@@ -1,7 +1,7 @@
 ﻿using Syadeu.Extentions.EditorUtils;
 using UnityEngine;
 
-namespace Syadeu.Extentions
+namespace Syadeu
 {
     /// <summary>
     /// literator 안에서 yield 전용 클래스<br/>

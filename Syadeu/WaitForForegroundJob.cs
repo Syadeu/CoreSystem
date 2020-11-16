@@ -1,7 +1,7 @@
 ﻿using Syadeu.Extentions.EditorUtils;
 using UnityEngine;
 
-namespace Syadeu.Extentions
+namespace Syadeu
 {
     public sealed class WaitForForegroundJob : CustomYieldInstruction
     {
