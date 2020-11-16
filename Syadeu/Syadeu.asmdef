@@ -1,7 +1,7 @@
 {
     "name": "Syadeu",
     "references": [
-        "GUID:0c752da273b17c547ae705acf0f2adf2"
+        "FMODUnity"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
