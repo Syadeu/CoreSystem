@@ -1,7 +1,7 @@
 {
-  "name": "com.syadeu.coresystem",
+  "name": "syadeu.coresystem",
   "displayName": "Syadeu CoreSystem",
   "version": "1.0.0",
-  "unity": "2019.2.1",
+  "unity": "2019.2",
   "description": "Syadeu CoreSystem Package."
 }
