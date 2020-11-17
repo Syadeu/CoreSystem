@@ -54,7 +54,7 @@ namespace Syadeu
         {
             DataIndex = InstanceList.Count;
 
-            Initialize();
+            //Initialize();
 
             InstanceList.TryAdd(DataIndex, this as T);
             Instances.Add(this as T);
