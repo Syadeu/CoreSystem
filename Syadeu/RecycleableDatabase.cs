@@ -9,10 +9,10 @@ namespace Syadeu
     /// <typeparam name="T"></typeparam>
     public abstract class RecycleableDatabase<T> where T : class
     {
-        public static int InstanceCount => InstanceList.Count;
+        public static int InstanceCount => Instances.Count;
 
         private static ConcurrentDictionary<int, T> InstanceList { get; } = new ConcurrentDictionary<int, T>();
-        private static List<T> Instances { get; } = new List<T>();
+        public static List<T> Instances { get; } = new List<T>();
 
         public static T GetInstance(int index)
         {
@@ -29,12 +29,12 @@ namespace Syadeu
         public static T GetDatabase()
         {
             T temp = null;
-            foreach (var item in InstanceList)
+            foreach (var item in Instances)
             {
-                if (!(item.Value as RecycleableDatabase<T>).Activated)
+                if (!(item as RecycleableDatabase<T>).Activated)
                 {
-                    temp = item.Value;
-                    (item.Value as RecycleableDatabase<T>).Initialize();
+                    temp = item;
+                    (item as RecycleableDatabase<T>).Initialize();
                 }
             }
             return temp;
