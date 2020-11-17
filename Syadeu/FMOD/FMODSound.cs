@@ -78,7 +78,8 @@ namespace Syadeu.FMOD
         {
             for (int i = 0; i < count; i++)
             {
-                new FMODSound();
+                FMODSound sound = new FMODSound();
+                sound.Terminate();
             }
         }
         /// <summary>
