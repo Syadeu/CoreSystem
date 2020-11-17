@@ -260,9 +260,20 @@ namespace Syadeu
         #endregion
 
         #region Worker Thread
-
+        UnityEngine.Profiling.CustomSampler OnBackgroundStartSampler;
+        UnityEngine.Profiling.CustomSampler OnBackgroundCustomUpdateSampler;
+        UnityEngine.Profiling.CustomSampler OnBackgroundUpdateSampler;
+        UnityEngine.Profiling.CustomSampler OnBackgroundJobSampler;
+        UnityEngine.Profiling.CustomSampler OnBackgroundTimerSampler;
         private void BackgroundWorker()
         {
+            OnBackgroundStartSampler = UnityEngine.Profiling.CustomSampler.Create("Syadeu.BackgroundStart");
+            OnBackgroundCustomUpdateSampler = UnityEngine.Profiling.CustomSampler.Create("Syadeu.BackgroundCustomUpdate");
+            OnBackgroundUpdateSampler = UnityEngine.Profiling.CustomSampler.Create("Syadeu.BackgroundUpdate");
+            OnBackgroundJobSampler = UnityEngine.Profiling.CustomSampler.Create("Syadeu.BackgroundJob");
+            OnBackgroundTimerSampler = UnityEngine.Profiling.CustomSampler.Create("Syadeu.BackgroundTimer");
+            UnityEngine.Profiling.Profiler.BeginThreadProfiling("Syadeu", "Syadeu.CoreSystem");
+
             do
             {
                 ThreadAwaiter(100);
@@ -276,6 +287,8 @@ namespace Syadeu
 
             while (true)
             {
+                OnBackgroundStartSampler.Begin();
+
                 #region OnBackgroundStart
                 try
                 {
@@ -291,6 +304,9 @@ namespace Syadeu
                     Debug.LogError(ex);
                 }
                 #endregion
+
+                OnBackgroundStartSampler.End();
+                OnBackgroundCustomUpdateSampler.Begin();
 
                 #region OnBackgroundCustomUpdate
                 if (OnBackgroundCustomUpdate.Count > 0)
@@ -339,6 +355,9 @@ namespace Syadeu
                 }
                 #endregion
 
+                OnBackgroundCustomUpdateSampler.End();
+                OnBackgroundUpdateSampler.Begin();
+
                 #region OnBackgroundUpdate
                 try
                 {
@@ -360,6 +379,9 @@ namespace Syadeu
                 }
                 #endregion
 
+                OnBackgroundUpdateSampler.End();
+                OnBackgroundJobSampler.Begin();
+
                 #region BackgroundJob
                 if (m_BackgroundJobs.Count > 0 &&
                     //GetBackgroundWorker(out BackgroundJobWorker worker) &&
@@ -379,6 +401,9 @@ namespace Syadeu
                     }
                 }
                 #endregion
+
+                OnBackgroundJobSampler.End();
+                OnBackgroundTimerSampler.Begin();
 
                 #region Timers
 
@@ -441,6 +466,8 @@ namespace Syadeu
                 }
 
                 #endregion
+
+                OnBackgroundTimerSampler.End();
 
                 ThreadAwaiter(10);
             }

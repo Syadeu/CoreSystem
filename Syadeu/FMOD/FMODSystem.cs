@@ -341,7 +341,6 @@ namespace Syadeu.FMOD
 
         #endregion
 
-        public const int MaxSoundCount = 999;
         /// <summary>
         /// 해당 사운드를 재생합니다
         /// </summary>

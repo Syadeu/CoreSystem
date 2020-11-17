@@ -16,6 +16,8 @@ namespace Syadeu.FMOD
 
         static FMODSound()
         {
+            CreateMemory(m_MemoryBlock);
+
             CoreSystem.Instance.StartUnityUpdate(UnityUpdater());
         }
 
@@ -71,6 +73,14 @@ namespace Syadeu.FMOD
             }
         }
 
+        private static int m_MemoryBlock = 512;
+        private static void CreateMemory(int count)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                new FMODSound();
+            }
+        }
         /// <summary>
         /// 놀고있는 사운드 객체를 뽑아옵니다. 없으면 생성하여 반환합니다.
         /// </summary>
@@ -80,15 +90,18 @@ namespace Syadeu.FMOD
             FMODSound sound = GetDatabase();
             if (sound == null)
             {
-                if (InstanceCount < FMODSystem.MaxSoundCount)
-                {
-                    sound = new FMODSound();
-                }
-                else
-                {
-                    "Sound is reached maximum instance count".ToLog();
-                    sound = GetDatabase(Playlist[10].DataIndex);
-                }
+                CreateMemory(m_MemoryBlock);
+                m_MemoryBlock *= 2;
+                //if (InstanceCount < m_MemoryBlock)
+                //{
+                //    sound = new FMODSound();
+                //}
+                //else
+                //{
+                $"Sound is reached maximum instance count => {m_MemoryBlock}".ToLog();
+                //    sound = GetDatabase(Playlist[10].DataIndex);
+                //}
+                sound = GetDatabase();
             }
             if (sound == null)
             {
