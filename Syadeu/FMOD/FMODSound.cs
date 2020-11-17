@@ -71,10 +71,6 @@ namespace Syadeu.FMOD
             }
         }
 
-        //internal FMODSound()
-        //{
-
-        //}
         /// <summary>
         /// 놀고있는 사운드 객체를 뽑아옵니다. 없으면 생성하여 반환합니다.
         /// </summary>
@@ -91,7 +87,7 @@ namespace Syadeu.FMOD
                 else
                 {
                     "Sound is reached maximum instance count".ToLog();
-                    sound = GetDatabase(Playlist[0].DataIndex);
+                    sound = GetDatabase(Playlist[10].DataIndex);
                 }
             }
             if (sound == null)

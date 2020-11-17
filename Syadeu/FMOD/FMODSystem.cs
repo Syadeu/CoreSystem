@@ -65,8 +65,7 @@ namespace Syadeu.FMOD
         {
             FMODStudioSystem.getBus("bus:/", out m_MasterBus);
 
-            SubListener = Instance.gameObject.AddComponent<FMODListener>();
-            MainListener = SubListener;
+            MainListener = Instance.gameObject.AddComponent<FMODListener>();
             FMODStudioSystem.setListenerWeight(MainListener.Index, 1);
 
             //CurrentLanguage = Language._ko_kr;
@@ -80,8 +79,13 @@ namespace Syadeu.FMOD
             m_MasterBus.setVolume(Mathf.Lerp(vol, Instance.IsFocused ? 1 : 0, Time.deltaTime * 5));
 #endif
             #endregion
+
+            if (MainListenerTarget != null)
+            {
+                MainListener.transform.position = Vector3.Lerp(MainListener.transform.position, MainListenerTarget.position, Time.deltaTime * 3f);
+            }
         }
-        private static IEnumerator OnBackgroundAsyncUpdate(/*SyadeuSystem.Awaiter awaiter*/)
+        private IEnumerator OnBackgroundAsyncUpdate(/*SyadeuSystem.Awaiter awaiter*/)
         {
             while (true)
             {
@@ -153,15 +157,14 @@ namespace Syadeu.FMOD
         public global::FMOD.Studio.System FMODStudioSystem => RuntimeManager.StudioSystem;
         public global::FMOD.System FMODCoreSystem => RuntimeManager.CoreSystem;
 
-        //public static List<CTFmodEntity> Playlist { get; private set; } = new List<CTFmodEntity>();
-        public static List<EventDescription> PreloadedSamples { get; set; } = new List<EventDescription>();
+        private List<EventDescription> PreloadedSamples { get; set; } = new List<EventDescription>();
 
-        public static ConcurrentDictionary<int, SoundListGUID> SoundLists { get; } = new ConcurrentDictionary<int, SoundListGUID>();
-        public static ConcurrentDictionary<int, SoundRoom> SoundRooms { get; } = new ConcurrentDictionary<int, SoundRoom>();
+        public ConcurrentDictionary<int, SoundListGUID> SoundLists { get; } = new ConcurrentDictionary<int, SoundListGUID>();
+        public ConcurrentDictionary<int, SoundRoom> SoundRooms { get; } = new ConcurrentDictionary<int, SoundRoom>();
 
-        public static SoundRoom CurrentListenerRoom { get; set; } = SoundRoom.Null;
-        public static FMODListener MainListener { get; set; }
-        public static FMODListener SubListener { get; set; }
+        public SoundRoom CurrentListenerRoom { get; private set; } = SoundRoom.Null;
+        public FMODListener MainListener { get; private set; }
+        public Transform MainListenerTarget { get; private set; }
 
         public static Language CurrentLanguage { get { return Instance.m_CurrentLanguage; } }
 
@@ -169,9 +172,15 @@ namespace Syadeu.FMOD
 
         #region Methods
 
+        /// <summary>
+        /// 해당 인덱스의 사운드 리스트를 가져옵니다.
+        /// </summary>
+        /// <param name="listIndex"></param>
+        /// <param name="list"></param>
+        /// <returns></returns>
         public static bool GetSoundList(int listIndex, out SoundListGUID list)
         {
-            if (!SoundLists.TryGetValue(listIndex, out list))
+            if (!Instance.SoundLists.TryGetValue(listIndex, out list))
             {
                 $"SOUND ERROR :: 지정된 사운드 리스트를 찾을 수 없음\nListIndex :: {listIndex}".ToLogError();
                 return false;
@@ -179,6 +188,11 @@ namespace Syadeu.FMOD
             return true;
         }
 
+        /// <summary>
+        /// 로컬라이징을 위해 분리한 뱅크들을 해당 언어로 교체합니다
+        /// </summary>
+        /// <param name="language"></param>
+        /// <returns></returns>
         public static bool SetLocale(Language language)
         {
             if (FMODSettings.LocalizedBankNames == null) return false;
@@ -208,22 +222,10 @@ namespace Syadeu.FMOD
         public static RESULT GetParameterDescriptionByName(string name, out PARAMETER_DESCRIPTION value) => Instance.FMODStudioSystem.getParameterDescriptionByName(name, out value);
         public static RESULT GetParameterByID(PARAMETER_ID id, out float value) => Instance.FMODStudioSystem.getParameterByID(id, out value);
 
-        public static bool SetListener(FMODListener listener, GameObject attenuationObj = null)
+        public static bool SetListenerTarget(Transform target, GameObject attenuationObj = null)
         {
-            if (MainListener == null) MainListener = listener;
-            else
-            {
-                SubListener = MainListener;
-                MainListener = listener;
-                RESULT result = Instance.FMODStudioSystem.setListenerWeight(MainListener.Index, 1);
-                if (result != RESULT.OK)
-                {
-                    $"SOUND EXCEPTION :: Listener가 제대로 설정되지 않음\nTrace: {result}".ToLog();
-                    return false;
-                }
-            }
-
-            MainListener.attenuationObject = attenuationObj;
+            Instance.MainListenerTarget = target;
+            Instance.MainListener.attenuationObject = attenuationObj;
 
             return true;
         }
@@ -270,25 +272,25 @@ namespace Syadeu.FMOD
             return Instance.FMODCoreSystem.setDriver(driverIndex) == RESULT.OK;
         }
 
-        // Current listener position.
-        private static VECTOR listenerPositionFmod = new VECTOR();
-        /// Returns whether the listener is currently inside the given |room| boundaries.
-        public static bool IsListenerInsideRoom(Transform room)
-        {
-            // Compute the room position relative to the listener.
-            VECTOR unused;
-            RuntimeManager.CoreSystem.get3DListenerAttributes(MainListener.Index, out listenerPositionFmod, out unused, out unused, out unused);
-            Vector3 listenerPosition = ToNormalVector(listenerPositionFmod);
-            Vector3 relativePosition = listenerPosition - room.position;
-            Quaternion rotationInverse = Quaternion.Inverse(room.rotation);
+        //// Current listener position.
+        //private static VECTOR listenerPositionFmod = new VECTOR();
+        ///// Returns whether the listener is currently inside the given |room| boundaries.
+        //public static bool IsListenerInsideRoom(Transform room)
+        //{
+        //    // Compute the room position relative to the listener.
+        //    VECTOR unused;
+        //    RuntimeManager.CoreSystem.get3DListenerAttributes(MainListener.Index, out listenerPositionFmod, out unused, out unused, out unused);
+        //    Vector3 listenerPosition = ToNormalVector(listenerPositionFmod);
+        //    Vector3 relativePosition = listenerPosition - room.position;
+        //    Quaternion rotationInverse = Quaternion.Inverse(room.rotation);
 
-            // Boundaries instance to be used in room detection logic.
-            Bounds bounds = new Bounds(Vector3.zero, Vector3.zero);
+        //    // Boundaries instance to be used in room detection logic.
+        //    Bounds bounds = new Bounds(Vector3.zero, Vector3.zero);
 
-            // Set the size of the room as the boundary and return whether the listener is inside.
-            bounds.size = Vector3.Scale(room.transform.lossyScale, room.transform.localScale);
-            return bounds.Contains(rotationInverse * relativePosition);
-        }
+        //    // Set the size of the room as the boundary and return whether the listener is inside.
+        //    bounds.size = Vector3.Scale(room.transform.lossyScale, room.transform.localScale);
+        //    return bounds.Contains(rotationInverse * relativePosition);
+        //}
 
         public static VECTOR ToFMODVector(Vector3 vector3) => RuntimeUtils.ToFMODVector(vector3);
         public static Vector3 ToNormalVector(VECTOR vec) => new Vector3(vec.x, vec.y, vec.z);
@@ -340,42 +342,28 @@ namespace Syadeu.FMOD
         #endregion
 
         public const int MaxSoundCount = 999;
-        public static bool GetSound(out FMODSound sound)
-        {
-            sound = FMODSound.GetDatabase();
-            if (sound == null)
-            {
-                if (FMODSound.InstanceCount < MaxSoundCount)
-                {
-                    sound = new FMODSound();
-                }
-                else
-                {
-                    "Sound is reached maximum instance count".ToLog();
-                    return false;
-                }
-            }
-            return true;
-        }
-        public static bool Play(FMODSound sound, Transform targetPos = null)
-        {
-            if (targetPos != null)
-            {
-                sound.SetPosition(targetPos);
-            }
-            sound.Play();
-            return true;
-        }
+        /// <summary>
+        /// 해당 사운드를 재생합니다
+        /// </summary>
+        /// <param name="listIndex"></param>
+        /// <param name="soundIndex"></param>
+        /// <param name="targetPos"></param>
+        /// <returns></returns>
         public static bool Play(int listIndex, int soundIndex, Transform targetPos = null)
         {
-            if (!GetSound(out var sound)) return false;
+            FMODSound sound = FMODSound.GetSound();
 
             if (!sound.SetEventPath(listIndex, soundIndex))
             {
                 return false;
             }
 
-            return Play(sound, targetPos);
+            if (targetPos != null)
+            {
+                sound.SetPosition(targetPos);
+            }
+            sound.Play();
+            return true;
         }
 
         #endregion

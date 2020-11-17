@@ -80,6 +80,10 @@ namespace Syadeu
         public event ValueChangeAction OnValueChange;
     }
 
+    /// <summary>
+    /// 컬렉션의 정보가 바뀌면 콜백을 호출하는 클래스들의 기본 클래스입니다
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public abstract class ObservableBag<T>
     {
         public delegate void ValueChangeAction(IEnumerable<T> target);
