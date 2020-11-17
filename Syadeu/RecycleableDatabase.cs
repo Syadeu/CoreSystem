@@ -35,6 +35,7 @@ namespace Syadeu
                 {
                     temp = item;
                     (item as RecycleableDatabase<T>).Initialize();
+                    break;
                 }
             }
             return temp;
@@ -54,7 +55,7 @@ namespace Syadeu
         {
             DataIndex = InstanceList.Count;
 
-            //Initialize();
+            Initialize();
 
             InstanceList.TryAdd(DataIndex, this as T);
             Instances.Add(this as T);
