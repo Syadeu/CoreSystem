@@ -7,7 +7,7 @@ namespace Syadeu
     /// literator 안에서 yield 전용 클래스<br/>
     /// initializer 에 넣은 BackgroundJob 이 완료되었는지(실패포함) 체크후 기다립니다.
     /// </summary>
-    public class WaitForBackgroundJob : CustomYieldInstruction
+    public sealed class WaitForBackgroundJob : CustomYieldInstruction
     {
         private readonly BackgroundJobEntity Job;
         /// <summary>

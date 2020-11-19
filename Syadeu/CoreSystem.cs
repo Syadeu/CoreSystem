@@ -582,9 +582,9 @@ namespace Syadeu
                 //if (m_ForegroundJobs.Count > 0 &&
                 //    m_ForegroundJobs.TryDequeue(out ForegroundJob job))
                 //{
-                    
+
                 //}
-                do
+                while (m_ForegroundJobs.Count > 0)
                 {
                     m_ForegroundJobs.TryDequeue(out ForegroundJob job);
 
@@ -601,7 +601,7 @@ namespace Syadeu
 
                     job.IsDone = true;
                     job.IsRunning = false;
-                } while (m_ForegroundJobs.Count > 0);
+                }
 
                 #endregion
 
