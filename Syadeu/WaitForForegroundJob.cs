@@ -3,9 +3,16 @@ using UnityEngine;
 
 namespace Syadeu
 {
+    /// <summary>
+    /// 메인 스레드잡이 끝날때까지 기다릴수있는 클래스입니다
+    /// </summary>
     public sealed class WaitForForegroundJob : CustomYieldInstruction
     {
         private readonly ForegroundJob Job;
+        /// <summary>
+        /// 잡을 넣어주세요
+        /// </summary>
+        /// <param name="job"></param>
         public WaitForForegroundJob(ForegroundJob job)
         {
             Job = job;

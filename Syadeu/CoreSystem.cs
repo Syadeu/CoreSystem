@@ -162,13 +162,23 @@ namespace Syadeu
             AddBackgroundJob(job);
             return job;
         }
-
+        /// <summary>
+        /// 유니티 메인 스레드에 해당 잡을 수행하도록 등록합니다.
+        /// </summary>
+        /// <param name="job"></param>
         public static void AddForegroundJob(ForegroundJob job)
         {
             Instance.m_ForegroundJobs.Enqueue(job);
         }
+        /// <summary>
+        /// 유니티 메인 스레드에 해당 잡을 수행하도록 등록합니다.
+        /// </summary>
+        /// <param name="action"></param>
+        /// <returns></returns>
         public static ForegroundJob AddForegroundJob(Action action)
         {
+            if (action == null) return null;
+
             ForegroundJob job = new ForegroundJob(action);
             AddForegroundJob(job);
             return job;
@@ -419,7 +429,9 @@ namespace Syadeu
                         timer.Activated = true;
                         timer.StartTime = new TimeSpan(DateTime.Now.Ticks);
                         timer.TargetTime = new TimeSpan(timer.TargetedTime).Add(timer.StartTime);
-                        timer.TimerStartAction?.Invoke();
+
+                        timer.TimerStartBackgroundAction?.Invoke();
+                        AddForegroundJob(timer.TimerStartAction);
 
                         activeTimers.Add(timer);
                     }
@@ -440,7 +452,8 @@ namespace Syadeu
                         activeTimers[i].Activated = false;
                         activeTimers[i].Started = false;
 
-                        activeTimers[i].TimerKillAction?.Invoke();
+                        activeTimers[i].TimerKillBackgroundAction?.Invoke();
+                        AddForegroundJob(activeTimers[i].TimerKillAction);
 
                         activeTimers.RemoveAt(i);
                         i--;
@@ -454,15 +467,15 @@ namespace Syadeu
                         activeTimers[i].Completed = true;
                         activeTimers[i].Started = false;
 
-                        activeTimers[i].TimerEndAction?.Invoke();
+                        activeTimers[i].TimerEndBackgroundAction?.Invoke();
+                        AddForegroundJob(activeTimers[i].TimerEndAction);
 
                         activeTimers.RemoveAt(i);
                         i--;
                         continue;
                     }
 
-                    //activeTimers[i].StartTime += 0.001f;
-                    activeTimers[i].TimerUpdateAction?.Invoke();
+                    AddForegroundJob(activeTimers[i].TimerUpdateAction);
                 }
 
                 #endregion
@@ -566,9 +579,15 @@ namespace Syadeu
 
                 #region ForegroundJob
 
-                if (m_ForegroundJobs.Count > 0 &&
-                    m_ForegroundJobs.TryDequeue(out ForegroundJob job))
+                //if (m_ForegroundJobs.Count > 0 &&
+                //    m_ForegroundJobs.TryDequeue(out ForegroundJob job))
+                //{
+                    
+                //}
+                do
                 {
+                    m_ForegroundJobs.TryDequeue(out ForegroundJob job);
+
                     job.IsRunning = true;
                     try
                     {
@@ -582,7 +601,7 @@ namespace Syadeu
 
                     job.IsDone = true;
                     job.IsRunning = false;
-                }
+                } while (m_ForegroundJobs.Count > 0);
 
                 #endregion
 

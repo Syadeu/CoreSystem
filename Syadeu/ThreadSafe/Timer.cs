@@ -3,22 +3,23 @@ using System;
 
 namespace Syadeu
 {
-    public delegate void TimerAction();
+    //public delegate void TimerAction();
     public delegate bool TimerCondition();
     public sealed class Timer : IDisposable
     {
-        public static int InstanceCount { get; private set; } = 0;
-
-        internal readonly int m_Hashcode;
+        internal static int InstanceCount { get; private set; } = 0;
 
         public TimeSpan StartTime { get; set; }
         internal long TargetedTime { get; set; }
         internal TimeSpan TargetTime { get; set; }
 
-        internal TimerAction TimerStartAction { get; set; }
-        internal TimerAction TimerKillAction { get; set; }
-        internal TimerAction TimerEndAction { get; set; }
-        internal TimerAction TimerUpdateAction { get; set; }
+        internal Action TimerStartAction { get; set; }
+        internal Action TimerStartBackgroundAction { get; set; }
+        internal Action TimerKillAction { get; set; }
+        internal Action TimerKillBackgroundAction { get; set; }
+        internal Action TimerEndAction { get; set; }
+        internal Action TimerEndBackgroundAction { get; set; }
+        internal Action TimerUpdateAction { get; set; }
 
         internal bool Disposed { get; set; } = false;
 
@@ -30,13 +31,7 @@ namespace Syadeu
 
         public Timer()
         {
-            m_Hashcode = InstanceCount;
             InstanceCount += 1;
-        }
-
-        public override int GetHashCode()
-        {
-            return m_Hashcode;
         }
 
         public bool IsTimerActive() => Activated || Started;
@@ -48,22 +43,37 @@ namespace Syadeu
             TargetedTime = second * 10000000;
             return this;
         }
-        public Timer OnTimerStart(TimerAction action)
+        public Timer OnTimerStart(Action action)
         {
             TimerStartAction = action;
             return this;
         }
-        public Timer OnTimerKill(TimerAction action)
+        public Timer OnTimerStartBackground(Action action)
+        {
+            TimerStartBackgroundAction = action;
+            return this;
+        }
+        public Timer OnTimerKill(Action action)
         {
             TimerKillAction = action;
             return this;
         }
-        public Timer OnTimerEnd(TimerAction action)
+        public Timer OnTimerKillBackground(Action action)
+        {
+            TimerKillBackgroundAction = action;
+            return this;
+        }
+        public Timer OnTimerEnd(Action action)
         {
             TimerEndAction = action;
             return this;
         }
-        public Timer OnTimerUpdate(TimerAction action)
+        public Timer OnTimerEndBackground(Action action)
+        {
+            TimerEndBackgroundAction = action;
+            return this;
+        }
+        public Timer OnTimerUpdate(Action action)
         {
             TimerUpdateAction = action;
             return this;
@@ -102,6 +112,7 @@ namespace Syadeu
 
         public void Dispose()
         {
+            InstanceCount -= 1;
             Disposed = true;
         }
     }

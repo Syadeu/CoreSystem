@@ -10,6 +10,10 @@ namespace Syadeu
     public class WaitForBackgroundJob : CustomYieldInstruction
     {
         private readonly BackgroundJobEntity Job;
+        /// <summary>
+        /// 등록한 잡을 넣어주세요
+        /// </summary>
+        /// <param name="job"></param>
         public WaitForBackgroundJob(BackgroundJobEntity job)
         {
             Job = job;
