@@ -28,17 +28,22 @@ namespace Syadeu
         /// </summary>
         public static T GetDatabase()
         {
-            T temp = null;
-            foreach (var item in Instances)
+            //T temp = null;
+            for (int i = 0; i < Instances.Count; i++)
             {
-                if (!(item as RecycleableDatabase<T>).Activated)
+                if (!(Instances[i] as RecycleableDatabase<T>).Activated)
                 {
-                    temp = item;
-                    (item as RecycleableDatabase<T>).Initialize();
-                    break;
+                    //temp = Instances[i];
+                    (Instances[i] as RecycleableDatabase<T>).Initialize();
+
+                    // 이거 왜 설정이 안되는지 모르겠음 그래서 한번 더함
+                    (Instances[i] as RecycleableDatabase<T>).Activated = true;
+
+                    return Instances[i];
                 }
             }
-            return temp;
+
+            return null;
         }
         public static T GetDatabase(int index)
         {

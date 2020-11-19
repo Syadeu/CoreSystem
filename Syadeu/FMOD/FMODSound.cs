@@ -211,7 +211,7 @@ namespace Syadeu.FMOD
             {
                 if (Position == INIT_POSITION)
                 {
-                    SetPosition(FMODSystem.Instance.transform.position.ToThreadSafe());
+                    SetPosition(FMODSystem.Instance.transform.position);
                 }
             }
 
