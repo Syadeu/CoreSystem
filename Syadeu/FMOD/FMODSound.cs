@@ -24,7 +24,6 @@ namespace Syadeu.FMOD
         private static IEnumerator UnityUpdater()
         {
             UnityEngine.Profiling.CustomSampler fmodUpdateSampler = UnityEngine.Profiling.CustomSampler.Create("FMODSound Update");
-            UnityEngine.Profiling.Profiler.BeginThreadProfiling("Syadeu", "FMOD");
 
             while (true)
             {

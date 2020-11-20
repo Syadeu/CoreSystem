@@ -88,7 +88,6 @@ namespace Syadeu.FMOD
         private IEnumerator OnBackgroundAsyncUpdate(/*SyadeuSystem.Awaiter awaiter*/)
         {
             UnityEngine.Profiling.CustomSampler fmodUpdateSampler = UnityEngine.Profiling.CustomSampler.Create("FMODSystem Background");
-            UnityEngine.Profiling.Profiler.BeginThreadProfiling("Syadeu", "FMOD");
 
             while (true)
             {
