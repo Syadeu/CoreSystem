@@ -29,6 +29,8 @@ namespace Syadeu
         /// </summary>
         public readonly Action Action;
 
+        internal int WorkerIndex = -1;
+
         public BackgroundJobEntity(Action action)
         {
             Action = action;
