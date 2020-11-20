@@ -277,12 +277,12 @@ namespace Syadeu
         UnityEngine.Profiling.CustomSampler OnBackgroundTimerSampler;
         private void BackgroundWorker()
         {
-            OnBackgroundStartSampler = UnityEngine.Profiling.CustomSampler.Create("Syadeu.BackgroundStart");
-            OnBackgroundCustomUpdateSampler = UnityEngine.Profiling.CustomSampler.Create("Syadeu.BackgroundCustomUpdate");
-            OnBackgroundUpdateSampler = UnityEngine.Profiling.CustomSampler.Create("Syadeu.BackgroundUpdate");
-            OnBackgroundJobSampler = UnityEngine.Profiling.CustomSampler.Create("Syadeu.BackgroundJob");
-            OnBackgroundTimerSampler = UnityEngine.Profiling.CustomSampler.Create("Syadeu.BackgroundTimer");
-            UnityEngine.Profiling.Profiler.BeginThreadProfiling("Syadeu", "Syadeu.CoreSystem");
+            OnBackgroundStartSampler = UnityEngine.Profiling.CustomSampler.Create("BackgroundStart");
+            OnBackgroundCustomUpdateSampler = UnityEngine.Profiling.CustomSampler.Create("BackgroundCustomUpdate");
+            OnBackgroundUpdateSampler = UnityEngine.Profiling.CustomSampler.Create("BackgroundUpdate");
+            OnBackgroundJobSampler = UnityEngine.Profiling.CustomSampler.Create("BackgroundJob");
+            OnBackgroundTimerSampler = UnityEngine.Profiling.CustomSampler.Create("BackgroundTimer");
+            UnityEngine.Profiling.Profiler.BeginThreadProfiling("Syadeu", "CoreSystem");
 
             do
             {

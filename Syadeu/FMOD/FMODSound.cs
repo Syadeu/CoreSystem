@@ -23,8 +23,12 @@ namespace Syadeu.FMOD
 
         private static IEnumerator UnityUpdater()
         {
+            UnityEngine.Profiling.CustomSampler fmodUpdateSampler = UnityEngine.Profiling.CustomSampler.Create("FMODSound Update");
+            UnityEngine.Profiling.Profiler.BeginThreadProfiling("Syadeu", "FMOD");
+
             while (true)
             {
+                fmodUpdateSampler.Begin();
                 for (int i = 0; i < Playlist.Count; i++)
                 {
                     if (!Playlist[i].Activated)
@@ -63,12 +67,9 @@ namespace Syadeu.FMOD
 
                         Playlist[i].FMODInstance.set3DAttributes(RuntimeUtils.To3DAttributes(Playlist[i].Transform, Playlist[i].Rigidbody));
                     }
-                    //else
-                    //{
-                    //    Playlist[i].FMODInstance.set3DAttributes(RuntimeUtils.To3DAttributes(Playlist[i].Position));
-                    //}
                 }
 
+                fmodUpdateSampler.End();
                 yield return null;
             }
         }
