@@ -16,7 +16,7 @@ namespace Syadeu
 
         Vector2 scrollPos = Vector2.zero;
         int windowIndex = 0;
-        string[] windows = new string[] { "FMOD" };
+        string[] windows = new string[] { "General", "FMOD" };
 
         private void OnGUI()
         {
@@ -26,6 +26,9 @@ namespace Syadeu
             switch (windowIndex)
             {
                 case 0:
+                    GeneralSettings();
+                    break;
+                case 1:
                     EditorGUILayout.LabelField($"Current FMOD Objects: {FMOD.FMODSound.InstanceCount}");
 
                     int activatedCount = 0;
@@ -43,6 +46,12 @@ namespace Syadeu
                     break;
             }
             GUILayout.EndScrollView();
+        }
+
+        void GeneralSettings()
+        {
+            EditorGUILayout.LabelField("작업중");
+
         }
     }
 }
