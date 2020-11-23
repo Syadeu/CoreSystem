@@ -62,7 +62,7 @@ namespace Syadeu
             jobWorker.Index = Instance.BackgroundJobWorkers.Count;
 
             Instance.BackgroundJobWorkers.Add(jobWorker);
-            Instance.BackgroundJobWorkerSamplers.Add(UnityEngine.Profiling.CustomSampler.Create($"Worker {jobWorker.Index}"));
+            //Instance.BackgroundJobWorkerSamplers.Add(UnityEngine.Profiling.CustomSampler.Create($"Worker {jobWorker.Index}"));
 
             jobWorker.Worker.DoWork += new DoWorkEventHandler(Instance.BackgroundJobRequest);
             jobWorker.Worker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(Instance.BackgroundJobCompleted);
@@ -235,7 +235,7 @@ namespace Syadeu
         private bool m_AsyncOperator = false;
 
         private readonly List<BackgroundJobWorker> BackgroundJobWorkers = new List<BackgroundJobWorker>();
-        private readonly List<UnityEngine.Profiling.CustomSampler> BackgroundJobWorkerSamplers = new List<UnityEngine.Profiling.CustomSampler>();
+        //private readonly List<UnityEngine.Profiling.CustomSampler> BackgroundJobWorkerSamplers = new List<UnityEngine.Profiling.CustomSampler>();
         private readonly ConcurrentQueue<BackgroundJobEntity> m_BackgroundJobs = new ConcurrentQueue<BackgroundJobEntity>();
 
         private readonly ConcurrentQueue<ForegroundJob> m_ForegroundJobs = new ConcurrentQueue<ForegroundJob>();
@@ -637,7 +637,7 @@ namespace Syadeu
         private void BackgroundJobRequest(object sender, DoWorkEventArgs e)
         {
             BackgroundJobEntity job = e.Argument as BackgroundJobEntity;
-            BackgroundJobWorkerSamplers[job.WorkerIndex].Begin();
+            //BackgroundJobWorkerSamplers[job.WorkerIndex].Begin();
             try
             {
                 job.Action.Invoke();
@@ -657,7 +657,7 @@ namespace Syadeu
             }
 
             e.Result = job;
-            BackgroundJobWorkerSamplers[job.WorkerIndex].End();
+            //BackgroundJobWorkerSamplers[job.WorkerIndex].End();
         }
         private void BackgroundJobCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
