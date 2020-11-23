@@ -303,6 +303,12 @@ namespace Syadeu.FMOD
 
         public FMODSound SetPosition(Transform transform)
         {
+            if (transform == null)
+            {
+                $"SOUND EXCEPTION :: Target transform is null, this request will be ignored".ToLog();
+                return this;
+            }
+
             if (ValidCheck())
             {
                 if (Is3D)

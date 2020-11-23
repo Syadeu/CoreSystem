@@ -37,10 +37,10 @@ namespace Syadeu
         public bool IsTimerActive() => Activated || Started;
         public bool IsTimerComplete() => Completed;
 
-        public Timer SetTargetTime(long second)
+        public Timer SetTargetTime(float second)
         {
             //TargetTime = second;
-            TargetedTime = second * 10000000;
+            TargetedTime = (long)(second * 10000000);
             return this;
         }
         public Timer OnTimerStart(Action action)
