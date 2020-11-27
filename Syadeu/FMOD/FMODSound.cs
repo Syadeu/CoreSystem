@@ -266,17 +266,6 @@ namespace Syadeu.FMOD
         }
         public bool SetEventPath(int listIndex, int soundIndex)
         {
-            if (!FMODSystem.GetSoundList(listIndex, out var list)) return false;
-
-            //SoundGUID input = null;
-            //for (int i = 0; i < list.Sounds.Length; i++)
-            //{
-            //    if (list.Sounds[i].Index == soundIndex)
-            //    {
-            //        input = list.Sounds[i];
-            //        break;
-            //    }
-            //} 
             SoundGUID input = GetEventPath(listIndex, soundIndex);
 
             if (input == null)

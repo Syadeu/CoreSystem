@@ -1,44 +1,102 @@
-﻿using System.Collections;
+﻿using Syadeu.Extentions.EditorUtils;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Syadeu
 {
     public sealed class RenderManager : StaticManager<RenderManager>
     {
+        public delegate bool RenderCondition();
+
         internal class ManagedObject
         {
-            public Transform Transform;
-            public Renderer[] Renderers;
-            public Vector3 Position;
+            public Transform Transform = null;
+            public List<Renderer> Renderers = null;
+            public Vector3 Position = Vector3.zero;
 
+            public RenderCondition RenderCondition = null;
+
+            public bool IsStatic = false;
             public bool IsOnline = true;
         }
 
-        public Camera TargetCamera { get; set; }
-        public Vector3 ScreenOffset { get; set; } = Vector3.zero;
+        private Camera TargetCamera { get; set; } = null;
+        private Vector3 ScreenOffset { get; set; }
 
         private List<ManagedObject> ManagedList { get; } = new List<ManagedObject>();
 
+        private List<int> WaitForCondition { get; } = new List<int>();
         private List<int> WaitForOffline { get; } = new List<int>();
         private List<int> WaitForOnline { get; } = new List<int>();
 
-        public static void AddAutoRender(Component component)
+        /// <summary>
+        /// 렌더링 규칙을 적용할 카메라를 설정합니다.
+        /// </summary>
+        /// <param name="cam"></param>
+        /// <param name="offset"></param>
+        public static void SetCamera(Camera cam, Vector3 offset = default)
         {
-            Instance.ManagedList.Add(new ManagedObject
+            Instance.TargetCamera = cam;
+            Instance.ScreenOffset = offset;
+        }
+        /// <summary>
+        /// 자동 렌더링 규칙을 가진 렌더러를 추가합니다.
+        /// </summary>
+        /// <param name="component"></param>
+        /// <param name="isStatic"></param>
+        public static void AddAutoRender(Component component, bool isStatic = false)
+        {
+            var temp = new ManagedObject
             {
                 Transform = component.transform,
-                Renderers = component.GetComponentsInChildren<Renderer>()
-            });
+                Renderers = component.GetComponentsInChildren<Renderer>().ToList(),
+                IsStatic = isStatic
+            };
+
+            if (isStatic)
+            {
+                temp.Position = temp.Transform.position;
+            }
+
+            Instance.ManagedList.Add(temp);
+        }
+        /// <summary>
+        /// 고유 렌더링 규칙을 가진 렌더러를 추가합니다.
+        /// </summary>
+        /// <param name="center"></param>
+        /// <param name="renderers"></param>
+        /// <param name="condition"></param>
+        public static void AddCustomAutoRender(Vector3 center, List<Renderer> renderers, RenderCondition condition)
+        {
+            if (condition == null)
+            {
+                $"EXCEPTION :: Condition cannot be null".ToLog();
+                return;
+            }
+
+            var temp = new ManagedObject
+            {
+                Position = center,
+                Renderers = renderers,
+                RenderCondition = condition,
+
+                IsStatic = true
+            };
+
+            Instance.ManagedList.Add(temp);
         }
 
+        /// <summary>
+        /// 사용하지마세요
+        /// </summary>
         public override void OnInitialize()
         {
             StartCoroutine(Updater());
         }
 
-        Matrix4x4 CamMatrix4x4;
-
+        private Matrix4x4 CamMatrix4x4;
         private IEnumerator Updater()
         {
             WaitForSeconds delay = new WaitForSeconds(2);
@@ -63,7 +121,10 @@ namespace Syadeu
                         continue;
                     }
 
-                    ManagedList[i].Position = ManagedList[i].Transform.position;
+                    if (!ManagedList[i].IsStatic && ManagedList[i].RenderCondition == null)
+                    {
+                        ManagedList[i].Position = ManagedList[i].Transform.position;
+                    }
 
                     if (i % 1000 == 0) yield return null;
                 }
@@ -71,13 +132,34 @@ namespace Syadeu
                 CoreSystem.AddBackgroundJob(jobWorkerIndex, CalculateRender, out var job);
                 yield return new WaitForBackgroundJob(job);
 
+                for (int i = 0; i < WaitForCondition.Count; i++)
+                {
+                    if (ManagedList[WaitForCondition[i]].RenderCondition.Invoke())
+                    {
+                        WaitForOnline.Add(i);
+                    }
+                    else
+                    {
+                        WaitForOffline.Add(i);
+                    }
+
+                    if (i % 1000 == 0) yield return null;
+                }
+                WaitForCondition.Clear();
+
+                #region On Off Func
                 for (int i = 0; i < WaitForOnline.Count; i++)
                 {
-                    if (ManagedList[WaitForOnline[i]].Transform == null) continue;
-
-                    foreach (var item in ManagedList[WaitForOnline[i]].Renderers)
+                    for (int a = 0; a < ManagedList[WaitForOnline[i]].Renderers.Count; a++)
                     {
-                        item.enabled = true;
+                        if (ManagedList[WaitForOnline[i]].Renderers[a] == null)
+                        {
+                            ManagedList[WaitForOnline[i]].Renderers.RemoveAt(a);
+                            a--;
+                            continue;
+                        }
+
+                        ManagedList[WaitForOnline[i]].Renderers[a].enabled = true;
                     }
 
                     ManagedList[WaitForOnline[i]].IsOnline = true;
@@ -86,16 +168,22 @@ namespace Syadeu
 
                 for (int i = 0; i < WaitForOffline.Count; i++)
                 {
-                    if (ManagedList[WaitForOffline[i]].Transform == null) continue;
-
-                    foreach (var item in ManagedList[WaitForOffline[i]].Renderers)
+                    for (int a = 0; a < ManagedList[WaitForOffline[i]].Renderers.Count; a++)
                     {
-                        item.enabled = false;
+                        if (ManagedList[WaitForOffline[i]].Renderers[a] == null)
+                        {
+                            ManagedList[WaitForOffline[i]].Renderers.RemoveAt(a);
+                            a--;
+                            continue;
+                        }
+
+                        ManagedList[WaitForOffline[i]].Renderers[a].enabled = false;
                     }
 
                     ManagedList[WaitForOffline[i]].IsOnline = false;
                 }
                 WaitForOffline.Clear();
+                #endregion
 
                 yield return null;
             }
@@ -107,18 +195,68 @@ namespace Syadeu
             {
                 if (IsInCameraScreen(ManagedList[i].Position))
                 {
-                    if (!ManagedList[i].IsOnline)
+                    if (ManagedList[i].RenderCondition != null)
                     {
-                        WaitForOnline.Add(i);
+                        try
+                        {
+                            if (ManagedList[i].RenderCondition.Invoke())
+                            {
+                                AddToOnline(i);
+                            }
+                            else
+                            {
+                                AddToOffline(i);
+                            }
+                        }
+                        catch (UnityException)
+                        {
+                            WaitForCondition.Add(i);
+                        }
+                    }
+                    else
+                    {
+                        AddToOnline(i);
                     }
                 }
                 else
                 {
-                    if (ManagedList[i].IsOnline)
+                    if (ManagedList[i].RenderCondition != null)
                     {
-                        WaitForOffline.Add(i);
+                        try
+                        {
+                            if (ManagedList[i].RenderCondition.Invoke())
+                            {
+                                AddToOnline(i);
+                            }
+                            else
+                            {
+                                AddToOffline(i);
+                            }
+                        }
+                        catch (UnityException)
+                        {
+                            WaitForCondition.Add(i);
+                        }
+                    }
+                    else
+                    {
+                        AddToOffline(i);
                     }
                 }
+            }
+        }
+        private void AddToOnline(int i)
+        {
+            if (!ManagedList[i].IsOnline)
+            {
+                WaitForOnline.Add(i);
+            }
+        }
+        private void AddToOffline(int i)
+        {
+            if (ManagedList[i].IsOnline)
+            {
+                WaitForOffline.Add(i);
             }
         }
 
