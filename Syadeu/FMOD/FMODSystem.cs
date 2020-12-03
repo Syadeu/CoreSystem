@@ -87,12 +87,15 @@ namespace Syadeu.FMOD
         }
         private IEnumerator OnBackgroundAsyncUpdate(/*SyadeuSystem.Awaiter awaiter*/)
         {
+#if UNITY_EDITOR
             UnityEngine.Profiling.CustomSampler fmodUpdateSampler = UnityEngine.Profiling.CustomSampler.Create("FMODSystem Background");
+#endif
 
             while (true)
             {
+#if UNITY_EDITOR
                 fmodUpdateSampler.Begin();
-
+#endif
                 for (int i = 0; i < FMODSound.InstanceCount; i++)
                 {
                     FMODSound sound = FMODSound.GetInstance(i);
@@ -137,7 +140,9 @@ namespace Syadeu.FMOD
                     }
                 }
 
+#if UNITY_EDITOR
                 fmodUpdateSampler.End();
+#endif
                 yield return null;
             }
 

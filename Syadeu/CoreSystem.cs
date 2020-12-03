@@ -274,19 +274,28 @@ namespace Syadeu
         #endregion
 
         #region Worker Thread
+
+#if UNITY_EDITOR
         UnityEngine.Profiling.CustomSampler OnBackgroundStartSampler;
         UnityEngine.Profiling.CustomSampler OnBackgroundCustomUpdateSampler;
         UnityEngine.Profiling.CustomSampler OnBackgroundUpdateSampler;
         UnityEngine.Profiling.CustomSampler OnBackgroundJobSampler;
         UnityEngine.Profiling.CustomSampler OnBackgroundTimerSampler;
+#endif
+
+        private bool m_BackgroundDeadFlag = false;
+        public event Action OnBackgroundThreadDead;
+
         private void BackgroundWorker()
         {
+#if UNITY_EDITOR
             OnBackgroundStartSampler = UnityEngine.Profiling.CustomSampler.Create("BackgroundStart");
             OnBackgroundCustomUpdateSampler = UnityEngine.Profiling.CustomSampler.Create("BackgroundCustomUpdate");
             OnBackgroundUpdateSampler = UnityEngine.Profiling.CustomSampler.Create("BackgroundUpdate");
             OnBackgroundJobSampler = UnityEngine.Profiling.CustomSampler.Create("BackgroundJob");
             OnBackgroundTimerSampler = UnityEngine.Profiling.CustomSampler.Create("BackgroundTimer");
             UnityEngine.Profiling.Profiler.BeginThreadProfiling("Syadeu", "CoreSystem");
+#endif
 
             do
             {
@@ -301,8 +310,9 @@ namespace Syadeu
 
             while (true)
             {
+#if UNITY_EDITOR
                 OnBackgroundStartSampler.Begin();
-
+#endif
                 #region OnBackgroundStart
                 try
                 {
@@ -318,10 +328,10 @@ namespace Syadeu
                     Debug.LogError(ex);
                 }
                 #endregion
-
+#if UNITY_EDITOR
                 OnBackgroundStartSampler.End();
                 OnBackgroundCustomUpdateSampler.Begin();
-
+#endif
                 #region OnBackgroundCustomUpdate
                 if (OnBackgroundCustomUpdate.Count > 0)
                 {
@@ -368,10 +378,10 @@ namespace Syadeu
                     }
                 }
                 #endregion
-
+#if UNITY_EDITOR
                 OnBackgroundCustomUpdateSampler.End();
                 OnBackgroundUpdateSampler.Begin();
-
+#endif
                 #region OnBackgroundUpdate
                 try
                 {
@@ -392,10 +402,10 @@ namespace Syadeu
                     Debug.LogError(ex);
                 }
                 #endregion
-
+#if UNITY_EDITOR
                 OnBackgroundUpdateSampler.End();
                 OnBackgroundJobSampler.Begin();
-
+#endif
                 #region BackgroundJob
                 if (m_BackgroundJobs.Count > 0 &&
                     //GetBackgroundWorker(out BackgroundJobWorker worker) &&
@@ -416,10 +426,10 @@ namespace Syadeu
                     }
                 }
                 #endregion
-
+#if UNITY_EDITOR
                 OnBackgroundJobSampler.End();
                 OnBackgroundTimerSampler.Begin();
-
+#endif
                 #region Timers
 
                 do
@@ -484,9 +494,9 @@ namespace Syadeu
                 }
 
                 #endregion
-
+#if UNITY_EDITOR
                 OnBackgroundTimerSampler.End();
-
+#endif
                 ThreadAwaiter(10);
             }
         }
@@ -502,6 +512,13 @@ namespace Syadeu
 
             while (true)
             {
+                if (!BackgroundThread.IsAlive && !m_BackgroundDeadFlag)
+                {
+                    OnBackgroundThreadDead?.Invoke();
+                    "ERROR :: Background thread is dead".ToLogError();
+                    m_BackgroundDeadFlag = true;
+                }
+
                 #region Manager Enforce load
                 do
                 {
@@ -584,11 +601,7 @@ namespace Syadeu
 
                 #region ForegroundJob
 
-                //if (m_ForegroundJobs.Count > 0 &&
-                //    m_ForegroundJobs.TryDequeue(out ForegroundJob job))
-                //{
-
-                //}
+                int jobCount = 0;
                 while (m_ForegroundJobs.Count > 0)
                 {
                     m_ForegroundJobs.TryDequeue(out ForegroundJob job);
@@ -606,6 +619,9 @@ namespace Syadeu
 
                     job.IsDone = true;
                     job.IsRunning = false;
+
+                    jobCount += 1;
+                    if (jobCount % 50 == 0) break;
                 }
 
                 #endregion
