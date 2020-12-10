@@ -2,7 +2,9 @@
 using FMODUnity;
 using Syadeu.Extentions.EditorUtils;
 using Syadeu.ThreadSafe;
+using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -14,6 +16,8 @@ namespace Syadeu.FMOD
         private static ThreadSafe.Vector3 INIT_POSITION { get; } = new ThreadSafe.Vector3(999, 999, 999);
         public static List<FMODSound> Playlist { get; } = new List<FMODSound>();
 
+        private static readonly ConcurrentQueue<FMODSound> WaitForPlay = new ConcurrentQueue<FMODSound>();
+
         static FMODSound()
         {
             CreateMemory(m_MemoryBlock);
@@ -23,11 +27,34 @@ namespace Syadeu.FMOD
 
         private static IEnumerator UnityUpdater()
         {
-            UnityEngine.Profiling.CustomSampler fmodUpdateSampler = UnityEngine.Profiling.CustomSampler.Create("FMODSound Update");
-
             while (true)
             {
-                fmodUpdateSampler.Begin();
+                if (WaitForPlay.Count > 0)
+                {
+                    int waitforplayCount = WaitForPlay.Count;
+                    for (int i = 0; i < waitforplayCount; i++)
+                    {
+                        if (WaitForPlay.TryDequeue(out FMODSound sound))
+                        {
+                            if (!sound.ValidCheck() || sound.IsPlaying) continue;
+
+                            if (sound.Is3D)
+                            {
+                                if (sound.Position == INIT_POSITION)
+                                {
+                                    sound.SetPosition(FMODSystem.Instance.transform.position);
+                                }
+                            }
+
+                            sound.FMODInstance.start();
+                            Playlist.Add(sound);
+                            sound.IsListed = true;
+
+                            sound.OnPlay?.Invoke();
+                        }
+                    }
+                }
+
                 for (int i = 0; i < Playlist.Count; i++)
                 {
                     if (!Playlist[i].Activated)
@@ -48,6 +75,7 @@ namespace Syadeu.FMOD
                     Playlist[i].FMODInstance.getPlaybackState(out playbackState);
                     if (playbackState == PLAYBACK_STATE.STOPPED)
                     {
+                        Playlist[i].OnStop?.Invoke();
                         Playlist[i].Terminate();
                         Playlist.RemoveAt(i);
                         i--;
@@ -58,6 +86,9 @@ namespace Syadeu.FMOD
                     {
                         if (Playlist[i].Transform == null)
                         {
+                            Playlist[i].OnStop?.Invoke();
+
+                            if (Playlist[i].FMODInstance.isValid()) Playlist[i].FMODInstance.stop(global::FMOD.Studio.STOP_MODE.ALLOWFADEOUT);
                             Playlist[i].Terminate();
                             Playlist.RemoveAt(i);
                             i--;
@@ -67,8 +98,6 @@ namespace Syadeu.FMOD
                         Playlist[i].FMODInstance.set3DAttributes(RuntimeUtils.To3DAttributes(Playlist[i].Transform, Playlist[i].Rigidbody));
                     }
                 }
-
-                fmodUpdateSampler.End();
                 yield return null;
             }
         }
@@ -134,6 +163,16 @@ namespace Syadeu.FMOD
 
             Paused = false;
         }
+        protected override void OnTerminate()
+        {
+            if (FMODInstance.hasHandle())
+            {
+                FMODInstance.release();
+                FMODInstance.clearHandle();
+            }
+
+            base.OnTerminate();
+        }
 
         #endregion
 
@@ -183,6 +222,9 @@ namespace Syadeu.FMOD
 
         public bool Paused { get; private set; } = false;
 
+        public event Action OnPlay;
+        public event Action OnStop;
+
         #region Utils
 
         /// <summary>
@@ -205,19 +247,17 @@ namespace Syadeu.FMOD
 
         public void Play()
         {
-            if (!ValidCheck() || IsPlaying) return;
+            //if (!ValidCheck() || IsPlaying) return;
 
-            if (Is3D)
-            {
-                if (Position == INIT_POSITION)
-                {
-                    SetPosition(FMODSystem.Instance.transform.position);
-                }
-            }
+            //if (Is3D)
+            //{
+            //    if (Position == INIT_POSITION)
+            //    {
+            //        SetPosition(FMODSystem.Instance.transform.position);
+            //    }
+            //}
 
-            FMODInstance.start();
-            Playlist.Add(this);
-            IsListed = true;
+            WaitForPlay.Enqueue(this);
         }
         public virtual void Pause()
         {
@@ -239,10 +279,11 @@ namespace Syadeu.FMOD
         {
             if (FMODInstance.isValid())
             {
+                OnStop?.Invoke();
                 FMODInstance.stop(global::FMOD.Studio.STOP_MODE.ALLOWFADEOUT);
 
-                FMODInstance.release();
-                FMODInstance.clearHandle();
+                //FMODInstance.release();
+                //FMODInstance.clearHandle();
 
                 Terminate();
             }

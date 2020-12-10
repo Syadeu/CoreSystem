@@ -11,7 +11,7 @@ namespace Syadeu.FMOD
     {
         //public static SoundGUID Empty = new SoundGUID(false);
 
-        private string EventPath { get; }
+        public string EventPath { get; }
 
         public int Index { get; }
         public Guid GUID { get; private set; }
