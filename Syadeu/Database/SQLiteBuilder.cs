@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace Syadeu.Database
 {
-    public sealed class SQLiteManager
+    public sealed class SQLiteBuilder
     {
         public enum IFLogic
         {
@@ -179,17 +179,24 @@ namespace Syadeu.Database
 
                 return false;
             }
+
+            public string BuildReader()
+            {
+                string sum = $@"SELECT * FROM {m_Name}";
+                return sum;
+            }
+
             /// <summary>
             /// 테이블을 생성한뒤 추가로 컬럼을 추가하려할때 필요한 쿼리문을 작성합니다
             /// </summary>
             /// <returns></returns>
             public string BuildAddColumn(Type t, string name, IFLogic logic = IFLogic.NONE)
             {
-                if (HasColumn(name))
-                {
-                    "SQLite Exception :: 같은 이름을 가진 컬럼이 이미 존재합니다".ToLog();
-                    return null;
-                }
+                //if (HasColumn(name))
+                //{
+                //    "SQLite Exception :: 같은 이름을 가진 컬럼이 이미 존재합니다".ToLog();
+                //    return null;
+                //}
 
                 string sum = $@"ALTER TABLE {m_Name} ADD COLUMN";
                 if (logic != IFLogic.NONE)
@@ -240,19 +247,19 @@ namespace Syadeu.Database
             /// <returns></returns>
             public IEnumerator<string> BuildRemoveColumn(string name, params string[] vs)
             {
-                if (!HasColumn(name))
-                {
-                    $"SQLite Exception :: 해당 이름({name})을 가진 컬럼은 존재하지않음".ToLog();
-                    yield break;
-                }
-                foreach (var item in vs)
-                {
-                    if (!HasColumn(item))
-                    {
-                        $"SQLite Exception :: 해당 이름({item})을 가진 컬럼은 존재하지않음".ToLog();
-                        yield break;
-                    }
-                }
+                //if (!HasColumn(name))
+                //{
+                //    $"SQLite Exception :: 해당 이름({name})을 가진 컬럼은 존재하지않음".ToLog();
+                //    yield break;
+                //}
+                //foreach (var item in vs)
+                //{
+                //    if (!HasColumn(item))
+                //    {
+                //        $"SQLite Exception :: 해당 이름({item})을 가진 컬럼은 존재하지않음".ToLog();
+                //        yield break;
+                //    }
+                //}
 
                 string query = $@"ALTER TABLE {m_Name} RENAME TO {m_Name}_old";
                 yield return query;
@@ -401,7 +408,7 @@ namespace Syadeu.Database
                 {
                     if (Values[valueKeys[i]].GetType() == typeof(string))
                     {
-                        m_Query += $@"\'{Values[valueKeys[i]]}\'";
+                        m_Query += $@"'{Values[valueKeys[i]]}'";
                     }
                     else
                     {
@@ -517,6 +524,10 @@ namespace Syadeu.Database
         /// <returns></returns>
         public static string BuildPath(string path, string name)
         {
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
             return $"URI=file:{path}{Path.DirectorySeparatorChar}{name}.db";
         }
 
