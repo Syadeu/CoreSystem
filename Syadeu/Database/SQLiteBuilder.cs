@@ -140,7 +140,7 @@ namespace Syadeu.Database
                     return sum;
                 }
             }
-            private string GetAllValues()
+            public string GetAllValues()
             {
                 string sum = null;
                 for (int i = 0; i < m_Values.Count; i++)
