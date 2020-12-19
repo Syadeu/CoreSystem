@@ -98,6 +98,12 @@ namespace Syadeu
         /// <returns></returns>
         public static bool AddBackgroundJob(int workerIndex, BackgroundJobEntity job)
         {
+            if (job.MainJob != null)
+            {
+                "ERROR :: 이 잡은 메인 잡이 아닙니다. 메인 잡을 실행하세요".ToLog();
+                return false;
+            }
+
             if (workerIndex >= Instance.BackgroundJobWorkers.Count) return false;
 
             if (Instance.BackgroundJobWorkers[workerIndex].Worker.IsBusy)
@@ -152,6 +158,12 @@ namespace Syadeu
         /// <param name="job"></param>
         public static void AddBackgroundJob(BackgroundJobEntity job)
         {
+            if (job.MainJob != null)
+            {
+                "ERROR :: 이 잡은 메인 잡이 아닙니다. 메인 잡을 실행하세요".ToLog();
+                return;
+            }
+
             Instance.m_BackgroundJobs.Enqueue(job);
         }
         /// <summary>
@@ -679,7 +691,7 @@ namespace Syadeu
         {
             BackgroundJobEntity job = e.Result as BackgroundJobEntity;
             job.IsRunning = false;
-            job.IsDone = true;
+            job.m_IsDone = true;
 
 #if UNITY_EDITOR
             //"LOG :: Background job completed".ToLog();
