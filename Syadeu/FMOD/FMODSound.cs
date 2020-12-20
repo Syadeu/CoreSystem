@@ -42,7 +42,15 @@ namespace Syadeu.FMOD
                             {
                                 if (sound.Position == INIT_POSITION)
                                 {
-                                    sound.SetPosition(FMODSystem.Instance.transform.position);
+                                    if (!sound.IsObject)
+                                    {
+                                        sound.SetPosition(FMODSystem.Instance.transform.position);
+                                    }
+                                    else
+                                    {
+                                        // 실행요청을 받았는데 오브젝트가 사라졌다?
+                                        continue;
+                                    }
                                 }
                             }
 
@@ -187,8 +195,8 @@ namespace Syadeu.FMOD
             {
                 if (IsObject)
                 {
-                    //if (Transform == null) return m_Position;
-                    //else
+                    if (Transform == null) return INIT_POSITION;
+                    else
                     {
                         return Transform.position.ToThreadSafe();
                     }
