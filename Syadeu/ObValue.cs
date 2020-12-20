@@ -170,6 +170,12 @@ namespace Syadeu
             ModifiedKeys = new List<TKey>();
             RemovedKeys = new List<TKey>();
         }
+        public ObDictionary(ConcurrentDictionary<TKey, TValue> dictionary)
+        {
+            m_Dictionary = dictionary;
+            ModifiedKeys = new List<TKey>();
+            RemovedKeys = new List<TKey>();
+        }
 
         public void Add(TKey key, TValue value, bool passModified = false)
         {
