@@ -11,7 +11,7 @@ namespace Syadeu
 #if UNITY_EDITOR
     [InitializeOnLoad]
 #endif
-    public abstract class StaticSettingEntity<T> : SettingEntity, IStaticSetting where T : ScriptableObject
+    public abstract class StaticSettingEditor<T> : SettingEntity, IStaticSetting where T : ScriptableObject
     {
         private static T m_Instance;
         private static bool m_IsEnforceOrder;
@@ -26,14 +26,15 @@ namespace Syadeu
                         StaticManagerEntity.AwaitForNotNull(ref m_Instance, ref m_IsEnforceOrder, EnforceOrder);
                         return m_Instance;
                     }
+
 #if UNITY_EDITOR
-                    if (!Directory.Exists("Assets/Resources/Syadeu"))
+                    if (!Directory.Exists("Assets/Resources/Syadeu/Editor"))
                     {
-                        Directory.CreateDirectory("Assets/Resources/Syadeu");
+                        Directory.CreateDirectory("Assets/Resources/Syadeu/Editor");
                     }
 #endif
 
-                    m_Instance = Resources.Load<T>("Syadeu/" + typeof(T).Name);
+                    m_Instance = Resources.Load<T>("Syadeu/Editor" + typeof(T).Name);
                     if (m_Instance == null)
                     {
                         $"LOG :: Creating new static setting<{typeof(T).Name}> asset".ToLog();
@@ -41,11 +42,11 @@ namespace Syadeu
                         m_Instance.name = $"Syadeu {typeof(T).Name} Setting Asset";
 
 #if UNITY_EDITOR
-                        if (!Directory.Exists("Assets/Resources/Syadeu"))
+                        if (!Directory.Exists("Assets/Resources/Syadeu/Editor"))
                         {
-                            AssetDatabase.CreateFolder("Assets/Resources", "Syadeu");
+                            AssetDatabase.CreateFolder("Assets/Resources/Syadeu", "Editor");
                         }
-                        AssetDatabase.CreateAsset(m_Instance, "Assets/Resources/Syadeu/" + typeof(T).Name + ".asset");
+                        AssetDatabase.CreateAsset(m_Instance, "Assets/Resources/Syadeu/Editor/" + typeof(T).Name + ".asset");
 #endif
                     }
                 }
