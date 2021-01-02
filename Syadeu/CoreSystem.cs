@@ -674,12 +674,12 @@ namespace Syadeu
             catch (UnityException mainthread)
             {
                 $"유니티 API 가 사용되어 백그라운드에서 돌릴 수 없음\nTrace: {mainthread.StackTrace}".ToLogError();
-                job.Faild = true;
+                job.Faild = true; job.IsRunning = false; job.m_IsDone = true;
                 job.Result = $"{nameof(mainthread)}: {mainthread.Message}";
             }
             catch (Exception ex)
             {
-                job.Faild = true;
+                job.Faild = true; job.IsRunning = false; job.m_IsDone = true;
                 job.Result = $"{nameof(ex)}: {ex.Message}";
                 Debug.LogError(ex);
             }

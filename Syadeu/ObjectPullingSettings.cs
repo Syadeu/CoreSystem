@@ -86,7 +86,8 @@ namespace Syadeu
             }
 
             // 무한 생성
-            if (obj.MaxCount < 0)
+            if (obj.MaxCount < 0 ||
+                obj.MaxCount > obj.Instances.Count)
             {
                 temp = Instantiate(obj.Prefab);
                 temp.IngameIndex = obj.Instances.Count;
@@ -99,15 +100,14 @@ namespace Syadeu
             return null;
         }
 
-        public override void OnInitialized()
+        private void OnEnable()
         {
+            IngameObjects.Clear();
             for (int i = 0; i < m_ObjectSettings.Count; i++)
             {
                 IngameObject obj = new IngameObject(i, m_ObjectSettings[i].Prefab, m_ObjectSettings[i].MaxInstanceCount);
                 IngameObjects.Add(i, obj);
             }
-
-            base.OnInitialized();
         }
 
 #if UNITY_EDITOR
