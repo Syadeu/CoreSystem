@@ -629,7 +629,7 @@ namespace Syadeu
                         job.Result = ex.Message;
                     }
 
-                    job.IsDone = true;
+                    job.m_IsDone = true;
                     job.IsRunning = false;
 
                     jobCount += 1;
@@ -716,6 +716,20 @@ namespace Syadeu
         //    }
         //    return false;
         //}
+        #endregion
+
+        #region Internals
+
+        internal static bool IsThisMainthread()
+        {
+            if (MainThread == null || Thread.CurrentThread == MainThread)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
         #endregion
 
 #if UNITY_EDITOR

@@ -28,7 +28,13 @@ namespace Syadeu
             switch (windowIndex)
             {
                 case 0:
+                    EditorGUI.BeginChangeCheck();
                     GeneralSettings();
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        EditorUtility.SetDirty(SyadeuSettings.Instance);
+                        AssetDatabase.SaveAssets();
+                    }
                     break;
                 case 1:
                     FMODGeneralInfo();
@@ -41,8 +47,10 @@ namespace Syadeu
 
         void GeneralSettings()
         {
-            EditorGUILayout.LabelField("작업중");
+            EditorUtils.StringHeader("General Settings");
+            EditorUtils.SectorLine();
 
+            SyadeuSettings.Instance.m_VisualizeObjects = EditorGUILayout.ToggleLeft("Hierarchy에 표시", SyadeuSettings.Instance.m_VisualizeObjects);
         }
 
         void FMODGeneralInfo()

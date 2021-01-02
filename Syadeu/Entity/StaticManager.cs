@@ -43,7 +43,10 @@ namespace Syadeu
                     T ins = obj.AddComponent<T>();
 
                     DontDestroyOnLoad(obj);
-                    obj.hideFlags = HideFlags.HideAndDontSave;
+                    if (!SyadeuSettings.Instance.m_VisualizeObjects)
+                    {
+                        obj.hideFlags = HideFlags.HideAndDontSave;
+                    }
 
                     (ins as IStaticManager).OnInitialize();
 

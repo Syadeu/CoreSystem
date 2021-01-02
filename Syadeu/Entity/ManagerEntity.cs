@@ -6,14 +6,7 @@
         public static System.Threading.Thread BackgroundThread { get; protected set; }
 
         protected static bool IsMainthread()
-        {
-            if (MainThread == null || System.Threading.Thread.CurrentThread == MainThread)
-            {
-                return true;
-            }
-
-            return false;
-        }
+            => CoreSystem.IsThisMainthread();
 
         /// <summary>
         /// OnBackgroundUpdate 보다 일찍 실행되는 커스텀 업데이트문을 넣을 수 있습니다.

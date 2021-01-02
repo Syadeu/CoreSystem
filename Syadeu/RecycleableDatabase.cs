@@ -89,12 +89,6 @@ namespace Syadeu
         }
 
         protected static bool IsMainthread()
-        {
-            if (ManagerEntity.MainThread == null || System.Threading.Thread.CurrentThread == ManagerEntity.MainThread)
-            {
-                return true;
-            }
-            return false;
-        }
+            => CoreSystem.IsThisMainthread();
     }
 }

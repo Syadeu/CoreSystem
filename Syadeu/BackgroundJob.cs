@@ -1,11 +1,10 @@
 ﻿using Syadeu.Extentions.EditorUtils;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 
 namespace Syadeu
 {
-    public abstract class BackgroundJobEntity
+    public abstract class BackgroundJobEntity : IJob
     {
         internal bool m_IsDone = false;
         /// <summary>
@@ -21,42 +20,46 @@ namespace Syadeu
 
                     for (int i = 0; i < ConnectedJobs.Count; i++)
                     {
-                        if (!ConnectedJobs[i].m_IsDone) return false;
+                        if (ConnectedJobs[i] is BackgroundJobEntity backJob &&
+                            !backJob.m_IsDone) return false;
+                        else if (ConnectedJobs[i] is ForegroundJob foreJob &&
+                            !foreJob.m_IsDone) return false;
                     }
 
                     return true;
                 }
 
-                return MainJob.m_IsDone;
+                return MainJob.IsDone;
             }
         }
         /// <summary>
         /// 이 잡이 수행중인가요?
         /// </summary>
-        public bool IsRunning = false;
+        public bool IsRunning { get; internal set; } = false;
 
         /// <summary>
         /// 이 잡이 실패했나요?
         /// </summary>
-        public bool Faild = false;
+        public bool Faild { get; internal set; } = false;
         /// <summary>
         /// 이 잡의 수행결과입니다.
         /// </summary>
-        public string Result = null;
+        public string Result { get; internal set; } = null;
 
         /// <summary>
         /// 잡이 수행할 델리게이트입니다
         /// </summary>
-        public readonly Action Action;
+        public Action Action { get; set; }
 
         internal int WorkerIndex = -1;
-        internal List<BackgroundJobEntity> ConnectedJobs;
-        internal BackgroundJobEntity MainJob;
+        internal List<IJob> ConnectedJobs;
+
+        public IJob MainJob { get; internal set; }
 
         public BackgroundJobEntity(Action action)
         {
             Action = action;
-            ConnectedJobs = new List<BackgroundJobEntity>();
+            ConnectedJobs = new List<IJob>();
             MainJob = null;
         }
 
@@ -64,7 +67,7 @@ namespace Syadeu
         /// 이 잡을 수행하도록 리스트에 등록합니다.
         /// </summary>
         /// <returns></returns>
-        public BackgroundJobEntity Start()
+        public IJob Start()
         {
             if (MainJob != null)
             {
@@ -78,7 +81,14 @@ namespace Syadeu
                 CoreSystem.AddBackgroundJob(this);
                 for (int i = 0; i < ConnectedJobs.Count; i++)
                 {
-                    CoreSystem.AddBackgroundJob(ConnectedJobs[i]);
+                    if (ConnectedJobs[i] is BackgroundJobEntity backgroundJob)
+                    {
+                        CoreSystem.AddBackgroundJob(backgroundJob);
+                    }
+                    else if (ConnectedJobs[i] is ForegroundJob foregroundJob)
+                    {
+                        CoreSystem.AddForegroundJob(foregroundJob);
+                    }
                 }
             }
             return this;
@@ -102,7 +112,14 @@ namespace Syadeu
                 CoreSystem.AddBackgroundJob(workerIndex, this);
                 for (int i = 0; i < ConnectedJobs.Count; i++)
                 {
-                    CoreSystem.AddBackgroundJob(workerIndex, ConnectedJobs[i]);
+                    if (ConnectedJobs[i] is BackgroundJobEntity backgroundJob)
+                    {
+                        CoreSystem.AddBackgroundJob(workerIndex, backgroundJob);
+                    }
+                    else if (ConnectedJobs[i] is ForegroundJob foregroundJob)
+                    {
+                        CoreSystem.AddForegroundJob(foregroundJob);
+                    }
                 }
             }
 
@@ -125,7 +142,7 @@ namespace Syadeu
             }
         }
 
-        public BackgroundJobEntity ConnectJob(BackgroundJobEntity job)
+        public IJob ConnectJob(IJob job)
         {
             if (job.MainJob != null)
             {
@@ -139,11 +156,25 @@ namespace Syadeu
             }
 
             ConnectedJobs.Add(job);
-            job.MainJob = this;
+
+            if (job is BackgroundJobEntity backgroundJob)
+            {
+                backgroundJob.MainJob = this;
+            }
+            else if (job is ForegroundJob foregroundJob)
+            {
+                foregroundJob.MainJob = this;
+            }
+            
             return this;
         }
         public void Await()
         {
+            if (CoreSystem.IsThisMainthread())
+            {
+                throw new InvalidOperationException("이 메소드는 메인 스레드에서의 호출을 지원하지 않습니다.");
+            }
+
             while (!IsDone)
             {
                 StaticManagerEntity.ThreadAwaiter(10);
