@@ -80,7 +80,10 @@ namespace Syadeu
                 if (!obj.Instances[i].Activated)
                 {
                     temp = obj.Instances[i];
+
+                    temp.Activated = true;
                     temp.OnInitialize();
+                    
                     return temp;
                 }
             }
@@ -92,7 +95,10 @@ namespace Syadeu
                 temp = Instantiate(obj.Prefab);
                 temp.IngameIndex = obj.Instances.Count;
                 obj.Instances.Add(temp);
+
+                temp.Activated = true;
                 temp.OnInitialize();
+
                 return temp;
             }
 
