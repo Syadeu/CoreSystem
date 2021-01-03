@@ -12,49 +12,58 @@ namespace Syadeu
 {
     public sealed class PrefabList : StaticSettingEntity<PrefabList>
     {
+#if UNITY_EDITOR
+        [MenuItem("Syadeu/Edit Prefab List", priority = 100)]
+        public static void MenuItem()
+        {
+            Selection.activeObject = Instance;
+            EditorApplication.ExecuteMenuItem("Window/General/Inspector");
+        }
+#endif
+
         [Serializable]
         public sealed class ObjectSetting
         {
             public string m_Name;
 
             [Space]
-            [Tooltip("풀링할 오브젝트의 프리팹입니다")]
-            public RecycleableMonobehaviour Prefab;
+            [Tooltip("오브젝트의 프리팹입니다")]
+            public MonoBehaviour Prefab;
             [Tooltip("최대로 생성될 수 있는 숫자입니다. 값이 음수면 무한")]
-            public int MaxInstanceCount;
+            public int MaxInstanceCount = -1;
         }
-        private struct IngameObject
+        private struct RecycleObject
         {
             public int Index { get; }
-            public RecycleableMonobehaviour Prefab { get; }
+            public MonoBehaviour Prefab { get; }
             public int MaxCount { get; }
-            public List<RecycleableMonobehaviour> Instances { get; }
+            public List<MonoBehaviour> Instances { get; }
 
-            public IngameObject(int index, RecycleableMonobehaviour prefab, int maxCount)
+            public RecycleObject(int index, MonoBehaviour prefab, int maxCount)
             {
                 Index = index;
                 Prefab = prefab;
                 MaxCount = maxCount;
-                Instances = new List<RecycleableMonobehaviour>();
+                Instances = new List<MonoBehaviour>();
             }
         }
 
         public List<ObjectSetting> m_ObjectSettings = new List<ObjectSetting>();
 
-        private Dictionary<int, IngameObject> IngameObjects { get; } = new Dictionary<int, IngameObject>();
+        private Dictionary<int, RecycleObject> RecycleObjects { get; } = new Dictionary<int, RecycleObject>();
 
         /// <summary>
         /// 해당 타입과 일치하는 리사이클 인스턴스를 받아옵니다.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public static T GetObject<T>() where T : RecycleableMonobehaviour
+        public static T GetRecycleObject<T>() where T : RecycleableMonobehaviour
         {
             for (int i = 0; i < Instance.m_ObjectSettings.Count; i++)
             {
                 if (Instance.m_ObjectSettings[i].Prefab is T)
                 {
-                    return GetObject(i) as T;
+                    return GetRecycleObject(i) as T;
                 }
             }
 
@@ -66,21 +75,16 @@ namespace Syadeu
         /// </summary>
         /// <param name="index"></param>
         /// <returns></returns>
-        public static RecycleableMonobehaviour GetObject(int index)
+        public static RecycleableMonobehaviour GetRecycleObject(int index)
         {
-            if (!Instance.IngameObjects.TryGetValue(index, out var obj))
-            {
-                "FATAL ERROR :: INSTANCE LOAD FAILED".ToLogError();
-                return null;
-            }
+            RecycleObject obj = Instance.RecycleObjects[index];
+            if (!(obj.Prefab is RecycleableMonobehaviour)) throw new InvalidOperationException("리사이클 오브젝트가 아님");
 
-            RecycleableMonobehaviour temp;
             for (int i = 0; i < obj.Instances.Count; i++)
             {
-                if (!obj.Instances[i].Activated)
+                if (obj.Instances[i] is RecycleableMonobehaviour temp &&
+                    !temp.Activated)
                 {
-                    temp = obj.Instances[i];
-
                     temp.Activated = true;
                     temp.OnInitialize();
                     
@@ -88,41 +92,54 @@ namespace Syadeu
                 }
             }
 
-            // 무한 생성
-            if (obj.MaxCount < 0 ||
-                obj.MaxCount > obj.Instances.Count)
+            // 생성
+            if ((obj.MaxCount < 0 ||
+                obj.MaxCount > obj.Instances.Count) && 
+                obj.Prefab is RecycleableMonobehaviour prefab)
             {
-                temp = Instantiate(obj.Prefab);
-                temp.IngameIndex = obj.Instances.Count;
-                obj.Instances.Add(temp);
+                RecycleableMonobehaviour recycleObj = Instantiate(prefab);
+                recycleObj.IngameIndex = obj.Instances.Count;
+                obj.Instances.Add(recycleObj);
 
-                temp.Activated = true;
-                temp.OnInitialize();
+                recycleObj.Activated = true;
+                recycleObj.OnInitialize();
 
-                return temp;
+                return recycleObj;
             }
 
             "Return null because this item has reached maximum instance count lock".ToLog();
             return null;
         }
 
-        private void OnEnable()
+        public static MonoBehaviour CreateObject(int index, Transform parent = null)
         {
-            IngameObjects.Clear();
-            for (int i = 0; i < m_ObjectSettings.Count; i++)
+            RecycleObject obj = Instance.RecycleObjects[index];
+
+            if (obj.MaxCount < 0 || obj.Instances.Count < obj.MaxCount)
             {
-                IngameObject obj = new IngameObject(i, m_ObjectSettings[i].Prefab, m_ObjectSettings[i].MaxInstanceCount);
-                IngameObjects.Add(i, obj);
+                MonoBehaviour temp = Instantiate(obj.Prefab, parent);
+                obj.Instances.Add(temp);
+                return temp;
             }
+
+            return null;
+        }
+        public static T CreateObject<T>(int index, Transform parent = null) where T : MonoBehaviour
+        {
+            MonoBehaviour temp = CreateObject(index, parent);
+            if (temp == null || !(temp is T output)) return null;
+
+            return output;
         }
 
-#if UNITY_EDITOR
-        [MenuItem("Syadeu/General/Edit Prefab List")]
-        public static void MenuItem()
+        private void OnEnable()
         {
-            Selection.activeObject = Instance;
-            EditorApplication.ExecuteMenuItem("Window/General/Inspector");
+            RecycleObjects.Clear();
+            for (int i = 0; i < m_ObjectSettings.Count; i++)
+            {
+                RecycleObject obj = new RecycleObject(i, m_ObjectSettings[i].Prefab, m_ObjectSettings[i].MaxInstanceCount);
+                RecycleObjects.Add(i, obj);
+            }
         }
-#endif
     }
 }

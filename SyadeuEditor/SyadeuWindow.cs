@@ -9,7 +9,7 @@ namespace Syadeu
     {
         static SyadeuWindow window;
 
-        [MenuItem("Syadeu/Syadeu Manager")]
+        [MenuItem("Syadeu/Syadeu Manager",  priority = 1)]
         public static void Initialize()
         {
             window = (SyadeuWindow)GetWindow(typeof(SyadeuWindow));
