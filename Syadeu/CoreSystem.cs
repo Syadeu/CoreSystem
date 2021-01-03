@@ -532,14 +532,14 @@ namespace Syadeu
                 }
 
                 #region Manager Enforce load
-                do
+                while (m_EnforceOrder.Count > 0)
                 {
                     if (m_EnforceOrder.TryDequeue(out var result))
                     {
-                        $"LOG :: EnForcing manager ordrer\ncurrent: {m_EnforceOrder.Count}".ToLog();
+                        //$"LOG :: EnForcing manager ordrer\ncurrent: {m_EnforceOrder.Count}".ToLog();
                         result.Invoke();
                     }
-                } while (m_EnforceOrder.Count > 0);
+                }
                 #endregion
 
                 #region OnUnityCustomUpdate

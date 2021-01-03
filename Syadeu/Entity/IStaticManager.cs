@@ -4,6 +4,8 @@
     {
         MainSystem,
         SubSystem,
+
+        Data,
     }
     public interface IStaticManager
     {
