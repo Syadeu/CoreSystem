@@ -10,7 +10,7 @@ using UnityEditor;
 
 namespace Syadeu
 {
-    public sealed class ObjectPullingSettings : StaticSettingEntity<ObjectPullingSettings>
+    public sealed class PrefabList : StaticSettingEntity<PrefabList>
     {
         [Serializable]
         public sealed class ObjectSetting
@@ -117,7 +117,7 @@ namespace Syadeu
         }
 
 #if UNITY_EDITOR
-        [MenuItem("Syadeu/General/Edit Object Pulling Settings", priority = 0)]
+        [MenuItem("Syadeu/General/Edit Prefab List")]
         public static void MenuItem()
         {
             Selection.activeObject = Instance;
