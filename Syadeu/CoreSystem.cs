@@ -1,13 +1,12 @@
-﻿using Syadeu.Extentions;
-using Syadeu.Extentions.EditorUtils;
+﻿using Syadeu.Extentions.EditorUtils;
+
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Reflection;
 using System.Threading;
-using System.Threading.Tasks;
+
 using UnityEngine;
 
 namespace Syadeu
@@ -100,8 +99,7 @@ namespace Syadeu
         {
             if (job.MainJob != null)
             {
-                "ERROR :: 이 잡은 메인 잡이 아닙니다. 메인 잡을 실행하세요".ToLog();
-                return false;
+                throw new InvalidCastException("CoreSystem.Job :: 이 잡은 메인 잡이 아닙니다. 메인 잡을 실행하세요");
             }
 
             if (workerIndex >= Instance.BackgroundJobWorkers.Count) return false;
@@ -160,8 +158,7 @@ namespace Syadeu
         {
             if (job.MainJob != null)
             {
-                "ERROR :: 이 잡은 메인 잡이 아닙니다. 메인 잡을 실행하세요".ToLog();
-                return;
+                throw new InvalidCastException("CoreSystem.Job :: 이 잡은 메인 잡이 아닙니다. 메인 잡을 실행하세요");
             }
 
             Instance.m_BackgroundJobs.Enqueue(job);
@@ -183,6 +180,10 @@ namespace Syadeu
         /// <param name="job"></param>
         public static void AddForegroundJob(ForegroundJob job)
         {
+            if (job.MainJob != null)
+            {
+                throw new InvalidCastException("CoreSystem.Job :: 이 잡은 메인 잡이 아닙니다. 메인 잡을 실행하세요");
+            }
             Instance.m_ForegroundJobs.Enqueue(job);
         }
         /// <summary>
@@ -728,6 +729,36 @@ namespace Syadeu
             }
 
             return false;
+        }
+        internal static void InternalAddBackgroundJob(BackgroundJobEntity job)
+        {
+            Instance.m_BackgroundJobs.Enqueue(job);
+        }
+        internal static bool InternalAddBackgroundJob(int workerIndex, BackgroundJobEntity job)
+        {
+            if (workerIndex >= Instance.BackgroundJobWorkers.Count) return false;
+
+            if (Instance.BackgroundJobWorkers[workerIndex].Worker.IsBusy)
+            {
+                Instance.BackgroundJobWorkers[workerIndex].Jobs.Enqueue(job);
+                return true;
+            }
+
+            try
+            {
+                Instance.BackgroundJobWorkers[workerIndex].Worker.RunWorkerAsync(job);
+            }
+            catch (Exception ex)
+            {
+                //GameConsole.LogError(ex);
+                Debug.LogError(ex);
+                return false;
+            }
+            return true;
+        }
+        internal static void InternalAddForegroundJob(ForegroundJob job)
+        {
+            Instance.m_ForegroundJobs.Enqueue(job);
         }
 
         #endregion

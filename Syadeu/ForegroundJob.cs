@@ -68,8 +68,7 @@ namespace Syadeu
         {
             if (MainJob != null)
             {
-                "ERROR :: 이 잡은 메인 잡이 아닙니다. 메인 잡을 실행하세요".ToLog();
-                return this;
+                throw new InvalidCastException("CoreSystem.Job :: 이 잡은 메인 잡이 아닙니다. 메인 잡을 실행하세요");
             }
 
             Reset();
@@ -80,11 +79,11 @@ namespace Syadeu
                 {
                     if (ConnectedJobs[i] is BackgroundJobEntity backgroundJob)
                     {
-                        CoreSystem.AddBackgroundJob(backgroundJob);
+                        CoreSystem.InternalAddBackgroundJob(backgroundJob);
                     }
                     else if (ConnectedJobs[i] is ForegroundJob foregroundJob)
                     {
-                        CoreSystem.AddForegroundJob(foregroundJob);
+                        CoreSystem.InternalAddForegroundJob(foregroundJob);
                     }
                 }
             }
