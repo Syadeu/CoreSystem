@@ -1,7 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 
-namespace Syadeu
+namespace Syadeu.Database
 {
     /// <summary>
     /// 재사용 가능 데이터 객체입니다.

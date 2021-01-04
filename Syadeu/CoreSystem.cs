@@ -260,13 +260,6 @@ namespace Syadeu
         private static void OnGameStart()
         {
             Instance.Initialize(SystemFlag.MainSystem);
-
-            SceneManager.activeSceneChanged += Instance.SceneManager_activeSceneChanged;
-        }
-
-        private void SceneManager_activeSceneChanged(Scene arg0, Scene arg1)
-        {
-            PrefabList.DisposeAll();
         }
 
         private void Awake()

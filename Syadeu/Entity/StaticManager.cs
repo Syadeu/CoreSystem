@@ -1,6 +1,4 @@
-﻿using Syadeu.Extentions.EditorUtils;
-using System.Reflection;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Syadeu
 {
@@ -42,8 +40,8 @@ namespace Syadeu
                     GameObject obj = new GameObject($"Syadeu.Extension.{typeof(T).Name}");
                     T ins = obj.AddComponent<T>();
 
-                    DontDestroyOnLoad(obj);
-                    if (!SyadeuSettings.Instance.m_VisualizeObjects)
+                    if ((ins as IStaticManager).DontDestroy) DontDestroyOnLoad(obj);
+                    if (!Mono.SyadeuSettings.Instance.m_VisualizeObjects)
                     {
                         obj.hideFlags = HideFlags.HideAndDontSave;
                     }
@@ -64,6 +62,8 @@ namespace Syadeu
                 return m_Instance;
             }
         }
+
+        public virtual bool DontDestroy => true;
 
         public virtual void OnInitialize() { }
         public virtual void Initialize(SystemFlag flag = SystemFlag.SubSystem)

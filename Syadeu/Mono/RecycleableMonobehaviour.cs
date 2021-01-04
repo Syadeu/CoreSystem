@@ -1,10 +1,11 @@
 ﻿using UnityEngine;
 
-namespace Syadeu
+namespace Syadeu.Mono
 {
     /// <summary>
     /// 재사용 가능 오브젝트들의 기본 참조 클래스입니다<br/>
     /// Awake, Start 함수를 절때 사용하지마세요 대신 OnInitialize를 사용하세요
+    /// OnDestroy 함수를 절때 사용하지마세요
     /// </summary>
     /// <typeparam name="T"></typeparam>
     public abstract class RecycleableMonobehaviour : MonoBehaviour
@@ -14,6 +15,7 @@ namespace Syadeu
         /// </summary>
         public int IngameIndex { get; internal set; }
         public bool Activated { get; internal set; } = false;
+        internal bool IsHandledByManager { get; set; } = false;
 
         public abstract Transform Transfrom { get; }
 
@@ -27,6 +29,14 @@ namespace Syadeu
         {
             OnTerminate();
             Activated = false;
+        }
+
+        private void OnDestroy()
+        {
+            if (IsHandledByManager)
+            {
+                throw new System.InvalidOperationException("CoreSystem.Prefab :: 이 객체는 PrefabManager에 의해 자동 리사이클링이 되고 있는 객체이므로 Destroy 될 수 없음");
+            }
         }
     }
 }

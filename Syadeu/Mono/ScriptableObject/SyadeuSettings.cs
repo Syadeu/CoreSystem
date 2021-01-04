@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Syadeu
+namespace Syadeu.Mono
 {
     public class SyadeuSettings : StaticSettingEntity<SyadeuSettings>
     {
