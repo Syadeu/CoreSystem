@@ -82,6 +82,12 @@ namespace Syadeu
 
             for (int i = 0; i < obj.Instances.Count; i++)
             {
+                if (obj.Instances[i].transform == null)
+                {
+                    obj.Instances.RemoveAt(i);
+                    i--;
+                    continue;
+                }
                 if (obj.Instances[i] is RecycleableMonobehaviour temp &&
                     !temp.Activated)
                 {
