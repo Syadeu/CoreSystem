@@ -15,6 +15,8 @@ namespace Syadeu
         public int IngameIndex { get; internal set; }
         public bool Activated { get; internal set; } = false;
 
+        public abstract Transform Transfrom { get; }
+
         /// <summary>
         /// GetObject() 함수를 호출했을때 재사용을 위해 실행되는 초기화 함수입니다.<br/>
         /// Unity 의 Awake 함수랑 비슷하다고 보면됨

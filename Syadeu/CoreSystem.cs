@@ -8,6 +8,7 @@ using System.ComponentModel;
 using System.Threading;
 
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Syadeu
 {
@@ -260,12 +261,14 @@ namespace Syadeu
         {
             Instance.Initialize(SystemFlag.MainSystem);
 
-            //GameConsole.Instance.Initialize();
-            //InputManager.Instance.Initialize();
-            //SceneManager.Instance.Initialize();
-
-            //NewMapManager.Instance.LoadMapData("SampleScene");
+            SceneManager.activeSceneChanged += Instance.SceneManager_activeSceneChanged;
         }
+
+        private void SceneManager_activeSceneChanged(Scene arg0, Scene arg1)
+        {
+            PrefabList.DisposeAll();
+        }
+
         private void Awake()
         {
             MainThread = Thread.CurrentThread;

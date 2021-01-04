@@ -3,6 +3,7 @@ using Syadeu.Extentions.EditorUtils;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -28,29 +29,51 @@ namespace Syadeu
 
             [Space]
             [Tooltip("오브젝트의 프리팹입니다")]
-            public MonoBehaviour Prefab;
+            public RecycleableMonobehaviour Prefab;
             [Tooltip("최대로 생성될 수 있는 숫자입니다. 값이 음수면 무한")]
             public int MaxInstanceCount = -1;
         }
         private struct RecycleObject
         {
             public int Index { get; }
-            public MonoBehaviour Prefab { get; }
+            public RecycleableMonobehaviour Prefab { get; }
             public int MaxCount { get; }
-            public List<MonoBehaviour> Instances { get; }
+            public List<RecycleableMonobehaviour> Instances { get; }
 
-            public RecycleObject(int index, MonoBehaviour prefab, int maxCount)
+            public RecycleObject(int index, RecycleableMonobehaviour prefab, int maxCount)
             {
                 Index = index;
                 Prefab = prefab;
                 MaxCount = maxCount;
-                Instances = new List<MonoBehaviour>();
+                Instances = new List<RecycleableMonobehaviour>();
+            }
+
+            public void DisposeAll()
+            {
+                for (int i = 0; i < Instances.Count; i++)
+                {
+                    if (Instances[i] == null) continue;
+                    if (Instances[i].Transfrom != null)
+                    {
+                        Destroy(Instances[i].Transfrom.gameObject);
+                    }
+                }
+                Instances.Clear();
             }
         }
 
         public List<ObjectSetting> m_ObjectSettings = new List<ObjectSetting>();
 
         private Dictionary<int, RecycleObject> RecycleObjects { get; } = new Dictionary<int, RecycleObject>();
+
+        public static void DisposeAll()
+        {
+            var list = Instance.RecycleObjects.Values.ToArray();
+            for (int i = 0; i < list.Length; i++)
+            {
+                list[i].DisposeAll();
+            }
+        }
 
         /// <summary>
         /// 해당 타입과 일치하는 리사이클 인스턴스를 받아옵니다.
@@ -82,12 +105,6 @@ namespace Syadeu
 
             for (int i = 0; i < obj.Instances.Count; i++)
             {
-                if (obj.Instances[i].transform == null)
-                {
-                    obj.Instances.RemoveAt(i);
-                    i--;
-                    continue;
-                }
                 if (obj.Instances[i] is RecycleableMonobehaviour temp &&
                     !temp.Activated)
                 {
@@ -117,26 +134,26 @@ namespace Syadeu
             return null;
         }
 
-        public static MonoBehaviour CreateObject(int index, Transform parent = null)
-        {
-            RecycleObject obj = Instance.RecycleObjects[index];
+        //public static MonoBehaviour CreateObject(int index, Transform parent = null)
+        //{
+        //    RecycleObject obj = Instance.RecycleObjects[index];
 
-            if (obj.MaxCount < 0 || obj.Instances.Count < obj.MaxCount)
-            {
-                MonoBehaviour temp = Instantiate(obj.Prefab, parent);
-                obj.Instances.Add(temp);
-                return temp;
-            }
+        //    if (obj.MaxCount < 0 || obj.Instances.Count < obj.MaxCount)
+        //    {
+        //        MonoBehaviour temp = Instantiate(obj.Prefab, parent);
+        //        obj.Instances.Add(temp);
+        //        return temp;
+        //    }
 
-            return null;
-        }
-        public static T CreateObject<T>(int index, Transform parent = null) where T : MonoBehaviour
-        {
-            MonoBehaviour temp = CreateObject(index, parent);
-            if (temp == null || !(temp is T output)) return null;
+        //    return null;
+        //}
+        //public static T CreateObject<T>(int index, Transform parent = null) where T : MonoBehaviour
+        //{
+        //    MonoBehaviour temp = CreateObject(index, parent);
+        //    if (temp == null || !(temp is T output)) return null;
 
-            return output;
-        }
+        //    return output;
+        //}
 
         private void OnEnable()
         {
