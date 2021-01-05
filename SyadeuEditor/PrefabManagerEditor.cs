@@ -101,9 +101,18 @@ namespace Syadeu
 
                 if (openInstances[i])
                 {
-                    sortInstances[i] = EditorGUILayout.ToggleLeft("\t사용 중인 인스턴스만 보이기", sortInstances[i]);
-
                     var instances = ins.GetInstances(objList[i].Key);
+
+                    EditorGUILayout.BeginHorizontal();
+                    sortInstances[i] = EditorGUILayout.Toggle("\t사용 중인 인스턴스만", sortInstances[i]);
+                    int sum = 0;
+                    for (int a = 0; a < instances.Count; a++)
+                    {
+                        if (instances[a].Activated) sum += 1;
+                    }
+                    EditorGUILayout.LabelField($"\t활성화된 인스턴스: {sum}");
+                    EditorGUILayout.EndHorizontal();
+                    
                     for (int a = 0; a < instances.Count; a++)
                     {
                         if (sortInstances[i] && !instances[a].Activated) continue;

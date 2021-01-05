@@ -72,6 +72,10 @@ namespace Syadeu
 
             return jobWorker.Index;
         }
+        public static void ChangeSettingBackgroundWorker(int workerIndex, bool isStandAlone)
+        {
+            Instance.BackgroundJobWorkers[workerIndex].standAlone = isStandAlone;
+        }
         /// <summary>
         /// 놀고있는 백그라운드잡 Worker를 반환합니다.<br/>
         /// 놀고있는 워커가 없을경우, False 를 반환합니다.
