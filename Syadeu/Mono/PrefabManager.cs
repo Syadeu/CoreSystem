@@ -54,11 +54,15 @@ namespace Syadeu.Mono
                     for (int i = 0; i < recycle.Instances.Count; i++)
                     {
                         if (!recycle.Instances[i].Activated) continue;
-                        if (SyadeuSettings.Instance.m_PMErrorAutoFix && recycle.Instances[i].Transfrom == null)
+                        if (recycle.Instances[i].Transfrom == null)
                         {
-                            recycle.Instances.RemoveAt(i);
-                            i--;
-                            continue;
+                            if (SyadeuSettings.Instance.m_PMErrorAutoFix)
+                            {
+                                recycle.Instances.RemoveAt(i);
+                                i--;
+                                continue;
+                            }
+                            else throw new CoreSystemException(CoreSystemExceptionFlag.RecycleObject, "PrefabManager에 의해 관리되던 RecycleMonobehaviour가 다른 객체에 의해 파괴되었습니다. 관리중인 객체는 다른 객체에서 파괴될 수 없습니다.");
                         }
 
                         if (recycle.Instances[i].OnActivated != null &&
@@ -111,9 +115,13 @@ namespace Syadeu.Mono
                 {
                     if (temp.Transfrom == null)
                     {
-                        obj.Instances.RemoveAt(i);
-                        i--;
-                        continue;
+                        if (SyadeuSettings.Instance.m_PMErrorAutoFix)
+                        {
+                            obj.Instances.RemoveAt(i);
+                            i--;
+                            continue;
+                        }
+                        else throw new CoreSystemException(CoreSystemExceptionFlag.RecycleObject, "PrefabManager에 의해 관리되던 RecycleMonobehaviour가 다른 객체에 의해 파괴되었습니다. 관리중인 객체는 다른 객체에서 파괴될 수 없습니다.");
                     }
 
                     temp.Activated = true;

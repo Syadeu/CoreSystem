@@ -103,7 +103,7 @@ namespace Syadeu
         {
             if (job.MainJob != null)
             {
-                throw new InvalidCastException("CoreSystem.Job :: 이 잡은 메인 잡이 아닙니다. 메인 잡을 실행하세요");
+                throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "이 잡은 메인 잡이 아닙니다. 메인 잡을 실행하세요");
             }
 
             if (workerIndex >= Instance.BackgroundJobWorkers.Count) return false;
@@ -162,7 +162,7 @@ namespace Syadeu
         {
             if (job.MainJob != null)
             {
-                throw new InvalidCastException("CoreSystem.Job :: 이 잡은 메인 잡이 아닙니다. 메인 잡을 실행하세요");
+                throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "이 잡은 메인 잡이 아닙니다. 메인 잡을 실행하세요");
             }
 
             Instance.m_BackgroundJobs.Enqueue(job);
@@ -186,7 +186,7 @@ namespace Syadeu
         {
             if (job.MainJob != null)
             {
-                throw new InvalidCastException("CoreSystem.Job :: 이 잡은 메인 잡이 아닙니다. 메인 잡을 실행하세요");
+                throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "이 잡은 메인 잡이 아닙니다. 메인 잡을 실행하세요");
             }
             Instance.m_ForegroundJobs.Enqueue(job);
         }
@@ -258,6 +258,8 @@ namespace Syadeu
         private readonly ConcurrentQueue<ForegroundJob> m_ForegroundJobs = new ConcurrentQueue<ForegroundJob>();
 
         internal readonly ConcurrentQueue<Timer> m_Timers = new ConcurrentQueue<Timer>();
+
+        public override bool HideInHierarchy => false;
 
         [RuntimeInitializeOnLoadMethod]
         private static void OnGameStart()
@@ -651,7 +653,20 @@ namespace Syadeu
 
         #endregion
 
-        #region BackgroundJob Methods
+        #region Job Methods
+
+        public int GetBackgroundJobWorkerCount() => BackgroundJobWorkers.Count;
+        public int GetBackgroundJobCount()
+        {
+            int sum = m_BackgroundJobs.Count;
+            for (int i = 0; i < BackgroundJobWorkers.Count; i++)
+            {
+                sum += BackgroundJobWorkers[i].Jobs.Count;
+            }
+            return sum;
+        }
+        public int GetForegroundJobCount() => m_ForegroundJobs.Count;
+
         internal class BackgroundJobWorker
         {
             public int Index;
@@ -671,7 +686,7 @@ namespace Syadeu
         private void BackgroundJobRequest(object sender, DoWorkEventArgs e)
         {
             BackgroundJobEntity job = e.Argument as BackgroundJobEntity;
-            //BackgroundJobWorkerSamplers[job.WorkerIndex].Begin();
+            
             try
             {
                 job.Action.Invoke();
@@ -679,9 +694,10 @@ namespace Syadeu
             }
             catch (UnityException mainthread)
             {
-                $"유니티 API 가 사용되어 백그라운드에서 돌릴 수 없음\nTrace: {mainthread.StackTrace}".ToLogError();
                 job.Faild = true; job.IsRunning = false; job.m_IsDone = true;
                 job.Result = $"{nameof(mainthread)}: {mainthread.Message}";
+
+                throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "유니티 API 가 사용되어 백그라운드에서 돌릴 수 없음", mainthread);
             }
             catch (Exception ex)
             {
@@ -691,17 +707,12 @@ namespace Syadeu
             }
 
             e.Result = job;
-            //BackgroundJobWorkerSamplers[job.WorkerIndex].End();
         }
         private void BackgroundJobCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             BackgroundJobEntity job = e.Result as BackgroundJobEntity;
             job.IsRunning = false;
             job.m_IsDone = true;
-
-#if UNITY_EDITOR
-            //"LOG :: Background job completed".ToLog();
-#endif
         }
 
         ///// <summary>

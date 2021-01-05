@@ -4,11 +4,11 @@ using System.Collections.Generic;
 
 namespace Syadeu
 {
-    public sealed class ForegroundJob : IJob
+    public abstract class BackgroundJobEntity : IJob
     {
         internal bool m_IsDone = false;
         /// <summary>
-        /// 이 잡이 수행되어 완료됬나요?
+        /// 이 잡이 수행되어 완료되었나요?
         /// </summary>
         public bool IsDone
         {
@@ -51,19 +51,22 @@ namespace Syadeu
         /// </summary>
         public Action Action { get; set; }
 
+        internal int WorkerIndex = -1;
         internal List<IJob> ConnectedJobs;
 
         public IJob MainJob { get; internal set; }
 
-        public ForegroundJob(Action action)
+        public BackgroundJobEntity(Action action)
         {
             Action = action;
             ConnectedJobs = new List<IJob>();
             MainJob = null;
         }
+
         /// <summary>
-        /// 이 잡을 실행합니다
+        /// 이 잡을 수행하도록 리스트에 등록합니다.
         /// </summary>
+        /// <returns></returns>
         public IJob Start()
         {
             if (MainJob != null)
@@ -74,7 +77,7 @@ namespace Syadeu
             Reset();
             if (!Faild)
             {
-                CoreSystem.AddForegroundJob(this);
+                CoreSystem.AddBackgroundJob(this);
                 for (int i = 0; i < ConnectedJobs.Count; i++)
                 {
                     if (ConnectedJobs[i] is BackgroundJobEntity backgroundJob)
@@ -89,7 +92,37 @@ namespace Syadeu
             }
             return this;
         }
+        /// <summary>
+        /// 이 잡을 수행하도록 해당 인덱스의 백그라운드 워커에게 잡을 할당합니다
+        /// </summary>
+        /// <param name="workerIndex"></param>
+        /// <returns></returns>
+        public BackgroundJobEntity Start(int workerIndex)
+        {
+            if (MainJob != null)
+            {
+                throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "이 잡은 메인 잡이 아닙니다. 메인 잡을 실행하세요");
+            }
 
+            Reset();
+            if (!Faild)
+            {
+                CoreSystem.AddBackgroundJob(workerIndex, this);
+                for (int i = 0; i < ConnectedJobs.Count; i++)
+                {
+                    if (ConnectedJobs[i] is BackgroundJobEntity backgroundJob)
+                    {
+                        CoreSystem.InternalAddBackgroundJob(workerIndex, backgroundJob);
+                    }
+                    else if (ConnectedJobs[i] is ForegroundJob foregroundJob)
+                    {
+                        CoreSystem.InternalAddForegroundJob(foregroundJob);
+                    }
+                }
+            }
+
+            return this;
+        }
         private void Reset()
         {
             if (IsDone)
@@ -125,13 +158,12 @@ namespace Syadeu
             {
                 foregroundJob.MainJob = this;
             }
-
+            
             return this;
         }
-
         public void Await()
         {
-            if (CoreSystem.IsThisMainthread()) 
+            if (CoreSystem.IsThisMainthread())
             {
                 throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "이 메소드는 메인 스레드에서의 호출을 지원하지 않습니다.");
             }

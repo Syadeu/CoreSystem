@@ -44,7 +44,7 @@ namespace Syadeu
                     }
                     else
                     {
-                        GameObject obj = new GameObject($"Syadeu.{typeof(T).Name}");
+                        GameObject obj = new GameObject();
                         ins = obj.AddComponent<T>();
                     }
 
@@ -52,6 +52,7 @@ namespace Syadeu
                     {
                         ins.gameObject.name = (ins as IStaticManager).DisplayName + $" : StaticManager<{typeof(T).Name}>";
                     }
+                    else ins.gameObject.name = $"Syadeu.{typeof(T).Name}";
 
                     if ((ins as IStaticManager).DontDestroy) DontDestroyOnLoad(ins.gameObject);
                     if (!Mono.SyadeuSettings.Instance.m_VisualizeObjects)
