@@ -55,7 +55,10 @@ namespace Syadeu
         {
             var jobWorker = new BackgroundJobWorker
             {
-                Worker = new BackgroundWorker(),
+                Worker = new BackgroundWorker
+                {
+                    WorkerSupportsCancellation = true
+                },
                 standAlone = isStandAlone
             };
 
