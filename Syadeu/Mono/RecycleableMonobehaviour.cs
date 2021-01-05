@@ -13,6 +13,11 @@ namespace Syadeu.Mono
         public delegate bool TerminateCondition();
 
         /// <summary>
+        /// PrefabManager 인스펙터창에서 보여질 이름입니다.
+        /// 런타임에 아무런 영향을 주지않습니다.
+        /// </summary>
+        public virtual string DisplayName => "None";
+        /// <summary>
         /// 이 오브젝트의 인스턴스 인덱스입니다.
         /// </summary>
         public int IngameIndex { get; internal set; }

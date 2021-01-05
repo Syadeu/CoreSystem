@@ -29,6 +29,8 @@ namespace Syadeu.Mono
             public RecycleableMonobehaviour Prefab;
             [Tooltip("최대로 생성될 수 있는 숫자입니다. 값이 음수면 무한")]
             public int MaxInstanceCount = -1;
+            [Tooltip("사용가능한 객체가 없어서 생성할때 한번에 생성할 갯수")]
+            [Range(1, 10)] public int InstanceCreationBlock = 1;
         }
         
         public List<ObjectSetting> m_ObjectSettings = new List<ObjectSetting>();

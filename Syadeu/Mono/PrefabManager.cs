@@ -16,13 +16,16 @@ namespace Syadeu.Mono
             public int Index { get; }
             public RecycleableMonobehaviour Prefab { get; }
             public int MaxCount { get; }
+            public int InstanceCreationBlock { get; }
             public List<RecycleableMonobehaviour> Instances { get; }
 
-            public RecycleObject(int index, RecycleableMonobehaviour prefab, int maxCount)
+            public RecycleObject(int i, PrefabList.ObjectSetting setting)
             {
-                Index = index;
-                Prefab = prefab;
-                MaxCount = maxCount;
+                Index = i;
+                Prefab = setting.Prefab;
+                MaxCount = setting.MaxInstanceCount;
+                InstanceCreationBlock = setting.InstanceCreationBlock;
+
                 Instances = new List<RecycleableMonobehaviour>();
             }
         }
@@ -33,10 +36,7 @@ namespace Syadeu.Mono
         {
             for (int i = 0; i < PrefabList.Instance.m_ObjectSettings.Count; i++)
             {
-                RecycleObject obj = new RecycleObject(
-                    i, 
-                    PrefabList.Instance.m_ObjectSettings[i].Prefab,
-                    PrefabList.Instance.m_ObjectSettings[i].MaxInstanceCount);
+                RecycleObject obj = new RecycleObject(i, PrefabList.Instance.m_ObjectSettings[i]);
                 RecycleObjects.Add(i, obj);
             }
         }
@@ -53,9 +53,8 @@ namespace Syadeu.Mono
                     for (int i = 0; i < recycle.Instances.Count; i++)
                     {
                         if (!recycle.Instances[i].Activated) continue;
-                        if (recycle.Instances[i].Transfrom == null)
+                        if (SyadeuSettings.Instance.m_PMErrorAutoFix && recycle.Instances[i].Transfrom == null)
                         {
-                            Debug.Log("error handled");
                             recycle.Instances.RemoveAt(i);
                             i--;
                             continue;
@@ -144,15 +143,15 @@ namespace Syadeu.Mono
         }
         private RecycleableMonobehaviour InternalInstantiate(RecycleObject obj)
         {
-            RecycleableMonobehaviour recycleObj = Instantiate(obj.Prefab, transform);
-            recycleObj.OnCreated();
+            for (int i = 0; i < obj.InstanceCreationBlock; i++)
+            {
+                RecycleableMonobehaviour recycleObj = Instantiate(obj.Prefab, transform);
+                recycleObj.OnCreated();
 
-            recycleObj.IngameIndex = obj.Instances.Count;
-            obj.Instances.Add(recycleObj);
-
-            recycleObj.Activated = true;
-            recycleObj.OnInitialize();
-            return recycleObj;
+                recycleObj.IngameIndex = obj.Instances.Count;
+                obj.Instances.Add(recycleObj);
+            }
+            return GetRecycleObject(obj.Index);
         }
 
         public int GetInstanceCount(int index) => RecycleObjects[index].Instances.Count;
