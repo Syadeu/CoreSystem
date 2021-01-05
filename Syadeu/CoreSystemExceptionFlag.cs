@@ -3,6 +3,10 @@
     public enum CoreSystemExceptionFlag
     {
         Jobs,
+
+        Background,
+        Foreground,
+
         RecycleObject,
     }
 }

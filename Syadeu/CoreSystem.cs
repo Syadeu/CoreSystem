@@ -148,9 +148,7 @@ namespace Syadeu
             }
             catch (Exception ex)
             {
-                //GameConsole.LogError(ex);
-                Debug.LogError(ex);
-                return false;
+                throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "잡을 실행하는 도중 에러가 발생되었습니다", ex);
             }
             return true;
         }
@@ -341,11 +339,12 @@ namespace Syadeu
                 }
                 catch (UnityException mainthread)
                 {
-                    $"유니티 API 가 사용되어 백그라운드에서 돌릴 수 없음\nTrace: {mainthread.StackTrace}".ToLogError();
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Background, "유니티 API 가 사용되어 백그라운드에서 돌릴 수 없습니다", mainthread);
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogError(ex);
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Background,
+                            "Start 문을 실행하는 중 에러가 발생했습니다", ex);
                 }
                 #endregion
 #if UNITY_EDITOR
@@ -383,18 +382,20 @@ namespace Syadeu
                             }
                             else if (item.Key.Current is YieldInstruction baseYield)
                             {
-                                "해당 yield return 타입은 지원하지 않음".ToLogError();
                                 m_CustomUpdates.TryRemove(item.Key, out var unused);
+                                throw new CoreSystemException(CoreSystemExceptionFlag.Background,
+                                    $"해당 yield return 타입({item.Key.Current.GetType().Name})은 지원하지 않습니다");
                             }
                         }
                     }
                     catch (UnityException mainthread)
                     {
-                        $"유니티 API 가 사용되어 백그라운드에서 돌릴 수 없음\nTrace: {mainthread.StackTrace}".ToLogError();
+                        throw new CoreSystemException(CoreSystemExceptionFlag.Background, "유니티 API 가 사용되어 백그라운드에서 돌릴 수 없습니다", mainthread);
                     }
                     catch (Exception ex)
                     {
-                        Debug.LogError(ex);
+                        throw new CoreSystemException(CoreSystemExceptionFlag.Background,
+                            "업데이트 문을 실행하는 중 에러가 발생했습니다", ex);
                     }
                 }
                 #endregion
@@ -415,11 +416,12 @@ namespace Syadeu
                 }
                 catch (UnityException mainthread)
                 {
-                    $"유니티 API 가 사용되어 백그라운드에서 돌릴 수 없음\nTrace: {mainthread.StackTrace}".ToLogError();
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Background, "유니티 API 가 사용되어 백그라운드에서 돌릴 수 없습니다", mainthread);
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogError(ex);
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Background,
+                            "업데이트 문을 실행하는 중 에러가 발생했습니다", ex);
                 }
                 #endregion
 #if UNITY_EDITOR
@@ -465,7 +467,20 @@ namespace Syadeu
                         timer.StartTime = new TimeSpan(DateTime.Now.Ticks);
                         timer.TargetTime = new TimeSpan(timer.TargetedTime).Add(timer.StartTime);
 
-                        timer.TimerStartBackgroundAction?.Invoke();
+                        try
+                        {
+                            timer.TimerStartBackgroundAction?.Invoke();
+                        }
+                        catch (UnityException mainthread)
+                        {
+                            throw new CoreSystemException(CoreSystemExceptionFlag.Background, "유니티 API 가 사용되어 타이머 Start 문에서 돌릴 수 없습니다", mainthread);
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new CoreSystemException(CoreSystemExceptionFlag.Background,
+                            "타이머 Start 문을 실행하는 중 에러가 발생했습니다", ex);
+                        }
+
                         AddForegroundJob(timer.TimerStartAction);
 
                         activeTimers.Add(timer);
@@ -487,7 +502,20 @@ namespace Syadeu
                         activeTimers[i].Activated = false;
                         activeTimers[i].Started = false;
 
-                        activeTimers[i].TimerKillBackgroundAction?.Invoke();
+                        try
+                        {
+                            activeTimers[i].TimerKillBackgroundAction?.Invoke();
+                        }
+                        catch (UnityException mainthread)
+                        {
+                            throw new CoreSystemException(CoreSystemExceptionFlag.Background, "유니티 API 가 사용되어 타이머 Kill 문에서 돌릴 수 없습니다", mainthread);
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new CoreSystemException(CoreSystemExceptionFlag.Background,
+                            "타이머 Kill 문을 실행하는 중 에러가 발생했습니다", ex);
+                        }
+
                         AddForegroundJob(activeTimers[i].TimerKillAction);
 
                         activeTimers.RemoveAt(i);
@@ -502,7 +530,20 @@ namespace Syadeu
                         activeTimers[i].Completed = true;
                         activeTimers[i].Started = false;
 
-                        activeTimers[i].TimerEndBackgroundAction?.Invoke();
+                        try
+                        {
+                            activeTimers[i].TimerEndBackgroundAction?.Invoke();
+                        }
+                        catch (UnityException mainthread)
+                        {
+                            throw new CoreSystemException(CoreSystemExceptionFlag.Background, "유니티 API 가 사용되어 타이머 End 문에서 돌릴 수 없습니다", mainthread);
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new CoreSystemException(CoreSystemExceptionFlag.Background,
+                            "타이머 End 문을 실행하는 중 에러가 발생했습니다", ex);
+                        }
+                        
                         AddForegroundJob(activeTimers[i].TimerEndAction);
 
                         activeTimers.RemoveAt(i);
@@ -581,14 +622,16 @@ namespace Syadeu
                             }
                             else if (item.Key.Current is YieldInstruction baseYield)
                             {
-                                "해당 yield return 타입은 지원하지 않음".ToLogError();
                                 m_CustomUpdates.TryRemove(item.Key, out var unused);
+                                throw new CoreSystemException(CoreSystemExceptionFlag.Foreground,
+                                    $"해당 yield return 타입({item.Key.Current.GetType().Name})은 지원하지 않습니다");
                             }
                         }
                     }
                     catch (Exception ex)
                     {
-                        Debug.LogError(ex);
+                        throw new CoreSystemException(CoreSystemExceptionFlag.Foreground,
+                            "업데이트 문을 실행하는 중 에러가 발생했습니다", ex);
                     }
                 }
                 #endregion
@@ -602,7 +645,8 @@ namespace Syadeu
                     }
                     catch (Exception ex)
                     {
-                        Debug.LogError(ex);
+                        throw new CoreSystemException(CoreSystemExceptionFlag.Foreground,
+                            "Start 문을 실행하는 중 에러가 발생했습니다", ex);
                     }
                     OnUnityStart = null;
                 }
@@ -615,7 +659,8 @@ namespace Syadeu
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogError(ex);
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Foreground,
+                            "업데이트 문을 실행하는 중 에러가 발생했습니다", ex);
                 }
                 #endregion
 
@@ -635,6 +680,8 @@ namespace Syadeu
                     {
                         job.Faild = true;
                         job.Result = ex.Message;
+
+                        throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "잡을 실행하는 도중 에러가 발생되었습니다", ex);
                     }
 
                     job.m_IsDone = true;
@@ -697,13 +744,14 @@ namespace Syadeu
                 job.Faild = true; job.IsRunning = false; job.m_IsDone = true;
                 job.Result = $"{nameof(mainthread)}: {mainthread.Message}";
 
-                throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "유니티 API 가 사용되어 백그라운드에서 돌릴 수 없음", mainthread);
+                throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "유니티 API 가 사용되어 백그라운드에서 돌릴 수 없습니다", mainthread);
             }
             catch (Exception ex)
             {
                 job.Faild = true; job.IsRunning = false; job.m_IsDone = true;
                 job.Result = $"{nameof(ex)}: {ex.Message}";
-                Debug.LogError(ex);
+
+                throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "잡을 실행하는 도중 에러가 발생되었습니다", ex);
             }
 
             e.Result = job;
