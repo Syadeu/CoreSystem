@@ -29,6 +29,8 @@ namespace Syadeu
 
         internal bool Started { get; set; } = false;
 
+        internal string CalledFrom { get; set; }
+
         public Timer()
         {
             InstanceCount += 1;
@@ -101,6 +103,7 @@ namespace Syadeu
             Completed = false;
             Killed = false;
 
+            CalledFrom = Environment.StackTrace;
             CoreSystem.Instance.m_Timers.Enqueue(this);
             return this;
         }

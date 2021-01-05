@@ -46,6 +46,9 @@ namespace Syadeu
         /// </summary>
         public string Result { get; internal set; } = null;
 
+        internal Exception Exception { get; set; }
+        internal string CalledFrom { get; set; } = null;
+
         /// <summary>
         /// 잡이 수행할 델리게이트입니다
         /// </summary>

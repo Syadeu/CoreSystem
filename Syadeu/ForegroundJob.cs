@@ -46,6 +46,8 @@ namespace Syadeu
         /// </summary>
         public string Result { get; internal set; } = null;
 
+        internal string CalledFrom { get; set; } = null;
+
         /// <summary>
         /// 잡이 수행할 델리게이트입니다
         /// </summary>
@@ -60,6 +62,8 @@ namespace Syadeu
             Action = action;
             ConnectedJobs = new List<IJob>();
             MainJob = null;
+
+            CalledFrom = Environment.StackTrace;
         }
         /// <summary>
         /// 이 잡을 실행합니다

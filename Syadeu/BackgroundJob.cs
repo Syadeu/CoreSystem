@@ -7,7 +7,9 @@ namespace Syadeu
     /// </summary>
     public class BackgroundJob : BackgroundJobEntity
     {
-        public BackgroundJob(Action action) : base(action) { }
-        //public BackgroundJob(IEnumerator action) : base(action) { }
+        public BackgroundJob(Action action) : base(action)
+        {
+            CalledFrom = Environment.StackTrace;
+        }
     }
 }

@@ -473,12 +473,12 @@ namespace Syadeu
                         }
                         catch (UnityException mainthread)
                         {
-                            throw new CoreSystemException(CoreSystemExceptionFlag.Background, "유니티 API 가 사용되어 타이머 Start 문에서 돌릴 수 없습니다", mainthread);
+                            throw new CoreSystemException(CoreSystemExceptionFlag.Background, "유니티 API 가 사용되어 타이머 Start 문에서 돌릴 수 없습니다", timer.CalledFrom, mainthread);
                         }
                         catch (Exception ex)
                         {
                             throw new CoreSystemException(CoreSystemExceptionFlag.Background,
-                            "타이머 Start 문을 실행하는 중 에러가 발생했습니다", ex);
+                            "타이머 Start 문을 실행하는 중 에러가 발생했습니다", timer.CalledFrom, ex);
                         }
 
                         AddForegroundJob(timer.TimerStartAction);
@@ -508,12 +508,12 @@ namespace Syadeu
                         }
                         catch (UnityException mainthread)
                         {
-                            throw new CoreSystemException(CoreSystemExceptionFlag.Background, "유니티 API 가 사용되어 타이머 Kill 문에서 돌릴 수 없습니다", mainthread);
+                            throw new CoreSystemException(CoreSystemExceptionFlag.Background, "유니티 API 가 사용되어 타이머 Kill 문에서 돌릴 수 없습니다", activeTimers[i].CalledFrom, mainthread);
                         }
                         catch (Exception ex)
                         {
                             throw new CoreSystemException(CoreSystemExceptionFlag.Background,
-                            "타이머 Kill 문을 실행하는 중 에러가 발생했습니다", ex);
+                            "타이머 Kill 문을 실행하는 중 에러가 발생했습니다", activeTimers[i].CalledFrom, ex);
                         }
 
                         AddForegroundJob(activeTimers[i].TimerKillAction);
@@ -536,12 +536,12 @@ namespace Syadeu
                         }
                         catch (UnityException mainthread)
                         {
-                            throw new CoreSystemException(CoreSystemExceptionFlag.Background, "유니티 API 가 사용되어 타이머 End 문에서 돌릴 수 없습니다", mainthread);
+                            throw new CoreSystemException(CoreSystemExceptionFlag.Background, "유니티 API 가 사용되어 타이머 End 문에서 돌릴 수 없습니다", activeTimers[i].CalledFrom, mainthread);
                         }
                         catch (Exception ex)
                         {
                             throw new CoreSystemException(CoreSystemExceptionFlag.Background,
-                            "타이머 End 문을 실행하는 중 에러가 발생했습니다", ex);
+                            "타이머 End 문을 실행하는 중 에러가 발생했습니다", activeTimers[i].CalledFrom, ex);
                         }
                         
                         AddForegroundJob(activeTimers[i].TimerEndAction);
@@ -681,7 +681,7 @@ namespace Syadeu
                         job.Faild = true;
                         job.Result = ex.Message;
 
-                        throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "잡을 실행하는 도중 에러가 발생되었습니다", ex);
+                        throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "잡을 실행하는 도중 에러가 발생되었습니다", job.CalledFrom, ex);
                     }
 
                     job.m_IsDone = true;
@@ -744,14 +744,14 @@ namespace Syadeu
                 job.Faild = true; job.IsRunning = false; job.m_IsDone = true;
                 job.Result = $"{nameof(mainthread)}: {mainthread.Message}";
 
-                throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "유니티 API 가 사용되어 백그라운드에서 돌릴 수 없습니다", mainthread);
+                throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "유니티 API 가 사용되어 백그라운드에서 돌릴 수 없습니다", job.CalledFrom, mainthread);
             }
             catch (Exception ex)
             {
-                job.Faild = true; job.IsRunning = false; job.m_IsDone = true;
+                job.Faild = true; job.IsRunning = false; job.m_IsDone = true; job.Exception = ex;
                 job.Result = $"{nameof(ex)}: {ex.Message}";
 
-                throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "잡을 실행하는 도중 에러가 발생되었습니다", ex);
+                throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "잡을 실행하는 도중 에러가 발생되었습니다", job.CalledFrom, ex);
             }
 
             e.Result = job;

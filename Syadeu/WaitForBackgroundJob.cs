@@ -25,13 +25,11 @@ namespace Syadeu
             {
                 if (Job == null)
                 {
-                    "ERROR :: Job is null".ToLog();
-                    return false;
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "Null 인 잡은 기다릴수 없습니다");
                 }
                 if (Job.Faild)
                 {
-                    $"ERROR :: Job has faild: {Job.Result}".ToLog();
-                    return true;
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "잡을 실행하는 도중 에러가 발생되었습니다", Job.CalledFrom, Job.Exception);
                 }
 
                 if (!Job.IsDone) return true;
