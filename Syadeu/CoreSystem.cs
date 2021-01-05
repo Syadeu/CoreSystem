@@ -278,6 +278,12 @@ namespace Syadeu
         }
         private void OnApplicationQuit()
         {
+            for (int i = 0; i < BackgroundJobWorkers.Count; i++)
+            {
+                BackgroundJobWorkers[i].Worker.CancelAsync();
+                BackgroundJobWorkers[i].Worker.Dispose();
+            }
+
             BackgroundThread?.Abort();
         }
         #endregion
