@@ -4,10 +4,10 @@ namespace Syadeu
 {
     public abstract class StaticDataManager<T> : IStaticManager where T : class
     {
-        public static bool Initialized { get; private set; } = false;
+        public static bool Initialized => m_Instance != null;
         public SystemFlag Flag { get; protected set; }
 
-        private static T m_Instance;
+        internal static T m_Instance;
         public static T Instance
         {
             get
@@ -19,7 +19,7 @@ namespace Syadeu
                     (ins as IStaticManager).OnInitialize();
 
                     m_Instance = ins;
-                    Initialized = true;
+                    (ins as IStaticManager).OnStart();
                 }
 
                 return m_Instance;
@@ -36,6 +36,7 @@ namespace Syadeu
 
         public bool DontDestroy => true;
         public virtual void OnInitialize() { }
+        public virtual void OnStart() { }
         public virtual void Initialize(SystemFlag flag = SystemFlag.Data)
         {
             Flag = flag;

@@ -10,33 +10,37 @@ namespace Syadeu.Mono
     /// <typeparam name="T"></typeparam>
     public abstract class RecycleableMonobehaviour : MonoBehaviour
     {
+        public delegate bool TerminateCondition();
+
         /// <summary>
         /// 이 오브젝트의 인스턴스 인덱스입니다.
         /// </summary>
         public int IngameIndex { get; internal set; }
         public bool Activated { get; internal set; } = false;
-        internal bool IsHandledByManager { get; set; } = false;
-
+        
         public abstract Transform Transfrom { get; }
 
         /// <summary>
+        /// 이 객체가 생성되었을때만 한번 실행하는 함수입니다.
+        /// </summary>
+        public virtual void OnCreated() { }
+
+        /// <summary>
         /// GetObject() 함수를 호출했을때 재사용을 위해 실행되는 초기화 함수입니다.<br/>
-        /// Unity 의 Awake 함수랑 비슷하다고 보면됨
+        /// Unity 의 OnEnable 함수랑 비슷하다고 보면됨
         /// </summary>
         public virtual void OnInitialize() { }
         public virtual void OnTerminate() { }
+
+        /// <summary>
+        /// False를 반환시키면 이 모노객체는 즉시 <see cref="Terminate"/>됩니다.
+        /// </summary>
+        public TerminateCondition OnActivated;
+
         public void Terminate()
         {
             OnTerminate();
             Activated = false;
-        }
-
-        private void OnDestroy()
-        {
-            if (IsHandledByManager)
-            {
-                throw new System.InvalidOperationException("CoreSystem.Prefab :: 이 객체는 PrefabManager에 의해 자동 리사이클링이 되고 있는 객체이므로 Destroy 될 수 없음");
-            }
         }
     }
 }

@@ -2,6 +2,7 @@ using Syadeu.Mono;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Syadeu.Mono
@@ -27,7 +28,6 @@ namespace Syadeu.Mono
         }
         public override bool DontDestroy => false;
         internal Dictionary<int, RecycleObject> RecycleObjects { get; } = new Dictionary<int, RecycleObject>();
-
         public override void OnInitialize()
         {
             for (int i = 0; i < PrefabList.Instance.m_ObjectSettings.Count; i++)
@@ -39,8 +39,47 @@ namespace Syadeu.Mono
                 RecycleObjects.Add(i, obj);
             }
         }
+        public override void OnStart()
+        {
+            StartUnityUpdate(Updater());
+        }
+        private IEnumerator Updater()
+        {
+            while (Initialized)
+            {
+                foreach (var recycle in RecycleObjects.Values)
+                {
+                    for (int i = 0; i < recycle.Instances.Count; i++)
+                    {
+                        if (!recycle.Instances[i].Activated) continue;
+                        if (recycle.Instances[i].Transfrom == null)
+                        {
+                            Debug.Log("error handled");
+                            recycle.Instances.RemoveAt(i);
+                            i--;
+                            continue;
+                        }
 
+                        if (recycle.Instances[i].OnActivated != null &&
+                            !recycle.Instances[i].OnActivated.Invoke())
+                        {
+                            recycle.Instances[i].Terminate();
+                        }
+                        if (i != 0 && i % 1000 == 0) yield return null;
+                    }
+                }
+
+                yield return null;
+            }
+
+            //Debug.Log("exit");
+        }
         #endregion
+
+        public int GetInstanceCount(int index)
+        {
+            return RecycleObjects[index].Instances.Count;
+        }
 
         /// <summary>
         /// 해당 타입(<typeparamref name="T"/>)과 일치하는 리사이클 인스턴스를 받아옵니다.
@@ -85,19 +124,32 @@ namespace Syadeu.Mono
             if (obj.MaxCount < 0 ||
                 obj.MaxCount > obj.Instances.Count)
             {
-                RecycleableMonobehaviour recycleObj = Instantiate(obj.Prefab);
-                recycleObj.IngameIndex = obj.Instances.Count;
-                recycleObj.IsHandledByManager = true;
-                obj.Instances.Add(recycleObj);
-
-                recycleObj.Activated = true;
-                recycleObj.OnInitialize();
-
+                RecycleableMonobehaviour recycleObj = null;
+                if (!IsMainthread())
+                {
+                    CoreSystem.AddForegroundJob(() =>
+                    {
+                        recycleObj = Instance.InternalInstantiate(obj);
+                    }).Await();
+                }
+                else recycleObj = Instance.InternalInstantiate(obj);
                 return recycleObj;
             }
 
             //"Return null because this item has reached maximum instance count lock".ToLog();
             return null;
+        }
+        private RecycleableMonobehaviour InternalInstantiate(RecycleObject obj)
+        {
+            RecycleableMonobehaviour recycleObj = Instantiate(obj.Prefab);
+            recycleObj.OnCreated();
+
+            recycleObj.IngameIndex = obj.Instances.Count;
+            obj.Instances.Add(recycleObj);
+
+            recycleObj.Activated = true;
+            recycleObj.OnInitialize();
+            return recycleObj;
         }
 
         //public static MonoBehaviour CreateObject(int index, Transform parent = null)

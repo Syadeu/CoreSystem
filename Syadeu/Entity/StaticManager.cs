@@ -8,9 +8,9 @@ namespace Syadeu
     /// <typeparam name="T"></typeparam>
     public abstract class StaticManager<T> : StaticManagerEntity, IStaticManager where T : Component
     {
-        public static bool Initialized { get; private set; } = false;
+        public static bool Initialized => m_Instance != null;
 
-        private static T m_Instance;
+        internal static T m_Instance;
         private static bool m_IsEnforceOrder;
         public static T Instance
         {
@@ -56,7 +56,7 @@ namespace Syadeu
                     }
 
                     m_Instance = ins;
-                    Initialized = true;
+                    (ins as IStaticManager).OnStart();
                     //$"LOG :: {typeof(T).Name} has successfully loaded".ToLog();
                 }
                 return m_Instance;
@@ -66,6 +66,7 @@ namespace Syadeu
         public virtual bool DontDestroy => true;
 
         public virtual void OnInitialize() { }
+        public virtual void OnStart() { }
         public virtual void Initialize(SystemFlag flag = SystemFlag.SubSystem)
         {
             Flag = flag;
