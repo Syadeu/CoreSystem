@@ -703,6 +703,15 @@ namespace Syadeu
         #region Job Methods
 
         public int GetBackgroundJobWorkerCount() => BackgroundJobWorkers.Count;
+        public int GetCurrentRunningBackgroundWorkerCount()
+        {
+            int sum = 0;
+            for (int i = 0; i < BackgroundJobWorkers.Count; i++)
+            {
+                if (BackgroundJobWorkers[i].Worker.IsBusy) sum += 1;
+            }
+            return sum;
+        }
         public int GetBackgroundJobCount()
         {
             int sum = m_BackgroundJobs.Count;

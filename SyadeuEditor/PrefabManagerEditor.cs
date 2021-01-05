@@ -57,14 +57,19 @@ namespace Syadeu
             EditorGUILayout.EndHorizontal();
         }
         bool[] openInstances = new bool[0];
+        bool[] sortInstances = new bool[0];
         void Runtime()
         {
+            var objList = ins.GetRecycleObjectList();
+            if (openInstances.Length != objList.Count) openInstances = new bool[objList.Count];
+            if (sortInstances.Length != objList.Count) sortInstances = new bool[objList.Count];
+
             EditorUtils.StringHeader("\t런타임", 15);
 
-            var objList = ins.GetRecycleObjectList();
-            if (openInstances.Length != objList.Count)
+            if (GUILayout.Button("미사용 객체 릴리즈"))
             {
-                openInstances = new bool[objList.Count];
+                int count = PrefabManager.ReleaseTerminatedObjects();
+                $"CoreSystem.RecycleObject :: {count}개의 사용하지 않는 재사용 객체가 곧 영구히 제거됩니다".ToLog();
             }
 
             EditorGUI.BeginDisabledGroup(true);
@@ -96,10 +101,14 @@ namespace Syadeu
 
                 if (openInstances[i])
                 {
+                    sortInstances[i] = EditorGUILayout.ToggleLeft("\t사용 중인 인스턴스만 보이기", sortInstances[i]);
+
                     var instances = ins.GetInstances(objList[i].Key);
                     for (int a = 0; a < instances.Count; a++)
                     {
-                        if (GUILayout.Button($"> {instances[a].IngameIndex}.\t{instances[a].DisplayName}: {instances[a].Activated}", "TextField"))
+                        if (sortInstances[i] && !instances[a].Activated) continue;
+
+                        if (GUILayout.Button($"> {a}.\t{instances[a].DisplayName}: {instances[a].Activated}", "TextField"))
                         {
                             EditorGUIUtility.PingObject(instances[a]);
                         }

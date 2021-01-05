@@ -53,6 +53,15 @@ namespace Syadeu.Mono
                 {
                     for (int i = 0; i < recycle.Instances.Count; i++)
                     {
+                        if (recycle.Instances[i].WaitForDeletion &&
+                            !recycle.Instances[i].Activated)
+                        {
+                            Destroy(recycle.Instances[i]);
+                            recycle.Instances.RemoveAt(i);
+                            i--;
+                            continue;
+                        }
+
                         if (!recycle.Instances[i].Activated) continue;
                         if (recycle.Instances[i].Transfrom == null)
                         {
@@ -157,10 +166,26 @@ namespace Syadeu.Mono
                 RecycleableMonobehaviour recycleObj = Instantiate(obj.Prefab, transform);
                 recycleObj.OnCreated();
 
-                recycleObj.IngameIndex = obj.Instances.Count;
                 obj.Instances.Add(recycleObj);
             }
             return GetRecycleObject(obj.Index);
+        }
+
+        public static int ReleaseTerminatedObjects()
+        {
+            int sum = 0;
+            foreach (var recycle in Instance.RecycleObjects.Values)
+            {
+                for (int i = 0; i < recycle.Instances.Count; i++)
+                {
+                    if (!recycle.Instances[i].Activated)
+                    {
+                        recycle.Instances[i].WaitForDeletion = true;
+                        sum += 1;
+                    }
+                }
+            }
+            return sum;
         }
 
         public int GetInstanceCount(int index) => RecycleObjects[index].Instances.Count;

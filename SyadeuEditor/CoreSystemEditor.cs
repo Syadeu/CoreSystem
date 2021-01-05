@@ -42,7 +42,8 @@ namespace Syadeu
             EditorGUI.indentLevel += 1;
 
             EditorGUI.BeginDisabledGroup(true);
-            EditorGUILayout.IntField($"Background Job Workers", CoreSystem.Instance.GetBackgroundJobWorkerCount());
+            EditorGUILayout.IntField($"생성된 백그라운드 워커", CoreSystem.Instance.GetBackgroundJobWorkerCount());
+            EditorGUILayout.IntField($"가동중인 백그라운드 워커", CoreSystem.Instance.GetCurrentRunningBackgroundWorkerCount());
             EditorGUI.EndDisabledGroup();
             EditorGUILayout.Space();
 
