@@ -51,8 +51,11 @@ namespace Syadeu
                     if (typeof(T) == typeof(CoreSystem)) System = ins as CoreSystem;
                     else
                     {
-                        CoreSystem.Managers.Add(ins as ManagerEntity);
-                        obj.transform.SetParent(System.transform);
+                        if ((ins as IStaticManager).DontDestroy)
+                        {
+                            CoreSystem.Managers.Add(ins as ManagerEntity);
+                            obj.transform.SetParent(System.transform);
+                        }
                     }
 
                     m_Instance = ins;
