@@ -485,7 +485,7 @@ namespace Syadeu
                             "타이머 Start 문을 실행하는 중 에러가 발생했습니다", timer.CalledFrom, ex);
                         }
 
-                        AddForegroundJob(timer.TimerStartAction);
+                        if (timer.TimerStartAction != null) AddForegroundJob(timer.TimerStartAction);
 
                         activeTimers.Add(timer);
                     }
@@ -520,7 +520,7 @@ namespace Syadeu
                             "타이머 Kill 문을 실행하는 중 에러가 발생했습니다", activeTimers[i].CalledFrom, ex);
                         }
 
-                        AddForegroundJob(activeTimers[i].TimerKillAction);
+                        if (activeTimers[i].TimerKillAction != null) AddForegroundJob(activeTimers[i].TimerKillAction);
 
                         activeTimers.RemoveAt(i);
                         i--;
@@ -548,14 +548,14 @@ namespace Syadeu
                             "타이머 End 문을 실행하는 중 에러가 발생했습니다", activeTimers[i].CalledFrom, ex);
                         }
                         
-                        AddForegroundJob(activeTimers[i].TimerEndAction);
+                        if (activeTimers[i].TimerEndAction != null) AddForegroundJob(activeTimers[i].TimerEndAction);
 
                         activeTimers.RemoveAt(i);
                         i--;
                         continue;
                     }
 
-                    AddForegroundJob(activeTimers[i].TimerUpdateAction);
+                    if (activeTimers[i].TimerUpdateAction != null) AddForegroundJob(activeTimers[i].TimerUpdateAction);
                 }
 
                 #endregion

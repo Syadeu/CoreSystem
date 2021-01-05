@@ -19,8 +19,8 @@ namespace Syadeu.Mono
             public int InstanceCreationBlock { get; }
             public List<RecycleableMonobehaviour> Instances { get; }
 
+            public Timer DeletionTimer { get; }
             public int DeletionTriggerCount { get; }
-            public int DeletionWaitSeconds { get; }
 
             public RecycleObject(int i, PrefabList.ObjectSetting setting)
             {
@@ -29,8 +29,11 @@ namespace Syadeu.Mono
                 MaxCount = setting.MaxInstanceCount;
                 InstanceCreationBlock = setting.InstanceCreationBlock;
 
+                DeletionTimer = new Timer()
+                    .SetTargetTime(setting.DeletionWaitSeconds)
+                    .OnTimerEnd(() => Instance.ReleaseTerminatedObjects(Index));
+
                 DeletionTriggerCount = setting.DeletionTriggerCount;
-                DeletionWaitSeconds = setting.DeletionWaitSeconds;
 
                 Instances = new List<RecycleableMonobehaviour>();
             }
@@ -53,62 +56,54 @@ namespace Syadeu.Mono
         }
         private IEnumerator Updater()
         {
-            Timer[] releaseTimers = new Timer[RecycleObjects.Count];
-            for (int i = 0; i < releaseTimers.Length; i++)
-            {
-                releaseTimers[i] = new Timer()
-                    .OnTimerEnd(() => ReleaseTerminatedObjects(i))
-                    .SetTargetTime(RecycleObjects[i].DeletionWaitSeconds);
-            }
-
             while (Initialized)
             {
-                foreach (var recycle in RecycleObjects)
+                foreach (var recycle in RecycleObjects.Values)
                 {
                     int activatedCount = 0;
 
-                    for (int i = 0; i < recycle.Value.Instances.Count; i++)
+                    for (int i = 0; i < recycle.Instances.Count; i++)
                     {
-                        if (recycle.Value.Instances[i].WaitForDeletion &&
-                            !recycle.Value.Instances[i].Activated)
+                        if (recycle.Instances[i].WaitForDeletion &&
+                            !recycle.Instances[i].Activated)
                         {
-                            Destroy(recycle.Value.Instances[i]);
-                            recycle.Value.Instances.RemoveAt(i);
+                            Destroy(recycle.Instances[i]);
+                            recycle.Instances.RemoveAt(i);
                             i--;
                             continue;
                         }
 
-                        if (!recycle.Value.Instances[i].Activated) continue;
-                        if (recycle.Value.Instances[i].Transfrom == null)
+                        if (!recycle.Instances[i].Activated) continue;
+                        if (recycle.Instances[i].Transfrom == null)
                         {
                             if (SyadeuSettings.Instance.m_PMErrorAutoFix)
                             {
-                                recycle.Value.Instances.RemoveAt(i);
+                                recycle.Instances.RemoveAt(i);
                                 i--;
                                 continue;
                             }
                             else throw new CoreSystemException(CoreSystemExceptionFlag.RecycleObject, "PrefabManager에 의해 관리되던 RecycleMonobehaviour가 다른 객체에 의해 파괴되었습니다. 관리중인 객체는 다른 객체에서 파괴될 수 없습니다.");
                         }
 
-                        if (recycle.Value.Instances[i].OnActivated != null &&
-                            !recycle.Value.Instances[i].OnActivated.Invoke())
+                        if (recycle.Instances[i].OnActivated != null &&
+                            !recycle.Instances[i].OnActivated.Invoke())
                         {
-                            recycle.Value.Instances[i].Terminate();
+                            recycle.Instances[i].Terminate();
                         }
 
                         activatedCount += 1;
                         if (i != 0 && i % 1000 == 0) yield return null;
                     }
 
-                    if (recycle.Value.Instances.Count - activatedCount >= recycle.Value.DeletionTriggerCount &&
-                        !releaseTimers[recycle.Key].IsTimerActive())
+                    if (recycle.Instances.Count - activatedCount >= recycle.DeletionTriggerCount &&
+                        !recycle.DeletionTimer.IsTimerActive())
                     {
-                        releaseTimers[recycle.Key].Start();
+                        recycle.DeletionTimer.Start();
                     }
-                    else if (releaseTimers[recycle.Key].IsTimerActive() &&
-                        recycle.Value.Instances.Count - activatedCount < recycle.Value.DeletionTriggerCount)
+                    else if (recycle.DeletionTimer.IsTimerActive() &&
+                        recycle.Instances.Count - activatedCount < recycle.DeletionTriggerCount)
                     {
-                        releaseTimers[recycle.Key].Kill();
+                        recycle.DeletionTimer.Kill();
                     }
                 }
 
