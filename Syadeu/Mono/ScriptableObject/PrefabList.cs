@@ -31,6 +31,12 @@ namespace Syadeu.Mono
             public int MaxInstanceCount = -1;
             [Tooltip("사용가능한 객체가 없어서 생성할때 한번에 생성할 갯수")]
             [Range(1, 10)] public int InstanceCreationBlock = 1;
+
+            [Space]
+            [Tooltip("미사용객체와 사용객체의 격차가 벌어질 경우 릴리즈 트리거를 실행할 격차")]
+            public int DeletionTriggerCount = 100;
+            [Tooltip("트리거가 발동되고 릴리즈 될때까지 시간(초), 도중에 돌아오면 초기화")]
+            public int DeletionWaitSeconds = 300;
         }
         
         public List<ObjectSetting> m_ObjectSettings = new List<ObjectSetting>();
