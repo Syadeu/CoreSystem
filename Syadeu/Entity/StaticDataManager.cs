@@ -34,6 +34,7 @@ namespace Syadeu
         protected static void ThreadAwaiter(int milliseconds)
             => StaticManagerEntity.ThreadAwaiter(milliseconds);
 
+        public string DisplayName => null;
         public bool DontDestroy => true;
         public bool HideInHierarchy => true;
 

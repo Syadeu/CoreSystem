@@ -28,22 +28,35 @@ namespace Syadeu
                         CoreSystem.Instance.Initialize();
                     }
 
+                    T ins;
                     var existing = FindObjectsOfType(typeof(T)) as T[];
-                    foreach (var item in existing)
+                    if (existing.Length > 0)
                     {
-                        if (existing != null)
+                        for (int i = 1; i < existing.Length; i++)
                         {
-                            Destroy(item);
+                            if (existing[i] != null)
+                            {
+                                Destroy(existing[i]);
+                            }
                         }
+
+                        ins = existing[0];
+                    }
+                    else
+                    {
+                        GameObject obj = new GameObject($"Syadeu.{typeof(T).Name}");
+                        ins = obj.AddComponent<T>();
                     }
 
-                    GameObject obj = new GameObject($"Syadeu.Extension.{typeof(T).Name}");
-                    T ins = obj.AddComponent<T>();
+                    if (!string.IsNullOrEmpty((ins as IStaticManager).DisplayName))
+                    {
+                        ins.gameObject.name = (ins as IStaticManager).DisplayName + $" : StaticManager<{typeof(T).Name}>";
+                    }
 
-                    if ((ins as IStaticManager).DontDestroy) DontDestroyOnLoad(obj);
+                    if ((ins as IStaticManager).DontDestroy) DontDestroyOnLoad(ins.gameObject);
                     if (!Mono.SyadeuSettings.Instance.m_VisualizeObjects)
                     {
-                        if ((ins as IStaticManager).HideInHierarchy) obj.hideFlags = HideFlags.HideAndDontSave;
+                        if ((ins as IStaticManager).HideInHierarchy) ins.gameObject.hideFlags = HideFlags.HideAndDontSave;
                     }
 
                     (ins as IStaticManager).OnInitialize();
@@ -54,18 +67,18 @@ namespace Syadeu
                         if ((ins as IStaticManager).DontDestroy)
                         {
                             CoreSystem.Managers.Add(ins as ManagerEntity);
-                            obj.transform.SetParent(System.transform);
+                            ins.transform.SetParent(System.transform);
                         }
                     }
 
                     m_Instance = ins;
                     (ins as IStaticManager).OnStart();
-                    //$"LOG :: {typeof(T).Name} has successfully loaded".ToLog();
                 }
                 return m_Instance;
             }
         }
 
+        public virtual string DisplayName => null;
         public virtual bool DontDestroy => true;
         public virtual bool HideInHierarchy { get => true; }
 

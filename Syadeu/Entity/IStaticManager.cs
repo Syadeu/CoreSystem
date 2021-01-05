@@ -10,6 +10,11 @@
     public interface IStaticManager
     {
         /// <summary>
+        /// Hierarchy에서 표시될 이름을 설정합니다.
+        /// 런타임에 아무런 영향을 주지 않습니다.
+        /// </summary>
+        string DisplayName { get; }
+        /// <summary>
         /// true 일 경우, 씬이 전환되어도 파괴되지 않습니다.
         /// </summary>
         bool DontDestroy { get; }

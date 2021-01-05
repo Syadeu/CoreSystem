@@ -29,6 +29,7 @@ namespace Syadeu.Mono
                 Instances = new List<RecycleableMonobehaviour>();
             }
         }
+        public override string DisplayName => "Prefab Manager";
         public override bool DontDestroy => false;
         public override bool HideInHierarchy => false;
         internal Dictionary<int, RecycleObject> RecycleObjects { get; } = new Dictionary<int, RecycleObject>();
