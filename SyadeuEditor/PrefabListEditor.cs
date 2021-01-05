@@ -8,6 +8,8 @@ namespace Syadeu
     [CustomEditor(typeof(PrefabList))]
     public class PrefabListEditor : Editor
     {
+        bool m_ShowOriginalContents = false;
+
         public override void OnInspectorGUI()
         {
             EditorUtils.StringHeader("Prefab List");
@@ -23,7 +25,9 @@ namespace Syadeu
                 serializedObject.ApplyModifiedProperties();
             }
 
-            //base.OnInspectorGUI();
+            EditorGUILayout.Space();
+            m_ShowOriginalContents = EditorGUILayout.BeginFoldoutHeaderGroup(m_ShowOriginalContents, "Original Contents");
+            if (m_ShowOriginalContents) base.OnInspectorGUI();
         }
     }
 }
