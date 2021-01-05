@@ -43,7 +43,7 @@ namespace Syadeu
                     if ((ins as IStaticManager).DontDestroy) DontDestroyOnLoad(obj);
                     if (!Mono.SyadeuSettings.Instance.m_VisualizeObjects)
                     {
-                        obj.hideFlags = HideFlags.HideAndDontSave;
+                        if ((ins as IStaticManager).HideInHierarchy) obj.hideFlags = HideFlags.HideAndDontSave;
                     }
 
                     (ins as IStaticManager).OnInitialize();
@@ -67,6 +67,7 @@ namespace Syadeu
         }
 
         public virtual bool DontDestroy => true;
+        public virtual bool HideInHierarchy { get => true; }
 
         public virtual void OnInitialize() { }
         public virtual void OnStart() { }

@@ -11,7 +11,7 @@ namespace Syadeu.Mono
     {
         #region Initialize
 
-        internal struct RecycleObject
+        internal class RecycleObject
         {
             public int Index { get; }
             public RecycleableMonobehaviour Prefab { get; }
@@ -27,6 +27,7 @@ namespace Syadeu.Mono
             }
         }
         public override bool DontDestroy => false;
+        public override bool HideInHierarchy => false;
         internal Dictionary<int, RecycleObject> RecycleObjects { get; } = new Dictionary<int, RecycleObject>();
         public override void OnInitialize()
         {
@@ -76,11 +77,6 @@ namespace Syadeu.Mono
         }
         #endregion
 
-        public int GetInstanceCount(int index)
-        {
-            return RecycleObjects[index].Instances.Count;
-        }
-
         /// <summary>
         /// 해당 타입(<typeparamref name="T"/>)과 일치하는 리사이클 인스턴스를 받아옵니다.
         /// </summary>
@@ -113,6 +109,13 @@ namespace Syadeu.Mono
                 if (obj.Instances[i] is RecycleableMonobehaviour temp &&
                     !temp.Activated)
                 {
+                    if (temp.Transfrom == null)
+                    {
+                        obj.Instances.RemoveAt(i);
+                        i--;
+                        continue;
+                    }
+
                     temp.Activated = true;
                     temp.OnInitialize();
 
@@ -141,7 +144,7 @@ namespace Syadeu.Mono
         }
         private RecycleableMonobehaviour InternalInstantiate(RecycleObject obj)
         {
-            RecycleableMonobehaviour recycleObj = Instantiate(obj.Prefab);
+            RecycleableMonobehaviour recycleObj = Instantiate(obj.Prefab, transform);
             recycleObj.OnCreated();
 
             recycleObj.IngameIndex = obj.Instances.Count;
@@ -152,25 +155,29 @@ namespace Syadeu.Mono
             return recycleObj;
         }
 
-        //public static MonoBehaviour CreateObject(int index, Transform parent = null)
-        //{
-        //    RecycleObject obj = Instance.RecycleObjects[index];
+        public int GetInstanceCount(int index) => RecycleObjects[index].Instances.Count;
+        /// <summary>
+        /// 해당 인덱스의 모든 인스턴스들을 리스트에 담아 반환합니다.
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
+        public IReadOnlyList<RecycleableMonobehaviour> GetInstances(int index)
+            => RecycleObjects[index].Instances;
+        /// <summary>
+        /// 등록된 모든 재사용 모노 프리팹을 받아옵니다.
+        /// 인덱스 번호와 프리팹을 담아서 리스트로 반환합니다.
+        /// </summary>
+        /// <returns></returns>
+        public IReadOnlyList<KeyValuePair<int, RecycleableMonobehaviour>> GetRecycleObjectList()
+        {
+            KeyValuePair<int, RecycleableMonobehaviour>[] list = new KeyValuePair<int, RecycleableMonobehaviour>[RecycleObjects.Count];
 
-        //    if (obj.MaxCount < 0 || obj.Instances.Count < obj.MaxCount)
-        //    {
-        //        MonoBehaviour temp = Instantiate(obj.Prefab, parent);
-        //        obj.Instances.Add(temp);
-        //        return temp;
-        //    }
+            for (int i = 0; i < list.Length; i++)
+            {
+                list[i] = new KeyValuePair<int, RecycleableMonobehaviour>(i, RecycleObjects[i].Prefab);
+            }
 
-        //    return null;
-        //}
-        //public static T CreateObject<T>(int index, Transform parent = null) where T : MonoBehaviour
-        //{
-        //    MonoBehaviour temp = CreateObject(index, parent);
-        //    if (temp == null || !(temp is T output)) return null;
-
-        //    return output;
-        //}
+            return list;
+        }
     }
 }

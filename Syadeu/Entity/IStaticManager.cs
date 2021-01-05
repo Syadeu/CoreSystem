@@ -14,6 +14,11 @@
         /// </summary>
         bool DontDestroy { get; }
         /// <summary>
+        /// Hierarchy 에서 이 매니저 객체를 표시할지 결정합니다.
+        /// <see cref="Mono.SyadeuSettings.m_VisualizeObjects"/> 가 true일 경우 영향받지 않습니다.
+        /// </summary>
+        bool HideInHierarchy { get; }
+        /// <summary>
         /// 인스턴트가 생성될때 한번 실행할 함수입니다.
         /// </summary>
         void OnInitialize();

@@ -35,6 +35,8 @@ namespace Syadeu
             => StaticManagerEntity.ThreadAwaiter(milliseconds);
 
         public bool DontDestroy => true;
+        public bool HideInHierarchy => true;
+
         public virtual void OnInitialize() { }
         public virtual void OnStart() { }
         public virtual void Initialize(SystemFlag flag = SystemFlag.Data)
