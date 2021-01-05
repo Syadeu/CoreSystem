@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+
+using Syadeu.FMOD;
+
 using UnityEditor;
 using UnityEngine;
 
-namespace Syadeu.FMOD
+namespace SyadeuEditor
 {
     [CustomEditor(typeof(SoundList))]
     public class SoundListEditor : Editor

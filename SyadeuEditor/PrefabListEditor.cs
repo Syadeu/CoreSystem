@@ -1,9 +1,9 @@
-﻿using UnityEditor;
-
+﻿using Syadeu;
 using Syadeu.Mono;
-using UnityEngine;
 
-namespace Syadeu
+using UnityEditor;
+
+namespace SyadeuEditor
 {
     [CustomEditor(typeof(PrefabList))]
     public class PrefabListEditor : Editor

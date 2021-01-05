@@ -1,12 +1,14 @@
-﻿using UnityEngine;
-using UnityEditor;
-
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
+using Syadeu;
+using Syadeu.FMOD;
 using Syadeu.Mono;
 
-namespace Syadeu
+using UnityEngine;
+using UnityEditor;
+
+namespace SyadeuEditor
 {
     public sealed class SyadeuWindow : EditorWindow
     {
@@ -60,12 +62,12 @@ namespace Syadeu
         {
             EditorUtils.StringHeader("FMOD Generals");
             EditorUtils.SectorLine();
-            EditorGUILayout.LabelField($"Current FMOD Objects: {FMOD.FMODSound.InstanceCount}");
+            EditorGUILayout.LabelField($"Current FMOD Objects: {FMODSound.InstanceCount}");
 
             int activatedCount = 0;
-            for (int i = 0; i < FMOD.FMODSound.Instances.Count; i++)
+            for (int i = 0; i < FMODSound.Instances.Count; i++)
             {
-                if (FMOD.FMODSound.Instances[i].Activated)
+                if (FMODSound.Instances[i].Activated)
                 {
                     activatedCount += 1;
                 }
@@ -78,16 +80,16 @@ namespace Syadeu
             {
                 Dictionary<string, int> FMODPlaylist = new Dictionary<string, int>();
                 List<string> currentPlaylistNames = new List<string>();
-                for (int i = 0; i < FMOD.FMODSound.Playlist.Count; i++)
+                for (int i = 0; i < FMODSound.Playlist.Count; i++)
                 {
-                    currentPlaylistNames.Add(FMOD.FMODSound.Playlist[i].SoundGUID.EventPath);
-                    if (!FMODPlaylist.ContainsKey(FMOD.FMODSound.Playlist[i].SoundGUID.EventPath))
+                    currentPlaylistNames.Add(FMODSound.Playlist[i].SoundGUID.EventPath);
+                    if (!FMODPlaylist.ContainsKey(FMODSound.Playlist[i].SoundGUID.EventPath))
                     {
-                        FMODPlaylist.Add(FMOD.FMODSound.Playlist[i].SoundGUID.EventPath, 1);
+                        FMODPlaylist.Add(FMODSound.Playlist[i].SoundGUID.EventPath, 1);
                     }
                     else
                     {
-                        FMODPlaylist[FMOD.FMODSound.Playlist[i].SoundGUID.EventPath] += 1;
+                        FMODPlaylist[FMODSound.Playlist[i].SoundGUID.EventPath] += 1;
                     }
                 }
 

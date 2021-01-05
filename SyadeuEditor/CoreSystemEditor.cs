@@ -1,7 +1,9 @@
-﻿using UnityEditor;
+﻿using Syadeu;
+
+using UnityEditor;
 using UnityEngine;
 
-namespace Syadeu
+namespace SyadeuEditor
 {
     [CustomEditor(typeof(CoreSystem))]
     public class CoreSystemEditor : Editor

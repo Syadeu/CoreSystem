@@ -1,14 +1,10 @@
-using System.Collections;
-using System.Collections.Generic;
+using Syadeu.Mono;
+using Syadeu.Extentions.EditorUtils;
 
 using UnityEngine;
 using UnityEditor;
 
-using Syadeu.Mono;
-using Syadeu.Extentions.EditorUtils;
-using DG.DOTweenEditor.UI;
-
-namespace Syadeu
+namespace SyadeuEditor
 {
     [CustomEditor(typeof(PrefabManager))]
     public class PrefabManagerEditor : Editor

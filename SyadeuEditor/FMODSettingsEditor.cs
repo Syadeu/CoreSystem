@@ -1,9 +1,12 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+
+using Syadeu.FMOD;
+
 using UnityEditor;
 using UnityEngine;
 
-namespace Syadeu.FMOD
+namespace SyadeuEditor
 {
     [CustomEditor(typeof(FMODSettings))]
     public sealed class FMODSettingsEditor : Editor

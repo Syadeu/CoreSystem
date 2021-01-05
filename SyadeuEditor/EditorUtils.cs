@@ -1,8 +1,7 @@
-﻿using System.IO;
-using UnityEditor;
+﻿using UnityEditor;
 using UnityEngine;
 
-namespace Syadeu
+namespace SyadeuEditor
 {
     public static class EditorUtils
     {

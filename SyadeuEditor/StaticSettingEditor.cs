@@ -1,16 +1,14 @@
-﻿using UnityEngine;
-using System.IO;
+﻿using System.IO;
+
+using Syadeu;
 using Syadeu.Extentions.EditorUtils;
 
-#if UNITY_EDITOR
+using UnityEngine;
 using UnityEditor;
-#endif
 
-namespace Syadeu
+namespace SyadeuEditor
 {
-#if UNITY_EDITOR
     [InitializeOnLoad]
-#endif
     public abstract class StaticSettingEditor<T> : SettingEntity, IStaticSetting where T : ScriptableObject
     {
         private static T m_Instance;
@@ -27,12 +25,10 @@ namespace Syadeu
                         return m_Instance;
                     }
 
-#if UNITY_EDITOR
                     if (!Directory.Exists("Assets/Resources/Syadeu/Editor"))
                     {
                         Directory.CreateDirectory("Assets/Resources/Syadeu/Editor");
                     }
-#endif
 
                     m_Instance = Resources.Load<T>("Syadeu/Editor" + typeof(T).Name);
                     if (m_Instance == null)
@@ -41,13 +37,11 @@ namespace Syadeu
                         m_Instance = CreateInstance<T>();
                         m_Instance.name = $"Syadeu {typeof(T).Name} Setting Asset";
 
-#if UNITY_EDITOR
                         if (!Directory.Exists("Assets/Resources/Syadeu/Editor"))
                         {
                             AssetDatabase.CreateFolder("Assets/Resources/Syadeu", "Editor");
                         }
                         AssetDatabase.CreateAsset(m_Instance, "Assets/Resources/Syadeu/Editor/" + typeof(T).Name + ".asset");
-#endif
                     }
                 }
 

@@ -1,11 +1,11 @@
-﻿using UnityEngine;
+﻿using Syadeu.FMOD;
 
-namespace Syadeu.FMOD
+using UnityEngine;
+
+namespace SyadeuEditor
 {
-#if UNITY_EDITOR
     public class FMODRoomVertice : MonoBehaviour
     {
         public FMODRoom room;
     }
-#endif
 }

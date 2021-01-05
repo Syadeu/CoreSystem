@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+
+using Syadeu.FMOD;
+
 using UnityEditor;
 using UnityEngine;
 
-namespace Syadeu.FMOD
+namespace SyadeuEditor
 {
     [CustomEditor(typeof(FMODLocalizedAudioTable))]
     public class LocalizedAudioTableEditor : Editor

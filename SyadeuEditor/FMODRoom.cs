@@ -1,10 +1,11 @@
 ﻿using System.Collections.Generic;
 
+using Syadeu.FMOD;
+
 using UnityEngine;
 
-namespace Syadeu.FMOD
+namespace SyadeuEditor
 {
-#if UNITY_EDITOR
     public class FMODRoom : MonoBehaviour
     {
         public static Transform roomFolder;
@@ -83,5 +84,4 @@ namespace Syadeu.FMOD
             return m_Instance;
         }
     }
-#endif
 }
