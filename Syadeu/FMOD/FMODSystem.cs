@@ -58,7 +58,6 @@ namespace Syadeu.FMOD
             CoreSystem.OnUnityUpdate += OnUnityUpdate;
 
             StartBackgroundUpdate(OnBackgroundAsyncUpdate());
-            //SyadeuSystem.OnBackgroundAsyncUpdate += OnBackgroundAsyncUpdate;
         }
 
         private void OnUnityStart()
@@ -67,9 +66,6 @@ namespace Syadeu.FMOD
 
             MainListener = Instance.gameObject.AddComponent<FMODListener>();
             FMODStudioSystem.setListenerWeight(MainListener.Index, 1);
-
-            //CurrentLanguage = Language._ko_kr;
-            //SetLocale(CurrentLanguage);
         }
         private void OnUnityUpdate()
         {
@@ -100,15 +96,6 @@ namespace Syadeu.FMOD
                 {
                     FMODSound sound = FMODSound.GetInstance(i);
                     if (!sound.Activated) continue;
-                    //awaiter(1);
-
-                    //if (!Playlist[i].IsPlaying() || Playlist[i].Disposed)
-                    //{
-                    //    if (!Playlist[i].Disposed) Playlist[i].Dispose();
-                    //    Playlist.RemoveAt(i);
-                    //    i--;
-                    //    continue;
-                    //}
 
                     if (SoundRooms.Count > 0 && MainListener != null)
                     {

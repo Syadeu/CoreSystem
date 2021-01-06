@@ -48,24 +48,14 @@ namespace Syadeu.ThreadSafe
             }
         }
 
-        public UnityEngine.Vector3 ToUnity()
-        {
-            return new UnityEngine.Vector3(x, y, z);
-        }
-        public static double Distance(Vector3 from, Vector3 target)
-        {
-            return Math.Sqrt((from - target).SqrMagnitute);
-        }
+        public UnityEngine.Vector3 ToUnity() => new UnityEngine.Vector3(x, y, z);
+        public global::FMOD.VECTOR ToFMOD() => new global::FMOD.VECTOR { x = x, y = y, z = z };
 
-        public override string ToString()
-        {
-            return $"({x}, {y}, {z})";
-        }
+        public static double Distance(Vector3 from, Vector3 target) => Math.Sqrt((from - target).SqrMagnitute);
 
-        public bool Equals(Vector3 x, Vector3 y)
-        {
-            return x.x == y.x && x.y == y.y && x.z == y.z;
-        }
+        public override string ToString() => $"({x}, {y}, {z})";
+
+        public bool Equals(Vector3 x, Vector3 y) => x.x == y.x && x.y == y.y && x.z == y.z;
         public new bool Equals(object x, object y)
         {
             Vector3 a = (Vector3)x;
@@ -78,10 +68,8 @@ namespace Syadeu.ThreadSafe
         public int GetHashCode(Vector3 obj) => obj.GetHashCode();
         public int GetHashCode(object obj) => obj.GetHashCode();
 
-        public static implicit operator UnityEngine.Vector3(Vector3 a)
-        {
-            return a.ToUnity();
-        }
+        public static implicit operator UnityEngine.Vector3(Vector3 a) => a.ToUnity();
+        public static implicit operator global::FMOD.VECTOR(Vector3 a) => a.ToFMOD();
         public static Vector3 operator *(Vector3 a, float b)
         {
             return new Vector3(a.x * b, a.y * b, a.z * b);
