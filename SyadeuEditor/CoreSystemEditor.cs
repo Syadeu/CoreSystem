@@ -101,6 +101,8 @@ namespace SyadeuEditor
             m_OpenFMODSoundList = EditorGUILayout.Foldout(m_OpenFMODSoundList, m_OpenFMODSoundList ? "리스트 닫기" : "리스트 열기");
             if (m_OpenFMODSoundList)
             {
+                EditorGUI.indentLevel += 1;
+
                 m_FMODPlaylist.Clear();
                 List<string> currentPlaylistNames = new List<string>();
                 IReadOnlyList<FMODSound> currentPlaylist = FMODSystem.GetPlayList();
@@ -121,8 +123,10 @@ namespace SyadeuEditor
                 var list = m_FMODPlaylist.Keys.ToArray();
                 for (int i = 0; i < list.Length; i++)
                 {
-                    EditorGUILayout.LabelField($"{list[i]}: {m_FMODPlaylist[list[i]]}개 재생 중");
+                    EditorGUILayout.LabelField($"> {list[i]}: {m_FMODPlaylist[list[i]]}개 재생 중");
                 }
+
+                EditorGUI.indentLevel -= 1;
             }
 
             EditorGUI.indentLevel -= 1;
