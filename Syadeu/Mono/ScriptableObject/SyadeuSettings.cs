@@ -11,5 +11,8 @@ namespace Syadeu.Mono
 
         // PrefabManager
         public bool m_PMErrorAutoFix = true;
+
+        // FMODManager
+        public int m_MemoryBlock = 512;
     }
 }

@@ -580,8 +580,8 @@ namespace Syadeu
                 if (!BackgroundThread.IsAlive && !m_BackgroundDeadFlag)
                 {
                     OnBackgroundThreadDead?.Invoke();
-                    "ERROR :: Background thread is dead".ToLogError();
                     m_BackgroundDeadFlag = true;
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Background, "에러로 인해 백그라운드 스레드가 강제 종료되었습니다");
                 }
 
                 #region Manager Enforce load

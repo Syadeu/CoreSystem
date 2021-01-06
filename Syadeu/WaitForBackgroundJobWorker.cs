@@ -1,4 +1,5 @@
 ﻿using Syadeu.Extentions.EditorUtils;
+using System;
 using UnityEngine;
 
 namespace Syadeu
@@ -9,6 +10,8 @@ namespace Syadeu
     public class WaitForBackgroundJobWorker : CustomYieldInstruction
     {
         private readonly CoreSystem.BackgroundJobWorker Worker;
+
+        internal string CalledFrom { get; } = null;
         /// <summary>
         /// 백그라운드잡 워커의 인덱스를 넣어주세요
         /// </summary>
@@ -16,6 +19,7 @@ namespace Syadeu
         public WaitForBackgroundJobWorker(int workerIndex)
         {
             Worker = CoreSystem.Instance.GetBackgroundJobWorker(workerIndex);
+            CalledFrom = Environment.StackTrace;
         }
 
         public override bool keepWaiting
@@ -24,9 +28,9 @@ namespace Syadeu
             {
                 if (Worker == null)
                 {
-                    "ERROR :: Worker is null".ToLog();
-                    return false;
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "Null 인 워커는 기다릴수 없습니다", CalledFrom);
                 }
+
                 if (Worker.Worker.IsBusy) return true;
                 return false;
             }

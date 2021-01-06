@@ -1,5 +1,5 @@
 ﻿using Syadeu;
-
+using Syadeu.FMOD;
 using UnityEditor;
 using UnityEngine;
 
@@ -14,7 +14,11 @@ namespace SyadeuEditor
             EditorUtils.SectorLine();
 
 
-            if (Application.isPlaying) Runtime();
+            if (Application.isPlaying)
+            {
+                Runtime();
+                FMOD();
+            }
 
         }
 
@@ -54,6 +58,26 @@ namespace SyadeuEditor
             EditorGUI.BeginDisabledGroup(true);
             EditorGUILayout.IntField("Background", CoreSystem.Instance.GetBackgroundJobCount());
             EditorGUILayout.IntField("Foreground", CoreSystem.Instance.GetForegroundJobCount());
+            EditorGUI.EndDisabledGroup();
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUI.indentLevel -= 1;
+        }
+
+        void FMOD()
+        {
+            EditorUtils.StringHeader("FMOD", 15);
+            EditorGUI.indentLevel += 1;
+
+            if (FMODSystem.Initialized == false)
+            {
+                EditorGUILayout.LabelField("현재 표시할 정보가 없음");
+                return;
+            }
+
+            EditorGUILayout.BeginHorizontal();
+            EditorGUI.BeginDisabledGroup(true);
+
             EditorGUI.EndDisabledGroup();
             EditorGUILayout.EndHorizontal();
 

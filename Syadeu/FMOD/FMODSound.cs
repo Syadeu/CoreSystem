@@ -11,118 +11,15 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 
 using UnityEngine;
+using Syadeu.Mono;
 
 namespace Syadeu.FMOD
 {
     public class FMODSound : RecycleableDatabase<FMODSound>
     {
         #region Initializer
-        private static ThreadSafe.Vector3 INIT_POSITION { get; } = new ThreadSafe.Vector3(999, 999, 999);
-        public static List<FMODSound> Playlist { get; } = new List<FMODSound>();
-
-        private static readonly ConcurrentQueue<FMODSound> WaitForPlay = new ConcurrentQueue<FMODSound>();
-
-        static FMODSound()
-        {
-            CreateMemory(m_MemoryBlock);
-
-            CoreSystem.Instance.StartUnityUpdate(UnityUpdater());
-        }
-
-        private static IEnumerator UnityUpdater()
-        {
-            while (true)
-            {
-                if (WaitForPlay.Count > 0)
-                {
-                    int waitforplayCount = WaitForPlay.Count;
-                    for (int i = 0; i < waitforplayCount; i++)
-                    {
-                        if (WaitForPlay.TryDequeue(out FMODSound sound))
-                        {
-                            if (!sound.ValidCheck() || sound.IsPlaying) continue;
-
-                            if (sound.Is3D)
-                            {
-                                if (sound.Position == INIT_POSITION)
-                                {
-                                    if (!sound.IsObject)
-                                    {
-                                        sound.SetPosition(FMODSystem.Instance.transform.position);
-                                    }
-                                    else
-                                    {
-                                        // 실행요청을 받았는데 오브젝트가 사라졌다?
-                                        continue;
-                                    }
-                                }
-                            }
-
-                            sound.FMODInstance.start();
-                            Playlist.Add(sound);
-                            sound.IsListed = true;
-
-                            sound.OnPlay?.Invoke();
-                        }
-                    }
-                }
-
-                for (int i = 0; i < Playlist.Count; i++)
-                {
-                    if (!Playlist[i].Activated)
-                    {
-                        Playlist.RemoveAt(i);
-                        i--;
-                        continue;
-                    }
-
-                    PLAYBACK_STATE playbackState;
-                    if (!Playlist[i].FMODInstance.isValid())
-                    {
-                        Playlist[i].Terminate();
-                        Playlist.RemoveAt(i);
-                        i--;
-                        continue;
-                    }
-                    Playlist[i].FMODInstance.getPlaybackState(out playbackState);
-                    if (playbackState == PLAYBACK_STATE.STOPPED)
-                    {
-                        Playlist[i].OnStop?.Invoke();
-                        Playlist[i].Terminate();
-                        Playlist.RemoveAt(i);
-                        i--;
-                        continue;
-                    }
-
-                    if (Playlist[i].IsObject)
-                    {
-                        if (Playlist[i].Transform == null)
-                        {
-                            Playlist[i].OnStop?.Invoke();
-
-                            if (Playlist[i].FMODInstance.isValid()) Playlist[i].FMODInstance.stop(global::FMOD.Studio.STOP_MODE.ALLOWFADEOUT);
-                            Playlist[i].Terminate();
-                            Playlist.RemoveAt(i);
-                            i--;
-                            continue;
-                        }
-
-                        Playlist[i].FMODInstance.set3DAttributes(RuntimeUtils.To3DAttributes(Playlist[i].Transform, Playlist[i].Rigidbody));
-                    }
-                }
-                yield return null;
-            }
-        }
-
-        private static int m_MemoryBlock = 512;
-        private static void CreateMemory(int count)
-        {
-            for (int i = 0; i < count; i++)
-            {
-                FMODSound sound = new FMODSound();
-                sound.Terminate();
-            }
-        }
+        internal static ThreadSafe.Vector3 INIT_POSITION { get; } = new ThreadSafe.Vector3(999, 999, 999);
+        
         /// <summary>
         /// 놀고있는 사운드 객체를 뽑아옵니다. 없으면 생성하여 반환합니다.
         /// </summary>
@@ -132,15 +29,15 @@ namespace Syadeu.FMOD
             FMODSound sound = GetDatabase();
             if (sound == null)
             {
-                CreateMemory(m_MemoryBlock);
-                m_MemoryBlock *= 2;
+                FMODSystem.Instance.CreateMemory(SyadeuSettings.Instance.m_MemoryBlock);
+                SyadeuSettings.Instance.m_MemoryBlock *= 2;
                 //if (InstanceCount < m_MemoryBlock)
                 //{
                 //    sound = new FMODSound();
                 //}
                 //else
                 //{
-                $"Sound is reached maximum instance count => {m_MemoryBlock}".ToLog();
+                $"CoreSystem.FMOD :: Sound is reached maximum instance count => {SyadeuSettings.Instance.m_MemoryBlock}".ToLog();
                 //    sound = GetDatabase(Playlist[10].DataIndex);
                 //}
                 sound = GetDatabase();
@@ -214,23 +111,23 @@ namespace Syadeu.FMOD
         }
         public EventInstance FMODInstance { get; private set; }
 
-        protected EVENT_CALLBACK EventCallback { get; set; }
+        protected internal EVENT_CALLBACK EventCallback { get; set; }
         /// <summary>
         /// 3D 사운드인지 반환합니다.
         /// </summary>
-        protected bool Is3D { get; private set; }
+        protected internal bool Is3D { get; private set; }
         /// <summary>
         /// 재생이 가능한 사운드인지 반환합니다.
         /// </summary>
-        protected bool IsVailded { get; private set; } = false;
+        protected internal bool IsVailded { get; internal set; } = false;
         /// <summary>
         /// Vector3로 포지션값이 지정된게 아니고 Transfrom으로 지정된 사운드인지 반환합니다
         /// </summary>
-        protected bool IsObject { get; private set; } = false;
+        protected internal bool IsObject { get; internal set; } = false;
         /// <summary>
         /// Playlist에 등록되어있는지 반환합니다.
         /// </summary>
-        protected bool IsListed { get; private set; } = false;
+        protected internal bool IsListed { get; internal set; } = false;
 
         public bool Paused { get; private set; } = false;
 
@@ -269,7 +166,7 @@ namespace Syadeu.FMOD
             //    }
             //}
 
-            WaitForPlay.Enqueue(this);
+            FMODSystem.Instance.WaitForPlay.Enqueue(this);
         }
         public virtual void Pause()
         {
@@ -299,6 +196,17 @@ namespace Syadeu.FMOD
 
                 Terminate();
             }
+        }
+
+        internal void InternalPlay()
+        {
+            FMODInstance.start();
+            OnPlay?.Invoke();
+        }
+        internal void InternalStop()
+        {
+            OnStop?.Invoke();
+            Terminate();
         }
 
         public static SoundGUID GetEventPath(int listIndex, int soundIndex)
@@ -444,7 +352,7 @@ namespace Syadeu.FMOD
 
         #region Checks
 
-        protected bool ValidCheck()
+        protected internal bool ValidCheck()
         {
             if (IsVailded /*|| instance.isValid()*/) return true;
             if (SoundGUID == null || !SoundGUID.IsValid())

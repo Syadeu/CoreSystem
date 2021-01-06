@@ -1,4 +1,5 @@
 ﻿using Syadeu.Extentions.EditorUtils;
+using System;
 using UnityEngine;
 
 namespace Syadeu
@@ -10,6 +11,8 @@ namespace Syadeu
     public sealed class WaitForBackgroundJob : CustomYieldInstruction
     {
         private readonly BackgroundJobEntity Job;
+
+        internal string CalledFrom { get; } = null;
         /// <summary>
         /// 등록한 잡을 넣어주세요
         /// </summary>
@@ -17,6 +20,7 @@ namespace Syadeu
         public WaitForBackgroundJob(BackgroundJobEntity job)
         {
             Job = job;
+            CalledFrom = Environment.StackTrace;
         }
 
         public override bool keepWaiting
@@ -25,7 +29,7 @@ namespace Syadeu
             {
                 if (Job == null)
                 {
-                    throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "Null 인 잡은 기다릴수 없습니다");
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "Null 인 잡은 기다릴수 없습니다", CalledFrom);
                 }
                 if (Job.Faild)
                 {

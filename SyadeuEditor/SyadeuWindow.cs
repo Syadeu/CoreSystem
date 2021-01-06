@@ -42,7 +42,7 @@ namespace SyadeuEditor
                     }
                     break;
                 case 1:
-                    FMODGeneralInfo();
+                    //FMODGeneralInfo();
                     break;
                 default:
                     break;
@@ -58,47 +58,47 @@ namespace SyadeuEditor
             SyadeuSettings.Instance.m_VisualizeObjects = EditorGUILayout.ToggleLeft("Hierarchy에 표시", SyadeuSettings.Instance.m_VisualizeObjects);
         }
 
-        void FMODGeneralInfo()
-        {
-            EditorUtils.StringHeader("FMOD Generals");
-            EditorUtils.SectorLine();
-            EditorGUILayout.LabelField($"Current FMOD Objects: {FMODSound.InstanceCount}");
+        //void FMODGeneralInfo()
+        //{
+        //    EditorUtils.StringHeader("FMOD Generals");
+        //    EditorUtils.SectorLine();
+        //    EditorGUILayout.LabelField($"Current FMOD Objects: {FMODSound.InstanceCount}");
 
-            int activatedCount = 0;
-            for (int i = 0; i < FMODSound.Instances.Count; i++)
-            {
-                if (FMODSound.Instances[i].Activated)
-                {
-                    activatedCount += 1;
-                }
-            }
+        //    int activatedCount = 0;
+        //    for (int i = 0; i < FMODSound.Instances.Count; i++)
+        //    {
+        //        if (FMODSound.Instances[i].Activated)
+        //        {
+        //            activatedCount += 1;
+        //        }
+        //    }
 
-            EditorGUILayout.LabelField($"Activated FMOD Objects: {activatedCount}");
-            EditorUtils.SectorLine();
+        //    EditorGUILayout.LabelField($"Activated FMOD Objects: {activatedCount}");
+        //    EditorUtils.SectorLine();
 
-            if (EditorApplication.isPlaying)
-            {
-                Dictionary<string, int> FMODPlaylist = new Dictionary<string, int>();
-                List<string> currentPlaylistNames = new List<string>();
-                for (int i = 0; i < FMODSound.Playlist.Count; i++)
-                {
-                    currentPlaylistNames.Add(FMODSound.Playlist[i].SoundGUID.EventPath);
-                    if (!FMODPlaylist.ContainsKey(FMODSound.Playlist[i].SoundGUID.EventPath))
-                    {
-                        FMODPlaylist.Add(FMODSound.Playlist[i].SoundGUID.EventPath, 1);
-                    }
-                    else
-                    {
-                        FMODPlaylist[FMODSound.Playlist[i].SoundGUID.EventPath] += 1;
-                    }
-                }
+        //    if (EditorApplication.isPlaying)
+        //    {
+        //        Dictionary<string, int> FMODPlaylist = new Dictionary<string, int>();
+        //        List<string> currentPlaylistNames = new List<string>();
+        //        for (int i = 0; i < FMODSound.Playlist.Count; i++)
+        //        {
+        //            currentPlaylistNames.Add(FMODSound.Playlist[i].SoundGUID.EventPath);
+        //            if (!FMODPlaylist.ContainsKey(FMODSound.Playlist[i].SoundGUID.EventPath))
+        //            {
+        //                FMODPlaylist.Add(FMODSound.Playlist[i].SoundGUID.EventPath, 1);
+        //            }
+        //            else
+        //            {
+        //                FMODPlaylist[FMODSound.Playlist[i].SoundGUID.EventPath] += 1;
+        //            }
+        //        }
 
-                var list = FMODPlaylist.Keys.ToArray();
-                for (int i = 0; i < list.Length; i++)
-                {
-                    EditorGUILayout.LabelField($"{list[i]}: {FMODPlaylist[list[i]]}개 재생 중");
-                }
-            }
-        }
+        //        var list = FMODPlaylist.Keys.ToArray();
+        //        for (int i = 0; i < list.Length; i++)
+        //        {
+        //            EditorGUILayout.LabelField($"{list[i]}: {FMODPlaylist[list[i]]}개 재생 중");
+        //        }
+        //    }
+        //}
     }
 }

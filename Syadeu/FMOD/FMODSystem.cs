@@ -2,6 +2,7 @@
 using FMOD.Studio;
 using FMODUnity;
 using Syadeu.Extentions.EditorUtils;
+using Syadeu.Mono;
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
@@ -20,11 +21,14 @@ namespace Syadeu.FMOD
         public enum Language
         {
             _ko_kr,
+            _en_us,
         }
 
+        private Bus m_MasterBus;
         private Language m_CurrentLanguage;
 
-        private static Bus m_MasterBus;
+        internal ConcurrentQueue<FMODSound> WaitForPlay { get; } = new ConcurrentQueue<FMODSound>();
+        internal List<FMODSound> Playlist { get; } = new List<FMODSound>();
 
         public bool IsFocused { get; private set; } = true;
 
@@ -58,10 +62,13 @@ namespace Syadeu.FMOD
             CoreSystem.OnUnityUpdate += OnUnityUpdate;
 
             StartBackgroundUpdate(OnBackgroundAsyncUpdate());
+            StartUnityUpdate(OnUnityCustomUpdate());
         }
 
         private void OnUnityStart()
         {
+            CreateMemory(SyadeuSettings.Instance.m_MemoryBlock);
+
             FMODStudioSystem.getBus("bus:/", out m_MasterBus);
 
             MainListener = Instance.gameObject.AddComponent<FMODListener>();
@@ -79,6 +86,92 @@ namespace Syadeu.FMOD
             if (MainListenerTarget != null)
             {
                 MainListener.transform.position = Vector3.Lerp(MainListener.transform.position, MainListenerTarget.position, Time.deltaTime * 3f);
+            }
+        }
+        private IEnumerator OnUnityCustomUpdate()
+        {
+            while (true)
+            {
+                if (WaitForPlay.Count > 0)
+                {
+                    int waitforplayCount = WaitForPlay.Count;
+                    for (int i = 0; i < waitforplayCount; i++)
+                    {
+                        if (WaitForPlay.TryDequeue(out FMODSound sound))
+                        {
+                            if (!sound.ValidCheck() || sound.IsPlaying) continue;
+
+                            if (sound.Is3D)
+                            {
+                                if (sound.Position == FMODSound.INIT_POSITION)
+                                {
+                                    if (!sound.IsObject)
+                                    {
+                                        sound.SetPosition(FMODSystem.Instance.transform.position);
+                                    }
+                                    else
+                                    {
+                                        // 실행요청을 받았는데 오브젝트가 사라졌다?
+                                        continue;
+                                    }
+                                }
+                            }
+
+                            //sound.FMODInstance.start();
+                            Playlist.Add(sound);
+                            sound.IsListed = true;
+                            sound.InternalPlay();
+                            //sound.OnPlay?.Invoke();
+                        }
+                    }
+                }
+
+                for (int i = 0; i < Playlist.Count; i++)
+                {
+                    if (!Playlist[i].Activated)
+                    {
+                        Playlist.RemoveAt(i);
+                        i--;
+                        continue;
+                    }
+
+                    PLAYBACK_STATE playbackState;
+                    if (!Playlist[i].FMODInstance.isValid())
+                    {
+                        Playlist[i].Terminate();
+                        Playlist.RemoveAt(i);
+                        i--;
+                        continue;
+                    }
+                    Playlist[i].FMODInstance.getPlaybackState(out playbackState);
+                    if (playbackState == PLAYBACK_STATE.STOPPED)
+                    {
+                        //Playlist[i].OnStop?.Invoke();
+                        //Playlist[i].Terminate();
+                        Playlist[i].InternalStop();
+                        Playlist.RemoveAt(i);
+                        i--;
+                        continue;
+                    }
+
+                    if (Playlist[i].IsObject)
+                    {
+                        if (Playlist[i].Transform == null)
+                        {
+                            //Playlist[i].OnStop?.Invoke();
+                            Playlist[i].InternalStop();
+
+                            if (Playlist[i].FMODInstance.isValid()) Playlist[i].FMODInstance.stop(global::FMOD.Studio.STOP_MODE.ALLOWFADEOUT);
+                            //Playlist[i].Terminate();
+                            Playlist.RemoveAt(i);
+                            i--;
+                            continue;
+                        }
+
+                        Playlist[i].FMODInstance.set3DAttributes(RuntimeUtils.To3DAttributes(Playlist[i].Transform, Playlist[i].Rigidbody));
+                    }
+                }
+                yield return null;
             }
         }
         private IEnumerator OnBackgroundAsyncUpdate(/*SyadeuSystem.Awaiter awaiter*/)
@@ -144,6 +237,15 @@ namespace Syadeu.FMOD
             for (int i = 0; i < PreloadedSamples.Count; i++)
             {
                 PreloadedSamples[i].unloadSampleData();
+            }
+        }
+
+        internal void CreateMemory(int count)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                FMODSound sound = new FMODSound();
+                sound.Terminate();
             }
         }
 
