@@ -1,12 +1,14 @@
 ﻿using Syadeu;
 using Syadeu.FMOD;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
 namespace SyadeuEditor
 {
     [CustomEditor(typeof(CoreSystem))]
-    public class CoreSystemEditor : Editor
+    public sealed class CoreSystemEditor : Editor
     {
         public override void OnInspectorGUI()
         {
@@ -17,6 +19,7 @@ namespace SyadeuEditor
             if (Application.isPlaying)
             {
                 Runtime();
+                EditorUtils.SectorLine();
                 FMOD();
             }
 
@@ -64,6 +67,8 @@ namespace SyadeuEditor
             EditorGUI.indentLevel -= 1;
         }
 
+        Dictionary<string, int> m_FMODPlaylist = new Dictionary<string, int>();
+        bool m_OpenFMODSoundList = false;
         void FMOD()
         {
             EditorUtils.StringHeader("FMOD", 15);
@@ -78,8 +83,47 @@ namespace SyadeuEditor
             EditorGUILayout.BeginHorizontal();
             EditorGUI.BeginDisabledGroup(true);
 
+            int activatedCount = 0;
+            for (int i = 0; i < FMODSound.Instances.Count; i++)
+            {
+                if (FMODSound.Instances[i].Activated)
+                {
+                    activatedCount += 1;
+                }
+            }
+
+            EditorGUILayout.IntField("현재 인스턴스 갯수: ", FMODSound.Instances.Count);
+            EditorGUILayout.IntField("현재 사용중인 갯수: ", activatedCount);
+
             EditorGUI.EndDisabledGroup();
             EditorGUILayout.EndHorizontal();
+
+            m_OpenFMODSoundList = EditorGUILayout.Foldout(m_OpenFMODSoundList, m_OpenFMODSoundList ? "리스트 닫기" : "리스트 열기");
+            if (m_OpenFMODSoundList)
+            {
+                m_FMODPlaylist.Clear();
+                List<string> currentPlaylistNames = new List<string>();
+                IReadOnlyList<FMODSound> currentPlaylist = FMODSystem.GetPlayList();
+
+                for (int i = 0; i < currentPlaylist.Count; i++)
+                {
+                    currentPlaylistNames.Add(currentPlaylist[i].SoundGUID.EventPath);
+                    if (!m_FMODPlaylist.ContainsKey(currentPlaylist[i].SoundGUID.EventPath))
+                    {
+                        m_FMODPlaylist.Add(currentPlaylist[i].SoundGUID.EventPath, 1);
+                    }
+                    else
+                    {
+                        m_FMODPlaylist[currentPlaylist[i].SoundGUID.EventPath] += 1;
+                    }
+                }
+
+                var list = m_FMODPlaylist.Keys.ToArray();
+                for (int i = 0; i < list.Length; i++)
+                {
+                    EditorGUILayout.LabelField($"{list[i]}: {m_FMODPlaylist[list[i]]}개 재생 중");
+                }
+            }
 
             EditorGUI.indentLevel -= 1;
         }

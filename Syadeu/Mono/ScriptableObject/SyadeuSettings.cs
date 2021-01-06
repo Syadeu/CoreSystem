@@ -6,7 +6,7 @@ namespace Syadeu.Mono
 {
     public class SyadeuSettings : StaticSettingEntity<SyadeuSettings>
     {
-        // CoreSystem
+        // Global System
         public bool m_VisualizeObjects = false;
 
         // PrefabManager
@@ -16,3 +16,4 @@ namespace Syadeu.Mono
         public int m_MemoryBlock = 512;
     }
 }
+ 

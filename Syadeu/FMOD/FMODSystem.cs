@@ -18,6 +18,7 @@ namespace Syadeu.FMOD
     {
         #region INIT
 
+        public delegate void FocusChagned(bool current, bool target);
         public enum Language
         {
             _ko_kr,
@@ -30,7 +31,7 @@ namespace Syadeu.FMOD
         internal ConcurrentQueue<FMODSound> WaitForPlay { get; } = new ConcurrentQueue<FMODSound>();
         internal List<FMODSound> Playlist { get; } = new List<FMODSound>();
 
-        public bool IsFocused { get; private set; } = true;
+        private ObValue<bool> IsFocused { get; } = new ObValue<bool>();
 
         public override void OnInitialize()
         {
@@ -73,15 +74,20 @@ namespace Syadeu.FMOD
 
             MainListener = Instance.gameObject.AddComponent<FMODListener>();
             FMODStudioSystem.setListenerWeight(MainListener.Index, 1);
+
+            IsFocused.OnValueChange += IsFocused_OnValueChange;
         }
+        private void IsFocused_OnValueChange(bool current, bool target)
+        {
+            OnFocus?.Invoke(current, target);
+        }
+
         private void OnUnityUpdate()
         {
-            #region Out Focus Mute
 #if !UNITY_EDITOR
             m_MasterBus.getVolume(out float vol);
-            m_MasterBus.setVolume(Mathf.Lerp(vol, Instance.IsFocused ? 1 : 0, Time.deltaTime * 5));
+            m_MasterBus.setVolume(Mathf.Lerp(vol, IsFocused.Value ? 1 : 0, Time.unscaledDeltaTime * 5));
 #endif
-            #endregion
 
             if (MainListenerTarget != null)
             {
@@ -230,7 +236,7 @@ namespace Syadeu.FMOD
 
         private void OnApplicationFocus(bool focus)
         {
-            IsFocused = focus;
+            IsFocused.Value = focus;
         }
         private void OnApplicationQuit()
         {
@@ -266,6 +272,8 @@ namespace Syadeu.FMOD
         public Transform MainListenerTarget { get; private set; }
 
         public static Language CurrentLanguage { get { return Instance.m_CurrentLanguage; } }
+
+        public static event FocusChagned OnFocus;
 
         #endregion
 

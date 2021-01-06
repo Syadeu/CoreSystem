@@ -1,4 +1,4 @@
-using Syadeu.Mono;
+ï»¿using Syadeu.Mono;
 using Syadeu.Extentions.EditorUtils;
 
 using UnityEngine;
@@ -39,17 +39,17 @@ namespace SyadeuEditor
 
         void Editor()
         {
-            EditorUtils.StringHeader("\t¼³Á¤", 15);
+            EditorUtils.StringHeader("\tì—ë””í„°", 15);
             EditorGUILayout.Space();
 
-            if (GUILayout.Button("ÇÁ¸®ÆÕ ¸®½ºÆ® ¿­±â"))
+            if (GUILayout.Button("í”„ë¦¬íŒ¹ ë¦¬ìŠ¤íŠ¸"))
             {
                 Selection.activeObject = PrefabList.Instance;
             }
 
             EditorGUILayout.BeginHorizontal();
-            SyadeuSettings.Instance.m_PMErrorAutoFix = EditorGUILayout.ToggleLeft("ÀÚµ¿ ¿¡·¯ ÇØ°á", SyadeuSettings.Instance.m_PMErrorAutoFix);
-            EditorGUILayout.HelpBox("È°¼ºÈ­½Ã, ·±Å¸ÀÓ µµÁß Àç»ç¿ë °´Ã¼°¡ ÆÄ±«µÇ¾ú°Å³ª ÇÏ´Â µîÀÇ ¿¹¿Ü»çÇ× Á¶Ä¡¸¦ ÀÚµ¿À¸·Î ÇØ°áÇÕ´Ï´Ù.", MessageType.Info);
+            SyadeuSettings.Instance.m_PMErrorAutoFix = EditorGUILayout.ToggleLeft("ìë™ ì—ëŸ¬ í•´ê²°", SyadeuSettings.Instance.m_PMErrorAutoFix);
+            EditorGUILayout.HelpBox("í™œì„±í™”ì‹œ, ëŸ°íƒ€ì„ ë„ì¤‘ ì¬ì‚¬ìš© ê°ì²´ê°€ íŒŒê´´ë˜ì—ˆê±°ë‚˜ í•˜ëŠ” ë“±ì˜ ì˜ˆì™¸ì‚¬í•­ ì¡°ì¹˜ë¥¼ ìë™ìœ¼ë¡œ í•´ê²°í•©ë‹ˆë‹¤.", MessageType.Info);
             EditorGUILayout.EndHorizontal();
         }
         bool[] openInstances = new bool[0];
@@ -60,16 +60,16 @@ namespace SyadeuEditor
             if (openInstances.Length != objList.Count) openInstances = new bool[objList.Count];
             if (sortInstances.Length != objList.Count) sortInstances = new bool[objList.Count];
 
-            EditorUtils.StringHeader("\t·±Å¸ÀÓ", 15);
+            EditorUtils.StringHeader("\tëŸ°íƒ€ì„", 15);
 
-            if (GUILayout.Button("¹Ì»ç¿ë °´Ã¼ ¸±¸®Áî"))
+            if (GUILayout.Button("ë¯¸ì‚¬ìš© ê°ì²´ ë¦´ë¦¬ì¦ˆ"))
             {
                 int count = PrefabManager.ReleaseTerminatedObjects();
-                $"CoreSystem.RecycleObject :: {count}°³ÀÇ »ç¿ëÇÏÁö ¾Ê´Â Àç»ç¿ë °´Ã¼°¡ °ğ ¿µ±¸È÷ Á¦°ÅµË´Ï´Ù".ToLog();
+                $"CoreSystem.RecycleObject :: {count}ê°œì˜ ì‚¬ìš©í•˜ì§€ ì•ŠëŠ” ì¬ì‚¬ìš© ê°ì²´ê°€ ê³§ ì˜êµ¬íˆ ì œê±°ë©ë‹ˆë‹¤".ToLog();
             }
 
             EditorGUI.BeginDisabledGroup(true);
-            EditorGUILayout.IntField("ÇöÀç Àç»ç¿ë °´Ã¼ Á¾·ù °¹¼ö: ", objList.Count);
+            EditorGUILayout.IntField("í˜„ì¬ ì¬ì‚¬ìš© ê°ì²´ ì¢…ë¥˜ ê°¯ìˆ˜: ", objList.Count);
             EditorGUI.EndDisabledGroup();
             EditorGUILayout.Space();
 
@@ -77,22 +77,22 @@ namespace SyadeuEditor
             {
                 EditorGUILayout.BeginHorizontal();
                 EditorUtils.StringHeader($"> {objList[i].Value.name}", 15);
-                openInstances[i] = EditorGUILayout.ToggleLeft(openInstances[i] ? "Á¢±â" : "¿­±â", openInstances[i]);
+                openInstances[i] = EditorGUILayout.ToggleLeft(openInstances[i] ? "ì ‘ê¸°" : "ì—´ê¸°", openInstances[i]);
                 EditorGUILayout.EndHorizontal();
 
                 EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.LabelField($"\tÇöÀç ÀÎ½ºÅÏ½º °¹¼ö: {ins.GetInstanceCount(objList[i].Key)}");
+                EditorGUILayout.LabelField($"\tí˜„ì¬ ì¸ìŠ¤í„´ìŠ¤ ê°¯ìˆ˜: {ins.GetInstanceCount(objList[i].Key)}");
 
                 string maxInstanceCount;
                 if (PrefabList.Instance.m_ObjectSettings[objList[i].Key].MaxInstanceCount < 0)
                 {
-                    maxInstanceCount = "¹«ÇÑ";
+                    maxInstanceCount = "ë¬´í•œ";
                 }
                 else
                 {
                     maxInstanceCount = PrefabList.Instance.m_ObjectSettings[objList[i].Key].MaxInstanceCount.ToString();
                 }
-                EditorGUILayout.LabelField($"ÃÖ´ë ÀÎ½ºÅÏ½º °¹¼ö: {maxInstanceCount}");
+                EditorGUILayout.LabelField($"ìµœëŒ€ ì¸ìŠ¤í„´ìŠ¤ ê°¯ìˆ˜: {maxInstanceCount}");
                 EditorGUILayout.EndHorizontal();
 
                 if (openInstances[i])
@@ -100,15 +100,15 @@ namespace SyadeuEditor
                     var instances = ins.GetInstances(objList[i].Key);
 
                     EditorGUILayout.BeginHorizontal();
-                    sortInstances[i] = EditorGUILayout.Toggle("\t»ç¿ë ÁßÀÎ ÀÎ½ºÅÏ½º¸¸", sortInstances[i]);
+                    sortInstances[i] = EditorGUILayout.Toggle("\tì‚¬ìš© ì¤‘ì¸ ì¸ìŠ¤í„´ìŠ¤ë§Œ", sortInstances[i]);
                     int sum = 0;
                     for (int a = 0; a < instances.Count; a++)
                     {
                         if (instances[a].Activated) sum += 1;
                     }
-                    EditorGUILayout.LabelField($"\tÈ°¼ºÈ­µÈ ÀÎ½ºÅÏ½º: {sum}");
+                    EditorGUILayout.LabelField($"\tí™œì„±í™”ëœ ì¸ìŠ¤í„´ìŠ¤: {sum}");
                     EditorGUILayout.EndHorizontal();
-                    
+
                     for (int a = 0; a < instances.Count; a++)
                     {
                         if (sortInstances[i] && !instances[a].Activated) continue;

@@ -1,4 +1,4 @@
-using Syadeu.Mono;
+ï»¿using Syadeu.Mono;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -82,7 +82,7 @@ namespace Syadeu.Mono
                                 i--;
                                 continue;
                             }
-                            else throw new CoreSystemException(CoreSystemExceptionFlag.RecycleObject, "PrefabManager¿¡ ÀÇÇØ °ü¸®µÇ´ø RecycleMonobehaviour°¡ ´Ù¸¥ °´Ã¼¿¡ ÀÇÇØ ÆÄ±«µÇ¾ú½À´Ï´Ù. °ü¸®ÁßÀÎ °´Ã¼´Â ´Ù¸¥ °´Ã¼¿¡¼­ ÆÄ±«µÉ ¼ö ¾ø½À´Ï´Ù.");
+                            else throw new CoreSystemException(CoreSystemExceptionFlag.RecycleObject, "PrefabManagerì— ì˜í•´ ê´€ë¦¬ë˜ë˜ RecycleMonobehaviourê°€ ë‹¤ë¥¸ ê°ì²´ì— ì˜í•´ íŒŒê´´ë˜ì—ˆìŠµë‹ˆë‹¤. ê´€ë¦¬ì¤‘ì¸ ê°ì²´ëŠ” ë‹¤ë¥¸ ê°ì²´ì—ì„œ íŒŒê´´ë  ìˆ˜ ì—†ìŠµë‹ˆë‹¤.");
                         }
 
                         if (recycle.Instances[i].OnActivated != null &&
@@ -115,7 +115,7 @@ namespace Syadeu.Mono
         #endregion
 
         /// <summary>
-        /// ÇØ´ç Å¸ÀÔ(<typeparamref name="T"/>)°ú ÀÏÄ¡ÇÏ´Â ¸®»çÀÌÅ¬ ÀÎ½ºÅÏ½º¸¦ ¹Ş¾Æ¿É´Ï´Ù.
+        /// í•´ë‹¹ íƒ€ì…(<typeparamref name="T"/>)ê³¼ ì¼ì¹˜í•˜ëŠ” ë¦¬ì‚¬ì´í´ ì¸ìŠ¤í„´ìŠ¤ë¥¼ ë°›ì•„ì˜µë‹ˆë‹¤.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
@@ -129,11 +129,11 @@ namespace Syadeu.Mono
                 }
             }
 
-            throw new InvalidCastException($"CoreSystem.Prefab :: {typeof(T).Name}¿Í ÀÏÄ¡ÇÏ´Â Å¸ÀÔÀÌ ÇÁ¸®ÆÕ ¸®½ºÆ®¿¡ µî·ÏµÇÁö¾Ê¾Æ Ã£À» ¼ö ¾øÀ½");
+            throw new InvalidCastException($"CoreSystem.Prefab :: {typeof(T).Name}ì™€ ì¼ì¹˜í•˜ëŠ” íƒ€ì…ì´ í”„ë¦¬íŒ¹ ë¦¬ìŠ¤íŠ¸ì— ë“±ë¡ë˜ì§€ì•Šì•„ ì°¾ì„ ìˆ˜ ì—†ìŒ");
         }
         /// <summary>
-        /// <see cref="PrefabList"/> ÀÇ ¸®½ºÆ®(<see cref="PrefabList.m_ObjectSettings"/>) ÀÎµ¦½º ¹øÈ£·Î 
-        /// ÀÎ½ºÅÏ½º¸¦ ¹Ş¾Æ¿É´Ï´Ù
+        /// <see cref="PrefabList"/> Ã€Ã‡ Â¸Â®Â½ÂºÃ†Â®(<see cref="PrefabList.m_ObjectSettings"/>) Ã€ÃÂµÂ¦Â½Âº Â¹Ã¸ÃˆÂ£Â·Ã 
+        /// Ã€ÃÂ½ÂºÃ…ÃÂ½ÂºÂ¸Â¦ Â¹ÃÂ¾Ã†Â¿Ã‰Â´ÃÂ´Ã™
         /// </summary>
         /// <param name="index"></param>
         /// <returns></returns>
@@ -154,7 +154,7 @@ namespace Syadeu.Mono
                             i--;
                             continue;
                         }
-                        else throw new CoreSystemException(CoreSystemExceptionFlag.RecycleObject, "PrefabManager¿¡ ÀÇÇØ °ü¸®µÇ´ø RecycleMonobehaviour°¡ ´Ù¸¥ °´Ã¼¿¡ ÀÇÇØ ÆÄ±«µÇ¾ú½À´Ï´Ù. °ü¸®ÁßÀÎ °´Ã¼´Â ´Ù¸¥ °´Ã¼¿¡¼­ ÆÄ±«µÉ ¼ö ¾ø½À´Ï´Ù.");
+                        else throw new CoreSystemException(CoreSystemExceptionFlag.RecycleObject, "PrefabManagerì— ì˜í•´ ê´€ë¦¬ë˜ë˜ RecycleMonobehaviourê°€ ë‹¤ë¥¸ ê°ì²´ì— ì˜í•´ íŒŒê´´ë˜ì—ˆìŠµë‹ˆë‹¤. ê´€ë¦¬ì¤‘ì¸ ê°ì²´ëŠ” ë‹¤ë¥¸ ê°ì²´ì—ì„œ íŒŒê´´ë  ìˆ˜ ì—†ìŠµë‹ˆë‹¤.");
                     }
 
                     temp.Activated = true;
@@ -164,7 +164,7 @@ namespace Syadeu.Mono
                 }
             }
 
-            // »ı¼º
+            // Â»Ã½Â¼Âº
             if (obj.MaxCount < 0 ||
                 obj.MaxCount > obj.Instances.Count)
             {
@@ -224,15 +224,15 @@ namespace Syadeu.Mono
 
         public int GetInstanceCount(int index) => RecycleObjects[index].Instances.Count;
         /// <summary>
-        /// ÇØ´ç ÀÎµ¦½ºÀÇ ¸ğµç ÀÎ½ºÅÏ½ºµéÀ» ¸®½ºÆ®¿¡ ´ã¾Æ ¹İÈ¯ÇÕ´Ï´Ù.
+        /// í•´ë‹¹ ì¸ë±ìŠ¤ì˜ ëª¨ë“  ì¸ìŠ¤í„´ìŠ¤ë“¤ì„ ë¦¬ìŠ¤íŠ¸ì— ë‹´ì•„ ë°˜í™˜í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="index"></param>
         /// <returns></returns>
         public IReadOnlyList<RecycleableMonobehaviour> GetInstances(int index)
             => RecycleObjects[index].Instances;
         /// <summary>
-        /// µî·ÏµÈ ¸ğµç Àç»ç¿ë ¸ğ³ë ÇÁ¸®ÆÕÀ» ¹Ş¾Æ¿É´Ï´Ù.
-        /// ÀÎµ¦½º ¹øÈ£¿Í ÇÁ¸®ÆÕÀ» ´ã¾Æ¼­ ¸®½ºÆ®·Î ¹İÈ¯ÇÕ´Ï´Ù.
+        /// ë“±ë¡ëœ ëª¨ë“  ì¬ì‚¬ìš© ëª¨ë…¸ í”„ë¦¬íŒ¹ì„ ë°›ì•„ì˜µë‹ˆë‹¤.
+        /// ì¸ë±ìŠ¤ ë²ˆí˜¸ì™€ í”„ë¦¬íŒ¹ì„ ë‹´ì•„ì„œ ë¦¬ìŠ¤íŠ¸ë¡œ ë°˜í™˜í•©ë‹ˆë‹¤.
         /// </summary>
         /// <returns></returns>
         public IReadOnlyList<KeyValuePair<int, RecycleableMonobehaviour>> GetRecycleObjectList()

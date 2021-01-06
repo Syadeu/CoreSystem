@@ -23,39 +23,46 @@ namespace SyadeuEditor
 
         Vector2 scrollPos = Vector2.zero;
         int windowIndex = 0;
-        string[] windows = new string[] { "General", "FMOD" };
+        string[] windows = new string[] { "Global", "Generals" };
 
         private void OnGUI()
         {
             windowIndex = GUILayout.Toolbar(windowIndex, windows);
 
             scrollPos = GUILayout.BeginScrollView(scrollPos, true, true, GUILayout.Width(position.width), GUILayout.Height(position.height - 10));
+            EditorGUI.BeginChangeCheck();
             switch (windowIndex)
             {
                 case 0:
-                    EditorGUI.BeginChangeCheck();
-                    GeneralSettings();
-                    if (EditorGUI.EndChangeCheck())
-                    {
-                        EditorUtility.SetDirty(SyadeuSettings.Instance);
-                        AssetDatabase.SaveAssets();
-                    }
+                    GlobalSettings();
                     break;
                 case 1:
-                    //FMODGeneralInfo();
+                    GeneralSettings();
                     break;
                 default:
                     break;
             }
+            if (EditorGUI.EndChangeCheck())
+            {
+                EditorUtility.SetDirty(SyadeuSettings.Instance);
+                AssetDatabase.SaveAssets();
+            }
             GUILayout.EndScrollView();
         }
 
+        void GlobalSettings()
+        {
+            EditorUtils.StringHeader("Global Settings");
+            EditorUtils.SectorLine();
+
+            SyadeuSettings.Instance.m_VisualizeObjects = EditorGUILayout.ToggleLeft("Hierarchy에 표시", SyadeuSettings.Instance.m_VisualizeObjects);
+        }
         void GeneralSettings()
         {
             EditorUtils.StringHeader("General Settings");
             EditorUtils.SectorLine();
 
-            SyadeuSettings.Instance.m_VisualizeObjects = EditorGUILayout.ToggleLeft("Hierarchy에 표시", SyadeuSettings.Instance.m_VisualizeObjects);
+            //SyadeuSettings.Instance.m_PMErrorAutoFix = EditorGUILayout.ToggleLeft("")
         }
 
         //void FMODGeneralInfo()
