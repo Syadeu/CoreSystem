@@ -62,7 +62,7 @@ namespace Syadeu.FMOD
             CoreSystem.OnUnityUpdate += OnUnityUpdate;
 
             StartBackgroundUpdate(OnBackgroundAsyncUpdate());
-            StartUnityUpdate(OnUnityCustomUpdate());
+            StartUnityUpdate(OnUnityCustomUpdater());
         }
 
         private void OnUnityStart()
@@ -88,7 +88,7 @@ namespace Syadeu.FMOD
                 MainListener.transform.position = Vector3.Lerp(MainListener.transform.position, MainListenerTarget.position, Time.deltaTime * 3f);
             }
         }
-        private IEnumerator OnUnityCustomUpdate()
+        private IEnumerator OnUnityCustomUpdater()
         {
             while (true)
             {
@@ -271,6 +271,8 @@ namespace Syadeu.FMOD
 
         #region Methods
 
+        public static IReadOnlyList<FMODSound> GetPlayList() => Instance.Playlist;
+
         /// <summary>
         /// 해당 인덱스의 사운드 리스트를 가져옵니다.
         /// </summary>
@@ -286,7 +288,6 @@ namespace Syadeu.FMOD
             }
             return true;
         }
-
         /// <summary>
         /// 로컬라이징을 위해 분리한 뱅크들을 해당 언어로 교체합니다
         /// </summary>
