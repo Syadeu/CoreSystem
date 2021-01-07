@@ -6,6 +6,7 @@ using System.Linq;
 
 namespace Syadeu.Database
 {
+    [Obsolete("곧 퇴역됩니다")]
     public sealed class SQLiteBuilder
     {
         public enum IFLogic

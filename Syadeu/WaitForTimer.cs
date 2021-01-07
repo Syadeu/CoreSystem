@@ -18,8 +18,7 @@ namespace Syadeu
             {
                 if (Timer == null)
                 {
-                    "ERROR :: Timer is null".ToLog();
-                    return false;
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "Null 인 타이머는 기다릴수 없습니다");
                 }
 
                 if (Timer.Killed || Timer.Completed || Timer.Disposed)

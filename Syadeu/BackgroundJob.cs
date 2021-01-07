@@ -162,7 +162,7 @@ namespace Syadeu
     }
 
     [Obsolete("테스트 중", true)]
-    public class BackgroundJob<T> : IJob
+    public class BackgroundJob<T> : IJob<T> where T : IJobNative
     {
         internal bool m_IsDone = false;
         public bool IsDone
@@ -192,6 +192,8 @@ namespace Syadeu
         internal Exception Exception { get; set; }
         internal string CalledFrom { get; set; } = null;
         public IJob MainJob { get; internal set; }
+
+        public T Result => throw new NotImplementedException();
 
         internal int WorkerIndex = -1;
         internal List<IJob> ConnectedJobs;

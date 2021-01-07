@@ -42,8 +42,16 @@
         /// </remarks>
         void Await();
     }
-    public interface IJob<T> : IJob
+    public interface IJob<T> : IJob where T : IJobNative
     {
+        T Result { get; }
+    }
 
+    public interface IJobNative
+    {
+    }
+    public interface IJobTransfrom : IJobNative
+    {
+        UnityEngine.Jobs.TransformAccessArray TransformAccessArray { get; }
     }
 }

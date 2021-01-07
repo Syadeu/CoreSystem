@@ -99,7 +99,11 @@ namespace Syadeu.FMOD
                     if (Transform == null) return INIT_POSITION;
                     else
                     {
-                        return Transform.position.ToThreadSafe();
+                        if (IsMainthread()) return Transform.position.ToThreadSafe();
+                        else
+                        {
+                            CoreSystem.GetPosition(Transform);
+                        }
                     }
                 }
                 else
@@ -297,6 +301,11 @@ namespace Syadeu.FMOD
             }
 
             return this;
+        }
+        public PARAMETER_DESCRIPTION GetParameter(string name)
+        {
+            SoundGUID.TryGetParameter(name, out var parameter);
+            return parameter;
         }
         public FMODSound SetParameter(string name, float value)
         {
