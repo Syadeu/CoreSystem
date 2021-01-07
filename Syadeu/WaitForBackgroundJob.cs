@@ -10,14 +10,14 @@ namespace Syadeu
     /// </summary>
     public sealed class WaitForBackgroundJob : CustomYieldInstruction
     {
-        private readonly BackgroundJobEntity Job;
+        private readonly BackgroundJob Job;
 
         internal string CalledFrom { get; } = null;
         /// <summary>
         /// 등록한 잡을 넣어주세요
         /// </summary>
         /// <param name="job"></param>
-        public WaitForBackgroundJob(BackgroundJobEntity job)
+        public WaitForBackgroundJob(BackgroundJob job)
         {
             Job = job;
             CalledFrom = Environment.StackTrace;

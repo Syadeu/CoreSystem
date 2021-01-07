@@ -7,9 +7,6 @@ namespace Syadeu
     public sealed class ForegroundJob : IJob
     {
         internal bool m_IsDone = false;
-        /// <summary>
-        /// 이 잡이 수행되어 완료됬나요?
-        /// </summary>
         public bool IsDone
         {
             get
@@ -20,7 +17,7 @@ namespace Syadeu
 
                     for (int i = 0; i < ConnectedJobs.Count; i++)
                     {
-                        if (ConnectedJobs[i] is BackgroundJobEntity backJob &&
+                        if (ConnectedJobs[i] is BackgroundJob backJob &&
                             !backJob.m_IsDone) return false;
                         else if (ConnectedJobs[i] is ForegroundJob foreJob &&
                             !foreJob.m_IsDone) return false;
@@ -32,30 +29,13 @@ namespace Syadeu
                 return MainJob.IsDone;
             }
         }
-        /// <summary>
-        /// 이 잡이 수행중인가요?
-        /// </summary>
         public bool IsRunning { get; internal set; } = false;
-
-        /// <summary>
-        /// 이 잡이 실패했나요?
-        /// </summary>
         public bool Faild { get; internal set; } = false;
-        /// <summary>
-        /// 이 잡의 수행결과입니다.
-        /// </summary>
-        public string Result { get; internal set; } = null;
-
         internal string CalledFrom { get; set; } = null;
-
-        /// <summary>
-        /// 잡이 수행할 델리게이트입니다
-        /// </summary>
         public Action Action { get; set; }
+        public IJob MainJob { get; internal set; }
 
         internal List<IJob> ConnectedJobs;
-
-        public IJob MainJob { get; internal set; }
 
         public ForegroundJob(Action action)
         {
@@ -65,9 +45,7 @@ namespace Syadeu
 
             CalledFrom = Environment.StackTrace;
         }
-        /// <summary>
-        /// 이 잡을 실행합니다
-        /// </summary>
+
         public IJob Start()
         {
             if (MainJob != null)
@@ -81,7 +59,7 @@ namespace Syadeu
                 CoreSystem.AddForegroundJob(this);
                 for (int i = 0; i < ConnectedJobs.Count; i++)
                 {
-                    if (ConnectedJobs[i] is BackgroundJobEntity backgroundJob)
+                    if (ConnectedJobs[i] is BackgroundJob backgroundJob)
                     {
                         CoreSystem.InternalAddBackgroundJob(backgroundJob);
                     }
@@ -104,7 +82,7 @@ namespace Syadeu
                 }
                 m_IsDone = false;
                 IsRunning = false;
-                Result = null;
+                //Result = null;
             }
         }
 
@@ -121,7 +99,7 @@ namespace Syadeu
 
             ConnectedJobs.Add(job);
 
-            if (job is BackgroundJobEntity backgroundJob)
+            if (job is BackgroundJob backgroundJob)
             {
                 backgroundJob.MainJob = this;
             }

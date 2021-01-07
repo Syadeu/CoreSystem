@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Syadeu
+﻿namespace Syadeu
 {
     public interface IJob
     {
@@ -18,21 +16,23 @@ namespace Syadeu
         /// </summary>
         bool Faild { get; }
         /// <summary>
-        /// 이 잡의 수행결과입니다.
+        /// 이 잡의 메인 루트 잡입니다.
+        /// 만약 이 잡이 루트 잡이면 null을 반환합니다.
         /// </summary>
-        string Result { get; }
-
-        /// <summary>
-        /// 잡이 수행할 델리게이트입니다
-        /// </summary>
-        Action Action { get; set; }
-
         IJob MainJob { get; }
 
         /// <summary>
         /// 이 잡을 실행합니다
         /// </summary>
         IJob Start();
+        /// <summary>
+        /// 다른 잡에 연결합니다.
+        /// </summary>
+        /// <remarks>
+        /// 이 잡은 메인잡이 되며, <paramref name="job"/>의 <see cref="MainJob"/>은 이 잡이 됩니다.
+        /// </remarks>
+        /// <param name="job"></param>
+        /// <returns></returns>
         IJob ConnectJob(IJob job);
         /// <summary>
         /// 이 잡이 끝날때까지 기다립니다.
@@ -41,5 +41,9 @@ namespace Syadeu
         /// 메인 스레드에서는 실행이 불가능한 메소드입니다.
         /// </remarks>
         void Await();
+    }
+    public interface IJob<T> : IJob
+    {
+
     }
 }

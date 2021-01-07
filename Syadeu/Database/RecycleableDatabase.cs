@@ -7,7 +7,7 @@ namespace Syadeu.Database
     /// 재사용 가능 데이터 객체입니다.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public abstract class RecycleableDatabase<T> where T : class
+    public abstract class RecycleableDatabase<T> : IRecycleable where T : class
     {
         public static int InstanceCount => Instances.Count;
 
@@ -90,5 +90,8 @@ namespace Syadeu.Database
 
         protected static bool IsMainthread()
             => CoreSystem.IsThisMainthread();
+
+        void IRecycleable.OnInitialize() => OnInitialize();
+        void IRecycleable.OnTerminate() => OnTerminate();
     }
 }

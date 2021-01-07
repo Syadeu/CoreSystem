@@ -1,12 +1,16 @@
 ﻿using FMOD;
 using FMOD.Studio;
 using FMODUnity;
+
 using Syadeu.Extentions.EditorUtils;
 using Syadeu.Mono;
+using Syadeu.Database;
+
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+
 using UnityEngine;
 
 namespace Syadeu.FMOD
@@ -82,8 +86,11 @@ namespace Syadeu.FMOD
         private void OnUnityUpdate()
         {
 #if !UNITY_EDITOR
-            m_MasterBus.getVolume(out float vol);
-            m_MasterBus.setVolume(Mathf.Lerp(vol, IsFocused.Value ? 1 : 0, Time.unscaledDeltaTime * 5));
+            if (m_MasterBus.isValid())
+            {
+                m_MasterBus.getVolume(out float vol);
+                m_MasterBus.setVolume(Mathf.Lerp(vol, IsFocused.Value ? 1 : 0, Time.unscaledDeltaTime * 5));
+            }
 #endif
 
             if (MainListenerTarget != null)

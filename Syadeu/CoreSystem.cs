@@ -103,7 +103,7 @@ namespace Syadeu
         /// <param name="workerIndex"></param>
         /// <param name="job"></param>
         /// <returns></returns>
-        public static bool AddBackgroundJob(int workerIndex, BackgroundJobEntity job)
+        public static bool AddBackgroundJob(int workerIndex, BackgroundJob job)
         {
             if (job.MainJob != null)
             {
@@ -160,7 +160,7 @@ namespace Syadeu
         /// 놀고있고 스탠드얼론이 아닌 백그라운드잡 Worker에 해당 잡을 수행시키도록 리스트에 등록합니다.
         /// </summary>
         /// <param name="job"></param>
-        public static void AddBackgroundJob(BackgroundJobEntity job)
+        public static void AddBackgroundJob(BackgroundJob job)
         {
             if (job.MainJob != null)
             {
@@ -254,9 +254,8 @@ namespace Syadeu
         private bool m_AsyncOperator = false;
 
         private readonly List<BackgroundJobWorker> BackgroundJobWorkers = new List<BackgroundJobWorker>();
-        //private readonly List<UnityEngine.Profiling.CustomSampler> BackgroundJobWorkerSamplers = new List<UnityEngine.Profiling.CustomSampler>();
-        private readonly ConcurrentQueue<BackgroundJobEntity> m_BackgroundJobs = new ConcurrentQueue<BackgroundJobEntity>();
-
+        
+        private readonly ConcurrentQueue<BackgroundJob> m_BackgroundJobs = new ConcurrentQueue<BackgroundJob>();
         private readonly ConcurrentQueue<ForegroundJob> m_ForegroundJobs = new ConcurrentQueue<ForegroundJob>();
 
         internal readonly ConcurrentQueue<Timer> m_Timers = new ConcurrentQueue<Timer>();
@@ -324,7 +323,7 @@ namespace Syadeu
                 ThreadAwaiter(100);
             } while (!m_StartUpdate && MainThread != null && Initialized);
 
-            int mainWorkerIndex = CreateNewBackgroundJobWorker(false);
+            CreateNewBackgroundJobWorker(false);
 
             //"LOG :: Background worker has started".ToLog();
 
@@ -433,18 +432,18 @@ namespace Syadeu
                 OnBackgroundJobSampler.Begin();
 #endif
                 #region BackgroundJob
-                if (m_BackgroundJobs.Count > 0 &&
-                    //GetBackgroundWorker(out BackgroundJobWorker worker) &&
-                    m_BackgroundJobs.TryDequeue(out BackgroundJobEntity job))
+                for (int i = 0; m_BackgroundJobs.Count > 0 && i < BackgroundJobWorkers.Count; i++)
                 {
-                    BackgroundJobWorkers[mainWorkerIndex].Jobs.Enqueue(job);
-                    //worker.Jobs.Enqueue(job);
+                    if (m_BackgroundJobs.TryDequeue(out BackgroundJob job))
+                    {
+                        BackgroundJobWorkers[i].Jobs.Enqueue(job);
+                    }
                 }
 
                 for (int i = 0; i < BackgroundJobWorkers.Count; i++)
                 {
-                    if (!BackgroundJobWorkers[i].Worker.IsBusy &&
-                        BackgroundJobWorkers[i].Jobs.Count > 0 &&
+                    if (BackgroundJobWorkers[i].Jobs.Count > 0 &&
+                        !BackgroundJobWorkers[i].Worker.IsBusy &&
                         BackgroundJobWorkers[i].Jobs.TryDequeue(out var wjob))
                     {
                         wjob.WorkerIndex = i;
@@ -683,7 +682,7 @@ namespace Syadeu
                     catch (Exception ex)
                     {
                         job.Faild = true;
-                        job.Result = ex.Message;
+                        //job.Result = ex.Message;
 
                         throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "잡을 실행하는 도중 에러가 발생되었습니다", job.CalledFrom, ex);
                     }
@@ -732,7 +731,7 @@ namespace Syadeu
             public int Index;
 
             public BackgroundWorker Worker;
-            public ConcurrentQueue<BackgroundJobEntity> Jobs = new ConcurrentQueue<BackgroundJobEntity>();
+            public ConcurrentQueue<BackgroundJob> Jobs = new ConcurrentQueue<BackgroundJob>();
             public bool standAlone;
         }
         internal BackgroundJobWorker GetBackgroundJobWorker(int index)
@@ -745,7 +744,7 @@ namespace Syadeu
         }
         private void BackgroundJobRequest(object sender, DoWorkEventArgs e)
         {
-            BackgroundJobEntity job = e.Argument as BackgroundJobEntity;
+            BackgroundJob job = e.Argument as BackgroundJob;
             
             try
             {
@@ -755,14 +754,14 @@ namespace Syadeu
             catch (UnityException mainthread)
             {
                 job.Faild = true; job.IsRunning = false; job.m_IsDone = true;
-                job.Result = $"{nameof(mainthread)}: {mainthread.Message}";
+                //job.Result = $"{nameof(mainthread)}: {mainthread.Message}";
 
                 throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "유니티 API 가 사용되어 백그라운드에서 돌릴 수 없습니다", job.CalledFrom, mainthread);
             }
             catch (Exception ex)
             {
                 job.Faild = true; job.IsRunning = false; job.m_IsDone = true; job.Exception = ex;
-                job.Result = $"{nameof(ex)}: {ex.Message}";
+                //job.Result = $"{nameof(ex)}: {ex.Message}";
 
                 throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "잡을 실행하는 도중 에러가 발생되었습니다", job.CalledFrom, ex);
             }
@@ -771,7 +770,7 @@ namespace Syadeu
         }
         private void BackgroundJobCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            BackgroundJobEntity job = e.Result as BackgroundJobEntity;
+            BackgroundJob job = e.Result as BackgroundJob;
             job.IsRunning = false;
             job.m_IsDone = true;
         }
@@ -807,11 +806,11 @@ namespace Syadeu
 
             return false;
         }
-        internal static void InternalAddBackgroundJob(BackgroundJobEntity job)
+        internal static void InternalAddBackgroundJob(BackgroundJob job)
         {
             Instance.m_BackgroundJobs.Enqueue(job);
         }
-        internal static bool InternalAddBackgroundJob(int workerIndex, BackgroundJobEntity job)
+        internal static bool InternalAddBackgroundJob(int workerIndex, BackgroundJob job)
         {
             if (workerIndex >= Instance.BackgroundJobWorkers.Count) return false;
 

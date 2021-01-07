@@ -5,7 +5,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Syadeu
+namespace Syadeu.Database
 {
     /// <summary>
     /// 값을 체크하는 방식을 설정합니다.
@@ -25,11 +25,12 @@ namespace Syadeu
     /// Value의 값이 바뀌면 OnValueChange event를 호출하는 클래스입니다.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public sealed class ObValue<T> where T : struct, System.IConvertible
+    public sealed class ObValue<T> where T : struct, IConvertible
     {
         public delegate void ValueChangeAction(T current, T target);
 
-        public ObValueDetection DetectionFlag = ObValueDetection.Constant;
+        public ObValueDetection DetectionFlag { get; }
+
         private T m_Value;
         public T Value
         {
@@ -51,37 +52,10 @@ namespace Syadeu
         }
 
         public event ValueChangeAction OnValueChange;
-    }
-    /// <summary>
-    /// Value의 값이 바뀌면 OnValueChange event를 호출하는 클래스입니다.
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    public sealed class ObClass<T> where T : class
-    {
-        public delegate void ValueChangeAction(T current, T target);
-
-        public ObValueDetection DetectionFlag = ObValueDetection.Constant;
-        private T m_Value;
-        public T Value
+        public ObValue(ObValueDetection flag = ObValueDetection.Constant)
         {
-            get { return m_Value; }
-            set
-            {
-                T temp = m_Value;
-                m_Value = value;
-
-                if (DetectionFlag == ObValueDetection.Constant)
-                {
-                    OnValueChange?.Invoke(temp, value);
-                }
-                else if (DetectionFlag == ObValueDetection.Changed)
-                {
-                    if (!temp.Equals(value)) OnValueChange?.Invoke(temp, value);
-                }
-            }
+            DetectionFlag = flag;
         }
-
-        public event ValueChangeAction OnValueChange;
     }
 
     public sealed class ObDictionary<TKey, TValue> : IEnumerable<KeyValuePair<TKey, TValue>>, IDictionary<TKey, TValue>
@@ -265,8 +239,8 @@ namespace Syadeu
     {
         public delegate void ValueChangeAction(IEnumerable<T> target);
 
-        protected abstract IEnumerable<T> m_List { get; }
-        public IEnumerable<T> Value => m_List;
+        protected abstract IEnumerable<T> List { get; }
+        public IEnumerable<T> Value => List;
         public abstract int Count { get; }
 
         public ObservableBag()
@@ -274,7 +248,7 @@ namespace Syadeu
             Initialize();
         }
         public abstract void Initialize();
-        protected void OnChange() => OnValueChange?.Invoke(m_List);
+        protected void OnChange() => OnValueChange?.Invoke(List);
 
         public event ValueChangeAction OnValueChange;
     }
@@ -285,7 +259,7 @@ namespace Syadeu
     public sealed class ObList<T> : ObservableBag<T>
     {
         private List<T> ts;
-        protected override IEnumerable<T> m_List => ts;
+        protected override IEnumerable<T> List => ts;
         public override int Count => ts.Count;
 
         public override void Initialize()
@@ -327,7 +301,7 @@ namespace Syadeu
     {
         private readonly T[] ts;
         public override int Count => ts.Length;
-        protected override IEnumerable<T> m_List => ts;
+        protected override IEnumerable<T> List => ts;
 
         public ObArray(int lenght)
         {
@@ -354,7 +328,7 @@ namespace Syadeu
     public class ObQueue<T> : ObservableBag<T>
     {
         private ConcurrentQueue<T> ts;
-        protected override IEnumerable<T> m_List => ts;
+        protected override IEnumerable<T> List => ts;
         public override int Count => ts.Count;
 
         public override void Initialize()
