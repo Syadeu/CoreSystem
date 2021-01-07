@@ -59,21 +59,18 @@ namespace Syadeu.FMOD
                 SoundRooms.TryAdd(i, FMODSettings.SoundRooms[i]);
             }
 
-            CoreSystem.OnUnityStart += OnUnityStart;
             CoreSystem.OnUnityUpdate += OnUnityUpdate;
 
             StartBackgroundUpdate(OnBackgroundAsyncUpdate());
             StartUnityUpdate(OnUnityCustomUpdater());
         }
-
-        private void OnUnityStart()
+        private void Awake()
         {
-            CreateMemory(SyadeuSettings.Instance.m_MemoryBlock);
-
-            FMODStudioSystem.getBus("bus:/", out m_MasterBus);
-
             MainListener = Instance.gameObject.AddComponent<FMODListener>();
             FMODStudioSystem.setListenerWeight(MainListener.Index, 1);
+
+            CreateMemory(SyadeuSettings.Instance.m_MemoryBlock);
+            FMODStudioSystem.getBus("bus:/", out m_MasterBus);
 
             IsFocused.OnValueChange += IsFocused_OnValueChange;
         }
