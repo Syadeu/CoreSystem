@@ -1,4 +1,6 @@
-﻿namespace Syadeu
+﻿using System;
+
+namespace Syadeu
 {
     public interface IJob
     {
@@ -42,14 +44,16 @@
         /// </remarks>
         void Await();
     }
+    [Obsolete("테스트 중", true)]
     public interface IJob<T> : IJob where T : IJobNative
     {
         T Result { get; }
     }
-
+    [Obsolete("테스트 중", true)]
     public interface IJobNative
     {
     }
+    [Obsolete("테스트 중", true)]
     public interface IJobTransfrom : IJobNative
     {
         UnityEngine.Jobs.TransformAccessArray TransformAccessArray { get; }
