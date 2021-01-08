@@ -16,8 +16,8 @@ namespace Syadeu.FMOD
         public List<SoundRoom> m_SoundRooms = new List<SoundRoom>();
         public string[] m_LocalizeBankNames;
 
-        public Dictionary<int, SoundListGUID> SoundLists { get; private set; }
-        public Dictionary<int, SoundRoom> SoundRooms { get; private set; }
+        //public Dictionary<int, SoundListGUID> SoundLists { get; private set; }
+        //public Dictionary<int, SoundRoom> SoundRooms { get; private set; }
         public static string[] LocalizedBankNames { get { return Instance.m_LocalizeBankNames; } }
 
         const string SettingsAssetName = "FMODSystemSettings";
@@ -32,20 +32,20 @@ namespace Syadeu.FMOD
         }
 #endif
 
-        public override void OnInitialized()
-        {
-            SoundLists = new Dictionary<int, SoundListGUID>();
-            for (int i = 0; i < m_SoundLists.Count; i++)
-            {
-                SoundLists.Add(m_SoundLists[i].listIndex, new SoundListGUID(m_SoundLists[i]));
-            }
+        //public override void OnInitialized()
+        //{
+        //    SoundLists = new Dictionary<int, SoundListGUID>();
+        //    for (int i = 0; i < m_SoundLists.Count; i++)
+        //    {
+        //        SoundLists.Add(m_SoundLists[i].listIndex, new SoundListGUID(m_SoundLists[i]));
+        //    }
 
-            SoundRooms = new Dictionary<int, SoundRoom>();
-            for (int i = 0; i < m_SoundRooms.Count; i++)
-            {
-                m_SoundRooms[i].Initialize(i);
-                SoundRooms.Add(i, m_SoundRooms[i]);
-            }
-        }
+        //    SoundRooms = new Dictionary<int, SoundRoom>();
+        //    for (int i = 0; i < m_SoundRooms.Count; i++)
+        //    {
+        //        m_SoundRooms[i].Initialize(i);
+        //        SoundRooms.Add(i, m_SoundRooms[i]);
+        //    }
+        //}
     }
 }

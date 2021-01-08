@@ -48,17 +48,17 @@ namespace Syadeu.FMOD
                 LoadBank("Master.strings");
             }
 
-            //for (int i = 0; i < FMODSettings.SoundLists.Count; i++)
-            //{
-            //    SoundLists.Add(FMODSettings.SoundLists[i].listIndex, new SoundListGUID(FMODSettings.SoundLists[i]));
-            //}
+            for (int i = 0; i < FMODSettings.Instance.m_SoundLists.Count; i++)
+            {
+                SoundLists.Add(FMODSettings.Instance.m_SoundLists[i].listIndex, new SoundListGUID(FMODSettings.Instance.m_SoundLists[i]));
+            }
 
-            //SoundRooms.Clear();
-            //for (int i = 0; i < FMODSettings.SoundRooms.Count; i++)
-            //{
-            //    FMODSettings.SoundRooms[i] = FMODSettings.SoundRooms[i].Initialize(i);
-            //    SoundRooms.Add(i, FMODSettings.SoundRooms[i]);
-            //}
+            SoundRooms.Clear();
+            for (int i = 0; i < FMODSettings.Instance.m_SoundRooms.Count; i++)
+            {
+                FMODSettings.Instance.m_SoundRooms[i] = FMODSettings.Instance.m_SoundRooms[i].Initialize(i);
+                SoundRooms.Add(i, FMODSettings.Instance.m_SoundRooms[i]);
+            }
 
             CoreSystem.OnUnityUpdate += OnUnityUpdate;
 
@@ -197,10 +197,10 @@ namespace Syadeu.FMOD
                     FMODSound sound = FMODSound.GetInstance(i);
                     if (!sound.Activated) continue;
 
-                    if (FMODSettings.Instance.SoundRooms.Count > 0 && MainListener != null)
+                    if (SoundRooms.Count > 0 && MainListener != null)
                     {
                         bool temp = false;
-                        foreach (var room in FMODSettings.Instance.SoundRooms.Values)
+                        foreach (var room in SoundRooms.Values)
                         {
                             if (room.IsValid() && room.Contains(MainListener.Position))
                             {
@@ -265,8 +265,8 @@ namespace Syadeu.FMOD
 
         private List<EventDescription> PreloadedSamples { get; set; } = new List<EventDescription>();
 
-        //public Dictionary<int, SoundListGUID> SoundLists { get; } = new Dictionary<int, SoundListGUID>();
-        //public Dictionary<int, SoundRoom> SoundRooms { get; } = new Dictionary<int, SoundRoom>();
+        public Dictionary<int, SoundListGUID> SoundLists { get; } = new Dictionary<int, SoundListGUID>();
+        public Dictionary<int, SoundRoom> SoundRooms { get; } = new Dictionary<int, SoundRoom>();
 
         public SoundRoom CurrentListenerRoom { get; private set; } = SoundRoom.Null;
         public FMODListener MainListener { get; private set; }
@@ -290,7 +290,7 @@ namespace Syadeu.FMOD
         /// <returns></returns>
         public static bool GetSoundList(int listIndex, out SoundListGUID list)
         {
-            if (!FMODSettings.Instance.SoundLists.TryGetValue(listIndex, out list))
+            if (!Instance.SoundLists.TryGetValue(listIndex, out list))
             {
                 $"SOUND ERROR :: 지정된 사운드 리스트를 찾을 수 없음\nListIndex :: {listIndex}".ToLogError();
                 return false;
