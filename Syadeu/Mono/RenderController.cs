@@ -41,7 +41,7 @@ namespace Syadeu.Mono
                 Camera = RenderManager.Instance.MainCamera;
             }
 
-            CoreSystem.Instance.StartBackgroundUpdate(BackgroundUpdate());
+            CoreSystem.Instance.StartBackgroundUpdate(BackgroundUpdate(RenderManager.Instance));
         }
 
         private void Update()
@@ -53,17 +53,17 @@ namespace Syadeu.Mono
             Destroyed = true;
         }
 
-        private IEnumerator BackgroundUpdate()
+        private IEnumerator BackgroundUpdate(RenderManager mgr)
         {
-            while (!Destroyed)
+            while (!Destroyed && mgr != null && mgr.transform != null)
             {
-                if (RenderManager.Instance.IsInCameraScreen(Position))
+                if (mgr.IsInCameraScreen(Position))
                 {
                     IsInvisible = false;
 
                     if (!Listed)
                     {
-                        if (!IsStandalone) RenderManager.Instance.AddRenderControl(this);
+                        if (!IsStandalone) mgr.AddRenderControl(this);
 
                         CoreSystem.AddForegroundJob(InvokeOnVisible);
                         Listed = true;
