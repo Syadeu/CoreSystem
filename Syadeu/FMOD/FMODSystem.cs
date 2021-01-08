@@ -72,7 +72,7 @@ namespace Syadeu.FMOD
         }
         private void Awake()
         {
-            CreateMemory(SyadeuSettings.Instance.m_MemoryBlock);
+            CreateMemory(SyadeuSettings.Instance.m_FMODMemoryBlock);
             FMODStudioSystem.getBus("bus:/", out m_MasterBus);
 
             IsFocused.OnValueChange += IsFocused_OnValueChange;

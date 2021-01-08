@@ -29,15 +29,15 @@ namespace Syadeu.FMOD
             FMODSound sound = GetDatabase();
             if (sound == null)
             {
-                FMODSystem.Instance.CreateMemory(SyadeuSettings.Instance.m_MemoryBlock);
-                SyadeuSettings.Instance.m_MemoryBlock *= 2;
+                FMODSystem.Instance.CreateMemory(SyadeuSettings.Instance.m_FMODMemoryBlock);
+                SyadeuSettings.Instance.m_FMODMemoryBlock *= 2;
                 //if (InstanceCount < m_MemoryBlock)
                 //{
                 //    sound = new FMODSound();
                 //}
                 //else
                 //{
-                $"CoreSystem.FMOD :: Sound is reached maximum instance count => {SyadeuSettings.Instance.m_MemoryBlock}".ToLog();
+                $"CoreSystem.FMOD :: Sound is reached maximum instance count => {SyadeuSettings.Instance.m_FMODMemoryBlock}".ToLog();
                 //    sound = GetDatabase(Playlist[10].DataIndex);
                 //}
                 sound = GetDatabase();

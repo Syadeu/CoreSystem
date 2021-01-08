@@ -15,14 +15,13 @@ namespace SyadeuEditor
             EditorUtils.StringHeader("CoreSystem");
             EditorUtils.SectorLine();
 
-
             if (Application.isPlaying)
             {
                 Runtime();
                 EditorUtils.SectorLine();
                 FMOD();
             }
-
+            else EditorUtils.StringRich("이 시스템은 실행 중에만 정보를 표시합니다", 12, StringColor.maroon, true);
         }
 
         bool m_OpenManagerList = false;

@@ -28,6 +28,10 @@ namespace SyadeuEditor
         private void OnEnable()
         {
             m_Render = target as RenderController;
+            m_RecycleMono = m_Render.GetComponent<RecycleableMonobehaviour>();
+
+            if (Application.isPlaying) return;
+
             m_ChildScriptList = m_Render.GetComponentsInChildren<Behaviour>();
             m_SelectedChildList = new bool[m_ChildScriptList.Length];
             for (int i = 0; i < m_ChildScriptList.Length; i++)
@@ -39,11 +43,14 @@ namespace SyadeuEditor
                 }
             }
 
-            m_RecycleMono = m_Render.GetComponent<RecycleableMonobehaviour>();
             EditorUtils.SortComponentOrder(m_Render, 1);
         }
         private void OnValidate()
         {
+            m_RecycleMono = m_Render.GetComponent<RecycleableMonobehaviour>();
+
+            if (Application.isPlaying) return;
+
             m_ChildScriptList = m_Render.GetComponentsInChildren<Behaviour>();
             m_SelectedChildList = new bool[m_ChildScriptList.Length];
             for (int i = 0; i < m_ChildScriptList.Length; i++)
@@ -54,8 +61,6 @@ namespace SyadeuEditor
                     m_SelectedChildList[i] = true;
                 }
             }
-
-            m_RecycleMono = m_Render.GetComponent<RecycleableMonobehaviour>();
         }
 
         public static void DrawStatus(RenderController render, bool center)
@@ -67,6 +72,11 @@ namespace SyadeuEditor
         {
             StringColor visibleColor;
             string visibleText;
+            if (!Application.isPlaying)
+            {
+                visibleColor = StringColor.maroon;
+                return $"<color={visibleColor}>실행 중이 아님</color>";
+            }
             if (render.IsInvisible)
             {
                 visibleColor = StringColor.maroon;
@@ -87,12 +97,41 @@ namespace SyadeuEditor
             }
             return $"<color={visibleColor}>{visibleText}</color>";
         }
+        private void DrawRecycleMono()
+        {
+            StringColor activeColor;
+            string activeText;
+
+            if (!Application.isPlaying)
+            {
+                activeColor = StringColor.maroon;
+                EditorUtils.StringRich($"상태: <color={activeColor}>실행 중이 아님</color>", true);
+                return;
+            }
+
+            if (!m_RecycleMono.Activated)
+            {
+                activeColor = StringColor.maroon;
+                activeText = "비활성화";
+            }
+            else
+            {
+                activeColor = StringColor.teal;
+                activeText = "활성화";
+            }
+            EditorUtils.StringRich($"상태: <color={activeColor}>{activeText}</color>", true);
+            if (m_RecycleMono.WaitForDeletion)
+            {
+                EditorUtils.StringRich("삭제 대기 중", StringColor.maroon, true);
+            }
+        }
 
         public override void OnInspectorGUI()
         {
             EditorUtils.StringHeader("Render Controller");
             EditorUtils.SectorLine();
 
+            EditorUtils.StringRich(m_Render.IsStandalone ? "Standalone" : "Managed", true);
             DrawStatus(m_Render, true);
 
             EditorUtils.SectorLine();
@@ -102,6 +141,8 @@ namespace SyadeuEditor
                 DrawRecycleMono();
                 EditorUtils.SectorLine();
             }
+
+            if (Application.isPlaying) return;
 
             EditorUtils.StringHeader("Settings", 15);
             EditorGUI.BeginChangeCheck();
@@ -122,12 +163,19 @@ namespace SyadeuEditor
 
         private void Setting()
         {
+            var camProperty = serializedObject.FindProperty("m_Camera");
+            var offsetProperty = serializedObject.FindProperty("m_Offset");
+
+            if (m_Render.IsStandalone)
+            {
+                if (camProperty.objectReferenceValue == null)
+                {
+                    EditorGUILayout.HelpBox("카메라가 설정되지 않았습니다", MessageType.Error);
+                }
+            }
             m_Render.IsStandalone = EditorGUILayout.ToggleLeft("단독 컨트롤러", m_Render.IsStandalone);
             if (m_Render.IsStandalone)
             {
-                var camProperty = serializedObject.FindProperty("m_Camera");
-                var offsetProperty = serializedObject.FindProperty("m_Offset");
-
                 EditorGUI.indentLevel += 1;
 
                 EditorGUILayout.PropertyField(camProperty, new GUIContent("> 타겟 카메라: "));
@@ -151,7 +199,8 @@ namespace SyadeuEditor
 
                 for (int i = 0; i < m_ChildScriptList.Length; i++)
                 {
-                    if (m_ChildScriptList[i] == target) continue;
+                    if (m_ChildScriptList[i] == target ||
+                        m_ChildScriptList[i] == m_RecycleMono) continue;
                     EditorGUI.BeginChangeCheck();
                     m_SelectedChildList[i] = EditorGUILayout.ToggleLeft($"{m_ChildScriptList[i].name} : {m_ChildScriptList[i].GetType()}", m_SelectedChildList[i]);
                     if (EditorGUI.EndChangeCheck())
@@ -179,25 +228,6 @@ namespace SyadeuEditor
 
         }
 
-        private void DrawRecycleMono()
-        {
-            StringColor activeColor;
-            string activeText;
-            if (!m_RecycleMono.Activated)
-            {
-                activeColor = StringColor.maroon;
-                activeText = "비활성화";
-            }
-            else
-            {
-                activeColor = StringColor.teal;
-                activeText = "활성화";
-            }
-            EditorUtils.StringRich($"상태: <color={activeColor}>{activeText}</color>", true);
-            if (m_RecycleMono.WaitForDeletion)
-            {
-                EditorUtils.StringRich("삭제 대기 중", StringColor.maroon, true);
-            }
-        }
+        
     }
 }
