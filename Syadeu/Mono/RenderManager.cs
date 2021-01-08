@@ -70,18 +70,21 @@ namespace Syadeu.Mono
                         continue;
                     }
 
-                    if (ManagedObjects[i].WhileVisible.Invoke())
+                    if (ManagedObjects[i].WhileVisible != null)
                     {
-                        if (ManagedObjects[i].Controller.IsForcedOff)
+                        if (ManagedObjects[i].WhileVisible.Invoke())
                         {
-                            ManagedObjects[i].Controller.RenderOn();
+                            if (ManagedObjects[i].Controller.IsForcedOff)
+                            {
+                                ManagedObjects[i].Controller.RenderOn();
+                            }
                         }
-                    }
-                    else
-                    {
-                        if (!ManagedObjects[i].Controller.IsForcedOff)
+                        else
                         {
-                            ManagedObjects[i].Controller.RenderOff();
+                            if (!ManagedObjects[i].Controller.IsForcedOff)
+                            {
+                                ManagedObjects[i].Controller.RenderOff();
+                            }
                         }
                     }
 

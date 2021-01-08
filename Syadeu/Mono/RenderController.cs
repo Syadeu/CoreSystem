@@ -67,10 +67,10 @@ namespace Syadeu.Mono
                 {
                     IsInvisible = false;
 
-                    if (IsForcedOff && WhileVisible.Invoke())
-                    {
-                        RenderOn();
-                    }
+                    //if (IsForcedOff && WhileVisible.Invoke())
+                    //{
+                    //    CoreSystem.AddForegroundJob(RenderOn);
+                    //}
 
                     if (!Listed)
                     {
@@ -96,9 +96,22 @@ namespace Syadeu.Mono
         }
 
         private void InvokeVisible()
-            => OnVisible?.Invoke();
+        {
+            OnVisible?.Invoke();
+            RenderOn();
+        }
         private void InvokeInvisible()
-            => OnInvisible?.Invoke();
+        {
+            OnInvisible?.Invoke();
+            foreach (var item in Renderers)
+            {
+                item.enabled = false;
+            }
+            for (int i = 0; i < AdditionalRenders.Count; i++)
+            {
+                AdditionalRenders[i].enabled = false;
+            }
+        }
 
         internal void RenderOff()
         {
