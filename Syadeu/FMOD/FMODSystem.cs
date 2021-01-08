@@ -67,7 +67,7 @@ namespace Syadeu.FMOD
         }
         private void Awake()
         {
-            MainListener = Instance.gameObject.AddComponent<FMODListener>();
+            MainListener = gameObject.AddComponent<FMODListener>();
             FMODStudioSystem.setListenerWeight(MainListener.Index, 1);
 
             CreateMemory(SyadeuSettings.Instance.m_MemoryBlock);
