@@ -12,9 +12,9 @@ namespace Syadeu.FMOD
     {
         public bool m_DisplayLogs = false;
 
-        [SerializeField] private List<SoundList> m_SoundLists = new List<SoundList>();
-        [SerializeField] private List<SoundRoom> m_SoundRooms = new List<SoundRoom>();
-        [SerializeField] private string[] m_LocalizeBankNames;
+        public List<SoundList> m_SoundLists = new List<SoundList>();
+        public List<SoundRoom> m_SoundRooms = new List<SoundRoom>();
+        public string[] m_LocalizeBankNames;
 
         public static Dictionary<int, SoundListGUID> SoundLists { get; private set; }
         public static Dictionary<int, SoundRoom> SoundRooms { get; private set; }
@@ -48,7 +48,7 @@ namespace Syadeu.FMOD
             for (int i = 0; i < m_SoundRooms.Count; i++)
             {
                 m_SoundRooms[i].Initialize(i);
-                SoundRooms.Add(u, m_SoundRooms[i]);
+                SoundRooms.Add(i, m_SoundRooms[i]);
             }
         }
     }

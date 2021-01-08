@@ -47,11 +47,11 @@ namespace SyadeuEditor
             EditorGUILayout.LabelField("_______________________________________________________________________");
             EditorGUILayout.Space();
 
-            if (FMODSettings.SoundLists.Contains(SoundList))
+            if (FMODSettings.Instance.m_SoundLists.Contains(SoundList))
             {
                 if (GUILayout.Button("사운드 리스트에서 제거"))
                 {
-                    FMODSettings.SoundLists.Remove(SoundList);
+                    FMODSettings.Instance.m_SoundLists.Remove(SoundList);
                     EditorUtility.SetDirty(FMODSettings.Instance);
                 }
             }
@@ -59,7 +59,7 @@ namespace SyadeuEditor
             {
                 if (GUILayout.Button("사운드 리스트에 추가"))
                 {
-                    FMODSettings.SoundLists.Add(SoundList);
+                    FMODSettings.Instance.m_SoundLists.Add(SoundList);
                     EditorUtility.SetDirty(FMODSettings.Instance);
                 }
             }

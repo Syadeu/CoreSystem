@@ -106,10 +106,10 @@ namespace SyadeuEditor
             for (int i = 0; i < FMODSettings.SoundLists.Count; i++)
             {
                 EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.LabelField($"{FMODSettings.SoundLists[i].listIndex}: {FMODSettings.SoundLists[i].listName}");
+                EditorGUILayout.LabelField($"{FMODSettings.Instance.m_SoundLists[i].listIndex}: {FMODSettings.Instance.m_SoundLists[i].listName}");
                 if (GUILayout.Button("Remove"))
                 {
-                    FMODSettings.SoundLists.RemoveAt(i);
+                    FMODSettings.Instance.m_SoundLists.RemoveAt(i);
                     i--;
                     continue;
                 }
@@ -117,10 +117,10 @@ namespace SyadeuEditor
 
                 EditorGUI.indentLevel += 1;
 
-                EditorGUILayout.ObjectField("Asset: ", FMODSettings.SoundLists[i], typeof(SoundList), false);
-                EditorGUILayout.LabelField($"Contains: {FMODSettings.SoundLists[i].fSounds.Count}");
+                EditorGUILayout.ObjectField("Asset: ", FMODSettings.Instance.m_SoundLists[i], typeof(SoundList), false);
+                EditorGUILayout.LabelField($"Contains: {FMODSettings.Instance.m_SoundLists[i].fSounds.Count}");
 
-                if (CheckSoundlistError(FMODSettings.SoundLists[i], out string warnning))
+                if (CheckSoundlistError(FMODSettings.Instance.m_SoundLists[i], out string warnning))
                 {
                     EditorGUILayout.LabelField("Error Found");
                     EditorGUILayout.HelpBox(warnning, MessageType.Error);
@@ -194,7 +194,7 @@ namespace SyadeuEditor
 
             if (GUILayout.Button("Add"))
             {
-                FMODSettings.SoundRooms.Add(SoundRoom.Null);
+                FMODSettings.Instance.m_SoundRooms.Add(SoundRoom.Null);
                 Reset();
                 Repaint();
                 return;
@@ -206,7 +206,7 @@ namespace SyadeuEditor
                 EditorGUILayout.LabelField($"Room {i}");
                 if (GUILayout.Button("Remove"))
                 {
-                    FMODSettings.SoundRooms.RemoveAt(i);
+                    FMODSettings.Instance.m_SoundRooms.RemoveAt(i);
                     i--;
                     Reset();
                     Repaint();
