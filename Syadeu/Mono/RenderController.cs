@@ -57,7 +57,7 @@ namespace Syadeu.Mono
 
         private IEnumerator BackgroundUpdate(RenderManager mgr)
         {
-            while (Transform != null && !Destroyed && mgr != null)
+            while (!Destroyed && mgr != null)
             {
                 if (mgr.IsInCameraScreen(Position))
                 {
