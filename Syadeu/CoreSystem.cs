@@ -243,17 +243,6 @@ namespace Syadeu
             });
         }
 
-        public static Vector3 GetPosition(Transform transform)
-        {
-            if (IsMainthread()) return transform.position;
-            else
-            {
-                Vector3 position = default;
-                AddForegroundJob(() => position = transform.position).Await();
-                return position;
-            }
-        }
-
         #region INIT
         public delegate void Awaiter(int milliseconds);
         public delegate void BackgroundWork(Awaiter awaiter);
@@ -402,7 +391,7 @@ namespace Syadeu
                                     m_CustomBackgroundUpdates.TryRemove(item.Key, out var unused);
                                 }
                             }
-                            else/* if (item.Key.Current is YieldInstruction baseYield)*/
+                            else if (item.Key.Current is YieldInstruction baseYield)
                             {
                                 m_CustomUpdates.TryRemove(item.Key, out var unused);
                                 throw new CoreSystemException(CoreSystemExceptionFlag.Background,
@@ -650,7 +639,7 @@ namespace Syadeu
                                     m_CustomBackgroundUpdates.TryRemove(item.Key, out var unused);
                                 }
                             }
-                            else /*if (item.Key.Current is YieldInstruction baseYield)*/
+                            else if (item.Key.Current is YieldInstruction baseYield)
                             {
                                 m_CustomUpdates.TryRemove(item.Key, out var unused);
                                 throw new CoreSystemException(CoreSystemExceptionFlag.Foreground,
@@ -862,6 +851,16 @@ namespace Syadeu
         internal static void InternalAddForegroundJob(ForegroundJob job)
         {
             Instance.m_ForegroundJobs.Enqueue(job);
+        }
+        internal static Vector3 GetPosition(Transform transform)
+        {
+            if (IsMainthread()) return transform.position;
+            else
+            {
+                Vector3 position = default;
+                AddForegroundJob(() => position = transform.position).Await();
+                return position;
+            }
         }
 
         #endregion

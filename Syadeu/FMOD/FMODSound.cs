@@ -99,11 +99,7 @@ namespace Syadeu.FMOD
                     if (Transform == null) return INIT_POSITION;
                     else
                     {
-                        if (IsMainthread()) return Transform.position.ToThreadSafe();
-                        else
-                        {
-                            CoreSystem.GetPosition(Transform);
-                        }
+                        return CoreSystem.GetPosition(Transform).ToThreadSafe();
                     }
                 }
                 else
