@@ -32,7 +32,7 @@ namespace Syadeu.FMOD
         }
 #endif
 
-        private void OnEnable()
+        public override void OnInitialized()
         {
             SoundLists = new Dictionary<int, SoundListGUID>();
             for (int i = 0; i < m_SoundLists.Count; i++)
