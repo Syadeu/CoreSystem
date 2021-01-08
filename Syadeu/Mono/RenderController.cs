@@ -29,6 +29,10 @@ namespace Syadeu.Mono
         internal bool IsInvisible { get; set; } = true;
         internal bool IsForcedOff { get; set; } = false;
 
+        internal Vector3 Position { get; private set; }
+        internal bool Destroyed { get; private set; } = false;
+        internal bool Listed { get; private set; } = false;
+
         private void Awake()
         {
             Renderers = transform.GetComponentsInChildren<Renderer>();
@@ -42,25 +46,52 @@ namespace Syadeu.Mono
 
                 Camera = RenderManager.Instance.MainCamera;
             }
+
+            CoreSystem.Instance.StartBackgroundUpdate(BackgroundUpdate());
         }
 
-        private void OnBecameVisible()
+        private void Update()
         {
-            IsInvisible = false;
+            Position = transform.position;
+        }
+        private void OnDestroy()
+        {
+            Destroyed = true;
+        }
 
-            OnVisible?.Invoke();
-            if (IsForcedOff && WhileVisible.Invoke())
+        private IEnumerator BackgroundUpdate()
+        {
+            while (!Destroyed)
             {
-                RenderOn();
+                if (RenderManager.Instance.IsInCameraScreen(Position))
+                {
+                    IsInvisible = false;
+
+                    if (IsForcedOff && WhileVisible.Invoke())
+                    {
+                        RenderOn();
+                    }
+
+                    if (!Listed)
+                    {
+                        if (!IsStandalone) RenderManager.Instance.AddRenderControl(this);
+                        OnVisible?.Invoke();
+                        Listed = true;
+                    }
+                }
+                else
+                {
+                    IsInvisible = true;
+                    
+                    if (Listed)
+                    {
+                        OnInvisible?.Invoke();
+                        Listed = false;
+                    }
+                }
+
+                yield return null;
             }
-
-            if (!IsStandalone) RenderManager.Instance.AddRenderControl(this);
-        }
-        private void OnBecameInvisible()
-        {
-            IsInvisible = true;
-
-            OnInvisible?.Invoke();
         }
 
         internal void RenderOff()
