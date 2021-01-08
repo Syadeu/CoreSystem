@@ -75,7 +75,8 @@ namespace Syadeu.Mono
                     if (!Listed)
                     {
                         if (!IsStandalone) RenderManager.Instance.AddRenderControl(this);
-                        OnVisible?.Invoke();
+
+                        CoreSystem.AddForegroundJob(InvokeVisible);
                         Listed = true;
                     }
                 }
@@ -85,7 +86,7 @@ namespace Syadeu.Mono
                     
                     if (Listed)
                     {
-                        OnInvisible?.Invoke();
+                        CoreSystem.AddForegroundJob(InvokeInvisible);
                         Listed = false;
                     }
                 }
@@ -93,6 +94,11 @@ namespace Syadeu.Mono
                 yield return null;
             }
         }
+
+        private void InvokeVisible()
+            => OnVisible?.Invoke();
+        private void InvokeInvisible()
+            => OnInvisible?.Invoke();
 
         internal void RenderOff()
         {
