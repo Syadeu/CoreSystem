@@ -109,15 +109,29 @@ namespace SyadeuEditor
                     EditorGUILayout.LabelField($"\t활성화된 인스턴스: {sum}");
                     EditorGUILayout.EndHorizontal();
 
+                    EditorGUI.indentLevel += 1;
                     for (int a = 0; a < instances.Count; a++)
                     {
                         if (sortInstances[i] && !instances[a].Activated) continue;
 
-                        if (GUILayout.Button($"> {a}.\t{instances[a].DisplayName}: {instances[a].Activated}", "TextField"))
+                        string rightText = null;
+                        if (instances[a].GetComponent<RenderController>() != null)
+                        {
+                            RenderController render = instances[a].GetComponent<RenderController>();
+                            rightText = $": {RenderControllerEditor.DrawStatus(render)}";
+                            EditorGUILayout.BeginHorizontal();
+                        }
+                        if (EditorUtils.Button($"> {a}.\t{instances[a].DisplayName}: {instances[a].Activated}", "TextField", 1))
                         {
                             EditorGUIUtility.PingObject(instances[a]);
                         }
+                        if (!string.IsNullOrEmpty(rightText))
+                        {
+                            EditorUtils.StringRich(rightText);
+                            EditorGUILayout.EndHorizontal();
+                        }
                     }
+                    EditorGUI.indentLevel -= 1;
                 }
 
                 EditorUtils.SectorLine();

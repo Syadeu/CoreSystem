@@ -126,22 +126,7 @@ namespace Syadeu
 
             if (workerIndex >= Instance.BackgroundJobWorkers.Count) return false;
 
-            if (Instance.BackgroundJobWorkers[workerIndex].Worker.IsBusy)
-            {
-                Instance.BackgroundJobWorkers[workerIndex].Jobs.Enqueue(job);
-                return true;
-            }
-
-            try
-            {
-                Instance.BackgroundJobWorkers[workerIndex].Worker.RunWorkerAsync(job);
-            }
-            catch (Exception ex)
-            {
-                //GameConsole.LogError(ex);
-                Debug.LogError(ex);
-                return false;
-            }
+            Instance.BackgroundJobWorkers[workerIndex].Jobs.Enqueue(job);
             return true;
         }
         /// <summary>
@@ -154,20 +139,7 @@ namespace Syadeu
             if (workerIndex >= Instance.BackgroundJobWorkers.Count) return false;
             job = new BackgroundJob(action);
 
-            if (Instance.BackgroundJobWorkers[workerIndex].Worker.IsBusy)
-            {
-                Instance.BackgroundJobWorkers[workerIndex].Jobs.Enqueue(job);
-                return true;
-            }
-
-            try
-            {
-                Instance.BackgroundJobWorkers[workerIndex].Worker.RunWorkerAsync(job);
-            }
-            catch (Exception ex)
-            {
-                throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "잡을 실행하는 도중 에러가 발생되었습니다", ex);
-            }
+            Instance.BackgroundJobWorkers[workerIndex].Jobs.Enqueue(job);
             return true;
         }
         /// <summary>
@@ -871,22 +843,7 @@ namespace Syadeu
         {
             if (workerIndex >= Instance.BackgroundJobWorkers.Count) return false;
 
-            if (Instance.BackgroundJobWorkers[workerIndex].Worker.IsBusy)
-            {
-                Instance.BackgroundJobWorkers[workerIndex].Jobs.Enqueue(job);
-                return true;
-            }
-
-            try
-            {
-                Instance.BackgroundJobWorkers[workerIndex].Worker.RunWorkerAsync(job);
-            }
-            catch (Exception ex)
-            {
-                //GameConsole.LogError(ex);
-                Debug.LogError(ex);
-                return false;
-            }
+            Instance.BackgroundJobWorkers[workerIndex].Jobs.Enqueue(job);
             return true;
         }
         internal static void InternalAddForegroundJob(ForegroundJob job)

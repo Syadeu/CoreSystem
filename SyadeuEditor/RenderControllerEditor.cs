@@ -58,7 +58,12 @@ namespace SyadeuEditor
             m_RecycleMono = m_Render.GetComponent<RecycleableMonobehaviour>();
         }
 
-        public static void DrawStatus(RenderController render, bool center = false)
+        public static void DrawStatus(RenderController render, bool center)
+        {
+            string txt = DrawStatus(render);
+            EditorUtils.StringRich($"상태: {txt}", center);
+        }
+        public static string DrawStatus(RenderController render)
         {
             StringColor visibleColor;
             string visibleText;
@@ -80,7 +85,7 @@ namespace SyadeuEditor
                     visibleText = "Visible";
                 }
             }
-            EditorUtils.StringRich($"상태: <color={visibleColor}>{visibleText}</color>", center);
+            return $"<color={visibleColor}>{visibleText}</color>";
         }
 
         public override void OnInspectorGUI()

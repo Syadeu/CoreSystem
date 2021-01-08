@@ -61,6 +61,12 @@ namespace SyadeuEditor
         {
             EditorGUILayout.LabelField($"{text}", center ? centerStyle : headerStyle);
         }
+        public static void StringRich(string text, GUIStyle style, bool center = false)
+        {
+            style.richText = true;
+            if (center) style.alignment = TextAnchor.MiddleCenter;
+            EditorGUILayout.LabelField($"{text}", style);
+        }
         public static void StringRich(string text, StringColor color, bool center = false)
         {
             EditorGUILayout.LabelField($"<color={color}>{text}</color>", center ? centerStyle : headerStyle);
@@ -135,7 +141,14 @@ namespace SyadeuEditor
                 GUILayout.Space(EditorGUI.indentLevel * 15 * indent);
             }
             if (string.IsNullOrEmpty(style)) temp = GUILayout.Button(name);
-            else temp = GUILayout.Button(name, style);
+            else
+            {
+                GUIStyle tempStyle = new GUIStyle(style)
+                {
+                    richText = true
+                };
+                temp = GUILayout.Button(name, tempStyle);
+            }
             GUILayout.EndHorizontal();
 
             return temp;
@@ -168,6 +181,9 @@ namespace SyadeuEditor
 
         public static void SortComponentOrder(Component target, int order, bool closeOther = true)
         {
+            var prefab = PrefabUtility.GetCorrespondingObjectFromSource(target.gameObject);
+            if (prefab != null) return;
+
             var components = target.GetComponentsInChildren<Component>();
             int myIdx = -1;
             for (int i = 0; i < components.Length; i++)
@@ -175,6 +191,7 @@ namespace SyadeuEditor
                 if (components[i] == target)
                 {
                     myIdx = i;
+                    InternalEditorUtility.SetIsInspectorExpanded(components[i], true);
                 }
                 else if (closeOther)
                 {
@@ -182,6 +199,7 @@ namespace SyadeuEditor
                 }
             }
 
+            if (myIdx == order) return;
             if (myIdx > order)
             {
                 for (int i = myIdx; i != order; i--)

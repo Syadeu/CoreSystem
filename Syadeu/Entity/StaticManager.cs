@@ -6,7 +6,7 @@ namespace Syadeu
     /// 객체 자동 생성 Static 매니저 기본 클래스입니다.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public abstract class StaticManager<T> : StaticManagerEntity, IStaticMonoManager where T : Component
+    public abstract class StaticManager<T> : StaticManagerEntity, IStaticMonoManager where T : Component, IStaticMonoManager
     {
         public static bool Initialized => m_Instance != null;
 
@@ -48,33 +48,33 @@ namespace Syadeu
                         ins = obj.AddComponent<T>();
                     }
 
-                    if (!string.IsNullOrEmpty((ins as IStaticMonoManager).DisplayName))
+                    if (!string.IsNullOrEmpty(ins.DisplayName))
                     {
-                        ins.gameObject.name = (ins as IStaticMonoManager).DisplayName + $" : StaticManager<{typeof(T).Name}>";
+                        ins.gameObject.name = $"{ins.DisplayName} : StaticManager<{typeof(T).Name}>";
                     }
                     else ins.gameObject.name = $"Syadeu.{typeof(T).Name}";
 
-                    if ((ins as IStaticMonoManager).DontDestroy) DontDestroyOnLoad(ins.gameObject);
+                    if (ins.DontDestroy) DontDestroyOnLoad(ins.gameObject);
                     if (!Mono.SyadeuSettings.Instance.m_VisualizeObjects)
                     {
-                        if ((ins as IStaticMonoManager).HideInHierarchy) ins.gameObject.hideFlags = HideFlags.HideAndDontSave;
+                        if (ins.HideInHierarchy) ins.gameObject.hideFlags = HideFlags.HideAndDontSave;
                     }
 
-                    (ins as IStaticManager).OnInitialize();
+                    ins.OnInitialize();
 
                     if (typeof(T) == typeof(CoreSystem)) System = ins as CoreSystem;
                     else
                     {
-                        if ((ins as IStaticMonoManager).DontDestroy)
+                        if (ins.DontDestroy)
                         {
-                            CoreSystem.StaticManagers.Add(ins as IStaticMonoManager);
+                            CoreSystem.StaticManagers.Add(ins);
                             ins.transform.SetParent(System.transform);
                         }
-                        else CoreSystem.InstanceManagers.Add(ins as IStaticMonoManager);
+                        else CoreSystem.InstanceManagers.Add(ins);
                     }
 
                     m_Instance = ins;
-                    (ins as IStaticManager).OnStart();
+                    ins.OnStart();
                 }
                 return m_Instance;
             }

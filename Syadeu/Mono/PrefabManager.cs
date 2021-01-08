@@ -132,8 +132,8 @@ namespace Syadeu.Mono
             throw new InvalidCastException($"CoreSystem.Prefab :: {typeof(T).Name}와 일치하는 타입이 프리팹 리스트에 등록되지않아 찾을 수 없음");
         }
         /// <summary>
-        /// <see cref="PrefabList"/> ÀÇ ¸®½ºÆ®(<see cref="PrefabList.m_ObjectSettings"/>) ÀÎµ¦½º ¹øÈ£·Î 
-        /// ÀÎ½ºÅÏ½º¸¦ ¹Þ¾Æ¿É´Ï´Ù
+        /// <see cref="PrefabList"/>에서 리스트 인덱스(<see cref="PrefabList.m_ObjectSettings"/>)값으로 
+        /// 재사용 인스턴스를 받아옵니다.
         /// </summary>
         /// <param name="index"></param>
         /// <returns></returns>
