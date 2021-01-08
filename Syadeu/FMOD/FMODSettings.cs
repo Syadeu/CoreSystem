@@ -16,8 +16,8 @@ namespace Syadeu.FMOD
         public List<SoundRoom> m_SoundRooms = new List<SoundRoom>();
         public string[] m_LocalizeBankNames;
 
-        public static Dictionary<int, SoundListGUID> SoundLists { get; private set; }
-        public static Dictionary<int, SoundRoom> SoundRooms { get; private set; }
+        public Dictionary<int, SoundListGUID> SoundLists { get; private set; }
+        public Dictionary<int, SoundRoom> SoundRooms { get; private set; }
         public static string[] LocalizedBankNames { get { return Instance.m_LocalizeBankNames; } }
 
         const string SettingsAssetName = "FMODSystemSettings";

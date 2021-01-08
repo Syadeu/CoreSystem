@@ -82,7 +82,7 @@ namespace Syadeu.FMOD
             }
             else
             {
-                if (FMODSettings.SoundRooms.TryGetValue(index, out SoundRoom room))
+                if (FMODSettings.Instance.SoundRooms.TryGetValue(index, out SoundRoom room))
                 {
                     this = room;
                 }

@@ -33,7 +33,7 @@ namespace SyadeuEditor
         }
         void Reset()
         {
-            enableSoundRoomVisualize = new bool[FMODSettings.SoundRooms.Count];
+            enableSoundRoomVisualize = new bool[FMODSettings.Instance.m_SoundRooms.Count];
 
             if (FMODRoom.roomFolder != null)
             {
@@ -43,7 +43,7 @@ namespace SyadeuEditor
 
             FMODRoom.insRooms.Clear();
 
-            tempRooms = new FMODRoom[FMODSettings.SoundRooms.Count];
+            tempRooms = new FMODRoom[FMODSettings.Instance.m_SoundRooms.Count];
         }
 
         public override void OnInspectorGUI()
@@ -105,7 +105,7 @@ namespace SyadeuEditor
 
             EditorGUI.indentLevel += 1;
 
-            for (int i = 0; i < FMODSettings.SoundLists.Count; i++)
+            for (int i = 0; i < FMODSettings.Instance.m_SoundLists.Count; i++)
             {
                 EditorGUILayout.BeginHorizontal();
                 EditorGUILayout.LabelField($"{FMODSettings.Instance.m_SoundLists[i].listIndex}: {FMODSettings.Instance.m_SoundLists[i].listName}");
@@ -202,7 +202,7 @@ namespace SyadeuEditor
                 return;
             }
 
-            for (int i = 0; i < FMODSettings.SoundRooms.Count; i++)
+            for (int i = 0; i < FMODSettings.Instance.m_SoundRooms.Count; i++)
             {
                 EditorGUILayout.BeginHorizontal();
                 EditorGUILayout.LabelField($"Room {i}");
@@ -224,7 +224,7 @@ namespace SyadeuEditor
 
                 if (tempRooms[i] == null)
                 {
-                    tempRooms[i] = FMODRoom.Set(FMODSettings.SoundRooms[i]);
+                    tempRooms[i] = FMODRoom.Set(FMODSettings.Instance.m_SoundRooms[i]);
                 }
                 tempRooms[i].drawBounds = enableSoundRoomVisualize[i];
 
@@ -248,13 +248,13 @@ namespace SyadeuEditor
                         vertices[b] = tempRooms[i].m_Vertices[b].transform.localPosition;
                     }
 
-                    FMODSettings.SoundRooms[i] =
+                    FMODSettings.Instance.m_SoundRooms[i] =
                         new SoundRoom(tempRooms[i].backgroundType, tempRooms[i].bounds, tempRooms[i].directOcclusion, tempRooms[i].transform.position, vertices);
                 }
                 else
                 {
-                    EditorGUILayout.LabelField($"Background Type: {FMODSettings.SoundRooms[i].BackgroundType}");
-                    EditorGUILayout.LabelField($"Direct: {FMODSettings.SoundRooms[i].Direct}");
+                    EditorGUILayout.LabelField($"Background Type: {FMODSettings.Instance.m_SoundRooms[i].BackgroundType}");
+                    EditorGUILayout.LabelField($"Direct: {FMODSettings.Instance.m_SoundRooms[i].Direct}");
                 }
                 EditorGUILayout.EndVertical();
 

@@ -197,10 +197,10 @@ namespace Syadeu.FMOD
                     FMODSound sound = FMODSound.GetInstance(i);
                     if (!sound.Activated) continue;
 
-                    if (FMODSettings.SoundRooms.Count > 0 && MainListener != null)
+                    if (FMODSettings.Instance.SoundRooms.Count > 0 && MainListener != null)
                     {
                         bool temp = false;
-                        foreach (var room in FMODSettings.SoundRooms.Values)
+                        foreach (var room in FMODSettings.Instance.SoundRooms.Values)
                         {
                             if (room.IsValid() && room.Contains(MainListener.Position))
                             {
@@ -290,7 +290,7 @@ namespace Syadeu.FMOD
         /// <returns></returns>
         public static bool GetSoundList(int listIndex, out SoundListGUID list)
         {
-            if (!FMODSettings.SoundLists.TryGetValue(listIndex, out list))
+            if (!FMODSettings.Instance.SoundLists.TryGetValue(listIndex, out list))
             {
                 $"SOUND ERROR :: 지정된 사운드 리스트를 찾을 수 없음\nListIndex :: {listIndex}".ToLogError();
                 return false;
