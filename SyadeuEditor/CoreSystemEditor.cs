@@ -26,23 +26,50 @@ namespace SyadeuEditor
         }
 
         bool m_OpenManagerList = false;
+        bool m_OpenInsManagerList = false;
         void Runtime()
         {
             EditorUtils.StringHeader("Generals", 15);
             EditorGUI.indentLevel += 1;
 
-            m_OpenManagerList = EditorGUILayout.Foldout(m_OpenManagerList, $"현재 생성된 파괴불가 매니저: {CoreSystem.Managers.Count}개");
+            #region Manager
+            m_OpenManagerList = EditorGUILayout.Foldout(m_OpenManagerList, $"현재 생성된 파괴불가 매니저: {CoreSystem.StaticManagers.Count}개");
             if (m_OpenManagerList)
             {
                 EditorGUI.indentLevel += 1;
-
-                for (int i = 0; i < CoreSystem.Managers.Count; i++)
+                EditorGUI.BeginDisabledGroup(true);
+                for (int i = 0; i < CoreSystem.StaticManagers.Count; i++)
                 {
-                    EditorGUILayout.LabelField($"> {CoreSystem.Managers[i].GetType().Name}");
+                    EditorGUILayout.LabelField($"> {CoreSystem.StaticManagers[i].GetType().Name}", new GUIStyle("TextField"));
+                }
+                EditorGUI.EndDisabledGroup();
+                EditorGUI.indentLevel -= 1;
+            }
+            m_OpenInsManagerList = EditorGUILayout.Foldout(m_OpenInsManagerList, $"현재 생성된 인스턴스 매니저: {CoreSystem.InstanceManagers.Count}개");
+            if (m_OpenInsManagerList)
+            {
+                EditorGUI.indentLevel += 1;
+
+                for (int i = 0; i < CoreSystem.InstanceManagers.Count; i++)
+                {
+                    if (CoreSystem.InstanceManagers[i].HideInHierarchy)
+                    {
+                        EditorGUI.BeginDisabledGroup(true);
+                        EditorGUILayout.LabelField($"> {CoreSystem.InstanceManagers[i].GetType().Name}", new GUIStyle("TextField"));
+                        EditorGUI.EndDisabledGroup();
+                    }
+                    else
+                    {
+                        if (EditorUtils.Button($"> {CoreSystem.InstanceManagers[i].GetType().Name}", "TextField", 1))
+                        {
+                            EditorGUIUtility.PingObject(CoreSystem.InstanceManagers[i].gameObject);
+                        }
+                    }
                 }
 
                 EditorGUI.indentLevel -= 1;
             }
+            #endregion
 
             EditorGUI.indentLevel -= 1;
             EditorUtils.SectorLine();
@@ -50,6 +77,7 @@ namespace SyadeuEditor
             EditorUtils.StringHeader("Routines", 15);
             EditorGUI.indentLevel += 1;
 
+            #region Routine
             EditorGUI.BeginDisabledGroup(true);
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.IntField("백그라운드 루틴", CoreSystem.Instance.GetCustomBackgroundUpdateCount());
@@ -58,12 +86,14 @@ namespace SyadeuEditor
 
             EditorGUI.EndDisabledGroup();
             EditorGUI.indentLevel -= 1;
+            #endregion
 
             EditorGUILayout.Space();
 
             EditorUtils.StringHeader("Jobs", 15);
             EditorGUI.indentLevel += 1;
 
+            #region Job
             EditorGUI.BeginDisabledGroup(true);
             EditorGUILayout.IntField($"생성된 백그라운드 워커", CoreSystem.Instance.GetBackgroundJobWorkerCount());
             EditorGUILayout.IntField($"가동중인 백그라운드 워커", CoreSystem.Instance.GetCurrentRunningBackgroundWorkerCount());
@@ -77,6 +107,7 @@ namespace SyadeuEditor
             EditorGUILayout.IntField("Foreground", CoreSystem.Instance.GetForegroundJobCount());
             EditorGUI.EndDisabledGroup();
             EditorGUILayout.EndHorizontal();
+            #endregion
 
             EditorGUI.indentLevel -= 1;
         }

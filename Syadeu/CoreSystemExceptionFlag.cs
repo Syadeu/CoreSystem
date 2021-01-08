@@ -8,5 +8,6 @@
         Foreground,
 
         RecycleObject,
+        Render,
     }
 }

@@ -1,18 +1,51 @@
 ﻿using UnityEditor;
+using UnityEditorInternal;
 using UnityEngine;
 
 namespace SyadeuEditor
 {
+    /// <inheritdoc path="https://docs.unity3d.com/Packages/com.unity.ugui@1.0/manual/StyledText.html"/>
+    public enum StringColor
+    {
+        black,
+        blue,
+        brown,
+        cyan,
+        darkblue,
+        fuchsia,
+        green,
+        grey,
+        lightblue,
+        lime,
+        magenta,
+        maroon,
+        navy,
+        olive,
+        orange,
+        purple,
+        red,
+        silver,
+        teal,
+        white,
+        yellow
+    }
+
     public static class EditorUtils
     {
         public const string DefaultPath = "Assets/Resources/Syadeu";
 
-        private static GUIStyle headerStyle;
+        public static GUIStyle headerStyle;
+        public static GUIStyle centerStyle;
         static EditorUtils()
         {
             headerStyle = new GUIStyle
             {
                 richText = true
+            };
+            centerStyle = new GUIStyle
+            {
+                richText = true,
+                alignment = TextAnchor.MiddleCenter
             };
         }
 
@@ -20,9 +53,25 @@ namespace SyadeuEditor
         {
             EditorGUILayout.LabelField($"<size={size}><color=grey>{text}</color></size>", headerStyle);
         }
-        public static void StringRich(string text)
+        public static void StringHeader(string text, StringColor color, int size = 20)
         {
-            EditorGUILayout.LabelField($"{text}", headerStyle);
+            EditorGUILayout.LabelField($"<size={size}><color={color}>{text}</color></size>", headerStyle);
+        }
+        public static void StringRich(string text, bool center = false)
+        {
+            EditorGUILayout.LabelField($"{text}", center ? centerStyle : headerStyle);
+        }
+        public static void StringRich(string text, StringColor color, bool center = false)
+        {
+            EditorGUILayout.LabelField($"<color={color}>{text}</color>", center ? centerStyle : headerStyle);
+        }
+        public static void StringRich(string text, int size, bool center = false)
+        {
+            EditorGUILayout.LabelField($"<size={size}>{text}</size>", center ? centerStyle : headerStyle);
+        }
+        public static void StringRich(string text, int size, StringColor color, bool center = false)
+        {
+            EditorGUILayout.LabelField($"<size={size}><color={color}>{text}</color></size>", center ? centerStyle : headerStyle);
         }
         public static void SectorLine()
         {
@@ -76,6 +125,22 @@ namespace SyadeuEditor
             else return true;
         }
 
+        public static bool Button(string name, string style = null, int indent = 0)
+        {
+            bool temp;
+
+            GUILayout.BeginHorizontal();
+            if (indent > 0)
+            {
+                GUILayout.Space(EditorGUI.indentLevel * 15 * indent);
+            }
+            if (string.IsNullOrEmpty(style)) temp = GUILayout.Button(name);
+            else temp = GUILayout.Button(name, style);
+            GUILayout.EndHorizontal();
+
+            return temp;
+        }
+
         public static T CreateScriptable<T>(string folder, string name) where T : ScriptableObject
         {
             var data = ScriptableObject.CreateInstance<T>();
@@ -99,6 +164,40 @@ namespace SyadeuEditor
             EditorUtility.SetDirty(data);
 
             return data;
+        }
+
+        public static void SortComponentOrder(Component target, int order, bool closeOther = true)
+        {
+            var components = target.GetComponentsInChildren<Component>();
+            int myIdx = -1;
+            for (int i = 0; i < components.Length; i++)
+            {
+                if (components[i] == target)
+                {
+                    myIdx = i;
+                }
+                else if (closeOther)
+                {
+                    InternalEditorUtility.SetIsInspectorExpanded(components[i], false);
+                }
+            }
+
+            if (myIdx > order)
+            {
+                for (int i = myIdx; i != order; i--)
+                {
+                    ComponentUtility.MoveComponentUp(target);
+                }
+            }
+            else
+            {
+                for (int i = myIdx; i != order; i++)
+                {
+                    ComponentUtility.MoveComponentDown(target);
+                }
+            }
+
+            InternalEditorUtility.RepaintAllViews();
         }
     }
 }

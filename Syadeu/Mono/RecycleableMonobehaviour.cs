@@ -19,7 +19,7 @@ namespace Syadeu.Mono
         public virtual string DisplayName => "None";
 
         public bool Activated { get; internal set; } = false;
-        internal bool WaitForDeletion { get; set; } = false;
+        public bool WaitForDeletion { get; internal set; } = false;
         
         public abstract Transform Transfrom { get; }
 

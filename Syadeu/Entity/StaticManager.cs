@@ -6,7 +6,7 @@ namespace Syadeu
     /// 객체 자동 생성 Static 매니저 기본 클래스입니다.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public abstract class StaticManager<T> : StaticManagerEntity, IStaticManager where T : Component
+    public abstract class StaticManager<T> : StaticManagerEntity, IStaticMonoManager where T : Component
     {
         public static bool Initialized => m_Instance != null;
 
@@ -48,16 +48,16 @@ namespace Syadeu
                         ins = obj.AddComponent<T>();
                     }
 
-                    if (!string.IsNullOrEmpty((ins as IStaticManager).DisplayName))
+                    if (!string.IsNullOrEmpty((ins as IStaticMonoManager).DisplayName))
                     {
-                        ins.gameObject.name = (ins as IStaticManager).DisplayName + $" : StaticManager<{typeof(T).Name}>";
+                        ins.gameObject.name = (ins as IStaticMonoManager).DisplayName + $" : StaticManager<{typeof(T).Name}>";
                     }
                     else ins.gameObject.name = $"Syadeu.{typeof(T).Name}";
 
-                    if ((ins as IStaticManager).DontDestroy) DontDestroyOnLoad(ins.gameObject);
+                    if ((ins as IStaticMonoManager).DontDestroy) DontDestroyOnLoad(ins.gameObject);
                     if (!Mono.SyadeuSettings.Instance.m_VisualizeObjects)
                     {
-                        if ((ins as IStaticManager).HideInHierarchy) ins.gameObject.hideFlags = HideFlags.HideAndDontSave;
+                        if ((ins as IStaticMonoManager).HideInHierarchy) ins.gameObject.hideFlags = HideFlags.HideAndDontSave;
                     }
 
                     (ins as IStaticManager).OnInitialize();
@@ -65,11 +65,12 @@ namespace Syadeu
                     if (typeof(T) == typeof(CoreSystem)) System = ins as CoreSystem;
                     else
                     {
-                        if ((ins as IStaticManager).DontDestroy)
+                        if ((ins as IStaticMonoManager).DontDestroy)
                         {
-                            CoreSystem.Managers.Add(ins as ManagerEntity);
+                            CoreSystem.StaticManagers.Add(ins as IStaticMonoManager);
                             ins.transform.SetParent(System.transform);
                         }
+                        else CoreSystem.InstanceManagers.Add(ins as IStaticMonoManager);
                     }
 
                     m_Instance = ins;
@@ -81,7 +82,7 @@ namespace Syadeu
 
         public virtual string DisplayName => null;
         public virtual bool DontDestroy => true;
-        public virtual bool HideInHierarchy { get => true; }
+        public virtual bool HideInHierarchy => true;
 
         public virtual void OnInitialize() { }
         public virtual void OnStart() { }

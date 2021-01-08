@@ -10,6 +10,21 @@
     public interface IStaticManager
     {
         /// <summary>
+        /// 인스턴트가 생성될때 한번 실행할 함수입니다.
+        /// </summary>
+        void OnInitialize();
+        /// <summary>
+        /// 초기화 작업이 완료되고 마지막에 실행되는 함수입니다.
+        /// </summary>
+        void OnStart();
+        /// <summary>
+        /// 초기화 함수입니다.
+        /// </summary>
+        void Initialize(SystemFlag flag = SystemFlag.SubSystem);
+    }
+    public interface IStaticMonoManager : IStaticManager
+    {
+        /// <summary>
         /// Hierarchy에서 표시될 이름을 설정합니다.
         /// 런타임에 아무런 영향을 주지 않습니다.
         /// </summary>
@@ -23,17 +38,10 @@
         /// <see cref="Mono.SyadeuSettings.m_VisualizeObjects"/> 가 true일 경우 영향받지 않습니다.
         /// </summary>
         bool HideInHierarchy { get; }
-        /// <summary>
-        /// 인스턴트가 생성될때 한번 실행할 함수입니다.
-        /// </summary>
-        void OnInitialize();
-        /// <summary>
-        /// 초기화 작업이 완료되고 마지막에 실행되는 함수입니다.
-        /// </summary>
-        void OnStart();
-        /// <summary>
-        /// 초기화 함수입니다.
-        /// </summary>
-        void Initialize(SystemFlag flag = SystemFlag.SubSystem);
+
+#pragma warning disable IDE1006 // Naming Styles
+        UnityEngine.GameObject gameObject { get; }
+        UnityEngine.Transform transform { get; }
+#pragma warning restore IDE1006 // Naming Styles
     }
 }

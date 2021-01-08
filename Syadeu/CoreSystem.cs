@@ -14,17 +14,29 @@ namespace Syadeu
 {
     public sealed class CoreSystem : StaticManager<CoreSystem>
     {
-        public static List<ManagerEntity> Managers { get; } = new List<ManagerEntity>();
+        public static List<IStaticMonoManager> StaticManagers { get; } = new List<IStaticMonoManager>();
+        public static List<IStaticMonoManager> InstanceManagers { get; } = new List<IStaticMonoManager>();
 
         public static T GetManager<T>() where T : ManagerEntity
         {
-            for (int i = 0; i < Managers.Count; i++)
+            for (int i = 0; i < StaticManagers.Count; i++)
             {
-                if (Managers[i] is T item) return item;
+                if (StaticManagers[i] is T item) return item;
+            }
+            for (int i = 0; i < InstanceManagers.Count; i++)
+            {
+                if (InstanceManagers[i] == null)
+                {
+                    InstanceManagers.RemoveAt(i);
+                    i--;
+                    continue;
+                }
+                if (InstanceManagers[i] is T item) return item;
             }
             return null;
         }
 
+        #region Events
         /// <summary>
         /// 백그라운드 스레드에서 한번만 실행될 함수를 넣을 수 있습니다.
         /// </summary>
@@ -46,7 +58,9 @@ namespace Syadeu
         /// 유니티 프레임에 맞춰 반복적으로 실행될 함수를 넣을 수 있습니다.
         /// </summary>
         public static event UnityWork OnUnityUpdate;
+        #endregion
 
+        #region Jobs
         /// <summary>
         /// 새로운 백그라운드잡 Worker 를 생성하고, 인덱스 번호를 반환합니다.
         /// </summary>
@@ -205,13 +219,16 @@ namespace Syadeu
             AddForegroundJob(job);
             return job;
         }
+        #endregion
 
+        #region Routines
         public static void StartBackgroundUpdate(object obj, IEnumerator update)
         {
-            AddBackgroundJob(() =>
-            {
-                Instance.m_CustomBackgroundUpdates.TryAdd(update, obj);
-            });
+            OnBackgroundCustomUpdate.Enqueue((obj, update));
+        }
+        public static void StartUnityUpdate(object obj, IEnumerator update)
+        {
+            OnUnityCustomUpdate.Enqueue((obj, update));
         }
 
         /// <summary>
@@ -250,6 +267,7 @@ namespace Syadeu
                 }
             });
         }
+        #endregion
 
         #region INIT
         public delegate void Awaiter(int milliseconds);

@@ -42,7 +42,7 @@ namespace Syadeu.Mono
 
         private IEnumerator UnityUpdate()
         {
-            CamMatrix4x4 = MainCamera.projectionMatrix * MainCamera.transform.worldToLocalMatrix;
+            CamMatrix4x4 = GetCameraMatrix4X4(MainCamera);
 
             while (m_Instance != null)
             {
@@ -89,24 +89,30 @@ namespace Syadeu.Mono
         {
             Instance.MainCamera = cam;
         }
+
         //// 이거 젤터 전용
         ////Vector3 screenOffset = new Vector3(1, 1, 5);
         internal bool IsInCameraScreen(Vector3 target)
+            => IsInCameraScreen(target, CamMatrix4x4, SyadeuSettings.Instance.m_ScreenOffset);
+
+        internal static Matrix4x4 GetCameraMatrix4X4(Camera cam)
+            => cam.projectionMatrix * cam.transform.worldToLocalMatrix;
+        internal static bool IsInCameraScreen(Vector3 target, Matrix4x4 matrix, Vector3 offset)
         {
             Vector4 p4 = target;
             p4.w = 1;
-            Vector4 result4 = CamMatrix4x4 * p4;
+            Vector4 result4 = matrix * p4;
             Vector3 screenPoint = result4;
             screenPoint /= -result4.w;
             screenPoint.x = screenPoint.x / 2 + 0.5f;
             screenPoint.y = screenPoint.y / 2 + 0.5f;
             screenPoint.z = -result4.w;
 
-            return screenPoint.z > 0 - SyadeuSettings.Instance.m_ScreenOffset.z &&
-                screenPoint.x > 0 - SyadeuSettings.Instance.m_ScreenOffset.x &&
-                screenPoint.x < 1 + SyadeuSettings.Instance.m_ScreenOffset.x &&
-                screenPoint.y > 0 - SyadeuSettings.Instance.m_ScreenOffset.y &&
-                screenPoint.y < 1 + SyadeuSettings.Instance.m_ScreenOffset.y;
+            return screenPoint.z > 0 - offset.z &&
+                screenPoint.x > 0 - offset.x &&
+                screenPoint.x < 1 + offset.x &&
+                screenPoint.y > 0 - offset.y &&
+                screenPoint.y < 1 + offset.y;
         }
     }
 }
