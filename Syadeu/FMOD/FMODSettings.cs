@@ -34,10 +34,6 @@ namespace Syadeu.FMOD
 
         private void OnEnable()
         {
-#if UNITY_EDITOR
-            if (!Application.isPlaying) return;
-#endif
-
             SoundLists = new Dictionary<int, SoundListGUID>();
             for (int i = 0; i < m_SoundLists.Count; i++)
             {

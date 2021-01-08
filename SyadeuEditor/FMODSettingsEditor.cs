@@ -22,6 +22,8 @@ namespace SyadeuEditor
 
         private void OnEnable()
         {
+            if (Application.isPlaying) return;
+
             headerStyle = new GUIStyle
             {
                 richText = true
