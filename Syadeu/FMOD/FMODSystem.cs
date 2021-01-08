@@ -65,11 +65,13 @@ namespace Syadeu.FMOD
             StartBackgroundUpdate(OnBackgroundAsyncUpdate());
             StartUnityUpdate(OnUnityCustomUpdater());
         }
-        private void Awake()
+        public override void OnStart()
         {
             MainListener = gameObject.AddComponent<FMODListener>();
             FMODStudioSystem.setListenerWeight(MainListener.Index, 1);
-
+        }
+        private void Awake()
+        {
             CreateMemory(SyadeuSettings.Instance.m_MemoryBlock);
             FMODStudioSystem.getBus("bus:/", out m_MasterBus);
 
