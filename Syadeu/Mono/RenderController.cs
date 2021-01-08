@@ -7,11 +7,13 @@ using UnityEngine.Events;
 
 namespace Syadeu.Mono
 {
-    [RequireComponent(typeof(Renderer))]
     public class RenderController : MonoBehaviour
     {
         public Camera Camera;
         public bool IsStandalone = false;
+
+        [Space]
+        public List<MonoBehaviour> AdditionalRenders = new List<MonoBehaviour>();
 
         [Space]
         [SerializeField] private UnityEvent OnVisible;
@@ -68,6 +70,10 @@ namespace Syadeu.Mono
             {
                 item.enabled = false;
             }
+            for (int i = 0; i < AdditionalRenders.Count; i++)
+            {
+                AdditionalRenders[i].enabled = false;
+            }
         }
         internal void RenderOn()
         {
@@ -75,6 +81,10 @@ namespace Syadeu.Mono
             foreach (var item in Renderers)
             {
                 item.enabled = true;
+            }
+            for (int i = 0; i < AdditionalRenders.Count; i++)
+            {
+                AdditionalRenders[i].enabled = true;
             }
         }
     }
