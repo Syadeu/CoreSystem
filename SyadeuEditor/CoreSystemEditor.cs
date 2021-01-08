@@ -47,6 +47,20 @@ namespace SyadeuEditor
             EditorGUI.indentLevel -= 1;
             EditorUtils.SectorLine();
 
+            EditorUtils.StringHeader("Routines", 15);
+            EditorGUI.indentLevel += 1;
+
+            EditorGUI.BeginDisabledGroup(true);
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.IntField("백그라운드 루틴", CoreSystem.Instance.GetCustomBackgroundUpdateCount());
+            EditorGUILayout.IntField("유니티 루틴", CoreSystem.Instance.GetCustomUpdateCount());
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUI.EndDisabledGroup();
+            EditorGUI.indentLevel -= 1;
+
+            EditorGUILayout.Space();
+
             EditorUtils.StringHeader("Jobs", 15);
             EditorGUI.indentLevel += 1;
 

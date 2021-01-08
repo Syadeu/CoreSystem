@@ -23,13 +23,15 @@ namespace Syadeu.Mono
         internal bool IsInvisible { get; set; } = true;
         public bool IsForcedOff { get; internal set; } = false;
 
+        private Transform Transform { get; set; }
         internal Vector3 Position { get; private set; }
         internal bool Destroyed { get; private set; } = false;
         internal bool Listed { get; private set; } = false;
 
         private void Awake()
         {
-            Renderers = transform.GetComponentsInChildren<Renderer>();
+            Transform = transform;
+            Renderers = Transform.GetComponentsInChildren<Renderer>();
 
             if (Camera == null && !IsStandalone)
             {
@@ -41,12 +43,12 @@ namespace Syadeu.Mono
                 Camera = RenderManager.Instance.MainCamera;
             }
 
-            CoreSystem.Instance.StartBackgroundUpdate(BackgroundUpdate(RenderManager.Instance));
+            CoreSystem.StartBackgroundUpdate(Transform, BackgroundUpdate(RenderManager.Instance));
         }
 
         private void Update()
         {
-            Position = transform.position;
+            Position = Transform.position;
         }
         private void OnDestroy()
         {
@@ -55,7 +57,7 @@ namespace Syadeu.Mono
 
         private IEnumerator BackgroundUpdate(RenderManager mgr)
         {
-            while (!Destroyed && mgr != null && mgr.transform != null)
+            while (Transform != null && !Destroyed && mgr != null)
             {
                 if (mgr.IsInCameraScreen(Position))
                 {

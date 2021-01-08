@@ -206,6 +206,14 @@ namespace Syadeu
             return job;
         }
 
+        public static void StartBackgroundUpdate(object obj, IEnumerator update)
+        {
+            AddBackgroundJob(() =>
+            {
+                Instance.m_CustomBackgroundUpdates.TryAdd(update, obj);
+            });
+        }
+
         /// <summary>
         /// 커스텀 관리되던 해당 유니티 업데이트 루틴을 제거합니다.
         /// </summary>
@@ -307,6 +315,9 @@ namespace Syadeu
         private bool m_BackgroundDeadFlag = false;
         public event Action OnBackgroundThreadDead;
 
+        public int GetCustomBackgroundUpdateCount() => m_CustomBackgroundUpdates.Count;
+        public int GetCustomUpdateCount() => m_CustomUpdates.Count;
+
         private void BackgroundWorker()
         {
 #if UNITY_EDITOR
@@ -364,13 +375,19 @@ namespace Syadeu
                 }
                 foreach (var item in m_CustomBackgroundUpdates)
                 {
+                    if (item.Value == null)
+                    {
+                        m_CustomBackgroundUpdates.TryRemove(item.Key, out _);
+                        continue;
+                    }
+
                     try
                     {
                         if (item.Key.Current == null)
                         {
                             if (!item.Key.MoveNext())
                             {
-                                m_CustomBackgroundUpdates.TryRemove(item.Key, out var unused);
+                                m_CustomBackgroundUpdates.TryRemove(item.Key, out _);
                             }
                         }
                         else
@@ -380,7 +397,7 @@ namespace Syadeu
                             {
                                 if (!item.Key.MoveNext())
                                 {
-                                    m_CustomBackgroundUpdates.TryRemove(item.Key, out var unused);
+                                    m_CustomBackgroundUpdates.TryRemove(item.Key, out _);
                                 }
                             }
                             else if (item.Key.Current.GetType() == typeof(bool) &&
@@ -388,12 +405,12 @@ namespace Syadeu
                             {
                                 if (!item.Key.MoveNext())
                                 {
-                                    m_CustomBackgroundUpdates.TryRemove(item.Key, out var unused);
+                                    m_CustomBackgroundUpdates.TryRemove(item.Key, out _);
                                 }
                             }
                             else if (item.Key.Current is YieldInstruction baseYield)
                             {
-                                m_CustomUpdates.TryRemove(item.Key, out var unused);
+                                m_CustomUpdates.TryRemove(item.Key, out _);
                                 throw new CoreSystemException(CoreSystemExceptionFlag.Background,
                                     $"해당 yield return 타입({item.Key.Current.GetType().Name})은 지원하지 않습니다");
                             }
@@ -612,13 +629,19 @@ namespace Syadeu
                 }
                 foreach (var item in m_CustomUpdates)
                 {
+                    if (item.Value == null)
+                    {
+                        m_CustomUpdates.TryRemove(item.Key, out _);
+                        continue;
+                    }
+
                     try
                     {
                         if (item.Key.Current == null)
                         {
                             if (!item.Key.MoveNext())
                             {
-                                m_CustomUpdates.TryRemove(item.Key, out var unused);
+                                m_CustomUpdates.TryRemove(item.Key, out _);
                             }
                         }
                         else
@@ -628,7 +651,7 @@ namespace Syadeu
                             {
                                 if (!item.Key.MoveNext())
                                 {
-                                    m_CustomUpdates.TryRemove(item.Key, out var unused);
+                                    m_CustomUpdates.TryRemove(item.Key, out _);
                                 }
                             }
                             else if (item.Key.Current.GetType() == typeof(bool) &&
@@ -636,12 +659,12 @@ namespace Syadeu
                             {
                                 if (!item.Key.MoveNext())
                                 {
-                                    m_CustomBackgroundUpdates.TryRemove(item.Key, out var unused);
+                                    m_CustomBackgroundUpdates.TryRemove(item.Key, out _);
                                 }
                             }
                             else if (item.Key.Current is YieldInstruction baseYield)
                             {
-                                m_CustomUpdates.TryRemove(item.Key, out var unused);
+                                m_CustomUpdates.TryRemove(item.Key, out _);
                                 throw new CoreSystemException(CoreSystemExceptionFlag.Foreground,
                                     $"해당 yield return 타입({item.Key.Current.GetType().Name})은 지원하지 않습니다");
                             }
