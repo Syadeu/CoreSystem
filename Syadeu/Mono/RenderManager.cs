@@ -19,8 +19,7 @@ namespace Syadeu.Mono
         public override bool HideInHierarchy => false;
 
         public List<ManagedObject> ManagedObjects = new List<ManagedObject>();
-        private Vector3 ScreenOffset { get; set; }
-
+        
         public Camera MainCamera;
         private Matrix4x4 CamMatrix4x4;
 
@@ -28,8 +27,6 @@ namespace Syadeu.Mono
         public class ManagedObject
         {
             public RenderController Controller { get; }
-            public RenderCondition WhileVisible => Controller.WhileVisible;
-
             public ManagedObject(RenderController controller)
             {
                 Controller = controller;
@@ -70,24 +67,6 @@ namespace Syadeu.Mono
                         continue;
                     }
 
-                    if (ManagedObjects[i].WhileVisible != null)
-                    {
-                        if (ManagedObjects[i].WhileVisible.Invoke())
-                        {
-                            if (ManagedObjects[i].Controller.IsForcedOff)
-                            {
-                                ManagedObjects[i].Controller.RenderOn();
-                            }
-                        }
-                        else
-                        {
-                            if (!ManagedObjects[i].Controller.IsForcedOff)
-                            {
-                                ManagedObjects[i].Controller.RenderOff();
-                            }
-                        }
-                    }
-
                     if (i != 0 && i % 500 == 0) yield return null;
                 }
 
@@ -106,10 +85,9 @@ namespace Syadeu.Mono
         /// </summary>
         /// <param name="cam"></param>
         /// <param name="offset"></param>
-        public static void SetCamera(Camera cam, Vector3 offset = default)
+        public static void SetCamera(Camera cam)
         {
             Instance.MainCamera = cam;
-            Instance.ScreenOffset = offset;
         }
         //// 이거 젤터 전용
         ////Vector3 screenOffset = new Vector3(1, 1, 5);
@@ -124,11 +102,11 @@ namespace Syadeu.Mono
             screenPoint.y = screenPoint.y / 2 + 0.5f;
             screenPoint.z = -result4.w;
 
-            return screenPoint.z > 0 - ScreenOffset.z &&
-                screenPoint.x > 0 - ScreenOffset.x &&
-                screenPoint.x < 1 + ScreenOffset.x &&
-                screenPoint.y > 0 - ScreenOffset.y &&
-                screenPoint.y < 1 + ScreenOffset.y;
+            return screenPoint.z > 0 - SyadeuSettings.Instance.m_ScreenOffset.z &&
+                screenPoint.x > 0 - SyadeuSettings.Instance.m_ScreenOffset.x &&
+                screenPoint.x < 1 + SyadeuSettings.Instance.m_ScreenOffset.x &&
+                screenPoint.y > 0 - SyadeuSettings.Instance.m_ScreenOffset.y &&
+                screenPoint.y < 1 + SyadeuSettings.Instance.m_ScreenOffset.y;
         }
     }
 }

@@ -14,6 +14,9 @@ namespace Syadeu.Mono
 
         // FMODManager
         public int m_MemoryBlock = 512;
+
+        // RenderManager
+        public Vector3 m_ScreenOffset = new Vector3(1, 1, 5);
     }
 }
  

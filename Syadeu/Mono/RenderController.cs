@@ -19,15 +19,9 @@ namespace Syadeu.Mono
         [SerializeField] private UnityEvent OnVisible;
         [SerializeField] private UnityEvent OnInvisible;
 
-        /// <summary>
-        /// IsStandalone = true 인 상태면 이 delegate는 작동하지않음
-        /// True를 반환하면 RenderOn, False면 RenderOFf
-        /// </summary>
-        public RenderManager.RenderCondition WhileVisible;
-
         internal Renderer[] Renderers { get; private set; }
         internal bool IsInvisible { get; set; } = true;
-        internal bool IsForcedOff { get; set; } = false;
+        public bool IsForcedOff { get; internal set; } = false;
 
         internal Vector3 Position { get; private set; }
         internal bool Destroyed { get; private set; } = false;
@@ -67,16 +61,11 @@ namespace Syadeu.Mono
                 {
                     IsInvisible = false;
 
-                    //if (IsForcedOff && WhileVisible.Invoke())
-                    //{
-                    //    CoreSystem.AddForegroundJob(RenderOn);
-                    //}
-
                     if (!Listed)
                     {
                         if (!IsStandalone) RenderManager.Instance.AddRenderControl(this);
 
-                        CoreSystem.AddForegroundJob(InvokeVisible);
+                        CoreSystem.AddForegroundJob(InvokeOnVisible);
                         Listed = true;
                     }
                 }
@@ -86,7 +75,7 @@ namespace Syadeu.Mono
                     
                     if (Listed)
                     {
-                        CoreSystem.AddForegroundJob(InvokeInvisible);
+                        CoreSystem.AddForegroundJob(InvokeOnInvisible);
                         Listed = false;
                     }
                 }
@@ -95,25 +84,10 @@ namespace Syadeu.Mono
             }
         }
 
-        private void InvokeVisible()
-        {
-            OnVisible?.Invoke();
-            RenderOn();
-        }
-        private void InvokeInvisible()
-        {
-            OnInvisible?.Invoke();
-            foreach (var item in Renderers)
-            {
-                item.enabled = false;
-            }
-            for (int i = 0; i < AdditionalRenders.Count; i++)
-            {
-                AdditionalRenders[i].enabled = false;
-            }
-        }
+        private void InvokeOnVisible() => OnVisible?.Invoke();
+        private void InvokeOnInvisible() => OnInvisible?.Invoke();
 
-        internal void RenderOff()
+        public void RenderOff()
         {
             IsForcedOff = true;
             foreach (var item in Renderers)
@@ -125,7 +99,7 @@ namespace Syadeu.Mono
                 AdditionalRenders[i].enabled = false;
             }
         }
-        internal void RenderOn()
+        public void RenderOn()
         {
             IsForcedOff = false;
             foreach (var item in Renderers)
