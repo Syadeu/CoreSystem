@@ -153,6 +153,18 @@ namespace SyadeuEditor
 
             return temp;
         }
+        public static bool Foldout(bool foldout, string name, int size = -1)
+        {
+            string firstKey = foldout ? "▼" : "▶";
+            if (size < 0)
+            {
+                return EditorGUILayout.Foldout(foldout, $"{firstKey} {name}", true, headerStyle);
+            }
+            else
+            {
+                return EditorGUILayout.Foldout(foldout, $"<size={size}>{firstKey} {name}</size>", true, headerStyle);
+            }
+        }
 
         public static T CreateScriptable<T>(string folder, string name) where T : ScriptableObject
         {
