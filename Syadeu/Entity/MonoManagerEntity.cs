@@ -28,7 +28,7 @@ namespace Syadeu
         public virtual bool DontDestroy => false;
         public virtual bool HideInHierarchy => false;
 
-        private void Awake()
+        protected virtual void Awake()
         {
             if (!string.IsNullOrEmpty(DisplayName))
             {
