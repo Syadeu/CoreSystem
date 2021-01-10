@@ -48,11 +48,13 @@ namespace Syadeu
                         ins = obj.AddComponent<T>();
                     }
 
+#if UNITY_EDITOR
                     if (!string.IsNullOrEmpty(ins.DisplayName))
                     {
                         ins.gameObject.name = $"{ins.DisplayName} : StaticManager<{typeof(T).Name}>";
                     }
                     else ins.gameObject.name = $"Syadeu.{typeof(T).Name}";
+#endif
 
                     if (ins.DontDestroy) DontDestroyOnLoad(ins.gameObject);
                     if (!Mono.SyadeuSettings.Instance.m_VisualizeObjects)

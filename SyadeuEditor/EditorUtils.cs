@@ -1,4 +1,5 @@
-﻿using UnityEditor;
+﻿using System.Collections;
+using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
 
@@ -49,6 +50,7 @@ namespace SyadeuEditor
             };
         }
 
+        #region String
         public static void StringHeader(string text, int size = 20)
         {
             EditorGUILayout.LabelField($"<size={size}><color=grey>{text}</color></size>", headerStyle);
@@ -63,6 +65,8 @@ namespace SyadeuEditor
         }
         public static void StringRich(string text, GUIStyle style, bool center = false)
         {
+            if (style == null) style = new GUIStyle("Label");
+
             style.richText = true;
             if (center) style.alignment = TextAnchor.MiddleCenter;
             EditorGUILayout.LabelField($"{text}", style);
@@ -83,6 +87,7 @@ namespace SyadeuEditor
         {
             EditorGUILayout.LabelField("________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________");
         }
+        #endregion
 
         private static Editor objectPreviewWindow;
         public static void ObjectPreview(this EditorWindow t, GameObject obj)
@@ -163,6 +168,23 @@ namespace SyadeuEditor
             else
             {
                 return EditorGUILayout.Foldout(foldout, $"<size={size}>{firstKey} {name}</size>", true, headerStyle);
+            }
+        }
+
+        public static void ShowSimpleListLabel(ref bool opened, string header, IList list, 
+            GUIStyle style = null, bool disableGroup = false)
+        {
+            opened = Foldout(opened, header);
+            if (opened)
+            {
+                EditorGUI.indentLevel += 1;
+                if (disableGroup) EditorGUI.BeginDisabledGroup(true);
+                for (int i = 0; i < list.Count; i++)
+                {
+                    StringRich($"> {list[i].GetType().Name}", style);
+                }
+                if (disableGroup) EditorGUI.EndDisabledGroup();
+                EditorGUI.indentLevel -= 1;
             }
         }
 

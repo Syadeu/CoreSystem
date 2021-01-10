@@ -1,11 +1,18 @@
-﻿namespace Syadeu
+﻿using System;
+
+namespace Syadeu
 {
     public enum SystemFlag
     {
-        MainSystem,
-        SubSystem,
+        None = 0,
 
-        Data,
+        MainSystem = 1 << 0,
+        SubSystem = 1 << 1,
+        MonoSystems = MainSystem | SubSystem,
+
+        Data = 1 << 2,
+
+        All = ~0
     }
     public interface IStaticManager
     {
@@ -21,6 +28,10 @@
         /// 초기화 함수입니다.
         /// </summary>
         void Initialize(SystemFlag flag = SystemFlag.SubSystem);
+    }
+    public interface IStaticDataManager : IStaticManager, IDisposable
+    {
+        bool Disposed { get; }
     }
     public interface IStaticMonoManager : IStaticManager
     {

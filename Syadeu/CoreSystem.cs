@@ -1,6 +1,4 @@
-﻿using Syadeu.Extentions.EditorUtils;
-
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -8,7 +6,6 @@ using System.ComponentModel;
 using System.Threading;
 
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace Syadeu
 {
@@ -16,23 +13,46 @@ namespace Syadeu
     {
         public static List<IStaticMonoManager> StaticManagers { get; } = new List<IStaticMonoManager>();
         public static List<IStaticMonoManager> InstanceManagers { get; } = new List<IStaticMonoManager>();
+        public static List<IStaticDataManager> DataManagers { get; } = new List<IStaticDataManager>();
 
-        public static T GetManager<T>() where T : ManagerEntity
+        public static T GetManager<T>(SystemFlag flag = SystemFlag.All) where T : class, IStaticManager
         {
-            for (int i = 0; i < StaticManagers.Count; i++)
+            if (flag.HasFlag(SystemFlag.MainSystem) ||
+                flag.HasFlag(SystemFlag.SubSystem))
             {
-                if (StaticManagers[i] is T item) return item;
-            }
-            for (int i = 0; i < InstanceManagers.Count; i++)
-            {
-                if (InstanceManagers[i] == null)
+                for (int i = 0; i < StaticManagers.Count; i++)
                 {
-                    InstanceManagers.RemoveAt(i);
-                    i--;
-                    continue;
+                    if (StaticManagers[i] is T item) return item;
                 }
-                if (InstanceManagers[i] is T item) return item;
+                for (int i = 0; i < InstanceManagers.Count; i++)
+                {
+                    if (InstanceManagers[i] == null)
+                    {
+                        InstanceManagers.RemoveAt(i);
+                        i--;
+                        continue;
+                    }
+                    if (InstanceManagers[i] is T item) return item;
+                }
             }
+            if (flag.HasFlag(SystemFlag.Data))
+            {
+                for (int i = 0; i < DataManagers.Count; i++)
+                {
+                    if (DataManagers[i] is T item)
+                    {
+                        if (DataManagers[i].Disposed)
+                        {
+                            DataManagers.RemoveAt(i);
+                            i--;
+                            continue;
+                        }
+
+                        return item;
+                    }
+                }
+            }
+            
             return null;
         }
 
@@ -257,6 +277,8 @@ namespace Syadeu
         private readonly ConcurrentQueue<ForegroundJob> m_ForegroundJobs = new ConcurrentQueue<ForegroundJob>();
 
         internal readonly ConcurrentQueue<Timer> m_Timers = new ConcurrentQueue<Timer>();
+
+        internal bool m_CleanupManagers = false;
 
         public override bool HideInHierarchy => false;
 
@@ -598,7 +620,7 @@ namespace Syadeu
                     throw new CoreSystemException(CoreSystemExceptionFlag.Background, "에러로 인해 백그라운드 스레드가 강제 종료되었습니다");
                 }
 
-                #region Manager Enforce load
+                #region Handle Managers
                 while (m_EnforceOrder.Count > 0)
                 {
                     if (m_EnforceOrder.TryDequeue(out var result))
@@ -606,6 +628,28 @@ namespace Syadeu
                         //$"LOG :: EnForcing manager ordrer\ncurrent: {m_EnforceOrder.Count}".ToLog();
                         result.Invoke();
                     }
+                }
+                if (m_CleanupManagers)
+                {
+                    for (int i = 0; i < InstanceManagers.Count; i++)
+                    {
+                        if (InstanceManagers[i] == null)
+                        {
+                            InstanceManagers.RemoveAt(i);
+                            i--;
+                            continue;
+                        }
+                    }
+                    for (int i = 0; i < DataManagers.Count; i++)
+                    {
+                        if (DataManagers[i].Disposed)
+                        {
+                            DataManagers.RemoveAt(i);
+                            i--;
+                            continue;
+                        }
+                    }
+                    m_CleanupManagers = false;
                 }
                 #endregion
 
@@ -850,6 +894,7 @@ namespace Syadeu
         {
             Instance.m_ForegroundJobs.Enqueue(job);
         }
+
         internal static Vector3 GetPosition(Transform transform)
         {
             if (IsMainthread()) return transform.position;

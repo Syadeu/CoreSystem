@@ -2,10 +2,11 @@
 
 namespace Syadeu
 {
-    public abstract class StaticDataManager<T> : IStaticManager where T : class
+    public abstract class StaticDataManager<T> : IStaticDataManager 
+        where T : class, IStaticDataManager
     {
         public static bool Initialized => m_Instance != null;
-        public SystemFlag Flag { get; protected set; }
+        public SystemFlag Flag => SystemFlag.Data;
 
         internal static T m_Instance;
         public static T Instance
@@ -16,10 +17,12 @@ namespace Syadeu
                 {
                     T ins = Activator.CreateInstance<T>();
 
-                    (ins as IStaticManager).OnInitialize();
+                    ins.OnInitialize();
 
+                    CoreSystem.DataManagers.Add(ins);
                     m_Instance = ins;
-                    (ins as IStaticManager).OnStart();
+
+                    ins.OnStart();
                 }
 
                 return m_Instance;
@@ -34,12 +37,11 @@ namespace Syadeu
         protected static void ThreadAwaiter(int milliseconds)
             => StaticManagerEntity.ThreadAwaiter(milliseconds);
 
+        public bool Disposed { get; private set; } = false;
+
         public virtual void OnInitialize() { }
         public virtual void OnStart() { }
-        public virtual void Initialize(SystemFlag flag = SystemFlag.Data)
-        {
-            Flag = flag;
-        }
+        public virtual void Initialize(SystemFlag flag = SystemFlag.Data) { }
 
         /// <summary>
         /// OnUnityUpdate 보다 일찍 실행되는 커스텀 업데이트문을 넣을 수 있습니다.
@@ -51,5 +53,12 @@ namespace Syadeu
         public void StartBackgroundUpdate(System.Collections.IEnumerator enumerator) => CoreSystem.Instance.StartBackgroundUpdate(enumerator);
         public void StopUnityUpdate(System.Collections.IEnumerator enumerator) => CoreSystem.RemoveUnityUpdate(this, enumerator);
         public void StopBackgroundUpdate(System.Collections.IEnumerator enumerator) => CoreSystem.RemoveBackgroundUpdate(this, enumerator);
+
+        public virtual void Dispose()
+        {
+            Disposed = true;
+
+            CoreSystem.Instance.m_CleanupManagers = true;
+        }
     }
 }

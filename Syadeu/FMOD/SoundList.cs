@@ -11,7 +11,7 @@ using UnityEditor;
 
 namespace Syadeu.FMOD
 {
-    [CreateAssetMenu(fileName = "New Sound List", menuName = "Sound Data/Create Sound List")]
+    [CreateAssetMenu(fileName = "newSoundlist", menuName = "Syadeu/FMOD/Soundlist")]
     public class SoundList : ScriptableObject
     {
         [Serializable]

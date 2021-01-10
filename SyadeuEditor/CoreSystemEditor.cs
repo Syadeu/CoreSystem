@@ -26,13 +26,14 @@ namespace SyadeuEditor
 
         bool m_OpenManagerList = false;
         bool m_OpenInsManagerList = false;
+        bool m_OpenDataManagerList = false;
         void Runtime()
         {
             EditorUtils.StringHeader("Generals", 15);
             EditorGUI.indentLevel += 1;
 
             #region Manager
-            m_OpenManagerList = EditorGUILayout.Foldout(m_OpenManagerList, $"현재 생성된 파괴불가 매니저: {CoreSystem.StaticManagers.Count}개");
+            m_OpenManagerList = EditorUtils.Foldout(m_OpenManagerList, $"현재 생성된 파괴불가 매니저: {CoreSystem.StaticManagers.Count}개");
             if (m_OpenManagerList)
             {
                 EditorGUI.indentLevel += 1;
@@ -44,7 +45,7 @@ namespace SyadeuEditor
                 EditorGUI.EndDisabledGroup();
                 EditorGUI.indentLevel -= 1;
             }
-            m_OpenInsManagerList = EditorGUILayout.Foldout(m_OpenInsManagerList, $"현재 생성된 인스턴스 매니저: {CoreSystem.InstanceManagers.Count}개");
+            m_OpenInsManagerList = EditorUtils.Foldout(m_OpenInsManagerList, $"현재 생성된 인스턴스 매니저: {CoreSystem.InstanceManagers.Count}개");
             if (m_OpenInsManagerList)
             {
                 EditorGUI.indentLevel += 1;
@@ -68,6 +69,9 @@ namespace SyadeuEditor
 
                 EditorGUI.indentLevel -= 1;
             }
+            EditorUtils.ShowSimpleListLabel(ref m_OpenDataManagerList, 
+                $"현재 생성된 데이터 매니저: {CoreSystem.DataManagers.Count}개",
+                CoreSystem.DataManagers, new GUIStyle("TextField"), true);
             #endregion
 
             EditorGUI.indentLevel -= 1;
