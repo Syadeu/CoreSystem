@@ -93,7 +93,7 @@ namespace Syadeu
 
         private static void EnforceOrder()
         {
-            (Instance as IStaticManager).Initialize();
+            Instance.Initialize();
         }
     }
 }
