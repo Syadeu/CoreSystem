@@ -1,7 +1,4 @@
-﻿#if UNITY_EDITOR
-#endif
-
-namespace Syadeu
+﻿namespace Syadeu
 {
     public interface IStaticSetting
     {

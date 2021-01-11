@@ -1,4 +1,3 @@
-using Syadeu.XNode;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -8,7 +7,9 @@ using UnityEngine;
 using XNode;
 using XNodeEditor;
 
-namespace SyadeuEditor.XNode
+using Syadeu.xNode;
+
+namespace SyadeuEditor.xNode
 {
     [CustomNodeGraphEditor(typeof(DialogueGraph))]
     public class DialogueGraphEditor : NodeGraphEditor

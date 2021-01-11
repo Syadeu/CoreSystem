@@ -33,7 +33,7 @@ namespace SyadeuEditor
                     m_Instance = Resources.Load<T>("Syadeu/Editor" + typeof(T).Name);
                     if (m_Instance == null)
                     {
-                        $"LOG :: Creating new static setting<{typeof(T).Name}> asset".ToLog();
+                        //$"LOG :: Creating new static setting<{typeof(T).Name}> asset".ToLog();
                         m_Instance = CreateInstance<T>();
                         m_Instance.name = $"Syadeu {typeof(T).Name} Setting Asset";
 
