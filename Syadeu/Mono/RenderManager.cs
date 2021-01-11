@@ -73,6 +73,14 @@ namespace Syadeu.Mono
                 yield return null;
             }
         }
+        private void OnDestroy()
+        {
+            for (int i = 0; i < ManagedObjects.Count; i++)
+            {
+                ManagedObjects[i].Controller.StopAllCoroutines();
+            }
+            ManagedObjects.Clear();
+        }
 
         private readonly ConcurrentQueue<RenderController> m_WaitForManaged = new ConcurrentQueue<RenderController>();
         internal void AddRenderControl(RenderController controller)

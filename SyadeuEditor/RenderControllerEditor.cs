@@ -191,7 +191,7 @@ namespace SyadeuEditor
                 "예를 들어, 선택된 컴포넌트는 RenderController에서 RenderOff() 메소드가 실행되었을때 " +
                 "선택된 컴포넌트의 enabled 는 false가 됩니다.", MessageType.Info);
             EditorGUI.indentLevel += 1;
-            m_OpenAdditionalRender = EditorGUILayout.Foldout(m_OpenAdditionalRender, "차일드 컴포넌트 연결", true);
+            m_OpenAdditionalRender = EditorUtils.Foldout(m_OpenAdditionalRender, "차일드 컴포넌트 연결");
             EditorGUI.indentLevel -= 1;
             if (m_OpenAdditionalRender)
             {

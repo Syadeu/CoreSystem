@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 #if XNODE
+using Syadeu.Database;
+
 using XNode;
 
 namespace Syadeu.xNode
@@ -13,12 +15,12 @@ namespace Syadeu.xNode
     {
         public int Current { get; private set; } = 0;
 
-        public void Initialize()
+        public void Initialize(ref SQLiteCharacterData characterData)
         {
             Current = 0;
 
         }
-        public void MoveNext()
+        public void MoveNext(ref SQLiteCharacterData characterData)
         {
             if (nodes[Current] is DialogueNode dialogue)
             {

@@ -2,8 +2,7 @@
     "name": "Syadeu",
     "rootNamespace": "Syadeu",
     "references": [
-        "FMODUnity",
-        "XNode"
+        "FMODUnity"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -12,12 +11,6 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [
-        {
-            "name": "com.github.siccity.xnode",
-            "expression": "1.8",
-            "define": "XNODE"
-        }
-    ],
+    "versionDefines": [],
     "noEngineReferences": false
 }
