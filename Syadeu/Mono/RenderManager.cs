@@ -19,8 +19,8 @@ namespace Syadeu.Mono
         public override bool HideInHierarchy => false;
 
         public List<ManagedObject> ManagedObjects = new List<ManagedObject>();
-        
-        private ObClass<Camera> MainCamera;
+
+        private ObClass<Camera> MainCamera = new ObClass<Camera>(ObValueDetection.Changed);
         private Matrix4x4 CamMatrix4x4;
 
         [Serializable]
