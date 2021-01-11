@@ -50,6 +50,8 @@ namespace SyadeuEditor
             };
         }
 
+        public static void SetDirty(Object obj) => EditorUtility.SetDirty(obj);
+
         #region String
         public static string String(string text, StringColor color)
             => $"<color={color}>{text}</color>";
