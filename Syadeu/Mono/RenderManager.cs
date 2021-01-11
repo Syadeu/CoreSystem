@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-
+using Syadeu.Database;
 using Syadeu.Extentions.EditorUtils;
 
 using UnityEngine;
@@ -20,7 +20,7 @@ namespace Syadeu.Mono
 
         public List<ManagedObject> ManagedObjects = new List<ManagedObject>();
         
-        public Camera MainCamera;
+        private ObClass<Camera> MainCamera;
         private Matrix4x4 CamMatrix4x4;
 
         [Serializable]
@@ -35,14 +35,20 @@ namespace Syadeu.Mono
 
         private void Awake()
         {
-            if (MainCamera == null) MainCamera = Camera.main;
+            MainCamera.Value = Camera.main;
+            MainCamera.OnValueChange += MainCamera_OnValueChange;
 
             StartUnityUpdate(UnityUpdate());
         }
 
+        private void MainCamera_OnValueChange(Camera current, Camera target)
+        {
+            CamMatrix4x4 = GetCameraMatrix4X4(target);
+        }
+
         private IEnumerator UnityUpdate()
         {
-            CamMatrix4x4 = GetCameraMatrix4X4(MainCamera);
+            CamMatrix4x4 = GetCameraMatrix4X4(MainCamera.Value);
 
             while (m_Instance != null)
             {
@@ -95,7 +101,7 @@ namespace Syadeu.Mono
         /// <param name="offset"></param>
         public static void SetCamera(Camera cam)
         {
-            Instance.MainCamera = cam;
+            Instance.MainCamera.Value = cam;
         }
 
         //// 이거 젤터 전용
