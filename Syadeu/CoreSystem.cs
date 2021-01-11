@@ -347,6 +347,10 @@ namespace Syadeu
             } while (!m_StartUpdate && MainThread != null && Initialized);
 
             CreateNewBackgroundJobWorker(false);
+            CreateNewBackgroundJobWorker(false);
+            CreateNewBackgroundJobWorker(false);
+            CreateNewBackgroundJobWorker(false);
+            CreateNewBackgroundJobWorker(false);
 
             //"LOG :: Background worker has started".ToLog();
 
@@ -471,7 +475,9 @@ namespace Syadeu
                 #region BackgroundJob
                 for (int i = 0; m_BackgroundJobs.Count > 0 && i < BackgroundJobWorkers.Count; i++)
                 {
-                    if (m_BackgroundJobs.TryDequeue(out BackgroundJob job))
+                    if (BackgroundJobWorkers[i].standAlone) continue;
+                    if (!BackgroundJobWorkers[i].Worker.IsBusy &&
+                        m_BackgroundJobs.TryDequeue(out BackgroundJob job))
                     {
                         BackgroundJobWorkers[i].Jobs.Enqueue(job);
                     }

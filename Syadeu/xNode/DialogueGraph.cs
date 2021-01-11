@@ -15,24 +15,24 @@ namespace Syadeu.xNode
     {
         public int Current { get; private set; } = 0;
 
-        public void Initialize(ref SQLiteCharacterData characterData)
-        {
-            Current = 0;
+        //public void Initialize(ref SQLiteCharacterData characterData)
+        //{
+        //    Current = 0;
 
-        }
-        public void MoveNext(ref SQLiteCharacterData characterData)
-        {
-            if (nodes[Current] is DialogueNode dialogue)
-            {
+        //}
+        //public void MoveNext(ref SQLiteCharacterData characterData)
+        //{
+        //    if (nodes[Current] is DialogueNode dialogue)
+        //    {
 
-            }
-            else if (nodes[Current] is DialogueBranchNode branch)
-            {
+        //    }
+        //    else if (nodes[Current] is DialogueBranchNode branch)
+        //    {
 
-            }
+        //    }
 
-            Current++;
-        }
+        //    Current++;
+        //}
     }
 
     [Serializable]
