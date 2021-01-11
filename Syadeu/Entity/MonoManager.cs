@@ -33,7 +33,8 @@ namespace Syadeu
             OnInitialize();
 
             m_Instance = this as T;
-            CoreSystem.InstanceManagers.Add(this);
+            if (DontDestroy) CoreSystem.StaticManagers.Add(this);
+            else CoreSystem.InstanceManagers.Add(this);
 
             OnStart();
         }

@@ -1,4 +1,5 @@
 ﻿using Syadeu.Extentions.EditorUtils;
+using Syadeu.Mono.Console;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -13,15 +14,6 @@ using UnityEngine.InputSystem;
 
 namespace Syadeu.Mono
 {
-    public enum ConsoleFlag
-    {
-        None,
-
-        Normal,
-        Warning,
-        Error
-    }
-
     public sealed class ConsoleWindow : StaticManager<ConsoleWindow>
     {
         public bool Opened { get; private set; } = false;
@@ -36,6 +28,8 @@ namespace Syadeu.Mono
         Rect m_PossibleRect;
         Rect m_ConsoleTextRect;
         Vector2 m_ConsoleLogScroll = new Vector2(0, 0);
+
+        char[] m_TextSeperator = new char[] { ' ' };
 
         [RuntimeInitializeOnLoadMethod]
         private static void OnGameStart()
@@ -65,7 +59,17 @@ namespace Syadeu.Mono
 
             m_ConsoleTextRect = new Rect(m_ConsoleRect.x, m_ConsoleRect.y + m_ConsoleRect.height, Screen.width, 23);
 
-            CoreSystem.OnUnityUpdate += InputCheck;
+            if (SyadeuSettings.Instance.m_UseConsole)
+            {
+                if (SyadeuSettings.Instance.m_UseOnlyDevelopmentBuild)
+                {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                    CoreSystem.OnUnityUpdate += InputCheck;
+#endif
+                }
+                else CoreSystem.OnUnityUpdate += InputCheck;
+            }
+            
             //KeySetting();
         }
 
@@ -139,6 +143,25 @@ namespace Syadeu.Mono
         private void ExcuteCommand(string cmd)
         {
             LogCommand(cmd);
+
+            CommandDefinition def = LookDefinition(cmd);
+        }
+
+        private CommandDefinition LookDefinition(string cmd)
+        {
+            string[] split = cmd.Split(m_TextSeperator, 1, StringSplitOptions.None);
+            string initializer = split[0];
+            for (int i = 0; i < SyadeuSettings.Instance.m_CommandDefinitions.Count; i++)
+            {
+                if (SyadeuSettings.Instance.m_CommandDefinitions[i].m_Initializer.Equals(initializer))
+                {
+                    SyadeuSettings.Instance.m_CommandDefinitions[i].Run(split);
+                    return SyadeuSettings.Instance.m_CommandDefinitions[i];
+                }
+            }
+
+            // error
+            return null;
         }
     }
 }

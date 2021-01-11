@@ -57,6 +57,10 @@ namespace SyadeuEditor
             => $"<size={size}>{text}</size>";
         public static string String(string text, StringColor color, int size)
             => String(String(text, color), size);
+        public static void StringHeader(string text, StringColor color, bool center)
+        {
+            EditorGUILayout.LabelField(String(text, color, 20), center ? centerStyle : headerStyle);
+        }
         public static void StringHeader(string text, int size = 20)
         {
             EditorGUILayout.LabelField(String(text, StringColor.grey, size), headerStyle);

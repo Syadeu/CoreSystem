@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.IO;
 using Syadeu.Extentions.EditorUtils;
+using System.Reflection;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -28,14 +29,21 @@ namespace Syadeu
                         return m_Instance;
                     }
 
-#if UNITY_EDITOR
-                    if (!Directory.Exists("Assets/Resources/Syadeu"))
+                    string path;
+                    var customPathAtt = typeof(T).GetCustomAttribute<CustomStaticSettingAttribute>();
+                    if (customPathAtt != null)
                     {
-                        Directory.CreateDirectory("Assets/Resources/Syadeu");
+                        path = customPathAtt.CustomPath;
+                    }
+                    else path = "Syadeu";
+#if UNITY_EDITOR
+                    if (!Directory.Exists($"Assets/Resources/{path}"))
+                    {
+                        Directory.CreateDirectory("Assets/Resources/{path}");
                     }
 #endif
 
-                    m_Instance = Resources.Load<T>("Syadeu/" + typeof(T).Name);
+                    m_Instance = Resources.Load<T>($"{path}/" + typeof(T).Name);
                     if (m_Instance == null)
                     {
                         //$"LOG :: Creating new static setting<{typeof(T).Name}> asset".ToLog();
@@ -43,7 +51,7 @@ namespace Syadeu
                         m_Instance.name = $"Syadeu {typeof(T).Name} Setting Asset";
 
 #if UNITY_EDITOR
-                        AssetDatabase.CreateAsset(m_Instance, "Assets/Resources/Syadeu/" + typeof(T).Name + ".asset");
+                        AssetDatabase.CreateAsset(m_Instance, $"Assets/Resources/{path}/" + typeof(T).Name + ".asset");
 #endif
                     }
 

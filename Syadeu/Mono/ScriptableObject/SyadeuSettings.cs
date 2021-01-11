@@ -1,3 +1,4 @@
+using Syadeu.Mono.Console;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -18,6 +19,11 @@ namespace Syadeu.Mono
 
         // RenderManager
         public Vector3 m_ScreenOffset = new Vector3(.4f, .5f, 1);
+
+        // Console
+        public bool m_UseConsole = true;
+        public bool m_UseOnlyDevelopmentBuild = false;
+        public List<CommandDefinition> m_CommandDefinitions = new List<CommandDefinition>();
     }
 }
  
