@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Syadeu.Extentions.EditorUtils;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,11 +13,29 @@ using UnityEngine.InputSystem;
 
 namespace Syadeu.Mono
 {
+    public enum ConsoleFlag
+    {
+        None,
+
+        Normal,
+        Warning,
+        Error
+    }
+
     public sealed class ConsoleWindow : StaticManager<ConsoleWindow>
     {
         public bool Opened { get; private set; } = false;
 
-        private Coroutine WindowCoroutine { get; set; }
+        #region Initialze
+
+        GUIStyle m_ConsoleLogStyle;
+        GUIStyle m_ConsoleTextStyle;
+        string m_ConsoleLog = "";
+        string m_ConsoleText = "";
+        Rect m_ConsoleRect = new Rect(0, 0, Screen.width, Screen.height * 0.5f);
+        Rect m_PossibleRect;
+        Rect m_ConsoleTextRect;
+        Vector2 m_ConsoleLogScroll = new Vector2(0, 0);
 
         [RuntimeInitializeOnLoadMethod]
         private static void OnGameStart()
@@ -25,12 +44,35 @@ namespace Syadeu.Mono
         }
         public override void OnInitialize()
         {
-            KeySetting();
+            Texture2D windowTexture = new Texture2D(1, 1);
+            windowTexture.SetPixel(1, 1, new Color(1, 1, 1, 0));
+            windowTexture.Apply();
+
+            m_ConsoleLogStyle = new GUIStyle("Box")
+            {
+                richText = true,
+                alignment = TextAnchor.UpperLeft,
+                fontSize = 15
+            };
+            m_ConsoleLogStyle.normal.background = windowTexture;
+            m_ConsoleLogStyle.normal.textColor = Color.white;
+            m_ConsoleTextStyle = new GUIStyle("Box")
+            {
+                alignment = TextAnchor.MiddleLeft,
+                padding = new RectOffset(3, 0, 0, 0),
+                fontSize = 15
+            };
+
+            m_ConsoleTextRect = new Rect(m_ConsoleRect.x, m_ConsoleRect.y + m_ConsoleRect.height, Screen.width, 23);
+
+            CoreSystem.OnUnityUpdate += InputCheck;
+            //KeySetting();
         }
-        private void KeySetting()
+
+        private void InputCheck()
         {
 #if INPUTSYSTEM
-            if (Keyboard.current.backquoteKey.isPressed)
+            if (Keyboard.current.backquoteKey.wasPressedThisFrame)
 #else
             if (Input.GetKeyDown(KeyCode.BackQuote))
 #endif
@@ -38,41 +80,65 @@ namespace Syadeu.Mono
                 Opened = !Opened;
             }
 
-            if (WindowCoroutine == null) WindowCoroutine = StartCoroutine(WindowUpdate());
-            else
+            if (!Opened)
             {
-                StopCoroutine(WindowCoroutine);
-                WindowCoroutine = null;
+                m_ConsoleText = "";
+                return;
+            }
+
+#if INPUTSYSTEM
+            if (Keyboard.current.enterKey.wasPressedThisFrame)
+#else
+            if (Input.GetKeyDown(KeyCode.Return))
+#endif
+            {
+                ExcuteCommand(m_ConsoleText);
+                m_ConsoleText = "";
             }
         }
 
-        private IEnumerator WindowUpdate()
-        {
-            while (true)
-            {
+        #endregion
 
-                yield return null;
-            }
-        }
-
-        string consoleLog = "";
-        Rect consoleRect = new Rect(0, 0, Screen.width * 0.999f, Screen.height * 0.5f);
-        Rect possibleRect;
-        Rect ConsoleTextPos;
-        Vector2 scroll = new Vector2(0, 0);
+        #region Window
 
         private void OnGUI()
         {
-            if (Opened)
-            {
-                consoleRect = GUI.Window(0, consoleRect, Console, "", "Box");
-            }
+            if (!Opened) return;
+
+            GUI.SetNextControlName("CmdWindow");
+            m_ConsoleRect = GUI.Window(0, m_ConsoleRect, Console, "", "Box");
+
+            GUI.SetNextControlName("CmdTextField");
+            m_ConsoleText = GUI.TextField(m_ConsoleTextRect, m_ConsoleText, m_ConsoleTextStyle);
+
+            GUI.FocusControl("CmdTextField");
         }
         private void Console(int id)
         {
-            scroll = GUILayout.BeginScrollView(scroll);
-            GUILayout.TextArea(consoleLog, "textarea");
+            m_ConsoleLogScroll = GUILayout.BeginScrollView(m_ConsoleLogScroll);
+            GUILayout.TextArea(m_ConsoleLog, m_ConsoleLogStyle);
             GUILayout.EndScrollView();
+        }
+
+        #endregion
+
+        private void LogCommand(string log)
+        {
+            string output;
+            if (string.IsNullOrEmpty(m_ConsoleLog))
+            {
+                output = $"> <color=silver>{log}</color>";
+            }
+            else output = $"\n> <color=silver>{log}</color>";
+
+            m_ConsoleLog += output;
+
+            int logLength = m_ConsoleLog.Split('\n').Length;
+            m_ConsoleLogScroll.y = logLength * 15f;
+        }
+        private void ExcuteCommand(string cmd)
+        {
+            LogCommand(cmd);
         }
     }
 }

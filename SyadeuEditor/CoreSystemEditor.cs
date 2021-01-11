@@ -37,12 +37,24 @@ namespace SyadeuEditor
             if (m_OpenManagerList)
             {
                 EditorGUI.indentLevel += 1;
-                EditorGUI.BeginDisabledGroup(true);
+                
                 for (int i = 0; i < CoreSystem.StaticManagers.Count; i++)
                 {
-                    EditorGUILayout.LabelField($"> {CoreSystem.StaticManagers[i].GetType().Name}", new GUIStyle("TextField"));
+                    if (CoreSystem.StaticManagers[i].HideInHierarchy)
+                    {
+                        EditorGUI.BeginDisabledGroup(true);
+                        EditorGUILayout.LabelField($"> {CoreSystem.StaticManagers[i].GetType().Name}", new GUIStyle("TextField"));
+                        EditorGUI.EndDisabledGroup();
+                    }
+                    else
+                    {
+                        if (EditorUtils.Button($"> {CoreSystem.StaticManagers[i].GetType().Name}", "TextField", 1))
+                        {
+                            EditorGUIUtility.PingObject(CoreSystem.StaticManagers[i].gameObject);
+                        }
+                    }
                 }
-                EditorGUI.EndDisabledGroup();
+                
                 EditorGUI.indentLevel -= 1;
             }
             m_OpenInsManagerList = EditorUtils.Foldout(m_OpenInsManagerList, $"현재 생성된 인스턴스 매니저: {CoreSystem.InstanceManagers.Count}개");

@@ -25,7 +25,7 @@
                 }
                 else if (DetectionFlag == ObValueDetection.Changed)
                 {
-                    if (!temp.Equals(value)) OnValueChange?.Invoke(temp, value);
+                    if (temp == null || !temp.Equals(value)) OnValueChange?.Invoke(temp, value);
                 }
             }
         }

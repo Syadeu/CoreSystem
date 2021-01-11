@@ -83,6 +83,7 @@ namespace Syadeu.Mono
         {
             for (int i = 0; i < ManagedObjects.Count; i++)
             {
+                if (ManagedObjects[i].Controller == null) continue;
                 ManagedObjects[i].Controller.StopAllCoroutines();
             }
             ManagedObjects.Clear();

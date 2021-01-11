@@ -51,17 +51,23 @@ namespace SyadeuEditor
         }
 
         #region String
+        public static string String(string text, StringColor color)
+            => $"<color={color}>{text}</color>";
+        public static string String(string text, int size)
+            => $"<size={size}>{text}</size>";
+        public static string String(string text, StringColor color, int size)
+            => String(String(text, color), size);
         public static void StringHeader(string text, int size = 20)
         {
-            EditorGUILayout.LabelField($"<size={size}><color=grey>{text}</color></size>", headerStyle);
+            EditorGUILayout.LabelField(String(text, StringColor.grey, size), headerStyle);
         }
         public static void StringHeader(string text, StringColor color, int size = 20)
         {
-            EditorGUILayout.LabelField($"<size={size}><color={color}>{text}</color></size>", headerStyle);
+            EditorGUILayout.LabelField(String(text, color, size), headerStyle);
         }
         public static void StringRich(string text, bool center = false)
         {
-            EditorGUILayout.LabelField($"{text}", center ? centerStyle : headerStyle);
+            EditorGUILayout.LabelField(text, center ? centerStyle : headerStyle);
         }
         public static void StringRich(string text, GUIStyle style, bool center = false)
         {
@@ -69,19 +75,19 @@ namespace SyadeuEditor
 
             style.richText = true;
             if (center) style.alignment = TextAnchor.MiddleCenter;
-            EditorGUILayout.LabelField($"{text}", style);
+            EditorGUILayout.LabelField(text, style);
         }
         public static void StringRich(string text, StringColor color, bool center = false)
         {
-            EditorGUILayout.LabelField($"<color={color}>{text}</color>", center ? centerStyle : headerStyle);
+            EditorGUILayout.LabelField(String(text, color), center ? centerStyle : headerStyle);
         }
         public static void StringRich(string text, int size, bool center = false)
         {
-            EditorGUILayout.LabelField($"<size={size}>{text}</size>", center ? centerStyle : headerStyle);
+            EditorGUILayout.LabelField(String(text, size), center ? centerStyle : headerStyle);
         }
         public static void StringRich(string text, int size, StringColor color, bool center = false)
         {
-            EditorGUILayout.LabelField($"<size={size}><color={color}>{text}</color></size>", center ? centerStyle : headerStyle);
+            EditorGUILayout.LabelField(String(text, color, size), center ? centerStyle : headerStyle);
         }
         public static void SectorLine()
         {
