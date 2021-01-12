@@ -89,6 +89,7 @@ namespace Syadeu.Mono
             ConnectAction((arg) => $"test get : {arg}".ToLog(), "get");
             ConnectAction((arg) => $"test get position : {arg}".ToLog(), "get", "position");
             ConnectAction((arg) => $"test get position test1 : {arg}".ToLog(), "get", "position", "test1");
+            ConnectAction((arg) => $"test get position test1 test12 : {arg}".ToLog(), "get", "position", "test1", "test12");
         }
 
         private void InputCheck()
@@ -247,6 +248,7 @@ namespace Syadeu.Mono
             
             PossibleDefs.Clear();
             CurrentDefinition = null;
+            CurrentCommand = null;
 
             //CommandDefinition def = LookDefinition(cmd);
         }
@@ -305,27 +307,19 @@ namespace Syadeu.Mono
                 nextCmd = nextCmd.Find(split[i]);
             }
 
-            // end of cmd
-            if (nextCmd == null)
+            for (int i = 0; i < nextCmd.m_Args.Count; i++)
             {
-                return nextCmd;
-            }
-            else
-            {
-                for (int i = 0; i < nextCmd.m_Args.Count; i++)
+                if (nextCmd.m_Args[i].m_Field.Equals(split[split.Length - 1]))
                 {
-                    if (nextCmd.m_Args[i].m_Field.Equals(split[split.Length - 1]))
-                    {
-                        bestCmd = nextCmd.m_Args[i];
-                    }
-                    else if (nextCmd.m_Args[i].m_Field.StartsWith(split[split.Length - 1]))
-                    {
-                        possibleList.Add(nextCmd.m_Args[i]);
-                    }
+                    bestCmd = nextCmd.m_Args[i];
+                }
+                else if (nextCmd.m_Args[i].m_Field.StartsWith(split[split.Length - 1]))
+                {
+                    possibleList.Add(nextCmd.m_Args[i]);
                 }
             }
-            
-            return bestCmd;
+
+            return bestCmd == null ? nextCmd : bestCmd;
         }
 
         private CommandDefinition FindDefinition(string name)
