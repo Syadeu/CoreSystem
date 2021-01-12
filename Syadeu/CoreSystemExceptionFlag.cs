@@ -9,5 +9,6 @@
 
         RecycleObject,
         Render,
+        Console,
     }
 }

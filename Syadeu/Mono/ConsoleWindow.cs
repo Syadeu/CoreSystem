@@ -19,7 +19,9 @@ namespace Syadeu.Mono
         public bool Opened { get; private set; } = false;
 
         private List<CommandDefinition> PossibleDefs = new List<CommandDefinition>();
+        private List<CommandField> PossibleCmds = new List<CommandField>();
         private CommandDefinition CurrentDefinition { get; set; }
+        private CommandField CurrentCommand { get; set; }
 
         #region Initialze
 
@@ -61,6 +63,7 @@ namespace Syadeu.Mono
                 padding = new RectOffset(3, 0, 0, 0),
                 fontSize = 15
             };
+            m_ConsoleTextStyle.normal.textColor = new Color(.1f, .8f, .1f);
             m_ConsolePossStyle = new GUIStyle("Label")
             {
                 richText = true
@@ -80,8 +83,12 @@ namespace Syadeu.Mono
                 }
                 else CoreSystem.OnUnityUpdate += InputCheck;
             }
-            
+
             //KeySetting();
+
+            ConnectAction((arg) => $"test get : {arg}".ToLog(), "get");
+            ConnectAction((arg) => $"test get position : {arg}".ToLog(), "get", "position");
+            ConnectAction((arg) => $"test get position test1 : {arg}".ToLog(), "get", "position", "test1");
         }
 
         private void InputCheck()
@@ -130,7 +137,7 @@ namespace Syadeu.Mono
                 SearchPossibleDefs(m_ConsoleText);
             }
 
-            if (PossibleDefs.Count > 0)
+            if (PossibleDefs.Count > 0 || PossibleCmds.Count > 0)
             {
                 m_PossibleRect = GUI.Window(1, m_PossibleRect, PossibleCmdWindow, "", "Box");
             }
@@ -162,6 +169,21 @@ namespace Syadeu.Mono
                 }
                 sum += output;
             }
+            for (int i = 0; i < PossibleCmds.Count; i++)
+            {
+                string output;
+                if (string.IsNullOrEmpty(sum)) output = PossibleCmds[i].m_Field;
+                else
+                {
+                    output = $"\n{PossibleCmds[i].m_Field}";
+                }
+
+                if (CurrentCommand != null && CurrentCommand == PossibleCmds[i])
+                {
+                    output = $"<color=teal>{output}</color>";
+                }
+                sum += output;
+            }
 
             GUILayout.Label(sum, m_ConsolePossStyle);
             GUILayout.EndScrollView();
@@ -177,6 +199,10 @@ namespace Syadeu.Mono
             }
 
             CurrentDefinition = LookDefinition(cmd, ref PossibleDefs);
+            if (CurrentDefinition != null)
+            {
+                CurrentCommand = LookInside(cmd, CurrentDefinition, ref PossibleCmds);
+            }
         }
 
         #endregion
@@ -197,19 +223,38 @@ namespace Syadeu.Mono
         }
         private void ExcuteCommand(string cmd)
         {
+            LogCommand(cmd);
+
+            if (!string.IsNullOrEmpty(cmd))
+            {
+                string[] vs = cmd.Split(m_TextSeperator, StringSplitOptions.RemoveEmptyEntries);
+                string arg = vs[vs.Length - 1];
+
+                if (CurrentCommand == null)
+                {
+                    if (CurrentDefinition != null)
+                    {
+                        if (arg.Equals(CurrentDefinition.m_Initializer)) arg = null;
+                        CurrentDefinition.Action?.Invoke(arg);
+                    }
+                }
+                else
+                {
+                    if (arg.Equals(CurrentCommand.m_Field)) arg = null;
+                    CurrentCommand.Action?.Invoke(arg);
+                }
+            }
+            
             PossibleDefs.Clear();
             CurrentDefinition = null;
 
-            LogCommand(cmd);
-
-            
             //CommandDefinition def = LookDefinition(cmd);
         }
 
         private CommandDefinition LookDefinition(string cmd, ref List<CommandDefinition> possibleList)
         {
-            string[] split = cmd.Split(m_TextSeperator, 1, StringSplitOptions.None);
-            string initializer = split[0];
+            string[] split = cmd.Split(m_TextSeperator, 2, StringSplitOptions.None);
+            string initializer = split[0].Trim();
 
             possibleList.Clear();
             if (CurrentDefinition != null &&
@@ -222,14 +267,97 @@ namespace Syadeu.Mono
                 {
                     bestDef = SyadeuSettings.Instance.m_CommandDefinitions[i];
                 }
-
-                if (SyadeuSettings.Instance.m_CommandDefinitions[i].m_Initializer.StartsWith(initializer))
+                else if (SyadeuSettings.Instance.m_CommandDefinitions[i].m_Initializer.StartsWith(initializer))
                 {
                     possibleList.Add(SyadeuSettings.Instance.m_CommandDefinitions[i]);
                 }
             }
 
             return bestDef;
+        }
+        private CommandField LookInside(string cmd, CommandDefinition def, ref List<CommandField> possibleList)
+        {
+            string[] split = cmd.Split(m_TextSeperator, StringSplitOptions.RemoveEmptyEntries);
+            possibleList.Clear();
+
+            if (split.Length < 2) return null;
+
+            CommandField bestCmd = null;
+            if (split.Length == 2)
+            {
+                for (int i = 0; i < def.m_Args.Count; i++)
+                {
+                    if (def.m_Args[i].m_Field.Equals(split[1]))
+                    {
+                        bestCmd = def.m_Args[i];
+                    }
+                    else if (def.m_Args[i].m_Field.StartsWith(split[1]))
+                    {
+                        possibleList.Add(def.m_Args[i]);
+                    }
+                }
+                return bestCmd;
+            }
+
+            CommandField nextCmd = def.Find(split[1]);
+            for (int i = 2; i < split.Length - 1; i++)
+            {
+                nextCmd = nextCmd.Find(split[i]);
+            }
+
+            // end of cmd
+            if (nextCmd == null)
+            {
+                return nextCmd;
+            }
+            else
+            {
+                for (int i = 0; i < nextCmd.m_Args.Count; i++)
+                {
+                    if (nextCmd.m_Args[i].m_Field.Equals(split[split.Length - 1]))
+                    {
+                        bestCmd = nextCmd.m_Args[i];
+                    }
+                    else if (nextCmd.m_Args[i].m_Field.StartsWith(split[split.Length - 1]))
+                    {
+                        possibleList.Add(nextCmd.m_Args[i]);
+                    }
+                }
+            }
+            
+            return bestCmd;
+        }
+
+        private CommandDefinition FindDefinition(string name)
+        {
+            for (int i = 0; i < SyadeuSettings.Instance.m_CommandDefinitions.Count; i++)
+            {
+                if (SyadeuSettings.Instance.m_CommandDefinitions[i].m_Initializer.Equals(name))
+                {
+                    return SyadeuSettings.Instance.m_CommandDefinitions[i];
+                }
+            }
+            return null;
+        }
+        private void ConnectAction(Action<string> action, params string[] lines)
+        {
+            CommandDefinition def = FindDefinition(lines[0]);
+            if (def == null) throw new CoreSystemException(CoreSystemExceptionFlag.Console,
+                $"{lines[0]}의 명령어 시작 구문이 없거나 추가되지 않았습니다");
+
+            if (lines.Length < 2)
+            {
+                def.Action = action;
+                return;
+            }
+
+            CommandField nextCmd = def.Find(lines[1]);
+            for (int i = 2; i < lines.Length; i++)
+            {
+                nextCmd = nextCmd.Find(lines[i]);
+            }
+
+            nextCmd.Action = action;
         }
     }
 }
