@@ -16,6 +16,10 @@ namespace Syadeu.Mono
 {
     public sealed class ConsoleWindow : StaticManager<ConsoleWindow>
     {
+        public static void Log(string log) => Instance.LogCommand(log);
+        public static void AddCommand(Action<string> action, params string[] arguments)
+            => Instance.ConnectAction(action, arguments);
+
         public bool Opened { get; private set; } = false;
 
         private List<CommandDefinition> PossibleDefs = new List<CommandDefinition>();
