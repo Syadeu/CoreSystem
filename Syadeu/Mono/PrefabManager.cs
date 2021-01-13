@@ -188,6 +188,7 @@ namespace Syadeu.Mono
             for (int i = 0; i < obj.InstanceCreationBlock; i++)
             {
                 RecycleableMonobehaviour recycleObj = Instantiate(obj.Prefab, transform);
+                recycleObj.transform.localPosition = Vector3.negativeInfinity;
                 recycleObj.OnCreated();
 
                 obj.Instances.Add(recycleObj);
