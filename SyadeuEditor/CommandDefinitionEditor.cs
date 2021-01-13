@@ -66,6 +66,14 @@ namespace SyadeuEditor
         {
             for (int i = 0; i < SyadeuSettings.Instance.m_CommandDefinitions.Count; i++)
             {
+                if (SyadeuSettings.Instance.m_CommandDefinitions[i] == null)
+                {
+                    SyadeuSettings.Instance.m_CommandDefinitions.RemoveAt(i);
+                    i--;
+                    EditorUtils.SetDirty(SyadeuSettings.Instance);
+                    continue;
+                }
+
                 if (SyadeuSettings.Instance.m_CommandDefinitions[i] == m_Def) return true;
             }
             return false;

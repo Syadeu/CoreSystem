@@ -29,8 +29,10 @@ namespace Syadeu.Mono
 
         private List<CommandDefinition> PossibleDefs = new List<CommandDefinition>();
         private List<CommandField> PossibleCmds = new List<CommandField>();
+
         private CommandDefinition CurrentDefinition { get; set; }
         private CommandField CurrentCommand { get; set; }
+        private string LastCommand { get; set; } = null;
 
         GUIStyle m_ConsoleLogStyle;
         GUIStyle m_ConsoleTextStyle;
@@ -78,7 +80,7 @@ namespace Syadeu.Mono
                 richText = true,
                 fontSize = SyadeuSettings.Instance.m_ConsoleFontSize
             };
-            m_ConsolePossStyle.normal.textColor = new Color(0.5f, 0.5f, 0.5f, 0.6f);
+            m_ConsolePossStyle.normal.textColor = Color.white;
 
             m_ConsoleTextRect = new Rect(m_ConsoleRect.x, m_ConsoleRect.y + m_ConsoleRect.height, Screen.width, 23);
             m_PossibleRect = new Rect(Screen.width * 0.65f, m_ConsoleRect.height * 0.6f, Screen.width * 0.35f, m_ConsoleRect.height * 0.4f);
@@ -138,6 +140,10 @@ namespace Syadeu.Mono
             if (SyadeuSettings.Instance.m_ConsoleThrowWhenErrorRecieved &&
                 SyadeuSettings.Instance.m_ConsoleLogErrorTypes.HasFlag(ConvertFlag(type)))
             {
+                if (!SyadeuSettings.Instance.m_ConsoleLogWhenLogRecieved)
+                {
+                    InternalLogAssert(true, condition, false);
+                }
                 throw new CoreSystemException(CoreSystemExceptionFlag.Console, condition, stackTrace);
             }
         }
@@ -301,6 +307,14 @@ namespace Syadeu.Mono
                 CurrentDefinition = bestDef;
                 m_ConsoleText = bestDef.m_Initializer;
             }
+            else
+            {
+                if (!string.IsNullOrEmpty(LastCommand))
+                {
+                    m_ConsoleText = LastCommand;
+                    SearchPossibleDefs(m_ConsoleText);
+                }
+            }
         }
 
         private CommandDefinition FindClosestDefinition(string[] cmds, ref List<CommandDefinition> defs)
@@ -319,7 +333,6 @@ namespace Syadeu.Mono
                 }
 
                 int length = defs[i].m_Initializer.Trim(cmds[0].ToCharArray()).Length;
-                $"{defs[i].m_Initializer} :: {length}".ToLog();
                 if (length < bestLength)
                 {
                     bestDef = defs[i];
@@ -458,16 +471,21 @@ namespace Syadeu.Mono
                     {
                         if (arg.Equals(CurrentDefinition.m_Initializer)) arg = null;
                         CurrentDefinition.Action?.Invoke(arg);
+
+                        if (CurrentDefinition.Action != null) LastCommand = cmd;
                     }
                 }
                 else
                 {
                     if (arg.Equals(CurrentCommand.m_Field)) arg = null;
                     CurrentCommand.Action?.Invoke(arg);
+
+                    if (CurrentCommand.Action != null) LastCommand = cmd;
                 }
             }
 
             PossibleDefs.Clear();
+
             CurrentDefinition = null;
             CurrentCommand = null;
 
