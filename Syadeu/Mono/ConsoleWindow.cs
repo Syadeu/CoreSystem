@@ -87,13 +87,6 @@ namespace Syadeu.Mono
                 }
                 else CoreSystem.OnUnityUpdate += InputCheck;
             }
-
-            //KeySetting();
-
-            ConnectAction((arg) => $"test get : {arg}".ToLog(), "get");
-            ConnectAction((arg) => $"test get position : {arg}".ToLog(), "get", "position");
-            ConnectAction((arg) => $"test get position test1 : {arg}".ToLog(), "get", "position", "test1");
-            ConnectAction((arg) => $"test get position test1 test12 : {arg}".ToLog(), "get", "position", "test1", "test12");
         }
 
         private void InputCheck()
