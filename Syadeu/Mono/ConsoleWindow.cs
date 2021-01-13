@@ -57,7 +57,7 @@ namespace Syadeu.Mono
             {
                 richText = true,
                 alignment = TextAnchor.UpperLeft,
-                fontSize = 15
+                fontSize = SyadeuSettings.Instance.m_ConsoleFontSize
             };
             m_ConsoleLogStyle.normal.background = windowTexture;
             m_ConsoleLogStyle.normal.textColor = Color.white;
@@ -65,12 +65,13 @@ namespace Syadeu.Mono
             {
                 alignment = TextAnchor.MiddleLeft,
                 padding = new RectOffset(3, 0, 0, 0),
-                fontSize = 15
+                fontSize = SyadeuSettings.Instance.m_ConsoleFontSize
             };
             m_ConsoleTextStyle.normal.textColor = new Color(.1f, .8f, .1f);
             m_ConsolePossStyle = new GUIStyle("Label")
             {
-                richText = true
+                richText = true,
+                fontSize = SyadeuSettings.Instance.m_ConsoleFontSize
             };
             m_ConsolePossStyle.normal.textColor = new Color(0.5f, 0.5f, 0.5f, 0.6f);
 
@@ -93,22 +94,14 @@ namespace Syadeu.Mono
         {
 #if INPUTSYSTEM
             if (Keyboard.current.backquoteKey.wasPressedThisFrame)
-#else
-            if (Input.GetKeyDown(KeyCode.BackQuote))
-#endif
             {
                 Opened = !Opened;
             }
-#if INPUTSYSTEM
             if (Keyboard.current.escapeKey.wasPressedThisFrame)
-#else
-            if (Event.current.isKey && 
-                (Event.current.keyCode == KeyCode.Escape || Event.current.keyCode == KeyCode.BackQuote))
-#endif
             {
                 Opened = false;
             }
-
+#endif
             if (!Opened)
             {
                 m_ConsoleText = "";
@@ -117,13 +110,11 @@ namespace Syadeu.Mono
 
 #if INPUTSYSTEM
             if (Keyboard.current.enterKey.wasPressedThisFrame)
-#else
-            if (Input.GetKeyDown(KeyCode.Return))
-#endif
             {
                 ExcuteCommand(m_ConsoleText);
                 m_ConsoleText = "";
             }
+#endif
         }
 
         #endregion
@@ -132,7 +123,28 @@ namespace Syadeu.Mono
 
         private void OnGUI()
         {
+#if !INPUTSYSTEM
+            if (Event.current.keyCode == KeyCode.BackQuote && Event.current.type == EventType.KeyDown)
+            {
+                m_ConsoleText = "";
+                Opened = !Opened;
+                return;
+            }
+            if (Event.current.keyCode == KeyCode.Escape)
+            {
+                Opened = false;
+            }
+#endif
+
             if (!Opened) return;
+#if !INPUTSYSTEM
+            if (Event.current.keyCode == KeyCode.Return && Event.current.type == EventType.KeyDown)
+            {
+                ExcuteCommand(m_ConsoleText);
+                m_ConsoleText = "";
+                return;
+            }
+#endif
 
             GUI.SetNextControlName("CmdWindow");
             m_ConsoleRect = GUI.Window(0, m_ConsoleRect, Console, "", "Box");

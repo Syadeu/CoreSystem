@@ -35,6 +35,7 @@ namespace Syadeu.Mono
         // Console
         public bool m_UseConsole = true;
         public bool m_UseOnlyDevelopmentBuild = false;
+        public int m_ConsoleFontSize = 15;
         public List<CommandDefinition> m_CommandDefinitions = new List<CommandDefinition>();
     }
 }
