@@ -106,6 +106,15 @@ namespace Syadeu.Mono
             {
                 Opened = !Opened;
             }
+#if INPUTSYSTEM
+            if (Keyboard.current.escapeKey.wasPressedThisFrame)
+#else
+            if (Event.current.isKey && 
+                (Event.current.keyCode == KeyCode.Escape || Event.current.keyCode == KeyCode.BackQuote))
+#endif
+            {
+                Opened = false;
+            }
 
             if (!Opened)
             {
