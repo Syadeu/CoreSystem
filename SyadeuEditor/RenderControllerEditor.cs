@@ -133,6 +133,11 @@ namespace SyadeuEditor
 
             EditorUtils.StringRich(m_Render.IsStandalone ? "Standalone" : "Managed", true);
             DrawStatus(m_Render, true);
+            if (Application.isPlaying)
+            {
+                Vector3 screenPoint = m_Render.GetScreenPoint();
+                EditorUtils.StringRich(screenPoint.ToString(), true);
+            }
 
             EditorUtils.SectorLine();
             if (m_RecycleMono != null)
