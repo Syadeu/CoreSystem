@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-
+using Syadeu.Extentions.EditorUtils;
 using Syadeu.Mono.Console;
 
 using UnityEngine;
@@ -62,8 +62,7 @@ namespace Syadeu.Mono
                 alignment = TextAnchor.UpperLeft,
                 fontSize = SyadeuSettings.Instance.m_ConsoleFontSize,
 
-                fixedWidth = Screen.width * .983f,
-                //fixedHeight = Screen.height * .48f,
+                fixedWidth = Screen.width * .983f
             };
             m_ConsoleLogStyle.normal.background = windowTexture;
             m_ConsoleLogStyle.normal.textColor = Color.white;
@@ -97,11 +96,14 @@ namespace Syadeu.Mono
 
             Application.logMessageReceived += Application_logMessageReceived;
 
-            InternalCreateCommand((arg) =>
+            if (FindDefinition("clear") == null)
             {
-                m_ConsoleLog = "";
-                m_ConsoleLogScroll = Vector2.zero;
-            }, "clear");
+                InternalCreateCommand((arg) =>
+                {
+                    m_ConsoleLog = "";
+                    m_ConsoleLogScroll = Vector2.zero;
+                }, "clear");
+            }
         }
         private void Application_logMessageReceived(string condition, string stackTrace, LogType type)
         {
@@ -225,6 +227,12 @@ namespace Syadeu.Mono
             }
 
             GUI.FocusControl("CmdTextField");
+
+            if (Event.current.keyCode == KeyCode.Tab)
+            {
+                if (Event.current.type == EventType.KeyDown) QuickTab();
+                else if (Event.current.type == EventType.KeyUp) SetTextCursorToLast("CmdTextField");
+            }
         }
         private void Console(int id)
         {
@@ -269,6 +277,98 @@ namespace Syadeu.Mono
 
             GUILayout.Label(sum, m_ConsolePossStyle);
             GUILayout.EndScrollView();
+        }
+
+        private void QuickTab()
+        {
+            string[] split = m_ConsoleText.Split(m_TextSeperator, StringSplitOptions.RemoveEmptyEntries);
+            if (CurrentDefinition != null)
+            {
+                if (PossibleCmds.Count > 0)
+                {
+                    CommandField bestField = FindClosestField(split, ref PossibleCmds);
+                    PossibleCmds.Clear();
+                    CurrentCommand = bestField;
+                    m_ConsoleText = 
+                        m_ConsoleText.Substring(0, m_ConsoleText.Length - split[split.Length - 1].Length);
+                    m_ConsoleText += bestField.m_Field;
+                }
+            }
+            else if (PossibleDefs.Count > 0)
+            {
+                CommandDefinition bestDef = FindClosestDefinition(split, ref PossibleDefs);
+                PossibleDefs.Clear();
+                CurrentDefinition = bestDef;
+                m_ConsoleText = bestDef.m_Initializer;
+            }
+        }
+
+        private CommandDefinition FindClosestDefinition(string[] cmds, ref List<CommandDefinition> defs)
+        {
+            if (defs.Count == 0) return null;
+
+            CommandDefinition bestDef = null;
+            int bestLength = 9999;
+            for (int i = 0; i < defs.Count; i++)
+            {
+                if (defs[i] == null)
+                {
+                    defs.RemoveAt(i);
+                    i--;
+                    continue;
+                }
+
+                int length = defs[i].m_Initializer.Trim(cmds[0].ToCharArray()).Length;
+                $"{defs[i].m_Initializer} :: {length}".ToLog();
+                if (length < bestLength)
+                {
+                    bestDef = defs[i];
+                    bestLength = length;
+                }
+            }
+
+            return bestDef;
+        }
+        private CommandField FindClosestField(string[] cmds, ref List<CommandField> fields)
+        {
+            if (fields.Count == 0) return null;
+
+            string lastField = cmds[cmds.Length - 1];
+            CommandField bestField = null;
+            int bestLength = 9999;
+            for (int i = 0; i < fields.Count; i++)
+            {
+                if (fields[i] == null)
+                {
+                    fields.RemoveAt(i);
+                    i--;
+                    continue;
+                }
+
+                int length = fields[i].m_Field.Trim(lastField.ToCharArray()).Length;
+                if (length < bestLength)
+                {
+                    bestField = fields[i];
+                    bestLength = length;
+                }
+            }
+
+            return bestField;
+        }
+
+        #endregion
+
+        #region Utils
+
+        private TextEditor SetTextCursorToLast(string controlName)
+        {
+            GUI.FocusControl(controlName);
+            TextEditor t = (TextEditor)GUIUtility.GetStateObject(typeof(TextEditor), GUIUtility.keyboardControl);
+
+            t.cursorIndex = t.text.Length;
+            t.selectIndex = t.text.Length;
+
+            return t;
         }
 
         #endregion
