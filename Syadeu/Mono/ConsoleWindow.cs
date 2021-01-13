@@ -1,11 +1,7 @@
-﻿using Syadeu.Extentions.EditorUtils;
-using Syadeu.Mono.Console;
-using System;
-using System.Collections;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
+using Syadeu.Mono.Console;
 
 using UnityEngine;
 #if INPUTSYSTEM
@@ -16,18 +12,25 @@ namespace Syadeu.Mono
 {
     public sealed class ConsoleWindow : StaticManager<ConsoleWindow>
     {
-        public static void Log(string log) => Instance.LogCommand(log);
+        public static void Log(string log, ConsoleFlag flag = ConsoleFlag.Normal) => Instance.LogCommand(log, flag);
+        public static void LogAssert(bool isTrue, string log, bool throwException = true)
+            => Instance.InternalLogAssert(isTrue, log, throwException);
+
         public static void AddCommand(Action<string> action, params string[] arguments)
-            => Instance.ConnectAction(action, arguments);
+            => Instance.InternalAddCommand(action, arguments);
+        public static void CreateCommand(Action<string> action, params string[] arguments)
+            => Instance.InternalCreateCommand(action, arguments);
+        
+        public static event Action OnErrorRecieved;
 
         public bool Opened { get; private set; } = false;
+
+        #region Initialze
 
         private List<CommandDefinition> PossibleDefs = new List<CommandDefinition>();
         private List<CommandField> PossibleCmds = new List<CommandField>();
         private CommandDefinition CurrentDefinition { get; set; }
         private CommandField CurrentCommand { get; set; }
-
-        #region Initialze
 
         GUIStyle m_ConsoleLogStyle;
         GUIStyle m_ConsoleTextStyle;
@@ -50,14 +53,17 @@ namespace Syadeu.Mono
         public override void OnInitialize()
         {
             Texture2D windowTexture = new Texture2D(1, 1);
-            windowTexture.SetPixel(1, 1, new Color(1, 1, 1, 0));
+            windowTexture.SetPixel(1, 1, new Color(1, 1, 1, .25f));
             windowTexture.Apply();
 
             m_ConsoleLogStyle = new GUIStyle("Box")
             {
                 richText = true,
                 alignment = TextAnchor.UpperLeft,
-                fontSize = SyadeuSettings.Instance.m_ConsoleFontSize
+                fontSize = SyadeuSettings.Instance.m_ConsoleFontSize,
+
+                fixedWidth = Screen.width * .983f,
+                //fixedHeight = Screen.height * .48f,
             };
             m_ConsoleLogStyle.normal.background = windowTexture;
             m_ConsoleLogStyle.normal.textColor = Color.white;
@@ -88,7 +94,55 @@ namespace Syadeu.Mono
                 }
                 else CoreSystem.OnUnityUpdate += InputCheck;
             }
+
+            Application.logMessageReceived += Application_logMessageReceived;
+
+            InternalCreateCommand((arg) =>
+            {
+                m_ConsoleLog = "";
+                m_ConsoleLogScroll = Vector2.zero;
+            }, "clear");
         }
+        private void Application_logMessageReceived(string condition, string stackTrace, LogType type)
+        {
+            if (SyadeuSettings.Instance.m_ConsoleLogErrorTypes.HasFlag(ConvertFlag(type)))
+            {
+                OnErrorRecieved?.Invoke();
+            }
+
+            if (SyadeuSettings.Instance.m_ConsoleLogWhenLogRecieved &&
+                SyadeuSettings.Instance.m_ConsoleLogTypes.HasFlag(ConvertFlag(type)))
+            {
+                if (SyadeuSettings.Instance.m_ConsoleLogOnlyIsDevelopment)
+                {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                    if (ConvertFlag(type) == ConsoleFlag.Error)
+                    {
+                        InternalLogAssert(true, condition, false);
+                    }
+                    else InternalLog(condition, StringColor.white);
+#endif
+                }
+                else
+                {
+                    if (ConvertFlag(type) == ConsoleFlag.Error)
+                    {
+                        InternalLogAssert(true, condition, false);
+                    }
+                    else InternalLog(condition, StringColor.white);
+                }
+            }
+
+            if (SyadeuSettings.Instance.m_ConsoleThrowWhenErrorRecieved &&
+                SyadeuSettings.Instance.m_ConsoleLogErrorTypes.HasFlag(ConvertFlag(type)))
+            {
+                throw new CoreSystemException(CoreSystemExceptionFlag.Console, condition, stackTrace);
+            }
+        }
+
+        #endregion
+
+        #region Window
 
         private void InputCheck()
         {
@@ -116,18 +170,27 @@ namespace Syadeu.Mono
             }
 #endif
         }
-
-        #endregion
-
-        #region Window
-
         private void OnGUI()
         {
+            if (!SyadeuSettings.Instance.m_UseConsole) return;
+            if (SyadeuSettings.Instance.m_UseOnlyDevelopmentBuild)
+            {
+#if !UNITY_EDITOR || !DEVELOPMENT_BUILD
+                return;
+#endif
+            }
+
+
 #if !INPUTSYSTEM
             if (Event.current.keyCode == KeyCode.BackQuote && Event.current.type == EventType.KeyDown)
             {
                 m_ConsoleText = "";
                 Opened = !Opened;
+                return;
+            }
+            if (Event.current.keyCode == KeyCode.BackQuote && Event.current.type == EventType.KeyUp)
+            {
+                m_ConsoleText = "";
                 return;
             }
             if (Event.current.keyCode == KeyCode.Escape)
@@ -165,7 +228,7 @@ namespace Syadeu.Mono
         }
         private void Console(int id)
         {
-            m_ConsoleLogScroll = GUILayout.BeginScrollView(m_ConsoleLogScroll);
+            m_ConsoleLogScroll = GUILayout.BeginScrollView(m_ConsoleLogScroll, false, true);
             GUILayout.TextArea(m_ConsoleLog, m_ConsoleLogStyle);
             GUILayout.EndScrollView();
         }
@@ -208,41 +271,81 @@ namespace Syadeu.Mono
             GUILayout.EndScrollView();
         }
 
-        private void SearchPossibleDefs(string cmd)
-        {
-            if (string.IsNullOrEmpty(cmd))
-            {
-                PossibleDefs.Clear();
-                CurrentDefinition = null;
-                return;
-            }
-
-            CurrentDefinition = LookDefinition(cmd, ref PossibleDefs);
-            if (CurrentDefinition != null)
-            {
-                CurrentCommand = LookInside(cmd, CurrentDefinition, ref PossibleCmds);
-            }
-        }
-
         #endregion
 
-        private void LogCommand(string log)
+        #region Internals
+
+        private ConsoleFlag ConvertFlag(LogType type)
+        {
+            if (type == LogType.Error || type == LogType.Exception || type == LogType.Assert)
+            {
+                return ConsoleFlag.Error;
+            }
+            else if (type == LogType.Warning) return ConsoleFlag.Warning;
+
+            return ConsoleFlag.Normal;
+        }
+
+        private enum StringColor
+        {
+            sliver, // user
+
+            maroon, // red
+            orange, //
+            teal, // green
+            white
+        }
+        private string ConvertString(string text, StringColor color)
+            => $"<color={color}>{text}</color>";
+        private void InternalLog(string text, StringColor color)
         {
             string output;
             if (string.IsNullOrEmpty(m_ConsoleLog))
             {
-                output = $"> <color=silver>{log}</color>";
+                output = $"> {ConvertString(text, color)}";
             }
-            else output = $"\n> <color=silver>{log}</color>";
+            else output = $"\n> {ConvertString(text, color)}";
 
             m_ConsoleLog += output;
-
             int logLength = m_ConsoleLog.Split('\n').Length;
             m_ConsoleLogScroll.y = logLength * 15f;
         }
+        private void InternalLogAssert(bool isTrue, string log, bool throwException = true)
+        {
+            if (isTrue)
+            {
+                string trace = Environment.StackTrace;
+                InternalLog($"{log}\n{trace}", StringColor.maroon);
+                OnErrorRecieved?.Invoke();
+                if (throwException)
+                {
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Console, log, trace);
+                }
+            }
+        }
+        private void LogCommand(string log, ConsoleFlag flag = ConsoleFlag.Normal)
+        {
+            if (flag == ConsoleFlag.Error)
+            {
+                InternalLog(log, StringColor.maroon);
+                OnErrorRecieved?.Invoke();
+                if (SyadeuSettings.Instance.m_ConsoleThrowWhenErrorRecieved)
+                {
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Console, log);
+                }
+            }
+            else if (flag == ConsoleFlag.Warning)
+            {
+                InternalLog(log, StringColor.orange);
+            }
+            else
+            {
+                InternalLog(log, StringColor.white);
+            }
+        }
         private void ExcuteCommand(string cmd)
         {
-            LogCommand(cmd);
+            InternalLog(cmd, StringColor.sliver);
 
             if (!string.IsNullOrEmpty(cmd))
             {
@@ -271,6 +374,21 @@ namespace Syadeu.Mono
             //CommandDefinition def = LookDefinition(cmd);
         }
 
+        private void SearchPossibleDefs(string cmd)
+        {
+            if (string.IsNullOrEmpty(cmd))
+            {
+                PossibleDefs.Clear();
+                CurrentDefinition = null;
+                return;
+            }
+
+            CurrentDefinition = LookDefinition(cmd, ref PossibleDefs);
+            if (CurrentDefinition != null)
+            {
+                CurrentCommand = LookInside(cmd, CurrentDefinition, ref PossibleCmds);
+            }
+        }
         private CommandDefinition LookDefinition(string cmd, ref List<CommandDefinition> possibleList)
         {
             string[] split = cmd.Split(m_TextSeperator, 2, StringSplitOptions.None);
@@ -283,6 +401,13 @@ namespace Syadeu.Mono
             CommandDefinition bestDef = null;
             for (int i = 0; i < SyadeuSettings.Instance.m_CommandDefinitions.Count; i++)
             {
+                if (SyadeuSettings.Instance.m_CommandDefinitions[i] == null)
+                {
+                    SyadeuSettings.Instance.m_CommandDefinitions.RemoveAt(i);
+                    i--;
+                    continue;
+                }
+
                 if (SyadeuSettings.Instance.m_CommandDefinitions[i].m_Initializer.Equals(initializer))
                 {
                     bestDef = SyadeuSettings.Instance.m_CommandDefinitions[i];
@@ -307,6 +432,13 @@ namespace Syadeu.Mono
             {
                 for (int i = 0; i < def.m_Args.Count; i++)
                 {
+                    if (def.m_Args[i] == null)
+                    {
+                        def.m_Args.RemoveAt(i);
+                        i--;
+                        continue;
+                    }
+
                     if (def.m_Args[i].m_Field.Equals(split[1]))
                     {
                         bestCmd = def.m_Args[i];
@@ -327,6 +459,13 @@ namespace Syadeu.Mono
 
             for (int i = 0; i < nextCmd.m_Args.Count; i++)
             {
+                if (nextCmd.m_Args[i] == null)
+                {
+                    nextCmd.m_Args.RemoveAt(i);
+                    i--;
+                    continue;
+                }
+
                 if (nextCmd.m_Args[i].m_Field.Equals(split[split.Length - 1]))
                 {
                     bestCmd = nextCmd.m_Args[i];
@@ -344,6 +483,13 @@ namespace Syadeu.Mono
         {
             for (int i = 0; i < SyadeuSettings.Instance.m_CommandDefinitions.Count; i++)
             {
+                if (SyadeuSettings.Instance.m_CommandDefinitions[i] == null)
+                {
+                    SyadeuSettings.Instance.m_CommandDefinitions.RemoveAt(i);
+                    i--;
+                    continue;
+                }
+
                 if (SyadeuSettings.Instance.m_CommandDefinitions[i].m_Initializer.Equals(name))
                 {
                     return SyadeuSettings.Instance.m_CommandDefinitions[i];
@@ -351,7 +497,7 @@ namespace Syadeu.Mono
             }
             return null;
         }
-        private void ConnectAction(Action<string> action, params string[] lines)
+        private void InternalAddCommand(Action<string> action, params string[] lines)
         {
             CommandDefinition def = FindDefinition(lines[0]);
             if (def == null) throw new CoreSystemException(CoreSystemExceptionFlag.Console,
@@ -371,5 +517,42 @@ namespace Syadeu.Mono
 
             nextCmd.Action = action;
         }
+        private void InternalCreateCommand(Action<string> action, params string[] lines)
+        {
+            CommandDefinition def = ScriptableObject.CreateInstance<CommandDefinition>();
+            def.m_Initializer = lines[0];
+
+            SyadeuSettings.Instance.m_CommandDefinitions.Add(def);
+
+            if (lines.Length < 2)
+            {
+                def.Action = action;
+                return;
+            }
+
+            CommandField nextCmd = def.Find(lines[1]);
+            if (nextCmd == null)
+            {
+                nextCmd = ScriptableObject.CreateInstance<CommandField>();
+                nextCmd.m_Field = lines[1];
+            }
+            for (int i = 2; i < lines.Length; i++)
+            {
+                CommandField findNext = nextCmd.Find(lines[i]);
+                if (findNext == null)
+                {
+                    findNext = ScriptableObject.CreateInstance<CommandField>();
+                    findNext.m_Field = lines[i];
+
+                    nextCmd.m_Args.Add(findNext);
+                }
+
+                nextCmd = findNext;
+            }
+
+            nextCmd.Action = action;
+        }
+
+        #endregion
     }
 }
