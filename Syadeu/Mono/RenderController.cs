@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using Syadeu.Extentions.EditorUtils;
+using System.Collections;
 using System.Collections.Generic;
 
 using UnityEngine;
@@ -45,7 +46,6 @@ namespace Syadeu.Mono
             {
                 if (m_Camera == null) throw new CoreSystemException(CoreSystemExceptionFlag.Render, "스탠드얼론으로 지정된 RenderController에서 카메라가 지정되지 않음");
 
-                Matrix = RenderManager.GetCameraMatrix4X4(m_Camera);
                 CoreSystem.StartBackgroundUpdate(Transform, StandaloneUpdate());
             }
         }
@@ -53,6 +53,7 @@ namespace Syadeu.Mono
         private void Update()
         {
             Position = Transform.position;
+            if (IsStandalone) Matrix = RenderManager.GetCameraMatrix4X4(m_Camera);
         }
         private void OnDestroy()
         {
@@ -84,6 +85,21 @@ namespace Syadeu.Mono
                     }
                 }
 
+                //Matrix4x4 matrixVP = m_Camera.projectionMatrix * m_Camera.worldToCameraMatrix; //multipication order matters
+                //Vector4 clipCoord = matrixVP.MultiplyPoint(Position);
+                //Vector3 screenPos = new Vector3(clipCoord.x + 1f, clipCoord.y + 1f, clipCoord.z + 1f) / 2f;
+
+                //Matrix4x4 p = Matrix;
+                //Vector4 p4 = Position;
+                //p4.w = 1;
+                //Vector4 result4 = p * p4;
+                //Vector3 screenPoint = result4;
+                //screenPoint /= -result4.w;
+                //screenPoint.x = screenPoint.x / 2 + 0.5f;
+                //screenPoint.y = screenPoint.y / 2 + 0.5f;
+                //screenPoint.z = -result4.w;
+
+                //$"{screenPoint}".ToLog();
                 yield return null;
             }
         }
@@ -120,6 +136,15 @@ namespace Syadeu.Mono
 
         private void InvokeOnVisible() => OnVisible?.Invoke();
         private void InvokeOnInvisible() => OnInvisible?.Invoke();
+
+        public Vector3 GetScreenPoint()
+        {
+            if (IsStandalone) return RenderManager.GetScreenPoint(Matrix, Position);
+            else
+            {
+                return RenderManager.GetScreenPoint(RenderManager.Instance.CamMatrix4x4, Position);
+            }
+        }
 
         public void RenderOff()
         {

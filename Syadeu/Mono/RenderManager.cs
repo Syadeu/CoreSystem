@@ -21,7 +21,8 @@ namespace Syadeu.Mono
         public List<ManagedObject> ManagedObjects = new List<ManagedObject>();
 
         private ObClass<Camera> MainCamera = new ObClass<Camera>(ObValueDetection.Changed);
-        private Matrix4x4 CamMatrix4x4;
+
+        internal Matrix4x4 CamMatrix4x4 { get; private set; }
 
         [Serializable]
         public class ManagedObject
@@ -48,10 +49,11 @@ namespace Syadeu.Mono
 
         private IEnumerator UnityUpdate()
         {
-            CamMatrix4x4 = GetCameraMatrix4X4(MainCamera.Value);
-
             while (m_Instance != null)
             {
+                if (MainCamera == null) MainCamera.Value = Camera.main;
+                CamMatrix4x4 = GetCameraMatrix4X4(MainCamera.Value);
+
                 if (m_WaitForManaged.Count > 0)
                 {
                     int count = m_WaitForManaged.Count;
@@ -112,7 +114,7 @@ namespace Syadeu.Mono
 
         internal static Matrix4x4 GetCameraMatrix4X4(Camera cam)
             => cam.projectionMatrix * cam.transform.worldToLocalMatrix;
-        internal static bool IsInCameraScreen(Vector3 target, Matrix4x4 matrix, Vector3 offset)
+        public static Vector3 GetScreenPoint(Matrix4x4 matrix, Vector3 target)
         {
             Vector4 p4 = target;
             p4.w = 1;
@@ -122,6 +124,12 @@ namespace Syadeu.Mono
             screenPoint.x = screenPoint.x / 2 + 0.5f;
             screenPoint.y = screenPoint.y / 2 + 0.5f;
             screenPoint.z = -result4.w;
+
+            return screenPoint;
+        }
+        internal static bool IsInCameraScreen(Vector3 target, Matrix4x4 matrix, Vector3 offset)
+        {
+            Vector3 screenPoint = GetScreenPoint(matrix, target);
 
             return screenPoint.z > 0 - offset.z &&
                 screenPoint.x > 0 - offset.x &&
