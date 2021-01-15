@@ -17,7 +17,6 @@ using Unity.Mathematics;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Transforms;
-using Unity.Rendering;
 
 namespace Syadeu.ECS
 {
@@ -37,87 +36,26 @@ namespace Syadeu.ECS
                 return m_Instance;
             }
         }
+
+        protected TValue GetComponentData<TValue>(Entity entity) where TValue : struct, IComponentData
+            => EntityManager.GetComponentData<TValue>(entity);
+        protected void AddComponentData<TValue>(Entity entity, TValue component) where TValue : struct, IComponentData
+            => EntityManager.AddComponentData(entity, component);
     }
 
     public enum AgentStatus
     {
         Idle = 0,
-        PathQueued = 1,
-        Moving = 2,
+        WaitForQueue = 1,
+        PathQueued = 2,
+        Moving = 3,
         Paused = 4
     }
-
-    //public class ECSNavAgentConversionSystem : GameObjectConversionSystem
-    //{
-    //    public Queue<ECSNavAgentAuthoring> WaitForAuthoring = new Queue<ECSNavAgentAuthoring>();
-
-    //    protected override void OnUpdate()
-    //    {
-    //        if (WaitForAuthoring.Count > 0)
-    //        {
-    //            CreateAdditionalEntity(WaitForAuthoring.Dequeue());
-    //        }
-
-    //        Entities.ForEach((ECSNavAgentAuthoring input) =>
-    //        {
-    //            var entity = GetPrimaryEntity(input);
-
-    //            input.Convert(entity, DstEntityManager, this);
-    //            //DstEntityManager.AddComponentData(entity, new ECSNavAgent
-    //            //{
-    //            //    status = AgentStatus.Idle,
-
-    //            //    position = input.transform.position,
-    //            //    rotation = input.transform.rotation,
-
-    //            //    height = input.m_Agent.height,
-    //            //    radius = input.m_Agent.radius
-    //            //});
-
-    //            Debug.Log("updated");
-    //        });
-    //    }
-    //}
-
-    //[DisableAutoCreation]
-    public class ECSNavAgentSystem : ECSManagerEntity<ECSNavAgentSystem>
+    public enum RequestOption
     {
-        private EntityQuery m_EntityQuery;
-
-        protected override void OnCreate()
-        {
-            base.OnCreate();
-            
-            m_EntityQuery = GetEntityQuery(typeof(ECSNavAgent));
-        }
-
-        protected override void OnUpdate()
-        {
-            //TransformUpdateJob trJob = new TransformUpdateJob
-            //{
-            //    trDatas = m_TransformDatas
-            //};
-            //trJob.Schedule(m_Transforms, Dependency);
-
-            ////NativeArray<int> entityIndexes = new NativeArray<int>(m_EntityIndexes.ToArray(), Allocator.Temp);
-            ////TransformAccessArray transforms = new TransformAccessArray(m_ManagedTransforms.ToArray());
-
-            //NativeArray<ECSNavAgent> agents = m_EntityQuery.ToComponentDataArrayAsync<ECSNavAgent>(Allocator.Temp, out JobHandle jobHandle);
-            ////TransformAccessArray transforms = new TransformAccessArray(agents.Length);
-
-
-
-            Entities
-                .WithStoreEntityQueryInField(ref m_EntityQuery)
-                .ForEach((Entity entity, ref ECSNavAgent agent) =>
-                {
-
-                })
-                .ScheduleParallel();
-        }
+        Single,
+        Constant
     }
-
-    //[DisableAutoCreation]
     public class ECSNavQuerySystem : ECSManagerEntity<ECSNavQuerySystem>
     {
         /// <summary>
@@ -140,20 +78,28 @@ namespace Syadeu.ECS
         /// </summary>
         public int MaxMapWidth = 10000;
 
-        public static void RequestPath(int id, Vector3 from, Vector3 to, int areaMask = -1)
+        public static void RequestPath(Entity entity, Vector3 target, int areaMask = -1, RequestOption option = RequestOption.Single)
         {
-            var key = p_Instance.GetKey((int)from.x, (int)from.z, (int)to.x, (int)to.z);
+            ECSNavAgentTransform agent = p_Instance.GetComponentData<ECSNavAgentTransform>(entity);
+            
+            var key = p_Instance.GetKey((int)agent.position.x, (int)agent.position.z, (int)target.x, (int)target.z);
             var data = new PathQueryData
             {
-                id = id,
+                entity = entity,
                 key = key,
 
-                from = from,
-                to = to,
+                from = agent.position,
+                to = target,
                 areaMask = areaMask
             };
             p_Instance.QueryQueue.Enqueue(data);
-            Debug.Log("query added");
+
+            p_Instance.AddComponentData(entity, new ECSNavAgentPathfinder
+            {
+                status = AgentStatus.WaitForQueue,
+                key = key,
+                iteration = 0
+            });
         }
 
         private enum PathStatus
@@ -169,7 +115,7 @@ namespace Syadeu.ECS
         }
         private struct PathQueryData
         {
-            public int id;
+            public Entity entity;
             public int key;
             public float3 from;
             public float3 to;
@@ -182,8 +128,8 @@ namespace Syadeu.ECS
             [ReadOnly] public PathQueryData queryData;
             public NavMeshQuery navMeshQuery;
             public NativeArray<NavMeshLocation> navMeshLocations;
-            public NativeArray<int> navMeshStatuses;
-            public NativeArray<int> navMeshCornerCount;
+            [WriteOnly] public NativeArray<int> navMeshStatuses;
+            [WriteOnly] public NativeArray<int> navMeshCornerCount;
 
             [ReadOnly] public int maxIterations;
             [ReadOnly] public int maxPathSize;
@@ -243,9 +189,9 @@ namespace Syadeu.ECS
         [BurstCompile]
         private struct UpdateQueryParallelJob : Unity.Jobs.IJob
         {
-            public int index;
+            [ReadOnly] public int index;
             public NativeArray<bool> usedSlots;
-            public NativeQueue<int> availableSlots;
+            [WriteOnly] public NativeQueue<int> availableSlots;
             [ReadOnly] public NativeArray<int> navMeshStatus;
 
             public void Execute()
@@ -259,10 +205,41 @@ namespace Syadeu.ECS
                 }
             }
         }
+        [BurstCompile]
+        private struct UpdatePathParallelJob : Unity.Jobs.IJob
+        {
+            [ReadOnly] public int index;
+
+            [ReadOnly] public PathQueryData queryData;
+            [ReadOnly] public NativeArray<int> navMeshStatuses;
+
+            [ReadOnly] public NativeArray<NavMeshLocation> navMeshLocations;
+            [ReadOnly] public NativeArray<int> navMeshCornerCount;
+
+            public NativeQueue<int> availableSlots;
+            public NativeArray<bool> UsedSlots;
+            public NativeMultiHashMap<int, float3> navMeshPaths;
+
+            public void Execute()
+            {
+                if (navMeshStatuses[0] == 3) // 성공했을떄
+                {
+                    if (navMeshPaths.ContainsKey(queryData.key)) navMeshPaths.Remove(queryData.key);
+                    
+                    for (int i = navMeshCornerCount[0] -1 ; i > -1; i--)
+                    {
+                        navMeshPaths.Add(queryData.key, navMeshLocations[i].position);
+                    }
+
+                    UsedSlots[index] = false;
+                    availableSlots.Enqueue(index);
+                }
+            }
+        }
 
         private NativeQueue<PathQueryData> QueryQueue;
 
-        // ParallelJob 에서도 사용될 NativeArray
+        // UpdateQueryJob | UpdateQueryParallelJob 에서 사용될 NativeArray
         private NativeQueue<int> AvailableSlots;
         private NativeArray<PathQueryData> QueryDatas;
 
@@ -272,6 +249,8 @@ namespace Syadeu.ECS
         private NativeArray<int>[] NavMeshStatuses;
         private NativeArray<int>[] NavMeshCornerCounts;
         //
+
+        private NativeMultiHashMap<int, float3> NavMeshPaths;
 
         protected override void OnCreate()
         {
@@ -296,6 +275,8 @@ namespace Syadeu.ECS
                 NavMeshCornerCounts[i] = new NativeArray<int>(1, Allocator.Persistent);
                 AvailableSlots.Enqueue(i);
             }
+
+            NavMeshPaths = new NativeMultiHashMap<int, float3>(MaxPathSize, Allocator.Persistent);
         }
         protected override void OnDestroy()
         {
@@ -314,56 +295,62 @@ namespace Syadeu.ECS
                 NavMeshStatuses[i].Dispose();
                 NavMeshCornerCounts[i].Dispose();
             }
+
+            NavMeshPaths.Dispose();
         }
         protected override void OnUpdate()
         {
-            if (QueryQueue.Count == 0 || AvailableSlots.Count == 0)
+            if (QueryQueue.Count != 0 || AvailableSlots.Count != 0)
             {
-                return;
+                // Burst 컴파일러는 로컬 변수만 취급하므로 로컬에 네비월드 캐싱
+                NavMeshWorld _navWorld = NavMeshWorld.GetDefaultWorld();
+
+                int _count = QueryQueue.Count;
+                for (int i = 0; i < _count; i++)
+                {
+                    if (AvailableSlots.Count == 0) break;
+
+                    PathQueryData pending = QueryQueue.Dequeue();
+
+                    var query = new NavMeshQuery(_navWorld, Allocator.Persistent, MaxPathSize);
+                    var from = query.MapLocation(pending.from, Vector3.one * 10, 0);
+                    var to = query.MapLocation(pending.to, Vector3.one * 10, 0);
+                    if (!query.IsValid(from) || !query.IsValid(to))
+                    {
+                        query.Dispose();
+                        Debug.LogWarning("잘못된 경로를 요청함");
+                        continue;
+                    }
+
+                    var status = query.BeginFindPath(from, to, pending.areaMask);
+                    // 성공적
+                    if (status == PathQueryStatus.InProgress || status == PathQueryStatus.Success)
+                    {
+                        int index = AvailableSlots.Dequeue();
+                        QueryDatas[index] = pending;
+
+                        var component = GetComponentData<ECSNavAgentPathfinder>(QueryDatas[index].entity);
+                        component.status = AgentStatus.PathQueued;
+                        AddComponentData(QueryDatas[index].entity, component);
+
+                        NavMeshQueries[index] = query;
+
+                        UsedSlots[index] = true;
+                    }
+                    // 뭔가 잘못됬을경우
+                    else
+                    {
+                        Debug.LogWarning("잘못된 경로를 요청함2");
+
+                        query.Dispose();
+                    }
+                }
             }
-            
-            // Burst 컴파일러는 로컬 변수만 취급하므로 로컬에 네비월드 캐싱
-            NavMeshWorld _navWorld = NavMeshWorld.GetDefaultWorld();
-            
-            int _count = QueryQueue.Count;
-            for (int i = 0; i < _count; i++)
-            {
-                if (AvailableSlots.Count == 0) break;
-
-                int index = AvailableSlots.Dequeue();
-                PathQueryData pending = QueryQueue.Dequeue();
-
-                var query = new NavMeshQuery(_navWorld, Allocator.Persistent, MaxPathSize);
-                var from = query.MapLocation(pending.from, Vector3.one * 10, 0);
-                var to = query.MapLocation(pending.to, Vector3.one * 10, 0);
-                if (!query.IsValid(from) || !query.IsValid(to))
-                {
-                    query.Dispose();
-                    continue;
-                }
-
-                var status = query.BeginFindPath(from, to, pending.areaMask);
-                // 성공적
-                if (status == PathQueryStatus.InProgress || status == PathQueryStatus.Success)
-                {
-                    QueryDatas[index] = pending;
-                    NavMeshQueries[index] = query;
-
-                    UsedSlots[index] = true;
-                }
-                // 뭔가 잘못됬을경우
-                else
-                {
-                    AvailableSlots.Enqueue(index);
-
-                    query.Dispose();
-                }
-            }
-
 
             // NativeArray 는 Worker Thread 에서 Write가 일어날 경우,
             // ReadOnly가 되어있지않으면 에러를 뱉으므로 먼저 캐싱 후 Read
             bool[] temp = UsedSlots.ToArray();
+
             for (int i = 0; i < MaxQueries; i++)
             {
                 if (!temp[i]) continue;
@@ -388,8 +375,80 @@ namespace Syadeu.ECS
                     navMeshStatus = NavMeshStatuses[i],
                     usedSlots = UsedSlots
                 };
-                parallelJob.Schedule(jobHandle);
+                JobHandle queryJob = parallelJob.Schedule(jobHandle);
+
+                UpdatePathParallelJob pathParallelJob = new UpdatePathParallelJob
+                {
+                    index = i,
+
+                    queryData = QueryDatas[i],
+                    navMeshStatuses = NavMeshStatuses[i],
+                    navMeshLocations = NavMeshLocations[i],
+                    navMeshCornerCount = NavMeshCornerCounts[i],
+
+                    availableSlots = AvailableSlots,
+                    UsedSlots = UsedSlots,
+                    navMeshPaths = NavMeshPaths
+                };
+                JobHandle.CombineDependencies(jobHandle, queryJob).Complete();
+                JobHandle pathJob = pathParallelJob.Schedule(jobHandle);
+
+                Dependency = JobHandle.CombineDependencies(Dependency, pathJob);
             }
+
+            var navMeshPaths = NavMeshPaths;
+            Dependency.Complete();
+
+            
+
+            Entities
+                .WithBurst()
+                .WithReadOnly(navMeshPaths)
+                .ForEach((ref ECSNavAgentPathfinder pathfinder, in ECSNavAgentTransform agent) =>
+                {
+                    if (pathfinder.status == AgentStatus.Idle) return;
+                    if (pathfinder.status == AgentStatus.PathQueued ||
+                        pathfinder.status == AgentStatus.Moving)
+                    {
+                        if (!navMeshPaths.ContainsKey(pathfinder.key))
+                        {
+                            return;
+                        }
+
+                        if (pathfinder.iteration == 0)
+                        {
+                            pathfinder.iteration = 1;
+                        }
+                        else
+                        {
+                            float3 dir = pathfinder.nextPosition - agent.position;
+                            float sqr = (dir.x * dir.x) + (dir.y * dir.y) + (dir.z * dir.z);
+                            pathfinder.remainingDistance = math.sqrt(sqr);
+                            if (pathfinder.remainingDistance < 1.5f) pathfinder.iteration++;
+                        }
+
+                        if (navMeshPaths.TryGetFirstValue(pathfinder.key, out float3 targetPos, out var iter))
+                        {
+                            for (int i = 1; i < pathfinder.iteration; i++)
+                            {
+                                if (navMeshPaths.TryGetNextValue(out float3 nextPos, ref iter))
+                                {
+                                    targetPos = nextPos;
+                                }
+                                else
+                                {
+                                    pathfinder.status = AgentStatus.Idle;
+                                    pathfinder.iteration = 0;
+                                    return;
+                                }
+                            }
+                            pathfinder.nextPosition = targetPos;
+                        }
+
+                        pathfinder.status = AgentStatus.Moving;
+                    }
+                })
+                .ScheduleParallel();
         }
 
         private int GetKey(int fromX, int fromZ, int toX, int toZ)
