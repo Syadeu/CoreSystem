@@ -213,6 +213,16 @@ namespace Syadeu
         }
         #endregion
 
+        public static bool IsThisMainthread()
+        {
+            if (MainThread == null || Thread.CurrentThread == MainThread)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
         #region Routines
         public static void StartBackgroundUpdate(object obj, IEnumerator update)
         {
@@ -876,15 +886,6 @@ namespace Syadeu
 
         #region Internals
 
-        internal static bool IsThisMainthread()
-        {
-            if (MainThread == null || Thread.CurrentThread == MainThread)
-            {
-                return true;
-            }
-
-            return false;
-        }
         internal static void InternalAddBackgroundJob(BackgroundJob job)
         {
             Instance.m_BackgroundJobs.Enqueue(job);

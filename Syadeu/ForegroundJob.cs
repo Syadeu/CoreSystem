@@ -33,7 +33,7 @@ namespace Syadeu
         public bool Faild { get; internal set; } = false;
         internal string CalledFrom { get; set; } = null;
         public Action Action { get; set; }
-        public IJob MainJob { get; internal set; }
+        public IJob MainJob { get; set; }
 
         internal List<IJob> ConnectedJobs;
 

@@ -36,7 +36,7 @@ namespace Syadeu
         internal Exception Exception { get; set; }
         internal string CalledFrom { get; set; } = null;
         public Action Action { get; set; }
-        public IJob MainJob { get; internal set; }
+        public IJob MainJob { get; set; }
 
         internal int WorkerIndex = -1;
         internal List<IJob> ConnectedJobs;
@@ -158,59 +158,6 @@ namespace Syadeu
             {
                 StaticManagerEntity.ThreadAwaiter(10);
             }
-        }
-    }
-
-    [Obsolete("테스트 중", true)]
-    public class BackgroundJob<T> : IJob<T> where T : IJobNative
-    {
-        internal bool m_IsDone = false;
-        public bool IsDone
-        {
-            get
-            {
-                if (MainJob == null)
-                {
-                    if (!m_IsDone) return false;
-
-                    for (int i = 0; i < ConnectedJobs.Count; i++)
-                    {
-                        if (ConnectedJobs[i] is BackgroundJob backJob &&
-                            !backJob.m_IsDone) return false;
-                        else if (ConnectedJobs[i] is ForegroundJob foreJob &&
-                            !foreJob.m_IsDone) return false;
-                    }
-
-                    return true;
-                }
-
-                return MainJob.IsDone;
-            }
-        }
-        public bool IsRunning { get; internal set; } = false;
-        public bool Faild { get; internal set; } = false;
-        internal Exception Exception { get; set; }
-        internal string CalledFrom { get; set; } = null;
-        public IJob MainJob { get; internal set; }
-
-        public T Result => throw new NotImplementedException();
-
-        internal int WorkerIndex = -1;
-        internal List<IJob> ConnectedJobs;
-
-        public void Await()
-        {
-            throw new NotImplementedException();
-        }
-
-        public IJob ConnectJob(IJob job)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IJob Start()
-        {
-            throw new NotImplementedException();
         }
     }
 }
