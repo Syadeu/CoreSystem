@@ -76,6 +76,23 @@ namespace Syadeu.ECS
         public int pathKey;
         public PathfinderStatus status;
     }
+    public struct ECSPathBuffer : IBufferElementData
+    {
+        public float3 position;
+
+        public static implicit operator float3(ECSPathBuffer e)
+        {
+            return e.position;
+        }
+        public static implicit operator ECSPathBuffer(float3 e)
+        {
+            return new ECSPathBuffer { position = e };
+        }
+        public static implicit operator ECSPathBuffer(Vector3 e)
+        {
+            return new ECSPathBuffer { position = e };
+        }
+    }
     public struct PathfinderID : IEquatable<PathfinderID>
     {
         internal Entity Entity { get; }

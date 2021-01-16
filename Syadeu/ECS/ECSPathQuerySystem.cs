@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using UnityEngine.AI;
 using UnityEngine.Experimental.AI;
 using UnityEngine;
+using Unity.Collections.LowLevel.Unsafe;
 
 
 #if UNITY_JOBS && UNITY_MATH && UNITY_BURST && UNITY_COLLECTION
@@ -41,11 +42,13 @@ namespace Syadeu.ECS
         /// </summary>
         public int MaxMapWidth = 10000;
 
-        private struct PathContainer
-        {
-            public NavMeshQuery query;
-            public NativeArray<NavMeshLocation> navMeshLocations;
-        }
+        //private struct PathContainer
+        //{
+        //    public Entity bufferEntity;
+        //    //public NavMeshQuery query;
+        //    public NativeArray<NavMeshLocation> navMeshLocations;
+        //}
+        
         private struct PathRequest
         {
             //public NavMeshQuery query;
@@ -57,25 +60,20 @@ namespace Syadeu.ECS
             public float3 from;
             public float3 to;
         }
-        private struct ActivePathfinder
-        {
-            public Entity entity;
-            public PathfinderStatus status;
 
-            public float3 targetPosition;
-        }
-
+        private EndSimulationEntityCommandBufferSystem m_EndSimulationEcbSystem;
         private EntityArchetype m_BaseArchetype;
         private EntityQuery m_BaseQuery;
         private NavMeshWorld m_MeshWorld;
 
-        private Dictionary<int, PathContainer> m_CachedList;
-        private NativeHashSet<int> m_CachedIndexList;
+        //private Dictionary<int, PathContainer> m_CachedList;
+        private NativeHashMap<int, Entity> m_CachedList;
+        //private NativeHashSet<int> m_CachedIndexList;
         private NativeHashSet<int> m_ActivePathList;
 
         private NativeQueue<PathRequest> m_QueryQueue;
         private NavMeshQuery[] m_Queries;
-        private PathRequest[] m_Slots;
+        private NativeArray<PathRequest> m_Slots;
         private NativeArray<bool> m_OccupiedSlots;
         private NativeQueue<int> m_AvailableSlots;
 
@@ -101,23 +99,40 @@ namespace Syadeu.ECS
             Translation translation = p_Instance.GetComponentData<Translation>(agent.Entity);
             ECSPathfinderComponent pathfinder = p_Instance.GetComponentData<ECSPathfinderComponent>(agent.Entity);
 
+            if (pathfinder.status != PathfinderStatus.Idle &&
+                p_Instance.m_ActivePathList.Contains(pathfinder.pathKey))
+            {
+                p_Instance.m_ActivePathList.Remove(pathfinder.pathKey);
+            }
+
             int key = p_Instance.GetKey(translation.Value, target, pathfinder.agentTypeId, areaMask);
             //Debug.Log(key);
 
-            if (!p_Instance.m_CachedList.TryGetValue(key, out PathContainer path))
+            PathRequest temp = new PathRequest
             {
-                PathRequest temp = new PathRequest
-                {
-                    retry = false,
+                retry = false,
 
-                    key = key,
-                    agentTypeID = pathfinder.agentTypeId,
-                    areaMask = areaMask,
-                    from = translation.Value,
-                    to = target
-                };
-                p_Instance.m_QueryQueue.Enqueue(temp);
-            }
+                key = key,
+                agentTypeID = pathfinder.agentTypeId,
+                areaMask = areaMask,
+                from = translation.Value,
+                to = target
+            };
+            p_Instance.m_QueryQueue.Enqueue(temp);
+            //if (!p_Instance.m_CachedList.TryGetValue(key, out PathContainer path))
+            //{
+            //    PathRequest temp = new PathRequest
+            //    {
+            //        retry = false,
+
+            //        key = key,
+            //        agentTypeID = pathfinder.agentTypeId,
+            //        areaMask = areaMask,
+            //        from = translation.Value,
+            //        to = target
+            //    };
+            //    p_Instance.m_QueryQueue.Enqueue(temp);
+            //}
 
             pathfinder.pathKey = key;
             pathfinder.status = PathfinderStatus.PathQueued;
@@ -127,6 +142,7 @@ namespace Syadeu.ECS
         protected override void OnCreate()
         {
             base.OnCreate();
+            m_EndSimulationEcbSystem = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
             m_BaseArchetype = EntityManager.CreateArchetype(
                 typeof(ECSPathfinderComponent),
                 typeof(Translation)
@@ -141,13 +157,13 @@ namespace Syadeu.ECS
             m_BaseQuery = GetEntityQuery(tempDesc);
             m_MeshWorld = NavMeshWorld.GetDefaultWorld();
 
-            m_CachedList = new Dictionary<int, PathContainer>();
-            m_CachedIndexList = new NativeHashSet<int>(MaxMapWidth, Allocator.Persistent);
+            m_CachedList = new NativeHashMap<int, Entity>(MaxMapWidth, Allocator.Persistent);
+            //m_CachedIndexList = new NativeHashSet<int>(MaxMapWidth, Allocator.Persistent);
             m_ActivePathList = new NativeHashSet<int>(MaxMapWidth, Allocator.Persistent);
 
             m_QueryQueue = new NativeQueue<PathRequest>(Allocator.Persistent);
             m_Queries = new NavMeshQuery[MaxQueries];
-            m_Slots = new PathRequest[MaxQueries];
+            m_Slots = new NativeArray<PathRequest>(MaxQueries, Allocator.Persistent);
             m_OccupiedSlots = new NativeArray<bool>(MaxQueries, Allocator.Persistent);
             m_AvailableSlots = new NativeQueue<int>(Allocator.Persistent);
 
@@ -171,23 +187,20 @@ namespace Syadeu.ECS
             m_OccupiedSlots.Dispose();
             m_AvailableSlots.Dispose();
 
-            foreach (var item in m_CachedList.Values)
-            {
-                item.query.Dispose();
-                item.navMeshLocations.Dispose();
-            }
-            m_CachedIndexList.Dispose();
+            m_CachedList.Dispose();
+            //m_CachedIndexList.Dispose();
             m_ActivePathList.Dispose();
         }
         protected override void OnUpdate()
         {
-            if (m_CachedList.Count > 1000)
-            {
-                Debug.Log("purging");
-                Purge();
-            }
-            else Debug.Log(m_CachedList.Count);
+            //if (m_CachedList.Count > 1000)
+            //{
+            //    //Debug.Log("purging");
+            //    Purge();
+            //}
+            //else Debug.Log(m_CachedList.Count);
 
+            var ecb = m_EndSimulationEcbSystem.CreateCommandBuffer().AsParallelWriter();
             NativeQueue<PathRequest> queries = m_QueryQueue;
             int maxIterations = MaxIterations;
             int maxPathSize = MaxPathSize;
@@ -204,30 +217,48 @@ namespace Syadeu.ECS
                 m_OccupiedSlots[index] = true;
             }
 
+            NavMeshWorld meshWorld = m_MeshWorld;
+            NativeArray<bool> occupied = m_OccupiedSlots;
+            NativeArray<PathRequest> slots = m_Slots;
+            NativeQueue<int>.ParallelWriter available = m_AvailableSlots.AsParallelWriter();
+            NativeHashMap<int, Entity> cached = m_CachedList;
             for (int i = 0; i < MaxQueries; i++)
             {
-                if (!m_OccupiedSlots[i]) continue;
+                //CompleteDependency();
+                if (!occupied[i]) continue;
 
                 PathRequest pathData = m_Slots[i];
                 NavMeshQuery query;
                 if (pathData.retry) query = m_Queries[i];
                 else
                 {
-                    query = new NavMeshQuery(p_Instance.m_MeshWorld, Allocator.Persistent, p_Instance.MaxPathSize);
+                    query = new NavMeshQuery(m_MeshWorld, Allocator.Persistent, MaxPathSize);
                 }
+                //PathRequest pathData = slots[i];
+                //if (!pathData.retry)
+                //{
+                //    m_Queries[i] = new NavMeshQuery(meshWorld, Allocator.TempJob, maxPathSize);
+                //}
+                //NavMeshQuery query = m_Queries[i];
 
                 NativeArray<bool> pass = new NativeArray<bool>(1, Allocator.TempJob);
                 NativeArray<bool> failed = new NativeArray<bool>(1, Allocator.TempJob);
-                NativeArray<int> tempDebug = new NativeArray<int>(1, Allocator.TempJob);
+                //NativeArray<int> tempDebug = new NativeArray<int>(1, Allocator.TempJob);
                 failed[0] = false;
                 pass[0] = false;
 
-                if (!pathData.retry)
-                {
-                    Job
-                    .WithBurst()
+                
+                //if (!pathData.retry)
+                //{
+
+                //}
+                Job
                     .WithCode(() =>
                     {
+                        //if (!occupied[i]) return;
+                        //PathRequest pathData = slots[i];
+                        //if (!pathData.retry) query = new NavMeshQuery(meshWorld, Allocator.Persistent, maxPathSize);
+
                         PathQueryStatus status;
 
                         NavMeshLocation from = query.MapLocation(pathData.from, Vector3.one * 10, pathData.agentTypeID, pathData.areaMask);
@@ -236,7 +267,7 @@ namespace Syadeu.ECS
                         {
                             pass[0] = true;
                             failed[0] = true;
-                            tempDebug[0] = 1;
+                            //tempDebug[0] = 1;
                             return;
                         }
 
@@ -248,7 +279,6 @@ namespace Syadeu.ECS
                         else pass[0] = true;
                     })
                     .Schedule();
-                }
 
                 NativeArray<NavMeshLocation> navMeshLocations = new NativeArray<NavMeshLocation>(MaxPathSize, Allocator.TempJob);
                 NativeArray<int> corners = new NativeArray<int>(1, Allocator.TempJob);
@@ -258,7 +288,10 @@ namespace Syadeu.ECS
                     .WithReadOnly(pass)
                     .WithCode(() =>
                     {
+                        //if (!occupied[i]) return;
                         if (pass[0] || failed[0]) return;
+
+                        //PathRequest pathData = slots[i];
 
                         var status = query.UpdateFindPath(maxIterations, out int performed);
                         if (status == PathQueryStatus.InProgress |
@@ -273,7 +306,7 @@ namespace Syadeu.ECS
                         {
                             pathData.retry = false;
                             failed[0] = true;
-                            tempDebug[0] = 2;
+                            //tempDebug[0] = 2;
                             return;
                         }
 
@@ -281,7 +314,7 @@ namespace Syadeu.ECS
                         if (endStatus != PathQueryStatus.Success)
                         {
                             pathData.retry = false;
-                            query.Dispose();
+                            //query.Dispose();
                             failed[0] = true;
                             return;
                         }
@@ -307,99 +340,142 @@ namespace Syadeu.ECS
                         if (pathStatus != PathQueryStatus.Success)
                         {
                             failed[0] = true;
-                            tempDebug[0] = 3;
+                            //tempDebug[0] = 3;
                         }
 
                         pathData.retry = false;
                         corners[0] = _cornerCount;
                     })
+                    .WithDisposeOnCompletion(pass)
                     .Schedule();
 
                 CompleteDependency();
 
-                if (!failed[0])
-                {
-                    NativeArray<NavMeshLocation> locations = new NativeArray<NavMeshLocation>(corners[0], Allocator.Persistent);
-                    for (int a = 0; a < locations.Length; a++)
-                    {
-                        locations[a] = navMeshLocations[a];
-                    }
-                    if (m_CachedList.TryGetValue(pathData.key, out PathContainer oldPath))
-                    {
-                        oldPath.query.Dispose();
-                        oldPath.navMeshLocations.Dispose();
+                //if (!occupied[i]) return;
+                //PathRequest pathData = slots[i];
 
-                        m_CachedList[pathData.key] = new PathContainer
+                if (!failed[0] && !pathData.retry)
+                {
+                    query.Dispose();
+
+                    if (!cached.TryGetValue(pathData.key, out Entity bufferEntity))
+                    {
+                        //bufferEntity = ecb.CreateEntity(i);
+                        //var buffers = ecb.AddBuffer<ECSPathBuffer>(i, bufferEntity);
+                        bufferEntity = EntityManager.CreateEntity(typeof(ECSPathBuffer));
+                        EntityManager.SetName(bufferEntity, pathData.key.ToString());
+                        var buffers = EntityManager.GetBuffer<ECSPathBuffer>(bufferEntity);
+                        for (int a = 0; a < corners[0]; a++)
                         {
-                            query = query,
-                            navMeshLocations = locations
-                        };
+                            buffers.Add(navMeshLocations[a].position);
+                        }
+
+                        cached.Add(pathData.key, bufferEntity);
                     }
                     else
                     {
-                        m_CachedList.Add(pathData.key, new PathContainer
+                        //var buffers = ecb.SetBuffer<ECSPathBuffer>(i, bufferEntity);
+                        var buffers = EntityManager.GetBuffer<ECSPathBuffer>(bufferEntity);
+                        buffers.Clear();
+                        for (int a = 0; a < corners[0]; a++)
                         {
-                            query = query,
-                            navMeshLocations = locations
-                        });
-                        m_CachedIndexList.Add(pathData.key);
+                            buffers.Add(navMeshLocations[a].position);
+                        }
                     }
                 }
-                else
+
+                if (failed[0])
                 {
                     query.Dispose();
-                    Debug.LogError($"failed in {tempDebug[0]}");
+                    pathData.retry = false;
+                    //Debug.LogError($"failed in {tempDebug[0]}");
                     //m_Queries[i] = null;
                 }
-                navMeshLocations.Dispose();
-                corners.Dispose();
-                pass.Dispose();
-                failed.Dispose();
 
                 if (!pathData.retry)
                 {
-                    m_OccupiedSlots[i] = false;
-                    m_AvailableSlots.Enqueue(i);
+                    occupied[i] = false;
+                    available.Enqueue(i);
                 }
 
-                tempDebug.Dispose();
+                //Job
+                //    //.WithBurst()
+                //    //.WithReadOnly(pathData)
+                //    .WithReadOnly(navMeshLocations)
+                //    .WithCode((/*int entityInQueryIndex*/) =>
+                //    {
+                       
+                //    })
+                //    .WithDisposeOnCompletion(navMeshLocations)
+                //    .WithDisposeOnCompletion(corners)
+                //    //.WithDisposeOnCompletion(pass)
+                //    .WithDisposeOnCompletion(failed)
+                //    //.WithDisposeOnCompletion(query)
+                //    //.WithDisposeOnCompletion(tempDebug)
+                //    .Schedule();
+
+                //CompleteDependency();
+
+                navMeshLocations.Dispose();
+                corners.Dispose();
+                failed.Dispose();
+
+
+
+                //tempDebug.Dispose();
             }
 
-            NativeHashSet<int> cachedList = m_CachedIndexList;
-            Entities
-                .WithReadOnly(cachedList)
-                .WithStoreEntityQueryInField(ref m_BaseQuery)
-                .ForEach((ref ECSPathfinderComponent pathfinder) =>
-                {
-                    if (pathfinder.status == PathfinderStatus.PathQueued &&
-                        cachedList.Contains(pathfinder.pathKey))
-                    {
-                        pathfinder.status = PathfinderStatus.Moving;
-                    }
-                    
-                })
-                .ScheduleParallel();
+            
+
+
+            //NativeHashSet<int> cachedList = m_CachedIndexList;
+            //NativeHashSet<int>.ParallelWriter activelist = m_ActivePathList.AsParallelWriter();
+            //Entities
+            //    .WithBurst()
+            //    .WithReadOnly(cachedList)
+            //    .WithStoreEntityQueryInField(ref m_BaseQuery)
+            //    .ForEach((Entity entity, int entityInQueryIndex, ref ECSPathfinderComponent pathfinder) =>
+            //    {
+            //        if (pathfinder.status == PathfinderStatus.PathQueued &&
+            //            cachedList.Contains(pathfinder.pathKey))
+            //        {
+            //            activelist.Add(pathfinder.pathKey);
+            //            pathfinder.status = PathfinderStatus.Moving;
+            //            //DynamicBuffer<ECSPathBuffer> paths = ecb.SetBuffer<ECSPathBuffer>(entityInQueryIndex, entity);
+
+            //        }
+            //    })
+            //    .ScheduleParallel();
         }
 
-        private void Purge()
-        {
-            Dictionary<int, PathContainer> newDic = new Dictionary<int, PathContainer>();
-            foreach (var item in m_CachedList)
-            {
-                if (m_ActivePathList.Contains(item.Key))
-                {
-                    newDic.Add(item.Key, item.Value);
-                    continue;
-                }
+        //private struct UpdateBufferJob : IJobChunk
+        //{
+        //    public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
+        //    {
+        //        throw new NotImplementedException();
+        //    }
+        //}
 
-                item.Value.query.Dispose();
-                item.Value.navMeshLocations.Dispose();
-            }
-            m_CachedList.Clear();
-            m_CachedList = newDic;
+        //private void Purge()
+        //{
+        //    Dictionary<int, PathContainer> newDic = new Dictionary<int, PathContainer>();
+        //    foreach (var item in m_CachedList)
+        //    {
+        //        if (m_ActivePathList.Contains(item.Key))
+        //        {
+        //            newDic.Add(item.Key, item.Value);
+        //            continue;
+        //        }
 
-            m_CachedIndexList.Clear();
-        }
+        //        //item.Value.query.Dispose();
+        //        item.Value.navMeshLocations.Dispose();
+        //        EntityManager.DestroyEntity(item.Value.bufferEntity);
+        //    }
+        //    m_CachedList.Clear();
+        //    m_CachedList = newDic;
+
+        //    m_CachedIndexList.Clear();
+        //}
         private int GetKey(float3 from, float3 to, int agentTypeID, int areaMask)
         {
             int fromKey = MaxMapWidth * (int)from.x + (int)from.y + (int)from.z;

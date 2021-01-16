@@ -61,16 +61,20 @@ namespace Syadeu.ECS
         {
             id = ECSPathQuerySystem.RegisterPathfinder(m_NavMeshAgent);
 
-            
-        }
-
-        private void Update()
-        {
             for (int i = 0; i < 100; i++)
             {
                 ECSPathQuerySystem.SchedulePath(id,
                     new Vector3(random(), 0, random()));
             }
+        }
+
+        private void Update()
+        {
+            //for (int i = 0; i < 10000; i++)
+            //{
+            //    ECSPathQuerySystem.SchedulePath(id,
+            //        new Vector3(random(), 0, random()));
+            //}
         }
         //private void Start()
         //{
