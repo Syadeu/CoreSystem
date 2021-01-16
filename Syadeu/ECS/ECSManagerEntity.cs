@@ -63,10 +63,10 @@ namespace Syadeu.ECS
         Idle = 0,
         
         PathQueued = 1 << 0,
-        Moving = 1 << 1,
-        Registered = PathQueued | Moving,
+        PathFound = 1 << 1,
 
-        Paused = 1 << 2
+        Paused = 1 << 2,
+        Failed = 1 << 3
     }
     public struct ECSPathfinderComponent : IComponentData
     {

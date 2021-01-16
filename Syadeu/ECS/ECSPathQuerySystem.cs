@@ -241,7 +241,7 @@ namespace Syadeu.ECS
                             failed[0] = true;
                             return;
                         }
-
+                        
                         PathQueryStatus status = query.BeginFindPath(from, to, pathData.areaMask);
                         if (status == PathQueryStatus.InProgress || status == PathQueryStatus.Success)
                         {
@@ -259,6 +259,15 @@ namespace Syadeu.ECS
                         if (pass[0] || failed[0])
                         {
                             if (cachedPath.ContainsKey(pathData.key)) cachedPath.Remove(pathData.key);
+
+                            if (GetDirectPath(query, pathData, ref navMeshLocations, out int corner))
+                            {
+                                for (int i = corner - 1; i > -1; i--)
+                                {
+                                    cachedPath.Add(pathData.key, navMeshLocations[i].position);
+                                }
+                            }
+
                             return;
                         }
 
@@ -279,6 +288,14 @@ namespace Syadeu.ECS
                             occupied[i] = false;
                             available.Enqueue(i);
                             if (cachedPath.ContainsKey(pathData.key)) cachedPath.Remove(pathData.key);
+
+                            if (GetDirectPath(query, pathData, ref navMeshLocations, out int corner))
+                            {
+                                for (int i = corner - 1; i > -1; i--)
+                                {
+                                    cachedPath.Add(pathData.key, navMeshLocations[i].position);
+                                }
+                            }
                             return;
                         }
 
@@ -291,6 +308,14 @@ namespace Syadeu.ECS
                             occupied[i] = false;
                             available.Enqueue(i);
                             if (cachedPath.ContainsKey(pathData.key)) cachedPath.Remove(pathData.key);
+
+                            if (GetDirectPath(query, pathData, ref navMeshLocations, out int corner))
+                            {
+                                for (int i = corner - 1; i > -1; i--)
+                                {
+                                    cachedPath.Add(pathData.key, navMeshLocations[i].position);
+                                }
+                            }
                             return;
                         }
 
@@ -316,6 +341,14 @@ namespace Syadeu.ECS
                         {
                             failed[0] = true;
                             if (cachedPath.ContainsKey(pathData.key)) cachedPath.Remove(pathData.key);
+
+                            if (GetDirectPath(query, pathData, ref navMeshLocations, out int corner))
+                            {
+                                for (int i = corner - 1; i > -1; i--)
+                                {
+                                    cachedPath.Add(pathData.key, navMeshLocations[i].position);
+                                }
+                            }
                         }
                         else
                         {
@@ -356,11 +389,45 @@ namespace Syadeu.ECS
                                 buffer.Add(pos);
                             }
                         }
+
+                        pathfinder.status = PathfinderStatus.PathFound;
+                    }
+                    else
+                    {
+                        pathfinder.status = PathfinderStatus.Failed;
                     }
                 })
                 .ScheduleParallel();
 
             m_EndSimulationEcbSystem.AddJobHandleForProducer(Dependency);
+        }
+
+        private static bool GetDirectPath(NavMeshQuery query, PathRequest pathData, ref NativeArray<NavMeshLocation> locations, out int corner)
+        {
+            NavMeshLocation from = query.MapLocation(pathData.from, Vector3.one * 10, pathData.agentTypeID, pathData.areaMask);
+            if (!query.IsValid(from))
+            {
+                throw new Exception("????");
+                return false;
+            }
+
+            var status = query.Raycast(out NavMeshHit hit, from, pathData.to, pathData.areaMask);
+            if (status == PathQueryStatus.Success)
+            {
+                NavMeshLocation to = query.MapLocation(hit.position, Vector3.one * 10, pathData.agentTypeID, pathData.areaMask);
+                if (!query.IsValid(to)) throw new Exception("????");
+
+                locations[0] = from;
+                locations[1] = to;
+                corner = 2;
+
+                return true;
+            }
+            else
+            {
+                throw new Exception("????");
+                return false;
+            }
         }
 
         private int GetKey(float3 from, float3 to, int agentTypeID, int areaMask)
