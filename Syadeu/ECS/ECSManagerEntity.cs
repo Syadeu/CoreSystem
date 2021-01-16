@@ -8,6 +8,7 @@ using UnityEngine.Experimental.AI;
 using System.Linq;
 using UnityEngine.Jobs;
 using System.Collections.Generic;
+using System;
 
 #if UNITY_JOBS && UNITY_MATH && UNITY_BURST && UNITY_COLLECTION
 
@@ -53,9 +54,40 @@ namespace Syadeu.ECS
     }
     public enum RequestOption
     {
-        Single,
-        Constant
+        Single = 0,
+        Constant = 1,
     }
+
+    public enum PathfinderStatus
+    {
+        Idle = 0,
+        
+        PathQueued = 1 << 0,
+        Moving = 1 << 1,
+        Registered = PathQueued | Moving,
+
+        Paused = 1 << 2
+    }
+    public struct ECSPathfinderComponent : IComponentData
+    {
+        public int id;
+        public int agentTypeId;
+
+        public int pathKey;
+        public PathfinderStatus status;
+    }
+    public struct PathfinderID : IEquatable<PathfinderID>
+    {
+        internal Entity Entity { get; }
+        internal PathfinderID(Entity entity)
+        {
+            Entity = entity;
+        }
+
+        public bool Equals(PathfinderID other)
+            => Entity.Index == other.Entity.Index;
+    }
+
     public class ECSNavQuerySystem : ECSManagerEntity<ECSNavQuerySystem>
     {
         /// <summary>
@@ -81,12 +113,19 @@ namespace Syadeu.ECS
         public static void RequestPath(Entity entity, Vector3 target, int areaMask = -1, RequestOption option = RequestOption.Single)
         {
             ECSNavAgentTransform agent = p_Instance.GetComponentData<ECSNavAgentTransform>(entity);
-            
+            ECSNavAgentPathfinder pathfinder = p_Instance.GetComponentData<ECSNavAgentPathfinder>(entity);
+            if (pathfinder.isActive)
+            {
+
+            }
+
             var key = p_Instance.GetKey((int)agent.position.x, (int)agent.position.z, (int)target.x, (int)target.z);
             var data = new PathQueryData
             {
                 entity = entity,
                 key = key,
+
+                option = option,
 
                 from = agent.position,
                 to = target,
@@ -117,6 +156,9 @@ namespace Syadeu.ECS
         {
             public Entity entity;
             public int key;
+
+            public RequestOption option;
+
             public float3 from;
             public float3 to;
             public int areaMask;
@@ -330,6 +372,7 @@ namespace Syadeu.ECS
                         QueryDatas[index] = pending;
 
                         var component = GetComponentData<ECSNavAgentPathfinder>(QueryDatas[index].entity);
+                        component.agentID = index;
                         component.status = AgentStatus.PathQueued;
                         AddComponentData(QueryDatas[index].entity, component);
 
@@ -350,7 +393,6 @@ namespace Syadeu.ECS
             // NativeArray 는 Worker Thread 에서 Write가 일어날 경우,
             // ReadOnly가 되어있지않으면 에러를 뱉으므로 먼저 캐싱 후 Read
             bool[] temp = UsedSlots.ToArray();
-
             for (int i = 0; i < MaxQueries; i++)
             {
                 if (!temp[i]) continue;
