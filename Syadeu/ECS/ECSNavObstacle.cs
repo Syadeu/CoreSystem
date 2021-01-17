@@ -11,7 +11,7 @@ namespace Syadeu.ECS
 
         private void OnEnable()
         {
-            ECSPathMeshSystem.AddObstacle(obj);
+            ECSPathMeshSystem.AddObstacle(obj, gameObject.isStatic);
         }
         private void OnDisable()
         {
