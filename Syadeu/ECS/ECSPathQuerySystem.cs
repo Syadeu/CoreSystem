@@ -444,20 +444,16 @@ namespace Syadeu.ECS
                         buffer.Add(tr.Value);
                         buffer.Add(pathfinder.to);
 
-                        //if (!tempList.Contains(pathfinder.pathKey))
+                        PathRequest newRequest = new PathRequest
                         {
-                            PathRequest newRequest = new PathRequest
-                            {
-                                key = pathfinder.pathKey,
-                                agentTypeID = pathfinder.agentTypeId,
-                                areaMask = pathfinder.areaMask,
-                                from = tr.Value,
-                                to = pathfinder.to,
-                                retry = false
-                            };
-                            queries.Enqueue(newRequest);
-                            //tempList[entityInQueryIndex] = pathfinder.pathKey;
-                        }
+                            key = pathfinder.pathKey,
+                            agentTypeID = pathfinder.agentTypeId,
+                            areaMask = pathfinder.areaMask,
+                            from = tr.Value,
+                            to = pathfinder.to,
+                            retry = false
+                        };
+                        queries.Enqueue(newRequest);
                     }
                 })
                 .WithDisposeOnCompletion(trans)
