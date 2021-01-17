@@ -3,6 +3,7 @@
     public enum CoreSystemExceptionFlag
     {
         Jobs,
+        ECS,
 
         Background,
         Foreground,

@@ -111,23 +111,6 @@ namespace Syadeu.ECS
             trArr[index] = transform.position;
         }
     }
-
-    //public class ECSPathObstacleSystem : ECSManagerEntity<ECSPathObstacleSystem>
-    //{
-    //    private TransformAccessArray m_TransformArray;
-
-    //    protected override void OnCreate()
-    //    {
-    //        base.OnCreate();
-
-    //        m_TransformArray = new TransformAccessArray();
-    //    }
-    //    protected override void OnUpdate()
-    //    {
-    //        UpdateTranslationJob job = new UpdateTranslationJob();
-    //        job.sc
-    //    }
-    //}
 }
 
 #endif
