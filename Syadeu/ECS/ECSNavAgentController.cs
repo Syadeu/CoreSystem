@@ -7,37 +7,15 @@ using UnityEngine.Experimental.AI;
 
 using Unity.Entities;
 using Unity.Mathematics;
+using UnityEngine.AI;
 
 namespace Syadeu.ECS
 {
-    public struct ECSNavAgent : IComponentData
-    {
-        public float height;
-        public float radius;
-    }
-    public struct ECSNavAgentTransform : IComponentData
-    {
-        public float3 position;
-        public quaternion rotation;
-    }
-    public struct ECSNavAgentPathfinder : IComponentData
-    {
-        public int agentID;
-        public AgentStatus status;
-        public bool isActive;
-
-        public int key;
-
-        public int iteration;
-        public float3 nextPosition;
-
-        public float remainingDistance;
-    }
-
-    [DisallowMultipleComponent][RequireComponent(typeof(NavMeshAgent))]
+    [DisallowMultipleComponent]
     public class ECSNavAgentController : MonoBehaviour
     {
         [SerializeField] private NavMeshAgent m_NavMeshAgent;
+        [SerializeField] private int typeID;
 
         public Transform target;
         public float moveSpeed = 3;
@@ -45,10 +23,10 @@ namespace Syadeu.ECS
         private EntityManager entityManager;
         private Entity Entity { get; set; }
 
-        public void RequestPath(Vector3 target)
-        {
-            ECSNavQuerySystem.RequestPath(Entity, target);
-        }
+        //public void RequestPath(Vector3 target)
+        //{
+        //    //ECSNavQuerySystem.RequestPath(Entity, target, 1);
+        //}
 
         private float random()
         {
@@ -58,7 +36,7 @@ namespace Syadeu.ECS
         private void Start()
         {
             entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
-            id = ECSPathQuerySystem.RegisterPathfinder(m_NavMeshAgent);
+            id = ECSPathQuerySystem.RegisterPathfinder(transform, typeID);
 
             //for (int i = 0; i < 100; i++)
             //{
@@ -86,12 +64,14 @@ namespace Syadeu.ECS
             //    status = AgentStatus.Idle,
             //    isActive = false
             //});
+            ECSPathQuerySystem.SchedulePath(id, target.position, 1);
         }
 
         private void Update()
         {
+            
             //RequestPath(new Vector3(random(), 0, random()));
-            ECSPathQuerySystem.SchedulePath(id, transform.position, target.position);
+            //ECSPathQuerySystem.SchedulePath(id, target.position, 1);
             //for (int i = 0; i < 100; i++)
             //{
             //    ECSPathQuerySystem.SchedulePath(id,
