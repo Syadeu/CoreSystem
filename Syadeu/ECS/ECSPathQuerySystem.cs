@@ -6,12 +6,10 @@ using System.Threading.Tasks;
 using UnityEngine.AI;
 using UnityEngine.Experimental.AI;
 using UnityEngine;
-using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine.Jobs;
 using System.Runtime.InteropServices;
 
-
-#if UNITY_JOBS && UNITY_MATH && UNITY_BURST && UNITY_COLLECTION
+#if UNITY_JOBS && UNITY_MATH && UNITY_BURST && UNITY_COLLECTION && UNITY_ENTITIES
 
 using Unity.Jobs;
 using Unity.Burst;
