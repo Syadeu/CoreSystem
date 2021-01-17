@@ -254,23 +254,20 @@ namespace Syadeu.ECS
                         NavMeshLocation to = query.MapLocation(pathData.to, Vector3.one * 10, pathData.agentTypeID, pathData.areaMask);
                         if (!query.IsValid(from) || !query.IsValid(to))
                         {
-                            //pass[0] = true;
                             failed[0] = true;
                             return;
                         }
 
                         PathQueryStatus status = query.BeginFindPath(from, to, pathData.areaMask);
-                        //if (status == PathQueryStatus.InProgress || status == PathQueryStatus.Success)
-                        //{
-                        //    pass[0] = false;
-                        //}
-                        //else pass[0] = true;
+                        if (status != PathQueryStatus.InProgress && status != PathQueryStatus.Success)
+                        {
+                            failed[0] = true;
+                        }
                     })
                     .Schedule();
 
                 Job
                     .WithBurst()
-                    //.WithReadOnly(pass)
                     .WithCode(() =>
                     {
                         if (failed[0])
@@ -385,8 +382,8 @@ namespace Syadeu.ECS
                     })
                     .Schedule();
 
-                CompleteDependency();
-                Debug.Log($"in 2 {failed[0]} :: {pathData.retry}: {cachedPath.ContainsKey(pathData.key)}");
+                //CompleteDependency();
+                //Debug.Log($"in 2 {failed[0]} :: {pathData.retry}: {cachedPath.ContainsKey(pathData.key)}");
             }
 
             var trans = new NativeArray<float3>(m_TransformArray.length, Allocator.TempJob);
@@ -440,8 +437,12 @@ namespace Syadeu.ECS
                     }
                     else
                     {
-                        pathfinder.totalDistance = -1;
+                        float3 temp = pathfinder.to - tr.Value;
+                        pathfinder.totalDistance = math.sqrt(math.dot(temp, temp));
                         pathfinder.temp = false;
+
+                        buffer.Add(tr.Value);
+                        buffer.Add(pathfinder.to);
 
                         //if (!tempList.Contains(pathfinder.pathKey))
                         {
