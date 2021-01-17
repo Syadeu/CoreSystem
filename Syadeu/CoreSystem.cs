@@ -7,6 +7,10 @@ using System.Threading;
 
 using UnityEngine;
 
+#if UNITY_JOBS
+using Unity.Jobs;
+#endif
+
 namespace Syadeu
 {
     public sealed class CoreSystem : StaticManager<CoreSystem>
@@ -129,6 +133,17 @@ namespace Syadeu
             }
             return false;
         }
+
+#if UNITY_JOBS
+        public static UnityJob AddUnityJob(Action action, JobHandle depends = default)
+        {
+            InternalUnityJob job = new InternalUnityJob
+            {
+                action = action
+            };
+            return new UnityJob(job.Schedule(depends));
+        }
+#endif
 
         /// <summary>
         /// 해당 인덱스의 백그라운드잡 Worker에 job을 할당합니다.<br/>

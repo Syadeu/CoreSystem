@@ -3,11 +3,16 @@ using UnityEngine.AI;
 using UnityEngine.Jobs;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 #if UNITY_JOBS && UNITY_MATH && UNITY_BURST && UNITY_COLLECTION
 
+using Unity.Jobs;
+using Unity.Burst;
 using Unity.Mathematics;
 using Unity.Collections;
+using Unity.Entities;
+using Unity.Transforms;
 
 namespace Syadeu.ECS
 {
@@ -84,7 +89,18 @@ namespace Syadeu.ECS
             NavMeshBuildSettings defaultBuildSettings = NavMesh.GetSettingsByID(0);
             Bounds bounds = QuantizedBounds();
             List<NavMeshBuildSource> sources = m_Obstacles.Values.ToList();
-            NavMeshBuilder.UpdateNavMeshDataAsync(m_NavMesh, defaultBuildSettings, sources, bounds);
+            var oper = NavMeshBuilder.UpdateNavMeshDataAsync(m_NavMesh, defaultBuildSettings, sources, bounds);
+
+            //var unitySC = SynchronizationContext.Current as unitysy;
+
+            //if (unitySC == null)
+            //    throw new InvalidOperationException("Awaiting jobs must be done in the UnitySynchronizationContext");
+
+            //var previousHandle = unitySC.CurrentHandle;
+
+            //var handle = job.Schedule(previousHandle);
+
+            //unitySC.CurrentHandle = handle;
         }
 
         private static float3 Quantize(float3 v, float3 quant)

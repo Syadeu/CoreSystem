@@ -1,12 +1,12 @@
 ﻿using System.Collections.Generic;
 
-#if UNITY_JOBS && UNITY_MATH && UNITY_BURST && UNITY_COLLECTION
+#if UNITY_JOBS
 
 using Unity.Jobs;
 
-namespace Syadeu.ECS
+namespace Syadeu
 {
-    public class ECSJob : IJob
+    public class UnityJob : IJob
     {
         private JobHandle JobHandle { get; }
 
@@ -18,7 +18,7 @@ namespace Syadeu.ECS
 
         internal List<IJob> ConnectedJobs;
 
-        internal ECSJob(JobHandle handle)
+        internal UnityJob(JobHandle handle)
         {
             JobHandle = handle;
         }
@@ -48,7 +48,7 @@ namespace Syadeu.ECS
             {
                 foregroundJob.MainJob = this;
             }
-            else if (job is ECSJob ecsJob)
+            else if (job is UnityJob ecsJob)
             {
                 ecsJob.MainJob = this;
             }
