@@ -50,25 +50,14 @@ namespace Syadeu.ECS
         {
             public bool retry;
 
-            public int key;
-            public int agentTypeID;
+            public Entity pathFinder;
             public int areaMask;
-            public float3 from;
-            public float3 to;
-        }
-        private struct PathRequest
-        {
-            public int id;
-
-            public int areaMask;
-            public float maxDistance;
-
             public float3 to;
         }
 
-        private EndSimulationEntityCommandBufferSystem m_EndSimulationEcbSystem;
-        private EntityArchetype m_BaseArchetype;
-        private EntityQuery m_BaseQuery;
+        //private EndSimulationEntityCommandBufferSystem m_EndSimulationEcbSystem;
+        
+        //private EntityQuery m_BaseQuery;
         private NavMeshWorld m_MeshWorld;
 
         private NativeMultiHashMap<int, float3> m_CachedPath;
@@ -83,75 +72,40 @@ namespace Syadeu.ECS
         private NativeArray<NavMeshLocation>[] m_Locations;
         private NativeArray<bool>[] m_Failed;
 
-        private NativeHashMap<int, PathRequest> m_PathRequests;
-        private NativeHashSet<int> m_DestroyRequests;
-        private NativeQueue<PathRequest> m_PathRequestQueue;
-        private Dictionary<int, Transform> m_Transforms;
-        private Transform[] m_TransformArray = null;
-        private TransformAccessArray m_TransformAccessArray;
-        private UpdateTranslationJob m_TranslationJob;
-        private JobHandle m_TranslationJobHandle;
+        //private NativeHashMap<int, PathRequest> m_PathRequests;
+        
+        //private NativeQueue<PathRequest> m_PathRequestQueue;
 
-        private bool m_IsPathfinderModified = true;
-
-        public static int RegisterPathfinder(Transform agent, int typeID)
+        public static void SchedulePath(Entity pathFinder, Vector3 target, int areaMask = -1)
         {
-            Entity entity = Instance.EntityManager.CreateEntity(Instance.m_BaseArchetype);
-            Instance.EntityManager.SetName(entity, agent.name);
+            if (!Instance.HasComponent<ECSPathQuery>(pathFinder))
+            {
+                Instance.EntityManager.AddComponent<ECSPathQuery>(pathFinder);
+                Instance.AddComponentData(pathFinder,
+                    new ECSPathQuery
+                    {
+                        status = PathStatus.PathQueued,
+                        areaMask = areaMask,
+                        to = target
+                    });
+            }
 
-            int id = agent.GetInstanceID();
-            Instance.AddComponentData(entity, new Translation
+            QueryRequest temp = new QueryRequest
             {
-                Value = agent.position
-            });
-            Instance.AddComponentData(entity, new ECSPathFinder
-            {
-                id = id,
-                agentTypeId = typeID
-            });
-            //int trIndex = Instance.m_TransformArray.length;
-            //Instance.m_TransformArray.Add(agent);
-            //Instance.m_TransformIndex.Add(id, trIndex);
-            Instance.m_Transforms.Add(id, agent);
-            Instance.m_IsPathfinderModified = true;
-            return id;
-        }
-        public static void DestroyPathfinder(int agent)
-        {
-            Instance.m_DestroyRequests.Add(agent);
-            Instance.m_Transforms.Remove(agent);
-            Instance.m_IsPathfinderModified = true;
-            //Instance.EntityManager.DestroyEntity(agent.Entity);
-            //Instance.m_TransformArray.RemoveAtSwapBack(agent.TrIndex);
-        }
-        public static void SchedulePath(int agent, Vector3 target, int areaMask = -1, float maxDistance = -1)
-        {
-            PathRequest temp = new PathRequest
-            {
-                id = agent,
-
+                retry = false,
+                pathFinder = pathFinder,
                 areaMask = areaMask,
-                maxDistance = maxDistance,
-
                 to = target
             };
-            Instance.m_PathRequestQueue.Enqueue(temp);
+            Instance.m_QueryQueue.Enqueue(temp);
         }
 
         protected override void OnCreate()
         {
             base.OnCreate();
-            m_EndSimulationEcbSystem = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
-            m_BaseArchetype = EntityManager.CreateArchetype(
-                typeof(Translation),
-                typeof(ECSPathFinder),
-                typeof(ECSPathBuffer)
-                );
-            //m_BaseQuery = GetEntityQuery(typeof(Translation), typeof(ECSPathFinder), typeof(ECSPathBuffer));
             m_MeshWorld = NavMeshWorld.GetDefaultWorld();
 
             m_CachedPath = new NativeMultiHashMap<int, float3>(MaxMapWidth, Allocator.Persistent);
-            //m_CacheQueued = new NativeHashSet<int>(MaxMapWidth, Allocator.Persistent);
 
             m_QueryQueue = new NativeQueue<QueryRequest>(Allocator.Persistent);
             m_Queries = new NavMeshQuery[MaxQueries];
@@ -171,15 +125,6 @@ namespace Syadeu.ECS
                 m_Locations[i] = new NativeArray<NavMeshLocation>(MaxPathSize, Allocator.Persistent);
                 m_Failed[i] = new NativeArray<bool>(1, Allocator.Persistent);
             }
-
-            m_PathRequests = new NativeHashMap<int, PathRequest>(MaxQueries, Allocator.Persistent);
-            m_DestroyRequests = new NativeHashSet<int>(MaxQueries, Allocator.Persistent);
-            m_PathRequestQueue = new NativeQueue<PathRequest>(Allocator.Persistent);
-            m_Transforms = new Dictionary<int, Transform>();
-            m_TransformAccessArray = new TransformAccessArray(MaxQueries);
-            m_TranslationJob = new UpdateTranslationJob();
-            m_TranslationJobHandle = new JobHandle();
-            //m_TransformIndex = new NativeHashMap<int, int>(MaxQueries, Allocator.Persistent);
         }
         protected override void OnDestroy()
         {
@@ -198,18 +143,14 @@ namespace Syadeu.ECS
             m_AvailableSlots.Dispose();
 
             m_CachedPath.Dispose();
-
-            m_PathRequests.Dispose();
-            m_DestroyRequests.Dispose();
-            m_PathRequestQueue.Dispose();
-            m_TransformAccessArray.Dispose();
-            //m_TransformIndex.Dispose();
         }
         protected override void OnUpdate()
         {
             int maxIterations = MaxIterations;
             int maxPathSize = MaxPathSize;
             int maxMapWidth = MaxMapWidth;
+
+            NativeMultiHashMap<int, float3> cachedPath = m_CachedPath;
 
             int queryCount = m_QueryQueue.Count;
             for (int i = 0; i < queryCount && i < MaxQueries; i++)
@@ -225,13 +166,11 @@ namespace Syadeu.ECS
             }
 
             //var ecb = m_EndSimulationEcbSystem.CreateCommandBuffer().AsParallelWriter();
-            NativeQueue<QueryRequest>.ParallelWriter queries = m_QueryQueue.AsParallelWriter();
+            
             NavMeshWorld meshWorld = m_MeshWorld;
             NativeArray<bool> occupied = m_OccupiedSlots;
             NativeArray<QueryRequest> slots = m_Slots;
             NativeQueue<int>.ParallelWriter available = m_AvailableSlots.AsParallelWriter();
-
-            NativeMultiHashMap<int, float3> cachedPath = m_CachedPath;
 
             bool[] skip = occupied.ToArray();
             for (int i = 0; i < MaxQueries; i++)
@@ -247,6 +186,10 @@ namespace Syadeu.ECS
                 NativeArray<bool> failed = m_Failed[i];
                 failed[0] = false;
 
+                Translation tr = GetComponent<Translation>(pathData.pathFinder);
+                ECSPathFinder pathFinder = GetComponent<ECSPathFinder>(pathData.pathFinder);
+                int pathKey = GetKey(tr.Value, pathData.to);
+
                 Job
                     .WithBurst()
                     .WithCode(() =>
@@ -257,8 +200,8 @@ namespace Syadeu.ECS
                             return;
                         }
 
-                        NavMeshLocation from = query.MapLocation(pathData.from, Vector3.one * 10, pathData.agentTypeID, pathData.areaMask);
-                        NavMeshLocation to = query.MapLocation(pathData.to, Vector3.one * 10, pathData.agentTypeID, pathData.areaMask);
+                        NavMeshLocation from = query.MapLocation(tr.Value, Vector3.one * 10, pathFinder.agentTypeId, pathData.areaMask);
+                        NavMeshLocation to = query.MapLocation(pathData.to, Vector3.one * 10, pathFinder.agentTypeId, pathData.areaMask);
                         if (!query.IsValid(from) || !query.IsValid(to))
                         {
                             failed[0] = true;
@@ -281,13 +224,13 @@ namespace Syadeu.ECS
                         {
                             occupied[i] = false;
                             available.Enqueue(i);
-                            if (cachedPath.ContainsKey(pathData.key)) cachedPath.Remove(pathData.key);
+                            if (cachedPath.ContainsKey(pathKey)) cachedPath.Remove(pathKey);
 
-                            if (GetDirectPath(query, pathData, ref navMeshLocations, out int corner))
+                            if (GetDirectPath(query, tr.Value, pathData, pathFinder.agentTypeId, ref navMeshLocations, out int corner))
                             {
                                 for (int i = corner - 1; i > -1; i--)
                                 {
-                                    cachedPath.Add(pathData.key, navMeshLocations[i].position);
+                                    cachedPath.Add(pathKey, navMeshLocations[i].position);
                                 }
                             }
 
@@ -309,13 +252,13 @@ namespace Syadeu.ECS
 
                             occupied[i] = false;
                             available.Enqueue(i);
-                            if (cachedPath.ContainsKey(pathData.key)) cachedPath.Remove(pathData.key);
+                            if (cachedPath.ContainsKey(pathKey)) cachedPath.Remove(pathKey);
 
-                            if (GetDirectPath(query, pathData, ref navMeshLocations, out int corner))
+                            if (GetDirectPath(query, tr.Value, pathData, pathFinder.agentTypeId, ref navMeshLocations, out int corner))
                             {
                                 for (int i = corner - 1; i > -1; i--)
                                 {
-                                    cachedPath.Add(pathData.key, navMeshLocations[i].position);
+                                    cachedPath.Add(pathKey, navMeshLocations[i].position);
                                 }
                             }
                             return;
@@ -329,13 +272,13 @@ namespace Syadeu.ECS
 
                             occupied[i] = false;
                             available.Enqueue(i);
-                            if (cachedPath.ContainsKey(pathData.key)) cachedPath.Remove(pathData.key);
+                            if (cachedPath.ContainsKey(pathKey)) cachedPath.Remove(pathKey);
 
-                            if (GetDirectPath(query, pathData, ref navMeshLocations, out int corner))
+                            if (GetDirectPath(query, tr.Value, pathData, pathFinder.agentTypeId, ref navMeshLocations, out int corner))
                             {
                                 for (int i = corner - 1; i > -1; i--)
                                 {
-                                    cachedPath.Add(pathData.key, navMeshLocations[i].position);
+                                    cachedPath.Add(pathKey, navMeshLocations[i].position);
                                 }
                             }
                             return;
@@ -348,7 +291,7 @@ namespace Syadeu.ECS
                         var _cornerCount = 0;
                         var pathStatus = PathUtils.FindStraightPath(
                             query,
-                            pathData.from,
+                            tr.Value,
                             pathData.to,
                             polygons,
                             pathSize,
@@ -362,22 +305,22 @@ namespace Syadeu.ECS
                         if (pathStatus != PathQueryStatus.Success)
                         {
                             failed[0] = true;
-                            if (cachedPath.ContainsKey(pathData.key)) cachedPath.Remove(pathData.key);
+                            if (cachedPath.ContainsKey(pathKey)) cachedPath.Remove(pathKey);
 
-                            if (GetDirectPath(query, pathData, ref navMeshLocations, out int corner))
+                            if (GetDirectPath(query, tr.Value, pathData, pathFinder.agentTypeId, ref navMeshLocations, out int corner))
                             {
                                 for (int i = corner - 1; i > -1; i--)
                                 {
-                                    cachedPath.Add(pathData.key, navMeshLocations[i].position);
+                                    cachedPath.Add(pathKey, navMeshLocations[i].position);
                                 }
                             }
                         }
                         else
                         {
-                            if (cachedPath.ContainsKey(pathData.key)) cachedPath.Remove(pathData.key);
+                            if (cachedPath.ContainsKey(pathKey)) cachedPath.Remove(pathKey);
                             for (int i = _cornerCount - 1; i > -1; i--)
                             {
-                                cachedPath.Add(pathData.key, navMeshLocations[i].position);
+                                cachedPath.Add(pathKey, navMeshLocations[i].position);
                             }
                         }
 
@@ -392,114 +335,66 @@ namespace Syadeu.ECS
                 //Debug.Log($"in 2 {failed[0]} :: {pathData.retry}: {cachedPath.ContainsKey(pathData.key)}");
             }
 
-            var requests = m_PathRequests;
-            if (m_PathRequestQueue.Count > 0)
-            {
-                var requestQueue = m_PathRequestQueue;
-                Job
-                    .WithBurst()
-                    .WithCode(() =>
-                    {
-                        int requestCount = requestQueue.Count;
-                        for (int i = 0; i < requestCount; i++)
-                        {
-                            if (requestQueue.TryDequeue(out var request))
-                            {
-                                if (requests.ContainsKey(request.id))
-                                {
-                                    requests[request.id] = request;
-                                }
-                                else requests.Add(request.id, request);
-                            }
-                        }
-                    })
-                    .Schedule();
-            }
-
-            var positions = new NativeArray<float3>(m_BaseQuery.CalculateEntityCount(), Allocator.TempJob);
-            {
-                m_TranslationJob.positions = positions;
-                
-                if (m_IsPathfinderModified)
+            NativeQueue<QueryRequest>.ParallelWriter queries = m_QueryQueue.AsParallelWriter();
+            Entities
+                .WithBurst()
+                .WithChangeFilter<Translation>()
+                .WithReadOnly(cachedPath)
+                .ForEach((Entity entity, ref ECSPathFinder pathFinder, ref ECSPathQuery pathQuery, in Translation tr) =>
                 {
-                    m_TranslationJobHandle.Complete();
-
-                    using (var pathfinders = m_BaseQuery.ToComponentDataArray<ECSPathFinder>(Allocator.Temp))
+                    if (pathQuery.status == PathStatus.Idle)
                     {
-                        if (m_TransformArray == null || m_TransformArray.Length != pathfinders.Length)
-                        {
-                            m_TransformArray = new Transform[pathfinders.Length];
-                        }
-                        for (int i = 0; i < pathfinders.Length; i++)
-                        {
-                            m_TransformArray[i] = m_Transforms[pathfinders[i].id];
-                        }
+                        return;
                     }
 
-                    m_TransformAccessArray.SetTransforms(m_TransformArray);
-                    m_IsPathfinderModified = false;
-                }
+                    int newKey = GetKey(maxMapWidth, tr.Value, pathQuery.to);
+                    if (!cachedPath.ContainsKey(newKey))
+                    {
+                        QueryRequest temp = new QueryRequest
+                        {
+                            retry = false,
+                            pathFinder = entity,
+                            areaMask = pathQuery.areaMask,
+                            to = pathQuery.to
+                        };
+                        queries.Enqueue(temp);
+                    }
 
-                m_TranslationJobHandle = m_TranslationJob.Schedule(m_TransformAccessArray, Dependency);
-                Dependency = JobHandle.CombineDependencies(Dependency, m_TranslationJobHandle);
-            }
-            
+                    if (newKey != pathFinder.pathKey)
+                    {
+                        //pathQuery.pathKey = newKey;
+                        pathFinder.pathKey = newKey;
+                    }
+                })
+                .ScheduleParallel();
+
             float sqrDistanceOffset = DistanceOffset * DistanceOffset;
             Entities
                 .WithBurst()
-                .WithStoreEntityQueryInField(ref m_BaseQuery)
-                .WithReadOnly(requests)
-                .WithReadOnly(positions)
+                //.WithStoreEntityQueryInField(ref m_BaseQuery)
+                .WithChangeFilter<ECSPathFinder>()
                 .WithReadOnly(cachedPath)
-                .ForEach((Entity entity, int entityInQueryIndex, ref Translation tr, ref ECSPathFinder pathfinder, ref DynamicBuffer<ECSPathBuffer> buffers) =>
+                .ForEach((Entity entity, int entityInQueryIndex, ref ECSPathQuery pathQuery, ref DynamicBuffer<ECSPathBuffer> buffers, in Translation tr, in ECSPathFinder pathFinder) =>
                 {
-                    if (requests.ContainsKey(pathfinder.id))
-                    {
-                        int key = GetKey(maxMapWidth, tr.Value, requests[pathfinder.id].to);
-                        queries.Enqueue(new QueryRequest()
-                        {
-                            retry = false,
-                            
-                            areaMask = requests[pathfinder.id].areaMask,
-                            agentTypeID = pathfinder.agentTypeId,
-                            from = tr.Value,
-                            to = requests[pathfinder.id].to,
-                            key = key
-                        });
+                    if (pathQuery.status == PathStatus.Idle) return;
 
-                        pathfinder.pathKey = key;
-                        pathfinder.maxDistance = requests[pathfinder.id].maxDistance;
-                        pathfinder.to = requests[pathfinder.id].to;
-                        pathfinder.status = PathStatus.PathQueued;
-                        pathfinder.areaMask = requests[pathfinder.id].areaMask;
-                    }
-
-                    if (pathfinder.status == PathStatus.Idle) return;
-                    tr.Value = positions[entityInQueryIndex];
-
-                    float3 dir = pathfinder.to - tr.Value;
+                    float3 dir = pathQuery.to - tr.Value;
                     float sqrDis = math.dot(dir, dir);
                     if (sqrDis < sqrDistanceOffset)
                     {
-                        pathfinder.status = PathStatus.Idle;
-                        pathfinder.pathKey = 0;
-                        pathfinder.to = float3.zero;
+                        pathQuery.status = PathStatus.Idle;
+                        //pathQuery.pathKey = 0;
+                        pathQuery.to = float3.zero;
                         buffers.Clear();
 
                         return;
                     }
 
-                    int newKey = GetKey(maxMapWidth, tr.Value, pathfinder.to);
-                    if (newKey != pathfinder.pathKey)
-                    {
-                        pathfinder.pathKey = newKey;
-                    }
-
                     buffers.Clear();
-                    if (cachedPath.ContainsKey(pathfinder.pathKey))
+                    if (cachedPath.ContainsKey(pathFinder.pathKey))
                     {
                         float distance = 0;
-                        using (var iter = cachedPath.GetValuesForKey(pathfinder.pathKey))
+                        using (var iter = cachedPath.GetValuesForKey(pathFinder.pathKey))
                         {
                             int it = 0;
                             float3 pos = float3.zero;
@@ -517,39 +412,27 @@ namespace Syadeu.ECS
                             }
                         }
 
-                        pathfinder.status = PathStatus.PathFound;
-                        pathfinder.totalDistance = distance;
+                        pathQuery.status = PathStatus.PathFound;
+                        pathQuery.totalDistance = distance;
                     }
                     else
                     {
-                        pathfinder.status = PathStatus.Failed;
-                        pathfinder.totalDistance = math.sqrt(sqrDis);
+                        pathQuery.status = PathStatus.Failed;
+                        pathQuery.totalDistance = math.sqrt(sqrDis);
 
                         buffers.Add(tr.Value);
-                        buffers.Add(pathfinder.to);
-
-                        QueryRequest newRequest = new QueryRequest
-                        {
-                            key = pathfinder.pathKey,
-                            agentTypeID = pathfinder.agentTypeId,
-                            areaMask = pathfinder.areaMask,
-                            from = tr.Value,
-                            to = pathfinder.to,
-                            retry = false
-                        };
-                        queries.Enqueue(newRequest);
+                        buffers.Add(pathQuery.to);
                     }
                 })
-                .WithDisposeOnCompletion(positions)
                 .ScheduleParallel();
 
-            Job
-                .WithBurst()
-                .WithCode(() =>
-                {
-                    requests.Clear();
-                })
-                .Schedule();
+            //Job
+            //    .WithBurst()
+            //    .WithCode(() =>
+            //    {
+            //        requests.Clear();
+            //    })
+            //    .Schedule();
 
             //m_EndSimulationEcbSystem.AddJobHandleForProducer(Dependency);
             //m_MeshWorld.AddDependency(Dependency);
@@ -576,9 +459,9 @@ namespace Syadeu.ECS
             }
             return distance;
         }
-        private static bool GetDirectPath(NavMeshQuery query, QueryRequest pathData, ref NativeArray<NavMeshLocation> locations, out int corner)
+        private static bool GetDirectPath(NavMeshQuery query, float3 currentPos, QueryRequest pathData, int agentTypeId, ref NativeArray<NavMeshLocation> locations, out int corner)
         {
-            NavMeshLocation from = query.MapLocation(pathData.from, Vector3.one * 10, pathData.agentTypeID, -1);
+            NavMeshLocation from = query.MapLocation(currentPos, Vector3.one * 10, agentTypeId, -1);
             if (!query.IsValid(from))
             {
                 //throw new Exception("1: ????");
@@ -589,7 +472,7 @@ namespace Syadeu.ECS
             var status = query.Raycast(out NavMeshHit hit, from, pathData.to, -1);
             if (status == PathQueryStatus.Success)
             {
-                NavMeshLocation to = query.MapLocation(hit.position, Vector3.one * 10, pathData.agentTypeID, -1);
+                NavMeshLocation to = query.MapLocation(hit.position, Vector3.one * 10, agentTypeId, -1);
                 if (!query.IsValid(to)) throw new CoreSystemException(CoreSystemExceptionFlag.ECS, "2: ????");
 
                 locations[0] = from;

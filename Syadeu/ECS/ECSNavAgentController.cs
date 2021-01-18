@@ -37,7 +37,7 @@ namespace Syadeu.ECS
         private void Start()
         {
             entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
-            id = ECSPathQuerySystem.RegisterPathfinder(transform, typeID);
+            id = ECSPathAgentSystem.RegisterPathfinder(transform, typeID);
 
             //for (int i = 0; i < 100; i++)
             //{
@@ -65,7 +65,7 @@ namespace Syadeu.ECS
             //    status = AgentStatus.Idle,
             //    isActive = false
             //});
-            ECSPathQuerySystem.SchedulePath(id, target.position, 1);
+            ECSPathAgentSystem.SchedulePath(id, target.position, 1);
         }
 
         private void Update()

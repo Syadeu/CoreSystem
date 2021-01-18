@@ -62,12 +62,17 @@ namespace Syadeu.ECS
     {
         public int id;
         public int agentTypeId;
-
-        public int areaMask;
         public float maxDistance;
 
-        public PathStatus status;
         public int pathKey;
+    }
+    public struct ECSPathQuery : IComponentData
+    {
+        //public int pathKey;
+        public PathStatus status;
+
+        public int areaMask;
+        
         public float3 to;
         public float totalDistance;
     }
@@ -82,20 +87,6 @@ namespace Syadeu.ECS
         public static implicit operator ECSPathBuffer(Vector3 e)
             => new ECSPathBuffer { position = e };
     }
-    //public struct PathfinderID : IEquatable<PathfinderID>
-    //{
-    //    internal Entity Entity { get; }
-    //    internal int TrIndex { get; }
-    //    internal PathfinderID(Entity entity, int trIndex)
-    //    {
-    //        Entity = entity;
-    //        TrIndex = trIndex;
-    //    }
-
-    //    public bool Equals(PathfinderID other)
-    //        => Entity.Index == other.Entity.Index;
-    //}
-
     [BurstCompile]
     public struct UpdateTranslationJob : IJobParallelForTransform
     {
