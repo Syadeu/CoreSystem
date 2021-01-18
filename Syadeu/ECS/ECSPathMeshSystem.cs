@@ -16,6 +16,7 @@ using Unity.Transforms;
 
 namespace Syadeu.ECS
 {
+    [UpdateInGroup(typeof(ECSPathSystemGroup))]
     public class ECSPathMeshSystem : ECSManagerEntity<ECSPathMeshSystem>
     {
         public float3 Center = new float3(0, 0, 0);

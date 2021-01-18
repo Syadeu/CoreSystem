@@ -21,6 +21,8 @@ using Unity.Transforms;
 
 namespace Syadeu.ECS
 {
+    [UpdateAfter(typeof(TransformSystemGroup))]
+    public class ECSPathSystemGroup : ComponentSystemGroup { }
     public abstract class ECSManagerEntity<T> : SystemBase
         where T : SystemBase
     {
@@ -94,6 +96,7 @@ namespace Syadeu.ECS
     //        => Entity.Index == other.Entity.Index;
     //}
 
+    [BurstCompile]
     public struct UpdateTranslationJob : IJobParallelForTransform
     {
         public NativeArray<float3> positions;

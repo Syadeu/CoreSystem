@@ -20,6 +20,7 @@ using Unity.Transforms;
 
 namespace Syadeu.ECS
 {
+    [UpdateInGroup(typeof(ECSPathSystemGroup), OrderFirst = true)]
     public class ECSPathQuerySystem : ECSManagerEntity<ECSPathQuerySystem>
     {
         /// <summary>
