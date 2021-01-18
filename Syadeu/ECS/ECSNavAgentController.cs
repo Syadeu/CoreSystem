@@ -33,7 +33,7 @@ namespace Syadeu.ECS
         {
             return UnityEngine.Random.Range(1, 100);
         }
-        PathfinderID id;
+        int id;
         private void Start()
         {
             entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
@@ -80,20 +80,20 @@ namespace Syadeu.ECS
             //}
         }
 
-        private void OnDrawGizmos()
-        {
-            if (!Application.isPlaying) return;
+        //private void OnDrawGizmos()
+        //{
+        //    if (!Application.isPlaying) return;
 
-            var buffer = entityManager.GetBuffer<ECSPathBuffer>(id.Entity);
-            for (int i = 0; i < buffer.Length; i++)
-            {
-                Gizmos.DrawSphere(buffer[i].position, .25f);
-                if (i + 1 < buffer.Length)
-                {
-                    Gizmos.DrawLine(buffer[i].position, buffer[i + 1].position);
-                }
-            }
-        }
+        //    var buffer = entityManager.GetBuffer<ECSPathBuffer>(id.Entity);
+        //    for (int i = 0; i < buffer.Length; i++)
+        //    {
+        //        Gizmos.DrawSphere(buffer[i].position, .25f);
+        //        if (i + 1 < buffer.Length)
+        //        {
+        //            Gizmos.DrawLine(buffer[i].position, buffer[i + 1].position);
+        //        }
+        //    }
+        //}
     }
 }
 

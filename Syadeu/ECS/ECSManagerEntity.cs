@@ -25,7 +25,7 @@ namespace Syadeu.ECS
         where T : SystemBase
     {
         private static T m_Instance;
-        protected static T p_Instance
+        public static T Instance
         {
             get
             {
@@ -44,18 +44,19 @@ namespace Syadeu.ECS
             => EntityManager.AddComponentData(entity, component);
     }
 
-    public enum PathfinderStatus
+    public enum PathStatus
     {
         Idle = 0,
         
         PathQueued = 1 << 0,
-        PathFound = 1 << 1,
 
-        Paused = 1 << 2,
-        Failed = 1 << 3,
-        ExceedDistance = 1 << 4
+        PathFound = 1 << 1,
+        Failed = 1 << 2,
+        //Paused = 1 << 2,
+
+        //ExceedDistance = 1 << 4
     }
-    public struct ECSPathfinderComponent : IComponentData
+    public struct ECSPathFinder : IComponentData
     {
         public int id;
         public int agentTypeId;
@@ -63,52 +64,43 @@ namespace Syadeu.ECS
         public int areaMask;
         public float maxDistance;
 
+        public PathStatus status;
         public int pathKey;
-        public PathfinderStatus status;
         public float3 to;
         public float totalDistance;
-
-        public bool temp;
     }
     public struct ECSPathBuffer : IBufferElementData
     {
         public float3 position;
 
         public static implicit operator float3(ECSPathBuffer e)
-        {
-            return e.position;
-        }
+            => e.position;
         public static implicit operator ECSPathBuffer(float3 e)
-        {
-            return new ECSPathBuffer { position = e };
-        }
+            => new ECSPathBuffer { position = e };
         public static implicit operator ECSPathBuffer(Vector3 e)
-        {
-            return new ECSPathBuffer { position = e };
-        }
+            => new ECSPathBuffer { position = e };
     }
-    public struct PathfinderID : IEquatable<PathfinderID>
-    {
-        internal Entity Entity { get; }
-        internal int TrIndex { get; }
-        internal PathfinderID(Entity entity, int trIndex)
-        {
-            Entity = entity;
-            TrIndex = trIndex;
-        }
+    //public struct PathfinderID : IEquatable<PathfinderID>
+    //{
+    //    internal Entity Entity { get; }
+    //    internal int TrIndex { get; }
+    //    internal PathfinderID(Entity entity, int trIndex)
+    //    {
+    //        Entity = entity;
+    //        TrIndex = trIndex;
+    //    }
 
-        public bool Equals(PathfinderID other)
-            => Entity.Index == other.Entity.Index;
-    }
+    //    public bool Equals(PathfinderID other)
+    //        => Entity.Index == other.Entity.Index;
+    //}
 
     public struct UpdateTranslationJob : IJobParallelForTransform
     {
-        public NativeArray<float3> trArr;
+        public NativeArray<float3> positions;
 
         public void Execute(int index, TransformAccess transform)
         {
-            //Debug.Log($"from {tr.Value} to {transform.position}");
-            trArr[index] = transform.position;
+            positions[index] = transform.position;
         }
     }
 }

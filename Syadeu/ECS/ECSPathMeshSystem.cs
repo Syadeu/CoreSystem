@@ -23,12 +23,18 @@ namespace Syadeu.ECS
 
         private NavMeshData m_NavMesh;
         private NavMeshDataInstance m_NavMeshData;
+        private NavMeshBuildSettings m_NavMeshBuildSettings;
 
         private TransformAccessArray m_TransformArray;
         private NativeList<bool> m_IsStaticArray;
 
         private Dictionary<int, NavMeshBuildSource> m_Obstacles;
+        private bool m_IsObstacleChanged;
 
+        public static void AddBuildArea(Vector3 center, Vector3 size)
+        {
+
+        }
         public static void AddObstacle(Object obj, bool isStatic, int areaMask = 0)
         {
             NavMeshBuildSource source;
@@ -41,7 +47,7 @@ namespace Syadeu.ECS
                     transform = mesh.transform.localToWorldMatrix,
                     area = areaMask
                 };
-                p_Instance.m_TransformArray.Add(mesh.transform);
+                Instance.m_TransformArray.Add(mesh.transform);
             }
             else if (obj is Terrain terrain)
             {
@@ -52,16 +58,18 @@ namespace Syadeu.ECS
                     transform = Matrix4x4.TRS(terrain.transform.position, Quaternion.identity, Vector3.one),
                     area = areaMask
                 };
-                p_Instance.m_TransformArray.Add(terrain.transform);
+                Instance.m_TransformArray.Add(terrain.transform);
             }
             else throw new CoreSystemException(CoreSystemExceptionFlag.ECS, "NavMesh Obstacle 지정은 MeshFilter 혹은 Terrain만 가능합니다");
 
-            p_Instance.m_IsStaticArray.Add(isStatic);
-            p_Instance.m_Obstacles.Add(obj.GetInstanceID(), source);
+            Instance.m_IsStaticArray.Add(isStatic);
+            Instance.m_Obstacles.Add(obj.GetInstanceID(), source);
+            Instance.m_IsObstacleChanged = true;
         }
         public static void RemoveObstacle(int id)
         {
-            p_Instance.m_Obstacles.Remove(id);
+            Instance.m_Obstacles.Remove(id);
+            Instance.m_IsObstacleChanged = true;
         }
 
         protected override void OnCreate()
@@ -70,15 +78,19 @@ namespace Syadeu.ECS
 
             m_NavMesh = new NavMeshData();
             m_NavMeshData = NavMesh.AddNavMeshData(m_NavMesh);
+            m_NavMeshBuildSettings = NavMesh.GetSettingsByID(0);
 
             m_TransformArray = new TransformAccessArray(256);
             m_IsStaticArray = new NativeList<bool>(256, Allocator.Persistent);
 
             m_Obstacles = new Dictionary<int, NavMeshBuildSource>();
+            m_IsObstacleChanged = true;
         }
         protected override void OnDestroy()
         {
             base.OnDestroy();
+
+            m_NavMeshData.Remove();
 
             m_TransformArray.Dispose();
             m_IsStaticArray.Dispose();
@@ -86,10 +98,16 @@ namespace Syadeu.ECS
         }
         protected override void OnUpdate()
         {
-            NavMeshBuildSettings defaultBuildSettings = NavMesh.GetSettingsByID(0);
-            Bounds bounds = QuantizedBounds();
-            List<NavMeshBuildSource> sources = m_Obstacles.Values.ToList();
-            var oper = NavMeshBuilder.UpdateNavMeshDataAsync(m_NavMesh, defaultBuildSettings, sources, bounds);
+            if (m_IsObstacleChanged)
+            {
+                NavMeshBuildSettings defaultBuildSettings = NavMesh.GetSettingsByID(0);
+                Bounds bounds = QuantizedBounds();
+                List<NavMeshBuildSource> sources = m_Obstacles.Values.ToList();
+                var oper = NavMeshBuilder.UpdateNavMeshDataAsync(m_NavMesh, defaultBuildSettings, sources, bounds);
+                
+                m_IsObstacleChanged = false;
+            }
+            
 
             //var unitySC = SynchronizationContext.Current as unitysy;
 

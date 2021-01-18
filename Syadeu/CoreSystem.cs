@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Threading;
 
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace Syadeu
 {
@@ -341,6 +342,8 @@ namespace Syadeu
 
         private void BackgroundWorker()
         {
+            Thread.CurrentThread.CurrentCulture = global::System.Globalization.CultureInfo.InvariantCulture;
+
 #if UNITY_EDITOR
             OnBackgroundStartSampler = UnityEngine.Profiling.CustomSampler.Create("BackgroundStart");
             OnBackgroundCustomUpdateSampler = UnityEngine.Profiling.CustomSampler.Create("BackgroundCustomUpdate");
@@ -832,6 +835,7 @@ namespace Syadeu
         }
         private void BackgroundJobRequest(object sender, DoWorkEventArgs e)
         {
+            Thread.CurrentThread.CurrentCulture = global::System.Globalization.CultureInfo.InvariantCulture;
             BackgroundJob job = e.Argument as BackgroundJob;
             
             try
