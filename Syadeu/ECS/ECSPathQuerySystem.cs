@@ -146,7 +146,7 @@ namespace Syadeu.ECS
                 typeof(ECSPathFinder),
                 typeof(ECSPathBuffer)
                 );
-            m_BaseQuery = GetEntityQuery(typeof(Translation), typeof(ECSPathFinder), typeof(ECSPathBuffer));
+            //m_BaseQuery = GetEntityQuery(typeof(Translation), typeof(ECSPathFinder), typeof(ECSPathBuffer));
             m_MeshWorld = NavMeshWorld.GetDefaultWorld();
 
             m_CachedPath = new NativeMultiHashMap<int, float3>(MaxMapWidth, Allocator.Persistent);
@@ -223,7 +223,7 @@ namespace Syadeu.ECS
                 m_OccupiedSlots[index] = true;
             }
 
-            var ecb = m_EndSimulationEcbSystem.CreateCommandBuffer().AsParallelWriter();
+            //var ecb = m_EndSimulationEcbSystem.CreateCommandBuffer().AsParallelWriter();
             NativeQueue<QueryRequest>.ParallelWriter queries = m_QueryQueue.AsParallelWriter();
             NavMeshWorld meshWorld = m_MeshWorld;
             NativeArray<bool> occupied = m_OccupiedSlots;
@@ -415,24 +415,26 @@ namespace Syadeu.ECS
                     .Schedule();
             }
 
-            var positions = new NativeArray<float3>(m_Transforms.Count, Allocator.TempJob);
+            var positions = new NativeArray<float3>(m_BaseQuery.CalculateEntityCount(), Allocator.TempJob);
             {
                 m_TranslationJob.positions = positions;
                 
                 if (m_IsPathfinderModified)
                 {
                     m_TranslationJobHandle.Complete();
-                    if (m_TransformArray == null || m_TransformArray.Length != m_Transforms.Count)
+
+                    using (var pathfinders = m_BaseQuery.ToComponentDataArray<ECSPathFinder>(Allocator.Temp))
                     {
-                        m_TransformArray = new Transform[m_Transforms.Count];
+                        if (m_TransformArray == null || m_TransformArray.Length != pathfinders.Length)
+                        {
+                            m_TransformArray = new Transform[pathfinders.Length];
+                        }
+                        for (int i = 0; i < pathfinders.Length; i++)
+                        {
+                            m_TransformArray[i] = m_Transforms[pathfinders[i].id];
+                        }
                     }
 
-                    var pathfinders = m_BaseQuery.ToComponentDataArray<ECSPathFinder>(Allocator.Temp);
-                    for (int i = 0; i < pathfinders.Length; i++)
-                    {
-                        m_TransformArray[i] = m_Transforms[pathfinders[i].id];
-                    }
-                    pathfinders.Dispose();
                     m_TransformAccessArray.SetTransforms(m_TransformArray);
                     m_IsPathfinderModified = false;
                 }
@@ -548,8 +550,8 @@ namespace Syadeu.ECS
                 })
                 .Schedule();
 
-            m_EndSimulationEcbSystem.AddJobHandleForProducer(Dependency);
-            m_MeshWorld.AddDependency(Dependency);
+            //m_EndSimulationEcbSystem.AddJobHandleForProducer(Dependency);
+            //m_MeshWorld.AddDependency(Dependency);
         }
 
         private static float CalculateDistance(ref NativeMultiHashMap<int, float3> cachedList, int key)

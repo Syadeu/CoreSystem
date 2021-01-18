@@ -103,6 +103,45 @@ namespace Syadeu.ECS
             positions[index] = transform.position;
         }
     }
+
+    public struct ManagedObjectRef<T> where T : class
+    {
+        public readonly ulong Id;
+
+        public ManagedObjectRef(ulong id)
+        {
+            Id = id;
+        }
+    }
+    public class ManagedObjectWorld<T> where T : class
+    {
+        private ulong m_NextId;
+        private readonly Dictionary<ulong, T> m_Objects;
+
+        public ManagedObjectWorld(int initialCapacity = 1000)
+        {
+            m_NextId = 1;
+            m_Objects = new Dictionary<ulong, T>(initialCapacity);
+        }
+
+        public ManagedObjectRef<T> Add(T obj)
+        {
+            ulong id = m_NextId;
+            m_NextId++;
+            m_Objects[id] = obj;
+            return new ManagedObjectRef<T>(id);
+        }
+
+        public T Get(ManagedObjectRef<T> objRef)
+        {
+            return m_Objects[objRef.Id];
+        }
+
+        public void Remove(ManagedObjectRef<T> objRef)
+        {
+            m_Objects.Remove(objRef.Id);
+        }
+    }
 }
 
 #endif
