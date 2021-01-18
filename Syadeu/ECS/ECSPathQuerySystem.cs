@@ -61,7 +61,7 @@ namespace Syadeu.ECS
         //private EntityQuery m_BaseQuery;
         private NavMeshWorld m_MeshWorld;
 
-        private NativeMultiHashMap<int, float3> m_CachedPath;
+        internal NativeMultiHashMap<int, float3> m_CachedPath;
 
         private NativeQueue<QueryRequest> m_QueryQueue;
         private NativeArray<QueryRequest> m_Slots;
@@ -79,8 +79,6 @@ namespace Syadeu.ECS
 
         public static bool HasPath(Vector3 from, Vector3 target)
             => Instance.m_CachedPath.ContainsKey(GetKey(Instance.MaxMapWidth, from, target));
-        public static bool HasPath(int key)
-            => Instance.m_CachedPath.ContainsKey(key);
         public static void SchedulePath(Entity pathFinder, Vector3 target, int areaMask = -1)
         {
             if (!Instance.HasComponent<ECSPathQuery>(pathFinder))

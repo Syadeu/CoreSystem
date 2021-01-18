@@ -111,8 +111,10 @@ namespace Syadeu.ECS
             var destroyRequests = m_DestroyRequests;
             var ecb = m_EndSimulationEcbSystem.CreateCommandBuffer().AsParallelWriter();
             int maxMapWidth = ECSPathQuerySystem.Instance.MaxMapWidth;
+            NativeMultiHashMap<int, float3> cachedPath = ECSPathQuerySystem.Instance.m_CachedPath;
             Entities
                 .WithBurst()
+                .WithReadOnly(cachedPath)
                 .WithStoreEntityQueryInField(ref m_BaseQuery)
                 .WithReadOnly(destroyRequests)
                 .ForEach((Entity entity, int entityInQueryIndex, in ECSPathFinder pathFinder, in Translation tr) =>
@@ -134,7 +136,7 @@ namespace Syadeu.ECS
 
                         int newKey = ECSPathQuerySystem.GetKey(maxMapWidth, tr.Value, query.to);
                         if (pathFinder.pathKey != newKey &&
-                            ECSPathQuerySystem.HasPath(newKey))
+                            cachedPath.ContainsKey(newKey))
                         {
                             ECSPathFinder copied = pathFinder;
                             copied.pathKey = newKey;
