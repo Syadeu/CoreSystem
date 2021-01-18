@@ -75,23 +75,7 @@ namespace Syadeu.ECS
         }
         public static void SchedulePath(int agent, Vector3 target, int areaMask = -1)
         {
-            //ECSPathQuerySystem.SchedulePath(from, target, agentTypeId, areaMask);
-
-            //var request = new PathRequest
-            //{
-            //    target = target,
-            //    areaMask = areaMask
-            //};
-
-            
-
             ECSPathQuerySystem.SchedulePath(Instance.m_PathAgents[agent], target, areaMask);
-
-            //if (Instance.m_PathRequests.ContainsKey(id))
-            //{
-            //    Instance.m_PathRequests[id] = request;
-            //}
-            //else Instance.m_PathRequests.Add(id, request);
         }
 
         protected override void OnCreate()
@@ -126,11 +110,12 @@ namespace Syadeu.ECS
         {
             var destroyRequests = m_DestroyRequests;
             var ecb = m_EndSimulationEcbSystem.CreateCommandBuffer().AsParallelWriter();
+            int maxMapWidth = ECSPathQuerySystem.Instance.MaxMapWidth;
             Entities
                 .WithBurst()
                 .WithStoreEntityQueryInField(ref m_BaseQuery)
                 .WithReadOnly(destroyRequests)
-                .ForEach((Entity entity, int entityInQueryIndex, ref Translation tr, in ECSPathFinder pathFinder) =>
+                .ForEach((Entity entity, int entityInQueryIndex, in ECSPathFinder pathFinder, in Translation tr) =>
                 {
                     if (destroyRequests.Contains(pathFinder.id))
                     {
@@ -147,6 +132,14 @@ namespace Syadeu.ECS
                             return;
                         }
 
+                        int newKey = ECSPathQuerySystem.GetKey(maxMapWidth, tr.Value, query.to);
+                        if (pathFinder.pathKey != newKey &&
+                            ECSPathQuerySystem.HasPath(newKey))
+                        {
+                            ECSPathFinder copied = pathFinder;
+                            copied.pathKey = newKey;
+                            ecb.SetComponent(entityInQueryIndex, entity, copied);
+                        }
                         // TODO :: 다음 경로 계산
                     }
                     else
@@ -158,16 +151,6 @@ namespace Syadeu.ECS
                 })
                 
                 .ScheduleParallel();
-
-            m_EndSimulationEcbSystem.AddJobHandleForProducer(Dependency);
-            
-            Job
-                .WithBurst()
-                .WithCode(() =>
-                {
-                    destroyRequests.Clear();
-                })
-                .Schedule();
 
             var positions = new NativeArray<float3>(m_TrQuery.CalculateEntityCount(), Allocator.TempJob);
             {
@@ -202,12 +185,28 @@ namespace Syadeu.ECS
                 .WithStoreEntityQueryInField(ref m_TrQuery)
                 .WithAll<ECSPathFinder>()
                 .WithReadOnly(positions)
-                .ForEach((int entityInQueryIndex, ref Translation tr) =>
+                .ForEach((Entity entity, int entityInQueryIndex, in Translation tr) =>
                 {
-                    tr.Value = positions[entityInQueryIndex];
+                    if (!tr.Value.Equals(positions[entityInQueryIndex]))
+                    {
+                        ecb.SetComponent(entityInQueryIndex, entity, new Translation
+                        {
+                            Value = positions[entityInQueryIndex]
+                        });
+                    }
                 })
                 .WithDisposeOnCompletion(positions)
                 .ScheduleParallel();
+
+            m_EndSimulationEcbSystem.AddJobHandleForProducer(Dependency);
+            
+            Job
+                .WithBurst()
+                .WithCode(() =>
+                {
+                    destroyRequests.Clear();
+                })
+                .Schedule();
         }
     }
 }

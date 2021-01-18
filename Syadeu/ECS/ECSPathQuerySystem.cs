@@ -8,6 +8,7 @@ using UnityEngine.Experimental.AI;
 using UnityEngine;
 using UnityEngine.Jobs;
 using System.Runtime.InteropServices;
+using System.Data.Entity.Core.Mapping;
 
 #if UNITY_JOBS && UNITY_MATH && UNITY_BURST && UNITY_COLLECTION && UNITY_ENTITIES
 
@@ -73,9 +74,13 @@ namespace Syadeu.ECS
         private NativeArray<bool>[] m_Failed;
 
         //private NativeHashMap<int, PathRequest> m_PathRequests;
-        
+
         //private NativeQueue<PathRequest> m_PathRequestQueue;
 
+        public static bool HasPath(Vector3 from, Vector3 target)
+            => Instance.m_CachedPath.ContainsKey(GetKey(Instance.MaxMapWidth, from, target));
+        public static bool HasPath(int key)
+            => Instance.m_CachedPath.ContainsKey(key);
         public static void SchedulePath(Entity pathFinder, Vector3 target, int areaMask = -1)
         {
             if (!Instance.HasComponent<ECSPathQuery>(pathFinder))
@@ -340,7 +345,7 @@ namespace Syadeu.ECS
                 .WithBurst()
                 .WithChangeFilter<Translation>()
                 .WithReadOnly(cachedPath)
-                .ForEach((Entity entity, ref ECSPathFinder pathFinder, ref ECSPathQuery pathQuery, in Translation tr) =>
+                .ForEach((Entity entity, ref ECSPathQuery pathQuery, in Translation tr) =>
                 {
                     if (pathQuery.status == PathStatus.Idle)
                     {
@@ -359,19 +364,12 @@ namespace Syadeu.ECS
                         };
                         queries.Enqueue(temp);
                     }
-
-                    if (newKey != pathFinder.pathKey)
-                    {
-                        //pathQuery.pathKey = newKey;
-                        pathFinder.pathKey = newKey;
-                    }
                 })
                 .ScheduleParallel();
 
             float sqrDistanceOffset = DistanceOffset * DistanceOffset;
             Entities
                 .WithBurst()
-                //.WithStoreEntityQueryInField(ref m_BaseQuery)
                 .WithChangeFilter<ECSPathFinder>()
                 .WithReadOnly(cachedPath)
                 .ForEach((Entity entity, int entityInQueryIndex, ref ECSPathQuery pathQuery, ref DynamicBuffer<ECSPathBuffer> buffers, in Translation tr, in ECSPathFinder pathFinder) =>
@@ -488,7 +486,7 @@ namespace Syadeu.ECS
         }
 
         private int GetKey(float3 from, float3 to) => GetKey(MaxMapWidth, from, to);
-        private static int GetKey(int maxMapWidth, float3 from, float3 to)
+        internal static int GetKey(int maxMapWidth, float3 from, float3 to)
         {
             int fromKey = maxMapWidth * (int)math.round(from.x) + (int)math.round(from.y) + (int)math.round(from.z);
             int toKey = maxMapWidth * (int)math.round(to.x) + (int)math.round(to.y) + (int)math.round(to.z);
