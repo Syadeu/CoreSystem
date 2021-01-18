@@ -86,8 +86,10 @@ namespace Syadeu.ECS
         private NativeHashSet<int> m_DestroyRequests;
         private NativeQueue<PathRequest> m_PathRequestQueue;
         private Dictionary<int, Transform> m_Transforms;
-        private TransformAccessArray m_TransformArray;
+        private Transform[] m_TransformArray = null;
+        private TransformAccessArray m_TransformAccessArray;
         private UpdateTranslationJob m_TranslationJob;
+        private JobHandle m_TranslationJobHandle;
 
         private bool m_IsPathfinderModified = true;
 
@@ -173,8 +175,9 @@ namespace Syadeu.ECS
             m_DestroyRequests = new NativeHashSet<int>(MaxQueries, Allocator.Persistent);
             m_PathRequestQueue = new NativeQueue<PathRequest>(Allocator.Persistent);
             m_Transforms = new Dictionary<int, Transform>();
-            m_TransformArray = new TransformAccessArray(MaxQueries);
+            m_TransformAccessArray = new TransformAccessArray(MaxQueries);
             m_TranslationJob = new UpdateTranslationJob();
+            m_TranslationJobHandle = new JobHandle();
             //m_TransformIndex = new NativeHashMap<int, int>(MaxQueries, Allocator.Persistent);
         }
         protected override void OnDestroy()
@@ -198,7 +201,7 @@ namespace Syadeu.ECS
             m_PathRequests.Dispose();
             m_DestroyRequests.Dispose();
             m_PathRequestQueue.Dispose();
-            m_TransformArray.Dispose();
+            m_TransformAccessArray.Dispose();
             //m_TransformIndex.Dispose();
         }
         protected override void OnUpdate()
@@ -418,20 +421,24 @@ namespace Syadeu.ECS
                 
                 if (m_IsPathfinderModified)
                 {
-                    Transform[] transforms = new Transform[m_Transforms.Count];
+                    m_TranslationJobHandle.Complete();
+                    if (m_TransformArray == null || m_TransformArray.Length != m_Transforms.Count)
+                    {
+                        m_TransformArray = new Transform[m_Transforms.Count];
+                    }
 
                     var pathfinders = m_BaseQuery.ToComponentDataArray<ECSPathFinder>(Allocator.Temp);
                     for (int i = 0; i < pathfinders.Length; i++)
                     {
-                        transforms[i] = m_Transforms[pathfinders[i].id];
+                        m_TransformArray[i] = m_Transforms[pathfinders[i].id];
                     }
                     pathfinders.Dispose();
-                    m_TransformArray.SetTransforms(transforms);
+                    m_TransformAccessArray.SetTransforms(m_TransformArray);
                     m_IsPathfinderModified = false;
                 }
-                
-                var transJob = m_TranslationJob.Schedule(m_TransformArray, Dependency);
-                Dependency = JobHandle.CombineDependencies(Dependency, transJob);
+
+                m_TranslationJobHandle = m_TranslationJob.Schedule(m_TransformAccessArray, Dependency);
+                Dependency = JobHandle.CombineDependencies(Dependency, m_TranslationJobHandle);
             }
             
             float sqrDistanceOffset = DistanceOffset * DistanceOffset;
