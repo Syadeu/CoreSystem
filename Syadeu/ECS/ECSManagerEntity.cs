@@ -12,7 +12,6 @@ using System;
 
 #if UNITY_JOBS && UNITY_MATH && UNITY_BURST && UNITY_COLLECTION && UNITY_ENTITIES
 
-using Unity.Jobs;
 using Unity.Burst;
 using Unity.Mathematics;
 using Unity.Collections;
@@ -58,6 +57,14 @@ namespace Syadeu.ECS
 
         //ExceedDistance = 1 << 4
     }
+    public struct ECSPathObstacle : IComponentData
+    {
+
+    }
+    public struct ECSPathVersion : IComponentData
+    {
+        public int version;
+    }
     public struct ECSPathFinder : IComponentData
     {
         public int id;
@@ -68,7 +75,6 @@ namespace Syadeu.ECS
     }
     public struct ECSPathQuery : IComponentData
     {
-        //public int pathKey;
         public PathStatus status;
 
         public int areaMask;
@@ -87,16 +93,7 @@ namespace Syadeu.ECS
         public static implicit operator ECSPathBuffer(Vector3 e)
             => new ECSPathBuffer { position = e };
     }
-    [BurstCompile]
-    public struct UpdateTranslationJob : IJobParallelForTransform
-    {
-        public NativeArray<float3> positions;
-
-        public void Execute(int index, TransformAccess transform)
-        {
-            positions[index] = transform.position;
-        }
-    }
+    
 
     public struct ManagedObjectRef<T> where T : class
     {

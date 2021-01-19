@@ -44,6 +44,8 @@ namespace Syadeu.ECS
         /// </summary>
         public int MaxMapWidth = 10000;
 
+        public bool SetStraightIfNotFound = false;
+
         //
         public float DistanceOffset = 2.5f;
 
@@ -56,9 +58,7 @@ namespace Syadeu.ECS
             public float3 to;
         }
 
-        //private EndSimulationEntityCommandBufferSystem m_EndSimulationEcbSystem;
-        
-        //private EntityQuery m_BaseQuery;
+        private EndSimulationEntityCommandBufferSystem m_EndSimulationEcbSystem;
         private NavMeshWorld m_MeshWorld;
 
         internal NativeMultiHashMap<int, float3> m_CachedPath;
@@ -73,13 +73,9 @@ namespace Syadeu.ECS
         private NativeArray<NavMeshLocation>[] m_Locations;
         private NativeArray<bool>[] m_Failed;
 
-        //private NativeHashMap<int, PathRequest> m_PathRequests;
-
-        //private NativeQueue<PathRequest> m_PathRequestQueue;
-
         public static bool HasPath(Vector3 from, Vector3 target)
             => Instance.m_CachedPath.ContainsKey(GetKey(Instance.MaxMapWidth, from, target));
-        public static void SchedulePath(Entity pathFinder, Vector3 target, int areaMask = -1)
+        internal static void SchedulePath(Entity pathFinder, Vector3 target, int areaMask = -1)
         {
             if (!Instance.HasComponent<ECSPathQuery>(pathFinder))
             {
@@ -91,6 +87,13 @@ namespace Syadeu.ECS
                         areaMask = areaMask,
                         to = target
                     });
+            }
+            else
+            {
+                var copied = Instance.GetComponentData<ECSPathQuery>(pathFinder);
+                copied.to = target;
+                var ecb = Instance.m_EndSimulationEcbSystem.CreateCommandBuffer();
+                ecb.SetComponent(pathFinder, copied);
             }
 
             QueryRequest temp = new QueryRequest
@@ -106,6 +109,7 @@ namespace Syadeu.ECS
         protected override void OnCreate()
         {
             base.OnCreate();
+            m_EndSimulationEcbSystem = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
             m_MeshWorld = NavMeshWorld.GetDefaultWorld();
 
             m_CachedPath = new NativeMultiHashMap<int, float3>(MaxMapWidth, Allocator.Persistent);
@@ -160,7 +164,6 @@ namespace Syadeu.ECS
             {
                 if (m_AvailableSlots.Count == 0) break;
 
-                //Debug.Log("in");
                 int index = m_AvailableSlots.Dequeue();
                 QueryRequest pathData = m_QueryQueue.Dequeue();
 
@@ -168,8 +171,6 @@ namespace Syadeu.ECS
                 m_OccupiedSlots[index] = true;
             }
 
-            //var ecb = m_EndSimulationEcbSystem.CreateCommandBuffer().AsParallelWriter();
-            
             NavMeshWorld meshWorld = m_MeshWorld;
             NativeArray<bool> occupied = m_OccupiedSlots;
             NativeArray<QueryRequest> slots = m_Slots;
@@ -179,7 +180,6 @@ namespace Syadeu.ECS
             for (int i = 0; i < MaxQueries; i++)
             {
                 if (!skip[i]) continue;
-                //Debug.Log("in 2");
 
                 NativeArray<NavMeshLocation> navMeshLocations = m_Locations[i];
 
@@ -189,7 +189,7 @@ namespace Syadeu.ECS
                 NativeArray<bool> failed = m_Failed[i];
                 failed[0] = false;
 
-                Translation tr = GetComponent<Translation>(pathData.pathFinder);
+                ECSTransformFromMono tr = GetComponent<ECSTransformFromMono>(pathData.pathFinder);
                 ECSPathFinder pathFinder = GetComponent<ECSPathFinder>(pathData.pathFinder);
                 int pathKey = GetKey(tr.Value, pathData.to);
 
@@ -333,17 +333,14 @@ namespace Syadeu.ECS
                         available.Enqueue(i);
                     })
                     .Schedule();
-
-                //CompleteDependency();
-                //Debug.Log($"in 2 {failed[0]} :: {pathData.retry}: {cachedPath.ContainsKey(pathData.key)}");
             }
 
             NativeQueue<QueryRequest>.ParallelWriter queries = m_QueryQueue.AsParallelWriter();
             Entities
                 .WithBurst()
-                .WithChangeFilter<Translation>()
+                .WithChangeFilter<ECSTransformFromMono>()
                 .WithReadOnly(cachedPath)
-                .ForEach((Entity entity, ref ECSPathQuery pathQuery, in Translation tr) =>
+                .ForEach((Entity entity, in ECSPathQuery pathQuery, in ECSTransformFromMono tr) =>
                 {
                     if (pathQuery.status == PathStatus.Idle)
                     {
@@ -366,11 +363,12 @@ namespace Syadeu.ECS
                 .ScheduleParallel();
 
             float sqrDistanceOffset = DistanceOffset * DistanceOffset;
+            bool setStraight = SetStraightIfNotFound;
             Entities
                 .WithBurst()
                 .WithChangeFilter<ECSPathFinder>()
                 .WithReadOnly(cachedPath)
-                .ForEach((Entity entity, int entityInQueryIndex, ref ECSPathQuery pathQuery, ref DynamicBuffer<ECSPathBuffer> buffers, in Translation tr, in ECSPathFinder pathFinder) =>
+                .ForEach((Entity entity, int entityInQueryIndex, ref ECSPathQuery pathQuery, ref DynamicBuffer<ECSPathBuffer> buffers, in ECSTransformFromMono tr, in ECSPathFinder pathFinder) =>
                 {
                     if (pathQuery.status == PathStatus.Idle) return;
 
@@ -379,7 +377,6 @@ namespace Syadeu.ECS
                     if (sqrDis < sqrDistanceOffset)
                     {
                         pathQuery.status = PathStatus.Idle;
-                        //pathQuery.pathKey = 0;
                         pathQuery.to = float3.zero;
                         buffers.Clear();
 
@@ -416,22 +413,14 @@ namespace Syadeu.ECS
                         pathQuery.status = PathStatus.Failed;
                         pathQuery.totalDistance = math.sqrt(sqrDis);
 
-                        buffers.Add(tr.Value);
-                        buffers.Add(pathQuery.to);
+                        if (setStraight)
+                        {
+                            buffers.Add(tr.Value);
+                            buffers.Add(pathQuery.to);
+                        }
                     }
                 })
                 .ScheduleParallel();
-
-            //Job
-            //    .WithBurst()
-            //    .WithCode(() =>
-            //    {
-            //        requests.Clear();
-            //    })
-            //    .Schedule();
-
-            //m_EndSimulationEcbSystem.AddJobHandleForProducer(Dependency);
-            //m_MeshWorld.AddDependency(Dependency);
         }
 
         private static float CalculateDistance(ref NativeMultiHashMap<int, float3> cachedList, int key)

@@ -70,7 +70,7 @@ namespace Syadeu.ECS
 
         private void Update()
         {
-            
+            ECSPathAgentSystem.SchedulePath(id, target.position, 1);
             //RequestPath(new Vector3(random(), 0, random()));
             //ECSPathQuerySystem.SchedulePath(id, target.position, 1);
             //for (int i = 0; i < 100; i++)
@@ -80,20 +80,20 @@ namespace Syadeu.ECS
             //}
         }
 
-        //private void OnDrawGizmos()
-        //{
-        //    if (!Application.isPlaying) return;
+        private void OnDrawGizmos()
+        {
+            if (!Application.isPlaying) return;
 
-        //    var buffer = entityManager.GetBuffer<ECSPathBuffer>(id.Entity);
-        //    for (int i = 0; i < buffer.Length; i++)
-        //    {
-        //        Gizmos.DrawSphere(buffer[i].position, .25f);
-        //        if (i + 1 < buffer.Length)
-        //        {
-        //            Gizmos.DrawLine(buffer[i].position, buffer[i + 1].position);
-        //        }
-        //    }
-        //}
+            var buffer = ECSPathAgentSystem.GetPathPositions(id);
+            for (int i = 0; i < buffer.Length; i++)
+            {
+                Gizmos.DrawSphere(buffer[i], .25f);
+                if (i + 1 < buffer.Length)
+                {
+                    Gizmos.DrawLine(buffer[i], buffer[i + 1]);
+                }
+            }
+        }
     }
 }
 

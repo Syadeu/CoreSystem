@@ -24,23 +24,34 @@ namespace Syadeu.ECS
         public float3 Center = new float3(0, 0, 0);
         public float3 Size = new float3(80, 20, 80);
 
+        private EntityArchetype m_BaseArchetype;
+        private EntityQuery m_BaseQuery;
+
         private NavMeshData m_NavMesh;
         private NavMeshDataInstance m_NavMeshData;
         private NavMeshBuildSettings m_NavMeshBuildSettings;
 
-        private TransformAccessArray m_TransformArray;
-        private NativeList<bool> m_IsStaticArray;
-
         private Dictionary<int, NavMeshBuildSource> m_Obstacles;
         private bool m_IsObstacleChanged;
+
+        internal NativeArray<int> m_Version;
 
         public static void AddBuildArea(Vector3 center, Vector3 size)
         {
 
         }
-        public static void AddObstacle(Object obj, bool isStatic, int areaMask = 0)
+        public static int AddObstacle(Object obj, int areaMask = 0)
         {
             NavMeshBuildSource source;
+
+            Entity entity = Instance.EntityManager.CreateEntity(Instance.m_BaseArchetype);
+            Instance.EntityManager.SetName(entity, obj.name);
+            //Instance.EntityManager.SetComponentData(entity, new ECSPathObstacle
+            //{
+
+            //});
+
+            int id;
             if (obj is MeshFilter mesh)
             {
                 source = new NavMeshBuildSource()
@@ -50,7 +61,7 @@ namespace Syadeu.ECS
                     transform = mesh.transform.localToWorldMatrix,
                     area = areaMask
                 };
-                Instance.m_TransformArray.Add(mesh.transform);
+                id = ECSCopyTransformFromMonoSystem.AddUpdate(entity, mesh.transform);
             }
             else if (obj is Terrain terrain)
             {
@@ -61,33 +72,40 @@ namespace Syadeu.ECS
                     transform = Matrix4x4.TRS(terrain.transform.position, Quaternion.identity, Vector3.one),
                     area = areaMask
                 };
-                Instance.m_TransformArray.Add(terrain.transform);
+                id = ECSCopyTransformFromMonoSystem.AddUpdate(entity, terrain.transform);
             }
             else throw new CoreSystemException(CoreSystemExceptionFlag.ECS, "NavMesh Obstacle 지정은 MeshFilter 혹은 Terrain만 가능합니다");
 
-            Instance.m_IsStaticArray.Add(isStatic);
-            Instance.m_Obstacles.Add(obj.GetInstanceID(), source);
+            Instance.m_Obstacles.Add(id, source);
             Instance.m_IsObstacleChanged = true;
+
+            return id;
         }
         public static void RemoveObstacle(int id)
         {
             Instance.m_Obstacles.Remove(id);
             Instance.m_IsObstacleChanged = true;
+
+            ECSCopyTransformFromMonoSystem.RemoveUpdate(id);
         }
 
         protected override void OnCreate()
         {
             base.OnCreate();
 
+            m_BaseArchetype = EntityManager.CreateArchetype(
+                typeof(ECSTransformFromMono),
+                typeof(ECSPathObstacle)
+                );
+
             m_NavMesh = new NavMeshData();
             m_NavMeshData = NavMesh.AddNavMeshData(m_NavMesh);
             m_NavMeshBuildSettings = NavMesh.GetSettingsByID(0);
 
-            m_TransformArray = new TransformAccessArray(256);
-            m_IsStaticArray = new NativeList<bool>(256, Allocator.Persistent);
-
             m_Obstacles = new Dictionary<int, NavMeshBuildSource>();
             m_IsObstacleChanged = true;
+
+            m_Version = new NativeArray<int>(1, Allocator.Persistent);
         }
         protected override void OnDestroy()
         {
@@ -95,9 +113,7 @@ namespace Syadeu.ECS
 
             m_NavMeshData.Remove();
 
-            m_TransformArray.Dispose();
-            m_IsStaticArray.Dispose();
-            //m_Obstacles.Dispose();
+            m_Version.Dispose();
         }
         protected override void OnUpdate()
         {
@@ -107,21 +123,20 @@ namespace Syadeu.ECS
                 Bounds bounds = QuantizedBounds();
                 List<NavMeshBuildSource> sources = m_Obstacles.Values.ToList();
                 var oper = NavMeshBuilder.UpdateNavMeshDataAsync(m_NavMesh, defaultBuildSettings, sources, bounds);
-                
+
+                var ver = m_Version;
+                ver[0]++;
+                Entities
+                    .WithBurst()
+                    .WithReadOnly(ver)
+                    .ForEach((ref ECSPathVersion version) =>
+                    {
+                        version.version = ver[0];
+                    })
+                    .ScheduleParallel();
+
                 m_IsObstacleChanged = false;
             }
-            
-
-            //var unitySC = SynchronizationContext.Current as unitysy;
-
-            //if (unitySC == null)
-            //    throw new InvalidOperationException("Awaiting jobs must be done in the UnitySynchronizationContext");
-
-            //var previousHandle = unitySC.CurrentHandle;
-
-            //var handle = job.Schedule(previousHandle);
-
-            //unitySC.CurrentHandle = handle;
         }
 
         private static float3 Quantize(float3 v, float3 quant)
