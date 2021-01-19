@@ -97,9 +97,10 @@ namespace Syadeu.ECS
             var ecb = m_EndSimulationEcbSystem.CreateCommandBuffer().AsParallelWriter();
             int maxMapWidth = ECSPathQuerySystem.Instance.MaxMapWidth;
             NativeMultiHashMap<int, float3> cachedPath = ECSPathQuerySystem.Instance.m_CachedPath;
+
             Entities
                 .WithBurst()
-                .WithReadOnly(cachedPath)
+                //.WithReadOnly(cachedPath)
                 .WithStoreEntityQueryInField(ref m_BaseQuery)
                 .WithReadOnly(destroyRequests)
                 .ForEach((Entity entity, int entityInQueryIndex, in ECSPathFinder pathFinder, in ECSTransformFromMono tr, in DynamicBuffer<ECSPathBuffer> buffers) =>
@@ -120,16 +121,20 @@ namespace Syadeu.ECS
                         }
 
                         int newKey = ECSPathQuerySystem.GetKey(maxMapWidth, tr.Value, query.to);
-                        if (pathFinder.pathKey != newKey &&
-                            cachedPath.ContainsKey(newKey))
+                        if (pathFinder.pathKey != newKey)
                         {
                             ECSPathFinder copied = pathFinder;
                             copied.pathKey = newKey;
                             ecb.SetComponent(entityInQueryIndex, entity, copied);
                             return;
                         }
-
-
+                        else if (query.status == PathStatus.Failed)
+                        {
+                            ECSPathFinder copied = pathFinder;
+                            copied.pathKey = newKey;
+                            ecb.SetComponent(entityInQueryIndex, entity, copied);
+                            return;
+                        }
                     }
                     else
                     {

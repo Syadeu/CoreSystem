@@ -20,7 +20,7 @@ using Unity.Transforms;
 
 namespace Syadeu.ECS
 {
-    [UpdateAfter(typeof(TransformSystemGroup))]
+    [UpdateAfter(typeof(ECSCopyTransformFromMonoSystem))]
     public class ECSPathSystemGroup : ComponentSystemGroup { }
     public abstract class ECSManagerEntity<T> : SystemBase
         where T : SystemBase

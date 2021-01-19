@@ -49,13 +49,17 @@ namespace Syadeu.ECS
         //
         public float DistanceOffset = 2.5f;
 
-        private struct QueryRequest
+        internal struct QueryRequest : IEquatable<QueryRequest>
         {
             public bool retry;
 
             public Entity pathFinder;
             public int areaMask;
             public float3 to;
+
+            public bool Equals(QueryRequest other)
+                => retry == other.retry && pathFinder == other.pathFinder
+                && areaMask == other.areaMask && to.Equals(to);
         }
 
         private EndSimulationEntityCommandBufferSystem m_EndSimulationEcbSystem;
@@ -63,7 +67,7 @@ namespace Syadeu.ECS
 
         internal NativeMultiHashMap<int, float3> m_CachedPath;
 
-        private NativeQueue<QueryRequest> m_QueryQueue;
+        internal NativeQueue<QueryRequest> m_QueryQueue;
         private NativeArray<QueryRequest> m_Slots;
         private NativeArray<bool> m_OccupiedSlots;
         private NativeQueue<int> m_AvailableSlots;
@@ -91,9 +95,17 @@ namespace Syadeu.ECS
             else
             {
                 var copied = Instance.GetComponentData<ECSPathQuery>(pathFinder);
+                var path = Instance.GetComponentData<ECSPathFinder>(pathFinder);
+                int key = Instance.GetKey(Instance.GetComponentData<ECSTransformFromMono>(pathFinder).Value, target);
+                if (copied.to.Equals(target) || path.pathKey.Equals(key))
+                {
+                    return;
+                }
+
                 copied.to = target;
-                var ecb = Instance.m_EndSimulationEcbSystem.CreateCommandBuffer();
-                ecb.SetComponent(pathFinder, copied);
+                Instance.SetComponent(pathFinder, copied);
+                //var ecb = Instance.m_EndSimulationEcbSystem.CreateCommandBuffer();
+                //ecb.SetComponent(pathFinder, copied);
             }
 
             QueryRequest temp = new QueryRequest
