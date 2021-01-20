@@ -71,10 +71,11 @@ namespace Syadeu.ECS
         public int agentTypeId;
         public float maxDistance;
 
-        public int pathKey;
+        
     }
     public struct ECSPathQuery : IComponentData
     {
+        public int pathKey;
         public PathStatus status;
 
         public int areaMask;

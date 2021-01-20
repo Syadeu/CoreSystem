@@ -22,10 +22,10 @@ namespace Syadeu.ECS
     public class ECSPathMeshSystem : ECSManagerEntity<ECSPathMeshSystem>
     {
         public float3 Center = new float3(0, 0, 0);
-        public float3 Size = new float3(80, 20, 80);
+        public float3 Size = new float3(1000, 20, 1000);
 
         private EntityArchetype m_BaseArchetype;
-        private EntityQuery m_BaseQuery;
+        private EntityQuery m_VersionQuery;
 
         private NavMeshData m_NavMesh;
         private NavMeshDataInstance m_NavMeshData;
@@ -97,6 +97,20 @@ namespace Syadeu.ECS
                 typeof(ECSTransformFromMono),
                 typeof(ECSPathObstacle)
                 );
+            EntityQueryDesc temp = new EntityQueryDesc
+            {
+                All = new ComponentType[]
+                {
+                    typeof(ECSPathVersion),
+
+                },
+                Any = new ComponentType[]
+                {
+                    typeof(ECSPathFinder),
+                    typeof(ECSPathObstacle)
+                }
+            };
+            m_VersionQuery = GetEntityQuery(temp);
 
             m_NavMesh = new NavMeshData();
             m_NavMeshData = NavMesh.AddNavMeshData(m_NavMesh);
@@ -124,8 +138,12 @@ namespace Syadeu.ECS
                 List<NavMeshBuildSource> sources = m_Obstacles.Values.ToList();
                 var oper = NavMeshBuilder.UpdateNavMeshDataAsync(m_NavMesh, defaultBuildSettings, sources, bounds);
 
+                m_Version[0]++;
                 var ver = m_Version;
-                ver[0]++;
+                //m_VersionQuery.SetSharedComponentFilter(new ECSPathVersion
+                //{
+                //    version = m_Version[0]
+                //});
                 Entities
                     .WithBurst()
                     .WithReadOnly(ver)

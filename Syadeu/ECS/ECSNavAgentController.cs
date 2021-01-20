@@ -70,7 +70,7 @@ namespace Syadeu.ECS
 
         private void Update()
         {
-            ECSPathAgentSystem.SchedulePath(id, target.position, 1);
+            //ECSPathAgentSystem.SchedulePath(id, target.position, 1);
             //RequestPath(new Vector3(random(), 0, random()));
             //ECSPathQuerySystem.SchedulePath(id, target.position, 1);
             //for (int i = 0; i < 100; i++)
@@ -83,7 +83,7 @@ namespace Syadeu.ECS
         private void OnDrawGizmos()
         {
             if (!Application.isPlaying) return;
-
+            
             var buffer = ECSPathAgentSystem.GetPathPositions(id);
             for (int i = 0; i < buffer.Length; i++)
             {

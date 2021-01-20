@@ -20,13 +20,12 @@ namespace Syadeu.ECS
         private EndSimulationEntityCommandBufferSystem m_EndSimulationEcbSystem;
 
         private EntityArchetype m_BaseArchetype;
-        private EntityQuery m_BaseQuery;
-        private EntityQuery m_TrQuery;
+        private EntityQuery m_RemoveQuery;
 
         private NativeHashMap<int, Entity> m_PathAgents;
-        private NativeHashMap<int, Entity> m_PathTargets;
-
         private NativeHashSet<int> m_DestroyRequests;
+
+        private NativeList<int> m_SortedIdleQueries;
 
         public static int RegisterPathfinder(Transform agent, int agentTypeID)
         {
@@ -39,7 +38,7 @@ namespace Syadeu.ECS
                 id = id,
                 agentTypeId = agentTypeID
             });
-            Instance.AddComponentData(entity, new ECSPathVersion
+            Instance.EntityManager.AddComponentData(entity, new ECSPathVersion
             {
                 version = ECSPathMeshSystem.Instance.m_Version[0]
             });
@@ -80,9 +79,21 @@ namespace Syadeu.ECS
                 typeof(ECSPathBuffer),
                 typeof(ECSPathVersion)
                 );
+            
+            EntityQueryDesc tempdesc = new EntityQueryDesc
+            {
+                All = new ComponentType[]
+                {
+                    ComponentType.ReadOnly<ECSPathQuery>()
+                }
+            };
+            m_RemoveQuery = GetEntityQuery(tempdesc);
+            m_RemoveQuery.SetChangedVersionFilter(ComponentType.ReadWrite<ECSPathQuery>());
 
             m_PathAgents = new NativeHashMap<int, Entity>(256, Allocator.Persistent);
             m_DestroyRequests = new NativeHashSet<int>(256, Allocator.Persistent);
+
+            m_SortedIdleQueries = new NativeList<int>(256, Allocator.Persistent);
         }
         protected override void OnDestroy()
         {
@@ -90,69 +101,92 @@ namespace Syadeu.ECS
 
             m_PathAgents.Dispose();
             m_DestroyRequests.Dispose();
+
+            m_SortedIdleQueries.Dispose();
+        }
+        [BurstCompile]
+        private struct RemoveQueryJob : Unity.Jobs.IJob
+        {
+            public EntityCommandBuffer.ParallelWriter ecb;
+
+            [DeallocateOnJobCompletion]
+            [ReadOnly] public NativeArray<Entity> entities;
+            public NativeList<int> sortedIndexes;
+
+            public void Execute()
+            {
+                for (int i = 0; i < sortedIndexes.Length; i++)
+                {
+                    ecb.RemoveComponent<ECSPathQuery>(i, entities[sortedIndexes[i]]);
+                }
+
+                sortedIndexes.Clear();
+            }
+        }
+        [BurstCompile]
+        private struct SortIdleQueryJob : IJobParallelForFilter
+        {
+            [DeallocateOnJobCompletion][ReadOnly]
+            public NativeArray<ECSPathQuery> queries;
+
+            public bool Execute(int i)
+            {
+                return queries[i].status == PathStatus.Idle;
+            }
         }
         protected override void OnUpdate()
         {
-            var destroyRequests = m_DestroyRequests;
-            var ecb = m_EndSimulationEcbSystem.CreateCommandBuffer().AsParallelWriter();
             int maxMapWidth = ECSPathQuerySystem.Instance.MaxMapWidth;
             NativeMultiHashMap<int, float3> cachedPath = ECSPathQuerySystem.Instance.m_CachedPath;
-
-            Entities
-                .WithBurst()
-                //.WithReadOnly(cachedPath)
-                .WithStoreEntityQueryInField(ref m_BaseQuery)
-                .WithReadOnly(destroyRequests)
-                .ForEach((Entity entity, int entityInQueryIndex, in ECSPathFinder pathFinder, in ECSTransformFromMono tr, in DynamicBuffer<ECSPathBuffer> buffers) =>
-                {
-                    if (destroyRequests.Contains(pathFinder.id))
+            
+            if (m_DestroyRequests.Count() > 0)
+            {
+                var ecb = m_EndSimulationEcbSystem.CreateCommandBuffer().AsParallelWriter();
+                var destroyRequests = m_DestroyRequests;
+                Entities
+                    .WithBurst()
+                    .WithName("PathFinder_Destroy_1")
+                    .WithReadOnly(destroyRequests)
+                    .ForEach((Entity entity, int entityInQueryIndex, in ECSPathFinder pathFinder) =>
                     {
-                        ecb.DestroyEntity(entityInQueryIndex, entity);
-                        return;
-                    }
-
-                    if (HasComponent<ECSPathQuery>(entity))
-                    {
-                        ECSPathQuery query = GetComponent<ECSPathQuery>(entity);
-                        if (query.status == PathStatus.Idle)
+                        if (destroyRequests.Contains(pathFinder.id))
                         {
-                            ecb.RemoveComponent<ECSPathQuery>(entityInQueryIndex, entity);
+                            ecb.DestroyEntity(entityInQueryIndex, entity);
                             return;
                         }
-
-                        int newKey = ECSPathQuerySystem.GetKey(maxMapWidth, tr.Value, query.to);
-                        if (pathFinder.pathKey != newKey)
-                        {
-                            ECSPathFinder copied = pathFinder;
-                            copied.pathKey = newKey;
-                            ecb.SetComponent(entityInQueryIndex, entity, copied);
-                            return;
-                        }
-                        else if (query.status == PathStatus.Failed)
-                        {
-                            ECSPathFinder copied = pathFinder;
-                            copied.pathKey = newKey;
-                            ecb.SetComponent(entityInQueryIndex, entity, copied);
-                            return;
-                        }
-                    }
-                    else
+                    })
+                    .ScheduleParallel();
+                Job
+                    .WithBurst()
+                    .WithName("PathFinder_Destroy_2")
+                    .WithCode(() =>
                     {
+                        destroyRequests.Clear();
+                    })
+                    .Schedule();
+                m_EndSimulationEcbSystem.AddJobHandleForProducer(Dependency);
+            }
 
-                    }
-                })
-                .ScheduleParallel();
+            NativeList<int> sortedIdleQueries = m_SortedIdleQueries;
+            SortIdleQueryJob idleQueryJob = new SortIdleQueryJob
+            {
+                queries = m_RemoveQuery.ToComponentDataArrayAsync<ECSPathQuery>(Allocator.TempJob, out var job1)
+            };
+            var sortJobHandle = idleQueryJob.ScheduleAppend(sortedIdleQueries, m_RemoveQuery.CalculateChunkCount(), 32, job1);
+            //m_EndSimulationEcbSystem.AddJobHandleForProducer(sortJobHandle);
 
-            m_EndSimulationEcbSystem.AddJobHandleForProducer(Dependency);
+            RemoveQueryJob removeQueryJob = new RemoveQueryJob
+            {
+                ecb = m_EndSimulationEcbSystem.CreateCommandBuffer().AsParallelWriter(),
 
-            Job
-                .WithBurst()
-                .WithCode(() =>
-                {
-                    destroyRequests.Clear();
-                })
-                .Schedule();
+                entities = m_RemoveQuery.ToEntityArrayAsync(Allocator.TempJob, out var job2),
+                sortedIndexes = sortedIdleQueries
+            };
+            var removeJobHandle = removeQueryJob.Schedule(JobHandle.CombineDependencies(sortJobHandle, job2));
+            m_EndSimulationEcbSystem.AddJobHandleForProducer(removeJobHandle);
         }
+
+
     }
 }
 
