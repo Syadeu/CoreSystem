@@ -25,7 +25,7 @@ namespace Syadeu.ECS
         public float3 Size = new float3(1000, 20, 1000);
 
         private EntityArchetype m_BaseArchetype;
-        private EntityQuery m_VersionQuery;
+        private EntityQuery m_BaseQuery;
 
         private NavMeshData m_NavMesh;
         private NavMeshDataInstance m_NavMeshData;
@@ -34,7 +34,13 @@ namespace Syadeu.ECS
         private Dictionary<int, NavMeshBuildSource> m_Obstacles;
         private bool m_IsObstacleChanged;
 
-        internal NativeArray<int> m_Version;
+        private NativeQueue<RebakePayload> m_RequireBakeQueue;
+        
+        private struct RebakePayload
+        {
+            public Entity entity;
+            public ECSPathObstacle obstacle;
+        }
 
         public static void AddBuildArea(Vector3 center, Vector3 size)
         {
@@ -43,15 +49,10 @@ namespace Syadeu.ECS
         public static int AddObstacle(Object obj, int areaMask = 0)
         {
             NavMeshBuildSource source;
-
             Entity entity = Instance.EntityManager.CreateEntity(Instance.m_BaseArchetype);
-            Instance.EntityManager.SetName(entity, obj.name);
-            //Instance.EntityManager.SetComponentData(entity, new ECSPathObstacle
-            //{
-
-            //});
 
             int id;
+            PathObstacleType type;
             if (obj is MeshFilter mesh)
             {
                 source = new NavMeshBuildSource()
@@ -62,6 +63,7 @@ namespace Syadeu.ECS
                     area = areaMask
                 };
                 id = ECSCopyTransformFromMonoSystem.AddUpdate(entity, mesh.transform);
+                type = PathObstacleType.Mesh;
             }
             else if (obj is Terrain terrain)
             {
@@ -73,8 +75,16 @@ namespace Syadeu.ECS
                     area = areaMask
                 };
                 id = ECSCopyTransformFromMonoSystem.AddUpdate(entity, terrain.transform);
+                type = PathObstacleType.Terrain;
             }
             else throw new CoreSystemException(CoreSystemExceptionFlag.ECS, "NavMesh Obstacle 지정은 MeshFilter 혹은 Terrain만 가능합니다");
+
+            Instance.EntityManager.SetName(entity, obj.name);
+            Instance.EntityManager.SetComponentData(entity, new ECSPathObstacle
+            {
+                id = id,
+                type = type
+            });
 
             Instance.m_Obstacles.Add(id, source);
             Instance.m_IsObstacleChanged = true;
@@ -97,20 +107,6 @@ namespace Syadeu.ECS
                 typeof(ECSTransformFromMono),
                 typeof(ECSPathObstacle)
                 );
-            EntityQueryDesc temp = new EntityQueryDesc
-            {
-                All = new ComponentType[]
-                {
-                    typeof(ECSPathVersion),
-
-                },
-                Any = new ComponentType[]
-                {
-                    typeof(ECSPathFinder),
-                    typeof(ECSPathObstacle)
-                }
-            };
-            m_VersionQuery = GetEntityQuery(temp);
 
             m_NavMesh = new NavMeshData();
             m_NavMeshData = NavMesh.AddNavMeshData(m_NavMesh);
@@ -119,7 +115,7 @@ namespace Syadeu.ECS
             m_Obstacles = new Dictionary<int, NavMeshBuildSource>();
             m_IsObstacleChanged = true;
 
-            m_Version = new NativeArray<int>(1, Allocator.Persistent);
+            m_RequireBakeQueue = new NativeQueue<RebakePayload>(Allocator.Persistent);
         }
         protected override void OnDestroy()
         {
@@ -127,7 +123,7 @@ namespace Syadeu.ECS
 
             m_NavMeshData.Remove();
 
-            m_Version.Dispose();
+            m_RequireBakeQueue.Dispose();
         }
         protected override void OnUpdate()
         {
@@ -138,23 +134,51 @@ namespace Syadeu.ECS
                 List<NavMeshBuildSource> sources = m_Obstacles.Values.ToList();
                 var oper = NavMeshBuilder.UpdateNavMeshDataAsync(m_NavMesh, defaultBuildSettings, sources, bounds);
 
-                m_Version[0]++;
-                var ver = m_Version;
-                //m_VersionQuery.SetSharedComponentFilter(new ECSPathVersion
-                //{
-                //    version = m_Version[0]
-                //});
-                Entities
-                    .WithBurst()
-                    .WithReadOnly(ver)
-                    .ForEach((ref ECSPathVersion version) =>
-                    {
-                        version.version = ver[0];
-                    })
-                    .ScheduleParallel();
-
                 m_IsObstacleChanged = false;
             }
+
+            var requireBakeQueue = m_RequireBakeQueue;
+            var requireBakeQueuePara = m_RequireBakeQueue.AsParallelWriter();
+
+            Entities
+                .WithBurst()
+                .WithStoreEntityQueryInField(ref m_BaseQuery)
+                .WithChangeFilter<ECSTransformFromMono>()
+                .ForEach((Entity entity, in ECSPathObstacle obstacle, in ECSTransformFromMono tr) =>
+                {
+                    requireBakeQueuePara.Enqueue(new RebakePayload
+                    {
+                        entity = entity,
+                        obstacle = obstacle
+                    });
+                })
+                .ScheduleParallel();
+
+            Job
+                .WithoutBurst()
+                .WithCode(() =>
+                {
+                    while (requireBakeQueue.TryDequeue(out RebakePayload payload))
+                    {
+                        var temp = m_Obstacles[payload.obstacle.id];
+                        Transform tr = ECSCopyTransformFromMonoSystem.GetTransform(payload.obstacle.id);
+                        switch (payload.obstacle.type)
+                        {
+                            case PathObstacleType.Mesh:
+                                temp.transform = tr.localToWorldMatrix;
+                                break;
+                            case PathObstacleType.Terrain:
+                                temp.transform = Matrix4x4.TRS(tr.transform.position, Quaternion.identity, Vector3.one);
+                                break;
+                            default:
+                                break;
+                        }
+                        //Debug.Log("in");
+                        m_Obstacles[payload.obstacle.id] = temp;
+                        m_IsObstacleChanged = true;
+                    }
+                })
+                .Run();
         }
 
         private static float3 Quantize(float3 v, float3 quant)

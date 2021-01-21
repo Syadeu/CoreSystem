@@ -61,6 +61,8 @@ namespace Syadeu.ECS
 
             ManualUpdate();
         }
+        internal static Transform GetTransform(int id)
+            => Instance.m_Transforms[id];
 
         [BurstCompile]
         private struct UpdateTransformJob : IJobParallelForTransform

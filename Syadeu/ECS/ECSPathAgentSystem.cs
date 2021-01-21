@@ -41,10 +41,10 @@ namespace Syadeu.ECS
                 id = id,
                 agentTypeId = agentTypeID
             });
-            Instance.EntityManager.AddComponentData(entity, new ECSPathVersion
-            {
-                version = ECSPathMeshSystem.Instance.m_Version[0]
-            });
+            //Instance.EntityManager.SetSharedComponentData(entity, new ECSPathVersion
+            //{
+            //    version = ECSPathMeshSystem.Instance.m_Version[0]
+            //});
             Instance.m_PathAgents.Add(id, entity);
 
             return id;
@@ -84,8 +84,7 @@ namespace Syadeu.ECS
             m_BaseArchetype = EntityManager.CreateArchetype(
                 typeof(ECSTransformFromMono),
                 typeof(ECSPathFinder),
-                typeof(ECSPathBuffer),
-                typeof(ECSPathVersion)
+                typeof(ECSPathBuffer)
                 );
             
             EntityQueryDesc tempdesc = new EntityQueryDesc

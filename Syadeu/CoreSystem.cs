@@ -368,6 +368,7 @@ namespace Syadeu
 
             List<Timer> activeTimers = new List<Timer>();
 
+            int counter = 0;
             while (true)
             {
 #if UNITY_EDITOR
@@ -616,6 +617,8 @@ namespace Syadeu
 #if UNITY_EDITOR
                 OnBackgroundTimerSampler.End();
 #endif
+                counter++;
+                if (counter % 1000 == 0) GC.Collect();
                 ThreadAwaiter(10);
             }
         }
@@ -788,6 +791,11 @@ namespace Syadeu
                 #endregion
 
                 m_AsyncOperator = false;
+
+                //if (Time.frameCount % 10 == 0)
+                //{
+                //    GC.Collect();
+                //}
                 yield return null;
             }
         }

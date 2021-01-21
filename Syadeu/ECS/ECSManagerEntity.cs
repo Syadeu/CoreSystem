@@ -57,21 +57,23 @@ namespace Syadeu.ECS
 
         //ExceedDistance = 1 << 4
     }
+    public enum PathObstacleType
+    {
+        None, 
+        
+        Mesh,
+        Terrain,
+    }
     public struct ECSPathObstacle : IComponentData
     {
-
-    }
-    public struct ECSPathVersion : IComponentData
-    {
-        public int version;
+        public int id;
+        public PathObstacleType type;
     }
     public struct ECSPathFinder : IComponentData
     {
         public int id;
         public int agentTypeId;
         public float maxDistance;
-
-        
     }
     public struct ECSPathQuery : IComponentData
     {
@@ -94,7 +96,6 @@ namespace Syadeu.ECS
         public static implicit operator ECSPathBuffer(Vector3 e)
             => new ECSPathBuffer { position = e };
     }
-    
 
     public struct ManagedObjectRef<T> where T : class
     {
