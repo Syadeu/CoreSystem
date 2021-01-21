@@ -39,45 +39,14 @@ namespace Syadeu.ECS
             entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
             id = ECSPathAgentSystem.RegisterPathfinder(transform, typeID);
 
-            //for (int i = 0; i < 100; i++)
-            //{
-            //    ECSPathQuerySystem.SchedulePath(id,
-            //        new Vector3(random(), 0, random()));
-            //}
 
-            //EntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
-            //Entity = EntityManager.CreateEntity(
-            //    typeof(ECSNavAgentTransform), typeof(ECSNavAgentPathfinder),
-            //    typeof(ECSNavAgent));
-            //EntityManager.SetName(Entity, $"{name:: ECSNavAgent}");
-            //EntityManager.AddComponentData(Entity, new ECSNavAgentTransform
-            //{
-            //    position = transform.position,
-            //    rotation = transform.rotation
-            //});
-            //EntityManager.AddComponentData(Entity, new ECSNavAgent
-            //{
-            //    height = m_NavMeshAgent.height,
-            //    radius = m_NavMeshAgent.radius
-            //});
-            //EntityManager.AddComponentData(Entity, new ECSNavAgentPathfinder
-            //{
-            //    status = AgentStatus.Idle,
-            //    isActive = false
-            //});
             ECSPathAgentSystem.SchedulePath(id, target.position, 1);
         }
 
         private void Update()
         {
-            //ECSPathAgentSystem.SchedulePath(id, target.position, 1);
-            //RequestPath(new Vector3(random(), 0, random()));
-            //ECSPathQuerySystem.SchedulePath(id, target.position, 1);
-            //for (int i = 0; i < 100; i++)
-            //{
-            //    ECSPathQuerySystem.SchedulePath(id,
-            //        new Vector3(random(), 0, random()));
-            //}
+            ECSPathAgentSystem.SchedulePath(id, target.position, 1);
+
         }
 
         private void OnDrawGizmos()

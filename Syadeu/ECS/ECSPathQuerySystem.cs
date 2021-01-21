@@ -95,7 +95,7 @@ namespace Syadeu.ECS
                 var copied = Instance.GetComponentData<ECSPathQuery>(entity);
                 //var pathfinder = Instance.GetComponentData<ECSPathFinder>(entity);
                 int key = Instance.GetKey(Instance.GetComponentData<ECSTransformFromMono>(entity).Value, target);
-                if (copied.to.Equals(target) || copied.pathKey.Equals(key))
+                if (copied.to.Equals(target) && copied.pathKey.Equals(key))
                 {
                     return;
                 }

@@ -27,6 +27,9 @@ namespace Syadeu.ECS
 
         private NativeList<int> m_SortedIdleQueries;
 
+        private SortIdleQueryJob m_IdleQueryJob;
+        private RemoveQueryJob m_RemoveQueryJob;
+
         public static int RegisterPathfinder(Transform agent, int agentTypeID)
         {
             Entity entity = Instance.EntityManager.CreateEntity(Instance.m_BaseArchetype);
@@ -59,7 +62,12 @@ namespace Syadeu.ECS
         }
         public static Vector3[] GetPathPositions(int agent)
         {
-            var buffers = Instance.EntityManager.GetBuffer<ECSPathBuffer>(Instance.m_PathAgents[agent]);
+            if (!Instance.m_PathAgents.TryGetValue(agent, out Entity entity))
+            {
+                return new Vector3[0];
+            }
+
+            var buffers = Instance.EntityManager.GetBuffer<ECSPathBuffer>(entity);
             Vector3[] pos = new Vector3[buffers.Length];
             for (int i = 0; i < pos.Length; i++)
             {
@@ -94,6 +102,9 @@ namespace Syadeu.ECS
             m_DestroyRequests = new NativeHashSet<int>(256, Allocator.Persistent);
 
             m_SortedIdleQueries = new NativeList<int>(256, Allocator.Persistent);
+
+            m_IdleQueryJob = new SortIdleQueryJob();
+            m_RemoveQueryJob = new RemoveQueryJob();
         }
         protected override void OnDestroy()
         {
@@ -168,21 +179,16 @@ namespace Syadeu.ECS
             }
 
             NativeList<int> sortedIdleQueries = m_SortedIdleQueries;
-            SortIdleQueryJob idleQueryJob = new SortIdleQueryJob
-            {
-                queries = m_RemoveQuery.ToComponentDataArrayAsync<ECSPathQuery>(Allocator.TempJob, out var job1)
-            };
-            var sortJobHandle = idleQueryJob.ScheduleAppend(sortedIdleQueries, m_RemoveQuery.CalculateChunkCount(), 32, job1);
-            //m_EndSimulationEcbSystem.AddJobHandleForProducer(sortJobHandle);
+            m_IdleQueryJob.queries = m_RemoveQuery.ToComponentDataArrayAsync<ECSPathQuery>(Allocator.TempJob, out var job1);
 
-            RemoveQueryJob removeQueryJob = new RemoveQueryJob
-            {
-                ecb = m_EndSimulationEcbSystem.CreateCommandBuffer().AsParallelWriter(),
+            var sortJobHandle = m_IdleQueryJob.ScheduleAppend(sortedIdleQueries, m_RemoveQuery.CalculateChunkCount(), 32, job1);
 
-                entities = m_RemoveQuery.ToEntityArrayAsync(Allocator.TempJob, out var job2),
-                sortedIndexes = sortedIdleQueries
-            };
-            var removeJobHandle = removeQueryJob.Schedule(JobHandle.CombineDependencies(sortJobHandle, job2));
+            m_RemoveQueryJob.ecb = m_EndSimulationEcbSystem.CreateCommandBuffer().AsParallelWriter();
+            m_RemoveQueryJob.entities = m_RemoveQuery.ToEntityArrayAsync(Allocator.TempJob, out var job2);
+            m_RemoveQueryJob.sortedIndexes = sortedIdleQueries;
+
+            var removeJobHandle = m_RemoveQueryJob.Schedule(JobHandle.CombineDependencies(sortJobHandle, job2));
+
             m_EndSimulationEcbSystem.AddJobHandleForProducer(removeJobHandle);
         }
 
