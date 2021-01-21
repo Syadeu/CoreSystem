@@ -32,6 +32,7 @@ namespace Syadeu.ECS
         private NavMeshBuildSettings m_NavMeshBuildSettings;
 
         private Dictionary<int, NavMeshBuildSource> m_Obstacles;
+        private Dictionary<int, NavMeshLinkInstance> m_MeshLinks;
         private bool m_IsObstacleChanged;
 
         private NativeQueue<RebakePayload> m_RequireBakeQueue;
@@ -42,10 +43,31 @@ namespace Syadeu.ECS
             public ECSPathObstacle obstacle;
         }
 
-        public static void AddBuildArea(Vector3 center, Vector3 size)
+        public static int AddLink(Vector3 from, Vector3 to, int agentTypeID, int areaMask,
+            bool bidirectional, int cost = -1)
         {
+            NavMeshLinkData data = new NavMeshLinkData
+            {
+                agentTypeID = agentTypeID,
+                area = areaMask,
+                bidirectional = bidirectional,
+                costModifier = cost,
+                startPosition = from,
+                endPosition = to,
+                width = math.sqrt((to - from).sqrMagnitude)
+            };
 
+            int id = Instance.m_MeshLinks.Count;
+            Instance.m_MeshLinks.Add(id, NavMesh.AddLink(data));
+
+            return id;
         }
+        public static void RemoveLink(int id)
+        {
+            NavMesh.RemoveLink(Instance.m_MeshLinks[id]);
+            Instance.m_MeshLinks.Remove(id);
+        }
+
         public static int AddObstacle(Object obj, int areaMask = 0)
         {
             NavMeshBuildSource source;
@@ -113,6 +135,7 @@ namespace Syadeu.ECS
             m_NavMeshBuildSettings = NavMesh.GetSettingsByID(0);
 
             m_Obstacles = new Dictionary<int, NavMeshBuildSource>();
+            m_MeshLinks = new Dictionary<int, NavMeshLinkInstance>();
             m_IsObstacleChanged = true;
 
             m_RequireBakeQueue = new NativeQueue<RebakePayload>(Allocator.Persistent);
@@ -132,7 +155,8 @@ namespace Syadeu.ECS
                 NavMeshBuildSettings defaultBuildSettings = NavMesh.GetSettingsByID(0);
                 Bounds bounds = QuantizedBounds();
                 List<NavMeshBuildSource> sources = m_Obstacles.Values.ToList();
-                var oper = NavMeshBuilder.UpdateNavMeshDataAsync(m_NavMesh, defaultBuildSettings, sources, bounds);
+
+                NavMeshBuilder.UpdateNavMeshDataAsync(m_NavMesh, defaultBuildSettings, sources, bounds);
 
                 m_IsObstacleChanged = false;
             }
@@ -153,7 +177,7 @@ namespace Syadeu.ECS
                     });
                 })
                 .ScheduleParallel();
-
+            
             Job
                 .WithoutBurst()
                 .WithCode(() =>
@@ -173,7 +197,7 @@ namespace Syadeu.ECS
                             default:
                                 break;
                         }
-                        //Debug.Log("in");
+                        
                         m_Obstacles[payload.obstacle.id] = temp;
                         m_IsObstacleChanged = true;
                     }
