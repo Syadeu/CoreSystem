@@ -32,7 +32,6 @@ namespace Syadeu.ECS
         private NavMeshBuildSettings m_NavMeshBuildSettings;
 
         private Dictionary<int, NavMeshBuildSource> m_Obstacles;
-        private Dictionary<int, NavMeshLinkInstance> m_MeshLinks;
         private bool m_IsObstacleChanged;
 
         private NativeQueue<RebakePayload> m_RequireBakeQueue;
@@ -43,8 +42,7 @@ namespace Syadeu.ECS
             public ECSPathObstacle obstacle;
         }
 
-        public static int AddLink(Vector3 from, Vector3 to, int agentTypeID, int areaMask,
-            bool bidirectional, int cost = -1)
+        public static NavMeshLinkInstance AddLink(Vector3 from, Vector3 to, int agentTypeID, int areaMask, bool bidirectional, int cost = 1, float width = -1)
         {
             NavMeshLinkData data = new NavMeshLinkData
             {
@@ -54,18 +52,13 @@ namespace Syadeu.ECS
                 costModifier = cost,
                 startPosition = from,
                 endPosition = to,
-                width = math.sqrt((to - from).sqrMagnitude)
+                width = width
             };
-
-            int id = Instance.m_MeshLinks.Count;
-            Instance.m_MeshLinks.Add(id, NavMesh.AddLink(data));
-
-            return id;
+            return NavMesh.AddLink(data);
         }
-        public static void RemoveLink(int id)
+        public static void RemoveLink(NavMeshLinkInstance ins)
         {
-            NavMesh.RemoveLink(Instance.m_MeshLinks[id]);
-            Instance.m_MeshLinks.Remove(id);
+            NavMesh.RemoveLink(ins);
         }
 
         public static int AddObstacle(Object obj, int areaMask = 0)
@@ -135,7 +128,6 @@ namespace Syadeu.ECS
             m_NavMeshBuildSettings = NavMesh.GetSettingsByID(0);
 
             m_Obstacles = new Dictionary<int, NavMeshBuildSource>();
-            m_MeshLinks = new Dictionary<int, NavMeshLinkInstance>();
             m_IsObstacleChanged = true;
 
             m_RequireBakeQueue = new NativeQueue<RebakePayload>(Allocator.Persistent);
@@ -158,6 +150,7 @@ namespace Syadeu.ECS
 
                 NavMeshBuilder.UpdateNavMeshDataAsync(m_NavMesh, defaultBuildSettings, sources, bounds);
 
+                ECSPathQuerySystem.Purge();
                 m_IsObstacleChanged = false;
             }
 

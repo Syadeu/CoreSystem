@@ -15,38 +15,25 @@ namespace Syadeu.ECS
     [DisallowMultipleComponent]
     public class ECSNavAgentController : MonoBehaviour
     {
-        [SerializeField] private NavMeshAgent m_NavMeshAgent;
+        [SerializeField] private Transform target;
         [SerializeField] private int typeID;
 
-        public Transform target;
-        public float moveSpeed = 3;
+        private int id;
 
-        private EntityManager entityManager;
-        private Entity Entity { get; set; }
-
-        //public void RequestPath(Vector3 target)
-        //{
-        //    //ECSNavQuerySystem.RequestPath(Entity, target, 1);
-        //}
-
-        private float random()
-        {
-            return UnityEngine.Random.Range(1, 100);
-        }
-        int id;
         private void Start()
         {
-            entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
+            
+
             id = ECSPathAgentSystem.RegisterPathfinder(transform, typeID);
+            ECSPathAgentSystem.SchedulePath(id, target.position, -1);
 
-
-            ECSPathAgentSystem.SchedulePath(id, target.position, 1);
+            ECSPathMeshSystem.AddLink(new Vector3(-9.68f, 2.705f, -11.72f),
+                new Vector3(-9.96f, 0, -13.68f), typeID, -1, true, 1);
         }
 
         private void Update()
         {
-            ECSPathAgentSystem.SchedulePath(id, target.position, 1);
-
+            //ECSPathAgentSystem.SchedulePath(id, target.position, 1);
         }
 
         private void OnDrawGizmos()

@@ -75,6 +75,12 @@ namespace Syadeu.ECS
         private NativeArray<NavMeshLocation>[] m_Locations;
         private NativeArray<bool>[] m_Failed;
 
+        private bool m_PurgeData = false;
+
+        public static void Purge()
+        {
+            Instance.m_PurgeData = true;
+        }
         public static bool HasPath(Vector3 from, Vector3 target)
             => Instance.m_CachedPath.ContainsKey(GetKey(Instance.MaxMapWidth, from, target));
         internal static void SchedulePath(Entity entity, Vector3 target, int areaMask = -1)
@@ -170,6 +176,19 @@ namespace Syadeu.ECS
             int maxMapWidth = MaxMapWidth;
 
             NativeMultiHashMap<int, float3> cachedPath = m_CachedPath;
+
+            if (m_PurgeData)
+            {
+                Job
+                    .WithBurst()
+                    .WithCode(() =>
+                    {
+                        cachedPath.Clear();
+                    })
+                    .Schedule();
+
+                m_PurgeData = false;
+            }
 
             int queryCount = m_QueryQueue.Count;
             for (int i = 0; i < queryCount && i < MaxQueries; i++)
