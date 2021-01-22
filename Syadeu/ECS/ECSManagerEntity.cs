@@ -10,8 +10,6 @@ using UnityEngine.Jobs;
 using System.Collections.Generic;
 using System;
 
-#if UNITY_JOBS && UNITY_MATH && UNITY_BURST && UNITY_COLLECTION && UNITY_ENTITIES
-
 using Unity.Burst;
 using Unity.Mathematics;
 using Unity.Collections;
@@ -136,5 +134,3 @@ namespace Syadeu.ECS
         }
     }
 }
-
-#endif

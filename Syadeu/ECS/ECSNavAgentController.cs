@@ -2,8 +2,6 @@
 using UnityEngine.AI;
 using UnityEngine.Experimental.AI;
 
-#if UNITY_JOBS && UNITY_MATH && UNITY_BURST && UNITY_COLLECTION
-
 using Unity.Jobs;
 using Unity.Burst;
 using Unity.Mathematics;
@@ -52,5 +50,3 @@ namespace Syadeu.ECS
         }
     }
 }
-
-#endif

@@ -2,8 +2,6 @@
 using UnityEngine;
 using UnityEngine.Experimental.AI;
 
-#if UNITY_JOBS && UNITY_MATH && UNITY_BURST && UNITY_COLLECTION
-
 using Unity.Mathematics;
 using Unity.Collections;
 
@@ -194,5 +192,3 @@ namespace Syadeu.ECS
         }
     }
 }
-
-#endif

@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine.Jobs;
 
-#if UNITY_JOBS && UNITY_MATH && UNITY_BURST && UNITY_COLLECTION
-
 using Unity.Jobs;
 using Unity.Burst;
 using Unity.Mathematics;
@@ -194,5 +192,3 @@ namespace Syadeu.ECS
 
     }
 }
-
-#endif

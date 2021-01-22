@@ -5,8 +5,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 
-#if UNITY_JOBS && UNITY_MATH && UNITY_BURST && UNITY_COLLECTION
-
 using Unity.Jobs;
 using Unity.Burst;
 using Unity.Mathematics;
@@ -214,5 +212,3 @@ namespace Syadeu.ECS
 
     }
 }
-
-#endif

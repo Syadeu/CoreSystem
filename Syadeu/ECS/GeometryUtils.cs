@@ -1,7 +1,4 @@
-﻿
-#if UNITY_JOBS && UNITY_MATH && UNITY_BURST && UNITY_COLLECTION
-
-using Unity.Mathematics;
+﻿using Unity.Mathematics;
 
 namespace Syadeu.ECS
 {
@@ -43,5 +40,3 @@ namespace Syadeu.ECS
         }
     }
 }
-
-#endif

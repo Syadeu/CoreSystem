@@ -1,8 +1,5 @@
 ﻿using UnityEngine;
 
-#if UNITY_JOBS && UNITY_MATH && UNITY_BURST && UNITY_COLLECTION
-
-
 namespace Syadeu.ECS
 {
     public class ECSNavObstacle : MonoBehaviour
@@ -19,5 +16,3 @@ namespace Syadeu.ECS
         }
     }
 }
-
-#endif
