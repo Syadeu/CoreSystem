@@ -73,6 +73,38 @@ namespace Syadeu.ECS
             }
             return pos;
         }
+        public static bool TryGetPathPositions(int agent, out Vector3[] pos)
+        {
+            pos = null;
+            if (!Instance.m_PathAgents.TryGetValue(agent, out Entity entity))
+            {
+                return false;
+            }
+
+            var buffers = Instance.EntityManager.GetBuffer<ECSPathBuffer>(entity);
+            if (buffers.Length == 0) return false;
+
+            pos = new Vector3[buffers.Length];
+            for (int i = 0; i < pos.Length; i++)
+            {
+                pos[i] = buffers[i].position;
+            }
+            return true;
+        }
+        public static bool Raycast(out UnityEngine.AI.NavMeshHit hit, int agent, Vector3 direction, int areaMask = -1)
+        {
+            Entity entity = Instance.m_PathAgents[agent];
+            Vector3 targetPos = Instance.EntityManager.GetComponentData<ECSTransformFromMono>(entity).Value;
+            targetPos += direction;
+
+            return ECSPathQuerySystem.Raycast(out hit, entity, targetPos, areaMask);
+        }
+        public static bool Raycast(out UnityEngine.AI.NavMeshHit hit, int agentTypeID, Vector3 from, Vector3 direction, int areaMask = -1)
+        {
+            direction += from;
+
+            return ECSPathQuerySystem.Raycast(out hit, from, direction, agentTypeID, areaMask);
+        }
 
         protected override void OnCreate()
         {

@@ -20,6 +20,8 @@ namespace Syadeu.ECS
     [UpdateAfter(typeof(TransformSystemGroup))]
     public class ECSCopyTransformFromMonoSystem : ECSManagerEntity<ECSCopyTransformFromMonoSystem>
     {
+        public readonly static float m_RoundRange = .01f;
+
         private EndSimulationEntityCommandBufferSystem m_EndSimulationEcbSystem;
         private EntityQuery m_BaseQuery;
 
@@ -62,6 +64,19 @@ namespace Syadeu.ECS
         internal static Transform GetTransform(int id)
             => Instance.m_Transforms[id];
 
+        private static bool IsMatch(Vector3 current, Vector3 pos)
+        {
+            return
+                current.x - m_RoundRange <= pos.x &&
+                current.x + m_RoundRange >= pos.x &&
+
+                current.y + m_RoundRange >= pos.y &&
+                current.y + m_RoundRange >= pos.y &&
+
+                current.z + m_RoundRange >= pos.z &&
+                current.z + m_RoundRange >= pos.z;
+        }
+
         [BurstCompile]
         private struct UpdateTransformJob : IJobParallelForTransform
         {
@@ -86,7 +101,8 @@ namespace Syadeu.ECS
 
             public void Execute(int i)
             {
-                if (!Round(transforms[i].Value).Equals(Round(positions[i])))
+                //if (!Round(transforms[i].Value).Equals(Round(positions[i])))
+                if (!IsMatch(transforms[i].Value, positions[i]))
                 {
                     ECSTransformFromMono copied = transforms[i];
                     copied.Value = positions[i];

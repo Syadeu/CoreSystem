@@ -119,6 +119,23 @@ namespace Syadeu.ECS
             };
             Instance.m_QueryQueue.Enqueue(temp);
         }
+        public static bool Raycast(out NavMeshHit hit, Entity entity, float3 target, int areaMask = -1)
+        {
+            var agent = Instance.EntityManager.GetComponentData<ECSPathFinder>(entity);
+            float3 from = Instance.EntityManager.GetComponentData<ECSTransformFromMono>(entity).Value;
+
+            var fromLoc = Instance.m_GlobalQuery.MapLocation(from, Vector3.one * 10f, agent.agentTypeId, areaMask);
+
+            Instance.m_GlobalQuery.Raycast(out hit, fromLoc, target, areaMask);
+            return hit.hit;
+        }
+        public static bool Raycast(out NavMeshHit hit, float3 from, float3 target, int agentTypeID, int areaMask = -1)
+        {
+            var fromLoc = Instance.m_GlobalQuery.MapLocation(from, Vector3.one * 10f, agentTypeID, areaMask);
+            Instance.m_GlobalQuery.Raycast(out hit, fromLoc, target, areaMask);
+
+            return hit.hit;
+        }
 
         protected override void OnCreate()
         {
