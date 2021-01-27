@@ -424,18 +424,18 @@ namespace Syadeu.ECS
                     float3 dir = pathQuery.to - tr.Value;
                     float sqrDis = math.dot(dir, dir);
 
-                    //if (pathFinder.nodeOffset > 0)
-                    //{
-                    //    if (sqrDis < pathFinder.nodeOffset * pathFinder.nodeOffset)
-                    //    {
-                    //        pathQuery.status = PathStatus.Idle;
-                    //        pathQuery.to = float3.zero;
-                    //        buffers.Clear();
+                    if (pathFinder.nodeOffset > 0)
+                    {
+                        if (sqrDis < pathFinder.nodeOffset * pathFinder.nodeOffset)
+                        {
+                            pathQuery.status = PathStatus.Idle;
+                            pathQuery.to = float3.zero;
+                            buffers.Clear();
 
-                    //        return;
-                    //    }
-                    //}
-                    //else
+                            return;
+                        }
+                    }
+                    else
                     {
                         if (sqrDis < sqrDistanceOffset)
                         {
@@ -467,30 +467,30 @@ namespace Syadeu.ECS
 
                                 // 만약 agent에서 설정된 최대거리보다 경로의 거리가 클경우
                                 // 직진 코스로 설정
-                                //if (pathFinder.maxTravelDistance > 0 &&
-                                //    distance > pathFinder.maxTravelDistance)
-                                //{
-                                //    buffers.Clear();
+                                if (pathFinder.maxTravelDistance > 0 &&
+                                    distance > pathFinder.maxTravelDistance)
+                                {
+                                    buffers.Clear();
 
-                                //    pathQuery.status = PathStatus.ExceedDistance;
+                                    pathQuery.status = PathStatus.ExceedDistance;
 
-                                //    var startPos = tempQuery.MapLocation(tr.Value, Vector3.one * 10, pathFinder.agentTypeId, pathQuery.areaMask);
+                                    var startPos = tempQuery.MapLocation(tr.Value, Vector3.one * 10, pathFinder.agentTypeId, pathQuery.areaMask);
 
-                                //    tempQuery.Raycast(out var hit, startPos, pathQuery.to, pathQuery.areaMask);
+                                    tempQuery.Raycast(out var hit, startPos, pathQuery.to, pathQuery.areaMask);
 
-                                //    buffers.Add(tr.Value);
-                                //    if (hit.hit)
-                                //    {
-                                //        pathQuery.totalDistance = hit.distance;
-                                //        buffers.Add(hit.position);
-                                //    }
-                                //    else
-                                //    {
-                                //        pathQuery.totalDistance = math.sqrt(sqrDis);
-                                //        buffers.Add(pathQuery.to);
-                                //    }
-                                //    return;
-                                //}
+                                    buffers.Add(tr.Value);
+                                    if (hit.hit)
+                                    {
+                                        pathQuery.totalDistance = hit.distance;
+                                        buffers.Add(hit.position);
+                                    }
+                                    else
+                                    {
+                                        pathQuery.totalDistance = math.sqrt(sqrDis);
+                                        buffers.Add(pathQuery.to);
+                                    }
+                                    return;
+                                }
 
                                 buffers.Add(iter.Current);
                                 pos = iter.Current;
