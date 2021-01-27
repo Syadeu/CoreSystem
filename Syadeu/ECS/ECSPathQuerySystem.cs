@@ -22,27 +22,12 @@ namespace Syadeu.ECS
     [UpdateInGroup(typeof(ECSPathSystemGroup), OrderFirst = true)]
     public class ECSPathQuerySystem : ECSManagerEntity<ECSPathQuerySystem>
     {
-        public int MaxQueries = 256;
-
-        /// <summary>
-        /// Maximum path size of each query
-        /// </summary>
-        public int MaxPathSize = 1024;
-
-        /// <summary>
-        /// Maximum iteration on each update cycle
-        /// </summary>
-        public int MaxIterations = 1024;
-
-        /// <summary>
-        /// Max map width
-        /// </summary>
-        public int MaxMapWidth = 10000;
-
-        public bool SetStraightIfNotFound = true;
-
-        //
-        public float DistanceOffset = .5f;
+        public int MaxQueries => ECSSettings.Instance.m_MaxQueries;
+        public int MaxPathSize => ECSSettings.Instance.m_MaxPathSize;
+        public int MaxIterations => ECSSettings.Instance.m_MaxIterations;
+        public int MaxMapWidth => ECSSettings.Instance.m_MaxMapWidth;
+        public bool SetStraightIfNotFound => ECSSettings.Instance.m_StraightIfNotFound;
+        public float DistanceOffset => ECSSettings.Instance.m_ArrivalDistanceOffset;
 
         internal struct QueryRequest : IEquatable<QueryRequest>
         {
@@ -194,6 +179,8 @@ namespace Syadeu.ECS
             int maxPathSize = MaxPathSize;
             int maxMapWidth = MaxMapWidth;
 
+            float pathNodeOffset = ECSSettings.Instance.m_PathNodeOffset;
+
             NativeMultiHashMap<int, float3> cachedPath = m_CachedPath;
 
             if (m_PurgeData)
@@ -254,8 +241,8 @@ namespace Syadeu.ECS
                             return;
                         }
 
-                        NavMeshLocation from = query.MapLocation(tr.Value, Vector3.one * 2.5f, pathFinder.agentTypeId, pathData.areaMask);
-                        NavMeshLocation to = query.MapLocation(pathData.to, Vector3.one * 2.5f, pathFinder.agentTypeId, pathData.areaMask);
+                        NavMeshLocation from = query.MapLocation(tr.Value, Vector3.one * pathNodeOffset, pathFinder.agentTypeId, pathData.areaMask);
+                        NavMeshLocation to = query.MapLocation(pathData.to, Vector3.one * pathNodeOffset, pathFinder.agentTypeId, pathData.areaMask);
                         if (!query.IsValid(from) || !query.IsValid(to))
                         {
                             failed[0] = true;
@@ -301,7 +288,7 @@ namespace Syadeu.ECS
                             available.Enqueue(i);
                             if (cachedPath.ContainsKey(pathKey)) cachedPath.Remove(pathKey);
 
-                            if (GetDirectPath(query, tr.Value, pathData, pathFinder.agentTypeId, ref navMeshLocations, out int corner))
+                            if (GetDirectPath(pathNodeOffset, query, tr.Value, pathData, pathFinder.agentTypeId, ref navMeshLocations, out int corner))
                             {
                                 for (int i = corner - 1; i > -1; i--)
                                 {
@@ -321,7 +308,7 @@ namespace Syadeu.ECS
                             available.Enqueue(i);
                             if (cachedPath.ContainsKey(pathKey)) cachedPath.Remove(pathKey);
 
-                            if (GetDirectPath(query, tr.Value, pathData, pathFinder.agentTypeId, ref navMeshLocations, out int corner))
+                            if (GetDirectPath(pathNodeOffset, query, tr.Value, pathData, pathFinder.agentTypeId, ref navMeshLocations, out int corner))
                             {
                                 for (int i = corner - 1; i > -1; i--)
                                 {
@@ -354,7 +341,7 @@ namespace Syadeu.ECS
                             failed[0] = true;
                             if (cachedPath.ContainsKey(pathKey)) cachedPath.Remove(pathKey);
 
-                            if (GetDirectPath(query, tr.Value, pathData, pathFinder.agentTypeId, ref navMeshLocations, out int corner))
+                            if (GetDirectPath(pathNodeOffset, query, tr.Value, pathData, pathFinder.agentTypeId, ref navMeshLocations, out int corner))
                             {
                                 for (int i = corner - 1; i > -1; i--)
                                 {
@@ -474,7 +461,7 @@ namespace Syadeu.ECS
 
                                     pathQuery.status = PathStatus.ExceedDistance;
 
-                                    var startPos = tempQuery.MapLocation(tr.Value, Vector3.one * 10, pathFinder.agentTypeId, pathQuery.areaMask);
+                                    var startPos = tempQuery.MapLocation(tr.Value, Vector3.one * pathNodeOffset, pathFinder.agentTypeId, pathQuery.areaMask);
 
                                     tempQuery.Raycast(out var hit, startPos, pathQuery.to, pathQuery.areaMask);
 
@@ -507,7 +494,7 @@ namespace Syadeu.ECS
                         
                         if (setStraight)
                         {
-                            var startPos = tempQuery.MapLocation(tr.Value, Vector3.one * 10, pathFinder.agentTypeId, pathQuery.areaMask);
+                            var startPos = tempQuery.MapLocation(tr.Value, Vector3.one * pathNodeOffset, pathFinder.agentTypeId, pathQuery.areaMask);
 
                             tempQuery.Raycast(out var hit, startPos, pathQuery.to, pathQuery.areaMask);
 
@@ -555,9 +542,9 @@ namespace Syadeu.ECS
             }
             return distance;
         }
-        private static bool GetDirectPath(NavMeshQuery query, float3 currentPos, QueryRequest pathData, int agentTypeId, ref NativeArray<NavMeshLocation> locations, out int corner)
+        private static bool GetDirectPath(float nodeOffset, NavMeshQuery query, float3 currentPos, QueryRequest pathData, int agentTypeId, ref NativeArray<NavMeshLocation> locations, out int corner)
         {
-            NavMeshLocation from = query.MapLocation(currentPos, Vector3.one * 10, agentTypeId, -1);
+            NavMeshLocation from = query.MapLocation(currentPos, Vector3.one * nodeOffset, agentTypeId, -1);
             if (!query.IsValid(from))
             {
                 //throw new Exception("1: ????");
@@ -568,7 +555,7 @@ namespace Syadeu.ECS
             var status = query.Raycast(out NavMeshHit hit, from, pathData.to, -1);
             if (status == PathQueryStatus.Success)
             {
-                NavMeshLocation to = query.MapLocation(hit.position, Vector3.one * 10, agentTypeId, -1);
+                NavMeshLocation to = query.MapLocation(hit.position, Vector3.one * nodeOffset, agentTypeId, -1);
                 if (!query.IsValid(to)) throw new CoreSystemException(CoreSystemExceptionFlag.ECS, "2: ????");
 
                 locations[0] = from;

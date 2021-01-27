@@ -20,7 +20,7 @@ namespace Syadeu.ECS
     [UpdateAfter(typeof(TransformSystemGroup))]
     public class ECSCopyTransformFromMonoSystem : ECSManagerEntity<ECSCopyTransformFromMonoSystem>
     {
-        public readonly static float m_RoundRange = .01f;
+        //public readonly static float m_RoundRange = .01f;
 
         private EndSimulationEntityCommandBufferSystem m_EndSimulationEcbSystem;
         private EntityQuery m_BaseQuery;
@@ -64,24 +64,26 @@ namespace Syadeu.ECS
         internal static Transform GetTransform(int id)
             => Instance.m_Transforms[id];
 
-        private static bool IsMatch(Vector3 current, Vector3 pos)
+        private static bool IsMatch(Vector3 current, Vector3 pos, float roundOffset)
         {
             return
-                current.x - m_RoundRange <= pos.x &&
-                current.x + m_RoundRange >= pos.x &&
+                current.x - roundOffset <= pos.x &&
+                current.x + roundOffset >= pos.x &&
 
-                current.y - m_RoundRange <= pos.y &&
-                current.y + m_RoundRange >= pos.y &&
+                current.y - roundOffset <= pos.y &&
+                current.y + roundOffset >= pos.y &&
 
-                current.z - m_RoundRange <= pos.z &&
-                current.z + m_RoundRange >= pos.z;
+                current.z - roundOffset <= pos.z &&
+                current.z + roundOffset >= pos.z;
         }
 
         [BurstCompile]
         private struct UpdateTransformJob : IJobParallelForTransform
         {
             public EntityCommandBuffer.ParallelWriter ecb;
-            //public NativeArray<float3> positions;
+
+            [ReadOnly]
+            public float roundOffset;
 
             [DeallocateOnJobCompletion][ReadOnly]
             public NativeArray<Entity> entities;
@@ -91,7 +93,7 @@ namespace Syadeu.ECS
             public void Execute(int i, TransformAccess transform)
             {
                 //positions[index] = transform.position;
-                if (!IsMatch(transforms[i].Value, transform.position))
+                if (!IsMatch(transforms[i].Value, transform.position, roundOffset))
                 {
                     ECSTransformFromMono copied = transforms[i];
                     copied.Value = transform.position;
@@ -130,6 +132,7 @@ namespace Syadeu.ECS
             var transforms = m_BaseQuery.ToComponentDataArray<ECSTransformFromMono>(Allocator.TempJob);
 
             m_TranslationJob.ecb = m_EndSimulationEcbSystem.CreateCommandBuffer().AsParallelWriter();
+            m_TranslationJob.roundOffset = ECSSettings.Instance.m_TrRoundOffset;
 
             if (m_IsModified)
             {
