@@ -28,7 +28,7 @@ namespace Syadeu.ECS
         private SortIdleQueryJob m_IdleQueryJob;
         private RemoveQueryJob m_RemoveQueryJob;
 
-        public static int RegisterPathfinder(Transform agent, int agentTypeID)
+        public static int RegisterPathfinder(Transform agent, int agentTypeID, float maxTravelDistance = -1, float nodeOffset = -1)
         {
             Entity entity = Instance.EntityManager.CreateEntity(Instance.m_BaseArchetype);
             Instance.EntityManager.SetName(entity, agent.name);
@@ -37,7 +37,10 @@ namespace Syadeu.ECS
             Instance.AddComponentData(entity, new ECSPathFinder
             {
                 id = id,
-                agentTypeId = agentTypeID
+                agentTypeId = agentTypeID,
+
+                maxTravelDistance = maxTravelDistance,
+                nodeOffset = nodeOffset
             });
             //Instance.EntityManager.SetSharedComponentData(entity, new ECSPathVersion
             //{
@@ -58,6 +61,16 @@ namespace Syadeu.ECS
         {
             ECSPathQuerySystem.SchedulePath(Instance.m_PathAgents[agent], target, areaMask);
         }
+        public static void StopPath(int agent)
+        {
+            Entity entity = Instance.m_PathAgents[agent];
+
+            if (Instance.EntityManager.HasComponent<ECSPathQuery>(entity))
+            {
+                Instance.EntityManager.RemoveComponent<ECSPathQuery>(entity);
+            }
+        }
+
         public static Vector3[] GetPathPositions(int agent)
         {
             if (!Instance.m_PathAgents.TryGetValue(agent, out Entity entity))
@@ -105,6 +118,16 @@ namespace Syadeu.ECS
 
             return ECSPathQuerySystem.Raycast(out hit, from, direction, agentTypeID, areaMask);
         }
+
+        //public static void UpdatePosition(int agent, Transform tr)
+        //{
+        //    Entity entity = Instance.m_PathAgents[agent];
+        //    ECSTransformFromMono copied = Instance.EntityManager.GetComponentData<ECSTransformFromMono>(entity);
+
+        //    copied.Value = tr.position;
+
+        //    Instance.EntityManager.SetComponentData(entity, copied);
+        //}
 
         protected override void OnCreate()
         {

@@ -70,42 +70,31 @@ namespace Syadeu.ECS
                 current.x - m_RoundRange <= pos.x &&
                 current.x + m_RoundRange >= pos.x &&
 
-                current.y + m_RoundRange >= pos.y &&
+                current.y - m_RoundRange <= pos.y &&
                 current.y + m_RoundRange >= pos.y &&
 
-                current.z + m_RoundRange >= pos.z &&
+                current.z - m_RoundRange <= pos.z &&
                 current.z + m_RoundRange >= pos.z;
         }
 
         [BurstCompile]
         private struct UpdateTransformJob : IJobParallelForTransform
         {
-            public NativeArray<float3> positions;
-
-            public void Execute(int index, TransformAccess transform)
-            {
-                positions[index] = transform.position;
-            }
-        }
-        [BurstCompile]
-        private struct ApplyTransformJob : IJobFor
-        {
             public EntityCommandBuffer.ParallelWriter ecb;
+            //public NativeArray<float3> positions;
 
-            [DeallocateOnJobCompletion][ReadOnly]
-            public NativeArray<float3> positions;
             [DeallocateOnJobCompletion][ReadOnly]
             public NativeArray<Entity> entities;
             [DeallocateOnJobCompletion][ReadOnly]
             public NativeArray<ECSTransformFromMono> transforms;
 
-            public void Execute(int i)
+            public void Execute(int i, TransformAccess transform)
             {
-                //if (!Round(transforms[i].Value).Equals(Round(positions[i])))
-                if (!IsMatch(transforms[i].Value, positions[i]))
+                //positions[index] = transform.position;
+                if (!IsMatch(transforms[i].Value, transform.position))
                 {
                     ECSTransformFromMono copied = transforms[i];
-                    copied.Value = positions[i];
+                    copied.Value = transform.position;
 
                     ecb.SetComponent(i, entities[i], copied);
                 }
@@ -138,44 +127,34 @@ namespace Syadeu.ECS
         }
         protected override void OnUpdate()
         {
-            var positions = new NativeArray<float3>(m_BaseQuery.CalculateEntityCount(), Allocator.TempJob);
             var transforms = m_BaseQuery.ToComponentDataArray<ECSTransformFromMono>(Allocator.TempJob);
 
+            m_TranslationJob.ecb = m_EndSimulationEcbSystem.CreateCommandBuffer().AsParallelWriter();
+
+            if (m_IsModified)
             {
-                m_TranslationJob.positions = positions;
-
-                if (m_IsModified)
+                m_TranslationJobHandle.Complete();
+                if (m_TransformArray == null || m_TransformArray.Length != transforms.Length)
                 {
-                    m_TranslationJobHandle.Complete();
-                    if (m_TransformArray == null || m_TransformArray.Length != transforms.Length)
-                    {
-                        m_TransformArray = new Transform[transforms.Length];
-                    }
-                    for (int i = 0; i < transforms.Length; i++)
-                    {
-                        m_TransformArray[i] = m_Transforms[transforms[i].id];
-                    }
-
-                    m_TransformAccessArray.SetTransforms(m_TransformArray);
-                    m_IsModified = false;
+                    m_TransformArray = new Transform[transforms.Length];
                 }
-
-                var updateJob = m_TranslationJob.Schedule(m_TransformAccessArray, Dependency);
-                m_TranslationJobHandle = JobHandle.CombineDependencies(m_TranslationJobHandle, updateJob);
-                Dependency = JobHandle.CombineDependencies(Dependency, m_TranslationJobHandle);
+                m_IsModified = false;
+            }
+            for (int i = 0; i < transforms.Length; i++)
+            {
+                m_TransformArray[i] = m_Transforms[transforms[i].id];
             }
 
-            ApplyTransformJob transformJob = new ApplyTransformJob
-            {
-                ecb = m_EndSimulationEcbSystem.CreateCommandBuffer().AsParallelWriter(),
+            m_TransformAccessArray.SetTransforms(m_TransformArray);
 
-                positions = positions,
-                entities = m_BaseQuery.ToEntityArrayAsync(Allocator.TempJob, out var job1),
-                transforms = transforms
-            };
-            job1 = JobHandle.CombineDependencies(job1, m_TranslationJobHandle);
-            var transformJobHandle = transformJob.ScheduleParallel(positions.Length, 32, job1);
-            m_EndSimulationEcbSystem.AddJobHandleForProducer(transformJobHandle);
+            m_TranslationJob.entities = m_BaseQuery.ToEntityArrayAsync(Allocator.TempJob, out var job1);
+            m_TranslationJob.transforms = transforms;
+
+            var updateJob = m_TranslationJob.Schedule(m_TransformAccessArray, job1);
+            m_TranslationJobHandle = JobHandle.CombineDependencies(m_TranslationJobHandle, updateJob);
+            Dependency = JobHandle.CombineDependencies(Dependency, m_TranslationJobHandle);
+
+            m_EndSimulationEcbSystem.AddJobHandleForProducer(Dependency);
         }
 
         private static float3 Round(float3 float3)

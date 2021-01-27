@@ -53,7 +53,7 @@ namespace Syadeu.ECS
         Failed = 1 << 2,
         //Paused = 1 << 2,
 
-        //ExceedDistance = 1 << 4
+        ExceedDistance = 1 << 3
     }
     public enum PathObstacleType
     {
@@ -71,7 +71,9 @@ namespace Syadeu.ECS
     {
         public int id;
         public int agentTypeId;
-        public float maxDistance;
+
+        public float maxTravelDistance;
+        public float nodeOffset;
     }
     public struct ECSPathQuery : IComponentData
     {

@@ -42,7 +42,7 @@ namespace Syadeu.ECS
         public bool SetStraightIfNotFound = true;
 
         //
-        public float DistanceOffset = 2.5f;
+        public float DistanceOffset = .5f;
 
         internal struct QueryRequest : IEquatable<QueryRequest>
         {
@@ -124,17 +124,21 @@ namespace Syadeu.ECS
             var agent = Instance.EntityManager.GetComponentData<ECSPathFinder>(entity);
             float3 from = Instance.EntityManager.GetComponentData<ECSTransformFromMono>(entity).Value;
 
-            var fromLoc = Instance.m_GlobalQuery.MapLocation(from, Vector3.one * 10f, agent.agentTypeId, areaMask);
+            var fromLoc = Instance.m_GlobalQuery.MapLocation(from, Vector3.one * 2.5f, agent.agentTypeId, areaMask);
 
             Instance.m_GlobalQuery.Raycast(out hit, fromLoc, target, areaMask);
             return hit.hit;
         }
         public static bool Raycast(out NavMeshHit hit, float3 from, float3 target, int agentTypeID, int areaMask = -1)
         {
-            var fromLoc = Instance.m_GlobalQuery.MapLocation(from, Vector3.one * 10f, agentTypeID, areaMask);
+            var fromLoc = Instance.m_GlobalQuery.MapLocation(from, Vector3.one * 2.5f, agentTypeID, areaMask);
             Instance.m_GlobalQuery.Raycast(out hit, fromLoc, target, areaMask);
 
             return hit.hit;
+        }
+        public static NavMeshLocation ToLocation(Vector3 point, int agentTypeID, int areaMask = -1)
+        {
+            return Instance.m_GlobalQuery.MapLocation(point, Vector3.one * 2.5f, agentTypeID, areaMask);
         }
 
         protected override void OnCreate()
@@ -250,8 +254,8 @@ namespace Syadeu.ECS
                             return;
                         }
 
-                        NavMeshLocation from = query.MapLocation(tr.Value, Vector3.one * 10, pathFinder.agentTypeId, pathData.areaMask);
-                        NavMeshLocation to = query.MapLocation(pathData.to, Vector3.one * 10, pathFinder.agentTypeId, pathData.areaMask);
+                        NavMeshLocation from = query.MapLocation(tr.Value, Vector3.one * 2.5f, pathFinder.agentTypeId, pathData.areaMask);
+                        NavMeshLocation to = query.MapLocation(pathData.to, Vector3.one * 2.5f, pathFinder.agentTypeId, pathData.areaMask);
                         if (!query.IsValid(from) || !query.IsValid(to))
                         {
                             failed[0] = true;
@@ -419,13 +423,28 @@ namespace Syadeu.ECS
 
                     float3 dir = pathQuery.to - tr.Value;
                     float sqrDis = math.dot(dir, dir);
-                    if (sqrDis < sqrDistanceOffset)
-                    {
-                        pathQuery.status = PathStatus.Idle;
-                        pathQuery.to = float3.zero;
-                        buffers.Clear();
 
-                        return;
+                    //if (pathFinder.nodeOffset > 0)
+                    //{
+                    //    if (sqrDis < pathFinder.nodeOffset * pathFinder.nodeOffset)
+                    //    {
+                    //        pathQuery.status = PathStatus.Idle;
+                    //        pathQuery.to = float3.zero;
+                    //        buffers.Clear();
+
+                    //        return;
+                    //    }
+                    //}
+                    //else
+                    {
+                        if (sqrDis < sqrDistanceOffset)
+                        {
+                            pathQuery.status = PathStatus.Idle;
+                            pathQuery.to = float3.zero;
+                            buffers.Clear();
+
+                            return;
+                        }
                     }
 
                     pathQuery.pathKey = GetKey(maxMapWidth, tr.Value, pathQuery.to);
@@ -445,6 +464,33 @@ namespace Syadeu.ECS
                                     float3 temp = iter.Current - pos;
                                     distance += math.sqrt(math.dot(temp, temp));
                                 }
+
+                                // 만약 agent에서 설정된 최대거리보다 경로의 거리가 클경우
+                                // 직진 코스로 설정
+                                //if (pathFinder.maxTravelDistance > 0 &&
+                                //    distance > pathFinder.maxTravelDistance)
+                                //{
+                                //    buffers.Clear();
+
+                                //    pathQuery.status = PathStatus.ExceedDistance;
+
+                                //    var startPos = tempQuery.MapLocation(tr.Value, Vector3.one * 10, pathFinder.agentTypeId, pathQuery.areaMask);
+
+                                //    tempQuery.Raycast(out var hit, startPos, pathQuery.to, pathQuery.areaMask);
+
+                                //    buffers.Add(tr.Value);
+                                //    if (hit.hit)
+                                //    {
+                                //        pathQuery.totalDistance = hit.distance;
+                                //        buffers.Add(hit.position);
+                                //    }
+                                //    else
+                                //    {
+                                //        pathQuery.totalDistance = math.sqrt(sqrDis);
+                                //        buffers.Add(pathQuery.to);
+                                //    }
+                                //    return;
+                                //}
 
                                 buffers.Add(iter.Current);
                                 pos = iter.Current;
@@ -540,8 +586,8 @@ namespace Syadeu.ECS
         private int GetKey(float3 from, float3 to) => GetKey(MaxMapWidth, from, to);
         internal static int GetKey(int maxMapWidth, float3 from, float3 to)
         {
-            int fromKey = maxMapWidth * (int)math.round(from.x) /*+ (int)math.round(from.y)*/ + (int)math.round(from.z);
-            int toKey = maxMapWidth * (int)math.round(to.x) /*+ (int)math.round(to.y)*/ + (int)math.round(to.z);
+            int fromKey = maxMapWidth * (int)math.round(from.x * 10) /*+ (int)math.round(from.y)*/ + (int)math.round(from.z * 10);
+            int toKey = maxMapWidth * (int)math.round(to.x * 10) /*+ (int)math.round(to.y)*/ + (int)math.round(to.z * 10);
             return maxMapWidth * fromKey + toKey;
         }
     }
