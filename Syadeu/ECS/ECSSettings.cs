@@ -1,10 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 using UnityEngine;
+using Syadeu.Extentions.EditorUtils;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -14,7 +14,7 @@ namespace Syadeu.ECS
     public class ECSSettings : StaticSettingEntity<ECSSettings>
     {
 #if UNITY_EDITOR
-        [MenuItem("Syadeu/ECS/Edit Settings", priority = 100)]
+        [MenuItem("Syadeu/ECS/Edit Settings", priority = 1)]
         public static void MenuItem()
         {
             Selection.activeObject = Instance;
@@ -32,5 +32,8 @@ namespace Syadeu.ECS
         public int m_MaxMapWidth = 10000;
         public bool m_StraightIfNotFound = true;
         public float m_ArrivalDistanceOffset = .5f;
+
+        [Header("Path Agent")]
+        public float m_AgentNodeOffset = .6f;
     }
 }

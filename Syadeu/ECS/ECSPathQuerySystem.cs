@@ -66,8 +66,29 @@ namespace Syadeu.ECS
         }
         public static bool HasPath(Vector3 from, Vector3 target)
             => Instance.m_CachedPath.ContainsKey(GetKey(Instance.MaxMapWidth, from, target));
-        internal static void SchedulePath(Entity entity, Vector3 target, int areaMask = -1)
+        internal static void SchedulePath(Entity entity, float3 target, int areaMask = -1)
         {
+            ECSTransformFromMono tr = Instance.GetComponentData<ECSTransformFromMono>(entity);
+            ECSPathFinder pathFinder = Instance.GetComponentData<ECSPathFinder>(entity);
+
+            float3 dir = target - tr.Value;
+            float sqrDis = math.dot(dir, dir);
+
+            if (pathFinder.overrideArrivalDistanceOffset > 0)
+            {
+                if (sqrDis < pathFinder.overrideArrivalDistanceOffset * pathFinder.overrideArrivalDistanceOffset)
+                {
+                    return;
+                }
+            }
+            else
+            {
+                if (sqrDis < Instance.DistanceOffset * Instance.DistanceOffset)
+                {
+                    return;
+                }
+            }
+
             if (!Instance.HasComponent<ECSPathQuery>(entity))
             {
                 Instance.EntityManager.AddComponent<ECSPathQuery>(entity);
@@ -82,8 +103,7 @@ namespace Syadeu.ECS
             else
             {
                 var copied = Instance.GetComponentData<ECSPathQuery>(entity);
-                //var pathfinder = Instance.GetComponentData<ECSPathFinder>(entity);
-                int key = Instance.GetKey(Instance.GetComponentData<ECSTransformFromMono>(entity).Value, target);
+                int key = Instance.GetKey(tr.Value, target);
                 if (copied.to.Equals(target) && copied.pathKey.Equals(key))
                 {
                     return;
@@ -91,8 +111,6 @@ namespace Syadeu.ECS
 
                 copied.to = target;
                 Instance.SetComponent(entity, copied);
-                //var ecb = Instance.m_EndSimulationEcbSystem.CreateCommandBuffer();
-                //ecb.SetComponent(pathFinder, copied);
             }
 
             QueryRequest temp = new QueryRequest
@@ -411,9 +429,9 @@ namespace Syadeu.ECS
                     float3 dir = pathQuery.to - tr.Value;
                     float sqrDis = math.dot(dir, dir);
 
-                    if (pathFinder.nodeOffset > 0)
+                    if (pathFinder.overrideArrivalDistanceOffset > 0)
                     {
-                        if (sqrDis < pathFinder.nodeOffset * pathFinder.nodeOffset)
+                        if (sqrDis < pathFinder.overrideArrivalDistanceOffset * pathFinder.overrideArrivalDistanceOffset)
                         {
                             pathQuery.status = PathStatus.Idle;
                             pathQuery.to = float3.zero;
@@ -436,9 +454,10 @@ namespace Syadeu.ECS
 
                     pathQuery.pathKey = GetKey(maxMapWidth, tr.Value, pathQuery.to);
 
-                    buffers.Clear();
                     if (cachedPath.ContainsKey(pathQuery.pathKey))
                     {
+                        buffers.Clear();
+
                         float distance = 0;
                         using (var iter = cachedPath.GetValuesForKey(pathQuery.pathKey))
                         {
@@ -490,30 +509,32 @@ namespace Syadeu.ECS
                     }
                     else
                     {
-                        pathQuery.status = PathStatus.Failed;
+                        return;
+
+                        //pathQuery.status = PathStatus.Failed;
                         
-                        if (setStraight)
-                        {
-                            var startPos = tempQuery.MapLocation(tr.Value, Vector3.one * pathNodeOffset, pathFinder.agentTypeId, pathQuery.areaMask);
+                        //if (setStraight)
+                        //{
+                        //    var startPos = tempQuery.MapLocation(tr.Value, Vector3.one * pathNodeOffset, pathFinder.agentTypeId, pathQuery.areaMask);
 
-                            tempQuery.Raycast(out var hit, startPos, pathQuery.to, pathQuery.areaMask);
+                        //    tempQuery.Raycast(out var hit, startPos, pathQuery.to, pathQuery.areaMask);
 
-                            buffers.Add(tr.Value);
-                            if (hit.hit)
-                            {
-                                pathQuery.totalDistance = hit.distance;
-                                buffers.Add(hit.position);
-                            }
-                            else
-                            {
-                                pathQuery.totalDistance = math.sqrt(sqrDis);
-                                buffers.Add(pathQuery.to);
-                            }
-                        }
-                        else
-                        {
-                            pathQuery.totalDistance = math.sqrt(sqrDis);
-                        }
+                        //    buffers.Add(tr.Value);
+                        //    if (hit.hit)
+                        //    {
+                        //        pathQuery.totalDistance = hit.distance;
+                        //        buffers.Add(hit.position);
+                        //    }
+                        //    else
+                        //    {
+                        //        pathQuery.totalDistance = math.sqrt(sqrDis);
+                        //        buffers.Add(pathQuery.to);
+                        //    }
+                        //}
+                        //else
+                        //{
+                        //    pathQuery.totalDistance = math.sqrt(sqrDis);
+                        //}
                     }
                 })
                 .ScheduleParallel();

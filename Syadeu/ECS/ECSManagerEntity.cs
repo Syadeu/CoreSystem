@@ -73,7 +73,9 @@ namespace Syadeu.ECS
         public int agentTypeId;
 
         public float maxTravelDistance;
-        public float nodeOffset;
+        public float overrideArrivalDistanceOffset;
+
+        public float radius;
     }
     public struct ECSPathQuery : IComponentData
     {

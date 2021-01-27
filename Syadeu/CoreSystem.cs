@@ -913,7 +913,7 @@ namespace Syadeu
             Instance.m_ForegroundJobs.Enqueue(job);
         }
 
-        internal static Vector3 GetPosition(Transform transform)
+        public static Vector3 GetPosition(Transform transform)
         {
             if (IsMainthread()) return transform.position;
             else

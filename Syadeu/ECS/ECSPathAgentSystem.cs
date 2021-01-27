@@ -28,7 +28,9 @@ namespace Syadeu.ECS
         private SortIdleQueryJob m_IdleQueryJob;
         private RemoveQueryJob m_RemoveQueryJob;
 
-        public static int RegisterPathfinder(Transform agent, int agentTypeID, float maxTravelDistance = -1, float nodeOffset = -1)
+        private NativeHashMap<int, int> m_HashLocations;
+
+        public static int RegisterPathfinder(Transform agent, int agentTypeID, float maxTravelDistance = -1, float nodeOffset = -1, float radius = 1)
         {
             Entity entity = Instance.EntityManager.CreateEntity(Instance.m_BaseArchetype);
             Instance.EntityManager.SetName(entity, agent.name);
@@ -40,12 +42,11 @@ namespace Syadeu.ECS
                 agentTypeId = agentTypeID,
 
                 maxTravelDistance = maxTravelDistance,
-                nodeOffset = nodeOffset
+                overrideArrivalDistanceOffset = nodeOffset,
+
+                radius = radius
             });
-            //Instance.EntityManager.SetSharedComponentData(entity, new ECSPathVersion
-            //{
-            //    version = ECSPathMeshSystem.Instance.m_Version[0]
-            //});
+            
             Instance.m_PathAgents.Add(id, entity);
 
             return id;
@@ -104,6 +105,15 @@ namespace Syadeu.ECS
             }
             return true;
         }
+        public static void SetPosition(int agent, Vector3 pos)
+        {
+            Entity entity = Instance.m_PathAgents[agent];
+            ECSTransformFromMono copied = Instance.EntityManager.GetComponentData<ECSTransformFromMono>(entity);
+            copied.Value = pos;
+
+            Instance.EntityManager.SetComponentData(entity, copied);
+        }
+
         public static bool Raycast(out UnityEngine.AI.NavMeshHit hit, int agent, Vector3 direction, int areaMask = -1)
         {
             Entity entity = Instance.m_PathAgents[agent];
@@ -118,16 +128,6 @@ namespace Syadeu.ECS
 
             return ECSPathQuerySystem.Raycast(out hit, from, direction, agentTypeID, areaMask);
         }
-
-        //public static void UpdatePosition(int agent, Transform tr)
-        //{
-        //    Entity entity = Instance.m_PathAgents[agent];
-        //    ECSTransformFromMono copied = Instance.EntityManager.GetComponentData<ECSTransformFromMono>(entity);
-
-        //    copied.Value = tr.position;
-
-        //    Instance.EntityManager.SetComponentData(entity, copied);
-        //}
 
         protected override void OnCreate()
         {
@@ -157,6 +157,8 @@ namespace Syadeu.ECS
 
             m_IdleQueryJob = new SortIdleQueryJob();
             m_RemoveQueryJob = new RemoveQueryJob();
+
+            m_HashLocations = new NativeHashMap<int, int>(32, Allocator.Persistent);
         }
         protected override void OnDestroy()
         {
@@ -166,6 +168,8 @@ namespace Syadeu.ECS
             m_DestroyRequests.Dispose();
 
             m_SortedIdleQueries.Dispose();
+
+            m_HashLocations.Dispose();
         }
         [BurstCompile]
         private struct RemoveQueryJob : Unity.Jobs.IJob
@@ -199,7 +203,7 @@ namespace Syadeu.ECS
         }
         protected override void OnUpdate()
         {
-            int maxMapWidth = ECSPathQuerySystem.Instance.MaxMapWidth;
+            int maxMapWidth = ECSSettings.Instance.m_MaxMapWidth;
             NativeMultiHashMap<int, float3> cachedPath = ECSPathQuerySystem.Instance.m_CachedPath;
             
             if (m_DestroyRequests.Count() > 0)
@@ -242,8 +246,36 @@ namespace Syadeu.ECS
             var removeJobHandle = m_RemoveQueryJob.Schedule(JobHandle.CombineDependencies(sortJobHandle, job2));
 
             m_EndSimulationEcbSystem.AddJobHandleForProducer(removeJobHandle);
+
+            var hashLocation = m_HashLocations;
+
+            Job
+                .WithBurst()
+                .WithCode(() =>
+                {
+                    hashLocation.Clear();
+                })
+                .Schedule();
+
+            var concurrentHashLoc = hashLocation.AsParallelWriter();
+
+            Entities
+                .WithAll<ECSPathQuery>()
+                .ForEach((int entityInQueryIndex, ref ECSTransformFromMono tr, in ECSPathFinder pathFinder) =>
+                {
+                    int hash = HashPosition(tr.Value, pathFinder.radius, maxMapWidth);
+                    concurrentHashLoc.TryAdd(entityInQueryIndex, hash);
+                })
+                .ScheduleParallel();
+
+            //asdasd
         }
 
-
+        private static int HashPosition(float3 position, float radius, int maxMapWidth)
+        {
+            int ix = Mathf.RoundToInt((position.x / radius) * radius);
+            int iz = Mathf.RoundToInt((position.z / radius) * radius);
+            return ix * maxMapWidth + iz;
+        }
     }
 }

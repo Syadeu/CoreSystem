@@ -20,8 +20,6 @@ namespace Syadeu.ECS
     [UpdateAfter(typeof(TransformSystemGroup))]
     public class ECSCopyTransformFromMonoSystem : ECSManagerEntity<ECSCopyTransformFromMonoSystem>
     {
-        //public readonly static float m_RoundRange = .01f;
-
         private EndSimulationEntityCommandBufferSystem m_EndSimulationEcbSystem;
         private EntityQuery m_BaseQuery;
 
@@ -93,13 +91,25 @@ namespace Syadeu.ECS
             public void Execute(int i, TransformAccess transform)
             {
                 //positions[index] = transform.position;
-                if (!IsMatch(transforms[i].Value, transform.position, roundOffset))
-                {
-                    ECSTransformFromMono copied = transforms[i];
-                    copied.Value = transform.position;
+                //if (!IsMatch(transforms[i].Value, transform.position, roundOffset))
+                //{
+                //    //ECSTransformFromMono copied = transforms[i];
+                //    //copied.Value = transform.position;
 
-                    ecb.SetComponent(i, entities[i], copied);
-                }
+                //    //ecb.SetComponent(i, entities[i], copied);
+
+                //    transform.position = transforms[i].Value;
+                //}
+
+
+
+                //transform.position = transforms[i].Value;
+
+                Vector3 cur = transforms[i].Value;
+                Vector3 dir = cur - transform.position;
+                transform.position += dir;
+
+
             }
         }
 
