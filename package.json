@@ -1,17 +1,9 @@
 {
   "name": "syadeu.coresystem",
-  "version": "1.4.1",
+  "version": "1.4.0-old.2",
   "displayName": "Syadeu CoreSystem",
   "description": "Syadeu CoreSystem Package.",
   "unity": "2019.2",
-  "dependencies": {
-    "com.unity.burst": "1.4.4",
-    "com.unity.collections": "0.5.1-preview.11",
-    "com.unity.entities": "0.16.0-preview.21",
-    "com.unity.jobs": "0.7.0-preview.17",
-    "com.unity.mathematics": "1.2.1",
-    "com.unity.nuget.newtonsoft-json": "2.0.0"
-  },
   "keywords": [
     "syadeu",
     "core",
