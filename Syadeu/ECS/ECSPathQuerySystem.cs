@@ -7,8 +7,6 @@ using UnityEngine.AI;
 using UnityEngine.Experimental.AI;
 using UnityEngine;
 using UnityEngine.Jobs;
-using System.Runtime.InteropServices;
-using System.Data.Entity.Core.Mapping;
 
 using Unity.Jobs;
 using Unity.Burst;

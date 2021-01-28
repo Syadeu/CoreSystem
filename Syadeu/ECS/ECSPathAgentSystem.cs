@@ -28,7 +28,7 @@ namespace Syadeu.ECS
         private SortIdleQueryJob m_IdleQueryJob;
         private RemoveQueryJob m_RemoveQueryJob;
 
-        private NativeHashMap<int, int> m_HashLocations;
+        private NativeHashMap<int, int2> m_HashLocations;
 
         public static int RegisterPathfinder(Transform agent, int agentTypeID, float maxTravelDistance = -1, float nodeOffset = -1, float radius = 1)
         {
@@ -158,7 +158,7 @@ namespace Syadeu.ECS
             m_IdleQueryJob = new SortIdleQueryJob();
             m_RemoveQueryJob = new RemoveQueryJob();
 
-            m_HashLocations = new NativeHashMap<int, int>(32, Allocator.Persistent);
+            m_HashLocations = new NativeHashMap<int, int2>(32, Allocator.Persistent);
         }
         protected override void OnDestroy()
         {
@@ -247,28 +247,57 @@ namespace Syadeu.ECS
 
             m_EndSimulationEcbSystem.AddJobHandleForProducer(removeJobHandle);
 
-            var hashLocation = m_HashLocations;
+            //var hashLocation = m_HashLocations;
 
-            Job
-                .WithBurst()
-                .WithCode(() =>
-                {
-                    hashLocation.Clear();
-                })
-                .Schedule();
+            //Job
+            //    .WithBurst()
+            //    .WithCode(() =>
+            //    {
+            //        hashLocation.Clear();
+            //    })
+            //    .Schedule();
 
-            var concurrentHashLoc = hashLocation.AsParallelWriter();
+            //NativeHashMap<int, int2>.ParallelWriter concurrentHashLoc = hashLocation.AsParallelWriter();
+            //float agentNodeOffset = ECSSettings.Instance.m_AgentNodeOffset;
 
-            Entities
-                .WithAll<ECSPathQuery>()
-                .ForEach((int entityInQueryIndex, ref ECSTransformFromMono tr, in ECSPathFinder pathFinder) =>
-                {
-                    int hash = HashPosition(tr.Value, pathFinder.radius, maxMapWidth);
-                    concurrentHashLoc.TryAdd(entityInQueryIndex, hash);
-                })
-                .ScheduleParallel();
+            //Entities
+            //    .WithAll<ECSPathQuery>()
+            //    .ForEach((int entityInQueryIndex, ref ECSTransformFromMono tr, in ECSPathFinder pathFinder, in DynamicBuffer<ECSPathBuffer> buffers) =>
+            //    {
+            //        float3 current = tr.Value;
+            //        float3 nextPos;
+
+            //        if (IsArrived(current, buffers[1].position, agentNodeOffset) &&
+            //                    buffers.Length >= 3)
+            //        {
+            //            nextPos = buffers[2];
+            //        }
+            //        else
+            //        {
+            //            nextPos = buffers[1];
+            //        }
+            //        Vector3 dir = nextPos - current;
+
+            //        Vector3 pos = current + (dir.normalized * Time.DeltaTime * Speed);
+            //        pos = ECSPathQuerySystem.ToLocation(pos, AgentTypeID).position;
+            //    })
+            //    .ScheduleParallel();
+            //Entities
+            //    //.WithAll<ECSPathQuery>()
+            //    .ForEach((int entityInQueryIndex, ref ECSTransformFromMono tr, in ECSPathFinder pathFinder) =>
+            //    {
+            //        int hash = HashPosition(tr.Value, pathFinder.radius, maxMapWidth);
+            //        concurrentHashLoc.TryAdd(
+            //            entityInQueryIndex, 
+            //            new int2(hash, Mathf.RoundToInt(tr.Value.y))
+            //            );
+
+
+            //    })
+            //    .ScheduleParallel();
 
             //asdasd
+
         }
 
         private static int HashPosition(float3 position, float radius, int maxMapWidth)
@@ -276,6 +305,18 @@ namespace Syadeu.ECS
             int ix = Mathf.RoundToInt((position.x / radius) * radius);
             int iz = Mathf.RoundToInt((position.z / radius) * radius);
             return ix * maxMapWidth + iz;
+        }
+        private bool IsArrived(Vector3 current, Vector3 pos, float offset)
+        {
+            return
+                current.x - offset <= pos.x &&
+                current.x + offset >= pos.x &&
+
+                current.y - offset <= pos.y &&
+                current.y + offset >= pos.y &&
+
+                current.z - offset <= pos.z &&
+                current.z + offset >= pos.z;
         }
     }
 }
