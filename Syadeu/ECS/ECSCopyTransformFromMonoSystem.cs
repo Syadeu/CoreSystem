@@ -105,11 +105,14 @@ namespace Syadeu.ECS
 
                 //transform.position = transforms[i].Value;
 
+                
                 Vector3 cur = transforms[i].Value;
-                Vector3 dir = cur - transform.position;
-                transform.position += dir;
 
-
+                if (!cur.Equals(transform.position))
+                {
+                    Vector3 dir = cur - transform.position;
+                    transform.position += dir;
+                }
             }
         }
 

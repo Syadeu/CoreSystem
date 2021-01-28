@@ -20,7 +20,7 @@ namespace Syadeu.ECS
     public class ECSPathMeshSystem : ECSManagerEntity<ECSPathMeshSystem>
     {
         public float3 Center = new float3(0, 0, 0);
-        public float3 Size = new float3(1000, 20, 1000);
+        public float3 Size = new float3(100, 20, 100);
 
         private EntityArchetype m_BaseArchetype;
         private EntityQuery m_BaseQuery;
@@ -30,14 +30,70 @@ namespace Syadeu.ECS
         private NavMeshBuildSettings m_NavMeshBuildSettings;
 
         private Dictionary<int, NavMeshBuildSource> m_Obstacles;
+        private List<NavMeshBuildSource> m_Sources = null;
         private bool m_IsObstacleChanged;
 
         private NativeQueue<RebakePayload> m_RequireBakeQueue;
-        
+
         private struct RebakePayload
         {
             public Entity entity;
             public ECSPathObstacle obstacle;
+        }
+
+        public static void UpdatePosition(Vector3 center, Vector3 size)
+        {
+            CoreSystem.AddBackgroundJob(() =>
+            {
+                if (!Quantize(center, 0.1f * size).Equals(Quantize(Instance.Center, 0.1f * Instance.Size)))
+                {
+                    Instance.Center = center;
+                    Instance.Size = size;
+
+                    CoreSystem.AddForegroundJob(() =>
+                    {
+                        NavMeshBuildSettings defaultBuildSettings = NavMesh.GetSettingsByID(0);
+                        Bounds bounds = Instance.QuantizedBounds();
+
+                        if (Instance.m_Sources == null)
+                        {
+                            Instance.m_Sources = new List<NavMeshBuildSource>();
+                        }
+
+                        NavMeshBuilder.UpdateNavMeshDataAsync(Instance.m_NavMesh, defaultBuildSettings, Instance.m_Sources, bounds);
+                    });
+                }
+            });
+            
+
+            //Instance.Center = center;
+            //Instance.Size = size;
+
+
+            //CoreSystem.AddBackgroundJob(Instance.workerIdx, () =>
+            //{
+            //    NavMeshBuildSettings defaultBuildSettings = NavMesh.GetSettingsByID(0);
+            //    Bounds bounds = Instance.QuantizedBounds();
+
+            //    if (Instance.m_Sources == null)
+            //    {
+            //        Instance.m_Sources = new List<NavMeshBuildSource>();
+            //    }
+
+            //    NavMeshBuilder.UpdateNavMeshDataAsync(Instance.m_NavMesh, defaultBuildSettings, Instance.m_Sources, bounds);
+            //}, out var job);
+
+            
+
+            //NavMeshBuildSettings defaultBuildSettings = NavMesh.GetSettingsByID(0);
+            //Bounds bounds = Instance.QuantizedBounds();
+
+            //if (Instance.m_Sources == null)
+            //{
+            //    Instance.m_Sources = new List<NavMeshBuildSource>();
+            //}
+
+            //NavMeshBuilder.UpdateNavMeshDataAsync(Instance.m_NavMesh, defaultBuildSettings, Instance.m_Sources, bounds);
         }
 
         public static NavMeshLinkInstance AddLink(Vector3 from, Vector3 to, int agentTypeID, int areaMask, bool bidirectional, int cost = 1, float width = -1)
@@ -140,17 +196,24 @@ namespace Syadeu.ECS
         }
         protected override void OnUpdate()
         {
-            if (m_IsObstacleChanged)
-            {
-                NavMeshBuildSettings defaultBuildSettings = NavMesh.GetSettingsByID(0);
-                Bounds bounds = QuantizedBounds();
-                List<NavMeshBuildSource> sources = m_Obstacles.Values.ToList();
+            NavMeshBuildSettings defaultBuildSettings;
+            Job
+                .WithoutBurst()
+                .WithCode(() =>
+                {
+                    if (m_IsObstacleChanged)
+                    {
+                        defaultBuildSettings = NavMesh.GetSettingsByID(0);
+                        Bounds bounds = QuantizedBounds();
+                        m_Sources = m_Obstacles.Values.ToList();
 
-                NavMeshBuilder.UpdateNavMeshDataAsync(m_NavMesh, defaultBuildSettings, sources, bounds);
+                        NavMeshBuilder.UpdateNavMeshDataAsync(m_NavMesh, defaultBuildSettings, m_Sources, bounds);
 
-                ECSPathQuerySystem.Purge();
-                m_IsObstacleChanged = false;
-            }
+                        ECSPathQuerySystem.Purge();
+                        m_IsObstacleChanged = false;
+                    }
+                })
+                .Run();
 
             var requireBakeQueue = m_RequireBakeQueue;
             var requireBakeQueuePara = m_RequireBakeQueue.AsParallelWriter();

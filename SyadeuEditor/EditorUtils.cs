@@ -175,11 +175,11 @@ namespace SyadeuEditor
             string firstKey = foldout ? "▼" : "▶";
             if (size < 0)
             {
-                return EditorGUILayout.Foldout(foldout, $"{firstKey} {name}", true, headerStyle);
+                return EditorGUILayout.Foldout(foldout, String($"{firstKey} {name}", StringColor.grey), true, headerStyle);
             }
             else
             {
-                return EditorGUILayout.Foldout(foldout, $"<size={size}>{firstKey} {name}</size>", true, headerStyle);
+                return EditorGUILayout.Foldout(foldout, String($"<size={size}>{firstKey} {name}</size>", StringColor.grey), true, headerStyle);
             }
         }
 

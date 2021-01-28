@@ -76,6 +76,8 @@ namespace Syadeu.ECS
         public float overrideArrivalDistanceOffset;
 
         public float radius;
+
+        public float speed;
     }
     public struct ECSPathQuery : IComponentData
     {
