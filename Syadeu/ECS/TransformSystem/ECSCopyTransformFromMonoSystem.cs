@@ -11,12 +11,6 @@ using Unity.Transforms;
 
 namespace Syadeu.ECS
 {
-    public struct ECSTransformFromMono : IComponentData
-    {
-        public int id;
-        public float3 Value;
-    }
-
     [UpdateAfter(typeof(TransformSystemGroup))]
     public class ECSCopyTransformFromMonoSystem : ECSManagerEntity<ECSCopyTransformFromMonoSystem>
     {

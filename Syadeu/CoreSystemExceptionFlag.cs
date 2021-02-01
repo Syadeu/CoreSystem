@@ -11,5 +11,6 @@
         RecycleObject,
         Render,
         Console,
+        Database,
     }
 }

@@ -866,6 +866,7 @@ namespace Syadeu
                 throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "잡을 실행하는 도중 에러가 발생되었습니다", job.CalledFrom, ex);
             }
 
+
             e.Result = job;
         }
         private void BackgroundJobCompleted(object sender, RunWorkerCompletedEventArgs e)
