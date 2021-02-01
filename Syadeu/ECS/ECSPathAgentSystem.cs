@@ -33,7 +33,9 @@ namespace Syadeu.ECS
         public static int RegisterPathfinder(Transform agent, int agentTypeID, float maxTravelDistance = -1, float nodeOffset = -1, float radius = 1)
         {
             Entity entity = Instance.EntityManager.CreateEntity(Instance.m_BaseArchetype);
+#if UNITY_EDITOR
             Instance.EntityManager.SetName(entity, agent.name);
+#endif
 
             int id = ECSCopyTransformFromMonoSystem.AddUpdate(entity, agent);
             Instance.AddComponentData(entity, new ECSPathFinder
