@@ -53,10 +53,12 @@ namespace Syadeu.ECS
             ManualUpdate();
             return id;
         }
-        internal static void RemoveUpdate(int id)
+        internal static void RemoveUpdate(Entity entity)
         {
-            Instance.m_Transforms.Remove(id);
+            var tr = Instance.EntityManager.GetComponentData<ECSTransformFromMono>(entity);
+            Instance.m_Transforms.Remove(tr.id);
 
+            Instance.EntityManager.DestroyEntity(entity);
             ManualUpdate();
         }
         internal static Transform GetTransform(int id)

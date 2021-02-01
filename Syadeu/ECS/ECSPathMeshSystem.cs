@@ -29,7 +29,7 @@ namespace Syadeu.ECS
         private NavMeshDataInstance m_NavMeshData;
         private NavMeshBuildSettings m_NavMeshBuildSettings;
 
-        private Dictionary<int, NavMeshBuildSource> m_Obstacles;
+        private Dictionary<int, (Entity, NavMeshBuildSource)> m_Obstacles;
         private List<NavMeshBuildSource> m_Sources = null;
         private bool m_IsObstacleChanged;
 
@@ -157,17 +157,19 @@ namespace Syadeu.ECS
                 type = type
             });
 
-            Instance.m_Obstacles.Add(id, source);
+            Instance.m_Obstacles.Add(id, (entity, source));
             Instance.m_IsObstacleChanged = true;
 
             return id;
         }
         public static void RemoveObstacle(int id)
         {
+            var col = Instance.m_Obstacles[id];
+
             Instance.m_Obstacles.Remove(id);
             Instance.m_IsObstacleChanged = true;
 
-            ECSCopyTransformFromMonoSystem.RemoveUpdate(id);
+            ECSCopyTransformFromMonoSystem.RemoveUpdate(col.Item1);
         }
 
         protected override void OnCreate()
@@ -183,7 +185,7 @@ namespace Syadeu.ECS
             m_NavMeshData = NavMesh.AddNavMeshData(m_NavMesh);
             m_NavMeshBuildSettings = NavMesh.GetSettingsByID(0);
 
-            m_Obstacles = new Dictionary<int, NavMeshBuildSource>();
+            m_Obstacles = new Dictionary<int, (Entity, NavMeshBuildSource)>();
             m_IsObstacleChanged = true;
 
             m_RequireBakeQueue = new NativeQueue<RebakePayload>(Allocator.Persistent);
@@ -207,7 +209,12 @@ namespace Syadeu.ECS
                     {
                         defaultBuildSettings = NavMesh.GetSettingsByID(0);
                         Bounds bounds = QuantizedBounds();
-                        m_Sources = m_Obstacles.Values.ToList();
+                        m_Sources.Clear();
+                        foreach (var item in m_Obstacles.Values)
+                        {
+                            m_Sources.Add(item.Item2);
+                        }
+                        //m_Sources = m_Obstacles.Values.ToList();
 
                         NavMeshBuilder.UpdateNavMeshDataAsync(m_NavMesh, defaultBuildSettings, m_Sources, bounds);
 
@@ -245,10 +252,10 @@ namespace Syadeu.ECS
                         switch (payload.obstacle.type)
                         {
                             case PathObstacleType.Mesh:
-                                temp.transform = tr.localToWorldMatrix;
+                                temp.Item2.transform = tr.localToWorldMatrix;
                                 break;
                             case PathObstacleType.Terrain:
-                                temp.transform = Matrix4x4.TRS(tr.transform.position, Quaternion.identity, Vector3.one);
+                                temp.Item2.transform = Matrix4x4.TRS(tr.transform.position, Quaternion.identity, Vector3.one);
                                 break;
                             default:
                                 break;

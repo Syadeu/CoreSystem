@@ -56,9 +56,10 @@ namespace Syadeu.ECS
         public static void DestroyPathfinder(int agent)
         {
             Instance.m_DestroyRequests.Add(agent);
+            Entity entity = Instance.m_PathAgents[agent];
             Instance.m_PathAgents.Remove(agent);
 
-            ECSCopyTransformFromMonoSystem.RemoveUpdate(agent);
+            ECSCopyTransformFromMonoSystem.RemoveUpdate(entity);
         }
         public static void SchedulePath(int agent, Vector3 target, int areaMask = -1)
         {
