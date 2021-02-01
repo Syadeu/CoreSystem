@@ -32,8 +32,8 @@ namespace SyadeuEditor
             EditorGUILayout.Space();
             if (IsListed())
             {
-                EditorUtils.StringRich("등록된 커맨드", StringColor.teal, true);
-                if (EditorUtils.Button("해제"))
+                EditorUtils.StringRich("Added", StringColor.teal, true);
+                if (EditorUtils.Button("Remove"))
                 {
                     SyadeuSettings.Instance.m_CommandDefinitions.Remove(m_Def);
                     EditorUtility.SetDirty(SyadeuSettings.Instance);
@@ -41,8 +41,8 @@ namespace SyadeuEditor
             }
             else
             {
-                EditorUtils.StringRich("해제된 커맨드", StringColor.maroon, true);
-                if (EditorUtils.Button("등록"))
+                EditorUtils.StringRich("Not Added", StringColor.maroon, true);
+                if (EditorUtils.Button("Add"))
                 {
                     SyadeuSettings.Instance.m_CommandDefinitions.Add(m_Def);
                     EditorUtility.SetDirty(SyadeuSettings.Instance);
@@ -81,15 +81,15 @@ namespace SyadeuEditor
 
         private void Arguments()
         {
-            m_Def.m_Initializer = EditorGUILayout.TextField("시작 명령어: ", m_Def.m_Initializer);
+            m_Def.m_Initializer = EditorGUILayout.TextField("Initializer: ", m_Def.m_Initializer);
             EditorGUILayout.Space();
 
-            EditorGUILayout.HelpBox("추후 추가되는 기능입니다. 현재는 아무런 기능을 하지 않습니다.", MessageType.Info);
-            m_Def.m_Type = (CommandInputType)EditorGUILayout.EnumFlagsField("인풋 타입: ", m_Def.m_Type);
+            //EditorGUILayout.HelpBox("추후 추가되는 기능입니다. 현재는 아무런 기능을 하지 않습니다.", MessageType.Info);
+            m_Def.m_Type = (CommandInputType)EditorGUILayout.EnumFlagsField("Input Type: ", m_Def.m_Type);
 
             EditorUtils.SectorLine();
-            EditorGUILayout.PropertyField(m_Args, new GUIContent("명령 변수"));
-            EditorGUILayout.HelpBox("이 명령어로 실행할 수 있는 변수들입니다", MessageType.Info);
+            EditorGUILayout.PropertyField(m_Args, new GUIContent("Command Arguments"));
+            //EditorGUILayout.HelpBox("이 명령어로 실행할 수 있는 변수들입니다", MessageType.Info);
 
             serializedObject.ApplyModifiedProperties();
         }
