@@ -212,7 +212,9 @@ namespace Syadeu.ECS
                 var destroyRequests = m_DestroyRequests;
                 Entities
                     .WithBurst()
+#if UNITY_EDITOR
                     .WithName("PathFinder_Destroy_1")
+#endif
                     .WithReadOnly(destroyRequests)
                     .ForEach((Entity entity, int entityInQueryIndex, in ECSPathFinder pathFinder) =>
                     {
@@ -225,7 +227,9 @@ namespace Syadeu.ECS
                     .ScheduleParallel();
                 Job
                     .WithBurst()
+#if UNITY_EDITOR
                     .WithName("PathFinder_Destroy_2")
+#endif
                     .WithCode(() =>
                     {
                         destroyRequests.Clear();

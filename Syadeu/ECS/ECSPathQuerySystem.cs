@@ -248,7 +248,9 @@ namespace Syadeu.ECS
 
                 Job
                     .WithBurst()
+#if UNITY_EDITOR
                     .WithName("Locate_Position_Job")
+#endif
                     .WithCode(() =>
                     {
                         if (pathData.retry)
@@ -275,7 +277,9 @@ namespace Syadeu.ECS
 
                 Job
                     .WithBurst()
+#if UNITY_EDITOR
                     .WithName("Find_Location_Job")
+#endif
                     .WithCode(() =>
                     {
                         if (failed[0])
@@ -385,7 +389,9 @@ namespace Syadeu.ECS
             NativeQueue<QueryRequest>.ParallelWriter queries = m_QueryQueue.AsParallelWriter();
             Entities
                 .WithBurst()
+#if UNITY_EDITOR
                 .WithName("Query_Check")
+#endif
                 .WithChangeFilter<ECSTransformFromMono>()
                 .WithReadOnly(cachedPath)
                 .ForEach((Entity entity, in ECSPathQuery pathQuery, in ECSTransformFromMono tr) =>
@@ -417,7 +423,9 @@ namespace Syadeu.ECS
 
             Entities
                 .WithBurst()
+#if UNITY_EDITOR
                 .WithName("Query_Update")
+#endif
                 .WithReadOnly(cachedPath)
                 .WithReadOnly(tempQuery)
                 .ForEach((ref ECSPathQuery pathQuery, ref DynamicBuffer<ECSPathBuffer> buffers, in ECSTransformFromMono tr, in ECSPathFinder pathFinder) =>

@@ -148,7 +148,9 @@ namespace Syadeu.ECS
             }
             else throw new CoreSystemException(CoreSystemExceptionFlag.ECS, "NavMesh Obstacle 지정은 MeshFilter 혹은 Terrain만 가능합니다");
 
+#if UNITY_EDITOR
             Instance.EntityManager.SetName(entity, obj.name);
+#endif
             Instance.EntityManager.SetComponentData(entity, new ECSPathObstacle
             {
                 id = id,
