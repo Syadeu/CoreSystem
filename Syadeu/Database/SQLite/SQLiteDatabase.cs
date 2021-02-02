@@ -1919,7 +1919,7 @@ namespace Syadeu.Database
         /// </summary>
         /// <param name="isTrue"></param>
         /// <param name="log"></param>
-        internal static void Assert(bool isTrue, string log)
+        public static void Assert(bool isTrue, string log)
         {
             if (isTrue)
             {
@@ -1931,7 +1931,7 @@ namespace Syadeu.Database
 #endif
             }
         }
-        internal static void Assert(Func<bool> func, bool isTrue, string log)
+        public static void Assert(Func<bool> func, bool isTrue, string log)
         {
             if (func.Invoke() == isTrue)
             {

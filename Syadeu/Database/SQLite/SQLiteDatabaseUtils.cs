@@ -148,7 +148,7 @@ namespace Syadeu.Database
             double[] xyz = new double[3];
             for (int i = 0; i < split.Length; i++)
             {
-                xyz[i] = double.Parse(split[i].Trim());
+                xyz[i] = double.Parse(split[i]);
             }
             return $"{xyz[0]}/{xyz[1]}/{xyz[2]}";
         }
@@ -306,16 +306,9 @@ namespace Syadeu.Database
             {
                 if (obj.GetType() == typeof(bool))
                 {
-                    rtrn = bool.Parse(tx);
+                    rtrn = obj;
                 }
-                else if (int.TryParse(tx, out int output))
-                {
-                    rtrn = output == 1;
-                }
-                else
-                {
-                    throw new InvalidOperationException($"{tx}는 bool 로 변환될 수 없음");
-                }
+                else rtrn = int.Parse(tx) == 1;
             }
             else if (t == typeof(decimal))
             {
@@ -486,8 +479,8 @@ namespace Syadeu.Database
                 else if (t.IsEnum && defaultType == typeof(int))
                 {
                     int index = int.Parse(att.DefaultValue.ToString());
-                    string[] names = System.Enum.GetNames(t);
-                    value = System.Enum.Parse(t, names[index]);
+                    string[] names = Enum.GetNames(t);
+                    value = Enum.Parse(t, names[index]);
                 }
                 else value = ConvertSQL(t, att.DefaultValue);
             }
