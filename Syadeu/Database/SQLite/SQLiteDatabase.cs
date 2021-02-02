@@ -29,7 +29,7 @@ namespace Syadeu.Database
     /// <see cref="SQLiteTable"/>의 형태로 <see cref="Tables"/>에 저장되며,
     /// 이를 그대로 <see cref="TryGetTable(string, out SQLiteTable)"/>으로 불러서 사용하거나,
     /// <see cref="SQLiteTableAttribute"/>를 상속받은 구조체를 사용하여 
-    /// <see cref="TryGetTableValue{T}(string, int, out T)"/>, 혹은 <see cref="SQLiteTable.TryReadLine{T}(int, out T)"/>
+    /// <see cref="TryGetTableValue{T}(in string, int, out T)"/>, 혹은 <see cref="SQLiteTable.TryReadLine{T}(int, out T)"/>
     /// 으로 가공된 데이터로 받아서 사용할 수 있습니다.<br/><br/>
     /// 
     /// 사용자 정의된 <see cref="SQLiteTableAttribute"/> 구조체로 가공된 데이터를 받아오면
@@ -1076,9 +1076,9 @@ namespace Syadeu.Database
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
-        public bool HasTable(string name) => HasTable(name, out _);
-        /// <inheritdoc cref="HasTable(string)"/>/>
-        public bool HasTable(string name, out int index)
+        public bool HasTable(in string name) => HasTable(name, out _);
+        /// <inheritdoc cref="HasTable(in string)"/>/>
+        public bool HasTable(in string name, out int index)
         {
             for (int i = 0; i < Tables.Length; i++)
             {
@@ -1098,7 +1098,7 @@ namespace Syadeu.Database
         /// <param name="name"></param>
         /// <exception cref="SQLiteException"></exception>
         /// <returns></returns>
-        public SQLiteTable GetTable(string name)
+        public SQLiteTable GetTable(in string name)
         {
             for (int i = 0; i < Tables.Length; i++)
             {
@@ -1110,8 +1110,8 @@ namespace Syadeu.Database
 
             throw new SQLiteException($"{name}의 이름을 가진 테이블이 존재하지않음");
         }
-        /// <inheritdoc cref="GetTable(string)"/>
-        public ISQLiteReadOnlyTable GetTableReadOnly(string name)
+        /// <inheritdoc cref="GetTable(in string)"/>
+        public ISQLiteReadOnlyTable GetTableReadOnly(in string name)
         {
             for (int i = 0; i < Tables.Length; i++)
             {
@@ -1130,7 +1130,7 @@ namespace Syadeu.Database
         /// <param name="name"></param>
         /// <param name="table"></param>
         /// <returns></returns>
-        public bool TryGetTable(string name, out SQLiteTable table)
+        public bool TryGetTable(in string name, out SQLiteTable table)
         {
             for (int i = 0; i < Tables.Length; i++)
             {
@@ -1144,8 +1144,8 @@ namespace Syadeu.Database
             table = default;
             return false;
         }
-        /// <inheritdoc cref="TryGetTable(string, out SQLiteTable)"/>
-        public bool TryGetTableReadOnly(string name, out ISQLiteReadOnlyTable table)
+        /// <inheritdoc cref="TryGetTable(in string, out SQLiteTable)"/>
+        public bool TryGetTableReadOnly(in string name, out ISQLiteReadOnlyTable table)
         {
             for (int i = 0; i < Tables.Length; i++)
             {
@@ -1173,7 +1173,7 @@ namespace Syadeu.Database
         /// <param name="index">테이블내의 인덱스 번호</param>
         /// <param name="table"><see cref="SQLiteTableAttribute"/>가 선언된 구조체</param>
         /// <returns></returns>
-        public bool TryGetTableValue<T>(string tableName, int index, out T table) where T : struct
+        public bool TryGetTableValue<T>(in string tableName, int index, out T table) where T : struct
         {
             table = default;
             if (!TryGetTable(tableName, out var sqTable))
@@ -1190,7 +1190,7 @@ namespace Syadeu.Database
         /// 메인 키(<paramref name="primaryKey"/>)값과 일치하는 열 데이터를 <see cref="SQLiteTableAttribute"/>가 선언된 구조체로 반환합니다<br/><br/>
         /// 
         /// 비슷한 메소드<br/>
-        /// <see cref="TryGetTableValue{T}(string, int, out T)"/>: 순번값이 일치하는 열 데이터를 <see cref="SQLiteTableAttribute"/>가 선언된 구조체로 반환합니다
+        /// <see cref="TryGetTableValue{T}(in string, int, out T)"/>: 순번값이 일치하는 열 데이터를 <see cref="SQLiteTableAttribute"/>가 선언된 구조체로 반환합니다
         /// </summary>
         /// <typeparam name="T"><see cref="SQLiteTableAttribute"/>가 선언된 구조체 타입</typeparam>
         /// <param name="tableName"></param>

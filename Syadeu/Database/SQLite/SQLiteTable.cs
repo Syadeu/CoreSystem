@@ -260,46 +260,48 @@ namespace Syadeu.Database
                 return false;
             }
 
-            object boxed = table;
+            //object boxed = table;
 
-            for (int i = 0; i < Columns.Count; i++)
-            {
-                MemberInfo field = SQLiteDatabaseUtils.GetMemberInfo<T>(Columns[i].Name, out var att);
-                if (field == null || index >= Columns[i].Values.Count) continue;
+            //for (int i = 0; i < Columns.Count; i++)
+            //{
+            //    MemberInfo field = SQLiteDatabaseUtils.GetMemberInfo<T>(Columns[i].Name, out var att);
+            //    if (field == null || index >= Columns[i].Values.Count) continue;
 
-                object value = null;
-                switch (field.MemberType)
-                {
-                    case MemberTypes.Field:
-                        value = SQLiteDatabaseUtils.ConvertSQL((field as FieldInfo).FieldType,
-                    Columns[i].Values[index]);
-                        //if (value == null || string.IsNullOrEmpty(value.ToString()))
-                        if (value == null || string.IsNullOrEmpty(value.ToString()))
-                        {
-                            //value = field.GetCustomAttribute<SQLiteDatabaseAttribute>().DefaultValue;
-                            value = SQLiteDatabaseUtils.GetDataDefaultValue((field as FieldInfo).FieldType, att);
-                        }
+            //    object value = null;
+            //    switch (field.MemberType)
+            //    {
+            //        case MemberTypes.Field:
+            //            value = SQLiteDatabaseUtils.ConvertSQL((field as FieldInfo).FieldType,
+            //        Columns[i].Values[index]);
+            //            //if (value == null || string.IsNullOrEmpty(value.ToString()))
+            //            if (value == null || string.IsNullOrEmpty(value.ToString()))
+            //            {
+            //                //value = field.GetCustomAttribute<SQLiteDatabaseAttribute>().DefaultValue;
+            //                value = SQLiteDatabaseUtils.GetDataDefaultValue((field as FieldInfo).FieldType, att);
+            //            }
 
-                        (field as FieldInfo).SetValue(boxed, value);
-                        break;
-                    case MemberTypes.Property:
-                        value = SQLiteDatabaseUtils.ConvertSQL((field as PropertyInfo).PropertyType,
-                    Columns[i].Values[index]);
-                        //if (value == null || string.IsNullOrEmpty(value.ToString()))
-                        if (value == null || string.IsNullOrEmpty(value.ToString()))
-                        {
-                            //value = field.GetCustomAttribute<SQLiteDatabaseAttribute>().DefaultValue;
-                            value = SQLiteDatabaseUtils.GetDataDefaultValue((field as PropertyInfo).PropertyType, att);
-                        }
+            //            (field as FieldInfo).SetValue(boxed, value);
+            //            break;
+            //        case MemberTypes.Property:
+            //            value = SQLiteDatabaseUtils.ConvertSQL((field as PropertyInfo).PropertyType,
+            //        Columns[i].Values[index]);
+            //            //if (value == null || string.IsNullOrEmpty(value.ToString()))
+            //            if (value == null || string.IsNullOrEmpty(value.ToString()))
+            //            {
+            //                //value = field.GetCustomAttribute<SQLiteDatabaseAttribute>().DefaultValue;
+            //                value = SQLiteDatabaseUtils.GetDataDefaultValue((field as PropertyInfo).PropertyType, att);
+            //            }
 
-                        (field as PropertyInfo).SetValue(boxed, value);
-                        break;
-                    default:
-                        continue;
-                }
-            }
+            //            (field as PropertyInfo).SetValue(boxed, value);
+            //            break;
+            //        default:
+            //            continue;
+            //    }
+            //}
 
-            table = (T)boxed;
+            //table = (T)boxed;
+            IReadOnlyList<SQLiteColumn> columns = Columns;
+            table = ReadLine<T>(in columns, in index);
             return true;
         }
 
@@ -312,5 +314,46 @@ namespace Syadeu.Database
         }
         IEnumerator IEnumerable.GetEnumerator()
             => GetEnumerator();
+
+        private static T ReadLine<T>(in IReadOnlyList<SQLiteColumn> columns, in int index) where T : struct
+        {
+            T table = default;
+            object boxed = table;
+
+            for (int i = 0; i < columns.Count; i++)
+            {
+                MemberInfo field = SQLiteDatabaseUtils.GetMemberInfo<T>(columns[i].Name, out var att);
+                if (field == null || index >= columns[i].Values.Count) continue;
+
+                object value = null;
+                switch (field.MemberType)
+                {
+                    case MemberTypes.Field:
+                        value = SQLiteDatabaseUtils.ConvertSQL((field as FieldInfo).FieldType,
+                    columns[i].Values[index]);
+                        if (value == null || string.IsNullOrEmpty(value.ToString()))
+                        {
+                            value = SQLiteDatabaseUtils.GetDataDefaultValue((field as FieldInfo).FieldType, att);
+                        }
+
+                        (field as FieldInfo).SetValue(boxed, value);
+                        break;
+                    case MemberTypes.Property:
+                        value = SQLiteDatabaseUtils.ConvertSQL((field as PropertyInfo).PropertyType,
+                    columns[i].Values[index]);
+                        if (value == null || string.IsNullOrEmpty(value.ToString()))
+                        {
+                            value = SQLiteDatabaseUtils.GetDataDefaultValue((field as PropertyInfo).PropertyType, att);
+                        }
+
+                        (field as PropertyInfo).SetValue(boxed, value);
+                        break;
+                    default:
+                        continue;
+                }
+            }
+
+            return (T)boxed;
+        }
     }
 }

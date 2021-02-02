@@ -12,7 +12,7 @@ namespace Syadeu.Database
     /// <see cref="string"/> 형태로 담겨있습니다. 이 컬럼의 데이터 형식은 <c>Type</c>에서 받아올 수 있습니다.<br/>
     /// <br/>
     /// 담긴 데이터를 원하는 타입으로 가공하려면 
-    /// <seealso cref="SQLiteDatabaseUtils.ConvertSQL{T}(object)"/>으로 데이터를 가공하거나,
+    /// <seealso cref="SQLiteDatabaseUtils.ConvertSQL{T}(in object)"/>으로 데이터를 가공하거나,
     /// <seealso cref="SQLiteTableAttribute"/>가 선언된 구조체를 이용하여 
     /// <seealso cref="SQLiteDatabase.TryGetTableValueWithPrimary{T}(string, object, out T)"/>, 혹은
     /// <seealso cref="SQLiteTable.TryReadLineWithPrimary{T}(object, out T)"/> 을 사용하세요.
