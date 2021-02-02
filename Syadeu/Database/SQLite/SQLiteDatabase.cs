@@ -412,7 +412,7 @@ namespace Syadeu.Database
         /// 데이터 파일 내부의 모든 데이터 테이블을 다시 읽어서 <see cref="Tables"/>에 로드합니다.
         /// </para></summary>
         /// <exception cref="SQLiteUnreadableException"></exception>
-        private void InternalLoadTables(bool safeMode = false)
+        private void InternalLoadTables()
         {
             Assert(Connection == null, "커넥션이 왜 없지?");
 
@@ -439,8 +439,6 @@ namespace Syadeu.Database
                     // 마스터 파일이 깨진거면 복구 불가능
                     throw new SQLiteUnreadableException("sqlite_master", true);
                 }
-
-                List<string> corruptTables = new List<string>();
 
                 for (int i = 0; i < tableNames.Count; i++)
                 {
@@ -490,12 +488,7 @@ namespace Syadeu.Database
                     }
                     catch (Exception)
                     {
-                        if (safeMode)
-                        {
-                            corruptTables.Add(tableNames[i]);
-                            continue;
-                        }
-                        else throw new SQLiteUnreadableException(tableNames[i]);
+                        throw new SQLiteUnreadableException(tableNames[i]);
                     }
 
                     SQLiteTable table = new SQLiteTable(tableNames[i], sqColumns);
