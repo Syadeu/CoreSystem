@@ -1,4 +1,4 @@
-using Syadeu.Mono.Console;
+ï»¿using Syadeu.Mono.Console;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -43,10 +43,12 @@ namespace Syadeu.Mono
         public bool m_UseOnlyDevelopmentBuild = false;
         public int m_ConsoleFontSize = 15;
         public ConsoleFlag m_ConsoleLogErrorTypes = ConsoleFlag.Error;
-        [Tooltip("ÄÜ¼Ö¿¡ ·Î±×¸¦ Ç¥±âÇÒ Å¸ÀÔÀ» ÁöÁ¤ÇÕ´Ï´Ù")]
+        [Tooltip("ì½˜ì†”ì— í‘œì‹œí•  ë¡œê·¸ íƒ€ì…ì„ ì§€ì •í•©ë‹ˆë‹¤.")]
+        // ì½˜ì†”ì— í‘œì‹œí•  ë¡œê·¸ íƒ€ì…ì„ ì§€ì •í•©ë‹ˆë‹¤.
         public ConsoleFlag m_ConsoleLogTypes = ConsoleFlag.Normal | ConsoleFlag.Error;
         public bool m_ConsoleLogWhenLogRecieved = false;
-        [Tooltip("ConsoleLogWhenLogRecieved°¡ È°¼ºÈ­ µÇÀÖÀ»¶§, ¿¡µğÅÍÀÌ°Å³ª °³¹ß ºôµåÀÏ°æ¿ì¿¡¸¸ ÄÜ¼Ö¿¡ ·Î±×¸¦ Ç¥½ÃÇÕ´Ï´Ù")]
+        [Tooltip("ConsoleLogWhenLogRecievedê°€ trueì´ê³  development build ì¼ ê²½ìš°ì—ë§Œ ì½˜ì†”ì— ë¡œê·¸ë¥¼ í‘œì‹œí•©ë‹ˆë‹¤.")]
+        // ConsoleLogWhenLogRecievedê°€ trueì´ê³  development build ì¼ ê²½ìš°ì—ë§Œ ì½˜ì†”ì— ë¡œê·¸ë¥¼ í‘œì‹œí•©ë‹ˆë‹¤.
         public bool m_ConsoleLogOnlyIsDevelopment = true;
         public bool m_ConsoleThrowWhenErrorRecieved = true;
         public List<CommandDefinition> m_CommandDefinitions = new List<CommandDefinition>();
