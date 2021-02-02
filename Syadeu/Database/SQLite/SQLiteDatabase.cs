@@ -985,10 +985,7 @@ namespace Syadeu.Database
                             catch (Exception ex)
                             {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-                                CoreSystem.AddForegroundJob(() =>
-                                {
-                                    Assert(true, $"통신 중 문제 발생: {ex.Message}: {ex.StackTrace}\n{query}");
-                                });
+                                Assert(true, $"통신 중 문제 발생: {ex.Message}: {ex.StackTrace}\n{query}");
 #else
                                 // TODO : 로그 붙이기
                                 throw new SQLiteExcuteExcpetion(query, ex);
