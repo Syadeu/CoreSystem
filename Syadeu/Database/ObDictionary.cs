@@ -16,9 +16,15 @@ namespace Syadeu.Database
             {
                 if (!m_Dictionary.ContainsKey(key))
                 {
+#if UNITY_EDITOR
                     throw new CoreSystemException(CoreSystemExceptionFlag.Database, 
                         $"ObDictionary<{typeof(TKey).Name}, {typeof(TValue)}> 에서" +
                         $"{key} 값이 존재하지 않음");
+#else
+                    CoreSystemException.SendCrash(CoreSystemExceptionFlag.Background,
+                        $"ObDictionary<{typeof(TKey).Name}, {typeof(TValue)}> 에서" +
+                        $"{key} 값이 존재하지 않음", null);
+#endif
                 }
                 return m_Dictionary[key];
             }
@@ -26,9 +32,15 @@ namespace Syadeu.Database
             {
                 if (!m_Dictionary.ContainsKey(key))
                 {
-                    throw new CoreSystemException(CoreSystemExceptionFlag.Database,
+#if UNITY_EDITOR
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Database, 
                         $"ObDictionary<{typeof(TKey).Name}, {typeof(TValue)}> 에서" +
                         $"{key} 값이 존재하지 않음");
+#else
+                    CoreSystemException.SendCrash(CoreSystemExceptionFlag.Background,
+                        $"ObDictionary<{typeof(TKey).Name}, {typeof(TValue)}> 에서" +
+                        $"{key} 값이 존재하지 않음", null);
+#endif
                 }
 
                 m_Dictionary[key] = value;

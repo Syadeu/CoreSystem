@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Syadeu.Mono;
+using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -6,6 +7,7 @@ using System.ComponentModel;
 using System.Threading;
 
 using UnityEngine;
+using UnityEngine.Diagnostics;
 using UnityEngine.Networking;
 
 namespace Syadeu
@@ -194,7 +196,13 @@ namespace Syadeu
         {
             if (job.MainJob != null)
             {
-                throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "이 잡은 메인 잡이 아닙니다. 메인 잡을 실행하세요");
+#if UNITY_EDITOR
+                throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, 
+                        "이 잡은 메인 잡이 아닙니다. 메인 잡을 실행하세요");
+#else
+                CoreSystemException.SendCrash(CoreSystemExceptionFlag.Jobs,
+                    "이 잡은 메인 잡이 아닙니다. 메인 잡을 실행하세요", null);
+#endif
             }
             Instance.m_ForegroundJobs.Enqueue(job);
         }
@@ -314,13 +322,22 @@ namespace Syadeu
         }
         private void OnApplicationQuit()
         {
-            for (int i = 0; i < BackgroundJobWorkers.Count; i++)
+            try
             {
-                BackgroundJobWorkers[i].Worker.CancelAsync();
-                BackgroundJobWorkers[i].Worker.Dispose();
-            }
+                for (int i = 0; i < BackgroundJobWorkers.Count; i++)
+                {
+                    BackgroundJobWorkers[i].Worker.CancelAsync();
+                    BackgroundJobWorkers[i].Worker.Dispose();
+                }
 
-            BackgroundThread?.Abort();
+                BackgroundThread?.Abort();
+            }
+            catch (ThreadAbortException)
+            {
+            }
+            catch (Exception)
+            {
+            }
         }
         #endregion
 
@@ -382,12 +399,23 @@ namespace Syadeu
                 }
                 catch (UnityException mainthread)
                 {
-                    throw new CoreSystemException(CoreSystemExceptionFlag.Background, "유니티 API 가 사용되어 백그라운드에서 돌릴 수 없습니다", mainthread);
+#if UNITY_EDITOR
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Background, 
+                        "유니티 API 가 사용되어 백그라운드에서 돌릴 수 없습니다", mainthread);
+#else
+                    CoreSystemException.SendCrash(CoreSystemExceptionFlag.Background,
+                        "유니티 API 가 사용되어 백그라운드에서 돌릴 수 없습니다", mainthread);
+#endif
                 }
                 catch (Exception ex)
                 {
+#if UNITY_EDITOR
                     throw new CoreSystemException(CoreSystemExceptionFlag.Background,
                             "Start 문을 실행하는 중 에러가 발생했습니다", ex);
+#else
+                    CoreSystemException.SendCrash(CoreSystemExceptionFlag.Background,
+                        "Start 문을 실행하는 중 에러가 발생했습니다", ex);
+#endif
                 }
                 #endregion
 #if UNITY_EDITOR
@@ -447,12 +475,23 @@ namespace Syadeu
                     }
                     catch (UnityException mainthread)
                     {
-                        throw new CoreSystemException(CoreSystemExceptionFlag.Background, "유니티 API 가 사용되어 백그라운드에서 돌릴 수 없습니다", mainthread);
+#if UNITY_EDITOR
+                        throw new CoreSystemException(CoreSystemExceptionFlag.Background, 
+                            "유니티 API 가 사용되어 백그라운드에서 돌릴 수 없습니다", mainthread);
+#else
+                        CoreSystemException.SendCrash(CoreSystemExceptionFlag.Background,
+                            "유니티 API 가 사용되어 백그라운드에서 돌릴 수 없습니다", mainthread);
+#endif
                     }
                     catch (Exception ex)
                     {
+#if UNITY_EDITOR
                         throw new CoreSystemException(CoreSystemExceptionFlag.Background,
                             "업데이트 문을 실행하는 중 에러가 발생했습니다", ex);
+#else
+                        CoreSystemException.SendCrash(CoreSystemExceptionFlag.Background,
+                            "업데이트 문을 실행하는 중 에러가 발생했습니다", ex);
+#endif
                     }
                 }
                 #endregion
@@ -473,12 +512,23 @@ namespace Syadeu
                 }
                 catch (UnityException mainthread)
                 {
-                    throw new CoreSystemException(CoreSystemExceptionFlag.Background, "유니티 API 가 사용되어 백그라운드에서 돌릴 수 없습니다", mainthread);
+#if UNITY_EDITOR
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Background, 
+                        "유니티 API 가 사용되어 백그라운드에서 돌릴 수 없습니다", mainthread);
+#else
+                    CoreSystemException.SendCrash(CoreSystemExceptionFlag.Background,
+                        "유니티 API 가 사용되어 백그라운드에서 돌릴 수 없습니다", mainthread);
+#endif
                 }
                 catch (Exception ex)
                 {
+#if UNITY_EDITOR
                     throw new CoreSystemException(CoreSystemExceptionFlag.Background,
                             "업데이트 문을 실행하는 중 에러가 발생했습니다", ex);
+#else
+                    CoreSystemException.SendCrash(CoreSystemExceptionFlag.Background,
+                        "업데이트 문을 실행하는 중 에러가 발생했습니다", ex);
+#endif
                 }
                 #endregion
 #if UNITY_EDITOR
@@ -532,12 +582,23 @@ namespace Syadeu
                         }
                         catch (UnityException mainthread)
                         {
-                            throw new CoreSystemException(CoreSystemExceptionFlag.Background, "유니티 API 가 사용되어 타이머 Start 문에서 돌릴 수 없습니다", timer.CalledFrom, mainthread);
+#if UNITY_EDITOR
+                            throw new CoreSystemException(CoreSystemExceptionFlag.Background, 
+                                "유니티 API 가 사용되어 타이머 Start 문에서 돌릴 수 없습니다", timer.CalledFrom, mainthread);
+#else
+                            CoreSystemException.SendCrash(CoreSystemExceptionFlag.Background,
+                                "유니티 API 가 사용되어 타이머 Start 문에서 돌릴 수 없습니다", mainthread);
+#endif
                         }
                         catch (Exception ex)
                         {
+#if UNITY_EDITOR
                             throw new CoreSystemException(CoreSystemExceptionFlag.Background,
                             "타이머 Start 문을 실행하는 중 에러가 발생했습니다", timer.CalledFrom, ex);
+#else
+                            CoreSystemException.SendCrash(CoreSystemExceptionFlag.Background,
+                                "타이머 Start 문을 실행하는 중 에러가 발생했습니다", ex);
+#endif
                         }
 
                         if (timer.TimerStartAction != null) AddForegroundJob(timer.TimerStartAction);
@@ -567,12 +628,23 @@ namespace Syadeu
                         }
                         catch (UnityException mainthread)
                         {
-                            throw new CoreSystemException(CoreSystemExceptionFlag.Background, "유니티 API 가 사용되어 타이머 Kill 문에서 돌릴 수 없습니다", activeTimers[i].CalledFrom, mainthread);
+#if UNITY_EDITOR
+                            throw new CoreSystemException(CoreSystemExceptionFlag.Background, 
+                                "유니티 API 가 사용되어 타이머 Kill 문에서 돌릴 수 없습니다", activeTimers[i].CalledFrom, mainthread);
+#else
+                            CoreSystemException.SendCrash(CoreSystemExceptionFlag.Background,
+                                "유니티 API 가 사용되어 타이머 Kill 문에서 돌릴 수 없습니다", mainthread);
+#endif
                         }
                         catch (Exception ex)
                         {
+#if UNITY_EDITOR
                             throw new CoreSystemException(CoreSystemExceptionFlag.Background,
                             "타이머 Kill 문을 실행하는 중 에러가 발생했습니다", activeTimers[i].CalledFrom, ex);
+#else
+                            CoreSystemException.SendCrash(CoreSystemExceptionFlag.Background,
+                                "타이머 Kill 문을 실행하는 중 에러가 발생했습니다", ex);
+#endif
                         }
 
                         if (activeTimers[i].TimerKillAction != null) AddForegroundJob(activeTimers[i].TimerKillAction);
@@ -595,14 +667,25 @@ namespace Syadeu
                         }
                         catch (UnityException mainthread)
                         {
-                            throw new CoreSystemException(CoreSystemExceptionFlag.Background, "유니티 API 가 사용되어 타이머 End 문에서 돌릴 수 없습니다", activeTimers[i].CalledFrom, mainthread);
+#if UNITY_EDITOR
+                            throw new CoreSystemException(CoreSystemExceptionFlag.Background, 
+                                "유니티 API 가 사용되어 타이머 End 문에서 돌릴 수 없습니다", activeTimers[i].CalledFrom, mainthread);
+#else
+                            CoreSystemException.SendCrash(CoreSystemExceptionFlag.Background,
+                                "유니티 API 가 사용되어 타이머 End 문에서 돌릴 수 없습니다", mainthread);
+#endif
                         }
                         catch (Exception ex)
                         {
+#if UNITY_EDITOR
                             throw new CoreSystemException(CoreSystemExceptionFlag.Background,
                             "타이머 End 문을 실행하는 중 에러가 발생했습니다", activeTimers[i].CalledFrom, ex);
+#else
+                            CoreSystemException.SendCrash(CoreSystemExceptionFlag.Background,
+                                "타이머 End 문을 실행하는 중 에러가 발생했습니다", ex);
+#endif
                         }
-                        
+
                         if (activeTimers[i].TimerEndAction != null) AddForegroundJob(activeTimers[i].TimerEndAction);
 
                         activeTimers.RemoveAt(i);
@@ -638,7 +721,15 @@ namespace Syadeu
                 {
                     OnBackgroundThreadDead?.Invoke();
                     m_BackgroundDeadFlag = true;
-                    throw new CoreSystemException(CoreSystemExceptionFlag.Background, "에러로 인해 백그라운드 스레드가 강제 종료되었습니다");
+
+#if UNITY_EDITOR
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Background, 
+                            "에러로 인해 백그라운드 스레드가 강제 종료되었습니다");
+#else
+                    CoreSystemException.SendCrash(CoreSystemExceptionFlag.Background,
+                        "에러로 인해 백그라운드 스레드가 강제 종료되었습니다", null);
+                    yield break;
+#endif
                 }
 
                 #region Handle Managers
@@ -720,15 +811,26 @@ namespace Syadeu
                             else if (item.Key.Current is YieldInstruction baseYield)
                             {
                                 m_CustomUpdates.TryRemove(item.Key, out _);
+
+#if UNITY_EDITOR
                                 throw new CoreSystemException(CoreSystemExceptionFlag.Foreground,
                                     $"해당 yield return 타입({item.Key.Current.GetType().Name})은 지원하지 않습니다");
+#else
+                                CoreSystemException.SendCrash(CoreSystemExceptionFlag.Foreground,
+                                    $"해당 yield return 타입({item.Key.Current.GetType().Name})은 지원하지 않습니다", null);
+#endif
                             }
                         }
                     }
                     catch (Exception ex)
                     {
+#if UNITY_EDITOR
                         throw new CoreSystemException(CoreSystemExceptionFlag.Foreground,
                             "업데이트 문을 실행하는 중 에러가 발생했습니다", ex);
+#else
+                        CoreSystemException.SendCrash(CoreSystemExceptionFlag.Foreground,
+                            "업데이트 문을 실행하는 중 에러가 발생했습니다", ex);
+#endif
                     }
                 }
                 #endregion
@@ -742,8 +844,13 @@ namespace Syadeu
                     }
                     catch (Exception ex)
                     {
+#if UNITY_EDITOR
                         throw new CoreSystemException(CoreSystemExceptionFlag.Foreground,
                             "Start 문을 실행하는 중 에러가 발생했습니다", ex);
+#else
+                        CoreSystemException.SendCrash(CoreSystemExceptionFlag.Foreground,
+                            "Start 문을 실행하는 중 에러가 발생했습니다", ex);
+#endif
                     }
                     OnUnityStart = null;
                 }
@@ -756,8 +863,13 @@ namespace Syadeu
                 }
                 catch (Exception ex)
                 {
+#if UNITY_EDITOR
                     throw new CoreSystemException(CoreSystemExceptionFlag.Foreground,
                             "업데이트 문을 실행하는 중 에러가 발생했습니다", ex);
+#else
+                    CoreSystemException.SendCrash(CoreSystemExceptionFlag.Foreground,
+                        "업데이트 문을 실행하는 중 에러가 발생했습니다", ex);
+#endif
                 }
                 #endregion
 
@@ -778,7 +890,13 @@ namespace Syadeu
                         job.Faild = true;
                         //job.Result = ex.Message;
 
-                        throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "잡을 실행하는 도중 에러가 발생되었습니다", job.CalledFrom, ex);
+#if UNITY_EDITOR
+                        throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, 
+                                "잡을 실행하는 도중 에러가 발생되었습니다", job.CalledFrom, ex);
+#else
+                        CoreSystemException.SendCrash(CoreSystemExceptionFlag.Jobs,
+                            "잡을 실행하는 도중 에러가 발생되었습니다", ex);
+#endif
                     }
 
                     job.m_IsDone = true;
@@ -856,16 +974,27 @@ namespace Syadeu
                 job.Faild = true; job.IsRunning = false; job.m_IsDone = true;
                 //job.Result = $"{nameof(mainthread)}: {mainthread.Message}";
 
-                throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "유니티 API 가 사용되어 백그라운드에서 돌릴 수 없습니다", job.CalledFrom, mainthread);
+#if UNITY_EDITOR
+                throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, 
+                    "유니티 API 가 사용되어 백그라운드잡에서 돌릴 수 없습니다", job.CalledFrom, mainthread);
+#else
+                CoreSystemException.SendCrash(CoreSystemExceptionFlag.Jobs,
+                    "유니티 API 가 사용되어 백그라운드잡에서 돌릴 수 없습니다", mainthread);
+#endif
             }
             catch (Exception ex)
             {
                 job.Faild = true; job.IsRunning = false; job.m_IsDone = true; job.Exception = ex;
                 //job.Result = $"{nameof(ex)}: {ex.Message}";
 
-                throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "잡을 실행하는 도중 에러가 발생되었습니다", job.CalledFrom, ex);
+#if UNITY_EDITOR
+                throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, 
+                    "잡을 실행하는 도중 에러가 발생되었습니다", job.CalledFrom, ex);
+#else
+                CoreSystemException.SendCrash(CoreSystemExceptionFlag.Jobs,
+                    "잡을 실행하는 도중 에러가 발생되었습니다", ex);
+#endif
             }
-
 
             e.Result = job;
         }

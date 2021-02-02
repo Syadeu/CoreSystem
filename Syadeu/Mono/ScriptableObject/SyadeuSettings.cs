@@ -23,6 +23,7 @@ namespace Syadeu.Mono
         // Global System
         [Header("Global")]
         public bool m_VisualizeObjects = false;
+        public bool m_CrashAfterException = false;
 
         // PrefabManager
         [Header("Prefab Manager")]
