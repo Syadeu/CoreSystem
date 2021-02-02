@@ -308,7 +308,10 @@ namespace Syadeu.Database
                 {
                     rtrn = bool.Parse(tx);
                 }
-                else if (obj.GetType() == typeof(int)) rtrn = int.Parse(tx) == 1;
+                else if (int.TryParse(tx, out int output))
+                {
+                    rtrn = output == 1;
+                }
                 else
                 {
                     throw new InvalidOperationException($"{tx}는 bool 로 변환될 수 없음");
