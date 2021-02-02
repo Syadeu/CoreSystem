@@ -3,7 +3,7 @@ using System.Reflection;
 
 namespace Syadeu.Database
 {
-    public abstract class SQLiteException : Exception
+    public class SQLiteException : Exception
     {
         const string Msg = "SQLite Database Error: ";
         public SQLiteException(string msg) : base($"{Msg}{msg}")
