@@ -1182,7 +1182,7 @@ namespace Syadeu.Database
                 return false;
             }
 
-            return sqTable.TryReadLine(index, out table);
+            return sqTable.TryReadLine(in index, out table);
         }
         /// <summary>
         /// <para>메모리에 로드된 정보에서 불러오는 메소드</para>
@@ -1234,7 +1234,7 @@ namespace Syadeu.Database
 
                 for (int i = 0; i < table.Count; i++)
                 {
-                    if (table.TryReadLine(i, out TValue data))
+                    if (table.TryReadLine(in i, out TValue data))
                     {
                         TKey key;
                         switch (primaryKeyInfo.MemberType)
@@ -1283,9 +1283,9 @@ namespace Syadeu.Database
         public bool TryLoadTableToDictionary<TKey, TValue>(string tableName, IDictionary<TKey, TValue> dic)
             where TValue : struct, IEquatable<TValue>
         {
-            if (!TryGetTable(tableName, out SQLiteTable table)) return false;
+            if (!TryGetTableReadOnly(tableName, out ISQLiteReadOnlyTable table)) return false;
 
-            LoadTableToDictionary(table, dic);
+            LoadTableToDictionary(in table, dic);
             return true;
         }
 
@@ -2113,7 +2113,7 @@ namespace Syadeu.Database
 
             for (int i = 0; i < table.Count; i++)
             {
-                if (table.TryReadLine(i, out TValue data))
+                if (table.TryReadLine(in i, out TValue data))
                 {
                     TKey key;
                     switch (primaryKeyInfo.MemberType)

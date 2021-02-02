@@ -206,7 +206,7 @@ namespace Syadeu.Database
             return false;
         }
 
-        public bool TryReadLine(int index, out IReadOnlyList<KeyValuePair<string, object>> line)
+        public bool TryReadLine(in int index, out IReadOnlyList<KeyValuePair<string, object>> line)
         {
             if (!IsValid() || Columns.Count == 0 || index >= Columns[0].Values.Count)
             {
@@ -240,7 +240,7 @@ namespace Syadeu.Database
             }
 
             if (PrimaryKeyPairs.TryGetValue(searchValue, out int index) &&
-                TryReadLine(index, out T foundedTable))
+                TryReadLine(in index, out T foundedTable))
             {
                 table = foundedTable;
                 return true;
@@ -251,7 +251,7 @@ namespace Syadeu.Database
                 return false;
             }
         }
-        public bool TryReadLine<T>(int index, out T table) where T : struct
+        public bool TryReadLine<T>(in int index, out T table) where T : struct
         {
             table = default;
             if (!IsValid() || Columns.Count == 0 || index >= Columns[0].Values.Count)

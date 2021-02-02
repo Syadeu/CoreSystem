@@ -73,13 +73,13 @@ namespace Syadeu.Database
         /// 순서대로 열을 불러옵니다<br/>
         /// <paramref name="line"/>의 키값은 컬럼의 이름이고, 밸류값은 <paramref name="index"/>로 불러온 데이터를 담습니다.<br/><br/>
         /// 비슷한 메소드<br/>
-        /// <seealso cref="TryReadLine{T}(int, out T)"/>: 시스템 비용이 크지만, 데이터 가공이 용이합니다<br/>
+        /// <seealso cref="TryReadLine{T}(in int, out T)"/>: 시스템 비용이 크지만, 데이터 가공이 용이합니다<br/>
         /// <seealso cref="TryReadLineWithPrimary{T}(object, out T)"/>: 시스템 비용이 크지만, 메인 키값으로 불러오며 데이터 가공이 용이합니다
         /// </summary>
         /// <param name="index"></param>
         /// <param name="line"></param>
         /// <returns></returns>
-        bool TryReadLine(int index, out IReadOnlyList<KeyValuePair<string, object>> line);
+        bool TryReadLine(in int index, out IReadOnlyList<KeyValuePair<string, object>> line);
         /// <summary>
         /// 순서대로 열을 불러옵니다<br/>
         /// SQLiteTable Attribute가 선언된 커스텀 구조체에 담아서 반환합니다.<br/>
@@ -93,14 +93,14 @@ namespace Syadeu.Database
         /// <param name="index"></param>
         /// <param name="table"></param>
         /// <returns></returns>
-        bool TryReadLine<T>(int index, out T table) where T : struct;
+        bool TryReadLine<T>(in int index, out T table) where T : struct;
         /// <summary>
         /// 해당 키의 열을 읽어옵니다<br/>
         /// SQLiteTable Attribute가 선언된 커스텀 구조체에 담아서 반환합니다.<br/>
         /// Reflection 사용으로 시스템 비용이 큽니다.<br/><br/>
         /// 비슷한 메소드<br/>
-        /// <seealso cref="TryReadLine{T}(int, out T)"/>: 동작방식 같음, 다만 순서대로 접근<br/>
-        /// <seealso cref="TryReadLine(int, out IReadOnlyList{KeyValuePair{string, object}})"/>: Reflection 미사용으로 접근이 매우 빠름
+        /// <seealso cref="TryReadLine{T}(in int, out T)"/>: 동작방식 같음, 다만 순서대로 접근<br/>
+        /// <seealso cref="TryReadLine(in int, out IReadOnlyList{KeyValuePair{string, object}})"/>: Reflection 미사용으로 접근이 매우 빠름
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="primaryKey"></param>
