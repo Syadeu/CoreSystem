@@ -30,7 +30,7 @@ namespace Syadeu.ECS
         private NavMeshBuildSettings m_NavMeshBuildSettings;
 
         private Dictionary<int, (Entity, NavMeshBuildSource)> m_Obstacles;
-        private List<NavMeshBuildSource> m_Sources = null;
+        private List<NavMeshBuildSource> m_Sources = new List<NavMeshBuildSource>();
         private bool m_IsObstacleChanged;
 
         private NativeQueue<RebakePayload> m_RequireBakeQueue;
@@ -54,11 +54,6 @@ namespace Syadeu.ECS
                     {
                         NavMeshBuildSettings defaultBuildSettings = NavMesh.GetSettingsByID(0);
                         Bounds bounds = Instance.QuantizedBounds();
-
-                        if (Instance.m_Sources == null)
-                        {
-                            Instance.m_Sources = new List<NavMeshBuildSource>();
-                        }
 
                         NavMeshBuilder.UpdateNavMeshDataAsync(Instance.m_NavMesh, defaultBuildSettings, Instance.m_Sources, bounds);
                     });

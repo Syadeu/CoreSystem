@@ -47,7 +47,7 @@ namespace Syadeu.Database
         /// <summary>
         /// 싱글 쿼리용
         /// </summary>
-        private static ConcurrentQueue<string> Queries { get; }
+        private static ConcurrentQueue<(string, SQLiteParameter[])> Queries { get; }
         private static int ExcuteWorker { get; }
         private ConcurrentQueue<bool> VacuumQueries { get; }
         private Dictionary<string, string> m_SafeWritingTables { get; }
@@ -84,7 +84,7 @@ namespace Syadeu.Database
 
         static SQLiteDatabase()
         {
-            Queries = new ConcurrentQueue<string>();
+            Queries = new ConcurrentQueue<(string, SQLiteParameter[])>();
 #if UNITY_EDITOR
             if (!Application.isPlaying)
             {
@@ -355,7 +355,7 @@ namespace Syadeu.Database
                         {
                             while (iter.MoveNext())
                             {
-                                AddQuery(iter.Current);
+                                AddQuery(iter.Current.Item1, iter.Current.Item2);
                             }
                         }
 
@@ -400,7 +400,7 @@ namespace Syadeu.Database
             {
                 while (iter.MoveNext())
                 {
-                    AddQuery(iter.Current);
+                    AddQuery(iter.Current.Item1, iter.Current.Item2);
                 }
             }
             if (LoadInMemory) AddReloadTableQuery("versionInfo");
@@ -716,11 +716,26 @@ namespace Syadeu.Database
             return $"ALTER TABLE {tableName} ADD COLUMN {ConvertColumnInfoToString(column)}";
         }
 
-        private IEnumerator<string> GetInsertDataQuery(SQLiteTable table, int queryBlock = 1000)
+        private string QueryHelper(ref List<SQLiteParameter> parameters, int i, Type t, object value)
+        {
+            if (t == typeof(byte[]))
+            {
+                string temp = $"@item{i}";
+                SQLiteParameter parameter = new SQLiteParameter(temp, System.Data.DbType.Binary);
+                parameter.Value = value as byte[];
+                parameters.Add(parameter);
+                return temp;
+            }
+
+            //parameters.Add(null);
+            return ConvertToString(t, value);
+        }
+        private IEnumerator<(string, SQLiteParameter[])> GetInsertDataQuery(SQLiteTable table, int queryBlock = 1000)
         {
             Assert(table.IsValid, false, "정상적인 데이터 테이블이 아닌게 들어옴");
             if (table.Count == 0) yield break;
 
+            List<SQLiteParameter> parameters = new List<SQLiteParameter>();
             string query = $"INSERT INTO {ConvertTableInfoToString(table, true)} ";
 
             string unions = " VALUES ";
@@ -732,51 +747,70 @@ namespace Syadeu.Database
                     if (!string.IsNullOrEmpty(properties)) properties += ", ";
 
                     Type valueType = table.Columns[a].Type;
-                    properties += ConvertToString(valueType, table.Columns[a].Values[i]);
+                    properties += QueryHelper(ref parameters, i, valueType, table.Columns[a].Values[i]);
+                    //if (valueType == typeof(byte[]))
+                    //{
+                    //    string temp = $"@item{i}";
+                    //    parameters.Add(new SQLiteParameter
+                    //    {
+                    //        DbType = System.Data.DbType.Binary,
+                    //        ParameterName = temp,
+                    //        Value = table.Columns[a].Values[i]
+                    //    });
+                    //    properties += temp;
+                    //}
+                    //else
+                    //{
+                    //    properties += ConvertToString(valueType, table.Columns[a].Values[i]);
+                    //    parameters.Add(null);
+                    //}
                 }
                 unions += $"({properties}),";
 
                 if (i != 0 && i % queryBlock == 0)
                 {
-                    yield return $"{query}{unions.Substring(0, unions.Length - 1)}";
+                    yield return ($"{query}{unions.Substring(0, unions.Length - 1)}", parameters.ToArray());
+                    parameters.Clear();
                     unions = " VALUES ";
                 }
             }
             if (!string.IsNullOrEmpty(unions))
             {
-                yield return $"{query}{unions.Substring(0, unions.Length - 1)}";
+                yield return ($"{query}{unions.Substring(0, unions.Length - 1)}", parameters.ToArray());
             }
         }
-        private IEnumerator<string> GetReplaceTableQuery(SQLiteTable table, string into, int queryBlock = 1000)
+        private IEnumerator<(string, SQLiteParameter[])> GetReplaceTableQuery(SQLiteTable table, string into, int queryBlock = 1000)
         {
             Assert(table.IsValid, false, "정상적인 데이터 테이블이 아닌게 들어옴");
 
             if (TryGetTable(into, out SQLiteTable current))
             {
                 string drop = $"DROP TABLE {into}";
-                yield return drop;
+                yield return (drop, null);
             }
             else current = table;
 
-            yield return GetCreateTableQuery(current);
+            yield return (GetCreateTableQuery(current), null);
 
             //if (table.Count == 0) yield break;
 
             if (table.Count != 0)
             {
-                var iter = GetInsertDataQuery(table, queryBlock);
-                while (iter.MoveNext())
+                using (var iter = GetInsertDataQuery(table, queryBlock))
                 {
-                    yield return iter.Current;
+                    while (iter.MoveNext())
+                    {
+                        yield return iter.Current;
+                    }
                 }
-                iter.Dispose();
             }
         }
-        private IEnumerator<string> GetUpdateTableQuery(SQLiteTable table, int queryBlock = 100)
+        private IEnumerator<(string, SQLiteParameter[])> GetUpdateTableQuery(SQLiteTable table, int queryBlock = 100)
         {
             Assert(table.IsValid, false, "정상적인 데이터 테이블이 아닌게 들어옴");
             if (table.Count == 0) yield break;
 
+            List<SQLiteParameter> parameters = new List<SQLiteParameter>();
             string query = $"INSERT OR REPLACE INTO {ConvertTableInfoToString(table, true)} ";
 
             string unions = " VALUES ";
@@ -788,19 +822,21 @@ namespace Syadeu.Database
                     if (!string.IsNullOrEmpty(properties)) properties += ", ";
 
                     Type valueType = table.Columns[a].Type;
-                    properties += ConvertToString(valueType, table.Columns[a].Values[i]);
+                    properties += QueryHelper(ref parameters, i, valueType, table.Columns[a].Values[i]);
+                    //properties += ConvertToString(valueType, table.Columns[a].Values[i]);
                 }
                 unions += $"({properties}),";
 
                 if (i != 0 && i % queryBlock == 0)
                 {
-                    yield return $"{query}{unions.Substring(0, unions.Length - 1)}";
+                    yield return ($"{query}{unions.Substring(0, unions.Length - 1)}", parameters.ToArray());
+                    parameters.Clear();
                     unions = " VALUES ";
                 }
             }
             if (!string.IsNullOrEmpty(unions))
             {
-                yield return $"{query}{unions.Substring(0, unions.Length - 1)}";
+                yield return ($"{query}{unions.Substring(0, unions.Length - 1)}", parameters.ToArray());
             }
         }
         private IEnumerator<string> GetRemoveRowsQuery<TValue>(string name, string keyName, IList<TValue> values, int queryBlock = 100)
@@ -847,7 +883,7 @@ namespace Syadeu.Database
             {
                 while (iter.MoveNext())
                 {
-                    AddQuery(iter.Current);
+                    AddQuery(iter.Current.Item1, iter.Current.Item2);
                 }
             }
         }
@@ -864,7 +900,7 @@ namespace Syadeu.Database
             {
                 while (iter.MoveNext())
                 {
-                    AddQuery(iter.Current);
+                    AddQuery(iter.Current.Item1, iter.Current.Item2);
                 }
             }
         }
@@ -874,7 +910,7 @@ namespace Syadeu.Database
             {
                 while (iter.MoveNext())
                 {
-                    AddQuery(iter.Current);
+                    AddQuery(iter.Current.Item1, iter.Current.Item2);
                 }
             }
         }
@@ -920,24 +956,28 @@ namespace Syadeu.Database
                     {
                         if (!Queries.TryDequeue(out var query)) continue;
 
-                        if (query.StartsWith("reload:"))
+                        if (query.Item1.StartsWith("reload:"))
                         {
-                            query = query.Replace("reload:", "");
+                            query.Item1 = query.Item1.Replace("reload:", "");
 
-                            if (query == "master")
+                            if (query.Item1 == "master")
                             {
                                 InternalLoadTables();
                             }
-                            else InternalLoadTable(query);
+                            else InternalLoadTable(query.Item1);
                         }
                         else
                         {
-                            OnExcute?.Invoke(query);
-                            
+                            OnExcute?.Invoke(query.Item1);
+                            cmd.Parameters.Clear();
                             try
                             {
-                                $"SQLite 통신 중: {query}".ToLog();
-                                cmd.CommandText = query;
+                                $"SQLite 통신 중: {query.Item1}".ToLog();
+                                cmd.CommandText = query.Item1;
+                                if (query.Item2 != null)
+                                {
+                                    cmd.Parameters.AddRange(query.Item2);
+                                }
                                 cmd.ExecuteNonQuery();
                             }
                             catch (Exception ex)
@@ -1842,10 +1882,10 @@ namespace Syadeu.Database
         /// <see cref="SQLiteDatabase"/> 통신을 위한 쿼리문을 추가합니다
         /// </summary>
         /// <param name="query"></param>
-        public void AddQuery(string query)
+        public void AddQuery(string query, SQLiteParameter[] parameters = null)
         {
             //var job = new SQLiteQueryJob(query);
-            Queries.Enqueue(query);
+            Queries.Enqueue((query, parameters));
             //return job;
         }
 
@@ -1922,11 +1962,18 @@ namespace Syadeu.Database
             string sum = null;
             if (objType.IsArray)
             {
-                if (objType == typeof(byte[]))
-                {
-                    sum += obj.ToString();
-                }
-                else
+                //if (objType == typeof(byte[]))
+                //{
+                //    if (obj.GetType() != typeof(byte[])) throw new InvalidOperationException("byte[] 타입이 아님");
+
+                //    byte[] bytes = obj as byte[];
+
+                //    SQLiteBlob temp = new SQLiteBlob();
+                //    temp.Write(bytes, bytes.Length, )
+
+                //    sum += Convert.ToBase64String();
+                //}
+                //else
                 {
                     //string temp = SQLiteDatabaseUtils.ParseArray(obj as ICollection);
                     string temp = SQLiteDatabaseUtils.ParseArrayToSQL(obj as IList);
@@ -1962,14 +2009,14 @@ namespace Syadeu.Database
         {
             string properties = $"{column.Name}";
             string t;
-            if (column.Type == typeof(string) || column.Type == typeof(Vector3) ||
+            if (column.Type == typeof(byte[]) || column.Type == typeof(SQLiteBlob))
+            {
+                t = "BLOB";
+            }
+            else if (column.Type == typeof(string) || column.Type == typeof(Vector3) ||
                 column.Type.IsArray || column.Type.GenericTypeArguments.Length > 0)
             {
                 t = "TEXT";
-            }
-            else if (column.Type == typeof(byte[]) || column.Type == typeof(SQLiteBlob))
-            {
-                t = "BLOB";
             }
             else if (column.Type == typeof(double) || column.Type == typeof(float) ||
                 column.Type == typeof(decimal))
