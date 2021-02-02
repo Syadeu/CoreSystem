@@ -304,7 +304,15 @@ namespace Syadeu.Database
             }
             else if (t == typeof(bool))
             {
-                rtrn = int.Parse(tx) == 1;
+                if (obj.GetType() == typeof(bool))
+                {
+                    rtrn = bool.Parse(tx);
+                }
+                else if (obj.GetType() == typeof(int)) rtrn = int.Parse(tx) == 1;
+                else
+                {
+                    throw new InvalidOperationException($"{tx}는 bool 로 변환될 수 없음");
+                }
             }
             else if (t == typeof(decimal))
             {
