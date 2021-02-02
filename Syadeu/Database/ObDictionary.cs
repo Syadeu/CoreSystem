@@ -18,11 +18,11 @@ namespace Syadeu.Database
                 {
 #if UNITY_EDITOR
                     throw new CoreSystemException(CoreSystemExceptionFlag.Database, 
-                        $"ObDictionary<{typeof(TKey).Name}, {typeof(TValue)}> 에서" +
+                        $"ObDictionary<{typeof(TKey).Name}, {typeof(TValue).Name}> 에서" +
                         $"{key} 값이 존재하지 않음");
 #else
                     CoreSystemException.SendCrash(CoreSystemExceptionFlag.Background,
-                        $"ObDictionary<{typeof(TKey).Name}, {typeof(TValue)}> 에서" +
+                        $"ObDictionary<{typeof(TKey).Name}, {typeof(TValue).Name}> 에서" +
                         $"{key} 값이 존재하지 않음", null);
 #endif
                 }
@@ -34,11 +34,11 @@ namespace Syadeu.Database
                 {
 #if UNITY_EDITOR
                     throw new CoreSystemException(CoreSystemExceptionFlag.Database, 
-                        $"ObDictionary<{typeof(TKey).Name}, {typeof(TValue)}> 에서" +
+                        $"ObDictionary<{typeof(TKey).Name}, {typeof(TValue).Name}> 에서" +
                         $"{key} 값이 존재하지 않음");
 #else
                     CoreSystemException.SendCrash(CoreSystemExceptionFlag.Background,
-                        $"ObDictionary<{typeof(TKey).Name}, {typeof(TValue)}> 에서" +
+                        $"ObDictionary<{typeof(TKey).Name}, {typeof(TValue).Name}> 에서" +
                         $"{key} 값이 존재하지 않음", null);
 #endif
                 }
