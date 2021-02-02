@@ -48,6 +48,7 @@ namespace Syadeu
                         ins = obj.AddComponent<T>();
                     }
 
+                    ins.transform.position = Vector3.zero;
 #if UNITY_EDITOR
                     if (!string.IsNullOrEmpty(ins.DisplayName))
                     {

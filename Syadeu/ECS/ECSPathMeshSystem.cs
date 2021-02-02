@@ -5,8 +5,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 
-#if UNITY_JOBS && UNITY_MATH && UNITY_BURST && UNITY_COLLECTION
-
 using Unity.Jobs;
 using Unity.Burst;
 using Unity.Mathematics;
@@ -22,7 +20,7 @@ namespace Syadeu.ECS
     public class ECSPathMeshSystem : ECSManagerEntity<ECSPathMeshSystem>
     {
         public float3 Center = new float3(0, 0, 0);
-        public float3 Size = new float3(1000, 20, 1000);
+        public float3 Size = new float3(100, 20, 100);
 
         private EntityArchetype m_BaseArchetype;
         private EntityQuery m_BaseQuery;
@@ -31,15 +29,66 @@ namespace Syadeu.ECS
         private NavMeshDataInstance m_NavMeshData;
         private NavMeshBuildSettings m_NavMeshBuildSettings;
 
-        private Dictionary<int, NavMeshBuildSource> m_Obstacles;
+        private Dictionary<int, (Entity, NavMeshBuildSource)> m_Obstacles;
+        private List<NavMeshBuildSource> m_Sources = new List<NavMeshBuildSource>();
         private bool m_IsObstacleChanged;
 
         private NativeQueue<RebakePayload> m_RequireBakeQueue;
-        
+
         private struct RebakePayload
         {
             public Entity entity;
             public ECSPathObstacle obstacle;
+        }
+
+        public static void UpdatePosition(Vector3 center, Vector3 size)
+        {
+            CoreSystem.AddBackgroundJob(() =>
+            {
+                if (!Quantize(center, 0.1f * size).Equals(Quantize(Instance.Center, 0.1f * Instance.Size)))
+                {
+                    Instance.Center = center;
+                    Instance.Size = size;
+
+                    CoreSystem.AddForegroundJob(() =>
+                    {
+                        NavMeshBuildSettings defaultBuildSettings = NavMesh.GetSettingsByID(0);
+                        Bounds bounds = Instance.QuantizedBounds();
+
+                        NavMeshBuilder.UpdateNavMeshDataAsync(Instance.m_NavMesh, defaultBuildSettings, Instance.m_Sources, bounds);
+                    });
+                }
+            });
+            
+
+            //Instance.Center = center;
+            //Instance.Size = size;
+
+
+            //CoreSystem.AddBackgroundJob(Instance.workerIdx, () =>
+            //{
+            //    NavMeshBuildSettings defaultBuildSettings = NavMesh.GetSettingsByID(0);
+            //    Bounds bounds = Instance.QuantizedBounds();
+
+            //    if (Instance.m_Sources == null)
+            //    {
+            //        Instance.m_Sources = new List<NavMeshBuildSource>();
+            //    }
+
+            //    NavMeshBuilder.UpdateNavMeshDataAsync(Instance.m_NavMesh, defaultBuildSettings, Instance.m_Sources, bounds);
+            //}, out var job);
+
+            
+
+            //NavMeshBuildSettings defaultBuildSettings = NavMesh.GetSettingsByID(0);
+            //Bounds bounds = Instance.QuantizedBounds();
+
+            //if (Instance.m_Sources == null)
+            //{
+            //    Instance.m_Sources = new List<NavMeshBuildSource>();
+            //}
+
+            //NavMeshBuilder.UpdateNavMeshDataAsync(Instance.m_NavMesh, defaultBuildSettings, Instance.m_Sources, bounds);
         }
 
         public static NavMeshLinkInstance AddLink(Vector3 from, Vector3 to, int agentTypeID, int areaMask, bool bidirectional, int cost = 1, float width = -1)
@@ -94,24 +143,28 @@ namespace Syadeu.ECS
             }
             else throw new CoreSystemException(CoreSystemExceptionFlag.ECS, "NavMesh Obstacle 지정은 MeshFilter 혹은 Terrain만 가능합니다");
 
+#if UNITY_EDITOR
             Instance.EntityManager.SetName(entity, obj.name);
+#endif
             Instance.EntityManager.SetComponentData(entity, new ECSPathObstacle
             {
                 id = id,
                 type = type
             });
 
-            Instance.m_Obstacles.Add(id, source);
+            Instance.m_Obstacles.Add(id, (entity, source));
             Instance.m_IsObstacleChanged = true;
 
             return id;
         }
         public static void RemoveObstacle(int id)
         {
+            var col = Instance.m_Obstacles[id];
+
             Instance.m_Obstacles.Remove(id);
             Instance.m_IsObstacleChanged = true;
 
-            ECSCopyTransformFromMonoSystem.RemoveUpdate(id);
+            ECSCopyTransformFromMonoSystem.RemoveUpdate(col.Item1);
         }
 
         protected override void OnCreate()
@@ -127,7 +180,7 @@ namespace Syadeu.ECS
             m_NavMeshData = NavMesh.AddNavMeshData(m_NavMesh);
             m_NavMeshBuildSettings = NavMesh.GetSettingsByID(0);
 
-            m_Obstacles = new Dictionary<int, NavMeshBuildSource>();
+            m_Obstacles = new Dictionary<int, (Entity, NavMeshBuildSource)>();
             m_IsObstacleChanged = true;
 
             m_RequireBakeQueue = new NativeQueue<RebakePayload>(Allocator.Persistent);
@@ -142,17 +195,29 @@ namespace Syadeu.ECS
         }
         protected override void OnUpdate()
         {
-            if (m_IsObstacleChanged)
-            {
-                NavMeshBuildSettings defaultBuildSettings = NavMesh.GetSettingsByID(0);
-                Bounds bounds = QuantizedBounds();
-                List<NavMeshBuildSource> sources = m_Obstacles.Values.ToList();
+            NavMeshBuildSettings defaultBuildSettings;
+            Job
+                .WithoutBurst()
+                .WithCode(() =>
+                {
+                    if (m_IsObstacleChanged)
+                    {
+                        defaultBuildSettings = NavMesh.GetSettingsByID(0);
+                        Bounds bounds = QuantizedBounds();
+                        m_Sources.Clear();
+                        foreach (var item in m_Obstacles.Values)
+                        {
+                            m_Sources.Add(item.Item2);
+                        }
+                        //m_Sources = m_Obstacles.Values.ToList();
 
-                NavMeshBuilder.UpdateNavMeshDataAsync(m_NavMesh, defaultBuildSettings, sources, bounds);
+                        NavMeshBuilder.UpdateNavMeshDataAsync(m_NavMesh, defaultBuildSettings, m_Sources, bounds);
 
-                ECSPathQuerySystem.Purge();
-                m_IsObstacleChanged = false;
-            }
+                        ECSPathQuerySystem.Purge();
+                        m_IsObstacleChanged = false;
+                    }
+                })
+                .Run();
 
             var requireBakeQueue = m_RequireBakeQueue;
             var requireBakeQueuePara = m_RequireBakeQueue.AsParallelWriter();
@@ -182,10 +247,10 @@ namespace Syadeu.ECS
                         switch (payload.obstacle.type)
                         {
                             case PathObstacleType.Mesh:
-                                temp.transform = tr.localToWorldMatrix;
+                                temp.Item2.transform = tr.localToWorldMatrix;
                                 break;
                             case PathObstacleType.Terrain:
-                                temp.transform = Matrix4x4.TRS(tr.transform.position, Quaternion.identity, Vector3.one);
+                                temp.Item2.transform = Matrix4x4.TRS(tr.transform.position, Quaternion.identity, Vector3.one);
                                 break;
                             default:
                                 break;
@@ -214,5 +279,3 @@ namespace Syadeu.ECS
 
     }
 }
-
-#endif

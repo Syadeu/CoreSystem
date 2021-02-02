@@ -39,7 +39,7 @@ namespace Syadeu
 #if UNITY_EDITOR
                     if (!Directory.Exists($"Assets/Resources/{path}"))
                     {
-                        Directory.CreateDirectory("Assets/Resources/{path}");
+                        Directory.CreateDirectory($"Assets/Resources/{path}");
                     }
 #endif
 

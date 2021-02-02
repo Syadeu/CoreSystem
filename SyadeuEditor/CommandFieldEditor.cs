@@ -42,15 +42,15 @@ namespace SyadeuEditor
 
         private void Arguments()
         {
-            m_Field.m_Field = EditorGUILayout.TextField("변수 명령어: ", m_Field.m_Field);
+            m_Field.m_Field = EditorGUILayout.TextField("Field Command: ", m_Field.m_Field);
             EditorGUILayout.Space();
 
-            EditorGUILayout.HelpBox("추후 추가되는 기능입니다. 현재는 아무런 기능을 하지 않습니다.", MessageType.Info);
+            //EditorGUILayout.HelpBox("추후 추가되는 기능입니다. 현재는 아무런 기능을 하지 않습니다.", MessageType.Info);
             m_Field.m_Type = (CommandInputType)EditorGUILayout.EnumFlagsField("인풋 타입: ", m_Field.m_Type);
 
             EditorUtils.SectorLine();
-            EditorGUILayout.PropertyField(m_Args, new GUIContent("명령 변수"));
-            EditorGUILayout.HelpBox("이 변수로 실행할 수 있는 변수들입니다", MessageType.Info);
+            EditorGUILayout.PropertyField(m_Args, new GUIContent("Command Arguments"));
+            //EditorGUILayout.HelpBox("이 변수로 실행할 수 있는 변수들입니다", MessageType.Info);
 
             serializedObject.ApplyModifiedProperties();
         }

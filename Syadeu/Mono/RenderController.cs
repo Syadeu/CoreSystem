@@ -113,7 +113,7 @@ namespace Syadeu.Mono
 
                     if (!Listed)
                     {
-                        mgr.AddRenderControl(this);
+                        //mgr.AddRenderControl(this);
 
                         CoreSystem.AddForegroundJob(InvokeOnVisible);
                         Listed = true;

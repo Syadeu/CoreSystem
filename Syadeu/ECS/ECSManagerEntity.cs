@@ -1,6 +1,4 @@
 using System.Collections;
-
-using UnityEngine;
 using UnityEngine.AI;
 using System.Net;
 using System.Collections.Concurrent;
@@ -10,18 +8,13 @@ using UnityEngine.Jobs;
 using System.Collections.Generic;
 using System;
 
-#if UNITY_JOBS && UNITY_MATH && UNITY_BURST && UNITY_COLLECTION && UNITY_ENTITIES
-
 using Unity.Burst;
-using Unity.Mathematics;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Transforms;
 
 namespace Syadeu.ECS
 {
-    [UpdateAfter(typeof(ECSCopyTransformFromMonoSystem))]
-    public class ECSPathSystemGroup : ComponentSystemGroup { }
     public abstract class ECSManagerEntity<T> : SystemBase
         where T : SystemBase
     {
@@ -45,96 +38,42 @@ namespace Syadeu.ECS
             => EntityManager.AddComponentData(entity, component);
     }
 
-    public enum PathStatus
-    {
-        Idle = 0,
-        
-        PathQueued = 1 << 0,
+    //public struct ManagedObjectRef<T> where T : class
+    //{
+    //    public readonly ulong Id;
 
-        PathFound = 1 << 1,
-        Failed = 1 << 2,
-        //Paused = 1 << 2,
+    //    public ManagedObjectRef(ulong id)
+    //    {
+    //        Id = id;
+    //    }
+    //}
+    //public class ManagedObjectWorld<T> where T : class
+    //{
+    //    private ulong m_NextId;
+    //    private readonly Dictionary<ulong, T> m_Objects;
 
-        //ExceedDistance = 1 << 4
-    }
-    public enum PathObstacleType
-    {
-        None, 
-        
-        Mesh,
-        Terrain,
-    }
-    public struct ECSPathObstacle : IComponentData
-    {
-        public int id;
-        public PathObstacleType type;
-    }
-    public struct ECSPathFinder : IComponentData
-    {
-        public int id;
-        public int agentTypeId;
-        public float maxDistance;
-    }
-    public struct ECSPathQuery : IComponentData
-    {
-        public int pathKey;
-        public PathStatus status;
+    //    public ManagedObjectWorld(int initialCapacity = 1000)
+    //    {
+    //        m_NextId = 1;
+    //        m_Objects = new Dictionary<ulong, T>(initialCapacity);
+    //    }
 
-        public int areaMask;
-        
-        public float3 to;
-        public float totalDistance;
-    }
-    public struct ECSPathBuffer : IBufferElementData
-    {
-        public float3 position;
+    //    public ManagedObjectRef<T> Add(T obj)
+    //    {
+    //        ulong id = m_NextId;
+    //        m_NextId++;
+    //        m_Objects[id] = obj;
+    //        return new ManagedObjectRef<T>(id);
+    //    }
 
-        public static implicit operator float3(ECSPathBuffer e)
-            => e.position;
-        public static implicit operator ECSPathBuffer(float3 e)
-            => new ECSPathBuffer { position = e };
-        public static implicit operator ECSPathBuffer(Vector3 e)
-            => new ECSPathBuffer { position = e };
-    }
+    //    public T Get(ManagedObjectRef<T> objRef)
+    //    {
+    //        return m_Objects[objRef.Id];
+    //    }
 
-    public struct ManagedObjectRef<T> where T : class
-    {
-        public readonly ulong Id;
-
-        public ManagedObjectRef(ulong id)
-        {
-            Id = id;
-        }
-    }
-    public class ManagedObjectWorld<T> where T : class
-    {
-        private ulong m_NextId;
-        private readonly Dictionary<ulong, T> m_Objects;
-
-        public ManagedObjectWorld(int initialCapacity = 1000)
-        {
-            m_NextId = 1;
-            m_Objects = new Dictionary<ulong, T>(initialCapacity);
-        }
-
-        public ManagedObjectRef<T> Add(T obj)
-        {
-            ulong id = m_NextId;
-            m_NextId++;
-            m_Objects[id] = obj;
-            return new ManagedObjectRef<T>(id);
-        }
-
-        public T Get(ManagedObjectRef<T> objRef)
-        {
-            return m_Objects[objRef.Id];
-        }
-
-        public void Remove(ManagedObjectRef<T> objRef)
-        {
-            m_Objects.Remove(objRef.Id);
-        }
-    }
+    //    public void Remove(ManagedObjectRef<T> objRef)
+    //    {
+    //        m_Objects.Remove(objRef.Id);
+    //    }
+    //}
 }
-
-#endif

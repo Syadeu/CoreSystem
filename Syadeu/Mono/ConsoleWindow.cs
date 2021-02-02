@@ -34,9 +34,9 @@ namespace Syadeu.Mono
         private CommandField CurrentCommand { get; set; }
         private string LastCommand { get; set; } = null;
 
-        GUIStyle m_ConsoleLogStyle;
-        GUIStyle m_ConsoleTextStyle;
-        GUIStyle m_ConsolePossStyle;
+        GUIStyle m_ConsoleLogStyle = null;
+        GUIStyle m_ConsoleTextStyle = null;
+        GUIStyle m_ConsolePossStyle = null;
         string m_ConsoleLog = "";
         string m_ConsoleText = "";
         Rect m_ConsoleRect = new Rect(0, 0, Screen.width, Screen.height * 0.5f);
@@ -54,34 +54,6 @@ namespace Syadeu.Mono
         }
         public override void OnInitialize()
         {
-            Texture2D windowTexture = new Texture2D(1, 1);
-            windowTexture.SetPixel(1, 1, new Color(1, 1, 1, .25f));
-            windowTexture.Apply();
-
-            m_ConsoleLogStyle = new GUIStyle("Box")
-            {
-                richText = true,
-                alignment = TextAnchor.UpperLeft,
-                fontSize = SyadeuSettings.Instance.m_ConsoleFontSize,
-
-                fixedWidth = Screen.width * .983f
-            };
-            m_ConsoleLogStyle.normal.background = windowTexture;
-            m_ConsoleLogStyle.normal.textColor = Color.white;
-            m_ConsoleTextStyle = new GUIStyle("Box")
-            {
-                alignment = TextAnchor.MiddleLeft,
-                padding = new RectOffset(3, 0, 0, 0),
-                fontSize = SyadeuSettings.Instance.m_ConsoleFontSize
-            };
-            m_ConsoleTextStyle.normal.textColor = new Color(.1f, .8f, .1f);
-            m_ConsolePossStyle = new GUIStyle("Label")
-            {
-                richText = true,
-                fontSize = SyadeuSettings.Instance.m_ConsoleFontSize
-            };
-            m_ConsolePossStyle.normal.textColor = Color.white;
-
             m_ConsoleTextRect = new Rect(m_ConsoleRect.x, m_ConsoleRect.y + m_ConsoleRect.height, Screen.width, 23);
             m_PossibleRect = new Rect(Screen.width * 0.65f, m_ConsoleRect.height * 0.6f, Screen.width * 0.35f, m_ConsoleRect.height * 0.4f);
 
@@ -180,6 +152,42 @@ namespace Syadeu.Mono
         }
         private void OnGUI()
         {
+            if (m_ConsoleLogStyle == null)
+            {
+                Texture2D windowTexture = new Texture2D(1, 1);
+                windowTexture.SetPixel(1, 1, new Color(1, 1, 1, .25f));
+                windowTexture.Apply();
+                m_ConsoleLogStyle = new GUIStyle("Box")
+                {
+                    richText = true,
+                    alignment = TextAnchor.UpperLeft,
+                    fontSize = SyadeuSettings.Instance.m_ConsoleFontSize,
+
+                    fixedWidth = Screen.width * .983f
+                };
+                m_ConsoleLogStyle.normal.background = windowTexture;
+                m_ConsoleLogStyle.normal.textColor = Color.white;
+            }
+            if (m_ConsoleTextStyle == null)
+            {
+                m_ConsoleTextStyle = new GUIStyle("Box")
+                {
+                    alignment = TextAnchor.MiddleLeft,
+                    padding = new RectOffset(3, 0, 0, 0),
+                    fontSize = SyadeuSettings.Instance.m_ConsoleFontSize
+                };
+                m_ConsoleTextStyle.normal.textColor = new Color(.1f, .8f, .1f);
+            }
+            if (m_ConsolePossStyle == null)
+            {
+                m_ConsolePossStyle = new GUIStyle("Label")
+                {
+                    richText = true,
+                    fontSize = SyadeuSettings.Instance.m_ConsoleFontSize
+                };
+                m_ConsolePossStyle.normal.textColor = Color.white;
+            }
+
             if (!SyadeuSettings.Instance.m_UseConsole) return;
             if (SyadeuSettings.Instance.m_UseOnlyDevelopmentBuild)
             {
