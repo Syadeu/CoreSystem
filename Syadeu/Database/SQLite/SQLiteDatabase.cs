@@ -481,7 +481,7 @@ namespace Syadeu.Database
                                 {
                                     if (sqColumns[a].Type == typeof(byte[]))
                                     {
-                                        sqColumns[a].Values.Add(GetBytes(rdr));
+                                        sqColumns[a].Values.Add(GetBytes(rdr, a));
                                     }
                                     else sqColumns[a].Values.Add(rdr.GetValue(a));
                                 }
@@ -513,7 +513,7 @@ namespace Syadeu.Database
 
             $"SQLite Database: All Tables Fully Loaded".ToLog();
         }
-        private static byte[] GetBytes(SQLiteDataReader rdr)
+        private static byte[] GetBytes(SQLiteDataReader rdr, int i)
         {
             const int CHUNK_SIZE = 2 * 1024;
             byte[] buffer = new byte[CHUNK_SIZE];
@@ -521,7 +521,7 @@ namespace Syadeu.Database
             long fieldOffset = 0;
             using (MemoryStream stream = new MemoryStream())
             {
-                while ((bytesRead = rdr.GetBytes(0, fieldOffset, buffer, 0, buffer.Length)) > 0)
+                while ((bytesRead = rdr.GetBytes(i, fieldOffset, buffer, 0, buffer.Length)) > 0)
                 {
                     stream.Write(buffer, 0, (int)bytesRead);
                     fieldOffset += bytesRead;
@@ -586,6 +586,7 @@ namespace Syadeu.Database
                             columns.Add(rdr.GetName(a));
                             Type t = rdr.GetFieldType(a);
                             if (t == typeof(double)) t = typeof(float);
+                            else if (t == typeof(SQLiteBlob)) t = typeof(byte[]);
                             columnTypes.Add(t);
 
                             SQLiteColumn column =
@@ -598,7 +599,11 @@ namespace Syadeu.Database
                         {
                             for (int a = 0; a < sqColumns.Count; a++)
                             {
-                                sqColumns[a].Values.Add(rdr.GetValue(a));
+                                if (sqColumns[a].Type == typeof(byte[]))
+                                {
+                                    sqColumns[a].Values.Add(GetBytes(rdr, a));
+                                }
+                                else sqColumns[a].Values.Add(rdr.GetValue(a));
                             }
                         }
                     }
@@ -629,7 +634,11 @@ namespace Syadeu.Database
                         {
                             for (int a = 0; a < columnCount; a++)
                             {
-                                table.Columns[a].Values[row] = rdr.GetValue(a);
+                                if (table.Columns[a].Type == typeof(byte[]))
+                                {
+                                    table.Columns[a].Values[row] = GetBytes(rdr, a);
+                                }
+                                else table.Columns[a].Values[row] = rdr.GetValue(a);
                             }
                             row++;
                         }
