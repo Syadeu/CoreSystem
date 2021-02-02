@@ -976,7 +976,8 @@ namespace Syadeu.Database
                             {
                                 $"SQLite 통신 중: {query.Item1}".ToLog();
                                 cmd.CommandText = query.Item1;
-                                if (query.Item2 != null)
+                                if (query.Item2 != null &&
+                                    query.Item2.Length > 0)
                                 {
                                     cmd.Parameters.AddRange(query.Item2);
                                 }
