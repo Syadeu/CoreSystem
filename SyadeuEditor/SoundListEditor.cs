@@ -21,6 +21,8 @@ namespace SyadeuEditor
         private List<bool[]> showAudioClipsList;
         private bool[] showChangeIndex;
 
+        private bool m_ShowOriginalContents = false;
+
         private void OnEnable()
         {
             SoundList = target as SoundList;
@@ -284,6 +286,9 @@ namespace SyadeuEditor
             {
                 EditorGUILayout.HelpBox(warnning, MessageType.Error, true);
             }
+
+            m_ShowOriginalContents = EditorUtils.Foldout(m_ShowOriginalContents, "Original Contents");
+            if (m_ShowOriginalContents) base.OnInspectorGUI();
         }
 
         void EventClips(SoundList.FInput sound, int count)
@@ -300,8 +305,8 @@ namespace SyadeuEditor
             #region FMOD Event generals
 
             var ev = serializedObject.FindProperty($"fSounds.Array.data[{count}].eventClips.Array.data[{0}].Event");
-            if (ev == null) UnityEngine.Debug.Log("asdasd");
-            else EditorGUILayout.PropertyField(ev, new GUIContent("Event"));
+            if (ev != null) EditorGUILayout.PropertyField(ev, new GUIContent("Event"));
+            
             FMODUnity.EditorEventRef editorEvent = FMODUnity.EventManager.EventFromPath(sound.eventClips[0].Event);
 
             if (editorEvent != null)
@@ -400,7 +405,7 @@ namespace SyadeuEditor
             sound.eventClips[0].type = EditorGUILayout.IntField(label: "종류 :", sound.eventClips[0].type);
         }
 
-        [InitializeOnLoadMethod]
+        //[InitializeOnLoadMethod]
         bool CheckDataLegit(out string warnning)
         {
             warnning = null;
@@ -423,6 +428,9 @@ namespace SyadeuEditor
 
             for (int i = 0; i < SoundList.fSounds.Count; i++)
             {
+                if (SoundList.fSounds[i].eventClips == null ||
+                    SoundList.fSounds[i].eventClips.Count == 0) continue;
+
                 if (FMODUnity.EventManager.EventFromPath(SoundList.fSounds[i].eventClips[0].Event) == null)
                 {
                     warnning += $"{SoundList.fSounds[i].index}: 이벤트가 존재하지않음\n";
