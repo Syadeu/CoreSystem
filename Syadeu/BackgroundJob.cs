@@ -36,7 +36,7 @@ namespace Syadeu
         internal Exception Exception { get; set; }
         internal string CalledFrom { get; set; } = null;
         public Action Action { get; set; }
-        public IJob MainJob { get; set; }
+        public IJob MainJob { get; internal set; }
 
         internal int WorkerIndex = -1;
         internal List<IJob> ConnectedJobs;
