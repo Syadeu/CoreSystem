@@ -71,7 +71,7 @@ namespace Syadeu.Database
             return null;
         }
 
-        public static List<MemberInfo> GetMembers(Type t)
+        public static List<MemberInfo> GetMembers(in Type t)
         {
             if (t == null) return null;
 
@@ -96,7 +96,7 @@ namespace Syadeu.Database
             }
             return temp;
         }
-        private static List<MemberInfo> SortMembers(MemberInfo[] membersInfo)
+        private static List<MemberInfo> SortMembers(in MemberInfo[] membersInfo)
         {
             List<MemberInfo> members = new List<MemberInfo>();
             for (int i = 0; i < membersInfo.Length; i++)
@@ -218,7 +218,7 @@ namespace Syadeu.Database
             }
             return list;
         }
-        public static string ParseArrayToSQL(IList array)
+        public static string ParseArrayToSQL(in IList array)
         {
             if (array == null || array.Count == 0) return string.Empty;
 
@@ -243,7 +243,7 @@ namespace Syadeu.Database
         /// <param name="t"></param>
         /// <param name="obj"></param>
         /// <returns></returns>
-        public static object ConvertSQL(Type t, object obj)
+        public static object ConvertSQL(in Type t, in object obj)
         {
             if (obj == null)
             {
@@ -374,7 +374,7 @@ namespace Syadeu.Database
             }
             return rtrn;
         }
-        public static T ConvertSQL<T>(object obj)
+        public static T ConvertSQL<T>(in object obj)
             => (T)ConvertSQL(typeof(T), obj);
 
         /// <summary>

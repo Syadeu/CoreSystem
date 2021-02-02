@@ -49,9 +49,16 @@ namespace Syadeu.ECS
         }
         internal static void RemoveUpdate(Entity entity)
         {
-            if (!Instance.EntityManager.HasComponent<ECSTransformFromMono>(entity)) return;
-
-            var tr = Instance.EntityManager.GetComponentData<ECSTransformFromMono>(entity);
+            ECSTransformFromMono tr;
+            try
+            {
+                tr = Instance.EntityManager.GetComponentData<ECSTransformFromMono>(entity);
+            }
+            catch (System.InvalidOperationException)
+            {
+                return;
+            }
+            
             Instance.m_Transforms.Remove(tr.id);
 
             Instance.EntityManager.DestroyEntity(entity);

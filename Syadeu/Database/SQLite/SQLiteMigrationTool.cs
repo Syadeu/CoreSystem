@@ -393,10 +393,10 @@ namespace Syadeu.Database
 
             if (removeColumnList.Count > 0)
             {
-                string firstName = removeColumnList[0];
-                removeColumnList.RemoveAt(0);
+                //string firstName = removeColumnList[0];
+                //removeColumnList.RemoveAt(0);
 
-                database.DeleteColumn(tableName, firstName, removeColumnList.ToArray()).Await();
+                database.DeleteColumn(tableName, removeColumnList.ToArray()).Await();
                 //while (!job.IsDone)
                 //{
                 //    //"waitting 1".ToLog();

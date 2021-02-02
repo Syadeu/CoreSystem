@@ -19,7 +19,7 @@ namespace Syadeu.Database
     /// </summary>
     /// <remarks>
     /// 
-    /// 데이터베이스를 불러올려면 <see cref="Initialize(string, string, string)"/>으로 데이터베이스 구조체를 생성해야합니다.<br/>
+    /// 데이터베이스를 불러올려면 <see cref="Initialize(string, string, bool)"/>으로 데이터베이스 구조체를 생성해야합니다.<br/>
     /// <see cref="BackgroundJob"/>을 반환하는 모든 작업은 호출된 순서에 의해 순차적으로 수행되며, 
     /// 이 작업이 수행되는 동안 <see cref="SearchTable(string, string, object)"/>과 같이
     /// 데이터베이스에 직접 연결하여 불러오는 메소드들은 피해야됩니다. 이를 안전하게 사용하려면
@@ -36,7 +36,7 @@ namespace Syadeu.Database
     /// 쉽고 간편하게 데이터 재가공 및 읽기가 가능하다는 장점이 있지만, 시스템 비용이 크다는 단점이 존재합니다.
     /// 매우 많은 작업(예를 들어 for, foreach와 같은 <see cref="IEnumerator"/> 작업들)은
     /// 데이터를 가공하여 사용하는 대신, <see cref="SQLiteTable.TryReadLine(int, out IReadOnlyList{KeyValuePair{string, object}})"/>,
-    /// <see cref="SQLiteTable.CompairLine{TKey}(TKey, SQLiteTable)"/>과 같이
+    /// <see cref="SQLiteTable.CompairLine{TKey}(TKey, in SQLiteTable)"/>과 같이
     /// 미가공 데이터를 사용하거나 반환하는 비용이 작은 메소드로 대체될 수 있습니다. 
     /// 
     /// </remarks>
@@ -535,7 +535,9 @@ namespace Syadeu.Database
 
             if (HasTable(name, out int index))
             {
-                InternalLoadInArrayTable(ref Tables[index]);
+                //InternalLoadInArrayTable(ref Tables[index]);
+
+                Tables[index] = InternalLoadInNewTable(name);
             }
             else
             {
@@ -608,41 +610,41 @@ namespace Syadeu.Database
             }
             return new SQLiteTable(name, sqColumns);
         }
-        private void InternalLoadInArrayTable(ref SQLiteTable table)
-        {
-            using (var cmd = Connection.CreateCommand())
-            {
-                cmd.CommandText = GetReadTableQuery(table.Name);
+        //private void InternalLoadInArrayTable(ref SQLiteTable table)
+        //{
+        //    using (var cmd = Connection.CreateCommand())
+        //    {
+        //        cmd.CommandText = GetReadTableQuery(table.Name);
 
-                try
-                {
-                    using (var rdr = cmd.ExecuteReader())
-                    {
-                        int columnCount = rdr.FieldCount;
-                        List<string> columns = new List<string>();
-                        List<Type> columnTypes = new List<Type>();
+        //        try
+        //        {
+        //            using (var rdr = cmd.ExecuteReader())
+        //            {
+        //                int columnCount = rdr.FieldCount;
+        //                List<string> columns = new List<string>();
+        //                List<Type> columnTypes = new List<Type>();
 
-                        int row = 0;
-                        while (rdr.Read())
-                        {
-                            for (int a = 0; a < columnCount; a++)
-                            {
-                                if (table.Columns[a].Type == typeof(byte[]))
-                                {
-                                    table.Columns[a].Values[row] = GetBytes(rdr, a);
-                                }
-                                else table.Columns[a].Values[row] = rdr.GetValue(a);
-                            }
-                            row++;
-                        }
-                    }
-                }
-                catch (Exception)
-                {
-                    throw new SQLiteUnreadableException(table.Name);
-                }
-            }
-        }
+        //                int row = 0;
+        //                while (rdr.Read())
+        //                {
+        //                    for (int a = 0; a < columnCount; a++)
+        //                    {
+        //                        if (table.Columns[a].Type == typeof(byte[]))
+        //                        {
+        //                            table.Columns[a].Values[row] = GetBytes(rdr, a);
+        //                        }
+        //                        else table.Columns[a].Values[row] = rdr.GetValue(a);
+        //                    }
+        //                    row++;
+        //                }
+        //            }
+        //        }
+        //        catch (Exception)
+        //        {
+        //            throw new SQLiteUnreadableException(table.Name);
+        //        }
+        //    }
+        //}
 
         /// <inheritdoc cref="InternalLoadTable(string)"/>
         private void AddReloadTableQuery(string name)
@@ -662,7 +664,7 @@ namespace Syadeu.Database
         /// </summary>
         /// <param name="data"></param>
         /// <returns></returns>
-        private string GetCreateTableQuery(SQLiteTable data)
+        private string GetCreateTableQuery(in SQLiteTable data)
         {
             Assert(string.IsNullOrEmpty(data.Name), "만드려는 테이블의 이름이 빈란임");
             Assert(data.Columns.Count == 0, "만드려는 테이블의 컬럼이 0개임");
@@ -676,7 +678,7 @@ namespace Syadeu.Database
 
             return query;
         }
-        private string GetCreateTableQuery(string tableName, IList<KeyValuePair<Type, string>> columns)
+        private string GetCreateTableQuery(string tableName, in IList<KeyValuePair<Type, string>> columns)
         {
             string query = $"CREATE TABLE {tableName} ({ConvertColumnInfoToString(columns[0], true)}";
             for (int i = 1; i < columns.Count; i++)
@@ -687,7 +689,7 @@ namespace Syadeu.Database
 
             return query;
         }
-        private string GetCreateTableQuery(string tableName, IList<SQLiteColumn> columns)
+        private string GetCreateTableQuery(string tableName, in IList<SQLiteColumn> columns)
         {
             string query = $"CREATE TABLE {tableName} ({ConvertColumnInfoToString(columns[0], true)}";
             for (int i = 1; i < columns.Count; i++)
@@ -713,12 +715,39 @@ namespace Syadeu.Database
             }
             return $"SELECT {colNames} FROM {tableName}";
         }
-        private string GetAddColumnQuery(string tableName, KeyValuePair<Type, string> column)
+        private string GetAddColumnQuery(string tableName, in KeyValuePair<Type, string> column)
         {
             return $"ALTER TABLE {tableName} ADD COLUMN {ConvertColumnInfoToString(column)}";
         }
+        private IEnumerator<string> GetRemoveColumnQuery(string tableName, params string[] removeColumns)
+        {
+            string alter = $"{tableName}_temp";
+            yield return $"ALTER TABLE {tableName} RENAME TO {alter}";
 
-        private string QueryHelper(ref List<SQLiteParameter> parameters, int i, Type t, object value)
+            SQLiteTable table = GetTable(tableName);
+            var columns = table.GetColumnsInfo();
+
+            for (int i = 0; i < columns.Count; i++)
+            {
+                if (removeColumns.Contains(columns[i].Value))
+                {
+                    columns.RemoveAt(i);
+                    i--;
+                    continue;
+                }
+            }
+
+            table = ToSQLiteTable(tableName, columns);
+
+            yield return GetCreateTableQuery(table);
+
+            yield return $"INSERT INTO {ConvertTableInfoToString(table, true)} " +
+                $"SELECT {ConvertTableInfoToString(table, false)} FROM {alter}";
+
+            yield return $"DROP TABLE {alter}";
+        }
+
+        private string QueryHelper(ref List<SQLiteParameter> parameters, in int i, in Type t, in object value)
         {
             if (t == typeof(byte[]))
             {
@@ -881,7 +910,7 @@ namespace Syadeu.Database
 
         //}
 
-        private void AddReplaceTableQuery(SQLiteTable table, string into, int queryBlock = 1000)
+        private void AddReplaceTableQuery(in SQLiteTable table, string into, int queryBlock = 1000)
         {
             using (var iter = GetReplaceTableQuery(table, into, queryBlock))
             {
@@ -896,7 +925,7 @@ namespace Syadeu.Database
         /// 완전교체는 <see cref="AddReplaceTableQuery(SQLiteTable, SQLiteTable, int)"/>을 사용
         /// </summary>
         /// <param name="table"></param>
-        private void AddUpdateTableQuery(SQLiteTable table, int queryBlock = 100)
+        private void AddUpdateTableQuery(in SQLiteTable table, int queryBlock = 100)
         {
             if (table.Count == 0) return;
 
@@ -908,7 +937,7 @@ namespace Syadeu.Database
                 }
             }
         }
-        private void AddInsertDataQuery(SQLiteTable table, int queryBlock = 1000)
+        private void AddInsertDataQuery(in SQLiteTable table, int queryBlock = 1000)
         {
             using (var iter = GetInsertDataQuery(table, queryBlock))
             {
@@ -926,7 +955,7 @@ namespace Syadeu.Database
             query += $"= {ConvertToString(value.GetType(), value)}";
             AddQuery(query);
         }
-        private void AddRemoveRowsQuery<TValue>(string name, string keyName, IList<TValue> values, int queryBlock = 100)
+        private void AddRemoveRowsQuery<TValue>(string name, string keyName, in IList<TValue> values, int queryBlock = 100)
         {
             using (var iter = GetRemoveRowsQuery(name, keyName, values, queryBlock))
             {
@@ -1481,7 +1510,7 @@ namespace Syadeu.Database
         /// 메인키(<paramref name="primaryKey"/>)로 선언된 컬럼을 기준으로 일치하는 열을 삭제합니다.<br/>
         /// 열 자체가 삭제됩니다. 데이터만 지우는게 아닙니다.<br/><br/>
         /// 비슷한 메소드<br/>
-        /// <seealso cref="DeleteRow(string, KeyValuePair{string, object})"/>: 입력된 컬럼 이름을 기준으로 일치하는 열을 삭제합니다
+        /// <seealso cref="DeleteRow(string, in KeyValuePair{string, object})"/>: 입력된 컬럼 이름을 기준으로 일치하는 열을 삭제합니다
         /// </summary>
         /// <param name="tableName"></param>
         /// <param name="primaryKeys"></param>
@@ -1510,7 +1539,7 @@ namespace Syadeu.Database
         /// <param name="tableName"></param>
         /// <param name="keyValue"></param>
         /// <returns></returns>
-        public BackgroundJob DeleteRow(string tableName, KeyValuePair<string, object> keyValue)
+        public BackgroundJob DeleteRow(string tableName, in KeyValuePair<string, object> keyValue)
         {
             if (!m_SafeWritingTables.ContainsKey(tableName))
             {
@@ -1526,14 +1555,14 @@ namespace Syadeu.Database
         /// 메인 키로 선언된 컬럼을 기준으로 입력된 리스트(<paramref name="primaryKeys"/>)의 열들을 삭제합니다.<br/>
         /// 열 자체가 삭제됩니다. 데이터만 지우는게 아닙니다.<br/><br/>
         /// 비슷한 메소드<br/>
-        /// <seealso cref="DeleteRows{T}(string, string, IList{T})"/>: 행 이름을 기준으로
+        /// <seealso cref="DeleteRows{TValue}(string, string, in IList{TValue}, int)"/>: 행 이름을 기준으로
         /// <see cref="SQLiteTableAttribute"/>가 선언된 구조체로 구성된 리스트와 일치하는 열을 삭제합니다.
         /// </summary>
         /// <param name="tableName">테이블 이름</param>
         /// <param name="primaryKeys">지울 메인 키값 리스트</param>
         /// <param name="queryBlock">한번에 지울 갯수</param>
         /// <returns></returns>
-        public BackgroundJob DeleteRows<TKey>(string tableName, IList<TKey> primaryKeys, int queryBlock = 100)
+        public BackgroundJob DeleteRows<TKey>(string tableName, in IList<TKey> primaryKeys, int queryBlock = 100)
         {
             if (!m_SafeWritingTables.ContainsKey(tableName))
             {
@@ -1556,14 +1585,14 @@ namespace Syadeu.Database
         /// </summary>
         /// <remarks>
         /// 비슷한 메소드<br/>
-        /// <seealso cref="DeleteRows{TKey}(string, IList{TKey}, int)"/>: 메인 키로 선언된 컬럼을 기준으로 
+        /// <seealso cref="DeleteRows{TKey}(string, in IList{TKey}, int)"/>: 메인 키로 선언된 컬럼을 기준으로 
         /// 입력된 리스트(<paramref name="primaryKeys"/>)의 열들을 삭제합니다.
         /// </remarks>
         /// <param name="tableName"></param>
         /// <param name="columnName"></param>
         /// <param name="keyValues"></param>
         /// <returns></returns>
-        public BackgroundJob DeleteRows<TValue>(string tableName, string columnName, IList<TValue> keyValues, int queryBlock = 100)
+        public BackgroundJob DeleteRows<TValue>(string tableName, string columnName, in IList<TValue> keyValues, int queryBlock = 100)
         {
             if (!m_SafeWritingTables.ContainsKey(tableName))
             {
@@ -1584,7 +1613,7 @@ namespace Syadeu.Database
         /// <param name="data"></param>
         /// <param name="queryBlock"></param>
         /// <returns></returns>
-        public BackgroundJob AddRows(SQLiteTable data, int queryBlock = 1000)
+        public BackgroundJob AddRows(in SQLiteTable data, int queryBlock = 1000)
         {
             Assert(data.Count == 0, $"{data.Name}에 넣을 데이터가 하나도 없음");
 
@@ -1631,7 +1660,7 @@ namespace Syadeu.Database
         /// 
         /// <param name="table"></param>
         /// <returns></returns>
-        public BackgroundJob CreateTable(SQLiteTable table, int queryBlock = 100)
+        public BackgroundJob CreateTable(in SQLiteTable table, int queryBlock = 100)
         {
             Assert(HasTable(table.Name), $"이름 ({table.Name})을 가진 테이블이 이미 존재합니다");
 
@@ -1653,7 +1682,7 @@ namespace Syadeu.Database
         /// <param name="name"></param>
         /// <param name="columns"></param>
         /// <returns></returns>
-        public BackgroundJob CreateTable(string name, IList<KeyValuePair<Type, string>> columns)
+        public BackgroundJob CreateTable(string name, in IList<KeyValuePair<Type, string>> columns)
         {
             Assert(HasTable(name), $"이름 ({name})을 가진 테이블이 이미 존재합니다");
             Assert(columns.Count == 0, "테이블을 생성하려면 반드시 하나 이상의 컬럼 정보를 가지고 있어야됩니다");
@@ -1676,7 +1705,7 @@ namespace Syadeu.Database
         /// 
         /// <remarks>
         /// 비슷한 메소드<br/>
-        /// <seealso cref="CreateTable(SQLiteTable)"/>: 입력된 테이블 정보를 바탕으로 새로운 테이블을 만듭니다
+        /// <seealso cref="CreateTable(in SQLiteTable, int)"/>: 입력된 테이블 정보를 바탕으로 새로운 테이블을 만듭니다
         /// </remarks>
         /// <typeparam name="T"></typeparam>
         /// <param name="tableName"></param>
@@ -1703,7 +1732,7 @@ namespace Syadeu.Database
         /// </summary>
         /// <param name="table"></param>
         /// <returns></returns>
-        public BackgroundJob ReplaceTable(SQLiteTable table, string into, int queryBlock = 100)
+        public BackgroundJob ReplaceTable(in SQLiteTable table, string into, int queryBlock = 100)
         {
             // 새로운 정보를 넣습니다
             AddReplaceTableQuery(table, into, queryBlock);
@@ -1713,13 +1742,13 @@ namespace Syadeu.Database
         /// <summary>
         /// <para>!! 제거는 하지않습니다.
         /// 제거는 <see cref="DeleteRow(string, object)"/> 
-        /// 혹은,<br/> <see cref="DeleteColumn(string, string, string[])"/> 을 사용하세요 !!</para>
+        /// 혹은,<br/> <see cref="DeleteColumn(string, string[])"/> 을 사용하세요 !!</para>
         ///
         /// <see cref="SQLiteTableAttribute"/>가 선언된 구조체를 기반으로,
         /// 전체 테이블 교체가 아닌, 입력한 테이블의 컬럼이 있거나 없을 경우에 추가하거나 교체합니다.
-        /// 전체 테이블 교체를 원하면 <seealso cref="ReplaceTable(SQLiteTable)"/> 을 사용하세요<br/><br/>
+        /// 전체 테이블 교체를 원하면 <seealso cref="ReplaceTable(in SQLiteTable, string, int)"/> 을 사용하세요<br/><br/>
         /// 비슷한 메소드<br/>
-        /// <seealso cref="UpdateTable(SQLiteTable)"/>: 동일한 기능을 수행합니다
+        /// <seealso cref="UpdateTable(in SQLiteTable, int)"/>: 동일한 기능을 수행합니다
         /// </summary>
         /// <typeparam name="T"><see cref="SQLiteTableAttribute"/>가 선언된 객체 타입</typeparam>
         /// <param name="tableName">목표 테이블의 이름</param>
@@ -1738,16 +1767,16 @@ namespace Syadeu.Database
         /// <summary>
         /// <para>!! 제거는 하지않습니다.
         /// 제거는 <see cref="DeleteRow(string, object)"/> 
-        /// 혹은,<br/> <see cref="DeleteColumn(string, string, string[])"/> 을 사용하세요 !!</para>
+        /// 혹은,<br/> <see cref="DeleteColumn(string, string[])"/> 을 사용하세요 !!</para>
         ///
         /// 전체 테이블 교체가 아닌, 입력한 테이블의 컬럼이 있거나 없을 경우에 추가하거나 교체합니다.<br/>
-        /// 전체 테이블 교체를 원하면 <seealso cref="ReplaceTable(SQLiteTable)"/> 을 사용하세요<br/><br/>
+        /// 전체 테이블 교체를 원하면 <seealso cref="ReplaceTable(in SQLiteTable, string, int)"/> 을 사용하세요<br/><br/>
         /// 비슷한 메소드<br/>
         /// <seealso cref="UpdateTable{T}(string, T)"/>: 동일한 기능을 수행합니다
         /// </summary>
         /// <param name="table"></param>
         /// <returns></returns>
-        public BackgroundJob UpdateTable(SQLiteTable table, int queryBlock = 100)
+        public BackgroundJob UpdateTable(in SQLiteTable table, int queryBlock = 100)
         {
             if (!m_SafeWritingTables.ContainsKey(table.Name))
             {
@@ -1854,23 +1883,30 @@ namespace Syadeu.Database
         /// <param name="tableName">지울 컬럼의 테이블 이름</param>
         /// <param name="name">지울 컬럼의 이름</param>
         /// <param name="vs">추가로 지울 컬럼들의 이름들</param>
-        public BackgroundJob DeleteColumn(string tableName, string name, params string[] vs)
+        public BackgroundJob DeleteColumn(string tableName, params string[] removeColumns)
         {
             TryGetTable(tableName, out var table);
             Assert(table.IsValid, false, $"이름 ({tableName})을 가진 테이블이 존재하지 않습니다");
 
-            SQLiteBuilder.TableBuilder tableBuilder = new SQLiteBuilder.TableBuilder(tableName);
-            for (int i = 0; i < table.Columns.Count; i++)
-            {
-                tableBuilder.AddValue(table.Columns[i].Type, table.Columns[i].Name);
-            }
+            //SQLiteBuilder.TableBuilder tableBuilder = new SQLiteBuilder.TableBuilder(tableName);
+            //for (int i = 0; i < table.Columns.Count; i++)
+            //{
+            //    tableBuilder.AddValue(table.Columns[i].Type, table.Columns[i].Name);
+            //}
 
-            var iter = tableBuilder.BuildRemoveColumn(name, vs);
-            while (iter.MoveNext())
-            {
-                if (string.IsNullOrEmpty(iter.Current)) continue;
+            //var iter = tableBuilder.BuildRemoveColumn(name, vs);
+            //while (iter.MoveNext())
+            //{
+            //    if (string.IsNullOrEmpty(iter.Current)) continue;
 
-                AddQuery(iter.Current);
+            //    AddQuery(iter.Current);
+            //}
+            using (var iter = GetRemoveColumnQuery(tableName, removeColumns))
+            {
+                while (iter.MoveNext())
+                {
+                    AddQuery(iter.Current);
+                }
             }
 
             AddReloadTableQuery(tableName);
@@ -1884,7 +1920,7 @@ namespace Syadeu.Database
         /// <see cref="SQLiteDatabase"/> 통신을 위한 쿼리문을 추가합니다
         /// </summary>
         /// <param name="query"></param>
-        public void AddQuery(string query, SQLiteParameter[] parameters = null)
+        public void AddQuery(string query, params SQLiteParameter[] parameters)
         {
             //var job = new SQLiteQueryJob(query);
             Queries.Enqueue((query, parameters));
@@ -1957,7 +1993,7 @@ namespace Syadeu.Database
         /// <param name="objType"></param>
         /// <param name="obj"></param>
         /// <returns></returns>
-        private static string ConvertToString(Type objType, object obj)
+        private static string ConvertToString(in Type objType, in object obj)
         {
             Assert(objType == null, "ConvertToString에서 오브젝트 타입이 왜 널이지");
 
@@ -1992,7 +2028,7 @@ namespace Syadeu.Database
             }
             return sum;
         }
-        private static string ConvertColumnInfoToString(SQLiteColumn column, bool isUnique = false)
+        private static string ConvertColumnInfoToString(in SQLiteColumn column, in bool isUnique = false)
         {
             string properties = $"{column.Name}";
             string t;
@@ -2020,7 +2056,7 @@ namespace Syadeu.Database
 
             return properties;
         }
-        private static string ConvertColumnInfoToString(KeyValuePair<Type, string> column, bool isUnique = false)
+        private static string ConvertColumnInfoToString(in KeyValuePair<Type, string> column, in bool isUnique = false)
         {
             string properties = $"{column.Value}";
             string t;
@@ -2048,7 +2084,7 @@ namespace Syadeu.Database
 
             return properties;
         }
-        private static string ConvertTableInfoToString(SQLiteTable data, bool withName, string namePrefix = "")
+        private static string ConvertTableInfoToString(in SQLiteTable data, in bool withName, in string namePrefix = "")
         {
             string info = null;
 
@@ -2061,7 +2097,7 @@ namespace Syadeu.Database
             }
             return withName ? $"{info})" : info;
         }
-        private static string ConvertTableInfoToString(string tableName, IList<SQLiteColumn> columns, bool withName)
+        private static string ConvertTableInfoToString(in string tableName, in IList<SQLiteColumn> columns, in bool withName)
         {
             string info = null;
 
@@ -2083,7 +2119,7 @@ namespace Syadeu.Database
         /// <typeparam name="TValue"><see cref="SQLiteTableAttribute"/>가 선언된 구조체</typeparam>
         /// <param name="table"></param>
         /// <param name="dic">딕셔너리는 인스턴스가 이미 생성되어있어야합니다</param>
-        public static void LoadTableToDictionary<TKey, TValue>(SQLiteTable table, IDictionary<TKey, TValue> dic)
+        public static void LoadTableToDictionary<TKey, TValue>(in SQLiteTable table, IDictionary<TKey, TValue> dic)
             where TValue : struct, IEquatable<TValue>
         {
             var primaryKeyInfo = SQLiteDatabaseUtils.GetPrimaryKeyInfo<TValue>();
@@ -2131,7 +2167,7 @@ namespace Syadeu.Database
         /// <param name="tableName">테이블 이름</param>
         /// <param name="tableDatas">테이블 아이템들</param>
         /// <returns></returns>
-        public static SQLiteTable ToSQLiteTable<T>(string tableName, IList<T> tableDatas)
+        public static SQLiteTable ToSQLiteTable<T>(in string tableName, in IList<T> tableDatas)
             where T : struct
         {
             Assert(typeof(T).GetCustomAttribute<SQLiteTableAttribute>() == null, $"객체 타입 ({typeof(T).Name})은 SQLite 데이터 객체가 아닙니다");
@@ -2190,7 +2226,7 @@ namespace Syadeu.Database
             SQLiteTable table = new SQLiteTable(tableName, (columns != null ? columns.ToList() : new List<SQLiteColumn>()));
             return table;
         }
-        public static SQLiteTable ToSQLiteTable(string tableName, IList<KeyValuePair<Type, string>> columns)
+        public static SQLiteTable ToSQLiteTable(in string tableName, in IList<KeyValuePair<Type, string>> columns)
         {
             SQLiteColumn[] newColumns = new SQLiteColumn[columns.Count];
             for (int i = 0; i < columns.Count; i++)

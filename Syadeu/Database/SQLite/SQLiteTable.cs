@@ -83,7 +83,7 @@ namespace Syadeu.Database
         IReadOnlyList<SQLiteColumn> ISQLiteReadOnlyTable.Columns => Columns;
         IReadOnlyDictionary<object, int> ISQLiteReadOnlyTable.PrimaryKeyPairs => PrimaryKeyPairs;
 
-        internal SQLiteTable(string name, IList<SQLiteColumn> columns)
+        internal SQLiteTable(string name, in IList<SQLiteColumn> columns)
         {
             Name = name;
             Columns = new List<SQLiteColumn>(columns);
@@ -172,7 +172,7 @@ namespace Syadeu.Database
         /// <param name="primaryKey"></param>
         /// <param name="other"></param>
         /// <returns></returns>
-        public bool CompairLine<TKey>(TKey primaryKey, SQLiteTable other)
+        public bool CompairLine<TKey>(TKey primaryKey, in SQLiteTable other)
         {
             SQLiteDatabase.Assert(IsValid, false, "정상적으로 로드된 테이블 데이터가 아닙니다");
 
