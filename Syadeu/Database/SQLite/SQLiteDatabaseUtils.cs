@@ -250,7 +250,11 @@ namespace Syadeu.Database
                 return GetDefault(t);
             }
 
-            if (t != typeof(byte[]))
+            if (t == typeof(byte[]))
+            {
+                SQLiteDatabase.Assert(true, "byte[] 바이너리는 지원안함");
+            }
+            else
             {
                 SQLiteDatabase.Assert(obj.GetType().IsArray || obj.GetType().GenericTypeArguments.Length > 0,
                 "어레이는 지원안함 ParseArray시리즈를 사용");
@@ -315,14 +319,6 @@ namespace Syadeu.Database
                 rtrn = decimal.Parse(tx);
             }
             #endregion
-            else if (t == typeof(byte[]))
-            {
-                if (obj.GetType() != typeof(byte[]))
-                {
-                    throw new InvalidOperationException("byte[] 타입이 아님");
-                }
-                rtrn = obj.ToString();
-            }
             else if (t == typeof(string))
             {
                 Type objType = obj.GetType();

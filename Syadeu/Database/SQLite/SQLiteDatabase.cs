@@ -721,8 +721,10 @@ namespace Syadeu.Database
             if (t == typeof(byte[]))
             {
                 string temp = $"@item{i}";
-                SQLiteParameter parameter = new SQLiteParameter(temp, System.Data.DbType.Binary);
-                parameter.Value = value as byte[];
+                SQLiteParameter parameter = new SQLiteParameter(temp, System.Data.DbType.Binary)
+                {
+                    Value = value as byte[]
+                };
                 parameters.Add(parameter);
                 return temp;
             }
@@ -1962,23 +1964,8 @@ namespace Syadeu.Database
             string sum = null;
             if (objType.IsArray)
             {
-                //if (objType == typeof(byte[]))
-                //{
-                //    if (obj.GetType() != typeof(byte[])) throw new InvalidOperationException("byte[] 타입이 아님");
-
-                //    byte[] bytes = obj as byte[];
-
-                //    SQLiteBlob temp = new SQLiteBlob();
-                //    temp.Write(bytes, bytes.Length, )
-
-                //    sum += Convert.ToBase64String();
-                //}
-                //else
-                {
-                    //string temp = SQLiteDatabaseUtils.ParseArray(obj as ICollection);
-                    string temp = SQLiteDatabaseUtils.ParseArrayToSQL(obj as IList);
-                    sum += $@"'{temp}'";
-                }
+                string temp = SQLiteDatabaseUtils.ParseArrayToSQL(obj as IList);
+                sum += $@"'{temp}'";
             }
             else if (objType.GenericTypeArguments != null && objType.GenericTypeArguments.Length > 0)
             {
@@ -2037,14 +2024,14 @@ namespace Syadeu.Database
         {
             string properties = $"{column.Value}";
             string t;
-            if (column.Key == typeof(string) || column.Key == typeof(Vector3) ||
+            if (column.Key == typeof(byte[]) || column.Key == typeof(SQLiteBlob))
+            {
+                t = "BLOB";
+            }
+            else if (column.Key == typeof(string) || column.Key == typeof(Vector3) ||
                 column.Key.IsArray || column.Key.GenericTypeArguments.Length > 0)
             {
                 t = "TEXT";
-            }
-            else if (column.Key == typeof(byte[]) || column.Key == typeof(SQLiteBlob))
-            {
-                t = "BLOB";
             }
             else if (column.Key == typeof(double) || column.Key == typeof(float) ||
                 column.Key == typeof(decimal))

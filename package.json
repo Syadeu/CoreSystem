@@ -1,6 +1,6 @@
 {
   "name": "syadeu.coresystem",
-  "version": "1.4.1",
+  "version": "1.4.4",
   "displayName": "Syadeu CoreSystem",
   "description": "Syadeu CoreSystem Package.",
   "unity": "2019.2",
@@ -19,6 +19,6 @@
   ],
   "author": {
     "name": "Syadeu",
-    "email": "syadeu@gmail.com"
+    "email": "syadeu@g1play.co.kr"
   }
 }
