@@ -549,17 +549,7 @@ namespace Syadeu.Database
                     VersionTable = newTable;
                 }
 
-                //for (int i = 0; i < Tables.Length; i++)
-                //{
-                //    if (Tables[i].Name == name)
-                //    {
-                //        Tables[i] = newTable;
-                //        return;
-                //    }
-                //}
-                //var temp = Tables.ToList();
                 Tables.Add(newTable);
-                //Tables = temp.ToArray();
             }
         }
         private SQLiteTable InternalLoadInNewTable(string name)
@@ -1834,7 +1824,7 @@ namespace Syadeu.Database
 
             for (int i = 0; i < Tables.Count; i++)
             {
-                if (Tables[i].Name.Equals(tableName))
+                if (Tables[i].Name == tableName)
                 {
                     Tables[i] = default;
                     break;
@@ -1853,7 +1843,7 @@ namespace Syadeu.Database
 
                 for (int i = 0; i < Tables.Count; i++)
                 {
-                    if (Tables[i].Name.Equals(tableName))
+                    if (Tables[i].Name == tableName)
                     {
                         Tables[i] = default;
                         break;
