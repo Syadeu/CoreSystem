@@ -40,5 +40,7 @@ namespace Syadeu.Database
 
             Values = new List<object>();
         }
+
+        public T GetValue<T>(int i) => (T)Values[i];
     }
 }

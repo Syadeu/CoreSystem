@@ -11,6 +11,7 @@ using System.Reflection;
 using System.Data.SQLite;
 
 using UnityEngine;
+using Syadeu.Mono;
 
 namespace Syadeu.Database
 {
@@ -480,7 +481,7 @@ namespace Syadeu.Database
                                 {
                                     if (sqColumns[a].Type == typeof(byte[]))
                                     {
-                                        sqColumns[a].Values.Add(GetBytes(rdr, a));
+                                        sqColumns[a].Values.Add(GetBytes(in rdr, in a));
                                     }
                                     else sqColumns[a].Values.Add(rdr.GetValue(a));
                                 }
@@ -505,9 +506,9 @@ namespace Syadeu.Database
 
             //Tables = tables;
 
-            $"SQLite Database: All Tables Fully Loaded".ToLog();
+            //$"SQLite Database: All Tables Fully Loaded".ToLog();
         }
-        private static byte[] GetBytes(SQLiteDataReader rdr, int i)
+        private static byte[] GetBytes(in SQLiteDataReader rdr, in int i)
         {
             const int CHUNK_SIZE = 2 * 1024;
             byte[] buffer = new byte[CHUNK_SIZE];
@@ -587,7 +588,7 @@ namespace Syadeu.Database
                             {
                                 if (sqColumns[a].Type == typeof(byte[]))
                                 {
-                                    sqColumns[a].Values.Add(GetBytes(rdr, a));
+                                    sqColumns[a].Values.Add(GetBytes(in rdr, in a));
                                 }
                                 else sqColumns[a].Values.Add(rdr.GetValue(a));
                             }
@@ -972,7 +973,11 @@ namespace Syadeu.Database
                             cmd.Parameters.Clear();
                             try
                             {
-                                $"SQLite 통신 중: {query.Item1}".ToLog();
+                                if (SyadeuSettings.Instance.m_EnableQueryLog)
+                                {
+                                    $"SQLite 통신 중: {query.Item1}".ToLog();
+                                }
+                                
                                 cmd.CommandText = query.Item1;
                                 if (query.Item2 != null &&
                                     query.Item2.Length > 0)

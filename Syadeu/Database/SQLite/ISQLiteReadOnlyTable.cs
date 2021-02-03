@@ -60,6 +60,9 @@ namespace Syadeu.Database
         /// <param name="name"></param>
         /// <returns></returns>
         bool HasColumn(string name);
+
+        T ReadLine<T>(in int i) where T : struct;
+
         /// <summary>
         /// 이 테이블에서 해당 이름(<paramref name="name"/>)을 가진 행을 반환합니다<br/>
         /// 행 체크만 하는거면 <see cref="HasColumn(string)"/>을 사용하세요
@@ -68,7 +71,6 @@ namespace Syadeu.Database
         /// <param name="column"></param>
         /// <returns></returns>
         bool TryGetColumn(string name, out SQLiteColumn column);
-
         /// <summary>
         /// 순서대로 열을 불러옵니다<br/>
         /// <paramref name="line"/>의 키값은 컬럼의 이름이고, 밸류값은 <paramref name="index"/>로 불러온 데이터를 담습니다.<br/><br/>

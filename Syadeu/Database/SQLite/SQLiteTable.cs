@@ -14,7 +14,8 @@ namespace Syadeu.Database
     /// <see cref="SQLiteTable"/>[<see cref="int"/>]로 빠르게 테이블의 열을 탐색할 수 있습니다.<br/>
     /// foreach 문으로 빠르게 테이블의 열을 탐색할 수 있습니다.
     /// </remarks>
-    public struct SQLiteTable : IEnumerable<IReadOnlyList<KeyValuePair<string, object>>>, ISQLiteReadOnlyTable
+    public struct SQLiteTable : ISQLiteReadOnlyTable,
+        IEnumerable<IReadOnlyList<KeyValuePair<string, object>>>, IEnumerable
     {
         public IReadOnlyList<KeyValuePair<string, object>> this[int index]
         {
@@ -138,7 +139,20 @@ namespace Syadeu.Database
             }
             return false;
         }
-        
+        public bool HasColumn(string name)
+        {
+            if (!IsValid()) return false;
+
+            for (int i = 0; i < Columns.Count; i++)
+            {
+                if (Columns[i].Name == name)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         public bool CompairLine<TKey>(TKey primaryKey, in ISQLiteReadOnlyTable other)
         {
             SQLiteDatabase.Assert(IsValid, false, "정상적으로 로드된 테이블 데이터가 아닙니다");
@@ -177,19 +191,12 @@ namespace Syadeu.Database
             return true;
         }
 
-        public bool HasColumn(string name)
+        public T ReadLine<T>(in int i) where T : struct
         {
-            if (!IsValid()) return false;
-
-            for (int i = 0; i < Columns.Count; i++)
-            {
-                if (Columns[i].Name == name)
-                {
-                    return true;
-                }
-            }
-            return false;
+            IReadOnlyList<SQLiteColumn> columns = Columns;
+            return PrivateReadLine<T>(in columns, in i);
         }
+
         public bool TryGetColumn(string name, out SQLiteColumn column)
         {
             column = default;
@@ -205,7 +212,6 @@ namespace Syadeu.Database
             }
             return false;
         }
-
         public bool TryReadLine(in int index, out IReadOnlyList<KeyValuePair<string, object>> line)
         {
             if (!IsValid() || Columns.Count == 0 || index >= Columns[0].Values.Count)
@@ -256,52 +262,9 @@ namespace Syadeu.Database
             table = default;
             if (!IsValid() || Columns.Count == 0 || index >= Columns[0].Values.Count)
             {
-                //$"SQLite Exception: {Name} 테이블의 인덱스({index})를 읽어올 수 없습니다\n이 요청은 무시됩니다".ToLog();
                 return false;
             }
-
-            //object boxed = table;
-
-            //for (int i = 0; i < Columns.Count; i++)
-            //{
-            //    MemberInfo field = SQLiteDatabaseUtils.GetMemberInfo<T>(Columns[i].Name, out var att);
-            //    if (field == null || index >= Columns[i].Values.Count) continue;
-
-            //    object value = null;
-            //    switch (field.MemberType)
-            //    {
-            //        case MemberTypes.Field:
-            //            value = SQLiteDatabaseUtils.ConvertSQL((field as FieldInfo).FieldType,
-            //        Columns[i].Values[index]);
-            //            //if (value == null || string.IsNullOrEmpty(value.ToString()))
-            //            if (value == null || string.IsNullOrEmpty(value.ToString()))
-            //            {
-            //                //value = field.GetCustomAttribute<SQLiteDatabaseAttribute>().DefaultValue;
-            //                value = SQLiteDatabaseUtils.GetDataDefaultValue((field as FieldInfo).FieldType, att);
-            //            }
-
-            //            (field as FieldInfo).SetValue(boxed, value);
-            //            break;
-            //        case MemberTypes.Property:
-            //            value = SQLiteDatabaseUtils.ConvertSQL((field as PropertyInfo).PropertyType,
-            //        Columns[i].Values[index]);
-            //            //if (value == null || string.IsNullOrEmpty(value.ToString()))
-            //            if (value == null || string.IsNullOrEmpty(value.ToString()))
-            //            {
-            //                //value = field.GetCustomAttribute<SQLiteDatabaseAttribute>().DefaultValue;
-            //                value = SQLiteDatabaseUtils.GetDataDefaultValue((field as PropertyInfo).PropertyType, att);
-            //            }
-
-            //            (field as PropertyInfo).SetValue(boxed, value);
-            //            break;
-            //        default:
-            //            continue;
-            //    }
-            //}
-
-            //table = (T)boxed;
-            IReadOnlyList<SQLiteColumn> columns = Columns;
-            table = ReadLine<T>(in columns, in index);
+            table = ReadLine<T>(index);
             return true;
         }
 
@@ -315,7 +278,7 @@ namespace Syadeu.Database
         IEnumerator IEnumerable.GetEnumerator()
             => GetEnumerator();
 
-        private static T ReadLine<T>(in IReadOnlyList<SQLiteColumn> columns, in int index) where T : struct
+        private static T PrivateReadLine<T>(in IReadOnlyList<SQLiteColumn> columns, in int index) where T : struct
         {
             T table = default;
             object boxed = table;
