@@ -1830,6 +1830,16 @@ namespace Syadeu.Database
 
             string query = $@"DROP TABLE {tableName}";
             AddQuery(query);
+
+            for (int i = 0; i < Tables.Length; i++)
+            {
+                if (Tables[i].Name.Equals(tableName))
+                {
+                    Tables[i] = default;
+                    break;
+                }
+            }
+
             return Excute();
         }
         /// <inheritdoc cref="DropTable(string)"/>
@@ -1839,6 +1849,15 @@ namespace Syadeu.Database
             {
                 string query = $@"DROP TABLE {tableName}";
                 AddQuery(query);
+
+                for (int i = 0; i < Tables.Length; i++)
+                {
+                    if (Tables[i].Name.Equals(tableName))
+                    {
+                        Tables[i] = default;
+                        break;
+                    }
+                }
             }
             else
             {

@@ -63,7 +63,7 @@ namespace Syadeu.Database
     {
         const string ExcuteMsg = "An error occurred while excuting query.\n";
         public SQLiteExcuteExcpetion(string query, Exception ex) :
-            base($"{ExcuteMsg}{ex.Message}:{ex.StackTrace}\nQuery: {query}")
+            base($"{ExcuteMsg}{ex.Message}\nQuery: {query}")
         {
         }
     }
