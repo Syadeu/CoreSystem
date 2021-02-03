@@ -121,7 +121,7 @@ namespace SyadeuEditor
             m_SelectedToolbar = GUILayout.Toolbar(m_SelectedToolbar, m_ToolbarNames);
             EditorUtils.SectorLine();
 
-            if (m_Database.Tables.Length == 0)
+            if (m_Database.Tables.Count == 0)
             {
                 EditorGUILayout.LabelField("테이블 정보가 없습니다");
                 return;

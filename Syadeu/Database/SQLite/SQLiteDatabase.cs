@@ -71,7 +71,7 @@ namespace Syadeu.Database
         public bool Initialized { get; private set; }
         public bool LoadInMemory { get; private set; }
         public SQLiteTable VersionTable { get; private set; }
-        public SQLiteTable[] Tables { get; private set; }
+        public List<SQLiteTable> Tables { get; private set; }
 
         /// <summary>
         /// 쿼리문을 수행하기 직전에 호출되는 델리게이트입니다. 현재 수행하려는 쿼리문을 넣어서 호출합니다
@@ -108,7 +108,7 @@ namespace Syadeu.Database
 
             VersionTable = default;
             //Tables = new List<SQLiteTable>();
-            Tables = new SQLiteTable[0];
+            Tables = new List<SQLiteTable>();
 
             OnExcute = null;
 
@@ -326,7 +326,7 @@ namespace Syadeu.Database
         private void AddCheckTempTablesQuery()
         {
             List<SQLiteTable> tempTables = new List<SQLiteTable>();
-            for (int i = 0; i < Tables.Length; i++)
+            for (int i = 0; i < Tables.Count; i++)
             {
                 if (Tables[i].Name.Contains("_temp"))
                 {
@@ -376,7 +376,7 @@ namespace Syadeu.Database
         {
             if (GetVersion() == currentVersion) return;
 
-            for (int i = 0; i < Tables.Length; i++)
+            for (int i = 0; i < Tables.Count; i++)
             {
                 if (SQLiteMigrationTool.TryLoadMigrationRule(Tables[i].Name, out string data))
                 {
@@ -418,7 +418,8 @@ namespace Syadeu.Database
 
             //Tables.Clear();
             List<string> tableNames = new List<string>();
-            List<SQLiteTable> tables = new List<SQLiteTable>();
+            //List<SQLiteTable> tables = new List<SQLiteTable>();
+            Tables.Clear();
 
             using (SQLiteCommand cmd = Connection.CreateCommand())
             {
@@ -498,11 +499,11 @@ namespace Syadeu.Database
                         VersionTable = table;
                     }
 
-                    tables.Add(table);
+                    Tables.Add(table);
                 }
             }
 
-            Tables = tables.ToArray();
+            //Tables = tables;
 
             $"SQLite Database: All Tables Fully Loaded".ToLog();
         }
@@ -533,7 +534,7 @@ namespace Syadeu.Database
         {
             Assert(Connection == null, "커넥션이 왜 없지?");
 
-            if (HasTable(name, out int index))
+            if (HasTable(in name, out int index))
             {
                 //InternalLoadInArrayTable(ref Tables[index]);
 
@@ -556,9 +557,9 @@ namespace Syadeu.Database
                 //        return;
                 //    }
                 //}
-                var temp = Tables.ToList();
-                temp.Add(newTable);
-                Tables = temp.ToArray();
+                //var temp = Tables.ToList();
+                Tables.Add(newTable);
+                //Tables = temp.ToArray();
             }
         }
         private SQLiteTable InternalLoadInNewTable(string name)
@@ -1080,9 +1081,9 @@ namespace Syadeu.Database
         /// <inheritdoc cref="HasTable(in string)"/>/>
         public bool HasTable(in string name, out int index)
         {
-            for (int i = 0; i < Tables.Length; i++)
+            for (int i = 0; i < Tables.Count; i++)
             {
-                if (Tables[i].Name == name)
+                if (Tables[i].Name.Equals(name))
                 {
                     index = i;
                     return true;
@@ -1100,7 +1101,7 @@ namespace Syadeu.Database
         /// <returns></returns>
         public SQLiteTable GetTable(in string name)
         {
-            for (int i = 0; i < Tables.Length; i++)
+            for (int i = 0; i < Tables.Count; i++)
             {
                 if (Tables[i].Name == name)
                 {
@@ -1113,7 +1114,7 @@ namespace Syadeu.Database
         /// <inheritdoc cref="GetTable(in string)"/>
         public ISQLiteReadOnlyTable GetTableReadOnly(in string name)
         {
-            for (int i = 0; i < Tables.Length; i++)
+            for (int i = 0; i < Tables.Count; i++)
             {
                 if (Tables[i].Name == name)
                 {
@@ -1132,9 +1133,9 @@ namespace Syadeu.Database
         /// <returns></returns>
         public bool TryGetTable(in string name, out SQLiteTable table)
         {
-            for (int i = 0; i < Tables.Length; i++)
+            for (int i = 0; i < Tables.Count; i++)
             {
-                if (Tables[i].Name == name)
+                if (Tables[i].Name.Equals(name))
                 {
                     table = Tables[i];
                     return true;
@@ -1147,7 +1148,7 @@ namespace Syadeu.Database
         /// <inheritdoc cref="TryGetTable(in string, out SQLiteTable)"/>
         public bool TryGetTableReadOnly(in string name, out ISQLiteReadOnlyTable table)
         {
-            for (int i = 0; i < Tables.Length; i++)
+            for (int i = 0; i < Tables.Count; i++)
             {
                 if (Tables[i].Name == name)
                 {
@@ -1831,7 +1832,7 @@ namespace Syadeu.Database
             string query = $@"DROP TABLE {tableName}";
             AddQuery(query);
 
-            for (int i = 0; i < Tables.Length; i++)
+            for (int i = 0; i < Tables.Count; i++)
             {
                 if (Tables[i].Name.Equals(tableName))
                 {
@@ -1850,7 +1851,7 @@ namespace Syadeu.Database
                 string query = $@"DROP TABLE {tableName}";
                 AddQuery(query);
 
-                for (int i = 0; i < Tables.Length; i++)
+                for (int i = 0; i < Tables.Count; i++)
                 {
                     if (Tables[i].Name.Equals(tableName))
                     {
