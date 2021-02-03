@@ -1826,7 +1826,7 @@ namespace Syadeu.Database
             {
                 if (Tables[i].Name == tableName)
                 {
-                    Tables[i] = default;
+                    Tables.RemoveAt(i);
                     break;
                 }
             }
@@ -1845,7 +1845,7 @@ namespace Syadeu.Database
                 {
                     if (Tables[i].Name == tableName)
                     {
-                        Tables[i] = default;
+                        Tables.RemoveAt(i);
                         break;
                     }
                 }

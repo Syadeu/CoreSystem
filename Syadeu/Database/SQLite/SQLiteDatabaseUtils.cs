@@ -252,7 +252,11 @@ namespace Syadeu.Database
 
             if (t == typeof(byte[]))
             {
-                SQLiteDatabase.Assert(true, "byte[] 바이너리는 지원안함");
+                if (obj.GetType() == typeof(byte[]))
+                {
+                    return (byte[])obj;
+                }
+                else SQLiteDatabase.Assert(true, "byte[] 바이너리는 지원안함");
             }
             else
             {
