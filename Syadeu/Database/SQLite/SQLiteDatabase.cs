@@ -1083,7 +1083,7 @@ namespace Syadeu.Database
         {
             for (int i = 0; i < Tables.Count; i++)
             {
-                if (Tables[i].Name.Equals(name))
+                if (Tables[i].Name == name)
                 {
                     index = i;
                     return true;
@@ -1135,7 +1135,7 @@ namespace Syadeu.Database
         {
             for (int i = 0; i < Tables.Count; i++)
             {
-                if (Tables[i].Name.Equals(name))
+                if (Tables[i].Name == name)
                 {
                     table = Tables[i];
                     return true;
