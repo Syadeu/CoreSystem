@@ -37,7 +37,7 @@ namespace Syadeu.Database
     /// 쉽고 간편하게 데이터 재가공 및 읽기가 가능하다는 장점이 있지만, 시스템 비용이 크다는 단점이 존재합니다.
     /// 매우 많은 작업(예를 들어 for, foreach와 같은 <see cref="IEnumerator"/> 작업들)은
     /// 데이터를 가공하여 사용하는 대신, <see cref="SQLiteTable.TryReadLine(int, out IReadOnlyList{KeyValuePair{string, object}})"/>,
-    /// <see cref="SQLiteTable.CompairLine{TKey}(TKey, in SQLiteTable)"/>과 같이
+    /// <see cref="SQLiteTable.CompairLine{TKey}(TKey, in ISQLiteReadOnlyTable)"/>과 같이
     /// 미가공 데이터를 사용하거나 반환하는 비용이 작은 메소드로 대체될 수 있습니다. 
     /// 
     /// </remarks>
@@ -537,8 +537,6 @@ namespace Syadeu.Database
 
             if (HasTable(in name, out int index))
             {
-                //InternalLoadInArrayTable(ref Tables[index]);
-
                 Tables[index] = InternalLoadInNewTable(name);
             }
             else
@@ -752,7 +750,6 @@ namespace Syadeu.Database
                 return temp;
             }
 
-            //parameters.Add(null);
             return ConvertToString(t, value);
         }
         private IEnumerator<(string, SQLiteParameter[])> GetInsertDataQuery(ISQLiteReadOnlyTable table, int queryBlock = 1000)
@@ -801,8 +798,6 @@ namespace Syadeu.Database
 
             yield return (GetCreateTableQuery(current), null);
 
-            //if (table.Count == 0) yield break;
-
             if (table.Count != 0)
             {
                 using (var iter = GetInsertDataQuery(table, queryBlock))
@@ -832,7 +827,6 @@ namespace Syadeu.Database
 
                     Type valueType = table.Columns[a].Type;
                     properties += QueryHelper(ref parameters, i, valueType, table.Columns[a].Values[i]);
-                    //properties += ConvertToString(valueType, table.Columns[a].Values[i]);
                 }
                 unions += $"({properties}),";
 
@@ -853,7 +847,6 @@ namespace Syadeu.Database
             Assert(values == null || values.Count == 0, "열 삭제 쿼리작성 메소드에 빈 리스트가 들어옴");
 
             string query = $"DELETE FROM {name} WHERE {keyName}";
-            //Type t = typeof(TValue);
             Type t = values[0].GetType();
             Assert(t == typeof(object), "이게 오브젝트 타입으로 받으면 안될텐데");
 
@@ -990,12 +983,11 @@ namespace Syadeu.Database
                             {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                                 Assert(true, $"통신 중 문제 발생: {ex.Message}: {ex.StackTrace}\n{query}");
+                                break;
 #else
                                 // TODO : 로그 붙이기
-                                throw new SQLiteExcuteExcpetion(query, ex);
+                                throw new SQLiteExcuteExcpetion(query.Item1, ex);
 #endif
-                                CoreSystem.BackgroundThread.Abort();
-                                break;
 
                             }
                         }

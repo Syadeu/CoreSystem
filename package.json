@@ -1,9 +1,9 @@
 {
   "name": "syadeu.coresystem",
-  "version": "1.4.4",
+  "version": "1.4.5",
   "displayName": "Syadeu CoreSystem",
   "description": "Syadeu CoreSystem Package.",
-  "unity": "2019.2",
+  "unity": "2020.2",
   "dependencies": {
     "com.unity.burst": "1.4.4",
     "com.unity.collections": "0.5.1-preview.11",
