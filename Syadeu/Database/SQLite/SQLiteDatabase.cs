@@ -8,7 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 
-using System.Data.SQLite;
+using Mono.Data.Sqlite;
 
 using UnityEngine;
 using Syadeu.Mono;
@@ -48,7 +48,7 @@ namespace Syadeu.Database
         /// <summary>
         /// 싱글 쿼리용
         /// </summary>
-        private static ConcurrentQueue<(string, SQLiteParameter[])> Queries { get; }
+        private static ConcurrentQueue<(string, SqliteParameter[])> Queries { get; }
         private static int ExcuteWorker { get; }
         private ConcurrentQueue<bool> VacuumQueries { get; }
         private Dictionary<string, string> m_SafeWritingTables { get; }
@@ -66,7 +66,7 @@ namespace Syadeu.Database
         /// </summary>
         private string FileName { get; }
 
-        private SQLiteConnection Connection { get; set; }
+        private SqliteConnection Connection { get; set; }
         public bool IsConnectionOpened { get; private set; }
 
         public bool Initialized { get; private set; }
@@ -85,7 +85,7 @@ namespace Syadeu.Database
 
         static SQLiteDatabase()
         {
-            Queries = new ConcurrentQueue<(string, SQLiteParameter[])>();
+            Queries = new ConcurrentQueue<(string, SqliteParameter[])>();
 #if UNITY_EDITOR
             if (!Application.isPlaying)
             {
@@ -306,7 +306,7 @@ namespace Syadeu.Database
 
             System.Threading.Thread.CurrentThread.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
             IsConnectionOpened = true;
-            Connection = new SQLiteConnection(DataPath);
+            Connection = new SqliteConnection(DataPath);
             Connection.Open();
         }
         private void CloseConnection()
@@ -422,12 +422,12 @@ namespace Syadeu.Database
             //List<SQLiteTable> tables = new List<SQLiteTable>();
             Tables.Clear();
 
-            using (SQLiteCommand cmd = Connection.CreateCommand())
+            using (SqliteCommand cmd = Connection.CreateCommand())
             {
                 cmd.CommandText = @"SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'";
                 try
                 {
-                    using (SQLiteDataReader rdr = cmd.ExecuteReader())
+                    using (SqliteDataReader rdr = cmd.ExecuteReader())
                     {
                         while (rdr.Read())
                         {
@@ -455,7 +455,7 @@ namespace Syadeu.Database
 
                     try
                     {
-                        using (SQLiteDataReader rdr = cmd.ExecuteReader())
+                        using (SqliteDataReader rdr = cmd.ExecuteReader())
                         {
                             int columnCount = rdr.FieldCount;
                             string[] columns = new string[columnCount];
@@ -466,7 +466,8 @@ namespace Syadeu.Database
                                 columns[a] = rdr.GetName(a);
                                 Type t = rdr.GetFieldType(a);
                                 if (t == typeof(double)) t = typeof(float);
-                                else if (t == typeof(SQLiteBlob)) t = typeof(byte[]);
+                                //$"1. {rdr.GetName(a)} :: {rdr.GetFieldType(a).Name}".ToLog();
+                                //else if (t == typeof(SQLiteBlob)) t = typeof(byte[]);
                                 columnTypes.Add(t);
 
                                 SQLiteColumn column =
@@ -508,7 +509,7 @@ namespace Syadeu.Database
 
             //$"SQLite Database: All Tables Fully Loaded".ToLog();
         }
-        private static byte[] GetBytes(in SQLiteDataReader rdr, in int i)
+        private static byte[] GetBytes(in SqliteDataReader rdr, in int i)
         {
             const int CHUNK_SIZE = 2 * 1024;
             byte[] buffer = new byte[CHUNK_SIZE];
@@ -571,7 +572,8 @@ namespace Syadeu.Database
                             columns.Add(rdr.GetName(a));
                             Type t = rdr.GetFieldType(a);
                             if (t == typeof(double)) t = typeof(float);
-                            else if (t == typeof(SQLiteBlob)) t = typeof(byte[]);
+                            //$"2. {rdr.GetName(a)} :: {rdr.GetFieldType(a).Name}".ToLog();
+                            //else if (t == typeof()) t = typeof(byte[]);
                             columnTypes.Add(t);
 
                             SQLiteColumn column =
@@ -737,12 +739,12 @@ namespace Syadeu.Database
             yield return $"DROP TABLE {alter}";
         }
 
-        private string QueryHelper(ref List<SQLiteParameter> parameters, in int i, in Type t, in object value)
+        private string QueryHelper(ref List<SqliteParameter> parameters, in int i, in Type t, in object value)
         {
             if (t == typeof(byte[]))
             {
                 string temp = $"@item{i}";
-                SQLiteParameter parameter = new SQLiteParameter(temp, System.Data.DbType.Binary)
+                SqliteParameter parameter = new SqliteParameter(temp, System.Data.DbType.Binary)
                 {
                     Value = value as byte[]
                 };
@@ -752,12 +754,12 @@ namespace Syadeu.Database
 
             return ConvertToString(t, value);
         }
-        private IEnumerator<(string, SQLiteParameter[])> GetInsertDataQuery(ISQLiteReadOnlyTable table, int queryBlock = 1000)
+        private IEnumerator<(string, SqliteParameter[])> GetInsertDataQuery(ISQLiteReadOnlyTable table, int queryBlock = 1000)
         {
             Assert(table.IsValid, false, "정상적인 데이터 테이블이 아닌게 들어옴");
             if (table.Count == 0) yield break;
 
-            List<SQLiteParameter> parameters = new List<SQLiteParameter>();
+            List<SqliteParameter> parameters = new List<SqliteParameter>();
             string query = $"INSERT INTO {ConvertTableInfoToString(table, true)} ";
 
             string unions = " VALUES ";
@@ -785,7 +787,7 @@ namespace Syadeu.Database
                 yield return ($"{query}{unions.Substring(0, unions.Length - 1)}", parameters.ToArray());
             }
         }
-        private IEnumerator<(string, SQLiteParameter[])> GetReplaceTableQuery(ISQLiteReadOnlyTable table, string into, int queryBlock = 1000)
+        private IEnumerator<(string, SqliteParameter[])> GetReplaceTableQuery(ISQLiteReadOnlyTable table, string into, int queryBlock = 1000)
         {
             Assert(table.IsValid, false, "정상적인 데이터 테이블이 아닌게 들어옴");
 
@@ -809,12 +811,12 @@ namespace Syadeu.Database
                 }
             }
         }
-        private IEnumerator<(string, SQLiteParameter[])> GetUpdateTableQuery(ISQLiteReadOnlyTable table, int queryBlock = 100)
+        private IEnumerator<(string, SqliteParameter[])> GetUpdateTableQuery(ISQLiteReadOnlyTable table, int queryBlock = 100)
         {
             Assert(table.IsValid, false, "정상적인 데이터 테이블이 아닌게 들어옴");
             if (table.Count == 0) yield break;
 
-            List<SQLiteParameter> parameters = new List<SQLiteParameter>();
+            List<SqliteParameter> parameters = new List<SqliteParameter>();
             string query = $"INSERT OR REPLACE INTO {ConvertTableInfoToString(table, true)} ";
 
             string unions = " VALUES ";
@@ -1916,7 +1918,7 @@ namespace Syadeu.Database
         /// <see cref="SQLiteDatabase"/> 통신을 위한 쿼리문을 추가합니다
         /// </summary>
         /// <param name="query"></param>
-        public void AddQuery(string query, params SQLiteParameter[] parameters)
+        public void AddQuery(string query, params SqliteParameter[] parameters)
         {
             Queries.Enqueue((query, parameters));
         }
@@ -2026,7 +2028,7 @@ namespace Syadeu.Database
         {
             string properties = $"{column.Name}";
             string t;
-            if (column.Type == typeof(byte[]) || column.Type == typeof(SQLiteBlob))
+            if (column.Type == typeof(byte[]) /*|| column.Type == typeof(SQLiteBlob)*/)
             {
                 t = "BLOB";
             }
@@ -2054,7 +2056,7 @@ namespace Syadeu.Database
         {
             string properties = $"{column.Value}";
             string t;
-            if (column.Key == typeof(byte[]) || column.Key == typeof(SQLiteBlob))
+            if (column.Key == typeof(byte[]) /*|| column.Key == typeof(SQLiteBlob)*/)
             {
                 t = "BLOB";
             }
