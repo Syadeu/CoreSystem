@@ -1,10 +1,11 @@
-using System.IO;
+Ôªøusing System.IO;
 
 using Syadeu.Database;
 using Syadeu.Extentions.EditorUtils;
 
 using UnityEngine;
 using UnityEditor;
+using System.Runtime.InteropServices;
 
 namespace SyadeuEditor
 {
@@ -37,6 +38,8 @@ namespace SyadeuEditor
         private static string m_DatabasePath = "";
         private static SQLiteDatabase m_Database;
 
+        private double m_TotalMemory;
+
         private void OnEnable()
         {
             m_DatabasePath = Application.streamingAssetsPath;
@@ -47,9 +50,10 @@ namespace SyadeuEditor
 
         private int m_SeletedTable = 0;
         private Rect m_TableListRect = new Rect(10, 110, 200, 470);
-        private Rect m_TableInfoRect = new Rect(225, 110, 960, 470);
+        private Rect m_TableRightRect = new Rect(225, 110, 960, 470);
         private Vector2 m_TableListScroll = Vector2.zero;
         private Vector2 m_TableInfoScroll = Vector2.zero;
+        private Vector2 m_TableAnalyzerScroll = Vector2.zero;
         private string[] m_TableNames;
 
         private void OnGUI()
@@ -57,22 +61,22 @@ namespace SyadeuEditor
             EditorUtils.StringHeader("SQLite Window");
             EditorUtils.SectorLine();
 
-            #region µ•¿Ã≈Õ ∞Ê∑Œ ¡ˆ¡§ π◊ ¥›±‚
+            #region Îç∞Ïù¥ÌÑ∞ Í≤ΩÎ°ú ÏßÄÏ†ï Î∞è Îã´Í∏∞
             EditorGUI.BeginDisabledGroup(true);
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.TextField("µ•¿Ã≈Õ ∞Ê∑Œ: ", m_DatabasePath);
+            EditorGUILayout.TextField("Path: ", m_DatabasePath);
             EditorGUI.EndDisabledGroup();
             if (!m_DatabaseLoaded)
             {
-                if (GUILayout.Button("∞Ê∑Œ ¡ˆ¡§"))
+                if (GUILayout.Button("Set database path"))
                 {
-                    string temp = EditorUtility.OpenFolderPanel("∞Ê∑Œ ¡ˆ¡§", m_DatabasePath, "");
+                    string temp = EditorUtility.OpenFolderPanel("Set database path", m_DatabasePath, "");
                     if (!string.IsNullOrEmpty(temp)) m_DatabasePath = temp;
                 }
             }
             else
             {
-                if (GUILayout.Button("µ•¿Ã≈Õ ¥›±‚"))
+                if (GUILayout.Button("Close"))
                 {
                     m_DatabaseLoaded = false;
                     return;
@@ -81,15 +85,15 @@ namespace SyadeuEditor
             EditorGUILayout.EndHorizontal();
             #endregion
 
-            #region µ•¿Ã≈Õ∆ƒ¿œ ø≠±‚
+            #region Datafile Open
             if (!m_DatabaseLoaded)
             {
                 EditorGUILayout.BeginHorizontal();
-                if (GUILayout.Button("µ•¿Ã≈Õ ø≠±‚"))
+                if (GUILayout.Button("Open"))
                 {
                     if (!m_DatabasePath.Contains(".db"))
                     {
-                        string temp = EditorUtility.OpenFilePanel("µ•¿Ã≈Õ ø≠±‚", m_DatabasePath, "db");
+                        string temp = EditorUtility.OpenFilePanel("Open", m_DatabasePath, "db");
                         if (!string.IsNullOrEmpty(temp)) m_DatabasePath = temp;
                         else return;
                     }
@@ -97,12 +101,23 @@ namespace SyadeuEditor
                     string[] split = m_DatabasePath.Split('/');
                     string fileName = split[split.Length - 1].Replace(".db", "");
                     string filePath = m_DatabasePath.Replace(split[split.Length - 1], "");
-                    $"{filePath} : {fileName}".ToLog();
+                    //$"{filePath} : {fileName}".ToLog();
                     m_Database = SQLiteDatabase.Initialize(filePath, fileName, true);
+
+                    m_TotalMemory = Marshal.SizeOf(m_Database);
+                    m_TableNames = new string[m_Database.Tables.Count];
+                    for (int i = 0; i < m_TableNames.Length; i++)
+                    {
+                        m_TableNames[i] = m_Database.Tables[i].Name;
+                        m_TotalMemory += Marshal.SizeOf(m_Database.Tables[i]);
+                    }
+
+                    m_TotalMemory /= 1e+6;
+
                     m_DatabaseLoaded = true;
                     return;
                 }
-                if (GUILayout.Button("ªı∑Œ ª˝º∫«œ±‚"))
+                if (GUILayout.Button("Create New"))
                 {
                     m_Database = SQLiteDatabase.Initialize(m_DatabasePath, "database", true);
                     m_DatabasePath += "/database.db";
@@ -123,7 +138,7 @@ namespace SyadeuEditor
 
             if (m_Database.Tables.Count == 0)
             {
-                EditorGUILayout.LabelField("≈◊¿Ã∫Ì ¡§∫∏∞° æ¯Ω¿¥œ¥Ÿ");
+                EditorGUILayout.LabelField("No Table infos");
                 return;
             }
 
@@ -132,9 +147,11 @@ namespace SyadeuEditor
             {
                 case 0:
                     GUILayout.Window(1, m_TableListRect, TableListWindow, "", "Box");
-                    GUILayout.Window(2, m_TableInfoRect, TableInfoWindow, "", "Box");
+                    GUILayout.Window(2, m_TableRightRect, TableInfoWindow, "", "Box");
                     break;
                 case 1:
+                    GUILayout.Window(1, m_TableListRect, TableListWindow, "", "Box");
+                    GUILayout.Window(2, m_TableRightRect, TableAnalyzerWindow, "", "Box");
                     break;
                 default:
                     break;
@@ -144,6 +161,7 @@ namespace SyadeuEditor
 
         private void TableListWindow(int unusedWindowID)
         {
+            if (m_TableNames.Length == 0) return;
             m_TableListScroll = GUILayout.BeginScrollView(m_TableListScroll, false, false, GUILayout.Width(m_TableListRect.width), GUILayout.Height(m_TableListRect.height));
 
             EditorGUI.BeginChangeCheck();
@@ -157,10 +175,77 @@ namespace SyadeuEditor
         }
         private void TableInfoWindow(int unusedWindowID)
         {
-            m_TableInfoScroll = GUILayout.BeginScrollView(m_TableInfoScroll, false, false, GUILayout.Width(m_TableInfoRect.width), GUILayout.Height(m_TableInfoRect.height));
+            if (m_TableNames.Length == 0) return;
+            m_TableInfoScroll = GUILayout.BeginScrollView(m_TableInfoScroll, false, false, GUILayout.Width(m_TableRightRect.width), GUILayout.Height(m_TableRightRect.height));
+
+            if (m_TableNames.Length < m_SeletedTable) m_SeletedTable = 0;
 
             EditorUtils.StringHeader(m_TableNames[m_SeletedTable]);
+            EditorUtils.SectorLine();
 
+            EditorUtils.StringRich("ÏûëÏóÖÏ§ë", true);
+
+            GUILayout.EndScrollView();
+        }
+        private void TableAnalyzerWindow(int unusedWindowID)
+        {
+            if (m_TableNames.Length == 0) return;
+
+            m_TableAnalyzerScroll = GUILayout.BeginScrollView(m_TableAnalyzerScroll, false, false, GUILayout.Width(m_TableRightRect.width), GUILayout.Height(m_TableRightRect.height));
+
+            EditorUtils.StringRich("Global Infomation", 20, StringColor.grey);
+            EditorUtils.SectorLine();
+
+            EditorGUILayout.TextField("File size: ", $"{new FileInfo(m_DatabasePath).Length / 1e+6} Mb");
+            EditorGUILayout.TextField("Require Minimum Memory: ", $"{m_TotalMemory} Mb");
+            EditorGUILayout.Space();
+
+            string databaseVersion = m_Database.GetVersion();
+            string versionInfo;
+            StringColor versionInfoColor;
+            if (string.IsNullOrEmpty(databaseVersion))
+            {
+                versionInfo = "No Version Data";
+                versionInfoColor = StringColor.maroon;
+            }
+            else
+            {
+                if (databaseVersion.Equals(Application.version))
+                {
+                    versionInfo = "Normal";
+                    versionInfoColor = StringColor.teal;
+                }
+                else
+                {
+                    versionInfo = "Verion Not Match";
+                    versionInfoColor = StringColor.maroon;
+                }
+            }
+            EditorUtils.StringRich(versionInfo, versionInfoColor, true);
+            EditorGUILayout.TextField("Application Version: ", $"{Application.version}");
+            EditorGUILayout.TextField("Database Version: ", $"{databaseVersion}");
+            
+            EditorUtils.SectorLine();
+
+            EditorUtils.StringHeader($"{m_TableNames[m_SeletedTable]} :: <size=13>Analyzer</size>");
+            EditorUtils.SectorLine();
+
+            SQLiteTable selectedTable = m_Database.Tables[m_SeletedTable];
+            EditorGUILayout.BeginHorizontal();
+            EditorUtils.StringRich($"Name: ", StringColor.grey);
+            for (int i = 0; i < selectedTable.Columns.Count; i++)
+            {
+                EditorUtils.StringRich($"{selectedTable.Columns[i].Name}", StringColor.grey);
+            }
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.BeginHorizontal();
+            EditorUtils.StringRich($"Type: ", StringColor.grey);
+            for (int i = 0; i < selectedTable.Columns.Count; i++)
+            {
+                EditorUtils.StringRich($"{selectedTable.Columns[i].Type.Name}", StringColor.grey);
+            }
+            EditorGUILayout.EndHorizontal();
 
             GUILayout.EndScrollView();
         }

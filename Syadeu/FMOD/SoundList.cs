@@ -45,7 +45,7 @@ namespace Syadeu.FMOD
             }
         }
 
-        public string listName;
+        public string listName = "이름을 입력하세요";
         public int listIndex;
         //public int soundListType;
         public List<FInput> fSounds = new List<FInput>();

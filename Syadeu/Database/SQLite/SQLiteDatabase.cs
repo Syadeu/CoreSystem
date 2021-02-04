@@ -108,7 +108,6 @@ namespace Syadeu.Database
             DataPath = $"URI=file:{Path.Combine(path, $"{name}.db")}";
 
             VersionTable = default;
-            //Tables = new List<SQLiteTable>();
             Tables = new List<SQLiteTable>();
 
             OnExcute = null;
@@ -417,13 +416,11 @@ namespace Syadeu.Database
         {
             Assert(Connection == null, "커넥션이 왜 없지?");
 
-            //Tables.Clear();
-            List<string> tableNames = new List<string>();
-            //List<SQLiteTable> tables = new List<SQLiteTable>();
             Tables.Clear();
 
             using (SqliteCommand cmd = Connection.CreateCommand())
             {
+                List<string> tableNames = new List<string>();
                 cmd.CommandText = @"SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'";
                 try
                 {
@@ -458,21 +455,15 @@ namespace Syadeu.Database
                         using (SqliteDataReader rdr = cmd.ExecuteReader())
                         {
                             int columnCount = rdr.FieldCount;
-                            string[] columns = new string[columnCount];
-                            List<Type> columnTypes = new List<Type>();
-
+                            
                             for (int a = 0; a < columnCount; a++)
                             {
-                                columns[a] = rdr.GetName(a);
+                                string name = rdr.GetName(a);
                                 Type t = rdr.GetFieldType(a);
+                                // 사용 편의상 double 타입은 float 로 변환하여 저장
                                 if (t == typeof(double)) t = typeof(float);
-                                //$"1. {rdr.GetName(a)} :: {rdr.GetFieldType(a).Name}".ToLog();
-                                //else if (t == typeof(SQLiteBlob)) t = typeof(byte[]);
-                                columnTypes.Add(t);
 
-                                SQLiteColumn column =
-                                        new SQLiteColumn(columnTypes[a], columns[a]);
-
+                                SQLiteColumn column = new SQLiteColumn(t, name);
                                 sqColumns.Add(column);
                             }
 
@@ -504,26 +495,7 @@ namespace Syadeu.Database
                     Tables.Add(table);
                 }
             }
-
-            //Tables = tables;
-
             //$"SQLite Database: All Tables Fully Loaded".ToLog();
-        }
-        private static byte[] GetBytes(in SqliteDataReader rdr, in int i)
-        {
-            const int CHUNK_SIZE = 2 * 1024;
-            byte[] buffer = new byte[CHUNK_SIZE];
-            long bytesRead;
-            long fieldOffset = 0;
-            using (MemoryStream stream = new MemoryStream())
-            {
-                while ((bytesRead = rdr.GetBytes(i, fieldOffset, buffer, 0, buffer.Length)) > 0)
-                {
-                    stream.Write(buffer, 0, (int)bytesRead);
-                    fieldOffset += bytesRead;
-                }
-                return stream.ToArray();
-            }
         }
         /// <summary>
         /// 해당 테이블을 SQLite 통신하여 읽고 저장합니다.
@@ -532,7 +504,7 @@ namespace Syadeu.Database
         /// <param name="name"></param>
         /// <returns></returns>
         /// <exception cref="SQLiteUnreadableException"></exception>
-        private void InternalLoadTable(string name)
+        private void InternalLoadTable(in string name)
         {
             Assert(Connection == null, "커넥션이 왜 없지?");
 
@@ -552,7 +524,7 @@ namespace Syadeu.Database
                 Tables.Add(newTable);
             }
         }
-        private SQLiteTable InternalLoadInNewTable(string name)
+        private SQLiteTable InternalLoadInNewTable(in string name)
         {
             List<SQLiteColumn> sqColumns = new List<SQLiteColumn>();
             using (var cmd = Connection.CreateCommand())
@@ -564,21 +536,15 @@ namespace Syadeu.Database
                     using (var rdr = cmd.ExecuteReader())
                     {
                         int columnCount = rdr.FieldCount;
-                        List<string> columns = new List<string>();
-                        List<Type> columnTypes = new List<Type>();
-
+                        
                         for (int a = 0; a < columnCount; a++)
                         {
-                            columns.Add(rdr.GetName(a));
+                            string columnName = rdr.GetName(a);
                             Type t = rdr.GetFieldType(a);
+                            // 사용 편의상 double 타입은 float 로 변환하여 저장
                             if (t == typeof(double)) t = typeof(float);
-                            //$"2. {rdr.GetName(a)} :: {rdr.GetFieldType(a).Name}".ToLog();
-                            //else if (t == typeof()) t = typeof(byte[]);
-                            columnTypes.Add(t);
 
-                            SQLiteColumn column =
-                                    new SQLiteColumn(columnTypes[a], columns[a]);
-
+                            SQLiteColumn column = new SQLiteColumn(t, columnName);
                             sqColumns.Add(column);
                         }
 
@@ -638,7 +604,7 @@ namespace Syadeu.Database
         //    }
         //}
 
-        /// <inheritdoc cref="InternalLoadTable(string)"/>
+        /// <inheritdoc cref="InternalLoadTable(in string)"/>
         private void AddReloadTableQuery(string name)
         {
             Assert(!LoadInMemory, "메모리 로드 플래그가 활성되지않은 데이터베이스");
@@ -739,21 +705,6 @@ namespace Syadeu.Database
             yield return $"DROP TABLE {alter}";
         }
 
-        private string QueryHelper(ref List<SqliteParameter> parameters, in int i, in Type t, in object value)
-        {
-            if (t == typeof(byte[]))
-            {
-                string temp = $"@item{i}";
-                SqliteParameter parameter = new SqliteParameter(temp, System.Data.DbType.Binary)
-                {
-                    Value = value as byte[]
-                };
-                parameters.Add(parameter);
-                return temp;
-            }
-
-            return ConvertToString(t, value);
-        }
         private IEnumerator<(string, SqliteParameter[])> GetInsertDataQuery(ISQLiteReadOnlyTable table, int queryBlock = 1000)
         {
             Assert(table.IsValid, false, "정상적인 데이터 테이블이 아닌게 들어옴");
@@ -771,7 +722,7 @@ namespace Syadeu.Database
                     if (!string.IsNullOrEmpty(properties)) properties += ", ";
 
                     Type valueType = table.Columns[a].Type;
-                    properties += QueryHelper(ref parameters, i, valueType, table.Columns[a].Values[i]);
+                    properties += QueryWriter(ref parameters, i, valueType, table.Columns[a].Values[i]);
                 }
                 unions += $"({properties}),";
 
@@ -828,7 +779,7 @@ namespace Syadeu.Database
                     if (!string.IsNullOrEmpty(properties)) properties += ", ";
 
                     Type valueType = table.Columns[a].Type;
-                    properties += QueryHelper(ref parameters, i, valueType, table.Columns[a].Values[i]);
+                    properties += QueryWriter(ref parameters, i, valueType, table.Columns[a].Values[i]);
                 }
                 unions += $"({properties}),";
 
@@ -990,7 +941,6 @@ namespace Syadeu.Database
                                 // TODO : 로그 붙이기
                                 throw new SQLiteExcuteExcpetion(query.Item1, ex);
 #endif
-
                             }
                         }
 
@@ -1016,12 +966,11 @@ namespace Syadeu.Database
                         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                             Assert(true, $"VACUUM 중 문제 발생: {ex.Message}: {ex.StackTrace}");
+                            throw;
 #else
                             // TODO : 로그 붙이기
                             throw new SQLiteExcuteExcpetion("VACUUM", ex);
 #endif
-                            CoreSystem.BackgroundThread.Abort();
-                            throw;
                         }
                     }
                 }
@@ -1628,7 +1577,7 @@ namespace Syadeu.Database
             AddReloadAllTablesQuery();
             return Excute();
         }
-        /// <inheritdoc cref="InternalLoadTable(string)"/>
+        /// <inheritdoc cref="InternalLoadTable(in string)"/>
         /// <remarks>
         /// 비슷한 메소드<br/>
         /// <seealso cref="ReloadAllTables"/>: 모든 테이블 정보를 다시 불러옵니다.
@@ -2105,6 +2054,38 @@ namespace Syadeu.Database
                 info += $", {columns[i].Name}";
             }
             return withName ? $"{info})" : info;
+        }
+
+        private static string QueryWriter(ref List<SqliteParameter> parameters, in int i, in Type t, in object value)
+        {
+            if (t == typeof(byte[]))
+            {
+                string temp = $"@item{i}";
+                SqliteParameter parameter = new SqliteParameter(temp, System.Data.DbType.Binary)
+                {
+                    Value = value as byte[]
+                };
+                parameters.Add(parameter);
+                return temp;
+            }
+
+            return ConvertToString(t, value);
+        }
+        private static byte[] GetBytes(in SqliteDataReader rdr, in int i)
+        {
+            const int CHUNK_SIZE = 2 * 1024;
+            byte[] buffer = new byte[CHUNK_SIZE];
+            long bytesRead;
+            long fieldOffset = 0;
+            using (MemoryStream stream = new MemoryStream())
+            {
+                while ((bytesRead = rdr.GetBytes(i, fieldOffset, buffer, 0, buffer.Length)) > 0)
+                {
+                    stream.Write(buffer, 0, (int)bytesRead);
+                    fieldOffset += bytesRead;
+                }
+                return stream.ToArray();
+            }
         }
 
         /// <summary>

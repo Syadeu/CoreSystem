@@ -11,8 +11,6 @@ namespace SyadeuEditor
     [CustomEditor(typeof(FMODSettings))]
     public sealed class FMODSettingsEditor : Editor
     {
-        private GUIStyle headerStyle;
-
         public FMODRoom[] tempRooms;
         public static bool[] enableSoundRoomVisualize;
 
@@ -23,11 +21,6 @@ namespace SyadeuEditor
         private void OnEnable()
         {
             if (Application.isPlaying) return;
-
-            headerStyle = new GUIStyle
-            {
-                richText = true
-            };
 
             Reset();
         }
@@ -58,21 +51,21 @@ namespace SyadeuEditor
                 return;
             }
 
-            EditorGUILayout.LabelField($"<size=20>FMOD System Configuation</size>", headerStyle);
+            EditorUtils.StringHeader("FMOD System Configuation");
             EditorGUILayout.Space();
             EditorGUILayout.ObjectField(label: "Setting File: ", FMODSettings.Instance, typeof(FMODSettings), false);
-            EditorGUILayout.LabelField("_______________________________________________________________________");
+            EditorUtils.SectorLine();
             EditorGUILayout.Space();
             EditorGUI.indentLevel += 1;
 
             EditorGUI.BeginChangeCheck();
 
             GeneralSettings();
-            EditorGUILayout.LabelField("_______________________________________________________________________");
+            EditorUtils.SectorLine();
             VisualizeSoundList();
-            EditorGUILayout.LabelField("_______________________________________________________________________");
+            EditorUtils.SectorLine();
             VisualizeSoundRooms();
-            EditorGUILayout.LabelField("_______________________________________________________________________");
+            EditorUtils.SectorLine();
 
             if (EditorGUI.EndChangeCheck())
             {
@@ -85,9 +78,7 @@ namespace SyadeuEditor
 
         void GeneralSettings()
         {
-            EditorGUILayout.LabelField("<size=15>General Settings</size>", headerStyle);
-
-            showGeneralSetting = EditorGUILayout.ToggleLeft(label: showGeneralSetting ? "Hide" : "Show", showGeneralSetting);
+            showGeneralSetting = EditorUtils.Foldout(showGeneralSetting, "General Settings", 15);
             if (!showGeneralSetting) return;
 
             EditorGUI.indentLevel += 1;
@@ -98,9 +89,7 @@ namespace SyadeuEditor
         }
         void VisualizeSoundList()
         {
-            EditorGUILayout.LabelField("<size=15>Sound Lists</size>", headerStyle);
-
-            showSoundlist = EditorGUILayout.ToggleLeft(label: showSoundlist ? "Hide" : "Show", showSoundlist);
+            showSoundlist = EditorUtils.Foldout(showSoundlist, "Sound Lists", 15);
             if (!showSoundlist) return;
 
             EditorGUI.indentLevel += 1;
@@ -175,9 +164,7 @@ namespace SyadeuEditor
 
         void VisualizeSoundRooms()
         {
-            EditorGUILayout.LabelField("<size=15>Room Settings</size>", headerStyle);
-
-            showSoundroom = EditorGUILayout.ToggleLeft(showSoundroom ? "Hide" : "Show", showSoundroom);
+            showSoundroom = EditorUtils.Foldout(showSoundroom, "Room Settings", 15);
             if (!showSoundroom)
             {
                 if (tempRooms != null)

@@ -34,7 +34,7 @@ namespace SyadeuEditor
                     roomFolder = new GameObject("Syadeu.Extension.RoomEditor").transform;
                 }
 
-                roomFolder.gameObject.hideFlags = HideFlags.HideInHierarchy;
+                //roomFolder.gameObject.hideFlags = HideFlags.HideInHierarchy;
             }
             var gameObj = new GameObject($"Syadeu.Extension.TempRoom_{insRooms.Count}");
             gameObj.transform.SetParent(roomFolder);

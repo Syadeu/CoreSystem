@@ -13,8 +13,7 @@ namespace SyadeuEditor
     public class SoundListEditor : Editor
     {
         private SoundList SoundList { get; set; }
-        private GUIStyle headerStyle;
-
+        
         private bool enableDuplicate = false;
         private bool[] showSounds;
         private bool[] showAudio;
@@ -26,11 +25,6 @@ namespace SyadeuEditor
         private void OnEnable()
         {
             SoundList = target as SoundList;
-
-            headerStyle = new GUIStyle
-            {
-                richText = true
-            };
 
             showSounds = new bool[SoundList.fSounds.Count];
             showAudio = new bool[SoundList.fSounds.Count];
@@ -45,8 +39,8 @@ namespace SyadeuEditor
         public override void OnInspectorGUI()
         {
             if (Application.isPlaying || SoundList == null) return;
-            EditorGUILayout.LabelField(string.Format("<size=20>List Configuation</size> :: {0}", SoundList.listName), headerStyle);
-            EditorGUILayout.LabelField("_______________________________________________________________________");
+            EditorUtils.StringHeader($"List Configuation :: <size=13>{SoundList.listName}</size>");
+            EditorUtils.SectorLine();
             EditorGUILayout.Space();
 
             if (FMODSettings.Instance.m_SoundLists.Contains(SoundList))
@@ -141,7 +135,7 @@ namespace SyadeuEditor
             for (int i = 0; i < totalCount; i++)
             {
                 EditorGUILayout.BeginHorizontal();
-                showSounds[i] = EditorGUILayout.ToggleLeft(label: string.Format("<size=13>{0} : {1}</size>", SoundList.fSounds[i].index, SoundList.fSounds[i].name), showSounds[i], headerStyle);
+                showSounds[i] = EditorUtils.Foldout(showSounds[i], $"<size=13>{SoundList.fSounds[i].index} : {SoundList.fSounds[i].name}</size>");
 
                 if (enableDuplicate)
                 {
@@ -214,24 +208,22 @@ namespace SyadeuEditor
                     if (SoundList.fSounds[i].index == 0)
                     {
                         EditorGUILayout.LabelField("로컬 인덱스를 먼저 추가해주세요");
-                        EditorGUILayout.LabelField("______________________________________________________________");
+                        EditorUtils.SectorLine();
                         EditorGUI.indentLevel -= 1;
                         continue;
                     }
                     else if (SoundList.fSounds[i].index == 999999)
                     {
                         EditorGUILayout.LabelField("입력된 값이 잘못되었습니다");
-                        EditorGUILayout.LabelField("______________________________________________________________");
+                        EditorUtils.SectorLine();
                         EditorGUI.indentLevel -= 1;
                         continue;
                     }
 
-                    EditorGUILayout.LabelField("______________________________________________________________");
+                    EditorUtils.SectorLine();
                     SoundList.fSounds[i].name = EditorGUILayout.TextField(label: "사운드 이름 :", SoundList.fSounds[i].name);
 
-                    //EditorGUILayout.LabelField("______________________________________________________________");
-
-                    EditorGUILayout.LabelField("______________________________________________________________");
+                    EditorUtils.SectorLine();
 
                     EditorGUILayout.BeginHorizontal();
                     EditorGUILayout.LabelField("사운드 갯수 : " + SoundList.fSounds[i].eventClips.Count);
@@ -258,14 +250,15 @@ namespace SyadeuEditor
                     }
                     EditorGUILayout.EndHorizontal();
 
-                    showAudio[i] = EditorGUILayout.ToggleLeft(label: "Event Clip", showAudio[i]);
+                    //showAudio[i] = EditorGUILayout.ToggleLeft(label: "Event Clip", showAudio[i]);
+                    showAudio[i] = EditorUtils.Foldout(showAudio[i], "Event Clip");
                     if (showAudio[i] && SoundList.fSounds[i].eventClips.Count != 0)
                     {
                         EditorGUI.indentLevel += 1;
                         EventClips(SoundList.fSounds[i], i);
                         EditorGUI.indentLevel -= 1;
                     }
-                    EditorGUILayout.LabelField("______________________________________________________________");
+                    EditorUtils.SectorLine();
                 }
                 else
                 {
