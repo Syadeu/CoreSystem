@@ -26,7 +26,7 @@ namespace SyadeuEditor
             }
 
             EditorGUILayout.Space();
-            m_ShowOriginalContents = EditorGUILayout.BeginFoldoutHeaderGroup(m_ShowOriginalContents, "Original Contents");
+            m_ShowOriginalContents = EditorUtils.Foldout(m_ShowOriginalContents, "Original Contents");
             if (m_ShowOriginalContents) base.OnInspectorGUI();
         }
     }

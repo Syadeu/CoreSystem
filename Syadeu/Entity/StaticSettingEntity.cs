@@ -15,6 +15,8 @@ namespace Syadeu
     public abstract class StaticSettingEntity<T> : SettingEntity, IStaticSetting 
         where T : ScriptableObject, IStaticSetting
     {
+        public virtual bool RuntimeModifiable { get; } = false;
+
         private static T m_Instance;
         private static bool m_IsEnforceOrder;
         public static T Instance
@@ -53,6 +55,13 @@ namespace Syadeu
 #if UNITY_EDITOR
                         AssetDatabase.CreateAsset(m_Instance, $"Assets/Resources/{path}/" + typeof(T).Name + ".asset");
 #endif
+                    }
+
+#if UNITY_EDITOR
+                    if (Application.isPlaying)
+#endif
+                    {
+                        if (!(m_Instance as StaticSettingEntity<T>).RuntimeModifiable) m_Instance = Instantiate(m_Instance);
                     }
 
                     m_Instance.OnInitialized();
