@@ -28,15 +28,15 @@ namespace Syadeu.Database
     /// 
     /// <see cref="LoadInMemory"/>가 True일 경우, 모든 테이블들은
     /// <see cref="SQLiteTable"/>의 형태로 <see cref="Tables"/>에 저장되며,
-    /// 이를 그대로 <see cref="TryGetTable(string, out SQLiteTable)"/>으로 불러서 사용하거나,
+    /// 이를 그대로 <see cref="TryGetTable(in string, out SQLiteTable)"/>으로 불러서 사용하거나,
     /// <see cref="SQLiteTableAttribute"/>를 상속받은 구조체를 사용하여 
-    /// <see cref="TryGetTableValue{T}(in string, int, out T)"/>, 혹은 <see cref="SQLiteTable.TryReadLine{T}(int, out T)"/>
+    /// <see cref="TryGetTableValue{T}(in string, int, out T)"/>, 혹은 <see cref="SQLiteTable.TryReadLine{T}(in int, out T)"/>
     /// 으로 가공된 데이터로 받아서 사용할 수 있습니다.<br/><br/>
     /// 
     /// 사용자 정의된 <see cref="SQLiteTableAttribute"/> 구조체로 가공된 데이터를 받아오면
     /// 쉽고 간편하게 데이터 재가공 및 읽기가 가능하다는 장점이 있지만, 시스템 비용이 크다는 단점이 존재합니다.
     /// 매우 많은 작업(예를 들어 for, foreach와 같은 <see cref="IEnumerator"/> 작업들)은
-    /// 데이터를 가공하여 사용하는 대신, <see cref="SQLiteTable.TryReadLine(int, out IReadOnlyList{KeyValuePair{string, object}})"/>,
+    /// 데이터를 가공하여 사용하는 대신, <see cref="SQLiteTable.TryReadLine(in int, out IReadOnlyList{KeyValuePair{string, object}})"/>,
     /// <see cref="SQLiteTable.CompairLine{TKey}(TKey, in ISQLiteReadOnlyTable)"/>과 같이
     /// 미가공 데이터를 사용하거나 반환하는 비용이 작은 메소드로 대체될 수 있습니다. 
     /// 
