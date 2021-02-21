@@ -42,6 +42,20 @@ namespace Syadeu.Mono
         protected virtual void Awake() { }
         protected virtual void Start() { }
 
+        public T GetComponent<T>() where T : Behaviour
+        {
+            T component = Parent.GetComponent<T>();
+
+#if UNITY_EDITOR
+            if (component == null)
+            {
+                throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                    $"{typeof(T).Name} 을 찾을 수 없습니다.");
+            }
+#endif
+            return component;
+        }
+
         public void Dispose()
         {
             Disposed = true;

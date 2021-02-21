@@ -64,7 +64,8 @@ namespace Syadeu.Mono
                 }
             }
 
-            return null;
+            throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                $"{typeof(T).Name} 을 찾을 수 없습니다.");
         }
     }
 }
