@@ -7,18 +7,15 @@ namespace Syadeu.Mono
 {
     public abstract class DataBehaviour : MonoBehaviour
     {
-        internal List<DataComponent> DataComponents { get; set; }
+        internal List<DataComponent> DataComponents { get; set; } = new List<DataComponent>();
 
-        protected virtual void Awake()
-        {
-            DataComponents = new List<DataComponent>();
-        }
         protected virtual void OnDestroy()
         {
             for (int i = 0; i < DataComponents.Count; i++)
             {
                 DataComponents[i].Dispose();
             }
+            DataComponents.Clear();
         }
 
         public T AddDataComponent<T>() where T : DataComponent
@@ -27,8 +24,6 @@ namespace Syadeu.Mono
 
             component.Parent = this;
             DataComponents.Add(component);
-
-            component.Initialize();
 
             return component;
         }

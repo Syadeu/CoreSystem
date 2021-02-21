@@ -44,6 +44,8 @@ namespace Syadeu.Mono
 
         private void MainCamera_OnValueChange(Camera current, Camera target)
         {
+            if (target == null) return;
+
             CamMatrix4x4 = GetCameraMatrix4X4(target);
         }
 

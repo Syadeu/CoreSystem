@@ -5,11 +5,9 @@ namespace Syadeu.Mono
 {
     public abstract class DataComponent : IDisposable
     {
-        protected bool Initialized { get; private set; } = false;
-        private bool Disposed { get; set; } = false;
-
         private DataBehaviour m_Parent;
 
+        public bool Disposed { get; private set; } = false;
         public DataBehaviour Parent
         {
             get => m_Parent;
@@ -29,14 +27,10 @@ namespace Syadeu.Mono
             }
         }
 
-        internal void Initialize()
+        public DataComponent()
         {
-            if (Disposed || Initialized) return;
-
             Awake();
             Start();
-
-            Initialized = true;
         }
 
         protected virtual void Awake() { }
@@ -44,6 +38,12 @@ namespace Syadeu.Mono
 
         public T GetComponent<T>() where T : Behaviour
         {
+            if (Parent == null)
+            {
+                throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                    $"부모가 없는 데이터 컴포넌트에서는 GetComponent를 사용할 수 없습니다.");
+            }
+
             T component = Parent.GetComponent<T>();
 
 #if UNITY_EDITOR
