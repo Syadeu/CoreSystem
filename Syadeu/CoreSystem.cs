@@ -14,9 +14,40 @@ namespace Syadeu
 {
     public sealed class CoreSystem : StaticManager<CoreSystem>
     {
-        public static List<IStaticMonoManager> StaticManagers { get; } = new List<IStaticMonoManager>();
-        public static List<IStaticMonoManager> InstanceManagers { get; } = new List<IStaticMonoManager>();
-        public static List<IStaticDataManager> DataManagers { get; } = new List<IStaticDataManager>();
+        #region Managers
+
+        internal static List<IStaticMonoManager> StaticManagers { get; } = new List<IStaticMonoManager>();
+        internal static List<IStaticMonoManager> InstanceManagers { get; } = new List<IStaticMonoManager>();
+        internal static List<IStaticDataManager> DataManagers { get; } = new List<IStaticDataManager>();
+
+        public static IReadOnlyList<IStaticMonoManager> GetStaticManagers() => StaticManagers;
+        public static IReadOnlyList<IStaticMonoManager> GetInstanceManagers()
+        {
+            for (int i = 0; i < InstanceManagers.Count; i++)
+            {
+                if (InstanceManagers[i] == null)
+                {
+                    InstanceManagers.RemoveAt(i);
+                    i--;
+                    continue;
+                }
+            }
+            return InstanceManagers;
+        }
+        public static IReadOnlyList<IStaticDataManager> GetDataManagers()
+        {
+            for (int i = 0; i < DataManagers.Count; i++)
+            {
+                if (DataManagers[i] == null ||
+                    DataManagers[i].Disposed)
+                {
+                    DataManagers.RemoveAt(i);
+                    i--;
+                    continue;
+                }
+            }
+            return DataManagers;
+        }
 
         public static T GetManager<T>(SystemFlag flag = SystemFlag.All) where T : class, IStaticManager
         {
@@ -58,6 +89,8 @@ namespace Syadeu
             
             return null;
         }
+
+        #endregion
 
         #region Events
         /// <summary>
@@ -437,6 +470,12 @@ namespace Syadeu
                         m_CustomBackgroundUpdates.TryRemove(item.Key, out _);
                         continue;
                     }
+                    if (item.Value is IStaticDataManager dataMgr &&
+                        dataMgr.Disposed)
+                    {
+                        m_CustomBackgroundUpdates.TryRemove(item.Key, out _);
+                        continue;
+                    }
 
                     try
                     {
@@ -701,7 +740,11 @@ namespace Syadeu
                 OnBackgroundTimerSampler.End();
 #endif
                 counter++;
-                if (counter % 1000 == 0) GC.Collect();
+                if (counter % 1000 == 0)
+                {
+                    GC.Collect();
+                    counter = 0;
+                }
                 ThreadAwaiter(10);
             }
         }
