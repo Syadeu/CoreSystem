@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Syadeu.Database
 {
@@ -35,10 +36,48 @@ namespace Syadeu.Database
 
         public T this[int i]
         {
-            get => ts[i];
+            get
+            {
+                try
+                {
+                    return ts[i];
+                }
+                catch (ArgumentOutOfRangeException ex)
+                {
+#if UNITY_EDITOR
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Database,
+                        $"ObArray<{typeof(T).Name}> 에서 {i} 인덱스 값이 없음", ex);
+#else
+                    CoreSystemException.SendCrash(CoreSystemExceptionFlag.Background,
+                        $"ObArray<{typeof(T).Name}> 에서 {i} 인덱스 값이 없음", ex);
+#endif
+                }
+                catch (Exception)
+                {
+                    throw;
+                }
+            }
             set
             {
-                ts[i] = value;
+                try
+                {
+                    ts[i] = value;
+                }
+                catch (ArgumentOutOfRangeException ex)
+                {
+#if UNITY_EDITOR
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Database,
+                        $"ObArray<{typeof(T).Name}> 에서 {i} 인덱스 값이 없음", ex);
+#else
+                    CoreSystemException.SendCrash(CoreSystemExceptionFlag.Background,
+                        $"ObArray<{typeof(T).Name}> 에서 {i} 인덱스 값이 없음", ex);
+#endif
+                }
+                catch (Exception)
+                {
+                    throw;
+                }
+                
                 OnChange();
             }
         }

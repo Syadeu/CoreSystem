@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Syadeu.Database
 {
@@ -22,6 +23,10 @@ namespace Syadeu.Database
         }
         public bool Activated { get; private set; } = false;
         public int DataIndex { get; }
+
+        public Transform transform => throw new System.NotImplementedException("지원하지 않음");
+        public bool WaitForDeletion => throw new System.NotImplementedException("지원하지 않음");
+
         /// <summary>
         /// 이 객체의 재사용리스트에서 사용중이지않은 객체를 뽑아봅니다.<br/>
         /// null일 수 있고, 그 경우에는 new 키워드를 사용하세요
@@ -70,7 +75,7 @@ namespace Syadeu.Database
         /// 초기화 함수, 이 객체가 재사용리스트에서 불러왔을경우 호출됩니다.
         /// </summary>
         protected virtual void OnInitialize() { }
-        private void Initialize()
+        public void Initialize()
         {
             Activated = true;
             OnInitialize();

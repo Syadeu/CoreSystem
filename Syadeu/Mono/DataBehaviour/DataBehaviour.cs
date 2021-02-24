@@ -7,15 +7,15 @@ namespace Syadeu.Mono
 {
     public abstract class DataBehaviour : MonoBehaviour
     {
-        internal List<DataComponent> DataComponents { get; set; } = new List<DataComponent>();
+        internal List<DataComponent> m_DataComponents = new List<DataComponent>();
 
         protected virtual void OnDestroy()
         {
-            for (int i = 0; i < DataComponents.Count; i++)
+            for (int i = 0; i < m_DataComponents.Count; i++)
             {
-                DataComponents[i].Dispose();
+                m_DataComponents[i].Dispose();
             }
-            DataComponents.Clear();
+            m_DataComponents.Clear();
         }
 
         public T AddDataComponent<T>() where T : DataComponent
@@ -23,39 +23,39 @@ namespace Syadeu.Mono
             T component = Activator.CreateInstance<T>();
 
             component.Parent = this;
-            DataComponents.Add(component);
+            m_DataComponents.Add(component);
 
             return component;
         }
         public void RemoveDataComponent<T>(T component) where T : DataComponent
         {
-            for (int i = 0; i < DataComponents.Count; i++)
+            for (int i = 0; i < m_DataComponents.Count; i++)
             {
-                if (DataComponents[i] == component)
+                if (m_DataComponents[i] == component)
                 {
-                    DataComponents.RemoveAt(i);
+                    m_DataComponents.RemoveAt(i);
                     break;
                 }
             }
         }
         public void RemoveDataComponent(DataComponent component)
         {
-            for (int i = 0; i < DataComponents.Count; i++)
+            for (int i = 0; i < m_DataComponents.Count; i++)
             {
-                if (DataComponents[i] == component)
+                if (m_DataComponents[i] == component)
                 {
-                    DataComponents.RemoveAt(i);
+                    m_DataComponents.RemoveAt(i);
                     break;
                 }
             }
         }
         public T GetDataComponent<T>() where T : DataComponent
         {
-            for (int i = 0; i < DataComponents.Count; i++)
+            for (int i = 0; i < m_DataComponents.Count; i++)
             {
-                if (DataComponents[i].GetType() == typeof(T))
+                if (m_DataComponents[i].GetType() == typeof(T))
                 {
-                    return (T)DataComponents[i];
+                    return (T)m_DataComponents[i];
                 }
             }
 

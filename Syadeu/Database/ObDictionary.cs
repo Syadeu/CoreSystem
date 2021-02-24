@@ -14,36 +14,49 @@ namespace Syadeu.Database
         {
             get
             {
-                if (!m_Dictionary.ContainsKey(key))
+                try
+                {
+                    return m_Dictionary[key];
+                }
+                catch (KeyNotFoundException ex1)
                 {
 #if UNITY_EDITOR
                     throw new CoreSystemException(CoreSystemExceptionFlag.Database, 
                         $"ObDictionary<{typeof(TKey).Name}, {typeof(TValue).Name}> 에서" +
-                        $"{key} 값이 존재하지 않음");
+                        $"{key} 값이 존재하지 않음", ex1);
 #else
                     CoreSystemException.SendCrash(CoreSystemExceptionFlag.Background,
                         $"ObDictionary<{typeof(TKey).Name}, {typeof(TValue).Name}> 에서" +
-                        $"{key} 값이 존재하지 않음", null);
+                        $"{key} 값이 존재하지 않음", ex1);
 #endif
                 }
-                return m_Dictionary[key];
+                catch (Exception)
+                {
+                    throw;
+                }
             }
             set
             {
-                if (!m_Dictionary.ContainsKey(key))
+                try
+                {
+                    m_Dictionary[key] = value;
+                }
+                catch (KeyNotFoundException ex1)
                 {
 #if UNITY_EDITOR
-                    throw new CoreSystemException(CoreSystemExceptionFlag.Database, 
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Database,
                         $"ObDictionary<{typeof(TKey).Name}, {typeof(TValue).Name}> 에서" +
-                        $"{key} 값이 존재하지 않음");
+                        $"{key} 값이 존재하지 않음", ex1);
 #else
                     CoreSystemException.SendCrash(CoreSystemExceptionFlag.Background,
                         $"ObDictionary<{typeof(TKey).Name}, {typeof(TValue).Name}> 에서" +
-                        $"{key} 값이 존재하지 않음", null);
+                        $"{key} 값이 존재하지 않음", ex1);
 #endif
                 }
-
-                m_Dictionary[key] = value;
+                catch (Exception)
+                {
+                    throw;
+                }
 
                 if (value == null)
                 {

@@ -42,10 +42,10 @@ namespace Syadeu.Mono
         public List<ObjectSetting> m_ObjectSettings = new List<ObjectSetting>();
 
         /// <inheritdoc cref="PrefabManager.GetRecycleObject{T}"/>
-        public static T GetRecycleObject<T>() where T : RecycleableMonobehaviour
+        public static T GetRecycleObject<T>() where T : IRecycleable
             => PrefabManager.GetRecycleObject<T>();
         /// <inheritdoc cref="PrefabManager.GetRecycleObject(int)"/>
-        public static RecycleableMonobehaviour GetRecycleObject(int index)
+        public static IRecycleable GetRecycleObject(int index)
             => PrefabManager.GetRecycleObject(index);
     }
 }

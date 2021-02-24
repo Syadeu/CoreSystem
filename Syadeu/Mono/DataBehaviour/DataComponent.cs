@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace Syadeu.Mono
 {
+    [Serializable]
     public abstract class DataComponent : IDisposable
     {
         private DataBehaviour m_Parent;
@@ -23,7 +24,7 @@ namespace Syadeu.Mono
                 }
 
                 m_Parent = value;
-                if (value != null) m_Parent.DataComponents.Add(this);
+                if (value != null) m_Parent.m_DataComponents.Add(this);
             }
         }
 

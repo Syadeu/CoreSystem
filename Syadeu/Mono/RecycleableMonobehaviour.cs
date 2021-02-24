@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace Syadeu.Mono
 {
@@ -21,7 +22,13 @@ namespace Syadeu.Mono
         public bool Activated { get; internal set; } = false;
         public bool WaitForDeletion { get; internal set; } = false;
         
+        [Obsolete("", true)]
         public abstract Transform Transfrom { get; }
+
+        public void Initialize()
+        {
+            Activated = true;
+        }
 
         /// <summary>
         /// 이 객체가 생성되었을때만 한번 실행하는 함수입니다.
