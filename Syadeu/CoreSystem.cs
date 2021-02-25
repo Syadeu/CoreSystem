@@ -351,6 +351,7 @@ namespace Syadeu
 #if UNITY_EDITOR
         private static IEnumerator m_EditorCoroutine = null;
         private static Dictionary<IEnumerator, object> m_EditorCoroutines = new Dictionary<IEnumerator, object>();
+        private static List<(int progressID, EditorTask task)> m_EditorTasks = new List<(int, EditorTask)>();
 
         [InitializeOnLoadMethod]
         private static void EditorInitialize()
@@ -375,12 +376,14 @@ namespace Syadeu
                     {
                         m_EditorCoroutines.Remove(item.Key);
                     }
-
+                    
                     if (item.Key.Current == null)
                     {
                         if (!item.Key.MoveNext())
                         {
                             m_EditorCoroutines.Remove(item.Key);
+
+                            if (item.Value is int progressID) Progress.Remove(progressID);
                         }
                     }
                     else
@@ -391,6 +394,8 @@ namespace Syadeu
                             if (!item.Key.MoveNext())
                             {
                                 m_EditorCoroutines.Remove(item.Key);
+
+                                if (item.Value is int progressID) Progress.Remove(progressID);
                             }
                         }
                         else if (item.Key.Current.GetType() == typeof(bool) &&
@@ -399,15 +404,27 @@ namespace Syadeu
                             if (!item.Key.MoveNext())
                             {
                                 m_EditorCoroutines.Remove(item.Key);
+
+                                if (item.Value is int progressID) Progress.Remove(progressID);
                             }
                         }
                         else if (item.Key.Current is YieldInstruction baseYield)
                         {
                             m_EditorCoroutines.Remove(item.Key);
+                            if (item.Value is int progressID) Progress.Remove(progressID);
+
                             throw new CoreSystemException(CoreSystemExceptionFlag.Editor,
                                 $"해당 yield return 타입({item.Key.Current.GetType().Name})은 지원하지 않습니다");
                         }
                     }
+                }
+
+                for (int i = 0; i < m_EditorTasks.Count; i++)
+                {
+                    IEnumerator iterTask = m_EditorTasks[i].task.Invoke(m_EditorTasks[i].progressID);
+                    m_EditorCoroutines.Add(iterTask, m_EditorTasks[i].progressID);
+
+                    //Progress.Remove(m_EditorTasks[i].progressID);
                 }
 
                 yield return null;
@@ -421,6 +438,13 @@ namespace Syadeu
         public static void StopEditorUpdate(IEnumerator iter)
         {
             m_EditorCoroutines.Remove(iter);
+        }
+
+        public delegate IEnumerator EditorTask(int progressID);
+        public static void AddEditorTask(EditorTask task, string taskName = null)
+        {
+            int progressID = Progress.Start(taskName);
+            m_EditorTasks.Add((progressID, task));
         }
 #endif
 
