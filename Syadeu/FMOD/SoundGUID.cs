@@ -1,13 +1,14 @@
 ﻿using FMOD;
 using FMOD.Studio;
 using FMODUnity;
+using Syadeu.Database;
 using Syadeu.Extentions.EditorUtils;
 using System;
 using System.Collections.Concurrent;
 
 namespace Syadeu.FMOD
 {
-    public class SoundGUID
+    public class SoundGUID : IValidation
     {
         //public static SoundGUID Empty = new SoundGUID(false);
 

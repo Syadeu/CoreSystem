@@ -2,7 +2,7 @@
 
 namespace Syadeu.Database
 {
-    public interface ISQLiteReadOnlyTable
+    public interface ISQLiteReadOnlyTable : IValidation
     {
         /// <summary>
         /// 열 정보를 순번(<paramref name="index"/>)으로 빠르게 불러옵니다.

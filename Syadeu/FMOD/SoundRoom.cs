@@ -1,9 +1,10 @@
-﻿using UnityEngine;
+﻿using Syadeu.Database;
+using UnityEngine;
 
 namespace Syadeu.FMOD
 {
     [System.Serializable]
-    public struct SoundRoom
+    public struct SoundRoom : IValidation
     {
         public readonly static SoundRoom Null = new SoundRoom(-1);
 

@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -8,7 +9,7 @@ namespace Syadeu.Database
     /// 재사용 가능 데이터 객체입니다.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public abstract class RecycleableDatabase<T> : IRecycleable where T : class
+    public abstract class RecycleableDatabase<T> : IRecycleable, IDisposable, IValidation where T : class
     {
         public static int InstanceCount => Instances.Count;
 
@@ -23,6 +24,7 @@ namespace Syadeu.Database
         }
         public bool Activated { get; private set; } = false;
         public int DataIndex { get; }
+        private bool Disposed { get; set; } = false;
 
         public Transform transform => throw new System.NotImplementedException("지원하지 않음");
         public bool WaitForDeletion => throw new System.NotImplementedException("지원하지 않음");
@@ -98,5 +100,21 @@ namespace Syadeu.Database
 
         void IRecycleable.OnInitialize() => OnInitialize();
         void IRecycleable.OnTerminate() => OnTerminate();
+
+        public void Dispose()
+        {
+            InstanceList.TryRemove(DataIndex, out _);
+            for (int i = 0; i < Instances.Count; i++)
+            {
+                if (Instances[i] == this)
+                {
+                    Instances.RemoveAt(i);
+                    break;
+                }
+            }
+
+            Disposed = true;
+        }
+        public bool IsValid() => !Disposed;
     }
 }

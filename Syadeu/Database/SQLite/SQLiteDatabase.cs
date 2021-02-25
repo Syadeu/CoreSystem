@@ -41,7 +41,7 @@ namespace Syadeu.Database
     /// 미가공 데이터를 사용하거나 반환하는 비용이 작은 메소드로 대체될 수 있습니다. 
     /// 
     /// </remarks>
-    public struct SQLiteDatabase
+    public struct SQLiteDatabase : IValidation
     {
         #region Initialize
 
@@ -1311,6 +1311,9 @@ namespace Syadeu.Database
         /// <returns></returns>
         public SQLiteTable SearchTable(string tableName, string where, object targetValue)
         {
+            if (!IsValid()) throw new CoreSystemException(CoreSystemExceptionFlag.Database,
+                "초기화 되지않은 SQLiteDatabase를 사용하려함");
+
             OpenConnection();
 
             List<SQLiteColumn> sqColumns = new List<SQLiteColumn>();
@@ -1366,6 +1369,9 @@ namespace Syadeu.Database
         /// <returns></returns>
         public SQLiteTable LoadTable(string tableName)
         {
+            if (!IsValid()) throw new CoreSystemException(CoreSystemExceptionFlag.Database,
+                "초기화 되지않은 SQLiteDatabase를 사용하려함");
+
             OpenConnection();
             using (var transaction = Connection.BeginTransaction())
             {
@@ -1385,6 +1391,9 @@ namespace Syadeu.Database
         /// <inheritdoc cref="AddCheckTempTablesQuery"/>
         public BackgroundJob CheckTempTables()
         {
+            if (!IsValid()) throw new CoreSystemException(CoreSystemExceptionFlag.Database,
+                "초기화 되지않은 SQLiteDatabase를 사용하려함");
+
             AddCheckTempTablesQuery();
             return Excute();
         }
@@ -1407,6 +1416,9 @@ namespace Syadeu.Database
         /// <returns></returns>
         public BackgroundJob OpenSafeWriting(string tableName, bool withEmpty, out string divertedName)
         {
+            if (!IsValid()) throw new CoreSystemException(CoreSystemExceptionFlag.Database,
+                "초기화 되지않은 SQLiteDatabase를 사용하려함");
+
             Assert(!HasTable(tableName), $"이름 ({tableName})을 가진 테이블이 존재하지 않습니다");
 
             TryGetTable(tableName, out SQLiteTable table);
@@ -1434,6 +1446,9 @@ namespace Syadeu.Database
         /// <returns></returns>
         public BackgroundJob CloseSafeWriting(string divertedName)
         {
+            if (!IsValid()) throw new CoreSystemException(CoreSystemExceptionFlag.Database,
+                "초기화 되지않은 SQLiteDatabase를 사용하려함");
+
             if (!m_SafeWritingTables.ContainsKey(divertedName))
             {
                 Assert(!HasTable(divertedName), $"이름 ({divertedName})을 가진 테이블이 존재하지 않습니다");
@@ -1460,6 +1475,9 @@ namespace Syadeu.Database
         /// <returns></returns>
         public BackgroundJob DeleteRow(string tableName, object primaryKey)
         {
+            if (!IsValid()) throw new CoreSystemException(CoreSystemExceptionFlag.Database,
+                "초기화 되지않은 SQLiteDatabase를 사용하려함");
+
             if (!m_SafeWritingTables.ContainsKey(tableName))
             {
                 Assert(!HasTable(tableName), $"이름 ({tableName})을 가진 테이블이 존재하지 않습니다");
@@ -1484,6 +1502,9 @@ namespace Syadeu.Database
         /// <returns></returns>
         public BackgroundJob DeleteRow(string tableName, in KeyValuePair<string, object> keyValue)
         {
+            if (!IsValid()) throw new CoreSystemException(CoreSystemExceptionFlag.Database,
+                "초기화 되지않은 SQLiteDatabase를 사용하려함");
+
             if (!m_SafeWritingTables.ContainsKey(tableName))
             {
                 Assert(!HasTable(tableName), $"이름 ({tableName})을 가진 테이블이 존재하지 않습니다");
@@ -1507,6 +1528,9 @@ namespace Syadeu.Database
         /// <returns></returns>
         public BackgroundJob DeleteRows<TKey>(string tableName, in IList<TKey> primaryKeys, int queryBlock = 100)
         {
+            if (!IsValid()) throw new CoreSystemException(CoreSystemExceptionFlag.Database,
+                "초기화 되지않은 SQLiteDatabase를 사용하려함");
+
             if (!m_SafeWritingTables.ContainsKey(tableName))
             {
                 Assert(!HasTable(tableName), $"이름 ({tableName})을 가진 테이블이 존재하지 않습니다");
@@ -1537,6 +1561,9 @@ namespace Syadeu.Database
         /// <returns></returns>
         public BackgroundJob DeleteRows<TValue>(string tableName, string columnName, in IList<TValue> keyValues, int queryBlock = 100)
         {
+            if (!IsValid()) throw new CoreSystemException(CoreSystemExceptionFlag.Database,
+                "초기화 되지않은 SQLiteDatabase를 사용하려함");
+
             if (!m_SafeWritingTables.ContainsKey(tableName))
             {
                 Assert(!HasTable(tableName), $"이름 ({tableName})을 가진 테이블이 존재하지 않습니다");
@@ -1558,6 +1585,9 @@ namespace Syadeu.Database
         /// <returns></returns>
         public BackgroundJob AddRows(in ISQLiteReadOnlyTable data, int queryBlock = 1000)
         {
+            if (!IsValid()) throw new CoreSystemException(CoreSystemExceptionFlag.Database,
+                "초기화 되지않은 SQLiteDatabase를 사용하려함");
+
             Assert(data.Count == 0, $"{data.Name}에 넣을 데이터가 하나도 없음");
 
             AddInsertDataQuery(data, queryBlock);
@@ -1572,6 +1602,8 @@ namespace Syadeu.Database
         /// <returns></returns>
         public BackgroundJob ReloadAllTables()
         {
+            if (!IsValid()) throw new CoreSystemException(CoreSystemExceptionFlag.Database,
+                "초기화 되지않은 SQLiteDatabase를 사용하려함");
             Assert(IsValid, false, "정상 로드되지않은 데이터베이스에서 ReloadAllTables");
 
             AddReloadAllTablesQuery();
@@ -1586,6 +1618,8 @@ namespace Syadeu.Database
         /// <returns></returns>
         public BackgroundJob ReloadTable(string name)
         {
+            if (!IsValid()) throw new CoreSystemException(CoreSystemExceptionFlag.Database,
+                "초기화 되지않은 SQLiteDatabase를 사용하려함");
             Assert(!HasTable(name), $"이름 ({name})을 가진 테이블이 존재하지 않습니다");
 
             AddReloadTableQuery(name);
@@ -1605,6 +1639,8 @@ namespace Syadeu.Database
         /// <returns></returns>
         public BackgroundJob CreateTable(in ISQLiteReadOnlyTable table, int queryBlock = 100)
         {
+            if (!IsValid()) throw new CoreSystemException(CoreSystemExceptionFlag.Database,
+                "초기화 되지않은 SQLiteDatabase를 사용하려함");
             Assert(HasTable(table.Name), $"이름 ({table.Name})을 가진 테이블이 이미 존재합니다");
 
             // 새로운 테이블을 작성합니다.
@@ -1627,6 +1663,8 @@ namespace Syadeu.Database
         /// <returns></returns>
         public BackgroundJob CreateTable(string name, in IList<KeyValuePair<Type, string>> columns)
         {
+            if (!IsValid()) throw new CoreSystemException(CoreSystemExceptionFlag.Database,
+                "초기화 되지않은 SQLiteDatabase를 사용하려함");
             Assert(HasTable(name), $"이름 ({name})을 가진 테이블이 이미 존재합니다");
             Assert(columns.Count == 0, "테이블을 생성하려면 반드시 하나 이상의 컬럼 정보를 가지고 있어야됩니다");
 
@@ -1655,6 +1693,8 @@ namespace Syadeu.Database
         /// <returns></returns>
         public BackgroundJob CreateTable<T>(string tableName) where T : struct
         {
+            if (!IsValid()) throw new CoreSystemException(CoreSystemExceptionFlag.Database,
+                "초기화 되지않은 SQLiteDatabase를 사용하려함");
             Assert(HasTable(tableName), $"이름 ({tableName})을 가진 테이블이 이미 존재합니다");
             Assert(typeof(T).GetCustomAttribute<SQLiteTableAttribute>() == null, $"타입 ({typeof(T).Name})은 SQLiteTable 구조체가 아닙니다");
 
@@ -1677,6 +1717,8 @@ namespace Syadeu.Database
         /// <returns></returns>
         public BackgroundJob ReplaceTable(in ISQLiteReadOnlyTable table, string into, int queryBlock = 100)
         {
+            if (!IsValid()) throw new CoreSystemException(CoreSystemExceptionFlag.Database,
+                "초기화 되지않은 SQLiteDatabase를 사용하려함");
             // 새로운 정보를 넣습니다
             AddReplaceTableQuery(table, into, queryBlock);
 
@@ -1698,6 +1740,8 @@ namespace Syadeu.Database
         /// <param name="target"><see cref="SQLiteTableAttribute"/>이 선언된 객체</param>
         public BackgroundJob UpdateTable<T>(string tableName, T target) where T : struct
         {
+            if (!IsValid()) throw new CoreSystemException(CoreSystemExceptionFlag.Database,
+                "초기화 되지않은 SQLiteDatabase를 사용하려함");
             if (!m_SafeWritingTables.ContainsKey(tableName))
             {
                 Assert(!HasTable(tableName), $"이름 ({tableName})을 가진 테이블이 존재하지 않습니다");
@@ -1721,6 +1765,8 @@ namespace Syadeu.Database
         /// <returns></returns>
         public BackgroundJob UpdateTable(in ISQLiteReadOnlyTable table, int queryBlock = 100)
         {
+            if (!IsValid()) throw new CoreSystemException(CoreSystemExceptionFlag.Database,
+                "초기화 되지않은 SQLiteDatabase를 사용하려함");
             if (!m_SafeWritingTables.ContainsKey(table.Name))
             {
                 Assert(!HasTable(table.Name), $"이름 ({table.Name})을 가진 테이블이 존재하지 않습니다");
@@ -1741,6 +1787,8 @@ namespace Syadeu.Database
         /// <returns></returns>
         public BackgroundJob CopyTable(string tableName, string newTableName)
         {
+            if (!IsValid()) throw new CoreSystemException(CoreSystemExceptionFlag.Database,
+                "초기화 되지않은 SQLiteDatabase를 사용하려함");
             TryGetTable(tableName, out SQLiteTable table);
 
             Assert(table.IsValid, false, $"이름 ({tableName})을 가진 테이블이 존재하지 않습니다");
@@ -1765,6 +1813,8 @@ namespace Syadeu.Database
         /// <returns></returns>
         public BackgroundJob DropTable(string tableName)
         {
+            if (!IsValid()) throw new CoreSystemException(CoreSystemExceptionFlag.Database,
+                "초기화 되지않은 SQLiteDatabase를 사용하려함");
             Assert(!HasTable(tableName), $"이름 ({tableName})을 가진 테이블이 존재하지 않습니다");
 
             string query = $@"DROP TABLE {tableName}";
@@ -1784,6 +1834,8 @@ namespace Syadeu.Database
         /// <inheritdoc cref="DropTable(string)"/>
         public bool TryDropTable(string tableName, out BackgroundJob job)
         {
+            if (!IsValid()) throw new CoreSystemException(CoreSystemExceptionFlag.Database,
+                "초기화 되지않은 SQLiteDatabase를 사용하려함");
             if (HasTable(tableName))
             {
                 string query = $@"DROP TABLE {tableName}";
@@ -1815,6 +1867,8 @@ namespace Syadeu.Database
         /// <returns></returns>
         public BackgroundJob RenameTable(string tableName, string targetName)
         {
+            if (!IsValid()) throw new CoreSystemException(CoreSystemExceptionFlag.Database,
+                "초기화 되지않은 SQLiteDatabase를 사용하려함");
             Assert(!HasTable(tableName), $"이름 ({tableName})을 가진 테이블이 존재하지 않습니다");
 
             AddQuery($"ALTER TABLE {tableName} RENAME TO {targetName}");
@@ -1830,6 +1884,8 @@ namespace Syadeu.Database
         /// <param name="name">추가할 컬럼의 이름</param>
         public BackgroundJob AddColumn(string tableName, Type t, string name)
         {
+            if (!IsValid()) throw new CoreSystemException(CoreSystemExceptionFlag.Database,
+                "초기화 되지않은 SQLiteDatabase를 사용하려함");
             Assert(!HasTable(tableName), $"이름 ({tableName})을 가진 테이블이 존재하지 않습니다");
 
             AddQuery(GetAddColumnQuery(tableName, new KeyValuePair<Type, string>(t, name)));
@@ -1845,6 +1901,8 @@ namespace Syadeu.Database
         /// <param name="vs">추가로 지울 컬럼들의 이름들</param>
         public BackgroundJob DeleteColumn(string tableName, params string[] removeColumns)
         {
+            if (!IsValid()) throw new CoreSystemException(CoreSystemExceptionFlag.Database,
+                "초기화 되지않은 SQLiteDatabase를 사용하려함");
             TryGetTable(tableName, out var table);
             Assert(table.IsValid, false, $"이름 ({tableName})을 가진 테이블이 존재하지 않습니다");
 
@@ -1869,6 +1927,8 @@ namespace Syadeu.Database
         /// <param name="query"></param>
         public void AddQuery(string query, params SqliteParameter[] parameters)
         {
+            if (!IsValid()) throw new CoreSystemException(CoreSystemExceptionFlag.Database,
+                "초기화 되지않은 SQLiteDatabase를 사용하려함");
             Queries.Enqueue((query, parameters));
         }
 
@@ -1880,6 +1940,9 @@ namespace Syadeu.Database
         /// </remarks>
         public BackgroundJob Excute()
         {
+            if (!IsValid()) throw new CoreSystemException(CoreSystemExceptionFlag.Database,
+                "초기화 되지않은 SQLiteDatabase를 사용하려함");
+
             CoreSystem.AddBackgroundJob(ExcuteWorker, InternalExcute, out var job);
             return job;
         }
@@ -1891,6 +1954,9 @@ namespace Syadeu.Database
         /// </summary>
         public void ExcuteEditor()
         {
+            if (!IsValid()) throw new CoreSystemException(CoreSystemExceptionFlag.Database,
+                "초기화 되지않은 SQLiteDatabase를 사용하려함");
+
             InternalExcute();
         }
 #endif

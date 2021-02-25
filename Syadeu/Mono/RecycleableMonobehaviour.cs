@@ -22,7 +22,7 @@ namespace Syadeu.Mono
         public bool Activated { get; internal set; } = false;
         public bool WaitForDeletion { get; internal set; } = false;
         
-        [Obsolete("", true)]
+        [Obsolete("transform을 사용하세요", true)]
         public abstract Transform Transfrom { get; }
 
         public void Initialize()

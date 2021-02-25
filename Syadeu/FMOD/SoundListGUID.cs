@@ -1,6 +1,8 @@
-﻿namespace Syadeu.FMOD
+﻿using Syadeu.Database;
+
+namespace Syadeu.FMOD
 {
-    public readonly struct SoundListGUID
+    public readonly struct SoundListGUID : IValidation
     {
         public int Index { get; }
         public SoundGUID[] Sounds { get; }
@@ -30,6 +32,11 @@
             }
 
             return this;
+        }
+
+        public bool IsValid()
+        {
+            return Sounds != null;
         }
     }
 }

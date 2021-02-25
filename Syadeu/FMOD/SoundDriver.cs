@@ -1,9 +1,10 @@
 ﻿using FMOD;
+using Syadeu.Database;
 using System;
 
 namespace Syadeu.FMOD
 {
-    public readonly struct SoundDriver : IEquatable<SoundDriver>
+    public readonly struct SoundDriver : IEquatable<SoundDriver>, IValidation
     {
         /// <summary>
         /// 시스템상의 출력장치 인덱스 번호
