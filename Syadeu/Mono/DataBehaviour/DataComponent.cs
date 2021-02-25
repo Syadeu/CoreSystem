@@ -1,10 +1,11 @@
-﻿using System;
+﻿using Syadeu.Database;
+using System;
 using UnityEngine;
 
 namespace Syadeu.Mono
 {
     [Serializable]
-    public abstract class DataComponent : IDisposable
+    public abstract class DataComponent : IDisposable, IValidation
     {
         private DataBehaviour m_Parent;
 
@@ -61,5 +62,6 @@ namespace Syadeu.Mono
         {
             Disposed = true;
         }
+        public bool IsValid() => !Disposed;
     }
 }
