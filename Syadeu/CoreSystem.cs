@@ -457,6 +457,9 @@ namespace Syadeu
                     IEnumerator iterTask = m_EditorTasks[i].task.Invoke(m_EditorTasks[i].progressID);
                     m_EditorCoroutines.Add(iterTask, m_EditorTasks[i].progressID);
 
+                    m_EditorTasks.RemoveAt(i);
+                    i--;
+                    continue;
                     //Progress.Remove(m_EditorTasks[i].progressID);
                 }
 
