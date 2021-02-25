@@ -403,51 +403,81 @@ namespace Syadeu
 
             while (true)
             {
-                foreach (var item in m_EditorCoroutines)
+                if (m_EditorCoroutines.Count > 0)
                 {
-                    if (item.Value == null)
+                    List<IEnumerator> _waitForDeletion = null;
+
+                    foreach (var item in m_EditorCoroutines)
                     {
-                        m_EditorCoroutines.Remove(item.Key);
-                    }
-                    
-                    if (item.Key.Current == null)
-                    {
-                        if (!item.Key.MoveNext())
+                        if (item.Value == null)
                         {
                             m_EditorCoroutines.Remove(item.Key);
-
-                            if (item.Value is int progressID) Progress.Remove(progressID);
                         }
-                    }
-                    else
-                    {
-                        if (item.Key.Current is CustomYieldInstruction @yield &&
-                            !yield.keepWaiting)
+
+                        if (item.Key.Current == null)
                         {
                             if (!item.Key.MoveNext())
                             {
-                                m_EditorCoroutines.Remove(item.Key);
-
+                                if (_waitForDeletion == null)
+                                {
+                                    _waitForDeletion = new List<IEnumerator>();
+                                }
+                                _waitForDeletion.Add(item.Key);
+                                
                                 if (item.Value is int progressID) Progress.Remove(progressID);
                             }
                         }
-                        else if (item.Key.Current.GetType() == typeof(bool) &&
-                                Convert.ToBoolean(item.Key.Current) == true)
+                        else
                         {
-                            if (!item.Key.MoveNext())
+                            if (item.Key.Current is CustomYieldInstruction @yield &&
+                                !yield.keepWaiting)
                             {
-                                m_EditorCoroutines.Remove(item.Key);
+                                if (!item.Key.MoveNext())
+                                {
+                                    if (_waitForDeletion == null)
+                                    {
+                                        _waitForDeletion = new List<IEnumerator>();
+                                    }
+                                    _waitForDeletion.Add(item.Key);
 
+                                    if (item.Value is int progressID) Progress.Remove(progressID);
+                                }
+                            }
+                            else if (item.Key.Current.GetType() == typeof(bool) &&
+                                    Convert.ToBoolean(item.Key.Current) == true)
+                            {
+                                if (!item.Key.MoveNext())
+                                {
+                                    if (_waitForDeletion == null)
+                                    {
+                                        _waitForDeletion = new List<IEnumerator>();
+                                    }
+                                    _waitForDeletion.Add(item.Key);
+                                    
+                                    if (item.Value is int progressID) Progress.Remove(progressID);
+                                }
+                            }
+                            else if (item.Key.Current is YieldInstruction baseYield)
+                            {
+                                if (_waitForDeletion == null)
+                                {
+                                    _waitForDeletion = new List<IEnumerator>();
+                                }
+                                _waitForDeletion.Add(item.Key);
+                                
                                 if (item.Value is int progressID) Progress.Remove(progressID);
+
+                                throw new CoreSystemException(CoreSystemExceptionFlag.Editor,
+                                    $"해당 yield return 타입({item.Key.Current.GetType().Name})은 지원하지 않습니다");
                             }
                         }
-                        else if (item.Key.Current is YieldInstruction baseYield)
-                        {
-                            m_EditorCoroutines.Remove(item.Key);
-                            if (item.Value is int progressID) Progress.Remove(progressID);
+                    }
 
-                            throw new CoreSystemException(CoreSystemExceptionFlag.Editor,
-                                $"해당 yield return 타입({item.Key.Current.GetType().Name})은 지원하지 않습니다");
+                    if (_waitForDeletion != null)
+                    {
+                        for (int i = 0; i < _waitForDeletion.Count; i++)
+                        {
+                            m_EditorCoroutines.Remove(_waitForDeletion[i]);
                         }
                     }
                 }
@@ -460,7 +490,6 @@ namespace Syadeu
                     m_EditorTasks.RemoveAt(i);
                     i--;
                     continue;
-                    //Progress.Remove(m_EditorTasks[i].progressID);
                 }
 
                 yield return null;
