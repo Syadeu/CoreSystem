@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.IO;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
@@ -202,6 +203,11 @@ namespace SyadeuEditor
 
         public static T CreateScriptable<T>(string folder, string name) where T : ScriptableObject
         {
+            if (!Directory.Exists($"Assets/Resources/Syadeu/{folder}"))
+            {
+                AssetDatabase.CreateFolder("Assets/Resources/Syadeu", folder);
+            }
+
             var data = ScriptableObject.CreateInstance<T>();
             AssetDatabase.CreateAsset(data, $"Assets/Resources/Syadeu/{folder}/" + name + ".asset");
 
@@ -215,7 +221,7 @@ namespace SyadeuEditor
         }
         public static T SaveScriptable<T>(T data, string folder) where T : ScriptableObject
         {
-            if (!System.IO.Directory.Exists($"Assets/Resources/Syadeu/{folder}"))
+            if (!Directory.Exists($"Assets/Resources/Syadeu/{folder}"))
             {
                 AssetDatabase.CreateFolder("Assets/Resources/Syadeu", folder);
             }
