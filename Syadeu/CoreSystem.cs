@@ -4,9 +4,14 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Threading;
 
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
 using UnityEngine.Diagnostics;
 using UnityEngine.Networking;
 
@@ -342,6 +347,82 @@ namespace Syadeu
         #endregion
 
         #region Worker Thread
+
+#if UNITY_EDITOR
+        private static IEnumerator m_EditorCoroutine = null;
+        private static Dictionary<IEnumerator, object> m_EditorCoroutines = new Dictionary<IEnumerator, object>();
+
+        [InitializeOnLoadMethod]
+        private static void EditorInitialize()
+        {
+            m_EditorCoroutine = EditorWorker();
+            EditorApplication.update += EditorWorkerMoveNext;
+        }
+
+        private static void EditorWorkerMoveNext()
+        {
+            m_EditorCoroutine.MoveNext();
+        }
+        private static IEnumerator EditorWorker()
+        {
+            Thread.CurrentThread.CurrentCulture = global::System.Globalization.CultureInfo.InvariantCulture;
+
+            while (true)
+            {
+                foreach (var item in m_EditorCoroutines)
+                {
+                    if (item.Value == null)
+                    {
+                        m_EditorCoroutines.Remove(item.Key);
+                    }
+
+                    if (item.Key.Current == null)
+                    {
+                        if (!item.Key.MoveNext())
+                        {
+                            m_EditorCoroutines.Remove(item.Key);
+                        }
+                    }
+                    else
+                    {
+                        if (item.Key.Current is CustomYieldInstruction @yield &&
+                            !yield.keepWaiting)
+                        {
+                            if (!item.Key.MoveNext())
+                            {
+                                m_EditorCoroutines.Remove(item.Key);
+                            }
+                        }
+                        else if (item.Key.Current.GetType() == typeof(bool) &&
+                                Convert.ToBoolean(item.Key.Current) == true)
+                        {
+                            if (!item.Key.MoveNext())
+                            {
+                                m_EditorCoroutines.Remove(item.Key);
+                            }
+                        }
+                        else if (item.Key.Current is YieldInstruction baseYield)
+                        {
+                            m_EditorCoroutines.Remove(item.Key);
+                            throw new CoreSystemException(CoreSystemExceptionFlag.Editor,
+                                $"해당 yield return 타입({item.Key.Current.GetType().Name})은 지원하지 않습니다");
+                        }
+                    }
+                }
+
+                yield return null;
+            }
+        }
+
+        public static void StartEditorUpdate(IEnumerator iter, object obj)
+        {
+            m_EditorCoroutines.Add(iter, obj);
+        }
+        public static void StopEditorUpdate(IEnumerator iter)
+        {
+            m_EditorCoroutines.Remove(iter);
+        }
+#endif
 
 #if UNITY_EDITOR
         UnityEngine.Profiling.CustomSampler OnBackgroundStartSampler;

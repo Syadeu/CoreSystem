@@ -2,6 +2,8 @@
 {
     public enum CoreSystemExceptionFlag
     {
+        Editor,
+
         Jobs,
         ECS,
 
