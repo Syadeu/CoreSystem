@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+
 using System.IO;
+
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
@@ -186,6 +188,38 @@ namespace SyadeuEditor
         }
 
         public static void ShowSimpleListLabel(ref bool opened, string header, IList list, 
+            GUIStyle style = null, bool disableGroup = false)
+        {
+            opened = Foldout(opened, header);
+            if (opened)
+            {
+                EditorGUI.indentLevel += 1;
+                if (disableGroup) EditorGUI.BeginDisabledGroup(true);
+                for (int i = 0; i < list.Count; i++)
+                {
+                    StringRich($"> {list[i].GetType().Name}", style);
+                }
+                if (disableGroup) EditorGUI.EndDisabledGroup();
+                EditorGUI.indentLevel -= 1;
+            }
+        }
+        public static void ShowSimpleListLabel<T>(ref bool opened, string header, IList<T> list, 
+            GUIStyle style = null, bool disableGroup = false)
+        {
+            opened = Foldout(opened, header);
+            if (opened)
+            {
+                EditorGUI.indentLevel += 1;
+                if (disableGroup) EditorGUI.BeginDisabledGroup(true);
+                for (int i = 0; i < list.Count; i++)
+                {
+                    StringRich($"> {list[i].GetType().Name}", style);
+                }
+                if (disableGroup) EditorGUI.EndDisabledGroup();
+                EditorGUI.indentLevel -= 1;
+            }
+        }
+        public static void ShowSimpleListLabel<T>(ref bool opened, string header, IReadOnlyList<T> list, 
             GUIStyle style = null, bool disableGroup = false)
         {
             opened = Foldout(opened, header);

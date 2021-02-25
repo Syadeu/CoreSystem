@@ -33,57 +33,61 @@ namespace SyadeuEditor
             EditorGUI.indentLevel += 1;
 
             #region Manager
-            m_OpenManagerList = EditorUtils.Foldout(m_OpenManagerList, $"현재 생성된 파괴불가 매니저: {CoreSystem.StaticManagers.Count}개");
+            m_OpenManagerList = EditorUtils.Foldout(m_OpenManagerList, $"현재 생성된 파괴불가 매니저: {CoreSystem.GetStaticManagers().Count}개");
             if (m_OpenManagerList)
             {
                 EditorGUI.indentLevel += 1;
                 
-                for (int i = 0; i < CoreSystem.StaticManagers.Count; i++)
+                for (int i = 0; i < CoreSystem.GetStaticManagers().Count; i++)
                 {
-                    if (CoreSystem.StaticManagers[i].HideInHierarchy)
+                    if (CoreSystem.GetStaticManagers()[i].HideInHierarchy)
                     {
                         EditorGUI.BeginDisabledGroup(true);
-                        EditorGUILayout.LabelField($"> {CoreSystem.StaticManagers[i].GetType().Name}", new GUIStyle("TextField"));
+                        EditorGUILayout.LabelField($"> {CoreSystem.GetStaticManagers()[i].GetType().Name}", new GUIStyle("TextField"));
                         EditorGUI.EndDisabledGroup();
                     }
                     else
                     {
-                        if (EditorUtils.Button($"> {CoreSystem.StaticManagers[i].GetType().Name}", "TextField", 1))
+                        if (EditorUtils.Button($"> {CoreSystem.GetStaticManagers()[i].GetType().Name}", "TextField", 1))
                         {
-                            EditorGUIUtility.PingObject(CoreSystem.StaticManagers[i].gameObject);
+                            EditorGUIUtility.PingObject(CoreSystem.GetStaticManagers()[i].gameObject);
                         }
                     }
                 }
                 
                 EditorGUI.indentLevel -= 1;
             }
-            m_OpenInsManagerList = EditorUtils.Foldout(m_OpenInsManagerList, $"현재 생성된 인스턴스 매니저: {CoreSystem.InstanceManagers.Count}개");
+
+            IReadOnlyList<IStaticMonoManager> _insMgrs = CoreSystem.GetInstanceManagers();
+            m_OpenInsManagerList = EditorUtils.Foldout(m_OpenInsManagerList, $"현재 생성된 인스턴스 매니저: {_insMgrs.Count}개");
             if (m_OpenInsManagerList)
             {
                 EditorGUI.indentLevel += 1;
 
-                for (int i = 0; i < CoreSystem.InstanceManagers.Count; i++)
+                for (int i = 0; i < _insMgrs.Count; i++)
                 {
-                    if (CoreSystem.InstanceManagers[i].HideInHierarchy)
+                    if (_insMgrs[i].HideInHierarchy)
                     {
                         EditorGUI.BeginDisabledGroup(true);
-                        EditorGUILayout.LabelField($"> {CoreSystem.InstanceManagers[i].GetType().Name}", new GUIStyle("TextField"));
+                        EditorGUILayout.LabelField($"> {_insMgrs[i].GetType().Name}", new GUIStyle("TextField"));
                         EditorGUI.EndDisabledGroup();
                     }
                     else
                     {
-                        if (EditorUtils.Button($"> {CoreSystem.InstanceManagers[i].GetType().Name}", "TextField", 1))
+                        if (EditorUtils.Button($"> {_insMgrs[i].GetType().Name}", "TextField", 1))
                         {
-                            EditorGUIUtility.PingObject(CoreSystem.InstanceManagers[i].gameObject);
+                            EditorGUIUtility.PingObject(_insMgrs[i].gameObject);
                         }
                     }
                 }
 
                 EditorGUI.indentLevel -= 1;
             }
+
+            IReadOnlyList<IStaticDataManager> _dataMgrs = CoreSystem.GetDataManagers();
             EditorUtils.ShowSimpleListLabel(ref m_OpenDataManagerList, 
-                $"현재 생성된 데이터 매니저: {CoreSystem.DataManagers.Count}개",
-                CoreSystem.DataManagers, new GUIStyle("TextField"), true);
+                $"현재 생성된 데이터 매니저: {_dataMgrs.Count}개",
+                _dataMgrs, new GUIStyle("TextField"), true);
             #endregion
 
             EditorGUI.indentLevel -= 1;

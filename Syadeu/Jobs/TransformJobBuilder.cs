@@ -10,119 +10,228 @@ using UnityEngine.Jobs;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
+using System.Collections;
+using System.Collections.Concurrent;
 
 namespace Syadeu
 {
-    public class TransformJobBuilder
+    internal sealed class TransformJobManager : StaticDataManager<TransformJobManager>
     {
-        private TransformJobType m_JobType;
+        internal Dictionary<TransformIdx, Transform> m_Transforms = new Dictionary<TransformIdx, Transform>();
         private TransformAccessArray m_TransformAccessArray;
 
-        private float3[] m_VectorArray;
+        private ConcurrentQueue<MoveJobPayload> moveJobPayloads = new ConcurrentQueue<MoveJobPayload>();
 
-        public TransformJobBuilder(TransformJobType jobType, params Transform[] transforms)
+        private struct MoveJobPayload
         {
-            m_JobType = jobType;
-            m_TransformAccessArray = new TransformAccessArray(transforms);
+            public TransformIdx m_Tr;
+            public Vector3 m_Target;
+        }
 
-            switch (jobType)
+        public override void OnInitialize()
+        {
+            base.OnInitialize();
+
+            StartBackgroundUpdate(Updater());
+        }
+
+        internal TransformIdx Register(in Transform tr)
+        {
+            TransformIdx idx = TransformIdx.NewIdx();
+            m_Transforms.Add(idx, tr);
+
+            return idx;
+        }
+
+        private IEnumerator Updater()
+        {
+            while (true)
             {
-                case TransformJobType.Move:
-                case TransformJobType.Cache:
-                    m_VectorArray = new float3[transforms.Length];
-                    break;
+
+
+                yield return null;
             }
         }
+    }
 
-        public TransformJobBuilder MoveTo(int i, Vector3 point)
+    internal struct TransformIdx : IEquatable<TransformIdx>
+    {
+        public static TransformIdx NewIdx()
         {
-            if (m_JobType != TransformJobType.Move) throw new Exception();
-
-            m_VectorArray[i] = point;
-            return this;
-        }
-        public TransformJobBuilder MoveToAll(Vector3 point)
-        {
-            if (m_JobType != TransformJobType.Move) throw new Exception();
-
-            for (int i = 0; i < m_VectorArray.Length; i++)
+            return new TransformIdx
             {
-                m_VectorArray[i] = point;
+                m_Idx = TransformJobManager.Instance.m_Transforms.Count,
+                m_Guid = Guid.NewGuid()
+            };
+        }
+
+        public bool Equals(TransformIdx other) => m_Guid.Equals(other.m_Guid);
+
+        public int m_Idx;
+        public Guid m_Guid;
+
+        public bool IsValid() => m_Guid != Guid.Empty;
+    }
+
+    public ref struct TransformJob
+    {
+        internal TransformIdx m_Idx;
+        private bool m_Initialized;
+
+        private bool m_IsMoveJob;
+        private float3 m_TargetPos;
+
+        public static TransformJob Create(in Transform tr)
+        {
+            TransformJob job = new TransformJob
+            {
+                m_Idx = TransformJobManager.Instance.Register(tr),
+                m_Initialized = true
+            };
+
+            return job;
+        }
+        private static void Initialize(ref TransformJob job)
+        {
+            var idx = job.m_Idx;
+            if (!idx.IsValid())
+            {
+                throw new CoreSystemException(CoreSystemExceptionFlag.Jobs,
+                    "정상적으로 생성되지 않은 TransformJob의 메소드 호출");
             }
+
+            job = default;
+
+            job.m_Idx = idx;
+        }
+
+        public bool IsValid() => m_Initialized;
+
+        public TransformJob MoveTo(Vector3 target)
+        {
+            m_IsMoveJob = true;
+            m_TargetPos = target;
+
             return this;
         }
 
-        public JobHandle BuildMove()
-        {
-            TransformMoveJob job = new TransformMoveJob
-            {
-                positions = new NativeArray<float3>(m_VectorArray, Allocator.TempJob)
-            };
 
-            return job.Schedule(m_TransformAccessArray);
-        }
-        public JobHandle BuildCache(NativeArray<TransformCache> caches)
+        public void Schedule()
         {
-            TransformCacheJob job = new TransformCacheJob
-            {
-                caches = caches
-            };
 
-            return job.Schedule(m_TransformAccessArray);
         }
     }
 
-    public enum TransformJobType
-    {
-        Move,
-        Cache,
-    }
+    //public class TransformJobBuilder
+    //{
+    //    private TransformJobType m_JobType;
+    //    private TransformAccessArray m_TransformAccessArray;
 
-    public struct TransformCache
-    {
-        public Vector3 position;
-        public Vector3 localPosition;
+    //    private float3[] m_VectorArray;
 
-        public Vector3 localScale;
+    //    public TransformJobBuilder(TransformJobType jobType, params Transform[] transforms)
+    //    {
+    //        m_JobType = jobType;
+    //        m_TransformAccessArray = new TransformAccessArray(transforms);
 
-        public Quaternion rotation;
-        public Quaternion localRotation;
+    //        switch (jobType)
+    //        {
+    //            case TransformJobType.Move:
+    //            case TransformJobType.Cache:
+    //                m_VectorArray = new float3[transforms.Length];
+    //                break;
+    //        }
+    //    }
 
-        public Matrix4x4 worldToLocalMatrix;
-        public Matrix4x4 localToWorldMatrix;
+    //    public TransformJobBuilder MoveTo(int i, Vector3 point)
+    //    {
+    //        if (m_JobType != TransformJobType.Move) throw new Exception();
 
-        internal TransformCache(TransformAccess tr)
-        {
-            position = tr.position;
-            localPosition = tr.localPosition;
+    //        m_VectorArray[i] = point;
+    //        return this;
+    //    }
+    //    public TransformJobBuilder MoveToAll(Vector3 point)
+    //    {
+    //        if (m_JobType != TransformJobType.Move) throw new Exception();
 
-            localScale = tr.localScale;
+    //        for (int i = 0; i < m_VectorArray.Length; i++)
+    //        {
+    //            m_VectorArray[i] = point;
+    //        }
+    //        return this;
+    //    }
 
-            rotation = tr.rotation;
-            localRotation = tr.localRotation;
+    //    public JobHandle BuildMove()
+    //    {
+    //        TransformMoveJob job = new TransformMoveJob
+    //        {
+    //            positions = new NativeArray<float3>(m_VectorArray, Allocator.TempJob)
+    //        };
 
-            worldToLocalMatrix = tr.worldToLocalMatrix;
-            localToWorldMatrix = tr.localToWorldMatrix;
-        }
-    }
+    //        return job.Schedule(m_TransformAccessArray);
+    //    }
+    //    public JobHandle BuildCache(NativeArray<TransformCache> caches)
+    //    {
+    //        TransformCacheJob job = new TransformCacheJob
+    //        {
+    //            caches = caches
+    //        };
 
-    internal struct TransformMoveJob : IJobParallelForTransform
-    {
-        [DeallocateOnJobCompletion]
-        public NativeArray<float3> positions;
+    //        return job.Schedule(m_TransformAccessArray);
+    //    }
+    //}
 
-        public void Execute(int i, TransformAccess transform)
-        {
-            transform.position = positions[i];
-        }
-    }
-    internal struct TransformCacheJob : IJobParallelForTransform
-    {
-        public NativeArray<TransformCache> caches;
+    //public enum TransformJobType
+    //{
+    //    Move,
+    //    Cache,
+    //}
 
-        public void Execute(int i, TransformAccess transform)
-        {
-            caches[i] = new TransformCache(transform);
-        }
-    }
+    //public struct TransformCache
+    //{
+    //    public Vector3 position;
+    //    public Vector3 localPosition;
+
+    //    public Vector3 localScale;
+
+    //    public Quaternion rotation;
+    //    public Quaternion localRotation;
+
+    //    public Matrix4x4 worldToLocalMatrix;
+    //    public Matrix4x4 localToWorldMatrix;
+
+    //    internal TransformCache(TransformAccess tr)
+    //    {
+    //        position = tr.position;
+    //        localPosition = tr.localPosition;
+
+    //        localScale = tr.localScale;
+
+    //        rotation = tr.rotation;
+    //        localRotation = tr.localRotation;
+
+    //        worldToLocalMatrix = tr.worldToLocalMatrix;
+    //        localToWorldMatrix = tr.localToWorldMatrix;
+    //    }
+    //}
+
+    //internal struct TransformMoveJob : IJobParallelForTransform
+    //{
+    //    [DeallocateOnJobCompletion]
+    //    public NativeArray<float3> positions;
+
+    //    public void Execute(int i, TransformAccess transform)
+    //    {
+    //        transform.position = positions[i];
+    //    }
+    //}
+    //internal struct TransformCacheJob : IJobParallelForTransform
+    //{
+    //    public NativeArray<TransformCache> caches;
+
+    //    public void Execute(int i, TransformAccess transform)
+    //    {
+    //        caches[i] = new TransformCache(transform);
+    //    }
+    //}
 }
