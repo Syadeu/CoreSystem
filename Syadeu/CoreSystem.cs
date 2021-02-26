@@ -383,8 +383,8 @@ namespace Syadeu
 
 #if UNITY_EDITOR
         private static IEnumerator m_EditorCoroutine = null;
-        private static Dictionary<IEnumerator, object> m_EditorCoroutines = new Dictionary<IEnumerator, object>();
-        private static List<(int progressID, EditorTask task)> m_EditorTasks = new List<(int, EditorTask)>();
+        private static readonly Dictionary<IEnumerator, object> m_EditorCoroutines = new Dictionary<IEnumerator, object>();
+        private static readonly List<(int progressID, EditorTask task)> m_EditorTasks = new List<(int, EditorTask)>();
 
         [InitializeOnLoadMethod]
         private static void EditorInitialize()
@@ -403,10 +403,10 @@ namespace Syadeu
 
             while (true)
             {
+                #region Editor Coroutine
                 if (m_EditorCoroutines.Count > 0)
                 {
                     List<IEnumerator> _waitForDeletion = null;
-
                     foreach (var item in m_EditorCoroutines)
                     {
                         if (item.Value == null)
@@ -481,7 +481,9 @@ namespace Syadeu
                         }
                     }
                 }
+                #endregion
 
+                #region Editor Task
                 for (int i = 0; i < m_EditorTasks.Count; i++)
                 {
                     IEnumerator iterTask = m_EditorTasks[i].task.Invoke(m_EditorTasks[i].progressID);
@@ -491,6 +493,7 @@ namespace Syadeu
                     i--;
                     continue;
                 }
+                #endregion
 
                 yield return null;
             }
