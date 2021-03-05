@@ -45,8 +45,8 @@ namespace SyadeuEditor
             m_Field.m_Field = EditorGUILayout.TextField("Field Command: ", m_Field.m_Field);
             EditorGUILayout.Space();
 
-            CommandDefinitionEditor.ShowTypeHelpBox(m_Field.m_Type);
-            m_Field.m_Type = (CommandInputType)EditorGUILayout.EnumFlagsField("Input Type: ", m_Field.m_Type);
+            CommandDefinitionEditor.ShowTypeHelpBox(m_Field.m_Settings);
+            m_Field.m_Settings = (CommandSetting)EditorGUILayout.EnumFlagsField("Input Type: ", m_Field.m_Settings);
 
             EditorUtils.SectorLine();
             EditorGUILayout.PropertyField(m_Args, new GUIContent("Command Arguments"));

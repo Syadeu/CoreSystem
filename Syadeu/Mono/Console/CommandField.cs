@@ -8,7 +8,7 @@ namespace Syadeu.Mono.Console
     public sealed class CommandField : ScriptableObject
     {
         public string m_Field = null;
-        public CommandInputType m_Type = CommandInputType.None;
+        public CommandSetting m_Settings = CommandSetting.None;
 
         [Space]
         public List<CommandField> m_Args = new List<CommandField>();
@@ -21,7 +21,15 @@ namespace Syadeu.Mono.Console
         {
             for (int i = 0; i < m_Args.Count; i++)
             {
-                if (m_Args[i].m_Field == cmd) return m_Args[i];
+                if (m_Args[i].m_Field == cmd)
+                {
+                    if (Requires != null)
+                    {
+                        if (Requires.Invoke()) return m_Args[i];
+                        else return null;
+                    }
+                    else return m_Args[i];
+                }
             }
             return null;
         }

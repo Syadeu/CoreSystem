@@ -558,7 +558,7 @@ namespace Syadeu.Mono
                 {
                     if (SyadeuSettings.Instance.m_CommandDefinitions[i].Requires != null)
                     {
-                        if (SyadeuSettings.Instance.m_CommandDefinitions[i].m_Type.HasFlag(CommandInputType.ShowIfRequiresTrue))
+                        if (SyadeuSettings.Instance.m_CommandDefinitions[i].m_Settings.HasFlag(CommandSetting.ShowIfRequiresTrue))
                         {
                             if (SyadeuSettings.Instance.m_CommandDefinitions[i].Requires.Invoke()) bestDef = SyadeuSettings.Instance.m_CommandDefinitions[i];
                         }
@@ -570,7 +570,7 @@ namespace Syadeu.Mono
                 {
                     if (SyadeuSettings.Instance.m_CommandDefinitions[i].Requires != null)
                     {
-                        if (SyadeuSettings.Instance.m_CommandDefinitions[i].m_Type.HasFlag(CommandInputType.ShowIfRequiresTrue))
+                        if (SyadeuSettings.Instance.m_CommandDefinitions[i].m_Settings.HasFlag(CommandSetting.ShowIfRequiresTrue))
                         {
                             if (SyadeuSettings.Instance.m_CommandDefinitions[i].Requires.Invoke()) possibleList.Add(SyadeuSettings.Instance.m_CommandDefinitions[i]);
                         }
@@ -605,7 +605,7 @@ namespace Syadeu.Mono
                     {
                         if (def.m_Args[i].Requires != null)
                         {
-                            if (def.m_Args[i].m_Type.HasFlag(CommandInputType.ShowIfRequiresTrue))
+                            if (def.m_Args[i].m_Settings.HasFlag(CommandSetting.ShowIfRequiresTrue))
                             {
                                 if (def.m_Args[i].Requires.Invoke()) bestCmd = def.m_Args[i];
                             }
@@ -617,7 +617,7 @@ namespace Syadeu.Mono
                     {
                         if (def.m_Args[i].Requires != null)
                         {
-                            if (def.m_Args[i].m_Type.HasFlag(CommandInputType.ShowIfRequiresTrue))
+                            if (def.m_Args[i].m_Settings.HasFlag(CommandSetting.ShowIfRequiresTrue))
                             {
                                 if (def.m_Args[i].Requires.Invoke()) possibleList.Add(def.m_Args[i]);
                             }
@@ -648,7 +648,7 @@ namespace Syadeu.Mono
                 {
                     if (nextCmd.m_Args[i].Requires != null)
                     {
-                        if (nextCmd.m_Args[i].m_Type.HasFlag(CommandInputType.ShowIfRequiresTrue))
+                        if (nextCmd.m_Args[i].m_Settings.HasFlag(CommandSetting.ShowIfRequiresTrue))
                         {
                             if (nextCmd.m_Args[i].Requires.Invoke()) bestCmd = nextCmd.m_Args[i];
                         }
@@ -660,7 +660,7 @@ namespace Syadeu.Mono
                 {
                     if (nextCmd.m_Args[i].Requires != null)
                     {
-                        if (nextCmd.m_Args[i].m_Type.HasFlag(CommandInputType.ShowIfRequiresTrue))
+                        if (nextCmd.m_Args[i].m_Settings.HasFlag(CommandSetting.ShowIfRequiresTrue))
                         {
                             if (nextCmd.m_Args[i].Requires.Invoke()) possibleList.Add(nextCmd.m_Args[i]);
                         }

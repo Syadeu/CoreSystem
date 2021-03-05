@@ -9,7 +9,7 @@ namespace Syadeu.Mono.Console
     public sealed class CommandDefinition : ScriptableObject
     {
         public string m_Initializer = null;
-        public CommandInputType m_Type = CommandInputType.None;
+        public CommandSetting m_Settings = CommandSetting.None;
 
         [Space]
         public List<CommandField> m_Args = new List<CommandField>();

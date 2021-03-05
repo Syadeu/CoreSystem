@@ -1,7 +1,7 @@
 ﻿namespace Syadeu.Mono.Console
 {
     [System.Flags]
-    public enum CommandInputType
+    public enum CommandSetting
     {
         None = 0,
 

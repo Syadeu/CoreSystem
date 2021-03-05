@@ -85,8 +85,8 @@ namespace SyadeuEditor
             EditorGUILayout.Space();
 
             //EditorGUILayout.HelpBox("ÃßÈÄ Ãß°¡µÇ´Â ±â´ÉÀÔ´Ï´Ù. ÇöÀç´Â ¾Æ¹«·± ±â´ÉÀ» ÇÏÁö ¾Ê½À´Ï´Ù.", MessageType.Info);
-            ShowTypeHelpBox(m_Def.m_Type);
-            m_Def.m_Type = (CommandInputType)EditorGUILayout.EnumFlagsField("Input Type: ", m_Def.m_Type);
+            ShowTypeHelpBox(m_Def.m_Settings);
+            m_Def.m_Settings = (CommandSetting)EditorGUILayout.EnumFlagsField("Input Type: ", m_Def.m_Settings);
 
             EditorUtils.SectorLine();
             EditorGUILayout.PropertyField(m_Args, new GUIContent("Command Arguments"));
@@ -95,7 +95,7 @@ namespace SyadeuEditor
             serializedObject.ApplyModifiedProperties();
         }
 
-        internal static void ShowTypeHelpBox(CommandInputType inputType)
+        internal static void ShowTypeHelpBox(CommandSetting inputType)
         {
             if (inputType == 0)
             {
@@ -104,7 +104,7 @@ namespace SyadeuEditor
             }
 
             string typeHelpTxt = null;
-            if (inputType.HasFlag(CommandInputType.ShowIfRequiresTrue))
+            if (inputType.HasFlag(CommandSetting.ShowIfRequiresTrue))
             {
                 EditorUtils.AutoString(ref typeHelpTxt,
                     "ShowIfRequiresTrue: Requires 프로퍼티의 리턴이 예상값과 일치할 경우에만 자동완성 및 콘솔창에 표시됩니다.");
