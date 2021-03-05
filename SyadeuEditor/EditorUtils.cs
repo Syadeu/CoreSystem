@@ -57,6 +57,13 @@ namespace SyadeuEditor
         public static void SetDirty(Object obj) => EditorUtility.SetDirty(obj);
 
         #region String
+
+        public static void AutoString(ref string original, in string txt)
+        {
+            if (!string.IsNullOrEmpty(original)) original += "\n";
+            original += txt;
+        }
+
         public static string String(string text, StringColor color)
             => $"<color={color}>{text}</color>";
         public static string String(string text, int size)

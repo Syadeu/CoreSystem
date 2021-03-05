@@ -25,7 +25,7 @@ namespace SyadeuEditor
         public override void OnInspectorGUI()
         {
             EditorGUILayout.Space();
-            EditorUtils.StringHeader("Command Field", StringColor.black, true);
+            EditorUtils.StringHeader("Command Field", StringColor.grey, true);
             EditorUtils.SectorLine();
 
             EditorGUI.BeginChangeCheck();
@@ -45,8 +45,8 @@ namespace SyadeuEditor
             m_Field.m_Field = EditorGUILayout.TextField("Field Command: ", m_Field.m_Field);
             EditorGUILayout.Space();
 
-            //EditorGUILayout.HelpBox("추후 추가되는 기능입니다. 현재는 아무런 기능을 하지 않습니다.", MessageType.Info);
-            m_Field.m_Type = (CommandInputType)EditorGUILayout.EnumFlagsField("인풋 타입: ", m_Field.m_Type);
+            CommandDefinitionEditor.ShowTypeHelpBox(m_Field.m_Type);
+            m_Field.m_Type = (CommandInputType)EditorGUILayout.EnumFlagsField("Input Type: ", m_Field.m_Type);
 
             EditorUtils.SectorLine();
             EditorGUILayout.PropertyField(m_Args, new GUIContent("Command Arguments"));

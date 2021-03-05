@@ -14,9 +14,11 @@ namespace Syadeu.Mono.Console
         [Space]
         public List<CommandField> m_Args = new List<CommandField>();
 
-        public Action<string> Action { get; internal set; }
+        internal bool Connected { get; set; } = false;
+        internal Action<string> Action { get; set; }
+        internal CommandRequires Requires { get; set; } = null;
 
-        public CommandField Find(string cmd)
+        internal CommandField Find(string cmd)
         {
             for (int i = 0; i < m_Args.Count; i++)
             {

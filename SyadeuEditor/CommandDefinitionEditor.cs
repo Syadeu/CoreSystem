@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 
 using Syadeu.Mono.Console;
@@ -28,7 +28,7 @@ namespace SyadeuEditor
         public override void OnInspectorGUI()
         {
             EditorGUILayout.Space();
-            EditorUtils.StringHeader("Command Definition", StringColor.black, true);
+            EditorUtils.StringHeader("Command Definition", StringColor.grey, true);
             EditorGUILayout.Space();
             if (IsListed())
             {
@@ -84,14 +84,32 @@ namespace SyadeuEditor
             m_Def.m_Initializer = EditorGUILayout.TextField("Initializer: ", m_Def.m_Initializer);
             EditorGUILayout.Space();
 
-            //EditorGUILayout.HelpBox("���� �߰��Ǵ� ����Դϴ�. ����� �ƹ��� ����� ���� �ʽ��ϴ�.", MessageType.Info);
+            //EditorGUILayout.HelpBox("ÃßÈÄ Ãß°¡µÇ´Â ±â´ÉÀÔ´Ï´Ù. ÇöÀç´Â ¾Æ¹«·± ±â´ÉÀ» ÇÏÁö ¾Ê½À´Ï´Ù.", MessageType.Info);
+            ShowTypeHelpBox(m_Def.m_Type);
             m_Def.m_Type = (CommandInputType)EditorGUILayout.EnumFlagsField("Input Type: ", m_Def.m_Type);
 
             EditorUtils.SectorLine();
             EditorGUILayout.PropertyField(m_Args, new GUIContent("Command Arguments"));
-            //EditorGUILayout.HelpBox("�� ���ɾ�� ������ �� �ִ� �������Դϴ�", MessageType.Info);
+            //EditorGUILayout.HelpBox("ÀÌ ¸í·É¾î·Î ½ÇÇàÇÒ ¼ö ÀÖ´Â º¯¼öµéÀÔ´Ï´Ù", MessageType.Info);
 
             serializedObject.ApplyModifiedProperties();
+        }
+
+        internal static void ShowTypeHelpBox(CommandInputType inputType)
+        {
+            if (inputType == 0)
+            {
+                EditorGUILayout.HelpBox("타입이 선택되지 않았습니다. 아무런 추가 기능을 수행하지않습니다.", MessageType.Info);
+                return;
+            }
+
+            string typeHelpTxt = null;
+            if (inputType.HasFlag(CommandInputType.ShowIfRequiresTrue))
+            {
+                EditorUtils.AutoString(ref typeHelpTxt,
+                    "ShowIfRequiresTrue: Requires 프로퍼티의 리턴이 예상값과 일치할 경우에만 자동완성 및 콘솔창에 표시됩니다.");
+            }
+            EditorGUILayout.HelpBox(typeHelpTxt, MessageType.Info);
         }
     }
 }

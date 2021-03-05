@@ -18,6 +18,12 @@ namespace Syadeu.Mono
 
         public static void AddCommand(Action<string> action, params string[] arguments)
             => Instance.InternalAddCommand(action, arguments);
+        public static void AddCommand(Action<string> action, CommandRequires requires, params string[] arguments)
+            => Instance.InternalAddCommand(action, requires, arguments);
+        public static void AddCommand(Action<string> action, Type scriptType, string methodName, object expectValue, params string[] arguments)
+            => Instance.InternalAddCommand(action, scriptType, methodName, expectValue, arguments);
+        public static void AddCommand(Action<string> action, Type scriptType, string methodName, CommandRequiresDelegate predictate, params string[] arguments)
+            => Instance.InternalAddCommand(action, scriptType, methodName, predictate, arguments);
         public static void CreateCommand(Action<string> action, params string[] arguments)
             => Instance.InternalCreateCommand(action, arguments);
         
@@ -478,7 +484,15 @@ namespace Syadeu.Mono
                     if (CurrentDefinition != null)
                     {
                         if (arg.Equals(CurrentDefinition.m_Initializer)) arg = null;
-                        CurrentDefinition.Action?.Invoke(arg);
+
+                        if (CurrentDefinition.Requires != null)
+                        {
+                            if (CurrentDefinition.Requires.Invoke())
+                            {
+                                CurrentDefinition.Action?.Invoke(arg);
+                            }
+                        }
+                        else CurrentDefinition.Action?.Invoke(arg);
 
                         if (CurrentDefinition.Action != null) LastCommand = cmd;
                     }
@@ -486,7 +500,15 @@ namespace Syadeu.Mono
                 else
                 {
                     if (arg.Equals(CurrentCommand.m_Field)) arg = null;
-                    CurrentCommand.Action?.Invoke(arg);
+
+                    if (CurrentCommand.Requires != null)
+                    {
+                        if (CurrentCommand.Requires.Invoke())
+                        {
+                            CurrentCommand.Action?.Invoke(arg);
+                        }
+                    }
+                    else CurrentCommand.Action?.Invoke(arg);
 
                     if (CurrentCommand.Action != null) LastCommand = cmd;
                 }
@@ -496,8 +518,6 @@ namespace Syadeu.Mono
 
             CurrentDefinition = null;
             CurrentCommand = null;
-
-            //CommandDefinition def = LookDefinition(cmd);
         }
 
         private void SearchPossibleDefs(string cmd)
@@ -536,11 +556,27 @@ namespace Syadeu.Mono
 
                 if (SyadeuSettings.Instance.m_CommandDefinitions[i].m_Initializer.Equals(initializer))
                 {
-                    bestDef = SyadeuSettings.Instance.m_CommandDefinitions[i];
+                    if (SyadeuSettings.Instance.m_CommandDefinitions[i].Requires != null)
+                    {
+                        if (SyadeuSettings.Instance.m_CommandDefinitions[i].m_Type.HasFlag(CommandInputType.ShowIfRequiresTrue))
+                        {
+                            if (SyadeuSettings.Instance.m_CommandDefinitions[i].Requires.Invoke()) bestDef = SyadeuSettings.Instance.m_CommandDefinitions[i];
+                        }
+                        else bestDef = SyadeuSettings.Instance.m_CommandDefinitions[i];
+                    }
+                    else bestDef = SyadeuSettings.Instance.m_CommandDefinitions[i];
                 }
                 else if (SyadeuSettings.Instance.m_CommandDefinitions[i].m_Initializer.StartsWith(initializer))
                 {
-                    possibleList.Add(SyadeuSettings.Instance.m_CommandDefinitions[i]);
+                    if (SyadeuSettings.Instance.m_CommandDefinitions[i].Requires != null)
+                    {
+                        if (SyadeuSettings.Instance.m_CommandDefinitions[i].m_Type.HasFlag(CommandInputType.ShowIfRequiresTrue))
+                        {
+                            if (SyadeuSettings.Instance.m_CommandDefinitions[i].Requires.Invoke()) possibleList.Add(SyadeuSettings.Instance.m_CommandDefinitions[i]);
+                        }
+                        else possibleList.Add(SyadeuSettings.Instance.m_CommandDefinitions[i]);
+                    }
+                    else possibleList.Add(SyadeuSettings.Instance.m_CommandDefinitions[i]);
                 }
             }
 
@@ -567,11 +603,27 @@ namespace Syadeu.Mono
 
                     if (def.m_Args[i].m_Field.Equals(split[1]))
                     {
-                        bestCmd = def.m_Args[i];
+                        if (def.m_Args[i].Requires != null)
+                        {
+                            if (def.m_Args[i].m_Type.HasFlag(CommandInputType.ShowIfRequiresTrue))
+                            {
+                                if (def.m_Args[i].Requires.Invoke()) bestCmd = def.m_Args[i];
+                            }
+                            else bestCmd = def.m_Args[i];
+                        }
+                        else bestCmd = def.m_Args[i];
                     }
                     else if (def.m_Args[i].m_Field.StartsWith(split[1]))
                     {
-                        possibleList.Add(def.m_Args[i]);
+                        if (def.m_Args[i].Requires != null)
+                        {
+                            if (def.m_Args[i].m_Type.HasFlag(CommandInputType.ShowIfRequiresTrue))
+                            {
+                                if (def.m_Args[i].Requires.Invoke()) possibleList.Add(def.m_Args[i]);
+                            }
+                            else possibleList.Add(def.m_Args[i]);
+                        }
+                        else possibleList.Add(def.m_Args[i]);
                     }
                 }
                 return bestCmd;
@@ -594,11 +646,27 @@ namespace Syadeu.Mono
 
                 if (nextCmd.m_Args[i].m_Field.Equals(split[split.Length - 1]))
                 {
-                    bestCmd = nextCmd.m_Args[i];
+                    if (nextCmd.m_Args[i].Requires != null)
+                    {
+                        if (nextCmd.m_Args[i].m_Type.HasFlag(CommandInputType.ShowIfRequiresTrue))
+                        {
+                            if (nextCmd.m_Args[i].Requires.Invoke()) bestCmd = nextCmd.m_Args[i];
+                        }
+                        else bestCmd = nextCmd.m_Args[i];
+                    }
+                    else bestCmd = nextCmd.m_Args[i];
                 }
                 else if (nextCmd.m_Args[i].m_Field.StartsWith(split[split.Length - 1]))
                 {
-                    possibleList.Add(nextCmd.m_Args[i]);
+                    if (nextCmd.m_Args[i].Requires != null)
+                    {
+                        if (nextCmd.m_Args[i].m_Type.HasFlag(CommandInputType.ShowIfRequiresTrue))
+                        {
+                            if (nextCmd.m_Args[i].Requires.Invoke()) possibleList.Add(nextCmd.m_Args[i]);
+                        }
+                        else possibleList.Add(nextCmd.m_Args[i]);
+                    }
+                    else possibleList.Add(nextCmd.m_Args[i]);
                 }
             }
 
@@ -631,6 +699,7 @@ namespace Syadeu.Mono
 
             if (lines.Length < 2)
             {
+                def.Connected = true;
                 def.Action = action;
                 return;
             }
@@ -641,7 +710,84 @@ namespace Syadeu.Mono
                 nextCmd = nextCmd.Find(lines[i]);
             }
 
+            nextCmd.Connected = true;
             nextCmd.Action = action;
+        }
+        private void InternalAddCommand(Action<string> action, CommandRequires requires, params string[] lines)
+        {
+            CommandDefinition def = FindDefinition(lines[0]);
+            if (def == null) throw new CoreSystemException(CoreSystemExceptionFlag.Console,
+                $"{lines[0]}의 명령어 시작 구문이 없거나 추가되지 않았습니다");
+
+            if (lines.Length < 2)
+            {
+                def.Connected = true;
+                def.Action = action;
+                def.Requires = requires;
+                return;
+            }
+
+            CommandField nextCmd = def.Find(lines[1]);
+            for (int i = 2; i < lines.Length; i++)
+            {
+                nextCmd = nextCmd.Find(lines[i]);
+            }
+
+            nextCmd.Connected = true;
+            nextCmd.Action = action;
+            nextCmd.Requires = requires;
+        }
+        private void InternalAddCommand(Action<string> action, Type scriptType, string methodName, object expectValue, params string[] lines)
+        {
+            CommandDefinition def = FindDefinition(lines[0]);
+            if (def == null) throw new CoreSystemException(CoreSystemExceptionFlag.Console,
+                $"{lines[0]}의 명령어 시작 구문이 없거나 추가되지 않았습니다");
+
+            CommandRequires requires = new CommandRequires(scriptType.GetMethod(methodName), expectValue);
+
+            if (lines.Length < 2)
+            {
+                def.Connected = true;
+                def.Action = action;
+                def.Requires = requires;
+                return;
+            }
+
+            CommandField nextCmd = def.Find(lines[1]);
+            for (int i = 2; i < lines.Length; i++)
+            {
+                nextCmd = nextCmd.Find(lines[i]);
+            }
+
+            nextCmd.Connected = true;
+            nextCmd.Action = action;
+            nextCmd.Requires = requires;
+        }
+        private void InternalAddCommand(Action<string> action, Type scriptType, string methodName, CommandRequiresDelegate predictate, params string[] lines)
+        {
+            CommandDefinition def = FindDefinition(lines[0]);
+            if (def == null) throw new CoreSystemException(CoreSystemExceptionFlag.Console,
+                $"{lines[0]}의 명령어 시작 구문이 없거나 추가되지 않았습니다");
+
+            CommandRequires requires = new CommandRequires(scriptType.GetMethod(methodName), predictate);
+
+            if (lines.Length < 2)
+            {
+                def.Connected = true;
+                def.Action = action;
+                def.Requires = requires;
+                return;
+            }
+
+            CommandField nextCmd = def.Find(lines[1]);
+            for (int i = 2; i < lines.Length; i++)
+            {
+                nextCmd = nextCmd.Find(lines[i]);
+            }
+
+            nextCmd.Connected = true;
+            nextCmd.Action = action;
+            nextCmd.Requires = requires;
         }
         private void InternalCreateCommand(Action<string> action, params string[] lines)
         {
@@ -676,6 +822,7 @@ namespace Syadeu.Mono
                 nextCmd = findNext;
             }
 
+            nextCmd.Connected = true;
             nextCmd.Action = action;
         }
 
