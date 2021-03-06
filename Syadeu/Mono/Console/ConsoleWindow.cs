@@ -51,7 +51,7 @@ namespace Syadeu.Mono
         Vector2 m_ConsoleLogScroll = new Vector2(0, 0);
         Vector2 m_PossibleCmdScroll = new Vector2(0, 0);
 
-        char[] m_TextSeperator = new char[] { ' ' };
+        readonly char[] m_TextSeperator = new char[] { ' ' };
 
         [RuntimeInitializeOnLoadMethod]
         private static void OnGameStart()

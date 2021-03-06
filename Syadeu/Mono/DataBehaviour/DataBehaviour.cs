@@ -25,6 +25,9 @@ namespace Syadeu.Mono
             component.Parent = this;
             m_DataComponents.Add(component);
 
+            component.InternalAwake();
+            component.InternalStart();
+
             return component;
         }
         public void RemoveDataComponent<T>(T component) where T : DataComponent

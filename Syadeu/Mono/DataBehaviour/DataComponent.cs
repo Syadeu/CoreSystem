@@ -29,11 +29,14 @@ namespace Syadeu.Mono
             }
         }
 
-        public DataComponent()
-        {
-            Awake();
-            Start();
-        }
+        //internal DataComponent()
+        //{
+        //    Awake();
+        //    Start();
+        //}
+
+        internal void InternalAwake() => Awake();
+        internal void InternalStart() => Start();
 
         protected virtual void Awake() { }
         protected virtual void Start() { }

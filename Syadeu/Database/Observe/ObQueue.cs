@@ -1,8 +1,10 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 
 namespace Syadeu.Database
 {
+    [Obsolete("기능 수정 예정")]
     /// <summary>
     /// 리스트의 값이 바뀌면 OnValueChange event를 호출하는 클래스입니다.
     /// </summary>

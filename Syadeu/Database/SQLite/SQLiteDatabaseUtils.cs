@@ -6,6 +6,8 @@ using System.Reflection;
 using UnityEngine;
 using UnityEngine.Scripting;
 
+using Unity.Mathematics;
+
 namespace Syadeu.Database
 {
     [Preserve]
@@ -14,7 +16,7 @@ namespace Syadeu.Database
     /// </summary>
     public static class SQLiteDatabaseUtils
     {
-        private static char[] numbers = new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
+        private readonly static char[] numbers = new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
         public static bool HasNumbers(string value)
         {
             for (int i = 0; i < numbers.Length; i++)
@@ -151,6 +153,8 @@ namespace Syadeu.Database
             }
             return $"{xyz[0]}/{xyz[1]}/{xyz[2]}";
         }
+        public static string ParseFloat3ToSQL(float3 float3) => $"{float3.x}/{float3.y}/{float3.z}";
+
         public static Vector3 ParseVector3FromSQL(object obj)
         {
             string trim = Convert.ToString(obj).Trim();
@@ -230,6 +234,10 @@ namespace Syadeu.Database
                 if (t == typeof(Vector3))
                 {
                     sum += ParseVector3ToSQL(array[i].ToString());
+                }
+                else if (t == typeof(float3))
+                {
+                    sum += ParseFloat3ToSQL((float3)array[i]);
                 }
                 else sum += array[i].ToString();
             }
@@ -328,6 +336,10 @@ namespace Syadeu.Database
                 if (objType == typeof(Vector3))
                 {
                     rtrn = ParseVector3ToSQL(tx);
+                }
+                else if (objType == typeof(float3))
+                {
+                    rtrn = ParseFloat3ToSQL((float3)obj);
                 }
                 else rtrn = tx;
             }

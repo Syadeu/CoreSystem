@@ -14,6 +14,7 @@ using UnityEditor;
 
 using UnityEngine.Diagnostics;
 using UnityEngine.Networking;
+using System.Threading.Tasks;
 
 namespace Syadeu
 {
@@ -122,6 +123,7 @@ namespace Syadeu
         #endregion
 
         #region Jobs
+
         /// <summary>
         /// 새로운 백그라운드잡 Worker 를 생성하고, 인덱스 번호를 반환합니다.
         /// </summary>
@@ -257,6 +259,7 @@ namespace Syadeu
             AddForegroundJob(job);
             return job;
         }
+
         #endregion
 
         public static bool IsThisMainthread()
