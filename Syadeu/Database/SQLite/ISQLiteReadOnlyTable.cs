@@ -31,8 +31,6 @@ namespace Syadeu.Database
         /// </summary>
         int Count { get; }
 
-        bool IsValid();
-
         /// <summary>
         /// 같은 컬럼을 가진 두 테이블 데이터를 메인 키(<paramref name="primaryKey"/>)값으로 비교합니다<br/>
         /// 단 하나라도 행의 값이 다르거나, 비교 대상(<paramref name="other"/>)이 

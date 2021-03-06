@@ -17,7 +17,7 @@ namespace Syadeu.Database
     /// <seealso cref="SQLiteDatabase.TryGetTableValueWithPrimary{T}(string, object, out T)"/>, 혹은
     /// <seealso cref="SQLiteTable.TryReadLineWithPrimary{T}(object, out T)"/> 을 사용하세요.
     /// </summary>
-    public struct SQLiteColumn
+    public struct SQLiteColumn : IValidation
     {
         /// <summary>
         /// 실제 db에 담긴 데이터 형식
@@ -42,5 +42,13 @@ namespace Syadeu.Database
         }
 
         public T GetValue<T>(int i) => (T)Values[i];
+
+        public bool IsValid()
+        {
+            if (Type == null ||
+                Values == null) return false;
+
+            return true;
+        }
     }
 }
