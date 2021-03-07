@@ -17,6 +17,8 @@ namespace Syadeu.Database
     public struct SQLiteTable : ISQLiteReadOnlyTable,
         IEnumerable<IReadOnlyList<KeyValuePair<string, object>>>, IEnumerable
     {
+        private readonly Dictionary<object, int> m_PrimaryKeyPairs;
+
         public IReadOnlyList<KeyValuePair<string, object>> this[int index]
         {
             get
@@ -50,9 +52,32 @@ namespace Syadeu.Database
             }
         }
 
+        public bool IsByteTable { get; }
+
         public string Name { get; }
         public List<SQLiteColumn> Columns { get; }
-        public Dictionary<object, int> PrimaryKeyPairs { get; }
+        public Dictionary<object, int> PrimaryKeyPairs
+        {
+            get
+            {
+                if (!IsValid()) throw new CoreSystemException(CoreSystemExceptionFlag.Database,
+                    "유효하지않은 SQLiteTable 데이터 접근");
+
+                if (m_PrimaryKeyPairs.Count != Count)
+                {
+                    m_PrimaryKeyPairs.Clear();
+                    for (int i = 0; i < Count; i++)
+                    {
+                        SQLiteDatabase.Assert(m_PrimaryKeyPairs.ContainsKey(Columns[0].Values[i]),
+                            $"{Name}테이블의 PK({Columns[0].Name})에 같은 값이 추가됨: {Columns[0].Values[i]}");
+
+                        m_PrimaryKeyPairs.Add(Columns[0].Values[i], i);
+                    }
+                }
+
+                return m_PrimaryKeyPairs;
+            }
+        }
         public int Count
         {
             get
@@ -65,23 +90,14 @@ namespace Syadeu.Database
         IReadOnlyList<SQLiteColumn> ISQLiteReadOnlyTable.Columns => Columns;
         IReadOnlyDictionary<object, int> ISQLiteReadOnlyTable.PrimaryKeyPairs => PrimaryKeyPairs;
 
-        internal SQLiteTable(string name, in IList<SQLiteColumn> columns)
+        internal SQLiteTable(string name, in IList<SQLiteColumn> columns, bool saveAsByte = false)
         {
+            IsByteTable = saveAsByte;
+
             Name = name;
             Columns = new List<SQLiteColumn>(columns);
 
-            PrimaryKeyPairs = new Dictionary<object, int>();
-            for (int i = 0; i < Count; i++)
-            {
-                SQLiteDatabase.Assert(PrimaryKeyPairs.ContainsKey(Columns[0].Values[i]),
-                    $"{Name}테이블의 PK({Columns[0].Name})에 같은 값이 추가됨: {Columns[0].Values[i]}");
-
-                //if (Columns[0].Type == typeof(int))
-                //{
-
-                //}
-                PrimaryKeyPairs.Add(Columns[0].Values[i], i);
-            }
+            m_PrimaryKeyPairs = new Dictionary<object, int>();
         }
 
         /// <summary>
@@ -196,6 +212,7 @@ namespace Syadeu.Database
             IReadOnlyList<SQLiteColumn> columns = Columns;
             return PrivateReadLine<T>(in columns, in i);
         }
+        public IReadOnlyList<KeyValuePair<string, object>> ReadLine(in int i) => this[i];
 
         public bool TryGetColumn(string name, out SQLiteColumn column)
         {

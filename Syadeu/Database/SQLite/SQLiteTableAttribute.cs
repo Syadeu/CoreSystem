@@ -11,10 +11,10 @@ namespace Syadeu.Database
     [AttributeUsage(AttributeTargets.Struct)]
     public sealed class SQLiteTableAttribute : Attribute
     {
-        public bool IsDefault = false;
-        public SQLiteTableAttribute(bool isDefault = false)
+        public bool SaveAsByte = false;
+        public SQLiteTableAttribute(bool saveAsByte = false)
         {
-            IsDefault = isDefault;
+            SaveAsByte = saveAsByte;
         }
     }
 }

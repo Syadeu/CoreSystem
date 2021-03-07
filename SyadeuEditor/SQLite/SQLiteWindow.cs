@@ -58,7 +58,7 @@ namespace SyadeuEditor
 
         private void OnGUI()
         {
-            EditorUtils.StringHeader("SQLite Window");
+            EditorUtils.StringHeader("SQLite Window", StringColor.grey, true);
             EditorUtils.SectorLine();
 
             #region 데이터 경로 지정 및 닫기
@@ -191,13 +191,13 @@ namespace SyadeuEditor
         {
             if (m_TableNames.Length == 0) return;
 
-            m_TableAnalyzerScroll = GUILayout.BeginScrollView(m_TableAnalyzerScroll, false, false, GUILayout.Width(m_TableRightRect.width), GUILayout.Height(m_TableRightRect.height));
-
             EditorUtils.StringRich("Global Infomation", 20, StringColor.grey);
             EditorUtils.SectorLine();
 
+            EditorGUI.BeginDisabledGroup(true);
             EditorGUILayout.TextField("File size: ", $"{new FileInfo(m_DatabasePath).Length / 1e+6} Mb");
             EditorGUILayout.TextField("Require Minimum Memory: ", $"{m_TotalMemory} Mb");
+            EditorGUI.EndDisabledGroup();
             EditorGUILayout.Space();
 
             string databaseVersion = m_Database.GetVersion();
@@ -205,7 +205,7 @@ namespace SyadeuEditor
             StringColor versionInfoColor;
             if (string.IsNullOrEmpty(databaseVersion))
             {
-                versionInfo = "No Version Data";
+                versionInfo = "No Version Data Found";
                 versionInfoColor = StringColor.maroon;
             }
             else
@@ -222,13 +222,20 @@ namespace SyadeuEditor
                 }
             }
             EditorUtils.StringRich(versionInfo, versionInfoColor, true);
+            EditorGUI.BeginDisabledGroup(true);
+            EditorGUILayout.BeginHorizontal();
             EditorGUILayout.TextField("Application Version: ", $"{Application.version}");
-            EditorGUILayout.TextField("Database Version: ", $"{databaseVersion}");
+            EditorGUILayout.TextField("Database Version: ", 
+                string.IsNullOrEmpty(databaseVersion) ? "No Version Data Found" : $"{databaseVersion}");
+            EditorGUILayout.EndHorizontal();
+            EditorGUI.EndDisabledGroup();
             
             EditorUtils.SectorLine();
 
             EditorUtils.StringHeader($"{m_TableNames[m_SeletedTable]} :: <size=13>Analyzer</size>");
             EditorUtils.SectorLine();
+
+            m_TableAnalyzerScroll = GUILayout.BeginScrollView(m_TableAnalyzerScroll, false, false, GUILayout.Width(m_TableRightRect.width), GUILayout.Height(m_TableRightRect.height * .5f));
 
             SQLiteTable selectedTable = m_Database.Tables[m_SeletedTable];
             EditorGUILayout.BeginHorizontal();

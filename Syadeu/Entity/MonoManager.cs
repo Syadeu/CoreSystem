@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Syadeu.Mono;
+using UnityEngine;
 
 namespace Syadeu
 {
@@ -22,13 +23,17 @@ namespace Syadeu
 #if UNITY_EDITOR
             if (!string.IsNullOrEmpty(DisplayName))
             {
-                name = $"{typeof(T).Name} : MonoManager<{typeof(T).Name}>";
+                name = $"{DisplayName} : MonoManager<{typeof(T).Name}>";
             }
             else name = $"Syadeu.{typeof(T).Name}";
 #endif
 
             if (DontDestroy) transform.SetParent(System.transform);
-            if (HideInHierarchy) gameObject.hideFlags = HideFlags.HideAndDontSave;
+
+            if (!SyadeuSettings.Instance.m_VisualizeObjects)
+            {
+                if (HideInHierarchy) gameObject.hideFlags = HideFlags.HideAndDontSave;
+            }
 
             OnInitialize();
 

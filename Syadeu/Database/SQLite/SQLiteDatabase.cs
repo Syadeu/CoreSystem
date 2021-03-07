@@ -43,6 +43,8 @@ namespace Syadeu.Database
     /// </remarks>
     public struct SQLiteDatabase : IValidation
     {
+        private const string m_ByteTableName = "ByteTable";
+
         #region Initialize
 
         /// <summary>
@@ -299,6 +301,65 @@ namespace Syadeu.Database
 
         #region 내부 통신용 함수
 
+        private void AddByteTableIfNotExist()
+        {
+            Assert(IsValid, false, "정상적인 데이터베이스가 아님");
+
+            if (LoadInMemory)
+            {
+                if (HasTable(m_ByteTableName)) return;
+            }
+            else
+            {
+                OpenConnection();
+                using (SqliteCommand cmd = Connection.CreateCommand())
+                {
+                    cmd.CommandText = @"SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'";
+                    try
+                    {
+                        using (SqliteDataReader rdr = cmd.ExecuteReader())
+                        {
+                            while (rdr.Read())
+                            {
+                                if (rdr.GetString(0).Equals(m_ByteTableName))
+                                {
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        throw new SQLiteUnreadableException("sqlite_master", true);
+                    }
+                }
+                CloseConnection();
+            }
+
+            OpenConnection();
+            using (SqliteCommand cmd = Connection.CreateCommand())
+            {
+                SQLiteTable table = new List<SQLiteByteTable>()
+                {
+                    SQLiteDatabaseUtils.GetDefaultTable<SQLiteByteTable>()
+                }.ToSQLiteTable(m_ByteTableName);
+
+                string query = GetCreateTableQuery(table);
+                try
+                {
+                    cmd.CommandText = query;
+                    cmd.ExecuteNonQuery();
+                }
+                catch (Exception ex)
+                {
+                    throw new SQLiteExcuteExcpetion(query, ex);
+                }
+
+                Tables.Add(table);
+            }
+            CloseConnection();
+        }
+
         private void OpenConnection()
         {
             Assert(string.IsNullOrEmpty(DataPath), "데이터 경로가 없는데 커넥션을 열려함");
@@ -388,14 +449,13 @@ namespace Syadeu.Database
         }
         private void AddVersionInfo(string version)
         {
-            SQLiteTable versionInfo = ToSQLiteTable("versionInfo",
-                new SQLiteVersionInfoTableData[]
+            SQLiteTable versionInfo = new SQLiteVersionInfoTableData[]
                 {
                     new SQLiteVersionInfoTableData
                     {
                         Version = version
                     }
-                });
+                }.ToSQLiteTable("versionInfo");
             using (var iter = GetReplaceTableQuery(versionInfo, "versionInfo"))
             {
                 while (iter.MoveNext())
@@ -473,7 +533,7 @@ namespace Syadeu.Database
                                 {
                                     if (sqColumns[a].Type == typeof(byte[]))
                                     {
-                                        sqColumns[a].Values.Add(GetBytes(in rdr, in a));
+                                        sqColumns[a].Values.Add(ReadBytes(in rdr, in a));
                                     }
                                     else sqColumns[a].Values.Add(rdr.GetValue(a));
                                 }
@@ -554,7 +614,7 @@ namespace Syadeu.Database
                             {
                                 if (sqColumns[a].Type == typeof(byte[]))
                                 {
-                                    sqColumns[a].Values.Add(GetBytes(in rdr, in a));
+                                    sqColumns[a].Values.Add(ReadBytes(in rdr, in a));
                                 }
                                 else sqColumns[a].Values.Add(rdr.GetValue(a));
                             }
@@ -1698,10 +1758,10 @@ namespace Syadeu.Database
             Assert(HasTable(tableName), $"이름 ({tableName})을 가진 테이블이 이미 존재합니다");
             Assert(typeof(T).GetCustomAttribute<SQLiteTableAttribute>() == null, $"타입 ({typeof(T).Name})은 SQLiteTable 구조체가 아닙니다");
 
-            SQLiteTable table = ToSQLiteTable(tableName, new List<T>()
+            SQLiteTable table = new List<T>()
             {
                 SQLiteDatabaseUtils.GetDefaultTable<T>()
-            });
+            }.ToSQLiteTable(tableName);
             AddQuery(GetCreateTableQuery(table));
 
             AddReloadTableQuery(tableName);
@@ -1748,7 +1808,7 @@ namespace Syadeu.Database
             }
             Assert(typeof(T).GetCustomAttribute<SQLiteTableAttribute>() == null, $"타입 ({typeof(T).Name})은 SQLiteTable 구조체가 아닙니다");
 
-            SQLiteTable table = ToSQLiteTable(tableName, new T[] { target });
+            SQLiteTable table = new T[] { target }.ToSQLiteTable(tableName);
             return UpdateTable(table);
         }
         /// <summary>
@@ -1917,6 +1977,35 @@ namespace Syadeu.Database
             AddReloadTableQuery(tableName);
             return Excute();
         }
+
+        //public BackgroundJob SaveAsByte<T>(T target, string name = null) where T : struct
+        //{
+        //    var tableAtt = typeof(T).GetCustomAttribute<SQLiteTableAttribute>();
+        //    if (tableAtt == null || !tableAtt.SaveAsByte)
+        //    {
+        //        throw new CoreSystemException(CoreSystemExceptionFlag.Database,
+        //            "Byte 테이블로 지정되지 않았거나 SQLiteTable로 지정되지 않은 Struct 형식");
+        //    }
+
+        //    CoreSystem.AddBackgroundJob(ExcuteWorker, AddByteTableIfNotExist, out var job);
+
+        //    SQLiteTable table = GetTable(m_ByteTableName);
+        //    if (string.IsNullOrEmpty(name)) name = typeof(T).Name;
+
+        //    int idx = table.Count;
+        //    for (int i = 0; i < table.Count; i++)
+        //    {
+        //        if (table[i][1].Value.Equals(name))
+        //        {
+        //            idx = i;
+        //            break;
+        //        }
+        //    }
+
+        //    byte[] bytes = target.ToBytes();
+
+        //    return job;
+        //}
 
         #endregion
 
@@ -2137,7 +2226,7 @@ namespace Syadeu.Database
 
             return ConvertToString(t, value);
         }
-        private static byte[] GetBytes(in SqliteDataReader rdr, in int i)
+        private static byte[] ReadBytes(in SqliteDataReader rdr, in int i)
         {
             const int CHUNK_SIZE = 2 * 1024;
             byte[] buffer = new byte[CHUNK_SIZE];
@@ -2198,77 +2287,9 @@ namespace Syadeu.Database
                 }
             }
         }
-        /// <summary>
-        /// <para>!! <see cref="SQLiteTableAttribute"/>가 선언된 구조체들로 구성된 리스트를
-        /// <paramref name="tableDatas"/>에 넣어야됩니다. 
-        /// <see cref="SQLiteTable"/>를 넣지마세요 !!</para>
-        /// 
-        /// 입력된 데이터 리스트(<paramref name="tableDatas"/>)를 가지고, 입력된 테이블 이름(<paramref name="tableName"/>)을 가진 
-        /// <see cref="SQLiteTable"/> 테이블로 변환합니다.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="tableName">테이블 이름</param>
-        /// <param name="tableDatas">테이블 아이템들</param>
-        /// <returns></returns>
+        /// <inheritdoc cref="ExtensionMethods.ToSQLiteTable{T}(IList{T}, in string)"/>
         public static SQLiteTable ToSQLiteTable<T>(in string tableName, in IList<T> tableDatas)
-            where T : struct
-        {
-            Assert(typeof(T).GetCustomAttribute<SQLiteTableAttribute>() == null, $"객체 타입 ({typeof(T).Name})은 SQLite 데이터 객체가 아닙니다");
-
-            List<MemberInfo> members = null;
-            SQLiteColumn[] columns = null;
-
-            for (int a = 0; a < tableDatas.Count; a++)
-            {
-                if (members == null)
-                {
-                    members = SQLiteDatabaseUtils.GetMembers(tableDatas[a].GetType());
-                    columns = new SQLiteColumn[members.Count];
-                    for (int i = 0; i < members.Count; i++)
-                    {
-                        Type memberType = null;
-                        switch (members[i].MemberType)
-                        {
-                            case MemberTypes.Field:
-                                memberType = (members[i] as FieldInfo).FieldType;
-                                break;
-                            case MemberTypes.Property:
-                                memberType = (members[i] as PropertyInfo).PropertyType;
-                                break;
-                        }
-                        if (memberType == null) continue;
-
-                        if (memberType == typeof(Vector3))
-                        {
-                            memberType = typeof(string);
-                        }
-
-                        columns[i] = new SQLiteColumn(memberType, members[i].Name);
-                    }
-                }
-
-                for (int i = 0; i < columns.Length; i++)
-                {
-                    switch (members[i].MemberType)
-                    {
-                        case MemberTypes.Field:
-                            FieldInfo field = members[i] as FieldInfo;
-
-                            columns[i].Values.Add(field.GetValue(tableDatas[a]));
-
-                            break;
-                        case MemberTypes.Property:
-                            PropertyInfo property = members[i] as PropertyInfo;
-
-                            columns[i].Values.Add(property.GetValue(tableDatas[a]));
-                            break;
-                    }
-                }
-            }
-
-            SQLiteTable table = new SQLiteTable(tableName, (columns != null ? columns.ToList() : new List<SQLiteColumn>()));
-            return table;
-        }
+            where T : struct => tableDatas.ToSQLiteTable(in tableName);
         public static SQLiteTable ToSQLiteTable(in string tableName, in IList<KeyValuePair<Type, string>> columns)
         {
             SQLiteColumn[] newColumns = new SQLiteColumn[columns.Count];

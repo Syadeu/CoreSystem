@@ -17,6 +17,8 @@ namespace Syadeu.Database
         /// <returns></returns>
         SQLiteColumn this[string name] { get; }
 
+        bool IsByteTable { get; }
+
         /// <summary>
         /// 이 테이블의 이름
         /// </summary>
