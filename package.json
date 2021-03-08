@@ -1,6 +1,6 @@
 {
   "name": "syadeu.coresystem",
-  "version": "1.4.7",
+  "version": "1.4.8",
   "displayName": "Syadeu CoreSystem",
   "description": "Syadeu CoreSystem Package.",
   "unity": "2020.2",
@@ -12,9 +12,14 @@
     "com.unity.mathematics": "1.2.1",
     "com.unity.nuget.newtonsoft-json": "2.0.0"
   },
+  "optionalDependencies": {
+    "com.github.siccity.xnode": "https://github.com/Siccity/xNode.git",
+    "com.unity.inputsystem": "1.0.2"
+  },
   "keywords": [
     "syadeu",
-    "core",
+    "background",
+    "thread",
     "system"
   ],
   "author": {

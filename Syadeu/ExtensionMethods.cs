@@ -1,9 +1,11 @@
 ﻿using Syadeu.Database;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
 
 namespace Syadeu.Extentions.EditorUtils
@@ -42,7 +44,15 @@ namespace Syadeu
             //Debug.Log(_bytes.Length / 1024 + "Kb was saved as: " + _fullPath);
         }
 
-        public static byte[] ToBytes<T>(this T str) where T : struct
+        public static byte[] ToByteWithStream<T>(this T str) where T : struct
+        {
+            var formatter = new BinaryFormatter();
+            var stream = new MemoryStream();
+
+            formatter.Serialize(stream, str);
+            return stream.ToArray();
+        }
+        public static byte[] ToByte<T>(this T str) where T : struct
         {
             int size = Marshal.SizeOf(str);
             byte[] arr = new byte[size];
@@ -53,20 +63,25 @@ namespace Syadeu
             Marshal.FreeHGlobal(ptr);
             return arr;
         }
-        //T FromBytes<T>(this T t, byte[] arr) where T : struct
-        //{
-        //    CIFSPacket str = new CIFSPacket();
 
-        //    int size = Marshal.SizeOf(str);
-        //    IntPtr ptr = Marshal.AllocHGlobal(size);
+        public static T FromByteWithStream<T>(this byte[] arr) where T : struct
+        {
+            var stream = new MemoryStream(arr);
+            var formatter = new BinaryFormatter();
+            return (T)formatter.Deserialize(stream);
+        }
+        public static T FromByte<T>(this byte[] arr) where T : struct
+        {
+            int size = Marshal.SizeOf(typeof(T));
+            IntPtr ptr = Marshal.AllocHGlobal(size);
 
-        //    Marshal.Copy(arr, 0, ptr, size);
+            Marshal.Copy(arr, 0, ptr, size);
 
-        //    str = (CIFSPacket)Marshal.PtrToStructure(ptr, str.GetType());
-        //    Marshal.FreeHGlobal(ptr);
+            T str = (T)Marshal.PtrToStructure(ptr, typeof(T));
+            Marshal.FreeHGlobal(ptr);
 
-        //    return str;
-        //}
+            return str;
+        }
 
         /// <summary>
         /// <para>!! <see cref="SQLiteTableAttribute"/>가 선언된 구조체들로 구성된 리스트를

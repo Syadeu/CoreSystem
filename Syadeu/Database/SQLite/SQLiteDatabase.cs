@@ -743,7 +743,7 @@ namespace Syadeu.Database
             yield return $"ALTER TABLE {tableName} RENAME TO {alter}";
 
             SQLiteTable table = GetTable(tableName);
-            var columns = table.GetColumnsInfo();
+            List<KeyValuePair<Type, string>> columns = new List<KeyValuePair<Type, string>>(table.GetColumnsInfo());
 
             for (int i = 0; i < columns.Count; i++)
             {
@@ -1781,6 +1781,7 @@ namespace Syadeu.Database
                 "초기화 되지않은 SQLiteDatabase를 사용하려함");
             // 새로운 정보를 넣습니다
             AddReplaceTableQuery(table, into, queryBlock);
+            AddReloadTableQuery(into);
 
             return Excute();
         }
@@ -1932,7 +1933,7 @@ namespace Syadeu.Database
             Assert(!HasTable(tableName), $"이름 ({tableName})을 가진 테이블이 존재하지 않습니다");
 
             AddQuery($"ALTER TABLE {tableName} RENAME TO {targetName}");
-            AddReloadTableQuery(targetName);
+            AddReloadAllTablesQuery();
             return Excute();
         }
 
