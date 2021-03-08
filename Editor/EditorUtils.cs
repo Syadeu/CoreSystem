@@ -37,10 +37,41 @@ namespace SyadeuEditor
 
     public static class EditorUtils
     {
+        #region Init
+
         public const string DefaultPath = "Assets/Resources/Syadeu";
 
-        public static GUIStyle headerStyle;
-        public static GUIStyle centerStyle;
+        static GUIStyle _headerStyle;
+        static GUIStyle headerStyle
+        {
+            get
+            {
+                if (_headerStyle == null)
+                {
+                    _headerStyle = new GUIStyle
+                    {
+                        richText = true
+                    };
+                }
+                return _headerStyle;
+            }
+        }
+        static GUIStyle _centerStyle;
+        static GUIStyle centerStyle
+        {
+            get
+            {
+                if (_centerStyle == null)
+                {
+                    _centerStyle = new GUIStyle
+                    {
+                        richText = true,
+                        alignment = TextAnchor.MiddleCenter
+                    };
+                }
+                return _centerStyle;
+            }
+        }
 
         static GUIStyle _bttStyle;
         static GUIStyle BttStyle
@@ -84,19 +115,20 @@ namespace SyadeuEditor
             return _guiContent;
         }
 
+        public static System.Action onSceneGUIDelegate;
+
         static EditorUtils()
         {
-            headerStyle = new GUIStyle
-            {
-                richText = true
-            };
-            centerStyle = new GUIStyle
-            {
-                richText = true,
-                alignment = TextAnchor.MiddleCenter
-            };
+            SceneView.duringSceneGui -= SceneView_duringSceneGui;
+            SceneView.duringSceneGui += SceneView_duringSceneGui;
         }
-        
+
+        private static void SceneView_duringSceneGui(SceneView obj)
+        {
+            onSceneGUIDelegate?.Invoke();
+        }
+
+        #endregion
 
         public static void SetDirty(Object obj) => EditorUtility.SetDirty(obj);
 
