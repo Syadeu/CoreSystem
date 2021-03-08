@@ -33,7 +33,7 @@ public class SQLiteDatabaseTests
         {
             if (idx <= 0) idx = GetRandomInt();
 
-            byte[] testBytes = new SQliteTestStruct().ToStrByte();
+            byte[] testBytes = new SQliteTestStruct().ToBytes();
 
             return new SQliteTestStruct
             {
