@@ -42,8 +42,6 @@ namespace SyadeuEditor
         public static GUIStyle headerStyle;
         public static GUIStyle centerStyle;
 
-        private static GUIStyle toggleBttStyleNormal;
-        private static GUIStyle toggleBttStyleToggled;
         static EditorUtils()
         {
             headerStyle = new GUIStyle
@@ -55,10 +53,6 @@ namespace SyadeuEditor
                 richText = true,
                 alignment = TextAnchor.MiddleCenter
             };
-
-            toggleBttStyleNormal = "Button";
-            toggleBttStyleToggled = new GUIStyle(toggleBttStyleNormal);
-            toggleBttStyleToggled.normal.background = toggleBttStyleToggled.active.background;
         }
 
         public static void SetDirty(Object obj) => EditorUtility.SetDirty(obj);
@@ -188,10 +182,14 @@ namespace SyadeuEditor
 
             return temp;
         }
-        public static bool ToggleButton(bool btt, string name)
-        {
-            return GUILayout.Button(name, btt ? toggleBttStyleToggled : toggleBttStyleNormal);
-        }
+        //public static bool ToggleButton(bool btt, string name)
+        //{
+        //    return GUILayout.Button(name, btt ? toggleBttStyleToggled : toggleBttStyleNormal);
+        //}
+        //public static bool ToggleButton(bool btt, string name, params GUILayoutOption[] options)
+        //{
+        //    return GUILayout.Button(name, btt ? toggleBttStyleToggled : toggleBttStyleNormal, options);
+        //}
         public static bool Foldout(bool foldout, string name, int size = -1)
         {
             string firstKey = foldout ? "▼" : "▶";
