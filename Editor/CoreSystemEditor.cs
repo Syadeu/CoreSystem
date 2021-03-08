@@ -1,4 +1,5 @@
 ﻿using Syadeu;
+using Syadeu.Extentions.EditorUtils;
 using Syadeu.FMOD;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +11,26 @@ namespace SyadeuEditor
     [CustomEditor(typeof(CoreSystem))]
     public sealed class CoreSystemEditor : Editor
     {
+        bool testBool = false;
+        private void OnSceneGUI()
+        {
+            CoreSystem ins = target as CoreSystem;
+            
+            EditorUtils.SceneLabel(ins.transform.position, "CoreSystem Test Label", StringColor.white, true);
+            Rect rect = EditorUtils.GetLastSceneGUIRect();
+            if (EditorUtils.SceneButton(ins.transform.position, "Button", new Vector2(0, rect.height + 3)))
+            {
+                "clicked".ToLog();
+                testBool = !testBool;
+            }
+
+            if (testBool)
+            {
+                ins.transform.position = EditorUtils.GetMouseScreenPos(1);
+                if (Event.current.keyCode == KeyCode.Mouse1) testBool = false;
+            }
+        }
+        
         public override void OnInspectorGUI()
         {
             EditorUtils.StringHeader("CoreSystem");

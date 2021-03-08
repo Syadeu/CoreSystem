@@ -8,7 +8,7 @@ namespace SyadeuEditor
     [CustomEditor(typeof(PrefabList))]
     public class PrefabListEditor : Editor
     {
-        bool m_ShowOriginalContents = false;
+        private bool m_ShowOriginalContents = false;
 
         public override void OnInspectorGUI()
         {

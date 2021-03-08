@@ -44,15 +44,16 @@ namespace Syadeu
             //Debug.Log(_bytes.Length / 1024 + "Kb was saved as: " + _fullPath);
         }
 
-        public static byte[] ToByteWithStream<T>(this T str) where T : struct
+        public static byte[] ToBytesWithStream<T>(this T obj)
         {
-            var formatter = new BinaryFormatter();
-            var stream = new MemoryStream();
-
-            formatter.Serialize(stream, str);
-            return stream.ToArray();
+            using (var ms = new MemoryStream())
+            {
+                BinaryFormatter formatter = new BinaryFormatter();
+                formatter.Serialize(ms, obj);
+                return ms.ToArray();
+            }
         }
-        public static byte[] ToByte<T>(this T str) where T : struct
+        public static byte[] ToBytes<T>(this T str)
         {
             int size = Marshal.SizeOf(str);
             byte[] arr = new byte[size];
@@ -64,13 +65,18 @@ namespace Syadeu
             return arr;
         }
 
-        public static T FromByteWithStream<T>(this byte[] arr) where T : struct
+        public static T ToObjectWithStream<T>(this byte[] arr)
         {
-            var stream = new MemoryStream(arr);
-            var formatter = new BinaryFormatter();
-            return (T)formatter.Deserialize(stream);
+            using (var memStream = new MemoryStream())
+            {
+                BinaryFormatter formatter = new BinaryFormatter();
+                memStream.Write(arr, 0, arr.Length);
+                memStream.Seek(0, SeekOrigin.Begin);
+
+                return (T)formatter.Deserialize(memStream);
+            }
         }
-        public static T FromByte<T>(this byte[] arr) where T : struct
+        public static T ToObject<T>(this byte[] arr)
         {
             int size = Marshal.SizeOf(typeof(T));
             IntPtr ptr = Marshal.AllocHGlobal(size);
