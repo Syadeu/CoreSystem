@@ -28,6 +28,7 @@ namespace Syadeu.Database
                     CoreSystemException.SendCrash(CoreSystemExceptionFlag.Background,
                         $"ObDictionary<{typeof(TKey).Name}, {typeof(TValue).Name}> 에서" +
                         $"{key} 값이 존재하지 않음", ex1);
+                    throw;
 #endif
                 }
                 catch (Exception)

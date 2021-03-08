@@ -52,6 +52,7 @@ namespace Syadeu.Database
 #else
                     CoreSystemException.SendCrash(CoreSystemExceptionFlag.Background,
                         $"ObArray<{typeof(T).Name}> 에서 {i} 인덱스 값이 없음", ex);
+                    throw;
 #endif
                 }
                 catch (Exception)
