@@ -423,7 +423,7 @@ namespace SyadeuEditor
 
             int countFound = 0;
 
-            Debug.Log(filePaths.Length);
+            //Debug.Log(filePaths.Length);
 
             if (filePaths != null && filePaths.Length > 0)
             {

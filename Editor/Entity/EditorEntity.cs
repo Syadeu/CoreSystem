@@ -14,19 +14,27 @@ namespace SyadeuEditor
         {
             if (material == null) material = AssetDatabase.GetBuiltinExtraResource<Material>(DEFAULT_MATERIAL);
 
-            Color white = Color.white; white.a = .1f;
+            Color
+                red = new Color { r = 1, a = 0.1f },
+                green = new Color { g = 1, a = 0.1f },
+                blue = new Color { b = 1, a = 0.1f };
 
             material.SetPass(0);
 
             GL.PushMatrix();
             GL.Begin(GL.TRIANGLES);
             {
+                Color currentColor = red;
                 for (int i = 0; i < mesh.triangles.Length; i += 3)
                 {
                     Tri(mesh.vertices[mesh.triangles[i]], 
                         mesh.vertices[mesh.triangles[i + 1]],
-                        mesh.vertices[mesh.triangles[i + 2]], 
-                        white);
+                        mesh.vertices[mesh.triangles[i + 2]],
+                        currentColor);
+
+                    if (currentColor.Equals(red)) currentColor = green;
+                    else if (currentColor.Equals(green)) currentColor = blue;
+                    else currentColor = red;
                 }
             }
             GL.End();
