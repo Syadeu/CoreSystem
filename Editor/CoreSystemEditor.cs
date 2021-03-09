@@ -11,33 +11,39 @@ namespace SyadeuEditor
     [CustomEditor(typeof(CoreSystem))]
     public sealed class CoreSystemEditor : Editor
     {
-        //bool testBool = false;
-        //private void OnSceneGUI()
-        //{
-        //    CoreSystem ins = target as CoreSystem;
-            
-        //    EditorUtils.SceneLabel(ins.transform.position, "CoreSystem Test Label", StringColor.white, true);
-        //    Rect rect = EditorUtils.GetLastSceneGUIRect();
-        //    if (EditorUtils.SceneButton(ins.transform.position, "Button", new Vector2(0, rect.height + 3)))
-        //    {
-        //        "clicked".ToLog();
-        //        testBool = !testBool;
-        //    }
+        SceneGUIBox sceneGUI = new SceneGUIBox();
 
-        //    if (testBool)
-        //    {
-        //        ins.transform.position = EditorUtils.GetMouseScreenPos(1);
-        //        if (Event.current.isKey && Event.current.keyCode == KeyCode.Space)
-        //        {
-        //            testBool = false;
-        //        }
-        //    }
-        //}
-        
+        private void OnSceneGUI()
+        {
+            CoreSystem ins = target as CoreSystem;
+
+            //sceneGUI = new SceneGUIBox();
+            sceneGUI.Label("CoreSystem Test Label");
+            sceneGUI.Label("CoreSystem Test Label3");
+            //sceneGUI.BeginHorizontal();
+            sceneGUI.Label("test1");
+            sceneGUI.Button("test2", () => { "test2 pushed".ToLog(); });
+            //sceneGUI.EndHorizontal();
+            sceneGUI.Label("test3");
+            sceneGUI.Label("test4");
+            sceneGUI.Button("test5 longongongongong", () => { "test5 pushed".ToLog(); });
+            //sceneGUI.Button("test6", () => { "test6 pushed".ToLog(); });
+            
+            sceneGUI.Label("end");
+            
+            sceneGUI.Draw(ins.transform.position);
+        }
         public override void OnInspectorGUI()
         {
             EditorUtils.StringHeader("CoreSystem");
             EditorUtils.SectorLine();
+
+            EditorGUILayout.Space();
+
+            {
+                sceneGUI.m_BorderOffset = EditorGUILayout.Vector2Field("Border Offset", sceneGUI.m_BorderOffset);
+                sceneGUI.m_TextSpace = EditorGUILayout.FloatField("Text Space", sceneGUI.m_TextSpace);
+            }
 
             if (Application.isPlaying)
             {

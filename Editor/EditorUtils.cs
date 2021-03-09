@@ -42,7 +42,7 @@ namespace SyadeuEditor
         public const string DefaultPath = "Assets/Resources/Syadeu";
 
         static GUIStyle _headerStyle;
-        static GUIStyle headerStyle
+        internal static GUIStyle HeaderStyle
         {
             get
             {
@@ -57,7 +57,7 @@ namespace SyadeuEditor
             }
         }
         static GUIStyle _centerStyle;
-        static GUIStyle centerStyle
+        internal static GUIStyle CenterStyle
         {
             get
             {
@@ -72,9 +72,8 @@ namespace SyadeuEditor
                 return _centerStyle;
             }
         }
-
         static GUIStyle _bttStyle;
-        static GUIStyle BttStyle
+        internal static GUIStyle BttStyle
         {
             get
             {
@@ -86,9 +85,8 @@ namespace SyadeuEditor
                 return _bttStyle;
             }
         }
-
         static GUIStyle _splitStyle;
-        static GUIStyle SplitStyle
+        internal static GUIStyle SplitStyle
         {
             get
             {
@@ -148,19 +146,19 @@ namespace SyadeuEditor
             => String(String(text, color), size);
         public static void StringHeader(string text, StringColor color, bool center)
         {
-            EditorGUILayout.LabelField(String(text, color, 20), center ? centerStyle : headerStyle);
+            EditorGUILayout.LabelField(String(text, color, 20), center ? CenterStyle : HeaderStyle);
         }
         public static void StringHeader(string text, int size = 20)
         {
-            EditorGUILayout.LabelField(String(text, StringColor.grey, size), headerStyle);
+            EditorGUILayout.LabelField(String(text, StringColor.grey, size), HeaderStyle);
         }
         public static void StringHeader(string text, StringColor color, int size = 20)
         {
-            EditorGUILayout.LabelField(String(text, color, size), headerStyle);
+            EditorGUILayout.LabelField(String(text, color, size), HeaderStyle);
         }
         public static void StringRich(string text, bool center = false)
         {
-            EditorGUILayout.LabelField(text, center ? centerStyle : headerStyle);
+            EditorGUILayout.LabelField(text, center ? CenterStyle : HeaderStyle);
         }
         public static void StringRich(string text, GUIStyle style, bool center = false)
         {
@@ -172,15 +170,15 @@ namespace SyadeuEditor
         }
         public static void StringRich(string text, StringColor color, bool center = false)
         {
-            EditorGUILayout.LabelField(String(text, color), center ? centerStyle : headerStyle);
+            EditorGUILayout.LabelField(String(text, color), center ? CenterStyle : HeaderStyle);
         }
         public static void StringRich(string text, int size, bool center = false)
         {
-            EditorGUILayout.LabelField(String(text, size), center ? centerStyle : headerStyle);
+            EditorGUILayout.LabelField(String(text, size), center ? CenterStyle : HeaderStyle);
         }
         public static void StringRich(string text, int size, StringColor color, bool center = false)
         {
-            EditorGUILayout.LabelField(String(text, color, size), center ? centerStyle : headerStyle);
+            EditorGUILayout.LabelField(String(text, color, size), center ? CenterStyle : HeaderStyle);
         }
 
         #endregion
@@ -285,189 +283,13 @@ namespace SyadeuEditor
             string firstKey = foldout ? "▼" : "▶";
             if (size < 0)
             {
-                return EditorGUILayout.Foldout(foldout, String($"{firstKey} {name}", StringColor.grey), true, headerStyle);
+                return EditorGUILayout.Foldout(foldout, String($"{firstKey} {name}", StringColor.grey), true, HeaderStyle);
             }
             else
             {
-                return EditorGUILayout.Foldout(foldout, String($"<size={size}>{firstKey} {name}</size>", StringColor.grey), true, headerStyle);
+                return EditorGUILayout.Foldout(foldout, String($"<size={size}>{firstKey} {name}</size>", StringColor.grey), true, HeaderStyle);
             }
         }
-
-        #region OnSceneGUI
-
-        static Camera SceneCam => SceneView.currentDrawingSceneView.camera;
-
-        static Color SceneGUIBackgroundColor = new Color32(29, 20, 45, 100);
-        static Rect sceneRect = new Rect(0f, 0f, 0f, 0f);
-        
-        private static bool SceneIsDrawable(Vector3 screenPos)
-        {
-            if (screenPos.y < 0 || screenPos.y > Screen.height ||
-                screenPos.x < 0 || screenPos.x > Screen.width || screenPos.z < 0)
-            {
-                return false;
-            }
-            return true;
-        }
-        private static Vector3 GetScenePos(Vector3 worldPosition)
-        {
-            Vector3 pos = SceneCam.WorldToScreenPoint(worldPosition);
-            pos.y = Screen.height - pos.y;
-            return pos;
-        }
-        public static Rect GetLastSceneGUIRect() => sceneRect;
-        public static Vector3 GetMouseScreenPos(float quantize = 0)
-        {
-            Ray ray = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
-
-            object hit = HandleUtility.RaySnap(ray);
-            Vector3 point;
-            if (hit != null)
-            {
-                point = ((RaycastHit)hit).point;
-            }
-            else point = ray.GetPoint(10);
-
-            if (quantize > 0)
-            {
-                point.x -= point.x % quantize;
-                point.y -= point.y % quantize;
-                point.z -= point.z % quantize;
-            }
-
-            return point;
-        }
-
-        public static void SceneLabel(Vector3 worldPosition, string text, bool center, Vector2 offset, Vector2 sizeOffset)
-        {
-            GUIContent gc = TempContent(text);
-            
-            Vector3 screenPos = GetScenePos(worldPosition);
-            if (!SceneIsDrawable(screenPos)) return;
-
-            GUIStyle style = center ? centerStyle : headerStyle;
-
-            float width = style.CalcSize(gc).x + 10 + sizeOffset.x;
-            float height = style.CalcHeight(gc, width) + 8 + sizeOffset.y;
-
-            sceneRect.x = screenPos.x - width * .5f; sceneRect.x += offset.x;
-            sceneRect.y = screenPos.y - height * .5f; sceneRect.y += offset.y;
-            sceneRect.width = width;
-            sceneRect.height = height;
-
-            DrawSolidColor(sceneRect, SceneGUIBackgroundColor);
-
-            Handles.BeginGUI();
-            GUI.Label(sceneRect, gc, style);
-            Handles.EndGUI();
-        }
-        public static void SceneLabel(Vector3 worldPosition, string text, StringColor color, bool center, Vector2 offset, Vector2 sizeOffset)
-        {
-            SceneLabel(worldPosition, String(text, color), center, offset, sizeOffset);
-        }
-        public static void SceneLabel(Vector3 worldPosition, string text, StringColor color, bool center, Vector2 offset)
-        {
-            SceneLabel(worldPosition, String(text, color), center, offset, Vector2.zero);
-        }
-        public static void SceneLabel(Vector3 worldPosition, string text, StringColor color, bool center)
-        {
-            SceneLabel(worldPosition, String(text, color), center, Vector2.zero, Vector2.zero);
-        }
-        public static void SceneLabel(Vector3 worldPosition, string text, StringColor color, int size, bool center, Vector2 offset, Vector2 sizeOffset)
-        {
-            SceneLabel(worldPosition, String(text, color, size), center, offset, sizeOffset);
-        }
-        public static void SceneLabel(Vector3 worldPosition, string text, StringColor color, int size, bool center, Vector2 offset)
-        {
-            SceneLabel(worldPosition, String(text, color, size), center, offset, Vector2.zero);
-        }
-        public static void SceneLabel(Vector3 worldPosition, string text, StringColor color, int size, bool center)
-        {
-            SceneLabel(worldPosition, String(text, color, size), center, Vector2.zero, Vector2.zero);
-        }
-        public static void SceneLabel(Vector3 worldPosition, string text, int size, bool center, Vector2 offset, Vector2 sizeOffset)
-        {
-            SceneLabel(worldPosition, String(text, size), center, offset, sizeOffset);
-        }
-        public static void SceneLabel(Vector3 worldPosition, string text, int size, bool center, Vector2 offset)
-        {
-            SceneLabel(worldPosition, String(text, size), center, offset, Vector2.zero);
-        }
-        public static void SceneLabel(Vector3 worldPosition, string text, int size, bool center)
-        {
-            SceneLabel(worldPosition, String(text, size), center, Vector2.zero, Vector2.zero);
-        }
-        public static void SceneLabel(Vector3 worldPosition, string text, Vector2 sizeOffset)
-        {
-            SceneLabel(worldPosition, text, false, Vector2.zero, sizeOffset);
-        }
-        public static void SceneLabel(Vector3 worldPosition, string text)
-        {
-            SceneLabel(worldPosition, text, false, Vector2.zero, Vector2.zero);
-        }
-
-        public static bool SceneButton(Vector3 worldPosition, string text, Vector2 offset, Vector2 sizeOffset)
-        {
-            GUIContent gc = TempContent(text);
-            Vector3 screenPos = GetScenePos(worldPosition);
-            if (!SceneIsDrawable(screenPos)) return false;
-
-            float width = BttStyle.CalcSize(gc).x + 10 + sizeOffset.x;
-            float height = BttStyle.CalcHeight(gc, width) + 8 + sizeOffset.y;
-            //float height = EditorStyles.label.CalcHeight(gc, width) + 8;
-
-            sceneRect.x = screenPos.x - width * .5f; sceneRect.x += offset.x;
-            sceneRect.y = screenPos.y - height * .5f; sceneRect.y += offset.y;
-            sceneRect.width = width;
-            sceneRect.height = height;
-
-            Handles.BeginGUI();
-            bool output = GUI.Button(sceneRect, text, BttStyle);
-            Handles.EndGUI();
-
-            return output;
-        }
-        public static bool SceneButton(Vector3 worldPosition, string text, Vector2 offset)
-            => SceneButton(worldPosition, text, offset, Vector2.zero);
-        public static bool SceneButton(Vector3 worldPosition, string text)
-            => SceneButton(worldPosition, text, Vector2.zero, Vector2.zero);
-        public static bool SceneButton(Vector3 worldPosition, string text, StringColor color, Vector2 offset, Vector2 sizeOffset)
-            => SceneButton(worldPosition, String(text, color), offset, sizeOffset);
-        public static bool SceneButton(Vector3 worldPosition, string text, StringColor color, Vector2 offset)
-            => SceneButton(worldPosition, String(text, color), offset, Vector2.zero);
-        public static bool SceneButton(Vector3 worldPosition, string text, StringColor color)
-            => SceneButton(worldPosition, String(text, color), Vector2.zero, Vector2.zero);
-        public static bool SceneButton(Vector3 worldPosition, string text, StringColor color, int size, Vector2 offset, Vector2 sizeOffset)
-            => SceneButton(worldPosition, String(text, color, size), offset, sizeOffset);
-        public static bool SceneButton(Vector3 worldPosition, string text, StringColor color, int size, Vector2 offset)
-            => SceneButton(worldPosition, String(text, color, size), offset, Vector2.zero);
-        public static bool SceneButton(Vector3 worldPosition, string text, StringColor color, int size)
-            => SceneButton(worldPosition, String(text, color, size), Vector2.zero, Vector2.zero);
-        public static bool SceneButton(Vector3 worldPosition, string text, int size, Vector2 offset, Vector2 sizeOffset)
-            => SceneButton(worldPosition, String(text, size), offset, sizeOffset);
-        public static bool SceneButton(Vector3 worldPosition, string text, int size, Vector2 offset)
-            => SceneButton(worldPosition, String(text, size), offset, Vector2.zero);
-        public static bool SceneButton(Vector3 worldPosition, string text, int size)
-            => SceneButton(worldPosition, String(text, size), Vector2.zero, Vector2.zero);
-        
-        /**
-         * Draw a solid color block at rect.
-         */
-        public static void DrawSolidColor(Rect rect, Color col)
-        {
-            Handles.BeginGUI();
-
-            Color old = GUI.backgroundColor;
-            GUI.backgroundColor = col;
-
-            GUI.Box(rect, "", SplitStyle);
-
-            GUI.backgroundColor = old;
-
-            Handles.EndGUI();
-        }
-
-        #endregion
 
         public static void ShowSimpleListLabel(ref bool opened, string header, IList list, 
             GUIStyle style = null, bool disableGroup = false)
@@ -622,101 +444,4 @@ namespace SyadeuEditor
             return countFound;
         }
     }
-
-    //public sealed class SceneGUIContents
-    //{
-    //    private static Camera SceneCam => SceneView.currentDrawingSceneView.camera;
-    //    private static bool SceneIsDrawable(Vector3 screenPos)
-    //    {
-    //        if (screenPos.y < 0 || screenPos.y > Screen.height ||
-    //            screenPos.x < 0 || screenPos.x > Screen.width || screenPos.z < 0)
-    //        {
-    //            return false;
-    //        }
-    //        return true;
-    //    }
-    //    private static Vector3 GetScenePos(Vector3 worldPosition)
-    //    {
-    //        Vector3 pos = SceneCam.WorldToScreenPoint(worldPosition);
-    //        pos.y = Screen.height - pos.y;
-    //        return pos;
-    //    }
-
-    //    private Vector3 m_InitPosition;
-
-    //    private readonly List<System.Action<Rect>> m_GUIs = new List<System.Action<Rect>>();
-    //    //private List<Rect> m_GUIRects = new List<Rect>();
-
-    //    public SceneGUIContents(Vector3 worldPosition)
-    //    {
-    //        m_InitPosition = worldPosition;
-    //    }
-
-    //    public SceneGUIContents Label(string text)
-    //    {
-    //        m_GUIs.Add((other) =>
-    //        {
-    //            GUIContent gc = EditorUtils.TempContent(text);
-
-
-    //        });
-
-    //        return this;
-    //    }
-    //    public SceneGUIContents Button(string text)
-    //    {
-
-    //    }
-    //    public SceneGUIContents Space(int pixels)
-    //    {
-            
-    //    }
-
-    //    public static void SceneLabel(string text, Vector3 worldPosition)
-    //    {
-    //        GUIContent gc = TempContent(text);
-
-    //        Vector3 screenPos = GetScenePos(worldPosition);
-    //        if (!SceneIsDrawable(screenPos)) return;
-
-    //        float width = EditorStyles.boldLabel.CalcSize(gc).x + 10;
-    //        float height = EditorStyles.label.CalcHeight(gc, width) + 8;
-
-    //        sceneRect.x = screenPos.x - width * .5f;
-    //        sceneRect.y = screenPos.y - height * .5f;
-    //        sceneRect.width = width;
-    //        sceneRect.height = height;
-
-    //        DrawSolidColor(sceneRect, SceneGUIBackgroundColor);
-
-    //        Handles.BeginGUI();
-    //        GUI.Label(sceneRect, gc, sceneBoldLabel);
-    //        Handles.EndGUI();
-    //    }
-    //    public static void SceneButton(string text, Vector3 worldPosition)
-    //    {
-    //        GUIContent gc = TempContent(text);
-    //        Vector3 screenPos = GetScenePos(worldPosition);
-    //        if (!SceneIsDrawable(screenPos)) return;
-
-    //        float width = EditorStyles.boldLabel.CalcSize(gc).x + 10;
-    //        float height = EditorStyles.label.CalcHeight(gc, width) + 8;
-
-    //        sceneRect.x = screenPos.x - width * .5f;
-    //        sceneRect.y = screenPos.y - height * .5f;
-    //        sceneRect.width = width;
-    //        sceneRect.height = height;
-
-    //        Handles.BeginGUI();
-    //        GUI.Button(sceneRect, text);
-    //        Handles.EndGUI();
-    //    }
-
-    //    public void Run()
-    //    {
-    //        Handles.BeginGUI();
-
-    //        Handles.EndGUI();
-    //    }
-    //}
 }
