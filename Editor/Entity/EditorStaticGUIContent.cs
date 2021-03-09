@@ -6,7 +6,7 @@ using UnityEditor;
 
 namespace SyadeuEditor
 {
-    public abstract class EditorStaticGUIContent<T> where T : EditorGUIEntity
+    public abstract class EditorStaticGUIContent<T> : EditorGUIEntity where T : EditorGUIEntity
     {
         private static T m_Instance;
         public static T Instance
@@ -35,7 +35,10 @@ namespace SyadeuEditor
             }
         }
 
-        public abstract void OnGUI();
-        public virtual void OnSceneGUI(SceneView sceneView) { }
+        public static void OnGUI() => (Instance as EditorStaticGUIContent<T>).OnGUIDraw();
+        public static void OnSceneGUI(SceneView sceneView) => (Instance as EditorStaticGUIContent<T>).OnSceneGUIDraw(sceneView);
+
+        protected abstract void OnGUIDraw();
+        protected virtual void OnSceneGUIDraw(SceneView sceneView) { }
     }
 }
