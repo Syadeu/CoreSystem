@@ -8,6 +8,42 @@ namespace SyadeuEditor
     /// </summary>
     public abstract class EditorEntity : Editor
     {
+        private const string DEFAULT_MATERIAL = "Sprites-Default.mat";
+
+        public static void GLDrawMesh(Mesh mesh, Material material)
+        {
+            if (material == null) material = AssetDatabase.GetBuiltinExtraResource<Material>(DEFAULT_MATERIAL);
+
+            Color white = Color.white; white.a = .1f;
+
+            material.SetPass(0);
+
+            GL.PushMatrix();
+            GL.Begin(GL.TRIANGLES);
+            {
+                for (int i = 0; i < mesh.triangles.Length; i += 3)
+                {
+                    Tri(mesh.vertices[mesh.triangles[i]], 
+                        mesh.vertices[mesh.triangles[i + 1]],
+                        mesh.vertices[mesh.triangles[i + 2]], 
+                        white);
+                }
+            }
+            GL.End();
+            GL.PopMatrix();
+
+            bool IsDrawable(Vector3 worldPos)
+            {
+                return EditorSceneUtils.IsDrawable(EditorSceneUtils.ToScreenPosition(worldPos));
+            }
+            void Tri(Vector3 v0, Vector3 v1, Vector3 v2, Color color)
+            {
+                if (!IsDrawable(v0) || !IsDrawable(v1) || !IsDrawable(v2)) return;
+
+                GL.Color(color);
+                GL.Vertex(v0); GL.Vertex(v1); GL.Vertex(v2);
+            }
+        }
         public static void GLDrawBounds(Bounds bounds)
         {
             Vector3
@@ -27,7 +63,7 @@ namespace SyadeuEditor
                 green = new Color { g = 1, a = 0.1f },
                 blue = new Color { b = 1, a = 0.1f };
 
-            Material material = AssetDatabase.GetBuiltinExtraResource<Material>("Sprites-Default.mat");
+            Material material = AssetDatabase.GetBuiltinExtraResource<Material>(DEFAULT_MATERIAL);
             material.SetPass(0);
 
             GL.PushMatrix();
@@ -43,8 +79,14 @@ namespace SyadeuEditor
             GL.End();
             GL.PopMatrix();
 
+            bool IsDrawable(Vector3 worldPos)
+            {
+                return EditorSceneUtils.IsDrawable(EditorSceneUtils.ToScreenPosition(worldPos));
+            }
             void Quad(Vector3 v0, Vector3 v1, Vector3 v2, Vector3 v3, Color color)
             {
+                if (!IsDrawable(v0) || !IsDrawable(v1) || !IsDrawable(v2) || !IsDrawable(v3)) return;
+
                 GL.Color(color);
                 GL.Vertex(v0); GL.Vertex(v1); GL.Vertex(v2); GL.Vertex(v3);
             }
@@ -81,8 +123,14 @@ namespace SyadeuEditor
             GL.End();
             GL.PopMatrix();
 
+            bool IsDrawable(Vector3 worldPos)
+            {
+                return EditorSceneUtils.IsDrawable(EditorSceneUtils.ToScreenPosition(worldPos));
+            }
             void Quad(Vector3 v0, Vector3 v1, Vector3 v2, Vector3 v3, Color color)
             {
+                if (!IsDrawable(v0) || !IsDrawable(v1) || !IsDrawable(v2) || !IsDrawable(v3)) return;
+
                 GL.Color(color);
                 GL.Vertex(v0); GL.Vertex(v1); GL.Vertex(v2); GL.Vertex(v3);
             }
