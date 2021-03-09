@@ -8,6 +8,9 @@ namespace SyadeuEditor
         internal string m_Text;
         private readonly System.Action m_OnPushed;
 
+        private bool m_IsOverrideBttSize = false;
+        private Vector2 m_OverrideBttSize = Vector2.zero;
+
         public int m_FontSize = 12;
         public StringColor m_Color = StringColor.black;
         public Vector2 m_SizeOffset = Vector2.zero;
@@ -21,6 +24,13 @@ namespace SyadeuEditor
         {
             m_Text = text; m_OnPushed = onPushsed;
         }
+        public SceneGUIButton(string text, System.Action onPushsed, Vector2 overrideSize)
+        {
+            m_Text = text; m_OnPushed = onPushsed;
+
+            m_IsOverrideBttSize = true;
+            m_OverrideBttSize = overrideSize;
+        }
 
         internal override void SetRect(ref Rect rect, Vector2 pos, Vector2 size)
         {
@@ -31,9 +41,13 @@ namespace SyadeuEditor
         }
         internal override Vector2 GetSize()
         {
-            float width = Style.CalcSize(GUIContent).x + 10 + m_SizeOffset.x;
-            float height = Style.CalcHeight(GUIContent, width) + 3 + m_SizeOffset.y;
-            return new Vector2(width, height);
+            if (m_IsOverrideBttSize) return m_OverrideBttSize;
+            else
+            {
+                float width = Style.CalcSize(GUIContent).x + 10 + m_SizeOffset.x;
+                float height = Style.CalcHeight(GUIContent, width) + 3 + m_SizeOffset.y;
+                return new Vector2(width, height);
+            }
         }
 
         internal override void Draw(ref Rect rect)

@@ -1,4 +1,5 @@
 ﻿using Syadeu.Database;
+using Syadeu.Mono;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -16,12 +17,16 @@ namespace Syadeu.Extentions.EditorUtils
         {
 #if UNITY_EDITOR
             Debug.LogError(log);
+//#elif DEVELOPMENT_BUILD
+//            ConsoleWindow.Log(log, ConsoleFlag.Error);
 #endif
         }
         public static void ToLog(this string log, bool overrideLog = false)
         {
 #if UNITY_EDITOR
             Debug.Log(log);
+//#elif DEVELOPMENT_BUILD
+//            ConsoleWindow.Log(log);
 #endif
         }
     }
@@ -43,6 +48,28 @@ namespace Syadeu
             System.IO.File.WriteAllBytes(_fullPath, _bytes);
             //Debug.Log(_bytes.Length / 1024 + "Kb was saved as: " + _fullPath);
         }
+        public static byte[] CompressToBytes(this Texture2D source, bool highQuality = false)
+        {
+            source.Compress(highQuality);
+
+            RenderTexture renderTex = RenderTexture.GetTemporary(
+                        source.width,
+                        source.height,
+                        0,
+                        RenderTextureFormat.Default,
+                        RenderTextureReadWrite.Linear);
+
+            Graphics.Blit(source, renderTex);
+            RenderTexture previous = RenderTexture.active;
+            RenderTexture.active = renderTex;
+            Texture2D readableText = new Texture2D(source.width, source.height);
+            readableText.ReadPixels(new Rect(0, 0, renderTex.width, renderTex.height), 0, 0);
+            readableText.Apply();
+            RenderTexture.active = previous;
+            RenderTexture.ReleaseTemporary(renderTex);
+
+            return readableText.EncodeToPNG();
+        }
 
         public static byte[] ToBytesWithStream<T>(this T obj)
         {
@@ -58,7 +85,19 @@ namespace Syadeu
             int size = Marshal.SizeOf(str);
             byte[] arr = new byte[size];
 
-            IntPtr ptr = Marshal.AllocHGlobal(size);
+            IntPtr ptr;
+            try
+            {
+                ptr = Marshal.AllocHGlobal(size);
+            }
+            catch (OutOfMemoryException)
+            {
+                Debug.LogWarning(
+                    $"CoreSystem Warnning: {typeof(T).Name}을 Marshaling (To Bytes) 하는 도중 메모리가 부족하여, " +
+                    $"MemoryStream 으로 전환하여 작업시도함");
+                return str.ToBytesWithStream();
+            }
+            
             Marshal.StructureToPtr(str, ptr, true);
             Marshal.Copy(ptr, arr, 0, size);
             Marshal.FreeHGlobal(ptr);
@@ -79,11 +118,21 @@ namespace Syadeu
         public static T ToObject<T>(this byte[] arr)
         {
             int size = Marshal.SizeOf(typeof(T));
-            IntPtr ptr = Marshal.AllocHGlobal(size);
+            IntPtr ptr;
+            try
+            {
+                ptr = Marshal.AllocHGlobal(size);
+            }
+            catch (OutOfMemoryException)
+            {
+                Debug.LogWarning(
+                    $"CoreSystem Warnning: {typeof(T).Name}을 Marshaling (To Object) 하는 도중 메모리가 부족하여, " +
+                    $"MemoryStream 으로 전환하여 작업시도함");
+                return arr.ToObjectWithStream<T>();
+            }
 
             Marshal.Copy(arr, 0, ptr, size);
-
-            T str = (T)Marshal.PtrToStructure(ptr, typeof(T));
+            T str = Marshal.PtrToStructure<T>(ptr);
             Marshal.FreeHGlobal(ptr);
 
             return str;
