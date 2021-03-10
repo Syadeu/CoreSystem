@@ -14,7 +14,7 @@ namespace Syadeu.Mono
     {
         public static void Log(string log, ConsoleFlag flag = ConsoleFlag.Normal) => Instance.LogCommand(log, flag);
         public static void LogAssert(bool isTrue, string log, bool throwException = true)
-            => Instance.InternalLogAssert(isTrue, log, throwException);
+            => Instance.InternalLogAssert(isTrue, log, Environment.StackTrace, throwException);
 
         public static void AddCommand(Action<string> action, params string[] arguments)
             => Instance.InternalAddCommand(action, arguments);
@@ -87,11 +87,6 @@ namespace Syadeu.Mono
         }
         private void Application_logMessageReceived(string condition, string stackTrace, LogType type)
         {
-            if (SyadeuSettings.Instance.m_ConsoleLogErrorTypes.HasFlag(ConvertFlag(type)))
-            {
-                OnErrorRecieved?.Invoke();
-            }
-
             if (SyadeuSettings.Instance.m_ConsoleLogWhenLogRecieved &&
                 SyadeuSettings.Instance.m_ConsoleLogTypes.HasFlag(ConvertFlag(type)))
             {
@@ -100,7 +95,7 @@ namespace Syadeu.Mono
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                     if (ConvertFlag(type) == ConsoleFlag.Error)
                     {
-                        InternalLogAssert(true, condition, false);
+                        InternalLogAssert(true, condition, stackTrace, SyadeuSettings.Instance.m_ConsoleThrowWhenErrorRecieved);
                     }
                     else InternalLog(condition, StringColor.white);
 #endif
@@ -109,20 +104,10 @@ namespace Syadeu.Mono
                 {
                     if (ConvertFlag(type) == ConsoleFlag.Error)
                     {
-                        InternalLogAssert(true, condition, false);
+                        InternalLogAssert(true, condition, stackTrace, SyadeuSettings.Instance.m_ConsoleThrowWhenErrorRecieved);
                     }
                     else InternalLog(condition, StringColor.white);
                 }
-            }
-
-            if (SyadeuSettings.Instance.m_ConsoleThrowWhenErrorRecieved &&
-                SyadeuSettings.Instance.m_ConsoleLogErrorTypes.HasFlag(ConvertFlag(type)))
-            {
-                if (!SyadeuSettings.Instance.m_ConsoleLogWhenLogRecieved)
-                {
-                    InternalLogAssert(true, condition, false);
-                }
-                throw new CoreSystemException(CoreSystemExceptionFlag.Console, condition, stackTrace);
             }
         }
 
@@ -437,11 +422,10 @@ namespace Syadeu.Mono
             int logLength = m_ConsoleLog.Split('\n').Length;
             m_ConsoleLogScroll.y = logLength * 15f;
         }
-        private void InternalLogAssert(bool isTrue, string log, bool throwException = true)
+        private void InternalLogAssert(bool isTrue, string log, string trace, bool throwException = true)
         {
             if (isTrue)
             {
-                string trace = Environment.StackTrace;
                 InternalLog($"{log}\n{trace}", StringColor.maroon);
                 OnErrorRecieved?.Invoke();
                 if (throwException)

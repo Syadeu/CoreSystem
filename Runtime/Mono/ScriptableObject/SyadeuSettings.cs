@@ -46,7 +46,7 @@ namespace Syadeu.Mono
         public bool m_UseConsole = true;
         public bool m_UseOnlyDevelopmentBuild = false;
         public int m_ConsoleFontSize = 15;
-        public ConsoleFlag m_ConsoleLogErrorTypes = ConsoleFlag.Error;
+        //public ConsoleFlag m_ConsoleLogErrorTypes = ConsoleFlag.Error;
         [Tooltip("콘솔에 표시할 로그 타입을 지정합니다.")]
         // 콘솔에 표시할 로그 타입을 지정합니다.
         public ConsoleFlag m_ConsoleLogTypes = ConsoleFlag.Normal | ConsoleFlag.Error;
