@@ -141,6 +141,10 @@ namespace Syadeu.ECS
         {
             return Instance.m_GlobalQuery.MapLocation(point, Vector3.one * 2.5f, agentTypeID, areaMask);
         }
+        public static NavMeshLocation ToLocation(Vector3 point, Vector3 extents, int agentTypeID, int areaMask = -1)
+        {
+            return Instance.m_GlobalQuery.MapLocation(point, extents, agentTypeID, areaMask);
+        }
 
         protected override void OnCreate()
         {

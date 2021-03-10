@@ -176,6 +176,27 @@ namespace Syadeu.Database
                     float.Parse(split[1]),
                     float.Parse(split[2]));
         }
+        public static Vector3Int ParseVector3IntFromSQL(object obj)
+        {
+            string trim = Convert.ToString(obj).Trim();
+            string[] split;
+
+            if (trim.StartsWith("("))
+            {
+                trim = trim.Replace("(", "");
+                trim = trim.Replace(")", "");
+                split = trim.Split(',');
+            }
+            else
+            {
+                split = trim.Split('/');
+            }
+
+            return new Vector3Int(
+                    int.Parse(split[0]),
+                    int.Parse(split[1]),
+                    int.Parse(split[2]));
+        }
 
         public static IList ParseArrayFromSQL(Type t, object array, bool isArray)
         {
@@ -231,7 +252,7 @@ namespace Syadeu.Database
             {
                 if (!string.IsNullOrEmpty(sum)) sum += "&";
 
-                if (t == typeof(Vector3))
+                if (t == typeof(Vector3) || t == typeof(Vector3Int))
                 {
                     sum += ParseVector3ToSQL(array[i].ToString());
                 }
@@ -279,6 +300,10 @@ namespace Syadeu.Database
             if (t == typeof(Vector3))
             {
                 rtrn = ParseVector3FromSQL(tx);
+            }
+            else if (t == typeof(Vector3Int))
+            {
+                rtrn = ParseVector3IntFromSQL(tx);
             }
             #region Basic Types
             else if (t == typeof(int))
@@ -333,7 +358,7 @@ namespace Syadeu.Database
             else if (t == typeof(string))
             {
                 Type objType = obj.GetType();
-                if (objType == typeof(Vector3))
+                if (objType == typeof(Vector3) || objType == typeof(Vector3Int))
                 {
                     rtrn = ParseVector3ToSQL(tx);
                 }

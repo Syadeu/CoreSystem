@@ -87,13 +87,13 @@ namespace SyadeuEditor
             GL.End();
             GL.PopMatrix();
 
-            bool IsDrawable(Vector3 worldPos)
-            {
-                return EditorSceneUtils.IsDrawable(EditorSceneUtils.ToScreenPosition(worldPos));
-            }
+            //bool IsDrawable(Vector3 worldPos)
+            //{
+            //    return EditorSceneUtils.IsDrawable(EditorSceneUtils.ToScreenPosition(worldPos));
+            //}
             void Quad(Vector3 v0, Vector3 v1, Vector3 v2, Vector3 v3, Color color)
             {
-                if (!IsDrawable(v0) || !IsDrawable(v1) || !IsDrawable(v2) || !IsDrawable(v3)) return;
+                //if (!IsDrawable(v0) || !IsDrawable(v1) || !IsDrawable(v2) || !IsDrawable(v3)) return;
 
                 GL.Color(color);
                 GL.Vertex(v0); GL.Vertex(v1); GL.Vertex(v2); GL.Vertex(v3);
@@ -131,13 +131,13 @@ namespace SyadeuEditor
             GL.End();
             GL.PopMatrix();
 
-            bool IsDrawable(Vector3 worldPos)
-            {
-                return EditorSceneUtils.IsDrawable(EditorSceneUtils.ToScreenPosition(worldPos));
-            }
+            //bool IsDrawable(Vector3 worldPos)
+            //{
+            //    return EditorSceneUtils.IsDrawable(EditorSceneUtils.ToScreenPosition(worldPos));
+            //}
             void Quad(Vector3 v0, Vector3 v1, Vector3 v2, Vector3 v3, Color color)
             {
-                if (!IsDrawable(v0) || !IsDrawable(v1) || !IsDrawable(v2) || !IsDrawable(v3)) return;
+                //if (!IsDrawable(v0) || !IsDrawable(v1) || !IsDrawable(v2) || !IsDrawable(v3)) return;
 
                 GL.Color(color);
                 GL.Vertex(v0); GL.Vertex(v1); GL.Vertex(v2); GL.Vertex(v3);

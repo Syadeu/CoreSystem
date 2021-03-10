@@ -9,11 +9,11 @@ namespace Syadeu.ECS
 
         private int ID { get; set; }
 
-        private void OnEnable()
+        protected virtual void OnEnable()
         {
             ID = ECSPathMeshSystem.AddObstacle(obj);
         }
-        private void OnDisable()
+        protected virtual void OnDisable()
         {
             if (ID == -1) return;
 

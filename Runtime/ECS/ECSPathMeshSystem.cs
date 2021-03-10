@@ -41,54 +41,34 @@ namespace Syadeu.ECS
             public ECSPathObstacle obstacle;
         }
 
-        public static void UpdatePosition(Vector3 center, Vector3 size)
+        public static void UpdatePosition(Vector3 center, Vector3 size, bool forceUpdate = false)
         {
-            CoreSystem.AddBackgroundJob(() =>
+            if (forceUpdate)
             {
-                if (!Quantize(center, 0.1f * size).Equals(Quantize(Instance.Center, 0.1f * Instance.Size)))
+                Instance.Center = center;
+                Instance.Size = size;
+
+                Bounds bounds = Instance.QuantizedBounds();
+                Instance.m_Sources.Clear();
+                foreach (var item in Instance.m_Obstacles.Values)
                 {
-                    Instance.Center = center;
-                    Instance.Size = size;
-
-                    CoreSystem.AddForegroundJob(() =>
-                    {
-                        NavMeshBuildSettings defaultBuildSettings = NavMesh.GetSettingsByID(0);
-                        Bounds bounds = Instance.QuantizedBounds();
-
-                        NavMeshBuilder.UpdateNavMeshDataAsync(Instance.m_NavMesh, defaultBuildSettings, Instance.m_Sources, bounds);
-                    });
+                    Instance.m_Sources.Add(item.Item2);
                 }
-            });
-            
 
-            //Instance.Center = center;
-            //Instance.Size = size;
+                NavMeshBuilder.UpdateNavMeshDataAsync(Instance.m_NavMesh, NavMesh.GetSettingsByID(0), Instance.m_Sources, bounds);
 
+                ECSPathQuerySystem.Purge();
+                Instance.m_IsObstacleChanged = false;
+                return;
+            }
 
-            //CoreSystem.AddBackgroundJob(Instance.workerIdx, () =>
-            //{
-            //    NavMeshBuildSettings defaultBuildSettings = NavMesh.GetSettingsByID(0);
-            //    Bounds bounds = Instance.QuantizedBounds();
+            if (!Quantize(center, 0.1f * size).Equals(Quantize(Instance.Center, 0.1f * Instance.Size)))
+            {
+                Instance.Center = center;
+                Instance.Size = size;
 
-            //    if (Instance.m_Sources == null)
-            //    {
-            //        Instance.m_Sources = new List<NavMeshBuildSource>();
-            //    }
-
-            //    NavMeshBuilder.UpdateNavMeshDataAsync(Instance.m_NavMesh, defaultBuildSettings, Instance.m_Sources, bounds);
-            //}, out var job);
-
-            
-
-            //NavMeshBuildSettings defaultBuildSettings = NavMesh.GetSettingsByID(0);
-            //Bounds bounds = Instance.QuantizedBounds();
-
-            //if (Instance.m_Sources == null)
-            //{
-            //    Instance.m_Sources = new List<NavMeshBuildSource>();
-            //}
-
-            //NavMeshBuilder.UpdateNavMeshDataAsync(Instance.m_NavMesh, defaultBuildSettings, Instance.m_Sources, bounds);
+                Instance.m_IsObstacleChanged = true;
+            }
         }
 
         public static NavMeshLinkInstance AddLink(Vector3 from, Vector3 to, int agentTypeID, int areaMask, bool bidirectional, int cost = 1, float width = -1)

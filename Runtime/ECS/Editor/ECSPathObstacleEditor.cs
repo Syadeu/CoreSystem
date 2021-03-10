@@ -21,23 +21,31 @@ namespace SyadeuEditor.ECS
         {
             obstacle = target as ECSPathObstacleComponent;
 
-            objProperty = serializedObject.FindProperty("obj");
-
-            MeshFilter meshFilter = obstacle.GetComponent<MeshFilter>();
-            Terrain terrain = obstacle.GetComponent<Terrain>();
-            
-            if (meshFilter != null)
+            if (!Application.isPlaying)
             {
-                objProperty.objectReferenceValue = meshFilter;
-                isMeshFilter = true;
-            }
-            else if (terrain != null)
-            {
-                objProperty.objectReferenceValue = terrain;
-                isTerrain = true;
-            }
+                objProperty = serializedObject.FindProperty("obj");
 
-            serializedObject.ApplyModifiedProperties();
+                MeshFilter meshFilter = obstacle.GetComponent<MeshFilter>();
+                Terrain terrain = obstacle.GetComponent<Terrain>();
+
+                if (meshFilter != null)
+                {
+                    objProperty.objectReferenceValue = meshFilter;
+                    isMeshFilter = true;
+                }
+                else if (terrain != null)
+                {
+                    objProperty.objectReferenceValue = terrain;
+                    isTerrain = true;
+                }
+
+                serializedObject.ApplyModifiedProperties();
+            }
+            else
+            {
+                isMeshFilter = obstacle.GetComponent<MeshFilter>() != null;
+                isTerrain = obstacle.GetComponent<Terrain>() != null;
+            }
         }
 
         public override void OnInspectorGUI()

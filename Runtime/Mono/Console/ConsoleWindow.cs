@@ -721,6 +721,12 @@ namespace Syadeu.Mono
 
             if (lines.Length < 2)
             {
+                if (def.m_Settings == CommandSetting.None)
+                {
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Console,
+                        $"명령어 {def.m_Initializer}는 아무 세팅도 없으므로 요구 조건이 필요없는데 조건을 추가하려합니다");
+                }
+
                 def.Connected = true;
                 def.Action = action;
                 def.Requires = requires;
@@ -731,6 +737,12 @@ namespace Syadeu.Mono
             for (int i = 2; i < lines.Length; i++)
             {
                 nextCmd = nextCmd.Find(lines[i]);
+            }
+
+            if (nextCmd.m_Settings == CommandSetting.None)
+            {
+                throw new CoreSystemException(CoreSystemExceptionFlag.Console,
+                        $"명령어 {def.m_Initializer}는 아무 세팅도 없으므로 요구 조건이 필요없는데 조건을 추가하려합니다");
             }
 
             nextCmd.Connected = true;
@@ -747,6 +759,12 @@ namespace Syadeu.Mono
 
             if (lines.Length < 2)
             {
+                if (def.m_Settings == CommandSetting.None)
+                {
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Console,
+                        $"명령어 {def.m_Initializer}는 아무 세팅도 없으므로 요구 조건이 필요없는데 조건을 추가하려합니다");
+                }
+
                 def.Connected = true;
                 def.Action = action;
                 def.Requires = requires;
@@ -757,6 +775,12 @@ namespace Syadeu.Mono
             for (int i = 2; i < lines.Length; i++)
             {
                 nextCmd = nextCmd.Find(lines[i]);
+            }
+
+            if (nextCmd.m_Settings == CommandSetting.None)
+            {
+                throw new CoreSystemException(CoreSystemExceptionFlag.Console,
+                        $"명령어 {def.m_Initializer}는 아무 세팅도 없으므로 요구 조건이 필요없는데 조건을 추가하려합니다");
             }
 
             nextCmd.Connected = true;
@@ -773,6 +797,12 @@ namespace Syadeu.Mono
 
             if (lines.Length < 2)
             {
+                if (def.m_Settings == CommandSetting.None)
+                {
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Console,
+                        $"명령어 {def.m_Initializer}는 아무 세팅도 없으므로 요구 조건이 필요없는데 조건을 추가하려합니다");
+                }
+
                 def.Connected = true;
                 def.Action = action;
                 def.Requires = requires;
@@ -783,6 +813,12 @@ namespace Syadeu.Mono
             for (int i = 2; i < lines.Length; i++)
             {
                 nextCmd = nextCmd.Find(lines[i]);
+            }
+
+            if (nextCmd.m_Settings == CommandSetting.None)
+            {
+                throw new CoreSystemException(CoreSystemExceptionFlag.Console,
+                        $"명령어 {def.m_Initializer}는 아무 세팅도 없으므로 요구 조건이 필요없는데 조건을 추가하려합니다");
             }
 
             nextCmd.Connected = true;

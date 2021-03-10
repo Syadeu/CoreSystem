@@ -5,22 +5,25 @@ using UnityEngine.AI;
 namespace Syadeu.ECS
 {
     [DisallowMultipleComponent]
-    public sealed class ECSPathMeshBaker : MonoManager<ECSPathMeshBaker>
+    public sealed class ECSPathMeshBaker : MonoBehaviour
     {
+        public Vector3 m_Size = Vector3.one;
+
         private IEnumerator Start()
         {
+            ECSPathMeshSystem.UpdatePosition(transform.position, m_Size, true);
+
             while (transform != null)
             {
-                ECSPathMeshSystem.UpdatePosition(transform.position, transform.lossyScale);
+                ECSPathMeshSystem.UpdatePosition(transform.position, m_Size);
 
                 yield return null;
             }
         }
 
-        private void OnDrawGizmosSelected()
-        {
-            Gizmos.color = new Color(0, 1, 0, .7f);
-            Gizmos.DrawWireCube(transform.position, transform.lossyScale);
-        }
+        //public void GetPosition()
+        //{
+        //    ECSPathQuerySystem.ToLocation()
+        //}
     }
 }
