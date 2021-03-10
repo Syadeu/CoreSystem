@@ -66,6 +66,7 @@ namespace SyadeuEditor.ECS
         private void OnSceneGUI()
         {
             GLDrawCube(m_Scr.transform.position, m_Scr.m_Size);
+            GLDrawWireBounds(m_Scr.transform.position, m_Scr.m_Size);
         }
 
         private void EnableNavMeshPreview()
