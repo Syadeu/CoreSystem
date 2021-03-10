@@ -14,7 +14,7 @@ namespace SyadeuEditor
 
         public static void GLDrawLine(Vector3 from, Vector3 to)
         {
-            if (GLIsDrawable(from) || GLIsDrawable(to))
+            if (!GLIsDrawable(from) && !GLIsDrawable(to)) return;
 
             GL.PushMatrix();
             GL.Begin(GL.LINES);
@@ -24,7 +24,7 @@ namespace SyadeuEditor
             GL.End();
             GL.PopMatrix();
         }
-        public static void GLDrawMesh(Mesh mesh, Material material)
+        public static void GLDrawMesh(Mesh mesh, Material material = null)
         {
             if (material == null) material = AssetDatabase.GetBuiltinExtraResource<Material>(DEFAULT_MATERIAL);
 
@@ -41,7 +41,7 @@ namespace SyadeuEditor
                 Color currentColor = red;
                 for (int i = 0; i < mesh.triangles.Length; i += 3)
                 {
-                    Tri(mesh.vertices[mesh.triangles[i]], 
+                    GLTri(mesh.vertices[mesh.triangles[i]], 
                         mesh.vertices[mesh.triangles[i + 1]],
                         mesh.vertices[mesh.triangles[i + 2]],
                         currentColor);
@@ -53,15 +53,36 @@ namespace SyadeuEditor
             }
             GL.End();
             GL.PopMatrix();
+        }
+        public static void GLDrawMesh(Vector3 center, Mesh mesh, Material material = null)
+        {
+            if (material == null) material = AssetDatabase.GetBuiltinExtraResource<Material>(DEFAULT_MATERIAL);
 
-            static void Tri(Vector3 v0, Vector3 v1, Vector3 v2, Color color)
+            Color
+                red = new Color { r = 1, a = 0.1f },
+                green = new Color { g = 1, a = 0.1f },
+                blue = new Color { b = 1, a = 0.1f };
+
+            material.SetPass(0);
+
+            GL.PushMatrix();
+            GL.Begin(GL.TRIANGLES);
             {
-                if (GLIsDrawable(v0) || GLIsDrawable(v1) || GLIsDrawable(v2))
+                Color currentColor = red;
+                for (int i = 0; i < mesh.triangles.Length; i += 3)
                 {
-                    GL.Color(color);
-                    GL.Vertex(v0); GL.Vertex(v1); GL.Vertex(v2);
+                    GLTri(mesh.vertices[mesh.triangles[i]] + center, 
+                        mesh.vertices[mesh.triangles[i + 1]] + center,
+                        mesh.vertices[mesh.triangles[i + 2]] + center,
+                        currentColor);
+
+                    if (currentColor.Equals(red)) currentColor = green;
+                    else if (currentColor.Equals(green)) currentColor = blue;
+                    else currentColor = red;
                 }
             }
+            GL.End();
+            GL.PopMatrix();
         }
         public static void GLDrawBounds(Bounds bounds)
         {
@@ -205,6 +226,14 @@ namespace SyadeuEditor
         private static bool GLIsDrawable(Vector3 worldPos)
         {
             return EditorSceneUtils.IsDrawable(EditorSceneUtils.ToScreenPosition(worldPos));
+        }
+        private static void GLTri(Vector3 v0, Vector3 v1, Vector3 v2, Color color)
+        {
+            if (GLIsDrawable(v0) || GLIsDrawable(v1) || GLIsDrawable(v2))
+            {
+                GL.Color(color);
+                GL.Vertex(v0); GL.Vertex(v1); GL.Vertex(v2);
+            }
         }
         private static void GLQuad(Vector3 v0, Vector3 v1, Vector3 v2, Vector3 v3, Color color)
         {
