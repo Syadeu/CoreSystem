@@ -27,6 +27,7 @@ namespace SyadeuEditor.ECS
             m_Scr = target as ECSPathMeshBaker;
 
             DisableNavMeshPreview();
+            m_PreviewNavMesh = false;
         }
 
         public override void OnInspectorGUI()
@@ -54,8 +55,8 @@ namespace SyadeuEditor.ECS
 
             if (Application.isPlaying && m_PreviewNavMesh)
             {
-                "in".ToLog();
                 DisableNavMeshPreview();
+                m_PreviewNavMesh = false;
             }
 
             m_ShowOriginalContents = EditorUtils.Foldout(m_ShowOriginalContents, "Original Contents");
@@ -125,8 +126,8 @@ namespace SyadeuEditor.ECS
 
             m_NavMeshData.Remove();
             m_NavMeshSources = null;
-            
-            m_PreviewNavMesh = false;
+
+            SceneView.lastActiveSceneView.Repaint();
         }
     }
 }
