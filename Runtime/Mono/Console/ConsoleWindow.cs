@@ -72,17 +72,17 @@ namespace Syadeu.Mono
 #endif
                 }
                 else CoreSystem.OnUnityUpdate += InputCheck;
-            }
 
-            Application.logMessageReceived += Application_logMessageReceived;
+                Application.logMessageReceived += Application_logMessageReceived;
 
-            if (FindDefinition("clear") == null)
-            {
-                InternalCreateCommand((arg) =>
+                if (FindDefinition("clear") == null)
                 {
-                    m_ConsoleLog = "";
-                    m_ConsoleLogScroll = Vector2.zero;
-                }, "clear");
+                    InternalCreateCommand((arg) =>
+                    {
+                        m_ConsoleLog = "";
+                        m_ConsoleLogScroll = Vector2.zero;
+                    }, "clear");
+                }
             }
         }
         private void Application_logMessageReceived(string condition, string stackTrace, LogType type)

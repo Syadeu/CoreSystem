@@ -28,6 +28,7 @@ namespace SyadeuEditor
                     }
 
                     //CoreSystem.StartEditorUpdate(boxed.Update(), boxed);
+                    (boxed as EditorStaticGUIContent<T>).OnInitialize();
                     m_Instance = boxed;
                 }
 
@@ -38,6 +39,7 @@ namespace SyadeuEditor
         public static void OnGUI() => (Instance as EditorStaticGUIContent<T>).OnGUIDraw();
         public static void OnSceneGUI(SceneView sceneView) => (Instance as EditorStaticGUIContent<T>).OnSceneGUIDraw(sceneView);
 
+        protected virtual void OnInitialize() { }
         protected abstract void OnGUIDraw();
         protected virtual void OnSceneGUIDraw(SceneView sceneView) { }
     }
