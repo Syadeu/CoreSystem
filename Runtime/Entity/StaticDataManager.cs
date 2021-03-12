@@ -46,13 +46,13 @@ namespace Syadeu
         /// <summary>
         /// OnUnityUpdate 보다 일찍 실행되는 커스텀 업데이트문을 넣을 수 있습니다.
         /// </summary>
-        public void StartUnityUpdate(System.Collections.IEnumerator enumerator) => CoreSystem.Instance.StartUnityUpdate(enumerator);
+        public CoreRoutine StartUnityUpdate(System.Collections.IEnumerator enumerator) => CoreSystem.Instance.StartUnityUpdate(enumerator);
         /// <summary>
         /// OnBackgroundUpdate 보다 일찍 실행되는 커스텀 업데이트문을 넣을 수 있습니다.
         /// </summary>
-        public void StartBackgroundUpdate(System.Collections.IEnumerator enumerator) => CoreSystem.Instance.StartBackgroundUpdate(enumerator);
-        public void StopUnityUpdate(System.Collections.IEnumerator enumerator) => CoreSystem.RemoveUnityUpdate(this, enumerator);
-        public void StopBackgroundUpdate(System.Collections.IEnumerator enumerator) => CoreSystem.RemoveBackgroundUpdate(this, enumerator);
+        public CoreRoutine StartBackgroundUpdate(System.Collections.IEnumerator enumerator) => CoreSystem.Instance.StartBackgroundUpdate(enumerator);
+        public void StopUnityUpdate(CoreRoutine routine) => CoreSystem.RemoveUnityUpdate(routine);
+        public void StopBackgroundUpdate(CoreRoutine routine) => CoreSystem.RemoveBackgroundUpdate(routine);
 
         public virtual void Dispose()
         {

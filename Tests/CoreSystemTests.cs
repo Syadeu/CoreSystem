@@ -25,13 +25,13 @@ public class CoreSystemTests
         test = Mathf.Sqrt(test);
         test = Mathf.Sqrt(test);
 
-        test /= test;
-        test /= test;
-        test /= test;
-        test /= test;
-        test /= test;
-        test /= test;
-        test /= test;
+        test /= 3;
+        test /= 3;
+        test /= 3;
+        test /= 3;
+        test /= 3;
+        test /= 3;
+        test /= 3;
     }
     public class TestClass
     {
@@ -40,6 +40,35 @@ public class CoreSystemTests
     public class TestInnerClass
     {
         public int testInt = 0;
+    }
+
+    public IEnumerator TestWhileCoreRoutine()
+    {
+        Debug.Log("Routine Start");
+        yield return null;
+
+        while (true)
+        {
+            yield return null;
+        }
+    }
+
+    [UnityTest]
+    public IEnumerator UnityUpdateTest()
+    {
+        CoreRoutine routine = CoreSystem.StartUnityUpdate(this, TestWhileCoreRoutine());
+
+        Debug.Log("Wait 2 seconds");
+        yield return new WaitForSeconds(2);
+
+        Debug.Log($"{routine.IsRunning} isrunning");
+        yield return new WaitForSeconds(1);
+
+        BackgroundJob job = CoreSystem.RemoveUnityUpdate(routine);
+        yield return new WaitForBackgroundJob(job);
+        Debug.Log("remove routine");
+
+        Debug.Log($"{routine.IsRunning} isrunning");
     }
 
     #region Job Test

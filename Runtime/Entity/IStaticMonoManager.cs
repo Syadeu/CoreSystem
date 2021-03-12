@@ -16,6 +16,7 @@
         /// <see cref="Mono.SyadeuSettings.m_VisualizeObjects"/> 가 true일 경우 영향받지 않습니다.
         /// </summary>
         bool HideInHierarchy { get; }
+        bool ManualInitialize { get; }
 
 #pragma warning disable IDE1006 // Naming Styles
         UnityEngine.GameObject gameObject { get; }

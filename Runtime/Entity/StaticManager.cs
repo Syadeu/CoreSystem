@@ -86,6 +86,7 @@ namespace Syadeu
         public virtual string DisplayName => null;
         public virtual bool DontDestroy => true;
         public virtual bool HideInHierarchy => true;
+        public bool ManualInitialize => false;
 
         public virtual void OnInitialize() { }
         public virtual void OnStart() { }

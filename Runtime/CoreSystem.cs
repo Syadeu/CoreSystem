@@ -15,6 +15,7 @@ using UnityEditor;
 using UnityEngine.Diagnostics;
 using UnityEngine.Networking;
 using System.Threading.Tasks;
+using Syadeu.Extentions.EditorUtils;
 
 namespace Syadeu
 {
@@ -273,13 +274,17 @@ namespace Syadeu
         }
 
         #region Routines
-        public static void StartBackgroundUpdate(object obj, IEnumerator update)
+        public static CoreRoutine StartBackgroundUpdate(object obj, IEnumerator update)
         {
-            OnBackgroundCustomUpdate.Enqueue((obj, update));
+            CoreRoutine routine = new CoreRoutine(obj, update, false, true);
+            OnBackgroundCustomUpdate.Enqueue(routine);
+            return routine;
         }
-        public static void StartUnityUpdate(object obj, IEnumerator update)
+        public static CoreRoutine StartUnityUpdate(object obj, IEnumerator update)
         {
-            OnUnityCustomUpdate.Enqueue((obj, update));
+            CoreRoutine routine = new CoreRoutine(obj, update, false, false);
+            OnUnityCustomUpdate.Enqueue(routine);
+            return routine;
         }
 
         /// <summary>
@@ -287,17 +292,18 @@ namespace Syadeu
         /// </summary>
         /// <param name="obj"></param>
         /// <param name="update"></param>
-        public static void RemoveUnityUpdate(object obj, IEnumerator update)
+        public static BackgroundJob RemoveUnityUpdate(CoreRoutine routine)
         {
-            AddBackgroundJob(() =>
+            return AddBackgroundJob(() =>
             {
-                foreach (var item in Instance.m_CustomUpdates)
-                {
-                    if (item.Key == update && item.Value == obj)
-                    {
-                        Instance.m_CustomUpdates.TryRemove(update, out obj);
-                    }
-                }
+                //foreach (var item in Instance.m_CustomUpdates)
+                //{
+                //    if (item.Key == update && item.Value == obj)
+                //    {
+                //        Instance.m_CustomUpdates.TryRemove(update, out obj);
+                //    }
+                //}
+                Instance.m_CustomUpdates.TryRemove(routine, out _);
             });
         }
         /// <summary>
@@ -305,17 +311,18 @@ namespace Syadeu
         /// </summary>
         /// <param name="obj"></param>
         /// <param name="enumerator"></param>
-        public static void RemoveBackgroundUpdate(object obj, IEnumerator enumerator)
+        public static BackgroundJob RemoveBackgroundUpdate(CoreRoutine routine)
         {
-            AddBackgroundJob(() =>
+            return AddBackgroundJob(() =>
             {
-                foreach (var item in Instance.m_CustomBackgroundUpdates)
-                {
-                    if (item.Key == enumerator && item.Value == obj)
-                    {
-                        Instance.m_CustomBackgroundUpdates.TryRemove(enumerator, out obj);
-                    }
-                }
+                //foreach (var item in Instance.m_CustomBackgroundUpdates)
+                //{
+                //    if (item.Key == enumerator && item.Value == obj)
+                //    {
+                //        Instance.m_CustomBackgroundUpdates.TryRemove(enumerator, out obj);
+                //    }
+                //}
+                Instance.m_CustomBackgroundUpdates.TryRemove(routine, out _);
             });
         }
         #endregion
@@ -325,8 +332,8 @@ namespace Syadeu
         public delegate void BackgroundWork(Awaiter awaiter);
         public delegate void UnityWork();
 
-        private readonly ConcurrentDictionary<IEnumerator, object> m_CustomBackgroundUpdates = new ConcurrentDictionary<IEnumerator, object>();
-        private readonly ConcurrentDictionary<IEnumerator, object> m_CustomUpdates = new ConcurrentDictionary<IEnumerator, object>();
+        internal readonly ConcurrentDictionary<CoreRoutine, object> m_CustomBackgroundUpdates = new ConcurrentDictionary<CoreRoutine, object>();
+        internal readonly ConcurrentDictionary<CoreRoutine, object> m_CustomUpdates = new ConcurrentDictionary<CoreRoutine, object>();
         private bool m_StartUpdate = false;
         private bool m_AsyncOperator = false;
 
@@ -386,7 +393,7 @@ namespace Syadeu
 
 #if UNITY_EDITOR
         private static IEnumerator m_EditorCoroutine = null;
-        private static readonly Dictionary<IEnumerator, object> m_EditorCoroutines = new Dictionary<IEnumerator, object>();
+        internal static readonly Dictionary<CoreRoutine, object> m_EditorCoroutines = new Dictionary<CoreRoutine, object>();
         private static readonly List<(int progressID, EditorTask task)> m_EditorTasks = new List<(int, EditorTask)>();
 
         [InitializeOnLoadMethod]
@@ -409,7 +416,7 @@ namespace Syadeu
                 #region Editor Coroutine
                 if (m_EditorCoroutines.Count > 0)
                 {
-                    List<IEnumerator> _waitForDeletion = null;
+                    List<CoreRoutine> _waitForDeletion = null;
                     foreach (var item in m_EditorCoroutines)
                     {
                         if (item.Value == null)
@@ -417,13 +424,13 @@ namespace Syadeu
                             m_EditorCoroutines.Remove(item.Key);
                         }
 
-                        if (item.Key.Current == null)
+                        if (item.Key.Iterator.Current == null)
                         {
-                            if (!item.Key.MoveNext())
+                            if (!item.Key.Iterator.MoveNext())
                             {
                                 if (_waitForDeletion == null)
                                 {
-                                    _waitForDeletion = new List<IEnumerator>();
+                                    _waitForDeletion = new List<CoreRoutine>();
                                 }
                                 _waitForDeletion.Add(item.Key);
                                 
@@ -432,46 +439,46 @@ namespace Syadeu
                         }
                         else
                         {
-                            if (item.Key.Current is CustomYieldInstruction @yield &&
+                            if (item.Key.Iterator.Current is CustomYieldInstruction @yield &&
                                 !yield.keepWaiting)
                             {
-                                if (!item.Key.MoveNext())
+                                if (!item.Key.Iterator.MoveNext())
                                 {
                                     if (_waitForDeletion == null)
                                     {
-                                        _waitForDeletion = new List<IEnumerator>();
+                                        _waitForDeletion = new List<CoreRoutine>();
                                     }
                                     _waitForDeletion.Add(item.Key);
 
                                     if (item.Value is int progressID) Progress.Remove(progressID);
                                 }
                             }
-                            else if (item.Key.Current.GetType() == typeof(bool) &&
-                                    Convert.ToBoolean(item.Key.Current) == true)
+                            else if (item.Key.Iterator.Current.GetType() == typeof(bool) &&
+                                    Convert.ToBoolean(item.Key.Iterator.Current) == true)
                             {
-                                if (!item.Key.MoveNext())
+                                if (!item.Key.Iterator.MoveNext())
                                 {
                                     if (_waitForDeletion == null)
                                     {
-                                        _waitForDeletion = new List<IEnumerator>();
+                                        _waitForDeletion = new List<CoreRoutine>();
                                     }
                                     _waitForDeletion.Add(item.Key);
                                     
                                     if (item.Value is int progressID) Progress.Remove(progressID);
                                 }
                             }
-                            else if (item.Key.Current is YieldInstruction baseYield)
+                            else if (item.Key.Iterator.Current is YieldInstruction baseYield)
                             {
                                 if (_waitForDeletion == null)
                                 {
-                                    _waitForDeletion = new List<IEnumerator>();
+                                    _waitForDeletion = new List<CoreRoutine>();
                                 }
                                 _waitForDeletion.Add(item.Key);
                                 
                                 if (item.Value is int progressID) Progress.Remove(progressID);
 
                                 throw new CoreSystemException(CoreSystemExceptionFlag.Editor,
-                                    $"해당 yield return 타입({item.Key.Current.GetType().Name})은 지원하지 않습니다");
+                                    $"해당 yield return 타입({item.Key.Iterator.Current.GetType().Name})은 지원하지 않습니다");
                             }
                         }
                     }
@@ -490,7 +497,8 @@ namespace Syadeu
                 for (int i = 0; i < m_EditorTasks.Count; i++)
                 {
                     IEnumerator iterTask = m_EditorTasks[i].task.Invoke(m_EditorTasks[i].progressID);
-                    m_EditorCoroutines.Add(iterTask, m_EditorTasks[i].progressID);
+                    CoreRoutine routine = new CoreRoutine(m_EditorTasks[i].progressID, iterTask, true, false);
+                    m_EditorCoroutines.Add(routine, m_EditorTasks[i].progressID);
 
                     m_EditorTasks.RemoveAt(i);
                     i--;
@@ -502,13 +510,16 @@ namespace Syadeu
             }
         }
 
-        public static void StartEditorUpdate(IEnumerator iter, object obj)
+        public static CoreRoutine StartEditorUpdate(IEnumerator iter, object obj)
         {
-            m_EditorCoroutines.Add(iter, obj);
+            CoreRoutine routine = new CoreRoutine(obj, iter, true, false);
+            m_EditorCoroutines.Add(routine, obj);
+
+            return routine;
         }
-        public static void StopEditorUpdate(IEnumerator iter)
+        public static void StopEditorUpdate(CoreRoutine routine)
         {
-            m_EditorCoroutines.Remove(iter);
+            m_EditorCoroutines.Remove(routine);
         }
 
         public delegate IEnumerator EditorTask(int progressID);
@@ -603,7 +614,7 @@ namespace Syadeu
                 {
                     if (OnBackgroundCustomUpdate.TryDequeue(out var value))
                     {
-                        m_CustomBackgroundUpdates.TryAdd(value.Item2, value.Item1);
+                        m_CustomBackgroundUpdates.TryAdd(value, value.Object);
                     }
                 }
                 foreach (var item in m_CustomBackgroundUpdates)
@@ -622,36 +633,36 @@ namespace Syadeu
 
                     try
                     {
-                        if (item.Key.Current == null)
+                        if (item.Key.Iterator.Current == null)
                         {
-                            if (!item.Key.MoveNext())
+                            if (!item.Key.Iterator.MoveNext())
                             {
                                 m_CustomBackgroundUpdates.TryRemove(item.Key, out _);
                             }
                         }
                         else
                         {
-                            if (item.Key.Current is CustomYieldInstruction @yield &&
+                            if (item.Key.Iterator.Current is CustomYieldInstruction @yield &&
                                 !yield.keepWaiting)
                             {
-                                if (!item.Key.MoveNext())
+                                if (!item.Key.Iterator.MoveNext())
                                 {
                                     m_CustomBackgroundUpdates.TryRemove(item.Key, out _);
                                 }
                             }
-                            else if (item.Key.Current.GetType() == typeof(bool) &&
-                                    Convert.ToBoolean(item.Key.Current) == true)
+                            else if (item.Key.Iterator.Current.GetType() == typeof(bool) &&
+                                    Convert.ToBoolean(item.Key.Iterator.Current) == true)
                             {
-                                if (!item.Key.MoveNext())
+                                if (!item.Key.Iterator.MoveNext())
                                 {
                                     m_CustomBackgroundUpdates.TryRemove(item.Key, out _);
                                 }
                             }
-                            else if (item.Key.Current is YieldInstruction baseYield)
+                            else if (item.Key.Iterator.Current is YieldInstruction baseYield)
                             {
                                 m_CustomUpdates.TryRemove(item.Key, out _);
                                 throw new CoreSystemException(CoreSystemExceptionFlag.Background,
-                                    $"해당 yield return 타입({item.Key.Current.GetType().Name})은 지원하지 않습니다");
+                                    $"해당 yield return 타입({item.Key.Iterator.Current.GetType().Name})은 지원하지 않습니다");
                             }
                         }
                     }
@@ -954,9 +965,9 @@ namespace Syadeu
                 #region OnUnityCustomUpdate
                 if (OnUnityCustomUpdate.Count > 0)
                 {
-                    if (OnUnityCustomUpdate.TryDequeue(out var value))
+                    if (OnUnityCustomUpdate.TryDequeue(out CoreRoutine value))
                     {
-                        m_CustomUpdates.TryAdd(value.Item2, value.Item1);
+                        m_CustomUpdates.TryAdd(value, value.Object);
                     }
                 }
                 foreach (var item in m_CustomUpdates)
@@ -969,38 +980,38 @@ namespace Syadeu
 
                     try
                     {
-                        if (item.Key.Current == null)
+                        if (item.Key.Iterator.Current == null)
                         {
-                            if (!item.Key.MoveNext())
+                            if (!item.Key.Iterator.MoveNext())
                             {
                                 m_CustomUpdates.TryRemove(item.Key, out _);
                             }
                         }
                         else
                         {
-                            if (item.Key.Current is CustomYieldInstruction @yield &&
+                            if (item.Key.Iterator.Current is CustomYieldInstruction @yield &&
                                 !yield.keepWaiting)
                             {
-                                if (!item.Key.MoveNext())
+                                if (!item.Key.Iterator.MoveNext())
                                 {
                                     m_CustomUpdates.TryRemove(item.Key, out _);
                                 }
                             }
-                            else if (item.Key.Current.GetType() == typeof(bool) &&
-                                    Convert.ToBoolean(item.Key.Current) == true)
+                            else if (item.Key.Iterator.Current.GetType() == typeof(bool) &&
+                                    Convert.ToBoolean(item.Key.Iterator.Current) == true)
                             {
-                                if (!item.Key.MoveNext())
+                                if (!item.Key.Iterator.MoveNext())
                                 {
                                     m_CustomBackgroundUpdates.TryRemove(item.Key, out _);
                                 }
                             }
-                            else if (item.Key.Current is YieldInstruction baseYield)
+                            else if (item.Key.Iterator.Current is YieldInstruction baseYield)
                             {
                                 m_CustomUpdates.TryRemove(item.Key, out _);
 
 #if UNITY_EDITOR
                                 throw new CoreSystemException(CoreSystemExceptionFlag.Foreground,
-                                    $"해당 yield return 타입({item.Key.Current.GetType().Name})은 지원하지 않습니다");
+                                    $"해당 yield return 타입({item.Key.Iterator.Current.GetType().Name})은 지원하지 않습니다");
 #else
                                 CoreSystemException.SendCrash(CoreSystemExceptionFlag.Foreground,
                                     $"해당 yield return 타입({item.Key.Current.GetType().Name})은 지원하지 않습니다", null);
