@@ -1,19 +1,24 @@
-﻿using Syadeu.Database;
-using System;
-using System.Collections;
-
-namespace Syadeu
+﻿namespace Syadeu
 {
-    public struct CoreRoutine : IValidation, IEquatable<CoreRoutine>
+    public struct CoreRoutine : Database.IValidation, System.IEquatable<CoreRoutine>
     {
-        private Guid m_Guid;
+        private System.Guid m_Guid;
 
+        /// <summary>
+        /// 에디터에서 실행되는 루틴인가요?
+        /// </summary>
         public bool IsEditor { get; }
+        /// <summary>
+        /// 백그라운드에서 실행되는 루틴인가요?
+        /// </summary>
         public bool IsBackground { get; }
 
         internal object Object { get; }
-        internal IEnumerator Iterator { get; }
+        internal System.Collections.IEnumerator Iterator { get; }
 
+        /// <summary>
+        /// 현재 이 루틴이 실행 중인지 반환합니다.
+        /// </summary>
         public bool IsRunning
         {
             get
@@ -27,15 +32,24 @@ namespace Syadeu
             }
         }
 
-        internal CoreRoutine(object obj, IEnumerator iter, bool isEditor, bool isBackground)
+        internal CoreRoutine(object obj, System.Collections.IEnumerator iter, bool isEditor, bool isBackground)
         {
-            m_Guid = Guid.NewGuid();
+            m_Guid = System.Guid.NewGuid();
 
             Object = obj;
             Iterator = iter;
 
             IsEditor = isEditor;
             IsBackground = isBackground;
+        }
+
+        public CoreRoutine(object obj, System.Collections.IEnumerator iter, bool isBackground) 
+            : this(obj, iter, false, isBackground)
+        {
+        }
+        public CoreRoutine(System.Collections.IEnumerator iter, bool isBackground)
+            : this(null, iter, false, isBackground)
+        {
         }
 
         public bool IsValid() => Iterator != null;
