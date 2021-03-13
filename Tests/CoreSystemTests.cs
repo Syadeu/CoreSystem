@@ -70,6 +70,23 @@ public class CoreSystemTests
 
         Debug.Log($"{routine.IsRunning} isrunning");
     }
+    [UnityTest]
+    public IEnumerator BackgroundUpdateTest()
+    {
+        CoreRoutine routine = CoreSystem.StartBackgroundUpdate(this, TestWhileCoreRoutine());
+
+        Debug.Log("Wait 2 seconds");
+        yield return new WaitForSeconds(2);
+
+        Debug.Log($"{routine.IsRunning} isrunning");
+        yield return new WaitForSeconds(1);
+
+        BackgroundJob job = CoreSystem.RemoveBackgroundUpdate(routine);
+        yield return new WaitForBackgroundJob(job);
+        Debug.Log("remove routine");
+
+        Debug.Log($"{routine.IsRunning} isrunning");
+    }
 
     #region Job Test
 

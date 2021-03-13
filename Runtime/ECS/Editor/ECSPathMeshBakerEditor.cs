@@ -20,6 +20,7 @@ namespace SyadeuEditor.ECS
         private NavMeshBuildSettings m_NavMeshBuildSettings;
         private List<NavMeshBuildSource> m_NavMeshSources;
 
+        private bool m_DrawBounds = false;
         private bool m_ShowOriginalContents = false;
 
         private void OnEnable()
@@ -29,7 +30,13 @@ namespace SyadeuEditor.ECS
             DisableNavMeshPreview();
             m_PreviewNavMesh = false;
         }
-
+        private void OnDestroy()
+        {
+            if (m_PreviewNavMesh)
+            {
+                DisableNavMeshPreview();
+            }
+        }
         public override void OnInspectorGUI()
         {
             EditorUtils.StringHeader("ECS Mesh Baker");
@@ -59,14 +66,25 @@ namespace SyadeuEditor.ECS
                 m_PreviewNavMesh = false;
             }
 
+            EditorGUI.BeginChangeCheck();
+            m_DrawBounds = EditorGUILayout.ToggleLeft("Draw Target Area", m_DrawBounds);
+            if (EditorGUI.EndChangeCheck())
+            {
+                SceneView.lastActiveSceneView.Repaint();
+            }
+
+            EditorGUILayout.Space();
             m_ShowOriginalContents = EditorUtils.Foldout(m_ShowOriginalContents, "Original Contents");
             if (m_ShowOriginalContents) base.OnInspectorGUI();
         }
 
         private void OnSceneGUI()
         {
-            GLDrawCube(m_Scr.transform.position, m_Scr.m_Size);
-            GLDrawWireBounds(m_Scr.transform.position, m_Scr.m_Size);
+            if (m_DrawBounds)
+            {
+                GLDrawCube(m_Scr.transform.position, m_Scr.m_Size);
+                GLDrawWireBounds(m_Scr.transform.position, m_Scr.m_Size);
+            }
         }
 
         private void EnableNavMeshPreview()
