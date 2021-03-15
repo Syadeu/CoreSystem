@@ -158,7 +158,7 @@ namespace SyadeuEditor
         }
         public static void StringRich(string text, bool center = false)
         {
-            EditorGUILayout.LabelField(text, center ? CenterStyle : HeaderStyle);
+            EditorGUILayout.LabelField(String(text, EditorGUIUtility.isProSkin ? StringColor.white : StringColor.black), center ? CenterStyle : HeaderStyle);
         }
         public static void StringRich(string text, GUIStyle style, bool center = false)
         {
