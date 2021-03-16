@@ -9,26 +9,11 @@ using System.Runtime.InteropServices;
 using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
 
-namespace Syadeu.Extentions.EditorUtils
+namespace Syadeu.Extensions.Logs
 {
     public static class EditorUtilExtensions
     {
-        public static void ToLogError(this string log, bool overrideLog = false)
-        {
-#if UNITY_EDITOR
-            Debug.LogError(log);
-//#elif DEVELOPMENT_BUILD
-//            ConsoleWindow.Log(log, ConsoleFlag.Error);
-#endif
-        }
-        public static void ToLog(this string log, bool overrideLog = false)
-        {
-#if UNITY_EDITOR
-            Debug.Log(log);
-//#elif DEVELOPMENT_BUILD
-//            ConsoleWindow.Log(log);
-#endif
-        }
+
     }
 }
 
@@ -36,6 +21,23 @@ namespace Syadeu
 {
     public static class ExtensionMethods
     {
+        public static void ToLogError(this string log, bool overrideLog = false)
+        {
+#if UNITY_EDITOR
+            Debug.LogError(log);
+            //#elif DEVELOPMENT_BUILD
+            //            ConsoleWindow.Log(log, ConsoleFlag.Error);
+#endif
+        }
+        public static void ToLog(this string log, bool overrideLog = false)
+        {
+#if UNITY_EDITOR
+            Debug.Log(log);
+            //#elif DEVELOPMENT_BUILD
+            //            ConsoleWindow.Log(log);
+#endif
+        }
+
         public static T Clamp<T>(this T val, T min, T max) where T : IComparable<T>
         {
             if (val.CompareTo(min) < 0) return min;

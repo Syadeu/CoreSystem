@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using System.IO;
-using Syadeu.Extentions.EditorUtils;
+using Syadeu.Extensions.Logs;
 using System.Reflection;
 
 #if UNITY_EDITOR

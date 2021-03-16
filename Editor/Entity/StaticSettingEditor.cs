@@ -1,7 +1,7 @@
 ﻿using System.IO;
 
 using Syadeu;
-using Syadeu.Extentions.EditorUtils;
+using Syadeu.Extensions.Logs;
 
 using UnityEngine;
 using UnityEditor;
