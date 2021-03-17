@@ -1,5 +1,5 @@
 ﻿using Syadeu;
-using Syadeu.Extentions.EditorUtils;
+using Syadeu.Extensions.Logs;
 using Syadeu.FMOD;
 using System.Collections.Generic;
 using System.Linq;

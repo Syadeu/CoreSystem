@@ -1,8 +1,8 @@
 ﻿using Syadeu.Mono;
-using Syadeu.Extentions.EditorUtils;
 
 using UnityEngine;
 using UnityEditor;
+using Syadeu;
 
 namespace SyadeuEditor
 {

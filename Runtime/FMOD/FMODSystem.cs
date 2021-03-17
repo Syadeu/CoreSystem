@@ -2,7 +2,7 @@
 using FMOD.Studio;
 using FMODUnity;
 
-using Syadeu.Extentions.EditorUtils;
+using Syadeu.Extensions.Logs;
 using Syadeu.Mono;
 using Syadeu.Database;
 

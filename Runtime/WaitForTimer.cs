@@ -1,4 +1,4 @@
-﻿using Syadeu.Extentions.EditorUtils;
+﻿using Syadeu.Extensions.Logs;
 using UnityEngine;
 
 namespace Syadeu

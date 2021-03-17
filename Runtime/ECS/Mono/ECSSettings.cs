@@ -4,7 +4,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using UnityEngine;
-using Syadeu.Extentions.EditorUtils;
+using Syadeu.Extensions.Logs;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif

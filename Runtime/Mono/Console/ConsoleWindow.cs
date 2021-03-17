@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Syadeu.Extentions.EditorUtils;
+using Syadeu.Extensions.Logs;
 using Syadeu.Mono.Console;
 
 using UnityEngine;
