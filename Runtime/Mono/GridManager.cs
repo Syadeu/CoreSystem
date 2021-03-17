@@ -19,6 +19,10 @@ namespace Syadeu.Mono
 
         private Grid[] m_Grids;
 
+#if UNITY_EDITOR
+        private static Grid[] m_EditorGrids = new Grid[1];
+#endif
+
         [Serializable]
         public struct Grid : IValidation, IEquatable<Grid>
         {
@@ -114,17 +118,27 @@ namespace Syadeu.Mono
                 }
             }
 
-            Grid grid = new Grid(Instance.m_Grids.Length, bounds.size.y, cells);
-
-            Grid[] newGrids = new Grid[Instance.m_Grids.Length];
-            for (int i = 0; i < Instance.m_Grids.Length; i++)
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
             {
-                newGrids[i] = Instance.m_Grids[i];
+                m_EditorGrids[0] = new Grid(0, bounds.size.y, cells);
+                return ref m_EditorGrids[0];
             }
-            newGrids[Instance.m_Grids.Length] = grid;
-            Instance.m_Grids = newGrids;
+            else
+#endif
+            {
+                Grid grid = new Grid(Instance.m_Grids.Length, bounds.size.y, cells);
 
-            return ref Instance.m_Grids[Instance.m_Grids.Length - 1];
+                Grid[] newGrids = new Grid[Instance.m_Grids.Length];
+                for (int i = 0; i < Instance.m_Grids.Length; i++)
+                {
+                    newGrids[i] = Instance.m_Grids[i];
+                }
+                newGrids[Instance.m_Grids.Length] = grid;
+                Instance.m_Grids = newGrids;
+
+                return ref Instance.m_Grids[Instance.m_Grids.Length - 1];
+            }
         }
         public static ref Grid SetCustomData(int idx, object customData)
         {

@@ -15,9 +15,10 @@ namespace SyadeuEditor
         private GridManager m_Scr;
         private ECSPathMeshBaker m_NavBaker;
 
-        private SerializedProperty m_Bounds;
-
+        private Bounds m_Bounds;
         private GridManager.Grid grid;
+
+        private SerializedProperty m_GridSize;
 
         private bool m_ShowOriginalContents = false;
 
@@ -26,10 +27,9 @@ namespace SyadeuEditor
             m_Scr = target as GridManager;
             m_NavBaker = m_Scr.GetComponent<ECSPathMeshBaker>();
 
-            m_Bounds = serializedObject.FindProperty("m_Bounds");
+            m_GridSize = serializedObject.FindProperty("m_GridSize");
 
-
-            grid = GridManager.CreateGrid(m_Bounds.boundsValue, 2.5f);
+            grid = GridManager.CreateGrid(m_Bounds, 2.5f);
         }
 
         private void OnDestroy()
@@ -44,13 +44,14 @@ namespace SyadeuEditor
 
             if (GUILayout.Button("Reload Grid"))
             {
-                grid = GridManager.CreateGrid(m_Bounds.boundsValue, 2.5f);
+                grid = GridManager.CreateGrid(m_Bounds, 2.5f);
                 SceneView.lastActiveSceneView.Repaint();
             }
             EditorGUI.BeginDisabledGroup(m_NavBaker == null);
             if (GUILayout.Button("Match with ECSBaker"))
             {
-                m_Bounds.boundsValue = new Bounds(m_Scr.transform.position, m_NavBaker.m_Size);
+                Vector3 adjust = new Vector3(m_GridSize.floatValue * .5f, 0, 0);
+                m_Bounds = new Bounds(m_Scr.transform.position + adjust, m_NavBaker.m_Size);
                 serializedObject.ApplyModifiedProperties();
             }
             EditorGUI.EndDisabledGroup();
@@ -66,7 +67,7 @@ namespace SyadeuEditor
 
         private void OnSceneGUI()
         {
-            for (int i = 0; i < grid.Cells.Length; i++)
+            for (int i = 0; i < grid.Cells?.Length; i++)
             {
                 GLDrawBounds(grid.Cells[i].Bounds, i % 2 == 0 ? green : blue);
                 //if (i > 1) break;
