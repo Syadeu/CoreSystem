@@ -12,6 +12,7 @@ using Mono.Data.Sqlite;
 
 using UnityEngine;
 using Syadeu.Mono;
+using Unity.Mathematics;
 
 namespace Syadeu.Database
 {
@@ -2137,7 +2138,8 @@ namespace Syadeu.Database
             {
                 t = "BLOB";
             }
-            else if (column.Type == typeof(string) || column.Type == typeof(Vector3) ||
+            else if (column.Type == typeof(string) || column.Type == typeof(Vector3) || column.Type == typeof(Vector2) ||
+                column.Type == typeof(float3) ||
                 column.Type.IsArray || column.Type.GenericTypeArguments.Length > 0)
             {
                 t = "TEXT";
@@ -2165,7 +2167,8 @@ namespace Syadeu.Database
             {
                 t = "BLOB";
             }
-            else if (column.Key == typeof(string) || column.Key == typeof(Vector3) ||
+            else if (column.Key == typeof(string) || column.Key == typeof(Vector3) || column.Key == typeof(Vector2) ||
+                column.Key == typeof(float3) ||
                 column.Key.IsArray || column.Key.GenericTypeArguments.Length > 0)
             {
                 t = "TEXT";
