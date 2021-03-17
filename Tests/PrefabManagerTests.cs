@@ -12,7 +12,7 @@ public class PrefabManagerTests
     [Test]
     public void GetRecycleObjectTest()
     {
-        List<IRecycleable> tempList = new List<IRecycleable>();
+        List<RecycleableMonobehaviour> tempList = new List<RecycleableMonobehaviour>();
         for (int i = 0; i < 100; i++)
         {
             tempList.Add(PrefabManager.GetRecycleObject(0));
@@ -23,7 +23,7 @@ public class PrefabManagerTests
     [UnityTest]
     public IEnumerator DestoryBackgroundRecycleObjectTest()
     {
-        List<IRecycleable> tempList = new List<IRecycleable>();
+        List<RecycleableMonobehaviour> tempList = new List<RecycleableMonobehaviour>();
         var tempJob = CoreSystem.AddBackgroundJob(() =>
         {
             for (int i = 0; i < 100; i++)
@@ -58,7 +58,7 @@ public class PrefabManagerTests
     [UnityTest]
     public IEnumerator DestoryForegroundRecycleObjectTest()
     {
-        List<IRecycleable> tempList = new List<IRecycleable>();
+        List<RecycleableMonobehaviour> tempList = new List<RecycleableMonobehaviour>();
         for (int i = 0; i < 100; i++)
         {
             var obj = PrefabManager.GetRecycleObject(0);
@@ -89,7 +89,7 @@ public class PrefabManagerTests
     [UnityTest]
     public IEnumerator NullRecycleObjectTest()
     {
-        List<IRecycleable> tempList = new List<IRecycleable>();
+        List<RecycleableMonobehaviour> tempList = new List<RecycleableMonobehaviour>();
         for (int i = 0; i < 100; i++)
         {
             var obj = PrefabManager.GetRecycleObject(0);

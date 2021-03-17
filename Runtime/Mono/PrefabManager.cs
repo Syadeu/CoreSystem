@@ -119,7 +119,7 @@ namespace Syadeu.Mono
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public static T GetRecycleObject<T>() where T : IRecycleable
+        public static T GetRecycleObject<T>() where T : RecycleableMonobehaviour
         {
             for (int i = 0; i < PrefabList.Instance.m_ObjectSettings.Count; i++)
             {
@@ -137,16 +137,15 @@ namespace Syadeu.Mono
         /// </summary>
         /// <param name="index"></param>
         /// <returns></returns>
-        public static IRecycleable GetRecycleObject(int index)
+        public static RecycleableMonobehaviour GetRecycleObject(int index)
         {
             RecycleObject obj = Instance.RecycleObjects[index];
 
             for (int i = 0; i < obj.Instances.Count; i++)
             {
-                if (obj.Instances[i] is IRecycleable temp &&
-                    !temp.Activated)
+                if (!obj.Instances[i].Activated)
                 {
-                    if (temp.transform == null)
+                    if (obj.Instances[i].transform == null)
                     {
                         if (SyadeuSettings.Instance.m_PMErrorAutoFix)
                         {
@@ -157,10 +156,10 @@ namespace Syadeu.Mono
                         else throw new CoreSystemException(CoreSystemExceptionFlag.RecycleObject, "PrefabManager에 의해 관리되던 RecycleMonobehaviour가 다른 객체에 의해 파괴되었습니다. 관리중인 객체는 다른 객체에서 파괴될 수 없습니다.");
                     }
 
-                    temp.Initialize();
-                    temp.OnInitialize();
+                    obj.Instances[i].Initialize();
+                    obj.Instances[i].OnInitialize();
 
-                    return temp;
+                    return obj.Instances[i];
                 }
             }
 
@@ -168,7 +167,7 @@ namespace Syadeu.Mono
             if (obj.MaxCount < 0 ||
                 obj.MaxCount > obj.Instances.Count)
             {
-                IRecycleable recycleObj = null;
+                RecycleableMonobehaviour recycleObj = null;
                 if (!IsMainthread())
                 {
                     CoreSystem.AddForegroundJob(() =>
@@ -183,7 +182,7 @@ namespace Syadeu.Mono
             //"Return null because this item has reached maximum instance count lock".ToLog();
             return null;
         }
-        private IRecycleable InternalInstantiate(RecycleObject obj)
+        private RecycleableMonobehaviour InternalInstantiate(RecycleObject obj)
         {
             for (int i = 0; i < obj.InstanceCreationBlock; i++)
             {
