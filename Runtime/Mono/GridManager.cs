@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -95,7 +95,27 @@ namespace Syadeu.Mono
             }
         }
 
-        public static ref Grid GetGrid(in int idx) => ref Instance.m_Grids[idx];
+        public static ref Grid GetGrid(in int idx)
+        {
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                for (int i = 0; i < m_EditorGrids.Length; i++)
+                {
+                    if (m_EditorGrids[i].Idx.Equals(idx)) return ref m_EditorGrids[i];
+                }
+            }
+            else
+#endif
+            {
+                for (int i = 0; i < Instance.m_Grids.Length; i++)
+                {
+                    if (Instance.m_Grids[i].Idx.Equals(idx)) return ref Instance.m_Grids[i];
+                }
+            }
+
+            throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"인덱스 ({idx}) 그리드를 찾을 수 없음");
+        }
         public static int CreateGrid(in Bounds bounds, in float gridSize)
         {
             List<Grid> newGrids;
@@ -129,17 +149,9 @@ namespace Syadeu.Mono
         public static void UpdateGrid(in int idx, in Bounds bounds, in float gridSize)
         {
             Grid newGrid = InternalCreateGrid(idx, bounds, gridSize);
+            ref Grid target = ref GetGrid(in idx);
 
-#if UNITY_EDITOR
-            if (!Application.isPlaying)
-            {
-                m_EditorGrids[idx] = newGrid;
-            }
-            else
-#endif
-            {
-                Instance.m_Grids[idx] = newGrid;
-            }
+            target = newGrid;
         }
         public static ref Grid SetCustomData(int idx, object customData)
         {
