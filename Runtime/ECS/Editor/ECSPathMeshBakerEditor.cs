@@ -82,8 +82,9 @@ namespace SyadeuEditor.ECS
         {
             if (m_DrawBounds)
             {
-                GLDrawCube(m_Scr.transform.position, m_Scr.m_Size);
-                GLDrawWireBounds(m_Scr.transform.position, m_Scr.m_Size);
+                Vector3 pos = m_Scr.transform.position;
+                GLDrawBounds(new Bounds(pos, m_Scr.m_Size));
+                GLDrawWireBounds(in pos, in m_Scr.m_Size);
             }
         }
 

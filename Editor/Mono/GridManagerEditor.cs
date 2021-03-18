@@ -6,6 +6,7 @@ using UnityEngine.AI;
 using System.Collections.Generic;
 using UnityEngine;
 using Syadeu.Mono;
+using Syadeu;
 
 namespace SyadeuEditor
 {
@@ -15,8 +16,8 @@ namespace SyadeuEditor
         private GridManager m_Scr;
         private ECSPathMeshBaker m_NavBaker;
 
-        private Bounds m_Bounds;
-        private GridManager.Grid grid;
+        private static Bounds m_Bounds;
+        private static int m_GridIdx;
 
         private SerializedProperty m_GridSize;
 
@@ -29,12 +30,12 @@ namespace SyadeuEditor
 
             m_GridSize = serializedObject.FindProperty("m_GridSize");
 
-            grid = GridManager.CreateGrid(m_Bounds, 2.5f);
+            m_GridIdx = GridManager.CreateGrid(in m_Bounds, 2.5f);
         }
 
         private void OnDestroy()
         {
-
+            GridManager.m_EditorGrids = new GridManager.Grid[0];
         }
 
         public override void OnInspectorGUI()
@@ -44,15 +45,18 @@ namespace SyadeuEditor
 
             if (GUILayout.Button("Reload Grid"))
             {
-                grid = GridManager.CreateGrid(m_Bounds, 2.5f);
+                GridManager.UpdateGrid(in m_GridIdx, in m_Bounds, m_GridSize.floatValue);
+                //$"{grid.Cells.Length} :: {GridManager.m_EditorGrids[0].Cells.Length} :: created".ToLog();
                 SceneView.lastActiveSceneView.Repaint();
             }
+
+            EditorGUILayout.Space();
+            m_Bounds = EditorGUILayout.BoundsField("Bounds: ", m_Bounds);
             EditorGUI.BeginDisabledGroup(m_NavBaker == null);
             if (GUILayout.Button("Match with ECSBaker"))
             {
                 Vector3 adjust = new Vector3(m_GridSize.floatValue * .5f, 0, 0);
                 m_Bounds = new Bounds(m_Scr.transform.position + adjust, m_NavBaker.m_Size);
-                serializedObject.ApplyModifiedProperties();
             }
             EditorGUI.EndDisabledGroup();
 
@@ -61,16 +65,16 @@ namespace SyadeuEditor
             if (m_ShowOriginalContents) base.OnInspectorGUI();
         }
 
-        Color red = new Color(1, 0, 0, 1f);
-        Color blue = new Color(0, 0, 1, 1f);
-        Color green = new Color(0, 1, 1);
+        Color red = new Color(1, 0, 0, .2f);
+        Color blue = new Color(0, 0, 1, .2f);
+        Color green = new Color(0, 1, 1, .2f);
 
         private void OnSceneGUI()
         {
-            for (int i = 0; i < grid.Cells?.Length; i++)
+            ref GridManager.Grid grid = ref GridManager.m_EditorGrids[m_GridIdx];
+            for (int i = 0; i < grid.Cells.Length; i++)
             {
-                GLDrawBounds(grid.Cells[i].Bounds, i % 2 == 0 ? green : blue);
-                //if (i > 1) break;
+                GLDrawBounds(in grid.Cells[i].Bounds, i % 2 == 0 ? green : blue);
             }
         }
     }

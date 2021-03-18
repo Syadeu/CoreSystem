@@ -12,7 +12,7 @@ namespace SyadeuEditor
 
         #region GL
 
-        public static void GLDrawLine(Vector3 from, Vector3 to)
+        public static void GLDrawLine(in Vector3 from, in Vector3 to)
         {
             if (!GLIsDrawable(from) && !GLIsDrawable(to)) return;
 
@@ -41,10 +41,10 @@ namespace SyadeuEditor
                 Color currentColor = red;
                 for (int i = 0; i < mesh.triangles.Length; i += 3)
                 {
-                    GLTri(mesh.vertices[mesh.triangles[i]], 
-                        mesh.vertices[mesh.triangles[i + 1]],
-                        mesh.vertices[mesh.triangles[i + 2]],
-                        currentColor);
+                    GLTri(in mesh.vertices[mesh.triangles[i]],
+                        in mesh.vertices[mesh.triangles[i + 1]],
+                        in mesh.vertices[mesh.triangles[i + 2]],
+                        in currentColor);
 
                     if (currentColor.Equals(red)) currentColor = green;
                     else if (currentColor.Equals(green)) currentColor = blue;
@@ -54,7 +54,7 @@ namespace SyadeuEditor
             GL.End();
             GL.PopMatrix();
         }
-        public static void GLDrawMesh(Vector3 center, Mesh mesh, Material material = null)
+        public static void GLDrawMesh(in Vector3 center, Mesh mesh, Material material = null)
         {
             if (material == null) material = AssetDatabase.GetBuiltinExtraResource<Material>(DEFAULT_MATERIAL);
 
@@ -74,7 +74,7 @@ namespace SyadeuEditor
                     GLTri(mesh.vertices[mesh.triangles[i]] + center, 
                         mesh.vertices[mesh.triangles[i + 1]] + center,
                         mesh.vertices[mesh.triangles[i + 2]] + center,
-                        currentColor);
+                        in currentColor);
 
                     if (currentColor.Equals(red)) currentColor = green;
                     else if (currentColor.Equals(green)) currentColor = blue;
@@ -84,7 +84,7 @@ namespace SyadeuEditor
             GL.End();
             GL.PopMatrix();
         }
-        public static void GLDrawBounds(Bounds bounds)
+        public static void GLDrawBounds(in Bounds bounds)
         {
             Vector3
                 min = bounds.min,
@@ -109,17 +109,17 @@ namespace SyadeuEditor
             GL.PushMatrix();
             GL.Begin(GL.QUADS);
             {
-                GLQuad(b3, b2, b1, b0, green);// Y-
-                GLQuad(b1, t1, t0, b0, red);// X-
-                GLQuad(b0, t0, t3, b3, blue);// Z-
-                GLQuad(b3, t3, t2, b2, red);// X+
-                GLQuad(b2, t2, t1, b1, blue);// Z+
-                GLQuad(t0, t1, t2, t3, green);// Y+
+                GLQuad(in b3, in b2, in b1, in b0, in green);// Y-
+                GLQuad(in b1, in t1, in t0, in b0, in red);// X-
+                GLQuad(in b0, in t0, in t3, in b3, in blue);// Z-
+                GLQuad(in b3, in t3, in t2, in b2, in red);// X+
+                GLQuad(in b2, in t2, in t1, in b1, in blue);// Z+
+                GLQuad(in t0, in t1, in t2, in t3, in green);// Y+
             }
             GL.End();
             GL.PopMatrix();
         }
-        public static void GLDrawBounds(Bounds bounds, Color color)
+        public static void GLDrawBounds(in Bounds bounds, in Color color)
         {
             Vector3
                 min = bounds.min,
@@ -133,25 +133,24 @@ namespace SyadeuEditor
                 t1 = new Vector3(min.x, max.y, max.z),
                 t2 = max,
                 t3 = new Vector3(max.x, max.y, min.z);
-            color.a = .1f;
-
+            
             Material material = AssetDatabase.GetBuiltinExtraResource<Material>("Sprites-Default.mat");
             material.SetPass(0);
 
             GL.PushMatrix();
             GL.Begin(GL.QUADS);
             {
-                GLQuad(b3, b2, b1, b0, color);// Y-
-                GLQuad(b1, t1, t0, b0, color);// X-
-                GLQuad(b0, t0, t3, b3, color);// Z-
-                GLQuad(b3, t3, t2, b2, color);// X+
-                GLQuad(b2, t2, t1, b1, color);// Z+
-                GLQuad(t0, t1, t2, t3, color);// Y+
+                GLQuad(in b3, in b2, in b1, in b0, in color);// Y-
+                GLQuad(in b1, in t1, in t0, in b0, in color);// X-
+                GLQuad(in b0, in t0, in t3, in b3, in color);// Z-
+                GLQuad(in b3, in t3, in t2, in b2, in color);// X+
+                GLQuad(in b2, in t2, in t1, in b1, in color);// Z+
+                GLQuad(in t0, in t1, in t2, in t3, in color);// Y+
             }
             GL.End();
             GL.PopMatrix();
         }
-        public static void GLDrawWireBounds(Bounds bounds)
+        public static void GLDrawWireBounds(in Bounds bounds)
         {
             Vector3
                 min = bounds.min,
@@ -176,17 +175,30 @@ namespace SyadeuEditor
             GL.PushMatrix();
             GL.Begin(GL.LINES);
             {
-                GLQuad(b3, b2, b1, b0, green);// Y-
-                GLQuad(b1, t1, t0, b0, red);// X-
-                GLQuad(b0, t0, t3, b3, blue);// Z-
-                GLQuad(b3, t3, t2, b2, red);// X+
-                GLQuad(b2, t2, t1, b1, blue);// Z+
-                GLQuad(t0, t1, t2, t3, green);// Y+
+                GLDuo(in b3, in b2, in green); GLDuo(in b1, in b0, in green);// Y-
+
+                GLDuo(in b1, in t1, in green); GLDuo(in t0, in b0, in red);// X-
+
+                GLDuo(in b0, in t0, in green); GLDuo(in t3, in b3, in red);// Z-
+
+                GLDuo(in b3, in t3, in green); GLDuo(in t2, in b2, in red);// X+
+
+                GLDuo(in b2, in t2, in green); GLDuo(in t1, in b1, in red);// Z+
+
+                GLDuo(in t0, in t1, in green); GLDuo(in t2, in t3, in red);// Y+
+
+
+                //GLQuad(in b3, in b2, in b1, in b0, in green);// Y-
+                //GLQuad(in b1, in t1, in t0, in b0, in red);// X-
+                //GLQuad(in b0, in t0, in t3, in b3, in blue);// Z-
+                //GLQuad(in b3, in t3, in t2, in b2, in red);// X+
+                //GLQuad(in b2, in t2, in t1, in b1, in blue);// Z+
+                //GLQuad(in t0, in t1, in t2, in t3, in green);// Y+
             }
             GL.End();
             GL.PopMatrix();
         }
-        public static void GLDrawWireBounds(Bounds bounds, Color color)
+        public static void GLDrawWireBounds(in Bounds bounds, in Color color)
         {
             Vector3
                 min = bounds.min,
@@ -200,34 +212,33 @@ namespace SyadeuEditor
                 t1 = new Vector3(min.x, max.y, max.z),
                 t2 = max,
                 t3 = new Vector3(max.x, max.y, min.z);
-            color.a = .15f;
-
+            
             Material material = AssetDatabase.GetBuiltinExtraResource<Material>("Sprites-Default.mat");
             material.SetPass(0);
 
             GL.PushMatrix();
             GL.Begin(GL.QUADS);
             {
-                GLQuad(b3, b2, b1, b0, color);// Y-
-                GLQuad(b1, t1, t0, b0, color);// X-
-                GLQuad(b0, t0, t3, b3, color);// Z-
-                GLQuad(b3, t3, t2, b2, color);// X+
-                GLQuad(b2, t2, t1, b1, color);// Z+
-                GLQuad(t0, t1, t2, t3, color);// Y+
+                GLQuad(in b3, in b2, in b1, in b0, in color);// Y-
+                GLQuad(in b1, in t1, in t0, in b0, in color);// X-
+                GLQuad(in b0, in t0, in t3, in b3, in color);// Z-
+                GLQuad(in b3, in t3, in t2, in b2, in color);// X+
+                GLQuad(in b2, in t2, in t1, in b1, in color);// Z+
+                GLQuad(in t0, in t1, in t2, in t3, in color);// Y+
             }
             GL.End();
             GL.PopMatrix();
         }
-        public static void GLDrawCube(Vector3 position, Vector3 size) => GLDrawBounds(new Bounds(position, size));
-        public static void GLDrawWireBounds(Vector3 position, Vector3 size) => GLDrawWireBounds(new Bounds(position, size));
-        public static void GLDrawCube(Vector3 position, Vector3 size, Color color) => GLDrawBounds(new Bounds(position, size), color);
-        public static void GLDrawWireBounds(Vector3 position, Vector3 size, Color color) => GLDrawWireBounds(new Bounds(position, size), color);
+        public static void GLDrawCube(in Vector3 position, in Vector3 size) => GLDrawBounds(new Bounds(position, size));
+        public static void GLDrawWireBounds(in Vector3 position, in Vector3 size) => GLDrawWireBounds(new Bounds(position, size));
+        public static void GLDrawCube(in Vector3 position, in Vector3 size, in Color color) => GLDrawBounds(new Bounds(position, size), in color);
+        public static void GLDrawWireBounds(in Vector3 position, in Vector3 size, in Color color) => GLDrawWireBounds(new Bounds(position, size), in color);
 
-        private static bool GLIsDrawable(Vector3 worldPos)
+        private static bool GLIsDrawable(in Vector3 worldPos)
         {
             return EditorSceneUtils.IsDrawable(EditorSceneUtils.ToScreenPosition(worldPos));
         }
-        private static void GLTri(Vector3 v0, Vector3 v1, Vector3 v2, Color color)
+        private static void GLTri(in Vector3 v0, in Vector3 v1, in Vector3 v2, in Color color)
         {
             if (GLIsDrawable(v0) || GLIsDrawable(v1) || GLIsDrawable(v2))
             {
@@ -235,12 +246,20 @@ namespace SyadeuEditor
                 GL.Vertex(v0); GL.Vertex(v1); GL.Vertex(v2);
             }
         }
-        private static void GLQuad(Vector3 v0, Vector3 v1, Vector3 v2, Vector3 v3, Color color)
+        private static void GLQuad(in Vector3 v0, in Vector3 v1, in Vector3 v2, in Vector3 v3, in Color color)
         {
             if (GLIsDrawable(v0) || GLIsDrawable(v1) || GLIsDrawable(v2) || GLIsDrawable(v3))
             {
                 GL.Color(color);
                 GL.Vertex(v0); GL.Vertex(v1); GL.Vertex(v2); GL.Vertex(v3);
+            }
+        }
+        private static void GLDuo(in Vector3 v0, in Vector3 v1, in Color color)
+        {
+            if (GLIsDrawable(v0) || GLIsDrawable(v1))
+            {
+                GL.Color(color);
+                GL.Vertex(v0); GL.Vertex(v1);
             }
         }
 
