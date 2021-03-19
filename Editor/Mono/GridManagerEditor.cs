@@ -95,7 +95,7 @@ namespace SyadeuEditor
                 }
                 else GLDrawBounds(in cell.Bounds, i % 2 == 0 ? green : blue);
 
-                Handles.Label(cell.Bounds.center, $"{cell.Grid.x},{cell.Grid.y}");
+                Handles.Label(cell.Bounds.center, $"{cell.Location.x},{cell.Location.y}");
             }
         }
     }

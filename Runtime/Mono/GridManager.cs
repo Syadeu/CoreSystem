@@ -65,7 +65,7 @@ namespace Syadeu.Mono
             {
                 for (int i = 0; i < Cells.Length; i++)
                 {
-                    if (Cells[i].Grid.Equals(grid)) return true;
+                    if (Cells[i].Location.Equals(grid)) return true;
                 }
                 return false;
             }
@@ -75,7 +75,7 @@ namespace Syadeu.Mono
             {
                 for (int i = 0; i < Cells.Length; i++)
                 {
-                    if (Cells[i].Grid.Equals(grid)) return ref Cells[i];
+                    if (Cells[i].Location.Equals(grid)) return ref Cells[i];
                 }
 
                 throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({grid.x},{grid.y}). " +
@@ -119,12 +119,12 @@ namespace Syadeu.Mono
         {
             public readonly int ParentIdx;
 
-            public Vector2Int Grid;
+            public int2 Location;
             public Bounds Bounds;
 
             public object CustomData;
 
-            private readonly Vector3[] Verties;
+            private readonly float3[] Verties;
             private readonly float3[] NavMeshVerties;
 
             // NavMesh
@@ -144,21 +144,21 @@ namespace Syadeu.Mono
                 }
             }
 
-            internal GridCell(int parentIdx, Vector2Int grid, Bounds bounds, bool enableNavMesh)
+            internal GridCell(int parentIdx, int2 grid, Bounds bounds, bool enableNavMesh)
             {
                 ParentIdx = parentIdx;
 
-                Grid = grid;
+                Location = grid;
                 Bounds = bounds;
 
                 CustomData = null;
 
-                Verties = new Vector3[4]
+                Verties = new float3[4]
                 {
-                bounds.min,
-                new Vector3(bounds.min.x, bounds.min.y, bounds.max.z),
-                new Vector3(bounds.max.x, bounds.min.y, bounds.max.z),
-                new Vector3(bounds.max.x, bounds.min.y, bounds.min.z)
+                new float3(bounds.min.x, bounds.min.y, bounds.min.z),
+                new float3(bounds.min.x, bounds.min.y, bounds.max.z),
+                new float3(bounds.max.x, bounds.min.y, bounds.max.z),
+                new float3(bounds.max.x, bounds.min.y, bounds.min.z)
                 };
 
                 //ref Grid parent = ref GetGrid(parentIdx);
@@ -166,6 +166,7 @@ namespace Syadeu.Mono
                 {
                     NavMeshVerties = new float3[]
                     {
+                        bounds.center,
                         new float3(Bounds.center.x + Bounds.extents.x - .1f, Bounds.center.y, Bounds.center.z),
                         new float3(Bounds.center.x - Bounds.extents.x + .1f, Bounds.center.y, Bounds.center.z),
                         new float3(Bounds.center.x, Bounds.center.y, Bounds.center.z + Bounds.extents.z - .1f),
@@ -176,7 +177,7 @@ namespace Syadeu.Mono
             }
 
             public bool IsValid() => Verties != null;
-            public bool Equals(GridCell other) => Grid.Equals(other.Grid);
+            public bool Equals(GridCell other) => Location.Equals(other.Location);
             public bool IsVisable()
             {
                 for (int i = 0; i < Verties.Length; i++)
@@ -286,7 +287,7 @@ namespace Syadeu.Mono
         //    Instance.m_Grids = bytes.ToObject<Grid[]>();
         //}
 
-        private static bool IsInScreen(in Vector3 screenPos)
+        private static bool IsInScreen(in float3 screenPos)
         {
             if (screenPos.y < 0 || screenPos.y > Screen.height ||
                 screenPos.x < 0 || screenPos.x > Screen.width || screenPos.z < 0)
@@ -313,7 +314,7 @@ namespace Syadeu.Mono
                         bounds.min.x + halfSize + (gridCellSize * j), 0,
                         bounds.max.z - halfSize - (gridCellSize * i));
 
-                    cells[count] = new GridCell(idx, new Vector2Int(j, i), new Bounds(center, cellSize), enableNavMesh);
+                    cells[count] = new GridCell(idx, new int2(j, i), new Bounds(center, cellSize), enableNavMesh);
                     count++;
                 }
             }
