@@ -18,6 +18,11 @@ namespace Syadeu
             {
                 if (m_Instance == null)
                 {
+#if UNITY_EDITOR
+                    if (!Application.isPlaying) throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                        $"StaticManager<{typeof(T).Name}>의 인스턴스 객체는 플레이중에만 생성되거나 받아올 수 있습니다.");
+#endif
+
                     if (!IsMainthread())
                     {
                         AwaitForNotNull(ref m_Instance, ref m_IsEnforceOrder, EnforceOrder);
@@ -54,7 +59,7 @@ namespace Syadeu
                     {
                         ins.gameObject.name = $"{ins.DisplayName} : StaticManager<{typeof(T).Name}>";
                     }
-                    else ins.gameObject.name = $"Syadeu.{typeof(T).Name}";
+                    else ins.gameObject.name = $"StaticManager.{typeof(T).Name}";
 #endif
 
                     if (ins.DontDestroy) DontDestroyOnLoad(ins.gameObject);

@@ -12,7 +12,20 @@ namespace Syadeu
         public static bool Initialized => m_Instance != null;
 
         internal static T m_Instance = null;
-        public static T Instance => m_Instance;
+        public static T Instance
+        {
+            get
+            {
+                if (m_Instance == null)
+                {
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                        $"MonoManager를 상속받는 {typeof(T).Name}은 인스턴스가 자동으로 생성되지 않습니다.\n" +
+                        $"먼저 컴포넌트를 빈 GameObject에 추가해주세요");
+                }
+
+                return m_Instance;
+            }
+        }
 
         public virtual string DisplayName => null;
         public virtual bool DontDestroy => false;
@@ -50,7 +63,7 @@ namespace Syadeu
             {
                 name = $"{DisplayName} : MonoManager<{typeof(T).Name}>";
             }
-            else name = $"Syadeu.{typeof(T).Name}";
+            else name = $"MonoManager.{typeof(T).Name}";
 #endif
 
             if (DontDestroy) transform.SetParent(System.transform);
