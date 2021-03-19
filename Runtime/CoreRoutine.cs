@@ -23,7 +23,9 @@
         {
             get
             {
+#if UNITY_EDITOR
                 if (IsEditor) return CoreSystem.m_EditorCoroutines.ContainsKey(this);
+#endif
                 if (IsBackground)
                 {
                     return CoreSystem.Instance.m_CustomBackgroundUpdates.ContainsKey(this);
