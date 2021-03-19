@@ -291,7 +291,8 @@ namespace Syadeu.Database
                     }
                 }
                 //$"{newTableData.Name} updating".ToLog();
-                database.UpdateTable(newTableData).Await();
+
+                if (newTableData.Count > 0) database.UpdateTable(newTableData).Await();
             }
             else if (line.StartsWith("DeleteColumn"))
             {
