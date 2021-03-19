@@ -1014,7 +1014,7 @@ namespace Syadeu
                                     $"해당 yield return 타입({item.Key.Iterator.Current.GetType().Name})은 지원하지 않습니다");
 #else
                                 CoreSystemException.SendCrash(CoreSystemExceptionFlag.Foreground,
-                                    $"해당 yield return 타입({item.Key.Current.GetType().Name})은 지원하지 않습니다", null);
+                                    $"해당 yield return 타입({item.Key.Iterator.Current.GetType().Name})은 지원하지 않습니다", null);
 #endif
                             }
                         }

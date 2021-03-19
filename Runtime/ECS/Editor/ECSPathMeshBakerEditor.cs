@@ -27,7 +27,8 @@ namespace SyadeuEditor.ECS
         {
             m_Scr = target as ECSPathMeshBaker;
 
-            DisableNavMeshPreview();
+            NavMesh.RemoveAllNavMeshData();
+            //DisableNavMeshPreview();
             m_PreviewNavMesh = false;
         }
         private void OnDestroy()
