@@ -71,8 +71,10 @@ namespace SyadeuEditor
             EditorGUI.BeginDisabledGroup(m_NavBaker == null);
             if (GUILayout.Button("Match with ECSBaker"))
             {
+                SerializedObject meshBaker = new SerializedObject(m_NavBaker);
+
                 Vector3 adjust = new Vector3(m_CellSize.floatValue * .5f, 0, 0);
-                m_Bounds = new Bounds(m_Scr.transform.position + adjust, m_NavBaker.m_Size);
+                m_Bounds = new Bounds(m_Scr.transform.position + adjust, meshBaker.FindProperty("m_Size").vector3Value);
             }
             EditorGUI.EndDisabledGroup();
         }

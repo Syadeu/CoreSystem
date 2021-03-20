@@ -7,15 +7,16 @@ namespace Syadeu.ECS
     [DisallowMultipleComponent]
     public sealed class ECSPathMeshBaker : MonoBehaviour
     {
-        public Vector3 m_Size = Vector3.one;
+        [SerializeField] private Vector3 m_Center = Vector3.zero;
+        [SerializeField] private Vector3 m_Size = Vector3.one;
 
         private IEnumerator Start()
         {
-            ECSPathMeshSystem.UpdatePosition(transform.position, m_Size, true);
+            ECSPathMeshSystem.UpdatePosition(transform.position + m_Center, m_Size, true);
 
             while (transform != null)
             {
-                ECSPathMeshSystem.UpdatePosition(transform.position, m_Size);
+                ECSPathMeshSystem.UpdatePosition(transform.position + m_Center, m_Size);
 
                 yield return null;
             }
