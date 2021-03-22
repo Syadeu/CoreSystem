@@ -92,27 +92,34 @@ namespace Syadeu.Mono
                     $"해당 좌표계는 이 그리드에 존재하지않습니다.");
             }
 
-            public ref GridCell SetCustomData(int idx, object customData)
-            {
-                ref GridCell cell = ref GetCell(idx);
+            public object GetCustomData() => CustomData;
+            public T GetCustomData<T>() => (T)CustomData;
 
-                cell.CustomData = customData;
-                return ref cell;
-            }
-            public ref GridCell SetCustomData(Vector2Int grid, object customData)
-            {
-                ref GridCell cell = ref GetCell(grid);
+            #region Custom Data
+            //public ref GridCell SetCustomData(int idx, object customData)
+            //{
+            //    ref GridCell cell = ref GetCell(idx);
 
-                cell.CustomData = customData;
-                return ref cell;
-            }
-            public ref GridCell SetCustomData(Vector3 worldPosistion, object customData)
-            {
-                ref GridCell cell = ref GetCell(worldPosistion);
+            //    cell.CustomData = customData;
+            //    return ref cell;
+            //}
+            //public ref GridCell SetCustomData(Vector2Int grid, object customData)
+            //{
+            //    ref GridCell cell = ref GetCell(grid);
 
-                cell.CustomData = customData;
-                return ref cell;
-            }
+            //    cell.CustomData = customData;
+            //    return ref cell;
+            //}
+            //public ref GridCell SetCustomData(Vector3 worldPosistion, object customData)
+            //{
+            //    ref GridCell cell = ref GetCell(worldPosistion);
+
+            //    cell.CustomData = customData;
+            //    return ref cell;
+            //}
+
+
+            #endregion
         }
         [Serializable]
         public struct GridCell : IValidation, IEquatable<GridCell>
@@ -186,6 +193,9 @@ namespace Syadeu.Mono
                 }
                 return false;
             }
+
+            public object GetCustomData() => CustomData;
+            public T GetCustomData<T>() => (T)CustomData;
         }
 
         public static ref Grid GetGrid(in int idx)
