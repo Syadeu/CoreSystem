@@ -14,6 +14,9 @@ namespace SyadeuEditor.ECS
         private ECSPathMeshBaker m_Scr;
         private static Color s_AreaColor = new Color(0, 1, 0, .1f);
 
+        private SerializedProperty m_Center;
+        private SerializedProperty m_Size;
+
         private bool m_PreviewNavMesh;
         private NavMeshData m_NavMesh;
         private NavMeshDataInstance m_NavMeshData;
@@ -26,6 +29,8 @@ namespace SyadeuEditor.ECS
         private void OnEnable()
         {
             m_Scr = target as ECSPathMeshBaker;
+            m_Center = serializedObject.FindProperty("m_Center");
+            m_Size = serializedObject.FindProperty("m_Size");
 
             NavMesh.RemoveAllNavMeshData();
             //DisableNavMeshPreview();
@@ -54,7 +59,9 @@ namespace SyadeuEditor.ECS
             EditorGUI.EndDisabledGroup();
 
             EditorGUI.BeginChangeCheck();
-            m_Scr.m_Size = EditorGUILayout.Vector3Field("Size: ", m_Scr.m_Size);
+            EditorGUILayout.PropertyField(m_Center);
+            EditorGUILayout.PropertyField(m_Size);
+            //m_Scr.m_Size = EditorGUILayout.Vector3Field("Size: ", m_Scr.m_Size);
 
             if (EditorGUI.EndChangeCheck())
             {
@@ -77,15 +84,17 @@ namespace SyadeuEditor.ECS
             EditorGUILayout.Space();
             m_ShowOriginalContents = EditorUtils.Foldout(m_ShowOriginalContents, "Original Contents");
             if (m_ShowOriginalContents) base.OnInspectorGUI();
+
+            serializedObject.ApplyModifiedProperties();
         }
 
         private void OnSceneGUI()
         {
             if (m_DrawBounds)
             {
-                Vector3 pos = m_Scr.transform.position;
-                GLDrawBounds(new Bounds(pos, m_Scr.m_Size));
-                GLDrawWireBounds(in pos, in m_Scr.m_Size);
+                Vector3 pos = m_Scr.transform.position + m_Center.vector3Value;
+                GLDrawBounds(new Bounds(pos, m_Size.vector3Value));
+                GLDrawWireBounds(in pos, m_Size.vector3Value);
             }
         }
 
@@ -100,7 +109,7 @@ namespace SyadeuEditor.ECS
             }
             Bounds QuantizedBounds()
             {
-                return new Bounds(Quantize(m_Scr.transform.position, 0.1f * m_Scr.m_Size), m_Scr.m_Size);
+                return new Bounds(Quantize(m_Scr.transform.position, 0.1f * m_Size.vector3Value) + m_Center.vector3Value, m_Size.vector3Value);
             }
 
             m_NavMesh = new NavMeshData();

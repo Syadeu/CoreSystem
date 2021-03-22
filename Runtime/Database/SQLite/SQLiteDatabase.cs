@@ -683,7 +683,7 @@ namespace Syadeu.Database
         /// </summary>
         /// <param name="data"></param>
         /// <returns></returns>
-        private string GetCreateTableQuery(in ISQLiteReadOnlyTable data)
+        private string GetCreateTableQuery(in SQLiteTable data)
         {
             Assert(string.IsNullOrEmpty(data.Name), "만드려는 테이블의 이름이 빈란임");
             Assert(data.Columns.Count == 0, "만드려는 테이블의 컬럼이 0개임");
@@ -766,7 +766,7 @@ namespace Syadeu.Database
             yield return $"DROP TABLE {alter}";
         }
 
-        private IEnumerator<(string, SqliteParameter[])> GetInsertDataQuery(ISQLiteReadOnlyTable table, int queryBlock = 1000)
+        private IEnumerator<(string, SqliteParameter[])> GetInsertDataQuery(SQLiteTable table, int queryBlock = 1000)
         {
             Assert(table.IsValid, false, "정상적인 데이터 테이블이 아닌게 들어옴");
             if (table.Count == 0) yield break;
@@ -799,11 +799,11 @@ namespace Syadeu.Database
                 yield return ($"{query}{unions.Substring(0, unions.Length - 1)}", parameters.ToArray());
             }
         }
-        private IEnumerator<(string, SqliteParameter[])> GetReplaceTableQuery(ISQLiteReadOnlyTable table, string into, int queryBlock = 1000)
+        private IEnumerator<(string, SqliteParameter[])> GetReplaceTableQuery(SQLiteTable table, string into, int queryBlock = 1000)
         {
             Assert(table.IsValid, false, "정상적인 데이터 테이블이 아닌게 들어옴");
 
-            if (TryGetTableReadOnly(into, out ISQLiteReadOnlyTable current))
+            if (TryGetTable(into, out SQLiteTable current))
             {
                 string drop = $"DROP TABLE {into}";
                 yield return (drop, null);
@@ -823,7 +823,7 @@ namespace Syadeu.Database
                 }
             }
         }
-        private IEnumerator<(string, SqliteParameter[])> GetUpdateTableQuery(ISQLiteReadOnlyTable table, int queryBlock = 100)
+        private IEnumerator<(string, SqliteParameter[])> GetUpdateTableQuery(SQLiteTable table, int queryBlock = 100)
         {
             Assert(table.IsValid, false, "정상적인 데이터 테이블이 아닌게 들어옴");
             if (table.Count == 0) yield break;
@@ -885,7 +885,7 @@ namespace Syadeu.Database
             }
         }
 
-        private void AddReplaceTableQuery(in ISQLiteReadOnlyTable table, string into, int queryBlock = 1000)
+        private void AddReplaceTableQuery(in SQLiteTable table, string into, int queryBlock = 1000)
         {
             using (var iter = GetReplaceTableQuery(table, into, queryBlock))
             {
@@ -897,10 +897,10 @@ namespace Syadeu.Database
         }
         /// <summary>
         /// 제거는 안함 넣거나 교체만함<br/> 
-        /// 완전교체는 <see cref="AddReplaceTableQuery(SQLiteTable, SQLiteTable, int)"/>을 사용
+        /// 완전교체는 <see cref="AddReplaceTableQuery(in SQLiteTable, string, int)"/>을 사용
         /// </summary>
         /// <param name="table"></param>
-        private void AddUpdateTableQuery(in ISQLiteReadOnlyTable table, int queryBlock = 100)
+        private void AddUpdateTableQuery(in SQLiteTable table, int queryBlock = 100)
         {
             if (table.Count == 0) return;
 
@@ -912,7 +912,7 @@ namespace Syadeu.Database
                 }
             }
         }
-        private void AddInsertDataQuery(in ISQLiteReadOnlyTable table, int queryBlock = 1000)
+        private void AddInsertDataQuery(in SQLiteTable table, int queryBlock = 1000)
         {
             using (var iter = GetInsertDataQuery(table, queryBlock))
             {
@@ -1275,7 +1275,7 @@ namespace Syadeu.Database
             dic.ClearModified();
             return true;
         }
-        /// <inheritdoc cref="LoadTableToDictionary{TKey, TValue}(SQLiteTable, IDictionary{TKey, TValue})"/>
+        /// <inheritdoc cref="LoadTableToDictionary{TKey, TValue}(in SQLiteTable, IDictionary{TKey, TValue})"/>
         /// <remarks>
         /// 비슷한 메소드<br/>
         /// <seealso cref="TryLoadTableToDictionary{TKey, TValue}(string, ObDictionary{TKey, TValue}, Action{TKey, TValue})"/>
@@ -1283,7 +1283,7 @@ namespace Syadeu.Database
         public bool TryLoadTableToDictionary<TKey, TValue>(string tableName, IDictionary<TKey, TValue> dic)
             where TValue : struct, IEquatable<TValue>
         {
-            if (!TryGetTableReadOnly(tableName, out ISQLiteReadOnlyTable table)) return false;
+            if (!TryGetTable(tableName, out SQLiteTable table)) return false;
 
             LoadTableToDictionary(in table, dic);
             return true;
@@ -1644,7 +1644,7 @@ namespace Syadeu.Database
         /// <param name="data"></param>
         /// <param name="queryBlock"></param>
         /// <returns></returns>
-        public BackgroundJob AddRows(in ISQLiteReadOnlyTable data, int queryBlock = 1000)
+        public BackgroundJob AddRows(in SQLiteTable data, int queryBlock = 1000)
         {
             if (!IsValid()) throw new CoreSystemException(CoreSystemExceptionFlag.Database,
                 "초기화 되지않은 SQLiteDatabase를 사용하려함");
@@ -1698,7 +1698,7 @@ namespace Syadeu.Database
         /// 
         /// <param name="table"></param>
         /// <returns></returns>
-        public BackgroundJob CreateTable(in ISQLiteReadOnlyTable table, int queryBlock = 100)
+        public BackgroundJob CreateTable(in SQLiteTable table, int queryBlock = 100)
         {
             if (!IsValid()) throw new CoreSystemException(CoreSystemExceptionFlag.Database,
                 "초기화 되지않은 SQLiteDatabase를 사용하려함");
@@ -1776,7 +1776,7 @@ namespace Syadeu.Database
         /// </summary>
         /// <param name="table"></param>
         /// <returns></returns>
-        public BackgroundJob ReplaceTable(in ISQLiteReadOnlyTable table, string into, int queryBlock = 100)
+        public BackgroundJob ReplaceTable(in SQLiteTable table, string into, int queryBlock = 100)
         {
             if (!IsValid()) throw new CoreSystemException(CoreSystemExceptionFlag.Database,
                 "초기화 되지않은 SQLiteDatabase를 사용하려함");
@@ -1825,7 +1825,7 @@ namespace Syadeu.Database
         /// </summary>
         /// <param name="table"></param>
         /// <returns></returns>
-        public BackgroundJob UpdateTable(in ISQLiteReadOnlyTable table, int queryBlock = 100)
+        public BackgroundJob UpdateTable(in SQLiteTable table, int queryBlock = 100)
         {
             if (!IsValid()) throw new CoreSystemException(CoreSystemExceptionFlag.Database,
                 "초기화 되지않은 SQLiteDatabase를 사용하려함");
@@ -2188,7 +2188,7 @@ namespace Syadeu.Database
 
             return properties;
         }
-        private static string ConvertTableInfoToString(in ISQLiteReadOnlyTable data, in bool withName, in string namePrefix = "")
+        private static string ConvertTableInfoToString(in SQLiteTable data, in bool withName, in string namePrefix = "")
         {
             string info = null;
 
@@ -2255,7 +2255,7 @@ namespace Syadeu.Database
         /// <typeparam name="TValue"><see cref="SQLiteTableAttribute"/>가 선언된 구조체</typeparam>
         /// <param name="table"></param>
         /// <param name="dic">딕셔너리는 인스턴스가 이미 생성되어있어야합니다</param>
-        public static void LoadTableToDictionary<TKey, TValue>(in ISQLiteReadOnlyTable table, IDictionary<TKey, TValue> dic)
+        public static void LoadTableToDictionary<TKey, TValue>(in SQLiteTable table, IDictionary<TKey, TValue> dic)
             where TValue : struct, IEquatable<TValue>
         {
             var primaryKeyInfo = SQLiteDatabaseUtils.GetPrimaryKeyInfo<TValue>();
