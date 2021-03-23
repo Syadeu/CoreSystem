@@ -31,7 +31,7 @@ namespace Syadeu.ECS
             {
                 return terrain.terrainData.bounds;
             }
-            else throw new CoreSystemException(CoreSystemExceptionFlag.ECS, $"{name}은 현재 연결된 부모 컴포넌트(Mesh Filter or Terrain)가 없습니다.")
+            else throw new CoreSystemException(CoreSystemExceptionFlag.ECS, $"{name}은 현재 연결된 부모 컴포넌트(Mesh Filter or Terrain)가 없습니다.");
         }
     }
 }
