@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Syadeu.Mono;
 using Syadeu;
+using Unity.Mathematics;
 
 namespace SyadeuEditor
 {
@@ -62,6 +63,17 @@ namespace SyadeuEditor
                 GridManager.UpdateGrid(in m_GridIdx, in m_Bounds, m_CellSize.floatValue, m_EnableNavMesh);
                 SceneView.lastActiveSceneView.Repaint();
             }
+            if (GUILayout.Button("To Bytes (Test)"))
+            {
+                ref GridManager.Grid grid = ref GridManager.GetGrid(in m_GridIdx);
+                grid.SetCustomData(new float3(123, 123, 123));
+
+                GridManager.BinaryWrapper wrapper = grid.Convert();
+
+                GridManager.Grid newGrid = wrapper.ToGrid();
+
+                $"{grid.Length} :: {newGrid.Length}, {newGrid.GetCustomData<float3>()}".ToLog();
+            }
 
             EditorGUILayout.Space();
             m_EnableNavMesh = EditorGUILayout.ToggleLeft("Enable NavMesh", m_EnableNavMesh);
@@ -85,7 +97,7 @@ namespace SyadeuEditor
 
         private void OnSceneGUI()
         {
-            ref GridManager.Grid grid = ref GridManager.m_EditorGrids[m_GridIdx];
+            ref GridManager.Grid grid = ref GridManager.s_EditorGrids[m_GridIdx];
             
             for (int i = 0; i < grid.Length; i++)
             {

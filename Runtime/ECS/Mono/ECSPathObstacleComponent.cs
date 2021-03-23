@@ -20,5 +20,18 @@ namespace Syadeu.ECS
             ECSPathMeshSystem.RemoveObstacle(ID);
             ID = -1;
         }
+
+        public Bounds GetBounds()
+        {
+            if (obj is MeshFilter mesh)
+            {
+                return mesh.mesh.bounds;
+            }
+            else if (obj is Terrain terrain)
+            {
+                return terrain.terrainData.bounds;
+            }
+            else throw new CoreSystemException(CoreSystemExceptionFlag.ECS, $"{name}은 현재 연결된 부모 컴포넌트(Mesh Filter or Terrain)가 없습니다.");
+        }
     }
 }
