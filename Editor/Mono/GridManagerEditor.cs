@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Syadeu.Mono;
 using Syadeu;
+using Unity.Mathematics;
 
 namespace SyadeuEditor
 {
@@ -62,14 +63,16 @@ namespace SyadeuEditor
                 GridManager.UpdateGrid(in m_GridIdx, in m_Bounds, m_CellSize.floatValue, m_EnableNavMesh);
                 SceneView.lastActiveSceneView.Repaint();
             }
-            if (GUILayout.Button("To Bytes"))
+            if (GUILayout.Button("To Bytes (Test)"))
             {
                 ref GridManager.Grid grid = ref GridManager.GetGrid(in m_GridIdx);
+                grid.SetCustomData(new float3(123, 123, 123));
+
                 GridManager.BinaryWrapper wrapper = grid.Convert();
 
                 GridManager.Grid newGrid = wrapper.ToGrid();
 
-                $"{grid.Length} :: {newGrid.Length}".ToLog();
+                $"{grid.Length} :: {newGrid.Length}, {newGrid.GetCustomData<float3>()}".ToLog();
             }
 
             EditorGUILayout.Space();

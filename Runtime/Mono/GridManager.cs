@@ -9,10 +9,7 @@ using Syadeu.Extensions.Logs;
 using System.Linq;
 using UnityEngine.AI;
 using Unity.Mathematics;
-using Newtonsoft.Json;
-using System.Runtime.InteropServices;
-using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
+using System.Reflection;
 
 namespace Syadeu.Mono
 {
@@ -54,8 +51,7 @@ namespace Syadeu.Mono
             public float CellSize;
             public float Height;
 
-            public string CustomDataType;
-            public string CustomData;
+            public object CustomData;
 
             public bool EnableNavMesh;
 
@@ -68,17 +64,7 @@ namespace Syadeu.Mono
                 CellSize = grid.CellSize;
                 Height = grid.Height;
 
-                if (grid.CustomData != null)
-                {
-                    Type t = grid.CustomData.GetType();
-                    CustomDataType = t.Name;
-                    CustomData = JsonConvert.SerializeObject(grid.CustomData, t, Formatting.None, null);
-                }
-                else
-                {
-                    CustomDataType = null;
-                    CustomData = null;
-                }
+                CustomData = grid.CustomData;
 
                 EnableNavMesh = grid.EnableNavMesh;
             }
@@ -92,8 +78,7 @@ namespace Syadeu.Mono
             public float3 Bounds_Center;
             public float3 Bounds_Size;
 
-            public string CustomDataType;
-            public string CustomData;
+            public object CustomData;
 
             public BinaryGridCell(in GridCell gridCell)
             {
@@ -103,17 +88,7 @@ namespace Syadeu.Mono
                 Bounds_Center = gridCell.Bounds.center;
                 Bounds_Size = gridCell.Bounds.size;
 
-                if (gridCell.CustomData != null)
-                {
-                    Type t = gridCell.CustomData.GetType();
-                    CustomDataType = t.Name;
-                    CustomData = JsonConvert.SerializeObject(gridCell.CustomData, t, Formatting.None, null);
-                }
-                else
-                {
-                    CustomDataType = null;
-                    CustomData = null;
-                }
+                CustomData = gridCell.CustomData;
             }
         }
 
@@ -128,7 +103,7 @@ namespace Syadeu.Mono
             public float CellSize;
             public float Height;
 
-            public object CustomData;
+            internal object CustomData;
 
             public readonly bool EnableNavMesh;
 
@@ -148,25 +123,6 @@ namespace Syadeu.Mono
 
                 EnableNavMesh = enableNavMesh;
             }
-            internal Grid(in BinaryGrid grid, in BinaryGridCell[] cells)
-            {
-                Guid = grid.Guid;
-                Idx = grid.Idx;
-
-                GridSize = grid.GridSize;
-                GridCell[] convertedCells = new GridCell[cells.Length];
-                for (int i = 0; i < cells.Length; i++)
-                {
-                    convertedCells[i] = new GridCell(in cells[i], grid.EnableNavMesh);
-                }
-                Cells = convertedCells;
-                CellSize = grid.CellSize;
-                Height = grid.Height;
-
-                CustomData = JsonConvert.DeserializeObject(grid.CustomData);
-
-                EnableNavMesh = grid.EnableNavMesh;
-            }
             internal Grid(in BinaryWrapper wrapper)
             {
                 BinaryGrid grid;
@@ -174,11 +130,6 @@ namespace Syadeu.Mono
 
                 grid = wrapper.m_Grid.ToObjectWithStream<BinaryGrid>();
                 cells = wrapper.m_GridCells.ToObjectWithStream<BinaryGridCell[]>();
-                //cells = new BinaryGridCell[wrapper.m_GridCells.Length];
-                //for (int i = 0; i < cells.Length; i++)
-                //{
-                //    cells[i] = wrapper.m_GridCells[i].ToObjectWithStream<BinaryGridCell[]>();
-                //}
 
                 Guid = grid.Guid;
                 Idx = grid.Idx;
@@ -193,11 +144,7 @@ namespace Syadeu.Mono
                 CellSize = grid.CellSize;
                 Height = grid.Height;
 
-                if (!string.IsNullOrEmpty(grid.CustomData))
-                {
-                    CustomData = JsonConvert.DeserializeObject(grid.CustomData, Type.GetType(grid.CustomDataType));
-                }
-                else CustomData = null;
+                CustomData = grid.CustomData;
 
                 EnableNavMesh = grid.EnableNavMesh;
             }
@@ -238,6 +185,16 @@ namespace Syadeu.Mono
 
             public object GetCustomData() => CustomData;
             public T GetCustomData<T>() => (T)CustomData;
+            public void SetCustomData(object data)
+            {
+                if (data.GetType().GetCustomAttribute<SerializableAttribute>() == null)
+                {
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Mono, 
+                        "해당 객체는 Serializable 어트리뷰트가 선언되지 않았습니다.");
+                }
+
+                CustomData = data;
+            }
 
             public BinaryWrapper Convert()
             {
@@ -321,11 +278,7 @@ namespace Syadeu.Mono
             }
             internal GridCell(in BinaryGridCell cell, bool enableNavMesh) : this(cell.ParentIdx, cell.Location, new Bounds(cell.Bounds_Center, cell.Bounds_Size), enableNavMesh)
             {
-                if (!string.IsNullOrEmpty(cell.CustomData))
-                {
-                    CustomData = JsonConvert.DeserializeObject(cell.CustomData, Type.GetType(cell.CustomDataType));
-                }
-                else CustomData = null;
+                CustomData = cell.CustomData;
             }
 
             public bool IsValid() => Verties != null;
@@ -341,6 +294,16 @@ namespace Syadeu.Mono
 
             public object GetCustomData() => CustomData;
             public T GetCustomData<T>() => (T)CustomData;
+            public void SetCustomData(object data)
+            {
+                if (data.GetType().GetCustomAttribute<SerializableAttribute>() == null)
+                {
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                        "해당 객체는 Serializable 어트리뷰트가 선언되지 않았습니다.");
+                }
+
+                CustomData = data;
+            }
         }
 
         public static ref Grid GetGrid(in int idx)
