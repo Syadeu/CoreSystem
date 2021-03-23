@@ -30,10 +30,11 @@ namespace Syadeu.Mono
         public static Grid[] s_EditorGrids = new Grid[0];
 #endif
 
-        public readonly struct BinaryWrapper
+        [Serializable]
+        public struct BinaryWrapper
         {
-            public readonly byte[] m_Grid;
-            public readonly byte[][] m_GridCells;
+            public byte[] m_Grid;
+            public byte[][] m_GridCells;
 
             internal BinaryWrapper(byte[] grid, byte[][] cells)
             {
