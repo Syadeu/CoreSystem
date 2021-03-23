@@ -9,6 +9,10 @@ using Syadeu.Extensions.Logs;
 using System.Linq;
 using UnityEngine.AI;
 using Unity.Mathematics;
+using Newtonsoft.Json;
+using System.Runtime.InteropServices;
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace Syadeu.Mono
 {
@@ -26,10 +30,71 @@ namespace Syadeu.Mono
         public static Grid[] s_EditorGrids = new Grid[0];
 #endif
 
+        public readonly struct BinaryWrapper
+        {
+            public readonly byte[] m_Grid;
+            public readonly byte[][] m_GridCells;
+
+            internal BinaryWrapper(byte[] grid, byte[][] cells)
+            {
+                m_Grid = grid;
+                m_GridCells = cells;
+            }
+
+            public Grid Grid() => new Grid(in this);
+        }
+
+        [Serializable]
+        internal struct BinaryGrid
+        {
+            public Guid Guid;
+            public int Idx;
+
+            public int2 GridSize;
+            public float CellSize;
+            public float Height;
+
+            public string CustomData;
+
+            public bool EnableNavMesh;
+
+            public BinaryGrid(in Grid grid)
+            {
+                Guid = grid.Guid;
+                Idx = grid.Idx;
+
+                GridSize = grid.GridSize;
+                CellSize = grid.CellSize;
+                Height = grid.Height;
+
+                CustomData = JsonConvert.SerializeObject(grid.CustomData);
+
+                EnableNavMesh = grid.EnableNavMesh;
+            }
+        }
+        [Serializable]
+        internal struct BinaryGridCell
+        {
+            public int ParentIdx;
+
+            public int2 Location;
+            public float3 Bounds_Center;
+            public float3 Bounds_Size;
+
+            public BinaryGridCell(in GridCell gridCell)
+            {
+                ParentIdx = gridCell.ParentIdx;
+
+                Location = gridCell.Location;
+                Bounds_Center = gridCell.Bounds.center;
+                Bounds_Size = gridCell.Bounds.size;
+            }
+        }
+
         [Serializable]
         public struct Grid : IValidation, IEquatable<Grid>
         {
-            private Guid Guid;
+            internal Guid Guid;
             internal int Idx;
 
             internal int2 GridSize;
@@ -56,6 +121,54 @@ namespace Syadeu.Mono
                 CustomData = null;
 
                 EnableNavMesh = enableNavMesh;
+            }
+            internal Grid(in BinaryGrid grid, in BinaryGridCell[] cells)
+            {
+                Guid = grid.Guid;
+                Idx = grid.Idx;
+
+                GridSize = grid.GridSize;
+                GridCell[] convertedCells = new GridCell[cells.Length];
+                for (int i = 0; i < cells.Length; i++)
+                {
+                    convertedCells[i] = new GridCell(in cells[i], grid.EnableNavMesh);
+                }
+                Cells = convertedCells;
+                CellSize = grid.CellSize;
+                Height = grid.Height;
+
+                CustomData = JsonConvert.DeserializeObject(grid.CustomData);
+
+                EnableNavMesh = grid.EnableNavMesh;
+            }
+            internal Grid(in BinaryWrapper wrapper)
+            {
+                BinaryGrid grid;
+                BinaryGridCell[] cells;
+
+                grid = wrapper.m_Grid.ToObjectWithStream<BinaryGrid>();
+                cells = new BinaryGridCell[wrapper.m_GridCells.Length];
+                for (int i = 0; i < cells.Length; i++)
+                {
+                    cells[i] = wrapper.m_GridCells[i].ToObjectWithStream<BinaryGridCell>();
+                }
+
+                Guid = grid.Guid;
+                Idx = grid.Idx;
+
+                GridSize = grid.GridSize;
+                GridCell[] convertedCells = new GridCell[cells.Length];
+                for (int i = 0; i < cells.Length; i++)
+                {
+                    convertedCells[i] = new GridCell(in cells[i], grid.EnableNavMesh);
+                }
+                Cells = convertedCells;
+                CellSize = grid.CellSize;
+                Height = grid.Height;
+
+                CustomData = JsonConvert.DeserializeObject(grid.CustomData);
+
+                EnableNavMesh = grid.EnableNavMesh;
             }
 
             public bool IsValid() => Cells != null;
@@ -95,31 +208,41 @@ namespace Syadeu.Mono
             public object GetCustomData() => CustomData;
             public T GetCustomData<T>() => (T)CustomData;
 
-            #region Custom Data
-            //public ref GridCell SetCustomData(int idx, object customData)
-            //{
-            //    ref GridCell cell = ref GetCell(idx);
+            public BinaryWrapper Convert()
+            {
+                //int debugCount = 0;
+                byte[] binaryGrid;
+                byte[][] binaryCells;
 
-            //    cell.CustomData = customData;
-            //    return ref cell;
-            //}
-            //public ref GridCell SetCustomData(Vector2Int grid, object customData)
-            //{
-            //    ref GridCell cell = ref GetCell(grid);
+                BinaryGrid grid = new BinaryGrid(this);
+                binaryGrid = grid.ToBytesWithStream();
 
-            //    cell.CustomData = customData;
-            //    return ref cell;
-            //}
-            //public ref GridCell SetCustomData(Vector3 worldPosistion, object customData)
-            //{
-            //    ref GridCell cell = ref GetCell(worldPosistion);
+                //debugCount += binaryGrid.Length;
+                //ms.Write(binaryGrid, 0, binaryGrid.Length);
 
-            //    cell.CustomData = customData;
-            //    return ref cell;
-            //}
+                binaryCells = new byte[Cells.Length][];
+                for (int i = 0; i < Cells.Length; i++)
+                {
+                    BinaryGridCell cell = new BinaryGridCell(in Cells[i]);
+                    binaryCells[i] = cell.ToBytesWithStream();
 
+                    //debugCount += binaryCells[i].Length;
+                    //ms.Write(binaryCell, 0, binaryCell.Length);
+                }
 
-            #endregion
+                //using (var ms = new MemoryStream())
+                //{
+                    
+
+                //    bytes = ms.ToArray();
+                //}
+
+                $"cell Count: {Cells.Length}".ToLog();
+                //$"{debugCount} :: {bytes.Length} length".ToLog();
+
+                return new BinaryWrapper(binaryGrid, binaryCells);
+            }
+            public static Grid FromBytes(BinaryWrapper wrapper) => new Grid(wrapper);
         }
         [Serializable]
         public struct GridCell : IValidation, IEquatable<GridCell>
@@ -151,11 +274,11 @@ namespace Syadeu.Mono
                 }
             }
 
-            internal GridCell(int parentIdx, int2 grid, Bounds bounds, bool enableNavMesh)
+            internal GridCell(int parentIdx, int2 location, Bounds bounds, bool enableNavMesh)
             {
                 ParentIdx = parentIdx;
 
-                Location = grid;
+                Location = location;
                 Bounds = bounds;
 
                 CustomData = null;
@@ -181,6 +304,9 @@ namespace Syadeu.Mono
                     };
                 }
                 else NavMeshVerties = null;
+            }
+            internal GridCell(in BinaryGridCell cell, bool enableNavMesh) : this(cell.ParentIdx, cell.Location, new Bounds(cell.Bounds_Center, cell.Bounds_Size), enableNavMesh)
+            {
             }
 
             public bool IsValid() => Verties != null;
@@ -316,29 +442,10 @@ namespace Syadeu.Mono
             return ref Instance.m_Grids[idx];
         }
 
-        public static byte[] ExportGrids() => Instance.m_Grids.ToBytesWithStream();
-        //{
-        //    Grid[] copied = new Grid[Instance.m_Grids.Length];
-        //    Instance.m_Grids.CopyTo(copied, 0);
-        //    List<GridCell> newGridCells = new List<GridCell>();
-
-        //    for (int i = 0; i < copied.Length; i++)
-        //    {
-        //        newGridCells.Clear();
-        //        for (int j = 0; j < copied.Length; j++)
-        //        {
-        //            ref GridCell cell = ref copied[i].Cells[j];
-
-        //            if (cell.CustomData == null) continue;
-
-        //            newGridCells.Add(cell);
-        //        }
-
-        //        copied[i].Cells = newGridCells.ToArray();
-        //    }
-
-        //    return copied.ToBytesWithStream();
-        //}
+        public static byte[] ExportGrids()
+        {
+            return null;
+        }
         public static void ImportGrids(in byte[] bytes) => Instance.m_Grids = bytes.ToObject<Grid[]>();
         public static void ImportGrid(in byte[] bytes)
         {

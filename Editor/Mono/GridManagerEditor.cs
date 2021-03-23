@@ -62,6 +62,15 @@ namespace SyadeuEditor
                 GridManager.UpdateGrid(in m_GridIdx, in m_Bounds, m_CellSize.floatValue, m_EnableNavMesh);
                 SceneView.lastActiveSceneView.Repaint();
             }
+            if (GUILayout.Button("To Bytes"))
+            {
+                ref GridManager.Grid grid = ref GridManager.GetGrid(in m_GridIdx);
+                GridManager.BinaryWrapper wrapper = grid.Convert();
+
+                GridManager.Grid newGrid = GridManager.Grid.FromBytes(wrapper);
+
+                $"{grid.Length} :: {newGrid.Length}".ToLog();
+            }
 
             EditorGUILayout.Space();
             m_EnableNavMesh = EditorGUILayout.ToggleLeft("Enable NavMesh", m_EnableNavMesh);
