@@ -34,9 +34,9 @@ namespace Syadeu.Mono
         public struct BinaryWrapper
         {
             public byte[] m_Grid;
-            public byte[][] m_GridCells;
+            public byte[] m_GridCells;
 
-            internal BinaryWrapper(byte[] grid, byte[][] cells)
+            internal BinaryWrapper(byte[] grid, byte[] cells)
             {
                 m_Grid = grid;
                 m_GridCells = cells;
@@ -173,11 +173,12 @@ namespace Syadeu.Mono
                 BinaryGridCell[] cells;
 
                 grid = wrapper.m_Grid.ToObjectWithStream<BinaryGrid>();
-                cells = new BinaryGridCell[wrapper.m_GridCells.Length];
-                for (int i = 0; i < cells.Length; i++)
-                {
-                    cells[i] = wrapper.m_GridCells[i].ToObjectWithStream<BinaryGridCell>();
-                }
+                cells = wrapper.m_GridCells.ToObjectWithStream<BinaryGridCell[]>();
+                //cells = new BinaryGridCell[wrapper.m_GridCells.Length];
+                //for (int i = 0; i < cells.Length; i++)
+                //{
+                //    cells[i] = wrapper.m_GridCells[i].ToObjectWithStream<BinaryGridCell[]>();
+                //}
 
                 Guid = grid.Guid;
                 Idx = grid.Idx;
@@ -241,17 +242,18 @@ namespace Syadeu.Mono
             public BinaryWrapper Convert()
             {
                 byte[] binaryGrid;
-                byte[][] binaryCells;
+                byte[] binaryCells;
 
                 BinaryGrid grid = new BinaryGrid(this);
                 binaryGrid = grid.ToBytesWithStream();
 
-                binaryCells = new byte[Cells.Length][];
+                var temp = new BinaryGridCell[Cells.Length];
                 for (int i = 0; i < Cells.Length; i++)
                 {
-                    BinaryGridCell cell = new BinaryGridCell(in Cells[i]);
-                    binaryCells[i] = cell.ToBytesWithStream();
+                    temp[i] = new BinaryGridCell(in Cells[i]);
+                    //binaryCells[i] = cell.ToBytesWithStream();
                 }
+                binaryCells = temp.ToBytesWithStream();
                 return new BinaryWrapper(binaryGrid, binaryCells);
             }
             public static Grid FromBytes(BinaryWrapper wrapper) => new Grid(wrapper);

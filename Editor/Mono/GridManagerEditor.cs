@@ -67,7 +67,7 @@ namespace SyadeuEditor
                 ref GridManager.Grid grid = ref GridManager.GetGrid(in m_GridIdx);
                 GridManager.BinaryWrapper wrapper = grid.Convert();
 
-                GridManager.Grid newGrid = GridManager.Grid.FromBytes(wrapper);
+                GridManager.Grid newGrid = wrapper.ToGrid();
 
                 $"{grid.Length} :: {newGrid.Length}".ToLog();
             }
