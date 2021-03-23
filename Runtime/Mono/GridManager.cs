@@ -261,8 +261,8 @@ namespace Syadeu.Mono
 
                 s_EditorGrids = newGrids.ToArray();
             }
-#endif
             else
+#endif
             {
                 newGrids = new List<Grid>(Instance.m_Grids);
                 grid = InternalCreateGrid(newGrids.Count, mesh.bounds, in gridCellSize, in enableNavMesh);
@@ -288,8 +288,8 @@ namespace Syadeu.Mono
 
                 s_EditorGrids = newGrids.ToArray();
             }
-#endif
             else
+#endif
             {
                 newGrids = new List<Grid>(Instance.m_Grids);
                 grid = InternalCreateGrid(newGrids.Count, terrain.terrainData.bounds, in gridCellSize, in enableNavMesh);
