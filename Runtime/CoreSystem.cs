@@ -378,7 +378,7 @@ namespace Syadeu
                     BackgroundJobWorkers[i].Worker.Dispose();
                 }
 
-                BackgroundThread?.Abort();
+                //BackgroundThread?.Abort();
             }
             catch (ThreadAbortException)
             {

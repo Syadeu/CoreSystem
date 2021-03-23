@@ -23,7 +23,7 @@ namespace Syadeu.Mono
         private Grid[] m_Grids = new Grid[0];
 
 #if UNITY_EDITOR
-        public static Grid[] m_EditorGrids = new Grid[0];
+        public static Grid[] s_EditorGrids = new Grid[0];
 #endif
 
         [Serializable]
@@ -203,9 +203,9 @@ namespace Syadeu.Mono
 #if UNITY_EDITOR
             if (!Application.isPlaying)
             {
-                for (int i = 0; i < m_EditorGrids.Length; i++)
+                for (int i = 0; i < s_EditorGrids.Length; i++)
                 {
-                    if (m_EditorGrids[i].Idx.Equals(idx)) return ref m_EditorGrids[i];
+                    if (s_EditorGrids[i].Idx.Equals(idx)) return ref s_EditorGrids[i];
                 }
             }
             else
@@ -219,7 +219,7 @@ namespace Syadeu.Mono
 
             throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"인덱스 ({idx}) 그리드를 찾을 수 없음");
         }
-        public static int CreateGrid(in Bounds bounds, in float gridSize, in bool enableNavMesh)
+        public static int CreateGrid(in Bounds bounds, in float gridCellSize, in bool enableNavMesh)
         {
             List<Grid> newGrids;
             Grid grid;
@@ -227,31 +227,82 @@ namespace Syadeu.Mono
 #if UNITY_EDITOR
             if (!Application.isPlaying)
             {
-                newGrids = new List<Grid>(m_EditorGrids);
-                grid = InternalCreateGrid(newGrids.Count, in bounds, in gridSize, in enableNavMesh);
+                newGrids = new List<Grid>(s_EditorGrids);
+                grid = InternalCreateGrid(newGrids.Count, in bounds, in gridCellSize, in enableNavMesh);
 
                 newGrids.Add(grid);
 
-                m_EditorGrids = newGrids.ToArray();
-
-                return grid.Idx;
+                s_EditorGrids = newGrids.ToArray();
             }
             else
 #endif
             {
                 newGrids = new List<Grid>(Instance.m_Grids);
-                grid = InternalCreateGrid(newGrids.Count, in bounds, in gridSize, in enableNavMesh);
+                grid = InternalCreateGrid(newGrids.Count, in bounds, in gridCellSize, in enableNavMesh);
 
                 newGrids.Add(grid);
 
                 Instance.m_Grids = newGrids.ToArray();
-
-                return grid.Idx;
             }
+            return grid.Idx;
         }
-        public static void UpdateGrid(in int idx, in Bounds bounds, in float gridSize, in bool enableNavMesh)
+        public static int CreateGrid(in Mesh mesh, in float gridCellSize, in bool enableNavMesh)
         {
-            Grid newGrid = InternalCreateGrid(in idx, in bounds, in gridSize, in enableNavMesh);
+            List<Grid> newGrids;
+            Grid grid;
+
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                newGrids = new List<Grid>(s_EditorGrids);
+                grid = InternalCreateGrid(newGrids.Count, mesh.bounds, in gridCellSize, in enableNavMesh);
+
+                newGrids.Add(grid);
+
+                s_EditorGrids = newGrids.ToArray();
+            }
+#endif
+            else
+            {
+                newGrids = new List<Grid>(Instance.m_Grids);
+                grid = InternalCreateGrid(newGrids.Count, mesh.bounds, in gridCellSize, in enableNavMesh);
+
+                newGrids.Add(grid);
+
+                Instance.m_Grids = newGrids.ToArray();
+            }
+            return grid.Idx;
+        }
+        public static int CreateGrid(in Terrain terrain, in float gridCellSize, in bool enableNavMesh)
+        {
+            List<Grid> newGrids;
+            Grid grid;
+
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                newGrids = new List<Grid>(s_EditorGrids);
+                grid = InternalCreateGrid(newGrids.Count, terrain.terrainData.bounds, in gridCellSize, in enableNavMesh);
+
+                newGrids.Add(grid);
+
+                s_EditorGrids = newGrids.ToArray();
+            }
+#endif
+            else
+            {
+                newGrids = new List<Grid>(Instance.m_Grids);
+                grid = InternalCreateGrid(newGrids.Count, terrain.terrainData.bounds, in gridCellSize, in enableNavMesh);
+
+                newGrids.Add(grid);
+
+                Instance.m_Grids = newGrids.ToArray();
+            }
+            return grid.Idx;
+        }
+        public static void UpdateGrid(in int idx, in Bounds bounds, in float gridCellSize, in bool enableNavMesh)
+        {
+            Grid newGrid = InternalCreateGrid(in idx, in bounds, in gridCellSize, in enableNavMesh);
             ref Grid target = ref GetGrid(in idx);
 
             target = newGrid;
@@ -289,6 +340,12 @@ namespace Syadeu.Mono
         //    return copied.ToBytesWithStream();
         //}
         public static void ImportGrids(in byte[] bytes) => Instance.m_Grids = bytes.ToObject<Grid[]>();
+        public static void ImportGrid(in byte[] bytes)
+        {
+            List<Grid> newGrids = Instance.m_Grids.ToList();
+            newGrids.Add(bytes.ToObject<Grid>());
+            Instance.m_Grids = newGrids.ToArray();
+        }
         //{
         //    Grid[] grids = bytes.ToObject<Grid[]>();
         //    List<GridCell> newGridCells = new List<GridCell>();

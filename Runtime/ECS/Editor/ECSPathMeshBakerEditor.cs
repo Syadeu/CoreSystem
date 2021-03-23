@@ -35,6 +35,12 @@ namespace SyadeuEditor.ECS
             NavMesh.RemoveAllNavMeshData();
             //DisableNavMeshPreview();
             m_PreviewNavMesh = false;
+
+            UnityEditor.AI.NavMeshVisualizationSettings.showNavigation++;
+        }
+        void OnDisable()
+        {
+            UnityEditor.AI.NavMeshVisualizationSettings.showNavigation--;
         }
         private void OnDestroy()
         {

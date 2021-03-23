@@ -85,7 +85,7 @@ namespace SyadeuEditor
 
         private void OnSceneGUI()
         {
-            ref GridManager.Grid grid = ref GridManager.m_EditorGrids[m_GridIdx];
+            ref GridManager.Grid grid = ref GridManager.s_EditorGrids[m_GridIdx];
             
             for (int i = 0; i < grid.Length; i++)
             {
