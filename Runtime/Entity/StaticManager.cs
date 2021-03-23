@@ -19,7 +19,7 @@ namespace Syadeu
                 if (m_Instance == null)
                 {
 #if UNITY_EDITOR
-                    if (!Application.isPlaying) throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                    if (IsMainthread() && !Application.isPlaying) throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
                         $"StaticManager<{typeof(T).Name}>의 인스턴스 객체는 플레이중에만 생성되거나 받아올 수 있습니다.");
 #endif
 
