@@ -9,7 +9,7 @@ using UnityEditor;
 
 namespace Syadeu.Mono
 {
-    public partial class SyadeuSettings : StaticSettingEntity<SyadeuSettings>
+    public sealed class SyadeuSettings : StaticSettingEntity<SyadeuSettings>
     {
 #if UNITY_EDITOR
         [MenuItem("Syadeu/Edit Settings", priority = 100)]
@@ -19,6 +19,9 @@ namespace Syadeu.Mono
             EditorApplication.ExecuteMenuItem("Window/General/Inspector");
         }
 #endif
+        // Modules
+        public UserTagNameModule m_UserTagNameModule;
+        public CustomTagNameModule m_CustomTagNameModule;
 
         // Global System
         [Header("Global")]

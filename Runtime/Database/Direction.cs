@@ -1,4 +1,7 @@
-﻿namespace Syadeu.Database
+﻿using System;
+using Unity.Mathematics;
+
+namespace Syadeu.Database
 {
     public enum Direction
     {

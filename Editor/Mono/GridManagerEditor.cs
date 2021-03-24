@@ -8,6 +8,7 @@ using UnityEngine;
 using Syadeu.Mono;
 using Syadeu;
 using Unity.Mathematics;
+using Syadeu.Database;
 
 namespace SyadeuEditor
 {
@@ -56,6 +57,24 @@ namespace SyadeuEditor
             if (m_ShowOriginalContents) base.OnInspectorGUI();
         }
 
+        [System.Serializable]
+        public struct TestDataStruct : ITag
+        {
+            public UserTagFlag UserTag { get; set; }
+            public CustomTagFlag CustomTag { get; set; }
+
+            public int Idx { get; set; }
+            public float3 TestFloat3 { get; set; }
+
+            public TestDataStruct(object other)
+            {
+                UserTag = UserTagFlag.UserTag3;
+                CustomTag = CustomTagFlag.CustomTag10;
+
+                Idx = 152;
+                TestFloat3 = new float3(123, 123, 123);
+            }
+        }
         private void GridPreview()
         {
             if (GUILayout.Button("Reload Grid"))
@@ -66,13 +85,17 @@ namespace SyadeuEditor
             if (GUILayout.Button("To Bytes (Test)"))
             {
                 ref GridManager.Grid grid = ref GridManager.GetGrid(in m_GridIdx);
-                grid.SetCustomData(new float3(123, 123, 123));
+                grid.SetCustomData(new TestDataStruct(null));
 
                 GridManager.BinaryWrapper wrapper = grid.Convert();
 
                 GridManager.Grid newGrid = wrapper.ToGrid();
+                newGrid.For<TestDataStruct>((in int i, ref GridManager.GridCell gridCell) =>
+                {
 
-                $"{grid.Length} :: {newGrid.Length}, {newGrid.GetCustomData<float3>()}".ToLog();
+                });
+
+                $"{grid.Length} :: {newGrid.Length}, {newGrid.GetCustomData<TestDataStruct>().TestFloat3} :: {newGrid.GetCustomData<ITag>().UserTag}".ToLog();
             }
 
             EditorGUILayout.Space();

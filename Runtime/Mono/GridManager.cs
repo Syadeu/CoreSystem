@@ -92,9 +92,17 @@ namespace Syadeu.Mono
             }
         }
 
+        public delegate void GridRWAllTagLambdaDescription(in int i, ref GridCell gridCell, in UserTagFlag userTag, in CustomTagFlag customTag);
+        public delegate void GridRWUserTagLambdaDescription(in int i, ref GridCell gridCell, in UserTagFlag userTag);
+        public delegate void GridRWCustomTagLambdaDescription(in int i, ref GridCell gridCell, in CustomTagFlag customTag);
+        public delegate void GridRWLambdaDescription(in int i, ref GridCell gridCell);
+        public delegate void GridLambdaDescription(in int i, in GridCell gridCell);
+
         [Serializable]
         public struct Grid : IValidation, IEquatable<Grid>
         {
+            #region Init
+
             internal Guid Guid;
             internal int Idx;
 
@@ -151,7 +159,6 @@ namespace Syadeu.Mono
 
             public bool IsValid() => Cells != null;
             public bool Equals(Grid other) => Guid.Equals(other.Guid);
-            
             public bool Contains(Vector2Int grid)
             {
                 for (int i = 0; i < Cells.Length; i++)
@@ -160,6 +167,10 @@ namespace Syadeu.Mono
                 }
                 return false;
             }
+
+            #endregion
+
+            #region Gets
 
             public ref GridCell GetCell(int idx) => ref Cells[idx];
             public ref GridCell GetCell(Vector2Int grid)
@@ -182,10 +193,151 @@ namespace Syadeu.Mono
                 throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({worldPosistion.x},{worldPosistion.y},{worldPosistion.z}). " +
                     $"해당 좌표계는 이 그리드에 존재하지않습니다.");
             }
+            public IReadOnlyList<int> GetCells(UserTagFlag userTag)
+            {
+                List<int> indexes = new List<int>();
+                for (int i = 0; i < Cells.Length; i++)
+                {
+                    ITag tag = Cells[i].GetCustomData<ITag>();
+                    if (userTag.HasFlag(tag.UserTag)) indexes.Add(i);
+                }
+                return indexes;
+            }
+            public IReadOnlyList<int> GetCells(CustomTagFlag customTag)
+            {
+                List<int> indexes = new List<int>();
+                for (int i = 0; i < Cells.Length; i++)
+                {
+                    ITag tag = Cells[i].GetCustomData<ITag>();
+                    if (customTag.HasFlag(tag.CustomTag)) indexes.Add(i);
+                }
+                return indexes;
+            }
+
+            #endregion
+
+            #region Lambda Descriptions
+
+            public Grid For(GridLambdaDescription lambdaDescription)
+            {
+                for (int i = 0; i < Cells.Length; i++)
+                {
+                    lambdaDescription.Invoke(in i, in Cells[i]);
+                }
+
+                return this;
+            }
+            public Grid For<T>(GridLambdaDescription lambdaDescription) where T : struct, ITag
+            {
+                for (int i = 0; i < Cells.Length; i++)
+                {
+                    if (Cells[i].GetCustomData<T>() is GridNull) continue;
+                    lambdaDescription.Invoke(in i, in Cells[i]);
+                }
+
+                return this;
+            }
+            public Grid For(GridRWLambdaDescription lambdaDescription)
+            {
+                for (int i = 0; i < Cells.Length; i++)
+                {
+                    lambdaDescription.Invoke(in i, ref Cells[i]);
+                }
+
+                return this;
+            }
+            public Grid For<T>(GridRWLambdaDescription lambdaDescription) where T : struct, ITag
+            {
+                for (int i = 0; i < Cells.Length; i++)
+                {
+                    if (Cells[i].GetCustomData<T>() is GridNull) continue;
+                    lambdaDescription.Invoke(in i, ref Cells[i]);
+                }
+
+                return this;
+            }
+            public Grid For(GridRWUserTagLambdaDescription lambdaDescription)
+            {
+                for (int i = 0; i < Cells.Length; i++)
+                {
+                    ITag tag = Cells[i].GetCustomData<ITag>();
+                    if (tag is GridNull) continue;
+
+                    lambdaDescription.Invoke(in i, ref Cells[i], tag.UserTag);
+                }
+
+                return this;
+            }
+            public Grid For<T>(GridRWUserTagLambdaDescription lambdaDescription) where T : struct, ITag
+            {
+                for (int i = 0; i < Cells.Length; i++)
+                {
+                    T data = Cells[i].GetCustomData<T>();
+                    if (data is GridNull) continue;
+
+                    lambdaDescription.Invoke(in i, ref Cells[i], data.UserTag);
+                }
+
+                return this;
+            }
+            public Grid For(GridRWCustomTagLambdaDescription lambdaDescription)
+            {
+                for (int i = 0; i < Cells.Length; i++)
+                {
+                    ITag tag = Cells[i].GetCustomData<ITag>();
+                    if (tag is GridNull) continue;
+
+                    lambdaDescription.Invoke(in i, ref Cells[i], tag.CustomTag);
+                }
+
+                return this;
+            }
+            public Grid For<T>(GridRWCustomTagLambdaDescription lambdaDescription) where T : struct, ITag
+            {
+                for (int i = 0; i < Cells.Length; i++)
+                {
+                    T data = Cells[i].GetCustomData<T>();
+                    if (data is GridNull) continue;
+
+                    lambdaDescription.Invoke(in i, ref Cells[i], data.CustomTag);
+                }
+
+                return this;
+            }
+            public Grid For(GridRWAllTagLambdaDescription lambdaDescription)
+            {
+                for (int i = 0; i < Cells.Length; i++)
+                {
+                    ITag tag = Cells[i].GetCustomData<ITag>();
+                    if (tag is GridNull) continue;
+
+                    lambdaDescription.Invoke(in i, ref Cells[i], tag.UserTag, tag.CustomTag);
+                }
+
+                return this;
+            }
+            public Grid For<T>(GridRWAllTagLambdaDescription lambdaDescription) where T : struct, ITag
+            {
+                for (int i = 0; i < Cells.Length; i++)
+                {
+                    T data = Cells[i].GetCustomData<T>();
+                    if (data is GridNull) continue;
+
+                    lambdaDescription.Invoke(in i, ref Cells[i], data.UserTag, data.CustomTag);
+                }
+
+                return this;
+            }
+
+            #endregion
 
             public object GetCustomData() => CustomData;
-            public T GetCustomData<T>() => (T)CustomData;
-            public void SetCustomData(object data)
+            public T GetCustomData<T>() where T : ITag
+            {
+                if (CustomData != null && CustomData is T t) return t;
+                return (T)GridNull.Value;
+            }
+            public void SetCustomData<T>(T data) where T : struct, ITag
             {
                 if (data.GetType().GetCustomAttribute<SerializableAttribute>() == null)
                 {
@@ -223,7 +375,7 @@ namespace Syadeu.Mono
             public int2 Location;
             public Bounds Bounds;
 
-            public object CustomData;
+            internal object CustomData;
 
             private readonly float3[] Verties;
             private readonly float3[] NavMeshVerties;
@@ -293,8 +445,12 @@ namespace Syadeu.Mono
             }
 
             public object GetCustomData() => CustomData;
-            public T GetCustomData<T>() => (T)CustomData;
-            public void SetCustomData(object data)
+            public T GetCustomData<T>() where T : ITag
+            {
+                if (CustomData != null && CustomData is T t) return t;
+                return (T)GridNull.Value;
+            }
+            public void SetCustomData<T>(T data) where T : struct, ITag
             {
                 if (data.GetType().GetCustomAttribute<SerializableAttribute>() == null)
                 {
@@ -304,6 +460,14 @@ namespace Syadeu.Mono
 
                 CustomData = data;
             }
+        }
+
+        public struct GridNull : ITag
+        {
+            public static readonly object Value = default;
+
+            public UserTagFlag UserTag { get; set; }
+            public CustomTagFlag CustomTag { get; set; }
         }
 
         public static ref Grid GetGrid(in int idx)

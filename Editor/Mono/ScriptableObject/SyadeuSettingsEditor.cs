@@ -1,6 +1,7 @@
 ﻿using Syadeu.Mono;
 
 using UnityEditor;
+using UnityEngine;
 
 namespace SyadeuEditor
 {
@@ -9,10 +10,40 @@ namespace SyadeuEditor
     {
         bool m_EnableHelpbox = false;
 
+        bool m_UserTag = false;
+        bool m_CustomTag = false;
+
         bool m_GlobalOption = true;
 
         bool m_ShowOriginalContents = false;
 
+        private void OnEnable()
+        {
+            if (SyadeuSettings.Instance.m_UserTagNameModule == null)
+            {
+                var userTag = CreateInstance<UserTagNameModule>();
+                userTag.name = "UserTagNameModule";
+                AssetDatabase.AddObjectToAsset(userTag, SyadeuSettings.Instance);
+                AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(SyadeuSettings.Instance));
+
+                SyadeuSettings.Instance.m_UserTagNameModule = userTag;
+                EditorUtility.SetDirty(SyadeuSettings.Instance);
+
+                AssetDatabase.SaveAssets();
+            }
+            if (SyadeuSettings.Instance.m_CustomTagNameModule == null)
+            {
+                var customTag = CreateInstance<CustomTagNameModule>();
+                customTag.name = "CustomTagNameModule";
+                AssetDatabase.AddObjectToAsset(customTag, SyadeuSettings.Instance);
+                AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(SyadeuSettings.Instance));
+
+                SyadeuSettings.Instance.m_CustomTagNameModule = customTag;
+                EditorUtility.SetDirty(SyadeuSettings.Instance);
+
+                AssetDatabase.SaveAssets();
+            }
+        }
         public override void OnInspectorGUI()
         {
             EditorUtils.StringHeader("CoreSystem Setting");
