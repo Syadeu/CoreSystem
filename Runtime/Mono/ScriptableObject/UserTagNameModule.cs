@@ -83,6 +83,17 @@ namespace Syadeu.Mono
 
             return m_Tags[tag.ToString()];
         }
+        public string GetUserTag(int idx)
+        {
+            if (idx.Equals(31)) return UserTagFlag.UserTag31.ToString();
+            else if (idx.Equals(32)) return UserTagFlag.UserTag32.ToString();
+
+            foreach (var item in m_Tags)
+            {
+                if (item.Value.Equals(idx)) return item.Key;
+            }
+            return string.Empty;
+        }
     }
 }
  

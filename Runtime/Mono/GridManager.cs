@@ -331,6 +331,7 @@ namespace Syadeu.Mono
 
             #endregion
 
+            #region Custom Data
             public object GetCustomData() => CustomData;
             public T GetCustomData<T>() where T : ITag
             {
@@ -347,7 +348,9 @@ namespace Syadeu.Mono
 
                 CustomData = data;
             }
+            #endregion
 
+            #region Binary
             public BinaryWrapper Convert()
             {
                 byte[] binaryGrid;
@@ -360,17 +363,18 @@ namespace Syadeu.Mono
                 for (int i = 0; i < Cells.Length; i++)
                 {
                     temp[i] = new BinaryGridCell(in Cells[i]);
-                    //binaryCells[i] = cell.ToBytesWithStream();
                 }
                 binaryCells = temp.ToBytesWithStream();
                 return new BinaryWrapper(binaryGrid, binaryCells);
             }
             public static Grid FromBytes(BinaryWrapper wrapper) => new Grid(wrapper);
+            #endregion
         }
         [Serializable]
         public struct GridCell : IValidation, IEquatable<GridCell>
         {
-            public readonly int ParentIdx;
+            #region Init
+            internal readonly int ParentIdx;
 
             public int2 Location;
             public Bounds Bounds;
@@ -433,6 +437,7 @@ namespace Syadeu.Mono
                 CustomData = cell.CustomData;
             }
 
+            public readonly Grid GetParent() => GetGrid(in ParentIdx);
             public bool IsValid() => Verties != null;
             public bool Equals(GridCell other) => Location.Equals(other.Location);
             public bool IsVisable()
@@ -443,6 +448,7 @@ namespace Syadeu.Mono
                 }
                 return false;
             }
+            #endregion
 
             public object GetCustomData() => CustomData;
             public T GetCustomData<T>() where T : ITag
@@ -461,13 +467,32 @@ namespace Syadeu.Mono
                 CustomData = data;
             }
         }
-
+        [Serializable]
         public struct GridNull : ITag
         {
             public static readonly object Value = default;
 
             public UserTagFlag UserTag { get; set; }
             public CustomTagFlag CustomTag { get; set; }
+        }
+
+        public static int ClearGrids()
+        {
+            int count;
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                count = s_EditorGrids.Length;
+                s_EditorGrids = new Grid[0];
+            }
+            else
+#endif
+            {
+                count = Instance.m_Grids.Length;
+                Instance.m_Grids = new Grid[0];
+            }
+
+            return count;
         }
 
         public static ref Grid GetGrid(in int idx)
@@ -578,14 +603,6 @@ namespace Syadeu.Mono
             ref Grid target = ref GetGrid(in idx);
 
             target = newGrid;
-        }
-
-        public static ref Grid SetCustomData(int idx, object customData)
-        {
-            ref Grid grid = ref GetGrid(idx);
-
-            grid.CustomData = customData;
-            return ref Instance.m_Grids[idx];
         }
 
         public static BinaryWrapper[] ExportGrids()
