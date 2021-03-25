@@ -87,15 +87,18 @@ namespace SyadeuEditor
                 ref GridManager.Grid grid = ref GridManager.GetGrid(in m_GridIdx);
                 grid.SetCustomData(new TestDataStruct(null));
 
-                GridManager.BinaryWrapper wrapper = grid.Convert();
+                GridManager.BinaryWrapper wrapper = grid.ConvertToWrapper();
+                byte[] bytes = wrapper.ToBytesWithStream();
 
-                GridManager.Grid newGrid = wrapper.ToGrid();
+                //GridManager.Grid newGrid = wrapper.ToGrid();
+                GridManager.Grid newGrid = GridManager.BinaryWrapper.ToWrapper(bytes).ToGrid();
                 newGrid.For<TestDataStruct>((in int i, ref GridManager.GridCell gridCell) =>
                 {
 
                 });
 
-                $"{grid.Length} :: {newGrid.Length}, {newGrid.GetCustomData<TestDataStruct>().TestFloat3} :: {newGrid.GetCustomData<ITag>().UserTag}".ToLog();
+                newGrid.GetCustomData(out TestDataStruct cusData);
+                $"{grid.Length} :: {newGrid.Length}, {cusData.TestFloat3} :: {cusData.UserTag}".ToLog();
             }
 
             EditorGUILayout.Space();

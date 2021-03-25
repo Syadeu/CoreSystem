@@ -30,14 +30,15 @@ namespace Syadeu.Mono
         [Serializable]
         public struct BinaryWrapper
         {
-            public byte[] m_Grid;
-            public byte[] m_GridCells;
+            internal BinaryGrid m_Grid;
+            internal BinaryGridCell[] m_GridCells;
 
-            internal BinaryWrapper(byte[] grid, byte[] cells)
+            internal BinaryWrapper(BinaryGrid grid, BinaryGridCell[] cells)
             {
                 m_Grid = grid;
                 m_GridCells = cells;
             }
+            public static BinaryWrapper ToWrapper(byte[] bytes) => bytes.ToObjectWithStream<BinaryWrapper>();
 
             public Grid ToGrid() => new Grid(in this);
         }
@@ -136,8 +137,10 @@ namespace Syadeu.Mono
                 BinaryGrid grid;
                 BinaryGridCell[] cells;
 
-                grid = wrapper.m_Grid.ToObjectWithStream<BinaryGrid>();
-                cells = wrapper.m_GridCells.ToObjectWithStream<BinaryGridCell[]>();
+                //grid = wrapper.m_Grid.ToObjectWithStream<BinaryGrid>();
+                //cells = wrapper.m_GridCells.ToObjectWithStream<BinaryGridCell[]>();
+                grid = wrapper.m_Grid;
+                cells = wrapper.m_GridCells;
 
                 Guid = grid.Guid;
                 Idx = grid.Idx;
@@ -198,7 +201,10 @@ namespace Syadeu.Mono
                 List<int> indexes = new List<int>();
                 for (int i = 0; i < Cells.Length; i++)
                 {
-                    ITag tag = Cells[i].GetCustomData<ITag>();
+                    if (!Cells[i].GetCustomData(out ITag tag))
+                    {
+                        continue;
+                    }
                     if (userTag.HasFlag(tag.UserTag)) indexes.Add(i);
                 }
                 return indexes;
@@ -208,7 +214,10 @@ namespace Syadeu.Mono
                 List<int> indexes = new List<int>();
                 for (int i = 0; i < Cells.Length; i++)
                 {
-                    ITag tag = Cells[i].GetCustomData<ITag>();
+                    if (!Cells[i].GetCustomData(out ITag tag))
+                    {
+                        continue;
+                    }
                     if (customTag.HasFlag(tag.CustomTag)) indexes.Add(i);
                 }
                 return indexes;
@@ -231,7 +240,7 @@ namespace Syadeu.Mono
             {
                 for (int i = 0; i < Cells.Length; i++)
                 {
-                    if (Cells[i].GetCustomData<T>() is GridNull) continue;
+                    if (!Cells[i].GetCustomData(out T _)) continue;
                     lambdaDescription.Invoke(in i, in Cells[i]);
                 }
 
@@ -250,7 +259,7 @@ namespace Syadeu.Mono
             {
                 for (int i = 0; i < Cells.Length; i++)
                 {
-                    if (Cells[i].GetCustomData<T>() is GridNull) continue;
+                    if (!Cells[i].GetCustomData(out T _)) continue;
                     lambdaDescription.Invoke(in i, ref Cells[i]);
                 }
 
@@ -260,8 +269,10 @@ namespace Syadeu.Mono
             {
                 for (int i = 0; i < Cells.Length; i++)
                 {
-                    ITag tag = Cells[i].GetCustomData<ITag>();
-                    if (tag is GridNull) continue;
+                    if (!Cells[i].GetCustomData(out ITag tag))
+                    {
+                        continue;
+                    }
 
                     lambdaDescription.Invoke(in i, ref Cells[i], tag.UserTag);
                 }
@@ -272,8 +283,10 @@ namespace Syadeu.Mono
             {
                 for (int i = 0; i < Cells.Length; i++)
                 {
-                    T data = Cells[i].GetCustomData<T>();
-                    if (data is GridNull) continue;
+                    if (!Cells[i].GetCustomData(out T data))
+                    {
+                        continue;
+                    }
 
                     lambdaDescription.Invoke(in i, ref Cells[i], data.UserTag);
                 }
@@ -284,8 +297,10 @@ namespace Syadeu.Mono
             {
                 for (int i = 0; i < Cells.Length; i++)
                 {
-                    ITag tag = Cells[i].GetCustomData<ITag>();
-                    if (tag is GridNull) continue;
+                    if (!Cells[i].GetCustomData(out ITag tag))
+                    {
+                        continue;
+                    }
 
                     lambdaDescription.Invoke(in i, ref Cells[i], tag.CustomTag);
                 }
@@ -296,8 +311,10 @@ namespace Syadeu.Mono
             {
                 for (int i = 0; i < Cells.Length; i++)
                 {
-                    T data = Cells[i].GetCustomData<T>();
-                    if (data is GridNull) continue;
+                    if (!Cells[i].GetCustomData(out T data))
+                    {
+                        continue;
+                    }
 
                     lambdaDescription.Invoke(in i, ref Cells[i], data.CustomTag);
                 }
@@ -308,8 +325,10 @@ namespace Syadeu.Mono
             {
                 for (int i = 0; i < Cells.Length; i++)
                 {
-                    ITag tag = Cells[i].GetCustomData<ITag>();
-                    if (tag is GridNull) continue;
+                    if (!Cells[i].GetCustomData(out ITag tag))
+                    {
+                        continue;
+                    }
 
                     lambdaDescription.Invoke(in i, ref Cells[i], tag.UserTag, tag.CustomTag);
                 }
@@ -320,8 +339,10 @@ namespace Syadeu.Mono
             {
                 for (int i = 0; i < Cells.Length; i++)
                 {
-                    T data = Cells[i].GetCustomData<T>();
-                    if (data is GridNull) continue;
+                    if (!Cells[i].GetCustomData(out T data))
+                    {
+                        continue;
+                    }
 
                     lambdaDescription.Invoke(in i, ref Cells[i], data.UserTag, data.CustomTag);
                 }
@@ -333,10 +354,15 @@ namespace Syadeu.Mono
 
             #region Custom Data
             public object GetCustomData() => CustomData;
-            public T GetCustomData<T>() where T : ITag
+            public bool GetCustomData<T>(out T value) where T : ITag
             {
-                if (CustomData != null && CustomData is T t) return t;
-                return (T)GridNull.Value;
+                if (CustomData != null && CustomData is T t)
+                {
+                    value = t;
+                    return true;
+                }
+                value = default;
+                return false;
             }
             public void SetCustomData<T>(T data) where T : struct, ITag
             {
@@ -351,23 +377,17 @@ namespace Syadeu.Mono
             #endregion
 
             #region Binary
-            public BinaryWrapper Convert()
+            public BinaryWrapper ConvertToWrapper()
             {
-                byte[] binaryGrid;
-                byte[] binaryCells;
-
-                BinaryGrid grid = new BinaryGrid(this);
-                binaryGrid = grid.ToBytesWithStream();
-
                 var temp = new BinaryGridCell[Cells.Length];
                 for (int i = 0; i < Cells.Length; i++)
                 {
                     temp[i] = new BinaryGridCell(in Cells[i]);
                 }
-                binaryCells = temp.ToBytesWithStream();
-                return new BinaryWrapper(binaryGrid, binaryCells);
+                return new BinaryWrapper(new BinaryGrid(this), temp);
             }
             public static Grid FromBytes(BinaryWrapper wrapper) => new Grid(wrapper);
+            public static Grid FromBytes(byte[] bytes) => BinaryWrapper.ToWrapper(bytes).ToGrid();
             #endregion
         }
         [Serializable]
@@ -451,10 +471,15 @@ namespace Syadeu.Mono
             #endregion
 
             public object GetCustomData() => CustomData;
-            public T GetCustomData<T>() where T : ITag
+            public bool GetCustomData<T>(out T value) where T : ITag
             {
-                if (CustomData != null && CustomData is T t) return t;
-                return (T)GridNull.Value;
+                if (CustomData != null && CustomData is T t)
+                {
+                    value = t;
+                    return true;
+                }
+                value = default;
+                return false;
             }
             public void SetCustomData<T>(T data) where T : struct, ITag
             {
@@ -466,14 +491,6 @@ namespace Syadeu.Mono
 
                 CustomData = data;
             }
-        }
-        [Serializable]
-        public struct GridNull : ITag
-        {
-            public static readonly object Value = default;
-
-            public UserTagFlag UserTag { get; set; }
-            public CustomTagFlag CustomTag { get; set; }
         }
 
         public static int ClearGrids()
@@ -614,7 +631,7 @@ namespace Syadeu.Mono
                 wrappers = new BinaryWrapper[s_EditorGrids.Length];
                 for (int i = 0; i < wrappers.Length; i++)
                 {
-                    wrappers[i] = s_EditorGrids[i].Convert();
+                    wrappers[i] = s_EditorGrids[i].ConvertToWrapper();
                 }
             }
             else
@@ -623,7 +640,7 @@ namespace Syadeu.Mono
                 wrappers = new BinaryWrapper[Instance.m_Grids.Length];
                 for (int i = 0; i < wrappers.Length; i++)
                 {
-                    wrappers[i] = Instance.m_Grids[i].Convert();
+                    wrappers[i] = Instance.m_Grids[i].ConvertToWrapper();
                 }
             }
 

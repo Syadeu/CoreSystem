@@ -22,9 +22,6 @@ namespace Syadeu.ECS
             }
         }
 
-        //public void GetPosition()
-        //{
-        //    ECSPathQuerySystem.ToLocation()
-        //}
+        public Bounds GetBounds() => new Bounds(m_Center, m_Size);
     }
 }
