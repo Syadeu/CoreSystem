@@ -646,6 +646,36 @@ namespace Syadeu.Mono
 
             return wrappers;
         }
+        public static void ImportGrids(params Grid[] grids)
+        {
+            List<Grid> temp;
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                temp = s_EditorGrids.ToList();
+            }
+            else
+#endif
+            {
+                temp = Instance.m_Grids.ToList();
+            }
+
+            for (int i = 0; i < grids.Length; i++)
+            {
+                temp.Add(grids[i]);
+            }
+
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                s_EditorGrids = temp.ToArray();
+            }
+            else
+#endif
+            {
+                Instance.m_Grids = temp.ToArray();
+            }
+        }
         public static void ImportGrids(params BinaryWrapper[] wrappers)
         {
             List<Grid> grids;
@@ -663,6 +693,17 @@ namespace Syadeu.Mono
             for (int i = 0; i < wrappers.Length; i++)
             {
                 grids.Add(new Grid(wrappers[i]));
+            }
+
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                s_EditorGrids = grids.ToArray();
+            }
+            else
+#endif
+            {
+                Instance.m_Grids = grids.ToArray();
             }
         }
 
