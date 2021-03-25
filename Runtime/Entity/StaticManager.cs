@@ -81,6 +81,7 @@ namespace Syadeu
                         else CoreSystem.InstanceManagers.Add(ins);
                     }
 
+                    ins.gameObject.isStatic = true;
                     m_Instance = ins;
                     ins.OnStart();
                 }

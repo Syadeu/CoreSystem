@@ -123,6 +123,7 @@ namespace SyadeuEditor
 
         private void OnSceneGUI()
         {
+            if (Application.isPlaying) return;
             ref GridManager.Grid grid = ref GridManager.s_EditorGrids[m_GridIdx];
             
             for (int i = 0; i < grid.Length; i++)

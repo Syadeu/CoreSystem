@@ -16,16 +16,25 @@ namespace Syadeu.Mono
     [DisallowMultipleComponent]
     public class GridManager : StaticManager<GridManager>
     {
+        #region Init
         public override bool HideInHierarchy => false;
 
+        //[SerializeField] private bool m_DrawGridAtRuntime = false;
         [SerializeField] private float m_CellSize = 2.5f;
         [SerializeField] private float m_GridHeight = 0;
 
         private Grid[] m_Grids = new Grid[0];
+        //private LineRenderer m_LineRenderer;
 
 #if UNITY_EDITOR
         public static Grid[] s_EditorGrids = new Grid[0];
 #endif
+
+        public delegate void GridRWAllTagLambdaDescription(in int i, ref GridCell gridCell, in UserTagFlag userTag, in CustomTagFlag customTag);
+        public delegate void GridRWUserTagLambdaDescription(in int i, ref GridCell gridCell, in UserTagFlag userTag);
+        public delegate void GridRWCustomTagLambdaDescription(in int i, ref GridCell gridCell, in CustomTagFlag customTag);
+        public delegate void GridRWLambdaDescription(in int i, ref GridCell gridCell);
+        public delegate void GridLambdaDescription(in int i, in GridCell gridCell);
 
         [Serializable]
         public struct BinaryWrapper
@@ -92,13 +101,6 @@ namespace Syadeu.Mono
                 CustomData = gridCell.CustomData;
             }
         }
-
-        public delegate void GridRWAllTagLambdaDescription(in int i, ref GridCell gridCell, in UserTagFlag userTag, in CustomTagFlag customTag);
-        public delegate void GridRWUserTagLambdaDescription(in int i, ref GridCell gridCell, in UserTagFlag userTag);
-        public delegate void GridRWCustomTagLambdaDescription(in int i, ref GridCell gridCell, in CustomTagFlag customTag);
-        public delegate void GridRWLambdaDescription(in int i, ref GridCell gridCell);
-        public delegate void GridLambdaDescription(in int i, in GridCell gridCell);
-
         [Serializable]
         public struct Grid : IValidation, IEquatable<Grid>
         {
@@ -493,6 +495,35 @@ namespace Syadeu.Mono
             }
         }
 
+        int tempIdx = -1;
+        Color red = new Color(1, 0, 0, .2f);
+        Color blue = new Color(0, 0, 1, .2f);
+        Color green = new Color(0, 1, 1, .2f);
+        public override void OnStart()
+        {
+            tempIdx = CreateGrid(new Bounds(new Vector3(1.25f, 0, 0), new Vector3(22.5f, 10, 40)), m_CellSize, true);
+        }
+        private void OnRenderObject()
+        {
+            if (tempIdx >= 0)
+            {
+                ref Grid grid = ref GetGrid(in tempIdx);
+                for (int i = 0; i < grid.Length; i++)
+                {
+                    ref var cell = ref grid.GetCell(i);
+
+                    if (cell.BlockedByNavMesh)
+                    {
+                        GLDrawBounds(in cell.Bounds, red);
+                    }
+                    else GLDrawBounds(in cell.Bounds, i % 2 == 0 ? green : blue);
+                }
+            }
+        }
+
+        #endregion
+
+        #region Grid Methods
         public static int ClearGrids()
         {
             int count;
@@ -621,7 +652,7 @@ namespace Syadeu.Mono
 
             target = newGrid;
         }
-
+        
         public static BinaryWrapper[] ExportGrids()
         {
             BinaryWrapper[] wrappers;
@@ -706,6 +737,8 @@ namespace Syadeu.Mono
                 Instance.m_Grids = grids.ToArray();
             }
         }
+
+        #endregion
 
         private static bool IsInScreen(in float3 screenPos)
         {

@@ -32,8 +32,7 @@ namespace SyadeuEditor.ECS
             m_Center = serializedObject.FindProperty("m_Center");
             m_Size = serializedObject.FindProperty("m_Size");
 
-            NavMesh.RemoveAllNavMeshData();
-            //DisableNavMeshPreview();
+            if (!Application.isPlaying) NavMesh.RemoveAllNavMeshData();
             m_PreviewNavMesh = false;
 
             UnityEditor.AI.NavMeshVisualizationSettings.showNavigation++;
