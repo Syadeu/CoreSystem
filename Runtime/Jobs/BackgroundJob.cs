@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Unity.Collections;
 
 namespace Syadeu
 {
@@ -158,6 +159,104 @@ namespace Syadeu
             {
                 StaticManagerEntity.ThreadAwaiter(10);
             }
+        }
+
+        public static BackgroundJob ParallelFor<T>(IList<T> list, Action<int, T> action, int chunkSize = 2048)
+        {
+            bool single = list.Count < chunkSize;
+            BackgroundJob job = new BackgroundJob(() =>
+            {
+                for (int i = 0; i < (single ? list.Count : chunkSize); i++)
+                {
+                    action.Invoke(i, list[i]);
+                }
+            });
+            if (!single)
+            {
+                int div = list.Count / chunkSize;
+                for (int i = 0; i < div - 1; i++)
+                {
+                    int targetRow = i;
+                    job.ConnectJob(new BackgroundJob(() =>
+                    {
+                        for (int a = chunkSize + (chunkSize * targetRow); a < (chunkSize) + (chunkSize * (targetRow + 1)); a++)
+                        {
+                            action.Invoke(a, list[a]);
+                        }
+                    }));
+                }
+                if (list.Count % chunkSize != 0)
+                {
+                    job.ConnectJob(new BackgroundJob(() =>
+                    {
+                        for (int i = chunkSize * (div - 1); i < list.Count; i++)
+                        {
+                            action.Invoke(i, list[i]);
+                        }
+                    }));
+                }
+            }
+
+            job.Start();
+
+            return CoreSystem.AddBackgroundJob(() =>
+            {
+                while (!job.IsDone)
+                {
+                    StaticManagerEntity.ThreadAwaiter(10);
+                }
+            });
+        }
+        public static BackgroundJob ParallelFor<T>(IList<T> list, Func<int, T, bool> func, int chunkSize = 2048)
+        {
+            NativeArray<bool> found = new NativeArray<bool>(1, Allocator.Persistent);
+            found[0] = false;
+            bool single = list.Count < chunkSize;
+            BackgroundJob job = new BackgroundJob(() =>
+            {
+                for (int i = 0; i < (single ? list.Count : chunkSize); i++)
+                {
+                    found[0] = func.Invoke(i, list[i]);
+                }
+            });
+            if (!single)
+            {
+                int div = list.Count / chunkSize;
+                for (int i = 0; i < div - 1; i++)
+                {
+                    int targetRow = i;
+                    job.ConnectJob(new BackgroundJob(() =>
+                    {
+                        for (int a = chunkSize + (chunkSize * targetRow); a < (chunkSize) + (chunkSize * (targetRow + 1)); a++)
+                        {
+                            if (found[0]) break;
+                            found[0] = func.Invoke(a, list[a]);
+                        }
+                    }));
+                }
+                if (list.Count % chunkSize != 0)
+                {
+                    job.ConnectJob(new BackgroundJob(() =>
+                    {
+                        for (int i = chunkSize * (div - 1); i < list.Count; i++)
+                        {
+                            if (found[0]) break;
+                            found[0] = func.Invoke(i, list[i]);
+                        }
+                    }));
+                }
+            }
+
+            job.Start();
+
+            return CoreSystem.AddBackgroundJob(()=>
+            {
+                while (!job.IsDone)
+                {
+                    StaticManagerEntity.ThreadAwaiter(10);
+                }
+                found.Dispose();
+            });
         }
     }
 }

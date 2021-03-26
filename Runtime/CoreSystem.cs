@@ -784,12 +784,19 @@ namespace Syadeu
 
                 for (int i = 0; i < BackgroundJobWorkers.Count; i++)
                 {
-                    if (BackgroundJobWorkers[i].Jobs.Count > 0 &&
-                        !BackgroundJobWorkers[i].Worker.IsBusy &&
-                        BackgroundJobWorkers[i].Jobs.TryDequeue(out var wjob))
+                    if (BackgroundJobWorkers[i].Jobs.Count > 0)
                     {
-                        wjob.WorkerIndex = i;
-                        BackgroundJobWorkers[i].Worker.RunWorkerAsync(wjob);
+                        if (!BackgroundJobWorkers[i].Worker.IsBusy &&
+                            BackgroundJobWorkers[i].Jobs.TryDequeue(out var wjob))
+                        {
+                            wjob.WorkerIndex = i;
+                            BackgroundJobWorkers[i].Worker.RunWorkerAsync(wjob);
+                        }
+                        else if (BackgroundJobWorkers[i].Worker.IsBusy &&
+                            BackgroundJobWorkers[i].Jobs.TryDequeue(out var rjob))
+                        {
+                            m_BackgroundJobs.Enqueue(rjob);
+                        }
                     }
                 }
                 #endregion
@@ -1214,6 +1221,8 @@ namespace Syadeu
                 job.Faild = true; job.IsRunning = false; job.m_IsDone = true;
                 //job.Result = $"{nameof(mainthread)}: {mainthread.Message}";
 
+                ConsoleWindow.Log($"Unity API Detected in Background Thread\n{job.CalledFrom}");
+                Debug.LogException(mainthread);
 #if UNITY_EDITOR
                 throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, 
                     "유니티 API 가 사용되어 백그라운드잡에서 돌릴 수 없습니다", job.CalledFrom, mainthread);
@@ -1227,6 +1236,8 @@ namespace Syadeu
                 job.Faild = true; job.IsRunning = false; job.m_IsDone = true; job.Exception = ex;
                 //job.Result = $"{nameof(ex)}: {ex.Message}";
 
+                ConsoleWindow.Log($"Error Raised while executing Jobs: {ex.Message}\n{job.CalledFrom}");
+                Debug.LogException(ex);
 #if UNITY_EDITOR
                 throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, 
                     "잡을 실행하는 도중 에러가 발생되었습니다", job.CalledFrom, ex);

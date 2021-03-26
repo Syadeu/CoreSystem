@@ -45,6 +45,8 @@ namespace Syadeu
 
         #endregion
 
+        #region GL
+
         private static Color
             whiteLine = new Color { a = 1f },
             red = new Color { r = 1, a = 0.1f },
@@ -330,6 +332,21 @@ namespace Syadeu
         {
             GL.Color(color);
             GL.Vertex(v0); GL.Vertex(v1);
+        }
+
+        #endregion
+
+        protected static bool IsInScreen(Camera cam, Vector3 worldPosition)
+        {
+            Vector3 screenPos = cam.WorldToScreenPoint(worldPosition);
+            screenPos.y = Screen.height - screenPos.y;
+
+            if (screenPos.y < 0 || screenPos.y > Screen.height ||
+                screenPos.x < 0 || screenPos.x > Screen.width || screenPos.z < 0)
+            {
+                return false;
+            }
+            return true;
         }
     }
 }

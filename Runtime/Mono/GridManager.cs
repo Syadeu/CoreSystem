@@ -10,6 +10,7 @@ using System.Linq;
 using UnityEngine.AI;
 using Unity.Mathematics;
 using System.Reflection;
+using Unity.Collections;
 
 namespace Syadeu.Mono
 {
@@ -142,8 +143,6 @@ namespace Syadeu.Mono
                 BinaryGrid grid;
                 BinaryGridCell[] cells;
 
-                //grid = wrapper.m_Grid.ToObjectWithStream<BinaryGrid>();
-                //cells = wrapper.m_GridCells.ToObjectWithStream<BinaryGridCell[]>();
                 grid = wrapper.m_Grid;
                 cells = wrapper.m_GridCells;
 
@@ -219,6 +218,18 @@ namespace Syadeu.Mono
 
                 throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({worldPosition.x},{worldPosition.y},{worldPosition.z}). " +
                     $"해당 좌표계는 이 그리드에 존재하지않습니다.");
+            }
+            public BackgroundJob GetCellAsync(Vector3 worldPosition, NativeArray<int> idx, int chunkSize = 2024)
+            {
+                return BackgroundJob.ParallelFor(Cells, (i, cell) =>
+                {
+                    if (cell.Bounds.Contains(worldPosition))
+                    {
+                        idx[0] = i;
+                        return true;
+                    }
+                    return false;
+                }, chunkSize);
             }
             public IReadOnlyList<int> GetCells(UserTagFlag userTag)
             {
@@ -437,6 +448,12 @@ namespace Syadeu.Mono
             private readonly float3[] Verties;
             private readonly float3[] NavMeshVerties;
 
+            public bool Enabled;
+            public bool Highlighted;
+            public Color NormalColor;
+            public Color HighlightColor;
+            public Color DisableColor;
+
             // NavMesh
             public bool BlockedByNavMesh
             {
@@ -471,7 +488,12 @@ namespace Syadeu.Mono
                 new float3(bounds.max.x, bounds.min.y, bounds.min.z)
                 };
 
-                //ref Grid parent = ref GetGrid(parentIdx);
+                Enabled = true;
+                Highlighted = false;
+                NormalColor = new Color(1, 1, 1, .1f);
+                HighlightColor = new Color { g = 1, a = .1f };
+                DisableColor = new Color { r = 1, a = .1f };
+
                 if (enableNavMesh)
                 {
                     NavMeshVerties = new float3[]
@@ -528,18 +550,6 @@ namespace Syadeu.Mono
             public void Dispose() { }
         }
 
-
-
-        Color red = new Color(1, 0, 0, .1f);
-        Color grey = new Color(1, 1, 1, .1f);
-        //Color green = new Color(0, 1, 1, .2f);
-        public override void OnStart()
-        {
-            int temp = CreateGrid(new Bounds(Vector3.zero, new Vector3(100, 10, 100)), m_CellSize, true);
-            ref Grid grid = ref GetGrid(temp);
-            $"{grid.Length}".ToLog();
-            grid.EnableDrawGL = true;
-        }
         private void OnRenderObject()
         {
             for (int i = 0; i < m_Grids.Length; i++)
@@ -551,13 +561,15 @@ namespace Syadeu.Mono
                 {
                     ref var cell = ref grid.GetCell(a);
 
-                    if (cell.BlockedByNavMesh)
+                    if (!cell.Enabled || cell.BlockedByNavMesh)
                     {
-                        //GLDrawBounds(in cell.Bounds, red);
-                        GLDrawPlane(cell.Bounds.center, new Vector2(cell.Bounds.size.x, cell.Bounds.size.z), in red, true);
+                        GLDrawPlane(cell.Bounds.center, new Vector2(cell.Bounds.size.x, cell.Bounds.size.z), in cell.DisableColor, true);
                     }
-                    //else GLDrawBounds(in cell.Bounds, a % 2 == 0 ? green : blue);
-                    else GLDrawPlane(cell.Bounds.center, new Vector2(cell.Bounds.size.x, cell.Bounds.size.z), in grey, true);
+                    else
+                    {
+                        GLDrawPlane(cell.Bounds.center, new Vector2(cell.Bounds.size.x, cell.Bounds.size.z), 
+                            cell.Highlighted ? cell.HighlightColor : cell.NormalColor, true);
+                    }
                 }
             }
         }
@@ -636,7 +648,7 @@ namespace Syadeu.Mono
         public static ref Grid GetGrid(in int idx)
         {
 #if UNITY_EDITOR
-            if (!Application.isPlaying)
+            if (IsMainthread() && !Application.isPlaying)
             {
                 for (int i = 0; i < s_EditorGrids.Length; i++)
                 {
