@@ -354,19 +354,46 @@ namespace Syadeu
         {
             Instance.Initialize(SystemFlag.MainSystem);
 
-            Type[] types = typeof(CoreSystem).Assembly.GetTypes()
+            Type[] internalTypes = typeof(CoreSystem).Assembly.GetTypes()
                 .Where(other => other.GetCustomAttribute<StaticManagerIntializeOnLoadAttribute>() != null)
                 .ToArray();
-            for (int i = 0; i < types.Length; i++)
+            for (int i = 0; i < internalTypes.Length; i++)
             {
-                Type staticManager = typeof(StaticManager<>).MakeGenericType(types[i]);
-                if (types[i].BaseType != staticManager)
+                Type staticManager = typeof(StaticManager<>).MakeGenericType(internalTypes[i]);
+                if (internalTypes[i].BaseType != staticManager)
                 {
                     throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
-                        $"{types[i].Name}: StaticManagerInitializeOnLoad 어트리뷰트는 StaticManager를 상속받은 객체에만 사용되어야합니다.");
+                        $"{internalTypes[i].Name}: StaticManagerInitializeOnLoad 어트리뷰트는 StaticManager를 상속받은 객체에만 사용되어야합니다.");
                 }
 
                 staticManager.GetProperty("Instance").GetGetMethod().Invoke(null, null);
+            }
+
+            if (SyadeuSettings.Instance.m_EnableAutoStaticInitialize)
+            {
+                Type[] types = AppDomain.CurrentDomain.GetAssemblies()
+                .SingleOrDefault((assembly) =>
+                {
+                    if (SyadeuSettings.Instance.m_AutoInitializeTargetAssembly.Contains(assembly.GetName().Name))
+                    {
+                        return true;
+                    }
+                    return false;
+                })
+                .GetTypes()
+                .Where(other => other.GetCustomAttribute<StaticManagerIntializeOnLoadAttribute>() != null)
+                .ToArray();
+                for (int i = 0; i < types.Length; i++)
+                {
+                    Type staticManager = typeof(StaticManager<>).MakeGenericType(types[i]);
+                    if (types[i].BaseType != staticManager)
+                    {
+                        throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                            $"{types[i].Name}: StaticManagerInitializeOnLoad 어트리뷰트는 StaticManager를 상속받은 객체에만 사용되어야합니다.");
+                    }
+
+                    staticManager.GetProperty("Instance").GetGetMethod().Invoke(null, null);
+                }
             }
         }
 

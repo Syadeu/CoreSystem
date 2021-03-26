@@ -45,10 +45,11 @@ namespace Syadeu
 
         #endregion
 
-        //// When added to an object, draws colored rays from the
-        //// transform position.
-        //public int lineCount = 100;
-        //public float radius = 3.0f;
+        private static Color
+            whiteLine = new Color { a = 1f },
+            red = new Color { r = 1, a = 0.1f },
+            green = new Color { g = 1, a = 0.1f },
+            blue = new Color { b = 1, a = 0.1f };
 
         private static Material s_DefaultMaterial;
         private static Material DefaultMaterial
@@ -74,35 +75,6 @@ namespace Syadeu
                 return s_DefaultMaterial;
             }
         }
-
-        //// Will be called after all regular rendering is done
-        //protected virtual void OnRenderObject()
-        //{
-        //    CreateLineMaterial();
-        //    // Apply the line material
-        //    s_DefaultMaterial.SetPass(0);
-
-        //    GL.PushMatrix();
-        //    // Set transformation matrix for drawing to
-        //    // match our transform
-        //    GL.MultMatrix(transform.localToWorldMatrix);
-
-        //    // Draw lines
-        //    GL.Begin(GL.LINES);
-        //    for (int i = 0; i < lineCount; ++i)
-        //    {
-        //        float a = i / (float)lineCount;
-        //        float angle = a * Mathf.PI * 2;
-        //        // Vertex colors change from red to green
-        //        GL.Color(new Color(a, 1 - a, 0, 0.8F));
-        //        // One vertex at transform position
-        //        GL.Vertex3(0, 0, 0);
-        //        // Another vertex at edge of circle
-        //        GL.Vertex3(Mathf.Cos(angle) * radius, Mathf.Sin(angle) * radius, 0);
-        //    }
-        //    GL.End();
-        //    GL.PopMatrix();
-        //}
 
         protected void GLDrawLine(in Vector3 from, in Vector3 to)
         {
@@ -153,11 +125,6 @@ namespace Syadeu
         {
             if (material == null) material = DefaultMaterial;
 
-            Color
-                red = new Color { r = 1, a = 0.1f },
-                green = new Color { g = 1, a = 0.1f },
-                blue = new Color { b = 1, a = 0.1f };
-
             material.SetPass(0);
 
             GL.PushMatrix();
@@ -180,6 +147,37 @@ namespace Syadeu
             GL.End();
             GL.PopMatrix();
         }
+        protected void GLDrawPlane(in Vector3 center, in Vector2 size, in Color color, bool withOutline = false)
+        {
+            Vector2 half = size * .5f;
+
+            Vector3
+                b0 = new Vector3(center.x - half.x, center.y + .1f, center.z - half.y),
+                b1 = new Vector3(center.x - half.x, center.y + .1f, center.z + half.y),
+                b2 = new Vector3(center.x + half.x, center.y + .1f, center.z + half.y),
+                b3 = new Vector3(center.x + half.x, center.y + .1f, center.z - half.y);
+
+            DefaultMaterial.SetPass(0);
+
+            GL.PushMatrix();
+            GL.Begin(GL.QUADS);
+            {
+                GLQuad(in b0, in b1, in b2, in b3, color);
+            }
+            GL.End();
+            if (withOutline)
+            {
+                GL.Begin(GL.LINES);
+                {
+                    GLDuo(in b0, in b1, whiteLine);
+                    GLDuo(in b1, in b2, whiteLine);
+                    GLDuo(in b2, in b3, whiteLine);
+                    GLDuo(in b3, in b0, whiteLine);
+                }
+                GL.End();
+            }
+            GL.PopMatrix();
+        }
         protected void GLDrawBounds(in Bounds bounds)
         {
             Vector3
@@ -194,10 +192,6 @@ namespace Syadeu
                 t1 = new Vector3(min.x, max.y, max.z),
                 t2 = max,
                 t3 = new Vector3(max.x, max.y, min.z);
-            Color
-                red = new Color { r = 1, a = 0.1f },
-                green = new Color { g = 1, a = 0.1f },
-                blue = new Color { b = 1, a = 0.1f };
 
             Material material = DefaultMaterial;
             material.SetPass(0);
@@ -262,10 +256,6 @@ namespace Syadeu
                 t1 = new Vector3(min.x, max.y, max.z),
                 t2 = max,
                 t3 = new Vector3(max.x, max.y, min.z);
-            Color
-                red = new Color { r = 1, a = .15f },
-                green = new Color { g = 1, a = .15f },
-                blue = new Color { b = 1, a = .15f };
 
             Material material = DefaultMaterial;
             material.SetPass(0);

@@ -27,6 +27,8 @@ namespace Syadeu.Mono
         [Header("Global")]
         public bool m_VisualizeObjects = false;
         public bool m_CrashAfterException = false;
+        public bool m_EnableAutoStaticInitialize = false;
+        public string[] m_AutoInitializeTargetAssembly = new string[] { "Assembly-CSharp" };
 
         // PrefabManager
         [Header("Prefab Manager")]

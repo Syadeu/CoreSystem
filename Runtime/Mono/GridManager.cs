@@ -103,7 +103,7 @@ namespace Syadeu.Mono
             }
         }
         [Serializable]
-        public struct Grid : IValidation, IEquatable<Grid>
+        public struct Grid : IValidation, IEquatable<Grid>, IDisposable
         {
             #region Init
 
@@ -118,6 +118,7 @@ namespace Syadeu.Mono
             internal object CustomData;
 
             public readonly bool EnableNavMesh;
+            public bool EnableDrawGL;
 
             public int Length => Cells.Length;
 
@@ -134,6 +135,7 @@ namespace Syadeu.Mono
                 CustomData = null;
 
                 EnableNavMesh = enableNavMesh;
+                EnableDrawGL = false;
             }
             internal Grid(in BinaryWrapper wrapper)
             {
@@ -161,9 +163,10 @@ namespace Syadeu.Mono
                 CustomData = grid.CustomData;
 
                 EnableNavMesh = grid.EnableNavMesh;
+                EnableDrawGL = false;
             }
 
-            public bool IsValid() => Cells != null;
+            public bool IsValid() => HasGrid(in Guid);
             public bool Equals(Grid other) => Guid.Equals(other.Guid);
             public bool Contains(Vector2Int grid)
             {
@@ -175,6 +178,24 @@ namespace Syadeu.Mono
             }
 
             #endregion
+
+            public bool HasCell(int idx) => idx >= 0 && Cells.Length > idx;
+            public bool HasCell(Vector2Int grid)
+            {
+                for (int i = 0; i < Cells.Length; i++)
+                {
+                    if (Cells[i].Location.Equals(grid)) return true;
+                }
+                return false;
+            }
+            public bool HasCell(Vector3 worldPosition)
+            {
+                for (int i = 0; i < Cells.Length; i++)
+                {
+                    if (Cells[i].Bounds.Contains(worldPosition)) return true;
+                }
+                return false;
+            }
 
             #region Gets
 
@@ -189,14 +210,14 @@ namespace Syadeu.Mono
                 throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({grid.x},{grid.y}). " +
                     $"해당 좌표계는 이 그리드에 존재하지않습니다.");
             }
-            public ref GridCell GetCell(Vector3 worldPosistion)
+            public ref GridCell GetCell(Vector3 worldPosition)
             {
                 for (int i = 0; i < Cells.Length; i++)
                 {
-                    if (Cells[i].Bounds.Contains(worldPosistion)) return ref Cells[i];
+                    if (Cells[i].Bounds.Contains(worldPosition)) return ref Cells[i];
                 }
 
-                throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({worldPosistion.x},{worldPosistion.y},{worldPosistion.z}). " +
+                throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({worldPosition.x},{worldPosition.y},{worldPosition.z}). " +
                     $"해당 좌표계는 이 그리드에 존재하지않습니다.");
             }
             public IReadOnlyList<int> GetCells(UserTagFlag userTag)
@@ -391,10 +412,19 @@ namespace Syadeu.Mono
             }
             public static Grid FromBytes(BinaryWrapper wrapper) => new Grid(wrapper);
             public static Grid FromBytes(byte[] bytes) => BinaryWrapper.ToWrapper(bytes).ToGrid();
+
             #endregion
+
+            public void Dispose()
+            {
+                for (int i = 0; i < Cells.Length; i++)
+                {
+                    Cells[i].Dispose();
+                }
+            }
         }
         [Serializable]
-        public struct GridCell : IValidation, IEquatable<GridCell>
+        public struct GridCell : IValidation, IEquatable<GridCell>, IDisposable
         {
             #region Init
             internal readonly int ParentIdx;
@@ -494,30 +524,40 @@ namespace Syadeu.Mono
 
                 CustomData = data;
             }
+
+            public void Dispose() { }
         }
 
-        int tempIdx = -1;
-        Color red = new Color(1, 0, 0, .2f);
-        Color blue = new Color(0, 0, 1, .2f);
-        Color green = new Color(0, 1, 1, .2f);
+
+
+        Color red = new Color(1, 0, 0, .1f);
+        Color grey = new Color(1, 1, 1, .1f);
+        //Color green = new Color(0, 1, 1, .2f);
         public override void OnStart()
         {
-            tempIdx = CreateGrid(new Bounds(new Vector3(1.25f, 0, 0), new Vector3(22.5f, 10, 40)), m_CellSize, true);
+            int temp = CreateGrid(new Bounds(Vector3.zero, new Vector3(100, 10, 100)), m_CellSize, true);
+            ref Grid grid = ref GetGrid(temp);
+            $"{grid.Length}".ToLog();
+            grid.EnableDrawGL = true;
         }
         private void OnRenderObject()
         {
-            if (tempIdx >= 0)
+            for (int i = 0; i < m_Grids.Length; i++)
             {
-                ref Grid grid = ref GetGrid(in tempIdx);
-                for (int i = 0; i < grid.Length; i++)
+                ref Grid grid = ref m_Grids[i];
+                if (!grid.EnableDrawGL) continue;
+
+                for (int a = 0; a < grid.Length; a++)
                 {
-                    ref var cell = ref grid.GetCell(i);
+                    ref var cell = ref grid.GetCell(a);
 
                     if (cell.BlockedByNavMesh)
                     {
-                        GLDrawBounds(in cell.Bounds, red);
+                        //GLDrawBounds(in cell.Bounds, red);
+                        GLDrawPlane(cell.Bounds.center, new Vector2(cell.Bounds.size.x, cell.Bounds.size.z), in red, true);
                     }
-                    else GLDrawBounds(in cell.Bounds, i % 2 == 0 ? green : blue);
+                    //else GLDrawBounds(in cell.Bounds, a % 2 == 0 ? green : blue);
+                    else GLDrawPlane(cell.Bounds.center, new Vector2(cell.Bounds.size.x, cell.Bounds.size.z), in grey, true);
                 }
             }
         }
@@ -532,16 +572,65 @@ namespace Syadeu.Mono
             if (!Application.isPlaying)
             {
                 count = s_EditorGrids.Length;
+                for (int i = 0; i < s_EditorGrids.Length; i++)
+                {
+                    s_EditorGrids[i].Dispose();
+                }
                 s_EditorGrids = new Grid[0];
             }
             else
 #endif
             {
                 count = Instance.m_Grids.Length;
+                for (int i = 0; i < Instance.m_Grids.Length; i++)
+                {
+                    Instance.m_Grids[i].Dispose();
+                }
                 Instance.m_Grids = new Grid[0];
             }
 
             return count;
+        }
+
+        public static bool HasGrid(in Guid guid)
+        {
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                for (int i = 0; i < s_EditorGrids.Length; i++)
+                {
+                    if (s_EditorGrids[i].Guid.Equals(guid)) return true;
+                }
+            }
+            else
+#endif
+            {
+                for (int i = 0; i < Instance.m_Grids.Length; i++)
+                {
+                    if (Instance.m_Grids[i].Guid.Equals(guid)) return true;
+                }
+            }
+            return false;
+        }
+        public static bool HasGrid(in int idx)
+        {
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                for (int i = 0; i < s_EditorGrids.Length; i++)
+                {
+                    if (s_EditorGrids[i].Idx.Equals(idx)) return true;
+                }
+            }
+            else
+#endif
+            {
+                for (int i = 0; i < Instance.m_Grids.Length; i++)
+                {
+                    if (Instance.m_Grids[i].Idx.Equals(idx)) return true;
+                }
+            }
+            return false;
         }
 
         public static ref Grid GetGrid(in int idx)
