@@ -14,6 +14,7 @@ using System.Reflection;
 namespace Syadeu.Mono
 {
     [DisallowMultipleComponent]
+    [StaticManagerIntializeOnLoad]
     public class GridManager : StaticManager<GridManager>
     {
         #region Init

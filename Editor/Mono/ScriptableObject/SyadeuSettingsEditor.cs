@@ -1,5 +1,9 @@
-﻿using Syadeu.Mono;
-
+﻿using NUnit.Framework;
+using Syadeu;
+using Syadeu.Mono;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
@@ -9,6 +13,7 @@ namespace SyadeuEditor
     public class SyadeuSettingsEditor : Editor
     {
         bool m_EnableHelpbox = false;
+        //public List<string> m_ManagerNames = new List<string>();
 
         bool m_UserTag = false;
         bool m_CustomTag = false;
@@ -43,6 +48,16 @@ namespace SyadeuEditor
 
                 AssetDatabase.SaveAssets();
             }
+
+            //Type[] types = typeof(CoreSystem).Assembly.GetTypes().Where(TheType => TheType.IsClass && !TheType.IsAbstract && TheType.GetInterface("IStaticManager") != null).ToArray();
+            //{
+            //    m_ManagerNames.Clear();
+            //    for (int i = 0; i < types.Length; i++)
+            //    {
+            //        m_ManagerNames.Add(types[i].Name);
+            //    }
+            //}
+
         }
         public override void OnInspectorGUI()
         {
@@ -86,6 +101,12 @@ namespace SyadeuEditor
 
             SyadeuSettings.Instance.m_CrashAfterException =
                 EditorGUILayout.ToggleLeft("에러 발생 후 강제 크래쉬", SyadeuSettings.Instance.m_CrashAfterException);
+
+            //EditorGUILayout.Space();
+            //for (int i = 0; i < m_ManagerNames.Count; i++)
+            //{
+            //    EditorGUILayout.LabelField(m_ManagerNames[i]);
+            //}
         }
     }
 }

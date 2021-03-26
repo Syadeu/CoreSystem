@@ -186,14 +186,6 @@ namespace SyadeuEditor
                 GLDuo(in b2, in t2, in green); GLDuo(in t1, in b1, in red);// Z+
 
                 GLDuo(in t0, in t1, in green); GLDuo(in t2, in t3, in red);// Y+
-
-
-                //GLQuad(in b3, in b2, in b1, in b0, in green);// Y-
-                //GLQuad(in b1, in t1, in t0, in b0, in red);// X-
-                //GLQuad(in b0, in t0, in t3, in b3, in blue);// Z-
-                //GLQuad(in b3, in t3, in t2, in b2, in red);// X+
-                //GLQuad(in b2, in t2, in t1, in b1, in blue);// Z+
-                //GLQuad(in t0, in t1, in t2, in t3, in green);// Y+
             }
             GL.End();
             GL.PopMatrix();

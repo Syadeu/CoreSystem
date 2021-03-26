@@ -16,6 +16,7 @@ using UnityEngine.Diagnostics;
 using UnityEngine.Networking;
 using System.Threading.Tasks;
 using Syadeu.Extensions.Logs;
+using System.Reflection;
 
 namespace Syadeu
 {
@@ -352,6 +353,21 @@ namespace Syadeu
         private static void OnGameStart()
         {
             Instance.Initialize(SystemFlag.MainSystem);
+
+            Type[] types = typeof(CoreSystem).Assembly.GetTypes()
+                .Where(other => other.GetCustomAttribute<StaticManagerIntializeOnLoadAttribute>() != null)
+                .ToArray();
+            for (int i = 0; i < types.Length; i++)
+            {
+                Type staticManager = typeof(StaticManager<>).MakeGenericType(types[i]);
+                if (types[i].BaseType != staticManager)
+                {
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                        $"{types[i].Name}: StaticManagerInitializeOnLoad 어트리뷰트는 StaticManager를 상속받은 객체에만 사용되어야합니다.");
+                }
+
+                staticManager.GetProperty("Instance").GetGetMethod().Invoke(null, null);
+            }
         }
 
         private void Awake()
