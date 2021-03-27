@@ -11,6 +11,7 @@ using UnityEngine.AI;
 using Unity.Mathematics;
 using System.Reflection;
 using Unity.Collections;
+using System.Collections.Concurrent;
 
 namespace Syadeu.Mono
 {
@@ -21,7 +22,6 @@ namespace Syadeu.Mono
         #region Init
         public override bool HideInHierarchy => false;
 
-        //[SerializeField] private bool m_DrawGridAtRuntime = false;
         [SerializeField] private float m_CellSize = 2.5f;
         [SerializeField] private float m_GridHeight = 0;
 
@@ -31,6 +31,12 @@ namespace Syadeu.Mono
 #if UNITY_EDITOR
         public static Grid[] s_EditorGrids = new Grid[0];
 #endif
+
+        public Camera RenderCameraTarget
+        {
+            get => RenderManager.Instance.m_MainCamera.Value;
+            set => RenderManager.SetCamera(value);
+        }
 
         public delegate void GridRWAllTagLambdaDescription(in int i, ref GridCell gridCell, in UserTagFlag userTag, in CustomTagFlag customTag);
         public delegate void GridRWUserTagLambdaDescription(in int i, ref GridCell gridCell, in UserTagFlag userTag);
@@ -224,6 +230,18 @@ namespace Syadeu.Mono
                 return BackgroundJob.ParallelFor(Cells, (i, cell) =>
                 {
                     if (cell.Bounds.Contains(worldPosition))
+                    {
+                        idx[0] = i;
+                        return true;
+                    }
+                    return false;
+                }, chunkSize);
+            }
+            public BackgroundJob GetCellAsync(Vector2Int grid, NativeArray<int> idx, int chunkSize = 2024)
+            {
+                return BackgroundJob.ParallelFor(Cells, (i, cell) =>
+                {
+                    if (cell.Location.Equals(grid))
                     {
                         idx[0] = i;
                         return true;
@@ -438,7 +456,7 @@ namespace Syadeu.Mono
         public struct GridCell : IValidation, IEquatable<GridCell>, IDisposable
         {
             #region Init
-            internal readonly int ParentIdx;
+            public readonly int ParentIdx;
 
             public int2 Location;
             public Bounds Bounds;
@@ -512,14 +530,13 @@ namespace Syadeu.Mono
                 CustomData = cell.CustomData;
             }
 
-            public readonly Grid GetParent() => GetGrid(in ParentIdx);
             public bool IsValid() => Verties != null;
             public bool Equals(GridCell other) => Location.Equals(other.Location);
             public bool IsVisable()
             {
                 for (int i = 0; i < Verties.Length; i++)
                 {
-                    if (IsInScreen(in Verties[i])) return true;
+                    if (IsInScreen(Instance.RenderCameraTarget, Verties[i])) return true;
                 }
                 return false;
             }
@@ -552,6 +569,7 @@ namespace Syadeu.Mono
 
         private void OnRenderObject()
         {
+            GLSetMaterial();
             for (int i = 0; i < m_Grids.Length; i++)
             {
                 ref Grid grid = ref m_Grids[i];
@@ -560,6 +578,7 @@ namespace Syadeu.Mono
                 for (int a = 0; a < grid.Length; a++)
                 {
                     ref var cell = ref grid.GetCell(a);
+                    if (!IsInScreen(RenderCameraTarget, cell.Bounds.center)) continue;
 
                     if (!cell.Enabled || cell.BlockedByNavMesh)
                     {
@@ -567,7 +586,7 @@ namespace Syadeu.Mono
                     }
                     else
                     {
-                        GLDrawPlane(cell.Bounds.center, new Vector2(cell.Bounds.size.x, cell.Bounds.size.z), 
+                        GLDrawPlane(cell.Bounds.center, new Vector2(cell.Bounds.size.x, cell.Bounds.size.z),
                             cell.Highlighted ? cell.HighlightColor : cell.NormalColor, true);
                     }
                 }
@@ -842,15 +861,6 @@ namespace Syadeu.Mono
 
         #endregion
 
-        private static bool IsInScreen(in float3 screenPos)
-        {
-            if (screenPos.y < 0 || screenPos.y > Screen.height ||
-                screenPos.x < 0 || screenPos.x > Screen.width || screenPos.z < 0)
-            {
-                return false;
-            }
-            return true;
-        }
         private static Grid InternalCreateGrid(in int idx, in Bounds bounds, in float gridCellSize, in bool enableNavMesh)
         {
             int xSize = Mathf.FloorToInt(bounds.size.x / gridCellSize);

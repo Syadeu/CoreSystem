@@ -14,13 +14,12 @@ namespace Syadeu.Mono
     {
         public delegate bool RenderCondition();
 
-        public override string DisplayName => "Render Manager";
         public override bool DontDestroy => false;
         public override bool HideInHierarchy => false;
 
         public List<ManagedObject> ManagedObjects = new List<ManagedObject>();
 
-        private readonly ObClass<Camera> m_MainCamera = new ObClass<Camera>(ObValueDetection.Changed);
+        internal readonly ObClass<Camera> m_MainCamera = new ObClass<Camera>(ObValueDetection.Changed);
 
         internal Matrix4x4 CamMatrix4x4 { get; private set; }
 
@@ -36,8 +35,8 @@ namespace Syadeu.Mono
 
         private void Awake()
         {
-            m_MainCamera.Value = Camera.main;
             m_MainCamera.OnValueChange += MainCamera_OnValueChange;
+            m_MainCamera.Value = Camera.main;
 
             //StartUnityUpdate(UnityUpdate());
         }
@@ -49,6 +48,10 @@ namespace Syadeu.Mono
             CamMatrix4x4 = GetCameraMatrix4X4(target);
         }
 
+        private void Update()
+        {
+            CamMatrix4x4 = GetCameraMatrix4X4(m_MainCamera.Value);
+        }
         //private IEnumerator UnityUpdate()
         //{
         //    while (m_Instance != null)

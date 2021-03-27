@@ -27,9 +27,9 @@ namespace Syadeu
 
         public static void AwaitForNotNull<T>(ref T component, ref bool order, Action init)
         {
-            $"CoreSystem.ThreadSafe :: 백그라운드 스레드에서 Mono 매니저 객체({typeof(T).Name})를 생성 요청함".ToLog();
             if (!order)
             {
+                $"CoreSystem.ThreadSafe :: 백그라운드 스레드에서 Mono 매니저 객체({typeof(T).Name})를 생성 요청함".ToLog();
                 m_EnforceOrder.Enqueue(init);
                 order = true;
             }

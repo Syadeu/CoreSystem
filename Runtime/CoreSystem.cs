@@ -605,11 +605,7 @@ namespace Syadeu
                 ThreadAwaiter(100);
             } while (!m_StartUpdate && MainThread != null && Initialized);
 
-            CreateNewBackgroundJobWorker(false);
-            CreateNewBackgroundJobWorker(false);
-            CreateNewBackgroundJobWorker(false);
-            CreateNewBackgroundJobWorker(false);
-            CreateNewBackgroundJobWorker(false);
+            InternalCreateNewBackgroundWorker(32, false);
 
             //"LOG :: Background worker has started".ToLog();
 
@@ -772,6 +768,10 @@ namespace Syadeu
                 OnBackgroundJobSampler.Begin();
 #endif
                 #region BackgroundJob
+                if (m_BackgroundJobs.Count > 100 && !GetBackgroundWorker(out _))
+                {
+                    InternalCreateNewBackgroundWorker(32, false);
+                }
                 for (int i = 0; m_BackgroundJobs.Count > 0 && i < BackgroundJobWorkers.Count; i++)
                 {
                     if (BackgroundJobWorkers[i].standAlone) continue;
@@ -792,11 +792,11 @@ namespace Syadeu
                             wjob.WorkerIndex = i;
                             BackgroundJobWorkers[i].Worker.RunWorkerAsync(wjob);
                         }
-                        else if (BackgroundJobWorkers[i].Worker.IsBusy &&
-                            BackgroundJobWorkers[i].Jobs.TryDequeue(out var rjob))
-                        {
-                            m_BackgroundJobs.Enqueue(rjob);
-                        }
+                        //else if (BackgroundJobWorkers[i].Worker.IsBusy &&
+                        //    BackgroundJobWorkers[i].Jobs.TryDequeue(out var rjob))
+                        //{
+                        //    m_BackgroundJobs.Enqueue(rjob);
+                        //}
                     }
                 }
                 #endregion
@@ -1221,7 +1221,7 @@ namespace Syadeu
                 job.Faild = true; job.IsRunning = false; job.m_IsDone = true;
                 //job.Result = $"{nameof(mainthread)}: {mainthread.Message}";
 
-                ConsoleWindow.Log($"Unity API Detected in Background Thread\n{job.CalledFrom}");
+                //ConsoleWindow.Log($"Unity API Detected in Background Thread\n{job.CalledFrom}");
                 Debug.LogException(mainthread);
 #if UNITY_EDITOR
                 throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, 
@@ -1236,7 +1236,7 @@ namespace Syadeu
                 job.Faild = true; job.IsRunning = false; job.m_IsDone = true; job.Exception = ex;
                 //job.Result = $"{nameof(ex)}: {ex.Message}";
 
-                ConsoleWindow.Log($"Error Raised while executing Jobs: {ex.Message}\n{job.CalledFrom}");
+                //ConsoleWindow.Log($"Error Raised while executing Jobs: {ex.Message}\n{job.CalledFrom}");
                 Debug.LogException(ex);
 #if UNITY_EDITOR
                 throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, 
@@ -1278,6 +1278,28 @@ namespace Syadeu
 
         #region Internals
 
+        private static void InternalCreateNewBackgroundWorker(int count, bool isStandAlone)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                var jobWorker = new BackgroundJobWorker
+                {
+                    Worker = new BackgroundWorker
+                    {
+                        WorkerSupportsCancellation = true
+                    },
+                    standAlone = isStandAlone
+                };
+
+                jobWorker.Index = Instance.BackgroundJobWorkers.Count;
+
+                Instance.BackgroundJobWorkers.Add(jobWorker);
+                //Instance.BackgroundJobWorkerSamplers.Add(UnityEngine.Profiling.CustomSampler.Create($"Worker {jobWorker.Index}"));
+
+                jobWorker.Worker.DoWork += new DoWorkEventHandler(Instance.BackgroundJobRequest);
+                jobWorker.Worker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(Instance.BackgroundJobCompleted);
+            }
+        }
         internal static void InternalAddBackgroundJob(BackgroundJob job)
         {
             Instance.m_BackgroundJobs.Enqueue(job);

@@ -60,6 +60,7 @@ namespace Syadeu
             {
                 throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "이 잡은 메인 잡이 아닙니다. 메인 잡을 실행하세요");
             }
+            if (IsRunning) return this;
 
             Reset();
             if (!Faild)
@@ -90,6 +91,7 @@ namespace Syadeu
             {
                 throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "이 잡은 메인 잡이 아닙니다. 메인 잡을 실행하세요");
             }
+            if (IsRunning) return this;
 
             Reset();
             if (!Faild)
@@ -189,7 +191,7 @@ namespace Syadeu
                 {
                     job.ConnectJob(new BackgroundJob(() =>
                     {
-                        for (int i = chunkSize * (div - 1); i < list.Count; i++)
+                        for (int i = chunkSize * (div); i < list.Count; i++)
                         {
                             action.Invoke(i, list[i]);
                         }
@@ -238,7 +240,7 @@ namespace Syadeu
                 {
                     job.ConnectJob(new BackgroundJob(() =>
                     {
-                        for (int i = chunkSize * (div - 1); i < list.Count; i++)
+                        for (int i = chunkSize * (div); i < list.Count; i++)
                         {
                             if (found[0]) break;
                             found[0] = func.Invoke(i, list[i]);

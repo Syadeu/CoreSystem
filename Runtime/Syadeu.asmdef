@@ -5,7 +5,8 @@
         "FMODUnity",
         "Unity.InputSystem",
         "Unity.Jobs",
-        "Unity.Mathematics"
+        "Unity.Mathematics",
+        "Unity.Collections"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

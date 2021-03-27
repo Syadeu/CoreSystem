@@ -78,10 +78,13 @@ namespace Syadeu
             }
         }
 
+        protected void GLSetMaterial(Material mat = null)
+        {
+            if (mat == null) DefaultMaterial.SetPass(0);
+            else mat.SetPass(0);
+        }
         protected void GLDrawLine(in Vector3 from, in Vector3 to)
         {
-            DefaultMaterial.SetPass(0);
-
             GL.PushMatrix();
             //GL.MultMatrix(transform.localToWorldMatrix);
 
@@ -94,14 +97,10 @@ namespace Syadeu
         }
         protected void GLDrawMesh(Mesh mesh, Material material = null)
         {
-            if (material == null) material = DefaultMaterial;
-
             Color
                 red = new Color { r = 1, a = 0.1f },
                 green = new Color { g = 1, a = 0.1f },
                 blue = new Color { b = 1, a = 0.1f };
-
-            material.SetPass(0);
 
             GL.PushMatrix();
             //GL.MultMatrix(transform.localToWorldMatrix);
@@ -125,10 +124,6 @@ namespace Syadeu
         }
         protected void GLDrawMesh(in Vector3 center, Mesh mesh, Material material = null)
         {
-            if (material == null) material = DefaultMaterial;
-
-            material.SetPass(0);
-
             GL.PushMatrix();
             //GL.MultMatrix(transform.localToWorldMatrix);
             GL.Begin(GL.TRIANGLES);
@@ -149,7 +144,7 @@ namespace Syadeu
             GL.End();
             GL.PopMatrix();
         }
-        protected void GLDrawPlane(in Vector3 center, in Vector2 size, in Color color, bool withOutline = false)
+        protected void GLDrawPlane(in Vector3 center, in Vector2 size, in Color color, bool withOutline = false, bool autoPush = true)
         {
             Vector2 half = size * .5f;
 
@@ -159,9 +154,7 @@ namespace Syadeu
                 b2 = new Vector3(center.x + half.x, center.y + .1f, center.z + half.y),
                 b3 = new Vector3(center.x + half.x, center.y + .1f, center.z - half.y);
 
-            DefaultMaterial.SetPass(0);
-
-            GL.PushMatrix();
+            if (autoPush) GL.PushMatrix();
             GL.Begin(GL.QUADS);
             {
                 GLQuad(in b0, in b1, in b2, in b3, color);
@@ -178,7 +171,7 @@ namespace Syadeu
                 }
                 GL.End();
             }
-            GL.PopMatrix();
+            if (autoPush) GL.PopMatrix();
         }
         protected void GLDrawBounds(in Bounds bounds)
         {
@@ -194,9 +187,6 @@ namespace Syadeu
                 t1 = new Vector3(min.x, max.y, max.z),
                 t2 = max,
                 t3 = new Vector3(max.x, max.y, min.z);
-
-            Material material = DefaultMaterial;
-            material.SetPass(0);
 
             GL.PushMatrix();
             //GL.MultMatrix(transform.localToWorldMatrix);
@@ -227,9 +217,6 @@ namespace Syadeu
                 t2 = max,
                 t3 = new Vector3(max.x, max.y, min.z);
 
-            Material material = DefaultMaterial;
-            material.SetPass(0);
-
             GL.PushMatrix();
             //GL.MultMatrix(transform.localToWorldMatrix);
             GL.Begin(GL.QUADS);
@@ -258,9 +245,6 @@ namespace Syadeu
                 t1 = new Vector3(min.x, max.y, max.z),
                 t2 = max,
                 t3 = new Vector3(max.x, max.y, min.z);
-
-            Material material = DefaultMaterial;
-            material.SetPass(0);
 
             GL.PushMatrix();
             //GL.MultMatrix(transform.localToWorldMatrix);
@@ -295,9 +279,6 @@ namespace Syadeu
                 t1 = new Vector3(min.x, max.y, max.z),
                 t2 = max,
                 t3 = new Vector3(max.x, max.y, min.z);
-
-            Material material = DefaultMaterial;
-            material.SetPass(0);
 
             GL.PushMatrix();
             //GL.MultMatrix(transform.localToWorldMatrix);
@@ -335,6 +316,47 @@ namespace Syadeu
         }
 
         #endregion
+
+        protected Mesh CreatePlaneMesh(in Vector3 size)
+        {
+            Mesh mesh = new Mesh();
+            mesh.hideFlags = HideFlags.HideAndDontSave;
+            mesh.vertices = new Vector3[]
+            {
+                Vector3.zero,
+                new Vector3(size.x, 0, 0),
+                new Vector3(0, 0, size.z),
+                new Vector3(size.x, 0, size.z)
+            };
+            mesh.triangles = new int[]
+            {
+                0, 2, 1,
+                2, 3, 1
+            };
+            mesh.normals = new Vector3[]
+            {
+                -Vector3.forward,
+                -Vector3.forward,
+                -Vector3.forward,
+                -Vector3.forward
+            };
+            mesh.uv = new Vector2[]
+            {
+                Vector2.zero,
+                new Vector2(1, 0),
+                new Vector2(0, 1),
+                Vector2.one
+            };
+            return mesh;
+        }
+        protected void MeshDraw(Mesh mesh, Material material, Vector3 pos, Quaternion rot)
+        {
+            //var option = new MaterialPropertyBlock();
+            //option.SetColor("default", new Color { a = .1f });
+            
+            Graphics.DrawMesh(mesh, pos, rot, material, 0);
+            //DefaultMaterial.color = temp;
+        }
 
         protected static bool IsInScreen(Camera cam, Vector3 worldPosition)
         {
