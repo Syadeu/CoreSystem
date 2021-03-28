@@ -4,6 +4,8 @@ namespace Syadeu
 {
     public abstract class ManagerEntity : MonoBehaviour
     {
+        protected static Transform InstanceGroupTr { get; set; }
+
         #region Thread Methods
 
         public static System.Threading.Thread MainThread { get; protected set; }
@@ -356,19 +358,6 @@ namespace Syadeu
             
             Graphics.DrawMesh(mesh, pos, rot, material, 0);
             //DefaultMaterial.color = temp;
-        }
-
-        protected static bool IsInScreen(Camera cam, Vector3 worldPosition)
-        {
-            Vector3 screenPos = cam.WorldToScreenPoint(worldPosition);
-            screenPos.y = Screen.height - screenPos.y;
-
-            if (screenPos.y < 0 || screenPos.y > Screen.height ||
-                screenPos.x < 0 || screenPos.x > Screen.width || screenPos.z < 0)
-            {
-                return false;
-            }
-            return true;
         }
     }
 }

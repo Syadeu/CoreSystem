@@ -20,7 +20,7 @@ namespace Syadeu
                 {
                     throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
                         $"MonoManager를 상속받는 {typeof(T).Name}은 인스턴스가 자동으로 생성되지 않습니다.\n" +
-                        $"먼저 컴포넌트를 빈 GameObject에 추가해주세요");
+                        $"먼저 컴포넌트를 빈 GameObject에 추가해주세요, 혹은 호출이 너무 일찍되었습니다. Awake에서 호출하지마세요.");
                 }
 
                 return m_Instance;
@@ -65,9 +65,6 @@ namespace Syadeu
             }
             else name = $"MonoManager.{typeof(T).Name}";
 #endif
-
-            if (DontDestroy) transform.SetParent(System.transform);
-
             if (!SyadeuSettings.Instance.m_VisualizeObjects)
             {
                 if (HideInHierarchy) gameObject.hideFlags = HideFlags.HideAndDontSave;
@@ -76,8 +73,20 @@ namespace Syadeu
             OnInitialize();
 
             m_Instance = this as T;
-            if (DontDestroy) CoreSystem.StaticManagers.Add(this);
-            else CoreSystem.InstanceManagers.Add(this);
+            if (DontDestroy)
+            {
+                CoreSystem.StaticManagers.Add(this);
+                transform.SetParent(System.transform);
+            }
+            else
+            {
+                CoreSystem.InstanceManagers.Add(this);
+                if (InstanceGroupTr == null)
+                {
+                    InstanceGroupTr = new GameObject("InstanceSystemGroup").transform;
+                }
+                transform.SetParent(InstanceGroupTr);
+            }
 
             OnStart();
         }

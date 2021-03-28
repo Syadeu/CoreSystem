@@ -22,6 +22,8 @@ namespace Syadeu.ECS
         public float3 Center = new float3(0, 0, 0);
         public float3 Size = new float3(100, 20, 100);
 
+        public static event System.Action onNavMeshBaked;
+
         private EntityArchetype m_BaseArchetype;
         private EntityQuery m_BaseQuery;
 
@@ -58,6 +60,7 @@ namespace Syadeu.ECS
                 NavMeshBuilder.UpdateNavMeshDataAsync(Instance.m_NavMesh, NavMesh.GetSettingsByID(0), Instance.m_Sources, bounds);
 
                 ECSPathQuerySystem.Purge();
+                onNavMeshBaked?.Invoke();
                 Instance.m_IsObstacleChanged = false;
                 return;
             }
@@ -194,6 +197,7 @@ namespace Syadeu.ECS
                         NavMeshBuilder.UpdateNavMeshDataAsync(m_NavMesh, defaultBuildSettings, m_Sources, bounds);
 
                         ECSPathQuerySystem.Purge();
+                        onNavMeshBaked?.Invoke();
                         m_IsObstacleChanged = false;
                     }
                 })

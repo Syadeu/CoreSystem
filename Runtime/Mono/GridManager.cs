@@ -1,17 +1,20 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
+using System.Linq;
+using System.Reflection;
+
+
 using UnityEngine;
+using UnityEngine.AI;
+using UnityEngine.Experimental.AI;
+using Unity.Collections;
+using Unity.Mathematics;
 
 using Syadeu;
 using Syadeu.Database;
-using System;
 using Syadeu.Extensions.Logs;
-using System.Linq;
-using UnityEngine.AI;
-using Unity.Mathematics;
-using System.Reflection;
-using Unity.Collections;
-using System.Collections.Concurrent;
 
 namespace Syadeu.Mono
 {
@@ -26,7 +29,7 @@ namespace Syadeu.Mono
         [SerializeField] private float m_GridHeight = 0;
 
         private Grid[] m_Grids = new Grid[0];
-        //private LineRenderer m_LineRenderer;
+        private NavMeshQuery m_NavMeshQuery;
 
 #if UNITY_EDITOR
         public static Grid[] s_EditorGrids = new Grid[0];
@@ -277,50 +280,43 @@ namespace Syadeu.Mono
                 }
                 return indexes;
             }
+            public readonly GridCell[] GetCells() => Cells;
 
             #endregion
 
             #region Lambda Descriptions
 
-            public Grid For(GridLambdaDescription lambdaDescription)
+            public void For(GridLambdaDescription lambdaDescription)
             {
                 for (int i = 0; i < Cells.Length; i++)
                 {
                     lambdaDescription.Invoke(in i, in Cells[i]);
                 }
-
-                return this;
             }
-            public Grid For<T>(GridLambdaDescription lambdaDescription) where T : struct, ITag
+            public void For<T>(GridLambdaDescription lambdaDescription) where T : struct, ITag
             {
                 for (int i = 0; i < Cells.Length; i++)
                 {
                     if (!Cells[i].GetCustomData(out T _)) continue;
                     lambdaDescription.Invoke(in i, in Cells[i]);
                 }
-
-                return this;
             }
-            public Grid For(GridRWLambdaDescription lambdaDescription)
+            public void For(GridRWLambdaDescription lambdaDescription)
             {
                 for (int i = 0; i < Cells.Length; i++)
                 {
                     lambdaDescription.Invoke(in i, ref Cells[i]);
                 }
-
-                return this;
             }
-            public Grid For<T>(GridRWLambdaDescription lambdaDescription) where T : struct, ITag
+            public void For<T>(GridRWLambdaDescription lambdaDescription) where T : struct, ITag
             {
                 for (int i = 0; i < Cells.Length; i++)
                 {
                     if (!Cells[i].GetCustomData(out T _)) continue;
                     lambdaDescription.Invoke(in i, ref Cells[i]);
                 }
-
-                return this;
             }
-            public Grid For(GridRWUserTagLambdaDescription lambdaDescription)
+            public void For(GridRWUserTagLambdaDescription lambdaDescription)
             {
                 for (int i = 0; i < Cells.Length; i++)
                 {
@@ -331,10 +327,8 @@ namespace Syadeu.Mono
 
                     lambdaDescription.Invoke(in i, ref Cells[i], tag.UserTag);
                 }
-
-                return this;
             }
-            public Grid For<T>(GridRWUserTagLambdaDescription lambdaDescription) where T : struct, ITag
+            public void For<T>(GridRWUserTagLambdaDescription lambdaDescription) where T : struct, ITag
             {
                 for (int i = 0; i < Cells.Length; i++)
                 {
@@ -345,10 +339,8 @@ namespace Syadeu.Mono
 
                     lambdaDescription.Invoke(in i, ref Cells[i], data.UserTag);
                 }
-
-                return this;
             }
-            public Grid For(GridRWCustomTagLambdaDescription lambdaDescription)
+            public void For(GridRWCustomTagLambdaDescription lambdaDescription)
             {
                 for (int i = 0; i < Cells.Length; i++)
                 {
@@ -359,10 +351,8 @@ namespace Syadeu.Mono
 
                     lambdaDescription.Invoke(in i, ref Cells[i], tag.CustomTag);
                 }
-
-                return this;
             }
-            public Grid For<T>(GridRWCustomTagLambdaDescription lambdaDescription) where T : struct, ITag
+            public void For<T>(GridRWCustomTagLambdaDescription lambdaDescription) where T : struct, ITag
             {
                 for (int i = 0; i < Cells.Length; i++)
                 {
@@ -373,10 +363,8 @@ namespace Syadeu.Mono
 
                     lambdaDescription.Invoke(in i, ref Cells[i], data.CustomTag);
                 }
-
-                return this;
             }
-            public Grid For(GridRWAllTagLambdaDescription lambdaDescription)
+            public void For(GridRWAllTagLambdaDescription lambdaDescription)
             {
                 for (int i = 0; i < Cells.Length; i++)
                 {
@@ -387,10 +375,8 @@ namespace Syadeu.Mono
 
                     lambdaDescription.Invoke(in i, ref Cells[i], tag.UserTag, tag.CustomTag);
                 }
-
-                return this;
             }
-            public Grid For<T>(GridRWAllTagLambdaDescription lambdaDescription) where T : struct, ITag
+            public void For<T>(GridRWAllTagLambdaDescription lambdaDescription) where T : struct, ITag
             {
                 for (int i = 0; i < Cells.Length; i++)
                 {
@@ -401,8 +387,6 @@ namespace Syadeu.Mono
 
                     lambdaDescription.Invoke(in i, ref Cells[i], data.UserTag, data.CustomTag);
                 }
-
-                return this;
             }
 
             #endregion
@@ -485,8 +469,16 @@ namespace Syadeu.Mono
                     if (!parent.EnableNavMesh) return false;
                     for (int i = 0; i < NavMeshVerties.Length; i++)
                     {
-                        NavMesh.SamplePosition(NavMeshVerties[i], out NavMeshHit hit, .5f, -1);
-                        if (!hit.hit) return true;
+                        if (IsMainthread())
+                        {
+                            NavMesh.SamplePosition(NavMeshVerties[i], out NavMeshHit hit, .5f, -1);
+                            if (!hit.hit) return true;
+                        }
+                        else
+                        {
+                            NavMeshLocation hit = Instance.m_NavMeshQuery.MapLocation(NavMeshVerties[i], Vector3.one, 0, -1);
+                            if (!Instance.m_NavMeshQuery.IsValid(hit.polygon)) return true;
+                        }
                     }
                     return false;
                 }
@@ -540,7 +532,7 @@ namespace Syadeu.Mono
             {
                 for (int i = 0; i < Verties.Length; i++)
                 {
-                    if (IsInScreen(Instance.RenderCameraTarget, Verties[i])) return true;
+                    if (RenderManager.Instance.IsInCameraScreen(/*Instance.RenderCameraTarget, */Verties[i])) return true;
                 }
                 return false;
             }
@@ -571,6 +563,14 @@ namespace Syadeu.Mono
             public void Dispose() { }
         }
 
+        public override void OnInitialize()
+        {
+            m_NavMeshQuery = new NavMeshQuery(NavMeshWorld.GetDefaultWorld(), Allocator.Persistent, 256);
+        }
+        private void OnDestroy()
+        {
+            m_NavMeshQuery.Dispose();
+        }
         private void OnRenderObject()
         {
             GLSetMaterial();
@@ -582,7 +582,7 @@ namespace Syadeu.Mono
                 for (int a = 0; a < grid.Length; a++)
                 {
                     ref var cell = ref grid.GetCell(a);
-                    if (!IsInScreen(RenderCameraTarget, cell.Bounds.center)) continue;
+                    if (!RenderManager.Instance.IsInCameraScreen(/*RenderCameraTarget,*/ cell.Bounds.center)) continue;
 
                     if (!cell.Enabled || cell.BlockedByNavMesh)
                     {

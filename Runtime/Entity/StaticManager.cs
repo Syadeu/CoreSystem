@@ -30,7 +30,8 @@ namespace Syadeu
                     }
                     if (typeof(T) != typeof(CoreSystem) && !CoreSystem.Initialized)
                     {
-                        CoreSystem.Instance.Initialize();
+                        CoreSystem.Instance.Initialize(SystemFlag.MainSystem);
+                        DontDestroyOnLoad(CoreSystem.Instance.gameObject);
                     }
 
                     T ins;
@@ -62,7 +63,7 @@ namespace Syadeu
                     else ins.gameObject.name = $"StaticManager.{typeof(T).Name}";
 #endif
 
-                    if (ins.DontDestroy) DontDestroyOnLoad(ins.gameObject);
+                    //if (ins.DontDestroy) DontDestroyOnLoad(ins.gameObject);
                     if (!Mono.SyadeuSettings.Instance.m_VisualizeObjects)
                     {
                         if (ins.HideInHierarchy) ins.gameObject.hideFlags = HideFlags.HideAndDontSave;
@@ -78,7 +79,15 @@ namespace Syadeu
                             CoreSystem.StaticManagers.Add(ins);
                             ins.transform.SetParent(System.transform);
                         }
-                        else CoreSystem.InstanceManagers.Add(ins);
+                        else
+                        {
+                            CoreSystem.InstanceManagers.Add(ins);
+                            if (InstanceGroupTr == null)
+                            {
+                                InstanceGroupTr = new GameObject("InstanceSystemGroup").transform;
+                            }
+                            ins.transform.SetParent(InstanceGroupTr);
+                        }
                     }
 
                     ins.gameObject.isStatic = true;
