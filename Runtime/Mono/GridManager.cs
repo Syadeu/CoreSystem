@@ -91,6 +91,7 @@ namespace Syadeu.Mono
         internal struct BinaryGridCell
         {
             public int ParentIdx;
+            public int Idx;
 
             public int2 Location;
             public float3 Bounds_Center;
@@ -101,6 +102,7 @@ namespace Syadeu.Mono
             public BinaryGridCell(in GridCell gridCell)
             {
                 ParentIdx = gridCell.ParentIdx;
+                Idx = gridCell.Idx;
 
                 Location = gridCell.Location;
                 Bounds_Center = gridCell.Bounds.center;
@@ -114,8 +116,8 @@ namespace Syadeu.Mono
         {
             #region Init
 
-            internal Guid Guid;
-            internal int Idx;
+            public readonly Guid Guid;
+            public readonly int Idx;
 
             internal int2 GridSize;
             internal GridCell[] Cells;
@@ -457,6 +459,7 @@ namespace Syadeu.Mono
         {
             #region Init
             public readonly int ParentIdx;
+            public readonly int Idx;
 
             public int2 Location;
             public Bounds Bounds;
@@ -489,9 +492,10 @@ namespace Syadeu.Mono
                 }
             }
 
-            internal GridCell(int parentIdx, int2 location, Bounds bounds, bool enableNavMesh)
+            internal GridCell(int parentIdx, int idx, int2 location, Bounds bounds, bool enableNavMesh)
             {
                 ParentIdx = parentIdx;
+                Idx = idx;
 
                 Location = location;
                 Bounds = bounds;
@@ -525,7 +529,7 @@ namespace Syadeu.Mono
                 }
                 else NavMeshVerties = null;
             }
-            internal GridCell(in BinaryGridCell cell, bool enableNavMesh) : this(cell.ParentIdx, cell.Location, new Bounds(cell.Bounds_Center, cell.Bounds_Size), enableNavMesh)
+            internal GridCell(in BinaryGridCell cell, bool enableNavMesh) : this(cell.ParentIdx, cell.Idx, cell.Location, new Bounds(cell.Bounds_Center, cell.Bounds_Size), enableNavMesh)
             {
                 CustomData = cell.CustomData;
             }
@@ -861,7 +865,7 @@ namespace Syadeu.Mono
 
         #endregion
 
-        private static Grid InternalCreateGrid(in int idx, in Bounds bounds, in float gridCellSize, in bool enableNavMesh)
+        private static Grid InternalCreateGrid(in int parentIdx, in Bounds bounds, in float gridCellSize, in bool enableNavMesh)
         {
             int xSize = Mathf.FloorToInt(bounds.size.x / gridCellSize);
             int zSize = Mathf.FloorToInt(bounds.size.z / gridCellSize);
@@ -879,12 +883,12 @@ namespace Syadeu.Mono
                         bounds.min.x + halfSize + (gridCellSize * j), 0,
                         bounds.max.z - halfSize - (gridCellSize * i));
 
-                    cells[count] = new GridCell(idx, new int2(j, i), new Bounds(center, cellSize), enableNavMesh);
+                    cells[count] = new GridCell(parentIdx, count, new int2(j, i), new Bounds(center, cellSize), enableNavMesh);
                     count++;
                 }
             }
 
-            return new Grid(idx, new int2(xSize, zSize), gridCellSize, bounds.size.y, enableNavMesh, cells);
+            return new Grid(parentIdx, new int2(xSize, zSize), gridCellSize, bounds.size.y, enableNavMesh, cells);
         }
     }
 }
