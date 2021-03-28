@@ -68,9 +68,9 @@ namespace Syadeu.Mono
             public Guid Guid;
             public int Idx;
 
-            public int2 GridSize;
+            public int3 GridCenter;
+            public int3 GridSize;
             public float CellSize;
-            public float Height;
 
             public object CustomData;
 
@@ -81,9 +81,9 @@ namespace Syadeu.Mono
                 Guid = grid.Guid;
                 Idx = grid.Idx;
 
+                GridCenter = grid.GridCenter;
                 GridSize = grid.GridSize;
                 CellSize = grid.CellSize;
-                Height = grid.Height;
 
                 CustomData = grid.CustomData;
 
@@ -122,10 +122,12 @@ namespace Syadeu.Mono
             public readonly Guid Guid;
             public readonly int Idx;
 
-            internal int2 GridSize;
+            internal Bounds Bounds;
+            internal int3 GridCenter;
+            internal int3 GridSize;
+
             internal GridCell[] Cells;
             public float CellSize;
-            public float Height;
 
             internal object CustomData;
 
@@ -134,15 +136,19 @@ namespace Syadeu.Mono
 
             public int Length => Cells.Length;
 
-            internal Grid(int idx, int2 gridSize, float cellSize, float height, bool enableNavMesh, params GridCell[] cells)
+            internal Grid(int idx, int3 gridCenter, int3 gridSize, float cellSize, bool enableNavMesh, params GridCell[] cells)
             {
                 Guid = Guid.NewGuid();
                 Idx = idx;
 
+                Bounds = new Bounds(
+                    new Vector3(gridCenter.x, gridCenter.y, gridCenter.z),
+                    new Vector3(gridSize.x, gridSize.y, gridSize.z));
+                GridCenter = gridCenter;
                 GridSize = gridSize;
+
                 Cells = cells;
                 CellSize = cellSize;
-                Height = height;
 
                 CustomData = null;
 
@@ -160,7 +166,12 @@ namespace Syadeu.Mono
                 Guid = grid.Guid;
                 Idx = grid.Idx;
 
+                Bounds = new Bounds(
+                    new Vector3(grid.GridCenter.x, grid.GridCenter.y, grid.GridCenter.z),
+                    new Vector3(grid.GridSize.x, grid.GridSize.y, grid.GridSize.z));
+                GridCenter = grid.GridCenter;
                 GridSize = grid.GridSize;
+
                 GridCell[] convertedCells = new GridCell[cells.Length];
                 for (int i = 0; i < cells.Length; i++)
                 {
@@ -168,7 +179,6 @@ namespace Syadeu.Mono
                 }
                 Cells = convertedCells;
                 CellSize = grid.CellSize;
-                Height = grid.Height;
 
                 CustomData = grid.CustomData;
 
@@ -178,14 +188,6 @@ namespace Syadeu.Mono
 
             public bool IsValid() => HasGrid(in Guid);
             public bool Equals(Grid other) => Guid.Equals(other.Guid);
-            public bool Contains(Vector2Int grid)
-            {
-                for (int i = 0; i < Cells.Length; i++)
-                {
-                    if (Cells[i].Location.Equals(grid)) return true;
-                }
-                return false;
-            }
 
             #endregion
 
@@ -554,7 +556,7 @@ namespace Syadeu.Mono
                 if (data.GetType().GetCustomAttribute<SerializableAttribute>() == null)
                 {
                     throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
-                        "해당 객체는 Serializable 어트리뷰트가 선언되지 않았습니다.");
+                        $"해당 객체({data.GetType().Name})는 Serializable 어트리뷰트가 선언되지 않았습니다.");
                 }
 
                 CustomData = data;
@@ -667,6 +669,26 @@ namespace Syadeu.Mono
             }
             return false;
         }
+        public static bool HasGrid(in Vector3 worldPosition)
+        {
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                for (int i = 0; i < s_EditorGrids.Length; i++)
+                {
+                    if (s_EditorGrids[i].Bounds.Contains(worldPosition)) return true;
+                }
+            }
+            else
+#endif
+            {
+                for (int i = 0; i < Instance.m_Grids.Length; i++)
+                {
+                    if (Instance.m_Grids[i].Bounds.Contains(worldPosition)) return true;
+                }
+            }
+            return false;
+        }
 
         public static ref Grid GetGrid(in int idx)
         {
@@ -689,6 +711,28 @@ namespace Syadeu.Mono
 
             throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"인덱스 ({idx}) 그리드를 찾을 수 없음");
         }
+        public static ref Grid GetGrid(in Vector3 worldPosition)
+        {
+#if UNITY_EDITOR
+            if (IsMainthread() && !Application.isPlaying)
+            {
+                for (int i = 0; i < s_EditorGrids.Length; i++)
+                {
+                    if (s_EditorGrids[i].Bounds.Contains(worldPosition)) return ref s_EditorGrids[i];
+                }
+            }
+            else
+#endif
+            {
+                for (int i = 0; i < Instance.m_Grids.Length; i++)
+                {
+                    if (Instance.m_Grids[i].Bounds.Contains(worldPosition)) return ref Instance.m_Grids[i];
+                }
+            }
+
+            throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"포지션 ({worldPosition}) 그리드를 찾을 수 없음");
+        }
+
         public static int CreateGrid(in Bounds bounds, in float gridCellSize, in bool enableNavMesh)
         {
             List<Grid> newGrids;
@@ -888,7 +932,10 @@ namespace Syadeu.Mono
                 }
             }
 
-            return new Grid(parentIdx, new int2(xSize, zSize), gridCellSize, bounds.size.y, enableNavMesh, cells);
+            return new Grid(parentIdx, 
+                new int3(bounds.center), 
+                new int3(xSize, Mathf.RoundToInt(bounds.size.y), zSize), 
+                gridCellSize, enableNavMesh, cells);
         }
     }
 }

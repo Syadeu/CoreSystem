@@ -22,47 +22,78 @@ namespace SyadeuEditor
 
         bool m_ShowOriginalContents = false;
 
-        private void OnEnable()
-        {
-            if (SyadeuSettings.Instance.m_UserTagNameModule == null)
-            {
-                var userTag = CreateInstance<UserTagNameModule>();
-                userTag.name = "UserTagNameModule";
-                AssetDatabase.AddObjectToAsset(userTag, SyadeuSettings.Instance);
-                AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(SyadeuSettings.Instance));
+        //private void OnEnable()
+        //{
+        //    if (SyadeuSettings.Instance.m_UserTagNameModule == null)
+        //    {
+        //        var userTag = CreateInstance<UserTagNameModule>();
+        //        userTag.name = "UserTagNameModule";
+        //        AssetDatabase.AddObjectToAsset(userTag, SyadeuSettings.Instance);
+        //        AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(SyadeuSettings.Instance));
 
-                SyadeuSettings.Instance.m_UserTagNameModule = userTag;
-                EditorUtility.SetDirty(SyadeuSettings.Instance);
+        //        SyadeuSettings.Instance.m_UserTagNameModule = userTag;
+        //        EditorUtility.SetDirty(SyadeuSettings.Instance);
 
-                AssetDatabase.SaveAssets();
-            }
-            if (SyadeuSettings.Instance.m_CustomTagNameModule == null)
-            {
-                var customTag = CreateInstance<CustomTagNameModule>();
-                customTag.name = "CustomTagNameModule";
-                AssetDatabase.AddObjectToAsset(customTag, SyadeuSettings.Instance);
-                AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(SyadeuSettings.Instance));
+        //        AssetDatabase.SaveAssets();
+        //    }
+        //    if (SyadeuSettings.Instance.m_CustomTagNameModule == null)
+        //    {
+        //        var customTag = CreateInstance<CustomTagNameModule>();
+        //        customTag.name = "CustomTagNameModule";
+        //        AssetDatabase.AddObjectToAsset(customTag, SyadeuSettings.Instance);
+        //        AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(SyadeuSettings.Instance));
 
-                SyadeuSettings.Instance.m_CustomTagNameModule = customTag;
-                EditorUtility.SetDirty(SyadeuSettings.Instance);
+        //        SyadeuSettings.Instance.m_CustomTagNameModule = customTag;
+        //        EditorUtility.SetDirty(SyadeuSettings.Instance);
 
-                AssetDatabase.SaveAssets();
-            }
+        //        AssetDatabase.SaveAssets();
+        //    }
 
-            //Type[] types = typeof(CoreSystem).Assembly.GetTypes().Where(TheType => TheType.IsClass && !TheType.IsAbstract && TheType.GetInterface("IStaticManager") != null).ToArray();
-            //{
-            //    m_ManagerNames.Clear();
-            //    for (int i = 0; i < types.Length; i++)
-            //    {
-            //        m_ManagerNames.Add(types[i].Name);
-            //    }
-            //}
+        //    //Type[] types = typeof(CoreSystem).Assembly.GetTypes().Where(TheType => TheType.IsClass && !TheType.IsAbstract && TheType.GetInterface("IStaticManager") != null).ToArray();
+        //    //{
+        //    //    m_ManagerNames.Clear();
+        //    //    for (int i = 0; i < types.Length; i++)
+        //    //    {
+        //    //        m_ManagerNames.Add(types[i].Name);
+        //    //    }
+        //    //}
 
-        }
+        //}
         public override void OnInspectorGUI()
         {
             EditorUtils.StringHeader("CoreSystem Setting");
             EditorUtils.SectorLine();
+
+            if (SyadeuSettings.Instance.m_UserTagNameModule == null)
+            {
+                if (GUILayout.Button("Add UserTagNameModule"))
+                {
+                    var userTag = CreateInstance<UserTagNameModule>();
+                    userTag.name = "UserTagNameModule";
+                    AssetDatabase.AddObjectToAsset(userTag, SyadeuSettings.Instance);
+                    AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(SyadeuSettings.Instance));
+
+                    SyadeuSettings.Instance.m_UserTagNameModule = userTag;
+                    EditorUtility.SetDirty(SyadeuSettings.Instance);
+
+                    AssetDatabase.SaveAssets();
+                }
+            }
+            if (SyadeuSettings.Instance.m_CustomTagNameModule == null)
+            {
+                if (GUILayout.Button("Add CustomTagNameModule"))
+                {
+                    var customTag = CreateInstance<CustomTagNameModule>();
+                    customTag.name = "CustomTagNameModule";
+                    AssetDatabase.AddObjectToAsset(customTag, SyadeuSettings.Instance);
+                    AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(SyadeuSettings.Instance));
+
+                    SyadeuSettings.Instance.m_CustomTagNameModule = customTag;
+                    EditorUtility.SetDirty(SyadeuSettings.Instance);
+
+                    AssetDatabase.SaveAssets();
+                }
+            }
 
             m_EnableHelpbox = EditorGUILayout.ToggleLeft("도움말 표시", m_EnableHelpbox);
             EditorGUILayout.Space();
