@@ -5,7 +5,6 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Reflection;
 
-
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Experimental.AI;
@@ -15,6 +14,10 @@ using Unity.Mathematics;
 using Syadeu;
 using Syadeu.Database;
 using Syadeu.Extensions.Logs;
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace Syadeu.Mono
 {
@@ -133,6 +136,7 @@ namespace Syadeu.Mono
 
             public readonly bool EnableNavMesh;
             public bool EnableDrawGL;
+            public bool EnableDrawIdx;
 
             public int Length => Cells.Length;
 
@@ -154,6 +158,7 @@ namespace Syadeu.Mono
 
                 EnableNavMesh = enableNavMesh;
                 EnableDrawGL = false;
+                EnableDrawIdx = false;
             }
             internal Grid(in BinaryWrapper wrapper)
             {
@@ -184,6 +189,7 @@ namespace Syadeu.Mono
 
                 EnableNavMesh = grid.EnableNavMesh;
                 EnableDrawGL = false;
+                EnableDrawIdx = false;
             }
 
             public bool IsValid() => HasGrid(in Guid);
@@ -598,6 +604,39 @@ namespace Syadeu.Mono
                 }
             }
         }
+#if UNITY_EDITOR
+        private void OnDrawGizmos()
+        {
+            //GLSetMaterial();
+            for (int i = 0; i < s_EditorGrids.Length; i++)
+            {
+                ref Grid grid = ref s_EditorGrids[i];
+                if (!grid.EnableDrawGL) continue;
+
+                for (int a = 0; a < grid.Length; a++)
+                {
+                    ref var cell = ref grid.GetCell(a);
+
+                    if (!cell.Enabled || cell.BlockedByNavMesh)
+                    {
+                        Gizmos.color = cell.DisableColor;
+                    }
+                    else
+                    {
+                        Gizmos.color = cell.Highlighted ? cell.HighlightColor : cell.NormalColor;
+                    }
+
+                    Gizmos.DrawCube(cell.Bounds.center, new Vector3(cell.Bounds.size.x, .1f, cell.Bounds.size.z));
+                    Gizmos.DrawWireCube(cell.Bounds.center, new Vector3(cell.Bounds.size.x, .1f, cell.Bounds.size.z));
+
+                    if (grid.EnableDrawIdx)
+                    {
+                        Handles.Label(cell.Bounds.center, $"{cell.Location.x},{cell.Location.y}");
+                    }
+                }
+            }
+        }
+#endif
 
         #endregion
 
@@ -814,9 +853,11 @@ namespace Syadeu.Mono
             }
             return grid.Idx;
         }
-        public static void UpdateGrid(in int idx, in Bounds bounds, in float gridCellSize, in bool enableNavMesh)
+        public static void UpdateGrid(in int idx, in Bounds bounds, in float gridCellSize, in bool enableNavMesh, in bool drawGL = false, in bool drawIdx = false)
         {
             Grid newGrid = InternalCreateGrid(in idx, in bounds, in gridCellSize, in enableNavMesh);
+            newGrid.EnableDrawGL = drawGL;
+            newGrid.EnableDrawIdx = drawIdx;
             ref Grid target = ref GetGrid(in idx);
 
             target = newGrid;

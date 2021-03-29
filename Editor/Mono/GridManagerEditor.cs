@@ -79,7 +79,7 @@ namespace SyadeuEditor
         {
             if (GUILayout.Button("Reload Grid"))
             {
-                GridManager.UpdateGrid(in m_GridIdx, in m_Bounds, m_CellSize.floatValue, m_EnableNavMesh);
+                GridManager.UpdateGrid(in m_GridIdx, in m_Bounds, m_CellSize.floatValue, m_EnableNavMesh, true, true);
                 SceneView.lastActiveSceneView.Repaint();
             }
             if (GUILayout.Button("To Bytes (Test)"))
@@ -124,20 +124,14 @@ namespace SyadeuEditor
         private void OnSceneGUI()
         {
             if (Application.isPlaying) return;
-            ref GridManager.Grid grid = ref GridManager.s_EditorGrids[m_GridIdx];
+            //ref GridManager.Grid grid = ref GridManager.s_EditorGrids[m_GridIdx];
             
-            for (int i = 0; i < grid.Length; i++)
-            {
-                ref var cell = ref grid.GetCell(i);
+            //for (int i = 0; i < grid.Length; i++)
+            //{
+            //    ref var cell = ref grid.GetCell(i);
 
-                if (cell.BlockedByNavMesh)
-                {
-                    GLDrawBounds(in cell.Bounds, red);
-                }
-                else GLDrawBounds(in cell.Bounds, i % 2 == 0 ? green : blue);
-
-                Handles.Label(cell.Bounds.center, $"{cell.Location.x},{cell.Location.y}");
-            }
+            //    Handles.Label(cell.Bounds.center, $"{cell.Location.x},{cell.Location.y}");
+            //}
         }
     }
 }

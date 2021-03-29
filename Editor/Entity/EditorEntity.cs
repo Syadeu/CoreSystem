@@ -9,14 +9,26 @@ namespace SyadeuEditor
     public abstract class EditorEntity : Editor
     {
         private const string DEFAULT_MATERIAL = "Sprites-Default.mat";
+        private static Material s_Material;
+        private static Material DefaultMaterial
+        {
+            get
+            {
+                if (s_Material == null) s_Material = AssetDatabase.GetBuiltinExtraResource<Material>(DEFAULT_MATERIAL);
+                return s_Material;
+            }
+        }
 
         #region GL
 
-        public static void GLDrawLine(in Vector3 from, in Vector3 to)
+        public static void GLDrawLine(in Vector3 from, in Vector3 to) => GLDrawLine(in from, in to, Color.white);
+        public static void GLDrawLine(in Vector3 from, in Vector3 to, in Color color)
         {
             if (!GLIsDrawable(from) && !GLIsDrawable(to)) return;
 
             GL.PushMatrix();
+            DefaultMaterial.SetPass(0);
+            GL.Color(color);
             GL.Begin(GL.LINES);
             {
                 GL.Vertex(from); GL.Vertex(to);
@@ -26,7 +38,7 @@ namespace SyadeuEditor
         }
         public static void GLDrawMesh(Mesh mesh, Material material = null)
         {
-            if (material == null) material = AssetDatabase.GetBuiltinExtraResource<Material>(DEFAULT_MATERIAL);
+            if (material == null) material = DefaultMaterial;
 
             Color
                 red = new Color { r = 1, a = 0.1f },
@@ -56,7 +68,7 @@ namespace SyadeuEditor
         }
         public static void GLDrawMesh(in Vector3 center, Mesh mesh, Material material = null)
         {
-            if (material == null) material = AssetDatabase.GetBuiltinExtraResource<Material>(DEFAULT_MATERIAL);
+            if (material == null) material = DefaultMaterial;
 
             Color
                 red = new Color { r = 1, a = 0.1f },
@@ -103,10 +115,11 @@ namespace SyadeuEditor
                 green = new Color { g = 1, a = 0.1f },
                 blue = new Color { b = 1, a = 0.1f };
 
-            Material material = AssetDatabase.GetBuiltinExtraResource<Material>(DEFAULT_MATERIAL);
-            material.SetPass(0);
+            //Material material = DefaultMaterial;
+            //material.SetPass(0);
 
             GL.PushMatrix();
+            DefaultMaterial.SetPass(0);
             GL.Begin(GL.QUADS);
             {
                 GLQuad(in b3, in b2, in b1, in b0, in green);// Y-
@@ -133,8 +146,8 @@ namespace SyadeuEditor
                 t1 = new Vector3(min.x, max.y, max.z),
                 t2 = max,
                 t3 = new Vector3(max.x, max.y, min.z);
-            
-            Material material = AssetDatabase.GetBuiltinExtraResource<Material>("Sprites-Default.mat");
+
+            Material material = DefaultMaterial;
             material.SetPass(0);
 
             GL.PushMatrix();
@@ -169,7 +182,7 @@ namespace SyadeuEditor
                 green = new Color { g = 1, a = .15f },
                 blue = new Color { b = 1, a = .15f };
 
-            Material material = AssetDatabase.GetBuiltinExtraResource<Material>(DEFAULT_MATERIAL);
+            Material material = DefaultMaterial;
             material.SetPass(0);
 
             GL.PushMatrix();
@@ -204,8 +217,8 @@ namespace SyadeuEditor
                 t1 = new Vector3(min.x, max.y, max.z),
                 t2 = max,
                 t3 = new Vector3(max.x, max.y, min.z);
-            
-            Material material = AssetDatabase.GetBuiltinExtraResource<Material>("Sprites-Default.mat");
+
+            Material material = DefaultMaterial;
             material.SetPass(0);
 
             GL.PushMatrix();
