@@ -8,24 +8,25 @@ using UnityEngine.Diagnostics;
 using System.Linq;
 using System.Collections.Generic;
 using Syadeu.Mono;
+using System.Threading.Tasks;
 
 public class CoreSystemTests
 {
     public void TestMath()
     {
-        float test = 99999;
-        test = Mathf.Sqrt(test);
-        test = Mathf.Sqrt(test);
-        test = Mathf.Sqrt(test);
-        test = Mathf.Sqrt(test);
-        test = Mathf.Sqrt(test);
-        test = Mathf.Sqrt(test);
-        test = Mathf.Sqrt(test);
-        test = Mathf.Sqrt(test);
-        test = Mathf.Sqrt(test);
-        test = Mathf.Sqrt(test);
-        test = Mathf.Sqrt(test);
-        test = Mathf.Sqrt(test);
+        double test = 99999999999;
+        test = System.Math.Sqrt(test);
+        test = System.Math.Sqrt(test);
+        test = System.Math.Sqrt(test);
+        test = System.Math.Sqrt(test);
+        test = System.Math.Sqrt(test);
+        test = System.Math.Sqrt(test);
+        test = System.Math.Sqrt(test);
+        test = System.Math.Sqrt(test);
+        test = System.Math.Sqrt(test);
+        test = System.Math.Sqrt(test);
+        test = System.Math.Sqrt(test);
+        test = System.Math.Sqrt(test);
 
         test /= 3;
         test /= 3;
@@ -58,18 +59,15 @@ public class CoreSystemTests
     [UnityTest]
     public IEnumerator ParallelJobTest()
     {
-        List<int> testIntList = new List<int>(1000000);
+        int[] testIntList = new int[1000000];
 
         System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
         stopwatch.Start();
         BackgroundJob job0 = CoreSystem.AddBackgroundJob(() =>
         {
-            for (int i = 0; i < testIntList.Count; i++)
+            for (int i = 0; i < testIntList.Length; i++)
             {
-                if (i == 1001)
-                {
-                    testIntList[i] *= testIntList.Count;
-                }
+                TestMath();
             }
         });
         yield return new WaitForBackgroundJob(job0);
@@ -80,16 +78,26 @@ public class CoreSystemTests
         stopwatch.Start();
         BackgroundJob job1 = BackgroundJob.ParallelFor(testIntList, (i, value) =>
         {
-            if (i == 1001)
-            {
-                testIntList[i] *= testIntList.Count;
-            }
+            TestMath();
 
-        }, 100000);
+        }, chunkSize: 50000);
 
         yield return new WaitForBackgroundJob(job1);
         stopwatch.Stop();
         $"parallel job takes = {stopwatch.ElapsedMilliseconds}".ToLog();
+
+        stopwatch.Reset();
+        stopwatch.Start();
+        var result = Parallel.For(0, testIntList.Length, (i) =>
+        {
+            TestMath();
+        });
+        while (!result.IsCompleted)
+        {
+            yield return null;
+        }
+        stopwatch.Stop();
+        $"system.Threading.Task.Parallel job takes = {stopwatch.ElapsedMilliseconds}".ToLog();
     }
 
     [UnityTest]
