@@ -6,6 +6,8 @@ using UnityEngine.TestTools;
 using Syadeu;
 using UnityEngine.Diagnostics;
 using System.Linq;
+using System.Collections.Generic;
+using Syadeu.Mono;
 
 public class CoreSystemTests
 {
@@ -51,6 +53,43 @@ public class CoreSystemTests
         {
             yield return null;
         }
+    }
+
+    [UnityTest]
+    public IEnumerator ParallelJobTest()
+    {
+        List<int> testIntList = new List<int>(1000000);
+
+        System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
+        stopwatch.Start();
+        BackgroundJob job0 = CoreSystem.AddBackgroundJob(() =>
+        {
+            for (int i = 0; i < testIntList.Count; i++)
+            {
+                if (i == 1001)
+                {
+                    testIntList[i] *= testIntList.Count;
+                }
+            }
+        });
+        yield return new WaitForBackgroundJob(job0);
+        stopwatch.Stop();
+        $"single job takes = {stopwatch.ElapsedMilliseconds}".ToLog();
+
+        stopwatch.Reset();
+        stopwatch.Start();
+        BackgroundJob job1 = BackgroundJob.ParallelFor(testIntList, (i, value) =>
+        {
+            if (i == 1001)
+            {
+                testIntList[i] *= testIntList.Count;
+            }
+
+        }, 100000);
+
+        yield return new WaitForBackgroundJob(job1);
+        stopwatch.Stop();
+        $"parallel job takes = {stopwatch.ElapsedMilliseconds}".ToLog();
     }
 
     [UnityTest]
