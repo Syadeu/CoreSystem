@@ -41,6 +41,8 @@ namespace Syadeu.Mono
             set => RenderManager.SetCamera(value);
         }
         private readonly ConcurrentQueue<int2> m_DirtyFlags = new ConcurrentQueue<int2>();
+        private readonly ConcurrentQueue<int2> m_DirtyFlagsAsync = new ConcurrentQueue<int2>();
+        private readonly ConcurrentDictionary<int, GridLambdaDescription<Grid, GridCell>> m_OnDirtyFlagRaised = new ConcurrentDictionary<int, GridLambdaDescription<Grid, GridCell>>();
         private readonly ConcurrentDictionary<int, GridLambdaDescription<Grid, GridCell>> m_OnDirtyFlagRaisedAsync = new ConcurrentDictionary<int, GridLambdaDescription<Grid, GridCell>>();
 
         public delegate void GridRWAllTagLambdaDescription(in int i, ref GridCell gridCell, in UserTagFlag userTag, in CustomTagFlag customTag);
@@ -437,6 +439,15 @@ namespace Syadeu.Mono
 
             #endregion
 
+            public void OnDirtyMarked(GridLambdaDescription<Grid, GridCell> async)
+            {
+                Instance.m_OnDirtyFlagRaised.TryAdd(Idx, async);
+            }
+            public void OnDirtyMarkedAsync(GridLambdaDescription<Grid, GridCell> async)
+            {
+                Instance.m_OnDirtyFlagRaisedAsync.TryAdd(Idx, async);
+            }
+
             public void Dispose()
             {
                 for (int i = 0; i < Cells.Length; i++)
@@ -463,10 +474,32 @@ namespace Syadeu.Mono
 
             public bool Enabled;
             public bool Highlighted;
+
             public Color NormalColor;
             public Color HighlightColor;
             public Color DisableColor;
 
+            public Color Color
+            {
+                get
+                {
+                    if (BlockedByNavMesh || !Enabled)
+                    {
+                        return DisableColor;
+                    }
+                    else
+                    {
+                        if (Highlighted)
+                        {
+                            return HighlightColor;
+                        }
+                        else
+                        {
+                            return NormalColor;
+                        }
+                    }
+                }
+            }
             // NavMesh
             public bool BlockedByNavMesh
             {
@@ -513,6 +546,7 @@ namespace Syadeu.Mono
 
                 Enabled = true;
                 Highlighted = false;
+
                 NormalColor = new Color(1, 1, 1, .1f);
                 HighlightColor = new Color { g = 1, a = .1f };
                 DisableColor = new Color { r = 1, a = .1f };
@@ -567,13 +601,13 @@ namespace Syadeu.Mono
                 }
 
                 CustomData = data;
+                SetDirty();
             }
 
             public void SetDirty()
             {
-                if (!Instance.m_OnDirtyFlagRaisedAsync.ContainsKey(ParentIdx)) return;
-
                 Instance.m_DirtyFlags.Enqueue(Idxes);
+                Instance.m_DirtyFlagsAsync.Enqueue(Idxes);
             }
 
             public void Dispose() { }
@@ -582,21 +616,47 @@ namespace Syadeu.Mono
         public override void OnInitialize()
         {
             m_NavMeshQuery = new NavMeshQuery(NavMeshWorld.GetDefaultWorld(), Allocator.Persistent, 256);
+
+            StartUnityUpdate(UnityUpdate());
             StartBackgroundUpdate(BackgroundUpdate());
         }
         private void OnDestroy()
         {
             m_NavMeshQuery.Dispose();
         }
-        private IEnumerator BackgroundUpdate()
+        private IEnumerator UnityUpdate()
         {
             while (true)
             {
                 if (m_DirtyFlags.Count > 0)
                 {
-                    for (int i = 0; i < m_DirtyFlags.Count; i++)
+                    int dirtyCount = m_DirtyFlags.Count;
+                    for (int i = 0; i < dirtyCount; i++)
                     {
-                        if (!m_DirtyFlags.TryDequeue(out int2 idxes)) continue;
+                        if (!m_DirtyFlags.TryDequeue(out int2 idxes) ||
+                            !m_OnDirtyFlagRaised.ContainsKey(idxes.x)) continue;
+
+                        Grid grid = GetGrid(idxes.x);
+                        GridCell cell = grid.GetCell(idxes.y);
+
+                        m_OnDirtyFlagRaised[idxes.x].Invoke(grid, cell);
+                    }
+                }
+
+                yield return null;
+            }
+        }
+        private IEnumerator BackgroundUpdate()
+        {
+            while (true)
+            {
+                if (m_DirtyFlagsAsync.Count > 0)
+                {
+                    int dirtyCount = m_DirtyFlagsAsync.Count;
+                    for (int i = 0; i < dirtyCount; i++)
+                    {
+                        if (!m_DirtyFlagsAsync.TryDequeue(out int2 idxes) ||
+                            !m_OnDirtyFlagRaisedAsync.ContainsKey(idxes.x)) continue;
 
                         Grid grid = GetGrid(idxes.x);
                         GridCell cell = grid.GetCell(idxes.y);

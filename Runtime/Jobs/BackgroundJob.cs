@@ -170,7 +170,20 @@ namespace Syadeu
             {
                 for (int i = 0; i < (single ? list.Count : chunkSize); i++)
                 {
-                    action.Invoke(i, list[i]);
+                    try
+                    {
+                        action.Invoke(i, list[i]);
+                    }
+                    catch (ArgumentOutOfRangeException)
+                    {
+                        throw new CoreSystemException(CoreSystemExceptionFlag.Jobs,
+                            $"Argument Out of Range: {i}:{list.Count}");
+                    }
+                    catch (Exception)
+                    {
+                        throw new CoreSystemException(CoreSystemExceptionFlag.Jobs,
+                            $"Unknown Error: {i}:{list.Count}");
+                    }
                 }
             });
             if (!single)
