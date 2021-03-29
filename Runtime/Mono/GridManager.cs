@@ -28,9 +28,6 @@ namespace Syadeu.Mono
         #region Init
         public override bool HideInHierarchy => false;
 
-        [SerializeField] private float m_CellSize = 2.5f;
-        [SerializeField] private float m_GridHeight = 0;
-
         private Grid[] m_Grids = new Grid[0];
         private NavMeshQuery m_NavMeshQuery;
 
@@ -43,12 +40,14 @@ namespace Syadeu.Mono
             get => RenderManager.Instance.m_MainCamera.Value;
             set => RenderManager.SetCamera(value);
         }
+        private readonly ConcurrentQueue<int2> m_DirtyFlags = new ConcurrentQueue<int2>();
+        private readonly ConcurrentDictionary<int, GridLambdaDescription<Grid, GridCell>> m_OnDirtyFlagRaisedAsync = new ConcurrentDictionary<int, GridLambdaDescription<Grid, GridCell>>();
 
         public delegate void GridRWAllTagLambdaDescription(in int i, ref GridCell gridCell, in UserTagFlag userTag, in CustomTagFlag customTag);
         public delegate void GridRWUserTagLambdaDescription(in int i, ref GridCell gridCell, in UserTagFlag userTag);
         public delegate void GridRWCustomTagLambdaDescription(in int i, ref GridCell gridCell, in CustomTagFlag customTag);
         public delegate void GridRWLambdaDescription(in int i, ref GridCell gridCell);
-        public delegate void GridLambdaDescription(in int i, in GridCell gridCell);
+        public delegate void GridLambdaDescription<in T, in TA>(T t, TA ta);
 
         [Serializable]
         public struct BinaryWrapper
@@ -294,19 +293,19 @@ namespace Syadeu.Mono
 
             #region Lambda Descriptions
 
-            public void For(GridLambdaDescription lambdaDescription)
+            public void For(GridLambdaDescription<int, GridCell> lambdaDescription)
             {
                 for (int i = 0; i < Cells.Length; i++)
                 {
-                    lambdaDescription.Invoke(in i, in Cells[i]);
+                    lambdaDescription.Invoke(i, Cells[i]);
                 }
             }
-            public void For<T>(GridLambdaDescription lambdaDescription) where T : struct, ITag
+            public void For<T>(GridLambdaDescription<int, GridCell> lambdaDescription) where T : struct, ITag
             {
                 for (int i = 0; i < Cells.Length; i++)
                 {
                     if (!Cells[i].GetCustomData(out T _)) continue;
-                    lambdaDescription.Invoke(in i, in Cells[i]);
+                    lambdaDescription.Invoke(i, Cells[i]);
                 }
             }
             public void For(GridRWLambdaDescription lambdaDescription)
@@ -450,6 +449,7 @@ namespace Syadeu.Mono
         public struct GridCell : IValidation, IEquatable<GridCell>, IDisposable
         {
             #region Init
+            public readonly int2 Idxes;
             public readonly int ParentIdx;
             public readonly int Idx;
 
@@ -494,6 +494,7 @@ namespace Syadeu.Mono
 
             internal GridCell(int parentIdx, int idx, int2 location, Bounds bounds, bool enableNavMesh)
             {
+                Idxes = new int2(parentIdx, idx);
                 ParentIdx = parentIdx;
                 Idx = idx;
 
@@ -568,16 +569,44 @@ namespace Syadeu.Mono
                 CustomData = data;
             }
 
+            public void SetDirty()
+            {
+                if (!Instance.m_OnDirtyFlagRaisedAsync.ContainsKey(ParentIdx)) return;
+
+                Instance.m_DirtyFlags.Enqueue(Idxes);
+            }
+
             public void Dispose() { }
         }
 
         public override void OnInitialize()
         {
             m_NavMeshQuery = new NavMeshQuery(NavMeshWorld.GetDefaultWorld(), Allocator.Persistent, 256);
+            StartBackgroundUpdate(BackgroundUpdate());
         }
         private void OnDestroy()
         {
             m_NavMeshQuery.Dispose();
+        }
+        private IEnumerator BackgroundUpdate()
+        {
+            while (true)
+            {
+                if (m_DirtyFlags.Count > 0)
+                {
+                    for (int i = 0; i < m_DirtyFlags.Count; i++)
+                    {
+                        if (!m_DirtyFlags.TryDequeue(out int2 idxes)) continue;
+
+                        Grid grid = GetGrid(idxes.x);
+                        GridCell cell = grid.GetCell(idxes.y);
+
+                        m_OnDirtyFlagRaisedAsync[idxes.x].Invoke(grid, cell);
+                    }
+                }
+
+                yield return null;
+            }
         }
         private void OnRenderObject()
         {
@@ -607,7 +636,6 @@ namespace Syadeu.Mono
 #if UNITY_EDITOR
         private void OnDrawGizmos()
         {
-            //GLSetMaterial();
             for (int i = 0; i < s_EditorGrids.Length; i++)
             {
                 ref Grid grid = ref s_EditorGrids[i];

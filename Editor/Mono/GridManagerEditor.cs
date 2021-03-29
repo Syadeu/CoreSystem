@@ -22,6 +22,7 @@ namespace SyadeuEditor
         private static int m_GridIdx;
 
         private bool m_EnableNavMesh;
+        private bool m_EnableCellIdx;
         private SerializedProperty m_CellSize;
 
         private bool m_ShowPreviewPanel = true;
@@ -79,7 +80,7 @@ namespace SyadeuEditor
         {
             if (GUILayout.Button("Reload Grid"))
             {
-                GridManager.UpdateGrid(in m_GridIdx, in m_Bounds, m_CellSize.floatValue, m_EnableNavMesh, true, true);
+                GridManager.UpdateGrid(in m_GridIdx, in m_Bounds, m_CellSize.floatValue, m_EnableNavMesh, true, m_EnableCellIdx);
                 SceneView.lastActiveSceneView.Repaint();
             }
             if (GUILayout.Button("To Bytes (Test)"))
@@ -103,6 +104,7 @@ namespace SyadeuEditor
 
             EditorGUILayout.Space();
             m_EnableNavMesh = EditorGUILayout.ToggleLeft("Enable NavMesh", m_EnableNavMesh);
+            m_EnableCellIdx = EditorGUILayout.ToggleLeft("Enable CellIdx", m_EnableCellIdx);
 
             EditorGUILayout.Space();
             m_Bounds = EditorGUILayout.BoundsField("Bounds: ", m_Bounds);

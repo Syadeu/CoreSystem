@@ -80,12 +80,12 @@ namespace Syadeu
             }
         }
 
-        protected void GLSetMaterial(Material mat = null)
+        protected static void GLSetMaterial(Material mat = null)
         {
             if (mat == null) DefaultMaterial.SetPass(0);
             else mat.SetPass(0);
         }
-        protected void GLDrawLine(in Vector3 from, in Vector3 to)
+        protected static void GLDrawLine(in Vector3 from, in Vector3 to)
         {
             GL.PushMatrix();
             //GL.MultMatrix(transform.localToWorldMatrix);
@@ -97,7 +97,7 @@ namespace Syadeu
             GL.End();
             GL.PopMatrix();
         }
-        protected void GLDrawMesh(Mesh mesh, Material material = null)
+        protected static void GLDrawMesh(Mesh mesh, Material material = null)
         {
             Color
                 red = new Color { r = 1, a = 0.1f },
@@ -105,6 +105,8 @@ namespace Syadeu
                 blue = new Color { b = 1, a = 0.1f };
 
             GL.PushMatrix();
+            if (material == null) DefaultMaterial.SetPass(0);
+            else material.SetPass(0);
             //GL.MultMatrix(transform.localToWorldMatrix);
             GL.Begin(GL.TRIANGLES);
             {
@@ -124,9 +126,11 @@ namespace Syadeu
             GL.End();
             GL.PopMatrix();
         }
-        protected void GLDrawMesh(in Vector3 center, Mesh mesh, Material material = null)
+        protected static void GLDrawMesh(in Vector3 center, Mesh mesh, Material material = null)
         {
             GL.PushMatrix();
+            if (material == null) DefaultMaterial.SetPass(0);
+            else material.SetPass(0);
             //GL.MultMatrix(transform.localToWorldMatrix);
             GL.Begin(GL.TRIANGLES);
             {
@@ -146,7 +150,7 @@ namespace Syadeu
             GL.End();
             GL.PopMatrix();
         }
-        protected void GLDrawPlane(in Vector3 center, in Vector2 size, in Color color, bool withOutline = false, bool autoPush = true)
+        protected static void GLDrawPlane(in Vector3 center, in Vector2 size, in Color color, bool withOutline = false, bool autoPush = true)
         {
             Vector2 half = size * .5f;
 
@@ -175,7 +179,7 @@ namespace Syadeu
             }
             if (autoPush) GL.PopMatrix();
         }
-        protected void GLDrawBounds(in Bounds bounds)
+        protected static void GLDrawBounds(in Bounds bounds)
         {
             Vector3
                 min = bounds.min,
@@ -204,7 +208,7 @@ namespace Syadeu
             GL.End();
             GL.PopMatrix();
         }
-        protected void GLDrawBounds(in Bounds bounds, in Color color)
+        protected static void GLDrawBounds(in Bounds bounds, in Color color)
         {
             Vector3
                 min = bounds.min,
@@ -233,7 +237,7 @@ namespace Syadeu
             GL.End();
             GL.PopMatrix();
         }
-        protected void GLDrawWireBounds(in Bounds bounds)
+        protected static void GLDrawWireBounds(in Bounds bounds)
         {
             Vector3
                 min = bounds.min,
@@ -267,7 +271,7 @@ namespace Syadeu
             GL.End();
             GL.PopMatrix();
         }
-        protected void GLDrawWireBounds(in Bounds bounds, in Color color)
+        protected static void GLDrawWireBounds(in Bounds bounds, in Color color)
         {
             Vector3
                 min = bounds.min,
@@ -296,10 +300,10 @@ namespace Syadeu
             GL.End();
             GL.PopMatrix();
         }
-        protected void GLDrawCube(in Vector3 position, in Vector3 size) => GLDrawBounds(new Bounds(position, size));
-        protected void GLDrawWireBounds(in Vector3 position, in Vector3 size) => GLDrawWireBounds(new Bounds(position, size));
-        protected void GLDrawCube(in Vector3 position, in Vector3 size, in Color color) => GLDrawBounds(new Bounds(position, size), in color);
-        protected void GLDrawWireBounds(in Vector3 position, in Vector3 size, in Color color) => GLDrawWireBounds(new Bounds(position, size), in color);
+        protected static void GLDrawCube(in Vector3 position, in Vector3 size) => GLDrawBounds(new Bounds(position, size));
+        protected static void GLDrawWireBounds(in Vector3 position, in Vector3 size) => GLDrawWireBounds(new Bounds(position, size));
+        protected static void GLDrawCube(in Vector3 position, in Vector3 size, in Color color) => GLDrawBounds(new Bounds(position, size), in color);
+        protected static void GLDrawWireBounds(in Vector3 position, in Vector3 size, in Color color) => GLDrawWireBounds(new Bounds(position, size), in color);
 
         private static void GLTri(in Vector3 v0, in Vector3 v1, in Vector3 v2, in Color color)
         {
