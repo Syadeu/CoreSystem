@@ -76,6 +76,12 @@ namespace SyadeuEditor
         }
         private void GridPreview()
         {
+            if (GUILayout.Button("Clear All Grids"))
+            {
+                GridManager.ClearGrids();
+                m_GridIdx = GridManager.CreateGrid(in m_Bounds, 2.5f, true);
+                SceneView.lastActiveSceneView.Repaint();
+            }
             if (GUILayout.Button("Reload Grid"))
             {
                 GridManager.UpdateGrid(in m_GridIdx, in m_Bounds, m_CellSize, m_EnableNavMesh, true, m_EnableCellIdx);
