@@ -28,6 +28,8 @@ namespace Syadeu.Mono
         #region Init
         public override bool HideInHierarchy => false;
 
+        private static object s_LockManager = new object();
+
         private Grid[] m_Grids = new Grid[0];
         private NavMeshQuery m_NavMeshQuery;
 
@@ -104,6 +106,9 @@ namespace Syadeu.Mono
             public float3 Bounds_Center;
             public float3 Bounds_Size;
 
+            public bool HasDependency;
+            public int2 DependencyTarget;
+            public int2[] DependencyChilds;
             public object CustomData;
 
             public BinaryGridCell(in GridCell gridCell)
@@ -115,6 +120,9 @@ namespace Syadeu.Mono
                 Bounds_Center = gridCell.Bounds.center;
                 Bounds_Size = gridCell.Bounds.size;
 
+                HasDependency = gridCell.HasDependency;
+                DependencyTarget = gridCell.DependencyTarget;
+                DependencyChilds = gridCell.DependencyChilds;
                 CustomData = gridCell.CustomData;
             }
         }
@@ -227,6 +235,17 @@ namespace Syadeu.Mono
                 }
 
                 throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({grid.x},{grid.y}). " +
+                    $"해당 좌표계는 이 그리드에 존재하지않습니다.");
+            }
+            public ref GridCell GetCell(int x, int y)
+            {
+                for (int i = 0; i < Cells.Length; i++)
+                {
+                    if (Cells[i].Location.x.Equals(x) &&
+                        Cells[i].Location.y.Equals(y)) return ref Cells[i];
+                }
+
+                throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({x},{y}). " +
                     $"해당 좌표계는 이 그리드에 존재하지않습니다.");
             }
             public ref GridCell GetCell(Vector3 worldPosition)
@@ -459,6 +478,8 @@ namespace Syadeu.Mono
         [Serializable]
         public struct GridCell : IValidation, IEquatable<GridCell>, IDisposable
         {
+            private static object s_LockCell = new object();
+
             #region Init
             public readonly int2 Idxes;
             public readonly int ParentIdx;
@@ -467,6 +488,9 @@ namespace Syadeu.Mono
             public int2 Location;
             public Bounds Bounds;
 
+            internal bool HasDependency;
+            internal int2 DependencyTarget;
+            internal int2[] DependencyChilds;
             internal object CustomData;
 
             private readonly float3[] Verties;
@@ -483,6 +507,13 @@ namespace Syadeu.Mono
             {
                 get
                 {
+                    if (HasDependency)
+                    {
+                        ref Grid grid = ref GetGrid(DependencyTarget.x);
+                        ref GridCell cell = ref grid.GetCell(DependencyTarget.y);
+                        return cell.Color;
+                    }
+
                     if (BlockedByNavMesh || !Enabled)
                     {
                         return DisableColor;
@@ -534,6 +565,9 @@ namespace Syadeu.Mono
                 Location = location;
                 Bounds = bounds;
 
+                HasDependency = false;
+                DependencyTarget = int2.zero;
+                DependencyChilds = null;
                 CustomData = null;
 
                 Verties = new float3[4]
@@ -566,6 +600,9 @@ namespace Syadeu.Mono
             }
             internal GridCell(in BinaryGridCell cell, bool enableNavMesh) : this(cell.ParentIdx, cell.Idx, cell.Location, new Bounds(cell.Bounds_Center, cell.Bounds_Size), enableNavMesh)
             {
+                HasDependency = cell.HasDependency;
+                DependencyTarget = cell.DependencyTarget;
+                DependencyChilds = cell.DependencyChilds;
                 CustomData = cell.CustomData;
             }
 
@@ -581,14 +618,35 @@ namespace Syadeu.Mono
             }
             #endregion
 
-            public object GetCustomData() => CustomData;
+            public object GetCustomData()
+            {
+                if (HasDependency)
+                {
+                    ref Grid grid = ref GetGrid(DependencyTarget.x);
+                    ref GridCell cell = ref grid.GetCell(DependencyTarget.y);
+
+                    return cell.CustomData;
+                }
+                else return CustomData;
+            }
             public bool GetCustomData<T>(out T value) where T : ITag
             {
-                if (CustomData != null && CustomData is T t)
+                object data;
+                if (HasDependency)
+                {
+                    ref Grid grid = ref GetGrid(DependencyTarget.x);
+                    ref GridCell cell = ref grid.GetCell(DependencyTarget.y);
+
+                    data = cell.CustomData;
+                }
+                else data = CustomData;
+
+                if (data != null && data is T t)
                 {
                     value = t;
                     return true;
                 }
+
                 value = default;
                 return false;
             }
@@ -600,17 +658,125 @@ namespace Syadeu.Mono
                         $"해당 객체({data.GetType().Name})는 Serializable 어트리뷰트가 선언되지 않았습니다.");
                 }
 
-                CustomData = data;
+                if (HasDependency)
+                {
+                    ref Grid grid = ref GetGrid(DependencyTarget.x);
+                    ref GridCell cell = ref grid.GetCell(DependencyTarget.y);
+
+                    cell.CustomData = data;
+                }
+                else CustomData = data;
+
                 SetDirty();
+            }
+
+            /// <summary>
+            /// 해당 셀에 영향받는 셀임을 선언합니다.<br/>
+            /// 커스텀 데이터는 해당 셀로 override 됩니다.
+            /// </summary>
+            /// <param name="gridIdx"></param>
+            /// <param name="cellIdx"></param>
+            public void EnableDependency(in int gridIdx, in int cellIdx)
+            {
+                if (HasDependency) throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                    $"{Idxes} 그리드셀은 Dependency 가 이미 있는데 또 추가하려함. 먼저 DisableDependency()을 호출하여 초기화하세요.");
+
+                ref Grid grid = ref GetGrid(gridIdx);
+                ref GridCell cell = ref grid.GetCell(cellIdx);
+
+                InternalEnableDependency(ref this, ref grid, ref cell);
+            }
+            public void EnableDependency(in int gridIdx, in Vector2Int location)
+            {
+                if (HasDependency) throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                    $"{Idxes} 그리드셀은 Dependency 가 이미 있는데 또 추가하려함. 먼저 DisableDependency()을 호출하여 초기화하세요.");
+
+                ref Grid grid = ref GetGrid(gridIdx);
+                ref GridCell cell = ref grid.GetCell(location);
+
+                InternalEnableDependency(ref this, ref grid, ref cell);
+            }
+            public void EnableDependency(in int gridIdx, in int x, in int y)
+            {
+                if (HasDependency) throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                    $"{Idxes} 그리드셀은 Dependency 가 이미 있는데 또 추가하려함. 먼저 DisableDependency()을 호출하여 초기화하세요.");
+
+                ref Grid grid = ref GetGrid(gridIdx);
+                ref GridCell cell = ref grid.GetCell(x, y);
+
+                InternalEnableDependency(ref this, ref grid, ref cell);
+            }
+            public void DisableDependency()
+            {
+                if (!HasDependency) throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                    $"{Idxes} 그리드셀은 Dependency 가 없는데 삭제하려함");
+
+                ref Grid grid = ref GetGrid(DependencyTarget.x);
+                ref GridCell cell = ref grid.GetCell(DependencyTarget.y);
+
+                lock (s_LockCell)
+                {
+                    List<int2> temp = cell.DependencyChilds.ToList();
+                    for (int i = 0; i < temp.Count; i++)
+                    {
+                        if (temp[i].Equals(Idxes))
+                        {
+                            temp.RemoveAt(i);
+                            break;
+                        }
+                    }
+
+                    if (temp.Count > 0) cell.DependencyChilds = temp.ToArray();
+                    else cell.DependencyChilds = null;
+                }
+
+                HasDependency = false;
             }
 
             public void SetDirty()
             {
-                Instance.m_DirtyFlags.Enqueue(Idxes);
-                Instance.m_DirtyFlagsAsync.Enqueue(Idxes);
+                if (IsMainthread() && !Application.isPlaying) return;
+
+                if (HasDependency)
+                {
+                    ref Grid grid = ref GetGrid(DependencyTarget.x);
+                    ref GridCell cell = ref grid.GetCell(DependencyTarget.y);
+
+                    cell.SetDirty();
+                }
+                else
+                {
+                    Instance.m_DirtyFlags.Enqueue(Idxes);
+                    Instance.m_DirtyFlagsAsync.Enqueue(Idxes);
+
+                    if (DependencyChilds != null)
+                    {
+                        for (int i = 0; i < DependencyChilds.Length; i++)
+                        {
+                            Instance.m_DirtyFlags.Enqueue(DependencyChilds[i]);
+                            Instance.m_DirtyFlagsAsync.Enqueue(DependencyChilds[i]);
+                        }
+                    }
+                }
             }
 
             public void Dispose() { }
+
+            private static void InternalEnableDependency(ref GridCell other, ref Grid grid, ref GridCell cell)
+            {
+                List<int2> temp;
+                lock (s_LockCell)
+                {
+                    if (cell.DependencyChilds == null) temp = new List<int2>();
+                    else temp = cell.DependencyChilds.ToList();
+
+                    temp.Add(other.Idxes);
+                    cell.DependencyChilds = temp.ToArray();
+                }
+
+                other.HasDependency = true;
+                other.DependencyTarget = new int2(grid.Idx, cell.Idx);
+            }
         }
 
         public override void OnInitialize()
@@ -705,21 +871,13 @@ namespace Syadeu.Mono
                 {
                     ref var cell = ref grid.GetCell(a);
 
-                    if (!cell.Enabled || cell.BlockedByNavMesh)
-                    {
-                        Gizmos.color = cell.DisableColor;
-                    }
-                    else
-                    {
-                        Gizmos.color = cell.Highlighted ? cell.HighlightColor : cell.NormalColor;
-                    }
-
+                    Gizmos.color = cell.Color;
                     Gizmos.DrawCube(cell.Bounds.center, new Vector3(cell.Bounds.size.x, .1f, cell.Bounds.size.z));
                     Gizmos.DrawWireCube(cell.Bounds.center, new Vector3(cell.Bounds.size.x, .1f, cell.Bounds.size.z));
 
                     if (grid.EnableDrawIdx)
                     {
-                        Handles.Label(cell.Bounds.center, $"{cell.Location.x},{cell.Location.y}");
+                        Handles.Label(cell.Bounds.center, $"{cell.Idx}:({cell.Location.x},{cell.Location.y}):c{cell.DependencyChilds?.Length}");
                     }
                 }
             }
@@ -878,12 +1036,15 @@ namespace Syadeu.Mono
             else
 #endif
             {
-                newGrids = new List<Grid>(Instance.m_Grids);
-                grid = InternalCreateGrid(newGrids.Count, in bounds, in gridCellSize, in enableNavMesh);
+                lock (s_LockManager)
+                {
+                    newGrids = new List<Grid>(Instance.m_Grids);
+                    grid = InternalCreateGrid(newGrids.Count, in bounds, in gridCellSize, in enableNavMesh);
 
-                newGrids.Add(grid);
+                    newGrids.Add(grid);
 
-                Instance.m_Grids = newGrids.ToArray();
+                    Instance.m_Grids = newGrids.ToArray();
+                }
             }
             return grid.Idx;
         }
@@ -905,12 +1066,15 @@ namespace Syadeu.Mono
             else
 #endif
             {
-                newGrids = new List<Grid>(Instance.m_Grids);
-                grid = InternalCreateGrid(newGrids.Count, mesh.bounds, in gridCellSize, in enableNavMesh);
+                lock (s_LockManager)
+                {
+                    newGrids = new List<Grid>(Instance.m_Grids);
+                    grid = InternalCreateGrid(newGrids.Count, mesh.bounds, in gridCellSize, in enableNavMesh);
 
-                newGrids.Add(grid);
+                    newGrids.Add(grid);
 
-                Instance.m_Grids = newGrids.ToArray();
+                    Instance.m_Grids = newGrids.ToArray();
+                }
             }
             return grid.Idx;
         }
@@ -932,12 +1096,15 @@ namespace Syadeu.Mono
             else
 #endif
             {
-                newGrids = new List<Grid>(Instance.m_Grids);
-                grid = InternalCreateGrid(newGrids.Count, terrain.terrainData.bounds, in gridCellSize, in enableNavMesh);
+                lock (s_LockManager)
+                {
+                    newGrids = new List<Grid>(Instance.m_Grids);
+                    grid = InternalCreateGrid(newGrids.Count, terrain.terrainData.bounds, in gridCellSize, in enableNavMesh);
 
-                newGrids.Add(grid);
+                    newGrids.Add(grid);
 
-                Instance.m_Grids = newGrids.ToArray();
+                    Instance.m_Grids = newGrids.ToArray();
+                }
             }
             return grid.Idx;
         }

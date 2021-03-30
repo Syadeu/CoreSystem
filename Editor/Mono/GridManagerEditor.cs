@@ -18,12 +18,12 @@ namespace SyadeuEditor
         private GridManager m_Scr;
         private ECSPathMeshBaker m_NavBaker;
 
+        private static float m_CellSize = 2.5f;
         private static Bounds m_Bounds;
         private static int m_GridIdx;
 
         private bool m_EnableNavMesh;
         private bool m_EnableCellIdx;
-        private SerializedProperty m_CellSize;
 
         private bool m_ShowPreviewPanel = true;
         private bool m_ShowOriginalContents = false;
@@ -32,8 +32,6 @@ namespace SyadeuEditor
         {
             m_Scr = target as GridManager;
             m_NavBaker = m_Scr.GetComponent<ECSPathMeshBaker>();
-
-            m_CellSize = serializedObject.FindProperty("m_CellSize");
 
             m_GridIdx = GridManager.CreateGrid(in m_Bounds, 2.5f, true);
         }
@@ -80,7 +78,7 @@ namespace SyadeuEditor
         {
             if (GUILayout.Button("Reload Grid"))
             {
-                GridManager.UpdateGrid(in m_GridIdx, in m_Bounds, m_CellSize.floatValue, m_EnableNavMesh, true, m_EnableCellIdx);
+                GridManager.UpdateGrid(in m_GridIdx, in m_Bounds, m_CellSize, m_EnableNavMesh, true, m_EnableCellIdx);
                 SceneView.lastActiveSceneView.Repaint();
             }
             if (GUILayout.Button("To Bytes (Test)"))
@@ -101,19 +99,27 @@ namespace SyadeuEditor
                 newGrid.GetCustomData(out TestDataStruct cusData);
                 $"{grid.Length} :: {newGrid.Length}, {cusData.TestFloat3} :: {cusData.UserTag}".ToLog();
             }
+            if (GUILayout.Button("Connect (19.23),(20.23) (Test)"))
+            {
+                ref GridManager.Grid grid = ref GridManager.GetGrid(m_GridIdx);
+                ref GridManager.GridCell cell = ref grid.GetCell(20, 23);
+
+                cell.EnableDependency(m_GridIdx, 19, 23);
+            }
 
             EditorGUILayout.Space();
             m_EnableNavMesh = EditorGUILayout.ToggleLeft("Enable NavMesh", m_EnableNavMesh);
             m_EnableCellIdx = EditorGUILayout.ToggleLeft("Enable CellIdx", m_EnableCellIdx);
 
             EditorGUILayout.Space();
+            m_CellSize = EditorGUILayout.FloatField("CellSize: ", m_CellSize);
             m_Bounds = EditorGUILayout.BoundsField("Bounds: ", m_Bounds);
             EditorGUI.BeginDisabledGroup(m_NavBaker == null);
             if (GUILayout.Button("Match with ECSBaker"))
             {
                 SerializedObject meshBaker = new SerializedObject(m_NavBaker);
 
-                Vector3 adjust = new Vector3(m_CellSize.floatValue * .5f, 0, 0);
+                Vector3 adjust = new Vector3(m_CellSize * .5f, 0, 0);
                 m_Bounds = new Bounds(m_Scr.transform.position + adjust, meshBaker.FindProperty("m_Size").vector3Value);
             }
             EditorGUI.EndDisabledGroup();
