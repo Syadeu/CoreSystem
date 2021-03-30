@@ -25,10 +25,10 @@ namespace Syadeu.Mono
     [StaticManagerIntializeOnLoad]
     public class GridManager : StaticManager<GridManager>
     {
+        private static readonly object s_LockManager = new object();
+
         #region Init
         public override bool HideInHierarchy => false;
-
-        private static object s_LockManager = new object();
 
         private Grid[] m_Grids = new Grid[0];
         private NavMeshQuery m_NavMeshQuery;
@@ -478,7 +478,7 @@ namespace Syadeu.Mono
         [Serializable]
         public struct GridCell : IValidation, IEquatable<GridCell>, IDisposable
         {
-            private static object s_LockCell = new object();
+            private static readonly object s_LockCell = new object();
 
             #region Init
             public readonly int2 Idxes;
