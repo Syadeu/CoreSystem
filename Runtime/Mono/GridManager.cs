@@ -227,15 +227,25 @@ namespace Syadeu.Mono
             #region Gets
 
             public ref GridCell GetCell(int idx) => ref Cells[idx];
-            public ref GridCell GetCell(Vector2Int grid)
+            public ref GridCell GetCell(Vector2Int location)
             {
                 for (int i = 0; i < Cells.Length; i++)
                 {
-                    int2 target = new int2(grid.x, grid.y);
+                    int2 target = new int2(location.x, location.y);
                     if (Cells[i].Location.Equals(target)) return ref Cells[i];
                 }
 
-                throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({grid.x},{grid.y}). " +
+                throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({location.x},{location.y}). " +
+                    $"해당 좌표계는 이 그리드에 존재하지않습니다.");
+            }
+            public ref GridCell GetCell(int2 location)
+            {
+                for (int i = 0; i < Cells.Length; i++)
+                {
+                    if (Cells[i].Location.Equals(location)) return ref Cells[i];
+                }
+
+                throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({location.x},{location.y}). " +
                     $"해당 좌표계는 이 그리드에 존재하지않습니다.");
             }
             public ref GridCell GetCell(int x, int y)
