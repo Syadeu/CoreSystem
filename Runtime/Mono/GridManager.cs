@@ -231,7 +231,8 @@ namespace Syadeu.Mono
             {
                 for (int i = 0; i < Cells.Length; i++)
                 {
-                    if (Cells[i].Location.Equals(grid)) return ref Cells[i];
+                    int2 target = new int2(grid.x, grid.y);
+                    if (Cells[i].Location.Equals(target)) return ref Cells[i];
                 }
 
                 throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({grid.x},{grid.y}). " +
