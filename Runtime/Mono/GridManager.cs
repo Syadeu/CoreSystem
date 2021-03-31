@@ -61,6 +61,11 @@ namespace Syadeu.Mono
         public delegate void GridLambdaRefDescription<T, TA>(in T i, ref TA gridCell);
         public delegate void GridLambdaDescription<T, TA>(in T i, in TA gridCell);
 
+        public static Color 
+            NormalColor = new Color(1, 1, 1, .1f),
+            HighlightColor = new Color { g = 1, a = .1f },
+            DisableColor = new Color { r = 1, a = .1f };
+
         [Serializable]
         public struct BinaryWrapper
         {
@@ -642,9 +647,9 @@ namespace Syadeu.Mono
             public bool Enabled;
             public bool Highlighted;
 
-            public Color NormalColor;
-            public Color HighlightColor;
-            public Color DisableColor;
+            //public Color NormalColor;
+            //public Color HighlightColor;
+            //public Color DisableColor;
 
             public Color Color
             {
@@ -724,9 +729,9 @@ namespace Syadeu.Mono
                 Enabled = true;
                 Highlighted = false;
 
-                NormalColor = new Color(1, 1, 1, .1f);
-                HighlightColor = new Color { g = 1, a = .1f };
-                DisableColor = new Color { r = 1, a = .1f };
+                //NormalColor = new Color(1, 1, 1, .1f);
+                //HighlightColor = new Color { g = 1, a = .1f };
+                //DisableColor = new Color { r = 1, a = .1f };
 
                 //if (enableNavMesh)
                 //{
@@ -1241,12 +1246,12 @@ namespace Syadeu.Mono
 
                     if (!cell.Enabled || cell.BlockedByNavMesh)
                     {
-                        GLDrawPlane(cell.Bounds.center, new Vector2(cell.Bounds.size.x, cell.Bounds.size.z), in cell.DisableColor, true);
+                        GLDrawPlane(cell.Bounds.center, new Vector2(cell.Bounds.size.x, cell.Bounds.size.z), in DisableColor, true);
                     }
                     else
                     {
                         GLDrawPlane(cell.Bounds.center, new Vector2(cell.Bounds.size.x, cell.Bounds.size.z),
-                            cell.Highlighted ? cell.HighlightColor : cell.NormalColor, true);
+                            cell.Highlighted ? HighlightColor : NormalColor, true);
                     }
                 }
             }
