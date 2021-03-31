@@ -402,8 +402,8 @@ public unsafe class UnsafeTests
     //    Marshal.FreeHGlobal(ptr);
     }
 
-    public TestClass _A;
-    public TestClass* _B;
+    //public TestClass _A;
+    //public TestClass* _B;
 
     public struct TestClass
     {
