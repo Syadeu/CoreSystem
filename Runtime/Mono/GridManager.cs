@@ -32,11 +32,13 @@ namespace Syadeu.Mono
 
         private Grid[] m_Grids = new Grid[0];
         private Dictionary<int2, object> m_CellObjects = new Dictionary<int2, object>();
+        private Dictionary<int2, List<int2>> m_CellDependency = new Dictionary<int2, List<int2>>();
         private NavMeshQuery m_NavMeshQuery;
 
 #if UNITY_EDITOR
         public static Grid[] s_EditorGrids = new Grid[0];
         public static Dictionary<int2, object> s_EditorCellObjects = new Dictionary<int2, object>();
+        public static Dictionary<int2, List<int2>> s_EditorCellDependency = new Dictionary<int2, List<int2>>();
 #endif
 
         public Camera RenderCameraTarget
@@ -127,7 +129,7 @@ namespace Syadeu.Mono
 
                 HasDependency = gridCell.HasDependency;
                 DependencyTarget = gridCell.DependencyTarget;
-                DependencyChilds = gridCell.DependencyChilds;
+                //DependencyChilds = gridCell.DependencyChilds;
 #if UNITY_EDITOR
                 if (IsMainthread() && !Application.isPlaying)
                 {
@@ -136,6 +138,12 @@ namespace Syadeu.Mono
                         CustomData = s_EditorCellObjects[gridCell.Idxes];
                     }
                     else CustomData = null;
+
+                    if (s_EditorCellDependency.ContainsKey(gridCell.Idxes))
+                    {
+                        DependencyChilds = s_EditorCellDependency[gridCell.Idxes].ToArray();
+                    }
+                    else DependencyChilds = null;
                 }
                 else
 #endif
@@ -145,6 +153,12 @@ namespace Syadeu.Mono
                         CustomData = Instance.m_CellObjects[gridCell.Idxes];
                     }
                     else CustomData = null;
+
+                    if (Instance.m_CellDependency.ContainsKey(gridCell.Idxes))
+                    {
+                        DependencyChilds = Instance.m_CellDependency[gridCell.Idxes].ToArray();
+                    }
+                    else DependencyChilds = null;
                 }
                 //CustomData = gridCell.CustomData;
             }
@@ -236,6 +250,18 @@ namespace Syadeu.Mono
                 if (idx >= Cells.Length) return false;
                 return true;
             }
+            public bool HasCell(int2 location)
+            {
+                int idx = (GridSize.z * location.y) + location.x;
+                if (idx >= Cells.Length) return false;
+                return true;
+            }
+            public bool HasCell(int x, int y)
+            {
+                int idx = (GridSize.z * y) + x;
+                if (idx >= Cells.Length) return false;
+                return true;
+            }
             public bool HasCell(Vector3 worldPosition)
             {
                 for (int i = 0; i < Cells.Length; i++)
@@ -249,15 +275,16 @@ namespace Syadeu.Mono
 
             public ref GridCell GetCell(int idx)
             {
-                return ref Cells[idx];
+                unsafe
+                {
+                    GridCell* target;
+                    fixed (GridCell* p = Cells)
+                    {
+                        target = p + idx;
+                    }
 
-                //unsafe
-                //{
-                //    fixed (GridCell* p = Cells)
-                //    {
-
-                //    }
-                //}
+                    return ref *target;
+                }
             }
             public ref GridCell GetCell(Vector2Int location)
             {
@@ -265,7 +292,7 @@ namespace Syadeu.Mono
                 if (idx >= Cells.Length) throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({location.x},{location.y}). " +
                     $"해당 좌표계는 이 그리드에 존재하지않습니다.");
 
-                return ref Cells[idx];
+                return ref GetCell(idx);
             }
             public ref GridCell GetCell(int2 location)
             {
@@ -273,7 +300,7 @@ namespace Syadeu.Mono
                 if (idx >= Cells.Length) throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({location.x},{location.y}). " +
                     $"해당 좌표계는 이 그리드에 존재하지않습니다.");
 
-                return ref Cells[idx];
+                return ref GetCell(idx);
             }
             public ref GridCell GetCell(int x, int y)
             {
@@ -281,7 +308,7 @@ namespace Syadeu.Mono
                 if (idx >= Cells.Length) throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({x},{y}). " +
                      $"해당 좌표계는 이 그리드에 존재하지않습니다.");
 
-                return ref Cells[idx];
+                return ref GetCell(idx);
             }
             public ref GridCell GetCell(Vector3 worldPosition)
             {
@@ -515,7 +542,7 @@ namespace Syadeu.Mono
 
             internal bool HasDependency;
             internal int2 DependencyTarget;
-            internal int2[] DependencyChilds;
+            //internal int2[] DependencyChilds;
             //internal object CustomData;
 
             private readonly float3[] Verties
@@ -617,7 +644,7 @@ namespace Syadeu.Mono
 
                 HasDependency = false;
                 DependencyTarget = int2.zero;
-                DependencyChilds = null;
+                //DependencyChilds = null;
                 //CustomData = null;
 
                 //Verties = new float3[4]
@@ -652,7 +679,7 @@ namespace Syadeu.Mono
             {
                 HasDependency = cell.HasDependency;
                 DependencyTarget = cell.DependencyTarget;
-                DependencyChilds = cell.DependencyChilds;
+                //DependencyChilds = cell.DependencyChilds;
                 //CustomData = cell.CustomData;
                 int2 loc = new int2(cell.ParentIdx, cell.Idx);
 #if UNITY_EDITOR
@@ -663,6 +690,23 @@ namespace Syadeu.Mono
                         s_EditorCellObjects[loc] = cell.CustomData;
                     }
                     else s_EditorCellObjects.Add(loc, cell.CustomData);
+
+                    if (s_EditorCellDependency.ContainsKey(loc))
+                    {
+                        if (cell.DependencyChilds == null)
+                        {
+                            s_EditorCellDependency[loc].Clear();
+                        }
+                        else s_EditorCellDependency[loc] = cell.DependencyChilds.ToList();
+                    }
+                    else
+                    {
+                        if (cell.DependencyChilds == null)
+                        {
+                            s_EditorCellDependency.Add(loc, new List<int2>());
+                        }
+                        else s_EditorCellDependency.Add(loc, cell.DependencyChilds.ToList());
+                    }
                 }
                 else
 #endif
@@ -672,6 +716,23 @@ namespace Syadeu.Mono
                         Instance.m_CellObjects[loc] = cell.CustomData;
                     }
                     else Instance.m_CellObjects.Add(loc, cell.CustomData);
+
+                    if (Instance.m_CellDependency.ContainsKey(loc))
+                    {
+                        if (cell.DependencyChilds == null)
+                        {
+                            Instance.m_CellDependency[loc].Clear();
+                        }
+                        else Instance.m_CellDependency[loc] = cell.DependencyChilds.ToList();
+                    }
+                    else
+                    {
+                        if (cell.DependencyChilds == null)
+                        {
+                            Instance.m_CellDependency.Add(loc, new List<int2>());
+                        }
+                        else Instance.m_CellDependency.Add(loc, cell.DependencyChilds.ToList());
+                    }
                 }
             }
 
@@ -929,7 +990,18 @@ namespace Syadeu.Mono
 
                 lock (s_LockCell)
                 {
-                    List<int2> temp = cell.DependencyChilds.ToList();
+                    List<int2> temp;
+#if UNITY_EDITOR
+                    if (IsMainthread() && !Application.isPlaying)
+                    {
+                        temp = s_EditorCellDependency[DependencyTarget];
+                    }
+                    else
+#endif
+                    {
+                        temp = Instance.m_CellDependency[DependencyTarget];
+                    }
+
                     for (int i = 0; i < temp.Count; i++)
                     {
                         if (temp[i].Equals(Idxes))
@@ -939,8 +1011,8 @@ namespace Syadeu.Mono
                         }
                     }
 
-                    if (temp.Count > 0) cell.DependencyChilds = temp.ToArray();
-                    else cell.DependencyChilds = null;
+                    //if (temp.Count == 0) cell.DependencyChilds = temp.ToArray();
+                    //else cell.DependencyChilds = null;
                 }
 
                 HasDependency = false;
@@ -962,12 +1034,32 @@ namespace Syadeu.Mono
                     Instance.m_DirtyFlags.Enqueue(Idxes);
                     Instance.m_DirtyFlagsAsync.Enqueue(Idxes);
 
-                    if (DependencyChilds != null)
+                    List<int2> temp;
+#if UNITY_EDITOR
+                    if (IsMainthread() && !Application.isPlaying)
                     {
-                        for (int i = 0; i < DependencyChilds.Length; i++)
+                        if (s_EditorCellDependency.ContainsKey(DependencyTarget))
                         {
-                            Instance.m_DirtyFlags.Enqueue(DependencyChilds[i]);
-                            Instance.m_DirtyFlagsAsync.Enqueue(DependencyChilds[i]);
+                            temp = s_EditorCellDependency[DependencyTarget];
+                        }
+                        else temp = null;
+                    }
+                    else
+#endif
+                    {
+                        if (Instance.m_CellDependency.ContainsKey(DependencyTarget))
+                        {
+                            temp = Instance.m_CellDependency[DependencyTarget];
+                        }
+                        else temp = null;
+                    }
+
+                    if (temp != null)
+                    {
+                        for (int i = 0; i < temp.Count; i++)
+                        {
+                            Instance.m_DirtyFlags.Enqueue(temp[i]);
+                            Instance.m_DirtyFlagsAsync.Enqueue(temp[i]);
                         }
                     }
                 }
@@ -977,14 +1069,35 @@ namespace Syadeu.Mono
 
             private static void InternalEnableDependency(ref GridCell other, ref Grid grid, ref GridCell cell)
             {
-                List<int2> temp;
+                //List<int2> temp;
                 lock (s_LockCell)
                 {
-                    if (cell.DependencyChilds == null) temp = new List<int2>();
-                    else temp = cell.DependencyChilds.ToList();
+#if UNITY_EDITOR
+                    if (IsMainthread() && !Application.isPlaying)
+                    {
+                        if (!s_EditorCellDependency.ContainsKey(cell.Idxes))
+                        {
+                            s_EditorCellDependency.Add(cell.Idxes, new List<int2>());
+                        }
 
-                    temp.Add(other.Idxes);
-                    cell.DependencyChilds = temp.ToArray();
+                        s_EditorCellDependency[cell.Idxes].Add(other.Idxes);
+                    }
+                    else
+#endif
+                    {
+                        if (!Instance.m_CellDependency.ContainsKey(cell.Idxes))
+                        {
+                            Instance.m_CellDependency.Add(cell.Idxes, new List<int2>());
+                        }
+
+                        Instance.m_CellDependency[cell.Idxes].Add(other.Idxes);
+                    }
+
+                    //if (cell.DependencyChilds == null) temp = new List<int2>();
+                    //else temp = cell.DependencyChilds.ToList();
+
+                    //temp.Add(other.Idxes);
+                    //cell.DependencyChilds = temp.ToArray();
                 }
 
                 other.HasDependency = true;
@@ -1090,7 +1203,7 @@ namespace Syadeu.Mono
 
                     if (grid.EnableDrawIdx)
                     {
-                        Handles.Label(cell.Bounds.center, $"{cell.Idx}:({cell.Location.x},{cell.Location.y}):c{cell.DependencyChilds?.Length}");
+                        Handles.Label(cell.Bounds.center, $"{cell.Idx}:({cell.Location.x},{cell.Location.y}):c{Instance.m_CellDependency[cell.Idxes]?.Count}");
                     }
                 }
             }
@@ -1113,6 +1226,7 @@ namespace Syadeu.Mono
                 }
                 s_EditorGrids = new Grid[0];
                 s_EditorCellObjects.Clear();
+                s_EditorCellDependency.Clear();
             }
             else
 #endif
@@ -1124,6 +1238,7 @@ namespace Syadeu.Mono
                 }
                 Instance.m_Grids = new Grid[0];
                 Instance.m_CellObjects.Clear();
+                Instance.m_CellDependency.Clear();
             }
 
             return count;
