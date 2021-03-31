@@ -164,7 +164,7 @@ namespace Syadeu.Mono
                 //CustomData = gridCell.CustomData;
             }
         }
-        [Serializable]
+        [Serializable] 
         public struct Grid : IValidation, IEquatable<Grid>, IDisposable
         {
             #region Init
@@ -212,7 +212,7 @@ namespace Syadeu.Mono
 
                             GridCell target = *pTarget;
                             Marshal.StructureToPtr(target, (IntPtr)curr, true);
-                            $"{(*curr).Location} == {(*pTarget).Location} == {cells[i].Location}".ToLog();
+                            //$"{(*curr).Location} == {(*pTarget).Location} == {cells[i].Location}".ToLog();
                         }
                     }
                 }
@@ -263,7 +263,7 @@ namespace Syadeu.Mono
 
                             GridCell target = *pTarget;
                             Marshal.StructureToPtr(target, (IntPtr)curr, true);
-                            $"{(*curr).Location} == {(*pTarget).Location} == {convertedCells[i].Location}".ToLog();
+                            //$"{(*curr).Location} == {(*pTarget).Location} == {convertedCells[i].Location}".ToLog();
                         }
                     }
                 }
@@ -431,7 +431,7 @@ namespace Syadeu.Mono
                 {
                     for (int i = 0; i < Length; i++)
                     {
-                        lambdaDescription.Invoke(in i, in *(Cells + i));
+                        lambdaDescription.Invoke(in i, in Cells[i]);
                     }
                 }
             }
@@ -452,7 +452,7 @@ namespace Syadeu.Mono
                 {
                     for (int i = 0; i < Length; i++)
                     {
-                        lambdaDescription.Invoke(in i, ref *(Cells + i));
+                        lambdaDescription.Invoke(in i, ref Cells[i]);
                     }
                 }
             }
