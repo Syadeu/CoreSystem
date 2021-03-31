@@ -101,10 +101,23 @@ namespace SyadeuEditor
                 TestDataStruct data;
                 GridManager.Grid newGrid = GridManager.BinaryWrapper.ToWrapper(bytes).ToGrid();
                 var newCell = newGrid.GetCell(1);
-                //newGrid.For<TestDataStruct>((int i, ref TestDataStruct data) =>
+
+                //System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
+                //stopwatch.Start();
+                //newGrid.For((int i, ref GridManager.GridCell data) =>
                 //{
 
                 //});
+                //stopwatch.Stop();
+                //$"1. {stopwatch.ElapsedTicks}".ToLog();
+                //stopwatch.Reset();
+                //stopwatch.Start();
+                //newGrid.For((int i, GridManager.GridCell data) =>
+                //{
+
+                //});
+                //stopwatch.Stop();
+                //$"2. {stopwatch.ElapsedTicks}".ToLog();
 
                 newGrid.GetCustomData(out TestDataStruct cusData);
                 newCell.GetCustomData(out TestDataStruct cusCellData);

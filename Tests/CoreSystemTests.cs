@@ -350,6 +350,50 @@ public class CoreSystemTests
     #endregion
 }
 
+public class GridTests
+{
+    static Bounds bounds = new Bounds(Vector3.zero, Vector3.one * 500);
+
+    private GridManager.Grid CreateTestGrid()
+    {
+        int gridIdx = GridManager.CreateGrid(bounds, 1, false);
+        ref GridManager.Grid grid = ref GridManager.GetGrid(in gridIdx);
+
+        return grid;
+    }
+
+    [Test]
+    public void GridForTest()
+    {
+        int gridIdx = GridManager.CreateGrid(bounds, 1, false);
+        ref GridManager.Grid grid = ref GridManager.GetGrid(in gridIdx);
+        //ref GridManager.GridCell cell = ref grid.GetCell(1);
+
+        System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
+
+        stopwatch.Start();
+
+        grid.For((in int i, in GridManager.GridCell data) =>
+        {
+
+        });
+        
+        stopwatch.Stop();
+        $"1. {stopwatch.ElapsedTicks}".ToLog();
+        stopwatch.Reset();
+
+        stopwatch.Start();
+
+        grid.For((in int i, ref GridManager.GridCell data) =>
+        {
+
+        });
+
+        stopwatch.Stop();
+        $"2. {stopwatch.ElapsedTicks}".ToLog();
+    }
+}
+
 public unsafe class UnsafeTests
 {
     [Test]

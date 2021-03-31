@@ -54,11 +54,11 @@ namespace Syadeu.Mono
         //public delegate void GridRWAllTagLambdaDescription(in int i, ref GridCell gridCell, in UserTagFlag userTag, in CustomTagFlag customTag);
         //public delegate void GridRWUserTagLambdaDescription(in int i, ref GridCell gridCell, in UserTagFlag userTag);
         //public delegate void GridRWCustomTagLambdaDescription(in int i, ref GridCell gridCell, in CustomTagFlag customTag);
-        public delegate void GridLambdaRefAllTagDescription<in T, TA, in TAA, in TAAA>(T i, ref TA gridCell, TAA tag, TAAA tag2);
-        public delegate void GridLambdaRefTagDescription<in T, TA, in TAA>(T i, ref TA gridCell, TAA tag);
+        public delegate void GridLambdaRefAllTagDescription<T, TA, TAA, TAAA>(in T i, ref TA gridCell, in TAA tag, in TAAA tag2);
+        public delegate void GridLambdaRefTagDescription<T, TA, TAA>(in T i, ref TA gridCell, in TAA tag);
         //public delegate void GridRWLambdaDescription(in int i, ref GridCell gridCell);
-        public delegate void GridLambdaRefDescription<in T, TA>(T i, ref TA gridCell);
-        public delegate void GridLambdaDescription<in T, in TA>(T i, TA gridCell);
+        public delegate void GridLambdaRefDescription<T, TA>(in T i, ref TA gridCell);
+        public delegate void GridLambdaDescription<T, TA>(in T i, in TA gridCell);
 
         [Serializable]
         public struct BinaryWrapper
@@ -378,9 +378,15 @@ namespace Syadeu.Mono
 
             public void For(GridLambdaDescription<int, GridCell> lambdaDescription)
             {
-                for (int i = 0; i < Cells.Length; i++)
+                unsafe
                 {
-                    lambdaDescription.Invoke(i, Cells[i]);
+                    fixed (GridCell* p = Cells)
+                    {
+                        for (int i = 0; i < Cells.Length; i++)
+                        {
+                            lambdaDescription.Invoke(in i, in *(p + i));
+                        }
+                    }
                 }
             }
             public void For<T>(GridLambdaRefDescription<int, T> lambdaDescription) where T : struct, ITag
@@ -388,14 +394,14 @@ namespace Syadeu.Mono
                 for (int i = 0; i < Cells.Length; i++)
                 {
                     if (!Cells[i].GetCustomData(out T data)) continue;
-                    lambdaDescription.Invoke(i, ref data);
+                    lambdaDescription.Invoke(in i, ref data);
                 }
             }
             public void For(GridLambdaRefDescription<int, GridCell> lambdaDescription)
             {
                 for (int i = 0; i < Cells.Length; i++)
                 {
-                    lambdaDescription.Invoke(i, ref Cells[i]);
+                    lambdaDescription.Invoke(in i, ref Cells[i]);
                 }
             }
             public void For(GridLambdaRefTagDescription<int, GridCell, UserTagFlag> lambdaDescription)
@@ -407,7 +413,7 @@ namespace Syadeu.Mono
                         continue;
                     }
 
-                    lambdaDescription.Invoke(i, ref Cells[i], tag.UserTag);
+                    lambdaDescription.Invoke(in i, ref Cells[i], tag.UserTag);
                 }
             }
             public void For<T>(GridLambdaRefTagDescription<int, T, UserTagFlag> lambdaDescription) where T : struct, ITag
@@ -419,7 +425,7 @@ namespace Syadeu.Mono
                         continue;
                     }
 
-                    lambdaDescription.Invoke(i, ref data, data.UserTag);
+                    lambdaDescription.Invoke(in i, ref data, data.UserTag);
                 }
             }
             public void For(GridLambdaRefTagDescription<int, GridCell, CustomTagFlag> lambdaDescription)
@@ -431,7 +437,7 @@ namespace Syadeu.Mono
                         continue;
                     }
 
-                    lambdaDescription.Invoke(i, ref Cells[i], tag.CustomTag);
+                    lambdaDescription.Invoke(in i, ref Cells[i], tag.CustomTag);
                 }
             }
             public void For<T>(GridLambdaRefTagDescription<int, T, CustomTagFlag> lambdaDescription) where T : struct, ITag
@@ -443,7 +449,7 @@ namespace Syadeu.Mono
                         continue;
                     }
 
-                    lambdaDescription.Invoke(i, ref data, data.CustomTag);
+                    lambdaDescription.Invoke(in i, ref data, data.CustomTag);
                 }
             }
             //public void For(GridRWAllTagLambdaDescription lambdaDescription)
