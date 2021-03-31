@@ -119,7 +119,7 @@ namespace Syadeu.Mono
             public int2[] DependencyChilds;
             public object CustomData;
 
-            public BinaryGridCell(in GridCell* gridCell)
+            public BinaryGridCell(GridCell* gridCell)
             {
                 ParentIdx = (*gridCell).ParentIdx;
                 Idx = (*gridCell).Idx;
@@ -563,7 +563,7 @@ namespace Syadeu.Mono
                 {
                     for (int i = 0; i < Length; i++)
                     {
-                        temp[i] = new BinaryGridCell(in Cells[i]);
+                        temp[i] = new BinaryGridCell(Cells + i);
                     }
                 }
                 
