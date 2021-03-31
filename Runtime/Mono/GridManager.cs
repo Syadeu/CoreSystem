@@ -13,6 +13,7 @@ using Unity.Mathematics;
 
 using Syadeu;
 using Syadeu.Database;
+using System.Runtime.InteropServices;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -175,7 +176,7 @@ namespace Syadeu.Mono
             internal int3 GridCenter;
             internal int3 GridSize;
 
-            internal GridCell[] Cells;
+            unsafe internal GridCell* Cells;
             public float CellSize;
 
             internal object CustomData;
@@ -184,7 +185,7 @@ namespace Syadeu.Mono
             public bool EnableDrawGL;
             public bool EnableDrawIdx;
 
-            public int Length => Cells.Length;
+            public int Length;
 
             internal Grid(int idx, int3 gridCenter, int3 gridSize, float cellSize, bool enableNavMesh, params GridCell[] cells)
             {
@@ -197,7 +198,27 @@ namespace Syadeu.Mono
                 GridCenter = gridCenter;
                 GridSize = gridSize;
 
-                Cells = cells;
+                unsafe
+                {
+                    int cellLen = sizeof(GridCell);
+                    Cells = (GridCell*)Marshal.AllocHGlobal(cellLen * cells.Length);
+                     
+                    fixed (GridCell* p = cells)
+                    {
+                        for (int i = 0; i < cells.Length; i++)
+                        {
+                            GridCell* curr = Cells + i;
+                            GridCell* pTarget = p + i;
+
+                            GridCell target = *pTarget;
+                            Marshal.StructureToPtr(target, (IntPtr)curr, true);
+                            $"{(*curr).Location} == {(*pTarget).Location} == {cells[i].Location}".ToLog();
+                        }
+                    }
+                }
+                Length = cells.Length;
+
+                //Cells = cells;
                 CellSize = cellSize;
 
                 CustomData = null;
@@ -210,7 +231,7 @@ namespace Syadeu.Mono
             {
                 BinaryGrid grid;
                 BinaryGridCell[] cells;
-
+                 
                 grid = wrapper.m_Grid;
                 cells = wrapper.m_GridCells;
 
@@ -228,7 +249,27 @@ namespace Syadeu.Mono
                 {
                     convertedCells[i] = new GridCell(in cells[i], grid.EnableNavMesh);
                 }
-                Cells = convertedCells;
+                unsafe
+                {
+                    int cellLen = sizeof(GridCell);
+                    Cells = (GridCell*)Marshal.AllocHGlobal(cellLen * convertedCells.Length);
+
+                    fixed (GridCell* p = convertedCells)
+                    {
+                        for (int i = 0; i < convertedCells.Length; i++)
+                        {
+                            GridCell* curr = Cells + i;
+                            GridCell* pTarget = p + i;
+
+                            GridCell target = *pTarget;
+                            Marshal.StructureToPtr(target, (IntPtr)curr, true);
+                            $"{(*curr).Location} == {(*pTarget).Location} == {convertedCells[i].Location}".ToLog();
+                        }
+                    }
+                }
+                Length = convertedCells.Length;
+
+                //Cells = convertedCells;
                 CellSize = grid.CellSize;
 
                 CustomData = grid.CustomData;
@@ -243,31 +284,35 @@ namespace Syadeu.Mono
 
             #endregion
 
-            public bool HasCell(int idx) => idx >= 0 && Cells.Length > idx;
+            public bool HasCell(int idx) => idx >= 0 && Length > idx;
             public bool HasCell(Vector2Int location)
             {
                 int idx = (GridSize.z * location.y) + location.x;
-                if (idx >= Cells.Length) return false;
+                if (idx >= Length) return false;
                 return true;
             }
             public bool HasCell(int2 location)
             {
                 int idx = (GridSize.z * location.y) + location.x;
-                if (idx >= Cells.Length) return false;
+                if (idx >= Length) return false;
                 return true;
             }
             public bool HasCell(int x, int y)
             {
                 int idx = (GridSize.z * y) + x;
-                if (idx >= Cells.Length) return false;
+                if (idx >= Length) return false;
                 return true;
             }
             public bool HasCell(Vector3 worldPosition)
             {
-                for (int i = 0; i < Cells.Length; i++)
+                unsafe
                 {
-                    if (Cells[i].Bounds.Contains(worldPosition)) return true;
+                    for (int i = 0; i < Length; i++)
+                    {
+                        if (Cells[i].Bounds.Contains(worldPosition)) return true;
+                    }
                 }
+                
                 return false;
             }
 
@@ -277,19 +322,13 @@ namespace Syadeu.Mono
             {
                 unsafe
                 {
-                    GridCell* target;
-                    fixed (GridCell* p = Cells)
-                    {
-                        target = p + idx;
-                    }
-
-                    return ref *target;
+                    return ref Cells[idx];
                 }
             }
             public ref GridCell GetCell(Vector2Int location)
             {
                 int idx = (GridSize.z * location.y) + location.x;
-                if (idx >= Cells.Length) throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({location.x},{location.y}). " +
+                if (idx >= Length) throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({location.x},{location.y}). " +
                     $"해당 좌표계는 이 그리드에 존재하지않습니다.");
 
                 return ref GetCell(idx);
@@ -297,7 +336,7 @@ namespace Syadeu.Mono
             public ref GridCell GetCell(int2 location)
             {
                 int idx = (GridSize.z * location.y) + location.x;
-                if (idx >= Cells.Length) throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({location.x},{location.y}). " +
+                if (idx >= Length) throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({location.x},{location.y}). " +
                     $"해당 좌표계는 이 그리드에 존재하지않습니다.");
 
                 return ref GetCell(idx);
@@ -305,72 +344,82 @@ namespace Syadeu.Mono
             public ref GridCell GetCell(int x, int y)
             {
                 int idx = (GridSize.z * y) + x;
-                if (idx >= Cells.Length) throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({x},{y}). " +
+                if (idx >= Length) throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({x},{y}). " +
                      $"해당 좌표계는 이 그리드에 존재하지않습니다.");
 
                 return ref GetCell(idx);
             }
             public ref GridCell GetCell(Vector3 worldPosition)
             {
-                for (int i = 0; i < Cells.Length; i++)
+                unsafe
                 {
-                    if (Cells[i].Bounds.Contains(worldPosition)) return ref Cells[i];
+                    for (int i = 0; i < Length; i++)
+                    {
+                        if (Cells[i].Bounds.Contains(worldPosition)) return ref Cells[i];
+                    }
                 }
 
                 throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({worldPosition.x},{worldPosition.y},{worldPosition.z}). " +
                     $"해당 좌표계는 이 그리드에 존재하지않습니다.");
             }
-            public BackgroundJob GetCellAsync(Vector3 worldPosition, NativeArray<int> idx, int chunkSize = 2024)
-            {
-                return BackgroundJob.ParallelFor(Cells, (i, cell) =>
-                {
-                    if (cell.Bounds.Contains(worldPosition))
-                    {
-                        idx[0] = i;
-                        return true;
-                    }
-                    return false;
-                }, chunkSize);
-            }
-            public BackgroundJob GetCellAsync(Vector2Int grid, NativeArray<int> idx, int chunkSize = 2024)
-            {
-                return BackgroundJob.ParallelFor(Cells, (i, cell) =>
-                {
-                    if (cell.Location.Equals(grid))
-                    {
-                        idx[0] = i;
-                        return true;
-                    }
-                    return false;
-                }, chunkSize);
-            }
+            //public BackgroundJob GetCellAsync(Vector3 worldPosition, NativeArray<int> idx, int chunkSize = 2024)
+            //{
+            //    return BackgroundJob.ParallelFor(Cells, (i, cell) =>
+            //    {
+            //        if (cell.Bounds.Contains(worldPosition))
+            //        {
+            //            idx[0] = i;
+            //            return true;
+            //        }
+            //        return false;
+            //    }, chunkSize);
+            //}
+            //public BackgroundJob GetCellAsync(Vector2Int grid, NativeArray<int> idx, int chunkSize = 2024)
+            //{
+            //    return BackgroundJob.ParallelFor(Cells, (i, cell) =>
+            //    {
+            //        if (cell.Location.Equals(grid))
+            //        {
+            //            idx[0] = i;
+            //            return true;
+            //        }
+            //        return false;
+            //    }, chunkSize);
+            //}
             public IReadOnlyList<int> GetCells(UserTagFlag userTag)
             {
                 List<int> indexes = new List<int>();
-                for (int i = 0; i < Cells.Length; i++)
+                unsafe
                 {
-                    if (!Cells[i].GetCustomData(out ITag tag))
+                    for (int i = 0; i < Length; i++)
                     {
-                        continue;
+                        if (!Cells[i].GetCustomData(out ITag tag))
+                        {
+                            continue;
+                        }
+                        if (userTag.HasFlag(tag.UserTag)) indexes.Add(i);
                     }
-                    if (userTag.HasFlag(tag.UserTag)) indexes.Add(i);
                 }
+                
                 return indexes;
             }
             public IReadOnlyList<int> GetCells(CustomTagFlag customTag)
             {
                 List<int> indexes = new List<int>();
-                for (int i = 0; i < Cells.Length; i++)
+                unsafe
                 {
-                    if (!Cells[i].GetCustomData(out ITag tag))
+                    for (int i = 0; i < Length; i++)
                     {
-                        continue;
+                        if (!Cells[i].GetCustomData(out ITag tag))
+                        {
+                            continue;
+                        }
+                        if (customTag.HasFlag(tag.CustomTag)) indexes.Add(i);
                     }
-                    if (customTag.HasFlag(tag.CustomTag)) indexes.Add(i);
                 }
+                
                 return indexes;
             }
-            public readonly GridCell[] GetCells() => Cells;
 
             #endregion
 
@@ -380,78 +429,81 @@ namespace Syadeu.Mono
             {
                 unsafe
                 {
-                    fixed (GridCell* p = Cells)
+                    for (int i = 0; i < Length; i++)
                     {
-                        for (int i = 0; i < Cells.Length; i++)
-                        {
-                            lambdaDescription.Invoke(in i, in *(p + i));
-                        }
+                        lambdaDescription.Invoke(in i, in *(Cells + i));
                     }
                 }
             }
             public void For<T>(GridLambdaRefDescription<int, T> lambdaDescription) where T : struct, ITag
             {
-                for (int i = 0; i < Cells.Length; i++)
+                unsafe
                 {
-                    if (!Cells[i].GetCustomData(out T data)) continue;
-                    lambdaDescription.Invoke(in i, ref data);
+                    for (int i = 0; i < Length; i++)
+                    {
+                        if (!Cells[i].GetCustomData(out T data)) continue;
+                        lambdaDescription.Invoke(in i, ref data);
+                    }
                 }
             }
             public void For(GridLambdaRefDescription<int, GridCell> lambdaDescription)
             {
-                for (int i = 0; i < Cells.Length; i++)
+                unsafe
                 {
-                    lambdaDescription.Invoke(in i, ref Cells[i]);
-                }
-            }
-            public void For(GridLambdaRefTagDescription<int, GridCell, UserTagFlag> lambdaDescription)
-            {
-                for (int i = 0; i < Cells.Length; i++)
-                {
-                    if (!Cells[i].GetCustomData(out ITag tag))
+                    for (int i = 0; i < Length; i++)
                     {
-                        continue;
+                        lambdaDescription.Invoke(in i, ref *(Cells + i));
                     }
-
-                    lambdaDescription.Invoke(in i, ref Cells[i], tag.UserTag);
                 }
             }
-            public void For<T>(GridLambdaRefTagDescription<int, T, UserTagFlag> lambdaDescription) where T : struct, ITag
-            {
-                for (int i = 0; i < Cells.Length; i++)
-                {
-                    if (!Cells[i].GetCustomData(out T data))
-                    {
-                        continue;
-                    }
+            //public void For(GridLambdaRefTagDescription<int, GridCell, UserTagFlag> lambdaDescription)
+            //{
+            //    for (int i = 0; i < Cells.Length; i++)
+            //    {
+            //        if (!Cells[i].GetCustomData(out ITag tag))
+            //        {
+            //            continue;
+            //        }
 
-                    lambdaDescription.Invoke(in i, ref data, data.UserTag);
-                }
-            }
-            public void For(GridLambdaRefTagDescription<int, GridCell, CustomTagFlag> lambdaDescription)
-            {
-                for (int i = 0; i < Cells.Length; i++)
-                {
-                    if (!Cells[i].GetCustomData(out ITag tag))
-                    {
-                        continue;
-                    }
+            //        lambdaDescription.Invoke(in i, ref Cells[i], tag.UserTag);
+            //    }
+            //}
+            //public void For<T>(GridLambdaRefTagDescription<int, T, UserTagFlag> lambdaDescription) where T : struct, ITag
+            //{
+            //    for (int i = 0; i < Cells.Length; i++)
+            //    {
+            //        if (!Cells[i].GetCustomData(out T data))
+            //        {
+            //            continue;
+            //        }
 
-                    lambdaDescription.Invoke(in i, ref Cells[i], tag.CustomTag);
-                }
-            }
-            public void For<T>(GridLambdaRefTagDescription<int, T, CustomTagFlag> lambdaDescription) where T : struct, ITag
-            {
-                for (int i = 0; i < Cells.Length; i++)
-                {
-                    if (!Cells[i].GetCustomData(out T data))
-                    {
-                        continue;
-                    }
+            //        lambdaDescription.Invoke(in i, ref data, data.UserTag);
+            //    }
+            //}
+            //public void For(GridLambdaRefTagDescription<int, GridCell, CustomTagFlag> lambdaDescription)
+            //{
+            //    for (int i = 0; i < Cells.Length; i++)
+            //    {
+            //        if (!Cells[i].GetCustomData(out ITag tag))
+            //        {
+            //            continue;
+            //        }
 
-                    lambdaDescription.Invoke(in i, ref data, data.CustomTag);
-                }
-            }
+            //        lambdaDescription.Invoke(in i, ref Cells[i], tag.CustomTag);
+            //    }
+            //}
+            //public void For<T>(GridLambdaRefTagDescription<int, T, CustomTagFlag> lambdaDescription) where T : struct, ITag
+            //{
+            //    for (int i = 0; i < Cells.Length; i++)
+            //    {
+            //        if (!Cells[i].GetCustomData(out T data))
+            //        {
+            //            continue;
+            //        }
+
+            //        lambdaDescription.Invoke(in i, ref data, data.CustomTag);
+            //    }
+            //}
             //public void For(GridRWAllTagLambdaDescription lambdaDescription)
             //{
             //    for (int i = 0; i < Cells.Length; i++)
@@ -506,11 +558,15 @@ namespace Syadeu.Mono
             #region Binary
             public BinaryWrapper ConvertToWrapper()
             {
-                var temp = new BinaryGridCell[Cells.Length];
-                for (int i = 0; i < Cells.Length; i++)
+                var temp = new BinaryGridCell[Length];
+                unsafe
                 {
-                    temp[i] = new BinaryGridCell(in Cells[i]);
+                    for (int i = 0; i < Length; i++)
+                    {
+                        temp[i] = new BinaryGridCell(in Cells[i]);
+                    }
                 }
+                
                 return new BinaryWrapper(new BinaryGrid(this), temp);
             }
             public static Grid FromBytes(BinaryWrapper wrapper) => new Grid(wrapper);
@@ -529,9 +585,13 @@ namespace Syadeu.Mono
 
             public void Dispose()
             {
-                for (int i = 0; i < Cells.Length; i++)
+                //for (int i = 0; i < Cells.Length; i++)
+                //{
+                //    Cells[i].Dispose();
+                //}
+                unsafe
                 {
-                    Cells[i].Dispose();
+                    Marshal.FreeHGlobal((IntPtr)Cells);
                 }
             }
         }
