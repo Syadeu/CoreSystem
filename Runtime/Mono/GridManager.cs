@@ -105,7 +105,7 @@ namespace Syadeu.Mono
             }
         }
         [Serializable]
-        internal struct BinaryGridCell
+        unsafe internal struct BinaryGridCell
         {
             public int ParentIdx;
             public int Idx;
@@ -119,45 +119,45 @@ namespace Syadeu.Mono
             public int2[] DependencyChilds;
             public object CustomData;
 
-            public BinaryGridCell(in GridCell gridCell)
+            public BinaryGridCell(in GridCell* gridCell)
             {
-                ParentIdx = gridCell.ParentIdx;
-                Idx = gridCell.Idx;
+                ParentIdx = (*gridCell).ParentIdx;
+                Idx = (*gridCell).Idx;
 
-                Location = gridCell.Location;
-                Bounds_Center = gridCell.Bounds.center;
-                Bounds_Size = gridCell.Bounds.size;
+                Location = (*gridCell).Location;
+                Bounds_Center = (*gridCell).Bounds.center;
+                Bounds_Size = (*gridCell).Bounds.size;
 
-                HasDependency = gridCell.HasDependency;
-                DependencyTarget = gridCell.DependencyTarget;
+                HasDependency = (*gridCell).HasDependency;
+                DependencyTarget = (*gridCell).DependencyTarget;
                 //DependencyChilds = gridCell.DependencyChilds;
 #if UNITY_EDITOR
                 if (IsMainthread() && !Application.isPlaying)
                 {
-                    if (s_EditorCellObjects.ContainsKey(gridCell.Idxes))
+                    if (s_EditorCellObjects.ContainsKey((*gridCell).Idxes))
                     {
-                        CustomData = s_EditorCellObjects[gridCell.Idxes];
+                        CustomData = s_EditorCellObjects[(*gridCell).Idxes];
                     }
                     else CustomData = null;
 
-                    if (s_EditorCellDependency.ContainsKey(gridCell.Idxes))
+                    if (s_EditorCellDependency.ContainsKey((*gridCell).Idxes))
                     {
-                        DependencyChilds = s_EditorCellDependency[gridCell.Idxes].ToArray();
+                        DependencyChilds = s_EditorCellDependency[(*gridCell).Idxes].ToArray();
                     }
                     else DependencyChilds = null;
                 }
                 else
 #endif
                 {
-                    if (Instance.m_CellObjects.ContainsKey(gridCell.Idxes))
+                    if (Instance.m_CellObjects.ContainsKey((*gridCell).Idxes))
                     {
-                        CustomData = Instance.m_CellObjects[gridCell.Idxes];
+                        CustomData = Instance.m_CellObjects[(*gridCell).Idxes];
                     }
                     else CustomData = null;
 
-                    if (Instance.m_CellDependency.ContainsKey(gridCell.Idxes))
+                    if (Instance.m_CellDependency.ContainsKey((*gridCell).Idxes))
                     {
-                        DependencyChilds = Instance.m_CellDependency[gridCell.Idxes].ToArray();
+                        DependencyChilds = Instance.m_CellDependency[(*gridCell).Idxes].ToArray();
                     }
                     else DependencyChilds = null;
                 }
