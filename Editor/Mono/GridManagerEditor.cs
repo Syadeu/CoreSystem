@@ -96,8 +96,9 @@ namespace SyadeuEditor
                 byte[] bytes = wrapper.ToBytesWithStream();
 
                 //GridManager.Grid newGrid = wrapper.ToGrid();
+                TestDataStruct data;
                 GridManager.Grid newGrid = GridManager.BinaryWrapper.ToWrapper(bytes).ToGrid();
-                newGrid.For<TestDataStruct>((in int i, ref GridManager.GridCell gridCell) =>
+                newGrid.For<TestDataStruct>((int i, ref TestDataStruct data) =>
                 {
 
                 });

@@ -47,11 +47,14 @@ namespace Syadeu.Mono
         private readonly ConcurrentDictionary<int, GridLambdaDescription<Grid, GridCell>> m_OnDirtyFlagRaised = new ConcurrentDictionary<int, GridLambdaDescription<Grid, GridCell>>();
         private readonly ConcurrentDictionary<int, GridLambdaDescription<Grid, GridCell>> m_OnDirtyFlagRaisedAsync = new ConcurrentDictionary<int, GridLambdaDescription<Grid, GridCell>>();
 
-        public delegate void GridRWAllTagLambdaDescription(in int i, ref GridCell gridCell, in UserTagFlag userTag, in CustomTagFlag customTag);
-        public delegate void GridRWUserTagLambdaDescription(in int i, ref GridCell gridCell, in UserTagFlag userTag);
-        public delegate void GridRWCustomTagLambdaDescription(in int i, ref GridCell gridCell, in CustomTagFlag customTag);
-        public delegate void GridRWLambdaDescription(in int i, ref GridCell gridCell);
-        public delegate void GridLambdaDescription<in T, in TA>(T t, TA ta);
+        //public delegate void GridRWAllTagLambdaDescription(in int i, ref GridCell gridCell, in UserTagFlag userTag, in CustomTagFlag customTag);
+        //public delegate void GridRWUserTagLambdaDescription(in int i, ref GridCell gridCell, in UserTagFlag userTag);
+        //public delegate void GridRWCustomTagLambdaDescription(in int i, ref GridCell gridCell, in CustomTagFlag customTag);
+        public delegate void GridLambdaRefAllTagDescription<in T, TA, in TAA, in TAAA>(T i, ref TA gridCell, TAA tag, TAAA tag2);
+        public delegate void GridLambdaRefTagDescription<in T, TA, in TAA>(T i, ref TA gridCell, TAA tag);
+        //public delegate void GridRWLambdaDescription(in int i, ref GridCell gridCell);
+        public delegate void GridLambdaRefDescription<in T, TA>(T i, ref TA gridCell);
+        public delegate void GridLambdaDescription<in T, in TA>(T i, TA gridCell);
 
         [Serializable]
         public struct BinaryWrapper
@@ -332,30 +335,22 @@ namespace Syadeu.Mono
                     lambdaDescription.Invoke(i, Cells[i]);
                 }
             }
-            public void For<T>(GridLambdaDescription<int, GridCell> lambdaDescription) where T : struct, ITag
+            public void For<T>(GridLambdaRefDescription<int, T> lambdaDescription) where T : struct, ITag
             {
                 for (int i = 0; i < Cells.Length; i++)
                 {
-                    if (!Cells[i].GetCustomData(out T _)) continue;
-                    lambdaDescription.Invoke(i, Cells[i]);
+                    if (!Cells[i].GetCustomData(out T data)) continue;
+                    lambdaDescription.Invoke(i, ref data);
                 }
             }
-            public void For(GridRWLambdaDescription lambdaDescription)
+            public void For(GridLambdaRefDescription<int, GridCell> lambdaDescription)
             {
                 for (int i = 0; i < Cells.Length; i++)
                 {
-                    lambdaDescription.Invoke(in i, ref Cells[i]);
+                    lambdaDescription.Invoke(i, ref Cells[i]);
                 }
             }
-            public void For<T>(GridRWLambdaDescription lambdaDescription) where T : struct, ITag
-            {
-                for (int i = 0; i < Cells.Length; i++)
-                {
-                    if (!Cells[i].GetCustomData(out T _)) continue;
-                    lambdaDescription.Invoke(in i, ref Cells[i]);
-                }
-            }
-            public void For(GridRWUserTagLambdaDescription lambdaDescription)
+            public void For(GridLambdaRefTagDescription<int, GridCell, UserTagFlag> lambdaDescription)
             {
                 for (int i = 0; i < Cells.Length; i++)
                 {
@@ -364,10 +359,10 @@ namespace Syadeu.Mono
                         continue;
                     }
 
-                    lambdaDescription.Invoke(in i, ref Cells[i], tag.UserTag);
+                    lambdaDescription.Invoke(i, ref Cells[i], tag.UserTag);
                 }
             }
-            public void For<T>(GridRWUserTagLambdaDescription lambdaDescription) where T : struct, ITag
+            public void For<T>(GridLambdaRefTagDescription<int, T, UserTagFlag> lambdaDescription) where T : struct, ITag
             {
                 for (int i = 0; i < Cells.Length; i++)
                 {
@@ -376,10 +371,10 @@ namespace Syadeu.Mono
                         continue;
                     }
 
-                    lambdaDescription.Invoke(in i, ref Cells[i], data.UserTag);
+                    lambdaDescription.Invoke(i, ref data, data.UserTag);
                 }
             }
-            public void For(GridRWCustomTagLambdaDescription lambdaDescription)
+            public void For(GridLambdaRefTagDescription<int, GridCell, CustomTagFlag> lambdaDescription)
             {
                 for (int i = 0; i < Cells.Length; i++)
                 {
@@ -388,10 +383,10 @@ namespace Syadeu.Mono
                         continue;
                     }
 
-                    lambdaDescription.Invoke(in i, ref Cells[i], tag.CustomTag);
+                    lambdaDescription.Invoke(i, ref Cells[i], tag.CustomTag);
                 }
             }
-            public void For<T>(GridRWCustomTagLambdaDescription lambdaDescription) where T : struct, ITag
+            public void For<T>(GridLambdaRefTagDescription<int, T, CustomTagFlag> lambdaDescription) where T : struct, ITag
             {
                 for (int i = 0; i < Cells.Length; i++)
                 {
@@ -400,33 +395,33 @@ namespace Syadeu.Mono
                         continue;
                     }
 
-                    lambdaDescription.Invoke(in i, ref Cells[i], data.CustomTag);
+                    lambdaDescription.Invoke(i, ref data, data.CustomTag);
                 }
             }
-            public void For(GridRWAllTagLambdaDescription lambdaDescription)
-            {
-                for (int i = 0; i < Cells.Length; i++)
-                {
-                    if (!Cells[i].GetCustomData(out ITag tag))
-                    {
-                        continue;
-                    }
+            //public void For(GridRWAllTagLambdaDescription lambdaDescription)
+            //{
+            //    for (int i = 0; i < Cells.Length; i++)
+            //    {
+            //        if (!Cells[i].GetCustomData(out ITag tag))
+            //        {
+            //            continue;
+            //        }
 
-                    lambdaDescription.Invoke(in i, ref Cells[i], tag.UserTag, tag.CustomTag);
-                }
-            }
-            public void For<T>(GridRWAllTagLambdaDescription lambdaDescription) where T : struct, ITag
-            {
-                for (int i = 0; i < Cells.Length; i++)
-                {
-                    if (!Cells[i].GetCustomData(out T data))
-                    {
-                        continue;
-                    }
+            //        lambdaDescription.Invoke(in i, ref Cells[i], tag.UserTag, tag.CustomTag);
+            //    }
+            //}
+            //public void For<T>(GridRWAllTagLambdaDescription lambdaDescription) where T : struct, ITag
+            //{
+            //    for (int i = 0; i < Cells.Length; i++)
+            //    {
+            //        if (!Cells[i].GetCustomData(out T data))
+            //        {
+            //            continue;
+            //        }
 
-                    lambdaDescription.Invoke(in i, ref Cells[i], data.UserTag, data.CustomTag);
-                }
-            }
+            //        lambdaDescription.Invoke(in i, ref Cells[i], data.UserTag, data.CustomTag);
+            //    }
+            //}
 
             #endregion
 

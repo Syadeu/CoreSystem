@@ -9,6 +9,8 @@ using System.Linq;
 using System.Collections.Generic;
 using Syadeu.Mono;
 using System.Threading.Tasks;
+using System.Runtime.InteropServices;
+using System;
 
 public class CoreSystemTests
 {
@@ -346,4 +348,65 @@ public class CoreSystemTests
     }
 
     #endregion
+}
+
+public unsafe class UnsafeTests
+{
+    [Test]
+    public unsafe void UnsafeIntTest()
+    {
+        int a = 5;
+
+        int* b = &a;
+
+        int c = *b;
+
+        Debug.Log($"{a} == {c}");
+    }
+    //[Test]
+    //public unsafe void UnsafeIntArrayTest()
+    //{
+    //    int[] a = new int[] { 1, 2, 3 };
+
+    //    //int d = ref a[1];
+    //    int* b = stackalloc int[1];
+
+    //    b++;
+        
+    //    int c = (int)b;
+
+    //    Debug.Log($"{d} + 1 == {c}");
+    //}
+
+    //[Test]
+    //public unsafe void UnsafeClassRefTest()
+    //{
+    //    unsafe
+    //    {
+
+    //    }
+    //    IntPtr c = new TestClass() { a = 5 };
+
+    //    //IntPtr ptr = Marshal.AllocHGlobal(Marshal.SizeOf(_A));
+    //    //Marshal.StructureToPtr(_A, ptr, true);
+
+    //    TestClass *refB = (TestClass *)ptr.ToPointer();
+
+        
+
+    //    TestClass result = Marshal.PtrToStructure<TestClass>(refB);
+
+
+    //    Debug.Log($"{_A.a} == ");
+
+    //    Marshal.FreeHGlobal(ptr);
+    }
+
+    public TestClass _A;
+    public TestClass* _B;
+
+    public struct TestClass
+    {
+        public int a;
+    }
 }

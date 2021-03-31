@@ -18,6 +18,7 @@ namespace Syadeu.Database
         IEnumerable<IReadOnlyList<KeyValuePair<string, object>>>, IEnumerable
     {
         private readonly Dictionary<object, int> m_PrimaryKeyPairs;
+        private static readonly object s_TableLock = new object();
 
         public IReadOnlyList<KeyValuePair<string, object>> this[int index]
         {
@@ -63,15 +64,18 @@ namespace Syadeu.Database
                 if (!IsValid()) throw new CoreSystemException(CoreSystemExceptionFlag.Database,
                     "유효하지않은 SQLiteTable 데이터 접근");
 
-                if (m_PrimaryKeyPairs.Count != Count)
+                lock (s_TableLock)
                 {
-                    m_PrimaryKeyPairs.Clear();
-                    for (int i = 0; i < Count; i++)
+                    if (m_PrimaryKeyPairs.Count != Count)
                     {
-                        SQLiteDatabase.Assert(m_PrimaryKeyPairs.ContainsKey(Columns[0].Values[i]),
-                            $"{Name}테이블의 PK({Columns[0].Name})에 같은 값이 추가됨: {Columns[0].Values[i]}");
+                        m_PrimaryKeyPairs.Clear();
+                        for (int i = 0; i < Count; i++)
+                        {
+                            SQLiteDatabase.Assert(m_PrimaryKeyPairs.ContainsKey(Columns[0].Values[i]),
+                                $"{Name}테이블의 PK({Columns[0].Name})에 같은 값이 추가됨: {Columns[0].Values[i]}");
 
-                        m_PrimaryKeyPairs.Add(Columns[0].Values[i], i);
+                            m_PrimaryKeyPairs.Add(Columns[0].Values[i], i);
+                        }
                     }
                 }
 

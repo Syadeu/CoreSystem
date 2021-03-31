@@ -54,6 +54,11 @@ namespace Syadeu
                     $"{typeof(T).Name}은 이미 초기화되었는데 다시 초기화하려합니다.");
 #endif
             }
+            if (!IsMainthread())
+            {
+                throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                    $"{typeof(T).Name}은 메인 유니티 스레드에서만 Initialize 될 수 있습니다.");
+            }
 
 #if UNITY_EDITOR
             var temp = new System.Diagnostics.StackTrace(true);

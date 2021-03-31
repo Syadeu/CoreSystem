@@ -5,6 +5,7 @@ namespace Syadeu
     public abstract class ManagerEntity : MonoBehaviour
     {
         protected static Transform InstanceGroupTr { get; set; }
+        private static readonly object ManagerLock = new object();
 
         #region Thread Methods
 
@@ -55,6 +56,7 @@ namespace Syadeu
             green = new Color { g = 1, a = 0.1f },
             blue = new Color { b = 1, a = 0.1f };
 
+        private static bool s_CreateDefaultMaterialCalled = false;
         private static Material s_DefaultMaterial;
         private static Material DefaultMaterial
         {
@@ -62,6 +64,40 @@ namespace Syadeu
             {
                 if (s_DefaultMaterial == null)
                 {
+                    if (!IsMainthread())
+                    {
+                        lock (ManagerLock)
+                        {
+                            if (!s_CreateDefaultMaterialCalled)
+                            {
+                                s_CreateDefaultMaterialCalled = true;
+                                ForegroundJob job = new ForegroundJob(() =>
+                                {
+                                    // Unity has a built-in shader that is useful for drawing
+                                    // simple colored things.
+                                    Shader shader = Shader.Find("Hidden/Internal-Colored");
+                                    Material temp = new Material(shader);
+                                    temp.hideFlags = HideFlags.HideAndDontSave;
+                                    // Turn on alpha blending
+                                    temp.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+                                    temp.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                                    // Turn backface culling off
+                                    temp.SetInt("_Cull", (int)UnityEngine.Rendering.CullMode.Off);
+                                    // Turn off depth writes
+                                    temp.SetInt("_ZWrite", 0);
+
+                                    s_DefaultMaterial = temp;
+                                });
+                            }
+                        }
+
+                        while (s_DefaultMaterial == null)
+                        {
+                            StaticManagerEntity.ThreadAwaiter(10);
+                        }
+
+                        return s_DefaultMaterial;
+                    }
                     // Unity has a built-in shader that is useful for drawing
                     // simple colored things.
                     Shader shader = Shader.Find("Hidden/Internal-Colored");

@@ -29,7 +29,7 @@
         "WindowsStandalone64",
         "XboxOne"
     ],
-    "allowUnsafeCode": false,
+    "allowUnsafeCode": true,
     "overrideReferences": true,
     "precompiledReferences": [
         "nunit.framework.dll"
