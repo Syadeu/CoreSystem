@@ -1,5 +1,6 @@
 ﻿using Syadeu.Database;
 using Syadeu.Mono;
+using Syadeu.Unsafe;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -15,14 +16,52 @@ namespace Syadeu.Unsafe
     public static class ExtensionMethods
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static IntPtr ToPointer<T>(this ref T t) where T : struct
+        unsafe public static IntPtr AddressOf<T>(T t) where T : struct
         {
-            unsafe
+            TypedReference reference = __makeref(t);
+            return *(IntPtr*)(&reference);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe public static IntPtr AddressOfRef<T>(ref T t) where T : struct
+        {
+            TypedReference reference = __makeref(t);
+            TypedReference* pRef = &reference;
+            return (IntPtr)pRef; //(&pRef)
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe public static T ReadGenericFromPtr<T>(IntPtr source, int sizeOfT) where T : struct
+        {
+            byte* bytePtr = (byte*)source;
+
+            T result = default(T);
+            TypedReference resultRef = __makeref(result);
+            byte* resultPtr = (byte*)*((IntPtr*)&resultRef);
+
+            for (int i = 0; i < sizeOfT; ++i)
             {
-                TypedReference tr = __makeref(t);
-                return *(IntPtr*)(&tr);
+                resultPtr[i] = bytePtr[i];
             }
 
+            return result;
+        }
+
+        public static byte[] ToBytes<T>(ref T str) where T : unmanaged
+        {
+            int size = Marshal.SizeOf<T>();
+            byte[] arr = new byte[size];
+
+            IntPtr ptr = AddressOfRef(ref str);
+
+            Marshal.Copy(ptr, arr, 0, size);
+            return arr;
+        }
+        unsafe public static T ToObject<T>(byte[] arr) where T : unmanaged
+        {
+            fixed (byte* ptr = &arr[0])
+            {
+                return (T)Marshal.PtrToStructure((IntPtr)ptr, typeof(T));
+            }
         }
     }
 }
@@ -92,29 +131,6 @@ namespace Syadeu
                 return ms.ToArray();
             }
         }
-        public static byte[] ToBytes<T>(this T str)
-        {
-            int size = Marshal.SizeOf(str);
-            byte[] arr = new byte[size];
-
-            IntPtr ptr;
-            try
-            {
-                ptr = Marshal.AllocHGlobal(size);
-            }
-            catch (OutOfMemoryException)
-            {
-                Debug.LogWarning(
-                    $"CoreSystem Warnning: {typeof(T).Name}을 Marshaling (To Bytes) 하는 도중 메모리가 부족하여, " +
-                    $"MemoryStream 으로 전환하여 작업시도함");
-                return str.ToBytesWithStream();
-            }
-            
-            Marshal.StructureToPtr(str, ptr, true);
-            Marshal.Copy(ptr, arr, 0, size);
-            Marshal.FreeHGlobal(ptr);
-            return arr;
-        }
 
         public static T ToObjectWithStream<T>(this byte[] arr)
         {
@@ -127,28 +143,7 @@ namespace Syadeu
                 return (T)formatter.Deserialize(memStream);
             }
         }
-        public static T ToObject<T>(this byte[] arr)
-        {
-            int size = Marshal.SizeOf(typeof(T));
-            IntPtr ptr;
-            try
-            {
-                ptr = Marshal.AllocHGlobal(size);
-            }
-            catch (OutOfMemoryException)
-            {
-                Debug.LogWarning(
-                    $"CoreSystem Warnning: {typeof(T).Name}을 Marshaling (To Object) 하는 도중 메모리가 부족하여, " +
-                    $"MemoryStream 으로 전환하여 작업시도함");
-                return arr.ToObjectWithStream<T>();
-            }
-
-            Marshal.Copy(arr, 0, ptr, size);
-            T str = Marshal.PtrToStructure<T>(ptr);
-            Marshal.FreeHGlobal(ptr);
-
-            return str;
-        }
+        
 
         /// <summary>
         /// <para>!! <see cref="SQLiteTableAttribute"/>가 선언된 구조체들로 구성된 리스트를

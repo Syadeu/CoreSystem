@@ -25,6 +25,7 @@ namespace Syadeu.Mono
     public class GridManager : StaticManager<GridManager>
     {
         private static readonly object s_LockManager = new object();
+        private static readonly object s_LockCell = new object();
 
         #region Init
         public override bool HideInHierarchy => false;
@@ -209,13 +210,11 @@ namespace Syadeu.Mono
             #endregion
 
             public bool HasCell(int idx) => idx >= 0 && Cells.Length > idx;
-            public bool HasCell(Vector2Int grid)
+            public bool HasCell(Vector2Int location)
             {
-                for (int i = 0; i < Cells.Length; i++)
-                {
-                    if (Cells[i].Location.Equals(grid)) return true;
-                }
-                return false;
+                int idx = (GridSize.z * location.y) + location.x;
+                if (idx >= Cells.Length) return false;
+                return true;
             }
             public bool HasCell(Vector3 worldPosition)
             {
@@ -475,8 +474,6 @@ namespace Syadeu.Mono
         [Serializable]
         public struct GridCell : IValidation, IEquatable<GridCell>, IDisposable
         {
-            private static readonly object s_LockCell = new object();
-
             #region Init
             public readonly int2 Idxes;
             public readonly int ParentIdx;

@@ -367,26 +367,27 @@ public unsafe class UnsafeTests
     public unsafe void UnsafeIntArrayTest()
     {
         System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
-        int lenght = int.MaxValue / 3;
+        int lenght = 10000000;
 
         TestStruct[] a = new TestStruct[lenght];
 
         stopwatch.Start();
-        TestStruct val1 = a[lenght - 1];
+        ref TestStruct val1 = ref a[lenght - 1];
+        val1.str.a = 10;
         stopwatch.Stop();
 
-        $"{stopwatch.ElapsedMilliseconds} :: 1".ToLog();
+        $"{stopwatch.ElapsedTicks} :: 1 {val1.str.a}".ToLog();
 
         stopwatch.Reset();
         stopwatch.Start();
-        TestStruct c;
+        TestStruct* val2;
         fixed (TestStruct* ptr1 = a)
         {
-            c = *(ptr1 + (lenght - 1));
+            val2 = (ptr1 + (lenght - 1));
         }
         stopwatch.Stop();
 
-        $"{stopwatch.ElapsedMilliseconds} :: 2".ToLog();
+        $"{stopwatch.ElapsedTicks} :: 2 {(*val2).str.a}".ToLog();
 
         //Debug.Log($"{a[int.MaxValue - 1]} == {c}");
     }
@@ -410,6 +411,27 @@ public unsafe class UnsafeTests
         TestStruct val1 = Marshal.PtrToStructure<TestStruct>((IntPtr)tr);
 
         Debug.Log($"{b.b} == {val1.b} == ");
+    }
+
+    [Test]
+    public unsafe void UnsafeTestTest()
+    {
+        int[] arr = { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20 };
+        unsafe
+        {
+            fixed (int* parr = arr)
+            {
+                IntPtr ptr = new IntPtr(parr);
+                // Get the size of an array element.
+                int size = sizeof(int);
+                for (int ctr = 0; ctr < arr.Length; ctr++)
+                {
+                    IntPtr newPtr = IntPtr.Add(ptr, ctr * size);
+                    int* target = parr + ctr;
+                    Debug.Log($"{Marshal.ReadInt32(newPtr)} :: {(*target)}");
+                }
+            }
+        }
     }
 
     //private void* getPointer<T>(ref T t) where T : struct
@@ -451,4 +473,12 @@ public struct TestStruct
     public int k;
     public int l;
     public int m;
+
+    public TestInnerStruct str;
+}
+public struct TestInnerStruct
+{
+    public int a;
+    public int b;
+    public int c;
 }

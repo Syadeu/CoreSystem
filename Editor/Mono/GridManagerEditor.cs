@@ -90,7 +90,9 @@ namespace SyadeuEditor
             if (GUILayout.Button("To Bytes (Test)"))
             {
                 ref GridManager.Grid grid = ref GridManager.GetGrid(in m_GridIdx);
+                ref GridManager.GridCell cell = ref grid.GetCell(1);
                 grid.SetCustomData(new TestDataStruct(null));
+                cell.SetCustomData(new TestDataStruct(null));
 
                 GridManager.BinaryWrapper wrapper = grid.ConvertToWrapper();
                 byte[] bytes = wrapper.ToBytesWithStream();
@@ -98,13 +100,16 @@ namespace SyadeuEditor
                 //GridManager.Grid newGrid = wrapper.ToGrid();
                 TestDataStruct data;
                 GridManager.Grid newGrid = GridManager.BinaryWrapper.ToWrapper(bytes).ToGrid();
-                newGrid.For<TestDataStruct>((int i, ref TestDataStruct data) =>
-                {
+                var newCell = newGrid.GetCell(1);
+                //newGrid.For<TestDataStruct>((int i, ref TestDataStruct data) =>
+                //{
 
-                });
+                //});
 
                 newGrid.GetCustomData(out TestDataStruct cusData);
+                newCell.GetCustomData(out TestDataStruct cusCellData);
                 $"{grid.Length} :: {newGrid.Length}, {cusData.TestFloat3} :: {cusData.UserTag}".ToLog();
+                $"CELL____ ::{cusCellData.TestFloat3} :: {cusCellData.UserTag}".ToLog();
             }
             if (GUILayout.Button("Connect (19.23),(20.23) (Test)"))
             {
