@@ -31,10 +31,12 @@ namespace Syadeu.Mono
         public override bool HideInHierarchy => false;
 
         private Grid[] m_Grids = new Grid[0];
+        private Dictionary<int2, object> m_CellObjects = new Dictionary<int2, object>();
         private NavMeshQuery m_NavMeshQuery;
 
 #if UNITY_EDITOR
         public static Grid[] s_EditorGrids = new Grid[0];
+        public static Dictionary<int2, object> s_EditorCellObjects = new Dictionary<int2, object>();
 #endif
 
         public Camera RenderCameraTarget
@@ -126,7 +128,25 @@ namespace Syadeu.Mono
                 HasDependency = gridCell.HasDependency;
                 DependencyTarget = gridCell.DependencyTarget;
                 DependencyChilds = gridCell.DependencyChilds;
-                CustomData = gridCell.CustomData;
+#if UNITY_EDITOR
+                if (IsMainthread() && !Application.isPlaying)
+                {
+                    if (s_EditorCellObjects.ContainsKey(gridCell.Idxes))
+                    {
+                        CustomData = s_EditorCellObjects[gridCell.Idxes];
+                    }
+                    else CustomData = null;
+                }
+                else
+#endif
+                {
+                    if (Instance.m_CellObjects.ContainsKey(gridCell.Idxes))
+                    {
+                        CustomData = Instance.m_CellObjects[gridCell.Idxes];
+                    }
+                    else CustomData = null;
+                }
+                //CustomData = gridCell.CustomData;
             }
         }
         [Serializable]
@@ -227,7 +247,18 @@ namespace Syadeu.Mono
 
             #region Gets
 
-            public ref GridCell GetCell(int idx) => ref Cells[idx];
+            public ref GridCell GetCell(int idx)
+            {
+                return ref Cells[idx];
+
+                //unsafe
+                //{
+                //    fixed (GridCell* p = Cells)
+                //    {
+
+                //    }
+                //}
+            }
             public ref GridCell GetCell(Vector2Int location)
             {
                 int idx = (GridSize.z * location.y) + location.x;
@@ -485,10 +516,35 @@ namespace Syadeu.Mono
             internal bool HasDependency;
             internal int2 DependencyTarget;
             internal int2[] DependencyChilds;
-            internal object CustomData;
+            //internal object CustomData;
 
-            private readonly float3[] Verties;
-            private readonly float3[] NavMeshVerties;
+            private readonly float3[] Verties
+            {
+                get
+                {
+                    return new float3[4]
+                    {
+                        new float3(Bounds.min.x, Bounds.min.y, Bounds.min.z),
+                        new float3(Bounds.min.x, Bounds.min.y, Bounds.max.z),
+                        new float3(Bounds.max.x, Bounds.min.y, Bounds.max.z),
+                        new float3(Bounds.max.x, Bounds.min.y, Bounds.min.z)
+                    };
+                }
+            }
+            private float3[] NavMeshVerties
+            {
+                get
+                {
+                    return new float3[]
+                    {
+                        Bounds.center,
+                        new float3(Bounds.center.x + Bounds.extents.x - .01f, Bounds.center.y, Bounds.center.z),
+                        new float3(Bounds.center.x - Bounds.extents.x + .01f, Bounds.center.y, Bounds.center.z),
+                        new float3(Bounds.center.x, Bounds.center.y, Bounds.center.z + Bounds.extents.z - .01f),
+                        new float3(Bounds.center.x, Bounds.center.y, Bounds.center.z - Bounds.extents.z + .01f)
+                    };
+                }
+            }
 
             public bool Enabled;
             public bool Highlighted;
@@ -537,12 +593,12 @@ namespace Syadeu.Mono
                     {
                         if (IsMainthread())
                         {
-                            NavMesh.SamplePosition(NavMeshVerties[i], out NavMeshHit hit, .5f, -1);
+                            NavMesh.SamplePosition(NavMeshVerties[i], out NavMeshHit hit, .25f, -1);
                             if (!hit.hit) return true;
                         }
                         else
                         {
-                            NavMeshLocation hit = Instance.m_NavMeshQuery.MapLocation(NavMeshVerties[i], Vector3.one, 0, -1);
+                            NavMeshLocation hit = Instance.m_NavMeshQuery.MapLocation(NavMeshVerties[i], Vector3.one * .25f, 0, -1);
                             if (!Instance.m_NavMeshQuery.IsValid(hit.polygon)) return true;
                         }
                     }
@@ -562,15 +618,15 @@ namespace Syadeu.Mono
                 HasDependency = false;
                 DependencyTarget = int2.zero;
                 DependencyChilds = null;
-                CustomData = null;
+                //CustomData = null;
 
-                Verties = new float3[4]
-                {
-                new float3(bounds.min.x, bounds.min.y, bounds.min.z),
-                new float3(bounds.min.x, bounds.min.y, bounds.max.z),
-                new float3(bounds.max.x, bounds.min.y, bounds.max.z),
-                new float3(bounds.max.x, bounds.min.y, bounds.min.z)
-                };
+                //Verties = new float3[4]
+                //{
+                //    new float3(bounds.min.x, bounds.min.y, bounds.min.z),
+                //    new float3(bounds.min.x, bounds.min.y, bounds.max.z),
+                //    new float3(bounds.max.x, bounds.min.y, bounds.max.z),
+                //    new float3(bounds.max.x, bounds.min.y, bounds.min.z)
+                //};
 
                 Enabled = true;
                 Highlighted = false;
@@ -579,25 +635,44 @@ namespace Syadeu.Mono
                 HighlightColor = new Color { g = 1, a = .1f };
                 DisableColor = new Color { r = 1, a = .1f };
 
-                if (enableNavMesh)
-                {
-                    NavMeshVerties = new float3[]
-                    {
-                        bounds.center,
-                        new float3(Bounds.center.x + Bounds.extents.x - .1f, Bounds.center.y, Bounds.center.z),
-                        new float3(Bounds.center.x - Bounds.extents.x + .1f, Bounds.center.y, Bounds.center.z),
-                        new float3(Bounds.center.x, Bounds.center.y, Bounds.center.z + Bounds.extents.z - .1f),
-                        new float3(Bounds.center.x, Bounds.center.y, Bounds.center.z - Bounds.extents.z + .1f)
-                    };
-                }
-                else NavMeshVerties = null;
+                //if (enableNavMesh)
+                //{
+                //    NavMeshVerties = new float3[]
+                //    {
+                //        bounds.center,
+                //        new float3(Bounds.center.x + Bounds.extents.x - .1f, Bounds.center.y, Bounds.center.z),
+                //        new float3(Bounds.center.x - Bounds.extents.x + .1f, Bounds.center.y, Bounds.center.z),
+                //        new float3(Bounds.center.x, Bounds.center.y, Bounds.center.z + Bounds.extents.z - .1f),
+                //        new float3(Bounds.center.x, Bounds.center.y, Bounds.center.z - Bounds.extents.z + .1f)
+                //    };
+                //}
+                //else NavMeshVerties = null;
             }
             internal GridCell(in BinaryGridCell cell, bool enableNavMesh) : this(cell.ParentIdx, cell.Idx, cell.Location, new Bounds(cell.Bounds_Center, cell.Bounds_Size), enableNavMesh)
             {
                 HasDependency = cell.HasDependency;
                 DependencyTarget = cell.DependencyTarget;
                 DependencyChilds = cell.DependencyChilds;
-                CustomData = cell.CustomData;
+                //CustomData = cell.CustomData;
+                int2 loc = new int2(cell.ParentIdx, cell.Idx);
+#if UNITY_EDITOR
+                if (IsMainthread() && !Application.isPlaying)
+                {
+                    if (s_EditorCellObjects.ContainsKey(loc))
+                    {
+                        s_EditorCellObjects[loc] = cell.CustomData;
+                    }
+                    else s_EditorCellObjects.Add(loc, cell.CustomData);
+                }
+                else
+#endif
+                {
+                    if (Instance.m_CellObjects.ContainsKey(loc))
+                    {
+                        Instance.m_CellObjects[loc] = cell.CustomData;
+                    }
+                    else Instance.m_CellObjects.Add(loc, cell.CustomData);
+                }
             }
 
             public bool IsValid() => Verties != null;
@@ -614,31 +689,120 @@ namespace Syadeu.Mono
 
             public object GetCustomData()
             {
+                //if (HasDependency)
+                //{
+                //    ref Grid grid = ref GetGrid(DependencyTarget.x);
+                //    ref GridCell cell = ref grid.GetCell(DependencyTarget.y);
+
+                //    return cell.CustomData;
+                //}
+                //else return CustomData;
                 if (HasDependency)
                 {
-                    ref Grid grid = ref GetGrid(DependencyTarget.x);
-                    ref GridCell cell = ref grid.GetCell(DependencyTarget.y);
-
-                    return cell.CustomData;
+#if UNITY_EDITOR
+                    if (IsMainthread() && !Application.isPlaying)
+                    {
+                        if (s_EditorCellObjects.TryGetValue(DependencyTarget, out var data))
+                        {
+                            return data;
+                        }
+                    }
+                    else
+#endif
+                    {
+                        if (Instance.m_CellObjects.TryGetValue(DependencyTarget, out var data))
+                        {
+                            return data;
+                        }
+                    }
                 }
-                else return CustomData;
+                else
+                {
+#if UNITY_EDITOR
+                    if (IsMainthread() && !Application.isPlaying)
+                    {
+                        if (s_EditorCellObjects.TryGetValue(Idxes, out var data))
+                        {
+                            return data;
+                        }
+                    }
+                    else
+#endif
+                    {
+                        if (Instance.m_CellObjects.TryGetValue(Idxes, out var data))
+                        {
+                            return data;
+                        }
+                    }
+                }
+
+                return null;
             }
             public bool GetCustomData<T>(out T value) where T : ITag
             {
-                object data;
+                //object data;
+                //if (HasDependency)
+                //{
+                //    ref Grid grid = ref GetGrid(DependencyTarget.x);
+                //    ref GridCell cell = ref grid.GetCell(DependencyTarget.y);
+
+                //    data = cell.CustomData;
+                //}
+                //else data = CustomData;
+
+                //if (data != null && data is T t)
+                //{
+                //    value = t;
+                //    return true;
+                //}
+
+                //value = default;
+                //return false;
                 if (HasDependency)
                 {
-                    ref Grid grid = ref GetGrid(DependencyTarget.x);
-                    ref GridCell cell = ref grid.GetCell(DependencyTarget.y);
-
-                    data = cell.CustomData;
+#if UNITY_EDITOR
+                    if (IsMainthread() && !Application.isPlaying)
+                    {
+                        if (s_EditorCellObjects.TryGetValue(DependencyTarget, out var data) &&
+                            data is T t)
+                        {
+                            value = t;
+                            return true;
+                        }
+                    }
+                    else
+#endif
+                    {
+                        if (Instance.m_CellObjects.TryGetValue(DependencyTarget, out var data) &&
+                            data is T t)
+                        {
+                            value = t;
+                            return true;
+                        }
+                    }
                 }
-                else data = CustomData;
-
-                if (data != null && data is T t)
+                else
                 {
-                    value = t;
-                    return true;
+#if UNITY_EDITOR
+                    if (IsMainthread() && !Application.isPlaying)
+                    {
+                        if (s_EditorCellObjects.TryGetValue(Idxes, out var data) &&
+                            data is T t)
+                        {
+                            value = t;
+                            return true;
+                        }
+                    }
+                    else
+#endif
+                    {
+                        if (Instance.m_CellObjects.TryGetValue(Idxes, out var data) &&
+                            data is T t)
+                        {
+                            value = t;
+                            return true;
+                        }
+                    }
                 }
 
                 value = default;
@@ -652,14 +816,69 @@ namespace Syadeu.Mono
                         $"해당 객체({data.GetType().Name})는 Serializable 어트리뷰트가 선언되지 않았습니다.");
                 }
 
+                //if (HasDependency)
+                //{
+                //    ref Grid grid = ref GetGrid(DependencyTarget.x);
+                //    ref GridCell cell = ref grid.GetCell(DependencyTarget.y);
+
+                //    cell.CustomData = data;
+                //}
+                //else CustomData = data;
+
                 if (HasDependency)
                 {
-                    ref Grid grid = ref GetGrid(DependencyTarget.x);
-                    ref GridCell cell = ref grid.GetCell(DependencyTarget.y);
-
-                    cell.CustomData = data;
+#if UNITY_EDITOR
+                    if (IsMainthread() && !Application.isPlaying)
+                    {
+                        if (s_EditorCellObjects.ContainsKey(DependencyTarget))
+                        {
+                            s_EditorCellObjects[DependencyTarget] = data;
+                        }
+                        else
+                        {
+                            s_EditorCellObjects.Add(DependencyTarget, data);
+                        }
+                    }
+                    else
+#endif
+                    {
+                        if (Instance.m_CellObjects.ContainsKey(DependencyTarget))
+                        {
+                            Instance.m_CellObjects[DependencyTarget] = data;
+                        }
+                        else
+                        {
+                            Instance.m_CellObjects.Add(DependencyTarget, data);
+                        }
+                    }
                 }
-                else CustomData = data;
+                else
+                {
+#if UNITY_EDITOR
+                    if (IsMainthread() && !Application.isPlaying)
+                    {
+                        if (s_EditorCellObjects.ContainsKey(Idxes))
+                        {
+                            s_EditorCellObjects[Idxes] = data;
+                        }
+                        else
+                        {
+                            s_EditorCellObjects.Add(Idxes, data);
+                        }
+                    }
+                    else
+#endif
+                    {
+                        if (Instance.m_CellObjects.ContainsKey(Idxes))
+                        {
+                            Instance.m_CellObjects[Idxes] = data;
+                        }
+                        else
+                        {
+                            Instance.m_CellObjects.Add(Idxes, data);
+                        }
+                    }
+                }
 
                 SetDirty();
             }
@@ -893,6 +1112,7 @@ namespace Syadeu.Mono
                     s_EditorGrids[i].Dispose();
                 }
                 s_EditorGrids = new Grid[0];
+                s_EditorCellObjects.Clear();
             }
             else
 #endif
@@ -903,6 +1123,7 @@ namespace Syadeu.Mono
                     Instance.m_Grids[i].Dispose();
                 }
                 Instance.m_Grids = new Grid[0];
+                Instance.m_CellObjects.Clear();
             }
 
             return count;

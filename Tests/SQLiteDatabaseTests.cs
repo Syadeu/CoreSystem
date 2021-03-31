@@ -11,7 +11,7 @@ using System.Linq;
 
 public class SQLiteDatabaseTests
 {
-    [SQLiteTable]
+    [SQLiteTable][System.Serializable]
     public struct SQliteTestStruct : System.IEquatable<SQliteTestStruct>
     {
         [SQLiteDatabase(IsPrimaryKey = true)] public int Idx { get; set; }

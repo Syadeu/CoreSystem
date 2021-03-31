@@ -16,21 +16,21 @@ namespace Syadeu.Unsafe
     public static class ExtensionMethods
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        unsafe public static IntPtr AddressOf<T>(T t) where T : struct
+        unsafe public static IntPtr AddressOf<T>(T t) where T : unmanaged
         {
             TypedReference reference = __makeref(t);
             return *(IntPtr*)(&reference);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        unsafe public static IntPtr AddressOfRef<T>(ref T t) where T : struct
+        unsafe public static IntPtr AddressOfRef<T>(ref T t) where T : unmanaged
         {
             TypedReference reference = __makeref(t);
             TypedReference* pRef = &reference;
             return (IntPtr)pRef; //(&pRef)
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        unsafe public static T ReadGenericFromPtr<T>(IntPtr source, int sizeOfT) where T : struct
+        unsafe public static T ReadGenericFromPtr<T>(IntPtr source, int sizeOfT) where T : unmanaged
         {
             byte* bytePtr = (byte*)source;
 
