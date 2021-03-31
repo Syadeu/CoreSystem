@@ -143,7 +143,7 @@ namespace Syadeu.Mono
 
             internal object CustomData;
 
-            public readonly bool EnableNavMesh;
+            public bool EnableNavMesh;
             public bool EnableDrawGL;
             public bool EnableDrawIdx;
 
