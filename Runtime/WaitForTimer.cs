@@ -1,5 +1,4 @@
-﻿using Syadeu.Extensions.Logs;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Syadeu
 {

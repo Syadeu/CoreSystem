@@ -2,7 +2,6 @@
 using FMOD.Studio;
 using FMODUnity;
 using Syadeu.Database;
-using Syadeu.Extensions.Logs;
 using System;
 using System.Collections.Concurrent;
 

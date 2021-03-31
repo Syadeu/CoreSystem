@@ -13,7 +13,6 @@ using Unity.Mathematics;
 
 using Syadeu;
 using Syadeu.Database;
-using Syadeu.Extensions.Logs;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -232,35 +231,27 @@ namespace Syadeu.Mono
             public ref GridCell GetCell(int idx) => ref Cells[idx];
             public ref GridCell GetCell(Vector2Int location)
             {
-                for (int i = 0; i < Cells.Length; i++)
-                {
-                    int2 target = new int2(location.x, location.y);
-                    if (Cells[i].Location.Equals(target)) return ref Cells[i];
-                }
-
-                throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({location.x},{location.y}). " +
+                int idx = (GridSize.z * location.y) + location.x;
+                if (idx >= Cells.Length) throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({location.x},{location.y}). " +
                     $"해당 좌표계는 이 그리드에 존재하지않습니다.");
+
+                return ref Cells[idx];
             }
             public ref GridCell GetCell(int2 location)
             {
-                for (int i = 0; i < Cells.Length; i++)
-                {
-                    if (Cells[i].Location.Equals(location)) return ref Cells[i];
-                }
-
-                throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({location.x},{location.y}). " +
+                int idx = (GridSize.z * location.y) + location.x;
+                if (idx >= Cells.Length) throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({location.x},{location.y}). " +
                     $"해당 좌표계는 이 그리드에 존재하지않습니다.");
+
+                return ref Cells[idx];
             }
             public ref GridCell GetCell(int x, int y)
             {
-                for (int i = 0; i < Cells.Length; i++)
-                {
-                    if (Cells[i].Location.x.Equals(x) &&
-                        Cells[i].Location.y.Equals(y)) return ref Cells[i];
-                }
+                int idx = (GridSize.z * y) + x;
+                if (idx >= Cells.Length) throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({x},{y}). " +
+                     $"해당 좌표계는 이 그리드에 존재하지않습니다.");
 
-                throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({x},{y}). " +
-                    $"해당 좌표계는 이 그리드에 존재하지않습니다.");
+                return ref Cells[idx];
             }
             public ref GridCell GetCell(Vector3 worldPosition)
             {

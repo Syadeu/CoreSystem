@@ -111,7 +111,7 @@ namespace SyadeuEditor
                 ref GridManager.Grid grid = ref GridManager.GetGrid(m_GridIdx);
                 ref GridManager.GridCell cell = ref grid.GetCell(20, 23);
 
-                cell.EnableDependency(m_GridIdx, 19, 23);
+                $"{cell.Location} == 20,23".ToLog();
             }
 
             EditorGUILayout.Space();

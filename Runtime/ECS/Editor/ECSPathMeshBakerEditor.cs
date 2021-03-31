@@ -3,7 +3,7 @@ using Syadeu.ECS;
 using UnityEngine;
 using UnityEngine.AI;
 using System.Collections.Generic;
-using Syadeu.Extensions.Logs;
+
 using Syadeu;
 
 namespace SyadeuEditor.ECS

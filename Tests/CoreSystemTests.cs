@@ -363,50 +363,92 @@ public unsafe class UnsafeTests
 
         Debug.Log($"{a} == {c}");
     }
-    //[Test]
-    //public unsafe void UnsafeIntArrayTest()
+    [Test]
+    public unsafe void UnsafeIntArrayTest()
+    {
+        System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
+        int lenght = int.MaxValue / 3;
+
+        TestStruct[] a = new TestStruct[lenght];
+
+        stopwatch.Start();
+        TestStruct val1 = a[lenght - 1];
+        stopwatch.Stop();
+
+        $"{stopwatch.ElapsedMilliseconds} :: 1".ToLog();
+
+        stopwatch.Reset();
+        stopwatch.Start();
+        TestStruct c;
+        fixed (TestStruct* ptr1 = a)
+        {
+            c = *(ptr1 + (lenght - 1));
+        }
+        stopwatch.Stop();
+
+        $"{stopwatch.ElapsedMilliseconds} :: 2".ToLog();
+
+        //Debug.Log($"{a[int.MaxValue - 1]} == {c}");
+    }
+
+    [Test]
+    public unsafe void UnsafeClassTest()
+    {
+        TestClass a = new TestClass() { a = 5 };
+
+        TypedReference tr = __makeref(a);
+        TestClass val1 = __refvalue(tr, TestClass);
+
+        Debug.Log($"{a.a} == {val1.a}");
+    }
+    [Test]
+    public unsafe void UnsafeStructTest()
+    {
+        TestStruct b = new TestStruct() { b = 2 };
+
+        TestStruct* tr = &b;
+        TestStruct val1 = Marshal.PtrToStructure<TestStruct>((IntPtr)tr);
+
+        Debug.Log($"{b.b} == {val1.b} == ");
+    }
+
+    //private void* getPointer<T>(ref T t) where T : struct
     //{
-    //    int[] a = new int[] { 1, 2, 3 };
-
-    //    //int d = ref a[1];
-    //    int* b = stackalloc int[1];
-
-    //    b++;
-        
-    //    int c = (int)b;
-
-    //    Debug.Log($"{d} + 1 == {c}");
+    //    //TypedReference tr = __makeref(t);
+    //    void* temp = &tr;
+    //    return temp;
     //}
-
-    //[Test]
-    //public unsafe void UnsafeClassRefTest()
+    //private void* getPointer2<T>(ref T t) where T : struct
     //{
-    //    unsafe
-    //    {
-
-    //    }
-    //    IntPtr c = new TestClass() { a = 5 };
-
-    //    //IntPtr ptr = Marshal.AllocHGlobal(Marshal.SizeOf(_A));
-    //    //Marshal.StructureToPtr(_A, ptr, true);
-
-    //    TestClass *refB = (TestClass *)ptr.ToPointer();
-
-        
-
-    //    TestClass result = Marshal.PtrToStructure<TestClass>(refB);
-
-
-    //    Debug.Log($"{_A.a} == ");
-
-    //    Marshal.FreeHGlobal(ptr);
+    //    IntPtr temp = Marshal.AllocHGlobal(Marshal.SizeOf<T>());
+    //    Marshal.StructureToPtr(t, temp, true);
+    //    //TypedReference tr = __makeref(t);
+    //    //void* temp = &tr;
+    //    return temp;
     //}
 
     //public TestClass _A;
     //public TestClass* _B;
 
-    public struct TestClass
-    {
-        public int a;
-    }
+    
+}
+
+public class TestClass
+{
+    public int a;
+}
+public struct TestStruct
+{
+    public int a;
+    public int b;
+    public int c;
+    public int d;
+    public int f;
+    public int g;
+    public int h;
+    public int i;
+    public int j;
+    public int k;
+    public int l;
+    public int m;
 }

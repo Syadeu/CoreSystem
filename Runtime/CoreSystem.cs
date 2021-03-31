@@ -15,7 +15,6 @@ using UnityEditor;
 using UnityEngine.Diagnostics;
 using UnityEngine.Networking;
 using System.Threading.Tasks;
-using Syadeu.Extensions.Logs;
 using System.Reflection;
 
 namespace Syadeu

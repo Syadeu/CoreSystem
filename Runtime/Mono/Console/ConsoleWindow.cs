@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Syadeu.Extensions.Logs;
 using Syadeu.Mono.Console;
 
 using UnityEngine;

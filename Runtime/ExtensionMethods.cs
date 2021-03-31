@@ -5,15 +5,25 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
 
-namespace Syadeu.Extensions.Logs
+namespace Syadeu.Unsafe
 {
-    public static class EditorUtilExtensions
+    public static class ExtensionMethods
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static IntPtr ToPointer<T>(this ref T t) where T : struct
+        {
+            unsafe
+            {
+                TypedReference tr = __makeref(t);
+                return *(IntPtr*)(&tr);
+            }
 
+        }
     }
 }
 

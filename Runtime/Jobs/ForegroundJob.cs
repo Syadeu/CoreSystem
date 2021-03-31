@@ -1,5 +1,4 @@
-﻿using Syadeu.Extensions.Logs;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace Syadeu

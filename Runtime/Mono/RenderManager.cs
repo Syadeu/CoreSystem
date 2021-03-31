@@ -4,7 +4,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using Syadeu.Database;
-using Syadeu.Extensions.Logs;
 
 using UnityEngine;
 

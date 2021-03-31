@@ -7,7 +7,6 @@ using Unity.Burst;
 using Unity.Mathematics;
 using Unity.Entities;
 using Unity.Transforms;
-using Syadeu.Extensions.Logs;
 using System.Collections;
 
 namespace Syadeu.ECS
