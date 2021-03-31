@@ -400,7 +400,7 @@ public unsafe class UnsafeTests
     //    Debug.Log($"{_A.a} == ");
 
     //    Marshal.FreeHGlobal(ptr);
-    }
+    //}
 
     //public TestClass _A;
     //public TestClass* _B;
