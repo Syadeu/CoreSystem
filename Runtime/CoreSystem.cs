@@ -27,12 +27,24 @@ namespace Syadeu
         internal static List<IStaticMonoManager> InstanceManagers { get; } = new List<IStaticMonoManager>();
         internal static List<IStaticDataManager> DataManagers { get; } = new List<IStaticDataManager>();
 
-        public static IReadOnlyList<IStaticMonoManager> GetStaticManagers() => StaticManagers;
+        public static IReadOnlyList<IStaticMonoManager> GetStaticManagers()
+        {
+            for (int i = 0; i < StaticManagers.Count; i++)
+            {
+                if (StaticManagers[i].transform == null)
+                {
+                    StaticManagers.RemoveAt(i);
+                    i--;
+                    continue;
+                }
+            }
+            return StaticManagers;
+        }
         public static IReadOnlyList<IStaticMonoManager> GetInstanceManagers()
         {
             for (int i = 0; i < InstanceManagers.Count; i++)
             {
-                if (InstanceManagers[i] == null)
+                if (InstanceManagers[i].transform == null)
                 {
                     InstanceManagers.RemoveAt(i);
                     i--;

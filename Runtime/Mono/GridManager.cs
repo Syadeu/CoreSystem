@@ -310,14 +310,34 @@ namespace Syadeu.Mono
             }
             public bool HasCell(Vector3 worldPosition)
             {
-                unsafe
+                if (worldPosition.y <= Bounds.extents.y)
                 {
-                    for (int i = 0; i < Length; i++)
+                    GridCell first;
+                    unsafe
                     {
-                        if (Cells[i].Bounds.Contains(worldPosition)) return true;
+                        first = *Cells;
+                    }
+
+                    int x = Math.Abs(Convert.ToInt32((worldPosition.x - first.Bounds.center.x) / CellSize));
+                    int y = Math.Abs(Convert.ToInt32((worldPosition.z - first.Bounds.center.z) / CellSize));
+
+                    int idx = (GridSize.z * y) + x;
+                    if (idx < Length)
+                    {
+                        unsafe
+                        {
+                            return true;
+                        }
                     }
                 }
-                
+                //unsafe
+                //{
+                //    for (int i = 0; i < Length; i++)
+                //    {
+                //        if (Cells[i].Bounds.Contains(worldPosition)) return true;
+                //    }
+                //}
+
                 return false;
             }
 
@@ -327,6 +347,11 @@ namespace Syadeu.Mono
 
             public ref GridCell GetCell(int idx)
             {
+                if (idx >= Length)
+                {
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({idx}). " +
+                        $"해당 좌표계는 이 그리드에 존재하지않습니다.");
+                }
                 unsafe
                 {
                     return ref Cells[idx];
@@ -338,7 +363,10 @@ namespace Syadeu.Mono
                 if (idx >= Length) throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({location.x},{location.y}). " +
                     $"해당 좌표계는 이 그리드에 존재하지않습니다.");
 
-                return ref GetCell(idx);
+                unsafe
+                {
+                    return ref Cells[idx];
+                }
             }
             public ref GridCell GetCell(int2 location)
             {
@@ -346,7 +374,10 @@ namespace Syadeu.Mono
                 if (idx >= Length) throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({location.x},{location.y}). " +
                     $"해당 좌표계는 이 그리드에 존재하지않습니다.");
 
-                return ref GetCell(idx);
+                unsafe
+                {
+                    return ref Cells[idx];
+                }
             }
             public ref GridCell GetCell(int x, int y)
             {
@@ -354,15 +385,31 @@ namespace Syadeu.Mono
                 if (idx >= Length) throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({x},{y}). " +
                      $"해당 좌표계는 이 그리드에 존재하지않습니다.");
 
-                return ref GetCell(idx);
+                unsafe
+                {
+                    return ref Cells[idx];
+                }
             }
             public ref GridCell GetCell(Vector3 worldPosition)
             {
-                unsafe
+                if (worldPosition.y <= Bounds.extents.y)
                 {
-                    for (int i = 0; i < Length; i++)
+                    GridCell first;
+                    unsafe
                     {
-                        if (Cells[i].Bounds.Contains(worldPosition)) return ref Cells[i];
+                        first = *Cells;
+                    }
+                    
+                    int x = Math.Abs(Convert.ToInt32((worldPosition.x - first.Bounds.center.x) / CellSize));
+                    int y = Math.Abs(Convert.ToInt32((worldPosition.z - first.Bounds.center.z) / CellSize));
+                    
+                    int idx = (GridSize.z * y) + x;
+                    if (idx < Length)
+                    {
+                        unsafe
+                        {
+                            return ref Cells[idx];
+                        }
                     }
                 }
 
@@ -1205,7 +1252,7 @@ namespace Syadeu.Mono
 
                     if (grid.EnableDrawIdx)
                     {
-                        Handles.Label(cell.Bounds.center, $"{cell.Idx}:({cell.Location.x},{cell.Location.y}):c{Instance.m_CellDependency[cell.Idxes]?.Count}");
+                        Handles.Label(cell.Bounds.center, $"{cell.Idx}:({cell.Location.x},{cell.Location.y})");
                     }
                 }
             }

@@ -145,6 +145,14 @@ namespace SyadeuEditor
 
                 $"{cell.Location} == 20,23".ToLog();
             }
+            if (GUILayout.Button("00 test"))
+            {
+                ref GridManager.Grid grid = ref GridManager.GetGrid(m_GridIdx);
+                ref GridManager.GridCell cell1 = ref grid.GetCell(0, 0);
+                ref GridManager.GridCell cell2 = ref grid.GetCell(grid.GetCell(2, 2).Bounds.center);
+
+                $"{cell1.Location}:{cell1.Bounds.center} == {cell2.Location}".ToLog();
+            }
 
             EditorGUILayout.Space();
             m_EnableNavMesh = EditorGUILayout.ToggleLeft("Enable NavMesh", m_EnableNavMesh);
