@@ -49,13 +49,15 @@ namespace Syadeu.Mono
         }
         private readonly ConcurrentQueue<int2> m_DirtyFlags = new ConcurrentQueue<int2>();
         private readonly ConcurrentQueue<int2> m_DirtyFlagsAsync = new ConcurrentQueue<int2>();
-        private readonly ConcurrentDictionary<int, GridLambdaDescription<Grid, GridCell>> m_OnDirtyFlagRaised = new ConcurrentDictionary<int, GridLambdaDescription<Grid, GridCell>>();
-        private readonly ConcurrentDictionary<int, GridLambdaDescription<Grid, GridCell>> m_OnDirtyFlagRaisedAsync = new ConcurrentDictionary<int, GridLambdaDescription<Grid, GridCell>>();
+        private readonly ConcurrentDictionary<int, GridLambdaWriteAllDescription<Grid, GridCell>> m_OnDirtyFlagRaised = new ConcurrentDictionary<int, GridLambdaWriteAllDescription<Grid, GridCell>>();
+        private readonly ConcurrentDictionary<int, GridLambdaWriteAllDescription<Grid, GridCell>> m_OnDirtyFlagRaisedAsync = new ConcurrentDictionary<int, GridLambdaWriteAllDescription<Grid, GridCell>>();
 
         //public delegate void GridLambdaRefAllTagDescription<T, TA, TAA, TAAA>(in T i, ref TA gridCell, in TAA tag, in TAAA tag2);
         //public delegate void GridLambdaRefTagDescription<T, TA, TAA>(in T i, ref TA gridCell, in TAA tag);
-        public delegate void GridLambdaRefDescription<T, TA>(in T i, ref TA gridCell);
-        public delegate void GridLambdaDescription<T, TA>(in T i, in TA gridCell);
+        public delegate void GridLambdaWriteAllDescription<T, TA>(ref T t, ref TA ta);
+        public delegate void GridLambdaRefRevDescription<T, TA>(ref T t, in TA ta);
+        public delegate void GridLambdaRefDescription<T, TA>(in T t, ref TA ta);
+        public delegate void GridLambdaDescription<T, TA>(in T t, in TA ta);
 
         public static Color 
             NormalColor = new Color(1, 1, 1, .1f),
@@ -518,11 +520,11 @@ namespace Syadeu.Mono
 
             #endregion
 
-            public void OnDirtyMarked(GridLambdaDescription<Grid, GridCell> async)
+            public void OnDirtyMarked(GridLambdaWriteAllDescription<Grid, GridCell> async)
             {
                 Instance.m_OnDirtyFlagRaised.TryAdd(Idx, async);
             }
-            public void OnDirtyMarkedAsync(GridLambdaDescription<Grid, GridCell> async)
+            public void OnDirtyMarkedAsync(GridLambdaWriteAllDescription<Grid, GridCell> async)
             {
                 Instance.m_OnDirtyFlagRaisedAsync.TryAdd(Idx, async);
             }
@@ -1128,10 +1130,7 @@ namespace Syadeu.Mono
                         if (!m_DirtyFlags.TryDequeue(out int2 idxes) ||
                             !m_OnDirtyFlagRaised.ContainsKey(idxes.x)) continue;
 
-                        Grid grid = GetGrid(idxes.x);
-                        GridCell cell = grid.GetCell(idxes.y);
-
-                        m_OnDirtyFlagRaised[idxes.x].Invoke(grid, cell);
+                        ExecuteDirtyFlag(idxes, m_OnDirtyFlagRaised[idxes.x]);
                     }
                 }
 
@@ -1150,15 +1149,18 @@ namespace Syadeu.Mono
                         if (!m_DirtyFlagsAsync.TryDequeue(out int2 idxes) ||
                             !m_OnDirtyFlagRaisedAsync.ContainsKey(idxes.x)) continue;
 
-                        Grid grid = GetGrid(idxes.x);
-                        GridCell cell = grid.GetCell(idxes.y);
-
-                        m_OnDirtyFlagRaisedAsync[idxes.x].Invoke(grid, cell);
+                        ExecuteDirtyFlag(idxes, m_OnDirtyFlagRaisedAsync[idxes.x]);
                     }
                 }
 
                 yield return null;
             }
+        }
+        private void ExecuteDirtyFlag(int2 idxes, GridLambdaWriteAllDescription<Grid, GridCell> gridLambda)
+        {
+            ref Grid grid = ref GetGrid(idxes.x);
+            ref GridCell cell = ref grid.GetCell(idxes.y);
+            gridLambda.Invoke(ref grid, ref cell);
         }
         private void OnRenderObject()
         {
