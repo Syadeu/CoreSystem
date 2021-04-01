@@ -52,12 +52,8 @@ namespace Syadeu.Mono
         private readonly ConcurrentDictionary<int, GridLambdaDescription<Grid, GridCell>> m_OnDirtyFlagRaised = new ConcurrentDictionary<int, GridLambdaDescription<Grid, GridCell>>();
         private readonly ConcurrentDictionary<int, GridLambdaDescription<Grid, GridCell>> m_OnDirtyFlagRaisedAsync = new ConcurrentDictionary<int, GridLambdaDescription<Grid, GridCell>>();
 
-        //public delegate void GridRWAllTagLambdaDescription(in int i, ref GridCell gridCell, in UserTagFlag userTag, in CustomTagFlag customTag);
-        //public delegate void GridRWUserTagLambdaDescription(in int i, ref GridCell gridCell, in UserTagFlag userTag);
-        //public delegate void GridRWCustomTagLambdaDescription(in int i, ref GridCell gridCell, in CustomTagFlag customTag);
-        public delegate void GridLambdaRefAllTagDescription<T, TA, TAA, TAAA>(in T i, ref TA gridCell, in TAA tag, in TAAA tag2);
-        public delegate void GridLambdaRefTagDescription<T, TA, TAA>(in T i, ref TA gridCell, in TAA tag);
-        //public delegate void GridRWLambdaDescription(in int i, ref GridCell gridCell);
+        //public delegate void GridLambdaRefAllTagDescription<T, TA, TAA, TAAA>(in T i, ref TA gridCell, in TAA tag, in TAAA tag2);
+        //public delegate void GridLambdaRefTagDescription<T, TA, TAA>(in T i, ref TA gridCell, in TAA tag);
         public delegate void GridLambdaRefDescription<T, TA>(in T i, ref TA gridCell);
         public delegate void GridLambdaDescription<T, TA>(in T i, in TA gridCell);
 
@@ -289,6 +285,8 @@ namespace Syadeu.Mono
 
             #endregion
 
+            #region Has
+
             public bool HasCell(int idx) => idx >= 0 && Length > idx;
             public bool HasCell(Vector2Int location)
             {
@@ -320,6 +318,8 @@ namespace Syadeu.Mono
                 
                 return false;
             }
+
+            #endregion
 
             #region Gets
 
@@ -451,6 +451,17 @@ namespace Syadeu.Mono
                     }
                 }
             }
+            public void For<T>(GridLambdaDescription<int, T> lambdaDescription) where T : struct, ITag
+            {
+                unsafe
+                {
+                    for (int i = 0; i < Length; i++)
+                    {
+                        if (!Cells[i].GetCustomData(out T data)) continue;
+                        lambdaDescription.Invoke(in i, in data);
+                    }
+                }
+            }
             public void For(GridLambdaRefDescription<int, GridCell> lambdaDescription)
             {
                 unsafe
@@ -461,78 +472,6 @@ namespace Syadeu.Mono
                     }
                 }
             }
-            //public void For(GridLambdaRefTagDescription<int, GridCell, UserTagFlag> lambdaDescription)
-            //{
-            //    for (int i = 0; i < Cells.Length; i++)
-            //    {
-            //        if (!Cells[i].GetCustomData(out ITag tag))
-            //        {
-            //            continue;
-            //        }
-
-            //        lambdaDescription.Invoke(in i, ref Cells[i], tag.UserTag);
-            //    }
-            //}
-            //public void For<T>(GridLambdaRefTagDescription<int, T, UserTagFlag> lambdaDescription) where T : struct, ITag
-            //{
-            //    for (int i = 0; i < Cells.Length; i++)
-            //    {
-            //        if (!Cells[i].GetCustomData(out T data))
-            //        {
-            //            continue;
-            //        }
-
-            //        lambdaDescription.Invoke(in i, ref data, data.UserTag);
-            //    }
-            //}
-            //public void For(GridLambdaRefTagDescription<int, GridCell, CustomTagFlag> lambdaDescription)
-            //{
-            //    for (int i = 0; i < Cells.Length; i++)
-            //    {
-            //        if (!Cells[i].GetCustomData(out ITag tag))
-            //        {
-            //            continue;
-            //        }
-
-            //        lambdaDescription.Invoke(in i, ref Cells[i], tag.CustomTag);
-            //    }
-            //}
-            //public void For<T>(GridLambdaRefTagDescription<int, T, CustomTagFlag> lambdaDescription) where T : struct, ITag
-            //{
-            //    for (int i = 0; i < Cells.Length; i++)
-            //    {
-            //        if (!Cells[i].GetCustomData(out T data))
-            //        {
-            //            continue;
-            //        }
-
-            //        lambdaDescription.Invoke(in i, ref data, data.CustomTag);
-            //    }
-            //}
-            //public void For(GridRWAllTagLambdaDescription lambdaDescription)
-            //{
-            //    for (int i = 0; i < Cells.Length; i++)
-            //    {
-            //        if (!Cells[i].GetCustomData(out ITag tag))
-            //        {
-            //            continue;
-            //        }
-
-            //        lambdaDescription.Invoke(in i, ref Cells[i], tag.UserTag, tag.CustomTag);
-            //    }
-            //}
-            //public void For<T>(GridRWAllTagLambdaDescription lambdaDescription) where T : struct, ITag
-            //{
-            //    for (int i = 0; i < Cells.Length; i++)
-            //    {
-            //        if (!Cells[i].GetCustomData(out T data))
-            //        {
-            //            continue;
-            //        }
-
-            //        lambdaDescription.Invoke(in i, ref Cells[i], data.UserTag, data.CustomTag);
-            //    }
-            //}
 
             #endregion
 
@@ -590,10 +529,6 @@ namespace Syadeu.Mono
 
             public void Dispose()
             {
-                //for (int i = 0; i < Cells.Length; i++)
-                //{
-                //    Cells[i].Dispose();
-                //}
                 unsafe
                 {
                     Marshal.FreeHGlobal((IntPtr)Cells);
@@ -613,8 +548,6 @@ namespace Syadeu.Mono
 
             internal bool HasDependency;
             internal int2 DependencyTarget;
-            //internal int2[] DependencyChilds;
-            //internal object CustomData;
 
             private readonly float3[] Verties
             {
@@ -646,10 +579,6 @@ namespace Syadeu.Mono
 
             public bool Enabled;
             public bool Highlighted;
-
-            //public Color NormalColor;
-            //public Color HighlightColor;
-            //public Color DisableColor;
 
             public Color Color
             {
@@ -1314,6 +1243,20 @@ namespace Syadeu.Mono
 
             return count;
         }
+#if UNITY_EDITOR
+        public static int ClearEditorGrids()
+        {
+            int count = s_EditorGrids.Length;
+            for (int i = 0; i < s_EditorGrids.Length; i++)
+            {
+                s_EditorGrids[i].Dispose();
+            }
+            s_EditorGrids = new Grid[0];
+            s_EditorCellObjects.Clear();
+            s_EditorCellDependency.Clear();
+            return count;
+        }
+#endif
 
         public static bool HasGrid(in Guid guid)
         {

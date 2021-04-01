@@ -20,7 +20,7 @@ namespace SyadeuEditor
 
         private static float m_CellSize = 2.5f;
         private static Bounds m_Bounds;
-        private static int m_GridIdx;
+        private static int m_GridIdx = -1;
 
         private bool m_EnableNavMesh;
         private bool m_EnableCellIdx;
@@ -32,14 +32,15 @@ namespace SyadeuEditor
         {
             m_Scr = target as GridManager;
             m_NavBaker = m_Scr.GetComponent<ECSPathMeshBaker>();
-
-            m_GridIdx = GridManager.CreateGrid(in m_Bounds, 2.5f, true);
         }
-
-        //private void OnDestroy()
-        //{
-        //    GridManager.m_EditorGrids = new GridManager.Grid[0];
-        //}
+        private void OnDisable()
+        {
+            if (Application.isPlaying)
+            {
+                GridManager.ClearEditorGrids();
+                m_GridIdx = -1;
+            }
+        }
 
         public override void OnInspectorGUI()
         {
@@ -76,17 +77,30 @@ namespace SyadeuEditor
         }
         private void GridPreview()
         {
+            if (Application.isPlaying)
+            {
+                EditorUtils.StringRich("실행 중에는 불가합니다", true);
+                return;
+            }
+
             if (GUILayout.Button("Clear All Grids"))
             {
-                GridManager.ClearGrids();
-                m_GridIdx = GridManager.CreateGrid(in m_Bounds, 2.5f, true);
+                GridManager.ClearEditorGrids();
+                m_GridIdx = -1;
                 SceneView.lastActiveSceneView.Repaint();
             }
-            if (GUILayout.Button("Reload Grid"))
+            if (GUILayout.Button(m_GridIdx < 0 ? "Create Grid" : "Reload Grid"))
             {
+                if (m_GridIdx < 0)
+                {
+                    m_GridIdx = GridManager.CreateGrid(in m_Bounds, 2.5f, true);
+                }
+
                 GridManager.UpdateGrid(in m_GridIdx, in m_Bounds, m_CellSize, m_EnableNavMesh, true, m_EnableCellIdx);
                 SceneView.lastActiveSceneView.Repaint();
             }
+            EditorUtils.SectorLine();
+
             if (GUILayout.Button("To Bytes (Test)"))
             {
                 ref GridManager.Grid grid = ref GridManager.GetGrid(in m_GridIdx);
