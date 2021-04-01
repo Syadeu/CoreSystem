@@ -266,13 +266,11 @@ namespace Syadeu.Mono
 
                             GridCell target = *pTarget;
                             Marshal.StructureToPtr(target, (IntPtr)curr, true);
-                            //$"{(*curr).Location} == {(*pTarget).Location} == {convertedCells[i].Location}".ToLog();
                         }
                     }
                 }
                 Length = convertedCells.Length;
 
-                //Cells = convertedCells;
                 CellSize = grid.CellSize;
 
                 CustomData = grid.CustomData;
@@ -330,13 +328,6 @@ namespace Syadeu.Mono
                         }
                     }
                 }
-                //unsafe
-                //{
-                //    for (int i = 0; i < Length; i++)
-                //    {
-                //        if (Cells[i].Bounds.Contains(worldPosition)) return true;
-                //    }
-                //}
 
                 return false;
             }
@@ -416,30 +407,6 @@ namespace Syadeu.Mono
                 throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({worldPosition.x},{worldPosition.y},{worldPosition.z}). " +
                     $"해당 좌표계는 이 그리드에 존재하지않습니다.");
             }
-            //public BackgroundJob GetCellAsync(Vector3 worldPosition, NativeArray<int> idx, int chunkSize = 2024)
-            //{
-            //    return BackgroundJob.ParallelFor(Cells, (i, cell) =>
-            //    {
-            //        if (cell.Bounds.Contains(worldPosition))
-            //        {
-            //            idx[0] = i;
-            //            return true;
-            //        }
-            //        return false;
-            //    }, chunkSize);
-            //}
-            //public BackgroundJob GetCellAsync(Vector2Int grid, NativeArray<int> idx, int chunkSize = 2024)
-            //{
-            //    return BackgroundJob.ParallelFor(Cells, (i, cell) =>
-            //    {
-            //        if (cell.Location.Equals(grid))
-            //        {
-            //            idx[0] = i;
-            //            return true;
-            //        }
-            //        return false;
-            //    }, chunkSize);
-            //}
             public IReadOnlyList<int> GetCells(UserTagFlag userTag)
             {
                 List<int> indexes = new List<int>();
@@ -657,7 +624,6 @@ namespace Syadeu.Mono
                     }
                 }
             }
-            // NavMesh
             public bool BlockedByNavMesh
             {
                 get
@@ -1059,9 +1025,6 @@ namespace Syadeu.Mono
                             break;
                         }
                     }
-
-                    //if (temp.Count == 0) cell.DependencyChilds = temp.ToArray();
-                    //else cell.DependencyChilds = null;
                 }
 
                 HasDependency = false;
@@ -1118,7 +1081,6 @@ namespace Syadeu.Mono
 
             private static void InternalEnableDependency(ref GridCell other, ref Grid grid, ref GridCell cell)
             {
-                //List<int2> temp;
                 lock (s_LockCell)
                 {
 #if UNITY_EDITOR
@@ -1141,12 +1103,6 @@ namespace Syadeu.Mono
 
                         Instance.m_CellDependency[cell.Idxes].Add(other.Idxes);
                     }
-
-                    //if (cell.DependencyChilds == null) temp = new List<int2>();
-                    //else temp = cell.DependencyChilds.ToList();
-
-                    //temp.Add(other.Idxes);
-                    //cell.DependencyChilds = temp.ToArray();
                 }
 
                 other.HasDependency = true;
@@ -1220,7 +1176,7 @@ namespace Syadeu.Mono
                 for (int a = 0; a < grid.Length; a++)
                 {
                     ref var cell = ref grid.GetCell(a);
-                    if (!RenderManager.Instance.IsInCameraScreen(/*RenderCameraTarget,*/ cell.Bounds.center)) continue;
+                    if (!RenderManager.Instance.IsInCameraScreen(cell.Bounds.center)) continue;
 
                     if (!cell.Enabled || cell.BlockedByNavMesh)
                     {
@@ -1252,7 +1208,16 @@ namespace Syadeu.Mono
 
                     if (grid.EnableDrawIdx)
                     {
-                        Handles.Label(cell.Bounds.center, $"{cell.Idx}:({cell.Location.x},{cell.Location.y})");
+                        string locTxt = $"{cell.Idx}:({cell.Location.x},{cell.Location.y})";
+                        //if (Application.isPlaying)
+                        //{
+                        //    locTxt += $"{m_CellDependency[cell.Idxes].Count}";
+                        //}
+                        //else
+                        {
+                            locTxt += $"\n{s_EditorCellDependency[cell.Idxes].Count}";
+                        }
+                        Handles.Label(cell.Bounds.center, locTxt);
                     }
                 }
             }
