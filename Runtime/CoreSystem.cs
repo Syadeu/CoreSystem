@@ -382,28 +382,24 @@ namespace Syadeu
 
             if (SyadeuSettings.Instance.m_EnableAutoStaticInitialize)
             {
-                Type[] types = AppDomain.CurrentDomain.GetAssemblies()
-                .SingleOrDefault((assembly) =>
+                for (int i = 0; i < SyadeuSettings.Instance.m_AutoInitializeTargetAssembly.Length; i++)
                 {
-                    if (SyadeuSettings.Instance.m_AutoInitializeTargetAssembly.Contains(assembly.GetName().Name))
-                    {
-                        return true;
-                    }
-                    return false;
-                })
-                .GetTypes()
-                .Where(other => other.GetCustomAttribute<StaticManagerIntializeOnLoadAttribute>() != null)
-                .ToArray();
-                for (int i = 0; i < types.Length; i++)
-                {
-                    Type staticManager = typeof(StaticManager<>).MakeGenericType(types[i]);
-                    if (types[i].BaseType != staticManager)
-                    {
-                        throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
-                            $"{types[i].Name}: StaticManagerInitializeOnLoad 어트리뷰트는 StaticManager를 상속받은 객체에만 사용되어야합니다.");
-                    }
+                    Type[] types = Assembly.Load(SyadeuSettings.Instance.m_AutoInitializeTargetAssembly[i])
+                        .GetTypes()
+                        .Where(other => other.GetCustomAttribute<StaticManagerIntializeOnLoadAttribute>() != null)
+                        .ToArray();
 
-                    staticManager.GetProperty("Instance").GetGetMethod().Invoke(null, null);
+                    for (int j = 0; j < types.Length; j++)
+                    {
+                        Type staticManager = typeof(StaticManager<>).MakeGenericType(types[j]);
+                        if (types[j].BaseType != staticManager)
+                        {
+                            throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                                $"{types[j].Name}: StaticManagerInitializeOnLoad 어트리뷰트는 StaticManager를 상속받은 객체에만 사용되어야합니다.");
+                        }
+
+                        staticManager.GetProperty("Instance").GetGetMethod().Invoke(null, null);
+                    }
                 }
             }
         }
