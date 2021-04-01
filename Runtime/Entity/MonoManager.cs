@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Syadeu
 {
-    public abstract class MonoManager<T> : ManagerEntity, IStaticMonoManager 
+    public abstract class MonoManager<T> : ManagerEntity, IStaticMonoManager, IInitialize 
         where T : Component, IStaticMonoManager
     {
         protected static CoreSystem System => CoreSystem.Instance;

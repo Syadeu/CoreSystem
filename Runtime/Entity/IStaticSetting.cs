@@ -1,9 +1,8 @@
 ﻿namespace Syadeu
 {
-    public interface IStaticSetting
+    public interface IStaticSetting : IInitialize
     {
         bool Initialized { get; }
         void OnInitialized();
-        void Initialize();
     }
 }
