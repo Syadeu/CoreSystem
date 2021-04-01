@@ -16,6 +16,8 @@ using Unity.Mathematics;
 using Syadeu;
 using Syadeu.Database;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
+using UnityEditorInternal;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -263,7 +265,7 @@ namespace Syadeu.Mono
                     int cellLen = sizeof(GridCell);
                     Cells = (GridCell*)Marshal.AllocHGlobal(cellLen * Length);
 
-                    fixed (GridCell* p = new Span<GridCell>(cells))
+                    fixed (GridCell* p = cells)
                     {
                         for (int i = 0; i < Length; i++)
                         {
@@ -565,6 +567,55 @@ namespace Syadeu.Mono
                     }
                 }
             }
+
+#if CORESYSTEM_UNSAFE
+            public ParallelLoopResult ParallelFor(GridLambdaDescription<int, GridCell> lambdaDescription)
+            {
+                unsafe
+                {
+                    GridCell* other = Cells;
+                    return Parallel.For(0, Length, (i) =>
+                    {
+                        lambdaDescription.Invoke(in i, in other[i]);
+                    });
+                }
+            }
+            public ParallelLoopResult ParallelFor(GridLambdaRefDescription<int, GridCell> lambdaDescription)
+            {
+                unsafe
+                {
+                    GridCell* other = Cells;
+                    return Parallel.For(0, Length, (i) =>
+                    {
+                        lambdaDescription.Invoke(in i, ref other[i]);
+                    });
+                }
+            }
+            public ParallelLoopResult ParallelFor<T>(GridLambdaDescription<int, T> lambdaDescription) where T : struct, ITag
+            {
+                unsafe
+                {
+                    GridCell* other = Cells;
+                    return Parallel.For(0, Length, (i) =>
+                    {
+                        if (!other[i].GetCustomData(out T data)) return;
+                        lambdaDescription.Invoke(in i, in data);
+                    });
+                }
+            }
+            public ParallelLoopResult ParallelFor<T>(GridLambdaRefDescription<int, T> lambdaDescription) where T : struct, ITag
+            {
+                unsafe
+                {
+                    GridCell* other = Cells;
+                    return Parallel.For(0, Length, (i) =>
+                    {
+                        if (!other[i].GetCustomData(out T data)) return;
+                        lambdaDescription.Invoke(in i, ref data);
+                    });
+                }
+            }
+#endif
 
             #endregion
 

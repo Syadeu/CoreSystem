@@ -418,57 +418,17 @@ public class GridTests
         GridManager.Grid grid = GridManager.GetGrid(in gridIdx);
 
         //Vector3 pos = new Vector3(123, 0, 123);
-        
+        yield return new WaitForSeconds(1);
 
-        stopwatch.Start();
-        var cell = grid.GetCell(GetRndPos());
+        for (int i = 0; i < 10000; i++)
+        {
+            stopwatch.Start();
+            var cell = grid.GetCell(GetRndPos());
 
-        stopwatch.Stop();
-        $"{cell.Location} :: {stopwatch.ElapsedTicks}".ToLog();
-        stopwatch.Reset();
-
-        stopwatch.Start();
-        cell = grid.GetCell(GetRndPos());
-
-        stopwatch.Stop();
-        $"{cell.Location} :: {stopwatch.ElapsedTicks}".ToLog();
-        stopwatch.Reset();
-
-        stopwatch.Start();
-        cell = grid.GetCell(GetRndPos());
-
-        stopwatch.Stop();
-        $"{cell.Location} :: {stopwatch.ElapsedTicks}".ToLog();
-        stopwatch.Reset();
-
-        stopwatch.Start();
-        cell = grid.GetCell(GetRndPos());
-
-        stopwatch.Stop();
-        $"{cell.Location} :: {stopwatch.ElapsedTicks}".ToLog();
-        stopwatch.Reset();
-
-        stopwatch.Start();
-        cell = grid.GetCell(GetRndPos());
-
-        stopwatch.Stop();
-        $"{cell.Location} :: {stopwatch.ElapsedTicks}".ToLog();
-        stopwatch.Reset();
-
-        stopwatch.Start();
-        cell = grid.GetCell(GetRndPos());
-
-        stopwatch.Stop();
-        $"{cell.Location} :: {stopwatch.ElapsedTicks}".ToLog();
-        stopwatch.Reset();
-
-        stopwatch.Start();
-        cell = grid.GetCell(GetRndPos());
-
-        stopwatch.Stop();
-        $"{cell.Location} :: {stopwatch.ElapsedTicks}".ToLog();
-        stopwatch.Reset();
-
+            stopwatch.Stop();
+            $"{cell.Location} :: {stopwatch.ElapsedTicks}".ToLog();
+            stopwatch.Reset();
+        }
 
         grid.Dispose();
     }
