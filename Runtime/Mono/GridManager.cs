@@ -1,4 +1,6 @@
-﻿using System;
+﻿//#undef CORESYSTEM_UNSAFE
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
@@ -52,8 +54,6 @@ namespace Syadeu.Mono
         private readonly ConcurrentDictionary<int, GridLambdaWriteAllDescription<Grid, GridCell>> m_OnDirtyFlagRaised = new ConcurrentDictionary<int, GridLambdaWriteAllDescription<Grid, GridCell>>();
         private readonly ConcurrentDictionary<int, GridLambdaWriteAllDescription<Grid, GridCell>> m_OnDirtyFlagRaisedAsync = new ConcurrentDictionary<int, GridLambdaWriteAllDescription<Grid, GridCell>>();
 
-        //public delegate void GridLambdaRefAllTagDescription<T, TA, TAA, TAAA>(in T i, ref TA gridCell, in TAA tag, in TAAA tag2);
-        //public delegate void GridLambdaRefTagDescription<T, TA, TAA>(in T i, ref TA gridCell, in TAA tag);
         public delegate void GridLambdaWriteAllDescription<T, TA>(ref T t, ref TA ta);
         public delegate void GridLambdaRefRevDescription<T, TA>(ref T t, in TA ta);
         public delegate void GridLambdaRefDescription<T, TA>(in T t, ref TA ta);
@@ -108,7 +108,11 @@ namespace Syadeu.Mono
             }
         }
         [Serializable]
+#if CORESYSTEM_UNSAFE
         unsafe internal struct BinaryGridCell
+#else
+        internal struct BinaryGridCell
+#endif
         {
             public int ParentIdx;
             public int Idx;
@@ -122,6 +126,7 @@ namespace Syadeu.Mono
             public int2[] DependencyChilds;
             public object CustomData;
 
+#if CORESYSTEM_UNSAFE
             public BinaryGridCell(GridCell* gridCell)
             {
                 ParentIdx = (*gridCell).ParentIdx;
@@ -133,10 +138,26 @@ namespace Syadeu.Mono
 
                 HasDependency = (*gridCell).HasDependency;
                 DependencyTarget = (*gridCell).DependencyTarget;
-                //DependencyChilds = gridCell.DependencyChilds;
+#else
+            public BinaryGridCell(GridCell gridCell)
+            {
+                ParentIdx = gridCell.ParentIdx;
+                Idx = gridCell.Idx;
+
+                ParentIdx = gridCell.ParentIdx;
+                Idx = gridCell.Idx;
+
+                Location = gridCell.Location;
+                Bounds_Center = gridCell.Bounds.center;
+                Bounds_Size = gridCell.Bounds.size;
+
+                HasDependency = gridCell.HasDependency;
+                DependencyTarget = gridCell.DependencyTarget;
+#endif
 #if UNITY_EDITOR
                 if (IsMainthread() && !Application.isPlaying)
                 {
+#if CORESYSTEM_UNSAFE
                     if (s_EditorCellObjects.ContainsKey((*gridCell).Idxes))
                     {
                         CustomData = s_EditorCellObjects[(*gridCell).Idxes];
@@ -148,10 +169,24 @@ namespace Syadeu.Mono
                         DependencyChilds = s_EditorCellDependency[(*gridCell).Idxes].ToArray();
                     }
                     else DependencyChilds = null;
+#else
+                    if (s_EditorCellObjects.ContainsKey(gridCell.Idxes))
+                    {
+                        CustomData = s_EditorCellObjects[gridCell.Idxes];
+                    }
+                    else CustomData = null;
+
+                    if (s_EditorCellDependency.ContainsKey(gridCell.Idxes))
+                    {
+                        DependencyChilds = s_EditorCellDependency[gridCell.Idxes].ToArray();
+                    }
+                    else DependencyChilds = null;
+#endif
                 }
                 else
 #endif
                 {
+#if CORESYSTEM_UNSAFE
                     if (Instance.m_CellObjects.ContainsKey((*gridCell).Idxes))
                     {
                         CustomData = Instance.m_CellObjects[(*gridCell).Idxes];
@@ -163,8 +198,20 @@ namespace Syadeu.Mono
                         DependencyChilds = Instance.m_CellDependency[(*gridCell).Idxes].ToArray();
                     }
                     else DependencyChilds = null;
+#else
+                    if (Instance.m_CellObjects.ContainsKey(gridCell.Idxes))
+                    {
+                        CustomData = Instance.m_CellObjects[gridCell.Idxes];
+                    }
+                    else CustomData = null;
+
+                    if (Instance.m_CellDependency.ContainsKey(gridCell.Idxes))
+                    {
+                        DependencyChilds = Instance.m_CellDependency[gridCell.Idxes].ToArray();
+                    }
+                    else DependencyChilds = null;
+#endif
                 }
-                //CustomData = gridCell.CustomData;
             }
         }
         [Serializable] 
@@ -179,7 +226,11 @@ namespace Syadeu.Mono
             internal int3 GridCenter;
             internal int3 GridSize;
 
+#if CORESYSTEM_UNSAFE
             unsafe internal GridCell* Cells;
+#else
+            internal GridCell[] Cells;
+#endif
             public float CellSize;
 
             internal object CustomData;
@@ -188,7 +239,11 @@ namespace Syadeu.Mono
             public bool EnableDrawGL;
             public bool EnableDrawIdx;
 
+#if CORESYSTEM_UNSAFE
             public int Length;
+#else
+            public int Length => Cells.Length;
+#endif
 
             internal Grid(int idx, int3 gridCenter, int3 gridSize, float cellSize, bool enableNavMesh, params GridCell[] cells)
             {
@@ -201,27 +256,24 @@ namespace Syadeu.Mono
                 GridCenter = gridCenter;
                 GridSize = gridSize;
 
+#if CORESYSTEM_UNSAFE
+                Length = cells.Length;
                 unsafe
                 {
                     int cellLen = sizeof(GridCell);
-                    Cells = (GridCell*)Marshal.AllocHGlobal(cellLen * cells.Length);
-                     
-                    fixed (GridCell* p = cells)
-                    {
-                        for (int i = 0; i < cells.Length; i++)
-                        {
-                            GridCell* curr = Cells + i;
-                            GridCell* pTarget = p + i;
+                    Cells = (GridCell*)Marshal.AllocHGlobal(cellLen * Length);
 
-                            GridCell target = *pTarget;
-                            Marshal.StructureToPtr(target, (IntPtr)curr, true);
-                            //$"{(*curr).Location} == {(*pTarget).Location} == {cells[i].Location}".ToLog();
+                    fixed (GridCell* p = new Span<GridCell>(cells))
+                    {
+                        for (int i = 0; i < Length; i++)
+                        {
+                            Buffer.MemoryCopy(p + i, Cells + i, cellLen, cellLen);
                         }
                     }
                 }
-                Length = cells.Length;
-
-                //Cells = cells;
+#else
+                Cells = cells;
+#endif
                 CellSize = cellSize;
 
                 CustomData = null;
@@ -252,25 +304,24 @@ namespace Syadeu.Mono
                 {
                     convertedCells[i] = new GridCell(in cells[i], grid.EnableNavMesh);
                 }
+#if CORESYSTEM_UNSAFE
+                Length = convertedCells.Length;
                 unsafe
                 {
                     int cellLen = sizeof(GridCell);
-                    Cells = (GridCell*)Marshal.AllocHGlobal(cellLen * convertedCells.Length);
+                    Cells = (GridCell*)Marshal.AllocHGlobal(cellLen * Length);
 
                     fixed (GridCell* p = convertedCells)
                     {
-                        for (int i = 0; i < convertedCells.Length; i++)
+                        for (int i = 0; i < Length; i++)
                         {
-                            GridCell* curr = Cells + i;
-                            GridCell* pTarget = p + i;
-
-                            GridCell target = *pTarget;
-                            Marshal.StructureToPtr(target, (IntPtr)curr, true);
+                            Buffer.MemoryCopy(p + i, Cells + i, cellLen, cellLen);
                         }
                     }
                 }
-                Length = convertedCells.Length;
-
+#else
+                Cells = convertedCells;
+#endif
                 CellSize = grid.CellSize;
 
                 CustomData = grid.CustomData;
@@ -311,10 +362,14 @@ namespace Syadeu.Mono
                 if (worldPosition.y <= Bounds.extents.y)
                 {
                     GridCell first;
+#if CORESYSTEM_UNSAFE
                     unsafe
                     {
                         first = *Cells;
                     }
+#else
+                    first = Cells[0];
+#endif
 
                     int x = Math.Abs(Convert.ToInt32((worldPosition.x - first.Bounds.center.x) / CellSize));
                     int y = Math.Abs(Convert.ToInt32((worldPosition.z - first.Bounds.center.z) / CellSize));
@@ -322,10 +377,7 @@ namespace Syadeu.Mono
                     int idx = (GridSize.z * y) + x;
                     if (idx < Length)
                     {
-                        unsafe
-                        {
-                            return true;
-                        }
+                        return true;
                     }
                 }
 
@@ -343,7 +395,9 @@ namespace Syadeu.Mono
                     throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({idx}). " +
                         $"해당 좌표계는 이 그리드에 존재하지않습니다.");
                 }
+#if CORESYSTEM_UNSAFE
                 unsafe
+#endif
                 {
                     return ref Cells[idx];
                 }
@@ -354,7 +408,9 @@ namespace Syadeu.Mono
                 if (idx >= Length) throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({location.x},{location.y}). " +
                     $"해당 좌표계는 이 그리드에 존재하지않습니다.");
 
+#if CORESYSTEM_UNSAFE
                 unsafe
+#endif
                 {
                     return ref Cells[idx];
                 }
@@ -365,7 +421,9 @@ namespace Syadeu.Mono
                 if (idx >= Length) throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({location.x},{location.y}). " +
                     $"해당 좌표계는 이 그리드에 존재하지않습니다.");
 
+#if CORESYSTEM_UNSAFE
                 unsafe
+#endif
                 {
                     return ref Cells[idx];
                 }
@@ -375,8 +433,9 @@ namespace Syadeu.Mono
                 int idx = (GridSize.z * y) + x;
                 if (idx >= Length) throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({x},{y}). " +
                      $"해당 좌표계는 이 그리드에 존재하지않습니다.");
-
+#if CORESYSTEM_UNSAFE
                 unsafe
+#endif
                 {
                     return ref Cells[idx];
                 }
@@ -386,18 +445,24 @@ namespace Syadeu.Mono
                 if (worldPosition.y <= Bounds.extents.y)
                 {
                     GridCell first;
+#if CORESYSTEM_UNSAFE
                     unsafe
                     {
                         first = *Cells;
                     }
-                    
+#else
+                    first = Cells[0];
+#endif
+
                     int x = Math.Abs(Convert.ToInt32((worldPosition.x - first.Bounds.center.x) / CellSize));
                     int y = Math.Abs(Convert.ToInt32((worldPosition.z - first.Bounds.center.z) / CellSize));
                     
                     int idx = (GridSize.z * y) + x;
                     if (idx < Length)
                     {
+#if CORESYSTEM_UNSAFE
                         unsafe
+#endif
                         {
                             return ref Cells[idx];
                         }
@@ -410,7 +475,9 @@ namespace Syadeu.Mono
             public IReadOnlyList<int> GetCells(UserTagFlag userTag)
             {
                 List<int> indexes = new List<int>();
+#if CORESYSTEM_UNSAFE
                 unsafe
+#endif
                 {
                     for (int i = 0; i < Length; i++)
                     {
@@ -427,7 +494,9 @@ namespace Syadeu.Mono
             public IReadOnlyList<int> GetCells(CustomTagFlag customTag)
             {
                 List<int> indexes = new List<int>();
+#if CORESYSTEM_UNSAFE
                 unsafe
+#endif
                 {
                     for (int i = 0; i < Length; i++)
                     {
@@ -448,7 +517,9 @@ namespace Syadeu.Mono
 
             public void For(GridLambdaDescription<int, GridCell> lambdaDescription)
             {
+#if CORESYSTEM_UNSAFE
                 unsafe
+#endif
                 {
                     for (int i = 0; i < Length; i++)
                     {
@@ -458,7 +529,9 @@ namespace Syadeu.Mono
             }
             public void For<T>(GridLambdaRefDescription<int, T> lambdaDescription) where T : struct, ITag
             {
+#if CORESYSTEM_UNSAFE
                 unsafe
+#endif
                 {
                     for (int i = 0; i < Length; i++)
                     {
@@ -469,7 +542,9 @@ namespace Syadeu.Mono
             }
             public void For<T>(GridLambdaDescription<int, T> lambdaDescription) where T : struct, ITag
             {
+#if CORESYSTEM_UNSAFE
                 unsafe
+#endif
                 {
                     for (int i = 0; i < Length; i++)
                     {
@@ -480,7 +555,9 @@ namespace Syadeu.Mono
             }
             public void For(GridLambdaRefDescription<int, GridCell> lambdaDescription)
             {
+#if CORESYSTEM_UNSAFE
                 unsafe
+#endif
                 {
                     for (int i = 0; i < Length; i++)
                     {
@@ -519,11 +596,17 @@ namespace Syadeu.Mono
             public BinaryWrapper ConvertToWrapper()
             {
                 var temp = new BinaryGridCell[Length];
+#if CORESYSTEM_UNSAFE
                 unsafe
+#endif
                 {
                     for (int i = 0; i < Length; i++)
                     {
+#if CORESYSTEM_UNSAFE
                         temp[i] = new BinaryGridCell(Cells + i);
+#else
+                        temp[i] = new BinaryGridCell(Cells[i]);
+#endif
                     }
                 }
                 
@@ -545,10 +628,12 @@ namespace Syadeu.Mono
 
             public void Dispose()
             {
+#if CORESYSTEM_UNSAFE
                 unsafe
                 {
                     Marshal.FreeHGlobal((IntPtr)Cells);
                 }
+#endif
             }
         }
         [Serializable]
@@ -765,14 +850,6 @@ namespace Syadeu.Mono
 
             public object GetCustomData()
             {
-                //if (HasDependency)
-                //{
-                //    ref Grid grid = ref GetGrid(DependencyTarget.x);
-                //    ref GridCell cell = ref grid.GetCell(DependencyTarget.y);
-
-                //    return cell.CustomData;
-                //}
-                //else return CustomData;
                 if (HasDependency)
                 {
 #if UNITY_EDITOR
@@ -816,24 +893,6 @@ namespace Syadeu.Mono
             }
             public bool GetCustomData<T>(out T value) where T : ITag
             {
-                //object data;
-                //if (HasDependency)
-                //{
-                //    ref Grid grid = ref GetGrid(DependencyTarget.x);
-                //    ref GridCell cell = ref grid.GetCell(DependencyTarget.y);
-
-                //    data = cell.CustomData;
-                //}
-                //else data = CustomData;
-
-                //if (data != null && data is T t)
-                //{
-                //    value = t;
-                //    return true;
-                //}
-
-                //value = default;
-                //return false;
                 if (HasDependency)
                 {
 #if UNITY_EDITOR
@@ -891,15 +950,6 @@ namespace Syadeu.Mono
                     throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
                         $"해당 객체({data.GetType().Name})는 Serializable 어트리뷰트가 선언되지 않았습니다.");
                 }
-
-                //if (HasDependency)
-                //{
-                //    ref Grid grid = ref GetGrid(DependencyTarget.x);
-                //    ref GridCell cell = ref grid.GetCell(DependencyTarget.y);
-
-                //    cell.CustomData = data;
-                //}
-                //else CustomData = data;
 
                 if (HasDependency)
                 {

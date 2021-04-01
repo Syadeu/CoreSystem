@@ -6,7 +6,9 @@
         "UnityEditor.TestRunner",
         "Syadeu",
         "DataSystem",
-        "MonoSystem"
+        "MonoSystem",
+        "Unity.Collections",
+        "Unity.Mathematics"
     ],
     "includePlatforms": [],
     "excludePlatforms": [
