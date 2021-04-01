@@ -641,6 +641,10 @@ namespace Syadeu.Mono
 
                 CustomData = data;
             }
+            public void RemoveCustomData()
+            {
+                CustomData = null;
+            }
             #endregion
 
             #region Binary
@@ -1002,6 +1006,10 @@ namespace Syadeu.Mono
                         $"해당 객체({data.GetType().Name})는 Serializable 어트리뷰트가 선언되지 않았습니다.");
                 }
 
+                InternalSetCustomData(data);
+            }
+            private void InternalSetCustomData(object data)
+            {
                 if (HasDependency)
                 {
 #if UNITY_EDITOR
@@ -1058,6 +1066,43 @@ namespace Syadeu.Mono
                 }
 
                 SetDirty();
+            }
+            public void RemoveCustomData()
+            {
+                if (HasDependency)
+                {
+#if UNITY_EDITOR
+                    if (IsMainthread() && !Application.isPlaying)
+                    {
+                        s_EditorCellObjects.Remove(DependencyTarget);
+                    }
+                    else
+#endif
+                    {
+                        Instance.m_CellObjects.Remove(DependencyTarget);
+                    }
+                }
+                else
+                {
+#if UNITY_EDITOR
+                    if (IsMainthread() && !Application.isPlaying)
+                    {
+                        s_EditorCellObjects.Remove(Idxes);
+                    }
+                    else
+#endif
+                    {
+                        Instance.m_CellObjects.Remove(Idxes);
+                    }
+                }
+            }
+            public void MoveCustomData(int2 gridNCellIdxes) => MoveCustomData(gridNCellIdxes.x, gridNCellIdxes.y);
+            public void MoveCustomData(int gridIdx, int cellIdx)
+            {
+                object data = GetCustomData();
+                RemoveCustomData();
+
+                GetGrid(gridIdx).GetCell(cellIdx).InternalSetCustomData(data);
             }
 
             /// <summary>

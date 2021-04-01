@@ -9,7 +9,7 @@ namespace Syadeu
         protected static CoreSystem System => CoreSystem.Instance;
         public SystemFlag Flag => SystemFlag.SubSystem;
 
-        public static bool Initialized => m_Instance != null;
+        public static bool Initialized { get; private set; }
 
         internal static T m_Instance = null;
         public static T Instance
@@ -39,9 +39,12 @@ namespace Syadeu
         protected virtual void Awake()
         {
             if (!ManualInitialize) Initialize();
+            else m_Instance = this as T;
         }
         public void Initialize()
         {
+            var temp = new System.Diagnostics.StackTrace(true);
+            m_InitLastStack = temp.GetFrame(temp.FrameCount - 1);
             if (Initialized)
             {
 #if UNITY_EDITOR
@@ -61,8 +64,6 @@ namespace Syadeu
             }
 
 #if UNITY_EDITOR
-            var temp = new System.Diagnostics.StackTrace(true);
-            m_InitLastStack = temp.GetFrame(temp.FrameCount - 1);
 
             if (!string.IsNullOrEmpty(DisplayName))
             {
@@ -94,6 +95,7 @@ namespace Syadeu
             }
 
             OnStart();
+            Initialized = true;
         }
 
         public static void ThreadAwaiter(int milliseconds)
