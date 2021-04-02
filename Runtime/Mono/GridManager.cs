@@ -6,6 +6,11 @@ using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
+
+#if CORESYSTEM_UNSAFE
+using System.Runtime.InteropServices;
+#endif
 
 using UnityEngine;
 using UnityEngine.AI;
@@ -15,12 +20,10 @@ using Unity.Mathematics;
 
 using Syadeu;
 using Syadeu.Database;
-using System.Runtime.InteropServices;
-using System.Threading.Tasks;
-using UnityEditorInternal;
 
 #if UNITY_EDITOR
 using UnityEditor;
+using UnityEditorInternal;
 #endif
 
 namespace Syadeu.Mono
