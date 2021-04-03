@@ -1017,7 +1017,7 @@ namespace Syadeu.Mono
                 Bounds = bounds;
 
                 HasDependency = false;
-                DependencyTarget = int2.zero;
+                DependencyTarget = -1;
                 //DependencyChilds = null;
                 //CustomData = null;
 
@@ -1610,6 +1610,7 @@ namespace Syadeu.Mono
                 other.HasDependency = true;
                 other.DependencyTarget = cell.Idxes;
 
+                cell.DependencyTarget = -1;
                 cell.SetDirty();
             }
         }
