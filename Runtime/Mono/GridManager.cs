@@ -980,6 +980,22 @@ namespace Syadeu.Mono
                     return false;
                 }
             }
+            public bool HasDependencyChilds
+            {
+                get
+                {
+#if UNITY_EDITOR
+                    if (IsMainthread() && !Application.isPlaying)
+                    {
+                        return s_EditorCellDependency.ContainsKey(Idxes);
+                    }
+                    else
+#endif
+                    {
+                        return Instance.m_CellDependency.ContainsKey(Idxes);
+                    }
+                }
+            }
 
             internal GridCell(int parentIdx, int idx, int2 location, Bounds bounds, bool enableNavMesh)
             {
@@ -1095,6 +1111,69 @@ namespace Syadeu.Mono
                 return false;
             }
             #endregion
+
+            public bool HasCell(Direction direction)
+            {
+                ref Grid grid = ref GetGrid(ParentIdx);
+                
+                int2 target = Location;
+                if (direction.HasFlag(Direction.Up)) target.y += 1;
+                if (direction.HasFlag(Direction.Down)) target.y -= 1;
+                if (direction.HasFlag(Direction.Left)) target.x -= 1;
+                if (direction.HasFlag(Direction.Right)) target.x += 1;
+
+                return grid.HasCell(target);
+            }
+            public bool HasCell(Direction direction, bool hasCustomData)
+            {
+                ref Grid grid = ref GetGrid(ParentIdx);
+                
+                int2 target = Location;
+                if (direction.HasFlag(Direction.Up)) target.y += 1;
+                if (direction.HasFlag(Direction.Down)) target.y -= 1;
+                if (direction.HasFlag(Direction.Left)) target.x -= 1;
+                if (direction.HasFlag(Direction.Right)) target.x += 1;
+
+                int idx = (grid.GridSize.z * target.y) + target.x;
+                if (idx >= grid.Length) return false;
+
+                ref GridCell cell = ref grid.GetCell(idx);
+                return cell.GetCustomData() != null == hasCustomData;
+            }
+            public bool HasCell<T>(Direction direction, bool hasCustomData)
+            {
+                ref Grid grid = ref GetGrid(ParentIdx);
+                
+                int2 target = Location;
+                if (direction.HasFlag(Direction.Up)) target.y += 1;
+                if (direction.HasFlag(Direction.Down)) target.y -= 1;
+                if (direction.HasFlag(Direction.Left)) target.x -= 1;
+                if (direction.HasFlag(Direction.Right)) target.x += 1;
+
+                int idx = (grid.GridSize.z * target.y) + target.x;
+                if (idx >= grid.Length) return false;
+
+                ref GridCell cell = ref grid.GetCell(idx);
+                object data = cell.GetCustomData();
+                return (data != null && data is T) == hasCustomData;
+            }
+            public ref GridCell FindCell(Direction direction)
+            {
+                if (!HasCell(direction)) throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                    $"{direction} 에 그리드셀이 존재하지 않습니다.");
+
+                ref Grid grid = ref GetGrid(ParentIdx);
+
+                int2 target = Location;
+                if (direction.HasFlag(Direction.Up)) target.y += 1;
+                if (direction.HasFlag(Direction.Down)) target.y -= 1;
+                if (direction.HasFlag(Direction.Left)) target.x -= 1;
+                if (direction.HasFlag(Direction.Right)) target.x += 1;
+
+                return ref grid.GetCell(target);
+            }
+
+            #region Custom Data
 
             public object GetCustomData()
             {
@@ -1300,6 +1379,8 @@ namespace Syadeu.Mono
                 GetGrid(gridIdx).GetCell(cellIdx).InternalSetCustomData(data);
             }
 
+            #endregion
+
             /// <summary>
             /// 해당 셀에 영향받는 셀임을 선언합니다.<br/>
             /// 커스텀 데이터는 해당 셀로 override 됩니다.
@@ -1313,6 +1394,16 @@ namespace Syadeu.Mono
 
                 ref Grid grid = ref GetGrid(gridIdx);
                 ref GridCell cell = ref grid.GetCell(cellIdx);
+
+                InternalEnableDependency(ref this, ref grid, ref cell);
+            }
+            public void EnableDependency(in int2 idxes)
+            {
+                if (HasDependency) throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                    $"{Idxes} 그리드셀은 Dependency 가 이미 있는데 또 추가하려함. 먼저 DisableDependency()을 호출하여 초기화하세요.");
+
+                ref Grid grid = ref GetGrid(idxes.x);
+                ref GridCell cell = ref grid.GetCell(idxes.y);
 
                 InternalEnableDependency(ref this, ref grid, ref cell);
             }
@@ -1369,6 +1460,38 @@ namespace Syadeu.Mono
                 }
 
                 HasDependency = false;
+                SetDirty();
+            }
+            public void DisableAllChildsDependency()
+            {
+                if (!HasDependencyChilds) throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                    $"{Idxes} 그리드셀은 부모가 아닌데 자식 dependency를 삭제하려함");
+
+                List<int2> targetList;
+                lock (s_LockCell)
+                {
+#if UNITY_EDITOR
+                    if (IsMainthread() && !Application.isPlaying)
+                    {
+                        targetList = s_EditorCellDependency[Idxes];
+                        s_EditorCellDependency.Remove(Idxes);
+                    }
+                    else
+#endif
+                    {
+                        targetList = Instance.m_CellDependency[Idxes];
+                        Instance.m_CellDependency.Remove(Idxes);
+                    }
+                }
+
+                for (int i = 0; i < targetList.Count; i++)
+                {
+                    ref GridCell targetCell = ref GetGrid(targetList[i].x).GetCell(targetList[i].y);
+                    targetCell.HasDependency = false;
+                    targetCell.SetDirty();
+                }
+
+                SetDirty();
             }
 
             public void SetDirty()
@@ -1391,18 +1514,18 @@ namespace Syadeu.Mono
 #if UNITY_EDITOR
                     if (IsMainthread() && !Application.isPlaying)
                     {
-                        if (s_EditorCellDependency.ContainsKey(DependencyTarget))
+                        if (s_EditorCellDependency.ContainsKey(Idxes))
                         {
-                            temp = s_EditorCellDependency[DependencyTarget];
+                            temp = s_EditorCellDependency[Idxes];
                         }
                         else temp = null;
                     }
                     else
 #endif
                     {
-                        if (Instance.m_CellDependency.ContainsKey(DependencyTarget))
+                        if (Instance.m_CellDependency.ContainsKey(Idxes))
                         {
-                            temp = Instance.m_CellDependency[DependencyTarget];
+                            temp = Instance.m_CellDependency[Idxes];
                         }
                         else temp = null;
                     }
@@ -1448,6 +1571,8 @@ namespace Syadeu.Mono
 
                 other.HasDependency = true;
                 other.DependencyTarget = new int2(grid.Idx, cell.Idx);
+
+                cell.SetDirty();
             }
         }
 
