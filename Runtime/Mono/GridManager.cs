@@ -895,8 +895,8 @@ namespace Syadeu.Mono
             public int2 Location;
             public Bounds Bounds;
 
-            internal bool HasDependency;
-            internal int2 DependencyTarget;
+            public bool HasDependency { get; internal set; }
+            public int2 DependencyTarget { get; internal set; }
 
             private readonly float3[] Verties
             {
@@ -994,6 +994,16 @@ namespace Syadeu.Mono
                     {
                         return Instance.m_CellDependency.ContainsKey(Idxes);
                     }
+                }
+            }
+            public bool IsRoot
+            {
+                get
+                {
+                    if (HasDependencyChilds) return true;
+                    if (!HasDependency) return true;
+
+                    return false;
                 }
             }
 
@@ -1381,6 +1391,32 @@ namespace Syadeu.Mono
 
             #endregion
 
+            public bool HasTargetDependency(in int2 targetGridIdxes)
+            {
+                List<int2> temp;
+#if UNITY_EDITOR
+                if (IsMainthread() && !Application.isPlaying)
+                {
+                    if (!s_EditorCellDependency.TryGetValue(Idxes, out temp))
+                    {
+                        return false;
+                    }
+                }
+                else
+#endif
+                {
+                    if (!Instance.m_CellDependency.TryGetValue(Idxes, out temp))
+                    {
+                        return false;
+                    }
+                }
+
+                for (int i = 0; i < temp.Count; i++)
+                {
+                    if (temp[i].Equals(targetGridIdxes)) return true;
+                }
+                return false;
+            }
             /// <summary>
             /// 해당 셀에 영향받는 셀임을 선언합니다.<br/>
             /// 커스텀 데이터는 해당 셀로 override 됩니다.
@@ -1460,6 +1496,7 @@ namespace Syadeu.Mono
                 }
 
                 HasDependency = false;
+                DependencyTarget = -1;
                 SetDirty();
             }
             public void DisableAllChildsDependency()
@@ -1488,6 +1525,7 @@ namespace Syadeu.Mono
                 {
                     ref GridCell targetCell = ref GetGrid(targetList[i].x).GetCell(targetList[i].y);
                     targetCell.HasDependency = false;
+                    targetCell.DependencyTarget = -1;
                     targetCell.SetDirty();
                 }
 
@@ -1570,7 +1608,7 @@ namespace Syadeu.Mono
                 }
 
                 other.HasDependency = true;
-                other.DependencyTarget = new int2(grid.Idx, cell.Idx);
+                other.DependencyTarget = cell.Idxes;
 
                 cell.SetDirty();
             }
