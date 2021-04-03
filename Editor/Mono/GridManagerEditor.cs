@@ -153,6 +153,15 @@ namespace SyadeuEditor
 
                 $"{cell1.Location}:{cell1.Bounds.center} == {cell2.Location}".ToLog();
             }
+            if (GUILayout.Button("00 range test"))
+            {
+                ref GridManager.Grid grid = ref GridManager.GetGrid(m_GridIdx);
+                //GridManager.GridRange range = grid.GetRange(1599, 2);
+                //GridManager.GridRange range2 = grid.GetRange(39, 39, 2);
+                GridManager.GridRange range2 = grid.GetRange(new int2(20,23), 2);
+
+                //ref GridManager.GridCell cell = ref grid.GetCell(0, 0);
+            }
 
             EditorGUILayout.Space();
             m_EnableNavMesh = EditorGUILayout.ToggleLeft("Enable NavMesh", m_EnableNavMesh);

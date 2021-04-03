@@ -30,7 +30,7 @@ namespace Syadeu.Mono
 {
     [DisallowMultipleComponent]
     [StaticManagerIntializeOnLoad]
-    public class GridManager : StaticManager<GridManager>
+    public sealed class GridManager : StaticManager<GridManager>
     {
         private static readonly object s_LockManager = new object();
         private static readonly object s_LockCell = new object();
@@ -39,12 +39,14 @@ namespace Syadeu.Mono
         public override bool HideInHierarchy => false;
 
         private Grid[] m_Grids = new Grid[0];
+        private Dictionary<int, object> m_GridObjects = new Dictionary<int, object>();
         private Dictionary<int2, object> m_CellObjects = new Dictionary<int2, object>();
         private Dictionary<int2, List<int2>> m_CellDependency = new Dictionary<int2, List<int2>>();
         private NavMeshQuery m_NavMeshQuery;
 
 #if UNITY_EDITOR
         public static Grid[] s_EditorGrids = new Grid[0];
+        public static Dictionary<int, object> s_EditorGridObjects = new Dictionary<int, object>();
         public static Dictionary<int2, object> s_EditorCellObjects = new Dictionary<int2, object>();
         public static Dictionary<int2, List<int2>> s_EditorCellDependency = new Dictionary<int2, List<int2>>();
 #endif
@@ -107,7 +109,24 @@ namespace Syadeu.Mono
                 GridSize = grid.GridSize;
                 CellSize = grid.CellSize;
 
-                CustomData = grid.CustomData;
+#if UNITY_EDITOR
+                if (IsMainthread() && !Application.isPlaying)
+                {
+                    if (s_EditorGridObjects.ContainsKey(grid.Idx))
+                    {
+                        CustomData = s_EditorGridObjects[grid.Idx];
+                    }
+                    else CustomData = null;
+                }
+                else
+#endif
+                {
+                    if (Instance.m_GridObjects.ContainsKey(grid.Idx))
+                    {
+                        CustomData = Instance.m_GridObjects[grid.Idx];
+                    }
+                    else CustomData = null;
+                }
 
                 EnableNavMesh = grid.EnableNavMesh;
             }
@@ -238,8 +257,6 @@ namespace Syadeu.Mono
 #endif
             public float CellSize;
 
-            internal object CustomData;
-
             public bool EnableNavMesh;
             public bool EnableDrawGL;
             public bool EnableDrawIdx;
@@ -281,7 +298,7 @@ namespace Syadeu.Mono
 #endif
                 CellSize = cellSize;
 
-                CustomData = null;
+                //CustomData = null;
 
                 EnableNavMesh = enableNavMesh;
                 EnableDrawGL = false;
@@ -329,7 +346,20 @@ namespace Syadeu.Mono
 #endif
                 CellSize = grid.CellSize;
 
-                CustomData = grid.CustomData;
+                //CustomData = grid.CustomData;
+                if (grid.CustomData != null)
+                {
+#if UNITY_EDITOR
+                    if (IsMainthread() && !Application.isPlaying)
+                    {
+                        s_EditorGridObjects.Add(grid.Idx, grid.CustomData);
+                    }
+                    else
+#endif
+                    {
+                        Instance.m_GridObjects.Add(grid.Idx, grid.CustomData);
+                    }
+                }
 
                 EnableNavMesh = grid.EnableNavMesh;
                 EnableDrawGL = false;
@@ -516,6 +546,95 @@ namespace Syadeu.Mono
                 return indexes;
             }
 
+            public GridRange GetRange(int idx, int range)
+            {
+                if (range <= 0) throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                    "range 는 0 보다 커야됩니다.");
+
+                List<int> targets = new List<int>();
+                // 왼쪽 아래 부터 탐색 시작
+                int startIdx = idx - range + (GridSize.z * range);
+
+                int height = ((range * 2) + 1);
+                for (int yGrid = 0; yGrid < height; yGrid++)
+                {
+                    for (int xGrid = 0; xGrid < height; xGrid++)
+                    {
+                        int temp = startIdx - (yGrid * GridSize.z) + xGrid;
+                        
+                        if (HasCell(temp)) targets.Add(temp);
+                        if (temp >= temp - (temp % GridSize.x) + GridSize.x - 1) break;
+                    }
+                }
+
+#if CORESYSTEM_UNSAFE
+                unsafe
+                {
+                    return new GridRange(Cells, targets.ToArray());
+                }
+#else
+                return new GridRange(Idx, targets.ToArray());
+#endif
+            }
+            public GridRange GetRange(int x, int y, int range)
+            {
+                if (range <= 0) throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                    "range 는 0 보다 커야됩니다.");
+
+                List<int> targets = new List<int>();
+                // 왼쪽 아래 부터 탐색 시작
+                int startIdx = (GridSize.z * (y + range)) + x - range;
+
+                int height = ((range * 2) + 1);
+                for (int yGrid = 0; yGrid < height; yGrid++)
+                {
+                    for (int xGrid = 0; xGrid < height; xGrid++)
+                    {
+                        int temp = startIdx - (yGrid * GridSize.z) + xGrid;
+                        if (HasCell(temp)) targets.Add(temp);
+                        if (temp >= (GridSize.z * (y - yGrid + 2)) + GridSize.x - 1) break;
+                    }
+                }
+
+#if CORESYSTEM_UNSAFE
+                unsafe
+                {
+                    return new GridRange(Cells, targets.ToArray());
+                }
+#else
+                return new GridRange(Idx, targets.ToArray());
+#endif
+            }
+            public GridRange GetRange(int2 location, int range)
+            {
+                if (range <= 0) throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                    "range 는 0 보다 커야됩니다.");
+
+                List<int> targets = new List<int>();
+                // 왼쪽 아래 부터 탐색 시작
+                int startIdx = (GridSize.z * (location.y + range)) + location.x - range;
+
+                int height = ((range * 2) + 1);
+                for (int yGrid = 0; yGrid < height; yGrid++)
+                {
+                    for (int xGrid = 0; xGrid < height; xGrid++)
+                    {
+                        int temp = startIdx - (yGrid * GridSize.z) + xGrid;
+                        if (HasCell(temp)) targets.Add(temp);
+                        if (temp >= (GridSize.z * (location.y - yGrid + 2)) + GridSize.x - 1) break;
+                    }
+                }
+
+#if CORESYSTEM_UNSAFE
+                unsafe
+                {
+                    return new GridRange(Cells, targets.ToArray());
+                }
+#else
+                return new GridRange(Idx, targets.ToArray());
+#endif
+            }
+
             #endregion
 
             #region Lambda Descriptions
@@ -529,6 +648,42 @@ namespace Syadeu.Mono
                     for (int i = 0; i < Length; i++)
                     {
                         lambdaDescription.Invoke(in i, in Cells[i]);
+                    }
+                }
+            }
+            public void For(GridLambdaDescription<Grid, GridCell> lambdaDescription)
+            {
+#if CORESYSTEM_UNSAFE
+                unsafe
+#endif
+                {
+                    for (int i = 0; i < Length; i++)
+                    {
+                        lambdaDescription.Invoke(in this, in Cells[i]);
+                    }
+                }
+            }
+            public void For(GridLambdaRefDescription<Grid, GridCell> lambdaDescription)
+            {
+#if CORESYSTEM_UNSAFE
+                unsafe
+#endif
+                {
+                    for (int i = 0; i < Length; i++)
+                    {
+                        lambdaDescription.Invoke(in this, ref Cells[i]);
+                    }
+                }
+            }
+            public void For(GridLambdaWriteAllDescription<Grid, GridCell> lambdaDescription)
+            {
+#if CORESYSTEM_UNSAFE
+                unsafe
+#endif
+                {
+                    for (int i = 0; i < Length; i++)
+                    {
+                        lambdaDescription.Invoke(ref this, ref Cells[i]);
                     }
                 }
             }
@@ -623,10 +778,25 @@ namespace Syadeu.Mono
             #endregion
 
             #region Custom Data
-            public object GetCustomData() => CustomData;
+            public object GetCustomData()
+            {
+#if UNITY_EDITOR
+                if (IsMainthread() && !Application.isPlaying)
+                {
+                    if (s_EditorGridObjects.TryGetValue(Idx, out object value)) return value;
+                }
+                else
+#endif
+                {
+                    if (Instance.m_GridObjects.TryGetValue(Idx, out object value)) return value;
+                }
+
+                return null;
+            }
             public bool GetCustomData<T>(out T value) where T : ITag
             {
-                if (CustomData != null && CustomData is T t)
+                object data = GetCustomData();
+                if (data != null && data is T t)
                 {
                     value = t;
                     return true;
@@ -642,11 +812,31 @@ namespace Syadeu.Mono
                         "해당 객체는 Serializable 어트리뷰트가 선언되지 않았습니다.");
                 }
 
-                CustomData = data;
+#if UNITY_EDITOR
+                if (IsMainthread() && !Application.isPlaying)
+                {
+                    if (s_EditorGridObjects.ContainsKey(Idx)) s_EditorGridObjects[Idx] = data;
+                    else s_EditorGridObjects.Add(Idx, data);
+                }
+                else
+#endif
+                {
+                    if (Instance.m_GridObjects.ContainsKey(Idx)) Instance.m_GridObjects[Idx] = data;
+                    else Instance.m_GridObjects.Add(Idx, data);
+                }
             }
             public void RemoveCustomData()
             {
-                CustomData = null;
+#if UNITY_EDITOR
+                if (IsMainthread() && !Application.isPlaying)
+                {
+                    if (s_EditorGridObjects.ContainsKey(Idx)) s_EditorGridObjects.Remove(Idx);
+                }
+                else
+#endif
+                {
+                    if (Instance.m_GridObjects.ContainsKey(Idx)) Instance.m_GridObjects.Remove(Idx);
+                }
             }
             #endregion
 
@@ -1098,6 +1288,8 @@ namespace Syadeu.Mono
                         Instance.m_CellObjects.Remove(Idxes);
                     }
                 }
+
+                SetDirty();
             }
             public void MoveCustomData(int2 gridNCellIdxes) => MoveCustomData(gridNCellIdxes.x, gridNCellIdxes.y);
             public void MoveCustomData(int gridIdx, int cellIdx)
@@ -1259,16 +1451,60 @@ namespace Syadeu.Mono
             }
         }
 
+        public struct GridRange
+        {
+            private int[] m_Targets;
+
+            public int Length => m_Targets.Length;
+#if CORESYSTEM_UNSAFE
+            unsafe private GridCell* m_Pointer;
+
+            unsafe internal GridRange(GridCell* pointer, params int[] targets)
+            {
+                m_Pointer = pointer;
+                m_Targets = targets;
+            }
+
+            unsafe public ref GridCell this[int i]
+            {
+                get
+                {
+                    return ref *(m_Pointer + m_Targets[i]);
+                }
+            }
+#else
+            private int m_GridIdx;
+            internal GridRange(int gridIdx, params int[] targets)
+            {
+                m_GridIdx = gridIdx;
+                m_Targets = targets;
+            }
+            public ref GridCell this[int i]
+            {
+                get
+                {
+                    return ref GridManager.GetGrid(m_GridIdx).GetCell(m_Targets[i]);
+                }
+            }
+#endif
+        }
+
         public override void OnInitialize()
         {
+#if UNITY_EDITOR
+            ClearEditorGrids();
+#endif
             m_NavMeshQuery = new NavMeshQuery(NavMeshWorld.GetDefaultWorld(), Allocator.Persistent, 256);
 
             StartUnityUpdate(UnityUpdate());
             StartBackgroundUpdate(BackgroundUpdate());
         }
+
         private void OnDestroy()
         {
             m_NavMeshQuery.Dispose();
+
+            ClearGrids();
         }
         private IEnumerator UnityUpdate()
         {
@@ -1358,13 +1594,19 @@ namespace Syadeu.Mono
                     if (grid.EnableDrawIdx)
                     {
                         string locTxt = $"{cell.Idx}:({cell.Location.x},{cell.Location.y})";
-                        //if (Application.isPlaying)
-                        //{
-                        //    locTxt += $"{m_CellDependency[cell.Idxes].Count}";
-                        //}
-                        //else
+                        if (Application.isPlaying)
                         {
-                            locTxt += $"\n{s_EditorCellDependency[cell.Idxes].Count}";
+                            if (m_CellDependency.ContainsKey(cell.Idxes))
+                            {
+                                locTxt += $"{m_CellDependency[cell.Idxes].Count}";
+                            }
+                        }
+                        else
+                        {
+                            if (s_EditorCellDependency.ContainsKey(cell.Idxes))
+                            {
+                                locTxt += $"\n{s_EditorCellDependency[cell.Idxes].Count}";
+                            }
                         }
                         Handles.Label(cell.Bounds.center, locTxt);
                     }
@@ -1378,31 +1620,24 @@ namespace Syadeu.Mono
         #region Grid Methods
         public static int ClearGrids()
         {
-            int count;
+            int count = 0;
 #if UNITY_EDITOR
             if (!Application.isPlaying)
             {
-                count = s_EditorGrids.Length;
-                for (int i = 0; i < s_EditorGrids.Length; i++)
-                {
-                    s_EditorGrids[i].Dispose();
-                }
-                s_EditorGrids = new Grid[0];
-                s_EditorCellObjects.Clear();
-                s_EditorCellDependency.Clear();
+                count += ClearEditorGrids();
             }
-            else
 #endif
+            count += Instance.m_Grids.Length;
+            if (count == 0) return count;
+
+            for (int i = 0; i < Instance.m_Grids.Length; i++)
             {
-                count = Instance.m_Grids.Length;
-                for (int i = 0; i < Instance.m_Grids.Length; i++)
-                {
-                    Instance.m_Grids[i].Dispose();
-                }
-                Instance.m_Grids = new Grid[0];
-                Instance.m_CellObjects.Clear();
-                Instance.m_CellDependency.Clear();
+                Instance.m_Grids[i].Dispose();
             }
+            Instance.m_Grids = new Grid[0];
+            Instance.m_GridObjects.Clear();
+            Instance.m_CellObjects.Clear();
+            Instance.m_CellDependency.Clear();
 
             return count;
         }
@@ -1410,11 +1645,14 @@ namespace Syadeu.Mono
         public static int ClearEditorGrids()
         {
             int count = s_EditorGrids.Length;
+            if (count == 0) return count;
+
             for (int i = 0; i < s_EditorGrids.Length; i++)
             {
                 s_EditorGrids[i].Dispose();
             }
             s_EditorGrids = new Grid[0];
+            s_EditorGridObjects.Clear();
             s_EditorCellObjects.Clear();
             s_EditorCellDependency.Clear();
             return count;

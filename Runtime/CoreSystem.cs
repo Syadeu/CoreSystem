@@ -420,22 +420,24 @@ namespace Syadeu
         }
         private void OnDestroy()
         {
-            try
+            for (int i = 0; i < BackgroundJobWorkers.Count; i++)
             {
-                for (int i = 0; i < BackgroundJobWorkers.Count; i++)
+                try
                 {
                     BackgroundJobWorkers[i].Worker.CancelAsync();
+                }
+                catch (Exception) { }
+                finally
+                {
                     BackgroundJobWorkers[i].Worker.Dispose();
                 }
+            }
 
+            try
+            {
                 BackgroundThread?.Abort();
             }
-            catch (ThreadAbortException)
-            {
-            }
-            catch (Exception)
-            {
-            }
+            catch (Exception) { }
         }
         #endregion
 

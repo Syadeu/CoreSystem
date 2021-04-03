@@ -19,16 +19,15 @@ namespace Syadeu.ECS
     [UpdateAfter(typeof(ECSPathQuerySystem))]
     public class ECSPathMeshSystem : ECSManagerEntity<ECSPathMeshSystem>
     {
-        public float3 Center = new float3(0, 0, 0);
-        public float3 Size = new float3(100, 20, 100);
+        //public float3 Center = new float3(0, 0, 0);
+        //public float3 Size = new float3(100, 20, 100);
 
         public static event System.Action onNavMeshBaked;
 
         private EntityArchetype m_BaseArchetype;
         private EntityQuery m_BaseQuery;
 
-        private NavMeshData m_NavMesh;
-        private NavMeshDataInstance m_NavMeshData;
+        private List<ECSPathMeshBaker> m_Bakers = new List<ECSPathMeshBaker>();
         private NavMeshBuildSettings m_NavMeshBuildSettings;
 
         private Dictionary<int, (Entity, NavMeshBuildSource)> m_Obstacles;
@@ -43,21 +42,54 @@ namespace Syadeu.ECS
             public ECSPathObstacle obstacle;
         }
 
-        public static void UpdatePosition(Vector3 center, Vector3 size, bool forceUpdate = false)
+        public static int AddBaker(ECSPathMeshBaker baker)
         {
+            //int i = Instance.m_Bakers.Count;
+            int idx;
+            for (int i = 0; i < Instance.m_Bakers.Count; i++)
+            {
+                if (Instance.m_Bakers[i] == null)
+                {
+                    idx = i;
+                    Instance.m_Bakers[i] = baker;
+
+                    if (baker.m_NavMesh == null) baker.m_NavMesh = new NavMeshData();
+                    baker.m_NavMeshData = NavMesh.AddNavMeshData(baker.m_NavMesh);
+
+                    return idx;
+                }
+            }
+
+            idx = Instance.m_Bakers.Count;
+            Instance.m_Bakers.Add(baker);
+            if (baker.m_NavMesh == null) baker.m_NavMesh = new NavMeshData();
+            baker.m_NavMeshData = NavMesh.AddNavMeshData(baker.m_NavMesh);
+
+            return idx;
+        }
+        public static void RemoveBaker(int i)
+        {
+            Instance.m_Bakers[i].m_NavMeshData.Remove();
+            Instance.m_Bakers[i] = null;
+        }
+        public static void UpdatePosition(int i, bool forceUpdate = false)
+        {
+            //if (i < 0 || i >= Instance.m_Bakers.Count) return;
+
             if (forceUpdate)
             {
-                Instance.Center = center;
-                Instance.Size = size;
+                //Instance.Center = center;
+                //Instance.Size = size;
 
-                Bounds bounds = Instance.QuantizedBounds();
+                Bounds bounds = Instance.QuantizedBounds(Instance.m_Bakers[i].Center, Instance.m_Bakers[i].Size);
                 Instance.m_Sources.Clear();
                 foreach (var item in Instance.m_Obstacles.Values)
                 {
                     Instance.m_Sources.Add(item.Item2);
                 }
 
-                NavMeshBuilder.UpdateNavMeshDataAsync(Instance.m_NavMesh, NavMesh.GetSettingsByID(0), Instance.m_Sources, bounds);
+                NavMeshBuilder.UpdateNavMeshDataAsync(Instance.m_Bakers[i].m_NavMesh, NavMesh.GetSettingsByID(0), Instance.m_Sources, bounds);
+
 
                 ECSPathQuerySystem.Purge();
                 onNavMeshBaked?.Invoke();
@@ -65,10 +97,10 @@ namespace Syadeu.ECS
                 return;
             }
 
-            if (!Quantize(center, 0.1f * size).Equals(Quantize(Instance.Center, 0.1f * Instance.Size)))
+            if (!Quantize(Instance.m_Bakers[i].Center, 0.1f * Instance.m_Bakers[i].Size).Equals(Quantize(Instance.m_Bakers[i].transform.position, 0.1f * Instance.m_Bakers[i].Size)))
             {
-                Instance.Center = center;
-                Instance.Size = size;
+                Instance.m_Bakers[i].Center = Instance.m_Bakers[i].transform.position;
+                //Instance.m_Bakers[i].Size = size;
 
                 Instance.m_IsObstacleChanged = true;
             }
@@ -159,8 +191,8 @@ namespace Syadeu.ECS
                 typeof(ECSPathObstacle)
                 );
 
-            m_NavMesh = new NavMeshData();
-            m_NavMeshData = NavMesh.AddNavMeshData(m_NavMesh);
+            //m_NavMesh = new NavMeshData();
+            //m_NavMeshData = NavMesh.AddNavMeshData(m_NavMesh);
             m_NavMeshBuildSettings = NavMesh.GetSettingsByID(0);
 
             m_Obstacles = new Dictionary<int, (Entity, NavMeshBuildSource)>();
@@ -172,7 +204,7 @@ namespace Syadeu.ECS
         {
             base.OnDestroy();
 
-            m_NavMeshData.Remove();
+            //m_NavMeshData.Remove();
 
             m_RequireBakeQueue.Dispose();
         }
@@ -186,7 +218,6 @@ namespace Syadeu.ECS
                     if (m_IsObstacleChanged)
                     {
                         defaultBuildSettings = NavMesh.GetSettingsByID(0);
-                        Bounds bounds = QuantizedBounds();
                         m_Sources.Clear();
                         foreach (var item in m_Obstacles.Values)
                         {
@@ -194,7 +225,11 @@ namespace Syadeu.ECS
                         }
                         //m_Sources = m_Obstacles.Values.ToList();
 
-                        NavMeshBuilder.UpdateNavMeshDataAsync(m_NavMesh, defaultBuildSettings, m_Sources, bounds);
+                        for (int i = 0; i < m_Bakers.Count; i++)
+                        {
+                            Bounds bounds = QuantizedBounds(m_Bakers[i].Center, m_Bakers[i].Size);
+                            NavMeshBuilder.UpdateNavMeshDataAsync(m_Bakers[i].m_NavMesh, defaultBuildSettings, m_Sources, bounds);
+                        }
 
                         ECSPathQuerySystem.Purge();
                         onNavMeshBaked?.Invoke();
@@ -254,11 +289,11 @@ namespace Syadeu.ECS
             float z = quant.z * math.floor(v.z / quant.z);
             return new float3(x, y, z);
         }
-        Bounds QuantizedBounds()
+        Bounds QuantizedBounds(Vector3 center, Vector3 size)
         {
             // Quantize the bounds to update only when theres a 10% change in size
             
-            return new Bounds(Quantize(Center, 0.1f * Size), Size);
+            return new Bounds(Quantize(center, 0.1f * size), size);
         }
 
     }

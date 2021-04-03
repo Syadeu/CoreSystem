@@ -10,6 +10,7 @@ namespace Syadeu
         public SystemFlag Flag => SystemFlag.SubSystem;
 
         public static bool Initialized { get; private set; }
+        public static bool HasInstance => m_Instance != null;
 
         internal static T m_Instance = null;
         public static T Instance
