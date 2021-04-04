@@ -714,6 +714,9 @@ namespace Syadeu
                             }
                         }
                     }
+#if UNITY_EDITOR
+                    catch (ThreadAbortException) { }
+#endif
                     catch (UnityException mainthread)
                     {
 #if UNITY_EDITOR

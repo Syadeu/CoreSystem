@@ -17,7 +17,7 @@ namespace Syadeu.Mono
         /// PrefabManager 인스펙터창에서 보여질 이름입니다.
         /// 런타임에 아무런 영향을 주지않습니다.
         /// </summary>
-        public virtual string DisplayName => "None";
+        public virtual string DisplayName => name;
 
         public bool Activated { get; internal set; } = false;
         public bool WaitForDeletion { get; internal set; } = false;

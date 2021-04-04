@@ -5,7 +5,7 @@ namespace Syadeu
     public abstract class ManagerEntity : MonoBehaviour
     {
         protected static Transform InstanceGroupTr { get; set; }
-        private static readonly object ManagerLock = new object();
+        protected static readonly object ManagerLock = new object();
 
         #region Thread Methods
 

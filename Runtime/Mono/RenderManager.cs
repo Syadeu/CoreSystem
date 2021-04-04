@@ -72,7 +72,7 @@ namespace Syadeu.Mono
             Instance.m_MainCamera.Value = cam;
         }
 
-        internal bool IsInCameraScreen(Vector3 worldPosition)
+        public bool IsInCameraScreen(Vector3 worldPosition)
             => IsInCameraScreen(worldPosition, CamMatrix4x4, SyadeuSettings.Instance.m_ScreenOffset);
 
         internal static Matrix4x4 GetCameraMatrix4X4(Camera cam)

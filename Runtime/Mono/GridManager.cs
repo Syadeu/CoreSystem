@@ -39,9 +39,9 @@ namespace Syadeu.Mono
         public override bool HideInHierarchy => false;
 
         private Grid[] m_Grids = new Grid[0];
-        private Dictionary<int, object> m_GridObjects = new Dictionary<int, object>();
-        private Dictionary<int2, object> m_CellObjects = new Dictionary<int2, object>();
-        private Dictionary<int2, List<int2>> m_CellDependency = new Dictionary<int2, List<int2>>();
+        private readonly ConcurrentDictionary<int, object> m_GridObjects = new ConcurrentDictionary<int, object>();
+        private readonly ConcurrentDictionary<int2, object> m_CellObjects = new ConcurrentDictionary<int2, object>();
+        private readonly ConcurrentDictionary<int2, List<int2>> m_CellDependency = new ConcurrentDictionary<int2, List<int2>>();
         private NavMeshQuery m_NavMeshQuery;
 
 #if UNITY_EDITOR
@@ -357,7 +357,7 @@ namespace Syadeu.Mono
                     else
 #endif
                     {
-                        Instance.m_GridObjects.Add(grid.Idx, grid.CustomData);
+                        Instance.m_GridObjects.TryAdd(grid.Idx, grid.CustomData);
                     }
                 }
 
@@ -422,6 +422,56 @@ namespace Syadeu.Mono
             #endregion
 
             #region Gets
+
+#if CORESYSTEM_UNSAFE
+            unsafe public GridCell* GetCellPointer(int idx)
+            {
+                return Cells + idx;
+            }
+            unsafe public GridCell* GetCellPointer(Vector2Int location)
+            {
+                int idx = (GridSize.z * location.y) + location.x;
+                if (idx >= Length) throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({location.x},{location.y}). " +
+                     $"해당 좌표계는 이 그리드에 존재하지않습니다.");
+
+                return Cells + idx;
+            }
+            unsafe public GridCell* GetCellPointer(int2 location)
+            {
+                int idx = (GridSize.z * location.y) + location.x;
+                if (idx >= Length) throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({location.x},{location.y}). " +
+                     $"해당 좌표계는 이 그리드에 존재하지않습니다.");
+
+                return Cells + idx;
+            }
+            unsafe public GridCell* GetCellPointer(int x, int y)
+            {
+                int idx = (GridSize.z * y) + x;
+                if (idx >= Length) throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({x},{y}). " +
+                     $"해당 좌표계는 이 그리드에 존재하지않습니다.");
+
+                return Cells + idx;
+            }
+            unsafe public GridCell* GetCellPointer(Vector3 worldPosition)
+            {
+                if (worldPosition.y <= Bounds.extents.y)
+                {
+                    GridCell first = *Cells;
+
+                    int x = Math.Abs(Convert.ToInt32((worldPosition.x - first.Bounds.center.x) / CellSize));
+                    int y = Math.Abs(Convert.ToInt32((worldPosition.z - first.Bounds.center.z) / CellSize));
+
+                    int idx = (GridSize.z * y) + x;
+                    if (idx < Length)
+                    {
+                        return Cells + idx;
+                    }
+                }
+
+                throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({worldPosition.x},{worldPosition.y},{worldPosition.z}). " +
+                    $"해당 좌표계는 이 그리드에 존재하지않습니다.");
+            }
+#endif
 
             public ref GridCell GetCell(int idx)
             {
@@ -822,7 +872,7 @@ namespace Syadeu.Mono
 #endif
                 {
                     if (Instance.m_GridObjects.ContainsKey(Idx)) Instance.m_GridObjects[Idx] = data;
-                    else Instance.m_GridObjects.Add(Idx, data);
+                    else Instance.m_GridObjects.TryAdd(Idx, data);
                 }
             }
             public void RemoveCustomData()
@@ -835,7 +885,7 @@ namespace Syadeu.Mono
                 else
 #endif
                 {
-                    if (Instance.m_GridObjects.ContainsKey(Idx)) Instance.m_GridObjects.Remove(Idx);
+                    if (Instance.m_GridObjects.ContainsKey(Idx)) Instance.m_GridObjects.TryRemove(Idx, out _);
                 }
             }
             #endregion
@@ -1089,7 +1139,7 @@ namespace Syadeu.Mono
                     {
                         Instance.m_CellObjects[loc] = cell.CustomData;
                     }
-                    else Instance.m_CellObjects.Add(loc, cell.CustomData);
+                    else Instance.m_CellObjects.TryAdd(loc, cell.CustomData);
 
                     if (Instance.m_CellDependency.ContainsKey(loc))
                     {
@@ -1103,9 +1153,9 @@ namespace Syadeu.Mono
                     {
                         if (cell.DependencyChilds == null)
                         {
-                            Instance.m_CellDependency.Add(loc, new List<int2>());
+                            Instance.m_CellDependency.TryAdd(loc, new List<int2>());
                         }
-                        else Instance.m_CellDependency.Add(loc, cell.DependencyChilds.ToList());
+                        else Instance.m_CellDependency.TryAdd(loc, cell.DependencyChilds.ToList());
                     }
                 }
             }
@@ -1315,7 +1365,7 @@ namespace Syadeu.Mono
                         }
                         else
                         {
-                            Instance.m_CellObjects.Add(DependencyTarget, data);
+                            Instance.m_CellObjects.TryAdd(DependencyTarget, data);
                         }
                     }
                 }
@@ -1342,7 +1392,7 @@ namespace Syadeu.Mono
                         }
                         else
                         {
-                            Instance.m_CellObjects.Add(Idxes, data);
+                            Instance.m_CellObjects.TryAdd(Idxes, data);
                         }
                     }
                 }
@@ -1361,7 +1411,7 @@ namespace Syadeu.Mono
                     else
 #endif
                     {
-                        Instance.m_CellObjects.Remove(DependencyTarget);
+                        Instance.m_CellObjects.TryRemove(DependencyTarget, out _);
                     }
                 }
                 else
@@ -1374,7 +1424,7 @@ namespace Syadeu.Mono
                     else
 #endif
                     {
-                        Instance.m_CellObjects.Remove(Idxes);
+                        Instance.m_CellObjects.TryRemove(Idxes, out _);
                     }
                 }
 
@@ -1517,7 +1567,7 @@ namespace Syadeu.Mono
 #endif
                     {
                         targetList = Instance.m_CellDependency[Idxes];
-                        Instance.m_CellDependency.Remove(Idxes);
+                        Instance.m_CellDependency.TryRemove(Idxes, out _);
                     }
                 }
 
@@ -1600,7 +1650,7 @@ namespace Syadeu.Mono
                     {
                         if (!Instance.m_CellDependency.ContainsKey(cell.Idxes))
                         {
-                            Instance.m_CellDependency.Add(cell.Idxes, new List<int2>());
+                            Instance.m_CellDependency.TryAdd(cell.Idxes, new List<int2>());
                         }
 
                         Instance.m_CellDependency[cell.Idxes].Add(other.Idxes);
@@ -1629,11 +1679,11 @@ namespace Syadeu.Mono
                 m_Targets = targets;
             }
 
-            unsafe public ref GridCell this[int i]
+            unsafe public GridCell* this[int i]
             {
                 get
                 {
-                    return ref *(m_Pointer + m_Targets[i]);
+                    return m_Pointer + m_Targets[i];
                 }
             }
 #else

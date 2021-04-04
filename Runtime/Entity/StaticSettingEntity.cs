@@ -14,6 +14,7 @@ namespace Syadeu
     public abstract class StaticSettingEntity<T> : SettingEntity, IStaticSetting 
         where T : ScriptableObject, IStaticSetting
     {
+        private static object s_LockObj = new object();
         public virtual bool RuntimeModifiable { get; } = false;
 
         private static T m_Instance;
@@ -26,9 +27,13 @@ namespace Syadeu
                 {
                     if (!IsMainthread())
                     {
-                        StaticManagerEntity.AwaitForNotNull(ref m_Instance, ref m_IsEnforceOrder, EnforceOrder);
-                        return m_Instance;
+                        lock (s_LockObj)
+                        {
+                            StaticManagerEntity.AwaitForNotNull(ref m_Instance, ref m_IsEnforceOrder, EnforceOrder);
+                            return m_Instance;
+                        }
                     }
+                    if (m_Instance != null) return m_Instance;
 
                     string path;
                     var customPathAtt = typeof(T).GetCustomAttribute<CustomStaticSettingAttribute>();

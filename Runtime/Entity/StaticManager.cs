@@ -22,12 +22,16 @@ namespace Syadeu
                     if (IsMainthread() && !Application.isPlaying) throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
                         $"StaticManager<{typeof(T).Name}>의 인스턴스 객체는 플레이중에만 생성되거나 받아올 수 있습니다.");
 #endif
-
                     if (!IsMainthread())
                     {
-                        AwaitForNotNull(ref m_Instance, ref m_IsEnforceOrder, EnforceOrder);
-                        return m_Instance;
+                        lock (ManagerLock)
+                        {
+                            AwaitForNotNull(ref m_Instance, ref m_IsEnforceOrder, EnforceOrder);
+                            return m_Instance;
+                        }
                     }
+                    if (m_Instance != null) return m_Instance;
+
                     if (typeof(T) != typeof(CoreSystem) && !CoreSystem.Initialized)
                     {
                         CoreSystem.Instance.Initialize(SystemFlag.MainSystem);

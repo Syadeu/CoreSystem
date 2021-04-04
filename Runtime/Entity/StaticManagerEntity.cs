@@ -28,7 +28,7 @@ namespace Syadeu
         {
             if (!order)
             {
-                $"CoreSystem.ThreadSafe :: 백그라운드 스레드에서 Mono 매니저 객체({typeof(T).Name})를 생성 요청함".ToLog();
+                //$"CoreSystem.ThreadSafe :: 백그라운드 스레드에서 Mono 매니저 객체({typeof(T).Name})를 생성 요청함".ToLog();
                 m_EnforceOrder.Enqueue(init);
                 order = true;
             }
@@ -38,7 +38,7 @@ namespace Syadeu
                 ThreadAwaiter(10);
             } while (component == null);
 
-            $"CoreSystem.ThreadSafe :: 매니저 객체({typeof(T).Name})가 정상적으로 생성되어 백그라운드 스레드에 반환됨".ToLog();
+            //$"CoreSystem.ThreadSafe :: 매니저 객체({typeof(T).Name})가 정상적으로 생성되어 백그라운드 스레드에 반환됨".ToLog();
         }
     }
 }

@@ -2,12 +2,12 @@
 
 namespace Syadeu
 {
-    internal interface IRecycleable : IInitialize
+    public interface IRecycleable : IInitialize
     {
         Transform transform { get; }
 
-        bool Activated { get; }
-        bool WaitForDeletion { get; }
+        //bool Activated { get; }
+        //bool WaitForDeletion { get; }
 
         void OnInitialize();
         void OnTerminate();

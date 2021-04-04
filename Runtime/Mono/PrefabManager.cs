@@ -11,10 +11,12 @@ namespace Syadeu.Mono
     {
         #region Initialize
 
+        private static object s_LockObj = new object();
+
         internal class RecycleObject
         {
             public int Index { get; }
-            public RecycleableMonobehaviour Prefab { get; }
+            public GameObject Prefab { get; }
             public int MaxCount { get; }
             public int InstanceCreationBlock { get; }
             public List<RecycleableMonobehaviour> Instances { get; }
@@ -119,13 +121,13 @@ namespace Syadeu.Mono
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public static T GetRecycleObject<T>() where T : RecycleableMonobehaviour
+        public static T GetRecycleObject<T>() where T : Component
         {
             for (int i = 0; i < PrefabList.Instance.m_ObjectSettings.Count; i++)
             {
-                if (PrefabList.Instance.m_ObjectSettings[i].Prefab is T)
+                if (PrefabList.Instance.m_ObjectSettings[i].Prefab.GetComponent<T>() != null)
                 {
-                    return (T)GetRecycleObject(i);
+                    return GetRecycleObject(i).GetComponent<T>();
                 }
             }
 
@@ -164,21 +166,24 @@ namespace Syadeu.Mono
             }
 
             // »ý¼º
-            if (obj.MaxCount < 0 ||
-                obj.MaxCount > obj.Instances.Count)
+            lock (s_LockObj)
             {
-                RecycleableMonobehaviour recycleObj = null;
-                if (!IsMainthread())
+                if (obj.MaxCount < 0 ||
+                    obj.MaxCount > obj.Instances.Count)
                 {
-                    CoreSystem.AddForegroundJob(() =>
+                    RecycleableMonobehaviour recycleObj = null;
+                    if (!IsMainthread())
                     {
-                        recycleObj = Instance.InternalInstantiate(obj);
-                    }).Await();
+                        CoreSystem.AddForegroundJob(() =>
+                        {
+                            recycleObj = Instance.InternalInstantiate(obj);
+                        }).Await();
+                    }
+                    else recycleObj = Instance.InternalInstantiate(obj);
+                    return recycleObj;
                 }
-                else recycleObj = Instance.InternalInstantiate(obj);
-                return recycleObj;
             }
-
+            
             //"Return null because this item has reached maximum instance count lock".ToLog();
             return null;
         }
@@ -186,7 +191,17 @@ namespace Syadeu.Mono
         {
             for (int i = 0; i < obj.InstanceCreationBlock; i++)
             {
-                RecycleableMonobehaviour recycleObj = Instantiate(obj.Prefab, transform);
+                RecycleableMonobehaviour recycleObj;
+                RecycleableMonobehaviour recycleable = obj.Prefab.GetComponent<RecycleableMonobehaviour>();
+                if (recycleable == null)
+                {
+                    recycleObj = Instantiate(obj.Prefab, transform).AddComponent<ManagedRecycleObject>();
+                }
+                else
+                {
+                    recycleObj = Instantiate(obj.Prefab, transform).GetComponent<RecycleableMonobehaviour>();
+                }
+
                 recycleObj.transform.localPosition = new Vector3(-9999, -9999, -9999);
                 recycleObj.OnCreated();
 
@@ -235,13 +250,13 @@ namespace Syadeu.Mono
         /// 인덱스 번호와 프리팹을 담아서 리스트로 반환합니다.
         /// </summary>
         /// <returns></returns>
-        public IReadOnlyList<KeyValuePair<int, RecycleableMonobehaviour>> GetRecycleObjectList()
+        public IReadOnlyList<KeyValuePair<int, GameObject>> GetRecycleObjectList()
         {
-            KeyValuePair<int, RecycleableMonobehaviour>[] list = new KeyValuePair<int, RecycleableMonobehaviour>[RecycleObjects.Count];
+            KeyValuePair<int, GameObject>[] list = new KeyValuePair<int, GameObject>[RecycleObjects.Count];
 
             for (int i = 0; i < list.Length; i++)
             {
-                list[i] = new KeyValuePair<int, RecycleableMonobehaviour>(i, RecycleObjects[i].Prefab);
+                list[i] = new KeyValuePair<int, GameObject>(i, RecycleObjects[i].Prefab);
             }
 
             return list;
