@@ -18,11 +18,11 @@ namespace SyadeuEditor
             {
                 if (s_Instance == null)
                 {
-                    if (!IsMainthread())
-                    {
-                        StaticManagerEntity.AwaitForNotNull(ref s_Instance, ref s_IsEnforceOrder, EnforceOrder);
-                        return s_Instance;
-                    }
+                    //if (!IsMainthread())
+                    //{
+                    //    StaticManagerEntity.AwaitForNotNull(ref s_Instance, ref s_IsEnforceOrder, EnforceOrder);
+                    //    return s_Instance;
+                    //}
 
                     if (!Directory.Exists("Assets/Resources/Syadeu/Editor"))
                     {
