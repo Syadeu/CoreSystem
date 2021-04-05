@@ -52,17 +52,14 @@ namespace SyadeuEditor
             }
 
             m_DefineUnsafe = m_DefineFmod = true;
-            foreach (var item in Enum.GetValues(typeof(BuildTargetGroup)))
+            PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, out string[] temp);
+            if (!temp.Contains(CORESYSTEM_UNSAFE))
             {
-                PlayerSettings.GetScriptingDefineSymbolsForGroup((BuildTargetGroup)item, out string[] temp);
-                if (!temp.Contains(CORESYSTEM_UNSAFE))
-                {
-                    m_DefineUnsafe = false;
-                }
-                if (!temp.Contains(CORESYSTEM_FMOD))
-                {
-                    m_DefineFmod = false;
-                }
+                m_DefineUnsafe = false;
+            }
+            if (!temp.Contains(CORESYSTEM_FMOD))
+            {
+                m_DefineFmod = false;
             }
 
         }
