@@ -87,40 +87,43 @@ namespace SyadeuEditor
         private void GlobalSettings()
         {
             EditorGUI.BeginChangeCheck();
-            m_DefineUnsafe = EditorGUILayout.ToggleLeft("Unsafe 설정", m_DefineUnsafe);
-            m_DefineFmod = EditorGUILayout.ToggleLeft("Fmod 설정", m_DefineFmod);
+            if (m_EnableHelpbox)
+            {
+                EditorGUILayout.HelpBox(
+                    "PlayerSetting 스크립트 Define에 CORESYSTEM_UNSAFE 를 추가/제거합니다.\n" +
+                    "활성화시 포인터를 이용한 메소드를 사용가능합니다.", 
+                    MessageType.Info);
+            }
+            m_DefineUnsafe = EditorGUILayout.ToggleLeft("DEFINE CORESYSTEM_UNSAFE", m_DefineUnsafe);
+            if (m_EnableHelpbox)
+            {
+                EditorGUILayout.HelpBox(
+                    "PlayerSetting 스크립트 Define에 CORESYSTEM_FMOD 를 추가/제거합니다.\n" +
+                    "활성화전 FMOD Unity Integration package를 설치하세요.\n" +
+                    "FMOD 사용을 위한 컬렉션이 제공됩니다.", 
+                    MessageType.Info);
+            }
+            m_DefineFmod = EditorGUILayout.ToggleLeft("DEFINE CORESYSTEM_FMOD", m_DefineFmod);
             if (EditorGUI.EndChangeCheck())
             {
                 PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, out string[] temp);
                 List<string> temptemp = new List<string>(temp);
                 if (m_DefineUnsafe)
                 {
-                    if (!temp.Contains(CORESYSTEM_UNSAFE))
-                    {
-                        temptemp.Add(CORESYSTEM_UNSAFE);
-                    }
+                    if (!temp.Contains(CORESYSTEM_UNSAFE)) temptemp.Add(CORESYSTEM_UNSAFE);
                 }
                 else
                 {
-                    if (temp.Contains(CORESYSTEM_UNSAFE))
-                    {
-                        temptemp.Remove(CORESYSTEM_UNSAFE);
-                    }
+                    if (temp.Contains(CORESYSTEM_UNSAFE)) temptemp.Remove(CORESYSTEM_UNSAFE);
                 }
 
                 if (m_DefineFmod)
                 {
-                    if (!temp.Contains(CORESYSTEM_FMOD))
-                    {
-                        temptemp.Add(CORESYSTEM_FMOD);
-                    }
+                    if (!temp.Contains(CORESYSTEM_FMOD)) temptemp.Add(CORESYSTEM_FMOD);
                 }
                 else
                 {
-                    if (temp.Contains(CORESYSTEM_FMOD))
-                    {
-                        temptemp.Remove(CORESYSTEM_FMOD);
-                    }
+                    if (temp.Contains(CORESYSTEM_FMOD)) temptemp.Remove(CORESYSTEM_FMOD);
                 }
 
                 PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, temptemp.ToArray());
