@@ -50,12 +50,6 @@ namespace Syadeu.Mono
         public static Dictionary<int2, object> s_EditorCellObjects = new Dictionary<int2, object>();
         public static Dictionary<int2, List<int2>> s_EditorCellDependency = new Dictionary<int2, List<int2>>();
 #endif
-
-        public Camera RenderCameraTarget
-        {
-            get => RenderManager.Instance.m_MainCamera.Value;
-            set => RenderManager.SetCamera(value);
-        }
         private readonly ConcurrentQueue<int2> m_DirtyFlags = new ConcurrentQueue<int2>();
         private readonly ConcurrentQueue<int2> m_DirtyFlagsAsync = new ConcurrentQueue<int2>();
         private readonly ConcurrentDictionary<int, GridLambdaWriteAllDescription<Grid, GridCell>> m_OnDirtyFlagRaised = new ConcurrentDictionary<int, GridLambdaWriteAllDescription<Grid, GridCell>>();
@@ -83,6 +77,7 @@ namespace Syadeu.Mono
                 m_GridCells = cells;
             }
             public static BinaryWrapper ToWrapper(byte[] bytes) => bytes.ToObjectWithStream<BinaryWrapper>();
+            public byte[] ToBinary() => this.ToBytesWithStream();
 
             public Grid ToGrid() => new Grid(in this);
         }
