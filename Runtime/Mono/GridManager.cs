@@ -376,7 +376,8 @@ namespace Syadeu.Mono
             public bool HasCell(int idx) => idx >= 0 && Length > idx;
             public bool HasCell(Vector2Int location)
             {
-                if (location.x > GridSize.x || location.y > GridSize.z) return false;
+                if (location.x < 0 || location.y < 0 ||
+                    location.x > GridSize.x || location.y > GridSize.z) return false;
 
                 int idx = (GridSize.z * location.y) + location.x;
                 if (idx >= Length) return false;
@@ -384,7 +385,8 @@ namespace Syadeu.Mono
             }
             public bool HasCell(int2 location)
             {
-                if (location.x > GridSize.x || location.y > GridSize.z) return false;
+                if (location.x < 0 || location.y < 0 ||
+                    location.x > GridSize.x || location.y > GridSize.z) return false;
 
                 int idx = (GridSize.z * location.y) + location.x;
                 if (idx >= Length) return false;
@@ -392,7 +394,8 @@ namespace Syadeu.Mono
             }
             public bool HasCell(int x, int y)
             {
-                if (x > GridSize.x || y > GridSize.z) return false;
+                if (x < 0 || y < 0 ||
+                    x > GridSize.x || y > GridSize.z) return false;
 
                 int idx = (GridSize.z * y) + x;
                 if (idx >= Length) return false;
@@ -496,7 +499,9 @@ namespace Syadeu.Mono
             public ref GridCell GetCell(Vector2Int location)
             {
                 int idx = (GridSize.z * location.y) + location.x;
-                if (idx >= Length) throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({location.x},{location.y}). " +
+                if (idx >= Length ||
+                    location.x < 0 || location.y < 0 ||
+                    location.x > GridSize.x || location.y > GridSize.z) throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({location.x},{location.y}). " +
                     $"해당 좌표계는 이 그리드에 존재하지않습니다.");
 
 #if CORESYSTEM_UNSAFE
@@ -509,7 +514,8 @@ namespace Syadeu.Mono
             public ref GridCell GetCell(int2 location)
             {
                 int idx = (GridSize.z * location.y) + location.x;
-                if (idx >= Length) throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({location.x},{location.y}). " +
+                if (idx >= Length || location.x < 0 || location.y < 0 ||
+                    location.x > GridSize.x || location.y > GridSize.z) throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({location.x},{location.y}). " +
                     $"해당 좌표계는 이 그리드에 존재하지않습니다.");
 
 #if CORESYSTEM_UNSAFE
@@ -522,7 +528,8 @@ namespace Syadeu.Mono
             public ref GridCell GetCell(int x, int y)
             {
                 int idx = (GridSize.z * y) + x;
-                if (idx >= Length) throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({x},{y}). " +
+                if (idx >= Length || x < 0 || y < 0 ||
+                    x > GridSize.x || y > GridSize.z) throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({x},{y}). " +
                      $"해당 좌표계는 이 그리드에 존재하지않습니다.");
 #if CORESYSTEM_UNSAFE
                 unsafe
