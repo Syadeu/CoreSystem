@@ -1,7 +1,4 @@
-﻿using FMOD.Studio;
-using FMODUnity;
-
-using Syadeu.ThreadSafe;
+﻿using Syadeu.ThreadSafe;
 using Syadeu.Database;
 
 using System;
@@ -15,9 +12,11 @@ using Syadeu.Mono;
 namespace Syadeu.FMOD
 {
 #if CORESYSTEM_FMOD
+    using FMOD.Studio;
+    using FMODUnity;
     public class FMODSound : RecycleableDatabase<FMODSound>
     {
-        #region Initializer
+    #region Initializer
         internal static ThreadSafe.Vector3 INIT_POSITION { get; } = new ThreadSafe.Vector3(999, 999, 999);
         
         /// <summary>
@@ -83,7 +82,7 @@ namespace Syadeu.FMOD
             base.OnTerminate();
         }
 
-        #endregion
+    #endregion
 
         public SoundGUID SoundGUID { get; private set; }
 
@@ -134,7 +133,7 @@ namespace Syadeu.FMOD
         public event Action OnPlay;
         public event Action OnStop;
 
-        #region Utils
+    #region Utils
 
         /// <summary>
         /// 현재 재생 중인지 반환합니다.
@@ -152,7 +151,7 @@ namespace Syadeu.FMOD
             }
         }
 
-        #endregion
+    #endregion
 
         public void Play()
         {
@@ -249,7 +248,7 @@ namespace Syadeu.FMOD
             return true;
         }
 
-        #region Sound Settings
+    #region Sound Settings
 
         public FMODSound SetPosition(Transform transform)
         {
@@ -353,9 +352,9 @@ namespace Syadeu.FMOD
             return this;
         }
 
-        #endregion
+    #endregion
 
-        #region Checks
+    #region Checks
 
         protected internal bool ValidCheck()
         {
@@ -386,7 +385,7 @@ namespace Syadeu.FMOD
             return true;
         }
 
-        #endregion
+    #endregion
     }
 #endif
 }

@@ -1,13 +1,13 @@
-﻿using FMOD;
-using FMOD.Studio;
-using FMODUnity;
-using Syadeu.Database;
+﻿using Syadeu.Database;
 using System;
 using System.Collections.Concurrent;
 
 namespace Syadeu.FMOD
 {
 #if CORESYSTEM_FMOD
+    using FMOD;
+    using FMOD.Studio;
+    using FMODUnity;
     public class SoundGUID : IValidation
     {
         //public static SoundGUID Empty = new SoundGUID(false);

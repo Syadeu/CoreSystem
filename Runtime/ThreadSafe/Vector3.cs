@@ -48,7 +48,9 @@ namespace Syadeu.ThreadSafe
         }
 
         public UnityEngine.Vector3 ToUnity() => new UnityEngine.Vector3(x, y, z);
+#if CORESYSTEM_FMOD
         public global::FMOD.VECTOR ToFMOD() => new global::FMOD.VECTOR { x = x, y = y, z = z };
+#endif
 
         public static double Distance(Vector3 from, Vector3 target) => Math.Sqrt((from - target).SqrMagnitute);
 
@@ -68,7 +70,9 @@ namespace Syadeu.ThreadSafe
         public int GetHashCode(object obj) => obj.GetHashCode();
 
         public static implicit operator UnityEngine.Vector3(Vector3 a) => a.ToUnity();
+#if CORESYSTEM_FMOD
         public static implicit operator global::FMOD.VECTOR(Vector3 a) => a.ToFMOD();
+#endif
         public static Vector3 operator *(Vector3 a, float b)
         {
             return new Vector3(a.x * b, a.y * b, a.z * b);

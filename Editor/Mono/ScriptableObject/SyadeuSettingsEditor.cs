@@ -12,88 +12,64 @@ namespace SyadeuEditor
     [CustomEditor(typeof(SyadeuSettings))]
     public class SyadeuSettingsEditor : Editor
     {
-        bool m_EnableHelpbox = false;
-        //public List<string> m_ManagerNames = new List<string>();
+        const string CORESYSTEM_UNSAFE = "CORESYSTEM_UNSAFE";
+        const string CORESYSTEM_FMOD = "CORESYSTEM_FMOD";
+        bool m_DefineUnsafe = true;
+        bool m_DefineFmod = true;
 
-        bool m_UserTag = false;
-        bool m_CustomTag = false;
+
+        bool m_EnableHelpbox = false;
 
         bool m_GlobalOption = true;
 
         bool m_ShowOriginalContents = false;
 
-        //private void OnEnable()
-        //{
-        //    if (SyadeuSettings.Instance.m_UserTagNameModule == null)
-        //    {
-        //        var userTag = CreateInstance<UserTagNameModule>();
-        //        userTag.name = "UserTagNameModule";
-        //        AssetDatabase.AddObjectToAsset(userTag, SyadeuSettings.Instance);
-        //        AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(SyadeuSettings.Instance));
+        private void OnEnable()
+        {
+            if (SyadeuSettings.Instance.m_UserTagNameModule == null)
+            {
+                var userTag = CreateInstance<UserTagNameModule>();
+                userTag.name = "UserTagNameModule";
+                AssetDatabase.AddObjectToAsset(userTag, SyadeuSettings.Instance);
+                AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(SyadeuSettings.Instance));
 
-        //        SyadeuSettings.Instance.m_UserTagNameModule = userTag;
-        //        EditorUtility.SetDirty(SyadeuSettings.Instance);
+                SyadeuSettings.Instance.m_UserTagNameModule = userTag;
+                EditorUtility.SetDirty(SyadeuSettings.Instance);
 
-        //        AssetDatabase.SaveAssets();
-        //    }
-        //    if (SyadeuSettings.Instance.m_CustomTagNameModule == null)
-        //    {
-        //        var customTag = CreateInstance<CustomTagNameModule>();
-        //        customTag.name = "CustomTagNameModule";
-        //        AssetDatabase.AddObjectToAsset(customTag, SyadeuSettings.Instance);
-        //        AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(SyadeuSettings.Instance));
+                AssetDatabase.SaveAssets();
+            }
+            if (SyadeuSettings.Instance.m_CustomTagNameModule == null)
+            {
+                var customTag = CreateInstance<CustomTagNameModule>();
+                customTag.name = "CustomTagNameModule";
+                AssetDatabase.AddObjectToAsset(customTag, SyadeuSettings.Instance);
+                AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(SyadeuSettings.Instance));
 
-        //        SyadeuSettings.Instance.m_CustomTagNameModule = customTag;
-        //        EditorUtility.SetDirty(SyadeuSettings.Instance);
+                SyadeuSettings.Instance.m_CustomTagNameModule = customTag;
+                EditorUtility.SetDirty(SyadeuSettings.Instance);
 
-        //        AssetDatabase.SaveAssets();
-        //    }
+                AssetDatabase.SaveAssets();
+            }
 
-        //    //Type[] types = typeof(CoreSystem).Assembly.GetTypes().Where(TheType => TheType.IsClass && !TheType.IsAbstract && TheType.GetInterface("IStaticManager") != null).ToArray();
-        //    //{
-        //    //    m_ManagerNames.Clear();
-        //    //    for (int i = 0; i < types.Length; i++)
-        //    //    {
-        //    //        m_ManagerNames.Add(types[i].Name);
-        //    //    }
-        //    //}
+            m_DefineUnsafe = m_DefineFmod = true;
+            foreach (var item in Enum.GetValues(typeof(BuildTargetGroup)))
+            {
+                PlayerSettings.GetScriptingDefineSymbolsForGroup((BuildTargetGroup)item, out string[] temp);
+                if (!temp.Contains(CORESYSTEM_UNSAFE))
+                {
+                    m_DefineUnsafe = false;
+                }
+                if (!temp.Contains(CORESYSTEM_FMOD))
+                {
+                    m_DefineFmod = false;
+                }
+            }
 
-        //}
+        }
         public override void OnInspectorGUI()
         {
             EditorUtils.StringHeader("CoreSystem Setting");
             EditorUtils.SectorLine();
-
-            if (SyadeuSettings.Instance.m_UserTagNameModule == null)
-            {
-                if (GUILayout.Button("Add UserTagNameModule"))
-                {
-                    var userTag = CreateInstance<UserTagNameModule>();
-                    userTag.name = "UserTagNameModule";
-                    AssetDatabase.AddObjectToAsset(userTag, SyadeuSettings.Instance);
-                    AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(SyadeuSettings.Instance));
-
-                    SyadeuSettings.Instance.m_UserTagNameModule = userTag;
-                    EditorUtility.SetDirty(SyadeuSettings.Instance);
-
-                    AssetDatabase.SaveAssets();
-                }
-            }
-            if (SyadeuSettings.Instance.m_CustomTagNameModule == null)
-            {
-                if (GUILayout.Button("Add CustomTagNameModule"))
-                {
-                    var customTag = CreateInstance<CustomTagNameModule>();
-                    customTag.name = "CustomTagNameModule";
-                    AssetDatabase.AddObjectToAsset(customTag, SyadeuSettings.Instance);
-                    AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(SyadeuSettings.Instance));
-
-                    SyadeuSettings.Instance.m_CustomTagNameModule = customTag;
-                    EditorUtility.SetDirty(SyadeuSettings.Instance);
-
-                    AssetDatabase.SaveAssets();
-                }
-            }
 
             m_EnableHelpbox = EditorGUILayout.ToggleLeft("도움말 표시", m_EnableHelpbox);
             EditorGUILayout.Space();
@@ -113,6 +89,47 @@ namespace SyadeuEditor
 
         private void GlobalSettings()
         {
+            EditorGUI.BeginChangeCheck();
+            m_DefineUnsafe = EditorGUILayout.ToggleLeft("Unsafe 설정", m_DefineUnsafe);
+            m_DefineFmod = EditorGUILayout.ToggleLeft("Fmod 설정", m_DefineFmod);
+            if (EditorGUI.EndChangeCheck())
+            {
+                PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, out string[] temp);
+                List<string> temptemp = new List<string>(temp);
+                if (m_DefineUnsafe)
+                {
+                    if (!temp.Contains(CORESYSTEM_UNSAFE))
+                    {
+                        temptemp.Add(CORESYSTEM_UNSAFE);
+                    }
+                }
+                else
+                {
+                    if (temp.Contains(CORESYSTEM_UNSAFE))
+                    {
+                        temptemp.Remove(CORESYSTEM_UNSAFE);
+                    }
+                }
+
+                if (m_DefineFmod)
+                {
+                    if (!temp.Contains(CORESYSTEM_FMOD))
+                    {
+                        temptemp.Add(CORESYSTEM_FMOD);
+                    }
+                }
+                else
+                {
+                    if (temp.Contains(CORESYSTEM_FMOD))
+                    {
+                        temptemp.Remove(CORESYSTEM_FMOD);
+                    }
+                }
+
+                PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, temptemp.ToArray());
+            }
+
+            EditorGUILayout.Space();
             if (m_EnableHelpbox)
             {
                 EditorGUILayout.HelpBox(

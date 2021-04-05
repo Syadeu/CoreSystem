@@ -1,8 +1,4 @@
-﻿using FMOD;
-using FMOD.Studio;
-using FMODUnity;
-
-using Syadeu.Mono;
+﻿using Syadeu.Mono;
 using Syadeu.Database;
 
 using System;
@@ -15,12 +11,15 @@ using UnityEngine;
 namespace Syadeu.FMOD
 {
 #if CORESYSTEM_FMOD
+    using FMOD;
+    using FMOD.Studio;
+    using FMODUnity;
     /// <summary>
     /// FMOD 메인 객체 시스템 사운드 컨트롤러입니다.
     /// </summary>
     public sealed class FMODSystem : StaticManager<FMODSystem>
     {
-        #region INIT
+    #region INIT
 
         public delegate void FocusChagned(bool current, bool target);
         public enum Language
@@ -258,9 +257,9 @@ namespace Syadeu.FMOD
             }
         }
 
-        #endregion
+    #endregion
 
-        #region Exposed
+    #region Exposed
 
         public global::FMOD.Studio.System FMODStudioSystem => RuntimeManager.StudioSystem;
         public global::FMOD.System FMODCoreSystem => RuntimeManager.CoreSystem;
@@ -278,9 +277,9 @@ namespace Syadeu.FMOD
 
         public static event FocusChagned OnFocus;
 
-        #endregion
+    #endregion
 
-        #region Methods
+    #region Methods
 
         public static IReadOnlyList<FMODSound> GetPlayList() => Instance.Playlist;
 
@@ -328,7 +327,7 @@ namespace Syadeu.FMOD
             return true;
         }
 
-        #region FMOD Functions
+    #region FMOD Functions
 
         public static RESULT GetParameterDescriptionByName(string name, out PARAMETER_DESCRIPTION value) => Instance.FMODStudioSystem.getParameterDescriptionByName(name, out value);
         public static RESULT GetParameterByID(PARAMETER_ID id, out float value) => Instance.FMODStudioSystem.getParameterByID(id, out value);
@@ -450,7 +449,7 @@ namespace Syadeu.FMOD
         }
         public static bool IsBankLoaded(string name) => RuntimeManager.HasBankLoaded(name);
 
-        #endregion
+    #endregion
 
         /// <summary>
         /// 해당 사운드를 재생합니다
@@ -476,7 +475,7 @@ namespace Syadeu.FMOD
             return true;
         }
 
-        #endregion
+    #endregion
     }
 #endif
 }

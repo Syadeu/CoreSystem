@@ -1,10 +1,10 @@
-﻿using FMOD;
-using Syadeu.Database;
+﻿using Syadeu.Database;
 using System;
 
 namespace Syadeu.FMOD
 {
 #if CORESYSTEM_FMOD
+    using FMOD;
     public readonly struct SoundDriver : IEquatable<SoundDriver>, IValidation
     {
         /// <summary>
