@@ -1174,7 +1174,7 @@ namespace Syadeu.Mono
             {
                 for (int i = 0; i < Verties.Length; i++)
                 {
-                    if (RenderManager.Instance.IsInCameraScreen(/*Instance.RenderCameraTarget, */Verties[i])) return true;
+                    if (RenderManager.IsInCameraScreen(/*Instance.RenderCameraTarget, */Verties[i])) return true;
                 }
                 return false;
             }
@@ -1784,7 +1784,7 @@ namespace Syadeu.Mono
                 for (int a = 0; a < grid.Length; a++)
                 {
                     ref var cell = ref grid.GetCell(a);
-                    if (!RenderManager.Instance.IsInCameraScreen(cell.Bounds.center)) continue;
+                    if (!RenderManager.IsInCameraScreen(cell.Bounds.center)) continue;
 
                     if (!cell.Enabled || cell.BlockedByNavMesh)
                     {

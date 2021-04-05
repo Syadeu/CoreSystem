@@ -106,7 +106,7 @@ namespace Syadeu.Mono
         {
             while (!Destroyed && mgr != null)
             {
-                if (mgr.IsInCameraScreen(Position))
+                if (RenderManager.IsInCameraScreen(Position))
                 {
                     IsInvisible = false;
 

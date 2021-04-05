@@ -125,6 +125,11 @@ namespace Syadeu.Mono
         {
             for (int i = 0; i < PrefabList.Instance.m_ObjectSettings.Count; i++)
             {
+                if (PrefabList.Instance.m_ObjectSettings[i].Prefab == null)
+                {
+                    throw new CoreSystemException(CoreSystemExceptionFlag.RecycleObject, $"인덱스 {i} 의 Prefab 항목이 없습니다.");
+                }
+
                 if (PrefabList.Instance.m_ObjectSettings[i].Prefab.GetComponent<T>() != null)
                 {
                     return GetRecycleObject(i).GetComponent<T>();
@@ -210,6 +215,10 @@ namespace Syadeu.Mono
             return GetRecycleObject(obj.Index);
         }
 
+        /// <summary>
+        /// 현재 Terminated 처리된 재사용 오브젝트들을 메모리에서 방출합니다.
+        /// </summary>
+        /// <returns></returns>
         public static int ReleaseTerminatedObjects()
         {
             int sum = 0;
@@ -237,6 +246,11 @@ namespace Syadeu.Mono
             }
         }
 
+        /// <summary>
+        /// 해당 인덱스의 재사용 오브젝트들의 인스턴스 갯수를 반환합니다.
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
         public int GetInstanceCount(int index) => RecycleObjects[index].Instances.Count;
         /// <summary>
         /// 해당 인덱스의 모든 인스턴스들을 리스트에 담아 반환합니다.

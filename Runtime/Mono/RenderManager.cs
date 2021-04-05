@@ -11,13 +11,12 @@ namespace Syadeu.Mono
 {
     public sealed class RenderManager : StaticManager<RenderManager>
     {
-        public delegate bool RenderCondition();
+        #region Initialize
 
         public override bool DontDestroy => false;
         public override bool HideInHierarchy => false;
 
-        public List<ManagedObject> ManagedObjects = new List<ManagedObject>();
-
+        private readonly List<ManagedObject> ManagedObjects = new List<ManagedObject>();
         internal readonly ObClass<Camera> m_MainCamera = new ObClass<Camera>(ObValueDetection.Changed);
 
         internal Matrix4x4 CamMatrix4x4 { get; private set; }
@@ -36,20 +35,23 @@ namespace Syadeu.Mono
         {
             m_MainCamera.OnValueChange += MainCamera_OnValueChange;
             m_MainCamera.Value = Camera.main;
-
-            //StartUnityUpdate(UnityUpdate());
         }
 
         private void MainCamera_OnValueChange(Camera current, Camera target)
         {
-            if (target == null) return;
-
-            CamMatrix4x4 = GetCameraMatrix4X4(target);
+            if (target != null)
+            {
+                CamMatrix4x4 = GetCameraMatrix4X4(target);
+            }
         }
 
         private void Update()
         {
-            CamMatrix4x4 = GetCameraMatrix4X4(m_MainCamera.Value);
+            if (m_MainCamera.Value != null)
+            {
+                CamMatrix4x4 = GetCameraMatrix4X4(m_MainCamera.Value);
+            }
+            else m_MainCamera.Value = Camera.main;
         }
 
         private void OnDestroy()
@@ -62,6 +64,8 @@ namespace Syadeu.Mono
             ManagedObjects.Clear();
         }
 
+        #endregion
+
         /// <summary>
         /// 렌더링 규칙을 적용할 카메라를 설정합니다.
         /// </summary>
@@ -71,12 +75,20 @@ namespace Syadeu.Mono
         {
             Instance.m_MainCamera.Value = cam;
         }
+        /// <summary>
+        /// 해당 좌표가 RenderManager가 감시하는 카메라의 Matrix 내 위치하는지 반환합니다.
+        /// </summary>
+        /// <param name="worldPosition"></param>
+        /// <returns></returns>
+        public static bool IsInCameraScreen(Vector3 worldPosition)
+            => IsInCameraScreen(worldPosition, Instance.CamMatrix4x4, SyadeuSettings.Instance.m_ScreenOffset);
 
-        public bool IsInCameraScreen(Vector3 worldPosition)
-            => IsInCameraScreen(worldPosition, CamMatrix4x4, SyadeuSettings.Instance.m_ScreenOffset);
-
-        internal static Matrix4x4 GetCameraMatrix4X4(Camera cam)
-            => cam.projectionMatrix * cam.transform.worldToLocalMatrix;
+        /// <summary>
+        /// 해당 월드 좌표를 입력한 Matrix 기반으로 2D 좌표값을 반환합니다.
+        /// </summary>
+        /// <param name="matrix"></param>
+        /// <param name="worldPosition"></param>
+        /// <returns></returns>
         public static Vector3 GetScreenPoint(Matrix4x4 matrix, Vector3 worldPosition)
         {
             Vector4 p4 = worldPosition;
@@ -90,16 +102,12 @@ namespace Syadeu.Mono
 
             return screenPoint;
         }
-        internal static bool IsInCameraScreen(Vector3 worldPosition, Matrix4x4 matrix, Vector3 offset)
-        {
-            Vector3 screenPoint = GetScreenPoint(matrix, worldPosition);
-
-            return screenPoint.z > 0 - offset.z &&
-                screenPoint.x > 0 - offset.x &&
-                screenPoint.x < 1 + offset.x &&
-                screenPoint.y > 0 - offset.y &&
-                screenPoint.y < 1 + offset.y;
-        }
+        /// <summary>
+        /// 해당 좌표가 입력한 카메라 내부에 위치하는지 반환합니다.
+        /// </summary>
+        /// <param name="cam"></param>
+        /// <param name="worldPosition"></param>
+        /// <returns></returns>
         public static bool IsInCameraScreen(Camera cam, Vector3 worldPosition)
         {
             Vector3 screenPos = cam.WorldToScreenPoint(worldPosition);
@@ -111,6 +119,19 @@ namespace Syadeu.Mono
                 return false;
             }
             return true;
+        }
+
+        internal static Matrix4x4 GetCameraMatrix4X4(Camera cam)
+            => cam.projectionMatrix * cam.transform.worldToLocalMatrix;
+        internal static bool IsInCameraScreen(Vector3 worldPosition, Matrix4x4 matrix, Vector3 offset)
+        {
+            Vector3 screenPoint = GetScreenPoint(matrix, worldPosition);
+
+            return screenPoint.z > 0 - offset.z &&
+                screenPoint.x > 0 - offset.x &&
+                screenPoint.x < 1 + offset.x &&
+                screenPoint.y > 0 - offset.y &&
+                screenPoint.y < 1 + offset.y;
         }
     }
 }
