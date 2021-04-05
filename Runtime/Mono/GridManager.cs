@@ -245,22 +245,18 @@ namespace Syadeu.Mono
             internal int3 GridCenter;
             internal int3 GridSize;
 
+            public readonly float CellSize;
 #if CORESYSTEM_UNSAFE
             unsafe internal GridCell* Cells;
+            public readonly int Length;
 #else
             internal GridCell[] Cells;
+            public int Length => Cells.Length;
 #endif
-            public float CellSize;
 
             public bool EnableNavMesh;
             public bool EnableDrawGL;
             public bool EnableDrawIdx;
-
-#if CORESYSTEM_UNSAFE
-            public int Length;
-#else
-            public int Length => Cells.Length;
-#endif
 
             internal Grid(int idx, int3 gridCenter, int3 gridSize, float cellSize, bool enableNavMesh, params GridCell[] cells)
             {
@@ -319,7 +315,7 @@ namespace Syadeu.Mono
                 GridCell[] convertedCells = new GridCell[cells.Length];
                 for (int i = 0; i < cells.Length; i++)
                 {
-                    convertedCells[i] = new GridCell(in cells[i], grid.EnableNavMesh);
+                    convertedCells[i] = new GridCell(in cells[i]);
                 }
 #if CORESYSTEM_UNSAFE
                 Length = convertedCells.Length;
@@ -950,11 +946,37 @@ namespace Syadeu.Mono
             public readonly int ParentIdx;
             public readonly int Idx;
 
-            public int2 Location;
-            public Bounds Bounds;
+            public readonly int2 Location;
+            public readonly Bounds Bounds;
 
+            public bool IsRoot
+            {
+                get
+                {
+                    if (HasDependencyChilds) return true;
+                    if (!HasDependency) return true;
+
+                    return false;
+                }
+            }
             public bool HasDependency { get; internal set; }
             public int2 DependencyTarget { get; internal set; }
+            public bool HasDependencyChilds
+            {
+                get
+                {
+#if UNITY_EDITOR
+                    if (IsMainthread() && !Application.isPlaying)
+                    {
+                        return s_EditorCellDependency.ContainsKey(Idxes);
+                    }
+                    else
+#endif
+                    {
+                        return Instance.m_CellDependency.ContainsKey(Idxes);
+                    }
+                }
+            }
 
             private readonly float3[] Verties
             {
@@ -1038,34 +1060,8 @@ namespace Syadeu.Mono
                     return false;
                 }
             }
-            public bool HasDependencyChilds
-            {
-                get
-                {
-#if UNITY_EDITOR
-                    if (IsMainthread() && !Application.isPlaying)
-                    {
-                        return s_EditorCellDependency.ContainsKey(Idxes);
-                    }
-                    else
-#endif
-                    {
-                        return Instance.m_CellDependency.ContainsKey(Idxes);
-                    }
-                }
-            }
-            public bool IsRoot
-            {
-                get
-                {
-                    if (HasDependencyChilds) return true;
-                    if (!HasDependency) return true;
-
-                    return false;
-                }
-            }
-
-            internal GridCell(int parentIdx, int idx, int2 location, Bounds bounds, bool enableNavMesh)
+            
+            internal GridCell(int parentIdx, int idx, int2 location, Bounds bounds)
             {
                 Idxes = new int2(parentIdx, idx);
                 ParentIdx = parentIdx;
@@ -1076,38 +1072,10 @@ namespace Syadeu.Mono
 
                 HasDependency = false;
                 DependencyTarget = -1;
-                //DependencyChilds = null;
-                //CustomData = null;
-
-                //Verties = new float3[4]
-                //{
-                //    new float3(bounds.min.x, bounds.min.y, bounds.min.z),
-                //    new float3(bounds.min.x, bounds.min.y, bounds.max.z),
-                //    new float3(bounds.max.x, bounds.min.y, bounds.max.z),
-                //    new float3(bounds.max.x, bounds.min.y, bounds.min.z)
-                //};
-
                 Enabled = true;
                 Highlighted = false;
-
-                //NormalColor = new Color(1, 1, 1, .1f);
-                //HighlightColor = new Color { g = 1, a = .1f };
-                //DisableColor = new Color { r = 1, a = .1f };
-
-                //if (enableNavMesh)
-                //{
-                //    NavMeshVerties = new float3[]
-                //    {
-                //        bounds.center,
-                //        new float3(Bounds.center.x + Bounds.extents.x - .1f, Bounds.center.y, Bounds.center.z),
-                //        new float3(Bounds.center.x - Bounds.extents.x + .1f, Bounds.center.y, Bounds.center.z),
-                //        new float3(Bounds.center.x, Bounds.center.y, Bounds.center.z + Bounds.extents.z - .1f),
-                //        new float3(Bounds.center.x, Bounds.center.y, Bounds.center.z - Bounds.extents.z + .1f)
-                //    };
-                //}
-                //else NavMeshVerties = null;
             }
-            internal GridCell(in BinaryGridCell cell, bool enableNavMesh) : this(cell.ParentIdx, cell.Idx, cell.Location, new Bounds(cell.Bounds_Center, cell.Bounds_Size), enableNavMesh)
+            internal GridCell(in BinaryGridCell cell) : this(cell.ParentIdx, cell.Idx, cell.Location, new Bounds(cell.Bounds_Center, cell.Bounds_Size))
             {
                 HasDependency = cell.HasDependency;
                 DependencyTarget = cell.DependencyTarget;
@@ -1170,7 +1138,7 @@ namespace Syadeu.Mono
 
             public bool IsValid() => Verties != null;
             public bool Equals(GridCell other) => Location.Equals(other.Location);
-            public bool IsVisable()
+            public bool IsVisible()
             {
                 for (int i = 0; i < Verties.Length; i++)
                 {
@@ -2191,7 +2159,7 @@ namespace Syadeu.Mono
                         bounds.min.x + halfSize + (gridCellSize * j), 0,
                         bounds.max.z - halfSize - (gridCellSize * i));
 
-                    cells[count] = new GridCell(parentIdx, count, new int2(j, i), new Bounds(center, cellSize), enableNavMesh);
+                    cells[count] = new GridCell(parentIdx, count, new int2(j, i), new Bounds(center, cellSize));
                     count++;
                 }
             }
