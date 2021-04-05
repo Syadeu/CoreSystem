@@ -1,13 +1,12 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-
-using Syadeu.FMOD;
+﻿using System.Collections.Generic;
 
 using UnityEditor;
 using UnityEngine;
 
 namespace SyadeuEditor
 {
+#if CORESYSTEM_FMOD
+    using Syadeu.FMOD;
     [CustomEditor(typeof(FMODSettings))]
     public sealed class FMODSettingsEditor : Editor
     {
@@ -307,4 +306,5 @@ namespace SyadeuEditor
             Gizmos.DrawCube(vertice.transform.position, Vector3.one * 0.05f);
         }
     }
+#endif
 }

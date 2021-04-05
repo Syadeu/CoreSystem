@@ -1,7 +1,11 @@
 ﻿using Syadeu;
+#if CORESYSTEM_FMOD
 using Syadeu.FMOD;
+#endif
+
 using System.Collections.Generic;
 using System.Linq;
+
 using UnityEditor;
 using UnityEngine;
 
@@ -20,8 +24,10 @@ namespace SyadeuEditor
             if (Application.isPlaying)
             {
                 Runtime();
+#if CORESYSTEM_FMOD
                 EditorUtils.SectorLine();
                 FMOD();
+#endif
             }
             else EditorUtils.StringRich("이 시스템은 실행 중에만 정보를 표시합니다", 12, StringColor.maroon, true);
         }
@@ -133,6 +139,7 @@ namespace SyadeuEditor
             EditorGUI.indentLevel -= 1;
         }
 
+#if CORESYSTEM_FMOD
         Dictionary<string, int> m_FMODPlaylist = new Dictionary<string, int>();
         bool m_OpenFMODSoundList = false;
         void FMOD()
@@ -197,5 +204,6 @@ namespace SyadeuEditor
 
             EditorGUI.indentLevel -= 1;
         }
+#endif
     }
 }

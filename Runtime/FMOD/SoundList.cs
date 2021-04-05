@@ -11,6 +11,7 @@ using UnityEditor;
 
 namespace Syadeu.FMOD
 {
+#if CORESYSTEM_FMOD
     [CreateAssetMenu(fileName = "newSoundlist", menuName = "Syadeu/FMOD/Soundlist")]
     public class SoundList : ScriptableObject
     {
@@ -72,4 +73,5 @@ namespace Syadeu.FMOD
         }
 #endif
     }
+#endif
 }

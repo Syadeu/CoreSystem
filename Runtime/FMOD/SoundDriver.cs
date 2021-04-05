@@ -4,6 +4,7 @@ using System;
 
 namespace Syadeu.FMOD
 {
+#if CORESYSTEM_FMOD
     public readonly struct SoundDriver : IEquatable<SoundDriver>, IValidation
     {
         /// <summary>
@@ -70,4 +71,5 @@ namespace Syadeu.FMOD
             return Index == other.Index && Guid == other.Guid;
         }
     }
+#endif
 }

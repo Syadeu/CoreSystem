@@ -359,7 +359,36 @@ public class GridTests
         int gridIdx = GridManager.CreateGrid(bounds, 1, false);
         ref GridManager.Grid grid = ref GridManager.GetGrid(in gridIdx);
 
+        GridManager.BinaryWrapper wrapper = grid.ConvertToWrapper();
+        byte[] _binary = wrapper.ToBinary();
+
+        GridManager.ClearGrids();
+
+        GridManager.BinaryWrapper _converted = GridManager.BinaryWrapper.ToWrapper(_binary);
+        GridManager.Grid _convertedGrid = _converted.ToGrid();
+
+        GridManager.ImportGrids(_convertedGrid);
+
+        GridManager.HasGrid(grid.Guid);
+        GridManager.HasGrid(grid.Idx);
+        GridManager.HasGrid(Vector3.zero);
+
         return grid;
+    }
+
+    public void GridRangeTest()
+    {
+        int gridIdx = GridManager.CreateGrid(bounds, 1, false);
+        ref GridManager.Grid grid = ref GridManager.GetGrid(in gridIdx);
+
+        GridManager.GridRange _range = grid.GetRange(0, 5);
+        unsafe
+        {
+            for (int i = 0; i < _range.Length; i++)
+            {
+                Debug.Log((*_range[i]).Location);
+            }
+        }
     }
 
     [Test]

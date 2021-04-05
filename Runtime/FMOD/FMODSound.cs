@@ -14,6 +14,7 @@ using Syadeu.Mono;
 
 namespace Syadeu.FMOD
 {
+#if CORESYSTEM_FMOD
     public class FMODSound : RecycleableDatabase<FMODSound>
     {
         #region Initializer
@@ -387,4 +388,5 @@ namespace Syadeu.FMOD
 
         #endregion
     }
+#endif
 }

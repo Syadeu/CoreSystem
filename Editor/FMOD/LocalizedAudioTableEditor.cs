@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.IO;
 
-using Syadeu.FMOD;
-
 using UnityEditor;
 using UnityEngine;
 
 namespace SyadeuEditor
 {
+#if CORESYSTEM_FMOD
+    using Syadeu.FMOD;
     [CustomEditor(typeof(FMODLocalizedAudioTable))]
     public class LocalizedAudioTableEditor : Editor
     {
@@ -396,4 +396,5 @@ namespace SyadeuEditor
             data.Name = EditorGUILayout.TextField($"> Index: {data.Index} ", data.Name);
         }
     }
+#endif
 }

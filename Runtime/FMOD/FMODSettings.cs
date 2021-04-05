@@ -8,6 +8,7 @@ using UnityEditor;
 
 namespace Syadeu.FMOD
 {
+#if CORESYSTEM_FMOD
     public sealed class FMODSettings : StaticSettingEntity<FMODSettings>
     {
         public bool m_DisplayLogs = false;
@@ -48,4 +49,5 @@ namespace Syadeu.FMOD
         //    }
         //}
     }
+#endif
 }

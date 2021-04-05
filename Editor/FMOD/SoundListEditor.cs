@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 
-using Syadeu.FMOD;
-
 using UnityEditor;
 using UnityEngine;
 
 namespace SyadeuEditor
 {
+#if CORESYSTEM_FMOD
+    using Syadeu.FMOD;
     [CustomEditor(typeof(SoundList))]
     public class SoundListEditor : Editor
     {
@@ -585,4 +585,5 @@ namespace SyadeuEditor
             }
         }
     }
+#endif
 }

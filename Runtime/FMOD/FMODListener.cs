@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace Syadeu.FMOD
 {
+#if CORESYSTEM_FMOD
     public class FMODListener : MonoBehaviour
     {
         private static List<FMODListener> Listeners { get; } = new List<FMODListener>();
@@ -155,4 +156,5 @@ namespace Syadeu.FMOD
             }
         }
     }
+#endif
 }

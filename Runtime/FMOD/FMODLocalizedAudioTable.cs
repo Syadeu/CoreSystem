@@ -7,6 +7,7 @@ using UnityEditor;
 
 namespace Syadeu.FMOD
 {
+#if CORESYSTEM_FMOD
     public sealed class FMODLocalizedAudioTable : StaticSettingEntity<FMODLocalizedAudioTable>
     {
         [SerializeField] private AudioTableRoot[] m_AudioTableDatas;
@@ -21,4 +22,5 @@ namespace Syadeu.FMOD
         }
 #endif
     }
+#endif
 }

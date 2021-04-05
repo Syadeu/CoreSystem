@@ -14,6 +14,7 @@ using UnityEngine;
 
 namespace Syadeu.FMOD
 {
+#if CORESYSTEM_FMOD
     /// <summary>
     /// FMOD 메인 객체 시스템 사운드 컨트롤러입니다.
     /// </summary>
@@ -477,4 +478,5 @@ namespace Syadeu.FMOD
 
         #endregion
     }
+#endif
 }

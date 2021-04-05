@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace Syadeu.FMOD
 {
+#if CORESYSTEM_FMOD
     [System.Serializable]
     public struct SoundRoom : IValidation
     {
@@ -182,4 +183,5 @@ namespace Syadeu.FMOD
         }
         public static implicit operator int(SoundRoom room) => room.Index;
     }
+#endif
 }

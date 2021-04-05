@@ -1,5 +1,6 @@
 ﻿namespace Syadeu.FMOD
 {
+#if CORESYSTEM_FMOD
     [System.Serializable]
     public struct AudioTable : IAudioTable
     {
@@ -11,4 +12,5 @@
         int IAudioTable.Index => m_Index;
         string IAudioTable.Name => m_Name;
     }
+#endif
 }

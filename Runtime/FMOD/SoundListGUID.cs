@@ -2,6 +2,7 @@
 
 namespace Syadeu.FMOD
 {
+#if CORESYSTEM_FMOD
     public readonly struct SoundListGUID : IValidation
     {
         public int Index { get; }
@@ -39,4 +40,5 @@ namespace Syadeu.FMOD
             return Sounds != null;
         }
     }
+#endif
 }

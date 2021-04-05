@@ -7,6 +7,7 @@ using System.Collections.Concurrent;
 
 namespace Syadeu.FMOD
 {
+#if CORESYSTEM_FMOD
     public class SoundGUID : IValidation
     {
         //public static SoundGUID Empty = new SoundGUID(false);
@@ -144,4 +145,5 @@ namespace Syadeu.FMOD
             return Parameters.TryGetValue(name, out parameter);
         }
     }
+#endif
 }
