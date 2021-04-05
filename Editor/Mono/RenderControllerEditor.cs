@@ -43,7 +43,7 @@ namespace SyadeuEditor
                 }
             }
 
-            EditorUtils.SortComponentOrder(m_Render, 1);
+            EditorUtils.SortComponentOrder(m_Render, 1, false);
         }
         private void OnValidate()
         {
