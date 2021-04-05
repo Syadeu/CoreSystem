@@ -376,18 +376,24 @@ namespace Syadeu.Mono
             public bool HasCell(int idx) => idx >= 0 && Length > idx;
             public bool HasCell(Vector2Int location)
             {
+                if (location.x > GridSize.x || location.y > GridSize.z) return false;
+
                 int idx = (GridSize.z * location.y) + location.x;
                 if (idx >= Length) return false;
                 return true;
             }
             public bool HasCell(int2 location)
             {
+                if (location.x > GridSize.x || location.y > GridSize.z) return false;
+
                 int idx = (GridSize.z * location.y) + location.x;
                 if (idx >= Length) return false;
                 return true;
             }
             public bool HasCell(int x, int y)
             {
+                if (x > GridSize.x || y > GridSize.z) return false;
+
                 int idx = (GridSize.z * y) + x;
                 if (idx >= Length) return false;
                 return true;
@@ -1584,8 +1590,9 @@ namespace Syadeu.Mono
 
             public void SetDirty()
             {
+#if UNITY_EDITOR
                 if (IsMainthread() && !Application.isPlaying) return;
-
+#endif
                 if (HasDependency)
                 {
                     ref Grid grid = ref GetGrid(DependencyTarget.x);
@@ -1657,8 +1664,8 @@ namespace Syadeu.Mono
                     }
                 }
 
-                other.HasDependency = true;
                 other.DependencyTarget = cell.Idxes;
+                other.HasDependency = true;
 
                 cell.DependencyTarget = -1;
                 cell.SetDirty();
