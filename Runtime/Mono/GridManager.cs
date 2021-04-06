@@ -1,6 +1,4 @@
-﻿//#undef CORESYSTEM_UNSAFE
-
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
@@ -489,7 +487,7 @@ namespace Syadeu.Mono
             }
             public ref GridCell GetCell(Vector2Int location)
             {
-                int idx = (GridSize.z * location.y) + location.x;
+                int idx = ToCellIndex(location);
                 if (idx >= Length ||
                     location.x < 0 || location.y < 0 ||
                     location.x > GridSize.x || location.y > GridSize.z) throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({location.x},{location.y}). " +
@@ -504,7 +502,7 @@ namespace Syadeu.Mono
             }
             public ref GridCell GetCell(int2 location)
             {
-                int idx = (GridSize.z * location.y) + location.x;
+                int idx = ToCellIndex(location);
                 if (idx >= Length || location.x < 0 || location.y < 0 ||
                     location.x > GridSize.x || location.y > GridSize.z) throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({location.x},{location.y}). " +
                     $"해당 좌표계는 이 그리드에 존재하지않습니다.");
@@ -518,7 +516,7 @@ namespace Syadeu.Mono
             }
             public ref GridCell GetCell(int x, int y)
             {
-                int idx = (GridSize.z * y) + x;
+                int idx = ToCellIndex(x, y);
                 if (idx >= Length || x < 0 || y < 0 ||
                     x > GridSize.x || y > GridSize.z) throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({x},{y}). " +
                      $"해당 좌표계는 이 그리드에 존재하지않습니다.");
@@ -533,20 +531,7 @@ namespace Syadeu.Mono
             {
                 if (worldPosition.y <= Bounds.extents.y)
                 {
-                    GridCell first;
-#if CORESYSTEM_UNSAFE
-                    unsafe
-                    {
-                        first = *Cells;
-                    }
-#else
-                    first = Cells[0];
-#endif
-
-                    int x = Math.Abs(Convert.ToInt32((worldPosition.x - first.Bounds.center.x) / CellSize));
-                    int y = Math.Abs(Convert.ToInt32((worldPosition.z - first.Bounds.center.z) / CellSize));
-                    
-                    int idx = (GridSize.z * y) + x;
+                    int idx = ToCellIndex(worldPosition);
                     if (idx < Length)
                     {
 #if CORESYSTEM_UNSAFE
@@ -561,6 +546,7 @@ namespace Syadeu.Mono
                 throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Out of Range({worldPosition.x},{worldPosition.y},{worldPosition.z}). " +
                     $"해당 좌표계는 이 그리드에 존재하지않습니다.");
             }
+            
             public IReadOnlyList<int> GetCells(UserTagFlag userTag)
             {
                 List<int> indexes = new List<int>();
@@ -688,6 +674,26 @@ namespace Syadeu.Mono
                 return new GridRange(Idx, targets.ToArray());
 #endif
             }
+
+            public int ToCellIndex(Vector3 worldPosition)
+            {
+                GridCell first;
+#if CORESYSTEM_UNSAFE
+                unsafe
+                {
+                    first = *Cells;
+                }
+#else
+                first = Cells[0];
+#endif
+
+                int x = Math.Abs(Convert.ToInt32((worldPosition.x - first.Bounds.center.x) / CellSize));
+                int y = Math.Abs(Convert.ToInt32((worldPosition.z - first.Bounds.center.z) / CellSize));
+                return ToCellIndex(x, y);
+            }
+            public int ToCellIndex(Vector2Int location) => ToCellIndex(location.x, location.y);
+            public int ToCellIndex(int2 location) => ToCellIndex(location.x, location.y);
+            public int ToCellIndex(int x, int y) => (GridSize.z * y) + x;
 
             #endregion
 
@@ -949,6 +955,8 @@ namespace Syadeu.Mono
             public readonly int2 Location;
             public readonly Bounds Bounds;
 
+            private bool m_Enabled;
+
             public bool IsRoot
             {
                 get
@@ -1006,7 +1014,28 @@ namespace Syadeu.Mono
                 }
             }
 
-            public bool Enabled;
+            public bool Enabled
+            {
+                get
+                {
+                    if (HasDependency) return GetDependencyTarget().Enabled;
+
+                    if (BlockedByNavMesh || !m_Enabled)
+                    {
+                        return false;
+                    }
+                    return true;
+                }
+                set
+                {
+                    if (HasDependency)
+                    {
+                        ref var temp = ref GetDependencyTarget();
+                        temp.Enabled = value;
+                    }
+                    else m_Enabled = value;
+                }
+            }
             public bool Highlighted;
 
             public Color Color
@@ -1015,12 +1044,11 @@ namespace Syadeu.Mono
                 {
                     if (HasDependency)
                     {
-                        ref Grid grid = ref GetGrid(DependencyTarget.x);
-                        ref GridCell cell = ref grid.GetCell(DependencyTarget.y);
+                        ref GridCell cell = ref GetDependencyTarget();
                         return cell.Color;
                     }
 
-                    if (BlockedByNavMesh || !Enabled)
+                    if (!Enabled)
                     {
                         return DisableColor;
                     }
@@ -1075,7 +1103,7 @@ namespace Syadeu.Mono
 
                 HasDependency = false;
                 DependencyTarget = -1;
-                Enabled = true;
+                m_Enabled = true;
                 Highlighted = false;
             }
             internal GridCell(in BinaryGridCell cell) : this(cell.ParentIdx, cell.Idx, cell.Location, new Bounds(cell.Bounds_Center, cell.Bounds_Size))
@@ -1210,6 +1238,16 @@ namespace Syadeu.Mono
                 if (direction.HasFlag(Direction.Right)) target.x += 1;
 
                 return ref grid.GetCell(target);
+            }
+            public int FindCellIdx(Direction direction)
+            {
+                int2 target = Location;
+                if (direction.HasFlag(Direction.Up)) target.y -= 1;
+                if (direction.HasFlag(Direction.Down)) target.y += 1;
+                if (direction.HasFlag(Direction.Left)) target.x -= 1;
+                if (direction.HasFlag(Direction.Right)) target.x += 1;
+
+                return GetGrid(ParentIdx).ToCellIndex(target);
             }
 
             #region Custom Data
@@ -1420,6 +1458,17 @@ namespace Syadeu.Mono
 
             #endregion
 
+            public ref GridCell GetDependencyTarget()
+            {
+                if (!HasDependency)
+                {
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                        $"이 그리드({Location.x}, {Location.y} : {ParentIdx}: {Idx}) 는 루트 셀이 없습니다.");
+                }
+
+                return ref GetGrid(DependencyTarget.x).GetCell(DependencyTarget.y);
+            }
+
             public bool HasTargetDependency(in int2 targetGridIdxes)
             {
                 List<int2> temp;
@@ -1495,10 +1544,9 @@ namespace Syadeu.Mono
             public void DisableDependency()
             {
                 if (!HasDependency) throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
-                    $"{Idxes} 그리드셀은 Dependency 가 없는데 삭제하려함");
+                    $"{Idxes} 그리드셀은 루트 셀이 없는데 삭제하려함");
 
-                ref Grid grid = ref GetGrid(DependencyTarget.x);
-                ref GridCell cell = ref grid.GetCell(DependencyTarget.y);
+                //ref GridCell cell = ref GetDependencyTarget();
 
                 List<int2> temp;
 #if UNITY_EDITOR
@@ -1518,7 +1566,8 @@ namespace Syadeu.Mono
                         if (temp[i].Equals(Idxes))
                         {
                             temp.RemoveAt(i);
-                            break;
+                            i--;
+                            continue;
                         }
                     }
                 }
@@ -1529,7 +1578,7 @@ namespace Syadeu.Mono
             }
             public void DisableAllChildsDependency()
             {
-                if (!HasDependencyChilds) throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                if (!IsRoot) throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
                     $"{Idxes} 그리드셀은 부모가 아닌데 자식 dependency를 삭제하려함");
 
                 List<int2> targetList;
@@ -1574,9 +1623,7 @@ namespace Syadeu.Mono
 #endif
                 if (HasDependency)
                 {
-                    ref Grid grid = ref GetGrid(DependencyTarget.x);
-                    ref GridCell cell = ref grid.GetCell(DependencyTarget.y);
-
+                    ref GridCell cell = ref GetDependencyTarget();
                     cell.SetDirty();
                 }
                 else
@@ -1664,6 +1711,11 @@ namespace Syadeu.Mono
                 m_Pointer = pointer;
                 m_Targets = targets;
             }
+            unsafe public GridRange(GridCell* pointer, int length)
+            {
+                m_Targets = new int[length];
+                m_Pointer = pointer;
+            }
 
             unsafe public GridCell* this[int i]
             {
@@ -1671,6 +1723,11 @@ namespace Syadeu.Mono
                 {
                     return m_Pointer + m_Targets[i];
                 }
+            }
+
+            public void AddAt(int i, int cellIdx)
+            {
+                m_Targets[i] = cellIdx;
             }
 #else
             private int m_GridIdx;
@@ -1687,7 +1744,6 @@ namespace Syadeu.Mono
                 }
             }
 #endif
-
             public void Dispose() { }
         }
 
