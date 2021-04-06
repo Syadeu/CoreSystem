@@ -1450,6 +1450,12 @@ namespace Syadeu.Mono
             public void MoveCustomData(int2 gridNCellIdxes) => MoveCustomData(gridNCellIdxes.x, gridNCellIdxes.y);
             public void MoveCustomData(int gridIdx, int cellIdx)
             {
+                if (HasDependency || HasDependencyChilds)
+                {
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                        "이 셀은 다른 셀과 연결되있어서 커스텀 데이터를 옮길 수 없습니다.");
+                }
+
                 object data = GetCustomData();
                 RemoveCustomData();
 
