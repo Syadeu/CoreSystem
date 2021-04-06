@@ -363,24 +363,8 @@ namespace Syadeu.Mono
             #region Has
 
             public bool HasCell(int idx) => idx >= 0 && Length > idx;
-            public bool HasCell(Vector2Int location)
-            {
-                if (location.x < 0 || location.y < 0 ||
-                    location.x > GridSize.x || location.y > GridSize.z) return false;
-
-                int idx = (GridSize.z * location.y) + location.x;
-                if (idx >= Length) return false;
-                return true;
-            }
-            public bool HasCell(int2 location)
-            {
-                if (location.x < 0 || location.y < 0 ||
-                    location.x > GridSize.x || location.y > GridSize.z) return false;
-
-                int idx = (GridSize.z * location.y) + location.x;
-                if (idx >= Length) return false;
-                return true;
-            }
+            public bool HasCell(Vector2Int location) => HasCell(location.x, location.y);
+            public bool HasCell(int2 location) => HasCell(location.x, location.y);
             public bool HasCell(int x, int y)
             {
                 if (x < 0 || y < 0 ||
@@ -961,7 +945,6 @@ namespace Syadeu.Mono
             {
                 get
                 {
-                    if (HasDependencyChilds) return true;
                     if (!HasDependency) return true;
 
                     return false;
@@ -1672,6 +1655,12 @@ namespace Syadeu.Mono
 
             private static void InternalEnableDependency(ref GridCell other, ref Grid grid, ref GridCell cell)
             {
+                if (cell.HasDependency)
+                {
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                        "자식 셀은 부모로 삼을 수 없습니다.");
+                }
+
 #if UNITY_EDITOR
                 if (IsMainthread() && !Application.isPlaying)
                 {
