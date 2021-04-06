@@ -33,7 +33,7 @@ namespace Syadeu.Mono
     public sealed class GridManager : StaticManager<GridManager>
     {
         private static readonly object s_LockManager = new object();
-        private static readonly object s_LockCell = new object();
+        private static readonly object s_LockDependency = new object();
 
         #region Init
         public override bool HideInHierarchy => false;
@@ -1153,46 +1153,46 @@ namespace Syadeu.Mono
                 ref Grid grid = ref GetGrid(ParentIdx);
                 
                 int2 target = Location;
-                if (direction.HasFlag(Direction.Up)) target.y += 1;
-                if (direction.HasFlag(Direction.Down)) target.y -= 1;
+                if (direction.HasFlag(Direction.Up)) target.y -= 1;
+                if (direction.HasFlag(Direction.Down)) target.y += 1;
                 if (direction.HasFlag(Direction.Left)) target.x -= 1;
                 if (direction.HasFlag(Direction.Right)) target.x += 1;
 
                 return grid.HasCell(target);
             }
-            public bool HasCell(Direction direction, bool hasCustomData)
-            {
-                ref Grid grid = ref GetGrid(ParentIdx);
+            //public bool HasCell(Direction direction, bool hasCustomData)
+            //{
+            //    ref Grid grid = ref GetGrid(ParentIdx);
                 
-                int2 target = Location;
-                if (direction.HasFlag(Direction.Up)) target.y += 1;
-                if (direction.HasFlag(Direction.Down)) target.y -= 1;
-                if (direction.HasFlag(Direction.Left)) target.x -= 1;
-                if (direction.HasFlag(Direction.Right)) target.x += 1;
+            //    int2 target = Location;
+            //    if (direction.HasFlag(Direction.Up)) target.y -= 1;
+            //    if (direction.HasFlag(Direction.Down)) target.y += 1;
+            //    if (direction.HasFlag(Direction.Left)) target.x += 1;
+            //    if (direction.HasFlag(Direction.Right)) target.x -= 1;
 
-                int idx = (grid.GridSize.z * target.y) + target.x;
-                if (idx >= grid.Length) return false;
+            //    int idx = (grid.GridSize.z * target.y) + target.x;
+            //    if (idx >= grid.Length) return false;
 
-                ref GridCell cell = ref grid.GetCell(idx);
-                return cell.GetCustomData() != null == hasCustomData;
-            }
-            public bool HasCell<T>(Direction direction, bool hasCustomData)
-            {
-                ref Grid grid = ref GetGrid(ParentIdx);
+            //    ref GridCell cell = ref grid.GetCell(idx);
+            //    return cell.GetCustomData() != null == hasCustomData;
+            //}
+            //public bool HasCell<T>(Direction direction, bool hasCustomData)
+            //{
+            //    ref Grid grid = ref GetGrid(ParentIdx);
                 
-                int2 target = Location;
-                if (direction.HasFlag(Direction.Up)) target.y += 1;
-                if (direction.HasFlag(Direction.Down)) target.y -= 1;
-                if (direction.HasFlag(Direction.Left)) target.x -= 1;
-                if (direction.HasFlag(Direction.Right)) target.x += 1;
+            //    int2 target = Location;
+            //    if (direction.HasFlag(Direction.Up)) target.y -= 1;
+            //    if (direction.HasFlag(Direction.Down)) target.y += 1;
+            //    if (direction.HasFlag(Direction.Left)) target.x += 1;
+            //    if (direction.HasFlag(Direction.Right)) target.x -= 1;
 
-                int idx = (grid.GridSize.z * target.y) + target.x;
-                if (idx >= grid.Length) return false;
+            //    int idx = (grid.GridSize.z * target.y) + target.x;
+            //    if (idx >= grid.Length) return false;
 
-                ref GridCell cell = ref grid.GetCell(idx);
-                object data = cell.GetCustomData();
-                return (data != null && data is T) == hasCustomData;
-            }
+            //    ref GridCell cell = ref grid.GetCell(idx);
+            //    object data = cell.GetCustomData();
+            //    return (data != null && data is T) == hasCustomData;
+            //}
             public ref GridCell FindCell(Direction direction)
             {
                 if (!HasCell(direction)) throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
@@ -1201,8 +1201,8 @@ namespace Syadeu.Mono
                 ref Grid grid = ref GetGrid(ParentIdx);
 
                 int2 target = Location;
-                if (direction.HasFlag(Direction.Up)) target.y += 1;
-                if (direction.HasFlag(Direction.Down)) target.y -= 1;
+                if (direction.HasFlag(Direction.Up)) target.y -= 1;
+                if (direction.HasFlag(Direction.Down)) target.y += 1;
                 if (direction.HasFlag(Direction.Left)) target.x -= 1;
                 if (direction.HasFlag(Direction.Right)) target.x += 1;
 
@@ -1497,20 +1497,19 @@ namespace Syadeu.Mono
                 ref Grid grid = ref GetGrid(DependencyTarget.x);
                 ref GridCell cell = ref grid.GetCell(DependencyTarget.y);
 
-                lock (s_LockCell)
-                {
-                    List<int2> temp;
+                List<int2> temp;
 #if UNITY_EDITOR
-                    if (IsMainthread() && !Application.isPlaying)
-                    {
-                        temp = s_EditorCellDependency[DependencyTarget];
-                    }
-                    else
+                if (IsMainthread() && !Application.isPlaying)
+                {
+                    temp = s_EditorCellDependency[DependencyTarget];
+                }
+                else
 #endif
-                    {
-                        temp = Instance.m_CellDependency[DependencyTarget];
-                    }
-
+                {
+                    temp = Instance.m_CellDependency[DependencyTarget];
+                }
+                lock (s_LockDependency)
+                {
                     for (int i = 0; i < temp.Count; i++)
                     {
                         if (temp[i].Equals(Idxes))
@@ -1531,28 +1530,35 @@ namespace Syadeu.Mono
                     $"{Idxes} 그리드셀은 부모가 아닌데 자식 dependency를 삭제하려함");
 
                 List<int2> targetList;
-                lock (s_LockCell)
-                {
 #if UNITY_EDITOR
-                    if (IsMainthread() && !Application.isPlaying)
+                if (IsMainthread() && !Application.isPlaying)
+                {
+                    targetList = s_EditorCellDependency[Idxes];
+                    s_EditorCellDependency.Remove(Idxes);
+
+                    for (int i = 0; i < targetList.Count; i++)
                     {
-                        targetList = s_EditorCellDependency[Idxes];
-                        s_EditorCellDependency.Remove(Idxes);
-                    }
-                    else
-#endif
-                    {
-                        targetList = Instance.m_CellDependency[Idxes];
-                        Instance.m_CellDependency.TryRemove(Idxes, out _);
+                        ref GridCell targetCell = ref GetGrid(targetList[i].x).GetCell(targetList[i].y);
+                        targetCell.HasDependency = false;
+                        targetCell.DependencyTarget = -1;
+                        targetCell.SetDirty();
                     }
                 }
-
-                for (int i = 0; i < targetList.Count; i++)
+                else
+#endif
                 {
-                    ref GridCell targetCell = ref GetGrid(targetList[i].x).GetCell(targetList[i].y);
-                    targetCell.HasDependency = false;
-                    targetCell.DependencyTarget = -1;
-                    targetCell.SetDirty();
+                    if (!Instance.m_CellDependency.TryRemove(Idxes, out targetList))
+                    {
+                        throw new Exception("Thread overloaded?");
+                    }
+                    //targetList = Instance.m_CellDependency[Idxes];
+                    for (int i = 0; i < targetList.Count; i++)
+                    {
+                        ref GridCell targetCell = ref GetGrid(targetList[i].x).GetCell(targetList[i].y);
+                        targetCell.HasDependency = false;
+                        targetCell.DependencyTarget = -1;
+                        targetCell.SetDirty();
+                    }
                 }
 
                 SetDirty();
@@ -1610,28 +1616,28 @@ namespace Syadeu.Mono
 
             private static void InternalEnableDependency(ref GridCell other, ref Grid grid, ref GridCell cell)
             {
-                lock (s_LockCell)
-                {
 #if UNITY_EDITOR
-                    if (IsMainthread() && !Application.isPlaying)
+                if (IsMainthread() && !Application.isPlaying)
+                {
+                    if (!s_EditorCellDependency.ContainsKey(cell.Idxes))
                     {
-                        if (!s_EditorCellDependency.ContainsKey(cell.Idxes))
-                        {
-                            s_EditorCellDependency.Add(cell.Idxes, new List<int2>());
-                        }
-
-                        s_EditorCellDependency[cell.Idxes].Add(other.Idxes);
+                        s_EditorCellDependency.Add(cell.Idxes, new List<int2>());
                     }
-                    else
+
+                    s_EditorCellDependency[cell.Idxes].Add(other.Idxes);
+                }
+                else
 #endif
+                {
+                    lock (s_LockDependency)
                     {
                         if (!Instance.m_CellDependency.ContainsKey(cell.Idxes))
                         {
                             Instance.m_CellDependency.TryAdd(cell.Idxes, new List<int2>());
                         }
-
-                        Instance.m_CellDependency[cell.Idxes].Add(other.Idxes);
                     }
+
+                    Instance.m_CellDependency[cell.Idxes].Add(other.Idxes);
                 }
 
                 other.DependencyTarget = cell.Idxes;

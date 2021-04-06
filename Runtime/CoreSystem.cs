@@ -402,6 +402,8 @@ namespace Syadeu
                     }
                 }
             }
+
+            Application.quitting += Instance.OnDestroy;
         }
 
         private void Awake()
@@ -432,6 +434,7 @@ namespace Syadeu
                     BackgroundJobWorkers[i].Worker.Dispose();
                 }
             }
+            BackgroundJobWorkers.Clear();
 
             try
             {
