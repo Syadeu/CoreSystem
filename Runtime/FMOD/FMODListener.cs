@@ -31,14 +31,14 @@ namespace Syadeu.FMOD
             {
                 if (Listeners[i] != null && listener.gameObject == Listeners[i].gameObject)
                 {
-                    Debug.LogWarning(string.Format(("[FMOD] Listener has already been added at index {0}."), i));
+                    UnityEngine.Debug.LogWarning(string.Format(("[FMOD] Listener has already been added at index {0}."), i));
                     return i;
                 }
             }
             // If already at the max numListeners
             if (numListeners >= global::FMOD.CONSTANTS.MAX_LISTENERS)
             {
-                Debug.LogWarning(string.Format(("[FMOD] Max number of listeners reached : {0}."), global::FMOD.CONSTANTS.MAX_LISTENERS));
+                UnityEngine.Debug.LogWarning(string.Format(("[FMOD] Max number of listeners reached : {0}."), global::FMOD.CONSTANTS.MAX_LISTENERS));
                 //return -1;
             }
 
