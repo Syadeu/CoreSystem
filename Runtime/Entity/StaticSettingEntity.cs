@@ -15,7 +15,6 @@ namespace Syadeu
         where T : ScriptableObject, IStaticSetting
     {
         private static object s_LockObj = new object();
-        public virtual bool RuntimeModifiable { get; } = false;
 
         private static T m_Instance;
         private static bool m_IsEnforceOrder;
@@ -76,6 +75,7 @@ namespace Syadeu
         }
 
         public bool Initialized { get; private set; }
+        public virtual bool RuntimeModifiable { get; } = false;
 
         public virtual void OnInitialized()
         {

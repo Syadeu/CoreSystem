@@ -39,7 +39,9 @@ namespace Syadeu.Mono
             public int DeletionWaitSeconds = 300;
         }
         
-        public List<ObjectSetting> m_ObjectSettings = new List<ObjectSetting>();
+        [SerializeField] private List<ObjectSetting> m_ObjectSettings = new List<ObjectSetting>();
+
+        public IReadOnlyList<ObjectSetting> ObjectSettings => m_ObjectSettings;
 
         /// <inheritdoc cref="PrefabManager.GetRecycleObject{T}"/>
         public static T GetRecycleObject<T>() where T : RecycleableMonobehaviour

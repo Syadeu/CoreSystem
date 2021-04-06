@@ -46,9 +46,9 @@ namespace Syadeu.Mono
         internal Dictionary<int, RecycleObject> RecycleObjects { get; } = new Dictionary<int, RecycleObject>();
         public override void OnInitialize()
         {
-            for (int i = 0; i < PrefabList.Instance.m_ObjectSettings.Count; i++)
+            for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
             {
-                RecycleObject obj = new RecycleObject(i, PrefabList.Instance.m_ObjectSettings[i]);
+                RecycleObject obj = new RecycleObject(i, PrefabList.Instance.ObjectSettings[i]);
                 RecycleObjects.Add(i, obj);
             }
         }
@@ -123,14 +123,14 @@ namespace Syadeu.Mono
         /// <returns></returns>
         public static T GetRecycleObject<T>() where T : Component
         {
-            for (int i = 0; i < PrefabList.Instance.m_ObjectSettings.Count; i++)
+            for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
             {
-                if (PrefabList.Instance.m_ObjectSettings[i].Prefab == null)
+                if (PrefabList.Instance.ObjectSettings[i].Prefab == null)
                 {
                     throw new CoreSystemException(CoreSystemExceptionFlag.RecycleObject, $"인덱스 {i} 의 Prefab 항목이 없습니다.");
                 }
 
-                if (PrefabList.Instance.m_ObjectSettings[i].Prefab.GetComponent<T>() != null)
+                if (PrefabList.Instance.ObjectSettings[i].Prefab.GetComponent<T>() != null)
                 {
                     return GetRecycleObject(i).GetComponent<T>();
                 }
