@@ -607,7 +607,7 @@ namespace Syadeu.Mono
                     }
                 }
 
-#if CORESYSTEM_UNSAFE
+#if CORESYSTEM_UNSAFE_INTERNAL
                 unsafe
                 {
                     return new GridRange(Cells, targets.ToArray());
@@ -636,7 +636,7 @@ namespace Syadeu.Mono
                     }
                 }
 
-#if CORESYSTEM_UNSAFE
+#if CORESYSTEM_UNSAFE_INTERNAL
                 unsafe
                 {
                     return new GridRange(Cells, targets.ToArray());
@@ -665,7 +665,7 @@ namespace Syadeu.Mono
                     }
                 }
 
-#if CORESYSTEM_UNSAFE
+#if CORESYSTEM_UNSAFE_INTERNAL
                 unsafe
                 {
                     return new GridRange(Cells, targets.ToArray());
@@ -1703,7 +1703,7 @@ namespace Syadeu.Mono
             private int[] m_Targets;
 
             public int Length => m_Targets.Length;
-#if CORESYSTEM_UNSAFE
+#if CORESYSTEM_UNSAFE_INTERNAL
             unsafe private GridCell* m_Pointer;
 
             unsafe internal GridRange(GridCell* pointer, params int[] targets)
