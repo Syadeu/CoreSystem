@@ -145,6 +145,11 @@ namespace Syadeu.ECS
         {
             return Instance.m_GlobalQuery.MapLocation(point, extents, agentTypeID, areaMask);
         }
+        public static bool HasLocation(Vector3 point, int agentTypeID, int areaMask = -1)
+        {
+            var temp = Instance.m_GlobalQuery.MapLocation(point, Vector3.one * 2.5f, agentTypeID, areaMask);
+            return Instance.m_GlobalQuery.IsValid(temp.polygon);
+        }
 
         protected override void OnCreate()
         {

@@ -1048,7 +1048,10 @@ namespace Syadeu.Mono
                     {
                         if (IsMainthread())
                         {
-                            NavMesh.SamplePosition(NavMeshVerties[i], out NavMeshHit hit, .25f, -1);
+                            if (!NavMesh.SamplePosition(NavMeshVerties[i], out NavMeshHit hit, .25f, -1))
+                            {
+                                return false;
+                            }
                             if (!hit.hit) return true;
                         }
                         else
