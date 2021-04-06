@@ -1648,7 +1648,7 @@ namespace Syadeu.Mono
             }
         }
 
-        public struct GridRange
+        public struct GridRange : IDisposable
         {
             private int[] m_Targets;
 
@@ -1684,6 +1684,8 @@ namespace Syadeu.Mono
                 }
             }
 #endif
+
+            public void Dispose() { }
         }
 
         public override void OnInitialize()

@@ -84,13 +84,13 @@ namespace SyadeuEditor
                 EditorGUILayout.LabelField($"\t현재 인스턴스 갯수: {ins.GetInstanceCount(objList[i].Key)}");
 
                 string maxInstanceCount;
-                if (PrefabList.Instance.m_ObjectSettings[objList[i].Key].MaxInstanceCount < 0)
+                if (PrefabList.Instance.ObjectSettings[objList[i].Key].MaxInstanceCount < 0)
                 {
                     maxInstanceCount = "무한";
                 }
                 else
                 {
-                    maxInstanceCount = PrefabList.Instance.m_ObjectSettings[objList[i].Key].MaxInstanceCount.ToString();
+                    maxInstanceCount = PrefabList.Instance.ObjectSettings[objList[i].Key].MaxInstanceCount.ToString();
                 }
                 EditorGUILayout.LabelField($"최대 인스턴스 갯수: {maxInstanceCount}");
                 EditorGUILayout.EndHorizontal();
