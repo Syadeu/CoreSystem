@@ -8,12 +8,15 @@ using System.Collections.Generic;
 
 using UnityEngine;
 
+#if CORESYSTEM_FMOD
+using FMOD;
+using FMOD.Studio;
+using FMODUnity;
+#endif
+
 namespace Syadeu.FMOD
 {
 #if CORESYSTEM_FMOD
-    using FMOD;
-    using FMOD.Studio;
-    using FMODUnity;
     /// <summary>
     /// FMOD 메인 객체 시스템 사운드 컨트롤러입니다.
     /// </summary>

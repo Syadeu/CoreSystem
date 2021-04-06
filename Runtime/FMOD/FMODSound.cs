@@ -9,11 +9,15 @@ using System.Collections.Generic;
 using UnityEngine;
 using Syadeu.Mono;
 
+#if CORESYSTEM_FMOD
+using FMOD;
+using FMOD.Studio;
+using FMODUnity;
+#endif
+
 namespace Syadeu.FMOD
 {
 #if CORESYSTEM_FMOD
-    using FMOD.Studio;
-    using FMODUnity;
     public class FMODSound : RecycleableDatabase<FMODSound>
     {
     #region Initializer

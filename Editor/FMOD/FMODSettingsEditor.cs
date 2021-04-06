@@ -2,11 +2,16 @@
 
 using UnityEditor;
 using UnityEngine;
+#if CORESYSTEM_FMOD
+using FMOD;
+using FMOD.Studio;
+using FMODUnity;
+using Syadeu.FMOD;
+#endif
 
 namespace SyadeuEditor
 {
 #if CORESYSTEM_FMOD
-    using Syadeu.FMOD;
     [CustomEditor(typeof(FMODSettings))]
     public sealed class FMODSettingsEditor : Editor
     {

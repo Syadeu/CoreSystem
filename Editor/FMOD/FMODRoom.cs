@@ -2,10 +2,16 @@
 
 using UnityEngine;
 
+#if CORESYSTEM_FMOD
+using FMOD;
+using FMOD.Studio;
+using FMODUnity;
+using Syadeu.FMOD;
+#endif
+
 namespace SyadeuEditor
 {
 #if CORESYSTEM_FMOD
-    using Syadeu.FMOD;
     public class FMODRoom : MonoBehaviour
     {
         public static Transform roomFolder;

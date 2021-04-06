@@ -2,10 +2,15 @@
 
 using UnityEngine;
 
+#if CORESYSTEM_FMOD
+using FMOD;
+using FMOD.Studio;
+using FMODUnity;
+#endif
+
 namespace Syadeu.FMOD
 {
 #if CORESYSTEM_FMOD
-    using FMODUnity;
     public class FMODListener : MonoBehaviour
     {
         private static List<FMODListener> Listeners { get; } = new List<FMODListener>();

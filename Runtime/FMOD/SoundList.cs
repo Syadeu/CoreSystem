@@ -8,10 +8,15 @@ using System.IO;
 using UnityEditor;
 #endif
 
+#if CORESYSTEM_FMOD
+using FMOD;
+using FMOD.Studio;
+using FMODUnity;
+#endif
+
 namespace Syadeu.FMOD
 {
 #if CORESYSTEM_FMOD
-    using FMODUnity;
     [CreateAssetMenu(fileName = "newSoundlist", menuName = "Syadeu/FMOD/Soundlist")]
     public class SoundList : ScriptableObject
     {

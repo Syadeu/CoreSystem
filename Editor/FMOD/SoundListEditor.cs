@@ -1,14 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-
 using UnityEditor;
 using UnityEngine;
+
+#if CORESYSTEM_FMOD
+using FMOD;
+using FMOD.Studio;
+using FMODUnity;
+using Syadeu.FMOD;
+#endif
 
 namespace SyadeuEditor
 {
 #if CORESYSTEM_FMOD
-    using Syadeu.FMOD;
     [CustomEditor(typeof(SoundList))]
     public class SoundListEditor : Editor
     {
