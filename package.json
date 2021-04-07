@@ -1,6 +1,6 @@
 {
   "name": "syadeu.coresystem",
-  "version": "1.5.0-preview27",
+  "version": "1.5.0",
   "displayName": "Syadeu CoreSystem",
   "description": "Syadeu CoreSystem Package.",
   "unity": "2020.2",
