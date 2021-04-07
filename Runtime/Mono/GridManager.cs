@@ -1061,7 +1061,7 @@ namespace Syadeu.Mono
                         {
                             if (!NavMesh.SamplePosition(NavMeshVerties[i], out NavMeshHit hit, .25f, -1))
                             {
-                                return false;
+                                return true;
                             }
                             if (!hit.hit) return true;
                         }
@@ -1444,6 +1444,8 @@ namespace Syadeu.Mono
 
             #endregion
 
+            #region Dependency
+
             public ref GridCell GetDependencyTarget()
             {
                 if (!HasDependency)
@@ -1604,6 +1606,8 @@ namespace Syadeu.Mono
 
                 SetDirty();
             }
+
+            #endregion
 
             public void SetDirty()
             {
@@ -1867,6 +1871,7 @@ namespace Syadeu.Mono
                                 locTxt += $"\n{s_EditorCellDependency[cell.Idxes].Count}";
                             }
                         }
+
                         Handles.Label(cell.Bounds.center, locTxt);
                         drawIdxCount++;
                     }

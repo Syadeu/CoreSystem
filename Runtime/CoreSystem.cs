@@ -403,13 +403,13 @@ namespace Syadeu
                 }
             }
 
-            Application.quitting += () =>
-            {
-                if (m_Instance != null)
-                {
-                    m_Instance.OnDestroy();
-                }
-            };
+            //Application.quitting += () =>
+            //{
+            //    if (m_Instance != null)
+            //    {
+            //        m_Instance.OnDestroy();
+            //    }
+            //};
         }
 
         private void Awake()
