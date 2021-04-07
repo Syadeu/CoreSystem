@@ -1337,6 +1337,10 @@ namespace Syadeu
             Instance.m_ForegroundJobs.Enqueue(job);
         }
 
+        #endregion
+
+        #region Utils
+
         public static Vector3 GetPosition(Transform transform)
         {
             if (IsMainthread()) return transform.position;
@@ -1345,6 +1349,22 @@ namespace Syadeu
                 Vector3 position = default;
                 AddForegroundJob(() => position = transform.position).Await();
                 return position;
+            }
+        }
+        public static Transform GetTransform(UnityEngine.Component component)
+        {
+            if (IsMainthread())
+            {
+                return component.transform;
+            }
+            else
+            {
+                Transform tr = null;
+                AddForegroundJob(() =>
+                {
+                    tr = component.transform;
+                }).Await();
+                return tr;
             }
         }
 

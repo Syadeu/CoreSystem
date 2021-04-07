@@ -135,7 +135,7 @@ namespace Syadeu.Mono
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public static T GetRecycleObject<T>() where T : Component
+        public static T GetRecycleObject<T>(Transform parent = null) where T : Component
         {
             for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
             {
@@ -144,10 +144,28 @@ namespace Syadeu.Mono
                     throw new CoreSystemException(CoreSystemExceptionFlag.RecycleObject, $"인덱스 {i} 의 Prefab 항목이 없습니다.");
                 }
 
-                if (PrefabList.Instance.ObjectSettings[i].Prefab.GetComponent<T>() != null)
+                T _ins = null;
+                if (IsMainthread())
                 {
-                    return GetRecycleObject(i).GetComponent<T>();
+                    if (PrefabList.Instance.ObjectSettings[i].Prefab.GetComponent<T>() != null)
+                    {
+                        _ins = GetRecycleObject(i).GetComponent<T>();
+                        if (parent != null) _ins.transform.SetParent(parent);
+                    }
                 }
+                else
+                {
+                    CoreSystem.AddForegroundJob(() =>
+                    {
+                        if (PrefabList.Instance.ObjectSettings[i].Prefab.GetComponent<T>() != null)
+                        {
+                            _ins = GetRecycleObject(i).GetComponent<T>();
+                            if (parent != null) _ins.transform.SetParent(parent);
+                        }
+                    }).Await();
+                }
+
+                if (_ins != null) return _ins;
             }
 
             throw new InvalidCastException($"CoreSystem.Prefab :: {typeof(T).Name}와 일치하는 타입이 프리팹 리스트에 등록되지않아 찾을 수 없음");
