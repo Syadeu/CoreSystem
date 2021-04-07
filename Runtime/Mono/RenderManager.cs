@@ -6,6 +6,9 @@ using System.Linq;
 using Syadeu.Database;
 
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace Syadeu.Mono
 {
@@ -81,7 +84,18 @@ namespace Syadeu.Mono
         /// <param name="worldPosition"></param>
         /// <returns></returns>
         public static bool IsInCameraScreen(Vector3 worldPosition)
-            => IsInCameraScreen(worldPosition, Instance.CamMatrix4x4, SyadeuSettings.Instance.m_ScreenOffset);
+        {
+#if UNITY_EDITOR
+            if (IsMainthread() && !Application.isPlaying)
+            {
+                return IsInCameraScreen(worldPosition, GetCameraMatrix4X4(SceneView.lastActiveSceneView.camera), SyadeuSettings.Instance.m_ScreenOffset);
+            }
+            else
+#endif
+            {
+                return IsInCameraScreen(worldPosition, Instance.CamMatrix4x4, SyadeuSettings.Instance.m_ScreenOffset);
+            }
+        }
 
         /// <summary>
         /// 해당 월드 좌표를 입력한 Matrix 기반으로 2D 좌표값을 반환합니다.

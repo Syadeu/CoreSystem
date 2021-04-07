@@ -1835,9 +1835,14 @@ namespace Syadeu.Mono
                 ref Grid grid = ref s_EditorGrids[i];
                 if (!grid.EnableDrawGL) continue;
 
+                int drawIdxCount = 0;
                 for (int a = 0; a < grid.Length; a++)
                 {
                     ref var cell = ref grid.GetCell(a);
+                    if (!cell.IsVisible())
+                    {
+                        continue;
+                    }
 
                     Gizmos.color = cell.Color;
                     Gizmos.DrawCube(cell.Bounds.center, new Vector3(cell.Bounds.size.x, .1f, cell.Bounds.size.z));
@@ -1845,6 +1850,8 @@ namespace Syadeu.Mono
 
                     if (grid.EnableDrawIdx)
                     {
+                        if (drawIdxCount > 300) continue;
+
                         string locTxt = $"{cell.Idx}:({cell.Location.x},{cell.Location.y})";
                         if (Application.isPlaying)
                         {
@@ -1861,6 +1868,7 @@ namespace Syadeu.Mono
                             }
                         }
                         Handles.Label(cell.Bounds.center, locTxt);
+                        drawIdxCount++;
                     }
                 }
             }
