@@ -1,6 +1,8 @@
-﻿using Syadeu.Mono;
+﻿using Syadeu.Database;
+using Syadeu.Mono;
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -44,6 +46,7 @@ namespace Syadeu.Mono
         public override bool DontDestroy => false;
         public override bool HideInHierarchy => false;
         internal Dictionary<int, RecycleObject> RecycleObjects { get; } = new Dictionary<int, RecycleObject>();
+        internal ConcurrentQueue<ITerminate> Terminators { get; } = new ConcurrentQueue<ITerminate>();
         public override void OnInitialize()
         {
             for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
@@ -106,6 +109,17 @@ namespace Syadeu.Mono
                         recycle.Instances.Count - activatedCount < recycle.DeletionTriggerCount)
                     {
                         recycle.DeletionTimer.Kill();
+                    }
+                }
+
+                if (Terminators.Count > 0)
+                {
+                    int c = Terminators.Count;
+                    for (int i = 0; i < c; i++)
+                    {
+                        if (!Terminators.TryDequeue(out ITerminate obj)) continue;
+
+                        obj.Terminate();
                     }
                 }
 
@@ -274,6 +288,11 @@ namespace Syadeu.Mono
             }
 
             return list;
+        }
+
+        public static void SendTerminate(ITerminate terminator)
+        {
+            Instance.Terminators.Enqueue(terminator);
         }
     }
 }

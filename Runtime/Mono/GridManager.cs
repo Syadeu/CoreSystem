@@ -1154,10 +1154,7 @@ namespace Syadeu.Mono
             public bool Equals(GridCell other) => Location.Equals(other.Location);
             public bool IsVisible()
             {
-                for (int i = 0; i < Verties.Length; i++)
-                {
-                    if (RenderManager.IsInCameraScreen(/*Instance.RenderCameraTarget, */Verties[i])) return true;
-                }
+                if (RenderManager.IsInCameraScreen(Bounds.center)) return true;
                 return false;
             }
             #endregion
@@ -1455,7 +1452,8 @@ namespace Syadeu.Mono
                         $"이 그리드({Location.x}, {Location.y} : {ParentIdx}: {Idx}) 는 루트 셀이 없습니다.");
                 }
 
-                return ref GetGrid(DependencyTarget.x).GetCell(DependencyTarget.y);
+                ref var temp = ref GetGrid(DependencyTarget.x);
+                return ref temp.GetCell(DependencyTarget.y);
             }
 
             public bool HasTargetDependency(in int2 targetGridIdxes)
@@ -1575,30 +1573,32 @@ namespace Syadeu.Mono
                 if (IsMainthread() && !Application.isPlaying)
                 {
                     targetList = s_EditorCellDependency[Idxes];
-                    s_EditorCellDependency.Remove(Idxes);
-
-                    for (int i = 0; i < targetList.Count; i++)
+                    
+                    for (int i = targetList.Count - 1; i >= 0; i--)
                     {
-                        ref GridCell targetCell = ref GetGrid(targetList[i].x).GetCell(targetList[i].y);
-                        targetCell.HasDependency = false;
-                        targetCell.DependencyTarget = -1;
-                        targetCell.SetDirty();
+                        ref Grid grid = ref GetGrid(targetList[i].x);
+                        ref GridCell targetCell = ref grid.GetCell(targetList[i].y);
+                        targetCell.DisableDependency();
                     }
+
+                    s_EditorCellDependency.Remove(Idxes);
                 }
                 else
 #endif
                 {
+                    targetList = Instance.m_CellDependency[Idxes];
+
+                    //targetList = Instance.m_CellDependency[Idxes];
+                    for (int i = targetList.Count - 1; i >= 0; i--)
+                    {
+                        ref Grid grid = ref GetGrid(targetList[i].x);
+                        ref GridCell targetCell = ref grid.GetCell(targetList[i].y);
+                        targetCell.DisableDependency();
+                    }
+
                     if (!Instance.m_CellDependency.TryRemove(Idxes, out targetList))
                     {
                         throw new Exception("Thread overloaded?");
-                    }
-                    //targetList = Instance.m_CellDependency[Idxes];
-                    for (int i = 0; i < targetList.Count; i++)
-                    {
-                        ref GridCell targetCell = ref GetGrid(targetList[i].x).GetCell(targetList[i].y);
-                        targetCell.HasDependency = false;
-                        targetCell.DependencyTarget = -1;
-                        targetCell.SetDirty();
                     }
                 }
 
@@ -1658,7 +1658,7 @@ namespace Syadeu.Mono
                 if (cell.HasDependency)
                 {
                     throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
-                        "자식 셀은 부모로 삼을 수 없습니다.");
+                        $"자식 셀({cell.Idxes}::{cell.Location})은 부모로 삼을 수 없습니다.");
                 }
 
 #if UNITY_EDITOR
@@ -1688,7 +1688,6 @@ namespace Syadeu.Mono
                 other.DependencyTarget = cell.Idxes;
                 other.HasDependency = true;
 
-                cell.DependencyTarget = -1;
                 cell.SetDirty();
             }
         }
