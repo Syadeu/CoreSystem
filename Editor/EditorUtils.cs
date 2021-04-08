@@ -166,7 +166,15 @@ namespace SyadeuEditor
 
             style.richText = true;
             if (center) style.alignment = TextAnchor.MiddleCenter;
-            EditorGUILayout.LabelField(text, style);
+            EditorGUILayout.LabelField(String(text, EditorGUIUtility.isProSkin ? StringColor.white : StringColor.black), style);
+        }
+        public static void StringRich(string text, StringColor color, bool center, GUIStyle style, params GUILayoutOption[] options)
+        {
+            if (style == null) style = new GUIStyle("Label");
+            style.richText = true;
+            if (center) style.alignment = TextAnchor.MiddleCenter;
+
+            GUILayout.Label(String(text, color), style, options);
         }
         public static void StringRich(string text, StringColor color, bool center = false)
         {
@@ -174,7 +182,7 @@ namespace SyadeuEditor
         }
         public static void StringRich(string text, int size, bool center = false)
         {
-            EditorGUILayout.LabelField(String(text, size), center ? CenterStyle : HeaderStyle);
+            EditorGUILayout.LabelField(String(text, EditorGUIUtility.isProSkin ? StringColor.white : StringColor.black, size), center ? CenterStyle : HeaderStyle);
         }
         public static void StringRich(string text, int size, StringColor color, bool center = false)
         {
@@ -190,6 +198,23 @@ namespace SyadeuEditor
 
             GUILayout.Space(8);
             GUILayout.Box("", SplitStyle, GUILayout.MaxHeight(1.5f));
+            GUILayout.Space(2);
+
+            for (int i = 1; i < lines; i++)
+            {
+                GUILayout.Space(2);
+                GUILayout.Box("", SplitStyle, GUILayout.MaxHeight(1.5f));
+            }
+
+            GUI.backgroundColor = old;
+        }
+        public static void SectorLine(float width, int lines = 1)
+        {
+            Color old = GUI.backgroundColor;
+            GUI.backgroundColor = EditorGUIUtility.isProSkin ? Color.white : Color.grey;
+
+            GUILayout.Space(8);
+            GUILayout.Box("", SplitStyle, GUILayout.Width(width), GUILayout.MaxHeight(1.5f));
             GUILayout.Space(2);
 
             for (int i = 1; i < lines; i++)
