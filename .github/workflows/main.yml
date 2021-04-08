@@ -19,7 +19,6 @@ jobs:
             path: ${{ steps.getManualLicenseFile.outputs.filePath }}
     
   start:
-    needs: activation
     runs-on: ubuntu-latest
     strategy:
         fail-fast: false
