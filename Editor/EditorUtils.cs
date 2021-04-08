@@ -168,6 +168,14 @@ namespace SyadeuEditor
             if (center) style.alignment = TextAnchor.MiddleCenter;
             EditorGUILayout.LabelField(String(text, EditorGUIUtility.isProSkin ? StringColor.white : StringColor.black), style);
         }
+        public static void StringRich(string text, StringColor color, bool center, GUIStyle style, params GUILayoutOption[] options)
+        {
+            if (style == null) style = new GUIStyle("Label");
+            style.richText = true;
+            if (center) style.alignment = TextAnchor.MiddleCenter;
+
+            GUILayout.LabelField(String(text, color), style, options);
+        }
         public static void StringRich(string text, StringColor color, bool center = false)
         {
             EditorGUILayout.LabelField(String(text, color), center ? CenterStyle : HeaderStyle);
