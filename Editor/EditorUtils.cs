@@ -174,7 +174,7 @@ namespace SyadeuEditor
             style.richText = true;
             if (center) style.alignment = TextAnchor.MiddleCenter;
 
-            GUILayout.LabelField(String(text, color), style, options);
+            GUILayout.Label(String(text, color), style, options);
         }
         public static void StringRich(string text, StringColor color, bool center = false)
         {
