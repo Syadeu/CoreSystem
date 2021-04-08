@@ -25,9 +25,11 @@ jobs:
         id: testRunner
         uses: game-ci/unity-test-runner@v2
         env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+            UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
         with:
-          githubToken: ${{ secrets.GITHUB_TOKEN }}
+            projectPath: ${{ matrix.projectPath }}
+            unityVersion: ${{ matrix.unityVersion }}
+            githubToken: ${{ secrets.GITHUB_TOKEN }}
           
       - name: Save Results
         uses: actions/upload-artifact@v2
