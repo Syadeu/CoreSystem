@@ -200,6 +200,23 @@ namespace SyadeuEditor
 
             GUI.backgroundColor = old;
         }
+        public static void SectorLine(float width, int lines = 1)
+        {
+            Color old = GUI.backgroundColor;
+            GUI.backgroundColor = EditorGUIUtility.isProSkin ? Color.white : Color.grey;
+
+            GUILayout.Space(8);
+            GUILayout.Box("", SplitStyle, GUILayout.Width(width), GUILayout.MaxHeight(1.5f));
+            GUILayout.Space(2);
+
+            for (int i = 1; i < lines; i++)
+            {
+                GUILayout.Space(2);
+                GUILayout.Box("", SplitStyle, GUILayout.MaxHeight(1.5f));
+            }
+
+            GUI.backgroundColor = old;
+        }
 
         private static Editor objectPreviewWindow;
         public static void ObjectPreview(this EditorWindow t, GameObject obj)
