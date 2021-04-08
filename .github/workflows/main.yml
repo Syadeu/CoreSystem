@@ -1,7 +1,7 @@
 name: CoreSystem Release Action
 on: 
     push:
-        branches: [main]
+        branches: [none]
 jobs:
   activation:
     runs-on: ubuntu-latest
