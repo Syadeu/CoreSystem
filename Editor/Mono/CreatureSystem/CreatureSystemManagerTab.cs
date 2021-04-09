@@ -111,10 +111,6 @@ namespace SyadeuEditor
 
                         EditorGUILayout.EndHorizontal();
 
-                        if (CreatureSettings.Instance.GetPrivateSet(Manager.m_CreatureSets[i].m_DataIdx) == null)
-                        {
-
-                        }
                         EditorGUI.BeginChangeCheck();
                         {
                             CreatureSystemSettingTab.GetCreaturePrivateSet(Manager.m_CreatureSets[i].m_DataIdx).m_PrefabIdx =
@@ -125,6 +121,7 @@ namespace SyadeuEditor
                             EditorUtility.SetDirty(CreatureSettings.Instance);
                         }
 
+                        EditorGUILayout.Space();
                         EditorGUI.BeginChangeCheck();
                         {
                             Manager.m_CreatureSets[i].m_SpawnRanges[a].m_Center

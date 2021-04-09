@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.Events;
 
 namespace Syadeu.Mono
 {
@@ -24,13 +25,28 @@ namespace Syadeu.Mono
         [Space]
         [SerializeField] private float m_SamplePosDistance = .1f;
 
+        [Space]
+        [SerializeField] private UnityAction m_OnCreated;
+        [SerializeField] private UnityAction<int> m_OnInitialize;
+        [SerializeField] private UnityAction<int> m_OnTerminate;
+
         public bool Initialized { get; private set; } = false;
 
         public void Initialize(int dataIdx)
         {
             m_DataIdx = dataIdx;
+            m_OnInitialize?.Invoke(m_DataIdx);
 
             Initialized = true;
+        }
+        public override void OnCreated()
+        {
+            m_OnCreated?.Invoke();
+        }
+        public override void OnTerminate()
+        {
+            m_OnTerminate?.Invoke(m_DataIdx);
+            Initialized = false;
         }
 
         #region Basic Moves

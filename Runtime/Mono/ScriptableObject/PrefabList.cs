@@ -29,8 +29,7 @@ namespace Syadeu.Mono
         
         [SerializeField] private List<ObjectSetting> m_ObjectSettings = new List<ObjectSetting>();
 
-        public IReadOnlyList<ObjectSetting> ObjectSettings => m_ObjectSettings;
-        public ObjectSetting GetPrefabSettings(int i) => m_ObjectSettings[i];
+        public List<ObjectSetting> ObjectSettings => m_ObjectSettings;
 
         /// <inheritdoc cref="PrefabManager.GetRecycleObject{T}"/>
         public static T GetRecycleObject<T>() where T : RecycleableMonobehaviour

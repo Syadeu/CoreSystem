@@ -9,7 +9,7 @@ namespace Syadeu.Mono
     [CustomStaticSetting("Syadeu/Creature")]
     public sealed class CreatureSettings : StaticSettingEntity<CreatureSettings>
     {
-#if UNITY_EDITOR
+//#if UNITY_EDITOR
         [SerializeField] private string m_DepTypeName;
         [SerializeField] private string m_DepSingleToneName = "Instance";
         [SerializeField] private string m_DepArrName;
@@ -18,7 +18,7 @@ namespace Syadeu.Mono
         [Space]
         [SerializeField] private string m_DepDisplayName;
 
-#endif
+//#endif
 
         [Serializable]
         public class PrivateSet : IComparable<PrivateSet>
@@ -33,7 +33,7 @@ namespace Syadeu.Mono
                 else if (m_DataIdx == other.m_DataIdx) return 0;
                 else return -1;
             }
-            public PrefabList.ObjectSetting GetPrefabSetting() => PrefabList.Instance.GetPrefabSettings(m_PrefabIdx);
+            public PrefabList.ObjectSetting GetPrefabSetting() => PrefabList.Instance.ObjectSettings[m_PrefabIdx];
         }
         [SerializeField] private List<PrivateSet> m_PrivateSets = new List<PrivateSet>();
 

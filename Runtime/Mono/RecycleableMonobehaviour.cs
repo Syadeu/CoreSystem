@@ -9,7 +9,7 @@ namespace Syadeu.Mono
     /// OnDestroy 함수를 절때 사용하지마세요
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public abstract class RecycleableMonobehaviour : MonoBehaviour, IRecycleable
+    public abstract class RecycleableMonobehaviour : MonoBehaviour, IRecycleable, IInitialize
     {
         public delegate bool TerminateCondition();
 
