@@ -1985,6 +1985,27 @@ namespace Syadeu.Mono
             return false;
         }
 
+        public static ref Grid GetGrid(in Guid guid)
+        {
+#if UNITY_EDITOR
+            if (IsMainthread() && !Application.isPlaying)
+            {
+                for (int i = 0; i < s_EditorGrids.Length; i++)
+                {
+                    if (s_EditorGrids[i].Guid.Equals(guid)) return ref s_EditorGrids[i];
+                }
+            }
+            else
+#endif
+            {
+                for (int i = 0; i < Instance.m_Grids.Length; i++)
+                {
+                    if (Instance.m_Grids[i].Guid.Equals(guid)) return ref Instance.m_Grids[i];
+                }
+            }
+
+            throw new CoreSystemException(CoreSystemExceptionFlag.Mono, $"Guid ({guid}) 그리드를 찾을 수 없음");
+        }
         public static ref Grid GetGrid(in int idx)
         {
 #if UNITY_EDITOR
