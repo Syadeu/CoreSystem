@@ -277,11 +277,16 @@ namespace Syadeu
 
         public static bool IsThisMainthread()
         {
-            if (MainThread == null || Thread.CurrentThread == MainThread)
+            if (MainThread == null)
             {
+                if (BackgroundThread != null)
+                {
+                    return false;
+                }
                 return true;
             }
 
+            if (Thread.CurrentThread == MainThread) return true;
             return false;
         }
 
