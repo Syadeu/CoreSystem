@@ -138,6 +138,7 @@ namespace SyadeuEditor
             original += txt;
         }
 
+        public static string String(string text) => String(text, EditorGUIUtility.isProSkin ? StringColor.white : StringColor.black);
         public static string String(string text, StringColor color)
             => $"<color={color}>{text}</color>";
         public static string String(string text, int size)
@@ -151,6 +152,10 @@ namespace SyadeuEditor
         public static void StringHeader(string text, int size = 20)
         {
             EditorGUILayout.LabelField(String(text, StringColor.grey, size), HeaderStyle);
+        }
+        public static void StringHeader(string text, int size, params GUILayoutOption[] options)
+        {
+            EditorGUILayout.LabelField(String(text, StringColor.grey, size), HeaderStyle, options);
         }
         public static void StringHeader(string text, StringColor color, int size = 20)
         {
