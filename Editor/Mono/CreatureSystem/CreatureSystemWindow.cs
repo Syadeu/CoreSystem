@@ -33,9 +33,11 @@ namespace SyadeuEditor
         private SerializedProperty m_DepTypeName;
         private SerializedProperty m_DepSingleToneName;
         private SerializedProperty m_DepArrName;
+        private SerializedProperty m_DepArrElementTypeName;
         private SerializedProperty m_DepDisplayName;
 
         // TargetList
+        public MonoScript m_TargetScript;
         private SerializedObject m_TargetObj;
         private SerializedProperty m_TargetList;
 
@@ -51,6 +53,7 @@ namespace SyadeuEditor
             m_DepTypeName = m_CreatureSettings.FindProperty("m_DepTypeName");
             m_DepSingleToneName = m_CreatureSettings.FindProperty("m_DepSingleToneName");
             m_DepArrName = m_CreatureSettings.FindProperty("m_DepArrName");
+            m_DepArrElementTypeName = m_CreatureSettings.FindProperty("m_DepArrElementTypeName");
             m_DepDisplayName = m_CreatureSettings.FindProperty("m_DepDisplayName");
 
             if (!string.IsNullOrEmpty(m_DepTypeName.stringValue) &&
@@ -87,6 +90,7 @@ namespace SyadeuEditor
 
             if (m_TargetList?.arraySize > 0)
             {
+                m_DepArrElementTypeName.stringValue = m_TargetList.arrayElementType;
                 m_CreatureNameList = new string[m_TargetList.arraySize];
                 m_CreatureNameList = new string[m_TargetList.arraySize];
                 for (int i = 0; i < m_CreatureNameList.Length; i++)
@@ -106,6 +110,8 @@ namespace SyadeuEditor
                         m_CreatureNameList[i] = temp.stringValue;
                     }
                 }
+
+                m_CreatureSettings.ApplyModifiedProperties();
             }
         }
         private Type GetTargetType(string name)
@@ -358,6 +364,9 @@ namespace SyadeuEditor
 
             EditorGUILayout.Space();
             EditorUtils.StringHeader("Reflections", 14);
+
+            Main.m_TargetScript = (MonoScript)EditorGUILayout.ObjectField("Target Script: ", Main.m_TargetScript, typeof(MonoScript), false);
+
             EditorGUI.BeginChangeCheck();
             EditorGUILayout.PropertyField(m_DepDisplayName, new GUIContent("List Display Name: ")/*, GUILayout.Width(150)*/);
 

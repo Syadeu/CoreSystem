@@ -13,6 +13,7 @@ namespace Syadeu.Mono
         [SerializeField] private string m_DepTypeName;
         [SerializeField] private string m_DepSingleToneName = "Instance";
         [SerializeField] private string m_DepArrName;
+        [SerializeField] private string m_DepArrElementTypeName;
 
         [Space]
         [SerializeField] private string m_DepDisplayName;
