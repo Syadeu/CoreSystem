@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 using Syadeu.Mono;
+using Syadeu.Mono.Creature;
 
 using UnityEditor;
 using System;
