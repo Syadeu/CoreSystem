@@ -7,7 +7,7 @@ using System.Linq;
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace Syadeu.Mono
+namespace Syadeu.Mono.Creature
 {
     public sealed class CreatureManager : MonoManager<CreatureManager>
     {
@@ -51,52 +51,23 @@ namespace Syadeu.Mono
                 while (count < targetCount)
                 {
                     int rndInt = UnityEngine.Random.Range(0, range.Length);
+                    var creatureInfo = GetPrivateSet();
+                    GameObject prefab = creatureInfo.GetPrefabSetting().Prefab;
+
+#if CORESYSTEM_UNSAFE
                     unsafe
                     {
                         ref GridManager.GridCell targetCell = ref *range[rndInt];
-
-                        var creatureInfo = GetPrivateSet();
-                        //GameObject rndPrefab = creatureInfo.Prefabs[UnityEngine.Random.Range(0, creatureInfo.Prefabs.Length)];
-                        GameObject rndPrefab = creatureInfo.GetPrefabSetting().Prefab;
-
-                        //if (creatureInfo.Creaturesize == (int)CreatureSize.Medium)
-                        //{
-                        //    if (targetCell.GetCustomData() == null &&
-
-                        //        targetCell.HasCell(Direction.Up) &&
-                        //        targetCell.FindCell(Direction.Up).GetCustomData() == null &&
-
-                        //        targetCell.HasCell(Direction.UpRight) &&
-                        //        targetCell.FindCell(Direction.UpRight).GetCustomData() == null &&
-
-                        //        targetCell.HasCell(Direction.Right) &&
-                        //        targetCell.FindCell(Direction.Right).GetCustomData() == null &&
-
-                        //        IsSpawnable(targetCell.Bounds.center))
-                        //    {
-                        //        GameObject ins = Instantiate(rndPrefab, Instance.transform);
-                        //        ins.name = $"{rndPrefab.name}_{count}";
-                        //        CreatureBrain brain = ins.GetComponent<CreatureBrain>();
-                        //        if (brain == null) brain = ins.AddComponent<CreatureBrain>();
-
-                        //        brain.Initialize(m_DataIdx, range[rndInt]);
-
-                        //        count++;
-                        //    }
-                        //}
-                        //else
+#else
+                    {
+                        ref GridManager.GridCell targetCell = ref range[rndInt];
+#endif
+                        if (targetCell.GetCustomData() == null)
                         {
-                            if (targetCell.GetCustomData() == null)
-                            {
-                                GameObject ins = Instantiate(rndPrefab, Instance.transform);
-                                ins.name = $"{rndPrefab.name}_{count}";
-                                //CreatureBrain brain = ins.GetComponent<CreatureBrain>();
-                                //if (brain == null) brain = ins.AddComponent<CreatureBrain>();
+                            GameObject ins = Instantiate(prefab, Instance.transform);
+                            ins.name = $"{prefab.name}_{count}";
 
-                                //brain.Initialize(m_DataIdx, range[rndInt]);
-
-                                count++;
-                            }
+                            count++;
                         }
                     }
 

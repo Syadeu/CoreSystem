@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 
 using Syadeu.Mono;
+using Syadeu.Mono.Creature;
 
 using UnityEditor;
 using System.Linq;

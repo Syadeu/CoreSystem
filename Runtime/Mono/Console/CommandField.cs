@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Syadeu.Mono.Console
 {
-    [CreateAssetMenu(menuName = "Syadeu/Console/Command Field")]
+    [CreateAssetMenu(menuName = "CoreSystem/Console/Command Field")]
     public sealed class CommandField : ScriptableObject
     {
         public string m_Field = null;
