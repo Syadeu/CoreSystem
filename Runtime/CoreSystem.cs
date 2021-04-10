@@ -612,6 +612,7 @@ namespace Syadeu
 
         public int GetCustomBackgroundUpdateCount() => m_CustomBackgroundUpdates.Count;
         public int GetCustomUpdateCount() => m_CustomUpdates.Count;
+        public IReadOnlyList<CoreRoutine> GetCustomBackgroundUpdates() => m_CustomBackgroundUpdates.Keys.ToArray();
 
         private void BackgroundWorker()
         {

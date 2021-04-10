@@ -16,6 +16,8 @@
         internal object Object { get; }
         internal System.Collections.IEnumerator Iterator { get; }
 
+        public string ObjectName { get; }
+
         /// <summary>
         /// 현재 이 루틴이 실행 중인지 반환합니다.
         /// </summary>
@@ -40,6 +42,8 @@
 
             Object = obj;
             Iterator = iter;
+            
+            ObjectName = iter.ToString();
 
             IsEditor = isEditor;
             IsBackground = isBackground;

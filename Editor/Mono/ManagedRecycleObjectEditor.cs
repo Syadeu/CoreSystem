@@ -9,17 +9,17 @@ namespace SyadeuEditor
     {
         private ManagedRecycleObject m_Scr;
 
-        private SerializedProperty onCreated;
-        private SerializedProperty onInitialize;
-        private SerializedProperty onTerminate;
+        private SerializedProperty onCreation;
+        private SerializedProperty onInitializion;
+        private SerializedProperty onTermination;
 
         private void OnEnable()
         {
             m_Scr = target as ManagedRecycleObject;
 
-            onCreated = serializedObject.FindProperty("onCreated");
-            onInitialize = serializedObject.FindProperty("onInitialize");
-            onTerminate = serializedObject.FindProperty("onTerminate");
+            onCreation = serializedObject.FindProperty("onCreation");
+            onInitializion = serializedObject.FindProperty("onInitializion");
+            onTermination = serializedObject.FindProperty("onTermination");
         }
         public override void OnInspectorGUI()
         {
@@ -27,9 +27,9 @@ namespace SyadeuEditor
             EditorUtils.SectorLine();
             EditorGUILayout.Space();
 
-            EditorGUILayout.PropertyField(onCreated, new GUIContent("인스턴스 생성 시 한번만 호출할 함수"));
-            EditorGUILayout.PropertyField(onInitialize, new GUIContent("재사용을 위해 호출되었을 때"));
-            EditorGUILayout.PropertyField(onTerminate, new GUIContent("재사용 풀로 되돌아갈 때"));
+            EditorGUILayout.PropertyField(onCreation, new GUIContent("인스턴스 생성 시 한번만 호출할 함수"));
+            EditorGUILayout.PropertyField(onInitializion, new GUIContent("재사용을 위해 호출되었을 때"));
+            EditorGUILayout.PropertyField(onTermination, new GUIContent("재사용 풀로 되돌아갈 때"));
 
             serializedObject.ApplyModifiedProperties();
             //base.OnInspectorGUI();

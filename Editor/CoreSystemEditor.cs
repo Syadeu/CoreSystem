@@ -14,6 +14,8 @@ namespace SyadeuEditor
     [CustomEditor(typeof(CoreSystem))]
     public sealed class CoreSystemEditor : Editor
     {
+        private bool m_OpenBackgroundRoutines = false;
+
         public override void OnInspectorGUI()
         {
             EditorUtils.StringHeader("CoreSystem");
@@ -112,6 +114,18 @@ namespace SyadeuEditor
             EditorGUILayout.EndHorizontal();
 
             EditorGUI.EndDisabledGroup();
+            m_OpenBackgroundRoutines = EditorGUILayout.Foldout(m_OpenBackgroundRoutines, "Open Background Routines");
+            if (m_OpenBackgroundRoutines)
+            {
+                IReadOnlyList<CoreRoutine> backgroundRoutines = CoreSystem.Instance.GetCustomBackgroundUpdates();
+                EditorGUI.indentLevel += 1;
+                for (int i = 0; i < backgroundRoutines.Count; i++)
+                {
+                    EditorGUILayout.LabelField(backgroundRoutines[i].ObjectName);
+                }
+                EditorGUI.indentLevel -= 1;
+            }
+
             EditorGUI.indentLevel -= 1;
             #endregion
 
