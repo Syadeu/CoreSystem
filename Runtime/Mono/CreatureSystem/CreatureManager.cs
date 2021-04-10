@@ -50,6 +50,12 @@ namespace Syadeu.Mono.Creature
                 brain.m_DataIdx = m_DataIdx;
                 brain.Initialize();
 
+                IInitialize<CreatureBrain, int>[] initialize = brain.GetComponentsInChildren<IInitialize<CreatureBrain, int>>();
+                for (int i = 0; i < initialize.Length; i++)
+                {
+                    initialize[i].Initialize(brain, m_DataIdx);
+                }
+
                 Instance.m_Creatures.Add(brain);
 
                 m_OnSpawn?.Invoke(m_DataIdx);
@@ -59,7 +65,7 @@ namespace Syadeu.Mono.Creature
                 ref GridManager.Grid grid = ref GridManager.GetGrid(point.m_Center);
                 ref GridManager.GridCell centerCell = ref grid.GetCell(point.m_Center);
 
-                GridManager.GridRange range = grid.GetRange(centerCell.Idx, (int)point.m_Range);
+                GridManager.GridRange range = grid.GetRange(centerCell.Idx, (point.m_Range / 2) / 2);
 
                 int count = 0;
                 int tries = 0;

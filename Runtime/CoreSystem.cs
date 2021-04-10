@@ -602,9 +602,6 @@ namespace Syadeu
         UnityEngine.Profiling.CustomSampler OnBackgroundUpdateSampler;
         UnityEngine.Profiling.CustomSampler OnBackgroundJobSampler;
         UnityEngine.Profiling.CustomSampler OnBackgroundTimerSampler;
-
-
-        //UnityEngine.Profiling.CustomSampler OnUnityUpdateSampler;
 #endif
 
         private bool m_BackgroundDeadFlag = false;

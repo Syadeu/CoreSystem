@@ -69,13 +69,6 @@ namespace Syadeu.Mono
             Initialize();
         }
 
-        //public void Initialize(int dataIdx)
-        //{
-        //    m_DataIdx = dataIdx;
-        //    m_OnInitialize?.Invoke(m_DataIdx);
-
-        //    Initialized = true;
-        //}
         public override void OnCreated()
         {
             m_OnCreated?.Invoke();
@@ -89,7 +82,7 @@ namespace Syadeu.Mono
         public ref GridManager.GridCell GetCurrentGridCell()
         {
             if (!IsOnGrid) throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
-                $"{name} 은 그리드 위에 존재하지 않습니다.");
+                $"{name}({transform.position}) 은 그리드 위에 존재하지 않습니다.");
 
             Vector3 pos = CoreSystem.GetPosition(CoreSystem.GetTransform(transform));
             ref GridManager.Grid grid = ref GridManager.GetGrid(pos);
@@ -103,7 +96,7 @@ namespace Syadeu.Mono
         public void MoveTo(Vector3 worldPosition)
         {
             m_NavMeshAgent.ResetPath();
-            if (!RenderManager.IsInCameraScreen(transform.position))
+            if (m_EnableCameraCull && !RenderManager.IsInCameraScreen(transform.position))
             {
                 transform.position = worldPosition;
                 return;
@@ -158,7 +151,7 @@ namespace Syadeu.Mono
 
             while (sqr > .25f)
             {
-                if (!RenderManager.IsInCameraScreen(transform.position))
+                if (m_EnableCameraCull && !RenderManager.IsInCameraScreen(transform.position))
                 {
                     transform.position = worldPosition;
                     yield break;
@@ -183,7 +176,7 @@ namespace Syadeu.Mono
 
             while (sqr > .25f)
             {
-                if (!RenderManager.IsInCameraScreen(transform.position))
+                if (m_EnableCameraCull && !RenderManager.IsInCameraScreen(transform.position))
                 {
                     transform.position = worldPosition;
                     yield break;
