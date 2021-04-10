@@ -60,85 +60,92 @@ namespace Syadeu.Mono
         }
         public override void OnStart()
         {
-            if (IsMainthread())
+            //if (IsMainthread())
+            //{
+            //    StartCoroutine(Updater());
+
+            //}
+            //else
+            //{
+            //    foreach (var recycle in RecycleObjects.Values)
+            //    {
+            //        StartUnityUpdate(RecycleInstancesUpdate(recycle));
+            //    }
+            //    //CoreSystem.AddForegroundJob(() =>
+            //    //{
+            //    //    StartCoroutine(Updater());
+            //    //});
+            //}
+
+            StartUnityUpdate(Updater());
+            foreach (var recycle in RecycleObjects.Values)
             {
-                StartCoroutine(Updater());
+                StartUnityUpdate(RecycleInstancesUpdate(recycle));
             }
-            else
-            {
-                CoreSystem.AddForegroundJob(() =>
-                {
-                    StartCoroutine(Updater());
-                });
-            }
-            //StartUnityUpdate(Updater());
         }
-        private IEnumerator Updater()
+        private IEnumerator RecycleInstancesUpdate(RecycleObject recycle)
         {
-            int counter = 0;
-
-            while (Initialized)
+            while (true)
             {
-                foreach (var recycle in RecycleObjects.Values)
+                int activatedCount = 0;
+                for (int i = 0; i < recycle.Instances.Count; i++)
                 {
-                    int activatedCount = 0;
-
-                    for (int i = 0; i < recycle.Instances.Count; i++)
+                    if (recycle.Instances[i].WaitForDeletion &&
+                        !recycle.Instances[i].Activated)
                     {
-                        if (recycle.Instances[i].WaitForDeletion &&
-                            !recycle.Instances[i].Activated)
+                        Destroy(recycle.Instances[i]);
+                        recycle.Instances.RemoveAt(i);
+                        i--;
+                        continue;
+                    }
+
+                    if (!recycle.Instances[i].Activated)
+                    {
+                        //if (recycle.Instances[i].transform.parent != transform)
+                        //{
+                        //    recycle.Instances[i].transform.SetParent(transform);
+                        //}
+                        continue;
+                    }
+                    if (recycle.Instances[i].transform == null)
+                    {
+                        if (SyadeuSettings.Instance.m_PMErrorAutoFix)
                         {
-                            Destroy(recycle.Instances[i]);
                             recycle.Instances.RemoveAt(i);
                             i--;
                             continue;
                         }
-
-                        if (!recycle.Instances[i].Activated)
-                        {
-                            //if (recycle.Instances[i].transform.parent != transform)
-                            //{
-                            //    recycle.Instances[i].transform.SetParent(transform);
-                            //}
-                            continue;
-                        }
-                        if (recycle.Instances[i].transform == null)
-                        {
-                            if (SyadeuSettings.Instance.m_PMErrorAutoFix)
-                            {
-                                recycle.Instances.RemoveAt(i);
-                                i--;
-                                continue;
-                            }
-                            else throw new CoreSystemException(CoreSystemExceptionFlag.RecycleObject, "PrefabManager에 의해 관리되던 RecycleMonobehaviour가 다른 객체에 의해 파괴되었습니다. 관리중인 객체는 다른 객체에서 파괴될 수 없습니다.");
-                        }
-
-                        if (recycle.Instances[i].OnActivated != null &&
-                            !recycle.Instances[i].OnActivated.Invoke())
-                        {
-                            recycle.Instances[i].Terminate();
-                        }
-
-                        activatedCount += 1;
-                        if (i != 0 && i % 1000 == 0) yield return null;
+                        else throw new CoreSystemException(CoreSystemExceptionFlag.RecycleObject, "PrefabManager에 의해 관리되던 RecycleMonobehaviour가 다른 객체에 의해 파괴되었습니다. 관리중인 객체는 다른 객체에서 파괴될 수 없습니다.");
                     }
 
-                    if (recycle.Instances.Count - activatedCount >= recycle.DeletionTriggerCount &&
-                        !recycle.DeletionTimer.IsTimerActive())
+                    if (recycle.Instances[i].OnActivated != null &&
+                        !recycle.Instances[i].OnActivated.Invoke())
                     {
-                        recycle.DeletionTimer.Start();
-                    }
-                    else if (recycle.DeletionTimer.IsTimerActive() &&
-                        recycle.Instances.Count - activatedCount < recycle.DeletionTriggerCount)
-                    {
-                        recycle.DeletionTimer.Kill();
+                        recycle.Instances[i].Terminate();
                     }
 
-                    counter++;
-                    if (counter != 0 && counter % 150 == 0) yield return null;
+                    activatedCount += 1;
+                    if (i != 0 && i % 500 == 0) yield return null;
                 }
-                counter = 0;
 
+                if (recycle.Instances.Count - activatedCount >= recycle.DeletionTriggerCount &&
+                        !recycle.DeletionTimer.IsTimerActive())
+                {
+                    recycle.DeletionTimer.Start();
+                }
+                else if (recycle.DeletionTimer.IsTimerActive() &&
+                    recycle.Instances.Count - activatedCount < recycle.DeletionTriggerCount)
+                {
+                    recycle.DeletionTimer.Kill();
+                }
+
+                yield return null;
+            }
+        }
+        private IEnumerator Updater()
+        {
+            while (Initialized)
+            {
                 if (Terminators.Count > 0)
                 {
                     int c = Terminators.Count;

@@ -22,6 +22,7 @@ namespace Syadeu.Mono
         internal readonly List<ManagedObject> m_ManagedObjects = new List<ManagedObject>();
         internal readonly ObClass<Camera> m_MainCamera = new ObClass<Camera>(ObValueDetection.Changed);
 
+        public static Camera MainCamera => Instance.m_MainCamera.Value;
         internal Matrix4x4 CamMatrix4x4 { get; private set; }
 
         [Serializable]
