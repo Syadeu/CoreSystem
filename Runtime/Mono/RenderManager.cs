@@ -86,9 +86,23 @@ namespace Syadeu.Mono
         public static bool IsInCameraScreen(Vector3 worldPosition)
         {
 #if UNITY_EDITOR
-            if (IsMainthread() && !Application.isPlaying)
+            if (IsMainthread())
             {
-                return IsInCameraScreen(worldPosition, GetCameraMatrix4X4(SceneView.lastActiveSceneView.camera), SyadeuSettings.Instance.m_ScreenOffset);
+                try
+                {
+                    if (!Application.isPlaying)
+                    {
+                        return IsInCameraScreen(worldPosition, GetCameraMatrix4X4(SceneView.lastActiveSceneView.camera), SyadeuSettings.Instance.m_ScreenOffset);
+                    }
+                    else
+                    {
+                        return IsInCameraScreen(worldPosition, Instance.CamMatrix4x4, SyadeuSettings.Instance.m_ScreenOffset);
+                    }
+                }
+                catch (UnityException)
+                {
+                    return IsInCameraScreen(worldPosition, Instance.CamMatrix4x4, SyadeuSettings.Instance.m_ScreenOffset);
+                }
             }
             else
 #endif

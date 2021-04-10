@@ -92,7 +92,6 @@ namespace SyadeuEditor
             {
                 m_DepArrElementTypeName.stringValue = m_TargetList.arrayElementType;
                 m_CreatureNameList = new string[m_TargetList.arraySize];
-                m_CreatureNameList = new string[m_TargetList.arraySize];
                 for (int i = 0; i < m_CreatureNameList.Length; i++)
                 {
                     var temp = m_TargetList.GetArrayElementAtIndex(i).FindPropertyRelative(m_DepDisplayName.stringValue);
@@ -274,9 +273,11 @@ namespace SyadeuEditor
                     EditorGUI.BeginDisabledGroup(m_ToolbarIdx == 0 || IsListHasCreatureIdx(i));
                     if (GUILayout.Button("+", GUILayout.Width(20)))
                     {
-                        m_Manager.m_CreatureSets.Add(new CreatureManager.Creature
+                        m_Manager.m_CreatureSets.Add(new CreatureManager.CreatureSet
                         {
                             m_DataIdx = i,
+                            m_PrefabIdx = CreatureSettings.Instance.GetPrivateSet(i).m_PrefabIdx,
+
                             m_SpawnRanges = new CreatureManager.SpawnRange[1]
                             {
                             new CreatureManager.SpawnRange

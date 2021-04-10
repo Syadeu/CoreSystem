@@ -279,10 +279,10 @@ namespace Syadeu
         {
             if (MainThread == null)
             {
-                if (BackgroundThread != null)
-                {
-                    return false;
-                }
+                //if (BackgroundThread != null)
+                //{
+                //    return false;
+                //}
                 return true;
             }
 
