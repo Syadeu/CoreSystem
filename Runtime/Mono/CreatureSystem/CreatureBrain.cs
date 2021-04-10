@@ -44,6 +44,8 @@ namespace Syadeu.Mono
 
         internal override void Initialize()
         {
+            if (m_NavMeshAgent == null) m_NavMeshAgent = GetComponent<NavMeshAgent>();
+
             m_OnInitialize?.Invoke(m_DataIdx);
 
             Initialized = true;
@@ -62,6 +64,7 @@ namespace Syadeu.Mono
             m_DataIdx = dataIdx;
             var set = CreatureSettings.Instance.GetPrivateSet(m_DataIdx);
             PrefabManager.Instance.RecycleObjects[set.m_PrefabIdx].Instances.Add(this);
+            CreatureManager.Instance.m_Creatures.Add(this);
 
             Initialize();
         }
@@ -123,6 +126,8 @@ namespace Syadeu.Mono
             => MoveTo(target.Bounds.center);
         public bool MoveToDirection(Vector3 direction)
         {
+            direction = direction.normalized;
+
             if (NavMesh.SamplePosition(transform.position + direction, out _, m_SamplePosDistance, m_NavMeshAgent.areaMask) &&
                 NavMesh.SamplePosition(transform.position, out _, m_SamplePosDistance, m_NavMeshAgent.areaMask))
             {

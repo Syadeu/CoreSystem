@@ -52,6 +52,18 @@ namespace Syadeu.Mono
             onTerminateAction?.Invoke();
             onTerminate?.Invoke();
             OnTerminate();
+            
+            //if (CoreSystem.IsThisMainthread())
+            //{
+            //    transform.SetParent(PrefabManager.Instance.transform);
+            //}
+            //else
+            //{
+            //    CoreSystem.AddForegroundJob(() =>
+            //    {
+            //        transform.SetParent(PrefabManager.Instance.transform);
+            //    });
+            //}
             Activated = false;
         }
     }

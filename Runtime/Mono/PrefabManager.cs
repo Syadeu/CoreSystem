@@ -60,7 +60,18 @@ namespace Syadeu.Mono
         }
         public override void OnStart()
         {
-            StartUnityUpdate(Updater());
+            if (IsMainthread())
+            {
+                StartCoroutine(Updater());
+            }
+            else
+            {
+                CoreSystem.AddForegroundJob(() =>
+                {
+                    StartCoroutine(Updater());
+                });
+            }
+            //StartUnityUpdate(Updater());
         }
         private IEnumerator Updater()
         {
@@ -83,10 +94,10 @@ namespace Syadeu.Mono
 
                         if (!recycle.Instances[i].Activated)
                         {
-                            if (recycle.Instances[i].transform.parent != transform)
-                            {
-                                recycle.Instances[i].transform.SetParent(transform);
-                            }
+                            //if (recycle.Instances[i].transform.parent != transform)
+                            //{
+                            //    recycle.Instances[i].transform.SetParent(transform);
+                            //}
                             continue;
                         }
                         if (recycle.Instances[i].transform == null)

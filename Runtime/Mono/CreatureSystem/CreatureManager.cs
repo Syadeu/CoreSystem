@@ -101,7 +101,7 @@ namespace Syadeu.Mono.Creature
         }
 
         public List<CreatureSet> m_CreatureSets = new List<CreatureSet>();
-        private List<CreatureBrain> m_Creatures = new List<CreatureBrain>();
+        internal readonly List<CreatureBrain> m_Creatures = new List<CreatureBrain>();
 
         public Transform UserCharacter { get; private set; } = null;
         public List<CreatureBrain> Creatures => m_Creatures;
