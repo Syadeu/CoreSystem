@@ -25,7 +25,7 @@ namespace Syadeu.Mono
         public bool IsForcedOff { get; internal set; } = false;
 
         private Transform Transform { get; set; }
-        internal Vector3 Position { get; private set; }
+        internal Vector3 Position { get; set; }
         internal bool Destroyed { get; private set; } = false;
         internal bool Listed { get; private set; } = false;
 
@@ -39,6 +39,7 @@ namespace Syadeu.Mono
 
             if (!IsStandalone)
             {
+                RenderManager.Instance.m_ManagedObjects.Add(new RenderManager.ManagedObject(this));
                 CoreSystem.OnBackgroundAsyncUpdate += ManagedUpdate;
                 //CoreSystem.StartBackgroundUpdate(Transform, ManagedUpdate(RenderManager.Instance));
             }
@@ -46,21 +47,28 @@ namespace Syadeu.Mono
             {
                 if (m_Camera == null) throw new CoreSystemException(CoreSystemExceptionFlag.Render, "스탠드얼론으로 지정된 RenderController에서 카메라가 지정되지 않음");
 
+                CoreSystem.OnUnityUpdate += OnStandaloneUnityUpdate;
                 CoreSystem.StartBackgroundUpdate(Transform, StandaloneUpdate());
             }
         }
 
-        private void Update()
-        {
-            Position = Transform.position;
-            if (IsStandalone) Matrix = RenderManager.GetCameraMatrix4X4(m_Camera);
-        }
+        //private void Update()
+        //{
+        //    Position = Transform.position;
+        //    if (IsStandalone) Matrix = RenderManager.GetCameraMatrix4X4(m_Camera);
+        //}
         private void OnDestroy()
         {
-            CoreSystem.OnBackgroundAsyncUpdate -= ManagedUpdate;
+            if (IsStandalone) CoreSystem.OnUnityUpdate -= OnStandaloneUnityUpdate;
+            else CoreSystem.OnBackgroundAsyncUpdate -= ManagedUpdate;
+
             Destroyed = true;
         }
-
+        private void OnStandaloneUnityUpdate()
+        {
+            Position = Transform.position;
+            Matrix = RenderManager.GetCameraMatrix4X4(m_Camera);
+        }
         private IEnumerator StandaloneUpdate()
         {
             while (!Destroyed)

@@ -75,6 +75,8 @@ namespace Syadeu.Mono
         }
         private IEnumerator Updater()
         {
+            int counter = 0;
+
             while (Initialized)
             {
                 foreach (var recycle in RecycleObjects.Values)
@@ -131,7 +133,11 @@ namespace Syadeu.Mono
                     {
                         recycle.DeletionTimer.Kill();
                     }
+
+                    counter++;
+                    if (counter != 0 && counter % 150 == 0) yield return null;
                 }
+                counter = 0;
 
                 if (Terminators.Count > 0)
                 {
