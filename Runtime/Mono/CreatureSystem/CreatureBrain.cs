@@ -33,6 +33,8 @@ namespace Syadeu.Mono
         [SerializeField] private UnityAction<int> m_OnInitialize;
         [SerializeField] private UnityAction<int> m_OnTerminate;
 
+        public event Action<Vector3> onMove;
+
         public bool Initialized { get; private set; } = false;
         public bool IsOnGrid
         {
@@ -135,12 +137,16 @@ namespace Syadeu.Mono
                 m_NavMeshAgent.enabled = true;
                 m_NavMeshAgent.Move(direction);
 
+                onMove?.Invoke(transform.position + direction);
+
                 return true;
             }
             else
             {
                 m_NavMeshAgent.enabled = false;
                 transform.position += direction * .6f;
+
+                onMove?.Invoke(transform.position);
 
                 return false;
             }
@@ -153,7 +159,9 @@ namespace Syadeu.Mono
             {
                 if (m_EnableCameraCull && !RenderManager.IsInCameraScreen(transform.position))
                 {
+                    m_NavMeshAgent.ResetPath();
                     transform.position = worldPosition;
+                    onMove?.Invoke(worldPosition);
                     yield break;
                 }
 
@@ -165,6 +173,7 @@ namespace Syadeu.Mono
                 }
 
                 sqr = (worldPosition - transform.position).sqrMagnitude;
+                onMove?.Invoke(transform.position);
 
                 yield return null;
             }
@@ -179,6 +188,7 @@ namespace Syadeu.Mono
                 if (m_EnableCameraCull && !RenderManager.IsInCameraScreen(transform.position))
                 {
                     transform.position = worldPosition;
+                    onMove?.Invoke(worldPosition);
                     yield break;
                 }
 
@@ -193,6 +203,8 @@ namespace Syadeu.Mono
                 targetAxis = (worldPosition - transform.position).normalized * m_NavMeshAgent.speed * 1.87f;
 
                 transform.position = Vector3.Lerp(transform.position, transform.position + targetAxis, Time.deltaTime * m_NavMeshAgent.angularSpeed);
+
+                onMove?.Invoke(transform.position);
 
                 yield return null;
             }
