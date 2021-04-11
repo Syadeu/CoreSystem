@@ -25,7 +25,7 @@ namespace Syadeu.Mono
 #endif
         [Space]
         [Tooltip("활성화시, 카메라에 비치지 않으면 이동 메소드가 순간이동을 합니다")]
-        [SerializeField] private bool m_EnableCameraCull = true;
+        public bool m_EnableCameraCull = true;
         [SerializeField] private float m_SamplePosDistance = .1f;
 
         [Space]
