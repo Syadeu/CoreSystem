@@ -6,7 +6,8 @@
         "Unity.InputSystem",
         "Unity.Jobs",
         "Unity.Mathematics",
-        "Unity.Collections"
+        "Unity.Collections",
+        "XNode"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
