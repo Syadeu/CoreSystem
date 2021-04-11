@@ -22,6 +22,7 @@ namespace SyadeuEditor
         private static Bounds m_Bounds;
         private static int m_GridIdx = -1;
 
+        private bool m_EnableDebugMode = false;
         private bool m_EnableNavMesh;
         private bool m_EnableCellIdx;
 
@@ -41,13 +42,44 @@ namespace SyadeuEditor
                 m_GridIdx = -1;
             }
         }
+        private void OnSceneGUI()
+        {
+            if (!m_EnableDebugMode) return;
 
+            for (int i = 0; i < GridManager.Length; i++)
+            {
+                ref GridManager.Grid grid = ref GridManager.GetGrid(i);
+
+                int drawIdxCount = 0;
+                for (int a = 0; a < grid.Length; a++)
+                {
+                    ref var cell = ref grid.GetCell(a);
+                    if (!cell.IsVisible())
+                    {
+                        continue;
+                    }
+
+                    Color temp = cell.Color;
+                    temp.a = .35f;
+
+                    GLDrawCube(cell.Bounds.center, new Vector3(cell.Bounds.size.x, .1f, cell.Bounds.size.z), temp);
+                    GLDrawWireBounds(cell.Bounds.center, new Vector3(cell.Bounds.size.x, .1f, cell.Bounds.size.z), Color.white);
+
+                    if (drawIdxCount > 300) continue;
+
+                    string locTxt = $"{cell.Idx}:({cell.Location.x},{cell.Location.y})";
+                    Handles.Label(cell.Bounds.center, locTxt);
+                    drawIdxCount++;
+                }
+            }
+        }
         public override void OnInspectorGUI()
         {
             EditorUtils.StringHeader("Grid Manager");
             EditorUtils.SectorLine();
 
             EditorGUILayout.Space();
+            m_EnableDebugMode = EditorGUILayout.ToggleLeft("런타임 디버그 모드", m_EnableDebugMode);
 
             m_ShowPreviewPanel = EditorUtils.Foldout(m_ShowPreviewPanel, "Preview", 13);
             if (m_ShowPreviewPanel) GridPreview();
@@ -181,21 +213,8 @@ namespace SyadeuEditor
             EditorGUI.EndDisabledGroup();
         }
 
-        Color red = new Color(1, 0, 0, .2f);
-        Color blue = new Color(0, 0, 1, .2f);
-        Color green = new Color(0, 1, 1, .2f);
-
-        private void OnSceneGUI()
-        {
-            if (Application.isPlaying) return;
-            //ref GridManager.Grid grid = ref GridManager.s_EditorGrids[m_GridIdx];
-            
-            //for (int i = 0; i < grid.Length; i++)
-            //{
-            //    ref var cell = ref grid.GetCell(i);
-
-            //    Handles.Label(cell.Bounds.center, $"{cell.Location.x},{cell.Location.y}");
-            //}
-        }
+        //Color red = new Color(1, 0, 0, .2f);
+        //Color blue = new Color(0, 0, 1, .2f);
+        //Color green = new Color(0, 1, 1, .2f);
     }
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Syadeu.Mono.Creature;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,38 +8,102 @@ using System.Threading.Tasks;
 
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.Events;
 
 namespace Syadeu.Mono
 {
     [RequireComponent(typeof(NavMeshAgent))]
-    public class CreatureBrain : RecycleableMonobehaviour, IInitialize<int>
+    public class CreatureBrain : RecycleableMonobehaviour
     {
-        private int m_DataIdx;
+        internal int m_DataIdx;
         [SerializeField] private NavMeshAgent m_NavMeshAgent;
 
 #if UNITY_EDITOR
         [Space]
-        [SerializeField] private string m_Name = null;
-        [SerializeField] private string m_Description = null;
+        [SerializeField] private string m_CreatureName = null;
+        [SerializeField] private string m_CreatureDescription = null;
 #endif
         [Space]
+        [Tooltip("활성화시, 카메라에 비치지 않으면 이동 메소드가 순간이동을 합니다")]
+        public bool m_EnableCameraCull = true;
         [SerializeField] private float m_SamplePosDistance = .1f;
 
+        [Space]
+        [SerializeField] private UnityAction m_OnCreated;
+        [SerializeField] private UnityAction<int> m_OnInitialize;
+        [SerializeField] private UnityAction<int> m_OnTerminate;
+
+        public event Action<Vector3> onMove;
+
         public bool Initialized { get; private set; } = false;
-
-        public void Initialize(int dataIdx)
+        public bool IsOnGrid
         {
-            m_DataIdx = dataIdx;
-
-            Initialized = true;
+            get
+            {
+                return GridManager.HasGrid(CoreSystem.GetPosition(CoreSystem.GetTransform(transform)));
+            }
         }
 
-        #region Basic Moves
+        internal override void Initialize()
+        {
+            if (m_NavMeshAgent == null) m_NavMeshAgent = GetComponent<NavMeshAgent>();
+
+            m_OnInitialize?.Invoke(m_DataIdx);
+
+            Initialized = true;
+
+            base.Initialize();
+        }
+        public void ManualInitialize(int dataIdx)
+        {
+            if (Activated || Initialized)
+            {
+                throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                    $"크리쳐 {name} 은 이미 사용등록이 완료되었으나 다시 등록하려합니다. \n" +
+                    $"사용을 마친 후, Terminate() 메소드를 실행하세요.");
+            }
+
+            m_DataIdx = dataIdx;
+            var set = CreatureSettings.Instance.GetPrivateSet(m_DataIdx);
+            PrefabManager.Instance.RecycleObjects[set.m_PrefabIdx].Instances.Add(this);
+            CreatureManager.Instance.m_Creatures.Add(this);
+
+            Initialize();
+        }
+
+        public override void OnCreated()
+        {
+            m_OnCreated?.Invoke();
+        }
+        public override void OnTerminate()
+        {
+            m_OnTerminate?.Invoke(m_DataIdx);
+            Initialized = false;
+        }
+
+        public ref GridManager.GridCell GetCurrentGridCell()
+        {
+            if (!IsOnGrid) throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                $"{name}({transform.position}) 은 그리드 위에 존재하지 않습니다.");
+
+            Vector3 pos = CoreSystem.GetPosition(CoreSystem.GetTransform(transform));
+            ref GridManager.Grid grid = ref GridManager.GetGrid(pos);
+            return ref grid.GetCell(pos);
+        }
+
+        #region Moves
 
         private CoreRoutine m_MoveRoutine;
 
         public void MoveTo(Vector3 worldPosition)
         {
+            m_NavMeshAgent.ResetPath();
+            if (m_EnableCameraCull && !RenderManager.IsInCameraScreen(transform.position))
+            {
+                transform.position = worldPosition;
+                return;
+            }
+
             if (NavMesh.SamplePosition(transform.position, out _, m_SamplePosDistance, m_NavMeshAgent.areaMask) &&
                 NavMesh.SamplePosition(worldPosition, out _, m_SamplePosDistance, m_NavMeshAgent.areaMask))
             {
@@ -52,8 +117,12 @@ namespace Syadeu.Mono
                 m_MoveRoutine = CoreSystem.StartUnityUpdate(this, MoveToPointJob(worldPosition));
             }
         }
+        public void MoveTo(GridManager.GridCell target)
+            => MoveTo(target.Bounds.center);
         public bool MoveToDirection(Vector3 direction)
         {
+            direction = direction.normalized;
+
             if (NavMesh.SamplePosition(transform.position + direction, out _, m_SamplePosDistance, m_NavMeshAgent.areaMask) &&
                 NavMesh.SamplePosition(transform.position, out _, m_SamplePosDistance, m_NavMeshAgent.areaMask))
             {
@@ -68,12 +137,16 @@ namespace Syadeu.Mono
                 m_NavMeshAgent.enabled = true;
                 m_NavMeshAgent.Move(direction);
 
+                onMove?.Invoke(transform.position + direction);
+
                 return true;
             }
             else
             {
                 m_NavMeshAgent.enabled = false;
                 transform.position += direction * .6f;
+
+                onMove?.Invoke(transform.position);
 
                 return false;
             }
@@ -84,6 +157,14 @@ namespace Syadeu.Mono
 
             while (sqr > .25f)
             {
+                if (m_EnableCameraCull && !RenderManager.IsInCameraScreen(transform.position))
+                {
+                    m_NavMeshAgent.ResetPath();
+                    transform.position = worldPosition;
+                    onMove?.Invoke(worldPosition);
+                    yield break;
+                }
+
                 if (m_NavMeshAgent.pathStatus == NavMeshPathStatus.PathInvalid ||
                     !NavMesh.SamplePosition(transform.position, out _, m_SamplePosDistance, m_NavMeshAgent.areaMask))
                 {
@@ -92,6 +173,7 @@ namespace Syadeu.Mono
                 }
 
                 sqr = (worldPosition - transform.position).sqrMagnitude;
+                onMove?.Invoke(transform.position);
 
                 yield return null;
             }
@@ -103,6 +185,13 @@ namespace Syadeu.Mono
 
             while (sqr > .25f)
             {
+                if (m_EnableCameraCull && !RenderManager.IsInCameraScreen(transform.position))
+                {
+                    transform.position = worldPosition;
+                    onMove?.Invoke(worldPosition);
+                    yield break;
+                }
+
                 if (NavMesh.SamplePosition(worldPosition, out _, m_SamplePosDistance, m_NavMeshAgent.areaMask) &&
                     NavMesh.SamplePosition(transform.position, out _, m_SamplePosDistance, m_NavMeshAgent.areaMask))
                 {
@@ -114,6 +203,8 @@ namespace Syadeu.Mono
                 targetAxis = (worldPosition - transform.position).normalized * m_NavMeshAgent.speed * 1.87f;
 
                 transform.position = Vector3.Lerp(transform.position, transform.position + targetAxis, Time.deltaTime * m_NavMeshAgent.angularSpeed);
+
+                onMove?.Invoke(transform.position);
 
                 yield return null;
             }

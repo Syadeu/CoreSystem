@@ -19,7 +19,7 @@ namespace SyadeuEditor
         public int m_CreatureSelected = -1;
         public CreatureSettings.PrivateSet m_CreatureSelectedSet = null;
 
-        private string[] m_ToolbarNames = new string[] { "Reflection Setting", "Creuture Manager" };
+        private string[] m_ToolbarNames = new string[] { "Settings", "Creuture Manager" };
         public int m_ToolbarIdx = 0;
         private Rect m_ListRect = new Rect(-1, 144.5f, 0, 0);
         private Vector2 m_ListScroll = Vector2.zero;
@@ -30,11 +30,12 @@ namespace SyadeuEditor
         public GUIStyle m_BoxStyle;
 
         // CreatureSettings
-        private SerializedObject m_CreatureSettings;
-        private SerializedProperty m_DepTypeName;
-        private SerializedProperty m_DepSingleToneName;
-        private SerializedProperty m_DepArrName;
-        private SerializedProperty m_DepDisplayName;
+        public SerializedObject m_CreatureSettings;
+        public SerializedProperty m_DepTypeName;
+        public SerializedProperty m_DepSingleToneName;
+        public SerializedProperty m_DepArrName;
+        public SerializedProperty m_DepArrElementTypeName;
+        public SerializedProperty m_DepDisplayName;
 
         // TargetList
         private SerializedObject m_TargetObj;
@@ -52,6 +53,7 @@ namespace SyadeuEditor
             m_DepTypeName = m_CreatureSettings.FindProperty("m_DepTypeName");
             m_DepSingleToneName = m_CreatureSettings.FindProperty("m_DepSingleToneName");
             m_DepArrName = m_CreatureSettings.FindProperty("m_DepArrName");
+            m_DepArrElementTypeName = m_CreatureSettings.FindProperty("m_DepArrElementTypeName");
             m_DepDisplayName = m_CreatureSettings.FindProperty("m_DepDisplayName");
 
             if (!string.IsNullOrEmpty(m_DepTypeName.stringValue) &&
@@ -88,7 +90,7 @@ namespace SyadeuEditor
 
             if (m_TargetList?.arraySize > 0)
             {
-                m_CreatureNameList = new string[m_TargetList.arraySize];
+                m_DepArrElementTypeName.stringValue = m_TargetList.arrayElementType;
                 m_CreatureNameList = new string[m_TargetList.arraySize];
                 for (int i = 0; i < m_CreatureNameList.Length; i++)
                 {
@@ -107,6 +109,8 @@ namespace SyadeuEditor
                         m_CreatureNameList[i] = temp.stringValue;
                     }
                 }
+
+                m_CreatureSettings.ApplyModifiedProperties();
             }
         }
         private Type GetTargetType(string name)
@@ -209,9 +213,7 @@ namespace SyadeuEditor
 
             if (m_CreatureSettings.hasModifiedProperties)
             {
-                EditorUtility.SetDirty(m_CreatureSettings.targetObject);
                 m_CreatureSettings.ApplyModifiedProperties();
-                AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(m_CreatureSettings.targetObject));
             }
         }
 
@@ -271,9 +273,11 @@ namespace SyadeuEditor
                     EditorGUI.BeginDisabledGroup(m_ToolbarIdx == 0 || IsListHasCreatureIdx(i));
                     if (GUILayout.Button("+", GUILayout.Width(20)))
                     {
-                        m_Manager.m_CreatureSets.Add(new CreatureManager.Creature
+                        m_Manager.m_CreatureSets.Add(new CreatureManager.CreatureSet
                         {
                             m_DataIdx = i,
+                            m_PrefabIdx = CreatureSettings.Instance.GetPrivateSet(i).m_PrefabIdx,
+
                             m_SpawnRanges = new CreatureManager.SpawnRange[1]
                             {
                             new CreatureManager.SpawnRange
@@ -339,17 +343,13 @@ namespace SyadeuEditor
         private CreatureSystemWindow Main => CoreSystemMenuItems.m_CreatureWindow;
 
         // CreatureSettings
-        private SerializedObject m_CreatureSettings;
-        private SerializedProperty m_DepDisplayName;
         private SerializedProperty m_PrivateSets;
 
         protected override void OnInitialize()
         {
             if (Main == null) CoreSystemMenuItems.CreatureWindow();
 
-            m_CreatureSettings = new SerializedObject(CreatureSettings.Instance);
-            m_DepDisplayName = m_CreatureSettings.FindProperty("m_DepDisplayName");
-            m_PrivateSets = m_CreatureSettings.FindProperty("m_PrivateSets");
+            m_PrivateSets = Main.m_CreatureSettings.FindProperty("m_PrivateSets");
         }
         protected override void OnGUIDraw()
         {
@@ -359,12 +359,13 @@ namespace SyadeuEditor
 
             EditorGUILayout.Space();
             EditorUtils.StringHeader("Reflections", 14);
+
             EditorGUI.BeginChangeCheck();
-            EditorGUILayout.PropertyField(m_DepDisplayName, new GUIContent("List Display Name: ")/*, GUILayout.Width(150)*/);
+            EditorGUILayout.PropertyField(Main.m_DepDisplayName, new GUIContent("List Display Name: ")/*, GUILayout.Width(150)*/);
 
             if (EditorGUI.EndChangeCheck())
             {
-                m_CreatureSettings.ApplyModifiedProperties();
+                Main.m_CreatureSettings.ApplyModifiedProperties();
                 Main.SetTargetList();
             }
 
@@ -412,7 +413,7 @@ namespace SyadeuEditor
 
                 var dataIdxProp = Instance.m_PrivateSets.GetArrayElementAtIndex(idx).FindPropertyRelative("m_DataIdx");
                 dataIdxProp.intValue = dataIdx;
-                Instance.m_CreatureSettings.ApplyModifiedProperties();
+                Instance.Main.m_CreatureSettings.ApplyModifiedProperties();
 
                 set = CreatureSettings.Instance.GetPrivateSet(dataIdx);
             }

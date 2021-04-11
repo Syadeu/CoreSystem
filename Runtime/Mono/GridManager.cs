@@ -1924,6 +1924,8 @@ namespace Syadeu.Mono
         }
 #endif
 
+        public static int Length => Instance.m_Grids.Length;
+
         public static bool HasGrid(in Guid guid)
         {
 #if UNITY_EDITOR

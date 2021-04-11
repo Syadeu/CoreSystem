@@ -25,7 +25,7 @@ namespace Syadeu.Mono
         public bool IsForcedOff { get; internal set; } = false;
 
         private Transform Transform { get; set; }
-        internal Vector3 Position { get; private set; }
+        internal Vector3 Position { get; set; }
         internal bool Destroyed { get; private set; } = false;
         internal bool Listed { get; private set; } = false;
 
@@ -39,26 +39,36 @@ namespace Syadeu.Mono
 
             if (!IsStandalone)
             {
-                CoreSystem.StartBackgroundUpdate(Transform, ManagedUpdate(RenderManager.Instance));
+                RenderManager.Instance.m_ManagedObjects.Add(new RenderManager.ManagedObject(this));
+                CoreSystem.OnBackgroundAsyncUpdate += ManagedUpdate;
+                //CoreSystem.StartBackgroundUpdate(Transform, ManagedUpdate(RenderManager.Instance));
             }
             else
             {
                 if (m_Camera == null) throw new CoreSystemException(CoreSystemExceptionFlag.Render, "스탠드얼론으로 지정된 RenderController에서 카메라가 지정되지 않음");
 
+                CoreSystem.OnUnityUpdate += OnStandaloneUnityUpdate;
                 CoreSystem.StartBackgroundUpdate(Transform, StandaloneUpdate());
             }
         }
 
-        private void Update()
-        {
-            Position = Transform.position;
-            if (IsStandalone) Matrix = RenderManager.GetCameraMatrix4X4(m_Camera);
-        }
+        //private void Update()
+        //{
+        //    Position = Transform.position;
+        //    if (IsStandalone) Matrix = RenderManager.GetCameraMatrix4X4(m_Camera);
+        //}
         private void OnDestroy()
         {
+            if (IsStandalone) CoreSystem.OnUnityUpdate -= OnStandaloneUnityUpdate;
+            else CoreSystem.OnBackgroundAsyncUpdate -= ManagedUpdate;
+
             Destroyed = true;
         }
-
+        private void OnStandaloneUnityUpdate()
+        {
+            Position = Transform.position;
+            Matrix = RenderManager.GetCameraMatrix4X4(m_Camera);
+        }
         private IEnumerator StandaloneUpdate()
         {
             while (!Destroyed)
@@ -102,36 +112,61 @@ namespace Syadeu.Mono
                 yield return null;
             }
         }
-        private IEnumerator ManagedUpdate(RenderManager mgr)
+        private void ManagedUpdate(CoreSystem.Awaiter awaiter)
         {
-            while (!Destroyed && mgr != null)
+            if (RenderManager.IsInCameraScreen(Position))
             {
-                if (RenderManager.IsInCameraScreen(Position))
+                IsInvisible = false;
+
+                if (!Listed)
                 {
-                    IsInvisible = false;
+                    //mgr.AddRenderControl(this);
 
-                    if (!Listed)
-                    {
-                        //mgr.AddRenderControl(this);
-
-                        CoreSystem.AddForegroundJob(InvokeOnVisible);
-                        Listed = true;
-                    }
+                    CoreSystem.AddForegroundJob(InvokeOnVisible);
+                    Listed = true;
                 }
-                else
+            }
+            else
+            {
+                IsInvisible = true;
+
+                if (Listed)
                 {
-                    IsInvisible = true;
-                    
-                    if (Listed)
-                    {
-                        CoreSystem.AddForegroundJob(InvokeOnInvisible);
-                        Listed = false;
-                    }
+                    CoreSystem.AddForegroundJob(InvokeOnInvisible);
+                    Listed = false;
                 }
-
-                yield return null;
             }
         }
+        //private IEnumerator ManagedUpdate(RenderManager mgr)
+        //{
+        //    while (!Destroyed && mgr != null)
+        //    {
+        //        if (RenderManager.IsInCameraScreen(Position))
+        //        {
+        //            IsInvisible = false;
+
+        //            if (!Listed)
+        //            {
+        //                //mgr.AddRenderControl(this);
+
+        //                CoreSystem.AddForegroundJob(InvokeOnVisible);
+        //                Listed = true;
+        //            }
+        //        }
+        //        else
+        //        {
+        //            IsInvisible = true;
+                    
+        //            if (Listed)
+        //            {
+        //                CoreSystem.AddForegroundJob(InvokeOnInvisible);
+        //                Listed = false;
+        //            }
+        //        }
+
+        //        yield return null;
+        //    }
+        //}
 
         private void InvokeOnVisible() => OnVisible?.Invoke();
         private void InvokeOnInvisible() => OnInvisible?.Invoke();

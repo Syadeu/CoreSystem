@@ -19,18 +19,21 @@ namespace Syadeu.Mono
         public override bool DontDestroy => false;
         public override bool HideInHierarchy => false;
 
-        private readonly List<ManagedObject> ManagedObjects = new List<ManagedObject>();
+        internal readonly List<ManagedObject> m_ManagedObjects = new List<ManagedObject>();
         internal readonly ObClass<Camera> m_MainCamera = new ObClass<Camera>(ObValueDetection.Changed);
 
+        public static Camera MainCamera => Instance.m_MainCamera.Value;
         internal Matrix4x4 CamMatrix4x4 { get; private set; }
 
         [Serializable]
         public class ManagedObject
         {
             public RenderController Controller { get; }
+            public Transform Transform { get; }
             public ManagedObject(RenderController controller)
             {
                 Controller = controller;
+                Transform = controller.transform;
             }
         }
 
@@ -38,6 +41,8 @@ namespace Syadeu.Mono
         {
             m_MainCamera.OnValueChange += MainCamera_OnValueChange;
             m_MainCamera.Value = Camera.main;
+
+            StartCoroutine(UnityUpdate());
         }
 
         private void MainCamera_OnValueChange(Camera current, Camera target)
@@ -48,23 +53,34 @@ namespace Syadeu.Mono
             }
         }
 
-        private void Update()
+        private IEnumerator UnityUpdate()
         {
-            if (m_MainCamera.Value != null)
+            while (true)
             {
-                CamMatrix4x4 = GetCameraMatrix4X4(m_MainCamera.Value);
-            }
-            else m_MainCamera.Value = Camera.main;
-        }
+                if (m_MainCamera.Value != null)
+                {
+                    CamMatrix4x4 = GetCameraMatrix4X4(m_MainCamera.Value);
+                }
+                else m_MainCamera.Value = Camera.main;
 
+                for (int i = 0; i < m_ManagedObjects.Count; i++)
+                {
+                    m_ManagedObjects[i].Controller.Position = m_ManagedObjects[i].Transform.position;
+
+                    if (i != 0 && i % 150 == 0) yield return null;
+                }
+
+                yield return null;
+            }
+        }
         private void OnDestroy()
         {
-            for (int i = 0; i < ManagedObjects.Count; i++)
+            for (int i = 0; i < m_ManagedObjects.Count; i++)
             {
-                if (ManagedObjects[i].Controller == null) continue;
-                ManagedObjects[i].Controller.StopAllCoroutines();
+                if (m_ManagedObjects[i].Controller == null) continue;
+                m_ManagedObjects[i].Controller.StopAllCoroutines();
             }
-            ManagedObjects.Clear();
+            m_ManagedObjects.Clear();
         }
 
         #endregion
@@ -86,9 +102,23 @@ namespace Syadeu.Mono
         public static bool IsInCameraScreen(Vector3 worldPosition)
         {
 #if UNITY_EDITOR
-            if (IsMainthread() && !Application.isPlaying)
+            if (IsMainthread())
             {
-                return IsInCameraScreen(worldPosition, GetCameraMatrix4X4(SceneView.lastActiveSceneView.camera), SyadeuSettings.Instance.m_ScreenOffset);
+                try
+                {
+                    if (!Application.isPlaying)
+                    {
+                        return IsInCameraScreen(worldPosition, GetCameraMatrix4X4(SceneView.lastActiveSceneView.camera), SyadeuSettings.Instance.m_ScreenOffset);
+                    }
+                    else
+                    {
+                        return IsInCameraScreen(worldPosition, Instance.CamMatrix4x4, SyadeuSettings.Instance.m_ScreenOffset);
+                    }
+                }
+                catch (UnityException)
+                {
+                    return IsInCameraScreen(worldPosition, Instance.CamMatrix4x4, SyadeuSettings.Instance.m_ScreenOffset);
+                }
             }
             else
 #endif
