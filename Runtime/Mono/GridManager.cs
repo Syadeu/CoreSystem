@@ -256,14 +256,16 @@ namespace Syadeu.Mono
             public bool EnableDrawGL;
             public bool EnableDrawIdx;
 
-            internal Grid(int idx, int3 gridCenter, int3 gridSize, float cellSize, bool enableNavMesh, params GridCell[] cells)
+            internal Grid(int idx, int3 gridCenter, int3 gridSize, Bounds bounds, float cellSize, bool enableNavMesh, params GridCell[] cells)
             {
                 Guid = Guid.NewGuid();
                 Idx = idx;
 
-                Bounds = new Bounds(
-                    new Vector3(gridCenter.x, gridCenter.y, gridCenter.z),
-                    new Vector3(gridSize.x, gridSize.y, gridSize.z));
+                //Bounds = new Bounds(
+                //    new Vector3(gridCenter.x, gridCenter.y, gridCenter.z),
+                //    new Vector3(gridSize.x, gridSize.y, gridSize.z));
+                Bounds = bounds;
+                //$"{Bounds.center} :: {Bounds.size}".ToLog();
                 GridCenter = gridCenter;
                 GridSize = gridSize;
 
@@ -2244,7 +2246,7 @@ namespace Syadeu.Mono
             int zSize = Mathf.FloorToInt(bounds.size.z / gridCellSize);
 
             float halfSize = gridCellSize / 2;
-            Vector3 cellSize = new Vector3(gridCellSize, .5f, gridCellSize);
+            Vector3 cellSize = new Vector3(gridCellSize, bounds.size.y, gridCellSize);
 
             int count = 0;
             GridCell[] cells = new GridCell[xSize * zSize];
@@ -2253,7 +2255,7 @@ namespace Syadeu.Mono
                 for (int j = 0; j < xSize; j++)
                 {
                     Vector3 center = new Vector3(
-                        bounds.min.x + halfSize + (gridCellSize * j), 0,
+                        bounds.min.x + halfSize + (gridCellSize * j), bounds.center.y,
                         bounds.max.z - halfSize - (gridCellSize * i));
 
                     cells[count] = new GridCell(parentIdx, count, new int2(j, i), new Bounds(center, cellSize));
@@ -2264,6 +2266,7 @@ namespace Syadeu.Mono
             return new Grid(parentIdx, 
                 new int3(bounds.center), 
                 new int3(xSize, Mathf.RoundToInt(bounds.size.y), zSize), 
+                bounds,
                 gridCellSize, enableNavMesh, cells);
         }
     }
