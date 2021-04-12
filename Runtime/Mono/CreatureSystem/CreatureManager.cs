@@ -34,6 +34,7 @@ namespace Syadeu.Mono.Creature
             {
                 for (int i = 0; i < m_SpawnRanges.Length; i++)
                 {
+                    if (m_SpawnRanges[i].m_Count <= 0) continue;
                     InternalSpawnAtGrid(m_SpawnRanges[i], m_SpawnRanges[i].m_Count);
                 }
             }
