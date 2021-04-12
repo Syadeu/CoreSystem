@@ -9,6 +9,10 @@ using Syadeu.Mono;
 using UnityEditor;
 using UnityEngine;
 
+#if CORESYSTEM_FMOD
+using Syadeu.FMOD;
+#endif
+
 namespace SyadeuEditor
 {
     public sealed class CoreSystemMenuItems : EditorWindow
