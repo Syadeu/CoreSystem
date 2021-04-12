@@ -64,7 +64,7 @@ namespace SyadeuEditor
 
 #if CORESYSTEM_FMOD
         [MenuItem("Syadeu/FMOD/Edit FMOD Settings", priority = 300)]
-        public static void FMODSettings()
+        public static void FMODSettingsMenu()
         {
             Selection.activeObject = FMODSettings.Instance;
             EditorApplication.ExecuteMenuItem("Window/General/Inspector");
