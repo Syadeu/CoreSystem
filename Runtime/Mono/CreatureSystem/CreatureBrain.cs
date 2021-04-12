@@ -109,7 +109,6 @@ namespace Syadeu.Mono
 
         public void MoveTo(Vector3 worldPosition)
         {
-            m_NavMeshAgent.ResetPath();
             if (m_EnableCameraCull && !RenderManager.IsInCameraScreen(transform.position))
             {
                 transform.position = worldPosition;
@@ -120,6 +119,7 @@ namespace Syadeu.Mono
                 NavMesh.SamplePosition(worldPosition, out _, m_SamplePosDistance, m_NavMeshAgent.areaMask))
             {
                 m_NavMeshAgent.enabled = true;
+                m_NavMeshAgent.ResetPath();
                 m_NavMeshAgent.SetDestination(worldPosition);
                 m_MoveRoutine = CoreSystem.StartUnityUpdate(this, MoveToPointNavJob(worldPosition));
             }
@@ -133,8 +133,6 @@ namespace Syadeu.Mono
             => MoveTo(target.Bounds.center);
         public bool MoveToDirection(Vector3 direction)
         {
-            direction = direction.normalized;
-
             if (NavMesh.SamplePosition(transform.position + direction, out _, m_SamplePosDistance, m_NavMeshAgent.areaMask) &&
                 NavMesh.SamplePosition(transform.position, out _, m_SamplePosDistance, m_NavMeshAgent.areaMask))
             {
