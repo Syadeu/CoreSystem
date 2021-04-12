@@ -169,7 +169,7 @@ namespace Syadeu.Mono
             {
                 if (m_EnableCameraCull && !RenderManager.IsInCameraScreen(transform.position))
                 {
-                    m_NavMeshAgent.ResetPath();
+                    //m_NavMeshAgent.ResetPath();
                     transform.position = worldPosition;
                     onMove?.Invoke(worldPosition);
                     yield break;
