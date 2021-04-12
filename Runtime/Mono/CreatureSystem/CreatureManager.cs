@@ -12,6 +12,7 @@ namespace Syadeu.Mono.Creature
 {
     public sealed class CreatureManager : MonoManager<CreatureManager>
     {
+        #region Initialize
         [Serializable]
         public class CreatureSet : IComparable<CreatureSet>
         {
@@ -20,7 +21,11 @@ namespace Syadeu.Mono.Creature
             public SpawnRange[] m_SpawnRanges;
 
             [Space]
-            public UnityAction<int> m_OnSpawn;
+            public bool m_ReturnIfTooFar = false;
+            [Tooltip("SpawnRange에서 설정한 range를 기반으로 해당 거리만큼 더 멀어지면 작동합니다")]
+            public float m_ReturnMaxDistanceOffset = 15f;
+
+            public Action<int> onSpawn;
 
             public int CompareTo(CreatureSet other)
             {
@@ -59,7 +64,7 @@ namespace Syadeu.Mono.Creature
 
                 Instance.m_Creatures.Add(brain);
 
-                m_OnSpawn?.Invoke(m_DataIdx);
+                onSpawn?.Invoke(m_DataIdx);
             }
             internal void InternalSpawnAtGrid(SpawnRange point, int targetCount)
             {
@@ -112,6 +117,8 @@ namespace Syadeu.Mono.Creature
         public List<CreatureSet> m_CreatureSets = new List<CreatureSet>();
         internal readonly List<CreatureBrain> m_Creatures = new List<CreatureBrain>();
 
+        #endregion
+
         public Transform UserCharacter { get; private set; } = null;
         public List<CreatureBrain> Creatures => m_Creatures;
 
@@ -125,17 +132,14 @@ namespace Syadeu.Mono.Creature
             throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
                 $"{dataIdx} 를 가진 크리쳐는 존재하지 않습니다.");
         }
-
-        //public static bool IsSpawnable(Vector3 from, Vector3 to)
-        //{
-        //    //Vector3 userPos = UserCharacter.Instance.transform.position;
-        //    if ((to - from).sqrMagnitude <
-        //        CreatureSettings.Instance.m_DontSpawnEnemyWithIn * CreatureSettings.Instance.m_DontSpawnEnemyWithIn)
-        //    {
-        //        return false;
-        //    }
-        //    return true;
-        //}
+        public static int GetCreatureSetID(int dataidx)
+        {
+            for (int i = 0; i < Instance.m_CreatureSets.Count; i++)
+            {
+                if (Instance.m_CreatureSets[i].m_DataIdx.Equals(dataidx)) return i;
+            }
+            return -1;
+        }
         public static void SetUserCharacter(Transform tr)
         {
             Instance.UserCharacter = tr;
@@ -143,7 +147,38 @@ namespace Syadeu.Mono.Creature
 
         public static void SpawnAt(int setID, Vector3 pos)
         {
+            if (Instance.m_CreatureSets.Count >= setID)
+            {
+                throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                    $"해당 인덱스 {setID} 를 가진 크리쳐 세팅이 존재하지않습니다.");
+            }
 
+            Instance.m_CreatureSets[setID].InternalSpawnAt(pos);
+        }
+        public static void SpawnAt(int setID, GridManager.GridCell target)
+        {
+            if (Instance.m_CreatureSets.Count >= setID)
+            {
+                throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                    $"해당 인덱스 {setID} 를 가진 크리쳐 세팅이 존재하지않습니다.");
+            }
+
+            Instance.m_CreatureSets[setID].InternalSpawnAt(target.Bounds.center);
+        }
+        public static void SpawnAt(int setID, int2 gridIdxes) => SpawnAt(setID, gridIdxes.x, gridIdxes.y);
+        public static void SpawnAt(int setID, Vector2Int gridIdxes) => SpawnAt(setID, gridIdxes.x, gridIdxes.y);
+        public static void SpawnAt(int setID, int gridIdx, int cellIdx)
+        {
+            if (Instance.m_CreatureSets.Count >= setID)
+            {
+                throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                    $"해당 인덱스 {setID} 를 가진 크리쳐 세팅이 존재하지않습니다.");
+            }
+
+            ref var grid = ref GridManager.GetGrid(gridIdx);
+            ref var cell = ref grid.GetCell(cellIdx);
+
+            Instance.m_CreatureSets[setID].InternalSpawnAt(cell.Bounds.center);
         }
     }
 
