@@ -162,7 +162,7 @@ namespace SyadeuEditor
 
                     EditorEntity.GLDrawCube(
                         Manager.m_CreatureSets[i].m_SpawnRanges[a].m_Center,
-                        new Vector3(range, 10, range), in temp);
+                        new Vector3(range * .5f, 10, range * .5f), in temp);
 
                     Handles.Label(Manager.m_CreatureSets[i].m_SpawnRanges[a].m_Center,
                         $"\t{Main.m_CreatureNameList[Manager.m_CreatureSets[i].m_DataIdx]}_{a}");

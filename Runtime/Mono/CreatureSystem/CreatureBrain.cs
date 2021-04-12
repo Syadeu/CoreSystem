@@ -65,7 +65,19 @@ namespace Syadeu.Mono
 
             m_DataIdx = dataIdx;
             var set = CreatureSettings.Instance.GetPrivateSet(m_DataIdx);
-            PrefabManager.Instance.RecycleObjects[set.m_PrefabIdx].Instances.Add(this);
+            if (set == null)
+            {
+                throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                    $"데이터 인덱스 {m_DataIdx} 는 CreatureSettings 에 존재하지않습니다.\n" +
+                    $"CreatureWindow를 먼저 키고 설정을 완료하세요.");
+            }
+            var recycleContainer = PrefabManager.Instance.InternalGetRecycleObject(set.m_PrefabIdx);
+            if (recycleContainer == null)
+            {
+                throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                    $"프리팹 인덱스 {set.m_PrefabIdx} 는 PrefabList 에 존재하지않습니다.");
+            }
+            recycleContainer.AddNewInstance(this);
             CreatureManager.Instance.m_Creatures.Add(this);
 
             Initialize();

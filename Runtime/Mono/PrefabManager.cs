@@ -24,6 +24,7 @@ namespace Syadeu.Mono
             public int MaxCount { get; }
             public int InstanceCreationBlock { get; }
             public List<RecycleableMonobehaviour> Instances { get; }
+            public List<Transform> Transforms { get; }
 
             public Timer DeletionTimer { get; }
             public int DeletionTriggerCount { get; }
@@ -42,6 +43,13 @@ namespace Syadeu.Mono
                 DeletionTriggerCount = setting.DeletionTriggerCount;
 
                 Instances = new List<RecycleableMonobehaviour>();
+                Transforms = new List<Transform>();
+            }
+
+            public void AddNewInstance(RecycleableMonobehaviour obj)
+            {
+                Instances.Add(obj);
+                Transforms.Add(obj.transform);
             }
         }
         public override string DisplayName => "Prefab Manager";
@@ -60,29 +68,22 @@ namespace Syadeu.Mono
         }
         public override void OnStart()
         {
-            //if (IsMainthread())
-            //{
-            //    StartCoroutine(Updater());
-
-            //}
-            //else
-            //{
-            //    foreach (var recycle in RecycleObjects.Values)
-            //    {
-            //        StartUnityUpdate(RecycleInstancesUpdate(recycle));
-            //    }
-            //    //CoreSystem.AddForegroundJob(() =>
-            //    //{
-            //    //    StartCoroutine(Updater());
-            //    //});
-            //}
-
             StartUnityUpdate(Updater());
             foreach (var recycle in RecycleObjects.Values)
             {
-                StartUnityUpdate(RecycleInstancesUpdate(recycle));
+                StartBackgroundUpdate(RecycleInstancesUpdate(recycle));
             }
         }
+        internal RecycleObject InternalGetRecycleObject(int idx)
+        {
+            if (RecycleObjects.TryGetValue(idx, out var obj))
+            {
+                return obj;
+            }
+            return null;
+        }
+        internal bool InternalHasRecycleObject(int idx) => InternalGetRecycleObject(idx) != null;
+
         private IEnumerator RecycleInstancesUpdate(RecycleObject recycle)
         {
             while (true)
@@ -93,8 +94,10 @@ namespace Syadeu.Mono
                     if (recycle.Instances[i].WaitForDeletion &&
                         !recycle.Instances[i].Activated)
                     {
-                        Destroy(recycle.Instances[i]);
+                        SendDestroy(recycle.Instances[i]);
+                        //Destroy();
                         recycle.Instances.RemoveAt(i);
+                        recycle.Transforms.RemoveAt(i);
                         i--;
                         continue;
                     }
@@ -107,11 +110,12 @@ namespace Syadeu.Mono
                         //}
                         continue;
                     }
-                    if (recycle.Instances[i].transform == null)
+                    if (CoreSystem.GetTransform(recycle.Instances[i]) == null)
                     {
                         if (SyadeuSettings.Instance.m_PMErrorAutoFix)
                         {
                             recycle.Instances.RemoveAt(i);
+                            recycle.Transforms.RemoveAt(i);
                             i--;
                             continue;
                         }
@@ -121,7 +125,9 @@ namespace Syadeu.Mono
                     if (recycle.Instances[i].OnActivated != null &&
                         !recycle.Instances[i].OnActivated.Invoke())
                     {
-                        recycle.Instances[i].Terminate();
+                        SendTerminate(recycle.Instances[i]);
+                        //recycle.Instances[i].Terminate();
+                        recycle.Instances[i].Activated = false;
                     }
 
                     activatedCount += 1;
@@ -141,6 +147,10 @@ namespace Syadeu.Mono
 
                 yield return null;
             }
+        }
+        private void SendDestroy(UnityEngine.Object obj)
+        {
+            CoreSystem.AddForegroundJob(() => Destroy(obj));
         }
         private IEnumerator Updater()
         {
@@ -218,11 +228,12 @@ namespace Syadeu.Mono
             {
                 if (!obj.Instances[i].Activated)
                 {
-                    if (obj.Instances[i].transform == null)
+                    if (CoreSystem.GetTransform(obj.Instances[i]) == null)
                     {
                         if (SyadeuSettings.Instance.m_PMErrorAutoFix)
                         {
                             obj.Instances.RemoveAt(i);
+                            obj.Transforms.RemoveAt(i);
                             i--;
                             continue;
                         }
@@ -278,7 +289,7 @@ namespace Syadeu.Mono
                 recycleObj.OnCreated();
                 recycleObj.onTerminate = onTerminate;
 
-                obj.Instances.Add(recycleObj);
+                obj.AddNewInstance(recycleObj);
             }
             return GetRecycleObject(obj.Index);
         }
@@ -302,7 +313,7 @@ namespace Syadeu.Mono
                 recycleObj.OnCreated();
                 recycleObj.onTerminate = onTerminate;
 
-                obj.Instances.Add(recycleObj);
+                obj.AddNewInstance(recycleObj);
             }
             return (T)GetRecycleObject(obj.Index);
         }
