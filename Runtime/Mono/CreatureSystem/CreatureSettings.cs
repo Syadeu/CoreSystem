@@ -41,6 +41,7 @@ namespace Syadeu.Mono
         public float m_IgnoreDistanceOfTurn = 50;
         public float m_SkipMoveAniDistance = 30;
 
+        public bool HasPrivateSet(int idx) => GetPrivateSet(idx) != null;
         public PrivateSet GetPrivateSet(int idx)
         {
             for (int i = 0; i < m_PrivateSets.Count; i++)

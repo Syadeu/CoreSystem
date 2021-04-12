@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -273,12 +273,22 @@ namespace SyadeuEditor
                     EditorGUI.BeginDisabledGroup(m_ToolbarIdx == 0 || IsListHasCreatureIdx(i));
                     if (GUILayout.Button("+", GUILayout.Width(20)))
                     {
-                        m_Manager.m_CreatureSets.Add(new CreatureManager.CreatureSet
+                        if (m_Manager.m_CreatureSets == null)
                         {
-                            m_DataIdx = i,
-                            m_PrefabIdx = CreatureSettings.Instance.GetPrivateSet(i).m_PrefabIdx,
+                            m_Manager.m_CreatureSets = new List<CreatureManager.CreatureSet>();
+                        }
+                        if (!CreatureSettings.Instance.HasPrivateSet(i))
+                        {
+                            $"해당 크리쳐에 대한 설정이 완료되지 않았습니다.".ToLogError();
+                        }
+                        else
+                        {
+                            m_Manager.m_CreatureSets.Add(new CreatureManager.CreatureSet
+                            {
+                                m_DataIdx = i,
+                                m_PrefabIdx = CreatureSettings.Instance.GetPrivateSet(i).m_PrefabIdx,
 
-                            m_SpawnRanges = new CreatureManager.SpawnRange[1]
+                                m_SpawnRanges = new CreatureManager.SpawnRange[1]
                             {
                             new CreatureManager.SpawnRange
                             {
@@ -287,9 +297,10 @@ namespace SyadeuEditor
                                 m_Range = 10
                             }
                             }
-                        });
-                        m_Manager.m_CreatureSets.Sort();
-                        SceneView.lastActiveSceneView.Repaint();
+                            });
+                            m_Manager.m_CreatureSets.Sort();
+                            SceneView.lastActiveSceneView.Repaint();
+                        }
                     }
                     EditorGUI.EndDisabledGroup();
 
@@ -368,6 +379,11 @@ namespace SyadeuEditor
                 Main.m_CreatureSettings.ApplyModifiedProperties();
                 Main.SetTargetList();
             }
+
+            EditorUtils.SectorLine();
+
+            EditorUtils.StringHeader("Generals", 14);
+            
 
             EditorUtils.SectorLine();
 

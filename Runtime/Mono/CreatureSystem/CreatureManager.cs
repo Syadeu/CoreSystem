@@ -68,6 +68,7 @@ namespace Syadeu.Mono.Creature
 
                 GridManager.GridRange range = grid.GetRange(centerCell.Idx, Mathf.FloorToInt((point.m_Range / 2) / grid.CellSize));
 
+                targetCount++;
                 int count = 0;
                 int tries = 0;
                 while (count < targetCount)
