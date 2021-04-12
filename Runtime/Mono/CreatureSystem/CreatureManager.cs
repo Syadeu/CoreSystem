@@ -66,7 +66,8 @@ namespace Syadeu.Mono.Creature
                 ref GridManager.Grid grid = ref GridManager.GetGrid(point.m_Center);
                 ref GridManager.GridCell centerCell = ref grid.GetCell(point.m_Center);
 
-                GridManager.GridRange range = grid.GetRange(centerCell.Idx, Mathf.FloorToInt((point.m_Range / 2) / grid.CellSize));
+                float rng = (point.m_Range * .25f) / grid.CellSize;
+                GridManager.GridRange range = grid.GetRange(centerCell.Idx, Mathf.FloorToInt(rng));
 
                 targetCount++;
                 int count = 0;

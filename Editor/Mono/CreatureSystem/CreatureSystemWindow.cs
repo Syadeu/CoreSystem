@@ -382,11 +382,6 @@ namespace SyadeuEditor
 
             EditorUtils.SectorLine();
 
-            EditorUtils.StringHeader("Generals", 14);
-            
-
-            EditorUtils.SectorLine();
-
             if (Main.m_CreatureSelected >= 0)
             {
                 EditorUtils.StringHeader($"Creature Settings: {Main.m_CreatureNameList[Main.m_CreatureSelected]}", 14);

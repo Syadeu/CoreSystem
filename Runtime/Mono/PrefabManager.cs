@@ -110,7 +110,7 @@ namespace Syadeu.Mono
                         //}
                         continue;
                     }
-                    if (recycle.Transforms[i] == null)
+                    if (CoreSystem.GetTransform(recycle.Instances[i]) == null)
                     {
                         if (SyadeuSettings.Instance.m_PMErrorAutoFix)
                         {
@@ -228,7 +228,7 @@ namespace Syadeu.Mono
             {
                 if (!obj.Instances[i].Activated)
                 {
-                    if (obj.Transforms[i] == null)
+                    if (CoreSystem.GetTransform(obj.Instances[i]) == null)
                     {
                         if (SyadeuSettings.Instance.m_PMErrorAutoFix)
                         {
