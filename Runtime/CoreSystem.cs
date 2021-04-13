@@ -433,6 +433,13 @@ namespace Syadeu
         }
         private void OnDestroy()
         {
+            StopAllCoroutines();
+
+            for (int i = 0; i < transform.childCount; i++)
+            {
+                Destroy(transform.GetChild(i).gameObject);
+            }
+
             for (int i = 0; i < BackgroundJobWorkers.Count; i++)
             {
                 try

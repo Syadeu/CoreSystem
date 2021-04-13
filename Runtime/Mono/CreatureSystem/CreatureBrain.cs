@@ -29,9 +29,9 @@ namespace Syadeu.Mono
         [SerializeField] private float m_SamplePosDistance = .1f;
 
         [Space]
-        [SerializeField] private UnityAction m_OnCreated;
-        [SerializeField] private UnityAction<int> m_OnInitialize;
-        [SerializeField] private UnityAction<int> m_OnTerminate;
+        [SerializeField] private UnityEvent m_OnCreated;
+        [SerializeField] private UnityEvent<int> m_OnInitialize;
+        [SerializeField] private UnityEvent<int> m_OnTerminate;
 
         public event Action<Vector3> onMove;
 
@@ -41,6 +41,16 @@ namespace Syadeu.Mono
             get
             {
                 return GridManager.HasGrid(CoreSystem.GetPosition(CoreSystem.GetTransform(transform)));
+            }
+        }
+        public bool IsOnNavMesh => m_NavMeshAgent.isOnNavMesh;
+        public bool IsMoving
+        {
+            get
+            {
+                if (m_NavMeshAgent.hasPath &&
+                    m_NavMeshAgent.remainingDistance > .2f) return true;
+                return false;
             }
         }
 
