@@ -12,20 +12,6 @@ namespace SyadeuEditor
     {
         #region Initialize
 
-        static SQLiteWindow window;
-        [MenuItem("Syadeu/SQLite/SQLite Window", priority = 200)]
-        public static void Initialize()
-        {
-            if (window == null)
-            {
-                window = CreateInstance<SQLiteWindow>();
-                window.titleContent = new GUIContent("SQLite Viewer");
-                window.minSize = new Vector2(1200, 600);
-            }
-
-            window.ShowUtility();
-        }
-
         private string[] m_ToolbarNames = new string[]
         {
         "Viewer",

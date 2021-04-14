@@ -2,7 +2,7 @@
 
 namespace Syadeu
 {
-    public interface IRecycleable : IInitialize
+    public interface IRecycleable
     {
         Transform transform { get; }
 

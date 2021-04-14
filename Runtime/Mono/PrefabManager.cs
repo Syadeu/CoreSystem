@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace Syadeu.Mono
@@ -14,6 +15,7 @@ namespace Syadeu.Mono
         #region Initialize
 
         private static object s_LockObj = new object();
+        internal static Vector3 INIT_POSITION = new Vector3(-9999, -9999, -9999);
 
         internal class RecycleObject
         {
@@ -22,6 +24,7 @@ namespace Syadeu.Mono
             public int MaxCount { get; }
             public int InstanceCreationBlock { get; }
             public List<RecycleableMonobehaviour> Instances { get; }
+            public List<Transform> Transforms { get; }
 
             public Timer DeletionTimer { get; }
             public int DeletionTriggerCount { get; }
@@ -40,12 +43,20 @@ namespace Syadeu.Mono
                 DeletionTriggerCount = setting.DeletionTriggerCount;
 
                 Instances = new List<RecycleableMonobehaviour>();
+                Transforms = new List<Transform>();
+            }
+
+            public void AddNewInstance(RecycleableMonobehaviour obj)
+            {
+                Instances.Add(obj);
+                Transforms.Add(obj.transform);
             }
         }
         public override string DisplayName => "Prefab Manager";
         public override bool DontDestroy => false;
         public override bool HideInHierarchy => false;
         internal Dictionary<int, RecycleObject> RecycleObjects { get; } = new Dictionary<int, RecycleObject>();
+        
         internal ConcurrentQueue<ITerminate> Terminators { get; } = new ConcurrentQueue<ITerminate>();
         public override void OnInitialize()
         {
@@ -58,60 +69,93 @@ namespace Syadeu.Mono
         public override void OnStart()
         {
             StartUnityUpdate(Updater());
+            foreach (var recycle in RecycleObjects.Values)
+            {
+                StartBackgroundUpdate(RecycleInstancesUpdate(recycle));
+            }
+        }
+        internal RecycleObject InternalGetRecycleObject(int idx)
+        {
+            if (RecycleObjects.TryGetValue(idx, out var obj))
+            {
+                return obj;
+            }
+            return null;
+        }
+        internal bool InternalHasRecycleObject(int idx) => InternalGetRecycleObject(idx) != null;
+
+        private IEnumerator RecycleInstancesUpdate(RecycleObject recycle)
+        {
+            while (true)
+            {
+                int activatedCount = 0;
+                for (int i = 0; i < recycle.Instances.Count; i++)
+                {
+                    if (recycle.Instances[i].WaitForDeletion &&
+                        !recycle.Instances[i].Activated)
+                    {
+                        SendDestroy(recycle.Instances[i]);
+                        //Destroy();
+                        recycle.Instances.RemoveAt(i);
+                        recycle.Transforms.RemoveAt(i);
+                        i--;
+                        continue;
+                    }
+
+                    if (!recycle.Instances[i].Activated)
+                    {
+                        //if (recycle.Instances[i].transform.parent != transform)
+                        //{
+                        //    recycle.Instances[i].transform.SetParent(transform);
+                        //}
+                        continue;
+                    }
+                    if (CoreSystem.GetTransform(recycle.Instances[i]) == null)
+                    {
+                        if (SyadeuSettings.Instance.m_PMErrorAutoFix)
+                        {
+                            recycle.Instances.RemoveAt(i);
+                            recycle.Transforms.RemoveAt(i);
+                            i--;
+                            continue;
+                        }
+                        else throw new CoreSystemException(CoreSystemExceptionFlag.RecycleObject, "PrefabManager에 의해 관리되던 RecycleMonobehaviour가 다른 객체에 의해 파괴되었습니다. 관리중인 객체는 다른 객체에서 파괴될 수 없습니다.");
+                    }
+
+                    if (recycle.Instances[i].OnActivated != null &&
+                        !recycle.Instances[i].OnActivated.Invoke())
+                    {
+                        SendTerminate(recycle.Instances[i]);
+                        //recycle.Instances[i].Terminate();
+                        recycle.Instances[i].Activated = false;
+                    }
+
+                    activatedCount += 1;
+                    if (i != 0 && i % 500 == 0) yield return null;
+                }
+
+                if (recycle.Instances.Count - activatedCount >= recycle.DeletionTriggerCount &&
+                        !recycle.DeletionTimer.IsTimerActive())
+                {
+                    recycle.DeletionTimer.Start();
+                }
+                else if (recycle.DeletionTimer.IsTimerActive() &&
+                    recycle.Instances.Count - activatedCount < recycle.DeletionTriggerCount)
+                {
+                    recycle.DeletionTimer.Kill();
+                }
+
+                yield return null;
+            }
+        }
+        private void SendDestroy(UnityEngine.Object obj)
+        {
+            CoreSystem.AddForegroundJob(() => Destroy(obj));
         }
         private IEnumerator Updater()
         {
             while (Initialized)
             {
-                foreach (var recycle in RecycleObjects.Values)
-                {
-                    int activatedCount = 0;
-
-                    for (int i = 0; i < recycle.Instances.Count; i++)
-                    {
-                        if (recycle.Instances[i].WaitForDeletion &&
-                            !recycle.Instances[i].Activated)
-                        {
-                            Destroy(recycle.Instances[i]);
-                            recycle.Instances.RemoveAt(i);
-                            i--;
-                            continue;
-                        }
-
-                        if (!recycle.Instances[i].Activated) continue;
-                        if (recycle.Instances[i].transform == null)
-                        {
-                            if (SyadeuSettings.Instance.m_PMErrorAutoFix)
-                            {
-                                recycle.Instances.RemoveAt(i);
-                                i--;
-                                continue;
-                            }
-                            else throw new CoreSystemException(CoreSystemExceptionFlag.RecycleObject, "PrefabManager에 의해 관리되던 RecycleMonobehaviour가 다른 객체에 의해 파괴되었습니다. 관리중인 객체는 다른 객체에서 파괴될 수 없습니다.");
-                        }
-
-                        if (recycle.Instances[i].OnActivated != null &&
-                            !recycle.Instances[i].OnActivated.Invoke())
-                        {
-                            recycle.Instances[i].Terminate();
-                        }
-
-                        activatedCount += 1;
-                        if (i != 0 && i % 1000 == 0) yield return null;
-                    }
-
-                    if (recycle.Instances.Count - activatedCount >= recycle.DeletionTriggerCount &&
-                        !recycle.DeletionTimer.IsTimerActive())
-                    {
-                        recycle.DeletionTimer.Start();
-                    }
-                    else if (recycle.DeletionTimer.IsTimerActive() &&
-                        recycle.Instances.Count - activatedCount < recycle.DeletionTriggerCount)
-                    {
-                        recycle.DeletionTimer.Kill();
-                    }
-                }
-
                 if (Terminators.Count > 0)
                 {
                     int c = Terminators.Count;
@@ -184,11 +228,12 @@ namespace Syadeu.Mono
             {
                 if (!obj.Instances[i].Activated)
                 {
-                    if (obj.Instances[i].transform == null)
+                    if (CoreSystem.GetTransform(obj.Instances[i]) == null)
                     {
                         if (SyadeuSettings.Instance.m_PMErrorAutoFix)
                         {
                             obj.Instances.RemoveAt(i);
+                            obj.Transforms.RemoveAt(i);
                             i--;
                             continue;
                         }
@@ -220,11 +265,12 @@ namespace Syadeu.Mono
                     return recycleObj;
                 }
             }
-            
+
             //"Return null because this item has reached maximum instance count lock".ToLog();
+            $"CoreSystem: PrefabManager Warning: 이 프리팹(인덱스: {index})은 최대 인스턴스 갯수에 도달하여 요청이 무시되었습니다.".ToLog();
             return null;
         }
-        private RecycleableMonobehaviour InternalInstantiate(RecycleObject obj)
+        private RecycleableMonobehaviour InternalInstantiate(RecycleObject obj, Action onTerminate = null)
         {
             for (int i = 0; i < obj.InstanceCreationBlock; i++)
             {
@@ -239,12 +285,37 @@ namespace Syadeu.Mono
                     recycleObj = Instantiate(obj.Prefab, transform).GetComponent<RecycleableMonobehaviour>();
                 }
 
-                recycleObj.transform.localPosition = new Vector3(-9999, -9999, -9999);
+                recycleObj.transform.localPosition = INIT_POSITION;
                 recycleObj.OnCreated();
+                recycleObj.onTerminate = onTerminate;
 
-                obj.Instances.Add(recycleObj);
+                obj.AddNewInstance(recycleObj);
             }
             return GetRecycleObject(obj.Index);
+        }
+        internal T InternalInstantitate<T>(int prefabIdx, Action onTerminate = null) where T : RecycleableMonobehaviour
+        {
+            RecycleObject obj = Instance.RecycleObjects[prefabIdx];
+            for (int i = 0; i < obj.InstanceCreationBlock; i++)
+            {
+                T recycleObj;
+                T recycleable = obj.Prefab.GetComponent<T>();
+                if (recycleable == null)
+                {
+                    recycleObj = Instantiate(obj.Prefab, transform).AddComponent<T>();
+                }
+                else
+                {
+                    recycleObj = Instantiate(obj.Prefab, transform).GetComponent<T>();
+                }
+
+                recycleObj.transform.localPosition = INIT_POSITION;
+                recycleObj.OnCreated();
+                recycleObj.onTerminate = onTerminate;
+
+                obj.AddNewInstance(recycleObj);
+            }
+            return (T)GetRecycleObject(obj.Index);
         }
 
         /// <summary>

@@ -25,12 +25,7 @@ namespace Syadeu.FMOD
 
 
 #if UNITY_EDITOR
-        [MenuItem("Syadeu/FMOD/Edit FMOD Settings", priority = 3)]
-        public static void EditSettings()
-        {
-            Selection.activeObject = Instance;
-            EditorApplication.ExecuteMenuItem("Window/General/Inspector");
-        }
+
 #endif
 
         //public override void OnInitialized()

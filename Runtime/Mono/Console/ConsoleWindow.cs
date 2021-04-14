@@ -26,7 +26,7 @@ namespace Syadeu.Mono
         public static void CreateCommand(Action<string> action, params string[] arguments)
             => Instance.InternalCreateCommand(action, arguments);
         
-        public static event Action OnErrorRecieved;
+        public static event Action OnErrorReceieved;
 
         public bool Opened { get; private set; } = false;
 
@@ -426,7 +426,7 @@ namespace Syadeu.Mono
             if (isTrue)
             {
                 InternalLog($"{log}\n{trace}", StringColor.maroon);
-                OnErrorRecieved?.Invoke();
+                OnErrorReceieved?.Invoke();
                 if (throwException)
                 {
                     throw new CoreSystemException(CoreSystemExceptionFlag.Console, log, trace);
@@ -438,7 +438,7 @@ namespace Syadeu.Mono
             if (flag == ConsoleFlag.Error)
             {
                 InternalLog(log, StringColor.maroon);
-                OnErrorRecieved?.Invoke();
+                OnErrorReceieved?.Invoke();
                 if (SyadeuSettings.Instance.m_ConsoleThrowWhenErrorRecieved)
                 {
                     throw new CoreSystemException(CoreSystemExceptionFlag.Console, log);

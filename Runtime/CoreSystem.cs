@@ -277,11 +277,16 @@ namespace Syadeu
 
         public static bool IsThisMainthread()
         {
-            if (MainThread == null || Thread.CurrentThread == MainThread)
+            if (MainThread == null)
             {
+                //if (BackgroundThread != null)
+                //{
+                //    return false;
+                //}
                 return true;
             }
 
+            if (Thread.CurrentThread == MainThread) return true;
             return false;
         }
 
@@ -428,6 +433,13 @@ namespace Syadeu
         }
         private void OnDestroy()
         {
+            StopAllCoroutines();
+
+            for (int i = 0; i < transform.childCount; i++)
+            {
+                Destroy(transform.GetChild(i).gameObject);
+            }
+
             for (int i = 0; i < BackgroundJobWorkers.Count; i++)
             {
                 try
@@ -604,6 +616,7 @@ namespace Syadeu
 
         public int GetCustomBackgroundUpdateCount() => m_CustomBackgroundUpdates.Count;
         public int GetCustomUpdateCount() => m_CustomUpdates.Count;
+        public IReadOnlyList<CoreRoutine> GetCustomBackgroundUpdates() => m_CustomBackgroundUpdates.Keys.ToArray();
 
         private void BackgroundWorker()
         {
@@ -975,6 +988,11 @@ namespace Syadeu
         }
         private IEnumerator UnityWorker()
         {
+#if UNITY_EDITOR
+            Dictionary<string, UnityEngine.Profiling.CustomSampler> samplers = new Dictionary<string, UnityEngine.Profiling.CustomSampler>();
+            UnityEngine.Profiling.CustomSampler sampler;
+#endif
+
             yield return new WaitUntil(() => Initialized);
 
             m_StartUpdate = true;
@@ -1049,6 +1067,16 @@ namespace Syadeu
                         continue;
                     }
 
+#if UNITY_EDITOR
+                    if (!samplers.TryGetValue(item.Value.ToString(), out sampler))
+                    {
+                        sampler = UnityEngine.Profiling.CustomSampler.Create(item.Value.ToString());
+                        samplers.Add(item.Value.ToString(), sampler);
+                    }
+
+                    sampler.Begin();
+#endif
+
                     try
                     {
                         if (item.Key.Iterator.Current == null)
@@ -1089,6 +1117,9 @@ namespace Syadeu
 #endif
                             }
                         }
+#if UNITY_EDITOR
+                        sampler.End();
+#endif
                     }
                     catch (Exception ex)
                     {
@@ -1104,6 +1135,15 @@ namespace Syadeu
                 #endregion
 
                 #region OnUnityStart
+#if UNITY_EDITOR
+                if (!samplers.TryGetValue("OnUnityStart", out sampler))
+                {
+                    sampler = UnityEngine.Profiling.CustomSampler.Create("OnUnityStart");
+                    samplers.Add("OnUnityStart", sampler);
+                }
+
+                sampler.Begin();
+#endif
                 if (OnUnityStart != null)
                 {
                     try
@@ -1122,11 +1162,25 @@ namespace Syadeu
                     }
                     OnUnityStart = null;
                 }
+
+#if UNITY_EDITOR
+                sampler.End();
+#endif
+
                 #endregion
 
                 #region OnUnityUpdate
                 try
                 {
+#if UNITY_EDITOR
+                    if (!samplers.TryGetValue("OnUnityUpdate", out sampler))
+                    {
+                        sampler = UnityEngine.Profiling.CustomSampler.Create("OnUnityUpdate");
+                        samplers.Add("OnUnityUpdate", sampler);
+                    }
+
+                    sampler.Begin();
+#endif
                     OnUnityUpdate?.Invoke();
                 }
                 catch (Exception ex)
@@ -1139,6 +1193,11 @@ namespace Syadeu
                         "업데이트 문을 실행하는 중 에러가 발생했습니다", ex);
 #endif
                 }
+
+#if UNITY_EDITOR
+                sampler.End();
+#endif
+
                 #endregion
 
                 #region ForegroundJob
@@ -1147,6 +1206,15 @@ namespace Syadeu
                 while (m_ForegroundJobs.Count > 0)
                 {
                     m_ForegroundJobs.TryDequeue(out ForegroundJob job);
+#if UNITY_EDITOR
+                    if (!samplers.TryGetValue("Job_" + job.Action.Method.Name, out sampler))
+                    {
+                        sampler = UnityEngine.Profiling.CustomSampler.Create("Job_" + job.Action.Method.Name);
+                        samplers.Add("Job_" + job.Action.Method.Name, sampler);
+                    }
+
+                    sampler.Begin();
+#endif
 
                     job.IsRunning = true;
                     try
@@ -1171,6 +1239,9 @@ namespace Syadeu
                     job.IsRunning = false;
 
                     jobCount += 1;
+#if UNITY_EDITOR
+                    sampler.End();
+#endif
                     if (jobCount % 50 == 0) break;
                 }
 

@@ -2,23 +2,11 @@
 using System.Collections.Generic;
 
 using UnityEngine;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 namespace Syadeu.Mono
 {
     public sealed class PrefabList : StaticSettingEntity<PrefabList>
     {
-#if UNITY_EDITOR
-        [MenuItem("Syadeu/Edit Prefab List", priority = 100)]
-        public static void MenuItem()
-        {
-            Selection.activeObject = Instance;
-            EditorApplication.ExecuteMenuItem("Window/General/Inspector");
-        }
-#endif
-
         [Serializable]
         public sealed class ObjectSetting
         {
@@ -41,7 +29,7 @@ namespace Syadeu.Mono
         
         [SerializeField] private List<ObjectSetting> m_ObjectSettings = new List<ObjectSetting>();
 
-        public IReadOnlyList<ObjectSetting> ObjectSettings => m_ObjectSettings;
+        public List<ObjectSetting> ObjectSettings => m_ObjectSettings;
 
         /// <inheritdoc cref="PrefabManager.GetRecycleObject{T}"/>
         public static T GetRecycleObject<T>() where T : RecycleableMonobehaviour

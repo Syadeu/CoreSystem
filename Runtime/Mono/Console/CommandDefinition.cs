@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Syadeu.Mono.Console
 {
-    [CreateAssetMenu(menuName = "Syadeu/Console/Command Definition")]
+    [CreateAssetMenu(menuName = "CoreSystem/Console/Command Definition")]
     public sealed class CommandDefinition : ScriptableObject
     {
         public string m_Initializer = null;

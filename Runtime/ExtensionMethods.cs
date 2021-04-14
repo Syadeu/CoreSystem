@@ -70,20 +70,18 @@ namespace Syadeu
 {
     public static class ExtensionMethods
     {
-        public static void ToLogError(this string log, bool overrideLog = false)
+        public static void ToLogError(this string log, UnityEngine.Object target = null)
         {
 #if UNITY_EDITOR
-            Debug.LogError(log);
-            //#elif DEVELOPMENT_BUILD
-            //            ConsoleWindow.Log(log, ConsoleFlag.Error);
+            if (target == null) Debug.LogError(log);
+            else Debug.LogError(log, target);
 #endif
         }
-        public static void ToLog(this string log, bool overrideLog = false)
+        public static void ToLog(this string log, UnityEngine.Object target = null)
         {
 #if UNITY_EDITOR
-            Debug.Log(log);
-            //#elif DEVELOPMENT_BUILD
-            //            ConsoleWindow.Log(log);
+            if (target == null) Debug.Log(log);
+            else Debug.Log(log, target);
 #endif
         }
 

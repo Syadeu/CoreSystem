@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Syadeu.Database;
+using System;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace Syadeu.Mono
 {
@@ -9,7 +11,7 @@ namespace Syadeu.Mono
     /// OnDestroy 함수를 절때 사용하지마세요
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public abstract class RecycleableMonobehaviour : MonoBehaviour, IRecycleable
+    public abstract class RecycleableMonobehaviour : MonoBehaviour, IRecycleable, ITerminate
     {
         public delegate bool TerminateCondition();
 
@@ -19,10 +21,13 @@ namespace Syadeu.Mono
         /// </summary>
         public virtual string DisplayName => name;
 
+        public UnityAction onTerminateAction;
+        public Action onTerminate;
+
         public bool Activated { get; internal set; } = false;
         public bool WaitForDeletion { get; internal set; } = false;
         
-        public void Initialize()
+        internal virtual void Initialize()
         {
             Activated = true;
         }
@@ -45,7 +50,21 @@ namespace Syadeu.Mono
 
         public void Terminate()
         {
+            onTerminateAction?.Invoke();
+            onTerminate?.Invoke();
             OnTerminate();
+            
+            //if (CoreSystem.IsThisMainthread())
+            //{
+            //    transform.SetParent(PrefabManager.Instance.transform);
+            //}
+            //else
+            //{
+            //    CoreSystem.AddForegroundJob(() =>
+            //    {
+            //        transform.SetParent(PrefabManager.Instance.transform);
+            //    });
+            //}
             Activated = false;
         }
     }
