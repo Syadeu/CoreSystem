@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Events;
@@ -129,7 +129,7 @@ namespace Syadeu.Mono
                 NavMesh.SamplePosition(worldPosition, out _, m_SamplePosDistance, m_NavMeshAgent.areaMask))
             {
                 m_NavMeshAgent.enabled = true;
-                m_NavMeshAgent.ResetPath();
+                //m_NavMeshAgent.ResetPath();
                 m_NavMeshAgent.SetDestination(worldPosition);
                 m_MoveRoutine = CoreSystem.StartUnityUpdate(this, MoveToPointNavJob(worldPosition));
             }
@@ -139,8 +139,15 @@ namespace Syadeu.Mono
                 m_MoveRoutine = CoreSystem.StartUnityUpdate(this, MoveToPointJob(worldPosition));
             }
         }
-        public void MoveTo(GridManager.GridCell target)
-            => MoveTo(target.Bounds.center);
+        public void MoveTo(GridManager.GridCell target) => MoveTo(target.Bounds.center);
+        public void MoveTo(int gridIdx, int cellIdx)
+        {
+            Vector3 worldPos = GridManager.GetGrid(gridIdx).GetCell(cellIdx).Bounds.center;
+            MoveTo(worldPos);
+        }
+        public void MoveTo(int2 gridIdxes) => MoveTo(gridIdxes.x, gridIdxes.y);
+        public void MoveTo(Vector2Int gridIdxes) => MoveTo(gridIdxes.x, gridIdxes.y);
+
         public bool MoveToDirection(Vector3 direction)
         {
             if (NavMesh.SamplePosition(transform.position + direction, out _, m_SamplePosDistance, m_NavMeshAgent.areaMask) &&
