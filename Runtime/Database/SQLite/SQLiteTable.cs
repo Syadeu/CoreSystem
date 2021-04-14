@@ -14,8 +14,7 @@ namespace Syadeu.Database
     /// <see cref="SQLiteTable"/>[<see cref="int"/>]로 빠르게 테이블의 열을 탐색할 수 있습니다.<br/>
     /// foreach 문으로 빠르게 테이블의 열을 탐색할 수 있습니다.
     /// </remarks>
-    public struct SQLiteTable : ISQLiteReadOnlyTable,
-        IEnumerable<IReadOnlyList<KeyValuePair<string, object>>>, IEnumerable
+    public struct SQLiteTable : ISQLiteReadOnlyTable, IEnumerable<IReadOnlyList<KeyValuePair<string, object>>>, IEnumerable
     {
         private readonly Dictionary<object, int> m_PrimaryKeyPairs;
         private static readonly object s_TableLock = new object();
