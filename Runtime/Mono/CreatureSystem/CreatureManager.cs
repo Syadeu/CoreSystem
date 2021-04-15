@@ -40,6 +40,15 @@ namespace Syadeu.Mono.Creature
                 for (int i = 0; i < m_SpawnRanges.Length; i++)
                 {
                     if (m_SpawnRanges[i].m_Count <= 0) continue;
+                    if (m_SpawnRanges[i].m_InstanceCount >= m_SpawnRanges[i].m_MaxCount)
+                    {
+                        continue;
+                    }
+                    if (m_SpawnRanges[i].m_InstanceCount + m_SpawnRanges[i].m_RespawnCount >= m_SpawnRanges[i].m_MaxCount)
+                    {
+                        continue;
+                    }
+
                     InternalSpawnAtGrid(m_SpawnRanges[i], m_SpawnRanges[i].m_Count);
                 }
             }
@@ -63,7 +72,7 @@ namespace Syadeu.Mono.Creature
                 }
 
                 Instance.m_Creatures.Add(brain);
-
+                
                 onSpawn?.Invoke(m_DataIdx);
             }
             internal void InternalSpawnAtGrid(SpawnRange point, int targetCount)
@@ -102,6 +111,8 @@ namespace Syadeu.Mono.Creature
                         break;
                     }
                 }
+
+                point.m_InstanceCount += count;
             }
         }
         [Serializable]
@@ -110,7 +121,20 @@ namespace Syadeu.Mono.Creature
             public Vector3 m_Center;
             public int m_Range;
 
+            [Tooltip("초기에 생성할 갯수")]
             public int m_Count;
+
+            [Space]
+            [Tooltip("이 스폰레인지에서 최대로 생성될 수 있는 갯수")]
+            public int m_MaxCount;
+            [Tooltip("최초 스폰 이후, 몇 초 뒤 부터 리스폰 로직이 동작하는지")]
+            public float m_SpawnTermSeconds = 30;
+            [Tooltip("리스폰 로직이 동작한후 몇초마다 리스폰 할지")]
+            public float m_RespawnTimeSeconds = 60;
+            [Tooltip("리스폰 로직이 실행될때마다 생성될 갯수")]
+            public float m_RespawnCount = 5;
+
+            internal int m_InstanceCount = 0;
         }
 
         public List<CreatureSet> m_CreatureSets = new List<CreatureSet>();
