@@ -21,7 +21,7 @@ namespace Syadeu.Mono
         [SerializeField] private UnityEvent OnInvisible;
 
         internal Renderer[] Renderers { get; private set; }
-        public bool IsInvisible { get; set; } = true;
+        public bool IsInvisible { get; private set; } = true;
         public bool IsForcedOff { get; internal set; } = false;
 
         private Transform Transform { get; set; }
