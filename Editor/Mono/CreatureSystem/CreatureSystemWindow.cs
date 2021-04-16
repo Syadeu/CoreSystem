@@ -9,6 +9,7 @@ using UnityEditor;
 using System;
 using Syadeu;
 using System.Reflection;
+using System.Linq;
 
 namespace SyadeuEditor
 {
@@ -45,6 +46,11 @@ namespace SyadeuEditor
         public bool[] m_ShowCreatureSet = null;
         public Color[] m_CreatureSetColor = null;
 
+        // Attributes
+        public int m_SelectedDataClassName = 0;
+        public CreatureDataAttribute m_SelectedDataAttribute = null;
+        public string[] m_DataClassNames = new string[0];
+
         private void OnEnable()
         {
             m_Manager = FindObjectOfType<CreatureManager>();
@@ -64,6 +70,7 @@ namespace SyadeuEditor
             }
 
             CheckListConditions();
+            FindAttributeTargets();
 
             SceneView.duringSceneGui -= OnSceneGUI;
             SceneView.duringSceneGui += OnSceneGUI;
@@ -139,14 +146,40 @@ namespace SyadeuEditor
             }
             return propInfo;
         }
+        private void FindAttributeTargets()
+        {
+            const string AssemblyCSharp = "Assembly-CSharp";
+
+            Type[] types = Assembly.Load(AssemblyCSharp)
+                .GetTypes()
+                .Where(other => other.GetCustomAttribute<CreatureDataAttribute>() != null)
+                .ToArray();
+
+            m_DataClassNames = new string[types.Length];
+            for (int i = 0; i < types.Length; i++)
+            {
+                m_DataClassNames[i] = types[i].Name;
+                if (m_DataClassNames[i].Equals(m_DepTypeName.stringValue))
+                {
+                    m_SelectedDataClassName = i;
+                    m_SelectedDataAttribute = types[i].GetCustomAttribute<CreatureDataAttribute>();
+                }
+            }
+        }
         private void OnHierarchyChange()
         {
             m_Manager = FindObjectOfType<CreatureManager>();
 
             Repaint();
         }
+        private void OnProjectChange()
+        {
+            FindAttributeTargets();
+        }
         private void OnGUI()
         {
+            #region Init
+
             if (m_BoxStyle == null)
             {
                 m_BoxStyle = new GUIStyle("Box")
@@ -172,14 +205,24 @@ namespace SyadeuEditor
             }
             if (m_Manager == null) return;
 
+            #endregion
+
             EditorGUI.BeginChangeCheck();
-            EditorGUILayout.PropertyField(m_DepTypeName, new GUIContent("List Class Name: "));
-            EditorGUILayout.PropertyField(m_DepSingleToneName, new GUIContent("List SingleTone Name: "));
-            EditorGUILayout.PropertyField(m_DepArrName, new GUIContent("List Array Name: "));
+            m_SelectedDataClassName = EditorGUILayout.Popup("List Class: ", m_SelectedDataClassName, m_DataClassNames);
             if (EditorGUI.EndChangeCheck())
             {
+                m_DepTypeName.stringValue = m_DataClassNames[m_SelectedDataClassName];
+                FindAttributeTargets();
+
+                m_DepSingleToneName.stringValue = m_SelectedDataAttribute.SingleToneName;
+                m_DepArrName.stringValue = m_SelectedDataAttribute.DataArrayName;
                 SetTargetList();
             }
+
+            EditorGUI.BeginDisabledGroup(true);
+            EditorGUILayout.PropertyField(m_DepSingleToneName, new GUIContent("List SingleTone Name: "));
+            EditorGUILayout.PropertyField(m_DepArrName, new GUIContent("List Array Name: "));
+            EditorGUI.EndDisabledGroup();
 
             EditorUtils.SectorLine();
             EditorGUILayout.Space();
