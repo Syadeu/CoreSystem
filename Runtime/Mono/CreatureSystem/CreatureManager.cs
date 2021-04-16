@@ -7,6 +7,7 @@ using System.Linq;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Events;
+using System.Collections;
 
 namespace Syadeu.Mono.Creature
 {
@@ -49,21 +50,27 @@ namespace Syadeu.Mono.Creature
                         continue;
                     }
 
-                    InternalSpawnAtGrid(m_SpawnRanges[i], m_SpawnRanges[i].m_Count);
+                    InternalSpawnAtGrid(i, m_SpawnRanges[i].m_Count);
+                    if (m_SpawnRanges[i].m_EnableRespawn && !m_SpawnRanges[i].m_RespawnStarted)
+                    {
+                        m_SpawnRanges[i].m_RespawnStarted = true;
+                        CoreSystem.StartUnityUpdate(Instance, RespawnUpdater(i));
+                    }
                 }
             }
             public void SpawnAtRandomPoint(int count)
             {
-                SpawnRange spawnPoint = m_SpawnRanges[UnityEngine.Random.Range(0, m_SpawnRanges.Length)];
+                int spawnPoint = UnityEngine.Random.Range(0, m_SpawnRanges.Length);
                 InternalSpawnAtGrid(spawnPoint, count);
             }
-            internal void InternalSpawnAt(Vector3 pos)
+            internal CreatureBrain InternalSpawnAt(Vector3 pos)
             {
-                CreatureBrain brain = PrefabManager.Instance.InternalInstantitate<CreatureBrain>(m_PrefabIdx);
-                brain.transform.position = pos;
-                brain.transform.SetParent(Instance.transform);
+                CreatureBrain brain = (CreatureBrain)PrefabManager.GetRecycleObject(m_PrefabIdx);
                 brain.m_DataIdx = m_DataIdx;
                 brain.Initialize();
+
+                brain.transform.position = pos;
+                brain.transform.SetParent(Instance.transform);
 
                 IInitialize<CreatureBrain, int>[] initialize = brain.GetComponentsInChildren<IInitialize<CreatureBrain, int>>();
                 for (int i = 0; i < initialize.Length; i++)
@@ -72,15 +79,16 @@ namespace Syadeu.Mono.Creature
                 }
 
                 Instance.m_Creatures.Add(brain);
-                
-                onSpawn?.Invoke(m_DataIdx);
-            }
-            internal void InternalSpawnAtGrid(SpawnRange point, int targetCount)
-            {
-                ref GridManager.Grid grid = ref GridManager.GetGrid(point.m_Center);
-                ref GridManager.GridCell centerCell = ref grid.GetCell(point.m_Center);
 
-                float rng = (point.m_Range * .25f) / grid.CellSize;
+                onSpawn?.Invoke(m_DataIdx);
+                return brain;
+            }
+            internal void InternalSpawnAtGrid(int i, int targetCount)
+            {
+                ref GridManager.Grid grid = ref GridManager.GetGrid(m_SpawnRanges[i].m_Center);
+                ref GridManager.GridCell centerCell = ref grid.GetCell(m_SpawnRanges[i].m_Center);
+
+                float rng = (m_SpawnRanges[i].m_Range * .25f) / grid.CellSize;
                 GridManager.GridRange range = grid.GetRange(centerCell.Idx, Mathf.FloorToInt(rng));
 
                 int count = 0;
@@ -99,7 +107,8 @@ namespace Syadeu.Mono.Creature
                         if (targetCell.GetCustomData() == null &&
                             !targetCell.BlockedByNavMesh)
                         {
-                            InternalSpawnAt(targetCell.Bounds.center);
+                            CreatureBrain creature = InternalSpawnAt(targetCell.Bounds.center);
+
                             count++;
                         }
                     }
@@ -112,7 +121,38 @@ namespace Syadeu.Mono.Creature
                     }
                 }
 
-                point.m_InstanceCount += count;
+                m_SpawnRanges[i].m_InstanceCount += count;
+            }
+
+            private IEnumerator RespawnUpdater(int i)
+            {
+                Timer timer = new Timer()
+                    .SetTargetTime(m_SpawnRanges[i].m_RespawnTimeSeconds)
+                    .OnTimerEnd(() =>
+                    {
+                        if (m_SpawnRanges[i].m_InstanceCount >= m_SpawnRanges[i].m_MaxCount ||
+                            m_SpawnRanges[i].m_InstanceCount + m_SpawnRanges[i].m_RespawnCount >= m_SpawnRanges[i].m_MaxCount)
+                        {
+                            return;
+                        }
+
+                        InternalSpawnAtGrid(i, m_SpawnRanges[i].m_RespawnCount);
+                    });
+                WaitForTimer waitForTimer = new WaitForTimer(timer);
+
+                Timer startTimer = new Timer()
+                    .SetTargetTime(m_SpawnRanges[i].m_SpawnTermSeconds)
+                    .Start();
+
+                yield return new WaitForTimer(startTimer);
+                startTimer.Dispose();
+
+                while (true)
+                {
+                    timer.Start();
+
+                    yield return waitForTimer;
+                }
             }
         }
         [Serializable]
@@ -125,6 +165,7 @@ namespace Syadeu.Mono.Creature
             public int m_Count;
 
             [Space]
+            public bool m_EnableRespawn = false;
             [Tooltip("이 스폰레인지에서 최대로 생성될 수 있는 갯수")]
             public int m_MaxCount;
             [Tooltip("최초 스폰 이후, 몇 초 뒤 부터 리스폰 로직이 동작하는지")]
@@ -132,8 +173,9 @@ namespace Syadeu.Mono.Creature
             [Tooltip("리스폰 로직이 동작한후 몇초마다 리스폰 할지")]
             public float m_RespawnTimeSeconds = 60;
             [Tooltip("리스폰 로직이 실행될때마다 생성될 갯수")]
-            public float m_RespawnCount = 5;
+            public int m_RespawnCount = 5;
 
+            internal bool m_RespawnStarted = false;
             internal int m_InstanceCount = 0;
         }
 
@@ -142,14 +184,29 @@ namespace Syadeu.Mono.Creature
 
         #endregion
 
+        public bool m_SpawnAtStart = false;
+
         public Transform UserCharacter { get; private set; } = null;
         public List<CreatureBrain> Creatures => m_Creatures;
 
-        internal CreatureSet GetCreatureSet(int dataIdx)
+        private IEnumerator Start()
         {
-            for (int i = 0; i < m_CreatureSets.Count; i++)
+            yield return new WaitForSeconds(3);
+
+            if (m_SpawnAtStart)
             {
-                if (m_CreatureSets[i].m_DataIdx.Equals(dataIdx)) return m_CreatureSets[i];
+                for (int i = 0; i < m_CreatureSets.Count; i++)
+                {
+                    m_CreatureSets[i].Spawn();
+                }
+            }
+        }
+
+        internal static CreatureSet GetCreatureSet(int dataIdx)
+        {
+            for (int i = 0; i < Instance.m_CreatureSets.Count; i++)
+            {
+                if (Instance.m_CreatureSets[i].m_DataIdx.Equals(dataIdx)) return Instance.m_CreatureSets[i];
             }
 
             throw new CoreSystemException(CoreSystemExceptionFlag.Mono,

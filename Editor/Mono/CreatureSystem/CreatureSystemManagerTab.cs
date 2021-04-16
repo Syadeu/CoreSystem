@@ -132,6 +132,23 @@ namespace SyadeuEditor
 
                             Manager.m_CreatureSets[i].m_SpawnRanges[a].m_Count
                                 = EditorGUILayout.IntField("Count: ", Manager.m_CreatureSets[i].m_SpawnRanges[a].m_Count);
+
+                            EditorGUILayout.Space();
+
+                            Manager.m_CreatureSets[i].m_SpawnRanges[a].m_EnableRespawn
+                                = EditorGUILayout.ToggleLeft("Enable Respawn", Manager.m_CreatureSets[i].m_SpawnRanges[a].m_EnableRespawn);
+
+                            Manager.m_CreatureSets[i].m_SpawnRanges[a].m_MaxCount
+                                = EditorGUILayout.IntField("Max Count: ", Manager.m_CreatureSets[i].m_SpawnRanges[a].m_MaxCount);
+
+                            Manager.m_CreatureSets[i].m_SpawnRanges[a].m_SpawnTermSeconds
+                                = EditorGUILayout.FloatField("Spawn Secs: ", Manager.m_CreatureSets[i].m_SpawnRanges[a].m_SpawnTermSeconds);
+
+                            Manager.m_CreatureSets[i].m_SpawnRanges[a].m_RespawnTimeSeconds
+                                = EditorGUILayout.FloatField("Respawn Secs: ", Manager.m_CreatureSets[i].m_SpawnRanges[a].m_RespawnTimeSeconds);
+
+                            Manager.m_CreatureSets[i].m_SpawnRanges[a].m_RespawnCount
+                                = EditorGUILayout.IntField("Respawn Count: ", Manager.m_CreatureSets[i].m_SpawnRanges[a].m_RespawnCount);
                         }
                         if (EditorGUI.EndChangeCheck())
                         {

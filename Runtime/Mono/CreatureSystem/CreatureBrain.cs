@@ -15,7 +15,10 @@ namespace Syadeu.Mono
     [RequireComponent(typeof(NavMeshAgent))]
     public class CreatureBrain : RecycleableMonobehaviour
     {
+        private static Vector3 INIT_POSITION = new Vector3(99999, -99999, 99999);
+
         internal int m_DataIdx;
+        internal int m_SpawnPointIdx;
         [SerializeField] private NavMeshAgent m_NavMeshAgent;
 
 #if UNITY_EDITOR
@@ -95,11 +98,17 @@ namespace Syadeu.Mono
 
         public override void OnCreated()
         {
+            m_SharedPath = new NavMeshPath();
             m_OnCreated?.Invoke();
         }
         public override void OnTerminate()
         {
             m_OnTerminate?.Invoke(m_DataIdx);
+
+            var set = CreatureManager.GetCreatureSet(m_DataIdx);
+            set.m_SpawnRanges[m_SpawnPointIdx].m_InstanceCount--;
+
+            transform.position = INIT_POSITION;
             Initialized = false;
         }
 
@@ -116,13 +125,14 @@ namespace Syadeu.Mono
         #region Moves
 
         private CoreRoutine m_MoveRoutine;
+        private NavMeshPath m_SharedPath;
 
-        public void MoveTo(Vector3 worldPosition)
+        public bool MoveTo(Vector3 worldPosition, bool force = false)
         {
             if (m_EnableCameraCull && !RenderManager.IsInCameraScreen(transform.position))
             {
                 transform.position = worldPosition;
-                return;
+                return false;
             }
 
             if (NavMesh.SamplePosition(transform.position, out _, m_SamplePosDistance, m_NavMeshAgent.areaMask) &&
@@ -130,14 +140,31 @@ namespace Syadeu.Mono
             {
                 m_NavMeshAgent.enabled = true;
                 //m_NavMeshAgent.ResetPath();
-                m_NavMeshAgent.SetDestination(worldPosition);
-                m_MoveRoutine = CoreSystem.StartUnityUpdate(this, MoveToPointNavJob(worldPosition));
+                if (force)
+                {
+                    if (!m_NavMeshAgent.CalculatePath(worldPosition, m_SharedPath))
+                    {
+                        return false;
+                    }
+                    m_NavMeshAgent.SetPath(m_SharedPath);
+                }
+                else
+                {
+                    if (!m_NavMeshAgent.SetDestination(worldPosition))
+                    {
+                        return false;
+                    }
+                }
+
+                //m_MoveRoutine = CoreSystem.StartUnityUpdate(this, MoveToPointNavJob(worldPosition));
             }
             else
             {
                 m_NavMeshAgent.enabled = false;
                 m_MoveRoutine = CoreSystem.StartUnityUpdate(this, MoveToPointJob(worldPosition));
             }
+
+            return true;
         }
         public void MoveTo(GridManager.GridCell target) => MoveTo(target.Bounds.center);
         public void MoveTo(int gridIdx, int cellIdx)
