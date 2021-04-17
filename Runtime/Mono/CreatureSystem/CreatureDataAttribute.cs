@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Syadeu.Mono
+namespace Syadeu.Mono.Creature
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
     public sealed class CreatureDataAttribute : Attribute

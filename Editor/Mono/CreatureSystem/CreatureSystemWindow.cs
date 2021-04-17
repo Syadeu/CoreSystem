@@ -332,14 +332,14 @@ namespace SyadeuEditor
                                 m_PrefabIdx = CreatureSettings.Instance.GetPrivateSet(i).m_PrefabIdx,
 
                                 m_SpawnRanges = new CreatureManager.SpawnRange[1]
-                            {
-                            new CreatureManager.SpawnRange
-                            {
-                                m_Center = Vector3.zero,
-                                m_Count = 0,
-                                m_Range = 10
-                            }
-                            }
+                                {
+                                    new CreatureManager.SpawnRange
+                                    {
+                                        m_Center = Vector3.zero,
+                                        m_Count = 0,
+                                        m_Range = 10
+                                    }
+                                }
                             });
                             m_Manager.m_CreatureSets.Sort();
                             SceneView.lastActiveSceneView.Repaint();
