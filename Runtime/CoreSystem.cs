@@ -423,11 +423,13 @@ namespace Syadeu
         }
         public override void OnInitialize()
         {
-            BackgroundThread = new Thread(BackgroundWorker)
-            {
-                IsBackground = true
-            };
-            BackgroundThread.Start();
+            //BackgroundThread = new Thread(BackgroundWorker)
+            //{
+            //    IsBackground = true
+            //};
+            //BackgroundThread.Start();
+
+            ThreadPool.QueueUserWorkItem(BackgroundWorker);
 
             StartCoroutine(UnityWorker());
         }
@@ -454,11 +456,11 @@ namespace Syadeu
             }
             BackgroundJobWorkers.Clear();
 
-            try
-            {
-                BackgroundThread?.Abort();
-            }
-            catch (Exception) { }
+            //try
+            //{
+            //    BackgroundThread?.Abort();
+            //}
+            //catch (Exception) { }
         }
         #endregion
 
@@ -618,8 +620,9 @@ namespace Syadeu
         public int GetCustomUpdateCount() => m_CustomUpdates.Count;
         public IReadOnlyList<CoreRoutine> GetCustomBackgroundUpdates() => m_CustomBackgroundUpdates.Keys.ToArray();
 
-        private void BackgroundWorker()
+        private void BackgroundWorker(System.Object stateInfo)
         {
+            BackgroundThread = Thread.CurrentThread;
             Thread.CurrentThread.CurrentCulture = global::System.Globalization.CultureInfo.InvariantCulture;
 
 #if UNITY_EDITOR
@@ -993,7 +996,7 @@ namespace Syadeu
             UnityEngine.Profiling.CustomSampler sampler;
 #endif
 
-            yield return new WaitUntil(() => Initialized);
+            yield return new WaitUntil(() => Initialized && BackgroundThread != null);
 
             m_StartUpdate = true;
 
