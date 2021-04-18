@@ -40,15 +40,13 @@ namespace Syadeu.Mono.Creature
             {
                 for (int i = 0; i < m_SpawnRanges.Length; i++)
                 {
-                    if (m_SpawnRanges[i].m_Count <= 0) continue;
-                    if (m_SpawnRanges[i].m_InstanceCount >= m_SpawnRanges[i].m_MaxCount)
-                    {
-                        continue;
-                    }
-                    if (m_SpawnRanges[i].m_InstanceCount + m_SpawnRanges[i].m_RespawnCount >= m_SpawnRanges[i].m_MaxCount)
-                    {
-                        continue;
-                    }
+                    if (m_SpawnRanges[i].m_Count <= 0 ||
+                        m_SpawnRanges[i].m_InstanceCount >= m_SpawnRanges[i].m_MaxCount) continue;
+
+                    //if (m_SpawnRanges[i].m_InstanceCount + m_SpawnRanges[i].m_RespawnCount > m_SpawnRanges[i].m_MaxCount)
+                    //{
+                    //    continue;
+                    //}
 
                     InternalSpawnAtGrid(i, m_SpawnRanges[i].m_Count);
                     if (m_SpawnRanges[i].m_EnableRespawn && !m_SpawnRanges[i].m_RespawnStarted)

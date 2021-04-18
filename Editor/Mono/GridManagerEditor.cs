@@ -50,7 +50,7 @@ namespace SyadeuEditor
             {
                 ref GridManager.Grid grid = ref GridManager.GetGrid(i);
 
-                int drawIdxCount = 0;
+                //int drawIdxCount = 0;
                 for (int a = 0; a < grid.Length; a++)
                 {
                     ref var cell = ref grid.GetCell(a);
@@ -63,13 +63,22 @@ namespace SyadeuEditor
                     temp.a = .35f;
 
                     GLDrawCube(cell.Bounds.center, new Vector3(cell.Bounds.size.x, .1f, cell.Bounds.size.z), temp);
-                    GLDrawWireBounds(cell.Bounds.center, new Vector3(cell.Bounds.size.x, .1f, cell.Bounds.size.z), Color.white);
+                    //GLDrawWireBounds(cell.Bounds.center, new Vector3(cell.Bounds.size.x, .1f, cell.Bounds.size.z), Color.white);
 
-                    if (drawIdxCount > 300) continue;
+                    //if (drawIdxCount > 300) continue;
 
                     string locTxt = $"{cell.Idx}:({cell.Location.x},{cell.Location.y})";
+                    if (cell.HasDependency)
+                    {
+                        locTxt += $"\nD:{cell.DependencyTarget.x},{cell.DependencyTarget.y}";
+                    }
+                    if (cell.GetCustomData() != null)
+                    {
+                        locTxt += $", HasData";
+                    }
+
                     Handles.Label(cell.Bounds.center, locTxt);
-                    drawIdxCount++;
+                    //drawIdxCount++;
                 }
             }
         }
