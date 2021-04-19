@@ -112,6 +112,16 @@ namespace Syadeu.Mono
             Initialized = false;
         }
 
+        public Guid GetCurrentGrid()
+        {
+            if (!IsOnGrid) throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                $"{name}({transform.position}) 은 그리드 위에 존재하지 않습니다.");
+
+            Vector3 pos = CoreSystem.GetPosition(CoreSystem.GetTransform(transform));
+            ref GridManager.Grid grid = ref GridManager.GetGrid(pos);
+
+            return grid.Guid;
+        }
         public ref GridManager.GridCell GetCurrentGridCell()
         {
             if (!IsOnGrid) throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
