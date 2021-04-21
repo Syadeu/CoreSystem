@@ -31,7 +31,7 @@ namespace Syadeu
         {
             for (int i = 0; i < StaticManagers.Count; i++)
             {
-                if (StaticManagers[i].transform == null)
+                if (StaticManagers[i] == null)
                 {
                     StaticManagers.RemoveAt(i);
                     i--;
@@ -44,7 +44,7 @@ namespace Syadeu
         {
             for (int i = 0; i < InstanceManagers.Count; i++)
             {
-                if (InstanceManagers[i].transform == null)
+                if (InstanceManagers[i] == null)
                 {
                     InstanceManagers.RemoveAt(i);
                     i--;
@@ -1436,7 +1436,8 @@ namespace Syadeu
                 Transform tr = null;
                 AddForegroundJob(() =>
                 {
-                    tr = component.transform;
+                    if (component == null) tr = null;
+                    else tr = component.transform;
                 }).Await();
                 return tr;
             }
