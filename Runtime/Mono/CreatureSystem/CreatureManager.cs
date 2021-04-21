@@ -70,12 +70,6 @@ namespace Syadeu.Mono.Creature
                 brain.transform.position = pos;
                 brain.transform.SetParent(Instance.transform);
 
-                IInitialize<CreatureBrain, int>[] initialize = brain.GetComponentsInChildren<IInitialize<CreatureBrain, int>>();
-                for (int i = 0; i < initialize.Length; i++)
-                {
-                    initialize[i].Initialize(brain, m_DataIdx);
-                }
-
                 Instance.m_Creatures.Add(brain);
 
                 onSpawn?.Invoke(m_DataIdx);

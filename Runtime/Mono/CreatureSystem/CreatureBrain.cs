@@ -36,6 +36,8 @@ namespace Syadeu.Mono
         [SerializeField] private UnityEvent<int> m_OnInitialize;
         [SerializeField] private UnityEvent<int> m_OnTerminate;
 
+        private CreatureEntity[] m_Childs = null;
+
         public event Action<Vector3> onMove;
 
         public bool Initialized { get; private set; } = false;
@@ -51,22 +53,12 @@ namespace Syadeu.Mono
         {
             get
             {
-                if (m_NavMeshAgent.hasPath &&
+                if (m_NavMeshAgent.desiredVelocity.magnitude > 0 &&
                     m_NavMeshAgent.remainingDistance > .2f) return true;
                 return false;
             }
         }
 
-        internal override void Initialize()
-        {
-            if (m_NavMeshAgent == null) m_NavMeshAgent = GetComponent<NavMeshAgent>();
-
-            m_OnInitialize?.Invoke(m_DataIdx);
-
-            Initialized = true;
-
-            base.Initialize();
-        }
         public void ManualInitialize(int dataIdx)
         {
             if (Activated || Initialized)
@@ -99,7 +91,26 @@ namespace Syadeu.Mono
         public override void OnCreated()
         {
             m_SharedPath = new NavMeshPath();
+            m_Childs = GetComponentsInChildren<CreatureEntity>();
+
+            if (m_NavMeshAgent == null) m_NavMeshAgent = GetComponent<NavMeshAgent>();
+
+            for (int i = 0; i < m_Childs.Length; i++)
+            {
+                m_Childs[i].InternalOnCreated();
+            }
+
             m_OnCreated?.Invoke();
+        }
+        public override void OnInitialize()
+        {
+            m_OnInitialize?.Invoke(m_DataIdx);
+            for (int i = 0; i < m_Childs.Length; i++)
+            {
+                m_Childs[i].Initialize(this, m_DataIdx);
+            }
+
+            Initialized = true;
         }
         public override void OnTerminate()
         {
@@ -109,6 +120,12 @@ namespace Syadeu.Mono
             set.m_SpawnRanges[m_SpawnPointIdx].m_InstanceCount--;
 
             transform.position = INIT_POSITION;
+
+            for (int i = 0; i < m_Childs.Length; i++)
+            {
+                m_Childs[i].InternalOnTerminate();
+            }
+
             Initialized = false;
         }
 
@@ -276,6 +293,4 @@ namespace Syadeu.Mono
 
         #endregion
     }
-
-
 }
