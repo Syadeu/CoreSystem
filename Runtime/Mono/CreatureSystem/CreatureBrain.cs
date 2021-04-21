@@ -83,6 +83,9 @@ namespace Syadeu.Mono
                     $"프리팹 인덱스 {set.m_PrefabIdx} 는 PrefabList 에 존재하지않습니다.");
             }
             recycleContainer.AddNewInstance(this);
+
+            OnCreated();
+
             CreatureManager.Instance.m_Creatures.Add(this);
 
             Initialize();
@@ -129,6 +132,7 @@ namespace Syadeu.Mono
             Initialized = false;
         }
 
+        public int2 m_CachedCurrentGridIdxes = -1;
         public Guid GetCurrentGrid()
         {
             if (!IsOnGrid) throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
@@ -146,7 +150,10 @@ namespace Syadeu.Mono
 
             Vector3 pos = CoreSystem.GetPosition(CoreSystem.GetTransform(transform));
             ref GridManager.Grid grid = ref GridManager.GetGrid(pos);
-            return ref grid.GetCell(pos);
+            ref GridManager.GridCell cell = ref grid.GetCell(pos);
+            m_CachedCurrentGridIdxes = cell.Idxes;
+
+            return ref cell;
         }
 
         #region Moves
