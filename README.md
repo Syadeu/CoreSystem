@@ -12,7 +12,7 @@
 * [CoreSystem](https://github.com/Syadeu/CoreSystem/wiki/CoreSystem) 은 백그라운드 스레드에서 Unity 스레드와의 연결을 완전히 보장하지 않습니다.
 (UnityEngine 네임스페이스안 거의 대부분의 메소드들은 백그라운드에서 사용하지 못합니다)
 * [CoreSystem](https://github.com/Syadeu/CoreSystem/wiki/CoreSystem) 는 모든 백그라운드 스레드를 사용할때 사용하는 기본 매니저 객체입니다.
-* [StaticManager](https://github.com/Syadeu/CoreSystem/wiki/StaticManager) 는 백그라운드 스레드에서 즉시 싱글톤 객체를 만들 수 있는 Mono abstruct class입니다.
-* [MonoManager](https://github.com/Syadeu/CoreSystem/wiki/MonoManager) 는 사용자가 싱글톤 객체를 만들 수 있게 도와주는 Mono abstruct class입니다.
-* [StaticSettingEntity](https://github.com/Syadeu/CoreSystem/wiki/StaticSettingEntity) 는 백그라운드 스레드에서 즉시 싱글톤 [ScriptableObject](https://docs.unity3d.com/ScriptReference/ScriptableObject.html) 객체를 만들 수 있는 Mono abstruct class입니다.
+* [StaticManager](https://github.com/Syadeu/CoreSystem/wiki/StaticManager) 는 백그라운드 스레드에서 즉시 싱글톤 객체를 만들 수 있는 Mono abstract class입니다.
+* [MonoManager](https://github.com/Syadeu/CoreSystem/wiki/MonoManager) 는 사용자가 싱글톤 객체를 만들 수 있게 도와주는 Mono abstract class입니다.
+* [StaticSettingEntity](https://github.com/Syadeu/CoreSystem/wiki/StaticSettingEntity) 는 백그라운드 스레드에서 즉시 싱글톤 [ScriptableObject](https://docs.unity3d.com/ScriptReference/ScriptableObject.html) 객체를 만들 수 있는 Mono abstract class입니다.
 * [BackgroundJob](https://github.com/Syadeu/CoreSystem/wiki/BackgroundJob), [ForegroundJob](https://github.com/Syadeu/CoreSystem/wiki/ForegroundJob) 는 각각 백그라운드, 유니티 스레드에서 delegate를 실행할 수 있는 객체입니다.
