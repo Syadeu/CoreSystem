@@ -114,7 +114,7 @@ namespace Syadeu
         public virtual void OnInitialize() { }
         public virtual void OnStart() { }
 
-        public void Dispose()
+        public virtual void Dispose()
         {
             Disposed = true;
 
