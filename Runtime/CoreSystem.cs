@@ -29,12 +29,11 @@ namespace Syadeu
 
         public static IReadOnlyList<IStaticMonoManager> GetStaticManagers()
         {
-            for (int i = 0; i < StaticManagers.Count; i++)
+            for (int i = StaticManagers.Count - 1; i >= 0; i--)
             {
-                if (StaticManagers[i] == null)
+                if (StaticManagers[i].Disposed)
                 {
                     StaticManagers.RemoveAt(i);
-                    i--;
                     continue;
                 }
             }
@@ -42,12 +41,11 @@ namespace Syadeu
         }
         public static IReadOnlyList<IStaticMonoManager> GetInstanceManagers()
         {
-            for (int i = 0; i < InstanceManagers.Count; i++)
+            for (int i = InstanceManagers.Count - 1; i >= 0; i--)
             {
-                if (InstanceManagers[i] == null)
+                if (InstanceManagers[i].Disposed)
                 {
                     InstanceManagers.RemoveAt(i);
-                    i--;
                     continue;
                 }
             }
@@ -55,13 +53,12 @@ namespace Syadeu
         }
         public static IReadOnlyList<IStaticDataManager> GetDataManagers()
         {
-            for (int i = 0; i < DataManagers.Count; i++)
+            for (int i = DataManagers.Count - 1; i >= 0; i--)
             {
                 if (DataManagers[i] == null ||
                     DataManagers[i].Disposed)
                 {
                     DataManagers.RemoveAt(i);
-                    i--;
                     continue;
                 }
             }
@@ -77,12 +74,11 @@ namespace Syadeu
                 {
                     if (StaticManagers[i] is T item) return item;
                 }
-                for (int i = 0; i < InstanceManagers.Count; i++)
+                for (int i = InstanceManagers.Count - 1; i >= 0; i--)
                 {
-                    if (InstanceManagers[i] == null)
+                    if (InstanceManagers[i].Disposed)
                     {
                         InstanceManagers.RemoveAt(i);
-                        i--;
                         continue;
                     }
                     if (InstanceManagers[i] is T item) return item;
@@ -90,14 +86,13 @@ namespace Syadeu
             }
             if (flag.HasFlag(SystemFlag.Data))
             {
-                for (int i = 0; i < DataManagers.Count; i++)
+                for (int i = DataManagers.Count - 1; i >= 0; i--)
                 {
                     if (DataManagers[i] is T item)
                     {
                         if (DataManagers[i].Disposed)
                         {
                             DataManagers.RemoveAt(i);
-                            i--;
                             continue;
                         }
 
