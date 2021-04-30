@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 
 using UnityEngine;
@@ -6,6 +7,7 @@ using UnityEngine.Events;
 
 namespace Syadeu.Mono
 {
+    [Obsolete("Will be deprecated and replaced to based on IRender interface MonoBehaviour")]
     public class RenderController : MonoBehaviour
     {
         public bool IsStandalone = false;

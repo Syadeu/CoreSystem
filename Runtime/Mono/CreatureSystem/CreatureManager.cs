@@ -63,7 +63,7 @@ namespace Syadeu.Mono.Creature
             }
             internal CreatureBrain InternalSpawnAt(Vector3 pos)
             {
-                CreatureBrain brain = (CreatureBrain)PrefabManager.GetRecycleObject(m_PrefabIdx);
+                CreatureBrain brain = (CreatureBrain)PrefabManager.GetRecycleObject(m_PrefabIdx, false);
                 brain.m_DataIdx = m_DataIdx;
                 brain.transform.position = pos;
                 brain.transform.SetParent(Instance.transform);

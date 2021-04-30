@@ -16,7 +16,7 @@ namespace Syadeu.Mono
     /// 하위 컴포넌트들은 <seealso cref="CreatureEntity"/> 를 참조하면 자동으로 Initialize 됨.
     /// </summary>
     [RequireComponent(typeof(NavMeshAgent))]
-    public class CreatureBrain : RecycleableMonobehaviour
+    public class CreatureBrain : RecycleableMonobehaviour, IRender
     {
         private static Vector3 INIT_POSITION = new Vector3(99999, -99999, 99999);
 
@@ -91,6 +91,7 @@ namespace Syadeu.Mono
 
             CreatureManager.Instance.m_Creatures.Add(this);
 
+            //OnInitialize();
             Initialize();
         }
 
@@ -116,6 +117,7 @@ namespace Syadeu.Mono
                 m_Childs[i].Initialize(this, m_DataIdx);
             }
 
+            RenderManager.AddObserver(this);
             Initialized = true;
         }
         public override void OnTerminate()
@@ -132,7 +134,27 @@ namespace Syadeu.Mono
                 m_Childs[i].InternalOnTerminate();
             }
 
+            RenderManager.RemoveObserver(this);
             Initialized = false;
+        }
+        //protected virtual void OnDestroy()
+        //{
+        //    RenderManager.RemoveObserver(this);
+        //}
+
+        public void OnVisible()
+        {
+            for (int i = 0; i < m_Childs.Length; i++)
+            {
+                m_Childs[i].OnVisible();
+            }
+        }
+        public void OnInvisible()
+        {
+            for (int i = 0; i < m_Childs.Length; i++)
+            {
+                m_Childs[i].OnInvisible();
+            }
         }
 
         public int2 m_CachedCurrentGridIdxes = -1;

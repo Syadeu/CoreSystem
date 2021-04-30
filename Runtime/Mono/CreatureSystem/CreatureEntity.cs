@@ -2,7 +2,7 @@
 
 namespace Syadeu.Mono
 {
-    public abstract class CreatureEntity : MonoBehaviour, IInitialize<CreatureBrain, int>
+    public abstract class CreatureEntity : MonoBehaviour, IInitialize<CreatureBrain, int>, IRender
     {
         [SerializeField] private CreatureBrain m_Brain = null;
         [SerializeField] private int m_DataIdx = -1;
@@ -16,7 +16,7 @@ namespace Syadeu.Mono
         {
             m_Brain = t;
             m_DataIdx = ta;
-
+            $"1. {GetType().Name}: {ta}".ToLog();
             OnInitialize(t, ta);
             Initialized = true;
         }
@@ -37,5 +37,8 @@ namespace Syadeu.Mono
         /// <param name="dataIdx">이 크리쳐의 데이터 인덱스</param>
         protected virtual void OnInitialize(CreatureBrain brain, int dataIdx) { }
         protected virtual void OnTerminate() { }
+
+        public virtual void OnVisible() { }
+        public virtual void OnInvisible() { }
     }
 }
