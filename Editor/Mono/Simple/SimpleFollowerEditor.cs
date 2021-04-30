@@ -38,6 +38,8 @@ namespace SyadeuEditor
             EditorGUILayout.PropertyField(m_Offset, new GUIContent("Offset: "));
             EditorGUILayout.PropertyField(m_Speed, new GUIContent("Follow Speed: "));
 
+            serializedObject.ApplyModifiedProperties();
+
             EditorGUILayout.Space();
             m_ShowOriginalContents = EditorUtils.Foldout(m_ShowOriginalContents, "Original Contents");
             if (m_ShowOriginalContents) base.OnInspectorGUI();
