@@ -4,8 +4,8 @@ namespace Syadeu.Mono
 {
     public abstract class CreatureEntity : MonoBehaviour, IInitialize<CreatureBrain, int>
     {
-        private CreatureBrain m_Brain = null;
-        private int m_DataIdx = -1;
+        [SerializeField] private CreatureBrain m_Brain = null;
+        [SerializeField] private int m_DataIdx = -1;
 
         public CreatureBrain Brain => m_Brain;
         public int DataIdx => m_DataIdx;
@@ -30,6 +30,11 @@ namespace Syadeu.Mono
         internal void InternalOnCreated() => OnCreated();
 
         protected virtual void OnCreated() { }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="brain">이 크리쳐의 메인 스크립트</param>
+        /// <param name="dataIdx">이 크리쳐의 데이터 인덱스</param>
         protected virtual void OnInitialize(CreatureBrain brain, int dataIdx) { }
         protected virtual void OnTerminate() { }
     }
