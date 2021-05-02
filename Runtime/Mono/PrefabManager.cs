@@ -220,7 +220,7 @@ namespace Syadeu.Mono
         /// </summary>
         /// <param name="index"></param>
         /// <returns></returns>
-        public static RecycleableMonobehaviour GetRecycleObject(int index)
+        public static RecycleableMonobehaviour GetRecycleObject(int index, bool initOnCall = true)
         {
             RecycleObject obj = Instance.RecycleObjects[index];
 
@@ -240,8 +240,11 @@ namespace Syadeu.Mono
                         else throw new CoreSystemException(CoreSystemExceptionFlag.RecycleObject, "PrefabManager에 의해 관리되던 RecycleMonobehaviour가 다른 객체에 의해 파괴되었습니다. 관리중인 객체는 다른 객체에서 파괴될 수 없습니다.");
                     }
 
-                    obj.Instances[i].Initialize();
-                    obj.Instances[i].OnInitialize();
+                    if (initOnCall)
+                    {
+                        obj.Instances[i].Initialize();
+                        //obj.Instances[i].OnInitialize();
+                    }
 
                     return obj.Instances[i];
                 }
@@ -258,10 +261,10 @@ namespace Syadeu.Mono
                     {
                         CoreSystem.AddForegroundJob(() =>
                         {
-                            recycleObj = Instance.InternalInstantiate(obj);
+                            recycleObj = Instance.InternalInstantiate(obj, initOnCall);
                         }).Await();
                     }
-                    else recycleObj = Instance.InternalInstantiate(obj);
+                    else recycleObj = Instance.InternalInstantiate(obj, initOnCall);
                     return recycleObj;
                 }
             }
@@ -270,7 +273,7 @@ namespace Syadeu.Mono
             $"CoreSystem: PrefabManager Warning: 이 프리팹(인덱스: {index})은 최대 인스턴스 갯수에 도달하여 요청이 무시되었습니다.".ToLog();
             return null;
         }
-        private RecycleableMonobehaviour InternalInstantiate(RecycleObject obj, Action onTerminate = null)
+        private RecycleableMonobehaviour InternalInstantiate(RecycleObject obj, bool initOnCall, Action onTerminate = null)
         {
             for (int i = 0; i < obj.InstanceCreationBlock; i++)
             {
@@ -291,7 +294,7 @@ namespace Syadeu.Mono
 
                 obj.AddNewInstance(recycleObj);
             }
-            return GetRecycleObject(obj.Index);
+            return GetRecycleObject(obj.Index, initOnCall);
         }
         internal T InternalInstantitate<T>(int prefabIdx, Action onTerminate = null) where T : RecycleableMonobehaviour
         {

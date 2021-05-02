@@ -33,6 +33,8 @@ namespace Syadeu
         public virtual bool HideInHierarchy => false;
         public virtual bool ManualInitialize => false;
 
+        public bool Disposed { get; private set; } = false;
+
 #if UNITY_EDITOR
         private System.Diagnostics.StackFrame m_InitLastStack = null;
 #endif
@@ -41,6 +43,10 @@ namespace Syadeu
         {
             if (!ManualInitialize) Initialize();
             else m_Instance = this as T;
+        }
+        protected virtual void OnDestroy()
+        {
+            Dispose();
         }
         public void Initialize()
         {
@@ -107,5 +113,13 @@ namespace Syadeu
         public void Initialize(SystemFlag flag = SystemFlag.SubSystem) { }
         public virtual void OnInitialize() { }
         public virtual void OnStart() { }
+
+        public virtual void Dispose()
+        {
+            Disposed = true;
+
+            Initialized = false;
+            m_Instance = null;
+        }
     }
 }

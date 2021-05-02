@@ -107,6 +107,13 @@ namespace Syadeu
         public virtual bool HideInHierarchy => true;
         public bool ManualInitialize => false;
 
+        public bool Disposed { get; private set; } = false;
+
+        protected virtual void OnDestroy()
+        {
+            Dispose();
+        }
+
         public virtual void OnInitialize() { }
         public virtual void OnStart() { }
         public virtual void Initialize(SystemFlag flag = SystemFlag.SubSystem)
@@ -117,6 +124,13 @@ namespace Syadeu
         private static void EnforceOrder()
         {
             Instance.Initialize();
+        }
+
+        public void Dispose()
+        {
+            Disposed = true;
+
+            m_Instance = null;
         }
     }
 }

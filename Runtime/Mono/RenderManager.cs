@@ -21,6 +21,7 @@ namespace Syadeu.Mono
 
         internal readonly List<ManagedObject> m_ManagedObjects = new List<ManagedObject>();
         internal readonly ObClass<Camera> m_MainCamera = new ObClass<Camera>(ObValueDetection.Changed);
+        internal readonly List<ObserverObject> m_ObserverList = new List<ObserverObject>();
 
         public static Camera MainCamera => Instance.m_MainCamera.Value;
         internal Matrix4x4 CamMatrix4x4 { get; private set; }
@@ -36,13 +37,19 @@ namespace Syadeu.Mono
                 Transform = controller.transform;
             }
         }
+        internal class ObserverObject
+        {
+            public IRender render;
+            public bool visible = false;
+        }
 
         private void Awake()
         {
             m_MainCamera.OnValueChange += MainCamera_OnValueChange;
             m_MainCamera.Value = Camera.main;
 
-            StartCoroutine(UnityUpdate());
+            StartCoroutine(ComponentUpdate());
+            StartCoroutine(ObserverUpdate());
         }
 
         private void MainCamera_OnValueChange(Camera current, Camera target)
@@ -53,7 +60,7 @@ namespace Syadeu.Mono
             }
         }
 
-        private IEnumerator UnityUpdate()
+        private IEnumerator ComponentUpdate()
         {
             while (true)
             {
@@ -73,7 +80,40 @@ namespace Syadeu.Mono
                 yield return null;
             }
         }
-        private void OnDestroy()
+        private IEnumerator ObserverUpdate()
+        {
+            while (true)
+            {
+                for (int i = 0; i < m_ObserverList.Count; i++)
+                {
+                    if (m_ObserverList[i].render.transform == null)
+                    {
+                        m_ObserverList.RemoveAt(i);
+                        i--;
+                        continue;
+                    }
+
+                    if (!m_ObserverList[i].visible &&
+                        IsInCameraScreen(m_ObserverList[i].render.transform.position))
+                    {
+                        m_ObserverList[i].render.OnVisible();
+                        m_ObserverList[i].visible = true;
+                    }
+
+                    if (m_ObserverList[i].visible &&
+                        !IsInCameraScreen(m_ObserverList[i].render.transform.position))
+                    {
+                        m_ObserverList[i].render.OnInvisible();
+                        m_ObserverList[i].visible = false;
+                    }
+
+                    if (i != 0 && i % 150 == 0) yield return null;
+                }
+
+                yield return null;
+            }
+        }
+        protected override void OnDestroy()
         {
             for (int i = 0; i < m_ManagedObjects.Count; i++)
             {
@@ -81,9 +121,37 @@ namespace Syadeu.Mono
                 m_ManagedObjects[i].Controller.StopAllCoroutines();
             }
             m_ManagedObjects.Clear();
+
+            StopAllCoroutines();
+            base.OnDestroy();
         }
 
         #endregion
+
+        public static void AddObserver(IRender render)
+        {
+            bool visible = IsInCameraScreen(render.transform.position);
+
+            Instance.m_ObserverList.Add(new ObserverObject
+            {
+                render = render,
+                visible = visible
+            });
+
+            if (visible) render.OnVisible();
+            else render.OnInvisible();
+        }
+        public static void RemoveObserver(IRender render)
+        {
+            for (int i = 0; i < Instance.m_ObserverList.Count; i++)
+            {
+                if (Instance.m_ObserverList[i].Equals(render))
+                {
+                    Instance.m_ObserverList.RemoveAt(i);
+                    break;
+                }
+            }
+        }
 
         /// <summary>
         /// 렌더링 규칙을 적용할 카메라를 설정합니다.
