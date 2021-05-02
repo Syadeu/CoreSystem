@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 
 using UnityEngine;
@@ -6,6 +7,7 @@ using UnityEngine.Events;
 
 namespace Syadeu.Mono
 {
+    [Obsolete("Will be deprecated and replaced to based on IRender interface MonoBehaviour")]
     public class RenderController : MonoBehaviour
     {
         public bool IsStandalone = false;
@@ -21,7 +23,7 @@ namespace Syadeu.Mono
         [SerializeField] private UnityEvent OnInvisible;
 
         internal Renderer[] Renderers { get; private set; }
-        public bool IsInvisible { get; set; } = true;
+        public bool IsInvisible { get; private set; } = true;
         public bool IsForcedOff { get; internal set; } = false;
 
         private Transform Transform { get; set; }

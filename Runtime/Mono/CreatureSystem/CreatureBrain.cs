@@ -5,17 +5,23 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Events;
 
 namespace Syadeu.Mono
 {
+    /// <summary>
+    /// 하위 컴포넌트들은 <seealso cref="CreatureEntity"/> 를 참조하면 자동으로 Initialize 됨.
+    /// </summary>
     [RequireComponent(typeof(NavMeshAgent))]
-    public class CreatureBrain : RecycleableMonobehaviour
+    public class CreatureBrain : RecycleableMonobehaviour, IRender
     {
+        private static Vector3 INIT_POSITION = new Vector3(99999, -99999, 99999);
+
         internal int m_DataIdx;
+        internal int m_SpawnPointIdx;
         [SerializeField] private NavMeshAgent m_NavMeshAgent;
 
 #if UNITY_EDITOR
@@ -33,6 +39,8 @@ namespace Syadeu.Mono
         [SerializeField] private UnityEvent<int> m_OnInitialize;
         [SerializeField] private UnityEvent<int> m_OnTerminate;
 
+        private CreatureEntity[] m_Childs = null;
+
         public event Action<Vector3> onMove;
 
         public bool Initialized { get; private set; } = false;
@@ -48,22 +56,12 @@ namespace Syadeu.Mono
         {
             get
             {
-                if (m_NavMeshAgent.hasPath &&
+                if (m_NavMeshAgent.desiredVelocity.magnitude > 0 &&
                     m_NavMeshAgent.remainingDistance > .2f) return true;
                 return false;
             }
         }
 
-        internal override void Initialize()
-        {
-            if (m_NavMeshAgent == null) m_NavMeshAgent = GetComponent<NavMeshAgent>();
-
-            m_OnInitialize?.Invoke(m_DataIdx);
-
-            Initialized = true;
-
-            base.Initialize();
-        }
         public void ManualInitialize(int dataIdx)
         {
             if (Activated || Initialized)
@@ -88,21 +86,88 @@ namespace Syadeu.Mono
                     $"프리팹 인덱스 {set.m_PrefabIdx} 는 PrefabList 에 존재하지않습니다.");
             }
             recycleContainer.AddNewInstance(this);
+
+            OnCreated();
+
             CreatureManager.Instance.m_Creatures.Add(this);
 
+            //OnInitialize();
             Initialize();
         }
 
         public override void OnCreated()
         {
+            m_SharedPath = new NavMeshPath();
+            m_Childs = GetComponentsInChildren<CreatureEntity>();
+
+            if (m_NavMeshAgent == null) m_NavMeshAgent = GetComponent<NavMeshAgent>();
+
+            for (int i = 0; i < m_Childs.Length; i++)
+            {
+                m_Childs[i].InternalOnCreated();
+            }
+
             m_OnCreated?.Invoke();
+        }
+        public override void OnInitialize()
+        {
+            m_OnInitialize?.Invoke(m_DataIdx);
+            for (int i = 0; i < m_Childs.Length; i++)
+            {
+                m_Childs[i].Initialize(this, m_DataIdx);
+            }
+
+            RenderManager.AddObserver(this);
+            Initialized = true;
         }
         public override void OnTerminate()
         {
             m_OnTerminate?.Invoke(m_DataIdx);
+
+            var set = CreatureManager.GetCreatureSet(m_DataIdx);
+            set.m_SpawnRanges[m_SpawnPointIdx].m_InstanceCount--;
+
+            transform.position = INIT_POSITION;
+
+            for (int i = 0; i < m_Childs.Length; i++)
+            {
+                m_Childs[i].InternalOnTerminate();
+            }
+
+            RenderManager.RemoveObserver(this);
             Initialized = false;
         }
+        //protected virtual void OnDestroy()
+        //{
+        //    RenderManager.RemoveObserver(this);
+        //}
 
+        public void OnVisible()
+        {
+            for (int i = 0; i < m_Childs.Length; i++)
+            {
+                m_Childs[i].OnVisible();
+            }
+        }
+        public void OnInvisible()
+        {
+            for (int i = 0; i < m_Childs.Length; i++)
+            {
+                m_Childs[i].OnInvisible();
+            }
+        }
+
+        public int2 m_CachedCurrentGridIdxes = -1;
+        public Guid GetCurrentGrid()
+        {
+            if (!IsOnGrid) throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                $"{name}({transform.position}) 은 그리드 위에 존재하지 않습니다.");
+
+            Vector3 pos = CoreSystem.GetPosition(CoreSystem.GetTransform(transform));
+            ref GridManager.Grid grid = ref GridManager.GetGrid(pos);
+
+            return grid.Guid;
+        }
         public ref GridManager.GridCell GetCurrentGridCell()
         {
             if (!IsOnGrid) throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
@@ -110,37 +175,65 @@ namespace Syadeu.Mono
 
             Vector3 pos = CoreSystem.GetPosition(CoreSystem.GetTransform(transform));
             ref GridManager.Grid grid = ref GridManager.GetGrid(pos);
-            return ref grid.GetCell(pos);
+            ref GridManager.GridCell cell = ref grid.GetCell(pos);
+            m_CachedCurrentGridIdxes = cell.Idxes;
+
+            return ref cell;
         }
 
         #region Moves
 
         private CoreRoutine m_MoveRoutine;
+        private NavMeshPath m_SharedPath;
 
-        public void MoveTo(Vector3 worldPosition)
+        public bool MoveTo(Vector3 worldPosition, bool force = false)
         {
             if (m_EnableCameraCull && !RenderManager.IsInCameraScreen(transform.position))
             {
                 transform.position = worldPosition;
-                return;
+                return false;
             }
 
             if (NavMesh.SamplePosition(transform.position, out _, m_SamplePosDistance, m_NavMeshAgent.areaMask) &&
                 NavMesh.SamplePosition(worldPosition, out _, m_SamplePosDistance, m_NavMeshAgent.areaMask))
             {
                 m_NavMeshAgent.enabled = true;
-                m_NavMeshAgent.ResetPath();
-                m_NavMeshAgent.SetDestination(worldPosition);
-                m_MoveRoutine = CoreSystem.StartUnityUpdate(this, MoveToPointNavJob(worldPosition));
+                //m_NavMeshAgent.ResetPath();
+                if (force)
+                {
+                    if (!m_NavMeshAgent.CalculatePath(worldPosition, m_SharedPath))
+                    {
+                        return false;
+                    }
+                    m_NavMeshAgent.SetPath(m_SharedPath);
+                }
+                else
+                {
+                    if (!m_NavMeshAgent.SetDestination(worldPosition))
+                    {
+                        return false;
+                    }
+                }
+
+                //m_MoveRoutine = CoreSystem.StartUnityUpdate(this, MoveToPointNavJob(worldPosition));
             }
             else
             {
                 m_NavMeshAgent.enabled = false;
                 m_MoveRoutine = CoreSystem.StartUnityUpdate(this, MoveToPointJob(worldPosition));
             }
+
+            return true;
         }
-        public void MoveTo(GridManager.GridCell target)
-            => MoveTo(target.Bounds.center);
+        public void MoveTo(GridManager.GridCell target) => MoveTo(target.Bounds.center);
+        public void MoveTo(int gridIdx, int cellIdx)
+        {
+            Vector3 worldPos = GridManager.GetGrid(gridIdx).GetCell(cellIdx).Bounds.center;
+            MoveTo(worldPos);
+        }
+        public void MoveTo(int2 gridIdxes) => MoveTo(gridIdxes.x, gridIdxes.y);
+        public void MoveTo(Vector2Int gridIdxes) => MoveTo(gridIdxes.x, gridIdxes.y);
+
         public bool MoveToDirection(Vector3 direction)
         {
             if (NavMesh.SamplePosition(transform.position + direction, out _, m_SamplePosDistance, m_NavMeshAgent.areaMask) &&
@@ -232,6 +325,4 @@ namespace Syadeu.Mono
 
         #endregion
     }
-
-
 }

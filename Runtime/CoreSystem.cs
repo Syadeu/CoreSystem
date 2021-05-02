@@ -29,12 +29,11 @@ namespace Syadeu
 
         public static IReadOnlyList<IStaticMonoManager> GetStaticManagers()
         {
-            for (int i = 0; i < StaticManagers.Count; i++)
+            for (int i = StaticManagers.Count - 1; i >= 0; i--)
             {
-                if (StaticManagers[i].transform == null)
+                if (StaticManagers[i].Disposed)
                 {
                     StaticManagers.RemoveAt(i);
-                    i--;
                     continue;
                 }
             }
@@ -42,12 +41,11 @@ namespace Syadeu
         }
         public static IReadOnlyList<IStaticMonoManager> GetInstanceManagers()
         {
-            for (int i = 0; i < InstanceManagers.Count; i++)
+            for (int i = InstanceManagers.Count - 1; i >= 0; i--)
             {
-                if (InstanceManagers[i].transform == null)
+                if (InstanceManagers[i].Disposed)
                 {
                     InstanceManagers.RemoveAt(i);
-                    i--;
                     continue;
                 }
             }
@@ -55,13 +53,12 @@ namespace Syadeu
         }
         public static IReadOnlyList<IStaticDataManager> GetDataManagers()
         {
-            for (int i = 0; i < DataManagers.Count; i++)
+            for (int i = DataManagers.Count - 1; i >= 0; i--)
             {
                 if (DataManagers[i] == null ||
                     DataManagers[i].Disposed)
                 {
                     DataManagers.RemoveAt(i);
-                    i--;
                     continue;
                 }
             }
@@ -77,12 +74,11 @@ namespace Syadeu
                 {
                     if (StaticManagers[i] is T item) return item;
                 }
-                for (int i = 0; i < InstanceManagers.Count; i++)
+                for (int i = InstanceManagers.Count - 1; i >= 0; i--)
                 {
-                    if (InstanceManagers[i] == null)
+                    if (InstanceManagers[i].Disposed)
                     {
                         InstanceManagers.RemoveAt(i);
-                        i--;
                         continue;
                     }
                     if (InstanceManagers[i] is T item) return item;
@@ -90,14 +86,13 @@ namespace Syadeu
             }
             if (flag.HasFlag(SystemFlag.Data))
             {
-                for (int i = 0; i < DataManagers.Count; i++)
+                for (int i = DataManagers.Count - 1; i >= 0; i--)
                 {
                     if (DataManagers[i] is T item)
                     {
                         if (DataManagers[i].Disposed)
                         {
                             DataManagers.RemoveAt(i);
-                            i--;
                             continue;
                         }
 
@@ -277,7 +272,7 @@ namespace Syadeu
 
         public static bool IsThisMainthread()
         {
-            if (MainThread == null)
+            if (MainThread == null || !CoreSystem.Initialized || Thread.CurrentThread == MainThread || BackgroundThread == null)
             {
                 //if (BackgroundThread != null)
                 //{
@@ -423,11 +418,13 @@ namespace Syadeu
         }
         public override void OnInitialize()
         {
-            BackgroundThread = new Thread(BackgroundWorker)
-            {
-                IsBackground = true
-            };
-            BackgroundThread.Start();
+            //BackgroundThread = new Thread(BackgroundWorker)
+            //{
+            //    IsBackground = true
+            //};
+            //BackgroundThread.Start();
+
+            ThreadPool.QueueUserWorkItem(BackgroundWorker);
 
             StartCoroutine(UnityWorker());
         }
@@ -454,11 +451,11 @@ namespace Syadeu
             }
             BackgroundJobWorkers.Clear();
 
-            try
-            {
-                BackgroundThread?.Abort();
-            }
-            catch (Exception) { }
+            //try
+            //{
+            //    BackgroundThread?.Abort();
+            //}
+            //catch (Exception) { }
         }
         #endregion
 
@@ -618,8 +615,9 @@ namespace Syadeu
         public int GetCustomUpdateCount() => m_CustomUpdates.Count;
         public IReadOnlyList<CoreRoutine> GetCustomBackgroundUpdates() => m_CustomBackgroundUpdates.Keys.ToArray();
 
-        private void BackgroundWorker()
+        private void BackgroundWorker(System.Object stateInfo)
         {
+            BackgroundThread = Thread.CurrentThread;
             Thread.CurrentThread.CurrentCulture = global::System.Globalization.CultureInfo.InvariantCulture;
 
 #if UNITY_EDITOR
@@ -993,7 +991,7 @@ namespace Syadeu
             UnityEngine.Profiling.CustomSampler sampler;
 #endif
 
-            yield return new WaitUntil(() => Initialized);
+            yield return new WaitUntil(() => Initialized && BackgroundThread != null);
 
             m_StartUpdate = true;
 
@@ -1433,7 +1431,8 @@ namespace Syadeu
                 Transform tr = null;
                 AddForegroundJob(() =>
                 {
-                    tr = component.transform;
+                    if (component == null) tr = null;
+                    else tr = component.transform;
                 }).Await();
                 return tr;
             }

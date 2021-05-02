@@ -119,6 +119,8 @@ namespace Syadeu
 
             while (!IsDone)
             {
+                if (CoreSystem.IsThisMainthread()) break;
+
                 StaticManagerEntity.ThreadAwaiter(10);
             }
         }

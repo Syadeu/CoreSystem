@@ -29,6 +29,7 @@ namespace Syadeu.Mono
         
         internal virtual void Initialize()
         {
+            OnInitialize();
             Activated = true;
         }
 
