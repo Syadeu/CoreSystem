@@ -10,8 +10,21 @@ namespace Syadeu.Mono
         [SerializeField] private float m_Speed;
 
         private Coroutine m_UpdateCor = null;
+        private Vector3 m_TargetPosition = Vector3.zero;
 
-        public Transform Target => m_Target;
+        public Vector3 Target
+        {
+            get
+            {
+                if (m_Target == null)
+                {
+                    return m_TargetPosition;
+                }
+
+                m_TargetPosition = CoreSystem.GetPosition(m_Target);
+                return m_TargetPosition;
+            }
+        }
         public Vector3 Offset => m_Offset;
         public float Speed => m_Speed;
 
@@ -29,7 +42,7 @@ namespace Syadeu.Mono
             while (m_Target != null)
             {
                 transform.position
-                    = Vector3.Lerp(transform.position, m_Target.position + m_Offset, m_Speed * Time.deltaTime);
+                    = Vector3.Lerp(transform.position, Target + m_Offset, m_Speed * Time.deltaTime);
 
                 yield return null;
             }
@@ -43,6 +56,11 @@ namespace Syadeu.Mono
         }
 
         public void SetTarget(Transform tr) => m_Target = tr;
+        public void SetTarget(Vector3 target)
+        {
+            m_Target = null;
+            m_TargetPosition = target;
+        }
         public void SetOffset(Vector3 offset) => m_Offset = offset;
         public void SetSpeed(float speed) => m_Speed = speed;
     }
