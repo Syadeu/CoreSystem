@@ -1696,6 +1696,10 @@ namespace Syadeu.Mono
 
                 cell.SetDirty();
             }
+
+#if CORESYSTEM_UNSAFE
+            public static GridCell FromPointer(IntPtr intPtr) => (GridCell)GCHandle.FromIntPtr(intPtr).Target;
+#endif
         }
 
         public struct GridRange : IDisposable

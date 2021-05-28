@@ -9,6 +9,10 @@ namespace Syadeu.Mono
         [SerializeField] private Vector3 m_Offset;
         [SerializeField] private float m_Speed;
 
+        [Space]
+        [SerializeField] private int m_UpdateType = 0;
+        [SerializeField] private int m_UpdateAt = 0;
+
         private Coroutine m_UpdateCor = null;
         private Vector3 m_TargetPosition = Vector3.zero;
 
@@ -35,16 +39,31 @@ namespace Syadeu.Mono
         private IEnumerator Updater()
         {
             WaitUntil targetNotNull = new WaitUntil(() => m_Target != null);
+            YieldInstruction updateAt = null;
+            if (m_UpdateAt == 1) updateAt = new WaitForEndOfFrame();
+            else if (m_UpdateAt == 2) updateAt = new WaitForFixedUpdate();
 
         Try1:
             yield return targetNotNull;
 
             while (m_Target != null)
             {
-                transform.position
-                    = Vector3.Lerp(transform.position, Target + m_Offset, m_Speed * Time.deltaTime);
+                if (m_UpdateType == 0) transform.position = Target + m_Offset;
+                else if (m_UpdateType == 1)
+                {
+                    transform.position
+                        = Vector3.Lerp(transform.position, Target + m_Offset, m_Speed * Time.deltaTime);
+                }
 
-                yield return null;
+                switch (m_UpdateAt)
+                {
+                    case 0:
+                        yield return null;
+                        break;
+                    default:
+                        yield return updateAt;
+                        break;
+                }
             }
 
             goto Try1;

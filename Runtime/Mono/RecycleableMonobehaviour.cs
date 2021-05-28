@@ -11,7 +11,7 @@ namespace Syadeu.Mono
     /// OnDestroy 함수를 절때 사용하지마세요
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public abstract class RecycleableMonobehaviour : MonoBehaviour, IRecycleable, ITerminate
+    public abstract class RecycleableMonobehaviour : MonoBehaviour, ITerminate
     {
         public delegate bool TerminateCondition();
 
@@ -27,8 +27,11 @@ namespace Syadeu.Mono
         public bool Activated { get; internal set; } = false;
         public bool WaitForDeletion { get; internal set; } = false;
         
-        internal virtual void Initialize()
+        public virtual void Initialize()
         {
+            if (Activated) throw new CoreSystemException(CoreSystemExceptionFlag.RecycleObject,
+                "이미 초기화 된 재사용 오브젝트를 또 초기화하려합니다.");
+
             OnInitialize();
             Activated = true;
         }
@@ -36,18 +39,19 @@ namespace Syadeu.Mono
         /// <summary>
         /// 이 객체가 생성되었을때만 한번 실행하는 함수입니다.
         /// </summary>
-        public virtual void OnCreated() { }
+        protected virtual void OnCreated() { }
+        internal void InternalOnCreated() => OnCreated();
         /// <summary>
         /// GetObject() 함수를 호출했을때 재사용을 위해 실행되는 초기화 함수입니다.<br/>
         /// Unity 의 OnEnable 함수랑 비슷하다고 보면됨
         /// </summary>
-        public virtual void OnInitialize() { }
-        public virtual void OnTerminate() { }
+        protected virtual void OnInitialize() { }
+        protected virtual void OnTerminate() { }
 
         /// <summary>
         /// False를 반환시키면 이 모노객체는 즉시 <see cref="Terminate"/>됩니다.
         /// </summary>
-        public TerminateCondition OnActivated;
+        [Obsolete] public TerminateCondition OnActivated;
 
         public void Terminate()
         {

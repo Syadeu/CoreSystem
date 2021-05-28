@@ -1,7 +1,9 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace Syadeu
 {
+    [Obsolete]
     public interface IRecycleable
     {
         Transform transform { get; }
