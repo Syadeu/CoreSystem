@@ -137,6 +137,24 @@ namespace Syadeu.Mono
             RenderManager.RemoveObserver(this);
             Initialized = false;
         }
+        /// <summary>
+        /// 런타임 중 추가된 자식 CreatureEntity 를 초기화 하기 위한 함수입니다.
+        /// </summary>
+        /// <param name="entity"></param>
+        public void InitializeCreatureEntity(CreatureEntity entity)
+        {
+            if (!CoreSystem.IsThisMainthread()) throw new CoreSystemThreadSafeMethodException("InitializeCreatureEntity");
+
+            for (int i = 0; i < m_Childs.Length; i++)
+            {
+                if (m_Childs[i].Equals(entity)) return;
+            }
+            var temp = m_Childs.ToList();
+            temp.Add(entity);
+            m_Childs = temp.ToArray();
+
+            entity.Initialize(this, m_DataIdx);
+        }
         //protected virtual void OnDestroy()
         //{
         //    RenderManager.RemoveObserver(this);
