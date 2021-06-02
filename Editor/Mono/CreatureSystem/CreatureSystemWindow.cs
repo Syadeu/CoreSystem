@@ -223,8 +223,15 @@ namespace SyadeuEditor
                 m_DepTypeName.stringValue = m_DataClassNames[m_SelectedDataClassName];
                 FindAttributeTargets();
 
-                m_DepSingleToneName.stringValue = m_SelectedDataAttribute.SingleToneName;
-                m_DepArrName.stringValue = m_SelectedDataAttribute.DataArrayName;
+                if (!string.IsNullOrEmpty(m_SelectedDataAttribute.SingleToneName))
+                {
+                    m_DepSingleToneName.stringValue = m_SelectedDataAttribute.SingleToneName;
+                }
+                if (!string.IsNullOrEmpty(m_SelectedDataAttribute.DataArrayName))
+                {
+                    m_DepArrName.stringValue = m_SelectedDataAttribute.DataArrayName;
+                }
+                
                 SetTargetList();
             }
 
