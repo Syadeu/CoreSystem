@@ -95,7 +95,7 @@ namespace Syadeu.Mono
             Initialize();
         }
 
-        public override void OnCreated()
+        protected override void OnCreated()
         {
             m_SharedPath = new NavMeshPath();
             m_Childs = GetComponentsInChildren<CreatureEntity>();
@@ -109,7 +109,7 @@ namespace Syadeu.Mono
 
             m_OnCreated?.Invoke();
         }
-        public override void OnInitialize()
+        protected override void OnInitialize()
         {
             m_OnInitialize?.Invoke(m_DataIdx);
             for (int i = 0; i < m_Childs.Length; i++)
@@ -120,7 +120,7 @@ namespace Syadeu.Mono
             RenderManager.AddObserver(this);
             Initialized = true;
         }
-        public override void OnTerminate()
+        protected override void OnTerminate()
         {
             m_OnTerminate?.Invoke(m_DataIdx);
 
@@ -136,6 +136,24 @@ namespace Syadeu.Mono
 
             RenderManager.RemoveObserver(this);
             Initialized = false;
+        }
+        /// <summary>
+        /// 런타임 중 추가된 자식 CreatureEntity 를 초기화 하기 위한 함수입니다.
+        /// </summary>
+        /// <param name="entity"></param>
+        public void InitializeCreatureEntity(CreatureEntity entity)
+        {
+            if (!CoreSystem.IsThisMainthread()) throw new CoreSystemThreadSafeMethodException("InitializeCreatureEntity");
+
+            for (int i = 0; i < m_Childs.Length; i++)
+            {
+                if (m_Childs[i].Equals(entity)) return;
+            }
+            var temp = m_Childs.ToList();
+            temp.Add(entity);
+            m_Childs = temp.ToArray();
+
+            entity.Initialize(this, m_DataIdx);
         }
         //protected virtual void OnDestroy()
         //{

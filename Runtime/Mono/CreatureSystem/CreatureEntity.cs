@@ -16,9 +16,11 @@ namespace Syadeu.Mono
         {
             m_Brain = t;
             m_DataIdx = ta;
-            $"1. {GetType().Name}: {ta}".ToLog();
+            
             OnInitialize(t, ta);
             Initialized = true;
+
+            $"{name}. {GetType().Name}: {ta} : init done".ToLog();
         }
         internal void InternalOnTerminate()
         {
