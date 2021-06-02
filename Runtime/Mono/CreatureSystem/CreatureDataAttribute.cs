@@ -12,6 +12,6 @@ namespace Syadeu.Mono.Creature
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
     public sealed class CreatureStatDataAttribute : Attribute
     {
-
+        public int Idx = 0;
     }
 }
