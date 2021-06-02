@@ -24,6 +24,17 @@ namespace Syadeu.Mono.Audio
                 return Instance.m_AudioListener;
             }
         }
+#if UNITY_EDITOR
+        private static AudioListener m_EditorListener = null;
+        private static AudioListener EditorListener
+        {
+            get
+            {
+                if (m_EditorListener == null) m_EditorListener = FindObjectOfType<AudioListener>();
+                return m_EditorListener;
+            }
+        }
+#endif
 
         public override void OnStart()
         {
@@ -51,7 +62,18 @@ namespace Syadeu.Mono.Audio
         }
 
         public static float DistanceFromListener(Transform tr)
-            => (AudioListener.transform.position - tr.position).magnitude;
+        {
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                return (EditorListener.transform.position - tr.position).magnitude;
+            }
+            else
+#endif
+            {
+                return (AudioListener.transform.position - tr.position).magnitude;
+            }
+        }
 
         #region Play
         private static UnityAudioSource GetAudioSource()

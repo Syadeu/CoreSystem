@@ -13,7 +13,11 @@ namespace SyadeuEditor
     public sealed class UnityAudioSourceEditor : EditorEntity
     {
         private UnityAudioSource m_Scr;
+        private SerializedProperty m_SelectedPlayType;
+
         private bool m_ShowOriginalContents = false;
+
+        private static string[] m_PlayTypeString = new string[] { "OneShot", "Tracked" };
 
         private void OnEnable()
         {
@@ -21,6 +25,7 @@ namespace SyadeuEditor
 
             AudioSource audio = m_Scr.GetComponent<AudioSource>();
             serializedObject.FindProperty("m_AudioSource").objectReferenceValue = audio;
+            m_SelectedPlayType = serializedObject.FindProperty("m_PlayType");
 
             serializedObject.ApplyModifiedProperties();
         }
@@ -32,15 +37,18 @@ namespace SyadeuEditor
             EditorGUILayout.Space();
 
             EditorGUI.BeginDisabledGroup(true);
-            EditorGUILayout.FloatField("Distance From Listener: ", Application.isPlaying ? UnityAudioManager.DistanceFromListener(m_Scr.transform) : 0);
+            EditorGUILayout.FloatField("Distance From Listener: ", UnityAudioManager.DistanceFromListener(m_Scr.transform));
             EditorGUI.EndDisabledGroup();
+
+            m_SelectedPlayType.intValue = EditorGUILayout.Popup("Play Type: ", m_SelectedPlayType.intValue, m_PlayTypeString);
+
             EditorGUILayout.Space();
 
+            m_Scr.AudioClip = (AudioClip)EditorGUILayout.ObjectField("Audio Clip: ", m_Scr.AudioClip, typeof(AudioClip), false);
             if (!Application.isPlaying)
             {
                 EditorGUILayout.HelpBox("Only can play the sound at runtime", MessageType.Info);
             }
-            m_Scr.AudioClip = (AudioClip)EditorGUILayout.ObjectField("Audio Clip: ", m_Scr.AudioClip, typeof(AudioClip), false);
             EditorGUI.BeginDisabledGroup(!Application.isPlaying);
             if (GUILayout.Button("Play"))
             {
@@ -48,6 +56,7 @@ namespace SyadeuEditor
             }
             EditorGUI.EndDisabledGroup();
 
+            serializedObject.ApplyModifiedProperties();
             EditorGUILayout.Space();
             m_ShowOriginalContents = EditorUtils.Foldout(m_ShowOriginalContents, "Original Contents");
             if (m_ShowOriginalContents) base.OnInspectorGUI();

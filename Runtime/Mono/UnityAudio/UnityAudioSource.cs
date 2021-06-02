@@ -10,6 +10,7 @@ namespace Syadeu.Mono.Audio
     {
         [SerializeField] private AudioSource m_AudioSource;
         [SerializeField] private SimpleFollower m_SimpleFollower;
+        [SerializeField] private int m_PlayType = 0;
 
         private bool m_Initialized = false;
         private UnityAudioList.Content m_Content = null;
@@ -63,6 +64,7 @@ namespace Syadeu.Mono.Audio
             else m_SimpleFollower.enabled = true;
 
             m_SimpleFollower.SetTarget(tr);
+            m_PlayType = 1;
             return this;
         }
         public UnityAudioSource SetPosition(Vector3 worldPosition)
