@@ -209,7 +209,7 @@ namespace Syadeu.Mono
             if (m_EnableCameraCull && !RenderManager.IsInCameraScreen(transform.position))
             {
                 transform.position = worldPosition;
-                return false;
+                return true;
             }
 
             if (NavMesh.SamplePosition(transform.position, out _, m_SamplePosDistance, m_NavMeshAgent.areaMask) &&

@@ -83,4 +83,15 @@ namespace SyadeuEditor
         }
 #endif
     }
+
+    public sealed class CoreSystemGameobjectMenuItems
+    {
+#if CORESYSTEM_UNITYAUDIO
+        [MenuItem("GameObject/CoreSystem/Audio/Unity Audio Object", false, 10)]
+        public static void AddGameObject()
+        {
+
+        }
+#endif
+    }
 }
