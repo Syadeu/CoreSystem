@@ -86,9 +86,32 @@ namespace SyadeuEditor
 
     public sealed class CoreSystemGameobjectMenuItems
     {
+        private static GameObject GetGameObject(string name, bool isStatic = false, params Type[] t)
+        {
+            GameObject obj;
+            if (isStatic)
+            {
+                obj = GameObject.Find(name);
+                if (obj != null) return obj;
+            }
+
+            obj = new GameObject(name);
+            for (int i = 0; i < t.Length; i++)
+            {
+                obj.AddComponent(t[i]);
+            }
+            return obj;
+        }
+
+        [MenuItem("GameObject/CoreSystem/CoreSystem", false, 10)]
+        public static void AddCoreSystem()
+        {
+            Selection.activeObject = GetGameObject("CoreSystem", true, typeof(CoreSystem));
+        }
+
 #if CORESYSTEM_UNITYAUDIO
-        [MenuItem("GameObject/CoreSystem/Audio/Unity Audio Object", false, 10)]
-        public static void AddGameObject()
+        [MenuItem("GameObject/CoreSystem/Audio/Audio Source", false, 10)]
+        public static void AddAudioSource()
         {
 
         }
