@@ -1,6 +1,4 @@
-﻿#define CORESYSTEM_UNITYAUDIO
-
-using Syadeu.Database;
+﻿using Syadeu.Database;
 
 using System.Collections;
 using System.Collections.Generic;

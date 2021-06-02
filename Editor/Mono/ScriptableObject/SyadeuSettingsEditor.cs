@@ -14,9 +14,10 @@ namespace SyadeuEditor
     {
         const string CORESYSTEM_UNSAFE = "CORESYSTEM_UNSAFE";
         const string CORESYSTEM_FMOD = "CORESYSTEM_FMOD";
+        const string CORESYSTEM_UNITYAUDIO = "CORESYSTEM_UNITYAUDIO";
         bool m_DefineUnsafe = true;
         bool m_DefineFmod = true;
-
+        bool m_DefineUnityAudio = true;
 
         bool m_EnableHelpbox = false;
 
@@ -51,7 +52,7 @@ namespace SyadeuEditor
                 AssetDatabase.SaveAssets();
             }
 
-            m_DefineUnsafe = m_DefineFmod = true;
+            m_DefineUnsafe = m_DefineFmod = m_DefineUnityAudio = true;
             PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, out string[] temp);
             if (!temp.Contains(CORESYSTEM_UNSAFE))
             {
@@ -61,7 +62,10 @@ namespace SyadeuEditor
             {
                 m_DefineFmod = false;
             }
-
+            if (!temp.Contains(CORESYSTEM_UNITYAUDIO))
+            {
+                m_DefineUnityAudio = false;
+            }
         }
         public override void OnInspectorGUI()
         {
@@ -94,7 +98,9 @@ namespace SyadeuEditor
                     "활성화시 포인터를 이용한 메소드를 사용가능합니다.", 
                     MessageType.Info);
             }
+            EditorGUI.BeginDisabledGroup(!PlayerSettings.allowUnsafeCode);
             m_DefineUnsafe = EditorGUILayout.ToggleLeft("DEFINE CORESYSTEM_UNSAFE", m_DefineUnsafe);
+            EditorGUI.EndDisabledGroup();
             if (m_EnableHelpbox)
             {
                 EditorGUILayout.HelpBox(
@@ -104,6 +110,11 @@ namespace SyadeuEditor
                     MessageType.Info);
             }
             m_DefineFmod = EditorGUILayout.ToggleLeft("DEFINE CORESYSTEM_FMOD", m_DefineFmod);
+            if (m_EnableHelpbox)
+            {
+                EditorGUILayout.HelpBox("", MessageType.Info);
+            }
+            m_DefineUnityAudio = EditorGUILayout.ToggleLeft("DEFINE CORESYSTEM_UNITYAUDIO", m_DefineUnityAudio);
             if (EditorGUI.EndChangeCheck())
             {
                 PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, out string[] temp);
@@ -124,6 +135,15 @@ namespace SyadeuEditor
                 else
                 {
                     if (temp.Contains(CORESYSTEM_FMOD)) temptemp.Remove(CORESYSTEM_FMOD);
+                }
+
+                if (m_DefineUnityAudio)
+                {
+                    if (!temp.Contains(CORESYSTEM_UNITYAUDIO)) temptemp.Add(CORESYSTEM_UNITYAUDIO);
+                }
+                else
+                {
+                    if (temp.Contains(CORESYSTEM_UNITYAUDIO)) temptemp.Remove(CORESYSTEM_UNITYAUDIO);
                 }
 
                 PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, temptemp.ToArray());
