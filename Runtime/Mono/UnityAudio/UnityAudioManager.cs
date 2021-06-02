@@ -119,7 +119,7 @@ namespace Syadeu.Mono.Audio
 
             m_Initialized = true;
         }
-        public override void OnTerminate()
+        protected override void OnTerminate()
         {
             m_Content = null;
             m_Initialized = false;

@@ -10,6 +10,7 @@ using System;
 using Syadeu;
 using System.Reflection;
 using System.Linq;
+using System.IO;
 
 namespace SyadeuEditor
 {
@@ -150,10 +151,18 @@ namespace SyadeuEditor
         {
             const string AssemblyCSharp = "Assembly-CSharp";
 
-            Type[] types = Assembly.Load(AssemblyCSharp)
+            Type[] types;
+            try
+            {
+                types = Assembly.Load(AssemblyCSharp)
                 .GetTypes()
                 .Where(other => other.GetCustomAttribute<CreatureDataAttribute>() != null)
                 .ToArray();
+            }
+            catch (FileNotFoundException)
+            {
+                types = new Type[0];
+            }
 
             m_DataClassNames = new string[types.Length];
             for (int i = 0; i < types.Length; i++)

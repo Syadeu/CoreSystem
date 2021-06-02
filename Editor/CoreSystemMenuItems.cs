@@ -11,6 +11,8 @@ using UnityEngine;
 
 #if CORESYSTEM_FMOD
 using Syadeu.FMOD;
+#elif CORESYSTEM_UNITYAUDIO
+using Syadeu.Mono.Audio;
 #endif
 
 namespace SyadeuEditor
@@ -72,6 +74,12 @@ namespace SyadeuEditor
         {
             Selection.activeObject = FMODSettings.Instance;
             EditorApplication.ExecuteMenuItem("Window/General/Inspector");
+        }
+#elif CORESYSTEM_UNITYAUDIO
+        [MenuItem("CoreSystem/Unity/AudioList")]
+        public static void UnityAudioListMenu()
+        {
+            Selection.activeObject = UnityAudioList.Instance;
         }
 #endif
     }

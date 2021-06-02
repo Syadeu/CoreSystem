@@ -109,12 +109,16 @@ namespace SyadeuEditor
                     "FMOD 사용을 위한 컬렉션이 제공됩니다.", 
                     MessageType.Info);
             }
+            EditorGUI.BeginDisabledGroup(m_DefineUnityAudio);
             m_DefineFmod = EditorGUILayout.ToggleLeft("DEFINE CORESYSTEM_FMOD", m_DefineFmod);
+            EditorGUI.EndDisabledGroup();
             if (m_EnableHelpbox)
             {
                 EditorGUILayout.HelpBox("", MessageType.Info);
             }
+            EditorGUI.BeginDisabledGroup(m_DefineFmod);
             m_DefineUnityAudio = EditorGUILayout.ToggleLeft("DEFINE CORESYSTEM_UNITYAUDIO", m_DefineUnityAudio);
+            EditorGUI.EndDisabledGroup();
             if (EditorGUI.EndChangeCheck())
             {
                 PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, out string[] temp);
@@ -147,6 +151,7 @@ namespace SyadeuEditor
                 }
 
                 PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, temptemp.ToArray());
+                UnityEditor.Compilation.CompilationPipeline.RequestScriptCompilation();
             }
 
             EditorGUILayout.Space();
