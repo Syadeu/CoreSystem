@@ -21,7 +21,9 @@ namespace Syadeu.Mono
         private static Vector3 INIT_POSITION = new Vector3(99999, -99999, 99999);
 
         internal int m_DataIdx;
+        internal bool m_IsSpawnedFromManager = false;
         internal int m_SpawnPointIdx;
+
         [SerializeField] private NavMeshAgent m_NavMeshAgent;
 
 #if UNITY_EDITOR
@@ -135,6 +137,7 @@ namespace Syadeu.Mono
             }
 
             RenderManager.RemoveObserver(this);
+            m_IsSpawnedFromManager = false;
             Initialized = false;
         }
         /// <summary>

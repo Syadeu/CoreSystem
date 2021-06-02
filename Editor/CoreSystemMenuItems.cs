@@ -113,7 +113,7 @@ namespace SyadeuEditor
         [MenuItem("GameObject/CoreSystem/Audio/Audio Source", false, 10)]
         public static void AddAudioSource()
         {
-
+            Selection.activeObject = GetGameObject("UnityAudioSource", true, typeof(AudioSource), typeof(UnityAudioSource));
         }
 #endif
     }

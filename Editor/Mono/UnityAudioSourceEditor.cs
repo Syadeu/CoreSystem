@@ -13,6 +13,7 @@ namespace SyadeuEditor
     public sealed class UnityAudioSourceEditor : EditorEntity
     {
         private UnityAudioSource m_Scr;
+        private AudioSource m_AudioSource;
         private SerializedProperty m_SelectedPlayType;
 
         private bool m_ShowOriginalContents = false;
@@ -23,8 +24,8 @@ namespace SyadeuEditor
         {
             m_Scr = target as UnityAudioSource;
 
-            AudioSource audio = m_Scr.GetComponent<AudioSource>();
-            serializedObject.FindProperty("m_AudioSource").objectReferenceValue = audio;
+            m_AudioSource = m_Scr.GetComponent<AudioSource>();
+            serializedObject.FindProperty("m_AudioSource").objectReferenceValue = m_AudioSource;
             m_SelectedPlayType = serializedObject.FindProperty("m_PlayType");
 
             serializedObject.ApplyModifiedProperties();
@@ -39,7 +40,9 @@ namespace SyadeuEditor
             EditorGUI.BeginDisabledGroup(true);
             EditorGUILayout.FloatField("Distance From Listener: ", UnityAudioManager.DistanceFromListener(m_Scr.transform));
             EditorGUI.EndDisabledGroup();
+            EditorGUILayout.Space();
 
+            m_AudioSource.playOnAwake = EditorGUILayout.Toggle("Play On Awake: ", m_AudioSource.playOnAwake);
             m_SelectedPlayType.intValue = EditorGUILayout.Popup("Play Type: ", m_SelectedPlayType.intValue, m_PlayTypeString);
 
             EditorGUILayout.Space();

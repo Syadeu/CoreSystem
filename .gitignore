@@ -58,3 +58,5 @@ sysinfo.txt
 # Crashlytics generated file
 crashlytics-build.properties
 
+workspace.code-workspace
+workspace.code-workspace.meta
