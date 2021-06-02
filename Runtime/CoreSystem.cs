@@ -428,7 +428,7 @@ namespace Syadeu
 
             StartCoroutine(UnityWorker());
         }
-        private void OnDestroy()
+        protected override void OnDestroy()
         {
             StopAllCoroutines();
 
@@ -456,6 +456,8 @@ namespace Syadeu
             //    BackgroundThread?.Abort();
             //}
             //catch (Exception) { }
+
+            base.OnDestroy();
         }
         #endregion
 

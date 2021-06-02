@@ -1762,11 +1762,13 @@ namespace Syadeu.Mono
             StartBackgroundUpdate(BackgroundUpdate());
         }
 
-        private void OnDestroy()
+        protected override void OnDestroy()
         {
             m_NavMeshQuery.Dispose();
 
             ClearGrids();
+
+            base.OnDestroy();
         }
         private IEnumerator UnityUpdate()
         {
