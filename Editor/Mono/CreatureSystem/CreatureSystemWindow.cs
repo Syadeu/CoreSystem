@@ -332,7 +332,6 @@ namespace SyadeuEditor
             if (EditorGUI.EndChangeCheck())
             {
                 m_DepTypeName.stringValue = m_DataClassNames[m_SelectedDataClassName];
-                m_SelectedDataSingleToneName = 0; m_SelectedDataArrayName = 0;
 
                 FindAttributeTargets();
 
@@ -343,13 +342,21 @@ namespace SyadeuEditor
                     {
                         m_DepSingleToneName.stringValue = m_DataSingleToneNames[m_SelectedDataSingleToneName];
                     }
-                    else m_DepSingleToneName.stringValue = null;
+                    else
+                    {
+                        m_SelectedDataSingleToneName = 0;
+                        m_DepSingleToneName.stringValue = null;
+                    }
 
                     if (m_DataArrayNames.Length > m_SelectedDataArrayName)
                     {
                         m_DepArrName.stringValue = m_DataArrayNames[m_SelectedDataArrayName];
                     }
-                    else m_DepArrName.stringValue = null;
+                    else
+                    {
+                        m_SelectedDataArrayName = 0;
+                        m_DepArrName.stringValue = null;
+                    }
                 }
                 else
                 {
@@ -357,11 +364,6 @@ namespace SyadeuEditor
                     m_DepArrName.stringValue = null;
                 }
 
-                //if (!string.IsNullOrEmpty(m_SelectedDataAttribute.DataArrayName))
-                //{
-                //    m_DepArrName.stringValue = m_SelectedDataAttribute.DataArrayName;
-                //}
-                
                 SetTargetList();
             }
 

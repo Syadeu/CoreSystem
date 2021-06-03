@@ -13,9 +13,9 @@ namespace Syadeu.Mono
         [SerializeField] private string m_DepTypeName;
         [SerializeField] private string m_DepSingleToneName = "Instance";
         [SerializeField] private string m_DepArrName;
-        [SerializeField] private string m_DepArrElementTypeName;
 
-        [Space]
+        [Space] //
+        [SerializeField] private string m_DepArrElementTypeName;
         [SerializeField] private string m_DepDisplayName;
 
 //#endif
@@ -35,6 +35,8 @@ namespace Syadeu.Mono
             }
             public PrefabList.ObjectSetting GetPrefabSetting() => PrefabList.Instance.ObjectSettings[m_PrefabIdx];
         }
+
+        [Space]
         [SerializeField] private List<PrivateSet> m_PrivateSets = new List<PrivateSet>();
 
         public float m_DontSpawnEnemyWithIn = 10;
