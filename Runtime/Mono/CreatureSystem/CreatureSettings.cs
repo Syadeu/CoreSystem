@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Syadeu.Mono
 {
-    [CustomStaticSetting("Syadeu/Creature")]
+    [PreferBinarySerialization][CustomStaticSetting("Syadeu/Creature")]
     public sealed class CreatureSettings : StaticSettingEntity<CreatureSettings>
     {
 //#if UNITY_EDITOR
