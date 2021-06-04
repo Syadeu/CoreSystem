@@ -384,11 +384,10 @@ namespace Syadeu.Mono
 
         public static int AddRecycleObject(PrefabList.ObjectSetting objectSetting)
         {
+            PrefabList.Instance.ObjectSettings.Add(objectSetting);
             int i = PrefabList.Instance.ObjectSettings.Count;
 
-            RecycleObject obj = new RecycleObject(i, PrefabList.Instance.ObjectSettings[i]);
-
-            PrefabList.Instance.ObjectSettings.Add(objectSetting);
+            RecycleObject obj = new RecycleObject(i, PrefabList.Instance.ObjectSettings[i - 1]);
             Instance.RecycleObjects.Add(i, obj);
 
             Instance.StartBackgroundUpdate(Instance.RecycleInstancesUpdate(obj));
