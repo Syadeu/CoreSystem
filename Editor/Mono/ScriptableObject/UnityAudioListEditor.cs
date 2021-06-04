@@ -1,5 +1,7 @@
-﻿using Syadeu.Mono.Audio;
-using UnityEditor;
+﻿using UnityEditor;
+
+#if CORESYSTEM_UNITYAUDIO
+using Syadeu.Mono.Audio;
 
 namespace SyadeuEditor
 {
@@ -28,3 +30,5 @@ namespace SyadeuEditor
         }
     }
 }
+
+#endif
