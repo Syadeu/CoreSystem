@@ -10,6 +10,19 @@ using Syadeu.Mono;
 public class PrefabManagerTests
 {
     [Test]
+    public void AddNewPrefabTest()
+    {
+        GameObject obj = new GameObject("test");
+        int idx = PrefabManager.AddRecycleObject(new PrefabList.ObjectSetting()
+        {
+            m_Name = "test",
+            Prefab = obj
+        });
+
+        RecycleableMonobehaviour testObj = PrefabManager.GetRecycleObject(idx);
+        Debug.Log($"{testObj.name} has created and returned");
+    }
+    [Test]
     public void GetRecycleObjectTest()
     {
         List<RecycleableMonobehaviour> tempList = new List<RecycleableMonobehaviour>();

@@ -4,6 +4,7 @@ using UnityEngine;
 #if CORESYSTEM_UNITYAUDIO
 namespace Syadeu.Mono.Audio
 {
+    [CustomStaticSetting("Audio")]
     public sealed class UnityAudioList : StaticSettingEntity<UnityAudioList>
     {
         [System.Serializable]
@@ -52,6 +53,10 @@ namespace Syadeu.Mono.Audio
             }
         }
 
+        [SerializeField] private string m_AudioMixerPath = "Resources/Audio/Mixers";
+        [SerializeField] private string m_AudioClipPath = "Resources/Audio/Clips";
+
+        [Space]
         [SerializeField] private Content[] m_Contents = new Content[0];
 
         public Content[] Contents => m_Contents;
