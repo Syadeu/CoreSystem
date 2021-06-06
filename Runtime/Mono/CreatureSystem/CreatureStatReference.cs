@@ -4,6 +4,7 @@ using UnityEngine;
 namespace Syadeu.Mono.Creature
 {
     [PreferBinarySerialization]
+    [CreateAssetMenu(menuName = "CoreSystem/Creature/Stat Reference")]
     public sealed class CreatureStatReference : ScriptableObject
     {
         [Serializable]
@@ -12,8 +13,8 @@ namespace Syadeu.Mono.Creature
             public string m_Name;
             public Index m_Idx;
 
-            public object m_InitValue;
-            public object m_Value;
+            public string m_InitValue;
+            public string m_Value;
 
             // 0 = int
             // 1 = float

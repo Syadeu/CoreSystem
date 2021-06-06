@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 using Syadeu;
 using Syadeu.Mono;
+using Syadeu.Mono.Creature;
 using UnityEditor;
 using UnityEngine;
 
