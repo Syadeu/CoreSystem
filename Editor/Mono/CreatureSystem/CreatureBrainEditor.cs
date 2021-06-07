@@ -37,6 +37,7 @@ namespace SyadeuEditor
             EditorUtils.StringHeader("Creature Brain");
             EditorUtils.SectorLine();
 
+            PrefabListEditor.DrawPrefabAdder(m_Scr.gameObject);
             m_CreatureName.stringValue = EditorGUILayout.TextField("Creature Name: ", m_CreatureName.stringValue);
             EditorGUILayout.LabelField("Description");
             m_CreatureDescription.stringValue = EditorGUILayout.TextArea(m_CreatureDescription.stringValue, GUILayout.MinHeight(50));

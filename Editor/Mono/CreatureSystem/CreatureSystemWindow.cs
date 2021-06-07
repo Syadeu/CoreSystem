@@ -652,8 +652,10 @@ namespace SyadeuEditor
         {
             EditorGUI.BeginChangeCheck();
 
-            //EditorGUILayout.PropertyField(Main.m_DepDisplayName, new GUIContent("List Display Name: "));
+            if (m_DisplayNames.Length == 0) EditorGUILayout.HelpBox($"Value type \"String\" not found in {Main.m_SelectedDataArrayClass.Name}.", MessageType.Error);
+            EditorGUI.BeginDisabledGroup(m_DisplayNames.Length == 0);
             m_SelectedDisplayName = EditorGUILayout.Popup("List Display Name: ", m_SelectedDisplayName, m_DisplayNames);
+            EditorGUI.EndDisabledGroup();
 
             if (EditorGUI.EndChangeCheck())
             {
