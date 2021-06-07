@@ -1,5 +1,5 @@
 ﻿using UnityEditor;
-using Syadeu.Mono;
+using Syadeu.Mono.Creature;
 
 namespace SyadeuEditor
 {

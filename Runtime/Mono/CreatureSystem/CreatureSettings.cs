@@ -1,10 +1,11 @@
 ﻿using Syadeu;
 using Syadeu.Mono;
+using Syadeu.Mono.Creature;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Syadeu.Mono
+namespace Syadeu.Mono.Creature
 {
     [PreferBinarySerialization][CustomStaticSetting("Syadeu/Creature")]
     public sealed class CreatureSettings : StaticSettingEntity<CreatureSettings>
@@ -25,6 +26,7 @@ namespace Syadeu.Mono
         {
             public int m_DataIdx;
             public int m_PrefabIdx = -1;
+            public CreatureStatReference m_StatReference;
 
             public int CompareTo(PrivateSet other)
             {

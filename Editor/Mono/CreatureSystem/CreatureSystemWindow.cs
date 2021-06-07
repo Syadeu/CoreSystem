@@ -25,7 +25,7 @@ namespace SyadeuEditor
         public int m_ToolbarIdx = 0;
         private Rect m_ListRect = new Rect(-1, 144.5f, 0, 0);
         private Vector2 m_ListScroll = Vector2.zero;
-        private Rect m_ListContentRect = new Rect(167, 144.5f, 460, 40);
+        private Rect m_ListContentRect = new Rect(167, 144.5f, 450, 40);
 
         private Color
             m_SelectColor = new Color(0, 1, 0);
@@ -56,6 +56,7 @@ namespace SyadeuEditor
         public string[] m_DataSingleToneNames = new string[0];
         public int m_SelectedDataArrayName = 0;
         public string[] m_DataArrayNames = new string[0];
+        public Type m_SelectedDataArrayClass = null;
 
         private void OnEnable()
         {
@@ -281,6 +282,40 @@ namespace SyadeuEditor
                     tempNames.Add(candidates[i].Name);
                 }
                 m_DataArrayNames = tempNames.ToArray();
+                for (int i = 0; i < m_DataArrayNames.Length; i++)
+                {
+                    if (m_DataArrayNames[i].Equals(m_DepArrName.stringValue))
+                    {
+                        m_SelectedDataArrayName = i;
+                        MemberInfo temp = m_SelectedDataClass.GetMembers()
+                            .Where((other) => other.Name.Equals(m_DataArrayNames[i]))
+                            .First();
+                        if (temp is FieldInfo field)
+                        {
+                            if (field.FieldType.IsArray)
+                            {
+                                m_SelectedDataArrayClass = field.FieldType.GetElementType();
+                            }
+                            else if (field.FieldType.GenericTypeArguments.Length > 0)
+                            {
+                                m_SelectedDataArrayClass = field.FieldType.GenericTypeArguments[0];
+                            }
+                        }
+                        //else if (temp is PropertyInfo property)
+                        //{
+                        //    if (property.PropertyType.IsArray)
+                        //    {
+                        //        m_SelectedDataArrayClass = property.PropertyType.GetElementType();
+                        //    }
+                        //    else if (property.PropertyType.GenericTypeArguments.Length > 0)
+                        //    {
+                        //        m_SelectedDataArrayClass = property.PropertyType.GenericTypeArguments[0];
+                        //    }
+                        //}
+
+                        break;
+                    }
+                }
 
                 #endregion
             }
@@ -556,11 +591,37 @@ namespace SyadeuEditor
         // CreatureSettings
         private SerializedProperty m_PrivateSets;
 
+        private int m_SelectedDisplayName = 0;
+        private string[] m_DisplayNames = new string[0];
+
         protected override void OnInitialize()
         {
             if (Main == null) CoreSystemMenuItems.CreatureWindow();
 
             m_PrivateSets = Main.m_CreatureSettings.FindProperty("m_PrivateSets");
+
+            MemberInfo[] temp;
+            #region Name Reflection
+            temp = Main.m_SelectedDataArrayClass.GetMembers(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)
+                .Where((other) =>
+                {
+                    if (other is FieldInfo field && field.FieldType.Equals(typeof(string)))
+                    {
+                        return true;
+                    }
+                    return false;
+                })
+                .ToArray();
+            m_DisplayNames = new string[temp.Length];
+            for (int i = 0; i < temp.Length; i++)
+            {
+                m_DisplayNames[i] = temp[i].Name;
+                if (Main.m_DepDisplayName.stringValue.Equals(temp[i].Name))
+                {
+                    m_SelectedDisplayName = i;
+                }
+            }
+            #endregion
         }
         protected override void OnGUIDraw()
         {
@@ -570,15 +631,7 @@ namespace SyadeuEditor
 
             EditorGUILayout.Space();
             EditorUtils.StringHeader("Reflections", 14);
-
-            EditorGUI.BeginChangeCheck();
-            EditorGUILayout.PropertyField(Main.m_DepDisplayName, new GUIContent("List Display Name: ")/*, GUILayout.Width(150)*/);
-
-            if (EditorGUI.EndChangeCheck())
-            {
-                Main.m_CreatureSettings.ApplyModifiedProperties();
-                Main.SetTargetList();
-            }
+            DrawReflections();
 
             EditorUtils.SectorLine();
 
@@ -595,6 +648,21 @@ namespace SyadeuEditor
 
             EditorGUI.indentLevel -= 1;
         }
+        private void DrawReflections()
+        {
+            EditorGUI.BeginChangeCheck();
+
+            //EditorGUILayout.PropertyField(Main.m_DepDisplayName, new GUIContent("List Display Name: "));
+            m_SelectedDisplayName = EditorGUILayout.Popup("List Display Name: ", m_SelectedDisplayName, m_DisplayNames);
+
+            if (EditorGUI.EndChangeCheck())
+            {
+                Main.m_DepDisplayName.stringValue = m_DisplayNames[m_SelectedDisplayName];
+
+                Main.m_CreatureSettings.ApplyModifiedProperties();
+                Main.SetTargetList();
+            }
+        }
 
         private void DrawPrivateSet()
         {
@@ -607,6 +675,8 @@ namespace SyadeuEditor
 
             EditorGUILayout.HelpBox("Loaded List From Prefab List", MessageType.Info);
             Main.m_CreatureSelectedSet.m_PrefabIdx = PrefabListEditor.DrawPrefabSelector(Main.m_CreatureSelectedSet.m_PrefabIdx);
+            Main.m_CreatureSelectedSet.m_StatReference = (CreatureStatReference)EditorGUILayout.ObjectField("Stat Ref: ", Main.m_CreatureSelectedSet.m_StatReference, typeof(CreatureStatReference), false);
+
 
             if (EditorGUI.EndChangeCheck())
             {
