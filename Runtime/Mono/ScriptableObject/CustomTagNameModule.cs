@@ -1,9 +1,6 @@
-﻿
-using Syadeu.Database;
+﻿using Syadeu.Database;
 using System.Collections.Generic;
 using UnityEngine;
-#if UNITY_EDITOR
-#endif
 
 namespace Syadeu.Mono
 {

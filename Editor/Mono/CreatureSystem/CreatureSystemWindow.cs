@@ -677,7 +677,6 @@ namespace SyadeuEditor
             Main.m_CreatureSelectedSet.m_PrefabIdx = PrefabListEditor.DrawPrefabSelector(Main.m_CreatureSelectedSet.m_PrefabIdx);
             Main.m_CreatureSelectedSet.m_StatReference = (CreatureStatReference)EditorGUILayout.ObjectField("Stat Ref: ", Main.m_CreatureSelectedSet.m_StatReference, typeof(CreatureStatReference), false);
 
-
             if (EditorGUI.EndChangeCheck())
             {
                 EditorUtility.SetDirty(CreatureSettings.Instance);

@@ -34,8 +34,23 @@ namespace SyadeuEditor
             EditorApplication.ExecuteMenuItem("Window/General/Inspector");
         }
 
+        public static ItemDesigner m_ItemDesignerWindow;
+        [MenuItem("CoreSystem/Designer/Item", priority = 100)]
+        public static void ItemDesigner()
+        {
+            if (m_ItemDesignerWindow == null)
+            {
+                m_ItemDesignerWindow = GetWindow<ItemDesigner>();
+                m_ItemDesignerWindow.titleContent = new GUIContent("Creature Window");
+                //m_ItemDesignerWindow.minSize = new Vector2(620, m_CreatureWindow.minSize.y);
+                //m_ItemDesignerWindow.maxSize = new Vector2(620, m_CreatureWindow.maxSize.y);
+            }
+
+            m_ItemDesignerWindow.Show();
+        }
+
         public static CreatureSystemWindow m_CreatureWindow;
-        [MenuItem("CoreSystem/Creature/Window", priority = 100)]
+        [MenuItem("CoreSystem/Creature/Window", priority = 200)]
         public static void CreatureWindow()
         {
             if (m_CreatureWindow == null)
@@ -48,7 +63,8 @@ namespace SyadeuEditor
 
             m_CreatureWindow.Show();
         }
-        [MenuItem("CoreSystem/Creature/Edit Creature Settings", priority = 101)]
+
+        [MenuItem("CoreSystem/Creature/Edit Creature Settings", priority = 201)]
         public static void CreatureSettingsWindow()
         {
             Selection.activeObject = CreatureSettings.Instance;
@@ -56,7 +72,7 @@ namespace SyadeuEditor
         }
 
         static SQLiteWindow m_SQLiteWindow;
-        [MenuItem("CoreSystem/SQLite/SQLite Window", priority = 200)]
+        [MenuItem("CoreSystem/SQLite/SQLite Window", priority = 300)]
         public static void Initialize()
         {
             if (m_SQLiteWindow == null)
@@ -70,7 +86,7 @@ namespace SyadeuEditor
         }
 
 #if CORESYSTEM_FMOD
-        [MenuItem("Syadeu/FMOD/Edit FMOD Settings", priority = 300)]
+        [MenuItem("Syadeu/FMOD/Edit FMOD Settings", priority = 400)]
         public static void FMODSettingsMenu()
         {
             Selection.activeObject = FMODSettings.Instance;
