@@ -316,9 +316,13 @@ namespace SyadeuEditor
         //{
         //    return GUILayout.Button(name, btt ? toggleBttStyleToggled : toggleBttStyleNormal, options);
         //}
+
+        public const string FoldoutOpendString = "▼";
+        public const string FoldoutClosedString = "▶";
+
         public static bool Foldout(bool foldout, string name, int size = -1)
         {
-            string firstKey = foldout ? "▼" : "▶";
+            string firstKey = foldout ? FoldoutOpendString : FoldoutClosedString;
             if (size < 0)
             {
                 return EditorGUILayout.Foldout(foldout, String($"{firstKey} {name}", StringColor.grey), true, HeaderStyle);

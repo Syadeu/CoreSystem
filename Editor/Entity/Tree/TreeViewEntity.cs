@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
@@ -329,5 +330,153 @@ namespace SyadeuEditor.Tree
         {
             Data = data;
         }
+    }
+
+    public class VerticalTreeView
+    {
+        private SearchField m_SearchField;
+        private string m_SearchString = null;
+
+        private List<VerticalTreeElement> m_Elements;
+
+        public VerticalTreeView(params VerticalTreeElement[] elements)
+        {
+            m_SearchField = new SearchField();
+            SetupElements(elements);
+        }
+        private void SetupElements(params VerticalTreeElement[] elements)
+        {
+            List<VerticalTreeElement> temp = new List<VerticalTreeElement>(elements);
+            for (int i = temp.Count - 1; i >= 0; i--)
+            {
+                if (temp[i].Parent != null)
+                {
+                    if (!temp[i].m_Childs.Contains(temp[i]))
+                    {
+                        temp[i].m_Childs.Add(temp[i]);
+                    }
+                    temp.RemoveAt(i);
+                }
+            }
+
+            m_Elements = temp;
+        }
+
+        public void OnGUI()
+        {
+            BeforeDraw();
+            m_SearchString = m_SearchField.OnGUI(GUILayoutUtility.GetRect(Screen.width, 20), m_SearchString);
+            BeforeDrawChilds();
+            for (int i = 0; i < m_Elements.Count; i++)
+            {
+                if (!string.IsNullOrEmpty(m_SearchString))
+                {
+                    if (!m_Elements[i].Name.Contains(m_SearchString)) continue;
+                }
+                DrawChild(m_Elements[i]);
+
+                if (i + 1 < m_Elements.Count) EditorUtils.SectorLine();
+            }
+            AfterDraw();
+        }
+        public void RemoveElements(params VerticalTreeElement[] elements)
+        {
+            m_Elements = m_Elements.Where((other) => !elements.Contains(other)).ToList();
+        }
+
+        protected virtual void BeforeDraw() { }
+        protected virtual void BeforeDrawChilds() { }
+        protected virtual void AfterDraw() { }
+
+        protected virtual void DrawChild(VerticalTreeElement e)
+        {
+            if (e.HasChilds)
+            {
+                e.m_Opened = EditorUtils.Foldout(e.m_Opened, e.Name);
+                if (e.m_Opened)
+                {
+                    e.OnGUI();
+
+                    EditorGUILayout.Space();
+
+                    EditorGUI.indentLevel += 1;
+                    for (int i = 0; i < e.Childs.Count; i++)
+                    {
+                        DrawChild(e.Childs[i]);
+                    }
+                    EditorGUI.indentLevel -= 1;
+                }
+            }
+            else
+            {
+                e.OnGUI();
+            }
+        }
+    }
+    public abstract class VerticalTreeElement
+    {
+        private VerticalTreeView m_Tree;
+
+        [SerializeField] protected string m_Name;
+
+        [NonSerialized] internal VerticalTreeElement m_Parent;
+        [NonSerialized] internal List<VerticalTreeElement> m_Childs;
+
+        internal bool m_Opened = false;
+
+        public virtual string Name => m_Name;
+
+        public bool HasChilds => Childs != null && Childs.Count > 0;
+
+        public VerticalTreeElement Parent => m_Parent;
+        public IReadOnlyList<VerticalTreeElement> Childs => m_Childs;
+
+        public VerticalTreeElement(VerticalTreeView tree)
+        {
+            m_Tree = tree;
+        }
+
+        public abstract void OnGUI();
+        public void SetParent(VerticalTreeElement parent)
+        {
+            if (m_Parent != null)
+            {
+                RemoveParent();
+            }
+            else m_Tree.RemoveElements(this);
+
+            if (parent.m_Childs == null) parent.m_Childs = new List<VerticalTreeElement>();
+            parent.m_Childs.Add(this);
+            m_Parent = parent;
+        }
+        public void RemoveParent()
+        {
+            if (m_Parent == null) return;
+
+            if (m_Parent.Childs.Count == 1)
+            {
+                m_Parent.m_Childs = null;
+            }
+            else m_Parent.m_Childs.Remove(this);
+            m_Parent = null;
+        }
+
+        protected Rect GetRect(float width, float height) => GUILayoutUtility.GetRect(width, height);
+    }
+    public sealed class VerticalLabelTreeElement : VerticalTreeElement
+    {
+        private string m_Label1 = null;
+        private string m_Label2 = null;
+
+        public VerticalLabelTreeElement(VerticalTreeView tree, string label) : base(tree)
+        {
+            m_Label1 = label;
+        }
+        public VerticalLabelTreeElement(VerticalTreeView tree, string label1, string label2) : base(tree)
+        {
+            m_Label1 = label1; m_Label2 = label2;
+        }
+
+        public override void OnGUI() => EditorGUILayout.LabelField(m_Label1, m_Label2);
     }
 }
