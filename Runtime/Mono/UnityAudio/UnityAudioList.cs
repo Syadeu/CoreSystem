@@ -1,5 +1,6 @@
 ﻿
 using UnityEngine;
+using UnityEngine.Audio;
 
 #if CORESYSTEM_UNITYAUDIO
 namespace Syadeu.Mono.Audio
@@ -25,7 +26,9 @@ namespace Syadeu.Mono.Audio
             public bool m_IsLoop = false;
             public bool m_Is3D = true;
 
+            [Space]
             public UnityAudioSource m_BaseSetting = null;
+            public AudioMixerGroup m_AudioGroup = null;
 
             [Space]
             [SerializeField] [Range(0, 1)] private float m_VolumeMin = 1;

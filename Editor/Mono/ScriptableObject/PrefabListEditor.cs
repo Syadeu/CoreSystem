@@ -2,6 +2,7 @@
 using Syadeu.Mono;
 using System.Collections.Generic;
 using UnityEditor;
+using UnityEngine;
 
 namespace SyadeuEditor
 {
@@ -47,12 +48,48 @@ namespace SyadeuEditor
             }
         }
 
+        public static bool HasPrefab(GameObject obj)
+        {
+            for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
+            {
+                if (PrefabList.Instance.ObjectSettings[i].Prefab.Equals(obj))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
         public static int DrawPrefabSelector(int i)
         {
             CheckConditions();
             i = EditorGUILayout.Popup("Prefab: ", i, m_PrefabNames);
 
             return i;
+        }
+        public static void DrawPrefabAdder(GameObject obj)
+        {
+            if (!PrefabUtility.IsPartOfAnyPrefab(obj))
+            {
+                if (GUILayout.Button("Create Prefab"))
+                {
+                    //string temp = EditorUtility.OpenFolderPanel("Set prefab save path", Application.)
+                }
+
+                return;
+            }
+            GameObject prefab = PrefabUtility.GetCorrespondingObjectFromSource(obj);
+            EditorGUI.BeginDisabledGroup(HasPrefab(prefab));
+
+            if (GUILayout.Button("Add Prefab"))
+            {
+                PrefabManager.AddRecycleObject(new PrefabList.ObjectSetting()
+                {
+                    m_Name = prefab.name,
+                    Prefab = prefab,
+                });
+            }
+
+            EditorGUI.EndDisabledGroup();
         }
     }
 }
