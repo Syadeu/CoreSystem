@@ -30,8 +30,6 @@ namespace SyadeuEditor.Tree
             m_ID = id;
         }
 
-        public virtual void DrawGUI(Rect rect, int column)
-        {
-        }
+        public abstract void DrawGUI(Rect rect, int column);
     }
 }

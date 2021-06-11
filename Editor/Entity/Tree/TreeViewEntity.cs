@@ -135,26 +135,26 @@ namespace SyadeuEditor.Tree
         {
             CenterRectUsingSingleLineHeight(ref cellRect);
 
+            item.Data.DrawGUI(cellRect, column);
+            //switch (column)
+            //{
+            //    case 0:
+            //        //Rect toggleRect = cellRect;
+            //        //toggleRect.x += GetContentIndent(item);
+            //        //toggleRect.width = kToggleWidth;
+            //        //if (toggleRect.xMax < cellRect.xMax)
+            //        //    item.Data.enabled = EditorGUI.Toggle(toggleRect, item.Data.enabled); // hide when outside cell rect
+            //        //Rect temp = cellRect;
+            //        //temp.x += GetContentIndent(item);
+            //        ////EditorGUI.LabelField(temp, $"{item.Data.Name}");
 
-            switch (column)
-            {
-                case 0:
-                    //Rect toggleRect = cellRect;
-                    //toggleRect.x += GetContentIndent(item);
-                    //toggleRect.width = kToggleWidth;
-                    //if (toggleRect.xMax < cellRect.xMax)
-                    //    item.Data.enabled = EditorGUI.Toggle(toggleRect, item.Data.enabled); // hide when outside cell rect
-                    //Rect temp = cellRect;
-                    //temp.x += GetContentIndent(item);
-                    ////EditorGUI.LabelField(temp, $"{item.Data.Name}");
-
-                    args.rowRect = cellRect;
-                    base.RowGUI(args);
-                    break;
-                default:
-                    item.Data.DrawGUI(cellRect, column);
-                    break;
-            }
+            //        args.rowRect = cellRect;
+            //        base.RowGUI(args);
+            //        break;
+            //    default:
+            //        item.Data.DrawGUI(cellRect, column);
+            //        break;
+            //}
         }
 
 
@@ -179,7 +179,7 @@ namespace SyadeuEditor.Tree
             }
         }
 
-        public static MultiColumnHeaderState CreateDefaultMultiColumnHeaderState(float treeViewWidth)
+        public static MultiColumnHeaderState CreateDefaultMultiColumnHeaderState()
         {
             var columns = new[]
             {

@@ -1,4 +1,6 @@
-﻿namespace SyadeuEditor.Tree
+﻿using UnityEngine;
+
+namespace SyadeuEditor.Tree
 {
     public sealed class TreeFolderElement : TreeElementEntity
     {
@@ -9,5 +11,6 @@
         {
 
         }
+        public override void DrawGUI(Rect rect, int column) { }
     }
 }
