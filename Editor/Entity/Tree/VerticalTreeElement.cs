@@ -7,7 +7,7 @@ namespace SyadeuEditor.Tree
 {
     public abstract class VerticalTreeElement
     {
-        public bool m_EnableFoldout;
+        public bool m_EnableFoldout = true;
 
         [SerializeField] protected string m_Name;
 
@@ -19,6 +19,7 @@ namespace SyadeuEditor.Tree
         internal bool m_Opened = false;
 
         public virtual string Name => m_Name;
+        public abstract object Data { get; }
 
         public bool HasChilds => Childs != null && Childs.Count > 0;
 
