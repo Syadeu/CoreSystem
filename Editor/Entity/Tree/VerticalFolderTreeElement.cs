@@ -6,11 +6,11 @@ namespace SyadeuEditor.Tree
     {
         public string m_Description = null;
 
-        public VerticalFolderTreeElement(VerticalTreeView tree, string name) : base(tree)
+        public VerticalFolderTreeElement(VerticalTreeViewEntity tree, string name) : base(tree)
         {
             m_Name = name;
         }
-        public VerticalFolderTreeElement(VerticalTreeView tree, string name, string description) : base(tree)
+        public VerticalFolderTreeElement(VerticalTreeViewEntity tree, string name, string description) : base(tree)
         {
             m_Name = name;
             m_Description = description;
@@ -21,6 +21,10 @@ namespace SyadeuEditor.Tree
         public override void OnGUI()
         {
             if (!string.IsNullOrEmpty(m_Description)) EditorGUILayout.LabelField(m_Description);
+        }
+
+        protected override void OnRemove()
+        {
         }
     }
 }
