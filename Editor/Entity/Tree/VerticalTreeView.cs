@@ -16,7 +16,9 @@ namespace SyadeuEditor.Tree
         private Func<VerticalTreeElement, string, bool> m_CustomSearchFilter = null;
 
         public int m_CurrentDrawChilds = 0;
-        public event Action OnSearchFieldChanged;
+        public event Action<string> OnSearchFieldChanged;
+
+        public IReadOnlyList<VerticalTreeElement> Elements => m_Elements;
 
         public VerticalTreeView(params VerticalTreeElement[] elements)
         {
@@ -29,6 +31,8 @@ namespace SyadeuEditor.Tree
             else m_Elements.Clear();
 
             m_Elements.AddRange(elements);
+
+            SearchFieldChagned(in m_SearchString);
         }
 
         public void OnGUI()
@@ -42,7 +46,7 @@ namespace SyadeuEditor.Tree
             BeforeDrawChilds();
             for (int i = 0; i < m_Elements.Count; i++)
             {
-                if (!VaildateDrawChild(m_Elements[i])) continue;
+                if (m_Elements[i].m_HideElementInTree) continue;
 
                 DrawChild(m_Elements[i]);
                 m_CurrentDrawChilds += 1;
@@ -69,6 +73,14 @@ namespace SyadeuEditor.Tree
 
         private void DrawChild(VerticalTreeElement e)
         {
+            if (ValidateDrawParentChild(e))
+            {
+                if (!string.IsNullOrEmpty(m_SearchString))
+                {
+                    e.Expend();
+                }
+            }
+
             if (e.HasChilds)
             {
                 EditorGUI.indentLevel += 1;
@@ -78,11 +90,10 @@ namespace SyadeuEditor.Tree
                 {
                     EditorGUI.indentLevel += 1;
                     e.OnGUI();
-                    EditorGUI.indentLevel -= 1;
 
                     EditorGUILayout.Space();
+                    EditorGUILayout.LabelField("Childs");
 
-                    EditorGUI.indentLevel += 1;
                     for (int i = 0; i < e.Childs.Count; i++)
                     {
                         DrawChild(e.Childs[i]);
@@ -115,28 +126,44 @@ namespace SyadeuEditor.Tree
             m_SearchString = m_SearchField.OnGUI(GUILayoutUtility.GetRect(Screen.width, 20), m_SearchString);
             if (EditorGUI.EndChangeCheck())
             {
-                SearchFieldChagned();
-                OnSearchFieldChanged?.Invoke();
+                SearchFieldChagned(in m_SearchString);
+                OnSearchFieldChanged?.Invoke(m_SearchString);
             }
         }
-        private bool VaildateDrawChild(VerticalTreeElement e)
+        private bool ValidateDrawParent(VerticalTreeElement e)
         {
             if (e.Parent != null) return false;
+            
+            return ValidateDrawParentChild(e);
+        }
+        private bool ValidateDrawParentChild(VerticalTreeElement child)
+        {
             if (string.IsNullOrEmpty(m_SearchString)) return true;
-
             if (m_CustomSearchFilter != null)
             {
-                if (!m_CustomSearchFilter.Invoke(e, m_SearchString)) return false;
+                if (m_CustomSearchFilter.Invoke(child, m_SearchString)) return true;
             }
             else
             {
-                if (!e.Name.Contains(m_SearchString)) return false;
+                if (child.Name.Contains(m_SearchString)) return true;
             }
 
-            return true;
+            if (child.HasChilds)
+            {
+                for (int i = 0; i < child.Childs.Count; i++)
+                {
+                    if (ValidateDrawParentChild(child.Childs[i])) return true;
+                }
+            }
+            return false;
         }
-        protected virtual void SearchFieldChagned()
+
+        protected virtual void SearchFieldChagned(in string field)
         {
+            for (int i = 0; i < m_Elements.Count; i++)
+            {
+                m_Elements[i].m_HideElementInTree = !ValidateDrawParent(m_Elements[i]);
+            }
         }
 
         public VerticalLabelTreeElement Label(string label) => new VerticalLabelTreeElement(this, label);

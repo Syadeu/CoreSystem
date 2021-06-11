@@ -14,6 +14,7 @@ namespace SyadeuEditor.Tree
         [NonSerialized] private VerticalTreeView m_Tree;
         [NonSerialized] internal VerticalTreeElement m_Parent;
         [NonSerialized] internal List<VerticalTreeElement> m_Childs;
+        [NonSerialized] internal bool m_HideElementInTree = false;
 
         internal bool m_Opened = false;
 
@@ -52,6 +53,11 @@ namespace SyadeuEditor.Tree
             }
             else m_Parent.m_Childs.Remove(this);
             m_Parent = null;
+        }
+        public void Expend()
+        {
+            m_Opened = true;
+            if (Parent != null) Parent.Expend();
         }
 
         protected Rect GetRect(float width, float height) => GUILayoutUtility.GetRect(width, height);
