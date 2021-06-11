@@ -7,10 +7,11 @@ namespace SyadeuEditor.Tree
 {
     public abstract class VerticalTreeElement
     {
-        private VerticalTreeView m_Tree;
+        public bool m_EnableFoldout;
 
         [SerializeField] protected string m_Name;
 
+        [NonSerialized] private VerticalTreeView m_Tree;
         [NonSerialized] internal VerticalTreeElement m_Parent;
         [NonSerialized] internal List<VerticalTreeElement> m_Childs;
 
