@@ -7,7 +7,6 @@ namespace SyadeuEditor.Tree
 {
     public class VerticalTreeView : VerticalTreeViewEntity
     {
-        protected UnityEngine.Object m_Asset;
         protected IList m_Data;
         protected Func<object, VerticalTreeElement> m_DataSetup;
 
@@ -15,13 +14,8 @@ namespace SyadeuEditor.Tree
 
         public event Func<IList> OnAddButton;
 
-        
-        
-        public VerticalTreeView(UnityEngine.Object asset)
-        {
-            m_Asset = asset;
-            OnInitialize();
-        }
+        public VerticalTreeView(UnityEngine.Object asset) : base(asset) { }
+
         public VerticalTreeView SetupElements(IList list, Func<object, VerticalTreeElement> func)
         {
             m_Data = list;
@@ -52,6 +46,7 @@ namespace SyadeuEditor.Tree
             {
                 m_Data = OnAddButton?.Invoke();
                 SetupElements(m_Data, m_DataSetup);
+                EditorUtility.SetDirty(Asset);
             }
 
             m_CurrentDrawChilds = 0;

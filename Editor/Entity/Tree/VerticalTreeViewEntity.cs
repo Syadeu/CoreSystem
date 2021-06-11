@@ -7,8 +7,14 @@ using UnityEngine;
 
 namespace SyadeuEditor.Tree
 {
+    /// <summary>
+    /// Internal class for construct <see cref="VerticalTreeView"/>
+    /// </summary>
     public abstract class VerticalTreeViewEntity
     {
+        private UnityEngine.Object m_Asset;
+        public UnityEngine.Object Asset => m_Asset;
+
         protected List<VerticalTreeElement> m_Elements = new List<VerticalTreeElement>();
         public IReadOnlyList<VerticalTreeElement> Elements => m_Elements;
         internal List<VerticalTreeElement> I_Elements => m_Elements;
@@ -27,6 +33,11 @@ namespace SyadeuEditor.Tree
         private string[] m_ToolbarNames = null;
         private int m_SelectedToolbar = 0;
         #endregion
+
+        public VerticalTreeViewEntity(UnityEngine.Object asset)
+        {
+            m_Asset = asset;
+        }
 
         public void MakeCustomSearchFilter(Func<VerticalTreeElement, string, bool> predicate)
         {
@@ -54,11 +65,9 @@ namespace SyadeuEditor.Tree
             return output;
         }
 
-        protected virtual void OnInitialize() { }
         protected virtual void BeforeDraw() { }
         protected virtual void BeforeDrawChilds() { }
         protected virtual void AfterDraw() { }
-        protected virtual void OnDrawFoldout(VerticalTreeElement e) { }
         protected virtual void ToolbarChanged(ref int idx) { }
         protected virtual void SearchFieldChanged(in string field)
         {
@@ -101,7 +110,9 @@ namespace SyadeuEditor.Tree
 
                 if (e.m_Opened)
                 {
+                    EditorGUI.BeginChangeCheck();
                     e.OnGUI();
+                    if (EditorGUI.EndChangeCheck()) EditorUtility.SetDirty(m_Asset);
 
                     for (int i = 0; i < e.Childs?.Count; i++)
                     {
@@ -125,7 +136,6 @@ namespace SyadeuEditor.Tree
                         EditorGUI.indentLevel -= 1;
                         return;
                     }
-                    OnDrawFoldout(e);
                     EditorGUILayout.EndHorizontal();
 
                     EditorGUI.indentLevel -= 1;
@@ -137,7 +147,9 @@ namespace SyadeuEditor.Tree
                 }
 
                 EditorGUI.indentLevel += 1;
+                EditorGUI.BeginChangeCheck();
                 e.OnGUI();
+                if (EditorGUI.EndChangeCheck()) EditorUtility.SetDirty(m_Asset);
                 EditorGUI.indentLevel -= 1;
             }
         }
@@ -156,6 +168,8 @@ namespace SyadeuEditor.Tree
             if (GUILayout.Button("-", GUILayout.Width(20)))
             {
                 e.Remove();
+                EditorUtility.SetDirty(m_Asset);
+
                 return true;
             }
             return false;
