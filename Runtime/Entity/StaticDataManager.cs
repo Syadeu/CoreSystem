@@ -15,6 +15,12 @@ namespace Syadeu
             {
                 if (m_Instance == null)
                 {
+                    m_Instance = CoreSystem.GetManager<T>();
+                    if (m_Instance != null)
+                    {
+                        return m_Instance;
+                    }
+
                     T ins = Activator.CreateInstance<T>();
 
                     ins.OnInitialize();

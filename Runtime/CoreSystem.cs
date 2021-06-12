@@ -363,21 +363,31 @@ namespace Syadeu
         [RuntimeInitializeOnLoadMethod]
         private static void OnGameStart()
         {
+            const string InstanceStr = "Instance";
+
             Instance.Initialize(SystemFlag.MainSystem);
 
             Type[] internalTypes = typeof(CoreSystem).Assembly.GetTypes()
                 .Where(other => other.GetCustomAttribute<StaticManagerIntializeOnLoadAttribute>() != null)
                 .ToArray();
+
+            MethodInfo method = null;
             for (int i = 0; i < internalTypes.Length; i++)
             {
-                Type staticManager = typeof(StaticManager<>).MakeGenericType(internalTypes[i]);
-                if (internalTypes[i].BaseType != staticManager)
+                method = internalTypes[i].BaseType.GetProperty(InstanceStr)?.GetGetMethod();
+                if (method == null)
                 {
                     throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
                         $"{internalTypes[i].Name}: StaticManagerInitializeOnLoad 어트리뷰트는 StaticManager를 상속받은 객체에만 사용되어야합니다.");
                 }
+                method.Invoke(null, null);
 
-                staticManager.GetProperty("Instance").GetGetMethod().Invoke(null, null);
+                //Type staticManager = typeof(StaticManager<>).MakeGenericType(internalTypes[i]);
+                //if (internalTypes[i].BaseType == staticManager)
+                //{
+                //    staticManager.GetProperty(InstanceStr).GetGetMethod().Invoke(null, null);
+                //    continue;
+                //}
             }
 
             if (SyadeuSettings.Instance.m_EnableAutoStaticInitialize)
@@ -391,14 +401,22 @@ namespace Syadeu
 
                     for (int j = 0; j < types.Length; j++)
                     {
-                        Type staticManager = typeof(StaticManager<>).MakeGenericType(types[j]);
-                        if (types[j].BaseType != staticManager)
+                        method = types[j].BaseType.GetProperty(InstanceStr)?.GetGetMethod();
+                        if (method == null)
                         {
                             throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
                                 $"{types[j].Name}: StaticManagerInitializeOnLoad 어트리뷰트는 StaticManager를 상속받은 객체에만 사용되어야합니다.");
                         }
+                        method.Invoke(null, null);
+                        //Type staticManager = typeof(StaticManager<>).MakeGenericType(types[j]);
+                        //if (types[j].BaseType == staticManager)
+                        //{
+                        //    staticManager.GetProperty(InstanceStr).GetGetMethod().Invoke(null, null);
+                        //    continue;
+                        //}
 
-                        staticManager.GetProperty("Instance").GetGetMethod().Invoke(null, null);
+                        //throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                        //        $"{types[j].Name}: StaticManagerInitializeOnLoad 어트리뷰트는 StaticManager를 상속받은 객체에만 사용되어야합니다.");
                     }
                 }
             }
@@ -1146,7 +1164,7 @@ namespace Syadeu
                         CoreSystemException.SendCrash(CoreSystemExceptionFlag.Foreground,
                             "업데이트 문을 실행하는 중 에러가 발생했습니다", ex);
 #endif
-                    }
+                    }   
                 }
 
                 if (m_RoutineChanged)

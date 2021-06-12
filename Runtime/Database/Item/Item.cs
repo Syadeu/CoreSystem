@@ -21,6 +21,14 @@ namespace Syadeu.Database
         All = ~0
     }
 
+    [StaticManagerIntializeOnLoad]
+    public sealed class ItemDataManager : StaticDataManager<ItemDataManager>
+    {
+        private const string c_DataPath = "/Syadeu/ItemData/";
+        private const string c_FileExtension = ".json";
+        public static string DataPath => Application.persistentDataPath + c_DataPath;
+    }
+
     [Serializable]
     public sealed class Item
     {
