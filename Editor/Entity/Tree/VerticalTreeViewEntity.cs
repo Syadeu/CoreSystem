@@ -52,6 +52,8 @@ namespace SyadeuEditor.Tree
         }
         public VerticalFolderTreeElement GetOrCreateFolder(string name)
         {
+            name = name.Trim();
+
             var temp = m_Elements.Where((other) => (other is VerticalFolderTreeElement) && other.Name.Equals(name));
 
             VerticalFolderTreeElement output;
@@ -95,12 +97,13 @@ namespace SyadeuEditor.Tree
         }
         internal protected void DrawChild(VerticalTreeElement e)
         {
-            if (ValidateDrawParentChild(e))
+            if (!string.IsNullOrEmpty(m_SearchString))
             {
-                if (!string.IsNullOrEmpty(m_SearchString))
+                if (ValidateDrawParentChild(e))
                 {
                     e.Expend();
                 }
+                else return;
             }
 
             if (e.HasChilds)

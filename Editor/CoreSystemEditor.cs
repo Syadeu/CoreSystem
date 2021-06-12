@@ -1,4 +1,5 @@
 ﻿using Syadeu;
+using SyadeuEditor.Tree;
 #if CORESYSTEM_FMOD
 using Syadeu.FMOD;
 #endif
@@ -12,10 +13,109 @@ using UnityEngine;
 namespace SyadeuEditor
 {
     [CustomEditor(typeof(CoreSystem))]
-    public sealed class CoreSystemEditor : Editor
+    public sealed class CoreSystemEditor : EditorEntity<CoreSystem>
     {
         private bool m_OpenBackgroundRoutines = false;
 
+        private void OnEnable()
+        {
+            m_RoutinesView = new VerticalTreeView(Asset);
+            m_RoutinesView.MakeCustomSearchFilter((e, str) =>
+            {
+                str = str.ToLower();
+                if (e is RoutineTreeElement routineElement)
+                {
+                    if (routineElement.Routine.ObjectName.ToLower().Contains(str)) return true;
+                }
+                else if (e.Name.ToLower().Contains(str))
+                {
+                    return true;
+                }
+                return false;
+            });
+            if (Application.isPlaying)
+            {
+                CoreSystem.Instance.OnRoutineChanged += Instance_OnRoutineChanged;
+            }
+        }
+        private void OnDisable()
+        {
+            if (Application.isPlaying)
+            {
+                CoreSystem.Instance.OnRoutineChanged -= Instance_OnRoutineChanged;
+            }
+        }
+
+        private void Instance_OnRoutineChanged()
+        {
+            if (m_Routines.Count != CoreSystem.Instance.GetCustomBackgroundUpdateCount() + CoreSystem.Instance.GetCustomUpdateCount())
+            {
+                ValidateRoutineView();
+            }
+        }
+
+        VerticalTreeView m_RoutinesView;
+        List<CoreRoutine> m_Routines = new List<CoreRoutine>();
+        private class RoutineTreeElement : VerticalTreeElement
+        {
+            private CoreRoutine m_Routine;
+            public CoreRoutine Routine => m_Routine;
+
+            public RoutineTreeElement(VerticalTreeViewEntity tree, CoreRoutine routine) : base(tree)
+            {
+                m_Routine = routine;
+                m_Name = routine.ObjectName.Split('+')[1];
+            }
+
+            public override object Data => m_Routine;
+
+            public override void OnGUI()
+            {
+                //throw new System.NotImplementedException();
+            }
+
+            protected override void OnRemove()
+            {
+                //throw new System.NotImplementedException();
+            }
+        }
+        private void ValidateRoutineView()
+        {
+            IReadOnlyList<CoreRoutine> backgroundRoutines = CoreSystem.Instance.GetCustomBackgroundUpdates();
+            IReadOnlyList<CoreRoutine> foregroundRoutines = CoreSystem.Instance.GetCustomUpdates();
+
+            m_Routines.Clear();
+            m_Routines.AddRange(backgroundRoutines);
+            m_Routines.AddRange(foregroundRoutines);
+
+            m_RoutinesView
+                .SetupElements(m_Routines, (other) =>
+                {
+                    CoreRoutine routine = (CoreRoutine)other;
+                    VerticalFolderTreeElement folder; RoutineTreeElement element;
+                    if (routine.IsEditor)
+                    {
+                        folder = m_RoutinesView.GetOrCreateFolder("Editor Routine");
+                        element = new RoutineTreeElement(m_RoutinesView, routine);
+                    }
+                    else if (routine.IsBackground)
+                    {
+                        folder = m_RoutinesView.GetOrCreateFolder("Background Routine");
+                        element = new RoutineTreeElement(m_RoutinesView, routine);
+                    }
+                    else
+                    {
+                        folder = m_RoutinesView.GetOrCreateFolder("Foreground Routine");
+                        element = new RoutineTreeElement(m_RoutinesView, routine);
+                    }
+                    string objPath = routine.ObjectName.Split('+')[0];
+                    var topFolder = m_RoutinesView.GetOrCreateFolder(objPath);
+                    element.SetParent(topFolder);
+
+                    topFolder.SetParent(folder);
+                    return element;
+                });
+        }
         public override void OnInspectorGUI()
         {
             EditorUtils.StringHeader("CoreSystem");
@@ -114,6 +214,8 @@ namespace SyadeuEditor
             EditorGUILayout.EndHorizontal();
 
             EditorGUI.EndDisabledGroup();
+            m_RoutinesView.OnGUI();
+
             m_OpenBackgroundRoutines = EditorGUILayout.Foldout(m_OpenBackgroundRoutines, "Open Background Routines");
             if (m_OpenBackgroundRoutines)
             {

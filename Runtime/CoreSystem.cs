@@ -613,9 +613,13 @@ namespace Syadeu
         private bool m_BackgroundDeadFlag = false;
         public event Action OnBackgroundThreadDead;
 
+        private bool m_RoutineChanged = false;
+        public event Action OnRoutineChanged;
+
         public int GetCustomBackgroundUpdateCount() => m_CustomBackgroundUpdates.Count;
         public int GetCustomUpdateCount() => m_CustomUpdates.Count;
         public IReadOnlyList<CoreRoutine> GetCustomBackgroundUpdates() => m_CustomBackgroundUpdates.Keys.ToArray();
+        public IReadOnlyList<CoreRoutine> GetCustomUpdates() => m_CustomUpdates.Keys.ToArray();
 
         private void BackgroundWorker(System.Object stateInfo)
         {
@@ -685,6 +689,7 @@ namespace Syadeu
                     if (OnBackgroundCustomUpdate.TryDequeue(out var value))
                     {
                         m_CustomBackgroundUpdates.TryAdd(value, value.Object);
+                        m_RoutineChanged = true;
                     }
                 }
                 foreach (var item in m_CustomBackgroundUpdates)
@@ -692,12 +697,14 @@ namespace Syadeu
                     if (item.Value == null)
                     {
                         m_CustomBackgroundUpdates.TryRemove(item.Key, out _);
+                        m_RoutineChanged = true;
                         continue;
                     }
                     if (item.Value is IStaticDataManager dataMgr &&
                         dataMgr.Disposed)
                     {
                         m_CustomBackgroundUpdates.TryRemove(item.Key, out _);
+                        m_RoutineChanged = true;
                         continue;
                     }
 
@@ -708,6 +715,7 @@ namespace Syadeu
                             if (!item.Key.Iterator.MoveNext())
                             {
                                 m_CustomBackgroundUpdates.TryRemove(item.Key, out _);
+                                m_RoutineChanged = true;
                             }
                         }
                         else
@@ -718,6 +726,7 @@ namespace Syadeu
                                 if (!item.Key.Iterator.MoveNext())
                                 {
                                     m_CustomBackgroundUpdates.TryRemove(item.Key, out _);
+                                    m_RoutineChanged = true;
                                 }
                             }
                             else if (item.Key.Iterator.Current.GetType() == typeof(bool) &&
@@ -726,11 +735,13 @@ namespace Syadeu
                                 if (!item.Key.Iterator.MoveNext())
                                 {
                                     m_CustomBackgroundUpdates.TryRemove(item.Key, out _);
+                                    m_RoutineChanged = true;
                                 }
                             }
                             else if (item.Key.Iterator.Current is YieldInstruction baseYield)
                             {
                                 m_CustomUpdates.TryRemove(item.Key, out _);
+                                m_RoutineChanged = true;
                                 throw new CoreSystemException(CoreSystemExceptionFlag.Background,
                                     $"해당 yield return 타입({item.Key.Iterator.Current.GetType().Name})은 지원하지 않습니다");
                             }
@@ -1057,6 +1068,7 @@ namespace Syadeu
                     if (OnUnityCustomUpdate.TryDequeue(out CoreRoutine value))
                     {
                         m_CustomUpdates.TryAdd(value, value.Object);
+                        m_RoutineChanged = true;
                     }
                 }
                 foreach (var item in m_CustomUpdates)
@@ -1064,6 +1076,7 @@ namespace Syadeu
                     if (item.Value == null)
                     {
                         m_CustomUpdates.TryRemove(item.Key, out _);
+                        m_RoutineChanged = true;
                         continue;
                     }
 
@@ -1084,6 +1097,7 @@ namespace Syadeu
                             if (!item.Key.Iterator.MoveNext())
                             {
                                 m_CustomUpdates.TryRemove(item.Key, out _);
+                                m_RoutineChanged = true;
                             }
                         }
                         else
@@ -1094,6 +1108,7 @@ namespace Syadeu
                                 if (!item.Key.Iterator.MoveNext())
                                 {
                                     m_CustomUpdates.TryRemove(item.Key, out _);
+                                    m_RoutineChanged = true;
                                 }
                             }
                             else if (item.Key.Iterator.Current.GetType() == typeof(bool) &&
@@ -1102,12 +1117,13 @@ namespace Syadeu
                                 if (!item.Key.Iterator.MoveNext())
                                 {
                                     m_CustomBackgroundUpdates.TryRemove(item.Key, out _);
+                                    m_RoutineChanged = true;
                                 }
                             }
                             else if (item.Key.Iterator.Current is YieldInstruction baseYield)
                             {
                                 m_CustomUpdates.TryRemove(item.Key, out _);
-
+                                m_RoutineChanged = true;
 #if UNITY_EDITOR
                                 throw new CoreSystemException(CoreSystemExceptionFlag.Foreground,
                                     $"해당 yield return 타입({item.Key.Iterator.Current.GetType().Name})은 지원하지 않습니다");
@@ -1131,6 +1147,11 @@ namespace Syadeu
                             "업데이트 문을 실행하는 중 에러가 발생했습니다", ex);
 #endif
                     }
+                }
+
+                if (m_RoutineChanged)
+                {
+                    OnRoutineChanged?.Invoke();
                 }
                 #endregion
 
