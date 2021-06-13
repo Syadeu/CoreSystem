@@ -1,4 +1,7 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 
 namespace Syadeu.Database
@@ -26,7 +29,22 @@ namespace Syadeu.Database
     {
         private const string c_DataPath = "/Syadeu/ItemData/";
         private const string c_FileExtension = ".json";
+        
         public static string DataPath => Application.persistentDataPath + c_DataPath;
+        internal static string EditorDataPath => $"{Application.dataPath}/../{c_DataPath}";
+
+        private Dictionary<int, Item> m_Items = new Dictionary<int, Item>();
+
+        public override void OnInitialize()
+        {
+            //Resources.LoadAll<>
+        }
+
+        private static void SaveItem(string path, Item item)
+        {
+            string data = JsonConvert.SerializeObject(item);
+            File.WriteAllText(path + $"Item/{item.m_Name}.json", data);
+        }
     }
 
     [Serializable]
