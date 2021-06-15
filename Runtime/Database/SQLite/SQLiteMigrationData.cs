@@ -2,23 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
-
 namespace Syadeu.Database
 {
     public class SQLiteMigrationData : StaticSettingEntity<SQLiteMigrationData>
     {
-#if UNITY_EDITOR
-        [MenuItem("Syadeu/SQLite/Create Migration Data", priority = 201)]
-        public static void EditSettings()
-        {
-            Selection.activeObject = Instance;
-            EditorApplication.ExecuteMenuItem("Window/General/Inspector");
-        }
-#endif
-
         public List<TextAsset> m_Migrations = new List<TextAsset>();
 
         public Dictionary<string, string> MigrationData { get; } = new Dictionary<string, string>();
