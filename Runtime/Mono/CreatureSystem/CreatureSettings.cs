@@ -1,21 +1,22 @@
 ﻿using Syadeu;
 using Syadeu.Mono;
+using Syadeu.Mono.Creature;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Syadeu.Mono
+namespace Syadeu.Mono.Creature
 {
-    [CustomStaticSetting("Syadeu/Creature")]
+    [PreferBinarySerialization][CustomStaticSetting("Syadeu/Creature")]
     public sealed class CreatureSettings : StaticSettingEntity<CreatureSettings>
     {
 //#if UNITY_EDITOR
         [SerializeField] private string m_DepTypeName;
         [SerializeField] private string m_DepSingleToneName = "Instance";
         [SerializeField] private string m_DepArrName;
-        [SerializeField] private string m_DepArrElementTypeName;
 
-        [Space]
+        [Space] //
+        [SerializeField] private string m_DepArrElementTypeName;
         [SerializeField] private string m_DepDisplayName;
 
 //#endif
@@ -25,6 +26,7 @@ namespace Syadeu.Mono
         {
             public int m_DataIdx;
             public int m_PrefabIdx = -1;
+            public CreatureStatReference m_StatReference;
 
             public int CompareTo(PrivateSet other)
             {
@@ -35,6 +37,8 @@ namespace Syadeu.Mono
             }
             public PrefabList.ObjectSetting GetPrefabSetting() => PrefabList.Instance.ObjectSettings[m_PrefabIdx];
         }
+
+        [Space]
         [SerializeField] private List<PrivateSet> m_PrivateSets = new List<PrivateSet>();
 
         public float m_DontSpawnEnemyWithIn = 10;

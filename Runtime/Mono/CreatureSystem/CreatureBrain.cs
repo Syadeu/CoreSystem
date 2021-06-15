@@ -21,7 +21,9 @@ namespace Syadeu.Mono
         private static Vector3 INIT_POSITION = new Vector3(99999, -99999, 99999);
 
         internal int m_DataIdx;
+        internal bool m_IsSpawnedFromManager = false;
         internal int m_SpawnPointIdx;
+
         [SerializeField] private NavMeshAgent m_NavMeshAgent;
 
 #if UNITY_EDITOR
@@ -95,7 +97,7 @@ namespace Syadeu.Mono
             Initialize();
         }
 
-        public override void OnCreated()
+        protected override void OnCreated()
         {
             m_SharedPath = new NavMeshPath();
             m_Childs = GetComponentsInChildren<CreatureEntity>();
@@ -109,7 +111,7 @@ namespace Syadeu.Mono
 
             m_OnCreated?.Invoke();
         }
-        public override void OnInitialize()
+        protected override void OnInitialize()
         {
             m_OnInitialize?.Invoke(m_DataIdx);
             for (int i = 0; i < m_Childs.Length; i++)
@@ -120,7 +122,7 @@ namespace Syadeu.Mono
             RenderManager.AddObserver(this);
             Initialized = true;
         }
-        public override void OnTerminate()
+        protected override void OnTerminate()
         {
             m_OnTerminate?.Invoke(m_DataIdx);
 
@@ -135,7 +137,26 @@ namespace Syadeu.Mono
             }
 
             RenderManager.RemoveObserver(this);
+            m_IsSpawnedFromManager = false;
             Initialized = false;
+        }
+        /// <summary>
+        /// 런타임 중 추가된 자식 CreatureEntity 를 초기화 하기 위한 함수입니다.
+        /// </summary>
+        /// <param name="entity"></param>
+        public void InitializeCreatureEntity(CreatureEntity entity)
+        {
+            if (!CoreSystem.IsThisMainthread()) throw new CoreSystemThreadSafeMethodException("InitializeCreatureEntity");
+
+            for (int i = 0; i < m_Childs.Length; i++)
+            {
+                if (m_Childs[i].Equals(entity)) return;
+            }
+            var temp = m_Childs.ToList();
+            temp.Add(entity);
+            m_Childs = temp.ToArray();
+
+            entity.Initialize(this, m_DataIdx);
         }
         //protected virtual void OnDestroy()
         //{
@@ -191,7 +212,7 @@ namespace Syadeu.Mono
             if (m_EnableCameraCull && !RenderManager.IsInCameraScreen(transform.position))
             {
                 transform.position = worldPosition;
-                return false;
+                return true;
             }
 
             if (NavMesh.SamplePosition(transform.position, out _, m_SamplePosDistance, m_NavMeshAgent.areaMask) &&

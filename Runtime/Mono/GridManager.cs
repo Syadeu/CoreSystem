@@ -1696,6 +1696,10 @@ namespace Syadeu.Mono
 
                 cell.SetDirty();
             }
+
+#if CORESYSTEM_UNSAFE
+            public static GridCell FromPointer(IntPtr intPtr) => (GridCell)GCHandle.FromIntPtr(intPtr).Target;
+#endif
         }
 
         public struct GridRange : IDisposable
@@ -1758,11 +1762,13 @@ namespace Syadeu.Mono
             StartBackgroundUpdate(BackgroundUpdate());
         }
 
-        private void OnDestroy()
+        protected override void OnDestroy()
         {
             m_NavMeshQuery.Dispose();
 
             ClearGrids();
+
+            base.OnDestroy();
         }
         private IEnumerator UnityUpdate()
         {

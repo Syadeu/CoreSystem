@@ -8,8 +8,8 @@ namespace Syadeu.Mono
         public UnityEvent onInitializion;
         public UnityEvent onTermination;
 
-        public override void OnCreated() => onCreation?.Invoke();
-        public override void OnInitialize() => onInitializion?.Invoke();
-        public override void OnTerminate() => onTermination?.Invoke();
+        protected override void OnCreated() => onCreation?.Invoke();
+        protected override void OnInitialize() => onInitializion?.Invoke();
+        protected override void OnTerminate() => onTermination?.Invoke();
     }
 }

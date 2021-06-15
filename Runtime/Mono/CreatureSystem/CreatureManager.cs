@@ -65,6 +65,7 @@ namespace Syadeu.Mono.Creature
             {
                 CreatureBrain brain = (CreatureBrain)PrefabManager.GetRecycleObject(m_PrefabIdx, false);
                 brain.m_DataIdx = m_DataIdx;
+                brain.m_IsSpawnedFromManager = true;
                 brain.transform.position = pos;
                 brain.transform.SetParent(Instance.transform);
 

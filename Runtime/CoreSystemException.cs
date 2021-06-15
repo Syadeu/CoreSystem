@@ -43,4 +43,11 @@ namespace Syadeu
         {
         }
     }
+    public sealed class CoreSystemThreadSafeMethodException : Exception
+    {
+        public CoreSystemThreadSafeMethodException(string methodName)
+            : base($"CoreSystem.{CoreSystemExceptionFlag.Background} :: 메소드 {methodName} 는 외부 스레드에서 실행될 수 없습니다.")
+        {
+        }
+    }
 }

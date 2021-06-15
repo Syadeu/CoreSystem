@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace Syadeu.Mono
 {
+    [PreferBinarySerialization]
     public sealed class PrefabList : StaticSettingEntity<PrefabList>
     {
         [Serializable]

@@ -270,4 +270,9 @@ namespace SyadeuEditor
 
         #endregion
     }
+
+    public abstract class EditorEntity<T> : EditorEntity where T : UnityEngine.Object
+    {
+        protected T Asset => (T)target;
+    }
 }

@@ -376,20 +376,20 @@ public class GridTests
         return grid;
     }
 
-    public void GridRangeTest()
-    {
-        int gridIdx = GridManager.CreateGrid(bounds, 1, false);
-        ref GridManager.Grid grid = ref GridManager.GetGrid(in gridIdx);
+    //public void GridRangeTest()
+    //{
+    //    int gridIdx = GridManager.CreateGrid(bounds, 1, false);
+    //    ref GridManager.Grid grid = ref GridManager.GetGrid(in gridIdx);
 
-        GridManager.GridRange _range = grid.GetRange(0, 5);
-        unsafe
-        {
-            for (int i = 0; i < _range.Length; i++)
-            {
-                Debug.Log((*_range[i]).Location);
-            }
-        }
-    }
+    //    GridManager.GridRange _range = grid.GetRange(0, 5);
+    //    unsafe
+    //    {
+    //        for (int i = 0; i < _range.Length; i++)
+    //        {
+    //            Debug.Log((*_range[i]).Location);
+    //        }
+    //    }
+    //}
 
     [Test]
     public void GridForTest()

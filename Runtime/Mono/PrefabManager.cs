@@ -289,7 +289,7 @@ namespace Syadeu.Mono
                 }
 
                 recycleObj.transform.localPosition = INIT_POSITION;
-                recycleObj.OnCreated();
+                recycleObj.InternalOnCreated();
                 recycleObj.onTerminate = onTerminate;
 
                 obj.AddNewInstance(recycleObj);
@@ -313,7 +313,7 @@ namespace Syadeu.Mono
                 }
 
                 recycleObj.transform.localPosition = INIT_POSITION;
-                recycleObj.OnCreated();
+                recycleObj.InternalOnCreated();
                 recycleObj.onTerminate = onTerminate;
 
                 obj.AddNewInstance(recycleObj);
@@ -380,6 +380,19 @@ namespace Syadeu.Mono
             }
 
             return list;
+        }
+
+        public static int AddRecycleObject(PrefabList.ObjectSetting objectSetting)
+        {
+            PrefabList.Instance.ObjectSettings.Add(objectSetting);
+            int i = PrefabList.Instance.ObjectSettings.Count;
+
+            RecycleObject obj = new RecycleObject(i, PrefabList.Instance.ObjectSettings[i - 1]);
+            Instance.RecycleObjects.Add(i, obj);
+
+            Instance.StartBackgroundUpdate(Instance.RecycleInstancesUpdate(obj));
+
+            return i;
         }
 
         public static void SendTerminate(ITerminate terminator)

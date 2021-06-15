@@ -10,6 +10,7 @@ using System;
 using Syadeu;
 using System.Reflection;
 using System.Linq;
+using System.IO;
 
 namespace SyadeuEditor
 {
@@ -24,7 +25,7 @@ namespace SyadeuEditor
         public int m_ToolbarIdx = 0;
         private Rect m_ListRect = new Rect(-1, 144.5f, 0, 0);
         private Vector2 m_ListScroll = Vector2.zero;
-        private Rect m_ListContentRect = new Rect(167, 144.5f, 460, 40);
+        private Rect m_ListContentRect = new Rect(167, 144.5f, 450, 40);
 
         private Color
             m_SelectColor = new Color(0, 1, 0);
@@ -50,6 +51,12 @@ namespace SyadeuEditor
         public int m_SelectedDataClassName = 0;
         public CreatureDataAttribute m_SelectedDataAttribute = null;
         public string[] m_DataClassNames = new string[0];
+        public Type m_SelectedDataClass = null;
+        public int m_SelectedDataSingleToneName = 0;
+        public string[] m_DataSingleToneNames = new string[0];
+        public int m_SelectedDataArrayName = 0;
+        public string[] m_DataArrayNames = new string[0];
+        public Type m_SelectedDataArrayClass = null;
 
         private void OnEnable()
         {
@@ -150,21 +157,169 @@ namespace SyadeuEditor
         {
             const string AssemblyCSharp = "Assembly-CSharp";
 
-            Type[] types = Assembly.Load(AssemblyCSharp)
+            Type[] types;
+            try
+            {
+                types = Assembly.Load(AssemblyCSharp)
                 .GetTypes()
                 .Where(other => other.GetCustomAttribute<CreatureDataAttribute>() != null)
                 .ToArray();
+            }
+            catch (FileNotFoundException)
+            {
+                types = new Type[0];
+            }
 
             m_DataClassNames = new string[types.Length];
+            bool foundType = false;
             for (int i = 0; i < types.Length; i++)
             {
                 m_DataClassNames[i] = types[i].Name;
                 if (m_DataClassNames[i].Equals(m_DepTypeName.stringValue))
                 {
+                    foundType = true;
+                    m_SelectedDataClass = types[i];
                     m_SelectedDataClassName = i;
                     m_SelectedDataAttribute = types[i].GetCustomAttribute<CreatureDataAttribute>();
                 }
             }
+            if (!foundType) m_SelectedDataClass = null;
+            else
+            {
+                MemberInfo[] candidates;
+                List<string> tempNames = new List<string>();
+
+                #region Find SingleTone
+
+                if (m_SelectedDataClass.BaseType != null)
+                {
+                    candidates = m_SelectedDataClass.BaseType
+                    .GetMembers()
+                    .Where
+                    (
+                        (other) =>
+                        {
+                            if (other is FieldInfo field)
+                            {
+                                return field.IsStatic && field.FieldType.Equals(m_SelectedDataClass);
+                            }
+                            else if (other is PropertyInfo property)
+                            {
+                                return property.GetGetMethod().IsStatic && property.PropertyType.Equals(m_SelectedDataClass);
+                            }
+                            return false;
+                        }
+                    )
+                    .ToArray();
+
+                    for (int i = 0; i < candidates.Length; i++)
+                    {
+                        tempNames.Add(candidates[i].Name);
+                    }
+                }
+
+                candidates = m_SelectedDataClass
+                    .GetMembers()
+                    .Where
+                    (
+                        (other) =>
+                        {
+                            if (other is FieldInfo field)
+                            {
+                                return field.IsStatic && field.FieldType.Equals(m_SelectedDataClass);
+                            }
+                            else if (other is PropertyInfo property)
+                            {
+                                return property.GetGetMethod().IsStatic && property.PropertyType.Equals(m_SelectedDataClass);
+                            }
+                            return false;
+                        }
+                    )
+                    .ToArray();
+                
+                for (int i = 0; i < candidates.Length; i++)
+                {
+                    tempNames.Add(candidates[i].Name);
+                }
+                m_DataSingleToneNames = tempNames.ToArray();
+
+                #endregion
+
+                tempNames.Clear();
+
+                #region Find Array
+
+                if (m_SelectedDataClass.BaseType != null)
+                {
+                    candidates = m_SelectedDataClass.BaseType
+                        .GetMembers()
+                        .Where((other) =>
+                        {
+                            if (other is FieldInfo field && field.FieldType.GetInterfaces().Contains(typeof(IList)))
+                            {
+                                return true;
+                            }
+                            return false;
+                        })
+                        .ToArray();
+                    for (int i = 0; i < candidates.Length; i++)
+                    {
+                        tempNames.Add(candidates[i].Name);
+                    }
+                }
+                candidates = m_SelectedDataClass.GetMembers()
+                    .Where((other) =>
+                    {
+                        if (other is FieldInfo field && field.FieldType.GetInterfaces().Contains(typeof(IList)))
+                        {
+                            return true;
+                        }
+                        return false;
+                    })
+                    .ToArray();
+                for (int i = 0; i < candidates.Length; i++)
+                {
+                    tempNames.Add(candidates[i].Name);
+                }
+                m_DataArrayNames = tempNames.ToArray();
+                for (int i = 0; i < m_DataArrayNames.Length; i++)
+                {
+                    if (m_DataArrayNames[i].Equals(m_DepArrName.stringValue))
+                    {
+                        m_SelectedDataArrayName = i;
+                        MemberInfo temp = m_SelectedDataClass.GetMembers()
+                            .Where((other) => other.Name.Equals(m_DataArrayNames[i]))
+                            .First();
+                        if (temp is FieldInfo field)
+                        {
+                            if (field.FieldType.IsArray)
+                            {
+                                m_SelectedDataArrayClass = field.FieldType.GetElementType();
+                            }
+                            else if (field.FieldType.GenericTypeArguments.Length > 0)
+                            {
+                                m_SelectedDataArrayClass = field.FieldType.GenericTypeArguments[0];
+                            }
+                        }
+                        //else if (temp is PropertyInfo property)
+                        //{
+                        //    if (property.PropertyType.IsArray)
+                        //    {
+                        //        m_SelectedDataArrayClass = property.PropertyType.GetElementType();
+                        //    }
+                        //    else if (property.PropertyType.GenericTypeArguments.Length > 0)
+                        //    {
+                        //        m_SelectedDataArrayClass = property.PropertyType.GenericTypeArguments[0];
+                        //    }
+                        //}
+
+                        break;
+                    }
+                }
+
+                #endregion
+            }
+
         }
         private void OnHierarchyChange()
         {
@@ -212,17 +367,54 @@ namespace SyadeuEditor
             if (EditorGUI.EndChangeCheck())
             {
                 m_DepTypeName.stringValue = m_DataClassNames[m_SelectedDataClassName];
+
                 FindAttributeTargets();
 
-                m_DepSingleToneName.stringValue = m_SelectedDataAttribute.SingleToneName;
-                m_DepArrName.stringValue = m_SelectedDataAttribute.DataArrayName;
+                //if (!string.IsNullOrEmpty(m_SelectedDataAttribute.SingleToneName))
+                if (m_SelectedDataClass != null)
+                {
+                    if (m_DataSingleToneNames.Length > m_SelectedDataSingleToneName)
+                    {
+                        m_DepSingleToneName.stringValue = m_DataSingleToneNames[m_SelectedDataSingleToneName];
+                    }
+                    else
+                    {
+                        m_SelectedDataSingleToneName = 0;
+                        m_DepSingleToneName.stringValue = null;
+                    }
+
+                    if (m_DataArrayNames.Length > m_SelectedDataArrayName)
+                    {
+                        m_DepArrName.stringValue = m_DataArrayNames[m_SelectedDataArrayName];
+                    }
+                    else
+                    {
+                        m_SelectedDataArrayName = 0;
+                        m_DepArrName.stringValue = null;
+                    }
+                }
+                else
+                {
+                    m_DepSingleToneName.stringValue = null;
+                    m_DepArrName.stringValue = null;
+                }
+
                 SetTargetList();
             }
 
-            EditorGUI.BeginDisabledGroup(true);
-            EditorGUILayout.PropertyField(m_DepSingleToneName, new GUIContent("List SingleTone Name: "));
-            EditorGUILayout.PropertyField(m_DepArrName, new GUIContent("List Array Name: "));
-            EditorGUI.EndDisabledGroup();
+            EditorGUI.BeginChangeCheck();
+            m_SelectedDataSingleToneName = EditorGUILayout.Popup("List SingleTone Name: ", m_SelectedDataSingleToneName, m_DataSingleToneNames);
+            //EditorGUILayout.PropertyField(m_DepSingleToneName, new GUIContent("List SingleTone Name: "));
+            m_SelectedDataArrayName = EditorGUILayout.Popup("List Array Name: ", m_SelectedDataArrayName, m_DataArrayNames);
+            if (EditorGUI.EndChangeCheck())
+            {
+                m_DepSingleToneName.stringValue = m_DataSingleToneNames[m_SelectedDataSingleToneName];
+                m_DepArrName.stringValue = m_DataArrayNames[m_SelectedDataArrayName];
+            }
+
+            //EditorGUI.BeginDisabledGroup(true);
+            //EditorGUILayout.PropertyField(m_DepArrName, new GUIContent("List Array Name: "));
+            //EditorGUI.EndDisabledGroup();
 
             EditorUtils.SectorLine();
             EditorGUILayout.Space();
@@ -399,11 +591,37 @@ namespace SyadeuEditor
         // CreatureSettings
         private SerializedProperty m_PrivateSets;
 
+        private int m_SelectedDisplayName = 0;
+        private string[] m_DisplayNames = new string[0];
+
         protected override void OnInitialize()
         {
             if (Main == null) CoreSystemMenuItems.CreatureWindow();
 
             m_PrivateSets = Main.m_CreatureSettings.FindProperty("m_PrivateSets");
+
+            MemberInfo[] temp;
+            #region Name Reflection
+            temp = Main.m_SelectedDataArrayClass.GetMembers(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)
+                .Where((other) =>
+                {
+                    if (other is FieldInfo field && field.FieldType.Equals(typeof(string)))
+                    {
+                        return true;
+                    }
+                    return false;
+                })
+                .ToArray();
+            m_DisplayNames = new string[temp.Length];
+            for (int i = 0; i < temp.Length; i++)
+            {
+                m_DisplayNames[i] = temp[i].Name;
+                if (Main.m_DepDisplayName.stringValue.Equals(temp[i].Name))
+                {
+                    m_SelectedDisplayName = i;
+                }
+            }
+            #endregion
         }
         protected override void OnGUIDraw()
         {
@@ -413,15 +631,7 @@ namespace SyadeuEditor
 
             EditorGUILayout.Space();
             EditorUtils.StringHeader("Reflections", 14);
-
-            EditorGUI.BeginChangeCheck();
-            EditorGUILayout.PropertyField(Main.m_DepDisplayName, new GUIContent("List Display Name: ")/*, GUILayout.Width(150)*/);
-
-            if (EditorGUI.EndChangeCheck())
-            {
-                Main.m_CreatureSettings.ApplyModifiedProperties();
-                Main.SetTargetList();
-            }
+            DrawReflections();
 
             EditorUtils.SectorLine();
 
@@ -438,6 +648,23 @@ namespace SyadeuEditor
 
             EditorGUI.indentLevel -= 1;
         }
+        private void DrawReflections()
+        {
+            EditorGUI.BeginChangeCheck();
+
+            if (m_DisplayNames.Length == 0) EditorGUILayout.HelpBox($"Value type \"String\" not found in {Main.m_SelectedDataArrayClass.Name}.", MessageType.Error);
+            EditorGUI.BeginDisabledGroup(m_DisplayNames.Length == 0);
+            m_SelectedDisplayName = EditorGUILayout.Popup("List Display Name: ", m_SelectedDisplayName, m_DisplayNames);
+            EditorGUI.EndDisabledGroup();
+
+            if (EditorGUI.EndChangeCheck())
+            {
+                Main.m_DepDisplayName.stringValue = m_DisplayNames[m_SelectedDisplayName];
+
+                Main.m_CreatureSettings.ApplyModifiedProperties();
+                Main.SetTargetList();
+            }
+        }
 
         private void DrawPrivateSet()
         {
@@ -450,6 +677,7 @@ namespace SyadeuEditor
 
             EditorGUILayout.HelpBox("Loaded List From Prefab List", MessageType.Info);
             Main.m_CreatureSelectedSet.m_PrefabIdx = PrefabListEditor.DrawPrefabSelector(Main.m_CreatureSelectedSet.m_PrefabIdx);
+            Main.m_CreatureSelectedSet.m_StatReference = (CreatureStatReference)EditorGUILayout.ObjectField("Stat Ref: ", Main.m_CreatureSelectedSet.m_StatReference, typeof(CreatureStatReference), false);
 
             if (EditorGUI.EndChangeCheck())
             {
