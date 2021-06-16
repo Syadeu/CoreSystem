@@ -90,12 +90,12 @@ namespace Syadeu
             m_Instance = this as T;
             if (DontDestroy)
             {
-                CoreSystem.StaticManagers.Add(this);
+                CoreSystem.Instance.StaticManagers.Add(this);
                 transform.SetParent(System.transform);
             }
             else
             {
-                CoreSystem.InstanceManagers.Add(this);
+                CoreSystem.Instance.InstanceManagers.Add(this);
                 if (InstanceGroupTr == null)
                 {
                     InstanceGroupTr = new GameObject("InstanceSystemGroup").transform;

@@ -1,4 +1,5 @@
 ﻿using System;
+using UnityEngine;
 
 namespace Syadeu
 {
@@ -15,6 +16,11 @@ namespace Syadeu
             {
                 if (m_Instance == null)
                 {
+#if UNITY_EDITOR
+                    if (IsMainthread() && !Application.isPlaying) throw new CoreSystemException(CoreSystemExceptionFlag.Database,
+                        $"StaticDataManager<{typeof(T).Name}>의 인스턴스 객체는 플레이중에만 생성되거나 받아올 수 있습니다.");
+#endif
+
                     m_Instance = CoreSystem.GetManager<T>();
                     if (m_Instance != null)
                     {
@@ -25,7 +31,7 @@ namespace Syadeu
 
                     ins.OnInitialize();
 
-                    CoreSystem.DataManagers.Add(ins);
+                    CoreSystem.Instance.DataManagers.Add(ins);
                     m_Instance = ins;
 
                     ins.OnStart();
@@ -52,13 +58,13 @@ namespace Syadeu
         /// <summary>
         /// OnUnityUpdate 보다 일찍 실행되는 커스텀 업데이트문을 넣을 수 있습니다.
         /// </summary>
-        public CoreRoutine StartUnityUpdate(System.Collections.IEnumerator enumerator) => CoreSystem.Instance.StartUnityUpdate(enumerator);
+        protected CoreRoutine StartUnityUpdate(System.Collections.IEnumerator enumerator) => CoreSystem.Instance.StartUnityUpdate(enumerator);
         /// <summary>
         /// OnBackgroundUpdate 보다 일찍 실행되는 커스텀 업데이트문을 넣을 수 있습니다.
         /// </summary>
-        public CoreRoutine StartBackgroundUpdate(System.Collections.IEnumerator enumerator) => CoreSystem.Instance.StartBackgroundUpdate(enumerator);
-        public void StopUnityUpdate(CoreRoutine routine) => CoreSystem.RemoveUnityUpdate(routine);
-        public void StopBackgroundUpdate(CoreRoutine routine) => CoreSystem.RemoveBackgroundUpdate(routine);
+        protected CoreRoutine StartBackgroundUpdate(System.Collections.IEnumerator enumerator) => CoreSystem.Instance.StartBackgroundUpdate(enumerator);
+        protected void StopUnityUpdate(CoreRoutine routine) => CoreSystem.RemoveUnityUpdate(routine);
+        protected void StopBackgroundUpdate(CoreRoutine routine) => CoreSystem.RemoveBackgroundUpdate(routine);
 
         public virtual void Dispose()
         {

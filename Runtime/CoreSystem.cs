@@ -23,46 +23,46 @@ namespace Syadeu
     {
         #region Managers
 
-        internal static List<IStaticMonoManager> StaticManagers { get; } = new List<IStaticMonoManager>();
-        internal static List<IStaticMonoManager> InstanceManagers { get; } = new List<IStaticMonoManager>();
-        internal static List<IStaticDataManager> DataManagers { get; } = new List<IStaticDataManager>();
+        internal List<IStaticMonoManager> StaticManagers { get; } = new List<IStaticMonoManager>();
+        internal List<IStaticMonoManager> InstanceManagers { get; } = new List<IStaticMonoManager>();
+        internal List<IStaticDataManager> DataManagers { get; } = new List<IStaticDataManager>();
 
         public static IReadOnlyList<IStaticMonoManager> GetStaticManagers()
         {
-            for (int i = StaticManagers.Count - 1; i >= 0; i--)
+            for (int i = Instance.StaticManagers.Count - 1; i >= 0; i--)
             {
-                if (StaticManagers[i].Disposed)
+                if (Instance.StaticManagers[i].Disposed)
                 {
-                    StaticManagers.RemoveAt(i);
+                    Instance.StaticManagers.RemoveAt(i);
                     continue;
                 }
             }
-            return StaticManagers;
+            return Instance.StaticManagers;
         }
         public static IReadOnlyList<IStaticMonoManager> GetInstanceManagers()
         {
-            for (int i = InstanceManagers.Count - 1; i >= 0; i--)
+            for (int i = Instance.InstanceManagers.Count - 1; i >= 0; i--)
             {
-                if (InstanceManagers[i].Disposed)
+                if (Instance.InstanceManagers[i].Disposed)
                 {
-                    InstanceManagers.RemoveAt(i);
+                    Instance.InstanceManagers.RemoveAt(i);
                     continue;
                 }
             }
-            return InstanceManagers;
+            return Instance.InstanceManagers;
         }
         public static IReadOnlyList<IStaticDataManager> GetDataManagers()
         {
-            for (int i = DataManagers.Count - 1; i >= 0; i--)
+            for (int i = Instance.DataManagers.Count - 1; i >= 0; i--)
             {
-                if (DataManagers[i] == null ||
-                    DataManagers[i].Disposed)
+                if (Instance.DataManagers[i] == null ||
+                    Instance.DataManagers[i].Disposed)
                 {
-                    DataManagers.RemoveAt(i);
+                    Instance.DataManagers.RemoveAt(i);
                     continue;
                 }
             }
-            return DataManagers;
+            return Instance.DataManagers;
         }
 
         public static T GetManager<T>(SystemFlag flag = SystemFlag.All) where T : class, IStaticManager
@@ -70,29 +70,29 @@ namespace Syadeu
             if (flag.HasFlag(SystemFlag.MainSystem) ||
                 flag.HasFlag(SystemFlag.SubSystem))
             {
-                for (int i = 0; i < StaticManagers.Count; i++)
+                for (int i = 0; i < Instance.StaticManagers.Count; i++)
                 {
-                    if (StaticManagers[i] is T item) return item;
+                    if (Instance.StaticManagers[i] is T item) return item;
                 }
-                for (int i = InstanceManagers.Count - 1; i >= 0; i--)
+                for (int i = Instance.InstanceManagers.Count - 1; i >= 0; i--)
                 {
-                    if (InstanceManagers[i].Disposed)
+                    if (Instance.InstanceManagers[i].Disposed)
                     {
-                        InstanceManagers.RemoveAt(i);
+                        Instance.InstanceManagers.RemoveAt(i);
                         continue;
                     }
-                    if (InstanceManagers[i] is T item) return item;
+                    if (Instance.InstanceManagers[i] is T item) return item;
                 }
             }
             if (flag.HasFlag(SystemFlag.Data))
             {
-                for (int i = DataManagers.Count - 1; i >= 0; i--)
+                for (int i = Instance.DataManagers.Count - 1; i >= 0; i--)
                 {
-                    if (DataManagers[i] is T item)
+                    if (Instance.DataManagers[i] is T item)
                     {
-                        if (DataManagers[i].Disposed)
+                        if (Instance.DataManagers[i].Disposed)
                         {
-                            DataManagers.RemoveAt(i);
+                            Instance.DataManagers.RemoveAt(i);
                             continue;
                         }
 

@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using Syadeu;
+using Syadeu.Database;
 using Syadeu.Mono;
 using Syadeu.Mono.Creature;
 using UnityEditor;
@@ -31,6 +32,12 @@ namespace SyadeuEditor
         public static void PrefabListMenu()
         {
             Selection.activeObject = PrefabList.Instance;
+            EditorApplication.ExecuteMenuItem("Window/General/Inspector");
+        }
+        [MenuItem("CoreSystem/Edit Item Data List", priority = 3)]
+        public static void ItemDataListMenu()
+        {
+            Selection.activeObject = ItemDataList.Instance;
             EditorApplication.ExecuteMenuItem("Window/General/Inspector");
         }
 

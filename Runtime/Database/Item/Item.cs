@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using UnityEngine;
 
 namespace Syadeu.Database
 {
@@ -27,20 +26,15 @@ namespace Syadeu.Database
     [StaticManagerIntializeOnLoad]
     public sealed class ItemDataManager : StaticDataManager<ItemDataManager>
     {
-        private const string c_DataPath = "/Syadeu/ItemData/";
-        private const string c_FileExtension = ".json";
-        
-        public static string DataPath => Application.persistentDataPath + c_DataPath;
-        internal static string EditorDataPath => $"{Application.dataPath}/../{c_DataPath}";
-
         private Dictionary<int, Item> m_Items = new Dictionary<int, Item>();
 
         public override void OnInitialize()
         {
+            //$"{DataManager.DataPath}/Item".ToLog();
             //Resources.LoadAll<>
         }
 
-        private static void SaveItem(string path, Item item)
+        private static void SaveItem(string path, Item item)    
         {
             string data = JsonConvert.SerializeObject(item);
             File.WriteAllText(path + $"Item/{item.m_Name}.json", data);
@@ -50,35 +44,32 @@ namespace Syadeu.Database
     [Serializable]
     public sealed class Item
     {
-        public string m_Idx;
-
         public string m_Name;
+        public string m_Guid;
+
         /// <summary>
         /// <see cref="ItemType"/>
         /// </summary>
-        public int m_ItemType;
+        public string[] m_ItemTypes;
         /// <summary>
         /// <see cref="ItemEffectType"/>
         /// </summary>
-        public int[] m_ItemEffectTypes;
+        public string[] m_ItemEffectTypes;
         public ItemAffect m_ItemAffects;
     }
 
     [Serializable]
-    public class ItemType
+    public sealed class ItemType
     {
         public string m_Name;
-        public int m_Idx;
-
-        public bool m_IsWearable;
-        public bool m_IsUsable;
+        public string m_Guid;
     }
 
     [Serializable]
-    public class ItemEffectType
+    public sealed class ItemEffectType
     {
         public string m_Name;
-        public int m_Idx;
+        public string m_Guid;
 
         public ItemMath m_Math;
         public float m_Value;
