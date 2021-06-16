@@ -13,7 +13,7 @@ namespace Syadeu.ECS
     public class ECSSettings : StaticSettingEntity<ECSSettings>
     {
 #if UNITY_EDITOR
-        [MenuItem("Syadeu/ECS/Edit Settings", priority = 1)]
+        [MenuItem("CoreSystem/ECS/Edit Settings", priority = 400)]
         public static void MenuItem()
         {
             Selection.activeObject = Instance;

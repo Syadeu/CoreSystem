@@ -84,6 +84,12 @@ namespace SyadeuEditor
 
             m_SQLiteWindow.ShowUtility();
         }
+        [MenuItem("CoreSystem/SQLite/Create Migration Data", priority = 301)]
+        public static void EditSettings()
+        {
+            Selection.activeObject = Syadeu.Database.SQLiteMigrationData.Instance;
+            EditorApplication.ExecuteMenuItem("Window/General/Inspector");
+        }
 
 #if CORESYSTEM_FMOD
         [MenuItem("Syadeu/FMOD/Edit FMOD Settings", priority = 400)]
