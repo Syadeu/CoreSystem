@@ -15,6 +15,7 @@
   },
   "optionalDependencies": {
     "com.github.siccity.xnode": "https://github.com/Siccity/xNode.git",
+    "syadeu.gamesystem": "https://syadeuglobal:syadeuglobal213!@github.com/Syadeu/GameSystem.git",
     "com.unity.inputsystem": "1.0.2"
   },
   "keywords": [
@@ -25,6 +26,6 @@
   ],
   "author": {
     "name": "Syadeu",
-    "email": "syadeu@g1play.co.kr"
+    "email": "syadeu@gmail.com"
   }
 }
