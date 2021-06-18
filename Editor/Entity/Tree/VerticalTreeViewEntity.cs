@@ -22,16 +22,26 @@ namespace SyadeuEditor.Tree
         public IReadOnlyList<VerticalTreeElement> Elements => m_Elements;
         internal List<VerticalTreeElement> I_Elements => m_Elements;
 
+        public int SelectedToolbar
+        {
+            get
+            {
+                if (!m_EnableToolbar) throw new Exception();
+                return m_SelectedToolbar;
+            }
+        }
+
         #region Search Values
         private readonly SearchField m_SearchField = new SearchField();
         private string m_SearchString = null;
         private Func<VerticalTreeElement, string, bool> m_CustomSearchFilter = null;
 
         public event Action<string> OnSearchFieldChanged;
-        public event Action<int> OnToolbarChanged;
         #endregion
 
         #region Toolbar Values
+        public event Action<int> OnToolbarChanged;
+
         private bool m_EnableToolbar = false;
         private string[] m_ToolbarNames = null;
         private int m_SelectedToolbar = 0;
@@ -50,6 +60,15 @@ namespace SyadeuEditor.Tree
         {
             m_EnableToolbar = true;
             m_ToolbarNames = toolbarNames;
+
+            return this;
+        }
+        public VerticalTreeViewEntity MakeToolbar(Action<int> onSelect, params string[] toolbarNames)
+        {
+            m_EnableToolbar = true;
+            m_ToolbarNames = toolbarNames;
+
+            OnToolbarChanged += onSelect;
 
             return this;
         }

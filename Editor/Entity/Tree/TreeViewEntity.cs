@@ -68,10 +68,10 @@ namespace SyadeuEditor.Tree
 
             return m_Rows;
         }
-        public override void OnGUI(Rect rect)
-        {
-            base.OnGUI(rect);
-        }
+        public void OnGUI() => base.OnGUI(GUILayoutUtility.GetRect(Screen.width, 300));
+        public override void OnGUI(Rect rect) => base.OnGUI(rect);
+        public void OnGUI(float height) => base.OnGUI(GUILayoutUtility.GetRect(Screen.width, height));
+        public void OnGUI(float width, float height) => base.OnGUI(GUILayoutUtility.GetRect(width, height));
         protected override void RowGUI(RowGUIArgs args)
         {
             var item = (TreeViewItem<TreeElementEntity>)args.item;
