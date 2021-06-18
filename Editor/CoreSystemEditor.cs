@@ -6,7 +6,7 @@ using Syadeu.FMOD;
 
 using System.Collections.Generic;
 using System.Linq;
-
+using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
@@ -70,15 +70,26 @@ namespace SyadeuEditor
             private IStaticManager m_Manager;
             public IStaticManager Manager => m_Manager;
 
+            private string m_Description = null;
+
             public ManagerTreeElement(VerticalTreeViewEntity tree, IStaticManager manager) : base(tree)
             {
                 m_Manager = manager;
                 string[] split = manager.ToString().Split('.');
                 m_Name = split[split.Length - 1].Trim(')');
+
+                var desc = manager.GetType().GetCustomAttribute<StaticManagerDescriptionAttribute>();
+                if (desc != null)
+                {
+                    m_Description = desc.m_Description;
+                }
             }
             public override object Data => m_Manager;
             public override void OnGUI()
             {
+                if (string.IsNullOrEmpty(m_Description)) return;
+
+                EditorGUILayout.LabelField(m_Description);
             }
         }
         private void ValidateManagerView()

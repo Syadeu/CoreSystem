@@ -19,6 +19,10 @@ using System.Reflection;
 
 namespace Syadeu
 {
+    [StaticManagerDescription(@"
+    CoreSystem's main system.
+    
+    ")]
     public sealed class CoreSystem : StaticManager<CoreSystem>
     {
         #region Managers

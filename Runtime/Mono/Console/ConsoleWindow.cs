@@ -9,6 +9,8 @@ using UnityEngine.InputSystem;
 
 namespace Syadeu.Mono
 {
+    [StaticManagerDescription("" +
+        "Console System")]
     public sealed class ConsoleWindow : StaticManager<ConsoleWindow>
     {
         public static void Log(string log, ConsoleFlag flag = ConsoleFlag.Normal) => Instance.LogCommand(log, flag);
