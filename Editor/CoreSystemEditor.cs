@@ -73,11 +73,6 @@ namespace SyadeuEditor
             {
                 //throw new System.NotImplementedException();
             }
-
-            protected override void OnRemove()
-            {
-                //throw new System.NotImplementedException();
-            }
         }
         private void ValidateRoutineView()
         {

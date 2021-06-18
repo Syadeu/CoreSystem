@@ -22,9 +22,5 @@ namespace SyadeuEditor.Tree
         {
             if (!string.IsNullOrEmpty(m_Description)) EditorGUILayout.LabelField(m_Description);
         }
-
-        protected override void OnRemove()
-        {
-        }
     }
 }

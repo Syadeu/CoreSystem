@@ -46,7 +46,7 @@ namespace SyadeuEditor.Tree
             parent.m_Childs.Add(this);
             m_Parent = parent;
         }
-        public void RemoveParent()
+        internal void RemoveParent()
         {
             if (m_Parent == null) return;
 
@@ -57,9 +57,9 @@ namespace SyadeuEditor.Tree
             else m_Parent.m_Childs.Remove(this);
             m_Parent = null;
         }
-        public void Remove()
+        internal void Remove()
         {
-            OnRemove();
+            //OnRemove();
 
             RemoveParent();
             Dispose();
@@ -70,7 +70,7 @@ namespace SyadeuEditor.Tree
             if (Parent != null) Parent.Expend();
         }
 
-        protected abstract void OnRemove();
+        //protected abstract void OnRemove();
 
         public void Dispose()
         {

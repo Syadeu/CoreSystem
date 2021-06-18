@@ -12,6 +12,9 @@ namespace SyadeuEditor.Tree
     /// </summary>
     public abstract class VerticalTreeViewEntity
     {
+        public bool m_DrawAddButton = false;
+        public bool m_DrawRemoveButton = false;
+
         private UnityEngine.Object m_Asset;
         public UnityEngine.Object Asset => m_Asset;
 
@@ -133,7 +136,7 @@ namespace SyadeuEditor.Tree
 
                     EditorGUILayout.BeginHorizontal();
                     e.m_Opened = EditorUtils.Foldout(e.m_Opened, $"{e.Name}", 12);
-                    if (DrawRemoveButton(e))
+                    if (m_DrawRemoveButton && DrawRemoveButton(e))
                     {
                         EditorGUILayout.EndHorizontal();
                         EditorGUI.indentLevel -= 1;
@@ -168,15 +171,21 @@ namespace SyadeuEditor.Tree
         }
         internal protected bool DrawRemoveButton(VerticalTreeElement e)
         {
-            if (GUILayout.Button("-", GUILayout.Width(20)))
+            const string miniBtt = "miniButton";
+
+            if (GUILayout.Button("-", miniBtt, GUILayout.Width(20)))
             {
                 e.Remove();
+                RemoveButtonClicked(e);
                 EditorUtility.SetDirty(m_Asset);
 
                 return true;
             }
             return false;
         }
+        internal abstract void RemoveButtonClicked(VerticalTreeElement e);
+
+        #region Validate
         internal protected bool ValidateDrawParent(VerticalTreeElement e)
         {
             if (e.Parent != null) return false;
@@ -204,5 +213,6 @@ namespace SyadeuEditor.Tree
             }
             return false;
         }
+        #endregion
     }
 }
