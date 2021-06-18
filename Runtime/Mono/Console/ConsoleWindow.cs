@@ -828,6 +828,8 @@ namespace Syadeu.Mono
             {
                 nextCmd = ScriptableObject.CreateInstance<CommandField>();
                 nextCmd.m_Field = lines[1];
+
+                def.m_Args.Add(nextCmd);
             }
             for (int i = 2; i < lines.Length; i++)
             {
