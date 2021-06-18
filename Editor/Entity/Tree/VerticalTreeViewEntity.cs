@@ -194,8 +194,8 @@ namespace SyadeuEditor.Tree
 
             if (GUILayout.Button("-", miniBtt, GUILayout.Width(20)))
             {
-                e.Remove();
                 RemoveButtonClicked(e);
+                e.Remove();
                 EditorUtility.SetDirty(m_Asset);
 
                 return true;

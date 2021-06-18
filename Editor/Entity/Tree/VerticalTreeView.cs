@@ -103,7 +103,7 @@ namespace SyadeuEditor.Tree
                     idx = i;
                 }
             }
-            if (idx < 0) throw new Exception();
+            if (idx < 0) throw new Exception($"{idx}");
 
             m_Data = OnRemoveButton?.Invoke(idx);
             SetupElements(m_Data, m_DataSetup);
