@@ -23,35 +23,40 @@ namespace Syadeu
     {
         #region Managers
 
-        internal List<IStaticMonoManager> StaticManagers { get; } = new List<IStaticMonoManager>();
-        internal List<IStaticMonoManager> InstanceManagers { get; } = new List<IStaticMonoManager>();
-        internal List<IStaticDataManager> DataManagers { get; } = new List<IStaticDataManager>();
+        public event Action OnManagerChanged;
 
-        public static IReadOnlyList<IStaticMonoManager> GetStaticManagers()
+        internal List<IStaticManager> StaticManagers { get; } = new List<IStaticManager>();
+        internal List<IStaticManager> InstanceManagers { get; } = new List<IStaticManager>();
+        internal List<IStaticManager> DataManagers { get; } = new List<IStaticManager>();
+
+        internal static void InvokeManagerChanged() => Instance.OnManagerChanged?.Invoke();
+        public static IReadOnlyList<IStaticManager> GetStaticManagers()
         {
             for (int i = Instance.StaticManagers.Count - 1; i >= 0; i--)
             {
                 if (Instance.StaticManagers[i].Disposed)
                 {
                     Instance.StaticManagers.RemoveAt(i);
+                    InvokeManagerChanged();
                     continue;
                 }
             }
             return Instance.StaticManagers;
         }
-        public static IReadOnlyList<IStaticMonoManager> GetInstanceManagers()
+        public static IReadOnlyList<IStaticManager> GetInstanceManagers()
         {
             for (int i = Instance.InstanceManagers.Count - 1; i >= 0; i--)
             {
                 if (Instance.InstanceManagers[i].Disposed)
                 {
                     Instance.InstanceManagers.RemoveAt(i);
+                    InvokeManagerChanged();
                     continue;
                 }
             }
             return Instance.InstanceManagers;
         }
-        public static IReadOnlyList<IStaticDataManager> GetDataManagers()
+        public static IReadOnlyList<IStaticManager> GetDataManagers()
         {
             for (int i = Instance.DataManagers.Count - 1; i >= 0; i--)
             {
@@ -59,6 +64,7 @@ namespace Syadeu
                     Instance.DataManagers[i].Disposed)
                 {
                     Instance.DataManagers.RemoveAt(i);
+                    InvokeManagerChanged();
                     continue;
                 }
             }
@@ -79,6 +85,7 @@ namespace Syadeu
                     if (Instance.InstanceManagers[i].Disposed)
                     {
                         Instance.InstanceManagers.RemoveAt(i);
+                        InvokeManagerChanged();
                         continue;
                     }
                     if (Instance.InstanceManagers[i] is T item) return item;
@@ -93,6 +100,7 @@ namespace Syadeu
                         if (Instance.DataManagers[i].Disposed)
                         {
                             Instance.DataManagers.RemoveAt(i);
+                            InvokeManagerChanged();
                             continue;
                         }
 
@@ -1063,6 +1071,7 @@ namespace Syadeu
                         if (InstanceManagers[i] == null)
                         {
                             InstanceManagers.RemoveAt(i);
+                            InvokeManagerChanged();
                             i--;
                             continue;
                         }
@@ -1072,6 +1081,7 @@ namespace Syadeu
                         if (DataManagers[i].Disposed)
                         {
                             DataManagers.RemoveAt(i);
+                            InvokeManagerChanged();
                             i--;
                             continue;
                         }

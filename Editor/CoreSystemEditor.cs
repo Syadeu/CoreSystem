@@ -19,6 +19,8 @@ namespace SyadeuEditor
 
         private void OnEnable()
         {
+            m_ManagerView = new VerticalTreeView(Asset);
+
             m_RoutinesView = new VerticalTreeView(Asset);
             m_RoutinesView.MakeCustomSearchFilter((e, str) =>
             {
@@ -35,13 +37,18 @@ namespace SyadeuEditor
             });
             if (Application.isPlaying)
             {
+                CoreSystem.Instance.OnManagerChanged += ValidateManagerView;
                 CoreSystem.Instance.OnRoutineChanged += Instance_OnRoutineChanged;
+
+                ValidateManagerView();
             }
         }
+
         private void OnDisable()
         {
             if (Application.isPlaying)
             {
+                CoreSystem.Instance.OnManagerChanged -= ValidateManagerView;
                 CoreSystem.Instance.OnRoutineChanged -= Instance_OnRoutineChanged;
             }
         }
@@ -53,6 +60,60 @@ namespace SyadeuEditor
                 ValidateRoutineView();
             }
         }
+
+        #region ManagerView
+
+        VerticalTreeView m_ManagerView;
+        List<IStaticManager> m_Managers = new List<IStaticManager>();
+        private class ManagerTreeElement : VerticalTreeElement
+        {
+            private IStaticManager m_Manager;
+            public IStaticManager Manager => m_Manager;
+
+            public ManagerTreeElement(VerticalTreeViewEntity tree, IStaticManager manager) : base(tree)
+            {
+                m_Manager = manager;
+                string[] split = manager.ToString().Split('.');
+                m_Name = split[split.Length - 1].Trim(')');
+            }
+            public override object Data => m_Manager;
+            public override void OnGUI()
+            {
+            }
+        }
+        private void ValidateManagerView()
+        {
+            m_Managers.Clear();
+            m_Managers.AddRange(CoreSystem.GetStaticManagers());
+            m_Managers.AddRange(CoreSystem.GetDataManagers());
+            m_Managers.AddRange(CoreSystem.GetInstanceManagers());
+            $"{m_Managers.Count}".ToLog();
+            m_ManagerView
+                .SetupElements(m_Managers, (other) =>
+                {
+                    VerticalFolderTreeElement folder; ManagerTreeElement element;
+                    if (other is StaticManagerEntity staticMgr)
+                    {
+                        folder = m_ManagerView.GetOrCreateFolder("Static Manager");
+                    }
+                    else if (other is IStaticMonoManager monoMgr)
+                    {
+                        folder = m_ManagerView.GetOrCreateFolder("Mono Manager");
+                    }
+                    else
+                    {
+                        folder = m_ManagerView.GetOrCreateFolder("Data Manager");
+                    }
+                    element = new ManagerTreeElement(m_ManagerView, other as IStaticManager);
+                    element.SetParent(folder);
+
+                    return element;
+                });
+        }
+
+        #endregion
+
+        #region Routine View
 
         VerticalTreeView m_RoutinesView;
         List<CoreRoutine> m_Routines = new List<CoreRoutine>();
@@ -76,12 +137,9 @@ namespace SyadeuEditor
         }
         private void ValidateRoutineView()
         {
-            IReadOnlyList<CoreRoutine> backgroundRoutines = CoreSystem.Instance.GetCustomBackgroundUpdates();
-            IReadOnlyList<CoreRoutine> foregroundRoutines = CoreSystem.Instance.GetCustomUpdates();
-
             m_Routines.Clear();
-            m_Routines.AddRange(backgroundRoutines);
-            m_Routines.AddRange(foregroundRoutines);
+            m_Routines.AddRange(CoreSystem.Instance.GetCustomBackgroundUpdates());
+            m_Routines.AddRange(CoreSystem.Instance.GetCustomUpdates());
 
             m_RoutinesView
                 .SetupElements(m_Routines, (other) =>
@@ -91,18 +149,17 @@ namespace SyadeuEditor
                     if (routine.IsEditor)
                     {
                         folder = m_RoutinesView.GetOrCreateFolder("Editor Routine");
-                        element = new RoutineTreeElement(m_RoutinesView, routine);
                     }
                     else if (routine.IsBackground)
                     {
                         folder = m_RoutinesView.GetOrCreateFolder("Background Routine");
-                        element = new RoutineTreeElement(m_RoutinesView, routine);
                     }
                     else
                     {
                         folder = m_RoutinesView.GetOrCreateFolder("Foreground Routine");
-                        element = new RoutineTreeElement(m_RoutinesView, routine);
                     }
+                    element = new RoutineTreeElement(m_RoutinesView, routine);
+
                     string objPath = routine.ObjectName.Split('+')[0];
                     var topFolder = m_RoutinesView.GetOrCreateFolder(objPath);
                     element.SetParent(topFolder);
@@ -111,6 +168,9 @@ namespace SyadeuEditor
                     return element;
                 });
         }
+
+        #endregion
+
         public override void OnInspectorGUI()
         {
             EditorUtils.StringHeader("CoreSystem");
@@ -126,7 +186,12 @@ namespace SyadeuEditor
                 FMOD();
 #endif
             }
-            else EditorUtils.StringRich("이 시스템은 실행 중에만 정보를 표시합니다", 12, StringColor.maroon, true);
+            else
+            {
+                EditorGUILayout.BeginVertical("Box");
+                EditorUtils.StringRich("이 시스템은 실행 중에만 정보를 표시합니다", 12, true);
+                EditorGUILayout.EndVertical();
+            }
         }
 
         bool m_OpenManagerList = false;
@@ -138,61 +203,65 @@ namespace SyadeuEditor
             EditorGUI.indentLevel += 1;
 
             #region Manager
-            m_OpenManagerList = EditorUtils.Foldout(m_OpenManagerList, $"현재 생성된 파괴불가 매니저: {CoreSystem.GetStaticManagers().Count}개");
-            if (m_OpenManagerList)
-            {
-                EditorGUI.indentLevel += 1;
+            m_ManagerView.OnGUI();
+
+            //m_OpenManagerList = EditorUtils.Foldout(m_OpenManagerList, $"현재 생성된 파괴불가 매니저: {CoreSystem.GetStaticManagers().Count}개");
+            //if (m_OpenManagerList)
+            //{
+            //    EditorGUI.indentLevel += 1;
                 
-                for (int i = 0; i < CoreSystem.GetStaticManagers().Count; i++)
-                {
-                    if (CoreSystem.GetStaticManagers()[i].HideInHierarchy)
-                    {
-                        EditorGUI.BeginDisabledGroup(true);
-                        EditorGUILayout.LabelField($"> {CoreSystem.GetStaticManagers()[i].GetType().Name}", new GUIStyle("TextField"));
-                        EditorGUI.EndDisabledGroup();
-                    }
-                    else
-                    {
-                        if (EditorUtils.Button($"> {CoreSystem.GetStaticManagers()[i].GetType().Name}", "TextField", 1))
-                        {
-                            EditorGUIUtility.PingObject(CoreSystem.GetStaticManagers()[i].gameObject);
-                        }
-                    }
-                }
+            //    for (int i = 0; i < CoreSystem.GetStaticManagers().Count; i++)
+            //    {
+            //        IStaticMonoManager mgr = CoreSystem.GetStaticManagers()[i] as IStaticMonoManager;
+            //        if (mgr.HideInHierarchy)
+            //        {
+            //            EditorGUI.BeginDisabledGroup(true);
+            //            EditorGUILayout.LabelField($"> {CoreSystem.GetStaticManagers()[i].GetType().Name}", new GUIStyle("TextField"));
+            //            EditorGUI.EndDisabledGroup();
+            //        }
+            //        else
+            //        {
+            //            if (EditorUtils.Button($"> {CoreSystem.GetStaticManagers()[i].GetType().Name}", "TextField", 1))
+            //            {
+            //                EditorGUIUtility.PingObject(mgr.gameObject);
+            //            }
+            //        }
+            //    }
                 
-                EditorGUI.indentLevel -= 1;
-            }
+            //    EditorGUI.indentLevel -= 1;
+            //}
 
-            IReadOnlyList<IStaticMonoManager> _insMgrs = CoreSystem.GetInstanceManagers();
-            m_OpenInsManagerList = EditorUtils.Foldout(m_OpenInsManagerList, $"현재 생성된 인스턴스 매니저: {_insMgrs.Count}개");
-            if (m_OpenInsManagerList)
-            {
-                EditorGUI.indentLevel += 1;
+            //IReadOnlyList<IStaticManager> _insMgrs = CoreSystem.GetInstanceManagers();
+            //m_OpenInsManagerList = EditorUtils.Foldout(m_OpenInsManagerList, $"현재 생성된 인스턴스 매니저: {_insMgrs.Count}개");
+            //if (m_OpenInsManagerList)
+            //{
+            //    EditorGUI.indentLevel += 1;
 
-                for (int i = 0; i < _insMgrs.Count; i++)
-                {
-                    if (_insMgrs[i].HideInHierarchy)
-                    {
-                        EditorGUI.BeginDisabledGroup(true);
-                        EditorGUILayout.LabelField($"> {_insMgrs[i].GetType().Name}", new GUIStyle("TextField"));
-                        EditorGUI.EndDisabledGroup();
-                    }
-                    else
-                    {
-                        if (EditorUtils.Button($"> {_insMgrs[i].GetType().Name}", "TextField", 1))
-                        {
-                            EditorGUIUtility.PingObject(_insMgrs[i].gameObject);
-                        }
-                    }
-                }
+            //    for (int i = 0; i < _insMgrs.Count; i++)
+            //    {
+            //        IStaticMonoManager mgr = _insMgrs[i] as IStaticMonoManager;
+            //        if (mgr.HideInHierarchy)
+            //        {
+            //            EditorGUI.BeginDisabledGroup(true);
+            //            EditorGUILayout.LabelField($"> {_insMgrs[i].GetType().Name}", new GUIStyle("TextField"));
+            //            EditorGUI.EndDisabledGroup();
+            //        }
+            //        else
+            //        {
+            //            if (EditorUtils.Button($"> {_insMgrs[i].GetType().Name}", "TextField", 1))
+            //            {
+            //                EditorGUIUtility.PingObject(mgr.gameObject);
+            //            }
+            //        }
+            //    }
 
-                EditorGUI.indentLevel -= 1;
-            }
+            //    EditorGUI.indentLevel -= 1;
+            //}
 
-            IReadOnlyList<IStaticDataManager> _dataMgrs = CoreSystem.GetDataManagers();
-            EditorUtils.ShowSimpleListLabel(ref m_OpenDataManagerList, 
-                $"현재 생성된 데이터 매니저: {_dataMgrs.Count}개",
-                _dataMgrs, new GUIStyle("TextField"), true);
+            //IReadOnlyList<IStaticManager> _dataMgrs = CoreSystem.GetDataManagers();
+            //EditorUtils.ShowSimpleListLabel(ref m_OpenDataManagerList, 
+            //    $"현재 생성된 데이터 매니저: {_dataMgrs.Count}개",
+            //    _dataMgrs, new GUIStyle("TextField"), true);
             #endregion
 
             EditorGUI.indentLevel -= 1;
@@ -202,13 +271,7 @@ namespace SyadeuEditor
             EditorGUI.indentLevel += 1;
 
             #region Routine
-            EditorGUI.BeginDisabledGroup(true);
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.IntField("백그라운드 루틴", CoreSystem.Instance.GetCustomBackgroundUpdateCount());
-            EditorGUILayout.IntField("유니티 루틴", CoreSystem.Instance.GetCustomUpdateCount());
-            EditorGUILayout.EndHorizontal();
 
-            EditorGUI.EndDisabledGroup();
             m_RoutinesView.OnGUI();
 
             //m_OpenBackgroundRoutines = EditorGUILayout.Foldout(m_OpenBackgroundRoutines, "Open Background Routines");
@@ -223,9 +286,9 @@ namespace SyadeuEditor
             //    EditorGUI.indentLevel -= 1;
             //}
 
-            EditorGUI.indentLevel -= 1;
             #endregion
 
+            EditorGUI.indentLevel -= 1;
             EditorGUILayout.Space();
 
             EditorUtils.StringHeader("Jobs", 15);

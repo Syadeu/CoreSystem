@@ -1,6 +1,6 @@
 ﻿namespace Syadeu
 {
-    public interface IStaticMonoManager : IStaticManager, System.IDisposable
+    public interface IStaticMonoManager : IStaticManager
     {
         /// <summary>
         /// Hierarchy에서 표시될 이름을 설정합니다.
@@ -17,8 +17,6 @@
         /// </summary>
         bool HideInHierarchy { get; }
         bool ManualInitialize { get; }
-
-        bool Disposed { get; }
 
 #pragma warning disable IDE1006 // Naming Styles
         UnityEngine.GameObject gameObject { get; }

@@ -2,8 +2,7 @@
 
 namespace Syadeu
 {
-    public interface IStaticDataManager : IStaticManager, IDisposable
+    public interface IStaticDataManager : IStaticManager
     {
-        bool Disposed { get; }
     }
 }

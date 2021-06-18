@@ -1,7 +1,9 @@
 ﻿namespace Syadeu
 {
-    public interface IStaticManager
+    public interface IStaticManager : System.IDisposable
     {
+        bool Disposed { get; }
+
         /// <summary>
         /// 인스턴트가 생성될때 한번 실행할 함수입니다.
         /// </summary>

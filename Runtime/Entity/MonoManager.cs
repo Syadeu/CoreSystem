@@ -91,11 +91,13 @@ namespace Syadeu
             if (DontDestroy)
             {
                 CoreSystem.Instance.StaticManagers.Add(this);
+                CoreSystem.InvokeManagerChanged();
                 transform.SetParent(System.transform);
             }
             else
             {
                 CoreSystem.Instance.InstanceManagers.Add(this);
+                CoreSystem.InvokeManagerChanged();
                 if (InstanceGroupTr == null)
                 {
                     InstanceGroupTr = new GameObject("InstanceSystemGroup").transform;

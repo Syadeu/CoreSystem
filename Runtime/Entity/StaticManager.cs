@@ -81,11 +81,13 @@ namespace Syadeu
                         if (ins.DontDestroy)
                         {
                             CoreSystem.Instance.StaticManagers.Add(ins);
+                            CoreSystem.InvokeManagerChanged();
                             ins.transform.SetParent(System.transform);
                         }
                         else
                         {
                             CoreSystem.Instance.InstanceManagers.Add(ins);
+                            CoreSystem.InvokeManagerChanged();
                             if (InstanceGroupTr == null)
                             {
                                 InstanceGroupTr = new GameObject("InstanceSystemGroup").transform;

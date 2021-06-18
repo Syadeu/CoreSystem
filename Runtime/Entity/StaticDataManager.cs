@@ -32,6 +32,7 @@ namespace Syadeu
                     ins.OnInitialize();
 
                     CoreSystem.Instance.DataManagers.Add(ins);
+                    CoreSystem.InvokeManagerChanged();
                     m_Instance = ins;
 
                     ins.OnStart();
