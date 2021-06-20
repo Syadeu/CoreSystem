@@ -116,7 +116,7 @@ namespace Syadeu.Mono
             m_OnInitialize?.Invoke(m_DataIdx);
             for (int i = 0; i < m_Childs.Length; i++)
             {
-                m_Childs[i].Initialize(this, m_DataIdx);
+                m_Childs[i].InternalInitialize(this, m_DataIdx);
             }
 
             RenderManager.AddObserver(this);
@@ -156,7 +156,7 @@ namespace Syadeu.Mono
             temp.Add(entity);
             m_Childs = temp.ToArray();
 
-            entity.Initialize(this, m_DataIdx);
+            entity.InternalInitialize(this, m_DataIdx);
         }
         //protected virtual void OnDestroy()
         //{

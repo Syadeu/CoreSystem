@@ -3,7 +3,7 @@
 namespace Syadeu.Mono
 {
     [RequireComponent(typeof(CreatureBrain))]
-    public abstract class CreatureEntity : MonoBehaviour, IInitialize<CreatureBrain, int>, IRender
+    public abstract class CreatureEntity : MonoBehaviour, IRender
     {
         private CreatureBrain m_Brain = null;
         private int m_DataIdx = -1;
@@ -13,7 +13,7 @@ namespace Syadeu.Mono
 
         public bool Initialized { get; private set; } = false;
 
-        public void Initialize(CreatureBrain t, int ta)
+        internal void InternalInitialize(CreatureBrain t, int ta)
         {
             m_Brain = t;
             m_DataIdx = ta;

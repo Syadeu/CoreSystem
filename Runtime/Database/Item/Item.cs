@@ -13,6 +13,7 @@ namespace Syadeu.Database
         Multiply,
         Divide,
     }
+    [Flags]
     public enum ItemAffect
     {
         None = 0,
