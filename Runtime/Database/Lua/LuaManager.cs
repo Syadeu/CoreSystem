@@ -21,6 +21,9 @@ namespace Syadeu.Database
         {
             UserData.RegisterType<LuaUtils>();
             UserData.RegisterType<LuaVectorUtils>();
+
+            UserData.RegisterProxyType<ItemProxy, Item>(r => r.Proxy);
+
             m_MainScripter.Globals["CoreSystem"] = typeof(LuaUtils);
             m_MainScripter.Globals["Vector"] = typeof(LuaVectorUtils);
 

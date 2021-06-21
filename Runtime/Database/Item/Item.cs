@@ -1,29 +1,12 @@
 ﻿using Newtonsoft.Json;
+using Syadeu.Mono;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 
 namespace Syadeu.Database
 {
-    public enum ItemMath
-    {
-        Plus,
-        Minus,
-
-        Multiply,
-        Divide,
-    }
-    [Flags]
-    public enum ItemAffect
-    {
-        None = 0,
-
-        HP = 0x01,
-        AP = 0x02,
-
-        All = ~0
-    }
-
     [StaticManagerIntializeOnLoad]
     public sealed class ItemDataManager : StaticDataManager<ItemDataManager>
     {
@@ -41,6 +24,12 @@ namespace Syadeu.Database
             File.WriteAllText(path + $"Item/{item.m_Name}.json", data);
         }
     }
+    [Serializable]
+    public sealed class ItemValue
+    {
+        public string m_Name;
+        public string m_Value;
+    }
 
     [Serializable]
     public sealed class Item
@@ -56,7 +45,67 @@ namespace Syadeu.Database
         /// <see cref="ItemEffectType"/>
         /// </summary>
         public string[] m_ItemEffectTypes;
-        public ItemAffect m_ItemAffects;
+
+        public ItemValue[] m_ItemValues;
+
+        private ItemProxy m_Proxy = null;
+        public ItemProxy Proxy
+        {
+            get
+            {
+                if (m_Proxy == null)
+                {
+                    m_Proxy = new ItemProxy(this);
+                }
+                return m_Proxy;
+            }
+        }
+
+        public Action<CreatureEntity> OnEquip;
+        public Action<CreatureEntity> OnUse;
+
+        public Item()
+        {
+            m_Name = "NewItem";
+            m_Guid = Guid.NewGuid().ToString();
+        }
+
+        public string GetValue(string name)
+        {
+            for (int i = 0; i < m_ItemValues.Length; i++)
+            {
+                if (m_ItemValues[i].m_Name.Equals(name))
+                {
+                    return m_ItemValues[i].m_Value;
+                }
+            }
+            return null;
+        }
+    }
+    public sealed class ItemProxy : LuaProxyEntity<Item>
+    {
+        public ItemProxy(Item item) : base(item) { }
+
+        public string Name => Target.m_Name;
+        public string Guid => Target.m_Guid;
+
+        private ItemTypeProxy[] m_ItemTypes = null;
+        public ItemTypeProxy[] ItemTypes
+        {
+            get
+            {
+                if (m_ItemTypes == null)
+                {
+                    m_ItemTypes = new ItemTypeProxy[Target.m_ItemTypes.Length];
+                    for (int i = 0; i < m_ItemTypes.Length; i++)
+                    {
+                        m_ItemTypes[i] = ItemDataList.Instance.GetItemType(Target.m_ItemTypes[i]).Proxy;
+                    }
+                }
+                
+                return m_ItemTypes;
+            }
+        }
     }
 
     [Serializable]
@@ -64,6 +113,29 @@ namespace Syadeu.Database
     {
         public string m_Name;
         public string m_Guid;
+
+        private ItemTypeProxy m_Proxy = null;
+        public ItemTypeProxy Proxy
+        {
+            get
+            {
+                if (m_Proxy == null)
+                {
+                    m_Proxy = new ItemTypeProxy(this);
+                }
+                return m_Proxy;
+            }
+        }
+
+        public ItemType()
+        {
+            m_Name = "NewItemType";
+            m_Guid = Guid.NewGuid().ToString();
+        }
+    }
+    public sealed class ItemTypeProxy : LuaProxyEntity<ItemType>
+    {
+        public ItemTypeProxy(ItemType itemType) : base(itemType) { }
     }
 
     [Serializable]
@@ -72,7 +144,12 @@ namespace Syadeu.Database
         public string m_Name;
         public string m_Guid;
 
-        public ItemMath m_Math;
-        public float m_Value;
+        public Action<CreatureBrain> m_Effect;
+
+        public ItemEffectType()
+        {
+            m_Name = "NewItemEffectType";
+            m_Guid = Guid.NewGuid().ToString();
+        }
     }
 }
