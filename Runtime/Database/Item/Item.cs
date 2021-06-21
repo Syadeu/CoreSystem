@@ -112,10 +112,15 @@ namespace Syadeu.Database
         public Action OnEquip { get => Target.m_OnEquip; set => Target.m_OnEquip = value; }
         public Action OnUse { get => Target.m_OnUse; set => Target.m_OnUse = value; }
     }
-    public sealed class CreatureBrainProxy : LuaProxyEntity<CreatureBrain>
+    internal sealed class CreatureBrainProxy : LuaProxyEntity<CreatureBrain>
     {
         public CreatureBrainProxy(CreatureBrain brain) : base(brain) { }
 
+        public string Name => Target.name;
+
+        public bool IsOnGrid => Target.IsOnGrid;
+        public bool IsOnNavMesh => Target.IsOnNavMesh;
+        public bool IsMoving => Target.IsMoving;
     }
 
     [Serializable]

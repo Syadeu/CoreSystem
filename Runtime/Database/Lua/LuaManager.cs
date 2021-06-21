@@ -23,16 +23,19 @@ namespace Syadeu.Database.Lua
             UserData.RegisterType<LuaUtils>();
             UserData.RegisterType<LuaVectorUtils>();
             UserData.RegisterType<LuaItemUtils>();
+            UserData.RegisterType<LuaCreatureUtils>();
 
             UserData.RegisterProxyType<ItemProxy, Item>(r => r.Proxy);
-            UserData.RegisterProxyType<CreatureBrainProxy, CreatureBrain>(r => new CreatureBrainProxy(r));
+            UserData.RegisterProxyType<CreatureBrainProxy, CreatureBrain>(r => r.Proxy);
 
             RegisterSimpleAction();
+            RegisterSimpleAction<CreatureBrainProxy>();
 
             m_MainScripter = new Script();
             m_MainScripter.Globals["CoreSystem"] = typeof(LuaUtils);
             m_MainScripter.Globals["Vector"] = typeof(LuaVectorUtils);
             m_MainScripter.Globals["Items"] = typeof(LuaItemUtils);
+            m_MainScripter.Globals["Creature"] = typeof(LuaCreatureUtils);
 
             m_ScriptLoader = new LuaScriptLoader();
             m_MainScripter.Options.ScriptLoader = m_ScriptLoader;
@@ -302,5 +305,10 @@ your own IScriptLoader (possibly extending ScriptLoaderBase).", file, DEFAULT_PA
     internal sealed class LuaItemUtils
     {
         public static Item GetItem(string guid) => ItemDataList.Instance.GetItem(guid);
+    }
+    internal sealed class LuaCreatureUtils
+    {
+        public static Action<CreatureBrainProxy> OnVisible { get; set; }
+        public static Action<CreatureBrainProxy> OnInvisible { get; set; }
     }
 }

@@ -21,9 +21,15 @@ function test( )
 	CoreSystem.Log(target.Name)
 
 	target.OnUse = (function()
-
 	end)
 
+	Creature.OnVisible = (
+		function(targetCreature)
+			-- body
+			CoreSystem.Log(targetCreature.Name .. " is displaying")
+		end
+
+	)
 end
 
 return test()

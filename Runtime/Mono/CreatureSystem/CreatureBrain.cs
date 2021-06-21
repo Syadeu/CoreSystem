@@ -1,4 +1,6 @@
-﻿using Syadeu.Mono.Creature;
+﻿using Syadeu.Database;
+using Syadeu.Database.Lua;
+using Syadeu.Mono.Creature;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -26,11 +28,10 @@ namespace Syadeu.Mono
 
         [SerializeField] private NavMeshAgent m_NavMeshAgent;
 
-#if UNITY_EDITOR
         [Space]
         [SerializeField] private string m_CreatureName = null;
         [SerializeField] private string m_CreatureDescription = null;
-#endif
+
         [Space]
         [Tooltip("활성화시, 카메라에 비치지 않으면 이동 메소드가 순간이동을 합니다")]
         public bool m_EnableCameraCull = true;
@@ -42,8 +43,11 @@ namespace Syadeu.Mono
         [SerializeField] private UnityEvent<int> m_OnTerminate;
 
         private CreatureEntity[] m_Childs = null;
+        private CreatureBrainProxy m_Proxy = null;
 
-        public event Action<Vector3> onMove;
+        public event Action<Vector3> OnMove;
+
+        public override string DisplayName => m_CreatureName;
 
         public bool Initialized { get; private set; } = false;
         public bool IsOnGrid
@@ -61,6 +65,15 @@ namespace Syadeu.Mono
                 if (m_NavMeshAgent.desiredVelocity.magnitude > 0 &&
                     m_NavMeshAgent.remainingDistance > .2f) return true;
                 return false;
+            }
+        }
+
+        internal CreatureBrainProxy Proxy
+        {
+            get
+            {
+                if (m_Proxy == null) m_Proxy = new CreatureBrainProxy(this);
+                return m_Proxy;
             }
         }
 
@@ -169,6 +182,7 @@ namespace Syadeu.Mono
             {
                 m_Childs[i].OnVisible();
             }
+            LuaCreatureUtils.OnVisible?.Invoke(Proxy);
         }
         public void OnInvisible()
         {
@@ -176,6 +190,7 @@ namespace Syadeu.Mono
             {
                 m_Childs[i].OnInvisible();
             }
+            LuaCreatureUtils.OnInvisible?.Invoke(Proxy);
         }
 
         public int2 m_CachedCurrentGridIdxes = -1;
@@ -271,7 +286,7 @@ namespace Syadeu.Mono
                 m_NavMeshAgent.enabled = true;
                 m_NavMeshAgent.Move(direction);
 
-                onMove?.Invoke(transform.position + direction);
+                OnMove?.Invoke(transform.position + direction);
 
                 return true;
             }
@@ -280,7 +295,7 @@ namespace Syadeu.Mono
                 m_NavMeshAgent.enabled = false;
                 transform.position += direction * .6f;
 
-                onMove?.Invoke(transform.position);
+                OnMove?.Invoke(transform.position);
 
                 return false;
             }
@@ -295,7 +310,7 @@ namespace Syadeu.Mono
                 {
                     //m_NavMeshAgent.ResetPath();
                     transform.position = worldPosition;
-                    onMove?.Invoke(worldPosition);
+                    OnMove?.Invoke(worldPosition);
                     yield break;
                 }
 
@@ -307,7 +322,7 @@ namespace Syadeu.Mono
                 }
 
                 sqr = (worldPosition - transform.position).sqrMagnitude;
-                onMove?.Invoke(transform.position);
+                OnMove?.Invoke(transform.position);
 
                 yield return null;
             }
@@ -322,7 +337,7 @@ namespace Syadeu.Mono
                 if (m_EnableCameraCull && !RenderManager.IsInCameraScreen(transform.position))
                 {
                     transform.position = worldPosition;
-                    onMove?.Invoke(worldPosition);
+                    OnMove?.Invoke(worldPosition);
                     yield break;
                 }
 
@@ -338,7 +353,7 @@ namespace Syadeu.Mono
 
                 transform.position = Vector3.Lerp(transform.position, transform.position + targetAxis, Time.deltaTime * m_NavMeshAgent.angularSpeed);
 
-                onMove?.Invoke(transform.position);
+                OnMove?.Invoke(transform.position);
 
                 yield return null;
             }
