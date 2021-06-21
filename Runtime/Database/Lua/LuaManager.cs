@@ -27,48 +27,91 @@ namespace Syadeu.Database
             m_ScriptLoader = new LuaScriptLoader();
             m_MainScripter.Options.ScriptLoader = m_ScriptLoader;
 
+            LoadScripts();
+            CreateLuaCommands();
+        }
+
+        private void CreateLuaCommands()
+        {
             ConsoleWindow.CreateCommand((cmd) =>
             {
                 LoadScripts();
-                
-                foreach (var item in m_ScriptLoader.Resources)
-                {
-                    DynValue value;
-                    try
-                    {
-                        value = m_MainScripter.DoString(item.Value);
-                    }
-                    catch (ScriptRuntimeException runtimeEx)
-                    {
-                        ConsoleWindow.Log(runtimeEx.DecoratedMessage, ConsoleFlag.Error);
-                    }
-                    catch (SyntaxErrorException syntaxEx)
-                    {
-                        ConsoleWindow.Log(syntaxEx.DecoratedMessage, ConsoleFlag.Error);
-                    }
-                    catch (System.Exception ex)
-                    {
-                        ConsoleWindow.Log(ex.ToString(), ConsoleFlag.Error);
-                    }
-                }
-            }, "reload", "lua");
-        }
+            }, "lua", "reload");
 
+            ConsoleWindow.CreateCommand((cmd) =>
+            {
+                $"Displaying all lua functions".ToLogConsole();
+                foreach (var item in m_MainScripter.Globals.Pairs)
+                {
+                    $"{item.Key.CastToString()} : {item.Value.Type}".ToLogConsole(1);
+                }
+            }, "lua", "get", "functions");
+            ConsoleWindow.CreateCommand((cmd) =>
+            {
+                try
+                {
+                    if (cmd.Contains('('))
+                    {
+                        string[] vs = cmd.Split('(');
+                        vs[1] = vs[1].Trim(')');
+
+                        string[] parameters = vs[1].Split(',');
+                        m_MainScripter.Call(m_MainScripter.Globals[vs[0]], parameters);
+                    }
+                    else m_MainScripter.Call(m_MainScripter.Globals[cmd]);
+                }
+                catch (ScriptRuntimeException runtimeEx)
+                {
+                    ConsoleWindow.Log(runtimeEx.DecoratedMessage, ConsoleFlag.Error);
+                }
+                catch (SyntaxErrorException syntaxEx)
+                {
+                    ConsoleWindow.Log(syntaxEx.DecoratedMessage, ConsoleFlag.Error);
+                }
+                catch (System.Exception ex)
+                {
+                    ConsoleWindow.Log(ex.ToString(), ConsoleFlag.Error);
+                }
+            }, "lua", "excute");
+            //foreach (var item in m_MainScripter.Globals.Pairs)
+            //{
+            //    if (item.Value.Type != DataType.Function || item.Key.CastToString().Equals("require")) continue;
+
+            //    string[] parameters = new string[] { item.Key.ToString(), item.Value.ToString() };
+            //    ConsoleWindow.CreateCommand((cmd) =>
+            //    {
+            //        m_MainScripter.Call(item.Value);
+            //    }, parameters);
+
+            //    $"{parameters[0]}.{parameters[1]} : {item.Key.Type}.{item.Value.Type} added".ToLog();
+            //}
+        }
         private void LoadScripts()
         {
 #if UNITY_EDITOR
             AssetDatabase.Refresh();
 #endif
             m_ScriptLoader.ReloadScripts();
-
-            //for (int i = 0; i < result.Length; i++)
-            //{
-            //    ConsoleWindow.Log($"Script {result[i].name} is loaded");
-            //    m_Scripts.Add(result[i].name, result[i].text);
-            //}
-            //ConsoleWindow.Log($"Loaded lua scripts : {result.Length}");
-
-            //Script.DefaultOptions.ScriptLoader = new MoonSharp.Interpreter.Loaders.UnityAssetsScriptLoader(m_Scripts);
+            foreach (var item in m_ScriptLoader.Resources)
+            {
+                DynValue value;
+                try
+                {
+                    value = m_MainScripter.DoString(item.Value);
+                }
+                catch (ScriptRuntimeException runtimeEx)
+                {
+                    ConsoleWindow.Log(runtimeEx.DecoratedMessage, ConsoleFlag.Error);
+                }
+                catch (SyntaxErrorException syntaxEx)
+                {
+                    ConsoleWindow.Log(syntaxEx.DecoratedMessage, ConsoleFlag.Error);
+                }
+                catch (System.Exception ex)
+                {
+                    ConsoleWindow.Log(ex.ToString(), ConsoleFlag.Error);
+                }
+            }
         }
     }
 
@@ -87,7 +130,6 @@ namespace Syadeu.Database
             m_Resources = new Dictionary<string, string>();
 
             Initialize();
-            ReloadScripts();
         }
 
         private void Initialize()

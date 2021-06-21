@@ -617,7 +617,12 @@ namespace Syadeu.Mono
             CommandField nextCmd = def.Find(split[1]);
             for (int i = 2; i < split.Length - 1; i++)
             {
-                nextCmd = nextCmd.Find(split[i]);
+                var next = nextCmd.Find(split[i]);
+                if (next != null) nextCmd = next;
+                else
+                {
+                    break;
+                }
             }
 
             for (int i = 0; i < nextCmd.m_Args.Count; i++)
@@ -812,10 +817,13 @@ namespace Syadeu.Mono
         }
         private void InternalCreateCommand(Action<string> action, params string[] lines)
         {
-            CommandDefinition def = ScriptableObject.CreateInstance<CommandDefinition>();
-            def.m_Initializer = lines[0];
-
-            SyadeuSettings.Instance.m_CommandDefinitions.Add(def);
+            CommandDefinition def = FindDefinition(lines[0]);
+            if (def == null)
+            {
+                def = ScriptableObject.CreateInstance<CommandDefinition>();
+                def.m_Initializer = lines[0];
+                SyadeuSettings.Instance.m_CommandDefinitions.Add(def);
+            }
 
             if (lines.Length < 2)
             {
