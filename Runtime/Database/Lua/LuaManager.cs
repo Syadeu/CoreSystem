@@ -184,7 +184,7 @@ namespace Syadeu.Database
         }
         public override object LoadFile(string file, Table globalContext)
         {
-            $"requesting {file}".ToLog();
+            //$"requesting {file}".ToLog();
             file = GetFileName(file);
 
             if (m_Resources.ContainsKey(file))
@@ -206,7 +206,7 @@ your own IScriptLoader (possibly extending ScriptLoaderBase).", file, DEFAULT_PA
         }
         public override string ResolveModuleName(string modname, Table globalContext)
         {
-            $"in {modname}".ToLog();
+            //$"in {modname}".ToLog();
 
             if (m_Resources.ContainsKey(modname)) return modname;
             else return base.ResolveModuleName(modname, globalContext);
@@ -226,6 +226,8 @@ your own IScriptLoader (possibly extending ScriptLoaderBase).", file, DEFAULT_PA
 
         //public static bool IsArray(object obj) => obj.GetType().IsArray;
         public static void Log(string txt) => ConsoleWindow.Log(txt);
+
+        public static float GetDeltaTime() => Time.deltaTime;
     }
     internal sealed class LuaVectorUtils
     {
