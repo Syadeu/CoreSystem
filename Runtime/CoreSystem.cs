@@ -16,6 +16,7 @@ using UnityEngine.Diagnostics;
 using UnityEngine.Networking;
 using System.Threading.Tasks;
 using System.Reflection;
+using Syadeu.Database;
 
 namespace Syadeu
 {
@@ -400,6 +401,10 @@ namespace Syadeu
                 //    staticManager.GetProperty(InstanceStr).GetGetMethod().Invoke(null, null);
                 //    continue;
                 //}
+            }
+            if (SyadeuSettings.Instance.m_EnableLua)
+            {
+                LuaManager.Instance.Initialize();
             }
 
             if (SyadeuSettings.Instance.m_EnableAutoStaticInitialize)

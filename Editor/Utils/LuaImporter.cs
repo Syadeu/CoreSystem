@@ -10,6 +10,7 @@ using UnityEditor.AssetImporters;
 
 using Syadeu;
 using Syadeu.Database;
+using Syadeu.Mono;
 
 namespace SyadeuEditor
 {
@@ -18,6 +19,13 @@ namespace SyadeuEditor
     {
         public override void OnImportAsset(AssetImportContext ctx)
         {
+            if (!SyadeuSettings.Instance.m_EnableLua)
+            {
+                SyadeuSettings.Instance.m_EnableLua = true;
+                EditorUtility.SetDirty(SyadeuSettings.Instance);
+                AssetDatabase.SaveAssets();
+            }
+
             var luaTxt = File.ReadAllText(ctx.assetPath); //Read as a string
 
             //Debug.Log("Import:" + ctx.assetPath);

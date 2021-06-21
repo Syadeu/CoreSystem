@@ -70,6 +70,8 @@ namespace Syadeu
 {
     public static class ExtensionMethods
     {
+        private const string c_Indent = "    ";
+
         public static void ToLogError(this string log, UnityEngine.Object target = null)
         {
 #if UNITY_EDITOR
@@ -83,6 +85,20 @@ namespace Syadeu
             if (target == null) Debug.Log(log);
             else Debug.Log(log, target);
 #endif
+        }
+        public static void ToLogConsole(this string log, ConsoleFlag flag = ConsoleFlag.Normal)
+        {
+            ConsoleWindow.Log(log, flag);
+        }
+        public static void ToLogConsole(this string log, int indent, ConsoleFlag flag = ConsoleFlag.Normal)
+        {
+            string txt = "";
+            for (int i = 0; i < indent; i++)
+            {
+                txt += c_Indent;
+            }
+            txt += log;
+            ConsoleWindow.Log(txt, flag);
         }
 
         public static T Clamp<T>(this T val, T min, T max) where T : IComparable<T>

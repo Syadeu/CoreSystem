@@ -50,6 +50,10 @@ namespace Syadeu.Mono
         public bool m_ConsoleLogOnlyIsDevelopment = true;
         public bool m_ConsoleThrowWhenErrorRecieved = true;
         public List<CommandDefinition> m_CommandDefinitions = new List<CommandDefinition>();
+
+        // Lua
+        [Header("Lua Manager")]
+        public bool m_EnableLua = false;
     }
 }
  
