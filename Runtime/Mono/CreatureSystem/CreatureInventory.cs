@@ -7,7 +7,7 @@ namespace Syadeu.Mono
     public sealed class CreatureInventory : CreatureEntity
     {
         [Space]
-        [SerializeField] private List<int> m_Equipments = new List<int>();
-        [SerializeField] private List<int> m_Inventory = new List<int>();
+        [SerializeField] private List<string> m_Equipments = new List<string>();
+        [SerializeField] private List<string> m_Inventory = new List<string>();
     }
 }

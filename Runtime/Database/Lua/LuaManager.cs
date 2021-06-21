@@ -289,7 +289,7 @@ your own IScriptLoader (possibly extending ScriptLoaderBase).", file, DEFAULT_PA
         //public static bool IsArray(object obj) => obj.GetType().IsArray;
         public static void Log(string txt) => ConsoleWindow.Log(txt);
 
-        public static float GetDeltaTime() => Time.deltaTime;
+        public static float DeltaTime => Time.deltaTime;
     }
     internal sealed class LuaVectorUtils
     {
@@ -304,7 +304,7 @@ your own IScriptLoader (possibly extending ScriptLoaderBase).", file, DEFAULT_PA
     }
     internal sealed class LuaItemUtils
     {
-        public static Item GetItem(string guid) => ItemDataList.Instance.GetItem(guid);
+        public static ItemProxy GetItem(string guid) => ItemDataList.Instance.GetItem(guid).Proxy;
     }
     internal sealed class LuaCreatureUtils
     {
