@@ -6,26 +6,33 @@ using MoonSharp.Interpreter;
 using System.Linq;
 using MoonSharp.Interpreter.Loaders;
 using System.IO;
+using System;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 
-namespace Syadeu.Database
+namespace Syadeu.Database.Lua
 {
-    internal sealed class LuaManager : StaticDataManager<LuaManager>
+    public sealed class LuaManager : StaticDataManager<LuaManager>
     {
-        private Script m_MainScripter = new Script();
+        private Script m_MainScripter;
         private LuaScriptLoader m_ScriptLoader;
 
         public override void OnInitialize()
         {
             UserData.RegisterType<LuaUtils>();
             UserData.RegisterType<LuaVectorUtils>();
+            UserData.RegisterType<LuaItemUtils>();
 
             UserData.RegisterProxyType<ItemProxy, Item>(r => r.Proxy);
+            UserData.RegisterProxyType<CreatureBrainProxy, CreatureBrain>(r => new CreatureBrainProxy(r));
 
+            RegisterSimpleAction();
+
+            m_MainScripter = new Script();
             m_MainScripter.Globals["CoreSystem"] = typeof(LuaUtils);
             m_MainScripter.Globals["Vector"] = typeof(LuaVectorUtils);
+            m_MainScripter.Globals["Items"] = typeof(LuaItemUtils);
 
             m_ScriptLoader = new LuaScriptLoader();
             m_MainScripter.Options.ScriptLoader = m_ScriptLoader;
@@ -116,6 +123,52 @@ namespace Syadeu.Database
                 }
             }
         }
+
+        public static void AddGlobal(string functionName, Type type)
+        {
+            Instance.m_MainScripter.Globals[functionName] = type;
+        }
+
+        public static void RegisterSimpleFunc<T>()
+        {
+            Script.GlobalOptions.CustomConverters.SetScriptToClrCustomConversion(DataType.Function, typeof(Func<T>),
+                v =>
+                {
+                    var function = v.Function;
+                    return (Func<T>)(() => function.Call().ToObject<T>());
+                }
+            );
+        }
+        public static void RegisterSimpleFunc<T1, TResult>()
+        {
+            Script.GlobalOptions.CustomConverters.SetScriptToClrCustomConversion(DataType.Function, typeof(Func<T1, TResult>),
+                v =>
+                {
+                    var function = v.Function;
+                    return (Func<T1, TResult>)((T1 p1) => function.Call(p1).ToObject<TResult>());
+                }
+            );
+        }
+        public static void RegisterSimpleAction<T>()
+        {
+            Script.GlobalOptions.CustomConverters.SetScriptToClrCustomConversion(DataType.Function, typeof(Action<T>),
+                v =>
+                {
+                    var function = v.Function;
+                    return (Action<T>)(p => function.Call(p));
+                }
+            );
+        }
+        public static void RegisterSimpleAction()
+        {
+            Script.GlobalOptions.CustomConverters.SetScriptToClrCustomConversion(DataType.Function, typeof(Action),
+                v =>
+                {
+                    var function = v.Function;
+                    return (Action)(() => function.Call());
+                }
+            );
+        }
     }
 
     internal sealed class LuaScriptLoader : ScriptLoaderBase
@@ -126,7 +179,7 @@ namespace Syadeu.Database
         /// <summary>
 		/// The default path where scripts are meant to be stored (if not changed)
 		/// </summary>
-		public const string DEFAULT_PATH = "../Modules/Lua";
+		public const string DEFAULT_PATH = "../CoreSystem/Modules/Lua";
 
         public LuaScriptLoader()
         {
@@ -139,7 +192,6 @@ namespace Syadeu.Database
         {
             IgnoreLuaPathGlobal = true;
             ModulePaths = UnpackStringPaths(
-                $"?.lua" +
                 $"{Application.dataPath}/{DEFAULT_PATH}/?;" +
                 $"{Application.dataPath}/{DEFAULT_PATH}/?.lua");
         }
@@ -165,6 +217,10 @@ namespace Syadeu.Database
                 $"Loaded {scriptAssets[i].name}".ToLogConsole(1);
             }
 
+            if (!Directory.Exists($"{Application.dataPath}/{DEFAULT_PATH}"))
+            {
+                Directory.CreateDirectory($"{Application.dataPath}/{DEFAULT_PATH}");
+            }
             LoadAllScripts($"{Application.dataPath}/{DEFAULT_PATH}", m_Resources, 1);
 
             void LoadAllScripts(string path, Dictionary<string, string> scrs, int depth)
@@ -242,5 +298,9 @@ your own IScriptLoader (possibly extending ScriptLoaderBase).", file, DEFAULT_PA
 
         public static double[] Lerp(double[] a, double[] b, float t)
             => ToVector(Vector3.Lerp(GetVector(a), GetVector(b), t));
+    }
+    internal sealed class LuaItemUtils
+    {
+        public static Item GetItem(string guid) => ItemDataList.Instance.GetItem(guid);
     }
 }

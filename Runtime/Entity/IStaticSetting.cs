@@ -3,6 +3,6 @@
     public interface IStaticSetting : IInitialize
     {
         bool Initialized { get; }
-        void OnInitialized();
+        void OnInitialize();
     }
 }

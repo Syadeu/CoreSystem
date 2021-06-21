@@ -67,7 +67,8 @@ namespace Syadeu
                         if (!(m_Instance as StaticSettingEntity<T>).RuntimeModifiable) m_Instance = Instantiate(m_Instance);
                     }
 
-                    m_Instance.OnInitialized();
+                    (m_Instance as StaticSettingEntity<T>).OnInitialize();
+                    (m_Instance as StaticSettingEntity<T>).Initialized = true;
                 }
 
                 return m_Instance;
@@ -81,11 +82,8 @@ namespace Syadeu
         /// </summary>
         public virtual bool RuntimeModifiable { get; } = false;
 
-        public virtual void OnInitialized()
-        {
-            Initialized = true;
-        }
-        public virtual void Initialize() { }
+        public virtual void OnInitialize() { }
+        public void Initialize() { }
 
         private static void EnforceOrder()
         {

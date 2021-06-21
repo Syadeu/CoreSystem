@@ -404,7 +404,7 @@ namespace Syadeu
             }
             if (SyadeuSettings.Instance.m_EnableLua)
             {
-                LuaManager.Instance.Initialize();
+                Syadeu.Database.Lua.LuaManager.Instance.Initialize();
             }
 
             if (SyadeuSettings.Instance.m_EnableAutoStaticInitialize)

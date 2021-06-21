@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using UnityEngine;
 
 namespace Syadeu.Database
 {
@@ -37,10 +38,12 @@ namespace Syadeu.Database
         public string m_Name;
         public string m_Guid;
 
+        [Tooltip("GUID")]
         /// <summary>
         /// <see cref="ItemType"/>
         /// </summary>
         public string[] m_ItemTypes;
+        [Tooltip("GUID")]
         /// <summary>
         /// <see cref="ItemEffectType"/>
         /// </summary>
@@ -61,8 +64,8 @@ namespace Syadeu.Database
             }
         }
 
-        public Action<CreatureEntity> OnEquip;
-        public Action<CreatureEntity> OnUse;
+        public Action m_OnEquip;
+        public Action m_OnUse;
 
         public Item()
         {
@@ -87,7 +90,6 @@ namespace Syadeu.Database
         public ItemProxy(Item item) : base(item) { }
 
         public string Name => Target.m_Name;
-        public string Guid => Target.m_Guid;
 
         private ItemTypeProxy[] m_ItemTypes = null;
         public ItemTypeProxy[] ItemTypes
@@ -106,6 +108,14 @@ namespace Syadeu.Database
                 return m_ItemTypes;
             }
         }
+
+        public Action OnEquip { get => Target.m_OnEquip; set => Target.m_OnEquip = value; }
+        public Action OnUse { get => Target.m_OnUse; set => Target.m_OnUse = value; }
+    }
+    public sealed class CreatureBrainProxy : LuaProxyEntity<CreatureBrain>
+    {
+        public CreatureBrainProxy(CreatureBrain brain) : base(brain) { }
+
     }
 
     [Serializable]

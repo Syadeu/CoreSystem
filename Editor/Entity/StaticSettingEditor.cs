@@ -44,14 +44,14 @@ namespace SyadeuEditor
                     }
                 }
 
-                (s_Instance as IStaticSetting).OnInitialized();
+                (s_Instance as IStaticSetting).OnInitialize();
 
                 return s_Instance;
             }
         }
 
         public bool Initialized { get; private set; }
-        public virtual void OnInitialized()
+        public virtual void OnInitialize()
         {
             Initialized = true;
         }
