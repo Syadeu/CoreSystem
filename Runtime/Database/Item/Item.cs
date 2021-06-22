@@ -1,48 +1,120 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Syadeu.Mono;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 
 namespace Syadeu.Database
 {
     [Serializable]
-    public sealed class ItemValue
+    public abstract class ItemValue
     {
         public string m_Name;
-        /// <summary>
-        /// <see cref="ItemValueType"/>
-        /// </summary>
-        public int m_Type;
-        public string m_Value;
 
-        public object GetValue()
+        public virtual object GetValue() => throw new NotImplementedException();
+        //public abstract void SetValue(object value);
+    }
+    [Serializable]
+    public sealed class ITemValueNull : ItemValue
+    {
+        public override object GetValue() => null;
+        //public override void SetValue(object value)
+        //{
+        //    throw new NotImplementedException();
+        //}
+    }
+    [Serializable]
+    public sealed class ItemValue<T> : ItemValue where T : IConvertible
+    {
+        ///// <summary>
+        ///// <see cref="ItemValueType"/>
+        ///// </summary>
+        //public int m_Type;
+        public T m_Value;
+
+        public override object GetValue()
         {
-            switch ((ItemValueType)m_Type)
+            //switch ((ItemValueType)m_Type)
+            //{
+            //    case ItemValueType.String:
+            //        return m_Value;
+            //    case ItemValueType.Boolean:
+            //        return Convert.ChangeType(m_Value, typeof(bool));
+            //    case ItemValueType.Float:
+            //        return Convert.ChangeType(m_Value, typeof(float));
+            //    case ItemValueType.Integer:
+            //        return Convert.ChangeType(m_Value, typeof(int));
+            //    default:
+            //        return null;
+            //}
+            return m_Value;
+        }
+        //public override void SetValue(object value)
+        //{
+        //    m_Value = (T)value;
+        //}
+    }
+
+    //[Serializable] public sealed class SerializableItemIntValue : ItemValue<int> { }
+    //[Serializable] public sealed class SerializableItemFloatValue : ItemValue<float> { }
+    //[Serializable] public sealed class SerializableItemStringValue : ItemValue<string> { }
+    //[Serializable] public sealed class SerializableItemBoolValue : ItemValue<bool> { }
+    //internal enum ItemValueType
+    //{
+    //    Null,
+
+    //    String,
+    //    Boolean,
+    //    Float,
+    //    Integer
+    //}
+
+    public class ItemJsonConverter : JsonConverter
+    {
+        private readonly Type[] _types;
+
+        public ItemJsonConverter(params Type[] types)
+        {
+            _types = types;
+        }
+
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            JToken t = JToken.FromObject(value);
+
+            if (t.Type != JTokenType.Object)
             {
-                case ItemValueType.String:
-                    return m_Value;
-                case ItemValueType.Boolean:
-                    return Convert.ChangeType(m_Value, typeof(bool));
-                case ItemValueType.Float:
-                    return Convert.ChangeType(m_Value, typeof(float));
-                case ItemValueType.Integer:
-                    return Convert.ChangeType(m_Value, typeof(int));
-                default:
-                    return null;
+                t.WriteTo(writer);
+            }
+            else
+            {
+                JObject o = (JObject)t;
+                IList<string> propertyNames = o.Properties().Select(p => p.Name).ToList();
+
+                o.AddFirst(new JProperty("Keys", new JArray(propertyNames)));
+
+                o.WriteTo(writer);
             }
         }
-    }
-    internal enum ItemValueType
-    {
-        Null,
 
-        String,
-        Boolean,
-        Float,
-        Integer
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            throw new NotImplementedException("Unnecessary because CanRead is false. The type will skip the converter.");
+        }
+
+        public override bool CanRead
+        {
+            get { return false; }
+        }
+
+        public override bool CanConvert(Type objectType)
+        {
+            return _types.Any(t => t == objectType);
+        }
     }
 
     [Serializable]
@@ -62,10 +134,11 @@ namespace Syadeu.Database
         /// </summary>
         public string[] m_ItemEffectTypes;
 
-        public ItemValue[] m_Values;
+        [SerializeReference] public ItemValue[] m_Values;
 
         [NonSerialized] private ItemProxy m_Proxy = null;
 
+        [NonSerialized] private List<ItemInstance> m_Instances = new List<ItemInstance>();
         [NonSerialized] public Action m_OnEquip;
         [NonSerialized] public Action m_OnUse;
 
@@ -84,26 +157,80 @@ namespace Syadeu.Database
             return m_Proxy;
         }
 
-        private ItemValue InternalGetValue(string name)
+        private int GetValueIdx(string name)
         {
             for (int i = 0; i < m_Values.Length; i++)
             {
                 if (m_Values[i].m_Name.Equals(name))
                 {
-                    return m_Values[i];
+                    return i;
                 }
             }
             throw new Exception();
         }
-        public object GetValue(string name) => InternalGetValue(name).GetValue();
+        public object GetValue(string name) => m_Values[GetValueIdx(name)].GetValue();
         public void SetValue(string name, object value)
         {
-            ItemValue other = InternalGetValue(name);
+            int other = GetValueIdx(name);
 
-            if (value == null) other.m_Value = null;
-            else other.m_Value = value.ToString();
+            if (value == null)
+            {
+                m_Values[other] = new ITemValueNull();
+            }
+            else if (value is bool boolVal)
+            {
+                ItemValue<bool> temp = new ItemValue<bool>();
+                //SerializableItemBoolValue temp = new SerializableItemBoolValue();
+                temp.m_Value = boolVal;
+                m_Values[other] = temp;
+            }
+            else if (value is float floatVal)
+            {
+                ItemValue<float> temp = new ItemValue<float>();
+                //SerializableItemFloatValue temp = new SerializableItemFloatValue();
+                temp.m_Value = floatVal;
+                m_Values[other] = temp;
+            }
+            else if (value is int intVal)
+            {
+                ItemValue<int> temp = new ItemValue<int>();
+                //SerializableItemIntValue temp = new SerializableItemIntValue();
+                temp.m_Value = intVal;
+                m_Values[other] = temp;
+            }
+            else
+            {
+                ItemValue<string> temp = new ItemValue<string>();
+                //SerializableItemStringValue temp = new SerializableItemStringValue();
+                temp.m_Value = value.ToString();
+                m_Values[other] = temp;
+            }
+            //m_Values[other] = 
 
-            ItemDataList.SetValueType(other);
+            //if (value == null) other.m_Value = null;
+            //else other.m_Value = value.ToString();
+            //m_Values[other]..(value);
+
+            //ItemDataList.SetValueType(other);
+        }
+
+        public ItemInstance CreateInstance()
+        {
+            ItemInstance instance = new ItemInstance(this);
+
+            return instance;
+        }
+        public ItemInstance GetInstance(Guid guid)
+        {
+            for (int i = 0; i < m_Instances.Count; i++)
+            {
+                if (m_Instances[i].Guid.Equals(guid))
+                {
+                    return m_Instances[i];
+                }
+            }
+
+            throw new Exception();
         }
     }
     public sealed class ItemProxy : LuaProxyEntity<Item>
@@ -135,6 +262,35 @@ namespace Syadeu.Database
 
         public object GetValue(string name) => Target.GetValue(name);
         public void SetValue(string name, object value) => Target.SetValue(name, value);
+    }
+    public sealed class ItemInstance
+    {
+        private readonly Guid m_Guid;
+
+        private readonly Item m_Data;
+        private readonly ItemType[] m_ItemTypes;
+        private readonly ItemEffectType[] m_ItemEffectTypes;
+
+        public Guid Guid => m_Guid;
+
+        internal ItemInstance(Item item)
+        {
+            m_Guid = Guid.NewGuid();
+
+            m_Data = item;
+
+            m_ItemTypes = new ItemType[item.m_ItemTypes.Length];
+            for (int i = 0; i < m_ItemTypes.Length; i++)
+            {
+                m_ItemTypes[i] = ItemDataList.Instance.GetItemType(item.m_ItemTypes[i]);
+            }
+
+            m_ItemEffectTypes = new ItemEffectType[item.m_ItemEffectTypes.Length];
+            for (int i = 0; i < m_ItemEffectTypes.Length; i++)
+            {
+                m_ItemEffectTypes[i] = ItemDataList.Instance.GetItemEffectType(item.m_ItemEffectTypes[i]);
+            }
+        }
     }
 
     [Serializable]
