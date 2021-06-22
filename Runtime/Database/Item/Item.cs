@@ -33,8 +33,11 @@ namespace Syadeu.Database
         [NonSerialized] private ItemProxy m_Proxy = null;
 
         [NonSerialized] private List<ItemInstance> m_Instances = new List<ItemInstance>();
+
         [NonSerialized] public Action m_OnEquip;
+        [NonSerialized] public Action m_OnUnequip;
         [NonSerialized] public Action m_OnUse;
+        [NonSerialized] public Action m_OnDrop;
 
         public Item()
         {
@@ -202,7 +205,7 @@ namespace Syadeu.Database
         public string m_Guid;
 
         [Space]
-        public ItemValue[] m_Values;
+        [SerializeReference] public ItemValue[] m_Values;
 
         [NonSerialized] private ItemTypeProxy m_Proxy = null;
 
@@ -233,7 +236,7 @@ namespace Syadeu.Database
         public string m_Guid;
 
         [Space]
-        public ItemValue[] m_Values;
+        [SerializeReference] public ItemValue[] m_Values;
 
         [NonSerialized] private ItemEffectTypeProxy m_Proxy = null;
 

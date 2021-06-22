@@ -124,12 +124,12 @@ namespace Syadeu.Database.Lua
             }
         }
 
-        public static void AddGlobal(string functionName, Type type)
+        public void AddGlobal(string functionName, Type type)
         {
             UserData.RegisterType(type);
             Instance.m_MainScripter.Globals[functionName] = type;
         }
-        public static void AddGlobal<T>(string functionName) => AddGlobal(functionName, typeof(T));
+        public void AddGlobal<T>(string functionName) => AddGlobal(functionName, typeof(T));
 
         public static void RegisterSimpleFunc<T>()
         {
