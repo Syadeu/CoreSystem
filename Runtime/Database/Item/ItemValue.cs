@@ -126,9 +126,13 @@ namespace Syadeu.Database
             {
                 return JsonConvert.DeserializeObject<SerializableItemIntValue>(jo.ToString(), SpecifiedSubclassConversion);
             }
-            else
+            else if (t.Equals(typeof(string)))
             {
                 return JsonConvert.DeserializeObject<SerializableItemStringValue>(jo.ToString(), SpecifiedSubclassConversion);
+            }
+            else
+            {
+                return JsonConvert.DeserializeObject<ItemValueNull>(jo.ToString(), SpecifiedSubclassConversion);
             }
         }
     }
