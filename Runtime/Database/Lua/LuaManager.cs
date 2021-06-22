@@ -20,22 +20,19 @@ namespace Syadeu.Database.Lua
 
         public override void OnInitialize()
         {
-            UserData.RegisterType<LuaUtils>();
-            UserData.RegisterType<LuaVectorUtils>();
-            UserData.RegisterType<LuaItemUtils>();
-            UserData.RegisterType<LuaCreatureUtils>();
-
-            UserData.RegisterProxyType<ItemProxy, Item>(r => r.Proxy);
+            UserData.RegisterProxyType<ItemProxy, Item>(r => r.GetProxy());
+            UserData.RegisterProxyType<ItemTypeProxy, ItemType>(r => r.GetProxy());
+            UserData.RegisterProxyType<ItemEffectTypeProxy, ItemEffectType>(r => r.GetProxy());
             UserData.RegisterProxyType<CreatureBrainProxy, CreatureBrain>(r => r.Proxy);
 
             RegisterSimpleAction();
             RegisterSimpleAction<CreatureBrainProxy>();
 
             m_MainScripter = new Script();
-            m_MainScripter.Globals["CoreSystem"] = typeof(LuaUtils);
-            m_MainScripter.Globals["Vector"] = typeof(LuaVectorUtils);
-            m_MainScripter.Globals["Items"] = typeof(LuaItemUtils);
-            m_MainScripter.Globals["Creature"] = typeof(LuaCreatureUtils);
+            AddGlobal<LuaUtils>("CoreSystem");
+            AddGlobal<LuaVectorUtils>("Vector");
+            AddGlobal<LuaItemUtils>("Items");
+            AddGlobal<LuaCreatureUtils>("Creature");
 
             m_ScriptLoader = new LuaScriptLoader();
             m_MainScripter.Options.ScriptLoader = m_ScriptLoader;
@@ -127,10 +124,12 @@ namespace Syadeu.Database.Lua
             }
         }
 
-        public static void AddGlobal(string functionName, Type type)
+        public void AddGlobal(string functionName, Type type)
         {
+            UserData.RegisterType(type);
             Instance.m_MainScripter.Globals[functionName] = type;
         }
+        public void AddGlobal<T>(string functionName) => AddGlobal(functionName, typeof(T));
 
         public static void RegisterSimpleFunc<T>()
         {
@@ -210,14 +209,14 @@ namespace Syadeu.Database.Lua
 
         public void ReloadScripts()
         {
-            "LUA: Reloading".ToLogConsole();
+            //"LUA: Reloading".ToLogConsole();
             m_Resources.Clear();
 
             TextAsset[] scriptAssets = UnityEngine.Resources.LoadAll<TextAsset>("Lua");
             for (int i = 0; i < scriptAssets.Length; i++)
             {
                 m_Resources.Add(scriptAssets[i].name, scriptAssets[i].text);
-                $"Loaded {scriptAssets[i].name}".ToLogConsole(1);
+                //$"Loaded {scriptAssets[i].name}".ToLogConsole(1);
             }
 
             if (!Directory.Exists($"{Application.dataPath}/{DEFAULT_PATH}"))
@@ -231,16 +230,16 @@ namespace Syadeu.Database.Lua
                 string[] folders = Directory.GetDirectories(path);
                 for (int i = 0; i < folders.Length; i++)
                 {
-                    $"Searching folder ({folders[i]})".ToLogConsole(depth);
+                    //$"Searching folder ({folders[i]})".ToLogConsole(depth);
                     LoadAllScripts(folders[i], scrs, depth + 1);
                 }
 
-                $"Searching modules at ({path})".ToLogConsole(depth);
+                //$"Searching modules at ({path})".ToLogConsole(depth);
                 string[] scriptsPath = Directory.GetFiles(path);
                 for (int i = 0; i < scriptsPath.Length; i++)
                 {
                     scrs.Add(GetFileName(scriptsPath[i]), File.ReadAllText(scriptsPath[i]));
-                    $"Loaded {GetFileName(scriptsPath[i])}".ToLogConsole(depth + 1);
+                    //$"Loaded {GetFileName(scriptsPath[i])}".ToLogConsole(depth + 1);
                 }
             }
         }
@@ -304,7 +303,15 @@ your own IScriptLoader (possibly extending ScriptLoaderBase).", file, DEFAULT_PA
     }
     internal sealed class LuaItemUtils
     {
-        public static ItemProxy GetItem(string guid) => ItemDataList.Instance.GetItem(guid).Proxy;
+        public static ItemProxy GetItem(string guid)
+        {
+            Item item = ItemDataList.Instance.GetItem(guid);
+            if (item == null) return null;
+            else
+            {
+                return item.GetProxy();
+            }
+        }
     }
     internal sealed class LuaCreatureUtils
     {

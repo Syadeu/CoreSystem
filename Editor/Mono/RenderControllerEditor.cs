@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
 using Syadeu.Mono;
 
 using UnityEditor;
@@ -12,7 +11,7 @@ using UnityEngine;
 
 namespace SyadeuEditor
 {
-    [CustomEditor(typeof(RenderController))]
+    [Obsolete][CustomEditor(typeof(RenderController))]
     public class RenderControllerEditor : Editor
     {
         private RenderController m_Render;

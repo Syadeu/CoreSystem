@@ -84,7 +84,6 @@ namespace SyadeuEditor
                     m_Description = desc.m_Description;
                 }
             }
-            public override object Data => m_Manager;
             public override void OnGUI()
             {
                 if (string.IsNullOrEmpty(m_Description)) return;
@@ -138,8 +137,6 @@ namespace SyadeuEditor
                 m_Routine = routine;
                 m_Name = routine.ObjectName.Split('+')[1];
             }
-
-            public override object Data => m_Routine;
 
             public override void OnGUI()
             {
