@@ -6,18 +6,18 @@
   "unity": "2020.2",
   "dependencies": {
     "com.unity.burst": "1.4.8",
-    "com.unity.collections": "0.15.0-preview.21",
-    "com.unity.entities": "0.17.0-preview.42",
+    "com.unity.collections": "0.5.1-preview.11",
+    "com.unity.entities": "0.16.0-preview.21",
     "com.unity.jobs": "0.7.0-preview.17",
     "com.unity.mathematics": "1.2.1",
     "com.unity.nuget.newtonsoft-json": "2.0.0",
-    "com.unity.test-framework": "1.1.27",
-    "com.unity.platforms.windows": "0.10.0-preview.10"
+    "com.unity.test-framework": "1.1.27"
   },
   "optionalDependencies": {
     "com.github.siccity.xnode": "https://github.com/Siccity/xNode.git",
     "syadeu.gamesystem": "https://syadeuglobal:syadeuglobal213!@github.com/Syadeu/GameSystem.git",
     "com.unity.inputsystem": "1.0.2",
+    "com.unity.platforms.windows": "0.10.0-preview.10",
     "com.unity.platforms.android": "0.10.0-preview.10",
     "com.unity.platforms.ios": "0.10.0-preview.10",
     "com.unity.platforms.linux": "0.10.0-preview.10",
