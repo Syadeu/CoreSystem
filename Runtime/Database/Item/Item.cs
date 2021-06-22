@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
 using Syadeu.Mono;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,7 @@ using UnityEngine;
 
 namespace Syadeu.Database
 {
-    [Serializable]
+    [Serializable] [JsonConverter(typeof(ItemValueJsonConverter))]
     public abstract class ItemValue
     {
         public string m_Name;
@@ -28,7 +29,7 @@ namespace Syadeu.Database
         //}
     }
     [Serializable]
-    public sealed class ItemValue<T> : ItemValue where T : IConvertible
+    public abstract class ItemValue<T> : ItemValue where T : IConvertible
     {
         ///// <summary>
         ///// <see cref="ItemValueType"/>
@@ -59,10 +60,10 @@ namespace Syadeu.Database
         //}
     }
 
-    //[Serializable] public sealed class SerializableItemIntValue : ItemValue<int> { }
-    //[Serializable] public sealed class SerializableItemFloatValue : ItemValue<float> { }
-    //[Serializable] public sealed class SerializableItemStringValue : ItemValue<string> { }
-    //[Serializable] public sealed class SerializableItemBoolValue : ItemValue<bool> { }
+    [Serializable] public sealed class SerializableItemIntValue : ItemValue<int> { }
+    [Serializable] public sealed class SerializableItemFloatValue : ItemValue<float> { }
+    [Serializable] public sealed class SerializableItemStringValue : ItemValue<string> { }
+    [Serializable] public sealed class SerializableItemBoolValue : ItemValue<bool> { }
     //internal enum ItemValueType
     //{
     //    Null,
@@ -73,48 +74,89 @@ namespace Syadeu.Database
     //    Integer
     //}
 
-    public class ItemJsonConverter : JsonConverter
+    public class BaseSpecifiedConcreteClassConverter : DefaultContractResolver
     {
-        private readonly Type[] _types;
-
-        public ItemJsonConverter(params Type[] types)
+        protected override JsonConverter ResolveContractConverter(Type objectType)
         {
-            _types = types;
+            if (typeof(ItemValue).IsAssignableFrom(objectType) && !objectType.IsAbstract)
+                return null; // pretend TableSortRuleConvert is not specified (thus avoiding a stack overflow)
+            return base.ResolveContractConverter(objectType);
         }
+    }
+    public class ItemValueJsonConverter : JsonConverter
+    {
+        static readonly JsonSerializerSettings SpecifiedSubclassConversion 
+            = new JsonSerializerSettings() { ContractResolver = new BaseSpecifiedConcreteClassConverter() };
 
+        public override bool CanWrite => false;
+
+        public override bool CanConvert(Type objectType)
+            => objectType == typeof(ItemValue);
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
-            JToken t = JToken.FromObject(value);
+            //JToken t = JToken.FromObject(value);
 
-            if (t.Type != JTokenType.Object)
-            {
-                t.WriteTo(writer);
-            }
-            else
-            {
-                JObject o = (JObject)t;
-                IList<string> propertyNames = o.Properties().Select(p => p.Name).ToList();
+            //if (t.Type != JTokenType.Object)
+            //{
+            //    t.WriteTo(writer);
+            //}
+            //else
+            //{
+            //    JObject o = (JObject)t;
+            //    //IList<string> propertyNames = o.Properties().Select(p => p.Name).ToList();
 
-                o.AddFirst(new JProperty("Keys", new JArray(propertyNames)));
+            //    //o.AddFirst(new JProperty("Keys", new JArray(propertyNames)));
 
-                o.WriteTo(writer);
-            }
+            //    o.WriteTo(writer);
+            //}
+            throw new NotImplementedException();
         }
 
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
-            throw new NotImplementedException("Unnecessary because CanRead is false. The type will skip the converter.");
+            //throw new NotImplementedException("Unnecessary because CanRead is false. The type will skip the converter.");
+            JObject jo = JObject.Load(reader);
+            if (!jo.TryGetValue("m_Value", out JToken value))
+            {
+                return JsonConvert.DeserializeObject<ITemValueNull>(jo.ToString(), SpecifiedSubclassConversion);
+            }
+
+            Type t = value.GetType();
+            if (t.Equals(typeof(bool)))
+            {
+                return JsonConvert.DeserializeObject<SerializableItemBoolValue>(jo.ToString(), SpecifiedSubclassConversion);
+            }
+            else if (t.Equals(typeof(float)))
+            {
+                return JsonConvert.DeserializeObject<SerializableItemFloatValue>(jo.ToString(), SpecifiedSubclassConversion);
+            }
+            else if (t.Equals(typeof(int)))
+            {
+                return JsonConvert.DeserializeObject<SerializableItemIntValue>(jo.ToString(), SpecifiedSubclassConversion);
+            }
+            else
+            {
+                return JsonConvert.DeserializeObject<SerializableItemStringValue>(jo.ToString(), SpecifiedSubclassConversion);
+            }
+
+            //switch (jo["m_Value"].Value<int>())
+            //{
+            //    case 1:
+            //        return JsonConvert.DeserializeObject<DerivedType1>(jo.ToString(), SpecifiedSubclassConversion);
+            //    case 2:
+            //        return JsonConvert.DeserializeObject<DerivedType2>(jo.ToString(), SpecifiedSubclassConversion);
+            //    default:
+            //        throw new Exception();
+            //}
+            //throw new NotImplementedException();
         }
 
-        public override bool CanRead
-        {
-            get { return false; }
-        }
+        //public override bool CanRead
+        //{
+        //    get { return false; }
+        //}
 
-        public override bool CanConvert(Type objectType)
-        {
-            return _types.Any(t => t == objectType);
-        }
+        
     }
 
     [Serializable]
@@ -179,30 +221,42 @@ namespace Syadeu.Database
             }
             else if (value is bool boolVal)
             {
-                ItemValue<bool> temp = new ItemValue<bool>();
-                //SerializableItemBoolValue temp = new SerializableItemBoolValue();
-                temp.m_Value = boolVal;
+                //ItemValue<bool> temp = new ItemValue<bool>();
+                SerializableItemBoolValue temp = new SerializableItemBoolValue
+                {
+                    m_Name = name,
+                    m_Value = boolVal
+                };
                 m_Values[other] = temp;
             }
             else if (value is float floatVal)
             {
-                ItemValue<float> temp = new ItemValue<float>();
-                //SerializableItemFloatValue temp = new SerializableItemFloatValue();
-                temp.m_Value = floatVal;
+                //ItemValue<float> temp = new ItemValue<float>();
+                SerializableItemFloatValue temp = new SerializableItemFloatValue
+                {
+                    m_Name = name,
+                    m_Value = floatVal
+                };
                 m_Values[other] = temp;
             }
             else if (value is int intVal)
             {
-                ItemValue<int> temp = new ItemValue<int>();
-                //SerializableItemIntValue temp = new SerializableItemIntValue();
-                temp.m_Value = intVal;
+                //ItemValue<int> temp = new ItemValue<int>();
+                SerializableItemIntValue temp = new SerializableItemIntValue
+                {
+                    m_Name = name,
+                    m_Value = intVal
+                };
                 m_Values[other] = temp;
             }
             else
             {
-                ItemValue<string> temp = new ItemValue<string>();
-                //SerializableItemStringValue temp = new SerializableItemStringValue();
-                temp.m_Value = value.ToString();
+                //ItemValue<string> temp = new ItemValue<string>();
+                SerializableItemStringValue temp = new SerializableItemStringValue
+                {
+                    m_Name = name,
+                    m_Value = value.ToString()
+                };
                 m_Values[other] = temp;
             }
             //m_Values[other] = 
