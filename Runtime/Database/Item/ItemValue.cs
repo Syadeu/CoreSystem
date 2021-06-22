@@ -113,20 +113,19 @@ namespace Syadeu.Database
                 return JsonConvert.DeserializeObject<ItemValueNull>(jo.ToString(), SpecifiedSubclassConversion);
             }
 
-            Type t = value.GetType();
-            if (t.Equals(typeof(bool)))
+            if (value.Type == JTokenType.Boolean)
             {
                 return JsonConvert.DeserializeObject<SerializableItemBoolValue>(jo.ToString(), SpecifiedSubclassConversion);
             }
-            else if (t.Equals(typeof(float)))
+            else if (value.Type == JTokenType.Float)
             {
                 return JsonConvert.DeserializeObject<SerializableItemFloatValue>(jo.ToString(), SpecifiedSubclassConversion);
             }
-            else if (t.Equals(typeof(int)))
+            else if (value.Type == JTokenType.Integer)
             {
                 return JsonConvert.DeserializeObject<SerializableItemIntValue>(jo.ToString(), SpecifiedSubclassConversion);
             }
-            else if (t.Equals(typeof(string)))
+            else if (value.Type == JTokenType.String)
             {
                 return JsonConvert.DeserializeObject<SerializableItemStringValue>(jo.ToString(), SpecifiedSubclassConversion);
             }
