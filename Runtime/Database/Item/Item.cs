@@ -8,23 +8,6 @@ using UnityEngine;
 
 namespace Syadeu.Database
 {
-    [StaticManagerIntializeOnLoad]
-    public sealed class ItemDataManager : StaticDataManager<ItemDataManager>
-    {
-        private Dictionary<int, Item> m_Items = new Dictionary<int, Item>();
-
-        public override void OnInitialize()
-        {
-            //$"{DataManager.DataPath}/Item".ToLog();
-            //Resources.LoadAll<>
-        }
-
-        private static void SaveItem(string path, Item item)    
-        {
-            string data = JsonConvert.SerializeObject(item);
-            File.WriteAllText(path + $"Item/{item.m_Name}.json", data);
-        }
-    }
     [Serializable]
     public sealed class ItemValue
     {
@@ -100,16 +83,27 @@ namespace Syadeu.Database
             }
             return m_Proxy;
         }
-        public string GetValue(string name)
+
+        private ItemValue InternalGetValue(string name)
         {
             for (int i = 0; i < m_Values.Length; i++)
             {
                 if (m_Values[i].m_Name.Equals(name))
                 {
-                    return m_Values[i].m_Value;
+                    return m_Values[i];
                 }
             }
             throw new Exception();
+        }
+        public object GetValue(string name) => InternalGetValue(name).GetValue();
+        public void SetValue(string name, object value)
+        {
+            ItemValue other = InternalGetValue(name);
+
+            if (value == null) other.m_Value = null;
+            else other.m_Value = value.ToString();
+
+            ItemDataList.SetValueType(other);
         }
     }
     public sealed class ItemProxy : LuaProxyEntity<Item>
@@ -139,10 +133,8 @@ namespace Syadeu.Database
         public Action OnEquip { get => Target.m_OnEquip; set => Target.m_OnEquip = value; }
         public Action OnUse { get => Target.m_OnUse; set => Target.m_OnUse = value; }
 
-        public string GetValue(string name)
-        {
-            return null;
-        }
+        public object GetValue(string name) => Target.GetValue(name);
+        public void SetValue(string name, object value) => Target.SetValue(name, value);
     }
 
     [Serializable]

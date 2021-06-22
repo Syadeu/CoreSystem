@@ -9,9 +9,9 @@ namespace Syadeu.Database
     [PreferBinarySerialization][CustomStaticSetting("Syadeu/Item")]
     public sealed class ItemDataList : StaticSettingEntity<ItemDataList>
     {
-        public const string c_ItemDataPath = "../CoreSystem/Modules/Items";
-        public const string c_ItemTypeDataPath = "../CoreSystem/Modules/Items/ItemTypes";
-        public const string c_ItemEffectDataPath = "../CoreSystem/Modules/Items/ItemEffects";
+        private const string c_ItemDataPath = "../CoreSystem/Modules/Items";
+        private const string c_ItemTypeDataPath = "../CoreSystem/Modules/Items/ItemTypes";
+        private const string c_ItemEffectDataPath = "../CoreSystem/Modules/Items/ItemEffects";
 
         public Item[] m_Items;
         public ItemType[] m_ItemTypes;
@@ -24,8 +24,9 @@ namespace Syadeu.Database
             LoadDatas();
         }
 
-        private string GetPath(string dataPath) => $"{Application.dataPath}/{dataPath}";
+        private static string GetPath(string dataPath) => $"{Application.dataPath}/{dataPath}";
 
+        #region Data Works
         public void LoadDatas()
         {
             const string jsonPostfix = "*.json";
@@ -102,30 +103,34 @@ namespace Syadeu.Database
                     SetValueType(values[i]);
                 }
             }
-            void SetValueType(ItemValue value)
+        }
+
+        internal static void SetValueType(ItemValue value)
+        {
+            if (string.IsNullOrEmpty(value.m_Value))
             {
-                if (string.IsNullOrEmpty(value.m_Value))
-                {
-                    value.m_Type = (int)ItemValueType.Null;
-                }
-                else if (bool.TryParse(value.m_Value, out bool _))
-                {
-                    value.m_Type = (int)ItemValueType.Boolean;
-                }
-                else if (float.TryParse(value.m_Value, out float _))
-                {
-                    value.m_Type = (int)ItemValueType.Float;
-                }
-                else if (int.TryParse(value.m_Value, out int _))
-                {
-                    value.m_Type = (int)ItemValueType.Integer;
-                }
-                else
-                {
-                    value.m_Type = (int)ItemValueType.String;
-                }
+                value.m_Type = (int)ItemValueType.Null;
+            }
+            else if (bool.TryParse(value.m_Value, out bool _))
+            {
+                value.m_Type = (int)ItemValueType.Boolean;
+            }
+            else if (float.TryParse(value.m_Value, out float _))
+            {
+                value.m_Type = (int)ItemValueType.Float;
+            }
+            else if (int.TryParse(value.m_Value, out int _))
+            {
+                value.m_Type = (int)ItemValueType.Integer;
+            }
+            else
+            {
+                value.m_Type = (int)ItemValueType.String;
             }
         }
+        #endregion
+
+        #region Gets
 
         public Item GetItem(string guid)
         {
@@ -160,6 +165,17 @@ namespace Syadeu.Database
             }
             return null;
         }
+        public ItemType GetItemTypeByName(string name)
+        {
+            for (int i = 0; i < m_ItemTypes.Length; i++)
+            {
+                if (m_ItemTypes[i].m_Name.Equals(name))
+                {
+                    return m_ItemTypes[i];
+                }
+            }
+            return null;
+        }
         public ItemEffectType GetItemEffectType(string guid)
         {
             for (int i = 0; i < m_ItemEffectTypes.Length; i++)
@@ -171,5 +187,18 @@ namespace Syadeu.Database
             }
             return null;
         }
+        public ItemEffectType GetItemEffectTypeByName(string name)
+        {
+            for (int i = 0; i < m_ItemEffectTypes.Length; i++)
+            {
+                if (m_ItemEffectTypes[i].m_Name.Equals(name))
+                {
+                    return m_ItemEffectTypes[i];
+                }
+            }
+            return null;
+        }
+
+        #endregion
     }
 }

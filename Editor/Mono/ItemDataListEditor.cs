@@ -14,16 +14,8 @@ namespace SyadeuEditor
 
         private bool m_ShowOriginalContents = false;
 
-        private static string Path => $"{Application.dataPath}/{ItemDataList.c_ItemDataPath}";
-        public static string TypePath => $"{Path}/ItemTypes";
-        public static string EffectPath => $"{Path}/ItemEffects";
-
         private void OnEnable()
         {
-            if (!Directory.Exists(Path)) Directory.CreateDirectory(Path);
-            if (!Directory.Exists(TypePath)) Directory.CreateDirectory(TypePath);
-            if (!Directory.Exists(EffectPath)) Directory.CreateDirectory(EffectPath);
-
             m_TreeView = new VerticalTreeView(Asset);
             m_TreeView
                 .SetupElements(Asset.m_Items, (other) =>
@@ -47,9 +39,6 @@ namespace SyadeuEditor
                 Asset.m_ItemEffectTypes = new ItemEffectType[0];
                 EditorUtils.SetDirty(target);
             }
-            EditorGUI.BeginDisabledGroup(true);
-            EditorGUILayout.TextField(ItemDataList.c_ItemDataPath);
-            EditorGUI.EndDisabledGroup();
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("Load"))
             {

@@ -20,6 +20,8 @@ function test( )
 	local target = Items.GetItem('1f56c346-e80d-4d65-9137-a1f63454d3f3')
 	CoreSystem.Log(target.Name)
 
+	target.SetValue('TestValue', nil)
+
 	target.OnUse = (function()
 	end)
 
