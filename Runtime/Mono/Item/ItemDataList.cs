@@ -29,6 +29,7 @@ namespace Syadeu.Database
         private static string GetPath(string dataPath) => $"{Application.dataPath}/{dataPath}";
 
         #region Data Works
+
         public void LoadDatas()
         {
             const string jsonPostfix = "*.json";
@@ -70,7 +71,6 @@ namespace Syadeu.Database
                 {
                     m_Items[i].m_Guid = Guid.NewGuid().ToString();
                 }
-                //SetValueTypes(m_Items[i].m_Values);
 
                 File.WriteAllText($"{GetPath(c_ItemDataPath)}/{m_Items[i].m_Name}{json}", 
                     JsonConvert.SerializeObject(m_Items[i], Formatting.Indented));
@@ -81,7 +81,6 @@ namespace Syadeu.Database
                 {
                     m_ItemTypes[i].m_Guid = Guid.NewGuid().ToString();
                 }
-                //SetValueTypes(m_ItemTypes[i].m_Values);
 
                 File.WriteAllText($"{GetPath(c_ItemTypeDataPath)}/{m_ItemTypes[i].m_Name}{json}", 
                     JsonConvert.SerializeObject(m_ItemTypes[i], Formatting.Indented));
@@ -92,44 +91,12 @@ namespace Syadeu.Database
                 {
                     m_ItemEffectTypes[i].m_Guid = Guid.NewGuid().ToString();
                 }
-                //SetValueTypes(m_ItemEffectTypes[i].m_Values);
 
                 File.WriteAllText($"{GetPath(c_ItemEffectDataPath)}/{m_ItemEffectTypes[i].m_Name}{json}", 
                     JsonConvert.SerializeObject(m_ItemEffectTypes[i], Formatting.Indented));
             }
-
-            //void SetValueTypes(ItemValue[] values)
-            //{
-            //    for (int i = 0; i < values?.Length; i++)
-            //    {
-            //        SetValueType(values[i]);
-            //    }
-            //}
         }
 
-        //internal static void SetValueType(ItemValue value)
-        //{
-        //    if (string.IsNullOrEmpty(value.m_Value))
-        //    {
-        //        value.m_Type = (int)ItemValueType.Null;
-        //    }
-        //    else if (bool.TryParse(value.m_Value, out bool _))
-        //    {
-        //        value.m_Type = (int)ItemValueType.Boolean;
-        //    }
-        //    else if (float.TryParse(value.m_Value, out float _))
-        //    {
-        //        value.m_Type = (int)ItemValueType.Float;
-        //    }
-        //    else if (int.TryParse(value.m_Value, out int _))
-        //    {
-        //        value.m_Type = (int)ItemValueType.Integer;
-        //    }
-        //    else
-        //    {
-        //        value.m_Type = (int)ItemValueType.String;
-        //    }
-        //}
         #endregion
 
         #region Gets

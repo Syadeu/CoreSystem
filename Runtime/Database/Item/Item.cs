@@ -17,62 +17,27 @@ namespace Syadeu.Database
         public string m_Name;
 
         public virtual object GetValue() => throw new NotImplementedException();
-        //public abstract void SetValue(object value);
     }
     [Serializable]
     public sealed class ITemValueNull : ItemValue
     {
         public override object GetValue() => null;
-        //public override void SetValue(object value)
-        //{
-        //    throw new NotImplementedException();
-        //}
     }
     [Serializable]
     public abstract class ItemValue<T> : ItemValue where T : IConvertible
     {
-        ///// <summary>
-        ///// <see cref="ItemValueType"/>
-        ///// </summary>
-        //public int m_Type;
         public T m_Value;
 
         public override object GetValue()
         {
-            //switch ((ItemValueType)m_Type)
-            //{
-            //    case ItemValueType.String:
-            //        return m_Value;
-            //    case ItemValueType.Boolean:
-            //        return Convert.ChangeType(m_Value, typeof(bool));
-            //    case ItemValueType.Float:
-            //        return Convert.ChangeType(m_Value, typeof(float));
-            //    case ItemValueType.Integer:
-            //        return Convert.ChangeType(m_Value, typeof(int));
-            //    default:
-            //        return null;
-            //}
             return m_Value;
         }
-        //public override void SetValue(object value)
-        //{
-        //    m_Value = (T)value;
-        //}
     }
 
     [Serializable] public sealed class SerializableItemIntValue : ItemValue<int> { }
     [Serializable] public sealed class SerializableItemFloatValue : ItemValue<float> { }
     [Serializable] public sealed class SerializableItemStringValue : ItemValue<string> { }
     [Serializable] public sealed class SerializableItemBoolValue : ItemValue<bool> { }
-    //internal enum ItemValueType
-    //{
-    //    Null,
-
-    //    String,
-    //    Boolean,
-    //    Float,
-    //    Integer
-    //}
 
     public class BaseSpecifiedConcreteClassConverter : DefaultContractResolver
     {
@@ -90,31 +55,12 @@ namespace Syadeu.Database
 
         public override bool CanWrite => false;
 
-        public override bool CanConvert(Type objectType)
-            => objectType == typeof(ItemValue);
+        public override bool CanConvert(Type objectType) => objectType == typeof(ItemValue);
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-        {
-            //JToken t = JToken.FromObject(value);
-
-            //if (t.Type != JTokenType.Object)
-            //{
-            //    t.WriteTo(writer);
-            //}
-            //else
-            //{
-            //    JObject o = (JObject)t;
-            //    //IList<string> propertyNames = o.Properties().Select(p => p.Name).ToList();
-
-            //    //o.AddFirst(new JProperty("Keys", new JArray(propertyNames)));
-
-            //    o.WriteTo(writer);
-            //}
-            throw new NotImplementedException();
-        }
+            => throw new NotImplementedException();
 
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
-            //throw new NotImplementedException("Unnecessary because CanRead is false. The type will skip the converter.");
             JObject jo = JObject.Load(reader);
             if (!jo.TryGetValue("m_Value", out JToken value))
             {
@@ -138,25 +84,7 @@ namespace Syadeu.Database
             {
                 return JsonConvert.DeserializeObject<SerializableItemStringValue>(jo.ToString(), SpecifiedSubclassConversion);
             }
-
-            //switch (jo["m_Value"].Value<int>())
-            //{
-            //    case 1:
-            //        return JsonConvert.DeserializeObject<DerivedType1>(jo.ToString(), SpecifiedSubclassConversion);
-            //    case 2:
-            //        return JsonConvert.DeserializeObject<DerivedType2>(jo.ToString(), SpecifiedSubclassConversion);
-            //    default:
-            //        throw new Exception();
-            //}
-            //throw new NotImplementedException();
         }
-
-        //public override bool CanRead
-        //{
-        //    get { return false; }
-        //}
-
-        
     }
 
     [Serializable]
@@ -217,11 +145,13 @@ namespace Syadeu.Database
 
             if (value == null)
             {
-                m_Values[other] = new ITemValueNull();
+                m_Values[other] = new ITemValueNull()
+                {
+                    m_Name = name
+                };
             }
             else if (value is bool boolVal)
             {
-                //ItemValue<bool> temp = new ItemValue<bool>();
                 SerializableItemBoolValue temp = new SerializableItemBoolValue
                 {
                     m_Name = name,
@@ -231,7 +161,6 @@ namespace Syadeu.Database
             }
             else if (value is float floatVal)
             {
-                //ItemValue<float> temp = new ItemValue<float>();
                 SerializableItemFloatValue temp = new SerializableItemFloatValue
                 {
                     m_Name = name,
@@ -241,7 +170,6 @@ namespace Syadeu.Database
             }
             else if (value is int intVal)
             {
-                //ItemValue<int> temp = new ItemValue<int>();
                 SerializableItemIntValue temp = new SerializableItemIntValue
                 {
                     m_Name = name,
@@ -251,7 +179,6 @@ namespace Syadeu.Database
             }
             else
             {
-                //ItemValue<string> temp = new ItemValue<string>();
                 SerializableItemStringValue temp = new SerializableItemStringValue
                 {
                     m_Name = name,
@@ -259,13 +186,6 @@ namespace Syadeu.Database
                 };
                 m_Values[other] = temp;
             }
-            //m_Values[other] = 
-
-            //if (value == null) other.m_Value = null;
-            //else other.m_Value = value.ToString();
-            //m_Values[other]..(value);
-
-            //ItemDataList.SetValueType(other);
         }
 
         public ItemInstance CreateInstance()
