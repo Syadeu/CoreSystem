@@ -20,23 +20,19 @@ namespace Syadeu.Database.Lua
 
         public override void OnInitialize()
         {
-            UserData.RegisterType<LuaUtils>();
-            UserData.RegisterType<LuaVectorUtils>();
-            UserData.RegisterType<LuaItemUtils>();
-            UserData.RegisterType<LuaCreatureUtils>();
-
             UserData.RegisterProxyType<ItemProxy, Item>(r => r.GetProxy());
             UserData.RegisterProxyType<ItemTypeProxy, ItemType>(r => r.GetProxy());
+            UserData.RegisterProxyType<ItemEffectTypeProxy, ItemEffectType>(r => r.GetProxy());
             UserData.RegisterProxyType<CreatureBrainProxy, CreatureBrain>(r => r.Proxy);
 
             RegisterSimpleAction();
             RegisterSimpleAction<CreatureBrainProxy>();
 
             m_MainScripter = new Script();
-            m_MainScripter.Globals["CoreSystem"] = typeof(LuaUtils);
-            m_MainScripter.Globals["Vector"] = typeof(LuaVectorUtils);
-            m_MainScripter.Globals["Items"] = typeof(LuaItemUtils);
-            m_MainScripter.Globals["Creature"] = typeof(LuaCreatureUtils);
+            AddGlobal<LuaUtils>("CoreSystem");
+            AddGlobal<LuaVectorUtils>("Vector");
+            AddGlobal<LuaItemUtils>("Items");
+            AddGlobal<LuaCreatureUtils>("Creature");
 
             m_ScriptLoader = new LuaScriptLoader();
             m_MainScripter.Options.ScriptLoader = m_ScriptLoader;
@@ -130,8 +126,10 @@ namespace Syadeu.Database.Lua
 
         public static void AddGlobal(string functionName, Type type)
         {
+            UserData.RegisterType(type);
             Instance.m_MainScripter.Globals[functionName] = type;
         }
+        public static void AddGlobal<T>(string functionName) => AddGlobal(functionName, typeof(T));
 
         public static void RegisterSimpleFunc<T>()
         {
