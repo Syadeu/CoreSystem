@@ -29,7 +29,37 @@ namespace Syadeu.Database
     public sealed class ItemValue
     {
         public string m_Name;
+        /// <summary>
+        /// <see cref="ItemValueType"/>
+        /// </summary>
+        public int m_Type;
         public string m_Value;
+
+        public object GetValue()
+        {
+            switch ((ItemValueType)m_Type)
+            {
+                case ItemValueType.String:
+                    return m_Value;
+                case ItemValueType.Boolean:
+                    return Convert.ChangeType(m_Value, typeof(bool));
+                case ItemValueType.Float:
+                    return Convert.ChangeType(m_Value, typeof(float));
+                case ItemValueType.Integer:
+                    return Convert.ChangeType(m_Value, typeof(int));
+                default:
+                    return null;
+            }
+        }
+    }
+    internal enum ItemValueType
+    {
+        Null,
+
+        String,
+        Boolean,
+        Float,
+        Integer
     }
 
     [Serializable]
@@ -49,7 +79,7 @@ namespace Syadeu.Database
         /// </summary>
         public string[] m_ItemEffectTypes;
 
-        public ItemValue[] m_ItemValues;
+        public ItemValue[] m_Values;
 
         [NonSerialized] private ItemProxy m_Proxy = null;
 
@@ -72,14 +102,14 @@ namespace Syadeu.Database
         }
         public string GetValue(string name)
         {
-            for (int i = 0; i < m_ItemValues.Length; i++)
+            for (int i = 0; i < m_Values.Length; i++)
             {
-                if (m_ItemValues[i].m_Name.Equals(name))
+                if (m_Values[i].m_Name.Equals(name))
                 {
-                    return m_ItemValues[i].m_Value;
+                    return m_Values[i].m_Value;
                 }
             }
-            return null;
+            throw new Exception();
         }
     }
     public sealed class ItemProxy : LuaProxyEntity<Item>
@@ -108,6 +138,11 @@ namespace Syadeu.Database
 
         public Action OnEquip { get => Target.m_OnEquip; set => Target.m_OnEquip = value; }
         public Action OnUse { get => Target.m_OnUse; set => Target.m_OnUse = value; }
+
+        public string GetValue(string name)
+        {
+            return null;
+        }
     }
 
     [Serializable]
@@ -115,6 +150,9 @@ namespace Syadeu.Database
     {
         public string m_Name;
         public string m_Guid;
+
+        [Space]
+        public ItemValue[] m_Values;
 
         [NonSerialized] private ItemTypeProxy m_Proxy = null;
 
@@ -144,12 +182,25 @@ namespace Syadeu.Database
         public string m_Name;
         public string m_Guid;
 
-        [NonSerialized] public Action<CreatureBrain> m_Effect;
+        [Space]
+        public ItemValue[] m_Values;
+
+        [NonSerialized] private ItemEffectTypeProxy m_Proxy = null;
 
         public ItemEffectType()
         {
             m_Name = "NewItemEffectType";
             m_Guid = Guid.NewGuid().ToString();
         }
+
+        public ItemEffectTypeProxy GetProxy()
+        {
+            if (m_Proxy == null) m_Proxy = new ItemEffectTypeProxy(this);
+            return m_Proxy;
+        }
+    }
+    public sealed class ItemEffectTypeProxy : LuaProxyEntity<ItemEffectType>
+    {
+        public ItemEffectTypeProxy(ItemEffectType itemEffectType) : base(itemEffectType) { }
     }
 }

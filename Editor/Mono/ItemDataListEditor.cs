@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using Syadeu.Database;
-
+using SyadeuEditor.Tree;
 using UnityEditor;
 using UnityEngine;
 
@@ -10,6 +10,8 @@ namespace SyadeuEditor
     [CustomEditor(typeof(ItemDataList))]
     public sealed class ItemDataListEditor : EditorEntity<ItemDataList>
     {
+        private VerticalTreeView m_TreeView;
+
         private bool m_ShowOriginalContents = false;
 
         private static string Path => $"{Application.dataPath}/{ItemDataList.c_ItemDataPath}";
@@ -22,7 +24,15 @@ namespace SyadeuEditor
             if (!Directory.Exists(TypePath)) Directory.CreateDirectory(TypePath);
             if (!Directory.Exists(EffectPath)) Directory.CreateDirectory(EffectPath);
 
+            m_TreeView = new VerticalTreeView(Asset);
+            m_TreeView
+                .SetupElements(Asset.m_Items, (other) =>
+                {
+                    Item item = (Item)other;
 
+                    return new TreeItemElement(m_TreeView, item);
+                })
+                ;
         }
 
         public override void OnInspectorGUI()
@@ -37,6 +47,10 @@ namespace SyadeuEditor
                 Asset.m_ItemEffectTypes = new ItemEffectType[0];
                 EditorUtils.SetDirty(target);
             }
+            EditorGUI.BeginDisabledGroup(true);
+            EditorGUILayout.TextField(ItemDataList.c_ItemDataPath);
+            EditorGUI.EndDisabledGroup();
+            EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("Load"))
             {
                 Asset.LoadDatas();
@@ -47,9 +61,27 @@ namespace SyadeuEditor
                 Asset.SaveDatas();
                 EditorUtils.SetDirty(target);
             }
+            EditorGUILayout.EndHorizontal();
+            
+            EditorGUILayout.Space();
+            m_TreeView.OnGUI();
 
+            EditorGUILayout.Space();
             m_ShowOriginalContents = EditorUtils.Foldout(m_ShowOriginalContents, "Original Contents");
             if (m_ShowOriginalContents) base.OnInspectorGUI();
+        }
+
+        private class TreeItemElement : VerticalTreeElement<Item>
+        {
+            public override string Name => Target.m_Name;
+
+            public TreeItemElement(VerticalTreeView treeView, Item item) : base(treeView, item)
+            {
+            }
+
+            public override void OnGUI()
+            {
+            }
         }
     }
 }

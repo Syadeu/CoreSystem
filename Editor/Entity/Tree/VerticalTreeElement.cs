@@ -21,7 +21,6 @@ namespace SyadeuEditor.Tree
         [NonSerialized] internal bool m_Disposed = false;
 
         public virtual string Name => m_Name;
-        public abstract object Data { get; }
 
         public bool HasChilds => Childs != null && Childs.Count > 0;
 

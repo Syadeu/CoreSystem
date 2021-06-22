@@ -16,8 +16,6 @@ namespace SyadeuEditor.Tree
             m_Description = description;
         }
 
-        public override object Data => m_Name;
-
         public override void OnGUI()
         {
             if (!string.IsNullOrEmpty(m_Description)) EditorGUILayout.LabelField(m_Description);

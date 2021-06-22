@@ -17,7 +17,7 @@
 
 function test( )
 	-- body
-	local target = Items.GetItem('01fda884-331d-4116-a84d-e1c9f8f6d03b')
+	local target = Items.GetItem('1f56c346-e80d-4d65-9137-a1f63454d3f3')
 	CoreSystem.Log(target.Name)
 
 	target.OnUse = (function()
