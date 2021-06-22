@@ -13,7 +13,7 @@ namespace Syadeu.Database
         public abstract object GetValue();
         public abstract object Clone();
     }
-    [Serializable]
+    //[Serializable]
     public sealed class ItemValueNull : ItemValue
     {
         public override object GetValue() => null;
@@ -25,7 +25,7 @@ namespace Syadeu.Database
             };
         }
     }
-    [Serializable]
+    //[Serializable]
     public abstract class ItemValue<T> : ItemValue where T : IConvertible
     {
         public T m_Value;
@@ -34,7 +34,7 @@ namespace Syadeu.Database
     }
 
     #region Item Serializable Classes
-    [Serializable]
+    //[Serializable]
     public sealed class SerializableItemIntValue : ItemValue<int>
     {
         public override object Clone()
@@ -46,7 +46,7 @@ namespace Syadeu.Database
             };
         }
     }
-    [Serializable]
+    //[Serializable]
     public sealed class SerializableItemFloatValue : ItemValue<float>
     {
         public override object Clone()
@@ -58,7 +58,7 @@ namespace Syadeu.Database
             };
         }
     }
-    [Serializable]
+    //[Serializable]
     public sealed class SerializableItemStringValue : ItemValue<string>
     {
         public override object Clone()
@@ -70,7 +70,7 @@ namespace Syadeu.Database
             };
         }
     }
-    [Serializable]
+    //[Serializable]
     public sealed class SerializableItemBoolValue : ItemValue<bool>
     {
         public override object Clone()

@@ -28,13 +28,11 @@ namespace Syadeu
                     }
 
                     T ins = Activator.CreateInstance<T>();
-
-                    ins.OnInitialize();
-
                     CoreSystem.Instance.DataManagers.Add(ins);
                     CoreSystem.InvokeManagerChanged();
                     m_Instance = ins;
 
+                    ins.OnInitialize();
                     ins.OnStart();
                 }
 

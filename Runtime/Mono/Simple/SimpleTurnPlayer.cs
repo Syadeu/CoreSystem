@@ -6,7 +6,7 @@ namespace Syadeu.Mono.TurnTable
 {
     public class SimpleTurnPlayer : MonoBehaviour, ITurnPlayer
     {
-        [SerializeField] private string m_Name = null;
+        [SerializeField] private string m_PlayerName = null;
 
         [Space]
         [SerializeField] protected float m_TurnSpeed = 1;
