@@ -11,82 +11,6 @@ using UnityEngine;
 
 namespace Syadeu.Database
 {
-    [Serializable] [JsonConverter(typeof(ItemValueJsonConverter))]
-    public abstract class ItemValue
-    {
-        public string m_Name;
-
-        public virtual object GetValue() => throw new NotImplementedException();
-    }
-    [Serializable]
-    public sealed class ITemValueNull : ItemValue
-    {
-        public override object GetValue() => null;
-    }
-    [Serializable]
-    public abstract class ItemValue<T> : ItemValue where T : IConvertible
-    {
-        public T m_Value;
-
-        public override object GetValue()
-        {
-            return m_Value;
-        }
-    }
-
-    [Serializable] public sealed class SerializableItemIntValue : ItemValue<int> { }
-    [Serializable] public sealed class SerializableItemFloatValue : ItemValue<float> { }
-    [Serializable] public sealed class SerializableItemStringValue : ItemValue<string> { }
-    [Serializable] public sealed class SerializableItemBoolValue : ItemValue<bool> { }
-
-    public class BaseSpecifiedConcreteClassConverter : DefaultContractResolver
-    {
-        protected override JsonConverter ResolveContractConverter(Type objectType)
-        {
-            if (typeof(ItemValue).IsAssignableFrom(objectType) && !objectType.IsAbstract)
-                return null; // pretend TableSortRuleConvert is not specified (thus avoiding a stack overflow)
-            return base.ResolveContractConverter(objectType);
-        }
-    }
-    public class ItemValueJsonConverter : JsonConverter
-    {
-        static readonly JsonSerializerSettings SpecifiedSubclassConversion 
-            = new JsonSerializerSettings() { ContractResolver = new BaseSpecifiedConcreteClassConverter() };
-
-        public override bool CanWrite => false;
-
-        public override bool CanConvert(Type objectType) => objectType == typeof(ItemValue);
-        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-            => throw new NotImplementedException();
-
-        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
-        {
-            JObject jo = JObject.Load(reader);
-            if (!jo.TryGetValue("m_Value", out JToken value))
-            {
-                return JsonConvert.DeserializeObject<ITemValueNull>(jo.ToString(), SpecifiedSubclassConversion);
-            }
-
-            Type t = value.GetType();
-            if (t.Equals(typeof(bool)))
-            {
-                return JsonConvert.DeserializeObject<SerializableItemBoolValue>(jo.ToString(), SpecifiedSubclassConversion);
-            }
-            else if (t.Equals(typeof(float)))
-            {
-                return JsonConvert.DeserializeObject<SerializableItemFloatValue>(jo.ToString(), SpecifiedSubclassConversion);
-            }
-            else if (t.Equals(typeof(int)))
-            {
-                return JsonConvert.DeserializeObject<SerializableItemIntValue>(jo.ToString(), SpecifiedSubclassConversion);
-            }
-            else
-            {
-                return JsonConvert.DeserializeObject<SerializableItemStringValue>(jo.ToString(), SpecifiedSubclassConversion);
-            }
-        }
-    }
-
     [Serializable]
     public sealed class Item
     {
@@ -145,7 +69,7 @@ namespace Syadeu.Database
 
             if (value == null)
             {
-                m_Values[other] = new ITemValueNull()
+                m_Values[other] = new ItemValueNull()
                 {
                     m_Name = name
                 };
@@ -191,7 +115,7 @@ namespace Syadeu.Database
         public ItemInstance CreateInstance()
         {
             ItemInstance instance = new ItemInstance(this);
-
+            m_Instances.Add(instance);
             return instance;
         }
         public ItemInstance GetInstance(Guid guid)
@@ -244,6 +168,7 @@ namespace Syadeu.Database
         private readonly Item m_Data;
         private readonly ItemType[] m_ItemTypes;
         private readonly ItemEffectType[] m_ItemEffectTypes;
+        private readonly ItemValue[] m_Values;
 
         public Guid Guid => m_Guid;
 
@@ -252,17 +177,20 @@ namespace Syadeu.Database
             m_Guid = Guid.NewGuid();
 
             m_Data = item;
-
             m_ItemTypes = new ItemType[item.m_ItemTypes.Length];
             for (int i = 0; i < m_ItemTypes.Length; i++)
             {
                 m_ItemTypes[i] = ItemDataList.Instance.GetItemType(item.m_ItemTypes[i]);
             }
-
             m_ItemEffectTypes = new ItemEffectType[item.m_ItemEffectTypes.Length];
             for (int i = 0; i < m_ItemEffectTypes.Length; i++)
             {
                 m_ItemEffectTypes[i] = ItemDataList.Instance.GetItemEffectType(item.m_ItemEffectTypes[i]);
+            }
+            m_Values = new ItemValue[item.m_Values.Length];
+            for (int i = 0; i < m_Values.Length; i++)
+            {
+                m_Values[i] = (ItemValue)item.m_Values[i].Clone();
             }
         }
     }
