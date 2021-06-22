@@ -25,7 +25,8 @@ namespace Syadeu.Database.Lua
             UserData.RegisterType<LuaItemUtils>();
             UserData.RegisterType<LuaCreatureUtils>();
 
-            UserData.RegisterProxyType<ItemProxy, Item>(r => r.Proxy);
+            UserData.RegisterProxyType<ItemProxy, Item>(r => r.GetProxy());
+            UserData.RegisterProxyType<ItemTypeProxy, ItemType>(r => r.GetProxy());
             UserData.RegisterProxyType<CreatureBrainProxy, CreatureBrain>(r => r.Proxy);
 
             RegisterSimpleAction();
@@ -304,7 +305,15 @@ your own IScriptLoader (possibly extending ScriptLoaderBase).", file, DEFAULT_PA
     }
     internal sealed class LuaItemUtils
     {
-        public static ItemProxy GetItem(string guid) => ItemDataList.Instance.GetItem(guid).Proxy;
+        public static ItemProxy GetItem(string guid)
+        {
+            Item item = ItemDataList.Instance.GetItem(guid);
+            if (item == null) return null;
+            else
+            {
+                return item.GetProxy();
+            }
+        }
     }
     internal sealed class LuaCreatureUtils
     {

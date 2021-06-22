@@ -51,21 +51,10 @@ namespace Syadeu.Database
 
         public ItemValue[] m_ItemValues;
 
-        private ItemProxy m_Proxy = null;
-        public ItemProxy Proxy
-        {
-            get
-            {
-                if (m_Proxy == null)
-                {
-                    m_Proxy = new ItemProxy(this);
-                }
-                return m_Proxy;
-            }
-        }
+        [NonSerialized] private ItemProxy m_Proxy = null;
 
-        public Action m_OnEquip;
-        public Action m_OnUse;
+        [NonSerialized] public Action m_OnEquip;
+        [NonSerialized] public Action m_OnUse;
 
         public Item()
         {
@@ -73,6 +62,14 @@ namespace Syadeu.Database
             m_Guid = Guid.NewGuid().ToString();
         }
 
+        public ItemProxy GetProxy()
+        {
+            if (m_Proxy == null)
+            {
+                m_Proxy = new ItemProxy(this);
+            }
+            return m_Proxy;
+        }
         public string GetValue(string name)
         {
             for (int i = 0; i < m_ItemValues.Length; i++)
@@ -101,7 +98,7 @@ namespace Syadeu.Database
                     m_ItemTypes = new ItemTypeProxy[Target.m_ItemTypes.Length];
                     for (int i = 0; i < m_ItemTypes.Length; i++)
                     {
-                        m_ItemTypes[i] = ItemDataList.Instance.GetItemType(Target.m_ItemTypes[i]).Proxy;
+                        m_ItemTypes[i] = ItemDataList.Instance.GetItemType(Target.m_ItemTypes[i]).GetProxy();
                     }
                 }
                 
@@ -119,23 +116,21 @@ namespace Syadeu.Database
         public string m_Name;
         public string m_Guid;
 
-        private ItemTypeProxy m_Proxy = null;
-        public ItemTypeProxy Proxy
-        {
-            get
-            {
-                if (m_Proxy == null)
-                {
-                    m_Proxy = new ItemTypeProxy(this);
-                }
-                return m_Proxy;
-            }
-        }
+        [NonSerialized] private ItemTypeProxy m_Proxy = null;
 
         public ItemType()
         {
             m_Name = "NewItemType";
             m_Guid = Guid.NewGuid().ToString();
+        }
+
+        public ItemTypeProxy GetProxy()
+        {
+            if (m_Proxy == null)
+            {
+                m_Proxy = new ItemTypeProxy(this);
+            }
+            return m_Proxy;
         }
     }
     public sealed class ItemTypeProxy : LuaProxyEntity<ItemType>
@@ -149,7 +144,7 @@ namespace Syadeu.Database
         public string m_Name;
         public string m_Guid;
 
-        public Action<CreatureBrain> m_Effect;
+        [NonSerialized] public Action<CreatureBrain> m_Effect;
 
         public ItemEffectType()
         {
