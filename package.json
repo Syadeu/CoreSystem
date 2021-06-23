@@ -10,6 +10,7 @@
     "com.unity.entities": "0.16.0-preview.21",
     "com.unity.jobs": "0.7.0-preview.17",
     "com.unity.mathematics": "1.2.1",
+    "com.unity.addressables": "1.16.19",
     "com.unity.nuget.newtonsoft-json": "2.0.0",
     "com.unity.test-framework": "1.1.27"
   },

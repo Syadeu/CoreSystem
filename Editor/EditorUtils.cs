@@ -1,9 +1,10 @@
 ﻿using Syadeu;
+
 using System.Collections;
 using System.Collections.Generic;
-
 using System.IO;
 using System.Linq;
+
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
@@ -507,7 +508,17 @@ namespace SyadeuEditor
                     Directory.CreateDirectory(targetDir);
                 }
                 foreach (var file in Directory.GetFiles(sourceDir))
+                {
+                    if (File.Exists(Path.Combine(targetDir, Path.GetFileName(file))))
+                    {
+                        System.DateTime dest = File.GetLastWriteTimeUtc(Path.Combine(targetDir, Path.GetFileName(file)));
+                        System.DateTime origin = File.GetLastWriteTimeUtc(file);
+                        if (dest.Equals(origin)) continue;
+
+                        File.Delete(Path.Combine(targetDir, Path.GetFileName(file)));
+                    }
                     File.Copy(file, Path.Combine(targetDir, Path.GetFileName(file)));
+                }
 
                 foreach (var directory in Directory.GetDirectories(sourceDir))
                     Copy(directory, Path.Combine(targetDir, Path.GetFileName(directory)));

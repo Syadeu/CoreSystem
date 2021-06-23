@@ -8,7 +8,10 @@
         "Unity.Mathematics",
         "Unity.Collections",
         "XNode",
-        "MoonSharp"
+        "MoonSharp",
+        "Unity.Addressables",
+        "Unity.Addressables.Tests",
+        "Unity.ResourceManager"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -27,6 +30,11 @@
             "name": "com.unity.jobs",
             "expression": "0.7.0-preview.17",
             "define": "UNITY_JOBS"
+        },
+        {
+            "name": "com.unity.addressables",
+            "expression": "1.16.19",
+            "define": "UNITY_ADDRESSABLES"
         }
     ],
     "noEngineReferences": false

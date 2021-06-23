@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 namespace Syadeu.Mono
 {
@@ -173,6 +174,12 @@ namespace Syadeu.Mono
             //Debug.Log("exit");
         }
         #endregion
+
+        private void Test()
+        {
+            //Addressables.InitializeAsync("", Vector3.zero, Quaternion.identity);
+            Addressables.InstantiateAsync();
+        }
 
         /// <summary>
         /// 해당 타입(<typeparamref name="T"/>)과 일치하는 리사이클 인스턴스를 받아옵니다.
