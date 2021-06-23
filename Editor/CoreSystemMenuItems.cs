@@ -34,14 +34,6 @@ namespace SyadeuEditor
             Selection.activeObject = PrefabList.Instance;
             EditorApplication.ExecuteMenuItem("Window/General/Inspector");
         }
-#if UNITY_ADDRESSABLES
-        [MenuItem("CoreSystem/Edit Async Prefab List", priority = 3)]
-        public static void AsyncPrefabListMenu()
-        {
-            Selection.activeObject = AsyncPrefabList.Instance;
-            EditorApplication.ExecuteMenuItem("Window/General/Inspector");
-        }
-#endif
         [MenuItem("CoreSystem/Edit Item Data List", priority = 3)]
         public static void ItemDataListMenu()
         {

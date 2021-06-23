@@ -13,6 +13,8 @@ namespace Syadeu.Mono
 
         public bool Initialized { get; private set; } = false;
 
+        public bool IsVisible => m_Brain.IsVisible;
+
         internal void InternalInitialize(CreatureBrain t, int ta)
         {
             m_Brain = t;

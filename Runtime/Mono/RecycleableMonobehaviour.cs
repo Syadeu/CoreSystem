@@ -26,7 +26,10 @@ namespace Syadeu.Mono
 
         public bool Activated { get; internal set; } = false;
         public bool WaitForDeletion { get; internal set; } = false;
-        
+#if UNITY_ADDRESSABLES
+        internal bool CreatedWithAddressable { get; set; } = false;
+#endif
+
         public virtual void Initialize()
         {
             if (Activated) throw new CoreSystemException(CoreSystemExceptionFlag.RecycleObject,

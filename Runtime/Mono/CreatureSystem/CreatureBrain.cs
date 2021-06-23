@@ -67,6 +67,7 @@ namespace Syadeu.Mono
                 return false;
             }
         }
+        public bool IsVisible { get; private set; } = false;
 
         internal CreatureBrainProxy Proxy
         {
@@ -178,6 +179,7 @@ namespace Syadeu.Mono
 
         public void OnVisible()
         {
+            IsVisible = true;
             for (int i = 0; i < m_Childs.Length; i++)
             {
                 m_Childs[i].OnVisible();
@@ -186,6 +188,7 @@ namespace Syadeu.Mono
         }
         public void OnInvisible()
         {
+            IsVisible = false;
             for (int i = 0; i < m_Childs.Length; i++)
             {
                 m_Childs[i].OnInvisible();
