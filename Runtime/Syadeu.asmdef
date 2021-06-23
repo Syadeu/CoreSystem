@@ -10,7 +10,6 @@
         "XNode",
         "MoonSharp",
         "Unity.Addressables",
-        "Unity.Addressables.Tests",
         "Unity.ResourceManager"
     ],
     "includePlatforms": [],

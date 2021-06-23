@@ -175,12 +175,6 @@ namespace Syadeu.Mono
         }
         #endregion
 
-        private void Test()
-        {
-            //Addressables.InitializeAsync("", Vector3.zero, Quaternion.identity);
-            Addressables.InstantiateAsync();
-        }
-
         /// <summary>
         /// 해당 타입(<typeparamref name="T"/>)과 일치하는 리사이클 인스턴스를 받아옵니다.
         /// </summary>
