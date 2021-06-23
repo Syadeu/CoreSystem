@@ -69,14 +69,17 @@ namespace SyadeuEditor
                 List<PrefabList.ObjectSetting> list = PrefabList.Instance.ObjectSettings;
                 for (int i = 0; i < list.Count; i++)
                 {
-                    if (!list[i].RefPrefab.IsValid())
+                    string path = AssetDatabase.GetAssetPath(list[i].Prefab);
+                    AddressableAssetEntry entry = null;
+
+                    if (!list[i].RefPrefab.IsValid() || !Path.GetDirectoryName(path).Equals(c_PrefabListAssetPath))
                     {
                         if (list[i].Prefab == null)
                         {
                             $"{list[i].m_Name}: prefab null".ToLog();
                             continue;
                         }
-                        string path = AssetDatabase.GetAssetPath(list[i].Prefab);
+                        
                         if (!Path.GetDirectoryName(path).Equals(c_PrefabListAssetPath))
                         {
                             if (!Directory.Exists(c_PrefabListAssetPath)) Directory.CreateDirectory(c_PrefabListAssetPath);
@@ -88,11 +91,20 @@ namespace SyadeuEditor
 
                         string guid = AssetDatabase.AssetPathToGUID(path);
 
-                        var entry = DefaultSettings.CreateOrMoveEntry(guid, DefaultGroup);
+                        entry = DefaultSettings.CreateOrMoveEntry(guid, DefaultGroup);
                         list[i].RefPrefab = new AssetReferenceGameObject(guid);
                     }
                     else "none".ToLog();
+
+                    entry = DefaultGroup.GetAssetEntry(list[i].RefPrefab.AssetGUID);
+                    string dirName = Path.GetDirectoryName(entry.address);
+                    if (!dirName.Equals(c_PrefabListAssetPath))
+                    {
+                        entry.address = $"{c_PrefabListAssetPath}/{Path.GetFileName(path)}";
+                    }
                 }
+                EditorUtility.SetDirty(DefaultSettings);
+                EditorUtility.SetDirty(DefaultGroup);
                 EditorUtility.SetDirty(target);
 #endif
             }

@@ -75,7 +75,11 @@ namespace Syadeu
 
                     ins.OnInitialize();
 
-                    if (typeof(T) == typeof(CoreSystem)) System = ins as CoreSystem;
+                    if (typeof(T) == typeof(CoreSystem))
+                    {
+                        System = ins as CoreSystem;
+                        DontDestroyOnLoad(ins.gameObject);
+                    }
                     else
                     {
                         if (ins.DontDestroy)

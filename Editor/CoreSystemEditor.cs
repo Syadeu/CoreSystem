@@ -97,7 +97,6 @@ namespace SyadeuEditor
             m_Managers.AddRange(CoreSystem.GetStaticManagers());
             m_Managers.AddRange(CoreSystem.GetDataManagers());
             m_Managers.AddRange(CoreSystem.GetInstanceManagers());
-            $"{m_Managers.Count}".ToLog();
             m_ManagerView
                 .SetupElements(m_Managers, (other) =>
                 {
