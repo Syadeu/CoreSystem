@@ -625,7 +625,7 @@ namespace Syadeu.Mono
                 }
             }
 
-            for (int i = 0; i < nextCmd.m_Args.Count; i++)
+            for (int i = 0; i < nextCmd?.m_Args.Count; i++)
             {
                 if (nextCmd.m_Args[i] == null)
                 {

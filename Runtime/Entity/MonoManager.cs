@@ -50,8 +50,8 @@ namespace Syadeu
         }
         public void Initialize()
         {
-            var temp = new System.Diagnostics.StackTrace(true);
 #if UNITY_EDITOR
+            var temp = new System.Diagnostics.StackTrace(true);
             m_InitLastStack = temp.GetFrame(temp.FrameCount - 1);
 #endif
             if (Initialized)

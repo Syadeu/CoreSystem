@@ -45,6 +45,8 @@ namespace Syadeu.Mono.Creature
         public float m_IgnoreDistanceOfTurn = 50;
         public float m_SkipMoveAniDistance = 30;
 
+        public IReadOnlyList<PrivateSet> PrivateSets => m_PrivateSets;
+
         public bool HasPrivateSet(int idx) => GetPrivateSet(idx) != null;
         public PrivateSet GetPrivateSet(int idx)
         {

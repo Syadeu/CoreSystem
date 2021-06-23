@@ -78,7 +78,7 @@ namespace Syadeu.Mono.TurnTable
             }
 
             Instance.m_CurrentTurn.Value.StartTurn();
-            $"next turn called: next => {Instance.m_CurrentTurn.Value.name}".ToLog();
+            //$"next turn called: next => {Instance.m_CurrentTurn.Value.name}".ToLog();
         }
     }
 }

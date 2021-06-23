@@ -7,6 +7,7 @@ using System.Linq;
 using MoonSharp.Interpreter.Loaders;
 using System.IO;
 using System;
+using Syadeu.Mono.Creature;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -29,7 +30,25 @@ namespace Syadeu.Database.Lua
 
             Debug.Log("LUA: Registering Actions");
             RegisterSimpleAction();
+            RegisterSimpleAction<string>();
             RegisterSimpleAction<CreatureBrainProxy>();
+            //Script.GlobalOptions.CustomConverters.SetScriptToClrCustomConversion(DataType.Table, typeof(string),
+            //    v =>
+            //    {
+            //        var table = v.Table;
+            //        string str = "";
+            //        using (var pairs = table.Pairs.GetEnumerator())
+            //        {
+            //            for (int i = 0; i < table.Length; i++)
+            //            {
+            //                pairs.MoveNext();
+            //                if (!string.IsNullOrEmpty(str)) str += ", ";
+            //                str += pairs.Current.Value.CastToString();
+            //            }
+            //        }
+            //        return str;
+            //    }
+            //);
 
             Debug.Log("LUA: Registering Script and Globals");
             m_MainScripter = new Script();
@@ -60,22 +79,59 @@ namespace Syadeu.Database.Lua
                 $"Displaying all lua functions".ToLogConsole();
                 foreach (var item in m_MainScripter.Globals.Pairs)
                 {
+                    if (item.Value.Type != DataType.Function && item.Value.Type != DataType.UserData) continue;
+                    if (item.Key.CastToString().Equals("require")) continue;
+
                     $"{item.Key.CastToString()} : {item.Value.Type}".ToLogConsole(1);
                 }
             }, "lua", "get", "functions");
+            //foreach (var item in m_MainScripter.Globals.Pairs)
+            //{
+            //    if (item.Value.Type != DataType.Function && item.Value.Type != DataType.UserData) continue;
+            //    if (item.Key.CastToString().Equals("require")) continue;
+
+            //    ConsoleWindow.CreateCommand((cmd) =>
+            //    {
+            //        try
+            //        {
+            //            if (cmd.Contains('('))
+            //            {
+            //                string[] vs = cmd.Split('(');
+            //                vs[1] = vs[1].Trim(')');
+
+            //                string[] parameters = vs[1].Split(',');
+            //                m_MainScripter.Call(m_MainScripter.Globals[vs[0]], parameters);
+            //            }
+            //            else m_MainScripter.Call(m_MainScripter.Globals[cmd]);
+            //        }
+            //        catch (ScriptRuntimeException runtimeEx)
+            //        {
+            //            ConsoleWindow.Log(runtimeEx.DecoratedMessage, ConsoleFlag.Error);
+            //        }
+            //        catch (SyntaxErrorException syntaxEx)
+            //        {
+            //            ConsoleWindow.Log(syntaxEx.DecoratedMessage, ConsoleFlag.Error);
+            //        }
+            //        catch (System.Exception ex)
+            //        {
+            //            ConsoleWindow.Log(ex.ToString(), ConsoleFlag.Error);
+            //        }
+            //    }, "lua", "excute", item.Key.CastToString());   
+            //}
             ConsoleWindow.CreateCommand((cmd) =>
             {
                 try
                 {
-                    if (cmd.Contains('('))
-                    {
-                        string[] vs = cmd.Split('(');
-                        vs[1] = vs[1].Trim(')');
+                    //if (cmd.Contains('('))
+                    //{
+                    //    string[] vs = cmd.Split('(');
+                    //    vs[1] = vs[1].Trim(')');
 
-                        string[] parameters = vs[1].Split(',');
-                        m_MainScripter.Call(m_MainScripter.Globals[vs[0]], parameters);
-                    }
-                    else m_MainScripter.Call(m_MainScripter.Globals[cmd]);
+                    //    string[] parameters = vs[1].Split(',');
+                    //    m_MainScripter.Call(m_MainScripter.Globals[vs[0]], parameters);
+                    //}
+                    //else m_MainScripter.Call(m_MainScripter.Globals[cmd]);
+                    m_MainScripter.DoString(cmd);
                 }
                 catch (ScriptRuntimeException runtimeEx)
                 {
@@ -90,18 +146,6 @@ namespace Syadeu.Database.Lua
                     ConsoleWindow.Log(ex.ToString(), ConsoleFlag.Error);
                 }
             }, "lua", "excute");
-            //foreach (var item in m_MainScripter.Globals.Pairs)
-            //{
-            //    if (item.Value.Type != DataType.Function || item.Key.CastToString().Equals("require")) continue;
-
-            //    string[] parameters = new string[] { item.Key.ToString(), item.Value.ToString() };
-            //    ConsoleWindow.CreateCommand((cmd) =>
-            //    {
-            //        m_MainScripter.Call(item.Value);
-            //    }, parameters);
-
-            //    $"{parameters[0]}.{parameters[1]} : {item.Key.Type}.{item.Value.Type} added".ToLog();
-            //}
         }
         private void LoadScripts()
         {
@@ -290,23 +334,56 @@ your own IScriptLoader (possibly extending ScriptLoaderBase).", file, DEFAULT_PA
     }
     internal sealed class LuaUtils
     {
-        //public static string ToString(object obj) => obj.ToString();
+        public static float DeltaTime => Time.deltaTime;
 
-        //public static bool IsArray(object obj) => obj.GetType().IsArray;
         public static void Log(string txt) => ConsoleWindow.Log(txt);
 
-        public static float DeltaTime => Time.deltaTime;
+        public static void AddConsoleCommand(Action<string> cmd, string[] args)
+        {
+            ConsoleWindow.CreateCommand(cmd, args);
+        }
+
+        public static double[] GetPosition()
+        {
+            Transform cam = Camera.main.transform;
+            Ray ray = new Ray(cam.position, cam.forward);
+
+            if (Physics.Raycast(ray, out RaycastHit hit))
+            {
+                return LuaVectorUtils.FromVector(hit.point);
+            }
+            return LuaVectorUtils.FromVector(Vector3.zero);
+        }
+        public static (int, int) PositionToGridCell(double[] position)
+        {
+            Vector3 pos = LuaVectorUtils.ToVector(position);
+            if (!GridManager.HasGrid(pos))
+            {
+                ConsoleWindow.Log($"Grid not found at: {pos}");
+                return (-1, -1);
+            }
+
+            ref GridManager.Grid grid = ref GridManager.GetGrid(pos);
+            if (!grid.HasCell(pos))
+            {
+                ConsoleWindow.Log($"GridCell not found at: {pos}");
+                return (-1, -1);
+            }
+
+            ref GridManager.GridCell cell = ref grid.GetCell(pos);
+            return (grid.Idx, cell.Idx);
+        }
     }
     internal sealed class LuaVectorUtils
     {
-        private static Vector3 GetVector(double[] vs) => new Vector3((float)vs[0], (float)vs[1], (float)vs[2]);
-        private static double[] ToVector(Vector3 vec) => new double[] { vec.x, vec.y, vec.z };
+        internal static Vector3 ToVector(double[] vs) => new Vector3((float)vs[0], (float)vs[1], (float)vs[2]);
+        internal static double[] FromVector(Vector3 vec) => new double[] { vec.x, vec.y, vec.z };
 
         public static double[] ToVector2(float a, float b) => new double[] { a, b };
         public static double[] ToVector3(float a, float b, float c) => new double[] { a, b, c };
 
         public static double[] Lerp(double[] a, double[] b, float t)
-            => ToVector(Vector3.Lerp(GetVector(a), GetVector(b), t));
+            => FromVector(Vector3.Lerp(ToVector(a), ToVector(b), t));
     }
     internal sealed class LuaItemUtils
     {
@@ -324,5 +401,26 @@ your own IScriptLoader (possibly extending ScriptLoaderBase).", file, DEFAULT_PA
     {
         public static Action<CreatureBrainProxy> OnVisible { get; set; }
         public static Action<CreatureBrainProxy> OnInvisible { get; set; }
+
+        public static void GetCreatureList()
+        {
+            for (int i = 0; i < CreatureSettings.Instance.PrivateSets.Count; i++)
+            {
+                ConsoleWindow.Log(
+                    $"{CreatureSettings.Instance.PrivateSets[i].m_DataIdx}: " +
+                    $"{PrefabList.Instance.ObjectSettings[CreatureSettings.Instance.PrivateSets[i].m_PrefabIdx].m_Name}");
+            }
+        }
+        public static void CreateCreature(int dataIdx, double[] position)
+        {
+            if (!CreatureManager.HasInstance)
+            {
+                ConsoleWindow.Log("CreatureManager Not Found");
+                return;
+            }
+
+            Vector3 pos = LuaVectorUtils.ToVector(position);
+            CreatureManager.GetCreatureSet(dataIdx).InternalSpawnAt(0, pos);
+        }
     }
 }
