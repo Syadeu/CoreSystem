@@ -45,8 +45,6 @@ namespace Syadeu.Mono
         private CreatureEntity[] m_Childs = null;
         private CreatureBrainProxy m_Proxy = null;
 
-        public event Action<Vector3> OnMove;
-
         public override string DisplayName => m_CreatureName;
 
         public bool Initialized { get; private set; } = false;
@@ -289,16 +287,12 @@ namespace Syadeu.Mono
                 m_NavMeshAgent.enabled = true;
                 m_NavMeshAgent.Move(direction);
 
-                OnMove?.Invoke(transform.position + direction);
-
                 return true;
             }
             else
             {
                 m_NavMeshAgent.enabled = false;
                 transform.position += direction * .6f;
-
-                OnMove?.Invoke(transform.position);
 
                 return false;
             }
@@ -313,7 +307,6 @@ namespace Syadeu.Mono
                 {
                     //m_NavMeshAgent.ResetPath();
                     transform.position = worldPosition;
-                    OnMove?.Invoke(worldPosition);
                     yield break;
                 }
 
@@ -325,8 +318,6 @@ namespace Syadeu.Mono
                 }
 
                 sqr = (worldPosition - transform.position).sqrMagnitude;
-                OnMove?.Invoke(transform.position);
-
                 yield return null;
             }
         }
@@ -340,7 +331,6 @@ namespace Syadeu.Mono
                 if (m_EnableCameraCull && !RenderManager.IsInCameraScreen(transform.position))
                 {
                     transform.position = worldPosition;
-                    OnMove?.Invoke(worldPosition);
                     yield break;
                 }
 
@@ -355,9 +345,6 @@ namespace Syadeu.Mono
                 targetAxis = (worldPosition - transform.position).normalized * m_NavMeshAgent.speed * 1.87f;
 
                 transform.position = Vector3.Lerp(transform.position, transform.position + targetAxis, Time.deltaTime * m_NavMeshAgent.angularSpeed);
-
-                OnMove?.Invoke(transform.position);
-
                 yield return null;
             }
         }

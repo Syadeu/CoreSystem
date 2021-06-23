@@ -5,6 +5,7 @@ namespace Syadeu.Mono.TurnTable
 {
     public interface ITurnPlayer
     {
+        string name { get; }
         Transform transform { get; }
 
         /// <summary>

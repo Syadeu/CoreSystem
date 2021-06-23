@@ -61,9 +61,29 @@ namespace Syadeu.Mono.Creature
                 int spawnPoint = UnityEngine.Random.Range(0, m_SpawnRanges.Length);
                 InternalSpawnAtGrid(spawnPoint, count);
             }
-            internal CreatureBrain InternalSpawnAt(Vector3 pos)
+            internal void InternalSpawnAt(int spawnPointIdx, Vector3 pos)
             {
+#if UNITY_ADDRESSABLES
+                PrefabManager.GetRecycleObjectAsync(m_PrefabIdx, (obj) =>
+                {
+                    CreatureBrain brain = (CreatureBrain)obj;
+                    brain.m_SpawnPointIdx = spawnPointIdx;
+                    brain.m_DataIdx = m_DataIdx;
+                    brain.m_IsSpawnedFromManager = true;
+                    brain.transform.position = pos;
+                    brain.transform.SetParent(Instance.transform);
+
+                    brain.Initialize();
+
+                    $"{m_DataIdx}: spawnpoint {spawnPointIdx}".ToLog();
+                    GetCreatureSet(m_DataIdx).m_SpawnRanges[spawnPointIdx].m_InstanceCount++;
+                    Instance.m_Creatures.Add(brain);
+
+                    onSpawn?.Invoke(m_DataIdx);
+                }, true);
+#else
                 CreatureBrain brain = (CreatureBrain)PrefabManager.GetRecycleObject(m_PrefabIdx, false);
+                brain.m_SpawnPointIdx = spawnPointIdx;
                 brain.m_DataIdx = m_DataIdx;
                 brain.m_IsSpawnedFromManager = true;
                 brain.transform.position = pos;
@@ -71,10 +91,11 @@ namespace Syadeu.Mono.Creature
 
                 brain.Initialize();
 
+                Instance.m_CreatureSets[m_DataIdx].m_SpawnRanges[spawnPointIdx].m_InstanceCount++;
                 Instance.m_Creatures.Add(brain);
 
                 onSpawn?.Invoke(m_DataIdx);
-                return brain;
+#endif
             }
             internal void InternalSpawnAtGrid(int i, int targetCount)
             {
@@ -100,7 +121,7 @@ namespace Syadeu.Mono.Creature
                         if (targetCell.GetCustomData() == null &&
                             !targetCell.BlockedByNavMesh)
                         {
-                            CreatureBrain creature = InternalSpawnAt(targetCell.Bounds.center);
+                            InternalSpawnAt(i, targetCell.Bounds.center);
 
                             count++;
                         }
@@ -226,7 +247,7 @@ namespace Syadeu.Mono.Creature
                     $"해당 인덱스 {setID} 를 가진 크리쳐 세팅이 존재하지않습니다.");
             }
 
-            Instance.m_CreatureSets[setID].InternalSpawnAt(pos);
+            Instance.m_CreatureSets[setID].InternalSpawnAt(0, pos);
         }
         public static void SpawnAt(int setID, GridManager.GridCell target)
         {
@@ -236,7 +257,7 @@ namespace Syadeu.Mono.Creature
                     $"해당 인덱스 {setID} 를 가진 크리쳐 세팅이 존재하지않습니다.");
             }
 
-            Instance.m_CreatureSets[setID].InternalSpawnAt(target.Bounds.center);
+            Instance.m_CreatureSets[setID].InternalSpawnAt(0, target.Bounds.center);
         }
         public static void SpawnAt(int setID, int2 gridIdxes) => SpawnAt(setID, gridIdxes.x, gridIdxes.y);
         public static void SpawnAt(int setID, Vector2Int gridIdxes) => SpawnAt(setID, gridIdxes.x, gridIdxes.y);
@@ -251,7 +272,7 @@ namespace Syadeu.Mono.Creature
             ref var grid = ref GridManager.GetGrid(gridIdx);
             ref var cell = ref grid.GetCell(cellIdx);
 
-            Instance.m_CreatureSets[setID].InternalSpawnAt(cell.Bounds.center);
+            Instance.m_CreatureSets[setID].InternalSpawnAt(0, cell.Bounds.center);
         }
     }
 

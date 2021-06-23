@@ -36,6 +36,7 @@ namespace Syadeu.Mono
                 "이미 초기화 된 재사용 오브젝트를 또 초기화하려합니다.");
 
             OnInitialize();
+            gameObject.SetActive(true);
             Activated = true;
         }
 
@@ -61,7 +62,7 @@ namespace Syadeu.Mono
             onTerminateAction?.Invoke();
             onTerminate?.Invoke();
             OnTerminate();
-            
+
             //if (CoreSystem.IsThisMainthread())
             //{
             //    transform.SetParent(PrefabManager.Instance.transform);
@@ -73,6 +74,7 @@ namespace Syadeu.Mono
             //        transform.SetParent(PrefabManager.Instance.transform);
             //    });
             //}
+            gameObject.SetActive(false);
             Activated = false;
         }
     }

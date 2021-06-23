@@ -241,7 +241,9 @@ namespace Syadeu.Mono
             throw new InvalidCastException($"CoreSystem.Prefab :: {typeof(T).Name}와 일치하는 타입이 프리팹 리스트에 등록되지않아 찾을 수 없음");
         }
 #if UNITY_ADDRESSABLES
-        public static PromiseRecycleableObject GetRecycleObjectAsync<T>(Action<RecycleableMonobehaviour> onCompleted = null) where T : Component
+        public static PromiseRecycleableObject GetRecycleObjectAsync<T>() where T : Component
+            => GetRecycleObjectAsync<T>(null);
+        public static PromiseRecycleableObject GetRecycleObjectAsync<T>(Action<RecycleableMonobehaviour> onCompleted, bool manualInit = false) where T : Component
         {
             RecycleObject obj = null;
             for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
@@ -293,14 +295,15 @@ namespace Syadeu.Mono
                 if (obj.MaxCount < 0 ||
                     obj.MaxCount > obj.Instances.Count)
                 {
-                    PromiseRecycleableObject recycleObj = Instance.InternalInstantiateAsync(obj, onCompleted);
+                    PromiseRecycleableObject recycleObj = Instance.InternalInstantiateAsync(obj, onCompleted, manualInit);
                     return recycleObj;
                 }
             }
             $"CoreSystem: PrefabManager Warning: 이 프리팹({obj.Prefab.name})은 최대 인스턴스 갯수에 도달하여 요청이 무시되었습니다.".ToLog();
             return null;
         }
-        public static PromiseRecycleableObject GetRecycleObjectAsync(int index, Action<RecycleableMonobehaviour> onCompleted = null)
+        public static PromiseRecycleableObject GetRecycleObjectAsync(int index) => GetRecycleObjectAsync(index, null);
+        public static PromiseRecycleableObject GetRecycleObjectAsync(int index, Action<RecycleableMonobehaviour> onCompleted, bool manualInit = false)
         {
             RecycleObject obj = Instance.RecycleObjects[index];
             for (int i = 0; i < obj.Instances.Count; i++)
@@ -321,7 +324,7 @@ namespace Syadeu.Mono
 
                     if (onCompleted != null)
                     {
-                        obj.Instances[i].Initialize();
+                        if (!manualInit) obj.Instances[i].Initialize();
                         onCompleted.Invoke(obj.Instances[i]);
                     }
                     return new PromiseRecycleableObject(obj.Instances[i]);
@@ -333,7 +336,7 @@ namespace Syadeu.Mono
                 if (obj.MaxCount < 0 ||
                     obj.MaxCount > obj.Instances.Count)
                 {
-                    PromiseRecycleableObject recycleObj = Instance.InternalInstantiateAsync(obj, onCompleted);
+                    PromiseRecycleableObject recycleObj = Instance.InternalInstantiateAsync(obj, onCompleted, manualInit);
                     return recycleObj;
                 }
             }
@@ -424,18 +427,18 @@ namespace Syadeu.Mono
             return GetRecycleObject(obj.Index, initOnCall);
         }
 #if UNITY_ADDRESSABLES
-        private PromiseRecycleableObject InternalInstantiateAsync(RecycleObject obj, Action<RecycleableMonobehaviour> onCompleted)
+        private PromiseRecycleableObject InternalInstantiateAsync(RecycleObject obj, Action<RecycleableMonobehaviour> onCompleted, bool manualInit)
         {
             PromiseRecycleableObject output = null;
             for (int i = 0; i < obj.InstanceCreationBlock; i++)
             {
                 if (output == null)
                 {
-                    output = new PromiseRecycleableObject(obj, onCompleted);
+                    output = new PromiseRecycleableObject(obj, onCompleted, manualInit);
                 }
                 else
                 {
-                    obj.Promises.Add(new PromiseRecycleableObject(obj, onCompleted));
+                    obj.Promises.Add(new PromiseRecycleableObject(obj));
                 }
             }
             return output;
@@ -551,10 +554,10 @@ namespace Syadeu.Mono
     public sealed class PromiseRecycleableObject
     {
         private RecycleableMonobehaviour m_Output = null;
-        private Transform m_TargetParent = null;
 
         private PrefabManager.RecycleObject RecycleObjectSet;
         private AsyncOperationHandle<GameObject> m_Operation;
+        private bool m_ManualInit = false;
         private Action<RecycleableMonobehaviour> m_OnCompleted = null;
 
         public bool IsDone => m_Output != null;
@@ -571,11 +574,12 @@ namespace Syadeu.Mono
             m_Operation = obj.RefPrefab.InstantiateAsync(PrefabManager.INIT_POSITION, Quaternion.identity, PrefabManager.Instance.transform);
             m_Operation.Completed += M_Operation_Completed;
         }
-        internal PromiseRecycleableObject(PrefabManager.RecycleObject obj, Action<RecycleableMonobehaviour> onCompleted)
+        internal PromiseRecycleableObject(PrefabManager.RecycleObject obj, Action<RecycleableMonobehaviour> onCompleted, bool manualInit)
         {
             RecycleObjectSet = obj;
 
             m_Operation = obj.RefPrefab.InstantiateAsync(PrefabManager.INIT_POSITION, Quaternion.identity, PrefabManager.Instance.transform);
+            m_ManualInit = manualInit;
             m_OnCompleted = onCompleted;
             m_Operation.Completed += M_Operation_Completed;
         }
@@ -590,6 +594,7 @@ namespace Syadeu.Mono
 
             recycleable.CreatedWithAddressable = true;
             recycleable.InternalOnCreated();
+            obj.Result.SetActive(false);
             RecycleObjectSet.Promises.Remove(this);
             RecycleObjectSet.AddNewInstance(recycleable);
 
@@ -597,7 +602,10 @@ namespace Syadeu.Mono
 
             if (m_OnCompleted != null)
             {
-                recycleable.Initialize();
+                if (!m_ManualInit)
+                {
+                    recycleable.Initialize();
+                }
                 m_OnCompleted.Invoke(recycleable);
             }
         }

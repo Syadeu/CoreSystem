@@ -18,6 +18,7 @@ namespace Syadeu.Mono.TurnTable
         public UnityEvent m_OnResetTurn;
 
         private int m_ActionPoint = 0;
+        [SerializeField] private bool m_IsMyTurn = false;
 
         //protected abstract int StartTurnSpeed { get; }
         protected abstract int StartActionPoint { get; }
@@ -25,7 +26,7 @@ namespace Syadeu.Mono.TurnTable
         public abstract float TurnSpeed { get; }
 
         public bool ActivateTurn { get; protected set; } = true;
-        public bool IsMyTurn { get; private set; } = false;
+        public bool IsMyTurn /*{ get; private set; } = false;*/ => m_IsMyTurn;
         public int ActionPoint
         {
             get => m_ActionPoint;
@@ -45,7 +46,7 @@ namespace Syadeu.Mono.TurnTable
         {
             if (!Initialized) throw new Exception($"{name}. {GetType().Name}");
 
-            IsMyTurn = true;
+            m_IsMyTurn = true;
 
             OnStartTurn();
             m_OnStartTurn?.Invoke();
@@ -53,7 +54,11 @@ namespace Syadeu.Mono.TurnTable
         protected virtual void OnStartTurn() { }
         public void EndTurn()
         {
-            IsMyTurn = false;
+            if (!m_IsMyTurn)
+            {
+                throw new Exception("내턴이 아닌데 넘기려함");
+            }
+            m_IsMyTurn = false;
 
             OnEndTurn();
             m_OnEndTurn?.Invoke();
