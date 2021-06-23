@@ -7,13 +7,11 @@ using Syadeu;
 namespace SyadeuEditor
 {
     [CustomEditor(typeof(PrefabManager))]
-    public class PrefabManagerEditor : Editor
+    public class PrefabManagerEditor : EditorEntity<PrefabManager>
     {
-        PrefabManager ins;
-
         private void OnEnable()
         {
-            ins = target as PrefabManager;
+            
         }
 
         public override void OnInspectorGUI()
@@ -56,7 +54,7 @@ namespace SyadeuEditor
         bool[] sortInstances = new bool[0];
         void Runtime()
         {
-            var objList = ins.GetRecycleObjectList();
+            var objList = Asset.GetRecycleObjectList();
             if (openInstances.Length != objList.Count) openInstances = new bool[objList.Count];
             if (sortInstances.Length != objList.Count) sortInstances = new bool[objList.Count];
 
@@ -81,7 +79,7 @@ namespace SyadeuEditor
                 EditorGUILayout.EndHorizontal();
 
                 EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.LabelField($"\t현재 인스턴스 갯수: {ins.GetInstanceCount(objList[i].Key)}");
+                EditorGUILayout.LabelField($"\t현재 인스턴스 갯수: {Asset.GetInstanceCount(objList[i].Key)}");
 
                 string maxInstanceCount;
                 if (PrefabList.Instance.ObjectSettings[objList[i].Key].MaxInstanceCount < 0)
@@ -97,7 +95,7 @@ namespace SyadeuEditor
 
                 if (openInstances[i])
                 {
-                    var instances = ins.GetInstances(objList[i].Key);
+                    var instances = Asset.GetInstances(objList[i].Key);
 
                     EditorGUILayout.BeginHorizontal();
                     sortInstances[i] = EditorGUILayout.Toggle("\t사용 중인 인스턴스만", sortInstances[i]);
