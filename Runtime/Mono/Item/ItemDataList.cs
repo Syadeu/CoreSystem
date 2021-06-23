@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 
 namespace Syadeu.Database
@@ -65,35 +66,74 @@ namespace Syadeu.Database
             if (!Directory.Exists(GetPath(c_ItemTypeDataPath))) Directory.CreateDirectory(GetPath(c_ItemTypeDataPath));
             if (!Directory.Exists(GetPath(c_ItemEffectDataPath))) Directory.CreateDirectory(GetPath(c_ItemEffectDataPath));
 
-            for (int i = 0; i < m_Items?.Length; i++)
+            string[] files;
+            if (m_Items != null)
             {
-                if (string.IsNullOrEmpty(m_Items[i].m_Guid))
+                files = Directory.GetFiles(GetPath(c_ItemDataPath));
+                for (int i = 0; i < files.Length; i++)
                 {
-                    m_Items[i].m_Guid = Guid.NewGuid().ToString();
+                    string fileName = Path.GetFileNameWithoutExtension(files[i]);
+                    if (m_Items.Where((other) => other.m_Name.Equals(fileName)).Count() == 0)
+                    {
+                        File.Delete(files[i]);
+                    }
                 }
+                for (int i = 0; i < m_Items.Length; i++)
+                {
+                    if (string.IsNullOrEmpty(m_Items[i].m_Guid))
+                    {
+                        m_Items[i].m_Guid = Guid.NewGuid().ToString();
+                    }
 
-                File.WriteAllText($"{GetPath(c_ItemDataPath)}/{m_Items[i].m_Name}{json}", 
-                    JsonConvert.SerializeObject(m_Items[i], Formatting.Indented));
+                    File.WriteAllText($"{GetPath(c_ItemDataPath)}/{m_Items[i].m_Name}{json}",
+                        JsonConvert.SerializeObject(m_Items[i], Formatting.Indented));
+                }
             }
-            for (int i = 0; i < m_ItemTypes?.Length; i++)
+            
+            if (m_ItemTypes != null)
             {
-                if (string.IsNullOrEmpty(m_ItemTypes[i].m_Guid))
+                files = Directory.GetFiles(GetPath(c_ItemTypeDataPath));
+                for (int i = 0; i < files.Length; i++)
                 {
-                    m_ItemTypes[i].m_Guid = Guid.NewGuid().ToString();
+                    string fileName = Path.GetFileNameWithoutExtension(files[i]);
+                    if (m_ItemTypes.Where((other) => other.m_Name.Equals(fileName)).Count() == 0)
+                    {
+                        File.Delete(files[i]);
+                    }
                 }
+                for (int i = 0; i < m_ItemTypes?.Length; i++)
+                {
+                    if (string.IsNullOrEmpty(m_ItemTypes[i].m_Guid))
+                    {
+                        m_ItemTypes[i].m_Guid = Guid.NewGuid().ToString();
+                    }
 
-                File.WriteAllText($"{GetPath(c_ItemTypeDataPath)}/{m_ItemTypes[i].m_Name}{json}", 
-                    JsonConvert.SerializeObject(m_ItemTypes[i], Formatting.Indented));
+                    File.WriteAllText($"{GetPath(c_ItemTypeDataPath)}/{m_ItemTypes[i].m_Name}{json}",
+                        JsonConvert.SerializeObject(m_ItemTypes[i], Formatting.Indented));
+                }
             }
-            for (int i = 0; i < m_ItemEffectTypes?.Length; i++)
+            
+            if (m_ItemEffectTypes != null)
             {
-                if (string.IsNullOrEmpty(m_ItemEffectTypes[i].m_Guid))
+                files = Directory.GetFiles(GetPath(c_ItemEffectDataPath));
+                for (int i = 0; i < files.Length; i++)
                 {
-                    m_ItemEffectTypes[i].m_Guid = Guid.NewGuid().ToString();
+                    string fileName = Path.GetFileNameWithoutExtension(files[i]);
+                    if (m_ItemEffectTypes.Where((other) => other.m_Name.Equals(fileName)).Count() == 0)
+                    {
+                        File.Delete(files[i]);
+                    }
                 }
+                for (int i = 0; i < m_ItemEffectTypes.Length; i++)
+                {
+                    if (string.IsNullOrEmpty(m_ItemEffectTypes[i].m_Guid))
+                    {
+                        m_ItemEffectTypes[i].m_Guid = Guid.NewGuid().ToString();
+                    }
 
-                File.WriteAllText($"{GetPath(c_ItemEffectDataPath)}/{m_ItemEffectTypes[i].m_Name}{json}", 
-                    JsonConvert.SerializeObject(m_ItemEffectTypes[i], Formatting.Indented));
+                    File.WriteAllText($"{GetPath(c_ItemEffectDataPath)}/{m_ItemEffectTypes[i].m_Name}{json}",
+                        JsonConvert.SerializeObject(m_ItemEffectTypes[i], Formatting.Indented));
+                }
             }
         }
 
