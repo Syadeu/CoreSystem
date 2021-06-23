@@ -15,6 +15,10 @@ namespace Syadeu.Mono.TurnTable
 
         public static void AddPlayer(ITurnPlayer player)
         {
+            if (Instance.m_Players.Contains(player))
+            {
+                throw new System.Exception();
+            }
             Instance.m_Players.Add(player);
         }
         public static void RemovePlayer(ITurnPlayer player)
@@ -31,6 +35,22 @@ namespace Syadeu.Mono.TurnTable
 
         public static void StartTurnTable()
         {
+            if (Instance.m_Players.Count == 0)
+            {
+                Instance.StartCoroutine(Instance.WaitForJoinPlayer());
+            }
+            else
+            {
+                Instance.InternalInitializeTable();
+                Instance.m_CurrentTurn.Value.StartTurn();
+            }
+        }
+        private IEnumerator WaitForJoinPlayer()
+        {
+            while (m_Players.Count == 0)
+            {
+                yield return null;
+            }
             Instance.InternalInitializeTable();
             Instance.m_CurrentTurn.Value.StartTurn();
         }
@@ -70,6 +90,7 @@ namespace Syadeu.Mono.TurnTable
             {
                 Instance.m_CurrentTurn.Value.EndTurn();
             }
+            var prev = Instance.m_CurrentTurn;
             Instance.m_CurrentTurn = Instance.m_CurrentTurn.Next;
 
             if (Instance.m_CurrentTurn == null)
@@ -77,8 +98,8 @@ namespace Syadeu.Mono.TurnTable
                 Instance.InternalInitializeTable();
             }
 
+            $"next turn called: {prev.Value.name} => {Instance.m_CurrentTurn.Value.name}".ToLog();
             Instance.m_CurrentTurn.Value.StartTurn();
-            //$"next turn called: next => {Instance.m_CurrentTurn.Value.name}".ToLog();
         }
     }
 }

@@ -26,6 +26,7 @@ namespace Syadeu.Mono.TurnTable
         public abstract float TurnSpeed { get; }
 
         public bool ActivateTurn { get; protected set; } = true;
+        public bool IsJoined { get; private set; } = false;
         public bool IsMyTurn /*{ get; private set; } = false;*/ => m_IsMyTurn;
         public int ActionPoint
         {
@@ -40,6 +41,7 @@ namespace Syadeu.Mono.TurnTable
         protected override void OnInitialize(CreatureBrain brain, int dataIdx)
         {
             TurnTableManager.AddPlayer(this);
+            IsJoined = true;
         }
 
         public void StartTurn()
@@ -75,11 +77,11 @@ namespace Syadeu.Mono.TurnTable
 
         protected virtual void OnEnable()
         {
-            if (Initialized) TurnTableManager.AddPlayer(this);
+            if (Initialized && !IsJoined) TurnTableManager.AddPlayer(this);
         }
         protected virtual void OnDisable()
         {
-            TurnTableManager.RemovePlayer(this);
+            if (IsJoined) TurnTableManager.RemovePlayer(this);
         }
     }
 }
