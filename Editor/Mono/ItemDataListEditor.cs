@@ -12,11 +12,18 @@ namespace SyadeuEditor
     {
         private VerticalTreeView m_TreeView;
 
+        private static string[] m_ItemTypes = new string[0];
+
         private bool m_ShowOriginalContents = false;
 
         private void OnEnable()
         {
             m_TreeView = new VerticalTreeView(Asset);
+            OnValidate();
+        }
+        private void OnValidate()
+        {
+            if (m_TreeView == null) m_TreeView = new VerticalTreeView(Asset);
             m_TreeView
                 .SetupElements(Asset.m_Items, (other) =>
                 {
@@ -25,6 +32,12 @@ namespace SyadeuEditor
                     return new TreeItemElement(m_TreeView, item);
                 })
                 ;
+
+            m_ItemTypes = new string[ItemDataList.Instance.m_ItemTypes.Length];
+            for (int i = 0; i < m_ItemTypes.Length; i++)
+            {
+                m_ItemTypes[i] = ItemDataList.Instance.m_ItemTypes[i].m_Name;
+            }
         }
 
         public override void OnInspectorGUI()
@@ -38,17 +51,20 @@ namespace SyadeuEditor
                 Asset.m_ItemTypes = new ItemType[0];
                 Asset.m_ItemEffectTypes = new ItemEffectType[0];
                 EditorUtils.SetDirty(target);
+                OnValidate();
             }
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("Load"))
             {
                 Asset.LoadDatas();
                 EditorUtils.SetDirty(target);
+                OnValidate();
             }
             if (GUILayout.Button("Save"))
             {
                 Asset.SaveDatas();
                 EditorUtils.SetDirty(target);
+                OnValidate();
             }
             EditorGUILayout.EndHorizontal();
             
@@ -60,6 +76,9 @@ namespace SyadeuEditor
             if (m_ShowOriginalContents) base.OnInspectorGUI();
         }
 
+        private ItemType GetItemType(string guid)
+            => ItemDataList.Instance.GetItemType(guid);
+
         private class TreeItemElement : VerticalTreeElement<Item>
         {
             public override string Name => Target.m_Name;
@@ -70,6 +89,34 @@ namespace SyadeuEditor
 
             public override void OnGUI()
             {
+                Target.m_Name = EditorGUILayout.TextField("Name: ", Target.m_Name);
+                
+                using (new EditorGUILayout.VerticalScope("Box"))
+                {
+                    EditorGUILayout.LabelField("ItemTypes");
+                    EditorGUI.indentLevel += 1;
+
+                    for (int i = 0; i < Target.m_ItemTypes.Length; i++)
+                    {
+                        int selected = EditorGUILayout.Popup(GetSelectedItemType(Target.m_ItemTypes[i]), m_ItemTypes);
+
+                        Target.m_ItemTypes[i] = ItemDataList.Instance.m_ItemTypes[selected].m_Guid;
+                    }
+
+                    EditorGUI.indentLevel -= 1;
+                }
+            }
+
+            private int GetSelectedItemType(string guid)
+            {
+                for (int i = 0; i < ItemDataList.Instance.m_ItemTypes.Length; i++)
+                {
+                    if (ItemDataList.Instance.m_ItemTypes[i].m_Guid.Equals(guid))
+                    {
+                        return i;
+                    }
+                }
+                return 0;
             }
         }
     }
