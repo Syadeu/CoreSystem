@@ -131,7 +131,6 @@ namespace Syadeu.Mono.Creature
             ValuePair[] values = new ValuePair[m_TargetArrayElementFields.Length];
             for (int i = 0; i < m_TargetArrayElementFields.Length; i++)
             {
-                $"{m_TargetArrayElementFields[i].Name} : {m_TargetArrayElementFields[i].GetValue(element)}".ToLog();
                 values[i] = ValuePair.New(m_TargetArrayElementFields[i].Name, m_TargetArrayElementFields[i].GetValue(element));
             }
             return values;
