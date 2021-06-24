@@ -78,8 +78,7 @@ namespace Syadeu.Mono.Creature
             m_TargetSingleTone = GetTargetSingleTones(m_TargetType).Where((other) => other.Name.Equals(m_DepSingleToneName)).First();
             m_TargetArray = GetTargetArrays(m_TargetType).Where((other) => other.Name.Equals(m_DepArrName)).First();
             m_TargetArrayElementType = GetArrayElementType(m_TargetArray);
-            m_TargetArrayElementFields = m_TargetArrayElementType.GetFields();
-
+            m_TargetArrayElementFields = m_TargetArrayElementType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             IList targetArr = CastTargetArray();
             for (int i = 0; i < m_PrivateSets.Count; i++)
             {
