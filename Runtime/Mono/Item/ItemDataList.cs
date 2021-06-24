@@ -14,7 +14,7 @@ namespace Syadeu.Database
         private const string c_ItemTypeDataPath = "../CoreSystem/Modules/Items/ItemTypes";
         private const string c_ItemEffectDataPath = "../CoreSystem/Modules/Items/ItemEffects";
 
-        private ItemValueJsonConverter m_ItemJsonConverter;
+        private ValuePairJsonConverter m_ItemJsonConverter;
 
         public Item[] m_Items;
         public ItemType[] m_ItemTypes;

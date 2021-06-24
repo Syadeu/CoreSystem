@@ -28,7 +28,7 @@ namespace Syadeu.Database
         /// </summary>
         public string[] m_ItemEffectTypes;
 
-        [SerializeReference] public ItemValue[] m_Values;
+        [SerializeReference] public ValuePair[] m_Values;
 
         [NonSerialized] private ItemProxy m_Proxy = null;
 
@@ -72,14 +72,14 @@ namespace Syadeu.Database
 
             if (value == null)
             {
-                m_Values[other] = new ItemValueNull()
+                m_Values[other] = new ValueNull()
                 {
                     m_Name = name
                 };
             }
             else if (value is bool boolVal)
             {
-                SerializableItemBoolValue temp = new SerializableItemBoolValue
+                SerializableBoolValuePair temp = new SerializableBoolValuePair
                 {
                     m_Name = name,
                     m_Value = boolVal
@@ -88,7 +88,7 @@ namespace Syadeu.Database
             }
             else if (value is float floatVal)
             {
-                SerializableItemFloatValue temp = new SerializableItemFloatValue
+                SerializableFloatValuePair temp = new SerializableFloatValuePair
                 {
                     m_Name = name,
                     m_Value = floatVal
@@ -97,7 +97,7 @@ namespace Syadeu.Database
             }
             else if (value is int intVal)
             {
-                SerializableItemIntValue temp = new SerializableItemIntValue
+                SerializableIntValuePair temp = new SerializableIntValuePair
                 {
                     m_Name = name,
                     m_Value = intVal
@@ -106,7 +106,7 @@ namespace Syadeu.Database
             }
             else
             {
-                SerializableItemStringValue temp = new SerializableItemStringValue
+                SerializableStringValuePair temp = new SerializableStringValuePair
                 {
                     m_Name = name,
                     m_Value = value.ToString()
@@ -171,7 +171,7 @@ namespace Syadeu.Database
         private readonly Item m_Data;
         private readonly ItemType[] m_ItemTypes;
         private readonly ItemEffectType[] m_ItemEffectTypes;
-        private readonly ItemValue[] m_Values;
+        private readonly ValuePair[] m_Values;
 
         public Guid Guid => m_Guid;
 
@@ -190,10 +190,10 @@ namespace Syadeu.Database
             {
                 m_ItemEffectTypes[i] = ItemDataList.Instance.GetItemEffectType(item.m_ItemEffectTypes[i]);
             }
-            m_Values = new ItemValue[item.m_Values.Length];
+            m_Values = new ValuePair[item.m_Values.Length];
             for (int i = 0; i < m_Values.Length; i++)
             {
-                m_Values[i] = (ItemValue)item.m_Values[i].Clone();
+                m_Values[i] = (ValuePair)item.m_Values[i].Clone();
             }
         }
     }
@@ -205,7 +205,7 @@ namespace Syadeu.Database
         public string m_Guid;
 
         [Space]
-        [SerializeReference] public ItemValue[] m_Values;
+        [SerializeReference] public ValuePair[] m_Values;
 
         [NonSerialized] private ItemTypeProxy m_Proxy = null;
 
@@ -236,7 +236,7 @@ namespace Syadeu.Database
         public string m_Guid;
 
         [Space]
-        [SerializeReference] public ItemValue[] m_Values;
+        [SerializeReference] public ValuePair[] m_Values;
 
         [NonSerialized] private ItemEffectTypeProxy m_Proxy = null;
 
