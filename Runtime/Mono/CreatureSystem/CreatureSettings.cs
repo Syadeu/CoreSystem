@@ -47,10 +47,16 @@ namespace Syadeu.Mono.Creature
                 else return -1;
             }
             public PrefabList.ObjectSetting GetPrefabSetting() => PrefabList.Instance.ObjectSettings[m_PrefabIdx];
-            //public object GetData()
-            //{
-                
-            //}
+            
+            public object GetValue(string name)
+            {
+                for (int i = 0; i < m_Values.Length; i++)
+                {
+                    if (m_Values[i].m_Name.Equals(name)) return m_Values[i].GetValue();
+                }
+                throw new Exception($"value not found at {name}");
+            }
+            public T GetValue<T>(string name) where T : IConvertible => (T)GetValue(name);
         }
 
         [Space]
