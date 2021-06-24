@@ -16,11 +16,9 @@ namespace Syadeu.Database
 
         private ValuePairJsonConverter m_ItemJsonConverter;
 
-        public Item[] m_Items;
-        public ItemType[] m_ItemTypes;
-        public ItemEffectType[] m_ItemEffectTypes;
-
-        public override bool RuntimeModifiable => true;
+        public List<Item> m_Items;
+        public List<ItemType> m_ItemTypes;
+        public List<ItemEffectType> m_ItemEffectTypes;
 
         public override void OnInitialize()
         {
@@ -39,24 +37,24 @@ namespace Syadeu.Database
             if (!Directory.Exists(GetPath(c_ItemEffectDataPath))) Directory.CreateDirectory(GetPath(c_ItemEffectDataPath));
 
             string[] dataPaths = Directory.GetFiles(GetPath(c_ItemDataPath), jsonPostfix, SearchOption.TopDirectoryOnly);
-            m_Items = new Item[dataPaths.Length];
+            m_Items = new List<Item>();
             for (int i = 0; i < dataPaths.Length; i++)
             {
-                m_Items[i] = JsonConvert.DeserializeObject<Item>(File.ReadAllText(dataPaths[i]));
+                m_Items.Add(JsonConvert.DeserializeObject<Item>(File.ReadAllText(dataPaths[i])));
             }
             
             dataPaths = Directory.GetFiles(GetPath(c_ItemTypeDataPath), jsonPostfix, SearchOption.TopDirectoryOnly);
-            m_ItemTypes = new ItemType[dataPaths.Length];
+            m_ItemTypes = new List<ItemType>();
             for (int i = 0; i < dataPaths.Length; i++)
             {
-                m_ItemTypes[i] = JsonConvert.DeserializeObject<ItemType>(File.ReadAllText(dataPaths[i]));
+                m_ItemTypes.Add(JsonConvert.DeserializeObject<ItemType>(File.ReadAllText(dataPaths[i])));
             }
             
             dataPaths = Directory.GetFiles(GetPath(c_ItemEffectDataPath), jsonPostfix, SearchOption.TopDirectoryOnly);
-            m_ItemEffectTypes = new ItemEffectType[dataPaths.Length];
+            m_ItemEffectTypes = new List<ItemEffectType>();
             for (int i = 0; i < dataPaths.Length; i++)
             {
-                m_ItemEffectTypes[i] = JsonConvert.DeserializeObject<ItemEffectType>(File.ReadAllText(dataPaths[i]));
+                m_ItemEffectTypes.Add(JsonConvert.DeserializeObject<ItemEffectType>(File.ReadAllText(dataPaths[i])));
             }
         }
         public void SaveDatas()
@@ -78,7 +76,7 @@ namespace Syadeu.Database
                         File.Delete(files[i]);
                     }
                 }
-                for (int i = 0; i < m_Items.Length; i++)
+                for (int i = 0; i < m_Items.Count; i++)
                 {
                     if (string.IsNullOrEmpty(m_Items[i].m_Guid))
                     {
@@ -101,7 +99,7 @@ namespace Syadeu.Database
                         File.Delete(files[i]);
                     }
                 }
-                for (int i = 0; i < m_ItemTypes?.Length; i++)
+                for (int i = 0; i < m_ItemTypes.Count; i++)
                 {
                     if (string.IsNullOrEmpty(m_ItemTypes[i].m_Guid))
                     {
@@ -124,7 +122,7 @@ namespace Syadeu.Database
                         File.Delete(files[i]);
                     }
                 }
-                for (int i = 0; i < m_ItemEffectTypes.Length; i++)
+                for (int i = 0; i < m_ItemEffectTypes.Count; i++)
                 {
                     if (string.IsNullOrEmpty(m_ItemEffectTypes[i].m_Guid))
                     {
@@ -143,7 +141,7 @@ namespace Syadeu.Database
 
         public Item GetItem(string guid)
         {
-            for (int i = 0; i < m_Items.Length; i++)
+            for (int i = 0; i < m_Items.Count; i++)
             {
                 if (m_Items[i].m_Guid.Equals(guid))
                 {
@@ -154,7 +152,7 @@ namespace Syadeu.Database
         }
         public Item GetItemByName(string name)
         {
-            for (int i = 0; i < m_Items.Length; i++)
+            for (int i = 0; i < m_Items.Count; i++)
             {
                 if (m_Items[i].m_Name.Equals(name))
                 {
@@ -165,7 +163,7 @@ namespace Syadeu.Database
         }
         public ItemType GetItemType(string guid)
         {
-            for (int i = 0; i < m_ItemTypes.Length; i++)
+            for (int i = 0; i < m_ItemTypes.Count; i++)
             {
                 if (m_ItemTypes[i].m_Guid.Equals(guid))
                 {
@@ -176,7 +174,7 @@ namespace Syadeu.Database
         }
         public ItemType GetItemTypeByName(string name)
         {
-            for (int i = 0; i < m_ItemTypes.Length; i++)
+            for (int i = 0; i < m_ItemTypes.Count; i++)
             {
                 if (m_ItemTypes[i].m_Name.Equals(name))
                 {
@@ -187,7 +185,7 @@ namespace Syadeu.Database
         }
         public ItemEffectType GetItemEffectType(string guid)
         {
-            for (int i = 0; i < m_ItemEffectTypes.Length; i++)
+            for (int i = 0; i < m_ItemEffectTypes.Count; i++)
             {
                 if (m_ItemEffectTypes[i].m_Guid.Equals(guid))
                 {
@@ -198,7 +196,7 @@ namespace Syadeu.Database
         }
         public ItemEffectType GetItemEffectTypeByName(string name)
         {
-            for (int i = 0; i < m_ItemEffectTypes.Length; i++)
+            for (int i = 0; i < m_ItemEffectTypes.Count; i++)
             {
                 if (m_ItemEffectTypes[i].m_Name.Equals(name))
                 {

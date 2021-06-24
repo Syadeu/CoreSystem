@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using MoonSharp.Interpreter;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using Syadeu.Mono;
@@ -11,6 +12,7 @@ using UnityEngine;
 
 namespace Syadeu.Database
 {
+    #region Item
     [Serializable]
     public sealed class Item
     {
@@ -54,6 +56,7 @@ namespace Syadeu.Database
             return m_Proxy;
         }
 
+        #region Value
         private int GetValueIdx(string name)
         {
             for (int i = 0; i < m_Values.Length; i++)
@@ -65,56 +68,18 @@ namespace Syadeu.Database
             }
             throw new Exception();
         }
+        public bool HasValue(string name) => m_Values.Where((other) => other.m_Name.Equals(name)).Count() != 0;
         public object GetValue(string name) => m_Values[GetValueIdx(name)].GetValue();
-        public void SetValue(string name, object value)
+        public void SetValue(string name, object value) => m_Values[GetValueIdx(name)] = ValuePair.New(name, value);
+        public void AddValue(string name, object value)
         {
-            int other = GetValueIdx(name);
-
-            if (value == null)
-            {
-                m_Values[other] = new ValueNull()
-                {
-                    m_Name = name
-                };
-            }
-            else if (value is bool boolVal)
-            {
-                SerializableBoolValuePair temp = new SerializableBoolValuePair
-                {
-                    m_Name = name,
-                    m_Value = boolVal
-                };
-                m_Values[other] = temp;
-            }
-            else if (value is float floatVal)
-            {
-                SerializableFloatValuePair temp = new SerializableFloatValuePair
-                {
-                    m_Name = name,
-                    m_Value = floatVal
-                };
-                m_Values[other] = temp;
-            }
-            else if (value is int intVal)
-            {
-                SerializableIntValuePair temp = new SerializableIntValuePair
-                {
-                    m_Name = name,
-                    m_Value = intVal
-                };
-                m_Values[other] = temp;
-            }
-            else
-            {
-                SerializableStringValuePair temp = new SerializableStringValuePair
-                {
-                    m_Name = name,
-                    m_Value = value.ToString()
-                };
-                m_Values[other] = temp;
-            }
+            var temp = m_Values.ToList();
+            temp.Add(ValuePair.New(name, value));
+            m_Values = temp.ToArray();
         }
+        #endregion
 
+        #region Instance
         public ItemInstance CreateInstance()
         {
             ItemInstance instance = new ItemInstance(this);
@@ -133,12 +98,14 @@ namespace Syadeu.Database
 
             throw new Exception();
         }
+        #endregion
     }
     public sealed class ItemProxy : LuaProxyEntity<Item>
     {
         public ItemProxy(Item item) : base(item) { }
 
         public string Name => Target.m_Name;
+        public string Guid => Target.m_Guid;
 
         private ItemTypeProxy[] m_ItemTypes = null;
         public ItemTypeProxy[] ItemTypes
@@ -161,25 +128,35 @@ namespace Syadeu.Database
         public Action OnEquip { get => Target.m_OnEquip; set => Target.m_OnEquip = value; }
         public Action OnUse { get => Target.m_OnUse; set => Target.m_OnUse = value; }
 
+        #region Value
+        public int GetValueCount() => Target.m_Values.Length;
+        public bool HasValue(string name) => Target.HasValue(name);
         public object GetValue(string name) => Target.GetValue(name);
         public void SetValue(string name, object value) => Target.SetValue(name, value);
+        public void AddValue(string name, object value) => Target.AddValue(name, value);
+        #endregion
+
+        #region Instance
+        public ItemInstance CreateInstance() => Target.CreateInstance();
+        public ItemInstance GetInstance(string guid) => Target.GetInstance(System.Guid.Parse(guid));
+        #endregion
     }
     public sealed class ItemInstance
     {
+        private readonly Item m_Data;
         private readonly Guid m_Guid;
 
-        private readonly Item m_Data;
         private readonly ItemType[] m_ItemTypes;
         private readonly ItemEffectType[] m_ItemEffectTypes;
         private readonly ValuePair[] m_Values;
 
-        public Guid Guid => m_Guid;
+        [MoonSharpHidden] public Guid Guid => m_Guid;
 
         internal ItemInstance(Item item)
         {
+            m_Data = item;
             m_Guid = Guid.NewGuid();
 
-            m_Data = item;
             m_ItemTypes = new ItemType[item.m_ItemTypes.Length];
             for (int i = 0; i < m_ItemTypes.Length; i++)
             {
@@ -196,8 +173,29 @@ namespace Syadeu.Database
                 m_Values[i] = (ValuePair)item.m_Values[i].Clone();
             }
         }
-    }
+        public Item GetData() => m_Data;
 
+        #region Value
+        private int GetValueIdx(string name)
+        {
+            for (int i = 0; i < m_Values.Length; i++)
+            {
+                if (m_Values[i].m_Name.Equals(name))
+                {
+                    return i;
+                }
+            }
+            throw new Exception();
+        }
+        public int GetValueCount() => m_Values.Length;
+        public bool HasValue(string name) => m_Values.Where((other) => other.m_Name.Equals(name)).Count() != 0;
+        public object GetValue(string name) => m_Values[GetValueIdx(name)].GetValue();
+        public void SetValue(string name, object value) => m_Values[GetValueIdx(name)] = ValuePair.New(name, value);
+        #endregion
+    }
+    #endregion
+
+    #region ItemType
     [Serializable]
     public sealed class ItemType
     {
@@ -214,7 +212,6 @@ namespace Syadeu.Database
             m_Name = "NewItemType";
             m_Guid = Guid.NewGuid().ToString();
         }
-
         public ItemTypeProxy GetProxy()
         {
             if (m_Proxy == null)
@@ -223,12 +220,48 @@ namespace Syadeu.Database
             }
             return m_Proxy;
         }
+
+        #region Value
+        private int GetValueIdx(string name)
+        {
+            for (int i = 0; i < m_Values.Length; i++)
+            {
+                if (m_Values[i].m_Name.Equals(name))
+                {
+                    return i;
+                }
+            }
+            throw new Exception();
+        }
+        public bool HasValue(string name) => m_Values.Where((other) => other.m_Name.Equals(name)).Count() != 0;
+        public object GetValue(string name) => m_Values[GetValueIdx(name)].GetValue();
+        public void SetValue(string name, object value) => m_Values[GetValueIdx(name)] = ValuePair.New(name, value);
+        public void AddValue(string name, object value)
+        {
+            var temp = m_Values.ToList();
+            temp.Add(ValuePair.New(name, value));
+            m_Values = temp.ToArray();
+        }
+        #endregion
     }
     public sealed class ItemTypeProxy : LuaProxyEntity<ItemType>
     {
         public ItemTypeProxy(ItemType itemType) : base(itemType) { }
-    }
 
+        public string Name => Target.m_Name;
+        public string Guid => Target.m_Guid;
+
+        #region Value
+        public int GetValueCount() => Target.m_Values.Length;
+        public bool HasValue(string name) => Target.HasValue(name);
+        public object GetValue(string name) => Target.GetValue(name);
+        public void SetValue(string name, object value) => Target.SetValue(name, value);
+        public void AddValue(string name, object value) => Target.AddValue(name, value);
+        #endregion
+    }
+    #endregion
+
+    #region ItemEffectType
     [Serializable]
     public sealed class ItemEffectType
     {
@@ -251,9 +284,44 @@ namespace Syadeu.Database
             if (m_Proxy == null) m_Proxy = new ItemEffectTypeProxy(this);
             return m_Proxy;
         }
+
+        #region Value
+        private int GetValueIdx(string name)
+        {
+            for (int i = 0; i < m_Values.Length; i++)
+            {
+                if (m_Values[i].m_Name.Equals(name))
+                {
+                    return i;
+                }
+            }
+            throw new Exception();
+        }
+        public bool HasValue(string name) => m_Values.Where((other) => other.m_Name.Equals(name)).Count() != 0;
+        public object GetValue(string name) => m_Values[GetValueIdx(name)].GetValue();
+        public void SetValue(string name, object value) => m_Values[GetValueIdx(name)] = ValuePair.New(name, value);
+        public void AddValue(string name, object value)
+        {
+            var temp = m_Values.ToList();
+            temp.Add(ValuePair.New(name, value));
+            m_Values = temp.ToArray();
+        }
+        #endregion
     }
     public sealed class ItemEffectTypeProxy : LuaProxyEntity<ItemEffectType>
     {
+        public string Name => Target.m_Name;
+        public string Guid => Target.m_Guid;
+
         public ItemEffectTypeProxy(ItemEffectType itemEffectType) : base(itemEffectType) { }
+
+        #region Value
+        public int GetValueCount() => Target.m_Values.Length;
+        public bool HasValue(string name) => Target.HasValue(name);
+        public object GetValue(string name) => Target.GetValue(name);
+        public void SetValue(string name, object value) => Target.SetValue(name, value);
+        public void AddValue(string name, object value) => Target.AddValue(name, value);
+        #endregion
     }
+    #endregion
 }

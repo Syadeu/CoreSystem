@@ -33,7 +33,7 @@ namespace SyadeuEditor
                 })
                 ;
 
-            m_ItemTypes = new string[ItemDataList.Instance.m_ItemTypes.Length];
+            m_ItemTypes = new string[ItemDataList.Instance.m_ItemTypes.Count];
             for (int i = 0; i < m_ItemTypes.Length; i++)
             {
                 m_ItemTypes[i] = ItemDataList.Instance.m_ItemTypes[i].m_Name;
@@ -47,9 +47,9 @@ namespace SyadeuEditor
 
             if (GUILayout.Button("Clear"))
             {
-                Asset.m_Items = new Item[0];
-                Asset.m_ItemTypes = new ItemType[0];
-                Asset.m_ItemEffectTypes = new ItemEffectType[0];
+                Asset.m_Items.Clear();
+                Asset.m_ItemTypes.Clear();
+                Asset.m_ItemEffectTypes.Clear();
                 EditorUtils.SetDirty(target);
                 OnValidate();
             }
@@ -109,7 +109,7 @@ namespace SyadeuEditor
 
             private int GetSelectedItemType(string guid)
             {
-                for (int i = 0; i < ItemDataList.Instance.m_ItemTypes.Length; i++)
+                for (int i = 0; i < ItemDataList.Instance.m_ItemTypes.Count; i++)
                 {
                     if (ItemDataList.Instance.m_ItemTypes[i].m_Guid.Equals(guid))
                     {

@@ -387,6 +387,8 @@ your own IScriptLoader (possibly extending ScriptLoaderBase).", file, DEFAULT_PA
     }
     internal sealed class LuaItemUtils
     {
+        public static ValuePair NewValue(string name, object value) => ValuePair.New(name, value);
+
         public static ItemProxy GetItem(string guid)
         {
             Item item = ItemDataList.Instance.GetItem(guid);
@@ -395,6 +397,61 @@ your own IScriptLoader (possibly extending ScriptLoaderBase).", file, DEFAULT_PA
             {
                 return item.GetProxy();
             }
+        }
+        public static ItemTypeProxy GetItemType(string guid)
+        {
+            ItemType type = ItemDataList.Instance.GetItemType(guid);
+            if (type == null) return null;
+            else
+            {
+                return type.GetProxy();
+            }
+        }
+        public static ItemEffectTypeProxy GetItemEffectType(string guid)
+        {
+            ItemEffectType type = ItemDataList.Instance.GetItemEffectType(guid);
+            if (type == null) return null;
+            else
+            {
+                return type.GetProxy();
+            }
+        }
+
+        public static ItemProxy CreateItem(string name)
+        {
+            Item item = new Item()
+            {
+                m_Name = name,
+                m_Guid = Guid.NewGuid().ToString(),
+
+                m_Values = new ValuePair[0]
+            };
+            ItemDataList.Instance.m_Items.Add(item);
+            return item.GetProxy();
+        }
+        public static ItemTypeProxy CreateItemType(string name)
+        {
+            ItemType type = new ItemType()
+            {
+                m_Name = name,
+                m_Guid = Guid.NewGuid().ToString(),
+
+                m_Values = new ValuePair[0]
+            };
+            ItemDataList.Instance.m_ItemTypes.Add(type);
+            return type.GetProxy();
+        }
+        public static ItemEffectTypeProxy CreateItemEffectType(string name)
+        {
+            ItemEffectType effectType = new ItemEffectType()
+            {
+                m_Name = name,
+                m_Guid = Guid.NewGuid().ToString(),
+
+                m_Values = new ValuePair[0]
+            };
+            ItemDataList.Instance.m_ItemEffectTypes.Add(effectType);
+            return effectType.GetProxy();
         }
     }
     internal sealed class LuaCreatureUtils
