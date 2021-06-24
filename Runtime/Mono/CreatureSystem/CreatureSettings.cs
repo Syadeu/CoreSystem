@@ -2,7 +2,11 @@
 using Syadeu.Mono;
 using Syadeu.Mono.Creature;
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Reflection;
 using UnityEngine;
 
 namespace Syadeu.Mono.Creature
@@ -19,14 +23,17 @@ namespace Syadeu.Mono.Creature
         [SerializeField] private string m_DepArrElementTypeName;
         [SerializeField] private string m_DepDisplayName;
 
-//#endif
+        //#endif
+        private Type m_TargetType;
+        private MemberInfo m_TargetSingleTone;
+        private MemberInfo m_TargetArray;
+        private Type m_TargetArrayElementType;
 
         [Serializable]
         public class PrivateSet : IComparable<PrivateSet>
         {
             public int m_DataIdx;
             public int m_PrefabIdx = -1;
-            public CreatureStatReference m_StatReference;
 
             public int CompareTo(PrivateSet other)
             {
@@ -36,6 +43,10 @@ namespace Syadeu.Mono.Creature
                 else return -1;
             }
             public PrefabList.ObjectSetting GetPrefabSetting() => PrefabList.Instance.ObjectSettings[m_PrefabIdx];
+            //public object GetData()
+            //{
+
+            //}
         }
 
         [Space]
@@ -47,6 +58,14 @@ namespace Syadeu.Mono.Creature
 
         public IReadOnlyList<PrivateSet> PrivateSets => m_PrivateSets;
 
+        public override void OnInitialize()
+        {
+            m_TargetType = GetTargetClassTypes().Where((other) => other.Name.Equals(m_DepTypeName)).First();
+            m_TargetSingleTone = GetTargetSingleTones(m_TargetType).Where((other) => other.Name.Equals(m_DepSingleToneName)).First();
+            m_TargetArray = GetTargetArrays(m_TargetType).Where((other) => other.Name.Equals(m_DepArrName)).First();
+            m_TargetArrayElementType = GetArrayElementType(m_TargetArray);
+        }
+
         public bool HasPrivateSet(int idx) => GetPrivateSet(idx) != null;
         public PrivateSet GetPrivateSet(int idx)
         {
@@ -56,5 +75,121 @@ namespace Syadeu.Mono.Creature
             }
             return null;
         }
+
+        #region Reflections
+
+        public static Type[] GetTargetClassTypes()
+        {
+            const string AssemblyCSharp = "Assembly-CSharp";
+
+            Type[] types;
+            try
+            {
+                types = Assembly.Load(AssemblyCSharp)
+                .GetTypes()
+                .Where(other => other.GetCustomAttribute<CreatureDataAttribute>() != null)
+                .ToArray();
+            }
+            catch (FileNotFoundException)
+            {
+                types = new Type[0];
+            }
+            catch (Exception)
+            {
+                types = new Type[0];
+            }
+
+            return types;
+        }
+        public static MemberInfo[] GetTargetSingleTones(Type t)
+        {
+            List<MemberInfo> candidates = new List<MemberInfo>();
+            if (t.BaseType != null)
+            {
+                candidates.AddRange(t.BaseType
+                    .GetMembers()
+                    .Where
+                    (
+                        (other) =>
+                        {
+                            if (other is FieldInfo field)
+                            {
+                                return field.IsStatic && field.FieldType.Equals(t);
+                            }
+                            else if (other is PropertyInfo property)
+                            {
+                                return property.GetGetMethod().IsStatic && property.PropertyType.Equals(t);
+                            }
+                            return false;
+                        }
+                    ));
+            }
+
+            candidates.AddRange(t
+                .GetMembers()
+                .Where
+                (
+                    (other) =>
+                    {
+                        if (other is FieldInfo field)
+                        {
+                            return field.IsStatic && field.FieldType.Equals(t);
+                        }
+                        else if (other is PropertyInfo property)
+                        {
+                            return property.GetGetMethod().IsStatic && property.PropertyType.Equals(t);
+                        }
+                        return false;
+                    }
+                ));
+            return candidates.ToArray();
+        }
+        public static MemberInfo[] GetTargetArrays(Type t)
+        {
+            List<MemberInfo> candidates = new List<MemberInfo>();
+            if (t.BaseType != null)
+            {
+                candidates.AddRange(t.BaseType
+                    .GetMembers()
+                    .Where((other) =>
+                    {
+                        if (other is FieldInfo field && field.FieldType.GetInterfaces().Contains(typeof(IList)))
+                        {
+                            return true;
+                        }
+                        return false;
+                    }));
+            }
+            candidates.AddRange(t.GetMembers()
+                .Where((other) =>
+                {
+                    if (other is FieldInfo field && field.FieldType.GetInterfaces().Contains(typeof(IList)))
+                    {
+                        return true;
+                    }
+                    return false;
+                }));
+            return candidates.ToArray();
+        }
+        public static Type GetArrayElementType(MemberInfo t)
+        {
+            if (!(t is FieldInfo field))
+            {
+                return null;
+            }
+
+            if (field.FieldType.IsArray)
+            {
+                return field.FieldType.GetElementType();
+            }
+            else if (field.FieldType.GenericTypeArguments.Length > 0)
+            {
+                return field.FieldType.GenericTypeArguments[0];
+            }
+
+            return null;
+        }
+
+        #endregion
     }
 }

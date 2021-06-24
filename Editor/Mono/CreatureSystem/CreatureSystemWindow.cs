@@ -40,8 +40,8 @@ namespace SyadeuEditor
         public SerializedProperty m_DepDisplayName;
 
         // TargetList
-        private SerializedObject m_TargetObj;
-        private SerializedProperty m_TargetList;
+        public SerializedObject m_TargetObj;
+        public SerializedProperty m_TargetList;
 
         // CreatureManager
         public bool[] m_ShowCreatureSet = null;
@@ -155,20 +155,7 @@ namespace SyadeuEditor
         }
         private void FindAttributeTargets()
         {
-            const string AssemblyCSharp = "Assembly-CSharp";
-
-            Type[] types;
-            try
-            {
-                types = Assembly.Load(AssemblyCSharp)
-                .GetTypes()
-                .Where(other => other.GetCustomAttribute<CreatureDataAttribute>() != null)
-                .ToArray();
-            }
-            catch (FileNotFoundException)
-            {
-                types = new Type[0];
-            }
+            Type[] types = CreatureSettings.GetTargetClassTypes();
 
             m_DataClassNames = new string[types.Length];
             bool foundType = false;
@@ -186,102 +173,16 @@ namespace SyadeuEditor
             if (!foundType) m_SelectedDataClass = null;
             else
             {
-                MemberInfo[] candidates;
-                List<string> tempNames = new List<string>();
-
                 #region Find SingleTone
 
-                if (m_SelectedDataClass.BaseType != null)
-                {
-                    candidates = m_SelectedDataClass.BaseType
-                    .GetMembers()
-                    .Where
-                    (
-                        (other) =>
-                        {
-                            if (other is FieldInfo field)
-                            {
-                                return field.IsStatic && field.FieldType.Equals(m_SelectedDataClass);
-                            }
-                            else if (other is PropertyInfo property)
-                            {
-                                return property.GetGetMethod().IsStatic && property.PropertyType.Equals(m_SelectedDataClass);
-                            }
-                            return false;
-                        }
-                    )
-                    .ToArray();
-
-                    for (int i = 0; i < candidates.Length; i++)
-                    {
-                        tempNames.Add(candidates[i].Name);
-                    }
-                }
-
-                candidates = m_SelectedDataClass
-                    .GetMembers()
-                    .Where
-                    (
-                        (other) =>
-                        {
-                            if (other is FieldInfo field)
-                            {
-                                return field.IsStatic && field.FieldType.Equals(m_SelectedDataClass);
-                            }
-                            else if (other is PropertyInfo property)
-                            {
-                                return property.GetGetMethod().IsStatic && property.PropertyType.Equals(m_SelectedDataClass);
-                            }
-                            return false;
-                        }
-                    )
-                    .ToArray();
-                
-                for (int i = 0; i < candidates.Length; i++)
-                {
-                    tempNames.Add(candidates[i].Name);
-                }
-                m_DataSingleToneNames = tempNames.ToArray();
+                m_DataSingleToneNames = CreatureSettings.GetTargetSingleTones(m_SelectedDataClass).Select((other) => other.Name).ToArray();
 
                 #endregion
 
-                tempNames.Clear();
-
                 #region Find Array
 
-                if (m_SelectedDataClass.BaseType != null)
-                {
-                    candidates = m_SelectedDataClass.BaseType
-                        .GetMembers()
-                        .Where((other) =>
-                        {
-                            if (other is FieldInfo field && field.FieldType.GetInterfaces().Contains(typeof(IList)))
-                            {
-                                return true;
-                            }
-                            return false;
-                        })
-                        .ToArray();
-                    for (int i = 0; i < candidates.Length; i++)
-                    {
-                        tempNames.Add(candidates[i].Name);
-                    }
-                }
-                candidates = m_SelectedDataClass.GetMembers()
-                    .Where((other) =>
-                    {
-                        if (other is FieldInfo field && field.FieldType.GetInterfaces().Contains(typeof(IList)))
-                        {
-                            return true;
-                        }
-                        return false;
-                    })
-                    .ToArray();
-                for (int i = 0; i < candidates.Length; i++)
-                {
-                    tempNames.Add(candidates[i].Name);
-                }
-                m_DataArrayNames = tempNames.ToArray();
+                m_DataArrayNames = CreatureSettings.GetTargetArrays(m_SelectedDataClass).Select((other) => other.Name).ToArray();
+
                 for (int i = 0; i < m_DataArrayNames.Length; i++)
                 {
                     if (m_DataArrayNames[i].Equals(m_DepArrName.stringValue))
@@ -301,18 +202,6 @@ namespace SyadeuEditor
                                 m_SelectedDataArrayClass = field.FieldType.GenericTypeArguments[0];
                             }
                         }
-                        //else if (temp is PropertyInfo property)
-                        //{
-                        //    if (property.PropertyType.IsArray)
-                        //    {
-                        //        m_SelectedDataArrayClass = property.PropertyType.GetElementType();
-                        //    }
-                        //    else if (property.PropertyType.GenericTypeArguments.Length > 0)
-                        //    {
-                        //        m_SelectedDataArrayClass = property.PropertyType.GenericTypeArguments[0];
-                        //    }
-                        //}
-
                         break;
                     }
                 }
@@ -676,8 +565,13 @@ namespace SyadeuEditor
             EditorGUI.BeginChangeCheck();
 
             EditorGUILayout.HelpBox("Loaded List From Prefab List", MessageType.Info);
+            //if (Main.m_CreatureSelectedSet == null)
+            //{
+            //    $"set null".ToLog();
+            //    //Main.m_CreatureSelectedSet = GetCreaturePrivateSet(Main.m_CreatureSelected);
+            //}
             Main.m_CreatureSelectedSet.m_PrefabIdx = PrefabListEditor.DrawPrefabSelector(Main.m_CreatureSelectedSet.m_PrefabIdx);
-            Main.m_CreatureSelectedSet.m_StatReference = (CreatureStatReference)EditorGUILayout.ObjectField("Stat Ref: ", Main.m_CreatureSelectedSet.m_StatReference, typeof(CreatureStatReference), false);
+            //EditorGUILayout.TextField()
 
             if (EditorGUI.EndChangeCheck())
             {
