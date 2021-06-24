@@ -8,10 +8,4 @@ namespace Syadeu.Mono.Creature
         [Obsolete] public string SingleToneName = null;
         [Obsolete] public string DataArrayName = null;
     }
-
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
-    public sealed class CreatureStatDataAttribute : Attribute
-    {
-        public int Idx = 0;
-    }
 }

@@ -10,7 +10,7 @@ namespace Syadeu.Database
     {
         public string m_Name;
 
-        public abstract ValueType Type { get; }
+        public abstract ValueType GetValueType();
 
         public abstract object GetValue();
         public abstract object Clone();
@@ -52,28 +52,25 @@ namespace Syadeu.Database
     {
         public T m_Value;
 
-        public override ValueType Type
+        public override ValueType GetValueType()
         {
-            get
+            if (typeof(T).Equals(typeof(int)))
             {
-                if (typeof(T).Equals(typeof(int)))
-                {
-                    return ValueType.Int32;
-                }
-                else if (typeof(T).Equals(typeof(float)))
-                {
-                    return ValueType.Single;
-                }
-                else if (typeof(T).Equals(typeof(string)))
-                {
-                    return ValueType.String;
-                }
-                else if (typeof(T).Equals(typeof(bool)))
-                {
-                    return ValueType.Boolean;
-                }
-                return ValueType.Null;
+                return ValueType.Int32;
             }
+            else if (typeof(T).Equals(typeof(float)))
+            {
+                return ValueType.Single;
+            }
+            else if (typeof(T).Equals(typeof(string)))
+            {
+                return ValueType.String;
+            }
+            else if (typeof(T).Equals(typeof(bool)))
+            {
+                return ValueType.Boolean;
+            }
+            return ValueType.Null;
         }
 
         public override object GetValue() => m_Value;
@@ -83,7 +80,7 @@ namespace Syadeu.Database
     }
     public sealed class ValueNull : ValuePair
     {
-        public override ValueType Type => ValueType.Null;
+        public override ValueType GetValueType() => ValueType.Null;
 
         public override object GetValue() => null;
         public override object Clone()
