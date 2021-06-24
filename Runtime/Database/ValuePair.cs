@@ -10,10 +10,35 @@ namespace Syadeu.Database
     {
         public string m_Name;
 
+        public abstract ValueType Type { get; }
+
         public abstract object GetValue();
         public abstract object Clone();
         public virtual bool Equals(ValuePair other) => m_Name.Equals(other.m_Name);
 
+        public static ValuePair New(string name, object value)
+        {
+            if (value == null) return new ValueNull { m_Name = name };
+
+            Type t = value.GetType();
+            if (t.Equals(typeof(int)))
+            {
+                return Int(name, Convert.ToInt32(value));
+            }
+            else if (t.Equals(typeof(float)))
+            {
+                return Float(name, Convert.ToSingle(value));
+            }
+            else if (t.Equals(typeof(string)))
+            {
+                return String(name, Convert.ToString(value));
+            }
+            else if (t.Equals(typeof(bool)))
+            {
+                return Bool(name, Convert.ToBoolean(value));
+            }
+            throw new Exception();
+        }
         public static ValuePair<int> Int(string name, int value)
             => new SerializableIntValuePair() { m_Name = name, m_Value = value };
         public static ValuePair<float> Float(string name, float value)
@@ -27,6 +52,30 @@ namespace Syadeu.Database
     {
         public T m_Value;
 
+        public override ValueType Type
+        {
+            get
+            {
+                if (typeof(T).Equals(typeof(int)))
+                {
+                    return ValueType.Int32;
+                }
+                else if (typeof(T).Equals(typeof(float)))
+                {
+                    return ValueType.Single;
+                }
+                else if (typeof(T).Equals(typeof(string)))
+                {
+                    return ValueType.String;
+                }
+                else if (typeof(T).Equals(typeof(bool)))
+                {
+                    return ValueType.Boolean;
+                }
+                return ValueType.Null;
+            }
+        }
+
         public override object GetValue() => m_Value;
         public override bool Equals(ValuePair other)
             => (other is ValuePair<T> temp) && base.Equals(other) && Equals(temp.m_Value);
@@ -34,6 +83,8 @@ namespace Syadeu.Database
     }
     public sealed class ValueNull : ValuePair
     {
+        public override ValueType Type => ValueType.Null;
+
         public override object GetValue() => null;
         public override object Clone()
         {
@@ -42,6 +93,15 @@ namespace Syadeu.Database
                 m_Name = m_Name
             };
         }
+    }
+    public enum ValueType
+    {
+        Null,
+
+        Int32,
+        Single,
+        String,
+        Boolean
     }
 
     #region Serializable Classes

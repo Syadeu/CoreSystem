@@ -1,4 +1,5 @@
 ﻿using Syadeu;
+using Syadeu.Database;
 using Syadeu.Mono;
 using Syadeu.Mono.Creature;
 using System;
@@ -28,12 +29,15 @@ namespace Syadeu.Mono.Creature
         private MemberInfo m_TargetSingleTone;
         private MemberInfo m_TargetArray;
         private Type m_TargetArrayElementType;
+        private FieldInfo[] m_TargetArrayElementFields;
 
         [Serializable]
         public class PrivateSet : IComparable<PrivateSet>
         {
             public int m_DataIdx;
             public int m_PrefabIdx = -1;
+
+            [SerializeReference] public ValuePair[] m_Values;
 
             public int CompareTo(PrivateSet other)
             {
@@ -45,7 +49,7 @@ namespace Syadeu.Mono.Creature
             public PrefabList.ObjectSetting GetPrefabSetting() => PrefabList.Instance.ObjectSettings[m_PrefabIdx];
             //public object GetData()
             //{
-
+                
             //}
         }
 
@@ -58,12 +62,29 @@ namespace Syadeu.Mono.Creature
 
         public IReadOnlyList<PrivateSet> PrivateSets => m_PrivateSets;
 
-        public override void OnInitialize()
+        private void OnEnable()
+        {
+            ValidateData();
+        }
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            ValidateData();
+        }
+#endif
+        private void ValidateData()
         {
             m_TargetType = GetTargetClassTypes().Where((other) => other.Name.Equals(m_DepTypeName)).First();
             m_TargetSingleTone = GetTargetSingleTones(m_TargetType).Where((other) => other.Name.Equals(m_DepSingleToneName)).First();
             m_TargetArray = GetTargetArrays(m_TargetType).Where((other) => other.Name.Equals(m_DepArrName)).First();
             m_TargetArrayElementType = GetArrayElementType(m_TargetArray);
+            m_TargetArrayElementFields = m_TargetArrayElementType.GetFields();
+
+            IList targetArr = CastTargetArray();
+            for (int i = 0; i < m_PrivateSets.Count; i++)
+            {
+                m_PrivateSets[i].m_Values = CastArrayElementFields(targetArr[m_PrivateSets[i].m_DataIdx]);
+            }
         }
 
         public bool HasPrivateSet(int idx) => GetPrivateSet(idx) != null;
@@ -77,6 +98,44 @@ namespace Syadeu.Mono.Creature
         }
 
         #region Reflections
+
+        public object CastTargetInstance()
+        {
+            if (m_TargetSingleTone is FieldInfo field)
+            {
+                return field.GetValue(null);
+            }
+            else if (m_TargetSingleTone is PropertyInfo property)
+            {
+                return property.GetGetMethod().Invoke(null, null);
+            }
+            else throw new Exception();
+        }
+        public T CastTargetInstance<T>() => (T)CastTargetInstance();
+        public IList CastTargetArray()
+        {
+            object ins = CastTargetInstance();
+
+            if (m_TargetArray is FieldInfo field)
+            {
+                return (IList)field.GetValue(ins);
+            }
+            else if (m_TargetArray is PropertyInfo property)
+            {
+                return (IList)property.GetGetMethod().Invoke(ins, null);
+            }
+            else throw new Exception();
+        }
+        public ValuePair[] CastArrayElementFields(object element)
+        {
+            ValuePair[] values = new ValuePair[m_TargetArrayElementFields.Length];
+            for (int i = 0; i < m_TargetArrayElementFields.Length; i++)
+            {
+                $"{m_TargetArrayElementFields[i].Name} : {m_TargetArrayElementFields[i].GetValue(element)}".ToLog();
+                values[i] = ValuePair.New(m_TargetArrayElementFields[i].Name, m_TargetArrayElementFields[i].GetValue(element));
+            }
+            return values;
+        }
 
         public static Type[] GetTargetClassTypes()
         {

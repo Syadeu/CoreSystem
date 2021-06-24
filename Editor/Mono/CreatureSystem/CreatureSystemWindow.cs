@@ -589,6 +589,10 @@ namespace SyadeuEditor
 
                 var dataIdxProp = Instance.m_PrivateSets.GetArrayElementAtIndex(idx).FindPropertyRelative("m_DataIdx");
                 dataIdxProp.intValue = dataIdx;
+
+                //var valuesProp = Instance.m_PrivateSets.GetArrayElementAtIndex(idx).FindPropertyRelative("m_DataIdx");
+
+
                 Instance.Main.m_CreatureSettings.ApplyModifiedProperties();
 
                 set = CreatureSettings.Instance.GetPrivateSet(dataIdx);
