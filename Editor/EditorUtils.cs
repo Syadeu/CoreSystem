@@ -154,6 +154,10 @@ namespace SyadeuEditor
         {
             EditorGUILayout.LabelField(String(text, StringColor.grey, size), HeaderStyle);
         }
+        public static void StringHeader(string text, int size, bool center)
+        {
+            EditorGUILayout.LabelField(String(text, StringColor.grey, size), center ? CenterStyle : HeaderStyle);
+        }
         public static void StringHeader(string text, int size, params GUILayoutOption[] options)
         {
             EditorGUILayout.LabelField(String(text, StringColor.grey, size), HeaderStyle, options);

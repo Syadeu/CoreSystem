@@ -20,8 +20,10 @@ namespace SyadeuEditor.Tree
         [NonSerialized] internal bool m_Opened = false;
         [NonSerialized] internal bool m_Disposed = false;
 
+        public VerticalTreeViewEntity Tree => m_Tree;
         public virtual string Name => m_Name;
 
+        public virtual bool HideElementInTree => m_HideElementInTree;
         public bool HasChilds => Childs != null && Childs.Count > 0;
 
         public VerticalTreeElement Parent => m_Parent;

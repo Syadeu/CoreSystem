@@ -78,7 +78,7 @@ namespace SyadeuEditor.Tree
             BeforeDrawChilds();
             for (int i = 0; i < m_Elements.Count; i++)
             {
-                if (m_Elements[i].m_HideElementInTree) continue;
+                if (m_Elements[i].HideElementInTree) continue;
 
                 DrawChild(m_Elements[i]);
                 if (m_Elements.Count <= i) continue;
@@ -158,7 +158,7 @@ namespace SyadeuEditor.Tree
             BeforeDrawChilds();
             for (int i = 0; i < m_Elements.Count; i++)
             {
-                if (m_Elements[i].m_HideElementInTree) continue;
+                if (m_Elements[i].HideElementInTree) continue;
 
                 DrawChild(m_Elements[i]);
                 if (m_Elements.Count <= i) continue;

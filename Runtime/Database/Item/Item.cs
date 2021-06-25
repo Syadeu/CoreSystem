@@ -45,8 +45,13 @@ namespace Syadeu.Database
             m_Name = "NewItem";
             m_Guid = Guid.NewGuid().ToString();
         }
+        public Item(string name)
+        {
+            m_Name = name;
+            m_Guid = Guid.NewGuid().ToString();
+        }
 
-        public ItemProxy GetProxy()
+        internal ItemProxy GetProxy()
         {
             if (m_Proxy == null)
             {
@@ -76,7 +81,7 @@ namespace Syadeu.Database
         }
         #endregion
     }
-    public sealed class ItemProxy : LuaProxyEntity<Item>
+    internal sealed class ItemProxy : LuaProxyEntity<Item>
     {
         public ItemProxy(Item item) : base(item) { }
 
@@ -166,7 +171,12 @@ namespace Syadeu.Database
             m_Name = "NewItemType";
             m_Guid = Guid.NewGuid().ToString();
         }
-        public ItemTypeProxy GetProxy()
+        public ItemType(string name)
+        {
+            m_Name = name;
+            m_Guid = Guid.NewGuid().ToString();
+        }
+        internal ItemTypeProxy GetProxy()
         {
             if (m_Proxy == null)
             {
@@ -175,7 +185,7 @@ namespace Syadeu.Database
             return m_Proxy;
         }
     }
-    public sealed class ItemTypeProxy : LuaProxyEntity<ItemType>
+    internal sealed class ItemTypeProxy : LuaProxyEntity<ItemType>
     {
         public ItemTypeProxy(ItemType itemType) : base(itemType) { }
 
@@ -209,14 +219,19 @@ namespace Syadeu.Database
             m_Name = "NewItemEffectType";
             m_Guid = Guid.NewGuid().ToString();
         }
+        public ItemEffectType(string name)
+        {
+            m_Name = name;
+            m_Guid = Guid.NewGuid().ToString();
+        }
 
-        public ItemEffectTypeProxy GetProxy()
+        internal ItemEffectTypeProxy GetProxy()
         {
             if (m_Proxy == null) m_Proxy = new ItemEffectTypeProxy(this);
             return m_Proxy;
         }
     }
-    public sealed class ItemEffectTypeProxy : LuaProxyEntity<ItemEffectType>
+    internal sealed class ItemEffectTypeProxy : LuaProxyEntity<ItemEffectType>
     {
         public string Name => Target.m_Name;
         public string Guid => Target.m_Guid;
