@@ -16,6 +16,7 @@ namespace SyadeuEditor.Tree
         public event Func<IList> OnAddButton;
         public event Func<int, IList> OnRemoveButton;
 
+        public IList Data => m_Data;
         public int CurrentDrawChilds => m_CurrentDrawChilds;
 
         public VerticalTreeView(UnityEngine.Object asset, SerializedObject serializedObject) : base(asset, serializedObject) { }

@@ -64,9 +64,18 @@ namespace SyadeuEditor
                 })
                 .MakeRemoveButton((idx) =>
                 {
-                    if (m_TreeView.SelectedToolbar == 0) Asset.m_Items.RemoveAt(idx);
-                    else if (m_TreeView.SelectedToolbar == 1) Asset.m_ItemTypes.RemoveAt(idx);
-                    else if (m_TreeView.SelectedToolbar == 2) Asset.m_ItemEffectTypes.RemoveAt(idx);
+                    if (m_TreeView.SelectedToolbar == 0)
+                    {
+                        Asset.m_Items.Remove((Item)m_TreeView.Data[idx]);
+                    }
+                    else if (m_TreeView.SelectedToolbar == 1)
+                    {
+                        Asset.m_ItemTypes.Remove((ItemType)m_TreeView.Data[idx]);
+                    }
+                    else if (m_TreeView.SelectedToolbar == 2)
+                    {
+                        Asset.m_ItemEffectTypes.Remove((ItemEffectType)m_TreeView.Data[idx]);
+                    }
 
                     List<object> tempList = new List<object>();
                     tempList.AddRange(Asset.m_Items);
@@ -228,12 +237,7 @@ namespace SyadeuEditor
                     EditorGUI.indentLevel -= 1;
                 }
 
-                if (GUILayout.Button("Sync"))
-                {
-                    Target.m_Values.SyncWithGoogleSheet(
-                        Target.m_Values.Contains("Index") ? (int)Target.m_Values.GetValue("Index") : 1, "ItemTable");
-                }
-                Target.m_Values.DrawValueContainer();
+                Target.m_Values.DrawValueContainer("ItemTable");
             }
 
             private int GetSelectedItemType(string guid)
