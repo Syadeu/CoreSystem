@@ -25,9 +25,9 @@ namespace Syadeu.Database
             {
                 return Int(name, Convert.ToInt32(value));
             }
-            else if (t.Equals(typeof(float)))
+            else if (t.Equals(typeof(float)) || t.Equals(typeof(double)))
             {
-                return Float(name, Convert.ToSingle(value));
+                return Double(name, Convert.ToDouble(value));
             }
             else if (t.Equals(typeof(string)))
             {
@@ -41,8 +41,8 @@ namespace Syadeu.Database
         }
         public static ValuePair<int> Int(string name, int value)
             => new SerializableIntValuePair() { m_Name = name, m_Value = value };
-        public static ValuePair<float> Float(string name, float value)
-            => new SerializableFloatValuePair() { m_Name = name, m_Value = value };
+        public static ValuePair<double> Double(string name, double value)
+            => new SerializableDoubleValuePair() { m_Name = name, m_Value = value };
         public static ValuePair<string> String(string name, string value)
             => new SerializableStringValuePair() { m_Name = name, m_Value = value };
         public static ValuePair<bool> Bool(string name, bool value)
@@ -58,9 +58,9 @@ namespace Syadeu.Database
             {
                 return ValueType.Int32;
             }
-            else if (typeof(T).Equals(typeof(float)))
+            else if (typeof(T).Equals(typeof(float)) || typeof(T).Equals(typeof(double)))
             {
-                return ValueType.Single;
+                return ValueType.Double;
             }
             else if (typeof(T).Equals(typeof(string)))
             {
@@ -96,7 +96,7 @@ namespace Syadeu.Database
         Null,
 
         Int32,
-        Single,
+        Double,
         String,
         Boolean
     }
@@ -113,11 +113,11 @@ namespace Syadeu.Database
             };
         }
     }
-    public sealed class SerializableFloatValuePair : ValuePair<float>
+    public sealed class SerializableDoubleValuePair : ValuePair<double>
     {
         public override object Clone()
         {
-            return new SerializableFloatValuePair
+            return new SerializableDoubleValuePair
             {
                 m_Name = m_Name,
                 m_Value = m_Value
@@ -183,7 +183,7 @@ namespace Syadeu.Database
             }
             else if (value.Type == JTokenType.Float)
             {
-                return JsonConvert.DeserializeObject<SerializableFloatValuePair>(jo.ToString(), SpecifiedSubclassConversion);
+                return JsonConvert.DeserializeObject<SerializableDoubleValuePair>(jo.ToString(), SpecifiedSubclassConversion);
             }
             else if (value.Type == JTokenType.Integer)
             {

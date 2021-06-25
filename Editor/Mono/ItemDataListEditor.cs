@@ -105,7 +105,7 @@ namespace SyadeuEditor
 
             public override void OnGUI()
             {
-                EditorGUILayout.TextField(Target.m_Guid);
+                EditorGUILayout.TextField("Guid: ", Target.m_Guid);
                 Target.m_Name = EditorGUILayout.TextField("Name: ", Target.m_Name);
                 
                 using (new EditorGUILayout.VerticalScope("Box"))
@@ -131,7 +131,10 @@ namespace SyadeuEditor
 
                             if (GUILayout.Button("-", GUILayout.Width(20)))
                             {
-
+                                var temp = Target.m_ItemTypes.ToList();
+                                temp.RemoveAt(i);
+                                Target.m_ItemTypes = temp.ToArray();
+                                i--;
                             }
                         }
                     }
@@ -161,7 +164,10 @@ namespace SyadeuEditor
 
                             if (GUILayout.Button("-", GUILayout.Width(20)))
                             {
-
+                                var temp = Target.m_ItemEffectTypes.ToList();
+                                temp.RemoveAt(i);
+                                Target.m_ItemEffectTypes = temp.ToArray();
+                                i--;
                             }
                         }
                     }
@@ -180,9 +186,9 @@ namespace SyadeuEditor
                             {
                                 Target.AddValue<int>("New Int Value", 0);
                             });
-                            typeMenu.AddItem(new GUIContent("Float"), false, () =>
+                            typeMenu.AddItem(new GUIContent("Double"), false, () =>
                             {
-                                Target.AddValue<float>("New Float Value", 0);
+                                Target.AddValue<double>("New Double Value", 0);
                             });
                             typeMenu.AddItem(new GUIContent("String"), false, () =>
                             {
@@ -207,7 +213,7 @@ namespace SyadeuEditor
                     {
                         using (new EditorGUILayout.HorizontalScope())
                         {
-                            Target.m_Values[i].m_Name = EditorGUILayout.TextField(Target.m_Values[i].m_Name);
+                            Target.m_Values[i].m_Name = EditorGUILayout.TextField(Target.m_Values[i].m_Name, GUILayout.Width(150));
                             switch (Target.m_Values[i].GetValueType())
                             {
                                 case Syadeu.Database.ValueType.Int32:
@@ -217,11 +223,11 @@ namespace SyadeuEditor
                                         Target.SetValue(Target.m_Values[i].m_Name, intFal);
                                     }
                                     break;
-                                case Syadeu.Database.ValueType.Single:
-                                    float floatVal = EditorGUILayout.FloatField((float)Target.m_Values[i].GetValue());
-                                    if (!Target.m_Values[i].GetValue().Equals(floatVal))
+                                case Syadeu.Database.ValueType.Double:
+                                    double doubleVal = EditorGUILayout.DoubleField((double)Target.m_Values[i].GetValue());
+                                    if (!Target.m_Values[i].GetValue().Equals(doubleVal))
                                     {
-                                        Target.SetValue(Target.m_Values[i].m_Name, floatVal);
+                                        Target.SetValue(Target.m_Values[i].m_Name, doubleVal);
                                     }
                                     break;
                                 case Syadeu.Database.ValueType.String:
@@ -244,7 +250,11 @@ namespace SyadeuEditor
 
                             if (GUILayout.Button("-", GUILayout.Width(20)))
                             {
-
+                                var temp = Target.m_Values.ToList();
+                                temp.RemoveAt(i);
+                                Target.m_Values = temp.ToArray();
+                                i--;
+                                continue;
                             }
                         }
                     }
@@ -254,6 +264,7 @@ namespace SyadeuEditor
 
             private int GetSelectedItemType(string guid)
             {
+                if (string.IsNullOrEmpty(guid)) return 0;
                 for (int i = 0; i < ItemDataList.Instance.m_ItemTypes.Count; i++)
                 {
                     if (ItemDataList.Instance.m_ItemTypes[i].m_Guid.Equals(guid))
@@ -265,6 +276,7 @@ namespace SyadeuEditor
             }
             private int GetSelectedItemEffectType(string guid)
             {
+                if (string.IsNullOrEmpty(guid)) return 0;
                 for (int i = 0; i < ItemDataList.Instance.m_ItemEffectTypes.Count; i++)
                 {
                     if (ItemDataList.Instance.m_ItemEffectTypes[i].m_Guid.Equals(guid))
