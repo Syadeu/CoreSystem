@@ -131,7 +131,7 @@ namespace Syadeu.Database
         private readonly ItemEffectType[] m_ItemEffectTypes;
         private readonly ValuePairContainer m_Values;
 
-        [MoonSharpHidden] public Guid Guid => m_Guid;
+        public Guid Guid => m_Guid;
 
         internal ItemInstance(Item item)
         {
@@ -150,7 +150,6 @@ namespace Syadeu.Database
             }
             m_Values = (ValuePairContainer)item.m_Values.Clone();
         }
-        public Item GetData() => m_Data;
     }
     #endregion
 

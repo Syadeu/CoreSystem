@@ -237,7 +237,7 @@ namespace SyadeuEditor
                     EditorGUI.indentLevel -= 1;
                 }
 
-                Target.m_Values.DrawValueContainer("ItemTable");
+                Target.m_Values.DrawValueContainer();
             }
 
             private int GetSelectedItemType(string guid)
