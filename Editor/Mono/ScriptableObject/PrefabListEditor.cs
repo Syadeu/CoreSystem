@@ -9,6 +9,7 @@ using System.IO;
 using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
 using UnityEngine.AddressableAssets;
+using UnityEditor.AddressableAssets.Settings.GroupSchemas;
 #endif
 
 namespace SyadeuEditor
@@ -33,6 +34,11 @@ namespace SyadeuEditor
                         AssetDatabase.CreateAsset(m_DefaultGroup, "Assets/AddressableAssetsData/AssetGroups/PrefabList.asset");
 
                         m_DefaultGroup = AssetDatabase.LoadAssetAtPath<AddressableAssetGroup>("Assets/AddressableAssetsData/AssetGroups/PrefabList.asset");
+                        m_DefaultGroup.AddSchema(new ContentUpdateGroupSchema()
+                        {
+                            StaticContent = true
+                        });
+                        m_DefaultGroup.AddSchema(new BundledAssetGroupSchema());
                     }
                     else
                     {

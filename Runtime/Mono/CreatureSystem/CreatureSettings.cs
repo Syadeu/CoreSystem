@@ -19,8 +19,6 @@ namespace Syadeu.Mono.Creature
         [SerializeField] private string m_DepTypeName;
         [SerializeField] private string m_DepSingleToneName = "Instance";
         [SerializeField] private string m_DepArrName;
-
-        [Space] //
         [SerializeField] private string m_DepArrElementTypeName;
         [SerializeField] private string m_DepDisplayName;
 
@@ -31,13 +29,17 @@ namespace Syadeu.Mono.Creature
         private Type m_TargetArrayElementType;
         private FieldInfo[] m_TargetArrayElementFields;
 
+        private static string DepDisplayName => Instance.m_DepDisplayName;
+
         [Serializable]
         public class PrivateSet : IComparable<PrivateSet>
         {
             public int m_DataIdx;
             public int m_PrefabIdx = -1;
 
-            [SerializeReference] public ValuePair[] m_Values;
+            public ValuePairContainer m_Values;
+
+            public string Name => m_Values.Contains(DepDisplayName) ? m_Values.GetValue(DepDisplayName).ToString() : "NOTFOUND";
 
             public int CompareTo(PrivateSet other)
             {
@@ -47,16 +49,6 @@ namespace Syadeu.Mono.Creature
                 else return -1;
             }
             public PrefabList.ObjectSetting GetPrefabSetting() => PrefabList.Instance.ObjectSettings[m_PrefabIdx];
-            
-            public object GetValue(string name)
-            {
-                for (int i = 0; i < m_Values.Length; i++)
-                {
-                    if (m_Values[i].m_Name.Equals(name)) return m_Values[i].GetValue();
-                }
-                throw new Exception($"value not found at {name}");
-            }
-            public T GetValue<T>(string name) where T : IConvertible => (T)GetValue(name);
         }
 
         [Space]
@@ -66,7 +58,7 @@ namespace Syadeu.Mono.Creature
         public float m_IgnoreDistanceOfTurn = 50;
         public float m_SkipMoveAniDistance = 30;
 
-        public IReadOnlyList<PrivateSet> PrivateSets => m_PrivateSets;
+        public List<PrivateSet> PrivateSets => m_PrivateSets;
 
         private void OnEnable()
         {
@@ -131,14 +123,14 @@ namespace Syadeu.Mono.Creature
             }
             else throw new Exception();
         }
-        public ValuePair[] CastArrayElementFields(object element)
+        public ValuePairContainer CastArrayElementFields(object element)
         {
             ValuePair[] values = new ValuePair[m_TargetArrayElementFields.Length];
             for (int i = 0; i < m_TargetArrayElementFields.Length; i++)
             {
                 values[i] = ValuePair.New(m_TargetArrayElementFields[i].Name, m_TargetArrayElementFields[i].GetValue(element));
             }
-            return values;
+            return new ValuePairContainer(values);
         }
 
         public static Type[] GetTargetClassTypes()

@@ -74,7 +74,29 @@ namespace SyadeuEditor
                     tempList.AddRange(Asset.m_ItemEffectTypes);
                     return tempList;
                 })
-                .MakeToolbar("Items", "Types", "EffectTypes");
+                .MakeToolbar("Items", "Types", "EffectTypes")
+                .MakeCustomSearchFilter((e, searchTxt) =>
+                {
+                    string name = "", guid = "";
+                    if (e is TreeItemElement itemEle)
+                    {
+                        name = itemEle.Target.m_Name;
+                        guid = itemEle.Target.m_Guid;
+                    }
+                    else if (e is TreeItemTypeElement typeEle)
+                    {
+                        name = typeEle.Target.m_Name;
+                        guid = typeEle.Target.m_Guid;
+                    }
+                    else if (e is TreeItemEffectTypeElement effEle)
+                    {
+                        name = effEle.Target.m_Name;
+                        guid = effEle.Target.m_Guid;
+                    }
+
+                    if (name.ToLower().Contains(searchTxt.ToLower()) || guid.Contains(searchTxt)) return true;
+                    return false;
+                });
 
             m_ItemTypes = new string[ItemDataList.Instance.m_ItemTypes.Count + 1];
             m_ItemTypes[0] = "None";
@@ -121,7 +143,6 @@ namespace SyadeuEditor
             EditorUtils.SectorLine();
             EditorGUILayout.Space();
 
-            //EditorUtils.StringHeader("Items", 15, true);
             m_TreeView.OnGUI();
 
             EditorGUILayout.Space();
@@ -145,7 +166,7 @@ namespace SyadeuEditor
                 {
                     using (new EditorGUILayout.HorizontalScope())
                     {
-                        EditorGUILayout.LabelField("ItemTypes");
+                        EditorUtils.StringHeader("ItemTypes", 15);
                         if (GUILayout.Button("+", GUILayout.Width(20)))
                         {
                             var temp = Target.m_ItemTypes.ToList();
@@ -178,7 +199,7 @@ namespace SyadeuEditor
                 {
                     using (new EditorGUILayout.HorizontalScope())
                     {
-                        EditorGUILayout.LabelField("ItemEffects");
+                        EditorUtils.StringHeader("ItemEffects", 15);
                         if (GUILayout.Button("+", GUILayout.Width(20)))
                         {
                             var temp = Target.m_ItemEffectTypes.ToList();
@@ -207,102 +228,12 @@ namespace SyadeuEditor
                     EditorGUI.indentLevel -= 1;
                 }
 
-                DrawValueContainer(Target.m_Values);
-
-                //using (new EditorGUILayout.VerticalScope("Box"))
-                //{
-                //    using (new EditorGUILayout.HorizontalScope())
-                //    {
-                //        EditorGUILayout.LabelField("Values");
-                //        if (GUILayout.Button("+", GUILayout.Width(20)))
-                //        {
-                //            GenericMenu typeMenu = new GenericMenu();
-                //            typeMenu.AddItem(new GUIContent("Int"), false, () =>
-                //            {
-                //                Target.m_Values.Add<int>("New Int Value", 0);
-                //            });
-                //            typeMenu.AddItem(new GUIContent("Double"), false, () =>
-                //            {
-                //                Target.m_Values.Add<double>("New Double Value", 0);
-                //            });
-                //            typeMenu.AddItem(new GUIContent("String"), false, () =>
-                //            {
-                //                Target.m_Values.Add<string>("New String Value", "");
-                //            });
-                //            typeMenu.AddItem(new GUIContent("Bool"), false, () =>
-                //            {
-                //                Target.m_Values.Add<bool>("New Bool Value", false);
-                //            });
-                //            typeMenu.AddItem(new GUIContent("Delegate"), false, () =>
-                //            {
-                //                Target.m_Values.Add<Action>("New Delegate Value", () => { });
-                //            });
-                //            //;
-                //            //GUIUtility.GUIToScreenPoint(Event.current.mousePosition)
-                //            //GUILayoutUtility.GetRect()
-                //            Rect rect = GUILayoutUtility.GetLastRect();
-                //            rect.position = Event.current.mousePosition;
-                //            //rect.width = 100; rect.height = 400;
-                //            typeMenu.DropDown(rect);
-                //        }
-                //    }
-
-                //    EditorGUI.indentLevel += 1;
-                //    if (Target.m_Values == null) Target.m_Values = new ValuePairContainer();
-                //    for (int i = 0; i < Target.m_Values?.Count; i++)
-                //    {
-                //        using (new EditorGUILayout.HorizontalScope())
-                //        {
-                //            Target.m_Values[i].m_Name = EditorGUILayout.TextField(Target.m_Values[i].m_Name, GUILayout.Width(150));
-                //            switch (Target.m_Values[i].GetValueType())
-                //            {
-                //                case Syadeu.Database.ValueType.Int32:
-                //                    int intFal = EditorGUILayout.IntField((int)Target.m_Values[i].GetValue());
-                //                    if (!Target.m_Values[i].GetValue().Equals(intFal))
-                //                    {
-                //                        Target.m_Values.SetValue(Target.m_Values[i].m_Name, intFal);
-                //                    }
-                //                    break;
-                //                case Syadeu.Database.ValueType.Double:
-                //                    double doubleVal = EditorGUILayout.DoubleField((double)Target.m_Values[i].GetValue());
-                //                    if (!Target.m_Values[i].GetValue().Equals(doubleVal))
-                //                    {
-                //                        Target.m_Values.SetValue(Target.m_Values[i].m_Name, doubleVal);
-                //                    }
-                //                    break;
-                //                case Syadeu.Database.ValueType.String:
-                //                    string stringVal = EditorGUILayout.TextField((string)Target.m_Values[i].GetValue());
-                //                    if (!Target.m_Values[i].GetValue().Equals(stringVal))
-                //                    {
-                //                        Target.m_Values.SetValue(Target.m_Values[i].m_Name, stringVal);
-                //                    }
-                //                    break;
-                //                case Syadeu.Database.ValueType.Boolean:
-                //                    bool boolVal = EditorGUILayout.Toggle((bool)Target.m_Values[i].GetValue());
-                //                    if (!Target.m_Values[i].GetValue().Equals(boolVal))
-                //                    {
-                //                        Target.m_Values.SetValue(Target.m_Values[i].m_Name, boolVal);
-                //                    }
-                //                    break;
-                //                case Syadeu.Database.ValueType.Delegate:
-                //                    EditorGUI.BeginDisabledGroup(true);
-                //                    EditorGUILayout.TextField("Delegate");
-                //                    EditorGUI.EndDisabledGroup();
-                //                    break;
-                //                default:
-                //                    break;
-                //            }
-
-                //            if (GUILayout.Button("-", GUILayout.Width(20)))
-                //            {
-                //                Target.m_Values.RemoveAt(i);
-                //                i--;
-                //                continue;
-                //            }
-                //        }
-                //    }
-                //    EditorGUI.indentLevel -= 1;
-                //}
+                if (GUILayout.Button("Sync"))
+                {
+                    Target.m_Values.SyncWithGoogleSheet(
+                        Target.m_Values.Contains("Index") ? (int)Target.m_Values.GetValue("Index") : 1, "ItemTable");
+                }
+                Target.m_Values.DrawValueContainer();
             }
 
             private int GetSelectedItemType(string guid)
@@ -343,7 +274,7 @@ namespace SyadeuEditor
                 EditorGUILayout.TextField("Guid: ", Target.m_Guid);
 
                 EditorGUILayout.Space();
-                DrawValueContainer(Target.m_Values);
+                Target.m_Values.DrawValueContainer();
             }
         }
         private class TreeItemEffectTypeElement : VerticalTreeElement<ItemEffectType>
@@ -359,105 +290,7 @@ namespace SyadeuEditor
                 EditorGUILayout.TextField("Guid: ", Target.m_Guid);
 
                 EditorGUILayout.Space();
-                DrawValueContainer(Target.m_Values);
-            }
-        }
-
-        private static void DrawValueContainer(ValuePairContainer container)
-        {
-            using (new EditorGUILayout.VerticalScope("Box"))
-            {
-                using (new EditorGUILayout.HorizontalScope())
-                {
-                    EditorGUILayout.LabelField("Values");
-                    if (GUILayout.Button("+", GUILayout.Width(20)))
-                    {
-                        GenericMenu typeMenu = new GenericMenu();
-                        typeMenu.AddItem(new GUIContent("Int"), false, () =>
-                        {
-                            container.Add<int>("New Int Value", 0);
-                        });
-                        typeMenu.AddItem(new GUIContent("Double"), false, () =>
-                        {
-                            container.Add<double>("New Double Value", 0);
-                        });
-                        typeMenu.AddItem(new GUIContent("String"), false, () =>
-                        {
-                            container.Add<string>("New String Value", "");
-                        });
-                        typeMenu.AddItem(new GUIContent("Bool"), false, () =>
-                        {
-                            container.Add<bool>("New Bool Value", false);
-                        });
-                        typeMenu.AddItem(new GUIContent("Delegate"), false, () =>
-                        {
-                            container.Add<Action>("New Delegate Value", () => { });
-                        });
-                        //;
-                        //GUIUtility.GUIToScreenPoint(Event.current.mousePosition)
-                        //GUILayoutUtility.GetRect()
-                        Rect rect = GUILayoutUtility.GetLastRect();
-                        rect.position = Event.current.mousePosition;
-                        //rect.width = 100; rect.height = 400;
-                        typeMenu.DropDown(rect);
-                    }
-                }
-
-                EditorGUI.indentLevel += 1;
-                //if (Target.m_Values == null) Target.m_Values = new ValuePairContainer();
-                for (int i = 0; i < container.Count; i++)
-                {
-                    using (new EditorGUILayout.HorizontalScope())
-                    {
-                        container[i].m_Name = EditorGUILayout.TextField(container[i].m_Name, GUILayout.Width(150));
-                        switch (container[i].GetValueType())
-                        {
-                            case Syadeu.Database.ValueType.Int32:
-                                int intFal = EditorGUILayout.IntField((int)container[i].GetValue());
-                                if (!container[i].GetValue().Equals(intFal))
-                                {
-                                    container.SetValue(container[i].m_Name, intFal);
-                                }
-                                break;
-                            case Syadeu.Database.ValueType.Double:
-                                double doubleVal = EditorGUILayout.DoubleField((double)container[i].GetValue());
-                                if (!container[i].GetValue().Equals(doubleVal))
-                                {
-                                    container.SetValue(container[i].m_Name, doubleVal);
-                                }
-                                break;
-                            case Syadeu.Database.ValueType.String:
-                                string stringVal = EditorGUILayout.TextField((string)container[i].GetValue());
-                                if (!container[i].GetValue().Equals(stringVal))
-                                {
-                                    container.SetValue(container[i].m_Name, stringVal);
-                                }
-                                break;
-                            case Syadeu.Database.ValueType.Boolean:
-                                bool boolVal = EditorGUILayout.Toggle((bool)container[i].GetValue());
-                                if (!container[i].GetValue().Equals(boolVal))
-                                {
-                                    container.SetValue(container[i].m_Name, boolVal);
-                                }
-                                break;
-                            case Syadeu.Database.ValueType.Delegate:
-                                EditorGUI.BeginDisabledGroup(true);
-                                EditorGUILayout.TextField("Delegate");
-                                EditorGUI.EndDisabledGroup();
-                                break;
-                            default:
-                                break;
-                        }
-
-                        if (GUILayout.Button("-", GUILayout.Width(20)))
-                        {
-                            container.RemoveAt(i);
-                            i--;
-                            continue;
-                        }
-                    }
-                }
-                EditorGUI.indentLevel -= 1;
+                Target.m_Values.DrawValueContainer();
             }
         }
     }

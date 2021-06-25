@@ -48,13 +48,10 @@ namespace SyadeuEditor
         public Color[] m_CreatureSetColor = null;
 
         // Attributes
-        public int m_SelectedDataClassName = 0;
-        public CreatureDataAttribute m_SelectedDataAttribute = null;
+        public int m_SelectedDataClassName, m_SelectedDataSingleToneName, m_SelectedDataArrayName;
         public string[] m_DataClassNames = new string[0];
         public Type m_SelectedDataClass = null;
-        public int m_SelectedDataSingleToneName = 0;
         public string[] m_DataSingleToneNames = new string[0];
-        public int m_SelectedDataArrayName = 0;
         public string[] m_DataArrayNames = new string[0];
         public Type m_SelectedDataArrayClass = null;
 
@@ -167,7 +164,6 @@ namespace SyadeuEditor
                     foundType = true;
                     m_SelectedDataClass = types[i];
                     m_SelectedDataClassName = i;
-                    m_SelectedDataAttribute = types[i].GetCustomAttribute<CreatureDataAttribute>();
                 }
             }
             if (!foundType) m_SelectedDataClass = null;

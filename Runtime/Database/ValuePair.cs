@@ -3,6 +3,7 @@ using MoonSharp.Interpreter.Interop;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -225,6 +226,12 @@ namespace Syadeu.Database
         {
             var temp = m_Values.ToList();
             temp.Add(ValuePair.New(name, value));
+            m_Values = temp.ToArray();
+        }
+        public void AddRange(params ValuePair[] values)
+        {
+            var temp = m_Values.ToList();
+            temp.AddRange(values);
             m_Values = temp.ToArray();
         }
 
