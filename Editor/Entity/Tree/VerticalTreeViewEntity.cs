@@ -16,6 +16,7 @@ namespace SyadeuEditor.Tree
         public bool m_DrawRemoveButton = false;
 
         private UnityEngine.Object m_Asset;
+        private SerializedObject m_SerializedObject;
         public UnityEngine.Object Asset => m_Asset;
 
         protected List<VerticalTreeElement> m_Elements = new List<VerticalTreeElement>();
@@ -47,9 +48,10 @@ namespace SyadeuEditor.Tree
         private int m_SelectedToolbar = 0;
         #endregion
 
-        public VerticalTreeViewEntity(UnityEngine.Object asset)
+        public VerticalTreeViewEntity(UnityEngine.Object asset, SerializedObject serializedObject)
         {
             m_Asset = asset;
+            m_SerializedObject = serializedObject;
         }
 
         public void MakeCustomSearchFilter(Func<VerticalTreeElement, string, bool> predicate)

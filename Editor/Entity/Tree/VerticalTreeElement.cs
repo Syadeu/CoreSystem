@@ -81,6 +81,7 @@ namespace SyadeuEditor.Tree
     public abstract class VerticalTreeElement<T> : VerticalTreeElement where T : class
     {
         private T m_Target;
+        //internal SerializedProperty m_Property;
 
         public T Target => m_Target;
 

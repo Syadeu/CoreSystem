@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using Syadeu.Database;
 using SyadeuEditor.Tree;
 using UnityEditor;
@@ -21,12 +22,12 @@ namespace SyadeuEditor
 
         private void OnEnable()
         {
-            m_TreeView = new VerticalTreeView(Asset);
+            m_TreeView = new VerticalTreeView(Asset, serializedObject);
             OnValidate();
         }
         private void OnValidate()
         {
-            if (m_TreeView == null) m_TreeView = new VerticalTreeView(Asset);
+            if (m_TreeView == null) m_TreeView = new VerticalTreeView(Asset, serializedObject);
             m_TreeView
                 .SetupElements(Asset.m_Items, (other) =>
                 {
@@ -114,13 +115,9 @@ namespace SyadeuEditor
                         EditorGUILayout.LabelField("ItemTypes");
                         if (GUILayout.Button("+", GUILayout.Width(20)))
                         {
-                            ItemDataList.Instance.m_ItemTypes.Add(new ItemType
-                            {
-                                m_Name = "New Item",
-                                m_Guid = Guid.NewGuid().ToString(),
-
-                                m_Values = new ValuePair[0]
-                            });
+                            var temp = Target.m_ItemTypes.ToList();
+                            temp.Add("");
+                            Target.m_ItemTypes = temp.ToArray();
                         }
                     }
                     
@@ -148,7 +145,9 @@ namespace SyadeuEditor
                         EditorGUILayout.LabelField("ItemEffects");
                         if (GUILayout.Button("+", GUILayout.Width(20)))
                         {
-
+                            var temp = Target.m_ItemEffectTypes.ToList();
+                            temp.Add("");
+                            Target.m_ItemEffectTypes = temp.ToArray();
                         }
                     }
                     
@@ -197,6 +196,7 @@ namespace SyadeuEditor
                             //GUIUtility.GUIToScreenPoint(Event.current.mousePosition)
                             //GUILayoutUtility.GetRect()
                             Rect rect = GUILayoutUtility.GetLastRect();
+                            rect.position = Event.current.mousePosition;
                             //rect.width = 100; rect.height = 400;
                             typeMenu.DropDown(rect);
                         }
@@ -207,8 +207,45 @@ namespace SyadeuEditor
                     {
                         using (new EditorGUILayout.HorizontalScope())
                         {
+                            Target.m_Values[i].m_Name = EditorGUILayout.TextField(Target.m_Values[i].m_Name);
+                            switch (Target.m_Values[i].GetValueType())
+                            {
+                                case Syadeu.Database.ValueType.Int32:
+                                    int intFal = EditorGUILayout.IntField((int)Target.m_Values[i].GetValue());
+                                    if (!Target.m_Values[i].GetValue().Equals(intFal))
+                                    {
+                                        Target.SetValue(Target.m_Values[i].m_Name, intFal);
+                                    }
+                                    break;
+                                case Syadeu.Database.ValueType.Single:
+                                    float floatVal = EditorGUILayout.FloatField((float)Target.m_Values[i].GetValue());
+                                    if (!Target.m_Values[i].GetValue().Equals(floatVal))
+                                    {
+                                        Target.SetValue(Target.m_Values[i].m_Name, floatVal);
+                                    }
+                                    break;
+                                case Syadeu.Database.ValueType.String:
+                                    string stringVal = EditorGUILayout.TextField((string)Target.m_Values[i].GetValue());
+                                    if (!Target.m_Values[i].GetValue().Equals(stringVal))
+                                    {
+                                        Target.SetValue(Target.m_Values[i].m_Name, stringVal);
+                                    }
+                                    break;
+                                case Syadeu.Database.ValueType.Boolean:
+                                    bool boolVal = EditorGUILayout.Toggle((bool)Target.m_Values[i].GetValue());
+                                    if (!Target.m_Values[i].GetValue().Equals(boolVal))
+                                    {
+                                        Target.SetValue(Target.m_Values[i].m_Name, boolVal);
+                                    }
+                                    break;
+                                default:
+                                    break;
+                            }
 
+                            if (GUILayout.Button("-", GUILayout.Width(20)))
+                            {
 
+                            }
                         }
                     }
                     EditorGUI.indentLevel -= 1;

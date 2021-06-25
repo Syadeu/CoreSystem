@@ -19,9 +19,9 @@ namespace SyadeuEditor
 
         private void OnEnable()
         {
-            m_ManagerView = new VerticalTreeView(Asset);
+            m_ManagerView = new VerticalTreeView(Asset, serializedObject);
 
-            m_RoutinesView = new VerticalTreeView(Asset);
+            m_RoutinesView = new VerticalTreeView(Asset, serializedObject);
             m_RoutinesView.MakeCustomSearchFilter((e, str) =>
             {
                 str = str.ToLower();
