@@ -105,8 +105,8 @@ namespace SyadeuEditor
 
             public override void OnGUI()
             {
-                EditorGUILayout.TextField("Guid: ", Target.m_Guid);
                 Target.m_Name = EditorGUILayout.TextField("Name: ", Target.m_Name);
+                EditorGUILayout.TextField("Guid: ", Target.m_Guid);
                 
                 using (new EditorGUILayout.VerticalScope("Box"))
                 {

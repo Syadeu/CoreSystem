@@ -16,21 +16,20 @@ namespace Syadeu.Database
     [Serializable]
     public sealed class Item
     {
-        public string m_Name;
-        public string m_Guid;
+        [JsonProperty(Order = 0)] public string m_Name;
+        [JsonProperty(Order = 1)] public string m_Guid;
 
         [Tooltip("GUID")]
         /// <summary>
         /// <see cref="ItemType"/>
         /// </summary>
-        public string[] m_ItemTypes;
+        [JsonProperty(Order = 2)] public string[] m_ItemTypes;
         [Tooltip("GUID")]
         /// <summary>
         /// <see cref="ItemEffectType"/>
         /// </summary>
-        public string[] m_ItemEffectTypes;
-
-        public ValuePairContainer m_Values = new ValuePairContainer();
+        [JsonProperty(Order = 3)] public string[] m_ItemEffectTypes;
+        [JsonProperty(Order = 4)] public ValuePairContainer m_Values = new ValuePairContainer();
 
         [NonSerialized] private ItemProxy m_Proxy = null;
 
@@ -107,7 +106,7 @@ namespace Syadeu.Database
 
         #region Value
         public int GetValueCount() => Target.m_Values.Count;
-        public bool HasValue(string name) => Target.m_Values.HasValue(name);
+        public bool HasValue(string name) => Target.m_Values.Contains(name);
         public object GetValue(string name) => Target.m_Values.GetValue(name);
         public void SetValue(string name, object value) => Target.m_Values.SetValue(name, value);
         public void AddValue(string name, object value) => Target.m_Values.Add(name, value);
@@ -158,7 +157,7 @@ namespace Syadeu.Database
         public string m_Guid;
 
         [Space]
-        public ValuePairContainer m_Values;
+        public ValuePairContainer m_Values = new ValuePairContainer();
 
         [NonSerialized] private ItemTypeProxy m_Proxy = null;
 
@@ -185,7 +184,7 @@ namespace Syadeu.Database
 
         #region Value
         public int GetValueCount() => Target.m_Values.Count;
-        public bool HasValue(string name) => Target.m_Values.HasValue(name);
+        public bool HasValue(string name) => Target.m_Values.Contains(name);
         public object GetValue(string name) => Target.m_Values.GetValue(name);
         public void SetValue(string name, object value) => Target.m_Values.SetValue(name, value);
         public void AddValue(string name, object value) => Target.m_Values.Add(name, value);
@@ -201,7 +200,7 @@ namespace Syadeu.Database
         public string m_Guid;
 
         [Space]
-        public ValuePairContainer m_Values;
+        public ValuePairContainer m_Values = new ValuePairContainer();
 
         [NonSerialized] private ItemEffectTypeProxy m_Proxy = null;
 
@@ -226,7 +225,7 @@ namespace Syadeu.Database
 
         #region Value
         public int GetValueCount() => Target.m_Values.Count;
-        public bool HasValue(string name) => Target.m_Values.HasValue(name);
+        public bool HasValue(string name) => Target.m_Values.Contains(name);
         public object GetValue(string name) => Target.m_Values.GetValue(name);
         public void SetValue(string name, object value) => Target.m_Values.SetValue(name, value);
         public void AddValue(string name, object value) => Target.m_Values.Add(name, value);

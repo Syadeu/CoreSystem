@@ -438,9 +438,7 @@ your own IScriptLoader (possibly extending ScriptLoaderBase).", file, DEFAULT_PA
             ItemType type = new ItemType()
             {
                 m_Name = name,
-                m_Guid = Guid.NewGuid().ToString(),
-
-                m_Values = new ValuePair[0]
+                m_Guid = Guid.NewGuid().ToString()
             };
             ItemDataList.Instance.m_ItemTypes.Add(type);
             return type.GetProxy();
@@ -450,9 +448,7 @@ your own IScriptLoader (possibly extending ScriptLoaderBase).", file, DEFAULT_PA
             ItemEffectType effectType = new ItemEffectType()
             {
                 m_Name = name,
-                m_Guid = Guid.NewGuid().ToString(),
-
-                m_Values = new ValuePair[0]
+                m_Guid = Guid.NewGuid().ToString()
             };
             ItemDataList.Instance.m_ItemEffectTypes.Add(effectType);
             return effectType.GetProxy();

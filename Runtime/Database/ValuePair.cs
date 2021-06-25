@@ -13,7 +13,7 @@ namespace Syadeu.Database
     [Serializable] [JsonConverter(typeof(ValuePairJsonConverter))]
     public abstract class ValuePair : ICloneable, IEquatable<ValuePair>
     {
-        public string m_Name;
+        [JsonProperty(Order = 0)] public string m_Name;
 
         public abstract ValueType GetValueType();
 
@@ -67,7 +67,7 @@ namespace Syadeu.Database
     }
     public abstract class ValuePair<T> : ValuePair, IEquatable<T>
     {
-        public T m_Value;
+        [JsonProperty(Order = 1)] public T m_Value;
 
         public override ValueType GetValueType()
         {
@@ -132,15 +132,25 @@ namespace Syadeu.Database
     }
 
     [Serializable]
-    public sealed class ValuePairContainer : ICloneable
+    public sealed class ValuePairContainer : IList, ICloneable
     {
-        [MoonSharpVisible(true)][UnityEngine.SerializeReference] public ValuePair[] m_Values;
+        [MoonSharpVisible(true)][UnityEngine.SerializeReference][JsonProperty] private ValuePair[] m_Values;
         [MoonSharpHidden] public ValuePair this[int i]
         {
             get => m_Values[i];
             set => m_Values[i] = ValuePair.New(m_Values[i].m_Name, value);
         }
-        [MoonSharpHidden] public int Count => m_Values.Length;
+        [MoonSharpHidden] object IList.this[int index]
+        {
+            get => m_Values[index];
+            set => m_Values[index] = ValuePair.New(m_Values[index].m_Name, value);
+        }
+        [JsonIgnore] public int Count => m_Values.Length;
+
+        public bool IsFixedSize => false;
+        public bool IsReadOnly => false;
+        public bool IsSynchronized => throw new NotImplementedException();
+        public object SyncRoot => throw new NotImplementedException();
 
         [MoonSharpHidden] public ValuePairContainer(params ValuePair[] values)
         {
@@ -155,12 +165,33 @@ namespace Syadeu.Database
             }
             return -1;
         }
-        public bool HasValue(string name) => GetValuePairIdx(name) >= 0;
+        public int IndexOf(object value)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool Contains(object value)
+        {
+            throw new NotImplementedException();
+        }
+        public bool Contains(string name) => GetValuePairIdx(name) >= 0;
+
         public object GetValue(string name) => m_Values[GetValuePairIdx(name)].GetValue();
         public void SetValue(string name, object value) => m_Values[GetValuePairIdx(name)] = ValuePair.New(name, value);
+        public int Add(object value)
+        {
+            var temp = m_Values.ToList();
+            if (value is JObject jobj)
+            {
+                temp.Add(jobj.ToObject<ValuePair>());
+            }
+            else temp.Add(ValuePair.New("New Value", value));
+            m_Values = temp.ToArray();
+            return m_Values.Length - 1;
+        }
         public void Add(string name, object value)
         {
-            if (HasValue(name)) throw new Exception();
+            if (Contains(name)) throw new Exception();
 
             var temp = m_Values.ToList();
             temp.Add(ValuePair.New(name, value));
@@ -201,10 +232,19 @@ namespace Syadeu.Database
             m_Values = temp.ToArray();
         }
 
-        public object Clone()
+        public object Clone() => new ValuePairContainer(m_Values.ToArray());
+
+        public void Insert(int index, object value)
         {
-            return new ValuePairContainer(m_Values.ToArray());
+            throw new NotImplementedException();
         }
+
+        public void CopyTo(Array array, int index)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IEnumerator GetEnumerator() => m_Values.GetEnumerator();
     }
 
     #region Serializable Classes
