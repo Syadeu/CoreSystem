@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using Syadeu;
 using Syadeu.Database;
 using SyadeuEditor.Tree;
 using UnityEditor;
@@ -27,13 +28,28 @@ namespace SyadeuEditor
         }
         private void OnValidate()
         {
-            if (m_TreeView == null) m_TreeView = new VerticalTreeView(Asset, serializedObject);
+            m_TreeView = new VerticalTreeView(Asset, serializedObject);
             m_TreeView
                 .SetupElements(Asset.m_Items, (other) =>
                 {
                     Item item = (Item)other;
 
                     return new TreeItemElement(m_TreeView, item);
+                })
+                .MakeAddButton(() =>
+                {
+                    Asset.m_Items.Add(new Item()
+                    {
+                        m_Name = "New Item",
+                        m_Guid = Guid.NewGuid().ToString()
+                    });
+
+                    return Asset.m_Items;
+                })
+                .MakeRemoveButton((idx) =>
+                {
+                    Asset.m_Items.RemoveAt(idx);
+                    return Asset.m_Items;
                 })
                 ;
 
@@ -81,10 +97,6 @@ namespace SyadeuEditor
             EditorGUILayout.EndHorizontal();
             
             EditorGUILayout.Space();
-            if (GUILayout.Button("+"))
-            {
-                
-            }
             m_TreeView.OnGUI();
 
             EditorGUILayout.Space();

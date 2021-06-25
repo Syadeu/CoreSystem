@@ -23,12 +23,12 @@ namespace Syadeu.Database
         /// <summary>
         /// <see cref="ItemType"/>
         /// </summary>
-        [JsonProperty(Order = 2)] public string[] m_ItemTypes;
+        [JsonProperty(Order = 2)] public string[] m_ItemTypes = new string[0];
         [Tooltip("GUID")]
         /// <summary>
         /// <see cref="ItemEffectType"/>
         /// </summary>
-        [JsonProperty(Order = 3)] public string[] m_ItemEffectTypes;
+        [JsonProperty(Order = 3)] public string[] m_ItemEffectTypes = new string[0];
         [JsonProperty(Order = 4)] public ValuePairContainer m_Values = new ValuePairContainer();
 
         [NonSerialized] private ItemProxy m_Proxy = null;
