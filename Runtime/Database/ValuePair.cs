@@ -167,12 +167,36 @@ namespace Syadeu.Database
         }
         public int IndexOf(object value)
         {
-            throw new NotImplementedException();
+            if (value is ValuePair pair)
+            {
+                for (int i = 0; i < m_Values.Length; i++)
+                {
+                    if (m_Values[i].Equals(pair)) return i;
+                }
+            }
+            else if (value is string name)
+            {
+                return GetValuePairIdx(name);
+            }
+
+            throw new Exception();
         }
 
         public bool Contains(object value)
         {
-            throw new NotImplementedException();
+            if (value is ValuePair pair)
+            {
+                for (int i = 0; i < m_Values.Length; i++)
+                {
+                    if (m_Values[i].Equals(pair)) return true;
+                }
+            }
+            else if (value is string name)
+            {
+                return Contains(name);
+            }
+
+            return false;
         }
         public bool Contains(string name) => GetValuePairIdx(name) >= 0;
 
