@@ -134,7 +134,7 @@ namespace Syadeu.Database
     [Serializable]
     public sealed class ValuePairContainer : IList, ICloneable
     {
-        [MoonSharpVisible(true)][UnityEngine.SerializeReference][JsonProperty] private ValuePair[] m_Values;
+        [UnityEngine.SerializeReference][JsonProperty] private ValuePair[] m_Values;
         [MoonSharpHidden] public ValuePair this[int i]
         {
             get => m_Values[i];
