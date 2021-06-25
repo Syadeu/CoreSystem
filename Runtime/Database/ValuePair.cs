@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using MoonSharp.Interpreter;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using System;
@@ -37,6 +38,11 @@ namespace Syadeu.Database
             {
                 return Bool(name, Convert.ToBoolean(value));
             }
+            else if (value is Closure func)
+            {
+                return Action(name, (Action)(() => func.Call()));
+            }
+            $"{value.GetType().Name} none setting".ToLog();
             throw new Exception();
         }
         public static ValuePair<int> Int(string name, int value)
@@ -47,8 +53,11 @@ namespace Syadeu.Database
             => new SerializableStringValuePair() { m_Name = name, m_Value = value };
         public static ValuePair<bool> Bool(string name, bool value)
             => new SerializableBoolValuePair() { m_Name = name, m_Value = value };
+
+        public static ValuePair<Action> Action(string name, Action func)
+            => new SerializableActionValuePair() { m_Name = name, m_Value = func };
     }
-    public abstract class ValuePair<T> : ValuePair, IEquatable<T> where T : IConvertible
+    public abstract class ValuePair<T> : ValuePair, IEquatable<T>
     {
         public T m_Value;
 
@@ -70,6 +79,10 @@ namespace Syadeu.Database
             {
                 return ValueType.Boolean;
             }
+            else if (m_Value is Delegate)
+            {
+                return ValueType.Delegate;
+            }
             return ValueType.Null;
         }
 
@@ -77,6 +90,13 @@ namespace Syadeu.Database
         public override bool Equals(ValuePair other)
             => (other is ValuePair<T> temp) && base.Equals(other) && Equals(temp.m_Value);
         public bool Equals(T other) => m_Value.Equals(other);
+    }
+    public abstract class ValueFuncPair<T> : ValuePair<T> where T : Delegate
+    {
+        public object Invoke(params object[] args)
+        {
+            return m_Value.DynamicInvoke(args);
+        }
     }
     public sealed class ValueNull : ValuePair
     {
@@ -98,7 +118,9 @@ namespace Syadeu.Database
         Int32,
         Double,
         String,
-        Boolean
+        Boolean,
+
+        Delegate,
     }
 
     #region Serializable Classes
@@ -140,6 +162,19 @@ namespace Syadeu.Database
         public override object Clone()
         {
             return new SerializableBoolValuePair
+            {
+                m_Name = m_Name,
+                m_Value = m_Value
+            };
+        }
+    }
+
+    public sealed class SerializableActionValuePair : ValueFuncPair<Action>
+    {
+        public void Invoke() => Invoke(null);
+        public override object Clone()
+        {
+            return new SerializableActionValuePair
             {
                 m_Name = m_Name,
                 m_Value = m_Value

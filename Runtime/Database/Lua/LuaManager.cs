@@ -289,6 +289,8 @@ namespace Syadeu.Database.Lua
                 string[] scriptsPath = Directory.GetFiles(path);
                 for (int i = 0; i < scriptsPath.Length; i++)
                 {
+                    if (!Path.GetExtension(scriptsPath[i]).Equals(".lua")) continue;
+
                     scrs.Add(GetFileName(scriptsPath[i]), File.ReadAllText(scriptsPath[i]));
                     $"Loaded {GetFileName(scriptsPath[i])}".ToLog();
                 }
@@ -392,7 +394,11 @@ your own IScriptLoader (possibly extending ScriptLoaderBase).", file, DEFAULT_PA
         public static ItemProxy GetItem(string guid)
         {
             Item item = ItemDataList.Instance.GetItem(guid);
-            if (item == null) return null;
+            if (item == null)
+            {
+                $"item {guid} is null".ToLogConsole();
+                return null;
+            }
             else
             {
                 return item.GetProxy();
