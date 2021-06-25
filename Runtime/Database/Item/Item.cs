@@ -71,6 +71,12 @@ namespace Syadeu.Database
         public bool HasValue(string name) => m_Values.Where((other) => other.m_Name.Equals(name)).Count() != 0;
         public object GetValue(string name) => m_Values[GetValueIdx(name)].GetValue();
         public void SetValue(string name, object value) => m_Values[GetValueIdx(name)] = ValuePair.New(name, value);
+        public void AddValue<T>(string name, T value) where T : IConvertible
+        {
+            var temp = m_Values.ToList();
+            temp.Add(ValuePair.New(name, value));
+            m_Values = temp.ToArray();
+        }
         public void AddValue(string name, object value)
         {
             var temp = m_Values.ToList();

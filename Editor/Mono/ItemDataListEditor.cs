@@ -13,6 +13,9 @@ namespace SyadeuEditor
         private VerticalTreeView m_TreeView;
 
         private static string[] m_ItemTypes = new string[0];
+        private static string[] m_ItemEffectTypes = new string[0];
+
+        private string[] m_CreatableTypes = new string[] { "Int", "Float", "String", "Bool" };
 
         private bool m_ShowOriginalContents = false;
 
@@ -33,10 +36,18 @@ namespace SyadeuEditor
                 })
                 ;
 
-            m_ItemTypes = new string[ItemDataList.Instance.m_ItemTypes.Count];
-            for (int i = 0; i < m_ItemTypes.Length; i++)
+            m_ItemTypes = new string[ItemDataList.Instance.m_ItemTypes.Count + 1];
+            m_ItemTypes[0] = "None";
+            for (int i = 1; i < m_ItemTypes.Length; i++)
             {
-                m_ItemTypes[i] = ItemDataList.Instance.m_ItemTypes[i].m_Name;
+                m_ItemTypes[i] = ItemDataList.Instance.m_ItemTypes[i - 1].m_Name;
+            }
+
+            m_ItemEffectTypes = new string[ItemDataList.Instance.m_ItemEffectTypes.Count + 1];
+            m_ItemEffectTypes[0] = "None";
+            for (int i = 1; i < m_ItemEffectTypes.Length; i++)
+            {
+                m_ItemEffectTypes[i] = ItemDataList.Instance.m_ItemEffectTypes[i - 1].m_Name;
             }
         }
 
@@ -69,6 +80,10 @@ namespace SyadeuEditor
             EditorGUILayout.EndHorizontal();
             
             EditorGUILayout.Space();
+            if (GUILayout.Button("+"))
+            {
+                
+            }
             m_TreeView.OnGUI();
 
             EditorGUILayout.Space();
@@ -89,20 +104,113 @@ namespace SyadeuEditor
 
             public override void OnGUI()
             {
+                EditorGUILayout.TextField(Target.m_Guid);
                 Target.m_Name = EditorGUILayout.TextField("Name: ", Target.m_Name);
                 
                 using (new EditorGUILayout.VerticalScope("Box"))
                 {
-                    EditorGUILayout.LabelField("ItemTypes");
-                    EditorGUI.indentLevel += 1;
+                    using (new EditorGUILayout.HorizontalScope())
+                    {
+                        EditorGUILayout.LabelField("ItemTypes");
+                        if (GUILayout.Button("+", GUILayout.Width(20)))
+                        {
+                            ItemDataList.Instance.m_ItemTypes.Add(new ItemType
+                            {
+                                m_Name = "New Item",
+                                m_Guid = Guid.NewGuid().ToString(),
 
+                                m_Values = new ValuePair[0]
+                            });
+                        }
+                    }
+                    
+                    EditorGUI.indentLevel += 1;
                     for (int i = 0; i < Target.m_ItemTypes.Length; i++)
                     {
-                        int selected = EditorGUILayout.Popup(GetSelectedItemType(Target.m_ItemTypes[i]), m_ItemTypes);
+                        using(new EditorGUILayout.HorizontalScope())
+                        {
+                            int tSelected = EditorGUILayout.Popup(GetSelectedItemType(Target.m_ItemTypes[i]), m_ItemTypes);
+                            Target.m_ItemTypes[i] = tSelected == 0 ? "" : ItemDataList.Instance.m_ItemTypes[tSelected - 1].m_Guid;
 
-                        Target.m_ItemTypes[i] = ItemDataList.Instance.m_ItemTypes[selected].m_Guid;
+                            if (GUILayout.Button("-", GUILayout.Width(20)))
+                            {
+
+                            }
+                        }
+                    }
+                    EditorGUI.indentLevel -= 1;
+                }
+
+                using (new EditorGUILayout.VerticalScope("Box"))
+                {
+                    using (new EditorGUILayout.HorizontalScope())
+                    {
+                        EditorGUILayout.LabelField("ItemEffects");
+                        if (GUILayout.Button("+", GUILayout.Width(20)))
+                        {
+
+                        }
+                    }
+                    
+                    EditorGUI.indentLevel += 1;
+                    for (int i = 0; i < Target.m_ItemEffectTypes.Length; i++)
+                    {
+                        using (new EditorGUILayout.HorizontalScope())
+                        {
+                            int teSelected = EditorGUILayout.Popup(GetSelectedItemEffectType(Target.m_ItemEffectTypes[i]), m_ItemEffectTypes);
+                            Target.m_ItemEffectTypes[i] = teSelected == 0 ? "" : ItemDataList.Instance.m_ItemEffectTypes[teSelected - 1].m_Guid;
+
+                            if (GUILayout.Button("-", GUILayout.Width(20)))
+                            {
+
+                            }
+                        }
+                    }
+                    EditorGUI.indentLevel -= 1;
+                }
+
+                using (new EditorGUILayout.VerticalScope("Box"))
+                {
+                    using (new EditorGUILayout.HorizontalScope())
+                    {
+                        EditorGUILayout.LabelField("Values");
+                        if (GUILayout.Button("+", GUILayout.Width(20)))
+                        {
+                            GenericMenu typeMenu = new GenericMenu();
+                            typeMenu.AddItem(new GUIContent("Int"), false, () =>
+                            {
+                                Target.AddValue<int>("New Int Value", 0);
+                            });
+                            typeMenu.AddItem(new GUIContent("Float"), false, () =>
+                            {
+                                Target.AddValue<float>("New Float Value", 0);
+                            });
+                            typeMenu.AddItem(new GUIContent("String"), false, () =>
+                            {
+                                Target.AddValue<string>("New String Value", "");
+                            });
+                            typeMenu.AddItem(new GUIContent("Bool"), false, () =>
+                            {
+                                Target.AddValue<bool>("New Bool Value", false);
+                            });
+                            //;
+                            //GUIUtility.GUIToScreenPoint(Event.current.mousePosition)
+                            //GUILayoutUtility.GetRect()
+                            Rect rect = GUILayoutUtility.GetLastRect();
+                            //rect.width = 100; rect.height = 400;
+                            typeMenu.DropDown(rect);
+                        }
                     }
 
+                    EditorGUI.indentLevel += 1;
+                    for (int i = 0; i < Target.m_Values.Length; i++)
+                    {
+                        using (new EditorGUILayout.HorizontalScope())
+                        {
+
+
+                        }
+                    }
                     EditorGUI.indentLevel -= 1;
                 }
             }
@@ -113,7 +221,18 @@ namespace SyadeuEditor
                 {
                     if (ItemDataList.Instance.m_ItemTypes[i].m_Guid.Equals(guid))
                     {
-                        return i;
+                        return i + 1;
+                    }
+                }
+                return 0;
+            }
+            private int GetSelectedItemEffectType(string guid)
+            {
+                for (int i = 0; i < ItemDataList.Instance.m_ItemEffectTypes.Count; i++)
+                {
+                    if (ItemDataList.Instance.m_ItemEffectTypes[i].m_Guid.Equals(guid))
+                    {
+                        return i + 1;
                     }
                 }
                 return 0;
