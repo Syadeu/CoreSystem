@@ -184,23 +184,23 @@ namespace SyadeuEditor
                             GenericMenu typeMenu = new GenericMenu();
                             typeMenu.AddItem(new GUIContent("Int"), false, () =>
                             {
-                                Target.AddValue<int>("New Int Value", 0);
+                                Target.m_Values.Add<int>("New Int Value", 0);
                             });
                             typeMenu.AddItem(new GUIContent("Double"), false, () =>
                             {
-                                Target.AddValue<double>("New Double Value", 0);
+                                Target.m_Values.Add<double>("New Double Value", 0);
                             });
                             typeMenu.AddItem(new GUIContent("String"), false, () =>
                             {
-                                Target.AddValue<string>("New String Value", "");
+                                Target.m_Values.Add<string>("New String Value", "");
                             });
                             typeMenu.AddItem(new GUIContent("Bool"), false, () =>
                             {
-                                Target.AddValue<bool>("New Bool Value", false);
+                                Target.m_Values.Add<bool>("New Bool Value", false);
                             });
                             typeMenu.AddItem(new GUIContent("Delegate"), false, () =>
                             {
-                                Target.AddValue<Action>("New Delegate Value", () => { });
+                                Target.m_Values.Add<Action>("New Delegate Value", () => { });
                             });
                             //;
                             //GUIUtility.GUIToScreenPoint(Event.current.mousePosition)
@@ -213,7 +213,8 @@ namespace SyadeuEditor
                     }
 
                     EditorGUI.indentLevel += 1;
-                    for (int i = 0; i < Target.m_Values.Length; i++)
+                    if (Target.m_Values == null) Target.m_Values = new ValuePairContainer();
+                    for (int i = 0; i < Target.m_Values?.Count; i++)
                     {
                         using (new EditorGUILayout.HorizontalScope())
                         {
@@ -224,28 +225,28 @@ namespace SyadeuEditor
                                     int intFal = EditorGUILayout.IntField((int)Target.m_Values[i].GetValue());
                                     if (!Target.m_Values[i].GetValue().Equals(intFal))
                                     {
-                                        Target.SetValue(Target.m_Values[i].m_Name, intFal);
+                                        Target.m_Values.SetValue(Target.m_Values[i].m_Name, intFal);
                                     }
                                     break;
                                 case Syadeu.Database.ValueType.Double:
                                     double doubleVal = EditorGUILayout.DoubleField((double)Target.m_Values[i].GetValue());
                                     if (!Target.m_Values[i].GetValue().Equals(doubleVal))
                                     {
-                                        Target.SetValue(Target.m_Values[i].m_Name, doubleVal);
+                                        Target.m_Values.SetValue(Target.m_Values[i].m_Name, doubleVal);
                                     }
                                     break;
                                 case Syadeu.Database.ValueType.String:
                                     string stringVal = EditorGUILayout.TextField((string)Target.m_Values[i].GetValue());
                                     if (!Target.m_Values[i].GetValue().Equals(stringVal))
                                     {
-                                        Target.SetValue(Target.m_Values[i].m_Name, stringVal);
+                                        Target.m_Values.SetValue(Target.m_Values[i].m_Name, stringVal);
                                     }
                                     break;
                                 case Syadeu.Database.ValueType.Boolean:
                                     bool boolVal = EditorGUILayout.Toggle((bool)Target.m_Values[i].GetValue());
                                     if (!Target.m_Values[i].GetValue().Equals(boolVal))
                                     {
-                                        Target.SetValue(Target.m_Values[i].m_Name, boolVal);
+                                        Target.m_Values.SetValue(Target.m_Values[i].m_Name, boolVal);
                                     }
                                     break;
                                 case Syadeu.Database.ValueType.Delegate:
@@ -259,9 +260,7 @@ namespace SyadeuEditor
 
                             if (GUILayout.Button("-", GUILayout.Width(20)))
                             {
-                                var temp = Target.m_Values.ToList();
-                                temp.RemoveAt(i);
-                                Target.m_Values = temp.ToArray();
+                                Target.m_Values.RemoveAt(i);
                                 i--;
                                 continue;
                             }

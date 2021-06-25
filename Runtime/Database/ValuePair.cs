@@ -1,8 +1,12 @@
 ﻿using MoonSharp.Interpreter;
+using MoonSharp.Interpreter.Interop;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Syadeu.Database
 {
@@ -125,6 +129,82 @@ namespace Syadeu.Database
         Boolean,
 
         Delegate,
+    }
+
+    [Serializable]
+    public sealed class ValuePairContainer : ICloneable
+    {
+        [MoonSharpVisible(true)][UnityEngine.SerializeReference] public ValuePair[] m_Values;
+        [MoonSharpHidden] public ValuePair this[int i]
+        {
+            get => m_Values[i];
+            set => m_Values[i] = ValuePair.New(m_Values[i].m_Name, value);
+        }
+        [MoonSharpHidden] public int Count => m_Values.Length;
+
+        [MoonSharpHidden] public ValuePairContainer(params ValuePair[] values)
+        {
+            m_Values = values == null ? new ValuePair[0] : values;
+        }
+
+        private int GetValuePairIdx(string name)
+        {
+            for (int i = 0; i < m_Values.Length; i++)
+            {
+                if (m_Values[i].m_Name.Equals(name)) return i;
+            }
+            return -1;
+        }
+        public bool HasValue(string name) => GetValuePairIdx(name) >= 0;
+        public object GetValue(string name) => m_Values[GetValuePairIdx(name)].GetValue();
+        public void SetValue(string name, object value) => m_Values[GetValuePairIdx(name)] = ValuePair.New(name, value);
+        public void Add(string name, object value)
+        {
+            if (HasValue(name)) throw new Exception();
+
+            var temp = m_Values.ToList();
+            temp.Add(ValuePair.New(name, value));
+            m_Values = temp.ToArray();
+        }
+        public void Add<T>(string name, T value)
+        {
+            var temp = m_Values.ToList();
+            temp.Add(ValuePair.New(name, value));
+            m_Values = temp.ToArray();
+        }
+
+        public void Clear() => m_Values = new ValuePair[0];
+        public void Remove(object item)
+        {
+            if (item is string name)
+            {
+                int i = GetValuePairIdx(name);
+                if (i < 0) return;
+                RemoveAt(i);
+            }
+            else if (item is ValuePair pair)
+            {
+                for (int i = 0; i < m_Values.Length; i++)
+                {
+                    if (m_Values.Equals(pair))
+                    {
+                        RemoveAt(i);
+                        return;
+                    }
+                }
+            }
+        }
+        public void RemoveAt(int i)
+        {
+            var temp = m_Values.ToList();
+            temp.RemoveAt(i);
+            m_Values = temp.ToArray();
+        }
+
+        public object Clone()
+        {
+            return new ValuePairContainer(m_Values.ToArray());
+        }
     }
 
     #region Serializable Classes

@@ -428,9 +428,7 @@ your own IScriptLoader (possibly extending ScriptLoaderBase).", file, DEFAULT_PA
             Item item = new Item()
             {
                 m_Name = name,
-                m_Guid = Guid.NewGuid().ToString(),
-
-                m_Values = new ValuePair[0]
+                m_Guid = Guid.NewGuid().ToString()
             };
             ItemDataList.Instance.m_Items.Add(item);
             return item.GetProxy();

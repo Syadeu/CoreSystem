@@ -30,7 +30,7 @@ namespace Syadeu.Database
         /// </summary>
         public string[] m_ItemEffectTypes;
 
-        [SerializeReference] public ValuePair[] m_Values;
+        [SerializeReference] public ValuePairContainer m_Values = new ValuePairContainer();
 
         [NonSerialized] private ItemProxy m_Proxy = null;
 
@@ -56,34 +56,34 @@ namespace Syadeu.Database
             return m_Proxy;
         }
 
-        #region Value
-        private int GetValueIdx(string name)
-        {
-            for (int i = 0; i < m_Values.Length; i++)
-            {
-                if (m_Values[i].m_Name.Equals(name))
-                {
-                    return i;
-                }
-            }
-            throw new Exception();
-        }
-        public bool HasValue(string name) => m_Values.Where((other) => other.m_Name.Equals(name)).Count() != 0;
-        public object GetValue(string name) => m_Values[GetValueIdx(name)].GetValue();
-        public void SetValue(string name, object value) => m_Values[GetValueIdx(name)] = ValuePair.New(name, value);
-        public void AddValue<T>(string name, T value)
-        {
-            var temp = m_Values.ToList();
-            temp.Add(ValuePair.New(name, value));
-            m_Values = temp.ToArray();
-        }
-        public void AddValue(string name, object value)
-        {
-            var temp = m_Values.ToList();
-            temp.Add(ValuePair.New(name, value));
-            m_Values = temp.ToArray();
-        }
-        #endregion
+        //#region Value
+        //private int GetValueIdx(string name)
+        //{
+        //    for (int i = 0; i < m_Values.Length; i++)
+        //    {
+        //        if (m_Values[i].m_Name.Equals(name))
+        //        {
+        //            return i;
+        //        }
+        //    }
+        //    throw new Exception();
+        //}
+        //public bool HasValue(string name) => m_Values.Where((other) => other.m_Name.Equals(name)).Count() != 0;
+        //public object GetValue(string name) => m_Values[GetValueIdx(name)].GetValue();
+        //public void SetValue(string name, object value) => m_Values[GetValueIdx(name)] = ValuePair.New(name, value);
+        //public void AddValue<T>(string name, T value)
+        //{
+        //    var temp = m_Values.ToList();
+        //    temp.Add(ValuePair.New(name, value));
+        //    m_Values = temp.ToArray();
+        //}
+        //public void AddValue(string name, object value)
+        //{
+        //    var temp = m_Values.ToList();
+        //    temp.Add(ValuePair.New(name, value));
+        //    m_Values = temp.ToArray();
+        //}
+        //#endregion
 
         #region Instance
         public ItemInstance CreateInstance()
@@ -135,11 +135,11 @@ namespace Syadeu.Database
         public Action OnUse { get => Target.m_OnUse; set => Target.m_OnUse = value; }
 
         #region Value
-        public int GetValueCount() => Target.m_Values.Length;
-        public bool HasValue(string name) => Target.HasValue(name);
-        public object GetValue(string name) => Target.GetValue(name);
-        public void SetValue(string name, object value) => Target.SetValue(name, value);
-        public void AddValue(string name, object value) => Target.AddValue(name, value);
+        public int GetValueCount() => Target.m_Values.Count;
+        public bool HasValue(string name) => Target.m_Values.HasValue(name);
+        public object GetValue(string name) => Target.m_Values.GetValue(name);
+        public void SetValue(string name, object value) => Target.m_Values.SetValue(name, value);
+        public void AddValue(string name, object value) => Target.m_Values.Add(name, value);
         #endregion
 
         #region Instance
@@ -154,7 +154,7 @@ namespace Syadeu.Database
 
         private readonly ItemType[] m_ItemTypes;
         private readonly ItemEffectType[] m_ItemEffectTypes;
-        private readonly ValuePair[] m_Values;
+        private readonly ValuePairContainer m_Values;
 
         [MoonSharpHidden] public Guid Guid => m_Guid;
 
@@ -173,31 +173,9 @@ namespace Syadeu.Database
             {
                 m_ItemEffectTypes[i] = ItemDataList.Instance.GetItemEffectType(item.m_ItemEffectTypes[i]);
             }
-            m_Values = new ValuePair[item.m_Values.Length];
-            for (int i = 0; i < m_Values.Length; i++)
-            {
-                m_Values[i] = (ValuePair)item.m_Values[i].Clone();
-            }
+            m_Values = (ValuePairContainer)item.m_Values.Clone();
         }
         public Item GetData() => m_Data;
-
-        #region Value
-        private int GetValueIdx(string name)
-        {
-            for (int i = 0; i < m_Values.Length; i++)
-            {
-                if (m_Values[i].m_Name.Equals(name))
-                {
-                    return i;
-                }
-            }
-            throw new Exception();
-        }
-        public int GetValueCount() => m_Values.Length;
-        public bool HasValue(string name) => m_Values.Where((other) => other.m_Name.Equals(name)).Count() != 0;
-        public object GetValue(string name) => m_Values[GetValueIdx(name)].GetValue();
-        public void SetValue(string name, object value) => m_Values[GetValueIdx(name)] = ValuePair.New(name, value);
-        #endregion
     }
     #endregion
 
