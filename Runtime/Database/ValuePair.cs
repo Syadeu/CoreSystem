@@ -38,6 +38,10 @@ namespace Syadeu.Database
             {
                 return Bool(name, Convert.ToBoolean(value));
             }
+            else if (value is Action action)
+            {
+                return Action(name, action);
+            }
             else if (value is Closure func)
             {
                 return Action(name, (Action)(() => func.Call()));

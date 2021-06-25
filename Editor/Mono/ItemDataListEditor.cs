@@ -198,6 +198,10 @@ namespace SyadeuEditor
                             {
                                 Target.AddValue<bool>("New Bool Value", false);
                             });
+                            typeMenu.AddItem(new GUIContent("Delegate"), false, () =>
+                            {
+                                Target.AddValue<Action>("New Delegate Value", () => { });
+                            });
                             //;
                             //GUIUtility.GUIToScreenPoint(Event.current.mousePosition)
                             //GUILayoutUtility.GetRect()
@@ -243,6 +247,11 @@ namespace SyadeuEditor
                                     {
                                         Target.SetValue(Target.m_Values[i].m_Name, boolVal);
                                     }
+                                    break;
+                                case Syadeu.Database.ValueType.Delegate:
+                                    EditorGUI.BeginDisabledGroup(true);
+                                    EditorGUILayout.TextField("Delegate");
+                                    EditorGUI.EndDisabledGroup();
                                     break;
                                 default:
                                     break;
