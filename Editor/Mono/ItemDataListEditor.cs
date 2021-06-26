@@ -9,6 +9,11 @@ using SyadeuEditor.Tree;
 using UnityEditor;
 using UnityEngine;
 
+#if UNITY_ADDRESSABLES
+using UnityEditor.AddressableAssets;
+using UnityEngine.AddressableAssets;
+#endif
+
 namespace SyadeuEditor
 {
     [CustomEditor(typeof(ItemDataList))]
@@ -168,8 +173,10 @@ namespace SyadeuEditor
             public TreeItemElement(VerticalTreeView treeView, Item item) : base(treeView, item) { }
             public override void OnGUI()
             {
+                //AddressableAssetSettingsDefaultObject.GetSettings(true).FindGroup("Images").GetAssetEntry(Target.m_ImagePath)
                 Target.m_Name = EditorGUILayout.TextField("Name: ", Target.m_Name);
                 EditorGUILayout.TextField("Guid: ", Target.m_Guid);
+                Target.m_ImagePath = EditorGUILayout.TextField("Image Path: ", Target.m_ImagePath);
                 
                 using (new EditorGUILayout.VerticalScope("Box"))
                 {

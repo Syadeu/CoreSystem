@@ -18,18 +18,19 @@ namespace Syadeu.Database
     {
         [JsonProperty(Order = 0)] public string m_Name;
         [JsonProperty(Order = 1)] public string m_Guid;
+        [JsonProperty(Order = 2)] public string m_ImagePath;
 
         [Tooltip("GUID")]
         /// <summary>
         /// <see cref="ItemType"/>
         /// </summary>
-        [JsonProperty(Order = 2)] public string[] m_ItemTypes = new string[0];
+        [JsonProperty(Order = 3)] public string[] m_ItemTypes = new string[0];
         [Tooltip("GUID")]
         /// <summary>
         /// <see cref="ItemEffectType"/>
         /// </summary>
-        [JsonProperty(Order = 3)] public string[] m_ItemEffectTypes = new string[0];
-        [JsonProperty(Order = 4)] public ValuePairContainer m_Values = new ValuePairContainer();
+        [JsonProperty(Order = 4)] public string[] m_ItemEffectTypes = new string[0];
+        [JsonProperty(Order = 5)] public ValuePairContainer m_Values = new ValuePairContainer();
 
         [NonSerialized] private ItemProxy m_Proxy = null;
 
