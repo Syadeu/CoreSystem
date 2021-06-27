@@ -173,78 +173,82 @@ namespace SyadeuEditor
             public TreeItemElement(VerticalTreeView treeView, Item item) : base(treeView, item) { }
             public override void OnGUI()
             {
-                //AddressableAssetSettingsDefaultObject.GetSettings(true).FindGroup("Images").GetAssetEntry(Target.m_ImagePath)
-                Target.m_Name = EditorGUILayout.TextField("Name: ", Target.m_Name);
-                EditorGUILayout.TextField("Guid: ", Target.m_Guid);
-                Target.m_ImagePath = EditorGUILayout.TextField("Image Path: ", Target.m_ImagePath);
+                Target.DrawItem();
+
+                ////AddressableAssetSettingsDefaultObject.GetSettings(true).FindGroup("Images").GetAssetEntry(Target.m_ImagePath)
+                //Target.m_Name = EditorGUILayout.TextField("Name: ", Target.m_Name);
+                //EditorGUILayout.TextField("Guid: ", Target.m_Guid);
+                ////Target.m_ImagePath = EditorGUILayout.TextField("Image Path: ", Target.m_ImagePath);
                 
-                using (new EditorGUILayout.VerticalScope("Box"))
-                {
-                    using (new EditorGUILayout.HorizontalScope())
-                    {
-                        EditorUtils.StringHeader("ItemTypes", 15);
-                        if (GUILayout.Button("+", GUILayout.Width(20)))
-                        {
-                            var temp = Target.m_ItemTypes.ToList();
-                            temp.Add("");
-                            Target.m_ItemTypes = temp.ToArray();
-                        }
-                    }
+
+
+                //using (new EditorGUILayout.VerticalScope("Box"))
+                //{
+                //    using (new EditorGUILayout.HorizontalScope())
+                //    {
+                //        EditorUtils.StringHeader("ItemTypes", 15);
+                //        if (GUILayout.Button("+", GUILayout.Width(20)))
+                //        {
+                //            var temp = Target.m_ItemTypes.ToList();
+                //            temp.Add("");
+                //            Target.m_ItemTypes = temp.ToArray();
+                //        }
+                //    }
                     
-                    EditorGUI.indentLevel += 1;
-                    for (int i = 0; i < Target.m_ItemTypes.Length; i++)
-                    {
-                        using(new EditorGUILayout.HorizontalScope())
-                        {
-                            int tSelected = EditorGUILayout.Popup(GetSelectedItemType(Target.m_ItemTypes[i]), m_ItemTypes);
-                            Target.m_ItemTypes[i] = tSelected == 0 ? "" : ItemDataList.Instance.m_ItemTypes[tSelected - 1].m_Guid;
+                //    EditorGUI.indentLevel += 1;
+                //    for (int i = 0; i < Target.m_ItemTypes.Length; i++)
+                //    {
+                //        using(new EditorGUILayout.HorizontalScope())
+                //        {
+                //            int tSelected = EditorGUILayout.Popup(GetSelectedItemType(Target.m_ItemTypes[i]), m_ItemTypes);
+                //            Target.m_ItemTypes[i] = tSelected == 0 ? "" : ItemDataList.Instance.m_ItemTypes[tSelected - 1].m_Guid;
 
-                            if (GUILayout.Button("-", GUILayout.Width(20)))
-                            {
-                                var temp = Target.m_ItemTypes.ToList();
-                                temp.RemoveAt(i);
-                                Target.m_ItemTypes = temp.ToArray();
-                                i--;
-                            }
-                        }
-                    }
-                    EditorGUI.indentLevel -= 1;
-                }
+                //            if (GUILayout.Button("-", GUILayout.Width(20)))
+                //            {
+                //                var temp = Target.m_ItemTypes.ToList();
+                //                temp.RemoveAt(i);
+                //                Target.m_ItemTypes = temp.ToArray();
+                //                i--;
+                //            }
+                //        }
+                //    }
+                //    EditorGUI.indentLevel -= 1;
+                //}
 
-                using (new EditorGUILayout.VerticalScope("Box"))
-                {
-                    using (new EditorGUILayout.HorizontalScope())
-                    {
-                        EditorUtils.StringHeader("ItemEffects", 15);
-                        if (GUILayout.Button("+", GUILayout.Width(20)))
-                        {
-                            var temp = Target.m_ItemEffectTypes.ToList();
-                            temp.Add("");
-                            Target.m_ItemEffectTypes = temp.ToArray();
-                        }
-                    }
+                //using (new EditorGUILayout.VerticalScope("Box"))
+                //{
+                //    using (new EditorGUILayout.HorizontalScope())
+                //    {
+                //        EditorUtils.StringHeader("ItemEffects", 15);
+                //        if (GUILayout.Button("+", GUILayout.Width(20)))
+                //        {
+                //            var temp = Target.m_ItemEffectTypes.ToList();
+                //            temp.Add("");
+                //            Target.m_ItemEffectTypes = temp.ToArray();
+                //        }
+                //    }
                     
-                    EditorGUI.indentLevel += 1;
-                    for (int i = 0; i < Target.m_ItemEffectTypes.Length; i++)
-                    {
-                        using (new EditorGUILayout.HorizontalScope())
-                        {
-                            int teSelected = EditorGUILayout.Popup(GetSelectedItemEffectType(Target.m_ItemEffectTypes[i]), m_ItemEffectTypes);
-                            Target.m_ItemEffectTypes[i] = teSelected == 0 ? "" : ItemDataList.Instance.m_ItemEffectTypes[teSelected - 1].m_Guid;
+                //    EditorGUI.indentLevel += 1;
+                //    for (int i = 0; i < Target.m_ItemEffectTypes.Length; i++)
+                //    {
+                //        using (new EditorGUILayout.HorizontalScope())
+                //        {
+                //            int teSelected = EditorGUILayout.Popup(GetSelectedItemEffectType(Target.m_ItemEffectTypes[i]), m_ItemEffectTypes);
+                //            Target.m_ItemEffectTypes[i] = teSelected == 0 ? "" : ItemDataList.Instance.m_ItemEffectTypes[teSelected - 1].m_Guid;
 
-                            if (GUILayout.Button("-", GUILayout.Width(20)))
-                            {
-                                var temp = Target.m_ItemEffectTypes.ToList();
-                                temp.RemoveAt(i);
-                                Target.m_ItemEffectTypes = temp.ToArray();
-                                i--;
-                            }
-                        }
-                    }
-                    EditorGUI.indentLevel -= 1;
-                }
+                //            if (GUILayout.Button("-", GUILayout.Width(20)))
+                //            {
+                //                var temp = Target.m_ItemEffectTypes.ToList();
+                //                temp.RemoveAt(i);
+                //                Target.m_ItemEffectTypes = temp.ToArray();
+                //                i--;
+                //            }
+                //        }
+                //    }
+                //    EditorGUI.indentLevel -= 1;
+                //}
 
-                Target.m_Values.DrawValueContainer();
+                //Target.m_Values.DrawValueContainer();
             }
 
             private int GetSelectedItemType(string guid)

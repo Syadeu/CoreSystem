@@ -1,6 +1,5 @@
 ﻿using MoonSharp.Interpreter;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using Syadeu.Mono;
 using System;
@@ -10,6 +9,10 @@ using System.IO;
 using System.Linq;
 using UnityEngine;
 
+#if UNITY_ADDRESSABLES
+using UnityEngine.AddressableAssets;
+#endif
+
 namespace Syadeu.Database
 {
     #region Item
@@ -18,7 +21,10 @@ namespace Syadeu.Database
     {
         [JsonProperty(Order = 0)] public string m_Name;
         [JsonProperty(Order = 1)] public string m_Guid;
-        [JsonProperty(Order = 2)] public string m_ImagePath;
+#if UNITY_ADDRESSABLES
+        [JsonConverter(typeof(AssetReferenceJsonConverter))]
+        [JsonProperty(Order = 2)] public AssetReference m_ImagePath;
+#endif
 
         [Tooltip("GUID")]
         /// <summary>
@@ -246,5 +252,6 @@ namespace Syadeu.Database
         public void AddValue(string name, object value) => Target.m_Values.Add(name, value);
         #endregion
     }
-    #endregion
+
+#endregion
 }

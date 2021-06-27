@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Google.Apis.Sheets.v4.Data;
 using Syadeu;
 using Syadeu.Database;
@@ -236,6 +237,143 @@ namespace SyadeuEditor
                 }
 
                 return valuePairs;
+            }
+        }
+    }
+
+    public static class ItemEditor
+    {
+        private static string[] m_ItemTypes = new string[0];
+        private static string[] m_ItemEffectTypes = new string[0];
+
+        static ItemEditor()
+        {
+            Validate();
+        }
+        private static void Validate()
+        {
+            if (m_ItemTypes.Length == ItemDataList.Instance.m_ItemTypes.Count + 1 &&
+                m_ItemEffectTypes.Length == ItemDataList.Instance.m_ItemEffectTypes.Count + 1)
+            {
+                return;
+            }
+
+            m_ItemTypes = new string[ItemDataList.Instance.m_ItemTypes.Count + 1];
+            m_ItemTypes[0] = "None";
+            for (int i = 1; i < m_ItemTypes.Length; i++)
+            {
+                m_ItemTypes[i] = ItemDataList.Instance.m_ItemTypes[i - 1].m_Name;
+            }
+
+            m_ItemEffectTypes = new string[ItemDataList.Instance.m_ItemEffectTypes.Count + 1];
+            m_ItemEffectTypes[0] = "None";
+            for (int i = 1; i < m_ItemEffectTypes.Length; i++)
+            {
+                m_ItemEffectTypes[i] = ItemDataList.Instance.m_ItemEffectTypes[i - 1].m_Name;
+            }
+        }
+
+        public static void DrawItem(this Item item)
+        {
+            const string c_Box = "Box";
+            Validate();
+
+            //AddressableAssetSettingsDefaultObject.GetSettings(true).FindGroup("Images").GetAssetEntry(item.m_ImagePath)
+            item.m_Name = EditorGUILayout.TextField("Name: ", item.m_Name);
+            EditorGUILayout.TextField("Guid: ", item.m_Guid);
+
+            using (new EditorGUILayout.VerticalScope(c_Box))
+            {
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    EditorUtils.StringHeader("ItemTypes", 15);
+                    if (GUILayout.Button("+", GUILayout.Width(20)))
+                    {
+                        var temp = item.m_ItemTypes.ToList();
+                        temp.Add("");
+                        item.m_ItemTypes = temp.ToArray();
+                    }
+                }
+
+                EditorGUI.indentLevel += 1;
+                for (int i = 0; i < item.m_ItemTypes.Length; i++)
+                {
+                    using (new EditorGUILayout.HorizontalScope())
+                    {
+                        int tSelected = EditorGUILayout.Popup(GetSelectedItemType(item.m_ItemTypes[i]), m_ItemTypes);
+                        item.m_ItemTypes[i] = tSelected == 0 ? "" : ItemDataList.Instance.m_ItemTypes[tSelected - 1].m_Guid;
+
+                        if (GUILayout.Button("-", GUILayout.Width(20)))
+                        {
+                            var temp = item.m_ItemTypes.ToList();
+                            temp.RemoveAt(i);
+                            item.m_ItemTypes = temp.ToArray();
+                            i--;
+                        }
+                    }
+                }
+                EditorGUI.indentLevel -= 1;
+            }
+
+            using (new EditorGUILayout.VerticalScope(c_Box))
+            {
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    EditorUtils.StringHeader("ItemEffects", 15);
+                    if (GUILayout.Button("+", GUILayout.Width(20)))
+                    {
+                        var temp = item.m_ItemEffectTypes.ToList();
+                        temp.Add("");
+                        item.m_ItemEffectTypes = temp.ToArray();
+                    }
+                }
+
+                EditorGUI.indentLevel += 1;
+                for (int i = 0; i < item.m_ItemEffectTypes.Length; i++)
+                {
+                    using (new EditorGUILayout.HorizontalScope())
+                    {
+                        int teSelected = EditorGUILayout.Popup(GetSelectedItemEffectType(item.m_ItemEffectTypes[i]), m_ItemEffectTypes);
+                        item.m_ItemEffectTypes[i] = teSelected == 0 ? "" : ItemDataList.Instance.m_ItemEffectTypes[teSelected - 1].m_Guid;
+
+                        if (GUILayout.Button("-", GUILayout.Width(20)))
+                        {
+                            var temp = item.m_ItemEffectTypes.ToList();
+                            temp.RemoveAt(i);
+                            item.m_ItemEffectTypes = temp.ToArray();
+                            i--;
+                        }
+                    }
+                }
+                EditorGUI.indentLevel -= 1;
+            }
+
+            item.m_Values.DrawValueContainer();
+
+            
+            int GetSelectedItemType(string guid)
+            {
+                if (string.IsNullOrEmpty(guid)) return 0;
+                for (int i = 0; i < ItemDataList.Instance.m_ItemTypes.Count; i++)
+                {
+                    if (ItemDataList.Instance.m_ItemTypes[i].m_Guid.Equals(guid))
+                    {
+                        return i + 1;
+                    }
+                }
+                return 0;
+            }
+            int GetSelectedItemEffectType(string guid)
+            {
+                if (string.IsNullOrEmpty(guid)) return 0;
+                for (int i = 0; i < ItemDataList.Instance.m_ItemEffectTypes.Count; i++)
+                {
+                    if (ItemDataList.Instance.m_ItemEffectTypes[i].m_Guid.Equals(guid))
+                    {
+                        return i + 1;
+                    }
+                }
+                return 0;
             }
         }
     }
