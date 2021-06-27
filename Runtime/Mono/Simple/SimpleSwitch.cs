@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.Events;
 
 namespace Syadeu.Mono
 {
@@ -11,7 +12,12 @@ namespace Syadeu.Mono
             public Object m_Object;
 
             [Space]
+            public UnityEvent m_OnSelected;
+            public UnityEvent m_OnDeselected;
+
+            [Space]
             public bool m_Default;
+            internal bool m_Enabled = true;
         }
 
         [SerializeField] private Content[] m_Contents;
@@ -47,29 +53,47 @@ namespace Syadeu.Mono
 
         public void On(int idx)
         {
-            if (m_Contents[idx].m_Object is GameObject gameObj)
+            if (!m_Contents[idx].m_Enabled)
             {
-                gameObj.SetActive(true);
+                if (m_Contents[idx].m_Object is GameObject gameObj)
+                {
+                    gameObj.SetActive(true);
+                }
+                else if (m_Contents[idx].m_Object is Behaviour behaviour)
+                {
+                    behaviour.enabled = true;
+                }
+                else throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                    $"지원하지 않는 오브젝트 타입 ({m_Contents[idx].m_Object.GetType().Name})");
+
+                m_Contents[idx].m_OnSelected?.Invoke();
+                m_Contents[idx].m_Enabled = true;
             }
-            else if (m_Contents[idx].m_Object is Behaviour behaviour)
+            
+            for (int i = 0; i < m_Contents.Length; i++)
             {
-                behaviour.enabled = true;
+                if (i == idx) continue;
+                Off(i);
             }
-            else throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
-                $"지원하지 않는 오브젝트 타입 ({m_Contents[idx].m_Object.GetType().Name})");
         }
         public void Off(int idx)
         {
-            if (m_Contents[idx].m_Object is GameObject gameObj)
+            if (m_Contents[idx].m_Enabled)
             {
-                gameObj.SetActive(false);
+                if (m_Contents[idx].m_Object is GameObject gameObj)
+                {
+                    gameObj.SetActive(false);
+                }
+                else if (m_Contents[idx].m_Object is Behaviour behaviour)
+                {
+                    behaviour.enabled = false;
+                }
+                else throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                    $"지원하지 않는 오브젝트 타입 ({m_Contents[idx].m_Object.GetType().Name})");
+
+                m_Contents[idx].m_OnDeselected?.Invoke();
+                m_Contents[idx].m_Enabled = false;
             }
-            else if (m_Contents[idx].m_Object is Behaviour behaviour)
-            {
-                behaviour.enabled = false;
-            }
-            else throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
-                $"지원하지 않는 오브젝트 타입 ({m_Contents[idx].m_Object.GetType().Name})");
         }
     }
 }
