@@ -466,7 +466,7 @@ namespace Syadeu
         }
         protected override void OnDestroy()
         {
-            StopAllCoroutines();
+            //StopAllCoroutines();
 
             for (int i = 0; i < BackgroundJobWorkers.Count; i++)
             {

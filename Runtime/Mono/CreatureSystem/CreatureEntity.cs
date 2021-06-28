@@ -23,10 +23,11 @@ namespace Syadeu.Mono
             OnInitialize(t, ta);
             Initialized = true;
 
-            $"{name}. {GetType().Name}: {ta} : init done".ToLog();
+            //$"{name}. {GetType().Name}: {ta} : init done".ToLog();
         }
         internal void InternalOnTerminate()
         {
+            m_Brain = null;
             m_DataIdx = -1;
 
             OnTerminate();

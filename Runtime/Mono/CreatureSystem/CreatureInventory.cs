@@ -1,5 +1,4 @@
-﻿using Syadeu.Database;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 namespace Syadeu.Mono
