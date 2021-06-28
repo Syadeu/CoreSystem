@@ -23,7 +23,7 @@ namespace Syadeu.Database
 
         public static ValuePair New(string name, object value)
         {
-            if (value == null) return new ValueNull { m_Name = name };
+            if (value == null) return new ValueNull(name);
 
             Type t = value.GetType();
             if (t.Equals(typeof(int)))
@@ -121,15 +121,14 @@ namespace Syadeu.Database
     }
     public sealed class ValueNull : ValuePair
     {
+        public ValueNull(string name) => m_Name = name;
+
         public override ValueType GetValueType() => ValueType.Null;
 
         public override object GetValue() => null;
         public override object Clone()
         {
-            return new ValueNull
-            {
-                m_Name = m_Name
-            };
+            return new ValueNull(m_Name);
         }
     }
     public enum ValueType
