@@ -59,13 +59,13 @@ namespace Syadeu.Database
                 object value;
                 if (string.IsNullOrEmpty(att.Header))
                 {
-                    value = config.INIFile
+                    value = config.m_INI
                         .GetOrCreateValue(fields[i].FieldType, fields[i].Name)
                         .GetValue();
                 }
                 else
                 {
-                    value = config.INIFile.GetOrCreateHeader(att.Header)
+                    value = config.m_INI.GetOrCreateHeader(att.Header)
                         .GetOrCreateValue(fields[i].FieldType, fields[i].Name)
                         .GetValue();
                 }

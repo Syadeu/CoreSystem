@@ -6,13 +6,12 @@ namespace Syadeu.Database
     public sealed class Config
     {
         internal readonly ConfigLocation m_Location;
-        private readonly INIFile m_INI;
+        internal readonly INIFile m_INI;
 
         internal readonly string m_Path;
 
         public string Name => Path.GetFileNameWithoutExtension(m_Path);
         public ConfigLocation Location => m_Location;
-        public INIFile INIFile => m_INI;
 
         internal Config(ConfigLocation location, string path)
         {
@@ -27,6 +26,12 @@ namespace Syadeu.Database
                 m_INI = INIReader.Read(path);
             }
         }
+
+        public object GetValue(string name) => m_INI.GetValue(name)?.GetValue();
+        public void SetValue(string name, object value) => m_INI.SetValue(name, value);
+
+        public object GetHeaderValue(string header, string valueName) => m_INI.GetHeader(header)?.GetValue(valueName)?.GetValue();
+        public void SetHeaderValue(string header, string valueName, object value) => m_INI.GetOrCreateHeader(header).SetValue(valueName, value);
 
         public void Save()
         {
