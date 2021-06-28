@@ -3,16 +3,21 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+
+using Syadeu;
+using UnityEngine;
+
+#if CORESYSTEM_GOOGLE
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Services;
 using Google.Apis.Sheets.v4;
 using Google.Apis.Sheets.v4.Data;
 using Google.Apis.Util.Store;
-using Syadeu;
-using UnityEngine;
+#endif
 
 namespace SyadeuEditor
 {
+#if CORESYSTEM_GOOGLE
     public class GoogleService
     {
         private static GoogleService c_Instance;
@@ -165,4 +170,5 @@ namespace SyadeuEditor
             return list;
         }
     }
+#endif
 }

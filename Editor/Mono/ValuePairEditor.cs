@@ -2,15 +2,23 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Google.Apis.Sheets.v4.Data;
+
 using Syadeu;
 using Syadeu.Database;
 using UnityEditor;
-using UnityEditor.AddressableAssets;
-using UnityEditor.AddressableAssets.Settings;
+
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
+
+#if UNITY_ADDRESSABLES
 using UnityEngine.AddressableAssets;
+using UnityEditor.AddressableAssets;
+using UnityEditor.AddressableAssets.Settings;
+#endif
+
+#if CORESYSTEM_GOOGLE
+using Google.Apis.Sheets.v4.Data;
+#endif
 
 namespace SyadeuEditor
 {
@@ -23,11 +31,13 @@ namespace SyadeuEditor
                 using (new EditorGUILayout.HorizontalScope())
                 {
                     EditorUtils.StringHeader("Values", 15);
+#if CORESYSTEM_GOOGLE
                     if (!string.IsNullOrEmpty(syncSheetName) && GUILayout.Button("Sync", GUILayout.Width(50)))
                     {
                         container.SyncWithGoogleSheet(
                             container.Contains("Index") ? (int)container.GetValue("Index") : 1, syncSheetName);
                     }
+#endif
                     if (GUILayout.Button("+", GUILayout.Width(20)))
                     {
                         GenericMenu typeMenu = new GenericMenu();
@@ -195,6 +205,7 @@ namespace SyadeuEditor
                 EditorGUI.indentLevel -= 1;
             }
         }
+#if CORESYSTEM_GOOGLE
         public static void SyncWithGoogleSheet(this ValuePairContainer container, int idx, string sheetName)
         {
             container.Clear();
@@ -243,6 +254,7 @@ namespace SyadeuEditor
                 return valuePairs;
             }
         }
+#endif
     }
 
     public static class ItemEditor
@@ -286,7 +298,9 @@ namespace SyadeuEditor
             item.m_Name = EditorGUILayout.TextField("Name: ", item.m_Name);
             EditorGUILayout.TextField("Guid: ", item.m_Guid);
 
+#if UNITY_ADDRESSABLES
             DrawAssetReference(item, item.m_ImagePath);
+#endif
 
             using (new EditorGUILayout.VerticalScope(c_Box))
             {
@@ -382,6 +396,7 @@ namespace SyadeuEditor
                 return 0;
             }
 
+#if UNITY_ADDRESSABLES
             static void DrawAssetReference(Item item, AssetReference refAsset)
             {
                 UnityEngine.Object asset = refAsset?.editorAsset;
@@ -407,8 +422,7 @@ namespace SyadeuEditor
 
                 EditorGUIUtility.SetIconSize(iconSize);
             }
-
-
+#endif
         }
 
         class AssetReferencePopup : PopupWindowContent
