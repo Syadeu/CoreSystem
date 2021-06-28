@@ -2,15 +2,25 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Google.Apis.Sheets.v4.Data;
+
 using Syadeu;
 using Syadeu.Database;
+using Syadeu.Mono;
 using UnityEditor;
-using UnityEditor.AddressableAssets;
-using UnityEditor.AddressableAssets.Settings;
+
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
+
+#if CORESYSTEM_GOOGLE
+using Google.Apis.Sheets.v4.Data;
+#endif
+
+#if UNITY_ADDRESSABLES
+using UnityEditor.AddressableAssets;
+using UnityEditor.AddressableAssets.Settings;
 using UnityEngine.AddressableAssets;
+using System.Reflection;
+#endif
 
 namespace SyadeuEditor
 {
@@ -611,6 +621,39 @@ namespace SyadeuEditor
                     return root;
                 }
             }
+        }
+    }
+
+    [CustomEditor(typeof(CreatureStat))]
+    public sealed class CreatureStatEditor : EditorEntity<CreatureStat>
+    {
+        ValuePairContainer reflectionValues;
+
+        private void OnEnable()
+        {
+            FieldInfo field = typeof(CreatureStat).GetField("m_ReflectionValues", 
+                BindingFlags.NonPublic | BindingFlags.Instance);
+
+            reflectionValues = (ValuePairContainer)field.GetValue(Asset);
+            if (reflectionValues == null)
+            {
+                reflectionValues = new ValuePairContainer();
+                field.SetValue(Asset, reflectionValues);
+                EditorUtility.SetDirty(Asset);
+            }
+        }
+
+        public override void OnInspectorGUI()
+        {
+            EditorGUI.BeginChangeCheck();
+            reflectionValues.DrawValueContainer("Reflection Values");
+            if (EditorGUI.EndChangeCheck())
+            {
+                EditorUtility.SetDirty(Asset);
+            }
+
+            EditorGUILayout.Space();
+            base.OnInspectorGUI();
         }
     }
 }

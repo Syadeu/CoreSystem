@@ -29,6 +29,7 @@ namespace Syadeu.Database
         public abstract ValueType GetValueType();
 
         public abstract object GetValue();
+        public T GetValue<T>() => (T)GetValue();
         public abstract object Clone();
         public virtual bool Equals(ValuePair other) => Hash.Equals(other.Hash);
 
@@ -194,6 +195,14 @@ namespace Syadeu.Database
             }
             return -1;
         }
+        private int GetValuePairIdx(uint hash)
+        {
+            for (int i = 0; i < m_Values.Length; i++)
+            {
+                if (m_Values[i].Hash.Equals(hash)) return i;
+            }
+            return -1;
+        }
         public int IndexOf(object value)
         {
             if (value is ValuePair pair)
@@ -228,9 +237,21 @@ namespace Syadeu.Database
             return false;
         }
         public bool Contains(string name) => GetValuePairIdx(name) >= 0;
+        public bool Contains(uint hash) => GetValuePairIdx(hash) >= 0;
 
-        public object GetValue(string name) => m_Values[GetValuePairIdx(name)].GetValue();
+        public ValuePair GetValuePair(string name) => m_Values[GetValuePairIdx(name)];
+        public ValuePair GetValuePair(uint hash) => m_Values[GetValuePairIdx(hash)];
+        public object GetValue(string name) => GetValuePair(name).GetValue();
+        public object GetValue(uint hash) => GetValuePair(hash).GetValue();
+        public T GetValue<T>(string name) => (T)GetValue(name);
+        public T GetValue<T>(uint hash) => (T)GetValue(hash);
         public void SetValue(string name, object value) => m_Values[GetValuePairIdx(name)] = ValuePair.New(name, value);
+        public void SetValue(uint hash, object value)
+        {
+            int idx = GetValuePairIdx(hash);
+            var temp = m_Values[idx];
+            m_Values[idx] = ValuePair.New(temp.Name, value);
+        }
         public int Add(object value)
         {
             var temp = m_Values.ToList();
@@ -241,6 +262,14 @@ namespace Syadeu.Database
             else temp.Add(ValuePair.New("New Value", value));
             m_Values = temp.ToArray();
             return m_Values.Length - 1;
+        }
+        public void Add(ValuePair valuePair)
+        {
+            if (Contains(valuePair.Hash)) throw new Exception();
+
+            var temp = m_Values.ToList();
+            temp.Add(valuePair);
+            m_Values = temp.ToArray();
         }
         public void Add(string name, object value)
         {
