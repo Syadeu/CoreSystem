@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Syadeu.Database;
+using System;
 using UnityEngine;
 
 namespace Syadeu
@@ -33,6 +34,7 @@ namespace Syadeu
                     m_Instance = ins;
 
                     ins.OnInitialize();
+                    ConfigLoader.LoadConfig(ins);
                     ins.OnStart();
                 }
 
