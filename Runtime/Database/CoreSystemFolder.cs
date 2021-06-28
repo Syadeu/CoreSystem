@@ -7,12 +7,7 @@ namespace Syadeu.Database
     {
         private const string DEFAULT_PATH = "../CoreSystem";
         private const string MODULE_PATH = "Modules";
-        private static string c_ApplicationDataPath;
-
-        internal static void Initialize()
-        {
-            c_ApplicationDataPath = Application.dataPath;
-        }
+        private static string c_ApplicationDataPath = Application.dataPath;
 
         public static string ApplicationDataPath => c_ApplicationDataPath;
         public static string RootPath => Path.Combine(c_ApplicationDataPath, "..");

@@ -1,5 +1,4 @@
 ﻿using Syadeu.Database;
-using System.Reflection;
 using UnityEngine;
 
 namespace Syadeu
@@ -103,14 +102,10 @@ namespace Syadeu
                         }
                     }
 
-                    var configAtt = t.GetCustomAttribute<RequireGlobalConfigAttribute>();
-                    if (configAtt != null)
-                    {
-                        asd
-                    }
-
                     ins.gameObject.isStatic = true;
                     m_Instance = ins;
+
+                    ConfigLoader.LoadConfig(ins);
                     ins.OnStart();
                 }
                 return m_Instance;

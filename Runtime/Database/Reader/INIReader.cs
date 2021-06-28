@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Text;
 using UnityEditor.Graphs;
 
@@ -53,13 +55,31 @@ namespace Syadeu.Database
                 }
 
                 string[] vs = line.Split(c_ValueSeperator, 2);
-                if (currentHeader != null)
+                ValuePair value;
+                if (vs.Length == 2)
                 {
-                    headerValues.Add(vs.Length == 2 ? ValuePair.New(vs[0], vs[1]) : new ValueNull(vs[0]));
+                    object temp;
+                    if (int.TryParse(vs[1], out int intVal)) temp = intVal;
+                    else if (float.TryParse(vs[1], out float floatVal)) temp = floatVal;
+                    else if (bool.TryParse(vs[1], out bool boolVal)) temp = boolVal;
+                    else temp = vs[1];
+
+                    $"new value: {vs[0]}: {temp}".ToLog();
+                    value = ValuePair.New(vs[0], temp);
                 }
                 else
                 {
-                    values.Add(vs.Length == 2 ? ValuePair.New(vs[0], vs[1]) : new ValueNull(vs[0]));
+                    $"null value: {vs[0]}".ToLog();
+                    value = new ValueNull(vs[0]);
+                }
+
+                if (currentHeader != null)
+                {
+                    headerValues.Add(value);
+                }
+                else
+                {
+                    values.Add(value);
                 }
             }
 
@@ -67,14 +87,14 @@ namespace Syadeu.Database
             {
                 if (currentHeader != null)
                 {
-                    currentHeader.m_Values = headerValues.ToArray();
+                    currentHeader.m_Values = headerValues;
                     headers.Add(currentHeader);
                     currentHeader = null;
                     headerValues = null;
                 }
             }
 
-            return new INIFile(values.ToArray(), headers.ToArray());
+            return new INIFile(values, headers);
         }
         public static void Write(string path, INIFile ini)
         {
@@ -89,18 +109,18 @@ namespace Syadeu.Database
         public static void Write(TextWriter wr, INIFile ini)
         {
             StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < ini.m_Values.Length; i++)
+            for (int i = 0; i < ini.m_Values.Count; i++)
             {
                 if (sb.Length > 0) sb.AppendLine();
                 sb.AppendLine(ToValuePairLine(ini.m_Values[i]));
             }
 
-            for (int i = 0; i < ini.m_Headers.Length; i++)
+            for (int i = 0; i < ini.m_Headers.Count; i++)
             {
                 if (sb.Length > 0) sb.AppendLine();
                 sb.AppendLine(string.Concat(c_HeaderStart, ini.m_Headers[i].m_Name, c_HeaderEnd));
 
-                for (int j = 0; j < ini.m_Headers[i].m_Values.Length; j++)
+                for (int j = 0; j < ini.m_Headers[i].m_Values.Count; j++)
                 {
                     sb.AppendLine(ToValuePairLine(ini.m_Headers[i].m_Values[j]));
                 }
@@ -122,45 +142,92 @@ namespace Syadeu.Database
     [StaticManagerIntializeOnLoad]
     public sealed class ConfigLoader : StaticDataManager<ConfigLoader>
     {
-        private static string m_GlobalConfigPath = Path.Combine(CoreSystemFolder.RootPath, "config.ini");
-        private static string m_SubConfigPath = Path.Combine(CoreSystemFolder.RootPath, "Configs");
+        private static string m_GlobalConfigPath = Path.Combine(CoreSystemFolder.CoreSystemDataPath, "config.ini");
+        private static string m_SubConfigPath = Path.Combine(CoreSystemFolder.CoreSystemDataPath, "Configs");
 
         private Config m_Global;
-        private Config[] m_Locals;
+        private Dictionary<string, Config> m_Locals;
 
         public static Config Global => Instance.m_Global;
 
         public override void OnInitialize()
         {
+            if (!Directory.Exists(m_SubConfigPath)) Directory.CreateDirectory(m_SubConfigPath);
+
             m_Global = new Config(ConfigLocation.Global, m_GlobalConfigPath);
             string[] subConfigsPath = Directory.GetFiles(m_SubConfigPath);
-            m_Locals = new Config[subConfigsPath.Length];
-            for (int i = 0; i < m_Locals.Length; i++)
+            m_Locals = new Dictionary<string, Config>();
+            for (int i = 0; i < subConfigsPath.Length; i++)
             {
-                m_Locals[i] = new Config(ConfigLocation.Sub, subConfigsPath[i]);
+                Config config = new Config(ConfigLocation.Sub, subConfigsPath[i]);
+                m_Locals.Add(config.Name, config);
             }
         }
 
-        public Config 
+        public static void LoadConfig(object obj)
+        {
+            System.Type t = obj.GetType();
+            var configAtt = t.GetCustomAttribute<RequireGlobalConfigAttribute>();
+            if (configAtt == null) return;
+
+            Config config;
+            if (configAtt.m_Location == ConfigLocation.Global) config = Global;
+            else
+            {
+                if (!Instance.m_Locals.TryGetValue(configAtt.m_Name, out config))
+                {
+                    config = new Config(ConfigLocation.Sub, 
+                        Path.Combine(m_SubConfigPath, configAtt.m_Name + ".ini"));
+                    Instance.m_Locals.Add(config.Name, config);
+                }
+            }
+
+            FieldInfo[] fields = t
+                .GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                .Where((other) => other.GetCustomAttribute<ConfigValueAttribute>() != null)
+                .ToArray();
+
+            for (int i = 0; i < fields.Length; i++)
+            {
+                var att = fields[i].GetCustomAttribute<ConfigValueAttribute>();
+                object value;
+                if (string.IsNullOrEmpty(att.Header))
+                {
+                    value = config.INIFile
+                        .GetOrCreateValue(fields[i].FieldType, fields[i].Name)
+                        .GetValue();
+                }
+                else
+                {
+                    value = config.INIFile.GetOrCreateHeader(att.Header)
+                        .GetOrCreateValue(fields[i].FieldType, fields[i].Name)
+                        .GetValue();
+                }
+                $"{fields[i].Name}: {value}".ToLog();
+                fields[i].SetValue(obj, value);
+            }
+
+            config.Save();
+        }
     }
     public sealed class Config
     {
-        private readonly ConfigLocation m_Location;
+        internal readonly ConfigLocation m_Location;
         private readonly INIFile m_INI;
 
-        private readonly string m_Name;
-        private readonly string m_Path;
+        internal readonly string m_Path;
 
+        public string Name => Path.GetFileNameWithoutExtension(m_Path);
         public ConfigLocation Location => m_Location;
+        public INIFile INIFile => m_INI;
 
         internal Config(ConfigLocation location, string path)
         {
             m_Location = location;
-            m_Name = Path.GetFileNameWithoutExtension(path);
             m_Path = path;
             if (!File.Exists(path))
             {
-                m_INI = new INIFile(null, null);
+                m_INI = new INIFile(new List<ValuePair>(), new List<INIHeader>());
             }
             else
             {
@@ -178,32 +245,111 @@ namespace Syadeu.Database
     {
         public static INIFile Empty => new INIFile();
 
-        internal ValuePair[] m_Values;
-        internal INIHeader[] m_Headers;
+        internal List<ValuePair> m_Values;
+        internal List<INIHeader> m_Headers;
 
         private INIFile() { }
-        internal INIFile(ValuePair[] values, INIHeader[] headers)
+        internal INIFile(List<ValuePair> values, List<INIHeader> headers)
         {
             m_Values = values;
             m_Headers = headers;
         }
 
-        public INIFile NewValues(params ValuePair[] values)
+        public ValuePair GetValue(string name)
         {
-            m_Values = values;
-            return this;
+            for (int i = 0; i < m_Values.Count; i++)
+            {
+                if (m_Values[i].m_Name.Equals(name)) return m_Values[i];
+            }
+            return null;
         }
-        public INIFile NewHeaders(params INIHeader[] headers)
+        public INIHeader GetHeader(string name)
         {
-            m_Headers = headers;
-            return this;
+            for (int i = 0; i < m_Headers.Count; i++)
+            {
+                if (m_Headers[i].m_Name.Equals(name)) return m_Headers[i];
+            }
+            return null;
+        }
+
+        public ValuePair GetOrCreateValue<T>(string name) where T : System.IConvertible
+            => GetOrCreateValue(typeof(T), name);
+        public ValuePair GetOrCreateValue(System.Type type, string name)
+        {
+            ValuePair value = GetValue(name);
+            if (value != null) return value;
+
+            value = ValuePair.New(name, System.Activator.CreateInstance(type));
+            m_Values.Add(value);
+            return value;
+        }
+        public void SetValue(string name, object value)
+        {
+            ValuePair temp = ValuePair.New(name, value);
+            for (int i = 0; i < m_Values.Count; i++)
+            {
+                if (m_Values[i].m_Name.Equals(name))
+                {
+                    m_Values[i] = temp;
+                    return;
+                }
+            }
+
+            m_Values.Add(temp);
+        }
+        public INIHeader GetOrCreateHeader(string name)
+        {
+            INIHeader header = GetHeader(name);
+            if (header != null) return header;
+
+            header = new INIHeader(name);
+            m_Headers.Add(header);
+            return header;
         }
     }
     public sealed class INIHeader
     {
         public string m_Name;
-        public ValuePair[] m_Values;
+        public List<ValuePair> m_Values;
 
-        internal INIHeader(string name) => m_Name = name;
+        internal INIHeader(string name)
+        {
+            m_Name = name;
+            m_Values = new List<ValuePair>();
+        }
+
+        public ValuePair GetValue(string name)
+        {
+            for (int i = 0; i < m_Values.Count; i++)
+            {
+                if (m_Values[i].m_Name.Equals(name)) return m_Values[i];
+            }
+            return null;
+        }
+        public ValuePair GetOrCreateValue<T>(string name) where T : System.IConvertible
+            => GetOrCreateValue(typeof(T), name);
+        public ValuePair GetOrCreateValue(System.Type type, string name)
+        {
+            ValuePair value = GetValue(name);
+            if (value != null) return value;
+
+            value = ValuePair.New(name, System.Activator.CreateInstance(type));
+            m_Values.Add(value);
+            return value;
+        }
+        public void SetValue(string name, object value)
+        {
+            ValuePair temp = ValuePair.New(name, value);
+            for (int i = 0; i < m_Values.Count; i++)
+            {
+                if (m_Values[i].m_Name.Equals(name))
+                {
+                    m_Values[i] = temp;
+                    return;
+                }
+            }
+
+            m_Values.Add(temp);
+        }
     }
 }

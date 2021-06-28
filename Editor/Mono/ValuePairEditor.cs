@@ -2,29 +2,25 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-
+using Google.Apis.Sheets.v4.Data;
 using Syadeu;
 using Syadeu.Database;
 using UnityEditor;
-
-using UnityEditor.IMGUI.Controls;
-using UnityEngine;
-
-#if UNITY_ADDRESSABLES
-using UnityEngine.AddressableAssets;
 using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
-#endif
-
-#if CORESYSTEM_GOOGLE
-using Google.Apis.Sheets.v4.Data;
-#endif
+using UnityEditor.IMGUI.Controls;
+using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 namespace SyadeuEditor
 {
     public static class ValuePairEditor
     {
-        public static void DrawValueContainer(this ValuePairContainer container, string syncSheetName = null)
+        public static void DrawValueContainer(this ValuePairContainer container
+#if CORESYSTEM_GOOGLE
+            , string syncSheetName = null
+#endif
+            )
         {
             using (new EditorGUILayout.VerticalScope("Box"))
             {
@@ -298,9 +294,7 @@ namespace SyadeuEditor
             item.m_Name = EditorGUILayout.TextField("Name: ", item.m_Name);
             EditorGUILayout.TextField("Guid: ", item.m_Guid);
 
-#if UNITY_ADDRESSABLES
             DrawAssetReference(item, item.m_ImagePath);
-#endif
 
             using (new EditorGUILayout.VerticalScope(c_Box))
             {
@@ -396,7 +390,6 @@ namespace SyadeuEditor
                 return 0;
             }
 
-#if UNITY_ADDRESSABLES
             static void DrawAssetReference(Item item, AssetReference refAsset)
             {
                 UnityEngine.Object asset = refAsset?.editorAsset;
@@ -422,7 +415,8 @@ namespace SyadeuEditor
 
                 EditorGUIUtility.SetIconSize(iconSize);
             }
-#endif
+
+
         }
 
         class AssetReferencePopup : PopupWindowContent
@@ -461,7 +455,7 @@ namespace SyadeuEditor
             public override Vector2 GetWindowSize()
             {
                 Vector2 result = base.GetWindowSize();
-                result.x += 20;
+                result.x += 40;
                 return result;
             }
 

@@ -379,7 +379,6 @@ namespace Syadeu
         {
             const string InstanceStr = "Instance";
 
-            CoreSystemFolder.Initialize();
             Instance.Initialize(SystemFlag.MainSystem);
 
             Type[] internalTypes = typeof(CoreSystem).Assembly.GetTypes()
