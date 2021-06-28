@@ -229,11 +229,6 @@ namespace Syadeu.Database.Lua
         private readonly Dictionary<string, string> m_Resources;
         public Dictionary<string, string> Resources => m_Resources;
 
-        /// <summary>
-		/// The default path where scripts are meant to be stored (if not changed)
-		/// </summary>
-		public const string DEFAULT_PATH = "../CoreSystem/Modules/Lua";
-
         public LuaScriptLoader()
         {
             m_Resources = new Dictionary<string, string>();
@@ -245,8 +240,8 @@ namespace Syadeu.Database.Lua
         {
             IgnoreLuaPathGlobal = true;
             ModulePaths = UnpackStringPaths(
-                $"{Application.dataPath}/{DEFAULT_PATH}/?;" +
-                $"{Application.dataPath}/{DEFAULT_PATH}/?.lua");
+                $"{CoreSystemFolder.LuaPath}/?;" +
+                $"{CoreSystemFolder.LuaPath}/?.lua");
         }
         private static string GetFileName(string filename)
         {
@@ -270,11 +265,11 @@ namespace Syadeu.Database.Lua
                 $"Loaded {scriptAssets[i].name}".ToLog();
             }
 
-            if (!Directory.Exists($"{Application.dataPath}/{DEFAULT_PATH}"))
+            if (!Directory.Exists($"{CoreSystemFolder.LuaPath}"))
             {
-                Directory.CreateDirectory($"{Application.dataPath}/{DEFAULT_PATH}");
+                Directory.CreateDirectory($"{CoreSystemFolder.LuaPath}");
             }
-            LoadAllScripts($"{Application.dataPath}/{DEFAULT_PATH}", m_Resources, 1);
+            LoadAllScripts($"{CoreSystemFolder.LuaPath}", m_Resources, 1);
 
             void LoadAllScripts(string path, Dictionary<string, string> scrs, int depth)
             {
@@ -308,7 +303,7 @@ namespace Syadeu.Database.Lua
                 var error = string.Format(
 @"Cannot load script '{0}'. By default, scripts should be .txt files placed under a Assets/Resources/{1} directory.
 If you want scripts to be put in another directory or another way, use a custom instance of UnityAssetsScriptLoader or implement
-your own IScriptLoader (possibly extending ScriptLoaderBase).", file, DEFAULT_PATH);
+your own IScriptLoader (possibly extending ScriptLoaderBase).", file, CoreSystemFolder.LuaPath);
 
                 throw new System.Exception(error);
             }

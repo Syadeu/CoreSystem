@@ -17,6 +17,7 @@ using UnityEngine.Networking;
 using System.Threading.Tasks;
 using System.Reflection;
 using Syadeu.Database;
+using Syadeu.Database.Lua;
 
 namespace Syadeu
 {
@@ -378,6 +379,7 @@ namespace Syadeu
         {
             const string InstanceStr = "Instance";
 
+            CoreSystemFolder.Initialize();
             Instance.Initialize(SystemFlag.MainSystem);
 
             Type[] internalTypes = typeof(CoreSystem).Assembly.GetTypes()
