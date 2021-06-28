@@ -26,7 +26,26 @@ namespace SyadeuEditor
 {
     public static class ValuePairEditor
     {
-        public static void DrawValueContainer(this ValuePairContainer container, string name
+        public enum DrawMenu
+        {
+            None = 0,
+
+            Int = 1 << 0,
+            Double = 1 << 1,
+            String = 1 << 2,
+            Bool = 1 << 3,
+            IntArray = 1 << 4,
+            DoubleArray = 1 << 5,
+            StringArray = 1 << 6,
+            BoolArray = 1 << 7,
+            Delegate = 1 << 8,
+
+            All = ~0
+        }
+        public static void DrawValueContainer(this ValuePairContainer container, string name)
+            => DrawValueContainer(container, name, DrawMenu.All);
+        public static void DrawValueContainer(this ValuePairContainer container, 
+            string name, DrawMenu drawMenu
 #if CORESYSTEM_GOOGLE
             , string syncSheetName = null
 #endif
@@ -47,48 +66,72 @@ namespace SyadeuEditor
                     if (GUILayout.Button("+", GUILayout.Width(20)))
                     {
                         GenericMenu typeMenu = new GenericMenu();
-                        typeMenu.AddItem(new GUIContent("Int"), false, () =>
+                        if (drawMenu.HasFlag(DrawMenu.Int))
                         {
-                            container.Add<int>("New Int Value", 0);
-                        });
-                        typeMenu.AddItem(new GUIContent("Double"), false, () =>
+                            typeMenu.AddItem(new GUIContent("Int"), false, () =>
+                            {
+                                container.Add<int>("New Int Value", 0);
+                            });
+                        }
+                        if (drawMenu.HasFlag(DrawMenu.Double))
                         {
-                            container.Add<double>("New Double Value", 0);
-                        });
-                        typeMenu.AddItem(new GUIContent("String"), false, () =>
+                            typeMenu.AddItem(new GUIContent("Double"), false, () =>
+                            {
+                                container.Add<double>("New Double Value", 0);
+                            });
+                        }
+                        if (drawMenu.HasFlag(DrawMenu.String))
                         {
-                            container.Add<string>("New String Value", "");
-                        });
-                        typeMenu.AddItem(new GUIContent("Bool"), false, () =>
+                            typeMenu.AddItem(new GUIContent("String"), false, () =>
+                            {
+                                container.Add<string>("New String Value", "");
+                            });
+                        }
+                        if (drawMenu.HasFlag(DrawMenu.Bool))
                         {
-                            container.Add<bool>("New Bool Value", false);
-                        });
-                        typeMenu.AddItem(new GUIContent("Int Array"), false, () =>
+                            typeMenu.AddItem(new GUIContent("Bool"), false, () =>
+                            {
+                                container.Add<bool>("New Bool Value", false);
+                            });
+                        }
+                        if (drawMenu.HasFlag(DrawMenu.IntArray))
                         {
-                            container.Add<List<int>>("New Int Array", new List<int>());
-                        });
-                        typeMenu.AddItem(new GUIContent("Double Array"), false, () =>
+                            typeMenu.AddItem(new GUIContent("Int Array"), false, () =>
+                            {
+                                container.Add<List<int>>("New Int Array", new List<int>());
+                            });
+                        }
+                        if (drawMenu.HasFlag(DrawMenu.DoubleArray))
                         {
-                            container.Add<List<double>>("New Double Array", new List<double>());
-                        });
-                        typeMenu.AddItem(new GUIContent("Bool Array"), false, () =>
+                            typeMenu.AddItem(new GUIContent("Double Array"), false, () =>
+                            {
+                                container.Add<List<double>>("New Double Array", new List<double>());
+                            });
+                        }
+                        if (drawMenu.HasFlag(DrawMenu.BoolArray))
                         {
-                            container.Add<List<bool>>("New Bool Array", new List<bool>());
-                        });
-                        typeMenu.AddItem(new GUIContent("String Array"), false, () =>
+                            typeMenu.AddItem(new GUIContent("Bool Array"), false, () =>
+                            {
+                                container.Add<List<bool>>("New Bool Array", new List<bool>());
+                            });
+                        }
+                        if (drawMenu.HasFlag(DrawMenu.StringArray))
                         {
-                            container.Add<List<string>>("New String Array", new List<string>());
-                        });
-                        typeMenu.AddItem(new GUIContent("Delegate"), false, () =>
+                            typeMenu.AddItem(new GUIContent("String Array"), false, () =>
+                            {
+                                container.Add<List<string>>("New String Array", new List<string>());
+                            });
+                        }
+                        if (drawMenu.HasFlag(DrawMenu.Delegate))
                         {
-                            container.Add<Action>("New Delegate Value", () => { });
-                        });
-                        //;
-                        //GUIUtility.GUIToScreenPoint(Event.current.mousePosition)
-                        //GUILayoutUtility.GetRect()
+                            typeMenu.AddItem(new GUIContent("Delegate"), false, () =>
+                            {
+                                container.Add<Action>("New Delegate Value", () => { });
+                            });
+                        }
+                        
                         Rect rect = GUILayoutUtility.GetLastRect();
                         rect.position = Event.current.mousePosition;
-                        //rect.width = 100; rect.height = 400;
                         typeMenu.DropDown(rect);
                     }
                 }
@@ -628,17 +671,20 @@ namespace SyadeuEditor
     public sealed class CreatureStatEditor : EditorEntity<CreatureStat>
     {
         ValuePairContainer reflectionValues;
+        ValuePairContainer actualValues;
 
         private void OnEnable()
         {
-            FieldInfo field = typeof(CreatureStat).GetField("m_ReflectionValues", 
-                BindingFlags.NonPublic | BindingFlags.Instance);
-
-            reflectionValues = (ValuePairContainer)field.GetValue(Asset);
+            reflectionValues = GetValue<ValuePairContainer>("m_ReflectionValues");
             if (reflectionValues == null)
             {
-                reflectionValues = new ValuePairContainer();
-                field.SetValue(Asset, reflectionValues);
+                SetValue("m_ReflectionValues", reflectionValues);
+                EditorUtility.SetDirty(Asset);
+            }
+            actualValues = GetValue<ValuePairContainer>("m_Values");
+            if (actualValues == null)
+            {
+                SetValue("m_Values", actualValues);
                 EditorUtility.SetDirty(Asset);
             }
         }
@@ -646,11 +692,17 @@ namespace SyadeuEditor
         public override void OnInspectorGUI()
         {
             EditorGUI.BeginChangeCheck();
-            reflectionValues.DrawValueContainer("Reflection Values");
+            EditorGUI.BeginDisabledGroup(Application.isPlaying);
+            reflectionValues.DrawValueContainer("Reflection Values", ValuePairEditor.DrawMenu.String);
+            EditorGUI.EndDisabledGroup();
             if (EditorGUI.EndChangeCheck())
             {
                 EditorUtility.SetDirty(Asset);
             }
+
+            EditorGUI.BeginDisabledGroup(true);
+            actualValues.DrawValueContainer("Values", ValuePairEditor.DrawMenu.None);
+            EditorGUI.EndDisabledGroup();
 
             EditorGUILayout.Space();
             base.OnInspectorGUI();
