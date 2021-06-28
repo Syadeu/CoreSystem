@@ -16,7 +16,7 @@ namespace SyadeuEditor
 {
     public static class ValuePairEditor
     {
-        public static void DrawValueContainer(this ValuePairContainer container
+        public static void DrawValueContainer(this ValuePairContainer container, string name
 #if CORESYSTEM_GOOGLE
             , string syncSheetName = null
 #endif
@@ -26,7 +26,7 @@ namespace SyadeuEditor
             {
                 using (new EditorGUILayout.HorizontalScope())
                 {
-                    EditorUtils.StringHeader("Values", 15);
+                    EditorUtils.StringHeader(name, 15);
 #if CORESYSTEM_GOOGLE
                     if (!string.IsNullOrEmpty(syncSheetName) && GUILayout.Button("Sync", GUILayout.Width(50)))
                     {
@@ -87,6 +87,8 @@ namespace SyadeuEditor
                 //if (Target.m_Values == null) Target.m_Values = new ValuePairContainer();
                 for (int i = 0; i < container.Count; i++)
                 {
+                    uint hash = container[i].Hash;
+
                     Syadeu.Database.ValueType valueType = container[i].GetValueType();
                     if (valueType == Syadeu.Database.ValueType.Array)
                     {
@@ -94,7 +96,7 @@ namespace SyadeuEditor
                         EditorGUILayout.BeginHorizontal();
                         if (list == null || list.Count == 0)
                         {
-                            container[i].m_Name = EditorGUILayout.TextField(container[i].m_Name);
+                            container[i].Name = EditorGUILayout.TextField(container[i].Name);
                             if (GUILayout.Button("+", GUILayout.Width(20)))
                             {
                                 list.Add(Activator.CreateInstance(list.GetType().GenericTypeArguments[0]));
@@ -103,7 +105,7 @@ namespace SyadeuEditor
                         }
                         else
                         {
-                            container[i].m_Name = EditorGUILayout.TextField(container[i].m_Name);
+                            container[i].Name = EditorGUILayout.TextField(container[i].Name);
                             if (GUILayout.Button("+", GUILayout.Width(20)))
                             {
                                 list.Add(Activator.CreateInstance(list.GetType().GenericTypeArguments[0]));
@@ -149,35 +151,35 @@ namespace SyadeuEditor
 
                     using (new EditorGUILayout.HorizontalScope())
                     {
-                        container[i].m_Name = EditorGUILayout.TextField(container[i].m_Name, GUILayout.Width(150));
+                        container[i].Name = EditorGUILayout.TextField(container[i].Name, GUILayout.Width(150));
                         switch (valueType)
                         {
                             case Syadeu.Database.ValueType.Int32:
                                 int intFal = EditorGUILayout.IntField((int)container[i].GetValue());
                                 if (!container[i].GetValue().Equals(intFal))
                                 {
-                                    container.SetValue(container[i].m_Name, intFal);
+                                    container.SetValue(container[i].Name, intFal);
                                 }
                                 break;
                             case Syadeu.Database.ValueType.Double:
                                 double doubleVal = EditorGUILayout.DoubleField((double)container[i].GetValue());
                                 if (!container[i].GetValue().Equals(doubleVal))
                                 {
-                                    container.SetValue(container[i].m_Name, doubleVal);
+                                    container.SetValue(container[i].Name, doubleVal);
                                 }
                                 break;
                             case Syadeu.Database.ValueType.String:
                                 string stringVal = EditorGUILayout.TextField((string)container[i].GetValue());
                                 if (!container[i].GetValue().Equals(stringVal))
                                 {
-                                    container.SetValue(container[i].m_Name, stringVal);
+                                    container.SetValue(container[i].Name, stringVal);
                                 }
                                 break;
                             case Syadeu.Database.ValueType.Boolean:
                                 bool boolVal = EditorGUILayout.Toggle((bool)container[i].GetValue());
                                 if (!container[i].GetValue().Equals(boolVal))
                                 {
-                                    container.SetValue(container[i].m_Name, boolVal);
+                                    container.SetValue(container[i].Name, boolVal);
                                 }
                                 break;
                             case Syadeu.Database.ValueType.Delegate:
@@ -362,7 +364,7 @@ namespace SyadeuEditor
                 EditorGUI.indentLevel -= 1;
             }
 
-            item.m_Values.DrawValueContainer();
+            item.m_Values.DrawValueContainer("Values");
 
             
             int GetSelectedItemType(string guid)

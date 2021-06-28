@@ -289,7 +289,7 @@ namespace SyadeuEditor
                 EditorGUILayout.TextField("Guid: ", Target.m_Guid);
 
                 EditorGUILayout.Space();
-                Target.m_Values.DrawValueContainer();
+                Target.m_Values.DrawValueContainer("Values");
             }
         }
         private class TreeItemEffectTypeElement : VerticalTreeElement<ItemEffectType>
@@ -305,7 +305,7 @@ namespace SyadeuEditor
                 EditorGUILayout.TextField("Guid: ", Target.m_Guid);
 
                 EditorGUILayout.Space();
-                Target.m_Values.DrawValueContainer();
+                Target.m_Values.DrawValueContainer("Values");
             }
         }
     }

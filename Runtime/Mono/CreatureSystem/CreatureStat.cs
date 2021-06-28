@@ -6,6 +6,7 @@ namespace Syadeu.Mono
 {
     public sealed class CreatureStat : CreatureEntity
     {
+        [SerializeField] private SerializableStringValuePair[] m_ReflectionValues;
         [SerializeField] private ValuePairContainer m_Values;
 
         public ValuePairContainer Values => m_Values;

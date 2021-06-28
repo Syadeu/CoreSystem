@@ -467,6 +467,14 @@ namespace Syadeu
         protected override void OnDestroy()
         {
             //StopAllCoroutines();
+            try
+            {
+                m_CustomBackgroundUpdates.Clear();
+                BackgroundThread.Abort();
+            }
+            catch (Exception)
+            {
+            }
 
             for (int i = 0; i < BackgroundJobWorkers.Count; i++)
             {

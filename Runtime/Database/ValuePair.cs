@@ -13,13 +13,24 @@ namespace Syadeu.Database
     [Serializable] [JsonConverter(typeof(ValuePairJsonConverter))]
     public abstract class ValuePair : ICloneable, IEquatable<ValuePair>
     {
-        [JsonProperty(Order = 0)] public string m_Name;
+        [UnityEngine.SerializeField][JsonProperty(Order = 0)] protected string m_Name;
+        [UnityEngine.SerializeField][JsonProperty(Order = 1)] protected uint m_Hash;
+
+        [JsonIgnore] public string Name { get => m_Name; set => m_Name = value; }
+        [JsonIgnore] public uint Hash
+        {
+            get
+            {
+                if (m_Hash == 0) m_Hash = FNV1a32.Calculate(m_Name);
+                return m_Hash;
+            }
+        }
 
         public abstract ValueType GetValueType();
 
         public abstract object GetValue();
         public abstract object Clone();
-        public virtual bool Equals(ValuePair other) => m_Name.Equals(other.m_Name);
+        public virtual bool Equals(ValuePair other) => Hash.Equals(other.Hash);
 
         public static ValuePair New(string name, object value)
         {
@@ -58,21 +69,21 @@ namespace Syadeu.Database
             throw new Exception();
         }
         public static ValuePair<int> Int(string name, int value)
-            => new SerializableIntValuePair() { m_Name = name, m_Value = value };
+            => new SerializableIntValuePair() { m_Name = name, m_Value = value, m_Hash = FNV1a32.Calculate(name) };
         public static ValuePair<double> Double(string name, double value)
-            => new SerializableDoubleValuePair() { m_Name = name, m_Value = value };
+            => new SerializableDoubleValuePair() { m_Name = name, m_Value = value, m_Hash = FNV1a32.Calculate(name) };
         public static ValuePair<string> String(string name, string value)
-            => new SerializableStringValuePair() { m_Name = name, m_Value = value };
+            => new SerializableStringValuePair() { m_Name = name, m_Value = value, m_Hash = FNV1a32.Calculate(name) };
         public static ValuePair<bool> Bool(string name, bool value)
-            => new SerializableBoolValuePair() { m_Name = name, m_Value = value };
+            => new SerializableBoolValuePair() { m_Name = name, m_Value = value, m_Hash = FNV1a32.Calculate(name) };
 
         public static ValuePair<IList> Array(string name, params int[] values)
-            => new SerializableArrayValuePair() { m_Name = name, m_Value = values };
+            => new SerializableArrayValuePair() { m_Name = name, m_Value = values, m_Hash = FNV1a32.Calculate(name) };
         public static ValuePair<IList> Array(string name, IList values)
-            => new SerializableArrayValuePair() { m_Name = name, m_Value = values };
+            => new SerializableArrayValuePair() { m_Name = name, m_Value = values, m_Hash = FNV1a32.Calculate(name) };
 
         public static ValuePair<Action> Action(string name, Action func)
-            => new SerializableActionValuePair() { m_Name = name, m_Value = func };
+            => new SerializableActionValuePair() { m_Name = name, m_Value = func, m_Hash = FNV1a32.Calculate(name) };
     }
     public abstract class ValuePair<T> : ValuePair, IEquatable<T>
     {
@@ -121,7 +132,11 @@ namespace Syadeu.Database
     }
     public sealed class ValueNull : ValuePair
     {
-        public ValueNull(string name) => m_Name = name;
+        public ValueNull(string name)
+        {
+            m_Name = name;
+            m_Hash = FNV1a32.Calculate(name);
+        }
 
         public override ValueType GetValueType() => ValueType.Null;
 
@@ -152,12 +167,12 @@ namespace Syadeu.Database
         [MoonSharpHidden] public ValuePair this[int i]
         {
             get => m_Values[i];
-            set => m_Values[i] = ValuePair.New(m_Values[i].m_Name, value);
+            set => m_Values[i] = ValuePair.New(m_Values[i].Name, value);
         }
         [MoonSharpHidden] object IList.this[int index]
         {
             get => m_Values[index];
-            set => m_Values[index] = ValuePair.New(m_Values[index].m_Name, value);
+            set => m_Values[index] = ValuePair.New(m_Values[index].Name, value);
         }
         [JsonIgnore] public int Count => m_Values.Length;
 
@@ -175,7 +190,7 @@ namespace Syadeu.Database
         {
             for (int i = 0; i < m_Values.Length; i++)
             {
-                if (m_Values[i].m_Name.Equals(name)) return i;
+                if (m_Values[i].Name.Equals(name)) return i;
             }
             return -1;
         }
@@ -292,7 +307,7 @@ namespace Syadeu.Database
     }
 
     #region Serializable Classes
-    public sealed class SerializableIntValuePair : ValuePair<int>
+    [Serializable] public sealed class SerializableIntValuePair : ValuePair<int>
     {
         public override object Clone()
         {
@@ -303,7 +318,7 @@ namespace Syadeu.Database
             };
         }
     }
-    public sealed class SerializableDoubleValuePair : ValuePair<double>
+    [Serializable] public sealed class SerializableDoubleValuePair : ValuePair<double>
     {
         public override object Clone()
         {
@@ -314,7 +329,7 @@ namespace Syadeu.Database
             };
         }
     }
-    public sealed class SerializableStringValuePair : ValuePair<string>
+    [Serializable] public sealed class SerializableStringValuePair : ValuePair<string>
     {
         public override object Clone()
         {
@@ -325,7 +340,7 @@ namespace Syadeu.Database
             };
         }
     }
-    public sealed class SerializableBoolValuePair : ValuePair<bool>
+    [Serializable] public sealed class SerializableBoolValuePair : ValuePair<bool>
     {
         public override object Clone()
         {
@@ -363,4 +378,6 @@ namespace Syadeu.Database
     }
 
 #endregion
+
+
 }

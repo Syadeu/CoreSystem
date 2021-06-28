@@ -17,7 +17,7 @@ namespace Syadeu.Database
         {
             for (int i = 0; i < m_Values.Count; i++)
             {
-                if (m_Values[i].m_Name.Equals(name)) return m_Values[i];
+                if (m_Values[i].Name.Equals(name)) return m_Values[i];
             }
             return null;
         }
@@ -37,7 +37,7 @@ namespace Syadeu.Database
             ValuePair temp = ValuePair.New(name, value);
             for (int i = 0; i < m_Values.Count; i++)
             {
-                if (m_Values[i].m_Name.Equals(name))
+                if (m_Values[i].Name.Equals(name))
                 {
                     m_Values[i] = temp;
                     return;

@@ -130,9 +130,9 @@ namespace Syadeu.Database
             {
                 if (value is ValueNull)
                 {
-                    return string.Concat(c_Comment, value.m_Name);
+                    return string.Concat(c_Comment, value.Name);
                 }
-                return string.Concat(value.m_Name, c_ValueSeperator[0], value.GetValue().ToString());
+                return string.Concat(value.Name, c_ValueSeperator[0], value.GetValue().ToString());
             }
         }
     }
