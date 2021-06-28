@@ -14,7 +14,7 @@ namespace Syadeu.Database
     public abstract class ValuePair : ICloneable, IEquatable<ValuePair>
     {
         [UnityEngine.SerializeField][JsonProperty(Order = 0)] protected string m_Name;
-        [UnityEngine.SerializeField][JsonProperty(Order = 1)] protected uint m_Hash;
+        [JsonIgnore] protected uint m_Hash;
 
         [JsonIgnore] public string Name { get => m_Name; set => m_Name = value; }
         [JsonIgnore] public uint Hash
