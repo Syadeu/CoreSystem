@@ -12,11 +12,20 @@ namespace Syadeu.Database
         private const string c_Comment = "-";
         private static char[] c_ValueSeperator = new char[] { '=' };
 
+        public static INIFile Read(string path)
+        {
+            INIFile ini;
+            using (var rdr = File.OpenText(path))
+            {
+                ini = Read(rdr);
+            }
+            return ini;
+        }
         public static INIFile Read(TextReader rdr)
         {
             List<INIHeader> headers = new List<INIHeader>();
             List<ValuePair> values = new List<ValuePair>();
-            
+
             INIHeader currentHeader = null;
             List<ValuePair> headerValues = null;
 
@@ -67,6 +76,16 @@ namespace Syadeu.Database
 
             return new INIFile(values.ToArray(), headers.ToArray());
         }
+        public static void Write(string path, INIFile ini)
+        {
+            using (System.IO.Stream stream = File.OpenWrite(path))
+            {
+                using (var writer = new System.IO.StreamWriter(stream))
+                {
+                    Write(writer, ini);
+                }
+            }
+        }
         public static void Write(TextWriter wr, INIFile ini)
         {
             StringBuilder sb = new StringBuilder();
@@ -100,26 +119,67 @@ namespace Syadeu.Database
         }
     }
 
-    [System.AttributeUsage(System.AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
-    public sealed class RequireGlobalConfigAttribute : System.Attribute
+    [StaticManagerIntializeOnLoad]
+    public sealed class ConfigLoader : StaticDataManager<ConfigLoader>
     {
-        public ConfigLocation Location;
-        public RequireGlobalConfigAttribute(ConfigLocation location) { Location = location; }
+        private static string m_GlobalConfigPath = Path.Combine(CoreSystemFolder.RootPath, "config.ini");
+        private static string m_SubConfigPath = Path.Combine(CoreSystemFolder.RootPath, "Configs");
+
+        private Config m_Global;
+        private Config[] m_Locals;
+
+        public static Config Global => Instance.m_Global;
+
+        public override void OnInitialize()
+        {
+            m_Global = new Config(ConfigLocation.Global, m_GlobalConfigPath);
+            string[] subConfigsPath = Directory.GetFiles(m_SubConfigPath);
+            m_Locals = new Config[subConfigsPath.Length];
+            for (int i = 0; i < m_Locals.Length; i++)
+            {
+                m_Locals[i] = new Config(ConfigLocation.Sub, subConfigsPath[i]);
+            }
+        }
+
+        public Config 
     }
-    [System.AttributeUsage(System.AttributeTargets.Field, AllowMultiple = false, Inherited = false)]
-    public sealed class ConfigValueAttribute : System.Attribute { }
-    public enum ConfigLocation
+    public sealed class Config
     {
-        Global,
-        Sub
+        private readonly ConfigLocation m_Location;
+        private readonly INIFile m_INI;
+
+        private readonly string m_Name;
+        private readonly string m_Path;
+
+        public ConfigLocation Location => m_Location;
+
+        internal Config(ConfigLocation location, string path)
+        {
+            m_Location = location;
+            m_Name = Path.GetFileNameWithoutExtension(path);
+            m_Path = path;
+            if (!File.Exists(path))
+            {
+                m_INI = new INIFile(null, null);
+            }
+            else
+            {
+                m_INI = INIReader.Read(path);
+            }
+        }
+
+        public void Save()
+        {
+            INIReader.Write(m_Path, m_INI);
+        }
     }
 
     public sealed class INIFile
     {
-        public static INIFile Empty = new INIFile();
+        public static INIFile Empty => new INIFile();
 
-        public ValuePair[] m_Values;
-        public INIHeader[] m_Headers;
+        internal ValuePair[] m_Values;
+        internal INIHeader[] m_Headers;
 
         private INIFile() { }
         internal INIFile(ValuePair[] values, INIHeader[] headers)
@@ -145,138 +205,5 @@ namespace Syadeu.Database
         public ValuePair[] m_Values;
 
         internal INIHeader(string name) => m_Name = name;
-    }
-
-    public static class FNV1a32
-    {
-        private const uint kPrime32 = 16777619;
-        private const uint kOffsetBasis32 = 2166136261U;
-
-        /// <summary>
-        /// FNV1a 32-bit
-        /// </summary>
-        public static uint Calculate(string str)
-        {
-            if (str == null)
-            {
-                return kOffsetBasis32;
-            }
-
-            uint hashValue = kOffsetBasis32;
-
-            int length = str.Length;
-            for (int i = 0; i < length; i++)
-            {
-                hashValue *= kPrime32;
-                hashValue ^= (uint)str[i];
-            }
-
-            return hashValue;
-        }
-
-        /// <summary>
-        /// FNV1a 32-bit
-        /// </summary>
-        public static uint Calculate(byte[] data)
-        {
-            if (data == null)
-            {
-                return kOffsetBasis32;
-            }
-
-            uint hashValue = kOffsetBasis32;
-
-            int length = data.Length;
-            for (int i = 0; i < length; i++)
-            {
-                hashValue *= kPrime32;
-                hashValue ^= (uint)data[i];
-            }
-
-            return hashValue;
-        }
-
-        /// <summary>
-        /// 32 bit FNV hashing algorithm is used by Wwise for mapping strings to wwise IDs.
-        /// Adapted from AkFNVHash.h provided as part of the Wwise installation.
-        /// </summary>
-        public static uint CalculateLower(string str)
-        {
-            if (string.IsNullOrEmpty(str))
-            {
-                return 0;
-            }
-
-            uint hashValue = kOffsetBasis32;
-
-            int length = str.Length;
-            for (int i = 0; i < length; i++)
-            {
-                hashValue *= kPrime32;
-
-                // peform tolower as part of the hash to prevent garbage.
-                char sval = str[i];
-                if ((sval >= 'A') && (sval <= 'Z'))
-                {
-                    hashValue ^= (uint)sval + ('a' - 'A');
-                }
-                else
-                {
-                    hashValue ^= (uint)sval;
-                }
-            }
-
-            return hashValue;
-        }
-    }
-
-    public static class FNV1a64
-    {
-        private const ulong kPrime64 = 1099511628211LU;
-        private const ulong kOffsetBasis64 = 14695981039346656037LU;
-
-        /// <summary>
-        /// FNV1a 64-bit
-        /// </summary>
-        public static ulong Calculate(string str)
-        {
-            if (str == null)
-            {
-                return kOffsetBasis64;
-            }
-
-            ulong hashValue = kOffsetBasis64;
-
-            int length = str.Length;
-            for (int i = 0; i < length; i++)
-            {
-                hashValue *= kPrime64;
-                hashValue ^= (ulong)str[i];
-            }
-
-            return hashValue;
-        }
-
-        /// <summary>
-        /// FNV1a 64-bit
-        /// </summary>
-        public static ulong Calculate(byte[] data)
-        {
-            if (data == null)
-            {
-                return kOffsetBasis64;
-            }
-
-            ulong hashValue = kOffsetBasis64;
-
-            int length = data.Length;
-            for (int i = 0; i < length; i++)
-            {
-                hashValue *= kPrime64;
-                hashValue ^= (ulong)data[i];
-            }
-
-            return hashValue;
-        }
     }
 }

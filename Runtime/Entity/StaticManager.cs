@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using Syadeu.Database;
+using System.Reflection;
+using UnityEngine;
 
 namespace Syadeu
 {
@@ -18,6 +20,7 @@ namespace Syadeu
             {
                 if (m_Instance == null)
                 {
+                    global::System.Type t = typeof(T);
 #if UNITY_EDITOR
                     if (IsMainthread() && !Application.isPlaying) throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
                         $"StaticManager<{typeof(T).Name}>의 인스턴스 객체는 플레이중에만 생성되거나 받아올 수 있습니다.");
@@ -32,14 +35,14 @@ namespace Syadeu
                     }
                     if (m_Instance != null) return m_Instance;
 
-                    if (typeof(T) != typeof(CoreSystem) && !CoreSystem.Initialized)
+                    if (t != typeof(CoreSystem) && !CoreSystem.Initialized)
                     {
                         CoreSystem.Instance.Initialize(SystemFlag.MainSystem);
                         DontDestroyOnLoad(CoreSystem.Instance.gameObject);
                     }
 
                     T ins;
-                    var existing = FindObjectsOfType(typeof(T)) as T[];
+                    var existing = FindObjectsOfType(t) as T[];
                     if (existing.Length > 0)
                     {
                         for (int i = 1; i < existing.Length; i++)
@@ -75,7 +78,7 @@ namespace Syadeu
 
                     ins.OnInitialize();
 
-                    if (typeof(T) == typeof(CoreSystem))
+                    if (t == typeof(CoreSystem))
                     {
                         System = ins as CoreSystem;
                         DontDestroyOnLoad(ins.gameObject);
@@ -98,6 +101,12 @@ namespace Syadeu
                             }
                             ins.transform.SetParent(InstanceGroupTr);
                         }
+                    }
+
+                    var configAtt = t.GetCustomAttribute<RequireGlobalConfigAttribute>();
+                    if (configAtt != null)
+                    {
+                        asd
                     }
 
                     ins.gameObject.isStatic = true;
