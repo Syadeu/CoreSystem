@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using UnityEditor.Graphs;
 
 namespace Syadeu.Database
 {
@@ -99,6 +100,20 @@ namespace Syadeu.Database
         }
     }
 
+    [System.AttributeUsage(System.AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
+    public sealed class RequireGlobalConfigAttribute : System.Attribute
+    {
+        public ConfigLocation Location;
+        public RequireGlobalConfigAttribute(ConfigLocation location) { Location = location; }
+    }
+    [System.AttributeUsage(System.AttributeTargets.Field, AllowMultiple = false, Inherited = false)]
+    public sealed class ConfigValueAttribute : System.Attribute { }
+    public enum ConfigLocation
+    {
+        Global,
+        Sub
+    }
+
     public sealed class INIFile
     {
         public static INIFile Empty = new INIFile();
@@ -113,7 +128,16 @@ namespace Syadeu.Database
             m_Headers = headers;
         }
 
-
+        public INIFile NewValues(params ValuePair[] values)
+        {
+            m_Values = values;
+            return this;
+        }
+        public INIFile NewHeaders(params INIHeader[] headers)
+        {
+            m_Headers = headers;
+            return this;
+        }
     }
     public sealed class INIHeader
     {
