@@ -1049,6 +1049,7 @@ namespace Syadeu
                     counter = 0;
                 }
                 //ThreadAwaiter(10);
+                m_SimWatcher.Reset();
             }
         }
         private IEnumerator UnityWorker()
