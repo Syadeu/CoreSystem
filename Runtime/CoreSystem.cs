@@ -358,6 +358,7 @@ namespace Syadeu
         public delegate void BackgroundWork(Awaiter awaiter);
         public delegate void UnityWork();
 
+        private readonly ManualResetEvent m_SimWatcher = new ManualResetEvent(false);
         internal readonly ConcurrentDictionary<CoreRoutine, object> m_CustomBackgroundUpdates = new ConcurrentDictionary<CoreRoutine, object>();
         internal readonly ConcurrentDictionary<CoreRoutine, object> m_CustomUpdates = new ConcurrentDictionary<CoreRoutine, object>();
         private bool m_StartUpdate = false;
@@ -685,9 +686,23 @@ namespace Syadeu
 
             List<Timer> activeTimers = new List<Timer>();
 
-            int counter = 0;
+            int counter = 0, tickCounter = 0;
             while (true)
             {
+                if (!m_SimWatcher.WaitOne())
+                {
+                    tickCounter++;
+                }
+                else
+                {
+                    if (tickCounter != 0)
+                    {
+                        $"{tickCounter} was skipped".ToLog();
+                    }
+                    //$"passed".ToLog();
+                    tickCounter = 0;
+                }
+
 #if UNITY_EDITOR
                 OnBackgroundStartSampler.Begin();
 #endif
@@ -1033,7 +1048,7 @@ namespace Syadeu
                     GC.Collect();
                     counter = 0;
                 }
-                ThreadAwaiter(10);
+                //ThreadAwaiter(10);
             }
         }
         private IEnumerator UnityWorker()
@@ -1315,6 +1330,7 @@ namespace Syadeu
                 //{
                 //    GC.Collect();
                 //}
+                m_SimWatcher.Set();
                 yield return null;
             }
         }
