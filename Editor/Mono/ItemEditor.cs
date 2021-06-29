@@ -35,11 +35,11 @@ namespace SyadeuEditor
         }
         private static void Validate()
         {
-            if (m_ItemTypes.Length == ItemDataList.Instance.m_ItemTypes.Count + 1 &&
-                m_ItemEffectTypes.Length == ItemDataList.Instance.m_ItemEffectTypes.Count + 1)
-            {
-                return;
-            }
+            //if (m_ItemTypes.Length == ItemDataList.Instance.m_ItemTypes.Count + 1 &&
+            //    m_ItemEffectTypes.Length == ItemDataList.Instance.m_ItemEffectTypes.Count + 1)
+            //{
+            //    return;
+            //}
 
             m_ItemTypes = new string[ItemDataList.Instance.m_ItemTypes.Count + 1];
             m_ItemTypes[0] = "None";

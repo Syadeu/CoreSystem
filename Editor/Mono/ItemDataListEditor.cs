@@ -34,6 +34,7 @@ namespace SyadeuEditor
                     tempList.AddRange(Asset.m_ItemEffectTypes);
 
                     m_TreeView = new VerticalTreeView(Asset, serializedObject);
+                    m_TreeView.OnDirty += RefreshNames;
                     m_TreeView.OnDirty += RefreshTreeView;
                     m_TreeView
                         .SetupElements(tempList, (other) =>
@@ -140,15 +141,7 @@ namespace SyadeuEditor
         {
             OnValidate();
         }
-        private void RefreshTreeView()
-        {
-            List<object> tempList = new List<object>();
-            tempList.AddRange(Asset.m_Items);
-            tempList.AddRange(Asset.m_ItemTypes);
-            tempList.AddRange(Asset.m_ItemEffectTypes);
-            TreeView.Refresh(tempList);
-        }
-        private void OnValidate()
+        private void RefreshNames()
         {
             m_ItemTypes = new string[ItemDataList.Instance.m_ItemTypes.Count + 1];
             m_ItemTypes[0] = "None";
@@ -163,12 +156,19 @@ namespace SyadeuEditor
             {
                 m_ItemEffectTypes[i] = ItemDataList.Instance.m_ItemEffectTypes[i - 1].m_Name;
             }
-
+        }
+        private void RefreshTreeView()
+        {
             List<object> tempList = new List<object>();
             tempList.AddRange(Asset.m_Items);
             tempList.AddRange(Asset.m_ItemTypes);
             tempList.AddRange(Asset.m_ItemEffectTypes);
             TreeView.Refresh(tempList);
+        }
+        private void OnValidate()
+        {
+            RefreshNames();
+            RefreshTreeView();
         }
 
         public override void OnInspectorGUI()
@@ -195,6 +195,8 @@ namespace SyadeuEditor
             {
                 Asset.SaveDatas();
                 EditorUtils.SetDirty(Asset);
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
                 OnValidate();
             }
             EditorGUILayout.EndHorizontal();
