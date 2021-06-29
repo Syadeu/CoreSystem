@@ -5,7 +5,6 @@ using System.Linq;
 
 using Syadeu;
 using Syadeu.Database;
-using Syadeu.Mono;
 using UnityEditor;
 
 using UnityEditor.IMGUI.Controls;
@@ -43,16 +42,19 @@ namespace SyadeuEditor
             All = ~0
         }
         public static void DrawValueContainer(this ValuePairContainer container, string name)
-            => DrawValueContainer(container, name, DrawMenu.All);
+            => DrawValueContainer(container, name, DrawMenu.All, null);
         public static void DrawValueContainer(this ValuePairContainer container, 
-            string name, DrawMenu drawMenu
+            string name, DrawMenu drawMenu, Action<ValuePair> onDrawItem
 #if CORESYSTEM_GOOGLE
             , string syncSheetName = null
 #endif
             )
         {
-            using (new EditorGUILayout.VerticalScope("Box"))
+            const string Box = "Box";
+
+            using (new EditorGUILayout.VerticalScope(Box))
             {
+                #region Header
                 using (new EditorGUILayout.HorizontalScope())
                 {
                     EditorUtils.StringHeader(name, 15);
@@ -63,6 +65,7 @@ namespace SyadeuEditor
                             container.Contains("Index") ? (int)container.GetValue("Index") : 1, syncSheetName);
                     }
 #endif
+                    #region Add Menu Items
                     if (GUILayout.Button("+", GUILayout.Width(20)))
                     {
                         GenericMenu typeMenu = new GenericMenu();
@@ -134,11 +137,13 @@ namespace SyadeuEditor
                         rect.position = Event.current.mousePosition;
                         typeMenu.DropDown(rect);
                     }
+                    #endregion
                 }
+                #endregion
 
                 EditorGUI.indentLevel += 1;
                 //if (Target.m_Values == null) Target.m_Values = new ValuePairContainer();
-                for (int i = 0; i < container.Count; i++)
+                for (int i = 0; i < container?.Count; i++)
                 {
                     uint hash = container[i].Hash;
 
@@ -199,6 +204,8 @@ namespace SyadeuEditor
                             
                             EditorGUI.indentLevel -= 1;
                         }
+
+                        onDrawItem?.Invoke(container[i]);
                         continue;
                     }
 
@@ -252,6 +259,8 @@ namespace SyadeuEditor
                             continue;
                         }
                     }
+
+                    onDrawItem?.Invoke(container[i]);
                 }
                 EditorGUI.indentLevel -= 1;
             }
@@ -664,48 +673,6 @@ namespace SyadeuEditor
                     return root;
                 }
             }
-        }
-    }
-
-    [CustomEditor(typeof(CreatureStat))]
-    public sealed class CreatureStatEditor : EditorEntity<CreatureStat>
-    {
-        ValuePairContainer reflectionValues;
-        ValuePairContainer actualValues;
-
-        private void OnEnable()
-        {
-            reflectionValues = GetValue<ValuePairContainer>("m_ReflectionValues");
-            if (reflectionValues == null)
-            {
-                SetValue("m_ReflectionValues", reflectionValues);
-                EditorUtility.SetDirty(Asset);
-            }
-            actualValues = GetValue<ValuePairContainer>("m_Values");
-            if (actualValues == null)
-            {
-                SetValue("m_Values", actualValues);
-                EditorUtility.SetDirty(Asset);
-            }
-        }
-
-        public override void OnInspectorGUI()
-        {
-            EditorGUI.BeginChangeCheck();
-            EditorGUI.BeginDisabledGroup(Application.isPlaying);
-            reflectionValues.DrawValueContainer("Reflection Values", ValuePairEditor.DrawMenu.String);
-            EditorGUI.EndDisabledGroup();
-            if (EditorGUI.EndChangeCheck())
-            {
-                EditorUtility.SetDirty(Asset);
-            }
-
-            EditorGUI.BeginDisabledGroup(true);
-            actualValues.DrawValueContainer("Values", ValuePairEditor.DrawMenu.None);
-            EditorGUI.EndDisabledGroup();
-
-            EditorGUILayout.Space();
-            base.OnInspectorGUI();
         }
     }
 }

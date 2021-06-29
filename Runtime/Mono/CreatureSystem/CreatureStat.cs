@@ -22,6 +22,10 @@ namespace Syadeu.Mono
                     clone.Name = m_ReflectionValues[i].GetValue<string>();
                     m_Values.Add(clone);
                 }
+                else
+                {
+                    $"{m_ReflectionValues[i].Name} 의 값을 찾을 수 없음".ToLog();
+                }
             }
         }
     }
