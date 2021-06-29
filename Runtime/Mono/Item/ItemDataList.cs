@@ -47,7 +47,7 @@ namespace Syadeu.Database
             m_ItemTypes = new List<ItemTypeEntity>();
             for (int i = 0; i < dataPaths.Length; i++)
             {
-                m_ItemTypes.Add(JsonConvert.DeserializeObject<ItemType>(File.ReadAllText(dataPaths[i])));
+                m_ItemTypes.Add(JsonConvert.DeserializeObject<ItemTypeEntity>(File.ReadAllText(dataPaths[i])));
             }
             
             dataPaths = Directory.GetFiles(GetPath(c_ItemEffectDataPath), jsonPostfix, SearchOption.TopDirectoryOnly);

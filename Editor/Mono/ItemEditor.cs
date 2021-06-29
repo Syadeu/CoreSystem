@@ -94,17 +94,22 @@ namespace SyadeuEditor
                         int tSelected = EditorGUILayout.Popup(GetSelectedItemType(item.m_ItemTypes[i]), m_ItemTypes);
                         if (EditorGUI.EndChangeCheck())
                         {
-                            ItemTypeEntity selectedItemType = ItemDataList.Instance.m_ItemTypes[tSelected - 1];
+                            if (tSelected == 0) item.m_ItemTypes[i] = "";
+                            else
+                            {
+                                ItemTypeEntity selectedItemType = ItemDataList.Instance.m_ItemTypes[tSelected - 1];
 
-                            if (item.m_ItemTypes.Where((other) => ItemDataList.Instance.GetItemType(other) is ItemUseableType).Count() != 0)
-                            {
-                                $"이 타입은 한 개 이상 존재할 수 없습니다.".ToLog();
+                                if (item.m_ItemTypes.Where((other) => ItemDataList.Instance.GetItemType(other) is ItemUseableType).Count() != 0 &&
+                                    selectedItemType is ItemUseableType)
+                                {
+                                    $"이 타입은 한 개 이상 존재할 수 없습니다.".ToLog();
+                                }
+                                else if (item.m_ItemTypes.Contains(selectedItemType.m_Guid))
+                                {
+                                    $"이미 해당 타입을 포함하고 있습니다.".ToLog();
+                                }
+                                else item.m_ItemTypes[i] = ItemDataList.Instance.m_ItemTypes[tSelected - 1].m_Guid;
                             }
-                            else if (item.m_ItemTypes.Contains(selectedItemType.m_Guid))
-                            {
-                                $"이미 해당 타입을 포함하고 있습니다.".ToLog();
-                            }
-                            else item.m_ItemTypes[i] = tSelected == 0 ? "" : ItemDataList.Instance.m_ItemTypes[tSelected - 1].m_Guid;
                         }
 
                         if (GUILayout.Button("-", GUILayout.Width(20)))
@@ -137,8 +142,22 @@ namespace SyadeuEditor
                 {
                     using (new EditorGUILayout.HorizontalScope())
                     {
+                        EditorGUI.BeginChangeCheck();
                         int teSelected = EditorGUILayout.Popup(GetSelectedItemEffectType(item.m_ItemEffectTypes[i]), m_ItemEffectTypes);
-                        item.m_ItemEffectTypes[i] = teSelected == 0 ? "" : ItemDataList.Instance.m_ItemEffectTypes[teSelected - 1].m_Guid;
+                        if (EditorGUI.EndChangeCheck())
+                        {
+                            if (teSelected == 0) item.m_ItemEffectTypes[i] = "";
+                            else
+                            {
+                                ItemEffectType selectedEffectType = ItemDataList.Instance.m_ItemEffectTypes[teSelected - 1];
+
+                                if (item.m_ItemEffectTypes.Contains(selectedEffectType.m_Guid))
+                                {
+                                    $"이미 해당 타입을 포함하고 있습니다.".ToLog();
+                                }
+                                else item.m_ItemEffectTypes[i] = ItemDataList.Instance.m_ItemEffectTypes[teSelected - 1].m_Guid;
+                            }
+                        }
 
                         if (GUILayout.Button("-", GUILayout.Width(20)))
                         {

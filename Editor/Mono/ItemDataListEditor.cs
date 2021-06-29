@@ -20,6 +20,116 @@ namespace SyadeuEditor
     public sealed class ItemDataListEditor : EditorEntity<ItemDataList>
     {
         private VerticalTreeView m_TreeView;
+        private VerticalTreeView TreeView
+        {
+            get
+            {
+                if (m_TreeView == null)
+                {
+                    Asset.LoadDatas();
+
+                    List<object> tempList = new List<object>();
+                    tempList.AddRange(Asset.m_Items);
+                    tempList.AddRange(Asset.m_ItemTypes);
+                    tempList.AddRange(Asset.m_ItemEffectTypes);
+
+                    m_TreeView = new VerticalTreeView(Asset, serializedObject);
+                    m_TreeView.OnDirty += RefreshTreeView;
+                    m_TreeView
+                        .SetupElements(tempList, (other) =>
+                        {
+                            if (other is Item item)
+                            {
+                                return new TreeItemElement(TreeView, item);
+                            }
+                            else if (other is ItemTypeEntity type)
+                            {
+                                return new TreeItemTypeElement(TreeView, type);
+                            }
+                            else if (other is ItemEffectType effectType)
+                            {
+                                return new TreeItemEffectTypeElement(TreeView, effectType);
+                            }
+                            throw new Exception();
+                        })
+                        .MakeAddButton(() =>
+                        {
+                            if (TreeView.SelectedToolbar == 0) Asset.m_Items.Add(new Item());
+                            else if (TreeView.SelectedToolbar == 1)
+                            {
+                                GenericMenu typeMenu = new GenericMenu();
+                                typeMenu.AddItem(new GUIContent("Common"), false, () =>
+                                {
+                                    Asset.m_ItemTypes.Add(new ItemType());
+
+                                    RefreshTreeView();
+                                });
+                                typeMenu.AddItem(new GUIContent("Useable"), false, () =>
+                                {
+                                    Asset.m_ItemTypes.Add(new ItemUseableType());
+
+                                    RefreshTreeView();
+                                });
+                                Rect rect = GUILayoutUtility.GetLastRect();
+                                rect.position = Event.current.mousePosition;
+                                typeMenu.DropDown(rect);
+                            }
+                            else if (TreeView.SelectedToolbar == 2) Asset.m_ItemEffectTypes.Add(new ItemEffectType());
+
+                            List<object> tempList = new List<object>();
+                            tempList.AddRange(Asset.m_Items);
+                            tempList.AddRange(Asset.m_ItemTypes);
+                            tempList.AddRange(Asset.m_ItemEffectTypes);
+                            return tempList;
+                        })
+                        .MakeRemoveButton((idx) =>
+                        {
+                            if (TreeView.SelectedToolbar == 0)
+                            {
+                                Asset.m_Items.Remove((Item)TreeView.Data[idx]);
+                            }
+                            else if (TreeView.SelectedToolbar == 1)
+                            {
+                                Asset.m_ItemTypes.Remove((ItemTypeEntity)TreeView.Data[idx]);
+                            }
+                            else if (TreeView.SelectedToolbar == 2)
+                            {
+                                Asset.m_ItemEffectTypes.Remove((ItemEffectType)TreeView.Data[idx]);
+                            }
+
+                            List<object> tempList = new List<object>();
+                            tempList.AddRange(Asset.m_Items);
+                            tempList.AddRange(Asset.m_ItemTypes);
+                            tempList.AddRange(Asset.m_ItemEffectTypes);
+                            return tempList;
+                        })
+                        .MakeToolbar("Items", "Types", "EffectTypes")
+                        .MakeCustomSearchFilter((e, searchTxt) =>
+                        {
+                            string name = "", guid = "";
+                            if (e is TreeItemElement itemEle)
+                            {
+                                name = itemEle.Target.m_Name;
+                                guid = itemEle.Target.m_Guid;
+                            }
+                            else if (e is TreeItemTypeElement typeEle)
+                            {
+                                name = typeEle.Target.m_Name;
+                                guid = typeEle.Target.m_Guid;
+                            }
+                            else if (e is TreeItemEffectTypeElement effEle)
+                            {
+                                name = effEle.Target.m_Name;
+                                guid = effEle.Target.m_Guid;
+                            }
+
+                            if (name.ToLower().Contains(searchTxt.ToLower()) || guid.Contains(searchTxt)) return true;
+                            return false;
+                        });
+                }
+                return m_TreeView;
+            }
+        }
 
         private static string[] m_ItemTypes = new string[0];
         private static string[] m_ItemEffectTypes = new string[0];
@@ -32,6 +142,7 @@ namespace SyadeuEditor
         }
         private void RefreshTreeView()
         {
+            Asset.LoadDatas();
             EditorUtility.SetDirty(Asset);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -40,110 +151,10 @@ namespace SyadeuEditor
             tempList.AddRange(Asset.m_Items);
             tempList.AddRange(Asset.m_ItemTypes);
             tempList.AddRange(Asset.m_ItemEffectTypes);
-            m_TreeView.Refresh(tempList);
+            TreeView.Refresh(tempList);
         }
         private void OnValidate()
         {
-            Asset.LoadDatas();
-
-            List<object> tempList = new List<object>();
-            tempList.AddRange(Asset.m_Items);
-            tempList.AddRange(Asset.m_ItemTypes);
-            tempList.AddRange(Asset.m_ItemEffectTypes);
-
-            m_TreeView = new VerticalTreeView(Asset, serializedObject);
-            m_TreeView
-                .SetupElements(tempList, (other) =>
-                {
-                    if (other is Item item)
-                    {
-                        return new TreeItemElement(m_TreeView, item);
-                    }
-                    else if (other is ItemTypeEntity type)
-                    {
-                        return new TreeItemTypeElement(m_TreeView, type);
-                    }
-                    else if (other is ItemEffectType effectType)
-                    {
-                        return new TreeItemEffectTypeElement(m_TreeView, effectType);
-                    }
-                    throw new Exception();
-                })
-                .MakeAddButton(() =>
-                {
-                    if (m_TreeView.SelectedToolbar == 0) Asset.m_Items.Add(new Item());
-                    else if (m_TreeView.SelectedToolbar == 1)
-                    {
-                        GenericMenu typeMenu = new GenericMenu();
-                        typeMenu.AddItem(new GUIContent("Common"), false, () =>
-                        {
-                            Asset.m_ItemTypes.Add(new ItemType());
-
-                            RefreshTreeView();
-                        });
-                        typeMenu.AddItem(new GUIContent("Useable"), false, () =>
-                        {
-                            Asset.m_ItemTypes.Add(new ItemUseableType());
-
-                            RefreshTreeView();
-                        });
-                        Rect rect = GUILayoutUtility.GetLastRect();
-                        rect.position = Event.current.mousePosition;
-                        typeMenu.DropDown(rect);
-                    }
-                    else if (m_TreeView.SelectedToolbar == 2) Asset.m_ItemEffectTypes.Add(new ItemEffectType());
-
-                    List<object> tempList = new List<object>();
-                    tempList.AddRange(Asset.m_Items);
-                    tempList.AddRange(Asset.m_ItemTypes);
-                    tempList.AddRange(Asset.m_ItemEffectTypes);
-                    return tempList;
-                })
-                .MakeRemoveButton((idx) =>
-                {
-                    if (m_TreeView.SelectedToolbar == 0)
-                    {
-                        Asset.m_Items.Remove((Item)m_TreeView.Data[idx]);
-                    }
-                    else if (m_TreeView.SelectedToolbar == 1)
-                    {
-                        Asset.m_ItemTypes.Remove((ItemTypeEntity)m_TreeView.Data[idx]);
-                    }
-                    else if (m_TreeView.SelectedToolbar == 2)
-                    {
-                        Asset.m_ItemEffectTypes.Remove((ItemEffectType)m_TreeView.Data[idx]);
-                    }
-
-                    List<object> tempList = new List<object>();
-                    tempList.AddRange(Asset.m_Items);
-                    tempList.AddRange(Asset.m_ItemTypes);
-                    tempList.AddRange(Asset.m_ItemEffectTypes);
-                    return tempList;
-                })
-                .MakeToolbar("Items", "Types", "EffectTypes")
-                .MakeCustomSearchFilter((e, searchTxt) =>
-                {
-                    string name = "", guid = "";
-                    if (e is TreeItemElement itemEle)
-                    {
-                        name = itemEle.Target.m_Name;
-                        guid = itemEle.Target.m_Guid;
-                    }
-                    else if (e is TreeItemTypeElement typeEle)
-                    {
-                        name = typeEle.Target.m_Name;
-                        guid = typeEle.Target.m_Guid;
-                    }
-                    else if (e is TreeItemEffectTypeElement effEle)
-                    {
-                        name = effEle.Target.m_Name;
-                        guid = effEle.Target.m_Guid;
-                    }
-
-                    if (name.ToLower().Contains(searchTxt.ToLower()) || guid.Contains(searchTxt)) return true;
-                    return false;
-                });
-
             m_ItemTypes = new string[ItemDataList.Instance.m_ItemTypes.Count + 1];
             m_ItemTypes[0] = "None";
             for (int i = 1; i < m_ItemTypes.Length; i++)
@@ -157,6 +168,12 @@ namespace SyadeuEditor
             {
                 m_ItemEffectTypes[i] = ItemDataList.Instance.m_ItemEffectTypes[i - 1].m_Name;
             }
+
+            List<object> tempList = new List<object>();
+            tempList.AddRange(Asset.m_Items);
+            tempList.AddRange(Asset.m_ItemTypes);
+            tempList.AddRange(Asset.m_ItemEffectTypes);
+            TreeView.Refresh(tempList);
         }
 
         public override void OnInspectorGUI()
@@ -189,7 +206,7 @@ namespace SyadeuEditor
             EditorUtils.SectorLine();
             EditorGUILayout.Space();
 
-            m_TreeView.OnGUI();
+            TreeView.OnGUI();
 
             EditorGUILayout.Space();
             m_ShowOriginalContents = EditorUtils.Foldout(m_ShowOriginalContents, "Original Contents");

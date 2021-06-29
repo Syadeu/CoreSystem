@@ -41,22 +41,33 @@ namespace Syadeu.Database
 
     internal sealed class ItemTypeJsonConverter : JsonConverter
     {
-        public override bool CanWrite => false;
-        public override bool CanRead => false;
+        public override bool CanWrite => true;
+        public override bool CanRead => true;
 
         public override bool CanConvert(Type objectType) => objectType.Equals(typeof(ItemTypeEntity));
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
-            JObject o = (JObject)JToken.FromObject(value);
+            JObject o;
             if (value is ItemType)
             {
+                o = JObject.Parse(
+                    JsonConvert.SerializeObject(
+                        value, typeof(ItemType), Formatting.Indented,
+                        BaseSpecifiedConcreteClassConverter<ItemTypeEntity>.SpecifiedSubclassConversion)
+                    );
                 //BaseSpecifiedConcreteClassConverter<ItemTypeEntity>.SpecifiedSubclassConversion
                 o.AddFirst(new JProperty("Type", ClassType.Common));
                 o.WriteTo(writer);
             }
             else if (value is ItemUseableType)
             {
+                o = JObject.Parse(
+                    JsonConvert.SerializeObject(
+                        value, typeof(ItemUseableType), Formatting.Indented,
+                        BaseSpecifiedConcreteClassConverter<ItemTypeEntity>.SpecifiedSubclassConversion)
+                    );
+
                 o.AddFirst(new JProperty("Type", ClassType.Useable));
                 o.WriteTo(writer);
             }
@@ -66,29 +77,24 @@ namespace Syadeu.Database
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
             JObject jo = JObject.Load(reader);
+            ClassType classType = (ClassType)jo["Type"].ToObject<int>();
+            jo.Remove("Type");
+
             ItemTypeEntity itemType;
-
-
-            if (!jo.TryGetValue("m_Values", out JToken _))
+            switch (classType)
             {
-                ItemUseableType temp = new ItemUseableType(
-                    jo["m_Name"].ToString(), jo["m_Guid"].ToString())
-                {
-                    m_RemoveOnUse = jo["m_RemoveOnUse"].ToObject<bool>(),
-                    m_OnUse = jo["m_OnUse"].ToObject<ValuePairContainer>()
-                };
-
-                itemType = temp;
-            }
-            else
-            {
-                ItemType temp = new ItemType(
-                    jo["m_Name"].ToString(), jo["m_Guid"].ToString())
-                {
-                    m_Values = jo["m_Values"].ToObject<ValuePairContainer>()
-                };
-
-                itemType = temp;
+                case ClassType.Useable:
+                    itemType = (ItemUseableType)JsonConvert.DeserializeObject(
+                        jo.ToString(), typeof(ItemUseableType),
+                        BaseSpecifiedConcreteClassConverter<ItemTypeEntity>.SpecifiedSubclassConversion
+                        );
+                    break;
+                default:
+                    itemType = (ItemType)JsonConvert.DeserializeObject(
+                        jo.ToString(), typeof(ItemType),
+                        BaseSpecifiedConcreteClassConverter<ItemTypeEntity>.SpecifiedSubclassConversion
+                        );
+                    break;
             }
 
             return itemType;
