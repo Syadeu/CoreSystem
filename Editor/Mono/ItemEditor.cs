@@ -15,6 +15,7 @@ using Google.Apis.Sheets.v4.Data;
 using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
 using UnityEngine.AddressableAssets;
+using Syadeu;
 #endif
 
 namespace SyadeuEditor
@@ -89,8 +90,22 @@ namespace SyadeuEditor
                 {
                     using (new EditorGUILayout.HorizontalScope())
                     {
+                        EditorGUI.BeginChangeCheck();
                         int tSelected = EditorGUILayout.Popup(GetSelectedItemType(item.m_ItemTypes[i]), m_ItemTypes);
-                        item.m_ItemTypes[i] = tSelected == 0 ? "" : ItemDataList.Instance.m_ItemTypes[tSelected - 1].m_Guid;
+                        if (EditorGUI.EndChangeCheck())
+                        {
+                            ItemTypeEntity selectedItemType = ItemDataList.Instance.m_ItemTypes[tSelected - 1];
+
+                            if (item.m_ItemTypes.Where((other) => ItemDataList.Instance.GetItemType(other) is ItemUseableType).Count() != 0)
+                            {
+                                $"이 타입은 한 개 이상 존재할 수 없습니다.".ToLog();
+                            }
+                            else if (item.m_ItemTypes.Contains(selectedItemType.m_Guid))
+                            {
+                                $"이미 해당 타입을 포함하고 있습니다.".ToLog();
+                            }
+                            else item.m_ItemTypes[i] = tSelected == 0 ? "" : ItemDataList.Instance.m_ItemTypes[tSelected - 1].m_Guid;
+                        }
 
                         if (GUILayout.Button("-", GUILayout.Width(20)))
                         {

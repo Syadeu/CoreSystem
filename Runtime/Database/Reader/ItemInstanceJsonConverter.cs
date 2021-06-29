@@ -38,4 +38,55 @@ namespace Syadeu.Database
             return new ItemInstance(dataGuid, guid);
         }
     }
+
+    internal sealed class ItemTypeJsonConverter : JsonConverter
+    {
+        public override bool CanWrite => false;
+        public override bool CanRead => false;
+
+        public override bool CanConvert(Type objectType) => objectType.Equals(typeof(ItemTypeEntity));
+
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            //if (value is ItemType)
+            //{
+            //    return JsonConvert.DeserializeObject<SerializableBoolValuePair>(jo.ToString(),
+            //        BaseSpecifiedConcreteClassConverter.SpecifiedSubclassConversion);
+            //}
+            //else if (value is ItemUseableType)
+            //{
+
+            //}
+            //else 
+                throw new Exception();
+        }
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            JObject jo = JObject.Load(reader);
+            ItemTypeEntity itemType;
+            if (!jo.TryGetValue("m_Values", out JToken _))
+            {
+                ItemUseableType temp = new ItemUseableType(
+                    jo["m_Name"].ToString(), jo["m_Guid"].ToString())
+                {
+                    m_RemoveOnUse = jo["m_RemoveOnUse"].ToObject<bool>(),
+                    m_OnUse = jo["m_OnUse"].ToObject<ValuePairContainer>()
+                };
+
+                itemType = temp;
+            }
+            else
+            {
+                ItemType temp = new ItemType(
+                    jo["m_Name"].ToString(), jo["m_Guid"].ToString())
+                {
+                    m_Values = jo["m_Values"].ToObject<ValuePairContainer>()
+                };
+
+                itemType = temp;
+            }
+
+            return itemType;
+        }
+    }
 }

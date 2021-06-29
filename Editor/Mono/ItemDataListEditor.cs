@@ -83,11 +83,7 @@ namespace SyadeuEditor
                         });
                         typeMenu.AddItem(new GUIContent("Useable"), false, () =>
                         {
-                            if (Asset.m_ItemTypes.Where((other) => other is ItemUseableType).Count() != 0)
-                            {
-                                $"이 타입은 한 개 이상 존재할 수 없습니다.".ToLog();
-                            }
-                            else Asset.m_ItemTypes.Add(new ItemUseableType());
+                            Asset.m_ItemTypes.Add(new ItemUseableType());
 
                             RefreshTreeView();
                         });

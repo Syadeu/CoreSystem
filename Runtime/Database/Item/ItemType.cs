@@ -25,6 +25,11 @@ namespace Syadeu.Database
             m_Name = name;
             m_Guid = Guid.NewGuid().ToString();
         }
+        public ItemType(string name, string guid)
+        {
+            m_Name = name;
+            m_Guid = guid;
+        }
         internal ItemTypeProxy GetProxy()
         {
             if (m_Proxy == null)
@@ -51,6 +56,11 @@ namespace Syadeu.Database
         {
             m_Name = name;
             m_Guid = Guid.NewGuid().ToString();
+        }
+        public ItemUseableType(string name, string guid)
+        {
+            m_Name = name;
+            m_Guid = guid;
         }
         internal ItemUseableTypeProxy GetProxy()
         {
