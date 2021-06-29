@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 
 #if UNITY_ADDRESSABLES
 #endif
@@ -8,7 +9,7 @@ namespace Syadeu.Database
     [Serializable]
     public abstract class ItemTypeEntity
     {
-        public string m_Name;
-        public string m_Guid;
+        [JsonProperty(Order = 0)] public string m_Name;
+        [JsonProperty(Order = 1)] public string m_Guid;
     }
 }

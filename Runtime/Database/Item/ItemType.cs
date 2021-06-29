@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using UnityEngine;
 
 #if UNITY_ADDRESSABLES
@@ -10,7 +11,7 @@ namespace Syadeu.Database
     public sealed class ItemType : ItemTypeEntity
     {
         [Space]
-        public ValuePairContainer m_Values = new ValuePairContainer();
+        [JsonProperty(Order = 3)] public ValuePairContainer m_Values = new ValuePairContainer();
 
         [NonSerialized] private ItemTypeProxy m_Proxy = null;
 
@@ -36,8 +37,8 @@ namespace Syadeu.Database
     public sealed class ItemUseableType : ItemTypeEntity
     {
         [Space]
-        public bool m_RemoveOnUse = true;
-        public ValuePairContainer m_OnUse = new ValuePairContainer();
+        [JsonProperty(Order = 3)] public bool m_RemoveOnUse = true;
+        [JsonProperty(Order = 4)] public ValuePairContainer m_OnUse = new ValuePairContainer();
 
         [NonSerialized] private ItemUseableTypeProxy m_Proxy = null;
 

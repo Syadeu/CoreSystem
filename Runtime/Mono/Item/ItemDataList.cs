@@ -17,7 +17,7 @@ namespace Syadeu.Database
         private ValuePairJsonConverter m_ItemJsonConverter;
 
         public List<Item> m_Items;
-        [SerializeReference] public List<ItemTypeEntity> m_ItemTypes;
+        public List<ItemTypeEntity> m_ItemTypes;
         public List<ItemEffectType> m_ItemEffectTypes;
 
         public override void OnInitialize()

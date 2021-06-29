@@ -82,7 +82,7 @@ namespace Syadeu.Database
 
         public static ValueFuncPair<T> Action<T>(string name, T func) where T : Delegate
             => new ValueFuncPair<T>() { m_Name = name, m_Value = func, m_Hash = FNV1a32.Calculate(name) };
-        public static ValuePair<Closure> Closure(string name, Closure func)
+        public static SerializableClosureValuePair Closure(string name, Closure func)
             => new SerializableClosureValuePair() { m_Name = name, m_Value = func, m_Hash = FNV1a32.Calculate(name) };
     }
     public abstract class ValuePair<T> : ValuePair, IEquatable<T>
@@ -129,9 +129,10 @@ namespace Syadeu.Database
         
         public abstract object Invoke(params object[] args);
     }
+    [Serializable]
     public sealed class ValueFuncPair<T> : ValueFuncPair where T : Delegate
     {
-        public T m_Value;
+        [JsonIgnore] public T m_Value;
 
         public override object GetValue() => m_Value;
         public override bool Equals(ValuePair other) 
@@ -225,9 +226,15 @@ namespace Syadeu.Database
         }
     }
 
-    public sealed class SerializableClosureValuePair : ValuePair<Closure>
+    public sealed class SerializableClosureValuePair : ValueFuncPair
     {
-        public void Invoke(params object[] args) => m_Value.Call(args);
+        [JsonIgnore] public Closure m_Value;
+
+        public override object GetValue() => m_Value;
+        public override bool Equals(ValuePair other)
+            => base.Equals(other) && (other is SerializableClosureValuePair temp) && m_Value.Equals(temp.m_Value);
+
+        public override object Invoke(params object[] args) => m_Value.Call(args);
         public override object Clone()
         {
             return new SerializableClosureValuePair

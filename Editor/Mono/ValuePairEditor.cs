@@ -119,13 +119,13 @@ namespace SyadeuEditor
                                 container.Add<List<string>>("New String Array", new List<string>());
                             });
                         }
-                        if (drawMenu.HasFlag(DrawMenu.Delegate))
-                        {
-                            typeMenu.AddItem(new GUIContent("Delegate"), false, () =>
-                            {
-                                container.Add<Action>("New Delegate Value", () => { });
-                            });
-                        }
+                        //if (drawMenu.HasFlag(DrawMenu.Delegate))
+                        //{
+                        //    typeMenu.AddItem(new GUIContent("Delegate"), false, () =>
+                        //    {
+                        //        container.Add<UnityEngine.Events.UnityEvent>("New Delegate Value", new UnityEngine.Events.UnityEvent());
+                        //    });
+                        //}
                         
                         Rect rect = GUILayoutUtility.GetLastRect();
                         rect.position = Event.current.mousePosition;
