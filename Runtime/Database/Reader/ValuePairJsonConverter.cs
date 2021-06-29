@@ -9,6 +9,10 @@ namespace Syadeu.Database
 {
     internal class ValuePairJsonConverter : JsonConverter
     {
+        private const string c_ValueType = "ValueType";
+        private const string c_Name = "Name";
+        private const string c_Value = "Value";
+
         public override bool CanWrite => true;
         public override bool CanRead => true;
 
@@ -19,34 +23,34 @@ namespace Syadeu.Database
             ValueType valueType = valuePair.GetValueType();
 
             writer.WriteStartObject();
-            writer.WritePropertyName("ValueType");
+            writer.WritePropertyName(c_ValueType);
             writer.WriteValue(valueType.ToString());
 
-            writer.WritePropertyName("Name");
+            writer.WritePropertyName(c_Name);
             writer.WriteValue(valuePair.Name);
 
             switch (valueType)
             {
                 case ValueType.Int32:
-                    writer.WritePropertyName("Value");
+                    writer.WritePropertyName(c_Value);
                     writer.WriteValue(valuePair.GetValue<int>());
                     break;
                 case ValueType.Double:
-                    writer.WritePropertyName("Value");
+                    writer.WritePropertyName(c_Value);
                     writer.WriteValue(valuePair.GetValue<double>());
                     break;
                 case ValueType.String:
-                    writer.WritePropertyName("Value");
+                    writer.WritePropertyName(c_Value);
                     writer.WriteValue(valuePair.GetValue<string>());
                     break;
                 case ValueType.Boolean:
-                    writer.WritePropertyName("Value");
+                    writer.WritePropertyName(c_Value);
                     writer.WriteValue(valuePair.GetValue<bool>());
                     break;
                 case ValueType.Array:
                     SerializableArrayValuePair arr = valuePair as SerializableArrayValuePair;
 
-                    writer.WritePropertyName("Value");
+                    writer.WritePropertyName(c_Value);
                     writer.WriteStartArray();
 
                     for (int i = 0; i < arr.m_Value.Count; i++)
@@ -70,9 +74,9 @@ namespace Syadeu.Database
 
             ValuePair valuePair;
             
-            ValueType valueType = (ValueType)Enum.Parse(typeof(ValueType), jo["ValueType"].ToString());
-            string name = jo["Name"].ToString();
-            JToken valueToken = jo["Value"];
+            ValueType valueType = (ValueType)Enum.Parse(typeof(ValueType), jo[c_ValueType].ToString());
+            string name = jo[c_Name].ToString();
+            JToken valueToken = jo[c_Value];
 
             switch (valueType)
             {
