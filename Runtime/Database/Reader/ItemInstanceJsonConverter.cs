@@ -48,22 +48,27 @@ namespace Syadeu.Database
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
-            //if (value is ItemType)
-            //{
-            //    return JsonConvert.DeserializeObject<SerializableBoolValuePair>(jo.ToString(),
-            //        BaseSpecifiedConcreteClassConverter.SpecifiedSubclassConversion);
-            //}
-            //else if (value is ItemUseableType)
-            //{
-
-            //}
-            //else 
+            JObject o = (JObject)JToken.FromObject(value);
+            if (value is ItemType)
+            {
+                //BaseSpecifiedConcreteClassConverter<ItemTypeEntity>.SpecifiedSubclassConversion
+                o.AddFirst(new JProperty("Type", ClassType.Common));
+                o.WriteTo(writer);
+            }
+            else if (value is ItemUseableType)
+            {
+                o.AddFirst(new JProperty("Type", ClassType.Useable));
+                o.WriteTo(writer);
+            }
+            else
                 throw new Exception();
         }
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
             JObject jo = JObject.Load(reader);
             ItemTypeEntity itemType;
+
+
             if (!jo.TryGetValue("m_Values", out JToken _))
             {
                 ItemUseableType temp = new ItemUseableType(
@@ -87,6 +92,12 @@ namespace Syadeu.Database
             }
 
             return itemType;
+        }
+
+        private enum ClassType
+        {
+            Common,
+            Useable
         }
     }
 }
