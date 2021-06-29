@@ -24,6 +24,10 @@ namespace SyadeuEditor
         private static string[] m_ItemTypes = new string[0];
         private static string[] m_ItemEffectTypes = new string[0];
 
+#if UNITY_ADDRESSABLES
+        private static AddressableAssetSettings m_DefaultAddressableSettings = AddressableAssetSettingsDefaultObject.GetSettings(true);
+#endif
+
         static ItemEditor()
         {
             Validate();
@@ -60,7 +64,12 @@ namespace SyadeuEditor
             item.m_Name = EditorGUILayout.TextField("Name: ", item.m_Name);
             EditorGUILayout.TextField("Guid: ", item.m_Guid);
 
+#if UNITY_ADDRESSABLES
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Image: ");
             DrawAssetReference(item, item.m_ImagePath);
+            EditorGUILayout.EndHorizontal();
+#endif
 
             using (new EditorGUILayout.VerticalScope(c_Box))
             {
@@ -156,18 +165,16 @@ namespace SyadeuEditor
                 return 0;
             }
 
+#if UNITY_ADDRESSABLES
             static void DrawAssetReference(Item item, AssetReference refAsset)
             {
-                UnityEngine.Object asset = refAsset?.editorAsset;
-                var aaSettings = AddressableAssetSettingsDefaultObject.GetSettings(true);
-
                 float iconHeight = EditorGUIUtility.singleLineHeight - EditorGUIUtility.standardVerticalSpacing * 3;
                 Vector2 iconSize = EditorGUIUtility.GetIconSize();
                 EditorGUIUtility.SetIconSize(new Vector2(iconHeight, iconHeight));
                 string assetPath = AssetDatabase.GUIDToAssetPath(refAsset?.AssetGUID);
                 Texture2D assetIcon = AssetDatabase.GetCachedIcon(assetPath) as Texture2D;
 
-                var entry = refAsset == null ? null : aaSettings.FindAssetEntry(refAsset?.AssetGUID);
+                var entry = refAsset == null ? null : m_DefaultAddressableSettings.FindAssetEntry(refAsset?.AssetGUID);
                 string displayName = entry == null ? "Not Found" : entry.address.Split('/').Last();
 
                 if (EditorGUILayout.DropdownButton(new GUIContent(displayName, assetIcon), FocusType.Passive/*, new GUIStyle("ObjectField")*/))
@@ -181,10 +188,10 @@ namespace SyadeuEditor
 
                 EditorGUIUtility.SetIconSize(iconSize);
             }
-
-
+#endif
         }
 
+#if UNITY_ADDRESSABLES
         class AssetReferencePopup : PopupWindowContent
         {
             Item m_Item;
@@ -376,5 +383,6 @@ namespace SyadeuEditor
                 }
             }
         }
+#endif
     }
 }
