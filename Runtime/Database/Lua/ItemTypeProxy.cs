@@ -3,12 +3,9 @@
 
 namespace Syadeu.Database
 {
-    internal sealed class ItemTypeProxy : LuaProxyEntity<ItemType>
+    internal sealed class ItemTypeProxy : ItemTypeProxyEntity<ItemType>
     {
         public ItemTypeProxy(ItemType itemType) : base(itemType) { }
-
-        public string Name => Target.m_Name;
-        public string Guid => Target.m_Guid;
 
         #region Value
         public int GetValueCount() => Target.m_Values.Count;

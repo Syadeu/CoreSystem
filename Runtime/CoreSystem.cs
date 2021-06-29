@@ -697,7 +697,7 @@ namespace Syadeu
                 {
                     if (tickCounter != 0)
                     {
-                        $"{tickCounter} was skipped".ToLog();
+                        $"{tickCounter} ticks were skipped".ToLog();
                     }
                     //$"passed".ToLog();
                     tickCounter = 0;

@@ -12,24 +12,6 @@ namespace Syadeu.Database
         public string Name => Target.m_Name;
         public string Guid => Target.m_Guid;
 
-        private ItemTypeProxy[] m_ItemTypes = null;
-        public ItemTypeProxy[] ItemTypes
-        {
-            get
-            {
-                if (m_ItemTypes == null)
-                {
-                    m_ItemTypes = new ItemTypeProxy[Target.m_ItemTypes.Length];
-                    for (int i = 0; i < m_ItemTypes.Length; i++)
-                    {
-                        m_ItemTypes[i] = ItemDataList.Instance.GetItemType(Target.m_ItemTypes[i]).GetProxy();
-                    }
-                }
-                
-                return m_ItemTypes;
-            }
-        }
-
         public Action OnEquip { get => Target.m_OnEquip; set => Target.m_OnEquip = value; }
         public Action OnUse { get => Target.m_OnUse; set => Target.m_OnUse = value; }
 

@@ -17,7 +17,7 @@ namespace Syadeu.Database
         private ValuePairJsonConverter m_ItemJsonConverter;
 
         public List<Item> m_Items;
-        public List<ItemType> m_ItemTypes;
+        [SerializeReference] public List<ItemTypeEntity> m_ItemTypes;
         public List<ItemEffectType> m_ItemEffectTypes;
 
         public override void OnInitialize()
@@ -44,7 +44,7 @@ namespace Syadeu.Database
             }
             
             dataPaths = Directory.GetFiles(GetPath(c_ItemTypeDataPath), jsonPostfix, SearchOption.TopDirectoryOnly);
-            m_ItemTypes = new List<ItemType>();
+            m_ItemTypes = new List<ItemTypeEntity>();
             for (int i = 0; i < dataPaths.Length; i++)
             {
                 m_ItemTypes.Add(JsonConvert.DeserializeObject<ItemType>(File.ReadAllText(dataPaths[i])));
@@ -161,7 +161,7 @@ namespace Syadeu.Database
             }
             return null;
         }
-        public ItemType GetItemType(string guid)
+        public ItemTypeEntity GetItemType(string guid)
         {
             for (int i = 0; i < m_ItemTypes.Count; i++)
             {
@@ -172,7 +172,7 @@ namespace Syadeu.Database
             }
             return null;
         }
-        public ItemType GetItemTypeByName(string name)
+        public ItemTypeEntity GetItemTypeByName(string name)
         {
             for (int i = 0; i < m_ItemTypes.Count; i++)
             {

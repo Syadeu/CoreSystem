@@ -7,11 +7,8 @@ using UnityEngine;
 namespace Syadeu.Database
 {
     [Serializable]
-    public sealed class ItemType
+    public sealed class ItemType : ItemTypeEntity
     {
-        public string m_Name;
-        public string m_Guid;
-
         [Space]
         public ValuePairContainer m_Values = new ValuePairContainer();
 

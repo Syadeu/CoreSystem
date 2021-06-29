@@ -20,15 +20,7 @@ namespace Syadeu.Database.Lua
                 return item.GetProxy();
             }
         }
-        public static ItemTypeProxy GetItemType(string guid)
-        {
-            ItemType type = ItemDataList.Instance.GetItemType(guid);
-            if (type == null) return null;
-            else
-            {
-                return type.GetProxy();
-            }
-        }
+        public static ItemTypeEntity GetItemType(string guid) => ItemDataList.Instance.GetItemType(guid);
         public static ItemEffectTypeProxy GetItemEffectType(string guid)
         {
             ItemEffectType type = ItemDataList.Instance.GetItemEffectType(guid);

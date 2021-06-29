@@ -16,18 +16,18 @@ namespace Syadeu.Database
 
         public override bool CanConvert(Type objectType) => objectType.Equals(typeof(string));
 
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            AssetReference refAsset = value as AssetReference;
+            writer.WriteValue(refAsset.AssetGUID);
+        }
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
             JToken jo = JToken.Load(reader);
             string guid = jo.Value<string>();
             return new AssetReference(guid);
         }
-
-        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-        {
-            AssetReference refAsset = value as AssetReference;
-            writer.WriteValue(refAsset.AssetGUID);
-        }
     }
+
 #endif
 }
