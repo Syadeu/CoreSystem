@@ -10,12 +10,6 @@ namespace Syadeu.Database
     [PreferBinarySerialization][CustomStaticSetting("Syadeu/Item")]
     public sealed class ItemDataList : StaticSettingEntity<ItemDataList>
     {
-        private const string c_ItemDataPath = "../CoreSystem/Modules/Items";
-        private const string c_ItemTypeDataPath = "../CoreSystem/Modules/Items/ItemTypes";
-        private const string c_ItemEffectDataPath = "../CoreSystem/Modules/Items/ItemEffects";
-
-        private ValuePairJsonConverter m_ItemJsonConverter;
-
         public List<Item> m_Items;
         public List<ItemTypeEntity> m_ItemTypes;
         public List<ItemEffectType> m_ItemEffectTypes;
@@ -25,32 +19,30 @@ namespace Syadeu.Database
             LoadDatas();
         }
 
-        private static string GetPath(string dataPath) => $"{Application.dataPath}/{dataPath}";
-
         #region Data Works
 
         public void LoadDatas()
         {
             const string jsonPostfix = "*.json";
-            if (!Directory.Exists(GetPath(c_ItemDataPath))) Directory.CreateDirectory(GetPath(c_ItemDataPath));
-            if (!Directory.Exists(GetPath(c_ItemTypeDataPath))) Directory.CreateDirectory(GetPath(c_ItemTypeDataPath));
-            if (!Directory.Exists(GetPath(c_ItemEffectDataPath))) Directory.CreateDirectory(GetPath(c_ItemEffectDataPath));
+            if (!Directory.Exists(CoreSystemFolder.ItemPath)) Directory.CreateDirectory(CoreSystemFolder.ItemPath);
+            if (!Directory.Exists(CoreSystemFolder.ItemTypePath)) Directory.CreateDirectory(CoreSystemFolder.ItemTypePath);
+            if (!Directory.Exists(CoreSystemFolder.ItemEffectTypePath)) Directory.CreateDirectory(CoreSystemFolder.ItemEffectTypePath);
 
-            string[] dataPaths = Directory.GetFiles(GetPath(c_ItemDataPath), jsonPostfix, SearchOption.TopDirectoryOnly);
+            string[] dataPaths = Directory.GetFiles(CoreSystemFolder.ItemPath, jsonPostfix, SearchOption.TopDirectoryOnly);
             m_Items = new List<Item>();
             for (int i = 0; i < dataPaths.Length; i++)
             {
                 m_Items.Add(JsonConvert.DeserializeObject<Item>(File.ReadAllText(dataPaths[i])));
             }
             
-            dataPaths = Directory.GetFiles(GetPath(c_ItemTypeDataPath), jsonPostfix, SearchOption.TopDirectoryOnly);
+            dataPaths = Directory.GetFiles(CoreSystemFolder.ItemTypePath, jsonPostfix, SearchOption.TopDirectoryOnly);
             m_ItemTypes = new List<ItemTypeEntity>();
             for (int i = 0; i < dataPaths.Length; i++)
             {
                 m_ItemTypes.Add(JsonConvert.DeserializeObject<ItemTypeEntity>(File.ReadAllText(dataPaths[i])));
             }
             
-            dataPaths = Directory.GetFiles(GetPath(c_ItemEffectDataPath), jsonPostfix, SearchOption.TopDirectoryOnly);
+            dataPaths = Directory.GetFiles(CoreSystemFolder.ItemEffectTypePath, jsonPostfix, SearchOption.TopDirectoryOnly);
             m_ItemEffectTypes = new List<ItemEffectType>();
             for (int i = 0; i < dataPaths.Length; i++)
             {
@@ -60,14 +52,14 @@ namespace Syadeu.Database
         public void SaveDatas()
         {
             const string json = ".json";
-            if (!Directory.Exists(GetPath(c_ItemDataPath))) Directory.CreateDirectory(GetPath(c_ItemDataPath));
-            if (!Directory.Exists(GetPath(c_ItemTypeDataPath))) Directory.CreateDirectory(GetPath(c_ItemTypeDataPath));
-            if (!Directory.Exists(GetPath(c_ItemEffectDataPath))) Directory.CreateDirectory(GetPath(c_ItemEffectDataPath));
+            if (!Directory.Exists(CoreSystemFolder.ItemPath)) Directory.CreateDirectory(CoreSystemFolder.ItemPath);
+            if (!Directory.Exists(CoreSystemFolder.ItemTypePath)) Directory.CreateDirectory(CoreSystemFolder.ItemTypePath);
+            if (!Directory.Exists(CoreSystemFolder.ItemEffectTypePath)) Directory.CreateDirectory(CoreSystemFolder.ItemEffectTypePath);
 
             string[] files;
             if (m_Items != null)
             {
-                files = Directory.GetFiles(GetPath(c_ItemDataPath));
+                files = Directory.GetFiles(CoreSystemFolder.ItemPath);
                 for (int i = 0; i < files.Length; i++)
                 {
                     string fileName = Path.GetFileNameWithoutExtension(files[i]);
@@ -83,14 +75,14 @@ namespace Syadeu.Database
                         m_Items[i].m_Guid = Guid.NewGuid().ToString();
                     }
 
-                    File.WriteAllText($"{GetPath(c_ItemDataPath)}/{m_Items[i].m_Name}{json}",
+                    File.WriteAllText($"{CoreSystemFolder.ItemPath}/{m_Items[i].m_Name}{json}",
                         JsonConvert.SerializeObject(m_Items[i], Formatting.Indented));
                 }
             }
             
             if (m_ItemTypes != null)
             {
-                files = Directory.GetFiles(GetPath(c_ItemTypeDataPath));
+                files = Directory.GetFiles(CoreSystemFolder.ItemTypePath);
                 for (int i = 0; i < files.Length; i++)
                 {
                     string fileName = Path.GetFileNameWithoutExtension(files[i]);
@@ -106,14 +98,14 @@ namespace Syadeu.Database
                         m_ItemTypes[i].m_Guid = Guid.NewGuid().ToString();
                     }
 
-                    File.WriteAllText($"{GetPath(c_ItemTypeDataPath)}/{m_ItemTypes[i].m_Name}{json}",
+                    File.WriteAllText($"{CoreSystemFolder.ItemTypePath}/{m_ItemTypes[i].m_Name}{json}",
                         JsonConvert.SerializeObject(m_ItemTypes[i], Formatting.Indented));
                 }
             }
             
             if (m_ItemEffectTypes != null)
             {
-                files = Directory.GetFiles(GetPath(c_ItemEffectDataPath));
+                files = Directory.GetFiles(CoreSystemFolder.ItemEffectTypePath);
                 for (int i = 0; i < files.Length; i++)
                 {
                     string fileName = Path.GetFileNameWithoutExtension(files[i]);
@@ -129,7 +121,7 @@ namespace Syadeu.Database
                         m_ItemEffectTypes[i].m_Guid = Guid.NewGuid().ToString();
                     }
 
-                    File.WriteAllText($"{GetPath(c_ItemEffectDataPath)}/{m_ItemEffectTypes[i].m_Name}{json}",
+                    File.WriteAllText($"{CoreSystemFolder.ItemEffectTypePath}/{m_ItemEffectTypes[i].m_Name}{json}",
                         JsonConvert.SerializeObject(m_ItemEffectTypes[i], Formatting.Indented));
                 }
             }
