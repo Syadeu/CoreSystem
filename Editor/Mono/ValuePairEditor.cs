@@ -153,6 +153,13 @@ namespace SyadeuEditor
                             {
                                 list.Add(Activator.CreateInstance(list.GetType().GenericTypeArguments[0]));
                             }
+                            if (GUILayout.Button("-", GUILayout.Width(20)))
+                            {
+                                container.RemoveAt(i);
+                                i--;
+                                EditorGUILayout.EndHorizontal();
+                                continue;
+                            }
                             EditorGUILayout.EndHorizontal();
                         }
                         else

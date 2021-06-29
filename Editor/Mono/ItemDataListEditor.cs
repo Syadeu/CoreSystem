@@ -44,6 +44,8 @@ namespace SyadeuEditor
         }
         private void OnValidate()
         {
+            Asset.LoadDatas();
+
             List<object> tempList = new List<object>();
             tempList.AddRange(Asset.m_Items);
             tempList.AddRange(Asset.m_ItemTypes);
