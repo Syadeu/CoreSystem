@@ -142,11 +142,6 @@ namespace SyadeuEditor
         }
         private void RefreshTreeView()
         {
-            Asset.LoadDatas();
-            EditorUtility.SetDirty(Asset);
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-
             List<object> tempList = new List<object>();
             tempList.AddRange(Asset.m_Items);
             tempList.AddRange(Asset.m_ItemTypes);

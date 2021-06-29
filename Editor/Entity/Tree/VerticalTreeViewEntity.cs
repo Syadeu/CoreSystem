@@ -145,8 +145,6 @@ namespace SyadeuEditor.Tree
                     if (EditorGUI.EndChangeCheck())
                     {
                         EditorUtility.SetDirty(m_Asset);
-                        AssetDatabase.SaveAssets();
-                        AssetDatabase.Refresh();
                         OnDirty?.Invoke();
                     }
 
