@@ -13,8 +13,4 @@
 
         Delegate,
     }
-
-#endregion
-
-
 }
