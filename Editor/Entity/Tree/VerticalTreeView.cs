@@ -35,6 +35,19 @@ namespace SyadeuEditor.Tree
             SearchFieldChanged(null);
             return this;
         }
+        public VerticalTreeView Refresh(IList list)
+        {
+            m_Data = list;
+            m_Elements.Clear();
+
+            for (int i = 0; i < list.Count; i++)
+            {
+                m_Elements.Add(m_DataSetup.Invoke(list[i]));
+            }
+            SearchFieldChanged(null);
+            return this;
+        }
+        public VerticalTreeView Refresh() => Refresh(Data);
         public VerticalTreeView MakeAddButton(Func<IList> onAdd)
         {
             m_DrawAddButton = true;

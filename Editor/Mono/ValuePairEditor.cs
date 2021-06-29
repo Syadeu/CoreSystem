@@ -238,7 +238,7 @@ namespace SyadeuEditor
                                 break;
                             case Syadeu.Database.ValueType.Delegate:
                                 EditorGUI.BeginDisabledGroup(true);
-                                EditorGUILayout.TextField("Delegate");
+                                EditorGUILayout.TextField($"Delegate: {container[i].GetValue()}");
                                 EditorGUI.EndDisabledGroup();
                                 break;
                             default:
@@ -257,6 +257,124 @@ namespace SyadeuEditor
                     onDrawItem?.Invoke(container[i]);
                 }
                 EditorGUI.indentLevel -= 1;
+            }
+        }
+        public static void DrawValuePair(this ValuePair valuePair)
+        {
+            uint hash = valuePair.Hash;
+
+            Syadeu.Database.ValueType valueType = valuePair.GetValueType();
+            if (valueType == Syadeu.Database.ValueType.Array)
+            {
+                IList list = (IList)valuePair.GetValue();
+                EditorGUILayout.BeginHorizontal();
+                if (list == null || list.Count == 0)
+                {
+                    valuePair.Name = EditorGUILayout.TextField(valuePair.Name);
+                    if (GUILayout.Button("+", GUILayout.Width(20)))
+                    {
+                        list.Add(Activator.CreateInstance(list.GetType().GenericTypeArguments[0]));
+                    }
+                    EditorGUILayout.EndHorizontal();
+                }
+                else
+                {
+                    valuePair.Name = EditorGUILayout.TextField(valuePair.Name);
+                    if (GUILayout.Button("+", GUILayout.Width(20)))
+                    {
+                        list.Add(Activator.CreateInstance(list.GetType().GenericTypeArguments[0]));
+                    }
+                    if (GUILayout.Button("-", GUILayout.Width(20)))
+                    {
+                        list.RemoveAt(list.Count - 1);
+                    }
+                    EditorGUILayout.EndHorizontal();
+                    EditorGUI.indentLevel += 1;
+                    for (int a = 0; a < list.Count; a++)
+                    {
+                        EditorGUILayout.BeginHorizontal();
+                        if (list[a] is int intVal)
+                        {
+                            list[a] = EditorGUILayout.IntField(intVal);
+                        }
+                        else if (list[a] is float floatVal)
+                        {
+                            list[a] = EditorGUILayout.FloatField(floatVal);
+                        }
+                        else if (list[a] is bool boolVal)
+                        {
+                            list[a] = EditorGUILayout.Toggle(boolVal);
+                        }
+                        else if (list[a] is string strVal)
+                        {
+                            list[a] = EditorGUILayout.TextField(strVal);
+                        }
+                        if (GUILayout.Button("-", GUILayout.Width(20)))
+                        {
+                            list.RemoveAt(a);
+                            a--;
+                            continue;
+                        }
+                        EditorGUILayout.EndHorizontal();
+                    }
+
+                    EditorGUI.indentLevel -= 1;
+                }
+
+                //onDrawItem?.Invoke(valuePair);
+                //continue;
+                return;
+            }
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                valuePair.Name = EditorGUILayout.TextField(valuePair.Name, GUILayout.Width(150));
+                switch (valueType)
+                {
+                    case Syadeu.Database.ValueType.Int32:
+                        int intFal = EditorGUILayout.IntField((int)valuePair.GetValue());
+                        //if (!valuePair.GetValue().Equals(intFal))
+                        //{
+                        //    container.SetValue(valuePair.Name, intFal);
+                        //}
+                        break;
+                    case Syadeu.Database.ValueType.Double:
+                        double doubleVal = EditorGUILayout.DoubleField((double)valuePair.GetValue());
+                        //if (!valuePair.GetValue().Equals(doubleVal))
+                        //{
+                        //    container.SetValue(valuePair.Name, doubleVal);
+                        //}
+                        break;
+                    case Syadeu.Database.ValueType.String:
+                        string stringVal = EditorGUILayout.TextField((string)valuePair.GetValue());
+                        //if (!valuePair.GetValue().Equals(stringVal))
+                        //{
+                        //    container.SetValue(valuePair.Name, stringVal);
+                        //}
+                        break;
+                    case Syadeu.Database.ValueType.Boolean:
+                        bool boolVal = EditorGUILayout.Toggle((bool)valuePair.GetValue());
+                        //if (!valuePair.GetValue().Equals(boolVal))
+                        //{
+                        //    container.SetValue(valuePair.Name, boolVal);
+                        //}
+                        break;
+                    case Syadeu.Database.ValueType.Delegate:
+                        EditorGUI.BeginDisabledGroup(true);
+                        EditorGUILayout.TextField("Delegate");
+                        EditorGUI.EndDisabledGroup();
+                        break;
+                    default:
+                        EditorGUILayout.TextField($"{valueType}: {valuePair.GetValue()}");
+                        break;
+                }
+
+                //if (GUILayout.Button("-", GUILayout.Width(20)))
+                //{
+                //    container.RemoveAt(i);
+                //    i--;
+                //    continue;
+                //}
             }
         }
 #if CORESYSTEM_GOOGLE

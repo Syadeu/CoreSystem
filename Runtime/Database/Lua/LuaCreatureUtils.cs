@@ -12,6 +12,12 @@ namespace Syadeu.Database.Lua
         public static Action<CreatureBrainProxy> OnVisible { get; set; }
         public static Action<CreatureBrainProxy> OnInvisible { get; set; }
 
+
+        public static CreatureBrainProxy GetTestCreature()
+        {
+            GameObject temp = new GameObject("testCreature");
+            return temp.AddComponent<CreatureBrain>().Proxy;
+        }
         public static void GetCreatureList()
         {
             for (int i = 0; i < CreatureSettings.Instance.PrivateSets.Count; i++)

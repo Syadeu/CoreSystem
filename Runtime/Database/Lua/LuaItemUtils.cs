@@ -43,6 +43,12 @@ namespace Syadeu.Database.Lua
             ItemDataList.Instance.m_ItemTypes.Add(type);
             return type.GetProxy();
         }
+        public static ItemUseableTypeProxy CreateItemUseableType(string name)
+        {
+            ItemUseableType type = new ItemUseableType(name);
+            ItemDataList.Instance.m_ItemTypes.Add(type);
+            return type.GetProxy();
+        }
         public static ItemEffectTypeProxy CreateItemEffectType(string name)
         {
             ItemEffectType effectType = new ItemEffectType(name);

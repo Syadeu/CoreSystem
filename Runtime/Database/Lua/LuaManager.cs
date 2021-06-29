@@ -21,6 +21,7 @@ namespace Syadeu.Database.Lua
             Debug.Log("LUA: Registering Proxies");
             UserData.RegisterProxyType<ItemProxy, Item>(r => r.GetProxy());
             UserData.RegisterProxyType<ItemTypeProxy, ItemType>(r => r.GetProxy());
+            UserData.RegisterProxyType<ItemUseableTypeProxy, ItemUseableType>(r => r.GetProxy());
             UserData.RegisterProxyType<ItemEffectTypeProxy, ItemEffectType>(r => r.GetProxy());
             UserData.RegisterProxyType<CreatureBrainProxy, CreatureBrain>(r => r.Proxy);
 

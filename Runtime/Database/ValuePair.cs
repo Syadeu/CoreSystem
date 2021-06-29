@@ -2,7 +2,7 @@
 using MoonSharp.Interpreter.Interop;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
-
+using Syadeu.Mono;
 using System;
 using System.Collections;
 
@@ -56,13 +56,12 @@ namespace Syadeu.Database
             {
                 return Array(name, list);
             }
-            else if (value is Action action)
-            {
-                return Action(name, action);
-            }
+            else if (value is Action action) return Action(name, action);
+            else if (value is Action<CreatureBrainProxy> actiont) return Action(name, actiont);
+            else if (value is Action<CreatureBrain> actionta) return Action(name, actionta);
             else if (value is Closure func)
             {
-                return Action(name, (Action)(() => func.Call()));
+                return Closure(name, func);
             }
             $"{value.GetType().Name} none setting".ToLog();
             throw new Exception();
@@ -81,8 +80,10 @@ namespace Syadeu.Database
         public static ValuePair<IList> Array(string name, IList values)
             => new SerializableArrayValuePair() { m_Name = name, m_Value = values, m_Hash = FNV1a32.Calculate(name) };
 
-        public static ValuePair<Action> Action(string name, Action func)
-            => new SerializableActionValuePair() { m_Name = name, m_Value = func, m_Hash = FNV1a32.Calculate(name) };
+        public static ValueFuncPair<T> Action<T>(string name, T func) where T : Delegate
+            => new ValueFuncPair<T>() { m_Name = name, m_Value = func, m_Hash = FNV1a32.Calculate(name) };
+        public static ValuePair<Closure> Closure(string name, Closure func)
+            => new SerializableClosureValuePair() { m_Name = name, m_Value = func, m_Hash = FNV1a32.Calculate(name) };
     }
     public abstract class ValuePair<T> : ValuePair, IEquatable<T>
     {
@@ -110,7 +111,7 @@ namespace Syadeu.Database
             {
                 return ValueType.Array;
             }
-            else if (m_Value is Delegate)
+            else if (m_Value is Delegate || m_Value is Closure)
             {
                 return ValueType.Delegate;
             }
@@ -119,14 +120,34 @@ namespace Syadeu.Database
 
         public override object GetValue() => m_Value;
         public override bool Equals(ValuePair other)
-            => (other is ValuePair<T> temp) && base.Equals(other) && Equals(temp.m_Value);
+            => (other is ValuePair<T> temp) && base.Equals(other) && m_Value.Equals(temp.m_Value);
         public bool Equals(T other) => m_Value.Equals(other);
     }
-    public abstract class ValueFuncPair<T> : ValuePair<T> where T : Delegate
+    public abstract class ValueFuncPair : ValuePair
     {
-        public object Invoke(params object[] args)
+        public override ValueType GetValueType() => ValueType.Delegate;
+        
+        public abstract object Invoke(params object[] args);
+    }
+    public sealed class ValueFuncPair<T> : ValueFuncPair where T : Delegate
+    {
+        public T m_Value;
+
+        public override object GetValue() => m_Value;
+        public override bool Equals(ValuePair other) 
+            => base.Equals(other) && (other is ValueFuncPair<T> temp) && m_Value.Equals(temp.m_Value);
+
+        public override object Invoke(params object[] args)
         {
             return m_Value.DynamicInvoke(args);
+        }
+        public override object Clone()
+        {
+            return new ValueFuncPair<T>
+            {
+                m_Name = m_Name,
+                m_Value = m_Value
+            };
         }
     }
     public sealed class ValueNull : ValuePair
@@ -204,12 +225,12 @@ namespace Syadeu.Database
         }
     }
 
-    public sealed class SerializableActionValuePair : ValueFuncPair<Action>
+    public sealed class SerializableClosureValuePair : ValuePair<Closure>
     {
-        public void Invoke() => Invoke(null);
+        public void Invoke(params object[] args) => m_Value.Call(args);
         public override object Clone()
         {
-            return new SerializableActionValuePair
+            return new SerializableClosureValuePair
             {
                 m_Name = m_Name,
                 m_Value = m_Value

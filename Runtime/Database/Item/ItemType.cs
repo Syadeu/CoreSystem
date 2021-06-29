@@ -33,4 +33,31 @@ namespace Syadeu.Database
             return m_Proxy;
         }
     }
+    public sealed class ItemUseableType : ItemTypeEntity
+    {
+        [Space]
+        public bool m_RemoveOnUse = true;
+        public ValuePairContainer m_OnUse = new ValuePairContainer();
+
+        [NonSerialized] private ItemUseableTypeProxy m_Proxy = null;
+
+        public ItemUseableType()
+        {
+            m_Name = "NewUseableType";
+            m_Guid = Guid.NewGuid().ToString();
+        }
+        public ItemUseableType(string name)
+        {
+            m_Name = name;
+            m_Guid = Guid.NewGuid().ToString();
+        }
+        internal ItemUseableTypeProxy GetProxy()
+        {
+            if (m_Proxy == null)
+            {
+                m_Proxy = new ItemUseableTypeProxy(this);
+            }
+            return m_Proxy;
+        }
+    }
 }

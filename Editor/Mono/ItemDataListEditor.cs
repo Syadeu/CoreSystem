@@ -30,6 +30,18 @@ namespace SyadeuEditor
         {
             OnValidate();
         }
+        private void RefreshTreeView()
+        {
+            EditorUtility.SetDirty(Asset);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            List<object> tempList = new List<object>();
+            tempList.AddRange(Asset.m_Items);
+            tempList.AddRange(Asset.m_ItemTypes);
+            tempList.AddRange(Asset.m_ItemEffectTypes);
+            m_TreeView.Refresh(tempList);
+        }
         private void OnValidate()
         {
             List<object> tempList = new List<object>();
@@ -45,7 +57,7 @@ namespace SyadeuEditor
                     {
                         return new TreeItemElement(m_TreeView, item);
                     }
-                    else if (other is ItemType type)
+                    else if (other is ItemTypeEntity type)
                     {
                         return new TreeItemTypeElement(m_TreeView, type);
                     }
@@ -58,7 +70,29 @@ namespace SyadeuEditor
                 .MakeAddButton(() =>
                 {
                     if (m_TreeView.SelectedToolbar == 0) Asset.m_Items.Add(new Item());
-                    else if (m_TreeView.SelectedToolbar == 1) Asset.m_ItemTypes.Add(new ItemType());
+                    else if (m_TreeView.SelectedToolbar == 1)
+                    {
+                        GenericMenu typeMenu = new GenericMenu();
+                        typeMenu.AddItem(new GUIContent("Common"), false, () =>
+                        {
+                            Asset.m_ItemTypes.Add(new ItemType());
+
+                            RefreshTreeView();
+                        });
+                        typeMenu.AddItem(new GUIContent("Useable"), false, () =>
+                        {
+                            if (Asset.m_ItemTypes.Where((other) => other is ItemUseableType).Count() != 0)
+                            {
+                                $"이 타입은 한 개 이상 존재할 수 없습니다.".ToLog();
+                            }
+                            else Asset.m_ItemTypes.Add(new ItemUseableType());
+
+                            RefreshTreeView();
+                        });
+                        Rect rect = GUILayoutUtility.GetLastRect();
+                        rect.position = Event.current.mousePosition;
+                        typeMenu.DropDown(rect);
+                    }
                     else if (m_TreeView.SelectedToolbar == 2) Asset.m_ItemEffectTypes.Add(new ItemEffectType());
 
                     List<object> tempList = new List<object>();
@@ -75,7 +109,7 @@ namespace SyadeuEditor
                     }
                     else if (m_TreeView.SelectedToolbar == 1)
                     {
-                        Asset.m_ItemTypes.Remove((ItemType)m_TreeView.Data[idx]);
+                        Asset.m_ItemTypes.Remove((ItemTypeEntity)m_TreeView.Data[idx]);
                     }
                     else if (m_TreeView.SelectedToolbar == 2)
                     {
@@ -174,122 +208,32 @@ namespace SyadeuEditor
             public override void OnGUI()
             {
                 Target.DrawItem();
-
-                ////AddressableAssetSettingsDefaultObject.GetSettings(true).FindGroup("Images").GetAssetEntry(Target.m_ImagePath)
-                //Target.m_Name = EditorGUILayout.TextField("Name: ", Target.m_Name);
-                //EditorGUILayout.TextField("Guid: ", Target.m_Guid);
-                ////Target.m_ImagePath = EditorGUILayout.TextField("Image Path: ", Target.m_ImagePath);
-                
-
-
-                //using (new EditorGUILayout.VerticalScope("Box"))
-                //{
-                //    using (new EditorGUILayout.HorizontalScope())
-                //    {
-                //        EditorUtils.StringHeader("ItemTypes", 15);
-                //        if (GUILayout.Button("+", GUILayout.Width(20)))
-                //        {
-                //            var temp = Target.m_ItemTypes.ToList();
-                //            temp.Add("");
-                //            Target.m_ItemTypes = temp.ToArray();
-                //        }
-                //    }
-                    
-                //    EditorGUI.indentLevel += 1;
-                //    for (int i = 0; i < Target.m_ItemTypes.Length; i++)
-                //    {
-                //        using(new EditorGUILayout.HorizontalScope())
-                //        {
-                //            int tSelected = EditorGUILayout.Popup(GetSelectedItemType(Target.m_ItemTypes[i]), m_ItemTypes);
-                //            Target.m_ItemTypes[i] = tSelected == 0 ? "" : ItemDataList.Instance.m_ItemTypes[tSelected - 1].m_Guid;
-
-                //            if (GUILayout.Button("-", GUILayout.Width(20)))
-                //            {
-                //                var temp = Target.m_ItemTypes.ToList();
-                //                temp.RemoveAt(i);
-                //                Target.m_ItemTypes = temp.ToArray();
-                //                i--;
-                //            }
-                //        }
-                //    }
-                //    EditorGUI.indentLevel -= 1;
-                //}
-
-                //using (new EditorGUILayout.VerticalScope("Box"))
-                //{
-                //    using (new EditorGUILayout.HorizontalScope())
-                //    {
-                //        EditorUtils.StringHeader("ItemEffects", 15);
-                //        if (GUILayout.Button("+", GUILayout.Width(20)))
-                //        {
-                //            var temp = Target.m_ItemEffectTypes.ToList();
-                //            temp.Add("");
-                //            Target.m_ItemEffectTypes = temp.ToArray();
-                //        }
-                //    }
-                    
-                //    EditorGUI.indentLevel += 1;
-                //    for (int i = 0; i < Target.m_ItemEffectTypes.Length; i++)
-                //    {
-                //        using (new EditorGUILayout.HorizontalScope())
-                //        {
-                //            int teSelected = EditorGUILayout.Popup(GetSelectedItemEffectType(Target.m_ItemEffectTypes[i]), m_ItemEffectTypes);
-                //            Target.m_ItemEffectTypes[i] = teSelected == 0 ? "" : ItemDataList.Instance.m_ItemEffectTypes[teSelected - 1].m_Guid;
-
-                //            if (GUILayout.Button("-", GUILayout.Width(20)))
-                //            {
-                //                var temp = Target.m_ItemEffectTypes.ToList();
-                //                temp.RemoveAt(i);
-                //                Target.m_ItemEffectTypes = temp.ToArray();
-                //                i--;
-                //            }
-                //        }
-                //    }
-                //    EditorGUI.indentLevel -= 1;
-                //}
-
-                //Target.m_Values.DrawValueContainer();
-            }
-
-            private int GetSelectedItemType(string guid)
-            {
-                if (string.IsNullOrEmpty(guid)) return 0;
-                for (int i = 0; i < ItemDataList.Instance.m_ItemTypes.Count; i++)
-                {
-                    if (ItemDataList.Instance.m_ItemTypes[i].m_Guid.Equals(guid))
-                    {
-                        return i + 1;
-                    }
-                }
-                return 0;
-            }
-            private int GetSelectedItemEffectType(string guid)
-            {
-                if (string.IsNullOrEmpty(guid)) return 0;
-                for (int i = 0; i < ItemDataList.Instance.m_ItemEffectTypes.Count; i++)
-                {
-                    if (ItemDataList.Instance.m_ItemEffectTypes[i].m_Guid.Equals(guid))
-                    {
-                        return i + 1;
-                    }
-                }
-                return 0;
             }
         }
-        private class TreeItemTypeElement : VerticalTreeElement<ItemType>
+        private class TreeItemTypeElement : VerticalTreeElement<ItemTypeEntity>
         {
             public override string Name => Target.m_Name;
             public override bool HideElementInTree
                 => Tree.SelectedToolbar != 1 || base.HideElementInTree;
 
-            public TreeItemTypeElement(VerticalTreeView treeView, ItemType type) : base(treeView, type) { }
+            public TreeItemTypeElement(VerticalTreeView treeView, ItemTypeEntity type) : base(treeView, type) { }
             public override void OnGUI()
             {
                 Target.m_Name = EditorGUILayout.TextField("Name: ", Target.m_Name);
                 EditorGUILayout.TextField("Guid: ", Target.m_Guid);
 
-                EditorGUILayout.Space();
-                Target.m_Values.DrawValueContainer("Values");
+                if (Target is ItemType itemType)
+                {
+                    EditorGUILayout.Space();
+                    itemType.m_Values.DrawValueContainer("Values");
+                }
+                else if (Target is ItemUseableType useableType)
+                {
+                    EditorGUILayout.Space();
+                    useableType.m_RemoveOnUse = EditorGUILayout.Toggle("Remove On Use: ", useableType.m_RemoveOnUse);
+                    useableType.m_OnUse.DrawValueContainer("Delegates", ValuePairEditor.DrawMenu.Delegate, null);
+                }
+                else throw new Exception();
             }
         }
         private class TreeItemEffectTypeElement : VerticalTreeElement<ItemEffectType>

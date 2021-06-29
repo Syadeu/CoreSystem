@@ -5,11 +5,6 @@
 
 namespace Syadeu.Database
 {
-    //public sealed class ItemUseableType : ItemTypeEntity
-    //{
-
-    //}
-
     [Serializable]
     public abstract class ItemTypeEntity
     {
