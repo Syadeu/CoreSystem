@@ -57,6 +57,16 @@ namespace SyadeuEditor
                     EditorGUILayout.BeginHorizontal();
                 }
 
+                Texture itemTex = m_DefaultTex;
+                if (Asset.Inventory[i].Data != null &&
+                    Asset.Inventory[i].Data.m_ImagePath != null &&
+                    Asset.Inventory[i].Data.m_ImagePath.editorAsset != null &&
+                    Asset.Inventory[i].Data.m_ImagePath.editorAsset is Sprite sprite)
+                {
+                    //itemTex = Asset.Inventory[i].Data.m_ImagePath.editorAsset.GetType().Name;
+                    itemTex = sprite.texture;
+                }
+
                 //EditorGUILayout.TextField("Name: ", Asset.Inventory[i].ToString());
                 //if (Asset.Inventory[i].Data != null &&
                 //    Asset.Inventory[i].Data.m_ImagePath != null &&
