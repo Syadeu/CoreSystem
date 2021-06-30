@@ -145,7 +145,7 @@ namespace Syadeu.Mono
         {
             for (int i = 0; i < Instance.m_ObserverList.Count; i++)
             {
-                if (Instance.m_ObserverList[i].Equals(render))
+                if (Instance.m_ObserverList[i].render.Equals(render))
                 {
                     Instance.m_ObserverList.RemoveAt(i);
                     break;

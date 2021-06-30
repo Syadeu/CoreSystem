@@ -40,7 +40,8 @@ namespace Syadeu.Mono
         /// 
         /// </summary>
         /// <param name="brain">이 크리쳐의 메인 스크립트</param>
-        /// <param name="dataIdx">이 크리쳐의 데이터 인덱스</param>
+        /// <param name="dataIdx">이 크리쳐의 데이터 인덱스<br/>
+        /// <paramref name="dataIdx"/> == <see cref="CreatureBrain.m_DataIdx"/></param>
         protected virtual void OnInitialize(CreatureBrain brain, int dataIdx) { }
         protected virtual void OnTerminate() { }
 

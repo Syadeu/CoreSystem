@@ -1,4 +1,6 @@
-﻿namespace Syadeu.Database
+﻿using UnityEngine;
+
+namespace Syadeu.Database
 {
     [StaticManagerIntializeOnLoad]
     internal sealed class DataManager : StaticDataManager<DataManager>

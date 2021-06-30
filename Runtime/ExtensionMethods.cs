@@ -2,6 +2,7 @@
 using Syadeu.Mono;
 using Syadeu.Unsafe;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -232,6 +233,19 @@ namespace Syadeu
                 (columns != null ? columns.ToList() : new List<SQLiteColumn>()),
                 tableAtt.SaveAsByte);
             return table;
+        }
+
+        public static T RemoveFor<T, TA>(this T list, TA value) where T : IList<TA>/* where TA : IEquatable<TA>*/
+        {
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (list[i].Equals(value))
+                {
+                    list.RemoveAt(i);
+                    break;
+                }
+            }
+            return list;
         }
     }
 }
