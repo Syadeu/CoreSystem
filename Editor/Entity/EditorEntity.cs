@@ -276,6 +276,7 @@ namespace SyadeuEditor
 
     public abstract class EditorEntity<T> : EditorEntity where T : UnityEngine.Object
     {
+        private Dictionary<uint, MethodInfo> m_CachedMethodInfos = new Dictionary<uint, MethodInfo>();
         private Dictionary<uint, FieldInfo> m_CachedFieldInfos = new Dictionary<uint, FieldInfo>();
 
         protected T Asset => (T)target;
@@ -285,11 +286,22 @@ namespace SyadeuEditor
             uint hash = FNV1a32.Calculate(name);
             if (m_CachedFieldInfos.TryGetValue(hash, out FieldInfo value)) return value;
 
-            value = typeof(T).GetField(name, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+            value = typeof(T).GetField(name, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
             m_CachedFieldInfos.Add(hash, value);
             return value;
         }
         protected TA GetValue<TA>(string fieldName) => (TA)GetField(fieldName).GetValue(Asset);
         protected void SetValue(string fieldName, object value) => GetField(fieldName).SetValue(Asset, value);
+
+        protected MethodInfo GetMethod(string name)
+        {
+            uint hash = FNV1a32.Calculate(name);
+            if (m_CachedMethodInfos.TryGetValue(hash, out MethodInfo value)) return value;
+
+            value = typeof(T).GetMethod(name, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
+            m_CachedMethodInfos.Add(hash, value);
+            return value;
+        }
+        protected object InvokeMethod(string methodName, params object[] args) => GetMethod(methodName).Invoke(Asset, args);
     }
 }

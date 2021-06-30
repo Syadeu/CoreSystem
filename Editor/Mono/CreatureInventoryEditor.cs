@@ -2,6 +2,7 @@
 using UnityEditor;
 using UnityEngine;
 using Syadeu.Mono;
+using Syadeu;
 
 #if UNITY_ADDRESSABLES
 #endif
@@ -11,6 +12,21 @@ namespace SyadeuEditor
     [CustomEditor(typeof(CreatureInventory))]
     public sealed class CreatureInventoryEditor : EditorEntity<CreatureInventory>
     {
+        Texture2D m_DefaultTex;
+        private void OnEnable()
+        {
+            InvokeMethod("OnEnable");
+
+            m_DefaultTex = new Texture2D(100, 100);
+            for (int i = 0; i < m_DefaultTex.width; i++)
+            {
+                for (int j = 0; j < m_DefaultTex.height; j++)
+                {
+                    m_DefaultTex.SetPixel(i, j, Color.gray);
+                }
+            }
+            m_DefaultTex.Apply();
+        }
         public override void OnInspectorGUI()
         {
             if (GUILayout.Button("Add Item"))
@@ -29,15 +45,49 @@ namespace SyadeuEditor
             }
 
             EditorGUILayout.BeginVertical(EditorUtils.Box);
-            EditorUtils.StringHeader("Inventory", 15);
+            EditorUtils.StringHeader("Inventory", 18);
             EditorUtils.Line();
             EditorGUI.indentLevel += 1;
+            EditorGUILayout.BeginHorizontal();
             for (int i = 0; i < Asset.Inventory.Count; i++)
             {
-                EditorGUILayout.TextField("Name: ", Asset.Inventory[i].ToString());
+                if (i != 0 && i % 5 == 0)
+                {
+                    EditorGUILayout.EndHorizontal();
+                    EditorGUILayout.BeginHorizontal();
+                }
 
-                if (Asset.Inventory.Count > i + 1) EditorUtils.Line();
+                //EditorGUILayout.TextField("Name: ", Asset.Inventory[i].ToString());
+                //if (Asset.Inventory[i].Data != null &&
+                //    Asset.Inventory[i].Data.m_ImagePath != null &&
+                //    Asset.Inventory[i].Data.m_ImagePath.editorAsset != null)
+                //{
+                //    EditorGUILayout.LabelField(Asset.Inventory[i].Data.m_ImagePath.editorAsset.GetType().Name);
+                //}
+
+
+                //Sprite sprite = (Sprite)Asset.Inventory[i].Data.m_ImagePath.editorAsset;
+                //EditorGUI.DrawTextureTransparent(EditorGUILayout.GetControlRect(false), sprite.texture);
+
+
+                Rect rect = EditorGUILayout.GetControlRect(false, GUILayout.Height(50), GUILayout.Width(50));
+                rect = EditorGUI.IndentedRect(rect);
+                rect.width = 50;
+
+                if (EditorGUI.DropdownButton(rect, new GUIContent(m_DefaultTex), FocusType.Passive, EditorUtils.Box))
+                {
+                    "Clicked".ToLog();
+                }
+                //EditorGUI.DrawTextureTransparent(rect, , ScaleMode.StretchToFill, 2);
+
+                rect.y += rect.height * .3f;
+                rect.x -= rect.width * .3f;
+                rect.width = 65;
+                EditorGUI.LabelField(rect, Asset.Inventory[i].ToString(), EditorUtils.CenterStyle);
+                
+                //if (Asset.Inventory.Count > i + 1) EditorUtils.Line();
             }
+            EditorGUILayout.EndHorizontal();
             EditorGUI.indentLevel -= 1;
             EditorGUILayout.EndVertical();
 
@@ -49,5 +99,6 @@ namespace SyadeuEditor
         {
             Asset.Insert(item.CreateInstance());
         }
+
     }
 }

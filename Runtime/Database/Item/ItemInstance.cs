@@ -10,7 +10,7 @@ using UnityEngine;
 namespace Syadeu.Database
 {
     [Serializable] [JsonConverter(typeof(ItemInstanceJsonConverter))]
-    public sealed class ItemInstance : IDisposable
+    public sealed class ItemInstance : IDisposable, IValidation
     {
         private readonly Item m_Data;
         private readonly Guid m_Guid;
@@ -63,6 +63,12 @@ namespace Syadeu.Database
                 m_ItemEffectTypes[i] = ItemDataList.Instance.GetItemEffectType(item.m_ItemEffectTypes[i]);
             }
             m_Values = (ValuePairContainer)item.m_Values.Clone();
+        }
+
+        public bool IsValid()
+        {
+            if (m_Data == null || m_Guid.Equals(Guid.Empty)) return false;
+            return true;
         }
 
         public bool HasType<T>() where T : ItemTypeEntity => m_ItemTypes.Where((other) => other is T).Count() != 0;

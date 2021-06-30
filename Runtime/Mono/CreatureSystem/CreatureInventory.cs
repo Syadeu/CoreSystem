@@ -1,7 +1,11 @@
 ﻿using Syadeu.Database;
 using System;
 using System.Collections.Generic;
+
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace Syadeu.Mono
 {
@@ -13,6 +17,23 @@ namespace Syadeu.Mono
 
         public IReadOnlyList<ItemInstance> Inventory => m_Inventory;
 
+        private void OnEnable()
+        {
+            for (int i = m_Equipments.Count - 1; i >= 0; i--)
+            {
+                if (!m_Equipments[i].IsValid())
+                {
+                    m_Equipments.RemoveAt(i);
+                }
+            }
+            for (int i = m_Inventory.Count - 1; i >= 0; i--)
+            {
+                if (!m_Inventory[i].IsValid())
+                {
+                    m_Inventory.RemoveAt(i);
+                }
+            }
+        }
         public void Insert(ItemInstance item)
         {
             m_Inventory.Add(item);
