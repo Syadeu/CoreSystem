@@ -11,8 +11,34 @@ namespace Syadeu.Mono
 
         public ValuePairContainer Values => m_Values;
 
-        public ValuePair this[uint hash] => m_Values.GetValuePair(hash);
-        public ValuePair this[string name] => m_Values.GetValuePair(name);
+        public ValuePair this[uint hash]
+        {
+            get
+            {
+#if UNITY_EDITOR
+                if (!m_Values.Contains(hash))
+                {
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                        $"{Brain.DisplayName}은 Stat({hash}) 값이 없습니다.");
+                }
+#endif
+                return m_Values.GetValuePair(hash);
+            }
+        }
+        public ValuePair this[string name]
+        {
+            get
+            {
+#if UNITY_EDITOR
+                if (!m_Values.Contains(name))
+                {
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                        $"{Brain.DisplayName}은 Stat({name}) 값이 없습니다.");
+                }
+#endif
+                return m_Values.GetValuePair(name);
+            }
+        }
 
         protected override void OnInitialize(CreatureBrain brain, int dataIdx)
         {

@@ -33,6 +33,7 @@ namespace Syadeu.Mono
             Initialized = false;
         }
         internal void InternalOnCreated() => OnCreated();
+        internal void InternalOnStart() => OnStart();
 
         protected virtual void OnCreated() { }
         /// <summary>
@@ -42,6 +43,7 @@ namespace Syadeu.Mono
         /// <param name="dataIdx">이 크리쳐의 데이터 인덱스<br/>
         /// <paramref name="dataIdx"/> == <see cref="CreatureBrain.m_DataIdx"/></param>
         protected virtual void OnInitialize(CreatureBrain brain, int dataIdx) { }
+        protected virtual void OnStart() { }
         protected virtual void OnTerminate() { }
 
         public virtual void OnVisible() { }

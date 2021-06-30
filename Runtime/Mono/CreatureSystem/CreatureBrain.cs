@@ -130,6 +130,10 @@ namespace Syadeu.Mono
             {
                 m_Childs[i].InternalInitialize(this, m_DataIdx);
             }
+            for (int i = 0; i < m_Childs.Length; i++)
+            {
+                m_Childs[i].InternalOnStart();
+            }
 
             RenderManager.AddObserver(this);
             Initialized = true;
