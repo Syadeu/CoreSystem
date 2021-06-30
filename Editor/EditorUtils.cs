@@ -41,6 +41,7 @@ namespace SyadeuEditor
         #region Init
 
         public const string DefaultPath = "Assets/Resources/Syadeu";
+        public const string Box = "Box";
 
         static GUIStyle _headerStyle;
         internal static GUIStyle HeaderStyle
@@ -230,6 +231,7 @@ namespace SyadeuEditor
         {
             Rect rect = EditorGUILayout.GetControlRect(false, 1f);
             rect.height = 1f;
+            rect = EditorGUI.IndentedRect(rect);
             EditorGUI.DrawRect(rect, new Color(0.5f, 0.5f, 0.5f, 1));
         }
         public static void SectorLine(float width, int lines = 1)
@@ -238,7 +240,7 @@ namespace SyadeuEditor
             GUI.backgroundColor = EditorGUIUtility.isProSkin ? Color.white : Color.grey;
 
             GUILayout.Space(8);
-            GUILayout.Box("", SplitStyle, GUILayout.Width(width), GUILayout.MaxHeight(1.5f));
+            GUILayout.Box(string.Empty, SplitStyle, GUILayout.Width(width), GUILayout.MaxHeight(1.5f));
             GUILayout.Space(2);
 
             for (int i = 1; i < lines; i++)

@@ -68,7 +68,7 @@ namespace SyadeuEditor.Tree
             const string notFound = "Not Found";
 
             EditorGUILayout.BeginVertical(box);
-
+            EditorUtils.Line();
             BeforeDraw();
             DrawToolbar();
             DrawSearchField();
@@ -87,6 +87,7 @@ namespace SyadeuEditor.Tree
                 EditorUtility.SetDirty(Asset);
             }
             EditorGUILayout.EndHorizontal();
+            EditorUtils.Line();
 
             m_CurrentDrawChilds = 0;
             BeforeDrawChilds();
@@ -103,7 +104,7 @@ namespace SyadeuEditor.Tree
             }
             if (m_CurrentDrawChilds == 0) EditorUtils.StringRich(notFound, true);
             AfterDraw();
-
+            EditorUtils.Line();
             EditorGUILayout.EndVertical();
         }
 

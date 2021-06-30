@@ -15,15 +15,15 @@ using Google.Apis.Sheets.v4.Data;
 using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
 using UnityEngine.AddressableAssets;
-using Syadeu;
 #endif
 
 namespace SyadeuEditor
 {
     public static class ItemEditor
     {
-        private static string[] m_ItemTypes = new string[0];
-        private static string[] m_ItemEffectTypes = new string[0];
+        private static ItemDrawer m_ItemDrawer;
+        internal static string[] m_ItemTypes = new string[0];
+        internal static string[] m_ItemEffectTypes = new string[0];
 
 #if UNITY_ADDRESSABLES
         private static readonly AddressableAssetSettings m_DefaultAddressableSettings = AddressableAssetSettingsDefaultObject.GetSettings(true);
@@ -32,8 +32,10 @@ namespace SyadeuEditor
         static ItemEditor()
         {
             Validate();
+
+            m_ItemDrawer = new ItemDrawer(null);
         }
-        private static void Validate()
+        internal static void Validate()
         {
             m_ItemTypes = new string[ItemDataList.Instance.m_ItemTypes.Count + 1];
             m_ItemTypes[0] = "None";
@@ -52,181 +54,37 @@ namespace SyadeuEditor
 
         public static void DrawItem(this Item item)
         {
-            const string c_Box = "Box";
-            Validate();
-
-            //AddressableAssetSettingsDefaultObject.GetSettings(true).FindGroup("Images").GetAssetEntry(item.m_ImagePath)
-            item.m_Name = EditorGUILayout.TextField("Name: ", item.m_Name);
-            EditorGUILayout.TextField("Guid: ", item.m_Guid);
-
+            m_ItemDrawer.m_Item = item;
+            m_ItemDrawer.OnGUI();
+        }
 #if UNITY_ADDRESSABLES
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField("Image: ");
-            DrawAssetReference(item, item.m_ImagePath);
-            EditorGUILayout.EndHorizontal();
-            EditorUtils.Line();
-#endif
-            #region ItemTypes
-            using (new EditorGUILayout.VerticalScope(c_Box))
+        internal static void DrawAssetReference(Item item, AssetReference refAsset)
+        {
+            float iconHeight = EditorGUIUtility.singleLineHeight - EditorGUIUtility.standardVerticalSpacing * 3;
+            Vector2 iconSize = EditorGUIUtility.GetIconSize();
+            EditorGUIUtility.SetIconSize(new Vector2(iconHeight, iconHeight));
+            string assetPath = AssetDatabase.GUIDToAssetPath(refAsset?.AssetGUID);
+            Texture2D assetIcon = AssetDatabase.GetCachedIcon(assetPath) as Texture2D;
+
+            var entry = refAsset == null ? null : m_DefaultAddressableSettings.FindAssetEntry(refAsset?.AssetGUID);
+            string displayName = entry == null ? "Not Found" : entry.address.Split('/').Last();
+            //Rect rect = GUILayoutUtility.GetLastRect();
+            Rect rect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
+            rect = EditorGUI.IndentedRect(rect);
+            //rect.width = EditorGUIUtility.currentViewWidth
+
+            if (EditorGUI.DropdownButton(rect, new GUIContent(displayName, assetIcon), FocusType.Passive, new GUIStyle("ObjectField")))
             {
-                using (new EditorGUILayout.HorizontalScope())
-                {
-                    EditorUtils.StringHeader("ItemTypes", 15);
-                    if (GUILayout.Button("+", GUILayout.Width(20)))
-                    {
-                        var temp = item.m_ItemTypes.ToList();
-                        temp.Add("");
-                        item.m_ItemTypes = temp.ToArray();
-                    }
-                }
+                rect = GUILayoutUtility.GetLastRect();
+                rect.position = Event.current.mousePosition;
 
-                EditorGUI.indentLevel += 1;
-                for (int i = 0; i < item.m_ItemTypes.Length; i++)
-                {
-                    using (new EditorGUILayout.HorizontalScope())
-                    {
-                        EditorGUI.BeginChangeCheck();
-                        int tSelected = EditorGUILayout.Popup(GetSelectedItemType(item.m_ItemTypes[i]), m_ItemTypes);
-                        if (EditorGUI.EndChangeCheck())
-                        {
-                            if (tSelected == 0) item.m_ItemTypes[i] = "";
-                            else
-                            {
-                                ItemTypeEntity selectedItemType = ItemDataList.Instance.m_ItemTypes[tSelected - 1];
-
-                                if (item.m_ItemTypes.Where((other) => ItemDataList.Instance.GetItemType(other) is ItemUseableType).Count() != 0 &&
-                                    selectedItemType is ItemUseableType)
-                                {
-                                    $"이 타입은 한 개 이상 존재할 수 없습니다.".ToLog();
-                                }
-                                else if (item.m_ItemTypes.Contains(selectedItemType.m_Guid))
-                                {
-                                    $"이미 해당 타입을 포함하고 있습니다.".ToLog();
-                                }
-                                else item.m_ItemTypes[i] = ItemDataList.Instance.m_ItemTypes[tSelected - 1].m_Guid;
-                            }
-                        }
-
-                        if (GUILayout.Button("-", GUILayout.Width(20)))
-                        {
-                            var temp = item.m_ItemTypes.ToList();
-                            temp.RemoveAt(i);
-                            item.m_ItemTypes = temp.ToArray();
-                            i--;
-                        }
-                    }
-                }
-                EditorGUI.indentLevel -= 1;
-            }
-            #endregion
-            EditorUtils.Line();
-            #region ItemEffects
-            using (new EditorGUILayout.VerticalScope(c_Box))
-            {
-                using (new EditorGUILayout.HorizontalScope())
-                {
-                    EditorUtils.StringHeader("ItemEffects", 15);
-                    if (GUILayout.Button("+", GUILayout.Width(20)))
-                    {
-                        var temp = item.m_ItemEffectTypes.ToList();
-                        temp.Add("");
-                        item.m_ItemEffectTypes = temp.ToArray();
-                    }
-                }
-
-                EditorGUI.indentLevel += 1;
-                for (int i = 0; i < item.m_ItemEffectTypes.Length; i++)
-                {
-                    using (new EditorGUILayout.HorizontalScope())
-                    {
-                        EditorGUI.BeginChangeCheck();
-                        int teSelected = EditorGUILayout.Popup(GetSelectedItemEffectType(item.m_ItemEffectTypes[i]), m_ItemEffectTypes);
-                        if (EditorGUI.EndChangeCheck())
-                        {
-                            if (teSelected == 0) item.m_ItemEffectTypes[i] = "";
-                            else
-                            {
-                                ItemEffectType selectedEffectType = ItemDataList.Instance.m_ItemEffectTypes[teSelected - 1];
-
-                                if (item.m_ItemEffectTypes.Contains(selectedEffectType.m_Guid))
-                                {
-                                    $"이미 해당 타입을 포함하고 있습니다.".ToLog();
-                                }
-                                else item.m_ItemEffectTypes[i] = ItemDataList.Instance.m_ItemEffectTypes[teSelected - 1].m_Guid;
-                            }
-                        }
-
-                        if (GUILayout.Button("-", GUILayout.Width(20)))
-                        {
-                            var temp = item.m_ItemEffectTypes.ToList();
-                            temp.RemoveAt(i);
-                            item.m_ItemEffectTypes = temp.ToArray();
-                            i--;
-                        }
-                    }
-                }
-                EditorGUI.indentLevel -= 1;
-            }
-            #endregion
-            EditorUtils.Line();
-            item.m_Values.DrawValueContainer("Values");
-            
-            int GetSelectedItemType(string guid)
-            {
-                if (string.IsNullOrEmpty(guid)) return 0;
-                for (int i = 0; i < ItemDataList.Instance.m_ItemTypes.Count; i++)
-                {
-                    if (ItemDataList.Instance.m_ItemTypes[i].m_Guid.Equals(guid))
-                    {
-                        return i + 1;
-                    }
-                }
-                return 0;
-            }
-            int GetSelectedItemEffectType(string guid)
-            {
-                if (string.IsNullOrEmpty(guid)) return 0;
-                for (int i = 0; i < ItemDataList.Instance.m_ItemEffectTypes.Count; i++)
-                {
-                    if (ItemDataList.Instance.m_ItemEffectTypes[i].m_Guid.Equals(guid))
-                    {
-                        return i + 1;
-                    }
-                }
-                return 0;
+                PopupWindow.Show(rect,
+                    new AssetReferencePopup(item, refAsset?.AssetGUID, displayName));
             }
 
-#if UNITY_ADDRESSABLES
-            static void DrawAssetReference(Item item, AssetReference refAsset)
-            {
-                float iconHeight = EditorGUIUtility.singleLineHeight - EditorGUIUtility.standardVerticalSpacing * 3;
-                Vector2 iconSize = EditorGUIUtility.GetIconSize();
-                EditorGUIUtility.SetIconSize(new Vector2(iconHeight, iconHeight));
-                string assetPath = AssetDatabase.GUIDToAssetPath(refAsset?.AssetGUID);
-                Texture2D assetIcon = AssetDatabase.GetCachedIcon(assetPath) as Texture2D;
-
-                var entry = refAsset == null ? null : m_DefaultAddressableSettings.FindAssetEntry(refAsset?.AssetGUID);
-                string displayName = entry == null ? "Not Found" : entry.address.Split('/').Last();
-                //Rect rect = GUILayoutUtility.GetLastRect();
-                Rect rect = rect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
-                rect = EditorGUI.IndentedRect(rect);
-                //rect.width = EditorGUIUtility.currentViewWidth
-
-                if (EditorGUI.DropdownButton(rect, new GUIContent(displayName, assetIcon), FocusType.Passive, new GUIStyle("ObjectField")))
-                {
-                    rect = GUILayoutUtility.GetLastRect();
-                    rect.position = Event.current.mousePosition;
-
-                    PopupWindow.Show(rect, 
-                        new AssetReferencePopup(item, refAsset?.AssetGUID, displayName));
-                }
-
-                EditorGUIUtility.SetIconSize(iconSize);
-            }
-#endif
+            EditorGUIUtility.SetIconSize(iconSize);
         }
 
-#if UNITY_ADDRESSABLES
         class AssetReferencePopup : PopupWindowContent
         {
             Item m_Item;
