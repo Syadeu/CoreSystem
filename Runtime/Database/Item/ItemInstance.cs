@@ -33,7 +33,7 @@ namespace Syadeu.Database
             m_Data = item;
             m_Guid = Guid.NewGuid();
 
-            m_ItemTypes = new ItemType[item.m_ItemTypes.Length];
+            m_ItemTypes = new ItemTypeEntity[item.m_ItemTypes.Length];
             for (int i = 0; i < m_ItemTypes.Length; i++)
             {
                 m_ItemTypes[i] = ItemDataList.Instance.GetItemType(item.m_ItemTypes[i]);

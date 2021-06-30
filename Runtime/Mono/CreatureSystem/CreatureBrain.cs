@@ -114,7 +114,7 @@ namespace Syadeu.Mono
             m_SharedPath = new NavMeshPath();
             m_Childs = GetComponentsInChildren<CreatureEntity>();
 
-            if (m_NavMeshAgent == null) m_NavMeshAgent = GetComponent<NavMeshAgent>();
+            if (m_NavMeshAgent == null) m_NavMeshAgent = GetComponentInChildren<NavMeshAgent>();
 
             for (int i = 0; i < m_Childs.Length; i++)
             {

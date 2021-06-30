@@ -172,11 +172,11 @@ namespace SyadeuEditor
             }
             if (GUILayout.Button("Save"))
             {
+                //EditorUtils.SetDirty(Asset);
                 Asset.SaveDatas();
-                EditorUtils.SetDirty(Asset);
-                AssetDatabase.SaveAssets();
-                AssetDatabase.Refresh();
-                OnValidate();
+                //AssetDatabase.SaveAssets();
+                //AssetDatabase.Refresh();
+                //OnValidate();
             }
             EditorGUILayout.EndHorizontal();
             EditorUtils.SectorLine();

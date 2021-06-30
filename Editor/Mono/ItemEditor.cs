@@ -95,7 +95,7 @@ namespace SyadeuEditor
             Texture2D assetIcon = AssetDatabase.GetCachedIcon(assetPath) as Texture2D;
 
             AddressableAssetEntry entry = null;
-            if (refAsset != null && refAsset.IsValid())
+            if (refAsset != null /*&& refAsset.IsValid()*/)
             {
                 entry = m_DefaultAddressableSettings.FindAssetEntry(refAsset.AssetGUID);
             }
@@ -240,7 +240,7 @@ namespace SyadeuEditor
                         if (assetRefItem != null && !string.IsNullOrEmpty(assetRefItem.AssetPath))
                         {
                             //m_Drawer.newGuid = assetRefItem.Guid;
-                            m_Popup.m_Item.m_ImagePath = new AssetReferenceSprite(assetRefItem.Guid);
+                            m_Popup.m_Item.m_ImagePath = new AssetReference(assetRefItem.Guid);
                         }
                         else
                         {

@@ -57,8 +57,8 @@ namespace SyadeuEditor
             m_ActualValues.DrawValueContainer("Actual Values", ValuePairEditor.DrawMenu.None, null);
             EditorGUI.EndDisabledGroup();
 
-            EditorGUILayout.Space();
-            base.OnInspectorGUI();
+            //EditorGUILayout.Space();
+            //base.OnInspectorGUI();
         }
     }
 }

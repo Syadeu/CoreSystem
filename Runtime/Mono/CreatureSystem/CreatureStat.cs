@@ -6,10 +6,13 @@ namespace Syadeu.Mono
 {
     public sealed class CreatureStat : CreatureEntity
     {
-        [SerializeField] private ValuePairContainer m_ReflectionValues;
-        [SerializeField] private ValuePairContainer m_Values;
+        [SerializeField] private ValuePairContainer m_ReflectionValues = new ValuePairContainer();
+        [SerializeField] private ValuePairContainer m_Values = new ValuePairContainer();
 
         public ValuePairContainer Values => m_Values;
+
+        public ValuePair this[uint hash] => m_Values.GetValuePair(hash);
+        public ValuePair this[string name] => m_Values.GetValuePair(name);
 
         protected override void OnInitialize(CreatureBrain brain, int dataIdx)
         {
@@ -24,9 +27,11 @@ namespace Syadeu.Mono
                 }
                 else
                 {
-                    $"{m_ReflectionValues[i].Name} 의 값을 찾을 수 없음".ToLog();
+                    $"{m_ReflectionValues[i].Name} 의 값을 찾을 수 없음".ToLogError();
                 }
             }
         }
+
+        public static uint ToValueHash(string name) => FNV1a32.Calculate(name);
     }
 }

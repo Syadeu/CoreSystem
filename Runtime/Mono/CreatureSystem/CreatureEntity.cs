@@ -2,7 +2,6 @@
 
 namespace Syadeu.Mono
 {
-    [RequireComponent(typeof(CreatureBrain))]
     public abstract class CreatureEntity : MonoBehaviour, IRender
     {
         private CreatureBrain m_Brain = null;

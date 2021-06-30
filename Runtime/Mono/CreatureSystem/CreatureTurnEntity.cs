@@ -21,7 +21,7 @@ namespace Syadeu.Mono.TurnTable
         [SerializeField] private bool m_IsMyTurn = false;
 
         //protected abstract int StartTurnSpeed { get; }
-        protected abstract int StartActionPoint { get; }
+        protected abstract int InitialActionPoint { get; }
 
         public abstract float TurnSpeed { get; }
 
@@ -68,7 +68,7 @@ namespace Syadeu.Mono.TurnTable
         protected virtual void OnEndTurn() { }
         public void ResetTurnTable()
         {
-            ActionPoint = StartActionPoint;
+            ActionPoint = InitialActionPoint;
 
             OnResetTurnTable();
             m_OnResetTurn?.Invoke();

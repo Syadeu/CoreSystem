@@ -57,15 +57,24 @@ namespace SyadeuEditor
                     EditorGUILayout.BeginHorizontal();
                 }
 
-                Texture itemTex = m_DefaultTex;
+                Texture itemTex;
                 if (Asset.Inventory[i].Data != null &&
                     Asset.Inventory[i].Data.m_ImagePath != null &&
-                    Asset.Inventory[i].Data.m_ImagePath.editorAsset != null &&
-                    Asset.Inventory[i].Data.m_ImagePath.editorAsset is Sprite sprite)
+                    Asset.Inventory[i].Data.m_ImagePath.editorAsset is Texture tex)
                 {
+                    //if (Asset.Inventory[i].Data.m_ImagePath.editorAsset != null &&
+                    //    Asset.Inventory[i].Data.m_ImagePath.editorAsset is Sprite sprite)
+                    //{
+                    //    itemTex = sprite.texture;
+                    //}
+                    //else
+                    //{
+                    //    EditorGUILayout.LabelField(Asset.Inventory[i].Data.m_ImagePath.editorAsset.GetType().Name);
+                    //}
                     //itemTex = Asset.Inventory[i].Data.m_ImagePath.editorAsset.GetType().Name;
-                    itemTex = sprite.texture;
+                    itemTex = tex;
                 }
+                else itemTex = m_DefaultTex;
 
                 //EditorGUILayout.TextField("Name: ", Asset.Inventory[i].ToString());
                 //if (Asset.Inventory[i].Data != null &&
@@ -80,20 +89,20 @@ namespace SyadeuEditor
                 //EditorGUI.DrawTextureTransparent(EditorGUILayout.GetControlRect(false), sprite.texture);
 
 
-                Rect rect = EditorGUILayout.GetControlRect(false, GUILayout.Height(50), GUILayout.Width(50));
+                Rect rect = EditorGUILayout.GetControlRect(false, GUILayout.Height(75), GUILayout.Width(75), GUILayout.MaxHeight(75), GUILayout.MaxWidth(75));
                 rect = EditorGUI.IndentedRect(rect);
-                rect.width = 50;
+                rect.width = 75;
 
-                if (EditorGUI.DropdownButton(rect, new GUIContent(m_DefaultTex), FocusType.Passive, EditorUtils.Box))
+                if (EditorGUI.DropdownButton(rect, new GUIContent(itemTex), FocusType.Passive, EditorUtils.Box))
                 {
                     "Clicked".ToLog();
                 }
                 //EditorGUI.DrawTextureTransparent(rect, , ScaleMode.StretchToFill, 2);
 
                 rect.y += rect.height * .3f;
-                rect.x -= rect.width * .3f;
-                rect.width = 65;
-                EditorGUI.LabelField(rect, Asset.Inventory[i].ToString(), EditorUtils.CenterStyle);
+                rect.x -= rect.width * .2f;
+                rect.width += 15;
+                EditorGUI.LabelField(rect, EditorUtils.String(Asset.Inventory[i].ToString()), EditorUtils.CenterStyle);
                 
                 //if (Asset.Inventory.Count > i + 1) EditorUtils.Line();
             }
