@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 
 using Syadeu;
 using Syadeu.Database;
@@ -9,10 +10,6 @@ using UnityEngine;
 
 #if CORESYSTEM_GOOGLE
 using Google.Apis.Sheets.v4.Data;
-#endif
-
-#if UNITY_ADDRESSABLES
-using System.Reflection;
 #endif
 
 namespace SyadeuEditor

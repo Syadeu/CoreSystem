@@ -5,7 +5,7 @@ using UnityEditor.Graphs;
 
 namespace Syadeu.Database
 {
-    public static class INIReader
+    public static class INIInterface
     {
         private const string c_HeaderStart = "[";
         private const string c_HeaderEnd = "]";

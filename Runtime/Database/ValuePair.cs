@@ -75,8 +75,8 @@ namespace Syadeu.Database
         public static ValuePair<bool> Bool(string name, bool value)
             => new SerializableBoolValuePair() { m_Name = name, m_Value = value, m_Hash = FNV1a32.Calculate(name) };
 
-        public static ValuePair<IList> Array(string name, params int[] values)
-            => new SerializableArrayValuePair() { m_Name = name, m_Value = values, m_Hash = FNV1a32.Calculate(name) };
+        public static ValuePair<ValuePairContainer> Object(string name, params ValuePair[] values)
+            => new SerializableObjectValuePair() { m_Name = name, m_Value = new ValuePairContainer(values), m_Hash = FNV1a32.Calculate(name) };
         public static ValuePair<IList> Array(string name, IList values)
             => new SerializableArrayValuePair() { m_Name = name, m_Value = values, m_Hash = FNV1a32.Calculate(name) };
 
@@ -222,6 +222,17 @@ namespace Syadeu.Database
             {
                 m_Name = m_Name,
                 m_Value = m_Value
+            };
+        }
+    }
+    [Serializable] public sealed class SerializableObjectValuePair : ValuePair<ValuePairContainer>
+    {
+        public override object Clone()
+        {
+            return new SerializableObjectValuePair
+            {
+                m_Name = m_Name,
+                m_Value = (ValuePairContainer)m_Value.Clone()
             };
         }
     }

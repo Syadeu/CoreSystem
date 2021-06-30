@@ -184,9 +184,9 @@ namespace SyadeuEditor
 
             TreeView.OnGUI();
 
-            EditorGUILayout.Space();
-            m_ShowOriginalContents = EditorUtils.Foldout(m_ShowOriginalContents, "Original Contents");
-            if (m_ShowOriginalContents) base.OnInspectorGUI();
+            //EditorGUILayout.Space();
+            //m_ShowOriginalContents = EditorUtils.Foldout(m_ShowOriginalContents, "Original Contents");
+            //if (m_ShowOriginalContents) base.OnInspectorGUI();
         }
 
         private class TreeItemElement : VerticalTreeElement<Item>

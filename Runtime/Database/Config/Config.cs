@@ -23,7 +23,7 @@ namespace Syadeu.Database
             }
             else
             {
-                m_INI = INIReader.Read(path);
+                m_INI = INIInterface.Read(path);
             }
         }
 
@@ -35,7 +35,7 @@ namespace Syadeu.Database
 
         public void Save()
         {
-            INIReader.Write(m_Path, m_INI);
+            INIInterface.Write(m_Path, m_INI);
         }
     }
 }

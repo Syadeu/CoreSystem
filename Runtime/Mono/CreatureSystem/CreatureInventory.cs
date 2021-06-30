@@ -11,6 +11,8 @@ namespace Syadeu.Mono
         [SerializeField] private List<ItemInstance> m_Equipments = new List<ItemInstance>();
         [SerializeField] private List<ItemInstance> m_Inventory = new List<ItemInstance>();
 
+        public IReadOnlyList<ItemInstance> Inventory => m_Inventory;
+
         public void Insert(ItemInstance item)
         {
             m_Inventory.Add(item);

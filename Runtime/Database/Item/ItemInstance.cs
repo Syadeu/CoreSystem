@@ -76,5 +76,7 @@ namespace Syadeu.Database
         {
             Disposed = true;
         }
+
+        public override string ToString() => m_Data == null ? "NULL" : m_Data.m_Name;
     }
 }
