@@ -19,7 +19,7 @@ namespace Syadeu.Database
     public sealed class Item
     {
         [JsonProperty(Order = 0)] public string m_Name;
-        [JsonProperty(Order = 1)] public string m_Guid;
+        [JsonProperty(Order = 1)] public Guid m_Guid;
 #if UNITY_ADDRESSABLES
         [JsonConverter(typeof(AssetReferenceJsonConverter))]
         [JsonProperty(Order = 2)] public AssetReferenceSprite m_ImagePath;
@@ -49,12 +49,12 @@ namespace Syadeu.Database
         public Item()
         {
             m_Name = "NewItem";
-            m_Guid = Guid.NewGuid().ToString();
+            m_Guid = Guid.NewGuid();
         }
         public Item(string name)
         {
             m_Name = name;
-            m_Guid = Guid.NewGuid().ToString();
+            m_Guid = Guid.NewGuid();
         }
 
         internal ItemProxy GetProxy()

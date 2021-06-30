@@ -70,9 +70,9 @@ namespace Syadeu.Database
                 }
                 for (int i = 0; i < m_Items.Count; i++)
                 {
-                    if (string.IsNullOrEmpty(m_Items[i].m_Guid))
+                    if (Guid.Empty.Equals(m_Items[i].m_Guid))
                     {
-                        m_Items[i].m_Guid = Guid.NewGuid().ToString();
+                        m_Items[i].m_Guid = Guid.NewGuid();
                     }
 
                     File.WriteAllText($"{CoreSystemFolder.ItemPath}/{m_Items[i].m_Name}{json}",

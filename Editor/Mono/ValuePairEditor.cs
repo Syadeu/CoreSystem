@@ -212,32 +212,32 @@ namespace SyadeuEditor
 
                     using (new EditorGUILayout.HorizontalScope())
                     {
-                        container[i].Name = EditorGUILayout.TextField(container[i].Name, GUILayout.Width(150));
+                        container[i].Name = EditorGUILayout.TextField(container[i].Name, GUILayout.MinWidth(100));
                         switch (valueType)
                         {
                             case Syadeu.Database.ValueType.Int32:
-                                int intFal = EditorGUILayout.IntField((int)container[i].GetValue());
+                                int intFal = EditorGUILayout.IntField((int)container[i].GetValue(), GUILayout.MinWidth(100));
                                 if (!container[i].GetValue().Equals(intFal))
                                 {
                                     container.SetValue(container[i].Name, intFal);
                                 }
                                 break;
                             case Syadeu.Database.ValueType.Double:
-                                double doubleVal = EditorGUILayout.DoubleField((double)container[i].GetValue());
+                                double doubleVal = EditorGUILayout.DoubleField((double)container[i].GetValue(), GUILayout.MinWidth(100));
                                 if (!container[i].GetValue().Equals(doubleVal))
                                 {
                                     container.SetValue(container[i].Name, doubleVal);
                                 }
                                 break;
                             case Syadeu.Database.ValueType.String:
-                                string stringVal = EditorGUILayout.TextField((string)container[i].GetValue());
+                                string stringVal = EditorGUILayout.TextField((string)container[i].GetValue(), GUILayout.MinWidth(100));
                                 if (!container[i].GetValue().Equals(stringVal))
                                 {
                                     container.SetValue(container[i].Name, stringVal);
                                 }
                                 break;
                             case Syadeu.Database.ValueType.Boolean:
-                                bool boolVal = EditorGUILayout.Toggle((bool)container[i].GetValue());
+                                bool boolVal = EditorGUILayout.ToggleLeft(string.Empty, (bool)container[i].GetValue(), GUILayout.MinWidth(100));
                                 if (!container[i].GetValue().Equals(boolVal))
                                 {
                                     container.SetValue(container[i].Name, boolVal);
@@ -245,11 +245,11 @@ namespace SyadeuEditor
                                 break;
                             case Syadeu.Database.ValueType.Delegate:
                                 EditorGUI.BeginDisabledGroup(true);
-                                EditorGUILayout.TextField($"Delegate: {container[i].GetValue()}");
+                                EditorGUILayout.TextField($"Delegate: {container[i].GetValue()}", GUILayout.MinWidth(100));
                                 EditorGUI.EndDisabledGroup();
                                 break;
                             default:
-                                EditorGUILayout.TextField($"{valueType}: {container[i].GetValue()}");
+                                EditorGUILayout.TextField($"{valueType}: {container[i].GetValue()}", GUILayout.MinWidth(100));
                                 break;
                         }
 

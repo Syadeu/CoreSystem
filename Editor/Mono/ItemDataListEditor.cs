@@ -34,7 +34,6 @@ namespace SyadeuEditor
                     tempList.AddRange(Asset.m_ItemEffectTypes);
 
                     m_TreeView = new VerticalTreeView(Asset, serializedObject);
-                    m_TreeView.OnDirty += RefreshNames;
                     m_TreeView.OnDirty += RefreshTreeView;
                     m_TreeView
                         .SetupElements(tempList, (other) =>
@@ -111,7 +110,7 @@ namespace SyadeuEditor
                             if (e is TreeItemElement itemEle)
                             {
                                 name = itemEle.Target.m_Name;
-                                guid = itemEle.Target.m_Guid;
+                                guid = itemEle.Target.m_Guid.ToString();
                             }
                             else if (e is TreeItemTypeElement typeEle)
                             {
@@ -132,30 +131,11 @@ namespace SyadeuEditor
             }
         }
 
-        private static string[] m_ItemTypes = new string[0];
-        private static string[] m_ItemEffectTypes = new string[0];
-
         private bool m_ShowOriginalContents = false;
 
         private void OnEnable()
         {
             OnValidate();
-        }
-        private void RefreshNames()
-        {
-            m_ItemTypes = new string[ItemDataList.Instance.m_ItemTypes.Count + 1];
-            m_ItemTypes[0] = "None";
-            for (int i = 1; i < m_ItemTypes.Length; i++)
-            {
-                m_ItemTypes[i] = ItemDataList.Instance.m_ItemTypes[i - 1].m_Name;
-            }
-
-            m_ItemEffectTypes = new string[ItemDataList.Instance.m_ItemEffectTypes.Count + 1];
-            m_ItemEffectTypes[0] = "None";
-            for (int i = 1; i < m_ItemEffectTypes.Length; i++)
-            {
-                m_ItemEffectTypes[i] = ItemDataList.Instance.m_ItemEffectTypes[i - 1].m_Name;
-            }
         }
         private void RefreshTreeView()
         {
@@ -167,7 +147,6 @@ namespace SyadeuEditor
         }
         private void OnValidate()
         {
-            RefreshNames();
             RefreshTreeView();
         }
 
@@ -231,21 +210,7 @@ namespace SyadeuEditor
             public TreeItemTypeElement(VerticalTreeView treeView, ItemTypeEntity type) : base(treeView, type) { }
             public override void OnGUI()
             {
-                Target.m_Name = EditorGUILayout.TextField("Name: ", Target.m_Name);
-                EditorGUILayout.TextField("Guid: ", Target.m_Guid);
-
-                if (Target is ItemType itemType)
-                {
-                    EditorGUILayout.Space();
-                    itemType.m_Values.DrawValueContainer("Values");
-                }
-                else if (Target is ItemUseableType useableType)
-                {
-                    EditorGUILayout.Space();
-                    useableType.m_RemoveOnUse = EditorGUILayout.Toggle("Remove On Use: ", useableType.m_RemoveOnUse);
-                    useableType.m_OnUse.DrawValueContainer("Delegates", ValuePairEditor.DrawMenu.Delegate, null);
-                }
-                else throw new Exception();
+                Target.DrawItemType();
             }
         }
         private class TreeItemEffectTypeElement : VerticalTreeElement<ItemEffectType>
@@ -257,11 +222,7 @@ namespace SyadeuEditor
             public TreeItemEffectTypeElement(VerticalTreeView treeView, ItemEffectType effectType) : base(treeView, effectType) { }
             public override void OnGUI()
             {
-                Target.m_Name = EditorGUILayout.TextField("Name: ", Target.m_Name);
-                EditorGUILayout.TextField("Guid: ", Target.m_Guid);
-
-                EditorGUILayout.Space();
-                Target.m_Values.DrawValueContainer("Values");
+                Target.DrawItemEffectType();
             }
         }
     }

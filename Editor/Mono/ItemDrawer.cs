@@ -29,7 +29,7 @@ namespace SyadeuEditor
 
             //AddressableAssetSettingsDefaultObject.GetSettings(true).FindGroup("Images").GetAssetEntry(item.m_ImagePath)
             m_Item.m_Name = EditorGUILayout.TextField("Name: ", m_Item.m_Name);
-            EditorGUILayout.TextField("Guid: ", m_Item.m_Guid);
+            EditorGUILayout.TextField("Guid: ", m_Item.m_Guid.ToString());
 
 #if UNITY_ADDRESSABLES
             EditorGUILayout.BeginHorizontal();

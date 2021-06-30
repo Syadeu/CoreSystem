@@ -15,6 +15,7 @@ using Google.Apis.Sheets.v4.Data;
 using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
 using UnityEngine.AddressableAssets;
+using SyadeuEditor.Tree;
 #endif
 
 namespace SyadeuEditor
@@ -57,6 +58,33 @@ namespace SyadeuEditor
             m_ItemDrawer.m_Item = item;
             m_ItemDrawer.OnGUI();
         }
+        public static void DrawItemType(this ItemTypeEntity target)
+        {
+            target.m_Name = EditorGUILayout.TextField("Name: ", target.m_Name);
+            EditorGUILayout.TextField("Guid: ", target.m_Guid);
+
+            if (target is ItemType itemType)
+            {
+                EditorGUILayout.Space();
+                itemType.m_Values.DrawValueContainer("Values");
+            }
+            else if (target is ItemUseableType useableType)
+            {
+                EditorGUILayout.Space();
+                useableType.m_RemoveOnUse = EditorGUILayout.Toggle("Remove On Use: ", useableType.m_RemoveOnUse);
+                useableType.m_OnUse.DrawValueContainer("Delegates", ValuePairEditor.DrawMenu.Delegate, null);
+            }
+            else throw new Exception();
+        }
+        public static void DrawItemEffectType(this ItemEffectType target)
+        {
+            target.m_Name = EditorGUILayout.TextField("Name: ", target.m_Name);
+            EditorGUILayout.TextField("Guid: ", target.m_Guid);
+
+            EditorGUILayout.Space();
+            target.m_Values.DrawValueContainer("Values");
+        }
+
 #if UNITY_ADDRESSABLES
         internal static void DrawAssetReference(Item item, AssetReference refAsset)
         {
@@ -66,14 +94,19 @@ namespace SyadeuEditor
             string assetPath = AssetDatabase.GUIDToAssetPath(refAsset?.AssetGUID);
             Texture2D assetIcon = AssetDatabase.GetCachedIcon(assetPath) as Texture2D;
 
-            var entry = refAsset == null ? null : m_DefaultAddressableSettings.FindAssetEntry(refAsset?.AssetGUID);
+            AddressableAssetEntry entry = null;
+            if (refAsset != null && refAsset.IsValid())
+            {
+                entry = m_DefaultAddressableSettings.FindAssetEntry(refAsset.AssetGUID);
+            }
+
             string displayName = entry == null ? "Not Found" : entry.address.Split('/').Last();
             //Rect rect = GUILayoutUtility.GetLastRect();
             Rect rect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
             rect = EditorGUI.IndentedRect(rect);
             //rect.width = EditorGUIUtility.currentViewWidth
 
-            if (EditorGUI.DropdownButton(rect, new GUIContent(displayName, assetIcon), FocusType.Passive, new GUIStyle("ObjectField")))
+            if (EditorGUI.DropdownButton(rect, new GUIContent(displayName, assetIcon), FocusType.Passive/*, new GUIStyle("ObjectField")*/))
             {
                 rect = GUILayoutUtility.GetLastRect();
                 rect.position = Event.current.mousePosition;
@@ -276,6 +309,41 @@ namespace SyadeuEditor
                 }
             }
         }
+
+        //private class AssetReferencePopupWindow : PopupWindowContent
+        //{
+        //    private readonly Item m_Item;
+
+        //    private readonly SearchField m_SearchField;
+
+        //    public AssetReferencePopupWindow(Item item)
+        //    {
+        //        m_Item = item;
+
+        //        m_SearchField = new SearchField();
+        //    }
+
+        //    public override void OnOpen()
+        //    {
+        //        m_SearchField.SetFocus();
+        //        base.OnOpen();
+        //    }
+        //    public override Vector2 GetWindowSize()
+        //    {
+        //        Vector2 result = base.GetWindowSize();
+        //        result.x += 40;
+        //        return result;
+        //    }
+        //    public override void OnGUI(Rect rect)
+        //    {
+        //        throw new NotImplementedException();
+        //    }
+
+        //    class TreeView : TreeViewEntity
+        //    {
+
+        //    }
+        //}
 #endif
     }
 }
