@@ -14,7 +14,7 @@ namespace Syadeu.Database
         public override bool CanWrite => true;
         public override bool CanRead => true;
 
-        public override bool CanConvert(Type objectType) => objectType.Equals(typeof(string));
+        public override bool CanConvert(Type objectType) => objectType.Equals(typeof(AssetReference));
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
@@ -25,7 +25,7 @@ namespace Syadeu.Database
         {
             JToken jo = JToken.Load(reader);
             string guid = jo.Value<string>();
-            return new AssetReference(guid);
+            return Activator.CreateInstance(objectType, guid);
         }
     }
 

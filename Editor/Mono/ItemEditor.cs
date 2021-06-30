@@ -26,7 +26,7 @@ namespace SyadeuEditor
         private static string[] m_ItemEffectTypes = new string[0];
 
 #if UNITY_ADDRESSABLES
-        private static AddressableAssetSettings m_DefaultAddressableSettings = AddressableAssetSettingsDefaultObject.GetSettings(true);
+        private static readonly AddressableAssetSettings m_DefaultAddressableSettings = AddressableAssetSettingsDefaultObject.GetSettings(true);
 #endif
 
         static ItemEditor()
@@ -35,12 +35,6 @@ namespace SyadeuEditor
         }
         private static void Validate()
         {
-            //if (m_ItemTypes.Length == ItemDataList.Instance.m_ItemTypes.Count + 1 &&
-            //    m_ItemEffectTypes.Length == ItemDataList.Instance.m_ItemEffectTypes.Count + 1)
-            //{
-            //    return;
-            //}
-
             m_ItemTypes = new string[ItemDataList.Instance.m_ItemTypes.Count + 1];
             m_ItemTypes[0] = "None";
             for (int i = 1; i < m_ItemTypes.Length; i++)
@@ -70,8 +64,9 @@ namespace SyadeuEditor
             EditorGUILayout.LabelField("Image: ");
             DrawAssetReference(item, item.m_ImagePath);
             EditorGUILayout.EndHorizontal();
+            EditorUtils.Line();
 #endif
-
+            #region ItemTypes
             using (new EditorGUILayout.VerticalScope(c_Box))
             {
                 using (new EditorGUILayout.HorizontalScope())
@@ -123,7 +118,9 @@ namespace SyadeuEditor
                 }
                 EditorGUI.indentLevel -= 1;
             }
-
+            #endregion
+            EditorUtils.Line();
+            #region ItemEffects
             using (new EditorGUILayout.VerticalScope(c_Box))
             {
                 using (new EditorGUILayout.HorizontalScope())
@@ -170,9 +167,9 @@ namespace SyadeuEditor
                 }
                 EditorGUI.indentLevel -= 1;
             }
-
+            #endregion
+            EditorUtils.Line();
             item.m_Values.DrawValueContainer("Values");
-
             
             int GetSelectedItemType(string guid)
             {
@@ -210,10 +207,14 @@ namespace SyadeuEditor
 
                 var entry = refAsset == null ? null : m_DefaultAddressableSettings.FindAssetEntry(refAsset?.AssetGUID);
                 string displayName = entry == null ? "Not Found" : entry.address.Split('/').Last();
+                //Rect rect = GUILayoutUtility.GetLastRect();
+                Rect rect = rect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
+                rect = EditorGUI.IndentedRect(rect);
+                //rect.width = EditorGUIUtility.currentViewWidth
 
-                if (EditorGUILayout.DropdownButton(new GUIContent(displayName, assetIcon), FocusType.Passive/*, new GUIStyle("ObjectField")*/))
+                if (EditorGUI.DropdownButton(rect, new GUIContent(displayName, assetIcon), FocusType.Passive, new GUIStyle("ObjectField")))
                 {
-                    Rect rect = GUILayoutUtility.GetLastRect();
+                    rect = GUILayoutUtility.GetLastRect();
                     rect.position = Event.current.mousePosition;
 
                     PopupWindow.Show(rect, 
@@ -348,7 +349,7 @@ namespace SyadeuEditor
                         if (assetRefItem != null && !string.IsNullOrEmpty(assetRefItem.AssetPath))
                         {
                             //m_Drawer.newGuid = assetRefItem.Guid;
-                            m_Popup.m_Item.m_ImagePath = new AssetReference(assetRefItem.Guid);
+                            m_Popup.m_Item.m_ImagePath = new AssetReferenceSprite(assetRefItem.Guid);
                         }
                         else
                         {

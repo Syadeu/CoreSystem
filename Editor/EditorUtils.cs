@@ -226,6 +226,12 @@ namespace SyadeuEditor
 
             GUI.backgroundColor = old;
         }
+        public static void Line()
+        {
+            Rect rect = EditorGUILayout.GetControlRect(false, 1f);
+            rect.height = 1f;
+            EditorGUI.DrawRect(rect, new Color(0.5f, 0.5f, 0.5f, 1));
+        }
         public static void SectorLine(float width, int lines = 1)
         {
             Color old = GUI.backgroundColor;

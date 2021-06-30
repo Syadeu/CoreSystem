@@ -22,7 +22,7 @@ namespace Syadeu.Database
         [JsonProperty(Order = 1)] public string m_Guid;
 #if UNITY_ADDRESSABLES
         [JsonConverter(typeof(AssetReferenceJsonConverter))]
-        [JsonProperty(Order = 2)] public AssetReference m_ImagePath;
+        [JsonProperty(Order = 2)] public AssetReferenceSprite m_ImagePath;
 #endif
 
         [Tooltip("GUID")]
