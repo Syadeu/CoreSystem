@@ -35,8 +35,7 @@ namespace Syadeu.Mono.Creature
             {
                 for (int i = 0; i < m_SpawnRanges.Length; i++)
                 {
-                    if (m_SpawnRanges[i].m_Count <= 0 ||
-                        m_SpawnRanges[i].m_InstanceCount >= m_SpawnRanges[i].m_MaxCount) continue;
+                    if (m_SpawnRanges[i].m_Count <= 0) continue;
 
                     InternalSpawnAtGrid(i, m_SpawnRanges[i].m_Count);
                     if (m_SpawnRanges[i].m_EnableRespawn && !m_SpawnRanges[i].m_RespawnStarted)
@@ -185,23 +184,22 @@ namespace Syadeu.Mono.Creature
 
         #endregion
 
-        public bool m_SpawnAtStart = false;
+        //public bool m_SpawnAtStart = false;
 
-        public Transform UserCharacter { get; private set; } = null;
         public List<CreatureBrain> Creatures => m_Creatures;
 
-        private IEnumerator Start()
-        {
-            yield return new WaitForSeconds(3);
+        //private IEnumerator Start()
+        //{
+        //    yield return new WaitForSeconds(3);
 
-            if (m_SpawnAtStart)
-            {
-                for (int i = 0; i < m_CreatureSets.Count; i++)
-                {
-                    m_CreatureSets[i].Spawn();
-                }
-            }
-        }
+        //    if (m_SpawnAtStart)
+        //    {
+        //        for (int i = 0; i < m_CreatureSets.Count; i++)
+        //        {
+        //            m_CreatureSets[i].Spawn();
+        //        }
+        //    }
+        //}
 
         internal static CreatureSet GetCreatureSet(int dataIdx)
         {
@@ -221,9 +219,10 @@ namespace Syadeu.Mono.Creature
             }
             return -1;
         }
-        public static void SetUserCharacter(Transform tr)
+
+        public static CreatureBrain[] GetCreatures(Func<CreatureBrain, bool> predictate)
         {
-            Instance.UserCharacter = tr;
+            return Instance.m_Creatures.Where(predictate).ToArray();
         }
 
         public static void SpawnAt(int setID, Vector3 pos)
@@ -262,5 +261,4 @@ namespace Syadeu.Mono.Creature
             Instance.m_CreatureSets[setID].InternalSpawnAt(0, cell.Bounds.center);
         }
     }
-
 }
