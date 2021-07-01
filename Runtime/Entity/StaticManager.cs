@@ -21,6 +21,11 @@ namespace Syadeu
                 {
                     global::System.Type t = typeof(T);
 #if UNITY_EDITOR
+                    if (CoreSystem.s_BlockCreateInstance)
+                    {
+                        throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                            $"종료 중에 StaticManager<{typeof(T).Name}> 인스턴스를 생성하려 합니다.");
+                    }
                     if (IsMainthread() && !Application.isPlaying) throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
                         $"StaticManager<{typeof(T).Name}>의 인스턴스 객체는 플레이중에만 생성되거나 받아올 수 있습니다.");
 #endif
