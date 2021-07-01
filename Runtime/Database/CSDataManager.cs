@@ -15,7 +15,7 @@ namespace Syadeu.Database
         "Internal data work system.\n" +
         "This system do the basic data works like registering json converter types"
         )]
-    internal sealed class CoreSystemDataManager : StaticDataManager<CoreSystemDataManager>
+    internal sealed class CSDataManager : StaticDataManager<CSDataManager>
     {
         //private static bool s_JsonConverterSet = false;
 
@@ -43,19 +43,5 @@ namespace Syadeu.Database
 
         //    s_JsonConverterSet = true;
         //}
-    }
-
-    public sealed class CombatSystem : StaticDataManager<CombatSystem>
-    {
-
-
-        public static void AddPlayer(IPlayer player)
-        {
-
-        }
-        public static void RemovePlayer(IPlayer player)
-        {
-
-        }
     }
 }

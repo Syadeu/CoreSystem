@@ -75,13 +75,13 @@ namespace Syadeu.Database
                 if (string.IsNullOrEmpty(att.Header))
                 {
                     value = config.m_INI
-                        .GetOrCreateValue(fields[i].FieldType, fields[i].Name)
+                        .GetOrCreateValue(fields[i].FieldType, string.IsNullOrEmpty(att.Name) ? fields[i].Name : att.Name)
                         .GetValue();
                 }
                 else
                 {
                     value = config.m_INI.GetOrCreateHeader(att.Header)
-                        .GetOrCreateValue(fields[i].FieldType, fields[i].Name)
+                        .GetOrCreateValue(fields[i].FieldType, string.IsNullOrEmpty(att.Name) ? fields[i].Name : att.Name)
                         .GetValue();
                 }
                 $"{fields[i].Name}: {value}".ToLog();

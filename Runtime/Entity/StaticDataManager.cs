@@ -33,8 +33,8 @@ namespace Syadeu
                     CoreSystem.InvokeManagerChanged();
                     m_Instance = ins;
 
-                    ins.OnInitialize();
                     ConfigLoader.LoadConfig(ins);
+                    ins.OnInitialize();
                     ins.OnStart();
                 }
 

@@ -4,5 +4,6 @@
     public sealed class ConfigValueAttribute : System.Attribute
     {
         public string Header = null;
+        public string Name = null;
     }
 }
