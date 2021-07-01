@@ -46,7 +46,7 @@ namespace SyadeuEditor
             public override void OnGUI()
             {
                 Target.m_PrefabIdx = PrefabListEditor.DrawPrefabSelector(Target.m_PrefabIdx);
-                Target.m_Values.DrawValueContainer();
+                Target.m_Values.DrawValueContainer("Values");
             }
         }
     }

@@ -18,11 +18,11 @@ namespace Syadeu.Mono
     /// 하위 컴포넌트들은 <seealso cref="CreatureEntity"/> 를 참조하면 자동으로 Initialize 됨.
     /// </summary>
     [RequireComponent(typeof(NavMeshAgent))]
-    public class CreatureBrain : RecycleableMonobehaviour, IRender
+    public class CreatureBrain : RecycleableMonobehaviour, IRender, IPlayer
     {
         private static Vector3 INIT_POSITION = new Vector3(99999, -99999, 99999);
 
-        internal int m_DataIdx;
+        public int m_DataIdx;
         internal bool m_IsSpawnedFromManager = false;
         internal int m_SpawnPointIdx;
 
@@ -33,6 +33,7 @@ namespace Syadeu.Mono
         [SerializeField] private string m_CreatureDescription = null;
 
         [Space]
+        [SerializeField] private bool m_InitializeOnStart = false;
         [Tooltip("활성화시, 카메라에 비치지 않으면 이동 메소드가 순간이동을 합니다")]
         public bool m_EnableCameraCull = true;
         [SerializeField] private float m_SamplePosDistance = .1f;
@@ -44,6 +45,7 @@ namespace Syadeu.Mono
 
         private CreatureEntity[] m_Childs = null;
         private CreatureBrainProxy m_Proxy = null;
+        private Hash m_Hash;
 
         public override string DisplayName => m_CreatureName;
 
@@ -66,6 +68,10 @@ namespace Syadeu.Mono
             }
         }
         public bool IsVisible { get; private set; } = false;
+        public Hash Hash => m_Hash;
+
+        public bool HasInventory => Inventory != null;
+        public CreatureInventory Inventory { get; private set; }
 
         internal CreatureBrainProxy Proxy
         {
@@ -76,6 +82,12 @@ namespace Syadeu.Mono
             }
         }
 
+        private IEnumerator Start()
+        {
+            yield return new WaitUntil(() => CreatureManager.HasInstance && CreatureManager.Initialized);
+
+            if (m_InitializeOnStart) ManualInitialize(m_DataIdx);
+        }
         public void ManualInitialize(int dataIdx)
         {
             if (Activated || Initialized)
@@ -114,10 +126,12 @@ namespace Syadeu.Mono
             m_SharedPath = new NavMeshPath();
             m_Childs = GetComponentsInChildren<CreatureEntity>();
 
-            if (m_NavMeshAgent == null) m_NavMeshAgent = GetComponent<NavMeshAgent>();
+            if (m_NavMeshAgent == null) m_NavMeshAgent = GetComponentInChildren<NavMeshAgent>();
 
             for (int i = 0; i < m_Childs.Length; i++)
             {
+                if (m_Childs[i] is CreatureInventory inventory) Inventory = inventory;
+
                 m_Childs[i].InternalOnCreated();
             }
 
@@ -130,7 +144,12 @@ namespace Syadeu.Mono
             {
                 m_Childs[i].InternalInitialize(this, m_DataIdx);
             }
+            for (int i = 0; i < m_Childs.Length; i++)
+            {
+                m_Childs[i].InternalOnStart();
+            }
 
+            m_Hash = Hash.NewHash();
             RenderManager.AddObserver(this);
             Initialized = true;
         }
@@ -148,7 +167,9 @@ namespace Syadeu.Mono
                 m_Childs[i].InternalOnTerminate();
             }
 
+            m_Hash = Hash.Empty;
             RenderManager.RemoveObserver(this);
+            CreatureManager.Instance.Creatures.Remove(this);
             m_IsSpawnedFromManager = false;
             Initialized = false;
         }
@@ -350,5 +371,8 @@ namespace Syadeu.Mono
         }
 
         #endregion
+
+        public bool Equals(Hash other) => Hash.Equals(other);
+        public bool Equals(IObject other) => Hash.Equals(other.Hash);
     }
 }

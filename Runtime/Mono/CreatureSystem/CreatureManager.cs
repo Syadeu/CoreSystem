@@ -21,13 +21,6 @@ namespace Syadeu.Mono.Creature
             public int m_PrefabIdx;
             public SpawnRange[] m_SpawnRanges;
 
-            [Space]
-            public bool m_ReturnIfTooFar = false;
-            [Tooltip("SpawnRange에서 설정한 range를 기반으로 해당 거리만큼 더 멀어지면 작동합니다")]
-            public float m_ReturnMaxDistanceOffset = 15f;
-
-            public Action<int> onSpawn;
-
             public int CompareTo(CreatureSet other)
             {
                 if (other == null) return 1;
@@ -36,17 +29,13 @@ namespace Syadeu.Mono.Creature
                 else return -1;
             }
             internal CreatureSettings.PrivateSet GetPrivateSet() => CreatureSettings.Instance.GetPrivateSet(m_DataIdx);
+
+            #region Spawn
             public void Spawn()
             {
                 for (int i = 0; i < m_SpawnRanges.Length; i++)
                 {
-                    if (m_SpawnRanges[i].m_Count <= 0 ||
-                        m_SpawnRanges[i].m_InstanceCount >= m_SpawnRanges[i].m_MaxCount) continue;
-
-                    //if (m_SpawnRanges[i].m_InstanceCount + m_SpawnRanges[i].m_RespawnCount > m_SpawnRanges[i].m_MaxCount)
-                    //{
-                    //    continue;
-                    //}
+                    if (m_SpawnRanges[i].m_Count <= 0) continue;
 
                     InternalSpawnAtGrid(i, m_SpawnRanges[i].m_Count);
                     if (m_SpawnRanges[i].m_EnableRespawn && !m_SpawnRanges[i].m_RespawnStarted)
@@ -78,8 +67,6 @@ namespace Syadeu.Mono.Creature
                     $"{m_DataIdx}: spawnpoint {spawnPointIdx}".ToLog();
                     GetCreatureSet(m_DataIdx).m_SpawnRanges[spawnPointIdx].m_InstanceCount++;
                     Instance.m_Creatures.Add(brain);
-
-                    onSpawn?.Invoke(m_DataIdx);
                 }, true);
 #else
                 CreatureBrain brain = (CreatureBrain)PrefabManager.GetRecycleObject(m_PrefabIdx, false);
@@ -93,8 +80,6 @@ namespace Syadeu.Mono.Creature
 
                 Instance.m_CreatureSets[m_DataIdx].m_SpawnRanges[spawnPointIdx].m_InstanceCount++;
                 Instance.m_Creatures.Add(brain);
-
-                onSpawn?.Invoke(m_DataIdx);
 #endif
             }
             internal void InternalSpawnAtGrid(int i, int targetCount)
@@ -168,6 +153,7 @@ namespace Syadeu.Mono.Creature
                     yield return waitForTimer;
                 }
             }
+            #endregion
         }
         [Serializable]
         public class SpawnRange
@@ -198,23 +184,22 @@ namespace Syadeu.Mono.Creature
 
         #endregion
 
-        public bool m_SpawnAtStart = false;
+        //public bool m_SpawnAtStart = false;
 
-        public Transform UserCharacter { get; private set; } = null;
         public List<CreatureBrain> Creatures => m_Creatures;
 
-        private IEnumerator Start()
-        {
-            yield return new WaitForSeconds(3);
+        //private IEnumerator Start()
+        //{
+        //    yield return new WaitForSeconds(3);
 
-            if (m_SpawnAtStart)
-            {
-                for (int i = 0; i < m_CreatureSets.Count; i++)
-                {
-                    m_CreatureSets[i].Spawn();
-                }
-            }
-        }
+        //    if (m_SpawnAtStart)
+        //    {
+        //        for (int i = 0; i < m_CreatureSets.Count; i++)
+        //        {
+        //            m_CreatureSets[i].Spawn();
+        //        }
+        //    }
+        //}
 
         internal static CreatureSet GetCreatureSet(int dataIdx)
         {
@@ -234,9 +219,15 @@ namespace Syadeu.Mono.Creature
             }
             return -1;
         }
-        public static void SetUserCharacter(Transform tr)
+
+        public static CreatureBrain[] GetCreatures(Func<CreatureBrain, bool> predictate)
         {
-            Instance.UserCharacter = tr;
+            return Instance.m_Creatures.Where(predictate).ToArray();
+        }
+        public static CreatureBrain GetCreature(Hash hash)
+        {
+            CreatureBrain[] targets = GetCreatures((other) => other.Hash.Equals(hash));
+            return targets[0];
         }
 
         public static void SpawnAt(int setID, Vector3 pos)
@@ -275,5 +266,4 @@ namespace Syadeu.Mono.Creature
             Instance.m_CreatureSets[setID].InternalSpawnAt(0, cell.Bounds.center);
         }
     }
-
 }

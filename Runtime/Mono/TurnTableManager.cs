@@ -98,7 +98,7 @@ namespace Syadeu.Mono.TurnTable
                 Instance.InternalInitializeTable();
             }
 
-            $"next turn called: {prev.Value.name} => {Instance.m_CurrentTurn.Value.name}".ToLog();
+            $"next turn called: {prev.Value.DisplayName} => {Instance.m_CurrentTurn.Value.DisplayName}".ToLog();
             Instance.m_CurrentTurn.Value.StartTurn();
         }
     }

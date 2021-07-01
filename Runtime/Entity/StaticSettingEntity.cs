@@ -82,6 +82,10 @@ namespace Syadeu
         /// </summary>
         public virtual bool RuntimeModifiable { get; } = false;
 
+        protected virtual void OnDestroy()
+        {
+            m_Instance = null;
+        }
         public virtual void OnInitialize() { }
         public void Initialize() { }
 

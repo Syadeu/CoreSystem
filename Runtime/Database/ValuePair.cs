@@ -1,30 +1,39 @@
 ﻿using MoonSharp.Interpreter;
 using MoonSharp.Interpreter.Interop;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
-
+using Syadeu.Mono;
 using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Syadeu.Database
 {
     [Serializable] [JsonConverter(typeof(ValuePairJsonConverter))]
     public abstract class ValuePair : ICloneable, IEquatable<ValuePair>
     {
-        [JsonProperty(Order = 0)] public string m_Name;
+        [UnityEngine.SerializeField][JsonProperty(Order = 0)] protected string m_Name;
+        [JsonIgnore] protected Hash m_Hash;
+
+        [JsonIgnore] public string Name { get => m_Name; set => m_Name = value; }
+        [JsonIgnore] public Hash Hash
+        {
+            get
+            {
+                if (m_Hash == Hash.Empty) m_Hash = Hash.NewHash(m_Name);
+                return m_Hash;
+            }
+        }
 
         public abstract ValueType GetValueType();
 
         public abstract object GetValue();
+        public T GetValue<T>() => (T)GetValue();
         public abstract object Clone();
-        public virtual bool Equals(ValuePair other) => m_Name.Equals(other.m_Name);
+        public virtual bool Equals(ValuePair other) => Hash.Equals(other.Hash);
 
         public static ValuePair New(string name, object value)
         {
-            if (value == null) return new ValueNull { m_Name = name };
+            if (value == null) return new ValueNull(name);
 
             Type t = value.GetType();
             if (t.Equals(typeof(int)))
@@ -47,33 +56,34 @@ namespace Syadeu.Database
             {
                 return Array(name, list);
             }
-            else if (value is Action action)
-            {
-                return Action(name, action);
-            }
+            else if (value is Action action) return Action(name, action);
+            else if (value is Action<CreatureBrainProxy> actiont) return Action(name, actiont);
+            else if (value is Action<CreatureBrain> actionta) return Action(name, actionta);
             else if (value is Closure func)
             {
-                return Action(name, (Action)(() => func.Call()));
+                return Closure(name, func);
             }
             $"{value.GetType().Name} none setting".ToLog();
             throw new Exception();
         }
         public static ValuePair<int> Int(string name, int value)
-            => new SerializableIntValuePair() { m_Name = name, m_Value = value };
+            => new SerializableIntValuePair() { m_Name = name, m_Value = value, m_Hash = Hash.NewHash(name) };
         public static ValuePair<double> Double(string name, double value)
-            => new SerializableDoubleValuePair() { m_Name = name, m_Value = value };
+            => new SerializableDoubleValuePair() { m_Name = name, m_Value = value, m_Hash = Hash.NewHash(name) };
         public static ValuePair<string> String(string name, string value)
-            => new SerializableStringValuePair() { m_Name = name, m_Value = value };
+            => new SerializableStringValuePair() { m_Name = name, m_Value = value, m_Hash = Hash.NewHash(name) };
         public static ValuePair<bool> Bool(string name, bool value)
-            => new SerializableBoolValuePair() { m_Name = name, m_Value = value };
+            => new SerializableBoolValuePair() { m_Name = name, m_Value = value, m_Hash = Hash.NewHash(name) };
 
-        public static ValuePair<IList> Array(string name, params int[] values)
-            => new SerializableArrayValuePair() { m_Name = name, m_Value = values };
+        public static ValuePair<ValuePairContainer> Object(string name, params ValuePair[] values)
+            => new SerializableObjectValuePair() { m_Name = name, m_Value = new ValuePairContainer(values), m_Hash = Hash.NewHash(name) };
         public static ValuePair<IList> Array(string name, IList values)
-            => new SerializableArrayValuePair() { m_Name = name, m_Value = values };
+            => new SerializableArrayValuePair() { m_Name = name, m_Value = values, m_Hash = Hash.NewHash(name) };
 
-        public static ValuePair<Action> Action(string name, Action func)
-            => new SerializableActionValuePair() { m_Name = name, m_Value = func };
+        public static ValueFuncPair<T> Action<T>(string name, T func) where T : Delegate
+            => new ValueFuncPair<T>() { m_Name = name, m_Value = func, m_Hash = Hash.NewHash(name) };
+        public static SerializableClosureValuePair Closure(string name, Closure func)
+            => new SerializableClosureValuePair() { m_Name = name, m_Value = func, m_Hash = Hash.NewHash(name) };
     }
     public abstract class ValuePair<T> : ValuePair, IEquatable<T>
     {
@@ -101,7 +111,7 @@ namespace Syadeu.Database
             {
                 return ValueType.Array;
             }
-            else if (m_Value is Delegate)
+            else if (m_Value is Delegate || m_Value is Closure)
             {
                 return ValueType.Delegate;
             }
@@ -110,191 +120,56 @@ namespace Syadeu.Database
 
         public override object GetValue() => m_Value;
         public override bool Equals(ValuePair other)
-            => (other is ValuePair<T> temp) && base.Equals(other) && Equals(temp.m_Value);
+            => (other is ValuePair<T> temp) && base.Equals(other) && m_Value.Equals(temp.m_Value);
         public bool Equals(T other) => m_Value.Equals(other);
     }
-    public abstract class ValueFuncPair<T> : ValuePair<T> where T : Delegate
+    public abstract class ValueFuncPair : ValuePair
     {
-        public object Invoke(params object[] args)
+        public override ValueType GetValueType() => ValueType.Delegate;
+        
+        public abstract object Invoke(params object[] args);
+    }
+    [Serializable]
+    public sealed class ValueFuncPair<T> : ValueFuncPair where T : Delegate
+    {
+        [JsonIgnore] public T m_Value;
+
+        public override object GetValue() => m_Value;
+        public override bool Equals(ValuePair other) 
+            => base.Equals(other) && (other is ValueFuncPair<T> temp) && m_Value.Equals(temp.m_Value);
+
+        public override object Invoke(params object[] args)
         {
             return m_Value.DynamicInvoke(args);
+        }
+        public override object Clone()
+        {
+            return new ValueFuncPair<T>
+            {
+                m_Name = m_Name,
+                m_Value = m_Value
+            };
         }
     }
     public sealed class ValueNull : ValuePair
     {
+        public ValueNull(string name)
+        {
+            m_Name = name;
+            m_Hash = Hash.NewHash(name);
+        }
+
         public override ValueType GetValueType() => ValueType.Null;
 
         public override object GetValue() => null;
         public override object Clone()
         {
-            return new ValueNull
-            {
-                m_Name = m_Name
-            };
+            return new ValueNull(m_Name);
         }
-    }
-    public enum ValueType
-    {
-        Null,
-
-        Int32,
-        Double,
-        String,
-        Boolean,
-
-        Array,
-
-        Delegate,
-    }
-
-    [Serializable]
-    public sealed class ValuePairContainer : IList, ICloneable
-    {
-        [UnityEngine.SerializeReference][JsonProperty] private ValuePair[] m_Values;
-        [MoonSharpHidden] public ValuePair this[int i]
-        {
-            get => m_Values[i];
-            set => m_Values[i] = ValuePair.New(m_Values[i].m_Name, value);
-        }
-        [MoonSharpHidden] object IList.this[int index]
-        {
-            get => m_Values[index];
-            set => m_Values[index] = ValuePair.New(m_Values[index].m_Name, value);
-        }
-        [JsonIgnore] public int Count => m_Values.Length;
-
-        public bool IsFixedSize => false;
-        public bool IsReadOnly => false;
-        public bool IsSynchronized => throw new NotImplementedException();
-        public object SyncRoot => throw new NotImplementedException();
-
-        [MoonSharpHidden] public ValuePairContainer(params ValuePair[] values)
-        {
-            m_Values = values == null ? new ValuePair[0] : values;
-        }
-
-        private int GetValuePairIdx(string name)
-        {
-            for (int i = 0; i < m_Values.Length; i++)
-            {
-                if (m_Values[i].m_Name.Equals(name)) return i;
-            }
-            return -1;
-        }
-        public int IndexOf(object value)
-        {
-            if (value is ValuePair pair)
-            {
-                for (int i = 0; i < m_Values.Length; i++)
-                {
-                    if (m_Values[i].Equals(pair)) return i;
-                }
-            }
-            else if (value is string name)
-            {
-                return GetValuePairIdx(name);
-            }
-
-            throw new Exception();
-        }
-
-        public bool Contains(object value)
-        {
-            if (value is ValuePair pair)
-            {
-                for (int i = 0; i < m_Values.Length; i++)
-                {
-                    if (m_Values[i].Equals(pair)) return true;
-                }
-            }
-            else if (value is string name)
-            {
-                return Contains(name);
-            }
-
-            return false;
-        }
-        public bool Contains(string name) => GetValuePairIdx(name) >= 0;
-
-        public object GetValue(string name) => m_Values[GetValuePairIdx(name)].GetValue();
-        public void SetValue(string name, object value) => m_Values[GetValuePairIdx(name)] = ValuePair.New(name, value);
-        public int Add(object value)
-        {
-            var temp = m_Values.ToList();
-            if (value is JObject jobj)
-            {
-                temp.Add(jobj.ToObject<ValuePair>());
-            }
-            else temp.Add(ValuePair.New("New Value", value));
-            m_Values = temp.ToArray();
-            return m_Values.Length - 1;
-        }
-        public void Add(string name, object value)
-        {
-            if (Contains(name)) throw new Exception();
-
-            var temp = m_Values.ToList();
-            temp.Add(ValuePair.New(name, value));
-            m_Values = temp.ToArray();
-        }
-        public void Add<T>(string name, T value)
-        {
-            var temp = m_Values.ToList();
-            temp.Add(ValuePair.New(name, value));
-            m_Values = temp.ToArray();
-        }
-        public void AddRange(params ValuePair[] values)
-        {
-            var temp = m_Values.ToList();
-            temp.AddRange(values);
-            m_Values = temp.ToArray();
-        }
-
-        public void Clear() => m_Values = new ValuePair[0];
-        public void Remove(object item)
-        {
-            if (item is string name)
-            {
-                int i = GetValuePairIdx(name);
-                if (i < 0) return;
-                RemoveAt(i);
-            }
-            else if (item is ValuePair pair)
-            {
-                for (int i = 0; i < m_Values.Length; i++)
-                {
-                    if (m_Values.Equals(pair))
-                    {
-                        RemoveAt(i);
-                        return;
-                    }
-                }
-            }
-        }
-        public void RemoveAt(int i)
-        {
-            var temp = m_Values.ToList();
-            temp.RemoveAt(i);
-            m_Values = temp.ToArray();
-        }
-
-        public object Clone() => new ValuePairContainer(m_Values.ToArray());
-
-        public void Insert(int index, object value)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void CopyTo(Array array, int index)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IEnumerator GetEnumerator() => m_Values.GetEnumerator();
     }
 
     #region Serializable Classes
-    public sealed class SerializableIntValuePair : ValuePair<int>
+    [Serializable] public sealed class SerializableIntValuePair : ValuePair<int>
     {
         public override object Clone()
         {
@@ -305,7 +180,7 @@ namespace Syadeu.Database
             };
         }
     }
-    public sealed class SerializableDoubleValuePair : ValuePair<double>
+    [Serializable] public sealed class SerializableDoubleValuePair : ValuePair<double>
     {
         public override object Clone()
         {
@@ -316,7 +191,7 @@ namespace Syadeu.Database
             };
         }
     }
-    public sealed class SerializableStringValuePair : ValuePair<string>
+    [Serializable] public sealed class SerializableStringValuePair : ValuePair<string>
     {
         public override object Clone()
         {
@@ -327,7 +202,7 @@ namespace Syadeu.Database
             };
         }
     }
-    public sealed class SerializableBoolValuePair : ValuePair<bool>
+    [Serializable] public sealed class SerializableBoolValuePair : ValuePair<bool>
     {
         public override object Clone()
         {
@@ -350,117 +225,36 @@ namespace Syadeu.Database
             };
         }
     }
-
-    public sealed class SerializableActionValuePair : ValueFuncPair<Action>
+    [Serializable] public sealed class SerializableObjectValuePair : ValuePair<ValuePairContainer>
     {
-        public void Invoke() => Invoke(null);
         public override object Clone()
         {
-            return new SerializableActionValuePair
+            return new SerializableObjectValuePair
+            {
+                m_Name = m_Name,
+                m_Value = (ValuePairContainer)m_Value.Clone()
+            };
+        }
+    }
+
+    public sealed class SerializableClosureValuePair : ValueFuncPair
+    {
+        [JsonIgnore] public Closure m_Value;
+
+        public override object GetValue() => m_Value;
+        public override bool Equals(ValuePair other)
+            => base.Equals(other) && (other is SerializableClosureValuePair temp) && m_Value.Equals(temp.m_Value);
+
+        public override object Invoke(params object[] args) => m_Value.Call(args);
+        public override object Clone()
+        {
+            return new SerializableClosureValuePair
             {
                 m_Name = m_Name,
                 m_Value = m_Value
             };
         }
     }
-    #endregion
 
-    #region Json Converter
-    public class BaseSpecifiedConcreteClassConverter : DefaultContractResolver
-    {
-        protected override JsonConverter ResolveContractConverter(Type objectType)
-        {
-            if (typeof(ValuePair).IsAssignableFrom(objectType) && !objectType.IsAbstract)
-                return null; // pretend TableSortRuleConvert is not specified (thus avoiding a stack overflow)
-            return base.ResolveContractConverter(objectType);
-        }
-    }
-    public class ValuePairJsonConverter : JsonConverter
-    {
-        static readonly JsonSerializerSettings SpecifiedSubclassConversion
-            = new JsonSerializerSettings() { ContractResolver = new BaseSpecifiedConcreteClassConverter() };
-
-        public override bool CanWrite => false;
-
-        public override bool CanConvert(Type objectType) => objectType == typeof(ValuePair);
-        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-            => throw new NotImplementedException();
-
-        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
-        {
-            JObject jo = JObject.Load(reader);
-            if (!jo.TryGetValue("m_Value", out JToken value))
-            {
-                return JsonConvert.DeserializeObject<ValueNull>(jo.ToString(), SpecifiedSubclassConversion);
-            }
-
-            if (value.Type == JTokenType.Boolean)
-            {
-                return JsonConvert.DeserializeObject<SerializableBoolValuePair>(jo.ToString(), SpecifiedSubclassConversion);
-            }
-            else if (value.Type == JTokenType.Float)
-            {
-                return JsonConvert.DeserializeObject<SerializableDoubleValuePair>(jo.ToString(), SpecifiedSubclassConversion);
-            }
-            else if (value.Type == JTokenType.Integer)
-            {
-                return JsonConvert.DeserializeObject<SerializableIntValuePair>(jo.ToString(), SpecifiedSubclassConversion);
-            }
-            else if (value.Type == JTokenType.String)
-            {
-                return JsonConvert.DeserializeObject<SerializableStringValuePair>(jo.ToString(), SpecifiedSubclassConversion);
-            }
-            else if (value.Type == JTokenType.Array)
-            {
-                var temp = JsonConvert.DeserializeObject<SerializableArrayValuePair>(jo.ToString(), SpecifiedSubclassConversion);
-
-                if (temp.m_Value.Count > 0 && temp.m_Value[0].GetType().GetElementType() == null)
-                {
-                    if (int.TryParse(temp.m_Value[0].ToString(), out int _))
-                    {
-                        List<int> tempList = new List<int>();
-                        for (int i = 0; i < temp.m_Value.Count; i++)
-                        {
-                            tempList.Add(int.Parse(temp.m_Value[i].ToString()));
-                        }
-                        temp.m_Value = tempList;
-                    }
-                    else if (double.TryParse(temp.m_Value[0].ToString(), out double _))
-                    {
-                        List<double> tempList = new List<double>();
-                        for (int i = 0; i < temp.m_Value.Count; i++)
-                        {
-                            tempList.Add(double.Parse(temp.m_Value[i].ToString()));
-                        }
-                        temp.m_Value = tempList;
-                    }
-                    else if (bool.TryParse(temp.m_Value[0].ToString(), out bool _))
-                    {
-                        List<bool> tempList = new List<bool>();
-                        for (int i = 0; i < temp.m_Value.Count; i++)
-                        {
-                            tempList.Add(bool.Parse(temp.m_Value[i].ToString()));
-                        }
-                        temp.m_Value = tempList;
-                    }
-                    else
-                    {
-                        List<string> tempList = new List<string>();
-                        for (int i = 0; i < temp.m_Value.Count; i++)
-                        {
-                            tempList.Add(temp.m_Value[i].ToString());
-                        }
-                        temp.m_Value = tempList;
-                    }
-                }
-
-                return temp;
-            }
-            else
-            {
-                return JsonConvert.DeserializeObject<ValueNull>(jo.ToString(), SpecifiedSubclassConversion);
-            }
-        }
-    }
-    #endregion
+#endregion
 }

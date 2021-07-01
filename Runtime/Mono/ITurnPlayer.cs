@@ -1,12 +1,11 @@
-﻿
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Syadeu.Mono.TurnTable
 {
-    public interface ITurnPlayer
+    public interface ITurnPlayer : IObject
     {
-        string name { get; }
-        Transform transform { get; }
+        //string name { get; }
+        //Transform transform { get; }
 
         /// <summary>
         /// 값이 낮을 수록, 턴이 일찍 시작됩니다.

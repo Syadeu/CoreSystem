@@ -17,13 +17,13 @@ using UnityEngine.Networking;
 using System.Threading.Tasks;
 using System.Reflection;
 using Syadeu.Database;
+using Syadeu.Database.Lua;
 
 namespace Syadeu
 {
-    [StaticManagerDescription(@"
-    CoreSystem's main system.
-    
-    ")]
+    [StaticManagerDescription(
+        "CoreSystem's main system.\n" +
+        "You can register all background works through this system.")]
     public sealed class CoreSystem : StaticManager<CoreSystem>
     {
         #region Managers
@@ -37,42 +37,39 @@ namespace Syadeu
         internal static void InvokeManagerChanged() => Instance.OnManagerChanged?.Invoke();
         public static IReadOnlyList<IStaticManager> GetStaticManagers()
         {
-            for (int i = Instance.StaticManagers.Count - 1; i >= 0; i--)
-            {
-                if (Instance.StaticManagers[i].Disposed)
-                {
-                    Instance.StaticManagers.RemoveAt(i);
-                    InvokeManagerChanged();
-                    continue;
-                }
-            }
+            //for (int i = Instance.StaticManagers.Count - 1; i >= 0; i--)
+            //{
+            //    if (Instance.StaticManagers[i].Disposed)
+            //    {
+            //        Instance.StaticManagers.RemoveAt(i);
+            //        InvokeManagerChanged();
+            //    }
+            //}
             return Instance.StaticManagers;
         }
         public static IReadOnlyList<IStaticManager> GetInstanceManagers()
         {
-            for (int i = Instance.InstanceManagers.Count - 1; i >= 0; i--)
-            {
-                if (Instance.InstanceManagers[i].Disposed)
-                {
-                    Instance.InstanceManagers.RemoveAt(i);
-                    InvokeManagerChanged();
-                    continue;
-                }
-            }
+            //for (int i = Instance.InstanceManagers.Count - 1; i >= 0; i--)
+            //{
+            //    if (Instance.InstanceManagers[i].Disposed)
+            //    {
+            //        Instance.InstanceManagers.RemoveAt(i);
+            //        InvokeManagerChanged();
+            //    }
+            //}
             return Instance.InstanceManagers;
         }
         public static IReadOnlyList<IStaticManager> GetDataManagers()
         {
-            for (int i = Instance.DataManagers.Count - 1; i >= 0; i--)
-            {
-                if (Instance.DataManagers[i] == null ||
-                    Instance.DataManagers[i].Disposed)
-                {
-                    Instance.DataManagers.RemoveAt(i);
-                    InvokeManagerChanged();
-                    continue;
-                }
-            }
+            //for (int i = Instance.DataManagers.Count - 1; i >= 0; i--)
+            //{
+            //    if (Instance.DataManagers[i] == null ||
+            //        Instance.DataManagers[i].Disposed)
+            //    {
+            //        Instance.DataManagers.RemoveAt(i);
+            //        InvokeManagerChanged();
+            //    }
+            //}
             return Instance.DataManagers;
         }
 
@@ -357,6 +354,9 @@ namespace Syadeu
         public delegate void BackgroundWork(Awaiter awaiter);
         public delegate void UnityWork();
 
+        internal static bool s_BlockCreateInstance = false;
+
+        private readonly ManualResetEvent m_SimWatcher = new ManualResetEvent(false);
         internal readonly ConcurrentDictionary<CoreRoutine, object> m_CustomBackgroundUpdates = new ConcurrentDictionary<CoreRoutine, object>();
         internal readonly ConcurrentDictionary<CoreRoutine, object> m_CustomUpdates = new ConcurrentDictionary<CoreRoutine, object>();
         private bool m_StartUpdate = false;
@@ -394,13 +394,6 @@ namespace Syadeu
                         $"{internalTypes[i].Name}: StaticManagerInitializeOnLoad 어트리뷰트는 StaticManager를 상속받은 객체에만 사용되어야합니다.");
                 }
                 method.Invoke(null, null);
-
-                //Type staticManager = typeof(StaticManager<>).MakeGenericType(internalTypes[i]);
-                //if (internalTypes[i].BaseType == staticManager)
-                //{
-                //    staticManager.GetProperty(InstanceStr).GetGetMethod().Invoke(null, null);
-                //    continue;
-                //}
             }
             if (SyadeuSettings.Instance.m_EnableLua)
             {
@@ -425,26 +418,9 @@ namespace Syadeu
                                 $"{types[j].Name}: StaticManagerInitializeOnLoad 어트리뷰트는 StaticManager를 상속받은 객체에만 사용되어야합니다.");
                         }
                         method.Invoke(null, null);
-                        //Type staticManager = typeof(StaticManager<>).MakeGenericType(types[j]);
-                        //if (types[j].BaseType == staticManager)
-                        //{
-                        //    staticManager.GetProperty(InstanceStr).GetGetMethod().Invoke(null, null);
-                        //    continue;
-                        //}
-
-                        //throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
-                        //        $"{types[j].Name}: StaticManagerInitializeOnLoad 어트리뷰트는 StaticManager를 상속받은 객체에만 사용되어야합니다.");
                     }
                 }
             }
-
-            //Application.quitting += () =>
-            //{
-            //    if (m_Instance != null)
-            //    {
-            //        m_Instance.OnDestroy();
-            //    }
-            //};
         }
 
         private void Awake()
@@ -453,19 +429,26 @@ namespace Syadeu
         }
         public override void OnInitialize()
         {
-            //BackgroundThread = new Thread(BackgroundWorker)
-            //{
-            //    IsBackground = true
-            //};
-            //BackgroundThread.Start();
-
             ThreadPool.QueueUserWorkItem(BackgroundWorker);
-
+            Application.quitting += OnAboutToQuit;
             StartCoroutine(UnityWorker());
+        }
+        private void OnAboutToQuit()
+        {
+            //"test123".ToLog();
+            s_BlockCreateInstance = true;
         }
         protected override void OnDestroy()
         {
-            StopAllCoroutines();
+            //StopAllCoroutines();
+            try
+            {
+                m_CustomBackgroundUpdates.Clear();
+                BackgroundThread.Abort();
+            }
+            catch (Exception)
+            {
+            }
 
             for (int i = 0; i < BackgroundJobWorkers.Count; i++)
             {
@@ -486,7 +469,8 @@ namespace Syadeu
             //    BackgroundThread?.Abort();
             //}
             //catch (Exception) { }
-
+            //"in123".ToLog();
+            Application.quitting -= OnAboutToQuit;
             base.OnDestroy();
         }
         #endregion
@@ -495,19 +479,123 @@ namespace Syadeu
 
 #if UNITY_EDITOR
         private static IEnumerator m_EditorCoroutine = null;
+        private static IEnumerator m_EditorSceneCoroutine = null;
         internal static readonly Dictionary<CoreRoutine, object> m_EditorCoroutines = new Dictionary<CoreRoutine, object>();
+        internal static readonly Dictionary<CoreRoutine, object> m_EditorSceneCoroutines = new Dictionary<CoreRoutine, object>();
         private static readonly List<(int progressID, EditorTask task)> m_EditorTasks = new List<(int, EditorTask)>();
 
         [InitializeOnLoadMethod]
         private static void EditorInitialize()
         {
             m_EditorCoroutine = EditorWorker();
+            m_EditorSceneCoroutine = EditorCoroutineWorker(m_EditorSceneCoroutines);
+            EditorApplication.update -= EditorWorkerMoveNext;
             EditorApplication.update += EditorWorkerMoveNext;
+
+            SceneView.duringSceneGui -= EditorSceneWorkerMoveNext;
+            SceneView.duringSceneGui += EditorSceneWorkerMoveNext;
         }
 
+        private static void EditorSceneWorkerMoveNext(SceneView sceneView)
+        {
+            m_EditorSceneCoroutine.MoveNext();
+        }
         private static void EditorWorkerMoveNext()
         {
             m_EditorCoroutine.MoveNext();
+        }
+        private static IEnumerator EditorCoroutineWorker(IDictionary<CoreRoutine, object> list)
+        {
+            while (true)
+            {
+                #region Editor Coroutine
+                if (list.Count > 0)
+                {
+                    List<CoreRoutine> _waitForDeletion = null;
+                    foreach (var item in list)
+                    {
+                        if (item.Value == null)
+                        {
+                            if (_waitForDeletion == null)
+                            {
+                                _waitForDeletion = new List<CoreRoutine>();
+                            }
+                            _waitForDeletion.Add(item.Key);
+                            //list.Remove(item.Key);
+                            continue;
+                        }
+
+                        if (item.Key.Iterator.Current == null)
+                        {
+                            if (!item.Key.Iterator.MoveNext())
+                            {
+                                if (_waitForDeletion == null)
+                                {
+                                    _waitForDeletion = new List<CoreRoutine>();
+                                }
+                                _waitForDeletion.Add(item.Key);
+
+                                if (item.Value is int progressID) Progress.Remove(progressID);
+                            }
+                        }
+                        else
+                        {
+                            if (item.Key.Iterator.Current is CustomYieldInstruction @yield &&
+                                !yield.keepWaiting)
+                            {
+                                if (!item.Key.Iterator.MoveNext())
+                                {
+                                    if (_waitForDeletion == null)
+                                    {
+                                        _waitForDeletion = new List<CoreRoutine>();
+                                    }
+                                    _waitForDeletion.Add(item.Key);
+
+                                    if (item.Value is int progressID) Progress.Remove(progressID);
+                                }
+                            }
+                            else if (item.Key.Iterator.Current.GetType() == typeof(bool) &&
+                                    Convert.ToBoolean(item.Key.Iterator.Current) == true)
+                            {
+                                if (!item.Key.Iterator.MoveNext())
+                                {
+                                    if (_waitForDeletion == null)
+                                    {
+                                        _waitForDeletion = new List<CoreRoutine>();
+                                    }
+                                    _waitForDeletion.Add(item.Key);
+
+                                    if (item.Value is int progressID) Progress.Remove(progressID);
+                                }
+                            }
+                            else if (item.Key.Iterator.Current is YieldInstruction baseYield)
+                            {
+                                if (_waitForDeletion == null)
+                                {
+                                    _waitForDeletion = new List<CoreRoutine>();
+                                }
+                                _waitForDeletion.Add(item.Key);
+
+                                if (item.Value is int progressID) Progress.Remove(progressID);
+
+                                throw new CoreSystemException(CoreSystemExceptionFlag.Editor,
+                                    $"해당 yield return 타입({item.Key.Iterator.Current.GetType().Name})은 지원하지 않습니다");
+                            }
+                        }
+                    }
+
+                    if (_waitForDeletion != null)
+                    {
+                        for (int i = 0; i < _waitForDeletion.Count; i++)
+                        {
+                            list.Remove(_waitForDeletion[i]);
+                        }
+                    }
+                }
+                #endregion
+
+                yield return null;
+            }
         }
         private static IEnumerator EditorWorker()
         {
@@ -619,6 +707,13 @@ namespace Syadeu
 
             return routine;
         }
+        public static CoreRoutine StartEditorSceneUpdate(IEnumerator iter, object obj)
+        {
+            CoreRoutine routine = new CoreRoutine(obj, iter, true, false);
+            m_EditorSceneCoroutines.Add(routine, obj);
+
+            return routine;
+        }
         public static void StopEditorUpdate(CoreRoutine routine)
         {
             m_EditorCoroutines.Remove(routine);
@@ -676,9 +771,23 @@ namespace Syadeu
 
             List<Timer> activeTimers = new List<Timer>();
 
-            int counter = 0;
+            int counter = 0, tickCounter = 0;
             while (true)
             {
+                if (!m_SimWatcher.WaitOne())
+                {
+                    tickCounter++;
+                }
+                else
+                {
+                    if (tickCounter != 0)
+                    {
+                        $"{tickCounter} ticks were skipped".ToLog();
+                    }
+                    //$"passed".ToLog();
+                    tickCounter = 0;
+                }
+
 #if UNITY_EDITOR
                 OnBackgroundStartSampler.Begin();
 #endif
@@ -1024,7 +1133,8 @@ namespace Syadeu
                     GC.Collect();
                     counter = 0;
                 }
-                ThreadAwaiter(10);
+                //ThreadAwaiter(10);
+                m_SimWatcher.Reset();
             }
         }
         private IEnumerator UnityWorker()
@@ -1143,12 +1253,21 @@ namespace Syadeu
                                     m_RoutineChanged = true;
                                 }
                             }
+                            else if (item.Key.Iterator.Current is UnityEngine.AsyncOperation oper &&
+                                oper.isDone)
+                            {
+                                if (!item.Key.Iterator.MoveNext())
+                                {
+                                    m_CustomUpdates.TryRemove(item.Key, out _);
+                                    m_RoutineChanged = true;
+                                }
+                            }
                             else if (item.Key.Iterator.Current.GetType() == typeof(bool) &&
                                     Convert.ToBoolean(item.Key.Iterator.Current) == true)
                             {
                                 if (!item.Key.Iterator.MoveNext())
                                 {
-                                    m_CustomBackgroundUpdates.TryRemove(item.Key, out _);
+                                    m_CustomUpdates.TryRemove(item.Key, out _);
                                     m_RoutineChanged = true;
                                 }
                             }
@@ -1306,6 +1425,7 @@ namespace Syadeu
                 //{
                 //    GC.Collect();
                 //}
+                m_SimWatcher.Set();
                 yield return null;
             }
         }
@@ -1512,14 +1632,7 @@ namespace Syadeu
             }
         }
         private static readonly List<DebugLineClass> debugLines = new List<DebugLineClass>();
-        private void OnDrawGizmos()
-        {
-            foreach (var line in debugLines)
-            {
-                Gizmos.color = line.color;
-                Gizmos.DrawLine(line.a, line.b);
-            }
-        }
+        
         public static DebugLineClass DrawLine(Vector3 a, Vector3 b, Color color)
         {
             DebugLineClass temp = new DebugLineClass(a, b, color);

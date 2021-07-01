@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Syadeu.Database;
+using System;
 
 using UnityEngine;
 using UnityEngine.Events;
@@ -21,7 +22,10 @@ namespace Syadeu.Mono.TurnTable
         [SerializeField] private bool m_IsMyTurn = false;
 
         //protected abstract int StartTurnSpeed { get; }
-        protected abstract int StartActionPoint { get; }
+        public string DisplayName => Brain.DisplayName;
+        public Hash Hash => Brain.Hash;
+
+        protected abstract int InitialActionPoint { get; }
 
         public abstract float TurnSpeed { get; }
 
@@ -68,7 +72,7 @@ namespace Syadeu.Mono.TurnTable
         protected virtual void OnEndTurn() { }
         public void ResetTurnTable()
         {
-            ActionPoint = StartActionPoint;
+            ActionPoint = InitialActionPoint;
 
             OnResetTurnTable();
             m_OnResetTurn?.Invoke();
@@ -83,6 +87,9 @@ namespace Syadeu.Mono.TurnTable
         {
             if (IsJoined) TurnTableManager.RemovePlayer(this);
         }
+
+        public bool Equals(Hash other) => Hash.Equals(other);
+        public bool Equals(IObject other) => Hash.Equals(other.Hash);
     }
 }
 

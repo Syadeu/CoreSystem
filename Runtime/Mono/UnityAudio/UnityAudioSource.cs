@@ -80,6 +80,7 @@ namespace Syadeu.Mono.Audio
         {
             if (!InternalPlay())
             {
+                $"AudioSource({name}) is not initialized".ToLogError();
                 return this;
             }
             return this;
@@ -90,6 +91,7 @@ namespace Syadeu.Mono.Audio
 
             if (!InternalPlay())
             {
+                $"AudioSource({name}) is not initialized".ToLogError();
                 return this;
             }
             return this;

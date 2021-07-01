@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Syadeu.Database;
+using UnityEngine;
 
 namespace Syadeu
 {
@@ -18,7 +19,13 @@ namespace Syadeu
             {
                 if (m_Instance == null)
                 {
+                    global::System.Type t = typeof(T);
 #if UNITY_EDITOR
+                    if (CoreSystem.s_BlockCreateInstance)
+                    {
+                        throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+                            $"종료 중에 StaticManager<{typeof(T).Name}> 인스턴스를 생성하려 합니다.");
+                    }
                     if (IsMainthread() && !Application.isPlaying) throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
                         $"StaticManager<{typeof(T).Name}>의 인스턴스 객체는 플레이중에만 생성되거나 받아올 수 있습니다.");
 #endif
@@ -32,14 +39,14 @@ namespace Syadeu
                     }
                     if (m_Instance != null) return m_Instance;
 
-                    if (typeof(T) != typeof(CoreSystem) && !CoreSystem.Initialized)
+                    if (t != typeof(CoreSystem) && !CoreSystem.Initialized)
                     {
                         CoreSystem.Instance.Initialize(SystemFlag.MainSystem);
                         DontDestroyOnLoad(CoreSystem.Instance.gameObject);
                     }
 
                     T ins;
-                    var existing = FindObjectsOfType(typeof(T)) as T[];
+                    var existing = FindObjectsOfType(t) as T[];
                     if (existing.Length > 0)
                     {
                         for (int i = 1; i < existing.Length; i++)
@@ -75,7 +82,7 @@ namespace Syadeu
 
                     ins.OnInitialize();
 
-                    if (typeof(T) == typeof(CoreSystem))
+                    if (t == typeof(CoreSystem))
                     {
                         System = ins as CoreSystem;
                         DontDestroyOnLoad(ins.gameObject);
@@ -102,6 +109,8 @@ namespace Syadeu
 
                     ins.gameObject.isStatic = true;
                     m_Instance = ins;
+
+                    ConfigLoader.LoadConfig(ins);
                     ins.OnStart();
                 }
                 return m_Instance;
@@ -135,7 +144,7 @@ namespace Syadeu
         public void Dispose()
         {
             Disposed = true;
-
+            CoreSystem.Instance.StaticManagers.Remove(this);
             m_Instance = null;
         }
     }

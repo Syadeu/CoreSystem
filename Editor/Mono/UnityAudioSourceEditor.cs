@@ -37,6 +37,12 @@ namespace SyadeuEditor
             EditorUtils.SectorLine();
             EditorGUILayout.Space();
 
+            if (UnityAudioManager.EditorListener == null)
+            {
+                EditorGUILayout.HelpBox("!! Audio Listener Not Found !!", MessageType.Error);
+                return;
+            }
+
             EditorGUI.BeginDisabledGroup(true);
             EditorGUILayout.FloatField("Distance From Listener: ", UnityAudioManager.DistanceFromListener(m_Scr.transform));
             EditorGUI.EndDisabledGroup();

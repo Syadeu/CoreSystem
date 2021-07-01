@@ -1,4 +1,5 @@
-﻿using Syadeu.Mono;
+﻿using Syadeu.Database;
+using Syadeu.Mono;
 using UnityEngine;
 
 namespace Syadeu
@@ -105,6 +106,7 @@ namespace Syadeu
                 transform.SetParent(InstanceGroupTr);
             }
 
+            ConfigLoader.LoadConfig(this);
             OnStart();
             Initialized = true;
         }
@@ -120,6 +122,7 @@ namespace Syadeu
         {
             Disposed = true;
 
+            CoreSystem.Instance.InstanceManagers.Remove(this);
             Initialized = false;
             m_Instance = null;
         }

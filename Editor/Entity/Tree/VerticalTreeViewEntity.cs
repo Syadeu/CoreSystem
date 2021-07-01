@@ -17,6 +17,9 @@ namespace SyadeuEditor.Tree
 
         private UnityEngine.Object m_Asset;
         private SerializedObject m_SerializedObject;
+
+        public event Action OnDirty;
+
         public UnityEngine.Object Asset => m_Asset;
 
         protected List<VerticalTreeElement> m_Elements = new List<VerticalTreeElement>();
@@ -139,7 +142,11 @@ namespace SyadeuEditor.Tree
                 {
                     EditorGUI.BeginChangeCheck();
                     e.OnGUI();
-                    if (EditorGUI.EndChangeCheck()) EditorUtility.SetDirty(m_Asset);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        EditorUtility.SetDirty(m_Asset);
+                        OnDirty?.Invoke();
+                    }
 
                     for (int i = 0; i < e.Childs?.Count; i++)
                     {

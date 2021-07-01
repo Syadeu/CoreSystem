@@ -1,6 +1,5 @@
 ﻿using MoonSharp.Interpreter;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using Syadeu.Mono;
 using System;
@@ -10,27 +9,33 @@ using System.IO;
 using System.Linq;
 using UnityEngine;
 
+#if UNITY_ADDRESSABLES
+using UnityEngine.AddressableAssets;
+#endif
+
 namespace Syadeu.Database
 {
-    #region Item
     [Serializable]
     public sealed class Item
     {
-        [JsonProperty(Order = 0)] public string m_Name;
-        [JsonProperty(Order = 1)] public string m_Guid;
-        [JsonProperty(Order = 2)] public string m_ImagePath;
+        [JsonProperty(Order = 0, PropertyName = "Name")] public string m_Name;
+        [JsonProperty(Order = 1, PropertyName = "Hash")] public Hash m_Hash;
+#if UNITY_ADDRESSABLES
+        [JsonConverter(typeof(AssetReferenceJsonConverter))]
+        [JsonProperty(Order = 2, PropertyName = "ImagePath")] public AssetReference m_ImagePath;
+#endif
 
-        [Tooltip("GUID")]
+        [Tooltip("Hash")]
         /// <summary>
         /// <see cref="ItemType"/>
         /// </summary>
-        [JsonProperty(Order = 3)] public string[] m_ItemTypes = new string[0];
-        [Tooltip("GUID")]
+        [JsonProperty(Order = 3, PropertyName = "ItemTypes")] public ulong[] m_ItemTypes = new ulong[0];
+        [Tooltip("Hash")]
         /// <summary>
         /// <see cref="ItemEffectType"/>
         /// </summary>
-        [JsonProperty(Order = 4)] public string[] m_ItemEffectTypes = new string[0];
-        [JsonProperty(Order = 5)] public ValuePairContainer m_Values = new ValuePairContainer();
+        [JsonProperty(Order = 4, PropertyName = "ItemEffectTypes")] public ulong[] m_ItemEffectTypes = new ulong[0];
+        [JsonProperty(Order = 5, PropertyName = "Values")] public ValuePairContainer m_Values = new ValuePairContainer();
 
         [NonSerialized] private ItemProxy m_Proxy = null;
 
@@ -44,12 +49,12 @@ namespace Syadeu.Database
         public Item()
         {
             m_Name = "NewItem";
-            m_Guid = Guid.NewGuid().ToString();
+            m_Hash = Hash.NewHash();
         }
         public Item(string name)
         {
             m_Name = name;
-            m_Guid = Guid.NewGuid().ToString();
+            m_Hash = Hash.NewHash();
         }
 
         internal ItemProxy GetProxy()
@@ -72,7 +77,7 @@ namespace Syadeu.Database
         {
             for (int i = 0; i < m_Instances.Count; i++)
             {
-                if (m_Instances[i].Guid.Equals(guid))
+                if (m_Instances[i].Hash.Equals(guid))
                 {
                     return m_Instances[i];
                 }
@@ -82,169 +87,4 @@ namespace Syadeu.Database
         }
         #endregion
     }
-    internal sealed class ItemProxy : LuaProxyEntity<Item>
-    {
-        public ItemProxy(Item item) : base(item) { }
-
-        public string Name => Target.m_Name;
-        public string Guid => Target.m_Guid;
-
-        private ItemTypeProxy[] m_ItemTypes = null;
-        public ItemTypeProxy[] ItemTypes
-        {
-            get
-            {
-                if (m_ItemTypes == null)
-                {
-                    m_ItemTypes = new ItemTypeProxy[Target.m_ItemTypes.Length];
-                    for (int i = 0; i < m_ItemTypes.Length; i++)
-                    {
-                        m_ItemTypes[i] = ItemDataList.Instance.GetItemType(Target.m_ItemTypes[i]).GetProxy();
-                    }
-                }
-                
-                return m_ItemTypes;
-            }
-        }
-
-        public Action OnEquip { get => Target.m_OnEquip; set => Target.m_OnEquip = value; }
-        public Action OnUse { get => Target.m_OnUse; set => Target.m_OnUse = value; }
-
-        #region Value
-        public int GetValueCount() => Target.m_Values.Count;
-        public bool HasValue(string name) => Target.m_Values.Contains(name);
-        public object GetValue(string name) => Target.m_Values.GetValue(name);
-        public void SetValue(string name, object value) => Target.m_Values.SetValue(name, value);
-        public void AddValue(string name, object value) => Target.m_Values.Add(name, value);
-        #endregion
-
-        #region Instance
-        public ItemInstance CreateInstance() => Target.CreateInstance();
-        public ItemInstance GetInstance(string guid) => Target.GetInstance(System.Guid.Parse(guid));
-        #endregion
-    }
-    public sealed class ItemInstance
-    {
-        private readonly Item m_Data;
-        private readonly Guid m_Guid;
-
-        private readonly ItemType[] m_ItemTypes;
-        private readonly ItemEffectType[] m_ItemEffectTypes;
-        private readonly ValuePairContainer m_Values;
-
-        public Guid Guid => m_Guid;
-
-        internal ItemInstance(Item item)
-        {
-            m_Data = item;
-            m_Guid = Guid.NewGuid();
-
-            m_ItemTypes = new ItemType[item.m_ItemTypes.Length];
-            for (int i = 0; i < m_ItemTypes.Length; i++)
-            {
-                m_ItemTypes[i] = ItemDataList.Instance.GetItemType(item.m_ItemTypes[i]);
-            }
-            m_ItemEffectTypes = new ItemEffectType[item.m_ItemEffectTypes.Length];
-            for (int i = 0; i < m_ItemEffectTypes.Length; i++)
-            {
-                m_ItemEffectTypes[i] = ItemDataList.Instance.GetItemEffectType(item.m_ItemEffectTypes[i]);
-            }
-            m_Values = (ValuePairContainer)item.m_Values.Clone();
-        }
-    }
-    #endregion
-
-    #region ItemType
-    [Serializable]
-    public sealed class ItemType
-    {
-        public string m_Name;
-        public string m_Guid;
-
-        [Space]
-        public ValuePairContainer m_Values = new ValuePairContainer();
-
-        [NonSerialized] private ItemTypeProxy m_Proxy = null;
-
-        public ItemType()
-        {
-            m_Name = "NewItemType";
-            m_Guid = Guid.NewGuid().ToString();
-        }
-        public ItemType(string name)
-        {
-            m_Name = name;
-            m_Guid = Guid.NewGuid().ToString();
-        }
-        internal ItemTypeProxy GetProxy()
-        {
-            if (m_Proxy == null)
-            {
-                m_Proxy = new ItemTypeProxy(this);
-            }
-            return m_Proxy;
-        }
-    }
-    internal sealed class ItemTypeProxy : LuaProxyEntity<ItemType>
-    {
-        public ItemTypeProxy(ItemType itemType) : base(itemType) { }
-
-        public string Name => Target.m_Name;
-        public string Guid => Target.m_Guid;
-
-        #region Value
-        public int GetValueCount() => Target.m_Values.Count;
-        public bool HasValue(string name) => Target.m_Values.Contains(name);
-        public object GetValue(string name) => Target.m_Values.GetValue(name);
-        public void SetValue(string name, object value) => Target.m_Values.SetValue(name, value);
-        public void AddValue(string name, object value) => Target.m_Values.Add(name, value);
-        #endregion
-    }
-    #endregion
-
-    #region ItemEffectType
-    [Serializable]
-    public sealed class ItemEffectType
-    {
-        public string m_Name;
-        public string m_Guid;
-
-        [Space]
-        public ValuePairContainer m_Values = new ValuePairContainer();
-
-        [NonSerialized] private ItemEffectTypeProxy m_Proxy = null;
-
-        public ItemEffectType()
-        {
-            m_Name = "NewItemEffectType";
-            m_Guid = Guid.NewGuid().ToString();
-        }
-        public ItemEffectType(string name)
-        {
-            m_Name = name;
-            m_Guid = Guid.NewGuid().ToString();
-        }
-
-        internal ItemEffectTypeProxy GetProxy()
-        {
-            if (m_Proxy == null) m_Proxy = new ItemEffectTypeProxy(this);
-            return m_Proxy;
-        }
-    }
-    internal sealed class ItemEffectTypeProxy : LuaProxyEntity<ItemEffectType>
-    {
-        public string Name => Target.m_Name;
-        public string Guid => Target.m_Guid;
-
-        public ItemEffectTypeProxy(ItemEffectType itemEffectType) : base(itemEffectType) { }
-
-        #region Value
-        public int GetValueCount() => Target.m_Values.Count;
-        public bool HasValue(string name) => Target.m_Values.Contains(name);
-        public object GetValue(string name) => Target.m_Values.GetValue(name);
-        public void SetValue(string name, object value) => Target.m_Values.SetValue(name, value);
-        public void AddValue(string name, object value) => Target.m_Values.Add(name, value);
-        #endregion
-    }
-    #endregion
 }

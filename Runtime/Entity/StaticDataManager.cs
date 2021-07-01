@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Syadeu.Database;
+using System;
 using UnityEngine;
 
 namespace Syadeu
@@ -32,6 +33,7 @@ namespace Syadeu
                     CoreSystem.InvokeManagerChanged();
                     m_Instance = ins;
 
+                    ConfigLoader.LoadConfig(ins);
                     ins.OnInitialize();
                     ins.OnStart();
                 }
@@ -69,6 +71,8 @@ namespace Syadeu
         {
             Disposed = true;
 
+            CoreSystem.Instance.DataManagers.Remove(this);
+            m_Instance = null;
             CoreSystem.Instance.m_CleanupManagers = true;
         }
     }

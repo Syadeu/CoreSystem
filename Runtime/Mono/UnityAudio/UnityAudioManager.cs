@@ -1,4 +1,5 @@
 ﻿
+using Syadeu.Database;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -9,8 +10,6 @@ namespace Syadeu.Mono.Audio
 {
     public sealed class UnityAudioManager : StaticManager<UnityAudioManager>
     {
-        [SerializeField] private int m_AudioPrefabIdx = 0;
-
         private readonly List<UnityAudioSource> m_UnityAudios = new List<UnityAudioSource>();
         private AudioListener m_AudioListener = null;
 
@@ -26,7 +25,7 @@ namespace Syadeu.Mono.Audio
         }
 #if UNITY_EDITOR
         private static AudioListener m_EditorListener = null;
-        private static AudioListener EditorListener
+        public static AudioListener EditorListener
         {
             get
             {
@@ -36,6 +35,17 @@ namespace Syadeu.Mono.Audio
         }
 #endif
 
+        public override void OnInitialize()
+        {
+            PoolContainer<UnityAudioSource>.Initialize(() =>
+            {
+                GameObject obj = new GameObject("AudioObject");
+                obj.AddComponent<AudioSource>().playOnAwake = false;
+
+                UnityAudioSource audioSource = obj.AddComponent<UnityAudioSource>();
+                return audioSource;
+            }, 10, -1);
+        }
         public override void OnStart()
         {
             StartCoroutine(Updater());
@@ -49,6 +59,7 @@ namespace Syadeu.Mono.Audio
                     if (!m_UnityAudios[i].IsPlaying)
                     {
                         m_UnityAudios[i].Terminate();
+                        PoolContainer<UnityAudioSource>.Enqueue(m_UnityAudios[i]);
                         m_UnityAudios.RemoveAt(i);
 
                         continue;
@@ -76,12 +87,10 @@ namespace Syadeu.Mono.Audio
         }
 
         #region Play
-        private static UnityAudioSource GetAudioSource()
-            => (UnityAudioSource)PrefabManager.GetRecycleObject(Instance.m_AudioPrefabIdx);
 
         internal static void Play(UnityAudioList.Content content, Vector3 position)
         {
-            UnityAudioSource audio = GetAudioSource();
+            UnityAudioSource audio = PoolContainer<UnityAudioSource>.Dequeue();
             audio.Initialize(content);
             audio.SetPosition(position);
 
@@ -90,7 +99,7 @@ namespace Syadeu.Mono.Audio
         }
         internal static void Play(UnityAudioList.Content content, Transform tr)
         {
-            UnityAudioSource audio = GetAudioSource();
+            UnityAudioSource audio = PoolContainer<UnityAudioSource>.Dequeue();
             audio.Initialize(content);
             audio.SetPosition(tr);
 

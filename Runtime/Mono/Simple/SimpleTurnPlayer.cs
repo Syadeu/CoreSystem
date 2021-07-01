@@ -1,4 +1,5 @@
 ﻿
+using Syadeu.Database;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -16,6 +17,9 @@ namespace Syadeu.Mono.TurnTable
         [SerializeField] private UnityEvent m_OnStartTurn;
         [SerializeField] private UnityEvent m_OnEndTurn;
         [SerializeField] private UnityEvent m_OnResetTurn;
+
+        public string DisplayName => m_PlayerName;
+        public Hash Hash => Hash.NewHash(m_PlayerName);
 
         public float TurnSpeed => m_TurnSpeed;
 
@@ -49,6 +53,9 @@ namespace Syadeu.Mono.TurnTable
         {
             TurnTableManager.RemovePlayer(this);
         }
+
+        public bool Equals(Hash other) => Hash.Equals(other);
+        public bool Equals(IObject other) => Hash.Equals(other.Hash);
     }
 }
 

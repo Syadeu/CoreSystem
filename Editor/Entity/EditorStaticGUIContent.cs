@@ -26,6 +26,13 @@ namespace SyadeuEditor
                     {
                         CoreSystem.StartEditorUpdate((IEnumerator)updateMethod.Invoke(boxed, null), boxed);
                     }
+                    MethodInfo sceneGuiMethod = t.GetMethod("SceneGUI");
+                    if (sceneGuiMethod != null &&
+                        sceneGuiMethod.ReturnType == typeof(IEnumerator) &&
+                        sceneGuiMethod.GetParameters().Length == 0)
+                    {
+                        CoreSystem.StartEditorSceneUpdate((IEnumerator)sceneGuiMethod.Invoke(boxed, null), boxed);
+                    }
 
                     //CoreSystem.StartEditorUpdate(boxed.Update(), boxed);
                     (boxed as EditorStaticGUIContent<T>).OnInitialize();
