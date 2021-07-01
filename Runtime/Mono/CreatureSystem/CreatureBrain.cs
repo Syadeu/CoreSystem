@@ -70,6 +70,9 @@ namespace Syadeu.Mono
         public bool IsVisible { get; private set; } = false;
         public Hash Hash => m_Hash;
 
+        public bool HasInventory => Inventory != null;
+        public CreatureInventory Inventory { get; private set; }
+
         internal CreatureBrainProxy Proxy
         {
             get
@@ -127,6 +130,8 @@ namespace Syadeu.Mono
 
             for (int i = 0; i < m_Childs.Length; i++)
             {
+                if (m_Childs[i] is CreatureInventory inventory) Inventory = inventory;
+
                 m_Childs[i].InternalOnCreated();
             }
 
@@ -366,5 +371,8 @@ namespace Syadeu.Mono
         }
 
         #endregion
+
+        public bool Equals(Hash other) => Hash.Equals(other);
+        public bool Equals(IObject other) => Hash.Equals(other.Hash);
     }
 }

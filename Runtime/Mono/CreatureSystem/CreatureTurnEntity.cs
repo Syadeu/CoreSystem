@@ -87,6 +87,9 @@ namespace Syadeu.Mono.TurnTable
         {
             if (IsJoined) TurnTableManager.RemovePlayer(this);
         }
+
+        public bool Equals(Hash other) => Hash.Equals(other);
+        public bool Equals(IObject other) => Hash.Equals(other.Hash);
     }
 }
 

@@ -596,6 +596,8 @@ namespace Syadeu
                     }
                 }
                 #endregion
+
+                yield return null;
             }
         }
         private static IEnumerator EditorWorker()

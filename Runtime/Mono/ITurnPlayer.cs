@@ -2,7 +2,7 @@
 
 namespace Syadeu.Mono.TurnTable
 {
-    public interface ITurnPlayer : IPlayer
+    public interface ITurnPlayer : IObject
     {
         //string name { get; }
         //Transform transform { get; }

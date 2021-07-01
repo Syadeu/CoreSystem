@@ -1,12 +1,13 @@
 ﻿using Syadeu.Database;
+using System;
 
 namespace Syadeu.Mono
 {
-    public interface IHash
+    public interface IHash : IEquatable<Hash>
     {
         Hash Hash { get; }
     }
-    public interface IObject : IHash
+    public interface IObject : IHash, IEquatable<IObject>
     {
         string DisplayName { get; }
     }
