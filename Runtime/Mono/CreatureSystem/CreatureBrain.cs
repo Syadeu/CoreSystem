@@ -153,6 +153,7 @@ namespace Syadeu.Mono
             }
 
             RenderManager.RemoveObserver(this);
+            CreatureManager.Instance.Creatures.Remove(this);
             m_IsSpawnedFromManager = false;
             Initialized = false;
         }
