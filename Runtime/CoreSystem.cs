@@ -21,10 +21,9 @@ using Syadeu.Database.Lua;
 
 namespace Syadeu
 {
-    [StaticManagerDescription(@"
-    CoreSystem's main system.
-    
-    ")]
+    [StaticManagerDescription(
+        "CoreSystem's main system.\n" +
+        "You can register all background works through this system.")]
     public sealed class CoreSystem : StaticManager<CoreSystem>
     {
         #region Managers

@@ -7,12 +7,12 @@ namespace Syadeu.Database.Lua
     {
         public static ValuePair NewValue(string name, object value) => ValuePair.New(name, value);
 
-        public static ItemProxy GetItem(string guid)
+        public static ItemProxy GetItem(ulong hash)
         {
-            Item item = ItemDataList.Instance.GetItem(guid);
+            Item item = ItemDataList.Instance.GetItem(hash);
             if (item == null)
             {
-                $"item {guid} is null".ToLogConsole();
+                $"item {hash} is null".ToLogConsole();
                 return null;
             }
             else
@@ -20,10 +20,10 @@ namespace Syadeu.Database.Lua
                 return item.GetProxy();
             }
         }
-        public static ItemTypeEntity GetItemType(string guid) => ItemDataList.Instance.GetItemType(guid);
-        public static ItemEffectTypeProxy GetItemEffectType(string guid)
+        public static ItemTypeEntity GetItemType(ulong hash) => ItemDataList.Instance.GetItemType(hash);
+        public static ItemEffectTypeProxy GetItemEffectType(ulong hash)
         {
-            ItemEffectType type = ItemDataList.Instance.GetItemEffectType(guid);
+            ItemEffectType type = ItemDataList.Instance.GetItemEffectType(hash);
             if (type == null) return null;
             else
             {

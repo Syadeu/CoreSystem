@@ -10,7 +10,7 @@ namespace Syadeu.Database
         public ItemProxy(Item item) : base(item) { }
 
         public string Name => Target.m_Name;
-        public string Guid => Target.m_Guid.ToString();
+        public string Guid => Target.m_Hash.ToString();
 
         public Action OnEquip { get => Target.m_OnEquip; set => Target.m_OnEquip = value; }
         public Action OnUse { get => Target.m_OnUse; set => Target.m_OnUse = value; }

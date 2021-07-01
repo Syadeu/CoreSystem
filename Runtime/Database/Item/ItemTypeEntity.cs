@@ -9,7 +9,7 @@ namespace Syadeu.Database
     [Serializable][JsonConverter(typeof(ItemTypeJsonConverter))]
     public abstract class ItemTypeEntity
     {
-        [JsonProperty(Order = 0)] public string m_Name;
-        [JsonProperty(Order = 1)] public string m_Guid;
+        [JsonProperty(Order = 0, PropertyName = "Name")] public string m_Name;
+        [JsonProperty(Order = 1, PropertyName = "Hash")] public Hash m_Hash;
     }
 }

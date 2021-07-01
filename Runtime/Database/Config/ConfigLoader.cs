@@ -6,6 +6,16 @@ using System.Reflection;
 namespace Syadeu.Database
 {
     [StaticManagerIntializeOnLoad]
+    [StaticManagerDescription(
+        "Config Loader is handling and manganed .ini files,\n" +
+        "in the outside of application.datapath folder.\n" +
+        "\n" +
+        "You can save the CoreSystem's manager values with just attaching\n" +
+        "RequireGlobalConfig attribute.\n" +
+        "\n" +
+        "Main config name is config.ini in the top of application root folder,\n" +
+        "and the sub configs will be inside of /CoreSystem/Configs" +
+        "")]
     public sealed class ConfigLoader : StaticDataManager<ConfigLoader>
     {
         private static string m_GlobalConfigPath = Path.Combine(CoreSystemFolder.CoreSystemDataPath, "config.ini");

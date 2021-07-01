@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using UnityEngine;
 
 #if UNITY_ADDRESSABLES
@@ -9,23 +10,23 @@ namespace Syadeu.Database
     [Serializable]
     public sealed class ItemEffectType
     {
-        public string m_Name;
-        public string m_Guid;
+        [JsonProperty(Order = 0, PropertyName = "Name")] public string m_Name;
+        [JsonProperty(Order = 1, PropertyName = "Hash")] public Hash m_Hash;
 
         [Space]
-        public ValuePairContainer m_Values = new ValuePairContainer();
+        [JsonProperty(Order = 2, PropertyName = "Values")] public ValuePairContainer m_Values = new ValuePairContainer();
 
-        [NonSerialized] private ItemEffectTypeProxy m_Proxy = null;
+        [NonSerialized][JsonIgnore] private ItemEffectTypeProxy m_Proxy = null;
 
         public ItemEffectType()
         {
             m_Name = "NewItemEffectType";
-            m_Guid = Guid.NewGuid().ToString();
+            m_Hash = Hash.NewHash();
         }
         public ItemEffectType(string name)
         {
             m_Name = name;
-            m_Guid = Guid.NewGuid().ToString();
+            m_Hash = Hash.NewHash();
         }
 
         internal ItemEffectTypeProxy GetProxy()

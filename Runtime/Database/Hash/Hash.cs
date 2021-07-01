@@ -71,6 +71,9 @@ namespace Syadeu.Database
         //public static bool operator ==(object a, Hash b) => (b == a);
         //public static bool operator !=(object a, Hash b) => (b != a);
 
+        public static implicit operator ulong(Hash a) => a.mBits;
+        public static implicit operator Hash(ulong a) => new Hash(a);
+
         public override int GetHashCode() => mBits.GetHashCode();
         public override string ToString() => mBits.ToString();
     }

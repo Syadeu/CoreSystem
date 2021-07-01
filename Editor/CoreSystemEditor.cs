@@ -88,7 +88,7 @@ namespace SyadeuEditor
             {
                 if (string.IsNullOrEmpty(m_Description)) return;
 
-                EditorGUILayout.LabelField(m_Description);
+                EditorGUILayout.TextArea(m_Description);
             }
         }
         private void ValidateManagerView()

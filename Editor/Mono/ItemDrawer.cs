@@ -29,7 +29,7 @@ namespace SyadeuEditor
 
             //AddressableAssetSettingsDefaultObject.GetSettings(true).FindGroup("Images").GetAssetEntry(item.m_ImagePath)
             m_Item.m_Name = EditorGUILayout.TextField("Name: ", m_Item.m_Name);
-            EditorGUILayout.TextField("Guid: ", m_Item.m_Guid.ToString());
+            EditorGUILayout.TextField("Guid: ", m_Item.m_Hash.ToString());
 
 #if UNITY_ADDRESSABLES
             EditorGUILayout.BeginHorizontal();
@@ -47,7 +47,7 @@ namespace SyadeuEditor
                     if (GUILayout.Button("+", GUILayout.Width(20)))
                     {
                         var temp = m_Item.m_ItemTypes.ToList();
-                        temp.Add("");
+                        temp.Add(0);
                         m_Item.m_ItemTypes = temp.ToArray();
                     }
                 }
@@ -61,7 +61,7 @@ namespace SyadeuEditor
                         int tSelected = EditorGUILayout.Popup(GetSelectedItemType(m_Item.m_ItemTypes[i]), ItemEditor.m_ItemTypes);
                         if (EditorGUI.EndChangeCheck())
                         {
-                            if (tSelected == 0) m_Item.m_ItemTypes[i] = "";
+                            if (tSelected == 0) m_Item.m_ItemTypes[i] = 0;
                             else
                             {
                                 ItemTypeEntity selectedItemType = ItemDataList.Instance.m_ItemTypes[tSelected - 1];
@@ -71,11 +71,11 @@ namespace SyadeuEditor
                                 {
                                     $"이 타입은 한 개 이상 존재할 수 없습니다.".ToLog();
                                 }
-                                else if (m_Item.m_ItemTypes.Contains(selectedItemType.m_Guid))
+                                else if (m_Item.m_ItemTypes.Contains(selectedItemType.m_Hash))
                                 {
                                     $"이미 해당 타입을 포함하고 있습니다.".ToLog();
                                 }
-                                else m_Item.m_ItemTypes[i] = ItemDataList.Instance.m_ItemTypes[tSelected - 1].m_Guid;
+                                else m_Item.m_ItemTypes[i] = ItemDataList.Instance.m_ItemTypes[tSelected - 1].m_Hash;
                             }
                         }
 
@@ -101,7 +101,7 @@ namespace SyadeuEditor
                     if (GUILayout.Button("+", GUILayout.Width(20)))
                     {
                         var temp = m_Item.m_ItemEffectTypes.ToList();
-                        temp.Add("");
+                        temp.Add(0);
                         m_Item.m_ItemEffectTypes = temp.ToArray();
                     }
                 }
@@ -115,16 +115,16 @@ namespace SyadeuEditor
                         int teSelected = EditorGUILayout.Popup(GetSelectedItemEffectType(m_Item.m_ItemEffectTypes[i]), ItemEditor.m_ItemEffectTypes);
                         if (EditorGUI.EndChangeCheck())
                         {
-                            if (teSelected == 0) m_Item.m_ItemEffectTypes[i] = "";
+                            if (teSelected == 0) m_Item.m_ItemEffectTypes[i] = 0;
                             else
                             {
                                 ItemEffectType selectedEffectType = ItemDataList.Instance.m_ItemEffectTypes[teSelected - 1];
 
-                                if (m_Item.m_ItemEffectTypes.Contains(selectedEffectType.m_Guid))
+                                if (m_Item.m_ItemEffectTypes.Contains(selectedEffectType.m_Hash))
                                 {
                                     $"이미 해당 타입을 포함하고 있습니다.".ToLog();
                                 }
-                                else m_Item.m_ItemEffectTypes[i] = ItemDataList.Instance.m_ItemEffectTypes[teSelected - 1].m_Guid;
+                                else m_Item.m_ItemEffectTypes[i] = ItemDataList.Instance.m_ItemEffectTypes[teSelected - 1].m_Hash;
                             }
                         }
 
@@ -143,24 +143,24 @@ namespace SyadeuEditor
             EditorUtils.Line();
             m_Item.m_Values.DrawValueContainer("Values");
 
-            int GetSelectedItemType(string guid)
+            int GetSelectedItemType(ulong hash)
             {
-                if (string.IsNullOrEmpty(guid)) return 0;
+                if (hash == 0) return 0;
                 for (int i = 0; i < ItemDataList.Instance.m_ItemTypes.Count; i++)
                 {
-                    if (ItemDataList.Instance.m_ItemTypes[i].m_Guid.Equals(guid))
+                    if (ItemDataList.Instance.m_ItemTypes[i].m_Hash.Equals(hash))
                     {
                         return i + 1;
                     }
                 }
                 return 0;
             }
-            int GetSelectedItemEffectType(string guid)
+            int GetSelectedItemEffectType(ulong hash)
             {
-                if (string.IsNullOrEmpty(guid)) return 0;
+                if (hash == 0) return 0;
                 for (int i = 0; i < ItemDataList.Instance.m_ItemEffectTypes.Count; i++)
                 {
-                    if (ItemDataList.Instance.m_ItemEffectTypes[i].m_Guid.Equals(guid))
+                    if (ItemDataList.Instance.m_ItemEffectTypes[i].m_Hash.Equals(hash))
                     {
                         return i + 1;
                     }

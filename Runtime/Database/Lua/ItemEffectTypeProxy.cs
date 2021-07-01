@@ -6,7 +6,7 @@ namespace Syadeu.Database
     internal sealed class ItemEffectTypeProxy : LuaProxyEntity<ItemEffectType>
     {
         public string Name => Target.m_Name;
-        public string Guid => Target.m_Guid;
+        public ulong Hash => Target.m_Hash;
 
         public ItemEffectTypeProxy(ItemEffectType itemEffectType) : base(itemEffectType) { }
 

@@ -61,7 +61,7 @@ namespace SyadeuEditor
         public static void DrawItemType(this ItemTypeEntity target)
         {
             target.m_Name = EditorGUILayout.TextField("Name: ", target.m_Name);
-            EditorGUILayout.TextField("Guid: ", target.m_Guid);
+            EditorGUILayout.TextField("Guid: ", target.m_Hash.ToString());
 
             if (target is ItemType itemType)
             {
@@ -79,7 +79,7 @@ namespace SyadeuEditor
         public static void DrawItemEffectType(this ItemEffectType target)
         {
             target.m_Name = EditorGUILayout.TextField("Name: ", target.m_Name);
-            EditorGUILayout.TextField("Guid: ", target.m_Guid);
+            EditorGUILayout.TextField("Guid: ", target.m_Hash.ToString());
 
             EditorGUILayout.Space();
             target.m_Values.DrawValueContainer("Values");

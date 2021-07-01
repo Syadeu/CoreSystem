@@ -106,24 +106,24 @@ namespace SyadeuEditor
                         .MakeToolbar("Items", "Types", "EffectTypes")
                         .MakeCustomSearchFilter((e, searchTxt) =>
                         {
-                            string name = "", guid = "";
+                            string name = "", hash = "";
                             if (e is TreeItemElement itemEle)
                             {
                                 name = itemEle.Target.m_Name;
-                                guid = itemEle.Target.m_Guid.ToString();
+                                hash = itemEle.Target.m_Hash.ToString();
                             }
                             else if (e is TreeItemTypeElement typeEle)
                             {
                                 name = typeEle.Target.m_Name;
-                                guid = typeEle.Target.m_Guid;
+                                hash = typeEle.Target.m_Hash.ToString();
                             }
                             else if (e is TreeItemEffectTypeElement effEle)
                             {
                                 name = effEle.Target.m_Name;
-                                guid = effEle.Target.m_Guid;
+                                hash = effEle.Target.m_Hash.ToString();
                             }
 
-                            if (name.ToLower().Contains(searchTxt.ToLower()) || guid.Contains(searchTxt)) return true;
+                            if (name.ToLower().Contains(searchTxt.ToLower()) || hash.Contains(searchTxt)) return true;
                             return false;
                         });
                 }
@@ -135,7 +135,8 @@ namespace SyadeuEditor
 
         private void OnEnable()
         {
-            OnValidate();
+            Asset.LoadDatas();
+            RefreshTreeView();
         }
         private void RefreshTreeView()
         {
@@ -145,10 +146,10 @@ namespace SyadeuEditor
             tempList.AddRange(Asset.m_ItemEffectTypes);
             TreeView.Refresh(tempList);
         }
-        private void OnValidate()
-        {
-            RefreshTreeView();
-        }
+        //private void OnValidate()
+        //{
+        //    RefreshTreeView();
+        //}
 
         public override void OnInspectorGUI()
         {
@@ -161,14 +162,14 @@ namespace SyadeuEditor
                 Asset.m_ItemTypes.Clear();
                 Asset.m_ItemEffectTypes.Clear();
                 EditorUtils.SetDirty(Asset);
-                OnValidate();
+                RefreshTreeView();
             }
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("Load"))
             {
                 Asset.LoadDatas();
                 EditorUtils.SetDirty(Asset);
-                OnValidate();
+                RefreshTreeView();
             }
             if (GUILayout.Button("Save"))
             {

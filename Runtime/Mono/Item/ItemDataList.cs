@@ -70,9 +70,9 @@ namespace Syadeu.Database
                 }
                 for (int i = 0; i < m_Items.Count; i++)
                 {
-                    if (Guid.Empty.Equals(m_Items[i].m_Guid))
+                    if (Hash.Empty.Equals(m_Items[i].m_Hash))
                     {
-                        m_Items[i].m_Guid = Guid.NewGuid();
+                        m_Items[i].m_Hash = Hash.NewHash();
                     }
 
                     File.WriteAllText($"{CoreSystemFolder.ItemPath}/{m_Items[i].m_Name}{json}",
@@ -93,9 +93,9 @@ namespace Syadeu.Database
                 }
                 for (int i = 0; i < m_ItemTypes.Count; i++)
                 {
-                    if (string.IsNullOrEmpty(m_ItemTypes[i].m_Guid))
+                    if (Hash.Empty.Equals(m_ItemTypes[i].m_Hash))
                     {
-                        m_ItemTypes[i].m_Guid = Guid.NewGuid().ToString();
+                        m_ItemTypes[i].m_Hash = Hash.NewHash();
                     }
 
                     File.WriteAllText($"{CoreSystemFolder.ItemTypePath}/{m_ItemTypes[i].m_Name}{json}",
@@ -116,9 +116,9 @@ namespace Syadeu.Database
                 }
                 for (int i = 0; i < m_ItemEffectTypes.Count; i++)
                 {
-                    if (string.IsNullOrEmpty(m_ItemEffectTypes[i].m_Guid))
+                    if (Hash.Empty.Equals(m_ItemEffectTypes[i].m_Hash))
                     {
-                        m_ItemEffectTypes[i].m_Guid = Guid.NewGuid().ToString();
+                        m_ItemEffectTypes[i].m_Hash = Hash.NewHash();
                     }
 
                     File.WriteAllText($"{CoreSystemFolder.ItemEffectTypePath}/{m_ItemEffectTypes[i].m_Name}{json}",
@@ -131,11 +131,11 @@ namespace Syadeu.Database
 
         #region Gets
 
-        public Item GetItem(string guid)
+        public Item GetItem(Hash hash)
         {
             for (int i = 0; i < m_Items.Count; i++)
             {
-                if (m_Items[i].m_Guid.Equals(guid))
+                if (m_Items[i].m_Hash.Equals(hash))
                 {
                     return m_Items[i];
                 }
@@ -153,11 +153,11 @@ namespace Syadeu.Database
             }
             return null;
         }
-        public ItemTypeEntity GetItemType(string guid)
+        public ItemTypeEntity GetItemType(Hash hash)
         {
             for (int i = 0; i < m_ItemTypes.Count; i++)
             {
-                if (m_ItemTypes[i].m_Guid.Equals(guid))
+                if (m_ItemTypes[i].m_Hash.Equals(hash))
                 {
                     return m_ItemTypes[i];
                 }
@@ -175,11 +175,11 @@ namespace Syadeu.Database
             }
             return null;
         }
-        public ItemEffectType GetItemEffectType(string guid)
+        public ItemEffectType GetItemEffectType(Hash hash)
         {
             for (int i = 0; i < m_ItemEffectTypes.Count; i++)
             {
-                if (m_ItemEffectTypes[i].m_Guid.Equals(guid))
+                if (m_ItemEffectTypes[i].m_Hash.Equals(hash))
                 {
                     return m_ItemEffectTypes[i];
                 }

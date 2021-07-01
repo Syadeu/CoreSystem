@@ -18,24 +18,24 @@ namespace Syadeu.Database
     [Serializable]
     public sealed class Item
     {
-        [JsonProperty(Order = 0)] public string m_Name;
-        [JsonProperty(Order = 1)] public Guid m_Guid;
+        [JsonProperty(Order = 0, PropertyName = "Name")] public string m_Name;
+        [JsonProperty(Order = 1, PropertyName = "Hash")] public Hash m_Hash;
 #if UNITY_ADDRESSABLES
         [JsonConverter(typeof(AssetReferenceJsonConverter))]
-        [JsonProperty(Order = 2)] public AssetReference m_ImagePath;
+        [JsonProperty(Order = 2, PropertyName = "ImagePath")] public AssetReference m_ImagePath;
 #endif
 
-        [Tooltip("GUID")]
+        [Tooltip("Hash")]
         /// <summary>
         /// <see cref="ItemType"/>
         /// </summary>
-        [JsonProperty(Order = 3)] public string[] m_ItemTypes = new string[0];
-        [Tooltip("GUID")]
+        [JsonProperty(Order = 3, PropertyName = "ItemTypes")] public ulong[] m_ItemTypes = new ulong[0];
+        [Tooltip("Hash")]
         /// <summary>
         /// <see cref="ItemEffectType"/>
         /// </summary>
-        [JsonProperty(Order = 4)] public string[] m_ItemEffectTypes = new string[0];
-        [JsonProperty(Order = 5)] public ValuePairContainer m_Values = new ValuePairContainer();
+        [JsonProperty(Order = 4, PropertyName = "ItemEffectTypes")] public ulong[] m_ItemEffectTypes = new ulong[0];
+        [JsonProperty(Order = 5, PropertyName = "Values")] public ValuePairContainer m_Values = new ValuePairContainer();
 
         [NonSerialized] private ItemProxy m_Proxy = null;
 
@@ -49,12 +49,12 @@ namespace Syadeu.Database
         public Item()
         {
             m_Name = "NewItem";
-            m_Guid = Guid.NewGuid();
+            m_Hash = Hash.NewHash();
         }
         public Item(string name)
         {
             m_Name = name;
-            m_Guid = Guid.NewGuid();
+            m_Hash = Hash.NewHash();
         }
 
         internal ItemProxy GetProxy()
@@ -77,7 +77,7 @@ namespace Syadeu.Database
         {
             for (int i = 0; i < m_Instances.Count; i++)
             {
-                if (m_Instances[i].Guid.Equals(guid))
+                if (m_Instances[i].Hash.Equals(guid))
                 {
                     return m_Instances[i];
                 }

@@ -21,10 +21,10 @@ namespace Syadeu.Database
             writer.WriteStartObject();
 
             writer.WritePropertyName("Data");
-            writer.WriteValue(refAsset.Data.m_Guid);
+            writer.WriteValue(refAsset.Data.m_Hash);
 
             writer.WritePropertyName("Guid");
-            writer.WriteValue(refAsset.Guid);
+            writer.WriteValue(refAsset.Hash);
 
             writer.WriteEndObject();
         }
@@ -32,10 +32,10 @@ namespace Syadeu.Database
         {
             JObject jo = JObject.Load(reader);
 
-            string dataGuid = jo["Data"].ToString();
-            string guid = jo["Guid"].ToString();
+            ulong dataHash = jo["Data"].ToObject<ulong>();
+            ulong hash = jo["Hash"].ToObject<ulong>();
 
-            return new ItemInstance(dataGuid, guid);
+            return new ItemInstance(dataHash, hash);
         }
     }
 }

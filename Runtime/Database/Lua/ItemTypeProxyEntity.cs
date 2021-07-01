@@ -8,6 +8,6 @@ namespace Syadeu.Database
         public ItemTypeProxyEntity(T itemType) : base(itemType) { }
 
         public string Name => Target.m_Name;
-        public string Guid => Target.m_Guid;
+        public ulong Hash => Target.m_Hash;
     }
 }
