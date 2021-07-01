@@ -18,7 +18,7 @@ namespace Syadeu.Mono
     /// 하위 컴포넌트들은 <seealso cref="CreatureEntity"/> 를 참조하면 자동으로 Initialize 됨.
     /// </summary>
     [RequireComponent(typeof(NavMeshAgent))]
-    public class CreatureBrain : RecycleableMonobehaviour, IRender
+    public class CreatureBrain : RecycleableMonobehaviour, IRender, IObjectHash
     {
         private static Vector3 INIT_POSITION = new Vector3(99999, -99999, 99999);
 
@@ -44,6 +44,7 @@ namespace Syadeu.Mono
 
         private CreatureEntity[] m_Childs = null;
         private CreatureBrainProxy m_Proxy = null;
+        private Hash m_Hash;
 
         public override string DisplayName => m_CreatureName;
 
@@ -66,6 +67,7 @@ namespace Syadeu.Mono
             }
         }
         public bool IsVisible { get; private set; } = false;
+        public Hash Hash => m_Hash;
 
         internal CreatureBrainProxy Proxy
         {
@@ -135,6 +137,7 @@ namespace Syadeu.Mono
                 m_Childs[i].InternalOnStart();
             }
 
+            m_Hash = Hash.NewHash();
             RenderManager.AddObserver(this);
             Initialized = true;
         }
@@ -152,6 +155,7 @@ namespace Syadeu.Mono
                 m_Childs[i].InternalOnTerminate();
             }
 
+            m_Hash = Hash.Empty;
             RenderManager.RemoveObserver(this);
             CreatureManager.Instance.Creatures.Remove(this);
             m_IsSpawnedFromManager = false;

@@ -224,6 +224,11 @@ namespace Syadeu.Mono.Creature
         {
             return Instance.m_Creatures.Where(predictate).ToArray();
         }
+        public static CreatureBrain GetCreature(Hash hash)
+        {
+            CreatureBrain[] targets = GetCreatures((other) => other.Hash.Equals(hash));
+            return targets[0];
+        }
 
         public static void SpawnAt(int setID, Vector3 pos)
         {
