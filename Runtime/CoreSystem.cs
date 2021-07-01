@@ -482,19 +482,121 @@ namespace Syadeu
 
 #if UNITY_EDITOR
         private static IEnumerator m_EditorCoroutine = null;
+        private static IEnumerator m_EditorSceneCoroutine = null;
         internal static readonly Dictionary<CoreRoutine, object> m_EditorCoroutines = new Dictionary<CoreRoutine, object>();
+        internal static readonly Dictionary<CoreRoutine, object> m_EditorSceneCoroutines = new Dictionary<CoreRoutine, object>();
         private static readonly List<(int progressID, EditorTask task)> m_EditorTasks = new List<(int, EditorTask)>();
 
         [InitializeOnLoadMethod]
         private static void EditorInitialize()
         {
             m_EditorCoroutine = EditorWorker();
+            m_EditorSceneCoroutine = EditorCoroutineWorker(m_EditorSceneCoroutines);
+            EditorApplication.update -= EditorWorkerMoveNext;
             EditorApplication.update += EditorWorkerMoveNext;
+
+            SceneView.duringSceneGui -= EditorSceneWorkerMoveNext;
+            SceneView.duringSceneGui += EditorSceneWorkerMoveNext;
         }
 
+        private static void EditorSceneWorkerMoveNext(SceneView sceneView)
+        {
+            m_EditorSceneCoroutine.MoveNext();
+        }
         private static void EditorWorkerMoveNext()
         {
             m_EditorCoroutine.MoveNext();
+        }
+        private static IEnumerator EditorCoroutineWorker(IDictionary<CoreRoutine, object> list)
+        {
+            while (true)
+            {
+                #region Editor Coroutine
+                if (list.Count > 0)
+                {
+                    List<CoreRoutine> _waitForDeletion = null;
+                    foreach (var item in list)
+                    {
+                        if (item.Value == null)
+                        {
+                            if (_waitForDeletion == null)
+                            {
+                                _waitForDeletion = new List<CoreRoutine>();
+                            }
+                            _waitForDeletion.Add(item.Key);
+                            //list.Remove(item.Key);
+                            continue;
+                        }
+
+                        if (item.Key.Iterator.Current == null)
+                        {
+                            if (!item.Key.Iterator.MoveNext())
+                            {
+                                if (_waitForDeletion == null)
+                                {
+                                    _waitForDeletion = new List<CoreRoutine>();
+                                }
+                                _waitForDeletion.Add(item.Key);
+
+                                if (item.Value is int progressID) Progress.Remove(progressID);
+                            }
+                        }
+                        else
+                        {
+                            if (item.Key.Iterator.Current is CustomYieldInstruction @yield &&
+                                !yield.keepWaiting)
+                            {
+                                if (!item.Key.Iterator.MoveNext())
+                                {
+                                    if (_waitForDeletion == null)
+                                    {
+                                        _waitForDeletion = new List<CoreRoutine>();
+                                    }
+                                    _waitForDeletion.Add(item.Key);
+
+                                    if (item.Value is int progressID) Progress.Remove(progressID);
+                                }
+                            }
+                            else if (item.Key.Iterator.Current.GetType() == typeof(bool) &&
+                                    Convert.ToBoolean(item.Key.Iterator.Current) == true)
+                            {
+                                if (!item.Key.Iterator.MoveNext())
+                                {
+                                    if (_waitForDeletion == null)
+                                    {
+                                        _waitForDeletion = new List<CoreRoutine>();
+                                    }
+                                    _waitForDeletion.Add(item.Key);
+
+                                    if (item.Value is int progressID) Progress.Remove(progressID);
+                                }
+                            }
+                            else if (item.Key.Iterator.Current is YieldInstruction baseYield)
+                            {
+                                if (_waitForDeletion == null)
+                                {
+                                    _waitForDeletion = new List<CoreRoutine>();
+                                }
+                                _waitForDeletion.Add(item.Key);
+
+                                if (item.Value is int progressID) Progress.Remove(progressID);
+
+                                throw new CoreSystemException(CoreSystemExceptionFlag.Editor,
+                                    $"해당 yield return 타입({item.Key.Iterator.Current.GetType().Name})은 지원하지 않습니다");
+                            }
+                        }
+                    }
+
+                    if (_waitForDeletion != null)
+                    {
+                        for (int i = 0; i < _waitForDeletion.Count; i++)
+                        {
+                            list.Remove(_waitForDeletion[i]);
+                        }
+                    }
+                }
+                #endregion
+            }
         }
         private static IEnumerator EditorWorker()
         {
@@ -603,6 +705,13 @@ namespace Syadeu
         {
             CoreRoutine routine = new CoreRoutine(obj, iter, true, false);
             m_EditorCoroutines.Add(routine, obj);
+
+            return routine;
+        }
+        public static CoreRoutine StartEditorSceneUpdate(IEnumerator iter, object obj)
+        {
+            CoreRoutine routine = new CoreRoutine(obj, iter, true, false);
+            m_EditorSceneCoroutines.Add(routine, obj);
 
             return routine;
         }
@@ -1515,14 +1624,7 @@ namespace Syadeu
             }
         }
         private static readonly List<DebugLineClass> debugLines = new List<DebugLineClass>();
-        private void OnDrawGizmos()
-        {
-            foreach (var line in debugLines)
-            {
-                Gizmos.color = line.color;
-                Gizmos.DrawLine(line.a, line.b);
-            }
-        }
+        
         public static DebugLineClass DrawLine(Vector3 a, Vector3 b, Color color)
         {
             DebugLineClass temp = new DebugLineClass(a, b, color);

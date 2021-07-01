@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Syadeu.Database;
+using System;
 
 using UnityEngine;
 using UnityEngine.Events;
@@ -21,6 +22,9 @@ namespace Syadeu.Mono.TurnTable
         [SerializeField] private bool m_IsMyTurn = false;
 
         //protected abstract int StartTurnSpeed { get; }
+        public string DisplayName => Brain.DisplayName;
+        public Hash Hash => Brain.Hash;
+
         protected abstract int InitialActionPoint { get; }
 
         public abstract float TurnSpeed { get; }

@@ -18,7 +18,7 @@ namespace Syadeu.Mono
     /// 하위 컴포넌트들은 <seealso cref="CreatureEntity"/> 를 참조하면 자동으로 Initialize 됨.
     /// </summary>
     [RequireComponent(typeof(NavMeshAgent))]
-    public class CreatureBrain : RecycleableMonobehaviour, IRender, IObjectHash
+    public class CreatureBrain : RecycleableMonobehaviour, IRender, IPlayer
     {
         private static Vector3 INIT_POSITION = new Vector3(99999, -99999, 99999);
 

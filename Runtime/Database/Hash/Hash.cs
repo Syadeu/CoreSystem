@@ -1,8 +1,9 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 
 namespace Syadeu.Database
 {
-    [Serializable]
+    [Serializable] [JsonConverter(typeof(HashJsonConverter))]
     public struct Hash : IEquatable<Hash>
     {
         public enum Algorithm

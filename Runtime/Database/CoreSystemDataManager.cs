@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 
 using UnityEngine;
+using Syadeu.Mono;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -16,31 +17,45 @@ namespace Syadeu.Database
         )]
     internal sealed class CoreSystemDataManager : StaticDataManager<CoreSystemDataManager>
     {
-        private static bool s_JsonConverterSet = false;
+        //private static bool s_JsonConverterSet = false;
 
-        public override void OnInitialize()
+        //public override void OnInitialize()
+        //{
+        //    SetJsonConverters();
+        //}
+
+//#if UNITY_EDITOR
+//        [InitializeOnLoadMethod]
+//        private static void SetEditor()
+//        {
+//            SetJsonConverters();
+//        }
+//#endif
+
+        //private static void SetJsonConverters()
+        //{
+        //    if (s_JsonConverterSet) return;
+
+        //    JsonConvert.DefaultSettings = () => new JsonSerializerSettings
+        //    {
+        //        Converters = new List<JsonConverter> { new HashJsonConverter() }
+        //    };
+
+        //    s_JsonConverterSet = true;
+        //}
+    }
+
+    public sealed class CombatSystem : StaticDataManager<CombatSystem>
+    {
+
+
+        public static void AddPlayer(IPlayer player)
         {
-            SetJsonConverters();
+
         }
-
-#if UNITY_EDITOR
-        [InitializeOnLoadMethod]
-        private static void SetEditor()
+        public static void RemovePlayer(IPlayer player)
         {
-            SetJsonConverters();
-        }
-#endif
 
-        private static void SetJsonConverters()
-        {
-            if (s_JsonConverterSet) return;
-
-            JsonConvert.DefaultSettings = () => new JsonSerializerSettings
-            {
-                Converters = new List<JsonConverter> { new HashJsonConverter() }
-            };
-
-            s_JsonConverterSet = true;
         }
     }
 }
