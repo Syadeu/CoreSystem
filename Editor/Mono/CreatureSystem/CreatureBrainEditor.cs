@@ -8,24 +8,24 @@ using UnityEngine.AI;
 namespace SyadeuEditor
 {
     [CustomEditor(typeof(CreatureBrain))]
-    public sealed class CreatureBrainEditor : EditorEntity
+    public sealed class CreatureBrainEditor : EditorEntity<CreatureBrain>
     {
-        private CreatureBrain m_Scr;
         private SerializedProperty m_CreatureName;
         private SerializedProperty m_CreatureDescription;
+        private SerializedProperty m_InitializeOnStart;
         private SerializedProperty m_OnCreated;
         private SerializedProperty m_OnInitialize;
         private SerializedProperty m_OnTerminate;
 
+        private bool m_ShowDelegates = false;
         private bool m_ShowOriginalContents = false;
 
         private void OnEnable()
         {
-            m_Scr = target as CreatureBrain;
-
-            serializedObject.FindProperty("m_NavMeshAgent").objectReferenceValue = m_Scr.GetComponent<NavMeshAgent>();
+            serializedObject.FindProperty("m_NavMeshAgent").objectReferenceValue = Asset.GetComponent<NavMeshAgent>();
             m_CreatureName = serializedObject.FindProperty("m_CreatureName");
             m_CreatureDescription = serializedObject.FindProperty("m_CreatureDescription");
+            m_InitializeOnStart = serializedObject.FindProperty("m_InitializeOnStart");
             m_OnCreated = serializedObject.FindProperty("m_OnCreated");
             m_OnInitialize = serializedObject.FindProperty("m_OnInitialize");
             m_OnTerminate = serializedObject.FindProperty("m_OnTerminate");
@@ -37,16 +37,37 @@ namespace SyadeuEditor
             EditorUtils.StringHeader("Creature Brain");
             EditorUtils.SectorLine();
 
-            PrefabListEditor.DrawPrefabAdder(m_Scr.gameObject);
+            PrefabListEditor.DrawPrefabAdder(Asset.gameObject);
+            EditorUtils.Line();
+
+            EditorGUILayout.BeginVertical(EditorUtils.Box);
             m_CreatureName.stringValue = EditorGUILayout.TextField("Creature Name: ", m_CreatureName.stringValue);
             EditorGUILayout.LabelField("Description");
             m_CreatureDescription.stringValue = EditorGUILayout.TextArea(m_CreatureDescription.stringValue, GUILayout.MinHeight(50));
-            EditorUtils.SectorLine();
+            EditorGUILayout.EndVertical();
 
-            EditorGUILayout.Space();
-            EditorGUILayout.PropertyField(m_OnCreated);
-            EditorGUILayout.PropertyField(m_OnInitialize);
-            EditorGUILayout.PropertyField(m_OnTerminate);
+            EditorUtils.Line();
+
+            EditorGUILayout.BeginVertical(EditorUtils.Box);
+            EditorGUILayout.PropertyField(m_InitializeOnStart);
+            //Asset.m_EnableCameraCull = EditorGUILayout.Toggle("", Asset.m_EnableCameraCull);
+            EditorGUILayout.EndVertical();
+
+            EditorUtils.Line();
+
+            EditorGUILayout.BeginVertical(EditorUtils.Box);
+            EditorGUI.indentLevel += 1;
+            m_ShowDelegates = EditorUtils.Foldout(m_ShowDelegates, "Delegates");
+            if (m_ShowDelegates)
+            {
+                EditorGUILayout.PropertyField(m_OnCreated);
+                EditorGUILayout.PropertyField(m_OnInitialize);
+                EditorGUILayout.PropertyField(m_OnTerminate);
+            }
+            EditorGUI.indentLevel -= 1;
+            EditorGUILayout.EndVertical();
+
+            EditorUtils.Line();
 
             EditorGUILayout.Space();
             serializedObject.ApplyModifiedProperties();

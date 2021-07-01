@@ -158,7 +158,8 @@ namespace SyadeuEditor
             {
                 if (GUILayout.Button("Create Prefab"))
                 {
-                    //string temp = EditorUtility.OpenFolderPanel("Set prefab save path", Application.)
+                    string temp = EditorUtility.SaveFilePanel("Set prefab save path", Application.dataPath, "NewCreaturePrefab", "prefab");
+                    $"{temp} : not implemented".ToLog();
                 }
 
                 return;
@@ -168,11 +169,12 @@ namespace SyadeuEditor
 
             if (GUILayout.Button("Add Prefab"))
             {
-                PrefabManager.AddRecycleObject(new PrefabList.ObjectSetting()
+                PrefabList.Instance.ObjectSettings.Add(new PrefabList.ObjectSetting()
                 {
                     m_Name = prefab.name,
                     Prefab = prefab,
                 });
+                EditorUtility.SetDirty(PrefabList.Instance);
             }
 
             EditorGUI.EndDisabledGroup();
