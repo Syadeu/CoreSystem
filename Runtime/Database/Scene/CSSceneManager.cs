@@ -33,12 +33,14 @@ namespace Syadeu.Database
         [ConfigValue(Header = "Screen", Name = "ResolutionX")] private int m_ResolutionX;
         [ConfigValue(Header = "Screen", Name = "ResolutionY")] private int m_ResolutionY;
 
+        private CanvasGroup m_BlackScreen = null;
+
         public override void OnInitialize()
         {
             m_CurrentScene = SceneManager.GetActiveScene();
             if (string.IsNullOrEmpty(SceneList.Instance.CustomLoadingScene.ScenePath))
             {
-                m_LoadingScene = SceneManager.CreateScene("Loading Scene", new CreateSceneParameters(LocalPhysicsMode.Physics2D));
+                m_LoadingScene = SceneManager.CreateScene("Loading Scene");
 
                 GameObject obj = CreateObject(m_LoadingScene, "Test", typeof(Canvas), typeof(CanvasScaler));
 
@@ -54,6 +56,9 @@ namespace Syadeu.Database
                 image.rectTransform.sizeDelta = scaler.referenceResolution;
                 image.transform.localPosition = Vector3.zero;
                 image.color = Color.black;
+
+                m_BlackScreen = image.gameObject.AddComponent<CanvasGroup>();
+                m_BlackScreen.alpha = 1;
             }
             else
             {
@@ -63,19 +68,32 @@ namespace Syadeu.Database
                     loadSceneMode = LoadSceneMode.Additive,
                     localPhysicsMode = LocalPhysicsMode.None
                 });
+
+                //GameObject[] objs = m_LoadingScene.GetRootGameObjects();
+                //for (int i = 0; i < objs.Length; i++)
+                //{
+
+                //}
             }
 
             StartUnityUpdate(SceneStarter());
         }
+
+        public static void SetBlackScreen(CanvasGroup canvasGroup)
+        {
+            Instance.m_BlackScreen = canvasGroup;
+        }
         private IEnumerator SceneStarter()
         {
+            yield return new WaitUntil(() => m_BlackScreen != null);
+
             AsyncOperation oper;
 
             yield return null;
 #if UNITY_EDITOR
             if (m_DebugMode)
             {
-                SceneManager.UnloadSceneAsync(m_LoadingScene);
+                //SceneManager.UnloadSceneAsync(m_LoadingScene);
             }
             else
 #endif
@@ -85,12 +103,13 @@ namespace Syadeu.Database
 
                 LoadScene(SceneList.Instance.StartScene);
             }
-            
-            while (true)
-            {
 
+            while (!Mathf.Approximately(m_BlackScreen.alpha, 0))
+            {
+                m_BlackScreen.alpha = Mathf.Lerp(m_BlackScreen.alpha, 0, Time.deltaTime);
                 yield return null;
             }
+            "done".ToLog();
         }
 
         private void LoadScene(string path,
