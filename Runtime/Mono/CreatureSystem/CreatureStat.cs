@@ -58,6 +58,6 @@ namespace Syadeu.Mono
             }
         }
 
-        public static uint ToValueHash(string name) => FNV1a32.Calculate(name);
+        public static Hash ToValueHash(string name) => Hash.NewHash(name);
     }
 }

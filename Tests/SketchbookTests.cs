@@ -3,6 +3,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using UnityEngine;
 
 public class SketchbookTests
 {
@@ -45,5 +46,7 @@ public class SketchbookTests
             .SingleOrDefault();
         Assert.IsNotNull(attr);
         Assert.AreEqual(attr.Value, "Some Value");
+
+        Debug.Log($"{newType.Name} == {type.Name} = {newType.Equals(type)}");
     }
 }
