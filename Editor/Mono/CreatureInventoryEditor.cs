@@ -15,7 +15,7 @@ namespace SyadeuEditor
         Texture2D m_DefaultTex;
         private void OnEnable()
         {
-            InvokeMethod("OnEnable");
+            InvokeMethod("ValidateData");
 
             m_DefaultTex = new Texture2D(100, 100);
             for (int i = 0; i < m_DefaultTex.width; i++)

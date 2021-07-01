@@ -17,7 +17,12 @@ namespace Syadeu.Mono
 
         public IReadOnlyList<ItemInstance> Inventory => m_Inventory;
 
-        private void OnEnable()
+        protected override void OnCreated()
+        {
+            ValidateData();
+        }
+
+        private void ValidateData()
         {
             for (int i = m_Equipments.Count - 1; i >= 0; i--)
             {
@@ -34,6 +39,7 @@ namespace Syadeu.Mono
                 }
             }
         }
+
         public void Insert(ItemInstance item)
         {
             m_Inventory.Add(item);
