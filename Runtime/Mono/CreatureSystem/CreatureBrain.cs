@@ -22,7 +22,7 @@ namespace Syadeu.Mono
     {
         private static Vector3 INIT_POSITION = new Vector3(99999, -99999, 99999);
 
-        internal int m_DataIdx;
+        public int m_DataIdx;
         internal bool m_IsSpawnedFromManager = false;
         internal int m_SpawnPointIdx;
 
@@ -33,6 +33,7 @@ namespace Syadeu.Mono
         [SerializeField] private string m_CreatureDescription = null;
 
         [Space]
+        [SerializeField] private bool m_InitializeOnStart = false;
         [Tooltip("활성화시, 카메라에 비치지 않으면 이동 메소드가 순간이동을 합니다")]
         public bool m_EnableCameraCull = true;
         [SerializeField] private float m_SamplePosDistance = .1f;
@@ -78,6 +79,12 @@ namespace Syadeu.Mono
             }
         }
 
+        private IEnumerator Start()
+        {
+            yield return new WaitUntil(() => CreatureManager.HasInstance && CreatureManager.Initialized);
+
+            if (m_InitializeOnStart) ManualInitialize(m_DataIdx);
+        }
         public void ManualInitialize(int dataIdx)
         {
             if (Activated || Initialized)

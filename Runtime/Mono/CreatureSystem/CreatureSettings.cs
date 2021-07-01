@@ -72,12 +72,20 @@ namespace Syadeu.Mono.Creature
 #endif
         private void ValidateData()
         {
+            if (string.IsNullOrEmpty(m_DepTypeName) || string.IsNullOrEmpty(m_DepSingleToneName) || 
+                string.IsNullOrEmpty(m_DepArrName)) return;
             m_TargetType = GetTargetClassTypes().Where((other) => other.Name.Equals(m_DepTypeName)).First();
+
+            if (m_TargetType == null) return;
             m_TargetSingleTone = GetTargetSingleTones(m_TargetType).Where((other) => other.Name.Equals(m_DepSingleToneName)).First();
             m_TargetArray = GetTargetArrays(m_TargetType).Where((other) => other.Name.Equals(m_DepArrName)).First();
+
+            if (m_TargetArray == null) return;
             m_TargetArrayElementType = GetArrayElementType(m_TargetArray);
             m_TargetArrayElementFields = m_TargetArrayElementType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             IList targetArr = CastTargetArray();
+
+            if (targetArr == null) return;
             for (int i = 0; i < m_PrivateSets.Count; i++)
             {
                 m_PrivateSets[i].m_Values = CastArrayElementFields(targetArr[m_PrivateSets[i].m_DataIdx]);
