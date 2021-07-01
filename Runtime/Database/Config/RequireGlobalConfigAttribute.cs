@@ -6,9 +6,10 @@
         internal ConfigLocation m_Location;
         internal string m_Name;
 
-        public RequireGlobalConfigAttribute()
+        public RequireGlobalConfigAttribute(ConfigLocation location)
         {
-            m_Location = ConfigLocation.Global;
+            m_Location = location;
+            m_Name = string.Empty;
         }
         public RequireGlobalConfigAttribute(string name)
         {

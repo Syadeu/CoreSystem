@@ -22,7 +22,7 @@ namespace Syadeu.Database
         private static string m_SubConfigPath = Path.Combine(CoreSystemFolder.CoreSystemDataPath, "Configs");
 
         private Config m_Global;
-        private Dictionary<string, Config> m_Locals;
+        private Dictionary<Hash, Config> m_Locals;
 
         public static Config Global => Instance.m_Global;
 
@@ -32,11 +32,11 @@ namespace Syadeu.Database
 
             m_Global = new Config(ConfigLocation.Global, m_GlobalConfigPath);
             string[] subConfigsPath = Directory.GetFiles(m_SubConfigPath);
-            m_Locals = new Dictionary<string, Config>();
+            m_Locals = new Dictionary<Hash, Config>();
             for (int i = 0; i < subConfigsPath.Length; i++)
             {
                 Config config = new Config(ConfigLocation.Sub, subConfigsPath[i]);
-                m_Locals.Add(config.Name, config);
+                m_Locals.Add(Hash.NewHash(config.Name), config);
             }
         }
 
@@ -50,11 +50,16 @@ namespace Syadeu.Database
             if (configAtt.m_Location == ConfigLocation.Global) config = Global;
             else
             {
-                if (!Instance.m_Locals.TryGetValue(configAtt.m_Name, out config))
+                string name;
+                if (string.IsNullOrEmpty(configAtt.m_Name)) name = t.Name;
+                else name = configAtt.m_Name;
+
+                Hash hash = Hash.NewHash(name);
+                if (!Instance.m_Locals.TryGetValue(hash, out config))
                 {
                     config = new Config(ConfigLocation.Sub, 
-                        Path.Combine(m_SubConfigPath, configAtt.m_Name + ".ini"));
-                    Instance.m_Locals.Add(config.Name, config);
+                        Path.Combine(m_SubConfigPath, name + ".ini"));
+                    Instance.m_Locals.Add(hash, config);
                 }
             }
 
