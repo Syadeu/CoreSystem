@@ -43,7 +43,7 @@ namespace Syadeu.Database
             }
             return -1;
         }
-        private int GetValuePairIdx(uint hash)
+        private int GetValuePairIdx(Hash hash)
         {
             for (int i = 0; i < m_Values.Length; i++)
             {
@@ -85,18 +85,18 @@ namespace Syadeu.Database
             return false;
         }
         public bool Contains(string name) => GetValuePairIdx(name) >= 0;
-        public bool Contains(uint hash) => GetValuePairIdx(hash) >= 0;
+        public bool Contains(Hash hash) => GetValuePairIdx(hash) >= 0;
 
         public ValuePair GetValuePair(string name) => m_Values[GetValuePairIdx(name)];
-        public ValuePair GetValuePair(uint hash) => m_Values[GetValuePairIdx(hash)];
+        public ValuePair GetValuePair(Hash hash) => m_Values[GetValuePairIdx(hash)];
         public object GetValue(string name) => GetValuePair(name).GetValue();
-        public object GetValue(uint hash) => GetValuePair(hash).GetValue();
+        public object GetValue(Hash hash) => GetValuePair(hash).GetValue();
         public T GetValue<T>(string name) => (T)GetValue(name);
-        public T GetValue<T>(uint hash) => (T)GetValue(hash);
+        public T GetValue<T>(Hash hash) => (T)GetValue(hash);
         public ValuePair[] GetValuePairs(ValueType valueType) => m_Values.Where((other) => other.GetValueType() == valueType).ToArray();
         public ValuePair[] GetValuePairs(Func<ValuePair, bool> predictate) => m_Values.Where((other) => predictate.Invoke(other)).ToArray();
         public void SetValue(string name, object value) => m_Values[GetValuePairIdx(name)] = ValuePair.New(name, value);
-        public void SetValue(uint hash, object value)
+        public void SetValue(Hash hash, object value)
         {
             int idx = GetValuePairIdx(hash);
             var temp = m_Values[idx];

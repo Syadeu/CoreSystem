@@ -12,14 +12,14 @@ namespace Syadeu.Database
     public abstract class ValuePair : ICloneable, IEquatable<ValuePair>
     {
         [UnityEngine.SerializeField][JsonProperty(Order = 0)] protected string m_Name;
-        [JsonIgnore] protected uint m_Hash;
+        [JsonIgnore] protected Hash m_Hash;
 
         [JsonIgnore] public string Name { get => m_Name; set => m_Name = value; }
-        [JsonIgnore] public uint Hash
+        [JsonIgnore] public Hash Hash
         {
             get
             {
-                if (m_Hash == 0) m_Hash = FNV1a32.Calculate(m_Name);
+                if (m_Hash == Hash.Empty) m_Hash = Hash.NewHash(m_Name);
                 return m_Hash;
             }
         }
@@ -67,23 +67,23 @@ namespace Syadeu.Database
             throw new Exception();
         }
         public static ValuePair<int> Int(string name, int value)
-            => new SerializableIntValuePair() { m_Name = name, m_Value = value, m_Hash = FNV1a32.Calculate(name) };
+            => new SerializableIntValuePair() { m_Name = name, m_Value = value, m_Hash = Hash.NewHash(name) };
         public static ValuePair<double> Double(string name, double value)
-            => new SerializableDoubleValuePair() { m_Name = name, m_Value = value, m_Hash = FNV1a32.Calculate(name) };
+            => new SerializableDoubleValuePair() { m_Name = name, m_Value = value, m_Hash = Hash.NewHash(name) };
         public static ValuePair<string> String(string name, string value)
-            => new SerializableStringValuePair() { m_Name = name, m_Value = value, m_Hash = FNV1a32.Calculate(name) };
+            => new SerializableStringValuePair() { m_Name = name, m_Value = value, m_Hash = Hash.NewHash(name) };
         public static ValuePair<bool> Bool(string name, bool value)
-            => new SerializableBoolValuePair() { m_Name = name, m_Value = value, m_Hash = FNV1a32.Calculate(name) };
+            => new SerializableBoolValuePair() { m_Name = name, m_Value = value, m_Hash = Hash.NewHash(name) };
 
         public static ValuePair<ValuePairContainer> Object(string name, params ValuePair[] values)
-            => new SerializableObjectValuePair() { m_Name = name, m_Value = new ValuePairContainer(values), m_Hash = FNV1a32.Calculate(name) };
+            => new SerializableObjectValuePair() { m_Name = name, m_Value = new ValuePairContainer(values), m_Hash = Hash.NewHash(name) };
         public static ValuePair<IList> Array(string name, IList values)
-            => new SerializableArrayValuePair() { m_Name = name, m_Value = values, m_Hash = FNV1a32.Calculate(name) };
+            => new SerializableArrayValuePair() { m_Name = name, m_Value = values, m_Hash = Hash.NewHash(name) };
 
         public static ValueFuncPair<T> Action<T>(string name, T func) where T : Delegate
-            => new ValueFuncPair<T>() { m_Name = name, m_Value = func, m_Hash = FNV1a32.Calculate(name) };
+            => new ValueFuncPair<T>() { m_Name = name, m_Value = func, m_Hash = Hash.NewHash(name) };
         public static SerializableClosureValuePair Closure(string name, Closure func)
-            => new SerializableClosureValuePair() { m_Name = name, m_Value = func, m_Hash = FNV1a32.Calculate(name) };
+            => new SerializableClosureValuePair() { m_Name = name, m_Value = func, m_Hash = Hash.NewHash(name) };
     }
     public abstract class ValuePair<T> : ValuePair, IEquatable<T>
     {
@@ -156,7 +156,7 @@ namespace Syadeu.Database
         public ValueNull(string name)
         {
             m_Name = name;
-            m_Hash = FNV1a32.Calculate(name);
+            m_Hash = Hash.NewHash(name);
         }
 
         public override ValueType GetValueType() => ValueType.Null;

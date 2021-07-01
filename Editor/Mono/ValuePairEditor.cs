@@ -139,7 +139,7 @@ namespace SyadeuEditor
                 //if (Target.m_Values == null) Target.m_Values = new ValuePairContainer();
                 for (int i = 0; i < container?.Count; i++)
                 {
-                    uint hash = container[i].Hash;
+                    Hash hash = container[i].Hash;
 
                     Syadeu.Database.ValueType valueType = container[i].GetValueType();
                     if (valueType == Syadeu.Database.ValueType.Array)
@@ -268,7 +268,7 @@ namespace SyadeuEditor
         }
         public static void DrawValuePair(this ValuePair valuePair)
         {
-            uint hash = valuePair.Hash;
+            Hash hash = valuePair.Hash;
 
             Syadeu.Database.ValueType valueType = valuePair.GetValueType();
             if (valueType == Syadeu.Database.ValueType.Array)
