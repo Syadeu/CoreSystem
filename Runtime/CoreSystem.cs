@@ -37,42 +37,39 @@ namespace Syadeu
         internal static void InvokeManagerChanged() => Instance.OnManagerChanged?.Invoke();
         public static IReadOnlyList<IStaticManager> GetStaticManagers()
         {
-            for (int i = Instance.StaticManagers.Count - 1; i >= 0; i--)
-            {
-                if (Instance.StaticManagers[i].Disposed)
-                {
-                    Instance.StaticManagers.RemoveAt(i);
-                    InvokeManagerChanged();
-                    continue;
-                }
-            }
+            //for (int i = Instance.StaticManagers.Count - 1; i >= 0; i--)
+            //{
+            //    if (Instance.StaticManagers[i].Disposed)
+            //    {
+            //        Instance.StaticManagers.RemoveAt(i);
+            //        InvokeManagerChanged();
+            //    }
+            //}
             return Instance.StaticManagers;
         }
         public static IReadOnlyList<IStaticManager> GetInstanceManagers()
         {
-            for (int i = Instance.InstanceManagers.Count - 1; i >= 0; i--)
-            {
-                if (Instance.InstanceManagers[i].Disposed)
-                {
-                    Instance.InstanceManagers.RemoveAt(i);
-                    InvokeManagerChanged();
-                    continue;
-                }
-            }
+            //for (int i = Instance.InstanceManagers.Count - 1; i >= 0; i--)
+            //{
+            //    if (Instance.InstanceManagers[i].Disposed)
+            //    {
+            //        Instance.InstanceManagers.RemoveAt(i);
+            //        InvokeManagerChanged();
+            //    }
+            //}
             return Instance.InstanceManagers;
         }
         public static IReadOnlyList<IStaticManager> GetDataManagers()
         {
-            for (int i = Instance.DataManagers.Count - 1; i >= 0; i--)
-            {
-                if (Instance.DataManagers[i] == null ||
-                    Instance.DataManagers[i].Disposed)
-                {
-                    Instance.DataManagers.RemoveAt(i);
-                    InvokeManagerChanged();
-                    continue;
-                }
-            }
+            //for (int i = Instance.DataManagers.Count - 1; i >= 0; i--)
+            //{
+            //    if (Instance.DataManagers[i] == null ||
+            //        Instance.DataManagers[i].Disposed)
+            //    {
+            //        Instance.DataManagers.RemoveAt(i);
+            //        InvokeManagerChanged();
+            //    }
+            //}
             return Instance.DataManagers;
         }
 
@@ -1256,12 +1253,21 @@ namespace Syadeu
                                     m_RoutineChanged = true;
                                 }
                             }
+                            else if (item.Key.Iterator.Current is UnityEngine.AsyncOperation oper &&
+                                oper.isDone)
+                            {
+                                if (!item.Key.Iterator.MoveNext())
+                                {
+                                    m_CustomUpdates.TryRemove(item.Key, out _);
+                                    m_RoutineChanged = true;
+                                }
+                            }
                             else if (item.Key.Iterator.Current.GetType() == typeof(bool) &&
                                     Convert.ToBoolean(item.Key.Iterator.Current) == true)
                             {
                                 if (!item.Key.Iterator.MoveNext())
                                 {
-                                    m_CustomBackgroundUpdates.TryRemove(item.Key, out _);
+                                    m_CustomUpdates.TryRemove(item.Key, out _);
                                     m_RoutineChanged = true;
                                 }
                             }

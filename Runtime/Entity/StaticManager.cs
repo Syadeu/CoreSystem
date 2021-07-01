@@ -144,7 +144,7 @@ namespace Syadeu
         public void Dispose()
         {
             Disposed = true;
-
+            CoreSystem.Instance.StaticManagers.Remove(this);
             m_Instance = null;
         }
     }

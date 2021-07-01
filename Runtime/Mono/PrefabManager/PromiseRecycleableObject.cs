@@ -3,6 +3,7 @@ using UnityEngine;
 
 #if UNITY_ADDRESSABLES
 using UnityEngine.ResourceManagement.AsyncOperations;
+using UnityEngine.SceneManagement;
 #endif
 
 namespace Syadeu.Mono
@@ -11,6 +12,8 @@ namespace Syadeu.Mono
     public sealed class PromiseRecycleableObject
     {
         private RecycleableMonobehaviour m_Output = null;
+
+        private Scene m_CalledScene;
 
         private PrefabManager.RecycleObject RecycleObjectSet;
         private AsyncOperationHandle<GameObject> m_Operation;
@@ -28,6 +31,7 @@ namespace Syadeu.Mono
         {
             RecycleObjectSet = obj;
 
+            m_CalledScene = SceneManager.GetActiveScene();
             m_Operation = obj.RefPrefab.InstantiateAsync(PrefabManager.INIT_POSITION, Quaternion.identity, PrefabManager.Instance.transform);
             m_Operation.Completed += M_Operation_Completed;
         }
@@ -35,6 +39,7 @@ namespace Syadeu.Mono
         {
             RecycleObjectSet = obj;
 
+            m_CalledScene = SceneManager.GetActiveScene();
             m_Operation = obj.RefPrefab.InstantiateAsync(PrefabManager.INIT_POSITION, Quaternion.identity, PrefabManager.Instance.transform);
             m_ManualInit = manualInit;
             m_OnCompleted = onCompleted;
@@ -43,6 +48,14 @@ namespace Syadeu.Mono
 
         private void M_Operation_Completed(AsyncOperationHandle<GameObject> obj)
         {
+            Scene currentScene = SceneManager.GetActiveScene();
+            if (!currentScene.Equals(m_CalledScene))
+            {
+                $"{obj.Result.name} is return because Scene has been changed".ToLog();
+                RecycleObjectSet.RefPrefab.ReleaseInstance(obj.Result);
+                return;
+            }
+
             RecycleableMonobehaviour recycleable = obj.Result.GetComponent<RecycleableMonobehaviour>();
             if (recycleable == null)
             {

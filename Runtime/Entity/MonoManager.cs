@@ -122,6 +122,7 @@ namespace Syadeu
         {
             Disposed = true;
 
+            CoreSystem.Instance.InstanceManagers.Remove(this);
             Initialized = false;
             m_Instance = null;
         }

@@ -71,6 +71,8 @@ namespace Syadeu
         {
             Disposed = true;
 
+            CoreSystem.Instance.DataManagers.Remove(this);
+            m_Instance = null;
             CoreSystem.Instance.m_CleanupManagers = true;
         }
     }
