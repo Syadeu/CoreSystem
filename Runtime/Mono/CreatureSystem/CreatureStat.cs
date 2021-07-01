@@ -11,7 +11,7 @@ namespace Syadeu.Mono
 
         public ValuePairContainer Values => m_Values;
 
-        public ValuePair this[uint hash]
+        public ValuePair this[Hash hash]
         {
             get
             {
