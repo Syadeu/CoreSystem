@@ -358,6 +358,8 @@ namespace Syadeu
         public delegate void BackgroundWork(Awaiter awaiter);
         public delegate void UnityWork();
 
+        internal static bool s_BlockCreateInstance = false;
+
         private readonly ManualResetEvent m_SimWatcher = new ManualResetEvent(false);
         internal readonly ConcurrentDictionary<CoreRoutine, object> m_CustomBackgroundUpdates = new ConcurrentDictionary<CoreRoutine, object>();
         internal readonly ConcurrentDictionary<CoreRoutine, object> m_CustomUpdates = new ConcurrentDictionary<CoreRoutine, object>();
@@ -396,13 +398,6 @@ namespace Syadeu
                         $"{internalTypes[i].Name}: StaticManagerInitializeOnLoad 어트리뷰트는 StaticManager를 상속받은 객체에만 사용되어야합니다.");
                 }
                 method.Invoke(null, null);
-
-                //Type staticManager = typeof(StaticManager<>).MakeGenericType(internalTypes[i]);
-                //if (internalTypes[i].BaseType == staticManager)
-                //{
-                //    staticManager.GetProperty(InstanceStr).GetGetMethod().Invoke(null, null);
-                //    continue;
-                //}
             }
             if (SyadeuSettings.Instance.m_EnableLua)
             {
@@ -427,26 +422,9 @@ namespace Syadeu
                                 $"{types[j].Name}: StaticManagerInitializeOnLoad 어트리뷰트는 StaticManager를 상속받은 객체에만 사용되어야합니다.");
                         }
                         method.Invoke(null, null);
-                        //Type staticManager = typeof(StaticManager<>).MakeGenericType(types[j]);
-                        //if (types[j].BaseType == staticManager)
-                        //{
-                        //    staticManager.GetProperty(InstanceStr).GetGetMethod().Invoke(null, null);
-                        //    continue;
-                        //}
-
-                        //throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
-                        //        $"{types[j].Name}: StaticManagerInitializeOnLoad 어트리뷰트는 StaticManager를 상속받은 객체에만 사용되어야합니다.");
                     }
                 }
             }
-
-            //Application.quitting += () =>
-            //{
-            //    if (m_Instance != null)
-            //    {
-            //        m_Instance.OnDestroy();
-            //    }
-            //};
         }
 
         private void Awake()
@@ -455,15 +433,14 @@ namespace Syadeu
         }
         public override void OnInitialize()
         {
-            //BackgroundThread = new Thread(BackgroundWorker)
-            //{
-            //    IsBackground = true
-            //};
-            //BackgroundThread.Start();
-
             ThreadPool.QueueUserWorkItem(BackgroundWorker);
-
+            Application.quitting += OnAboutToQuit;
             StartCoroutine(UnityWorker());
+        }
+        private void OnAboutToQuit()
+        {
+            //"test123".ToLog();
+            s_BlockCreateInstance = true;
         }
         protected override void OnDestroy()
         {
@@ -496,7 +473,8 @@ namespace Syadeu
             //    BackgroundThread?.Abort();
             //}
             //catch (Exception) { }
-
+            //"in123".ToLog();
+            Application.quitting -= OnAboutToQuit;
             base.OnDestroy();
         }
         #endregion
