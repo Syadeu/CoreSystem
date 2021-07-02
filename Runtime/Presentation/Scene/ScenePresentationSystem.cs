@@ -45,7 +45,7 @@ namespace Syadeu.Presentation
         {
             get
             {
-                if (m_BlackScreen == null) return false;
+                if (m_BlackScreen == null && !m_AsyncOperation.isDone) return false;
                 return true;
             }
         }
@@ -53,6 +53,25 @@ namespace Syadeu.Presentation
         public override PresentationResult OnInitialize()
         {
             m_CurrentScene = SceneManager.GetActiveScene();
+
+            if (m_DebugMode)
+            {
+                //SceneManager.UnloadSceneAsync(m_LoadingScene);
+            }
+            else
+            {
+                if (string.IsNullOrEmpty(SceneList.Instance.StartScene))
+                {
+                    throw new Exception();
+                }
+                m_AsyncOperation = LoadScene(SceneList.Instance.StartScene);
+
+                //m_AsyncOperation = SceneManager.UnloadSceneAsync(m_CurrentScene);
+                //yield return m_AsyncOperation;
+
+                
+                //yield return LoadScene(SceneList.Instance.StartScene);
+            }
             if (string.IsNullOrEmpty(SceneList.Instance.CustomLoadingScene.ScenePath))
             {
                 m_LoadingScene = SceneManager.CreateScene("Loading Scene");
@@ -84,7 +103,7 @@ namespace Syadeu.Presentation
                     localPhysicsMode = LocalPhysicsMode.None
                 });
             }
-            if (!m_DebugMode) m_AsyncOperation = SceneManager.UnloadSceneAsync(m_CurrentScene);
+            //if (!m_DebugMode) m_AsyncOperation = SceneManager.UnloadSceneAsync(m_CurrentScene);
 
             //PresentationManager.OnPresentationStarted += PresentationManager_OnPresentationStarted;
 
@@ -108,21 +127,7 @@ namespace Syadeu.Presentation
 
             yield return null;
 
-            if (m_DebugMode)
-            {
-                //SceneManager.UnloadSceneAsync(m_LoadingScene);
-            }
-            else
-            {
-                m_AsyncOperation = SceneManager.UnloadSceneAsync(m_CurrentScene);
-                yield return m_AsyncOperation;
-
-                if (string.IsNullOrEmpty(SceneList.Instance.StartScene))
-                {
-                    throw new Exception();
-                }
-                yield return LoadScene(SceneList.Instance.StartScene);
-            }
+            
 
             yield return m_BlackScreen.Lerp(0, Time.fixedDeltaTime * .1f);
             //while (!Mathf.Approximately(m_BlackScreen.alpha, 0))

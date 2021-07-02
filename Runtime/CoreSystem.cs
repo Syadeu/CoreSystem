@@ -917,7 +917,8 @@ namespace Syadeu
                             //        m_RoutineChanged = true;
                             //    }
                             //}
-                            else if (item.Key.Iterator.Current is YieldInstruction baseYield)
+                            else if (item.Key.Iterator.Current is YieldInstruction baseYield &&
+                                !(item.Key.Iterator.Current is UnityEngine.AsyncOperation))
                             {
                                 m_CustomUpdates.TryRemove(item.Key, out _);
                                 m_RoutineChanged = true;
@@ -1320,13 +1321,14 @@ namespace Syadeu
                             //        m_RoutineChanged = true;
                             //    }
                             //}
-                            else if (item.Key.Iterator.Current is YieldInstruction baseYield)
+                            else if (item.Key.Iterator.Current is YieldInstruction baseYield &&
+                                !(item.Key.Iterator.Current is UnityEngine.AsyncOperation))
                             {
                                 m_CustomUpdates.TryRemove(item.Key, out _);
                                 m_RoutineChanged = true;
 #if UNITY_EDITOR
                                 throw new CoreSystemException(CoreSystemExceptionFlag.Foreground,
-                                    $"해당 yield return 타입({item.Key.Iterator.Current.GetType().Name})은 지원하지 않습니다");
+                                    $"해당 yield return 타입({item.Key.Iterator.Current.GetType().Name})은 지원하지 않습니다", item.Key.ObjectName);
 #else
                                 CoreSystemException.SendCrash(CoreSystemExceptionFlag.Foreground,
                                     $"해당 yield return 타입({item.Key.Iterator.Current.GetType().Name})은 지원하지 않습니다", null);

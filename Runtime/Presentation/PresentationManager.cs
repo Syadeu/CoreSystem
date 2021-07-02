@@ -200,20 +200,30 @@ namespace Syadeu.Presentation
             {
                 group.m_Initializers[i].OnInitializeAsync();
             }
-
+            //"1".ToLog();
             group.m_BackgroundthreadSignal = true;
             int requestSystemCount = group.m_RequestSystemDelegates.Count;
             for (int i = 0; i < requestSystemCount; i++)
             {
+                //$"asd : {i} = {requestSystemCount}".ToLog();
                 if (!group.m_RequestSystemDelegates.TryDequeue(out Action action)) continue;
-                action.Invoke();
+                try
+                {
+                    action?.Invoke();
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError(ex);
+                    throw;
+                }
             }
-
+            //"2".ToLog();
             yield return new WaitUntil(() => group.m_MainthreadSignal);
             group.m_BackgroundInitDone = true;
 
-
+            //"3".ToLog();
             yield return group.m_WaitUntilInitializeCompleted;
+            //"4".ToLog();
             while (true)
             {
                 for (int i = 0; i < group.m_BeforePresentations.Count; i++)
@@ -229,6 +239,7 @@ namespace Syadeu.Presentation
                     group.m_AfterPresentations[i].AfterPresentationAsync();
                 }
 
+                //"running".ToLog();
                 yield return null;
             }
         }
