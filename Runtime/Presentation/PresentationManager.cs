@@ -20,7 +20,7 @@ namespace Syadeu.Presentation
     [StaticManagerIntializeOnLoad]
     public sealed class PresentationManager : StaticDataManager<PresentationManager>
     {
-        private class PresentationGroup
+        internal class PresentationGroup
         {
             public string m_Name;
             public Hash m_Hash;
@@ -38,11 +38,17 @@ namespace Syadeu.Presentation
 
             public bool m_MainthreadSignal = false;
             public bool m_BackgroundthreadSignal = false;
+            
+            public bool m_MainInitDone = false;
+            public bool m_BackgroundInitDone = false;
+            public WaitUntil m_WaitUntilInitializeCompleted;
 
             public PresentationGroup(string name, Hash hash)
             {
                 m_Name = name;
                 m_Hash = hash;
+
+                m_WaitUntilInitializeCompleted = new WaitUntil(() => m_MainInitDone && m_BackgroundInitDone);
             }
 
             public bool HasSystem<T>(T system) where T : IPresentationSystem
@@ -50,19 +56,8 @@ namespace Syadeu.Presentation
         }
         private Hash m_DefaultGroupHash = Hash.NewHash("DefaultSystemGroup");
 
-        //private readonly List<IPresentationSystem> m_Systems = new List<IPresentationSystem>();
-        //private readonly List<IInitPresentation> m_Initialzers = new List<IInitPresentation>();
-        //private readonly List<IBeforePresentation> m_BeforePresentations = new List<IBeforePresentation>();
-        //private readonly List<IOnPresentation> m_OnPresentations = new List<IOnPresentation>();
-        //private readonly List<IAfterPresentation> m_AfterPresentations = new List<IAfterPresentation>();
-        private readonly Dictionary<Hash, PresentationGroup> m_PresentationGroups = new Dictionary<Hash, PresentationGroup>();
-        private readonly Dictionary<Type, Hash> m_RegisteredGroup = new Dictionary<Type, Hash>();
-
-        //private bool m_IsPresentationStarted = false;
-
-        //public static event Action OnPresentationStarted;
-
-        //public static bool IsPresentationStarted => m_Instance != null && m_Instance.m_IsPresentationStarted;
+        internal readonly Dictionary<Hash, PresentationGroup> m_PresentationGroups = new Dictionary<Hash, PresentationGroup>();
+        internal readonly Dictionary<Type, Hash> m_RegisteredGroup = new Dictionary<Type, Hash>();
 
         public override void OnInitialize()
         {
@@ -121,24 +116,26 @@ namespace Syadeu.Presentation
         }
         private void StartPresentation()
         {
-            Instance.StartUnityUpdate(Presentation(m_PresentationGroups[m_DefaultGroupHash]));
-            Instance.StartBackgroundUpdate(PresentationAsync(m_PresentationGroups[m_DefaultGroupHash]));
+            m_PresentationGroups[m_DefaultGroupHash].MainPresentation 
+                = Instance.StartUnityUpdate(Presentation(m_PresentationGroups[m_DefaultGroupHash]));
+            m_PresentationGroups[m_DefaultGroupHash].BackgroundPresentation 
+                = Instance.StartBackgroundUpdate(PresentationAsync(m_PresentationGroups[m_DefaultGroupHash]));
         }
 
-        public static T GetSystem<T>() where T : class, IPresentationSystem
-        {
-            if (!Instance.m_RegisteredGroup.TryGetValue(typeof(T), out Hash groupHash))
-            {
-                throw new Exception();
-            }
-            if (!Instance.m_PresentationGroups.TryGetValue(groupHash, out PresentationGroup group))
-            {
-                throw new Exception();
-            }
-            IPresentationSystem system = group.m_Systems.FindFor((other) => other.GetType().Equals(typeof(T)));
-            if (system == null) return null;
-            return (T)system;
-        }
+        //public static System<T> GetSystem<T>() where T : class, IPresentationSystem
+        //{
+        //    if (!Instance.m_RegisteredGroup.TryGetValue(typeof(T), out Hash groupHash))
+        //    {
+        //        throw new Exception();
+        //    }
+        //    if (!Instance.m_PresentationGroups.TryGetValue(groupHash, out PresentationGroup group))
+        //    {
+        //        throw new Exception();
+        //    }
+        //    IPresentationSystem system = group.m_Systems.FindFor((other) => other.GetType().Equals(typeof(T)));
+        //    if (system == null) return System<T>.Null;
+        //    return (T)system;
+        //}
         internal static void RegisterRequestSystem<T, TA>(Action<TA> setter) where TA : class, IPresentationSystem
         {
             if (!Instance.m_RegisteredGroup.TryGetValue(typeof(T), out Hash groupHash))
@@ -152,7 +149,7 @@ namespace Syadeu.Presentation
 
             group.m_RequestSystemDelegates.Enqueue(() =>
             {
-                TA system = GetSystem<TA>();
+                TA system = System<TA>.GetSystem();
                 if (system == null)
                 {
                     $"Requested system ({typeof(TA).Name}) not found".ToLogError();
@@ -161,6 +158,7 @@ namespace Syadeu.Presentation
 
                 setter.Invoke(system);
             });
+            "request in".ToLog();
         }
 
         private static IEnumerator Presentation(PresentationGroup group)
@@ -188,6 +186,9 @@ namespace Syadeu.Presentation
             group.m_MainthreadSignal = true;
             //group.m_IsPresentationStarted = true;
             //OnPresentationStarted?.Invoke();
+            group.m_MainInitDone = true;
+
+            yield return group.m_WaitUntilInitializeCompleted;
             $"Presentation started".ToLog();
             while (true)
             {
@@ -223,6 +224,10 @@ namespace Syadeu.Presentation
             }
 
             yield return new WaitUntil(() => group.m_MainthreadSignal);
+            group.m_BackgroundInitDone = true;
+
+
+            yield return group.m_WaitUntilInitializeCompleted;
             while (true)
             {
                 for (int i = 0; i < group.m_BeforePresentations.Count; i++)
@@ -242,49 +247,4 @@ namespace Syadeu.Presentation
             }
         }
     }
-
-    //public sealed class TestSystem : PresentationSystemEntity<TestSystem>
-    //{
-    //    Test123System testsystem;
-
-    //    public override bool EnableBeforePresentation => false;
-    //    public override bool EnableOnPresentation => true;
-    //    public override bool EnableAfterPresentation => false;
-
-    //    public override PresentationResult OnInitialize()
-    //    {
-    //        RequestSystem<Test123System>((other) => testsystem = other);
-
-    //        return base.OnInitialize();
-    //    }
-
-    //    public override PresentationResult OnPresentation()
-    //    {
-    //        //$"123123 system == null = {testsystem == null}".ToLog();
-
-    //        return base.OnPresentation();
-    //    }
-    //}
-    //public sealed class Test123System : PresentationSystemEntity<Test123System>
-    //{
-    //    TestSystem testSystem;
-
-    //    public override bool EnableBeforePresentation => false;
-    //    public override bool EnableOnPresentation => true;
-    //    public override bool EnableAfterPresentation => false;
-
-    //    public override PresentationResult OnInitialize()
-    //    {
-    //        RequestSystem<TestSystem>((other) => testSystem = other);
-
-    //        return base.OnInitialize();
-    //    }
-
-    //    public override PresentationResult OnPresentation()
-    //    {
-    //        //$"system == null = {testSystem == null}".ToLog();
-
-    //        return base.OnPresentation();
-    //    }
-    //}
 }
