@@ -122,20 +122,6 @@ namespace Syadeu.Presentation
                 = Instance.StartBackgroundUpdate(PresentationAsync(m_PresentationGroups[m_DefaultGroupHash]));
         }
 
-        //public static System<T> GetSystem<T>() where T : class, IPresentationSystem
-        //{
-        //    if (!Instance.m_RegisteredGroup.TryGetValue(typeof(T), out Hash groupHash))
-        //    {
-        //        throw new Exception();
-        //    }
-        //    if (!Instance.m_PresentationGroups.TryGetValue(groupHash, out PresentationGroup group))
-        //    {
-        //        throw new Exception();
-        //    }
-        //    IPresentationSystem system = group.m_Systems.FindFor((other) => other.GetType().Equals(typeof(T)));
-        //    if (system == null) return System<T>.Null;
-        //    return (T)system;
-        //}
         internal static void RegisterRequestSystem<T, TA>(Action<TA> setter) where TA : class, IPresentationSystem
         {
             if (!Instance.m_RegisteredGroup.TryGetValue(typeof(T), out Hash groupHash))
@@ -149,7 +135,7 @@ namespace Syadeu.Presentation
 
             group.m_RequestSystemDelegates.Enqueue(() =>
             {
-                TA system = System<TA>.GetSystem();
+                TA system = PresentationSystem<TA>.GetSystem();
                 if (system == null)
                 {
                     $"Requested system ({typeof(TA).Name}) not found".ToLogError();

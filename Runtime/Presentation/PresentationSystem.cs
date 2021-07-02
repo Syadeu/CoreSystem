@@ -12,11 +12,11 @@ using System;
 
 namespace Syadeu.Presentation
 {
-    public struct System<T> : IValidation where T : IPresentationSystem
+    public struct PresentationSystem<T> : IValidation where T : IPresentationSystem
     {
-        public static System<T> Null = new System<T>(Hash.Empty);
-        private static System<T> s_Instance = Null;
-        internal static System<T> Instance
+        public static PresentationSystem<T> Null = new PresentationSystem<T>(Hash.Empty);
+        private static PresentationSystem<T> s_Instance = Null;
+        internal static PresentationSystem<T> Instance
         {
             get
             {
@@ -26,7 +26,7 @@ namespace Syadeu.Presentation
                     {
                         return Null;
                     }
-                    s_Instance = new System<T>(hash);
+                    s_Instance = new PresentationSystem<T>(hash);
                 }
                 return s_Instance;
             }
@@ -35,7 +35,7 @@ namespace Syadeu.Presentation
         private readonly Hash m_Hash;
         private readonly int m_Index;
 
-        public System(Hash groupHash)
+        public PresentationSystem(Hash groupHash)
         {
             m_Hash = groupHash;
             if (m_Hash.Equals(Hash.Empty)) m_Index = -1;
