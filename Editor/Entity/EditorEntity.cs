@@ -278,6 +278,7 @@ namespace SyadeuEditor
     {
         private Dictionary<uint, MethodInfo> m_CachedMethodInfos = new Dictionary<uint, MethodInfo>();
         private Dictionary<uint, FieldInfo> m_CachedFieldInfos = new Dictionary<uint, FieldInfo>();
+        private Dictionary<uint, PropertyInfo> m_CachedPropertyInfos = new Dictionary<uint, PropertyInfo>();
 
         protected T Asset => (T)target;
 
@@ -290,8 +291,20 @@ namespace SyadeuEditor
             m_CachedFieldInfos.Add(hash, value);
             return value;
         }
-        protected TA GetValue<TA>(string fieldName) => (TA)GetField(fieldName).GetValue(Asset);
-        protected void SetValue(string fieldName, object value) => GetField(fieldName).SetValue(Asset, value);
+        protected TA GetFieldValue<TA>(string fieldName) => (TA)GetField(fieldName).GetValue(Asset);
+        protected void SetFieldValue(string fieldName, object value) => GetField(fieldName).SetValue(Asset, value);
+
+        protected PropertyInfo GetProperty(string name)
+        {
+            uint hash = FNV1a32.Calculate(name);
+            if (m_CachedPropertyInfos.TryGetValue(hash, out PropertyInfo value)) return value;
+
+            value = typeof(T).GetProperty(name, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
+            m_CachedPropertyInfos.Add(hash, value);
+            return value;
+        }
+        protected TA GetPropertyValue<TA>(string propertyName) => (TA)GetProperty(propertyName).GetGetMethod().Invoke(Asset, null);
+        protected void SetPropertyValue(string propertyName, object value) => GetProperty(propertyName).GetSetMethod().Invoke(Asset, new object[] { value });
 
         protected MethodInfo GetMethod(string name)
         {

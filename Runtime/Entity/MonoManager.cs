@@ -91,13 +91,13 @@ namespace Syadeu
             m_Instance = this as T;
             if (DontDestroy)
             {
-                CoreSystem.Instance.StaticManagers.Add(this);
+                CoreSystem.StaticManagers.Add(this);
                 CoreSystem.InvokeManagerChanged();
                 transform.SetParent(System.transform);
             }
             else
             {
-                CoreSystem.Instance.InstanceManagers.Add(this);
+                CoreSystem.InstanceManagers.Add(this);
                 CoreSystem.InvokeManagerChanged();
                 if (InstanceGroupTr == null)
                 {
@@ -122,7 +122,7 @@ namespace Syadeu
         {
             Disposed = true;
 
-            CoreSystem.Instance.InstanceManagers.Remove(this);
+            CoreSystem.InstanceManagers.Remove(this);
             Initialized = false;
             m_Instance = null;
         }

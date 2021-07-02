@@ -24,18 +24,18 @@ namespace SyadeuEditor
         }
         private void OnValidate()
         {
-            m_ReflectionValues = GetValue<ValuePairContainer>("m_ReflectionValues");
+            m_ReflectionValues = GetFieldValue<ValuePairContainer>("m_ReflectionValues");
             if (m_ReflectionValues == null)
             {
-                SetValue("m_ReflectionValues", m_ReflectionValues);
+                SetFieldValue("m_ReflectionValues", m_ReflectionValues);
                 EditorUtility.SetDirty(Asset);
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
             }
-            m_ActualValues = GetValue<ValuePairContainer>("m_Values");
+            m_ActualValues = GetFieldValue<ValuePairContainer>("m_Values");
             if (m_ActualValues == null)
             {
-                SetValue("m_Values", m_ActualValues);
+                SetFieldValue("m_Values", m_ActualValues);
                 EditorUtility.SetDirty(Asset);
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();

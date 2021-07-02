@@ -104,13 +104,16 @@ namespace Syadeu.Database
                 LoadScene(SceneList.Instance.StartScene);
             }
 
-            while (!Mathf.Approximately(m_BlackScreen.alpha, 0))
-            {
-                m_BlackScreen.alpha = Mathf.Lerp(m_BlackScreen.alpha, 0, Time.deltaTime);
-                yield return null;
-            }
+            yield return m_BlackScreen.Lerp(0, Time.deltaTime * .1f);
+            //while (!Mathf.Approximately(m_BlackScreen.alpha, 0))
+            //{
+            //    m_BlackScreen.alpha = Mathf.Lerp(m_BlackScreen.alpha, 0, Time.deltaTime);
+            //    if (m_BlackScreen.alpha <= 0.99f) m_BlackScreen.alpha = 0
+            //    yield return null;
+            //}
             "done".ToLog();
         }
+
 
         private void LoadScene(string path,
 #if UNITY_ADDRESSABLES

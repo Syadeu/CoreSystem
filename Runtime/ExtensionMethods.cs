@@ -247,5 +247,37 @@ namespace Syadeu
             }
             return list;
         }
+
+        public static CoreRoutine Lerp(this CanvasGroup canvasGroup, float target, float time)
+            => CoreSystem.StartUnityUpdate(
+                canvasGroup, 
+                FloatLerp(() => canvasGroup.alpha, (other) => canvasGroup.alpha = other, target, time)
+                );
+        private static IEnumerator FloatLerp(Func<float> getter, Action<float> setter, float target, float time)
+        {
+            while (getter.Invoke() != target)
+            {
+                setter.Invoke(Mathf.Lerp(getter.Invoke(), target, time));
+
+                if (getter.Invoke() < target)
+                {
+                    if (getter.Invoke() >= target - .01f)
+                    {
+                        setter.Invoke(target);
+                        break;
+                    }
+                }
+                else
+                {
+                    if (getter.Invoke() <= target + .01f)
+                    {
+                        setter.Invoke(target);
+                        break;
+                    }
+                }
+
+                yield return null;
+            }
+        }
     }
 }

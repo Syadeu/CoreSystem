@@ -12,9 +12,9 @@ namespace SyadeuEditor
     [CustomEditor(typeof(SyadeuSettings))]
     public class SyadeuSettingsEditor : Editor
     {
-        const string CORESYSTEM_UNSAFE = "CORESYSTEM_UNSAFE";
-        const string CORESYSTEM_FMOD = "CORESYSTEM_FMOD";
-        const string CORESYSTEM_UNITYAUDIO = "CORESYSTEM_UNITYAUDIO";
+        public const string CORESYSTEM_UNSAFE = "CORESYSTEM_UNSAFE";
+        public const string CORESYSTEM_FMOD = "CORESYSTEM_FMOD";
+        public const string CORESYSTEM_UNITYAUDIO = "CORESYSTEM_UNITYAUDIO";
         bool m_DefineUnsafe = true;
         bool m_DefineFmod = true;
         bool m_DefineUnityAudio = true;
@@ -180,6 +180,22 @@ namespace SyadeuEditor
             //{
             //    EditorGUILayout.LabelField(m_ManagerNames[i]);
             //}
+        }
+
+        public static bool IsDefined(string defineWord)
+        {
+            PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, out string[] temp);
+            return temp.Contains(defineWord);
+        }
+        public static void Define(string defineWord)
+        {
+            PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, out string[] temp);
+            if (!temp.Contains(defineWord))
+            {
+                List<string> defines = new List<string>(temp);
+                defines.Add(defineWord);
+                PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, defines.ToArray());
+            }
         }
     }
 }

@@ -30,9 +30,9 @@ namespace Syadeu
 
         public event Action OnManagerChanged;
 
-        internal List<IStaticManager> StaticManagers { get; } = new List<IStaticManager>();
-        internal List<IStaticManager> InstanceManagers { get; } = new List<IStaticManager>();
-        internal List<IStaticManager> DataManagers { get; } = new List<IStaticManager>();
+        internal static List<IStaticManager> StaticManagers { get; } = new List<IStaticManager>();
+        internal static List<IStaticManager> InstanceManagers { get; } = new List<IStaticManager>();
+        internal static List<IStaticManager> DataManagers { get; } = new List<IStaticManager>();
 
         internal static void InvokeManagerChanged() => Instance.OnManagerChanged?.Invoke();
         public static IReadOnlyList<IStaticManager> GetStaticManagers()
@@ -45,7 +45,7 @@ namespace Syadeu
             //        InvokeManagerChanged();
             //    }
             //}
-            return Instance.StaticManagers;
+            return StaticManagers;
         }
         public static IReadOnlyList<IStaticManager> GetInstanceManagers()
         {
@@ -57,7 +57,7 @@ namespace Syadeu
             //        InvokeManagerChanged();
             //    }
             //}
-            return Instance.InstanceManagers;
+            return InstanceManagers;
         }
         public static IReadOnlyList<IStaticManager> GetDataManagers()
         {
@@ -70,7 +70,7 @@ namespace Syadeu
             //        InvokeManagerChanged();
             //    }
             //}
-            return Instance.DataManagers;
+            return DataManagers;
         }
 
         public static T GetManager<T>(SystemFlag flag = SystemFlag.All) where T : class, IStaticManager
@@ -78,33 +78,33 @@ namespace Syadeu
             if (flag.HasFlag(SystemFlag.MainSystem) ||
                 flag.HasFlag(SystemFlag.SubSystem))
             {
-                for (int i = 0; i < Instance.StaticManagers.Count; i++)
+                for (int i = 0; i < StaticManagers.Count; i++)
                 {
-                    if (Instance.StaticManagers[i] is T item) return item;
+                    if (StaticManagers[i] is T item) return item;
                 }
-                for (int i = Instance.InstanceManagers.Count - 1; i >= 0; i--)
+                for (int i = InstanceManagers.Count - 1; i >= 0; i--)
                 {
-                    if (Instance.InstanceManagers[i].Disposed)
-                    {
-                        Instance.InstanceManagers.RemoveAt(i);
-                        InvokeManagerChanged();
-                        continue;
-                    }
-                    if (Instance.InstanceManagers[i] is T item) return item;
+                    //if (InstanceManagers[i].Disposed)
+                    //{
+                    //    InstanceManagers.RemoveAt(i);
+                    //    InvokeManagerChanged();
+                    //    continue;
+                    //}
+                    if (InstanceManagers[i] is T item) return item;
                 }
             }
             if (flag.HasFlag(SystemFlag.Data))
             {
-                for (int i = Instance.DataManagers.Count - 1; i >= 0; i--)
+                for (int i = DataManagers.Count - 1; i >= 0; i--)
                 {
-                    if (Instance.DataManagers[i] is T item)
+                    if (DataManagers[i] is T item)
                     {
-                        if (Instance.DataManagers[i].Disposed)
-                        {
-                            Instance.DataManagers.RemoveAt(i);
-                            InvokeManagerChanged();
-                            continue;
-                        }
+                        //if (DataManagers[i].Disposed)
+                        //{
+                        //    DataManagers.RemoveAt(i);
+                        //    InvokeManagerChanged();
+                        //    continue;
+                        //}
 
                         return item;
                     }
@@ -1255,6 +1255,15 @@ namespace Syadeu
                             }
                             else if (item.Key.Iterator.Current is UnityEngine.AsyncOperation oper &&
                                 oper.isDone)
+                            {
+                                if (!item.Key.Iterator.MoveNext())
+                                {
+                                    m_CustomUpdates.TryRemove(item.Key, out _);
+                                    m_RoutineChanged = true;
+                                }
+                            }
+                            else if (item.Key.Iterator.Current is CoreRoutine routine &&
+                                !routine.IsRunning)
                             {
                                 if (!item.Key.Iterator.MoveNext())
                                 {

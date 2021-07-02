@@ -145,6 +145,8 @@ namespace SyadeuEditor
         private void ValidateRoutineView()
         {
             m_Routines.Clear();
+            m_Routines.AddRange(GetFieldValue<Dictionary<CoreRoutine, object>>("m_EditorCoroutines").Keys.ToArray());
+            m_Routines.AddRange(GetFieldValue<Dictionary<CoreRoutine, object>>("m_EditorSceneCoroutines").Keys.ToArray());
             m_Routines.AddRange(CoreSystem.Instance.GetCustomBackgroundUpdates());
             m_Routines.AddRange(CoreSystem.Instance.GetCustomUpdates());
 

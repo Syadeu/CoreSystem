@@ -29,7 +29,7 @@ namespace Syadeu
                     }
 
                     T ins = Activator.CreateInstance<T>();
-                    CoreSystem.Instance.DataManagers.Add(ins);
+                    CoreSystem.DataManagers.Add(ins);
                     CoreSystem.InvokeManagerChanged();
                     m_Instance = ins;
 
@@ -71,7 +71,7 @@ namespace Syadeu
         {
             Disposed = true;
 
-            CoreSystem.Instance.DataManagers.Remove(this);
+            CoreSystem.DataManagers.Remove(this);
             m_Instance = null;
             CoreSystem.Instance.m_CleanupManagers = true;
         }
