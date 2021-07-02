@@ -380,9 +380,10 @@ namespace Syadeu
 
             Instance.Initialize(SystemFlag.MainSystem);
 
-            Type[] internalTypes = typeof(CoreSystem).Assembly.GetTypes()
-                .Where(other => other.GetCustomAttribute<StaticManagerIntializeOnLoadAttribute>() != null)
-                .ToArray();
+            //Type[] internalTypes = typeof(CoreSystem).Assembly.GetTypes()
+            //    .Where(other => other.GetCustomAttribute<StaticManagerIntializeOnLoadAttribute>() != null)
+            //    .ToArray();
+            Type[] internalTypes = GetInternalTypes(other => other.GetCustomAttribute<StaticManagerIntializeOnLoadAttribute>() != null);
 
             MethodInfo method = null;
             for (int i = 0; i < internalTypes.Length; i++)
@@ -421,6 +422,27 @@ namespace Syadeu
                     }
                 }
             }
+        }
+        private static Type[] s_InternalTypes = null;
+        private static Type[] s_MainAssemblyTypes = null;
+        internal static Type[] GetInternalTypes(Func<Type, bool> predictate = null)
+        {
+            if (s_InternalTypes == null) s_InternalTypes = typeof(CoreSystem).Assembly.GetTypes();
+            if (predictate != null)
+            {
+                return s_InternalTypes.Where(predictate).ToArray();
+            }
+            return s_InternalTypes;
+        }
+        internal static Type[] GetMainAssemblyTypes(Func<Type, bool> predictate = null)
+        {
+            const string assemblyName = "Assembly-CSharp";
+            if (s_MainAssemblyTypes == null) s_MainAssemblyTypes = Assembly.Load(assemblyName).GetTypes();
+            if (predictate != null)
+            {
+                return s_MainAssemblyTypes.Where(predictate).ToArray();
+            }
+            return s_MainAssemblyTypes;
         }
 
         private void Awake()

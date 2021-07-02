@@ -7,11 +7,11 @@
 #if UNITY_ADDRESSABLES
 #endif
 
-using Syadeu.Database;
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 
 namespace Syadeu.Presentation
@@ -30,6 +30,31 @@ namespace Syadeu.Presentation
         private bool m_PresentationStarted = false;
         private bool m_MainthreadSignal = false;
         private bool m_BackgroundthreadSignal = false;
+
+        public override void OnInitialize()
+        {
+            const string instance = "Instance";
+            const string register = "Register";
+
+            List<Type> registers = new List<Type>();
+            registers.AddRange(CoreSystem.GetInternalTypes((other) => other.GetInterfaces().FindFor(t => t.Equals(typeof(IPresentationRegister))) != null));
+            registers.AddRange(CoreSystem.GetMainAssemblyTypes((other) => other.GetInterfaces().FindFor(t => t.Equals(typeof(IPresentationRegister))) != null));
+
+            MethodInfo registerMethod = typeof(IPresentationRegister).GetMethod(register);
+
+            for (int i = 0; i < registers.Count; i++)
+            {
+                object ins;
+                PropertyInfo instanceProperty = registers[i].GetProperty(instance, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+                if (instanceProperty != null)
+                {
+                    ins = instanceProperty.GetGetMethod().Invoke(null, null);
+                }
+                else ins = Activator.CreateInstance(registers[i]);
+
+                registerMethod.Invoke(ins, null);
+            }
+        }
 
         public static void RegisterSystem<T>(params T[] systems) where T : IPresentationSystem
         {
@@ -151,40 +176,17 @@ namespace Syadeu.Presentation
     }
 
     [StaticManagerIntializeOnLoad]
-    internal sealed class CSPresentationInterface : StaticDataManager<CSPresentationInterface>
+    internal sealed class CSPresentationInterface : StaticDataManager<CSPresentationInterface>, IPresentationRegister
     {
-        public override void OnInitialize()
-        {
-            PresentationManager.RegisterSystem(new TestSystem());
-            PresentationManager.RegisterSystem(new Test123System());
-
-            
-        }
         public override void OnStart()
         {
             PresentationManager.StartPresentation();
         }
-    }
 
-    public struct PresentationResult
-    {
-        public static PresentationResult Normal = new PresentationResult(ResultFlag.Normal, string.Empty);
-
-        internal ResultFlag m_Result;
-        internal Exception m_Exception;
-        internal string m_Message;
-
-        public PresentationResult(ResultFlag flag, string msg)
+        public void Register()
         {
-            m_Result = flag;
-            m_Exception = null;
-            m_Message = msg;
-        }
-        public PresentationResult(Exception ex, ResultFlag flag = ResultFlag.Error)
-        {
-            m_Result = flag;
-            m_Exception = ex;
-            m_Message = string.Empty;
+            PresentationManager.RegisterSystem(new TestSystem());
+            PresentationManager.RegisterSystem(new Test123System());
         }
     }
 
@@ -223,61 +225,5 @@ namespace Syadeu.Presentation
 
             return base.OnPresentation();
         }
-    }
-
-    public abstract class PresentationSystemEntity<T> : IPresentationSystem, IDisposable where T : class
-    {
-        public virtual bool EnableBeforePresentation => true;
-        public virtual bool EnableOnPresentation => true;
-        public virtual bool EnableAfterPresentation => true;
-
-        ~PresentationSystemEntity()
-        {
-            Dispose();
-        }
-
-        public virtual PresentationResult OnInitialize() { return PresentationResult.Normal; }
-        public virtual PresentationResult OnInitializeAsync() { return PresentationResult.Normal; }
-
-        public virtual PresentationResult BeforePresentation() { return PresentationResult.Normal; }
-        public virtual PresentationResult BeforePresentationAsync() { return PresentationResult.Normal; }
-
-        public virtual PresentationResult OnPresentation() { return PresentationResult.Normal; }
-        public virtual PresentationResult OnPresentationAsync() { return PresentationResult.Normal; }
-
-        public virtual PresentationResult AfterPresentation() { return PresentationResult.Normal; }
-        public virtual PresentationResult AfterPresentationAsync() { return PresentationResult.Normal; }
-
-        public virtual void Dispose() { }
-
-        protected void RequestSystem<TA>(Action<TA> setter) where TA : class, IPresentationSystem
-            => PresentationManager.RegisterRequestSystem(setter);
-    }
-
-    public interface IPresentationSystem : IInitPresentation, IBeforePresentation, IOnPresentation, IAfterPresentation
-    {
-        bool EnableBeforePresentation { get; }
-        bool EnableOnPresentation { get; }
-        bool EnableAfterPresentation { get; }
-    }
-    public interface IInitPresentation
-    {
-        PresentationResult OnInitialize();
-        PresentationResult OnInitializeAsync();
-    }
-    public interface IBeforePresentation
-    {
-        PresentationResult BeforePresentation();
-        PresentationResult BeforePresentationAsync();
-    }
-    public interface IOnPresentation
-    {
-        PresentationResult OnPresentation();
-        PresentationResult OnPresentationAsync();
-    }
-    public interface IAfterPresentation
-    {
-        PresentationResult AfterPresentation();
-        PresentationResult AfterPresentationAsync();
     }
 }
