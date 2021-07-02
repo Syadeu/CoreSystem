@@ -7,6 +7,7 @@
 #if UNITY_ADDRESSABLES
 #endif
 
+using Syadeu.Database;
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
@@ -19,21 +20,49 @@ namespace Syadeu.Presentation
     [StaticManagerIntializeOnLoad]
     public sealed class PresentationManager : StaticDataManager<PresentationManager>
     {
-        private readonly List<IPresentationSystem> m_Systems = new List<IPresentationSystem>();
-        private readonly List<IInitPresentation> m_Initialzers = new List<IInitPresentation>();
-        private readonly List<IBeforePresentation> m_BeforePresentations = new List<IBeforePresentation>();
-        private readonly List<IOnPresentation> m_OnPresentations = new List<IOnPresentation>();
-        private readonly List<IAfterPresentation> m_AfterPresentations = new List<IAfterPresentation>();
-        private readonly ConcurrentQueue<Action> m_RequestSystemDelegates = new ConcurrentQueue<Action>();
+        private class PresentationGroup
+        {
+            public string m_Name;
+            public Hash m_Hash;
 
-        private bool m_IsPresentationStarted = false;
+            public readonly List<IPresentationSystem> m_Systems = new List<IPresentationSystem>();
+            public readonly List<IInitPresentation> m_Initializers = new List<IInitPresentation>();
+            public readonly List<IBeforePresentation> m_BeforePresentations = new List<IBeforePresentation>();
+            public readonly List<IOnPresentation> m_OnPresentations = new List<IOnPresentation>();
+            public readonly List<IAfterPresentation> m_AfterPresentations = new List<IAfterPresentation>();
 
-        private bool m_MainthreadSignal = false;
-        private bool m_BackgroundthreadSignal = false;
+            public readonly ConcurrentQueue<Action> m_RequestSystemDelegates = new ConcurrentQueue<Action>();
 
-        public static event Action OnPresentationStarted;
+            public CoreRoutine MainPresentation;
+            public CoreRoutine BackgroundPresentation;
 
-        public static bool IsPresentationStarted => m_Instance != null && m_Instance.m_IsPresentationStarted;
+            public bool m_MainthreadSignal = false;
+            public bool m_BackgroundthreadSignal = false;
+
+            public PresentationGroup(string name, Hash hash)
+            {
+                m_Name = name;
+                m_Hash = hash;
+            }
+
+            public bool HasSystem<T>(T system) where T : IPresentationSystem
+                => m_Systems.FindFor((other) => other.Equals(system)) != null;
+        }
+        private Hash m_DefaultGroupHash = Hash.NewHash("DefaultSystemGroup");
+
+        //private readonly List<IPresentationSystem> m_Systems = new List<IPresentationSystem>();
+        //private readonly List<IInitPresentation> m_Initialzers = new List<IInitPresentation>();
+        //private readonly List<IBeforePresentation> m_BeforePresentations = new List<IBeforePresentation>();
+        //private readonly List<IOnPresentation> m_OnPresentations = new List<IOnPresentation>();
+        //private readonly List<IAfterPresentation> m_AfterPresentations = new List<IAfterPresentation>();
+        private readonly Dictionary<Hash, PresentationGroup> m_PresentationGroups = new Dictionary<Hash, PresentationGroup>();
+        private readonly Dictionary<Type, Hash> m_RegisteredGroup = new Dictionary<Type, Hash>();
+
+        //private bool m_IsPresentationStarted = false;
+
+        //public static event Action OnPresentationStarted;
+
+        //public static bool IsPresentationStarted => m_Instance != null && m_Instance.m_IsPresentationStarted;
 
         public override void OnInitialize()
         {
@@ -62,121 +91,151 @@ namespace Syadeu.Presentation
             StartPresentation();
         }
 
-        public static void RegisterSystem<T>(params T[] systems) where T : IPresentationSystem
+        public static void RegisterSystem<T>(params T[] systems) where T : IPresentationSystem => RegisterSystem("DefaultSystemGroup", systems);
+        public static void RegisterSystem<T>(string groupName, params T[] systems) where T : IPresentationSystem
         {
+            Hash groupHash = Hash.NewHash(groupName);
+            if (!Instance.m_PresentationGroups.TryGetValue(groupHash, out PresentationGroup group))
+            {
+                group = new PresentationGroup(groupName, groupHash);
+                Instance.m_PresentationGroups.Add(groupHash, group);
+            }
+
             for (int i = 0; i < systems.Length; i++)
             {
-                if (Instance.m_Systems.Contains(systems[i]))
+                if (group.m_Systems.Contains(systems[i]))
                 {
                     throw new Exception();
                 }
 
-                Instance.m_Systems.Add(systems[i]);
+                group.m_Systems.Add(systems[i]);
 
-                Instance.m_Initialzers.Add(systems[i]);
-                if (systems[i].EnableBeforePresentation) Instance.m_BeforePresentations.Add(systems[i]);
-                if (systems[i].EnableOnPresentation) Instance.m_OnPresentations.Add(systems[i]);
-                if (systems[i].EnableAfterPresentation) Instance.m_AfterPresentations.Add(systems[i]);
+                group.m_Initializers.Add(systems[i]);
+                if (systems[i].EnableBeforePresentation) group.m_BeforePresentations.Add(systems[i]);
+                if (systems[i].EnableOnPresentation) group.m_OnPresentations.Add(systems[i]);
+                if (systems[i].EnableAfterPresentation) group.m_AfterPresentations.Add(systems[i]);
 
-                $"System: {systems[i].GetType().Name} Registered".ToLog();
+                Instance.m_RegisteredGroup.Add(systems[i].GetType(), groupHash);
+                $"System ({groupName}): {systems[i].GetType().Name} Registered".ToLog();
             }
         }
         private void StartPresentation()
         {
-            Instance.StartUnityUpdate(Instance.Presentation());
-            Instance.StartBackgroundUpdate(Instance.PresentationAsync());
+            Instance.StartUnityUpdate(Presentation(m_PresentationGroups[m_DefaultGroupHash]));
+            Instance.StartBackgroundUpdate(PresentationAsync(m_PresentationGroups[m_DefaultGroupHash]));
         }
 
         public static T GetSystem<T>() where T : class, IPresentationSystem
         {
-            IPresentationSystem system = m_Instance.m_Systems.FindFor((other) => other.GetType().Equals(typeof(T)));
+            if (!Instance.m_RegisteredGroup.TryGetValue(typeof(T), out Hash groupHash))
+            {
+                throw new Exception();
+            }
+            if (!Instance.m_PresentationGroups.TryGetValue(groupHash, out PresentationGroup group))
+            {
+                throw new Exception();
+            }
+            IPresentationSystem system = group.m_Systems.FindFor((other) => other.GetType().Equals(typeof(T)));
             if (system == null) return null;
             return (T)system;
         }
-        internal static void RegisterRequestSystem<T>(Action<T> setter) where T : class, IPresentationSystem
+        internal static void RegisterRequestSystem<T, TA>(Action<TA> setter) where TA : class, IPresentationSystem
         {
-            Instance.m_RequestSystemDelegates.Enqueue(() =>
+            if (!Instance.m_RegisteredGroup.TryGetValue(typeof(T), out Hash groupHash))
             {
-                T system = GetSystem<T>();
+                throw new Exception();
+            }
+            if (!Instance.m_PresentationGroups.TryGetValue(groupHash, out PresentationGroup group))
+            {
+                throw new Exception();
+            }
+
+            group.m_RequestSystemDelegates.Enqueue(() =>
+            {
+                TA system = GetSystem<TA>();
                 if (system == null)
                 {
-                    $"Requested system ({typeof(T).Name}) not found".ToLogError();
+                    $"Requested system ({typeof(TA).Name}) not found".ToLogError();
                 }
-                else $"Requested system ({typeof(T).Name}) found".ToLog();
+                else $"Requested system ({typeof(TA).Name}) found".ToLog();
 
                 setter.Invoke(system);
             });
         }
 
-        private IEnumerator Presentation()
+        private static IEnumerator Presentation(PresentationGroup group)
         {
-            for (int i = 0; i < m_Initialzers.Count; i++)
+            for (int i = 0; i < group.m_Initializers.Count; i++)
             {
-                m_Initialzers[i].OnInitialize();
+                group.m_Initializers[i].OnInitialize();
             }
-            yield return new WaitUntil(() => m_BackgroundthreadSignal);
+            yield return new WaitUntil(() => group.m_BackgroundthreadSignal);
 
             //$"main pre in".ToLog();
 
-            for (int i = 0; i < m_Systems.Count; i++)
+            for (int i = 0; i < group.m_Systems.Count; i++)
             {
-                while (!m_Systems[i].IsStartable)
+                while (!group.m_Systems[i].IsStartable)
                 {
                     yield return null;
                 }
             }
 
-            m_MainthreadSignal = true;
-            m_IsPresentationStarted = true;
-            OnPresentationStarted?.Invoke();
+            for (int i = 0; i < group.m_Initializers.Count; i++)
+            {
+                group.m_Initializers[i].OnStartPresentation();
+            }
+            group.m_MainthreadSignal = true;
+            //group.m_IsPresentationStarted = true;
+            //OnPresentationStarted?.Invoke();
             $"Presentation started".ToLog();
             while (true)
             {
-                for (int i = 0; i < m_BeforePresentations.Count; i++)
+                for (int i = 0; i < group.m_BeforePresentations.Count; i++)
                 {
-                    m_BeforePresentations[i].BeforePresentation();
+                    group.m_BeforePresentations[i].BeforePresentation();
                 }
-                for (int i = 0; i < m_OnPresentations.Count; i++)
+                for (int i = 0; i < group.m_OnPresentations.Count; i++)
                 {
-                    m_OnPresentations[i].OnPresentation();
+                    group.m_OnPresentations[i].OnPresentation();
                 }
-                for (int i = 0; i < m_AfterPresentations.Count; i++)
+                for (int i = 0; i < group.m_AfterPresentations.Count; i++)
                 {
-                    m_AfterPresentations[i].AfterPresentation();
+                    group.m_AfterPresentations[i].AfterPresentation();
                 }
 
                 yield return null;
             }
         }
-        private IEnumerator PresentationAsync()
+        private static IEnumerator PresentationAsync(PresentationGroup group)
         {
-            for (int i = 0; i < m_Initialzers.Count; i++)
+            for (int i = 0; i < group.m_Initializers.Count; i++)
             {
-                m_Initialzers[i].OnInitializeAsync();
+                group.m_Initializers[i].OnInitializeAsync();
             }
 
-            m_BackgroundthreadSignal = true;
-            int requestSystemCount = m_RequestSystemDelegates.Count;
+            group.m_BackgroundthreadSignal = true;
+            int requestSystemCount = group.m_RequestSystemDelegates.Count;
             for (int i = 0; i < requestSystemCount; i++)
             {
-                if (!m_RequestSystemDelegates.TryDequeue(out Action action)) continue;
+                if (!group.m_RequestSystemDelegates.TryDequeue(out Action action)) continue;
                 action.Invoke();
             }
 
-            yield return new WaitUntil(() => m_MainthreadSignal);
+            yield return new WaitUntil(() => group.m_MainthreadSignal);
             while (true)
             {
-                for (int i = 0; i < m_BeforePresentations.Count; i++)
+                for (int i = 0; i < group.m_BeforePresentations.Count; i++)
                 {
-                    m_BeforePresentations[i].BeforePresentationAsync();
+                    group.m_BeforePresentations[i].BeforePresentationAsync();
                 }
-                for (int i = 0; i < m_OnPresentations.Count; i++)
+                for (int i = 0; i < group.m_OnPresentations.Count; i++)
                 {
-                    m_OnPresentations[i].OnPresentationAsync();
+                    group.m_OnPresentations[i].OnPresentationAsync();
                 }
-                for (int i = 0; i < m_AfterPresentations.Count; i++)
+                for (int i = 0; i < group.m_AfterPresentations.Count; i++)
                 {
-                    m_AfterPresentations[i].AfterPresentationAsync();
+                    group.m_AfterPresentations[i].AfterPresentationAsync();
                 }
 
                 yield return null;

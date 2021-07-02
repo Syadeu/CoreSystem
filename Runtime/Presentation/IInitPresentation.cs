@@ -12,6 +12,8 @@ namespace Syadeu.Presentation
 {
     public interface IInitPresentation
     {
+        PresentationResult OnStartPresentation();
+
         PresentationResult OnInitialize();
         PresentationResult OnInitializeAsync();
     }

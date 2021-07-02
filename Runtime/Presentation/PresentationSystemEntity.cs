@@ -33,6 +33,8 @@ namespace Syadeu.Presentation
             Dispose();
         }
 
+        public virtual PresentationResult OnStartPresentation() { return PresentationResult.Normal; }
+
         public virtual PresentationResult OnInitialize() { return PresentationResult.Normal; }
         public virtual PresentationResult OnInitializeAsync() { return PresentationResult.Normal; }
 
@@ -53,6 +55,6 @@ namespace Syadeu.Presentation
         /// <typeparam name="TA"></typeparam>
         /// <param name="setter"></param>
         protected void RequestSystem<TA>(Action<TA> setter) where TA : class, IPresentationSystem
-            => PresentationManager.RegisterRequestSystem(setter);
+            => PresentationManager.RegisterRequestSystem<T, TA>(setter);
     }
 }

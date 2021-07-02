@@ -1,4 +1,4 @@
-﻿//#undef UNITY_ADDRESSABLES
+﻿#undef UNITY_ADDRESSABLES
 
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -23,13 +23,14 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace Syadeu.Presentation
 {
-    //[StaticManagerIntializeOnLoad]
     [RequireGlobalConfig("General")]
     public sealed class ScenePresentationSystem : PresentationSystemEntity<ScenePresentationSystem>
     {
         private Scene m_LoadingScene;
 
         private Scene m_CurrentScene;
+
+        private AsyncOperation m_AsyncOperation;
 
         [ConfigValue(Name = "DebugMode")] private bool m_DebugMode;
         [ConfigValue(Header = "Screen", Name = "ResolutionX")] private int m_ResolutionX;
@@ -40,6 +41,14 @@ namespace Syadeu.Presentation
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
+        public override bool IsStartable
+        {
+            get
+            {
+                if (m_BlackScreen == null) return false;
+                return true;
+            }
+        }
 
         public override PresentationResult OnInitialize()
         {
@@ -74,40 +83,28 @@ namespace Syadeu.Presentation
                     loadSceneMode = LoadSceneMode.Additive,
                     localPhysicsMode = LocalPhysicsMode.None
                 });
-
-                //GameObject[] objs = m_LoadingScene.GetRootGameObjects();
-                //for (int i = 0; i < objs.Length; i++)
-                //{
-
-                //}
             }
+            if (!m_DebugMode) m_AsyncOperation = SceneManager.UnloadSceneAsync(m_CurrentScene);
 
-            PresentationManager.OnPresentationStarted += PresentationManager_OnPresentationStarted;
+            //PresentationManager.OnPresentationStarted += PresentationManager_OnPresentationStarted;
 
             //StartUnityUpdate(SceneStarter());
             return base.OnInitialize();
         }
-
-        private void PresentationManager_OnPresentationStarted()
+        public override PresentationResult OnStartPresentation()
         {
             CoreSystem.StartUnityUpdate(this, SceneStarter());
+            return base.OnStartPresentation();
         }
-
-        public override bool IsStartable
-        {
-            get
-            {
-                if (m_BlackScreen == null) return false;
-                return true;
-            }
-        }
+        //private void PresentationManager_OnPresentationStarted()
+        //{
+            
+        //}
 
         private IEnumerator SceneStarter()
         {
             "in".ToLog();
-            yield return new WaitUntil(() => m_BlackScreen != null);
-
-            AsyncOperation oper;
+            if (m_AsyncOperation != null) yield return m_AsyncOperation;
 
             yield return null;
 
@@ -117,14 +114,14 @@ namespace Syadeu.Presentation
             }
             else
             {
-                oper = SceneManager.UnloadSceneAsync(m_CurrentScene);
-                yield return oper;
+                m_AsyncOperation = SceneManager.UnloadSceneAsync(m_CurrentScene);
+                yield return m_AsyncOperation;
 
                 if (string.IsNullOrEmpty(SceneList.Instance.StartScene))
                 {
                     throw new Exception();
                 }
-                LoadScene(SceneList.Instance.StartScene);
+                yield return LoadScene(SceneList.Instance.StartScene);
             }
 
             yield return m_BlackScreen.Lerp(0, Time.fixedDeltaTime * .1f);
@@ -138,7 +135,7 @@ namespace Syadeu.Presentation
         }
 
 
-        private void LoadScene(string path,
+        private AsyncOperation LoadScene(string path,
 #if UNITY_ADDRESSABLES
             Action<AsyncOperationHandle<SceneInstance>>
 #else
@@ -156,6 +153,8 @@ namespace Syadeu.Presentation
             oper.completed
 #endif
                 += (other) => onCompleted?.Invoke(other);
+
+            return oper;
         }
         private void UnloadScene(
 #if UNITY_ADDRESSABLES
