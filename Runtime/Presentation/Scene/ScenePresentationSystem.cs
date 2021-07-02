@@ -23,9 +23,9 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace Syadeu.Presentation
 {
-    [StaticManagerIntializeOnLoad]
+    //[StaticManagerIntializeOnLoad]
     [RequireGlobalConfig("General")]
-    public sealed class CSSceneManager : StaticDataManager<CSSceneManager>
+    public sealed class ScenePresentationSystem : PresentationSystemEntity<ScenePresentationSystem>
     {
         private Scene m_LoadingScene;
 
@@ -37,7 +37,11 @@ namespace Syadeu.Presentation
 
         private CanvasGroup m_BlackScreen = null;
 
-        public override void OnInitialize()
+        public override bool EnableBeforePresentation => false;
+        public override bool EnableOnPresentation => true;
+        public override bool EnableAfterPresentation => false;
+
+        public override PresentationResult OnInitialize()
         {
             m_CurrentScene = SceneManager.GetActiveScene();
             if (string.IsNullOrEmpty(SceneList.Instance.CustomLoadingScene.ScenePath))
@@ -78,35 +82,47 @@ namespace Syadeu.Presentation
                 //}
             }
 
-            StartUnityUpdate(SceneStarter());
+            PresentationManager.OnPresentationStarted += PresentationManager_OnPresentationStarted;
+
+            //StartUnityUpdate(SceneStarter());
+            return base.OnInitialize();
         }
 
-        public static void SetBlackScreen(CanvasGroup canvasGroup)
+        private void PresentationManager_OnPresentationStarted()
         {
-            Instance.m_BlackScreen = canvasGroup;
+            CoreSystem.StartUnityUpdate(this, SceneStarter());
         }
+
+        //public static void SetBlackScreen(CanvasGroup canvasGroup)
+        //{
+        //    Instance.m_BlackScreen = canvasGroup;
+        //}
         private IEnumerator SceneStarter()
         {
+            "in".ToLog();
             yield return new WaitUntil(() => m_BlackScreen != null);
 
             AsyncOperation oper;
 
             yield return null;
-#if UNITY_EDITOR
+
             if (m_DebugMode)
             {
                 //SceneManager.UnloadSceneAsync(m_LoadingScene);
             }
             else
-#endif
             {
                 oper = SceneManager.UnloadSceneAsync(m_CurrentScene);
                 yield return oper;
 
+                if (string.IsNullOrEmpty(SceneList.Instance.StartScene))
+                {
+                    throw new Exception();
+                }
                 LoadScene(SceneList.Instance.StartScene);
             }
 
-            yield return m_BlackScreen.Lerp(0, Time.deltaTime * .1f);
+            yield return m_BlackScreen.Lerp(0, Time.fixedDeltaTime * .1f);
             //while (!Mathf.Approximately(m_BlackScreen.alpha, 0))
             //{
             //    m_BlackScreen.alpha = Mathf.Lerp(m_BlackScreen.alpha, 0, Time.deltaTime);

@@ -7,6 +7,7 @@
 #if UNITY_ADDRESSABLES
 #endif
 
+using Syadeu.Database;
 using System;
 
 namespace Syadeu.Presentation
@@ -17,10 +18,14 @@ namespace Syadeu.Presentation
     /// <typeparam name="T"></typeparam>
     public abstract class PresentationSystemEntity<T> : IPresentationSystem, IDisposable where T : class
     {
-        public virtual bool EnableBeforePresentation => true;
-        public virtual bool EnableOnPresentation => true;
-        public virtual bool EnableAfterPresentation => true;
+        public abstract bool EnableBeforePresentation { get; }
+        public abstract bool EnableOnPresentation { get; }
+        public abstract bool EnableAfterPresentation { get; }
 
+        public PresentationSystemEntity()
+        {
+            ConfigLoader.LoadConfig(this);
+        }
         ~PresentationSystemEntity()
         {
             Dispose();
@@ -40,6 +45,11 @@ namespace Syadeu.Presentation
 
         public virtual void Dispose() { }
 
+        /// <summary>
+        /// <see cref="OnInitialize"/> 혹은 <see cref="OnInitializeAsync"/> 에서만 수행되야됩니다.
+        /// </summary>
+        /// <typeparam name="TA"></typeparam>
+        /// <param name="setter"></param>
         protected void RequestSystem<TA>(Action<TA> setter) where TA : class, IPresentationSystem
             => PresentationManager.RegisterRequestSystem(setter);
     }

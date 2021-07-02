@@ -19,17 +19,21 @@ namespace Syadeu.Presentation
     public sealed class PresentationManager : StaticDataManager<PresentationManager>
     {
         private readonly List<IPresentationSystem> m_Systems = new List<IPresentationSystem>();
-
         private readonly List<IInitPresentation> m_Initialzers = new List<IInitPresentation>();
         private readonly List<IBeforePresentation> m_BeforePresentations = new List<IBeforePresentation>();
         private readonly List<IOnPresentation> m_OnPresentations = new List<IOnPresentation>();
         private readonly List<IAfterPresentation> m_AfterPresentations = new List<IAfterPresentation>();
-
         private readonly ConcurrentQueue<Action> m_RequestSystemDelegates = new ConcurrentQueue<Action>();
 
-        private bool m_PresentationStarted = false;
+        private bool m_IsPresentationStarted = false;
+
+        private bool m_PresentationStartCalled = false;
         private bool m_MainthreadSignal = false;
         private bool m_BackgroundthreadSignal = false;
+
+        public static event Action OnPresentationStarted;
+
+        public static bool IsPresentationStarted => m_Instance != null && m_Instance.m_IsPresentationStarted;
 
         public override void OnInitialize()
         {
@@ -77,12 +81,12 @@ namespace Syadeu.Presentation
         }
         public static void StartPresentation()
         {
-            if (Instance.m_PresentationStarted) return;
+            if (Instance.m_PresentationStartCalled) return;
 
             Instance.StartUnityUpdate(Instance.Presentation());
             Instance.StartBackgroundUpdate(Instance.PresentationAsync());
 
-            Instance.m_PresentationStarted = true;
+            Instance.m_PresentationStartCalled = true;
         }
 
         public static T GetSystem<T>() where T : class, IPresentationSystem
@@ -114,10 +118,12 @@ namespace Syadeu.Presentation
             }
             yield return new WaitUntil(() => m_BackgroundthreadSignal);
 
-            $"main pre in".ToLog();
+            //$"main pre in".ToLog();
 
             m_MainthreadSignal = true;
-            $"{Instance.m_BeforePresentations.Count} : {Instance.m_OnPresentations.Count} : {Instance.m_AfterPresentations.Count}".ToLog();
+            //$"{Instance.m_BeforePresentations.Count} : {Instance.m_OnPresentations.Count} : {Instance.m_AfterPresentations.Count}".ToLog();
+            m_IsPresentationStarted = true;
+            OnPresentationStarted?.Invoke();
             while (true)
             {
                 for (int i = 0; i < m_BeforePresentations.Count; i++)
@@ -153,7 +159,7 @@ namespace Syadeu.Presentation
 
             yield return new WaitUntil(() => m_MainthreadSignal);
 
-            $"back pre in".ToLog();
+            //$"back pre in".ToLog();
 
             while (true)
             {
@@ -175,55 +181,48 @@ namespace Syadeu.Presentation
         }
     }
 
-    [StaticManagerIntializeOnLoad]
-    internal sealed class CSPresentationInterface : StaticDataManager<CSPresentationInterface>, IPresentationRegister
-    {
-        public override void OnStart()
-        {
-            PresentationManager.StartPresentation();
-        }
+    //public sealed class TestSystem : PresentationSystemEntity<TestSystem>
+    //{
+    //    Test123System testsystem;
 
-        public void Register()
-        {
-            PresentationManager.RegisterSystem(new TestSystem());
-            PresentationManager.RegisterSystem(new Test123System());
-        }
-    }
+    //    public override bool EnableBeforePresentation => false;
+    //    public override bool EnableOnPresentation => true;
+    //    public override bool EnableAfterPresentation => false;
 
-    public sealed class TestSystem : PresentationSystemEntity<TestSystem>
-    {
-        Test123System testsystem;
+    //    public override PresentationResult OnInitialize()
+    //    {
+    //        RequestSystem<Test123System>((other) => testsystem = other);
 
-        public override PresentationResult OnInitialize()
-        {
-            RequestSystem<Test123System>((other) => testsystem = other);
+    //        return base.OnInitialize();
+    //    }
 
-            return base.OnInitialize();
-        }
+    //    public override PresentationResult OnPresentation()
+    //    {
+    //        //$"123123 system == null = {testsystem == null}".ToLog();
 
-        public override PresentationResult OnPresentation()
-        {
-            //$"123123 system == null = {testsystem == null}".ToLog();
+    //        return base.OnPresentation();
+    //    }
+    //}
+    //public sealed class Test123System : PresentationSystemEntity<Test123System>
+    //{
+    //    TestSystem testSystem;
 
-            return base.OnPresentation();
-        }
-    }
-    public sealed class Test123System : PresentationSystemEntity<Test123System>
-    {
-        TestSystem testSystem;
+    //    public override bool EnableBeforePresentation => false;
+    //    public override bool EnableOnPresentation => true;
+    //    public override bool EnableAfterPresentation => false;
 
-        public override PresentationResult OnInitialize()
-        {
-            RequestSystem<TestSystem>((other) => testSystem = other);
+    //    public override PresentationResult OnInitialize()
+    //    {
+    //        RequestSystem<TestSystem>((other) => testSystem = other);
 
-            return base.OnInitialize();
-        }
+    //        return base.OnInitialize();
+    //    }
 
-        public override PresentationResult OnPresentation()
-        {
-            //$"system == null = {testSystem == null}".ToLog();
+    //    public override PresentationResult OnPresentation()
+    //    {
+    //        //$"system == null = {testSystem == null}".ToLog();
 
-            return base.OnPresentation();
-        }
-    }
+    //        return base.OnPresentation();
+    //    }
+    //}
 }
