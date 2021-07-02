@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Syadeu.Database;
 using Syadeu.Mono.Console;
 
 using UnityEngine;
@@ -13,7 +14,7 @@ namespace Syadeu.Mono
         "Console System")]
     public sealed class ConsoleWindow : StaticManager<ConsoleWindow>
     {
-        public static void Log(string log, ConsoleFlag flag = ConsoleFlag.Normal) => Instance.LogCommand(log, flag);
+        public static void Log(string log, ResultFlag flag = ResultFlag.Normal) => Instance.LogCommand(log, flag);
         public static void LogAssert(bool isTrue, string log, bool throwException = true)
             => Instance.InternalLogAssert(isTrue, log, Environment.StackTrace, throwException);
 
@@ -94,7 +95,7 @@ namespace Syadeu.Mono
                 if (SyadeuSettings.Instance.m_ConsoleLogOnlyIsDevelopment)
                 {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-                    if (ConvertFlag(type) == ConsoleFlag.Error)
+                    if (ConvertFlag(type) == ResultFlag.Error)
                     {
                         InternalLogAssert(true, condition, stackTrace, SyadeuSettings.Instance.m_ConsoleThrowWhenErrorRecieved);
                     }
@@ -103,7 +104,7 @@ namespace Syadeu.Mono
                 }
                 else
                 {
-                    if (ConvertFlag(type) == ConsoleFlag.Error)
+                    if (ConvertFlag(type) == ResultFlag.Error)
                     {
                         InternalLogAssert(true, condition, stackTrace, SyadeuSettings.Instance.m_ConsoleThrowWhenErrorRecieved);
                     }
@@ -388,15 +389,15 @@ namespace Syadeu.Mono
 
         #region Internals
 
-        private ConsoleFlag ConvertFlag(LogType type)
+        private ResultFlag ConvertFlag(LogType type)
         {
             if (type == LogType.Error || type == LogType.Exception || type == LogType.Assert)
             {
-                return ConsoleFlag.Error;
+                return ResultFlag.Error;
             }
-            else if (type == LogType.Warning) return ConsoleFlag.Warning;
+            else if (type == LogType.Warning) return ResultFlag.Warning;
 
-            return ConsoleFlag.Normal;
+            return ResultFlag.Normal;
         }
 
         private enum StringColor
@@ -435,9 +436,9 @@ namespace Syadeu.Mono
                 }
             }
         }
-        private void LogCommand(string log, ConsoleFlag flag = ConsoleFlag.Normal)
+        private void LogCommand(string log, ResultFlag flag = ResultFlag.Normal)
         {
-            if (flag == ConsoleFlag.Error)
+            if (flag == ResultFlag.Error)
             {
                 InternalLog(log, StringColor.maroon);
                 OnErrorReceieved?.Invoke();
@@ -446,7 +447,7 @@ namespace Syadeu.Mono
                     throw new CoreSystemException(CoreSystemExceptionFlag.Console, log);
                 }
             }
-            else if (flag == ConsoleFlag.Warning)
+            else if (flag == ResultFlag.Warning)
             {
                 InternalLog(log, StringColor.orange);
             }

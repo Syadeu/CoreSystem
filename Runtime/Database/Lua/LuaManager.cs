@@ -73,15 +73,15 @@ namespace Syadeu.Database.Lua
                 }
                 catch (ScriptRuntimeException runtimeEx)
                 {
-                    ConsoleWindow.Log(runtimeEx.DecoratedMessage, ConsoleFlag.Error);
+                    ConsoleWindow.Log(runtimeEx.DecoratedMessage, ResultFlag.Error);
                 }
                 catch (SyntaxErrorException syntaxEx)
                 {
-                    ConsoleWindow.Log(syntaxEx.DecoratedMessage, ConsoleFlag.Error);
+                    ConsoleWindow.Log(syntaxEx.DecoratedMessage, ResultFlag.Error);
                 }
                 catch (System.Exception ex)
                 {
-                    ConsoleWindow.Log(ex.ToString(), ConsoleFlag.Error);
+                    ConsoleWindow.Log(ex.ToString(), ResultFlag.Error);
                 }
             }, "lua", "excute");
         }
@@ -100,15 +100,15 @@ namespace Syadeu.Database.Lua
                 }
                 catch (ScriptRuntimeException runtimeEx)
                 {
-                    ConsoleWindow.Log(runtimeEx.DecoratedMessage, ConsoleFlag.Error);
+                    ConsoleWindow.Log(runtimeEx.DecoratedMessage, ResultFlag.Error);
                 }
                 catch (SyntaxErrorException syntaxEx)
                 {
-                    ConsoleWindow.Log(syntaxEx.DecoratedMessage, ConsoleFlag.Error);
+                    ConsoleWindow.Log(syntaxEx.DecoratedMessage, ResultFlag.Error);
                 }
                 catch (System.Exception ex)
                 {
-                    ConsoleWindow.Log(ex.ToString(), ConsoleFlag.Error);
+                    ConsoleWindow.Log(ex.ToString(), ResultFlag.Error);
                 }
             }
         }

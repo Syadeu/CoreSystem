@@ -42,8 +42,8 @@ namespace Syadeu
             }
         }
 
-        public static System.Threading.Thread MainThread => ManagerEntity.MainThread;
-        public static System.Threading.Thread BackgroundThread => ManagerEntity.BackgroundThread;
+        protected static System.Threading.Thread MainThread => ManagerEntity.MainThread;
+        protected static System.Threading.Thread BackgroundThread => ManagerEntity.BackgroundThread;
 
         protected static bool IsMainthread()
             => CoreSystem.IsThisMainthread();

@@ -8,7 +8,7 @@ using UnityEditor.SceneManagement;
 
 using Object = UnityEngine.Object;
 
-namespace Syadeu.Database
+namespace Syadeu.Presentation
 {
     // Author: JohannesMP (2018-08-12)
     //

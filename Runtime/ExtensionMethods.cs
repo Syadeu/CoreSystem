@@ -87,11 +87,11 @@ namespace Syadeu
             else Debug.Log(log, target);
 #endif
         }
-        public static void ToLogConsole(this string log, ConsoleFlag flag = ConsoleFlag.Normal)
+        public static void ToLogConsole(this string log, ResultFlag flag = ResultFlag.Normal)
         {
             ConsoleWindow.Log(log, flag);
         }
-        public static void ToLogConsole(this string log, int indent, ConsoleFlag flag = ConsoleFlag.Normal)
+        public static void ToLogConsole(this string log, int indent, ResultFlag flag = ResultFlag.Normal)
         {
             string txt = "";
             for (int i = 0; i < indent; i++)
@@ -235,6 +235,15 @@ namespace Syadeu
             return table;
         }
 
+        public static T FindFor<T>(this IList<T> list, Func<T, bool> predictate) where T : class
+        {
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (predictate.Invoke(list[i])) return list[i];
+            }
+
+            return null;
+        }
         public static T RemoveFor<T, TA>(this T list, TA value) where T : IList<TA>/* where TA : IEquatable<TA>*/
         {
             for (int i = 0; i < list.Count; i++)

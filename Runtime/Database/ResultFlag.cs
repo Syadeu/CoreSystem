@@ -1,9 +1,9 @@
 ﻿using System;
 
-namespace Syadeu.Mono
+namespace Syadeu.Database
 {
     [Flags]
-    public enum ConsoleFlag
+    public enum ResultFlag
     {
         None = 0,
 

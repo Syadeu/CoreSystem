@@ -5,7 +5,9 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using System;
 using System.Linq;
+
 using Syadeu.Mono;
+using Syadeu.Database;
 
 using System.Collections;
 
@@ -19,7 +21,7 @@ using UnityEngine.ResourceManagement.ResourceProviders;
 using UnityEngine.ResourceManagement.AsyncOperations;
 #endif
 
-namespace Syadeu.Database
+namespace Syadeu.Presentation
 {
     [StaticManagerIntializeOnLoad]
     [RequireGlobalConfig("General")]

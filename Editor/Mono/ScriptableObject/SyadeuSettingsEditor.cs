@@ -95,7 +95,7 @@ namespace SyadeuEditor
             {
                 EditorGUILayout.HelpBox(
                     "PlayerSetting 스크립트 Define에 CORESYSTEM_UNSAFE 를 추가/제거합니다.\n" +
-                    "활성화시 포인터를 이용한 메소드를 사용가능합니다.", 
+                    "활성화시 포인터를 이용한 메소드를 사용가능합니다.",
                     MessageType.Info);
             }
             EditorGUI.BeginDisabledGroup(!PlayerSettings.allowUnsafeCode);
@@ -106,7 +106,7 @@ namespace SyadeuEditor
                 EditorGUILayout.HelpBox(
                     "PlayerSetting 스크립트 Define에 CORESYSTEM_FMOD 를 추가/제거합니다.\n" +
                     "활성화전 FMOD Unity Integration package를 설치하세요.\n" +
-                    "FMOD 사용을 위한 컬렉션이 제공됩니다.", 
+                    "FMOD 사용을 위한 컬렉션이 제공됩니다.",
                     MessageType.Info);
             }
             EditorGUI.BeginDisabledGroup(m_DefineUnityAudio);
@@ -170,16 +170,17 @@ namespace SyadeuEditor
                 EditorGUILayout.HelpBox(
                     "게임내 Exception이 raise 된 후, 게임을 강제로 크래쉬 시킵니다. " +
                     "에디터에서는 작동하지 않고, 빌드에서만 작동합니다.", MessageType.Info);
+
+
+                SyadeuSettings.Instance.m_CrashAfterException =
+                    EditorGUILayout.ToggleLeft("에러 발생 후 강제 크래쉬", SyadeuSettings.Instance.m_CrashAfterException);
+
+                //EditorGUILayout.Space();
+                //for (int i = 0; i < m_ManagerNames.Count; i++)
+                //{
+                //    EditorGUILayout.LabelField(m_ManagerNames[i]);
+                //}
             }
-
-            SyadeuSettings.Instance.m_CrashAfterException =
-                EditorGUILayout.ToggleLeft("에러 발생 후 강제 크래쉬", SyadeuSettings.Instance.m_CrashAfterException);
-
-            //EditorGUILayout.Space();
-            //for (int i = 0; i < m_ManagerNames.Count; i++)
-            //{
-            //    EditorGUILayout.LabelField(m_ManagerNames[i]);
-            //}
         }
 
         public static bool IsDefined(string defineWord)

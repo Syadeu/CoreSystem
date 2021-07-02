@@ -1,4 +1,5 @@
-﻿using Syadeu.Mono.Console;
+﻿using Syadeu.Database;
+using Syadeu.Mono.Console;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -43,7 +44,7 @@ namespace Syadeu.Mono
         //public ConsoleFlag m_ConsoleLogErrorTypes = ConsoleFlag.Error;
         [Tooltip("콘솔에 표시할 로그 타입을 지정합니다.")]
         // 콘솔에 표시할 로그 타입을 지정합니다.
-        public ConsoleFlag m_ConsoleLogTypes = ConsoleFlag.Normal | ConsoleFlag.Error;
+        public ResultFlag m_ConsoleLogTypes = ResultFlag.Normal | ResultFlag.Error;
         public bool m_ConsoleLogWhenLogRecieved = false;
         [Tooltip("ConsoleLogWhenLogRecieved가 true이고 development build 일 경우에만 콘솔에 로그를 표시합니다.")]
         // ConsoleLogWhenLogRecieved가 true이고 development build 일 경우에만 콘솔에 로그를 표시합니다.
