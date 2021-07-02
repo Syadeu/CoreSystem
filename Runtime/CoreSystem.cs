@@ -868,15 +868,33 @@ namespace Syadeu
                                     m_RoutineChanged = true;
                                 }
                             }
-                            else if (item.Key.Iterator.Current.GetType() == typeof(bool) &&
-                                    Convert.ToBoolean(item.Key.Iterator.Current) == true)
+                            else if (item.Key.Iterator.Current is UnityEngine.AsyncOperation oper &&
+                                oper.isDone)
                             {
                                 if (!item.Key.Iterator.MoveNext())
                                 {
-                                    m_CustomBackgroundUpdates.TryRemove(item.Key, out _);
+                                    m_CustomUpdates.TryRemove(item.Key, out _);
                                     m_RoutineChanged = true;
                                 }
                             }
+                            else if (item.Key.Iterator.Current is ICustomYieldAwaiter yieldAwaiter &&
+                                !yieldAwaiter.KeepWait)
+                            {
+                                if (!item.Key.Iterator.MoveNext())
+                                {
+                                    m_CustomUpdates.TryRemove(item.Key, out _);
+                                    m_RoutineChanged = true;
+                                }
+                            }
+                            //else if (item.Key.Iterator.Current.GetType() == typeof(bool) &&
+                            //        Convert.ToBoolean(item.Key.Iterator.Current) == true)
+                            //{
+                            //    if (!item.Key.Iterator.MoveNext())
+                            //    {
+                            //        m_CustomBackgroundUpdates.TryRemove(item.Key, out _);
+                            //        m_RoutineChanged = true;
+                            //    }
+                            //}
                             else if (item.Key.Iterator.Current is YieldInstruction baseYield)
                             {
                                 m_CustomUpdates.TryRemove(item.Key, out _);
@@ -1262,8 +1280,8 @@ namespace Syadeu
                                     m_RoutineChanged = true;
                                 }
                             }
-                            else if (item.Key.Iterator.Current is CoreRoutine routine &&
-                                !routine.IsRunning)
+                            else if (item.Key.Iterator.Current is ICustomYieldAwaiter yieldAwaiter &&
+                                !yieldAwaiter.KeepWait)
                             {
                                 if (!item.Key.Iterator.MoveNext())
                                 {
@@ -1271,15 +1289,15 @@ namespace Syadeu
                                     m_RoutineChanged = true;
                                 }
                             }
-                            else if (item.Key.Iterator.Current.GetType() == typeof(bool) &&
-                                    Convert.ToBoolean(item.Key.Iterator.Current) == true)
-                            {
-                                if (!item.Key.Iterator.MoveNext())
-                                {
-                                    m_CustomUpdates.TryRemove(item.Key, out _);
-                                    m_RoutineChanged = true;
-                                }
-                            }
+                            //else if (item.Key.Iterator.Current.GetType() == typeof(bool) &&
+                            //        Convert.ToBoolean(item.Key.Iterator.Current) == true)
+                            //{
+                            //    if (!item.Key.Iterator.MoveNext())
+                            //    {
+                            //        m_CustomUpdates.TryRemove(item.Key, out _);
+                            //        m_RoutineChanged = true;
+                            //    }
+                            //}
                             else if (item.Key.Iterator.Current is YieldInstruction baseYield)
                             {
                                 m_CustomUpdates.TryRemove(item.Key, out _);

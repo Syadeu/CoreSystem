@@ -1,6 +1,6 @@
 ﻿namespace Syadeu
 {
-    public struct CoreRoutine : Database.IValidation, System.IEquatable<CoreRoutine>
+    public struct CoreRoutine : Database.IValidation, System.IEquatable<CoreRoutine>, ICustomYieldAwaiter
     {
         private System.Guid m_Guid;
 
@@ -35,6 +35,7 @@
                 return CoreSystem.Instance.m_CustomUpdates.ContainsKey(this);
             }
         }
+        public bool KeepWait => IsRunning;
 
         internal CoreRoutine(object obj, System.Collections.IEnumerator iter, bool isEditor, bool isBackground)
         {
