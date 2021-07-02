@@ -153,7 +153,8 @@ namespace Syadeu.Presentation
             {
                 group.m_Initializers[i].OnInitialize();
             }
-            yield return new WaitUntil(() => group.m_BackgroundthreadSignal);
+            group.m_MainthreadSignal = true;
+            
 
             //$"main pre in".ToLog();
 
@@ -165,11 +166,12 @@ namespace Syadeu.Presentation
                 }
             }
 
+            yield return new WaitUntil(() => group.m_BackgroundthreadSignal);
             for (int i = 0; i < group.m_Initializers.Count; i++)
             {
                 group.m_Initializers[i].OnStartPresentation();
             }
-            group.m_MainthreadSignal = true;
+            
             //group.m_IsPresentationStarted = true;
             //OnPresentationStarted?.Invoke();
             group.m_MainInitDone = true;
@@ -200,12 +202,13 @@ namespace Syadeu.Presentation
             {
                 group.m_Initializers[i].OnInitializeAsync();
             }
-            //"1".ToLog();
-            group.m_BackgroundthreadSignal = true;
+            "1".ToLog();
+
+            yield return new WaitUntil(() => group.m_MainthreadSignal);
             int requestSystemCount = group.m_RequestSystemDelegates.Count;
             for (int i = 0; i < requestSystemCount; i++)
             {
-                //$"asd : {i} = {requestSystemCount}".ToLog();
+                $"asd : {i} = {requestSystemCount}".ToLog();
                 if (!group.m_RequestSystemDelegates.TryDequeue(out Action action)) continue;
                 try
                 {
@@ -217,8 +220,9 @@ namespace Syadeu.Presentation
                     throw;
                 }
             }
-            //"2".ToLog();
-            yield return new WaitUntil(() => group.m_MainthreadSignal);
+            "2".ToLog();
+
+            group.m_BackgroundthreadSignal = true;
             group.m_BackgroundInitDone = true;
 
             //"3".ToLog();
