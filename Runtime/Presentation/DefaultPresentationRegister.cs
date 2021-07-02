@@ -10,14 +10,8 @@
 
 namespace Syadeu.Presentation
 {
-    [StaticManagerIntializeOnLoad]
-    internal sealed class DefaultPresentationInterface : StaticDataManager<DefaultPresentationInterface>, IPresentationRegister
+    internal sealed class DefaultPresentationRegister : IPresentationRegister
     {
-        public override void OnStart()
-        {
-            PresentationManager.StartPresentation();
-        }
-
         public void Register()
         {
             PresentationManager.RegisterSystem(new ScenePresentationSystem());

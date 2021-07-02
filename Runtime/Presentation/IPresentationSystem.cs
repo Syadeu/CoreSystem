@@ -15,5 +15,7 @@ namespace Syadeu.Presentation
         bool EnableBeforePresentation { get; }
         bool EnableOnPresentation { get; }
         bool EnableAfterPresentation { get; }
+
+        bool IsStartable { get; }
     }
 }

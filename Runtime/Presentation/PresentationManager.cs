@@ -16,6 +16,7 @@ using UnityEngine;
 
 namespace Syadeu.Presentation
 {
+    [StaticManagerIntializeOnLoad]
     public sealed class PresentationManager : StaticDataManager<PresentationManager>
     {
         private readonly List<IPresentationSystem> m_Systems = new List<IPresentationSystem>();
@@ -27,7 +28,6 @@ namespace Syadeu.Presentation
 
         private bool m_IsPresentationStarted = false;
 
-        private bool m_PresentationStartCalled = false;
         private bool m_MainthreadSignal = false;
         private bool m_BackgroundthreadSignal = false;
 
@@ -58,6 +58,8 @@ namespace Syadeu.Presentation
 
                 registerMethod.Invoke(ins, null);
             }
+
+            StartPresentation();
         }
 
         public static void RegisterSystem<T>(params T[] systems) where T : IPresentationSystem
@@ -79,14 +81,10 @@ namespace Syadeu.Presentation
                 $"System: {systems[i].GetType().Name} Registered".ToLog();
             }
         }
-        public static void StartPresentation()
+        private void StartPresentation()
         {
-            if (Instance.m_PresentationStartCalled) return;
-
             Instance.StartUnityUpdate(Instance.Presentation());
             Instance.StartBackgroundUpdate(Instance.PresentationAsync());
-
-            Instance.m_PresentationStartCalled = true;
         }
 
         public static T GetSystem<T>() where T : class, IPresentationSystem
@@ -120,10 +118,18 @@ namespace Syadeu.Presentation
 
             //$"main pre in".ToLog();
 
+            for (int i = 0; i < m_Systems.Count; i++)
+            {
+                while (!m_Systems[i].IsStartable)
+                {
+                    yield return null;
+                }
+            }
+
             m_MainthreadSignal = true;
-            //$"{Instance.m_BeforePresentations.Count} : {Instance.m_OnPresentations.Count} : {Instance.m_AfterPresentations.Count}".ToLog();
             m_IsPresentationStarted = true;
             OnPresentationStarted?.Invoke();
+            $"Presentation started".ToLog();
             while (true)
             {
                 for (int i = 0; i < m_BeforePresentations.Count; i++)
@@ -158,9 +164,6 @@ namespace Syadeu.Presentation
             }
 
             yield return new WaitUntil(() => m_MainthreadSignal);
-
-            //$"back pre in".ToLog();
-
             while (true)
             {
                 for (int i = 0; i < m_BeforePresentations.Count; i++)

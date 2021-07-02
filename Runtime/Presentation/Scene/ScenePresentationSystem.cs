@@ -38,7 +38,7 @@ namespace Syadeu.Presentation
         private CanvasGroup m_BlackScreen = null;
 
         public override bool EnableBeforePresentation => false;
-        public override bool EnableOnPresentation => true;
+        public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
         public override PresentationResult OnInitialize()
@@ -93,10 +93,15 @@ namespace Syadeu.Presentation
             CoreSystem.StartUnityUpdate(this, SceneStarter());
         }
 
-        //public static void SetBlackScreen(CanvasGroup canvasGroup)
-        //{
-        //    Instance.m_BlackScreen = canvasGroup;
-        //}
+        public override bool IsStartable
+        {
+            get
+            {
+                if (m_BlackScreen == null) return false;
+                return true;
+            }
+        }
+
         private IEnumerator SceneStarter()
         {
             "in".ToLog();

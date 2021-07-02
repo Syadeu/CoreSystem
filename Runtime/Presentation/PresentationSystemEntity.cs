@@ -22,6 +22,8 @@ namespace Syadeu.Presentation
         public abstract bool EnableOnPresentation { get; }
         public abstract bool EnableAfterPresentation { get; }
 
+        public virtual bool IsStartable => true;
+
         public PresentationSystemEntity()
         {
             ConfigLoader.LoadConfig(this);
