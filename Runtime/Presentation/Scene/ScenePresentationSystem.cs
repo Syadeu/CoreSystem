@@ -106,7 +106,7 @@ namespace Syadeu.Presentation
             //if (!m_DebugMode) m_AsyncOperation = SceneManager.UnloadSceneAsync(m_CurrentScene);
 
             //PresentationManager.OnPresentationStarted += PresentationManager_OnPresentationStarted;
-
+            SceneManager.MergeScenes(m_LoadingScene, m_CurrentScene);
             //StartUnityUpdate(SceneStarter());
             return base.OnInitialize();
         }
@@ -123,7 +123,15 @@ namespace Syadeu.Presentation
         private IEnumerator SceneStarter()
         {
             "in".ToLog();
-            if (m_AsyncOperation != null) yield return m_AsyncOperation;
+            while (!m_AsyncOperation.isDone)
+            {
+                if (m_AsyncOperation.progress >= .9f)
+                {
+                    m_AsyncOperation.allowSceneActivation = true;
+                }
+
+                yield return m_AsyncOperation;
+            }
 
             yield return null;
 

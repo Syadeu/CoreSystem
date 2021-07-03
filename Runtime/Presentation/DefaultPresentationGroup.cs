@@ -12,14 +12,22 @@ using UnityEngine.Assertions;
 
 namespace Syadeu.Presentation
 {
-    internal sealed class DefaultPresentationRegister : IPresentationRegister
+    internal sealed class DefaultPresentationGroup : IPresentationRegister
     {
         public void Register()
         {
-            PresentationManager.RegisterSystem(new ScenePresentationSystem());
-            PresentationManager.RegisterSystem(new TestSystem());
-            PresentationManager.RegisterSystem(new Test123System());
+            System.Type t = typeof(DefaultPresentationGroup);
+            PresentationManager.RegisterSystem(t, new ScenePresentationSystem());
+            PresentationManager.RegisterSystem(t, new TestSystem());
+            PresentationManager.RegisterSystem(t, new Test123System());
         }
+    }
+    public abstract class PresentationRegisterEntity : IPresentationRegister
+    {
+        public abstract void Register();
+
+        protected void RegisterSystem<T>(params T[] systems) where T : IPresentationSystem
+            => PresentationManager.RegisterSystem(GetType(), systems);
     }
     public sealed class TestSystem : PresentationSystemEntity<TestSystem>
     {

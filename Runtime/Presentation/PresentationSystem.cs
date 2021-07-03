@@ -9,6 +9,8 @@
 
 using Syadeu.Database;
 using System;
+using System.Collections.Generic;
+using System.Reflection;
 
 namespace Syadeu.Presentation
 {
@@ -47,17 +49,25 @@ namespace Syadeu.Presentation
                 return s_Instance;
             }
         }
+        public static IPresentationSystemGroup SystemGroup
+        {
+            get
+            {
+                if (!Instance.IsValid()) throw new Exception();
+                return PresentationManager.Instance.m_PresentationGroups[Instance.m_GroupHash].m_SystemGroup;
+            }
+        }
 
-        private readonly Hash m_Hash;
+        private readonly Hash m_GroupHash;
         private readonly int m_Index;
 
         private PresentationSystem(Hash groupHash, int idx)
         {
-            m_Hash = groupHash;
+            m_GroupHash = groupHash;
             m_Index = idx;
         }
 
-        public bool IsValid() => !m_Hash.Equals(Hash.Empty) && m_Index >= 0;
+        public bool IsValid() => !m_GroupHash.Equals(Hash.Empty) && m_Index >= 0;
         public static T GetSystem()
         {
             if (!Instance.IsValid())
@@ -66,11 +76,11 @@ namespace Syadeu.Presentation
             }
             try
             {
-                return (T)PresentationManager.Instance.m_PresentationGroups[Instance.m_Hash].m_Systems[Instance.m_Index];
+                return (T)PresentationManager.Instance.m_PresentationGroups[Instance.m_GroupHash].m_Systems[Instance.m_Index];
             }
             catch (Exception ex)
             {
-                $"{typeof(T).Name}: {Instance.m_Hash}, {Instance.m_Index}".ToLog();
+                $"{typeof(T).Name}: {Instance.m_GroupHash}, {Instance.m_Index}".ToLog();
 
                 UnityEngine.Debug.LogError(ex);
                 throw;

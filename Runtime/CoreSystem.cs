@@ -294,6 +294,17 @@ namespace Syadeu
             if (Thread.CurrentThread == MainThread) return true;
             return false;
         }
+        private void OnGUI()
+        {
+            if (GUILayout.Button("To intro"))
+            {
+
+            }
+            if (GUILayout.Button("To Game"))
+            {
+
+            }
+        }
 
         #region Routines
         public static CoreRoutine StartBackgroundUpdate(object obj, IEnumerator update)

@@ -4,12 +4,16 @@
 using Syadeu.Database;
 using Syadeu.Presentation;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Syadeu.Mono
 {
     public sealed class SceneList : StaticSettingEntity<SceneList>
     {
         public SceneReference CustomLoadingScene;
+
+        [Space]
+        public SceneReference MasterScene;
         public SceneReference StartScene;
 
         public List<SceneReference> Scenes = new List<SceneReference>();

@@ -14,16 +14,21 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace Syadeu.Presentation
 {
     [StaticManagerIntializeOnLoad]
     public sealed class PresentationManager : StaticDataManager<PresentationManager>
     {
+        const string instance = "Instance";
+
         internal class PresentationGroup
         {
-            public string m_Name;
+            public Type m_Name;
             public Hash m_Hash;
+
+            public IPresentationSystemGroup m_SystemGroup;
 
             public readonly List<IPresentationSystem> m_Systems = new List<IPresentationSystem>();
             public readonly List<IInitPresentation> m_Initializers = new List<IInitPresentation>();
@@ -43,7 +48,7 @@ namespace Syadeu.Presentation
             public bool m_BackgroundInitDone = false;
             public WaitUntil m_WaitUntilInitializeCompleted;
 
-            public PresentationGroup(string name, Hash hash)
+            public PresentationGroup(Type name, Hash hash)
             {
                 m_Name = name;
                 m_Hash = hash;
@@ -54,19 +59,21 @@ namespace Syadeu.Presentation
             public bool HasSystem<T>(T system) where T : IPresentationSystem
                 => m_Systems.FindFor((other) => other.Equals(system)) != null;
         }
-        private Hash m_DefaultGroupHash = Hash.NewHash("DefaultSystemGroup");
+        private Hash m_DefaultGroupHash = Hash.NewHash(typeof(DefaultPresentationGroup).Name);
 
         internal readonly Dictionary<Hash, PresentationGroup> m_PresentationGroups = new Dictionary<Hash, PresentationGroup>();
         internal readonly Dictionary<Type, Hash> m_RegisteredGroup = new Dictionary<Type, Hash>();
 
         public override void OnInitialize()
         {
-            const string instance = "Instance";
             const string register = "Register";
 
             List<Type> registers = new List<Type>();
-            registers.AddRange(CoreSystem.GetInternalTypes((other) => other.GetInterfaces().FindFor(t => t.Equals(typeof(IPresentationRegister))) != null));
-            registers.AddRange(CoreSystem.GetMainAssemblyTypes((other) => other.GetInterfaces().FindFor(t => t.Equals(typeof(IPresentationRegister))) != null));
+            registers.AddRange(CoreSystem.GetInternalTypes(
+                (other) => !other.IsAbstract && other.GetInterfaces().FindFor(t => t.Equals(typeof(IPresentationRegister))) != null)
+                );
+            registers.AddRange(CoreSystem.GetMainAssemblyTypes(
+                (other) => !other.IsAbstract && other.GetInterfaces().FindFor(t => t.Equals(typeof(IPresentationRegister))) != null));
 
             MethodInfo registerMethod = typeof(IPresentationRegister).GetMethod(register);
 
@@ -86,14 +93,22 @@ namespace Syadeu.Presentation
             StartPresentation();
         }
 
-        public static void RegisterSystem<T>(params T[] systems) where T : IPresentationSystem => RegisterSystem("DefaultSystemGroup", systems);
-        public static void RegisterSystem<T>(string groupName, params T[] systems) where T : IPresentationSystem
+        //public static void RegisterSystem<T>(params T[] systems) where T : IPresentationSystem => RegisterSystem("DefaultSystemGroup", systems);
+        public static void RegisterSystem<T>(Type groupName, params T[] systems) where T : IPresentationSystem
         {
-            Hash groupHash = Hash.NewHash(groupName);
+            Hash groupHash = Hash.NewHash(groupName.Name);
             if (!Instance.m_PresentationGroups.TryGetValue(groupHash, out PresentationGroup group))
             {
                 group = new PresentationGroup(groupName, groupHash);
                 Instance.m_PresentationGroups.Add(groupHash, group);
+
+                Type t = typeof(PresentationSystemGroup<>).MakeGenericType(groupName);
+                $"{t.Name}: {t.GenericTypeArguments[0]}".ToLog();
+                PropertyInfo insProperty = typeof(PresentationSystemGroup<>).MakeGenericType(groupName).GetProperty(instance, BindingFlags.NonPublic | BindingFlags.Static);
+                Assert.IsNotNull(insProperty);
+                $"{insProperty.Name}".ToLog();
+                Assert.IsNotNull(insProperty.GetValue(null, null));
+                group.m_SystemGroup = (IPresentationSystemGroup)insProperty.GetValue(null, null);
             }
 
             for (int i = 0; i < systems.Length; i++)
