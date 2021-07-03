@@ -27,6 +27,7 @@ namespace Syadeu.Presentation
         {
             public Type m_Name;
             public Hash m_Hash;
+            public readonly List<Type> m_RegisteredSystemTypes = new List<Type>();
 
             public IPresentationSystemGroup m_SystemGroup;
 
@@ -94,7 +95,7 @@ namespace Syadeu.Presentation
         }
 
         //public static void RegisterSystem<T>(params T[] systems) where T : IPresentationSystem => RegisterSystem("DefaultSystemGroup", systems);
-        public static void RegisterSystem<T>(Type groupName, params T[] systems) where T : IPresentationSystem
+        public static void RegisterSystem(Type groupName, params Type[] systems)
         {
             Hash groupHash = Hash.NewHash(groupName.Name);
             if (!Instance.m_PresentationGroups.TryGetValue(groupHash, out PresentationGroup group))
@@ -113,28 +114,55 @@ namespace Syadeu.Presentation
 
             for (int i = 0; i < systems.Length; i++)
             {
-                if (group.m_Systems.Contains(systems[i]))
+                if (systems[i].IsAbstract || systems[i].IsInterface) throw new Exception("is interface or abstract");
+                if (!typeof(PresentationSystemEntity<>).MakeGenericType(systems[i]).IsAssignableFrom(systems[i])) throw new Exception("not from PresentationSystemEntity");
+
+                if (group.m_RegisteredSystemTypes.Contains(systems[i]))
                 {
                     throw new Exception();
                 }
-
-                group.m_Systems.Add(systems[i]);
-
-                group.m_Initializers.Add(systems[i]);
-                if (systems[i].EnableBeforePresentation) group.m_BeforePresentations.Add(systems[i]);
-                if (systems[i].EnableOnPresentation) group.m_OnPresentations.Add(systems[i]);
-                if (systems[i].EnableAfterPresentation) group.m_AfterPresentations.Add(systems[i]);
-
-                Instance.m_RegisteredGroup.Add(systems[i].GetType(), groupHash);
+                group.m_RegisteredSystemTypes.Add(systems[i]);
+                Instance.m_RegisteredGroup.Add(systems[i], groupHash);
                 $"System ({groupName}): {systems[i].GetType().Name} Registered".ToLog();
             }
         }
         private void StartPresentation()
         {
-            m_PresentationGroups[m_DefaultGroupHash].MainPresentation 
-                = Instance.StartUnityUpdate(Presentation(m_PresentationGroups[m_DefaultGroupHash]));
-            m_PresentationGroups[m_DefaultGroupHash].BackgroundPresentation 
-                = Instance.StartBackgroundUpdate(PresentationAsync(m_PresentationGroups[m_DefaultGroupHash]));
+            //m_PresentationGroups[m_DefaultGroupHash].MainPresentation 
+            //    = Instance.StartUnityUpdate(Presentation(m_PresentationGroups[m_DefaultGroupHash]));
+            //m_PresentationGroups[m_DefaultGroupHash].BackgroundPresentation 
+            //    = Instance.StartBackgroundUpdate(PresentationAsync(m_PresentationGroups[m_DefaultGroupHash]));
+
+            StartPresentation(m_DefaultGroupHash);
+        }
+        internal void StartPresentation(Hash groupHash)
+        {
+            PresentationGroup group = m_PresentationGroups[groupHash];
+
+            for (int i = 0; i < group.m_RegisteredSystemTypes.Count; i++)
+            {
+                Type t = group.m_RegisteredSystemTypes[i];
+                ConstructorInfo ctor = t.GetConstructor(BindingFlags.Instance | BindingFlags.Public, null, CallingConventions.HasThis, new Type[0], null);
+                object ins;
+                if (ctor != null)
+                {
+                    ins = ctor.Invoke(null);
+                }
+                else ins = Activator.CreateInstance(t);
+
+                IPresentationSystem system = (IPresentationSystem)ins;
+                group.m_Systems.Add(system);
+
+                group.m_Initializers.Add((IInitPresentation)ins);
+                if (system.EnableBeforePresentation) group.m_BeforePresentations.Add(system);
+                if (system.EnableOnPresentation) group.m_OnPresentations.Add(system);
+                if (system.EnableAfterPresentation) group.m_AfterPresentations.Add(system);
+
+                $"System ({group.m_Name.Name}): {system.GetType().Name} Start".ToLog();
+            }
+
+            group.MainPresentation = Instance.StartUnityUpdate(Presentation(group));
+            group.BackgroundPresentation = Instance.StartBackgroundUpdate(PresentationAsync(group));
         }
 
         internal static void RegisterRequestSystem<T, TA>(Action<TA> setter) where TA : class, IPresentationSystem

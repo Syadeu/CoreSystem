@@ -20,17 +20,21 @@ namespace Syadeu.Presentation
         internal Exception m_Exception;
         internal string m_Message;
 
-        public PresentationResult(ResultFlag flag, string msg)
+        private PresentationResult(ResultFlag flag, string msg)
         {
             m_Result = flag;
             m_Exception = null;
             m_Message = msg;
         }
-        public PresentationResult(Exception ex, ResultFlag flag = ResultFlag.Error)
+        private PresentationResult(Exception ex, ResultFlag flag = ResultFlag.Error)
         {
             m_Result = flag;
             m_Exception = ex;
             m_Message = string.Empty;
         }
+
+        public static PresentationResult Warning(string msg) => new PresentationResult(ResultFlag.Warning, msg);
+        public static PresentationResult Error(string msg) => new PresentationResult(ResultFlag.Error, msg);
+        public static PresentationResult Error(Exception ex) => new PresentationResult(ex);
     }
 }

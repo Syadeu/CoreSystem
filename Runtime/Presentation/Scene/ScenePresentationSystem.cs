@@ -65,12 +65,6 @@ namespace Syadeu.Presentation
                     throw new Exception();
                 }
                 m_AsyncOperation = LoadScene(SceneList.Instance.StartScene);
-
-                //m_AsyncOperation = SceneManager.UnloadSceneAsync(m_CurrentScene);
-                //yield return m_AsyncOperation;
-
-                
-                //yield return LoadScene(SceneList.Instance.StartScene);
             }
             if (string.IsNullOrEmpty(SceneList.Instance.CustomLoadingScene.ScenePath))
             {
@@ -103,11 +97,8 @@ namespace Syadeu.Presentation
                     localPhysicsMode = LocalPhysicsMode.None
                 });
             }
-            //if (!m_DebugMode) m_AsyncOperation = SceneManager.UnloadSceneAsync(m_CurrentScene);
 
-            //PresentationManager.OnPresentationStarted += PresentationManager_OnPresentationStarted;
             SceneManager.MergeScenes(m_LoadingScene, m_CurrentScene);
-            //StartUnityUpdate(SceneStarter());
             return base.OnInitialize();
         }
         public override PresentationResult OnStartPresentation()

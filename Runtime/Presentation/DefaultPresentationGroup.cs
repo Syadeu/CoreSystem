@@ -8,6 +8,7 @@
 #endif
 
 
+using System;
 using UnityEngine.Assertions;
 
 namespace Syadeu.Presentation
@@ -17,16 +18,17 @@ namespace Syadeu.Presentation
         public void Register()
         {
             System.Type t = typeof(DefaultPresentationGroup);
-            PresentationManager.RegisterSystem(t, new ScenePresentationSystem());
-            PresentationManager.RegisterSystem(t, new TestSystem());
-            PresentationManager.RegisterSystem(t, new Test123System());
+            PresentationManager.RegisterSystem(t, 
+                typeof(ScenePresentationSystem),
+                typeof(TestSystem),
+                typeof(Test123System));
         }
     }
     public abstract class PresentationRegisterEntity : IPresentationRegister
     {
         public abstract void Register();
 
-        protected void RegisterSystem<T>(params T[] systems) where T : IPresentationSystem
+        protected void RegisterSystem<T>(params Type[] systems) where T : IPresentationSystem
             => PresentationManager.RegisterSystem(GetType(), systems);
     }
     public sealed class TestSystem : PresentationSystemEntity<TestSystem>
