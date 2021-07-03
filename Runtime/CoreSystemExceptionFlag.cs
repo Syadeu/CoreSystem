@@ -45,5 +45,7 @@
         /// 모노 기반 오브젝트에서 발생한 예외사항입니다.
         /// </summary>
         Mono,
+
+        Presentation,
     }
 }

@@ -14,6 +14,13 @@ using UnityEngine.Assertions;
 
 namespace Syadeu.Presentation
 {
+    /// <summary>
+    /// <see cref="PresentationManager"/>에서 수행되는 시스템의 그룹입니다.
+    /// </summary>
+    /// <remarks>
+    /// 특정 시스템만 불러오려면 <seealso cref="PresentationSystem{T}"/>으로 호출하세요.
+    /// </remarks>
+    /// <typeparam name="T"></typeparam>
     public struct PresentationSystemGroup<T> : IPresentationSystemGroup, IValidation where T : IPresentationRegister
     {
         public static PresentationSystemGroup<T> Null = new PresentationSystemGroup<T>(Hash.Empty);
@@ -31,8 +38,7 @@ namespace Syadeu.Presentation
         }
 
         private readonly Hash m_GroupHash;
-
-        public IReadOnlyList<IPresentationSystem> Systems
+        IReadOnlyList<IPresentationSystem> IPresentationSystemGroup.Systems
         {
             get
             {
@@ -50,10 +56,15 @@ namespace Syadeu.Presentation
         }
 
         public bool IsValid() => !m_GroupHash.Equals(Hash.Empty);
+        void IPresentationSystemGroup.Start() => PresentationManager.Instance.StartPresentation(m_GroupHash);
+        void IPresentationSystemGroup.Stop() => PresentationManager.Instance.StopPresentation(m_GroupHash);
 
-        public static IReadOnlyList<IPresentationSystem> GetSystems() => Instance.Systems;
+        /// <inheritdoc cref="IPresentationSystemGroup.Systems"/>
+        public static IReadOnlyList<IPresentationSystem> Systems => ((IPresentationSystemGroup)Instance).Systems;
 
-        public static void Start() => PresentationManager.Instance.StartPresentation(Instance.m_GroupHash);
-        public static void Stop() => PresentationManager.Instance.StopPresentation(Instance.m_GroupHash);
+        /// <inheritdoc cref="IPresentationSystemGroup.Start"/>
+        public static void Start() => ((IPresentationSystemGroup)Instance).Start();
+        /// <inheritdoc cref="IPresentationSystemGroup.Stop"/>
+        public static void Stop() => ((IPresentationSystemGroup)Instance).Stop();
     }
 }

@@ -115,12 +115,20 @@ namespace Syadeu.Presentation
 
             for (int i = 0; i < systems.Length; i++)
             {
-                if (systems[i].IsAbstract || systems[i].IsInterface) throw new Exception("is interface or abstract");
-                if (!typeof(PresentationSystemEntity<>).MakeGenericType(systems[i]).IsAssignableFrom(systems[i])) throw new Exception("not from PresentationSystemEntity");
-
+                if (systems[i].IsAbstract || systems[i].IsInterface)
+                {
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
+                        $"{systems[i].Name} 은 등록할 수 없는 시스템입니다. absract 혹은 interface 클래스인가요?");
+                }
+                if (!typeof(PresentationSystemEntity<>).MakeGenericType(systems[i]).IsAssignableFrom(systems[i]))
+                {
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
+                        $"{systems[i].Name}은 PresentationSystemEntity 을 상속받지 않아, 등록할 수 없습니다.");
+                }
                 if (group.m_RegisteredSystemTypes.Contains(systems[i]))
                 {
-                    throw new Exception();
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
+                        $"{systems[i].Name}은 이미 등록된 시스템입니다.");
                 }
                 group.m_RegisteredSystemTypes.Add(systems[i]);
                 Instance.m_RegisteredGroup.Add(systems[i], groupHash);
@@ -134,7 +142,8 @@ namespace Syadeu.Presentation
         internal void StartPresentation(Hash groupHash)
         {
             PresentationGroup group = m_PresentationGroups[groupHash];
-            if (group.m_IsStarted) throw new Exception("already started");
+            if (group.m_IsStarted) throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
+                    $"{group.m_Name.Name} 은 이미 시작된 시스템 그룹입니다.");
 
             for (int i = 0; i < group.m_RegisteredSystemTypes.Count; i++)
             {
@@ -167,7 +176,8 @@ namespace Syadeu.Presentation
         internal void StopPresentation(Hash groupHash)
         {
             PresentationGroup group = m_PresentationGroups[groupHash];
-            if (!group.m_IsStarted) throw new Exception("already stopped");
+            if (!group.m_IsStarted) throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
+                    $"{group.m_Name.Name} 은 이미 정지된 시스템 그룹입니다.");
 
             Instance.StopUnityUpdate(group.MainPresentation);
             Instance.StopUnityUpdate(group.BackgroundPresentation);
@@ -185,13 +195,11 @@ namespace Syadeu.Presentation
 
         internal static void RegisterRequestSystem<T, TA>(Action<TA> setter) where TA : class, IPresentationSystem
         {
-            if (!Instance.m_RegisteredGroup.TryGetValue(typeof(T), out Hash groupHash))
+            if (!Instance.m_RegisteredGroup.TryGetValue(typeof(T), out Hash groupHash) ||
+                !Instance.m_PresentationGroups.TryGetValue(groupHash, out PresentationGroup group))
             {
-                throw new Exception();
-            }
-            if (!Instance.m_PresentationGroups.TryGetValue(groupHash, out PresentationGroup group))
-            {
-                throw new Exception();
+                throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
+                    $"시스템 {typeof(T).Name} 은 등록되지 않았습니다.");
             }
 
             group.m_RequestSystemDelegates.Enqueue(() =>

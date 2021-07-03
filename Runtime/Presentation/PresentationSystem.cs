@@ -11,6 +11,7 @@ using Syadeu.Database;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using UnityEngine.Assertions;
 
 namespace Syadeu.Presentation
 {
@@ -70,10 +71,7 @@ namespace Syadeu.Presentation
         public bool IsValid() => !m_GroupHash.Equals(Hash.Empty) && m_Index >= 0;
         public static T GetSystem()
         {
-            if (!Instance.IsValid())
-            {
-                throw new Exception();
-            }
+            Assert.IsTrue(Instance.IsValid(), $"{typeof(T).Name} System is not valid");
             try
             {
                 return (T)PresentationManager.Instance.m_PresentationGroups[Instance.m_GroupHash].m_Systems[Instance.m_Index];

@@ -13,7 +13,7 @@ using System;
 namespace Syadeu.Presentation
 {
     /// <summary>
-    /// <seealso cref="PresentationManager"/>
+    /// <seealso cref="PresentationManager"/>에서 수행할 시스템의 Entity 클래스입니다.
     /// </summary>
     /// <typeparam name="T"></typeparam>
     public abstract class PresentationSystemEntity<T> : IPresentationSystem where T : class
