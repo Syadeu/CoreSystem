@@ -28,6 +28,7 @@ namespace Syadeu.Presentation
             public Type m_Name;
             public Hash m_Hash;
             public readonly List<Type> m_RegisteredSystemTypes = new List<Type>();
+            public bool m_IsStarted = false;
 
             public IPresentationSystemGroup m_SystemGroup;
 
@@ -128,16 +129,12 @@ namespace Syadeu.Presentation
         }
         private void StartPresentation()
         {
-            //m_PresentationGroups[m_DefaultGroupHash].MainPresentation 
-            //    = Instance.StartUnityUpdate(Presentation(m_PresentationGroups[m_DefaultGroupHash]));
-            //m_PresentationGroups[m_DefaultGroupHash].BackgroundPresentation 
-            //    = Instance.StartBackgroundUpdate(PresentationAsync(m_PresentationGroups[m_DefaultGroupHash]));
-
             StartPresentation(m_DefaultGroupHash);
         }
         internal void StartPresentation(Hash groupHash)
         {
             PresentationGroup group = m_PresentationGroups[groupHash];
+            if (group.m_IsStarted) throw new Exception("already started");
 
             for (int i = 0; i < group.m_RegisteredSystemTypes.Count; i++)
             {
@@ -163,6 +160,27 @@ namespace Syadeu.Presentation
 
             group.MainPresentation = Instance.StartUnityUpdate(Presentation(group));
             group.BackgroundPresentation = Instance.StartBackgroundUpdate(PresentationAsync(group));
+            group.m_IsStarted = true;
+
+            $"{group.m_Name.Name} group is started".ToLog();
+        }
+        internal void StopPresentation(Hash groupHash)
+        {
+            PresentationGroup group = m_PresentationGroups[groupHash];
+            if (!group.m_IsStarted) throw new Exception("already stopped");
+
+            Instance.StopUnityUpdate(group.MainPresentation);
+            Instance.StopUnityUpdate(group.BackgroundPresentation);
+            for (int i = 0; i < group.m_Systems.Count; i++)
+            {
+                group.m_Systems[i].Dispose();
+            }
+            group.m_Systems.Clear();
+            group.m_BeforePresentations.Clear();
+            group.m_OnPresentations.Clear();
+            group.m_AfterPresentations.Clear();
+
+            $"{group.m_Name.Name} group is stopped".ToLog();
         }
 
         internal static void RegisterRequestSystem<T, TA>(Action<TA> setter) where TA : class, IPresentationSystem

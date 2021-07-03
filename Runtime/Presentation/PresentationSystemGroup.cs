@@ -52,5 +52,8 @@ namespace Syadeu.Presentation
         public bool IsValid() => !m_GroupHash.Equals(Hash.Empty);
 
         public static IReadOnlyList<IPresentationSystem> GetSystems() => Instance.Systems;
+
+        public static void Start() => PresentationManager.Instance.StartPresentation(Instance.m_GroupHash);
+        public static void Stop() => PresentationManager.Instance.StopPresentation(Instance.m_GroupHash);
     }
 }

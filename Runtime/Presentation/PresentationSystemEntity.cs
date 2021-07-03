@@ -16,7 +16,7 @@ namespace Syadeu.Presentation
     /// <seealso cref="PresentationManager"/>
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public abstract class PresentationSystemEntity<T> : IPresentationSystem, IDisposable where T : class
+    public abstract class PresentationSystemEntity<T> : IPresentationSystem where T : class
     {
         public abstract bool EnableBeforePresentation { get; }
         public abstract bool EnableOnPresentation { get; }

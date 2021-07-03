@@ -39,7 +39,7 @@ namespace Syadeu.Presentation
         private CanvasGroup m_BlackScreen = null;
 
         public override bool EnableBeforePresentation => false;
-        public override bool EnableOnPresentation => false;
+        public override bool EnableOnPresentation => true;
         public override bool EnableAfterPresentation => false;
         public override bool IsStartable
         {
@@ -136,6 +136,18 @@ namespace Syadeu.Presentation
             //    yield return null;
             //}
             "done".ToLog();
+
+            PresentationSystemGroup<DefaultPresentationGroup>.Stop();
+        }
+        public override PresentationResult OnPresentation()
+        {
+            //"main thread".ToLog();
+            return base.OnPresentation();
+        }
+        public override PresentationResult OnPresentationAsync()
+        {
+            //"background thread".ToLog();
+            return base.OnPresentationAsync();
         }
 
 
