@@ -18,6 +18,7 @@ using System.Threading.Tasks;
 using System.Reflection;
 using Syadeu.Database;
 using Syadeu.Database.Lua;
+using Syadeu.Presentation;
 
 namespace Syadeu
 {
@@ -298,11 +299,11 @@ namespace Syadeu
         {
             if (GUILayout.Button("To intro"))
             {
-
+                
             }
             if (GUILayout.Button("To Game"))
             {
-
+                PresentationSystem<SceneSystem>.GetSystem().LoadScene(0);
             }
         }
 

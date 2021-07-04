@@ -113,12 +113,12 @@ namespace SyadeuEditor
                         if (sortInstances[i] && !instances[a].Activated) continue;
 
                         string rightText = null;
-                        if (instances[a].GetComponent<RenderController>() != null)
-                        {
-                            RenderController render = instances[a].GetComponent<RenderController>();
-                            rightText = $": {RenderControllerEditor.DrawStatus(render)}";
-                            EditorGUILayout.BeginHorizontal();
-                        }
+                        //if (instances[a].GetComponent<RenderController>() != null)
+                        //{
+                        //    RenderController render = instances[a].GetComponent<RenderController>();
+                        //    rightText = $": {RenderControllerEditor.DrawStatus(render)}";
+                        //    EditorGUILayout.BeginHorizontal();
+                        //}
                         if (EditorUtils.Button($"> {a}.\t{instances[a].DisplayName}: {instances[a].Activated}", "TextField", 1))
                         {
                             EditorGUIUtility.PingObject(instances[a]);

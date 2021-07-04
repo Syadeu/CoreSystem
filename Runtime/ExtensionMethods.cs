@@ -257,11 +257,24 @@ namespace Syadeu
             return list;
         }
 
+        private static readonly Dictionary<UnityEngine.Object, CoreRoutine> Lerps 
+            = new Dictionary<UnityEngine.Object, CoreRoutine>();
         public static CoreRoutine Lerp(this CanvasGroup canvasGroup, float target, float time)
-            => CoreSystem.StartUnityUpdate(
-                canvasGroup, 
+        {
+            if (Lerps.ContainsKey(canvasGroup))
+            {
+                CoreSystem.RemoveUnityUpdate(Lerps[canvasGroup]);
+                Lerps.Remove(canvasGroup);
+            }
+
+            CoreRoutine routine = CoreSystem.StartUnityUpdate(
+                canvasGroup,
                 FloatLerp(() => canvasGroup.alpha, (other) => canvasGroup.alpha = other, target, time)
                 );
+
+            Lerps.Add(canvasGroup, routine);
+            return routine;
+        }
         private static IEnumerator FloatLerp(Func<float> getter, Action<float> setter, float target, float time)
         {
             while (getter.Invoke() != target)

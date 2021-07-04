@@ -1,4 +1,5 @@
-﻿using Syadeu.Database;
+﻿using Syadeu.Presentation;
+using Syadeu.Database;
 using Syadeu.Database.Lua;
 using Syadeu.Mono.Creature;
 using System;
@@ -150,7 +151,7 @@ namespace Syadeu.Mono
             }
 
             m_Hash = Hash.NewHash();
-            RenderManager.AddObserver(this);
+            PresentationSystem<RenderSystem>.GetSystem().AddObserver(this);
             Initialized = true;
         }
         protected override void OnTerminate()
@@ -168,7 +169,7 @@ namespace Syadeu.Mono
             }
 
             m_Hash = Hash.Empty;
-            RenderManager.RemoveObserver(this);
+            PresentationSystem<RenderSystem>.GetSystem().RemoveObserver(this);
             CreatureManager.Instance.Creatures.Remove(this);
             m_IsSpawnedFromManager = false;
             Initialized = false;
@@ -246,7 +247,7 @@ namespace Syadeu.Mono
 
         public bool MoveTo(Vector3 worldPosition, bool force = false)
         {
-            if (m_EnableCameraCull && !RenderManager.IsInCameraScreen(transform.position))
+            if (m_EnableCameraCull && !PresentationSystem<RenderSystem>.GetSystem().IsInCameraScreen(transform.position))
             {
                 transform.position = worldPosition;
                 return true;
@@ -324,7 +325,7 @@ namespace Syadeu.Mono
 
             while (sqr > .25f)
             {
-                if (m_EnableCameraCull && !RenderManager.IsInCameraScreen(transform.position))
+                if (m_EnableCameraCull && !PresentationSystem<RenderSystem>.GetSystem().IsInCameraScreen(transform.position))
                 {
                     //m_NavMeshAgent.ResetPath();
                     transform.position = worldPosition;
@@ -349,7 +350,7 @@ namespace Syadeu.Mono
 
             while (sqr > .25f)
             {
-                if (m_EnableCameraCull && !RenderManager.IsInCameraScreen(transform.position))
+                if (m_EnableCameraCull && !PresentationSystem<RenderSystem>.GetSystem().IsInCameraScreen(transform.position))
                 {
                     transform.position = worldPosition;
                     yield break;

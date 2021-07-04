@@ -17,7 +17,8 @@ namespace Syadeu.Presentation
         public override void Register()
         {
             RegisterSystem(
-                typeof(ScenePresentationSystem),
+                typeof(SceneSystem),
+                typeof(RenderSystem),
                 typeof(TestSystem),
                 typeof(Test123System));
         }

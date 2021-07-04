@@ -7,7 +7,7 @@ using UnityEngine.Events;
 
 namespace Syadeu.Mono
 {
-    [Obsolete("Will be deprecated and replaced to based on IRender interface MonoBehaviour")]
+    [Obsolete("Will be deprecated and replaced to based on IRender interface MonoBehaviour", true)]
     public class RenderController : MonoBehaviour
     {
         public bool IsStandalone = false;

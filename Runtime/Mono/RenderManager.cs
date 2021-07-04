@@ -12,6 +12,11 @@ using UnityEditor;
 
 namespace Syadeu.Mono
 {
+    /// <summary>
+    /// 퇴역합니다, 
+    /// <see cref="Presentation.PresentationSystem{T}"/><see cref="Presentation.RenderSystem"/>을 사용하세요
+    /// </summary>
+    [Obsolete("", true)]
     public sealed class RenderManager : StaticManager<RenderManager>
     {
         #region Initialize
