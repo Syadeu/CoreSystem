@@ -58,6 +58,7 @@ namespace Syadeu.Presentation
                 m_Camera.Value = Camera.main;
                 if (Camera == null) return PresentationResult.Warning("Cam not found");
             }
+            //m_Matrix4x4 = GetCameraMatrix4X4(Camera);
 
             return base.BeforePresentation();
         }
@@ -67,7 +68,8 @@ namespace Syadeu.Presentation
 
             for (int i = 0; i < m_ObserverList.Count; i++)
             {
-                if (m_ObserverList[i].m_Object.transform == null)
+                if (m_ObserverList[i].m_Object == null ||
+                    m_ObserverList[i].m_Object.transform == null)
                 {
                     m_ObserverList.RemoveAt(i);
                     i--;
@@ -144,7 +146,14 @@ namespace Syadeu.Presentation
         }
         internal static Matrix4x4 GetCameraMatrix4X4(Camera cam) => cam.projectionMatrix * cam.transform.worldToLocalMatrix;
         /// <inheritdoc cref="IsInCameraScreen(Camera, Vector3)"/>
-        public bool IsInCameraScreen(Vector3 worldPosition) => IsInCameraScreen(m_Camera.Value, worldPosition);
+        public bool IsInCameraScreen(Vector3 worldPosition)
+        {
+            if (CoreSystem.IsThisMainthread())
+            {
+                return IsInCameraScreen(m_Camera.Value, worldPosition);
+            }
+            return IsInCameraScreen(worldPosition, m_Matrix4x4, Vector3.zero);
+        }
         /// <summary>
         /// 해당 좌표가 입력한 카메라 내부에 위치하는지 반환합니다.
         /// </summary>

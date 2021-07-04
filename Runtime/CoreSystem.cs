@@ -804,6 +804,7 @@ namespace Syadeu
             //"LOG :: Background worker has started".ToLog();
 
             List<Timer> activeTimers = new List<Timer>();
+            List<CoreRoutine> waitForRemove = new List<CoreRoutine>();
 
             int counter = 0, tickCounter = 0;
             while (true)
@@ -869,15 +870,17 @@ namespace Syadeu
                 {
                     if (item.Value == null)
                     {
-                        m_CustomBackgroundUpdates.TryRemove(item.Key, out _);
-                        m_RoutineChanged = true;
+                        //m_CustomBackgroundUpdates.TryRemove(item.Key, out _);
+                        waitForRemove.Add(item.Key);
+                        //m_RoutineChanged = true;
                         continue;
                     }
                     if (item.Value is IStaticDataManager dataMgr &&
                         dataMgr.Disposed)
                     {
-                        m_CustomBackgroundUpdates.TryRemove(item.Key, out _);
-                        m_RoutineChanged = true;
+                        //m_CustomBackgroundUpdates.TryRemove(item.Key, out _);
+                        waitForRemove.Add(item.Key);
+                        //m_RoutineChanged = true;
                         continue;
                     }
 
@@ -887,8 +890,9 @@ namespace Syadeu
                         {
                             if (!item.Key.Iterator.MoveNext())
                             {
-                                m_CustomBackgroundUpdates.TryRemove(item.Key, out _);
-                                m_RoutineChanged = true;
+                                //m_CustomBackgroundUpdates.TryRemove(item.Key, out _);
+                                //m_RoutineChanged = true;
+                                waitForRemove.Add(item.Key);
                             }
                         }
                         else
@@ -898,8 +902,9 @@ namespace Syadeu
                             {
                                 if (!item.Key.Iterator.MoveNext())
                                 {
-                                    m_CustomBackgroundUpdates.TryRemove(item.Key, out _);
-                                    m_RoutineChanged = true;
+                                    //m_CustomBackgroundUpdates.TryRemove(item.Key, out _);
+                                    //m_RoutineChanged = true;
+                                    waitForRemove.Add(item.Key);
                                 }
                             }
                             else if (item.Key.Iterator.Current is UnityEngine.AsyncOperation oper &&
@@ -907,8 +912,9 @@ namespace Syadeu
                             {
                                 if (!item.Key.Iterator.MoveNext())
                                 {
-                                    m_CustomUpdates.TryRemove(item.Key, out _);
-                                    m_RoutineChanged = true;
+                                    //m_CustomUpdates.TryRemove(item.Key, out _);
+                                    //m_RoutineChanged = true;
+                                    waitForRemove.Add(item.Key);
                                 }
                             }
                             else if (item.Key.Iterator.Current is ICustomYieldAwaiter yieldAwaiter &&
@@ -916,8 +922,9 @@ namespace Syadeu
                             {
                                 if (!item.Key.Iterator.MoveNext())
                                 {
-                                    m_CustomUpdates.TryRemove(item.Key, out _);
-                                    m_RoutineChanged = true;
+                                    //m_CustomUpdates.TryRemove(item.Key, out _);
+                                    //m_RoutineChanged = true;
+                                    waitForRemove.Add(item.Key);
                                 }
                             }
                             //else if (item.Key.Iterator.Current.GetType() == typeof(bool) &&
@@ -932,19 +939,21 @@ namespace Syadeu
                             else if (item.Key.Iterator.Current is YieldInstruction baseYield &&
                                 !(item.Key.Iterator.Current is UnityEngine.AsyncOperation))
                             {
-                                m_CustomUpdates.TryRemove(item.Key, out _);
-                                m_RoutineChanged = true;
+                                //m_CustomUpdates.TryRemove(item.Key, out _);
+                                //m_RoutineChanged = true;
+                                waitForRemove.Add(item.Key);
                                 throw new CoreSystemException(CoreSystemExceptionFlag.Background,
                                     $"해당 yield return 타입({item.Key.Iterator.Current.GetType().Name})은 지원하지 않습니다");
                             }
                         }
                     }
 #if UNITY_EDITOR
-                    catch (ThreadAbortException) { }
+                    //catch (ThreadAbortException) { }
 #endif
                     catch (UnityException mainthread)
                     {
 #if UNITY_EDITOR
+                        Debug.LogException(mainthread);
                         throw new CoreSystemException(CoreSystemExceptionFlag.Background, 
                             "유니티 API 가 사용되어 백그라운드에서 돌릴 수 없습니다", mainthread);
 #else
@@ -955,6 +964,7 @@ namespace Syadeu
                     catch (Exception ex)
                     {
 #if UNITY_EDITOR
+                        Debug.LogException(ex);
                         throw new CoreSystemException(CoreSystemExceptionFlag.Background,
                             "업데이트 문을 실행하는 중 에러가 발생했습니다", ex);
 #else
@@ -963,6 +973,14 @@ namespace Syadeu
 #endif
                     }
                 }
+
+                m_RoutineChanged = waitForRemove.Count != 0;
+                if (m_RoutineChanged) $"Background Routine rmoved {waitForRemove.Count}".ToLog();
+                for (int i = 0; i < waitForRemove.Count; i++)
+                {
+                    m_CustomBackgroundUpdates.TryRemove(waitForRemove[i], out _);
+                }
+                waitForRemove.Clear();
                 #endregion
 #if UNITY_EDITOR
                 OnBackgroundCustomUpdateSampler.End();
@@ -982,6 +1000,7 @@ namespace Syadeu
                 catch (UnityException mainthread)
                 {
 #if UNITY_EDITOR
+                    Debug.LogException(mainthread);
                     throw new CoreSystemException(CoreSystemExceptionFlag.Background, 
                         "유니티 API 가 사용되어 백그라운드에서 돌릴 수 없습니다", mainthread);
 #else
@@ -992,6 +1011,7 @@ namespace Syadeu
                 catch (Exception ex)
                 {
 #if UNITY_EDITOR
+                    Debug.LogException(ex);
                     throw new CoreSystemException(CoreSystemExceptionFlag.Background,
                             "업데이트 문을 실행하는 중 에러가 발생했습니다", ex);
 #else
@@ -1063,6 +1083,7 @@ namespace Syadeu
                         catch (UnityException mainthread)
                         {
 #if UNITY_EDITOR
+                            Debug.LogException(mainthread);
                             throw new CoreSystemException(CoreSystemExceptionFlag.Background, 
                                 "유니티 API 가 사용되어 타이머 Start 문에서 돌릴 수 없습니다", timer.CalledFrom, mainthread);
 #else
@@ -1073,6 +1094,7 @@ namespace Syadeu
                         catch (Exception ex)
                         {
 #if UNITY_EDITOR
+                            Debug.LogException(ex);
                             throw new CoreSystemException(CoreSystemExceptionFlag.Background,
                             "타이머 Start 문을 실행하는 중 에러가 발생했습니다", timer.CalledFrom, ex);
 #else
@@ -1109,6 +1131,7 @@ namespace Syadeu
                         catch (UnityException mainthread)
                         {
 #if UNITY_EDITOR
+                            Debug.LogException(mainthread);
                             throw new CoreSystemException(CoreSystemExceptionFlag.Background, 
                                 "유니티 API 가 사용되어 타이머 Kill 문에서 돌릴 수 없습니다", activeTimers[i].CalledFrom, mainthread);
 #else
@@ -1119,6 +1142,7 @@ namespace Syadeu
                         catch (Exception ex)
                         {
 #if UNITY_EDITOR
+                            Debug.LogException(ex);
                             throw new CoreSystemException(CoreSystemExceptionFlag.Background,
                             "타이머 Kill 문을 실행하는 중 에러가 발생했습니다", activeTimers[i].CalledFrom, ex);
 #else
@@ -1148,6 +1172,7 @@ namespace Syadeu
                         catch (UnityException mainthread)
                         {
 #if UNITY_EDITOR
+                            Debug.LogException(mainthread);
                             throw new CoreSystemException(CoreSystemExceptionFlag.Background, 
                                 "유니티 API 가 사용되어 타이머 End 문에서 돌릴 수 없습니다", activeTimers[i].CalledFrom, mainthread);
 #else
@@ -1158,6 +1183,7 @@ namespace Syadeu
                         catch (Exception ex)
                         {
 #if UNITY_EDITOR
+                            Debug.LogException(ex);
                             throw new CoreSystemException(CoreSystemExceptionFlag.Background,
                             "타이머 End 문을 실행하는 중 에러가 발생했습니다", activeTimers[i].CalledFrom, ex);
 #else
@@ -1180,12 +1206,12 @@ namespace Syadeu
 #if UNITY_EDITOR
                 OnBackgroundTimerSampler.End();
 #endif
-                counter++;
-                if (counter % 1000 == 0)
-                {
-                    GC.Collect();
-                    counter = 0;
-                }
+                //counter++;
+                //if (counter % 1000 == 0)
+                //{
+                //    GC.Collect();
+                //    counter = 0;
+                //}
                 //ThreadAwaiter(10);
                 m_SimWatcher.Reset();
             }

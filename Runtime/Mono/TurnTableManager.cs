@@ -11,6 +11,8 @@ namespace Syadeu.Mono.TurnTable
         private readonly LinkedList<ITurnPlayer> m_TurnTable = new LinkedList<ITurnPlayer>();
         private LinkedListNode<ITurnPlayer> m_CurrentTurn = null;
 
+        public override bool DontDestroy => false;
+
         public static ITurnPlayer CurrentTurn => Instance.m_CurrentTurn.Value;
 
         public static void AddPlayer(ITurnPlayer player)

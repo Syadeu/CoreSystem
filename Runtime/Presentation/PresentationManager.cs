@@ -8,6 +8,7 @@
 #endif
 
 using Syadeu.Database;
+using Syadeu.Mono;
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
@@ -93,9 +94,11 @@ namespace Syadeu.Presentation
                 registerMethod.Invoke(ins, null);
             }
 
-            StartPresentation();
+            StartPresentation(m_DefaultGroupHash);
         }
-        public static void RegisterSystem(Type groupName, SceneReference dependenceScene, params Type[] systems)
+
+        #region Internals
+        internal static void RegisterSystem(Type groupName, SceneReference dependenceScene, params Type[] systems)
         {
             Hash groupHash = Hash.NewHash(groupName.Name);
             if (!Instance.m_PresentationGroups.TryGetValue(groupHash, out Group group))
@@ -145,10 +148,6 @@ namespace Syadeu.Presentation
                 Instance.m_RegisteredGroup.Add(systems[i], groupHash);
                 $"System ({groupName}): {systems[i].GetType().Name} Registered".ToLog();
             }
-        }
-        private void StartPresentation()
-        {
-            StartPresentation(m_DefaultGroupHash);
         }
         internal void StartPresentation(Hash groupHash)
         {
@@ -228,7 +227,9 @@ namespace Syadeu.Presentation
             });
             "request in".ToLog();
         }
+        #endregion
 
+        #region Presentation Group Method
         private static IEnumerator Presentation(Group group)
         {
             for (int i = 0; i < group.m_Initializers.Count; i++)
@@ -260,19 +261,33 @@ namespace Syadeu.Presentation
 
             yield return group.m_WaitUntilInitializeCompleted;
             $"Presentation started".ToLog();
+
+            PresentationResult result;
             while (true)
             {
                 for (int i = 0; i < group.m_BeforePresentations.Count; i++)
                 {
-                    group.m_BeforePresentations[i].BeforePresentation();
+                    result = group.m_BeforePresentations[i].BeforePresentation();
+                    if (result.m_Result != ResultFlag.Normal)
+                    {
+                        ConsoleWindow.Log(result.m_Message, result.m_Result);
+                    }
                 }
                 for (int i = 0; i < group.m_OnPresentations.Count; i++)
                 {
-                    group.m_OnPresentations[i].OnPresentation();
+                    result = group.m_OnPresentations[i].OnPresentation();
+                    if (result.m_Result != ResultFlag.Normal)
+                    {
+                        ConsoleWindow.Log(result.m_Message, result.m_Result);
+                    }
                 }
                 for (int i = 0; i < group.m_AfterPresentations.Count; i++)
                 {
-                    group.m_AfterPresentations[i].AfterPresentation();
+                    result = group.m_AfterPresentations[i].AfterPresentation();
+                    if (result.m_Result != ResultFlag.Normal)
+                    {
+                        ConsoleWindow.Log(result.m_Message, result.m_Result);
+                    }
                 }
 
                 yield return null;
@@ -310,24 +325,39 @@ namespace Syadeu.Presentation
             //"3".ToLog();
             yield return group.m_WaitUntilInitializeCompleted;
             //"4".ToLog();
+
+            PresentationResult result;
             while (true)
             {
                 for (int i = 0; i < group.m_BeforePresentations.Count; i++)
                 {
-                    group.m_BeforePresentations[i].BeforePresentationAsync();
+                    result = group.m_BeforePresentations[i].BeforePresentationAsync();
+                    if (result.m_Result != ResultFlag.Normal)
+                    {
+                        ConsoleWindow.Log(result.m_Message, result.m_Result);
+                    }
                 }
                 for (int i = 0; i < group.m_OnPresentations.Count; i++)
                 {
-                    group.m_OnPresentations[i].OnPresentationAsync();
+                    result = group.m_OnPresentations[i].OnPresentationAsync();
+                    if (result.m_Result != ResultFlag.Normal)
+                    {
+                        ConsoleWindow.Log(result.m_Message, result.m_Result);
+                    }
                 }
                 for (int i = 0; i < group.m_AfterPresentations.Count; i++)
                 {
-                    group.m_AfterPresentations[i].AfterPresentationAsync();
+                    result = group.m_AfterPresentations[i].AfterPresentationAsync();
+                    if (result.m_Result != ResultFlag.Normal)
+                    {
+                        ConsoleWindow.Log(result.m_Message, result.m_Result);
+                    }
                 }
 
                 //"running".ToLog();
                 yield return null;
             }
         }
+        #endregion
     }
 }
