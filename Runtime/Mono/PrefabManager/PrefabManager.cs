@@ -136,7 +136,7 @@ namespace Syadeu.Mono
                         //}
                         continue;
                     }
-                    if (CoreSystem.GetTransform(recycle.Instances[i]) == null)
+                    if (CoreSystem.IsNull(recycle.Instances[i]))
                     {
                         if (SyadeuSettings.Instance.m_PMErrorAutoFix)
                         {

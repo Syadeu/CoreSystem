@@ -1701,6 +1701,22 @@ namespace Syadeu
                 return tr;
             }
         }
+        public static bool IsNull(UnityEngine.Object obj)
+        {
+            if (IsMainthread())
+            {
+                return obj == null;
+            }
+            else
+            {
+                bool result = false;
+                AddForegroundJob(() =>
+                {
+                    result = obj == null;
+                }).Await();
+                return result;
+            }
+        }
 
         #endregion
 
