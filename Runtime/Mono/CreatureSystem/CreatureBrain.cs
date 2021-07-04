@@ -174,6 +174,17 @@ namespace Syadeu.Mono
             m_IsSpawnedFromManager = false;
             Initialized = false;
         }
+        protected virtual void OnDestroy()
+        {
+            if (CreatureManager.HasInstance)
+            {
+                var set = CreatureManager.GetCreatureSet(m_DataIdx);
+                set.m_SpawnRanges[m_SpawnPointIdx].m_InstanceCount--;
+                CreatureManager.Instance.Creatures.Remove(this);
+            }
+            PresentationSystem<RenderSystem>.GetSystem().RemoveObserver(this);
+        }
+
         /// <summary>
         /// 런타임 중 추가된 자식 CreatureEntity 를 초기화 하기 위한 함수입니다.
         /// </summary>
