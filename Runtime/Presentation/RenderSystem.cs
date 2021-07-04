@@ -17,12 +17,16 @@ using UnityEngine;
 
 namespace Syadeu.Presentation
 {
+    [RequireGlobalConfig("General")]
     public sealed class RenderSystem : PresentationSystemEntity<RenderSystem>
     {
         private ObClass<Camera> m_Camera;
         private Matrix4x4 m_Matrix4x4;
 
         private readonly List<ObserverObject> m_ObserverList = new List<ObserverObject>();
+
+        [ConfigValue(Header = "Screen", Name = "ResolutionX")] private int m_ResolutionX;
+        [ConfigValue(Header = "Screen", Name = "ResolutionY")] private int m_ResolutionY;
 
         private class ObserverObject
         {
@@ -41,6 +45,7 @@ namespace Syadeu.Presentation
             m_Camera = new ObClass<Camera>(ObValueDetection.Changed);
             m_Camera.OnValueChange += (from, to) =>
             {
+                if (to == null) return;
                 m_Matrix4x4 = GetCameraMatrix4X4(to);
             };
 
@@ -51,12 +56,15 @@ namespace Syadeu.Presentation
             if (m_Camera.Value == null)
             {
                 m_Camera.Value = Camera.main;
+                if (Camera == null) return PresentationResult.Warning("Cam not found");
             }
 
             return base.BeforePresentation();
         }
         public override PresentationResult OnPresentation()
         {
+            if (Camera == null) return PresentationResult.Warning("Cam not found");
+
             for (int i = 0; i < m_ObserverList.Count; i++)
             {
                 if (m_ObserverList[i].m_Object.transform == null)

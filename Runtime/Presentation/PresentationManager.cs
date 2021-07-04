@@ -193,7 +193,9 @@ namespace Syadeu.Presentation
             $"{group.m_Name.Name} group is stopped".ToLog();
         }
 
-        internal static void RegisterRequestSystem<T, TA>(Action<TA> setter) where TA : class, IPresentationSystem
+        internal static void RegisterRequestSystem<T, TA>(Action<TA> setter) 
+            where T : class
+            where TA : class, IPresentationSystem
         {
             if (!Instance.m_RegisteredGroup.TryGetValue(typeof(T), out Hash groupHash) ||
                 !Instance.m_PresentationGroups.TryGetValue(groupHash, out PresentationGroup group))

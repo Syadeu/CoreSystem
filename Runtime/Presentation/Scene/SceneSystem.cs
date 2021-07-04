@@ -40,6 +40,7 @@ namespace Syadeu.Presentation
 
         private CanvasGroup m_BlackScreen = null;
         private bool m_LoadingEnabled = false;
+        private Timer m_SceneActiveTimer = new Timer();
 
         public override bool EnableBeforePresentation => true;
         public override bool EnableOnPresentation => false;
@@ -65,6 +66,10 @@ namespace Syadeu.Presentation
                 return true;
             }
         }
+        /// <summary>
+        /// 현재 씬을 로딩 중인가요?
+        /// </summary>
+        public bool IsSceneLoading => m_LoadingEnabled;
 
         public override PresentationResult OnInitialize()
         {
@@ -135,42 +140,6 @@ namespace Syadeu.Presentation
                 m_LoadingEnabled = true;
             }
         }
-
-        Timer m_SceneActiveTimer = new Timer();
-        //public override PresentationResult OnStartPresentation()
-        //{
-        //    CoreSystem.StartUnityUpdate(this, SceneStarter());
-        //    return base.OnStartPresentation();
-
-        //    IEnumerator SceneStarter()
-        //    {
-        //        "in".ToLog();
-        //        while (!m_AsyncOperation.isDone)
-        //        {
-        //            if (m_AsyncOperation.progress >= .9f)
-        //            {
-        //                m_AsyncOperation.allowSceneActivation = true;
-        //            }
-
-        //            yield return m_AsyncOperation;
-        //        }
-
-        //        yield return null;
-
-
-
-        //        yield return m_BlackScreen.Lerp(0, Time.fixedDeltaTime * .1f);
-        //        //while (!Mathf.Approximately(m_BlackScreen.alpha, 0))
-        //        //{
-        //        //    m_BlackScreen.alpha = Mathf.Lerp(m_BlackScreen.alpha, 0, Time.deltaTime);
-        //        //    if (m_BlackScreen.alpha <= 0.99f) m_BlackScreen.alpha = 0
-        //        //    yield return null;
-        //        //}
-        //        "done".ToLog();
-
-        //        PresentationSystemGroup<DefaultPresentationGroup>.Stop();
-        //    }
-        //}
         public override PresentationResult BeforePresentation()
         {
             if (m_AsyncOperation != null)
@@ -185,6 +154,11 @@ namespace Syadeu.Presentation
                 {
                     if (m_LoadingEnabled && m_AsyncOperation.progress >= .9f)
                     {
+                        if (m_SceneActiveTimer.IsTimerActive())
+                        {
+                            throw new Exception();
+                        }
+
                         AsyncOperation boxedOper = m_AsyncOperation;
                         m_SceneActiveTimer
                             .SetTargetTime(5)
@@ -196,6 +170,7 @@ namespace Syadeu.Presentation
                             })
                             .Start();
                         m_AsyncOperation = null;
+                        "timer in".ToLog();
                     }
                 }
                 "123123123".ToLog();
@@ -204,22 +179,44 @@ namespace Syadeu.Presentation
             return base.BeforePresentation();
         }
 
-        //public override PresentationResult OnPresentation()
-        //{
-        //    //"main thread".ToLog();
-        //    return base.OnPresentation();
-        //}
-        //public override PresentationResult OnPresentationAsync()
-        //{
-        //    //"background thread".ToLog();
-        //    return base.OnPresentationAsync();
-        //}
-
-        public void LoadScene(int index)
+        public void LoadStartScene()
         {
+            if (IsSceneLoading)
+            {
+                "cant load while in loading".ToLog();
+                return;
+            }
+
             $"{m_CurrentScene.name} : {m_CurrentScene.path}".ToLog();
             m_BlackScreen.Lerp(1, Time.fixedDeltaTime * .1f);
             m_LoadingEnabled = true;
+
+            if (ManagerEntity.InstanceGroupTr != null)
+            {
+                UnityEngine.Object.Destroy(ManagerEntity.InstanceGroupTr.gameObject);
+            }
+
+            InternalUnloadScene(m_CurrentScene, (oper) =>
+            {
+                m_AsyncOperation = InternalLoadScene(SceneList.Instance.StartScene);
+            });
+        }
+        public void LoadScene(int index)
+        {
+            if (IsSceneLoading)
+            {
+                "cant load while in loading".ToLog();
+                return;
+            }
+
+            $"{m_CurrentScene.name} : {m_CurrentScene.path}".ToLog();
+            m_BlackScreen.Lerp(1, Time.fixedDeltaTime * .1f);
+            m_LoadingEnabled = true;
+
+            if (ManagerEntity.InstanceGroupTr != null)
+            {
+                UnityEngine.Object.Destroy(ManagerEntity.InstanceGroupTr.gameObject);
+            }
 
             InternalUnloadScene(m_CurrentScene, (oper) =>
             {
