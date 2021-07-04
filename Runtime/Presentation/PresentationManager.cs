@@ -23,7 +23,7 @@ namespace Syadeu.Presentation
     {
         const string instance = "Instance";
 
-        internal class PresentationGroup
+        internal class Group
         {
             public Type m_Name;
             public Hash m_Hash;
@@ -50,7 +50,7 @@ namespace Syadeu.Presentation
             public bool m_BackgroundInitDone = false;
             public WaitUntil m_WaitUntilInitializeCompleted;
 
-            public PresentationGroup(Type name, Hash hash)
+            public Group(Type name, Hash hash)
             {
                 m_Name = name;
                 m_Hash = hash;
@@ -63,8 +63,9 @@ namespace Syadeu.Presentation
         }
         private Hash m_DefaultGroupHash = Hash.NewHash(typeof(DefaultPresentationGroup).Name);
 
-        internal readonly Dictionary<Hash, PresentationGroup> m_PresentationGroups = new Dictionary<Hash, PresentationGroup>();
+        internal readonly Dictionary<Hash, Group> m_PresentationGroups = new Dictionary<Hash, Group>();
         internal readonly Dictionary<Type, Hash> m_RegisteredGroup = new Dictionary<Type, Hash>();
+        internal readonly Dictionary<string, List<Hash>> m_DependenceSceneList = new Dictionary<string, List<Hash>>();
 
         public override void OnInitialize()
         {
@@ -94,14 +95,12 @@ namespace Syadeu.Presentation
 
             StartPresentation();
         }
-
-        //public static void RegisterSystem<T>(params T[] systems) where T : IPresentationSystem => RegisterSystem("DefaultSystemGroup", systems);
-        public static void RegisterSystem(Type groupName, params Type[] systems)
+        public static void RegisterSystem(Type groupName, SceneReference dependenceScene, params Type[] systems)
         {
             Hash groupHash = Hash.NewHash(groupName.Name);
-            if (!Instance.m_PresentationGroups.TryGetValue(groupHash, out PresentationGroup group))
+            if (!Instance.m_PresentationGroups.TryGetValue(groupHash, out Group group))
             {
-                group = new PresentationGroup(groupName, groupHash);
+                group = new Group(groupName, groupHash);
                 Instance.m_PresentationGroups.Add(groupHash, group);
 
                 Type t = typeof(PresentationSystemGroup<>).MakeGenericType(groupName);
@@ -111,6 +110,18 @@ namespace Syadeu.Presentation
                 $"{insProperty.Name}".ToLog();
                 Assert.IsNotNull(insProperty.GetValue(null, null));
                 group.m_SystemGroup = (IPresentationSystemGroup)insProperty.GetValue(null, null);
+            }
+
+            if (dependenceScene != null)
+            {
+                if (!Instance.m_DependenceSceneList.TryGetValue(dependenceScene, out List<Hash> list))
+                {
+                    list = new List<Hash>();
+                    Instance.m_DependenceSceneList.Add(dependenceScene, list);
+                }
+
+                if (list.Contains(groupHash)) throw new Exception();
+                list.Add(groupHash);
             }
 
             for (int i = 0; i < systems.Length; i++)
@@ -141,7 +152,7 @@ namespace Syadeu.Presentation
         }
         internal void StartPresentation(Hash groupHash)
         {
-            PresentationGroup group = m_PresentationGroups[groupHash];
+            Group group = m_PresentationGroups[groupHash];
             if (group.m_IsStarted) throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
                     $"{group.m_Name.Name} 은 이미 시작된 시스템 그룹입니다.");
 
@@ -175,7 +186,7 @@ namespace Syadeu.Presentation
         }
         internal void StopPresentation(Hash groupHash)
         {
-            PresentationGroup group = m_PresentationGroups[groupHash];
+            Group group = m_PresentationGroups[groupHash];
             if (!group.m_IsStarted) throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
                     $"{group.m_Name.Name} 은 이미 정지된 시스템 그룹입니다.");
 
@@ -194,11 +205,11 @@ namespace Syadeu.Presentation
         }
 
         internal static void RegisterRequestSystem<T, TA>(Action<TA> setter) 
-            where T : class
+            where T : class, IPresentationSystem
             where TA : class, IPresentationSystem
         {
             if (!Instance.m_RegisteredGroup.TryGetValue(typeof(T), out Hash groupHash) ||
-                !Instance.m_PresentationGroups.TryGetValue(groupHash, out PresentationGroup group))
+                !Instance.m_PresentationGroups.TryGetValue(groupHash, out Group group))
             {
                 throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
                     $"시스템 {typeof(T).Name} 은 등록되지 않았습니다.");
@@ -218,7 +229,7 @@ namespace Syadeu.Presentation
             "request in".ToLog();
         }
 
-        private static IEnumerator Presentation(PresentationGroup group)
+        private static IEnumerator Presentation(Group group)
         {
             for (int i = 0; i < group.m_Initializers.Count; i++)
             {
@@ -267,7 +278,7 @@ namespace Syadeu.Presentation
                 yield return null;
             }
         }
-        private static IEnumerator PresentationAsync(PresentationGroup group)
+        private static IEnumerator PresentationAsync(Group group)
         {
             for (int i = 0; i < group.m_Initializers.Count; i++)
             {

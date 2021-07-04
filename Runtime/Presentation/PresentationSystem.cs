@@ -23,7 +23,7 @@ namespace Syadeu.Presentation
         {
             get
             {
-                if (!s_Instance.IsValid())
+                if (!((IValidation)s_Instance).IsValid())
                 {
                     if (!PresentationManager.Instance.m_RegisteredGroup.TryGetValue(typeof(T), out Hash hash))
                     {
@@ -54,7 +54,7 @@ namespace Syadeu.Presentation
         {
             get
             {
-                if (!Instance.IsValid()) throw new Exception();
+                if (!IsValid()) throw new Exception();
                 return PresentationManager.Instance.m_PresentationGroups[Instance.m_GroupHash].m_SystemGroup;
             }
         }
@@ -68,10 +68,11 @@ namespace Syadeu.Presentation
             m_Index = idx;
         }
 
-        public bool IsValid() => !m_GroupHash.Equals(Hash.Empty) && m_Index >= 0;
+        bool IValidation.IsValid() => !m_GroupHash.Equals(Hash.Empty) && m_Index >= 0;
+        public static bool IsValid() => ((IValidation)Instance).IsValid();
         public static T GetSystem()
         {
-            Assert.IsTrue(Instance.IsValid(), $"{typeof(T).Name} System is not valid");
+            Assert.IsTrue(IsValid(), $"{typeof(T).Name} System is not valid");
             try
             {
                 return (T)PresentationManager.Instance.m_PresentationGroups[Instance.m_GroupHash].m_Systems[Instance.m_Index];

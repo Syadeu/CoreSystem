@@ -11,6 +11,7 @@ using Syadeu.Database;
 
 using System.Collections;
 using System.IO;
+using System.Collections.Generic;
 
 #if UNITY_EDITOR
 using UnityEditor.VersionControl;
@@ -73,16 +74,15 @@ namespace Syadeu.Presentation
 
         public override PresentationResult OnInitialize()
         {
-            SetupMasterScene();
-
-            SetupLoadingScene();
-
             if (m_DebugMode)
             {
                 //SceneManager.UnloadSceneAsync(m_LoadingScene);
             }
             else
             {
+                SetupMasterScene();
+                SetupLoadingScene();
+
                 if (string.IsNullOrEmpty(SceneList.Instance.StartScene))
                 {
                     throw new Exception();
@@ -92,6 +92,7 @@ namespace Syadeu.Presentation
 
             return base.OnInitialize();
 
+            #region Setups
             void SetupMasterScene()
             {
                 Scene temp = SceneManager.GetActiveScene();
@@ -139,6 +140,7 @@ namespace Syadeu.Presentation
                 SceneManager.MergeScenes(m_LoadingScene, m_MasterScene);
                 m_LoadingEnabled = true;
             }
+            #endregion
         }
         public override PresentationResult BeforePresentation()
         {
@@ -158,7 +160,7 @@ namespace Syadeu.Presentation
                         {
                             throw new Exception();
                         }
-
+                        // 이부분이 아무래도 무한 씬로딩 의심가는데 확인이 안됨
                         AsyncOperation boxedOper = m_AsyncOperation;
                         m_SceneActiveTimer
                             .SetTargetTime(5)
@@ -223,6 +225,8 @@ namespace Syadeu.Presentation
                 m_AsyncOperation = InternalLoadScene(SceneList.Instance.Scenes[index]);
             });
         }
+
+        #region Privates
         private AsyncOperation InternalLoadScene(string path,
 #if UNITY_ADDRESSABLES
             Action<AsyncOperationHandle<SceneInstance>>
@@ -247,6 +251,7 @@ namespace Syadeu.Presentation
 
                     onCompleted?.Invoke(other);
 
+                    StartSceneDependences(path);
                     $"{m_CurrentScene.name} : {m_CurrentScene.path}".ToLog();
                     "completed".ToLog();
                 };
@@ -263,6 +268,7 @@ namespace Syadeu.Presentation
 #endif
             onCompleted = null)
         {
+            string boxedScenePath = scene.path;
             var oper =
 #if UNITY_ADDRESSABLES
                 Addressables.UnloadSceneAsync(scene);
@@ -271,7 +277,12 @@ namespace Syadeu.Presentation
                 SceneManager.UnloadSceneAsync(scene);
             oper.completed
 #endif
-                += (other) => onCompleted?.Invoke(other);
+                += (other) =>
+                {
+                    onCompleted?.Invoke(other);
+
+                    StopSceneDependences(boxedScenePath);
+                };
         }
 
 
@@ -281,5 +292,36 @@ namespace Syadeu.Presentation
             SceneManager.MoveGameObjectToScene(obj, scene);
             return obj;
         }
+        private static void StartSceneDependences(string key)
+        {
+            if (!PresentationManager.Instance.m_DependenceSceneList.TryGetValue(key, out List<Hash> groupHashs))
+            {
+                $"no key({key}) found for load".ToLog();
+                return;
+            }
+
+            for (int i = 0; i < groupHashs.Count; i++)
+            {
+                if (!PresentationManager.Instance.m_PresentationGroups.TryGetValue(groupHashs[i], out var group)) continue;
+
+                group.m_SystemGroup.Start();
+            }
+        }
+        private static void StopSceneDependences(string key)
+        {
+            if (!PresentationManager.Instance.m_DependenceSceneList.TryGetValue(key, out List<Hash> groupHashs))
+            {
+                $"no key({key}) found for unload".ToLog();
+                return;
+            }
+
+            for (int i = 0; i < groupHashs.Count; i++)
+            {
+                if (!PresentationManager.Instance.m_PresentationGroups.TryGetValue(groupHashs[i], out var group)) continue;
+
+                group.m_SystemGroup.Stop();
+            }
+        }
+        #endregion
     }
 }

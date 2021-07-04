@@ -16,7 +16,7 @@ namespace Syadeu.Presentation
     /// <seealso cref="PresentationManager"/>에서 수행할 시스템의 Entity 클래스입니다.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public abstract class PresentationSystemEntity<T> : IPresentationSystem where T : class
+    public abstract class PresentationSystemEntity<T> : IPresentationSystem where T : class, IPresentationSystem
     {
         public abstract bool EnableBeforePresentation { get; }
         public abstract bool EnableOnPresentation { get; }
@@ -33,10 +33,10 @@ namespace Syadeu.Presentation
             Dispose();
         }
 
-        public virtual PresentationResult OnStartPresentation() { return PresentationResult.Normal; }
-
         public virtual PresentationResult OnInitialize() { return PresentationResult.Normal; }
         public virtual PresentationResult OnInitializeAsync() { return PresentationResult.Normal; }
+
+        public virtual PresentationResult OnStartPresentation() { return PresentationResult.Normal; }
 
         public virtual PresentationResult BeforePresentation() { return PresentationResult.Normal; }
         public virtual PresentationResult BeforePresentationAsync() { return PresentationResult.Normal; }
