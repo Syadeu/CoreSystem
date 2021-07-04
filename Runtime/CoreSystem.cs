@@ -948,7 +948,7 @@ namespace Syadeu
                         }
                     }
 #if UNITY_EDITOR
-                    //catch (ThreadAbortException) { }
+                    catch (ThreadAbortException) { }
 #endif
                     catch (UnityException mainthread)
                     {
