@@ -94,6 +94,12 @@ namespace Syadeu.Mono.Creature
                 int tries = 0;
                 while (count < targetCount)
                 {
+                    if (tries > targetCount * 2)
+                    {
+                        $"CreatureManager: 크리쳐 {PrefabList.Instance.ObjectSettings[GetPrivateSet().m_PrefabIdx].m_Name} 을 {targetCount} 마리 요청했지만, {count} 마리만 생성되었습니다.\n해당 지역이 너무 좁거나, 마릿수가 너무 많은 것 같습니다. 혹은 그리드위에 생성요청했는데 생성 직후 요청했나요?".ToLog();
+                        break;
+                    }
+
                     int rndInt = UnityEngine.Random.Range(0, range.Length);
 #if CORESYSTEM_UNSAFE
                     unsafe
@@ -113,11 +119,6 @@ namespace Syadeu.Mono.Creature
                     }
 
                     tries++;
-                    if (tries > targetCount * 2)
-                    {
-                        $"CreatureManager: 크리쳐 {PrefabList.Instance.ObjectSettings[GetPrivateSet().m_PrefabIdx].m_Name} 을 {targetCount} 마리 요청했지만, {count} 마리만 생성되었습니다.\n해당 지역이 너무 좁거나, 마릿수가 너무 많은 것 같습니다. 혹은 그리드위에 생성요청했는데 생성 직후 요청했나요?".ToLog();
-                        break;
-                    }
                 }
 
                 m_SpawnRanges[i].m_InstanceCount += count;
