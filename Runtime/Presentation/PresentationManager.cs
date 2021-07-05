@@ -200,6 +200,8 @@ namespace Syadeu.Presentation
             group.m_OnPresentations.Clear();
             group.m_AfterPresentations.Clear();
 
+            group.m_IsStarted = false;
+
             $"{group.m_Name.Name} group is stopped".ToLog();
         }
 

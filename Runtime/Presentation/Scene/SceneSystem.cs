@@ -40,8 +40,12 @@ namespace Syadeu.Presentation
         [ConfigValue(Header = "Screen", Name = "ResolutionY")] private int m_ResolutionY;
 
         private CanvasGroup m_BlackScreen = null;
+        private Camera m_DefaultCamera = null;
         private bool m_LoadingEnabled = false;
         private Timer m_SceneActiveTimer = new Timer();
+
+        public event Action OnLoadingEnter;
+        public event Action OnLoadingExit;
 
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;
@@ -50,7 +54,7 @@ namespace Syadeu.Presentation
         {
             get
             {
-                if (m_BlackScreen == null) return false;
+                if (m_BlackScreen == null || m_DefaultCamera == null) return false;
                 if (m_AsyncOperation != null && !m_AsyncOperation.isDone)
                 {
                     return false;
@@ -101,16 +105,22 @@ namespace Syadeu.Presentation
                 {
                     m_LoadingScene = SceneManager.CreateScene("Loading Scene");
 
-                    GameObject obj = CreateObject(m_LoadingScene, "Test", typeof(Canvas), typeof(CanvasScaler));
+                    //GameObject camObj = CreateObject(m_LoadingScene, "Default Camera", typeof(Camera));
+                    //m_DefaultCamera = camObj.GetComponent<Camera>();
+                    //m_DefaultCamera.cameraType = CameraType.Game;
+                    //m_DefaultCamera.transform.position = Vector3.zero;
+
+                    GameObject obj = CreateObject(m_LoadingScene, "Default Canvas", typeof(Canvas), typeof(CanvasScaler));
 
                     Canvas canvas = obj.GetComponent<Canvas>();
                     canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                    canvas.sortingOrder = 100;
 
                     CanvasScaler scaler = obj.GetComponent<CanvasScaler>();
                     scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
                     scaler.referenceResolution = new Vector2(m_ResolutionX, m_ResolutionY);
 
-                    Image image = new GameObject("img").AddComponent<Image>();
+                    Image image = new GameObject("Black Screen").AddComponent<Image>();
                     image.transform.SetParent(obj.transform);
                     image.rectTransform.sizeDelta = scaler.referenceResolution;
                     image.transform.localPosition = Vector3.zero;
@@ -118,6 +128,9 @@ namespace Syadeu.Presentation
 
                     m_BlackScreen = image.gameObject.AddComponent<CanvasGroup>();
                     m_BlackScreen.alpha = 1;
+
+                    OnLoadingEnter += () => m_BlackScreen.Lerp(1, Time.deltaTime);
+                    OnLoadingExit += () => m_BlackScreen.Lerp(0, Time.deltaTime);
                 }
                 else
                 {
@@ -150,12 +163,12 @@ namespace Syadeu.Presentation
             {
                 InternalUnloadScene(m_CurrentScene, (oper) =>
                 {
-                    m_AsyncOperation = InternalLoadScene(SceneList.Instance.StartScene, startDelay);
+                    InternalLoadScene(SceneList.Instance.StartScene, startDelay);
                 });
             }
             else
             {
-                m_AsyncOperation = InternalLoadScene(SceneList.Instance.StartScene, startDelay);
+                InternalLoadScene(SceneList.Instance.StartScene, startDelay);
             }
         }
         /// <summary>
@@ -175,17 +188,17 @@ namespace Syadeu.Presentation
             {
                 InternalUnloadScene(m_CurrentScene, (oper) =>
                 {
-                    m_AsyncOperation = InternalLoadScene(SceneList.Instance.Scenes[index], startDelay);
+                    InternalLoadScene(SceneList.Instance.Scenes[index], startDelay);
                 });
             }
             else
             {
-                m_AsyncOperation = InternalLoadScene(SceneList.Instance.Scenes[index], startDelay);
+                InternalLoadScene(SceneList.Instance.Scenes[index], startDelay);
             }
         }
 
         #region Privates
-        private AsyncOperation InternalLoadScene(string path, float startDelay,
+        private void InternalLoadScene(string path, float startDelay,
 #if UNITY_ADDRESSABLES
             Action<AsyncOperationHandle<SceneInstance>>
 #else
@@ -207,16 +220,18 @@ namespace Syadeu.Presentation
             {
                 UnityEngine.Object.Destroy(ManagerEntity.InstanceGroupTr.gameObject);
             }
-            m_BlackScreen.Lerp(1, Time.fixedDeltaTime * .1f);
+            OnLoadingEnter?.Invoke();
 
-            var oper =
+            CoreSystem.WaitInvoke(2, () =>
+            {
+                m_AsyncOperation =
 #if UNITY_ADDRESSABLES
                 Addressables.LoadSceneAsync(path, LoadSceneMode.Additive, false);
             oper.Completed
 #else
                 SceneManager.LoadSceneAsync(path, LoadSceneMode.Additive);
-            //oper.allowSceneActivation = false;
-            oper.completed
+                //oper.allowSceneActivation = false;
+                m_AsyncOperation.completed
 #endif
                 += (other) =>
                 {
@@ -232,7 +247,7 @@ namespace Syadeu.Presentation
                         .OnTimerEnd(() =>
                         {
                             m_AsyncOperation = null;
-                            m_BlackScreen.Lerp(0, Time.fixedDeltaTime * .1f);
+                            OnLoadingExit?.Invoke();
                             m_LoadingEnabled = false;
                             "done".ToLog();
                         })
@@ -240,8 +255,7 @@ namespace Syadeu.Presentation
                     $"{m_CurrentScene.name} : {m_CurrentScene.path}".ToLog();
                     "completed".ToLog();
                 };
-
-            return oper;
+            });
         }
         private void InternalUnloadScene(
 #if UNITY_ADDRESSABLES

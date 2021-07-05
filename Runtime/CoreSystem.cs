@@ -1720,6 +1720,14 @@ namespace Syadeu
                 return result;
             }
         }
+        public static void WaitInvoke(float seconds, Action action)
+        {
+            new BackgroundJob(() =>
+            {
+                ThreadAwaiter((int)seconds * 1000);
+                AddForegroundJob(action);
+            }).Start();
+        }
 
         #endregion
 
