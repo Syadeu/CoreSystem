@@ -36,6 +36,8 @@ namespace Syadeu.Mono
 
         private void Awake()
         {
+            throw new Exception();
+
             Transform = transform;
             Renderers = Transform.GetComponentsInChildren<Renderer>();
 

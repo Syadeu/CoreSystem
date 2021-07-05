@@ -41,6 +41,7 @@ namespace Syadeu.Presentation
 
         private CanvasGroup m_BlackScreen = null;
         private Camera m_DefaultCamera = null;
+
         private bool m_LoadingEnabled = false;
         private Timer m_SceneActiveTimer = new Timer();
 
@@ -55,6 +56,7 @@ namespace Syadeu.Presentation
             get
             {
                 if (m_BlackScreen == null || m_DefaultCamera == null) return false;
+                if (!m_LoadingScene.IsValid() || !m_LoadingScene.isLoaded) return false;
                 if (m_AsyncOperation != null && !m_AsyncOperation.isDone)
                 {
                     return false;
@@ -134,17 +136,19 @@ namespace Syadeu.Presentation
                 }
                 else
                 {
-                    m_LoadingScene = SceneManager.GetSceneByPath(SceneList.Instance.CustomLoadingScene.ScenePath);
-                    SceneManager.LoadScene(SceneList.Instance.CustomLoadingScene, new LoadSceneParameters
+                    m_LoadingScene = SceneManager.LoadScene(SceneList.Instance.CustomLoadingScene, new LoadSceneParameters
                     {
                         loadSceneMode = LoadSceneMode.Additive,
                         localPhysicsMode = LocalPhysicsMode.None
                     });
                 }
-
-                SceneManager.MergeScenes(m_LoadingScene, m_MasterScene);
             }
             #endregion
+        }
+        public override PresentationResult OnStartPresentation()
+        {
+            SceneManager.MergeScenes(m_LoadingScene, m_MasterScene);
+            return base.OnStartPresentation();
         }
 
         /// <summary>
@@ -159,14 +163,14 @@ namespace Syadeu.Presentation
                 return;
             }
 
-            if (m_CurrentScene.IsValid())
-            {
-                InternalUnloadScene(m_CurrentScene, (oper) =>
-                {
-                    InternalLoadScene(SceneList.Instance.StartScene, startDelay);
-                });
-            }
-            else
+            //if (m_CurrentScene.IsValid())
+            //{
+            //    InternalUnloadScene(m_CurrentScene, (oper) =>
+            //    {
+            //        InternalLoadScene(SceneList.Instance.StartScene, startDelay);
+            //    });
+            //}
+            //else
             {
                 InternalLoadScene(SceneList.Instance.StartScene, startDelay);
             }
@@ -184,17 +188,34 @@ namespace Syadeu.Presentation
                 return;
             }
 
-            if (m_CurrentScene.IsValid())
-            {
-                InternalUnloadScene(m_CurrentScene, (oper) =>
-                {
-                    InternalLoadScene(SceneList.Instance.Scenes[index], startDelay);
-                });
-            }
-            else
+            //if (m_CurrentScene.IsValid())
+            //{
+            //    InternalUnloadScene(m_CurrentScene, (oper) =>
+            //    {
+            //        InternalLoadScene(SceneList.Instance.Scenes[index], startDelay);
+            //    });
+            //}
+            //else
             {
                 InternalLoadScene(SceneList.Instance.Scenes[index], startDelay);
             }
+        }
+
+        internal void SetLoadingScene(Camera cam, Canvas canvas, CanvasGroup cg, Image backgroundImg)
+        {
+            CanvasScaler scaler = canvas.GetComponent<CanvasScaler>();
+            if (scaler == null) scaler = canvas.gameObject.AddComponent<CanvasScaler>();
+            //scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            //scaler.referenceResolution = new Vector2(m_ResolutionX, m_ResolutionY);
+
+            //backgroundImg.rectTransform.sizeDelta = scaler.referenceResolution;
+            //backgroundImg.transform.localPosition = Vector3.zero;
+
+            m_DefaultCamera = cam;
+            m_BlackScreen = cg;
+
+            OnLoadingEnter += () => m_BlackScreen.Lerp(1, Time.deltaTime * 2);
+            OnLoadingExit += () => m_BlackScreen.Lerp(0, Time.deltaTime * 2);
         }
 
         #region Privates
@@ -208,7 +229,7 @@ namespace Syadeu.Presentation
         {
             if (m_DebugMode) throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
                 "디버그 모드일때에는 씬 전환을 할 수 없습니다. DebugMode = False 로 설정한 후, MasterScene 에서 시작해주세요.");
-            if (IsSceneLoading || m_SceneActiveTimer.IsTimerActive())
+            if (IsSceneLoading || m_SceneActiveTimer.IsTimerActive() || m_AsyncOperation != null)
             {
                 "cant load while in loading".ToLogError();
                 throw new Exception();
@@ -224,6 +245,8 @@ namespace Syadeu.Presentation
 
             CoreSystem.WaitInvoke(2, () =>
             {
+                if (m_CurrentScene.IsValid()) InternalUnloadScene(m_CurrentScene);
+
                 m_AsyncOperation =
 #if UNITY_ADDRESSABLES
                 Addressables.LoadSceneAsync(path, LoadSceneMode.Additive, false);

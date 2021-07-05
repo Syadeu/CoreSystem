@@ -47,21 +47,6 @@ namespace SyadeuEditor
             EditorApplication.ExecuteMenuItem("Window/General/Inspector");
         }
 
-        public static ItemDesigner m_ItemDesignerWindow;
-        [MenuItem("CoreSystem/Designer/Item", priority = 100)]
-        public static void ItemDesigner()
-        {
-            if (m_ItemDesignerWindow == null)
-            {
-                m_ItemDesignerWindow = GetWindow<ItemDesigner>();
-                m_ItemDesignerWindow.titleContent = new GUIContent("Creature Window");
-                //m_ItemDesignerWindow.minSize = new Vector2(620, m_CreatureWindow.minSize.y);
-                //m_ItemDesignerWindow.maxSize = new Vector2(620, m_CreatureWindow.maxSize.y);
-            }
-
-            m_ItemDesignerWindow.Show();
-        }
-
         public static CreatureSystemWindow m_CreatureWindow;
         [MenuItem("CoreSystem/Creature/Window", priority = 200)]
         public static void CreatureWindow()
