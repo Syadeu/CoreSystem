@@ -299,7 +299,10 @@ namespace Syadeu
         {
             if (GUILayout.Button("To intro"))
             {
-                PresentationSystem<SceneSystem>.GetSystem().LoadStartScene(5);
+                AddBackgroundJob(() =>
+                {
+                    PresentationSystem<SceneSystem>.GetSystem().LoadStartScene(5);
+                });
             }
             if (GUILayout.Button("To Game"))
             {

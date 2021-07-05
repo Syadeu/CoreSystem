@@ -96,13 +96,18 @@ namespace Syadeu.Presentation
             #region Setups
             void SetupMasterScene()
             {
+                if (string.IsNullOrEmpty(SceneList.Instance.MasterScene)) throw new Exception("master scene is empty");
+
                 Scene temp = SceneManager.GetActiveScene();
                 string masterSceneName = Path.GetFileNameWithoutExtension(SceneList.Instance.MasterScene.ScenePath);
                 if (temp.name.Equals(masterSceneName))
                 {
                     m_MasterScene = temp;
                 }
-                else throw new Exception("not master scene");
+                else
+                {
+                    throw new Exception("not master scene");
+                }
             }
             void SetupLoadingScene()
             {
@@ -183,7 +188,12 @@ namespace Syadeu.Presentation
 
         public void LoadStartScene(int startDelay)
         {
-            $"{m_CurrentScene.name} : {m_CurrentScene.path}".ToLog();
+            if (!CoreSystem.IsThisMainthread())
+            {
+                CoreSystem.AddForegroundJob(() => LoadStartScene(startDelay)).Await();
+                return;
+            }
+
             if (m_CurrentScene.IsValid())
             {
                 InternalUnloadScene(m_CurrentScene, (oper) =>
@@ -198,7 +208,12 @@ namespace Syadeu.Presentation
         }
         public void LoadScene(int index, int startDelay)
         {
-            $"{m_CurrentScene.name} : {m_CurrentScene.path}".ToLog();
+            if (!CoreSystem.IsThisMainthread())
+            {
+                CoreSystem.AddForegroundJob(() => LoadScene(index, startDelay)).Await();
+                return;
+            }
+
             if (m_CurrentScene.IsValid())
             {
                 InternalUnloadScene(m_CurrentScene, (oper) =>
@@ -221,12 +236,15 @@ namespace Syadeu.Presentation
 #endif
             onCompleted = null)
         {
+            if (m_DebugMode) throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
+                "디버그 모드일때에는 씬 전환을 할 수 없습니다. DebugMode = False 로 설정한 후, MasterScene 에서 시작해주세요.");
             if (IsSceneLoading || m_SceneActiveTimer.IsTimerActive())
             {
                 "cant load while in loading".ToLogError();
                 throw new Exception();
             }
 
+            $"Scene change start from ({m_CurrentScene.name}) to ({Path.GetFileNameWithoutExtension(path)})".ToLog();
             m_LoadingEnabled = true;
             if (ManagerEntity.InstanceGroupTr != null)
             {
