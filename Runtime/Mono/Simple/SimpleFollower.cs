@@ -82,5 +82,7 @@ namespace Syadeu.Mono
         }
         public void SetOffset(Vector3 offset) => m_Offset = offset;
         public void SetSpeed(float speed) => m_Speed = speed;
+
+        public Transform GetTarget() => m_Target;
     }
 }

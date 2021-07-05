@@ -2,6 +2,7 @@ using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Syadeu.Mono;
 
 #if CORESYSTEM_UNITYAUDIO
 
@@ -10,10 +11,10 @@ using Syadeu.Mono.Audio;
 namespace SyadeuEditor
 {
     [CustomEditor(typeof(UnityAudioSource))]
-    public sealed class UnityAudioSourceEditor : EditorEntity
+    public sealed class UnityAudioSourceEditor : EditorEntity<UnityAudioSource>
     {
-        private UnityAudioSource m_Scr;
         private AudioSource m_AudioSource;
+        private SerializedProperty m_SimpleFollower;
         private SerializedProperty m_SelectedPlayType;
 
         private bool m_ShowOriginalContents = false;
@@ -22,10 +23,18 @@ namespace SyadeuEditor
 
         private void OnEnable()
         {
-            m_Scr = target as UnityAudioSource;
+            m_AudioSource = Asset.GetComponentInChildren<AudioSource>();
+            if (m_AudioSource == null)
+            {
+                GameObject folder = new GameObject("AudioSource");
+                folder.transform.SetParent(Asset.transform);
+                folder.transform.localPosition = Vector3.zero;
 
-            m_AudioSource = m_Scr.GetComponent<AudioSource>();
+                m_AudioSource = folder.AddComponent<AudioSource>();
+            }
+
             serializedObject.FindProperty("m_AudioSource").objectReferenceValue = m_AudioSource;
+            m_SimpleFollower = serializedObject.FindProperty("m_SimpleFollower");
             m_SelectedPlayType = serializedObject.FindProperty("m_PlayType");
 
             serializedObject.ApplyModifiedProperties();
@@ -44,16 +53,38 @@ namespace SyadeuEditor
             }
 
             EditorGUI.BeginDisabledGroup(true);
-            EditorGUILayout.FloatField("Distance From Listener: ", UnityAudioManager.DistanceFromListener(m_Scr.transform));
+            EditorGUILayout.FloatField("Distance From Listener: ", UnityAudioManager.DistanceFromListener(Asset.transform));
             EditorGUI.EndDisabledGroup();
             EditorGUILayout.Space();
 
             m_AudioSource.playOnAwake = EditorGUILayout.Toggle("Play On Awake: ", m_AudioSource.playOnAwake);
+
+            EditorGUI.BeginChangeCheck();
             m_SelectedPlayType.intValue = EditorGUILayout.Popup("Play Type: ", m_SelectedPlayType.intValue, m_PlayTypeString);
+            if (EditorGUI.EndChangeCheck())
+            {
+                SimpleFollower follower = Asset.GetComponent<SimpleFollower>();
+                if (m_SelectedPlayType.intValue == 0)
+                {
+                    if (follower != null) DestroyImmediate(follower);
+                }
+                else if (m_SelectedPlayType.intValue == 1)
+                {
+                    if (follower == null) follower = Asset.gameObject.AddComponent<SimpleFollower>();
+                    m_SimpleFollower.objectReferenceValue = follower;
+                }
+            }
+            if (m_SelectedPlayType.intValue == 1)
+            {
+                SimpleFollower follower = (SimpleFollower)m_SimpleFollower.objectReferenceValue;
+                follower.SetTarget(
+                    (Transform)EditorGUILayout.ObjectField("Track Target: ", follower.GetTarget(), typeof(Transform), true)
+                    );
+            }
 
             EditorGUILayout.Space();
 
-            m_Scr.AudioClip = (AudioClip)EditorGUILayout.ObjectField("Audio Clip: ", m_Scr.AudioClip, typeof(AudioClip), false);
+            Asset.AudioClip = (AudioClip)EditorGUILayout.ObjectField("Audio Clip: ", Asset.AudioClip, typeof(AudioClip), false);
             if (!Application.isPlaying)
             {
                 EditorGUILayout.HelpBox("Only can play the sound at runtime", MessageType.Info);
@@ -61,7 +92,7 @@ namespace SyadeuEditor
             EditorGUI.BeginDisabledGroup(!Application.isPlaying);
             if (GUILayout.Button("Play"))
             {
-                m_Scr.Play();
+                Asset.Play();
             }
             EditorGUI.EndDisabledGroup();
 

@@ -5,7 +5,6 @@ using UnityEngine;
 #if CORESYSTEM_UNITYAUDIO
 namespace Syadeu.Mono.Audio
 {
-    [RequireComponent(typeof(AudioSource))]
     public sealed class UnityAudioSource : RecycleableMonobehaviour, IInitialize<UnityAudioList.Content>, IValidation
     {
         [SerializeField] private AudioSource m_AudioSource;
