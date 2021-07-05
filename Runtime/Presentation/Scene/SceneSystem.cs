@@ -43,7 +43,7 @@ namespace Syadeu.Presentation
         private bool m_LoadingEnabled = false;
         private Timer m_SceneActiveTimer = new Timer();
 
-        public override bool EnableBeforePresentation => true;
+        public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
         public override bool IsStartable
@@ -53,15 +53,6 @@ namespace Syadeu.Presentation
                 if (m_BlackScreen == null) return false;
                 if (m_AsyncOperation != null && !m_AsyncOperation.isDone)
                 {
-                    //if (m_LoadingEnabled && m_AsyncOperation.progress >= .9f)
-                    //{
-                    //    m_AsyncOperation.allowSceneActivation = true;
-                    //    m_BlackScreen.Lerp(0, Time.fixedDeltaTime * .1f);
-                    //    m_LoadingEnabled = false;
-                    //    m_AsyncOperation = null;
-
-                    //    return true;
-                    //}
                     return false;
                 }
                 return true;
@@ -83,11 +74,6 @@ namespace Syadeu.Presentation
                 SetupMasterScene();
                 SetupLoadingScene();
 
-                if (string.IsNullOrEmpty(SceneList.Instance.StartScene))
-                {
-                    throw new Exception();
-                }
-                //m_AsyncOperation = InternalLoadScene(SceneList.Instance.StartScene);
                 LoadStartScene(3);
             }
 
@@ -147,45 +133,11 @@ namespace Syadeu.Presentation
             }
             #endregion
         }
-        public override PresentationResult BeforePresentation()
-        {
-            //if (m_AsyncOperation != null)
-            //{
-            //    //if (!m_LoadingEnabled)
-            //    //{
-            //    //    m_BlackScreen.Lerp(1, Time.fixedDeltaTime * .1f);
-            //    //    m_LoadingEnabled = true;
-            //    //}
 
-            //    if (!m_AsyncOperation.isDone)
-            //    {
-            //        if (m_LoadingEnabled && m_AsyncOperation.progress >= .9f)
-            //        {
-            //            if (m_SceneActiveTimer.IsTimerActive())
-            //            {
-            //                throw new Exception();
-            //            }
-            //            // 이부분이 아무래도 무한 씬로딩 의심가는데 확인이 안됨
-            //            AsyncOperation boxedOper = m_AsyncOperation;
-            //            m_SceneActiveTimer
-            //                .SetTargetTime(5)
-            //                .OnTimerEnd(() =>
-            //                {
-            //                    boxedOper.allowSceneActivation = true;
-            //                    m_BlackScreen.Lerp(0, Time.fixedDeltaTime * .1f);
-            //                    m_LoadingEnabled = false;
-            //                })
-            //                .Start();
-            //            m_AsyncOperation = null;
-            //            "timer in".ToLog();
-            //        }
-            //    }
-            //    "123123123".ToLog();
-            //}
-
-            return base.BeforePresentation();
-        }
-
+        /// <summary>
+        /// <see cref="SceneList.StartScene"/> 을 로드합니다.
+        /// </summary>
+        /// <param name="startDelay"></param>
         public void LoadStartScene(int startDelay)
         {
             if (!CoreSystem.IsThisMainthread())
@@ -206,6 +158,11 @@ namespace Syadeu.Presentation
                 m_AsyncOperation = InternalLoadScene(SceneList.Instance.StartScene, startDelay);
             }
         }
+        /// <summary>
+        /// <see cref="SceneList.Scenes"/>에 있는 씬을 로드합니다.
+        /// </summary>
+        /// <param name="index"></param>
+        /// <param name="startDelay"></param>
         public void LoadScene(int index, int startDelay)
         {
             if (!CoreSystem.IsThisMainthread())

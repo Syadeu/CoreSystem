@@ -10,7 +10,7 @@ namespace SyadeuEditor
 {
     public sealed class CreatureSystemManagerTab : EditorStaticGUIContent<CreatureSystemManagerTab>
     {
-        public CreatureSystemWindow Main => CoreSystemMenuItems.m_CreatureWindow;
+        public static CreatureSystemWindow Main => CoreSystemMenuItems.m_CreatureWindow;
         private CreatureManager Manager => Main.m_Manager;
 
         private Vector2 m_ContentScroll = Vector2.zero;

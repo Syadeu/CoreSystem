@@ -84,7 +84,7 @@ namespace SyadeuEditor.Tree
             var temp = m_Elements.Where((other) => (other is VerticalFolderTreeElement) && other.Name.Equals(name));
 
             VerticalFolderTreeElement output;
-            if (temp.Count() == 0)
+            if (!temp.Any())
             {
                 output = new VerticalFolderTreeElement(this, name);
                 m_Elements.Add(output);

@@ -66,7 +66,7 @@ namespace SyadeuEditor
                             {
                                 ItemTypeEntity selectedItemType = ItemDataList.Instance.m_ItemTypes[tSelected - 1];
 
-                                if (m_Item.m_ItemTypes.Where((other) => ItemDataList.Instance.GetItemType(other) is ItemUseableType).Count() != 0 &&
+                                if (m_Item.m_ItemTypes.Where((other) => ItemDataList.Instance.GetItemType(other) is ItemUseableType).Any() &&
                                     selectedItemType is ItemUseableType)
                                 {
                                     $"이 타입은 한 개 이상 존재할 수 없습니다.".ToLog();

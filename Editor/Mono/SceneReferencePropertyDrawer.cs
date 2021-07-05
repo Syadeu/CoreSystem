@@ -125,7 +125,7 @@ namespace SyadeuEditor
         /// <summary>
         /// Draws info box of the provided scene
         /// </summary>
-        private void DrawSceneInfoGUI(Rect position, BuildUtils.BuildScene buildScene, int sceneControlID)
+        private static void DrawSceneInfoGUI(Rect position, BuildUtils.BuildScene buildScene, int sceneControlID)
         {
             var readOnly = BuildUtils.IsReadOnly();
             var readOnlyWarning = readOnly ? "\n\nWARNING: Build Settings is not checked out and so cannot be modified." : "";

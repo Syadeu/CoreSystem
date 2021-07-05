@@ -49,10 +49,10 @@ namespace SyadeuEditor
 
         // Attributes
         public int m_SelectedDataClassName, m_SelectedDataSingleToneName, m_SelectedDataArrayName;
-        public string[] m_DataClassNames = new string[0];
+        public string[] m_DataClassNames = Array.Empty<string>();
         public Type m_SelectedDataClass = null;
-        public string[] m_DataSingleToneNames = new string[0];
-        public string[] m_DataArrayNames = new string[0];
+        public string[] m_DataSingleToneNames = Array.Empty<string>();
+        public string[] m_DataArrayNames = Array.Empty<string>();
         public Type m_SelectedDataArrayClass = null;
 
         private void OnEnable()
@@ -477,7 +477,7 @@ namespace SyadeuEditor
         private SerializedProperty m_PrivateSets;
 
         private int m_SelectedDisplayName = 0;
-        private string[] m_DisplayNames = new string[0];
+        private string[] m_DisplayNames = Array.Empty<string>();
 
         protected override void OnInitialize()
         {

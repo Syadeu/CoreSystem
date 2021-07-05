@@ -9,11 +9,6 @@ namespace SyadeuEditor
     [CustomEditor(typeof(PrefabManager))]
     public class PrefabManagerEditor : EditorEntity<PrefabManager>
     {
-        private void OnEnable()
-        {
-            
-        }
-
         public override void OnInspectorGUI()
         {
             EditorUtils.StringHeader("Prefab Manager");
@@ -35,7 +30,7 @@ namespace SyadeuEditor
             //base.OnInspectorGUI();
         }
 
-        void Editor()
+        static void Editor()
         {
             EditorUtils.StringHeader("\t에디터", 15);
             EditorGUILayout.Space();
@@ -50,8 +45,8 @@ namespace SyadeuEditor
             EditorGUILayout.HelpBox("활성화시, 런타임 도중 재사용 객체가 파괴되었거나 하는 등의 예외사항 조치를 자동으로 해결합니다.", MessageType.Info);
             EditorGUILayout.EndHorizontal();
         }
-        bool[] openInstances = new bool[0];
-        bool[] sortInstances = new bool[0];
+        bool[] openInstances = System.Array.Empty<bool>();
+        bool[] sortInstances = System.Array.Empty<bool>();
         void Runtime()
         {
             var objList = Asset.GetRecycleObjectList();

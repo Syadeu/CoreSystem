@@ -23,8 +23,8 @@ namespace SyadeuEditor
     public static class ItemEditor
     {
         private static ItemDrawer m_ItemDrawer;
-        internal static string[] m_ItemTypes = new string[0];
-        internal static string[] m_ItemEffectTypes = new string[0];
+        internal static string[] m_ItemTypes = Array.Empty<string>();
+        internal static string[] m_ItemEffectTypes = Array.Empty<string>();
 
 #if UNITY_ADDRESSABLES
         private static readonly AddressableAssetSettings m_DefaultAddressableSettings = AddressableAssetSettingsDefaultObject.GetSettings(true);

@@ -75,6 +75,7 @@ namespace SyadeuEditor.Tree
 
         public void Dispose()
         {
+            GC.SuppressFinalize(this);
             m_Disposed = true;
         }
 
