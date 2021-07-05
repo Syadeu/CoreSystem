@@ -299,11 +299,11 @@ namespace Syadeu
         {
             if (GUILayout.Button("To intro"))
             {
-                PresentationSystem<SceneSystem>.GetSystem().LoadStartScene();
+                PresentationSystem<SceneSystem>.GetSystem().LoadStartScene(5);
             }
             if (GUILayout.Button("To Game"))
             {
-                PresentationSystem<SceneSystem>.GetSystem().LoadScene(0);
+                PresentationSystem<SceneSystem>.GetSystem().LoadScene(0, 5);
             }
         }
 

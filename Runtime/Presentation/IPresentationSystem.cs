@@ -2,6 +2,12 @@
 
 namespace Syadeu.Presentation
 {
+    /// <summary>
+    /// 프레젠테이션 시스템 interface 입니다.
+    /// </summary>
+    /// <remarks>
+    /// 직접 상속은 허용하지 않습니다. <see cref="PresentationSystemEntity{T}"/>로 상속받아서 사용하세요.
+    /// </remarks>
     public interface IPresentationSystem : IInitPresentation, IBeforePresentation, IOnPresentation, IAfterPresentation, IDisposable
     {
         bool EnableBeforePresentation { get; }

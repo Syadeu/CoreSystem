@@ -53,15 +53,15 @@ namespace Syadeu.Presentation
                 if (m_BlackScreen == null) return false;
                 if (m_AsyncOperation != null && !m_AsyncOperation.isDone)
                 {
-                    if (m_LoadingEnabled && m_AsyncOperation.progress >= .9f)
-                    {
-                        m_AsyncOperation.allowSceneActivation = true;
-                        m_BlackScreen.Lerp(0, Time.fixedDeltaTime * .1f);
-                        m_LoadingEnabled = false;
-                        m_AsyncOperation = null;
+                    //if (m_LoadingEnabled && m_AsyncOperation.progress >= .9f)
+                    //{
+                    //    m_AsyncOperation.allowSceneActivation = true;
+                    //    m_BlackScreen.Lerp(0, Time.fixedDeltaTime * .1f);
+                    //    m_LoadingEnabled = false;
+                    //    m_AsyncOperation = null;
 
-                        return true;
-                    }
+                    //    return true;
+                    //}
                     return false;
                 }
                 return true;
@@ -70,7 +70,7 @@ namespace Syadeu.Presentation
         /// <summary>
         /// 현재 씬을 로딩 중인가요?
         /// </summary>
-        public bool IsSceneLoading => m_LoadingEnabled;
+        public bool IsSceneLoading => m_LoadingEnabled || m_AsyncOperation != null;
 
         public override PresentationResult OnInitialize()
         {
@@ -87,7 +87,8 @@ namespace Syadeu.Presentation
                 {
                     throw new Exception();
                 }
-                m_AsyncOperation = InternalLoadScene(SceneList.Instance.StartScene);
+                //m_AsyncOperation = InternalLoadScene(SceneList.Instance.StartScene);
+                LoadStartScene(3);
             }
 
             return base.OnInitialize();
@@ -138,96 +139,81 @@ namespace Syadeu.Presentation
                 }
 
                 SceneManager.MergeScenes(m_LoadingScene, m_MasterScene);
-                m_LoadingEnabled = true;
             }
             #endregion
         }
         public override PresentationResult BeforePresentation()
         {
-            if (m_AsyncOperation != null)
-            {
-                if (!m_LoadingEnabled)
-                {
-                    m_BlackScreen.Lerp(1, Time.fixedDeltaTime * .1f);
-                    m_LoadingEnabled = true;
-                }
+            //if (m_AsyncOperation != null)
+            //{
+            //    //if (!m_LoadingEnabled)
+            //    //{
+            //    //    m_BlackScreen.Lerp(1, Time.fixedDeltaTime * .1f);
+            //    //    m_LoadingEnabled = true;
+            //    //}
 
-                if (!m_AsyncOperation.isDone)
-                {
-                    if (m_LoadingEnabled && m_AsyncOperation.progress >= .9f)
-                    {
-                        if (m_SceneActiveTimer.IsTimerActive())
-                        {
-                            throw new Exception();
-                        }
-                        // 이부분이 아무래도 무한 씬로딩 의심가는데 확인이 안됨
-                        AsyncOperation boxedOper = m_AsyncOperation;
-                        m_SceneActiveTimer
-                            .SetTargetTime(5)
-                            .OnTimerEnd(() =>
-                            {
-                                boxedOper.allowSceneActivation = true;
-                                m_BlackScreen.Lerp(0, Time.fixedDeltaTime * .1f);
-                                m_LoadingEnabled = false;
-                            })
-                            .Start();
-                        m_AsyncOperation = null;
-                        "timer in".ToLog();
-                    }
-                }
-                "123123123".ToLog();
-            }
+            //    if (!m_AsyncOperation.isDone)
+            //    {
+            //        if (m_LoadingEnabled && m_AsyncOperation.progress >= .9f)
+            //        {
+            //            if (m_SceneActiveTimer.IsTimerActive())
+            //            {
+            //                throw new Exception();
+            //            }
+            //            // 이부분이 아무래도 무한 씬로딩 의심가는데 확인이 안됨
+            //            AsyncOperation boxedOper = m_AsyncOperation;
+            //            m_SceneActiveTimer
+            //                .SetTargetTime(5)
+            //                .OnTimerEnd(() =>
+            //                {
+            //                    boxedOper.allowSceneActivation = true;
+            //                    m_BlackScreen.Lerp(0, Time.fixedDeltaTime * .1f);
+            //                    m_LoadingEnabled = false;
+            //                })
+            //                .Start();
+            //            m_AsyncOperation = null;
+            //            "timer in".ToLog();
+            //        }
+            //    }
+            //    "123123123".ToLog();
+            //}
 
             return base.BeforePresentation();
         }
 
-        public void LoadStartScene()
+        public void LoadStartScene(int startDelay)
         {
-            if (IsSceneLoading)
-            {
-                "cant load while in loading".ToLog();
-                return;
-            }
-
             $"{m_CurrentScene.name} : {m_CurrentScene.path}".ToLog();
-            m_BlackScreen.Lerp(1, Time.fixedDeltaTime * .1f);
-            m_LoadingEnabled = true;
-
-            if (ManagerEntity.InstanceGroupTr != null)
+            if (m_CurrentScene.IsValid())
             {
-                UnityEngine.Object.Destroy(ManagerEntity.InstanceGroupTr.gameObject);
+                InternalUnloadScene(m_CurrentScene, (oper) =>
+                {
+                    m_AsyncOperation = InternalLoadScene(SceneList.Instance.StartScene, startDelay);
+                });
             }
-
-            InternalUnloadScene(m_CurrentScene, (oper) =>
+            else
             {
-                m_AsyncOperation = InternalLoadScene(SceneList.Instance.StartScene);
-            });
+                m_AsyncOperation = InternalLoadScene(SceneList.Instance.StartScene, startDelay);
+            }
         }
-        public void LoadScene(int index)
+        public void LoadScene(int index, int startDelay)
         {
-            if (IsSceneLoading)
-            {
-                "cant load while in loading".ToLog();
-                return;
-            }
-
             $"{m_CurrentScene.name} : {m_CurrentScene.path}".ToLog();
-            m_BlackScreen.Lerp(1, Time.fixedDeltaTime * .1f);
-            m_LoadingEnabled = true;
-
-            if (ManagerEntity.InstanceGroupTr != null)
+            if (m_CurrentScene.IsValid())
             {
-                UnityEngine.Object.Destroy(ManagerEntity.InstanceGroupTr.gameObject);
+                InternalUnloadScene(m_CurrentScene, (oper) =>
+                {
+                    m_AsyncOperation = InternalLoadScene(SceneList.Instance.Scenes[index], startDelay);
+                });
             }
-
-            InternalUnloadScene(m_CurrentScene, (oper) =>
+            else
             {
-                m_AsyncOperation = InternalLoadScene(SceneList.Instance.Scenes[index]);
-            });
+                m_AsyncOperation = InternalLoadScene(SceneList.Instance.Scenes[index], startDelay);
+            }
         }
 
         #region Privates
-        private AsyncOperation InternalLoadScene(string path,
+        private AsyncOperation InternalLoadScene(string path, float startDelay,
 #if UNITY_ADDRESSABLES
             Action<AsyncOperationHandle<SceneInstance>>
 #else
@@ -235,13 +221,26 @@ namespace Syadeu.Presentation
 #endif
             onCompleted = null)
         {
+            if (IsSceneLoading || m_SceneActiveTimer.IsTimerActive())
+            {
+                "cant load while in loading".ToLogError();
+                throw new Exception();
+            }
+
+            m_LoadingEnabled = true;
+            if (ManagerEntity.InstanceGroupTr != null)
+            {
+                UnityEngine.Object.Destroy(ManagerEntity.InstanceGroupTr.gameObject);
+            }
+            m_BlackScreen.Lerp(1, Time.fixedDeltaTime * .1f);
+
             var oper =
 #if UNITY_ADDRESSABLES
                 Addressables.LoadSceneAsync(path, LoadSceneMode.Additive, false);
             oper.Completed
 #else
                 SceneManager.LoadSceneAsync(path, LoadSceneMode.Additive);
-            oper.allowSceneActivation = false;
+            //oper.allowSceneActivation = false;
             oper.completed
 #endif
                 += (other) =>
@@ -252,6 +251,17 @@ namespace Syadeu.Presentation
                     onCompleted?.Invoke(other);
 
                     StartSceneDependences(path);
+
+                    m_SceneActiveTimer
+                        .SetTargetTime(startDelay)
+                        .OnTimerEnd(() =>
+                        {
+                            m_AsyncOperation = null;
+                            m_BlackScreen.Lerp(0, Time.fixedDeltaTime * .1f);
+                            m_LoadingEnabled = false;
+                            "done".ToLog();
+                        })
+                        .Start();
                     $"{m_CurrentScene.name} : {m_CurrentScene.path}".ToLog();
                     "completed".ToLog();
                 };
