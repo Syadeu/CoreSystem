@@ -109,10 +109,10 @@ namespace Syadeu.Presentation
                 {
                     m_LoadingScene = SceneManager.CreateScene("Loading Scene");
 
-                    //GameObject camObj = CreateObject(m_LoadingScene, "Default Camera", typeof(Camera));
-                    //m_DefaultCamera = camObj.GetComponent<Camera>();
-                    //m_DefaultCamera.cameraType = CameraType.Game;
-                    //m_DefaultCamera.transform.position = Vector3.zero;
+                    GameObject camObj = CreateObject(m_LoadingScene, "Default Camera", typeof(Camera));
+                    m_DefaultCamera = camObj.GetComponent<Camera>();
+                    m_DefaultCamera.cameraType = CameraType.Game;
+                    m_DefaultCamera.transform.position = Vector3.zero;
 
                     GameObject obj = CreateObject(m_LoadingScene, "Default Canvas", typeof(Canvas), typeof(CanvasScaler));
 
@@ -149,6 +149,7 @@ namespace Syadeu.Presentation
         }
         public override PresentationResult OnStartPresentation()
         {
+            "in".ToLog();
             SceneManager.MergeScenes(m_LoadingScene, m_MasterScene);
             return base.OnStartPresentation();
         }
