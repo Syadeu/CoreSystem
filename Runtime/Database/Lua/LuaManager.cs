@@ -17,33 +17,33 @@ namespace Syadeu.Database.Lua
         #region Initializer
         public override void OnInitialize()
         {
-            Debug.Log("LUA: Initialize start");
-            Debug.Log("LUA: Registering Proxies");
+            //Debug.Log("LUA: Initialize start");
+            CoreSystem.Log(Channel.Lua, "Registering Proxies");
             UserData.RegisterProxyType<ItemProxy, Item>(r => r.GetProxy());
             UserData.RegisterProxyType<ItemTypeProxy, ItemType>(r => r.GetProxy());
             UserData.RegisterProxyType<ItemUseableTypeProxy, ItemUseableType>(r => r.GetProxy());
             UserData.RegisterProxyType<ItemEffectTypeProxy, ItemEffectType>(r => r.GetProxy());
             UserData.RegisterProxyType<CreatureBrainProxy, CreatureBrain>(r => r.Proxy);
 
-            Debug.Log("LUA: Registering Actions");
+            CoreSystem.Log(Channel.Lua, "Registering Actions");
             RegisterSimpleAction();
             RegisterSimpleAction<string>();
             RegisterSimpleAction<CreatureBrainProxy>();
 
-            Debug.Log("LUA: Registering Script and Globals");
+            CoreSystem.Log(Channel.Lua, "Registering Script and Globals");
             m_MainScripter = new Script();
             AddGlobal<LuaUtils>("CoreSystem");
             AddGlobal<LuaVectorUtils>("Vector");
             AddGlobal<LuaItemUtils>("Items");
             AddGlobal<LuaCreatureUtils>("Creature");
 
-            Debug.Log("LUA: Registering ScriptLoader");
+            CoreSystem.Log(Channel.Lua, "Registering ScriptLoader");
             m_ScriptLoader = new LuaScriptLoader();
             m_MainScripter.Options.ScriptLoader = m_ScriptLoader;
 
-            Debug.Log("LUA: Load Scripts");
+            CoreSystem.Log(Channel.Lua, "Load Scripts");
             LoadScripts();
-            Debug.Log("LUA: Creating Console Commands");
+            CoreSystem.Log(Channel.Lua, "Creating Console Commands");
             CreateLuaCommands();
         }
 

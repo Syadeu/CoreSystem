@@ -31,10 +31,12 @@ namespace Syadeu
                     T ins = Activator.CreateInstance<T>();
                     CoreSystem.DataManagers.Add(ins);
                     CoreSystem.InvokeManagerChanged();
+
+                    ins.OnInitialize();
                     m_Instance = ins;
+                    CoreSystem.Log(Channel.Core, $"{typeof(T).Name} is initialized");
 
                     ConfigLoader.LoadConfig(ins);
-                    ins.OnInitialize();
                     ins.OnStart();
                 }
 

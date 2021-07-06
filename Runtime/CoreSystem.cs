@@ -1731,6 +1731,17 @@ namespace Syadeu
 
         #endregion
 
+        #region Debug
+#line hidden
+        public static void Log(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Normal, msg);
+        public static void LogWarning(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Warning, msg);
+        public static void LogError(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Error, msg);
+
+        public static void NotNull(object obj) => LogManager.NotNull(obj, string.Empty);
+        public static void NotNull(object obj, string msg) => LogManager.NotNull(obj, msg);
+#line default
+        #endregion
+
 #if UNITY_EDITOR
         #region Debug Only
 

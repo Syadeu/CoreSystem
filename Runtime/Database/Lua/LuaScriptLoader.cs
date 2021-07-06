@@ -41,14 +41,14 @@ namespace Syadeu.Database.Lua
 
         public void ReloadScripts()
         {
-            "LUA: Reloading".ToLog();
+            CoreSystem.Log(Channel.Lua, "Reloading");
             m_Resources.Clear();
 
             TextAsset[] scriptAssets = UnityEngine.Resources.LoadAll<TextAsset>("Lua");
             for (int i = 0; i < scriptAssets.Length; i++)
             {
                 m_Resources.Add(scriptAssets[i].name, scriptAssets[i].text);
-                $"Loaded {scriptAssets[i].name}".ToLog();
+                CoreSystem.Log(Channel.Lua, $"Loaded {scriptAssets[i].name}");
             }
 
             if (!Directory.Exists($"{CoreSystemFolder.LuaPath}"))
@@ -62,19 +62,27 @@ namespace Syadeu.Database.Lua
                 string[] folders = Directory.GetDirectories(path);
                 for (int i = 0; i < folders.Length; i++)
                 {
-                    $"Searching folder ({folders[i]})".ToLog();
+                    string folderName = Path.GetFileName(folders[i]);
+                    if (IsSpecialFolder(folderName)) continue;
+
+                    CoreSystem.Log(Channel.Lua, $"Searching folder ({folderName})");
                     LoadAllScripts(folders[i], scrs, depth + 1);
                 }
 
-                $"Searching modules at ({path})".ToLog();
+                //CoreSystem.Log(Channel.Lua, $"Searching modules at ({path})");
                 string[] scriptsPath = Directory.GetFiles(path);
                 for (int i = 0; i < scriptsPath.Length; i++)
                 {
                     if (!Path.GetExtension(scriptsPath[i]).Equals(".lua")) continue;
 
                     scrs.Add(GetFileName(scriptsPath[i]), File.ReadAllText(scriptsPath[i]));
-                    $"Loaded {GetFileName(scriptsPath[i])}".ToLog();
+                    CoreSystem.Log(Channel.Lua, $"Loaded {GetFileName(scriptsPath[i])}.lua");
                 }
+            }
+            bool IsSpecialFolder(string folderName)
+            {
+                if (folderName.Equals(".vs") || folderName.Equals("v16")) return true;
+                return false;
             }
         }
         public override object LoadFile(string file, Table globalContext)

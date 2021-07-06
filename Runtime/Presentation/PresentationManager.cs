@@ -13,6 +13,7 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -100,19 +101,28 @@ namespace Syadeu.Presentation
         #region Internals
         internal static void RegisterSystem(Type groupName, SceneReference dependenceScene, params Type[] systems)
         {
+            if (dependenceScene != null)
+            {
+                CoreSystem.Log(Channel.Presentation, $"Registration start ({groupName.Name.Split('.').Last()}), number of {systems.Length}, has dependece scene ({dependenceScene.ScenePath})");
+            }
+            else CoreSystem.Log(Channel.Presentation, $"Registration start ({groupName.Name.Split('.').Last()}), number of {systems.Length}");
+
             Hash groupHash = Hash.NewHash(groupName.Name);
             if (!Instance.m_PresentationGroups.TryGetValue(groupHash, out Group group))
             {
                 group = new Group(groupName, groupHash);
                 Instance.m_PresentationGroups.Add(groupHash, group);
 
-                Type t = typeof(PresentationSystemGroup<>).MakeGenericType(groupName);
-                $"{t.Name}: {t.GenericTypeArguments[0]}".ToLog();
+                //Type t = typeof(PresentationSystemGroup<>).MakeGenericType(groupName);
+                //$"{t.Name}: {t.GenericTypeArguments[0]}".ToLog();
                 PropertyInfo insProperty = typeof(PresentationSystemGroup<>).MakeGenericType(groupName).GetProperty(instance, BindingFlags.NonPublic | BindingFlags.Static);
-                Assert.IsNotNull(insProperty);
-                $"{insProperty.Name}".ToLog();
-                Assert.IsNotNull(insProperty.GetValue(null, null));
+                
+                CoreSystem.NotNull(insProperty);
+
+                //$"{insProperty.Name}".ToLog();
+                //Assert.IsNotNull(insProperty.GetValue(null, null));
                 group.m_SystemGroup = (IPresentationSystemGroup)insProperty.GetValue(null, null);
+                CoreSystem.NotNull(group.m_SystemGroup);
             }
 
             if (dependenceScene != null)
@@ -123,7 +133,7 @@ namespace Syadeu.Presentation
                     Instance.m_DependenceSceneList.Add(dependenceScene, list);
                 }
 
-                if (list.Contains(groupHash)) throw new Exception();
+                if (list.Contains(groupHash)) CoreSystem.LogError(Channel.Presentation, $"{groupName.Name.Split('.').Last()} 은 이미 해당 씬({dependenceScene.ScenePath})에 종속되었습니다. 중복 추가는 허용하지 않습니다.");
                 list.Add(groupHash);
             }
 
@@ -146,8 +156,10 @@ namespace Syadeu.Presentation
                 }
                 group.m_RegisteredSystemTypes.Add(systems[i]);
                 Instance.m_RegisteredGroup.Add(systems[i], groupHash);
-                $"System ({groupName}): {systems[i].GetType().Name} Registered".ToLog();
+                CoreSystem.Log(Channel.Presentation, $"System ({groupName.Name.Split('.').Last()}): {systems[i].Name} Registered");
             }
+
+            CoreSystem.Log(Channel.Presentation, $"Registration Ended ({groupName.Name.Split('.').Last()}), number of {systems.Length}");
         }
         internal void StartPresentation(Hash groupHash)
         {
@@ -174,14 +186,14 @@ namespace Syadeu.Presentation
                 if (system.EnableOnPresentation) group.m_OnPresentations.Add(system);
                 if (system.EnableAfterPresentation) group.m_AfterPresentations.Add(system);
 
-                $"System ({group.m_Name.Name}): {system.GetType().Name} Start".ToLog();
+                //$"System ({group.m_Name.Name}): {system.GetType().Name} Start".ToLog();
             }
 
             group.MainPresentation = Instance.StartUnityUpdate(Presentation(group));
             group.BackgroundPresentation = Instance.StartBackgroundUpdate(PresentationAsync(group));
             group.m_IsStarted = true;
 
-            $"{group.m_Name.Name} group is started".ToLog();
+            CoreSystem.Log(Channel.Presentation, $"{group.m_Name.Name} group is started");
         }
         internal void StopPresentation(Hash groupHash)
         {
@@ -221,13 +233,13 @@ namespace Syadeu.Presentation
                 TA system = PresentationSystem<TA>.GetSystem();
                 if (system == null)
                 {
-                    $"Requested system ({typeof(TA).Name}) not found".ToLogError();
+                    CoreSystem.LogError(Channel.Presentation, $"Requested system ({typeof(TA).Name}) not found");
                 }
-                else $"Requested system ({typeof(TA).Name}) found".ToLog();
+                else CoreSystem.Log(Channel.Presentation, $"Requested system ({typeof(TA).Name}) found");
 
                 setter.Invoke(system);
             });
-            "request in".ToLog();
+            //"request in".ToLog();
         }
         #endregion
 
@@ -301,13 +313,13 @@ namespace Syadeu.Presentation
             {
                 group.m_Initializers[i].OnInitializeAsync();
             }
-            "1".ToLog();
+            //"1".ToLog();
 
             yield return new WaitUntil(() => group.m_MainthreadSignal);
             int requestSystemCount = group.m_RequestSystemDelegates.Count;
             for (int i = 0; i < requestSystemCount; i++)
             {
-                $"asd : {i} = {requestSystemCount}".ToLog();
+                //$"asd : {i} = {requestSystemCount}".ToLog();
                 if (!group.m_RequestSystemDelegates.TryDequeue(out Action action)) continue;
                 try
                 {
@@ -319,7 +331,7 @@ namespace Syadeu.Presentation
                     throw;
                 }
             }
-            "2".ToLog();
+            //"2".ToLog();
 
             group.m_BackgroundthreadSignal = true;
             group.m_BackgroundInitDone = true;

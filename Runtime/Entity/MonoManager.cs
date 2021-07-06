@@ -106,6 +106,8 @@ namespace Syadeu
                 transform.SetParent(InstanceGroupTr);
             }
 
+            CoreSystem.Log(Channel.Core, $"{typeof(T).Name} is initialized");
+
             ConfigLoader.LoadConfig(this);
             OnStart();
             Initialized = true;

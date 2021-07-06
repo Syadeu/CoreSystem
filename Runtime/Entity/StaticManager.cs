@@ -109,6 +109,7 @@ namespace Syadeu
 
                     ins.gameObject.isStatic = true;
                     m_Instance = ins;
+                    CoreSystem.Log(Channel.Core, $"{t.Name} is initialized");
 
                     ConfigLoader.LoadConfig(ins);
                     ins.OnStart();

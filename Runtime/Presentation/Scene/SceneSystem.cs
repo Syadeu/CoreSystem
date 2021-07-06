@@ -235,7 +235,7 @@ namespace Syadeu.Presentation
                 throw new Exception();
             }
 
-            $"Scene change start from ({m_CurrentScene.name}) to ({Path.GetFileNameWithoutExtension(path)})".ToLog();
+            CoreSystem.Log(Channel.Scene, $"Scene change start from ({m_CurrentScene.name}) to ({Path.GetFileNameWithoutExtension(path)})");
             m_LoadingEnabled = true;
             if (ManagerEntity.InstanceGroupTr != null)
             {
@@ -272,11 +272,11 @@ namespace Syadeu.Presentation
                             m_AsyncOperation = null;
                             OnLoadingExit?.Invoke();
                             m_LoadingEnabled = false;
-                            "done".ToLog();
+                            CoreSystem.Log(Channel.Scene, $"Scene change done");
                         })
                         .Start();
-                    $"{m_CurrentScene.name} : {m_CurrentScene.path}".ToLog();
-                    "completed".ToLog();
+                    //$"{m_CurrentScene.name} : {m_CurrentScene.path}".ToLog();
+                    CoreSystem.Log(Channel.Scene, $"Scene({m_CurrentScene.name}) loaded");
                 };
             });
         }
@@ -318,7 +318,7 @@ namespace Syadeu.Presentation
         {
             if (!PresentationManager.Instance.m_DependenceSceneList.TryGetValue(key, out List<Hash> groupHashs))
             {
-                $"no key({key}) found for load".ToLog();
+                CoreSystem.Log(Channel.Scene, $"Scene({key.Split('/').Last()}) has no dependence systems for load");
                 return;
             }
 
