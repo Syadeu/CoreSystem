@@ -2,6 +2,9 @@
 using Syadeu;
 using Syadeu.Presentation;
 using Syadeu.Presentation.Entities;
+using System.Collections;
+using UnityEngine;
+using UnityEngine.TestTools;
 
 public class PresentationSystemTests
 {
@@ -42,7 +45,7 @@ public class PresentationSystemTests
         TestSystem testSystem;
 
         public override bool EnableBeforePresentation => false;
-        public override bool EnableOnPresentation => true;
+        public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
         public override PresentationResult OnInitialize()
@@ -51,21 +54,57 @@ public class PresentationSystemTests
 
             return base.OnInitialize();
         }
+        public override PresentationResult OnStartPresentation()
+        {
+            CoreSystem.Log(Channel.Core, "Test123System Starting");
 
+            CoreSystem.IsNotNull(testSystem);
+
+            return base.OnStartPresentation();
+        }
+
+        public override PresentationResult BeforePresentation()
+        {
+            CoreSystem.LogError(Channel.Core, "NEVER RUN THIS");
+            return base.BeforePresentation();
+        }
+        public override PresentationResult BeforePresentationAsync()
+        {
+            CoreSystem.LogError(Channel.Core, "NEVER RUN THIS");
+            return base.BeforePresentationAsync();
+        }
         public override PresentationResult OnPresentation()
         {
-            //$"system == null = {testSystem == null}".ToLog();
-            Assert.IsNotNull(testSystem);
+            CoreSystem.LogError(Channel.Core, "NEVER RUN THIS");
             return base.OnPresentation();
+        }
+        public override PresentationResult OnPresentationAsync()
+        {
+            CoreSystem.LogError(Channel.Core, "NEVER RUN THIS");
+            return base.OnPresentationAsync();
+        }
+        public override PresentationResult AfterPresentation()
+        {
+            CoreSystem.LogError(Channel.Core, "NEVER RUN THIS");
+            return base.AfterPresentation();
+        }
+        public override PresentationResult AfterPresentationAsync()
+        {
+            CoreSystem.LogError(Channel.Core, "NEVER RUN THIS");
+            return base.AfterPresentationAsync();
         }
     }
 
-    [Test]
-    public void RunPresentationGroupTest()
+    [UnityTest]
+    public IEnumerator RunPresentationGroupTest()
     {
         PresentationSystemGroup<PresentationTestGroup>.Start();
 
         CoreSystem.IsNotNull(PresentationSystem<TestSystem>.GetSystem());
         CoreSystem.IsNotNull(PresentationSystem<Test123System>.GetSystem());
+
+        yield return new WaitForSeconds(10);
+
+        PresentationSystemGroup<PresentationTestGroup>.Stop();
     }
 }

@@ -218,7 +218,7 @@ namespace Syadeu.Presentation
 
             group.m_IsStarted = false;
 
-            $"{group.m_Name.Name} group is stopped".ToLog();
+            CoreSystem.Log(Channel.Presentation, $"{group.m_Name.Name} group is stopped");
         }
 
         internal static void RegisterRequestSystem<T, TA>(Action<TA> setter) 
@@ -278,7 +278,7 @@ namespace Syadeu.Presentation
             group.m_MainInitDone = true;
 
             yield return group.m_WaitUntilInitializeCompleted;
-            $"Presentation started".ToLog();
+            CoreSystem.Log(Channel.Presentation, $"Presentation group ({group.m_Name.Name}) started");
 
             PresentationResult result;
             while (true)
