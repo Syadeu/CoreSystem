@@ -46,6 +46,8 @@ namespace Syadeu.Presentation
             public bool m_BackgroundInitDone = false;
             public WaitUntil m_WaitUntilInitializeCompleted;
 
+            public Action PublicSystemStructDisposer;
+
             public Group(Type name, Hash hash)
             {
                 m_Name = name;
@@ -211,6 +213,9 @@ namespace Syadeu.Presentation
             {
                 group.m_Systems[i].Dispose();
             }
+            group.PublicSystemStructDisposer?.Invoke();
+            group.PublicSystemStructDisposer = null;
+
             group.m_Systems.Clear();
             group.m_BeforePresentations.Clear();
             group.m_OnPresentations.Clear();

@@ -10,12 +10,12 @@ using Syadeu.Mono;
 using Syadeu.Mono.Creature;
 using UnityEditor;
 using UnityEngine;
-using SyadeuEditor.Audio.Unity;
 
 #if CORESYSTEM_FMOD
 using Syadeu.FMOD;
 #elif CORESYSTEM_UNITYAUDIO
 using Syadeu.Mono.Audio;
+using SyadeuEditor.Audio.Unity;
 #endif
 
 namespace SyadeuEditor

@@ -24,7 +24,7 @@ namespace Syadeu.Presentation
     /// 이 struct 로 시스템을 받아오려면 먼저 <seealso cref="PresentationSystemEntity{T}"/> 를 상속받고 시스템을 선언해야됩니다.
     /// </remarks>
     /// <typeparam name="T"></typeparam>
-    public struct PresentationSystem<T> : IValidation, ICustomYieldAwaiter where T : PresentationSystemEntity
+    public struct PresentationSystem<T> : IValidation, ICustomYieldAwaiter, IDisposable where T : PresentationSystemEntity
     {
         public static PresentationSystem<T> Null = new PresentationSystem<T>(Hash.Empty, -1);
         private static PresentationSystem<T> s_Instance = Null;
@@ -55,6 +55,8 @@ namespace Syadeu.Presentation
                         return Null;
                     }
                     s_Instance = new PresentationSystem<T>(hash, idx);
+                    PresentationManager.Instance.m_PresentationGroups[hash].PublicSystemStructDisposer 
+                        += ((IDisposable)s_Instance).Dispose;
                 }
                 return s_Instance;
             }
@@ -79,6 +81,11 @@ namespace Syadeu.Presentation
 
         bool IValidation.IsValid() => !m_GroupHash.Equals(Hash.Empty) && m_Index >= 0;
         bool ICustomYieldAwaiter.KeepWait => !IsValid();
+        void IDisposable.Dispose()
+        {
+            s_Instance = Null;
+            CoreSystem.Log(Channel.Presentation, $"Dispose public system struct of {TypeHelper.TypeOf<T>.Name}");
+        }
 
         public static bool IsValid() => ((IValidation)Instance).IsValid();
         public static T GetSystem()
