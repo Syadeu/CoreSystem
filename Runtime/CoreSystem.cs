@@ -521,7 +521,7 @@ namespace Syadeu
         private static IEnumerator m_EditorSceneCoroutine = null;
         internal static readonly Dictionary<CoreRoutine, object> m_EditorCoroutines = new Dictionary<CoreRoutine, object>();
         internal static readonly Dictionary<CoreRoutine, object> m_EditorSceneCoroutines = new Dictionary<CoreRoutine, object>();
-        private static readonly List<(int progressID, EditorTask task)> m_EditorTasks = new List<(int, EditorTask)>();
+        private static readonly List<(int progressID, Func<int, IEnumerator> task)> m_EditorTasks = new List<(int, Func<int, IEnumerator>)>();
 
         [InitializeOnLoadMethod]
         private static void EditorInitialize()
@@ -774,8 +774,8 @@ namespace Syadeu
             m_EditorCoroutines.Remove(routine);
         }
 
-        public delegate IEnumerator EditorTask(int progressID);
-        public static void AddEditorTask(EditorTask task, string taskName = null)
+        //public delegate IEnumerator EditorTask(int progressID);
+        public static void AddEditorTask(Func<int, IEnumerator> task, string taskName = null)
         {
             int progressID = Progress.Start(taskName);
             m_EditorTasks.Add((progressID, task));
