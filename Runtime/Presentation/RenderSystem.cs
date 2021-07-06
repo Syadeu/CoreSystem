@@ -1,9 +1,5 @@
 ﻿#undef UNITY_ADDRESSABLES
 
-
-#if UNITY_EDITOR
-#endif
-
 #if UNITY_ADDRESSABLES
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.ResourceProviders;
@@ -12,6 +8,7 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 
 using Syadeu.Database;
 using Syadeu.Mono;
+using Syadeu.Presentation.Entities;
 using System.Collections.Generic;
 using UnityEngine;
 

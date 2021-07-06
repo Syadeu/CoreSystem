@@ -1,14 +1,8 @@
-﻿//#undef UNITY_ADDRESSABLES
-
-
-#if UNITY_EDITOR
-#endif
-
-#if UNITY_ADDRESSABLES
-#endif
-
-using Syadeu.Database;
+﻿using Syadeu.Database;
+using Syadeu.Internal;
 using Syadeu.Mono;
+using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Internal;
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
@@ -34,7 +28,7 @@ namespace Syadeu.Presentation
 
             public IPresentationSystemGroup m_SystemGroup;
 
-            public readonly List<IPresentationSystem> m_Systems = new List<IPresentationSystem>();
+            public readonly List<PresentationSystemEntity> m_Systems = new List<PresentationSystemEntity>();
             public readonly List<IInitPresentation> m_Initializers = new List<IInitPresentation>();
             public readonly List<IBeforePresentation> m_BeforePresentations = new List<IBeforePresentation>();
             public readonly List<IOnPresentation> m_OnPresentations = new List<IOnPresentation>();
@@ -60,10 +54,10 @@ namespace Syadeu.Presentation
                 m_WaitUntilInitializeCompleted = new WaitUntil(() => m_MainInitDone && m_BackgroundInitDone);
             }
 
-            public bool HasSystem<T>(T system) where T : IPresentationSystem
+            public bool HasSystem<T>(T system) where T : PresentationSystemEntity
                 => m_Systems.FindFor((other) => other.Equals(system)) != null;
         }
-        private Hash m_DefaultGroupHash = Hash.NewHash(typeof(DefaultPresentationGroup).Name);
+        private Hash m_DefaultGroupHash = Hash.NewHash(TypeHelper.TypeOf<DefaultPresentationGroup>.Name);
 
         internal readonly Dictionary<Hash, Group> m_PresentationGroups = new Dictionary<Hash, Group>();
         internal readonly Dictionary<Type, Hash> m_RegisteredGroup = new Dictionary<Type, Hash>();
@@ -74,13 +68,23 @@ namespace Syadeu.Presentation
             const string register = "Register";
 
             List<Type> registers = new List<Type>();
-            registers.AddRange(CoreSystem.GetInternalTypes(
-                (other) => !other.IsAbstract && other.GetInterfaces().FindFor(t => t.Equals(typeof(IPresentationRegister))) != null)
-                );
-            registers.AddRange(CoreSystem.GetMainAssemblyTypes(
-                (other) => !other.IsAbstract && other.GetInterfaces().FindFor(t => t.Equals(typeof(IPresentationRegister))) != null));
+            //registers.AddRange(CoreSystem.GetInternalTypes(
+            //    (other) => !other.IsAbstract && other.GetInterfaces().FindFor(t => t.Equals(typeof(IPresentationRegister))) != null)
+            //    );
+            //registers.AddRange(CoreSystem.GetMainAssemblyTypes(
+            //    (other) => !other.IsAbstract && other.GetInterfaces().FindFor(t => t.Equals(typeof(IPresentationRegister))) != null));
 
-            MethodInfo registerMethod = typeof(IPresentationRegister).GetMethod(register);
+            //registers.AddRange(AppDomain
+            //    .CurrentDomain.GetAssemblies()
+            //    .Where(a => !a.IsDynamic)
+            //    .SelectMany(a => a.GetTypes())
+            //    .Where(t => !t.IsAbstract && t.GetInterfaces().FindFor(ta => ta.Equals(typeof(IPresentationRegister))) != null)
+                //);
+            registers.AddRange(TypeHelper.GetTypes(t => !t.IsAbstract && t.GetInterfaces().FindFor(ta => ta.Equals(TypeHelper.TypeOf<IPresentationRegister>.Type)) != null));
+
+            //Assembly.g
+
+            MethodInfo registerMethod = TypeHelper.TypeOf<IPresentationRegister>.Type.GetMethod(register);
 
             for (int i = 0; i < registers.Count; i++)
             {
@@ -117,12 +121,12 @@ namespace Syadeu.Presentation
                 //$"{t.Name}: {t.GenericTypeArguments[0]}".ToLog();
                 PropertyInfo insProperty = typeof(PresentationSystemGroup<>).MakeGenericType(groupName).GetProperty(instance, BindingFlags.NonPublic | BindingFlags.Static);
                 
-                CoreSystem.NotNull(insProperty);
+                CoreSystem.IsNotNull(insProperty);
 
                 //$"{insProperty.Name}".ToLog();
                 //Assert.IsNotNull(insProperty.GetValue(null, null));
                 group.m_SystemGroup = (IPresentationSystemGroup)insProperty.GetValue(null, null);
-                CoreSystem.NotNull(group.m_SystemGroup);
+                CoreSystem.IsNotNull(group.m_SystemGroup);
             }
 
             if (dependenceScene != null)
@@ -178,7 +182,7 @@ namespace Syadeu.Presentation
                 }
                 else ins = Activator.CreateInstance(t);
 
-                IPresentationSystem system = (IPresentationSystem)ins;
+                PresentationSystemEntity system = (PresentationSystemEntity)ins;
                 group.m_Systems.Add(system);
 
                 group.m_Initializers.Add((IInitPresentation)ins);
@@ -218,8 +222,8 @@ namespace Syadeu.Presentation
         }
 
         internal static void RegisterRequestSystem<T, TA>(Action<TA> setter) 
-            where T : class, IPresentationSystem
-            where TA : class, IPresentationSystem
+            where T : PresentationSystemEntity
+            where TA : PresentationSystemEntity
         {
             if (!Instance.m_RegisteredGroup.TryGetValue(typeof(T), out Hash groupHash) ||
                 !Instance.m_PresentationGroups.TryGetValue(groupHash, out Group group))
@@ -233,9 +237,9 @@ namespace Syadeu.Presentation
                 TA system = PresentationSystem<TA>.GetSystem();
                 if (system == null)
                 {
-                    CoreSystem.LogError(Channel.Presentation, $"Requested system ({typeof(TA).Name}) not found");
+                    CoreSystem.LogError(Channel.Presentation, $"Requested system ({TypeHelper.TypeOf<TA>.Name}) not found");
                 }
-                else CoreSystem.Log(Channel.Presentation, $"Requested system ({typeof(TA).Name}) found");
+                else CoreSystem.Log(Channel.Presentation, $"Requested system ({TypeHelper.TypeOf<TA>.Name}) found");
 
                 setter.Invoke(system);
             });

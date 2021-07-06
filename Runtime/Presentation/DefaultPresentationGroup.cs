@@ -1,14 +1,5 @@
-﻿//#undef UNITY_ADDRESSABLES
-
-
-#if UNITY_EDITOR
-#endif
-
-#if UNITY_ADDRESSABLES
-#endif
-
-
-using UnityEngine.Assertions;
+﻿using Syadeu.Internal;
+using Syadeu.Presentation.Entities;
 
 namespace Syadeu.Presentation
 {
@@ -17,54 +8,8 @@ namespace Syadeu.Presentation
         public override void Register()
         {
             RegisterSystem(
-                typeof(SceneSystem),
-                typeof(RenderSystem),
-                typeof(TestSystem),
-                typeof(Test123System));
-        }
-    }
-    public sealed class TestSystem : PresentationSystemEntity<TestSystem>
-    {
-        Test123System testsystem;
-
-        public override bool EnableBeforePresentation => false;
-        public override bool EnableOnPresentation => true;
-        public override bool EnableAfterPresentation => false;
-
-        public override PresentationResult OnInitialize()
-        {
-            RequestSystem<Test123System>((other) => testsystem = other);
-
-            return base.OnInitialize();
-        }
-
-        public override PresentationResult OnPresentation()
-        {
-            //$"123123 system == null = {testsystem == null}".ToLog();
-            Assert.IsNotNull(testsystem);
-            return base.OnPresentation();
-        }
-    }
-    public sealed class Test123System : PresentationSystemEntity<Test123System>
-    {
-        TestSystem testSystem;
-
-        public override bool EnableBeforePresentation => false;
-        public override bool EnableOnPresentation => true;
-        public override bool EnableAfterPresentation => false;
-
-        public override PresentationResult OnInitialize()
-        {
-            RequestSystem<TestSystem>((other) => testSystem = other);
-
-            return base.OnInitialize();
-        }
-
-        public override PresentationResult OnPresentation()
-        {
-            //$"system == null = {testSystem == null}".ToLog();
-            Assert.IsNotNull(testSystem);
-            return base.OnPresentation();
+                TypeHelper.TypeOf<SceneSystem>.Type,
+                TypeHelper.TypeOf<RenderSystem>.Type);
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Syadeu.Internal;
+using System;
 using System.Reflection;
 
 namespace Syadeu.Mono.Console
@@ -46,7 +47,7 @@ namespace Syadeu.Mono.Console
                 throw new CoreSystemException(CoreSystemExceptionFlag.Console,
                     "콘솔 명령어의 반환값은 void (null) 타입이 될 수 없습니다.");
             }
-            if (method.ReturnType != typeof(bool))
+            if (method.ReturnType != TypeHelper.TypeOf<bool>.Type)
             {
                 throw new CoreSystemException(CoreSystemExceptionFlag.Console,
                     "delegate를 수행하는 콘솔 명령어의 메소드는 리턴이 boolean 타입이어야됩니다.");
@@ -58,7 +59,7 @@ namespace Syadeu.Mono.Console
                     메소드는 Static 메소드만 가능합니다.");
             }
 
-            m_ReturnType = typeof(bool);
+            m_ReturnType = TypeHelper.TypeOf<bool>.Type;
             m_Method = method;
 
             m_ExpectDelegate = @delegate;
@@ -83,15 +84,15 @@ namespace Syadeu.Mono.Console
         internal bool Invoke()
         {
             object output;
-            if (m_ReturnType == typeof(bool))
+            if (m_ReturnType == TypeHelper.TypeOf<bool>.Type)
             {
                 output = InvokeBoolean();
             }
-            else if (m_ReturnType == typeof(int))
+            else if (m_ReturnType == TypeHelper.TypeOf<int>.Type)
             {
                 output = InvokeInteger();
             }
-            else if (m_ReturnType == typeof(float))
+            else if (m_ReturnType == TypeHelper.TypeOf<float>.Type)
             {
                 output = InvokeSingle();
             }

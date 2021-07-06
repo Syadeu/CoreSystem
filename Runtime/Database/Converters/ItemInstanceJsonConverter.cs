@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Syadeu.Internal;
 using System;
 
 namespace Syadeu.Database.Converters
@@ -9,7 +10,7 @@ namespace Syadeu.Database.Converters
         public override bool CanWrite => true;
         public override bool CanRead => true;
 
-        public override bool CanConvert(Type objectType) => objectType.Equals(typeof(ItemInstance));
+        public override bool CanConvert(Type objectType) => objectType.Equals(TypeHelper.TypeOf<ItemInstance>.Type);
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {

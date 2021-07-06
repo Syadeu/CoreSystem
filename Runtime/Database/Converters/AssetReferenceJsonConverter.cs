@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Syadeu.Internal;
 using System;
 
 #if UNITY_ADDRESSABLES
@@ -14,7 +15,7 @@ namespace Syadeu.Database.Converters
         public override bool CanWrite => true;
         public override bool CanRead => true;
 
-        public override bool CanConvert(Type objectType) => objectType.Equals(typeof(AssetReference));
+        public override bool CanConvert(Type objectType) => objectType.Equals(TypeHelper.TypeOf<AssetReference>.Type);
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {

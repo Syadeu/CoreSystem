@@ -8,6 +8,8 @@
 #endif
 
 using Syadeu.Database;
+using Syadeu.Internal;
+using Syadeu.Presentation.Internal;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -22,7 +24,7 @@ namespace Syadeu.Presentation
     /// 이 struct 로 시스템을 받아오려면 먼저 <seealso cref="PresentationSystemEntity{T}"/> 를 상속받고 시스템을 선언해야됩니다.
     /// </remarks>
     /// <typeparam name="T"></typeparam>
-    public struct PresentationSystem<T> : IValidation, ICustomYieldAwaiter where T : IPresentationSystem
+    public struct PresentationSystem<T> : IValidation, ICustomYieldAwaiter where T : PresentationSystemEntity
     {
         public static PresentationSystem<T> Null = new PresentationSystem<T>(Hash.Empty, -1);
         private static PresentationSystem<T> s_Instance = Null;
@@ -32,7 +34,7 @@ namespace Syadeu.Presentation
             {
                 if (!((IValidation)s_Instance).IsValid())
                 {
-                    if (!PresentationManager.Instance.m_RegisteredGroup.TryGetValue(typeof(T), out Hash hash))
+                    if (!PresentationManager.Instance.m_RegisteredGroup.TryGetValue(TypeHelper.TypeOf<T>.Type, out Hash hash))
                     {
                         "null out1".ToLog();
                         return Null;
@@ -41,7 +43,7 @@ namespace Syadeu.Presentation
                     int idx = -1;
                     for (int i = 0; i < list.Count; i++)
                     {
-                        if (list[i].GetType().Equals(typeof(T)))
+                        if (list[i].GetType().Equals(TypeHelper.TypeOf<T>.Type))
                         {
                             idx = i;
                             break;
@@ -81,14 +83,14 @@ namespace Syadeu.Presentation
         public static bool IsValid() => ((IValidation)Instance).IsValid();
         public static T GetSystem()
         {
-            Assert.IsTrue(IsValid(), $"{typeof(T).Name} System is not valid");
+            Assert.IsTrue(IsValid(), $"{TypeHelper.TypeOf<T>.Type.Name} System is not valid");
             try
             {
                 return (T)PresentationManager.Instance.m_PresentationGroups[Instance.m_GroupHash].m_Systems[Instance.m_Index];
             }
             catch (Exception ex)
             {
-                $"{typeof(T).Name}: {Instance.m_GroupHash}, {Instance.m_Index}".ToLog();
+                $"{TypeHelper.TypeOf<T>.Type.Name}: {Instance.m_GroupHash}, {Instance.m_Index}".ToLog();
 
                 UnityEngine.Debug.LogError(ex);
                 throw;

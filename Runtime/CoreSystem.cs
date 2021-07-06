@@ -398,11 +398,7 @@ namespace Syadeu
             const string InstanceStr = "Instance";
 
             Instance.Initialize(SystemFlag.MainSystem);
-
-            //Type[] internalTypes = typeof(CoreSystem).Assembly.GetTypes()
-            //    .Where(other => other.GetCustomAttribute<StaticManagerIntializeOnLoadAttribute>() != null)
-            //    .ToArray();
-            Type[] internalTypes = GetInternalTypes(other => other.GetCustomAttribute<StaticManagerIntializeOnLoadAttribute>() != null);
+            Type[] internalTypes = TypeHelper.GetTypes(other => other.GetCustomAttribute<StaticManagerIntializeOnLoadAttribute>() != null);
 
             MethodInfo method = null;
             for (int i = 0; i < internalTypes.Length; i++)
@@ -419,49 +415,6 @@ namespace Syadeu
             {
                 Syadeu.Database.Lua.LuaManager.Instance.Initialize();
             }
-
-            if (SyadeuSettings.Instance.m_EnableAutoStaticInitialize)
-            {
-                for (int i = 0; i < SyadeuSettings.Instance.m_AutoInitializeTargetAssembly.Length; i++)
-                {
-                    Type[] types = Assembly.Load(SyadeuSettings.Instance.m_AutoInitializeTargetAssembly[i])
-                        .GetTypes()
-                        .Where(other => other.GetCustomAttribute<StaticManagerIntializeOnLoadAttribute>() != null)
-                        .ToArray();
-
-                    for (int j = 0; j < types.Length; j++)
-                    {
-                        method = types[j].BaseType.GetProperty(InstanceStr)?.GetGetMethod();
-                        if (method == null)
-                        {
-                            throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
-                                $"{types[j].Name}: StaticManagerInitializeOnLoad 어트리뷰트는 StaticManager를 상속받은 객체에만 사용되어야합니다.");
-                        }
-                        method.Invoke(null, null);
-                    }
-                }
-            }
-        }
-        private static Type[] s_InternalTypes = null;
-        private static Type[] s_MainAssemblyTypes = null;
-        internal static Type[] GetInternalTypes(Func<Type, bool> predictate = null)
-        {
-            if (s_InternalTypes == null) s_InternalTypes = typeof(CoreSystem).Assembly.GetTypes();
-            if (predictate != null)
-            {
-                return s_InternalTypes.Where(predictate).ToArray();
-            }
-            return s_InternalTypes;
-        }
-        internal static Type[] GetMainAssemblyTypes(Func<Type, bool> predictate = null)
-        {
-            const string assemblyName = "Assembly-CSharp";
-            if (s_MainAssemblyTypes == null) s_MainAssemblyTypes = Assembly.Load(assemblyName).GetTypes();
-            if (predictate != null)
-            {
-                return s_MainAssemblyTypes.Where(predictate).ToArray();
-            }
-            return s_MainAssemblyTypes;
         }
 
         private void Awake()
@@ -1748,7 +1701,7 @@ namespace Syadeu
         public static void LogWarning(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Warning, msg);
         public static void LogError(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Error, msg);
 
-        public static void NotNull(object obj) => LogManager.NotNull(obj, string.Empty);
+        public static void IsNotNull(object obj) => LogManager.NotNull(obj, string.Empty);
         public static void NotNull(object obj, string msg) => LogManager.NotNull(obj, msg);
 
         public static void True(bool value, string msg) => LogManager.True(value, msg);

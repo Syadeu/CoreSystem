@@ -1,13 +1,4 @@
-﻿//#undef UNITY_ADDRESSABLES
-
-
-#if UNITY_EDITOR
-#endif
-
-#if UNITY_ADDRESSABLES
-#endif
-
-using Syadeu.Database;
+﻿using Syadeu.Database;
 using System;
 
 namespace Syadeu.Presentation

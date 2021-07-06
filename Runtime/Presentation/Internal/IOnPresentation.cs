@@ -1,6 +1,6 @@
-﻿namespace Syadeu.Presentation
+﻿namespace Syadeu.Presentation.Internal
 {
-    public interface IOnPresentation
+    internal interface IOnPresentation
     {
         PresentationResult OnPresentation();
         PresentationResult OnPresentationAsync();

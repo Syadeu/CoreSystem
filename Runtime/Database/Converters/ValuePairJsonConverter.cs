@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-
+using Syadeu.Internal;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -16,7 +16,7 @@ namespace Syadeu.Database.Converters
         public override bool CanWrite => true;
         public override bool CanRead => true;
 
-        public override bool CanConvert(Type objectType) => objectType == typeof(ValuePair);
+        public override bool CanConvert(Type objectType) => objectType == TypeHelper.TypeOf<ValuePair>.Type;
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
             ValuePair valuePair = (ValuePair)value;
@@ -74,7 +74,7 @@ namespace Syadeu.Database.Converters
 
             ValuePair valuePair;
             
-            ValueType valueType = (ValueType)Enum.Parse(typeof(ValueType), jo[c_ValueType].ToString());
+            ValueType valueType = (ValueType)Enum.Parse(TypeHelper.TypeOf<ValueType>.Type, jo[c_ValueType].ToString());
             string name = jo[c_Name].ToString();
             JToken valueToken = jo[c_Value];
 

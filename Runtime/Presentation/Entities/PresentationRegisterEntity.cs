@@ -1,4 +1,6 @@
-﻿namespace Syadeu.Presentation
+﻿using Syadeu.Presentation.Internal;
+
+namespace Syadeu.Presentation.Entities
 {
     /// <summary>
     /// <see cref="PresentationManager"/>에게 시스템을 등록하기 위한 레지스터 클래스입니다. 참조한 클래스는 그룹이 됩니다.

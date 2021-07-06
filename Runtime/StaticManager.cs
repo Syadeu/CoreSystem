@@ -1,5 +1,6 @@
 ﻿using Syadeu.Database;
 using Syadeu.Entities;
+using Syadeu.Internal;
 using UnityEngine;
 
 namespace Syadeu
@@ -20,15 +21,15 @@ namespace Syadeu
             {
                 if (m_Instance == null)
                 {
-                    global::System.Type t = typeof(T);
+                    global::System.Type t = TypeHelper.TypeOf<T>.Type;
 #if UNITY_EDITOR
                     if (CoreSystem.s_BlockCreateInstance)
                     {
                         throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
-                            $"종료 중에 StaticManager<{typeof(T).Name}> 인스턴스를 생성하려 합니다.");
+                            $"종료 중에 StaticManager<{TypeHelper.TypeOf<T>.Name}> 인스턴스를 생성하려 합니다.");
                     }
                     if (IsMainthread() && !Application.isPlaying) throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
-                        $"StaticManager<{typeof(T).Name}>의 인스턴스 객체는 플레이중에만 생성되거나 받아올 수 있습니다.");
+                        $"StaticManager<{TypeHelper.TypeOf<T>.Name}>의 인스턴스 객체는 플레이중에만 생성되거나 받아올 수 있습니다.");
 #endif
                     if (!IsMainthread())
                     {
@@ -40,7 +41,7 @@ namespace Syadeu
                     }
                     if (m_Instance != null) return m_Instance;
 
-                    if (t != typeof(CoreSystem) && !CoreSystem.Initialized)
+                    if (TypeHelper.TypeOf<T>.Type != TypeHelper.TypeOf<CoreSystem>.Type && !CoreSystem.Initialized)
                     {
                         CoreSystem.Instance.Initialize(SystemFlag.MainSystem);
                         DontDestroyOnLoad(CoreSystem.Instance.gameObject);
@@ -70,9 +71,9 @@ namespace Syadeu
 #if UNITY_EDITOR
                     if (!string.IsNullOrEmpty(ins.DisplayName))
                     {
-                        ins.gameObject.name = $"{ins.DisplayName} : StaticManager<{typeof(T).Name}>";
+                        ins.gameObject.name = $"{ins.DisplayName} : StaticManager<{TypeHelper.TypeOf<T>.Name}>";
                     }
-                    else ins.gameObject.name = $"StaticManager.{typeof(T).Name}";
+                    else ins.gameObject.name = $"StaticManager.{TypeHelper.TypeOf<T>.Name}";
 #endif
 
                     //if (ins.DontDestroy) DontDestroyOnLoad(ins.gameObject);
@@ -110,7 +111,7 @@ namespace Syadeu
 
                     ins.gameObject.isStatic = true;
                     m_Instance = ins;
-                    CoreSystem.Log(Channel.Core, $"{t.Name} is initialized");
+                    CoreSystem.Log(Channel.Core, $"{TypeHelper.TypeOf<T>.Name} is initialized");
 
                     ConfigLoader.LoadConfig(ins);
                     ins.OnStart();

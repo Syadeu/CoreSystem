@@ -1,4 +1,5 @@
 ﻿using Syadeu.Database;
+using Syadeu.Internal;
 using Syadeu.Mono;
 using System;
 using System.Collections;
@@ -238,7 +239,7 @@ namespace Syadeu.Mono
                 if (_ins != null) return _ins;
             }
 
-            throw new InvalidCastException($"CoreSystem.Prefab :: {typeof(T).Name}와 일치하는 타입이 프리팹 리스트에 등록되지않아 찾을 수 없음");
+            throw new InvalidCastException($"CoreSystem.Prefab :: {TypeHelper.TypeOf<T>.Name}와 일치하는 타입이 프리팹 리스트에 등록되지않아 찾을 수 없음");
         }
 #if UNITY_ADDRESSABLES
         public static PromiseRecycleableObject GetRecycleObjectAsync<T>() where T : Component
@@ -260,7 +261,7 @@ namespace Syadeu.Mono
                 }
             }
 
-            if (obj == null) throw new InvalidCastException($"CoreSystem.Prefab :: {typeof(T).Name}와 일치하는 타입이 프리팹 리스트에 등록되지않아 찾을 수 없음");
+            if (obj == null) throw new InvalidCastException($"CoreSystem.Prefab :: {TypeHelper.TypeOf<T>.Name}와 일치하는 타입이 프리팹 리스트에 등록되지않아 찾을 수 없음");
             for (int i = 0; i < obj.Instances.Count; i++)
             {
                 if (obj.Instances[i] == null)

@@ -53,7 +53,7 @@ namespace SyadeuEditor.Audio.Unity
             yield return new WaitUntil(() => Selection.activeObject != null);
 
             AudioMixer masterMixer = (AudioMixer)Selection.activeObject;
-            CoreSystem.NotNull(masterMixer);
+            CoreSystem.IsNotNull(masterMixer);
             CoreSystem.Log(Channel.Editor, $"{masterMixer.name}");
         }
     }

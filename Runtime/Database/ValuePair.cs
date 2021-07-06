@@ -7,6 +7,7 @@ using System;
 using System.Collections;
 
 using Syadeu.Database.Lua;
+using Syadeu.Internal;
 
 namespace Syadeu.Database
 {
@@ -38,19 +39,19 @@ namespace Syadeu.Database
             if (value == null) return new ValueNull(name);
 
             Type t = value.GetType();
-            if (t.Equals(typeof(int)))
+            if (t.Equals(TypeHelper.TypeOf<int>.Type))
             {
                 return Int(name, Convert.ToInt32(value));
             }
-            else if (t.Equals(typeof(float)) || t.Equals(typeof(double)))
+            else if (t.Equals(TypeHelper.TypeOf<float>.Type) || t.Equals(TypeHelper.TypeOf<double>.Type))
             {
                 return Double(name, Convert.ToDouble(value));
             }
-            else if (t.Equals(typeof(string)))
+            else if (t.Equals(TypeHelper.TypeOf<string>.Type))
             {
                 return String(name, Convert.ToString(value));
             }
-            else if (t.Equals(typeof(bool)))
+            else if (t.Equals(TypeHelper.TypeOf<bool>.Type))
             {
                 return Bool(name, Convert.ToBoolean(value));
             }
@@ -93,19 +94,19 @@ namespace Syadeu.Database
 
         public override ValueType GetValueType()
         {
-            if (typeof(T).Equals(typeof(int)))
+            if (TypeHelper.TypeOf<T>.Type.Equals(typeof(int)))
             {
                 return ValueType.Int32;
             }
-            else if (typeof(T).Equals(typeof(float)) || typeof(T).Equals(typeof(double)))
+            else if (TypeHelper.TypeOf<T>.Type.Equals(typeof(float)) || typeof(T).Equals(typeof(double)))
             {
                 return ValueType.Double;
             }
-            else if (typeof(T).Equals(typeof(string)))
+            else if (TypeHelper.TypeOf<T>.Type.Equals(typeof(string)))
             {
                 return ValueType.String;
             }
-            else if (typeof(T).Equals(typeof(bool)))
+            else if (TypeHelper.TypeOf<T>.Type.Equals(typeof(bool)))
             {
                 return ValueType.Boolean;
             }

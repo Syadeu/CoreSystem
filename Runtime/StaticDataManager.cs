@@ -1,5 +1,6 @@
 ﻿using Syadeu.Database;
 using Syadeu.Entities;
+using Syadeu.Internal;
 using System;
 using UnityEngine;
 
@@ -20,7 +21,7 @@ namespace Syadeu
                 {
 #if UNITY_EDITOR
                     if (IsMainthread() && !Application.isPlaying) throw new CoreSystemException(CoreSystemExceptionFlag.Database,
-                        $"StaticDataManager<{typeof(T).Name}>의 인스턴스 객체는 플레이중에만 생성되거나 받아올 수 있습니다.");
+                        $"StaticDataManager<{TypeHelper.TypeOf<T>.Name}>의 인스턴스 객체는 플레이중에만 생성되거나 받아올 수 있습니다.");
 #endif
 
                     m_Instance = CoreSystem.GetManager<T>();
@@ -35,7 +36,7 @@ namespace Syadeu
 
                     ins.OnInitialize();
                     m_Instance = ins;
-                    CoreSystem.Log(Channel.Core, $"{typeof(T).Name} is initialized");
+                    CoreSystem.Log(Channel.Core, $"{TypeHelper.TypeOf<T>.Name} is initialized");
 
                     ConfigLoader.LoadConfig(ins);
                     ins.OnStart();

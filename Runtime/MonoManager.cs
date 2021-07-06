@@ -1,5 +1,6 @@
 ﻿using Syadeu.Database;
 using Syadeu.Entities;
+using Syadeu.Internal;
 using Syadeu.Mono;
 
 using UnityEngine;
@@ -23,7 +24,7 @@ namespace Syadeu
                 if (m_Instance == null)
                 {
                     throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
-                        $"MonoManager를 상속받는 {typeof(T).Name}은 인스턴스가 자동으로 생성되지 않습니다.\n" +
+                        $"MonoManager를 상속받는 {TypeHelper.TypeOf<T>.Name}은 인스턴스가 자동으로 생성되지 않습니다.\n" +
                         $"먼저 컴포넌트를 빈 GameObject에 추가해주세요, 혹은 호출이 너무 일찍되었습니다. Awake에서 호출하지마세요.");
                 }
 
@@ -79,9 +80,9 @@ namespace Syadeu
 
             if (!string.IsNullOrEmpty(DisplayName))
             {
-                name = $"{DisplayName} : MonoManager<{typeof(T).Name}>";
+                name = $"{DisplayName} : MonoManager<{TypeHelper.TypeOf<T>.Name}>";
             }
-            else name = $"MonoManager.{typeof(T).Name}";
+            else name = $"MonoManager.{TypeHelper.TypeOf<T>.Name}";
 #endif
             if (!SyadeuSettings.Instance.m_VisualizeObjects)
             {
@@ -108,7 +109,7 @@ namespace Syadeu
                 transform.SetParent(InstanceGroupTr);
             }
 
-            CoreSystem.Log(Channel.Core, $"{typeof(T).Name} is initialized");
+            CoreSystem.Log(Channel.Core, $"{TypeHelper.TypeOf<T>.Name} is initialized");
 
             ConfigLoader.LoadConfig(this);
             OnStart();

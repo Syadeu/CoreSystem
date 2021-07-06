@@ -1,5 +1,6 @@
 ﻿using Syadeu;
 using Syadeu.Database;
+using Syadeu.Internal;
 using Syadeu.Mono;
 using Syadeu.Mono.Creature;
 using System;
@@ -216,7 +217,7 @@ namespace Syadeu.Mono.Creature
                     .GetMembers()
                     .Where((other) =>
                     {
-                        if (other is FieldInfo field && field.FieldType.GetInterfaces().Contains(typeof(IList)))
+                        if (other is FieldInfo field && field.FieldType.GetInterfaces().Contains(TypeHelper.TypeOf<IList>.Type))
                         {
                             return true;
                         }
@@ -226,7 +227,7 @@ namespace Syadeu.Mono.Creature
             candidates.AddRange(t.GetMembers()
                 .Where((other) =>
                 {
-                    if (other is FieldInfo field && field.FieldType.GetInterfaces().Contains(typeof(IList)))
+                    if (other is FieldInfo field && field.FieldType.GetInterfaces().Contains(TypeHelper.TypeOf<IList>.Type))
                     {
                         return true;
                     }

@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Syadeu.Internal;
 using System;
 
 namespace Syadeu.Database.Converters
@@ -9,7 +10,7 @@ namespace Syadeu.Database.Converters
         public override bool CanWrite => true;
         public override bool CanRead => true;
 
-        public override bool CanConvert(Type objectType) => objectType.Equals(typeof(ItemTypeEntity));
+        public override bool CanConvert(Type objectType) => objectType.Equals(TypeHelper.TypeOf<ItemTypeEntity>.Type);
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
@@ -20,7 +21,7 @@ namespace Syadeu.Database.Converters
             {
                 o = JObject.Parse(
                     JsonConvert.SerializeObject(
-                        value, typeof(ItemType), Formatting.Indented,
+                        value, TypeHelper.TypeOf<ItemType>.Type, Formatting.Indented,
                         BaseSpecifiedConcreteClassConverter<ItemTypeEntity>.SpecifiedSubclassConversion)
                     );
                 //BaseSpecifiedConcreteClassConverter<ItemTypeEntity>.SpecifiedSubclassConversion
@@ -31,7 +32,7 @@ namespace Syadeu.Database.Converters
             {
                 o = JObject.Parse(
                     JsonConvert.SerializeObject(
-                        value, typeof(ItemUseableType), Formatting.Indented,
+                        value, TypeHelper.TypeOf<ItemUseableType>.Type, Formatting.Indented,
                         BaseSpecifiedConcreteClassConverter<ItemTypeEntity>.SpecifiedSubclassConversion)
                     );
 
@@ -50,7 +51,7 @@ namespace Syadeu.Database.Converters
                 t = Type.GetType(val.ToString());
                 jo.Remove("Type");
             }
-            else t = typeof(ItemType);
+            else t = TypeHelper.TypeOf<ItemType>.Type;
 
             ItemTypeEntity itemType = (ItemTypeEntity)JsonConvert.DeserializeObject(
                         jo.ToString(), t,

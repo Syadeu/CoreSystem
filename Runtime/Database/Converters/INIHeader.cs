@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Syadeu.Internal;
+using System.Collections.Generic;
 
 namespace Syadeu.Database.Converters
 {
@@ -22,7 +23,7 @@ namespace Syadeu.Database.Converters
             return null;
         }
         public ValuePair GetOrCreateValue<T>(string name) where T : System.IConvertible
-            => GetOrCreateValue(typeof(T), name);
+            => GetOrCreateValue(TypeHelper.TypeOf<T>.Type, name);
         public ValuePair GetOrCreateValue(System.Type type, string name)
         {
             ValuePair value = GetValue(name);

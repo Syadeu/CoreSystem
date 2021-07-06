@@ -1,4 +1,5 @@
 ﻿using Syadeu.Database;
+using Syadeu.Internal;
 using Syadeu.Mono;
 using Syadeu.Unsafe;
 using System;
@@ -61,7 +62,7 @@ namespace Syadeu.Unsafe
         {
             fixed (byte* ptr = &arr[0])
             {
-                return (T)Marshal.PtrToStructure((IntPtr)ptr, typeof(T));
+                return (T)Marshal.PtrToStructure((IntPtr)ptr, TypeHelper.TypeOf<T>.Type);
             }
         }
     }
