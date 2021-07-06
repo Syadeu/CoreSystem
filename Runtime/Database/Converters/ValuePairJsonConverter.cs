@@ -5,7 +5,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Syadeu.Database
+namespace Syadeu.Database.Converters
 {
     internal class ValuePairJsonConverter : JsonConverter
     {

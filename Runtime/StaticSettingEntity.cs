@@ -2,6 +2,8 @@
 using System.IO;
 using System.Reflection;
 
+using Syadeu.Entities;
+
 #if UNITY_EDITOR
 using UnityEditor;
 #endif

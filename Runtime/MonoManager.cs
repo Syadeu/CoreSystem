@@ -1,5 +1,7 @@
 ﻿using Syadeu.Database;
+using Syadeu.Entities;
 using Syadeu.Mono;
+
 using UnityEngine;
 
 namespace Syadeu

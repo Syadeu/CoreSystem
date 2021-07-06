@@ -1,6 +1,6 @@
 ﻿using Syadeu.Mono;
 
-namespace Syadeu.Database
+namespace Syadeu.Database.Lua
 {
     internal sealed class CreatureBrainProxy : LuaProxyEntity<CreatureBrain>
     {

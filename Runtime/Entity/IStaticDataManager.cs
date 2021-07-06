@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Syadeu
+namespace Syadeu.Entities
 {
     public interface IStaticDataManager : IStaticManager
     {

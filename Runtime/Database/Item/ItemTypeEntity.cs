@@ -6,7 +6,7 @@ using System;
 
 namespace Syadeu.Database
 {
-    [Serializable][JsonConverter(typeof(ItemTypeJsonConverter))]
+    [Serializable][JsonConverter(typeof(Converters.ItemTypeJsonConverter))]
     public abstract class ItemTypeEntity
     {
         [JsonProperty(Order = 0, PropertyName = "Name")] public string m_Name;

@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-using Syadeu;
+using Syadeu.Entities;
 
 using UnityEngine;
 using UnityEditor;

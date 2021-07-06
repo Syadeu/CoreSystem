@@ -1,9 +1,6 @@
 ﻿using System;
 
-#if UNITY_ADDRESSABLES
-#endif
-
-namespace Syadeu.Database
+namespace Syadeu.Database.Lua
 {
     internal sealed class ItemProxy : LuaProxyEntity<Item>
     {

@@ -13,6 +13,8 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 #endif
 
+using Syadeu.Database.Lua;
+
 namespace Syadeu.Database
 {
     [Serializable]
@@ -21,7 +23,7 @@ namespace Syadeu.Database
         [JsonProperty(Order = 0, PropertyName = "Name")] public string m_Name;
         [JsonProperty(Order = 1, PropertyName = "Hash")] public Hash m_Hash;
 #if UNITY_ADDRESSABLES
-        [JsonConverter(typeof(AssetReferenceJsonConverter))]
+        [JsonConverter(typeof(Converters.AssetReferenceJsonConverter))]
         [JsonProperty(Order = 2, PropertyName = "ImagePath")] public AssetReference m_ImagePath;
 #endif
 

@@ -1,7 +1,4 @@
-﻿#if UNITY_ADDRESSABLES
-#endif
-
-namespace Syadeu.Database
+﻿namespace Syadeu.Database.Lua
 {
     internal abstract class ItemTypeProxyEntity<T> : LuaProxyEntity<T> where T : ItemTypeEntity
     {

@@ -1,4 +1,5 @@
 ﻿using Syadeu;
+using Syadeu.Entities;
 using SyadeuEditor.Tree;
 #if CORESYSTEM_FMOD
 using Syadeu.FMOD;

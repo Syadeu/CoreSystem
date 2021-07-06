@@ -3,7 +3,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Syadeu
+namespace Syadeu.Job
 {
     public interface IJob
     {

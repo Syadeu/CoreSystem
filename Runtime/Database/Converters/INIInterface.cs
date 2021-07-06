@@ -3,7 +3,7 @@ using System.IO;
 using System.Text;
 using UnityEditor.Graphs;
 
-namespace Syadeu.Database
+namespace Syadeu.Database.Converters
 {
     public static class INIInterface
     {

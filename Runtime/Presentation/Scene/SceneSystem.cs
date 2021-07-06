@@ -7,6 +7,7 @@ using System;
 using System.Linq;
 
 using Syadeu.Mono;
+using Syadeu.Entities;
 using Syadeu.Database;
 
 using System.Collections;

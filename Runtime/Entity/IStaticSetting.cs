@@ -1,4 +1,4 @@
-﻿namespace Syadeu
+﻿namespace Syadeu.Entities
 {
     public interface IStaticSetting : IInitialize
     {

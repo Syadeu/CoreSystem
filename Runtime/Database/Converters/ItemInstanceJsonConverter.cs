@@ -2,10 +2,7 @@
 using Newtonsoft.Json.Linq;
 using System;
 
-#if UNITY_ADDRESSABLES
-#endif
-
-namespace Syadeu.Database
+namespace Syadeu.Database.Converters
 {
     internal sealed class ItemInstanceJsonConverter : JsonConverter
     {

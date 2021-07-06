@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Syadeu
+namespace Syadeu.Entities
 {
     public abstract class SettingEntity : ScriptableObject
     {

@@ -1,7 +1,6 @@
 ﻿using MoonSharp.Interpreter;
-using UnityEngine;
 
-namespace Syadeu.Database
+namespace Syadeu.Database.Lua
 {
     public abstract class LuaProxyEntity<T>
     {

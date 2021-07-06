@@ -1,4 +1,6 @@
 ﻿using Syadeu.Mono;
+using Syadeu.Entities;
+using Syadeu.Internal;
 using System;
 using System.Collections;
 using System.Collections.Concurrent;

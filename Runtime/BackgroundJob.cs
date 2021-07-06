@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using Unity.Collections;
 
+using Syadeu.Job;
+using Syadeu.Entities;
+
 namespace Syadeu
 {
     /// <summary>

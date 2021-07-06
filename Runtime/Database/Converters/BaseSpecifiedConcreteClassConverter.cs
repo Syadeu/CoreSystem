@@ -3,7 +3,7 @@ using Newtonsoft.Json.Serialization;
 
 using System;
 
-namespace Syadeu.Database
+namespace Syadeu.Database.Converters
 {
     internal class BaseSpecifiedConcreteClassConverter<T> : DefaultContractResolver
     {

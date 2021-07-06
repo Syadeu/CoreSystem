@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 
+using Syadeu.Job;
+using Syadeu.Entities;
+
 namespace Syadeu
 {
     public sealed class ForegroundJob : IJob

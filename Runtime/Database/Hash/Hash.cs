@@ -3,7 +3,7 @@ using System;
 
 namespace Syadeu.Database
 {
-    [Serializable] [JsonConverter(typeof(HashJsonConverter))]
+    [Serializable] [JsonConverter(typeof(Converters.HashJsonConverter))]
     public struct Hash : IEquatable<Hash>
     {
         public enum Algorithm

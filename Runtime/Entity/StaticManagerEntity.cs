@@ -4,7 +4,7 @@ using System.Collections.Concurrent;
 using System.Threading;
 using UnityEngine;
 
-namespace Syadeu
+namespace Syadeu.Entities
 {
     public abstract class StaticManagerEntity : ManagerEntity
     {

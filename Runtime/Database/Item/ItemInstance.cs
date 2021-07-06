@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace Syadeu.Database
 {
-    [Serializable] [JsonConverter(typeof(ItemInstanceJsonConverter))]
+    [Serializable] [JsonConverter(typeof(Converters.ItemInstanceJsonConverter))]
     public sealed class ItemInstance : IDisposable, IValidation
     {
         private readonly Item m_Data;

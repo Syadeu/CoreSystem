@@ -6,7 +6,7 @@ namespace Syadeu.Database
     public sealed class Config
     {
         internal readonly ConfigLocation m_Location;
-        internal readonly INIFile m_INI;
+        internal readonly Converters.INIFile m_INI;
 
         internal readonly string m_Path;
 
@@ -19,11 +19,11 @@ namespace Syadeu.Database
             m_Path = path;
             if (!File.Exists(path))
             {
-                m_INI = new INIFile(new List<ValuePair>(), new List<INIHeader>());
+                m_INI = new Converters.INIFile(new List<ValuePair>(), new List<Converters.INIHeader>());
             }
             else
             {
-                m_INI = INIInterface.Read(path);
+                m_INI = Converters.INIInterface.Read(path);
             }
         }
 
@@ -35,7 +35,7 @@ namespace Syadeu.Database
 
         public void Save()
         {
-            INIInterface.Write(m_Path, m_INI);
+            Converters.INIInterface.Write(m_Path, m_INI);
         }
     }
 }

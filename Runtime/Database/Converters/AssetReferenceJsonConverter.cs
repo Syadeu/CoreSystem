@@ -6,7 +6,7 @@ using System;
 using UnityEngine.AddressableAssets;
 #endif
 
-namespace Syadeu.Database
+namespace Syadeu.Database.Converters
 {
 #if UNITY_ADDRESSABLES
     internal sealed class AssetReferenceJsonConverter : JsonConverter

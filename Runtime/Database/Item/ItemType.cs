@@ -2,8 +2,7 @@
 using System;
 using UnityEngine;
 
-#if UNITY_ADDRESSABLES
-#endif
+using Syadeu.Database.Lua;
 
 namespace Syadeu.Database
 {

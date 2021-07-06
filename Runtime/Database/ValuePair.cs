@@ -6,9 +6,11 @@ using Syadeu.Mono;
 using System;
 using System.Collections;
 
+using Syadeu.Database.Lua;
+
 namespace Syadeu.Database
 {
-    [Serializable] [JsonConverter(typeof(ValuePairJsonConverter))]
+    [Serializable] [JsonConverter(typeof(Converters.ValuePairJsonConverter))]
     public abstract class ValuePair : ICloneable, IEquatable<ValuePair>
     {
         [UnityEngine.SerializeField][JsonProperty(Order = 0)] protected string m_Name;

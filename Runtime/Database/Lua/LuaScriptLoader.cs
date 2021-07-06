@@ -5,8 +5,6 @@ using MoonSharp.Interpreter;
 using System.Linq;
 using MoonSharp.Interpreter.Loaders;
 using System.IO;
-#if UNITY_EDITOR
-#endif
 
 namespace Syadeu.Database.Lua
 {
