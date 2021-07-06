@@ -32,9 +32,12 @@ namespace Syadeu
             white,
             yellow
         }
+        internal static Channel s_DisplayLogChannel = Channel.All;
 #line hidden
         public static void Log(Channel channel, ResultFlag result, string msg)
         {
+            if (!s_DisplayLogChannel.HasFlag(channel)) return;
+
             string text;
             switch (result)
             {
@@ -52,29 +55,70 @@ namespace Syadeu
                     break;
             }
         }
-        public static void NotNull(object obj, string msg)
+
+        private static string AssertText(string msg)
         {
             const string assert = "Assert";
+            return string.Format(c_LogAssertText, StringColor.lime, string.Format(c_LogText, StringColor.maroon, assert), msg);
+        }
+
+        #region Asserts
+        public static void Null(object obj, string msg)
+        {
+            const string defaultMsg = "Object {0} is not null. Expected null";
+            if (obj == null) return;
+            if (string.IsNullOrEmpty(msg)) msg = string.Format(defaultMsg, obj);
+
+            Debug.LogError(AssertText(msg));
+        }
+        public static void NotNull(object obj, string msg)
+        {
             const string defaultMsg = "Object {0} is null. Expected not null";
             if (obj != null) return;
             if (string.IsNullOrEmpty(msg)) msg = string.Format(defaultMsg, obj);
 
-            string text = string.Format(c_LogAssertText, StringColor.lime, string.Format(c_LogText, StringColor.maroon, assert), msg);
-            Debug.LogError(text);
+            Debug.LogError(AssertText(msg));
         }
+
+        public static void True(bool value, string msg)
+        {
+            const string defaultMsg = "{0} is false. Expected true";
+            if (value) return;
+            if (string.IsNullOrEmpty(msg)) msg = string.Format(defaultMsg, value);
+
+            Debug.LogError(AssertText(msg));
+        }
+        public static void False(bool value, string msg)
+        {
+            const string defaultMsg = "{0} is true. Expected false";
+            if (!value) return;
+            if (string.IsNullOrEmpty(msg)) msg = string.Format(defaultMsg, value);
+
+            Debug.LogError(AssertText(msg));
+        }
+
+        #endregion
 #line default
     }
+
+    [System.Flags]
     public enum Channel
     {
-        None,
+        None = 0,
 
         Core = 1 << 0,
+        Editor = 1 << 1,
 
-        Jobs,
-        Lua,
-        Scene,
-        Presentation,
-        Audio,
+        Jobs = 1 << 10,
+        Lua = 1 << 11,
+
+        Mono = 1 << 20,
+        Creature = 1 << 21,
+
+        Presentation = 1 << 30,
+        Scene = 1 << 31,
+
+        Audio = 1 << 40,
 
         All = ~0
     }

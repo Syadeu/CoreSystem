@@ -386,6 +386,8 @@ namespace Syadeu
 
         internal bool m_CleanupManagers = false;
 
+        [SerializeField] private Channel m_DisplayLogChannel = Channel.All;
+
         public override bool HideInHierarchy => false;
 
         [RuntimeInitializeOnLoadMethod]
@@ -812,6 +814,8 @@ namespace Syadeu
             int counter = 0, tickCounter = 0;
             while (true)
             {
+                LogManager.s_DisplayLogChannel = m_DisplayLogChannel;
+
                 if (!m_SimWatcher.WaitOne())
                 {
                     tickCounter++;
@@ -1739,6 +1743,9 @@ namespace Syadeu
 
         public static void NotNull(object obj) => LogManager.NotNull(obj, string.Empty);
         public static void NotNull(object obj, string msg) => LogManager.NotNull(obj, msg);
+
+        public static void True(bool value, string msg) => LogManager.True(value, msg);
+        public static void False(bool value, string msg) => LogManager.False(value, msg);
 #line default
         #endregion
 

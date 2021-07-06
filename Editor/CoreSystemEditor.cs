@@ -17,6 +17,8 @@ namespace SyadeuEditor
     {
         //private bool m_OpenBackgroundRoutines = false;
 
+        private SerializedProperty m_DisplayLogChannel;
+
         private void OnEnable()
         {
             m_ManagerView = new VerticalTreeView(Asset, serializedObject);
@@ -42,6 +44,8 @@ namespace SyadeuEditor
 
                 ValidateManagerView();
             }
+
+            m_DisplayLogChannel = serializedObject.FindProperty("m_DisplayLogChannel");
         }
 
         private void OnDisable()
@@ -211,67 +215,8 @@ namespace SyadeuEditor
             EditorUtils.StringHeader("Generals", 15);
             EditorGUI.indentLevel += 1;
 
-            #region Manager
+            EditorGUILayout.PropertyField(m_DisplayLogChannel);
             m_ManagerView.OnGUI();
-
-            //m_OpenManagerList = EditorUtils.Foldout(m_OpenManagerList, $"현재 생성된 파괴불가 매니저: {CoreSystem.GetStaticManagers().Count}개");
-            //if (m_OpenManagerList)
-            //{
-            //    EditorGUI.indentLevel += 1;
-                
-            //    for (int i = 0; i < CoreSystem.GetStaticManagers().Count; i++)
-            //    {
-            //        IStaticMonoManager mgr = CoreSystem.GetStaticManagers()[i] as IStaticMonoManager;
-            //        if (mgr.HideInHierarchy)
-            //        {
-            //            EditorGUI.BeginDisabledGroup(true);
-            //            EditorGUILayout.LabelField($"> {CoreSystem.GetStaticManagers()[i].GetType().Name}", new GUIStyle("TextField"));
-            //            EditorGUI.EndDisabledGroup();
-            //        }
-            //        else
-            //        {
-            //            if (EditorUtils.Button($"> {CoreSystem.GetStaticManagers()[i].GetType().Name}", "TextField", 1))
-            //            {
-            //                EditorGUIUtility.PingObject(mgr.gameObject);
-            //            }
-            //        }
-            //    }
-                
-            //    EditorGUI.indentLevel -= 1;
-            //}
-
-            //IReadOnlyList<IStaticManager> _insMgrs = CoreSystem.GetInstanceManagers();
-            //m_OpenInsManagerList = EditorUtils.Foldout(m_OpenInsManagerList, $"현재 생성된 인스턴스 매니저: {_insMgrs.Count}개");
-            //if (m_OpenInsManagerList)
-            //{
-            //    EditorGUI.indentLevel += 1;
-
-            //    for (int i = 0; i < _insMgrs.Count; i++)
-            //    {
-            //        IStaticMonoManager mgr = _insMgrs[i] as IStaticMonoManager;
-            //        if (mgr.HideInHierarchy)
-            //        {
-            //            EditorGUI.BeginDisabledGroup(true);
-            //            EditorGUILayout.LabelField($"> {_insMgrs[i].GetType().Name}", new GUIStyle("TextField"));
-            //            EditorGUI.EndDisabledGroup();
-            //        }
-            //        else
-            //        {
-            //            if (EditorUtils.Button($"> {_insMgrs[i].GetType().Name}", "TextField", 1))
-            //            {
-            //                EditorGUIUtility.PingObject(mgr.gameObject);
-            //            }
-            //        }
-            //    }
-
-            //    EditorGUI.indentLevel -= 1;
-            //}
-
-            //IReadOnlyList<IStaticManager> _dataMgrs = CoreSystem.GetDataManagers();
-            //EditorUtils.ShowSimpleListLabel(ref m_OpenDataManagerList, 
-            //    $"현재 생성된 데이터 매니저: {_dataMgrs.Count}개",
-            //    _dataMgrs, new GUIStyle("TextField"), true);
-            #endregion
 
             EditorGUI.indentLevel -= 1;
             EditorUtils.SectorLine();
@@ -279,23 +224,7 @@ namespace SyadeuEditor
             EditorUtils.StringHeader("Routines", 15);
             EditorGUI.indentLevel += 1;
 
-            #region Routine
-
             m_RoutinesView.OnGUI();
-
-            //m_OpenBackgroundRoutines = EditorGUILayout.Foldout(m_OpenBackgroundRoutines, "Open Background Routines");
-            //if (m_OpenBackgroundRoutines)
-            //{
-            //    IReadOnlyList<CoreRoutine> backgroundRoutines = CoreSystem.Instance.GetCustomBackgroundUpdates();
-            //    EditorGUI.indentLevel += 1;
-            //    for (int i = 0; i < backgroundRoutines.Count; i++)
-            //    {
-            //        EditorGUILayout.LabelField(backgroundRoutines[i].ObjectName);
-            //    }
-            //    EditorGUI.indentLevel -= 1;
-            //}
-
-            #endregion
 
             EditorGUI.indentLevel -= 1;
             EditorGUILayout.Space();
@@ -320,6 +249,8 @@ namespace SyadeuEditor
             #endregion
 
             EditorGUI.indentLevel -= 1;
+
+            serializedObject.ApplyModifiedProperties();
         }
 
 #if CORESYSTEM_FMOD
