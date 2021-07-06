@@ -545,20 +545,17 @@ namespace Syadeu
         }
         private static IEnumerator EditorCoroutineWorker(IDictionary<CoreRoutine, object> list)
         {
+            List<CoreRoutine> _waitForDeletion = new List<CoreRoutine>();
+
             while (true)
             {
                 #region Editor Coroutine
                 if (list.Count > 0)
                 {
-                    List<CoreRoutine> _waitForDeletion = null;
                     foreach (var item in list)
                     {
                         if (item.Value == null)
                         {
-                            if (_waitForDeletion == null)
-                            {
-                                _waitForDeletion = new List<CoreRoutine>();
-                            }
                             _waitForDeletion.Add(item.Key);
                             //list.Remove(item.Key);
                             continue;
@@ -568,10 +565,6 @@ namespace Syadeu
                         {
                             if (!item.Key.Iterator.MoveNext())
                             {
-                                if (_waitForDeletion == null)
-                                {
-                                    _waitForDeletion = new List<CoreRoutine>();
-                                }
                                 _waitForDeletion.Add(item.Key);
 
                                 if (item.Value is int progressID) Progress.Remove(progressID);
@@ -584,35 +577,33 @@ namespace Syadeu
                             {
                                 if (!item.Key.Iterator.MoveNext())
                                 {
-                                    if (_waitForDeletion == null)
-                                    {
-                                        _waitForDeletion = new List<CoreRoutine>();
-                                    }
                                     _waitForDeletion.Add(item.Key);
 
                                     if (item.Value is int progressID) Progress.Remove(progressID);
                                 }
                             }
-                            else if (item.Key.Iterator.Current.GetType() == typeof(bool) &&
-                                    Convert.ToBoolean(item.Key.Iterator.Current) == true)
+                            else if (item.Key.Iterator.Current is ICustomYieldAwaiter yieldAwaiter &&
+                                !yieldAwaiter.KeepWait)
                             {
                                 if (!item.Key.Iterator.MoveNext())
                                 {
-                                    if (_waitForDeletion == null)
-                                    {
-                                        _waitForDeletion = new List<CoreRoutine>();
-                                    }
                                     _waitForDeletion.Add(item.Key);
 
                                     if (item.Value is int progressID) Progress.Remove(progressID);
                                 }
                             }
+                            //else if (item.Key.Iterator.Current.GetType() == typeof(bool) &&
+                            //        Convert.ToBoolean(item.Key.Iterator.Current) == true)
+                            //{
+                            //    if (!item.Key.Iterator.MoveNext())
+                            //    {
+                            //        _waitForDeletion.Add(item.Key);
+
+                            //        if (item.Value is int progressID) Progress.Remove(progressID);
+                            //    }
+                            //}
                             else if (item.Key.Iterator.Current is YieldInstruction baseYield)
                             {
-                                if (_waitForDeletion == null)
-                                {
-                                    _waitForDeletion = new List<CoreRoutine>();
-                                }
                                 _waitForDeletion.Add(item.Key);
 
                                 if (item.Value is int progressID) Progress.Remove(progressID);
@@ -623,13 +614,11 @@ namespace Syadeu
                         }
                     }
 
-                    if (_waitForDeletion != null)
+                    for (int i = 0; i < _waitForDeletion.Count; i++)
                     {
-                        for (int i = 0; i < _waitForDeletion.Count; i++)
-                        {
-                            list.Remove(_waitForDeletion[i]);
-                        }
+                        list.Remove(_waitForDeletion[i]);
                     }
+                    _waitForDeletion.Clear();
                 }
                 #endregion
 
