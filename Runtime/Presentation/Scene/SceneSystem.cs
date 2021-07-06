@@ -75,7 +75,13 @@ namespace Syadeu.Presentation
         {
             if (m_DebugMode)
             {
-                //SceneManager.UnloadSceneAsync(m_LoadingScene);
+                if (SceneManager.GetActiveScene().path.Equals(SceneList.Instance.MasterScene))
+                {
+                    SetupMasterScene();
+                    SetupLoadingScene();
+
+                    LoadStartScene(3);
+                }
             }
             else
             {
@@ -230,8 +236,8 @@ namespace Syadeu.Presentation
 #endif
             onCompleted = null)
         {
-            if (m_DebugMode) throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
-                "디버그 모드일때에는 씬 전환을 할 수 없습니다. DebugMode = False 로 설정한 후, MasterScene 에서 시작해주세요.");
+            //if (m_DebugMode) throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
+            //    "디버그 모드일때에는 씬 전환을 할 수 없습니다. DebugMode = False 로 설정한 후, MasterScene 에서 시작해주세요.");
             if (IsSceneLoading || m_SceneActiveTimer.IsTimerActive() || m_AsyncOperation != null)
             {
                 "cant load while in loading".ToLogError();
