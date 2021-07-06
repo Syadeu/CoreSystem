@@ -682,20 +682,36 @@ namespace Syadeu
                                     if (item.Value is int progressID) Progress.Remove(progressID);
                                 }
                             }
-                            else if (item.Key.Iterator.Current.GetType() == typeof(bool) &&
-                                    Convert.ToBoolean(item.Key.Iterator.Current) == true)
+                            else if (item.Key.Iterator.Current is ICustomYieldAwaiter yieldAwaiter &&
+                                !yieldAwaiter.KeepWait)
                             {
                                 if (!item.Key.Iterator.MoveNext())
                                 {
+                                    //m_CustomUpdates.TryRemove(item.Key, out _);
+                                    //m_RoutineChanged = true;
                                     if (_waitForDeletion == null)
                                     {
                                         _waitForDeletion = new List<CoreRoutine>();
                                     }
                                     _waitForDeletion.Add(item.Key);
-                                    
+
                                     if (item.Value is int progressID) Progress.Remove(progressID);
                                 }
                             }
+                            //else if (item.Key.Iterator.Current.GetType() == typeof(bool) &&
+                            //        Convert.ToBoolean(item.Key.Iterator.Current) == true)
+                            //{
+                            //    if (!item.Key.Iterator.MoveNext())
+                            //    {
+                            //        if (_waitForDeletion == null)
+                            //        {
+                            //            _waitForDeletion = new List<CoreRoutine>();
+                            //        }
+                            //        _waitForDeletion.Add(item.Key);
+
+                            //        if (item.Value is int progressID) Progress.Remove(progressID);
+                            //    }
+                            //}
                             else if (item.Key.Iterator.Current is YieldInstruction baseYield)
                             {
                                 if (_waitForDeletion == null)

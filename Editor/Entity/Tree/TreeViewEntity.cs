@@ -6,6 +6,8 @@ using UnityEditor;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 
+using Debug = UnityEngine.Debug;
+
 namespace SyadeuEditor.Tree
 {
     public class TreeViewEntity : TreeView

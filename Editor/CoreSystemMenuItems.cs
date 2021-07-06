@@ -10,6 +10,7 @@ using Syadeu.Mono;
 using Syadeu.Mono.Creature;
 using UnityEditor;
 using UnityEngine;
+using SyadeuEditor.Audio.Unity;
 
 #if CORESYSTEM_FMOD
 using Syadeu.FMOD;
@@ -68,7 +69,19 @@ namespace SyadeuEditor
             Selection.activeObject = CreatureSettings.Instance;
             EditorApplication.ExecuteMenuItem("Window/General/Inspector");
         }
+#if CORESYSTEM_UNITYAUDIO
+        static UnityAudioWindow m_UnityAudioWindow;
+        [MenuItem("CoreSystem/Unity/Unity Audio Window")]
+        public static void UnityAudioWindow()
+        {
+            if (m_UnityAudioWindow == null)
+            {
+                m_UnityAudioWindow = GetWindow<UnityAudioWindow>();
 
+            }
+            m_UnityAudioWindow.ShowUtility();
+        }
+#endif
         static SQLiteWindow m_SQLiteWindow;
         [MenuItem("CoreSystem/SQLite/SQLite Window", priority = 300)]
         public static void Initialize()

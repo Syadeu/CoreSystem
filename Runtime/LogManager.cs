@@ -7,7 +7,7 @@ namespace Syadeu
     {
         const string c_LogText = "<color={0}>{1}</color>";
         const string c_LogBaseText = "[<color={0}>CoreSystem</color>][{1}][{2}]: {3}";
-        const string c_LogAssertText = "[<color={0}>CoreSystem</color>][{1}]: {3}";
+        const string c_LogAssertText = "[<color={0}>CoreSystem</color>][{1}]: {2}";
         private enum StringColor
         {
             black,
@@ -65,17 +65,19 @@ namespace Syadeu
         #region Asserts
         public static void Null(object obj, string msg)
         {
-            const string defaultMsg = "Object {0} is not null. Expected null";
+            const string defaultMsg = "Object is not null. Expected null";
             if (obj == null) return;
-            if (string.IsNullOrEmpty(msg)) msg = string.Format(defaultMsg, obj);
+            if (string.IsNullOrEmpty(msg)) msg = defaultMsg;
+            else msg += " Expected null";
 
             Debug.LogError(AssertText(msg));
         }
         public static void NotNull(object obj, string msg)
         {
-            const string defaultMsg = "Object {0} is null. Expected not null";
+            const string defaultMsg = "Object is null. Expected not null";
             if (obj != null) return;
-            if (string.IsNullOrEmpty(msg)) msg = string.Format(defaultMsg, obj);
+            if (string.IsNullOrEmpty(msg)) msg = defaultMsg;
+            else msg += " Expected not null";
 
             Debug.LogError(AssertText(msg));
         }

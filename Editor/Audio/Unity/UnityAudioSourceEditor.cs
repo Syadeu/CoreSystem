@@ -8,7 +8,7 @@ using Syadeu.Mono;
 
 using Syadeu.Mono.Audio;
 
-namespace SyadeuEditor
+namespace SyadeuEditor.Audio.Unity
 {
     [CustomEditor(typeof(UnityAudioSource))]
     public sealed class UnityAudioSourceEditor : EditorEntity<UnityAudioSource>
@@ -102,34 +102,5 @@ namespace SyadeuEditor
             if (m_ShowOriginalContents) base.OnInspectorGUI();
         }
     }
-
-    //[CustomPropertyDrawer(typeof(UnityAudioList.Settings))]
-    //public sealed class UnityAudioListSettingsDrawer : PropertyDrawer
-    //{
-    //    //public override VisualElement CreatePropertyGUI(SerializedProperty property)
-    //    //{
-    //    //    //return base.CreatePropertyGUI(property);
-
-    //    //    VisualElement container = new VisualElement();
-
-    //    //    var isLoop = new PropertyField(property.FindPropertyRelative("m_IsLoop"));
-    //    //    var is3D = new PropertyField(property.FindPropertyRelative("m_Is3D"));
-
-    //    //    container.Add(isLoop);
-    //    //    container.Add(is3D);
-
-    //    //    return container;
-    //    //}
-    //    public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
-    //    {
-    //        //base.OnGUI(position, property, label);
-
-    //        EditorGUI.BeginProperty(position, label, property);
-
-    //        position = EditorGUI.PrefixLabel(position, GUIUtility.GetControlID(FocusType.Passive), label);
-
-    //        EditorGUI.EndProperty();
-    //    }
-    //}
 }
 #endif
