@@ -1,6 +1,7 @@
 ﻿using Syadeu.Database;
 using Syadeu.Presentation.Internal;
 using System;
+using System.Collections;
 
 namespace Syadeu.Presentation.Entities
 {
@@ -49,5 +50,10 @@ namespace Syadeu.Presentation.Entities
         /// <param name="setter"></param>
         protected void RequestSystem<TA>(Action<TA> setter) where TA : PresentationSystemEntity
             => PresentationManager.RegisterRequestSystem<T, TA>(setter);
+
+        protected CoreRoutine StartCoroutine(IEnumerator cor) => CoreSystem.StartUnityUpdate(this, cor);
+        protected CoreRoutine StartBackgroundCoroutine(IEnumerator cor) => CoreSystem.StartBackgroundUpdate(this, cor);
+        protected void StopCoroutine(CoreRoutine routine) => CoreSystem.RemoveUnityUpdate(routine);
+        protected void StopBackgroundCoroutine(CoreRoutine routine) => CoreSystem.RemoveBackgroundUpdate(routine);
     }
 }

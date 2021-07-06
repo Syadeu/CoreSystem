@@ -48,6 +48,7 @@ namespace Syadeu.Presentation
         private Timer m_SceneActiveTimer = new Timer();
 
         public event Action OnLoadingEnter;
+        public event Action<float> OnLoading;
         public event Action OnLoadingExit;
 
         public override bool EnableBeforePresentation => false;
@@ -210,10 +211,11 @@ namespace Syadeu.Presentation
             }
         }
 
-        internal void SetLoadingScene(Camera cam, Canvas canvas, CanvasGroup cg, Image backgroundImg)
+        internal void SetLoadingScene(Camera cam, CanvasGroup cg, 
+            Action onLoadingEnter, Action<float> onLoading, Action onLoadingExit)
         {
-            CanvasScaler scaler = canvas.GetComponent<CanvasScaler>();
-            if (scaler == null) scaler = canvas.gameObject.AddComponent<CanvasScaler>();
+            //CanvasScaler scaler = canvas.GetComponent<CanvasScaler>();
+            //if (scaler == null) scaler = canvas.gameObject.AddComponent<CanvasScaler>();
             //scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             //scaler.referenceResolution = new Vector2(m_ResolutionX, m_ResolutionY);
 
@@ -223,8 +225,9 @@ namespace Syadeu.Presentation
             m_DefaultCamera = cam;
             m_BlackScreen = cg;
 
-            OnLoadingEnter += () => m_BlackScreen.Lerp(1, Time.deltaTime * 2);
-            OnLoadingExit += () => m_BlackScreen.Lerp(0, Time.deltaTime * 2);
+            OnLoadingEnter += onLoadingEnter;
+            OnLoading += onLoading;
+            OnLoadingExit += onLoadingExit;
         }
 
         #region Privates
@@ -251,6 +254,7 @@ namespace Syadeu.Presentation
                 UnityEngine.Object.Destroy(ManagerEntity.InstanceGroupTr.gameObject);
             }
             OnLoadingEnter?.Invoke();
+            OnLoading?.Invoke(0);
 
             CoreSystem.WaitInvoke(2, () =>
             {
@@ -263,6 +267,7 @@ namespace Syadeu.Presentation
 #else
                 SceneManager.LoadSceneAsync(path, LoadSceneMode.Additive);
                 //oper.allowSceneActivation = false;
+                StartCoroutine(OnLoadingCoroutine(m_AsyncOperation));
                 m_AsyncOperation.completed
 #endif
                 += (other) =>
@@ -288,6 +293,17 @@ namespace Syadeu.Presentation
                     CoreSystem.Log(Channel.Scene, $"Scene({m_CurrentScene.name}) loaded");
                 };
             });
+
+            IEnumerator OnLoadingCoroutine(AsyncOperation oper)
+            {
+                while (oper.progress != 1)
+                {
+                    OnLoading?.Invoke(oper.progress);
+
+                    yield return null;
+                }
+                OnLoading?.Invoke(1);
+            }
         }
         private void InternalUnloadScene(
 #if UNITY_ADDRESSABLES

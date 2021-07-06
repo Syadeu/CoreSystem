@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 namespace Syadeu.Presentation
@@ -12,6 +13,11 @@ namespace Syadeu.Presentation
         [SerializeField] protected Canvas m_Canvas;
         [SerializeField] protected CanvasGroup m_FadeGroup;
         [SerializeField] protected Image m_BackgroundImage;
+
+        [Space]
+        [SerializeField] protected UnityEvent m_OnLoadingEnter;
+        [SerializeField] protected UnityEvent<float> m_OnLoading;
+        [SerializeField] protected UnityEvent m_OnLoadingExit;
 
         private void Start()
         {
@@ -30,13 +36,19 @@ namespace Syadeu.Presentation
             {
                 yield return PresentationSystem<SceneSystem>.GetAwaiter();
                 Initialize();
+
+                Destroy(gameObject);
             }
         }
 
         protected void Initialize()
         {
             SceneSystem sceneSystem = PresentationSystem<SceneSystem>.GetSystem();
-            sceneSystem.SetLoadingScene(m_Camera, m_Canvas, m_FadeGroup, m_BackgroundImage);
+            sceneSystem.SetLoadingScene(m_Camera, m_FadeGroup,
+                () => m_FadeGroup.Lerp(1, Time.deltaTime * 2),
+                m_OnLoading.Invoke,
+                () => m_FadeGroup.Lerp(0, Time.deltaTime * 2)
+                );
         }
     }
 }
