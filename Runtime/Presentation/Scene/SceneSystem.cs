@@ -336,7 +336,7 @@ namespace Syadeu.Presentation
         {
             if (!PresentationManager.Instance.m_DependenceSceneList.TryGetValue(key, out List<Hash> groupHashs))
             {
-                $"no key({key}) found for unload".ToLog();
+                CoreSystem.Log(Channel.Scene, $"Scene({key.Split('/').Last()}) has no dependence systems for unload");
                 return;
             }
 

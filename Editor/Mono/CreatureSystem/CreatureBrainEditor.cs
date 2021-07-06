@@ -4,6 +4,9 @@ using UnityEngine;
 using UnityEditor;
 using Syadeu.Mono;
 using UnityEngine.AI;
+using Syadeu.Database;
+using Syadeu.Internal;
+using System;
 
 namespace SyadeuEditor
 {
@@ -17,8 +20,19 @@ namespace SyadeuEditor
         private SerializedProperty m_OnInitialize;
         private SerializedProperty m_OnTerminate;
 
+        private ValuePairContainer Components;
+
         private bool m_ShowDelegates = false;
         private bool m_ShowOriginalContents = false;
+
+        [Serializable]
+        private class CreatureValue : ValuePair<CreatureEntity>
+        {
+            public override object Clone()
+            {
+                throw new System.NotImplementedException();
+            }
+        }
 
         private void OnEnable()
         {
@@ -31,6 +45,16 @@ namespace SyadeuEditor
             m_OnTerminate = serializedObject.FindProperty("m_OnTerminate");
 
             serializedObject.ApplyModifiedProperties();
+
+            CreatureEntity[] componentList = Asset.GetComponentsInChildren<CreatureEntity>();
+            for (int i = 0; i < componentList.Length; i++)
+            {
+                Components.Add(new CreatureValue()
+                {
+                    Name = componentList[i].GetType().Name,
+                    m_Value = componentList[i],
+                });
+            }
         }
         public override void OnInspectorGUI()
         {
@@ -68,6 +92,8 @@ namespace SyadeuEditor
             EditorGUILayout.EndVertical();
 
             EditorUtils.Line();
+
+            Components.DrawValueContainer("Components", ValuePairEditor.DrawMenu.None, null);
 
             EditorGUILayout.Space();
             serializedObject.ApplyModifiedProperties();

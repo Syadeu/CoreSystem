@@ -42,15 +42,24 @@ namespace Syadeu.Internal
             switch (result)
             {
                 case ResultFlag.Warning:
-                    text = string.Format(c_LogBaseText, StringColor.lime, string.Format(c_LogText, StringColor.orange, result), channel, msg);
+                    text = string.Format(c_LogBaseText, StringColor.lime, 
+                        string.Format(c_LogText, StringColor.orange, result), 
+                        string.Format(c_LogText, StringColor.white, channel), 
+                        msg);
                     Debug.LogWarning(text);
                     break;
                 case ResultFlag.Error:
-                    text = string.Format(c_LogBaseText, StringColor.lime, string.Format(c_LogText, StringColor.maroon, result), channel, msg);
+                    text = string.Format(c_LogBaseText, StringColor.lime, 
+                        string.Format(c_LogText, StringColor.maroon, result),
+                        string.Format(c_LogText, StringColor.white, channel),
+                        msg);
                     Debug.LogError(text);
                     break;
                 default:
-                    text = string.Format(c_LogBaseText, StringColor.lime, string.Format(c_LogText, StringColor.teal, result), channel, msg);
+                    text = string.Format(c_LogBaseText, StringColor.lime, 
+                        string.Format(c_LogText, StringColor.teal, result),
+                        string.Format(c_LogText, StringColor.white, channel),
+                        msg);
                     Debug.Log(text);
                     break;
             }
