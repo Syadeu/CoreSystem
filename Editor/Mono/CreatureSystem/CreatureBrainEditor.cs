@@ -7,6 +7,7 @@ using UnityEngine.AI;
 using Syadeu.Database;
 using Syadeu.Internal;
 using System;
+using Syadeu.Mono.Creature;
 
 namespace SyadeuEditor
 {
@@ -62,18 +63,32 @@ namespace SyadeuEditor
             EditorUtils.StringHeader("Creature Brain");
             EditorUtils.SectorLine();
 
-            PrefabListEditor.DrawPrefabAdder(Asset.gameObject);
+            if (Application.isPlaying)
+            {
+                EditorUtils.StringRich(Asset.Initialized ? "Initialized" : "Not Initialized", true);
+            }
+            else PrefabListEditor.DrawPrefabAdder(Asset.gameObject);
             EditorUtils.Line();
 
+            EditorGUI.BeginDisabledGroup(Application.isPlaying);
+
             EditorGUILayout.BeginVertical(EditorUtils.Box);
-            m_CreatureName.stringValue = EditorGUILayout.TextField("Creature Name: ", m_CreatureName.stringValue);
-            EditorGUILayout.LabelField("Description");
-            m_CreatureDescription.stringValue = EditorGUILayout.TextArea(m_CreatureDescription.stringValue, GUILayout.MinHeight(50));
+            {
+                m_CreatureName.stringValue = EditorGUILayout.TextField("Creature Name: ", m_CreatureName.stringValue);
+                EditorGUILayout.LabelField("Description");
+                m_CreatureDescription.stringValue = EditorGUILayout.TextArea(m_CreatureDescription.stringValue, GUILayout.MinHeight(50));
+            }
             EditorGUILayout.EndVertical();
 
             EditorUtils.Line();
 
             EditorGUILayout.BeginVertical(EditorUtils.Box);
+            if (m_InitializeOnStart.boolValue && FindObjectOfType<CreatureManager>() == null)
+            {
+                EditorGUILayout.HelpBox(
+                    "We couldn\'t found CreatureManager but you trying to initialize on start.\n" +
+                    "This creature will never initialize.", MessageType.Error);
+            }
             EditorGUILayout.PropertyField(m_InitializeOnStart);
             //Asset.m_EnableCameraCull = EditorGUILayout.Toggle("", Asset.m_EnableCameraCull);
             EditorGUILayout.EndVertical();
@@ -95,6 +110,8 @@ namespace SyadeuEditor
             EditorUtils.Line();
 
             Components.DrawValueContainer("Components", ValuePairEditor.DrawMenu.None, null);
+
+            EditorGUI.EndDisabledGroup();
 
             EditorGUILayout.Space();
             serializedObject.ApplyModifiedProperties();
