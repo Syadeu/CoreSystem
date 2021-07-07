@@ -1,18 +1,7 @@
-﻿//#undef UNITY_ADDRESSABLES
-
-
-#if UNITY_EDITOR
-#endif
-
-#if UNITY_ADDRESSABLES
-#endif
-
-using Syadeu.Database;
+﻿using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation.Internal;
 using System;
-using System.Collections.Generic;
-using System.Reflection;
 using UnityEngine.Assertions;
 
 namespace Syadeu.Presentation
@@ -21,7 +10,7 @@ namespace Syadeu.Presentation
     /// 등록한 프레젠테이션 시스템을 받아오기 위한 struct 입니다.
     /// </summary>
     /// <remarks>
-    /// 이 struct 로 시스템을 받아오려면 먼저 <seealso cref="PresentationSystemEntity{T}"/> 를 상속받고 시스템을 선언해야됩니다.
+    /// 이 struct 로 시스템을 받아오려면 먼저 <seealso cref="Entities.PresentationSystemEntity{T}"/> 를 상속받고 시스템을 선언해야됩니다.
     /// </remarks>
     /// <typeparam name="T"></typeparam>
     public struct PresentationSystem<T> : IValidation, ICustomYieldAwaiter, IDisposable where T : PresentationSystemEntity

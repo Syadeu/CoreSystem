@@ -17,7 +17,7 @@ namespace Syadeu.Presentation
     [StaticManagerIntializeOnLoad]
     public sealed class PresentationManager : StaticDataManager<PresentationManager>
     {
-        const string instance = "Instance";
+        const string c_Instance = "Instance";
 
         internal class Group
         {
@@ -44,6 +44,7 @@ namespace Syadeu.Presentation
             
             public bool m_MainInitDone = false;
             public bool m_BackgroundInitDone = false;
+
             public WaitUntil m_WaitUntilInitializeCompleted;
 
             public Action PublicSystemStructDisposer;
@@ -58,8 +59,35 @@ namespace Syadeu.Presentation
 
             public bool HasSystem<T>(T system) where T : PresentationSystemEntity
                 => m_Systems.FindFor((other) => other.Equals(system)) != null;
+
+            public void Reset()
+            {
+                m_IsStarted = false;
+
+                for (int i = 0; i < m_Systems.Count; i++)
+                {
+                    m_Systems[i].Dispose();
+                }
+                m_Systems.Clear();
+                m_Initializers.Clear();
+                m_BeforePresentations.Clear();
+                m_OnPresentations.Clear();
+                m_AfterPresentations.Clear();
+
+                PublicSystemStructDisposer?.Invoke();
+                PublicSystemStructDisposer = null;
+
+                m_MainthreadSignal = false;
+                m_BackgroundthreadSignal = false;
+
+                m_MainInitDone = false;
+                m_BackgroundInitDone = false;
+
+                PublicSystemStructDisposer?.Invoke();
+                PublicSystemStructDisposer = null;
+            }
         }
-        private Hash m_DefaultGroupHash = Hash.NewHash(TypeHelper.TypeOf<DefaultPresentationGroup>.Name);
+        private readonly Hash m_DefaultGroupHash = Hash.NewHash(TypeHelper.TypeOf<DefaultPresentationGroup>.Name);
 
         internal readonly Dictionary<Hash, Group> m_PresentationGroups = new Dictionary<Hash, Group>();
         internal readonly Dictionary<Type, Hash> m_RegisteredGroup = new Dictionary<Type, Hash>();
@@ -91,7 +119,7 @@ namespace Syadeu.Presentation
             for (int i = 0; i < registers.Count; i++)
             {
                 object ins;
-                PropertyInfo instanceProperty = registers[i].GetProperty(instance, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+                PropertyInfo instanceProperty = registers[i].GetProperty(c_Instance, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
                 if (instanceProperty != null)
                 {
                     ins = instanceProperty.GetGetMethod().Invoke(null, null);
@@ -121,7 +149,7 @@ namespace Syadeu.Presentation
 
                 //Type t = typeof(PresentationSystemGroup<>).MakeGenericType(groupName);
                 //$"{t.Name}: {t.GenericTypeArguments[0]}".ToLog();
-                PropertyInfo insProperty = typeof(PresentationSystemGroup<>).MakeGenericType(groupName).GetProperty(instance, BindingFlags.NonPublic | BindingFlags.Static);
+                PropertyInfo insProperty = typeof(PresentationSystemGroup<>).MakeGenericType(groupName).GetProperty(c_Instance, BindingFlags.NonPublic | BindingFlags.Static);
                 
                 CoreSystem.IsNotNull(insProperty);
 
@@ -209,19 +237,8 @@ namespace Syadeu.Presentation
 
             Instance.StopUnityUpdate(group.MainPresentation);
             Instance.StopUnityUpdate(group.BackgroundPresentation);
-            for (int i = 0; i < group.m_Systems.Count; i++)
-            {
-                group.m_Systems[i].Dispose();
-            }
-            group.PublicSystemStructDisposer?.Invoke();
-            group.PublicSystemStructDisposer = null;
 
-            group.m_Systems.Clear();
-            group.m_BeforePresentations.Clear();
-            group.m_OnPresentations.Clear();
-            group.m_AfterPresentations.Clear();
-
-            group.m_IsStarted = false;
+            group.Reset();
 
             CoreSystem.Log(Channel.Presentation, $"{group.m_Name.Name} group is stopped");
         }

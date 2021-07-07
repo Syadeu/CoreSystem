@@ -46,6 +46,7 @@ namespace SyadeuEditor
 
             serializedObject.ApplyModifiedProperties();
 
+            Components = new ValuePairContainer();
             CreatureEntity[] componentList = Asset.GetComponentsInChildren<CreatureEntity>();
             for (int i = 0; i < componentList.Length; i++)
             {

@@ -16,6 +16,7 @@ namespace Syadeu.Mono
 
         // Global System
         [Header("Global")]
+        public bool m_HideSetupWizard = false;
         public bool m_VisualizeObjects = false;
         public bool m_CrashAfterException = false;
         [Obsolete] public bool m_EnableAutoStaticInitialize = false;

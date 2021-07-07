@@ -14,7 +14,7 @@ namespace Syadeu.Presentation
     /// 특정 시스템만 불러오려면 <seealso cref="PresentationSystem{T}"/>으로 호출하세요.
     /// </remarks>
     /// <typeparam name="T"></typeparam>
-    public struct PresentationSystemGroup<T> : IPresentationSystemGroup, IValidation where T : PresentationRegisterEntity
+    public struct PresentationSystemGroup<T> : IPresentationSystemGroup where T : PresentationRegisterEntity
     {
         public static PresentationSystemGroup<T> Null = new PresentationSystemGroup<T>(Hash.Empty);
         private static PresentationSystemGroup<T> s_Instance = Null;
@@ -22,7 +22,7 @@ namespace Syadeu.Presentation
         {
             get
             {
-                if (!s_Instance.IsValid())
+                if (!((IValidation)s_Instance).IsValid())
                 {
                     s_Instance = new PresentationSystemGroup<T>(Hash.NewHash(TypeHelper.TypeOf<T>.Name));
                 }
@@ -43,18 +43,19 @@ namespace Syadeu.Presentation
             }
         }
 
+        /// <inheritdoc cref="IPresentationSystemGroup.Systems"/>
+        public static IReadOnlyList<PresentationSystemEntity> Systems => ((IPresentationSystemGroup)Instance).Systems;
+
         private PresentationSystemGroup(Hash groupHash)
         {
             m_GroupHash = groupHash;
         }
 
-        public bool IsValid() => !m_GroupHash.Equals(Hash.Empty);
+        bool IValidation.IsValid() => !m_GroupHash.Equals(Hash.Empty);
         void IPresentationSystemGroup.Start() => PresentationManager.Instance.StartPresentation(m_GroupHash);
         void IPresentationSystemGroup.Stop() => PresentationManager.Instance.StopPresentation(m_GroupHash);
 
-        /// <inheritdoc cref="IPresentationSystemGroup.Systems"/>
-        public static IReadOnlyList<PresentationSystemEntity> Systems => ((IPresentationSystemGroup)Instance).Systems;
-
+        public static bool IsValid() => ((IValidation)Instance).IsValid();
         /// <inheritdoc cref="IPresentationSystemGroup.Start"/>
         public static void Start() => ((IPresentationSystemGroup)Instance).Start();
         /// <inheritdoc cref="IPresentationSystemGroup.Stop"/>
