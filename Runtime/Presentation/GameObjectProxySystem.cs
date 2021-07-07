@@ -16,7 +16,7 @@ namespace Syadeu.Presentation
         public override bool EnableAfterPresentation => true;
 
         private ModuleBuilder m_ModuleBuilder;
-        private readonly Dictionary<Type, RuntimeType> m_BakedTypes = new Dictionary<Type, RuntimeType>();
+        private readonly Dictionary<Type, GenericType> m_GenericTypes = new Dictionary<Type, GenericType>();
 
         public override PresentationResult OnInitialize()
         {
@@ -33,13 +33,13 @@ namespace Syadeu.Presentation
 
         public override PresentationResult OnStartPresentation()
         {
-            GetOrGenericTypeObject<float>();
-            GetOrGenericTypeObject<double>();
-            GetOrGenericTypeObject<string>();
-            GetOrGenericTypeObject<string>();
-            GetOrGenericTypeObject<Component>();
-            GetOrGenericTypeObject<MonoBehaviour>();
-            GetOrGenericTypeObject<ItemDataList>();
+            GetOrCreateGenericTypeObject<float>();
+            GetOrCreateGenericTypeObject<double>();
+            GetOrCreateGenericTypeObject<string>();
+            GetOrCreateGenericTypeObject<string>();
+            GetOrCreateGenericTypeObject<Component>();
+            GetOrCreateGenericTypeObject<MonoBehaviour>();
+            GetOrCreateGenericTypeObject<ItemDataList>();
             "in".ToLog();
             return base.OnStartPresentation();
         }
@@ -50,30 +50,63 @@ namespace Syadeu.Presentation
         /// </summary>
         public void ReturnGenericTypeObject<T>(MonoBehaviour<T> obj)
         {
-            if (!m_BakedTypes.TryGetValue(TypeHelper.TypeOf<T>.Type, out RuntimeType runtimeType))
+            if (!m_GenericTypes.TryGetValue(TypeHelper.TypeOf<T>.Type, out GenericType runtimeType))
             {
-                runtimeType = new RuntimeType
+                runtimeType = new GenericType
                 {
                     TargetType = TypeHelper.TypeOf<T>.Type,
                     BakedType = obj.GetType()
                 };
-                m_BakedTypes.Add(TypeHelper.TypeOf<T>.Type, runtimeType);
+                m_GenericTypes.Add(TypeHelper.TypeOf<T>.Type, runtimeType);
             }
             if (obj is ITerminate terminate) terminate.Terminate();
             runtimeType.ObjectPool.Enqueue(obj);
         }
-        public MonoBehaviour<T> GetOrGenericTypeObject<T>()
+        /// <inheritdoc cref="ReturnGenericTypeObject{T}(MonoBehaviour{T})"/>
+        public void ReturnObject<T>(T obj) where T : MonoBehaviour
         {
-            if (!m_BakedTypes.TryGetValue(TypeHelper.TypeOf<T>.Type, out RuntimeType runtimeType) ||
+            if (!m_CompliedTypes.TryGetValue(TypeHelper.TypeOf<T>.Type, out CompliedType compliedType))
+            {
+                compliedType = new CompliedType
+                {
+                    Type = TypeHelper.TypeOf<T>.Type,
+                };
+                m_CompliedTypes.Add(TypeHelper.TypeOf<T>.Type, compliedType);
+            }
+            if (obj is ITerminate terminate) terminate.Terminate();
+            compliedType.ObjectPool.Enqueue(obj);
+        }
+        /// <summary>
+        /// 해당 <typeparamref name="T"/>의 값을 가지는 타입을 직접 만들어서 반환하거나 미사용 오브젝트를 반환합니다.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public MonoBehaviour<T> GetOrCreateGenericTypeObject<T>()
+        {
+            if (!m_GenericTypes.TryGetValue(TypeHelper.TypeOf<T>.Type, out GenericType runtimeType) ||
                 runtimeType.ObjectPool.Count == 0)
             {
                 return CreateGenericTypeObject<T>();
             }
             return runtimeType.ObjectPool.Dequeue() as MonoBehaviour<T>;
         }
+        /// <summary>
+        /// 단일 스크립트를 지닌 오브젝트를 생성하여 반환하거나 미사용 오브젝트를 반환합니다.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public T GetOrCreateObject<T>() where T : MonoBehaviour
+        {
+            if (!m_CompliedTypes.TryGetValue(TypeHelper.TypeOf<T>.Type, out CompliedType compliedType) ||
+                compliedType.ObjectPool.Count == 0)
+            {
+                return CreateCompliedTypeObject<T>();
+            }
+            return compliedType.ObjectPool.Dequeue() as T;
+        }
 
         #region Runtime Generic MonoBehaviour Maker
-        private class RuntimeType
+        private class GenericType
         {
             public Type TargetType;
             public Type BakedType;
@@ -98,20 +131,51 @@ namespace Syadeu.Presentation
         }
         private MonoBehaviour<T> CreateGenericTypeObject<T>()
         {
+            if (TypeHelper.TypeOf<T>.IsAbstract) throw new Exception();
+
             GameObject obj = new GameObject(TypeHelper.TypeOf<T>.Name);
-            if (!m_BakedTypes.TryGetValue(TypeHelper.TypeOf<T>.Type, out RuntimeType runtimeType))
+            if (!m_GenericTypes.TryGetValue(TypeHelper.TypeOf<T>.Type, out GenericType runtimeType))
             {
                 Type baked = MakeGenericTypeMonobehaviour<T>();
-                runtimeType = new RuntimeType
+                runtimeType = new GenericType
                 {
                     TargetType = TypeHelper.TypeOf<T>.Type,
                     BakedType = baked
                 };
-                m_BakedTypes.Add(TypeHelper.TypeOf<T>.Type, runtimeType);
+                m_GenericTypes.Add(TypeHelper.TypeOf<T>.Type, runtimeType);
             }
             obj.name += runtimeType.CreatedCount;
             runtimeType.CreatedCount++;
             return obj.AddComponent(runtimeType.BakedType) as MonoBehaviour<T>;
+        }
+        #endregion
+
+        #region Complied MonoBehaviour Maker
+        private readonly Dictionary<Type, CompliedType> m_CompliedTypes = new Dictionary<Type, CompliedType>();
+        private class CompliedType
+        {
+            public Type Type;
+            public GameObject Prefab;
+
+            public int CreatedCount = 0;
+            public Queue<MonoBehaviour> ObjectPool = new Queue<MonoBehaviour>();
+        }
+        private T CreateCompliedTypeObject<T>() where T : MonoBehaviour
+        {
+            if (TypeHelper.TypeOf<T>.IsAbstract) throw new Exception();
+
+            GameObject obj = new GameObject(TypeHelper.TypeOf<T>.Name);
+            if (!m_CompliedTypes.TryGetValue(TypeHelper.TypeOf<T>.Type, out CompliedType compliedType))
+            {
+                compliedType = new CompliedType
+                {
+                    Type = TypeHelper.TypeOf<T>.Type,
+                };
+                m_CompliedTypes.Add(compliedType.Type, compliedType);
+            }
+            obj.name += compliedType.CreatedCount;
+            compliedType.CreatedCount++;
+            return obj.AddComponent<T>();
         }
         #endregion
     }
