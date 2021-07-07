@@ -58,8 +58,12 @@ namespace Syadeu.Presentation
         {
             get
             {
-                if (m_BlackScreen == null || m_DefaultCamera == null) return false;
-                if (!m_LoadingScene.IsValid() || !m_LoadingScene.isLoaded) return false;
+                if (!m_DebugMode)
+                {
+                    if (m_BlackScreen == null || m_DefaultCamera == null) return false;
+                    if (!m_LoadingScene.IsValid() || !m_LoadingScene.isLoaded) return false;
+                }
+                
                 if (m_AsyncOperation != null && !m_AsyncOperation.isDone)
                 {
                     return false;
@@ -156,8 +160,10 @@ namespace Syadeu.Presentation
         }
         public override PresentationResult OnStartPresentation()
         {
-            "in".ToLog();
-            SceneManager.MergeScenes(m_LoadingScene, m_MasterScene);
+            if (m_LoadingScene.IsValid() && m_MasterScene.IsValid())
+            {
+                SceneManager.MergeScenes(m_LoadingScene, m_MasterScene);
+            }
             return base.OnStartPresentation();
         }
 

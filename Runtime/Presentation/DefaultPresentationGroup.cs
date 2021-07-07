@@ -8,6 +8,7 @@ namespace Syadeu.Presentation
         public override void Register()
         {
             RegisterSystem(
+                TypeHelper.TypeOf<GameObjectProxySystem>.Type,
                 TypeHelper.TypeOf<SceneSystem>.Type,
                 TypeHelper.TypeOf<RenderSystem>.Type);
         }

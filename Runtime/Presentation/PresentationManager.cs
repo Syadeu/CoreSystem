@@ -289,7 +289,15 @@ namespace Syadeu.Presentation
                 }
             }
 
-            yield return new WaitUntil(() => group.m_BackgroundthreadSignal);
+            DateTime dateTime = DateTime.Now;
+            yield return new WaitUntil(() =>
+            {
+                ////if (dateTime.Ticks + 1000 < DateTime.Now.Ticks)
+                //{
+                //    "waitting m_BackgroundthreadSignal".ToLog();
+                //}
+                return group.m_BackgroundthreadSignal;
+            });
             for (int i = 0; i < group.m_Initializers.Count; i++)
             {
                 group.m_Initializers[i].OnStartPresentation();
