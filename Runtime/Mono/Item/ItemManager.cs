@@ -49,7 +49,11 @@ namespace Syadeu.Database
             //    itemIns.m_ProxyObject = other.gameObject;
             //});
 
-            PresentationSystem<GameObjectProxySystem>.System.RequestPrefab(item.m_PrefabIdx, pos, rot, null);
+            PresentationSystem<GameObjectProxySystem>.System.RequestPrefab(item.m_PrefabIdx, pos, rot, (data)=>
+            {
+                DataTransform tr = data.GetTransform();
+                tr.position = Syadeu.ThreadSafe.Vector3.Zero;
+            });
         }
     }
 }
