@@ -31,26 +31,26 @@ namespace Syadeu.Mono.Creature
             internal CreatureSettings.PrivateSet GetPrivateSet() => CreatureSettings.Instance.GetPrivateSet(m_DataIdx);
 
             #region Spawn
-            public void Spawn()
+            public void Spawn(Action<CreatureBrain> onCreated)
             {
                 for (int i = 0; i < m_SpawnRanges.Length; i++)
                 {
                     if (m_SpawnRanges[i].m_Count <= 0) continue;
 
-                    InternalSpawnAtGrid(i, m_SpawnRanges[i].m_Count);
-                    if (m_SpawnRanges[i].m_EnableRespawn && !m_SpawnRanges[i].m_RespawnStarted)
-                    {
-                        m_SpawnRanges[i].m_RespawnStarted = true;
-                        CoreSystem.StartUnityUpdate(Instance, RespawnUpdater(i));
-                    }
+                    InternalSpawnAtGrid(i, m_SpawnRanges[i].m_Count, onCreated);
+                    //if (m_SpawnRanges[i].m_EnableRespawn && !m_SpawnRanges[i].m_RespawnStarted)
+                    //{
+                    //    m_SpawnRanges[i].m_RespawnStarted = true;
+                    //    CoreSystem.StartUnityUpdate(Instance, RespawnUpdater(i));
+                    //}
                 }
             }
-            public void SpawnAtRandomPoint(int count)
+            public void SpawnAtRandomPoint(int count, Action<CreatureBrain> onCreated)
             {
                 int spawnPoint = UnityEngine.Random.Range(0, m_SpawnRanges.Length);
-                InternalSpawnAtGrid(spawnPoint, count);
+                InternalSpawnAtGrid(spawnPoint, count, onCreated);
             }
-            internal void InternalSpawnAt(int spawnPointIdx, Vector3 pos)
+            internal void InternalSpawnAt(int spawnPointIdx, Vector3 pos, Action<CreatureBrain> onCreated)
             {
 #if UNITY_ADDRESSABLES
                 PrefabManager.GetRecycleObjectAsync(m_PrefabIdx, (obj) =>
@@ -67,6 +67,8 @@ namespace Syadeu.Mono.Creature
                     $"{m_DataIdx}: spawnpoint {spawnPointIdx}".ToLog();
                     GetCreatureSet(m_DataIdx).m_SpawnRanges[spawnPointIdx].m_InstanceCount++;
                     Instance.m_Creatures.Add(brain);
+
+                    onCreated?.Invoke(brain);
                 }, true);
 #else
                 CreatureBrain brain = (CreatureBrain)PrefabManager.GetRecycleObject(m_PrefabIdx, false);
@@ -82,7 +84,7 @@ namespace Syadeu.Mono.Creature
                 Instance.m_Creatures.Add(brain);
 #endif
             }
-            internal void InternalSpawnAtGrid(int i, int targetCount)
+            internal void InternalSpawnAtGrid(int i, int targetCount, Action<CreatureBrain> onCreated)
             {
                 ref GridManager.Grid grid = ref GridManager.GetGrid(m_SpawnRanges[i].m_Center);
                 ref GridManager.GridCell centerCell = ref grid.GetCell(m_SpawnRanges[i].m_Center);
@@ -94,7 +96,7 @@ namespace Syadeu.Mono.Creature
                 int tries = 0;
                 while (count < targetCount)
                 {
-                    if (tries > targetCount * 2)
+                    if (tries > (targetCount * 2) + 10)
                     {
                         $"CreatureManager: 크리쳐 {PrefabList.Instance.ObjectSettings[GetPrivateSet().m_PrefabIdx].m_Name} 을 {targetCount} 마리 요청했지만, {count} 마리만 생성되었습니다.\n해당 지역이 너무 좁거나, 마릿수가 너무 많은 것 같습니다. 혹은 그리드위에 생성요청했는데 생성 직후 요청했나요?".ToLog();
                         break;
@@ -112,7 +114,7 @@ namespace Syadeu.Mono.Creature
                         if (targetCell.GetCustomData() == null &&
                             !targetCell.BlockedByNavMesh)
                         {
-                            InternalSpawnAt(i, targetCell.Bounds.center);
+                            InternalSpawnAt(i, targetCell.Bounds.center, onCreated);
 
                             count++;
                         }
@@ -124,36 +126,36 @@ namespace Syadeu.Mono.Creature
                 m_SpawnRanges[i].m_InstanceCount += count;
             }
 
-            private IEnumerator RespawnUpdater(int i)
-            {
-                Timer timer = new Timer()
-                    .SetTargetTime(m_SpawnRanges[i].m_RespawnTimeSeconds)
-                    .OnTimerEnd(() =>
-                    {
-                        if (m_SpawnRanges[i].m_InstanceCount >= m_SpawnRanges[i].m_MaxCount ||
-                            m_SpawnRanges[i].m_InstanceCount + m_SpawnRanges[i].m_RespawnCount >= m_SpawnRanges[i].m_MaxCount)
-                        {
-                            return;
-                        }
+            //private IEnumerator RespawnUpdater(int i)
+            //{
+            //    Timer timer = new Timer()
+            //        .SetTargetTime(m_SpawnRanges[i].m_RespawnTimeSeconds)
+            //        .OnTimerEnd(() =>
+            //        {
+            //            if (m_SpawnRanges[i].m_InstanceCount >= m_SpawnRanges[i].m_MaxCount ||
+            //                m_SpawnRanges[i].m_InstanceCount + m_SpawnRanges[i].m_RespawnCount >= m_SpawnRanges[i].m_MaxCount)
+            //            {
+            //                return;
+            //            }
 
-                        InternalSpawnAtGrid(i, m_SpawnRanges[i].m_RespawnCount);
-                    });
-                WaitForTimer waitForTimer = new WaitForTimer(timer);
+            //            InternalSpawnAtGrid(i, m_SpawnRanges[i].m_RespawnCount, null);
+            //        });
+            //    WaitForTimer waitForTimer = new WaitForTimer(timer);
 
-                Timer startTimer = new Timer()
-                    .SetTargetTime(m_SpawnRanges[i].m_SpawnTermSeconds)
-                    .Start();
+            //    Timer startTimer = new Timer()
+            //        .SetTargetTime(m_SpawnRanges[i].m_SpawnTermSeconds)
+            //        .Start();
 
-                yield return new WaitForTimer(startTimer);
-                startTimer.Dispose();
+            //    yield return new WaitForTimer(startTimer);
+            //    startTimer.Dispose();
 
-                while (true)
-                {
-                    timer.Start();
+            //    while (true)
+            //    {
+            //        timer.Start();
 
-                    yield return waitForTimer;
-                }
-            }
+            //        yield return waitForTimer;
+            //    }
+            //}
             #endregion
         }
         [Serializable]
@@ -231,40 +233,40 @@ namespace Syadeu.Mono.Creature
             return targets[0];
         }
 
-        public static void SpawnAt(int setID, Vector3 pos)
-        {
-            if (Instance.m_CreatureSets.Count >= setID)
-            {
-                throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
-                    $"해당 인덱스 {setID} 를 가진 크리쳐 세팅이 존재하지않습니다.");
-            }
+        //public static void SpawnAt(int setID, Vector3 pos)
+        //{
+        //    if (Instance.m_CreatureSets.Count >= setID)
+        //    {
+        //        throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+        //            $"해당 인덱스 {setID} 를 가진 크리쳐 세팅이 존재하지않습니다.");
+        //    }
 
-            Instance.m_CreatureSets[setID].InternalSpawnAt(0, pos);
-        }
-        public static void SpawnAt(int setID, GridManager.GridCell target)
-        {
-            if (Instance.m_CreatureSets.Count >= setID)
-            {
-                throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
-                    $"해당 인덱스 {setID} 를 가진 크리쳐 세팅이 존재하지않습니다.");
-            }
+        //    Instance.m_CreatureSets[setID].InternalSpawnAt(0, pos);
+        //}
+        //public static void SpawnAt(int setID, GridManager.GridCell target)
+        //{
+        //    if (Instance.m_CreatureSets.Count >= setID)
+        //    {
+        //        throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+        //            $"해당 인덱스 {setID} 를 가진 크리쳐 세팅이 존재하지않습니다.");
+        //    }
 
-            Instance.m_CreatureSets[setID].InternalSpawnAt(0, target.Bounds.center);
-        }
-        public static void SpawnAt(int setID, int2 gridIdxes) => SpawnAt(setID, gridIdxes.x, gridIdxes.y);
-        public static void SpawnAt(int setID, Vector2Int gridIdxes) => SpawnAt(setID, gridIdxes.x, gridIdxes.y);
-        public static void SpawnAt(int setID, int gridIdx, int cellIdx)
-        {
-            if (Instance.m_CreatureSets.Count >= setID)
-            {
-                throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
-                    $"해당 인덱스 {setID} 를 가진 크리쳐 세팅이 존재하지않습니다.");
-            }
+        //    Instance.m_CreatureSets[setID].InternalSpawnAt(0, target.Bounds.center);
+        //}
+        //public static void SpawnAt(int setID, int2 gridIdxes) => SpawnAt(setID, gridIdxes.x, gridIdxes.y);
+        //public static void SpawnAt(int setID, Vector2Int gridIdxes) => SpawnAt(setID, gridIdxes.x, gridIdxes.y);
+        //public static void SpawnAt(int setID, int gridIdx, int cellIdx)
+        //{
+        //    if (Instance.m_CreatureSets.Count >= setID)
+        //    {
+        //        throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
+        //            $"해당 인덱스 {setID} 를 가진 크리쳐 세팅이 존재하지않습니다.");
+        //    }
 
-            ref var grid = ref GridManager.GetGrid(gridIdx);
-            ref var cell = ref grid.GetCell(cellIdx);
+        //    ref var grid = ref GridManager.GetGrid(gridIdx);
+        //    ref var cell = ref grid.GetCell(cellIdx);
 
-            Instance.m_CreatureSets[setID].InternalSpawnAt(0, cell.Bounds.center);
-        }
+        //    Instance.m_CreatureSets[setID].InternalSpawnAt(0, cell.Bounds.center);
+        //}
     }
 }

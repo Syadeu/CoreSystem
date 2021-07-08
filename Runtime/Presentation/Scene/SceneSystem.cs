@@ -228,6 +228,9 @@ namespace Syadeu.Presentation
             //backgroundImg.rectTransform.sizeDelta = scaler.referenceResolution;
             //backgroundImg.transform.localPosition = Vector3.zero;
 
+            cg.interactable = false;
+            cg.blocksRaycasts = false;
+
             m_DefaultCamera = cam;
             m_BlackScreen = cg;
 

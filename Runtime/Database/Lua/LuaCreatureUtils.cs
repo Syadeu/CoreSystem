@@ -36,7 +36,7 @@ namespace Syadeu.Database.Lua
             }
 
             Vector3 pos = LuaVectorUtils.ToVector(position);
-            CreatureManager.GetCreatureSet(dataIdx).InternalSpawnAt(0, pos);
+            CreatureManager.GetCreatureSet(dataIdx).InternalSpawnAt(0, pos, null);
         }
     }
 }
