@@ -256,7 +256,7 @@ namespace Syadeu.Presentation
 
             group.m_RequestSystemDelegates.Enqueue(() =>
             {
-                TA system = PresentationSystem<TA>.GetSystem();
+                TA system = PresentationSystem<TA>.System;
                 if (system == null)
                 {
                     CoreSystem.LogError(Channel.Presentation, $"Requested system ({TypeHelper.TypeOf<TA>.Name}) not found");

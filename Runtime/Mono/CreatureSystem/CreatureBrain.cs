@@ -151,7 +151,7 @@ namespace Syadeu.Mono
             }
 
             m_Hash = Hash.NewHash();
-            PresentationSystem<RenderSystem>.GetSystem().AddObserver(this);
+            PresentationSystem<RenderSystem>.System.AddObserver(this);
             Initialized = true;
         }
         protected override void OnTerminate()
@@ -169,7 +169,7 @@ namespace Syadeu.Mono
             }
 
             m_Hash = Hash.Empty;
-            PresentationSystem<RenderSystem>.GetSystem().RemoveObserver(this);
+            PresentationSystem<RenderSystem>.System.RemoveObserver(this);
             CreatureManager.Instance.Creatures.Remove(this);
             m_IsSpawnedFromManager = false;
             Initialized = false;
@@ -182,7 +182,7 @@ namespace Syadeu.Mono
                 set.m_SpawnRanges[m_SpawnPointIdx].m_InstanceCount--;
                 CreatureManager.Instance.Creatures.Remove(this);
             }
-            PresentationSystem<RenderSystem>.GetSystem().RemoveObserver(this);
+            PresentationSystem<RenderSystem>.System.RemoveObserver(this);
         }
 
         /// <summary>
@@ -258,7 +258,7 @@ namespace Syadeu.Mono
 
         public bool MoveTo(Vector3 worldPosition, bool force = false)
         {
-            if (m_EnableCameraCull && !PresentationSystem<RenderSystem>.GetSystem().IsInCameraScreen(transform.position))
+            if (m_EnableCameraCull && !PresentationSystem<RenderSystem>.System.IsInCameraScreen(transform.position))
             {
                 transform.position = worldPosition;
                 return true;
@@ -336,7 +336,7 @@ namespace Syadeu.Mono
 
             while (sqr > .25f)
             {
-                if (m_EnableCameraCull && !PresentationSystem<RenderSystem>.GetSystem().IsInCameraScreen(transform.position))
+                if (m_EnableCameraCull && !PresentationSystem<RenderSystem>.System.IsInCameraScreen(transform.position))
                 {
                     //m_NavMeshAgent.ResetPath();
                     transform.position = worldPosition;
@@ -361,7 +361,7 @@ namespace Syadeu.Mono
 
             while (sqr > .25f)
             {
-                if (m_EnableCameraCull && !PresentationSystem<RenderSystem>.GetSystem().IsInCameraScreen(transform.position))
+                if (m_EnableCameraCull && !PresentationSystem<RenderSystem>.System.IsInCameraScreen(transform.position))
                 {
                     transform.position = worldPosition;
                     yield break;

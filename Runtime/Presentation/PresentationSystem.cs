@@ -58,6 +58,24 @@ namespace Syadeu.Presentation
                 return PresentationManager.Instance.m_PresentationGroups[Instance.m_GroupHash].m_SystemGroup;
             }
         }
+        public static T System
+        {
+            get
+            {
+                Assert.IsTrue(IsValid(), $"{TypeHelper.TypeOf<T>.Type.Name} System is not valid");
+                try
+                {
+                    return (T)PresentationManager.Instance.m_PresentationGroups[Instance.m_GroupHash].m_Systems[Instance.m_Index];
+                }
+                catch (Exception ex)
+                {
+                    $"{TypeHelper.TypeOf<T>.Type.Name}: {Instance.m_GroupHash}, {Instance.m_Index}".ToLog();
+
+                    UnityEngine.Debug.LogError(ex);
+                    throw;
+                }
+            }
+        }
 
         private readonly Hash m_GroupHash;
         private readonly int m_Index;
@@ -77,21 +95,6 @@ namespace Syadeu.Presentation
         }
 
         public static bool IsValid() => ((IValidation)Instance).IsValid();
-        public static T GetSystem()
-        {
-            Assert.IsTrue(IsValid(), $"{TypeHelper.TypeOf<T>.Type.Name} System is not valid");
-            try
-            {
-                return (T)PresentationManager.Instance.m_PresentationGroups[Instance.m_GroupHash].m_Systems[Instance.m_Index];
-            }
-            catch (Exception ex)
-            {
-                $"{TypeHelper.TypeOf<T>.Type.Name}: {Instance.m_GroupHash}, {Instance.m_Index}".ToLog();
-
-                UnityEngine.Debug.LogError(ex);
-                throw;
-            }
-        }
         public static ICustomYieldAwaiter GetAwaiter() => Instance;
     }
 }

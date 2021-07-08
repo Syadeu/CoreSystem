@@ -303,12 +303,12 @@ namespace Syadeu
             {
                 AddBackgroundJob(() =>
                 {
-                    PresentationSystem<SceneSystem>.GetSystem().LoadStartScene(5);
+                    PresentationSystem<SceneSystem>.System.LoadStartScene(5);
                 });
             }
             if (GUILayout.Button("To Game"))
             {
-                PresentationSystem<SceneSystem>.GetSystem().LoadScene(0, 5);
+                PresentationSystem<SceneSystem>.System.LoadScene(0, 5);
             }
         }
 

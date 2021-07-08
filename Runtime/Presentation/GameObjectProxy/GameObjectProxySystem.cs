@@ -26,7 +26,8 @@ namespace Syadeu.Presentation
         //private readonly Dictionary<int, Queue<DataMonoBehaviour>> m_MonoDataPool = new Dictionary<int, Queue<DataMonoBehaviour>>();
 
         //private NativeList<DataMonoBehaviour> m_PinnedMonoData;
-        internal Queue<IDataComponent> m_RequireUpdateList = new Queue<IDataComponent>();
+        internal readonly Queue<IDataComponent> m_RequireUpdateList = new Queue<IDataComponent>();
+        internal readonly HashSet<IDataComponent> m_RequireUpdateQueuedList = new HashSet<IDataComponent>();
 
         public override PresentationResult OnInitialize()
         {
@@ -65,6 +66,7 @@ namespace Syadeu.Presentation
                         throw new Exception();
                         //break;
                 }
+                m_RequireUpdateQueuedList.Remove(data);
 
                 //if (i != 0 && i % 50 == 0) break;
             }

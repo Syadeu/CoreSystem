@@ -43,7 +43,7 @@ namespace Syadeu.Presentation
 
         protected void Initialize()
         {
-            SceneSystem sceneSystem = PresentationSystem<SceneSystem>.GetSystem();
+            SceneSystem sceneSystem = PresentationSystem<SceneSystem>.System;
             sceneSystem.SetLoadingScene(m_Camera, m_FadeGroup,
                 () => m_FadeGroup.Lerp(1, Time.deltaTime * 2),
                 m_OnLoading.Invoke,

@@ -100,8 +100,8 @@ public class PresentationSystemTests
     {
         PresentationSystemGroup<PresentationTestGroup>.Start();
 
-        CoreSystem.IsNotNull(PresentationSystem<TestSystem>.GetSystem());
-        CoreSystem.IsNotNull(PresentationSystem<Test123System>.GetSystem());
+        CoreSystem.IsNotNull(PresentationSystem<TestSystem>.System);
+        CoreSystem.IsNotNull(PresentationSystem<Test123System>.System);
 
         yield return new WaitForSeconds(10);
 
