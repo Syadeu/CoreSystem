@@ -193,7 +193,7 @@ namespace SyadeuEditor
 
                     if (EditorGUI.EndChangeCheck())
                     {
-                        Manager.m_CreatureSets[i].m_SpawnRanges[a].m_Center.y = 0;
+                        //Manager.m_CreatureSets[i].m_SpawnRanges[a].m_Center.y = 0;
                         Manager.m_CreatureSets[i].m_SpawnRanges[a].m_Center
                             = Vector3Int.RoundToInt(Manager.m_CreatureSets[i].m_SpawnRanges[a].m_Center);
                         EditorUtility.SetDirty(Manager);

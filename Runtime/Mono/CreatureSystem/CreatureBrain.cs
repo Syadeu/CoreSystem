@@ -69,6 +69,8 @@ namespace Syadeu.Mono
             }
         }
         public bool IsVisible { get; private set; } = false;
+        public Vector3 Direction => m_NavMeshAgent.desiredVelocity;
+        //public Vector3 Speed => m_NavMeshAgent.;
         public Hash Hash => m_Hash;
 
         public bool HasInventory => Inventory != null;
@@ -256,7 +258,12 @@ namespace Syadeu.Mono
         private CoreRoutine m_MoveRoutine;
         private NavMeshPath m_SharedPath;
 
-        public bool MoveTo(Vector3 worldPosition, bool force = false)
+        public Vector3[] CalculatePath(Vector3 target)
+        {
+            m_NavMeshAgent.CalculatePath(target, m_SharedPath);
+            return m_SharedPath.corners;
+        }
+        public bool MoveTo(Vector3 worldPosition, Action onCompleted = null, bool force = false)
         {
             if (m_EnableCameraCull && !PresentationSystem<RenderSystem>.System.IsInCameraScreen(transform.position))
             {
@@ -285,7 +292,7 @@ namespace Syadeu.Mono
                     }
                 }
 
-                //m_MoveRoutine = CoreSystem.StartUnityUpdate(this, MoveToPointNavJob(worldPosition));
+                m_MoveRoutine = CoreSystem.StartUnityUpdate(this, MoveToPointNavJob(worldPosition, onCompleted));
             }
             else
             {
@@ -295,14 +302,14 @@ namespace Syadeu.Mono
 
             return true;
         }
-        public void MoveTo(GridManager.GridCell target) => MoveTo(target.Bounds.center);
-        public void MoveTo(int gridIdx, int cellIdx)
+        public void MoveTo(GridManager.GridCell target, Action onCompleted = null) => MoveTo(target.Bounds.center, onCompleted);
+        public void MoveTo(int gridIdx, int cellIdx, Action onCompleted = null)
         {
             Vector3 worldPos = GridManager.GetGrid(gridIdx).GetCell(cellIdx).Bounds.center;
-            MoveTo(worldPos);
+            MoveTo(worldPos, onCompleted);
         }
-        public void MoveTo(int2 gridIdxes) => MoveTo(gridIdxes.x, gridIdxes.y);
-        public void MoveTo(Vector2Int gridIdxes) => MoveTo(gridIdxes.x, gridIdxes.y);
+        public void MoveTo(int2 gridIdxes, Action onCompleted = null) => MoveTo(gridIdxes.x, gridIdxes.y, onCompleted);
+        public void MoveTo(Vector2Int gridIdxes, Action onCompleted = null) => MoveTo(gridIdxes.x, gridIdxes.y, onCompleted);
 
         public bool MoveToDirection(Vector3 direction)
         {
@@ -330,7 +337,7 @@ namespace Syadeu.Mono
                 return false;
             }
         }
-        private IEnumerator MoveToPointNavJob(Vector3 worldPosition)
+        private IEnumerator MoveToPointNavJob(Vector3 worldPosition, Action onCompleted)
         {
             float sqr = (worldPosition - transform.position).sqrMagnitude;
 
@@ -340,7 +347,7 @@ namespace Syadeu.Mono
                 {
                     //m_NavMeshAgent.ResetPath();
                     transform.position = worldPosition;
-                    yield break;
+                    break;
                 }
 
                 if (m_NavMeshAgent.pathStatus == NavMeshPathStatus.PathInvalid ||
@@ -353,6 +360,8 @@ namespace Syadeu.Mono
                 sqr = (worldPosition - transform.position).sqrMagnitude;
                 yield return null;
             }
+
+            onCompleted?.Invoke();
         }
         private IEnumerator MoveToPointJob(Vector3 worldPosition)
         {

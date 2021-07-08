@@ -308,7 +308,7 @@ namespace Syadeu.Presentation
                 while (oper.progress != 1)
                 {
                     OnLoading?.Invoke(oper.progress);
-
+                    $"{oper.progress}".ToLog();
                     yield return null;
                 }
                 OnLoading?.Invoke(1);

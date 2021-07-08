@@ -64,7 +64,7 @@ namespace Syadeu.Mono
 
             recycleable.CreatedWithAddressable = true;
             recycleable.InternalOnCreated();
-            obj.Result.SetActive(false);
+            //obj.Result.SetActive(false);
             RecycleObjectSet.Promises.Remove(this);
             RecycleObjectSet.AddNewInstance(recycleable);
 
