@@ -9,7 +9,8 @@ namespace Syadeu.Presentation.Internal
     /// <remarks>
     /// 직접 상속은 허용하지 않습니다. <see cref="PresentationSystemEntity{T}"/>로 상속받아서 사용하세요.
     /// </remarks>
-    public abstract class PresentationSystemEntity : IInitPresentation, IBeforePresentation, IOnPresentation, IAfterPresentation, IDisposable
+    public abstract class PresentationSystemEntity : IInitPresentation, 
+        IBeforePresentation, IOnPresentation, IAfterPresentation, IDisposable
     {
         public abstract bool EnableBeforePresentation { get; }
         public abstract bool EnableOnPresentation { get; }
@@ -23,19 +24,28 @@ namespace Syadeu.Presentation.Internal
         /// </remarks>
         public abstract bool IsStartable { get; }
 
-        public abstract PresentationResult OnInitialize();
-        public abstract PresentationResult OnInitializeAsync();
+        protected abstract PresentationResult OnInitialize();
+        protected abstract PresentationResult OnInitializeAsync();
+        PresentationResult IInitPresentation.OnInitialize() => OnInitialize();
+        PresentationResult IInitPresentation.OnInitializeAsync() => OnInitializeAsync();
 
-        public abstract PresentationResult OnStartPresentation();
+        protected abstract PresentationResult OnStartPresentation();
+        PresentationResult IInitPresentation.OnStartPresentation() => OnStartPresentation();
 
-        public abstract PresentationResult BeforePresentation();
-        public abstract PresentationResult BeforePresentationAsync();
+        protected abstract PresentationResult BeforePresentation();
+        protected abstract PresentationResult BeforePresentationAsync();
+        PresentationResult IBeforePresentation.BeforePresentation() => BeforePresentation();
+        PresentationResult IBeforePresentation.BeforePresentationAsync() => BeforePresentationAsync();
 
-        public abstract PresentationResult OnPresentation();
-        public abstract PresentationResult OnPresentationAsync();
+        protected abstract PresentationResult OnPresentation();
+        protected abstract PresentationResult OnPresentationAsync();
+        PresentationResult IOnPresentation.OnPresentation() => OnPresentation();
+        PresentationResult IOnPresentation.OnPresentationAsync() => OnPresentationAsync();
 
-        public abstract PresentationResult AfterPresentation();
-        public abstract PresentationResult AfterPresentationAsync();
+        protected abstract PresentationResult AfterPresentation();
+        protected abstract PresentationResult AfterPresentationAsync();
+        PresentationResult IAfterPresentation.AfterPresentation() => AfterPresentation();
+        PresentationResult IAfterPresentation.AfterPresentationAsync() => AfterPresentationAsync();
 
         public abstract void Dispose();
     }

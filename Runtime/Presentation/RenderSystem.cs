@@ -37,7 +37,7 @@ namespace Syadeu.Presentation
 
         public Camera Camera => m_Camera.Value;
 
-        public override PresentationResult OnInitialize()
+        protected override PresentationResult OnInitialize()
         {
             m_Camera = new ObClass<Camera>(ObValueDetection.Changed);
             m_Camera.OnValueChange += (from, to) =>
@@ -48,7 +48,7 @@ namespace Syadeu.Presentation
 
             return base.OnInitialize();
         }
-        public override PresentationResult BeforePresentation()
+        protected override PresentationResult BeforePresentation()
         {
             if (m_Camera.Value == null)
             {
@@ -59,7 +59,7 @@ namespace Syadeu.Presentation
 
             return base.BeforePresentation();
         }
-        public override PresentationResult OnPresentation()
+        protected override PresentationResult OnPresentation()
         {
             if (Camera == null) return PresentationResult.Warning("Cam not found");
 

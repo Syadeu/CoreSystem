@@ -19,24 +19,23 @@ namespace Syadeu.Presentation
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
-        private ModuleBuilder m_ModuleBuilder;
-        private readonly Dictionary<Type, GenericType> m_GenericTypes = new Dictionary<Type, GenericType>();
-        internal Dictionary<int3, IDataComponent> m_MappedData = new Dictionary<int3, IDataComponent>();
+        
         //internal NativeHashMap<Hash, DataTransform> m_MappedTrData;
         //private readonly Dictionary<int, Queue<DataMonoBehaviour>> m_MonoDataPool = new Dictionary<int, Queue<DataMonoBehaviour>>();
 
         //private NativeList<DataMonoBehaviour> m_PinnedMonoData;
         internal readonly Queue<IDataComponent> m_RequireUpdateList = new Queue<IDataComponent>();
         internal readonly HashSet<IDataComponent> m_RequireUpdateQueuedList = new HashSet<IDataComponent>();
+        internal readonly Dictionary<int3, IDataComponent> m_MappedData = new Dictionary<int3, IDataComponent>();
 
-        public override PresentationResult OnInitialize()
+        protected override PresentationResult OnInitialize()
         {
             //m_PinnedMonoData = new NativeList<DataMonoBehaviour>(1, Allocator.Persistent);
             //m_MappedData = new NativeHashMap<Hash, IDataComponent>(1, Allocator.Persistent);
             //m_MappedTrData = new NativeHashMap<Hash, DataTransform>(1, Allocator.Persistent);
             return base.OnInitialize();
         }
-        public override PresentationResult OnInitializeAsync()
+        protected override PresentationResult OnInitializeAsync()
         {
             AssemblyName aName = new AssemblyName("CoreSystem_Runtime");
             AssemblyBuilder ab = AppDomain.CurrentDomain.DefineDynamicAssembly(aName, AssemblyBuilderAccess.Run);
@@ -44,12 +43,12 @@ namespace Syadeu.Presentation
 
             return base.OnInitializeAsync();
         }
-        public override PresentationResult OnStartPresentation()
+        protected override PresentationResult OnStartPresentation()
         {
             return base.OnStartPresentation();
         }
 
-        public override PresentationResult AfterPresentation()
+        protected override PresentationResult AfterPresentation()
         {
             int updateCount = m_RequireUpdateList.Count;
             for (int i = 0; i < updateCount; i++)
@@ -168,6 +167,11 @@ namespace Syadeu.Presentation
 
             oriTr.localScale = boxed.localScale;
         }
+
+        #region Experimental
+
+        private ModuleBuilder m_ModuleBuilder;
+        private readonly Dictionary<Type, GenericType> m_GenericTypes = new Dictionary<Type, GenericType>();
 
         /// <summary>
         /// 사용한 오브젝트를 재사용할 수 있도록 해당 오브젝트 풀로 반환합니다.<br/>
@@ -316,6 +320,8 @@ namespace Syadeu.Presentation
             compliedType.CreatedCount++;
             return obj.AddComponent<T>();
         }
+        #endregion
+
         #endregion
     }
 

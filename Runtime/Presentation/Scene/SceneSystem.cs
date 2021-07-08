@@ -76,7 +76,7 @@ namespace Syadeu.Presentation
         /// </summary>
         public bool IsSceneLoading => m_LoadingEnabled || m_AsyncOperation != null;
 
-        public override PresentationResult OnInitialize()
+        protected override PresentationResult OnInitialize()
         {
             if (m_DebugMode)
             {
@@ -158,7 +158,7 @@ namespace Syadeu.Presentation
             }
             #endregion
         }
-        public override PresentationResult OnStartPresentation()
+        protected override PresentationResult OnStartPresentation()
         {
             if (m_LoadingScene.IsValid() && m_MasterScene.IsValid())
             {

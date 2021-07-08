@@ -27,19 +27,19 @@ namespace Syadeu.Presentation.Entities
             Dispose();
         }
 
-        public override PresentationResult OnInitialize() { return PresentationResult.Normal; }
-        public override PresentationResult OnInitializeAsync() { return PresentationResult.Normal; }
+        protected override PresentationResult OnInitialize() { return PresentationResult.Normal; }
+        protected override PresentationResult OnInitializeAsync() { return PresentationResult.Normal; }
 
-        public override PresentationResult OnStartPresentation() { return PresentationResult.Normal; }
+        protected override PresentationResult OnStartPresentation() { return PresentationResult.Normal; }
 
-        public override PresentationResult BeforePresentation() { return PresentationResult.Normal; }
-        public override PresentationResult BeforePresentationAsync() { return PresentationResult.Normal; }
+        protected override PresentationResult BeforePresentation() { return PresentationResult.Normal; }
+        protected override PresentationResult BeforePresentationAsync() { return PresentationResult.Normal; }
 
-        public override PresentationResult OnPresentation() { return PresentationResult.Normal; }
-        public override PresentationResult OnPresentationAsync() { return PresentationResult.Normal; }
+        protected override PresentationResult OnPresentation() { return PresentationResult.Normal; }
+        protected override PresentationResult OnPresentationAsync() { return PresentationResult.Normal; }
 
-        public override PresentationResult AfterPresentation() { return PresentationResult.Normal; }
-        public override PresentationResult AfterPresentationAsync() { return PresentationResult.Normal; }
+        protected override PresentationResult AfterPresentation() { return PresentationResult.Normal; }
+        protected override PresentationResult AfterPresentationAsync() { return PresentationResult.Normal; }
 
         public override void Dispose() { }
 

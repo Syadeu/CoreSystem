@@ -26,14 +26,14 @@ public class PresentationSystemTests
         public override bool EnableOnPresentation => true;
         public override bool EnableAfterPresentation => false;
 
-        public override PresentationResult OnInitialize()
+        protected override PresentationResult OnInitialize()
         {
             RequestSystem<Test123System>((other) => testsystem = other);
 
             return base.OnInitialize();
         }
 
-        public override PresentationResult OnPresentation()
+        protected override PresentationResult OnPresentation()
         {
             //$"123123 system == null = {testsystem == null}".ToLog();
             Assert.IsNotNull(testsystem);
@@ -48,13 +48,13 @@ public class PresentationSystemTests
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
-        public override PresentationResult OnInitialize()
+        protected override PresentationResult OnInitialize()
         {
             RequestSystem<TestSystem>((other) => testSystem = other);
 
             return base.OnInitialize();
         }
-        public override PresentationResult OnStartPresentation()
+        protected override PresentationResult OnStartPresentation()
         {
             CoreSystem.Log(Channel.Core, "Test123System Starting");
 
@@ -63,32 +63,32 @@ public class PresentationSystemTests
             return base.OnStartPresentation();
         }
 
-        public override PresentationResult BeforePresentation()
+        protected override PresentationResult BeforePresentation()
         {
             CoreSystem.LogError(Channel.Core, "NEVER RUN THIS");
             return base.BeforePresentation();
         }
-        public override PresentationResult BeforePresentationAsync()
+        protected override PresentationResult BeforePresentationAsync()
         {
             CoreSystem.LogError(Channel.Core, "NEVER RUN THIS");
             return base.BeforePresentationAsync();
         }
-        public override PresentationResult OnPresentation()
+        protected override PresentationResult OnPresentation()
         {
             CoreSystem.LogError(Channel.Core, "NEVER RUN THIS");
             return base.OnPresentation();
         }
-        public override PresentationResult OnPresentationAsync()
+        protected override PresentationResult OnPresentationAsync()
         {
             CoreSystem.LogError(Channel.Core, "NEVER RUN THIS");
             return base.OnPresentationAsync();
         }
-        public override PresentationResult AfterPresentation()
+        protected override PresentationResult AfterPresentation()
         {
             CoreSystem.LogError(Channel.Core, "NEVER RUN THIS");
             return base.AfterPresentation();
         }
-        public override PresentationResult AfterPresentationAsync()
+        protected override PresentationResult AfterPresentationAsync()
         {
             CoreSystem.LogError(Channel.Core, "NEVER RUN THIS");
             return base.AfterPresentationAsync();
