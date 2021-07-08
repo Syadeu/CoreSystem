@@ -26,18 +26,22 @@ namespace Syadeu.Database
         [JsonConverter(typeof(Converters.AssetReferenceJsonConverter))]
         [JsonProperty(Order = 2, PropertyName = "ImagePath")] public AssetReference m_ImagePath;
 #endif
+        /// <summary>
+        /// <see cref="PrefabList.ObjectSettings"/>
+        /// </summary>
+        [JsonProperty(Order = 3, PropertyName = "PrefabIdx")] public int m_PrefabIdx;
 
         [Tooltip("Hash")]
         /// <summary>
         /// <see cref="ItemType"/>
         /// </summary>
-        [JsonProperty(Order = 3, PropertyName = "ItemTypes")] public ulong[] m_ItemTypes = new ulong[0];
+        [JsonProperty(Order = 4, PropertyName = "ItemTypes")] public ulong[] m_ItemTypes = new ulong[0];
         [Tooltip("Hash")]
         /// <summary>
         /// <see cref="ItemEffectType"/>
         /// </summary>
-        [JsonProperty(Order = 4, PropertyName = "ItemEffectTypes")] public ulong[] m_ItemEffectTypes = new ulong[0];
-        [JsonProperty(Order = 5, PropertyName = "Values")] public ValuePairContainer m_Values = new ValuePairContainer();
+        [JsonProperty(Order = 5, PropertyName = "ItemEffectTypes")] public ulong[] m_ItemEffectTypes = new ulong[0];
+        [JsonProperty(Order = 6, PropertyName = "Values")] public ValuePairContainer m_Values = new ValuePairContainer();
 
         [NonSerialized] private ItemProxy m_Proxy = null;
 

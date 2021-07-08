@@ -36,6 +36,7 @@ namespace SyadeuEditor
             EditorGUILayout.LabelField("Image: ");
             ItemEditor.DrawAssetReference(m_Item, m_Item.m_ImagePath);
             EditorGUILayout.EndHorizontal();
+            m_Item.m_PrefabIdx = PrefabListEditor.DrawPrefabSelector(m_Item.m_PrefabIdx);
             EditorUtils.Line();
 #endif
             #region ItemTypes

@@ -14,6 +14,10 @@ namespace Syadeu.Mono
     public abstract class RecycleableMonobehaviour : MonoBehaviour, ITerminate
     {
         public delegate bool TerminateCondition();
+        /// <summary>
+        /// <see cref="PrefabManager.RecycleObject.Instances"/>
+        /// </summary>
+        internal int m_Idx = -1;
 
         /// <summary>
         /// PrefabManager 인스펙터창에서 보여질 이름입니다.
@@ -21,7 +25,6 @@ namespace Syadeu.Mono
         /// </summary>
         public virtual string DisplayName => name;
 
-        public UnityAction onTerminateAction;
         public Action onTerminate;
 
         public bool Activated { get; internal set; } = false;
@@ -59,7 +62,6 @@ namespace Syadeu.Mono
 
         public void Terminate()
         {
-            onTerminateAction?.Invoke();
             onTerminate?.Invoke();
             OnTerminate();
 

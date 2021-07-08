@@ -123,14 +123,12 @@ namespace SyadeuEditor
         {
             if (m_PrefabNames == null || m_PrefabNames.Length != PrefabList.Instance.ObjectSettings.Count)
             {
-                IReadOnlyList<PrefabList.ObjectSetting> list = PrefabList.Instance.ObjectSettings;
-                m_PrefabNames = new string[list.Count];
-                for (int i = 0; i < m_PrefabNames.Length; i++)
-                {
-                    m_PrefabNames[i] = string.IsNullOrEmpty(list[i].m_Name) ? list[i].Prefab.name : list[i].m_Name;
-
-
-                }
+                m_PrefabNames = new string[PrefabList.Instance.ObjectSettings.Count];
+            }
+            for (int i = 0; i < m_PrefabNames.Length; i++)
+            {
+                m_PrefabNames[i] = string.IsNullOrEmpty(PrefabList.Instance.ObjectSettings[i].m_Name) ? 
+                    PrefabList.Instance.ObjectSettings[i].Prefab.name : PrefabList.Instance.ObjectSettings[i].m_Name;
             }
         }
 

@@ -19,7 +19,7 @@ namespace SyadeuEditor
     [CustomEditor(typeof(ItemDataList))]
     public sealed class ItemDataListEditor : EditorEntity<ItemDataList>
     {
-        private VerticalTreeView m_TreeView;
+        private static VerticalTreeView m_TreeView;
         private VerticalTreeView TreeView
         {
             get
@@ -135,16 +135,20 @@ namespace SyadeuEditor
 
         private void OnEnable()
         {
-            Asset.LoadDatas();
-            RefreshTreeView();
+            m_TreeView = null;
+
+            Asset.m_Items?.Clear();
+            Asset.m_ItemTypes?.Clear();
+            Asset.m_ItemEffectTypes?.Clear();
+            EditorUtils.SetDirty(Asset);
         }
         private void RefreshTreeView()
         {
             List<object> tempList = new List<object>();
-            tempList.AddRange(Asset.m_Items);
-            tempList.AddRange(Asset.m_ItemTypes);
-            tempList.AddRange(Asset.m_ItemEffectTypes);
-            TreeView.Refresh(tempList);
+            if (Asset.m_Items != null) tempList.AddRange(Asset.m_Items);
+            if (Asset.m_ItemTypes != null) tempList.AddRange(Asset.m_ItemTypes);
+            if (Asset.m_ItemEffectTypes != null) tempList.AddRange(Asset.m_ItemEffectTypes);
+            m_TreeView.Refresh(tempList);
         }
         //private void OnValidate()
         //{
@@ -153,6 +157,19 @@ namespace SyadeuEditor
 
         public override void OnInspectorGUI()
         {
+            if (m_TreeView == null)
+            {
+                Asset.LoadDatas();
+                EditorUtils.SetDirty(Asset);
+                //RefreshTreeView();
+
+                List<object> tempList = new List<object>();
+                if (Asset.m_Items != null) tempList.AddRange(Asset.m_Items);
+                if (Asset.m_ItemTypes != null) tempList.AddRange(Asset.m_ItemTypes);
+                if (Asset.m_ItemEffectTypes != null) tempList.AddRange(Asset.m_ItemEffectTypes);
+                TreeView.Refresh();
+            }
+
             EditorUtils.StringHeader("Item Datas");
             EditorUtils.SectorLine();
 
@@ -173,10 +190,12 @@ namespace SyadeuEditor
             }
             if (GUILayout.Button("Save"))
             {
-                //EditorUtils.SetDirty(Asset);
+                EditorUtils.SetDirty(Asset);
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
                 Asset.SaveDatas();
-                //AssetDatabase.SaveAssets();
-                //AssetDatabase.Refresh();
+                
+                
                 //OnValidate();
             }
             EditorGUILayout.EndHorizontal();
@@ -185,9 +204,9 @@ namespace SyadeuEditor
 
             TreeView.OnGUI();
 
-            //EditorGUILayout.Space();
-            //m_ShowOriginalContents = EditorUtils.Foldout(m_ShowOriginalContents, "Original Contents");
-            //if (m_ShowOriginalContents) base.OnInspectorGUI();
+            EditorGUILayout.Space();
+            m_ShowOriginalContents = EditorUtils.Foldout(m_ShowOriginalContents, "Original Contents");
+            if (m_ShowOriginalContents) base.OnInspectorGUI();
         }
 
         private class TreeItemElement : VerticalTreeElement<Item>

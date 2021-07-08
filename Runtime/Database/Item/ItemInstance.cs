@@ -19,6 +19,8 @@ namespace Syadeu.Database
         private readonly ItemEffectType[] m_ItemEffectTypes;
         private readonly ValuePairContainer m_Values;
 
+        internal GameObject m_ProxyObject;
+
         public Item Data => m_Data;
         public Hash Hash => m_Hash;
 

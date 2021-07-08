@@ -66,6 +66,7 @@ namespace Syadeu.Mono
 
             public void AddNewInstance(RecycleableMonobehaviour obj)
             {
+                obj.m_Idx = Instances.Count;
                 Instances.Add(obj);
                 Transforms.Add(obj.transform);
             }
