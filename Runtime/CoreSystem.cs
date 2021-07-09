@@ -303,12 +303,12 @@ namespace Syadeu
             {
                 AddBackgroundJob(() =>
                 {
-                    PresentationSystem<SceneSystem>.System.LoadStartScene(5);
+                    PresentationSystem<SceneSystem>.System.LoadStartScene(1, 5);
                 });
             }
             if (GUILayout.Button("To Game"))
             {
-                PresentationSystem<SceneSystem>.System.LoadScene(0, 5);
+                PresentationSystem<SceneSystem>.System.LoadScene(0, 1, 5);
             }
         }
 
@@ -1481,6 +1481,8 @@ namespace Syadeu
                 //{
                 //    GC.Collect();
                 //}
+                time = Time.time;
+                deltaTime = Time.deltaTime;
                 m_SimWatcher.Set();
                 yield return null;
             }
@@ -1641,6 +1643,9 @@ namespace Syadeu
 
         #region Utils
 
+        public static float time { get; private set; }
+        public static float deltaTime { get; private set; }
+
         public static Vector3 GetPosition(Transform transform)
         {
             if (IsMainthread()) return transform.position;
@@ -1684,11 +1689,22 @@ namespace Syadeu
                 return result;
             }
         }
-        public static void WaitInvoke(float seconds, Action action)
+        public static void WaitInvoke(float seconds, Action action) => WaitInvoke(seconds, action, null);
+        public static void WaitInvoke(float seconds, Action action, Action<float> whileWait)
         {
+            float 
+                startTime = Time.time,
+                currentTime = startTime;
             new BackgroundJob(() =>
             {
-                ThreadAwaiter((int)seconds * 1000);
+                while (currentTime < startTime + seconds)
+                {
+                    whileWait?.Invoke(currentTime - startTime);
+
+                    currentTime = CoreSystem.time;
+                    Instance.m_SimWatcher.WaitOne();
+                }
+                //ThreadAwaiter((int)seconds * 1000);
                 AddForegroundJob(action);
             }).Start();
         }

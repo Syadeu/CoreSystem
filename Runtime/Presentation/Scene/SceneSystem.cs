@@ -41,14 +41,43 @@ namespace Syadeu.Presentation
         [ConfigValue(Header = "Screen", Name = "ResolutionX")] private int m_ResolutionX;
         [ConfigValue(Header = "Screen", Name = "ResolutionY")] private int m_ResolutionY;
 
-        private CanvasGroup m_BlackScreen = null;
-        private Camera m_DefaultCamera = null;
+        //private CanvasGroup m_BlackScreen = null;
+        //private Camera m_DefaultCamera = null;
 
         private bool m_LoadingEnabled = false;
-        private Timer m_SceneActiveTimer = new Timer();
+        private bool m_LoadingSceneSetupDone = false;
+        //private Timer m_SceneActiveTimer = new Timer();
 
+        /// <summary>
+        /// 로딩 콜이 실행되었을때 맨 처음으로 발생하는 이벤트입니다.
+        /// </summary>
         public event Action OnLoadingEnter;
+        /// <summary>
+        /// 로딩이 시작되기전 잠시 대기될때 실행되는 이벤트입니다. <br/>
+        /// </summary>
+        /// <remarks>
+        /// arg1: 시작된 후부터 지나간 시간(초)<br/>
+        /// arg2: 기다리는 최종 타겟 시간(초)
+        /// </remarks>
+        public event Action<float, float> OnWaitLoading;
+        /// <summary>
+        /// 타겟 씬이 실제 로딩되는 중에 실행되는 이벤트입니다.
+        /// </summary>
+        /// <remarks>
+        /// arg1: 타겟씬의 실제 로딩 결과 0 ~ 1
+        /// </remarks>
         public event Action<float> OnLoading;
+        /// <summary>
+        /// 로딩이 끝난 후, 게임에게 로딩이 끝났음을 알리는 콜이 발생할때까지 실행되는 이벤트입니다.
+        /// </summary>
+        /// <remarks>
+        /// arg1: 시작된 후부터 지나간 시간(초)<br/>
+        /// arg2: 기다리는 최종 타겟 시간(초)
+        /// </remarks>
+        public event Action<float, float> OnAfterLoading;
+        /// <summary>
+        /// 로딩 과정이 전부 끝났을때 호출되는 이벤트입니다.
+        /// </summary>
         public event Action OnLoadingExit;
 
         public override bool EnableBeforePresentation => false;
@@ -60,7 +89,7 @@ namespace Syadeu.Presentation
             {
                 if (!m_DebugMode)
                 {
-                    if (m_BlackScreen == null || m_DefaultCamera == null) return false;
+                    if (/*m_BlackScreen == null || m_DefaultCamera == null || */!m_LoadingSceneSetupDone) return false;
                     if (!m_LoadingScene.IsValid() || !m_LoadingScene.isLoaded) return false;
                 }
                 
@@ -85,7 +114,7 @@ namespace Syadeu.Presentation
                     SetupMasterScene();
                     SetupLoadingScene();
 
-                    LoadStartScene(3);
+                    LoadStartScene(1, 2);
                 }
             }
             else
@@ -93,7 +122,7 @@ namespace Syadeu.Presentation
                 SetupMasterScene();
                 SetupLoadingScene();
 
-                LoadStartScene(3);
+                LoadStartScene(1, 2);
             }
 
             return base.OnInitialize();
@@ -121,7 +150,7 @@ namespace Syadeu.Presentation
                     m_LoadingScene = SceneManager.CreateScene("Loading Scene");
 
                     GameObject camObj = CreateObject(m_LoadingScene, "Default Camera", typeof(Camera));
-                    m_DefaultCamera = camObj.GetComponent<Camera>();
+                    Camera m_DefaultCamera = camObj.GetComponent<Camera>();
                     m_DefaultCamera.cameraType = CameraType.Game;
                     m_DefaultCamera.transform.position = Vector3.zero;
 
@@ -141,11 +170,13 @@ namespace Syadeu.Presentation
                     image.transform.localPosition = Vector3.zero;
                     image.color = Color.black;
 
-                    m_BlackScreen = image.gameObject.AddComponent<CanvasGroup>();
+                    CanvasGroup m_BlackScreen = image.gameObject.AddComponent<CanvasGroup>();
                     m_BlackScreen.alpha = 1;
 
                     OnLoadingEnter += () => m_BlackScreen.Lerp(1, Time.deltaTime);
                     OnLoadingExit += () => m_BlackScreen.Lerp(0, Time.deltaTime);
+
+                    m_LoadingSceneSetupDone = true;
                 }
                 else
                 {
@@ -171,11 +202,11 @@ namespace Syadeu.Presentation
         /// <see cref="SceneList.StartScene"/> 을 로드합니다.
         /// </summary>
         /// <param name="startDelay"></param>
-        public void LoadStartScene(int startDelay)
+        public void LoadStartScene(float waitDelay, int startDelay)
         {
             if (!CoreSystem.IsThisMainthread())
             {
-                CoreSystem.AddForegroundJob(() => LoadStartScene(startDelay)).Await();
+                CoreSystem.AddForegroundJob(() => LoadStartScene(waitDelay, startDelay)).Await();
                 return;
             }
 
@@ -188,7 +219,7 @@ namespace Syadeu.Presentation
             //}
             //else
             {
-                InternalLoadScene(SceneList.Instance.StartScene, startDelay);
+                InternalLoadScene(SceneList.Instance.StartScene, waitDelay, startDelay);
             }
         }
         /// <summary>
@@ -196,11 +227,11 @@ namespace Syadeu.Presentation
         /// </summary>
         /// <param name="index"></param>
         /// <param name="startDelay"></param>
-        public void LoadScene(int index, int startDelay)
+        public void LoadScene(int index, float waitDelay, int startDelay)
         {
             if (!CoreSystem.IsThisMainthread())
             {
-                CoreSystem.AddForegroundJob(() => LoadScene(index, startDelay)).Await();
+                CoreSystem.AddForegroundJob(() => LoadScene(index, waitDelay, startDelay)).Await();
                 return;
             }
 
@@ -213,12 +244,13 @@ namespace Syadeu.Presentation
             //}
             //else
             {
-                InternalLoadScene(SceneList.Instance.Scenes[index], startDelay);
+                InternalLoadScene(SceneList.Instance.Scenes[index], waitDelay, startDelay);
             }
         }
 
-        internal void SetLoadingScene(Camera cam, CanvasGroup cg, 
-            Action onLoadingEnter, Action<float> onLoading, Action onLoadingExit)
+        internal void SetLoadingScene(Action onLoadingEnter, Action<float, float> onWaitLoading, 
+            Action<float> onLoading, 
+            Action<float, float> onAfterLoading, Action onLoadingExit)
         {
             //CanvasScaler scaler = canvas.GetComponent<CanvasScaler>();
             //if (scaler == null) scaler = canvas.gameObject.AddComponent<CanvasScaler>();
@@ -228,19 +260,25 @@ namespace Syadeu.Presentation
             //backgroundImg.rectTransform.sizeDelta = scaler.referenceResolution;
             //backgroundImg.transform.localPosition = Vector3.zero;
 
-            cg.interactable = false;
-            cg.blocksRaycasts = false;
+            //cg.interactable = false;
+            //cg.blocksRaycasts = false;
 
-            m_DefaultCamera = cam;
-            m_BlackScreen = cg;
+            //m_DefaultCamera = cam;
+            //m_BlackScreen = cg;
 
             OnLoadingEnter += onLoadingEnter;
+            OnWaitLoading += onWaitLoading;
             OnLoading += onLoading;
+            OnAfterLoading += onAfterLoading;
             OnLoadingExit += onLoadingExit;
+
+            m_LoadingSceneSetupDone = true;
         }
 
         #region Privates
-        private void InternalLoadScene(string path, float startDelay,
+
+
+        private void InternalLoadScene(string path, float waitDelay, float startDelay,
 #if UNITY_ADDRESSABLES
             Action<AsyncOperationHandle<SceneInstance>>
 #else
@@ -250,7 +288,7 @@ namespace Syadeu.Presentation
         {
             //if (m_DebugMode) throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
             //    "디버그 모드일때에는 씬 전환을 할 수 없습니다. DebugMode = False 로 설정한 후, MasterScene 에서 시작해주세요.");
-            if (IsSceneLoading || m_SceneActiveTimer.IsTimerActive() || m_AsyncOperation != null)
+            if (IsSceneLoading /*|| m_SceneActiveTimer.IsTimerActive() */|| m_AsyncOperation != null)
             {
                 "cant load while in loading".ToLogError();
                 throw new Exception();
@@ -263,9 +301,10 @@ namespace Syadeu.Presentation
                 UnityEngine.Object.Destroy(ManagerEntity.InstanceGroupTr.gameObject);
             }
             OnLoadingEnter?.Invoke();
-            OnLoading?.Invoke(0);
+            OnWaitLoading?.Invoke(0, waitDelay);
+            //OnLoading?.Invoke(0);
 
-            CoreSystem.WaitInvoke(2, () =>
+            CoreSystem.WaitInvoke(waitDelay, () =>
             {
                 if (m_CurrentScene.IsValid()) InternalUnloadScene(m_CurrentScene);
 
@@ -276,6 +315,7 @@ namespace Syadeu.Presentation
 #else
                 SceneManager.LoadSceneAsync(path, LoadSceneMode.Additive);
                 //oper.allowSceneActivation = false;
+                OnLoading?.Invoke(0);
                 StartCoroutine(OnLoadingCoroutine(m_AsyncOperation));
                 m_AsyncOperation.completed
 #endif
@@ -288,24 +328,32 @@ namespace Syadeu.Presentation
 
                     StartSceneDependences(path);
 
-                    m_SceneActiveTimer
-                        .SetTargetTime(startDelay)
-                        .OnTimerEnd(() =>
-                        {
-                            m_AsyncOperation = null;
-                            OnLoadingExit?.Invoke();
-                            m_LoadingEnabled = false;
-                            CoreSystem.Log(Channel.Scene, $"Scene change done");
-                        })
-                        .Start();
+                    OnAfterLoading?.Invoke(0, startDelay);
+                    CoreSystem.WaitInvoke(startDelay, () =>
+                    {
+                        m_AsyncOperation = null;
+                        OnLoadingExit?.Invoke();
+                        m_LoadingEnabled = false;
+                        CoreSystem.Log(Channel.Scene, $"Scene change done");
+                    }, (passed) => OnAfterLoading?.Invoke(passed, startDelay));
+                    //m_SceneActiveTimer
+                    //    .SetTargetTime(startDelay)
+                    //    .OnTimerEnd(() =>
+                    //    {
+                    //        m_AsyncOperation = null;
+                    //        OnLoadingExit?.Invoke();
+                    //        m_LoadingEnabled = false;
+                    //        CoreSystem.Log(Channel.Scene, $"Scene change done");
+                    //    })
+                    //    .Start();
                     //$"{m_CurrentScene.name} : {m_CurrentScene.path}".ToLog();
                     CoreSystem.Log(Channel.Scene, $"Scene({m_CurrentScene.name}) loaded");
                 };
-            });
+            }, (passed) => OnWaitLoading?.Invoke(passed, waitDelay));
 
             IEnumerator OnLoadingCoroutine(AsyncOperation oper)
             {
-                while (oper.progress != 1)
+                while (oper.progress < 1)
                 {
                     OnLoading?.Invoke(oper.progress);
                     $"{oper.progress}".ToLog();
