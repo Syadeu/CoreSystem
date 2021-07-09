@@ -72,6 +72,7 @@ namespace Syadeu.ECS
             Instance.m_Bakers[i].m_NavMeshData.Remove();
             Instance.m_Bakers[i] = null;
         }
+        public static bool IsNavMeshBaked { get; private set; } = false;
         public static void UpdatePosition(int i, bool forceUpdate = false)
         {
             //if (i < 0 || i >= Instance.m_Bakers.Count) return;
@@ -90,8 +91,8 @@ namespace Syadeu.ECS
 
                 NavMeshBuilder.UpdateNavMeshDataAsync(Instance.m_Bakers[i].m_NavMesh, NavMesh.GetSettingsByID(0), Instance.m_Sources, bounds);
 
-
                 ECSPathQuerySystem.Purge();
+                IsNavMeshBaked = true;
                 onNavMeshBaked?.Invoke();
                 Instance.m_IsObstacleChanged = false;
                 return;
@@ -232,6 +233,7 @@ namespace Syadeu.ECS
                         }
 
                         ECSPathQuerySystem.Purge();
+                        IsNavMeshBaked = true;
                         onNavMeshBaked?.Invoke();
                         m_IsObstacleChanged = false;
                     }

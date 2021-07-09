@@ -195,6 +195,10 @@ namespace Syadeu.Presentation
             {
                 SceneManager.MergeScenes(m_LoadingScene, m_MasterScene);
             }
+            else
+            {
+                if (m_DebugMode) StartSceneDependences(SceneManager.GetActiveScene().path);
+            }
             return base.OnStartPresentation();
         }
 

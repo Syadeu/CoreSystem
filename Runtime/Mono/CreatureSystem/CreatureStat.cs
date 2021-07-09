@@ -15,13 +15,11 @@ namespace Syadeu.Mono
         {
             get
             {
-#if UNITY_EDITOR
                 if (!m_Values.Contains(hash))
                 {
                     throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
                         $"{Brain.DisplayName}은 Stat({hash}) 값이 없습니다.");
                 }
-#endif
                 return m_Values.GetValuePair(hash);
             }
         }

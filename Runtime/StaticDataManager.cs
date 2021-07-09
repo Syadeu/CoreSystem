@@ -20,6 +20,13 @@ namespace Syadeu
                 if (m_Instance == null)
                 {
 #if UNITY_EDITOR
+                    if (CoreSystem.s_BlockCreateInstance)
+                    {
+                        LogManager.Log(Channel.Core, ResultFlag.Warning,
+                            $"종료 중에 StaticDataManager<{TypeHelper.TypeOf<T>.Name}> 인스턴스를 생성하려 합니다.\n" +
+                            $"이 요청은 무시됩니다.");
+                        return null;
+                    }
                     if (IsMainthread() && !Application.isPlaying) throw new CoreSystemException(CoreSystemExceptionFlag.Database,
                         $"StaticDataManager<{TypeHelper.TypeOf<T>.Name}>의 인스턴스 객체는 플레이중에만 생성되거나 받아올 수 있습니다.");
 #endif

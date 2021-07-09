@@ -61,15 +61,15 @@ namespace Syadeu.Mono.Creature
 
         public List<PrivateSet> PrivateSets => m_PrivateSets;
 
-        private void OnEnable()
-        {
-            ValidateData();
-        }
+        //private void OnEnable()
+        //{
+        //    ValidateData();
+        //}
 #if UNITY_EDITOR
-        private void OnValidate()
-        {
-            ValidateData();
-        }
+        //private void OnValidate()
+        //{
+        //    ValidateData();
+        //}
 #endif
         private void ValidateData()
         {

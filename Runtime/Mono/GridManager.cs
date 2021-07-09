@@ -515,7 +515,7 @@ namespace Syadeu.Mono
             }
             public ref GridCell GetCell(Vector3 worldPosition)
             {
-                if (worldPosition.y <= Bounds.extents.y)
+                //if (worldPosition.y <= Bounds.extents.y)
                 {
                     int idx = ToCellIndex(worldPosition);
                     if (idx < Length)
@@ -1851,10 +1851,10 @@ namespace Syadeu.Mono
                 for (int a = 0; a < grid.Length; a++)
                 {
                     ref var cell = ref grid.GetCell(a);
-                    if (!cell.IsVisible())
-                    {
-                        continue;
-                    }
+                    //if (!cell.IsVisible())
+                    //{
+                    //    continue;
+                    //}
 
                     Gizmos.color = cell.Color;
                     Gizmos.DrawCube(cell.Bounds.center, new Vector3(cell.Bounds.size.x, .1f, cell.Bounds.size.z));
@@ -2263,6 +2263,19 @@ namespace Syadeu.Mono
                     Vector3 center = new Vector3(
                         bounds.min.x + halfSize + (gridCellSize * j), bounds.center.y,
                         bounds.max.z - halfSize - (gridCellSize * i));
+
+                    //if (IsMainthread())
+                    //{
+                    //    if (Physics.Raycast(center, Vector3.down, out RaycastHit hit))
+                    //    {
+                    //        //"hit".ToLog();
+                    //        center = hit.point;
+                    //    }
+                    //}
+                    //else
+                    //{
+
+                    //}
 
                     cells[count] = new GridCell(parentIdx, count, new int2(j, i), new Bounds(center, cellSize));
                     count++;

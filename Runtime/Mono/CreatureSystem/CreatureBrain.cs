@@ -24,6 +24,7 @@ namespace Syadeu.Mono
         private static Vector3 INIT_POSITION = new Vector3(99999, -99999, 99999);
 
         public int m_DataIdx;
+        public int m_UniqueIdx;
         internal bool m_IsSpawnedFromManager = false;
         internal int m_SpawnPointIdx;
 
@@ -37,7 +38,7 @@ namespace Syadeu.Mono
         [SerializeField] private bool m_InitializeOnStart = false;
         [Tooltip("활성화시, 카메라에 비치지 않으면 이동 메소드가 순간이동을 합니다")]
         public bool m_EnableCameraCull = true;
-        [SerializeField] private float m_SamplePosDistance = .1f;
+        [SerializeField] private float m_SamplePosDistance = .25f;
 
         [Space]
         [SerializeField] private UnityEvent m_OnCreated;
@@ -75,6 +76,7 @@ namespace Syadeu.Mono
 
         public bool HasInventory => Inventory != null;
         public CreatureInventory Inventory { get; private set; }
+        public CreatureStat Stat { get; private set; }
 
         internal CreatureBrainProxy Proxy
         {
@@ -134,6 +136,7 @@ namespace Syadeu.Mono
             for (int i = 0; i < m_Childs.Length; i++)
             {
                 if (m_Childs[i] is CreatureInventory inventory) Inventory = inventory;
+                else if (m_Childs[i] is CreatureStat stat) Stat = stat;
 
                 m_Childs[i].InternalOnCreated();
             }
@@ -154,6 +157,10 @@ namespace Syadeu.Mono
 
             m_Hash = Hash.NewHash();
             PresentationSystem<RenderSystem>.System.AddObserver(this);
+
+            m_NavMeshAgent.enabled = false;
+            m_NavMeshAgent.enabled = true;
+
             Initialized = true;
         }
         protected override void OnTerminate()
@@ -174,6 +181,9 @@ namespace Syadeu.Mono
             PresentationSystem<RenderSystem>.System.RemoveObserver(this);
             CreatureManager.Instance.Creatures.Remove(this);
             m_IsSpawnedFromManager = false;
+
+            m_NavMeshAgent.enabled = false;
+
             Initialized = false;
         }
         protected virtual void OnDestroy()

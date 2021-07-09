@@ -17,7 +17,7 @@ namespace Syadeu.Presentation
     {
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;
-        public override bool EnableAfterPresentation => false;
+        public override bool EnableAfterPresentation => true;
 
         
         //internal NativeHashMap<Hash, DataTransform> m_MappedTrData;

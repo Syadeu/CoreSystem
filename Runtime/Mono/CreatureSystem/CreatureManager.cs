@@ -66,6 +66,7 @@ namespace Syadeu.Mono.Creature
 
                     $"{m_DataIdx}: spawnpoint {spawnPointIdx}".ToLog();
                     GetCreatureSet(m_DataIdx).m_SpawnRanges[spawnPointIdx].m_InstanceCount++;
+                    brain.m_UniqueIdx = Instance.m_Creatures.Count;
                     Instance.m_Creatures.Add(brain);
 
                     onCreated?.Invoke(brain);
