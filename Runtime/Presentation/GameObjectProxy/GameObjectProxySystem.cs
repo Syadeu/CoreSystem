@@ -63,8 +63,9 @@ namespace Syadeu.Presentation
                         UpdateDataTransform(data.Idx);
                         break;
                     default:
-                        throw new Exception();
-                        //break;
+                        $"{data.Type}".ToLog();
+                        //throw new Exception();
+                        break;
                 }
                 m_RequireUpdateQueuedList.Remove(data);
 
@@ -133,18 +134,18 @@ namespace Syadeu.Presentation
             Transform oriTr = PrefabManager.Instance.RecycleObjects[boxed.m_Idx.x].Instances[boxed.m_Idx.y].transform;
 
             boxed.m_Position = new ThreadSafe.Vector3(oriTr.position);
-            boxed.m_LocalPosition = new ThreadSafe.Vector3(oriTr.localPosition);
+            //boxed.m_LocalPosition = new ThreadSafe.Vector3(oriTr.localPosition);
 
-            boxed.m_EulerAngles = new ThreadSafe.Vector3(oriTr.eulerAngles);
-            boxed.m_LocalEulerAngles = new ThreadSafe.Vector3(oriTr.localEulerAngles);
+            //boxed.m_EulerAngles = new ThreadSafe.Vector3(oriTr.eulerAngles);
+            //boxed.m_LocalEulerAngles = new ThreadSafe.Vector3(oriTr.localEulerAngles);
             boxed.m_Rotation = oriTr.rotation;
-            boxed.m_LocalRotation = oriTr.localRotation;
+            //boxed.m_LocalRotation = oriTr.localRotation;
 
             boxed.m_Right = new ThreadSafe.Vector3(oriTr.right);
             boxed.m_Up = new ThreadSafe.Vector3(oriTr.up);
             boxed.m_Forward = new ThreadSafe.Vector3(oriTr.forward);
 
-            boxed.m_LossyScale = new ThreadSafe.Vector3(oriTr.lossyScale);
+            //boxed.m_LossyScale = new ThreadSafe.Vector3(oriTr.lossyScale);
             boxed.m_LocalScale = new ThreadSafe.Vector3(oriTr.localScale);
 
             m_MappedData[trIdx] = boxed;
@@ -152,22 +153,25 @@ namespace Syadeu.Presentation
         private void UpdateDataTransform(int3 trIdx)
         {
             DataTransform boxed = (DataTransform)m_MappedData[trIdx];
-            Transform oriTr = PrefabManager.Instance.RecycleObjects[boxed.m_Idx.x].Instances[boxed.m_Idx.y].transform;
+            //Transform oriTr = PrefabManager.Instance.RecycleObjects[boxed.m_Idx.x].Instances[boxed.m_Idx.y].transform;
+            Transform oriTr = boxed.ProxyObject;
 
-            $"{oriTr.position} => {boxed.m_Position}".ToLog();
+            $"1 . {oriTr.position} => {boxed.m_Position}".ToLog(oriTr);
             oriTr.position = boxed.m_Position;
-            oriTr.localPosition = boxed.m_LocalPosition;
+            
+            //oriTr.localPosition = boxed.m_LocalPosition;
 
-            oriTr.eulerAngles = boxed.m_EulerAngles;
-            oriTr.localEulerAngles = boxed.m_LocalEulerAngles;
+            //oriTr.eulerAngles = boxed.m_EulerAngles;
+            //oriTr.localEulerAngles = boxed.m_LocalEulerAngles;
             oriTr.rotation = boxed.m_Rotation;
-            oriTr.localRotation = boxed.m_LocalRotation;
+            //oriTr.localRotation = boxed.m_LocalRotation;
 
-            oriTr.right = boxed.m_Right;
-            oriTr.up = boxed.m_Up;
-            oriTr.forward = boxed.m_Forward;
+            //oriTr.right = boxed.m_Right;
+            //oriTr.up = boxed.m_Up;
+            //oriTr.forward = boxed.m_Forward;
 
             oriTr.localScale = boxed.m_LocalScale;
+            $"2 . {oriTr.position} => {boxed.m_Position}".ToLog(oriTr);
         }
 
         #region Experimental

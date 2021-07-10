@@ -25,12 +25,13 @@ namespace Syadeu.Presentation
         public DataTransform GetTransform()
         {
             GameObjectProxySystem proxySystem = PresentationSystem<GameObjectProxySystem>.System;
-            if (!proxySystem.m_RequireUpdateQueuedList.Contains(this))
+            DataTransform tr = (DataTransform)PresentationSystem<GameObjectProxySystem>.System.m_MappedData[m_Transform];
+            if (!proxySystem.m_RequireUpdateQueuedList.Contains(tr))
             {
-                proxySystem.m_RequireUpdateList.Enqueue(this);
-                proxySystem.m_RequireUpdateQueuedList.Add(this);
+                proxySystem.m_RequireUpdateList.Enqueue(tr);
+                proxySystem.m_RequireUpdateQueuedList.Add(tr);
             }
-            return (DataTransform)PresentationSystem<GameObjectProxySystem>.System.m_MappedData[m_Transform];
+            return tr;
         }
         public void Terminate() => ProxyObject.Terminate();
         public bool IsValid() => !m_Hash.Equals(Hash.Empty);

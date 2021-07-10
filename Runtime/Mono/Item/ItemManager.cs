@@ -52,7 +52,9 @@ namespace Syadeu.Database
             PresentationSystem<GameObjectProxySystem>.System.RequestPrefab(item.m_PrefabIdx, pos, rot, (data)=>
             {
                 DataTransform tr = data.GetTransform();
-                tr.position = Syadeu.ThreadSafe.Vector3.Zero;
+                tr.position = new ThreadSafe.Vector3(123, 123, 123);
+
+                $"out {tr.position}".ToLog();
             });
         }
     }

@@ -98,6 +98,8 @@ namespace Syadeu
                             CoreSystem.StaticManagers.Add(ins);
                             CoreSystem.InvokeManagerChanged();
                             ins.transform.SetParent(System.transform);
+
+                            ins.gameObject.isStatic = true;
                         }
                         else
                         {
@@ -111,7 +113,6 @@ namespace Syadeu
                         }
                     }
 
-                    ins.gameObject.isStatic = true;
                     m_Instance = ins;
                     CoreSystem.Log(Channel.Core, $"{TypeHelper.TypeOf<T>.Name} is initialized");
 
