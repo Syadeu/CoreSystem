@@ -4,12 +4,14 @@ using Syadeu.Mono;
 using Syadeu.Presentation.Entities;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 namespace Syadeu.Presentation
 {
@@ -26,13 +28,21 @@ namespace Syadeu.Presentation
         //private NativeList<DataMonoBehaviour> m_PinnedMonoData;
         internal readonly Queue<IDataComponent> m_RequireUpdateList = new Queue<IDataComponent>();
         internal readonly HashSet<IDataComponent> m_RequireUpdateQueuedList = new HashSet<IDataComponent>();
-        internal readonly Dictionary<int3, IDataComponent> m_MappedData = new Dictionary<int3, IDataComponent>();
+        internal readonly Dictionary<Hash, IDataComponent> m_MappedData = new Dictionary<Hash, IDataComponent>();
+        private readonly List<Hash> m_MappedDataList = new List<Hash>();
+
+        private int m_VisibleCheckJobWorker;
+        private BackgroundJob m_VisibleCheckJob;
+
+        private RenderSystem m_RenderSystem;
 
         protected override PresentationResult OnInitialize()
         {
             //m_PinnedMonoData = new NativeList<DataMonoBehaviour>(1, Allocator.Persistent);
             //m_MappedData = new NativeHashMap<Hash, IDataComponent>(1, Allocator.Persistent);
             //m_MappedTrData = new NativeHashMap<Hash, DataTransform>(1, Allocator.Persistent);
+            m_VisibleCheckJobWorker = CoreSystem.CreateNewBackgroundJobWorker(true);
+            m_VisibleCheckJob = new BackgroundJob(VisibleCheckJob);
             return base.OnInitialize();
         }
         protected override PresentationResult OnInitializeAsync()
@@ -40,6 +50,8 @@ namespace Syadeu.Presentation
             AssemblyName aName = new AssemblyName("CoreSystem_Runtime");
             AssemblyBuilder ab = AppDomain.CurrentDomain.DefineDynamicAssembly(aName, AssemblyBuilderAccess.Run);
             m_ModuleBuilder = ab.DefineDynamicModule(aName.Name);
+
+            RequestSystem<RenderSystem>((other) => m_RenderSystem = other);
 
             return base.OnInitializeAsync();
         }
@@ -54,7 +66,9 @@ namespace Syadeu.Presentation
             for (int i = 0; i < updateCount; i++)
             {
                 IDataComponent data = m_RequireUpdateList.Dequeue();
-                $"update in {data.Idx}".ToLog();
+                //$"update in {data.Idx}".ToLog();
+                if (!data.HasProxyObject) continue;
+
                 switch (data.Type)
                 {
                     //case DataComponentType.Component:
@@ -71,67 +85,325 @@ namespace Syadeu.Presentation
 
                 //if (i != 0 && i % 50 == 0) break;
             }
+
+            int jobCount = m_RequestedJobs.Count;
+            lock (m_MappedData)
+            {
+                for (int i = 0; i < jobCount; i++)
+                {
+                    m_RequestedJobs.Dequeue().Invoke();
+                }
+            }
+
             return base.AfterPresentation();
         }
-        //public override void Dispose()
-        //{
-        //    m_PinnedMonoData.Dispose();
-        //    //m_MappedData.Dispose();
-        //    //m_MappedTrData.Dispose();
-        //}
-
-        
-        public void RequestPrefab(int prefabIdx, Vector3 pos, Quaternion rot, 
-            Action<DataMonoBehaviour> onCompleted)
+        private readonly Queue<Action> m_RequestedJobs = new Queue<Action>();
+        private readonly List<IDataComponent> m_RequestProxies = new List<IDataComponent>();
+        private readonly List<IDataComponent> m_RemoveProxies = new List<IDataComponent>();
+        protected override PresentationResult AfterPresentationAsync()
         {
-            PrefabManager.GetRecycleObjectAsync(prefabIdx, (other) =>
+            int temp1 = m_RequestProxies.Count;
+            for (int i = 0; i < temp1; i++)
             {
-                Transform tr = other.transform;
-                tr.position = pos;
-                tr.rotation = rot;
+                CoreSystem.Logger.NotNull(m_RequestProxies[i]);
 
-                int3 
-                    monoIdx = new int3(prefabIdx, other.m_Idx, (int)DataComponentType.Component),
-                    trIdx = new int3(prefabIdx, other.m_Idx, (int)DataComponentType.Transform);
+                RequestProxy(m_RequestProxies[i].Idx);
+                //$"requesting {m_RequestProxies[i].Idx}".ToLog();
+            }
+            m_RequestProxies.RemoveRange(0, temp1);
+            int temp2 = m_RemoveProxies.Count;
+            for (int i = 0; i < temp2; i++)
+            {
+                CoreSystem.Logger.NotNull(m_RemoveProxies[i]);
 
-                //int trID = tr.GetInstanceID();
-                if (!m_MappedData.ContainsKey(trIdx))
-                {
-                    DataTransform trData = new DataTransform()
-                    {
-                        m_Idx = trIdx
-                    };
+                RemoveProxy(m_RemoveProxies[i].Idx);
+            }
+            m_RemoveProxies.RemoveRange(0, temp2);
 
-                    m_MappedData.Add(trIdx, trData);
-                }
-                if (!m_MappedData.ContainsKey(monoIdx))
-                {
-                    DataMonoBehaviour mono = new DataMonoBehaviour()
-                    {
-                        m_Hash = Hash.NewHash(),
+            if (m_VisibleCheckJob.IsDone)
+            {
+                m_VisibleCheckJob.Start(m_VisibleCheckJobWorker);
+            }
+            //List<IDataComponent> tempList = m_MappedData.Values.ToList();
+            //for (int i = 0; i < tempList.Count; i++)
+            //{
+            //    if (tempList[i] is DataMonoBehaviour mono)
+            //    {
+            //        //DataTransform tr = (DataTransform)m_MappedData[mono.m_Transform];
 
-                        m_Idx = monoIdx,
-                        m_Transform = trIdx
-                    };
+            //    }
+            //    else if (tempList[i] is DataTransform tr)
+            //    {
+            //        if (m_RenderSystem.IsInCameraScreen(tr.position))
+            //        {
+            //            if (!tempList[i].ProxyRequested && !tempList[i].HasProxyObject)
+            //            {
+            //                //"in".ToLog();
+            //                m_RequestProxies.Add(tr);
+            //            }
+            //        }
+            //        else
+            //        {
+            //            if (tempList[i].HasProxyObject)
+            //            {
+            //                m_RemoveProxies.Add(tr);
+            //            }
+            //        }
+            //    }
+            //    else throw new NotImplementedException();
+            //}
 
-                    m_MappedData.Add(monoIdx, mono);
-                }
-
-                DownloadDataTransform(trIdx);
-                $"{((DataTransform)m_MappedData[trIdx]).m_Position}".ToLog();
-
-                onCompleted?.Invoke((DataMonoBehaviour)m_MappedData[monoIdx]);
-            });
+            return base.AfterPresentationAsync();
         }
-        //public DataMonoBehaviour GetPrefab(int prefabIdx)
+        public override void Dispose()
+        {
+            CoreSystem.RemoveBackgroundJobWorker(m_VisibleCheckJobWorker);
+
+            base.Dispose();
+        }
+
+        readonly List<BackgroundJob> jobs = new List<BackgroundJob>();
+        private void VisibleCheckJob()
+        {
+            const int maxCountForeachJob = 10;
+
+            int listCount = m_MappedDataList.Count;
+            int div = listCount / maxCountForeachJob;
+            for (int i = 0; i < div + 1; i++)
+            {
+                BackgroundJob job = PoolContainer<BackgroundJob>.Dequeue();
+                int targetDiv = i;
+                jobs.Add(job);
+                job.Action = () =>
+                {
+                    int max = (targetDiv + 1) * maxCountForeachJob;
+                    if (max > listCount) max = listCount;
+
+                    $"{targetDiv * maxCountForeachJob} to {max} :: {listCount}".ToLog();
+                    for (int j = targetDiv * maxCountForeachJob; j < max; j++)
+                    {
+                        if (m_MappedData[m_MappedDataList[j]] is DataMonoBehaviour mono)
+                        {
+                            //DataTransform tr = (DataTransform)m_MappedData[mono.m_Transform];
+
+                        }
+                        else if (m_MappedData[m_MappedDataList[j]] is DataTransform tr)
+                        {
+                            if (m_RenderSystem.IsInCameraScreen(tr.position))
+                            {
+                                if (!m_MappedData[m_MappedDataList[j]].ProxyRequested && 
+                                    !m_MappedData[m_MappedDataList[j]].HasProxyObject)
+                                {
+                                    //"in".ToLog();
+                                    m_RequestProxies.Add(tr);
+                                }
+                            }
+                            else
+                            {
+                                if (m_MappedData[m_MappedDataList[j]].HasProxyObject)
+                                {
+                                    m_RemoveProxies.Add(tr);
+                                }
+                            }
+                        }
+                        else throw new NotImplementedException();
+                    }
+                    PoolContainer<BackgroundJob>.Enqueue(job);
+                };
+                job.Start();
+            }
+
+            for (int i = 0; i < jobs.Count; i++)
+            {
+                jobs[i].Await();
+            }
+            jobs.Clear();
+            //for (int i = 0; i < tempList.Count; i++)
+            //{
+            //    if (tempList[i] is DataMonoBehaviour mono)
+            //    {
+            //        //DataTransform tr = (DataTransform)m_MappedData[mono.m_Transform];
+
+            //    }
+            //    else if (tempList[i] is DataTransform tr)
+            //    {
+            //        if (m_RenderSystem.IsInCameraScreen(tr.position))
+            //        {
+            //            if (!tempList[i].ProxyRequested && !tempList[i].HasProxyObject)
+            //            {
+            //                //"in".ToLog();
+            //                m_RequestProxies.Add(tr);
+            //            }
+            //        }
+            //        else
+            //        {
+            //            if (tempList[i].HasProxyObject)
+            //            {
+            //                m_RemoveProxies.Add(tr);
+            //            }
+            //        }
+            //    }
+            //    else throw new NotImplementedException();
+            //}
+        }
+        public DataMonoBehaviour CreateNewPrefab(int prefabIdx, Vector3 pos, Quaternion rot, Vector3 localScale)
+        {
+            Hash trHash = Hash.NewHash();
+            Hash monoHash = Hash.NewHash();
+
+            int2 proxyIdx = DataMonoBehaviour.ProxyNull;
+            if (m_RenderSystem.IsInCameraScreen(pos))
+            {
+                proxyIdx = DataMonoBehaviour.ProxyQueued;
+            }
+
+            DataTransform trData = new DataTransform()
+            {
+                m_Idx = trHash,
+                m_ProxyIdx = proxyIdx,
+                m_PrefabIdx = prefabIdx,
+
+                m_Position = new ThreadSafe.Vector3(pos),
+                m_Rotation = rot,
+                m_LocalScale = new ThreadSafe.Vector3(localScale),
+            };
+            DataMonoBehaviour monoData = new DataMonoBehaviour()
+            {
+                m_Idx = monoHash,
+
+                m_Transform = trHash
+            };
+            m_MappedData.Add(trHash, trData);
+            m_MappedData.Add(monoHash, monoData);
+            m_MappedDataList.Add(trHash);
+            m_MappedDataList.Add(monoHash);
+            if (proxyIdx.Equals(DataMonoBehaviour.ProxyQueued))
+            {
+                PrefabManager.GetRecycleObjectAsync(prefabIdx, (other) =>
+                {
+                    DataTransform tr;
+                    lock (m_MappedData)
+                    {
+                        tr = (DataTransform)m_MappedData[trHash];
+                        tr.m_ProxyIdx = new int2(tr.m_PrefabIdx, other.m_Idx);
+                        m_MappedData[trHash] = tr;
+                    }
+
+                    other.transform.position = tr.m_Position;
+                    other.transform.rotation = tr.m_Rotation;
+                    other.transform.localScale = tr.m_LocalScale;
+                });
+            }
+
+            $"{prefabIdx} spawned at {pos}".ToLog();
+            return monoData;
+        }
+        private void RequestProxy(Hash trHash)
+        {
+            DataTransform tr = (DataTransform)m_MappedData[trHash];
+            lock (m_MappedData)
+            {
+                tr.m_ProxyIdx = DataMonoBehaviour.ProxyQueued;
+                m_MappedData[trHash] = tr;
+            }
+
+            m_RequestedJobs.Enqueue(() =>
+            {
+                PrefabManager.GetRecycleObjectAsync(tr.m_PrefabIdx, (other) =>
+                {
+                    DataTransform tr;
+                    lock (m_MappedData)
+                    {
+                        tr = (DataTransform)m_MappedData[trHash];
+                        tr.m_ProxyIdx = new int2(tr.m_PrefabIdx, other.m_Idx);
+                        m_MappedData[trHash] = tr;
+                    }
+
+                    other.transform.position = tr.m_Position;
+                    other.transform.rotation = tr.m_Rotation;
+                    other.transform.localScale = tr.m_LocalScale;
+                });
+            });
+            
+            //$"request in {trHash}".ToLog();
+        }
+        private void RemoveProxy(Hash trHash)
+        {
+            DataTransform tr = (DataTransform)m_MappedData[trHash];
+            int2 proxyIdx = tr.m_ProxyIdx;
+            lock (m_MappedData)
+            {
+                tr.m_ProxyIdx = DataMonoBehaviour.ProxyNull;
+                m_MappedData[trHash] = tr;
+            }
+
+            m_RequestedJobs.Enqueue(() =>
+            {
+                RecycleableMonobehaviour obj;
+                try
+                {
+                    obj = PrefabManager.Instance.RecycleObjects[proxyIdx.x].Instances[proxyIdx.y];
+                }
+                catch (Exception)
+                {
+                    $"{proxyIdx}".ToLog();
+                    throw;
+                }
+                obj.Terminate();
+                obj.transform.position = PrefabManager.INIT_POSITION;
+            });
+            
+            //$"terminate in {trHash}".ToLog();
+        }
+
+        //public void RequestPrefab(int prefabIdx, Vector3 pos, Quaternion rot, 
+        //    Action<DataMonoBehaviour> onCompleted)
         //{
-        //    return m_MonoDataPool[prefabIdx].Dequeue();
+        //    PrefabManager.GetRecycleObjectAsync(prefabIdx, (other) =>
+        //    {
+        //        Transform tr = other.transform;
+        //        tr.position = pos;
+        //        tr.rotation = rot;
+
+        //        int3 
+        //            monoIdx = new int3(prefabIdx, other.m_Idx, (int)DataComponentType.Component),
+        //            trIdx = new int3(prefabIdx, other.m_Idx, (int)DataComponentType.Transform);
+
+        //        //int trID = tr.GetInstanceID();
+        //        if (!m_MappedData.ContainsKey(trIdx))
+        //        {
+        //            DataTransform trData = new DataTransform()
+        //            {
+        //                m_Idx = trIdx
+        //            };
+
+        //            m_MappedData.Add(trIdx, trData);
+        //            DownloadDataTransform(trIdx);
+        //        }
+        //        if (!m_MappedData.ContainsKey(monoIdx))
+        //        {
+        //            DataMonoBehaviour mono = new DataMonoBehaviour()
+        //            {
+        //                m_Hash = Hash.NewHash(),
+
+        //                m_Idx = monoIdx,
+        //                m_Transform = trIdx
+        //            };
+
+        //            m_MappedData.Add(monoIdx, mono);
+        //        }
+
+        //        $"{((DataTransform)m_MappedData[trIdx]).m_Position}".ToLog();
+
+        //        onCompleted?.Invoke((DataMonoBehaviour)m_MappedData[monoIdx]);
+        //    });
         //}
 
-        private void DownloadDataTransform(int3 trIdx)
+        private void DownloadDataTransform(Hash trIdx)
         {
             DataTransform boxed = (DataTransform)m_MappedData[trIdx];
-            Transform oriTr = PrefabManager.Instance.RecycleObjects[boxed.m_Idx.x].Instances[boxed.m_Idx.y].transform;
+            //Transform oriTr = PrefabManager.Instance.RecycleObjects[boxed.m_Idx.x].Instances[boxed.m_Idx.y].transform;
+            Transform oriTr = boxed.ProxyObject;
 
             boxed.m_Position = new ThreadSafe.Vector3(oriTr.position);
             //boxed.m_LocalPosition = new ThreadSafe.Vector3(oriTr.localPosition);
@@ -150,7 +422,7 @@ namespace Syadeu.Presentation
 
             m_MappedData[trIdx] = boxed;
         }
-        private void UpdateDataTransform(int3 trIdx)
+        private void UpdateDataTransform(Hash trIdx)
         {
             DataTransform boxed = (DataTransform)m_MappedData[trIdx];
             //Transform oriTr = PrefabManager.Instance.RecycleObjects[boxed.m_Idx.x].Instances[boxed.m_Idx.y].transform;

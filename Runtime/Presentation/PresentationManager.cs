@@ -137,9 +137,9 @@ namespace Syadeu.Presentation
         {
             if (dependenceScene != null)
             {
-                CoreSystem.Log(Channel.Presentation, $"Registration start ({groupName.Name.Split('.').Last()}), number of {systems.Length}, has dependece scene ({dependenceScene.ScenePath})");
+                CoreSystem.Logger.Log(Channel.Presentation, $"Registration start ({groupName.Name.Split('.').Last()}), number of {systems.Length}, has dependece scene ({dependenceScene.ScenePath})");
             }
-            else CoreSystem.Log(Channel.Presentation, $"Registration start ({groupName.Name.Split('.').Last()}), number of {systems.Length}");
+            else CoreSystem.Logger.Log(Channel.Presentation, $"Registration start ({groupName.Name.Split('.').Last()}), number of {systems.Length}");
 
             Hash groupHash = Hash.NewHash(groupName.Name);
             if (!Instance.m_PresentationGroups.TryGetValue(groupHash, out Group group))
@@ -151,12 +151,12 @@ namespace Syadeu.Presentation
                 //$"{t.Name}: {t.GenericTypeArguments[0]}".ToLog();
                 PropertyInfo insProperty = typeof(PresentationSystemGroup<>).MakeGenericType(groupName).GetProperty(c_Instance, BindingFlags.NonPublic | BindingFlags.Static);
                 
-                CoreSystem.NotNull(insProperty);
+                CoreSystem.Logger.NotNull(insProperty);
 
                 //$"{insProperty.Name}".ToLog();
                 //Assert.IsNotNull(insProperty.GetValue(null, null));
                 group.m_SystemGroup = (IPresentationSystemGroup)insProperty.GetValue(null, null);
-                CoreSystem.NotNull(group.m_SystemGroup);
+                CoreSystem.Logger.NotNull(group.m_SystemGroup);
             }
 
             if (dependenceScene != null)
@@ -167,7 +167,7 @@ namespace Syadeu.Presentation
                     Instance.m_DependenceSceneList.Add(dependenceScene, list);
                 }
 
-                if (list.Contains(groupHash)) CoreSystem.LogError(Channel.Presentation, $"{groupName.Name.Split('.').Last()} 은 이미 해당 씬({dependenceScene.ScenePath})에 종속되었습니다. 중복 추가는 허용하지 않습니다.");
+                if (list.Contains(groupHash)) CoreSystem.Logger.LogError(Channel.Presentation, $"{groupName.Name.Split('.').Last()} 은 이미 해당 씬({dependenceScene.ScenePath})에 종속되었습니다. 중복 추가는 허용하지 않습니다.");
                 list.Add(groupHash);
             }
 
@@ -190,10 +190,10 @@ namespace Syadeu.Presentation
                 }
                 group.m_RegisteredSystemTypes.Add(systems[i]);
                 Instance.m_RegisteredGroup.Add(systems[i], groupHash);
-                CoreSystem.Log(Channel.Presentation, $"System ({groupName.Name.Split('.').Last()}): {systems[i].Name} Registered");
+                CoreSystem.Logger.Log(Channel.Presentation, $"System ({groupName.Name.Split('.').Last()}): {systems[i].Name} Registered");
             }
 
-            CoreSystem.Log(Channel.Presentation, $"Registration Ended ({groupName.Name.Split('.').Last()}), number of {systems.Length}");
+            CoreSystem.Logger.Log(Channel.Presentation, $"Registration Ended ({groupName.Name.Split('.').Last()}), number of {systems.Length}");
         }
         internal void StartPresentation(Hash groupHash)
         {
@@ -227,7 +227,7 @@ namespace Syadeu.Presentation
             group.BackgroundPresentation = Instance.StartBackgroundUpdate(PresentationAsync(group));
             group.m_IsStarted = true;
 
-            CoreSystem.Log(Channel.Presentation, $"{group.m_Name.Name} group is started");
+            CoreSystem.Logger.Log(Channel.Presentation, $"{group.m_Name.Name} group is started");
         }
         internal void StopPresentation(Hash groupHash)
         {
@@ -240,7 +240,7 @@ namespace Syadeu.Presentation
 
             group.Reset();
 
-            CoreSystem.Log(Channel.Presentation, $"{group.m_Name.Name} group is stopped");
+            CoreSystem.Logger.Log(Channel.Presentation, $"{group.m_Name.Name} group is stopped");
         }
 
         internal static void RegisterRequestSystem<T, TA>(Action<TA> setter) 
@@ -259,9 +259,9 @@ namespace Syadeu.Presentation
                 TA system = PresentationSystem<TA>.System;
                 if (system == null)
                 {
-                    CoreSystem.LogError(Channel.Presentation, $"Requested system ({TypeHelper.TypeOf<TA>.Name}) not found");
+                    CoreSystem.Logger.LogError(Channel.Presentation, $"Requested system ({TypeHelper.TypeOf<TA>.Name}) not found");
                 }
-                else CoreSystem.Log(Channel.Presentation, $"Requested system ({TypeHelper.TypeOf<TA>.Name}) found");
+                else CoreSystem.Logger.Log(Channel.Presentation, $"Requested system ({TypeHelper.TypeOf<TA>.Name}) found");
 
                 setter.Invoke(system);
             });
@@ -308,7 +308,7 @@ namespace Syadeu.Presentation
             group.m_MainInitDone = true;
 
             yield return group.m_WaitUntilInitializeCompleted;
-            CoreSystem.Log(Channel.Presentation, $"Presentation group ({group.m_Name.Name}) started");
+            CoreSystem.Logger.Log(Channel.Presentation, $"Presentation group ({group.m_Name.Name}) started");
 
             PresentationResult result;
             while (true)

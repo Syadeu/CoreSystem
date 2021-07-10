@@ -45,7 +45,7 @@ namespace Syadeu.Database
             System.Type t = obj.GetType();
             var configAtt = t.GetCustomAttribute<RequireGlobalConfigAttribute>();
             if (configAtt == null) return;
-            CoreSystem.Log(Channel.Core, $"Config loading for {t.Name}");
+            CoreSystem.Logger.Log(Channel.Core, $"Config loading for {t.Name}");
 
             Config config;
             if (configAtt.m_Location == ConfigLocation.Global) config = Global;
@@ -90,7 +90,7 @@ namespace Syadeu.Database
             }
 
             config.Save();
-            CoreSystem.Log(Channel.Core, $"Config loaded for {t.Name}");
+            CoreSystem.Logger.Log(Channel.Core, $"Config loaded for {t.Name}");
         }
     }
 }

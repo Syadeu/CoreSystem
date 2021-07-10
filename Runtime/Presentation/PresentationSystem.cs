@@ -91,7 +91,7 @@ namespace Syadeu.Presentation
         void IDisposable.Dispose()
         {
             s_Instance = Null;
-            CoreSystem.Log(Channel.Presentation, $"Dispose public system struct of {TypeHelper.TypeOf<T>.Name}");
+            CoreSystem.Logger.Log(Channel.Presentation, $"Dispose public system struct of {TypeHelper.TypeOf<T>.Name}");
         }
 
         public static bool IsValid() => ((IValidation)Instance).IsValid();

@@ -448,19 +448,33 @@ namespace Syadeu.Mono
 #if UNITY_ADDRESSABLES
         private PromiseRecycleableObject InternalInstantiateAsync(RecycleObject obj, Action<RecycleableMonobehaviour> onCompleted, bool manualInit)
         {
-            PromiseRecycleableObject output = null;
-            for (int i = 0; i < obj.InstanceCreationBlock; i++)
+            if (IsMainthread())
             {
-                if (output == null)
-                {
-                    output = new PromiseRecycleableObject(obj, onCompleted, manualInit);
-                }
-                else
-                {
-                    obj.Promises.Add(new PromiseRecycleableObject(obj));
-                }
+                return Method();
             }
-            return output;
+            else
+            {
+                PromiseRecycleableObject temp = null;
+                CoreSystem.AddForegroundJob(() => temp = Method()).Await();
+                return temp;
+            }
+
+            PromiseRecycleableObject Method()
+            {
+                PromiseRecycleableObject output = null;
+                for (int i = 0; i < obj.InstanceCreationBlock; i++)
+                {
+                    if (output == null)
+                    {
+                        output = new PromiseRecycleableObject(obj, onCompleted, manualInit);
+                    }
+                    else
+                    {
+                        obj.Promises.Add(new PromiseRecycleableObject(obj));
+                    }
+                }
+                return output;
+            }
         }
 #endif
         [Obsolete]

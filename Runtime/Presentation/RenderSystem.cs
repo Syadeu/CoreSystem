@@ -36,6 +36,7 @@ namespace Syadeu.Presentation
         public override bool EnableAfterPresentation => false;
 
         public Camera Camera => m_Camera.Value;
+        private Vector3 m_ScreenOffset;
 
         protected override PresentationResult OnInitialize()
         {
@@ -45,17 +46,19 @@ namespace Syadeu.Presentation
                 if (to == null) return;
                 m_Matrix4x4 = GetCameraMatrix4X4(to);
             };
+            m_ScreenOffset = SyadeuSettings.Instance.m_ScreenOffset;
 
             return base.OnInitialize();
         }
         protected override PresentationResult BeforePresentation()
         {
+            m_ScreenOffset = SyadeuSettings.Instance.m_ScreenOffset;
             if (m_Camera.Value == null)
             {
                 m_Camera.Value = Camera.main;
                 if (Camera == null) return PresentationResult.Warning("Cam not found");
             }
-            //m_Matrix4x4 = GetCameraMatrix4X4(Camera);
+            m_Matrix4x4 = GetCameraMatrix4X4(Camera);
 
             return base.BeforePresentation();
         }
@@ -145,11 +148,11 @@ namespace Syadeu.Presentation
         /// <inheritdoc cref="IsInCameraScreen(Camera, Vector3)"/>
         public bool IsInCameraScreen(Vector3 worldPosition)
         {
-            if (CoreSystem.IsThisMainthread())
-            {
-                return IsInCameraScreen(m_Camera.Value, worldPosition);
-            }
-            return IsInCameraScreen(worldPosition, m_Matrix4x4, Vector3.zero);
+            //if (CoreSystem.IsThisMainthread())
+            //{
+            //    return IsInCameraScreen(m_Camera.Value, worldPosition);
+            //}
+            return IsInCameraScreen(worldPosition, m_Matrix4x4, m_ScreenOffset);
         }
         /// <summary>
         /// 해당 좌표가 입력한 카메라 내부에 위치하는지 반환합니다.

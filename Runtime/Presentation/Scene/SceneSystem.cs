@@ -48,6 +48,8 @@ namespace Syadeu.Presentation
         private bool m_LoadingSceneSetupDone = false;
         //private Timer m_SceneActiveTimer = new Timer();
 
+        public Scene CurrentScene => m_CurrentScene;
+
         /// <summary>
         /// 로딩 콜이 실행되었을때 맨 처음으로 발생하는 이벤트입니다.
         /// </summary>
@@ -298,7 +300,7 @@ namespace Syadeu.Presentation
                 throw new Exception();
             }
 
-            CoreSystem.Log(Channel.Scene, $"Scene change start from ({m_CurrentScene.name}) to ({Path.GetFileNameWithoutExtension(path)})");
+            CoreSystem.Logger.Log(Channel.Scene, $"Scene change start from ({m_CurrentScene.name}) to ({Path.GetFileNameWithoutExtension(path)})");
             m_LoadingEnabled = true;
             if (ManagerEntity.InstanceGroupTr != null)
             {
@@ -338,7 +340,7 @@ namespace Syadeu.Presentation
                         m_AsyncOperation = null;
                         OnLoadingExit?.Invoke();
                         m_LoadingEnabled = false;
-                        CoreSystem.Log(Channel.Scene, $"Scene change done");
+                        CoreSystem.Logger.Log(Channel.Scene, $"Scene change done");
                     }, (passed) => OnAfterLoading?.Invoke(passed, startDelay));
                     //m_SceneActiveTimer
                     //    .SetTargetTime(startDelay)
@@ -351,7 +353,7 @@ namespace Syadeu.Presentation
                     //    })
                     //    .Start();
                     //$"{m_CurrentScene.name} : {m_CurrentScene.path}".ToLog();
-                    CoreSystem.Log(Channel.Scene, $"Scene({m_CurrentScene.name}) loaded");
+                    CoreSystem.Logger.Log(Channel.Scene, $"Scene({m_CurrentScene.name}) loaded");
                 };
             }, (passed) => OnWaitLoading?.Invoke(passed, waitDelay));
 
@@ -404,7 +406,7 @@ namespace Syadeu.Presentation
         {
             if (!PresentationManager.Instance.m_DependenceSceneList.TryGetValue(key, out List<Hash> groupHashs))
             {
-                CoreSystem.Log(Channel.Scene, $"Scene({key.Split('/').Last()}) has no dependence systems for load");
+                CoreSystem.Logger.Log(Channel.Scene, $"Scene({key.Split('/').Last()}) has no dependence systems for load");
                 return;
             }
 
@@ -419,7 +421,7 @@ namespace Syadeu.Presentation
         {
             if (!PresentationManager.Instance.m_DependenceSceneList.TryGetValue(key, out List<Hash> groupHashs))
             {
-                CoreSystem.Log(Channel.Scene, $"Scene({key.Split('/').Last()}) has no dependence systems for unload");
+                CoreSystem.Logger.Log(Channel.Scene, $"Scene({key.Split('/').Last()}) has no dependence systems for unload");
                 return;
             }
 

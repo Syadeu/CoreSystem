@@ -114,7 +114,7 @@ namespace Syadeu
                     }
 
                     m_Instance = ins;
-                    CoreSystem.Log(Channel.Core, $"{TypeHelper.TypeOf<T>.Name} is initialized");
+                    CoreSystem.Logger.Log(Channel.Core, $"{TypeHelper.TypeOf<T>.Name} is initialized");
 
                     ConfigLoader.LoadConfig(ins);
                     ins.OnStart();

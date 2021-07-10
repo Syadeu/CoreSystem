@@ -12,15 +12,24 @@ namespace Syadeu.Database
         {
             ConsoleWindow.CreateCommand((cmd) =>
             {
-                int rnd = UnityEngine.Random.Range(0, ItemDataList.Instance.m_Items.Count);
-                Item item = ItemDataList.Instance.m_Items[rnd];
+                //int rnd = UnityEngine.Random.Range(0, ItemDataList.Instance.m_Items.Count);
+                //Item item = ItemDataList.Instance.m_Items[rnd];
 
-                Transform cam = Camera.main.transform;
-                Ray ray = new Ray(cam.position, cam.forward);
+                //Transform cam = Camera.main.transform;
+                //Ray ray = new Ray(cam.position, cam.forward);
 
-                if (Physics.Raycast(ray, out RaycastHit hit))
+                //if (Physics.Raycast(ray, out RaycastHit hit))
+                //{
+                //    SpawnItem(item.m_Hash, hit.point, Quaternion.identity);
+                //}
+
+                for (int i = 0; i < 100; i++)
                 {
-                    SpawnItem(item.m_Hash, hit.point, Quaternion.identity);
+                    int rnd = UnityEngine.Random.Range(0, ItemDataList.Instance.m_Items.Count);
+                    Item item = ItemDataList.Instance.m_Items[rnd];
+                    Vector3 pos = new Vector3(UnityEngine.Random.Range(-100, 100), 0, UnityEngine.Random.Range(-100, 100));
+
+                    SpawnItem(item.m_Hash, pos, Quaternion.identity);
                 }
             }, "item", "spawn", "random");
         }
@@ -49,13 +58,18 @@ namespace Syadeu.Database
             //    itemIns.m_ProxyObject = other.gameObject;
             //});
 
-            PresentationSystem<GameObjectProxySystem>.System.RequestPrefab(item.m_PrefabIdx, pos, rot, (data)=>
-            {
-                DataTransform tr = data.GetTransform();
-                tr.position = new ThreadSafe.Vector3(123, 123, 123);
+            //PresentationSystem<GameObjectProxySystem>.System.RequestPrefab(item.m_PrefabIdx, pos, rot, (data)=>
+            //{
+            //    DataTransform tr = data.GetTransform();
+            //    tr.position = new ThreadSafe.Vector3(123, 123, 123);
 
-                $"out {tr.position}".ToLog();
-            });
+            //    $"out {tr.position}".ToLog();
+            //});
+
+            DataMonoBehaviour dataMono =
+                PresentationSystem<GameObjectProxySystem>.System.CreateNewPrefab(item.m_PrefabIdx, pos, rot, Vector3.one);
+
+
         }
     }
 }

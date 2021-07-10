@@ -109,7 +109,7 @@ namespace Syadeu
                 transform.SetParent(InstanceGroupTr);
             }
 
-            CoreSystem.Log(Channel.Core, $"{TypeHelper.TypeOf<T>.Name} is initialized");
+            CoreSystem.Logger.Log(Channel.Core, $"{TypeHelper.TypeOf<T>.Name} is initialized");
 
             ConfigLoader.LoadConfig(this);
             OnStart();

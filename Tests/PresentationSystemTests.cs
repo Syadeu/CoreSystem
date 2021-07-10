@@ -56,41 +56,41 @@ public class PresentationSystemTests
         }
         protected override PresentationResult OnStartPresentation()
         {
-            CoreSystem.Log(Channel.Core, "Test123System Starting");
+            CoreSystem.Logger.Log(Channel.Core, "Test123System Starting");
 
-            CoreSystem.NotNull(testSystem);
+            CoreSystem.Logger.NotNull(testSystem);
 
             return base.OnStartPresentation();
         }
 
         protected override PresentationResult BeforePresentation()
         {
-            CoreSystem.LogError(Channel.Core, "NEVER RUN THIS");
+            CoreSystem.Logger.LogError(Channel.Core, "NEVER RUN THIS");
             return base.BeforePresentation();
         }
         protected override PresentationResult BeforePresentationAsync()
         {
-            CoreSystem.LogError(Channel.Core, "NEVER RUN THIS");
+            CoreSystem.Logger.LogError(Channel.Core, "NEVER RUN THIS");
             return base.BeforePresentationAsync();
         }
         protected override PresentationResult OnPresentation()
         {
-            CoreSystem.LogError(Channel.Core, "NEVER RUN THIS");
+            CoreSystem.Logger.LogError(Channel.Core, "NEVER RUN THIS");
             return base.OnPresentation();
         }
         protected override PresentationResult OnPresentationAsync()
         {
-            CoreSystem.LogError(Channel.Core, "NEVER RUN THIS");
+            CoreSystem.Logger.LogError(Channel.Core, "NEVER RUN THIS");
             return base.OnPresentationAsync();
         }
         protected override PresentationResult AfterPresentation()
         {
-            CoreSystem.LogError(Channel.Core, "NEVER RUN THIS");
+            CoreSystem.Logger.LogError(Channel.Core, "NEVER RUN THIS");
             return base.AfterPresentation();
         }
         protected override PresentationResult AfterPresentationAsync()
         {
-            CoreSystem.LogError(Channel.Core, "NEVER RUN THIS");
+            CoreSystem.Logger.LogError(Channel.Core, "NEVER RUN THIS");
             return base.AfterPresentationAsync();
         }
     }
@@ -100,8 +100,8 @@ public class PresentationSystemTests
     {
         PresentationSystemGroup<PresentationTestGroup>.Start();
 
-        CoreSystem.NotNull(PresentationSystem<TestSystem>.System);
-        CoreSystem.NotNull(PresentationSystem<Test123System>.System);
+        CoreSystem.Logger.NotNull(PresentationSystem<TestSystem>.System);
+        CoreSystem.Logger.NotNull(PresentationSystem<Test123System>.System);
 
         yield return new WaitForSeconds(10);
 

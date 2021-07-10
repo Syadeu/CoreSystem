@@ -170,6 +170,22 @@ namespace Syadeu
 
             return jobWorker.Index;
         }
+        public static void RemoveBackgroundJobWorker(int workerIdx)
+        {
+            try
+            {
+                Instance.BackgroundJobWorkers[workerIdx].Worker.CancelAsync();
+            }
+            catch (Exception)
+            {
+            }
+            finally
+            {
+                Instance.BackgroundJobWorkers[workerIdx].Worker.Dispose();
+            }
+
+            Instance.BackgroundJobWorkers.RemoveAt(workerIdx);
+        }
         public static void ChangeSettingBackgroundWorker(int workerIndex, bool isStandAlone)
         {
             Instance.BackgroundJobWorkers[workerIndex].standAlone = isStandAlone;
@@ -423,7 +439,8 @@ namespace Syadeu
         }
         public override void OnInitialize()
         {
-            ThreadPool.QueueUserWorkItem(BackgroundWorker);
+            new Thread(BackgroundWorker).Start();
+            //ThreadPool.QueueUserWorkItem(BackgroundWorker);
             Application.quitting += OnAboutToQuit;
             StartCoroutine(UnityWorker());
         }
@@ -764,7 +781,7 @@ namespace Syadeu
                 ThreadAwaiter(100);
             } while (!m_StartUpdate && MainThread != null && Initialized);
 
-            InternalCreateNewBackgroundWorker(32, false);
+            InternalCreateNewBackgroundWorker(128, false);
 
             //"LOG :: Background worker has started".ToLog();
 
@@ -1181,6 +1198,8 @@ namespace Syadeu
                 //}
                 //ThreadAwaiter(10);
                 m_SimWatcher.Reset();
+
+                if (s_BlockCreateInstance) break;
             }
         }
         private IEnumerator UnityWorker()
@@ -1713,15 +1732,18 @@ namespace Syadeu
 
         #region Debug
 #line hidden
-        public static void Log(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Normal, msg);
-        public static void LogWarning(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Warning, msg);
-        public static void LogError(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Error, msg);
+        public struct Logger
+        {
+            public static void Log(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Normal, msg);
+            public static void LogWarning(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Warning, msg);
+            public static void LogError(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Error, msg);
 
-        public static void NotNull(object obj) => LogManager.NotNull(obj, string.Empty);
-        public static void NotNull(object obj, string msg) => LogManager.NotNull(obj, msg);
+            public static void NotNull(object obj) => LogManager.NotNull(obj, string.Empty);
+            public static void NotNull(object obj, string msg) => LogManager.NotNull(obj, msg);
 
-        public static void True(bool value, string msg) => LogManager.True(value, msg);
-        public static void False(bool value, string msg) => LogManager.False(value, msg);
+            public static void True(bool value, string msg) => LogManager.True(value, msg);
+            public static void False(bool value, string msg) => LogManager.False(value, msg);
+        }
 #line default
         #endregion
 

@@ -1,4 +1,5 @@
-﻿using Syadeu.Mono;
+﻿using Syadeu.Database;
+using Syadeu.Mono;
 using Syadeu.ThreadSafe;
 using System;
 using Unity.Mathematics;
@@ -7,10 +8,15 @@ namespace Syadeu.Presentation
 {
     public struct DataTransform : IDataComponent, IReadOnlyTransform
     {
-        internal int3 m_Idx;
+        internal Hash m_Idx;
+        internal int2 m_ProxyIdx;
+        internal int m_PrefabIdx;
 
-        int3 IDataComponent.Idx => m_Idx;
+        Hash IDataComponent.Idx => m_Idx;
         DataComponentType IDataComponent.Type => DataComponentType.Transform;
+        bool IDataComponent.HasProxyObject => !m_ProxyIdx.Equals(DataMonoBehaviour.ProxyNull);
+        bool IDataComponent.ProxyRequested => m_ProxyIdx.Equals(DataMonoBehaviour.ProxyQueued);
+
         IReadOnlyTransform IDataComponent.transform => this;
         bool IEquatable<IDataComponent>.Equals(IDataComponent other) => m_Idx.Equals(other.Idx);
 
@@ -23,7 +29,14 @@ namespace Syadeu.Presentation
 
         internal Vector3 m_LocalScale;
 
-        internal UnityEngine.Transform ProxyObject => PrefabManager.Instance.RecycleObjects[m_Idx.x].Instances[m_Idx.y].transform;
+        internal UnityEngine.Transform ProxyObject
+        {
+            get
+            {
+                if (!((IDataComponent)this).HasProxyObject) return null;
+                return PrefabManager.Instance.RecycleObjects[m_ProxyIdx.x].Instances[m_ProxyIdx.y].transform;
+            }
+        }
         private DataTransform Data
         {
             get => (DataTransform)PresentationSystem<GameObjectProxySystem>.System.m_MappedData[m_Idx];
