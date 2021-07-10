@@ -145,7 +145,7 @@ namespace Syadeu.Presentation
                 if (maxIdx > listCount) maxIdx = listCount;
                 //if (startIdx == maxIdx) break;
 
-                $"{startIdx} to {maxIdx} :: {listCount}".ToLog();
+                //$"{startIdx} to {maxIdx} :: {listCount}".ToLog();
 
                 job.Action = () =>
                 {

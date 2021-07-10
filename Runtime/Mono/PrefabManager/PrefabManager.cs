@@ -116,7 +116,10 @@ namespace Syadeu.Mono
 #if UNITY_ADDRESSABLES
                         if (recycle.Instances[i].CreatedWithAddressable)
                         {
-                            recycle.RefPrefab.ReleaseInstance(recycle.Instances[i].gameObject);
+                            CoreSystem.AddForegroundJob(() =>
+                            {
+                                recycle.RefPrefab.ReleaseInstance(recycle.Instances[i].gameObject);
+                            });
                         }
                         else
 #endif
@@ -176,9 +179,9 @@ namespace Syadeu.Mono
                 yield return null;
             }
         }
-        private void SendDestroy(UnityEngine.Object obj)
+        private void SendDestroy(RecycleableMonobehaviour obj)
         {
-            CoreSystem.AddForegroundJob(() => Destroy(obj));
+            CoreSystem.AddForegroundJob(() => Destroy(obj.gameObject));
         }
         private IEnumerator Updater()
         {

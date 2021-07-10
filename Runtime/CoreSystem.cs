@@ -1032,6 +1032,7 @@ namespace Syadeu
                         {
                             wjob.WorkerIndex = i;
                             BackgroundJobWorkers[i].Worker.RunWorkerAsync(wjob);
+                            //Logger.Log(Channel.Jobs, $"Job started at worker {i}");
                         }
                         //else if (BackgroundJobWorkers[i].Worker.IsBusy &&
                         //    BackgroundJobWorkers[i].Jobs.TryDequeue(out var rjob))
