@@ -58,7 +58,7 @@ public class PresentationSystemTests
         {
             CoreSystem.Log(Channel.Core, "Test123System Starting");
 
-            CoreSystem.IsNotNull(testSystem);
+            CoreSystem.NotNull(testSystem);
 
             return base.OnStartPresentation();
         }
@@ -100,8 +100,8 @@ public class PresentationSystemTests
     {
         PresentationSystemGroup<PresentationTestGroup>.Start();
 
-        CoreSystem.IsNotNull(PresentationSystem<TestSystem>.System);
-        CoreSystem.IsNotNull(PresentationSystem<Test123System>.System);
+        CoreSystem.NotNull(PresentationSystem<TestSystem>.System);
+        CoreSystem.NotNull(PresentationSystem<Test123System>.System);
 
         yield return new WaitForSeconds(10);
 

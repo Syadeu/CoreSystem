@@ -283,12 +283,28 @@ namespace Syadeu.Mono
                     obj.Instances[i].Initialize();
                     onCompleted.Invoke(obj.Instances[i]);
                 }
+                //"in1".ToLog();
                 return new PromiseRecycleableObject(obj.Instances[i]);
             }
             for (int i = obj.Promises.Count - 1; i >= 0; i--)
             {
                 PromiseRecycleableObject target = obj.Promises[i];
+                if (onCompleted != null)
+                {
+                    if (obj.Promises[i].IsDone)
+                    {
+                        //"2".ToLog();
+                        obj.Promises[i].Target.Initialize();
+                        onCompleted.Invoke(obj.Promises[i].Target);
+                    }
+                    else
+                    {
+                        //"1".ToLog();
+                        obj.Promises[i].m_OnCompleted += onCompleted;
+                    }
+                }
                 obj.Promises.RemoveAt(i);
+                //"in2".ToLog();
                 return target;
             }
 
@@ -298,6 +314,7 @@ namespace Syadeu.Mono
                     obj.MaxCount > obj.Instances.Count)
                 {
                     PromiseRecycleableObject recycleObj = Instance.InternalInstantiateAsync(obj, onCompleted, manualInit);
+                    //"in3".ToLog();
                     return recycleObj;
                 }
             }

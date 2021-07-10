@@ -151,12 +151,12 @@ namespace Syadeu.Presentation
                 //$"{t.Name}: {t.GenericTypeArguments[0]}".ToLog();
                 PropertyInfo insProperty = typeof(PresentationSystemGroup<>).MakeGenericType(groupName).GetProperty(c_Instance, BindingFlags.NonPublic | BindingFlags.Static);
                 
-                CoreSystem.IsNotNull(insProperty);
+                CoreSystem.NotNull(insProperty);
 
                 //$"{insProperty.Name}".ToLog();
                 //Assert.IsNotNull(insProperty.GetValue(null, null));
                 group.m_SystemGroup = (IPresentationSystemGroup)insProperty.GetValue(null, null);
-                CoreSystem.IsNotNull(group.m_SystemGroup);
+                CoreSystem.NotNull(group.m_SystemGroup);
             }
 
             if (dependenceScene != null)

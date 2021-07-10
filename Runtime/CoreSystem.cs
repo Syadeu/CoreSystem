@@ -1717,7 +1717,7 @@ namespace Syadeu
         public static void LogWarning(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Warning, msg);
         public static void LogError(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Error, msg);
 
-        public static void IsNotNull(object obj) => LogManager.NotNull(obj, string.Empty);
+        public static void NotNull(object obj) => LogManager.NotNull(obj, string.Empty);
         public static void NotNull(object obj, string msg) => LogManager.NotNull(obj, msg);
 
         public static void True(bool value, string msg) => LogManager.True(value, msg);

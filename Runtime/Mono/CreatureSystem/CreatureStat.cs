@@ -7,6 +7,7 @@ namespace Syadeu.Mono
     public sealed class CreatureStat : CreatureEntity
     {
         [SerializeField] private ValuePairContainer m_ReflectionValues = new ValuePairContainer();
+        [SerializeField] private ValuePairContainer m_ExclusiveValues = new ValuePairContainer();
         [SerializeField] private ValuePairContainer m_Values = new ValuePairContainer();
 
         public ValuePairContainer Values => m_Values;
@@ -53,6 +54,10 @@ namespace Syadeu.Mono
                 {
                     $"{m_ReflectionValues[i].Name} 의 값을 찾을 수 없음".ToLogError();
                 }
+            }
+            for (int i = 0; i < m_ExclusiveValues.Count; i++)
+            {
+                m_Values.Add((ValuePair)m_ExclusiveValues[i].Clone());
             }
         }
 

@@ -18,7 +18,7 @@ namespace Syadeu.Mono
         private PrefabManager.RecycleObject RecycleObjectSet;
         private AsyncOperationHandle<GameObject> m_Operation;
         private bool m_ManualInit = false;
-        private Action<RecycleableMonobehaviour> m_OnCompleted = null;
+        public Action<RecycleableMonobehaviour> m_OnCompleted = null;
 
         public bool IsDone => m_Output != null;
         public RecycleableMonobehaviour Target => m_Output;
