@@ -123,8 +123,8 @@ namespace Syadeu.Presentation
         }
         public override void Dispose()
         {
-            CoreSystem.RemoveBackgroundJobWorker(m_VisibleCheckJobWorker);
             m_MappedTransforms.Dispose();
+            CoreSystem.RemoveBackgroundJobWorker(m_VisibleCheckJobWorker);
 
             base.Dispose();
         }

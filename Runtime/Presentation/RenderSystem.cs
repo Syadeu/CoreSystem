@@ -18,7 +18,9 @@ namespace Syadeu.Presentation
     public sealed class RenderSystem : PresentationSystemEntity<RenderSystem>
     {
         private ObClass<Camera> m_Camera;
+        private Camera m_TopdownCamera;
         private Matrix4x4 m_Matrix4x4;
+        private Matrix4x4 m_TopMatrix4x4;
 
         private readonly List<ObserverObject> m_ObserverList = new List<ObserverObject>();
 
@@ -44,7 +46,26 @@ namespace Syadeu.Presentation
             m_Camera.OnValueChange += (from, to) =>
             {
                 if (to == null) return;
+                if (m_TopdownCamera != null)
+                {
+                    m_TopdownCamera.transform.SetParent(to.transform);
+                }
+                else
+                {
+                    GameObject obj = new GameObject("RenderSystem.Camera");
+                    m_TopdownCamera = obj.AddComponent<Camera>();
+                    //m_TopdownCamera.enabled = false;
+                    m_TopdownCamera.targetDisplay = 1;
+
+                    Vector3 pos = to.transform.position;
+                    pos.y += 50;
+                    m_TopdownCamera.transform.position = pos;
+
+                    m_TopdownCamera.transform.SetParent(to.transform);
+                    m_TopdownCamera.transform.eulerAngles = new Vector3(90, 0, 0);
+                }
                 m_Matrix4x4 = GetCameraMatrix4X4(to);
+                m_TopMatrix4x4 = GetCameraMatrix4X4(m_TopdownCamera);
             };
             m_ScreenOffset = SyadeuSettings.Instance.m_ScreenOffset;
 
@@ -58,7 +79,8 @@ namespace Syadeu.Presentation
                 m_Camera.Value = Camera.main;
                 if (Camera == null) return PresentationResult.Warning("Cam not found");
             }
-            m_Matrix4x4 = GetCameraMatrix4X4(Camera);
+            m_Matrix4x4 = GetCameraMatrix4X4(m_Camera.Value);
+            m_TopMatrix4x4 = GetCameraMatrix4X4(m_TopdownCamera);
 
             return base.BeforePresentation();
         }
@@ -152,7 +174,8 @@ namespace Syadeu.Presentation
             //{
             //    return IsInCameraScreen(m_Camera.Value, worldPosition);
             //}
-            return IsInCameraScreen(worldPosition, m_Matrix4x4, m_ScreenOffset);
+            return IsInCameraScreen(worldPosition, m_Matrix4x4, m_ScreenOffset) ||
+                IsInCameraScreen(worldPosition, m_TopMatrix4x4, m_ScreenOffset);
         }
         /// <summary>
         /// 해당 좌표가 입력한 카메라 내부에 위치하는지 반환합니다.
