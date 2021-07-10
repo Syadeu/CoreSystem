@@ -6,7 +6,7 @@ using Unity.Mathematics;
 
 namespace Syadeu.Presentation
 {
-    public struct DataTransform : IDataComponent, IReadOnlyTransform
+    public struct DataTransform : IDataComponent, IReadOnlyTransform, IEquatable<DataTransform>
     {
         internal Hash m_Idx;
         internal int2 m_ProxyIdx;
@@ -15,10 +15,13 @@ namespace Syadeu.Presentation
         Hash IDataComponent.Idx => m_Idx;
         DataComponentType IDataComponent.Type => DataComponentType.Transform;
         bool IDataComponent.HasProxyObject => !m_ProxyIdx.Equals(DataMonoBehaviour.ProxyNull);
+        internal bool HasProxyObject => !m_ProxyIdx.Equals(DataMonoBehaviour.ProxyNull);
         bool IDataComponent.ProxyRequested => m_ProxyIdx.Equals(DataMonoBehaviour.ProxyQueued);
+        internal bool ProxyRequested => m_ProxyIdx.Equals(DataMonoBehaviour.ProxyQueued);
 
         IReadOnlyTransform IDataComponent.transform => this;
         bool IEquatable<IDataComponent>.Equals(IDataComponent other) => m_Idx.Equals(other.Idx);
+        bool IEquatable<DataTransform>.Equals(DataTransform other) => m_Idx.Equals(other.m_Idx);
 
         internal Vector3 m_Position;
         internal quaternion m_Rotation;
@@ -39,8 +42,8 @@ namespace Syadeu.Presentation
         }
         private DataTransform Data
         {
-            get => (DataTransform)PresentationSystem<GameObjectProxySystem>.System.m_MappedData[m_Idx];
-            set => PresentationSystem<GameObjectProxySystem>.System.m_MappedData[m_Idx] = value;
+            get => (DataTransform)PresentationSystem<GameObjectProxySystem>.System.m_MappedTransforms[m_Idx];
+            set => PresentationSystem<GameObjectProxySystem>.System.m_MappedTransforms[m_Idx] = value;
         }
 
         public Vector3 position

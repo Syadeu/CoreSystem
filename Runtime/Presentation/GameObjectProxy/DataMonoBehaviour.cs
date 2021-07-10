@@ -33,22 +33,23 @@ namespace Syadeu.Presentation
                 return PrefabManager.Instance.RecycleObjects[proxyIdx.x].Instances[proxyIdx.y];
             }
         }
-        private DataTransform InternalTransform => (DataTransform)PresentationSystem<GameObjectProxySystem>.System.m_MappedData[m_Transform];
-        public IReadOnlyTransform transform 
-            => (IReadOnlyTransform)PresentationSystem<GameObjectProxySystem>.System.m_MappedData[m_Transform];
+        private DataTransform InternalTransform => (DataTransform)PresentationSystem<GameObjectProxySystem>.System.m_MappedTransforms[m_Transform];
+        public IReadOnlyTransform transform
+            => /*(IReadOnlyTransform)PresentationSystem<GameObjectProxySystem>.System.m_MappedData[m_Transform];*/
+            throw new NotImplementedException();
 
 
-        public DataTransform GetTransform()
-        {
-            GameObjectProxySystem proxySystem = PresentationSystem<GameObjectProxySystem>.System;
-            DataTransform tr = (DataTransform)PresentationSystem<GameObjectProxySystem>.System.m_MappedData[m_Transform];
-            if (!proxySystem.m_RequireUpdateQueuedList.Contains(tr))
-            {
-                proxySystem.m_RequireUpdateList.Enqueue(tr);
-                proxySystem.m_RequireUpdateQueuedList.Add(tr);
-            }
-            return tr;
-        }
+        //public DataTransform GetTransform()
+        //{
+        //    GameObjectProxySystem proxySystem = PresentationSystem<GameObjectProxySystem>.System;
+        //    DataTransform tr = (DataTransform)PresentationSystem<GameObjectProxySystem>.System.m_MappedData[m_Transform];
+        //    if (!proxySystem.m_RequireUpdateQueuedList.Contains(tr))
+        //    {
+        //        proxySystem.m_RequireUpdateList.Enqueue(tr);
+        //        proxySystem.m_RequireUpdateQueuedList.Add(tr);
+        //    }
+        //    return tr;
+        //}
         //public void Terminate() => ProxyObject.Terminate();
         public bool IsValid() => !m_Idx.Equals(Hash.Empty);
     }
