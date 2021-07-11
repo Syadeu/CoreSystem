@@ -66,8 +66,7 @@ namespace Syadeu.Database
             //    $"out {tr.position}".ToLog();
             //});
 
-            DataMonoBehaviour dataMono =
-                PresentationSystem<GameObjectProxySystem>.System.CreateNewPrefab(item.m_PrefabIdx, pos, rot, Vector3.one);
+            PresentationSystem<GameObjectProxySystem>.System.CreateNewPrefab(item.m_PrefabIdx, pos, rot, Vector3.one);
 
 
         }

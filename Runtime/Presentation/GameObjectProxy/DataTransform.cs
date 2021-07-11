@@ -6,18 +6,23 @@ using Unity.Mathematics;
 
 namespace Syadeu.Presentation
 {
-    public struct DataTransform : IInternalDataComponent, IReadOnlyTransform, IEquatable<DataTransform>
+    public struct DataTransform : IInternalDataComponent, IReadOnlyTransform, IEquatable<DataTransform>, IDisposable
     {
+        internal static int2 ProxyNull = new int2(-1, -1);
+        internal static int2 ProxyQueued = new int2(-2, -2);
+
         internal Hash m_Idx;
         internal int2 m_ProxyIdx;
         internal int m_PrefabIdx;
 
         Hash IInternalDataComponent.Idx => m_Idx;
         DataComponentType IInternalDataComponent.Type => DataComponentType.Transform;
-        bool IInternalDataComponent.HasProxyObject => !m_ProxyIdx.Equals(DataMonoBehaviour.ProxyNull);
-        internal bool HasProxyObject => !m_ProxyIdx.Equals(DataMonoBehaviour.ProxyNull);
-        bool IInternalDataComponent.ProxyRequested => m_ProxyIdx.Equals(DataMonoBehaviour.ProxyQueued);
-        internal bool ProxyRequested => m_ProxyIdx.Equals(DataMonoBehaviour.ProxyQueued);
+        bool IInternalDataComponent.HasProxyObject => !m_ProxyIdx.Equals(ProxyNull);
+        internal bool HasProxyObject => !m_ProxyIdx.Equals(ProxyNull);
+        bool IInternalDataComponent.ProxyRequested => m_ProxyIdx.Equals(ProxyQueued);
+        internal bool ProxyRequested => m_ProxyIdx.Equals(ProxyQueued);
+
+        void IDisposable.Dispose() { }
 
         IReadOnlyTransform IInternalDataComponent.transform => this;
         bool IEquatable<IInternalDataComponent>.Equals(IInternalDataComponent other) => m_Idx.Equals(other.Idx);

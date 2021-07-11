@@ -25,8 +25,10 @@ namespace Syadeu.Presentation
         internal readonly Queue<IInternalDataComponent> m_RequireUpdateList = new Queue<IInternalDataComponent>();
         internal readonly HashSet<IInternalDataComponent> m_RequireUpdateQueuedList = new HashSet<IInternalDataComponent>();
         //internal readonly Dictionary<Hash, IDataComponent> m_MappedData = new Dictionary<Hash, IDataComponent>();
+        internal NativeHashMap<Hash, DataGameObject> m_MappedGameObjects = new NativeHashMap<Hash, DataGameObject>(1000, Allocator.Persistent);
         internal NativeHashMap<Hash, DataTransform> m_MappedTransforms = new NativeHashMap<Hash, DataTransform>(1000, Allocator.Persistent);
         private readonly List<Hash> m_MappedTransformList = new List<Hash>();
+        internal readonly Dictionary<Hash, List<DataComponentEntity>> m_ComponentList = new Dictionary<Hash, List<DataComponentEntity>>();
 
         private int m_VisibleCheckJobWorker;
         private BackgroundJob m_VisibleCheckJob;
@@ -90,8 +92,14 @@ namespace Syadeu.Presentation
             return base.AfterPresentation();
         }
         private readonly ConcurrentQueue<Action> m_RequestedJobs = new ConcurrentQueue<Action>();
+        private readonly ConcurrentQueue<Hash> m_RequestDestories = new ConcurrentQueue<Hash>();
         private readonly ConcurrentQueue<IInternalDataComponent> m_RequestProxies = new ConcurrentQueue<IInternalDataComponent>();
         private readonly ConcurrentQueue<IInternalDataComponent> m_RemoveProxies = new ConcurrentQueue<IInternalDataComponent>();
+        public void DestoryDataObject(Hash objHash)
+        {
+            if (!m_RequestDestories.Contains(objHash)) return;
+            m_RequestDestories.Enqueue(objHash);
+        }
         protected override PresentationResult AfterPresentationAsync()
         {
             int temp1 = m_RequestProxies.Count;
@@ -114,6 +122,26 @@ namespace Syadeu.Presentation
             }
             //m_RemoveProxies.RemoveRange(0, temp2);
 
+            int temp3 = m_RequestDestories.Count;
+            for (int i = 0; i < temp3; i++)
+            {
+                if (!m_RequestDestories.TryDequeue(out Hash objHash)) continue;
+
+                ((IDisposable)m_MappedTransforms[m_MappedGameObjects[objHash].m_Transform]).Dispose();
+                m_MappedTransforms.Remove(m_MappedGameObjects[objHash].m_Transform);
+                m_MappedTransformList.Remove(m_MappedGameObjects[objHash].m_Transform);
+
+                List<DataComponentEntity> components = m_ComponentList[objHash];
+                for (int j = 0; j < components.Count; j++)
+                {
+                    components[j].Dispose();
+                }
+                m_ComponentList.Remove(objHash);
+
+                ((IDisposable)m_MappedGameObjects[objHash]).Dispose();
+                m_MappedGameObjects.Remove(objHash);
+            }
+
             if (m_VisibleCheckJob.IsDone)
             {
                 m_VisibleCheckJob.Start(m_VisibleCheckJobWorker);
@@ -123,6 +151,7 @@ namespace Syadeu.Presentation
         }
         public override void Dispose()
         {
+            m_MappedGameObjects.Dispose();
             m_MappedTransforms.Dispose();
             CoreSystem.RemoveBackgroundJobWorker(m_VisibleCheckJobWorker);
 
@@ -186,43 +215,17 @@ namespace Syadeu.Presentation
                 jobs[i].Await();
             }
             jobs.Clear();
-            //for (int i = 0; i < tempList.Count; i++)
-            //{
-            //    if (tempList[i] is DataMonoBehaviour mono)
-            //    {
-            //        //DataTransform tr = (DataTransform)m_MappedData[mono.m_Transform];
-
-            //    }
-            //    else if (tempList[i] is DataTransform tr)
-            //    {
-            //        if (m_RenderSystem.IsInCameraScreen(tr.position))
-            //        {
-            //            if (!tempList[i].ProxyRequested && !tempList[i].HasProxyObject)
-            //            {
-            //                //"in".ToLog();
-            //                m_RequestProxies.Add(tr);
-            //            }
-            //        }
-            //        else
-            //        {
-            //            if (tempList[i].HasProxyObject)
-            //            {
-            //                m_RemoveProxies.Add(tr);
-            //            }
-            //        }
-            //    }
-            //    else throw new NotImplementedException();
-            //}
         }
-        public DataMonoBehaviour CreateNewPrefab(int prefabIdx, Vector3 pos, Quaternion rot, Vector3 localScale)
+        public DataGameObject CreateNewPrefab(int prefabIdx, Vector3 pos, Quaternion rot, Vector3 localScale)
         {
             Hash trHash = Hash.NewHash();
-            Hash monoHash = Hash.NewHash();
+            //Hash monoHash = Hash.NewHash();
+            Hash objHash = Hash.NewHash();
 
-            int2 proxyIdx = DataMonoBehaviour.ProxyNull;
+            int2 proxyIdx = DataTransform.ProxyNull;
             if (m_RenderSystem.IsInCameraScreen(pos))
             {
-                proxyIdx = DataMonoBehaviour.ProxyQueued;
+                proxyIdx = DataTransform.ProxyQueued;
             }
 
             DataTransform trData = new DataTransform()
@@ -235,18 +238,18 @@ namespace Syadeu.Presentation
                 m_Rotation = rot,
                 m_LocalScale = new ThreadSafe.Vector3(localScale),
             };
-            DataMonoBehaviour monoData = new DataMonoBehaviour()
+            DataGameObject objData = new DataGameObject()
             {
-                m_Idx = monoHash,
+                m_Idx = objHash,
 
                 m_Transform = trHash
             };
-            //m_MappedData.Add(trHash, trData);
-            //m_MappedData.Add(monoHash, monoData);
             m_MappedTransformList.Add(trHash);
-            //m_MappedDataList.Add(monoHash);
+
+            m_MappedGameObjects.Add(objHash, objData);
             m_MappedTransforms.Add(trHash, trData);
-            if (proxyIdx.Equals(DataMonoBehaviour.ProxyQueued))
+
+            if (proxyIdx.Equals(DataTransform.ProxyQueued))
             {
                 PrefabManager.GetRecycleObjectAsync(prefabIdx, (other) =>
                 {
@@ -262,13 +265,13 @@ namespace Syadeu.Presentation
             }
 
             $"{prefabIdx} spawned at {pos}".ToLog();
-            return monoData;
+            return objData;
         }
         private void RequestProxy(Hash trHash)
         {
             DataTransform tr = (DataTransform)m_MappedTransforms[trHash];
 
-            tr.m_ProxyIdx = DataMonoBehaviour.ProxyQueued;
+            tr.m_ProxyIdx = DataTransform.ProxyQueued;
             m_MappedTransforms[trHash] = tr;
 
             m_RequestedJobs.Enqueue(() =>
@@ -295,9 +298,9 @@ namespace Syadeu.Presentation
         {
             DataTransform tr = (DataTransform)m_MappedTransforms[trHash];
             int2 proxyIdx = tr.m_ProxyIdx;
-            CoreSystem.Logger.False(proxyIdx.Equals(DataMonoBehaviour.ProxyNull), $"proxy index null {proxyIdx}");
+            CoreSystem.Logger.False(proxyIdx.Equals(DataTransform.ProxyNull), $"proxy index null {proxyIdx}");
 
-            tr.m_ProxyIdx = DataMonoBehaviour.ProxyNull;
+            tr.m_ProxyIdx = DataTransform.ProxyNull;
             m_MappedTransforms[trHash] = tr;
 
             m_RequestedJobs.Enqueue(() =>
