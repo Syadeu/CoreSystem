@@ -131,6 +131,18 @@ namespace Syadeu.Presentation
 
             StartPresentation(m_DefaultGroupHash);
         }
+        public override void Dispose()
+        {
+            foreach (var item in m_PresentationGroups)
+            {
+                for (int i = 0; i < item.Value.m_Systems.Count; i++)
+                {
+                    item.Value.m_Systems[i].Dispose();
+                }
+            }
+
+            base.Dispose();
+        }
 
         #region Internals
         internal static void RegisterSystem(Type groupName, SceneReference dependenceScene, params Type[] systems)

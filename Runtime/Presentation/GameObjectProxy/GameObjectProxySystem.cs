@@ -22,8 +22,8 @@ namespace Syadeu.Presentation
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => true;
 
-        internal readonly Queue<IDataComponent> m_RequireUpdateList = new Queue<IDataComponent>();
-        internal readonly HashSet<IDataComponent> m_RequireUpdateQueuedList = new HashSet<IDataComponent>();
+        internal readonly Queue<IInternalDataComponent> m_RequireUpdateList = new Queue<IInternalDataComponent>();
+        internal readonly HashSet<IInternalDataComponent> m_RequireUpdateQueuedList = new HashSet<IInternalDataComponent>();
         //internal readonly Dictionary<Hash, IDataComponent> m_MappedData = new Dictionary<Hash, IDataComponent>();
         internal NativeHashMap<Hash, DataTransform> m_MappedTransforms = new NativeHashMap<Hash, DataTransform>(1000, Allocator.Persistent);
         private readonly List<Hash> m_MappedTransformList = new List<Hash>();
@@ -59,7 +59,7 @@ namespace Syadeu.Presentation
             int updateCount = m_RequireUpdateList.Count;
             for (int i = 0; i < updateCount; i++)
             {
-                IDataComponent data = m_RequireUpdateList.Dequeue();
+                IInternalDataComponent data = m_RequireUpdateList.Dequeue();
                 //$"update in {data.Idx}".ToLog();
                 if (!data.HasProxyObject) continue;
 
@@ -90,8 +90,8 @@ namespace Syadeu.Presentation
             return base.AfterPresentation();
         }
         private readonly ConcurrentQueue<Action> m_RequestedJobs = new ConcurrentQueue<Action>();
-        private readonly ConcurrentQueue<IDataComponent> m_RequestProxies = new ConcurrentQueue<IDataComponent>();
-        private readonly ConcurrentQueue<IDataComponent> m_RemoveProxies = new ConcurrentQueue<IDataComponent>();
+        private readonly ConcurrentQueue<IInternalDataComponent> m_RequestProxies = new ConcurrentQueue<IInternalDataComponent>();
+        private readonly ConcurrentQueue<IInternalDataComponent> m_RemoveProxies = new ConcurrentQueue<IInternalDataComponent>();
         protected override PresentationResult AfterPresentationAsync()
         {
             int temp1 = m_RequestProxies.Count;

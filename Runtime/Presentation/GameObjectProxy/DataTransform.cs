@@ -6,21 +6,21 @@ using Unity.Mathematics;
 
 namespace Syadeu.Presentation
 {
-    public struct DataTransform : IDataComponent, IReadOnlyTransform, IEquatable<DataTransform>
+    public struct DataTransform : IInternalDataComponent, IReadOnlyTransform, IEquatable<DataTransform>
     {
         internal Hash m_Idx;
         internal int2 m_ProxyIdx;
         internal int m_PrefabIdx;
 
-        Hash IDataComponent.Idx => m_Idx;
-        DataComponentType IDataComponent.Type => DataComponentType.Transform;
-        bool IDataComponent.HasProxyObject => !m_ProxyIdx.Equals(DataMonoBehaviour.ProxyNull);
+        Hash IInternalDataComponent.Idx => m_Idx;
+        DataComponentType IInternalDataComponent.Type => DataComponentType.Transform;
+        bool IInternalDataComponent.HasProxyObject => !m_ProxyIdx.Equals(DataMonoBehaviour.ProxyNull);
         internal bool HasProxyObject => !m_ProxyIdx.Equals(DataMonoBehaviour.ProxyNull);
-        bool IDataComponent.ProxyRequested => m_ProxyIdx.Equals(DataMonoBehaviour.ProxyQueued);
+        bool IInternalDataComponent.ProxyRequested => m_ProxyIdx.Equals(DataMonoBehaviour.ProxyQueued);
         internal bool ProxyRequested => m_ProxyIdx.Equals(DataMonoBehaviour.ProxyQueued);
 
-        IReadOnlyTransform IDataComponent.transform => this;
-        bool IEquatable<IDataComponent>.Equals(IDataComponent other) => m_Idx.Equals(other.Idx);
+        IReadOnlyTransform IInternalDataComponent.transform => this;
+        bool IEquatable<IInternalDataComponent>.Equals(IInternalDataComponent other) => m_Idx.Equals(other.Idx);
         bool IEquatable<DataTransform>.Equals(DataTransform other) => m_Idx.Equals(other.m_Idx);
 
         internal Vector3 m_Position;
@@ -36,7 +36,7 @@ namespace Syadeu.Presentation
         {
             get
             {
-                if (!((IDataComponent)this).HasProxyObject) return null;
+                if (!((IInternalDataComponent)this).HasProxyObject) return null;
                 return PrefabManager.Instance.RecycleObjects[m_ProxyIdx.x].Instances[m_ProxyIdx.y].transform;
             }
         }

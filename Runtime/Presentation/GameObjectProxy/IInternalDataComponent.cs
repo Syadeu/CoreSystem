@@ -4,7 +4,7 @@ using Unity.Mathematics;
 
 namespace Syadeu.Presentation
 {
-    internal interface IDataComponent : IEquatable<IDataComponent>
+    internal interface IInternalDataComponent : IEquatable<IInternalDataComponent>
     {
         /// <summary>
         /// x = prefabIdx, y = internalListIdx, z = DataComponentType
