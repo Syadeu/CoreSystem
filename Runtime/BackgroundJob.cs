@@ -165,7 +165,7 @@ namespace Syadeu
                 throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "이 메소드는 메인 스레드에서의 호출을 지원하지 않습니다.");
             }
 
-            while (!IsDone)
+            while (!IsDone && !CoreSystem.s_BlockCreateInstance)
             {
                 StaticManagerEntity.ThreadAwaiter(10);
             }

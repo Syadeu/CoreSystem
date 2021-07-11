@@ -5,10 +5,35 @@ using Unity.Mathematics;
 
 namespace Syadeu.Presentation
 {
-    public struct DataGameObject : IInternalDataComponent, IEquatable<DataGameObject>, IDisposable
+    [Serializable]
+    public struct DataGameObject : IInternalDataComponent, IEquatable<DataGameObject>, IDisposable, ITag
     {
+        internal UserTagFlag m_UserTag;
+        internal CustomTagFlag m_CustomTag;
+
         internal Hash m_Idx;
         internal Hash m_Transform;
+
+        public UserTagFlag UserTag
+        {
+            get => m_UserTag;
+            set
+            {
+                var boxed = PresentationSystem<GameObjectProxySystem>.System.m_MappedGameObjects[m_Idx];
+                boxed.m_UserTag = value;
+                PresentationSystem<GameObjectProxySystem>.System.m_MappedGameObjects[m_Idx] = boxed;
+            }
+        }
+        public CustomTagFlag CustomTag
+        {
+            get => m_CustomTag;
+            set
+            {
+                var boxed = PresentationSystem<GameObjectProxySystem>.System.m_MappedGameObjects[m_Idx];
+                boxed.m_CustomTag = value;
+                PresentationSystem<GameObjectProxySystem>.System.m_MappedGameObjects[m_Idx] = boxed;
+            }
+        }
 
         Hash IInternalDataComponent.Idx => m_Idx;
         DataComponentType IInternalDataComponent.Type => DataComponentType.GameObject;

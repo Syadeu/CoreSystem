@@ -37,12 +37,12 @@ namespace Syadeu.Presentation
 
         internal Vector3 m_LocalScale;
 
-        internal UnityEngine.Transform ProxyObject
+        internal RecycleableMonobehaviour ProxyObject
         {
             get
             {
                 if (!((IInternalDataComponent)this).HasProxyObject) return null;
-                return PrefabManager.Instance.RecycleObjects[m_ProxyIdx.x].Instances[m_ProxyIdx.y].transform;
+                return PrefabManager.Instance.RecycleObjects[m_ProxyIdx.x].Instances[m_ProxyIdx.y];
             }
         }
         private DataTransform Data

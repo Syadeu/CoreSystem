@@ -127,6 +127,11 @@ namespace Syadeu.Presentation
             {
                 if (!m_RequestDestories.TryDequeue(out Hash objHash)) continue;
 
+                if (m_MappedTransforms[m_MappedGameObjects[objHash].m_Transform].HasProxyObject)
+                {
+                    RemoveProxy(m_MappedGameObjects[objHash].m_Transform);
+                }
+
                 ((IDisposable)m_MappedTransforms[m_MappedGameObjects[objHash].m_Transform]).Dispose();
                 m_MappedTransforms.Remove(m_MappedGameObjects[objHash].m_Transform);
                 m_MappedTransformList.Remove(m_MappedGameObjects[objHash].m_Transform);
@@ -369,7 +374,7 @@ namespace Syadeu.Presentation
         {
             DataTransform boxed = (DataTransform)m_MappedTransforms[trIdx];
             //Transform oriTr = PrefabManager.Instance.RecycleObjects[boxed.m_Idx.x].Instances[boxed.m_Idx.y].transform;
-            Transform oriTr = boxed.ProxyObject;
+            Transform oriTr = boxed.ProxyObject.transform;
 
             boxed.m_Position = new ThreadSafe.Vector3(oriTr.position);
             //boxed.m_LocalPosition = new ThreadSafe.Vector3(oriTr.localPosition);
@@ -392,7 +397,7 @@ namespace Syadeu.Presentation
         {
             DataTransform boxed = (DataTransform)m_MappedTransforms[trIdx];
             //Transform oriTr = PrefabManager.Instance.RecycleObjects[boxed.m_Idx.x].Instances[boxed.m_Idx.y].transform;
-            Transform oriTr = boxed.ProxyObject;
+            Transform oriTr = boxed.ProxyObject.transform;
 
             $"1 . {oriTr.position} => {boxed.m_Position}".ToLog(oriTr);
             oriTr.position = boxed.m_Position;

@@ -12,7 +12,8 @@
         Lua = 1 << 11,
 
         Mono = 1 << 20,
-        Creature = 1 << 21,
+        Data = 1 << 21,
+        Creature = 1 << 22,
 
         Presentation = 1 << 30,
         Scene = 1 << 31,

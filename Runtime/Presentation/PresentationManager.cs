@@ -135,10 +135,11 @@ namespace Syadeu.Presentation
         {
             foreach (var item in m_PresentationGroups)
             {
-                for (int i = 0; i < item.Value.m_Systems.Count; i++)
-                {
-                    item.Value.m_Systems[i].Dispose();
-                }
+                //for (int i = 0; i < item.Value.m_Systems.Count; i++)
+                //{
+                //    item.Value.m_Systems[i].Dispose();
+                //}
+                item.Value.Reset();
             }
 
             base.Dispose();

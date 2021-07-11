@@ -446,7 +446,6 @@ namespace Syadeu
         }
         private void OnAboutToQuit()
         {
-            //"test123".ToLog();
             s_BlockCreateInstance = true;
         }
         protected override void OnDestroy()
@@ -454,12 +453,12 @@ namespace Syadeu
             //StopAllCoroutines();
             try
             {
-                m_CustomBackgroundUpdates.Clear();
                 BackgroundThread.Abort();
             }
             catch (Exception)
             {
             }
+            m_CustomBackgroundUpdates.Clear();
 
             for (int i = 0; i < BackgroundJobWorkers.Count; i++)
             {
@@ -468,19 +467,21 @@ namespace Syadeu
                     BackgroundJobWorkers[i].Worker.CancelAsync();
                 }
                 catch (Exception) { }
-                finally
-                {
-                    BackgroundJobWorkers[i].Worker.Dispose();
-                }
+                BackgroundJobWorkers[i].Worker.Dispose();
             }
             BackgroundJobWorkers.Clear();
 
-            //try
-            //{
-            //    BackgroundThread?.Abort();
-            //}
-            //catch (Exception) { }
-            //"in123".ToLog();
+            for (int i = 0; i < DataManagers.Count; i++)
+            {
+                try
+                {
+                    DataManagers[i].Dispose();
+                }
+                catch (Exception)
+                {
+                }
+            }
+            
             Application.quitting -= OnAboutToQuit;
             base.OnDestroy();
         }
