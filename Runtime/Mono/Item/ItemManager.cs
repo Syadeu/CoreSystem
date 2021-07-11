@@ -66,8 +66,14 @@ namespace Syadeu.Database
             //    $"out {tr.position}".ToLog();
             //});
 
-            PresentationSystem<GameObjectProxySystem>.System.CreateNewPrefab(item.m_PrefabIdx, pos, rot, Vector3.one);
+            GameObjectProxySystem proxySystem = PresentationSystem<GameObjectProxySystem>.System;
+            DataGameObject gameObject = proxySystem.CreateNewPrefab(item.m_PrefabIdx, pos, rot, Vector3.one);
 
+            gameObject.AddComponent<ItemDataComponent>();
+        }
+
+        private sealed class ItemDataComponent : DataComponentEntity
+        {
 
         }
     }

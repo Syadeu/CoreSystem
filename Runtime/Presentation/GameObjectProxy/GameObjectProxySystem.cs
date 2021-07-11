@@ -22,8 +22,8 @@ namespace Syadeu.Presentation
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => true;
 
-        internal readonly Queue<IInternalDataComponent> m_RequireUpdateList = new Queue<IInternalDataComponent>();
-        internal readonly HashSet<IInternalDataComponent> m_RequireUpdateQueuedList = new HashSet<IInternalDataComponent>();
+        //internal readonly Queue<IInternalDataComponent> m_RequireUpdateList = new Queue<IInternalDataComponent>();
+        //internal readonly HashSet<IInternalDataComponent> m_RequireUpdateQueuedList = new HashSet<IInternalDataComponent>();
         //internal readonly Dictionary<Hash, IDataComponent> m_MappedData = new Dictionary<Hash, IDataComponent>();
         internal NativeHashMap<Hash, DataGameObject> m_MappedGameObjects = new NativeHashMap<Hash, DataGameObject>(1000, Allocator.Persistent);
         internal NativeHashMap<Hash, DataTransform> m_MappedTransforms = new NativeHashMap<Hash, DataTransform>(1000, Allocator.Persistent);
@@ -58,29 +58,29 @@ namespace Syadeu.Presentation
 
         protected override PresentationResult AfterPresentation()
         {
-            int updateCount = m_RequireUpdateList.Count;
-            for (int i = 0; i < updateCount; i++)
-            {
-                IInternalDataComponent data = m_RequireUpdateList.Dequeue();
-                //$"update in {data.Idx}".ToLog();
-                if (!data.HasProxyObject) continue;
+            //int updateCount = m_RequireUpdateList.Count;
+            //for (int i = 0; i < updateCount; i++)
+            //{
+            //    IInternalDataComponent data = m_RequireUpdateList.Dequeue();
+            //    //$"update in {data.Idx}".ToLog();
+            //    if (!data.HasProxyObject) continue;
 
-                switch (data.Type)
-                {
-                    //case DataComponentType.Component:
-                    //    break;
-                    case DataComponentType.Transform:
-                        UpdateDataTransform(data.Idx);
-                        break;
-                    default:
-                        $"{data.Type}".ToLog();
-                        //throw new Exception();
-                        break;
-                }
-                m_RequireUpdateQueuedList.Remove(data);
+            //    switch (data.Type)
+            //    {
+            //        //case DataComponentType.Component:
+            //        //    break;
+            //        case DataComponentType.Transform:
+            //            UpdateDataTransform(data.Idx);
+            //            break;
+            //        default:
+            //            $"{data.Type}".ToLog();
+            //            //throw new Exception();
+            //            break;
+            //    }
+            //    m_RequireUpdateQueuedList.Remove(data);
 
-                //if (i != 0 && i % 50 == 0) break;
-            }
+            //    //if (i != 0 && i % 50 == 0) break;
+            //}
 
             int jobCount = m_RequestedJobs.Count;
             for (int i = 0; i < jobCount; i++)
