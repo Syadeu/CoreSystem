@@ -239,7 +239,7 @@ namespace Syadeu.Presentation
         }
         public DataGameObject CreateNewPrefab(int prefabIdx, 
             Vector3 pos, Quaternion rot, Vector3 localScale, bool enableCull,
-            Action<RecycleableMonobehaviour> onCompleted)
+            Action<DataGameObject, RecycleableMonobehaviour> onCompleted)
         {
             if (!GridManager.HasGrid(pos))
             {
@@ -301,7 +301,7 @@ namespace Syadeu.Presentation
             $"{prefabIdx} spawned at {pos}".ToLog();
             return objData;
         }
-        private void RequestProxy(Hash objHash, Hash trHash, Action<RecycleableMonobehaviour> onCompleted)
+        private void RequestProxy(Hash objHash, Hash trHash, Action<DataGameObject, RecycleableMonobehaviour> onCompleted)
         {
             DataTransform tr = (DataTransform)m_MappedTransforms[trHash];
 
@@ -338,7 +338,7 @@ namespace Syadeu.Presentation
                     //{
                     //    datas.m_Value.Add(m_ComponentList[objHash][i]);
                     //}
-                    onCompleted?.Invoke(other);
+                    onCompleted?.Invoke(m_MappedGameObjects[objHash], other);
                 });
             });
             

@@ -53,10 +53,10 @@ namespace Syadeu.Mono.Creature
             }
             internal void InternalSpawnAt(int spawnPointIdx, Vector3 pos, Action<CreatureBrain> onCreated)
             {
-                PresentationSystem<GameObjectProxySystem>.System.CreateNewPrefab(m_PrefabIdx, pos, Quaternion.identity, Vector3.one, false,
-                    (obj) =>
+                DataGameObject obj = PresentationSystem<GameObjectProxySystem>.System.CreateNewPrefab(m_PrefabIdx, pos, Quaternion.identity, Vector3.one, false,
+                    (dataObj, mono) =>
                     {
-                        CreatureBrain brain = (CreatureBrain)obj;
+                        CreatureBrain brain = (CreatureBrain)mono;
                         brain.m_SpawnPointIdx = spawnPointIdx;
                         brain.m_DataIdx = m_DataIdx;
                         brain.m_IsSpawnedFromManager = true;
@@ -69,6 +69,9 @@ namespace Syadeu.Mono.Creature
                         GetCreatureSet(m_DataIdx).m_SpawnRanges[spawnPointIdx].m_InstanceCount++;
                         brain.m_UniqueIdx = Instance.m_Creatures.Count;
                         Instance.m_Creatures.Add(brain);
+
+                        CreatureDataComponent creatureData = dataObj.AddComponent<CreatureDataComponent>();
+                        creatureData.m_UniqueIdx = brain.m_UniqueIdx;
 
                         onCreated?.Invoke(brain);
                     });
@@ -290,5 +293,11 @@ namespace Syadeu.Mono.Creature
 
         //    Instance.m_CreatureSets[setID].InternalSpawnAt(0, cell.Bounds.center);
         //}
+    }
+    public class CreatureDataComponent : DataComponentEntity
+    {
+        internal int m_UniqueIdx;
+
+        public CreatureBrain Brain => CreatureManager.Instance.m_Creatures[m_UniqueIdx];
     }
 }
