@@ -225,6 +225,7 @@ namespace Syadeu
 
             if (workerIndex >= Instance.BackgroundJobWorkers.Count) return false;
 
+            if (s_BlockCreateInstance) return false;
             Instance.BackgroundJobWorkers[workerIndex].Jobs.Enqueue(job);
             return true;
         }
@@ -238,6 +239,7 @@ namespace Syadeu
             if (workerIndex >= Instance.BackgroundJobWorkers.Count) return false;
             job = new BackgroundJob(action);
 
+            if (s_BlockCreateInstance) return false;
             Instance.BackgroundJobWorkers[workerIndex].Jobs.Enqueue(job);
             return true;
         }
@@ -251,7 +253,7 @@ namespace Syadeu
             {
                 throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "이 잡은 메인 잡이 아닙니다. 메인 잡을 실행하세요");
             }
-
+            if (s_BlockCreateInstance) return;
             Instance.m_BackgroundJobs.Enqueue(job);
         }
         /// <summary>

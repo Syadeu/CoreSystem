@@ -236,7 +236,16 @@ namespace Syadeu
             return table;
         }
 
-        public static T FindFor<T>(this IList<T> list, Func<T, bool> predictate) where T : class
+        //public static T FindFor<T>(this IList<T> list, Func<T, bool> predictate) where T : class
+        //{
+        //    for (int i = 0; i < list.Count; i++)
+        //    {
+        //        if (predictate.Invoke(list[i])) return list[i];
+        //    }
+
+        //    return null;
+        //}
+        public static T FindFor<T>(this IReadOnlyList<T> list, Func<T, bool> predictate) where T : class
         {
             for (int i = 0; i < list.Count; i++)
             {
