@@ -111,7 +111,7 @@ namespace Syadeu.Presentation
                 if (!m_RequestProxies.TryDequeue(out var data)) continue;
                 CoreSystem.Logger.NotNull(data);
 
-                RequestProxy(data.GameObject, data.Idx);
+                RequestProxy(data.GameObject, data.Idx, null);
                 //$"requesting {m_RequestProxies[i].Idx}".ToLog();
             }
             //m_RequestProxies.RemoveRange(0, temp1);
@@ -202,6 +202,7 @@ namespace Syadeu.Presentation
                     {
                         if (m_MappedTransforms[m_MappedTransformList[j]] is DataTransform tr)
                         {
+                            if (!tr.m_EnableCull) continue;
                             if (m_RenderSystem.IsInCameraScreen(tr.position))
                             {
                                 if (!m_MappedTransforms[m_MappedTransformList[j]].ProxyRequested && 
@@ -236,7 +237,9 @@ namespace Syadeu.Presentation
             }
             jobs.Clear();
         }
-        public DataGameObject CreateNewPrefab(int prefabIdx, Vector3 pos, Quaternion rot, Vector3 localScale)
+        public DataGameObject CreateNewPrefab(int prefabIdx, 
+            Vector3 pos, Quaternion rot, Vector3 localScale, bool enableCull,
+            Action<RecycleableMonobehaviour> onCompleted)
         {
             if (!GridManager.HasGrid(pos))
             {
@@ -271,6 +274,7 @@ namespace Syadeu.Presentation
                 m_Idx = trHash,
                 m_ProxyIdx = proxyIdx,
                 m_PrefabIdx = prefabIdx,
+                m_EnableCull = enableCull,
 
                 m_Position = new ThreadSafe.Vector3(pos),
                 m_Rotation = rot,
@@ -290,14 +294,14 @@ namespace Syadeu.Presentation
 
             if (proxyIdx.Equals(DataTransform.ProxyQueued))
             {
-                RequestProxy(objHash, trHash);
+                RequestProxy(objHash, trHash, onCompleted);
             }
 
             cell.SetCustomData(objData);
             $"{prefabIdx} spawned at {pos}".ToLog();
             return objData;
         }
-        private void RequestProxy(Hash objHash, Hash trHash)
+        private void RequestProxy(Hash objHash, Hash trHash, Action<RecycleableMonobehaviour> onCompleted)
         {
             DataTransform tr = (DataTransform)m_MappedTransforms[trHash];
 
@@ -334,6 +338,7 @@ namespace Syadeu.Presentation
                     //{
                     //    datas.m_Value.Add(m_ComponentList[objHash][i]);
                     //}
+                    onCompleted?.Invoke(other);
                 });
             });
             

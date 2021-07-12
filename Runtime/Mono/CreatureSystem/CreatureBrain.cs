@@ -50,6 +50,7 @@ namespace Syadeu.Mono
         private Hash m_Hash;
 
         public override string DisplayName => m_CreatureName;
+        public override bool InitializeOnCall => false;
 
         public bool Initialized { get; private set; } = false;
         public bool IsOnGrid

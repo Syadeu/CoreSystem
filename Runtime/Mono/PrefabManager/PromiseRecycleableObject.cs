@@ -18,7 +18,7 @@ namespace Syadeu.Mono
 
         private PrefabManager.RecycleObject RecycleObjectSet;
         private AsyncOperationHandle<GameObject> m_Operation;
-        private bool m_ManualInit = false;
+        //private bool m_ManualInit = false;
         public Action<RecycleableMonobehaviour> m_OnCompleted = null;
 
         public bool IsDone => m_Output != null;
@@ -36,13 +36,13 @@ namespace Syadeu.Mono
             m_Operation = obj.RefPrefab.InstantiateAsync(PrefabManager.INIT_POSITION, Quaternion.identity, CoreSystem.GetTransform(PrefabManager.Instance));
             m_Operation.Completed += M_Operation_Completed;
         }
-        internal PromiseRecycleableObject(PrefabManager.RecycleObject obj, Action<RecycleableMonobehaviour> onCompleted, bool manualInit)
+        internal PromiseRecycleableObject(PrefabManager.RecycleObject obj, Action<RecycleableMonobehaviour> onCompleted)
         {
             RecycleObjectSet = obj;
 
             m_CalledScene = PresentationSystem<SceneSystem>.System.CurrentScene;
             m_Operation = obj.RefPrefab.InstantiateAsync(PrefabManager.INIT_POSITION, Quaternion.identity, CoreSystem.GetTransform(PrefabManager.Instance));
-            m_ManualInit = manualInit;
+            //m_ManualInit = manualInit;
             m_OnCompleted = onCompleted;
             m_Operation.Completed += M_Operation_Completed;
         }
@@ -73,7 +73,7 @@ namespace Syadeu.Mono
 
             if (m_OnCompleted != null)
             {
-                if (!m_ManualInit)
+                if (recycleable.InitializeOnCall)
                 {
                     recycleable.Initialize();
                 }

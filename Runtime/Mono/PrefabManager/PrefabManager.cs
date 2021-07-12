@@ -316,7 +316,7 @@ namespace Syadeu.Mono
                 if (obj.MaxCount < 0 ||
                     obj.MaxCount > obj.Instances.Count)
                 {
-                    PromiseRecycleableObject recycleObj = Instance.InternalInstantiateAsync(obj, onCompleted, manualInit);
+                    PromiseRecycleableObject recycleObj = Instance.InternalInstantiateAsync(obj, onCompleted);
                     //"in3".ToLog();
                     return recycleObj;
                 }
@@ -325,7 +325,7 @@ namespace Syadeu.Mono
             return null;
         }
         public static PromiseRecycleableObject GetRecycleObjectAsync(int index) => GetRecycleObjectAsync(index, null);
-        public static PromiseRecycleableObject GetRecycleObjectAsync(int index, Action<RecycleableMonobehaviour> onCompleted, bool manualInit = false)
+        public static PromiseRecycleableObject GetRecycleObjectAsync(int index, Action<RecycleableMonobehaviour> onCompleted)
         {
             RecycleObject obj = Instance.RecycleObjects[index];
             for (int i = 0; i < obj.Instances.Count; i++)
@@ -346,7 +346,7 @@ namespace Syadeu.Mono
 
                     if (onCompleted != null)
                     {
-                        if (!manualInit) obj.Instances[i].Initialize();
+                        if (obj.Instances[i].InitializeOnCall) obj.Instances[i].Initialize();
                         onCompleted.Invoke(obj.Instances[i]);
                     }
                     return new PromiseRecycleableObject(obj.Instances[i]);
@@ -358,7 +358,7 @@ namespace Syadeu.Mono
                 if (obj.MaxCount < 0 ||
                     obj.MaxCount > obj.Instances.Count)
                 {
-                    PromiseRecycleableObject recycleObj = Instance.InternalInstantiateAsync(obj, onCompleted, manualInit);
+                    PromiseRecycleableObject recycleObj = Instance.InternalInstantiateAsync(obj, onCompleted);
                     return recycleObj;
                 }
             }
@@ -449,7 +449,7 @@ namespace Syadeu.Mono
             return GetRecycleObject(obj.Index, initOnCall);
         }
 #if UNITY_ADDRESSABLES
-        private PromiseRecycleableObject InternalInstantiateAsync(RecycleObject obj, Action<RecycleableMonobehaviour> onCompleted, bool manualInit)
+        private PromiseRecycleableObject InternalInstantiateAsync(RecycleObject obj, Action<RecycleableMonobehaviour> onCompleted)
         {
             if (IsMainthread())
             {
@@ -469,7 +469,7 @@ namespace Syadeu.Mono
                 {
                     if (output == null)
                     {
-                        output = new PromiseRecycleableObject(obj, onCompleted, manualInit);
+                        output = new PromiseRecycleableObject(obj, onCompleted);
                     }
                     else
                     {

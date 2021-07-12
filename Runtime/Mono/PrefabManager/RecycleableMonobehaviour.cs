@@ -24,6 +24,7 @@ namespace Syadeu.Mono
         /// 런타임에 아무런 영향을 주지않습니다.
         /// </summary>
         public virtual string DisplayName => name;
+        public virtual bool InitializeOnCall => true;
 
         public Action onTerminate;
 

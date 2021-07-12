@@ -78,7 +78,7 @@ namespace Syadeu.Database
             ItemInstance itemIns = item.CreateInstance();
 
             GameObjectProxySystem proxySystem = PresentationSystem<GameObjectProxySystem>.System;
-            DataGameObject gameObject = proxySystem.CreateNewPrefab(item.m_PrefabIdx, pos, rot, Vector3.one);
+            DataGameObject gameObject = proxySystem.CreateNewPrefab(item.m_PrefabIdx, pos, rot, Vector3.one, true, null);
 
             gameObject.UserTag = UserTag.GetUserTag("Object");
             gameObject.CustomTag = UserTag.GetCustomTag("Item");

@@ -15,6 +15,7 @@ namespace Syadeu.Presentation
         internal Hash m_Idx;
         internal int2 m_ProxyIdx;
         internal int m_PrefabIdx;
+        internal bool m_EnableCull;
 
         Hash IInternalDataComponent.GameObject => m_GameObject;
         Hash IInternalDataComponent.Idx => m_Idx;
