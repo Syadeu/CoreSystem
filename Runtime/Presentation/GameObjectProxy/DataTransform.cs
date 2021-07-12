@@ -11,10 +11,12 @@ namespace Syadeu.Presentation
         internal static int2 ProxyNull = new int2(-1, -1);
         internal static int2 ProxyQueued = new int2(-2, -2);
 
+        internal Hash m_GameObject;
         internal Hash m_Idx;
         internal int2 m_ProxyIdx;
         internal int m_PrefabIdx;
 
+        Hash IInternalDataComponent.GameObject => m_GameObject;
         Hash IInternalDataComponent.Idx => m_Idx;
         DataComponentType IInternalDataComponent.Type => DataComponentType.Transform;
         bool IInternalDataComponent.HasProxyObject => !m_ProxyIdx.Equals(ProxyNull);

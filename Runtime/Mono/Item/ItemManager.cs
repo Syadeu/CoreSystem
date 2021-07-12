@@ -1,6 +1,7 @@
 ﻿using Syadeu.Mono;
 using Syadeu.Presentation;
 using System;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace Syadeu.Database
@@ -12,8 +13,25 @@ namespace Syadeu.Database
         {
             ConsoleWindow.CreateCommand((cmd) =>
             {
-                int rnd = UnityEngine.Random.Range(0, ItemDataList.Instance.m_Items.Count);
-                Item item = ItemDataList.Instance.m_Items[rnd];
+                Item item;
+                if (!string.IsNullOrEmpty(cmd))
+                {
+                    if (ulong.TryParse(cmd, out ulong hash))
+                    {
+                        item = ItemDataList.Instance.GetItem(hash);
+                    }
+                    else item = ItemDataList.Instance.GetItemByName(cmd);
+                }
+                else
+                {
+                    int rnd = UnityEngine.Random.Range(0, ItemDataList.Instance.m_Items.Count);
+                    item = ItemDataList.Instance.m_Items[rnd];
+                }
+                if (item == null)
+                {
+                    ConsoleWindow.Log("Item Not found");
+                    return;
+                }
 
                 Transform cam = Camera.main.transform;
                 Ray ray = new Ray(cam.position, cam.forward);
@@ -66,14 +84,16 @@ namespace Syadeu.Database
             gameObject.CustomTag = UserTag.GetCustomTag("Item");
 
             ItemDataComponent component = gameObject.AddComponent<ItemDataComponent>();
+            component.GridIdxes = cell.Idxes;
             component.Item = itemIns;
-
-            cell.SetCustomData(gameObject);
         }
 
-        private sealed class ItemDataComponent : DataComponentEntity
-        {
-            public ItemInstance Item;
-        }
+        
+    }
+    [Serializable]
+    public sealed class ItemDataComponent : DataComponentEntity
+    {
+        public int2 GridIdxes;
+        public ItemInstance Item;
     }
 }

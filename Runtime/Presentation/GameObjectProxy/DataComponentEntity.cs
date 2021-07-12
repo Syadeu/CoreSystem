@@ -8,6 +8,7 @@ namespace Syadeu.Presentation
         internal Hash m_Idx;
         internal Hash m_GameObject;
 
+        Hash IInternalDataComponent.GameObject => m_GameObject;
         Hash IInternalDataComponent.Idx => m_Idx;
         DataComponentType IInternalDataComponent.Type => DataComponentType.GameObject;
         bool IInternalDataComponent.HasProxyObject => !InternalTransform.m_ProxyIdx.Equals(DataTransform.ProxyNull);

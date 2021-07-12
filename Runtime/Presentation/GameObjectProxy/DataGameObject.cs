@@ -12,6 +12,7 @@ namespace Syadeu.Presentation
         internal CustomTagFlag m_CustomTag;
 
         internal Hash m_Idx;
+        internal int2 m_GridIdxes;
         internal Hash m_Transform;
 
         public UserTagFlag UserTag
@@ -35,6 +36,7 @@ namespace Syadeu.Presentation
             }
         }
 
+        Hash IInternalDataComponent.GameObject => m_Idx;
         Hash IInternalDataComponent.Idx => m_Idx;
         DataComponentType IInternalDataComponent.Type => DataComponentType.GameObject;
         bool IInternalDataComponent.HasProxyObject => !InternalTransform.m_ProxyIdx.Equals(DataTransform.ProxyNull);

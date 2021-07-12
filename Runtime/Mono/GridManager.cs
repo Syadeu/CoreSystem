@@ -1914,6 +1914,15 @@ namespace Syadeu.Mono
 
             return count;
         }
+        public static void RemoveGrid(int idx)
+        {
+            lock (Instance.m_Grids)
+            {
+                List<Grid> grids = Instance.m_Grids.ToList();
+                grids.RemoveAt(idx);
+                Instance.m_Grids = Instance.m_Grids.ToArray();
+            }
+        }
 #if UNITY_EDITOR
         public static int ClearEditorGrids()
         {

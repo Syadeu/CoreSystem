@@ -6,6 +6,7 @@ namespace Syadeu.Presentation
 {
     internal interface IInternalDataComponent : IEquatable<IInternalDataComponent>
     {
+        Hash GameObject { get; }
         /// <summary>
         /// x = prefabIdx, y = internalListIdx, z = DataComponentType
         /// </summary>

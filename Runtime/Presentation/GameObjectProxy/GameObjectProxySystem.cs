@@ -97,7 +97,10 @@ namespace Syadeu.Presentation
         private readonly ConcurrentQueue<IInternalDataComponent> m_RemoveProxies = new ConcurrentQueue<IInternalDataComponent>();
         public void DestoryDataObject(Hash objHash)
         {
-            if (!m_RequestDestories.Contains(objHash)) return;
+            if (m_RequestDestories.Contains(objHash))
+            {
+                CoreSystem.Logger.LogError(Channel.Presentation, $"Already queued {objHash}");
+            }
             m_RequestDestories.Enqueue(objHash);
         }
         protected override PresentationResult AfterPresentationAsync()
@@ -108,7 +111,7 @@ namespace Syadeu.Presentation
                 if (!m_RequestProxies.TryDequeue(out var data)) continue;
                 CoreSystem.Logger.NotNull(data);
 
-                RequestProxy(data.Idx);
+                RequestProxy(data.GameObject, data.Idx);
                 //$"requesting {m_RequestProxies[i].Idx}".ToLog();
             }
             //m_RequestProxies.RemoveRange(0, temp1);
@@ -123,33 +126,45 @@ namespace Syadeu.Presentation
             //m_RemoveProxies.RemoveRange(0, temp2);
 
             int temp3 = m_RequestDestories.Count;
-            for (int i = 0; i < temp3; i++)
+            if (temp3 > 0)
             {
-                if (!m_RequestDestories.TryDequeue(out Hash objHash)) continue;
-
-                if (m_MappedTransforms[m_MappedGameObjects[objHash].m_Transform].HasProxyObject)
+                if (m_VisibleCheckJob.IsDone)
                 {
-                    RemoveProxy(m_MappedGameObjects[objHash].m_Transform);
-                }
+                    for (int i = 0; i < temp3; i++)
+                    {
+                        if (!m_RequestDestories.TryDequeue(out Hash objHash)) continue;
+
+                        if (m_MappedTransforms[m_MappedGameObjects[objHash].m_Transform].HasProxyObject)
+                        {
+                            RemoveProxy(m_MappedGameObjects[objHash].m_Transform);
+                        }
+
+                        GridManager.GetGrid(m_MappedGameObjects[objHash].m_GridIdxes.x)
+                            .GetCell(m_MappedGameObjects[objHash].m_GridIdxes.y)
+                            .RemoveCustomData();
 
                 ((IDisposable)m_MappedTransforms[m_MappedGameObjects[objHash].m_Transform]).Dispose();
-                m_MappedTransforms.Remove(m_MappedGameObjects[objHash].m_Transform);
-                m_MappedTransformList.Remove(m_MappedGameObjects[objHash].m_Transform);
+                        m_MappedTransforms.Remove(m_MappedGameObjects[objHash].m_Transform);
+                        m_MappedTransformList.Remove(m_MappedGameObjects[objHash].m_Transform);
 
-                List<DataComponentEntity> components = m_ComponentList[objHash];
-                for (int j = 0; j < components.Count; j++)
-                {
-                    components[j].Dispose();
+                        List<DataComponentEntity> components = m_ComponentList[objHash];
+                        for (int j = 0; j < components.Count; j++)
+                        {
+                            components[j].Dispose();
+                        }
+                        m_ComponentList.Remove(objHash);
+
+                        ((IDisposable)m_MappedGameObjects[objHash]).Dispose();
+                        m_MappedGameObjects.Remove(objHash);
+                    }
                 }
-                m_ComponentList.Remove(objHash);
-
-                ((IDisposable)m_MappedGameObjects[objHash]).Dispose();
-                m_MappedGameObjects.Remove(objHash);
             }
-
-            if (m_VisibleCheckJob.IsDone)
+            else
             {
-                m_VisibleCheckJob.Start(m_VisibleCheckJobWorker);
+                if (m_VisibleCheckJob.IsDone)
+                {
+                    m_VisibleCheckJob.Start(m_VisibleCheckJobWorker);
+                }
             }
 
             return base.AfterPresentationAsync();
@@ -223,8 +238,25 @@ namespace Syadeu.Presentation
         }
         public DataGameObject CreateNewPrefab(int prefabIdx, Vector3 pos, Quaternion rot, Vector3 localScale)
         {
+            if (!GridManager.HasGrid(pos))
+            {
+                CoreSystem.Logger.LogError(Channel.Data, $"Can\'t spawn prefab {prefabIdx} at {pos}, There\'s no grid");
+                throw new Exception();
+            }
+            ref GridManager.Grid grid = ref GridManager.GetGrid(pos);
+            if (!grid.HasCell(pos))
+            {
+                CoreSystem.Logger.LogError(Channel.Data, $"Can\'t spawn prefab {prefabIdx} at {pos}, There\'s no grid cell");
+                throw new Exception();
+            }
+            ref GridManager.GridCell cell = ref grid.GetCell(pos);
+            if (cell.GetCustomData() != null)
+            {
+                CoreSystem.Logger.LogError(Channel.Data, $"Can\'t spawn prefab {prefabIdx} at {pos}, target grid cell has object");
+                throw new Exception();
+            }
+
             Hash trHash = Hash.NewHash();
-            //Hash monoHash = Hash.NewHash();
             Hash objHash = Hash.NewHash();
 
             int2 proxyIdx = DataTransform.ProxyNull;
@@ -235,6 +267,7 @@ namespace Syadeu.Presentation
 
             DataTransform trData = new DataTransform()
             {
+                m_GameObject = objHash,
                 m_Idx = trHash,
                 m_ProxyIdx = proxyIdx,
                 m_PrefabIdx = prefabIdx,
@@ -246,6 +279,7 @@ namespace Syadeu.Presentation
             DataGameObject objData = new DataGameObject()
             {
                 m_Idx = objHash,
+                m_GridIdxes = cell.Idxes,
 
                 m_Transform = trHash
             };
@@ -256,23 +290,14 @@ namespace Syadeu.Presentation
 
             if (proxyIdx.Equals(DataTransform.ProxyQueued))
             {
-                PrefabManager.GetRecycleObjectAsync(prefabIdx, (other) =>
-                {
-                    DataTransform tr;
-                    tr = (DataTransform)m_MappedTransforms[trHash];
-                    tr.m_ProxyIdx = new int2(tr.m_PrefabIdx, other.m_Idx);
-                    m_MappedTransforms[trHash] = tr;
-
-                    other.transform.position = tr.m_Position;
-                    other.transform.rotation = tr.m_Rotation;
-                    other.transform.localScale = tr.m_LocalScale;
-                });
+                RequestProxy(objHash, trHash);
             }
 
+            cell.SetCustomData(objData);
             $"{prefabIdx} spawned at {pos}".ToLog();
             return objData;
         }
-        private void RequestProxy(Hash trHash)
+        private void RequestProxy(Hash objHash, Hash trHash)
         {
             DataTransform tr = (DataTransform)m_MappedTransforms[trHash];
 
@@ -294,6 +319,21 @@ namespace Syadeu.Presentation
                     other.transform.position = tr.m_Position;
                     other.transform.rotation = tr.m_Rotation;
                     other.transform.localScale = tr.m_LocalScale;
+
+                    ProxyMonoComponent datas = other.GetComponent<ProxyMonoComponent>();
+                    if (datas == null)
+                    {
+                        datas = other.gameObject.AddComponent<ProxyMonoComponent>();
+                    }
+
+                    datas.m_GameObject = objHash;
+                    //datas.m_Value = m_ComponentList[objHash];
+                    //if (datas.m_Value == null) datas.m_Value = new List<DataComponentEntity>();
+                    //else datas.m_Value.Clear();
+                    //for (int i = 0; i < m_ComponentList[objHash].Count; i++)
+                    //{
+                    //    datas.m_Value.Add(m_ComponentList[objHash][i]);
+                    //}
                 });
             });
             
@@ -574,6 +614,23 @@ namespace Syadeu.Presentation
         #endregion
     }
 
+    [RequireComponent(typeof(RecycleableMonobehaviour))]
+    public sealed class ProxyMonoComponent : MonoBehaviour
+    {
+        internal Hash m_GameObject;
+
+        public T GetDataComponent<T>() where T : DataComponentEntity, new()
+        {
+            return PresentationSystem<GameObjectProxySystem>.System.m_MappedGameObjects[m_GameObject]
+                .GetComponent<T>();
+        }
+
+        public void Destory()
+        {
+            PresentationSystem<GameObjectProxySystem>.System.m_MappedGameObjects[m_GameObject].Destory();
+            GetComponent<RecycleableMonobehaviour>().Terminate();
+        }
+    }
     public abstract class MonoBehaviour<T> : MonoBehaviour
     {
         [SerializeReference] public T m_Value;
