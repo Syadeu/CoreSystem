@@ -1,7 +1,4 @@
-﻿#if UNITY_EDITOR
-#endif
-
-namespace Syadeu.Database.Lua
+﻿namespace Syadeu.Database.Lua
 {
     public sealed class ItemInstanceProxy : LuaProxyEntity<ItemInstance>
     {
@@ -18,5 +15,11 @@ namespace Syadeu.Database.Lua
         public void SetValueDouble(string name, double value) => Target.Values.SetValue(name, value);
         public void SetValueBool(string name, bool value) => Target.Values.SetValue(name, value);
         public void SetValueString(string name, string value) => Target.Values.SetValue(name, value);
+
+        public bool HasItemType(string name) => ItemTypes.FindFor((other) => other.m_Name.Equals(name)) != null;
+        public ItemTypeEntity GetItemType(string name) => ItemTypes.FindFor((other) => other.m_Name.Equals(name));
+
+        public bool HasEffectType(string name) => EffectTypes.FindFor((other) => other.m_Name.Equals(name)) != null;
+        public ItemEffectType GetEffectType(string name) => EffectTypes.FindFor((other) => other.m_Name.Equals(name));
     }
 }
