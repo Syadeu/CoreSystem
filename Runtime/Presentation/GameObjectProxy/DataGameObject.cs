@@ -42,15 +42,6 @@ namespace Syadeu.Presentation
                 boxed.m_CustomTag = value;
             }
         }
-
-        Hash IInternalDataComponent.GameObject => m_Idx;
-        Hash IInternalDataComponent.Idx => m_Idx;
-        DataComponentType IInternalDataComponent.Type => DataComponentType.GameObject;
-        bool IInternalDataComponent.HasProxyObject => !InternalTransform.m_ProxyIdx.Equals(DataTransform.ProxyNull);
-        bool IInternalDataComponent.ProxyRequested => InternalTransform.m_ProxyIdx.Equals(DataTransform.ProxyQueued);
-        bool IEquatable<IInternalDataComponent>.Equals(IInternalDataComponent other) => m_Idx.Equals(other.Idx);
-        bool IEquatable<DataGameObject>.Equals(DataGameObject other) => m_Idx.Equals(other.m_Idx);
-
         internal DataTransform InternalTransform
         {
             get
@@ -61,7 +52,18 @@ namespace Syadeu.Presentation
                 }
             }
         }
+
+        Hash IInternalDataComponent.GameObject => m_Idx;
+        Hash IInternalDataComponent.Idx => m_Idx;
+        DataComponentType IInternalDataComponent.Type => DataComponentType.GameObject;
+        bool IInternalDataComponent.HasProxyObject => !InternalTransform.m_ProxyIdx.Equals(DataTransform.ProxyNull);
+        bool IInternalDataComponent.ProxyRequested => InternalTransform.m_ProxyIdx.Equals(DataTransform.ProxyQueued);
+        bool IEquatable<IInternalDataComponent>.Equals(IInternalDataComponent other) => m_Idx.Equals(other.Idx);
+        bool IEquatable<DataGameObject>.Equals(DataGameObject other) => m_Idx.Equals(other.m_Idx);
+
+#pragma warning disable IDE1006 // Naming Styles
         public DataTransform transform => InternalTransform;
+#pragma warning restore IDE1006 // Naming Styles
 
         public T AddComponent<T>() where T : DataComponentEntity, new()
         {

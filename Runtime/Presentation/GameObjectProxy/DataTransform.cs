@@ -36,10 +36,10 @@ namespace Syadeu.Presentation
 
         internal Vector3 m_Position;
         internal quaternion m_Rotation;
-        
-        //internal Vector3 m_Right;
-        //internal Vector3 m_Up;
-        //internal Vector3 m_Forward;
+
+        internal Vector3 m_Right;
+        internal Vector3 m_Up;
+        internal Vector3 m_Forward;
 
         internal Vector3 m_LocalScale;
 
@@ -65,6 +65,7 @@ namespace Syadeu.Presentation
             PresentationSystem<GameObjectProxySystem>.System.RequestUpdateTransform(m_Idx);
         }
 
+#pragma warning disable IDE1006 // Naming Styles
         public Vector3 position
         {
             get => GetRef().m_Position;
@@ -74,6 +75,14 @@ namespace Syadeu.Presentation
                 if (tr.m_Position.Equals(value)) return;
                 tr.m_Position = value;
                 RequestUpdate();
+            }
+        }
+        public Vector3 eulerAngles
+        {
+            get => new Vector3(rotation.Euler());
+            set
+            {
+                rotation = QuaternionExtensions.FromAngles(new float3(value.x, value.y, value.z));
             }
         }
         public quaternion rotation
@@ -87,9 +96,9 @@ namespace Syadeu.Presentation
                 RequestUpdate();
             }
         }
-        //public Vector3 right => throw new NotImplementedException();
-        //public Vector3 up => throw new NotImplementedException();
-        //public Vector3 forward => throw new NotImplementedException();
+        public Vector3 right => GetRef().right;
+        public Vector3 up => GetRef().up;
+        public Vector3 forward => GetRef().forward;
 
         public Vector3 localScale
         {
@@ -103,24 +112,14 @@ namespace Syadeu.Presentation
             }
         }
         Vector3 IReadOnlyTransform.position => GetRef().m_Position;
+        Vector3 IReadOnlyTransform.eulerAngles => GetRef().eulerAngles;
         quaternion IReadOnlyTransform.rotation => GetRef().m_Rotation;
 
-        //Vector3 IReadOnlyTransform.right => m_Right;
-        //Vector3 IReadOnlyTransform.up => m_Up;
-        //Vector3 IReadOnlyTransform.forward => m_Forward;
+        Vector3 IReadOnlyTransform.right => GetRef().m_Right;
+        Vector3 IReadOnlyTransform.up => GetRef().m_Up;
+        Vector3 IReadOnlyTransform.forward => GetRef().m_Forward;
 
         Vector3 IReadOnlyTransform.localScale => GetRef().m_LocalScale;
-
-        //unsafe private void Test()
-        //{
-        //    //PresentationSystem<GameObjectProxySystem>.System.m_MappedTransforms.ToLookup((other) => ).
-
-        //    PresentationSystem<GameObjectProxySystem>.System.m_MappedTransforms.geta
-
-        //    //PresentationSystem<GameObjectProxySystem>.System.m_MappedTransforms.GetBucketData().
-        //    UnsafeUtility.AddressOf(ref PresentationSystem<GameObjectProxySystem>.System.m_MappedTransforms[m_Idx]);
-
-        //    ref var tr = ref PresentationSystem<GameObjectProxySystem>.System.m_MappedTransforms[m_Idx];
-        //}
+#pragma warning restore IDE1006 // Naming Styles
     }
 }

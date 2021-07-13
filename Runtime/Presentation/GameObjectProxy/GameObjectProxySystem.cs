@@ -212,6 +212,8 @@ namespace Syadeu.Presentation
             Vector3 pos, Quaternion rot, Vector3 localScale, bool enableCull,
             Action<DataGameObject, RecycleableMonobehaviour> onCompleted)
         {
+            CoreSystem.Logger.NotNull(m_RenderSystem, $"You've call this method too early or outside of PresentationSystem");
+
             if (!GridManager.HasGrid(pos))
             {
                 CoreSystem.Logger.LogError(Channel.Data, $"Can\'t spawn prefab {prefabIdx} at {pos}, There\'s no grid");
@@ -258,7 +260,6 @@ namespace Syadeu.Presentation
 
                 m_Transform = trHash
             };
-            //m_MappedTransformList.Add(trHash);
 
             int objIdx = m_MappedGameObjects.Length;
             m_MappedGameObjects.Add(objData);
@@ -376,6 +377,9 @@ namespace Syadeu.Presentation
             //oriTr.right = boxed.m_Right;
             //oriTr.up = boxed.m_Up;
             //oriTr.forward = boxed.m_Forward;
+            boxed.m_Right = new ThreadSafe.Vector3(oriTr.right);
+            boxed.m_Up = new ThreadSafe.Vector3(oriTr.up);
+            boxed.m_Forward = new ThreadSafe.Vector3(oriTr.forward);
 
             oriTr.localScale = boxed.m_LocalScale;
             //$"2 . {oriTr.position} => {boxed.m_Position}".ToLog(oriTr);
