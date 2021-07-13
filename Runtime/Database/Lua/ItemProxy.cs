@@ -10,12 +10,72 @@ namespace Syadeu.Database.Lua
         public string Name => Target.m_Name;
         public string Guid => Target.m_Hash.ToString();
 
-        public Action<CreatureBrain> OnEquip { get => Target.m_OnEquip; set => Target.m_OnEquip += value; }
-        public Action<CreatureBrain> OnUnequip { get => Target.m_OnUnequip; set => Target.m_OnUnequip += value; }
-        public Action<CreatureBrain> OnUse { get => Target.m_OnUse; set => Target.m_OnUse += value; }
-        public Action<CreatureBrain> OnGet { get => Target.m_OnGet; set => Target.m_OnGet += value; }
-        public Action<CreatureBrain> OnDrop { get => Target.m_OnDrop; set => Target.m_OnDrop += value; }
-        public Action<ItemInstance> OnSpawn { get => Target.m_OnSpawn; set => Target.m_OnSpawn += value; }
+        public Action<CreatureBrain>[] OnEquip
+        {
+            set
+            {
+                Target.m_OnEquip = null;
+                for (int i = 0; i < value.Length; i++)
+                {
+                    Target.m_OnEquip += value[i];
+                }
+            }
+        }
+        public Action<CreatureBrain>[] OnUnequip
+        {
+            set
+            {
+                Target.m_OnUnequip = null;
+                for (int i = 0; i < value.Length; i++)
+                {
+                    Target.m_OnUnequip += value[i];
+                }
+            }
+        }
+        public Action<CreatureBrain>[] OnUse
+        {
+            set
+            {
+                Target.m_OnUse = null;
+                for (int i = 0; i < value.Length; i++)
+                {
+                    Target.m_OnUse += value[i];
+                }
+            }
+        }
+        public Action<CreatureBrain>[] OnGet
+        {
+            set
+            {
+                Target.m_OnGet = null;
+                for (int i = 0; i < value.Length; i++)
+                {
+                    Target.m_OnGet += value[i];
+                }
+            }
+        }
+        public Action<CreatureBrain>[] OnDrop
+        {
+            set
+            {
+                Target.m_OnDrop = null;
+                for (int i = 0; i < value.Length; i++)
+                {
+                    Target.m_OnDrop += value[i];
+                }
+            }
+        }
+        public Action<ItemInstance>[] OnSpawn
+        {
+            set
+            {
+                Target.m_OnSpawn = null;
+                for (int i = 0; i < value.Length; i++)
+                {
+                    Target.m_OnSpawn += value[i];
+                }
+            }
+        }
 
         #region Value
         public int GetValueCount() => Target.m_Values.Count;
