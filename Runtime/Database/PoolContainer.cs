@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Syadeu.Internal;
+using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -20,6 +21,8 @@ namespace Syadeu.Database
         //private static bool m_ReleaseCalled = false;
 
         //public static event Action<int, T> OnReleaseObject;
+
+        public static bool Initialized => m_Initialized;
 
         static PoolContainer()
         {
@@ -44,7 +47,11 @@ namespace Syadeu.Database
 
         public static T Dequeue()
         {
-            if (!m_Initialized) throw new Exception("Not Initialized");
+            if (!m_Initialized)
+            {
+                CoreSystem.Logger.LogError(Channel.Data, $"Pool Container<{TypeHelper.TypeOf<T>.Type}> is not initialized");
+                throw new Exception("Not Initialized");
+            }
 
             T output;
             if (m_List.Count == 0)
@@ -70,7 +77,11 @@ namespace Syadeu.Database
         }
         public static void Enqueue(T obj)
         {
-            if (!m_Initialized) throw new Exception("Not Initialized");
+            if (!m_Initialized)
+            {
+                CoreSystem.Logger.LogError(Channel.Data, $"Pool Container<{TypeHelper.TypeOf<T>.Type}> is not initialized");
+                throw new Exception("Not Initialized");
+            }
             m_List.Enqueue(obj);
 
             //if (m_ReleaseTimer != null && ValidateReleaseTrigger() && !m_ReleaseCalled)

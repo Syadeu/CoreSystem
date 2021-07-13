@@ -16,6 +16,7 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace Syadeu.Mono
 {
+    [Obsolete("Will be deprecated soon, Use PresentationSystem<GameObjectProxySystem>")]
     public class PrefabManager : StaticManager<PrefabManager>
     {
         #region Initialize

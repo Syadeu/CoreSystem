@@ -2,6 +2,7 @@
 
 namespace Syadeu.Presentation.Entities
 {
+    // TODO : 이거 헷갈리니까 PresentationGroupEntity 로 이름 바꾸자
     /// <summary>
     /// <see cref="PresentationManager"/>에게 시스템을 등록하기 위한 레지스터 클래스입니다. 참조한 클래스는 그룹이 됩니다.
     /// </summary>
