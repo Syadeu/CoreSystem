@@ -7,9 +7,9 @@ namespace Syadeu.Database.Lua
     {
         public static ValuePair NewValue(string name, object value) => ValuePair.New(name, value);
 
-        public static ItemProxy GetItem(ulong hash)
+        public static ItemProxy GetItem(string hash)
         {
-            Item item = ItemDataList.Instance.GetItem(hash);
+            Item item = ItemDataList.Instance.GetItem(ulong.Parse(hash));
             if (item == null)
             {
                 $"item {hash} is null".ToLogConsole();

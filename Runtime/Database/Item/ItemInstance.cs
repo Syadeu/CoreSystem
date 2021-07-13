@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Syadeu.Database.Lua;
 using Syadeu.Mono;
 using System;
 using System.Collections.Generic;
@@ -18,6 +19,8 @@ namespace Syadeu.Database
         private readonly ItemTypeEntity[] m_ItemTypes;
         private readonly ItemEffectType[] m_ItemEffectTypes;
         private readonly ValuePairContainer m_Values;
+
+        [NonSerialized] private ItemInstanceProxy m_LuaProxy = null;
 
         internal GameObject m_ProxyObject;
 
@@ -46,6 +49,8 @@ namespace Syadeu.Database
                 m_ItemEffectTypes[i] = ItemDataList.Instance.GetItemEffectType(item.m_ItemEffectTypes[i]);
             }
             m_Values = (ValuePairContainer)item.m_Values.Clone();
+
+            Data.m_OnSpawn?.Invoke(this);
         }
         internal ItemInstance(Hash dataHash, Hash hash)
         {
@@ -65,6 +70,8 @@ namespace Syadeu.Database
                 m_ItemEffectTypes[i] = ItemDataList.Instance.GetItemEffectType(item.m_ItemEffectTypes[i]);
             }
             m_Values = (ValuePairContainer)item.m_Values.Clone();
+
+            Data.m_OnSpawn?.Invoke(this);
         }
 
         public bool IsValid()
@@ -72,13 +79,18 @@ namespace Syadeu.Database
             if (m_Data == null || m_Hash.Equals(Guid.Empty)) return false;
             return true;
         }
+        internal ItemInstanceProxy GetLuaProxy()
+        {
+            if (m_LuaProxy == null) m_LuaProxy = new ItemInstanceProxy(this);
+            return m_LuaProxy;
+        }
 
         public bool HasType<T>() where T : ItemTypeEntity => m_ItemTypes.Where((other) => other is T).Count() != 0;
-        public bool HasType(string guid) => m_ItemTypes.Where((other) => other.m_Hash.Equals(guid)).Count() != 0;
+        public bool HasType(Hash hash) => m_ItemTypes.Where((other) => other.m_Hash.Equals(hash)).Count() != 0;
         public ItemTypeEntity[] GetTypes<T>() where T : ItemTypeEntity => m_ItemTypes.Where((other) => other is T).ToArray();
-        public ItemTypeEntity GetType(string guid) => m_ItemTypes.Where((other) => other.m_Hash.Equals(guid)).First();
+        public ItemTypeEntity GetType(Hash hash) => m_ItemTypes.Where((other) => other.m_Hash.Equals(hash)).First();
         public T GetType<T>() where T : ItemTypeEntity => (T)m_ItemTypes.Where((other) => other is T).First();
-        public T GetType<T>(string guid) where T : ItemTypeEntity => (T)GetType(guid);
+        public T GetType<T>(Hash hash) where T : ItemTypeEntity => (T)GetType(hash);
 
         public void Dispose()
         {

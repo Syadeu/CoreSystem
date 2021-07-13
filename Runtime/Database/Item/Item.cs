@@ -47,10 +47,12 @@ namespace Syadeu.Database
 
         [NonSerialized] private List<ItemInstance> m_Instances = new List<ItemInstance>();
 
-        [NonSerialized] public Action m_OnEquip;
-        [NonSerialized] public Action m_OnUnequip;
-        [NonSerialized] public Action m_OnUse;
-        [NonSerialized] public Action m_OnDrop;
+        [NonSerialized] public Action<CreatureBrain> m_OnEquip;
+        [NonSerialized] public Action<CreatureBrain> m_OnUnequip;
+        [NonSerialized] public Action<CreatureBrain> m_OnUse;
+        [NonSerialized] public Action<CreatureBrain> m_OnGet;
+        [NonSerialized] public Action<CreatureBrain> m_OnDrop;
+        [NonSerialized] public Action<ItemInstance> m_OnSpawn;
 
         public Item()
         {

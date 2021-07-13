@@ -8,9 +8,14 @@ namespace Syadeu.Database.Lua
 {
     internal sealed class LuaUtils
     {
-        public static float DeltaTime => Time.deltaTime;
+        public static float DeltaTime => CoreSystem.deltaTime;
+        public static float Time => CoreSystem.time;
 
-        public static void Log(string txt) => ConsoleWindow.Log(txt);
+        public static void Log(string txt)
+        {
+            ConsoleWindow.Log(txt);
+            CoreSystem.Logger.Log(Channel.Lua, txt);
+        }
 
         public static void AddConsoleCommand(Action<string> cmd, string[] args)
         {
@@ -47,5 +52,11 @@ namespace Syadeu.Database.Lua
             ref GridManager.GridCell cell = ref grid.GetCell(pos);
             return (grid.Idx, cell.Idx);
         }
+    }
+    internal sealed class RandomUtils
+    {
+        public static int RangeInt(int min, int max) => UnityEngine.Random.Range(min, max);
+        public static float RangeFloat(float min, float max) => UnityEngine.Random.Range(min, max);
+        public static bool Bool() => UnityEngine.Random.Range(0, 2) == 0;
     }
 }

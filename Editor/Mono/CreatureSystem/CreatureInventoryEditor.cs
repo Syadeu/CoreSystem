@@ -116,7 +116,7 @@ namespace SyadeuEditor
 
         private void CreateItemInstance(Item item)
         {
-            Asset.Insert(item.CreateInstance());
+            Asset.Insert(CreatureInventory.Type.Inventory, item.CreateInstance());
         }
 
     }

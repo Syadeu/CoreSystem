@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Syadeu.Mono;
+using System;
 
 namespace Syadeu.Database.Lua
 {
@@ -9,8 +10,12 @@ namespace Syadeu.Database.Lua
         public string Name => Target.m_Name;
         public string Guid => Target.m_Hash.ToString();
 
-        public Action OnEquip { get => Target.m_OnEquip; set => Target.m_OnEquip = value; }
-        public Action OnUse { get => Target.m_OnUse; set => Target.m_OnUse = value; }
+        public Action<CreatureBrain> OnEquip { get => Target.m_OnEquip; set => Target.m_OnEquip += value; }
+        public Action<CreatureBrain> OnUnequip { get => Target.m_OnUnequip; set => Target.m_OnUnequip += value; }
+        public Action<CreatureBrain> OnUse { get => Target.m_OnUse; set => Target.m_OnUse += value; }
+        public Action<CreatureBrain> OnGet { get => Target.m_OnGet; set => Target.m_OnGet += value; }
+        public Action<CreatureBrain> OnDrop { get => Target.m_OnDrop; set => Target.m_OnDrop += value; }
+        public Action<ItemInstance> OnSpawn { get => Target.m_OnSpawn; set => Target.m_OnSpawn += value; }
 
         #region Value
         public int GetValueCount() => Target.m_Values.Count;

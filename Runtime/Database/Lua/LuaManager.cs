@@ -20,6 +20,7 @@ namespace Syadeu.Database.Lua
             //Debug.Log("LUA: Initialize start");
             CoreSystem.Logger.Log(Channel.Lua, "Registering Proxies");
             UserData.RegisterProxyType<ItemProxy, Item>(r => r.GetProxy());
+            UserData.RegisterProxyType<ItemInstanceProxy, ItemInstance>(r => r.GetLuaProxy());
             UserData.RegisterProxyType<ItemTypeProxy, ItemType>(r => r.GetProxy());
             UserData.RegisterProxyType<ItemUseableTypeProxy, ItemUseableType>(r => r.GetProxy());
             UserData.RegisterProxyType<ItemEffectTypeProxy, ItemEffectType>(r => r.GetProxy());
@@ -28,7 +29,8 @@ namespace Syadeu.Database.Lua
             CoreSystem.Logger.Log(Channel.Lua, "Registering Actions");
             RegisterSimpleAction();
             RegisterSimpleAction<string>();
-            RegisterSimpleAction<CreatureBrainProxy>();
+            RegisterSimpleAction<CreatureBrain>();
+            RegisterSimpleAction<ItemInstance>();
 
             CoreSystem.Logger.Log(Channel.Lua, "Registering Script and Globals");
             m_MainScripter = new Script();
@@ -36,6 +38,7 @@ namespace Syadeu.Database.Lua
             AddGlobal<LuaVectorUtils>("Vector");
             AddGlobal<LuaItemUtils>("Items");
             AddGlobal<LuaCreatureUtils>("Creature");
+            AddGlobal<RandomUtils>("Random");
 
             CoreSystem.Logger.Log(Channel.Lua, "Registering ScriptLoader");
             m_ScriptLoader = new LuaScriptLoader();
