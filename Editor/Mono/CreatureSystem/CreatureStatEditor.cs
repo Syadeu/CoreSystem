@@ -16,6 +16,7 @@ namespace SyadeuEditor
     public sealed class CreatureStatEditor : EditorEntity<CreatureStat>
     {
         ValuePairContainer m_ReflectionValues;
+        ValuePairContainer m_ExclusiveValues;
         ValuePairContainer m_ActualValues;
 
         private void OnEnable()
@@ -28,6 +29,14 @@ namespace SyadeuEditor
             if (m_ReflectionValues == null)
             {
                 SetFieldValue("m_ReflectionValues", m_ReflectionValues);
+                EditorUtility.SetDirty(Asset);
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
+            }
+            m_ExclusiveValues = GetFieldValue<ValuePairContainer>("m_ExclusiveValues");
+            if (m_ExclusiveValues == null)
+            {
+                SetFieldValue("m_ReflectionValues", m_ExclusiveValues);
                 EditorUtility.SetDirty(Asset);
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
@@ -47,6 +56,7 @@ namespace SyadeuEditor
             EditorGUI.BeginChangeCheck();
             EditorGUI.BeginDisabledGroup(Application.isPlaying);
             m_ReflectionValues.DrawValueContainer("Reflection Values", ValuePairEditor.DrawMenu.String, null);
+            m_ExclusiveValues.DrawValueContainer("Exclusive Values");
             EditorGUI.EndDisabledGroup();
             if (EditorGUI.EndChangeCheck())
             {

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Syadeu.Presentation;
+using System;
 using UnityEngine;
 
 #if UNITY_ADDRESSABLES
@@ -17,8 +18,8 @@ namespace Syadeu.Mono
 
         private PrefabManager.RecycleObject RecycleObjectSet;
         private AsyncOperationHandle<GameObject> m_Operation;
-        private bool m_ManualInit = false;
-        private Action<RecycleableMonobehaviour> m_OnCompleted = null;
+        //private bool m_ManualInit = false;
+        public Action<RecycleableMonobehaviour> m_OnCompleted = null;
 
         public bool IsDone => m_Output != null;
         public RecycleableMonobehaviour Target => m_Output;
@@ -31,24 +32,24 @@ namespace Syadeu.Mono
         {
             RecycleObjectSet = obj;
 
-            m_CalledScene = SceneManager.GetActiveScene();
-            m_Operation = obj.RefPrefab.InstantiateAsync(PrefabManager.INIT_POSITION, Quaternion.identity, PrefabManager.Instance.transform);
+            m_CalledScene = PresentationSystem<SceneSystem>.System.CurrentScene;
+            m_Operation = obj.RefPrefab.InstantiateAsync(PrefabManager.INIT_POSITION, Quaternion.identity, CoreSystem.GetTransform(PrefabManager.Instance));
             m_Operation.Completed += M_Operation_Completed;
         }
-        internal PromiseRecycleableObject(PrefabManager.RecycleObject obj, Action<RecycleableMonobehaviour> onCompleted, bool manualInit)
+        internal PromiseRecycleableObject(PrefabManager.RecycleObject obj, Action<RecycleableMonobehaviour> onCompleted)
         {
             RecycleObjectSet = obj;
 
-            m_CalledScene = SceneManager.GetActiveScene();
-            m_Operation = obj.RefPrefab.InstantiateAsync(PrefabManager.INIT_POSITION, Quaternion.identity, PrefabManager.Instance.transform);
-            m_ManualInit = manualInit;
+            m_CalledScene = PresentationSystem<SceneSystem>.System.CurrentScene;
+            m_Operation = obj.RefPrefab.InstantiateAsync(PrefabManager.INIT_POSITION, Quaternion.identity, CoreSystem.GetTransform(PrefabManager.Instance));
+            //m_ManualInit = manualInit;
             m_OnCompleted = onCompleted;
             m_Operation.Completed += M_Operation_Completed;
         }
 
         private void M_Operation_Completed(AsyncOperationHandle<GameObject> obj)
         {
-            Scene currentScene = SceneManager.GetActiveScene();
+            Scene currentScene = PresentationSystem<SceneSystem>.System.CurrentScene;
             if (!currentScene.Equals(m_CalledScene))
             {
                 $"{obj.Result.name} is return because Scene has been changed".ToLog();
@@ -72,7 +73,7 @@ namespace Syadeu.Mono
 
             if (m_OnCompleted != null)
             {
-                if (!m_ManualInit)
+                if (recycleable.InitializeOnCall)
                 {
                     recycleable.Initialize();
                 }

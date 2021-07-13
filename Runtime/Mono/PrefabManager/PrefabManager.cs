@@ -116,7 +116,10 @@ namespace Syadeu.Mono
 #if UNITY_ADDRESSABLES
                         if (recycle.Instances[i].CreatedWithAddressable)
                         {
-                            recycle.RefPrefab.ReleaseInstance(recycle.Instances[i].gameObject);
+                            CoreSystem.AddForegroundJob(() =>
+                            {
+                                recycle.RefPrefab.ReleaseInstance(recycle.Instances[i].gameObject);
+                            });
                         }
                         else
 #endif
@@ -176,9 +179,9 @@ namespace Syadeu.Mono
                 yield return null;
             }
         }
-        private void SendDestroy(UnityEngine.Object obj)
+        private void SendDestroy(RecycleableMonobehaviour obj)
         {
-            CoreSystem.AddForegroundJob(() => Destroy(obj));
+            CoreSystem.AddForegroundJob(() => Destroy(obj.gameObject));
         }
         private IEnumerator Updater()
         {
@@ -283,12 +286,28 @@ namespace Syadeu.Mono
                     obj.Instances[i].Initialize();
                     onCompleted.Invoke(obj.Instances[i]);
                 }
+                //"in1".ToLog();
                 return new PromiseRecycleableObject(obj.Instances[i]);
             }
             for (int i = obj.Promises.Count - 1; i >= 0; i--)
             {
                 PromiseRecycleableObject target = obj.Promises[i];
+                if (onCompleted != null)
+                {
+                    if (obj.Promises[i].IsDone)
+                    {
+                        //"2".ToLog();
+                        obj.Promises[i].Target.Initialize();
+                        onCompleted.Invoke(obj.Promises[i].Target);
+                    }
+                    else
+                    {
+                        //"1".ToLog();
+                        obj.Promises[i].m_OnCompleted += onCompleted;
+                    }
+                }
                 obj.Promises.RemoveAt(i);
+                //"in2".ToLog();
                 return target;
             }
 
@@ -297,7 +316,8 @@ namespace Syadeu.Mono
                 if (obj.MaxCount < 0 ||
                     obj.MaxCount > obj.Instances.Count)
                 {
-                    PromiseRecycleableObject recycleObj = Instance.InternalInstantiateAsync(obj, onCompleted, manualInit);
+                    PromiseRecycleableObject recycleObj = Instance.InternalInstantiateAsync(obj, onCompleted);
+                    //"in3".ToLog();
                     return recycleObj;
                 }
             }
@@ -305,7 +325,7 @@ namespace Syadeu.Mono
             return null;
         }
         public static PromiseRecycleableObject GetRecycleObjectAsync(int index) => GetRecycleObjectAsync(index, null);
-        public static PromiseRecycleableObject GetRecycleObjectAsync(int index, Action<RecycleableMonobehaviour> onCompleted, bool manualInit = false)
+        public static PromiseRecycleableObject GetRecycleObjectAsync(int index, Action<RecycleableMonobehaviour> onCompleted)
         {
             RecycleObject obj = Instance.RecycleObjects[index];
             for (int i = 0; i < obj.Instances.Count; i++)
@@ -326,7 +346,7 @@ namespace Syadeu.Mono
 
                     if (onCompleted != null)
                     {
-                        if (!manualInit) obj.Instances[i].Initialize();
+                        if (obj.Instances[i].InitializeOnCall) obj.Instances[i].Initialize();
                         onCompleted.Invoke(obj.Instances[i]);
                     }
                     return new PromiseRecycleableObject(obj.Instances[i]);
@@ -338,7 +358,7 @@ namespace Syadeu.Mono
                 if (obj.MaxCount < 0 ||
                     obj.MaxCount > obj.Instances.Count)
                 {
-                    PromiseRecycleableObject recycleObj = Instance.InternalInstantiateAsync(obj, onCompleted, manualInit);
+                    PromiseRecycleableObject recycleObj = Instance.InternalInstantiateAsync(obj, onCompleted);
                     return recycleObj;
                 }
             }
@@ -429,21 +449,35 @@ namespace Syadeu.Mono
             return GetRecycleObject(obj.Index, initOnCall);
         }
 #if UNITY_ADDRESSABLES
-        private PromiseRecycleableObject InternalInstantiateAsync(RecycleObject obj, Action<RecycleableMonobehaviour> onCompleted, bool manualInit)
+        private PromiseRecycleableObject InternalInstantiateAsync(RecycleObject obj, Action<RecycleableMonobehaviour> onCompleted)
         {
-            PromiseRecycleableObject output = null;
-            for (int i = 0; i < obj.InstanceCreationBlock; i++)
+            if (IsMainthread())
             {
-                if (output == null)
-                {
-                    output = new PromiseRecycleableObject(obj, onCompleted, manualInit);
-                }
-                else
-                {
-                    obj.Promises.Add(new PromiseRecycleableObject(obj));
-                }
+                return Method();
             }
-            return output;
+            else
+            {
+                PromiseRecycleableObject temp = null;
+                CoreSystem.AddForegroundJob(() => temp = Method()).Await();
+                return temp;
+            }
+
+            PromiseRecycleableObject Method()
+            {
+                PromiseRecycleableObject output = null;
+                for (int i = 0; i < obj.InstanceCreationBlock; i++)
+                {
+                    if (output == null)
+                    {
+                        output = new PromiseRecycleableObject(obj, onCompleted);
+                    }
+                    else
+                    {
+                        obj.Promises.Add(new PromiseRecycleableObject(obj));
+                    }
+                }
+                return output;
+            }
         }
 #endif
         [Obsolete]

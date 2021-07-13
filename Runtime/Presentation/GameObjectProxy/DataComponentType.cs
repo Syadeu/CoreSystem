@@ -2,6 +2,7 @@
 {
     internal enum DataComponentType
     {
+        GameObject,
         Component,
         Transform,
     }

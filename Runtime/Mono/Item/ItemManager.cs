@@ -1,6 +1,7 @@
 ﻿using Syadeu.Mono;
 using Syadeu.Presentation;
 using System;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace Syadeu.Database
@@ -12,8 +13,25 @@ namespace Syadeu.Database
         {
             ConsoleWindow.CreateCommand((cmd) =>
             {
-                int rnd = UnityEngine.Random.Range(0, ItemDataList.Instance.m_Items.Count);
-                Item item = ItemDataList.Instance.m_Items[rnd];
+                Item item;
+                if (!string.IsNullOrEmpty(cmd))
+                {
+                    if (ulong.TryParse(cmd, out ulong hash))
+                    {
+                        item = ItemDataList.Instance.GetItem(hash);
+                    }
+                    else item = ItemDataList.Instance.GetItemByName(cmd);
+                }
+                else
+                {
+                    int rnd = UnityEngine.Random.Range(0, ItemDataList.Instance.m_Items.Count);
+                    item = ItemDataList.Instance.m_Items[rnd];
+                }
+                if (item == null)
+                {
+                    ConsoleWindow.Log("Item Not found");
+                    return;
+                }
 
                 Transform cam = Camera.main.transform;
                 Ray ray = new Ray(cam.position, cam.forward);
@@ -22,38 +40,60 @@ namespace Syadeu.Database
                 {
                     SpawnItem(item.m_Hash, hit.point, Quaternion.identity);
                 }
+            }, "item", "spawn");
+            ConsoleWindow.CreateCommand((cmd) =>
+            {
+                for (int i = 0; i < 100; i++)
+                {
+                    int rnd = UnityEngine.Random.Range(0, ItemDataList.Instance.m_Items.Count);
+                    Item item = ItemDataList.Instance.m_Items[rnd];
+                    Vector3 pos = new Vector3(UnityEngine.Random.Range(-100, 100), 0, UnityEngine.Random.Range(-100, 100));
+
+                    SpawnItem(item.m_Hash, pos, Quaternion.identity);
+                }
             }, "item", "spawn", "random");
         }
 
         public void SpawnItem(Hash hash, Vector3 pos, Quaternion rot)
         {
+            if (!GridManager.HasGrid(pos))
+            {
+                CoreSystem.Logger.LogError(Channel.Data, $"Can\'t spawn item {hash} at {pos}, There\'s no grid");
+                return;
+            }
+            ref GridManager.Grid grid = ref GridManager.GetGrid(pos);
+            if (!grid.HasCell(pos))
+            {
+                CoreSystem.Logger.LogError(Channel.Data, $"Can\'t spawn item {hash} at {pos}, There\'s no grid cell");
+                return;
+            }
+            ref GridManager.GridCell cell = ref grid.GetCell(pos);
+            if (cell.GetCustomData() != null)
+            {
+                CoreSystem.Logger.LogError(Channel.Data, $"Can\'t spawn item {hash} at {pos}, target grid cell has object");
+                return;
+            }
+
             Item item = ItemDataList.Instance.GetItem(hash);
             ItemInstance itemIns = item.CreateInstance();
 
-            //Type componentType = PresentationSystem<GameObjectProxySystem>
-            //    .GetSystem()
-            //    .GetGenericType<ItemInstance[]>();
+            GameObjectProxySystem proxySystem = PresentationSystem<GameObjectProxySystem>.System;
+            DataGameObject gameObject = proxySystem.CreateNewPrefab(item.m_PrefabIdx, pos, rot, Vector3.one, true, null);
 
-            //PrefabManager.GetRecycleObjectAsync(item.m_PrefabIdx, (other) =>
-            //{
-            //    other.transform.position = pos;
-            //    other.transform.rotation = rot;
+            gameObject.UserTag = UserTag.GetUserTag("Object");
+            gameObject.CustomTag = UserTag.GetCustomTag("Item");
 
-            //    MonoBehaviour<ItemInstance[]> dataComponent = other.GetComponent<MonoBehaviour<ItemInstance[]>>();
-            //    if (dataComponent == null)
-            //    {
-            //        dataComponent = other.gameObject.AddComponent(componentType) as MonoBehaviour<ItemInstance[]>;
-            //    }
-            //    dataComponent.m_Value = new ItemInstance[1] { itemIns };
-
-            //    itemIns.m_ProxyObject = other.gameObject;
-            //});
-
-            PresentationSystem<GameObjectProxySystem>.System.RequestPrefab(item.m_PrefabIdx, pos, rot, (data)=>
-            {
-                DataTransform tr = data.GetTransform();
-                tr.position = Syadeu.ThreadSafe.Vector3.Zero;
-            });
+            ItemDataComponent component = gameObject.AddComponent<ItemDataComponent>();
+            component.GridIdxes = cell.Idxes;
+            component.Item = itemIns;
         }
+
+        
+    }
+    [Serializable]
+    public sealed class ItemDataComponent : DataComponentEntity
+    {
+        public int2 GridIdxes;
+        public ItemInstance Item;
     }
 }

@@ -37,49 +37,49 @@ namespace Syadeu.Mono
         [SerializeField] private string CustomTag29 = "CustomTag29";
         [SerializeField] private string CustomTag30 = "CustomTag30";
 
-        private Dictionary<string, int> m_Tags;
+        internal Dictionary<string, CustomTagFlag> m_Tags;
         private void OnEnable()
         {
-            m_Tags = new Dictionary<string, int>();
-            m_Tags.Add(CustomTag1, 1);
-            m_Tags.Add(CustomTag2, 2);
-            m_Tags.Add(CustomTag3, 3);
-            m_Tags.Add(CustomTag4, 4);
-            m_Tags.Add(CustomTag5, 5);
-            m_Tags.Add(CustomTag6, 6);
-            m_Tags.Add(CustomTag7, 7);
-            m_Tags.Add(CustomTag8, 8);
-            m_Tags.Add(CustomTag9, 9);
-            m_Tags.Add(CustomTag10, 10);
-            m_Tags.Add(CustomTag11, 11);
-            m_Tags.Add(CustomTag12, 12);
-            m_Tags.Add(CustomTag13, 13);
-            m_Tags.Add(CustomTag14, 14);
-            m_Tags.Add(CustomTag15, 15);
-            m_Tags.Add(CustomTag16, 16);
-            m_Tags.Add(CustomTag17, 17);
-            m_Tags.Add(CustomTag18, 18);
-            m_Tags.Add(CustomTag19, 19);
-            m_Tags.Add(CustomTag20, 20);
-            m_Tags.Add(CustomTag21, 21);
-            m_Tags.Add(CustomTag22, 22);
-            m_Tags.Add(CustomTag23, 23);
-            m_Tags.Add(CustomTag24, 24);
-            m_Tags.Add(CustomTag25, 25);
-            m_Tags.Add(CustomTag26, 26);
-            m_Tags.Add(CustomTag27, 27);
-            m_Tags.Add(CustomTag28, 28);
-            m_Tags.Add(CustomTag29, 29);
-            m_Tags.Add(CustomTag30, 30);
+            m_Tags = new Dictionary<string, CustomTagFlag>();
+            m_Tags.Add(CustomTag1, CustomTagFlag.CustomTag1);
+            m_Tags.Add(CustomTag2, CustomTagFlag.CustomTag2);
+            m_Tags.Add(CustomTag3, CustomTagFlag.CustomTag3);
+            m_Tags.Add(CustomTag4, CustomTagFlag.CustomTag4);
+            m_Tags.Add(CustomTag5, CustomTagFlag.CustomTag5);
+            m_Tags.Add(CustomTag6, CustomTagFlag.CustomTag6);
+            m_Tags.Add(CustomTag7, CustomTagFlag.CustomTag7);
+            m_Tags.Add(CustomTag8, CustomTagFlag.CustomTag8);
+            m_Tags.Add(CustomTag9, CustomTagFlag.CustomTag9);
+            m_Tags.Add(CustomTag10, CustomTagFlag.CustomTag10);
+            m_Tags.Add(CustomTag11, CustomTagFlag.CustomTag11);
+            m_Tags.Add(CustomTag12, CustomTagFlag.CustomTag12);
+            m_Tags.Add(CustomTag13, CustomTagFlag.CustomTag13);
+            m_Tags.Add(CustomTag14, CustomTagFlag.CustomTag14);
+            m_Tags.Add(CustomTag15, CustomTagFlag.CustomTag15);
+            m_Tags.Add(CustomTag16, CustomTagFlag.CustomTag16);
+            m_Tags.Add(CustomTag17, CustomTagFlag.CustomTag17);
+            m_Tags.Add(CustomTag18, CustomTagFlag.CustomTag18);
+            m_Tags.Add(CustomTag19, CustomTagFlag.CustomTag19);
+            m_Tags.Add(CustomTag20, CustomTagFlag.CustomTag20);
+            m_Tags.Add(CustomTag21, CustomTagFlag.CustomTag21);
+            m_Tags.Add(CustomTag22, CustomTagFlag.CustomTag22);
+            m_Tags.Add(CustomTag23, CustomTagFlag.CustomTag23);
+            m_Tags.Add(CustomTag24, CustomTagFlag.CustomTag24);
+            m_Tags.Add(CustomTag25, CustomTagFlag.CustomTag25);
+            m_Tags.Add(CustomTag26, CustomTagFlag.CustomTag26);
+            m_Tags.Add(CustomTag27, CustomTagFlag.CustomTag27);
+            m_Tags.Add(CustomTag28, CustomTagFlag.CustomTag28);
+            m_Tags.Add(CustomTag29, CustomTagFlag.CustomTag29);
+            m_Tags.Add(CustomTag30, CustomTagFlag.CustomTag30);
         }
-        public int GetUserTag(string name) => m_Tags[name];
-        public int GetUserTag(CustomTagFlag tag)
-        {
-            if (tag == CustomTagFlag.CustomTag31) return 31;
-            else if (tag == CustomTagFlag.CustomTag32) return 32;
+        public CustomTagFlag GetUserTag(string name) => m_Tags[name];
+        //public int GetUserTag(CustomTagFlag tag)
+        //{
+        //    if (tag == CustomTagFlag.CustomTag31) return 31;
+        //    else if (tag == CustomTagFlag.CustomTag32) return 32;
 
-            return m_Tags[tag.ToString()];
-        }
+        //    return m_Tags[tag.ToString()];
+        //}
         public string GetUserTag(int idx)
         {
             if (idx.Equals(31)) return CustomTagFlag.CustomTag31.ToString();

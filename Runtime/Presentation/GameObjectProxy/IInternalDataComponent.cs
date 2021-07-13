@@ -1,15 +1,19 @@
-﻿using System;
+﻿using Syadeu.Database;
+using System;
 using Unity.Mathematics;
 
 namespace Syadeu.Presentation
 {
-    internal interface IDataComponent : IEquatable<IDataComponent>
+    internal interface IInternalDataComponent : IEquatable<IInternalDataComponent>
     {
+        Hash GameObject { get; }
         /// <summary>
         /// x = prefabIdx, y = internalListIdx, z = DataComponentType
         /// </summary>
-        int3 Idx { get; }
+        Hash Idx { get; }
         DataComponentType Type { get; }
+        bool HasProxyObject { get; }
+        bool ProxyRequested { get; }
 
         IReadOnlyTransform transform { get; }
     }

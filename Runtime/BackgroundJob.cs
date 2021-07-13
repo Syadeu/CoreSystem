@@ -4,6 +4,7 @@ using Unity.Collections;
 
 using Syadeu.Job;
 using Syadeu.Entities;
+using Syadeu.Database;
 
 namespace Syadeu
 {
@@ -12,7 +13,7 @@ namespace Syadeu
     /// </summary>
     public class BackgroundJob : IJob
     {
-        internal bool m_IsDone = false;
+        internal bool m_IsDone = true;
         public bool IsDone
         {
             get
@@ -45,6 +46,10 @@ namespace Syadeu
         internal int WorkerIndex = -1;
         internal List<IJob> ConnectedJobs;
 
+        static BackgroundJob()
+        {
+            PoolContainer<BackgroundJob>.Initialize(() => new BackgroundJob(null), 10);
+        }
         public BackgroundJob(Action action)
         {
             Action = action;
@@ -160,13 +165,13 @@ namespace Syadeu
                 throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "이 메소드는 메인 스레드에서의 호출을 지원하지 않습니다.");
             }
 
-            while (!IsDone)
+            while (!IsDone && !CoreSystem.s_BlockCreateInstance)
             {
                 StaticManagerEntity.ThreadAwaiter(10);
             }
         }
 
-        public static BackgroundJob ParallelFor<T>(IList<T> list, Action<int, T> action, int chunkSize = 2048)
+        public static BackgroundJob CreatePararellFor<T>(IList<T> list, Action<int, T> action, int chunkSize = 2048)
         {
             bool single = list.Count < chunkSize;
             BackgroundJob job = new BackgroundJob(() =>
@@ -215,15 +220,20 @@ namespace Syadeu
                 }
             }
 
-            job.Start();
-
-            return CoreSystem.AddBackgroundJob(() =>
+            return new BackgroundJob(() =>
             {
+                job.Start();
                 while (!job.IsDone)
                 {
                     StaticManagerEntity.ThreadAwaiter(10);
                 }
             });
+        }
+        public static BackgroundJob ParallelFor<T>(IList<T> list, Action<int, T> action, int chunkSize = 2048)
+        {
+            BackgroundJob job = CreatePararellFor<T>(list, action, chunkSize);
+            job.Start();
+            return job;
         }
         public static BackgroundJob ParallelFor<T>(IList<T> list, Func<int, T, bool> func, int chunkSize = 2048)
         {

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 
 using UnityEngine;
+using UnityEngine.Events;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -14,6 +15,9 @@ namespace Syadeu.Mono
         [Space]
         [SerializeField] private List<ItemInstance> m_Equipments = new List<ItemInstance>();
         [SerializeField] private List<ItemInstance> m_Inventory = new List<ItemInstance>();
+
+        [Space]
+        public UnityEvent<CreatureBrain, ItemInstance> m_OnItemInserted;
 
         public IReadOnlyList<ItemInstance> Inventory => m_Inventory;
 
@@ -43,6 +47,7 @@ namespace Syadeu.Mono
         public void Insert(ItemInstance item)
         {
             m_Inventory.Add(item);
+            m_OnItemInserted?.Invoke(Brain, item);
         }
         public void Use(int i)
         {

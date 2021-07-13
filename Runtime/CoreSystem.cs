@@ -170,6 +170,22 @@ namespace Syadeu
 
             return jobWorker.Index;
         }
+        public static void RemoveBackgroundJobWorker(int workerIdx)
+        {
+            try
+            {
+                Instance.BackgroundJobWorkers[workerIdx].Worker.CancelAsync();
+            }
+            catch (Exception)
+            {
+            }
+            finally
+            {
+                Instance.BackgroundJobWorkers[workerIdx].Worker.Dispose();
+            }
+
+            Instance.BackgroundJobWorkers.RemoveAt(workerIdx);
+        }
         public static void ChangeSettingBackgroundWorker(int workerIndex, bool isStandAlone)
         {
             Instance.BackgroundJobWorkers[workerIndex].standAlone = isStandAlone;
@@ -209,6 +225,7 @@ namespace Syadeu
 
             if (workerIndex >= Instance.BackgroundJobWorkers.Count) return false;
 
+            if (s_BlockCreateInstance) return false;
             Instance.BackgroundJobWorkers[workerIndex].Jobs.Enqueue(job);
             return true;
         }
@@ -222,6 +239,7 @@ namespace Syadeu
             if (workerIndex >= Instance.BackgroundJobWorkers.Count) return false;
             job = new BackgroundJob(action);
 
+            if (s_BlockCreateInstance) return false;
             Instance.BackgroundJobWorkers[workerIndex].Jobs.Enqueue(job);
             return true;
         }
@@ -235,7 +253,7 @@ namespace Syadeu
             {
                 throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, "이 잡은 메인 잡이 아닙니다. 메인 잡을 실행하세요");
             }
-
+            if (s_BlockCreateInstance) return;
             Instance.m_BackgroundJobs.Enqueue(job);
         }
         /// <summary>
@@ -423,13 +441,13 @@ namespace Syadeu
         }
         public override void OnInitialize()
         {
-            ThreadPool.QueueUserWorkItem(BackgroundWorker);
+            new Thread(BackgroundWorker).Start();
+            //ThreadPool.QueueUserWorkItem(BackgroundWorker);
             Application.quitting += OnAboutToQuit;
             StartCoroutine(UnityWorker());
         }
         private void OnAboutToQuit()
         {
-            //"test123".ToLog();
             s_BlockCreateInstance = true;
         }
         protected override void OnDestroy()
@@ -437,12 +455,12 @@ namespace Syadeu
             //StopAllCoroutines();
             try
             {
-                m_CustomBackgroundUpdates.Clear();
                 BackgroundThread.Abort();
             }
             catch (Exception)
             {
             }
+            m_CustomBackgroundUpdates.Clear();
 
             for (int i = 0; i < BackgroundJobWorkers.Count; i++)
             {
@@ -451,19 +469,21 @@ namespace Syadeu
                     BackgroundJobWorkers[i].Worker.CancelAsync();
                 }
                 catch (Exception) { }
-                finally
-                {
-                    BackgroundJobWorkers[i].Worker.Dispose();
-                }
+                BackgroundJobWorkers[i].Worker.Dispose();
             }
             BackgroundJobWorkers.Clear();
 
-            //try
-            //{
-            //    BackgroundThread?.Abort();
-            //}
-            //catch (Exception) { }
-            //"in123".ToLog();
+            for (int i = 0; i < DataManagers.Count; i++)
+            {
+                try
+                {
+                    DataManagers[i].Dispose();
+                }
+                catch (Exception)
+                {
+                }
+            }
+            
             Application.quitting -= OnAboutToQuit;
             base.OnDestroy();
         }
@@ -764,7 +784,7 @@ namespace Syadeu
                 ThreadAwaiter(100);
             } while (!m_StartUpdate && MainThread != null && Initialized);
 
-            InternalCreateNewBackgroundWorker(32, false);
+            InternalCreateNewBackgroundWorker(128, false);
 
             //"LOG :: Background worker has started".ToLog();
 
@@ -1015,6 +1035,7 @@ namespace Syadeu
                         {
                             wjob.WorkerIndex = i;
                             BackgroundJobWorkers[i].Worker.RunWorkerAsync(wjob);
+                            //Logger.Log(Channel.Jobs, $"Job started at worker {i}");
                         }
                         //else if (BackgroundJobWorkers[i].Worker.IsBusy &&
                         //    BackgroundJobWorkers[i].Jobs.TryDequeue(out var rjob))
@@ -1181,6 +1202,8 @@ namespace Syadeu
                 //}
                 //ThreadAwaiter(10);
                 m_SimWatcher.Reset();
+
+                if (s_BlockCreateInstance) break;
             }
         }
         private IEnumerator UnityWorker()
@@ -1713,15 +1736,18 @@ namespace Syadeu
 
         #region Debug
 #line hidden
-        public static void Log(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Normal, msg);
-        public static void LogWarning(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Warning, msg);
-        public static void LogError(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Error, msg);
+        public struct Logger
+        {
+            public static void Log(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Normal, msg);
+            public static void LogWarning(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Warning, msg);
+            public static void LogError(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Error, msg);
 
-        public static void IsNotNull(object obj) => LogManager.NotNull(obj, string.Empty);
-        public static void NotNull(object obj, string msg) => LogManager.NotNull(obj, msg);
+            public static void NotNull(object obj) => LogManager.NotNull(obj, string.Empty);
+            public static void NotNull(object obj, string msg) => LogManager.NotNull(obj, msg);
 
-        public static void True(bool value, string msg) => LogManager.True(value, msg);
-        public static void False(bool value, string msg) => LogManager.False(value, msg);
+            public static void True(bool value, string msg) => LogManager.True(value, msg);
+            public static void False(bool value, string msg) => LogManager.False(value, msg);
+        }
 #line default
         #endregion
 
