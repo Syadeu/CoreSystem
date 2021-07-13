@@ -38,9 +38,11 @@ namespace Syadeu.Mono
 
         public List<ObjectSetting> ObjectSettings => m_ObjectSettings;
 
+        [Obsolete("", true)]
         /// <inheritdoc cref="PrefabManager.GetRecycleObject{T}"/>
         public static T GetRecycleObject<T>() where T : RecycleableMonobehaviour
             => PrefabManager.GetRecycleObject<T>();
+        [Obsolete("", true)]
         /// <inheritdoc cref="PrefabManager.GetRecycleObject(int)"/>
         public static RecycleableMonobehaviour GetRecycleObject(int index)
             => PrefabManager.GetRecycleObject(index);

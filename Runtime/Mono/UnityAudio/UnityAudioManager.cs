@@ -44,7 +44,7 @@ namespace Syadeu.Mono.Audio
 
                 UnityAudioSource audioSource = obj.AddComponent<UnityAudioSource>();
                 return audioSource;
-            }, 10, -1);
+            }, 10);
         }
         public override void OnStart()
         {
