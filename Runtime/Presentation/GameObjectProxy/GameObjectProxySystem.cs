@@ -667,6 +667,7 @@ namespace Syadeu.Presentation
                     recycleable.m_Idx = instances.Count;
                     instances.Add(recycleable);
 
+                    recycleable.InternalOnCreated();
                     if (recycleable.InitializeOnCall) recycleable.Initialize();
                     onCompleted?.Invoke(recycleable);
 
