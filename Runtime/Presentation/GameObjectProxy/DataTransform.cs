@@ -2,6 +2,9 @@
 using Syadeu.Mono;
 using Syadeu.ThreadSafe;
 using System;
+using System.Linq;
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 
 namespace Syadeu.Presentation
@@ -27,7 +30,7 @@ namespace Syadeu.Presentation
 
         void IDisposable.Dispose() { }
 
-        IReadOnlyTransform IInternalDataComponent.transform => this;
+        DataTransform IInternalDataComponent.transform => this;
         bool IEquatable<IInternalDataComponent>.Equals(IInternalDataComponent other) => m_Idx.Equals(other.Idx);
         bool IEquatable<DataTransform>.Equals(DataTransform other) => m_Idx.Equals(other.m_Idx);
 
@@ -45,33 +48,34 @@ namespace Syadeu.Presentation
             get
             {
                 if (!((IInternalDataComponent)this).HasProxyObject) return null;
-                return PrefabManager.Instance.RecycleObjects[m_ProxyIdx.x].Instances[m_ProxyIdx.y];
+                return PresentationSystem<GameObjectProxySystem>.System.m_Instances[m_ProxyIdx.x][m_ProxyIdx.y];
             }
         }
-        private DataTransform Data
+        unsafe private DataTransform* GetPointer() => PresentationSystem<GameObjectProxySystem>.System.GetDataTransformPointer(m_Idx);
+        private ref DataTransform GetRef()
         {
-            get => (DataTransform)PresentationSystem<GameObjectProxySystem>.System.m_MappedTransforms[m_Idx];
-            set => PresentationSystem<GameObjectProxySystem>.System.m_MappedTransforms[m_Idx] = value;
+            unsafe
+            {
+                return ref *GetPointer();
+            }
         }
 
         public Vector3 position
         {
-            get => Data.m_Position;
+            get => m_Position;
             set
             {
-                var tr = Data;
+                ref DataTransform tr = ref GetRef();
                 tr.m_Position = value;
-                Data = tr;
             }
         }
         public quaternion rotation
         {
-            get => Data.m_Rotation;
+            get => m_Rotation;
             set
             {
-                var tr = Data;
+                ref DataTransform tr = ref GetRef();
                 tr.m_Rotation = value;
-                Data = tr;
             }
         }
         public Vector3 right => throw new NotImplementedException();
@@ -80,12 +84,11 @@ namespace Syadeu.Presentation
 
         public Vector3 localScale
         {
-            get => Data.m_LocalScale;
+            get => m_LocalScale;
             set
             {
-                var tr = Data;
+                ref DataTransform tr = ref GetRef();
                 tr.m_LocalScale = value;
-                Data = tr;
             }
         }
         Vector3 IReadOnlyTransform.position => m_Position;
@@ -96,5 +99,17 @@ namespace Syadeu.Presentation
         Vector3 IReadOnlyTransform.forward => m_Forward;
 
         Vector3 IReadOnlyTransform.localScale => m_LocalScale;
+
+        //unsafe private void Test()
+        //{
+        //    //PresentationSystem<GameObjectProxySystem>.System.m_MappedTransforms.ToLookup((other) => ).
+
+        //    PresentationSystem<GameObjectProxySystem>.System.m_MappedTransforms.geta
+
+        //    //PresentationSystem<GameObjectProxySystem>.System.m_MappedTransforms.GetBucketData().
+        //    UnsafeUtility.AddressOf(ref PresentationSystem<GameObjectProxySystem>.System.m_MappedTransforms[m_Idx]);
+
+        //    ref var tr = ref PresentationSystem<GameObjectProxySystem>.System.m_MappedTransforms[m_Idx];
+        //}
     }
 }

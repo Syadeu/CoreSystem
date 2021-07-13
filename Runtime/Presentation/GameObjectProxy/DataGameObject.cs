@@ -15,14 +15,22 @@ namespace Syadeu.Presentation
         internal int2 m_GridIdxes;
         internal Hash m_Transform;
 
+        unsafe private DataGameObject* GetPointer() => PresentationSystem<GameObjectProxySystem>.System.GetDataGameObjectPointer(m_Idx);
+        private ref DataGameObject GetRef()
+        {
+            unsafe
+            {
+                return ref *GetPointer();
+            }
+        }
+
         public UserTagFlag UserTag
         {
             get => m_UserTag;
             set
             {
-                var boxed = PresentationSystem<GameObjectProxySystem>.System.m_MappedGameObjects[m_Idx];
+                ref DataGameObject boxed = ref GetRef();
                 boxed.m_UserTag = value;
-                PresentationSystem<GameObjectProxySystem>.System.m_MappedGameObjects[m_Idx] = boxed;
             }
         }
         public CustomTagFlag CustomTag
@@ -30,9 +38,8 @@ namespace Syadeu.Presentation
             get => m_CustomTag;
             set
             {
-                var boxed = PresentationSystem<GameObjectProxySystem>.System.m_MappedGameObjects[m_Idx];
+                ref DataGameObject boxed = ref GetRef();
                 boxed.m_CustomTag = value;
-                PresentationSystem<GameObjectProxySystem>.System.m_MappedGameObjects[m_Idx] = boxed;
             }
         }
 
@@ -44,8 +51,17 @@ namespace Syadeu.Presentation
         bool IEquatable<IInternalDataComponent>.Equals(IInternalDataComponent other) => m_Idx.Equals(other.Idx);
         bool IEquatable<DataGameObject>.Equals(DataGameObject other) => m_Idx.Equals(other.m_Idx);
 
-        internal DataTransform InternalTransform => PresentationSystem<GameObjectProxySystem>.System.m_MappedTransforms[m_Transform];
-        public IReadOnlyTransform transform => InternalTransform;
+        internal DataTransform InternalTransform
+        {
+            get
+            {
+                unsafe
+                {
+                    return *PresentationSystem<GameObjectProxySystem>.System.GetDataTransformPointer(m_Transform);
+                }
+            }
+        }
+        public DataTransform transform => InternalTransform;
 
         public T AddComponent<T>() where T : DataComponentEntity, new()
         {

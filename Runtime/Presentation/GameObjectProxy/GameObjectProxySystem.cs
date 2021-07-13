@@ -10,6 +10,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.InteropServices;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -30,8 +31,10 @@ namespace Syadeu.Presentation
         //internal readonly Queue<IInternalDataComponent> m_RequireUpdateList = new Queue<IInternalDataComponent>();
         //internal readonly HashSet<IInternalDataComponent> m_RequireUpdateQueuedList = new HashSet<IInternalDataComponent>();
         //internal readonly Dictionary<Hash, IDataComponent> m_MappedData = new Dictionary<Hash, IDataComponent>();
-        internal NativeHashMap<Hash, DataGameObject> m_MappedGameObjects = new NativeHashMap<Hash, DataGameObject>(1000, Allocator.Persistent);
-        internal NativeHashMap<Hash, DataTransform> m_MappedTransforms = new NativeHashMap<Hash, DataTransform>(1000, Allocator.Persistent);
+        internal NativeHashMap<Hash, int> m_MappedGameObjectIdxes = new NativeHashMap<Hash, int>(1000, Allocator.Persistent);
+        internal NativeHashMap<Hash, int> m_MappedTransformIdxes = new NativeHashMap<Hash, int>(1000, Allocator.Persistent);
+        internal NativeList<DataGameObject> m_MappedGameObjects = new NativeList<DataGameObject>(1000, Allocator.Persistent);
+        internal NativeList<DataTransform> m_MappedTransforms = new NativeList<DataTransform>(1000, Allocator.Persistent);
         private readonly List<Hash> m_MappedTransformList = new List<Hash>();
         internal readonly Dictionary<Hash, List<DataComponentEntity>> m_ComponentList = new Dictionary<Hash, List<DataComponentEntity>>();
 
@@ -121,18 +124,23 @@ namespace Syadeu.Presentation
                     {
                         if (!m_RequestDestories.TryDequeue(out Hash objHash)) continue;
 
-                        if (m_MappedTransforms[m_MappedGameObjects[objHash].m_Transform].HasProxyObject)
+                        int objIdx = m_MappedGameObjectIdxes[objHash];
+                        int trIdx = m_MappedTransformIdxes[m_MappedGameObjects[objIdx].m_Transform];
+
+                        if (m_MappedTransforms[trIdx].HasProxyObject)
                         {
-                            RemoveProxy(m_MappedGameObjects[objHash].m_Transform);
+                            RemoveProxy(m_MappedGameObjects[objIdx].m_Transform);
                         }
 
-                        GridManager.GetGrid(m_MappedGameObjects[objHash].m_GridIdxes.x)
-                            .GetCell(m_MappedGameObjects[objHash].m_GridIdxes.y)
+                        GridManager.GetGrid(m_MappedGameObjects[objIdx].m_GridIdxes.x)
+                            .GetCell(m_MappedGameObjects[objIdx].m_GridIdxes.y)
                             .RemoveCustomData();
 
-                ((IDisposable)m_MappedTransforms[m_MappedGameObjects[objHash].m_Transform]).Dispose();
-                        m_MappedTransforms.Remove(m_MappedGameObjects[objHash].m_Transform);
-                        m_MappedTransformList.Remove(m_MappedGameObjects[objHash].m_Transform);
+                ((IDisposable)m_MappedTransforms[trIdx]).Dispose();
+
+                        m_MappedTransforms.RemoveAt(trIdx);
+                        m_MappedTransformIdxes.Remove(m_MappedGameObjects[objIdx].m_Transform);
+                        m_MappedTransformList.Remove(m_MappedGameObjects[objIdx].m_Transform);
 
                         List<DataComponentEntity> components = m_ComponentList[objHash];
                         for (int j = 0; j < components.Count; j++)
@@ -141,8 +149,10 @@ namespace Syadeu.Presentation
                         }
                         m_ComponentList.Remove(objHash);
 
-                        ((IDisposable)m_MappedGameObjects[objHash]).Dispose();
-                        m_MappedGameObjects.Remove(objHash);
+                        ((IDisposable)m_MappedGameObjects[objIdx]).Dispose();
+
+                        m_MappedGameObjectIdxes.Remove(objHash);
+                        m_MappedGameObjects.RemoveAt(objIdx);
                     }
                 }
             }
@@ -158,6 +168,8 @@ namespace Syadeu.Presentation
         }
         public override void Dispose()
         {
+            m_MappedGameObjectIdxes.Dispose();
+            m_MappedTransformIdxes.Dispose();
             m_MappedGameObjects.Dispose();
             m_MappedTransforms.Dispose();
             CoreSystem.RemoveBackgroundJobWorker(m_VisibleCheckJobWorker);
@@ -187,13 +199,15 @@ namespace Syadeu.Presentation
                 {
                     for (int j = startIdx; j < maxIdx; j++)
                     {
-                        if (m_MappedTransforms[m_MappedTransformList[j]] is DataTransform tr)
+                        int idx = m_MappedTransformIdxes[m_MappedTransformList[j]];
+
+                        if (m_MappedTransforms[idx] is DataTransform tr)
                         {
                             if (!tr.m_EnableCull) continue;
                             if (m_RenderSystem.IsInCameraScreen(tr.position))
                             {
-                                if (!m_MappedTransforms[m_MappedTransformList[j]].ProxyRequested && 
-                                    !m_MappedTransforms[m_MappedTransformList[j]].HasProxyObject)
+                                if (!m_MappedTransforms[idx].ProxyRequested && 
+                                    !m_MappedTransforms[idx].HasProxyObject)
                                 {
                                     //"in".ToLog();
                                     m_RequestProxies.Enqueue(tr);
@@ -201,7 +215,7 @@ namespace Syadeu.Presentation
                             }
                             else
                             {
-                                if (m_MappedTransforms[m_MappedTransformList[j]].HasProxyObject)
+                                if (m_MappedTransforms[idx].HasProxyObject)
                                 {
                                     if (m_RemoveProxies.Contains(tr))
                                     {
@@ -276,8 +290,13 @@ namespace Syadeu.Presentation
             };
             m_MappedTransformList.Add(trHash);
 
-            m_MappedGameObjects.Add(objHash, objData);
-            m_MappedTransforms.Add(trHash, trData);
+            int objIdx = m_MappedGameObjects.Length;
+            m_MappedGameObjects.Add(objData);
+            m_MappedGameObjectIdxes.Add(objHash, objIdx);
+
+            int trIdx = m_MappedTransforms.Length;
+            m_MappedTransforms.Add(trData);
+            m_MappedTransformIdxes.Add(trHash, trIdx);
 
             if (proxyIdx.Equals(DataTransform.ProxyQueued))
             {
@@ -290,10 +309,11 @@ namespace Syadeu.Presentation
         }
         private void RequestProxy(Hash objHash, Hash trHash, Action<DataGameObject, RecycleableMonobehaviour> onCompleted)
         {
-            DataTransform tr = (DataTransform)m_MappedTransforms[trHash];
+            int idx = m_MappedTransformIdxes[trHash];
+            DataTransform tr = (DataTransform)m_MappedTransforms[idx];
 
             tr.m_ProxyIdx = DataTransform.ProxyQueued;
-            m_MappedTransforms[trHash] = tr;
+            m_MappedTransforms[idx] = tr;
 
             m_RequestedJobs.Enqueue(() =>
             {
@@ -302,9 +322,9 @@ namespace Syadeu.Presentation
                     DataTransform tr;
                     //lock (m_MappedData)
                     {
-                        tr = (DataTransform)m_MappedTransforms[trHash];
+                        tr = (DataTransform)m_MappedTransforms[idx];
                         tr.m_ProxyIdx = new int2(tr.m_PrefabIdx, other.m_Idx);
-                        m_MappedTransforms[trHash] = tr;
+                        m_MappedTransforms[idx] = tr;
                     }
 
                     other.transform.position = tr.m_Position;
@@ -318,7 +338,7 @@ namespace Syadeu.Presentation
                     }
 
                     datas.m_GameObject = objHash;
-                    onCompleted?.Invoke(m_MappedGameObjects[objHash], other);
+                    onCompleted?.Invoke(m_MappedGameObjects[m_MappedGameObjectIdxes[objHash]], other);
                 });
                 //PrefabManager.GetRecycleObjectAsync(tr.m_PrefabIdx, (other) =>
                 //{
@@ -356,12 +376,14 @@ namespace Syadeu.Presentation
         }
         private void RemoveProxy(Hash trHash)
         {
-            DataTransform tr = (DataTransform)m_MappedTransforms[trHash];
+            int idx = m_MappedTransformIdxes[trHash];
+
+            DataTransform tr = (DataTransform)m_MappedTransforms[idx];
             int2 proxyIdx = tr.m_ProxyIdx;
             CoreSystem.Logger.False(proxyIdx.Equals(DataTransform.ProxyNull), $"proxy index null {proxyIdx}");
 
             tr.m_ProxyIdx = DataTransform.ProxyNull;
-            m_MappedTransforms[trHash] = tr;
+            m_MappedTransforms[idx] = tr;
 
             m_RequestedJobs.Enqueue(() =>
             {
@@ -426,9 +448,25 @@ namespace Syadeu.Presentation
         //    });
         //}
 
-        private void DownloadDataTransform(Hash trIdx)
+        unsafe internal DataTransform* GetDataTransformPointer(Hash trHash)
         {
-            DataTransform boxed = (DataTransform)m_MappedTransforms[trIdx];
+            int idx = m_MappedTransformIdxes[trHash];
+
+            DataTransform* targetTr = ((DataTransform*)m_MappedTransforms.GetUnsafePtr()) + idx;
+            return targetTr;
+        }
+        unsafe internal DataGameObject* GetDataGameObjectPointer(Hash objHash)
+        {
+            int idx = m_MappedGameObjectIdxes[objHash];
+
+            DataGameObject* obj = ((DataGameObject*)m_MappedGameObjects.GetUnsafePtr()) + idx;
+            return obj;
+        }
+
+        private void DownloadDataTransform(Hash trHash)
+        {
+            int idx = m_MappedTransformIdxes[trHash];
+            DataTransform boxed = (DataTransform)m_MappedTransforms[idx];
             //Transform oriTr = PrefabManager.Instance.RecycleObjects[boxed.m_Idx.x].Instances[boxed.m_Idx.y].transform;
             Transform oriTr = boxed.ProxyObject.transform;
 
@@ -447,11 +485,12 @@ namespace Syadeu.Presentation
             //boxed.m_LossyScale = new ThreadSafe.Vector3(oriTr.lossyScale);
             boxed.m_LocalScale = new ThreadSafe.Vector3(oriTr.localScale);
 
-            m_MappedTransforms[trIdx] = boxed;
+            m_MappedTransforms[idx] = boxed;
         }
-        private void UpdateDataTransform(Hash trIdx)
+        private void UpdateDataTransform(Hash trHash)
         {
-            DataTransform boxed = (DataTransform)m_MappedTransforms[trIdx];
+            int idx = m_MappedTransformIdxes[trHash];
+            DataTransform boxed = (DataTransform)m_MappedTransforms[idx];
             //Transform oriTr = PrefabManager.Instance.RecycleObjects[boxed.m_Idx.x].Instances[boxed.m_Idx.y].transform;
             Transform oriTr = boxed.ProxyObject.transform;
 
@@ -631,7 +670,7 @@ namespace Syadeu.Presentation
 
         #region Instantiate Prefab From PrefabList
 
-        private readonly Dictionary<int, List<RecycleableMonobehaviour>> m_Instances = new Dictionary<int, List<RecycleableMonobehaviour>>();
+        internal readonly Dictionary<int, List<RecycleableMonobehaviour>> m_Instances = new Dictionary<int, List<RecycleableMonobehaviour>>();
         private sealed class PrefabRequester
         {
             GameObjectProxySystem m_ProxySystem;

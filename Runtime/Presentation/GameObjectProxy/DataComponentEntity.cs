@@ -15,9 +15,18 @@ namespace Syadeu.Presentation
         bool IInternalDataComponent.ProxyRequested => InternalTransform.m_ProxyIdx.Equals(DataTransform.ProxyQueued);
         bool IEquatable<IInternalDataComponent>.Equals(IInternalDataComponent other) => m_Idx.Equals(other.Idx);
 
-        public DataGameObject gameObject => PresentationSystem<GameObjectProxySystem>.System.m_MappedGameObjects[m_GameObject];
+        public DataGameObject gameObject
+        {
+            get
+            {
+                unsafe
+                {
+                    return *PresentationSystem<GameObjectProxySystem>.System.GetDataGameObjectPointer(m_GameObject);
+                }
+            }
+        }
         private DataTransform InternalTransform => gameObject.InternalTransform;
-        public IReadOnlyTransform transform => InternalTransform;
+        public DataTransform transform => InternalTransform;
 
         public virtual void Dispose() { }
     }
