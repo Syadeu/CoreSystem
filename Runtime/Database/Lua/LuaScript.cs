@@ -23,6 +23,8 @@ namespace Syadeu.Database.Lua
 
         public DynValue Invoke(params object[] args)
         {
+            if (string.IsNullOrEmpty(m_FunctionName)) throw new Exception();
+
             if (m_LuaFunction == null)
             {
                 DynValue temp = LuaManager.GetScriptObject(m_FunctionName);
@@ -103,6 +105,9 @@ namespace Syadeu.Database.Lua
         [JsonProperty(Order = 0, PropertyName = "Functions")] public List<LuaScript> m_Scripts;
     }
 
+    /// <summary>
+    /// <see cref="LuaArg"/>
+    /// </summary>
     public sealed class LuaArgumentTypeAttribute : Attribute
     {
     }

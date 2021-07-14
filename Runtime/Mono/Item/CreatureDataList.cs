@@ -14,7 +14,7 @@ namespace Syadeu.Database
         const string json = ".json";
 
         public List<Creature> m_Entites;
-        public List<CreatureAttributeEntity> m_Attributes;
+        public List<ICreatureAttribute> m_Attributes;
 
         public void LoadData()
         {

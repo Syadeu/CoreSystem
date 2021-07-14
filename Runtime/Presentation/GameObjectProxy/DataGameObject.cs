@@ -143,6 +143,20 @@ namespace Syadeu.Presentation
             }
             return (T)list.FindFor((other) => other is T);
         }
+        public DataComponentEntity GetComponent(Type t)
+        {
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);
+                return null;
+            }
+
+            if (!PresentationSystem<GameObjectProxySystem>.System.m_ComponentList.TryGetValue(m_Idx, out var list))
+            {
+                return null;
+            }
+            return list.FindFor((other) => other.GetType().Equals(t));
+        }
         public void RemoveComponent<T>(T t) where T : DataComponentEntity
         {
             if (!IsValid())

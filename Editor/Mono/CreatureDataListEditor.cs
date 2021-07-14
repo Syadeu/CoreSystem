@@ -3,7 +3,8 @@ using Syadeu.Database.CreatureData;
 using SyadeuEditor.Tree;
 using System;
 using System.Collections.Generic;
-
+using System.Linq;
+using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
@@ -36,7 +37,7 @@ namespace SyadeuEditor
                     {
                         return new TreeCreatureElement(treeView, creature);
                     }
-                    else if (other is CreatureAttributeEntity attribute)
+                    else if (other is ICreatureAttribute attribute)
                     {
                         return new TreeCreatureAttributeElement(treeView, attribute);
                     }
@@ -143,13 +144,20 @@ namespace SyadeuEditor
                 Target.m_OnSpawn.DrawGUI("OnSpawn");
             }
         }
-        private class TreeCreatureAttributeElement : VerticalTreeElement<CreatureAttributeEntity>
+        private class TreeCreatureAttributeElement : VerticalTreeElement<ICreatureAttribute>
         {
-            public override string Name => Target.m_Name;
+            public override string Name => Target.Name;
             public override bool HideElementInTree
                 => Tree.SelectedToolbar != 1 || base.HideElementInTree;
 
-            public TreeCreatureAttributeElement(VerticalTreeView treeView, CreatureAttributeEntity att) : base(treeView, att) { }
+            MemberInfo[] m_Members;
+
+            public TreeCreatureAttributeElement(VerticalTreeView treeView, ICreatureAttribute att) : base(treeView, att)
+            {
+                m_Members = att.GetType().GetMembers(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                    .Where((other) => other.GetCustomAttribute<NonSerializedAttribute>() == null).ToArray();
+
+            }
             public override void OnGUI()
             {
                 //Target.DrawItem();
