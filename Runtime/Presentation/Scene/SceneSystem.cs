@@ -302,11 +302,11 @@ namespace Syadeu.Presentation
 
             CoreSystem.Logger.Log(Channel.Scene, $"Scene change start from ({m_CurrentScene.name}) to ({Path.GetFileNameWithoutExtension(path)})");
             m_LoadingEnabled = true;
+            OnLoadingEnter?.Invoke();
             if (ManagerEntity.InstanceGroupTr != null)
             {
                 UnityEngine.Object.Destroy(ManagerEntity.InstanceGroupTr.gameObject);
             }
-            OnLoadingEnter?.Invoke();
             OnWaitLoading?.Invoke(0, waitDelay);
             //OnLoading?.Invoke(0);
 

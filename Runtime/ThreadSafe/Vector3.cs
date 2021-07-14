@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Mathematics;
 
 namespace Syadeu.ThreadSafe
 {
@@ -9,6 +10,12 @@ namespace Syadeu.ThreadSafe
     {
         public static Vector3 Zero = new Vector3(0, 0, 0);
         public static Vector3 One = new Vector3(1, 1, 1);
+        public static Vector3 Right = new Vector3(UnityEngine.Vector3.right);
+        public static Vector3 Left = new Vector3(UnityEngine.Vector3.left);
+        public static Vector3 Up = new Vector3(UnityEngine.Vector3.up);
+        public static Vector3 Down = new Vector3(UnityEngine.Vector3.down);
+        public static Vector3 Forward = new Vector3(UnityEngine.Vector3.forward);
+        public static Vector3 Back = new Vector3(UnityEngine.Vector3.back);
 
         public const double Deg2Rad = 0.0174532924;
         public const double Rad2Deg = 57.29578;
@@ -70,9 +77,14 @@ namespace Syadeu.ThreadSafe
         public int GetHashCode(object obj) => obj.GetHashCode();
 
         public static implicit operator UnityEngine.Vector3(Vector3 a) => a.ToUnity();
+        public static implicit operator float3(Vector3 a) => new float3(a.x, a.y, a.z);
 #if CORESYSTEM_FMOD
         public static implicit operator global::FMOD.VECTOR(Vector3 a) => a.ToFMOD();
 #endif
+        public static Vector3 operator *(quaternion rot, Vector3 point)
+        {
+            return math.mul(rot, new float3(point.x, point.y, point.z)).ToThreadSafe();
+        }
         public static Vector3 operator *(Vector3 a, float b)
         {
             return new Vector3(a.x * b, a.y * b, a.z * b);

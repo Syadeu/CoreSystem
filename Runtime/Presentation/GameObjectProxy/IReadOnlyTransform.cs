@@ -8,7 +8,7 @@ namespace Syadeu.Presentation
         Vector3 position { get; }
         //Vector3 localPosition { get; }
 
-        //Vector3 eulerAngles { get; }
+        Vector3 eulerAngles { get; }
         //Vector3 localEulerAngles { get; }
         quaternion rotation { get; }
         //quaternion localRotation { get; }

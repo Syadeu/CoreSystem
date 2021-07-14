@@ -15,6 +15,6 @@ namespace Syadeu.Presentation
         bool HasProxyObject { get; }
         bool ProxyRequested { get; }
 
-        IReadOnlyTransform transform { get; }
+        DataTransform transform { get; }
     }
 }

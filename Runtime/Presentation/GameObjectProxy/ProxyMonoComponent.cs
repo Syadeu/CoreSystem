@@ -9,15 +9,21 @@ namespace Syadeu.Presentation
     {
         internal Hash m_GameObject;
 
+        public DataGameObject GetDataGameObject()
+        {
+            unsafe
+            {
+                return *PresentationSystem<GameObjectProxySystem>.System.GetDataGameObjectPointer(m_GameObject);
+            }
+        }
         public T GetDataComponent<T>() where T : DataComponentEntity, new()
         {
-            return PresentationSystem<GameObjectProxySystem>.System.m_MappedGameObjects[m_GameObject]
-                .GetComponent<T>();
+            return GetDataGameObject().GetComponent<T>();
         }
 
         public void Destory()
         {
-            PresentationSystem<GameObjectProxySystem>.System.m_MappedGameObjects[m_GameObject].Destory();
+            GetDataGameObject().Destory();
             GetComponent<RecycleableMonobehaviour>().Terminate();
         }
     }

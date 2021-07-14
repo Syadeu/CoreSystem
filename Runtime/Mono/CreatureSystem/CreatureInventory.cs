@@ -12,6 +12,12 @@ namespace Syadeu.Mono
 {
     public sealed class CreatureInventory : CreatureEntity
     {
+        public enum Type
+        {
+            Equipment,
+            Inventory
+        }
+
         [Space]
         [SerializeField] private List<ItemInstance> m_Equipments = new List<ItemInstance>();
         [SerializeField] private List<ItemInstance> m_Inventory = new List<ItemInstance>();
@@ -44,10 +50,31 @@ namespace Syadeu.Mono
             }
         }
 
-        public void Insert(ItemInstance item)
+        public void Insert(Type type, ItemInstance item)
         {
-            m_Inventory.Add(item);
+            IList<ItemInstance> list;
+            if (type == Type.Equipment) list = m_Equipments;
+            else list = m_Inventory;
+
+            list.Add(item);
+
             m_OnItemInserted?.Invoke(Brain, item);
+            
+            item.Data.m_OnGet?.Invoke(Brain);
+            if (type == Type.Equipment) item.Data.m_OnEquip?.Invoke(Brain);
+        }
+        public ItemInstance Drop(Type type, int idx)
+        {
+            IList<ItemInstance> list;
+            if (type == Type.Equipment) list = m_Equipments;
+            else list = m_Inventory;
+
+            ItemInstance item = list[idx];
+            list.RemoveAt(idx);
+
+            item.Data.m_OnDrop?.Invoke(Brain);
+
+            return item;
         }
         public void Use(int i)
         {
@@ -67,6 +94,8 @@ namespace Syadeu.Mono
                         throw new Exception();
                     }
                 }
+
+                item.Data.m_OnUse?.Invoke(Brain);
 
                 if (useableType.m_RemoveOnUse)
                 {

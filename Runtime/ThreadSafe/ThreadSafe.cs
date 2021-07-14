@@ -1,6 +1,7 @@
 ﻿using System;
 //using System.Numerics;
 using System.Runtime.InteropServices;
+using Unity.Mathematics;
 
 namespace Syadeu.ThreadSafe
 {
@@ -33,6 +34,7 @@ namespace Syadeu.ThreadSafe
         {
             return new Vector2(vector2);
         }
+        public static Vector3 ToThreadSafe(this float3 float3) => new Vector3(float3);
 
         public static class Random
         {

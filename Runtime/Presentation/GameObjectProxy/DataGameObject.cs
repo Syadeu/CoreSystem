@@ -6,8 +6,10 @@ using Unity.Mathematics;
 namespace Syadeu.Presentation
 {
     [Serializable]
-    public struct DataGameObject : IInternalDataComponent, IEquatable<DataGameObject>, IDisposable, ITag
+    public struct DataGameObject : IInternalDataComponent, IEquatable<DataGameObject>, ITag, IValidation
     {
+        const string c_WarningText = "This Data GameObject has been destoryed or didn\'t created propery. Request igonored.";
+
         internal UserTagFlag m_UserTag;
         internal CustomTagFlag m_CustomTag;
 
@@ -15,24 +17,68 @@ namespace Syadeu.Presentation
         internal int2 m_GridIdxes;
         internal Hash m_Transform;
 
+        unsafe private DataGameObject* GetPointer() => PresentationSystem<GameObjectProxySystem>.System.GetDataGameObjectPointer(m_Idx);
+        private ref DataGameObject GetRef()
+        {
+            unsafe
+            {
+                return ref *GetPointer();
+            }
+        }
         public UserTagFlag UserTag
         {
-            get => m_UserTag;
+            get
+            {
+                if (!IsValid())
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);
+                    return 0;
+                }
+                return GetRef().m_UserTag;
+            }
             set
             {
-                var boxed = PresentationSystem<GameObjectProxySystem>.System.m_MappedGameObjects[m_Idx];
+                if (!IsValid())
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);
+                    return;
+                }
+
+                ref DataGameObject boxed = ref GetRef();
                 boxed.m_UserTag = value;
-                PresentationSystem<GameObjectProxySystem>.System.m_MappedGameObjects[m_Idx] = boxed;
             }
         }
         public CustomTagFlag CustomTag
         {
-            get => m_CustomTag;
+            get
+            {
+                if (!IsValid())
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);
+                    return 0;
+                }
+                return GetRef().m_CustomTag;
+            }
             set
             {
-                var boxed = PresentationSystem<GameObjectProxySystem>.System.m_MappedGameObjects[m_Idx];
+                if (!IsValid())
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);
+                    return;
+                }
+
+                ref DataGameObject boxed = ref GetRef();
                 boxed.m_CustomTag = value;
-                PresentationSystem<GameObjectProxySystem>.System.m_MappedGameObjects[m_Idx] = boxed;
+            }
+        }
+        internal DataTransform InternalTransform
+        {
+            get
+            {
+                unsafe
+                {
+                    return *PresentationSystem<GameObjectProxySystem>.System.GetDataTransformPointer(m_Transform);
+                }
             }
         }
 
@@ -44,11 +90,36 @@ namespace Syadeu.Presentation
         bool IEquatable<IInternalDataComponent>.Equals(IInternalDataComponent other) => m_Idx.Equals(other.Idx);
         bool IEquatable<DataGameObject>.Equals(DataGameObject other) => m_Idx.Equals(other.m_Idx);
 
-        internal DataTransform InternalTransform => PresentationSystem<GameObjectProxySystem>.System.m_MappedTransforms[m_Transform];
-        public IReadOnlyTransform transform => InternalTransform;
+        public bool IsValid() => !m_Idx.Equals(Hash.Empty) && !m_Transform.Equals(Hash.Empty) &&
+            PresentationSystem<GameObjectProxySystem>.System.m_MappedTransformIdxes.ContainsKey(m_Transform) &&
+            PresentationSystem<GameObjectProxySystem>.System.m_MappedGameObjectIdxes.ContainsKey(m_Idx);
+
+#pragma warning disable IDE1006 // Naming Styles
+#line hidden
+        public DataTransform transform
+        {
+            get
+            {
+                if (!IsValid())
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);
+                    return default;
+                }
+                return InternalTransform;
+            }
+        }
+
+#line default
+#pragma warning restore IDE1006 // Naming Styles
 
         public T AddComponent<T>() where T : DataComponentEntity, new()
         {
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);
+                return null;
+            }
+
             if (!PresentationSystem<GameObjectProxySystem>.System.m_ComponentList.TryGetValue(m_Idx, out var list))
             {
                 list = new System.Collections.Generic.List<DataComponentEntity>();
@@ -60,6 +131,12 @@ namespace Syadeu.Presentation
         }
         public T GetComponent<T>() where T : DataComponentEntity, new()
         {
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);
+                return null;
+            }
+
             if (!PresentationSystem<GameObjectProxySystem>.System.m_ComponentList.TryGetValue(m_Idx, out var list))
             {
                 return null;
@@ -68,6 +145,12 @@ namespace Syadeu.Presentation
         }
         public void RemoveComponent<T>(T t) where T : DataComponentEntity
         {
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);
+                return;
+            }
+
             if (!PresentationSystem<GameObjectProxySystem>.System.m_ComponentList.TryGetValue(m_Idx, out var list))
             {
                 return;
@@ -83,7 +166,6 @@ namespace Syadeu.Presentation
             }
         }
 
-        void IDisposable.Dispose() { }
         public void Destory()
         {
             PresentationSystem<GameObjectProxySystem>.System.DestoryDataObject(m_Idx);
