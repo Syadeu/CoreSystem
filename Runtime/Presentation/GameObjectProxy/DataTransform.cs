@@ -9,7 +9,7 @@ using Unity.Mathematics;
 
 namespace Syadeu.Presentation
 {
-    public struct DataTransform : IInternalDataComponent, IReadOnlyTransform, IEquatable<DataTransform>, IDisposable
+    public struct DataTransform : IInternalDataComponent, IReadOnlyTransform, IValidation, IEquatable<DataTransform>, IDisposable
     {
         internal static int2 ProxyNull = new int2(-1, -1);
         internal static int2 ProxyQueued = new int2(-2, -2);
@@ -64,8 +64,24 @@ namespace Syadeu.Presentation
             if (!PresentationSystem<RenderSystem>.System.IsInCameraScreen(m_Position)) return;
             PresentationSystem<GameObjectProxySystem>.System.RequestUpdateTransform(m_Idx);
         }
+        public bool IsValid() => !m_GameObject.Equals(Hash.Empty) && !m_Idx.Equals(Hash.Empty);
 
 #pragma warning disable IDE1006 // Naming Styles
+        /// <summary>
+        /// <see langword="true"/>일 경우, 화면 밖에 있을때 자동으로 프록시 오브젝트를 할당 해제합니다.
+        /// </summary>
+        public bool enableCull
+        {
+            get => GetRef().m_EnableCull;
+            set
+            {
+                ref DataTransform tr = ref GetRef();
+                if (tr.m_EnableCull.Equals(value)) return;
+                tr.m_EnableCull = value;
+                RequestUpdate();
+            }
+        }
+
         public Vector3 position
         {
             get => GetRef().m_Position;

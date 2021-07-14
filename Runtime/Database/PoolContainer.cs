@@ -44,6 +44,10 @@ namespace Syadeu.Database
 
             m_Initialized = true;
         }
+        public static void Initialize()
+        {
+            m_Initialized = true;
+        }
 
         public static T Dequeue()
         {
@@ -56,22 +60,24 @@ namespace Syadeu.Database
             T output;
             if (m_List.Count == 0)
             {
-                //if (m_MaxCount < 0 || m_Count < m_MaxCount)
+                if (m_InstantiateFunc != null)
                 {
                     output = m_InstantiateFunc.Invoke();
                     m_Count++;
                 }
-                //else output = null;
+                else return null;
             }
             else
             {
                 if (!m_List.TryDequeue(out output))
                 {
-                    output = m_InstantiateFunc.Invoke();
-                    m_Count++;
+                    if (m_InstantiateFunc != null)
+                    {
+                        output = m_InstantiateFunc.Invoke();
+                        m_Count++;
+                    }
+                    else return null;
                 }
-                //m_List.RemoveAt(m_List.Count - 1);
-                //m_ResetTimerJob.Start();
             }
             return output;
         }
