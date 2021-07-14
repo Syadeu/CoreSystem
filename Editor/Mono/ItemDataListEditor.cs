@@ -26,7 +26,7 @@ namespace SyadeuEditor
             {
                 if (m_TreeView == null)
                 {
-                    Asset.LoadDatas();
+                    Asset.LoadData();
 
                     List<object> tempList = new List<object>();
                     tempList.AddRange(Asset.m_Items);
@@ -159,7 +159,7 @@ namespace SyadeuEditor
         {
             if (m_TreeView == null)
             {
-                Asset.LoadDatas();
+                Asset.LoadData();
                 EditorUtils.SetDirty(Asset);
                 //RefreshTreeView();
 
@@ -170,7 +170,7 @@ namespace SyadeuEditor
                 TreeView.Refresh();
             }
 
-            EditorUtils.StringHeader("Item Datas");
+            EditorUtils.StringHeader("Item Data");
             EditorUtils.SectorLine();
 
             if (GUILayout.Button("Clear"))
@@ -184,7 +184,7 @@ namespace SyadeuEditor
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("Load"))
             {
-                Asset.LoadDatas();
+                Asset.LoadData();
                 EditorUtils.SetDirty(Asset);
                 RefreshTreeView();
             }
@@ -193,10 +193,7 @@ namespace SyadeuEditor
                 EditorUtils.SetDirty(Asset);
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
-                Asset.SaveDatas();
-                
-                
-                //OnValidate();
+                Asset.SaveData();
             }
             EditorGUILayout.EndHorizontal();
             EditorUtils.SectorLine();

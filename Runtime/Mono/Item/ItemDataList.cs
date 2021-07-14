@@ -15,12 +15,12 @@ namespace Syadeu.Database
 
         public override void OnInitialize()
         {
-            LoadDatas();
+            LoadData();
         }
 
         #region Data Works
 
-        public void LoadDatas()
+        public void LoadData()
         {
             const string jsonPostfix = "*.json";
             if (!Directory.Exists(CoreSystemFolder.ItemPath)) Directory.CreateDirectory(CoreSystemFolder.ItemPath);
@@ -48,7 +48,7 @@ namespace Syadeu.Database
                 m_ItemEffectTypes.Add(JsonConvert.DeserializeObject<ItemEffectType>(File.ReadAllText(dataPaths[i])));
             }
         }
-        public void SaveDatas()
+        public void SaveData()
         {
             const string json = ".json";
             if (!Directory.Exists(CoreSystemFolder.ItemPath)) Directory.CreateDirectory(CoreSystemFolder.ItemPath);

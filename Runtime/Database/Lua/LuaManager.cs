@@ -166,5 +166,7 @@ namespace Syadeu.Database.Lua
             );
         }
         #endregion
+
+        public static DynValue GetScriptObject(string key) => Instance.m_MainScripter.Globals.Get(key);
     }
 }

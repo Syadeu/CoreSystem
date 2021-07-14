@@ -10,7 +10,8 @@ namespace Syadeu.Presentation
             RegisterSystem(
                 TypeHelper.TypeOf<GameObjectProxySystem>.Type,
                 TypeHelper.TypeOf<SceneSystem>.Type,
-                TypeHelper.TypeOf<RenderSystem>.Type);
+                TypeHelper.TypeOf<RenderSystem>.Type,
+                TypeHelper.TypeOf<CreatureSystem>.Type);
         }
     }
 }

@@ -1,7 +1,7 @@
-﻿using UnityEngine;
-using System.IO;
+﻿using System.IO;
+using UnityEngine;
 
-namespace Syadeu.Database
+namespace SyadeuEditor
 {
     public static class CoreSystemFolder
     {
