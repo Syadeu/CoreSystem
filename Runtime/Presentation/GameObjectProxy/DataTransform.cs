@@ -94,7 +94,7 @@ namespace Syadeu.Presentation
             get
             {
                 var temp = rotation.Euler();
-                return new Vector3(temp.x * UnityEngine.Mathf.Rad2Deg, temp.y * UnityEngine.Mathf.Rad2Deg, temp.z * UnityEngine.Mathf.Rad2Deg);
+                return temp.ToThreadSafe() * UnityEngine.Mathf.Rad2Deg;
             }
             set
             {
@@ -113,7 +113,7 @@ namespace Syadeu.Presentation
                 RequestUpdate();
             }
         }
-        //public Vector3 right => math.mul(rotation, UnityEngine.Vector3.right).ToThreadSafe();
+        
         public Vector3 right => rotation * Vector3.Right;
         public Vector3 up => rotation * Vector3.Up;
         public Vector3 forward => rotation * Vector3.Forward;
