@@ -293,7 +293,8 @@ namespace Syadeu.Presentation
             
             m_RequestedJobs.Enqueue(() =>
             {
-                if (!m_TerminatedProxies.TryGetValue(prefabIdx, out Queue<RecycleableMonobehaviour> pool))
+                if (!m_TerminatedProxies.TryGetValue(prefabIdx, out Queue<RecycleableMonobehaviour> pool) ||
+                    pool.Count == 0)
                 {
                     InstantiatePrefab(prefabIdx, (other) =>
                     {
