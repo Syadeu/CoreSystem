@@ -9,8 +9,10 @@ using Unity.Mathematics;
 
 namespace Syadeu.Presentation
 {
-    public struct DataTransform : IInternalDataComponent, IReadOnlyTransform, IValidation, IEquatable<DataTransform>, IDisposable
+    public struct DataTransform : IInternalDataComponent, IReadOnlyTransform, IValidation, IEquatable<DataTransform>
     {
+        const string c_WarningText = "This Data Transform has been destoryed or didn\'t created propery. Request igonored.";
+
         internal static int2 ProxyNull = new int2(-1, -1);
         internal static int2 ProxyQueued = new int2(-2, -2);
 
@@ -27,8 +29,6 @@ namespace Syadeu.Presentation
         internal bool HasProxyObject => !m_ProxyIdx.Equals(ProxyNull);
         bool IInternalDataComponent.ProxyRequested => m_ProxyIdx.Equals(ProxyQueued);
         internal bool ProxyRequested => m_ProxyIdx.Equals(ProxyQueued);
-
-        void IDisposable.Dispose() { }
 
         DataTransform IInternalDataComponent.transform => this;
         bool IEquatable<IInternalDataComponent>.Equals(IInternalDataComponent other) => m_Idx.Equals(other.Idx);
@@ -60,17 +60,35 @@ namespace Syadeu.Presentation
             if (!PresentationSystem<RenderSystem>.System.IsInCameraScreen(m_Position)) return;
             PresentationSystem<GameObjectProxySystem>.System.RequestUpdateTransform(m_Idx);
         }
-        public bool IsValid() => !m_GameObject.Equals(Hash.Empty) && !m_Idx.Equals(Hash.Empty);
+        public bool IsValid() => !m_GameObject.Equals(Hash.Empty) && !m_Idx.Equals(Hash.Empty) && 
+            PresentationSystem<GameObjectProxySystem>.System.m_MappedTransformIdxes.ContainsKey(m_Idx) &&
+            PresentationSystem<GameObjectProxySystem>.System.m_MappedGameObjectIdxes.ContainsKey(m_GameObject);
 
 #pragma warning disable IDE1006 // Naming Styles
+#line hidden
         /// <summary>
         /// <see langword="true"/>일 경우, 화면 밖에 있을때 자동으로 프록시 오브젝트를 할당 해제합니다.
         /// </summary>
         public bool enableCull
         {
-            get => GetRef().m_EnableCull;
+            get
+            {
+                if (!IsValid())
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);
+                    return false;
+                }
+
+                return GetRef().m_EnableCull;
+            }
             set
             {
+                if (!IsValid())
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);
+                    return;
+                }
+
                 ref DataTransform tr = ref GetRef();
                 if (tr.m_EnableCull.Equals(value)) return;
                 tr.m_EnableCull = value;
@@ -80,9 +98,23 @@ namespace Syadeu.Presentation
 
         public Vector3 position
         {
-            get => GetRef().m_Position;
+            get
+            {
+                if (!IsValid())
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);
+                    return Vector3.Zero;
+                }
+                return GetRef().m_Position;
+            }
             set
             {
+                if (!IsValid())
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);
+                    return;
+                }
+
                 ref DataTransform tr = ref GetRef();
                 if (tr.m_Position.Equals(value)) return;
                 tr.m_Position = value;
@@ -93,20 +125,46 @@ namespace Syadeu.Presentation
         {
             get
             {
+                if (!IsValid())
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);
+                    return Vector3.Zero;
+                }
+
                 var temp = rotation.Euler();
                 return temp.ToThreadSafe() * UnityEngine.Mathf.Rad2Deg;
             }
             set
             {
+                if (!IsValid())
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);
+                    return;
+                }
+
                 Vector3 temp = new Vector3(value.x * UnityEngine.Mathf.Deg2Rad, value.y * UnityEngine.Mathf.Deg2Rad, value.z * UnityEngine.Mathf.Deg2Rad);
                 rotation = quaternion.EulerZXY(temp);
             }
         }
         public quaternion rotation
         {
-            get => GetRef().m_Rotation;
+            get
+            {
+                if (!IsValid())
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);
+                    return quaternion.identity;
+                }
+                return GetRef().m_Rotation;
+            }
             set
             {
+                if (!IsValid())
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);
+                    return;
+                }
+
                 ref DataTransform tr = ref GetRef();
                 if (tr.m_Rotation.Equals(value)) return;
                 tr.m_Rotation = value;
@@ -120,9 +178,23 @@ namespace Syadeu.Presentation
 
         public Vector3 localScale
         {
-            get => GetRef().m_LocalScale;
+            get
+            {
+                if (!IsValid())
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);
+                    return Vector3.Zero;
+                }
+                return GetRef().m_LocalScale;
+            }
             set
             {
+                if (!IsValid())
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);
+                    return;
+                }
+
                 ref DataTransform tr = ref GetRef();
                 if (tr.m_LocalScale.Equals(value)) return;
                 tr.m_LocalScale = value;
@@ -138,6 +210,7 @@ namespace Syadeu.Presentation
         Vector3 IReadOnlyTransform.forward => forward;
 
         Vector3 IReadOnlyTransform.localScale => localScale;
+#line default
 #pragma warning restore IDE1006 // Naming Styles
     }
 }

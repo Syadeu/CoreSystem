@@ -48,6 +48,8 @@ namespace Syadeu.Presentation
         private SceneSystem m_SceneSystem;
         private RenderSystem m_RenderSystem;
 
+        private bool m_LoadingLock = false;
+
         #region Presentation Methods
         protected override PresentationResult OnInitialize()
         {
@@ -71,6 +73,43 @@ namespace Syadeu.Presentation
         }
         protected override PresentationResult OnStartPresentation()
         {
+            m_SceneSystem.OnLoadingEnter += () =>
+            {
+                m_LoadingLock = true;
+
+                foreach (var item in m_TerminatedProxies)
+                {
+                    var prefabInfo = PrefabList.Instance.ObjectSettings[item.Key];
+                    int count = item.Value.Count;
+                    for (int i = 0; i < count; i++)
+                    {
+                        prefabInfo.RefPrefab.ReleaseInstance(item.Value.Dequeue().gameObject);
+                    }
+                }
+                m_TerminatedProxies.Clear();
+
+                #region Clear Data Transforms
+                for (int i = 0; i < m_MappedTransforms.Length; i++)
+                {
+                    if (m_MappedTransforms[i].HasProxyObject)
+                    {
+                        int2 proxyIdx = m_MappedTransforms[i].m_ProxyIdx;
+
+                        PrefabList.Instance.ObjectSettings[proxyIdx.x].RefPrefab.ReleaseInstance(m_Instances[proxyIdx.x][proxyIdx.y].gameObject);
+                    }
+                }
+                m_MappedTransforms.Clear();
+                m_MappedTransformIdxes.Clear();
+                #endregion
+
+                m_Instances.Clear();
+                m_MappedGameObjects.Clear();
+                
+                m_MappedGameObjectIdxes.Clear();
+                m_ComponentList.Clear();
+
+                m_LoadingLock = false;
+            };
             return base.OnStartPresentation();
         }
 
@@ -128,7 +167,7 @@ namespace Syadeu.Presentation
             int temp3 = m_RequestDestories.Count;
             if (temp3 > 0)
             {
-                if (m_VisibleCheckJob.IsDone)
+                if (!m_LoadingLock && m_VisibleCheckJob.IsDone)
                 {
                     for (int i = 0; i < temp3; i++)
                     {
@@ -146,8 +185,6 @@ namespace Syadeu.Presentation
                             .GetCell(m_MappedGameObjects[objIdx].m_GridIdxes.y)
                             .RemoveCustomData();
 
-                        ((IDisposable)m_MappedTransforms[trIdx]).Dispose();
-
                         m_MappedTransforms.RemoveAt(trIdx);
                         m_MappedTransformIdxes.Remove(m_MappedGameObjects[objIdx].m_Transform);
                         //m_MappedTransformList.Remove(m_MappedGameObjects[objIdx].m_Transform);
@@ -158,8 +195,6 @@ namespace Syadeu.Presentation
                             components[j].Dispose();
                         }
                         m_ComponentList.Remove(objHash);
-
-                        ((IDisposable)m_MappedGameObjects[objIdx]).Dispose();
 
                         m_MappedGameObjectIdxes.Remove(objHash);
                         m_MappedGameObjects.RemoveAt(objIdx);
@@ -207,7 +242,9 @@ namespace Syadeu.Presentation
 
             m_UpdateTransforms.Enqueue(trHash);
         }
-        
+
+        public DataGameObject CreateNewPrefab(int prefabIdx, Vector3 pos, Quaternion rot)
+            => CreateNewPrefab(prefabIdx, pos, rot, Vector3.one, true, null);
         public DataGameObject CreateNewPrefab(int prefabIdx, 
             Vector3 pos, Quaternion rot, Vector3 localScale, bool enableCull,
             Action<DataGameObject, RecycleableMonobehaviour> onCompleted)
@@ -285,7 +322,7 @@ namespace Syadeu.Presentation
             }
 
             cell.SetCustomData(objData);
-            $"{prefabIdx} spawned at {pos}".ToLog();
+            //$"{prefabIdx} spawned at {pos}".ToLog();
             return objData;
         }
 
@@ -293,6 +330,8 @@ namespace Syadeu.Presentation
         private readonly Dictionary<int, Queue<RecycleableMonobehaviour>> m_TerminatedProxies = new Dictionary<int, Queue<RecycleableMonobehaviour>>();
         unsafe private void RequestProxy(Hash objHash, Hash trHash, Action<DataGameObject, RecycleableMonobehaviour> onCompleted)
         {
+            if (m_LoadingLock) return;
+
             ref DataTransform tr = ref *GetDataTransformPointer(trHash);
             tr.m_ProxyIdx = DataTransform.ProxyQueued;
             int prefabIdx = tr.m_PrefabIdx;
@@ -345,6 +384,8 @@ namespace Syadeu.Presentation
         }
         unsafe private void RemoveProxy(Hash trHash)
         {
+            if (m_LoadingLock) return;
+
             ref DataTransform tr = ref *GetDataTransformPointer(trHash);
             int2 proxyIdx = tr.m_ProxyIdx;
             CoreSystem.Logger.False(proxyIdx.Equals(DataTransform.ProxyNull), $"proxy index null {proxyIdx}");
@@ -405,34 +446,25 @@ namespace Syadeu.Presentation
         }
         unsafe private void UpdateDataTransform(Hash trHash)
         {
+            if (m_LoadingLock) return;
+
             ref DataTransform boxed = ref *GetDataTransformPointer(trHash);
-            //Transform oriTr = PrefabManager.Instance.RecycleObjects[boxed.m_Idx.x].Instances[boxed.m_Idx.y].transform;
             Transform oriTr = boxed.ProxyObject.transform;
 
-            //$"1 . {oriTr.position} => {boxed.m_Position}".ToLog(oriTr);
             oriTr.position = boxed.m_Position;
-
             //oriTr.localPosition = boxed.m_LocalPosition;
 
-            //oriTr.eulerAngles = boxed.m_EulerAngles;
-            //oriTr.localEulerAngles = boxed.m_LocalEulerAngles;
             oriTr.rotation = boxed.m_Rotation;
             //oriTr.localRotation = boxed.m_LocalRotation;
 
-            //oriTr.right = boxed.m_Right;
-            //oriTr.up = boxed.m_Up;
-            //oriTr.forward = boxed.m_Forward;
-            //boxed.m_Right = new ThreadSafe.Vector3(oriTr.right);
-            //boxed.m_Up = new ThreadSafe.Vector3(oriTr.up);
-            //boxed.m_Forward = new ThreadSafe.Vector3(oriTr.forward);
-
             oriTr.localScale = boxed.m_LocalScale;
-            //$"2 . {oriTr.position} => {boxed.m_Position}".ToLog(oriTr);
         }
 
         private void ProxyVisibleCheckJob()
         {
             const int maxCountForeachJob = 10;
+
+            if (m_LoadingLock) return;
 
             int listCount = m_MappedTransforms.Length;
             int div = listCount / maxCountForeachJob;
@@ -451,6 +483,7 @@ namespace Syadeu.Presentation
                 {
                     for (int j = startIdx; j < maxIdx; j++)
                     {
+                        if (m_LoadingLock) break;
                         //int idx = m_MappedTransformIdxes[m_MappedTransformList[j]];
 
                         if (m_MappedTransforms[j] is DataTransform tr)
