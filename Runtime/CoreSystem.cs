@@ -1556,7 +1556,11 @@ namespace Syadeu
         {
             Thread.CurrentThread.CurrentCulture = global::System.Globalization.CultureInfo.InvariantCulture;
             BackgroundJob job = e.Argument as BackgroundJob;
-            
+
+            while (!m_SimWatcher.WaitOne())
+            {
+                ThreadAwaiter(10);
+            }
             try
             {
                 job.Action.Invoke();

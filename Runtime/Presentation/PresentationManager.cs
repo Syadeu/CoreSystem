@@ -211,8 +211,12 @@ namespace Syadeu.Presentation
         internal void StartPresentation(Hash groupHash)
         {
             Group group = m_PresentationGroups[groupHash];
-            if (group.m_IsStarted) throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
-                    $"{group.m_Name.Name} 은 이미 시작된 시스템 그룹입니다.");
+            if (group.m_IsStarted)
+            {
+                CoreSystem.Logger.LogWarning(Channel.Presentation,
+                    $"Presentation Group {group.m_Name.Name} has already started and running. Request ignored.");
+                return;
+            }
 
             for (int i = 0; i < group.m_RegisteredSystemTypes.Count; i++)
             {
@@ -245,8 +249,12 @@ namespace Syadeu.Presentation
         internal void StopPresentation(Hash groupHash)
         {
             Group group = m_PresentationGroups[groupHash];
-            if (!group.m_IsStarted) throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
-                    $"{group.m_Name.Name} 은 이미 정지된 시스템 그룹입니다.");
+            if (!group.m_IsStarted)
+            {
+                CoreSystem.Logger.LogWarning(Channel.Presentation, 
+                    $"Presentation Group {group.m_Name.Name} has already stopped. Request ignored.");
+                return;
+            }
 
             Instance.StopUnityUpdate(group.MainPresentation);
             Instance.StopUnityUpdate(group.BackgroundPresentation);

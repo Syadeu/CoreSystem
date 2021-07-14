@@ -102,10 +102,19 @@ namespace Syadeu.Presentation
                 m_MappedTransformIdxes.Clear();
                 #endregion
 
-                m_Instances.Clear();
+                #region Clear Data GameObjects
+                for (int i = 0; i < m_MappedGameObjects.Length; i++)
+                {
+                    ref GridManager.Grid g = ref GridManager.GetGrid(m_MappedGameObjects[i].m_GridIdxes.x);
+                    ref GridManager.GridCell c = ref g.GetCell(m_MappedGameObjects[i].m_GridIdxes.y);
+
+                    c.RemoveCustomData();
+                }
                 m_MappedGameObjects.Clear();
-                
                 m_MappedGameObjectIdxes.Clear();
+                #endregion
+
+                m_Instances.Clear();
                 m_ComponentList.Clear();
 
                 m_LoadingLock = false;
@@ -468,6 +477,7 @@ namespace Syadeu.Presentation
 
             int listCount = m_MappedTransforms.Length;
             int div = listCount / maxCountForeachJob;
+            NativeArray<DataTransform>.ReadOnly readOnly = m_MappedTransforms.AsParallelReader();
             for (int i = 0; i < div + 1; i++)
             {
                 BackgroundJob job = PoolContainer<BackgroundJob>.Dequeue();
@@ -486,13 +496,13 @@ namespace Syadeu.Presentation
                         if (m_LoadingLock) break;
                         //int idx = m_MappedTransformIdxes[m_MappedTransformList[j]];
 
-                        if (m_MappedTransforms[j] is DataTransform tr)
+                        if (readOnly[j] is DataTransform tr)
                         {
                             if (!tr.m_EnableCull) continue;
                             if (m_RenderSystem.IsInCameraScreen(tr.position))
                             {
-                                if (!m_MappedTransforms[j].ProxyRequested &&
-                                    !m_MappedTransforms[j].HasProxyObject)
+                                if (!readOnly[j].ProxyRequested &&
+                                    !readOnly[j].HasProxyObject)
                                 {
                                     //"in".ToLog();
                                     m_RequestProxies.Enqueue(tr);
@@ -500,7 +510,7 @@ namespace Syadeu.Presentation
                             }
                             else
                             {
-                                if (m_MappedTransforms[j].HasProxyObject)
+                                if (readOnly[j].HasProxyObject)
                                 {
                                     if (m_RemoveProxies.Contains(tr))
                                     {
