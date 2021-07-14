@@ -1,5 +1,6 @@
 ﻿using Syadeu.Database;
 using Syadeu.Database.CreatureData;
+using Syadeu.Internal;
 using SyadeuEditor.Tree;
 using System;
 using System.Collections.Generic;
@@ -49,16 +50,18 @@ namespace SyadeuEditor
                     else if (treeView.SelectedToolbar == 1)
                     {
                         GenericMenu menu = new GenericMenu();
-                        menu.AddItem(new GUIContent("Test1"), false, () =>
+                        Type[] types = TypeHelper.GetTypes((other) => other.GetInterface("ICreatureAttribute") != null);
+                        for (int i = 0; i < types.Length; i++)
                         {
-                            //Asset.m_ItemTypes.Add(new ItemType());
-                            RefreshTreeView();
-                        });
-                        menu.AddItem(new GUIContent("Test2"), false, () =>
-                        {
-                            //Asset.m_ItemTypes.Add(new ItemType());
-                            RefreshTreeView();
-                        });
+                            menu.AddItem(new GUIContent(types[i].Name), false, () =>
+                            {
+                                if (Asset.m_Attributes == null) Asset.m_Attributes = new List<ICreatureAttribute>();
+
+                                Asset.m_Attributes.Add((ICreatureAttribute)Activator.CreateInstance(types[i]));
+                                RefreshTreeView();
+                            });
+                        }
+                        
                         Rect rect = GUILayoutUtility.GetLastRect();
                         rect.position = Event.current.mousePosition;
                         menu.DropDown(rect);
@@ -160,7 +163,10 @@ namespace SyadeuEditor
             }
             public override void OnGUI()
             {
-                //Target.DrawItem();
+                for (int i = 0; i < m_Members.Length; i++)
+                {
+                    EditorGUILayout.LabelField($"{m_Members[i].Name}: {m_Members[i].MemberType}");
+                }
             }
         }
     }
