@@ -37,10 +37,6 @@ namespace Syadeu.Presentation
         internal Vector3 m_Position;
         internal quaternion m_Rotation;
 
-        internal Vector3 m_Right;
-        internal Vector3 m_Up;
-        internal Vector3 m_Forward;
-
         internal Vector3 m_LocalScale;
 
         internal RecycleableMonobehaviour ProxyObject
@@ -95,10 +91,15 @@ namespace Syadeu.Presentation
         }
         public Vector3 eulerAngles
         {
-            get => new Vector3(rotation.Euler());
+            get
+            {
+                var temp = rotation.Euler();
+                return new Vector3(temp.x * UnityEngine.Mathf.Rad2Deg, temp.y * UnityEngine.Mathf.Rad2Deg, temp.z * UnityEngine.Mathf.Rad2Deg);
+            }
             set
             {
-                rotation = QuaternionExtensions.FromAngles(new float3(value.x, value.y, value.z));
+                Vector3 temp = new Vector3(value.x * UnityEngine.Mathf.Deg2Rad, value.y * UnityEngine.Mathf.Deg2Rad, value.z * UnityEngine.Mathf.Deg2Rad);
+                rotation = quaternion.EulerZXY(temp);
             }
         }
         public quaternion rotation
@@ -112,9 +113,10 @@ namespace Syadeu.Presentation
                 RequestUpdate();
             }
         }
-        public Vector3 right => GetRef().right;
-        public Vector3 up => GetRef().up;
-        public Vector3 forward => GetRef().forward;
+        //public Vector3 right => math.mul(rotation, UnityEngine.Vector3.right).ToThreadSafe();
+        public Vector3 right => rotation * Vector3.Right;
+        public Vector3 up => rotation * Vector3.Up;
+        public Vector3 forward => rotation * Vector3.Forward;
 
         public Vector3 localScale
         {
@@ -127,15 +129,15 @@ namespace Syadeu.Presentation
                 RequestUpdate();
             }
         }
-        Vector3 IReadOnlyTransform.position => GetRef().m_Position;
-        Vector3 IReadOnlyTransform.eulerAngles => GetRef().eulerAngles;
-        quaternion IReadOnlyTransform.rotation => GetRef().m_Rotation;
+        Vector3 IReadOnlyTransform.position => position;
+        Vector3 IReadOnlyTransform.eulerAngles => eulerAngles;
+        quaternion IReadOnlyTransform.rotation => rotation;
 
-        Vector3 IReadOnlyTransform.right => GetRef().m_Right;
-        Vector3 IReadOnlyTransform.up => GetRef().m_Up;
-        Vector3 IReadOnlyTransform.forward => GetRef().m_Forward;
+        Vector3 IReadOnlyTransform.right => right;
+        Vector3 IReadOnlyTransform.up => up;
+        Vector3 IReadOnlyTransform.forward => forward;
 
-        Vector3 IReadOnlyTransform.localScale => GetRef().m_LocalScale;
+        Vector3 IReadOnlyTransform.localScale => localScale;
 #pragma warning restore IDE1006 // Naming Styles
     }
 }

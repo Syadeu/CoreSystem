@@ -55,10 +55,6 @@ namespace Syadeu.Presentation
             m_VisibleCheckJob = new BackgroundJob(ProxyVisibleCheckJob);
 
             if (!PoolContainer<PrefabRequester>.Initialized) PoolContainer<PrefabRequester>.Initialize(() => new PrefabRequester(), 10);
-            if (!PoolContainer<RecycleableMonobehaviour>.Initialized)
-            {
-                PoolContainer<RecycleableMonobehaviour>.Initialize();
-            }
 
             return base.OnInitialize();
         }
@@ -245,6 +241,16 @@ namespace Syadeu.Presentation
                 proxyIdx = DataTransform.ProxyQueued;
             }
 
+            ThreadSafe.Vector3 right = ThreadSafe.Vector3.Right;
+            ThreadSafe.Vector3 up = ThreadSafe.Vector3.Up;
+            ThreadSafe.Vector3 forward = ThreadSafe.Vector3.Forward;
+            if (!rot.Equals(Quaternion.identity))
+            {
+                right = new ThreadSafe.Vector3(rot * Vector3.right);
+                up = new ThreadSafe.Vector3(rot * Vector3.up);
+                forward = new ThreadSafe.Vector3(rot * Vector3.right);
+            }
+
             DataTransform trData = new DataTransform()
             {
                 m_GameObject = objHash,
@@ -255,7 +261,7 @@ namespace Syadeu.Presentation
 
                 m_Position = new ThreadSafe.Vector3(pos),
                 m_Rotation = rot,
-                m_LocalScale = new ThreadSafe.Vector3(localScale),
+                m_LocalScale = new ThreadSafe.Vector3(localScale)
             };
             DataGameObject objData = new DataGameObject()
             {
@@ -416,9 +422,9 @@ namespace Syadeu.Presentation
             //oriTr.right = boxed.m_Right;
             //oriTr.up = boxed.m_Up;
             //oriTr.forward = boxed.m_Forward;
-            boxed.m_Right = new ThreadSafe.Vector3(oriTr.right);
-            boxed.m_Up = new ThreadSafe.Vector3(oriTr.up);
-            boxed.m_Forward = new ThreadSafe.Vector3(oriTr.forward);
+            //boxed.m_Right = new ThreadSafe.Vector3(oriTr.right);
+            //boxed.m_Up = new ThreadSafe.Vector3(oriTr.up);
+            //boxed.m_Forward = new ThreadSafe.Vector3(oriTr.forward);
 
             oriTr.localScale = boxed.m_LocalScale;
             //$"2 . {oriTr.position} => {boxed.m_Position}".ToLog(oriTr);
