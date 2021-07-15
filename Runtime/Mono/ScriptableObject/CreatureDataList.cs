@@ -18,6 +18,11 @@ namespace Syadeu.Database
         public List<Creature> m_Entites;
         public List<CreatureAttribute> m_Attributes;
 
+        public override void OnInitialize()
+        {
+            LoadData();
+        }
+
         public void LoadData()
         {
             if (!Directory.Exists(CoreSystemFolder.CreaturePath)) Directory.CreateDirectory(CoreSystemFolder.CreaturePath);

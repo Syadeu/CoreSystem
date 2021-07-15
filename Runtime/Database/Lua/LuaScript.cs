@@ -23,6 +23,12 @@ namespace Syadeu.Database.Lua
         [JsonConstructor]
         public LuaScript() { }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        /// <exception cref="ScriptRuntimeException"></exception>
         public DynValue Invoke(params object[] args)
         {
             if (string.IsNullOrEmpty(m_FunctionName)) throw new Exception();

@@ -1,4 +1,5 @@
-﻿using Syadeu.Database;
+﻿using MoonSharp.Interpreter;
+using Syadeu.Database;
 using Syadeu.Database.CreatureData;
 using Syadeu.Database.Lua;
 using Syadeu.Internal;
@@ -13,7 +14,7 @@ namespace Syadeu.Presentation
 {
     public sealed class CreatureSystem : PresentationSystemEntity<CreatureSystem>
     {
-        private const string c_AttributeWarning = "Attribute({0}) on entity({1}) has invaild value. At {2}";
+        private const string c_AttributeWarning = "Attribute({0}) on entity({1}) has invaild value at {2}. Request Ignored.";
 
         public override bool EnableBeforePresentation => true;
         public override bool EnableOnPresentation => true;
@@ -49,7 +50,7 @@ namespace Syadeu.Presentation
             return base.OnInitializeAsync();
         }
 
-        public void Spawn(Hash hash)
+        public DataGameObject Spawn(Hash hash)
         {
             Creature entity = CreatureDataList.Instance.GetEntity(hash);
             var prefabInfo = PrefabList.Instance.ObjectSettings[entity.m_PrefabIdx];
@@ -62,16 +63,14 @@ namespace Syadeu.Presentation
                         CreatureAttribute att = CreatureDataList.Instance.GetAttribute(entity.m_Attributes[i]);
                         dataObj.AddComponent(att.GetType());
 
-                        if (TryInvokeLua(att.OnEntityStart, entity, att))
-                        {
-                            att.OnEntityStart.Invoke(ToArgument(mono.gameObject, dataObj, att.OnEntityStart.m_Args));
-                        }
+                        InvokeLua(entity, dataObj, mono, att.GetType().Name, att.OnEntityStart);
                     }
                 });
 
             ProcessEntityOnCreated(this, entity, dataObj);
+            return dataObj;
         }
-        private List<object> ToArgument(GameObject gameObj, DataGameObject dataObj, IList<LuaArg> args)
+        private static List<object> ToArgument(GameObject gameObj, DataGameObject dataObj, IList<LuaArg> args)
         {
             List<object> temp = new List<object>();
             for (int i = 0; i < args.Count; i++)
@@ -84,7 +83,7 @@ namespace Syadeu.Presentation
                 {
                     temp.Add(dataObj);
                 }
-                else
+                else if (TypeHelper.TypeOf<DataComponentEntity>.Type.IsAssignableFrom(args[i].Type))
                 {
                     temp.Add(dataObj.GetComponent(args[i].Type));
                 }
@@ -92,16 +91,30 @@ namespace Syadeu.Presentation
             return temp;
         }
 
-        private static bool TryInvokeLua(LuaScript scr, Creature entity, ICreatureAttribute att)
+        private static void InvokeLua(Creature entity, DataGameObject dataObj, RecycleableMonobehaviour mono, in string calledAttName, LuaScript scr)
         {
-            if (scr == null) return false;
+            if (scr == null) return;
             if (!scr.IsValid())
             {
                 CoreSystem.Logger.LogWarning(Channel.Creature,
-                    string.Format(c_AttributeWarning, att.GetType().Name, entity.m_Name, "OnEntityStart"));
-                return false;
+                    string.Format(c_AttributeWarning, calledAttName, entity.m_Name, "OnEntityStart"));
+                return;
             }
-            return true;
+
+            try
+            {
+                scr.Invoke(ToArgument(mono.gameObject, dataObj, scr.m_Args));
+            }
+            catch (ScriptRuntimeException)
+            {
+                CoreSystem.Logger.LogWarning(Channel.Creature,
+                    string.Format(c_AttributeWarning, calledAttName, entity.m_Name, "OnEntityStart"));
+                return;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
         private static void ProcessEntityOnCreated(CreatureSystem system, Creature entity, DataGameObject dataObj)
         {

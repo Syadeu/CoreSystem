@@ -9,7 +9,13 @@ namespace Syadeu.Database.Lua
 
         public static ItemProxy GetItem(string hash)
         {
-            Item item = ItemDataList.Instance.GetItem(ulong.Parse(hash));
+            if (!ulong.TryParse(hash, out ulong hashu))
+            {
+                CoreSystem.Logger.LogWarning(Channel.Lua, $"{hash} cannot be a hash. Request ignored.");
+                return null;
+            }
+
+            Item item = ItemDataList.Instance.GetItem(hashu);
             if (item == null)
             {
                 $"item {hash} is null".ToLogConsole();
