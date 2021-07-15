@@ -70,8 +70,8 @@ namespace Syadeu.Mono.Creature
                         brain.m_UniqueIdx = Instance.m_Creatures.Count;
                         Instance.m_Creatures.Add(brain);
 
-                        CreatureDataComponent creatureData = dataObj.AddComponent<CreatureDataComponent>();
-                        creatureData.m_UniqueIdx = brain.m_UniqueIdx;
+                        //CreatureDataComponent creatureData = dataObj.AddComponent<CreatureDataComponent>();
+                        //creatureData.m_UniqueIdx = brain.m_UniqueIdx;
 
                         onCreated?.Invoke(brain);
                     });
@@ -293,11 +293,5 @@ namespace Syadeu.Mono.Creature
 
         //    Instance.m_CreatureSets[setID].InternalSpawnAt(0, cell.Bounds.center);
         //}
-    }
-    public class CreatureDataComponent : DataComponentEntity
-    {
-        internal int m_UniqueIdx;
-
-        public CreatureBrain Brain => CreatureManager.Instance.m_Creatures[m_UniqueIdx];
     }
 }

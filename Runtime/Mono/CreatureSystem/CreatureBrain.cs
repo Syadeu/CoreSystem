@@ -23,9 +23,10 @@ namespace Syadeu.Mono
     {
         private static Vector3 INIT_POSITION = new Vector3(99999, -99999, 99999);
 
-        public int m_DataIdx;
+        [Obsolete] public int m_DataIdx;
+        public Hash m_DataHash;
         public int m_UniqueIdx;
-        internal bool m_IsSpawnedFromManager = false;
+        [Obsolete] internal bool m_IsSpawnedFromManager = false;
         internal int m_SpawnPointIdx;
 
         [SerializeField] private NavMeshAgent m_NavMeshAgent;
@@ -35,15 +36,15 @@ namespace Syadeu.Mono
         [SerializeField] private string m_CreatureDescription = null;
 
         [Space]
-        [SerializeField] private bool m_InitializeOnStart = false;
+        [Obsolete] [SerializeField] private bool m_InitializeOnStart = false;
         [Tooltip("활성화시, 카메라에 비치지 않으면 이동 메소드가 순간이동을 합니다")]
-        public bool m_EnableCameraCull = true;
+        [Obsolete] public bool m_EnableCameraCull = true;
         [SerializeField] private float m_SamplePosDistance = .25f;
 
         [Space]
-        [SerializeField] private UnityEvent m_OnCreated;
-        [SerializeField] private UnityEvent<int> m_OnInitialize;
-        [SerializeField] private UnityEvent<int> m_OnTerminate;
+        [Obsolete] [SerializeField] private UnityEvent m_OnCreated;
+        [Obsolete] [SerializeField] private UnityEvent<int> m_OnInitialize;
+        [Obsolete] [SerializeField] private UnityEvent<int> m_OnTerminate;
 
         private CreatureEntity[] m_Childs = null;
         private CreatureBrainProxy m_Proxy = null;
@@ -94,6 +95,7 @@ namespace Syadeu.Mono
 
             if (m_InitializeOnStart) ManualInitialize(m_DataIdx);
         }
+        [Obsolete]
         public void ManualInitialize(int dataIdx)
         {
             if (Activated || Initialized)

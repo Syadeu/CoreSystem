@@ -8,13 +8,14 @@ using Syadeu.Presentation.Entities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Syadeu.Presentation
 {
     public sealed class CreatureSystem : PresentationSystemEntity<CreatureSystem>
     {
-        private const string c_AttributeWarning = "Attribute({0}) on entity({1}) has invaild value at {2}. Request Ignored.";
+        private const string c_AttributeWarning = "Attribute({0}) on entity({1}) has invaild value. {2}. Request Ignored.";
 
         public override bool EnableBeforePresentation => true;
         public override bool EnableOnPresentation => true;
@@ -22,6 +23,7 @@ namespace Syadeu.Presentation
 
         GameObjectProxySystem m_ProxySystem;
 
+        private readonly List<DataGameObject> m_Creatures = new List<DataGameObject>();
         private readonly Dictionary<Type, List<ICreatureAttributeProcessor>> m_Processors = new Dictionary<Type, List<ICreatureAttributeProcessor>>();
 
         protected override PresentationResult OnInitialize()
@@ -58,76 +60,97 @@ namespace Syadeu.Presentation
             DataGameObject dataObj = m_ProxySystem.CreateNewPrefab(entity.m_PrefabIdx, Vector3.zero, Quaternion.identity, Vector3.one, false,
                 (dataObj, mono) =>
                 {
-                    for (int i = 0; i < entity.m_Attributes.Count; i++)
-                    {
-                        CreatureAttribute att = CreatureDataList.Instance.GetAttribute(entity.m_Attributes[i]);
-                        dataObj.AddComponent(att.GetType());
+                    CreatureBrain brain = (CreatureBrain)mono;
+                    //brain.m_SpawnPointIdx = spawnPointIdx;
+                    brain.m_DataHash = hash;
+                    brain.m_IsSpawnedFromManager = true;
+                    //brain.transform.position = pos;
+                    //brain.transform.SetParent(Instance.transform);
 
-                        InvokeLua(entity, dataObj, mono, att.GetType().Name, att.OnEntityStart);
-                    }
+                    brain.Initialize();
+
+                    //$"{m_DataIdx}: spawnpoint {spawnPointIdx}".ToLog();
+                    //GetCreatureSet(m_DataIdx).m_SpawnRanges[spawnPointIdx].m_InstanceCount++;
+                    brain.m_UniqueIdx = m_Creatures.Count;
+                    m_Creatures.Add(dataObj);
+
+                    //onCreated?.Invoke(brain);
                 });
 
             ProcessEntityOnCreated(this, entity, dataObj);
             return dataObj;
         }
-        private static List<object> ToArgument(GameObject gameObj, DataGameObject dataObj, IList<LuaArg> args)
-        {
-            List<object> temp = new List<object>();
-            for (int i = 0; i < args.Count; i++)
-            {
-                if (TypeHelper.TypeOf<MonoBehaviour>.Type.IsAssignableFrom(args[i].Type))
-                {
-                    temp.Add(gameObj.GetComponent(args[i].Type));
-                }
-                else if (args[i].Type.Equals(TypeHelper.TypeOf<DataGameObject>.Type))
-                {
-                    temp.Add(dataObj);
-                }
-                else if (TypeHelper.TypeOf<DataComponentEntity>.Type.IsAssignableFrom(args[i].Type))
-                {
-                    temp.Add(dataObj.GetComponent(args[i].Type));
-                }
-            }
-            return temp;
-        }
 
-        private static void InvokeLua(Creature entity, DataGameObject dataObj, RecycleableMonobehaviour mono, in string calledAttName, LuaScript scr)
+        private static void InvokeLua(LuaScript scr, Creature entity, DataGameObject dataObj,
+            in string calledAttName, in string calledScriptName)
         {
-            if (scr == null) return;
-            if (!scr.IsValid())
+            if (scr == null || !scr.IsValid())
             {
                 CoreSystem.Logger.LogWarning(Channel.Creature,
-                    string.Format(c_AttributeWarning, calledAttName, entity.m_Name, "OnEntityStart"));
+                    string.Format(c_AttributeWarning, calledAttName, entity.m_Name, $"function({calledScriptName}) is null"));
                 return;
             }
 
             try
             {
-                scr.Invoke(ToArgument(mono.gameObject, dataObj, scr.m_Args));
+                scr.Invoke(ToArgument(/*mono.gameObject, */dataObj, scr.m_Args));
             }
-            catch (ScriptRuntimeException)
+            catch (ScriptRuntimeException ex)
             {
                 CoreSystem.Logger.LogWarning(Channel.Creature,
-                    string.Format(c_AttributeWarning, calledAttName, entity.m_Name, "OnEntityStart"));
+                    string.Format(c_AttributeWarning, calledAttName, entity.m_Name, $"An Error Raised while invoke function({calledScriptName})") +
+                    "\n" + ex.DecoratedMessage);
                 return;
             }
             catch (Exception)
             {
                 throw;
             }
+
+            static List<object> ToArgument(/*GameObject gameObj, */DataGameObject dataObj, IList<LuaArg> args)
+            {
+                List<object> temp = new List<object>();
+                for (int i = 0; i < args.Count; i++)
+                {
+                    //if (TypeHelper.TypeOf<MonoBehaviour>.Type.IsAssignableFrom(args[i].Type))
+                    //{
+                    //    temp.Add(gameObj.GetComponent(args[i].Type));
+                    //}
+                    /*else */if (args[i].Type.Equals(TypeHelper.TypeOf<DataGameObject>.Type))
+                    {
+                        temp.Add(dataObj);
+                    }
+                    else if (TypeHelper.TypeOf<DataComponentEntity>.Type.IsAssignableFrom(args[i].Type))
+                    {
+                        temp.Add(dataObj.GetComponent(args[i].Type));
+                    }
+                    else throw new NotImplementedException();
+                }
+                return temp;
+            }
         }
         private static void ProcessEntityOnCreated(CreatureSystem system, Creature entity, DataGameObject dataObj)
         {
-            for (int i = 0; i < entity.m_Attributes.Count; i++)
+            CreatureAttribute[] attributes = entity.m_Attributes.Select((other) => CreatureDataList.Instance.GetAttribute(other)).ToArray();
+            for (int i = 0; i < attributes.Length; i++)
             {
-                CreatureAttribute att = CreatureDataList.Instance.GetAttribute(entity.m_Attributes[i]);
-                if (system.m_Processors.TryGetValue(att.GetType(), out var processors))
+                CreatureAttribute att = attributes[i];
+                dataObj.AddComponent(att.GetType());
+
+                if (system.m_Processors.TryGetValue(att.GetType(), out List<ICreatureAttributeProcessor> processors))
                 {
                     for (int j = 0; j < processors.Count; j++)
                     {
                         processors[i].OnCreated(att, entity, dataObj);
                     }
                 }
+            }
+
+            for (int i = 0; i < attributes.Length; i++)
+            {
+                InvokeLua(attributes[i].OnEntityStart, entity, dataObj,
+                    calledAttName: attributes[i].GetType().Name,
+                    calledScriptName: "OnEntityStart");
             }
         }
     }
