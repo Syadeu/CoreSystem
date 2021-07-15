@@ -14,10 +14,11 @@ namespace Syadeu.Presentation
         [JsonIgnore] Hash IInternalDataComponent.GameObject => m_GameObject;
         [JsonIgnore] Hash IInternalDataComponent.Idx => m_Idx;
         [JsonIgnore] DataComponentType IInternalDataComponent.Type => DataComponentType.GameObject;
-        [JsonIgnore] bool IInternalDataComponent.HasProxyObject => !transform.m_ProxyIdx.Equals(DataTransform.ProxyNull);
+        [JsonIgnore] bool IInternalDataComponent.HasProxyObject => transform.HasProxyObject;
         [JsonIgnore] bool IInternalDataComponent.ProxyRequested => transform.m_ProxyIdx.Equals(DataTransform.ProxyQueued);
         bool IEquatable<IInternalDataComponent>.Equals(IInternalDataComponent other) => m_Idx.Equals(other.Idx);
         public bool IsValid() => !m_Disposed && !m_GameObject.Equals(Hash.Empty) && !m_Idx.Equals(Hash.Empty) &&
+            PresentationSystem<GameObjectProxySystem>.IsValid() &&
             PresentationSystem<GameObjectProxySystem>.System.m_ComponentList.ContainsKey(m_Idx) &&
             PresentationSystem<GameObjectProxySystem>.System.m_MappedGameObjectIdxes.ContainsKey(m_GameObject);
 
@@ -58,6 +59,12 @@ namespace Syadeu.Presentation
             OnDestory();
             m_Disposed = true;
         }
+
+        internal void InternalOnProxyCreated() => OnProxyCreated();
+        internal void InternalOnProxyRemoved() => OnProxyRemoved();
+
+        protected virtual void OnProxyCreated() { }
+        protected virtual void OnProxyRemoved() { }
         protected virtual void OnDestory() { }
     }
 }

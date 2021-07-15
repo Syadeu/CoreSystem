@@ -28,7 +28,7 @@ namespace Syadeu.Mono
 
         [Space]
         [Tooltip("활성화시, 카메라에 비치지 않으면 이동 메소드가 순간이동을 합니다")]
-        [Obsolete] public bool m_EnableCameraCull = true;
+        //[Obsolete] public bool m_EnableCameraCull = true;
         [SerializeField] private float m_SamplePosDistance = .25f;
 
         private CreatureEntity[] m_Childs = null;
@@ -224,11 +224,11 @@ namespace Syadeu.Mono
         }
         public bool MoveTo(Vector3 worldPosition, Action onCompleted = null, bool force = false)
         {
-            if (m_EnableCameraCull && !PresentationSystem<RenderSystem>.System.IsInCameraScreen(transform.position))
-            {
-                transform.position = worldPosition;
-                return true;
-            }
+            //if (!PresentationSystem<RenderSystem>.System.IsInCameraScreen(transform.position))
+            //{
+            //    transform.position = worldPosition;
+            //    return true;
+            //}
 
             if (NavMesh.SamplePosition(transform.position, out _, m_SamplePosDistance, m_NavMeshAgent.areaMask) &&
                 NavMesh.SamplePosition(worldPosition, out _, m_SamplePosDistance, m_NavMeshAgent.areaMask))
@@ -302,12 +302,12 @@ namespace Syadeu.Mono
 
             while (sqr > .25f)
             {
-                if (m_EnableCameraCull && !PresentationSystem<RenderSystem>.System.IsInCameraScreen(transform.position))
-                {
-                    //m_NavMeshAgent.ResetPath();
-                    transform.position = worldPosition;
-                    break;
-                }
+                //if (m_EnableCameraCull && !PresentationSystem<RenderSystem>.System.IsInCameraScreen(transform.position))
+                //{
+                //    //m_NavMeshAgent.ResetPath();
+                //    transform.position = worldPosition;
+                //    break;
+                //}
 
                 if (m_NavMeshAgent.pathStatus == NavMeshPathStatus.PathInvalid ||
                     !NavMesh.SamplePosition(transform.position, out _, m_SamplePosDistance, m_NavMeshAgent.areaMask))
@@ -317,6 +317,7 @@ namespace Syadeu.Mono
                 }
 
                 sqr = (worldPosition - transform.position).sqrMagnitude;
+                m_DataObject.transform.SynchronizeWithProxy();
                 yield return null;
             }
 
@@ -329,11 +330,11 @@ namespace Syadeu.Mono
 
             while (sqr > .25f)
             {
-                if (m_EnableCameraCull && !PresentationSystem<RenderSystem>.System.IsInCameraScreen(transform.position))
-                {
-                    transform.position = worldPosition;
-                    yield break;
-                }
+                //if (m_EnableCameraCull && !PresentationSystem<RenderSystem>.System.IsInCameraScreen(transform.position))
+                //{
+                //    transform.position = worldPosition;
+                //    yield break;
+                //}
 
                 if (NavMesh.SamplePosition(worldPosition, out _, m_SamplePosDistance, m_NavMeshAgent.areaMask) &&
                     NavMesh.SamplePosition(transform.position, out _, m_SamplePosDistance, m_NavMeshAgent.areaMask))
@@ -346,6 +347,7 @@ namespace Syadeu.Mono
                 targetAxis = (worldPosition - transform.position).normalized * m_NavMeshAgent.speed * 1.87f;
 
                 transform.position = Vector3.Lerp(transform.position, transform.position + targetAxis, Time.deltaTime * m_NavMeshAgent.angularSpeed);
+                m_DataObject.transform.SynchronizeWithProxy();
                 yield return null;
             }
         }

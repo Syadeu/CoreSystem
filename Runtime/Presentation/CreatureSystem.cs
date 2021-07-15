@@ -33,8 +33,6 @@ namespace Syadeu.Presentation
         #region Presentation Methods
         protected override PresentationResult OnInitializeAsync()
         {
-            RequestSystem<GameObjectProxySystem>((other) => m_ProxySystem = other);
-
             m_CreatureIdxes = new NativeList<Hash>(1000, Allocator.Persistent);
             m_CreatureIdxSet = new NativeHashSet<Hash>(1000, Allocator.Persistent);
             m_DeadCreatureIdxSet = new NativeHashSet<Hash>(1000, Allocator.Persistent);
@@ -46,6 +44,7 @@ namespace Syadeu.Presentation
             for (int i = 0; i < processors.Length; i++)
             {
                 ICreatureAttributeProcessor processor = (ICreatureAttributeProcessor)Activator.CreateInstance(processors[i]);
+                processor.CreatureSystem = this;
                 if (!m_Processors.TryGetValue(processor.TargetAttribute, out var values))
                 {
                     values = new List<ICreatureAttributeProcessor>();
@@ -53,6 +52,18 @@ namespace Syadeu.Presentation
                 }
                 values.Add(processor);
             }
+            RequestSystem<GameObjectProxySystem>((other) =>
+            {
+                m_ProxySystem = other;
+
+                foreach (var item in m_Processors.Values)
+                {
+                    for (int i = 0; i < item.Count; i++)
+                    {
+                        item[i].ProxySystem = m_ProxySystem;
+                    }
+                }
+            });
 
             return base.OnInitializeAsync();
         }

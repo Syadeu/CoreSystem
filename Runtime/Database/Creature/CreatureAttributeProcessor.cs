@@ -7,6 +7,12 @@ namespace Syadeu.Database.CreatureData.Attributes
 {
     public abstract class CreatureAttributeProcessor : ICreatureAttributeProcessor
     {
+        GameObjectProxySystem ICreatureAttributeProcessor.ProxySystem { get; set; }
+        CreatureSystem ICreatureAttributeProcessor.CreatureSystem { get; set; }
+
+        protected GameObjectProxySystem ProxySystem => ((ICreatureAttributeProcessor)this).ProxySystem;
+        protected CreatureSystem CreatureSystem => ((ICreatureAttributeProcessor)this).CreatureSystem;
+
         Type ICreatureAttributeProcessor.TargetAttribute => TargetAttribute;
         void ICreatureAttributeProcessor.OnCreated(CreatureAttribute attribute, DataGameObject dataObj) => OnCreated(attribute, dataObj);
         void ICreatureAttributeProcessor.OnPresentation(CreatureAttribute attribute, DataGameObject dataObj) => OnPresentation(attribute, dataObj);
@@ -21,6 +27,12 @@ namespace Syadeu.Database.CreatureData.Attributes
     }
     public abstract class CreatureAttributeProcessor<T> : ICreatureAttributeProcessor where T : CreatureAttribute
     {
+        GameObjectProxySystem ICreatureAttributeProcessor.ProxySystem { get; set; }
+        CreatureSystem ICreatureAttributeProcessor.CreatureSystem { get; set; }
+
+        protected GameObjectProxySystem ProxySystem => ((ICreatureAttributeProcessor)this).ProxySystem;
+        protected CreatureSystem CreatureSystem => ((ICreatureAttributeProcessor)this).CreatureSystem;
+
         Type ICreatureAttributeProcessor.TargetAttribute => TargetAttribute;
         void ICreatureAttributeProcessor.OnCreated(CreatureAttribute attribute, DataGameObject dataObj) => OnCreated((T)attribute, dataObj);
         void ICreatureAttributeProcessor.OnPresentation(CreatureAttribute attribute, DataGameObject dataObj) => OnPresentation((T)attribute, dataObj);

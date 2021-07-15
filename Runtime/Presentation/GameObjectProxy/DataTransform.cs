@@ -22,6 +22,8 @@ namespace Syadeu.Presentation
         internal int m_PrefabIdx;
         internal bool m_EnableCull;
 
+        internal bool m_IsVisible;
+
         Hash IInternalDataComponent.GameObject => m_GameObject;
         Hash IInternalDataComponent.Idx => m_Idx;
         DataComponentType IInternalDataComponent.Type => DataComponentType.Transform;
@@ -36,7 +38,6 @@ namespace Syadeu.Presentation
 
         internal Vector3 m_Position;
         internal quaternion m_Rotation;
-
         internal Vector3 m_LocalScale;
 
         internal RecycleableMonobehaviour ProxyObject
@@ -60,12 +61,38 @@ namespace Syadeu.Presentation
             if (!PresentationSystem<RenderSystem>.System.IsInCameraScreen(m_Position)) return;
             PresentationSystem<GameObjectProxySystem>.System.RequestUpdateTransform(m_Idx);
         }
-        public bool IsValid() => !m_GameObject.Equals(Hash.Empty) && !m_Idx.Equals(Hash.Empty) && 
+
+        public bool IsValid() => !m_GameObject.Equals(Hash.Empty) && !m_Idx.Equals(Hash.Empty) &&
+            PresentationSystem<GameObjectProxySystem>.IsValid() &&
             PresentationSystem<GameObjectProxySystem>.System.m_MappedTransformIdxes.ContainsKey(m_Idx) &&
             PresentationSystem<GameObjectProxySystem>.System.m_MappedGameObjectIdxes.ContainsKey(m_GameObject);
+        public bool IsVisible()
+        {
+            if (!IsValid()) return false;
+            return GetRef().m_IsVisible;
+        }
+        public void SynchronizeWithProxy()
+        {
+            if (!IsValid()) return;
+
+            PresentationSystem<GameObjectProxySystem>.System.DownloadDataTransform(m_Idx);
+        }
 
 #pragma warning disable IDE1006 // Naming Styles
 #line hidden
+        public DataGameObject gameObject
+        {
+            get
+            {
+                if (!IsValid())
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);
+                    return default;
+                }
+                return PresentationSystem<GameObjectProxySystem>.System.GetDataGameObject(m_GameObject);
+            }
+        }
+
         /// <summary>
         /// <see langword="true"/>일 경우, 화면 밖에 있을때 자동으로 프록시 오브젝트를 할당 해제합니다.
         /// </summary>

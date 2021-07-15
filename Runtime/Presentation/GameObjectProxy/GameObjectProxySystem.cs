@@ -29,6 +29,11 @@ namespace Syadeu.Presentation
         public override bool EnableAfterPresentation => true;
 
         public event Action<DataGameObject> OnDataObjectDestoryAsync;
+        public event Action<DataGameObject> OnDataObjectVisibleAsync;
+        public event Action<DataGameObject> OnDataObjectInvisibleAsync;
+
+        public event Action<DataGameObject> OnDataObjectProxyCreated;
+        public event Action<DataGameObject> OnDataObjectProxyRemoved;
 
         internal NativeHashMap<Hash, int> m_MappedGameObjectIdxes = new NativeHashMap<Hash, int>(1000, Allocator.Persistent);
         internal NativeHashMap<Hash, int> m_MappedTransformIdxes = new NativeHashMap<Hash, int>(1000, Allocator.Persistent);
@@ -309,7 +314,7 @@ namespace Syadeu.Presentation
 
         public DataGameObject CreateNewPrefab(int prefabIdx, Vector3 pos, Quaternion rot)
             => CreateNewPrefab(prefabIdx, pos, rot, Vector3.one, true, null);
-        public DataGameObject CreateNewPrefab(int prefabIdx, 
+        internal DataGameObject CreateNewPrefab(int prefabIdx, 
             Vector3 pos, Quaternion rot, Vector3 localScale, bool enableCull,
             Action<DataGameObject, RecycleableMonobehaviour> onCompleted)
         {
@@ -423,6 +428,9 @@ namespace Syadeu.Presentation
 
                         datas.m_GameObject = objHash;
                         onCompleted?.Invoke(m_MappedGameObjects[m_MappedGameObjectIdxes[objHash]], other);
+
+                        tr.gameObject.OnProxyCreated();
+                        OnDataObjectProxyCreated?.Invoke(tr.gameObject);
                     });
                 }
                 else
@@ -443,7 +451,11 @@ namespace Syadeu.Presentation
                     }
 
                     datas.m_GameObject = objHash;
+                    if (other.InitializeOnCall) other.Initialize();
                     onCompleted?.Invoke(m_MappedGameObjects[m_MappedGameObjectIdxes[objHash]], other);
+
+                    tr.gameObject.OnProxyCreated();
+                    OnDataObjectProxyCreated?.Invoke(tr.gameObject);
                 }
             });
         }
@@ -455,6 +467,8 @@ namespace Syadeu.Presentation
             int2 proxyIdx = tr.m_ProxyIdx;
             CoreSystem.Logger.False(proxyIdx.Equals(DataTransform.ProxyNull), $"proxy index null {proxyIdx}");
 
+            tr.gameObject.OnProxyRemoved();
+            OnDataObjectProxyRemoved?.Invoke(tr.gameObject);
             tr.m_ProxyIdx = DataTransform.ProxyNull;
 
             m_RequestedJobs.Enqueue(() =>
@@ -485,29 +499,14 @@ namespace Syadeu.Presentation
             });
         }
 
-        private void DownloadDataTransform(Hash trHash)
+        unsafe internal void DownloadDataTransform(Hash trHash)
         {
-            int idx = m_MappedTransformIdxes[trHash];
-            DataTransform boxed = (DataTransform)m_MappedTransforms[idx];
-            //Transform oriTr = PrefabManager.Instance.RecycleObjects[boxed.m_Idx.x].Instances[boxed.m_Idx.y].transform;
+            ref DataTransform boxed = ref *GetDataTransformPointer(trHash);
             Transform oriTr = boxed.ProxyObject.transform;
 
             boxed.m_Position = new ThreadSafe.Vector3(oriTr.position);
-            //boxed.m_LocalPosition = new ThreadSafe.Vector3(oriTr.localPosition);
-
-            //boxed.m_EulerAngles = new ThreadSafe.Vector3(oriTr.eulerAngles);
-            //boxed.m_LocalEulerAngles = new ThreadSafe.Vector3(oriTr.localEulerAngles);
             boxed.m_Rotation = oriTr.rotation;
-            //boxed.m_LocalRotation = oriTr.localRotation;
-
-            //boxed.m_Right = new ThreadSafe.Vector3(oriTr.right);
-            //boxed.m_Up = new ThreadSafe.Vector3(oriTr.up);
-            //boxed.m_Forward = new ThreadSafe.Vector3(oriTr.forward);
-
-            //boxed.m_LossyScale = new ThreadSafe.Vector3(oriTr.lossyScale);
             boxed.m_LocalScale = new ThreadSafe.Vector3(oriTr.localScale);
-
-            m_MappedTransforms[idx] = boxed;
         }
         unsafe private void UpdateDataTransform(Hash trHash)
         {
@@ -554,25 +553,37 @@ namespace Syadeu.Presentation
 
                         if (readOnly[j] is DataTransform tr)
                         {
-                            if (!tr.m_EnableCull || !tr.IsValid()) continue;
+                            if (!tr.IsValid()) continue;
                             if (m_RenderSystem.IsInCameraScreen(tr.position))
                             {
                                 if (!readOnly[j].ProxyRequested &&
                                     !readOnly[j].HasProxyObject)
                                 {
                                     //"in".ToLog();
-                                    m_RequestProxies.Enqueue(tr);
+                                    if (tr.m_EnableCull) m_RequestProxies.Enqueue(tr);
+                                }
+
+                                if (!tr.m_IsVisible)
+                                {
+                                    tr.m_IsVisible = true;
+                                    OnDataObjectVisibleAsync?.Invoke(tr.gameObject);
                                 }
                             }
                             else
                             {
-                                if (readOnly[j].HasProxyObject)
+                                if (tr.m_EnableCull && readOnly[j].HasProxyObject)
                                 {
                                     if (m_RemoveProxies.Contains(tr))
                                     {
                                         throw new Exception();
                                     }
                                     m_RemoveProxies.Enqueue(tr);
+                                }
+
+                                if (tr.m_IsVisible)
+                                {
+                                    tr.m_IsVisible = false;
+                                    OnDataObjectInvisibleAsync?.Invoke(tr.gameObject);
                                 }
                             }
                         }

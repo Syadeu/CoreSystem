@@ -246,5 +246,30 @@ namespace Syadeu.Presentation
             obj.m_Idx = Hash.Empty;
             obj.m_Transform = Hash.Empty;
         }
+
+        internal void OnProxyCreated()
+        {
+            if (!PresentationSystem<GameObjectProxySystem>.System.m_ComponentList.TryGetValue(m_Idx, out var list))
+            {
+                return;
+            }
+
+            for (int i = 0; i < list.Count; i++)
+            {
+                list[i].InternalOnProxyCreated();
+            }
+        }
+        internal void OnProxyRemoved()
+        {
+            if (!PresentationSystem<GameObjectProxySystem>.System.m_ComponentList.TryGetValue(m_Idx, out var list))
+            {
+                return;
+            }
+
+            for (int i = 0; i < list.Count; i++)
+            {
+                list[i].InternalOnProxyRemoved();
+            }
+        }
     }
 }
