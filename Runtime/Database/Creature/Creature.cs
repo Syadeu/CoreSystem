@@ -1,7 +1,9 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Database;
 using Syadeu.Database.Converters;
+using Syadeu.Database.Lua;
 using Syadeu.Internal;
+using Syadeu.Mono;
 using Syadeu.Presentation;
 using System;
 using System.Collections.Generic;
@@ -26,13 +28,29 @@ namespace Syadeu.Database.CreatureData
 
     public sealed class CreatureOnSpawnAttribute : CreatureAttribute
     {
-        //[JsonProperty(Order = 3, PropertyName = "OnSpawnLuaFunc")] public LuaScript m_OnSpawnLuaFunc;
+        [JsonProperty(Order = 0, PropertyName = "OnSpawn")] public LuaScriptContainer m_OnSpawn;
     }
     public sealed class CreatureOnSpawnProcessor : CreatureAttributeProcessor<CreatureOnSpawnAttribute>
     {
-        protected override void OnCreated(CreatureOnSpawnAttribute attribute, Creature creature, DataGameObject dataObj)
+        const string c_ScriptError = "On Spawn Attribute has an invalid lua function({0}) at Entity({1}). Request ignored.";
+
+        protected override void OnCreated(CreatureOnSpawnAttribute attribute, Creature creature, DataGameObject dataObj, CreatureBrain monoObj)
         {
             "in".ToLog();
+            if (attribute.m_OnSpawn.m_Scripts == null) return;
+            for (int i = 0; i < attribute.m_OnSpawn.m_Scripts.Count; i++)
+            {
+                if (attribute.m_OnSpawn.m_Scripts[i] == null) continue;
+                if (!attribute.m_OnSpawn.m_Scripts[i].IsValid())
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Lua, string.Format(c_ScriptError, $"OnSpawn: {i}", creature.m_Name));
+                    continue;
+                }
+
+                CreatureSystem.InvokeLua(attribute.m_OnSpawn.m_Scripts[i], creature, dataObj, monoObj,
+                    calledAttName: TypeHelper.TypeOf<CreatureOnSpawnAttribute>.Name,
+                    calledScriptName: "OnSpawn");
+            }
         }
     }
 }

@@ -81,7 +81,7 @@ namespace Syadeu.Presentation
             return dataObj;
         }
 
-        private static void InvokeLua(LuaScript scr, Creature entity, DataGameObject dataObj, RecycleableMonobehaviour mono,
+        public static void InvokeLua(LuaScript scr, Creature entity, DataGameObject dataObj, RecycleableMonobehaviour mono,
             in string calledAttName, in string calledScriptName)
         {
             if (scr == null || !scr.IsValid())
@@ -91,9 +91,10 @@ namespace Syadeu.Presentation
                 return;
             }
 
+            List<object> args = ToArgument(mono.gameObject, dataObj, scr.m_Args);
             try
             {
-                scr.Invoke(ToArgument(mono.gameObject, dataObj, scr.m_Args));
+                scr.Invoke(args);
             }
             catch (ScriptRuntimeException runtimeEx)
             {
@@ -112,6 +113,7 @@ namespace Syadeu.Presentation
 
             static List<object> ToArgument(GameObject gameObj, DataGameObject dataObj, IList<LuaArg> args)
             {
+                if (args == null || args.Count == 0) return null;
                 List<object> temp = new List<object>();
                 for (int i = 0; i < args.Count; i++)
                 {
@@ -127,7 +129,7 @@ namespace Syadeu.Presentation
                     {
                         temp.Add(dataObj.GetComponent(args[i].Type));
                     }
-                    else throw new NotImplementedException();
+                    else throw new NotImplementedException($"{args[i].Type.Name}");
                 }
                 return temp;
             }
@@ -144,17 +146,19 @@ namespace Syadeu.Presentation
                 {
                     for (int j = 0; j < processors.Count; j++)
                     {
-                        processors[i].OnCreated(att, entity, dataObj);
+                        processors[i].OnCreated(att, entity, dataObj, (CreatureBrain)mono);
                     }
                 }
             }
 
-            for (int i = 0; i < attributes.Length; i++)
-            {
-                InvokeLua(attributes[i].OnEntityStart, entity, dataObj, mono,
-                    calledAttName: attributes[i].GetType().Name,
-                    calledScriptName: "OnEntityStart");
-            }
+            //for (int i = 0; i < attributes.Length; i++)
+            //{
+            //    if (attributes[i].OnEntityStart == null || !attributes[i].OnEntityStart.IsValid()) continue;
+
+            //    InvokeLua(attributes[i].OnEntityStart, entity, dataObj, mono,
+            //        calledAttName: attributes[i].GetType().Name,
+            //        calledScriptName: "OnEntityStart");
+            //}
         }
     }
 }
