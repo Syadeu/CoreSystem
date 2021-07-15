@@ -1,5 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Database.CreatureData;
+using Syadeu.Internal;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -27,6 +29,20 @@ namespace Syadeu.Database
             {
                 m_Entites.Add(JsonConvert.DeserializeObject<Creature>(File.ReadAllText(entityPaths[i])));
             }
+
+            string[] attPaths = Directory.GetFiles(CoreSystemFolder.CreatureAttributePath, jsonPostfix, SearchOption.AllDirectories);
+            m_Attributes = new List<ICreatureAttribute>();
+            Type[] attTypes = TypeHelper.GetTypes((other) => other.GetInterface("ICreatureAttribute") != null);
+            for (int i = 0; i < attPaths.Length; i++)
+            {
+                string lastFold = Path.GetFileName(Path.GetDirectoryName(attPaths[i]));
+                Type t = attTypes.FindFor((other) => other.Name.Equals(lastFold));
+                //$"{lastFold} : {t?.Name}".ToLog();
+
+                var temp = (ICreatureAttribute)JsonConvert.DeserializeObject(File.ReadAllText(attPaths[i]), t);
+                //$"{temp.GetType().Name}".ToLog();
+                m_Attributes.Add(temp);
+            }
         }
         public void SaveData()
         {
@@ -52,15 +68,33 @@ namespace Syadeu.Database
                         JsonConvert.SerializeObject(m_Entites[i], Formatting.Indented));
                 }
             }
+
+            if (m_Attributes != null)
+            {
+                string[] atts = Directory.GetFiles(CoreSystemFolder.CreatureAttributePath, jsonPostfix, SearchOption.AllDirectories);
+                for (int i = 0; i < atts.Length; i++)
+                {
+                    string fileName = Path.GetFileNameWithoutExtension(atts[i]);
+                    if (m_Attributes.Where((other) => other.Name.Equals(fileName)).Count() == 0)
+                    {
+                        File.Delete(atts[i]);
+                    }
+                }
+
+                for (int i = 0; i < m_Attributes.Count; i++)
+                {
+                    string attPath = Path.Combine(CoreSystemFolder.CreatureAttributePath, m_Attributes[i].GetType().Name);
+                    if (!Directory.Exists(attPath)) Directory.CreateDirectory(attPath);
+
+                    if (m_Attributes[i].Hash.Equals(Hash.Empty)) m_Attributes[i].Hash = Hash.NewHash();
+
+                    File.WriteAllText($"{attPath}/{m_Attributes[i].Name}{json}",
+                        JsonConvert.SerializeObject(m_Attributes[i], Formatting.Indented));
+                }
+            }
         }
 
-        public Creature GetEntity(Hash hash)
-        {
-            for (int i = 0; i < m_Entites.Count; i++)
-            {
-                if (m_Entites[i].m_Hash.Equals(hash)) return m_Entites[i];
-            }
-            return null;
-        }
+        public Creature GetEntity(Hash hash) => m_Entites.FindFor((other) => other.m_Hash.Equals(hash));
+        public ICreatureAttribute GetAttribute(Hash hash) => m_Attributes.FindFor((other) => other.Hash.Equals(hash));
     }
 }

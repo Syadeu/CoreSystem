@@ -5,8 +5,11 @@ using System.Collections;
 
 namespace Syadeu.Presentation.Entities
 {
-    /// <summary>
+    /// <summary xml:lang="ko">
     /// <seealso cref="PresentationManager"/>에서 수행할 시스템의 Entity 클래스입니다.
+    /// </summary>
+    /// <summary xml:lang="en">
+    /// <seealso cref="PresentationManager"/>
     /// </summary>
     /// <remarks>
     /// 인스턴스를 생성하여 인스턴스 값으로만 작동하도록 제작되었습니다.<br/>

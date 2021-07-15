@@ -16,6 +16,8 @@ namespace SyadeuEditor
     {
         private VerticalTreeView treeView;
 
+        private static string[] m_AttributeNames;
+
         private void OnEnable()
         {
             Asset.m_Entites = null;
@@ -24,6 +26,14 @@ namespace SyadeuEditor
 
             LuaEditor.Reload();
             Asset.LoadData();
+
+            if (Asset.m_Attributes == null) m_AttributeNames = Array.Empty<string>();
+            else
+            {
+                var temp = Asset.m_Attributes.Select((other) => other.Name).ToList();
+                temp.Insert(0, "None");
+                m_AttributeNames = temp.ToArray();
+            }
 
             List<object> tempList = new List<object>();
             if (Asset.m_Entites != null) tempList.AddRange(Asset.m_Entites);
@@ -53,11 +63,12 @@ namespace SyadeuEditor
                         Type[] types = TypeHelper.GetTypes((other) => other.GetInterface("ICreatureAttribute") != null);
                         for (int i = 0; i < types.Length; i++)
                         {
-                            menu.AddItem(new GUIContent(types[i].Name), false, () =>
+                            Type target = types[i];
+                            menu.AddItem(new GUIContent(target.Name), false, () =>
                             {
                                 if (Asset.m_Attributes == null) Asset.m_Attributes = new List<ICreatureAttribute>();
 
-                                Asset.m_Attributes.Add((ICreatureAttribute)Activator.CreateInstance(types[i]));
+                                Asset.m_Attributes.Add((ICreatureAttribute)Activator.CreateInstance(target));
                                 RefreshTreeView();
                             });
                         }
@@ -88,6 +99,10 @@ namespace SyadeuEditor
         }
         private void RefreshTreeView()
         {
+            var temp = Asset.m_Attributes.Select((other) => other.Name).ToList();
+            temp.Insert(0, "None");
+            m_AttributeNames = temp.ToArray();
+
             List<object> tempList = new List<object>();
             if (Asset.m_Entites != null) tempList.AddRange(Asset.m_Entites);
             if (Asset.m_Attributes != null) tempList.AddRange(Asset.m_Attributes);
@@ -123,7 +138,7 @@ namespace SyadeuEditor
             EditorUtils.SectorLine();
             EditorGUILayout.Space();
 
-            if (treeView == null) return;
+            if (treeView == null) OnEnable();
             treeView.OnGUI();
 
             EditorGUILayout.Space();
@@ -142,30 +157,72 @@ namespace SyadeuEditor
                 Target.m_Name = EditorGUILayout.TextField("Name: ", Target.m_Name);
                 EditorGUILayout.TextField("Hash: ", Target.m_Hash.ToString());
                 Target.m_PrefabIdx = PrefabListEditor.DrawPrefabSelector(Target.m_PrefabIdx);
+
+                EditorGUILayout.BeginVertical(EditorUtils.Box);
+                {
+                    if (Target.m_Attributes == null) Target.m_Attributes = new List<Hash>();
+                    EditorGUILayout.BeginHorizontal();
+                    EditorUtils.StringRich("Attributes", 15);
+                    if (GUILayout.Button("+", GUILayout.Width(20)))
+                    {
+                        Target.m_Attributes.Add(Hash.Empty);
+                        return;
+                    }
+                    if (Target.m_Attributes.Count > 0 && GUILayout.Button("-", GUILayout.Width(20)))
+                    {
+                        Target.m_Attributes.RemoveAt(Target.m_Attributes.Count - 1);
+                    }
+                    EditorGUILayout.EndHorizontal();
+                    for (int i = 0; i < Target.m_Attributes.Count; i++)
+                    {
+                        int idx = EditorGUILayout.Popup(GetSelectedAttributeIdx(Target.m_Attributes[i]), m_AttributeNames);
+                        if (idx == 0)
+                        {
+                            Target.m_Attributes[i] = Hash.Empty;
+                        }
+                        else Target.m_Attributes[i] = CreatureDataList.Instance.m_Attributes[idx - 1].Hash;
+                    }
+                }
+                EditorGUILayout.EndVertical();
+
                 Target.m_Values.DrawValueContainer("Values");
 
                 Target.m_OnSpawn.DrawGUI("OnSpawn");
             }
+
+            private int GetSelectedAttributeIdx(Hash attHash)
+            {
+                if (attHash.Equals(Hash.Empty)) return 0;
+
+                for (int i = 0; i < CreatureDataList.Instance.m_Attributes.Count; i++)
+                {
+                    if (CreatureDataList.Instance.m_Attributes[i].Hash.Equals(attHash)) return i + 1;
+                }
+                return 0;
+            }
         }
         private class TreeCreatureAttributeElement : VerticalTreeElement<ICreatureAttribute>
         {
-            public override string Name => Target.Name;
+            public override string Name => $"{Target.GetType().Name}: {Target.Name}";
             public override bool HideElementInTree
                 => Tree.SelectedToolbar != 1 || base.HideElementInTree;
 
             MemberInfo[] m_Members;
-
+            
             public TreeCreatureAttributeElement(VerticalTreeView treeView, ICreatureAttribute att) : base(treeView, att)
             {
-                m_Members = att.GetType().GetMembers(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-                    .Where((other) => other.GetCustomAttribute<NonSerializedAttribute>() == null).ToArray();
+                m_Members = ReflectionHelper.GetSerializeMemberInfos(att.GetType());
 
             }
             public override void OnGUI()
             {
+                EditorUtils.StringRich(Target.GetType().Name, 15, true);
+
                 for (int i = 0; i < m_Members.Length; i++)
                 {
-                    EditorGUILayout.LabelField($"{m_Members[i].Name}: {m_Members[i].MemberType}");
+                    //string name = ReflectionHelper.SerializeMemberInfoName(m_Members[i]);
+                    //EditorGUILayout.LabelField($"{name}: {m_Members[i].MemberType}");
+                    ReflectionHelperEditor.DrawMember(Target, m_Members[i]);
                 }
             }
         }

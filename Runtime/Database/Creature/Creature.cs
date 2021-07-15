@@ -5,6 +5,7 @@ using Syadeu.Database.Lua;
 using Syadeu.Internal;
 using System;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
 using UnityEngine;
 
 namespace Syadeu.Database.CreatureData
@@ -12,7 +13,7 @@ namespace Syadeu.Database.CreatureData
     [Serializable]
     public sealed class Creature
     {
-        [JsonProperty(Order = 0, PropertyName = "Name")] public string m_Name;
+        [JsonProperty(Order = 0, PropertyName = "Name")] public string m_Name = "New Creature Entity";
         [JsonProperty(Order = 1, PropertyName = "Hash")] public Hash m_Hash;
         [JsonProperty(Order = 2, PropertyName = "PrefabIdx")] public int m_PrefabIdx;
         [JsonProperty(Order = 3, PropertyName = "Attributes")] public List<Hash> m_Attributes;
@@ -30,26 +31,26 @@ namespace Syadeu.Database.CreatureData
     //}
     public interface ICreatureAttribute
     {
-        string Name { get; }
-        Hash Hash { get; }
-        ValuePairContainer Values { get; }
+        [DataMember] [JsonProperty(Order = -3)] string Name { get; }
+        [DataMember] [JsonProperty(Order = -2)] Hash Hash { get; set; }
+        [DataMember] [JsonProperty(Order = -1)] ValuePairContainer Values { get; }
     }
 
-    [Serializable]
+    [DataContract]
     public class CreatureStatAttribute : ICreatureAttribute
     {
-        [JsonProperty(Order = 0)] public string Name { get; set; }
-        [JsonProperty(Order = 1)] public Hash Hash { get; set; }
-        [JsonProperty(Order = 2)] public ValuePairContainer Values { get; set; }
+        public string Name { get; set; } = "New Stat Attribute";
+        public Hash Hash { get; set; }
+        public ValuePairContainer Values { get; set; }
 
         [JsonProperty(Order = 3, PropertyName = "Stats")] public ValuePairContainer m_Stats;
     }
-    [Serializable]
+    [DataContract]
     public class CreatureOnSpawnAttribute : ICreatureAttribute
     {
-        [JsonProperty(Order = 0)] public string Name { get; set; }
-        [JsonProperty(Order = 1)] public Hash Hash { get; set; }
-        [JsonProperty(Order = 2)] public ValuePairContainer Values { get; set; }
+        public string Name { get; set; } = "New OnSpawn Attribute";
+        public Hash Hash { get; set; }
+        public ValuePairContainer Values { get; set; }
 
         [JsonProperty(Order = 3, PropertyName = "OnSpawnLuaFunc")] public LuaScript m_OnSpawnLuaFunc;
     }
