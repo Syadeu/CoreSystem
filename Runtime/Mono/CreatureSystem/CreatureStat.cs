@@ -10,7 +10,11 @@ namespace Syadeu.Mono
         [SerializeField] private ValuePairContainer m_ExclusiveValues = new ValuePairContainer();
         [SerializeField] private ValuePairContainer m_Values = new ValuePairContainer();
 
-        public ValuePairContainer Values => m_Values;
+        public ValuePairContainer Values
+        {
+            get => m_Values;
+            set => m_Values = value;
+        }
 
         public ValuePair this[Hash hash]
         {

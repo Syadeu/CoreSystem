@@ -25,6 +25,20 @@ namespace Syadeu.Database.CreatureData
     {
         [JsonProperty(Order = 3, PropertyName = "Stats")] public ValuePairContainer m_Stats;
     }
+    public sealed class CreatureStatProcessor : CreatureAttributeProcessor<CreatureStatAttribute>
+    {
+        protected override void OnCreated(CreatureStatAttribute attribute, Creature creature, DataGameObject dataObj, CreatureBrain monoObj)
+        {
+            CreatureStat stat = monoObj.Stat;
+            if (stat == null)
+            {
+                stat = monoObj.gameObject.AddComponent<CreatureStat>();
+                monoObj.InitializeCreatureEntity(stat);
+            }
+
+            stat.Values = attribute.m_Stats;
+        }
+    }
 
     public sealed class CreatureOnSpawnAttribute : CreatureAttribute
     {

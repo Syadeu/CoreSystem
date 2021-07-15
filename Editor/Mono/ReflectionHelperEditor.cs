@@ -105,7 +105,14 @@ namespace SyadeuEditor
             }
             else if (declaredType.Equals(TypeHelper.TypeOf<ValuePairContainer>.Type))
             {
-                ((ValuePairContainer)getter.Invoke(ins)).DrawValueContainer(name);
+                ValuePairContainer container = (ValuePairContainer)getter.Invoke(ins);
+                if (container == null)
+                {
+                    container = new ValuePairContainer();
+                    setter.Invoke(ins, container);
+                }
+
+                container.DrawValueContainer(name);
             }
             else if (declaredType.Equals(TypeHelper.TypeOf<LuaScript>.Type))
             {

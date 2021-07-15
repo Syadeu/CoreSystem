@@ -12,7 +12,7 @@ namespace Syadeu.Database
     [Serializable]
     public sealed class ValuePairContainer : IList, ICloneable
     {
-        [UnityEngine.SerializeReference][JsonProperty] private ValuePair[] m_Values;
+        [UnityEngine.SerializeReference][JsonProperty(Order = 0, PropertyName = "Values")] private ValuePair[] m_Values;
         [MoonSharpHidden] public ValuePair this[int i]
         {
             get => m_Values[i];
@@ -25,14 +25,18 @@ namespace Syadeu.Database
         }
         [JsonIgnore] public int Count => m_Values.Length;
 
-        public bool IsFixedSize => false;
-        public bool IsReadOnly => false;
-        public bool IsSynchronized => throw new NotImplementedException();
-        public object SyncRoot => throw new NotImplementedException();
+        [JsonIgnore] public bool IsFixedSize => false;
+        [JsonIgnore] public bool IsReadOnly => false;
+        [JsonIgnore] public bool IsSynchronized => throw new NotImplementedException();
+        [JsonIgnore] public object SyncRoot => throw new NotImplementedException();
 
         [MoonSharpHidden] public ValuePairContainer(params ValuePair[] values)
         {
             m_Values = values == null ? new ValuePair[0] : values;
+        }
+        [JsonConstructor] public ValuePairContainer()
+        {
+            m_Values = Array.Empty<ValuePair>();
         }
 
         private int GetValuePairIdx(string name)
@@ -141,7 +145,7 @@ namespace Syadeu.Database
             temp.AddRange(values);
             m_Values = temp.ToArray();
         }
-        public void AddRange(ValuePairContainer container) => AddRange(container.m_Values);
+        public void AddRange(ValuePairContainer container) => AddRange(((ValuePairContainer)container.Clone()).m_Values);
 
         public void Clear() => m_Values = new ValuePair[0];
         public void Remove(object item)

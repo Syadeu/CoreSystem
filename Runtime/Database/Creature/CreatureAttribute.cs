@@ -9,8 +9,5 @@ namespace Syadeu.Database.CreatureData
     {
         public string Name { get; set; } = "New Attribute";
         public Hash Hash { get; set; }
-        public ValuePairContainer Values { get; set; }
-        //public LuaScript OnEntityStart { get; set; }
-        //public LuaScript OnEntityDestory { get; set; }
     }
 }

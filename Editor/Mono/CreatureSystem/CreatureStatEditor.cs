@@ -63,7 +63,7 @@ namespace SyadeuEditor
                 EditorUtility.SetDirty(Asset);
             }
 
-            EditorGUI.BeginDisabledGroup(true);
+            EditorGUI.BeginDisabledGroup(!Application.isPlaying);
             m_ActualValues.DrawValueContainer("Actual Values", ValuePairEditor.DrawMenu.None, null);
             EditorGUI.EndDisabledGroup();
 

@@ -98,6 +98,7 @@ namespace Syadeu.Database
         }
 
         public Creature GetEntity(Hash hash) => m_Entites.FindFor((other) => other.m_Hash.Equals(hash));
+        public Creature GetCreature(string name) => m_Entites.FindFor((other) => other.m_Name.Equals(name));
         public CreatureAttribute GetAttribute(Hash hash) => m_Attributes.FindFor((other) => other.Hash.Equals(hash));
     }
 }

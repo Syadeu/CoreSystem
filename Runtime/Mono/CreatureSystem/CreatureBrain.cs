@@ -151,7 +151,7 @@ namespace Syadeu.Mono
             m_OnInitialize?.Invoke(m_DataIdx);
             for (int i = 0; i < m_Childs.Length; i++)
             {
-                m_Childs[i].InternalInitialize(this, m_DataIdx);
+                m_Childs[i].InternalInitialize(this, m_DataIdx, m_DataHash);
             }
             for (int i = 0; i < m_Childs.Length; i++)
             {
@@ -210,13 +210,16 @@ namespace Syadeu.Mono
 
             for (int i = 0; i < m_Childs.Length; i++)
             {
-                if (m_Childs[i].Equals(entity)) return;
+                if (m_Childs[i].Equals(entity)) throw new Exception();
             }
             var temp = m_Childs.ToList();
             temp.Add(entity);
             m_Childs = temp.ToArray();
 
-            entity.InternalInitialize(this, m_DataIdx);
+            if (entity is CreatureInventory inventory) Inventory = inventory;
+            else if (entity is CreatureStat stat) Stat = stat;
+
+            entity.InternalInitialize(this, m_DataIdx, m_DataHash);
         }
         //protected virtual void OnDestroy()
         //{
