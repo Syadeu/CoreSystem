@@ -74,14 +74,14 @@ namespace Syadeu.Presentation
                     brain.m_UniqueIdx = m_Creatures.Count;
                     m_Creatures.Add(dataObj);
 
-                    //onCreated?.Invoke(brain);
+                    ProcessEntityOnCreated(this, entity, dataObj, mono);
                 });
 
-            ProcessEntityOnCreated(this, entity, dataObj);
+            
             return dataObj;
         }
 
-        private static void InvokeLua(LuaScript scr, Creature entity, DataGameObject dataObj,
+        private static void InvokeLua(LuaScript scr, Creature entity, DataGameObject dataObj, RecycleableMonobehaviour mono,
             in string calledAttName, in string calledScriptName)
         {
             if (scr == null || !scr.IsValid())
@@ -93,30 +93,33 @@ namespace Syadeu.Presentation
 
             try
             {
-                scr.Invoke(ToArgument(/*mono.gameObject, */dataObj, scr.m_Args));
+                scr.Invoke(ToArgument(mono.gameObject, dataObj, scr.m_Args));
             }
-            catch (ScriptRuntimeException ex)
+            catch (ScriptRuntimeException runtimeEx)
             {
                 CoreSystem.Logger.LogWarning(Channel.Creature,
                     string.Format(c_AttributeWarning, calledAttName, entity.m_Name, $"An Error Raised while invoke function({calledScriptName})") +
-                    "\n" + ex.DecoratedMessage);
+                    "\n" + runtimeEx.DecoratedMessage);
                 return;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                throw;
+                CoreSystem.Logger.LogWarning(Channel.Creature,
+                    string.Format(c_AttributeWarning, calledAttName, entity.m_Name, $"An Error Raised while invoke function({calledScriptName})") +
+                    "\n" + ex.Message);
+                return;
             }
 
-            static List<object> ToArgument(/*GameObject gameObj, */DataGameObject dataObj, IList<LuaArg> args)
+            static List<object> ToArgument(GameObject gameObj, DataGameObject dataObj, IList<LuaArg> args)
             {
                 List<object> temp = new List<object>();
                 for (int i = 0; i < args.Count; i++)
                 {
-                    //if (TypeHelper.TypeOf<MonoBehaviour>.Type.IsAssignableFrom(args[i].Type))
-                    //{
-                    //    temp.Add(gameObj.GetComponent(args[i].Type));
-                    //}
-                    /*else */if (args[i].Type.Equals(TypeHelper.TypeOf<DataGameObject>.Type))
+                    if (TypeHelper.TypeOf<MonoBehaviour>.Type.IsAssignableFrom(args[i].Type))
+                    {
+                        temp.Add(gameObj.GetComponent(args[i].Type));
+                    }
+                    else if (args[i].Type.Equals(TypeHelper.TypeOf<DataGameObject>.Type))
                     {
                         temp.Add(dataObj);
                     }
@@ -129,7 +132,7 @@ namespace Syadeu.Presentation
                 return temp;
             }
         }
-        private static void ProcessEntityOnCreated(CreatureSystem system, Creature entity, DataGameObject dataObj)
+        private static void ProcessEntityOnCreated(CreatureSystem system, Creature entity, DataGameObject dataObj, RecycleableMonobehaviour mono)
         {
             CreatureAttribute[] attributes = entity.m_Attributes.Select((other) => CreatureDataList.Instance.GetAttribute(other)).ToArray();
             for (int i = 0; i < attributes.Length; i++)
@@ -148,7 +151,7 @@ namespace Syadeu.Presentation
 
             for (int i = 0; i < attributes.Length; i++)
             {
-                InvokeLua(attributes[i].OnEntityStart, entity, dataObj,
+                InvokeLua(attributes[i].OnEntityStart, entity, dataObj, mono,
                     calledAttName: attributes[i].GetType().Name,
                     calledScriptName: "OnEntityStart");
             }

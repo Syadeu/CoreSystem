@@ -11,7 +11,7 @@ namespace Syadeu.Database.Lua
         {
             if (!ulong.TryParse(hash, out ulong hashu))
             {
-                CoreSystem.Logger.LogWarning(Channel.Lua, $"{hash} cannot be a hash. Request ignored.");
+                CoreSystem.Logger.LogWarning(Channel.Lua, $"{hash} is cannot be a hash. Request ignored.");
                 return null;
             }
 
