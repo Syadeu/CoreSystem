@@ -4,7 +4,7 @@
     {
         public ItemTypeProxyEntity(T itemType) : base(itemType) { }
 
-        public string Name => Target.m_Name;
-        public ulong Hash => Target.m_Hash;
+        public string Name => Target.Name;
+        public ulong Hash => Target.Hash;
     }
 }

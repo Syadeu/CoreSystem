@@ -19,7 +19,7 @@ namespace Syadeu.Database.Converters
             writer.WriteStartObject();
 
             writer.WritePropertyName("Data");
-            writer.WriteValue(refAsset.Data.m_Hash);
+            writer.WriteValue(refAsset.Data.Hash);
 
             writer.WritePropertyName("Guid");
             writer.WriteValue(refAsset.Hash);

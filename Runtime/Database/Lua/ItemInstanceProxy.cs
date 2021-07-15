@@ -16,8 +16,8 @@
         public void SetValueBool(string name, bool value) => Target.Values.SetValue(name, value);
         public void SetValueString(string name, string value) => Target.Values.SetValue(name, value);
 
-        public bool HasItemType(string name) => ItemTypes.FindFor((other) => other.m_Name.Equals(name)) != null;
-        public ItemTypeEntity GetItemType(string name) => ItemTypes.FindFor((other) => other.m_Name.Equals(name));
+        public bool HasItemType(string name) => ItemTypes.FindFor((other) => other.Name.Equals(name)) != null;
+        public ItemTypeEntity GetItemType(string name) => ItemTypes.FindFor((other) => other.Name.Equals(name));
 
         public bool HasEffectType(string name) => EffectTypes.FindFor((other) => other.m_Name.Equals(name)) != null;
         public ItemEffectType GetEffectType(string name) => EffectTypes.FindFor((other) => other.m_Name.Equals(name));

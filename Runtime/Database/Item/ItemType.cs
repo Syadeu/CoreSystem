@@ -16,18 +16,18 @@ namespace Syadeu.Database
 
         public ItemType()
         {
-            m_Name = "NewItemType";
-            m_Hash = Hash.NewHash();
+            Name = "NewItemType";
+            Hash = Hash.NewHash();
         }
         public ItemType(string name)
         {
-            m_Name = name;
-            m_Hash = Hash.NewHash();
+            Name = name;
+            Hash = Hash.NewHash();
         }
         public ItemType(string name, Hash hash)
         {
-            m_Name = name;
-            m_Hash = hash;
+            Name = name;
+            Hash = hash;
         }
         internal ItemTypeProxy GetProxy()
         {
@@ -48,18 +48,18 @@ namespace Syadeu.Database
 
         public ItemUseableType()
         {
-            m_Name = "NewUseableType";
-            m_Hash = Hash.NewHash();
+            Name = "NewUseableType";
+            Hash = Hash.NewHash();
         }
         public ItemUseableType(string name)
         {
-            m_Name = name;
-            m_Hash = Hash.NewHash();
+            Name = name;
+            Hash = Hash.NewHash();
         }
         public ItemUseableType(string name, Hash hash)
         {
-            m_Name = name;
-            m_Hash = hash;
+            Name = name;
+            Hash = hash;
         }
         internal ItemUseableTypeProxy GetProxy()
         {

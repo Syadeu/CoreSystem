@@ -28,8 +28,8 @@ namespace SyadeuEditor
             ItemEditor.Validate();
 
             //AddressableAssetSettingsDefaultObject.GetSettings(true).FindGroup("Images").GetAssetEntry(item.m_ImagePath)
-            m_Item.m_Name = EditorGUILayout.TextField("Name: ", m_Item.m_Name);
-            EditorGUILayout.TextField("Hash: ", m_Item.m_Hash.ToString());
+            m_Item.Name = EditorGUILayout.TextField("Name: ", m_Item.Name);
+            EditorGUILayout.TextField("Hash: ", m_Item.Hash.ToString());
 
 #if UNITY_ADDRESSABLES
             EditorGUILayout.BeginHorizontal();
@@ -72,11 +72,11 @@ namespace SyadeuEditor
                                 {
                                     $"이 타입은 한 개 이상 존재할 수 없습니다.".ToLog();
                                 }
-                                else if (m_Item.m_ItemTypes.Contains(selectedItemType.m_Hash))
+                                else if (m_Item.m_ItemTypes.Contains(selectedItemType.Hash))
                                 {
                                     $"이미 해당 타입을 포함하고 있습니다.".ToLog();
                                 }
-                                else m_Item.m_ItemTypes[i] = ItemDataList.Instance.m_ItemTypes[tSelected - 1].m_Hash;
+                                else m_Item.m_ItemTypes[i] = ItemDataList.Instance.m_ItemTypes[tSelected - 1].Hash;
                             }
                         }
 
@@ -149,7 +149,7 @@ namespace SyadeuEditor
                 if (hash == 0) return 0;
                 for (int i = 0; i < ItemDataList.Instance.m_ItemTypes.Count; i++)
                 {
-                    if (ItemDataList.Instance.m_ItemTypes[i].m_Hash.Equals(hash))
+                    if (ItemDataList.Instance.m_ItemTypes[i].Hash.Equals(hash))
                     {
                         return i + 1;
                     }

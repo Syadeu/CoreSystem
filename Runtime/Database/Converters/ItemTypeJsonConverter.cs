@@ -17,30 +17,29 @@ namespace Syadeu.Database.Converters
             JObject o;
             string name = value.GetType().AssemblyQualifiedName;
 
-            if (value is ItemType)
+            //if (value is ItemType)
             {
                 o = JObject.Parse(
                     JsonConvert.SerializeObject(
-                        value, TypeHelper.TypeOf<ItemType>.Type, Formatting.Indented,
+                        value, value.GetType(), Formatting.Indented,
                         BaseSpecifiedConcreteClassConverter<ItemTypeEntity>.SpecifiedSubclassConversion)
                     );
-                //BaseSpecifiedConcreteClassConverter<ItemTypeEntity>.SpecifiedSubclassConversion
                 o.AddFirst(new JProperty("Type", name));
                 o.WriteTo(writer);
             }
-            else if (value is ItemUseableType)
-            {
-                o = JObject.Parse(
-                    JsonConvert.SerializeObject(
-                        value, TypeHelper.TypeOf<ItemUseableType>.Type, Formatting.Indented,
-                        BaseSpecifiedConcreteClassConverter<ItemTypeEntity>.SpecifiedSubclassConversion)
-                    );
+            //else if (value is ItemUseableType)
+            //{
+            //    o = JObject.Parse(
+            //        JsonConvert.SerializeObject(
+            //            value, value.GetType(), Formatting.Indented,
+            //            BaseSpecifiedConcreteClassConverter<ItemTypeEntity>.SpecifiedSubclassConversion)
+            //        );
 
-                o.AddFirst(new JProperty("Type", name));
-                o.WriteTo(writer);
-            }
-            else
-                throw new Exception();
+            //    o.AddFirst(new JProperty("Type", name));
+            //    o.WriteTo(writer);
+            //}
+            //else
+            //    throw new Exception();
         }
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {

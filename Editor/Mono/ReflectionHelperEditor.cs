@@ -9,6 +9,30 @@ namespace SyadeuEditor
 {
     public sealed class ReflectionHelperEditor
     {
+        public sealed class Drawer
+        {
+            public object m_Instance;
+            public Type m_Type;
+            public MemberInfo[] m_Members;
+
+            public Drawer(object ins)
+            {
+                m_Instance = ins;
+                m_Type = ins.GetType();
+                m_Members = ReflectionHelper.GetSerializeMemberInfos(ins.GetType());
+            }
+
+            public void OnGUI()
+            {
+                EditorUtils.StringRich(m_Type.Name, 15, true);
+                for (int i = 0; i < m_Members.Length; i++)
+                {
+                    DrawMember(m_Instance, m_Members[i]);
+                }
+            }
+        }
+        public static Drawer GetDrawer(object ins) => new Drawer(ins);
+
         public static void DrawMember(object ins, MemberInfo memberInfo, int depth = 0)
         {
             Type declaredType;
@@ -32,6 +56,10 @@ namespace SyadeuEditor
             if (declaredType.Equals(TypeHelper.TypeOf<int>.Type))
             {
                 setter.Invoke(ins, EditorGUILayout.IntField(name, (int)getter.Invoke(ins)));
+            }
+            else if (declaredType.Equals(TypeHelper.TypeOf<bool>.Type))
+            {
+                setter.Invoke(ins, EditorGUILayout.Toggle(name, (bool)getter.Invoke(ins)));
             }
             else if (declaredType.Equals(TypeHelper.TypeOf<float>.Type))
             {

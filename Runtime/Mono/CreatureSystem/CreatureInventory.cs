@@ -105,7 +105,7 @@ namespace Syadeu.Mono
             }
             else
             {
-                $"Item: {item.Data.m_Name} is not a type of useable".ToLog();
+                $"Item: {item.Data.Name} is not a type of useable".ToLog();
             }
         }
     }

@@ -229,7 +229,7 @@ namespace SyadeuEditor.Tree
             }
             else
             {
-                if (child.Name.Contains(m_SearchString)) return true;
+                if (child.Name.ToLower().Contains(m_SearchString.ToLower())) return true;
             }
 
             if (child.HasChilds)

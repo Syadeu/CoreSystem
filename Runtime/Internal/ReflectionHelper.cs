@@ -37,12 +37,13 @@ namespace Syadeu.Internal
             return t.GetMembers(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
                     .Where((other) =>
                     {
-                        if (other.MemberType != MemberTypes.Field)
+                        if (other.MemberType != MemberTypes.Field && other.MemberType != MemberTypes.Property)
                         {
                             return false;
                         }
 
-                        return other.GetCustomAttribute<NonSerializedAttribute>() == null;
+                        return other.GetCustomAttribute<NonSerializedAttribute>() == null &&
+                            other.GetCustomAttribute<JsonIgnoreAttribute>() == null;
                     })
                     .ToArray();
         }

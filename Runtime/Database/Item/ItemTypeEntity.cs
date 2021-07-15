@@ -7,9 +7,9 @@ using System;
 namespace Syadeu.Database
 {
     [Serializable][JsonConverter(typeof(Converters.ItemTypeJsonConverter))]
-    public abstract class ItemTypeEntity
+    public abstract class ItemTypeEntity : IAttribute
     {
-        [JsonProperty(Order = 0, PropertyName = "Name")] public string m_Name;
-        [JsonProperty(Order = 1, PropertyName = "Hash")] public Hash m_Hash;
+        public string Name { get; set; }
+        public Hash Hash { get; set; }
     }
 }

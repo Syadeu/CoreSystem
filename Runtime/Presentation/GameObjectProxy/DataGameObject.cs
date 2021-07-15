@@ -1,5 +1,6 @@
 ﻿using Syadeu.Database;
 using Syadeu.Mono;
+using Syadeu.Internal;
 using System;
 using Unity.Mathematics;
 
@@ -129,6 +130,28 @@ namespace Syadeu.Presentation
             list.Add(t);
             return t;
         }
+        public DataComponentEntity AddComponent(Type t)
+        {
+            if (!TypeHelper.TypeOf<DataComponentEntity>.Type.IsAssignableFrom(t))
+            {
+                CoreSystem.Logger.LogError(Channel.Presentation, $"{t.Name} is not DataComponentEntity");
+                return null;
+            }
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);
+                return null;
+            }
+
+            if (!PresentationSystem<GameObjectProxySystem>.System.m_ComponentList.TryGetValue(m_Idx, out var list))
+            {
+                list = new System.Collections.Generic.List<DataComponentEntity>();
+                PresentationSystem<GameObjectProxySystem>.System.m_ComponentList.Add(m_Idx, list);
+            }
+            DataComponentEntity component = (DataComponentEntity)Activator.CreateInstance(t);
+            list.Add(component);
+            return component;
+        }
         public T GetComponent<T>() where T : DataComponentEntity, new()
         {
             if (!IsValid())
@@ -145,6 +168,11 @@ namespace Syadeu.Presentation
         }
         public DataComponentEntity GetComponent(Type t)
         {
+            if (!TypeHelper.TypeOf<DataComponentEntity>.Type.IsAssignableFrom(t))
+            {
+                CoreSystem.Logger.LogError(Channel.Presentation, $"{t.Name} is not DataComponentEntity");
+                return null;
+            }
             if (!IsValid())
             {
                 CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);

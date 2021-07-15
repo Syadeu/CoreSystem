@@ -35,7 +35,7 @@ namespace SyadeuEditor
                 for (int i = 0; i < ItemDataList.Instance.m_Items.Count; i++)
                 {
                     Item item = ItemDataList.Instance.m_Items[i];
-                    menu.AddItem(new GUIContent(item.m_Name), false, 
+                    menu.AddItem(new GUIContent(item.Name), false, 
                         () => CreateItemInstance(item));
                 }
 

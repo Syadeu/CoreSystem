@@ -16,7 +16,7 @@ namespace Syadeu.Database
         const string json = ".json";
 
         public List<Creature> m_Entites;
-        public List<ICreatureAttribute> m_Attributes;
+        public List<CreatureAttribute> m_Attributes;
 
         public void LoadData()
         {
@@ -31,16 +31,14 @@ namespace Syadeu.Database
             }
 
             string[] attPaths = Directory.GetFiles(CoreSystemFolder.CreatureAttributePath, jsonPostfix, SearchOption.AllDirectories);
-            m_Attributes = new List<ICreatureAttribute>();
-            Type[] attTypes = TypeHelper.GetTypes((other) => other.GetInterface("ICreatureAttribute") != null);
+            m_Attributes = new List<CreatureAttribute>();
+            Type[] attTypes = TypeHelper.GetTypes((other) => TypeHelper.TypeOf<CreatureAttribute>.Type.IsAssignableFrom(other));
             for (int i = 0; i < attPaths.Length; i++)
             {
                 string lastFold = Path.GetFileName(Path.GetDirectoryName(attPaths[i]));
                 Type t = attTypes.FindFor((other) => other.Name.Equals(lastFold));
-                //$"{lastFold} : {t?.Name}".ToLog();
 
-                var temp = (ICreatureAttribute)JsonConvert.DeserializeObject(File.ReadAllText(attPaths[i]), t);
-                //$"{temp.GetType().Name}".ToLog();
+                var temp = (CreatureAttribute)JsonConvert.DeserializeObject(File.ReadAllText(attPaths[i]), t);
                 m_Attributes.Add(temp);
             }
         }
@@ -95,6 +93,6 @@ namespace Syadeu.Database
         }
 
         public Creature GetEntity(Hash hash) => m_Entites.FindFor((other) => other.m_Hash.Equals(hash));
-        public ICreatureAttribute GetAttribute(Hash hash) => m_Attributes.FindFor((other) => other.Hash.Equals(hash));
+        public CreatureAttribute GetAttribute(Hash hash) => m_Attributes.FindFor((other) => other.Hash.Equals(hash));
     }
 }

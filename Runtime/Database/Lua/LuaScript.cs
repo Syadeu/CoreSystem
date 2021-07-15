@@ -10,7 +10,7 @@ using Syadeu.Internal;
 namespace Syadeu.Database.Lua
 {
     [Serializable]
-    public sealed class LuaScript : IEquatable<LuaScript>
+    public sealed class LuaScript : IEquatable<LuaScript>, IValidation
     {
         [JsonProperty(Order = 0, PropertyName = "FunctionName")] public string m_FunctionName;
         [JsonProperty(Order = 1, PropertyName = "Args")] public List<LuaArg> m_Args;
@@ -20,6 +20,8 @@ namespace Syadeu.Database.Lua
         {
             m_FunctionName = name;
         }
+        [JsonConstructor]
+        public LuaScript() { }
 
         public DynValue Invoke(params object[] args)
         {
@@ -49,6 +51,8 @@ namespace Syadeu.Database.Lua
         public override int GetHashCode() => (int)FNV1a32.Calculate(m_FunctionName);
         public override string ToString() => m_FunctionName;
 
+        public bool IsValid() => !string.IsNullOrEmpty(m_FunctionName);
+
         public static implicit operator string(LuaScript a) => a.ToString();
         public static implicit operator LuaScript(string a) => new LuaScript(a);
     }
@@ -76,6 +80,8 @@ namespace Syadeu.Database.Lua
         {
             m_TypeName = typeName;
         }
+        [JsonConstructor]
+        public LuaArg() { }
 
         public static LuaArg GetArg<T>()
         {

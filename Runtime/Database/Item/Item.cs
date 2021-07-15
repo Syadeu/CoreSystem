@@ -18,10 +18,11 @@ using Syadeu.Database.Lua;
 namespace Syadeu.Database
 {
     [Serializable]
-    public sealed class Item
+    public sealed class Item : IAttribute
     {
-        [JsonProperty(Order = 0, PropertyName = "Name")] public string m_Name;
-        [JsonProperty(Order = 1, PropertyName = "Hash")] public Hash m_Hash;
+        public string Name { get; set; }
+        public Hash Hash { get; set; }
+
         [JsonConverter(typeof(Converters.AssetReferenceJsonConverter))]
         [JsonProperty(Order = 2, PropertyName = "ImagePath")] public AssetReference m_ImagePath;
         /// <summary>
@@ -54,13 +55,13 @@ namespace Syadeu.Database
 
         public Item()
         {
-            m_Name = "NewItem";
-            m_Hash = Hash.NewHash();
+            Name = "NewItem";
+            Hash = Hash.NewHash();
         }
         public Item(string name)
         {
-            m_Name = name;
-            m_Hash = Hash.NewHash();
+            Name = name;
+            Hash = Hash.NewHash();
         }
 
         internal ItemProxy GetProxy()

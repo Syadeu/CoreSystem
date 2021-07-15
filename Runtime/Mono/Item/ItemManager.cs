@@ -38,7 +38,7 @@ namespace Syadeu.Database
 
                 if (Physics.Raycast(ray, out RaycastHit hit))
                 {
-                    SpawnItem(item.m_Hash, hit.point, Quaternion.identity);
+                    SpawnItem(item.Hash, hit.point, Quaternion.identity);
                 }
             }, "item", "spawn");
             ConsoleWindow.CreateCommand((cmd) =>
@@ -49,7 +49,7 @@ namespace Syadeu.Database
                     Item item = ItemDataList.Instance.m_Items[rnd];
                     Vector3 pos = new Vector3(UnityEngine.Random.Range(-100, 100), 0, UnityEngine.Random.Range(-100, 100));
 
-                    SpawnItem(item.m_Hash, pos, Quaternion.identity);
+                    SpawnItem(item.Hash, pos, Quaternion.identity);
                 }
             }, "item", "spawn", "random");
         }

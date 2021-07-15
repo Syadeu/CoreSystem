@@ -48,7 +48,7 @@ namespace SyadeuEditor
                     {
                         return new TreeCreatureElement(treeView, creature);
                     }
-                    else if (other is ICreatureAttribute attribute)
+                    else if (other is CreatureAttribute attribute)
                     {
                         return new TreeCreatureAttributeElement(treeView, attribute);
                     }
@@ -60,15 +60,15 @@ namespace SyadeuEditor
                     else if (treeView.SelectedToolbar == 1)
                     {
                         GenericMenu menu = new GenericMenu();
-                        Type[] types = TypeHelper.GetTypes((other) => other.GetInterface("ICreatureAttribute") != null);
+                        Type[] types = TypeHelper.GetTypes((other) => !other.IsAbstract && TypeHelper.TypeOf<CreatureAttribute>.Type.IsAssignableFrom(other));
                         for (int i = 0; i < types.Length; i++)
                         {
                             Type target = types[i];
                             menu.AddItem(new GUIContent(target.Name), false, () =>
                             {
-                                if (Asset.m_Attributes == null) Asset.m_Attributes = new List<ICreatureAttribute>();
+                                if (Asset.m_Attributes == null) Asset.m_Attributes = new List<CreatureAttribute>();
 
-                                Asset.m_Attributes.Add((ICreatureAttribute)Activator.CreateInstance(target));
+                                Asset.m_Attributes.Add((CreatureAttribute)Activator.CreateInstance(target));
                                 RefreshTreeView();
                             });
                         }
@@ -88,6 +88,7 @@ namespace SyadeuEditor
                     if (treeView.SelectedToolbar == 0) Asset.m_Entites.Remove((Creature)treeView.Data[idx]);
                     else if (treeView.SelectedToolbar == 1)
                     {
+                        Asset.m_Attributes.Remove((CreatureAttribute)treeView.Data[idx]);
                     }
 
                     List<object> tempList = new List<object>();
@@ -133,6 +134,8 @@ namespace SyadeuEditor
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
                 Asset.SaveData();
+
+                RefreshTreeView();
             }
             EditorGUILayout.EndHorizontal();
             EditorUtils.SectorLine();
@@ -173,21 +176,30 @@ namespace SyadeuEditor
                         Target.m_Attributes.RemoveAt(Target.m_Attributes.Count - 1);
                     }
                     EditorGUILayout.EndHorizontal();
+                    EditorGUI.indentLevel += 1;
                     for (int i = 0; i < Target.m_Attributes.Count; i++)
                     {
+                        EditorGUILayout.BeginHorizontal();
+
                         int idx = EditorGUILayout.Popup(GetSelectedAttributeIdx(Target.m_Attributes[i]), m_AttributeNames);
                         if (idx == 0)
                         {
                             Target.m_Attributes[i] = Hash.Empty;
                         }
                         else Target.m_Attributes[i] = CreatureDataList.Instance.m_Attributes[idx - 1].Hash;
+                        if (GUILayout.Button("-", GUILayout.Width(20)))
+                        {
+                            Target.m_Attributes.RemoveAt(i);
+                            i--;
+                        }
+
+                        EditorGUILayout.EndHorizontal();
                     }
+                    EditorGUI.indentLevel -= 1;
                 }
                 EditorGUILayout.EndVertical();
 
                 Target.m_Values.DrawValueContainer("Values");
-
-                Target.m_OnSpawn.DrawGUI("OnSpawn");
             }
 
             private int GetSelectedAttributeIdx(Hash attHash)
@@ -201,29 +213,29 @@ namespace SyadeuEditor
                 return 0;
             }
         }
-        private class TreeCreatureAttributeElement : VerticalTreeElement<ICreatureAttribute>
+        private class TreeCreatureAttributeElement : VerticalTreeElement<CreatureAttribute>
         {
-            public override string Name => $"{Target.GetType().Name}: {Target.Name}";
+            public override string Name
+            {
+                get
+                {
+                    m_Name = $"{Target.GetType().Name}: {Target.Name}";
+                    return m_Name;
+                }
+            }
             public override bool HideElementInTree
                 => Tree.SelectedToolbar != 1 || base.HideElementInTree;
 
-            MemberInfo[] m_Members;
-            
-            public TreeCreatureAttributeElement(VerticalTreeView treeView, ICreatureAttribute att) : base(treeView, att)
+            ReflectionHelperEditor.Drawer m_Drawer;
+
+            public TreeCreatureAttributeElement(VerticalTreeView treeView, CreatureAttribute att) : base(treeView, att)
             {
-                m_Members = ReflectionHelper.GetSerializeMemberInfos(att.GetType());
+                m_Drawer = ReflectionHelperEditor.GetDrawer(att);
 
             }
             public override void OnGUI()
             {
-                EditorUtils.StringRich(Target.GetType().Name, 15, true);
-
-                for (int i = 0; i < m_Members.Length; i++)
-                {
-                    //string name = ReflectionHelper.SerializeMemberInfoName(m_Members[i]);
-                    //EditorGUILayout.LabelField($"{name}: {m_Members[i].MemberType}");
-                    ReflectionHelperEditor.DrawMember(Target, m_Members[i]);
-                }
+                m_Drawer.OnGUI();
             }
         }
     }

@@ -62,19 +62,19 @@ namespace Syadeu.Database
                 for (int i = 0; i < files.Length; i++)
                 {
                     string fileName = Path.GetFileNameWithoutExtension(files[i]);
-                    if (m_Items.Where((other) => other.m_Name.Equals(fileName)).Count() == 0)
+                    if (m_Items.Where((other) => other.Name.Equals(fileName)).Count() == 0)
                     {
                         File.Delete(files[i]);
                     }
                 }
                 for (int i = 0; i < m_Items.Count; i++)
                 {
-                    if (Hash.Empty.Equals(m_Items[i].m_Hash))
+                    if (Hash.Empty.Equals(m_Items[i].Hash))
                     {
-                        m_Items[i].m_Hash = Hash.NewHash();
+                        m_Items[i].Hash = Hash.NewHash();
                     }
 
-                    File.WriteAllText($"{CoreSystemFolder.ItemPath}/{m_Items[i].m_Name}{json}",
+                    File.WriteAllText($"{CoreSystemFolder.ItemPath}/{m_Items[i].Name}{json}",
                         JsonConvert.SerializeObject(m_Items[i], Formatting.Indented));
                 }
             }
@@ -85,19 +85,19 @@ namespace Syadeu.Database
                 for (int i = 0; i < files.Length; i++)
                 {
                     string fileName = Path.GetFileNameWithoutExtension(files[i]);
-                    if (m_ItemTypes.Where((other) => other.m_Name.Equals(fileName)).Count() == 0)
+                    if (m_ItemTypes.Where((other) => other.Name.Equals(fileName)).Count() == 0)
                     {
                         File.Delete(files[i]);
                     }
                 }
                 for (int i = 0; i < m_ItemTypes.Count; i++)
                 {
-                    if (Hash.Empty.Equals(m_ItemTypes[i].m_Hash))
+                    if (Hash.Empty.Equals(m_ItemTypes[i].Hash))
                     {
-                        m_ItemTypes[i].m_Hash = Hash.NewHash();
+                        m_ItemTypes[i].Hash = Hash.NewHash();
                     }
 
-                    File.WriteAllText($"{CoreSystemFolder.ItemTypePath}/{m_ItemTypes[i].m_Name}{json}",
+                    File.WriteAllText($"{CoreSystemFolder.ItemTypePath}/{m_ItemTypes[i].Name}{json}",
                         JsonConvert.SerializeObject(m_ItemTypes[i], Formatting.Indented));
                 }
             }
@@ -134,7 +134,7 @@ namespace Syadeu.Database
         {
             for (int i = 0; i < m_Items.Count; i++)
             {
-                if (m_Items[i].m_Hash.Equals(hash))
+                if (m_Items[i].Hash.Equals(hash))
                 {
                     return m_Items[i];
                 }
@@ -145,7 +145,7 @@ namespace Syadeu.Database
         {
             for (int i = 0; i < m_Items.Count; i++)
             {
-                if (m_Items[i].m_Name.Equals(name))
+                if (m_Items[i].Name.Equals(name))
                 {
                     return m_Items[i];
                 }
@@ -156,7 +156,7 @@ namespace Syadeu.Database
         {
             for (int i = 0; i < m_ItemTypes.Count; i++)
             {
-                if (m_ItemTypes[i].m_Hash.Equals(hash))
+                if (m_ItemTypes[i].Hash.Equals(hash))
                 {
                     return m_ItemTypes[i];
                 }
@@ -167,7 +167,7 @@ namespace Syadeu.Database
         {
             for (int i = 0; i < m_ItemTypes.Count; i++)
             {
-                if (m_ItemTypes[i].m_Name.Equals(name))
+                if (m_ItemTypes[i].Name.Equals(name))
                 {
                     return m_ItemTypes[i];
                 }

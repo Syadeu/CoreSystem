@@ -42,7 +42,7 @@ namespace SyadeuEditor
             m_ItemTypes[0] = "None";
             for (int i = 1; i < m_ItemTypes.Length; i++)
             {
-                m_ItemTypes[i] = ItemDataList.Instance.m_ItemTypes[i - 1].m_Name;
+                m_ItemTypes[i] = ItemDataList.Instance.m_ItemTypes[i - 1].Name;
             }
 
             m_ItemEffectTypes = new string[ItemDataList.Instance.m_ItemEffectTypes.Count + 1];
@@ -58,32 +58,32 @@ namespace SyadeuEditor
             m_ItemDrawer.m_Item = item;
             m_ItemDrawer.OnGUI();
         }
-        public static void DrawItemType(this ItemTypeEntity target)
-        {
-            target.m_Name = EditorGUILayout.TextField("Name: ", target.m_Name);
-            EditorGUILayout.TextField("Guid: ", target.m_Hash.ToString());
+        //public static void DrawItemType(this ItemTypeEntity target)
+        //{
+        //    target.Name = EditorGUILayout.TextField("Name: ", target.Name);
+        //    EditorGUILayout.TextField("Guid: ", target.Hash.ToString());
 
-            if (target is ItemType itemType)
-            {
-                EditorGUILayout.Space();
-                itemType.m_Values.DrawValueContainer("Values");
-            }
-            else if (target is ItemUseableType useableType)
-            {
-                EditorGUILayout.Space();
-                useableType.m_RemoveOnUse = EditorGUILayout.Toggle("Remove On Use: ", useableType.m_RemoveOnUse);
-                useableType.m_OnUse.DrawValueContainer("Delegates", ValuePairEditor.DrawMenu.Delegate, null);
-            }
-            else throw new Exception();
-        }
-        public static void DrawItemEffectType(this ItemEffectType target)
-        {
-            target.m_Name = EditorGUILayout.TextField("Name: ", target.m_Name);
-            EditorGUILayout.TextField("Guid: ", target.m_Hash.ToString());
+        //    if (target is ItemType itemType)
+        //    {
+        //        EditorGUILayout.Space();
+        //        itemType.m_Values.DrawValueContainer("Values");
+        //    }
+        //    else if (target is ItemUseableType useableType)
+        //    {
+        //        EditorGUILayout.Space();
+        //        useableType.m_RemoveOnUse = EditorGUILayout.Toggle("Remove On Use: ", useableType.m_RemoveOnUse);
+        //        useableType.m_OnUse.DrawValueContainer("Delegates", ValuePairEditor.DrawMenu.Delegate, null);
+        //    }
+        //    else throw new Exception();
+        //}
+        //public static void DrawItemEffectType(this ItemEffectType target)
+        //{
+        //    target.m_Name = EditorGUILayout.TextField("Name: ", target.m_Name);
+        //    EditorGUILayout.TextField("Guid: ", target.m_Hash.ToString());
 
-            EditorGUILayout.Space();
-            target.m_Values.DrawValueContainer("Values");
-        }
+        //    EditorGUILayout.Space();
+        //    target.m_Values.DrawValueContainer("Values");
+        //}
 
 #if UNITY_ADDRESSABLES
         internal static void DrawAssetReference(Item item, AssetReference refAsset)

@@ -86,9 +86,9 @@ namespace Syadeu.Database
         }
 
         public bool HasType<T>() where T : ItemTypeEntity => m_ItemTypes.Where((other) => other is T).Count() != 0;
-        public bool HasType(Hash hash) => m_ItemTypes.Where((other) => other.m_Hash.Equals(hash)).Count() != 0;
+        public bool HasType(Hash hash) => m_ItemTypes.Where((other) => other.Hash.Equals(hash)).Count() != 0;
         public ItemTypeEntity[] GetTypes<T>() where T : ItemTypeEntity => m_ItemTypes.Where((other) => other is T).ToArray();
-        public ItemTypeEntity GetType(Hash hash) => m_ItemTypes.Where((other) => other.m_Hash.Equals(hash)).First();
+        public ItemTypeEntity GetType(Hash hash) => m_ItemTypes.Where((other) => other.Hash.Equals(hash)).First();
         public T GetType<T>() where T : ItemTypeEntity => (T)m_ItemTypes.Where((other) => other is T).First();
         public T GetType<T>(Hash hash) where T : ItemTypeEntity => (T)GetType(hash);
 
@@ -97,6 +97,6 @@ namespace Syadeu.Database
             Disposed = true;
         }
 
-        public override string ToString() => m_Data == null ? "NULL" : m_Data.m_Name;
+        public override string ToString() => m_Data == null ? "NULL" : m_Data.Name;
     }
 }
