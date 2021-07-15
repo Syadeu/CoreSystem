@@ -19,7 +19,7 @@
         public bool HasItemType(string name) => ItemTypes.FindFor((other) => other.Name.Equals(name)) != null;
         public ItemTypeEntity GetItemType(string name) => ItemTypes.FindFor((other) => other.Name.Equals(name));
 
-        public bool HasEffectType(string name) => EffectTypes.FindFor((other) => other.m_Name.Equals(name)) != null;
-        public ItemEffectType GetEffectType(string name) => EffectTypes.FindFor((other) => other.m_Name.Equals(name));
+        public bool HasEffectType(string name) => EffectTypes.FindFor((other) => other.Name.Equals(name)) != null;
+        public ItemEffectType GetEffectType(string name) => EffectTypes.FindFor((other) => other.Name.Equals(name));
     }
 }

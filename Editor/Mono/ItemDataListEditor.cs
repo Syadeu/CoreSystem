@@ -121,8 +121,8 @@ namespace SyadeuEditor
                             }
                             else if (e is TreeItemEffectTypeElement effEle)
                             {
-                                name = effEle.Target.m_Name;
-                                hash = effEle.Target.m_Hash.ToString();
+                                name = effEle.Target.Name;
+                                hash = effEle.Target.Hash.ToString();
                             }
 
                             if (name.ToLower().Contains(searchTxt.ToLower()) || hash.Contains(searchTxt)) return true;
@@ -239,7 +239,7 @@ namespace SyadeuEditor
         }
         private class TreeItemEffectTypeElement : VerticalTreeElement<ItemEffectType>
         {
-            public override string Name => Target.m_Name;
+            public override string Name => Target.Name;
             public override bool HideElementInTree
                 => Tree.SelectedToolbar != 2 || base.HideElementInTree;
 

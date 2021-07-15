@@ -49,7 +49,7 @@ namespace SyadeuEditor
             m_ItemEffectTypes[0] = "None";
             for (int i = 1; i < m_ItemEffectTypes.Length; i++)
             {
-                m_ItemEffectTypes[i] = ItemDataList.Instance.m_ItemEffectTypes[i - 1].m_Name;
+                m_ItemEffectTypes[i] = ItemDataList.Instance.m_ItemEffectTypes[i - 1].Name;
             }
         }
 

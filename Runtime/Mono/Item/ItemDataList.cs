@@ -108,19 +108,19 @@ namespace Syadeu.Database
                 for (int i = 0; i < files.Length; i++)
                 {
                     string fileName = Path.GetFileNameWithoutExtension(files[i]);
-                    if (m_ItemEffectTypes.Where((other) => other.m_Name.Equals(fileName)).Count() == 0)
+                    if (m_ItemEffectTypes.Where((other) => other.Name.Equals(fileName)).Count() == 0)
                     {
                         File.Delete(files[i]);
                     }
                 }
                 for (int i = 0; i < m_ItemEffectTypes.Count; i++)
                 {
-                    if (Hash.Empty.Equals(m_ItemEffectTypes[i].m_Hash))
+                    if (Hash.Empty.Equals(m_ItemEffectTypes[i].Hash))
                     {
-                        m_ItemEffectTypes[i].m_Hash = Hash.NewHash();
+                        m_ItemEffectTypes[i].Hash = Hash.NewHash();
                     }
 
-                    File.WriteAllText($"{CoreSystemFolder.ItemEffectTypePath}/{m_ItemEffectTypes[i].m_Name}{json}",
+                    File.WriteAllText($"{CoreSystemFolder.ItemEffectTypePath}/{m_ItemEffectTypes[i].Name}{json}",
                         JsonConvert.SerializeObject(m_ItemEffectTypes[i], Formatting.Indented));
                 }
             }
@@ -178,7 +178,7 @@ namespace Syadeu.Database
         {
             for (int i = 0; i < m_ItemEffectTypes.Count; i++)
             {
-                if (m_ItemEffectTypes[i].m_Hash.Equals(hash))
+                if (m_ItemEffectTypes[i].Hash.Equals(hash))
                 {
                     return m_ItemEffectTypes[i];
                 }
@@ -189,7 +189,7 @@ namespace Syadeu.Database
         {
             for (int i = 0; i < m_ItemEffectTypes.Count; i++)
             {
-                if (m_ItemEffectTypes[i].m_Name.Equals(name))
+                if (m_ItemEffectTypes[i].Name.Equals(name))
                 {
                     return m_ItemEffectTypes[i];
                 }

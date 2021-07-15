@@ -4,7 +4,7 @@ namespace Syadeu.Database
 {
     public interface IAttribute
     {
-        [JsonProperty(Order = -2)] string Name { get; }
-        [JsonProperty(Order = -1)] Hash Hash { get; }
+        [JsonProperty(Order = -11)] string Name { get; }
+        [JsonProperty(Order = -10)] Hash Hash { get; }
     }
 }

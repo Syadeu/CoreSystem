@@ -2,8 +2,8 @@
 {
     internal sealed class ItemEffectTypeProxy : LuaProxyEntity<ItemEffectType>
     {
-        public string Name => Target.m_Name;
-        public ulong Hash => Target.m_Hash;
+        public string Name => Target.Name;
+        public ulong Hash => Target.Hash;
 
         public ItemEffectTypeProxy(ItemEffectType itemEffectType) : base(itemEffectType) { }
 

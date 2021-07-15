@@ -121,11 +121,11 @@ namespace SyadeuEditor
                             {
                                 ItemEffectType selectedEffectType = ItemDataList.Instance.m_ItemEffectTypes[teSelected - 1];
 
-                                if (m_Item.m_ItemEffectTypes.Contains(selectedEffectType.m_Hash))
+                                if (m_Item.m_ItemEffectTypes.Contains(selectedEffectType.Hash))
                                 {
                                     $"이미 해당 타입을 포함하고 있습니다.".ToLog();
                                 }
-                                else m_Item.m_ItemEffectTypes[i] = ItemDataList.Instance.m_ItemEffectTypes[teSelected - 1].m_Hash;
+                                else m_Item.m_ItemEffectTypes[i] = ItemDataList.Instance.m_ItemEffectTypes[teSelected - 1].Hash;
                             }
                         }
 
@@ -161,7 +161,7 @@ namespace SyadeuEditor
                 if (hash == 0) return 0;
                 for (int i = 0; i < ItemDataList.Instance.m_ItemEffectTypes.Count; i++)
                 {
-                    if (ItemDataList.Instance.m_ItemEffectTypes[i].m_Hash.Equals(hash))
+                    if (ItemDataList.Instance.m_ItemEffectTypes[i].Hash.Equals(hash))
                     {
                         return i + 1;
                     }

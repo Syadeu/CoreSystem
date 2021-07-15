@@ -7,10 +7,10 @@ using Syadeu.Database.Lua;
 namespace Syadeu.Database
 {
     [Serializable]
-    public sealed class ItemEffectType
+    public sealed class ItemEffectType : IAttribute
     {
-        [JsonProperty(Order = 0, PropertyName = "Name")] public string m_Name;
-        [JsonProperty(Order = 1, PropertyName = "Hash")] public Hash m_Hash;
+        public string Name { get; set; }
+        public Hash Hash { get; set; }
 
         [Space]
         [JsonProperty(Order = 2, PropertyName = "Values")] public ValuePairContainer m_Values = new ValuePairContainer();
@@ -19,13 +19,13 @@ namespace Syadeu.Database
 
         public ItemEffectType()
         {
-            m_Name = "NewItemEffectType";
-            m_Hash = Hash.NewHash();
+            Name = "NewItemEffectType";
+            Hash = Hash.NewHash();
         }
         public ItemEffectType(string name)
         {
-            m_Name = name;
-            m_Hash = Hash.NewHash();
+            Name = name;
+            Hash = Hash.NewHash();
         }
 
         internal ItemEffectTypeProxy GetProxy()
