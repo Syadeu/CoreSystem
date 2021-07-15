@@ -38,6 +38,11 @@ namespace Syadeu.Database.CreatureData
 
             stat.Values = attribute.m_Stats;
         }
+
+        protected override void OnDestory(CreatureStatAttribute attribute, Creature creature, DataGameObject dataObj, CreatureBrain monoObj)
+        {
+            "destory".ToLog();
+        }
     }
 
     public sealed class CreatureOnSpawnAttribute : CreatureAttribute
@@ -50,7 +55,6 @@ namespace Syadeu.Database.CreatureData
 
         protected override void OnCreated(CreatureOnSpawnAttribute attribute, Creature creature, DataGameObject dataObj, CreatureBrain monoObj)
         {
-            "in".ToLog();
             if (attribute.m_OnSpawn.m_Scripts == null) return;
             for (int i = 0; i < attribute.m_OnSpawn.m_Scripts.Count; i++)
             {
@@ -65,6 +69,10 @@ namespace Syadeu.Database.CreatureData
                     calledAttName: TypeHelper.TypeOf<CreatureOnSpawnAttribute>.Name,
                     calledScriptName: "OnSpawn");
             }
+        }
+        protected override void OnDestory(CreatureOnSpawnAttribute attribute, Creature creature, DataGameObject dataObj, CreatureBrain monoObj)
+        {
+            "destory".ToLog();
         }
     }
 }

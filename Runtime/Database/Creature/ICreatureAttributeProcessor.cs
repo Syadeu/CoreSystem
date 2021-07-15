@@ -8,5 +8,7 @@ namespace Syadeu.Database.CreatureData
     {
         Type TargetAttribute { get; }
         void OnCreated(CreatureAttribute attribute, Creature creature, DataGameObject dataObj, CreatureBrain monoObj);
+        void OnPresentation(CreatureAttribute attribute, Creature creature, DataGameObject dataObj, CreatureBrain monoObj);
+        void OnDestory(CreatureAttribute attribute, Creature creature, DataGameObject dataObj, CreatureBrain monoObj);
     }
 }

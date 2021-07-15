@@ -449,10 +449,7 @@ namespace Syadeu
         private void OnAboutToQuit()
         {
             s_BlockCreateInstance = true;
-        }
-        protected override void OnDestroy()
-        {
-            //StopAllCoroutines();
+
             try
             {
                 BackgroundThread.Abort();
@@ -483,8 +480,12 @@ namespace Syadeu
                 {
                 }
             }
+        }
+        protected override void OnDestroy()
+        {
+            //StopAllCoroutines();
             
-            Application.quitting -= OnAboutToQuit;
+            //Application.quitting -= OnAboutToQuit;
             base.OnDestroy();
         }
         #endregion

@@ -7,7 +7,7 @@ using Unity.Mathematics;
 namespace Syadeu.Presentation
 {
     [Serializable]
-    public struct DataGameObject : IInternalDataComponent, IEquatable<DataGameObject>, ITag, IValidation
+    public struct DataGameObject : IInternalDataComponent, IEquatable<DataGameObject>, ITag, IValidation, IDisposable
     {
         const string c_WarningText = "This Data GameObject has been destoryed or didn\'t created propery. Request igonored.";
 
@@ -113,6 +113,25 @@ namespace Syadeu.Presentation
 #line default
 #pragma warning restore IDE1006 // Naming Styles
 
+        public void AttachComponent<T>(T component) where T : DataComponentEntity
+        {
+            if (!IsValid() || !component.m_Idx.Equals(Hash.Empty))
+            {
+                CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);
+                return;
+            }
+
+            if (!PresentationSystem<GameObjectProxySystem>.System.m_ComponentList.TryGetValue(m_Idx, out var list))
+            {
+                list = new System.Collections.Generic.List<DataComponentEntity>();
+                PresentationSystem<GameObjectProxySystem>.System.m_ComponentList.Add(m_Idx, list);
+            }
+
+            component.m_Idx = Hash.NewHash();
+            component.m_GameObject = m_Idx;
+
+            list.Add(component);
+        }
         public T AddComponent<T>() where T : DataComponentEntity, new()
         {
             if (!IsValid())
@@ -127,6 +146,10 @@ namespace Syadeu.Presentation
                 PresentationSystem<GameObjectProxySystem>.System.m_ComponentList.Add(m_Idx, list);
             }
             T t = new T();
+
+            t.m_Idx = Hash.NewHash();
+            t.m_GameObject = m_Idx;
+
             list.Add(t);
             return t;
         }
@@ -149,6 +172,10 @@ namespace Syadeu.Presentation
                 PresentationSystem<GameObjectProxySystem>.System.m_ComponentList.Add(m_Idx, list);
             }
             DataComponentEntity component = (DataComponentEntity)Activator.CreateInstance(t);
+
+            component.m_Idx = Hash.NewHash();
+            component.m_GameObject = m_Idx;
+
             list.Add(component);
             return component;
         }
@@ -211,6 +238,13 @@ namespace Syadeu.Presentation
         public void Destory()
         {
             PresentationSystem<GameObjectProxySystem>.System.DestoryDataObject(m_Idx);
+        }
+
+        void IDisposable.Dispose()
+        {
+            ref DataGameObject obj = ref GetRef();
+            obj.m_Idx = Hash.Empty;
+            obj.m_Transform = Hash.Empty;
         }
     }
 }

@@ -9,6 +9,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Collections;
 using UnityEngine;
 
 namespace Syadeu.Presentation
@@ -23,12 +24,17 @@ namespace Syadeu.Presentation
 
         GameObjectProxySystem m_ProxySystem;
 
-        private readonly List<DataGameObject> m_Creatures = new List<DataGameObject>();
+        private NativeList<DataGameObject> m_Creatures;
+        private NativeHashSet<DataGameObject> m_CreatureSet;
         private readonly Dictionary<Type, List<ICreatureAttributeProcessor>> m_Processors = new Dictionary<Type, List<ICreatureAttributeProcessor>>();
 
+        #region Presentation Methods
         protected override PresentationResult OnInitialize()
         {
             RequestSystem<GameObjectProxySystem>((other) => m_ProxySystem = other);
+
+            m_Creatures = new NativeList<DataGameObject>(1000, Allocator.Persistent);
+            m_CreatureSet = new NativeHashSet<DataGameObject>(1000, Allocator.Persistent);
 
             return base.OnInitialize();
         }
@@ -51,11 +57,47 @@ namespace Syadeu.Presentation
 
             return base.OnInitializeAsync();
         }
+        protected override PresentationResult OnStartPresentation()
+        {
+            m_ProxySystem.OnDataObjectDestoryAsync += M_ProxySystem_OnDataObjectDestoryAsync;
+
+            return base.OnStartPresentation();
+        }
+        private void M_ProxySystem_OnDataObjectDestoryAsync(DataGameObject obj)
+        {
+            if (!m_CreatureSet.Contains(obj)) return;
+
+            CreatureInfoDataComponent info = obj.GetComponent<CreatureInfoDataComponent>();
+            Creature entity = CreatureDataList.Instance.GetEntity(info.m_CreatureHash);
+            ProcessEntityOnDestory(this, entity, obj, obj.transform.ProxyObject);
+
+            m_Creatures.RemoveFor(obj);
+            m_CreatureSet.Remove(obj);
+        }
+        protected override PresentationResult OnPresentation()
+        {
+            NativeArray<DataGameObject>.ReadOnly temp = m_Creatures.AsParallelReader();
+            for (int i = 0; i < temp.Length; i++)
+            {
+                CreatureInfoDataComponent info = temp[i].GetComponent<CreatureInfoDataComponent>();
+                Creature entity = CreatureDataList.Instance.GetEntity(info.m_CreatureHash);
+                ProcessEntityOnPresentation(this, entity, temp[i], temp[i].transform.ProxyObject);
+            }
+
+            return base.OnPresentation();
+        }
+
+        public override void Dispose()
+        {
+            m_Creatures.Dispose();
+            m_CreatureSet.Dispose();
+        }
+        #endregion
 
         public DataGameObject Spawn(Hash hash)
         {
             Creature entity = CreatureDataList.Instance.GetEntity(hash);
-            var prefabInfo = PrefabList.Instance.ObjectSettings[entity.m_PrefabIdx];
+            //var prefabInfo = PrefabList.Instance.ObjectSettings[entity.m_PrefabIdx];
 
             DataGameObject dataObj = m_ProxySystem.CreateNewPrefab(entity.m_PrefabIdx, Vector3.zero, Quaternion.identity, Vector3.one, false,
                 (dataObj, mono) =>
@@ -71,13 +113,16 @@ namespace Syadeu.Presentation
 
                     //$"{m_DataIdx}: spawnpoint {spawnPointIdx}".ToLog();
                     //GetCreatureSet(m_DataIdx).m_SpawnRanges[spawnPointIdx].m_InstanceCount++;
-                    brain.m_UniqueIdx = m_Creatures.Count;
-                    m_Creatures.Add(dataObj);
+                    brain.m_UniqueIdx = m_Creatures.Length;
 
+                    m_Creatures.Add(dataObj);
+                    m_CreatureSet.Add(dataObj);
+
+                    CreatureInfoDataComponent info = dataObj.AddComponent<CreatureInfoDataComponent>();
+                    info.m_CreatureHash = hash;
                     ProcessEntityOnCreated(this, entity, dataObj, mono);
                 });
 
-            
             return dataObj;
         }
 
@@ -146,19 +191,50 @@ namespace Syadeu.Presentation
                 {
                     for (int j = 0; j < processors.Count; j++)
                     {
+                        $"{entity.m_Name} : {processors[i].GetType().Name} : {att.Name}".ToLog();
                         processors[i].OnCreated(att, entity, dataObj, (CreatureBrain)mono);
+                    }
+
+                    CoreSystem.Logger.Log(Channel.Creature, $"Processed On Created {entity.m_Name}, {processors.Count}");
+                }
+            }
+        }
+        private static void ProcessEntityOnPresentation(CreatureSystem system, Creature entity, DataGameObject dataObj, RecycleableMonobehaviour mono)
+        {
+            CreatureAttribute[] attributes = entity.m_Attributes.Select((other) => CreatureDataList.Instance.GetAttribute(other)).ToArray();
+            for (int i = 0; i < attributes.Length; i++)
+            {
+                CreatureAttribute att = attributes[i];
+                if (system.m_Processors.TryGetValue(att.GetType(), out List<ICreatureAttributeProcessor> processors))
+                {
+                    for (int j = 0; j < processors.Count; j++)
+                    {
+                        processors[i].OnPresentation(att, entity, dataObj, (CreatureBrain)mono);
                     }
                 }
             }
+        }
+        private static void ProcessEntityOnDestory(CreatureSystem system, Creature entity, DataGameObject dataObj, RecycleableMonobehaviour mono)
+        {
+            CoreSystem.Logger.Log(Channel.Creature, $"Processing On Destory {entity.m_Name}");
 
-            //for (int i = 0; i < attributes.Length; i++)
-            //{
-            //    if (attributes[i].OnEntityStart == null || !attributes[i].OnEntityStart.IsValid()) continue;
+            CreatureAttribute[] attributes = entity.m_Attributes.Select((other) => CreatureDataList.Instance.GetAttribute(other)).ToArray();
+            for (int i = 0; i < attributes.Length; i++)
+            {
+                CreatureAttribute att = attributes[i];
+                if (system.m_Processors.TryGetValue(att.GetType(), out List<ICreatureAttributeProcessor> processors))
+                {
+                    for (int j = 0; j < processors.Count; j++)
+                    {
+                        processors[i].OnDestory(att, entity, dataObj, (CreatureBrain)mono);
+                    }
+                }
+            }
+        }
 
-            //    InvokeLua(attributes[i].OnEntityStart, entity, dataObj, mono,
-            //        calledAttName: attributes[i].GetType().Name,
-            //        calledScriptName: "OnEntityStart");
-            //}
+        private sealed class CreatureInfoDataComponent : DataComponentEntity
+        {
+            public Hash m_CreatureHash;
         }
     }
 }

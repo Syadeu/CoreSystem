@@ -11,6 +11,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization.Formatters.Binary;
+using Unity.Collections;
 using UnityEngine;
 
 namespace Syadeu.Unsafe
@@ -254,7 +255,7 @@ namespace Syadeu
 
             return null;
         }
-        public static T RemoveFor<T, TA>(this T list, TA value) where T : IList<TA>/* where TA : IEquatable<TA>*/
+        public static void RemoveFor<T>(this IList<T> list, T value) where T : IEquatable<T>/* where TA : IEquatable<TA>*/
         {
             for (int i = 0; i < list.Count; i++)
             {
@@ -264,7 +265,18 @@ namespace Syadeu
                     break;
                 }
             }
-            return list;
+            //return list;
+        }
+        public static void RemoveFor<T>(this NativeList<T> list, T value) where T : unmanaged, IEquatable<T>
+        {
+            for (int i = 0; i < list.Length; i++)
+            {
+                if (list[i].Equals(value))
+                {
+                    list.RemoveAt(i);
+                    break;
+                }
+            }
         }
 
         private static readonly Dictionary<UnityEngine.Object, CoreRoutine> Lerps 

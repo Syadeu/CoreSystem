@@ -28,6 +28,8 @@ namespace Syadeu.Presentation
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => true;
 
+        public event Action<DataGameObject> OnDataObjectDestoryAsync;
+
         internal NativeHashMap<Hash, int> m_MappedGameObjectIdxes = new NativeHashMap<Hash, int>(1000, Allocator.Persistent);
         internal NativeHashMap<Hash, int> m_MappedTransformIdxes = new NativeHashMap<Hash, int>(1000, Allocator.Persistent);
         internal NativeList<DataGameObject> m_MappedGameObjects = new NativeList<DataGameObject>(1000, Allocator.Persistent);
@@ -200,14 +202,16 @@ namespace Syadeu.Presentation
                         int objIdx = m_MappedGameObjectIdxes[objHash];
                         int trIdx = m_MappedTransformIdxes[m_MappedGameObjects[objIdx].m_Transform];
 
+                        OnDataObjectDestoryAsync?.Invoke(m_MappedGameObjects[objIdx]);
+
                         if (m_MappedTransforms[trIdx].HasProxyObject)
                         {
                             RemoveProxy(m_MappedGameObjects[objIdx].m_Transform);
                         }
 
-                        GridManager.GetGrid(m_MappedGameObjects[objIdx].m_GridIdxes.x)
-                            .GetCell(m_MappedGameObjects[objIdx].m_GridIdxes.y)
-                            .RemoveCustomData();
+                        //GridManager.GetGrid(m_MappedGameObjects[objIdx].m_GridIdxes.x)
+                        //    .GetCell(m_MappedGameObjects[objIdx].m_GridIdxes.y)
+                        //    .RemoveCustomData();
 
                         // 여기서 지우면 다른 오브젝트의 인덱스가 헷갈리니까 일단 위치저장
                         m_RemovedTransformIdxes.Add(trIdx);
@@ -221,6 +225,7 @@ namespace Syadeu.Presentation
                             }
                             m_ComponentList.Remove(objHash);
                         }
+                        ((IDisposable)m_MappedGameObjects[objIdx]).Dispose();
 
                         // 여기서 지우면 다른 오브젝트의 인덱스가 헷갈리니까 일단 위치저장
                         m_RemovedGameObjectIdxes.Add(objIdx);
@@ -236,6 +241,7 @@ namespace Syadeu.Presentation
                 }
             }
 
+            // 데이터 재 인덱싱
             if (m_RemovedGameObjectIdxes.Count > 0)
             {
                 List<int> removedObj = m_RemovedGameObjectIdxes.ToList();

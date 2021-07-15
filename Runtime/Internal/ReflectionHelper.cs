@@ -8,10 +8,16 @@ namespace Syadeu.Internal
 {
     public sealed class ReflectionHelper
     {
+        /// <summary>
+        /// 해당 맴버의 이름을 Serialize 정형화 이름으로 바꾸어 반환합니다.
+        /// </summary>
+        /// <param name="memberInfo"></param>
+        /// <returns></returns>
         public static string SerializeMemberInfoName(MemberInfo memberInfo)
         {
             const string backingField = "k__BackingField";
             const string memberPrefix = "m_";
+            const string underBar = "_";
 
             string output;
             JsonPropertyAttribute jsonProperty = memberInfo.GetCustomAttribute<JsonPropertyAttribute>();
@@ -28,10 +34,23 @@ namespace Syadeu.Internal
                         .Remove(0, 1);
                     output = output.Remove(output.Length - 1, 1);
                 }
+                else if (output.StartsWith(memberPrefix))
+                {
+                    output = output.Remove(0, 1);
+                    if (output[0].Equals(underBar))
+                    {
+                        output = output.Remove(0, 1);
+                    }
+                }
             }
 
             return output;
         }
+        /// <summary>
+        /// 해당 타입내 Serialize 가 될 수 있는 맴버의 정보를 Array 로 반환합니다.
+        /// </summary>
+        /// <param name="t"></param>
+        /// <returns></returns>
         public static MemberInfo[] GetSerializeMemberInfos(Type t)
         {
             return t.GetMembers(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
