@@ -221,6 +221,13 @@ namespace Syadeu.Presentation
             CreatureAttribute[] attributes = entity.m_Attributes.Select((other) => CreatureDataList.Instance.GetAttribute(other)).ToArray();
             for (int i = 0; i < attributes.Length; i++)
             {
+                if (attributes[i] == null)
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Creature,
+                        $"Entity({entity.m_Name}) has empty attribute. This is not allowed. Request Ignored.");
+                    continue;
+                }
+
                 CreatureAttribute att = attributes[i];
                 dataObj.AddComponent(att.GetType());
 
@@ -242,6 +249,13 @@ namespace Syadeu.Presentation
             CreatureAttribute[] attributes = entity.m_Attributes.Select((other) => CreatureDataList.Instance.GetAttribute(other)).ToArray();
             for (int i = 0; i < attributes.Length; i++)
             {
+                if (attributes[i] == null)
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Creature,
+                        $"Entity({entity.m_Name}) has empty attribute. This is not allowed. Request Ignored.");
+                    continue;
+                }
+
                 CreatureAttribute att = attributes[i];
                 if (system.m_Processors.TryGetValue(att.GetType(), out List<ICreatureAttributeProcessor> processors))
                 {
@@ -260,6 +274,13 @@ namespace Syadeu.Presentation
             CreatureAttribute[] attributes = entity.m_Attributes.Select((other) => CreatureDataList.Instance.GetAttribute(other)).ToArray();
             for (int i = 0; i < attributes.Length; i++)
             {
+                if (attributes[i] == null)
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Creature,
+                        $"Entity({entity.m_Name}) has empty attribute. This is not allowed. Request Ignored.");
+                    continue;
+                }
+
                 CreatureAttribute att = attributes[i];
                 if (system.m_Processors.TryGetValue(att.GetType(), out List<ICreatureAttributeProcessor> processors))
                 {
@@ -278,6 +299,13 @@ namespace Syadeu.Presentation
             CreatureAttribute[] attributes = entity.m_Attributes.Select((other) => CreatureDataList.Instance.GetAttribute(other)).ToArray();
             for (int i = 0; i < attributes.Length; i++)
             {
+                if (attributes[i] == null)
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Creature,
+                        $"Entity({entity.m_Name}) has empty attribute. This is not allowed. Request Ignored.");
+                    continue;
+                }
+
                 CreatureAttribute att = attributes[i];
                 if (system.m_Processors.TryGetValue(att.GetType(), out List<ICreatureAttributeProcessor> processors))
                 {

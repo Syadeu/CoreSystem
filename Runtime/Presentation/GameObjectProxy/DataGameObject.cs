@@ -87,7 +87,7 @@ namespace Syadeu.Presentation
         public bool HasProxyObject => transform.HasProxyObject;
         public RecycleableMonobehaviour GetProxyObject()
         {
-            if (!IsValid() || !transform.HasProxyObject) return null;
+            if (!GetRef().IsValid() || !transform.HasProxyObject) return null;
 
             return transform.ProxyObject;
         }

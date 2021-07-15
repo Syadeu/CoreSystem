@@ -19,7 +19,6 @@ namespace Syadeu.Presentation
         bool IEquatable<IInternalDataComponent>.Equals(IInternalDataComponent other) => m_Idx.Equals(other.Idx);
         public bool IsValid() => !m_Disposed && !m_GameObject.Equals(Hash.Empty) && !m_Idx.Equals(Hash.Empty) &&
             PresentationSystem<GameObjectProxySystem>.IsValid() &&
-            PresentationSystem<GameObjectProxySystem>.System.m_ComponentList.ContainsKey(m_Idx) &&
             PresentationSystem<GameObjectProxySystem>.System.m_MappedGameObjectIdxes.ContainsKey(m_GameObject);
 
         [JsonIgnore] private bool m_Disposed = false;

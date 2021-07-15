@@ -463,16 +463,24 @@ namespace Syadeu.Presentation
         {
             if (m_LoadingLock) return;
 
-            ref DataTransform tr = ref *GetDataTransformPointer(trHash);
-            int2 proxyIdx = tr.m_ProxyIdx;
-            CoreSystem.Logger.False(proxyIdx.Equals(DataTransform.ProxyNull), $"proxy index null {proxyIdx}");
+            //ref DataTransform tr = ref *GetDataTransformPointer(trHash);
+            //int2 proxyIdx = tr.m_ProxyIdx;
+            //CoreSystem.Logger.False(proxyIdx.Equals(DataTransform.ProxyNull), $"proxy index null {proxyIdx}");
 
-            tr.gameObject.OnProxyRemoved();
-            OnDataObjectProxyRemoved?.Invoke(tr.gameObject);
-            tr.m_ProxyIdx = DataTransform.ProxyNull;
+            //tr.gameObject.OnProxyRemoved();
+            //OnDataObjectProxyRemoved?.Invoke(tr.gameObject);
+            //tr.m_ProxyIdx = DataTransform.ProxyNull;
 
             m_RequestedJobs.Enqueue(() =>
             {
+                ref DataTransform tr = ref *GetDataTransformPointer(trHash);
+                int2 proxyIdx = tr.m_ProxyIdx;
+                CoreSystem.Logger.False(proxyIdx.Equals(DataTransform.ProxyNull), $"proxy index null {proxyIdx}");
+
+                tr.gameObject.OnProxyRemoved();
+                OnDataObjectProxyRemoved?.Invoke(tr.gameObject);
+                tr.m_ProxyIdx = DataTransform.ProxyNull;
+
                 RecycleableMonobehaviour obj;
                 try
                 {
