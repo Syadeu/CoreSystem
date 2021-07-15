@@ -76,12 +76,11 @@ namespace Syadeu.Presentation
         }
         protected override PresentationResult OnPresentation()
         {
-            NativeArray<DataGameObject>.ReadOnly temp = m_Creatures.AsParallelReader();
-            for (int i = 0; i < temp.Length; i++)
+            for (int i = 0; i < m_Creatures.Length; i++)
             {
-                CreatureInfoDataComponent info = temp[i].GetComponent<CreatureInfoDataComponent>();
+                CreatureInfoDataComponent info = m_Creatures[i].GetComponent<CreatureInfoDataComponent>();
                 Creature entity = CreatureDataList.Instance.GetEntity(info.m_CreatureHash);
-                ProcessEntityOnPresentation(this, entity, temp[i], temp[i].transform.ProxyObject);
+                ProcessEntityOnPresentation(this, entity, m_Creatures[i], m_Creatures[i].transform.ProxyObject);
             }
 
             return base.OnPresentation();
@@ -97,7 +96,6 @@ namespace Syadeu.Presentation
         public DataGameObject Spawn(Hash hash)
         {
             Creature entity = CreatureDataList.Instance.GetEntity(hash);
-            //var prefabInfo = PrefabList.Instance.ObjectSettings[entity.m_PrefabIdx];
 
             DataGameObject dataObj = m_ProxySystem.CreateNewPrefab(entity.m_PrefabIdx, Vector3.zero, Quaternion.identity, Vector3.one, false,
                 (dataObj, mono) =>
@@ -191,11 +189,10 @@ namespace Syadeu.Presentation
                 {
                     for (int j = 0; j < processors.Count; j++)
                     {
-                        $"{entity.m_Name} : {processors[i].GetType().Name} : {att.Name}".ToLog();
                         processors[i].OnCreated(att, entity, dataObj, (CreatureBrain)mono);
                     }
 
-                    CoreSystem.Logger.Log(Channel.Creature, $"Processed On Created {entity.m_Name}, {processors.Count}");
+                    CoreSystem.Logger.Log(Channel.Creature, $"Processed OnCreated at entity({entity.m_Name}), count {processors.Count}");
                 }
             }
         }
