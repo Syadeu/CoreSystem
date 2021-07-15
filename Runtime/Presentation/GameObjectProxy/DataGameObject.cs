@@ -72,28 +72,25 @@ namespace Syadeu.Presentation
                 boxed.m_CustomTag = value;
             }
         }
-        internal DataTransform InternalTransform
-        {
-            get
-            {
-                unsafe
-                {
-                    return *PresentationSystem<GameObjectProxySystem>.System.GetDataTransformPointer(m_Transform);
-                }
-            }
-        }
 
         Hash IInternalDataComponent.GameObject => m_Idx;
         Hash IInternalDataComponent.Idx => m_Idx;
         DataComponentType IInternalDataComponent.Type => DataComponentType.GameObject;
-        bool IInternalDataComponent.HasProxyObject => !InternalTransform.m_ProxyIdx.Equals(DataTransform.ProxyNull);
-        bool IInternalDataComponent.ProxyRequested => InternalTransform.m_ProxyIdx.Equals(DataTransform.ProxyQueued);
+        bool IInternalDataComponent.ProxyRequested => transform.ProxyRequested;
         bool IEquatable<IInternalDataComponent>.Equals(IInternalDataComponent other) => m_Idx.Equals(other.Idx);
         bool IEquatable<DataGameObject>.Equals(DataGameObject other) => m_Idx.Equals(other.m_Idx);
 
         public bool IsValid() => !m_Idx.Equals(Hash.Empty) && !m_Transform.Equals(Hash.Empty) &&
             PresentationSystem<GameObjectProxySystem>.System.m_MappedTransformIdxes.ContainsKey(m_Transform) &&
             PresentationSystem<GameObjectProxySystem>.System.m_MappedGameObjectIdxes.ContainsKey(m_Idx);
+
+        public bool HasProxyObject => transform.HasProxyObject;
+        public RecycleableMonobehaviour GetProxyObject()
+        {
+            if (!IsValid() || !transform.HasProxyObject) return null;
+
+            return transform.ProxyObject;
+        }
 
 #pragma warning disable IDE1006 // Naming Styles
 #line hidden
@@ -106,7 +103,10 @@ namespace Syadeu.Presentation
                     CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);
                     return default;
                 }
-                return InternalTransform;
+                unsafe
+                {
+                    return *PresentationSystem<GameObjectProxySystem>.System.GetDataTransformPointer(m_Transform);
+                }
             }
         }
 

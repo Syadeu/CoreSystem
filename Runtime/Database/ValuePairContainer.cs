@@ -119,7 +119,7 @@ namespace Syadeu.Database
         }
         public void Add(ValuePair valuePair)
         {
-            if (Contains(valuePair.Hash)) throw new Exception();
+            if (Contains(valuePair.Hash)) throw new Exception("Atempt to add same valuepair");
 
             var temp = m_Values.ToList();
             temp.Add(valuePair);
@@ -145,7 +145,7 @@ namespace Syadeu.Database
             temp.AddRange(values);
             m_Values = temp.ToArray();
         }
-        public void AddRange(ValuePairContainer container) => AddRange(((ValuePairContainer)container.Clone()).m_Values);
+        public void AddRange(ValuePairContainer container) => AddRange(container.m_Values);
 
         public void Clear() => m_Values = new ValuePair[0];
         public void Remove(object item)

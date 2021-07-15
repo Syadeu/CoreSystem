@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Linq;
 using System.Reflection;
 using Syadeu.Database;
 using Syadeu.Database.Lua;
 using Syadeu.Internal;
 using UnityEditor;
+using UnityEngine;
 
 namespace SyadeuEditor
 {
@@ -53,6 +55,18 @@ namespace SyadeuEditor
             else throw new NotImplementedException();
             string name = ReflectionHelper.SerializeMemberInfoName(memberInfo);
 
+            int spaceCount = memberInfo.GetCustomAttributes<SpaceAttribute>().Count();
+            for (int i = 0; i < spaceCount; i++)
+            {
+                EditorGUILayout.Space();
+            }
+
+            TooltipAttribute tooltip = memberInfo.GetCustomAttribute<TooltipAttribute>();
+            if (tooltip != null)
+            {
+                EditorGUILayout.HelpBox(tooltip.tooltip, MessageType.Info);
+            }
+
             if (declaredType.Equals(TypeHelper.TypeOf<int>.Type))
             {
                 setter.Invoke(ins, EditorGUILayout.IntField(name, (int)getter.Invoke(ins)));
@@ -98,6 +112,19 @@ namespace SyadeuEditor
             else if (declaredType.Equals(TypeHelper.TypeOf<string>.Type))
             {
                 setter.Invoke(ins, EditorGUILayout.TextField(name, (string)getter.Invoke(ins)));
+            }
+            else if (declaredType.IsEnum)
+            {
+                //string[] enumNames = Enum.GetNames(declaredType);
+                Enum idx = (Enum)getter.Invoke(ins);
+                Enum selected;
+                if (declaredType.GetCustomAttribute<FlagsAttribute>() != null)
+                {
+                    selected = EditorGUILayout.EnumFlagsField(name, idx);
+                }
+                else selected = EditorGUILayout.EnumPopup(name, idx);
+
+                setter.Invoke(ins, selected);
             }
             else if (declaredType.Equals(TypeHelper.TypeOf<Hash>.Type))
             {

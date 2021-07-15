@@ -606,6 +606,20 @@ namespace Syadeu.Presentation
             DataGameObject* obj = ((DataGameObject*)m_MappedGameObjects.GetUnsafePtr()) + idx;
             return obj;
         }
+        public DataTransform GetDataTransform(Hash hash)
+        {
+            unsafe
+            {
+                return *GetDataTransformPointer(hash);
+            }
+        }
+        public DataGameObject GetDataGameObject(Hash hash)
+        {
+            unsafe
+            {
+                return *GetDataGameObjectPointer(hash);
+            }
+        }
         #endregion
 
         #region Experimental

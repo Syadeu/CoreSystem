@@ -2,11 +2,11 @@
 
 namespace Syadeu.Mono.TurnTable
 {
-    public interface ITurnPlayer : IObject
+    public interface ITurnPlayer
     {
         //string name { get; }
         //Transform transform { get; }
-
+        string DisplayName { get; }
         /// <summary>
         /// 값이 낮을 수록, 턴이 일찍 시작됩니다.
         /// </summary>

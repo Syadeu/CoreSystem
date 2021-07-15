@@ -25,8 +25,8 @@ namespace Syadeu.Presentation
         Hash IInternalDataComponent.GameObject => m_GameObject;
         Hash IInternalDataComponent.Idx => m_Idx;
         DataComponentType IInternalDataComponent.Type => DataComponentType.Transform;
-        bool IInternalDataComponent.HasProxyObject => !m_ProxyIdx.Equals(ProxyNull);
-        internal bool HasProxyObject => !m_ProxyIdx.Equals(ProxyNull);
+        bool IInternalDataComponent.HasProxyObject => !m_ProxyIdx.Equals(ProxyNull) && !m_ProxyIdx.Equals(ProxyQueued);
+        internal bool HasProxyObject => !m_ProxyIdx.Equals(ProxyNull) && !m_ProxyIdx.Equals(ProxyQueued);
         bool IInternalDataComponent.ProxyRequested => m_ProxyIdx.Equals(ProxyQueued);
         internal bool ProxyRequested => m_ProxyIdx.Equals(ProxyQueued);
 

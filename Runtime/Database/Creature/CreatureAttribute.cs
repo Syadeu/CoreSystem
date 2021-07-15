@@ -2,7 +2,7 @@
 using Syadeu.Presentation;
 using System.Runtime.Serialization;
 
-namespace Syadeu.Database.CreatureData
+namespace Syadeu.Database.CreatureData.Attributes
 {
     [DataContract]
     public abstract class CreatureAttribute : DataComponentEntity, ICreatureAttribute

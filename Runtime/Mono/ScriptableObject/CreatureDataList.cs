@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Database.CreatureData;
+using Syadeu.Database.CreatureData.Attributes;
 using Syadeu.Internal;
 using System;
 using System.Collections.Generic;
@@ -43,7 +44,13 @@ namespace Syadeu.Database
                 string lastFold = Path.GetFileName(Path.GetDirectoryName(attPaths[i]));
                 Type t = attTypes.FindFor((other) => other.Name.Equals(lastFold));
 
-                var temp = (CreatureAttribute)JsonConvert.DeserializeObject(File.ReadAllText(attPaths[i]), t);
+                var obj = JsonConvert.DeserializeObject(File.ReadAllText(attPaths[i]), t);
+                if (!(obj is CreatureAttribute))
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Creature, $"Attribute({t?.Name}) at {attPaths[i]} is invalid. This attribute has been ignored");
+                    continue;
+                }
+                var temp = (CreatureAttribute)obj;
                 m_Attributes.Add(temp);
             }
         }

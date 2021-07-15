@@ -54,27 +54,27 @@ namespace SyadeuEditor
             EditorApplication.ExecuteMenuItem("Window/General/Inspector");
         }
 
-        public static CreatureSystemWindow m_CreatureWindow;
-        [MenuItem("CoreSystem/Creature/Window", priority = 200)]
-        public static void CreatureWindow()
-        {
-            if (m_CreatureWindow == null)
-            {
-                m_CreatureWindow = GetWindow<CreatureSystemWindow>();
-                m_CreatureWindow.titleContent = new GUIContent("Creature Window");
-                m_CreatureWindow.minSize = new Vector2(620, m_CreatureWindow.minSize.y);
-                m_CreatureWindow.maxSize = new Vector2(620, m_CreatureWindow.maxSize.y);
-            }
+        //public static CreatureSystemWindow m_CreatureWindow;
+        //[MenuItem("CoreSystem/Creature/Window", priority = 200)]
+        //public static void CreatureWindow()
+        //{
+        //    if (m_CreatureWindow == null)
+        //    {
+        //        m_CreatureWindow = GetWindow<CreatureSystemWindow>();
+        //        m_CreatureWindow.titleContent = new GUIContent("Creature Window");
+        //        m_CreatureWindow.minSize = new Vector2(620, m_CreatureWindow.minSize.y);
+        //        m_CreatureWindow.maxSize = new Vector2(620, m_CreatureWindow.maxSize.y);
+        //    }
 
-            m_CreatureWindow.Show();
-        }
+        //    m_CreatureWindow.Show();
+        //}
 
-        [MenuItem("CoreSystem/Creature/Edit Creature Settings", priority = 201)]
-        public static void CreatureSettingsWindow()
-        {
-            Selection.activeObject = CreatureSettings.Instance;
-            EditorApplication.ExecuteMenuItem("Window/General/Inspector");
-        }
+        //[MenuItem("CoreSystem/Creature/Edit Creature Settings", priority = 201)]
+        //public static void CreatureSettingsWindow()
+        //{
+        //    Selection.activeObject = CreatureSettings.Instance;
+        //    EditorApplication.ExecuteMenuItem("Window/General/Inspector");
+        //}
 #if CORESYSTEM_UNITYAUDIO
         static UnityAudioWindow m_UnityAudioWindow;
         [MenuItem("CoreSystem/Unity/Unity Audio Window")]

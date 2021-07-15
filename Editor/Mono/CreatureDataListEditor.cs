@@ -1,5 +1,6 @@
 ﻿using Syadeu.Database;
 using Syadeu.Database.CreatureData;
+using Syadeu.Database.CreatureData.Attributes;
 using Syadeu.Internal;
 using SyadeuEditor.Tree;
 using System;
@@ -199,6 +200,7 @@ namespace SyadeuEditor
                 }
                 EditorGUILayout.EndVertical();
 
+                Target.m_HP = EditorGUILayout.FloatField("HP", Target.m_HP);
                 Target.m_Values.DrawValueContainer("Values");
             }
 

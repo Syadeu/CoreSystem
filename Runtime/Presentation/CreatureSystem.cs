@@ -1,6 +1,7 @@
 ﻿using MoonSharp.Interpreter;
 using Syadeu.Database;
 using Syadeu.Database.CreatureData;
+using Syadeu.Database.CreatureData.Attributes;
 using Syadeu.Database.Lua;
 using Syadeu.Internal;
 using Syadeu.Mono;
@@ -20,26 +21,24 @@ namespace Syadeu.Presentation
 
         public override bool EnableBeforePresentation => true;
         public override bool EnableOnPresentation => true;
-        public override bool EnableAfterPresentation => false;
+        public override bool EnableAfterPresentation => true;
 
         GameObjectProxySystem m_ProxySystem;
 
-        private NativeList<DataGameObject> m_Creatures;
-        private NativeHashSet<DataGameObject> m_CreatureSet;
+        private NativeList<Hash> m_CreatureIdxes;
+        private NativeHashSet<Hash> m_CreatureIdxSet;
+        private NativeHashSet<Hash> m_DeadCreatureIdxSet;
         private readonly Dictionary<Type, List<ICreatureAttributeProcessor>> m_Processors = new Dictionary<Type, List<ICreatureAttributeProcessor>>();
 
         #region Presentation Methods
-        protected override PresentationResult OnInitialize()
+        protected override PresentationResult OnInitializeAsync()
         {
             RequestSystem<GameObjectProxySystem>((other) => m_ProxySystem = other);
 
-            m_Creatures = new NativeList<DataGameObject>(1000, Allocator.Persistent);
-            m_CreatureSet = new NativeHashSet<DataGameObject>(1000, Allocator.Persistent);
+            m_CreatureIdxes = new NativeList<Hash>(1000, Allocator.Persistent);
+            m_CreatureIdxSet = new NativeHashSet<Hash>(1000, Allocator.Persistent);
+            m_DeadCreatureIdxSet = new NativeHashSet<Hash>(1000, Allocator.Persistent);
 
-            return base.OnInitialize();
-        }
-        protected override PresentationResult OnInitializeAsync()
-        {
             Type[] processors = TypeHelper.GetTypes((other) =>
             {
                 return !other.IsAbstract && !other.IsInterface && TypeHelper.TypeOf<ICreatureAttributeProcessor>.Type.IsAssignableFrom(other);
@@ -65,68 +64,94 @@ namespace Syadeu.Presentation
         }
         private void M_ProxySystem_OnDataObjectDestoryAsync(DataGameObject obj)
         {
-            if (!m_CreatureSet.Contains(obj)) return;
+            if (!m_CreatureIdxSet.Contains(obj.m_Idx)) return;
 
             CreatureInfoDataComponent info = obj.GetComponent<CreatureInfoDataComponent>();
-            Creature entity = CreatureDataList.Instance.GetEntity(info.m_CreatureHash);
-            ProcessEntityOnDestory(this, entity, obj, obj.transform.ProxyObject);
+            ProcessEntityOnDestory(this, obj);
 
-            m_Creatures.RemoveFor(obj);
-            m_CreatureSet.Remove(obj);
+            m_CreatureIdxes.RemoveFor(obj.m_Idx);
+            m_CreatureIdxSet.Remove(obj.m_Idx);
+            m_DeadCreatureIdxSet.Remove(obj.m_Idx);
         }
-        protected override PresentationResult OnPresentation()
+        protected override PresentationResult OnPresentationAsync()
         {
-            for (int i = 0; i < m_Creatures.Length; i++)
+            for (int i = 0; i < m_CreatureIdxes.Length; i++)
             {
-                CreatureInfoDataComponent info = m_Creatures[i].GetComponent<CreatureInfoDataComponent>();
-                Creature entity = CreatureDataList.Instance.GetEntity(info.m_CreatureHash);
-                ProcessEntityOnPresentation(this, entity, m_Creatures[i], m_Creatures[i].transform.ProxyObject);
+                DataGameObject obj = m_ProxySystem.GetDataGameObject(m_CreatureIdxes[i]);
+                CreatureInfoDataComponent info = obj.GetComponent<CreatureInfoDataComponent>();
+
+                if (m_DeadCreatureIdxSet.Contains(obj.m_Idx)) continue;
+                ProcessEntityOnPresentation(this, obj);
             }
 
             return base.OnPresentation();
         }
+        protected override PresentationResult AfterPresentationAsync()
+        {
+            for (int i = 0; i < m_CreatureIdxes.Length; i++)
+            {
+                DataGameObject obj = m_ProxySystem.GetDataGameObject(m_CreatureIdxes[i]);
+                CreatureInfoDataComponent info = obj.GetComponent<CreatureInfoDataComponent>();
+
+                if (!m_DeadCreatureIdxSet.Contains(obj.m_Idx) && !info.IsAlive)
+                {
+                    ProcessEntityOnDead(this, obj);
+                    m_DeadCreatureIdxSet.Add(obj.m_Idx);
+                }
+            }
+            return base.AfterPresentation();
+        }
 
         public override void Dispose()
         {
-            m_Creatures.Dispose();
-            m_CreatureSet.Dispose();
+            m_CreatureIdxes.Dispose();
+            m_CreatureIdxSet.Dispose();
+            m_DeadCreatureIdxSet.Dispose();
         }
         #endregion
 
-        public DataGameObject Spawn(Hash hash)
+        public DataGameObject Spawn(Hash hash, Vector3 position, Quaternion rotation, Vector3 localSize)
         {
+            CoreSystem.Logger.NotNull(m_ProxySystem, "ProxySystem is not initialized");
             Creature entity = CreatureDataList.Instance.GetEntity(hash);
 
-            DataGameObject dataObj = m_ProxySystem.CreateNewPrefab(entity.m_PrefabIdx, Vector3.zero, Quaternion.identity, Vector3.one, false,
+            DataGameObject dataObj = m_ProxySystem.CreateNewPrefab(entity.m_PrefabIdx, position, rotation, localSize, false,
                 (dataObj, mono) =>
                 {
                     CreatureBrain brain = (CreatureBrain)mono;
+                    CreatureInfoDataComponent info = dataObj.AddComponent<CreatureInfoDataComponent>();
+                    info.m_CreatureInfo = (Creature)entity.Clone();
+                    info.m_Brain = brain;
+
                     //brain.m_SpawnPointIdx = spawnPointIdx;
                     brain.m_DataHash = hash;
-                    brain.m_IsSpawnedFromManager = true;
+                    brain.m_DataObject = dataObj;
+                    //brain.m_IsSpawnedFromManager = true;
                     //brain.transform.position = pos;
                     //brain.transform.SetParent(Instance.transform);
+
+                    ProcessEntityOnCreated(this, dataObj);
 
                     brain.Initialize();
 
                     //$"{m_DataIdx}: spawnpoint {spawnPointIdx}".ToLog();
                     //GetCreatureSet(m_DataIdx).m_SpawnRanges[spawnPointIdx].m_InstanceCount++;
-                    brain.m_UniqueIdx = m_Creatures.Length;
+                    //brain.m_UniqueIdx = m_Creatures.Length;
 
-                    m_Creatures.Add(dataObj);
-                    m_CreatureSet.Add(dataObj);
+                    m_CreatureIdxes.Add(dataObj.m_Idx);
+                    m_CreatureIdxSet.Add(dataObj.m_Idx);
 
-                    CreatureInfoDataComponent info = dataObj.AddComponent<CreatureInfoDataComponent>();
-                    info.m_CreatureHash = hash;
-                    ProcessEntityOnCreated(this, entity, dataObj, mono);
+                    
+                    
                 });
-
+            $"spawn {hash}".ToLog();
             return dataObj;
         }
 
-        public static void InvokeLua(LuaScript scr, Creature entity, DataGameObject dataObj, RecycleableMonobehaviour mono,
+        public static void InvokeLua(LuaScript scr, DataGameObject dataObj,
             in string calledAttName, in string calledScriptName)
         {
+            Creature entity = dataObj.GetComponent<CreatureInfoDataComponent>().m_CreatureInfo;
             if (scr == null || !scr.IsValid())
             {
                 CoreSystem.Logger.LogWarning(Channel.Creature,
@@ -134,6 +159,7 @@ namespace Syadeu.Presentation
                 return;
             }
 
+            RecycleableMonobehaviour mono = dataObj.transform.ProxyObject;
             List<object> args = ToArgument(mono.gameObject, dataObj, scr.m_Args);
             try
             {
@@ -177,8 +203,10 @@ namespace Syadeu.Presentation
                 return temp;
             }
         }
-        private static void ProcessEntityOnCreated(CreatureSystem system, Creature entity, DataGameObject dataObj, RecycleableMonobehaviour mono)
+        private static void ProcessEntityOnCreated(CreatureSystem system, DataGameObject dataObj)
         {
+            Creature entity = dataObj.GetComponent<CreatureInfoDataComponent>().m_CreatureInfo;
+
             CreatureAttribute[] attributes = entity.m_Attributes.Select((other) => CreatureDataList.Instance.GetAttribute(other)).ToArray();
             for (int i = 0; i < attributes.Length; i++)
             {
@@ -189,15 +217,17 @@ namespace Syadeu.Presentation
                 {
                     for (int j = 0; j < processors.Count; j++)
                     {
-                        processors[i].OnCreated(att, entity, dataObj, (CreatureBrain)mono);
+                        processors[j].OnCreated(att, dataObj);
                     }
 
                     CoreSystem.Logger.Log(Channel.Creature, $"Processed OnCreated at entity({entity.m_Name}), count {processors.Count}");
                 }
             }
         }
-        private static void ProcessEntityOnPresentation(CreatureSystem system, Creature entity, DataGameObject dataObj, RecycleableMonobehaviour mono)
+        private static void ProcessEntityOnPresentation(CreatureSystem system, DataGameObject dataObj)
         {
+            Creature entity = dataObj.GetComponent<CreatureInfoDataComponent>().m_CreatureInfo;
+
             CreatureAttribute[] attributes = entity.m_Attributes.Select((other) => CreatureDataList.Instance.GetAttribute(other)).ToArray();
             for (int i = 0; i < attributes.Length; i++)
             {
@@ -206,13 +236,32 @@ namespace Syadeu.Presentation
                 {
                     for (int j = 0; j < processors.Count; j++)
                     {
-                        processors[i].OnPresentation(att, entity, dataObj, (CreatureBrain)mono);
+                        processors[j].OnPresentation(att, dataObj);
                     }
                 }
             }
         }
-        private static void ProcessEntityOnDestory(CreatureSystem system, Creature entity, DataGameObject dataObj, RecycleableMonobehaviour mono)
+        private static void ProcessEntityOnDead(CreatureSystem system, DataGameObject dataObj)
         {
+            Creature entity = dataObj.GetComponent<CreatureInfoDataComponent>().m_CreatureInfo;
+            CoreSystem.Logger.Log(Channel.Creature, $"Processing On Dead {entity.m_Name}");
+
+            CreatureAttribute[] attributes = entity.m_Attributes.Select((other) => CreatureDataList.Instance.GetAttribute(other)).ToArray();
+            for (int i = 0; i < attributes.Length; i++)
+            {
+                CreatureAttribute att = attributes[i];
+                if (system.m_Processors.TryGetValue(att.GetType(), out List<ICreatureAttributeProcessor> processors))
+                {
+                    for (int j = 0; j < processors.Count; j++)
+                    {
+                        processors[j].OnDead(att, dataObj);
+                    }
+                }
+            }
+        }
+        private static void ProcessEntityOnDestory(CreatureSystem system, DataGameObject dataObj)
+        {
+            Creature entity = dataObj.GetComponent<CreatureInfoDataComponent>().m_CreatureInfo;
             CoreSystem.Logger.Log(Channel.Creature, $"Processing On Destory {entity.m_Name}");
 
             CreatureAttribute[] attributes = entity.m_Attributes.Select((other) => CreatureDataList.Instance.GetAttribute(other)).ToArray();
@@ -223,15 +272,18 @@ namespace Syadeu.Presentation
                 {
                     for (int j = 0; j < processors.Count; j++)
                     {
-                        processors[i].OnDestory(att, entity, dataObj, (CreatureBrain)mono);
+                        processors[j].OnDestory(att, dataObj);
                     }
                 }
             }
         }
+    }
 
-        private sealed class CreatureInfoDataComponent : DataComponentEntity
-        {
-            public Hash m_CreatureHash;
-        }
+    public sealed class CreatureInfoDataComponent : DataComponentEntity
+    {
+        public Creature m_CreatureInfo;
+        public CreatureBrain m_Brain;
+
+        public bool IsAlive => m_CreatureInfo.m_HP > 0;
     }
 }
