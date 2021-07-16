@@ -60,43 +60,33 @@ namespace SyadeuEditor
                 {
                     if (treeView.SelectedToolbar == 0)
                     {
-                        GenericMenu menu = new GenericMenu();
                         Type[] types = TypeHelper.GetTypes((other) => !other.IsAbstract && TypeHelper.TypeOf<EntityBase>.Type.IsAssignableFrom(other));
-                        for (int i = 0; i < types.Length; i++)
-                        {
-                            Type target = types[i];
-                            menu.AddItem(new GUIContent(target.Name), false, () =>
-                            {
-                                if (Asset.m_Entites == null) Asset.m_Entites = new List<EntityBase>();
-
-                                Asset.m_Entites.Add((EntityBase)Activator.CreateInstance(target));
-                                RefreshTreeView();
-                            });
-                        }
 
                         Rect rect = GUILayoutUtility.GetLastRect();
                         rect.position = Event.current.mousePosition;
-                        menu.DropDown(rect);
+
+                        PopupWindow.Show(rect, SelectorPopup<Type, Type>.GetWindow(types, (t) =>
+                        {
+                            if (Asset.m_Entites == null) Asset.m_Entites = new List<EntityBase>();
+                            Asset.m_Entites.Add((EntityBase)Activator.CreateInstance(t));
+                            RefreshTreeView();
+                        },
+                        (t) => t, (t) => t.Name));
                     }
                     else if (treeView.SelectedToolbar == 1)
                     {
-                        GenericMenu menu = new GenericMenu();
                         Type[] types = TypeHelper.GetTypes((other) => !other.IsAbstract && TypeHelper.TypeOf<AttributeBase>.Type.IsAssignableFrom(other));
-                        for (int i = 0; i < types.Length; i++)
-                        {
-                            Type target = types[i];
-                            menu.AddItem(new GUIContent(target.Name), false, () =>
-                            {
-                                if (Asset.m_Attributes == null) Asset.m_Attributes = new List<AttributeBase>();
 
-                                Asset.m_Attributes.Add((AttributeBase)Activator.CreateInstance(target));
-                                RefreshTreeView();
-                            });
-                        }
-                        
                         Rect rect = GUILayoutUtility.GetLastRect();
                         rect.position = Event.current.mousePosition;
-                        menu.DropDown(rect);
+
+                        PopupWindow.Show(rect, SelectorPopup<Type, Type>.GetWindow(types, (t) =>
+                        {
+                            if (Asset.m_Attributes == null) Asset.m_Attributes = new List<AttributeBase>();
+                            Asset.m_Attributes.Add((AttributeBase)Activator.CreateInstance(t));
+                            RefreshTreeView();
+                        },
+                        (t) => t, (t) => t.Name));
                     }
 
                     List<object> tempList = new List<object>();
