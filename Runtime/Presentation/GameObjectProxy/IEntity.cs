@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Database;
 using Syadeu.Internal;
+using Syadeu.Mono;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,7 +30,7 @@ namespace Syadeu.Presentation
 
         public string Name { get; set; } = "New Entity";
         [JsonProperty(Order = -10, PropertyName = "Hash")] public Hash Hash { get; set; }
-        [JsonProperty(Order = -9, PropertyName = "PrefabIdx")] public int PrefabIdx { get; set; }
+        [JsonProperty(Order = -9, PropertyName = "PrefabIdx")] public PrefabReference PrefabIdx { get; set; }
         [JsonProperty(Order = -8, PropertyName = "Attributes")] public List<Hash> Attributes { get; set; }
         List<AttributeBase> IEntity.Attributes => m_Attributes;
 

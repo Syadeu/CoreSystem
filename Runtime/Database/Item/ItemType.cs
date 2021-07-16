@@ -3,11 +3,12 @@ using System;
 using UnityEngine;
 
 using Syadeu.Database.Lua;
+using Syadeu.Presentation;
 
 namespace Syadeu.Database
 {
     [Serializable]
-    public sealed class ItemType : ItemTypeEntity
+    public sealed class ItemType : AttributeBase
     {
         [Space]
         [JsonProperty(Order = 3, PropertyName = "Values")] public ValuePairContainer m_Values = new ValuePairContainer();
@@ -38,7 +39,7 @@ namespace Syadeu.Database
             return m_Proxy;
         }
     }
-    public sealed class ItemUseableType : ItemTypeEntity
+    public sealed class ItemUseableType : AttributeBase
     {
         [Space]
         [JsonProperty(Order = 3, PropertyName = "RemoveOnUse")] public bool m_RemoveOnUse = true;

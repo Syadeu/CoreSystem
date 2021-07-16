@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using UnityEngine;
+using Syadeu.Presentation;
 
 #if UNITY_ADDRESSABLES
 using UnityEngine.AddressableAssets;
@@ -18,28 +19,20 @@ using Syadeu.Database.Lua;
 namespace Syadeu.Database
 {
     [Serializable]
-    public sealed class Item : IAttribute
+    public sealed class Item : EntityBase
     {
-        public string Name { get; set; }
-        public Hash Hash { get; set; }
-
         [JsonConverter(typeof(Converters.AssetReferenceJsonConverter))]
         [JsonProperty(Order = 2, PropertyName = "ImagePath")] public AssetReference m_ImagePath;
-        /// <summary>
-        /// <see cref="PrefabList.ObjectSettings"/>
-        /// </summary>
-        [JsonProperty(Order = 3, PropertyName = "PrefabIdx")] public int m_PrefabIdx;
-
-        [Tooltip("Hash")]
-        /// <summary>
-        /// <see cref="ItemType"/>
-        /// </summary>
-        [JsonProperty(Order = 4, PropertyName = "ItemTypes")] public ulong[] m_ItemTypes = new ulong[0];
-        [Tooltip("Hash")]
-        /// <summary>
-        /// <see cref="ItemEffectType"/>
-        /// </summary>
-        [JsonProperty(Order = 5, PropertyName = "ItemEffectTypes")] public ulong[] m_ItemEffectTypes = new ulong[0];
+        //[Tooltip("Hash")]
+        ///// <summary>
+        ///// <see cref="ItemType"/>
+        ///// </summary>
+        //[JsonProperty(Order = 4, PropertyName = "ItemTypes")] public ulong[] m_ItemTypes = new ulong[0];
+        //[Tooltip("Hash")]
+        ///// <summary>
+        ///// <see cref="ItemEffectType"/>
+        ///// </summary>
+        //[JsonProperty(Order = 5, PropertyName = "ItemEffectTypes")] public ulong[] m_ItemEffectTypes = new ulong[0];
         [JsonProperty(Order = 6, PropertyName = "Values")] public ValuePairContainer m_Values = new ValuePairContainer();
 
         [NonSerialized] private ItemProxy m_Proxy = null;

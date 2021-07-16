@@ -46,11 +46,11 @@ namespace SyadeuEditor
             treeView
                 .SetupElements(tempList, (other) =>
                 {
-                    if (other is CreatureEntity creature)
+                    if (other is EntityBase entity)
                     {
-                        return new TreeEntityElement(treeView, creature);
+                        return new TreeEntityElement(treeView, entity);
                     }
-                    else if (other is CreatureAttribute attribute)
+                    else if (other is AttributeBase attribute)
                     {
                         return new TreeAttributeElement(treeView, attribute);
                     }
@@ -187,7 +187,8 @@ namespace SyadeuEditor
 
                 Target.Name = EditorGUILayout.TextField("Name: ", Target.Name);
                 EditorGUILayout.TextField("Hash: ", Target.Hash.ToString());
-                Target.PrefabIdx = PrefabListEditor.DrawPrefabSelector(Target.PrefabIdx);
+                ReflectionHelperEditor.DrawPrefabReference("Prefab: ", (idx) => Target.PrefabIdx = idx, Target.PrefabIdx);
+                //Target.PrefabIdx = PrefabListEditor.DrawPrefabSelector(Target.PrefabIdx);
 
                 EditorGUILayout.BeginVertical(EditorUtils.Box);
                 {
@@ -209,12 +210,14 @@ namespace SyadeuEditor
                     {
                         EditorGUILayout.BeginHorizontal();
 
-                        int idx = EditorGUILayout.Popup(GetSelectedAttributeIdx(Target.Attributes[i]), m_AttributeNames);
-                        if (idx == 0)
-                        {
-                            Target.Attributes[i] = Hash.Empty;
-                        }
-                        else Target.Attributes[i] = EntityDataList.Instance.m_Attributes[idx - 1].Hash;
+                        //int idx = EditorGUILayout.Popup(GetSelectedAttributeIdx(Target.Attributes[i]), m_AttributeNames);
+                        //if (idx == 0)
+                        //{
+                        //    Target.Attributes[i] = Hash.Empty;
+                        //}
+                        //else Target.Attributes[i] = EntityDataList.Instance.m_Attributes[idx - 1].Hash;
+                        ReflectionHelperEditor.DrawAttributeSelector((attHash) => Target.Attributes[i] = attHash, Target.Attributes[i]);
+
                         if (GUILayout.Button("-", GUILayout.Width(20)))
                         {
                             Target.Attributes.RemoveAt(i);

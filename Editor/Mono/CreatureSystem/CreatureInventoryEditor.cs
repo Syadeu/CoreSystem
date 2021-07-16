@@ -31,17 +31,17 @@ namespace SyadeuEditor
         {
             if (GUILayout.Button("Add Item"))
             {
-                GenericMenu menu = new GenericMenu();
-                for (int i = 0; i < ItemDataList.Instance.m_Items.Count; i++)
-                {
-                    Item item = ItemDataList.Instance.m_Items[i];
-                    menu.AddItem(new GUIContent(item.Name), false, 
-                        () => CreateItemInstance(item));
-                }
+                //GenericMenu menu = new GenericMenu();
+                //for (int i = 0; i < ItemDataList.Instance.m_Items.Count; i++)
+                //{
+                //    Item item = ItemDataList.Instance.m_Items[i];
+                //    menu.AddItem(new GUIContent(item.Name), false, 
+                //        () => CreateItemInstance(item));
+                //}
 
-                Rect rect = GUILayoutUtility.GetLastRect();
-                rect.position = Event.current.mousePosition;
-                menu.DropDown(rect);
+                //Rect rect = GUILayoutUtility.GetLastRect();
+                //rect.position = Event.current.mousePosition;
+                //menu.DropDown(rect);
             }
 
             EditorGUILayout.BeginVertical(EditorUtils.Box);

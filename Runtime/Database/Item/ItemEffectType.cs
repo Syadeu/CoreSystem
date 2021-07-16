@@ -3,15 +3,13 @@ using System;
 using UnityEngine;
 
 using Syadeu.Database.Lua;
+using Syadeu.Presentation;
 
 namespace Syadeu.Database
 {
     [Serializable]
-    public sealed class ItemEffectType : IAttribute
+    public sealed class ItemEffectType : AttributeBase
     {
-        public string Name { get; set; }
-        public Hash Hash { get; set; }
-
         [Space]
         [JsonProperty(Order = 2, PropertyName = "Values")] public ValuePairContainer m_Values = new ValuePairContainer();
 

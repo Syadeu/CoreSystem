@@ -10,6 +10,11 @@ using Syadeu.Internal;
 using UnityEditor;
 using UnityEngine;
 
+using UnityEditor.AddressableAssets;
+using UnityEditor.AddressableAssets.Settings;
+using UnityEngine.AddressableAssets;
+using Syadeu.Mono;
+
 namespace SyadeuEditor
 {
     public sealed class ReflectionHelperEditor
@@ -49,6 +54,79 @@ namespace SyadeuEditor
             }
         }
         public static Drawer GetDrawer(object ins, params string[] ignore) => new Drawer(ins, ignore);
+        public static void DrawAssetReference(string name, Action<AssetReference> setter, AssetReference refAsset)
+        {
+            float iconHeight = EditorGUIUtility.singleLineHeight - EditorGUIUtility.standardVerticalSpacing * 3;
+            Vector2 iconSize = EditorGUIUtility.GetIconSize();
+            EditorGUIUtility.SetIconSize(new Vector2(iconHeight, iconHeight));
+            string assetPath = AssetDatabase.GUIDToAssetPath(refAsset?.AssetGUID);
+            Texture2D assetIcon = AssetDatabase.GetCachedIcon(assetPath) as Texture2D;
+
+            string displayName;
+            AddressableAssetEntry entry = null;
+            if (refAsset != null /*&& refAsset.IsValid()*/)
+            {
+                entry = AddressableAssetSettingsDefaultObject.GetSettings(true).FindAssetEntry(refAsset.AssetGUID);
+                if (entry == null)
+                {
+                    displayName = "Not Addressable: " + assetPath.Split('/').Last();
+                }
+                else displayName = entry.address.Split('/').Last();
+            }
+            else displayName = "None";
+
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField(name);
+
+            Rect rect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
+            rect = EditorGUI.IndentedRect(rect);
+            if (EditorGUI.DropdownButton(rect, new GUIContent(displayName, assetIcon), FocusType.Passive/*, new GUIStyle("ObjectField")*/))
+            {
+                rect = GUILayoutUtility.GetLastRect();
+                rect.position = Event.current.mousePosition;
+
+                PopupWindow.Show(rect, AssetReferencePopup.GetWindow(setter, refAsset?.AssetGUID, displayName));
+            }
+
+            EditorGUILayout.EndHorizontal();
+            EditorGUIUtility.SetIconSize(iconSize);
+        }
+        public static void DrawPrefabReference(string name, Action<int> setter, PrefabReference current)
+        {
+            string displayName;
+            if (current.m_Idx >= 0) displayName = current.GetObjectSetting().m_Name;
+            else displayName = "None";
+
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField(new GUIContent(name));
+
+            Rect rect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight, GUILayout.ExpandWidth(true));
+            rect = EditorGUI.IndentedRect(rect);
+            if (EditorGUI.DropdownButton(rect, new GUIContent(displayName), FocusType.Passive/*, new GUIStyle("ObjectField")*/))
+            {
+                rect = GUILayoutUtility.GetLastRect();
+                rect.position = Event.current.mousePosition;
+
+                PopupWindow.Show(rect, PrefabReferencePopup.GetWindow(setter));
+            }
+            EditorGUILayout.EndHorizontal();
+        }
+        public static void DrawAttributeSelector(Action<Hash> setter, Hash current)
+        {
+            string displayName;
+            if (current.Equals(Hash.Empty)) displayName = "None";
+            else displayName = EntityDataList.Instance.GetAttribute(current).Name;
+
+            Rect rect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight, GUILayout.ExpandWidth(true));
+            rect = EditorGUI.IndentedRect(rect);
+            if (EditorGUI.DropdownButton(rect, new GUIContent(displayName), FocusType.Passive))
+            {
+                rect = GUILayoutUtility.GetLastRect();
+                rect.position = Event.current.mousePosition;
+
+                PopupWindow.Show(rect, AttributeSelectPopup.GetWindow(setter));
+            }
+        }
 
         public static void DrawMember(object ins, MemberInfo memberInfo, int depth = 0)
         {
@@ -107,21 +185,26 @@ namespace SyadeuEditor
                 setter.Invoke(ins, ulong.Parse(EditorGUILayout.LongField(name, (long.Parse(getter.Invoke(ins).ToString()))).ToString()));
             }
             #region Unity Types
-            else if (declaredType.Equals(TypeHelper.TypeOf<UnityEngine.Rect>.Type))
+            else if (declaredType.Equals(TypeHelper.TypeOf<Rect>.Type))
             {
-                setter.Invoke(ins, EditorGUILayout.RectField(name, (UnityEngine.Rect)getter.Invoke(ins)));
+                setter.Invoke(ins, EditorGUILayout.RectField(name, (Rect)getter.Invoke(ins)));
             }
-            else if (declaredType.Equals(TypeHelper.TypeOf<UnityEngine.RectInt>.Type))
+            else if (declaredType.Equals(TypeHelper.TypeOf<RectInt>.Type))
             {
-                setter.Invoke(ins, EditorGUILayout.RectIntField(name, (UnityEngine.RectInt)getter.Invoke(ins)));
+                setter.Invoke(ins, EditorGUILayout.RectIntField(name, (RectInt)getter.Invoke(ins)));
             }
-            else if (declaredType.Equals(TypeHelper.TypeOf<UnityEngine.Vector3>.Type))
+            else if (declaredType.Equals(TypeHelper.TypeOf<Vector3>.Type))
             {
-                setter.Invoke(ins, EditorGUILayout.Vector3Field(name, (UnityEngine.Vector3)getter.Invoke(ins)));
+                setter.Invoke(ins, EditorGUILayout.Vector3Field(name, (Vector3)getter.Invoke(ins)));
             }
-            else if (declaredType.Equals(TypeHelper.TypeOf<UnityEngine.Vector3Int>.Type))
+            else if (declaredType.Equals(TypeHelper.TypeOf<Vector3Int>.Type))
             {
-                setter.Invoke(ins, EditorGUILayout.Vector3IntField(name, (UnityEngine.Vector3Int)getter.Invoke(ins)));
+                setter.Invoke(ins, EditorGUILayout.Vector3IntField(name, (Vector3Int)getter.Invoke(ins)));
+            }
+            else if (declaredType.Equals(TypeHelper.TypeOf<AssetReference>.Type))
+            {
+                AssetReference refAsset = (AssetReference)getter.Invoke(ins);
+                DrawAssetReference(name, (other) => setter.Invoke(ins, other), refAsset);
             }
             #endregion
             else if (declaredType.Equals(TypeHelper.TypeOf<string>.Type))
@@ -214,6 +297,11 @@ namespace SyadeuEditor
                     setter.Invoke(ins, container);
                 }
                 container.DrawGUI(name);
+            }
+            else if (declaredType.Equals(TypeHelper.TypeOf<PrefabReference>.Type))
+            {
+                PrefabReference prefabRef = (PrefabReference)getter.Invoke(ins);
+                DrawPrefabReference(name, (idx) => setter.Invoke(ins, idx), prefabRef);
             }
             else
             {
