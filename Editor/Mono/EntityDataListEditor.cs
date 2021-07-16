@@ -89,7 +89,7 @@ namespace SyadeuEditor
                             {
                                 if (Asset.m_Attributes == null) Asset.m_Attributes = new List<AttributeBase>();
 
-                                Asset.m_Attributes.Add((CreatureAttribute)Activator.CreateInstance(target));
+                                Asset.m_Attributes.Add((AttributeBase)Activator.CreateInstance(target));
                                 RefreshTreeView();
                             });
                         }
@@ -106,10 +106,10 @@ namespace SyadeuEditor
                 })
                 .MakeRemoveButton((idx) =>
                 {
-                    if (treeView.SelectedToolbar == 0) Asset.m_Entites.Remove((CreatureEntity)treeView.Data[idx]);
+                    if (treeView.SelectedToolbar == 0) Asset.m_Entites.Remove((EntityBase)treeView.Data[idx]);
                     else if (treeView.SelectedToolbar == 1)
                     {
-                        Asset.m_Attributes.Remove((CreatureAttribute)treeView.Data[idx]);
+                        Asset.m_Attributes.Remove((AttributeBase)treeView.Data[idx]);
                     }
 
                     List<object> tempList = new List<object>();

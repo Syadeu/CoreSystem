@@ -71,6 +71,8 @@ namespace Syadeu.Presentation
         }
         T IEntity.GetAttribute<T>() => (T)((IEntity)this).GetAttribute(TypeHelper.TypeOf<T>.Type);
         T[] IEntity.GetAttributes<T>() => ((IEntity)this).GetAttributes(TypeHelper.TypeOf<T>.Type).Select((other) => (T)other).ToArray();
+
+        public override string ToString() => Name;
     }
     public abstract class AttributeBase : IAttribute, ICloneable
     {
@@ -84,6 +86,8 @@ namespace Syadeu.Presentation
 
             return att;
         }
+
+        public override string ToString() => Name;
     }
 
     [Serializable]

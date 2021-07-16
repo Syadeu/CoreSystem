@@ -14,6 +14,7 @@ using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
 using UnityEngine.AddressableAssets;
 using Syadeu.Mono;
+using Syadeu.Presentation;
 
 namespace SyadeuEditor
 {
@@ -107,7 +108,14 @@ namespace SyadeuEditor
                 rect = GUILayoutUtility.GetLastRect();
                 rect.position = Event.current.mousePosition;
 
-                PopupWindow.Show(rect, PrefabReferencePopup.GetWindow(setter));
+                PopupWindow.Show(rect, SelectorPopup<int, PrefabList.ObjectSetting>.GetWindow(PrefabList.Instance.ObjectSettings, setter, (objSet) =>
+                {
+                    for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
+                    {
+                        if (objSet.Equals(PrefabList.Instance.ObjectSettings[i])) return i;
+                    }
+                    return -1;
+                }));
             }
             EditorGUILayout.EndHorizontal();
         }
@@ -124,7 +132,10 @@ namespace SyadeuEditor
                 rect = GUILayoutUtility.GetLastRect();
                 rect.position = Event.current.mousePosition;
 
-                PopupWindow.Show(rect, AttributeSelectPopup.GetWindow(setter));
+                PopupWindow.Show(rect, SelectorPopup<Hash, AttributeBase>.GetWindow(EntityDataList.Instance.m_Attributes, setter, (att) =>
+                {
+                    return att.Hash;
+                }));
             }
         }
 

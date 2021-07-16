@@ -32,6 +32,8 @@ namespace Syadeu.Mono
             public int DeletionTriggerCount = 100;
             [Tooltip("트리거가 발동되고 릴리즈 될때까지 시간(초), 도중에 돌아오면 초기화")]
             public int DeletionWaitSeconds = 300;
+
+            public override string ToString() => m_Name;
         }
         
         [SerializeField] private List<ObjectSetting> m_ObjectSettings = new List<ObjectSetting>();
