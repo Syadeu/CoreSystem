@@ -74,7 +74,7 @@ namespace Syadeu.Database
 
             if (m_Entites != null)
             {
-                string[] entityPaths = Directory.GetFiles(CoreSystemFolder.EntityPath, jsonPostfix, SearchOption.TopDirectoryOnly);
+                string[] entityPaths = Directory.GetFiles(CoreSystemFolder.EntityPath, jsonPostfix, SearchOption.AllDirectories);
                 for (int i = 0; i < entityPaths.Length; i++)
                 {
                     string fileName = Path.GetFileNameWithoutExtension(entityPaths[i]);
