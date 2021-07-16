@@ -11,7 +11,6 @@ namespace Syadeu.Presentation
         /// x = prefabIdx, y = internalListIdx, z = DataComponentType
         /// </summary>
         Hash Idx { get; }
-        DataComponentType Type { get; }
         bool HasProxyObject { get; }
         bool ProxyRequested { get; }
 

@@ -39,20 +39,21 @@ namespace SyadeuEditor
         }
         public static SelectorPopup<T, TA> GetWindow(IList<TA> list, Action<T> setter, Func<TA, T> getter, Func<TA, string> getName = null)
         {
-            if (m_Window == null)
-            {
-                m_Window = new SelectorPopup<T, TA>(setter, getter, list, getName);
-            }
-            else
-            {
-                m_Window.m_Setter = setter;
-                m_Window.m_Getter = getter;
-                m_Window.m_List = list;
-                m_Window.m_GetName = getName;
+            //if (m_Window == null)
+            //{
+            //    m_Window = new SelectorPopup<T, TA>(setter, getter, list, getName);
+            //}
+            //else
+            //{
+            //    m_Window.m_Setter = setter;
+            //    m_Window.m_Getter = getter;
+            //    m_Window.m_List = list;
+            //    m_Window.m_GetName = getName;
 
-                m_Window.m_ShouldClose = false;
-            }
-            return m_Window;
+            //    m_Window.m_ShouldClose = false;
+            //}
+            //return m_Window;
+            return new SelectorPopup<T, TA>(setter, getter, list, getName);
         }
         public override void OnOpen()
         {

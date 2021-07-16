@@ -76,7 +76,6 @@ namespace Syadeu.Presentation
 
         Hash IInternalDataComponent.GameObject => m_Idx;
         Hash IInternalDataComponent.Idx => m_Idx;
-        DataComponentType IInternalDataComponent.Type => DataComponentType.GameObject;
         bool IInternalDataComponent.ProxyRequested => transform.ProxyRequested;
         bool IEquatable<IInternalDataComponent>.Equals(IInternalDataComponent other) => m_Idx.Equals(other.Idx);
         bool IEquatable<DataGameObject>.Equals(DataGameObject other) => m_Idx.Equals(other.m_Idx);
