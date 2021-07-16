@@ -28,6 +28,7 @@ namespace Syadeu.Presentation
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => true;
 
+        public event Action<DataGameObject> OnDataObjectCreatedAsync;
         public event Action<DataGameObject> OnDataObjectDestoryAsync;
         public event Action<DataGameObject> OnDataObjectVisibleAsync;
         public event Action<DataGameObject> OnDataObjectInvisibleAsync;
@@ -40,7 +41,7 @@ namespace Syadeu.Presentation
         internal NativeList<DataGameObject> m_MappedGameObjects = new NativeList<DataGameObject>(1000, Allocator.Persistent);
         internal NativeList<DataTransform> m_MappedTransforms = new NativeList<DataTransform>(1000, Allocator.Persistent);
         
-        internal readonly Dictionary<Hash, List<DataComponentEntity>> m_ComponentList = new Dictionary<Hash, List<DataComponentEntity>>();
+        //internal readonly Dictionary<Hash, List<DataComponentEntity>> m_ComponentList = new Dictionary<Hash, List<DataComponentEntity>>();
 
         private readonly ConcurrentQueue<Hash> m_UpdateTransforms = new ConcurrentQueue<Hash>();
         private readonly ConcurrentQueue<Action> m_RequestedJobs = new ConcurrentQueue<Action>();
@@ -95,16 +96,16 @@ namespace Syadeu.Presentation
                 }
                 m_TerminatedProxies.Clear();
 
-                #region Clear Data Components
-                foreach (var item in m_ComponentList.Values)
-                {
-                    for (int i = 0; i < item.Count; i++)
-                    {
-                        ((IDisposable)item[i]).Dispose();
-                    }
-                }
-                m_ComponentList.Clear();
-                #endregion
+                //#region Clear Data Components
+                //foreach (var item in m_ComponentList.Values)
+                //{
+                //    for (int i = 0; i < item.Count; i++)
+                //    {
+                //        ((IDisposable)item[i]).Dispose();
+                //    }
+                //}
+                //m_ComponentList.Clear();
+                //#endregion
 
                 #region Clear Data Transforms
                 for (int i = 0; i < m_MappedTransforms.Length; i++)
@@ -222,14 +223,14 @@ namespace Syadeu.Presentation
                         m_RemovedTransformIdxes.Add(trIdx);
                         m_MappedTransformIdxes.Remove(m_MappedGameObjects[objIdx].m_Transform);
 
-                        if (m_ComponentList.TryGetValue(objHash, out List<DataComponentEntity> components))
-                        {
-                            for (int j = 0; j < components.Count; j++)
-                            {
-                                ((IDisposable)components[j]).Dispose();
-                            }
-                            m_ComponentList.Remove(objHash);
-                        }
+                        //if (m_ComponentList.TryGetValue(objHash, out List<DataComponentEntity> components))
+                        //{
+                        //    for (int j = 0; j < components.Count; j++)
+                        //    {
+                        //        ((IDisposable)components[j]).Dispose();
+                        //    }
+                        //    m_ComponentList.Remove(objHash);
+                        //}
                         ((IDisposable)m_MappedGameObjects[objIdx]).Dispose();
 
                         // 여기서 지우면 다른 오브젝트의 인덱스가 헷갈리니까 일단 위치저장
@@ -292,7 +293,7 @@ namespace Syadeu.Presentation
         }
         #endregion
 
-        public void DestoryDataObject(Hash objHash)
+        internal void DestoryDataObject(Hash objHash)
         {
             if (m_RequestDestories.Contains(objHash))
             {
@@ -392,6 +393,7 @@ namespace Syadeu.Presentation
 
             //cell.SetCustomData(objData);
             //$"{prefabIdx} spawned at {pos}".ToLog();
+            OnDataObjectCreatedAsync?.Invoke(objData);
             return objData;
         }
 
@@ -429,7 +431,7 @@ namespace Syadeu.Presentation
                         datas.m_GameObject = objHash;
                         onCompleted?.Invoke(m_MappedGameObjects[m_MappedGameObjectIdxes[objHash]], other);
 
-                        tr.gameObject.OnProxyCreated();
+                        //tr.gameObject.OnProxyCreated();
                         OnDataObjectProxyCreated?.Invoke(tr.gameObject);
                     });
                 }
@@ -454,7 +456,7 @@ namespace Syadeu.Presentation
                     if (other.InitializeOnCall) other.Initialize();
                     onCompleted?.Invoke(m_MappedGameObjects[m_MappedGameObjectIdxes[objHash]], other);
 
-                    tr.gameObject.OnProxyCreated();
+                    //tr.gameObject.OnProxyCreated();
                     OnDataObjectProxyCreated?.Invoke(tr.gameObject);
                 }
             });
@@ -477,7 +479,7 @@ namespace Syadeu.Presentation
                 int2 proxyIdx = tr.m_ProxyIdx;
                 CoreSystem.Logger.False(proxyIdx.Equals(DataTransform.ProxyNull), $"proxy index null {proxyIdx}");
 
-                tr.gameObject.OnProxyRemoved();
+                //tr.gameObject.OnProxyRemoved();
                 OnDataObjectProxyRemoved?.Invoke(tr.gameObject);
                 tr.m_ProxyIdx = DataTransform.ProxyNull;
 

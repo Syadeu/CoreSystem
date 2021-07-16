@@ -2,6 +2,7 @@
 using Syadeu.Database.CreatureData;
 using Syadeu.Database.CreatureData.Attributes;
 using Syadeu.Internal;
+using Syadeu.Presentation;
 using SyadeuEditor.Tree;
 using System;
 using System.Collections.Generic;
@@ -12,8 +13,8 @@ using UnityEngine;
 
 namespace SyadeuEditor
 {
-    [CustomEditor(typeof(CreatureDataList))]
-    public sealed class CreatureDataListEditor : EditorEntity<CreatureDataList>
+    [CustomEditor(typeof(EntityDataList))]
+    public sealed class EntityDataListEditor : EditorEntity<EntityDataList>
     {
         private VerticalTreeView treeView;
 
@@ -45,29 +46,48 @@ namespace SyadeuEditor
             treeView
                 .SetupElements(tempList, (other) =>
                 {
-                    if (other is Creature creature)
+                    if (other is CreatureEntity creature)
                     {
-                        return new TreeCreatureElement(treeView, creature);
+                        return new TreeEntityElement(treeView, creature);
                     }
                     else if (other is CreatureAttribute attribute)
                     {
-                        return new TreeCreatureAttributeElement(treeView, attribute);
+                        return new TreeAttributeElement(treeView, attribute);
                     }
                     else throw new Exception();
                 })
                 .MakeAddButton(() =>
                 {
-                    if (treeView.SelectedToolbar == 0) Asset.m_Entites.Add(new Creature());
-                    else if (treeView.SelectedToolbar == 1)
+                    if (treeView.SelectedToolbar == 0)
                     {
                         GenericMenu menu = new GenericMenu();
-                        Type[] types = TypeHelper.GetTypes((other) => !other.IsAbstract && TypeHelper.TypeOf<CreatureAttribute>.Type.IsAssignableFrom(other));
+                        Type[] types = TypeHelper.GetTypes((other) => !other.IsAbstract && TypeHelper.TypeOf<EntityBase>.Type.IsAssignableFrom(other));
                         for (int i = 0; i < types.Length; i++)
                         {
                             Type target = types[i];
                             menu.AddItem(new GUIContent(target.Name), false, () =>
                             {
-                                if (Asset.m_Attributes == null) Asset.m_Attributes = new List<CreatureAttribute>();
+                                if (Asset.m_Entites == null) Asset.m_Entites = new List<EntityBase>();
+
+                                Asset.m_Entites.Add((EntityBase)Activator.CreateInstance(target));
+                                RefreshTreeView();
+                            });
+                        }
+
+                        Rect rect = GUILayoutUtility.GetLastRect();
+                        rect.position = Event.current.mousePosition;
+                        menu.DropDown(rect);
+                    }
+                    else if (treeView.SelectedToolbar == 1)
+                    {
+                        GenericMenu menu = new GenericMenu();
+                        Type[] types = TypeHelper.GetTypes((other) => !other.IsAbstract && TypeHelper.TypeOf<AttributeBase>.Type.IsAssignableFrom(other));
+                        for (int i = 0; i < types.Length; i++)
+                        {
+                            Type target = types[i];
+                            menu.AddItem(new GUIContent(target.Name), false, () =>
+                            {
+                                if (Asset.m_Attributes == null) Asset.m_Attributes = new List<AttributeBase>();
 
                                 Asset.m_Attributes.Add((CreatureAttribute)Activator.CreateInstance(target));
                                 RefreshTreeView();
@@ -86,7 +106,7 @@ namespace SyadeuEditor
                 })
                 .MakeRemoveButton((idx) =>
                 {
-                    if (treeView.SelectedToolbar == 0) Asset.m_Entites.Remove((Creature)treeView.Data[idx]);
+                    if (treeView.SelectedToolbar == 0) Asset.m_Entites.Remove((CreatureEntity)treeView.Data[idx]);
                     else if (treeView.SelectedToolbar == 1)
                     {
                         Asset.m_Attributes.Remove((CreatureAttribute)treeView.Data[idx]);
@@ -112,9 +132,6 @@ namespace SyadeuEditor
         }
         public override void OnInspectorGUI()
         {
-            EditorUtils.StringHeader("Creature Data");
-            EditorUtils.SectorLine();
-
             if (GUILayout.Button("Clear"))
             {
                 Asset.m_Entites?.Clear();
@@ -149,48 +166,58 @@ namespace SyadeuEditor
             base.OnInspectorGUI();
         }
 
-        private class TreeCreatureElement : VerticalTreeElement<Creature>
+        private class TreeEntityElement : VerticalTreeElement<EntityBase>
         {
-            public override string Name => Target.m_Name;
+            public override string Name => Target.Name;
             public override bool HideElementInTree
                 => Tree.SelectedToolbar != 0 || base.HideElementInTree;
 
-            public TreeCreatureElement(VerticalTreeView treeView, Creature creature) : base(treeView, creature) { }
+            ReflectionHelperEditor.Drawer m_Drawer;
+
+            public TreeEntityElement(VerticalTreeView treeView, EntityBase entity) : base(treeView, entity)
+            {
+                m_Drawer = ReflectionHelperEditor.GetDrawer(entity, new string[]
+                    {
+                        "Name", "Hash", "PrefabIdx", "Attributes"
+                    });
+            }
             public override void OnGUI()
             {
-                Target.m_Name = EditorGUILayout.TextField("Name: ", Target.m_Name);
-                EditorGUILayout.TextField("Hash: ", Target.m_Hash.ToString());
-                Target.m_PrefabIdx = PrefabListEditor.DrawPrefabSelector(Target.m_PrefabIdx);
+                EditorUtils.StringRich(Target.GetType().Name, 15);
+
+                Target.Name = EditorGUILayout.TextField("Name: ", Target.Name);
+                EditorGUILayout.TextField("Hash: ", Target.Hash.ToString());
+                Target.PrefabIdx = PrefabListEditor.DrawPrefabSelector(Target.PrefabIdx);
 
                 EditorGUILayout.BeginVertical(EditorUtils.Box);
                 {
-                    if (Target.m_Attributes == null) Target.m_Attributes = new List<Hash>();
+                    if (Target.Attributes == null) Target.Attributes = new List<Hash>();
                     EditorGUILayout.BeginHorizontal();
                     EditorUtils.StringRich("Attributes", 15);
                     if (GUILayout.Button("+", GUILayout.Width(20)))
                     {
-                        Target.m_Attributes.Add(Hash.Empty);
+                        Target.Attributes.Add(Hash.Empty);
                         return;
                     }
-                    if (Target.m_Attributes.Count > 0 && GUILayout.Button("-", GUILayout.Width(20)))
+                    if (Target.Attributes.Count > 0 && GUILayout.Button("-", GUILayout.Width(20)))
                     {
-                        Target.m_Attributes.RemoveAt(Target.m_Attributes.Count - 1);
+                        Target.Attributes.RemoveAt(Target.Attributes.Count - 1);
                     }
                     EditorGUILayout.EndHorizontal();
                     EditorGUI.indentLevel += 1;
-                    for (int i = 0; i < Target.m_Attributes.Count; i++)
+                    for (int i = 0; i < Target.Attributes.Count; i++)
                     {
                         EditorGUILayout.BeginHorizontal();
 
-                        int idx = EditorGUILayout.Popup(GetSelectedAttributeIdx(Target.m_Attributes[i]), m_AttributeNames);
+                        int idx = EditorGUILayout.Popup(GetSelectedAttributeIdx(Target.Attributes[i]), m_AttributeNames);
                         if (idx == 0)
                         {
-                            Target.m_Attributes[i] = Hash.Empty;
+                            Target.Attributes[i] = Hash.Empty;
                         }
-                        else Target.m_Attributes[i] = CreatureDataList.Instance.m_Attributes[idx - 1].Hash;
+                        else Target.Attributes[i] = EntityDataList.Instance.m_Attributes[idx - 1].Hash;
                         if (GUILayout.Button("-", GUILayout.Width(20)))
                         {
-                            Target.m_Attributes.RemoveAt(i);
+                            Target.Attributes.RemoveAt(i);
                             i--;
                         }
 
@@ -200,22 +227,25 @@ namespace SyadeuEditor
                 }
                 EditorGUILayout.EndVertical();
 
-                Target.m_HP = EditorGUILayout.FloatField("HP", Target.m_HP);
-                Target.m_Values.DrawValueContainer("Values");
+                EditorUtils.Line();
+
+                m_Drawer.OnGUI(false);
+                //Target.m_HP = EditorGUILayout.FloatField("HP", Target.m_HP);
+                //Target.m_Values.DrawValueContainer("Values");
             }
 
             private int GetSelectedAttributeIdx(Hash attHash)
             {
                 if (attHash.Equals(Hash.Empty)) return 0;
 
-                for (int i = 0; i < CreatureDataList.Instance.m_Attributes.Count; i++)
+                for (int i = 0; i < EntityDataList.Instance.m_Attributes.Count; i++)
                 {
-                    if (CreatureDataList.Instance.m_Attributes[i].Hash.Equals(attHash)) return i + 1;
+                    if (EntityDataList.Instance.m_Attributes[i].Hash.Equals(attHash)) return i + 1;
                 }
                 return 0;
             }
         }
-        private class TreeCreatureAttributeElement : VerticalTreeElement<CreatureAttribute>
+        private class TreeAttributeElement : VerticalTreeElement<AttributeBase>
         {
             public override string Name
             {
@@ -230,7 +260,7 @@ namespace SyadeuEditor
 
             ReflectionHelperEditor.Drawer m_Drawer;
 
-            public TreeCreatureAttributeElement(VerticalTreeView treeView, CreatureAttribute att) : base(treeView, att)
+            public TreeAttributeElement(VerticalTreeView treeView, AttributeBase att) : base(treeView, att)
             {
                 m_Drawer = ReflectionHelperEditor.GetDrawer(att);
 

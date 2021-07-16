@@ -11,7 +11,7 @@ namespace Syadeu.Database.CreatureData.Attributes
         [Space]
         [JsonProperty(Order = 1, PropertyName = "Stats")] public ValuePairContainer m_Stats;
     }
-    public sealed class StatProcessor : CreatureAttributeProcessor<StatAttribute>
+    public sealed class StatProcessor : AttributeProcessor<StatAttribute>
     {
         protected override void OnCreated(StatAttribute attribute, DataGameObject dataObj)
         {

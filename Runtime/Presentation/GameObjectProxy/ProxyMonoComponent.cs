@@ -16,10 +16,10 @@ namespace Syadeu.Presentation
                 return *PresentationSystem<GameObjectProxySystem>.System.GetDataGameObjectPointer(m_GameObject);
             }
         }
-        public T GetDataComponent<T>() where T : DataComponentEntity, new()
-        {
-            return GetDataGameObject().GetComponent<T>();
-        }
+        //public T GetDataComponent<T>() where T : DataComponentEntity, new()
+        //{
+        //    return GetDataGameObject().GetComponent<T>();
+        //}
 
         public void Destory()
         {

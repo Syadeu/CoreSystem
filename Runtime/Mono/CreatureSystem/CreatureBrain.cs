@@ -35,7 +35,7 @@ namespace Syadeu.Mono
         private CreatureBrainProxy m_Proxy = null;
         //private Hash m_Hash;
 
-        public override string DisplayName => m_DataObject.GetComponent<CreatureInfoDataComponent>().m_CreatureInfo.m_Name;
+        public override string DisplayName => /*m_DataObject.GetComponent<CreatureInfoDataComponent>().m_CreatureInfo.m_Name;*/ "";
         public override bool InitializeOnCall => false;
 
         public bool Initialized { get; private set; } = false;

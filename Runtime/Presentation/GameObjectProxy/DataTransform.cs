@@ -65,7 +65,8 @@ namespace Syadeu.Presentation
         public bool IsValid() => !m_GameObject.Equals(Hash.Empty) && !m_Idx.Equals(Hash.Empty) &&
             PresentationSystem<GameObjectProxySystem>.IsValid() &&
             PresentationSystem<GameObjectProxySystem>.System.m_MappedTransformIdxes.ContainsKey(m_Idx) &&
-            PresentationSystem<GameObjectProxySystem>.System.m_MappedGameObjectIdxes.ContainsKey(m_GameObject);
+            PresentationSystem<GameObjectProxySystem>.System.m_MappedGameObjectIdxes.ContainsKey(m_GameObject) &&
+            !PresentationSystem<GameObjectProxySystem>.System.GetDataGameObject(m_GameObject).m_Destoryed;
         public bool IsVisible()
         {
             if (!IsValid()) return false;

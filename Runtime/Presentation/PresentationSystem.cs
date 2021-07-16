@@ -2,6 +2,7 @@
 using Syadeu.Internal;
 using Syadeu.Presentation.Internal;
 using System;
+using UnityEngine;
 using UnityEngine.Assertions;
 
 namespace Syadeu.Presentation
@@ -95,8 +96,10 @@ namespace Syadeu.Presentation
 
         public static bool IsValid() => ((IValidation)Instance).IsValid();
 
-        private struct SystemAwaiter : ICustomYieldAwaiter
+        private sealed class SystemAwaiter : CustomYieldInstruction, ICustomYieldAwaiter
         {
+            public override bool keepWaiting => ((ICustomYieldAwaiter)this).KeepWait;
+
             bool ICustomYieldAwaiter.KeepWait => !IsValid();
         }
         public static ICustomYieldAwaiter GetAwaiter() => new SystemAwaiter();

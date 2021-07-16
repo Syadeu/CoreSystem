@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using NUnit.Framework;
 using Syadeu.Database;
 using Syadeu.Database.Lua;
 using Syadeu.Internal;
@@ -17,23 +20,35 @@ namespace SyadeuEditor
             public Type m_Type;
             public MemberInfo[] m_Members;
 
-            public Drawer(object ins)
+            public Drawer(object ins, params string[] ignore)
             {
                 m_Instance = ins;
                 m_Type = ins.GetType();
-                m_Members = ReflectionHelper.GetSerializeMemberInfos(ins.GetType());
+                List<MemberInfo> list = ReflectionHelper.GetSerializeMemberInfos(ins.GetType()).ToList();
+                if (ignore != null && ignore.Length > 0)
+                {
+                    for (int i = list.Count - 1; i >= 0; i--)
+                    {
+                        if (ignore.Contains(list[i].Name))
+                        {
+                            list.RemoveAt(i);
+                        }
+                    }
+                }
+                m_Members = list.ToArray();
             }
 
-            public void OnGUI()
+            public void OnGUI() => OnGUI(true);
+            public void OnGUI(bool drawHeader)
             {
-                EditorUtils.StringRich(m_Type.Name, 15, true);
+                if (drawHeader) EditorUtils.StringRich(m_Type.Name, 15, true);
                 for (int i = 0; i < m_Members.Length; i++)
                 {
                     DrawMember(m_Instance, m_Members[i]);
                 }
             }
         }
-        public static Drawer GetDrawer(object ins) => new Drawer(ins);
+        public static Drawer GetDrawer(object ins, params string[] ignore) => new Drawer(ins, ignore);
 
         public static void DrawMember(object ins, MemberInfo memberInfo, int depth = 0)
         {
@@ -125,6 +140,45 @@ namespace SyadeuEditor
                 else selected = EditorGUILayout.EnumPopup(name, idx);
 
                 setter.Invoke(ins, selected);
+            }
+            else if (declaredType.IsArray)
+            {
+                IList list = (IList)getter.Invoke(ins);
+                EditorGUILayout.BeginHorizontal();
+                EditorGUILayout.LabelField(name);
+                if (GUILayout.Button("+", GUILayout.Width(20)))
+                {
+                    Array newArr = Array.CreateInstance(declaredType.GetElementType(), list != null ? list.Count + 1 : 1);
+                    if (list != null && list.Count > 0) Array.Copy((Array)list, newArr, list.Count);
+
+                    newArr.SetValue(default, newArr.Length - 1);
+
+                    setter.Invoke(ins, newArr);
+                    list = newArr;
+                }
+                if (list?.Count > 0 && GUILayout.Button("-", GUILayout.Width(20)))
+                {
+                    Array newArr = Array.CreateInstance(declaredType.GetElementType(), list.Count - 1);
+                    if (list != null && list.Count > 0) Array.Copy((Array)list, newArr, newArr.Length);
+
+                    setter.Invoke(ins, newArr);
+                    list = newArr;
+                }
+                EditorGUILayout.EndHorizontal();
+                if (list != null)
+                {
+                    for (int i = 0; i < list.Count; i++)
+                    {
+                        EditorGUI.indentLevel += 1;
+
+                        if (declaredType.GetElementType().Equals(TypeHelper.TypeOf<string>.Type))
+                        {
+                            list[i] = EditorGUILayout.TextField((string)list[i]);
+                        }
+
+                        EditorGUI.indentLevel -= 1;
+                    }
+                }
             }
             else if (declaredType.Equals(TypeHelper.TypeOf<Hash>.Type))
             {

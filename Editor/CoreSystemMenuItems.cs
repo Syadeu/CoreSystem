@@ -41,10 +41,10 @@ namespace SyadeuEditor
             Selection.activeObject = ItemDataList.Instance;
             EditorApplication.ExecuteMenuItem("Window/General/Inspector");
         }
-        [MenuItem("CoreSystem/Edit Creature Data List", priority = 4)]
-        public static void CreatureDataListMenu()
+        [MenuItem("CoreSystem/Edit Entity Data List", priority = 4)]
+        public static void EntityDataListMenu()
         {
-            Selection.activeObject = CreatureDataList.Instance;
+            Selection.activeObject = EntityDataList.Instance;
             EditorApplication.ExecuteMenuItem("Window/General/Inspector");
         }
         [MenuItem("CoreSystem/Edit Scene List", priority = 5)]

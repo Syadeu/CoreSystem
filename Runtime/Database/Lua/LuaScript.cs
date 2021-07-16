@@ -4,6 +4,8 @@ using System;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using Syadeu.Internal;
+using Syadeu.Presentation;
+using UnityEngine;
 #if UNITY_EDITOR
 #endif
 
@@ -114,7 +116,58 @@ namespace Syadeu.Database.Lua
     [Serializable]
     public sealed class LuaScriptContainer
     {
+        const string c_ScriptError = "This container has an invalid lua function({0}). Request ignored.";
+
         [JsonProperty(Order = 0, PropertyName = "Functions")] public List<LuaScript> m_Scripts;
+
+        public void Invoke(DataGameObject target)
+        {
+            for (int i = 0; i < m_Scripts.Count; i++)
+            {
+                if (m_Scripts[i] == null || !m_Scripts[i].IsValid())
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Lua, string.Format(c_ScriptError, $"{i}"));
+                    continue;
+                }
+
+                try
+                {
+                    m_Scripts[i].Invoke(ToArgument(target, m_Scripts[i].m_Args));
+                }
+                catch (ScriptRuntimeException runtimeEx)
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Lua, string.Format(c_ScriptError, $"{i}: {runtimeEx.DecoratedMessage}"));
+                }
+                catch (Exception)
+                {
+                    throw;
+                }
+            }
+        }
+        List<object> ToArgument(DataGameObject dataObj, IList<LuaArg> args)
+        {
+            if (args == null || args.Count == 0) return null;
+            List<object> temp = new List<object>();
+            for (int i = 0; i < args.Count; i++)
+            {
+                if (TypeHelper.TypeOf<MonoBehaviour>.Type.IsAssignableFrom(args[i].Type))
+                {
+                    if (!dataObj.HasProxyObject) temp.Add(null);
+                    else temp.Add(dataObj.GetProxyObject().GetComponentInChildren(args[i].Type));
+                }
+                else if (args[i].Type.Equals(TypeHelper.TypeOf<DataGameObject>.Type))
+                {
+                    temp.Add(dataObj);
+                }
+                else if (TypeHelper.TypeOf<IEntity>.Type.IsAssignableFrom(args[i].Type))
+                {
+                    IEntity entity = dataObj.GetEntity();
+                    temp.Add(entity.GetAttribute(args[i].Type));
+                }
+                else throw new NotImplementedException($"{args[i].Type.Name}");
+            }
+            return temp;
+        }
     }
 
     /// <summary>

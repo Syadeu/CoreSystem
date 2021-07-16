@@ -83,17 +83,17 @@ namespace Syadeu.Database
             gameObject.UserTag = UserTag.GetUserTag("Object");
             gameObject.CustomTag = UserTag.GetCustomTag("Item");
 
-            ItemDataComponent component = gameObject.AddComponent<ItemDataComponent>();
-            component.GridIdxes = cell.Idxes;
-            component.Item = itemIns;
+            //ItemDataComponent component = gameObject.AddComponent<ItemDataComponent>();
+            //component.GridIdxes = cell.Idxes;
+            //component.Item = itemIns;
         }
 
         
     }
-    [Serializable]
-    public sealed class ItemDataComponent : DataComponentEntity
-    {
-        public int2 GridIdxes;
-        public ItemInstance Item;
-    }
+    //[Serializable]
+    //public sealed class ItemDataComponent : DataComponentEntity
+    //{
+    //    public int2 GridIdxes;
+    //    public ItemInstance Item;
+    //}
 }
