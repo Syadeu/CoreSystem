@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Syadeu.Database.CreatureData.Attributes
 {
-    public sealed class StatAttribute : CreatureAttribute
+    public sealed class StatAttribute : AttributeBase
     {
         [Space]
         [JsonProperty(Order = 1, PropertyName = "Stats")] public ValuePairContainer m_Stats;

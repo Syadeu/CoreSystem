@@ -314,10 +314,9 @@ namespace Syadeu.Presentation
         }
 
         public DataGameObject CreateNewPrefab(int prefabIdx, Vector3 pos, Quaternion rot)
-            => CreateNewPrefab(prefabIdx, pos, rot, Vector3.one, true, null);
+            => CreateNewPrefab(prefabIdx, pos, rot, Vector3.one, true);
         internal DataGameObject CreateNewPrefab(int prefabIdx, 
-            Vector3 pos, Quaternion rot, Vector3 localScale, bool enableCull,
-            Action<DataGameObject, RecycleableMonobehaviour> onCompleted)
+            Vector3 pos, Quaternion rot, Vector3 localScale, bool enableCull)
         {
             CoreSystem.Logger.NotNull(m_RenderSystem, $"You've call this method too early or outside of PresentationSystem");
 
@@ -343,7 +342,7 @@ namespace Syadeu.Presentation
             Hash objHash = Hash.NewHash();
 
             int2 proxyIdx = DataTransform.ProxyNull;
-            if (m_RenderSystem.IsInCameraScreen(pos))
+            if (!enableCull || m_RenderSystem.IsInCameraScreen(pos))
             {
                 proxyIdx = DataTransform.ProxyQueued;
             }
@@ -388,7 +387,7 @@ namespace Syadeu.Presentation
 
             if (proxyIdx.Equals(DataTransform.ProxyQueued))
             {
-                RequestProxy(objHash, trHash, onCompleted);
+                RequestProxy(objHash, trHash, null);
             }
 
             //cell.SetCustomData(objData);

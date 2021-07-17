@@ -6,7 +6,7 @@ using Syadeu.Internal;
 
 namespace Syadeu.Database.CreatureData.Attributes
 {
-    public sealed class OnSpawnAttribute : CreatureAttribute
+    public sealed class OnSpawnAttribute : AttributeBase
     {
         [JsonProperty(Order = 0, PropertyName = "OnSpawn")] public LuaScriptContainer m_OnSpawn;
     }

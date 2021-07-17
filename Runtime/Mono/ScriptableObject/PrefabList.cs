@@ -54,7 +54,7 @@ namespace Syadeu.Mono
     {
         public int m_Idx;
 
-        private PrefabReference(int idx)
+        public PrefabReference(int idx)
         {
             m_Idx = idx;
         }

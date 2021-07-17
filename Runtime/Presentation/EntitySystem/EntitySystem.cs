@@ -58,8 +58,25 @@ namespace Syadeu.Presentation
         protected override PresentationResult OnStartPresentation()
         {
             m_ProxySystem.OnDataObjectDestoryAsync += M_ProxySystem_OnDataObjectDestoryAsync;
+
+            m_ProxySystem.OnDataObjectProxyCreated += M_ProxySystem_OnDataObjectProxyCreated;
+            m_ProxySystem.OnDataObjectProxyRemoved += M_ProxySystem_OnDataObjectProxyRemoved;
             return base.OnStartPresentation();
         }
+
+        private void M_ProxySystem_OnDataObjectProxyCreated(DataGameObject obj)
+        {
+            if (!m_ObjectHashSet.Contains(obj.m_Idx)) return;
+
+            ProcessEntityOnProxyCreated(this, obj);
+        }
+        private void M_ProxySystem_OnDataObjectProxyRemoved(DataGameObject obj)
+        {
+            if (!m_ObjectHashSet.Contains(obj.m_Idx)) return;
+
+            ProcessEntityOnProxyRemoved(this, obj);
+        }
+
         private void M_ProxySystem_OnDataObjectDestoryAsync(DataGameObject obj)
         {
             if (!m_ObjectHashSet.Contains(obj.m_Idx)) return;
@@ -79,20 +96,27 @@ namespace Syadeu.Presentation
         }
         #endregion
 
-        public void CreateEntity(Hash hash, Vector3 position, Quaternion rotation, Vector3 localSize, bool enableCull)
+        public IEntity CreateEntity(Hash hash, Vector3 position, Quaternion rotation, Vector3 localSize, bool enableCull)
         {
+            EntityBase original = EntityDataList.Instance.GetEntity(hash);
+            if (original == null)
+            {
+                CoreSystem.Logger.LogError(Channel.Presentation, $"Entity({hash}) not found. Cannot spawn at {position}");
+                return null;
+            }
+
             EntityBase entity = (EntityBase)EntityDataList.Instance.GetEntity(hash).Clone();
 
-            DataGameObject obj = m_ProxySystem.CreateNewPrefab(entity.PrefabIdx, position, rotation, localSize, enableCull, (dataobj, mono) =>
-            {
-                ProcessEntityOnCreated(this, dataobj);
-            });
+            DataGameObject obj = m_ProxySystem.CreateNewPrefab(entity.PrefabIdx, position, rotation, localSize, enableCull);
+
             entity.m_GameObjectHash = obj.m_Idx;
             entity.m_TransformHash = obj.m_Transform;
 
             m_ObjectHashSet.Add(obj.m_Idx);
             m_ObjectEntities.Add(obj.m_Idx, entity);
-            //return ins;
+
+            ProcessEntityOnCreated(this, obj);
+            return entity;
         }
         public IEntity GetEntity(Hash dataObj)
         {
@@ -105,75 +129,121 @@ namespace Syadeu.Presentation
         {
             IEntity entity = system.m_ObjectEntities[dataObj.m_Idx];
 
-            for (int i = 0; i < entity.Attributes.Count; i++)
+            entity.Attributes.AsParallel().ForAll((other) =>
             {
-                if (entity.Attributes[i] == null)
+                if (other == null)
                 {
-                    CoreSystem.Logger.LogWarning(Channel.Creature,
+                    CoreSystem.Logger.LogWarning(Channel.Presentation,
                         $"Entity({entity.Name}) has empty attribute. This is not allowed. Request Ignored.");
-                    continue;
+                    return;
                 }
 
-                AttributeBase att = entity.Attributes[i];
-
-                if (system.m_Processors.TryGetValue(att.GetType(), out List<IAttributeProcessor> processors))
+                if (system.m_Processors.TryGetValue(other.GetType(), out List<IAttributeProcessor> processors))
                 {
                     for (int j = 0; j < processors.Count; j++)
                     {
-                        processors[j].OnCreated(att, dataObj);
+                        processors[j].OnCreated(other, dataObj);
                     }
-
                     CoreSystem.Logger.Log(Channel.Creature, $"Processed OnCreated at entity({entity.Name}), count {processors.Count}");
                 }
-            }
+            });
         }
         private static void ProcessEntityOnPresentation(EntitySystem system, DataGameObject dataObj)
         {
             IEntity entity = system.m_ObjectEntities[dataObj.m_Idx];
 
-            for (int i = 0; i < entity.Attributes.Count; i++)
+            entity.Attributes.AsParallel().ForAll((other) =>
             {
-                if (entity.Attributes[i] == null)
+                if (other == null)
                 {
-                    CoreSystem.Logger.LogWarning(Channel.Creature,
+                    CoreSystem.Logger.LogWarning(Channel.Presentation,
                         $"Entity({entity.Name}) has empty attribute. This is not allowed. Request Ignored.");
-                    continue;
+                    return;
                 }
 
-                AttributeBase att = entity.Attributes[i];
-                if (system.m_Processors.TryGetValue(att.GetType(), out List<IAttributeProcessor> processors))
+                if (system.m_Processors.TryGetValue(other.GetType(), out List<IAttributeProcessor> processors))
                 {
                     for (int j = 0; j < processors.Count; j++)
                     {
-                        processors[j].OnPresentation(att, dataObj);
+                        if (!(processors[j] is IAttributeOnPresentation onPresentation)) continue;
+                        onPresentation.OnPresentation(other, dataObj);
                     }
                 }
-            }
+            });
         }
         private static void ProcessEntityOnDestory(EntitySystem system, DataGameObject dataObj)
         {
             IEntity entity = system.m_ObjectEntities[dataObj.m_Idx];
-            CoreSystem.Logger.Log(Channel.Creature, $"Processing On Destory {entity.Name}");
+            CoreSystem.Logger.Log(Channel.Presentation, $"Processing On Create {entity.Name}");
 
-            for (int i = 0; i < entity.Attributes.Count; i++)
+            entity.Attributes.AsParallel().ForAll((other) =>
             {
-                if (entity.Attributes[i] == null)
+                if (other == null)
                 {
-                    CoreSystem.Logger.LogWarning(Channel.Creature,
+                    CoreSystem.Logger.LogWarning(Channel.Presentation,
                         $"Entity({entity.Name}) has empty attribute. This is not allowed. Request Ignored.");
-                    continue;
+                    return;
                 }
 
-                AttributeBase att = entity.Attributes[i];
-                if (system.m_Processors.TryGetValue(att.GetType(), out List<IAttributeProcessor> processors))
+                if (system.m_Processors.TryGetValue(other.GetType(), out List<IAttributeProcessor> processors))
                 {
                     for (int j = 0; j < processors.Count; j++)
                     {
-                        processors[j].OnDestory(att, dataObj);
+                        processors[j].OnDestory(other, dataObj);
                     }
                 }
-            }
+            });
         }
+        
+        private static void ProcessEntityOnProxyCreated(EntitySystem system, DataGameObject dataObj)
+        {
+            IEntity entity = system.m_ObjectEntities[dataObj.m_Idx];
+            CoreSystem.Logger.Log(Channel.Presentation, $"Processing On Proxy Create {entity.Name}");
+
+            entity.Attributes.AsParallel().ForAll((other) =>
+            {
+                if (other == null)
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Presentation,
+                        $"Entity({entity.Name}) has empty attribute. This is not allowed. Request Ignored.");
+                    return;
+                }
+
+                if (system.m_Processors.TryGetValue(other.GetType(), out List<IAttributeProcessor> processors))
+                {
+                    for (int j = 0; j < processors.Count; j++)
+                    {
+                        if (!(processors[j] is IAttributeOnProxyCreated onProxyCreated)) continue;
+                        onProxyCreated.OnProxyCreated(other, dataObj);
+                    }
+                }
+            });
+        }
+        private static void ProcessEntityOnProxyRemoved(EntitySystem system, DataGameObject dataObj)
+        {
+            IEntity entity = system.m_ObjectEntities[dataObj.m_Idx];
+            CoreSystem.Logger.Log(Channel.Presentation, $"Processing On Proxy Removed {entity.Name}");
+
+            entity.Attributes.AsParallel().ForAll((other) =>
+            {
+                if (other == null)
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Presentation,
+                        $"Entity({entity.Name}) has empty attribute. This is not allowed. Request Ignored.");
+                    return;
+                }
+
+                if (system.m_Processors.TryGetValue(other.GetType(), out List<IAttributeProcessor> processors))
+                {
+                    for (int j = 0; j < processors.Count; j++)
+                    {
+                        if (!(processors[j] is IAttributeOnProxyRemoved onProxyRemoved)) continue;
+                        onProxyRemoved.OnProxyRemoved(other, dataObj);
+                    }
+                }
+            });
+        }
+
         #endregion
     }
 }

@@ -312,7 +312,7 @@ namespace SyadeuEditor
             else if (declaredType.Equals(TypeHelper.TypeOf<PrefabReference>.Type))
             {
                 PrefabReference prefabRef = (PrefabReference)getter.Invoke(ins);
-                DrawPrefabReference(name, (idx) => setter.Invoke(ins, idx), prefabRef);
+                DrawPrefabReference(name, (idx) => setter.Invoke(ins, new PrefabReference(idx)), prefabRef);
             }
             else
             {

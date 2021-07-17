@@ -6,8 +6,19 @@ namespace Syadeu.Presentation
     {
         Type TargetAttribute { get; }
         void OnCreated(AttributeBase attribute, DataGameObject dataObj);
-        void OnPresentation(AttributeBase attribute, DataGameObject dataObj);
-        void OnDead(AttributeBase attribute, DataGameObject dataObj);
         void OnDestory(AttributeBase attribute, DataGameObject dataObj);
+    }
+    public interface IAttributeOnPresentation
+    {
+        void OnPresentation(AttributeBase attribute, DataGameObject dataObj);
+    }
+    public interface IAttributeOnProxy : IAttributeOnProxyCreated, IAttributeOnProxyRemoved { }
+    public interface IAttributeOnProxyCreated
+    {
+        void OnProxyCreated(AttributeBase attribute, DataGameObject dataObj);
+    }
+    public interface IAttributeOnProxyRemoved
+    {
+        void OnProxyRemoved(AttributeBase attribute, DataGameObject dataObj);
     }
 }
