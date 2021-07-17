@@ -77,6 +77,10 @@ namespace Syadeu.Presentation
 
             PresentationSystem<GameObjectProxySystem>.System.DownloadDataTransform(m_Idx);
         }
+        public void SetCulling(bool enable)
+        {
+            GetRef().m_EnableCull = enable;
+        }
 
 #pragma warning disable IDE1006 // Naming Styles
 #line hidden

@@ -68,20 +68,20 @@ namespace Syadeu.Presentation
         {
             if (!m_ObjectHashSet.Contains(obj.m_Idx)) return;
 
-            ProcessEntityOnProxyCreated(this, obj);
+            ProcessEntityOnProxyCreated(this, m_ObjectEntities[obj.m_Idx]);
         }
         private void M_ProxySystem_OnDataObjectProxyRemoved(DataGameObject obj)
         {
             if (!m_ObjectHashSet.Contains(obj.m_Idx)) return;
 
-            ProcessEntityOnProxyRemoved(this, obj);
+            ProcessEntityOnProxyRemoved(this, m_ObjectEntities[obj.m_Idx]);
         }
 
         private void M_ProxySystem_OnDataObjectDestoryAsync(DataGameObject obj)
         {
             if (!m_ObjectHashSet.Contains(obj.m_Idx)) return;
 
-            ProcessEntityOnDestory(this, obj);
+            ProcessEntityOnDestory(this, m_ObjectEntities[obj.m_Idx]);
 
             m_ObjectHashSet.Remove(obj.m_Idx);
         }
@@ -89,7 +89,7 @@ namespace Syadeu.Presentation
         {
             m_ObjectEntities.AsParallel().ForAll((other) =>
             {
-                ProcessEntityOnPresentation(this, other.Value.gameObject);
+                ProcessEntityOnPresentation(this, other.Value);
             });
 
             return base.OnPresentationAsync();
@@ -115,7 +115,7 @@ namespace Syadeu.Presentation
             m_ObjectHashSet.Add(obj.m_Idx);
             m_ObjectEntities.Add(obj.m_Idx, entity);
 
-            ProcessEntityOnCreated(this, obj);
+            ProcessEntityOnCreated(this, entity);
             return entity;
         }
         public IEntity GetEntity(Hash dataObj)
@@ -125,9 +125,9 @@ namespace Syadeu.Presentation
         }
 
         #region Processor
-        private static void ProcessEntityOnCreated(EntitySystem system, DataGameObject dataObj)
+        private static void ProcessEntityOnCreated(EntitySystem system, IEntity entity)
         {
-            IEntity entity = system.m_ObjectEntities[dataObj.m_Idx];
+            //IEntity entity = system.m_ObjectEntities[dataObj.m_Idx];
 
             entity.Attributes.AsParallel().ForAll((other) =>
             {
@@ -142,15 +142,15 @@ namespace Syadeu.Presentation
                 {
                     for (int j = 0; j < processors.Count; j++)
                     {
-                        processors[j].OnCreated(other, dataObj);
+                        processors[j].OnCreated(other, entity);
                     }
                     CoreSystem.Logger.Log(Channel.Creature, $"Processed OnCreated at entity({entity.Name}), count {processors.Count}");
                 }
             });
         }
-        private static void ProcessEntityOnPresentation(EntitySystem system, DataGameObject dataObj)
+        private static void ProcessEntityOnPresentation(EntitySystem system, IEntity entity)
         {
-            IEntity entity = system.m_ObjectEntities[dataObj.m_Idx];
+            //IEntity entity = system.m_ObjectEntities[dataObj.m_Idx];
 
             entity.Attributes.AsParallel().ForAll((other) =>
             {
@@ -166,14 +166,14 @@ namespace Syadeu.Presentation
                     for (int j = 0; j < processors.Count; j++)
                     {
                         if (!(processors[j] is IAttributeOnPresentation onPresentation)) continue;
-                        onPresentation.OnPresentation(other, dataObj);
+                        onPresentation.OnPresentation(other, entity);
                     }
                 }
             });
         }
-        private static void ProcessEntityOnDestory(EntitySystem system, DataGameObject dataObj)
+        private static void ProcessEntityOnDestory(EntitySystem system, IEntity entity)
         {
-            IEntity entity = system.m_ObjectEntities[dataObj.m_Idx];
+            //IEntity entity = system.m_ObjectEntities[dataObj.m_Idx];
             CoreSystem.Logger.Log(Channel.Presentation, $"Processing On Create {entity.Name}");
 
             entity.Attributes.AsParallel().ForAll((other) =>
@@ -189,15 +189,15 @@ namespace Syadeu.Presentation
                 {
                     for (int j = 0; j < processors.Count; j++)
                     {
-                        processors[j].OnDestory(other, dataObj);
+                        processors[j].OnDestory(other, entity);
                     }
                 }
             });
         }
         
-        private static void ProcessEntityOnProxyCreated(EntitySystem system, DataGameObject dataObj)
+        private static void ProcessEntityOnProxyCreated(EntitySystem system, IEntity entity)
         {
-            IEntity entity = system.m_ObjectEntities[dataObj.m_Idx];
+            //IEntity entity = system.m_ObjectEntities[dataObj.m_Idx];
             CoreSystem.Logger.Log(Channel.Presentation, $"Processing On Proxy Create {entity.Name}");
 
             entity.Attributes.AsParallel().ForAll((other) =>
@@ -214,14 +214,14 @@ namespace Syadeu.Presentation
                     for (int j = 0; j < processors.Count; j++)
                     {
                         if (!(processors[j] is IAttributeOnProxyCreated onProxyCreated)) continue;
-                        onProxyCreated.OnProxyCreated(other, dataObj);
+                        onProxyCreated.OnProxyCreated(other, entity);
                     }
                 }
             });
         }
-        private static void ProcessEntityOnProxyRemoved(EntitySystem system, DataGameObject dataObj)
+        private static void ProcessEntityOnProxyRemoved(EntitySystem system, IEntity entity)
         {
-            IEntity entity = system.m_ObjectEntities[dataObj.m_Idx];
+            //IEntity entity = system.m_ObjectEntities[dataObj.m_Idx];
             CoreSystem.Logger.Log(Channel.Presentation, $"Processing On Proxy Removed {entity.Name}");
 
             entity.Attributes.AsParallel().ForAll((other) =>
@@ -238,7 +238,7 @@ namespace Syadeu.Presentation
                     for (int j = 0; j < processors.Count; j++)
                     {
                         if (!(processors[j] is IAttributeOnProxyRemoved onProxyRemoved)) continue;
-                        onProxyRemoved.OnProxyRemoved(other, dataObj);
+                        onProxyRemoved.OnProxyRemoved(other, entity);
                     }
                 }
             });

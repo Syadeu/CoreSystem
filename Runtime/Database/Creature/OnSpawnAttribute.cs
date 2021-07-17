@@ -14,18 +14,18 @@ namespace Syadeu.Database.CreatureData.Attributes
     {
         const string c_ScriptError = "On Spawn Attribute has an invalid lua function({0}) at Entity({1}). Request ignored.";
 
-        protected override void OnCreated(OnSpawnAttribute attribute, DataGameObject dataObj)
+        protected override void OnCreated(OnSpawnAttribute attribute, IEntity entity)
         {
             if (attribute.m_OnSpawn == null || attribute.m_OnSpawn.m_Scripts == null) return;
 
             try
             {
-                attribute.m_OnSpawn.Invoke(dataObj);
+                attribute.m_OnSpawn.Invoke(entity.gameObject);
             }
             catch (System.Exception ex)
             {
                 CoreSystem.Logger.LogWarning(Channel.Lua,
-                    string.Format(c_ScriptError, $"OnSpawn", dataObj.GetEntity().Name) +
+                    string.Format(c_ScriptError, $"OnSpawn", entity.Name) +
                     "\n" + ex.Message);
             }
 
@@ -45,7 +45,7 @@ namespace Syadeu.Database.CreatureData.Attributes
             //    //    calledScriptName: "OnSpawn");
             //}
         }
-        protected override void OnDestory(OnSpawnAttribute attribute, DataGameObject dataObj)
+        protected override void OnDestory(OnSpawnAttribute attribute, IEntity entity)
         {
             "destory".ToLog();
         }

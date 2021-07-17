@@ -13,9 +13,9 @@ namespace Syadeu.Database.CreatureData.Attributes
     }
     public sealed class StatProcessor : AttributeProcessor<StatAttribute>
     {
-        protected override void OnCreated(StatAttribute attribute, DataGameObject dataObj)
+        protected override void OnCreated(StatAttribute attribute, IEntity entity)
         {
-            CreatureBrain monoObj = (CreatureBrain)dataObj.transform.ProxyObject;
+            CreatureBrain monoObj = (CreatureBrain)entity.transform.ProxyObject;
 
             CreatureStat stat = monoObj.Stat;
             if (stat == null)
@@ -27,7 +27,7 @@ namespace Syadeu.Database.CreatureData.Attributes
             stat.Values = attribute.m_Stats;
         }
 
-        protected override void OnDestory(StatAttribute attribute, DataGameObject dataObj)
+        protected override void OnDestory(StatAttribute attribute, IEntity entity)
         {
             "destory".ToLog();
         }
