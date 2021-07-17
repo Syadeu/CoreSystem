@@ -12,6 +12,7 @@ using Syadeu.Presentation;
 
 namespace Syadeu.Mono.Creature
 {
+    [Obsolete]
     public sealed class CreatureManager : MonoManager<CreatureManager>
     {
         #region Initialize

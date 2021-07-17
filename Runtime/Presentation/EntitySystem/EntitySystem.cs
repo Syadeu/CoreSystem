@@ -127,8 +127,6 @@ namespace Syadeu.Presentation
         #region Processor
         private static void ProcessEntityOnCreated(EntitySystem system, IEntity entity)
         {
-            //IEntity entity = system.m_ObjectEntities[dataObj.m_Idx];
-
             entity.Attributes.AsParallel().ForAll((other) =>
             {
                 if (other == null)
@@ -143,6 +141,10 @@ namespace Syadeu.Presentation
                     for (int j = 0; j < processors.Count; j++)
                     {
                         processors[j].OnCreated(other, entity);
+                        CoreSystem.AddForegroundJob(() =>
+                        {
+                            processors[j].OnCreatedSync(other, entity);
+                        });
                     }
                     CoreSystem.Logger.Log(Channel.Creature, $"Processed OnCreated at entity({entity.Name}), count {processors.Count}");
                 }
@@ -150,8 +152,6 @@ namespace Syadeu.Presentation
         }
         private static void ProcessEntityOnPresentation(EntitySystem system, IEntity entity)
         {
-            //IEntity entity = system.m_ObjectEntities[dataObj.m_Idx];
-
             entity.Attributes.AsParallel().ForAll((other) =>
             {
                 if (other == null)
@@ -173,7 +173,6 @@ namespace Syadeu.Presentation
         }
         private static void ProcessEntityOnDestory(EntitySystem system, IEntity entity)
         {
-            //IEntity entity = system.m_ObjectEntities[dataObj.m_Idx];
             CoreSystem.Logger.Log(Channel.Presentation, $"Processing On Create {entity.Name}");
 
             entity.Attributes.AsParallel().ForAll((other) =>
@@ -190,6 +189,10 @@ namespace Syadeu.Presentation
                     for (int j = 0; j < processors.Count; j++)
                     {
                         processors[j].OnDestory(other, entity);
+                        CoreSystem.AddForegroundJob(() =>
+                        {
+                            processors[j].OnDestorySync(other, entity);
+                        });
                     }
                 }
             });
@@ -197,7 +200,6 @@ namespace Syadeu.Presentation
         
         private static void ProcessEntityOnProxyCreated(EntitySystem system, IEntity entity)
         {
-            //IEntity entity = system.m_ObjectEntities[dataObj.m_Idx];
             CoreSystem.Logger.Log(Channel.Presentation, $"Processing On Proxy Create {entity.Name}");
 
             entity.Attributes.AsParallel().ForAll((other) =>
@@ -213,8 +215,17 @@ namespace Syadeu.Presentation
                 {
                     for (int j = 0; j < processors.Count; j++)
                     {
-                        if (!(processors[j] is IAttributeOnProxyCreated onProxyCreated)) continue;
-                        onProxyCreated.OnProxyCreated(other, entity);
+                        if (processors[j] is IAttributeOnProxyCreated onProxyCreated)
+                        {
+                            onProxyCreated.OnProxyCreated(other, entity);
+                        }
+                        if (processors[j] is IAttributeOnProxyCreatedSync sync)
+                        {
+                            CoreSystem.AddForegroundJob(() =>
+                            {
+                                sync.OnProxyCreatedSync(other, entity);
+                            });
+                        }
                     }
                 }
             });
@@ -237,8 +248,17 @@ namespace Syadeu.Presentation
                 {
                     for (int j = 0; j < processors.Count; j++)
                     {
-                        if (!(processors[j] is IAttributeOnProxyRemoved onProxyRemoved)) continue;
-                        onProxyRemoved.OnProxyRemoved(other, entity);
+                        if (processors[j] is IAttributeOnProxyRemoved onProxyRemoved)
+                        {
+                            onProxyRemoved.OnProxyRemoved(other, entity);
+                        }
+                        if (processors[j] is IAttributeOnProxyRemovedSync sync)
+                        {
+                            CoreSystem.AddForegroundJob(() =>
+                            {
+                                sync.OnProxyRemovedSync(other, entity);
+                            });
+                        }
                     }
                 }
             });

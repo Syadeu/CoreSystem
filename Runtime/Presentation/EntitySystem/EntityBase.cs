@@ -15,7 +15,7 @@ namespace Syadeu.Presentation
         [JsonIgnore] internal List<AttributeBase> m_Attributes;
 
         public string Name { get; set; } = "New Entity";
-        [JsonProperty(Order = -10, PropertyName = "Hash")] public Hash Hash { get; set; }
+        [JsonProperty(Order = -10, PropertyName = "Hash")] [ReflectionSealedView] public Hash Hash { get; set; }
         [JsonProperty(Order = -9, PropertyName = "PrefabIdx")] public PrefabReference PrefabIdx { get; set; }
         [JsonProperty(Order = -8, PropertyName = "Attributes")] public List<Hash> Attributes { get; set; }
         List<AttributeBase> IEntity.Attributes => m_Attributes;

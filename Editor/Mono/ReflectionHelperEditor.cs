@@ -159,6 +159,8 @@ namespace SyadeuEditor
             else throw new NotImplementedException();
             string name = ReflectionHelper.SerializeMemberInfoName(memberInfo);
 
+            bool disable = memberInfo.GetCustomAttribute<ReflectionSealedViewAttribute>() != null;
+
             int spaceCount = memberInfo.GetCustomAttributes<SpaceAttribute>().Count();
             for (int i = 0; i < spaceCount; i++)
             {
@@ -171,6 +173,8 @@ namespace SyadeuEditor
                 EditorGUILayout.HelpBox(tooltip.tooltip, MessageType.Info);
             }
 
+            EditorGUI.BeginDisabledGroup(disable);
+            #region System Types
             if (declaredType.Equals(TypeHelper.TypeOf<int>.Type))
             {
                 setter.Invoke(ins, EditorGUILayout.IntField(name, (int)getter.Invoke(ins)));
@@ -195,29 +199,6 @@ namespace SyadeuEditor
             {
                 setter.Invoke(ins, ulong.Parse(EditorGUILayout.LongField(name, (long.Parse(getter.Invoke(ins).ToString()))).ToString()));
             }
-            #region Unity Types
-            else if (declaredType.Equals(TypeHelper.TypeOf<Rect>.Type))
-            {
-                setter.Invoke(ins, EditorGUILayout.RectField(name, (Rect)getter.Invoke(ins)));
-            }
-            else if (declaredType.Equals(TypeHelper.TypeOf<RectInt>.Type))
-            {
-                setter.Invoke(ins, EditorGUILayout.RectIntField(name, (RectInt)getter.Invoke(ins)));
-            }
-            else if (declaredType.Equals(TypeHelper.TypeOf<Vector3>.Type))
-            {
-                setter.Invoke(ins, EditorGUILayout.Vector3Field(name, (Vector3)getter.Invoke(ins)));
-            }
-            else if (declaredType.Equals(TypeHelper.TypeOf<Vector3Int>.Type))
-            {
-                setter.Invoke(ins, EditorGUILayout.Vector3IntField(name, (Vector3Int)getter.Invoke(ins)));
-            }
-            else if (declaredType.Equals(TypeHelper.TypeOf<AssetReference>.Type))
-            {
-                AssetReference refAsset = (AssetReference)getter.Invoke(ins);
-                DrawAssetReference(name, (other) => setter.Invoke(ins, other), refAsset);
-            }
-            #endregion
             else if (declaredType.Equals(TypeHelper.TypeOf<string>.Type))
             {
                 setter.Invoke(ins, EditorGUILayout.TextField(name, (string)getter.Invoke(ins)));
@@ -274,6 +255,31 @@ namespace SyadeuEditor
                     }
                 }
             }
+            #endregion
+            #region Unity Types
+            else if (declaredType.Equals(TypeHelper.TypeOf<Rect>.Type))
+            {
+                setter.Invoke(ins, EditorGUILayout.RectField(name, (Rect)getter.Invoke(ins)));
+            }
+            else if (declaredType.Equals(TypeHelper.TypeOf<RectInt>.Type))
+            {
+                setter.Invoke(ins, EditorGUILayout.RectIntField(name, (RectInt)getter.Invoke(ins)));
+            }
+            else if (declaredType.Equals(TypeHelper.TypeOf<Vector3>.Type))
+            {
+                setter.Invoke(ins, EditorGUILayout.Vector3Field(name, (Vector3)getter.Invoke(ins)));
+            }
+            else if (declaredType.Equals(TypeHelper.TypeOf<Vector3Int>.Type))
+            {
+                setter.Invoke(ins, EditorGUILayout.Vector3IntField(name, (Vector3Int)getter.Invoke(ins)));
+            }
+            else if (declaredType.Equals(TypeHelper.TypeOf<AssetReference>.Type))
+            {
+                AssetReference refAsset = (AssetReference)getter.Invoke(ins);
+                DrawAssetReference(name, (other) => setter.Invoke(ins, other), refAsset);
+            }
+            #endregion
+            #region CoreSystem Types
             else if (declaredType.Equals(TypeHelper.TypeOf<Hash>.Type))
             {
                 setter.Invoke(ins, new Hash(ulong.Parse(EditorGUILayout.LongField(name, (long.Parse(getter.Invoke(ins).ToString()))).ToString())));
@@ -314,6 +320,7 @@ namespace SyadeuEditor
                 PrefabReference prefabRef = (PrefabReference)getter.Invoke(ins);
                 DrawPrefabReference(name, (idx) => setter.Invoke(ins, new PrefabReference(idx)), prefabRef);
             }
+            #endregion
             else
             {
                 if (depth > 4) return;
@@ -330,6 +337,7 @@ namespace SyadeuEditor
 
                 EditorGUI.indentLevel -= 1;
             }
+            EditorGUI.EndDisabledGroup();
         }
     }
 }

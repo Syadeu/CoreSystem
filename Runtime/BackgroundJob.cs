@@ -45,6 +45,7 @@ namespace Syadeu
 
         internal int WorkerIndex = -1;
         internal List<IJob> ConnectedJobs;
+        internal bool IsPool = false;
 
         static BackgroundJob()
         {

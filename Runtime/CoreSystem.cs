@@ -263,7 +263,10 @@ namespace Syadeu
         /// <returns></returns>
         public static BackgroundJob AddBackgroundJob(Action action)
         {
-            BackgroundJob job = new BackgroundJob(action);
+            BackgroundJob job = PoolContainer<BackgroundJob>.Dequeue();
+            job.Action = action;
+            job.IsPool = true;
+
             AddBackgroundJob(job);
             return job;
         }
@@ -294,7 +297,10 @@ namespace Syadeu
         {
             if (action == null) return null;
 
-            ForegroundJob job = new ForegroundJob(action);
+            ForegroundJob job = PoolContainer<ForegroundJob>.Dequeue();
+            job.Action = action;
+            job.IsPool = true;
+
             AddForegroundJob(job);
             return job;
         }
@@ -1457,7 +1463,7 @@ namespace Syadeu
                 int jobCount = 0;
                 while (m_ForegroundJobs.Count > 0)
                 {
-                    m_ForegroundJobs.TryDequeue(out ForegroundJob job);
+                    if (!m_ForegroundJobs.TryDequeue(out ForegroundJob job)) continue;
 #if UNITY_EDITOR
                     if (!samplers.TryGetValue("Job_" + job.Action.Method.Name, out sampler))
                     {
@@ -1489,6 +1495,12 @@ namespace Syadeu
 
                     job.m_IsDone = true;
                     job.IsRunning = false;
+
+                    if (job.IsPool)
+                    {
+                        job.IsPool = false;
+                        PoolContainer<ForegroundJob>.Enqueue(job);
+                    }
 
                     jobCount += 1;
 #if UNITY_EDITOR
@@ -1605,6 +1617,12 @@ namespace Syadeu
             BackgroundJob job = e.Result as BackgroundJob;
             job.IsRunning = false;
             job.m_IsDone = true;
+
+            if (job.IsPool)
+            {
+                job.IsPool = false;
+                PoolContainer<BackgroundJob>.Enqueue(job);
+            }
         }
 
         ///// <summary>

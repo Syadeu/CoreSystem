@@ -8,6 +8,10 @@ namespace Syadeu.Internal
 {
     public sealed class ReflectionHelper
     {
+        const string backingField = "k__BackingField";
+        const string memberPrefix = "m_";
+        const string underBar = "_";
+
         /// <summary>
         /// 해당 맴버의 이름을 Serialize 정형화 이름으로 바꾸어 반환합니다.
         /// </summary>
@@ -15,10 +19,6 @@ namespace Syadeu.Internal
         /// <returns></returns>
         public static string SerializeMemberInfoName(MemberInfo memberInfo)
         {
-            const string backingField = "k__BackingField";
-            const string memberPrefix = "m_";
-            const string underBar = "_";
-
             string output;
             JsonPropertyAttribute jsonProperty = memberInfo.GetCustomAttribute<JsonPropertyAttribute>();
             if (jsonProperty != null && !string.IsNullOrEmpty(jsonProperty.PropertyName))
@@ -56,15 +56,28 @@ namespace Syadeu.Internal
             return t.GetMembers(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
                     .Where((other) =>
                     {
-                        if (other.MemberType != MemberTypes.Field && other.MemberType != MemberTypes.Property)
+                        if (other.MemberType != MemberTypes.Field)
                         {
                             return false;
                         }
 
-                        return other.GetCustomAttribute<NonSerializedAttribute>() == null &&
-                            other.GetCustomAttribute<JsonIgnoreAttribute>() == null;
+                        if (!CanSerialized(other)) return false;
+                        if (other.Name.Contains(backingField))
+                        {
+                            string propertyName = SerializeMemberInfoName(other);
+                            if (!CanSerialized(t.GetProperty(propertyName))) return false;
+                        }
+
+                        return true;
                     })
                     .ToArray();
+
+            static bool CanSerialized(MemberInfo member)
+            {
+                if (member.GetCustomAttribute<NonSerializedAttribute>() != null ||
+                    member.GetCustomAttribute<JsonIgnoreAttribute>() != null) return false;
+                return true;
+            }
         }
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 using Syadeu.Job;
 using Syadeu.Entities;
+using Syadeu.Database;
 
 namespace Syadeu
 {
@@ -38,7 +39,12 @@ namespace Syadeu
         public IJob MainJob { get; set; }
 
         internal List<IJob> ConnectedJobs;
+        internal bool IsPool = false;
 
+        static ForegroundJob()
+        {
+            PoolContainer<ForegroundJob>.Initialize();
+        }
         public ForegroundJob(Action action)
         {
             Action = action;
