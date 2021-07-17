@@ -176,7 +176,9 @@ namespace SyadeuEditor
                 EditorUtils.StringRich(Target.GetType().Name, 15);
 
                 Target.Name = EditorGUILayout.TextField("Name: ", Target.Name);
+                EditorGUI.BeginDisabledGroup(true);
                 EditorGUILayout.TextField("Hash: ", Target.Hash.ToString());
+                EditorGUI.EndDisabledGroup();
                 ReflectionHelperEditor.DrawPrefabReference("Prefab: ", (idx) => Target.PrefabIdx = idx, Target.PrefabIdx);
                 //Target.PrefabIdx = PrefabListEditor.DrawPrefabSelector(Target.PrefabIdx);
 
@@ -200,12 +202,21 @@ namespace SyadeuEditor
                     {
                         EditorGUILayout.BeginHorizontal();
 
-                        //int idx = EditorGUILayout.Popup(GetSelectedAttributeIdx(Target.Attributes[i]), m_AttributeNames);
-                        //if (idx == 0)
-                        //{
-                        //    Target.Attributes[i] = Hash.Empty;
-                        //}
-                        //else Target.Attributes[i] = EntityDataList.Instance.m_Attributes[idx - 1].Hash;
+                        int idx = i;
+                        EditorGUI.BeginChangeCheck();
+                        idx = EditorGUILayout.DelayedIntField(idx, GUILayout.Width(80));
+                        if (EditorGUI.EndChangeCheck())
+                        {
+                            if (idx >= Target.Attributes.Count) idx = Target.Attributes.Count - 1;
+
+                            Hash cache = Target.Attributes[i];
+                            Target.Attributes.RemoveAt(i);
+                            Target.Attributes.Insert(idx, cache);
+
+                            //EditorGUILayout.EndHorizontal();
+                            //break;
+                        }
+
                         ReflectionHelperEditor.DrawAttributeSelector((attHash) => Target.Attributes[i] = attHash, Target.Attributes[i]);
 
                         if (GUILayout.Button("-", GUILayout.Width(20)))

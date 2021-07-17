@@ -421,6 +421,9 @@ namespace Syadeu
         {
             const string InstanceStr = "Instance";
 
+            //PoolContainer<BackgroundJob>.Initialize(() => new BackgroundJob(null), 10);
+            PoolContainer<ForegroundJob>.Initialize(() => new ForegroundJob(null), 10);
+
             Instance.Initialize(SystemFlag.MainSystem);
             Type[] internalTypes = TypeHelper.GetTypes(other => other.GetCustomAttribute<StaticManagerIntializeOnLoadAttribute>() != null);
 

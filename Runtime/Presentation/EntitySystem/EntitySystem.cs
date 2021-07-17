@@ -140,10 +140,12 @@ namespace Syadeu.Presentation
                 {
                     for (int j = 0; j < processors.Count; j++)
                     {
-                        processors[j].OnCreated(other, entity);
+                        IAttributeProcessor processor = processors[j];
+
+                        processor.OnCreated(other, entity);
                         CoreSystem.AddForegroundJob(() =>
                         {
-                            processors[j].OnCreatedSync(other, entity);
+                            processor.OnCreatedSync(other, entity);
                         });
                     }
                     CoreSystem.Logger.Log(Channel.Creature, $"Processed OnCreated at entity({entity.Name}), count {processors.Count}");
@@ -188,10 +190,12 @@ namespace Syadeu.Presentation
                 {
                     for (int j = 0; j < processors.Count; j++)
                     {
-                        processors[j].OnDestory(other, entity);
+                        IAttributeProcessor processor = processors[j];
+
+                        processor.OnDestory(other, entity);
                         CoreSystem.AddForegroundJob(() =>
                         {
-                            processors[j].OnDestorySync(other, entity);
+                            processor.OnDestorySync(other, entity);
                         });
                     }
                 }

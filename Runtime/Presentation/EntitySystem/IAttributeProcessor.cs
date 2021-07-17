@@ -5,6 +5,11 @@ namespace Syadeu.Presentation
     /// <summary>
     /// <see cref="AttributeBase"/>의 동작부를 선언할 수 있습니다.
     /// </summary>
+    /// <remarks>
+    /// 만약 상속받은 class가 private, internal 혹은 그에 준하는 레벨로 노출에 제한이 있다면<br/>
+    /// AOT 문제를 방지하기 위해 <seealso cref="UnityEngine.Scripting.PreserveAttribute"/> 어트리뷰트를 해당 class에 선언하여야합니다.<br/>
+    /// 프로세서는 순수 내부 Reflection 을 통해 작동되므로 해당 사항이 필수입니다.
+    /// </remarks>
     internal interface IAttributeProcessor
     {
         /// <summary>
@@ -93,7 +98,7 @@ namespace Syadeu.Presentation
     /// </remarks>
     public interface IAttributeOnProxyCreatedSync
     {
-        /// <summary><inheritdoc cref="IAttributeOnProxyCreated.OnProxyCreated(AttributeBase, IEntity)"/></summary>
+        /// <summary><inheritdoc cref="IAttributeOnProxyCreatedSync.OnProxyCreated(AttributeBase, IEntity)"/></summary>
         void OnProxyCreatedSync(AttributeBase attribute, IEntity entity);
     }
     /// <summary>

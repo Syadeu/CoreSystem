@@ -41,10 +41,6 @@ namespace Syadeu
         internal List<IJob> ConnectedJobs;
         internal bool IsPool = false;
 
-        static ForegroundJob()
-        {
-            PoolContainer<ForegroundJob>.Initialize();
-        }
         public ForegroundJob(Action action)
         {
             Action = action;

@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Syadeu.Database;
 using Syadeu.Mono;
 using Syadeu.ThreadSafe;
 using Unity.Mathematics;
@@ -31,7 +32,7 @@ namespace Syadeu.Presentation
 
     }
     [Preserve]
-    internal sealed class CreatureBrainProcessor : AttributeProcessor<CreatureBrainAttribute>, IAttributeOnProxyCreated
+    internal sealed class CreatureBrainProcessor : AttributeProcessor<CreatureBrainAttribute>, IAttributeOnProxyCreatedSync
     {
         protected override void OnCreated(CreatureBrainAttribute attribute, IEntity entity)
         {
@@ -39,10 +40,33 @@ namespace Syadeu.Presentation
 
 
         }
-
-        public void OnProxyCreated(AttributeBase attribute, IEntity entity)
+        public void OnProxyCreatedSync(AttributeBase attribute, IEntity entity)
         {
-            
+            CreatureBrain brain = (CreatureBrain)entity.gameObject.GetProxyObject();
+
+            brain.Initialize();
+        }
+    }
+
+    public sealed class CreatureStatAttribute : AttributeBase
+    {
+        [JsonProperty(Order = 0, PropertyName = "Stats")] public ValuePairContainer m_Stats;
+    }
+    [Preserve]
+    internal sealed class CreatureStatProcessor : AttributeProcessor<CreatureStatAttribute>, IAttributeOnProxyCreatedSync
+    {
+        public void OnProxyCreatedSync(AttributeBase attribute, IEntity entity)
+        {
+            CreatureBrain brain = (CreatureBrain)entity.gameObject.GetProxyObject();
+
+            CreatureStat stat = brain.Stat;
+            if (stat == null)
+            {
+                stat = brain.gameObject.AddComponent<CreatureStat>();
+                brain.InitializeCreatureEntity(stat);
+            }
+
+            stat.Values = ((CreatureStatAttribute)attribute).m_Stats;
         }
     }
 }
