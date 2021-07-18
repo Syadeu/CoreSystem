@@ -214,7 +214,8 @@ namespace Syadeu.Presentation
         
         private static void ProcessEntityOnProxyCreated(EntitySystem system, IEntity entity)
         {
-            CoreSystem.Logger.Log(Channel.Presentation, $"Processing On Proxy Create {entity.Name}");
+            CoreSystem.Logger.Log(Channel.Presentation, 
+                $"Processing OnProxyCreated at {entity.Name}");
 
             entity.Attributes.AsParallel().ForAll((other) =>
             {
@@ -246,8 +247,8 @@ namespace Syadeu.Presentation
         }
         private static void ProcessEntityOnProxyRemoved(EntitySystem system, IEntity entity)
         {
-            //IEntity entity = system.m_ObjectEntities[dataObj.m_Idx];
-            CoreSystem.Logger.Log(Channel.Presentation, $"Processing On Proxy Removed {entity.Name}");
+            CoreSystem.Logger.Log(Channel.Presentation, 
+                $"Processing OnProxyRemoved at  {entity.Name}");
 
             entity.Attributes.AsParallel().ForAll((other) =>
             {

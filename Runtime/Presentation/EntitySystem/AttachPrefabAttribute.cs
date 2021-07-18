@@ -1,9 +1,12 @@
-﻿using Newtonsoft.Json;
+﻿using JetBrains.Annotations;
+using Newtonsoft.Json;
 using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Mono;
 using Syadeu.Mono.TurnTable;
 using Syadeu.ThreadSafe;
+using System;
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine.AI;
@@ -29,43 +32,6 @@ namespace Syadeu.Presentation
         //{
         //    "in".ToLog();
         //}
-    }
-
-    public sealed class CreatureBrainAttribute : AttributeBase
-    {
-
-        
-    }
-    [Preserve]
-    internal sealed class CreatureBrainProcessor : AttributeProcessor<CreatureBrainAttribute>
-    {
-        protected override void OnCreated(CreatureBrainAttribute attribute, IEntity entity)
-        {
-            if (entity.transform.m_EnableCull) entity.transform.SetCulling(false);
-
-            CreatureAttributeBase[] creatureAttributes = entity.GetAttributes<CreatureAttributeBase>();
-            for (int i = 0; i < creatureAttributes.Length; i++)
-            {
-                creatureAttributes[i].InternalOnCreatureCreated(attribute, entity);
-            }
-        }
-    }
-
-    public abstract class CreatureAttributeBase : AttributeBase
-    {
-        internal void InternalOnCreatureCreated(CreatureBrainAttribute attribute, IEntity entity)
-        {
-            try
-            {
-                OnCreatureCreated(attribute, entity);
-            }
-            catch (System.Exception ex)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity, $"An error raised during OnCreatureCreated at {entity.Name} : {GetType().Name}\n" + ex.Message);
-            }
-        }
-
-        protected virtual void OnCreatureCreated(CreatureBrainAttribute attribute, IEntity entity) { }
     }
 
     public sealed class TurnPlayerAttribute : AttributeBase, ITurnPlayer
@@ -103,6 +69,12 @@ namespace Syadeu.Presentation
         }
 
         public void SetMaxActionPoint(int ap) => m_MaxActionPoint = ap;
+        public int UseActionPoint(int ap) => m_CurrentActionPoint -= ap;
+        public IReadOnlyList<int2> GetMoveableCells()
+        {
+            ref GridManager.GridCell cell = ref Parent.GetCurrentCell();
+            return TurnTableManager.GetMoveableCells(in cell, ActionPoint);
+        }
     }
     [Preserve]
     internal sealed class TurnPlayerProcessor : AttributeProcessor<TurnPlayerAttribute>
@@ -118,7 +90,7 @@ namespace Syadeu.Presentation
         }
     }
 
-    public sealed class CreatureStatAttribute : CreatureAttributeBase
+    public sealed class CreatureStatAttribute : AttributeBase
     {
         [JsonProperty(Order = 0, PropertyName = "Stats")] public ValuePairContainer m_Stats;
     }

@@ -1,4 +1,5 @@
-﻿using Syadeu.Database;
+﻿using Newtonsoft.Json;
+using Syadeu.Database;
 using Syadeu.Internal;
 using System;
 
@@ -20,6 +21,8 @@ namespace Syadeu.Presentation
     {
         public string Name { get; set; } = "New Attribute";
         [ReflectionSealedView] public Hash Hash { get; set; }
+
+        [JsonIgnore] public IEntity Parent { get; internal set; }
 
         public virtual object Clone()
         {

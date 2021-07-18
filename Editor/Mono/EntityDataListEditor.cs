@@ -267,9 +267,10 @@ namespace SyadeuEditor
                                 ReflectionHelperEditor.GetDrawer(targetAtt).OnGUI();
                             }
                             EditorGUILayout.EndVertical();
-
                             EditorGUI.indentLevel -= 1;
                         }
+
+                        if (m_OpenAttributes[i]) EditorUtils.Line();
                     }
                     EditorGUILayout.EndVertical();
                     EditorGUI.indentLevel -= 1;

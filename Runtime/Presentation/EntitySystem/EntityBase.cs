@@ -49,7 +49,10 @@ namespace Syadeu.Presentation
                     CoreSystem.Logger.LogError(Channel.Entity, $"This Entity has an invalid attribute({Attributes[i]}) at {i}. This is not allowed.");
                     continue;
                 }
-                entity.m_Attributes.Add((AttributeBase)att.Clone());
+
+                AttributeBase clone = (AttributeBase)att.Clone();
+                clone.Parent = entity;
+                entity.m_Attributes.Add(clone);
             }
 
             return entity;

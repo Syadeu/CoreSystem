@@ -501,6 +501,7 @@ namespace Syadeu
 
         #region Worker Thread
 
+        #region Editor
 #if UNITY_EDITOR
         private static IEnumerator m_EditorCoroutine = null;
         private static IEnumerator m_EditorSceneCoroutine = null;
@@ -755,6 +756,7 @@ namespace Syadeu
             m_EditorTasks.Add((progressID, task));
         }
 #endif
+        #endregion
 
 #if UNITY_EDITOR
         UnityEngine.Profiling.CustomSampler OnBackgroundStartSampler;
@@ -806,16 +808,15 @@ namespace Syadeu
             {
                 LogManager.s_DisplayLogChannel = m_DisplayLogChannel;
 
-                if (!m_SimWatcher.WaitOne())
+                if (!m_SimWatcher.WaitOne(1, true))
                 {
                     tickCounter++;
+                    continue;
                 }
                 else
                 {
-                    if (tickCounter != 0)
-                    {
-                        $"{tickCounter} ticks were skipped".ToLog();
-                    }
+                    if (tickCounter > 9) CoreSystem.Logger.LogWarning(Channel.Core, 
+                        $"{tickCounter} ticks were skipped due to slow unity thread");
                     //$"passed".ToLog();
                     tickCounter = 0;
                 }
@@ -1649,6 +1650,8 @@ namespace Syadeu
         #endregion
 
         #region Internals
+
+        //internal static bool Synchronize() => Instance.m_SimWatcher.WaitOne(1, true);
 
         private static void InternalCreateNewBackgroundWorker(int count, bool isStandAlone)
         {

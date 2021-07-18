@@ -423,7 +423,6 @@ namespace Syadeu.Presentation
                     }
                 }
 
-                //"running".ToLog();
                 yield return null;
             }
         }
