@@ -12,24 +12,46 @@ using TVector3 = Syadeu.ThreadSafe.Vector3;
 
 namespace Syadeu.Presentation
 {
-    public sealed class NavMeshAttribute : AttributeBase
+    public sealed class NavAgentAttribute : AttributeBase
     {
         [JsonProperty(Order = 0, PropertyName = "AgentType")] public int m_AgentType = 0;
 
-        [JsonIgnore] public Vector3 PreviousPosition { get; internal set; }
-        [JsonIgnore] public Vector3 TargetPosition { get; set; }
+        //[JsonIgnore] public Vector3 PreviousPosition { get; internal set; }
+        //[JsonIgnore] public Vector3 TargetPosition { get; set; }
         //[JsonIgnore] public NavMeshQuery NavMeshQuery { get; internal set; }
         //[JsonIgnore] public PathQueryStatus PathQueryStatus { get; internal set; }
         //[JsonIgnore] public TVector3[] Path { get; internal set; }
 
         [JsonIgnore] public NavMeshAgent NavMeshAgent { get; internal set; }
+        [JsonIgnore] public bool IsMoving
+        {
+            get
+            {
+                if (NavMeshAgent.desiredVelocity.magnitude > 0 &&
+                    NavMeshAgent.remainingDistance > .2f) return true;
+                return false;
+            }
+        }
+        [JsonIgnore] public Vector3 Direction => NavMeshAgent.desiredVelocity;
+
+        public void MoveTo(Vector3 point)
+        {
+            if (!NavMeshAgent.isOnNavMesh)
+            {
+                NavMeshAgent.enabled = false;
+                NavMeshAgent.enabled = true;
+            }
+
+            NavMeshAgent.ResetPath();
+            NavMeshAgent.SetDestination(point);
+        }
     }
-    internal sealed class NavMeshProcessor : AttributeProcessor<NavMeshAttribute>, 
-        IAttributeOnProxyCreatedSync, IAttributeOnPresentation
+    internal sealed class NavAgentProcessor : AttributeProcessor<NavAgentAttribute>, 
+        IAttributeOnProxyCreatedSync/*, IAttributeOnPresentation*/
     {
         public void OnProxyCreatedSync(AttributeBase attribute, IEntity entity)
         {
-            NavMeshAttribute att = (NavMeshAttribute)attribute;
+            NavAgentAttribute att = (NavAgentAttribute)attribute;
             DataGameObject obj = entity.gameObject;
             RecycleableMonobehaviour monoObj = obj.GetProxyObject();
 
@@ -38,24 +60,24 @@ namespace Syadeu.Presentation
 
             att.NavMeshAgent.agentTypeID = att.m_AgentType;
         }
-        public void OnPresentation(AttributeBase attribute, IEntity entity)
-        {
-            NavMeshAttribute att = (NavMeshAttribute)attribute;
-            DataGameObject obj = entity.gameObject;
-            if (!att.PreviousPosition.Equals(att.TargetPosition))
-            {
-                if (obj.HasProxyObject)
-                {
-                    CoreSystem.AddForegroundJob(() =>
-                    {
-                        att.NavMeshAgent.SetDestination(att.TargetPosition);
-                    });
-                }
-                else throw new NotImplementedException();
+        //public void OnPresentation(AttributeBase attribute, IEntity entity)
+        //{
+        //    NavAgentAttribute att = (NavAgentAttribute)attribute;
+        //    DataGameObject obj = entity.gameObject;
+        //    if (!att.PreviousPosition.Equals(att.TargetPosition))
+        //    {
+        //        if (obj.HasProxyObject)
+        //        {
+        //            CoreSystem.AddForegroundJob(() =>
+        //            {
+        //                att.NavMeshAgent.SetDestination(att.TargetPosition);
+        //            });
+        //        }
+        //        else throw new NotImplementedException();
 
-                att.PreviousPosition = att.TargetPosition;
-            }
-        }
+        //        att.PreviousPosition = att.TargetPosition;
+        //    }
+        //}
     }
     //internal sealed class NavMeshProcessor : AttributeProcessor<NavMeshAttribute>, IAttributeOnPresentation
     //{

@@ -509,6 +509,8 @@ namespace Syadeu
         internal static readonly Dictionary<CoreRoutine, object> m_EditorSceneCoroutines = new Dictionary<CoreRoutine, object>();
         private static readonly List<(int progressID, Func<int, IEnumerator> task)> m_EditorTasks = new List<(int, Func<int, IEnumerator>)>();
 
+        private static bool IsEditorPaused = false;
+
         [InitializeOnLoadMethod]
         private static void EditorInitialize()
         {
@@ -519,6 +521,12 @@ namespace Syadeu
 
             SceneView.duringSceneGui -= EditorSceneWorkerMoveNext;
             SceneView.duringSceneGui += EditorSceneWorkerMoveNext;
+
+            EditorApplication.pauseStateChanged += (state) =>
+            {
+                if (state == PauseState.Paused) IsEditorPaused = true;
+                else IsEditorPaused = false;
+            };
         }
 
         private static void EditorSceneWorkerMoveNext(SceneView sceneView)
@@ -808,6 +816,9 @@ namespace Syadeu
             {
                 LogManager.s_DisplayLogChannel = m_DisplayLogChannel;
 
+#if UNITY_EDITOR
+                if (IsEditorPaused) continue;
+#endif
                 if (!m_SimWatcher.WaitOne(1, true))
                 {
                     tickCounter++;
