@@ -73,7 +73,13 @@ namespace Syadeu.Presentation
         }
         public void SynchronizeWithProxy()
         {
-            if (!IsValid()) return;
+            if (!CoreSystem.IsThisMainthread()) throw new CoreSystemThreadSafeMethodException("SynchronizeWithProxy");
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Presentation,
+                    "transform is not valid");
+                return;
+            }
 
             PresentationSystem<GameObjectProxySystem>.System.DownloadDataTransform(m_Idx);
         }

@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Mono;
 using System;
+using System.Collections;
 //using Syadeu.ThreadSafe;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -33,6 +34,7 @@ namespace Syadeu.Presentation
             }
         }
         [JsonIgnore] public Vector3 Direction => NavMeshAgent.desiredVelocity;
+        [JsonIgnore] private CoreRoutine Routine { get; set; }
 
         public void MoveTo(Vector3 point)
         {
@@ -44,6 +46,25 @@ namespace Syadeu.Presentation
 
             NavMeshAgent.ResetPath();
             NavMeshAgent.SetDestination(point);
+
+            if (Routine.IsValid() && Routine.IsRunning)
+            {
+                CoreSystem.RemoveUnityUpdate(Routine);
+            }
+            Routine = CoreSystem.StartUnityUpdate(this, Updater());
+        }
+        private IEnumerator Updater()
+        {
+            while (NavMeshAgent.pathPending)
+            {
+                yield return null;
+            }
+
+            while (IsMoving)
+            {
+                Parent.transform.SynchronizeWithProxy();
+                yield return null;
+            }
         }
     }
     internal sealed class NavAgentProcessor : AttributeProcessor<NavAgentAttribute>, 

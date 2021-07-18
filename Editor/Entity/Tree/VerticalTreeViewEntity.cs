@@ -30,7 +30,7 @@ namespace SyadeuEditor.Tree
         {
             get
             {
-                if (!m_EnableToolbar) throw new Exception();
+                //if (!m_EnableToolbar) throw new Exception();
                 return m_SelectedToolbar;
             }
         }

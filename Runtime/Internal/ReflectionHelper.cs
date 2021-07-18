@@ -66,7 +66,13 @@ namespace Syadeu.Internal
                         if (other.Name.Contains(backingField))
                         {
                             string propertyName = SerializeMemberInfoName(other);
-                            if (!CanSerialized(t.GetProperty(propertyName))) return false;
+                            PropertyInfo property = t.GetProperty(propertyName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                            if (property == null)
+                            {
+                                $"{other.Name} : {propertyName}".ToLog();
+                                return false;
+                            }
+                            if (!CanSerialized(property)) return false;
                         }
 
                         return true;
