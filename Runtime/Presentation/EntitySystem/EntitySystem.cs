@@ -73,17 +73,17 @@ namespace Syadeu.Presentation
             return base.OnStartPresentation();
         }
 
-        private void M_ProxySystem_OnDataObjectProxyCreated(DataGameObject obj)
+        private void M_ProxySystem_OnDataObjectProxyCreated(DataGameObject obj, RecycleableMonobehaviour monoObj)
         {
             if (!m_ObjectHashSet.Contains(obj.m_Idx)) return;
 
-            ProcessEntityOnProxyCreated(this, m_ObjectEntities[obj.m_Idx]);
+            ProcessEntityOnProxyCreated(this, m_ObjectEntities[obj.m_Idx], monoObj);
         }
-        private void M_ProxySystem_OnDataObjectProxyRemoved(DataGameObject obj)
+        private void M_ProxySystem_OnDataObjectProxyRemoved(DataGameObject obj, RecycleableMonobehaviour monoObj)
         {
             if (!m_ObjectHashSet.Contains(obj.m_Idx)) return;
 
-            ProcessEntityOnProxyRemoved(this, m_ObjectEntities[obj.m_Idx]);
+            ProcessEntityOnProxyRemoved(this, m_ObjectEntities[obj.m_Idx], monoObj);
         }
 
         private void M_ProxySystem_OnDataObjectDestoryAsync(DataGameObject obj)
@@ -212,7 +212,7 @@ namespace Syadeu.Presentation
             });
         }
         
-        private static void ProcessEntityOnProxyCreated(EntitySystem system, IEntity entity)
+        private static void ProcessEntityOnProxyCreated(EntitySystem system, IEntity entity, RecycleableMonobehaviour monoObj)
         {
             CoreSystem.Logger.Log(Channel.Presentation, 
                 $"Processing OnProxyCreated at {entity.Name}");
@@ -232,20 +232,20 @@ namespace Syadeu.Presentation
                     {
                         if (processors[j] is IAttributeOnProxyCreated onProxyCreated)
                         {
-                            onProxyCreated.OnProxyCreated(other, entity);
+                            onProxyCreated.OnProxyCreated(other, entity, monoObj);
                         }
                         if (processors[j] is IAttributeOnProxyCreatedSync sync)
                         {
                             CoreSystem.AddForegroundJob(() =>
                             {
-                                sync.OnProxyCreatedSync(other, entity);
+                                sync.OnProxyCreatedSync(other, entity, monoObj);
                             });
                         }
                     }
                 }
             });
         }
-        private static void ProcessEntityOnProxyRemoved(EntitySystem system, IEntity entity)
+        private static void ProcessEntityOnProxyRemoved(EntitySystem system, IEntity entity, RecycleableMonobehaviour monoObj)
         {
             CoreSystem.Logger.Log(Channel.Presentation, 
                 $"Processing OnProxyRemoved at  {entity.Name}");
@@ -265,13 +265,13 @@ namespace Syadeu.Presentation
                     {
                         if (processors[j] is IAttributeOnProxyRemoved onProxyRemoved)
                         {
-                            onProxyRemoved.OnProxyRemoved(other, entity);
+                            onProxyRemoved.OnProxyRemoved(other, entity, monoObj);
                         }
                         if (processors[j] is IAttributeOnProxyRemovedSync sync)
                         {
                             CoreSystem.AddForegroundJob(() =>
                             {
-                                sync.OnProxyRemovedSync(other, entity);
+                                sync.OnProxyRemovedSync(other, entity, monoObj);
                             });
                         }
                     }

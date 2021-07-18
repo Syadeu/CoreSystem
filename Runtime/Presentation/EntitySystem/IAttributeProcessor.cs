@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Syadeu.Mono;
+using System;
 
 namespace Syadeu.Presentation
 {
@@ -92,7 +93,7 @@ namespace Syadeu.Presentation
         /// </remarks>
         /// <param name="attribute"></param>
         /// <param name="entity"></param>
-        void OnProxyCreated(AttributeBase attribute, IEntity entity);
+        void OnProxyCreated(AttributeBase attribute, IEntity entity, RecycleableMonobehaviour monoObj);
     }
     /// <summary><inheritdoc cref="IAttributeOnProxyCreated"/></summary>
     /// <remarks>
@@ -101,7 +102,7 @@ namespace Syadeu.Presentation
     public interface IAttributeOnProxyCreatedSync
     {
         /// <summary><inheritdoc cref="IAttributeOnProxyCreatedSync.OnProxyCreated(AttributeBase, IEntity)"/></summary>
-        void OnProxyCreatedSync(AttributeBase attribute, IEntity entity);
+        void OnProxyCreatedSync(AttributeBase attribute, IEntity entity, RecycleableMonobehaviour monoObj);
     }
     /// <summary>
     /// <see cref="AttributeBase"/>에서 프록시 오브젝트가 제거되었을 때 실행될 동작을 선언할 수 있습니다.<br/>
@@ -123,7 +124,7 @@ namespace Syadeu.Presentation
         /// </remarks>
         /// <param name="attribute"></param>
         /// <param name="entity"></param>
-        void OnProxyRemoved(AttributeBase attribute, IEntity entity);
+        void OnProxyRemoved(AttributeBase attribute, IEntity entity, RecycleableMonobehaviour monoObj);
     }
     /// <summary><inheritdoc cref="IAttributeOnProxyRemoved"/></summary>
     /// <remarks>
@@ -135,6 +136,6 @@ namespace Syadeu.Presentation
         /// <remarks>
         /// 비동기 작업에서 오브젝트가 파괴됨으로, 동기 메소드에서 프록시 오브젝트를 호출할때에는 이미 파괴되었을 수 있습니다.
         /// </remarks>
-        void OnProxyRemovedSync(AttributeBase attribute, IEntity entity);
+        void OnProxyRemovedSync(AttributeBase attribute, IEntity entity, RecycleableMonobehaviour monoObj);
     }
 }

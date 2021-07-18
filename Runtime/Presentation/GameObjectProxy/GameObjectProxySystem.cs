@@ -33,8 +33,8 @@ namespace Syadeu.Presentation
         public event Action<DataGameObject> OnDataObjectVisibleAsync;
         public event Action<DataGameObject> OnDataObjectInvisibleAsync;
 
-        public event Action<DataGameObject> OnDataObjectProxyCreated;
-        public event Action<DataGameObject> OnDataObjectProxyRemoved;
+        public event Action<DataGameObject, RecycleableMonobehaviour> OnDataObjectProxyCreated;
+        public event Action<DataGameObject, RecycleableMonobehaviour> OnDataObjectProxyRemoved;
 
         internal NativeHashMap<Hash, int> m_MappedGameObjectIdxes = new NativeHashMap<Hash, int>(1000, Allocator.Persistent);
         internal NativeHashMap<Hash, int> m_MappedTransformIdxes = new NativeHashMap<Hash, int>(1000, Allocator.Persistent);
@@ -431,7 +431,7 @@ namespace Syadeu.Presentation
                         onCompleted?.Invoke(m_MappedGameObjects[m_MappedGameObjectIdxes[objHash]], other);
 
                         //tr.gameObject.OnProxyCreated();
-                        OnDataObjectProxyCreated?.Invoke(tr.gameObject);
+                        OnDataObjectProxyCreated?.Invoke(tr.gameObject, other);
                     });
                 }
                 else
@@ -456,7 +456,7 @@ namespace Syadeu.Presentation
                     onCompleted?.Invoke(m_MappedGameObjects[m_MappedGameObjectIdxes[objHash]], other);
 
                     //tr.gameObject.OnProxyCreated();
-                    OnDataObjectProxyCreated?.Invoke(tr.gameObject);
+                    OnDataObjectProxyCreated?.Invoke(tr.gameObject, other);
                 }
             });
         }
@@ -478,10 +478,6 @@ namespace Syadeu.Presentation
                 int2 proxyIdx = tr.m_ProxyIdx;
                 CoreSystem.Logger.False(proxyIdx.Equals(DataTransform.ProxyNull), $"proxy index null {proxyIdx}");
 
-                //tr.gameObject.OnProxyRemoved();
-                OnDataObjectProxyRemoved?.Invoke(tr.gameObject);
-                tr.m_ProxyIdx = DataTransform.ProxyNull;
-
                 RecycleableMonobehaviour obj;
                 try
                 {
@@ -493,6 +489,9 @@ namespace Syadeu.Presentation
                     $"{proxyIdx}".ToLog();
                     throw;
                 }
+                OnDataObjectProxyRemoved?.Invoke(tr.gameObject, obj);
+                tr.m_ProxyIdx = DataTransform.ProxyNull;
+
                 obj.Terminate();
                 obj.transform.position = INIT_POSITION;
 

@@ -9,7 +9,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Experimental.AI;
 
-using TVector3 = Syadeu.ThreadSafe.Vector3;
+using ThreadSafeVector3 = Syadeu.ThreadSafe.Vector3;
 
 namespace Syadeu.Presentation
 {
@@ -24,17 +24,10 @@ namespace Syadeu.Presentation
         //[JsonIgnore] public TVector3[] Path { get; internal set; }
 
         [JsonIgnore] public NavMeshAgent NavMeshAgent { get; internal set; }
-        [JsonIgnore] public bool IsMoving
-        {
-            get
-            {
-                if (NavMeshAgent.desiredVelocity.magnitude > 0 &&
-                    NavMeshAgent.remainingDistance > .2f) return true;
-                return false;
-            }
-        }
+        [JsonIgnore] public bool IsMoving { get; internal set; }
         [JsonIgnore] public Vector3 Direction => NavMeshAgent.desiredVelocity;
         [JsonIgnore] private CoreRoutine Routine { get; set; }
+        [JsonIgnore] public Vector3 PreviousTarget { get; set; }
 
         public void MoveTo(Vector3 point)
         {
@@ -46,6 +39,8 @@ namespace Syadeu.Presentation
 
             NavMeshAgent.ResetPath();
             NavMeshAgent.SetDestination(point);
+            PreviousTarget = point;
+            IsMoving = true;
 
             if (Routine.IsValid() && Routine.IsRunning)
             {
@@ -60,27 +55,54 @@ namespace Syadeu.Presentation
                 yield return null;
             }
 
-            while (IsMoving)
+            DataGameObject obj = Parent.gameObject;
+            DataTransform tr = Parent.transform;
+
+            while (NavMeshAgent.desiredVelocity.magnitude > 0 &&
+                    NavMeshAgent.remainingDistance > .2f)
             {
+                if (!obj.HasProxyObject) yield break;
+
                 Parent.transform.SynchronizeWithProxy();
                 yield return null;
             }
+
+            tr.position = new ThreadSafeVector3(PreviousTarget);
+            NavMeshAgent.ResetPath();
+            IsMoving = false;
         }
     }
     internal sealed class NavAgentProcessor : AttributeProcessor<NavAgentAttribute>, 
-        IAttributeOnProxyCreatedSync/*, IAttributeOnPresentation*/
+        IAttributeOnProxyCreatedSync, IAttributeOnProxyRemovedSync
     {
-        public void OnProxyCreatedSync(AttributeBase attribute, IEntity entity)
+        public void OnProxyCreatedSync(AttributeBase attribute, IEntity entity, RecycleableMonobehaviour monoObj)
         {
             NavAgentAttribute att = (NavAgentAttribute)attribute;
-            DataGameObject obj = entity.gameObject;
-            RecycleableMonobehaviour monoObj = obj.GetProxyObject();
 
             att.NavMeshAgent = monoObj.GetComponent<NavMeshAgent>();
             if (att.NavMeshAgent == null) att.NavMeshAgent = monoObj.gameObject.AddComponent<NavMeshAgent>();
 
             att.NavMeshAgent.agentTypeID = att.m_AgentType;
+
+            att.NavMeshAgent.enabled = true;
         }
+        public void OnProxyRemovedSync(AttributeBase attribute, IEntity entity, RecycleableMonobehaviour monoObj)
+        {
+            NavAgentAttribute att = (NavAgentAttribute)attribute;
+
+            if (att.IsMoving)
+            {
+                DataTransform tr = entity.transform;
+
+                NavMeshAgent agent = monoObj.GetComponent<NavMeshAgent>();
+                agent.ResetPath();
+                agent.enabled = false;
+
+                tr.position = new ThreadSafeVector3(att.PreviousTarget);
+                att.IsMoving = false;
+            }
+        }
+
         //public void OnPresentation(AttributeBase attribute, IEntity entity)
         //{
         //    NavAgentAttribute att = (NavAgentAttribute)attribute;
