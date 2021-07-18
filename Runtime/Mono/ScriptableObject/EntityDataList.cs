@@ -1,6 +1,4 @@
 ﻿using Newtonsoft.Json;
-using Syadeu.Database.CreatureData;
-using Syadeu.Database.CreatureData.Attributes;
 using Syadeu.Internal;
 using Syadeu.Presentation;
 using System;
@@ -41,7 +39,7 @@ namespace Syadeu.Database
                 var obj = JsonConvert.DeserializeObject(File.ReadAllText(entityPaths[i]), t);
                 if (!(obj is EntityBase))
                 {
-                    CoreSystem.Logger.LogWarning(Channel.Creature, $"Entity({t?.Name}) at {entityPaths[i]} is invalid. This entity has been ignored");
+                    CoreSystem.Logger.LogWarning(Channel.Entity, $"Entity({t?.Name}) at {entityPaths[i]} is invalid. This entity has been ignored");
                     continue;
                 }
 
@@ -60,7 +58,7 @@ namespace Syadeu.Database
                 var obj = JsonConvert.DeserializeObject(File.ReadAllText(attPaths[i]), t);
                 if (!(obj is AttributeBase))
                 {
-                    CoreSystem.Logger.LogWarning(Channel.Creature, $"Attribute({t?.Name}) at {attPaths[i]} is invalid. This attribute has been ignored");
+                    CoreSystem.Logger.LogWarning(Channel.Entity, $"Attribute({t?.Name}) at {attPaths[i]} is invalid. This attribute has been ignored");
                     continue;
                 }
                 var temp = (AttributeBase)obj;

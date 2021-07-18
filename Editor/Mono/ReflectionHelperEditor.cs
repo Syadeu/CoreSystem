@@ -48,6 +48,12 @@ namespace SyadeuEditor
             public void OnGUI(bool drawHeader)
             {
                 if (drawHeader) EditorUtils.StringRich(m_Type.Name, 15, true);
+                ReflectionDescriptionAttribute description = m_Type.GetCustomAttribute<ReflectionDescriptionAttribute>();
+                if (description != null)
+                {
+                    EditorGUILayout.HelpBox(description.m_Description, MessageType.Info);
+                }
+
                 for (int i = 0; i < m_Members.Length; i++)
                 {
                     DrawMember(m_Instance, m_Members[i]);
@@ -119,11 +125,19 @@ namespace SyadeuEditor
             }
             EditorGUILayout.EndHorizontal();
         }
-        public static void DrawAttributeSelector(Action<Hash> setter, Hash current)
+        public static void DrawAttributeSelector(string name, Action<Hash> setter, Hash current)
         {
             string displayName;
+            AttributeBase att = EntityDataList.Instance.GetAttribute(current);
             if (current.Equals(Hash.Empty)) displayName = "None";
-            else displayName = EntityDataList.Instance.GetAttribute(current).Name;
+            else if (att == null) displayName = "Attribute Not Found";
+            else displayName = att.Name;
+
+            if (!string.IsNullOrEmpty(name))
+            {
+                EditorGUILayout.BeginHorizontal();
+                EditorGUILayout.LabelField(new GUIContent(name));
+            }
 
             Rect rect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight, GUILayout.ExpandWidth(true));
             rect = EditorGUI.IndentedRect(rect);
@@ -137,8 +151,35 @@ namespace SyadeuEditor
                     return att.Hash;
                 }));
             }
+            if (!string.IsNullOrEmpty(name)) EditorGUILayout.EndHorizontal();
         }
+        public static void DrawEntitySelector(string name, Action<Hash> setter, Hash current)
+        {
+            string displayName;
+            if (current.Equals(Hash.Empty)) displayName = "None";
+            else displayName = EntityDataList.Instance.GetEntity(current).Name;
 
+            if (!string.IsNullOrEmpty(name))
+            {
+                EditorGUILayout.BeginHorizontal();
+                EditorGUILayout.LabelField(new GUIContent(name));
+            }
+            
+            Rect rect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight, GUILayout.ExpandWidth(true));
+            rect = EditorGUI.IndentedRect(rect);
+            if (EditorGUI.DropdownButton(rect, new GUIContent(displayName), FocusType.Passive))
+            {
+                rect = GUILayoutUtility.GetLastRect();
+                rect.position = Event.current.mousePosition;
+
+                PopupWindow.Show(rect, SelectorPopup<Hash, EntityBase>.GetWindow(EntityDataList.Instance.m_Entites, setter, (att) =>
+                {
+                    return att.Hash;
+                }));
+            }
+            if (!string.IsNullOrEmpty(name)) EditorGUILayout.EndHorizontal();
+        }
+        
         public static void DrawMember(object ins, MemberInfo memberInfo, int depth = 0)
         {
             Type declaredType;
@@ -257,6 +298,13 @@ namespace SyadeuEditor
             }
             #endregion
             #region Unity Types
+            else if (TypeHelper.TypeOf<UnityEngine.Object>.Type.IsAssignableFrom(declaredType))
+            {
+                //UnityEngine.Object obj = EditorGUILayout.ObjectField(name, (UnityEngine.Object)getter.Invoke(ins), declaredType, false);
+
+                //setter.Invoke(ins, obj);
+                EditorGUILayout.LabelField(name, "UnityEngine.Object 는 json 으로 저장할 수 없으므로 지원하지 않습니다.");
+            }
             else if (declaredType.Equals(TypeHelper.TypeOf<Rect>.Type))
             {
                 setter.Invoke(ins, EditorGUILayout.RectField(name, (Rect)getter.Invoke(ins)));
@@ -319,6 +367,11 @@ namespace SyadeuEditor
             {
                 PrefabReference prefabRef = (PrefabReference)getter.Invoke(ins);
                 DrawPrefabReference(name, (idx) => setter.Invoke(ins, new PrefabReference(idx)), prefabRef);
+            }
+            else if (declaredType.Equals(TypeHelper.TypeOf<EntityReference>.Type))
+            {
+                EntityReference prefabRef = (EntityReference)getter.Invoke(ins);
+                DrawEntitySelector(name, (idx) => setter.Invoke(ins, new EntityReference(idx)), prefabRef);
             }
             #endregion
             else

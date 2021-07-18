@@ -8,6 +8,11 @@ using System.Linq;
 
 namespace Syadeu.Presentation
 {
+    /// <summary><inheritdoc cref="IEntity"/></summary>
+    /// <remarks>
+    /// 이 클래스를 상속받음으로서 새로운 오브젝트를 선언할 수 있습니다.<br/>
+    /// 선언된 클래스는 <seealso cref="EntityDataList"/>에 자동으로 타입이 등록되어 추가할 수 있게 됩니다.
+    /// </remarks>
     public abstract class EntityBase : IEntity, ICloneable
     {
         [JsonIgnore] internal Hash m_GameObjectHash;
@@ -38,8 +43,13 @@ namespace Syadeu.Presentation
             entity.m_Attributes = new List<AttributeBase>();
             for (int i = 0; i < Attributes.Count; i++)
             {
-                AttributeBase att = (AttributeBase)EntityDataList.Instance.GetAttribute(Attributes[i]).Clone();
-                entity.m_Attributes.Add(att);
+                AttributeBase att = EntityDataList.Instance.GetAttribute(Attributes[i]);
+                if (att == null)
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity, $"This Entity has an invalid attribute({Attributes[i]}) at {i}. This is not allowed.");
+                    continue;
+                }
+                entity.m_Attributes.Add((AttributeBase)att.Clone());
             }
 
             return entity;

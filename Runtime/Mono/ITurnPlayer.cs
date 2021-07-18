@@ -16,7 +16,7 @@ namespace Syadeu.Mono.TurnTable
         /// <see langword="true"/> 일 경우, 다음 턴 테이블에 이 플레이어를 참여시킵니다
         /// </summary>
         bool ActivateTurn { get; }
-        bool IsMyTurn { get; }
+        //bool IsMyTurn { get; }
         int ActionPoint { get; }
 
         /// <summary>

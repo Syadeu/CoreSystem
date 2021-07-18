@@ -1744,18 +1744,51 @@ namespace Syadeu
             float 
                 startTime = Time.time,
                 currentTime = startTime;
-            new BackgroundJob(() =>
+            AddBackgroundJob(() =>
             {
                 while (currentTime < startTime + seconds)
                 {
                     whileWait?.Invoke(currentTime - startTime);
 
                     currentTime = CoreSystem.time;
-                    Instance.m_SimWatcher.WaitOne();
+                    if (!Instance.m_SimWatcher.WaitOne())
+                    {
+                        ThreadAwaiter(10);
+                    }
                 }
                 //ThreadAwaiter((int)seconds * 1000);
                 AddForegroundJob(action);
-            }).Start();
+            });
+        }
+        public static void WaitInvoke<T>(Func<T> notNull, Action action)
+        {
+            AddBackgroundJob(() =>
+            {
+                while (notNull.Invoke() == null)
+                {
+                    if (!Instance.m_SimWatcher.WaitOne())
+                    {
+                        ThreadAwaiter(10);
+                    }
+                }
+
+                AddForegroundJob(action);
+            });
+        }
+        public static void WaitInvoke<T>(Func<T> notNull, Action<T> action)
+        {
+            AddBackgroundJob(() =>
+            {
+                while (notNull.Invoke() == null)
+                {
+                    if (!Instance.m_SimWatcher.WaitOne())
+                    {
+                        ThreadAwaiter(10);
+                    }
+                }
+
+                AddForegroundJob(() => action.Invoke(notNull.Invoke()));
+            });
         }
 
         #endregion

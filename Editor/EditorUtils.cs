@@ -42,6 +42,9 @@ namespace SyadeuEditor
 
         public const string DefaultPath = "Assets/Resources/Syadeu";
         public const string Box = "Box";
+        public const string MiniButton = "miniButton";
+        public const string FoldoutOpendString = "▼";
+        public const string FoldoutClosedString = "▶";
 
         static GUIStyle _headerStyle;
         internal static GUIStyle HeaderStyle
@@ -332,8 +335,7 @@ namespace SyadeuEditor
         //    return GUILayout.Button(name, btt ? toggleBttStyleToggled : toggleBttStyleNormal, options);
         //}
 
-        public const string FoldoutOpendString = "▼";
-        public const string FoldoutClosedString = "▶";
+        
 
         public static bool Foldout(bool foldout, string name, int size = -1)
         {

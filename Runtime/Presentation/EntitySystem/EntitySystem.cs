@@ -1,6 +1,5 @@
 ﻿using MoonSharp.Interpreter;
 using Syadeu.Database;
-using Syadeu.Database.CreatureData.Attributes;
 using Syadeu.Database.Lua;
 using Syadeu.Internal;
 using Syadeu.Mono;
@@ -8,6 +7,7 @@ using Syadeu.Presentation.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Unity.Collections;
 using UnityEngine;
 
@@ -37,7 +37,16 @@ namespace Syadeu.Presentation
             });
             for (int i = 0; i < processors.Length; i++)
             {
-                IAttributeProcessor processor = (IAttributeProcessor)Activator.CreateInstance(processors[i]);
+                ConstructorInfo ctor = processors[i].GetConstructor(BindingFlags.Public | BindingFlags.Instance,
+                    null, CallingConventions.HasThis, Array.Empty<Type>(), null);
+                IAttributeProcessor processor;
+
+                if (ctor == null) processor = (IAttributeProcessor)Activator.CreateInstance(processors[i]);
+                else
+                {
+                    processor = (IAttributeProcessor)ctor.Invoke(null);
+                }
+
                 if (!TypeHelper.TypeOf<AttributeBase>.Type.IsAssignableFrom(processor.TargetAttribute))
                 {
                     throw new Exception();
@@ -136,7 +145,8 @@ namespace Syadeu.Presentation
                     return;
                 }
 
-                if (system.m_Processors.TryGetValue(other.GetType(), out List<IAttributeProcessor> processors))
+                Type t = other.GetType();
+                if (system.m_Processors.TryGetValue(t, out List<IAttributeProcessor> processors))
                 {
                     for (int j = 0; j < processors.Count; j++)
                     {
@@ -148,7 +158,7 @@ namespace Syadeu.Presentation
                             processor.OnCreatedSync(other, entity);
                         });
                     }
-                    CoreSystem.Logger.Log(Channel.Creature, $"Processed OnCreated at entity({entity.Name}), count {processors.Count}");
+                    CoreSystem.Logger.Log(Channel.Entity, $"Processed OnCreated at entity({entity.Name}), {t.Name}");
                 }
             });
         }

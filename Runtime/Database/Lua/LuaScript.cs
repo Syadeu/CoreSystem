@@ -132,7 +132,12 @@ namespace Syadeu.Database.Lua
 
                 try
                 {
-                    m_Scripts[i].Invoke(ToArgument(target, m_Scripts[i].m_Args));
+                    LuaScript scr = m_Scripts[i];
+                    if (IsContainsUnityArgs(scr.m_Args))
+                    {
+                        CoreSystem.AddForegroundJob(() => scr.Invoke(ToArgument(target, scr.m_Args)));
+                    }
+                    else scr.Invoke(ToArgument(target, scr.m_Args));
                 }
                 catch (ScriptRuntimeException runtimeEx)
                 {
@@ -143,6 +148,19 @@ namespace Syadeu.Database.Lua
                     throw;
                 }
             }
+
+            static bool IsContainsUnityArgs(IList<LuaArg> args)
+            {
+                if (args == null) return false;
+                for (int i = 0; i < args.Count; i++)
+                {
+                    if (TypeHelper.TypeOf<UnityEngine.Object>.Type.IsAssignableFrom(args[i].Type))
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
         }
         List<object> ToArgument(DataGameObject dataObj, IList<LuaArg> args)
         {
@@ -150,7 +168,7 @@ namespace Syadeu.Database.Lua
             List<object> temp = new List<object>();
             for (int i = 0; i < args.Count; i++)
             {
-                if (TypeHelper.TypeOf<MonoBehaviour>.Type.IsAssignableFrom(args[i].Type))
+                if (TypeHelper.TypeOf<UnityEngine.Object>.Type.IsAssignableFrom(args[i].Type))
                 {
                     if (!dataObj.HasProxyObject) temp.Add(null);
                     else temp.Add(dataObj.GetProxyObject().GetComponentInChildren(args[i].Type));

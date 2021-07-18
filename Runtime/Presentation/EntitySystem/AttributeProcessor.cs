@@ -1,4 +1,5 @@
-﻿using Syadeu.Internal;
+﻿using Syadeu.Database;
+using Syadeu.Internal;
 using Syadeu.Mono;
 using Syadeu.ThreadSafe;
 using System;
@@ -60,6 +61,16 @@ namespace Syadeu.Presentation
             CoreSystem.Logger.NotNull(system, "GameObjectProxySystem is not initialized");
 
             return system.CreateNewPrefab(prefab, position, rotation, localSize, enableCull);
+        }
+
+        protected IEntity CreateEntity(EntityReference entity, Vector3 position, quaternion rotation)
+            => CreateEntity(entity, position, rotation, Vector3.One, true);
+        protected IEntity CreateEntity(EntityReference entity, Vector3 position, quaternion rotation, Vector3 localSize, bool enableCull)
+        {
+            EntitySystem system = PresentationSystem<EntitySystem>.System;
+            CoreSystem.Logger.NotNull(system, "GameObjectProxySystem is not initialized");
+
+            return system.CreateEntity(entity, position, rotation, localSize, enableCull);
         }
     }
 }
