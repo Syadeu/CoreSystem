@@ -271,8 +271,8 @@ namespace Syadeu.Presentation
         
         private static void ProcessEntityOnProxyCreated(EntitySystem system, IEntity entity, RecycleableMonobehaviour monoObj)
         {
-            //CoreSystem.Logger.Log(Channel.Presentation, 
-            //    $"Processing OnProxyCreated at {entity.Name}");
+            CoreSystem.Logger.Log(Channel.Presentation,
+                $"Processing OnProxyCreated at {entity.Name}");
 
             entity.Attributes.AsParallel().ForAll((other) =>
             {
@@ -303,8 +303,8 @@ namespace Syadeu.Presentation
         }
         private static void ProcessEntityOnProxyRemoved(EntitySystem system, IEntity entity, RecycleableMonobehaviour monoObj)
         {
-            //CoreSystem.Logger.Log(Channel.Presentation, 
-            //    $"Processing OnProxyRemoved at  {entity.Name}");
+            CoreSystem.Logger.Log(Channel.Presentation,
+                $"Processing OnProxyRemoved at  {entity.Name}");
 
             entity.Attributes.AsParallel().ForAll((other) =>
             {

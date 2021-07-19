@@ -594,7 +594,7 @@ namespace Syadeu.Presentation
                             if (!tr.IsValid()) continue;
                             if (m_RenderSystem.IsInCameraScreen(tr.position))
                             {
-                                if (readOnly[j].m_PrefabIdx > 0 &&
+                                if (readOnly[j].m_PrefabIdx >= 0 &&
                                     !readOnly[j].ProxyRequested &&
                                     !readOnly[j].HasProxyObject)
                                 {
@@ -610,7 +610,7 @@ namespace Syadeu.Presentation
                             }
                             else
                             {
-                                if (readOnly[j].m_PrefabIdx > 0 && 
+                                if (readOnly[j].m_PrefabIdx >= 0 && 
                                     tr.m_EnableCull && 
                                     readOnly[j].HasProxyObject)
                                 {
