@@ -1,4 +1,6 @@
-﻿namespace Syadeu.Presentation.Internal
+﻿using Syadeu.Presentation.Entities;
+
+namespace Syadeu.Presentation.Internal
 {
     /// <summary>
     /// Presentation Manager에 유저 시스템을 등록하기 위한 인터페이스입니다.<br/>

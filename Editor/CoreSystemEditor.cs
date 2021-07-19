@@ -174,7 +174,7 @@ namespace SyadeuEditor
                     }
                     element = new RoutineTreeElement(m_RoutinesView, routine);
 
-                    string objPath = routine.ObjectName.Split('+')[0];
+                    string objPath = routine.ObjectName.Split('+')[0].Split('.').Last().Trim();
                     var topFolder = m_RoutinesView.GetOrCreateFolder(objPath);
                     element.SetParent(topFolder);
 
@@ -225,6 +225,7 @@ namespace SyadeuEditor
             EditorUtils.StringHeader("Routines", 15);
             EditorGUI.indentLevel += 1;
 
+            if (GUILayout.Button("Capture")) ValidateRoutineView();
             m_RoutinesView.OnGUI();
 
             EditorGUI.indentLevel -= 1;

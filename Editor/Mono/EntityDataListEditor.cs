@@ -69,7 +69,15 @@ namespace SyadeuEditor
                             Asset.m_Entites.Add((EntityBase)Activator.CreateInstance(t));
                             RefreshTreeView();
                         },
-                        (t) => t, (t) => t.Name));
+                        (t) => t,
+                        (t) =>
+                        {
+                            if (t.GetCustomAttribute<ObsoleteAttribute>() != null)
+                            {
+                                return $"[Deprecated] {t.Name}";
+                            }
+                            else return t.Name;
+                        }));
                     }
                     else if (treeView.SelectedToolbar == 1)
                     {
@@ -84,7 +92,15 @@ namespace SyadeuEditor
                             Asset.m_Attributes.Add((AttributeBase)Activator.CreateInstance(t));
                             RefreshTreeView();
                         },
-                        (t) => t, (t) => t.Name));
+                        (t) => t,
+                        (t) =>
+                        {
+                            if (t.GetCustomAttribute<ObsoleteAttribute>() != null)
+                            {
+                                return $"[Deprecated] {t.Name}";
+                            }
+                            else return t.Name;
+                        }));
                     }
 
                     List<object> tempList = new List<object>();
@@ -156,7 +172,10 @@ namespace SyadeuEditor
 
         private class TreeEntityElement : VerticalTreeElement<EntityBase>
         {
-            public override string Name => Target.Name;
+            static string[] c_DefaultProperties = new string[] { "Name", "Hash", "PrefabIdx", "Attributes" };
+            const string c_EntityObsoleteWarning = "This entity type has been marked as deprecated.";
+
+            //public override string Name => Target.Name;
             public override bool HideElementInTree
                 => Tree.SelectedToolbar != 0 || base.HideElementInTree;
 
@@ -165,19 +184,29 @@ namespace SyadeuEditor
 
             public TreeEntityElement(VerticalTreeView treeView, EntityBase entity) : base(treeView, entity)
             {
-                m_Drawer = ReflectionHelperEditor.GetDrawer(entity, new string[]
-                    {
-                        "Name", "Hash", "PrefabIdx", "Attributes"
-                    });
+                ObsoleteAttribute obsolete = entity.GetType().GetCustomAttribute<ObsoleteAttribute>();
+                if (obsolete != null)
+                {
+                    m_Name = $"[Deprecated] {Target.Name}";
+                }
+                else m_Name = Target.Name;
+                m_Drawer = ReflectionHelperEditor.GetDrawer(entity, c_DefaultProperties);
             }
             public override void OnGUI()
             {
-                if (m_OpenAttributes.Length != Target.Attributes.Count)
+                if (Target.Attributes == null) m_OpenAttributes = Array.Empty<bool>();
+                else if (m_OpenAttributes.Length != Target.Attributes.Count)
                 {
                     m_OpenAttributes = new bool[Target.Attributes.Count];
                 }
+                Type t = Target.GetType();
+                ObsoleteAttribute obsolete = t.GetCustomAttribute<ObsoleteAttribute>();
 
-                EditorUtils.StringRich(Target.GetType().Name, 15);
+                if (obsolete != null)
+                {
+                    EditorGUILayout.HelpBox(c_EntityObsoleteWarning, MessageType.Warning);
+                }
+                EditorUtils.StringRich(t.Name, 15);
 
                 Target.Name = EditorGUILayout.TextField("Name: ", Target.Name);
                 EditorGUI.BeginDisabledGroup(true);
@@ -233,8 +262,19 @@ namespace SyadeuEditor
 
                         if (GUILayout.Button("-", GUILayout.Width(20)))
                         {
+                            if (Target.Attributes.Count == 1)
+                            {
+                                Target.Attributes.Clear();
+                                m_OpenAttributes = Array.Empty<bool>();
+                                EditorGUILayout.EndHorizontal();
+                                break;
+                            }
+
+                            var temp = m_OpenAttributes.ToList();
+                            temp.RemoveAt(i);
+                            m_OpenAttributes = temp.ToArray();
                             Target.Attributes.RemoveAt(i);
-                            i--;
+                            if (i != 0) i--;
                         }
 
                         m_OpenAttributes[i] = GUILayout.Toggle(m_OpenAttributes[i],
@@ -279,7 +319,7 @@ namespace SyadeuEditor
 
                 EditorUtils.Line();
 
-                m_Drawer.OnGUI(false);
+                m_Drawer.OnGUI(false, true);
                 //Target.m_HP = EditorGUILayout.FloatField("HP", Target.m_HP);
                 //Target.m_Values.DrawValueContainer("Values");
             }
@@ -296,14 +336,16 @@ namespace SyadeuEditor
         }
         private class TreeAttributeElement : VerticalTreeElement<AttributeBase>
         {
-            public override string Name
-            {
-                get
-                {
-                    m_Name = $"{Target.GetType().Name}: {Target.Name}";
-                    return m_Name;
-                }
-            }
+            static string[] c_DefaultProperties = new string[] { "Name", "Hash" };
+
+            //public override string Name
+            //{
+            //    get
+            //    {
+            //        m_Name = $"{Target.GetType().Name}: {Target.Name}";
+            //        return m_Name;
+            //    }
+            //}
             public override bool HideElementInTree
                 => Tree.SelectedToolbar != 1 || base.HideElementInTree;
 
@@ -311,6 +353,12 @@ namespace SyadeuEditor
 
             public TreeAttributeElement(VerticalTreeView treeView, AttributeBase att) : base(treeView, att)
             {
+                ObsoleteAttribute obsolete = att.GetType().GetCustomAttribute<ObsoleteAttribute>();
+                if (obsolete != null)
+                {
+                    m_Name = $"[Deprecated] {Target.GetType().Name}: {Target.Name}";
+                }
+                else m_Name = $"{Target.GetType().Name}: {Target.Name}";
                 m_Drawer = ReflectionHelperEditor.GetDrawer(att);
 
             }

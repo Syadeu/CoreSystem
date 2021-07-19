@@ -15,7 +15,6 @@ namespace Syadeu.Presentation
         internal CustomTagFlag m_CustomTag;
 
         internal Hash m_Idx;
-        internal int2 m_GridIdxes;
         internal Hash m_Transform;
         internal bool m_Destoryed;
 

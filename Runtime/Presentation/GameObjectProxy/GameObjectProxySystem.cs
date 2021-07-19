@@ -94,17 +94,6 @@ namespace Syadeu.Presentation
                 }
                 m_TerminatedProxies.Clear();
 
-                //#region Clear Data Components
-                //foreach (var item in m_ComponentList.Values)
-                //{
-                //    for (int i = 0; i < item.Count; i++)
-                //    {
-                //        ((IDisposable)item[i]).Dispose();
-                //    }
-                //}
-                //m_ComponentList.Clear();
-                //#endregion
-
                 #region Clear Data Transforms
                 for (int i = 0; i < m_MappedTransforms.Length; i++)
                 {
@@ -120,13 +109,6 @@ namespace Syadeu.Presentation
                 #endregion
 
                 #region Clear Data GameObjects
-                for (int i = 0; i < m_MappedGameObjects.Length; i++)
-                {
-                    ref GridManager.Grid g = ref GridManager.GetGrid(m_MappedGameObjects[i].m_GridIdxes.x);
-                    ref GridManager.GridCell c = ref g.GetCell(m_MappedGameObjects[i].m_GridIdxes.y);
-
-                    c.RemoveCustomData();
-                }
                 m_MappedGameObjects.Clear();
                 m_MappedGameObjectIdxes.Clear();
                 #endregion
@@ -311,30 +293,17 @@ namespace Syadeu.Presentation
             m_UpdateTransforms.Enqueue(trHash);
         }
 
-        public DataGameObject CreateNewPrefab(int prefabIdx, Vector3 pos, Quaternion rot)
-            => CreateNewPrefab(prefabIdx, pos, rot, Vector3.one, true);
-        internal DataGameObject CreateNewPrefab(int prefabIdx, 
+        internal DataGameObject CreateNewPrefab(PrefabReference prefab, Vector3 pos)
+        {
+            Transform tr = CoreSystem.GetTransform(prefab.GetObjectSetting().Prefab);
+            DataTransform dataTr = ToDataTransform(tr);
+
+            return CreateNewPrefab(prefab, pos, dataTr.m_Rotation, dataTr.m_LocalScale, true);
+        }
+        internal DataGameObject CreateNewPrefab(PrefabReference prefab, 
             Vector3 pos, Quaternion rot, Vector3 localScale, bool enableCull)
         {
             CoreSystem.Logger.NotNull(m_RenderSystem, $"You've call this method too early or outside of PresentationSystem");
-
-            //if (!GridManager.HasGrid(pos))
-            //{
-            //    CoreSystem.Logger.LogError(Channel.Data, $"Can\'t spawn prefab {prefabIdx} at {pos}, There\'s no grid");
-            //    throw new Exception();
-            //}
-            //ref GridManager.Grid grid = ref GridManager.GetGrid(pos);
-            //if (!grid.HasCell(pos))
-            //{
-            //    CoreSystem.Logger.LogError(Channel.Data, $"Can\'t spawn prefab {prefabIdx} at {pos}, There\'s no grid cell");
-            //    throw new Exception();
-            //}
-            //ref GridManager.GridCell cell = ref grid.GetCell(pos);
-            //if (cell.GetCustomData() != null)
-            //{
-            //    CoreSystem.Logger.LogError(Channel.Data, $"Can\'t spawn prefab {prefabIdx} at {pos}, target grid cell has object");
-            //    throw new Exception();
-            //}
 
             Hash trHash = Hash.NewHash();
             Hash objHash = Hash.NewHash();
@@ -360,7 +329,7 @@ namespace Syadeu.Presentation
                 m_GameObject = objHash,
                 m_Idx = trHash,
                 m_ProxyIdx = proxyIdx,
-                m_PrefabIdx = prefabIdx,
+                m_PrefabIdx = prefab,
                 m_EnableCull = enableCull,
 
                 m_Position = new ThreadSafe.Vector3(pos),
@@ -370,8 +339,6 @@ namespace Syadeu.Presentation
             DataGameObject objData = new DataGameObject()
             {
                 m_Idx = objHash,
-                //m_GridIdxes = cell.Idxes,
-
                 m_Transform = trHash
             };
 
@@ -388,10 +355,36 @@ namespace Syadeu.Presentation
                 RequestProxy(objHash, trHash, null);
             }
 
-            //cell.SetCustomData(objData);
-            //$"{prefabIdx} spawned at {pos}".ToLog();
             OnDataObjectCreatedAsync?.Invoke(objData);
             return objData;
+        }
+        private DataTransform ToDataTransform(Transform tr)
+        {
+            Vector3
+                pos = Vector3.zero, localScale = Vector3.zero;
+            Quaternion rotation = Quaternion.identity;
+
+            if (CoreSystem.IsThisMainthread())
+            {
+                pos = tr.position;
+                localScale = tr.localScale;
+                rotation = tr.rotation;
+            }
+            else
+            {
+                CoreSystem.AddForegroundJob(() =>
+                {
+                    pos = tr.position;
+                    localScale = tr.localScale;
+                    rotation = tr.rotation;
+                }).Await();
+            }
+            return new DataTransform
+            {
+                m_Position = new ThreadSafe.Vector3(pos),
+                m_LocalScale = new ThreadSafe.Vector3(localScale),
+                m_Rotation = rotation
+            };
         }
 
         #region Proxy Object Control

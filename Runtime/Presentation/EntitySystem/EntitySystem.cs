@@ -15,7 +15,9 @@ namespace Syadeu.Presentation
 {
     public sealed class EntitySystem : PresentationSystemEntity<EntitySystem>
     {
+        private const string c_AttributeNotFoundError = "Entity({0}) not found. Cannot spawn at {1}";
         private const string c_AttributeWarning = "Attribute({0}) on entity({1}) has invaild value. {2}. Request Ignored.";
+        private const string c_AttributeEmptyWarning = "Entity({0}) has empty attribute. This is not allowed. Request Ignored.";
 
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;
@@ -105,19 +107,64 @@ namespace Syadeu.Presentation
         }
         #endregion
 
+#line hidden
+        public IEntity CreateEntity(string name, Vector3 position)
+        {
+            EntityBase original = EntityDataList.Instance.GetEntity(name);
+            if (original == null)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_AttributeNotFoundError, name, position));
+                return null;
+            }
+
+            DataGameObject obj = m_ProxySystem.CreateNewPrefab(original.PrefabIdx, position);
+            return InternalCreateEntity(original, obj);
+        }
+        public IEntity CreateEntity(Hash hash, Vector3 position)
+        {
+            EntityBase original = EntityDataList.Instance.GetEntity(hash);
+            if (original == null)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_AttributeNotFoundError, hash, position));
+                return null;
+            }
+
+            DataGameObject obj = m_ProxySystem.CreateNewPrefab(original.PrefabIdx, position);
+            return InternalCreateEntity(original, obj);
+        }
+        public IEntity CreateEntity(string name, Vector3 position, Quaternion rotation, Vector3 localSize, bool enableCull)
+        {
+            EntityBase original = EntityDataList.Instance.GetEntity(name);
+            if (original == null)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_AttributeNotFoundError, name, position));
+                return null;
+            }
+
+            DataGameObject obj = m_ProxySystem.CreateNewPrefab(original.PrefabIdx, position, rotation, localSize, enableCull);
+            return InternalCreateEntity(original, obj);
+        }
         public IEntity CreateEntity(Hash hash, Vector3 position, Quaternion rotation, Vector3 localSize, bool enableCull)
         {
             EntityBase original = EntityDataList.Instance.GetEntity(hash);
             if (original == null)
             {
-                CoreSystem.Logger.LogError(Channel.Presentation, $"Entity({hash}) not found. Cannot spawn at {position}");
+                CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_AttributeNotFoundError, hash, position));
                 return null;
             }
 
-            EntityBase entity = (EntityBase)EntityDataList.Instance.GetEntity(hash).Clone();
+            DataGameObject obj = m_ProxySystem.CreateNewPrefab(original.PrefabIdx, position, rotation, localSize, enableCull);
+            return InternalCreateEntity(original, obj);
+        }
+        public IEntity GetEntity(Hash dataObj)
+        {
+            if (!m_ObjectHashSet.Contains(dataObj)) return null;
+            return m_ObjectEntities[dataObj];
+        }
 
-            DataGameObject obj = m_ProxySystem.CreateNewPrefab(entity.PrefabIdx, position, rotation, localSize, enableCull);
-
+        private IEntity InternalCreateEntity(EntityBase entityBase, DataGameObject obj)
+        {
+            EntityBase entity = (EntityBase)entityBase.Clone();
             entity.m_GameObjectHash = obj.m_Idx;
             entity.m_TransformHash = obj.m_Transform;
 
@@ -127,11 +174,7 @@ namespace Syadeu.Presentation
             ProcessEntityOnCreated(this, entity);
             return entity;
         }
-        public IEntity GetEntity(Hash dataObj)
-        {
-            if (!m_ObjectHashSet.Contains(dataObj)) return null;
-            return m_ObjectEntities[dataObj];
-        }
+#line default
 
         #region Processor
         private static void ProcessEntityOnCreated(EntitySystem system, IEntity entity)
@@ -141,7 +184,7 @@ namespace Syadeu.Presentation
                 if (other == null)
                 {
                     CoreSystem.Logger.LogWarning(Channel.Presentation,
-                        $"Entity({entity.Name}) has empty attribute. This is not allowed. Request Ignored.");
+                        string.Format(c_AttributeEmptyWarning, entity.Name));
                     return;
                 }
 
@@ -169,7 +212,7 @@ namespace Syadeu.Presentation
                 if (other == null)
                 {
                     CoreSystem.Logger.LogWarning(Channel.Presentation,
-                        $"Entity({entity.Name}) has empty attribute. This is not allowed. Request Ignored.");
+                        string.Format(c_AttributeEmptyWarning, entity.Name));
                     return;
                 }
 
@@ -192,7 +235,7 @@ namespace Syadeu.Presentation
                 if (other == null)
                 {
                     CoreSystem.Logger.LogWarning(Channel.Presentation,
-                        $"Entity({entity.Name}) has empty attribute. This is not allowed. Request Ignored.");
+                        string.Format(c_AttributeEmptyWarning, entity.Name));
                     return;
                 }
 
@@ -222,8 +265,7 @@ namespace Syadeu.Presentation
                 if (other == null)
                 {
                     CoreSystem.Logger.LogWarning(Channel.Presentation,
-                        $"Entity({entity.Name}) has empty attribute. This is not allowed. Request Ignored.");
-                    return;
+                        string.Format(c_AttributeEmptyWarning, entity.Name));
                 }
 
                 if (system.m_Processors.TryGetValue(other.GetType(), out List<IAttributeProcessor> processors))
@@ -255,8 +297,7 @@ namespace Syadeu.Presentation
                 if (other == null)
                 {
                     CoreSystem.Logger.LogWarning(Channel.Presentation,
-                        $"Entity({entity.Name}) has empty attribute. This is not allowed. Request Ignored.");
-                    return;
+                        string.Format(c_AttributeEmptyWarning, entity.Name));
                 }
 
                 if (system.m_Processors.TryGetValue(other.GetType(), out List<IAttributeProcessor> processors))

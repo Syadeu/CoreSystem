@@ -1719,6 +1719,23 @@ namespace Syadeu
                 return position;
             }
         }
+        public static Transform GetTransform(UnityEngine.GameObject gameObject)
+        {
+            if (IsMainthread())
+            {
+                return gameObject.transform;
+            }
+            else
+            {
+                Transform tr = null;
+                AddForegroundJob(() =>
+                {
+                    if (gameObject == null) tr = null;
+                    else tr = gameObject.transform;
+                }).Await();
+                return tr;
+            }
+        }
         public static Transform GetTransform(UnityEngine.Component component)
         {
             if (IsMainthread())

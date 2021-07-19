@@ -22,6 +22,8 @@ namespace SyadeuEditor
     {
         public sealed class Drawer
         {
+            const string c_EntityObsoleteWarning = "This type has been marked as deprecated.";
+
             public object m_Instance;
             public Type m_Type;
             public MemberInfo[] m_Members;
@@ -45,8 +47,17 @@ namespace SyadeuEditor
             }
 
             public void OnGUI() => OnGUI(true);
-            public void OnGUI(bool drawHeader)
+            public void OnGUI(bool drawHeader, bool ignoreDeprecated = false)
             {
+                if (!ignoreDeprecated)
+                {
+                    ObsoleteAttribute obsolete = m_Type.GetCustomAttribute<ObsoleteAttribute>();
+                    if (obsolete != null)
+                    {
+                        EditorGUILayout.HelpBox(c_EntityObsoleteWarning, MessageType.Warning);
+                    }
+                }
+
                 if (drawHeader) EditorUtils.StringRich(m_Type.Name, 15, true);
                 ReflectionDescriptionAttribute description = m_Type.GetCustomAttribute<ReflectionDescriptionAttribute>();
                 if (description != null)
