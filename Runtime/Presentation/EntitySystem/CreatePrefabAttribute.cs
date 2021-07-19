@@ -14,16 +14,16 @@ using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation
 {
-    public sealed class AttachPrefabAttribute : AttributeBase
+    public sealed class CreatePrefabAttribute : AttributeBase
     {
         [JsonProperty(Order = 0, PropertyName = "Prefab")] public PrefabReference m_Prefab;
 
         [JsonIgnore] public DataGameObject PrefabInstance { get; internal set; }
     }
     [Preserve]
-    internal sealed class AttachPrefabProcessor : AttributeProcessor<AttachPrefabAttribute>
+    internal sealed class CreatePrefabProcessor : AttributeProcessor<CreatePrefabAttribute>
     {
-        protected override void OnCreated(AttachPrefabAttribute attribute, IEntity entity)
+        protected override void OnCreated(CreatePrefabAttribute attribute, IEntity entity)
         {
             Vector3 pos = entity.transform.position;
             attribute.PrefabInstance = CreatePrefab(attribute.m_Prefab, pos, quaternion.identity);

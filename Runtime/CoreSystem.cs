@@ -826,7 +826,7 @@ namespace Syadeu
                 }
                 else
                 {
-                    if (tickCounter > 9) CoreSystem.Logger.LogWarning(Channel.Core, 
+                    if (tickCounter > 20) CoreSystem.Logger.LogWarning(Channel.Core, 
                         $"{tickCounter} ticks were skipped due to slow unity thread");
                     //$"passed".ToLog();
                     tickCounter = 0;

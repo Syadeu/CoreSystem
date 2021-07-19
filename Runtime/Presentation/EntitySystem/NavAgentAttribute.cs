@@ -68,7 +68,7 @@ namespace Syadeu.Presentation
             }
 
             tr.position = new ThreadSafeVector3(PreviousTarget);
-            NavMeshAgent.ResetPath();
+            if (NavMeshAgent.isOnNavMesh) NavMeshAgent.ResetPath();
             IsMoving = false;
         }
     }

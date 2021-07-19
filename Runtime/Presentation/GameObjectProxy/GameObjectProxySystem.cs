@@ -41,8 +41,6 @@ namespace Syadeu.Presentation
         internal NativeList<DataGameObject> m_MappedGameObjects = new NativeList<DataGameObject>(1000, Allocator.Persistent);
         internal NativeList<DataTransform> m_MappedTransforms = new NativeList<DataTransform>(1000, Allocator.Persistent);
         
-        //internal readonly Dictionary<Hash, List<DataComponentEntity>> m_ComponentList = new Dictionary<Hash, List<DataComponentEntity>>();
-
         private readonly ConcurrentQueue<Hash> m_UpdateTransforms = new ConcurrentQueue<Hash>();
         private readonly ConcurrentQueue<Action> m_RequestedJobs = new ConcurrentQueue<Action>();
         private readonly ConcurrentQueue<Hash> m_RequestDestories = new ConcurrentQueue<Hash>();
@@ -421,13 +419,6 @@ namespace Syadeu.Presentation
                         other.transform.rotation = tr.m_Rotation;
                         other.transform.localScale = tr.m_LocalScale;
 
-                        ProxyMonoComponent datas = other.GetComponent<ProxyMonoComponent>();
-                        if (datas == null)
-                        {
-                            datas = other.gameObject.AddComponent<ProxyMonoComponent>();
-                        }
-
-                        datas.m_GameObject = objHash;
                         onCompleted?.Invoke(m_MappedGameObjects[m_MappedGameObjectIdxes[objHash]], other);
 
                         //tr.gameObject.OnProxyCreated();
@@ -445,13 +436,6 @@ namespace Syadeu.Presentation
                     other.transform.rotation = tr.m_Rotation;
                     other.transform.localScale = tr.m_LocalScale;
 
-                    ProxyMonoComponent datas = other.GetComponent<ProxyMonoComponent>();
-                    if (datas == null)
-                    {
-                        datas = other.gameObject.AddComponent<ProxyMonoComponent>();
-                    }
-
-                    datas.m_GameObject = objHash;
                     if (other.InitializeOnCall) other.Initialize();
                     onCompleted?.Invoke(m_MappedGameObjects[m_MappedGameObjectIdxes[objHash]], other);
 
@@ -494,9 +478,6 @@ namespace Syadeu.Presentation
 
                 obj.Terminate();
                 obj.transform.position = INIT_POSITION;
-
-                ProxyMonoComponent datas = obj.GetComponent<ProxyMonoComponent>();
-                datas.m_GameObject = Hash.Empty;
 
                 if (!m_TerminatedProxies.TryGetValue(proxyIdx.x, out Queue<RecycleableMonobehaviour> pool))
                 {
