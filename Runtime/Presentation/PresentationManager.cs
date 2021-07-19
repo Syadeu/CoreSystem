@@ -221,7 +221,7 @@ namespace Syadeu.Presentation
             for (int i = 0; i < group.m_RegisteredSystemTypes.Count; i++)
             {
                 Type t = group.m_RegisteredSystemTypes[i];
-                ConstructorInfo ctor = t.GetConstructor(BindingFlags.Instance | BindingFlags.Public, null, CallingConventions.HasThis, new Type[0], null);
+                ConstructorInfo ctor = t.GetConstructor(BindingFlags.Instance | BindingFlags.Public, null, CallingConventions.HasThis, Array.Empty<Type>(), null);
                 object ins;
                 if (ctor != null)
                 {
@@ -230,6 +230,7 @@ namespace Syadeu.Presentation
                 else ins = Activator.CreateInstance(t);
 
                 PresentationSystemEntity system = (PresentationSystemEntity)ins;
+                group.PublicSystemStructDisposer += ((IDisposable)system).Dispose;
                 group.m_Systems.Add(system);
 
                 group.m_Initializers.Add((IInitPresentation)ins);

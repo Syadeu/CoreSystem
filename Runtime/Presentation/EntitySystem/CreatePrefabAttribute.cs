@@ -130,8 +130,4 @@ namespace Syadeu.Presentation
             attribute.CreatedEntity = CreateEntity(attribute.m_Entity, tr.position, tr.rotation);
         }
     }
-    public sealed class ObjectEntity : EntityBase
-    {
-
-    }
 }

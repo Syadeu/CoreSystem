@@ -78,6 +78,7 @@ namespace Syadeu.ThreadSafe
 
         public static implicit operator UnityEngine.Vector3(Vector3 a) => a.ToUnity();
         public static implicit operator float3(Vector3 a) => new float3(a.x, a.y, a.z);
+        public static implicit operator Vector3(float3 a) => new Vector3(a.x, a.y, a.z);
 #if CORESYSTEM_FMOD
         public static implicit operator global::FMOD.VECTOR(Vector3 a) => a.ToFMOD();
 #endif

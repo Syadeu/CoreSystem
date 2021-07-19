@@ -10,6 +10,7 @@ using UnityEngine.SceneManagement;
 namespace Syadeu.Mono
 {
 #if UNITY_ADDRESSABLES
+    [Obsolete("", true)]
     public sealed class PromiseRecycleableObject
     {
         private RecycleableMonobehaviour m_Output = null;

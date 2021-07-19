@@ -238,6 +238,10 @@ namespace Syadeu.Presentation
                 RequestUpdate();
             }
         }
+
+        public float4x4 localToWorldMatrix => RenderSystem.LocalToWorldMatrix(position, rotation);
+        public float4x4 worldToLocalMatrix => math.inverse(localToWorldMatrix);
+
         Vector3 IReadOnlyTransform.position => position;
         Vector3 IReadOnlyTransform.eulerAngles => eulerAngles;
         quaternion IReadOnlyTransform.rotation => rotation;

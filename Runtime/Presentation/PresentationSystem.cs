@@ -45,8 +45,6 @@ namespace Syadeu.Presentation
                         return Null;
                     }
                     s_Instance = new PresentationSystem<T>(hash, idx);
-                    PresentationManager.Instance.m_PresentationGroups[hash].PublicSystemStructDisposer 
-                        += ((IDisposable)s_Instance).Dispose;
                 }
                 return s_Instance;
             }

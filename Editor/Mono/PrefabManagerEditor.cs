@@ -3,9 +3,11 @@
 using UnityEngine;
 using UnityEditor;
 using Syadeu;
+using System;
 
 namespace SyadeuEditor
 {
+    [Obsolete("", true)]
     [CustomEditor(typeof(PrefabManager))]
     public class PrefabManagerEditor : EditorEntity<PrefabManager>
     {

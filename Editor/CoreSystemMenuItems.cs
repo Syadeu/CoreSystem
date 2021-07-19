@@ -35,12 +35,12 @@ namespace SyadeuEditor
             Selection.activeObject = PrefabList.Instance;
             EditorApplication.ExecuteMenuItem("Window/General/Inspector");
         }
-        //[MenuItem("CoreSystem/Edit Item Data List", priority = 3)]
-        //public static void ItemDataListMenu()
-        //{
-        //    Selection.activeObject = ItemDataList.Instance;
-        //    EditorApplication.ExecuteMenuItem("Window/General/Inspector");
-        //}
+        [MenuItem("CoreSystem/Edit Render Settings", priority = 3)]
+        public static void ItemDataListMenu()
+        {
+            Selection.activeObject = Syadeu.Database.RenderSettings.Instance;
+            EditorApplication.ExecuteMenuItem("Window/General/Inspector");
+        }
         [MenuItem("CoreSystem/Edit Entity Data List", priority = 4)]
         public static void EntityDataListMenu()
         {

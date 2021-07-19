@@ -10,6 +10,8 @@ using Syadeu.Database;
 using Syadeu.Mono;
 using Syadeu.Presentation.Entities;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace Syadeu.Presentation
@@ -20,7 +22,7 @@ namespace Syadeu.Presentation
         private ObClass<Camera> m_Camera;
         private Camera m_TopdownCamera;
         private Matrix4x4 m_Matrix4x4;
-        private Matrix4x4 m_TopMatrix4x4;
+        //private Matrix4x4 m_TopMatrix4x4;
 
         private readonly List<ObserverObject> m_ObserverList = new List<ObserverObject>();
 
@@ -65,7 +67,7 @@ namespace Syadeu.Presentation
                     m_TopdownCamera.transform.eulerAngles = new Vector3(90, 0, 0);
                 }
                 m_Matrix4x4 = GetCameraMatrix4X4(to);
-                m_TopMatrix4x4 = GetCameraMatrix4X4(m_TopdownCamera);
+                //m_TopMatrix4x4 = GetCameraMatrix4X4(m_TopdownCamera);
             };
             m_ScreenOffset = SyadeuSettings.Instance.m_ScreenOffset;
 
@@ -80,7 +82,7 @@ namespace Syadeu.Presentation
                 if (Camera == null) return PresentationResult.Warning("Cam not found");
             }
             m_Matrix4x4 = GetCameraMatrix4X4(m_Camera.Value);
-            m_TopMatrix4x4 = GetCameraMatrix4X4(m_TopdownCamera);
+            //m_TopMatrix4x4 = GetCameraMatrix4X4(m_TopdownCamera);
 
             return base.BeforePresentation();
         }
@@ -174,8 +176,10 @@ namespace Syadeu.Presentation
             //{
             //    return IsInCameraScreen(m_Camera.Value, worldPosition);
             //}
-            return IsInCameraScreen(worldPosition, m_Matrix4x4, m_ScreenOffset) ||
-                IsInCameraScreen(worldPosition, m_TopMatrix4x4, m_ScreenOffset);
+            //Unity.Mathematics.float4x4 matrix4x4 = Camera.projectionMatrix;
+            //math.
+            return IsInCameraScreen(worldPosition, m_Matrix4x4, m_ScreenOffset) 
+                /*|| IsInCameraScreen(worldPosition, m_TopMatrix4x4, m_ScreenOffset)*/;
         }
         /// <summary>
         /// 해당 좌표가 입력한 카메라 내부에 위치하는지 반환합니다.
@@ -205,5 +209,24 @@ namespace Syadeu.Presentation
                 screenPoint.y > 0 - offset.y &&
                 screenPoint.y < 1 + offset.y;
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float4x4 TRS(float3 translation, quaternion rotation, float3 scale)
+        {
+            float3x3 r = new float3x3(rotation);
+            return
+                new float4x4(
+                    new float4(r.c0 * scale.x, 0),
+                    new float4(r.c1 * scale.y, 0),
+                    new float4(r.c2 * scale.z, 0),
+                    new float4(translation, 1)
+                    );
+        }
+        public static float4x4 LocalToWorldMatrix(float3 translation, quaternion rotation)
+        {
+            float3x3 r = new float3x3(rotation);
+            return new float4x4(r, translation);
+        }
+        public static float4x4 WorldToLocalMatrix(float3 translation, quaternion rotation) => math.fastinverse(LocalToWorldMatrix(translation, rotation));
     }
 }

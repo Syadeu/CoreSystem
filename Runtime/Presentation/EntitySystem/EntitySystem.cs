@@ -95,6 +95,7 @@ namespace Syadeu.Presentation
             ProcessEntityOnDestory(this, m_ObjectEntities[obj.m_Idx]);
 
             m_ObjectHashSet.Remove(obj.m_Idx);
+            m_ObjectEntities.Remove(obj.m_Idx);
         }
         protected override PresentationResult OnPresentationAsync()
         {
@@ -162,6 +163,18 @@ namespace Syadeu.Presentation
             return m_ObjectEntities[dataObj];
         }
 
+        //public void DestroyEntity(IEntity entity)
+        //{
+        //    DataGameObject obj = entity.gameObject;
+        //    if (!obj.IsValid() || !m_ObjectHashSet.Contains(obj.m_Idx))
+        //    {
+        //        "?".ToLog();
+        //        return;
+        //    }
+
+        //    obj.Destory();
+        //}
+
         private IEntity InternalCreateEntity(EntityBase entityBase, DataGameObject obj)
         {
             EntityBase entity = (EntityBase)entityBase.Clone();
@@ -228,7 +241,8 @@ namespace Syadeu.Presentation
         }
         private static void ProcessEntityOnDestory(EntitySystem system, IEntity entity)
         {
-            CoreSystem.Logger.Log(Channel.Presentation, $"Processing On Create {entity.Name}");
+            //CoreSystem.Logger.Log(Channel.Presentation, 
+            //    $"Processing OnDestory {entity.Name}");
 
             entity.Attributes.AsParallel().ForAll((other) =>
             {
