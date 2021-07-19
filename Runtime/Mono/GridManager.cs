@@ -1,4 +1,8 @@
-﻿using System;
+﻿#if CORESYSTEM_UNSAFE
+#define CORESYSTEM_UNSAFE_INTERNAL
+#endif
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
@@ -1721,11 +1725,11 @@ namespace Syadeu.Mono
                 m_Pointer = pointer;
             }
 
-            unsafe public GridCell* this[int i]
+            unsafe public ref GridCell this[int i]
             {
                 get
                 {
-                    return m_Pointer + m_Targets[i];
+                    return ref *(m_Pointer + m_Targets[i]);
                 }
             }
 

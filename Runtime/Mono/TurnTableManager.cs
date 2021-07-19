@@ -117,17 +117,14 @@ namespace Syadeu.Mono.TurnTable
 
             GridManager.GridRange range = grid.GetRange(from.Idx, point);
 
-            unsafe
+            for (int i = 0; i < range.Length; i++)
             {
-                for (int i = 0; i < range.Length; i++)
+                if (!IsReachable(point, in from, in range[i]))
                 {
-                    if (!IsReachable(point, in from, in *range[i]))
-                    {
-                        continue;
-                    }
-
-                    list.Add((*range[i]).Idxes);
+                    continue;
                 }
+
+                list.Add((range[i]).Idxes);
             }
 
             return list;
