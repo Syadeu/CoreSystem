@@ -93,6 +93,9 @@ namespace Syadeu.Mono
             public int3 GridSize;
             public float CellSize;
 
+            public float3 BoundsCenter;
+            public float3 BoundsSize;
+
             public object CustomData;
 
             public bool EnableNavMesh;
@@ -105,6 +108,9 @@ namespace Syadeu.Mono
                 GridCenter = grid.GridCenter;
                 GridSize = grid.GridSize;
                 CellSize = grid.CellSize;
+
+                BoundsCenter = grid.Bounds.center;
+                BoundsSize = grid.Bounds.size;
 
 #if UNITY_EDITOR
                 if (IsMainthread() && !Application.isPlaying)
@@ -310,9 +316,7 @@ namespace Syadeu.Mono
                 Guid = grid.Guid;
                 Idx = grid.Idx;
 
-                Bounds = new Bounds(
-                    new Vector3(grid.GridCenter.x, grid.GridCenter.y, grid.GridCenter.z),
-                    new Vector3(grid.GridSize.x, grid.GridSize.y, grid.GridSize.z));
+                Bounds = new Bounds(grid.BoundsCenter, grid.BoundsSize);
                 GridCenter = grid.GridCenter;
                 GridSize = grid.GridSize;
 
@@ -410,6 +414,8 @@ namespace Syadeu.Mono
             #endregion
 
             #region Gets
+
+            public Bounds GetBounds() => Bounds;
 
 #if CORESYSTEM_UNSAFE
             unsafe public GridCell* GetCellPointer(int idx)

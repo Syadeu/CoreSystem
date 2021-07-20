@@ -284,7 +284,7 @@ namespace Syadeu.Presentation
         #region Privates
 
 
-        private void InternalLoadScene(string path, float waitDelay, float startDelay,
+        private void InternalLoadScene(SceneReference scene, float waitDelay, float startDelay,
 #if UNITY_ADDRESSABLES
             Action<AsyncOperationHandle<SceneInstance>>
 #else
@@ -300,7 +300,9 @@ namespace Syadeu.Presentation
                 throw new Exception();
             }
 
-            CoreSystem.Logger.Log(Channel.Scene, $"Scene change start from ({m_CurrentScene.name}) to ({Path.GetFileNameWithoutExtension(path)})");
+            CoreSystem.Logger.Log(Channel.Scene, $"Scene change start from ({m_CurrentScene.name}) to ({Path.GetFileNameWithoutExtension(scene)})");
+            GridManager.ClearGrids();
+
             m_LoadingEnabled = true;
             OnLoadingEnter?.Invoke();
             if (ManagerEntity.InstanceGroupTr != null)
@@ -319,7 +321,7 @@ namespace Syadeu.Presentation
                 Addressables.LoadSceneAsync(path, LoadSceneMode.Additive, false);
             oper.Completed
 #else
-                SceneManager.LoadSceneAsync(path, LoadSceneMode.Additive);
+                SceneManager.LoadSceneAsync(scene, LoadSceneMode.Additive);
                 //oper.allowSceneActivation = false;
                 OnLoading?.Invoke(0);
                 StartCoroutine(OnLoadingCoroutine(m_AsyncOperation));
@@ -327,12 +329,18 @@ namespace Syadeu.Presentation
 #endif
                 += (other) =>
                 {
-                    m_CurrentScene = SceneManager.GetSceneByPath(path);
+                    m_CurrentScene = SceneManager.GetSceneByPath(scene);
                     SceneManager.SetActiveScene(m_CurrentScene);
 
                     onCompleted?.Invoke(other);
 
-                    StartSceneDependences(path);
+                    if (scene.m_SceneData != null && scene.m_SceneData.Length > 0)
+                    {
+                        var wrapper = GridManager.BinaryWrapper.ToWrapper(scene.m_SceneData);
+                        var grid = wrapper.ToGrid();
+                        GridManager.ImportGrids(grid);
+                    }
+                    StartSceneDependences(scene);
 
                     OnAfterLoading?.Invoke(0, startDelay);
                     CoreSystem.WaitInvoke(startDelay, () =>

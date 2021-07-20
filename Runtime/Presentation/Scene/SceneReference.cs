@@ -52,7 +52,7 @@ namespace Syadeu.Presentation
         // This should only ever be set during serialization/deserialization!
         [SerializeField]
         private string scenePath = string.Empty;
-        [SerializeField] internal byte[] m_SceneData;
+        public byte[] m_SceneData;
 
         // Use this when you want to actually have the scene path
         public string ScenePath
