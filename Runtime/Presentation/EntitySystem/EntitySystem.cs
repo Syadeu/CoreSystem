@@ -111,7 +111,7 @@ namespace Syadeu.Presentation
 #line hidden
         public IEntity CreateEntity(string name, Vector3 position)
         {
-            EntityBase original = EntityDataList.Instance.GetEntity(name);
+            EntityBase original = (EntityBase)EntityDataList.Instance.GetObject(name);
             if (original == null)
             {
                 CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_AttributeNotFoundError, name, position));
@@ -123,7 +123,7 @@ namespace Syadeu.Presentation
         }
         public IEntity CreateEntity(Hash hash, Vector3 position)
         {
-            EntityBase original = EntityDataList.Instance.GetEntity(hash);
+            EntityBase original = (EntityBase)EntityDataList.Instance.GetObject(hash);
             if (original == null)
             {
                 CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_AttributeNotFoundError, hash, position));
@@ -135,7 +135,7 @@ namespace Syadeu.Presentation
         }
         public IEntity CreateEntity(string name, Vector3 position, Quaternion rotation, Vector3 localSize, bool enableCull)
         {
-            EntityBase original = EntityDataList.Instance.GetEntity(name);
+            EntityBase original = (EntityBase)EntityDataList.Instance.GetObject(name);
             if (original == null)
             {
                 CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_AttributeNotFoundError, name, position));
@@ -147,7 +147,7 @@ namespace Syadeu.Presentation
         }
         public IEntity CreateEntity(Hash hash, Vector3 position, Quaternion rotation, Vector3 localSize, bool enableCull)
         {
-            EntityBase original = EntityDataList.Instance.GetEntity(hash);
+            EntityBase original = (EntityBase)EntityDataList.Instance.GetObject(hash);
             if (original == null)
             {
                 CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_AttributeNotFoundError, hash, position));

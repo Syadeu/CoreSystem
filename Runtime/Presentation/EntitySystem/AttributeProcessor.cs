@@ -69,6 +69,7 @@ namespace Syadeu.Presentation
         {
             EntitySystem system = PresentationSystem<EntitySystem>.System;
             CoreSystem.Logger.NotNull(system, "GameObjectProxySystem is not initialized");
+            CoreSystem.Logger.NotNull(entity, "Target Entity cannot be null");
 
             return system.CreateEntity(entity.Hash, position, rotation, localSize, enableCull);
         }

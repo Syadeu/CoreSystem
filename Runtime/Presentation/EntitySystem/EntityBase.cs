@@ -41,7 +41,7 @@ namespace Syadeu.Presentation
             entity.m_Attributes = new List<AttributeBase>();
             for (int i = 0; i < Attributes.Count; i++)
             {
-                AttributeBase att = EntityDataList.Instance.GetAttribute(Attributes[i]);
+                AttributeBase att = (AttributeBase)EntityDataList.Instance.GetObject(Attributes[i]);
                 if (att == null)
                 {
                     CoreSystem.Logger.LogError(Channel.Entity, $"This Entity has an invalid attribute({Attributes[i]}) at {i}. This is not allowed.");

@@ -42,8 +42,18 @@ namespace Syadeu.Presentation
         public Camera Camera => m_Camera.Value;
         private Vector3 m_ScreenOffset;
 
+        Plane[] m_TestPlanes;
+
         protected override PresentationResult OnInitialize()
         {
+            m_TestPlanes = GeometryUtility.CalculateFrustumPlanes(Camera.main);
+            for (int i = 0; i < m_TestPlanes.Length; i++)
+            {
+                GameObject p = GameObject.CreatePrimitive(PrimitiveType.Plane);
+                p.transform.position = -m_TestPlanes[i].normal * m_TestPlanes[i].distance;
+                p.transform.rotation = Quaternion.LookRotation(Vector3.up, m_TestPlanes[i].normal);
+            }
+
             m_Camera = new ObClass<Camera>(ObValueDetection.Changed);
             m_Camera.OnValueChange += (from, to) =>
             {

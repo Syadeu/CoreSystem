@@ -139,7 +139,7 @@ namespace SyadeuEditor
         public static void DrawAttributeSelector(string name, Action<Hash> setter, Hash current)
         {
             string displayName;
-            AttributeBase att = EntityDataList.Instance.GetAttribute(current);
+            AttributeBase att = (AttributeBase)EntityDataList.Instance.GetObject(current);
             if (current.Equals(Hash.Empty)) displayName = "None";
             else if (att == null) displayName = "Attribute Not Found";
             else displayName = att.Name;
@@ -157,7 +157,7 @@ namespace SyadeuEditor
                 rect = GUILayoutUtility.GetLastRect();
                 rect.position = Event.current.mousePosition;
 
-                PopupWindow.Show(rect, SelectorPopup<Hash, AttributeBase>.GetWindow(EntityDataList.Instance.m_Attributes, setter, (att) =>
+                PopupWindow.Show(rect, SelectorPopup<Hash, AttributeBase>.GetWindow(EntityDataList.Instance.GetAttributes(), setter, (att) =>
                 {
                     return att.Hash;
                 }));
@@ -167,7 +167,7 @@ namespace SyadeuEditor
         public static void DrawReferenceSelector(string name, Action<Hash> setter, IReference current, Type targetType)
         {
             string displayName;
-            if (current == null || current.Equals(Hash.Empty)) displayName = "None";
+            if (current == null || current.Hash.Equals(Hash.Empty)) displayName = "None";
             else
             {
                 ObjectBase objBase = EntityDataList.Instance.GetObject(current.Hash);
@@ -190,14 +190,14 @@ namespace SyadeuEditor
 
                 if (TypeHelper.TypeOf<EntityBase>.Type.IsAssignableFrom(targetType))
                 {
-                    PopupWindow.Show(rect, SelectorPopup<Hash, EntityBase>.GetWindow(EntityDataList.Instance.m_Entites, setter, (att) =>
+                    PopupWindow.Show(rect, SelectorPopup<Hash, EntityBase>.GetWindow(EntityDataList.Instance.GetEntities(), setter, (att) =>
                     {
                         return att.Hash;
                     }));
                 }
                 else
                 {
-                    PopupWindow.Show(rect, SelectorPopup<Hash, AttributeBase>.GetWindow(EntityDataList.Instance.m_Attributes, setter, (att) =>
+                    PopupWindow.Show(rect, SelectorPopup<Hash, AttributeBase>.GetWindow(EntityDataList.Instance.GetAttributes(), setter, (att) =>
                     {
                         return att.Hash;
                     }));

@@ -20,24 +20,35 @@ namespace SyadeuEditor
 
         private void OnEnable()
         {
-            Asset.m_Entites = null;
-            Asset.m_Attributes = null;
-            EditorUtility.SetDirty(target);
+            //Asset.m_Entites = null;
+            //Asset.m_Attributes = null;
+            //EditorUtility.SetDirty(target);
 
             LuaEditor.Reload();
-            Asset.LoadData();
+            //Asset.LoadData();
 
-            if (Asset.m_Attributes == null) m_AttributeNames = Array.Empty<string>();
+            //if (Asset.m_Attributes == null) m_AttributeNames = Array.Empty<string>();
+            //else
+            //{
+            //    var temp = Asset.m_Attributes.Select((other) => other.Name).ToList();
+            //    temp.Insert(0, "None");
+            //    m_AttributeNames = temp.ToArray();
+            //}
+            if (Asset.m_Objects == null) m_AttributeNames = Array.Empty<string>();
             else
             {
-                var temp = Asset.m_Attributes.Select((other) => other.Name).ToList();
+                var temp = Asset
+                    .GetAttributes()
+                    .Select((other) => other.Name)
+                    .ToList();
                 temp.Insert(0, "None");
                 m_AttributeNames = temp.ToArray();
             }
 
             List<object> tempList = new List<object>();
-            if (Asset.m_Entites != null) tempList.AddRange(Asset.m_Entites);
-            if (Asset.m_Attributes != null) tempList.AddRange(Asset.m_Attributes);
+            //if (Asset.m_Entites != null) tempList.AddRange(Asset.m_Entites);
+            //if (Asset.m_Attributes != null) tempList.AddRange(Asset.m_Attributes);
+            if (Asset.m_Objects != null) tempList.AddRange(Asset.m_Objects.Values);
 
             treeView = new VerticalTreeView(Asset, serializedObject);
             treeView.OnDirty += RefreshTreeView;
@@ -74,8 +85,11 @@ namespace SyadeuEditor
 
                         PopupWindow.Show(rect, SelectorPopup<Type, Type>.GetWindow(types, (t) =>
                         {
-                            if (Asset.m_Entites == null) Asset.m_Entites = new List<EntityBase>();
-                            Asset.m_Entites.Add((EntityBase)Activator.CreateInstance(t));
+                            if (Asset.m_Objects == null) Asset.m_Objects = new Dictionary<Hash, ObjectBase>();
+
+                            EntityBase ins = (EntityBase)Activator.CreateInstance(t);
+
+                            Asset.m_Objects.Add(ins.Hash, ins);
                             RefreshTreeView();
                         },
                         (t) => t,
@@ -97,8 +111,11 @@ namespace SyadeuEditor
 
                         PopupWindow.Show(rect, SelectorPopup<Type, Type>.GetWindow(types, (t) =>
                         {
-                            if (Asset.m_Attributes == null) Asset.m_Attributes = new List<AttributeBase>();
-                            Asset.m_Attributes.Add((AttributeBase)Activator.CreateInstance(t));
+                            if (Asset.m_Objects == null) Asset.m_Objects = new Dictionary<Hash, ObjectBase>();
+
+                            AttributeBase ins = (AttributeBase)Activator.CreateInstance(t);
+
+                            Asset.m_Objects.Add(ins.Hash, ins);
                             RefreshTreeView();
                         },
                         (t) => t,
@@ -113,42 +130,54 @@ namespace SyadeuEditor
                     }
 
                     List<object> tempList = new List<object>();
-                    if (Asset.m_Entites != null) tempList.AddRange(Asset.m_Entites);
-                    if (Asset.m_Attributes != null) tempList.AddRange(Asset.m_Attributes);
+                    if (Asset.m_Objects != null) tempList.AddRange(Asset.m_Objects.Values);
                     return tempList;
                 })
                 .MakeRemoveButton((idx) =>
                 {
-                    if (treeView.SelectedToolbar == 0) Asset.m_Entites.Remove((EntityBase)treeView.Data[idx]);
-                    else if (treeView.SelectedToolbar == 1)
-                    {
-                        Asset.m_Attributes.Remove((AttributeBase)treeView.Data[idx]);
-                    }
+                    ObjectBase target = (ObjectBase)treeView.Data[idx];
+
+                    //if (treeView.SelectedToolbar == 0) Asset.m_Objects.Remove(target.Hash);
+                    //else if (treeView.SelectedToolbar == 1)
+                    //{
+                    //    Asset.m_Attributes.Remove((AttributeBase)treeView.Data[idx]);
+                    //}
+                    Asset.m_Objects.Remove(target.Hash);
 
                     List<object> tempList = new List<object>();
-                    if (Asset.m_Entites != null) tempList.AddRange(Asset.m_Entites);
-                    if (Asset.m_Attributes != null) tempList.AddRange(Asset.m_Attributes);
+                    //if (Asset.m_Entites != null) tempList.AddRange(Asset.m_Entites);
+                    //if (Asset.m_Attributes != null) tempList.AddRange(Asset.m_Attributes);
+                    if (Asset.m_Objects != null) tempList.AddRange(Asset.m_Objects.Values);
                     return tempList;
                 })
                 .MakeToolbar("Entities", "Attributes");
         }
         private void RefreshTreeView()
         {
-            var temp = Asset.m_Attributes.Select((other) => other.Name).ToList();
-            temp.Insert(0, "None");
-            m_AttributeNames = temp.ToArray();
+            if (Asset.m_Objects == null) m_AttributeNames = Array.Empty<string>();
+            else
+            {
+                var temp = Asset
+                    .GetAttributes()
+                    .Select((other) => other.Name)
+                    .ToList();
+                temp.Insert(0, "None");
+                m_AttributeNames = temp.ToArray();
+            }
 
             List<object> tempList = new List<object>();
-            if (Asset.m_Entites != null) tempList.AddRange(Asset.m_Entites);
-            if (Asset.m_Attributes != null) tempList.AddRange(Asset.m_Attributes);
+            //if (Asset.m_Entites != null) tempList.AddRange(Asset.m_Entites);
+            //if (Asset.m_Attributes != null) tempList.AddRange(Asset.m_Attributes);
+            if (Asset.m_Objects != null) tempList.AddRange(Asset.m_Objects.Values);
             treeView.Refresh(tempList);
         }
         public override void OnInspectorGUI()
         {
             if (GUILayout.Button("Clear"))
             {
-                Asset.m_Entites?.Clear();
-                Asset.m_Attributes?.Clear();
+                //Asset.m_Entites?.Clear();
+                //Asset.m_Attributes?.Clear();
+                Asset.Purge();
                 EditorUtils.SetDirty(Asset);
                 RefreshTreeView();
             }
@@ -356,9 +385,13 @@ namespace SyadeuEditor
             private AttributeBase GetSelectedAttribute(Hash attHash)
             {
                 if (attHash.Equals(Hash.Empty)) return null;
-                for (int i = 0; i < EntityDataList.Instance.m_Attributes.Count; i++)
+                //for (int i = 0; i < EntityDataList.Instance.m_Attributes.Count; i++)
+                //{
+                //    if (EntityDataList.Instance.m_Attributes[i].Hash.Equals(attHash)) return EntityDataList.Instance.m_Attributes[i];
+                //}
+                if (EntityDataList.Instance.m_Objects.TryGetValue(attHash, out ObjectBase val))
                 {
-                    if (EntityDataList.Instance.m_Attributes[i].Hash.Equals(attHash)) return EntityDataList.Instance.m_Attributes[i];
+                    return (AttributeBase)val;
                 }
                 return null;
             }

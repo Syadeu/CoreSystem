@@ -15,25 +15,36 @@ namespace Syadeu.Database
         const string jsonPostfix = "*.json";
         const string json = ".json";
 
-        public List<EntityBase> m_Entites;
-        public List<AttributeBase> m_Attributes;
+        //public List<EntityBase> m_Entites;
+        //public List<AttributeBase> m_Attributes;
 
         public Dictionary<Hash, ObjectBase> m_Objects;
+        private Dictionary<string, Hash> m_EntityHash;
 
-        public override void OnInitialize()
+        //public override void OnInitialize()
+        //{
+        //    LoadData();
+        //}
+        private void OnEnable()
         {
             LoadData();
         }
 
+        public void Purge()
+        {
+            m_Objects.Clear();
+            m_EntityHash.Clear();
+        }
         public void LoadData()
         {
             if (!Directory.Exists(CoreSystemFolder.EntityPath)) Directory.CreateDirectory(CoreSystemFolder.EntityPath);
             if (!Directory.Exists(CoreSystemFolder.AttributePath)) Directory.CreateDirectory(CoreSystemFolder.AttributePath);
 
             m_Objects = new Dictionary<Hash, ObjectBase>();
+            m_EntityHash = new Dictionary<string, Hash>();
 
             string[] entityPaths = Directory.GetFiles(CoreSystemFolder.EntityPath, jsonPostfix, SearchOption.AllDirectories);
-            m_Entites = new List<EntityBase>();
+            //m_Entites = new List<EntityBase>();
             Type[] entityTypes = TypeHelper.GetTypes((other) => TypeHelper.TypeOf<EntityBase>.Type.IsAssignableFrom(other));
             for (int i = 0; i < entityPaths.Length; i++)
             {
@@ -49,26 +60,37 @@ namespace Syadeu.Database
 
                 var temp = (EntityBase)obj;
                 m_Objects.Add(temp.Hash, temp);
-                m_Entites.Add(temp);
+                m_EntityHash.Add(temp.Name, temp.Hash);
+                //m_Entites.Add(temp);
             }
 
             string[] attPaths = Directory.GetFiles(CoreSystemFolder.AttributePath, jsonPostfix, SearchOption.AllDirectories);
-            m_Attributes = new List<AttributeBase>();
+            //m_Attributes = new List<AttributeBase>();
             Type[] attTypes = TypeHelper.GetTypes((other) => TypeHelper.TypeOf<AttributeBase>.Type.IsAssignableFrom(other));
             for (int i = 0; i < attPaths.Length; i++)
             {
                 string lastFold = Path.GetFileName(Path.GetDirectoryName(attPaths[i]));
                 Type t = attTypes.FindFor((other) => other.Name.Equals(lastFold));
 
-                var obj = JsonConvert.DeserializeObject(File.ReadAllText(attPaths[i]), t);
-                if (!(obj is AttributeBase))
+                object obj;
+                try
+                {
+                    obj = JsonConvert.DeserializeObject(File.ReadAllText(attPaths[i]), t);
+                    if (!(obj is AttributeBase))
+                    {
+                        CoreSystem.Logger.LogWarning(Channel.Entity, $"Attribute({t?.Name}) at {attPaths[i]} is invalid. This attribute has been ignored");
+                        continue;
+                    }
+                }
+                catch (Exception)
                 {
                     CoreSystem.Logger.LogWarning(Channel.Entity, $"Attribute({t?.Name}) at {attPaths[i]} is invalid. This attribute has been ignored");
                     continue;
                 }
                 var temp = (AttributeBase)obj;
                 m_Objects.Add(temp.Hash, temp);
-                m_Attributes.Add(temp);
+                //m_ObjectHash.Add(temp.Name, temp.Hash);
+                //m_Attributes.Add(temp);
             }
         }
         public void SaveData()
@@ -76,6 +98,7 @@ namespace Syadeu.Database
             if (!Directory.Exists(CoreSystemFolder.EntityPath)) Directory.CreateDirectory(CoreSystemFolder.EntityPath);
             if (!Directory.Exists(CoreSystemFolder.AttributePath)) Directory.CreateDirectory(CoreSystemFolder.AttributePath);
 
+            EntityBase[] m_Entites = GetEntities();
             if (m_Entites != null)
             {
                 string[] entityPaths = Directory.GetFiles(CoreSystemFolder.EntityPath, jsonPostfix, SearchOption.AllDirectories);
@@ -87,7 +110,7 @@ namespace Syadeu.Database
                         File.Delete(entityPaths[i]);
                     }
                 }
-                for (int i = 0; i < m_Entites.Count; i++)
+                for (int i = 0; i < m_Entites.Length; i++)
                 {
                     string entityPath = Path.Combine(CoreSystemFolder.EntityPath, m_Entites[i].GetType().Name);
                     if (!Directory.Exists(entityPath)) Directory.CreateDirectory(entityPath);
@@ -98,7 +121,9 @@ namespace Syadeu.Database
                         JsonConvert.SerializeObject(m_Entites[i], Formatting.Indented));
                 }
             }
+            else "nothing to save entit".ToLog();
 
+            AttributeBase[] m_Attributes = GetAttributes();
             if (m_Attributes != null)
             {
                 string[] atts = Directory.GetFiles(CoreSystemFolder.AttributePath, jsonPostfix, SearchOption.AllDirectories);
@@ -111,7 +136,7 @@ namespace Syadeu.Database
                     }
                 }
 
-                for (int i = 0; i < m_Attributes.Count; i++)
+                for (int i = 0; i < m_Attributes.Length; i++)
                 {
                     string attPath = Path.Combine(CoreSystemFolder.AttributePath, m_Attributes[i].GetType().Name);
                     if (!Directory.Exists(attPath)) Directory.CreateDirectory(attPath);
@@ -122,15 +147,41 @@ namespace Syadeu.Database
                         JsonConvert.SerializeObject(m_Attributes[i], Formatting.Indented));
                 }
             }
+            else "nothing to save att".ToLog();
+        }
+
+        public EntityBase[] GetEntities()
+        {
+            if (m_Objects == null) return Array.Empty<EntityBase>();
+            return m_Objects
+                    .Where((other) =>
+                    {
+                        return TypeHelper.TypeOf<EntityBase>.Type.IsAssignableFrom(other.Value.GetType());
+                    })
+                    .Select((other) => (EntityBase)other.Value)
+                    .ToArray();
+        }
+        public AttributeBase[] GetAttributes()
+        {
+            if (m_Objects == null) return Array.Empty<AttributeBase>();
+            return m_Objects
+                    .Where((other) =>
+                    {
+                        return TypeHelper.TypeOf<AttributeBase>.Type.IsAssignableFrom(other.Value.GetType());
+                    })
+                    .Select((other) => (AttributeBase)other.Value)
+                    .ToArray();
         }
 
         public ObjectBase GetObject(Hash hash)
         {
             if (hash.Equals(Hash.Empty)) return null;
-            return m_Objects[hash];
+            if (m_Objects.TryGetValue(hash, out var val)) return val;
+            return null;
         }
-        public EntityBase GetEntity(Hash hash) => m_Entites.FindFor((other) => other.Hash.Equals(hash));
-        public EntityBase GetEntity(string name) => m_Entites.FindFor((other) => other.Name.Equals(name));
-        public AttributeBase GetAttribute(Hash hash) => m_Attributes.FindFor((other) => other.Hash.Equals(hash));
+        public ObjectBase GetObject(string name) => GetObject(m_EntityHash[name]);
+        //public EntityBase GetEntity(Hash hash) => m_Entites.FindFor((other) => other.Hash.Equals(hash));
+        //public EntityBase GetEntity(string name) => m_Entites.FindFor((other) => other.Name.Equals(name));
+        //public AttributeBase GetAttribute(Hash hash) => m_Attributes.FindFor((other) => other.Hash.Equals(hash));
     }
 }
