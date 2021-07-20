@@ -93,6 +93,25 @@ namespace SyadeuEditor.Tree
 
             return output;
         }
+        public VerticalFolderTreeElement GetOrCreateFolder<T>(string name) where T : VerticalFolderTreeElement, new()
+        {
+            name = name.Trim();
+
+            var temp = m_Elements.Where((other) => (other is T) && other.Name.Equals(name));
+
+            VerticalFolderTreeElement output;
+            if (!temp.Any())
+            {
+                output = new T();
+                output.m_Tree = this;
+                output.m_Name = name;
+
+                m_Elements.Add(output);
+            }
+            else output = temp.First() as VerticalFolderTreeElement;
+
+            return output;
+        }
 
         protected virtual void BeforeDraw() { }
         protected virtual void BeforeDrawChilds() { }

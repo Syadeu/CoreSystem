@@ -10,9 +10,9 @@ namespace SyadeuEditor.Tree
     {
         public bool m_EnableFoldout = true;
 
-        [SerializeField] protected string m_Name;
+        public string m_Name;
 
-        [NonSerialized] private VerticalTreeViewEntity m_Tree;
+        [NonSerialized] internal VerticalTreeViewEntity m_Tree;
         [NonSerialized] internal VerticalTreeElement m_Parent;
         [NonSerialized] internal List<VerticalTreeElement> m_Childs;
         [NonSerialized] internal bool m_HideElementInTree = false;
@@ -29,6 +29,7 @@ namespace SyadeuEditor.Tree
         public VerticalTreeElement Parent => m_Parent;
         public IReadOnlyList<VerticalTreeElement> Childs => m_Childs;
 
+        public VerticalTreeElement() { }
         public VerticalTreeElement(VerticalTreeViewEntity tree)
         {
             m_Tree = tree;

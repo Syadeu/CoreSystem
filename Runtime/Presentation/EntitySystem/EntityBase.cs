@@ -13,14 +13,12 @@ namespace Syadeu.Presentation
     /// 이 클래스를 상속받음으로서 새로운 오브젝트를 선언할 수 있습니다.<br/>
     /// 선언된 클래스는 <seealso cref="EntityDataList"/>에 자동으로 타입이 등록되어 추가할 수 있게 됩니다.
     /// </remarks>
-    public abstract class EntityBase : IEntity, ICloneable
+    public abstract class EntityBase : ObjectBase, IEntity, ICloneable
     {
         [JsonIgnore] internal Hash m_GameObjectHash;
         [JsonIgnore] internal Hash m_TransformHash;
         [JsonIgnore] internal List<AttributeBase> m_Attributes;
 
-        public string Name { get; set; } = "New Entity";
-        [JsonProperty(Order = -10, PropertyName = "Hash")] [ReflectionSealedView] public Hash Hash { get; set; }
         [JsonProperty(Order = -9, PropertyName = "PrefabIdx")] public PrefabReference PrefabIdx { get; set; }
         [JsonProperty(Order = -8, PropertyName = "Attributes")] public List<Hash> Attributes { get; set; }
         List<AttributeBase> IEntity.Attributes => m_Attributes;

@@ -164,11 +164,16 @@ namespace SyadeuEditor
             }
             if (!string.IsNullOrEmpty(name)) EditorGUILayout.EndHorizontal();
         }
-        public static void DrawEntitySelector(string name, Action<Hash> setter, Hash current)
+        public static void DrawReferenceSelector(string name, Action<Hash> setter, IReference current, Type targetType)
         {
             string displayName;
-            if (current.Equals(Hash.Empty)) displayName = "None";
-            else displayName = EntityDataList.Instance.GetEntity(current).Name;
+            if (current == null || current.Equals(Hash.Empty)) displayName = "None";
+            else
+            {
+                ObjectBase objBase = EntityDataList.Instance.GetObject(current.Hash);
+                if (objBase == null) displayName = "None";
+                else displayName = objBase.Name;
+            }
 
             if (!string.IsNullOrEmpty(name))
             {
@@ -183,13 +188,49 @@ namespace SyadeuEditor
                 rect = GUILayoutUtility.GetLastRect();
                 rect.position = Event.current.mousePosition;
 
-                PopupWindow.Show(rect, SelectorPopup<Hash, EntityBase>.GetWindow(EntityDataList.Instance.m_Entites, setter, (att) =>
+                if (TypeHelper.TypeOf<EntityBase>.Type.IsAssignableFrom(targetType))
                 {
-                    return att.Hash;
-                }));
+                    PopupWindow.Show(rect, SelectorPopup<Hash, EntityBase>.GetWindow(EntityDataList.Instance.m_Entites, setter, (att) =>
+                    {
+                        return att.Hash;
+                    }));
+                }
+                else
+                {
+                    PopupWindow.Show(rect, SelectorPopup<Hash, AttributeBase>.GetWindow(EntityDataList.Instance.m_Attributes, setter, (att) =>
+                    {
+                        return att.Hash;
+                    }));
+                }
             }
             if (!string.IsNullOrEmpty(name)) EditorGUILayout.EndHorizontal();
         }
+        //public static void DrawEntitySelector(string name, Action<Hash> setter, Hash current)
+        //{
+        //    string displayName;
+        //    if (current.Equals(Hash.Empty)) displayName = "None";
+        //    else displayName = EntityDataList.Instance.GetEntity(current).Name;
+
+        //    if (!string.IsNullOrEmpty(name))
+        //    {
+        //        EditorGUILayout.BeginHorizontal();
+        //        EditorGUILayout.LabelField(new GUIContent(name));
+        //    }
+            
+        //    Rect rect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight, GUILayout.ExpandWidth(true));
+        //    rect = EditorGUI.IndentedRect(rect);
+        //    if (EditorGUI.DropdownButton(rect, new GUIContent(displayName), FocusType.Passive))
+        //    {
+        //        rect = GUILayoutUtility.GetLastRect();
+        //        rect.position = Event.current.mousePosition;
+
+        //        PopupWindow.Show(rect, SelectorPopup<Hash, EntityBase>.GetWindow(EntityDataList.Instance.m_Entites, setter, (att) =>
+        //        {
+        //            return att.Hash;
+        //        }));
+        //    }
+        //    if (!string.IsNullOrEmpty(name)) EditorGUILayout.EndHorizontal();
+        //}
         
         public static void DrawMember(object ins, MemberInfo memberInfo, int depth = 0)
         {
@@ -339,6 +380,21 @@ namespace SyadeuEditor
             }
             #endregion
             #region CoreSystem Types
+            else if (TypeHelper.TypeOf<IReference>.Type.IsAssignableFrom(declaredType))
+            {
+                IReference objRef = (IReference)getter.Invoke(ins);
+                Type targetType = declaredType.GetGenericArguments()[0];
+                DrawReferenceSelector(name, (idx) =>
+                {
+                    ObjectBase objBase = EntityDataList.Instance.GetObject(idx);
+
+                    Type makedT = typeof(Reference<>).MakeGenericType(targetType);
+                    object temp = TypeHelper.GetConstructorInfo(makedT, TypeHelper.TypeOf<ObjectBase>.Type).Invoke(
+                        new object[] { objBase });
+
+                    setter.Invoke(ins, temp);
+                }, objRef, targetType);
+            }
             else if (declaredType.Equals(TypeHelper.TypeOf<Hash>.Type))
             {
                 setter.Invoke(ins, new Hash(ulong.Parse(EditorGUILayout.LongField(name, (long.Parse(getter.Invoke(ins).ToString()))).ToString())));
@@ -379,11 +435,11 @@ namespace SyadeuEditor
                 PrefabReference prefabRef = (PrefabReference)getter.Invoke(ins);
                 DrawPrefabReference(name, (idx) => setter.Invoke(ins, new PrefabReference(idx)), prefabRef);
             }
-            else if (declaredType.Equals(TypeHelper.TypeOf<EntityReference>.Type))
-            {
-                EntityReference prefabRef = (EntityReference)getter.Invoke(ins);
-                DrawEntitySelector(name, (idx) => setter.Invoke(ins, new EntityReference(idx)), prefabRef);
-            }
+            //else if (declaredType.Equals(TypeHelper.TypeOf<EntityReference>.Type))
+            //{
+            //    EntityReference prefabRef = (EntityReference)getter.Invoke(ins);
+            //    DrawEntitySelector(name, (idx) => setter.Invoke(ins, new EntityReference(idx)), prefabRef);
+            //}
             #endregion
             else
             {

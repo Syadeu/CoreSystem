@@ -63,14 +63,14 @@ namespace Syadeu.Presentation
             return system.CreateNewPrefab(prefab, position, rotation, localSize, enableCull);
         }
 
-        protected IEntity CreateEntity(EntityReference entity, Vector3 position, quaternion rotation)
+        protected IEntity CreateEntity(IReference entity, Vector3 position, quaternion rotation)
             => CreateEntity(entity, position, rotation, Vector3.One, true);
-        protected IEntity CreateEntity(EntityReference entity, Vector3 position, quaternion rotation, Vector3 localSize, bool enableCull)
+        protected IEntity CreateEntity(IReference entity, Vector3 position, quaternion rotation, Vector3 localSize, bool enableCull)
         {
             EntitySystem system = PresentationSystem<EntitySystem>.System;
             CoreSystem.Logger.NotNull(system, "GameObjectProxySystem is not initialized");
 
-            return system.CreateEntity(entity, position, rotation, localSize, enableCull);
+            return system.CreateEntity(entity.Hash, position, rotation, localSize, enableCull);
         }
     }
 }

@@ -2,10 +2,11 @@
 
 namespace SyadeuEditor.Tree
 {
-    public sealed class VerticalFolderTreeElement : VerticalTreeElement
+    public class VerticalFolderTreeElement : VerticalTreeElement
     {
         public string m_Description = null;
 
+        public VerticalFolderTreeElement() { }
         public VerticalFolderTreeElement(VerticalTreeViewEntity tree, string name) : base(tree)
         {
             m_Name = name;

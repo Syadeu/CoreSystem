@@ -44,15 +44,24 @@ namespace SyadeuEditor
             treeView
                 .SetupElements(tempList, (other) =>
                 {
+                    VerticalTreeElement element;
                     if (other is EntityBase entity)
                     {
-                        return new TreeEntityElement(treeView, entity);
+                        var folder = treeView.GetOrCreateFolder<EntityFolder>(entity.GetType().Name);
+                        element = new TreeEntityElement(treeView, entity);
+
+                        element.SetParent(folder);
                     }
                     else if (other is AttributeBase attribute)
                     {
-                        return new TreeAttributeElement(treeView, attribute);
+                        var folder = treeView.GetOrCreateFolder<AttributeFolder>(attribute.GetType().Name);
+                        element = new TreeAttributeElement(treeView, attribute);
+
+                        element.SetParent(folder);
                     }
                     else throw new Exception();
+
+                    return element;
                 })
                 .MakeAddButton(() =>
                 {
@@ -170,6 +179,26 @@ namespace SyadeuEditor
             base.OnInspectorGUI();
         }
 
+        private class EntityFolder : VerticalFolderTreeElement
+        {
+            public override bool HideElementInTree => Tree.SelectedToolbar != 0 || base.HideElementInTree;
+
+            public EntityFolder() { }
+            public EntityFolder(VerticalTreeViewEntity tree, string name) : base(tree, name)
+            {
+                m_Name = name;
+            }
+        }
+        private class AttributeFolder : VerticalFolderTreeElement
+        {
+            public override bool HideElementInTree => Tree.SelectedToolbar != 1 || base.HideElementInTree;
+
+            public AttributeFolder() { }
+            public AttributeFolder(VerticalTreeViewEntity tree, string name) : base(tree, name)
+            {
+                m_Name = name;
+            }
+        }
         private class TreeEntityElement : VerticalTreeElement<EntityBase>
         {
             static string[] c_DefaultProperties = new string[] { "Name", "Hash", "PrefabIdx", "Attributes" };
@@ -356,9 +385,9 @@ namespace SyadeuEditor
                 ObsoleteAttribute obsolete = att.GetType().GetCustomAttribute<ObsoleteAttribute>();
                 if (obsolete != null)
                 {
-                    m_Name = $"[Deprecated] {Target.GetType().Name}: {Target.Name}";
+                    m_Name = $"[Deprecated] {Target.Name}";
                 }
-                else m_Name = $"{Target.GetType().Name}: {Target.Name}";
+                else m_Name = Target.Name;
                 m_Drawer = ReflectionHelperEditor.GetDrawer(att);
 
             }

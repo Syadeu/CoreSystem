@@ -18,6 +18,8 @@ namespace Syadeu.Database
         public List<EntityBase> m_Entites;
         public List<AttributeBase> m_Attributes;
 
+        public Dictionary<Hash, ObjectBase> m_Objects;
+
         public override void OnInitialize()
         {
             LoadData();
@@ -27,6 +29,8 @@ namespace Syadeu.Database
         {
             if (!Directory.Exists(CoreSystemFolder.EntityPath)) Directory.CreateDirectory(CoreSystemFolder.EntityPath);
             if (!Directory.Exists(CoreSystemFolder.AttributePath)) Directory.CreateDirectory(CoreSystemFolder.AttributePath);
+
+            m_Objects = new Dictionary<Hash, ObjectBase>();
 
             string[] entityPaths = Directory.GetFiles(CoreSystemFolder.EntityPath, jsonPostfix, SearchOption.AllDirectories);
             m_Entites = new List<EntityBase>();
@@ -44,6 +48,7 @@ namespace Syadeu.Database
                 }
 
                 var temp = (EntityBase)obj;
+                m_Objects.Add(temp.Hash, temp);
                 m_Entites.Add(temp);
             }
 
@@ -62,6 +67,7 @@ namespace Syadeu.Database
                     continue;
                 }
                 var temp = (AttributeBase)obj;
+                m_Objects.Add(temp.Hash, temp);
                 m_Attributes.Add(temp);
             }
         }
@@ -118,6 +124,11 @@ namespace Syadeu.Database
             }
         }
 
+        public ObjectBase GetObject(Hash hash)
+        {
+            if (hash.Equals(Hash.Empty)) return null;
+            return m_Objects[hash];
+        }
         public EntityBase GetEntity(Hash hash) => m_Entites.FindFor((other) => other.Hash.Equals(hash));
         public EntityBase GetEntity(string name) => m_Entites.FindFor((other) => other.Name.Equals(name));
         public AttributeBase GetAttribute(Hash hash) => m_Attributes.FindFor((other) => other.Hash.Equals(hash));

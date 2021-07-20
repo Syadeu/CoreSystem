@@ -43,10 +43,18 @@ namespace Syadeu.Internal
                     return s_Methods;
                 }
             }
+
+            public static ConstructorInfo GetConstructorInfo(params Type[] args)
+                => TypeHelper.GetConstructorInfo(Type, args);
         }
         private static readonly Assembly[] s_Assemblies = AppDomain.CurrentDomain.GetAssemblies();
         private static readonly Type[] s_AllTypes = s_Assemblies.Where(a => !a.IsDynamic).SelectMany(a => a.GetTypes()).ToArray();
 
         public static Type[] GetTypes(Func<Type, bool> predictate) => s_AllTypes.Where(predictate).ToArray();
+        public static ConstructorInfo GetConstructorInfo(Type t, params Type[] args)
+        {
+            return t.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
+                null, CallingConventions.HasThis, args, null);
+        }
     }
 }
