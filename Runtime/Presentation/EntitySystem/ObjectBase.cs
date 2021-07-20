@@ -1,10 +1,11 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Database;
 using Syadeu.Internal;
+using System;
 
 namespace Syadeu.Presentation
 {
-    public abstract class ObjectBase
+    public abstract class ObjectBase : ICloneable
     {
         const string c_NameBase = "New {0}";
 
@@ -15,6 +16,18 @@ namespace Syadeu.Presentation
         {
             Name = string.Format(c_NameBase, GetType().Name);
             Hash = Hash.NewHash();
+        }
+
+        public virtual ObjectBase Copy()
+        {
+            ObjectBase entity = (ObjectBase)MemberwiseClone();
+            entity.Name = string.Copy(Name);
+
+            return entity;
+        }
+        public virtual object Clone()
+        {
+            return Copy();
         }
     }
 }

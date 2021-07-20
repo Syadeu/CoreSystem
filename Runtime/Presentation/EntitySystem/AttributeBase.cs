@@ -1,74 +1,15 @@
 ﻿using Newtonsoft.Json;
-using Syadeu.Database;
-using Syadeu.Database.Converters;
 using Syadeu.Internal;
 using System;
 
 namespace Syadeu.Presentation
 {
     /// <inheritdoc cref="IAttribute"/>
-    public abstract class AttributeBase : ObjectBase, IAttribute, ICloneable
+    public abstract class AttributeBase : ObjectBase, IAttribute
     {
         [JsonIgnore] public IEntity Parent { get; internal set; }
 
-        public virtual object Clone()
-        {
-            AttributeBase att = (AttributeBase)MemberwiseClone();
-            att.Name = string.Copy(Name);
-
-            return att;
-        }
-
-        public override string ToString() => Name;
-    }
-
-    [JsonConverter(typeof(ReferenceJsonConverter))]
-    public interface IReference
-    {
-        public Hash Hash { get; }
-    }
-    public interface IReference<T> : IReference { }
-    public struct Reference : IReference
-    {
-        [JsonProperty(Order = 0, PropertyName = "Hash")] public Hash m_Hash;
-
-        [JsonIgnore] Hash IReference.Hash => m_Hash;
-
-        [JsonConstructor]
-        public Reference(Hash hash)
-        {
-            m_Hash = hash;
-        }
-        public Reference(ObjectBase obj)
-        {
-            m_Hash = obj.Hash;
-        }
-
-        public static implicit operator ObjectBase(Reference a) => EntityDataList.Instance.m_Objects[a.m_Hash];
-        public static implicit operator Hash(Reference a) => a.m_Hash;
-    }
-    public struct Reference<T> : IReference<T>
-    {
-        [JsonProperty(Order = 0, PropertyName = "Hash")] public Hash m_Hash;
-
-        [JsonIgnore] Hash IReference.Hash => m_Hash;
-
-        [JsonConstructor]
-        public Reference(Hash hash)
-        {
-            m_Hash = hash;
-        }
-        public Reference(ObjectBase obj)
-        {
-            CoreSystem.Logger.True(TypeHelper.TypeOf<T>.Type.IsAssignableFrom(obj.GetType()),
-                $"Object reference type is not match\n" +
-                $"{obj.GetType().Name} != {TypeHelper.TypeOf<T>.Type.Name}");
-
-            m_Hash = obj.Hash;
-        }
-
-        public static implicit operator ObjectBase(Reference<T> a) => EntityDataList.Instance.m_Objects[a.m_Hash];
-        public static implicit operator Hash(Reference<T> a) => a.m_Hash;
-        public static implicit operator Reference(Reference<T> a) => new Reference(a.m_Hash);
+        public override sealed string ToString() => Name;
+        public override sealed object Clone() => base.Clone();
     }
 }

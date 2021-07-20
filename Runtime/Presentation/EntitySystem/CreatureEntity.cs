@@ -10,9 +10,9 @@ namespace Syadeu.Presentation
         [JsonProperty(Order = 0, PropertyName = "HP")] public float m_HP;
         [JsonProperty(Order = 1, PropertyName = "Values")] public ValuePairContainer m_Values = new ValuePairContainer();
 
-        public override object Clone()
+        public override ObjectBase Copy()
         {
-            CreatureEntity entity = (CreatureEntity)base.Clone();
+            CreatureEntity entity = (CreatureEntity)base.Copy();
             entity.m_Values = (ValuePairContainer)m_Values.Clone();
 
             return entity;

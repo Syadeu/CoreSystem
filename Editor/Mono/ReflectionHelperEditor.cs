@@ -188,7 +188,14 @@ namespace SyadeuEditor
                 rect = GUILayoutUtility.GetLastRect();
                 rect.position = Event.current.mousePosition;
 
-                if (TypeHelper.TypeOf<EntityBase>.Type.IsAssignableFrom(targetType))
+                if (targetType == null)
+                {
+                    PopupWindow.Show(rect, SelectorPopup<Hash, ObjectBase>.GetWindow(EntityDataList.Instance.m_Objects.Values.ToArray(), setter, (att) =>
+                    {
+                        return att.Hash;
+                    }));
+                }
+                else if (TypeHelper.TypeOf<EntityBase>.Type.IsAssignableFrom(targetType))
                 {
                     PopupWindow.Show(rect, SelectorPopup<Hash, EntityBase>.GetWindow(EntityDataList.Instance.GetEntities(), setter, (att) =>
                     {
@@ -383,12 +390,19 @@ namespace SyadeuEditor
             else if (TypeHelper.TypeOf<IReference>.Type.IsAssignableFrom(declaredType))
             {
                 IReference objRef = (IReference)getter.Invoke(ins);
-                Type targetType = declaredType.GetGenericArguments()[0];
+                Type targetType;
+                Type[] generics = declaredType.GetGenericArguments();
+                if (generics.Length > 0) targetType = declaredType.GetGenericArguments()[0];
+                else targetType = null;
+
                 DrawReferenceSelector(name, (idx) =>
                 {
                     ObjectBase objBase = EntityDataList.Instance.GetObject(idx);
 
-                    Type makedT = typeof(Reference<>).MakeGenericType(targetType);
+                    Type makedT;
+                    if (targetType != null) makedT = typeof(Reference<>).MakeGenericType(targetType);
+                    else makedT = TypeHelper.TypeOf<Reference>.Type;
+
                     object temp = TypeHelper.GetConstructorInfo(makedT, TypeHelper.TypeOf<ObjectBase>.Type).Invoke(
                         new object[] { objBase });
 

@@ -6,7 +6,7 @@ namespace Syadeu.Presentation
     /// <summary>
     /// <see cref="EntityBase"/>의 구성부입니다.<br/><br/>
     /// class 맴버 선언을 그리 추천하고 싶지 않지만, 필요에 의해 선언이 내부에 되었다면,<br/>
-    /// 해당 값을 복사하여 인스턴스를 만들기 위해 <see cref="Clone"/>을 override 하여 해당 값을 복사하여야합니다.<br/>
+    /// 해당 값을 복사하여 인스턴스를 만들기 위해 <see cref="ObjectBase.Copy"/>을 override 하여 해당 값을 복사하여야합니다.<br/>
     /// </summary>
     /// <remarks>
     /// 이 클래스를 상속받음으로서 새로운 어트리뷰트를 선언할 수 있습니다.<br/>

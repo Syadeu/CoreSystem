@@ -117,8 +117,8 @@ namespace Syadeu.Presentation
         )]
     public sealed class CreateEntityAttribute : AttributeBase
     {
-        [JsonProperty(Order = 0, PropertyName = "Entity")] public IReference<EntityBase> m_Entity;
-
+        [JsonProperty(Order = 0, PropertyName = "Entity")] public Reference<EntityBase> m_Entity;
+        
         [JsonIgnore] public IEntity CreatedEntity { get; internal set; }
     }
     [Preserve]

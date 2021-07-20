@@ -13,7 +13,7 @@ namespace Syadeu.Presentation
     /// 이 클래스를 상속받음으로서 새로운 오브젝트를 선언할 수 있습니다.<br/>
     /// 선언된 클래스는 <seealso cref="EntityDataList"/>에 자동으로 타입이 등록되어 추가할 수 있게 됩니다.
     /// </remarks>
-    public abstract class EntityBase : ObjectBase, IEntity, ICloneable
+    public abstract class EntityBase : ObjectBase, IEntity
     {
         [JsonIgnore] internal Hash m_GameObjectHash;
         [JsonIgnore] internal Hash m_TransformHash;
@@ -32,11 +32,16 @@ namespace Syadeu.Presentation
 
             return true;
         }
-        public virtual object Clone()
+        public override ObjectBase Copy()
         {
-            EntityBase entity = (EntityBase)MemberwiseClone();
-            entity.Name = string.Copy(Name);
+            EntityBase entity = (EntityBase)base.Copy();
             entity.Attributes = new List<Hash>(Attributes);
+
+            return entity;
+        }
+        public override sealed object Clone()
+        {
+            EntityBase entity = (EntityBase)Copy();
 
             entity.m_Attributes = new List<AttributeBase>();
             for (int i = 0; i < Attributes.Count; i++)
@@ -69,6 +74,6 @@ namespace Syadeu.Presentation
         T IEntity.GetAttribute<T>() => (T)((IEntity)this).GetAttribute(TypeHelper.TypeOf<T>.Type);
         T[] IEntity.GetAttributes<T>() => ((IEntity)this).GetAttributes(TypeHelper.TypeOf<T>.Type).Select((other) => (T)other).ToArray();
 
-        public override string ToString() => Name;
+        public override sealed string ToString() => Name;
     }
 }

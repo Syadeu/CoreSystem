@@ -7,9 +7,9 @@ namespace Syadeu.Presentation
     {
         [JsonProperty(Order = 0, PropertyName = "Values")] public ValuePairContainer m_Values;
 
-        public override object Clone()
+        public override ObjectBase Copy()
         {
-            ObjectEntity clone = (ObjectEntity)base.Clone();
+            ObjectEntity clone = (ObjectEntity)base.Copy();
             if (m_Values == null) m_Values = new ValuePairContainer();
 
             clone.m_Values = (ValuePairContainer)m_Values.Clone();
