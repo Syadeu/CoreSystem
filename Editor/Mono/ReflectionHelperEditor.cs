@@ -223,7 +223,7 @@ namespace SyadeuEditor
         //        EditorGUILayout.BeginHorizontal();
         //        EditorGUILayout.LabelField(new GUIContent(name));
         //    }
-            
+
         //    Rect rect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight, GUILayout.ExpandWidth(true));
         //    rect = EditorGUI.IndentedRect(rect);
         //    if (EditorGUI.DropdownButton(rect, new GUIContent(displayName), FocusType.Passive))
@@ -238,7 +238,7 @@ namespace SyadeuEditor
         //    }
         //    if (!string.IsNullOrEmpty(name)) EditorGUILayout.EndHorizontal();
         //}
-        
+
         public static void DrawMember(object ins, MemberInfo memberInfo, int depth = 0)
         {
             Type declaredType;
@@ -271,6 +271,18 @@ namespace SyadeuEditor
             if (tooltip != null)
             {
                 EditorGUILayout.HelpBox(tooltip.tooltip, MessageType.Info);
+            }
+
+            DrawMember(ins, name, declaredType, tooltip != null ? tooltip.tooltip : null, disable,
+                getter, setter, depth);
+        }
+        public static void DrawMember(object ins, string name, Type declaredType, string tooltip,
+            bool disable,
+            Func<object, object> getter, Action<object, object> setter, int depth = 0)
+        {
+            if (!string.IsNullOrEmpty(tooltip))
+            {
+                EditorGUILayout.HelpBox(tooltip, MessageType.Info);
             }
 
             EditorGUI.BeginDisabledGroup(disable);
@@ -346,10 +358,9 @@ namespace SyadeuEditor
                     {
                         EditorGUI.indentLevel += 1;
 
-                        if (declaredType.GetElementType().Equals(TypeHelper.TypeOf<string>.Type))
-                        {
-                            list[i] = EditorGUILayout.TextField((string)list[i]);
-                        }
+                        int idx = i;
+                        DrawMember(list[idx], string.Empty, declaredType.GetElementType(), string.Empty, disable,
+                            (other) => other, (ins, other) => list[idx] = other, depth + 1);
 
                         EditorGUI.indentLevel -= 1;
                     }

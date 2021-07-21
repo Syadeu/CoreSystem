@@ -31,7 +31,8 @@ namespace SyadeuEditor
                 }
             }
 
-            if (m_CurrentScene == null || m_CurrentScene.m_SceneData.Length == 0) return;
+            if (m_CurrentScene == null || m_CurrentScene.m_SceneData == null ||
+                m_CurrentScene.m_SceneData.Length == 0) return;
 
             var wrapper = GridManager.BinaryWrapper.ToWrapper(m_CurrentScene.m_SceneData);
             var grid = wrapper.ToGrid();

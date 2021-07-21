@@ -36,11 +36,11 @@ namespace Syadeu.Internal
                 }
                 else if (output.StartsWith(memberPrefix))
                 {
+                    output = output.Remove(0, 2);
+                }
+                else if (output.StartsWith(underBar))
+                {
                     output = output.Remove(0, 1);
-                    if (output[0].Equals(underBar))
-                    {
-                        output = output.Remove(0, 1);
-                    }
                 }
             }
 
