@@ -5,6 +5,7 @@ using Syadeu.Mono;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Mathematics;
 
 namespace Syadeu.Presentation
 {
@@ -75,5 +76,58 @@ namespace Syadeu.Presentation
         T[] IEntity.GetAttributes<T>() => ((IEntity)this).GetAttributes(TypeHelper.TypeOf<T>.Type).Select((other) => (T)other).ToArray();
 
         public override sealed string ToString() => Name;
+
+        public sealed class Captured
+        {
+            public float3 m_Translation;
+            public quaternion m_Rotation;
+            public float3 m_Scale;
+            public bool m_EnableCull;
+            public EntityBase m_Obj;
+            public AttributeBase[] m_Atts;
+        }
+        //internal object CaptureTarget()
+        //{
+        //    DataTransform tr = transform;
+        //    EntityBase clone = (EntityBase)Clone();
+        //    Captured payload = new Captured
+        //    {
+        //        m_Translation = tr.m_Position,
+        //        m_Rotation = tr.m_Rotation,
+        //        m_Obj = clone,
+        //        m_Atts = clone.m_Attributes.ToArray()
+        //    };
+
+        //    return payload;
+        //}
+        public Captured Capture()
+        {
+            DataTransform tr = transform;
+            EntityBase clone = (EntityBase)Clone();
+            Captured payload = new Captured
+            {
+                m_Translation = tr.m_Position,
+                m_Rotation = tr.m_Rotation,
+                m_Scale = tr.m_LocalScale,
+                m_EnableCull = tr.m_EnableCull,
+                m_Obj = clone,
+                m_Atts = clone.m_Attributes.ToArray()
+            };
+
+            return payload;
+        }
+        //internal byte[] Capture()
+        //{
+        //    object target = CaptureTarget();
+
+        //    using (System.IO.MemoryStream ms = new System.IO.MemoryStream())
+        //    using (Newtonsoft.Json.Bson.BsonDataWriter wr = new Newtonsoft.Json.Bson.BsonDataWriter(ms))
+        //    {
+        //        JsonSerializer serializer = new JsonSerializer();
+        //        serializer.Serialize(wr, target);
+
+        //        return ms.ToArray();
+        //    }
+        //}
     }
 }

@@ -15,16 +15,9 @@ namespace Syadeu.Database
         const string jsonPostfix = "*.json";
         const string json = ".json";
 
-        //public List<EntityBase> m_Entites;
-        //public List<AttributeBase> m_Attributes;
-
         public Dictionary<Hash, ObjectBase> m_Objects;
         private Dictionary<string, Hash> m_EntityHash;
 
-        //public override void OnInitialize()
-        //{
-        //    LoadData();
-        //}
         private void OnEnable()
         {
             LoadData();

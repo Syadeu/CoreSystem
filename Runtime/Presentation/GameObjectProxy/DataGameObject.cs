@@ -7,12 +7,9 @@ using Unity.Mathematics;
 namespace Syadeu.Presentation
 {
     [Serializable]
-    public struct DataGameObject : IInternalDataComponent, IEquatable<DataGameObject>, ITag, IValidation, IDisposable
+    public struct DataGameObject : IInternalDataComponent, IEquatable<DataGameObject>, IValidation, IDisposable
     {
         const string c_WarningText = "This Data GameObject has been destoryed or didn\'t created propery. Request igonored.";
-
-        internal UserTagFlag m_UserTag;
-        internal CustomTagFlag m_CustomTag;
 
         internal Hash m_Idx;
         internal Hash m_Transform;
@@ -24,52 +21,6 @@ namespace Syadeu.Presentation
             unsafe
             {
                 return ref *GetPointer();
-            }
-        }
-        public UserTagFlag UserTag
-        {
-            get
-            {
-                if (!IsValid())
-                {
-                    CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);
-                    return 0;
-                }
-                return GetRef().m_UserTag;
-            }
-            set
-            {
-                if (!IsValid())
-                {
-                    CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);
-                    return;
-                }
-
-                ref DataGameObject boxed = ref GetRef();
-                boxed.m_UserTag = value;
-            }
-        }
-        public CustomTagFlag CustomTag
-        {
-            get
-            {
-                if (!IsValid())
-                {
-                    CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);
-                    return 0;
-                }
-                return GetRef().m_CustomTag;
-            }
-            set
-            {
-                if (!IsValid())
-                {
-                    CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);
-                    return;
-                }
-
-                ref DataGameObject boxed = ref GetRef();
-                boxed.m_CustomTag = value;
             }
         }
 

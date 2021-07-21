@@ -52,12 +52,12 @@ namespace Syadeu.Presentation
         }
 
         bool IValidation.IsValid() => !m_GroupHash.Equals(Hash.Empty);
-        void IPresentationSystemGroup.Start() => PresentationManager.Instance.StartPresentation(m_GroupHash);
+        ICustomYieldAwaiter IPresentationSystemGroup.Start() => PresentationManager.Instance.StartPresentation(m_GroupHash);
         void IPresentationSystemGroup.Stop() => PresentationManager.Instance.StopPresentation(m_GroupHash);
 
         public static bool IsValid() => ((IValidation)Instance).IsValid();
         /// <inheritdoc cref="IPresentationSystemGroup.Start"/>
-        public static void Start() => ((IPresentationSystemGroup)Instance).Start();
+        public static ICustomYieldAwaiter Start() => ((IPresentationSystemGroup)Instance).Start();
         /// <inheritdoc cref="IPresentationSystemGroup.Stop"/>
         public static void Stop() => ((IPresentationSystemGroup)Instance).Stop();
     }

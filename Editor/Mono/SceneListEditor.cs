@@ -3,6 +3,7 @@ using UnityEditor;
 using UnityEngine.SceneManagement;
 using UnityEditor.SceneManagement;
 using Syadeu.Presentation;
+using Syadeu.Database;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -13,10 +14,10 @@ namespace SyadeuEditor
     {
         SceneReference m_CurrentScene;
 
-        int gridIdx = -1;
+        ManagedGrid grid;
         float cellSize = 2.5f;
-        Vector3 center;
-        Vector3 size;
+        Vector3Int center;
+        Vector3Int size;
 
         private void OnEnable()
         {
@@ -31,19 +32,16 @@ namespace SyadeuEditor
                 }
             }
 
-            if (m_CurrentScene == null || m_CurrentScene.m_SceneData == null ||
-                m_CurrentScene.m_SceneData.Length == 0) return;
+            if (m_CurrentScene == null || m_CurrentScene.m_SceneGridData == null ||
+                m_CurrentScene.m_SceneGridData.Length == 0) return;
 
-            var wrapper = GridManager.BinaryWrapper.ToWrapper(m_CurrentScene.m_SceneData);
-            var grid = wrapper.ToGrid();
+            grid = ManagedGrid.FromBinary(m_CurrentScene.m_SceneGridData);
+            cellSize = grid.cellSize;
+            center = Vector3Int.FloorToInt(grid.center);
+            size = Vector3Int.FloorToInt(grid.size);
 
-            gridIdx = grid.Idx;
-            cellSize = grid.CellSize;
-            center = grid.GetBounds().center;
-            size = grid.GetBounds().size;
-
-            GridManager.ImportGrids(grid);
-            GridManager.GetGrid(grid.Idx).EnableDrawGL = true;
+            //GridManager.ImportGrids(grid);
+            //GridManager.GetGrid(grid.Idx).EnableDrawGL = true;
         }
         private void OnDisable()
         {
@@ -58,25 +56,34 @@ namespace SyadeuEditor
                 return;
             }
             EditorUtils.StringHeader("Grid");
-            center = EditorGUILayout.Vector3Field("Center: ", center);
-            size = EditorGUILayout.Vector3Field("Size: ", size);
+            center = EditorGUILayout.Vector3IntField("Center: ", center);
+            size = EditorGUILayout.Vector3IntField("Size: ", size);
             cellSize = EditorGUILayout.FloatField("Cell Size: ", cellSize);
 
             if (GUILayout.Button("make"))
             {
-                gridIdx = GridManager.CreateGrid(new Bounds(center, size), cellSize, false);
-                GridManager.GetGrid(gridIdx).EnableDrawGL = true;
+                grid = new ManagedGrid(new int3(center.x, center.y, center.z),
+                new int3(size.x, size.y, size.z), cellSize);
             }
             if (GUILayout.Button("Save"))
             {
-                m_CurrentScene.m_SceneData = GridManager.GetGrid(gridIdx).ConvertToWrapper().ToBinary();
+                m_CurrentScene.m_SceneGridData = grid.ToBinary();
                 EditorUtils.SetDirty(target);
+            }
+            if (GUILayout.Button("test"))
+            {
+                grid.GetCell(0).SetValue(Hash.NewHash());
             }
             if (GUILayout.Button("remove"))
             {
-                if (m_CurrentScene != null) m_CurrentScene.m_SceneData = null;
-                GridManager.ClearEditorGrids();
+                grid = null;
                 EditorUtils.SetDirty(target);
+            }
+
+            if (grid != null)
+            {
+                ManagedCell cell = grid.GetCell(0);
+                EditorGUILayout.LabelField(cell.GetValue()?.ToString());
             }
 
             EditorGUILayout.Space();

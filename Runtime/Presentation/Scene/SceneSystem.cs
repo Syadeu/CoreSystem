@@ -107,6 +107,8 @@ namespace Syadeu.Presentation
         /// </summary>
         public bool IsSceneLoading => m_LoadingEnabled || m_AsyncOperation != null;
 
+        private EntitySystem m_EntitySystem;
+
         protected override PresentationResult OnInitialize()
         {
             if (m_DebugMode)
@@ -191,6 +193,12 @@ namespace Syadeu.Presentation
             }
             #endregion
         }
+        protected override PresentationResult OnInitializeAsync()
+        {
+            RequestSystem<EntitySystem>((other) => m_EntitySystem = other);
+
+            return base.OnInitializeAsync();
+        }
         protected override PresentationResult OnStartPresentation()
         {
             if (m_LoadingScene.IsValid() && m_MasterScene.IsValid())
@@ -199,7 +207,8 @@ namespace Syadeu.Presentation
             }
             else
             {
-                if (m_DebugMode) StartSceneDependences(SceneManager.GetActiveScene().path);
+                SceneReference sceneRef = SceneList.Instance.GetScene(SceneManager.GetActiveScene().path);
+                if (m_DebugMode) StartSceneDependences(m_EntitySystem, sceneRef);
             }
             return base.OnStartPresentation();
         }
@@ -334,13 +343,14 @@ namespace Syadeu.Presentation
 
                     onCompleted?.Invoke(other);
 
-                    if (scene.m_SceneData != null && scene.m_SceneData.Length > 0)
-                    {
-                        var wrapper = GridManager.BinaryWrapper.ToWrapper(scene.m_SceneData);
-                        var grid = wrapper.ToGrid();
-                        GridManager.ImportGrids(grid);
-                    }
-                    StartSceneDependences(scene);
+                    //if (scene.m_SceneGridData != null && scene.m_SceneGridData.Length > 0)
+                    //{
+                    //    var wrapper = GridManager.BinaryWrapper.ToWrapper(scene.m_SceneGridData);
+                    //    var grid = wrapper.ToGrid();
+                    //    GridManager.ImportGrids(grid);
+                    //}
+                    StartSceneDependences(m_EntitySystem, scene);
+                    //CoreSystem.WaitInvoke()
 
                     OnAfterLoading?.Invoke(0, startDelay);
                     CoreSystem.WaitInvoke(startDelay, () =>
@@ -350,17 +360,7 @@ namespace Syadeu.Presentation
                         m_LoadingEnabled = false;
                         CoreSystem.Logger.Log(Channel.Scene, $"Scene change done");
                     }, (passed) => OnAfterLoading?.Invoke(passed, startDelay));
-                    //m_SceneActiveTimer
-                    //    .SetTargetTime(startDelay)
-                    //    .OnTimerEnd(() =>
-                    //    {
-                    //        m_AsyncOperation = null;
-                    //        OnLoadingExit?.Invoke();
-                    //        m_LoadingEnabled = false;
-                    //        CoreSystem.Log(Channel.Scene, $"Scene change done");
-                    //    })
-                    //    .Start();
-                    //$"{m_CurrentScene.name} : {m_CurrentScene.path}".ToLog();
+
                     CoreSystem.Logger.Log(Channel.Scene, $"Scene({m_CurrentScene.name}) loaded");
                 };
             }, (passed) => OnWaitLoading?.Invoke(passed, waitDelay));
@@ -410,20 +410,24 @@ namespace Syadeu.Presentation
             SceneManager.MoveGameObjectToScene(obj, scene);
             return obj;
         }
-        private static void StartSceneDependences(string key)
+        private static List<ICustomYieldAwaiter> StartSceneDependences(EntitySystem system, SceneReference key)
         {
             if (!PresentationManager.Instance.m_DependenceSceneList.TryGetValue(key, out List<Hash> groupHashs))
             {
-                CoreSystem.Logger.Log(Channel.Scene, $"Scene({key.Split('/').Last()}) has no dependence systems for load");
-                return;
+                CoreSystem.Logger.Log(Channel.Scene, $"Scene({key.ScenePath.Split('/').Last()}) has no dependence systems for load");
+                return null;
             }
 
+            LoadSceneGrid(system, key);
+
+            List<ICustomYieldAwaiter> awaiters = new List<ICustomYieldAwaiter>();
             for (int i = 0; i < groupHashs.Count; i++)
             {
                 if (!PresentationManager.Instance.m_PresentationGroups.TryGetValue(groupHashs[i], out var group)) continue;
 
-                group.m_SystemGroup.Start();
+                awaiters.Add(group.m_SystemGroup.Start());
             }
+            return awaiters;
         }
         private static void StopSceneDependences(string key)
         {
@@ -441,5 +445,22 @@ namespace Syadeu.Presentation
             }
         }
         #endregion
+
+        private static void LoadSceneGrid(EntitySystem system, SceneReference scene)
+        {
+            ManagedGrid grid = ManagedGrid.FromBinary(scene.m_SceneGridData);
+            ManagedCell[] cells = grid.cells;
+            for (int i = 0; i < cells.Length; i++)
+            {
+                if (cells[i].GetValue() is EntityBase.Captured capturedEntity)
+                {
+                    system.LoadEntity(capturedEntity);
+                }
+                else
+                {
+
+                }
+            }
+        }
     }
 }

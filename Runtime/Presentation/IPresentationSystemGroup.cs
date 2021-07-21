@@ -18,7 +18,7 @@ namespace Syadeu.Presentation
         /// <summary>
         /// 이 그룹내 모든 시스템(<seealso cref="PresentationSystem{T}"/>)을 실행합니다.
         /// </summary>
-        void Start();
+        ICustomYieldAwaiter Start();
         /// <summary>
         /// 이 그룹내 모든 시스템(<seealso cref="PresentationSystem{T}"/>)을 정지합니다.
         /// </summary>

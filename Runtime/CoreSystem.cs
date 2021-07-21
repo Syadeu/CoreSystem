@@ -1791,7 +1791,22 @@ namespace Syadeu
                 AddForegroundJob(action);
             });
         }
-        public static void WaitInvoke<T>(Func<T> notNull, Action action)
+        public static void WaitInvoke(Func<bool> _true, Action action)
+        {
+            AddBackgroundJob(() =>
+            {
+                while (!_true.Invoke())
+                {
+                    if (!Instance.m_SimWatcher.WaitOne())
+                    {
+                        ThreadAwaiter(10);
+                    }
+                }
+
+                AddForegroundJob(action);
+            });
+        }
+        public static void WaitInvoke<T>(Func<T> notNull, Action action) where T : class
         {
             AddBackgroundJob(() =>
             {
@@ -1806,7 +1821,7 @@ namespace Syadeu
                 AddForegroundJob(action);
             });
         }
-        public static void WaitInvoke<T>(Func<T> notNull, Action<T> action)
+        public static void WaitInvoke<T>(Func<T> notNull, Action<T> action) where T : class
         {
             AddBackgroundJob(() =>
             {

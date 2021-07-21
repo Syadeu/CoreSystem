@@ -109,6 +109,13 @@ namespace Syadeu.Presentation
         #endregion
 
 #line hidden
+        public IEntity LoadEntity(EntityBase.Captured captured)
+        {
+            EntityBase original = (EntityBase)captured.m_Obj;
+            DataGameObject obj = m_ProxySystem.CreateNewPrefab(original.PrefabIdx, captured.m_Translation, captured.m_Rotation, captured.m_Scale, captured.m_EnableCull);
+
+            return InternalCreateEntity(original, obj);
+        }
         public IEntity CreateEntity(string name, Vector3 position)
         {
             EntityBase original = (EntityBase)EntityDataList.Instance.GetObject(name);
@@ -162,19 +169,6 @@ namespace Syadeu.Presentation
             if (!m_ObjectHashSet.Contains(dataObj)) return null;
             return m_ObjectEntities[dataObj];
         }
-
-        //public void DestroyEntity(IEntity entity)
-        //{
-        //    DataGameObject obj = entity.gameObject;
-        //    if (!obj.IsValid() || !m_ObjectHashSet.Contains(obj.m_Idx))
-        //    {
-        //        "?".ToLog();
-        //        return;
-        //    }
-
-        //    obj.Destory();
-        //}
-
         private IEntity InternalCreateEntity(EntityBase entityBase, DataGameObject obj)
         {
             EntityBase entity = (EntityBase)entityBase.Clone();
