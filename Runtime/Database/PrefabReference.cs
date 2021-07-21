@@ -1,5 +1,7 @@
 ﻿using Syadeu.Mono;
 using System;
+using System.Runtime.InteropServices;
+using Unity.Mathematics;
 
 namespace Syadeu.Database
 {

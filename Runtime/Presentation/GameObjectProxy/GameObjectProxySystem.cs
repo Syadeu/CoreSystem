@@ -20,7 +20,7 @@ using UnityEngine.SceneManagement;
 
 namespace Syadeu.Presentation
 {
-    public sealed class GameObjectProxySystem : PresentationSystemEntity<GameObjectProxySystem>
+    internal sealed class GameObjectProxySystem : PresentationSystemEntity<GameObjectProxySystem>
     {
         private static Vector3 INIT_POSITION = new Vector3(-9999, -9999, -9999);
 

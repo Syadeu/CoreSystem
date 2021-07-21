@@ -130,4 +130,12 @@ namespace Syadeu.Presentation
             attribute.CreatedEntity = CreateEntity(attribute.m_Entity, tr.position, tr.rotation);
         }
     }
+
+    public sealed class TestAttribute : AttributeBase
+    {
+        public string[] m_TestString;
+        public int[] m_TestInt;
+        public bool[] m_TestBoolen;
+        public Reference<EntityBase>[] m_TestEntityList;
+    }
 }

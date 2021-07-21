@@ -74,6 +74,7 @@ namespace SyadeuEditor
 
                     return element;
                 })
+            #region Button
                 .MakeAddButton(() =>
                 {
                     if (treeView.SelectedToolbar == 0)
@@ -137,20 +138,38 @@ namespace SyadeuEditor
                 {
                     ObjectBase target = (ObjectBase)treeView.Data[idx];
 
-                    //if (treeView.SelectedToolbar == 0) Asset.m_Objects.Remove(target.Hash);
-                    //else if (treeView.SelectedToolbar == 1)
-                    //{
-                    //    Asset.m_Attributes.Remove((AttributeBase)treeView.Data[idx]);
-                    //}
                     Asset.m_Objects.Remove(target.Hash);
 
                     List<object> tempList = new List<object>();
-                    //if (Asset.m_Entites != null) tempList.AddRange(Asset.m_Entites);
-                    //if (Asset.m_Attributes != null) tempList.AddRange(Asset.m_Attributes);
                     if (Asset.m_Objects != null) tempList.AddRange(Asset.m_Objects.Values);
                     return tempList;
                 })
-                .MakeToolbar("Entities", "Attributes");
+            #endregion
+                .MakeToolbar("Entities", "Attributes")
+                //.MakeCustomSearchFilter((element, txt) =>
+                //{
+                //    string targetName;
+                //    string typeString;
+
+                //    if (element is TreeEntityElement entityEle)
+                //    {
+                //        typeString = entityEle.Target.GetType().Name;
+
+                //    }
+                //    else if (element is TreeAttributeElement attEle)
+                //    {
+                //        typeString = attEle.Target.GetType().Name;
+
+                //    }
+                //    else
+                //    {
+                //        targetName = element.Name;
+                //        typeString = element.Name;
+                //    }
+
+                //    return true;
+                //})
+                ;
         }
         private void RefreshTreeView()
         {
