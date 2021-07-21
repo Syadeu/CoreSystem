@@ -12,6 +12,7 @@ using Syadeu.Database;
 
 namespace SyadeuEditor
 {
+    [System.Obsolete("", true)]
     [CustomEditor(typeof(GridManager))]
     public class GridManagerEditor : EditorEntity
     {

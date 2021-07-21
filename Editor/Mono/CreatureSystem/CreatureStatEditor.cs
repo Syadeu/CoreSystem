@@ -12,6 +12,7 @@ using Google.Apis.Sheets.v4.Data;
 
 namespace SyadeuEditor
 {
+    [System.Obsolete("", true)]
     [CustomEditor(typeof(CreatureStat))]
     public sealed class CreatureStatEditor : EditorEntity<CreatureStat>
     {

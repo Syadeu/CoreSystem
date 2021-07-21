@@ -391,6 +391,14 @@ namespace SyadeuEditor
             {
                 setter.Invoke(ins, EditorGUILayout.Vector3IntField(name, (Vector3Int)getter.Invoke(ins)));
             }
+            else if (declaredType.Equals(TypeHelper.TypeOf<Color>.Type))
+            {
+                setter.Invoke(ins, EditorGUILayout.ColorField(name, (Color)getter.Invoke(ins)));
+            }
+            else if (declaredType.Equals(TypeHelper.TypeOf<Color32>.Type))
+            {
+                setter.Invoke(ins, EditorGUILayout.ColorField(name, (Color32)getter.Invoke(ins)));
+            }
             else if (declaredType.Equals(TypeHelper.TypeOf<AssetReference>.Type))
             {
                 AssetReference refAsset = (AssetReference)getter.Invoke(ins);

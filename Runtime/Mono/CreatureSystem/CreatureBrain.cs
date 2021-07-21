@@ -19,6 +19,7 @@ namespace Syadeu.Mono
     /// 하위 컴포넌트들은 <seealso cref="CreatureEntity"/> 를 참조하면 자동으로 Initialize 됨.
     /// </summary>
     [RequireComponent(typeof(NavMeshAgent))] [LuaArgumentType]
+    [Obsolete("", true)]
     public sealed class CreatureBrain : RecycleableMonobehaviour
     {
         internal Hash m_DataHash;

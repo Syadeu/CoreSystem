@@ -45,9 +45,9 @@ namespace Syadeu.Mono
             public RecycleObject(int i, PrefabList.ObjectSetting setting)
             {
                 Index = i;
-                Prefab = setting.Prefab;
+                Prefab = setting.m_Prefab;
 #if UNITY_ADDRESSABLES
-                RefPrefab = setting.RefPrefab;
+                RefPrefab = setting.m_RefPrefab;
 #endif
                 MaxCount = setting.MaxInstanceCount;
                 InstanceCreationBlock = setting.InstanceCreationBlock;
@@ -215,7 +215,7 @@ namespace Syadeu.Mono
         {
             for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
             {
-                if (PrefabList.Instance.ObjectSettings[i].Prefab == null)
+                if (PrefabList.Instance.ObjectSettings[i].m_Prefab == null)
                 {
                     throw new CoreSystemException(CoreSystemExceptionFlag.RecycleObject, $"인덱스 {i} 의 Prefab 항목이 없습니다.");
                 }
@@ -223,7 +223,7 @@ namespace Syadeu.Mono
                 T _ins = null;
                 if (IsMainthread())
                 {
-                    if (PrefabList.Instance.ObjectSettings[i].Prefab.GetComponent<T>() != null)
+                    if (PrefabList.Instance.ObjectSettings[i].m_Prefab.GetComponent<T>() != null)
                     {
                         _ins = GetRecycleObject(i).GetComponent<T>();
                         if (parent != null) _ins.transform.SetParent(parent);
@@ -233,7 +233,7 @@ namespace Syadeu.Mono
                 {
                     CoreSystem.AddForegroundJob(() =>
                     {
-                        if (PrefabList.Instance.ObjectSettings[i].Prefab.GetComponent<T>() != null)
+                        if (PrefabList.Instance.ObjectSettings[i].m_Prefab.GetComponent<T>() != null)
                         {
                             _ins = GetRecycleObject(i).GetComponent<T>();
                             if (parent != null) _ins.transform.SetParent(parent);
@@ -254,12 +254,12 @@ namespace Syadeu.Mono
             RecycleObject obj = null;
             for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
             {
-                if (PrefabList.Instance.ObjectSettings[i].Prefab == null)
+                if (PrefabList.Instance.ObjectSettings[i].m_Prefab == null)
                 {
                     throw new CoreSystemException(CoreSystemExceptionFlag.RecycleObject, $"인덱스 {i} 의 Prefab 항목이 없습니다.");
                 }
 
-                if (PrefabList.Instance.ObjectSettings[i].Prefab.GetComponent<T>() != null)
+                if (PrefabList.Instance.ObjectSettings[i].m_Prefab.GetComponent<T>() != null)
                 {
                     obj = Instance.RecycleObjects[i];
                     break;

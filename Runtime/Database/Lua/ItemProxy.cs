@@ -3,6 +3,7 @@ using System;
 
 namespace Syadeu.Database.Lua
 {
+    [System.Obsolete("", true)]
     internal sealed class ItemProxy : LuaProxyEntity<Item>
     {
         public ItemProxy(Item item) : base(item) { }

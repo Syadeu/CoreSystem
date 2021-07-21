@@ -11,6 +11,7 @@ using UnityEngine;
 namespace Syadeu.Database
 {
     [Serializable] [JsonConverter(typeof(Converters.ItemInstanceJsonConverter))]
+    [System.Obsolete("", true)]
     public sealed class ItemInstance : IDisposable, IValidation
     {
         private readonly Item m_Data;

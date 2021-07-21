@@ -1,5 +1,6 @@
 ﻿namespace Syadeu.Database.Lua
 {
+    [System.Obsolete("", true)]
     internal sealed class ItemTypeProxy : ItemTypeProxyEntity<ItemType>
     {
         public ItemTypeProxy(ItemType itemType) : base(itemType) { }
@@ -12,6 +13,7 @@
         public void AddValue(string name, object value) => Target.m_Values.Add(name, value);
         #endregion
     }
+    [System.Obsolete("", true)]
     internal sealed class ItemUseableTypeProxy : ItemTypeProxyEntity<ItemUseableType>
     {
         public bool RemoveOnUse { get => Target.m_RemoveOnUse; set => Target.m_RemoveOnUse = value; }

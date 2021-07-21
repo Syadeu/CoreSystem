@@ -2,6 +2,7 @@
 
 namespace Syadeu.Mono
 {
+    [System.Obsolete("", true)]
     public sealed class GridBaker : MonoBehaviour
     {
         [SerializeField] private Vector3 m_GridCenter;

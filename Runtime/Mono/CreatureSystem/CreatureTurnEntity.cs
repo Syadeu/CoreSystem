@@ -7,6 +7,7 @@ using UnityEngine.Events;
 
 namespace Syadeu.Mono.TurnTable
 {
+    [System.Obsolete("", true)]
     public abstract class CreatureTurnEntity : CreatureEntity, ITurnPlayer
     {
         //[Space]

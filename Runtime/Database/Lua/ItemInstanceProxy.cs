@@ -1,5 +1,6 @@
 ﻿namespace Syadeu.Database.Lua
 {
+    [System.Obsolete("", true)]
     public sealed class ItemInstanceProxy : LuaProxyEntity<ItemInstance>
     {
         public ItemInstanceProxy(ItemInstance item) : base(item) { }

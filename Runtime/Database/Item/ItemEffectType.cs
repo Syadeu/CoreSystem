@@ -7,7 +7,8 @@ using Syadeu.Presentation;
 
 namespace Syadeu.Database
 {
-    [Serializable][Obsolete]
+    [Serializable]
+    [System.Obsolete("", true)]
     public sealed class ItemEffectType : AttributeBase
     {
         [Space]

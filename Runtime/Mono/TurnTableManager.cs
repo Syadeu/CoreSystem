@@ -108,6 +108,7 @@ namespace Syadeu.Mono.TurnTable
 
         #region Grid Methods
 
+        [System.Obsolete("", true)]
         public static IReadOnlyList<int2> GetMoveableCells(in GridManager.GridCell from, in int point)
         {
             List<int2> list = new List<int2>();
@@ -129,11 +130,13 @@ namespace Syadeu.Mono.TurnTable
 
             return list;
         }
+        [System.Obsolete("", true)]
         public static bool IsReachable(in int point, in GridManager.GridCell cell, in GridManager.GridCell target)
         {
             if (CalculateActionPoint(in cell, in target, point) <= point) return true;
             return false;
         }
+        [System.Obsolete("", true)]
         public static int CalculateActionPoint(in GridManager.GridCell from, in GridManager.GridCell target, int limitAP = 20)
         {
             int2 currentIdxes = from.Idxes;

@@ -2,6 +2,7 @@
 
 namespace Syadeu.Database.Lua
 {
+    [System.Obsolete("", true)]
     internal sealed class CreatureBrainProxy : LuaProxyEntity<CreatureBrain>
     {
         public CreatureBrainProxy(CreatureBrain brain) : base(brain) { }

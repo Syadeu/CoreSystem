@@ -32,6 +32,7 @@ namespace Syadeu.Mono
 {
     [DisallowMultipleComponent]
     [StaticManagerIntializeOnLoad]
+    [Obsolete("", true)]
     public sealed class GridManager : StaticManager<GridManager>
     {
         private static readonly object s_LockManager = new object();

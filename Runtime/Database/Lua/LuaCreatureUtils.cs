@@ -12,7 +12,7 @@ namespace Syadeu.Database.Lua
         //public static Action<CreatureBrainProxy> OnVisible { get; set; }
         //public static Action<CreatureBrainProxy> OnInvisible { get; set; }
 
-
+        [System.Obsolete("", true)]
         public static CreatureBrainProxy GetTestCreature()
         {
             GameObject temp = new GameObject("testCreature");

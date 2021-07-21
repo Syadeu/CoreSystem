@@ -49,6 +49,7 @@ namespace Syadeu.Presentation
         //private Timer m_SceneActiveTimer = new Timer();
 
         public Scene CurrentScene => m_CurrentScene;
+        public SceneReference CurrentSceneRef => SceneList.Instance.GetScene(m_CurrentScene.path);
 
         /// <summary>
         /// 로딩 콜이 실행되었을때 맨 처음으로 발생하는 이벤트입니다.
@@ -107,8 +108,10 @@ namespace Syadeu.Presentation
         /// </summary>
         public bool IsSceneLoading => m_LoadingEnabled || m_AsyncOperation != null;
 
+        private GridSystem m_GridSystem;
         private EntitySystem m_EntitySystem;
 
+        #region Presentation Methods
         protected override PresentationResult OnInitialize()
         {
             if (m_DebugMode)
@@ -195,6 +198,7 @@ namespace Syadeu.Presentation
         }
         protected override PresentationResult OnInitializeAsync()
         {
+            RequestSystem<GridSystem>((other) => m_GridSystem = other);
             RequestSystem<EntitySystem>((other) => m_EntitySystem = other);
 
             return base.OnInitializeAsync();
@@ -208,10 +212,11 @@ namespace Syadeu.Presentation
             else
             {
                 SceneReference sceneRef = SceneList.Instance.GetScene(SceneManager.GetActiveScene().path);
-                if (m_DebugMode) StartSceneDependences(m_EntitySystem, sceneRef);
+                if (m_DebugMode) StartSceneDependences(m_GridSystem, sceneRef);
             }
             return base.OnStartPresentation();
         }
+        #endregion
 
         /// <summary>
         /// <see cref="SceneList.StartScene"/> 을 로드합니다.
@@ -292,14 +297,7 @@ namespace Syadeu.Presentation
 
         #region Privates
 
-
-        private void InternalLoadScene(SceneReference scene, float waitDelay, float startDelay,
-#if UNITY_ADDRESSABLES
-            Action<AsyncOperationHandle<SceneInstance>>
-#else
-            Action<AsyncOperation>
-#endif
-            onCompleted = null)
+        private void InternalLoadScene(SceneReference scene, float waitDelay, float startDelay, Action<AsyncOperation> onCompleted = null)
         {
             //if (m_DebugMode) throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
             //    "디버그 모드일때에는 씬 전환을 할 수 없습니다. DebugMode = False 로 설정한 후, MasterScene 에서 시작해주세요.");
@@ -310,8 +308,7 @@ namespace Syadeu.Presentation
             }
 
             CoreSystem.Logger.Log(Channel.Scene, $"Scene change start from ({m_CurrentScene.name}) to ({Path.GetFileNameWithoutExtension(scene)})");
-            GridManager.ClearGrids();
-
+            
             m_LoadingEnabled = true;
             OnLoadingEnter?.Invoke();
             if (ManagerEntity.InstanceGroupTr != null)
@@ -319,23 +316,16 @@ namespace Syadeu.Presentation
                 UnityEngine.Object.Destroy(ManagerEntity.InstanceGroupTr.gameObject);
             }
             OnWaitLoading?.Invoke(0, waitDelay);
-            //OnLoading?.Invoke(0);
 
             CoreSystem.WaitInvoke(waitDelay, () =>
             {
                 if (m_CurrentScene.IsValid()) InternalUnloadScene(m_CurrentScene);
 
-                m_AsyncOperation =
-#if UNITY_ADDRESSABLES
-                Addressables.LoadSceneAsync(path, LoadSceneMode.Additive, false);
-            oper.Completed
-#else
-                SceneManager.LoadSceneAsync(scene, LoadSceneMode.Additive);
+                m_AsyncOperation = SceneManager.LoadSceneAsync(scene, LoadSceneMode.Additive);
                 //oper.allowSceneActivation = false;
                 OnLoading?.Invoke(0);
                 StartCoroutine(OnLoadingCoroutine(m_AsyncOperation));
                 m_AsyncOperation.completed
-#endif
                 += (other) =>
                 {
                     m_CurrentScene = SceneManager.GetSceneByPath(scene);
@@ -343,25 +333,27 @@ namespace Syadeu.Presentation
 
                     onCompleted?.Invoke(other);
 
-                    //if (scene.m_SceneGridData != null && scene.m_SceneGridData.Length > 0)
-                    //{
-                    //    var wrapper = GridManager.BinaryWrapper.ToWrapper(scene.m_SceneGridData);
-                    //    var grid = wrapper.ToGrid();
-                    //    GridManager.ImportGrids(grid);
-                    //}
-                    StartSceneDependences(m_EntitySystem, scene);
-                    //CoreSystem.WaitInvoke()
-
-                    OnAfterLoading?.Invoke(0, startDelay);
-                    CoreSystem.WaitInvoke(startDelay, () =>
+                    var awaiters = StartSceneDependences(m_GridSystem, scene);
+                    CoreSystem.WaitInvoke(() =>
                     {
-                        m_AsyncOperation = null;
-                        OnLoadingExit?.Invoke();
-                        m_LoadingEnabled = false;
-                        CoreSystem.Logger.Log(Channel.Scene, $"Scene change done");
-                    }, (passed) => OnAfterLoading?.Invoke(passed, startDelay));
+                        for (int i = 0; i < awaiters.Count; i++)
+                        {
+                            if (awaiters[i].KeepWait) return false;
+                        }
+                        return true;
+                    }, () =>
+                    {
+                        OnAfterLoading?.Invoke(0, startDelay);
+                        CoreSystem.WaitInvoke(startDelay, () =>
+                        {
+                            m_AsyncOperation = null;
+                            OnLoadingExit?.Invoke();
+                            m_LoadingEnabled = false;
+                            CoreSystem.Logger.Log(Channel.Scene, $"Scene change done");
+                        }, (passed) => OnAfterLoading?.Invoke(passed, startDelay));
 
-                    CoreSystem.Logger.Log(Channel.Scene, $"Scene({m_CurrentScene.name}) loaded");
+                        CoreSystem.Logger.Log(Channel.Scene, $"Scene({m_CurrentScene.name}) loaded");
+                    });
                 };
             }, (passed) => OnWaitLoading?.Invoke(passed, waitDelay));
 
@@ -376,25 +368,11 @@ namespace Syadeu.Presentation
                 OnLoading?.Invoke(1);
             }
         }
-        private void InternalUnloadScene(
-#if UNITY_ADDRESSABLES
-            SceneInstance scene,
-            Action<AsyncOperationHandle<SceneInstance>>
-#else
-            Scene scene,
-            Action<AsyncOperation>
-#endif
-            onCompleted = null)
+        private void InternalUnloadScene(Scene scene, Action<AsyncOperation> onCompleted = null)
         {
             string boxedScenePath = scene.path;
-            var oper =
-#if UNITY_ADDRESSABLES
-                Addressables.UnloadSceneAsync(scene);
-            oper.Completed
-#else
-                SceneManager.UnloadSceneAsync(scene);
+            var oper = SceneManager.UnloadSceneAsync(scene);
             oper.completed
-#endif
                 += (other) =>
                 {
                     onCompleted?.Invoke(other);
@@ -403,14 +381,13 @@ namespace Syadeu.Presentation
                 };
         }
 
-
         private static GameObject CreateObject(Scene scene, string name, params Type[] components)
         {
             GameObject obj = new GameObject(name, components);
             SceneManager.MoveGameObjectToScene(obj, scene);
             return obj;
         }
-        private static List<ICustomYieldAwaiter> StartSceneDependences(EntitySystem system, SceneReference key)
+        private static List<ICustomYieldAwaiter> StartSceneDependences(GridSystem gridSystem, SceneReference key)
         {
             if (!PresentationManager.Instance.m_DependenceSceneList.TryGetValue(key, out List<Hash> groupHashs))
             {
@@ -418,7 +395,7 @@ namespace Syadeu.Presentation
                 return null;
             }
 
-            LoadSceneGrid(system, key);
+            gridSystem.LoadGrid(key.m_SceneGridData);
 
             List<ICustomYieldAwaiter> awaiters = new List<ICustomYieldAwaiter>();
             for (int i = 0; i < groupHashs.Count; i++)
@@ -446,21 +423,21 @@ namespace Syadeu.Presentation
         }
         #endregion
 
-        private static void LoadSceneGrid(EntitySystem system, SceneReference scene)
-        {
-            ManagedGrid grid = ManagedGrid.FromBinary(scene.m_SceneGridData);
-            ManagedCell[] cells = grid.cells;
-            for (int i = 0; i < cells.Length; i++)
-            {
-                if (cells[i].GetValue() is EntityBase.Captured capturedEntity)
-                {
-                    system.LoadEntity(capturedEntity);
-                }
-                else
-                {
+        //private static void LoadSceneGrid(EntitySystem entitySystem, GridSystem gridSystem, SceneReference scene)
+        //{
+        //    ManagedGrid grid = ManagedGrid.FromBinary(scene.m_SceneGridData);
+        //    ManagedCell[] cells = grid.cells;
+        //    for (int i = 0; i < cells.Length; i++)
+        //    {
+        //        if (cells[i].GetValue() is EntityBase.Captured capturedEntity)
+        //        {
+        //            entitySystem.LoadEntity(capturedEntity);
+        //        }
+        //        else
+        //        {
 
-                }
-            }
-        }
+        //        }
+        //    }
+        //}
     }
 }

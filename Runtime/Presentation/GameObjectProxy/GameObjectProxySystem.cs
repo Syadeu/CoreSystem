@@ -89,7 +89,7 @@ namespace Syadeu.Presentation
                     int count = item.Value.Count;
                     for (int i = 0; i < count; i++)
                     {
-                        prefabInfo.RefPrefab.ReleaseInstance(item.Value.Dequeue().gameObject);
+                        prefabInfo.Pool.Enqueue(item.Value.Dequeue().gameObject);
                     }
                 }
                 m_TerminatedProxies.Clear();
@@ -101,7 +101,11 @@ namespace Syadeu.Presentation
                     {
                         int2 proxyIdx = m_MappedTransforms[i].m_ProxyIdx;
 
-                        PrefabList.Instance.ObjectSettings[proxyIdx.x].RefPrefab.ReleaseInstance(m_Instances[proxyIdx.x][proxyIdx.y].gameObject);
+                        var prefabSetting = PrefabList.Instance.ObjectSettings[proxyIdx.x];
+                        GameObject obj = m_Instances[proxyIdx.x][proxyIdx.y].gameObject;
+
+                        prefabSetting.Pool.Enqueue(obj);
+                        //PrefabList.Instance.ObjectSettings[proxyIdx.x].m_RefPrefab.ReleaseInstance(m_Instances[proxyIdx.x][proxyIdx.y].gameObject);
                     }
                 }
                 m_MappedTransforms.Clear();
@@ -111,6 +115,15 @@ namespace Syadeu.Presentation
                 #region Clear Data GameObjects
                 m_MappedGameObjects.Clear();
                 m_MappedGameObjectIdxes.Clear();
+                #endregion
+
+                #region PrefabQueue Release
+
+                for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
+                {
+                    PrefabList.Instance.ObjectSettings[i].Pool.Clear();
+                }
+
                 #endregion
 
                 m_Instances.Clear();
@@ -317,7 +330,7 @@ namespace Syadeu.Presentation
         }
         internal DataGameObject CreateNewPrefab(PrefabReference prefab, Vector3 pos)
         {
-            Transform tr = CoreSystem.GetTransform(prefab.GetObjectSetting().Prefab);
+            Transform tr = CoreSystem.GetTransform(prefab.GetObjectSetting().m_Prefab);
             DataTransform dataTr = ToDataTransform(tr);
 
             return CreateNewPrefab(prefab, pos, dataTr.m_Rotation, dataTr.m_LocalScale, true);
@@ -837,7 +850,6 @@ namespace Syadeu.Presentation
         {
             GameObjectProxySystem m_ProxySystem;
             SceneSystem m_SceneSystem;
-            AssetReferenceGameObject m_RefObject;
             Scene m_RequestedScene;
 
             public void Setup(GameObjectProxySystem proxySystem, SceneSystem sceneSystem, int prefabIdx, Vector3 pos, Quaternion rot,
@@ -845,27 +857,16 @@ namespace Syadeu.Presentation
             {
                 var prefabInfo = PrefabList.Instance.ObjectSettings[prefabIdx];
 
-                m_ProxySystem = proxySystem;
-                m_SceneSystem = sceneSystem;
-                m_RefObject = prefabInfo.RefPrefab;
-                m_RequestedScene = m_SceneSystem.CurrentScene;
-
-                if (CoreSystem.InstanceGroupTr == null) CoreSystem.InstanceGroupTr = new GameObject("InstanceSystemGroup").transform;
-                var oper = prefabInfo.RefPrefab.InstantiateAsync(pos, rot, CoreSystem.InstanceGroupTr);
-                oper.Completed += (other) =>
+                if (prefabInfo.Pool.Count > 0)
                 {
-                    Scene currentScene = m_SceneSystem.CurrentScene;
-                    if (!currentScene.Equals(m_RequestedScene))
-                    {
-                        CoreSystem.Logger.LogWarning(Channel.Presentation, $"{other.Result.name} is returned because Scene has been changed");
-                        m_RefObject.ReleaseInstance(other.Result);
-                        return;
-                    }
+                    GameObject obj = prefabInfo.Pool.Dequeue();
+                    obj.transform.position = pos;
+                    obj.transform.rotation = rot;
 
-                    RecycleableMonobehaviour recycleable = other.Result.GetComponent<RecycleableMonobehaviour>();
+                    RecycleableMonobehaviour recycleable = obj.GetComponent<RecycleableMonobehaviour>();
                     if (recycleable == null)
                     {
-                        recycleable = other.Result.AddComponent<ManagedRecycleObject>();
+                        recycleable = obj.AddComponent<ManagedRecycleObject>();
                     }
 
                     if (!m_ProxySystem.m_Instances.TryGetValue(prefabIdx, out List<RecycleableMonobehaviour> instances))
@@ -882,7 +883,86 @@ namespace Syadeu.Presentation
                     onCompleted?.Invoke(recycleable);
 
                     PoolContainer<PrefabRequester>.Enqueue(this);
-                };
+                    return;
+                }
+
+                m_ProxySystem = proxySystem;
+                m_SceneSystem = sceneSystem;
+                m_RequestedScene = m_SceneSystem.CurrentScene;
+
+                if (CoreSystem.InstanceGroupTr == null) CoreSystem.InstanceGroupTr = new GameObject("InstanceSystemGroup").transform;
+
+                if (prefabInfo.IsAddressable)
+                {
+                    AssetReferenceGameObject refObject = prefabInfo.m_RefPrefab;
+
+                    var oper = prefabInfo.m_RefPrefab.InstantiateAsync(pos, rot, CoreSystem.InstanceGroupTr);
+                    oper.Completed += (other) =>
+                    {
+                        Scene currentScene = m_SceneSystem.CurrentScene;
+                        if (!currentScene.Equals(m_RequestedScene))
+                        {
+                            CoreSystem.Logger.LogWarning(Channel.Presentation, $"{other.Result.name} is returned because Scene has been changed");
+                            refObject.ReleaseInstance(other.Result);
+                            return;
+                        }
+
+                        RecycleableMonobehaviour recycleable = other.Result.GetComponent<RecycleableMonobehaviour>();
+                        if (recycleable == null)
+                        {
+                            recycleable = other.Result.AddComponent<ManagedRecycleObject>();
+                        }
+
+                        if (!m_ProxySystem.m_Instances.TryGetValue(prefabIdx, out List<RecycleableMonobehaviour> instances))
+                        {
+                            instances = new List<RecycleableMonobehaviour>();
+                            m_ProxySystem.m_Instances.Add(prefabIdx, instances);
+                        }
+
+                        recycleable.m_Idx = instances.Count;
+                        instances.Add(recycleable);
+
+                        recycleable.InternalOnCreated();
+                        if (recycleable.InitializeOnCall) recycleable.Initialize();
+                        onCompleted?.Invoke(recycleable);
+
+                        PoolContainer<PrefabRequester>.Enqueue(this);
+                    };
+                }
+                else
+                {
+                    Scene currentScene = m_SceneSystem.CurrentScene;
+                    if (!currentScene.Equals(m_RequestedScene))
+                    {
+                        CoreSystem.Logger.LogWarning(Channel.Presentation, $"{prefabInfo.Prefab.name} is returned because Scene has been changed");
+                        return;
+                    }
+                    GameObject obj = UnityEngine.Object.Instantiate(prefabInfo.Prefab);
+                    obj.transform.SetParent(CoreSystem.InstanceGroupTr);
+                    obj.transform.position = pos;
+                    obj.transform.rotation = rot;
+
+                    RecycleableMonobehaviour recycleable = obj.GetComponent<RecycleableMonobehaviour>();
+                    if (recycleable == null)
+                    {
+                        recycleable = obj.AddComponent<ManagedRecycleObject>();
+                    }
+
+                    if (!m_ProxySystem.m_Instances.TryGetValue(prefabIdx, out List<RecycleableMonobehaviour> instances))
+                    {
+                        instances = new List<RecycleableMonobehaviour>();
+                        m_ProxySystem.m_Instances.Add(prefabIdx, instances);
+                    }
+
+                    recycleable.m_Idx = instances.Count;
+                    instances.Add(recycleable);
+
+                    recycleable.InternalOnCreated();
+                    if (recycleable.InitializeOnCall) recycleable.Initialize();
+                    onCompleted?.Invoke(recycleable);
+
+                    PoolContainer<PrefabRequester>.Enqueue(this);
+                }
             }
         }
 

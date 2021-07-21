@@ -75,12 +75,12 @@ namespace SyadeuEditor
                 List<PrefabList.ObjectSetting> list = PrefabList.Instance.ObjectSettings;
                 for (int i = 0; i < list.Count; i++)
                 {
-                    string path = AssetDatabase.GetAssetPath(list[i].Prefab);
+                    string path = AssetDatabase.GetAssetPath(list[i].m_Prefab);
                     AddressableAssetEntry entry = null;
 
-                    if (!list[i].RefPrefab.IsValid() || !Path.GetDirectoryName(path).Equals(c_PrefabListAssetPath))
+                    if (!list[i].m_RefPrefab.IsValid() || !Path.GetDirectoryName(path).Equals(c_PrefabListAssetPath))
                     {
-                        if (list[i].Prefab == null)
+                        if (list[i].m_Prefab == null)
                         {
                             $"{list[i].m_Name}: prefab null".ToLog();
                             continue;
@@ -92,17 +92,17 @@ namespace SyadeuEditor
 
                             AssetDatabase.MoveAsset(path, c_PrefabListAssetPath + "/" + Path.GetFileName(path));
                             AssetDatabase.Refresh();
-                            path = AssetDatabase.GetAssetPath(list[i].Prefab);
+                            path = AssetDatabase.GetAssetPath(list[i].m_Prefab);
                         }
 
                         string guid = AssetDatabase.AssetPathToGUID(path);
 
                         entry = DefaultSettings.CreateOrMoveEntry(guid, DefaultGroup);
-                        list[i].RefPrefab = new AssetReferenceGameObject(guid);
+                        list[i].m_RefPrefab = new AssetReferenceGameObject(guid);
                     }
                     else "none".ToLog();
 
-                    entry = DefaultGroup.GetAssetEntry(list[i].RefPrefab.AssetGUID);
+                    entry = DefaultGroup.GetAssetEntry(list[i].m_RefPrefab.AssetGUID);
                     string dirName = Path.GetDirectoryName(entry.address);
                     if (!dirName.Equals(c_PrefabListAssetPath))
                     {
@@ -128,7 +128,7 @@ namespace SyadeuEditor
             for (int i = 0; i < m_PrefabNames.Length; i++)
             {
                 m_PrefabNames[i] = string.IsNullOrEmpty(PrefabList.Instance.ObjectSettings[i].m_Name) ? 
-                    PrefabList.Instance.ObjectSettings[i].Prefab.name : PrefabList.Instance.ObjectSettings[i].m_Name;
+                    PrefabList.Instance.ObjectSettings[i].m_Prefab.name : PrefabList.Instance.ObjectSettings[i].m_Name;
             }
         }
 
@@ -136,7 +136,7 @@ namespace SyadeuEditor
         {
             for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
             {
-                if (PrefabList.Instance.ObjectSettings[i].Prefab.Equals(obj))
+                if (PrefabList.Instance.ObjectSettings[i].m_Prefab.Equals(obj))
                 {
                     return true;
                 }
@@ -170,7 +170,7 @@ namespace SyadeuEditor
                 PrefabList.Instance.ObjectSettings.Add(new PrefabList.ObjectSetting()
                 {
                     m_Name = prefab.name,
-                    Prefab = prefab,
+                    m_Prefab = prefab,
                 });
                 EditorUtility.SetDirty(PrefabList.Instance);
             }

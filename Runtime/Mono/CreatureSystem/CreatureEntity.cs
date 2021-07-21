@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace Syadeu.Mono
 {
+    [Obsolete("", true)]
     public abstract class CreatureEntity : MonoBehaviour
     {
         private CreatureBrain m_Brain = null;

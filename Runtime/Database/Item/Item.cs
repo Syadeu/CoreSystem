@@ -18,7 +18,8 @@ using Syadeu.Database.Lua;
 
 namespace Syadeu.Database
 {
-    [Serializable][Obsolete]
+    [Serializable]
+    [System.Obsolete("", true)]
     public sealed class Item : EntityBase
     {
         [JsonConverter(typeof(Converters.AssetReferenceJsonConverter))]

@@ -45,7 +45,7 @@ namespace SyadeuEditor
         }
         private void OnDisable()
         {
-            GridManager.ClearEditorGrids();
+            //GridManager.ClearEditorGrids();
         }
         public override void OnInspectorGUI()
         {

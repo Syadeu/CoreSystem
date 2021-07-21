@@ -1,5 +1,6 @@
 ﻿namespace Syadeu.Database.Lua
 {
+    [System.Obsolete("", true)]
     internal sealed class ItemEffectTypeProxy : LuaProxyEntity<ItemEffectType>
     {
         public string Name => Target.Name;

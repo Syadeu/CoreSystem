@@ -9,6 +9,7 @@ using Syadeu;
 
 namespace SyadeuEditor
 {
+    [System.Obsolete("", true)]
     [CustomEditor(typeof(CreatureInventory))]
     public sealed class CreatureInventoryEditor : EditorEntity<CreatureInventory>
     {

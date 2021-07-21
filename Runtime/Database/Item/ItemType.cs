@@ -7,7 +7,8 @@ using Syadeu.Presentation;
 
 namespace Syadeu.Database
 {
-    [Serializable][Obsolete]
+    [Serializable]
+    [System.Obsolete("", true)]
     public sealed class ItemType : AttributeBase
     {
         [Space]
@@ -39,6 +40,7 @@ namespace Syadeu.Database
             return m_Proxy;
         }
     }
+    [System.Obsolete("", true)]
     public sealed class ItemUseableType : AttributeBase
     {
         [Space]

@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace Syadeu.Mono
 {
+    [System.Obsolete("", true)]
     public sealed class CreatureStat : CreatureEntity
     {
         //[SerializeField] private ValuePairContainer m_ReflectionValues = new ValuePairContainer();

@@ -10,6 +10,7 @@ using UnityEditor;
 
 namespace Syadeu.Mono
 {
+    [Obsolete("", true)]
     public sealed class CreatureInventory : CreatureEntity
     {
         public enum Type

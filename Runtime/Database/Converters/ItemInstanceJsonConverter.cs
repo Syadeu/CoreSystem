@@ -5,6 +5,7 @@ using System;
 
 namespace Syadeu.Database.Converters
 {
+    [System.Obsolete("", true)]
     internal sealed class ItemInstanceJsonConverter : JsonConverter
     {
         public override bool CanWrite => true;

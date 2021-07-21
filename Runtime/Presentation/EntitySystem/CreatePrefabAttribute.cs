@@ -70,6 +70,8 @@ namespace Syadeu.Presentation
 
         public void SetMaxActionPoint(int ap) => m_MaxActionPoint = ap;
         public int UseActionPoint(int ap) => m_CurrentActionPoint -= ap;
+
+        [System.Obsolete("", true)]
         public IReadOnlyList<int2> GetMoveableCells()
         {
             ref GridManager.GridCell cell = ref Parent.GetCurrentCell();

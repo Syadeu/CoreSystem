@@ -19,6 +19,7 @@ namespace Syadeu.Presentation
             entity.gameObject.Destory();
         }
 
+        [Obsolete("", true)]
         public static ref GridManager.GridCell GetCurrentCell(this IEntity entity)
         {
             Vector3 pos = entity.transform.position;
