@@ -275,6 +275,7 @@ namespace SyadeuEditor
                             EditorGUILayout.BeginVertical(EditorUtils.Box);
                             GUI.backgroundColor = originColor;
 
+                            if (list[j] == null) list[j] = Activator.CreateInstance(elementType);
                             list[j] = DrawObject(list[j]);
 
                             EditorGUILayout.EndVertical();
