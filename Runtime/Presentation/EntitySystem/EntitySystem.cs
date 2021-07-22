@@ -73,6 +73,11 @@ namespace Syadeu.Presentation
                         entityProcessor = (IEntityProcessor)ctor.Invoke(null);
                     }
 
+                    if (!TypeHelper.TypeOf<EntityBase>.Type.IsAssignableFrom(entityProcessor.Target))
+                    {
+                        throw new Exception();
+                    }
+
                     if (!m_EntityProcessors.TryGetValue(entityProcessor.Target, out var values))
                     {
                         values = new List<IEntityProcessor>();
