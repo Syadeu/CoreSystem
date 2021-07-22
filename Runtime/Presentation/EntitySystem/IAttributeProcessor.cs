@@ -1,47 +1,12 @@
 ﻿using Syadeu.Mono;
-using System;
 
 namespace Syadeu.Presentation
 {
-    /// <summary>
-    /// <see cref="AttributeBase"/>의 동작부를 선언할 수 있습니다.
-    /// </summary>
-    /// <remarks>
-    /// 만약 상속받은 class가 private, internal 혹은 그에 준하는 레벨로 노출에 제한이 있다면<br/>
-    /// AOT 문제를 방지하기 위해 <seealso cref="UnityEngine.Scripting.PreserveAttribute"/> 어트리뷰트를 해당 class에 선언하여야합니다.<br/>
-    /// 프로세서는 순수 내부 Reflection 을 통해 작동되므로 해당 사항이 필수입니다.
-    /// <br/><br/>
-    /// 참조: <seealso cref="IAttributeOnPresentation"/>, <seealso cref="IAttributeOnProxy"/>,
-    /// </remarks>
-    internal interface IAttributeProcessor
+    internal interface IAttributeProcessor : IProcessor
     {
-        /// <summary>
-        /// 이 프로세서가 타겟으로 삼을 <see cref="AttributeBase"/>입니다.
-        /// </summary>
-        Type TargetAttribute { get; }
-        /// <summary>
-        /// <see cref="TargetAttribute"/>에 설정된 <see cref="AttributeBase"/>가 부착된 <see cref="IEntity"/>가
-        /// 생성되었을 때 실행되는 메소드입니다.
-        /// </summary>
-        /// <remarks>
-        /// 비동기 작업입니다. Unity API에 접근하면 에러를 뱉습니다.
-        /// </remarks>
-        /// <param name="attribute"><see cref="TargetAttribute"/></param>
-        /// <param name="entity"></param>
         void OnCreated(AttributeBase attribute, IEntity entity);
-        /// <summary><inheritdoc cref="OnCreated(AttributeBase, IEntity)"/></summary>
         void OnCreatedSync(AttributeBase attribute, IEntity entity);
-        /// <summary>
-        /// <see cref="TargetAttribute"/>에 설정된 <see cref="AttributeBase"/>가 부착된 <see cref="IEntity"/>가
-        /// 파괴되었을 때 실행되는 메소드입니다.
-        /// </summary>
-        /// <param name="attribute"></param>
-        /// <param name="entity"></param>
-        /// <remarks>
-        /// 비동기 작업입니다. Unity API에 접근하면 에러를 뱉습니다.
-        /// </remarks>
         void OnDestory(AttributeBase attribute, IEntity entity);
-        /// <summary><inheritdoc cref="OnDestory(AttributeBase, IEntity)"/></summary>
         void OnDestorySync(AttributeBase attribute, IEntity entity);
     }
     /// <summary>
@@ -53,7 +18,7 @@ namespace Syadeu.Presentation
     public interface IAttributeOnPresentation
     {
         /// <summary>
-        /// <see cref="IAttributeProcessor.TargetAttribute"/>에 설정된 <see cref="AttributeBase"/>가 부착된 <see cref="IEntity"/>가
+        /// <see cref="IAttributeProcessor.Target"/>에 설정된 <see cref="AttributeBase"/>가 부착된 <see cref="IEntity"/>가
         /// 매 프레임마다 동작할 메소드입니다.
         /// </summary>
         /// <param name="attribute"></param>
@@ -83,7 +48,7 @@ namespace Syadeu.Presentation
     public interface IAttributeOnProxyCreated
     {
         /// <summary>
-        /// <see cref="IAttributeProcessor.TargetAttribute"/>에 설정된 <see cref="AttributeBase"/>가 부착된 <see cref="IEntity"/>의
+        /// <see cref="IAttributeProcessor.Target"/>에 설정된 <see cref="AttributeBase"/>가 부착된 <see cref="IEntity"/>의
         /// 프록시 오브젝트가 생성되어 부착되었을 때 실행되는 메소드입니다.<br/>
         /// 이 메소드가 호출되었을 때에는 이미 프록시 오브젝트가 생성되어 받아올 수 있습니다.
         /// <seealso cref="IEntity.gameObject"/>에서 <seealso cref="DataGameObject.GetProxyObject"/>로 프록시 오브젝트를 받아올 수 있습니다.
@@ -114,7 +79,7 @@ namespace Syadeu.Presentation
     public interface IAttributeOnProxyRemoved
     {
         /// <summary>
-        /// <see cref="IAttributeProcessor.TargetAttribute"/>에 설정된 <see cref="AttributeBase"/>가 부착된 <see cref="IEntity"/>의
+        /// <see cref="IAttributeProcessor.Target"/>에 설정된 <see cref="AttributeBase"/>가 부착된 <see cref="IEntity"/>의
         /// 프록시 오브젝트가 제거될 때 실행되는 메소드입니다.<br/>
         /// 이 메소드가 호출되었을 때에는 아직 프록시 오브젝트가 존재하여 받아올 수 있습니다.
         /// <seealso cref="IEntity.gameObject"/>에서 <seealso cref="DataGameObject.GetProxyObject"/>로 프록시 오브젝트를 받아올 수 있습니다.

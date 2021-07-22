@@ -51,4 +51,8 @@ namespace Syadeu.Presentation
             m_SceneSystem.CurrentSceneRef.m_SceneGridData = m_MainGrid.ToBinary();
         }
     }
+    //public sealed class MapSystem : PresentationSystemEntity<MapSystem>
+    //{
+
+    //}
 }
