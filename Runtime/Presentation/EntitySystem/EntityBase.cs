@@ -20,8 +20,9 @@ namespace Syadeu.Presentation
         [JsonIgnore] internal Hash m_TransformHash;
         [JsonIgnore] internal List<AttributeBase> m_Attributes;
 
-        [JsonProperty(Order = -9, PropertyName = "PrefabIdx")] public PrefabReference PrefabIdx { get; set; }
-        [JsonProperty(Order = -8, PropertyName = "Attributes")] public List<Hash> Attributes { get; set; }
+        [JsonProperty(Order = -9, PropertyName = "Prefab")] public PrefabReference Prefab { get; set; }
+        [JsonProperty(Order = -8, PropertyName = "Attributes")]
+        [UnityEngine.HideInInspector] public List<Hash> Attributes { get; set; }
         List<AttributeBase> IEntity.Attributes => m_Attributes;
 
         [JsonIgnore] public DataGameObject gameObject => PresentationSystem<GameObjectProxySystem>.System.GetDataGameObject(m_GameObjectHash);

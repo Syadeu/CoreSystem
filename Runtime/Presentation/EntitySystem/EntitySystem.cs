@@ -137,7 +137,7 @@ namespace Syadeu.Presentation
         public IEntity LoadEntity(EntityBase.Captured captured)
         {
             EntityBase original = (EntityBase)captured.m_Obj;
-            DataGameObject obj = m_ProxySystem.CreateNewPrefab(original.PrefabIdx, captured.m_Translation, captured.m_Rotation, captured.m_Scale, captured.m_EnableCull);
+            DataGameObject obj = m_ProxySystem.CreateNewPrefab(original.Prefab, captured.m_Translation, captured.m_Rotation, captured.m_Scale, captured.m_EnableCull);
 
             return InternalCreateEntity(original, obj);
         }
@@ -150,7 +150,7 @@ namespace Syadeu.Presentation
                 return null;
             }
 
-            DataGameObject obj = m_ProxySystem.CreateNewPrefab(original.PrefabIdx, position);
+            DataGameObject obj = m_ProxySystem.CreateNewPrefab(original.Prefab, position);
             return InternalCreateEntity(original, obj);
         }
         public IEntity CreateEntity(Hash hash, Vector3 position)
@@ -162,7 +162,7 @@ namespace Syadeu.Presentation
                 return null;
             }
 
-            DataGameObject obj = m_ProxySystem.CreateNewPrefab(original.PrefabIdx, position);
+            DataGameObject obj = m_ProxySystem.CreateNewPrefab(original.Prefab, position);
             return InternalCreateEntity(original, obj);
         }
         public IEntity CreateEntity(string name, Vector3 position, Quaternion rotation, Vector3 localSize, bool enableCull)
@@ -174,7 +174,7 @@ namespace Syadeu.Presentation
                 return null;
             }
 
-            DataGameObject obj = m_ProxySystem.CreateNewPrefab(original.PrefabIdx, position, rotation, localSize, enableCull);
+            DataGameObject obj = m_ProxySystem.CreateNewPrefab(original.Prefab, position, rotation, localSize, enableCull);
             return InternalCreateEntity(original, obj);
         }
         public IEntity CreateEntity(Hash hash, Vector3 position, Quaternion rotation, Vector3 localSize, bool enableCull)
@@ -186,7 +186,7 @@ namespace Syadeu.Presentation
                 return null;
             }
 
-            DataGameObject obj = m_ProxySystem.CreateNewPrefab(original.PrefabIdx, position, rotation, localSize, enableCull);
+            DataGameObject obj = m_ProxySystem.CreateNewPrefab(original.Prefab, position, rotation, localSize, enableCull);
             return InternalCreateEntity(original, obj);
         }
         public IEntity GetEntity(Hash dataObj)

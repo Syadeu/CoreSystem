@@ -15,6 +15,8 @@ using UnityEditor.AddressableAssets.Settings;
 using UnityEngine.AddressableAssets;
 using Syadeu.Mono;
 using Syadeu.Presentation;
+using Unity.Mathematics;
+using Syadeu;
 
 namespace SyadeuEditor
 {
@@ -26,28 +28,17 @@ namespace SyadeuEditor
 
             public object m_Instance;
             public Type m_Type;
-            public MemberInfo[] m_Members;
+            public string[] m_Ignores;
 
             public Drawer(object ins, params string[] ignore)
             {
                 m_Instance = ins;
                 m_Type = ins.GetType();
-                List<MemberInfo> list = ReflectionHelper.GetSerializeMemberInfos(ins.GetType()).ToList();
-                if (ignore != null && ignore.Length > 0)
-                {
-                    for (int i = list.Count - 1; i >= 0; i--)
-                    {
-                        if (ignore.Contains(list[i].Name))
-                        {
-                            list.RemoveAt(i);
-                        }
-                    }
-                }
-                m_Members = list.ToArray();
+                m_Ignores = ignore;
             }
 
-            public void OnGUI() => OnGUI(true);
-            public void OnGUI(bool drawHeader, bool ignoreDeprecated = false)
+            public object OnGUI() => OnGUI(true);
+            public object OnGUI(bool drawHeader, bool ignoreDeprecated = false)
             {
                 if (!ignoreDeprecated)
                 {
@@ -65,10 +56,7 @@ namespace SyadeuEditor
                     EditorGUILayout.HelpBox(description.m_Description, MessageType.Info);
                 }
 
-                for (int i = 0; i < m_Members.Length; i++)
-                {
-                    DrawMember(m_Instance, m_Members[i]);
-                }
+                return DrawObject(m_Instance, m_Ignores);
             }
         }
         public static Drawer GetDrawer(object ins, params string[] ignore) => new Drawer(ins, ignore);
@@ -94,7 +82,7 @@ namespace SyadeuEditor
             else displayName = "None";
 
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField(name);
+            if (!string.IsNullOrEmpty(name)) EditorGUILayout.LabelField(name);
 
             Rect rect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
             rect = EditorGUI.IndentedRect(rect);
@@ -212,108 +200,213 @@ namespace SyadeuEditor
             }
             if (!string.IsNullOrEmpty(name)) EditorGUILayout.EndHorizontal();
         }
-        //public static void DrawEntitySelector(string name, Action<Hash> setter, Hash current)
-        //{
-        //    string displayName;
-        //    if (current.Equals(Hash.Empty)) displayName = "None";
-        //    else displayName = EntityDataList.Instance.GetEntity(current).Name;
-
-        //    if (!string.IsNullOrEmpty(name))
-        //    {
-        //        EditorGUILayout.BeginHorizontal();
-        //        EditorGUILayout.LabelField(new GUIContent(name));
-        //    }
-
-        //    Rect rect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight, GUILayout.ExpandWidth(true));
-        //    rect = EditorGUI.IndentedRect(rect);
-        //    if (EditorGUI.DropdownButton(rect, new GUIContent(displayName), FocusType.Passive))
-        //    {
-        //        rect = GUILayoutUtility.GetLastRect();
-        //        rect.position = Event.current.mousePosition;
-
-        //        PopupWindow.Show(rect, SelectorPopup<Hash, EntityBase>.GetWindow(EntityDataList.Instance.m_Entites, setter, (att) =>
-        //        {
-        //            return att.Hash;
-        //        }));
-        //    }
-        //    if (!string.IsNullOrEmpty(name)) EditorGUILayout.EndHorizontal();
-        //}
-
-        public static void DrawMember(object ins, MemberInfo memberInfo, int depth = 0)
+        public static object DrawObject(object obj, params string[] ignores)
         {
+            Type objType = obj.GetType();
+            MemberInfo[] members = ReflectionHelper.GetSerializeMemberInfos(objType);
+
             Type declaredType;
             Action<object, object> setter;
             Func<object, object> getter;
-            if (memberInfo is FieldInfo field)
+            string name;
+            for (int i = 0; i < members.Length; i++)
             {
-                declaredType = field.FieldType;
-                setter = field.SetValue;
-                getter = field.GetValue;
-            }
-            else if (memberInfo is PropertyInfo property)
-            {
-                declaredType = property.PropertyType;
-                setter = property.SetValue;
-                getter = property.GetValue;
-            }
-            else throw new NotImplementedException();
-            string name = ReflectionHelper.SerializeMemberInfoName(memberInfo);
+                if (ignores.Contains(members[i].Name)) continue;
 
-            bool disable = memberInfo.GetCustomAttribute<ReflectionSealedViewAttribute>() != null;
+                if (members[i] is FieldInfo field)
+                {
+                    declaredType = field.FieldType;
+                    setter = field.SetValue;
+                    getter = field.GetValue;
+                }
+                else if (members[i] is PropertyInfo property)
+                {
+                    declaredType = property.PropertyType;
+                    setter = property.SetValue;
+                    getter = property.GetValue;
+                }
+                else throw new NotImplementedException();
 
-            int spaceCount = memberInfo.GetCustomAttributes<SpaceAttribute>().Count();
-            for (int i = 0; i < spaceCount; i++)
-            {
-                EditorGUILayout.Space();
+                name = ReflectionHelper.SerializeMemberInfoName(members[i]);
+
+                EditorGUI.BeginDisabledGroup(members[i].GetCustomAttribute<ReflectionSealedViewAttribute>() != null);
+
+                if (DrawSystemField(obj, declaredType, name, getter, out object value))
+                {
+                    setter.Invoke(obj, value);
+                }
+                else if (declaredType.IsArray)
+                {
+                    IList list = (IList)getter.Invoke(obj);
+                    #region Header
+                    EditorGUILayout.BeginHorizontal();
+                    EditorGUILayout.LabelField(name);
+                    if (GUILayout.Button("+", GUILayout.Width(20)))
+                    {
+                        Array newArr = Array.CreateInstance(declaredType.GetElementType(), list != null ? list.Count + 1 : 1);
+                        if (list != null && list.Count > 0) Array.Copy((Array)list, newArr, list.Count);
+
+                        setter.Invoke(obj, newArr);
+                        list = newArr;
+                    }
+                    if (list?.Count > 0 && GUILayout.Button("-", GUILayout.Width(20)))
+                    {
+                        Array newArr = Array.CreateInstance(declaredType.GetElementType(), list.Count - 1);
+                        if (list != null && list.Count > 0) Array.Copy((Array)list, newArr, newArr.Length);
+
+                        setter.Invoke(obj, newArr);
+                        list = newArr;
+                    }
+                    EditorGUILayout.EndHorizontal();
+                    #endregion
+                    if (list != null)
+                    {
+                        Type elementType = declaredType.GetElementType();
+                        MemberInfo[] insider = ReflectionHelper.GetSerializeMemberInfos(elementType);
+                        for (int j = 0; j < list.Count; j++)
+                        {
+                            EditorGUI.indentLevel += 1;
+
+                            list[j] = DrawObject(list[j]);
+
+                            if (j + 1 < list.Count) EditorUtils.Line();
+                            EditorGUI.indentLevel -= 1;
+                        }
+                    }
+                }
+                #region Unity Types
+                else if (DrawUnityField(obj, declaredType, name, getter, out value))
+                {
+                    setter.Invoke(obj, value);
+                }
+                else if (DrawUnityMathField(obj, declaredType, name, getter, out value))
+                {
+                    setter.Invoke(obj, value);
+                }
+                else if (declaredType.Equals(TypeHelper.TypeOf<AssetReference>.Type))
+                {
+                    AssetReference refAsset = (AssetReference)getter.Invoke(obj);
+                    DrawAssetReference(name, (other) => setter.Invoke(obj, other), refAsset);
+                }
+                #endregion
+                #region CoreSystem Types
+                else if (TypeHelper.TypeOf<IReference>.Type.IsAssignableFrom(declaredType))
+                {
+                    IReference objRef = (IReference)getter.Invoke(obj);
+                    Type targetType;
+                    Type[] generics = declaredType.GetGenericArguments();
+                    if (generics.Length > 0) targetType = declaredType.GetGenericArguments()[0];
+                    else targetType = null;
+
+                    DrawReferenceSelector(name, (idx) =>
+                    {
+                        ObjectBase objBase = EntityDataList.Instance.GetObject(idx);
+
+                        Type makedT;
+                        if (targetType != null) makedT = typeof(Reference<>).MakeGenericType(targetType);
+                        else makedT = TypeHelper.TypeOf<Reference>.Type;
+
+                        object temp = TypeHelper.GetConstructorInfo(makedT, TypeHelper.TypeOf<ObjectBase>.Type).Invoke(
+                            new object[] { objBase });
+
+                        setter.Invoke(obj, temp);
+                    }, objRef, targetType);
+                }
+                else if (declaredType.Equals(TypeHelper.TypeOf<Hash>.Type))
+                {
+                    Hash hash = (Hash)getter.Invoke(obj);
+                    long temp = EditorGUILayout.LongField(name, long.Parse(hash.ToString()));
+                    setter.Invoke(obj, new Hash(ulong.Parse(temp.ToString())));
+
+                    //setter.Invoke(obj, new Hash(ulong.Parse(EditorGUILayout.LongField(name, (long.Parse(getter.Invoke(obj).ToString()))).ToString())));
+                }
+                else if (declaredType.Equals(TypeHelper.TypeOf<ValuePairContainer>.Type))
+                {
+                    ValuePairContainer container = (ValuePairContainer)getter.Invoke(obj);
+                    if (container == null)
+                    {
+                        container = new ValuePairContainer();
+                        setter.Invoke(obj, container);
+                    }
+
+                    container.DrawValueContainer(name);
+                }
+                else if (declaredType.Equals(TypeHelper.TypeOf<LuaScript>.Type))
+                {
+                    LuaScript scr = (LuaScript)getter.Invoke(obj);
+                    if (scr == null)
+                    {
+                        scr = string.Empty;
+                        setter.Invoke(obj, scr);
+                    }
+                    scr.DrawFunctionSelector(name);
+                }
+                else if (declaredType.Equals(TypeHelper.TypeOf<LuaScriptContainer>.Type))
+                {
+                    LuaScriptContainer container = (LuaScriptContainer)getter.Invoke(obj);
+                    if (container == null)
+                    {
+                        container = new LuaScriptContainer();
+                        setter.Invoke(obj, container);
+                    }
+                    container.DrawGUI(name);
+                }
+                else if (declaredType.Equals(TypeHelper.TypeOf<PrefabReference>.Type))
+                {
+                    PrefabReference prefabRef = (PrefabReference)getter.Invoke(obj);
+                    DrawPrefabReference(name, (idx) => setter.Invoke(obj, new PrefabReference(idx)), prefabRef);
+                }
+                #endregion
+                else
+                {
+                    //setter(obj, DrawObject(getter(obj)));
+                    EditorGUILayout.LabelField($"Not Supported Type: {name}.{declaredType.Name}");
+                }
+
+                EditorGUI.EndDisabledGroup();
             }
 
-            TooltipAttribute tooltip = memberInfo.GetCustomAttribute<TooltipAttribute>();
-            if (tooltip != null)
-            {
-                EditorGUILayout.HelpBox(tooltip.tooltip, MessageType.Info);
-            }
 
-            DrawMember(ins, name, declaredType, tooltip != null ? tooltip.tooltip : null, disable,
-                getter, setter, depth);
+
+            return obj;
         }
-        public static void DrawMember(object ins, string name, Type declaredType, string tooltip,
-            bool disable,
-            Func<object, object> getter, Action<object, object> setter, int depth = 0)
+        private static bool DrawSystemField(object ins, Type declaredType, string name, Func<object, object> getter, out object value)
         {
-            if (!string.IsNullOrEmpty(tooltip))
-            {
-                EditorGUILayout.HelpBox(tooltip, MessageType.Info);
-            }
-
-            EditorGUI.BeginDisabledGroup(disable);
-            #region System Types
+            value = null;
             if (declaredType.Equals(TypeHelper.TypeOf<int>.Type))
             {
-                setter.Invoke(ins, EditorGUILayout.IntField(name, (int)getter.Invoke(ins)));
+                value = EditorGUILayout.IntField(name, (int)getter.Invoke(ins));
+                return true;
             }
             else if (declaredType.Equals(TypeHelper.TypeOf<bool>.Type))
             {
-                setter.Invoke(ins, EditorGUILayout.Toggle(name, (bool)getter.Invoke(ins)));
+                value = EditorGUILayout.Toggle(name, (bool)getter.Invoke(ins));
+                return true;
             }
             else if (declaredType.Equals(TypeHelper.TypeOf<float>.Type))
             {
-                setter.Invoke(ins, EditorGUILayout.FloatField(name, (float)getter.Invoke(ins)));
+                value = EditorGUILayout.FloatField(name, (float)getter.Invoke(ins));
+                return true;
             }
             else if (declaredType.Equals(TypeHelper.TypeOf<double>.Type))
             {
-                setter.Invoke(ins, EditorGUILayout.DoubleField(name, (double)getter.Invoke(ins)));
+                value = EditorGUILayout.DoubleField(name, (double)getter.Invoke(ins));
+                return true;
             }
             else if (declaredType.Equals(TypeHelper.TypeOf<long>.Type))
             {
-                setter.Invoke(ins, EditorGUILayout.LongField(name, (long)getter.Invoke(ins)));
+                value = EditorGUILayout.LongField(name, (long)getter.Invoke(ins));
+                return true;
             }
             else if (declaredType.Equals(TypeHelper.TypeOf<ulong>.Type))
             {
-                setter.Invoke(ins, ulong.Parse(EditorGUILayout.LongField(name, (long.Parse(getter.Invoke(ins).ToString()))).ToString()));
+                value = ulong.Parse(EditorGUILayout.LongField(name, (long.Parse(getter.Invoke(ins).ToString()))).ToString());
+                return true;
             }
             else if (declaredType.Equals(TypeHelper.TypeOf<string>.Type))
             {
-                setter.Invoke(ins, EditorGUILayout.TextField(name, (string)getter.Invoke(ins)));
+                value = EditorGUILayout.TextField(name, (string)getter.Invoke(ins));
+                return true;
             }
             else if (declaredType.IsEnum)
             {
@@ -326,171 +419,112 @@ namespace SyadeuEditor
                 }
                 else selected = EditorGUILayout.EnumPopup(name, idx);
 
-                setter.Invoke(ins, selected);
+                value = selected;
+                return true;
             }
-            else if (declaredType.IsArray)
+            //else EditorGUILayout.LabelField($"not added {declaredType.Name}");
+
+            return false;
+        }
+        private static bool DrawUnityField(object ins, Type declaredType, string name, Func<object, object> getter, out object value)
+        {
+            value = null;
+            if (TypeHelper.TypeOf<UnityEngine.Object>.Type.IsAssignableFrom(declaredType))
             {
-                IList list = (IList)getter.Invoke(ins);
-                EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.LabelField(name);
-                if (GUILayout.Button("+", GUILayout.Width(20)))
-                {
-                    Array newArr = Array.CreateInstance(declaredType.GetElementType(), list != null ? list.Count + 1 : 1);
-                    if (list != null && list.Count > 0) Array.Copy((Array)list, newArr, list.Count);
-
-                    newArr.SetValue(default, newArr.Length - 1);
-
-                    setter.Invoke(ins, newArr);
-                    list = newArr;
-                }
-                if (list?.Count > 0 && GUILayout.Button("-", GUILayout.Width(20)))
-                {
-                    Array newArr = Array.CreateInstance(declaredType.GetElementType(), list.Count - 1);
-                    if (list != null && list.Count > 0) Array.Copy((Array)list, newArr, newArr.Length);
-
-                    setter.Invoke(ins, newArr);
-                    list = newArr;
-                }
-                EditorGUILayout.EndHorizontal();
-                if (list != null)
-                {
-                    for (int i = 0; i < list.Count; i++)
-                    {
-                        EditorGUI.indentLevel += 1;
-
-                        int idx = i;
-                        DrawMember(list[idx], string.Empty, declaredType.GetElementType(), string.Empty, disable,
-                            (other) => other, (ins, other) => list[idx] = other, depth + 1);
-
-                        EditorGUI.indentLevel -= 1;
-                    }
-                }
-            }
-            #endregion
-            #region Unity Types
-            else if (TypeHelper.TypeOf<UnityEngine.Object>.Type.IsAssignableFrom(declaredType))
-            {
-                //UnityEngine.Object obj = EditorGUILayout.ObjectField(name, (UnityEngine.Object)getter.Invoke(ins), declaredType, false);
-
-                //setter.Invoke(ins, obj);
                 EditorGUILayout.LabelField(name, "UnityEngine.Object 는 json 으로 저장할 수 없으므로 지원하지 않습니다.");
             }
             else if (declaredType.Equals(TypeHelper.TypeOf<Rect>.Type))
             {
-                setter.Invoke(ins, EditorGUILayout.RectField(name, (Rect)getter.Invoke(ins)));
+                value = EditorGUILayout.RectField(name, (Rect)getter.Invoke(ins));
+                return true;
             }
             else if (declaredType.Equals(TypeHelper.TypeOf<RectInt>.Type))
             {
-                setter.Invoke(ins, EditorGUILayout.RectIntField(name, (RectInt)getter.Invoke(ins)));
+                value = EditorGUILayout.RectIntField(name, (RectInt)getter.Invoke(ins));
+                return true;
             }
             else if (declaredType.Equals(TypeHelper.TypeOf<Vector3>.Type))
             {
-                setter.Invoke(ins, EditorGUILayout.Vector3Field(name, (Vector3)getter.Invoke(ins)));
+                value = EditorGUILayout.Vector3Field(name, (Vector3)getter.Invoke(ins));
+                return true;
             }
             else if (declaredType.Equals(TypeHelper.TypeOf<Vector3Int>.Type))
             {
-                setter.Invoke(ins, EditorGUILayout.Vector3IntField(name, (Vector3Int)getter.Invoke(ins)));
+                value = EditorGUILayout.Vector3IntField(name, (Vector3Int)getter.Invoke(ins));
+                return true;
+            }
+            else if (declaredType.Equals(TypeHelper.TypeOf<Quaternion>.Type))
+            {
+                EditorGUILayout.LabelField("UnityEngine.Quaternion is not support." +
+                    "Use Unity.Mathematics.quaternion");
             }
             else if (declaredType.Equals(TypeHelper.TypeOf<Color>.Type))
             {
-                setter.Invoke(ins, EditorGUILayout.ColorField(name, (Color)getter.Invoke(ins)));
+                value = EditorGUILayout.ColorField(name, (Color)getter.Invoke(ins));
+                return true;
             }
             else if (declaredType.Equals(TypeHelper.TypeOf<Color32>.Type))
             {
-                setter.Invoke(ins, EditorGUILayout.ColorField(name, (Color32)getter.Invoke(ins)));
+                value = EditorGUILayout.ColorField(name, (Color32)getter.Invoke(ins));
+                return true;
             }
-            else if (declaredType.Equals(TypeHelper.TypeOf<AssetReference>.Type))
-            {
-                AssetReference refAsset = (AssetReference)getter.Invoke(ins);
-                DrawAssetReference(name, (other) => setter.Invoke(ins, other), refAsset);
-            }
-            #endregion
-            #region CoreSystem Types
-            else if (TypeHelper.TypeOf<IReference>.Type.IsAssignableFrom(declaredType))
-            {
-                IReference objRef = (IReference)getter.Invoke(ins);
-                Type targetType;
-                Type[] generics = declaredType.GetGenericArguments();
-                if (generics.Length > 0) targetType = declaredType.GetGenericArguments()[0];
-                else targetType = null;
+            //else EditorGUILayout.LabelField($"not added {declaredType.Name}");
 
-                DrawReferenceSelector(name, (idx) =>
-                {
-                    ObjectBase objBase = EntityDataList.Instance.GetObject(idx);
-
-                    Type makedT;
-                    if (targetType != null) makedT = typeof(Reference<>).MakeGenericType(targetType);
-                    else makedT = TypeHelper.TypeOf<Reference>.Type;
-
-                    object temp = TypeHelper.GetConstructorInfo(makedT, TypeHelper.TypeOf<ObjectBase>.Type).Invoke(
-                        new object[] { objBase });
-
-                    setter.Invoke(ins, temp);
-                }, objRef, targetType);
-            }
-            else if (declaredType.Equals(TypeHelper.TypeOf<Hash>.Type))
-            {
-                setter.Invoke(ins, new Hash(ulong.Parse(EditorGUILayout.LongField(name, (long.Parse(getter.Invoke(ins).ToString()))).ToString())));
-            }
-            else if (declaredType.Equals(TypeHelper.TypeOf<ValuePairContainer>.Type))
-            {
-                ValuePairContainer container = (ValuePairContainer)getter.Invoke(ins);
-                if (container == null)
-                {
-                    container = new ValuePairContainer();
-                    setter.Invoke(ins, container);
-                }
-
-                container.DrawValueContainer(name);
-            }
-            else if (declaredType.Equals(TypeHelper.TypeOf<LuaScript>.Type))
-            {
-                LuaScript scr = (LuaScript)getter.Invoke(ins);
-                if (scr == null)
-                {
-                    scr = string.Empty;
-                    setter.Invoke(ins, scr);
-                }
-                scr.DrawFunctionSelector(name);
-            }
-            else if (declaredType.Equals(TypeHelper.TypeOf<LuaScriptContainer>.Type))
-            {
-                LuaScriptContainer container = (LuaScriptContainer)getter.Invoke(ins);
-                if (container == null)
-                {
-                    container = new LuaScriptContainer();
-                    setter.Invoke(ins, container);
-                }
-                container.DrawGUI(name);
-            }
-            else if (declaredType.Equals(TypeHelper.TypeOf<PrefabReference>.Type))
-            {
-                PrefabReference prefabRef = (PrefabReference)getter.Invoke(ins);
-                DrawPrefabReference(name, (idx) => setter.Invoke(ins, new PrefabReference(idx)), prefabRef);
-            }
-            //else if (declaredType.Equals(TypeHelper.TypeOf<EntityReference>.Type))
-            //{
-            //    EntityReference prefabRef = (EntityReference)getter.Invoke(ins);
-            //    DrawEntitySelector(name, (idx) => setter.Invoke(ins, new EntityReference(idx)), prefabRef);
-            //}
-            #endregion
-            else
-            {
-                if (depth > 4) return;
-
-                EditorGUILayout.LabelField(name);
-                EditorGUI.indentLevel += 1;
-                MemberInfo[] insider = ReflectionHelper.GetSerializeMemberInfos(declaredType);
-                for (int i = 0; i < insider.Length; i++)
-                {
-                    //EditorGUILayout.LabelField(insider[i].Name);
-                    object temp = getter.Invoke(ins);
-                    DrawMember(temp, insider[i], depth++);
-                }
-
-                EditorGUI.indentLevel -= 1;
-            }
-            EditorGUI.EndDisabledGroup();
+            return false;
         }
+        private static bool DrawUnityMathField(object ins, Type declaredType, string name, Func<object, object> getter, out object value)
+        {
+            value = null;
+            if (declaredType.Equals(TypeHelper.TypeOf<int3>.Type))
+            {
+                int3 gets = (int3)getter.Invoke(ins);
+                Vector3Int temp = EditorGUILayout.Vector3IntField(name, new Vector3Int(gets.x, gets.y, gets.z));
+
+                value = new int3(temp.x, temp.y, temp.z);
+                return true;
+            }
+            else if (declaredType.Equals(TypeHelper.TypeOf<float3>.Type))
+            {
+                float3 temp = EditorGUILayout.Vector3Field(name, (float3)getter.Invoke(ins));
+                value = temp;
+                return true;
+            }
+            else if (declaredType.Equals(TypeHelper.TypeOf<quaternion>.Type))
+            {
+                Vector4 temp =
+                    EditorGUILayout.Vector4Field(name, ((quaternion)getter.Invoke(ins)).value);
+                value = new quaternion(temp);
+                return true;
+            }
+
+            return false;
+        }
+        //private static bool DrawCoreSystemField(object ins, Type declaredType, string name, Func<object, object> getter, out object value)
+        //{
+        //    value = null;
+        //    if (declaredType.Equals(TypeHelper.TypeOf<int3>.Type))
+        //    {
+        //        int3 gets = (int3)getter.Invoke(ins);
+        //        Vector3Int temp = EditorGUILayout.Vector3IntField(name, new Vector3Int(gets.x, gets.y, gets.z));
+
+        //        value = new int3(temp.x, temp.y, temp.z);
+        //        return true;
+        //    }
+        //    else if (declaredType.Equals(TypeHelper.TypeOf<float3>.Type))
+        //    {
+        //        float3 temp = EditorGUILayout.Vector3Field(name, (float3)getter.Invoke(ins));
+        //        value = temp;
+        //        return true;
+        //    }
+        //    else if (declaredType.Equals(TypeHelper.TypeOf<quaternion>.Type))
+        //    {
+        //        Vector4 temp =
+        //            EditorGUILayout.Vector4Field(name, ((quaternion)getter.Invoke(ins)).value);
+        //        value = new quaternion(temp);
+        //        return true;
+        //    }
+
+        //    return false;
+        //}
     }
 }

@@ -3,6 +3,7 @@ using Syadeu.Database;
 using System;
 using System.Linq;
 using System.Reflection;
+using UnityEngine;
 
 namespace Syadeu.Internal
 {
@@ -81,8 +82,14 @@ namespace Syadeu.Internal
 
             static bool CanSerialized(MemberInfo member)
             {
-                if (member.GetCustomAttribute<NonSerializedAttribute>() != null ||
-                    member.GetCustomAttribute<JsonIgnoreAttribute>() != null) return false;
+                if (member.GetCustomAttribute<NonSerializedAttribute>(true) != null ||
+                    member.GetCustomAttribute<JsonIgnoreAttribute>(true) != null ||
+                    member.GetCustomAttribute<HideInInspector>() != null) return false;
+
+                if (member is PropertyInfo property)
+                {
+                    if (!property.CanWrite || !property.CanRead) return false;
+                }
                 return true;
             }
         }

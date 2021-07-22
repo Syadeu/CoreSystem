@@ -56,22 +56,26 @@ namespace SyadeuEditor
                 .SetupElements(tempList, (other) =>
                 {
                     VerticalTreeElement element;
+                    VerticalFolderTreeElement folder;
                     if (other is EntityBase entity)
                     {
-                        var folder = treeView.GetOrCreateFolder<EntityFolder>(entity.GetType().Name);
+                        folder = treeView.GetOrCreateFolder<ObjectFolder>(entity.GetType().Name);
                         element = new TreeEntityElement(treeView, entity);
-
-                        element.SetParent(folder);
                     }
                     else if (other is AttributeBase attribute)
                     {
-                        var folder = treeView.GetOrCreateFolder<AttributeFolder>(attribute.GetType().Name);
+                        folder = treeView.GetOrCreateFolder<AttributeFolder>(attribute.GetType().Name);
                         element = new TreeAttributeElement(treeView, attribute);
-
-                        element.SetParent(folder);
                     }
-                    else throw new Exception();
+                    else
+                    {
+                        ObjectBase objBase = (ObjectBase)other;
 
+                        folder = treeView.GetOrCreateFolder<ObjectFolder>(objBase.GetType().BaseType.Name);
+                        element = new TreeObjectElement(treeView, objBase);
+                    }
+
+                    element.SetParent(folder);
                     return element;
                 })
             #region Button
@@ -79,7 +83,9 @@ namespace SyadeuEditor
                 {
                     if (treeView.SelectedToolbar == 0)
                     {
-                        Type[] types = TypeHelper.GetTypes((other) => !other.IsAbstract && TypeHelper.TypeOf<EntityBase>.Type.IsAssignableFrom(other));
+                        Type[] types = TypeHelper.GetTypes((other) => !other.IsAbstract && 
+                            TypeHelper.TypeOf<ObjectBase>.Type.IsAssignableFrom(other) &&
+                            !TypeHelper.TypeOf<AttributeBase>.Type.IsAssignableFrom(other));
 
                         Rect rect = GUILayoutUtility.GetLastRect();
                         rect.position = Event.current.mousePosition;
@@ -88,7 +94,7 @@ namespace SyadeuEditor
                         {
                             if (Asset.m_Objects == null) Asset.m_Objects = new Dictionary<Hash, ObjectBase>();
 
-                            EntityBase ins = (EntityBase)Activator.CreateInstance(t);
+                            ObjectBase ins = (ObjectBase)Activator.CreateInstance(t);
 
                             Asset.m_Objects.Add(ins.Hash, ins);
                             RefreshTreeView();
@@ -227,12 +233,12 @@ namespace SyadeuEditor
             base.OnInspectorGUI();
         }
 
-        private class EntityFolder : VerticalFolderTreeElement
+        private class ObjectFolder : VerticalFolderTreeElement
         {
             public override bool HideElementInTree => Tree.SelectedToolbar != 0 || base.HideElementInTree;
 
-            public EntityFolder() { }
-            public EntityFolder(VerticalTreeViewEntity tree, string name) : base(tree, name)
+            public ObjectFolder() { }
+            public ObjectFolder(VerticalTreeViewEntity tree, string name) : base(tree, name)
             {
                 m_Name = name;
             }
@@ -247,27 +253,55 @@ namespace SyadeuEditor
                 m_Name = name;
             }
         }
-        private class TreeEntityElement : VerticalTreeElement<EntityBase>
+        private class TreeObjectElement : VerticalTreeElement<ObjectBase>
         {
-            static string[] c_DefaultProperties = new string[] { "Name", "Hash", "PrefabIdx", "Attributes" };
-            const string c_EntityObsoleteWarning = "This entity type has been marked as deprecated.";
+            const string c_EntityObsoleteWarning = "This object type has been marked as deprecated.";
 
-            //public override string Name => Target.Name;
             public override bool HideElementInTree
                 => Tree.SelectedToolbar != 0 || base.HideElementInTree;
 
-            ReflectionHelperEditor.Drawer m_Drawer;
+            readonly ReflectionHelperEditor.Drawer m_Drawer;
+            readonly ObsoleteAttribute m_Deprecated = null;
+
+            public TreeObjectElement(VerticalTreeView treeView, ObjectBase entity) : base(treeView, entity)
+            {
+                m_Deprecated = entity.GetType().GetCustomAttribute<ObsoleteAttribute>();
+                if (m_Deprecated != null)
+                {
+                    m_Name = $"[Deprecated] {Target.Name}";
+                }
+                else m_Name = Target.Name;
+                m_Drawer = ReflectionHelperEditor.GetDrawer(entity);
+            }
+            public override void OnGUI()
+            {
+                EntityDataList.Instance.m_Objects[Target.Hash] = (ObjectBase)m_Drawer.OnGUI();
+            }
+        }
+        private class TreeEntityElement : VerticalTreeElement<EntityBase>
+        {
+            static string[] c_DefaultProperties = new string[] { "Name", "Hash", "Prefab", "Attributes" };
+            const string c_EntityObsoleteWarning = "This entity type has been marked as deprecated.";
+
+            public override bool HideElementInTree
+                => Tree.SelectedToolbar != 0 || base.HideElementInTree;
+
+            readonly Type t = null;
+            readonly ReflectionHelperEditor.Drawer m_Drawer;
+            readonly ObsoleteAttribute m_Deprecated = null;
             bool[] m_OpenAttributes = Array.Empty<bool>();
 
             public TreeEntityElement(VerticalTreeView treeView, EntityBase entity) : base(treeView, entity)
             {
-                ObsoleteAttribute obsolete = entity.GetType().GetCustomAttribute<ObsoleteAttribute>();
-                if (obsolete != null)
+                m_Deprecated = entity.GetType().GetCustomAttribute<ObsoleteAttribute>();
+                if (m_Deprecated != null)
                 {
                     m_Name = $"[Deprecated] {Target.Name}";
                 }
                 else m_Name = Target.Name;
                 m_Drawer = ReflectionHelperEditor.GetDrawer(entity, c_DefaultProperties);
+
+                t = Target.GetType();
             }
             public override void OnGUI()
             {
@@ -276,12 +310,10 @@ namespace SyadeuEditor
                 {
                     m_OpenAttributes = new bool[Target.Attributes.Count];
                 }
-                Type t = Target.GetType();
-                ObsoleteAttribute obsolete = t.GetCustomAttribute<ObsoleteAttribute>();
 
-                if (obsolete != null)
+                if (m_Deprecated != null)
                 {
-                    EditorGUILayout.HelpBox(c_EntityObsoleteWarning, MessageType.Warning);
+                    EditorGUILayout.HelpBox(c_EntityObsoleteWarning, m_Deprecated.IsError ? MessageType.Error : MessageType.Warning);
                 }
                 EditorUtils.StringRich(t.Name, 15);
 
@@ -289,7 +321,7 @@ namespace SyadeuEditor
                 EditorGUI.BeginDisabledGroup(true);
                 EditorGUILayout.TextField("Hash: ", Target.Hash.ToString());
                 EditorGUI.EndDisabledGroup();
-                ReflectionHelperEditor.DrawPrefabReference("Prefab: ", (idx) => Target.PrefabIdx = idx, Target.PrefabIdx);
+                ReflectionHelperEditor.DrawPrefabReference("Prefab: ", (idx) => Target.Prefab = idx, Target.Prefab);
                 //Target.PrefabIdx = PrefabListEditor.DrawPrefabSelector(Target.PrefabIdx);
 
                 Color originColor = GUI.backgroundColor;
@@ -381,7 +413,8 @@ namespace SyadeuEditor
                                 EditorGUILayout.HelpBox(
                                     "This is shared attribute. Anything made changes in this inspector view will affect to original attribute directly not only as this entity.",
                                     MessageType.Info);
-                                ReflectionHelperEditor.GetDrawer(targetAtt).OnGUI();
+
+                                SetAttribute(Target.Attributes[i], ReflectionHelperEditor.GetDrawer(targetAtt).OnGUI());
                             }
                             EditorGUILayout.EndVertical();
                             EditorGUI.indentLevel -= 1;
@@ -396,7 +429,7 @@ namespace SyadeuEditor
 
                 EditorUtils.Line();
 
-                m_Drawer.OnGUI(false, true);
+                EntityDataList.Instance.m_Objects[Target.Hash] = (ObjectBase)m_Drawer.OnGUI(false, true);
                 //Target.m_HP = EditorGUILayout.FloatField("HP", Target.m_HP);
                 //Target.m_Values.DrawValueContainer("Values");
             }
@@ -404,15 +437,20 @@ namespace SyadeuEditor
             private AttributeBase GetSelectedAttribute(Hash attHash)
             {
                 if (attHash.Equals(Hash.Empty)) return null;
-                //for (int i = 0; i < EntityDataList.Instance.m_Attributes.Count; i++)
-                //{
-                //    if (EntityDataList.Instance.m_Attributes[i].Hash.Equals(attHash)) return EntityDataList.Instance.m_Attributes[i];
-                //}
                 if (EntityDataList.Instance.m_Objects.TryGetValue(attHash, out ObjectBase val))
                 {
                     return (AttributeBase)val;
                 }
                 return null;
+            }
+            private void SetAttribute(Hash attHash, object att)
+            {
+                if (attHash.Equals(Hash.Empty)) return;
+                if (EntityDataList.Instance.m_Objects.ContainsKey(attHash))
+                {
+                    EntityDataList.Instance.m_Objects[attHash] = (AttributeBase)att;
+                }
+                else EntityDataList.Instance.m_Objects.Add(attHash, (AttributeBase)att);
             }
         }
         private class TreeAttributeElement : VerticalTreeElement<AttributeBase>
@@ -445,7 +483,7 @@ namespace SyadeuEditor
             }
             public override void OnGUI()
             {
-                m_Drawer.OnGUI();
+                EntityDataList.Instance.m_Objects[Target.Hash] = (ObjectBase)m_Drawer.OnGUI();
             }
         }
     }
