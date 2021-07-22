@@ -6,6 +6,8 @@ namespace SyadeuEditor.Tree
     {
         public string m_Description = null;
 
+        public override object TargetObject => throw new System.NotImplementedException();
+
         public VerticalFolderTreeElement() { }
         public VerticalFolderTreeElement(VerticalTreeViewEntity tree, string name) : base(tree)
         {

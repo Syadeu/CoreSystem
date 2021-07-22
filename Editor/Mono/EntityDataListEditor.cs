@@ -140,9 +140,9 @@ namespace SyadeuEditor
                     if (Asset.m_Objects != null) tempList.AddRange(Asset.m_Objects.Values);
                     return tempList;
                 })
-                .MakeRemoveButton((idx) =>
+                .MakeRemoveButton((other) =>
                 {
-                    ObjectBase target = (ObjectBase)treeView.Data[idx];
+                    ObjectBase target = (ObjectBase)other.TargetObject;
 
                     Asset.m_Objects.Remove(target.Hash);
 
@@ -257,6 +257,17 @@ namespace SyadeuEditor
         {
             const string c_EntityObsoleteWarning = "This object type has been marked as deprecated.";
 
+            public override string Name
+            {
+                get
+                {
+                    if (m_Deprecated != null)
+                    {
+                        return $"[Deprecated] {Target.Name}";
+                    }
+                    return Target.Name;
+                }
+            }
             public override bool HideElementInTree
                 => Tree.SelectedToolbar != 0 || base.HideElementInTree;
 
@@ -266,11 +277,11 @@ namespace SyadeuEditor
             public TreeObjectElement(VerticalTreeView treeView, ObjectBase entity) : base(treeView, entity)
             {
                 m_Deprecated = entity.GetType().GetCustomAttribute<ObsoleteAttribute>();
-                if (m_Deprecated != null)
-                {
-                    m_Name = $"[Deprecated] {Target.Name}";
-                }
-                else m_Name = Target.Name;
+                //if (m_Deprecated != null)
+                //{
+                //    m_Name = $"[Deprecated] {Target.Name}";
+                //}
+                //else m_Name = Target.Name;
                 m_Drawer = ReflectionHelperEditor.GetDrawer(entity);
             }
             public override void OnGUI()
@@ -457,33 +468,39 @@ namespace SyadeuEditor
         {
             static string[] c_DefaultProperties = new string[] { "Name", "Hash" };
 
-            //public override string Name
-            //{
-            //    get
-            //    {
-            //        m_Name = $"{Target.GetType().Name}: {Target.Name}";
-            //        return m_Name;
-            //    }
-            //}
+            public override string Name
+            {
+                get
+                {
+                    if (obsolete != null)
+                    {
+                        return $"[Deprecated] {Target.Name}";
+                    }
+                    else return Target.Name;
+                }
+            }
             public override bool HideElementInTree
                 => Tree.SelectedToolbar != 1 || base.HideElementInTree;
 
+            ObsoleteAttribute obsolete;
             ReflectionHelperEditor.Drawer m_Drawer;
 
             public TreeAttributeElement(VerticalTreeView treeView, AttributeBase att) : base(treeView, att)
             {
-                ObsoleteAttribute obsolete = att.GetType().GetCustomAttribute<ObsoleteAttribute>();
-                if (obsolete != null)
-                {
-                    m_Name = $"[Deprecated] {Target.Name}";
-                }
-                else m_Name = Target.Name;
+                obsolete = att.GetType().GetCustomAttribute<ObsoleteAttribute>();
+                //if (obsolete != null)
+                //{
+                //    m_Name = $"[Deprecated] {Target.Name}";
+                //}
+                //else m_Name = Target.Name;
                 m_Drawer = ReflectionHelperEditor.GetDrawer(att);
 
             }
             public override void OnGUI()
             {
+                EditorGUILayout.BeginVertical(EditorUtils.Box);
                 EntityDataList.Instance.m_Objects[Target.Hash] = (ObjectBase)m_Drawer.OnGUI();
+                EditorGUILayout.EndVertical();
             }
         }
     }

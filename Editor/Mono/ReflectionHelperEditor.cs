@@ -261,17 +261,29 @@ namespace SyadeuEditor
                     #endregion
                     if (list != null)
                     {
+                        Color originColor = GUI.backgroundColor;
+                        Color color1 = Color.black, color2 = Color.gray;
+                        color1.a = .5f; color2.a = .5f;
+
                         Type elementType = declaredType.GetElementType();
                         MemberInfo[] insider = ReflectionHelper.GetSerializeMemberInfos(elementType);
                         for (int j = 0; j < list.Count; j++)
                         {
                             EditorGUI.indentLevel += 1;
 
+                            GUI.backgroundColor = j % 2 == 0 ? color1 : color2; 
+                            EditorGUILayout.BeginVertical(EditorUtils.Box);
+                            GUI.backgroundColor = originColor;
+
                             list[j] = DrawObject(list[j]);
+
+                            EditorGUILayout.EndVertical();
 
                             if (j + 1 < list.Count) EditorUtils.Line();
                             EditorGUI.indentLevel -= 1;
                         }
+
+                        GUI.backgroundColor = originColor;
                     }
                 }
                 #region Unity Types

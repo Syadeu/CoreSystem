@@ -75,6 +75,7 @@ namespace SyadeuEditor
             private IStaticManager m_Manager;
             public IStaticManager Manager => m_Manager;
 
+            public override object TargetObject => m_Manager;
             private string m_Description = null;
 
             public ManagerTreeElement(VerticalTreeViewEntity tree, IStaticManager manager) : base(tree)
@@ -135,6 +136,8 @@ namespace SyadeuEditor
         {
             private CoreRoutine m_Routine;
             public CoreRoutine Routine => m_Routine;
+
+            public override object TargetObject => m_Routine;
 
             public RoutineTreeElement(VerticalTreeViewEntity tree, CoreRoutine routine) : base(tree)
             {
