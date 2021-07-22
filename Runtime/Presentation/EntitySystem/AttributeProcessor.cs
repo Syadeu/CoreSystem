@@ -21,7 +21,7 @@ namespace Syadeu.Presentation
     [Preserve]
     public abstract class AttributeProcessor : AttributeProcessorBase, IAttributeProcessor
     {
-        Type IAttributeProcessor.Target => TargetAttribute;
+        Type IProcessor.Target => TargetAttribute;
         void IAttributeProcessor.OnCreated(AttributeBase attribute, IEntity entity) => OnCreated(attribute, entity);
         void IAttributeProcessor.OnCreatedSync(AttributeBase attribute, IEntity entity) => OnCreatedSync(attribute, entity);
         void IAttributeProcessor.OnDestory(AttributeBase attribute, IEntity entity) => OnDestory(attribute, entity);
@@ -67,7 +67,7 @@ namespace Syadeu.Presentation
     public abstract class AttributeProcessor<T> : AttributeProcessorBase, IAttributeProcessor 
         where T : AttributeBase
     {
-        Type IAttributeProcessor.Target => TargetAttribute;
+        Type IProcessor.Target => TargetAttribute;
         void IAttributeProcessor.OnCreated(AttributeBase attribute, IEntity entity) => OnCreated((T)attribute, entity);
         void IAttributeProcessor.OnCreatedSync(AttributeBase attribute, IEntity entity) => OnCreatedSync((T)attribute, entity);
         void IAttributeProcessor.OnDestory(AttributeBase attribute, IEntity entity) => OnDestory((T)attribute, entity);
