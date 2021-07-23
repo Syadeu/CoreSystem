@@ -1,6 +1,6 @@
 ﻿namespace Syadeu.Presentation
 {
-    internal interface IEntityProcessor : IProcessor
+    internal interface IEntityDataProcessor : IProcessor
     {
         void OnCreated(IObject entity);
         void OnCreatedSync(IObject entity);

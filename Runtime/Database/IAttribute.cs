@@ -19,5 +19,7 @@ namespace Syadeu.Presentation
     {
         [JsonProperty(Order = -11)] string Name { get; }
         [JsonProperty(Order = -10)] Hash Hash { get; }
+
+        [JsonIgnore] IObject Parent { get; }
     }
 }

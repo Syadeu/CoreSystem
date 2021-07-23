@@ -28,7 +28,7 @@ namespace Syadeu.Presentation
         private readonly HashSet<Hash> m_ObjectHashSet = new HashSet<Hash>();
         private readonly Dictionary<Hash, IObject> m_ObjectEntities = new Dictionary<Hash, IObject>();
         private readonly Dictionary<Type, List<IAttributeProcessor>> m_AttributeProcessors = new Dictionary<Type, List<IAttributeProcessor>>();
-        private readonly Dictionary<Type, List<IEntityProcessor>> m_EntityProcessors = new Dictionary<Type, List<IEntityProcessor>>();
+        private readonly Dictionary<Type, List<IEntityDataProcessor>> m_EntityProcessors = new Dictionary<Type, List<IEntityDataProcessor>>();
 
         private GameObjectProxySystem m_ProxySystem;
 
@@ -68,23 +68,24 @@ namespace Syadeu.Presentation
                 }
                 else
                 {
-                    IEntityProcessor entityProcessor;
-                    if (ctor == null) entityProcessor = (IEntityProcessor)Activator.CreateInstance(processors[i]);
+                    IEntityDataProcessor entityProcessor;
+                    if (ctor == null) entityProcessor = (IEntityDataProcessor)Activator.CreateInstance(processors[i]);
                     else
                     {
-                        entityProcessor = (IEntityProcessor)ctor.Invoke(null);
+                        entityProcessor = (IEntityDataProcessor)ctor.Invoke(null);
                     }
 
-                    if (!TypeHelper.TypeOf<EntityBase>.Type.IsAssignableFrom(entityProcessor.Target))
+                    if (!TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(entityProcessor.Target))
                     {
                         throw new Exception();
                     }
 
                     if (!m_EntityProcessors.TryGetValue(entityProcessor.Target, out var values))
                     {
-                        values = new List<IEntityProcessor>();
+                        values = new List<IEntityDataProcessor>();
                         m_EntityProcessors.Add(entityProcessor.Target, values);
                     }
+                    //$"{entityProcessor.GetType().Name} added".ToLog();
                     values.Add(entityProcessor);
                 }
             }
@@ -295,10 +296,39 @@ namespace Syadeu.Presentation
             {
                 throw;
             }
-            if (original is EntityBase entity)
+            if (original is EntityBase)
             {
                 CoreSystem.Logger.LogError(Channel.Entity, "You're creating entity with CreateObject method. This is not allowed but slightly cared.");
                 return CreateEntity(hash, Vector3.zero);
+            }
+            else if (original is AttributeBase)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity, "This object is attribute and cannot be created. Request ignored.");
+                return null;
+            }
+
+            return InternalCreateObject(original);
+        }
+        public IObject CreateObject(string name)
+        {
+            ObjectBase original;
+            try
+            {
+                original = EntityDataList.Instance.GetObject(name);
+            }
+            catch (KeyNotFoundException)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_ObjectNotFoundError, name));
+                return null;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+            if (original is EntityBase)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity, "You're creating entity with CreateObject method. This is not allowed but slightly cared.");
+                return CreateEntity(name, Vector3.zero);
             }
             else if (original is AttributeBase)
             {
@@ -324,6 +354,23 @@ namespace Syadeu.Presentation
         #region Processor
         private static void ProcessEntityOnCreated(EntitySystem system, IObject entity)
         {
+            #region Entity
+            if (system.m_EntityProcessors.TryGetValue(entity.GetType(), out List<IEntityDataProcessor> entityProcessor))
+            {
+                for (int i = 0; i < entityProcessor.Count; i++)
+                {
+                    IEntityDataProcessor processor = entityProcessor[i];
+
+                    processor.OnCreated(entity);
+                    CoreSystem.AddForegroundJob(() =>
+                    {
+                        processor.OnCreatedSync(entity);
+                    });
+                }
+            }
+            #endregion
+
+            #region Attributes
             entity.Attributes.ForEach((other) =>
             {
                 if (other == null)
@@ -335,23 +382,6 @@ namespace Syadeu.Presentation
 
                 Type t = other.GetType();
 
-                #region Entity
-                if (system.m_EntityProcessors.TryGetValue(t, out List<IEntityProcessor> entityProcessor))
-                {
-                    for (int i = 0; i < entityProcessor.Count; i++)
-                    {
-                        IEntityProcessor processor = entityProcessor[i];
-
-                        processor.OnCreated(entity);
-                        CoreSystem.AddForegroundJob(() =>
-                        {
-                            processor.OnCreatedSync(entity);
-                        });
-                    }
-                }
-                #endregion
-
-                #region Attributes
                 if (system.m_AttributeProcessors.TryGetValue(t, out List<IAttributeProcessor> processors))
                 {
                     for (int j = 0; j < processors.Count; j++)
@@ -366,11 +396,23 @@ namespace Syadeu.Presentation
                     }
                     CoreSystem.Logger.Log(Channel.Entity, $"Processed OnCreated at entity({entity.Name}), {t.Name}");
                 }
-                #endregion
             });
+            #endregion
         }
         private static void ProcessEntityOnPresentation(EntitySystem system, IObject entity)
         {
+            //#region Entity
+            //if (system.m_EntityProcessors.TryGetValue(t, out List<IEntityProcessor> entityProcessor))
+            //{
+            //    for (int i = 0; i < entityProcessor.Count; i++)
+            //    {
+            //        IEntityProcessor processor = entityProcessor[i];
+
+            //    }
+            //}
+            //#endregion
+
+            #region Attributes
             entity.Attributes.ForEach((other) =>
             {
                 if (other == null)
@@ -381,19 +423,6 @@ namespace Syadeu.Presentation
                 }
 
                 Type t = other.GetType();
-
-                //#region Entity
-                //if (system.m_EntityProcessors.TryGetValue(t, out List<IEntityProcessor> entityProcessor))
-                //{
-                //    for (int i = 0; i < entityProcessor.Count; i++)
-                //    {
-                //        IEntityProcessor processor = entityProcessor[i];
-
-                //    }
-                //}
-                //#endregion
-
-                #region Attributes
 
                 if (system.m_AttributeProcessors.TryGetValue(t, out List<IAttributeProcessor> processors))
                 {
@@ -403,12 +432,28 @@ namespace Syadeu.Presentation
                         onPresentation.OnPresentation(other, entity);
                     }
                 }
-
-                #endregion
             });
+            #endregion
         }
         private static void ProcessEntityOnDestory(EntitySystem system, IObject entity)
         {
+            #region Entity
+            if (system.m_EntityProcessors.TryGetValue(entity.GetType(), out List<IEntityDataProcessor> entityProcessor))
+            {
+                for (int i = 0; i < entityProcessor.Count; i++)
+                {
+                    IEntityDataProcessor processor = entityProcessor[i];
+
+                    processor.OnDestory(entity);
+                    CoreSystem.AddForegroundJob(() =>
+                    {
+                        processor.OnDestorySync(entity);
+                    });
+                }
+            }
+            #endregion
+
+            #region Attributes
             entity.Attributes.ForEach((other) =>
             {
                 if (other == null)
@@ -420,23 +465,6 @@ namespace Syadeu.Presentation
 
                 Type t = other.GetType();
 
-                #region Entity
-                if (system.m_EntityProcessors.TryGetValue(t, out List<IEntityProcessor> entityProcessor))
-                {
-                    for (int i = 0; i < entityProcessor.Count; i++)
-                    {
-                        IEntityProcessor processor = entityProcessor[i];
-
-                        processor.OnDestory(entity);
-                        CoreSystem.AddForegroundJob(() =>
-                        {
-                            processor.OnDestorySync(entity);
-                        });
-                    }
-                }
-                #endregion
-
-                #region Attributes
                 if (system.m_AttributeProcessors.TryGetValue(t, out List<IAttributeProcessor> processors))
                 {
                     for (int j = 0; j < processors.Count; j++)
@@ -450,15 +478,27 @@ namespace Syadeu.Presentation
                         });
                     }
                 }
-                #endregion
             });
+            #endregion
         }
-        
+
         private static void ProcessEntityOnProxyCreated(EntitySystem system, IEntity entity, RecycleableMonobehaviour monoObj)
         {
             CoreSystem.Logger.Log(Channel.Presentation,
                 $"Processing OnProxyCreated at {entity.Name}");
 
+            //#region Entity
+            //if (system.m_EntityProcessors.TryGetValue(entity.GetType(), out List<IEntityDataProcessor> entityProcessor))
+            //{
+            //    for (int i = 0; i < entityProcessor.Count; i++)
+            //    {
+            //        IEntityDataProcessor processor = entityProcessor[i];
+
+            //    }
+            //}
+            //#endregion
+
+            #region Attributes
             entity.Attributes.ForEach((other) =>
             {
                 if (other == null)
@@ -469,18 +509,6 @@ namespace Syadeu.Presentation
 
                 Type t = other.GetType();
 
-                #region Entity
-                if (system.m_EntityProcessors.TryGetValue(t, out List<IEntityProcessor> entityProcessor))
-                {
-                    for (int i = 0; i < entityProcessor.Count; i++)
-                    {
-                        IEntityProcessor processor = entityProcessor[i];
-
-                    }
-                }
-                #endregion
-
-                #region Attributes
                 if (system.m_AttributeProcessors.TryGetValue(t, out List<IAttributeProcessor> processors))
                 {
                     for (int j = 0; j < processors.Count; j++)
@@ -498,14 +526,26 @@ namespace Syadeu.Presentation
                         }
                     }
                 }
-                #endregion
             });
+            #endregion
         }
         private static void ProcessEntityOnProxyRemoved(EntitySystem system, IEntity entity, RecycleableMonobehaviour monoObj)
         {
             CoreSystem.Logger.Log(Channel.Presentation,
                 $"Processing OnProxyRemoved at  {entity.Name}");
 
+            //#region Entity
+            //if (system.m_EntityProcessors.TryGetValue(entity.GetType(), out List<IEntityDataProcessor> entityProcessor))
+            //{
+            //    for (int i = 0; i < entityProcessor.Count; i++)
+            //    {
+            //        IEntityDataProcessor processor = entityProcessor[i];
+
+            //    }
+            //}
+            //#endregion
+
+            #region Attributes
             entity.Attributes.ForEach((other) =>
             {
                 if (other == null)
@@ -516,18 +556,6 @@ namespace Syadeu.Presentation
 
                 Type t = other.GetType();
 
-                #region Entity
-                if (system.m_EntityProcessors.TryGetValue(t, out List<IEntityProcessor> entityProcessor))
-                {
-                    for (int i = 0; i < entityProcessor.Count; i++)
-                    {
-                        IEntityProcessor processor = entityProcessor[i];
-
-                    }
-                }
-                #endregion
-
-                #region Attributes
                 if (system.m_AttributeProcessors.TryGetValue(t, out List<IAttributeProcessor> processors))
                 {
                     for (int j = 0; j < processors.Count; j++)
@@ -545,8 +573,8 @@ namespace Syadeu.Presentation
                         }
                     }
                 }
-                #endregion
             });
+            #endregion
         }
 
         #endregion

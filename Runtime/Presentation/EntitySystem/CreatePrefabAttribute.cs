@@ -74,7 +74,9 @@ namespace Syadeu.Presentation
         [System.Obsolete("", true)]
         public IReadOnlyList<int2> GetMoveableCells()
         {
-            ref GridManager.GridCell cell = ref Parent.GetCurrentCell();
+            IEntity parent = (IEntity)Parent;
+
+            ref GridManager.GridCell cell = ref parent.GetCurrentCell();
             return TurnTableManager.GetMoveableCells(in cell, ActionPoint);
         }
     }

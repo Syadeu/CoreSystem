@@ -54,16 +54,17 @@ namespace Syadeu.Presentation
             {
                 yield return null;
             }
+            IEntity parent = (IEntity)Parent;
 
-            DataGameObject obj = Parent.gameObject;
-            DataTransform tr = Parent.transform;
+            DataGameObject obj = parent.gameObject;
+            DataTransform tr = parent.transform;
 
             while (NavMeshAgent.desiredVelocity.magnitude > 0 &&
                     NavMeshAgent.remainingDistance > .2f)
             {
                 if (!obj.HasProxyObject) yield break;
 
-                Parent.transform.SynchronizeWithProxy();
+                parent.transform.SynchronizeWithProxy();
                 yield return null;
             }
 

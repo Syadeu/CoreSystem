@@ -5,20 +5,20 @@ using UnityEngine.Scripting;
 namespace Syadeu.Presentation
 {
     [Preserve]
-    public abstract class EntityProcessor : IEntityProcessor
+    public abstract class EntityDataProcessor : IEntityDataProcessor
     {
         Type IProcessor.Target => TargetEntity;
-        void IEntityProcessor.OnCreated(IObject entity) => OnCreated((IEntity)entity);
-        void IEntityProcessor.OnCreatedSync(IObject entity) => OnCreatedSync((IEntity)entity);
-        void IEntityProcessor.OnDestory(IObject entity) => OnDestory((IEntity)entity);
-        void IEntityProcessor.OnDestorySync(IObject entity) => OnDestorySync((IEntity)entity);
+        void IEntityDataProcessor.OnCreated(IObject entity) => OnCreated((IEntity)entity);
+        void IEntityDataProcessor.OnCreatedSync(IObject entity) => OnCreatedSync((IEntity)entity);
+        void IEntityDataProcessor.OnDestory(IObject entity) => OnDestory((IEntity)entity);
+        void IEntityDataProcessor.OnDestorySync(IObject entity) => OnDestorySync((IEntity)entity);
 
         /// <summary>
-        /// 이 프로세서가 타겟으로 삼을 <see cref="EntityBase"/>입니다.
+        /// 이 프로세서가 타겟으로 삼을 <see cref="EntityDataBase"/>입니다.
         /// </summary>
         protected abstract Type TargetEntity { get; }
         /// <summary>
-        /// <see cref="Target"/>에 설정된 <see cref="ObjectBase"/>가
+        /// <see cref="Target"/>에 설정된 <see cref="EntityDataBase"/>가
         /// 생성되었을 때 실행되는 메소드입니다.
         /// </summary>
         /// <remarks>
@@ -32,7 +32,7 @@ namespace Syadeu.Presentation
         /// </remarks>
         protected virtual void OnCreatedSync(IEntity entity) { }
         /// <summary>
-        /// <see cref="Target"/>에 설정된 <see cref="EntityBase"/>가
+        /// <see cref="Target"/>에 설정된 <see cref="EntityDataBase"/>가
         /// 파괴되었을 때 실행되는 메소드입니다.
         /// </summary>
         /// <param name="entity"></param>
@@ -47,22 +47,22 @@ namespace Syadeu.Presentation
         protected virtual void OnDestorySync(IEntity entity) { }
     }
     [Preserve]
-    public abstract class EntityProcessor<T> : IEntityProcessor where T : EntityBase
+    public abstract class EntityDataProcessor<T> : IEntityDataProcessor where T : EntityDataBase
     {
         Type IProcessor.Target => TargetEntity;
-        void IEntityProcessor.OnCreated(IObject entity) => OnCreated((T)entity);
-        void IEntityProcessor.OnCreatedSync(IObject entity) => OnCreatedSync((T)entity);
-        void IEntityProcessor.OnDestory(IObject entity) => OnDestory((T)entity);
-        void IEntityProcessor.OnDestorySync(IObject entity) => OnDestorySync((T)entity);
+        void IEntityDataProcessor.OnCreated(IObject entity) => OnCreated((T)entity);
+        void IEntityDataProcessor.OnCreatedSync(IObject entity) => OnCreatedSync((T)entity);
+        void IEntityDataProcessor.OnDestory(IObject entity) => OnDestory((T)entity);
+        void IEntityDataProcessor.OnDestorySync(IObject entity) => OnDestorySync((T)entity);
 
         private Type TargetEntity => TypeHelper.TypeOf<T>.Type;
-        /// <inheritdoc cref="EntityProcessor.OnCreated(IEntity)"/>
+        /// <inheritdoc cref="EntityDataProcessor.OnCreated(IEntity)"/>
         protected virtual void OnCreated(T entity) { }
-        /// <inheritdoc cref="EntityProcessor.OnCreatedSync(IEntity)"/>
+        /// <inheritdoc cref="EntityDataProcessor.OnCreatedSync(IEntity)"/>
         protected virtual void OnCreatedSync(T entity) { }
-        /// <inheritdoc cref="EntityProcessor.OnDestory(IEntity)"/>
+        /// <inheritdoc cref="EntityDataProcessor.OnDestory(IEntity)"/>
         protected virtual void OnDestory(T entity) { }
-        /// <inheritdoc cref="EntityProcessor.OnDestorySync(IEntity)"/>
+        /// <inheritdoc cref="EntityDataProcessor.OnDestorySync(IEntity)"/>
         protected virtual void OnDestorySync(T entity) { }
     }
 }
