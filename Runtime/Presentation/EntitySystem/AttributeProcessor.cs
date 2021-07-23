@@ -1,9 +1,7 @@
 ﻿using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Mono;
-using Syadeu.ThreadSafe;
 using System;
-using Unity.Mathematics;
 using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation
@@ -19,7 +17,7 @@ namespace Syadeu.Presentation
     /// 참조: <seealso cref="IAttributeOnPresentation"/>, <seealso cref="IAttributeOnProxy"/>,
     /// </remarks>
     [Preserve]
-    public abstract class AttributeProcessor : AttributeProcessorBase, IAttributeProcessor
+    public abstract class AttributeProcessor : ProcessorBase, IAttributeProcessor
     {
         Type IProcessor.Target => TargetAttribute;
         void IAttributeProcessor.OnCreated(AttributeBase attribute, IObject entity) => OnCreated(attribute, (IEntity)entity);
@@ -64,7 +62,7 @@ namespace Syadeu.Presentation
     }
     /// <inheritdoc cref="IAttributeProcessor"/>
     [Preserve]
-    public abstract class AttributeProcessor<T> : AttributeProcessorBase, IAttributeProcessor 
+    public abstract class AttributeProcessor<T> : ProcessorBase, IAttributeProcessor 
         where T : AttributeBase
     {
         Type IProcessor.Target => TargetAttribute;
@@ -82,29 +80,5 @@ namespace Syadeu.Presentation
         protected virtual void OnDestory(T attribute, IEntity entity) { }
         /// <inheritdoc cref="IAttributeProcessor.OnDestorySync(AttributeBase, IEntity)"/>
         protected virtual void OnDestorySync(T attribute, IEntity entity) { }
-    }
-
-    public abstract class AttributeProcessorBase
-    {
-        protected DataGameObject CreatePrefab(PrefabReference prefab, Vector3 position, quaternion rotation)
-            => CreatePrefab(prefab, position, rotation, Vector3.One, true);
-        protected DataGameObject CreatePrefab(PrefabReference prefab, Vector3 position, quaternion rotation, Vector3 localSize, bool enableCull)
-        {
-            GameObjectProxySystem system = PresentationSystem<GameObjectProxySystem>.System;
-            CoreSystem.Logger.NotNull(system, "GameObjectProxySystem is not initialized");
-
-            return system.CreateNewPrefab(prefab, position, rotation, localSize, enableCull);
-        }
-
-        protected IEntity CreateEntity(IReference entity, Vector3 position, quaternion rotation)
-            => CreateEntity(entity, position, rotation, Vector3.One, true);
-        protected IEntity CreateEntity(IReference entity, Vector3 position, quaternion rotation, Vector3 localSize, bool enableCull)
-        {
-            EntitySystem system = PresentationSystem<EntitySystem>.System;
-            CoreSystem.Logger.NotNull(system, "GameObjectProxySystem is not initialized");
-            CoreSystem.Logger.NotNull(entity, "Target Entity cannot be null");
-
-            return system.CreateEntity(entity.Hash, position, rotation, localSize, enableCull);
-        }
     }
 }

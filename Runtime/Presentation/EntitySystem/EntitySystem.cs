@@ -30,7 +30,7 @@ namespace Syadeu.Presentation
         private readonly Dictionary<Type, List<IAttributeProcessor>> m_AttributeProcessors = new Dictionary<Type, List<IAttributeProcessor>>();
         private readonly Dictionary<Type, List<IEntityDataProcessor>> m_EntityProcessors = new Dictionary<Type, List<IEntityDataProcessor>>();
 
-        private GameObjectProxySystem m_ProxySystem;
+        internal GameObjectProxySystem m_ProxySystem;
 
         #region Presentation Methods
         protected override PresentationResult OnInitializeAsync()
@@ -45,9 +45,10 @@ namespace Syadeu.Presentation
                 ConstructorInfo ctor = processors[i].GetConstructor(BindingFlags.Public | BindingFlags.Instance,
                     null, CallingConventions.HasThis, Array.Empty<Type>(), null);
 
+                IProcessor processor;
                 if (TypeHelper.TypeOf<IAttributeProcessor>.Type.IsAssignableFrom(processors[i]))
                 {
-                    IAttributeProcessor processor;
+                    //IAttributeProcessor processor;
                     if (ctor == null) processor = (IAttributeProcessor)Activator.CreateInstance(processors[i]);
                     else
                     {
@@ -64,30 +65,33 @@ namespace Syadeu.Presentation
                         values = new List<IAttributeProcessor>();
                         m_AttributeProcessors.Add(processor.Target, values);
                     }
-                    values.Add(processor);
+                    values.Add((IAttributeProcessor)processor);
                 }
                 else
                 {
-                    IEntityDataProcessor entityProcessor;
-                    if (ctor == null) entityProcessor = (IEntityDataProcessor)Activator.CreateInstance(processors[i]);
+                    //IEntityDataProcessor entityProcessor;
+                    if (ctor == null) processor = (IEntityDataProcessor)Activator.CreateInstance(processors[i]);
                     else
                     {
-                        entityProcessor = (IEntityDataProcessor)ctor.Invoke(null);
+                        processor = (IEntityDataProcessor)ctor.Invoke(null);
                     }
 
-                    if (!TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(entityProcessor.Target))
+                    if (!TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(processor.Target))
                     {
                         throw new Exception();
                     }
 
-                    if (!m_EntityProcessors.TryGetValue(entityProcessor.Target, out var values))
+                    if (!m_EntityProcessors.TryGetValue(processor.Target, out var values))
                     {
                         values = new List<IEntityDataProcessor>();
-                        m_EntityProcessors.Add(entityProcessor.Target, values);
+                        m_EntityProcessors.Add(processor.Target, values);
                     }
                     //$"{entityProcessor.GetType().Name} added".ToLog();
-                    values.Add(entityProcessor);
+                    values.Add((IEntityDataProcessor)processor);
                 }
+
+                ProcessorBase baseProcessor = (ProcessorBase)processor;
+                baseProcessor.m_EntitySystem = this;
             }
             #endregion
 

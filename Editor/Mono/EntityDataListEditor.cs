@@ -70,8 +70,11 @@ namespace SyadeuEditor
                     else
                     {
                         ObjectBase objBase = (ObjectBase)other;
-
-                        folder = treeView.GetOrCreateFolder<ObjectFolder>(objBase.GetType().BaseType.Name);
+                        if (objBase.GetType().BaseType.Equals(TypeHelper.TypeOf<EntityDataBase>.Type))
+                        {
+                            folder = treeView.GetOrCreateFolder<ObjectFolder>(objBase.GetType().Name);
+                        }
+                        else folder = treeView.GetOrCreateFolder<ObjectFolder>(objBase.GetType().BaseType.Name);
                         element = new TreeObjectElement(treeView, objBase);
                     }
 

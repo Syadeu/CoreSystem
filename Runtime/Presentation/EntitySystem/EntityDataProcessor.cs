@@ -5,7 +5,7 @@ using UnityEngine.Scripting;
 namespace Syadeu.Presentation
 {
     [Preserve]
-    public abstract class EntityDataProcessor : IEntityDataProcessor
+    public abstract class EntityDataProcessor : ProcessorBase, IEntityDataProcessor
     {
         Type IProcessor.Target => TargetEntity;
         void IEntityDataProcessor.OnCreated(IObject entity) => OnCreated((IEntity)entity);
@@ -47,7 +47,7 @@ namespace Syadeu.Presentation
         protected virtual void OnDestorySync(IEntity entity) { }
     }
     [Preserve]
-    public abstract class EntityDataProcessor<T> : IEntityDataProcessor where T : EntityDataBase
+    public abstract class EntityDataProcessor<T> : ProcessorBase, IEntityDataProcessor where T : EntityDataBase
     {
         Type IProcessor.Target => TargetEntity;
         void IEntityDataProcessor.OnCreated(IObject entity) => OnCreated((T)entity);
