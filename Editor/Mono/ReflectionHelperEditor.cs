@@ -22,6 +22,26 @@ namespace SyadeuEditor
 {
     public sealed class ReflectionHelperEditor
     {
+        static GUIStyle m_SelectorStyle = null;
+        static GUIStyle SelectorStyle
+        {
+            get
+            {
+                if (m_SelectorStyle == null)
+                {
+                    GUIStyle st = new GUIStyle(EditorUtils.TextField);
+                    st.clipping = TextClipping.Clip;
+                    st.stretchWidth = true;
+                    st.alignment = TextAnchor.MiddleCenter;
+                    st.wordWrap = true;
+
+                    m_SelectorStyle = st;
+                }
+
+                return m_SelectorStyle;
+            }
+        }
+
         public sealed class Drawer
         {
             const string c_EntityObsoleteWarning = "This type has been marked as deprecated.";
@@ -62,11 +82,11 @@ namespace SyadeuEditor
         public static Drawer GetDrawer(object ins, params string[] ignore) => new Drawer(ins, ignore);
         public static void DrawAssetReference(string name, Action<AssetReference> setter, AssetReference refAsset)
         {
-            float iconHeight = EditorGUIUtility.singleLineHeight - EditorGUIUtility.standardVerticalSpacing * 3;
-            Vector2 iconSize = EditorGUIUtility.GetIconSize();
-            EditorGUIUtility.SetIconSize(new Vector2(iconHeight, iconHeight));
+            //float iconHeight = EditorGUIUtility.singleLineHeight - EditorGUIUtility.standardVerticalSpacing * 3;
+            //Vector2 iconSize = EditorGUIUtility.GetIconSize();
+            //EditorGUIUtility.SetIconSize(new Vector2(iconHeight, iconHeight));
             string assetPath = AssetDatabase.GUIDToAssetPath(refAsset?.AssetGUID);
-            Texture2D assetIcon = AssetDatabase.GetCachedIcon(assetPath) as Texture2D;
+            //Texture2D assetIcon = AssetDatabase.GetCachedIcon(assetPath) as Texture2D;
 
             string displayName;
             AddressableAssetEntry entry = null;
@@ -84,18 +104,26 @@ namespace SyadeuEditor
             EditorGUILayout.BeginHorizontal();
             if (!string.IsNullOrEmpty(name)) EditorGUILayout.LabelField(name);
 
-            Rect rect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
-            rect = EditorGUI.IndentedRect(rect);
-            if (EditorGUI.DropdownButton(rect, new GUIContent(displayName, assetIcon), FocusType.Passive/*, new GUIStyle("ObjectField")*/))
+            if (GUILayout.Button(displayName, SelectorStyle, GUILayout.ExpandWidth(true)))
             {
-                rect = GUILayoutUtility.GetLastRect();
+                Rect rect = GUILayoutUtility.GetLastRect();
                 rect.position = Event.current.mousePosition;
 
                 PopupWindow.Show(rect, AssetReferencePopup.GetWindow(setter, refAsset?.AssetGUID, displayName));
             }
 
+            //Rect rect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
+            //rect = EditorGUI.IndentedRect(rect);
+            //if (EditorGUI.DropdownButton(rect, new GUIContent(displayName, assetIcon), FocusType.Passive/*, new GUIStyle("ObjectField")*/))
+            //{
+            //    rect = GUILayoutUtility.GetLastRect();
+            //    rect.position = Event.current.mousePosition;
+
+            //    PopupWindow.Show(rect, AssetReferencePopup.GetWindow(setter, refAsset?.AssetGUID, displayName));
+            //}
+
             EditorGUILayout.EndHorizontal();
-            EditorGUIUtility.SetIconSize(iconSize);
+            //EditorGUIUtility.SetIconSize(iconSize);
         }
         public static void DrawPrefabReference(string name, Action<int> setter, PrefabReference current)
         {
@@ -104,13 +132,11 @@ namespace SyadeuEditor
             else displayName = "None";
 
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField(new GUIContent(name));
+            if (!string.IsNullOrEmpty(name)) EditorGUILayout.LabelField(name);
 
-            Rect rect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight, GUILayout.ExpandWidth(true));
-            rect = EditorGUI.IndentedRect(rect);
-            if (EditorGUI.DropdownButton(rect, new GUIContent(displayName), FocusType.Passive/*, new GUIStyle("ObjectField")*/))
+            if (GUILayout.Button(displayName, SelectorStyle, GUILayout.ExpandWidth(true)))
             {
-                rect = GUILayoutUtility.GetLastRect();
+                Rect rect = GUILayoutUtility.GetLastRect();
                 rect.position = Event.current.mousePosition;
 
                 PopupWindow.Show(rect, SelectorPopup<int, PrefabList.ObjectSetting>.GetWindow(PrefabList.Instance.ObjectSettings, setter, (objSet) =>
@@ -122,6 +148,23 @@ namespace SyadeuEditor
                     return -1;
                 }));
             }
+
+            //Rect rect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight, GUILayout.ExpandWidth(true));
+            //rect = EditorGUI.IndentedRect(rect);
+            //if (EditorGUI.DropdownButton(rect, new GUIContent(displayName), FocusType.Passive/*, new GUIStyle("ObjectField")*/))
+            //{
+            //    rect = GUILayoutUtility.GetLastRect();
+            //    rect.position = Event.current.mousePosition;
+
+            //    PopupWindow.Show(rect, SelectorPopup<int, PrefabList.ObjectSetting>.GetWindow(PrefabList.Instance.ObjectSettings, setter, (objSet) =>
+            //    {
+            //        for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
+            //        {
+            //            if (objSet.Equals(PrefabList.Instance.ObjectSettings[i])) return i;
+            //        }
+            //        return -1;
+            //    }));
+            //}
             EditorGUILayout.EndHorizontal();
         }
         public static void DrawAttributeSelector(string name, Action<Hash> setter, Hash current)
@@ -138,18 +181,29 @@ namespace SyadeuEditor
                 EditorGUILayout.LabelField(new GUIContent(name));
             }
 
-            Rect rect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight, GUILayout.ExpandWidth(true));
-            rect = EditorGUI.IndentedRect(rect);
-            if (EditorGUI.DropdownButton(rect, new GUIContent(displayName), FocusType.Passive))
+            if (GUILayout.Button(displayName, SelectorStyle, GUILayout.ExpandWidth(true)))
             {
-                rect = GUILayoutUtility.GetLastRect();
-                rect.position = Event.current.mousePosition;
+                Rect tempRect = GUILayoutUtility.GetLastRect();
+                tempRect.position = Event.current.mousePosition;
 
-                PopupWindow.Show(rect, SelectorPopup<Hash, AttributeBase>.GetWindow(EntityDataList.Instance.GetAttributes(), setter, (att) =>
+                PopupWindow.Show(tempRect, SelectorPopup<Hash, AttributeBase>.GetWindow(EntityDataList.Instance.GetAttributes(), setter, (att) =>
                 {
                     return att.Hash;
                 }));
             }
+
+            //Rect rect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight, GUILayout.ExpandWidth(true));
+            //rect = EditorGUI.IndentedRect(rect);
+            //if (EditorGUI.DropdownButton(rect, new GUIContent(displayName), FocusType.Passive))
+            //{
+            //    rect = GUILayoutUtility.GetLastRect();
+            //    rect.position = Event.current.mousePosition;
+
+            //    PopupWindow.Show(rect, SelectorPopup<Hash, AttributeBase>.GetWindow(EntityDataList.Instance.GetAttributes(), setter, (att) =>
+            //    {
+            //        return att.Hash;
+            //    }));
+            //}
             if (!string.IsNullOrEmpty(name)) EditorGUILayout.EndHorizontal();
         }
         public static void DrawReferenceSelector(string name, Action<Hash> setter, IReference current, Type targetType)

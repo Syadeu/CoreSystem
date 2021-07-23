@@ -42,6 +42,7 @@ namespace SyadeuEditor
 
         public const string DefaultPath = "Assets/Resources/Syadeu";
         public const string Box = "Box";
+        public const string TextField = "textField";
         public const string MiniButton = "miniButton";
         public const string FoldoutOpendString = "▼";
         public const string FoldoutClosedString = "▶";
