@@ -131,8 +131,10 @@ namespace SyadeuEditor
             if (current.m_Idx >= 0) displayName = current.GetObjectSetting().m_Name;
             else displayName = "None";
 
-            EditorGUILayout.BeginHorizontal();
-            if (!string.IsNullOrEmpty(name)) EditorGUILayout.LabelField(name);
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(EditorGUI.indentLevel * 15);
+
+            if (!string.IsNullOrEmpty(name)) GUILayout.Label(name);
 
             if (GUILayout.Button(displayName, SelectorStyle, GUILayout.ExpandWidth(true)))
             {
@@ -148,23 +150,6 @@ namespace SyadeuEditor
                     return -1;
                 }));
             }
-
-            //Rect rect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight, GUILayout.ExpandWidth(true));
-            //rect = EditorGUI.IndentedRect(rect);
-            //if (EditorGUI.DropdownButton(rect, new GUIContent(displayName), FocusType.Passive/*, new GUIStyle("ObjectField")*/))
-            //{
-            //    rect = GUILayoutUtility.GetLastRect();
-            //    rect.position = Event.current.mousePosition;
-
-            //    PopupWindow.Show(rect, SelectorPopup<int, PrefabList.ObjectSetting>.GetWindow(PrefabList.Instance.ObjectSettings, setter, (objSet) =>
-            //    {
-            //        for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
-            //        {
-            //            if (objSet.Equals(PrefabList.Instance.ObjectSettings[i])) return i;
-            //        }
-            //        return -1;
-            //    }));
-            //}
             EditorGUILayout.EndHorizontal();
         }
         public static void DrawAttributeSelector(string name, Action<Hash> setter, Hash current, Type entityType)
@@ -177,10 +162,12 @@ namespace SyadeuEditor
 
             EntityAcceptOnlyAttribute acceptOnly = entityType.GetCustomAttribute<EntityAcceptOnlyAttribute>();
 
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(EditorGUI.indentLevel * 15);
+
             if (!string.IsNullOrEmpty(name))
             {
-                EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.LabelField(new GUIContent(name));
+                GUILayout.Label(name);
             }
 
             if (GUILayout.Button(displayName, SelectorStyle, GUILayout.ExpandWidth(true)))
@@ -212,7 +199,7 @@ namespace SyadeuEditor
                     );
             }
 
-            if (!string.IsNullOrEmpty(name)) EditorGUILayout.EndHorizontal();
+            GUILayout.EndHorizontal();
         }
         public static void DrawReferenceSelector(string name, Action<Hash> setter, IReference current, Type targetType)
         {
@@ -225,17 +212,17 @@ namespace SyadeuEditor
                 else displayName = objBase.Name;
             }
 
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(EditorGUI.indentLevel * 15);
+            
             if (!string.IsNullOrEmpty(name))
             {
-                EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.LabelField(new GUIContent(name));
+                GUILayout.Label(name);
             }
             
-            Rect rect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight, GUILayout.ExpandWidth(true));
-            rect = EditorGUI.IndentedRect(rect);
-            if (EditorGUI.DropdownButton(rect, new GUIContent(displayName), FocusType.Passive))
+            if (GUILayout.Button(displayName, SelectorStyle, GUILayout.ExpandWidth(true)))
             {
-                rect = GUILayoutUtility.GetLastRect();
+                Rect rect = GUILayoutUtility.GetRect(150, 300);
                 rect.position = Event.current.mousePosition;
 
                 if (targetType == null)
@@ -262,7 +249,8 @@ namespace SyadeuEditor
                     }));
                 }
             }
-            if (!string.IsNullOrEmpty(name)) EditorGUILayout.EndHorizontal();
+
+            GUILayout.EndHorizontal();
         }
         public static object DrawObject(object obj, params string[] ignores)
         {
