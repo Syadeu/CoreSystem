@@ -1,4 +1,5 @@
 ﻿
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -134,7 +135,7 @@ namespace SyadeuEditor
 
         #endregion
 
-        public static void SetDirty(Object obj) => EditorUtility.SetDirty(obj);
+        public static void SetDirty(UnityEngine.Object obj) => EditorUtility.SetDirty(obj);
 
         #region String
 
@@ -257,6 +258,34 @@ namespace SyadeuEditor
             GUI.backgroundColor = old;
         }
         #endregion
+
+        public sealed class BoxBlock : IDisposable
+        {
+            Color m_PrevColor;
+            int m_PrevIndent;
+
+            public BoxBlock(Color color)
+            {
+                m_PrevColor = GUI.backgroundColor;
+                m_PrevIndent = EditorGUI.indentLevel;
+
+                EditorGUI.indentLevel = 0;
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(m_PrevIndent * 15);
+                GUI.backgroundColor = color;
+                GUILayout.BeginVertical(Box);
+                GUI.backgroundColor = m_PrevColor;
+            }
+            public void Dispose()
+            {
+                GUILayout.EndVertical();
+                GUILayout.EndHorizontal();
+
+                EditorGUI.indentLevel = m_PrevIndent;
+                GUI.backgroundColor = m_PrevColor;
+            }
+        }
 
         private static Editor objectPreviewWindow;
         public static void ObjectPreview(this EditorWindow t, GameObject obj)

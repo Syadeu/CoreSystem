@@ -305,13 +305,10 @@ namespace SyadeuEditor
                 EditorGUILayout.TextField("Hash: ", Target.Hash.ToString());
                 EditorGUI.EndDisabledGroup();
 
-                Color originColor = GUI.backgroundColor;
-                Color color1 = Color.black, color2 = Color.gray;
+                Color color1 = Color.black, color2 = Color.yellow;
                 color1.a = .5f; color2.a = .5f;
 
-                GUI.backgroundColor = color1;
-                EditorGUILayout.BeginVertical(EditorUtils.Box);
-                GUI.backgroundColor = originColor;
+                using (new EditorUtils.BoxBlock(color1))
                 {
                     if (Target.Attributes == null) Target.Attributes = new List<Hash>();
                     EditorGUILayout.BeginHorizontal();
@@ -329,60 +326,71 @@ namespace SyadeuEditor
 
                     EditorGUI.indentLevel += 1;
 
-                    GUI.backgroundColor = color2;
-                    EditorGUILayout.BeginVertical(EditorUtils.Box);
-                    GUI.backgroundColor = originColor;
-                    for (int i = 0; i < Target.Attributes.Count; i++)
+                    using (new EditorUtils.BoxBlock(color2))
                     {
-                        EditorGUILayout.BeginHorizontal();
+                        DrawAttributes();
+                    }
 
-                        int idx = i;
-                        EditorGUI.BeginChangeCheck();
-                        idx = EditorGUILayout.DelayedIntField(idx, GUILayout.Width(80));
-                        if (EditorGUI.EndChangeCheck())
+                    EditorGUI.indentLevel -= 1;
+                }
+
+                EditorUtils.Line();
+
+                EntityDataList.Instance.m_Objects[Target.Hash] = (ObjectBase)m_Drawer.OnGUI(false, true);
+            }
+
+            private void DrawAttributes()
+            {
+                for (int i = 0; i < Target.Attributes.Count; i++)
+                {
+                    EditorGUILayout.BeginHorizontal();
+
+                    int idx = i;
+                    EditorGUI.BeginChangeCheck();
+                    idx = EditorGUILayout.DelayedIntField(idx, GUILayout.Width(80));
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        if (idx >= Target.Attributes.Count) idx = Target.Attributes.Count - 1;
+
+                        Hash cache = Target.Attributes[i];
+                        Target.Attributes.RemoveAt(i);
+                        Target.Attributes.Insert(idx, cache);
+                    }
+
+                    ReflectionHelperEditor.DrawAttributeSelector(null, (attHash) => Target.Attributes[i] = attHash, Target.Attributes[i], m_Type);
+
+                    if (GUILayout.Button("-", GUILayout.Width(20)))
+                    {
+                        if (Target.Attributes.Count == 1)
                         {
-                            if (idx >= Target.Attributes.Count) idx = Target.Attributes.Count - 1;
-
-                            Hash cache = Target.Attributes[i];
-                            Target.Attributes.RemoveAt(i);
-                            Target.Attributes.Insert(idx, cache);
+                            Target.Attributes.Clear();
+                            m_OpenAttributes = Array.Empty<bool>();
+                            EditorGUILayout.EndHorizontal();
+                            break;
                         }
 
-                        ReflectionHelperEditor.DrawAttributeSelector(null, (attHash) => Target.Attributes[i] = attHash, Target.Attributes[i], m_Type);
+                        var temp = m_OpenAttributes.ToList();
+                        temp.RemoveAt(i);
+                        m_OpenAttributes = temp.ToArray();
+                        Target.Attributes.RemoveAt(i);
+                        if (i != 0) i--;
+                    }
 
-                        if (GUILayout.Button("-", GUILayout.Width(20)))
+                    m_OpenAttributes[i] = GUILayout.Toggle(m_OpenAttributes[i],
+                        m_OpenAttributes[i] ? EditorUtils.FoldoutOpendString : EditorUtils.FoldoutClosedString
+                        , EditorUtils.MiniButton, GUILayout.Width(20));
+                    EditorGUILayout.EndHorizontal();
+
+                    if (m_OpenAttributes[i])
+                    {
+                        Color color3 = Color.red;
+                        color3.a = .7f;
+                        AttributeBase targetAtt = GetSelectedAttribute(Target.Attributes[i]);
+
+                        EditorGUI.indentLevel += 1;
+
+                        using (new EditorUtils.BoxBlock(color3))
                         {
-                            if (Target.Attributes.Count == 1)
-                            {
-                                Target.Attributes.Clear();
-                                m_OpenAttributes = Array.Empty<bool>();
-                                EditorGUILayout.EndHorizontal();
-                                break;
-                            }
-
-                            var temp = m_OpenAttributes.ToList();
-                            temp.RemoveAt(i);
-                            m_OpenAttributes = temp.ToArray();
-                            Target.Attributes.RemoveAt(i);
-                            if (i != 0) i--;
-                        }
-
-                        m_OpenAttributes[i] = GUILayout.Toggle(m_OpenAttributes[i],
-                            m_OpenAttributes[i] ? EditorUtils.FoldoutOpendString : EditorUtils.FoldoutClosedString
-                            , EditorUtils.MiniButton, GUILayout.Width(20));
-                        EditorGUILayout.EndHorizontal();
-
-                        if (m_OpenAttributes[i])
-                        {
-                            AttributeBase targetAtt = GetSelectedAttribute(Target.Attributes[i]);
-                            EditorGUI.indentLevel += 1;
-
-                            Color color3 = Color.red;
-                            color3.a = .7f;
-
-                            GUI.backgroundColor = color3;
-                            EditorGUILayout.BeginVertical(EditorUtils.Box);
-                            GUI.backgroundColor = originColor;
                             if (targetAtt == null)
                             {
                                 EditorGUILayout.HelpBox(
@@ -397,22 +405,13 @@ namespace SyadeuEditor
 
                                 SetAttribute(Target.Attributes[i], ReflectionHelperEditor.GetDrawer(targetAtt).OnGUI());
                             }
-                            EditorGUILayout.EndVertical();
-                            EditorGUI.indentLevel -= 1;
                         }
 
-                        if (m_OpenAttributes[i]) EditorUtils.Line();
+                        EditorGUI.indentLevel -= 1;
                     }
-                    EditorGUILayout.EndVertical();
-                    EditorGUI.indentLevel -= 1;
+
+                    if (m_OpenAttributes[i]) EditorUtils.Line();
                 }
-                EditorGUILayout.EndVertical();
-
-                EditorUtils.Line();
-
-                EntityDataList.Instance.m_Objects[Target.Hash] = (ObjectBase)m_Drawer.OnGUI(false, true);
-
-                //EntityDataList.Instance.m_Objects[Target.Hash] = (ObjectBase)m_Drawer.OnGUI();
             }
         }
         private class TreeEntityElement : VerticalTreeElement<EntityBase>
@@ -459,15 +458,11 @@ namespace SyadeuEditor
                 EditorGUILayout.TextField("Hash: ", Target.Hash.ToString());
                 EditorGUI.EndDisabledGroup();
                 ReflectionHelperEditor.DrawPrefabReference("Prefab: ", (idx) => Target.Prefab = idx, Target.Prefab);
-                //Target.PrefabIdx = PrefabListEditor.DrawPrefabSelector(Target.PrefabIdx);
 
-                Color originColor = GUI.backgroundColor;
-                Color color1 = Color.black, color2 = Color.gray;
-                color1.a = .5f; color2.a = .5f;
+                Color color1 = Color.black, color2 = Color.black;
+                color1.a = .5f;/* color2.a = .5f;*/
 
-                GUI.backgroundColor = color1;
-                EditorGUILayout.BeginVertical(EditorUtils.Box);
-                GUI.backgroundColor = originColor;
+                using (new EditorUtils.BoxBlock(color1))
                 {
                     if (Target.Attributes == null) Target.Attributes = new List<Hash>();
                     EditorGUILayout.BeginHorizontal();
@@ -485,60 +480,70 @@ namespace SyadeuEditor
 
                     EditorGUI.indentLevel += 1;
 
-                    GUI.backgroundColor = color2;
-                    EditorGUILayout.BeginVertical(EditorUtils.Box);
-                    GUI.backgroundColor = originColor;
-                    for (int i = 0; i < Target.Attributes.Count; i++)
+                    using (new EditorUtils.BoxBlock(color2))
                     {
-                        EditorGUILayout.BeginHorizontal();
+                        DrawAttributes();
+                    }
 
-                        int idx = i;
-                        EditorGUI.BeginChangeCheck();
-                        idx = EditorGUILayout.DelayedIntField(idx, GUILayout.Width(80));
-                        if (EditorGUI.EndChangeCheck())
+                    EditorGUI.indentLevel -= 1;
+                }
+
+                EditorUtils.Line();
+
+                EntityDataList.Instance.m_Objects[Target.Hash] = (ObjectBase)m_Drawer.OnGUI(false, true);
+            }
+            private void DrawAttributes()
+            {
+                for (int i = 0; i < Target.Attributes.Count; i++)
+                {
+                    EditorGUILayout.BeginHorizontal();
+
+                    int idx = i;
+                    EditorGUI.BeginChangeCheck();
+                    idx = EditorGUILayout.DelayedIntField(idx, GUILayout.Width(80));
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        if (idx >= Target.Attributes.Count) idx = Target.Attributes.Count - 1;
+
+                        Hash cache = Target.Attributes[i];
+                        Target.Attributes.RemoveAt(i);
+                        Target.Attributes.Insert(idx, cache);
+                    }
+
+                    ReflectionHelperEditor.DrawAttributeSelector(null, (attHash) => Target.Attributes[i] = attHash, Target.Attributes[i], m_Type);
+
+                    if (GUILayout.Button("-", GUILayout.Width(20)))
+                    {
+                        if (Target.Attributes.Count == 1)
                         {
-                            if (idx >= Target.Attributes.Count) idx = Target.Attributes.Count - 1;
-
-                            Hash cache = Target.Attributes[i];
-                            Target.Attributes.RemoveAt(i);
-                            Target.Attributes.Insert(idx, cache);
+                            Target.Attributes.Clear();
+                            m_OpenAttributes = Array.Empty<bool>();
+                            EditorGUILayout.EndHorizontal();
+                            break;
                         }
 
-                        ReflectionHelperEditor.DrawAttributeSelector(null, (attHash) => Target.Attributes[i] = attHash, Target.Attributes[i], m_Type);
+                        var temp = m_OpenAttributes.ToList();
+                        temp.RemoveAt(i);
+                        m_OpenAttributes = temp.ToArray();
+                        Target.Attributes.RemoveAt(i);
+                        if (i != 0) i--;
+                    }
 
-                        if (GUILayout.Button("-", GUILayout.Width(20)))
+                    m_OpenAttributes[i] = GUILayout.Toggle(m_OpenAttributes[i],
+                        m_OpenAttributes[i] ? EditorUtils.FoldoutOpendString : EditorUtils.FoldoutClosedString
+                        , EditorUtils.MiniButton, GUILayout.Width(20));
+                    EditorGUILayout.EndHorizontal();
+
+                    if (m_OpenAttributes[i])
+                    {
+                        Color color3 = Color.red;
+                        color3.a = .7f;
+                        AttributeBase targetAtt = GetSelectedAttribute(Target.Attributes[i]);
+
+                        EditorGUI.indentLevel += 1;
+
+                        using (new EditorUtils.BoxBlock(color3))
                         {
-                            if (Target.Attributes.Count == 1)
-                            {
-                                Target.Attributes.Clear();
-                                m_OpenAttributes = Array.Empty<bool>();
-                                EditorGUILayout.EndHorizontal();
-                                break;
-                            }
-
-                            var temp = m_OpenAttributes.ToList();
-                            temp.RemoveAt(i);
-                            m_OpenAttributes = temp.ToArray();
-                            Target.Attributes.RemoveAt(i);
-                            if (i != 0) i--;
-                        }
-
-                        m_OpenAttributes[i] = GUILayout.Toggle(m_OpenAttributes[i],
-                            m_OpenAttributes[i] ? EditorUtils.FoldoutOpendString : EditorUtils.FoldoutClosedString
-                            , EditorUtils.MiniButton, GUILayout.Width(20));
-                        EditorGUILayout.EndHorizontal();
-
-                        if (m_OpenAttributes[i])
-                        {
-                            AttributeBase targetAtt = GetSelectedAttribute(Target.Attributes[i]);
-                            EditorGUI.indentLevel += 1;
-
-                            Color color3 = Color.red;
-                            color3.a = .7f;
-
-                            GUI.backgroundColor = color3;
-                            EditorGUILayout.BeginVertical(EditorUtils.Box);
-                            GUI.backgroundColor = originColor;
                             if (targetAtt == null)
                             {
                                 EditorGUILayout.HelpBox(
@@ -553,20 +558,13 @@ namespace SyadeuEditor
 
                                 SetAttribute(Target.Attributes[i], ReflectionHelperEditor.GetDrawer(targetAtt).OnGUI());
                             }
-                            EditorGUILayout.EndVertical();
-                            EditorGUI.indentLevel -= 1;
                         }
 
-                        if (m_OpenAttributes[i]) EditorUtils.Line();
+                        EditorGUI.indentLevel -= 1;
                     }
-                    EditorGUILayout.EndVertical();
-                    EditorGUI.indentLevel -= 1;
+
+                    if (m_OpenAttributes[i]) EditorUtils.Line();
                 }
-                EditorGUILayout.EndVertical();
-
-                EditorUtils.Line();
-
-                EntityDataList.Instance.m_Objects[Target.Hash] = (ObjectBase)m_Drawer.OnGUI(false, true);
             }
         }
         private static AttributeBase GetSelectedAttribute(Hash attHash)
@@ -621,9 +619,11 @@ namespace SyadeuEditor
             }
             public override void OnGUI()
             {
-                EditorGUILayout.BeginVertical(EditorUtils.Box);
-                EntityDataList.Instance.m_Objects[Target.Hash] = (ObjectBase)m_Drawer.OnGUI();
-                EditorGUILayout.EndVertical();
+                Color temp = Color.black; temp.a = .5f;
+                using (new EditorUtils.BoxBlock(temp))
+                {
+                    EntityDataList.Instance.m_Objects[Target.Hash] = (ObjectBase)m_Drawer.OnGUI();
+                }
             }
         }
     }

@@ -41,13 +41,13 @@ namespace SyadeuEditor
 #endif
             )
         {
-            const string Box = "Box";
+            //const string Box = "Box";
 
-            Color originColor = GUI.backgroundColor;
-            GUI.backgroundColor = Color.cyan;
-            using (new EditorGUILayout.VerticalScope(Box))
+            //Color originColor = GUI.backgroundColor;
+            //GUI.backgroundColor = Color.cyan;
+            using (new EditorUtils.BoxBlock(Color.cyan))
             {
-                GUI.backgroundColor = originColor;
+                //GUI.backgroundColor = originColor;
                 #region Header
                 using (new EditorGUILayout.HorizontalScope())
                 {
