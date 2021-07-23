@@ -12,7 +12,7 @@ namespace Syadeu.Presentation
                 TypeHelper.TypeOf<EntitySystem>.Type,
                 TypeHelper.TypeOf<SceneSystem>.Type,
                 TypeHelper.TypeOf<RenderSystem>.Type,
-                TypeHelper.TypeOf<GridSystem>.Type
+                TypeHelper.TypeOf<MapSystem>.Type
                 );
         }
     }

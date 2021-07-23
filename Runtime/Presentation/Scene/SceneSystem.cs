@@ -108,7 +108,7 @@ namespace Syadeu.Presentation
         /// </summary>
         public bool IsSceneLoading => m_LoadingEnabled || m_AsyncOperation != null;
 
-        private GridSystem m_GridSystem;
+        private MapSystem m_GridSystem;
         private EntitySystem m_EntitySystem;
 
         #region Presentation Methods
@@ -198,7 +198,7 @@ namespace Syadeu.Presentation
         }
         protected override PresentationResult OnInitializeAsync()
         {
-            RequestSystem<GridSystem>((other) => m_GridSystem = other);
+            RequestSystem<MapSystem>((other) => m_GridSystem = other);
             RequestSystem<EntitySystem>((other) => m_EntitySystem = other);
 
             return base.OnInitializeAsync();
@@ -387,7 +387,7 @@ namespace Syadeu.Presentation
             SceneManager.MoveGameObjectToScene(obj, scene);
             return obj;
         }
-        private static List<ICustomYieldAwaiter> StartSceneDependences(GridSystem gridSystem, SceneReference key)
+        private static List<ICustomYieldAwaiter> StartSceneDependences(MapSystem gridSystem, SceneReference key)
         {
             if (!PresentationManager.Instance.m_DependenceSceneList.TryGetValue(key, out List<Hash> groupHashs))
             {

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Syadeu.Presentation
 {
-    public sealed class GridSystem : PresentationSystemEntity<GridSystem>
+    public sealed class MapSystem : PresentationSystemEntity<MapSystem>
     {
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;

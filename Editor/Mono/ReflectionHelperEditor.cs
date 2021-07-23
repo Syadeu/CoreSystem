@@ -385,6 +385,11 @@ namespace SyadeuEditor
                         setter.Invoke(obj, temp);
                     }, objRef, targetType);
                 }
+                //else if (declaredType.DeclaringType != null &&
+                //        TypeHelper.TypeOf<IReference>.Type.IsAssignableFrom(declaredType.DeclaringType))
+                //{
+
+                //}
                 else if (declaredType.Equals(TypeHelper.TypeOf<Hash>.Type))
                 {
                     Hash hash = (Hash)getter.Invoke(obj);
@@ -438,8 +443,6 @@ namespace SyadeuEditor
 
                 EditorGUI.EndDisabledGroup();
             }
-
-
 
             return obj;
         }
@@ -572,32 +575,5 @@ namespace SyadeuEditor
 
             return false;
         }
-        //private static bool DrawCoreSystemField(object ins, Type declaredType, string name, Func<object, object> getter, out object value)
-        //{
-        //    value = null;
-        //    if (declaredType.Equals(TypeHelper.TypeOf<int3>.Type))
-        //    {
-        //        int3 gets = (int3)getter.Invoke(ins);
-        //        Vector3Int temp = EditorGUILayout.Vector3IntField(name, new Vector3Int(gets.x, gets.y, gets.z));
-
-        //        value = new int3(temp.x, temp.y, temp.z);
-        //        return true;
-        //    }
-        //    else if (declaredType.Equals(TypeHelper.TypeOf<float3>.Type))
-        //    {
-        //        float3 temp = EditorGUILayout.Vector3Field(name, (float3)getter.Invoke(ins));
-        //        value = temp;
-        //        return true;
-        //    }
-        //    else if (declaredType.Equals(TypeHelper.TypeOf<quaternion>.Type))
-        //    {
-        //        Vector4 temp =
-        //            EditorGUILayout.Vector4Field(name, ((quaternion)getter.Invoke(ins)).value);
-        //        value = new quaternion(temp);
-        //        return true;
-        //    }
-
-        //    return false;
-        //}
     }
 }
