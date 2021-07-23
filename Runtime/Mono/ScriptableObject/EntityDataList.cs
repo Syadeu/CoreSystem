@@ -38,20 +38,22 @@ namespace Syadeu.Database
 
             string[] entityPaths = Directory.GetFiles(CoreSystemFolder.EntityPath, jsonPostfix, SearchOption.AllDirectories);
             //m_Entites = new List<EntityBase>();
-            Type[] entityTypes = TypeHelper.GetTypes((other) => TypeHelper.TypeOf<EntityBase>.Type.IsAssignableFrom(other));
+            Type[] entityTypes = TypeHelper.GetTypes(
+                (other) => TypeHelper.TypeOf<ObjectBase>.Type.IsAssignableFrom(other) &&
+                            !TypeHelper.TypeOf<AttributeBase>.Type.IsAssignableFrom(other));
             for (int i = 0; i < entityPaths.Length; i++)
             {
                 string lastFold = Path.GetFileName(Path.GetDirectoryName(entityPaths[i]));
                 Type t = entityTypes.FindFor((other) => other.Name.Equals(lastFold));
 
                 var obj = JsonConvert.DeserializeObject(File.ReadAllText(entityPaths[i]), t);
-                if (!(obj is EntityBase))
+                if (!(obj is ObjectBase))
                 {
                     CoreSystem.Logger.LogWarning(Channel.Entity, $"Entity({t?.Name}) at {entityPaths[i]} is invalid. This entity has been ignored");
                     continue;
                 }
 
-                var temp = (EntityBase)obj;
+                var temp = (ObjectBase)obj;
                 m_Objects.Add(temp.Hash, temp);
                 m_EntityHash.Add(temp.Name, temp.Hash);
                 //m_Entites.Add(temp);
@@ -91,7 +93,7 @@ namespace Syadeu.Database
             if (!Directory.Exists(CoreSystemFolder.EntityPath)) Directory.CreateDirectory(CoreSystemFolder.EntityPath);
             if (!Directory.Exists(CoreSystemFolder.AttributePath)) Directory.CreateDirectory(CoreSystemFolder.AttributePath);
 
-            EntityBase[] m_Entites = GetEntities();
+            ObjectBase[] m_Entites = GetEntities();
             if (m_Entites != null)
             {
                 string[] entityPaths = Directory.GetFiles(CoreSystemFolder.EntityPath, jsonPostfix, SearchOption.AllDirectories);
@@ -143,15 +145,16 @@ namespace Syadeu.Database
             else "nothing to save att".ToLog();
         }
 
-        public EntityBase[] GetEntities()
+        public ObjectBase[] GetEntities()
         {
-            if (m_Objects == null) return Array.Empty<EntityBase>();
+            if (m_Objects == null) return Array.Empty<ObjectBase>();
             return m_Objects
                     .Where((other) =>
                     {
-                        return TypeHelper.TypeOf<EntityBase>.Type.IsAssignableFrom(other.Value.GetType());
+                        return TypeHelper.TypeOf<ObjectBase>.Type.IsAssignableFrom(other.Value.GetType()) &&
+                                !TypeHelper.TypeOf<AttributeBase>.Type.IsAssignableFrom(other.Value.GetType());
                     })
-                    .Select((other) => (EntityBase)other.Value)
+                    .Select((other) => other.Value)
                     .ToArray();
         }
         public AttributeBase[] GetAttributes()

@@ -183,9 +183,11 @@ namespace SyadeuEditor
                         return att.Hash;
                     }));
                 }
-                else if (TypeHelper.TypeOf<EntityBase>.Type.IsAssignableFrom(targetType))
+                else if (
+                    TypeHelper.TypeOf<ObjectBase>.Type.IsAssignableFrom(targetType) &&
+                    !TypeHelper.TypeOf<AttributeBase>.Type.IsAssignableFrom(targetType))
                 {
-                    PopupWindow.Show(rect, SelectorPopup<Hash, EntityBase>.GetWindow(EntityDataList.Instance.GetEntities(), setter, (att) =>
+                    PopupWindow.Show(rect, SelectorPopup<Hash, ObjectBase>.GetWindow(EntityDataList.Instance.GetEntities(), setter, (att) =>
                     {
                         return att.Hash;
                     }));
