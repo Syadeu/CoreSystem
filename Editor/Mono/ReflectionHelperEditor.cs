@@ -197,7 +197,7 @@ namespace SyadeuEditor
                             if (!acceptOnly.AttributeType.IsAssignableFrom(attType)) return false;
                         }
 
-                        RequireEntityAttribute requireEntity = attType.GetCustomAttribute<RequireEntityAttribute>();
+                        AttributeAcceptOnlyAttribute requireEntity = attType.GetCustomAttribute<AttributeAcceptOnlyAttribute>();
                         if (requireEntity == null) return true;
 
                         if (requireEntity.Type.Equals(entityType)) return true;

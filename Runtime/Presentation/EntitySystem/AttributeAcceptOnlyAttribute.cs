@@ -4,10 +4,10 @@ using System;
 namespace Syadeu.Presentation
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
-    public sealed class RequireEntityAttribute : Attribute
+    public sealed class AttributeAcceptOnlyAttribute : Attribute
     {
         public Type Type;
-        public RequireEntityAttribute(Type type)
+        public AttributeAcceptOnlyAttribute(Type type)
         {
             if (!TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(type))
             {

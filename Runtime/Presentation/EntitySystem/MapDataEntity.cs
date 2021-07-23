@@ -32,7 +32,7 @@ namespace Syadeu.Presentation
         }
     }
 
-    [RequireEntity(typeof(MapDataEntity))]
+    [AttributeAcceptOnly(typeof(MapDataEntity))]
     public abstract class MapDataAttributeBase : AttributeBase { }
 
     public sealed class TestMapAttribute : MapDataAttributeBase
