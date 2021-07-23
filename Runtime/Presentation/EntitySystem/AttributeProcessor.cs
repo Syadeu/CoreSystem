@@ -22,10 +22,10 @@ namespace Syadeu.Presentation
     public abstract class AttributeProcessor : AttributeProcessorBase, IAttributeProcessor
     {
         Type IProcessor.Target => TargetAttribute;
-        void IAttributeProcessor.OnCreated(AttributeBase attribute, IEntity entity) => OnCreated(attribute, entity);
-        void IAttributeProcessor.OnCreatedSync(AttributeBase attribute, IEntity entity) => OnCreatedSync(attribute, entity);
-        void IAttributeProcessor.OnDestory(AttributeBase attribute, IEntity entity) => OnDestory(attribute, entity);
-        void IAttributeProcessor.OnDestorySync(AttributeBase attribute, IEntity entity) => OnDestorySync(attribute, entity);
+        void IAttributeProcessor.OnCreated(AttributeBase attribute, IObject entity) => OnCreated(attribute, (IEntity)entity);
+        void IAttributeProcessor.OnCreatedSync(AttributeBase attribute, IObject entity) => OnCreatedSync(attribute, (IEntity)entity);
+        void IAttributeProcessor.OnDestory(AttributeBase attribute, IObject entity) => OnDestory(attribute, (IEntity)entity);
+        void IAttributeProcessor.OnDestorySync(AttributeBase attribute, IObject entity) => OnDestorySync(attribute, (IEntity)entity);
 
         /// <summary>
         /// 이 프로세서가 타겟으로 삼을 <see cref="AttributeBase"/>입니다.
@@ -68,10 +68,10 @@ namespace Syadeu.Presentation
         where T : AttributeBase
     {
         Type IProcessor.Target => TargetAttribute;
-        void IAttributeProcessor.OnCreated(AttributeBase attribute, IEntity entity) => OnCreated((T)attribute, entity);
-        void IAttributeProcessor.OnCreatedSync(AttributeBase attribute, IEntity entity) => OnCreatedSync((T)attribute, entity);
-        void IAttributeProcessor.OnDestory(AttributeBase attribute, IEntity entity) => OnDestory((T)attribute, entity);
-        void IAttributeProcessor.OnDestorySync(AttributeBase attribute, IEntity entity) => OnDestorySync((T)attribute, entity);
+        void IAttributeProcessor.OnCreated(AttributeBase attribute, IObject entity) => OnCreated((T)attribute, (IEntity)entity);
+        void IAttributeProcessor.OnCreatedSync(AttributeBase attribute, IObject entity) => OnCreatedSync((T)attribute, (IEntity)entity);
+        void IAttributeProcessor.OnDestory(AttributeBase attribute, IObject entity) => OnDestory((T)attribute, (IEntity)entity);
+        void IAttributeProcessor.OnDestorySync(AttributeBase attribute, IObject entity) => OnDestorySync((T)attribute, (IEntity)entity);
 
         private Type TargetAttribute => TypeHelper.TypeOf<T>.Type;
         /// <inheritdoc cref="IAttributeProcessor.OnCreated(AttributeBase, IEntity)"/>

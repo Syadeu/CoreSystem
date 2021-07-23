@@ -42,7 +42,11 @@ namespace Syadeu.Mono
                 {
                     if (m_RefPrefab == null || !m_RefPrefab.IsValid())
                     {
-                        CoreSystem.Logger.LogError(Channel.Entity, $"Referencing null prefab at ({m_Name})");
+                        if (m_Prefab == null)
+                        {
+                            CoreSystem.Logger.LogError(Channel.Entity, $"Referencing null prefab at ({m_Name})");
+                            return null;
+                        }
                         return m_Prefab;
                     }
                     return (GameObject)m_RefPrefab.Asset;

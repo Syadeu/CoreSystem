@@ -8,10 +8,10 @@ namespace Syadeu.Presentation
     public abstract class EntityProcessor : IEntityProcessor
     {
         Type IProcessor.Target => TargetEntity;
-        void IEntityProcessor.OnCreated(IEntity entity) => OnCreated(entity);
-        void IEntityProcessor.OnCreatedSync(IEntity entity) => OnCreatedSync(entity);
-        void IEntityProcessor.OnDestory(IEntity entity) => OnDestory(entity);
-        void IEntityProcessor.OnDestorySync(IEntity entity) => OnDestorySync(entity);
+        void IEntityProcessor.OnCreated(IObject entity) => OnCreated((IEntity)entity);
+        void IEntityProcessor.OnCreatedSync(IObject entity) => OnCreatedSync((IEntity)entity);
+        void IEntityProcessor.OnDestory(IObject entity) => OnDestory((IEntity)entity);
+        void IEntityProcessor.OnDestorySync(IObject entity) => OnDestorySync((IEntity)entity);
 
         /// <summary>
         /// 이 프로세서가 타겟으로 삼을 <see cref="EntityBase"/>입니다.
@@ -50,10 +50,10 @@ namespace Syadeu.Presentation
     public abstract class EntityProcessor<T> : IEntityProcessor where T : EntityBase
     {
         Type IProcessor.Target => TargetEntity;
-        void IEntityProcessor.OnCreated(IEntity entity) => OnCreated((T)entity);
-        void IEntityProcessor.OnCreatedSync(IEntity entity) => OnCreatedSync((T)entity);
-        void IEntityProcessor.OnDestory(IEntity entity) => OnDestory((T)entity);
-        void IEntityProcessor.OnDestorySync(IEntity entity) => OnDestorySync((T)entity);
+        void IEntityProcessor.OnCreated(IObject entity) => OnCreated((T)entity);
+        void IEntityProcessor.OnCreatedSync(IObject entity) => OnCreatedSync((T)entity);
+        void IEntityProcessor.OnDestory(IObject entity) => OnDestory((T)entity);
+        void IEntityProcessor.OnDestorySync(IObject entity) => OnDestorySync((T)entity);
 
         private Type TargetEntity => TypeHelper.TypeOf<T>.Type;
         /// <inheritdoc cref="EntityProcessor.OnCreated(IEntity)"/>

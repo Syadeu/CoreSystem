@@ -14,7 +14,7 @@ namespace Syadeu.Database
     [StaticManagerIntializeOnLoad]
     [StaticManagerDescription(
         "Internal data work system.\n" +
-        "This system do the basic data works like registering json converter types"
+        "This system do the basic data works like authuring json converter types"
         )]
     internal sealed class CSDataManager : StaticDataManager<CSDataManager>
     {

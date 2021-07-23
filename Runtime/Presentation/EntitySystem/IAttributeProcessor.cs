@@ -4,10 +4,10 @@ namespace Syadeu.Presentation
 {
     internal interface IAttributeProcessor : IProcessor
     {
-        void OnCreated(AttributeBase attribute, IEntity entity);
-        void OnCreatedSync(AttributeBase attribute, IEntity entity);
-        void OnDestory(AttributeBase attribute, IEntity entity);
-        void OnDestorySync(AttributeBase attribute, IEntity entity);
+        void OnCreated(AttributeBase attribute, IObject entity);
+        void OnCreatedSync(AttributeBase attribute, IObject entity);
+        void OnDestory(AttributeBase attribute, IObject entity);
+        void OnDestorySync(AttributeBase attribute, IObject entity);
     }
     /// <summary>
     /// <see cref="AttributeBase"/>에서 매 프레임마다 실행될 동작을 선언할 수 있습니다.
@@ -18,7 +18,7 @@ namespace Syadeu.Presentation
     public interface IAttributeOnPresentation
     {
         /// <summary>
-        /// <see cref="IAttributeProcessor.Target"/>에 설정된 <see cref="AttributeBase"/>가 부착된 <see cref="IEntity"/>가
+        /// <see cref="IAttributeProcessor.Target"/>에 설정된 <see cref="AttributeBase"/>가 부착된 <see cref="IObject"/>가
         /// 매 프레임마다 동작할 메소드입니다.
         /// </summary>
         /// <param name="attribute"></param>
@@ -26,7 +26,7 @@ namespace Syadeu.Presentation
         /// <remarks>
         /// 비동기 작업입니다. Unity API에 접근하면 에러를 뱉습니다.
         /// </remarks>
-        void OnPresentation(AttributeBase attribute, IEntity entity);
+        void OnPresentation(AttributeBase attribute, IObject entity);
     }
     /// <summary>
     /// <see cref="AttributeBase"/>에서 프록시 오브젝트에 대한 동작을 선언할 수 있습니다.

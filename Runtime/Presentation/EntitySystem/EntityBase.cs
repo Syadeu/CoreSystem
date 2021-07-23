@@ -23,7 +23,9 @@ namespace Syadeu.Presentation
         [JsonProperty(Order = -9, PropertyName = "Prefab")] public PrefabReference Prefab { get; set; }
         [JsonProperty(Order = -8, PropertyName = "Attributes")]
         [UnityEngine.HideInInspector] public List<Hash> Attributes { get; set; }
-        List<AttributeBase> IEntity.Attributes => m_Attributes;
+
+        Hash IObject.Idx => Hash;
+        List<AttributeBase> IObject.Attributes => m_Attributes;
 
         [JsonIgnore] public DataGameObject gameObject => PresentationSystem<GameObjectProxySystem>.System.GetDataGameObject(m_GameObjectHash);
         [JsonIgnore] public DataTransform transform => PresentationSystem<GameObjectProxySystem>.System.GetDataTransform(m_TransformHash);
@@ -63,18 +65,18 @@ namespace Syadeu.Presentation
             return entity;
         }
 
-        AttributeBase IEntity.GetAttribute(Type t)
+        AttributeBase IObject.GetAttribute(Type t)
         {
             IEntity entity = this;
             return entity.Attributes.FindFor((other) => other.GetType().Equals(t));
         }
-        AttributeBase[] IEntity.GetAttributes(Type t)
+        AttributeBase[] IObject.GetAttributes(Type t)
         {
             IEntity entity = this;
             return entity.Attributes.Where((other) => other.GetType().Equals(t)).ToArray();
         }
-        T IEntity.GetAttribute<T>() => (T)((IEntity)this).GetAttribute(TypeHelper.TypeOf<T>.Type);
-        T[] IEntity.GetAttributes<T>() => ((IEntity)this).GetAttributes(TypeHelper.TypeOf<T>.Type).Select((other) => (T)other).ToArray();
+        T IObject.GetAttribute<T>() => (T)((IObject)this).GetAttribute(TypeHelper.TypeOf<T>.Type);
+        T[] IObject.GetAttributes<T>() => ((IObject)this).GetAttributes(TypeHelper.TypeOf<T>.Type).Select((other) => (T)other).ToArray();
 
         public override sealed string ToString() => Name;
 
@@ -87,20 +89,6 @@ namespace Syadeu.Presentation
             public EntityBase m_Obj;
             public AttributeBase[] m_Atts;
         }
-        //internal object CaptureTarget()
-        //{
-        //    DataTransform tr = transform;
-        //    EntityBase clone = (EntityBase)Clone();
-        //    Captured payload = new Captured
-        //    {
-        //        m_Translation = tr.m_Position,
-        //        m_Rotation = tr.m_Rotation,
-        //        m_Obj = clone,
-        //        m_Atts = clone.m_Attributes.ToArray()
-        //    };
-
-        //    return payload;
-        //}
         public Captured Capture()
         {
             DataTransform tr = transform;
@@ -117,18 +105,5 @@ namespace Syadeu.Presentation
 
             return payload;
         }
-        //internal byte[] Capture()
-        //{
-        //    object target = CaptureTarget();
-
-        //    using (System.IO.MemoryStream ms = new System.IO.MemoryStream())
-        //    using (Newtonsoft.Json.Bson.BsonDataWriter wr = new Newtonsoft.Json.Bson.BsonDataWriter(ms))
-        //    {
-        //        JsonSerializer serializer = new JsonSerializer();
-        //        serializer.Serialize(wr, target);
-
-        //        return ms.ToArray();
-        //    }
-        //}
     }
 }

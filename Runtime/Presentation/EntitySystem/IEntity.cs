@@ -1,7 +1,4 @@
 ﻿using Newtonsoft.Json;
-using Syadeu.Database;
-using System;
-using System.Collections.Generic;
 
 namespace Syadeu.Presentation
 {
@@ -14,18 +11,9 @@ namespace Syadeu.Presentation
     /// 이 인터페이스의 직접 상속은 허용하지않습니다.<br/>
     /// 오브젝트를 선언하고싶다면 <seealso cref="EntityBase"/>를 상속하세요.
     /// </remarks>
-    public interface IEntity : IValidation
+    public interface IEntity : IObject
     {
-        [JsonProperty(Order = -30, PropertyName = "Name")] string Name { get; }
-
         [JsonIgnore] DataGameObject gameObject { get; }
         [JsonIgnore] DataTransform transform { get; }
-
-        [JsonIgnore] List<AttributeBase> Attributes { get; }
-
-        AttributeBase GetAttribute(Type t);
-        AttributeBase[] GetAttributes(Type t);
-        T GetAttribute<T>() where T : AttributeBase;
-        T[] GetAttributes<T>() where T : AttributeBase;
     }
 }
