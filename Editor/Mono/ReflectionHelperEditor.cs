@@ -240,14 +240,19 @@ namespace SyadeuEditor
                                 targetType.IsAssignableFrom(other.GetType()))
                         .ToArray();
 
-                    PopupWindow.Show(rect, SelectorPopup<Hash, ObjectBase>.GetWindow(EntityDataList.Instance.GetEntities(), setter, (att) =>
+                    PopupWindow.Show(rect, SelectorPopup<Hash, ObjectBase>.GetWindow(entities, setter, (att) =>
                     {
                         return att.Hash;
                     }));
                 }
                 else
                 {
-                    PopupWindow.Show(rect, SelectorPopup<Hash, AttributeBase>.GetWindow(EntityDataList.Instance.GetAttributes(), setter, (att) =>
+                    AttributeBase[] attributes = EntityDataList.Instance.GetAttributes()
+                        .Where((other) => other.GetType().Equals(targetType) ||
+                                targetType.IsAssignableFrom(other.GetType()))
+                        .ToArray();
+
+                    PopupWindow.Show(rect, SelectorPopup<Hash, AttributeBase>.GetWindow(attributes, setter, (att) =>
                     {
                         return att.Hash;
                     }));
