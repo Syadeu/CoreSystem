@@ -11,7 +11,7 @@ namespace Syadeu.Presentation
 {
     public struct DataTransform : IInternalDataComponent, IReadOnlyTransform, IValidation, IEquatable<DataTransform>
     {
-        const string c_WarningText = "This Data Transform has been destoryed or didn\'t created propery. Request igonored.";
+        const string c_WarningText = "This Data Transform has been destroyed or didn\'t created propery. Request ignored.";
 
         internal static int2 ProxyNull = new int2(-1, -1);
         internal static int2 ProxyQueued = new int2(-2, -2);
@@ -65,7 +65,7 @@ namespace Syadeu.Presentation
             PresentationSystem<GameObjectProxySystem>.IsValid() &&
             PresentationSystem<GameObjectProxySystem>.System.m_MappedTransformIdxes.ContainsKey(m_Idx) &&
             PresentationSystem<GameObjectProxySystem>.System.m_MappedGameObjectIdxes.ContainsKey(m_GameObject) &&
-            !PresentationSystem<GameObjectProxySystem>.System.GetDataGameObject(m_GameObject).m_Destoryed;
+            !PresentationSystem<GameObjectProxySystem>.System.GetDataGameObject(m_GameObject).m_Destroyed;
         public bool IsVisible()
         {
             if (!IsValid()) return false;

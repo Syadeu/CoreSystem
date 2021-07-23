@@ -1723,6 +1723,11 @@ namespace Syadeu
         {
             if (IsMainthread())
             {
+                if (gameObject == null)
+                {
+                    CoreSystem.Logger.LogError(Channel.Core, "Target gameobject is null. Cannot retrived transform");
+                    return null;
+                }
                 return gameObject.transform;
             }
             else

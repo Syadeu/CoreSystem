@@ -15,7 +15,7 @@ namespace Syadeu.Presentation
 {
     public sealed class EntitySystem : PresentationSystemEntity<EntitySystem>
     {
-        private const string c_AttributeNotFoundError = "Entity({0}) not found. Cannot spawn at {1}";
+        private const string c_EntityNotFoundError = "Entity({0}) not found. Cannot spawn at {1}";
         private const string c_AttributeWarning = "Attribute({0}) on entity({1}) has invaild value. {2}. Request Ignored.";
         private const string c_AttributeEmptyWarning = "Entity({0}) has empty attribute. This is not allowed. Request Ignored.";
 
@@ -143,11 +143,19 @@ namespace Syadeu.Presentation
         }
         public IEntity CreateEntity(string name, Vector3 position)
         {
-            EntityBase original = (EntityBase)EntityDataList.Instance.GetObject(name);
-            if (original == null)
+            EntityBase original;
+            try
             {
-                CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_AttributeNotFoundError, name, position));
+                original = (EntityBase)EntityDataList.Instance.GetObject(name);
+            }
+            catch (KeyNotFoundException)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_EntityNotFoundError, name, position));
                 return null;
+            }
+            catch (Exception)
+            {
+                throw;
             }
 
             DataGameObject obj = m_ProxySystem.CreateNewPrefab(original.Prefab, position);
@@ -158,7 +166,7 @@ namespace Syadeu.Presentation
             EntityBase original = (EntityBase)EntityDataList.Instance.GetObject(hash);
             if (original == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_AttributeNotFoundError, hash, position));
+                CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_EntityNotFoundError, hash, position));
                 return null;
             }
 
@@ -170,7 +178,7 @@ namespace Syadeu.Presentation
             EntityBase original = (EntityBase)EntityDataList.Instance.GetObject(name);
             if (original == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_AttributeNotFoundError, name, position));
+                CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_EntityNotFoundError, name, position));
                 return null;
             }
 
@@ -182,7 +190,7 @@ namespace Syadeu.Presentation
             EntityBase original = (EntityBase)EntityDataList.Instance.GetObject(hash);
             if (original == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_AttributeNotFoundError, hash, position));
+                CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_EntityNotFoundError, hash, position));
                 return null;
             }
 

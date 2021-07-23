@@ -9,11 +9,11 @@ namespace Syadeu.Presentation
     [Serializable]
     public struct DataGameObject : IInternalDataComponent, IEquatable<DataGameObject>, IValidation, IDisposable
     {
-        const string c_WarningText = "This Data GameObject has been destoryed or didn\'t created propery. Request igonored.";
+        const string c_WarningText = "This Data GameObject has been destroyed or didn\'t created propery. Request ignored.";
 
         internal Hash m_Idx;
         internal Hash m_Transform;
-        internal bool m_Destoryed;
+        internal bool m_Destroyed;
 
         unsafe private DataGameObject* GetPointer() => PresentationSystem<GameObjectProxySystem>.System.GetDataGameObjectPointer(m_Idx);
         private ref DataGameObject GetRef()
@@ -31,7 +31,7 @@ namespace Syadeu.Presentation
         bool IEquatable<DataGameObject>.Equals(DataGameObject other) => m_Idx.Equals(other.m_Idx);
 
         public bool IsValid() => !m_Idx.Equals(Hash.Empty) && !m_Transform.Equals(Hash.Empty) &&
-            !GetRef().m_Destoryed &&
+            !GetRef().m_Destroyed &&
             PresentationSystem<GameObjectProxySystem>.System.m_MappedTransformIdxes.ContainsKey(m_Transform) &&
             PresentationSystem<GameObjectProxySystem>.System.m_MappedGameObjectIdxes.ContainsKey(m_Idx);
 
@@ -188,7 +188,7 @@ namespace Syadeu.Presentation
 
         public void Destory()
         {
-            GetRef().m_Destoryed = true;
+            GetRef().m_Destroyed = true;
             PresentationSystem<GameObjectProxySystem>.System.DestoryDataObject(m_Idx);
         }
 

@@ -330,8 +330,36 @@ namespace Syadeu.Presentation
         }
         internal DataGameObject CreateNewPrefab(PrefabReference prefab, Vector3 pos)
         {
-            Transform tr = CoreSystem.GetTransform(prefab.GetObjectSetting().m_Prefab);
-            DataTransform dataTr = ToDataTransform(tr);
+            PrefabList.ObjectSetting objSetting;
+            try
+            {
+                objSetting = prefab.GetObjectSetting();
+            }
+            catch (KeyNotFoundException)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity, "Prefab is invalid. Create new prefab request has been ignored.");
+                return default;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+
+            Transform tr = CoreSystem.GetTransform(objSetting.Prefab);
+            DataTransform dataTr;
+            try
+            {
+                dataTr = ToDataTransform(tr);
+            }
+            catch (NullReferenceException)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity, $"Prefab({objSetting.m_Name}) is null. Create new prefab request has been ignored.");
+                return default;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
 
             return CreateNewPrefab(prefab, pos, dataTr.m_Rotation, dataTr.m_LocalScale, true);
         }
