@@ -4,6 +4,7 @@ using Unity.Mathematics;
 
 namespace Syadeu.Presentation
 {
+    [EntityAcceptOnly(typeof(MapDataAttributeBase))]
     public sealed class MapDataEntity : EntityDataBase
     {
         public class Object
@@ -29,5 +30,13 @@ namespace Syadeu.Presentation
             "entity in".ToLog();
             //CreateEntity(entity.m_Object, Vector3.Zero, quaternion.identity);
         }
+    }
+
+    [RequireEntity(typeof(MapDataEntity))]
+    public abstract class MapDataAttributeBase : AttributeBase { }
+
+    public sealed class TestMapAttribute : MapDataAttributeBase
+    {
+
     }
 }

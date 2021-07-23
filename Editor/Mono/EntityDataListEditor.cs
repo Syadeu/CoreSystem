@@ -348,7 +348,7 @@ namespace SyadeuEditor
                             Target.Attributes.Insert(idx, cache);
                         }
 
-                        ReflectionHelperEditor.DrawAttributeSelector(null, (attHash) => Target.Attributes[i] = attHash, Target.Attributes[i]);
+                        ReflectionHelperEditor.DrawAttributeSelector(null, (attHash) => Target.Attributes[i] = attHash, Target.Attributes[i], m_Type);
 
                         if (GUILayout.Button("-", GUILayout.Width(20)))
                         {
@@ -423,7 +423,7 @@ namespace SyadeuEditor
             public override bool HideElementInTree
                 => Tree.SelectedToolbar != 0 || base.HideElementInTree;
 
-            readonly Type t = null;
+            readonly Type m_Type = null;
             readonly ReflectionHelperEditor.Drawer m_Drawer;
             readonly ObsoleteAttribute m_Deprecated = null;
             bool[] m_OpenAttributes = Array.Empty<bool>();
@@ -438,7 +438,7 @@ namespace SyadeuEditor
                 else m_Name = Target.Name;
                 m_Drawer = ReflectionHelperEditor.GetDrawer(entity, c_DefaultProperties);
 
-                t = Target.GetType();
+                m_Type = Target.GetType();
             }
             public override void OnGUI()
             {
@@ -452,7 +452,7 @@ namespace SyadeuEditor
                 {
                     EditorGUILayout.HelpBox(c_EntityObsoleteWarning, m_Deprecated.IsError ? MessageType.Error : MessageType.Warning);
                 }
-                EditorUtils.StringRich(t.Name, 15);
+                EditorUtils.StringRich(m_Type.Name, 15);
 
                 Target.Name = EditorGUILayout.TextField("Name: ", Target.Name);
                 EditorGUI.BeginDisabledGroup(true);
@@ -504,7 +504,7 @@ namespace SyadeuEditor
                             Target.Attributes.Insert(idx, cache);
                         }
 
-                        ReflectionHelperEditor.DrawAttributeSelector(null, (attHash) => Target.Attributes[i] = attHash, Target.Attributes[i]);
+                        ReflectionHelperEditor.DrawAttributeSelector(null, (attHash) => Target.Attributes[i] = attHash, Target.Attributes[i], m_Type);
 
                         if (GUILayout.Button("-", GUILayout.Width(20)))
                         {

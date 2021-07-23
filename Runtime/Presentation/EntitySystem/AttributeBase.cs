@@ -1,6 +1,5 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Internal;
-using System;
 
 namespace Syadeu.Presentation
 {
@@ -12,14 +11,4 @@ namespace Syadeu.Presentation
         public override sealed string ToString() => Name;
         public override sealed object Clone() => base.Clone();
     }
-
-    //[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
-    //public sealed class RequireEntityAttribute : Attribute
-    //{
-    //    internal Type m_Type;
-    //    public RequireEntityAttribute(Type type)
-    //    {
-    //        m_Type = type;
-    //    }
-    //}
 }

@@ -167,13 +167,15 @@ namespace SyadeuEditor
             //}
             EditorGUILayout.EndHorizontal();
         }
-        public static void DrawAttributeSelector(string name, Action<Hash> setter, Hash current)
+        public static void DrawAttributeSelector(string name, Action<Hash> setter, Hash current, Type entityType)
         {
             string displayName;
             AttributeBase att = (AttributeBase)EntityDataList.Instance.GetObject(current);
             if (current.Equals(Hash.Empty)) displayName = "None";
             else if (att == null) displayName = "Attribute Not Found";
             else displayName = att.Name;
+
+            EntityAcceptOnlyAttribute acceptOnly = entityType.GetCustomAttribute<EntityAcceptOnlyAttribute>();
 
             if (!string.IsNullOrEmpty(name))
             {
@@ -186,24 +188,30 @@ namespace SyadeuEditor
                 Rect tempRect = GUILayoutUtility.GetLastRect();
                 tempRect.position = Event.current.mousePosition;
 
-                PopupWindow.Show(tempRect, SelectorPopup<Hash, AttributeBase>.GetWindow(EntityDataList.Instance.GetAttributes(), setter, (att) =>
-                {
-                    return att.Hash;
-                }));
+                var atts = EntityDataList.Instance.GetAttributes()
+                    .Where((other) =>
+                    {
+                        Type attType = other.GetType();
+                        if (acceptOnly != null)
+                        {
+                            if (!acceptOnly.AttributeType.IsAssignableFrom(attType)) return false;
+                        }
+
+                        RequireEntityAttribute requireEntity = attType.GetCustomAttribute<RequireEntityAttribute>();
+                        if (requireEntity == null) return true;
+
+                        if (requireEntity.Type.Equals(entityType)) return true;
+                        return false;
+                    })
+                    .ToArray();
+                PopupWindow.Show(tempRect, 
+                    SelectorPopup<Hash, AttributeBase>.GetWindow(atts, setter, (att) =>
+                    {
+                        return att.Hash;
+                    })
+                    );
             }
 
-            //Rect rect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight, GUILayout.ExpandWidth(true));
-            //rect = EditorGUI.IndentedRect(rect);
-            //if (EditorGUI.DropdownButton(rect, new GUIContent(displayName), FocusType.Passive))
-            //{
-            //    rect = GUILayoutUtility.GetLastRect();
-            //    rect.position = Event.current.mousePosition;
-
-            //    PopupWindow.Show(rect, SelectorPopup<Hash, AttributeBase>.GetWindow(EntityDataList.Instance.GetAttributes(), setter, (att) =>
-            //    {
-            //        return att.Hash;
-            //    }));
-            //}
             if (!string.IsNullOrEmpty(name)) EditorGUILayout.EndHorizontal();
         }
         public static void DrawReferenceSelector(string name, Action<Hash> setter, IReference current, Type targetType)
