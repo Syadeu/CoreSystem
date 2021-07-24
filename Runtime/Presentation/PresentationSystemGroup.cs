@@ -14,7 +14,7 @@ namespace Syadeu.Presentation
     /// 특정 시스템만 불러오려면 <seealso cref="PresentationSystem{T}"/>으로 호출하세요.
     /// </remarks>
     /// <typeparam name="T"></typeparam>
-    public struct PresentationSystemGroup<T> : IPresentationSystemGroup where T : PresentationRegisterEntity
+    public struct PresentationSystemGroup<T> : IPresentationSystemGroup where T : PresentationGroupEntity
     {
         public static PresentationSystemGroup<T> Null = new PresentationSystemGroup<T>(Hash.Empty);
         private static PresentationSystemGroup<T> s_Instance = Null;

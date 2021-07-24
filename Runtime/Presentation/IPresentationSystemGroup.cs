@@ -11,7 +11,7 @@ namespace Syadeu.Presentation
         /// </summary>
         /// <remarks>
         /// 런타임 중 시스템 추가는 허용하지 않습니다.<br/>
-        /// <seealso cref="Entities.PresentationRegisterEntity"/>를 상속받는 레지스터 클래스를 선언 후 등록하세요.
+        /// <seealso cref="Entities.PresentationGroupEntity"/>를 상속받는 레지스터 클래스를 선언 후 등록하세요.
         /// </remarks>
         IReadOnlyList<PresentationSystemEntity> Systems { get; }
 

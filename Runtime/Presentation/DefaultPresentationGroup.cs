@@ -3,7 +3,7 @@ using Syadeu.Presentation.Entities;
 
 namespace Syadeu.Presentation
 {
-    internal sealed class DefaultPresentationGroup : PresentationRegisterEntity
+    internal sealed class DefaultPresentationGroup : PresentationGroupEntity
     {
         public override void Register()
         {

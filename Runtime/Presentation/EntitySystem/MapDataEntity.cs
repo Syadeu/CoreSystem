@@ -10,7 +10,7 @@ namespace Syadeu.Presentation
         public class Object
         {
             [JsonProperty(Order = 0, PropertyName = "Object")] public Reference<EntityBase> m_Object;
-            [JsonProperty(Order = 1, PropertyName = "Position")] public float3 m_Translation;
+            [JsonProperty(Order = 1, PropertyName = "Translation")] public float3 m_Translation;
             [JsonProperty(Order = 2, PropertyName = "Rotation")] public quaternion m_Rotation;
             [JsonProperty(Order = 3, PropertyName = "Scale")] public float3 m_Scale;
         }

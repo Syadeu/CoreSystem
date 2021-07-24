@@ -1,4 +1,5 @@
 ﻿using Syadeu.Database;
+using Syadeu.Mono;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Internal;
 using System;
@@ -15,18 +16,49 @@ namespace Syadeu.Presentation
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
+        private UnityEngine.GameObject m_MapEditorPrefab;
+        private UnityEngine.GameObject m_MapEditorInstance;
         private ManagedGrid m_MainGrid;
 
         private SceneSystem m_SceneSystem;
         private EntitySystem m_EntitySystem;
 
         #region Presentation Methods
+        protected override PresentationResult OnInitialize()
+        {
+            m_MapEditorPrefab = UnityEngine.Resources.Load<UnityEngine.GameObject>("MapEditor");
+            CoreSystem.Logger.NotNull(m_MapEditorPrefab);
+
+            CreateConsoleCommands();
+            //UnityEngine.Object.Instantiate(m_MapEditorPrefab);
+
+            return base.OnInitialize();
+        }
         protected override PresentationResult OnInitializeAsync()
         {
             RequestSystem<SceneSystem>((other) => m_SceneSystem = other);
             RequestSystem<EntitySystem>((other) => m_EntitySystem = other);
 
             return base.OnInitializeAsync();
+        }
+        private void CreateConsoleCommands()
+        {
+            ConsoleWindow.CreateCommand((cmd) =>
+            {
+                if (m_MapEditorInstance != null)
+                {
+                    UnityEngine.Object.Destroy(m_MapEditorInstance);
+                }
+                m_MapEditorInstance = UnityEngine.Object.Instantiate(m_MapEditorPrefab);
+            }, "open", "mapeditor");
+            ConsoleWindow.CreateCommand((cmd) =>
+            {
+                if (m_MapEditorInstance != null)
+                {
+                    UnityEngine.Object.Destroy(m_MapEditorInstance);
+                }
+                m_MapEditorInstance = null;
+            }, "close", "mapeditor");
         }
         #endregion
 
@@ -51,8 +83,4 @@ namespace Syadeu.Presentation
             m_SceneSystem.CurrentSceneRef.m_SceneGridData = m_MainGrid.ToBinary();
         }
     }
-    //public sealed class MapSystem : PresentationSystemEntity<MapSystem>
-    //{
-
-    //}
 }
