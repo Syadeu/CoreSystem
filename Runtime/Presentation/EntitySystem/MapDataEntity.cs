@@ -35,8 +35,9 @@ namespace Syadeu.Presentation
     [AttributeAcceptOnly(typeof(MapDataEntity))]
     public abstract class MapDataAttributeBase : AttributeBase { }
 
-    public sealed class TestMapAttribute : MapDataAttributeBase
+    public sealed class MapGridAttribute : MapDataAttributeBase
     {
-
+        [JsonProperty(Order = 0, PropertyName = "Center")] public int3 m_Center;
+        [JsonProperty(Order = 1, PropertyName = "Size")] public int3 m_Size;
     }
 }

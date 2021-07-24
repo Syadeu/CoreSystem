@@ -6,31 +6,39 @@ namespace Syadeu.Presentation
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
     public sealed class AttributeAcceptOnlyAttribute : Attribute
     {
-        public Type Type;
-        public AttributeAcceptOnlyAttribute(Type type)
+        public Type[] Types;
+        public AttributeAcceptOnlyAttribute(params Type[] types)
         {
-            if (!TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(type))
+            for (int i = 0; i < types.Length; i++)
             {
-                CoreSystem.Logger.LogError(Channel.Entity, $"Type({type.Name}) is not a entity type.");
-                throw new Exception();
+                if (!TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(types[i]))
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity, $"Type({types[i].Name}) is not a entity type.");
+                    throw new Exception();
+                }
             }
-            Type = type;
+            
+            Types = types;
         }
     }
 
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
     public sealed class EntityAcceptOnlyAttribute : Attribute
     {
-        public Type AttributeType;
+        public Type[] AttributeTypes;
 
-        public EntityAcceptOnlyAttribute(Type attributeType)
+        public EntityAcceptOnlyAttribute(params Type[] attributeTypes)
         {
-            if (!TypeHelper.TypeOf<AttributeBase>.Type.IsAssignableFrom(attributeType))
+            for (int i = 0; i < attributeTypes.Length; i++)
             {
-                CoreSystem.Logger.LogError(Channel.Entity, $"Type({attributeType.Name}) is not a attribute type.");
-                throw new Exception();
+                if (!TypeHelper.TypeOf<AttributeBase>.Type.IsAssignableFrom(attributeTypes[i]))
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity, $"Type({attributeTypes[i].Name}) is not a attribute type.");
+                    throw new Exception();
+                }
             }
-            AttributeType = attributeType;
+            
+            AttributeTypes = attributeTypes;
         }
     }
 }

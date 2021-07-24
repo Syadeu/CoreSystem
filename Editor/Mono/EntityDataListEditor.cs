@@ -305,8 +305,8 @@ namespace SyadeuEditor
                 EditorGUILayout.TextField("Hash: ", Target.Hash.ToString());
                 EditorGUI.EndDisabledGroup();
 
-                Color color1 = Color.black, color2 = Color.yellow;
-                color1.a = .5f; color2.a = .5f;
+                Color color1 = Color.black, color2 = Color.black;
+                color1.a = .5f;
 
                 using (new EditorUtils.BoxBlock(color1))
                 {
@@ -460,7 +460,7 @@ namespace SyadeuEditor
                 ReflectionHelperEditor.DrawPrefabReference("Prefab: ", (idx) => Target.Prefab = idx, Target.Prefab);
 
                 Color color1 = Color.black, color2 = Color.black;
-                color1.a = .5f;/* color2.a = .5f;*/
+                color1.a = .5f;
 
                 using (new EditorUtils.BoxBlock(color1))
                 {

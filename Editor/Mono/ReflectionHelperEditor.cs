@@ -179,16 +179,35 @@ namespace SyadeuEditor
                     .Where((other) =>
                     {
                         Type attType = other.GetType();
+                        bool attCheck = false;
                         if (acceptOnly != null)
                         {
-                            if (!acceptOnly.AttributeType.IsAssignableFrom(attType)) return false;
+                            for (int i = 0; i < acceptOnly.AttributeTypes.Length; i++)
+                            {
+                                if (acceptOnly.AttributeTypes[i].IsAssignableFrom(attType))
+                                {
+                                    attCheck = true;
+                                    break;
+                                }
+                            }
                         }
+                        if (!attCheck) return false;
+                        attCheck = false;
 
                         AttributeAcceptOnlyAttribute requireEntity = attType.GetCustomAttribute<AttributeAcceptOnlyAttribute>();
                         if (requireEntity == null) return true;
 
-                        if (requireEntity.Type.Equals(entityType)) return true;
-                        return false;
+                        for (int i = 0; i < requireEntity.Types.Length; i++)
+                        {
+                            if (requireEntity.Types[i].IsAssignableFrom(entityType))
+                            {
+                                attCheck = true;
+                                break;
+                            }
+                        }
+
+                        if (!attCheck) return false;
+                        return true;
                     })
                     .ToArray();
                 PopupWindow.Show(tempRect, 
@@ -335,11 +354,41 @@ namespace SyadeuEditor
                             for (int j = 0; j < list.Count; j++)
                             {
                                 EditorGUI.indentLevel++;
+
+                                GUILayout.BeginHorizontal(EditorUtils.Box);
                                 using (new EditorUtils.BoxBlock(j % 2 == 0 ? color1 : color2))
                                 {
                                     if (list[j] == null) list[j] = Activator.CreateInstance(elementType);
                                     list[j] = DrawObject(list[j]);
                                 }
+                                if (GUILayout.Button("-", GUILayout.Width(20)))
+                                {
+                                    if (list.IsFixedSize)
+                                    {
+                                        IList newArr = Array.CreateInstance(declaredType.GetElementType(), list.Count - 1);
+                                        if (list != null && list.Count > 0)
+                                        {
+                                            for (int a = 0, b = 0; a < list.Count; a++)
+                                            {
+                                                if (a.Equals(j)) continue;
+
+                                                newArr[b] = list[a];
+
+                                                b++;
+                                            }
+                                        }
+
+                                        setter.Invoke(obj, newArr);
+                                        list = newArr;
+                                    }
+                                    else
+                                    {
+                                        list.RemoveAt(j);
+                                    }
+
+                                    j--;
+                                }
+                                GUILayout.EndHorizontal();
 
                                 EditorGUI.indentLevel--;
                                 if (j + 1 < list.Count) EditorUtils.Line();
