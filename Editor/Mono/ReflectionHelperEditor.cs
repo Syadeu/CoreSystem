@@ -434,11 +434,6 @@ namespace SyadeuEditor
                         setter.Invoke(obj, temp);
                     }, objRef, targetType);
                 }
-                //else if (declaredType.DeclaringType != null &&
-                //        TypeHelper.TypeOf<IReference>.Type.IsAssignableFrom(declaredType.DeclaringType))
-                //{
-
-                //}
                 else if (declaredType.Equals(TypeHelper.TypeOf<Hash>.Type))
                 {
                     Hash hash = (Hash)getter.Invoke(obj);

@@ -6,7 +6,7 @@ using Syadeu.Internal;
 namespace Syadeu.Presentation
 {
     [JsonConverter(typeof(ReferenceJsonConverter))]
-    public interface IReference
+    public interface IReference : IValidation
     {
         public Hash Hash { get; }
     }
@@ -26,6 +26,8 @@ namespace Syadeu.Presentation
         {
             m_Hash = obj.Hash;
         }
+
+        public bool IsValid() => !m_Hash.Equals(Hash.Empty);
 
         public static implicit operator ObjectBase(Reference a) => EntityDataList.Instance.m_Objects[a.m_Hash];
         public static implicit operator Hash(Reference a) => a.m_Hash;
@@ -49,6 +51,8 @@ namespace Syadeu.Presentation
 
             m_Hash = obj.Hash;
         }
+
+        public bool IsValid() => !m_Hash.Equals(Hash.Empty);
 
         public static implicit operator ObjectBase(Reference<T> a) => EntityDataList.Instance.m_Objects[a.m_Hash];
         public static implicit operator Hash(Reference<T> a) => a.m_Hash;
