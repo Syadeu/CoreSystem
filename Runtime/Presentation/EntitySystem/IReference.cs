@@ -8,9 +8,14 @@ namespace Syadeu.Presentation
     [JsonConverter(typeof(ReferenceJsonConverter))]
     public interface IReference : IValidation
     {
-        public Hash Hash { get; }
+        Hash Hash { get; }
+
+        ObjectBase GetObject();
     }
-    public interface IReference<T> : IReference where T : ObjectBase { }
+    public interface IReference<T> : IReference where T : ObjectBase
+    {
+        new T GetObject();
+    }
     public struct Reference : IReference
     {
         [JsonProperty(Order = 0, PropertyName = "Hash")] public Hash m_Hash;
@@ -27,6 +32,7 @@ namespace Syadeu.Presentation
             m_Hash = obj.Hash;
         }
 
+        public ObjectBase GetObject() => EntityDataList.Instance.m_Objects[m_Hash];
         public bool IsValid() => !m_Hash.Equals(Hash.Empty);
 
         public static implicit operator ObjectBase(Reference a) => EntityDataList.Instance.m_Objects[a.m_Hash];
@@ -52,9 +58,11 @@ namespace Syadeu.Presentation
             m_Hash = obj.Hash;
         }
 
+        ObjectBase IReference.GetObject() => EntityDataList.Instance.m_Objects[m_Hash];
+        public T GetObject() => (T)EntityDataList.Instance.m_Objects[m_Hash];
         public bool IsValid() => !m_Hash.Equals(Hash.Empty);
 
-        public static implicit operator ObjectBase(Reference<T> a) => EntityDataList.Instance.m_Objects[a.m_Hash];
+        public static implicit operator T(Reference<T> a) => (T)EntityDataList.Instance.m_Objects[a.m_Hash];
         public static implicit operator Hash(Reference<T> a) => a.m_Hash;
         public static implicit operator Reference(Reference<T> a) => new Reference(a.m_Hash);
     }
