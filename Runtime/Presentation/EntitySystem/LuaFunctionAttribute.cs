@@ -31,7 +31,7 @@ namespace Syadeu.Presentation
                 }
             }
         }
-        protected override void OnDestory(LuaFunctionAttribute attribute, IEntity entity)
+        protected override void OnDestroy(LuaFunctionAttribute attribute, IEntity entity)
         {
             if (attribute.m_OnEntityDestoryed != null && attribute.m_OnEntityDestoryed.m_Scripts != null)
             {

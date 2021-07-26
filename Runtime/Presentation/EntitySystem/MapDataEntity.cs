@@ -27,6 +27,7 @@ namespace Syadeu.Presentation
         [JsonProperty(Order = 0, PropertyName = "Objects")] public Object[] m_Objects;
 
         [JsonIgnore] public IEntity[] CreatedEntities { get; internal set; }
+        [JsonIgnore] public bool DestroyChildOnDestroy { get; set; } = true;
 
         public override bool IsValid()
         {
@@ -44,13 +45,15 @@ namespace Syadeu.Presentation
                 entity.CreatedEntities[i] = CreateEntity(entity.m_Objects[i].m_Object, entity.m_Objects[i].m_Translation, entity.m_Objects[i].m_Rotation, entity.m_Objects[i].m_Scale, entity.m_Objects[i].m_EnableCull);
             }
         }
-        protected override void OnDestory(MapDataEntity entity)
+        protected override void OnDestroy(MapDataEntity entity)
         {
+            if (!entity.DestroyChildOnDestroy) return;
+
             for (int i = 0; i < entity.CreatedEntities.Length; i++)
             {
                 if (entity.CreatedEntities[i].IsValid())
                 {
-                    entity.CreatedEntities[i].Destory();
+                    entity.CreatedEntities[i].Destroy();
                 }
             }
         }

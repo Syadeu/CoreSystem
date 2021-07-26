@@ -146,7 +146,7 @@ namespace Syadeu.Presentation
         }
         #endregion
 
-#line hidden
+//#line hidden
         #region Create Entity
         public IEntity LoadEntity(EntityBase.Captured captured)
         {
@@ -343,6 +343,15 @@ namespace Syadeu.Presentation
 
             return InternalCreateObject(original);
         }
+        public void DestroyObject(Hash hash)
+        {
+            if (!m_ObjectHashSet.Contains(hash)) return;
+
+            ProcessEntityOnDestory(this, m_ObjectEntities[hash]);
+
+            m_ObjectHashSet.Remove(hash);
+            m_ObjectEntities.Remove(hash);
+        }
 
         private IObject InternalCreateObject(ObjectBase obj)
         {
@@ -445,6 +454,9 @@ namespace Syadeu.Presentation
         }
         private static void ProcessEntityOnDestory(EntitySystem system, IObject entity)
         {
+            CoreSystem.Logger.Log(Channel.Entity,
+                $"Destroying entity({entity.Name})");
+
             #region Entity
             if (system.m_EntityProcessors.TryGetValue(entity.GetType(), out List<IEntityDataProcessor> entityProcessor))
             {
@@ -479,10 +491,10 @@ namespace Syadeu.Presentation
                     {
                         IAttributeProcessor processor = processors[j];
 
-                        processor.OnDestory(other, entity);
+                        processor.OnDestroy(other, entity);
                         CoreSystem.AddForegroundJob(() =>
                         {
-                            processor.OnDestorySync(other, entity);
+                            processor.OnDestroySync(other, entity);
                         });
                     }
                 }

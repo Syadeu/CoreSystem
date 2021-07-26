@@ -6,8 +6,8 @@ namespace Syadeu.Presentation
     {
         void OnCreated(AttributeBase attribute, IObject entity);
         void OnCreatedSync(AttributeBase attribute, IObject entity);
-        void OnDestory(AttributeBase attribute, IObject entity);
-        void OnDestorySync(AttributeBase attribute, IObject entity);
+        void OnDestroy(AttributeBase attribute, IObject entity);
+        void OnDestroySync(AttributeBase attribute, IObject entity);
     }
     /// <summary>
     /// <see cref="AttributeBase"/>에서 매 프레임마다 실행될 동작을 선언할 수 있습니다.

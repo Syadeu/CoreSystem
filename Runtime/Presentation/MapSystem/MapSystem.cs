@@ -21,6 +21,8 @@ namespace Syadeu.Presentation
         private UnityEngine.GameObject m_MapEditorInstance;
         private ManagedGrid m_MainGrid;
 
+        private readonly Dictionary<SceneReference, List<IObject>> m_SceneDataObjects = new Dictionary<SceneReference, List<IObject>>();
+
         private SceneSystem m_SceneSystem;
         private EntitySystem m_EntitySystem;
 
@@ -43,19 +45,42 @@ namespace Syadeu.Presentation
                     .Where((other) => (other is SceneDataEntity sceneData) && sceneData.m_BindScene && sceneData.IsValid())
                     .Select((other) => (SceneDataEntity)other)
                     .ToArray();
+
                 for (int i = 0; i < sceneData.Length; i++)
                 {
                     SceneDataEntity data = sceneData[i];
-                    other.RegisterSceneDependence(data.GetTargetScene(), () =>
+                    SceneReference targetScene = data.GetTargetScene();
+
+                    other.RegisterSceneLoadDependence(targetScene, () =>
                     {
+                        if (!m_SceneDataObjects.TryGetValue(targetScene, out var list))
+                        {
+                            list = new List<IObject>();
+                            m_SceneDataObjects.Add(targetScene, list);
+                        }
+
                         for (int i = 0; i < data.m_MapData.Length; i++)
                         {
-                            //MapDataEntity mapData = data.m_MapData[i].GetObject();
-                            m_EntitySystem.CreateObject(data.m_MapData[i]);
+                            list.Add(m_EntitySystem.CreateObject(data.m_MapData[i]));
                         }
                     });
                     CoreSystem.Logger.Log(Channel.Presentation,
                         $"Scene Data({data.Name}) is registered.");
+
+                    other.RegisterSceneUnloadDependence(data.GetTargetScene(), () =>
+                    {
+                        if (m_SceneDataObjects.TryGetValue(targetScene, out var list))
+                        {
+                            for (int i = 0; i < list.Count; i++)
+                            {
+                                MapDataEntity mapData = (MapDataEntity)list[i];
+                                mapData.DestroyChildOnDestroy = false;
+
+                                m_EntitySystem.DestroyObject(list[i].Idx);
+                            }
+                            list.Clear();
+                        }
+                    });
                 }
 
                 m_SceneSystem = other;

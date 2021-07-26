@@ -52,7 +52,7 @@ namespace Syadeu.Presentation
         Type IProcessor.Target => TargetEntity;
         void IEntityDataProcessor.OnCreated(IObject entity) => OnCreated((T)entity);
         void IEntityDataProcessor.OnCreatedSync(IObject entity) => OnCreatedSync((T)entity);
-        void IEntityDataProcessor.OnDestory(IObject entity) => OnDestory((T)entity);
+        void IEntityDataProcessor.OnDestory(IObject entity) => OnDestroy((T)entity);
         void IEntityDataProcessor.OnDestorySync(IObject entity) => OnDestorySync((T)entity);
 
         private Type TargetEntity => TypeHelper.TypeOf<T>.Type;
@@ -61,7 +61,7 @@ namespace Syadeu.Presentation
         /// <inheritdoc cref="EntityDataProcessor.OnCreatedSync(IEntity)"/>
         protected virtual void OnCreatedSync(T entity) { }
         /// <inheritdoc cref="EntityDataProcessor.OnDestory(IEntity)"/>
-        protected virtual void OnDestory(T entity) { }
+        protected virtual void OnDestroy(T entity) { }
         /// <inheritdoc cref="EntityDataProcessor.OnDestorySync(IEntity)"/>
         protected virtual void OnDestorySync(T entity) { }
     }

@@ -14,9 +14,13 @@ namespace Syadeu.Presentation
             if (!PresentationSystem<EntitySystem>.IsValid()) return null;
             return PresentationSystem<EntitySystem>.System.GetEntity(obj.m_Idx);
         }
-        public static void Destory(this IEntity entity)
+        public static void Destroy(this IEntity entity)
         {
             entity.gameObject.Destory();
+        }
+        public static void Destroy(this IObject obj)
+        {
+            PresentationSystem<EntitySystem>.System.DestroyObject(obj.Idx);
         }
 
         [Obsolete("", true)]

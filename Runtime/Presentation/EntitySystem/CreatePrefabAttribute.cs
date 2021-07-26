@@ -88,7 +88,7 @@ namespace Syadeu.Presentation
             attribute.ActivateTurn = attribute.ActivateOnCreate;
             TurnTableManager.AddPlayer(attribute);
         }
-        protected override void OnDestory(TurnPlayerAttribute attribute, IEntity entity)
+        protected override void OnDestroy(TurnPlayerAttribute attribute, IEntity entity)
         {
             TurnTableManager.RemovePlayer(attribute);
         }
