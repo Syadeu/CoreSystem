@@ -19,7 +19,7 @@ namespace Syadeu.Database
 
         public PrefabList.ObjectSetting GetObjectSetting() => PrefabList.Instance.ObjectSettings[m_Idx];
 
-        public bool IsValid() => PrefabList.Instance.ObjectSettings.Contains(m_Idx);
+        public bool IsValid() => 0 <= m_Idx && m_Idx < PrefabList.Instance.ObjectSettings.Count;
 
         public static implicit operator int(PrefabReference a) => a.m_Idx;
         public static implicit operator PrefabReference(int a) => new PrefabReference(a);
