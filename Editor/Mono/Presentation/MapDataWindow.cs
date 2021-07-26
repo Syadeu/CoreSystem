@@ -101,7 +101,10 @@ namespace SyadeuEditor
                     if (prefab.IsValid())
                     {
                         var temp = prefab.GetObjectSetting().m_RefPrefab.editorAsset;
-                        m_PreviewObject = Instantiate(temp, Target.m_Translation, Target.m_Rotation, m_Folder);
+                        
+                        m_PreviewObject = (GameObject)PrefabUtility.InstantiatePrefab(temp, m_Folder);
+                        m_PreviewObject.transform.position = Target.m_Translation;
+                        m_PreviewObject.transform.rotation = Target.m_Rotation;
 
                         UpdatePreviewObject();
                     }
@@ -122,7 +125,8 @@ namespace SyadeuEditor
                                 if (!hash.Equals(Hash.Empty))
                                 {
                                     GameObject temp = target.GetObject().Prefab.GetObjectSetting().m_RefPrefab.editorAsset;
-                                    m_PreviewObject = Instantiate(temp, m_Folder);
+
+                                    m_PreviewObject = (GameObject)PrefabUtility.InstantiatePrefab(temp, m_Folder);
 
                                     Target.m_Rotation = temp.transform.rotation;
                                     Target.m_Scale = temp.transform.localScale;
