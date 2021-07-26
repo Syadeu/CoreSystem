@@ -50,7 +50,7 @@ namespace Syadeu.Presentation
             {
                 if (entity.CreatedEntities[i].IsValid())
                 {
-
+                    entity.CreatedEntities[i].Destory();
                 }
             }
         }
