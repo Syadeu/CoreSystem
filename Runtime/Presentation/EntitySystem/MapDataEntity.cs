@@ -13,6 +13,11 @@ namespace Syadeu.Presentation
             [JsonProperty(Order = 1, PropertyName = "Translation")] public float3 m_Translation;
             [JsonProperty(Order = 2, PropertyName = "Rotation")] public quaternion m_Rotation;
             [JsonProperty(Order = 3, PropertyName = "Scale")] public float3 m_Scale;
+
+            public Object()
+            {
+                m_Rotation = quaternion.identity;
+            }
         }
 
         [JsonProperty(Order = 0, PropertyName = "Objects")] public Object[] m_Objects;

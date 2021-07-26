@@ -202,7 +202,7 @@ namespace SyadeuEditor.Tree
                 EditorGUI.indentLevel += 1;
                 EditorGUI.BeginChangeCheck();
                 e.OnGUI();
-                if (EditorGUI.EndChangeCheck()) EditorUtility.SetDirty(m_Asset);
+                if (EditorGUI.EndChangeCheck() && m_Asset != null) EditorUtility.SetDirty(m_Asset);
                 EditorGUI.indentLevel -= 1;
             }
         }

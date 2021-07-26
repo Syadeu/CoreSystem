@@ -141,20 +141,72 @@ namespace SyadeuEditor
         {
             if (m_Target == null) return;
 
-            //Handles.BeginGUI();
+            Color origin = Handles.color;
+            Handles.color = Color.black;
+
             for (int i = 0; i < m_Target.m_Objects.Length; i++)
             {
+                var objData = m_Target.m_Objects[i].m_Object.GetObject();
+                Handles.color = Color.white;
+
+                string name = $"[{i}] {(objData != null ? $"{objData.Name}" : "None")}";
+
+                Vector2 pos = HandleUtility.WorldToGUIPoint(m_Target.m_Objects[i].m_Translation);
+                Rect rect = new Rect(pos, new Vector2(100, 50));                
+                
+                Handles.BeginGUI();
+                GUI.BeginGroup(rect, name, EditorUtils.Box);
+
+                //GUI.Label(rect, "tesasdasdasdasdt");
+                //GUILayout.Label("gfhghfhfggfh");
+                //EditorGUILayout.LabelField("dasiduiouxoi");
+                
+                GUI.EndGroup();
+                Handles.EndGUI();
+
                 EditorGUI.BeginChangeCheck();
 
-                m_Target.m_Objects[i].m_Translation =
-                    Handles.PositionHandle(m_Target.m_Objects[i].m_Translation, Quaternion.identity);
+                switch (Tools.current)
+                {
+                    case Tool.View:
+                        break;
+                    case Tool.Move:
+                        DrawMoveTool(m_Target.m_Objects[i]);
+                        break;
+                    case Tool.Rotate:
+                        DrawRotationTool(m_Target.m_Objects[i]);
+                        break;
+                    case Tool.Scale:
+                        break;
+                    case Tool.Rect:
+                        break;
+                    case Tool.Transform:
+                        break;
+                    default:
+                        break;
+                }
+
+                
 
                 if (EditorGUI.EndChangeCheck())
                 {
                     Repaint();
                 }
             }
-            //Handles.EndGUI();
+
+            Handles.color = origin;
+        }
+        private void DrawMoveTool(MapDataEntity.Object obj)
+        {
+            //EditorGUI.BeginChangeCheck();
+            obj.m_Translation = Handles.PositionHandle(obj.m_Translation, obj.m_Rotation);
+            //if (EditorGUI.EndChangeCheck())
+            //{
+            //}
+        }
+        private void DrawRotationTool(MapDataEntity.Object obj)
+        {
+            obj.m_Rotation = Handles.RotationHandle(obj.m_Rotation, obj.m_Translation);
         }
     }
 }
