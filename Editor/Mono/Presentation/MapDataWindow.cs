@@ -13,6 +13,8 @@ namespace SyadeuEditor
 {
     public sealed class MapDataWindow : EditorWindowEntity<MapDataWindow>
     {
+        const string c_EditorOnly = "EditorOnly";
+
         protected override string DisplayName => "Map Data Window";
 
         private Reference<MapDataEntity> m_MapData;
@@ -25,6 +27,7 @@ namespace SyadeuEditor
         {
             m_PreviewFolder = new GameObject("Preview").transform;
             m_PreviewFolder.gameObject.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
+            m_PreviewFolder.gameObject.tag = c_EditorOnly;
 
             base.OnEnable();
         }
@@ -103,6 +106,8 @@ namespace SyadeuEditor
                         var temp = prefab.GetObjectSetting().m_RefPrefab.editorAsset;
                         
                         m_PreviewObject = (GameObject)PrefabUtility.InstantiatePrefab(temp, m_Folder);
+                        m_PreviewObject.tag = c_EditorOnly;
+                        m_PreviewObject.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
                         m_PreviewObject.transform.position = Target.m_Translation;
                         m_PreviewObject.transform.rotation = Target.m_Rotation;
 
@@ -127,6 +132,8 @@ namespace SyadeuEditor
                                     GameObject temp = target.GetObject().Prefab.GetObjectSetting().m_RefPrefab.editorAsset;
 
                                     m_PreviewObject = (GameObject)PrefabUtility.InstantiatePrefab(temp, m_Folder);
+                                    m_PreviewObject.tag = c_EditorOnly;
+                                    m_PreviewObject.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
 
                                     Target.m_Rotation = temp.transform.rotation;
                                     Target.m_Scale = temp.transform.localScale;

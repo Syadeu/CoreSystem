@@ -316,6 +316,11 @@ namespace SyadeuEditor
                 {
                     EditorGUILayout.HelpBox(tooltip.tooltip, MessageType.Info);
                 }
+                ReflectionDescriptionAttribute description = members[i].GetCustomAttribute<ReflectionDescriptionAttribute>();
+                if (description != null)
+                {
+                    EditorGUILayout.HelpBox(description.m_Description, MessageType.Info);
+                }
 
                 #endregion
 

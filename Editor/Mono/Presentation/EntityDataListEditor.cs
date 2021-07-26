@@ -300,6 +300,7 @@ namespace SyadeuEditor
                 }
                 EditorUtils.StringRich(m_Type.Name, 15);
 
+                EditorGUILayout.HelpBox("제발 한글 쓰지마라", MessageType.Warning);
                 Target.Name = EditorGUILayout.TextField("Name: ", Target.Name);
                 EditorGUI.BeginDisabledGroup(true);
                 EditorGUILayout.TextField("Hash: ", Target.Hash.ToString());
@@ -453,6 +454,7 @@ namespace SyadeuEditor
                 }
                 EditorUtils.StringRich(m_Type.Name, 15);
 
+                EditorGUILayout.HelpBox("제발 한글 쓰지마라", MessageType.Warning);
                 Target.Name = EditorGUILayout.TextField("Name: ", Target.Name);
                 EditorGUI.BeginDisabledGroup(true);
                 EditorGUILayout.TextField("Hash: ", Target.Hash.ToString());

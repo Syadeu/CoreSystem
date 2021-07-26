@@ -5,6 +5,7 @@ using Syadeu.Internal;
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using UnityEngine;
 
 namespace Syadeu.Presentation
 {
@@ -12,6 +13,9 @@ namespace Syadeu.Presentation
     {
         const string c_NameBase = "New {0}";
 
+#if UNITY_EDITOR
+        [ReflectionDescription("한글 쓰지마라")]
+#endif
         [JsonProperty(Order = -20, PropertyName = "Name")] public string Name { get; set; }
         [JsonProperty(Order = -19, PropertyName = "Hash")] [ReflectionSealedView] public Hash Hash { get; set; }
 
