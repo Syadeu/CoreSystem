@@ -42,6 +42,7 @@ namespace Syadeu.Presentation
     {
         [Tooltip("SceneIndex 의 씬이 로드될때 자동으로 데이터를 생성하나요?")]
         [JsonProperty(Order = 0, PropertyName = "BindScene")] public bool m_BindScene;
+        [Tooltip("SceneList.Scenes 의 Index")]
         [JsonProperty(Order = 1, PropertyName = "SceneIndex")] public int m_SceneIndex;
         [JsonProperty(Order = 2, PropertyName = "MapData")] public Reference<MapDataEntity>[] m_MapData;
 

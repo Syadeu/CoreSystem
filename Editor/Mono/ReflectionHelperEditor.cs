@@ -435,8 +435,8 @@ namespace SyadeuEditor
                                 }
                                 GUILayout.EndHorizontal();
 
-                                EditorGUI.indentLevel--;
                                 if (j + 1 < list.Count) EditorUtils.Line();
+                                EditorGUI.indentLevel--;
                             }
                         }
                     }
