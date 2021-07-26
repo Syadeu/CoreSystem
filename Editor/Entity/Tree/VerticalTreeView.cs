@@ -78,13 +78,13 @@ namespace SyadeuEditor.Tree
             {
                 m_Data = OnAddButton?.Invoke();
                 SetupElements(m_Data, m_DataSetup);
-                EditorUtility.SetDirty(Asset);
+                if (Asset != null) EditorUtility.SetDirty(Asset);
             }
             if (m_DrawRemoveButton && GUILayout.Button("-", miniBtt))
             {
                 m_Data = OnRemoveButton?.Invoke(m_Elements[m_Data.Count - 1]);
                 SetupElements(m_Data, m_DataSetup);
-                EditorUtility.SetDirty(Asset);
+                if (Asset != null) EditorUtility.SetDirty(Asset);
             }
             EditorGUILayout.EndHorizontal();
             EditorUtils.Line();
@@ -142,7 +142,7 @@ namespace SyadeuEditor.Tree
             if (e.Parent != null) e.RemoveParent();
 
             SetupElements(m_Data, m_DataSetup);
-            EditorUtility.SetDirty(Asset);
+            if (Asset != null) EditorUtility.SetDirty(Asset);
         }
     }
     public class VerticalTreeView<T> : VerticalTreeViewEntity where T : class

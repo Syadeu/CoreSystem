@@ -224,7 +224,7 @@ namespace SyadeuEditor.Tree
             {
                 RemoveButtonClicked(e);
                 e.Remove();
-                EditorUtility.SetDirty(m_Asset);
+                if (m_Asset != null) EditorUtility.SetDirty(m_Asset);
 
                 return true;
             }
