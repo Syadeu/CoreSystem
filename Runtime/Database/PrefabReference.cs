@@ -6,7 +6,7 @@ using Unity.Mathematics;
 namespace Syadeu.Database
 {
     [Serializable]
-    public struct PrefabReference : IEquatable<PrefabReference>
+    public struct PrefabReference : IEquatable<PrefabReference>, IValidation
     {
         public int m_Idx;
 
@@ -18,6 +18,8 @@ namespace Syadeu.Database
         public bool Equals(PrefabReference other) => m_Idx.Equals(other.m_Idx);
 
         public PrefabList.ObjectSetting GetObjectSetting() => PrefabList.Instance.ObjectSettings[m_Idx];
+
+        public bool IsValid() => PrefabList.Instance.ObjectSettings.Contains(m_Idx);
 
         public static implicit operator int(PrefabReference a) => a.m_Idx;
         public static implicit operator PrefabReference(int a) => new PrefabReference(a);
