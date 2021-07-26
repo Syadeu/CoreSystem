@@ -7,6 +7,12 @@ using System.Linq;
 
 namespace Syadeu.Presentation
 {
+    /// <summary>
+    /// <see cref="EntitySystem"/>에서 엔티티 구조의 제일 하단 abstract 입니다.
+    /// </summary>
+    /// <remarks>
+    /// 이 abstract 를 상속받음으로서 새로운 엔티티 계층 구조를 작성할 수 있습니다.
+    /// </remarks>
     public abstract class EntityDataBase : ObjectBase, IObject, ICloneable
     {
         [JsonIgnore] internal bool m_IsCreated = false;

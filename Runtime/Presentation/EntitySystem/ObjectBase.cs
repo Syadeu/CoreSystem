@@ -9,6 +9,9 @@ using UnityEngine;
 
 namespace Syadeu.Presentation
 {
+    /// <summary>
+    /// <see cref="EntitySystem"/>의 모든 객체들이 참조하는 가장 기본 abstract 입니다.
+    /// </summary>
     public abstract class ObjectBase : ICloneable
     {
         const string c_NameBase = "New {0}";

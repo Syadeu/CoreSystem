@@ -16,7 +16,6 @@ namespace Syadeu.Presentation
     /// </remarks>
     public abstract class EntityBase : EntityDataBase, IEntity
     {
-        [JsonIgnore] internal bool m_IsCreated = false;
         [JsonIgnore] internal Hash m_GameObjectHash;
         [JsonIgnore] internal Hash m_TransformHash;
 
@@ -24,8 +23,6 @@ namespace Syadeu.Presentation
 
         [JsonIgnore] public DataGameObject gameObject => PresentationSystem<GameObjectProxySystem>.System.GetDataGameObject(m_GameObjectHash);
         [JsonIgnore] public DataTransform transform => PresentationSystem<GameObjectProxySystem>.System.GetDataTransform(m_TransformHash);
-
-        [JsonIgnore] public bool isCreated => m_IsCreated;
 
         public override bool IsValid()
         {
