@@ -9,11 +9,14 @@ namespace Syadeu.Presentation
 {
     public abstract class EntityDataBase : ObjectBase, IObject, ICloneable
     {
+        [JsonIgnore] internal bool m_IsCreated = false;
         [JsonIgnore] internal List<AttributeBase> m_Attributes;
 
         Hash IObject.Idx => Hash;
         List<AttributeBase> IObject.Attributes => m_Attributes;
         [JsonProperty(Order = -8, PropertyName = "Attributes")] [UnityEngine.HideInInspector] public List<Hash> Attributes { get; set; }
+
+        [JsonIgnore] public bool isCreated => m_IsCreated;
 
         AttributeBase IObject.GetAttribute(Type t)
         {

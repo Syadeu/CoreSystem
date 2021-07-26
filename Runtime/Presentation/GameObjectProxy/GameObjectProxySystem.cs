@@ -94,6 +94,12 @@ namespace Syadeu.Presentation
                 }
                 m_TerminatedProxies.Clear();
 
+                while (m_RequestDestories.Count > 0)
+                {
+                    m_RequestDestories.TryDequeue(out _);
+                }
+                m_RemovedGameObjectIdxes.Clear();
+
                 #region Clear Data Transforms
                 for (int i = 0; i < m_MappedTransforms.Length; i++)
                 {

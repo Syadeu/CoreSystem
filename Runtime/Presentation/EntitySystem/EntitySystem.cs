@@ -275,6 +275,7 @@ namespace Syadeu.Presentation
             EntityBase entity = (EntityBase)entityBase.Clone();
             entity.m_GameObjectHash = obj.m_Idx;
             entity.m_TransformHash = obj.m_Transform;
+            entity.m_IsCreated = true;
 
             m_ObjectHashSet.Add(obj.m_Idx);
             m_ObjectEntities.Add(obj.m_Idx, entity);
@@ -345,7 +346,10 @@ namespace Syadeu.Presentation
 
         private IObject InternalCreateObject(ObjectBase obj)
         {
-            IObject clone = (IObject)obj.Clone();
+            EntityDataBase objClone = (EntityDataBase)obj.Clone();
+            objClone.m_IsCreated = true;
+
+            IObject clone = (IObject)objClone;
 
             m_ObjectHashSet.Add(clone.Idx);
             m_ObjectEntities.Add(clone.Idx, clone);
