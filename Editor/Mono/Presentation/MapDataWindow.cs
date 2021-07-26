@@ -1,7 +1,10 @@
-﻿using Syadeu.Database;
+﻿using Syadeu;
+using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation;
 using SyadeuEditor.Tree;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
@@ -31,6 +34,7 @@ namespace SyadeuEditor
 
             base.OnDisable();
         }
+
         #region TreeView
         private void SetupTreeView(MapDataEntity data)
         {
@@ -41,22 +45,34 @@ namespace SyadeuEditor
                 {
                     MapDataEntity.Object objData = (MapDataEntity.Object)other;
 
-                    return new TreeObjectElement(m_TreeView, objData);
+                    return new TreeObjectElement(m_TreeView, objData, m_PreviewFolder);
                 })
                 .MakeAddButton(() =>
                 {
-                    var temp = data.m_Objects.ToList();
+                    List<MapDataEntity.Object> temp = data.m_Objects.ToList();
+                    
                     temp.Add(new MapDataEntity.Object());
-
+                    
                     data.m_Objects = temp.ToArray();
+
                     return data.m_Objects;
                 })
                 .MakeRemoveButton((other) =>
                 {
-                    var temp = data.m_Objects.ToList();
-                    temp.Remove((MapDataEntity.Object)other.TargetObject);
+                    TreeObjectElement element = (TreeObjectElement)other;
+                    MapDataEntity.Object target = (MapDataEntity.Object)element.TargetObject;
+
+                    List<MapDataEntity.Object> temp = data.m_Objects.ToList();
+                    int idx = temp.IndexOf(target);
+
+                    temp.RemoveAt(idx);
+                    if (element.m_PreviewObject != null)
+                    {
+                        DestroyImmediate(element.m_PreviewObject);
+                    }
 
                     data.m_Objects = temp.ToArray();
+
                     return data.m_Objects;
                 })
                 ;
@@ -72,17 +88,69 @@ namespace SyadeuEditor
                     else return temp.Name;
                 }
             }
+            private Transform m_Folder;
+            public GameObject m_PreviewObject = null;
 
-            public TreeObjectElement(VerticalTreeView treeView, MapDataEntity.Object target) : base(treeView, target)
+            public TreeObjectElement(VerticalTreeView treeView, MapDataEntity.Object target, Transform previewTr) : base(treeView, target)
             {
+                m_Folder = previewTr;
 
+                if (Target.m_Object.IsValid())
+                {
+                    PrefabReference prefab = Target.m_Object.GetObject().Prefab;
+                    if (prefab.IsValid())
+                    {
+                        var temp = prefab.GetObjectSetting().m_RefPrefab.editorAsset;
+                        m_PreviewObject = Instantiate(temp, Target.m_Translation, Target.m_Rotation, m_Folder);
+
+                        UpdatePreviewObject();
+                    }
+                }
             }
             public override void OnGUI()
             {
                 using (new EditorUtils.BoxBlock(Color.black))
                 {
-                    ReflectionHelperEditor.DrawObject(Target);
+                    ReflectionHelperEditor.DrawReferenceSelector("Object",
+                        (hash) =>
+                        {
+                            var target = new Reference<EntityBase>(hash);
+                            if (!Target.m_Object.Equals(hash))
+                            {
+                                if (m_PreviewObject != null) DestroyImmediate(m_PreviewObject);
+
+                                if (!hash.Equals(Hash.Empty))
+                                {
+                                    GameObject temp = target.GetObject().Prefab.GetObjectSetting().m_RefPrefab.editorAsset;
+                                    m_PreviewObject = Instantiate(temp, m_Folder);
+
+                                    Target.m_Rotation = temp.transform.rotation;
+                                    Target.m_Scale = temp.transform.localScale;
+                                }
+
+                                UpdatePreviewObject();
+                            }
+
+                            Target.m_Object = target;
+
+                        }, Target.m_Object, TypeHelper.TypeOf<EntityBase>.Type);
+
+                    EditorGUI.BeginChangeCheck();
+                    ReflectionHelperEditor.DrawObject(Target, "m_Object");
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        UpdatePreviewObject();
+                    }
                 }
+            }
+            public void UpdatePreviewObject()
+            {
+                if (m_PreviewObject == null) return;
+
+                Transform tr = m_PreviewObject.transform;
+                tr.position = Target.m_Translation;
+                tr.rotation = Target.m_Rotation;
+                tr.localScale = Target.m_Scale;
             }
         }
         #endregion
@@ -106,6 +174,12 @@ namespace SyadeuEditor
 
             EditorUtils.Line();
 
+            if (Application.isPlaying)
+            {
+                EditorUtils.StringRich("Cannot edit data while playing", 13, true);
+                return;
+            }
+
             if (!m_MapData.IsValid())
             {
                 EditorGUILayout.Space();
@@ -124,18 +198,7 @@ namespace SyadeuEditor
             {
                 EntityDataList.Instance.SaveData();
             }
-            m_TreeView.OnGUI();
-
-            //using (new EditorUtils.BoxBlock(Color.gray))
-            //{
-
-
-            //    for (int i = 0; i < m_Target.m_Objects.Length; i++)
-            //    {
-            //        m_Target.m_Objects[i].m_Translation =
-            //            EditorGUILayout.Vector3Field("Position: ", m_Target.m_Objects[i].m_Translation);
-            //    }
-            //}
+            m_TreeView.OnGUI(); 
         }
         protected override void OnSceneGUI(SceneView obj)
         {
@@ -152,6 +215,7 @@ namespace SyadeuEditor
                 string name = $"[{i}] {(objData != null ? $"{objData.Name}" : "None")}";
 
                 Vector2 pos = HandleUtility.WorldToGUIPoint(m_Target.m_Objects[i].m_Translation);
+                pos.x += 20;
                 Rect rect = new Rect(pos, new Vector2(100, 50));                
                 
                 Handles.BeginGUI();
@@ -198,15 +262,29 @@ namespace SyadeuEditor
         }
         private void DrawMoveTool(MapDataEntity.Object obj)
         {
-            //EditorGUI.BeginChangeCheck();
+            EditorGUI.BeginChangeCheck();
             obj.m_Translation = Handles.PositionHandle(obj.m_Translation, obj.m_Rotation);
-            //if (EditorGUI.EndChangeCheck())
-            //{
-            //}
+            if (EditorGUI.EndChangeCheck())
+            {
+                TreeObjectElement element = (TreeObjectElement)m_TreeView.I_Elements.FindFor((other) => other.TargetObject.Equals(obj));
+                if (element.m_PreviewObject != null)
+                {
+                    element.m_PreviewObject.transform.position = obj.m_Translation;
+                }
+            }
         }
         private void DrawRotationTool(MapDataEntity.Object obj)
         {
+            EditorGUI.BeginChangeCheck();
             obj.m_Rotation = Handles.RotationHandle(obj.m_Rotation, obj.m_Translation);
+            if (EditorGUI.EndChangeCheck())
+            {
+                TreeObjectElement element = (TreeObjectElement)m_TreeView.I_Elements.FindFor((other) => other.TargetObject.Equals(obj));
+                if (element.m_PreviewObject != null)
+                {
+                    element.m_PreviewObject.transform.rotation = obj.m_Rotation;
+                }
+            }
         }
     }
 }

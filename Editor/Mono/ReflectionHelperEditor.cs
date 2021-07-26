@@ -309,6 +309,16 @@ namespace SyadeuEditor
 
                 name = ReflectionHelper.SerializeMemberInfoName(members[i]);
 
+                #region Helpbox
+
+                TooltipAttribute tooltip = members[i].GetCustomAttribute<TooltipAttribute>();
+                if (tooltip != null)
+                {
+                    EditorGUILayout.HelpBox(tooltip.tooltip, MessageType.Info);
+                }
+
+                #endregion
+
                 EditorGUI.BeginDisabledGroup(members[i].GetCustomAttribute<ReflectionSealedViewAttribute>() != null);
 
                 if (DrawSystemField(obj, declaredType, name, getter, out object value))
@@ -359,7 +369,42 @@ namespace SyadeuEditor
                                 using (new EditorUtils.BoxBlock(j % 2 == 0 ? color1 : color2))
                                 {
                                     if (list[j] == null) list[j] = Activator.CreateInstance(elementType);
-                                    list[j] = DrawObject(list[j]);
+
+                                    #region CoreSystem Types
+                                    if (TypeHelper.TypeOf<IReference>.Type.IsAssignableFrom(elementType))
+                                    {
+                                        IReference objRef = (IReference)list[j];
+                                        Type targetType;
+                                        Type[] generics = elementType.GetGenericArguments();
+                                        if (generics.Length > 0) targetType = elementType.GetGenericArguments()[0];
+                                        else targetType = null;
+
+                                        DrawReferenceSelector(string.Empty, (idx) =>
+                                        {
+                                            ObjectBase objBase = EntityDataList.Instance.GetObject(idx);
+
+                                            Type makedT;
+                                            if (targetType != null) makedT = typeof(Reference<>).MakeGenericType(targetType);
+                                            else makedT = TypeHelper.TypeOf<Reference>.Type;
+
+                                            object temp = TypeHelper.GetConstructorInfo(makedT, TypeHelper.TypeOf<ObjectBase>.Type).Invoke(
+                                                new object[] { objBase });
+
+                                            list[j] = temp;
+                                        }, objRef, targetType);
+                                    }
+                                    else if (elementType.Equals(TypeHelper.TypeOf<LuaScript>.Type))
+                                    {
+                                        LuaScript scr = (LuaScript)list[j];
+                                        if (scr == null)
+                                        {
+                                            scr = string.Empty;
+                                            list[j] = scr;
+                                        }
+                                        scr.DrawFunctionSelector(string.Empty);
+                                    }
+                                    #endregion
+                                    else list[j] = DrawObject(list[j]);
                                 }
                                 if (GUILayout.Button("-", GUILayout.Width(20)))
                                 {

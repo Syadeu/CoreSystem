@@ -284,7 +284,7 @@ your own IScriptLoader (possibly extending ScriptLoaderBase).", file, CoreSystem
         public static void DrawFunctionSelector(this LuaScript scr, string name)
         {
             EditorGUILayout.BeginVertical(EditorUtils.Box);
-            EditorUtils.StringRich(name, 15);
+            if (!string.IsNullOrEmpty(name)) EditorUtils.StringRich(name, 15);
             EditorGUI.indentLevel += 1;
 
             DrawLuaScript(scr);

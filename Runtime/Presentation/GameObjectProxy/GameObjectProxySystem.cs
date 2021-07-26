@@ -105,7 +105,6 @@ namespace Syadeu.Presentation
                         GameObject obj = m_Instances[proxyIdx.x][proxyIdx.y].gameObject;
 
                         prefabSetting.Pool.Enqueue(obj);
-                        //PrefabList.Instance.ObjectSettings[proxyIdx.x].m_RefPrefab.ReleaseInstance(m_Instances[proxyIdx.x][proxyIdx.y].gameObject);
                     }
                 }
                 m_MappedTransforms.Clear();
@@ -113,6 +112,10 @@ namespace Syadeu.Presentation
                 #endregion
 
                 #region Clear Data GameObjects
+                for (int i = 0; i < m_MappedGameObjects.Length; i++)
+                {
+                    OnDataObjectDestoryAsync?.Invoke(m_MappedGameObjects[i]);
+                }
                 m_MappedGameObjects.Clear();
                 m_MappedGameObjectIdxes.Clear();
                 #endregion

@@ -2,6 +2,7 @@
 using Syadeu.Mono;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Internal;
+using Syadeu.ThreadSafe;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -36,7 +37,29 @@ namespace Syadeu.Presentation
         }
         protected override PresentationResult OnInitializeAsync()
         {
-            RequestSystem<SceneSystem>((other) => m_SceneSystem = other);
+            RequestSystem<SceneSystem>((other) =>
+            {
+                SceneDataEntity[] sceneData = EntityDataList.Instance.m_Objects.Values
+                    .Where((other) => (other is SceneDataEntity sceneData) && sceneData.m_BindScene && sceneData.IsValid())
+                    .Select((other) => (SceneDataEntity)other)
+                    .ToArray();
+                for (int i = 0; i < sceneData.Length; i++)
+                {
+                    SceneDataEntity data = sceneData[i];
+                    other.RegisterSceneDependence(data.GetTargetScene(), () =>
+                    {
+                        for (int i = 0; i < data.m_MapData.Length; i++)
+                        {
+                            //MapDataEntity mapData = data.m_MapData[i].GetObject();
+                            m_EntitySystem.CreateObject(data.m_MapData[i]);
+                        }
+                    });
+                    CoreSystem.Logger.Log(Channel.Presentation,
+                        $"Scene Data({data.Name}) is registered.");
+                }
+
+                m_SceneSystem = other;
+            });
             RequestSystem<EntitySystem>((other) => m_EntitySystem = other);
 
             return base.OnInitializeAsync();
@@ -80,7 +103,7 @@ namespace Syadeu.Presentation
         }
         public void SaveGrid()
         {
-            m_SceneSystem.CurrentSceneRef.m_SceneGridData = m_MainGrid.ToBinary();
+            //m_SceneSystem.CurrentSceneRef.m_SceneGridData = m_MainGrid.ToBinary();
         }
     }
 }

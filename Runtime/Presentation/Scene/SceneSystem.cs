@@ -110,6 +110,7 @@ namespace Syadeu.Presentation
 
         private MapSystem m_GridSystem;
         private EntitySystem m_EntitySystem;
+        private readonly Dictionary<SceneReference, List<Action>> m_CustomSceneDependences = new Dictionary<SceneReference, List<Action>>();
 
         #region Presentation Methods
         protected override PresentationResult OnInitialize()
@@ -120,16 +121,12 @@ namespace Syadeu.Presentation
                 {
                     SetupMasterScene();
                     SetupLoadingScene();
-
-                    LoadStartScene(1, 2);
                 }
             }
             else
             {
                 SetupMasterScene();
                 SetupLoadingScene();
-
-                LoadStartScene(1, 2);
             }
 
             return base.OnInitialize();
@@ -205,6 +202,18 @@ namespace Syadeu.Presentation
         }
         protected override PresentationResult OnStartPresentation()
         {
+            if (m_DebugMode)
+            {
+                if (SceneManager.GetActiveScene().path.Equals(SceneList.Instance.MasterScene))
+                {
+                    LoadStartScene(1, 2);
+                }
+            }
+            else
+            {
+                LoadStartScene(1, 2);
+            }
+
             if (m_LoadingScene.IsValid() && m_MasterScene.IsValid())
             {
                 SceneManager.MergeScenes(m_LoadingScene, m_MasterScene);
@@ -212,7 +221,7 @@ namespace Syadeu.Presentation
             else
             {
                 SceneReference sceneRef = SceneList.Instance.GetScene(SceneManager.GetActiveScene().path);
-                if (m_DebugMode) StartSceneDependences(m_GridSystem, sceneRef);
+                if (m_DebugMode) StartSceneDependences(this, sceneRef);
             }
             return base.OnStartPresentation();
         }
@@ -266,6 +275,21 @@ namespace Syadeu.Presentation
             {
                 InternalLoadScene(SceneList.Instance.Scenes[index], waitDelay, startDelay);
             }
+        }
+
+        /// <summary>
+        /// <see cref="PresentationSystemEntity{T}.RequestSystem{TA}(Action{TA})"/> 의 람다식 내부에서 호출하세요.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="onSceneStart"></param>
+        public void RegisterSceneDependence(SceneReference key, Action onSceneStart)
+        {
+            if (!m_CustomSceneDependences.TryGetValue(key, out var list))
+            {
+                list = new List<Action>();
+                m_CustomSceneDependences.Add(key, list);
+            }
+            list.Add(onSceneStart);
         }
 
         internal void SetLoadingScene(Action onLoadingEnter, Action<float, float> onWaitLoading, 
@@ -333,10 +357,10 @@ namespace Syadeu.Presentation
 
                     onCompleted?.Invoke(other);
 
-                    var awaiters = StartSceneDependences(m_GridSystem, scene);
+                    var awaiters = StartSceneDependences(this, scene);
                     CoreSystem.WaitInvoke(() =>
                     {
-                        for (int i = 0; i < awaiters.Count; i++)
+                        for (int i = 0; i < awaiters?.Count; i++)
                         {
                             if (awaiters[i].KeepWait) return false;
                         }
@@ -362,7 +386,7 @@ namespace Syadeu.Presentation
                 while (oper.progress < 1)
                 {
                     OnLoading?.Invoke(oper.progress);
-                    $"{oper.progress}".ToLog();
+                    //$"{oper.progress}".ToLog();
                     yield return null;
                 }
                 OnLoading?.Invoke(1);
@@ -387,15 +411,23 @@ namespace Syadeu.Presentation
             SceneManager.MoveGameObjectToScene(obj, scene);
             return obj;
         }
-        private static List<ICustomYieldAwaiter> StartSceneDependences(MapSystem gridSystem, SceneReference key)
+        private static List<ICustomYieldAwaiter> StartSceneDependences(SceneSystem system, SceneReference key)
         {
+            if (system.m_CustomSceneDependences.TryGetValue(key, out List<Action> list))
+            {
+                for (int i = 0; i < list.Count; i++)
+                {
+                    list[i].Invoke();
+                }
+            }
+
             if (!PresentationManager.Instance.m_DependenceSceneList.TryGetValue(key, out List<Hash> groupHashs))
             {
                 CoreSystem.Logger.Log(Channel.Scene, $"Scene({key.ScenePath.Split('/').Last()}) has no dependence systems for load");
                 return null;
             }
 
-            gridSystem.LoadGrid(key.m_SceneGridData);
+            //gridSystem.LoadGrid(key.m_SceneGridData);
 
             List<ICustomYieldAwaiter> awaiters = new List<ICustomYieldAwaiter>();
             for (int i = 0; i < groupHashs.Count; i++)

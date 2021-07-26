@@ -32,13 +32,13 @@ namespace SyadeuEditor
                 }
             }
 
-            if (m_CurrentScene == null || m_CurrentScene.m_SceneGridData == null ||
-                m_CurrentScene.m_SceneGridData.Length == 0) return;
+            //if (m_CurrentScene == null || m_CurrentScene.m_SceneGridData == null ||
+            //    m_CurrentScene.m_SceneGridData.Length == 0) return;
 
-            grid = ManagedGrid.FromBinary(m_CurrentScene.m_SceneGridData);
-            cellSize = grid.cellSize;
-            center = Vector3Int.FloorToInt(grid.center);
-            size = Vector3Int.FloorToInt(grid.size);
+            //grid = ManagedGrid.FromBinary(m_CurrentScene.m_SceneGridData);
+            //cellSize = grid.cellSize;
+            //center = Vector3Int.FloorToInt(grid.center);
+            //size = Vector3Int.FloorToInt(grid.size);
 
             //GridManager.ImportGrids(grid);
             //GridManager.GetGrid(grid.Idx).EnableDrawGL = true;
@@ -55,36 +55,36 @@ namespace SyadeuEditor
 
                 return;
             }
-            EditorUtils.StringHeader("Grid");
-            center = EditorGUILayout.Vector3IntField("Center: ", center);
-            size = EditorGUILayout.Vector3IntField("Size: ", size);
-            cellSize = EditorGUILayout.FloatField("Cell Size: ", cellSize);
+            //EditorUtils.StringHeader("Grid");
+            //center = EditorGUILayout.Vector3IntField("Center: ", center);
+            //size = EditorGUILayout.Vector3IntField("Size: ", size);
+            //cellSize = EditorGUILayout.FloatField("Cell Size: ", cellSize);
 
-            if (GUILayout.Button("make"))
-            {
-                grid = new ManagedGrid(new int3(center.x, center.y, center.z),
-                new int3(size.x, size.y, size.z), cellSize);
-            }
-            if (GUILayout.Button("Save"))
-            {
-                m_CurrentScene.m_SceneGridData = grid.ToBinary();
-                EditorUtils.SetDirty(target);
-            }
-            if (GUILayout.Button("test"))
-            {
-                grid.GetCell(0).SetValue(Hash.NewHash());
-            }
-            if (GUILayout.Button("remove"))
-            {
-                grid = null;
-                EditorUtils.SetDirty(target);
-            }
+            //if (GUILayout.Button("make"))
+            //{
+            //    grid = new ManagedGrid(new int3(center.x, center.y, center.z),
+            //    new int3(size.x, size.y, size.z), cellSize);
+            //}
+            //if (GUILayout.Button("Save"))
+            //{
+            //    m_CurrentScene.m_SceneGridData = grid.ToBinary();
+            //    EditorUtils.SetDirty(target);
+            //}
+            //if (GUILayout.Button("test"))
+            //{
+            //    grid.GetCell(0).SetValue(Hash.NewHash());
+            //}
+            //if (GUILayout.Button("remove"))
+            //{
+            //    grid = null;
+            //    EditorUtils.SetDirty(target);
+            //}
 
-            if (grid != null)
-            {
-                ManagedCell cell = grid.GetCell(0);
-                EditorGUILayout.LabelField(cell.GetValue()?.ToString());
-            }
+            //if (grid != null)
+            //{
+            //    ManagedCell cell = grid.GetCell(0);
+            //    EditorGUILayout.LabelField(cell.GetValue()?.ToString());
+            //}
 
             EditorGUILayout.Space();
             base.OnInspectorGUI();
