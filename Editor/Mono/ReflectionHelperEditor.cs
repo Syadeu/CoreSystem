@@ -191,6 +191,8 @@ namespace SyadeuEditor
                                 }
                             }
                         }
+                        else attCheck = true;
+
                         if (!attCheck) return false;
                         attCheck = false;
 
@@ -251,8 +253,7 @@ namespace SyadeuEditor
                         return att.Hash;
                     }));
                 }
-                else if (
-                    TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(targetType))
+                else if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(targetType))
                 {
                     ObjectBase[] entities = EntityDataList.Instance.GetEntities()
                         .Where((other) => other.GetType().Equals(targetType) ||
@@ -645,12 +646,26 @@ namespace SyadeuEditor
         private static bool DrawUnityMathField(object ins, Type declaredType, string name, Func<object, object> getter, out object value)
         {
             value = null;
-            if (declaredType.Equals(TypeHelper.TypeOf<int3>.Type))
+            if (declaredType.Equals(TypeHelper.TypeOf<int2>.Type))
+            {
+                int2 gets = (int2)getter.Invoke(ins);
+                Vector2Int temp = EditorGUILayout.Vector2IntField(name, new Vector2Int(gets.x, gets.y));
+
+                value = new int2(temp.x, temp.y);
+                return true;
+            }
+            else if (declaredType.Equals(TypeHelper.TypeOf<int3>.Type))
             {
                 int3 gets = (int3)getter.Invoke(ins);
                 Vector3Int temp = EditorGUILayout.Vector3IntField(name, new Vector3Int(gets.x, gets.y, gets.z));
 
                 value = new int3(temp.x, temp.y, temp.z);
+                return true;
+            }
+            else if (declaredType.Equals(TypeHelper.TypeOf<float2>.Type))
+            {
+                float2 temp = EditorGUILayout.Vector2Field(name, (float2)getter.Invoke(ins));
+                value = temp;
                 return true;
             }
             else if (declaredType.Equals(TypeHelper.TypeOf<float3>.Type))
