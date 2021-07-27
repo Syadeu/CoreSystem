@@ -20,20 +20,7 @@ namespace SyadeuEditor
 
         private void OnEnable()
         {
-            //Asset.m_Entites = null;
-            //Asset.m_Attributes = null;
-            //EditorUtility.SetDirty(target);
-
             LuaEditor.Reload();
-            //Asset.LoadData();
-
-            //if (Asset.m_Attributes == null) m_AttributeNames = Array.Empty<string>();
-            //else
-            //{
-            //    var temp = Asset.m_Attributes.Select((other) => other.Name).ToList();
-            //    temp.Insert(0, "None");
-            //    m_AttributeNames = temp.ToArray();
-            //}
             if (Asset.m_Objects == null) m_AttributeNames = Array.Empty<string>();
             else
             {
@@ -46,8 +33,6 @@ namespace SyadeuEditor
             }
 
             List<object> tempList = new List<object>();
-            //if (Asset.m_Entites != null) tempList.AddRange(Asset.m_Entites);
-            //if (Asset.m_Attributes != null) tempList.AddRange(Asset.m_Attributes);
             if (Asset.m_Objects != null) tempList.AddRange(Asset.m_Objects.Values);
 
             treeView = new VerticalTreeView(Asset, serializedObject);
@@ -194,8 +179,6 @@ namespace SyadeuEditor
             }
 
             List<object> tempList = new List<object>();
-            //if (Asset.m_Entites != null) tempList.AddRange(Asset.m_Entites);
-            //if (Asset.m_Attributes != null) tempList.AddRange(Asset.m_Attributes);
             if (Asset.m_Objects != null) tempList.AddRange(Asset.m_Objects.Values);
             treeView.Refresh(tempList);
         }
@@ -348,7 +331,7 @@ namespace SyadeuEditor
 
                     int idx = i;
                     EditorGUI.BeginChangeCheck();
-                    idx = EditorGUILayout.DelayedIntField(idx, GUILayout.Width(80));
+                    idx = EditorGUILayout.DelayedIntField(idx, GUILayout.Width(40));
                     if (EditorGUI.EndChangeCheck())
                     {
                         if (idx >= Target.Attributes.Count) idx = Target.Attributes.Count - 1;
@@ -380,6 +363,18 @@ namespace SyadeuEditor
                     m_OpenAttributes[i] = GUILayout.Toggle(m_OpenAttributes[i],
                         m_OpenAttributes[i] ? EditorUtils.FoldoutOpendString : EditorUtils.FoldoutClosedString
                         , EditorUtils.MiniButton, GUILayout.Width(20));
+
+                    if (GUILayout.Button("C", GUILayout.Width(20)))
+                    {
+                        AttributeBase cloneAtt = (AttributeBase)EntityDataList.Instance.GetObject(Target.Attributes[i]).Clone();
+
+                        cloneAtt.Hash = Hash.NewHash();
+                        cloneAtt.Name += "_Clone";
+                        EntityDataList.Instance.m_Objects.Add(cloneAtt.Hash, cloneAtt);
+
+                        Target.Attributes[i] = cloneAtt.Hash;
+                    }
+
                     EditorGUILayout.EndHorizontal();
 
                     if (m_OpenAttributes[i])
