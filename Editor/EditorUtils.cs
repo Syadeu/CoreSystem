@@ -264,7 +264,7 @@ namespace SyadeuEditor
             Color m_PrevColor;
             int m_PrevIndent;
 
-            public BoxBlock(Color color)
+            public BoxBlock(Color color, params GUILayoutOption[] options)
             {
                 m_PrevColor = GUI.backgroundColor;
                 m_PrevIndent = EditorGUI.indentLevel;
@@ -274,7 +274,7 @@ namespace SyadeuEditor
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(m_PrevIndent * 15);
                 GUI.backgroundColor = color;
-                GUILayout.BeginVertical(Box);
+                GUILayout.BeginVertical(Box, options);
                 GUI.backgroundColor = m_PrevColor;
             }
             public void Dispose()

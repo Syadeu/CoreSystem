@@ -22,6 +22,7 @@ namespace SyadeuEditor.Presentation.Map
         private MapDataEntity m_Target;
         private Transform m_PreviewFolder;
 
+        private Vector2 m_Scroll;
         private VerticalTreeView m_TreeView;
 
         protected override void OnEnable()
@@ -48,15 +49,19 @@ namespace SyadeuEditor.Presentation.Map
                 .SetupElements(data.m_Objects, (other) =>
                 {
                     MapDataEntity.Object objData = (MapDataEntity.Object)other;
-
                     return new TreeObjectElement(m_TreeView, objData, m_PreviewFolder);
                 })
                 .MakeAddButton(() =>
                 {
                     List<MapDataEntity.Object> temp = data.m_Objects.ToList();
+
+                    var objData = new MapDataEntity.Object();
                     
-                    temp.Add(new MapDataEntity.Object());
-                    
+                    Camera sceneCam = SceneView.lastActiveSceneView.camera;
+                    Vector3 pos = sceneCam.transform.position + (sceneCam.transform.forward * 10f);
+                    objData.m_Translation = pos;
+
+                    temp.Add(objData);
                     data.m_Objects = temp.ToArray();
 
                     return data.m_Objects;
@@ -210,7 +215,14 @@ namespace SyadeuEditor.Presentation.Map
             {
                 EntityDataList.Instance.SaveData();
             }
-            m_TreeView.OnGUI(); 
+            m_Scroll = GUILayout.BeginScrollView(m_Scroll, false, true);
+
+            //using (new EditorUtils.BoxBlock(Color.white))
+            {
+                m_TreeView.OnGUI();
+            }
+
+            GUILayout.EndScrollView();
         }
         protected override void OnSceneGUI(SceneView obj)
         {
