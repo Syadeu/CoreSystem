@@ -12,18 +12,14 @@ using UnityEngine;
 
 namespace SyadeuEditor.Presentation.Map
 {
-    public sealed class MapDataWindow : EditorWindowEntity<MapDataWindow>
+    public sealed class MapSystemWindow : EditorWindowEntity<MapSystemWindow>
     {
         const string c_EditorOnly = "EditorOnly";
 
-        protected override string DisplayName => "Map Data Window";
+        protected override string DisplayName => "Map System";
 
-        private Reference<MapDataEntity> m_MapData;
-        private MapDataEntity m_Target;
-        private Transform m_PreviewFolder;
-
-        private Vector2 m_Scroll;
-        private VerticalTreeView m_TreeView;
+        private static string[] s_ToolbarNames = new string[] { "MapData", "MapGrid" };
+        private int m_SelectedToolbar = 0;
 
         protected override void OnEnable()
         {
@@ -36,8 +32,191 @@ namespace SyadeuEditor.Presentation.Map
         protected override void OnDisable()
         {
             DestroyImmediate(m_PreviewFolder.gameObject);
+            Tools.hidden = false;
 
             base.OnDisable();
+        }
+
+        private void OnGUI()
+        {
+            EditorGUILayout.Space();
+            EditorUtils.StringHeader("Map System", 20, true);
+            GUILayout.Space(5);
+            EditorUtils.Line();
+
+            m_SelectedToolbar = GUILayout.Toolbar(m_SelectedToolbar, s_ToolbarNames);
+
+            switch (m_SelectedToolbar)
+            {
+                case 0:
+                    MapDataGUI();
+                    break;
+                case 1:
+                    break;
+                default:
+                    break;
+            }
+        }
+        protected override void OnSceneGUI(SceneView obj)
+        {
+            switch (m_SelectedToolbar)
+            {
+                case 0:
+                    MapDataSceneGUI(obj);
+                    break;
+                case 1:
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        #region Map Data
+
+        private Reference<MapDataEntity> m_MapData;
+        private MapDataEntity m_Target;
+        private Transform m_PreviewFolder;
+        private Vector2 m_Scroll;
+        private VerticalTreeView m_TreeView;
+        private void MapDataGUI()
+        {
+            #region Map data selector
+            using (new EditorUtils.BoxBlock(Color.gray))
+            {
+                ReflectionHelperEditor.DrawReferenceSelector("Map data: ", (hash) =>
+                {
+                    m_MapData = new Reference<MapDataEntity>(hash);
+
+                    if (m_Target == null)
+                    {
+                        m_Target = m_MapData.GetObject();
+                        SetupTreeView(m_Target);
+
+                        SceneView.lastActiveSceneView.Repaint();
+                    }
+                    else if (!m_Target.Idx.Equals(m_MapData))
+                    {
+                        DestroyImmediate(m_PreviewFolder.gameObject);
+                        m_PreviewFolder = new GameObject("Preview").transform;
+                        m_PreviewFolder.gameObject.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
+                        m_PreviewFolder.gameObject.tag = c_EditorOnly;
+
+                        m_Target = m_MapData.GetObject();
+                        SetupTreeView(m_Target);
+
+                        SceneView.lastActiveSceneView.Repaint();
+                    }
+
+                    Tools.hidden = true;
+
+                }, m_MapData, TypeHelper.TypeOf<MapDataEntity>.Type);
+            }
+            #endregion
+
+            EditorUtils.Line();
+
+            if (Application.isPlaying)
+            {
+                EditorUtils.StringRich("Cannot edit data while playing", 13, true);
+                return;
+            }
+
+            if (!m_MapData.IsValid())
+            {
+                EditorGUILayout.Space();
+                EditorUtils.StringRich("Select map data", 13, true);
+                return;
+            }
+
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("Save"))
+            {
+                EntityDataList.Instance.SaveData();
+            }
+            if (GUILayout.Button("Close"))
+            {
+                DestroyImmediate(m_PreviewFolder.gameObject);
+                m_PreviewFolder = new GameObject("Preview").transform;
+                m_PreviewFolder.gameObject.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
+                m_PreviewFolder.gameObject.tag = c_EditorOnly;
+
+                m_Target = null;
+                m_MapData = new Reference<MapDataEntity>(Hash.Empty);
+
+                SceneView.lastActiveSceneView.Repaint();
+                EditorGUILayout.EndHorizontal();
+
+                Tools.hidden = false;
+                return;
+            }
+            EditorGUILayout.EndHorizontal();
+
+            int screenWidth = Screen.width;
+            m_Scroll = GUILayout.BeginScrollView(m_Scroll, false, false);
+
+            m_TreeView.OnGUI();
+
+            GUILayout.EndScrollView();
+        }
+        private void MapDataSceneGUI(SceneView obj)
+        {
+            if (m_Target == null) return;
+
+            Color origin = Handles.color;
+            Handles.color = Color.black;
+
+            for (int i = 0; i < m_Target.m_Objects?.Length; i++)
+            {
+                var objData = m_Target.m_Objects[i].m_Object.GetObject();
+                Handles.color = Color.white;
+
+                string name = $"[{i}] {(objData != null ? $"{objData.Name}" : "None")}";
+
+                Vector2 pos = HandleUtility.WorldToGUIPoint(m_Target.m_Objects[i].m_Translation);
+                pos.x += 20;
+                Rect rect = new Rect(pos, new Vector2(100, 50));
+
+                Handles.BeginGUI();
+                GUI.BeginGroup(rect, name, EditorUtils.Box);
+
+                //GUI.Label(rect, "tesasdasdasdasdt");
+                //GUILayout.Label("gfhghfhfggfh");
+                //EditorGUILayout.LabelField("dasiduiouxoi");
+
+                GUI.EndGroup();
+                Handles.EndGUI();
+
+                EditorGUI.BeginChangeCheck();
+
+                switch (Tools.current)
+                {
+                    case Tool.View:
+                        break;
+                    case Tool.Move:
+                        DrawMoveTool(m_Target.m_Objects[i]);
+                        break;
+                    case Tool.Rotate:
+                        DrawRotationTool(m_Target.m_Objects[i]);
+                        break;
+                    case Tool.Scale:
+                        break;
+                    case Tool.Rect:
+                        break;
+                    case Tool.Transform:
+                        break;
+                    default:
+                        break;
+                }
+
+
+
+                if (EditorGUI.EndChangeCheck())
+                {
+                    Repaint();
+                }
+            }
+
+            Handles.color = origin;
         }
 
         #region TreeView
@@ -58,7 +237,7 @@ namespace SyadeuEditor.Presentation.Map
                     List<MapDataEntity.Object> temp = data.m_Objects.ToList();
 
                     var objData = new MapDataEntity.Object();
-                    
+
                     Camera sceneCam = SceneView.lastActiveSceneView.camera;
                     Vector3 pos = sceneCam.transform.position + (sceneCam.transform.forward * 10f);
                     objData.m_Translation = pos;
@@ -96,15 +275,17 @@ namespace SyadeuEditor.Presentation.Map
                 {
                     EntityBase temp = Target.m_Object.GetObject();
                     if (temp == null) return "None";
-                    else return temp.Name;
+                    else return $"[{m_Idx}] {temp.Name}";
                 }
             }
             private Transform m_Folder;
             public GameObject m_PreviewObject = null;
+            private int m_Idx;
 
             public TreeObjectElement(VerticalTreeView treeView, MapDataEntity.Object target, Transform previewTr) : base(treeView, target)
             {
                 m_Folder = previewTr;
+                m_Idx = treeView.Data.IndexOf(target);
 
                 if (Target.m_Object.IsValid())
                 {
@@ -112,7 +293,7 @@ namespace SyadeuEditor.Presentation.Map
                     if (prefab.IsValid())
                     {
                         var temp = prefab.GetObjectSetting().m_RefPrefab.editorAsset;
-                        
+
                         m_PreviewObject = (GameObject)PrefabUtility.InstantiatePrefab(temp, m_Folder);
                         m_PreviewObject.tag = c_EditorOnly;
                         m_PreviewObject.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
@@ -174,130 +355,7 @@ namespace SyadeuEditor.Presentation.Map
         }
         #endregion
 
-        private void OnGUI()
-        {
-            EditorGUILayout.Space();
-            EditorUtils.StringHeader("Map Data Window", 20, true);
-            GUILayout.Space(5);
-            EditorUtils.Line();
-
-            #region Map data selector
-            using (new EditorUtils.BoxBlock(Color.gray))
-            {
-                ReflectionHelperEditor.DrawReferenceSelector("Map data: ", (hash) =>
-                {
-                    m_MapData = new Reference<MapDataEntity>(hash);
-
-                    if (m_Target == null)
-                    {
-                        m_Target = m_MapData.GetObject();
-                        SetupTreeView(m_Target);
-
-                        SceneView.lastActiveSceneView.Repaint();
-                    }
-                    else if (!m_Target.Idx.Equals(m_MapData))
-                    {
-                        DestroyImmediate(m_PreviewFolder.gameObject);
-                        m_PreviewFolder = new GameObject("Preview").transform;
-                        m_PreviewFolder.gameObject.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
-                        m_PreviewFolder.gameObject.tag = c_EditorOnly;
-
-                        m_Target = m_MapData.GetObject();
-                        SetupTreeView(m_Target);
-
-                        SceneView.lastActiveSceneView.Repaint();
-                    }
-                }, m_MapData, TypeHelper.TypeOf<MapDataEntity>.Type);
-            }
-            #endregion
-
-            EditorUtils.Line();
-
-            if (Application.isPlaying)
-            {
-                EditorUtils.StringRich("Cannot edit data while playing", 13, true);
-                return;
-            }
-
-            if (!m_MapData.IsValid())
-            {
-                EditorGUILayout.Space();
-                EditorUtils.StringRich("Select map data", 13, true);
-                return;
-            }
-
-            if (GUILayout.Button("Save"))
-            {
-                EntityDataList.Instance.SaveData();
-            }
-
-            int screenWidth = Screen.width;
-            m_Scroll = GUILayout.BeginScrollView(m_Scroll, false, false);
-
-            m_TreeView.OnGUI();
-
-            GUILayout.EndScrollView();
-        }
-        protected override void OnSceneGUI(SceneView obj)
-        {
-            if (m_Target == null) return;
-
-            Color origin = Handles.color;
-            Handles.color = Color.black;
-
-            for (int i = 0; i < m_Target.m_Objects?.Length; i++)
-            {
-                var objData = m_Target.m_Objects[i].m_Object.GetObject();
-                Handles.color = Color.white;
-
-                string name = $"[{i}] {(objData != null ? $"{objData.Name}" : "None")}";
-
-                Vector2 pos = HandleUtility.WorldToGUIPoint(m_Target.m_Objects[i].m_Translation);
-                pos.x += 20;
-                Rect rect = new Rect(pos, new Vector2(100, 50));                
-                
-                Handles.BeginGUI();
-                GUI.BeginGroup(rect, name, EditorUtils.Box);
-
-                //GUI.Label(rect, "tesasdasdasdasdt");
-                //GUILayout.Label("gfhghfhfggfh");
-                //EditorGUILayout.LabelField("dasiduiouxoi");
-                
-                GUI.EndGroup();
-                Handles.EndGUI();
-
-                EditorGUI.BeginChangeCheck();
-
-                switch (Tools.current)
-                {
-                    case Tool.View:
-                        break;
-                    case Tool.Move:
-                        DrawMoveTool(m_Target.m_Objects[i]);
-                        break;
-                    case Tool.Rotate:
-                        DrawRotationTool(m_Target.m_Objects[i]);
-                        break;
-                    case Tool.Scale:
-                        break;
-                    case Tool.Rect:
-                        break;
-                    case Tool.Transform:
-                        break;
-                    default:
-                        break;
-                }
-
-                
-
-                if (EditorGUI.EndChangeCheck())
-                {
-                    Repaint();
-                }
-            }
-
-            Handles.color = origin;
-        }
+        #region Tool
         private void DrawMoveTool(MapDataEntity.Object obj)
         {
             EditorGUI.BeginChangeCheck();
@@ -324,5 +382,8 @@ namespace SyadeuEditor.Presentation.Map
                 }
             }
         }
+        #endregion
+
+        #endregion
     }
 }

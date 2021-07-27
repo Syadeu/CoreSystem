@@ -497,7 +497,7 @@ namespace SyadeuEditor
 
                     int idx = i;
                     EditorGUI.BeginChangeCheck();
-                    idx = EditorGUILayout.DelayedIntField(idx, GUILayout.Width(80));
+                    idx = EditorGUILayout.DelayedIntField(idx, GUILayout.Width(40));
                     if (EditorGUI.EndChangeCheck())
                     {
                         if (idx >= Target.Attributes.Count) idx = Target.Attributes.Count - 1;

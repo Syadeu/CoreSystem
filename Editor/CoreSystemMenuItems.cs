@@ -53,10 +53,10 @@ namespace SyadeuEditor
             Selection.activeObject = SceneList.Instance;
             EditorApplication.ExecuteMenuItem("Window/General/Inspector");
         }
-        [MenuItem("CoreSystem/Map Object Window", priority = 6)]
-        public static void MapObjectWindowMenu()
+        [MenuItem("CoreSystem/Map System Window", priority = 6)]
+        public static void MapSystemWindowMenu()
         {
-            Presentation.Map.MapDataWindow.Instance.Show();
+            Presentation.Map.MapSystemWindow.Instance.Show();
         }
 
         //public static CreatureSystemWindow m_CreatureWindow;
