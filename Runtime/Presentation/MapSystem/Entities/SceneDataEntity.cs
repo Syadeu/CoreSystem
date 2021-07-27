@@ -42,11 +42,23 @@ namespace Syadeu.Presentation.Map
         {
             if (!entity.IsValid()) return;
 
-            for (int i = 0; i < entity.m_MapData.Length; i++)
-            {
-                IObject temp = CreateObject(entity.m_MapData[i]);
-                entity.m_CreatedMapData.Add(temp);
-            }
+            // TODO : 잠시보류
+            //for (int i = 0; i < entity.m_MapData.Length; i++)
+            //{
+            //    IObject temp = CreateObject(entity.m_MapData[i]);
+
+            //    var objs = ((MapDataEntity)temp).CreatedEntities;
+            //    for (int j = 0; j < objs.Length; j++)
+            //    {
+            //        GridSizeAttribute gridSize = objs[j].GetAttribute<GridSizeAttribute>();
+            //        if (gridSize == null) continue;
+
+            //        gridSize.
+            //    }
+
+
+            //    entity.m_CreatedMapData.Add(temp);
+            //}
         }
         protected override void OnDestroy(SceneDataEntity entity)
         {

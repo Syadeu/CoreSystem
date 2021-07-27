@@ -351,7 +351,7 @@ namespace Syadeu.Database
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public sealed class ManagedGrid
+    public sealed class ManagedGrid : IDisposable
     {
         [JsonProperty] internal readonly Hash m_Hash;
         [JsonProperty] private readonly AABB m_AABB;
@@ -486,6 +486,11 @@ namespace Syadeu.Database
                 Newtonsoft.Json.JsonSerializer serializer = new Newtonsoft.Json.JsonSerializer();
                 return serializer.Deserialize<ManagedGrid>(rd);
             }
+        }
+
+        public void Dispose()
+        {
+            m_Cells.Clear();
         }
     }
     public sealed class ManagedCell
