@@ -60,13 +60,9 @@ namespace Syadeu.Presentation.Map
                         }
 
                         list.Add(m_EntitySystem.CreateObject(data.Hash));
-                        //for (int i = 0; i < data.m_MapData.Length; i++)
-                        //{
-                        //    list.Add(m_EntitySystem.CreateObject(data.m_MapData[i]));
-                        //}
                     });
 
-                    other.RegisterSceneUnloadDependence(data.GetTargetScene(), () =>
+                    other.RegisterSceneUnloadDependence(targetScene, () =>
                     {
                         if (m_SceneDataObjects.TryGetValue(targetScene, out var list))
                         {
@@ -77,6 +73,8 @@ namespace Syadeu.Presentation.Map
                                 m_EntitySystem.DestroyObject(list[i].Idx);
                             }
                             list.Clear();
+
+                            m_SceneDataObjects.Remove(targetScene);
                         }
                     });
 
