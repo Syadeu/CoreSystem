@@ -529,6 +529,18 @@ namespace SyadeuEditor
                     m_OpenAttributes[i] = GUILayout.Toggle(m_OpenAttributes[i],
                         m_OpenAttributes[i] ? EditorUtils.FoldoutOpendString : EditorUtils.FoldoutClosedString
                         , EditorUtils.MiniButton, GUILayout.Width(20));
+
+                    if (GUILayout.Button("C", GUILayout.Width(20)))
+                    {
+                        AttributeBase cloneAtt = (AttributeBase)EntityDataList.Instance.GetObject(Target.Attributes[i]).Clone();
+
+                        cloneAtt.Hash = Hash.NewHash();
+                        cloneAtt.Name += "_Clone";
+                        EntityDataList.Instance.m_Objects.Add(cloneAtt.Hash, cloneAtt);
+
+                        Target.Attributes[i] = cloneAtt.Hash;
+                    }
+
                     EditorGUILayout.EndHorizontal();
 
                     if (m_OpenAttributes[i])
