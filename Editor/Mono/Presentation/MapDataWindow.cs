@@ -45,6 +45,8 @@ namespace SyadeuEditor.Presentation.Map
         {
             if (m_TreeView == null) m_TreeView = new VerticalTreeView(null, null);
 
+            if (data.m_Objects == null) data.m_Objects = Array.Empty<MapDataEntity.Object>();
+
             m_TreeView
                 .SetupElements(data.m_Objects, (other) =>
                 {
@@ -230,7 +232,7 @@ namespace SyadeuEditor.Presentation.Map
             Color origin = Handles.color;
             Handles.color = Color.black;
 
-            for (int i = 0; i < m_Target.m_Objects.Length; i++)
+            for (int i = 0; i < m_Target.m_Objects?.Length; i++)
             {
                 var objData = m_Target.m_Objects[i].m_Object.GetObject();
                 Handles.color = Color.white;
