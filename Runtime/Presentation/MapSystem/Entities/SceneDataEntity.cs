@@ -2,7 +2,7 @@
 using Syadeu.Mono;
 using UnityEngine;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Presentation.Map
 {
     public sealed class SceneDataEntity : EntityDataBase
     {

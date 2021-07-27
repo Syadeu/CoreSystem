@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Unity.Mathematics;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Presentation.Map
 {
     [AttributeAcceptOnly(typeof(EntityBase))]
     public abstract class GridAttributeBase : AttributeBase { }

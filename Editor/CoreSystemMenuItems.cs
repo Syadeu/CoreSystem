@@ -56,7 +56,7 @@ namespace SyadeuEditor
         [MenuItem("CoreSystem/Map Object Window", priority = 6)]
         public static void MapObjectWindowMenu()
         {
-            MapDataWindow.Instance.Show();
+            Presentation.Map.MapDataWindow.Instance.Show();
         }
 
         //public static CreatureSystemWindow m_CreatureWindow;

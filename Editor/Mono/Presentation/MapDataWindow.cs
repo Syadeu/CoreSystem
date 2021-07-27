@@ -2,6 +2,7 @@
 using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation;
+using Syadeu.Presentation.Map;
 using SyadeuEditor.Tree;
 using System;
 using System.Collections.Generic;
@@ -9,7 +10,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-namespace SyadeuEditor
+namespace SyadeuEditor.Presentation.Map
 {
     public sealed class MapDataWindow : EditorWindowEntity<MapDataWindow>
     {

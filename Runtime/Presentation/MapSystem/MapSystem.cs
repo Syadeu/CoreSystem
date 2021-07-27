@@ -9,7 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Presentation.Map
 {
     public sealed class MapSystem : PresentationSystemEntity<MapSystem>
     {
