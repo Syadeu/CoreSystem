@@ -187,6 +187,26 @@ namespace SyadeuEditor.Presentation.Map
                 ReflectionHelperEditor.DrawReferenceSelector("Map data: ", (hash) =>
                 {
                     m_MapData = new Reference<MapDataEntity>(hash);
+
+                    if (m_Target == null)
+                    {
+                        m_Target = m_MapData.GetObject();
+                        SetupTreeView(m_Target);
+
+                        SceneView.lastActiveSceneView.Repaint();
+                    }
+                    else if (!m_Target.Idx.Equals(m_MapData))
+                    {
+                        DestroyImmediate(m_PreviewFolder.gameObject);
+                        m_PreviewFolder = new GameObject("Preview").transform;
+                        m_PreviewFolder.gameObject.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
+                        m_PreviewFolder.gameObject.tag = c_EditorOnly;
+
+                        m_Target = m_MapData.GetObject();
+                        SetupTreeView(m_Target);
+
+                        SceneView.lastActiveSceneView.Repaint();
+                    }
                 }, m_MapData, TypeHelper.TypeOf<MapDataEntity>.Type);
             }
             #endregion
@@ -204,25 +224,6 @@ namespace SyadeuEditor.Presentation.Map
                 EditorGUILayout.Space();
                 EditorUtils.StringRich("Select map data", 13, true);
                 return;
-            }
-            else if (m_Target == null)
-            {
-                m_Target = m_MapData.GetObject();
-                SetupTreeView(m_Target);
-
-                SceneView.lastActiveSceneView.Repaint();
-            }
-            else if (!m_Target.Idx.Equals(m_MapData))
-            {
-                DestroyImmediate(m_PreviewFolder.gameObject);
-                m_PreviewFolder = new GameObject("Preview").transform;
-                m_PreviewFolder.gameObject.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
-                m_PreviewFolder.gameObject.tag = c_EditorOnly;
-
-                m_Target = m_MapData.GetObject();
-                SetupTreeView(m_Target);
-
-                SceneView.lastActiveSceneView.Repaint();
             }
 
             if (GUILayout.Button("Save"))
