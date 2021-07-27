@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 using Syadeu.Job;
 using Syadeu.Entities;
+using Syadeu.Database;
 
 namespace Syadeu
 {
@@ -38,6 +39,7 @@ namespace Syadeu
         public IJob MainJob { get; set; }
 
         internal List<IJob> ConnectedJobs;
+        internal bool IsPool = false;
 
         public ForegroundJob(Action action)
         {
@@ -46,6 +48,13 @@ namespace Syadeu
             MainJob = null;
 
             CalledFrom = Environment.StackTrace;
+        }
+        internal void Clear()
+        {
+            CalledFrom = null;
+            Action = null;
+            MainJob = null;
+            ConnectedJobs.Clear();
         }
 
         public IJob Start()

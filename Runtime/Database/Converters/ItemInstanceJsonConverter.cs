@@ -5,6 +5,7 @@ using System;
 
 namespace Syadeu.Database.Converters
 {
+    [System.Obsolete("", true)]
     internal sealed class ItemInstanceJsonConverter : JsonConverter
     {
         public override bool CanWrite => true;
@@ -19,7 +20,7 @@ namespace Syadeu.Database.Converters
             writer.WriteStartObject();
 
             writer.WritePropertyName("Data");
-            writer.WriteValue(refAsset.Data.m_Hash);
+            writer.WriteValue(refAsset.Data.Hash);
 
             writer.WritePropertyName("Guid");
             writer.WriteValue(refAsset.Hash);

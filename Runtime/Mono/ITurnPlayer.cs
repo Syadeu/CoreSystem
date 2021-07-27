@@ -2,11 +2,11 @@
 
 namespace Syadeu.Mono.TurnTable
 {
-    public interface ITurnPlayer : IObject
+    public interface ITurnPlayer
     {
         //string name { get; }
         //Transform transform { get; }
-
+        string DisplayName { get; }
         /// <summary>
         /// 값이 낮을 수록, 턴이 일찍 시작됩니다.
         /// </summary>
@@ -16,7 +16,7 @@ namespace Syadeu.Mono.TurnTable
         /// <see langword="true"/> 일 경우, 다음 턴 테이블에 이 플레이어를 참여시킵니다
         /// </summary>
         bool ActivateTurn { get; }
-        bool IsMyTurn { get; }
+        //bool IsMyTurn { get; }
         int ActionPoint { get; }
 
         /// <summary>

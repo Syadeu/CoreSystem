@@ -1,4 +1,5 @@
 ﻿using Syadeu.Database;
+using Syadeu.Presentation;
 using System;
 
 using UnityEngine;
@@ -6,6 +7,7 @@ using UnityEngine.Events;
 
 namespace Syadeu.Mono.TurnTable
 {
+    [System.Obsolete("", true)]
     public abstract class CreatureTurnEntity : CreatureEntity, ITurnPlayer
     {
         //[Space]
@@ -23,7 +25,6 @@ namespace Syadeu.Mono.TurnTable
 
         //protected abstract int StartTurnSpeed { get; }
         public string DisplayName => Brain.DisplayName;
-        public Hash Hash => Brain.Hash;
 
         protected abstract int InitialActionPoint { get; }
 
@@ -42,7 +43,7 @@ namespace Syadeu.Mono.TurnTable
             }
         }
 
-        protected override void OnInitialize(CreatureBrain brain, int dataIdx)
+        protected override void OnInitialize(CreatureBrain brain, DataGameObject dataObj)
         {
             TurnTableManager.AddPlayer(this);
             IsJoined = true;
@@ -87,9 +88,6 @@ namespace Syadeu.Mono.TurnTable
         {
             if (IsJoined) TurnTableManager.RemovePlayer(this);
         }
-
-        public bool Equals(Hash other) => Hash.Equals(other);
-        public bool Equals(IObject other) => Hash.Equals(other.Hash);
     }
 }
 

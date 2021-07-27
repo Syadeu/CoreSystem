@@ -75,6 +75,7 @@ namespace SyadeuEditor
             private IStaticManager m_Manager;
             public IStaticManager Manager => m_Manager;
 
+            public override object TargetObject => m_Manager;
             private string m_Description = null;
 
             public ManagerTreeElement(VerticalTreeViewEntity tree, IStaticManager manager) : base(tree)
@@ -136,6 +137,8 @@ namespace SyadeuEditor
             private CoreRoutine m_Routine;
             public CoreRoutine Routine => m_Routine;
 
+            public override object TargetObject => m_Routine;
+
             public RoutineTreeElement(VerticalTreeViewEntity tree, CoreRoutine routine) : base(tree)
             {
                 m_Routine = routine;
@@ -174,7 +177,7 @@ namespace SyadeuEditor
                     }
                     element = new RoutineTreeElement(m_RoutinesView, routine);
 
-                    string objPath = routine.ObjectName.Split('+')[0];
+                    string objPath = routine.ObjectName.Split('+')[0].Split('.').Last().Trim();
                     var topFolder = m_RoutinesView.GetOrCreateFolder(objPath);
                     element.SetParent(topFolder);
 
@@ -225,6 +228,7 @@ namespace SyadeuEditor
             EditorUtils.StringHeader("Routines", 15);
             EditorGUI.indentLevel += 1;
 
+            if (GUILayout.Button("Capture")) ValidateRoutineView();
             m_RoutinesView.OnGUI();
 
             EditorGUI.indentLevel -= 1;

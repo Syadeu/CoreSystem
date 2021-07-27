@@ -3,12 +3,13 @@ using System;
 
 namespace Syadeu.Database.Lua
 {
+    [System.Obsolete("", true)]
     internal sealed class ItemProxy : LuaProxyEntity<Item>
     {
         public ItemProxy(Item item) : base(item) { }
 
-        public string Name => Target.m_Name;
-        public string Guid => Target.m_Hash.ToString();
+        public string Name => Target.Name;
+        public string Guid => Target.Hash.ToString();
 
         public Action<CreatureBrain>[] OnEquip
         {

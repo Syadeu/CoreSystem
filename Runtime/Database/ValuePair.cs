@@ -60,8 +60,8 @@ namespace Syadeu.Database
                 return Array(name, list);
             }
             else if (value is Action action) return Action(name, action);
-            else if (value is Action<CreatureBrainProxy> actiont) return Action(name, actiont);
-            else if (value is Action<CreatureBrain> actionta) return Action(name, actionta);
+            //else if (value is Action<CreatureBrainProxy> actiont) return Action(name, actiont);
+            //else if (value is Action<CreatureBrain> actionta) return Action(name, actionta);
             else if (value is Closure func)
             {
                 return Closure(name, func);

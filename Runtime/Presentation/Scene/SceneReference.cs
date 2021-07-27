@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System;
+using Syadeu.Database;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -33,7 +34,7 @@ namespace Syadeu.Presentation
     /// A wrapper that provides the means to safely serialize Scene Asset References.
     /// </summary>
     [Serializable]
-    public class SceneReference : ISerializationCallbackReceiver
+    public class SceneReference : ISerializationCallbackReceiver, IEquatable<SceneReference>
     {
 #if UNITY_EDITOR
         // What we use in editor to select the scene
@@ -52,6 +53,8 @@ namespace Syadeu.Presentation
         // This should only ever be set during serialization/deserialization!
         [SerializeField]
         private string scenePath = string.Empty;
+        //public EntityBase.Captured[] m_SceneObjects;
+        //public byte[] m_SceneGridData = Array.Empty<byte>();
 
         // Use this when you want to actually have the scene path
         public string ScenePath
@@ -88,7 +91,6 @@ namespace Syadeu.Presentation
             HandleBeforeSerialize();
 #endif
         }
-
         // Called to set up data for deserialization. Stubbed out when not in editor.
         public void OnAfterDeserialize()
         {
@@ -98,19 +100,15 @@ namespace Syadeu.Presentation
 #endif
         }
 
-
-
 #if UNITY_EDITOR
         private SceneAsset GetSceneAssetFromPath()
         {
             return string.IsNullOrEmpty(scenePath) ? null : AssetDatabase.LoadAssetAtPath<SceneAsset>(scenePath);
         }
-
         private string GetScenePathFromAsset()
         {
             return sceneAsset == null ? string.Empty : AssetDatabase.GetAssetPath(sceneAsset);
         }
-
         private void HandleBeforeSerialize()
         {
             // Asset is invalid but have Path to try and recover from
@@ -127,7 +125,6 @@ namespace Syadeu.Presentation
                 scenePath = GetScenePathFromAsset();
             }
         }
-
         private void HandleAfterDeserialize()
         {
             EditorApplication.update -= HandleAfterDeserialize;
@@ -144,5 +141,14 @@ namespace Syadeu.Presentation
             if (!Application.isPlaying) EditorSceneManager.MarkAllScenesDirty();
         }
 #endif
+
+        private Hash m_Hash = Hash.Empty;
+        public bool Equals(SceneReference other)
+        {
+            if (m_Hash.Equals(Hash.Empty) && !string.IsNullOrEmpty(scenePath)) m_Hash = Hash.NewHash(scenePath);
+            if (other.m_Hash.Equals(Hash.Empty) && !string.IsNullOrEmpty(other.scenePath)) other.m_Hash = Hash.NewHash(other.scenePath);
+
+            return m_Hash.Equals(other.m_Hash);
+        }
     }
 }

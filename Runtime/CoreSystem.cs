@@ -263,7 +263,10 @@ namespace Syadeu
         /// <returns></returns>
         public static BackgroundJob AddBackgroundJob(Action action)
         {
-            BackgroundJob job = new BackgroundJob(action);
+            BackgroundJob job = PoolContainer<BackgroundJob>.Dequeue();
+            job.Action = action;
+            job.IsPool = true;
+
             AddBackgroundJob(job);
             return job;
         }
@@ -294,7 +297,10 @@ namespace Syadeu
         {
             if (action == null) return null;
 
-            ForegroundJob job = new ForegroundJob(action);
+            ForegroundJob job = PoolContainer<ForegroundJob>.Dequeue();
+            job.Action = action;
+            job.IsPool = true;
+
             AddForegroundJob(job);
             return job;
         }
@@ -415,6 +421,9 @@ namespace Syadeu
         {
             const string InstanceStr = "Instance";
 
+            //PoolContainer<BackgroundJob>.Initialize(() => new BackgroundJob(null), 10);
+            PoolContainer<ForegroundJob>.Initialize(() => new ForegroundJob(null), 10);
+
             Instance.Initialize(SystemFlag.MainSystem);
             Type[] internalTypes = TypeHelper.GetTypes(other => other.GetCustomAttribute<StaticManagerIntializeOnLoadAttribute>() != null);
 
@@ -449,10 +458,7 @@ namespace Syadeu
         private void OnAboutToQuit()
         {
             s_BlockCreateInstance = true;
-        }
-        protected override void OnDestroy()
-        {
-            //StopAllCoroutines();
+
             try
             {
                 BackgroundThread.Abort();
@@ -483,20 +489,27 @@ namespace Syadeu
                 {
                 }
             }
+        }
+        protected override void OnDestroy()
+        {
+            //StopAllCoroutines();
             
-            Application.quitting -= OnAboutToQuit;
+            //Application.quitting -= OnAboutToQuit;
             base.OnDestroy();
         }
         #endregion
 
         #region Worker Thread
 
+        #region Editor
 #if UNITY_EDITOR
         private static IEnumerator m_EditorCoroutine = null;
         private static IEnumerator m_EditorSceneCoroutine = null;
         internal static readonly Dictionary<CoreRoutine, object> m_EditorCoroutines = new Dictionary<CoreRoutine, object>();
         internal static readonly Dictionary<CoreRoutine, object> m_EditorSceneCoroutines = new Dictionary<CoreRoutine, object>();
         private static readonly List<(int progressID, Func<int, IEnumerator> task)> m_EditorTasks = new List<(int, Func<int, IEnumerator>)>();
+
+        private static bool IsEditorPaused = false;
 
         [InitializeOnLoadMethod]
         private static void EditorInitialize()
@@ -508,6 +521,12 @@ namespace Syadeu
 
             SceneView.duringSceneGui -= EditorSceneWorkerMoveNext;
             SceneView.duringSceneGui += EditorSceneWorkerMoveNext;
+
+            EditorApplication.pauseStateChanged += (state) =>
+            {
+                if (state == PauseState.Paused) IsEditorPaused = true;
+                else IsEditorPaused = false;
+            };
         }
 
         private static void EditorSceneWorkerMoveNext(SceneView sceneView)
@@ -745,6 +764,7 @@ namespace Syadeu
             m_EditorTasks.Add((progressID, task));
         }
 #endif
+        #endregion
 
 #if UNITY_EDITOR
         UnityEngine.Profiling.CustomSampler OnBackgroundStartSampler;
@@ -796,16 +816,18 @@ namespace Syadeu
             {
                 LogManager.s_DisplayLogChannel = m_DisplayLogChannel;
 
-                if (!m_SimWatcher.WaitOne())
+#if UNITY_EDITOR
+                if (IsEditorPaused) continue;
+#endif
+                if (!m_SimWatcher.WaitOne(1, true))
                 {
                     tickCounter++;
+                    continue;
                 }
                 else
                 {
-                    if (tickCounter != 0)
-                    {
-                        $"{tickCounter} ticks were skipped".ToLog();
-                    }
+                    if (tickCounter > 20) CoreSystem.Logger.LogWarning(Channel.Core, 
+                        $"{tickCounter} ticks were skipped due to slow unity thread");
                     //$"passed".ToLog();
                     tickCounter = 0;
                 }
@@ -857,17 +879,13 @@ namespace Syadeu
                 {
                     if (item.Value == null)
                     {
-                        //m_CustomBackgroundUpdates.TryRemove(item.Key, out _);
                         waitForRemove.Add(item.Key);
-                        //m_RoutineChanged = true;
                         continue;
                     }
                     if (item.Value is IStaticDataManager dataMgr &&
                         dataMgr.Disposed)
                     {
-                        //m_CustomBackgroundUpdates.TryRemove(item.Key, out _);
                         waitForRemove.Add(item.Key);
-                        //m_RoutineChanged = true;
                         continue;
                     }
 
@@ -877,8 +895,6 @@ namespace Syadeu
                         {
                             if (!item.Key.Iterator.MoveNext())
                             {
-                                //m_CustomBackgroundUpdates.TryRemove(item.Key, out _);
-                                //m_RoutineChanged = true;
                                 waitForRemove.Add(item.Key);
                             }
                         }
@@ -889,8 +905,6 @@ namespace Syadeu
                             {
                                 if (!item.Key.Iterator.MoveNext())
                                 {
-                                    //m_CustomBackgroundUpdates.TryRemove(item.Key, out _);
-                                    //m_RoutineChanged = true;
                                     waitForRemove.Add(item.Key);
                                 }
                             }
@@ -899,8 +913,6 @@ namespace Syadeu
                             {
                                 if (!item.Key.Iterator.MoveNext())
                                 {
-                                    //m_CustomUpdates.TryRemove(item.Key, out _);
-                                    //m_RoutineChanged = true;
                                     waitForRemove.Add(item.Key);
                                 }
                             }
@@ -909,25 +921,12 @@ namespace Syadeu
                             {
                                 if (!item.Key.Iterator.MoveNext())
                                 {
-                                    //m_CustomUpdates.TryRemove(item.Key, out _);
-                                    //m_RoutineChanged = true;
                                     waitForRemove.Add(item.Key);
                                 }
                             }
-                            //else if (item.Key.Iterator.Current.GetType() == typeof(bool) &&
-                            //        Convert.ToBoolean(item.Key.Iterator.Current) == true)
-                            //{
-                            //    if (!item.Key.Iterator.MoveNext())
-                            //    {
-                            //        m_CustomBackgroundUpdates.TryRemove(item.Key, out _);
-                            //        m_RoutineChanged = true;
-                            //    }
-                            //}
                             else if (item.Key.Iterator.Current is YieldInstruction baseYield &&
                                 !(item.Key.Iterator.Current is UnityEngine.AsyncOperation))
                             {
-                                //m_CustomUpdates.TryRemove(item.Key, out _);
-                                //m_RoutineChanged = true;
                                 waitForRemove.Add(item.Key);
                                 throw new CoreSystemException(CoreSystemExceptionFlag.Background,
                                     $"해당 yield return 타입({item.Key.Iterator.Current.GetType().Name})은 지원하지 않습니다");
@@ -1456,7 +1455,7 @@ namespace Syadeu
                 int jobCount = 0;
                 while (m_ForegroundJobs.Count > 0)
                 {
-                    m_ForegroundJobs.TryDequeue(out ForegroundJob job);
+                    if (!m_ForegroundJobs.TryDequeue(out ForegroundJob job)) continue;
 #if UNITY_EDITOR
                     if (!samplers.TryGetValue("Job_" + job.Action.Method.Name, out sampler))
                     {
@@ -1488,6 +1487,13 @@ namespace Syadeu
 
                     job.m_IsDone = true;
                     job.IsRunning = false;
+
+                    if (job.IsPool)
+                    {
+                        job.IsPool = false;
+                        job.Clear();
+                        PoolContainer<ForegroundJob>.Enqueue(job);
+                    }
 
                     jobCount += 1;
 #if UNITY_EDITOR
@@ -1604,6 +1610,13 @@ namespace Syadeu
             BackgroundJob job = e.Result as BackgroundJob;
             job.IsRunning = false;
             job.m_IsDone = true;
+
+            if (job.IsPool)
+            {
+                job.IsPool = false;
+                job.Clear();
+                PoolContainer<BackgroundJob>.Enqueue(job);
+            }
         }
 
         ///// <summary>
@@ -1627,6 +1640,8 @@ namespace Syadeu
         #endregion
 
         #region Internals
+
+        //internal static bool Synchronize() => Instance.m_SimWatcher.WaitOne(1, true);
 
         private static void InternalCreateNewBackgroundWorker(int count, bool isStandAlone)
         {
@@ -1683,6 +1698,28 @@ namespace Syadeu
                 return position;
             }
         }
+        public static Transform GetTransform(UnityEngine.GameObject gameObject)
+        {
+            if (IsMainthread())
+            {
+                if (gameObject == null)
+                {
+                    CoreSystem.Logger.LogError(Channel.Core, "Target gameobject is null. Cannot retrived transform");
+                    return null;
+                }
+                return gameObject.transform;
+            }
+            else
+            {
+                Transform tr = null;
+                AddForegroundJob(() =>
+                {
+                    if (gameObject == null) tr = null;
+                    else tr = gameObject.transform;
+                }).Await();
+                return tr;
+            }
+        }
         public static Transform GetTransform(UnityEngine.Component component)
         {
             if (IsMainthread())
@@ -1722,18 +1759,66 @@ namespace Syadeu
             float 
                 startTime = Time.time,
                 currentTime = startTime;
-            new BackgroundJob(() =>
+            AddBackgroundJob(() =>
             {
                 while (currentTime < startTime + seconds)
                 {
                     whileWait?.Invoke(currentTime - startTime);
 
                     currentTime = CoreSystem.time;
-                    Instance.m_SimWatcher.WaitOne();
+                    if (!Instance.m_SimWatcher.WaitOne())
+                    {
+                        ThreadAwaiter(10);
+                    }
                 }
                 //ThreadAwaiter((int)seconds * 1000);
                 AddForegroundJob(action);
-            }).Start();
+            });
+        }
+        public static void WaitInvoke(Func<bool> _true, Action action)
+        {
+            AddBackgroundJob(() =>
+            {
+                while (!_true.Invoke())
+                {
+                    if (!Instance.m_SimWatcher.WaitOne())
+                    {
+                        ThreadAwaiter(10);
+                    }
+                }
+
+                AddForegroundJob(action);
+            });
+        }
+        public static void WaitInvoke<T>(Func<T> notNull, Action action) where T : class
+        {
+            AddBackgroundJob(() =>
+            {
+                while (notNull.Invoke() == null)
+                {
+                    if (!Instance.m_SimWatcher.WaitOne())
+                    {
+                        ThreadAwaiter(10);
+                    }
+                }
+
+                AddForegroundJob(action);
+            });
+        }
+        public static void WaitInvoke<T>(Func<T> notNull, Action<T> action) where T : class
+        {
+            AddBackgroundJob(() =>
+            {
+                while (notNull.Invoke() == null)
+                {
+                    if (!Instance.m_SimWatcher.WaitOne())
+                    {
+                        ThreadAwaiter(10);
+                    }
+                }
+
+                AddForegroundJob(() => action.Invoke(notNull.Invoke()));
+            });
         }
 
         #endregion

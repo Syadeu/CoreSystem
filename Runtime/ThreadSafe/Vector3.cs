@@ -37,14 +37,8 @@ namespace Syadeu.ThreadSafe
             z = vector3.z;
         }
 
-        public float SqrMagnitute
-        {
-            get
-            {
-                return (x * x) + (y * y) + (z * z);
-            }
-        }
-        public float Magnitute { get { return (float)Math.Sqrt(SqrMagnitute); } }
+        public float SqrMagnitute => (x * x) + (y * y) + (z * z);
+        public float Magnitute => (float)Math.Sqrt(SqrMagnitute);
         public Vector3 Normalize
         {
             get
@@ -66,9 +60,7 @@ namespace Syadeu.ThreadSafe
         public bool Equals(Vector3 x, Vector3 y) => x.x == y.x && x.y == y.y && x.z == y.z;
         public new bool Equals(object x, object y)
         {
-            Vector3 a = (Vector3)x;
-            Vector3 b = (Vector3)y;
-
+            if (!(x is Vector3 a && y is Vector3 b)) return false;
             if (a.x == b.x && a.y == b.y && a.z == b.z) return true;
             return false;
         }
@@ -78,6 +70,7 @@ namespace Syadeu.ThreadSafe
 
         public static implicit operator UnityEngine.Vector3(Vector3 a) => a.ToUnity();
         public static implicit operator float3(Vector3 a) => new float3(a.x, a.y, a.z);
+        public static implicit operator Vector3(float3 a) => new Vector3(a.x, a.y, a.z);
 #if CORESYSTEM_FMOD
         public static implicit operator global::FMOD.VECTOR(Vector3 a) => a.ToFMOD();
 #endif

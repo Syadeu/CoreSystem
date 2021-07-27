@@ -350,6 +350,7 @@ public class CoreSystemTests
     #endregion
 }
 
+[System.Obsolete("", true)]
 public class GridTests
 {
     static Bounds bounds = new Bounds(Vector3.zero, Vector3.one * 1000);

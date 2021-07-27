@@ -1,10 +1,12 @@
-﻿namespace Syadeu.Database.Lua
+﻿using Syadeu.Presentation;
+
+namespace Syadeu.Database.Lua
 {
-    internal abstract class ItemTypeProxyEntity<T> : LuaProxyEntity<T> where T : ItemTypeEntity
+    internal abstract class ItemTypeProxyEntity<T> : LuaProxyEntity<T> where T : AttributeBase
     {
         public ItemTypeProxyEntity(T itemType) : base(itemType) { }
 
-        public string Name => Target.m_Name;
-        public ulong Hash => Target.m_Hash;
+        public string Name => Target.Name;
+        public ulong Hash => Target.Hash;
     }
 }

@@ -18,38 +18,25 @@ namespace Syadeu.Mono
     /// <summary>
     /// 하위 컴포넌트들은 <seealso cref="CreatureEntity"/> 를 참조하면 자동으로 Initialize 됨.
     /// </summary>
-    [RequireComponent(typeof(NavMeshAgent))]
-    public class CreatureBrain : RecycleableMonobehaviour, IRender, IPlayer
+    [RequireComponent(typeof(NavMeshAgent))] [LuaArgumentType]
+    [Obsolete("", true)]
+    public sealed class CreatureBrain : RecycleableMonobehaviour
     {
-        private static Vector3 INIT_POSITION = new Vector3(99999, -99999, 99999);
-
-        public int m_DataIdx;
-        public int m_UniqueIdx;
-        internal bool m_IsSpawnedFromManager = false;
-        internal int m_SpawnPointIdx;
+        internal Hash m_DataHash;
+        internal DataGameObject m_DataObject;
 
         [SerializeField] private NavMeshAgent m_NavMeshAgent;
 
         [Space]
-        [SerializeField] private string m_CreatureName = null;
-        [SerializeField] private string m_CreatureDescription = null;
-
-        [Space]
-        [SerializeField] private bool m_InitializeOnStart = false;
         [Tooltip("활성화시, 카메라에 비치지 않으면 이동 메소드가 순간이동을 합니다")]
-        public bool m_EnableCameraCull = true;
+        //[Obsolete] public bool m_EnableCameraCull = true;
         [SerializeField] private float m_SamplePosDistance = .25f;
-
-        [Space]
-        [SerializeField] private UnityEvent m_OnCreated;
-        [SerializeField] private UnityEvent<int> m_OnInitialize;
-        [SerializeField] private UnityEvent<int> m_OnTerminate;
 
         private CreatureEntity[] m_Childs = null;
         private CreatureBrainProxy m_Proxy = null;
-        private Hash m_Hash;
+        //private Hash m_Hash;
 
-        public override string DisplayName => m_CreatureName;
+        public override string DisplayName => /*m_DataObject.GetComponent<CreatureInfoDataComponent>().m_CreatureInfo.m_Name;*/ "";
         public override bool InitializeOnCall => false;
 
         public bool Initialized { get; private set; } = false;
@@ -70,10 +57,9 @@ namespace Syadeu.Mono
                 return false;
             }
         }
-        public bool IsVisible { get; private set; } = false;
         public Vector3 Direction => m_NavMeshAgent.desiredVelocity;
         //public Vector3 Speed => m_NavMeshAgent.;
-        public Hash Hash => m_Hash;
+        //public Hash Hash => m_Hash;
 
         public bool HasInventory => Inventory != null;
         public CreatureInventory Inventory { get; private set; }
@@ -88,48 +74,10 @@ namespace Syadeu.Mono
             }
         }
 
-        private IEnumerator Start()
-        {
-            yield return new WaitUntil(() => CreatureManager.HasInstance && CreatureManager.Initialized);
-
-            if (m_InitializeOnStart) ManualInitialize(m_DataIdx);
-        }
-        public void ManualInitialize(int dataIdx)
-        {
-            if (Activated || Initialized)
-            {
-                throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
-                    $"크리쳐 {name} 은 이미 사용등록이 완료되었으나 다시 등록하려합니다. \n" +
-                    $"사용을 마친 후, Terminate() 메소드를 실행하세요.");
-            }
-
-            m_DataIdx = dataIdx;
-            var set = CreatureSettings.Instance.GetPrivateSet(m_DataIdx);
-            if (set == null)
-            {
-                throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
-                    $"데이터 인덱스 {m_DataIdx} 는 CreatureSettings 에 존재하지않습니다.\n" +
-                    $"CreatureWindow를 먼저 키고 설정을 완료하세요.");
-            }
-            var recycleContainer = PrefabManager.Instance.InternalGetRecycleObject(set.m_PrefabIdx);
-            if (recycleContainer == null)
-            {
-                throw new CoreSystemException(CoreSystemExceptionFlag.Mono,
-                    $"프리팹 인덱스 {set.m_PrefabIdx} 는 PrefabList 에 존재하지않습니다.");
-            }
-            recycleContainer.AddNewInstance(this);
-
-            OnCreated();
-
-            CreatureManager.Instance.m_Creatures.Add(this);
-
-            //OnInitialize();
-            Initialize();
-        }
-
         protected override void OnCreated()
         {
             m_SharedPath = new NavMeshPath();
+            //m_Hash = Hash.NewHash();
             m_Childs = GetComponentsInChildren<CreatureEntity>();
 
             if (m_NavMeshAgent == null) m_NavMeshAgent = GetComponentInChildren<NavMeshAgent>();
@@ -142,22 +90,21 @@ namespace Syadeu.Mono
                 m_Childs[i].InternalOnCreated();
             }
 
-            m_OnCreated?.Invoke();
+            //m_OnCreated?.Invoke();
         }
         protected override void OnInitialize()
         {
-            m_OnInitialize?.Invoke(m_DataIdx);
+            //m_OnInitialize?.Invoke(m_DataIdx);
             for (int i = 0; i < m_Childs.Length; i++)
             {
-                m_Childs[i].InternalInitialize(this, m_DataIdx);
+                m_Childs[i].InternalInitialize(this, m_DataObject);
             }
             for (int i = 0; i < m_Childs.Length; i++)
             {
                 m_Childs[i].InternalOnStart();
             }
 
-            m_Hash = Hash.NewHash();
-            PresentationSystem<RenderSystem>.System.AddObserver(this);
+            //PresentationSystem<RenderSystem>.System.AddObserver(this);
 
             m_NavMeshAgent.enabled = false;
             m_NavMeshAgent.enabled = true;
@@ -166,37 +113,36 @@ namespace Syadeu.Mono
         }
         protected override void OnTerminate()
         {
-            m_OnTerminate?.Invoke(m_DataIdx);
+            //m_OnTerminate?.Invoke(m_DataIdx);
 
-            var set = CreatureManager.GetCreatureSet(m_DataIdx);
-            set.m_SpawnRanges[m_SpawnPointIdx].m_InstanceCount--;
+            //var set = CreatureManager.GetCreatureSet(m_DataIdx);
+            //set.m_SpawnRanges[m_SpawnPointIdx].m_InstanceCount--;
 
-            transform.position = INIT_POSITION;
+            //transform.position = INIT_POSITION;
 
             for (int i = 0; i < m_Childs.Length; i++)
             {
                 m_Childs[i].InternalOnTerminate();
             }
 
-            m_Hash = Hash.Empty;
-            PresentationSystem<RenderSystem>.System.RemoveObserver(this);
-            CreatureManager.Instance.Creatures.Remove(this);
-            m_IsSpawnedFromManager = false;
+            //PresentationSystem<RenderSystem>.System.RemoveObserver(this);
+            //CreatureManager.Instance.Creatures.Remove(this);
+            //m_IsSpawnedFromManager = false;
 
             m_NavMeshAgent.enabled = false;
 
             Initialized = false;
         }
-        protected virtual void OnDestroy()
-        {
-            if (CreatureManager.HasInstance)
-            {
-                var set = CreatureManager.GetCreatureSet(m_DataIdx);
-                set.m_SpawnRanges[m_SpawnPointIdx].m_InstanceCount--;
-                CreatureManager.Instance.Creatures.Remove(this);
-            }
-            PresentationSystem<RenderSystem>.System.RemoveObserver(this);
-        }
+        //protected virtual void OnDestroy()
+        //{
+        //    //if (CreatureManager.HasInstance)
+        //    //{
+        //    //    var set = CreatureManager.GetCreatureSet(m_DataIdx);
+        //    //    set.m_SpawnRanges[m_SpawnPointIdx].m_InstanceCount--;
+        //    //    CreatureManager.Instance.Creatures.Remove(this);
+        //    //}
+        //    //PresentationSystem<RenderSystem>.System.RemoveObserver(this);
+        //}
 
         /// <summary>
         /// 런타임 중 추가된 자식 CreatureEntity 를 초기화 하기 위한 함수입니다.
@@ -208,37 +154,40 @@ namespace Syadeu.Mono
 
             for (int i = 0; i < m_Childs.Length; i++)
             {
-                if (m_Childs[i].Equals(entity)) return;
+                if (m_Childs[i].Equals(entity)) throw new Exception();
             }
             var temp = m_Childs.ToList();
             temp.Add(entity);
             m_Childs = temp.ToArray();
 
-            entity.InternalInitialize(this, m_DataIdx);
+            if (entity is CreatureInventory inventory) Inventory = inventory;
+            else if (entity is CreatureStat stat) Stat = stat;
+
+            entity.InternalInitialize(this, m_DataObject);
         }
         //protected virtual void OnDestroy()
         //{
         //    RenderManager.RemoveObserver(this);
         //}
 
-        public void OnVisible()
-        {
-            IsVisible = true;
-            for (int i = 0; i < m_Childs.Length; i++)
-            {
-                m_Childs[i].OnVisible();
-            }
-            LuaCreatureUtils.OnVisible?.Invoke(Proxy);
-        }
-        public void OnInvisible()
-        {
-            IsVisible = false;
-            for (int i = 0; i < m_Childs.Length; i++)
-            {
-                m_Childs[i].OnInvisible();
-            }
-            LuaCreatureUtils.OnInvisible?.Invoke(Proxy);
-        }
+        //public void OnVisible()
+        //{
+        //    IsVisible = true;
+        //    for (int i = 0; i < m_Childs.Length; i++)
+        //    {
+        //        m_Childs[i].OnVisible();
+        //    }
+        //    LuaCreatureUtils.OnVisible?.Invoke(Proxy);
+        //}
+        //public void OnInvisible()
+        //{
+        //    IsVisible = false;
+        //    for (int i = 0; i < m_Childs.Length; i++)
+        //    {
+        //        m_Childs[i].OnInvisible();
+        //    }
+        //    LuaCreatureUtils.OnInvisible?.Invoke(Proxy);
+        //}
 
         public int2 m_CachedCurrentGridIdxes = -1;
         public Guid GetCurrentGrid()
@@ -276,11 +225,11 @@ namespace Syadeu.Mono
         }
         public bool MoveTo(Vector3 worldPosition, Action onCompleted = null, bool force = false)
         {
-            if (m_EnableCameraCull && !PresentationSystem<RenderSystem>.System.IsInCameraScreen(transform.position))
-            {
-                transform.position = worldPosition;
-                return true;
-            }
+            //if (!PresentationSystem<RenderSystem>.System.IsInCameraScreen(transform.position))
+            //{
+            //    transform.position = worldPosition;
+            //    return true;
+            //}
 
             if (NavMesh.SamplePosition(transform.position, out _, m_SamplePosDistance, m_NavMeshAgent.areaMask) &&
                 NavMesh.SamplePosition(worldPosition, out _, m_SamplePosDistance, m_NavMeshAgent.areaMask))
@@ -354,12 +303,12 @@ namespace Syadeu.Mono
 
             while (sqr > .25f)
             {
-                if (m_EnableCameraCull && !PresentationSystem<RenderSystem>.System.IsInCameraScreen(transform.position))
-                {
-                    //m_NavMeshAgent.ResetPath();
-                    transform.position = worldPosition;
-                    break;
-                }
+                //if (m_EnableCameraCull && !PresentationSystem<RenderSystem>.System.IsInCameraScreen(transform.position))
+                //{
+                //    //m_NavMeshAgent.ResetPath();
+                //    transform.position = worldPosition;
+                //    break;
+                //}
 
                 if (m_NavMeshAgent.pathStatus == NavMeshPathStatus.PathInvalid ||
                     !NavMesh.SamplePosition(transform.position, out _, m_SamplePosDistance, m_NavMeshAgent.areaMask))
@@ -369,6 +318,7 @@ namespace Syadeu.Mono
                 }
 
                 sqr = (worldPosition - transform.position).sqrMagnitude;
+                m_DataObject.transform.SynchronizeWithProxy();
                 yield return null;
             }
 
@@ -381,11 +331,11 @@ namespace Syadeu.Mono
 
             while (sqr > .25f)
             {
-                if (m_EnableCameraCull && !PresentationSystem<RenderSystem>.System.IsInCameraScreen(transform.position))
-                {
-                    transform.position = worldPosition;
-                    yield break;
-                }
+                //if (m_EnableCameraCull && !PresentationSystem<RenderSystem>.System.IsInCameraScreen(transform.position))
+                //{
+                //    transform.position = worldPosition;
+                //    yield break;
+                //}
 
                 if (NavMesh.SamplePosition(worldPosition, out _, m_SamplePosDistance, m_NavMeshAgent.areaMask) &&
                     NavMesh.SamplePosition(transform.position, out _, m_SamplePosDistance, m_NavMeshAgent.areaMask))
@@ -398,13 +348,11 @@ namespace Syadeu.Mono
                 targetAxis = (worldPosition - transform.position).normalized * m_NavMeshAgent.speed * 1.87f;
 
                 transform.position = Vector3.Lerp(transform.position, transform.position + targetAxis, Time.deltaTime * m_NavMeshAgent.angularSpeed);
+                m_DataObject.transform.SynchronizeWithProxy();
                 yield return null;
             }
         }
 
         #endregion
-
-        public bool Equals(Hash other) => Hash.Equals(other);
-        public bool Equals(IObject other) => Hash.Equals(other.Hash);
     }
 }

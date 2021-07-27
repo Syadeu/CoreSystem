@@ -1,4 +1,5 @@
 ﻿
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -42,6 +43,10 @@ namespace SyadeuEditor
 
         public const string DefaultPath = "Assets/Resources/Syadeu";
         public const string Box = "Box";
+        public const string TextField = "textField";
+        public const string MiniButton = "miniButton";
+        public const string FoldoutOpendString = "▼";
+        public const string FoldoutClosedString = "▶";
 
         static GUIStyle _headerStyle;
         internal static GUIStyle HeaderStyle
@@ -130,7 +135,7 @@ namespace SyadeuEditor
 
         #endregion
 
-        public static void SetDirty(Object obj) => EditorUtility.SetDirty(obj);
+        public static void SetDirty(UnityEngine.Object obj) => EditorUtility.SetDirty(obj);
 
         #region String
 
@@ -254,6 +259,34 @@ namespace SyadeuEditor
         }
         #endregion
 
+        public sealed class BoxBlock : IDisposable
+        {
+            Color m_PrevColor;
+            int m_PrevIndent;
+
+            public BoxBlock(Color color, params GUILayoutOption[] options)
+            {
+                m_PrevColor = GUI.backgroundColor;
+                m_PrevIndent = EditorGUI.indentLevel;
+
+                EditorGUI.indentLevel = 0;
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(m_PrevIndent * 15);
+                GUI.backgroundColor = color;
+                GUILayout.BeginVertical(Box, options);
+                GUI.backgroundColor = m_PrevColor;
+            }
+            public void Dispose()
+            {
+                GUILayout.EndVertical();
+                GUILayout.EndHorizontal();
+
+                EditorGUI.indentLevel = m_PrevIndent;
+                GUI.backgroundColor = m_PrevColor;
+            }
+        }
+
         private static Editor objectPreviewWindow;
         public static void ObjectPreview(this EditorWindow t, GameObject obj)
         {
@@ -332,8 +365,7 @@ namespace SyadeuEditor
         //    return GUILayout.Button(name, btt ? toggleBttStyleToggled : toggleBttStyleNormal, options);
         //}
 
-        public const string FoldoutOpendString = "▼";
-        public const string FoldoutClosedString = "▶";
+        
 
         public static bool Foldout(bool foldout, string name, int size = -1)
         {

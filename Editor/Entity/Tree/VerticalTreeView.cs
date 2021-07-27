@@ -14,7 +14,7 @@ namespace SyadeuEditor.Tree
         protected int m_CurrentDrawChilds = 0;
 
         public event Func<IList> OnAddButton;
-        public event Func<int, IList> OnRemoveButton;
+        public event Func<VerticalTreeElement, IList> OnRemoveButton;
 
         public IList Data => m_Data;
         public int CurrentDrawChilds => m_CurrentDrawChilds;
@@ -54,7 +54,7 @@ namespace SyadeuEditor.Tree
             OnAddButton += onAdd;
             return this;
         }
-        public VerticalTreeView MakeRemoveButton(Func<int, IList> onRemove)
+        public VerticalTreeView MakeRemoveButton(Func<VerticalTreeElement, IList> onRemove)
         {
             m_DrawRemoveButton = true;
             OnRemoveButton += onRemove;
@@ -67,7 +67,8 @@ namespace SyadeuEditor.Tree
             const string box = "Box";
             const string notFound = "Not Found";
 
-            EditorGUILayout.BeginVertical(box);
+            EditorGUILayout.BeginVertical(box, GUILayout.ExpandWidth(false));
+
             EditorUtils.Line();
             BeforeDraw();
             DrawToolbar();
@@ -78,13 +79,13 @@ namespace SyadeuEditor.Tree
             {
                 m_Data = OnAddButton?.Invoke();
                 SetupElements(m_Data, m_DataSetup);
-                EditorUtility.SetDirty(Asset);
+                if (Asset != null) EditorUtility.SetDirty(Asset);
             }
             if (m_DrawRemoveButton && GUILayout.Button("-", miniBtt))
             {
-                m_Data = OnRemoveButton?.Invoke(m_Data.Count - 1);
+                m_Data = OnRemoveButton?.Invoke(m_Elements[m_Data.Count - 1]);
                 SetupElements(m_Data, m_DataSetup);
-                EditorUtility.SetDirty(Asset);
+                if (Asset != null) EditorUtility.SetDirty(Asset);
             }
             EditorGUILayout.EndHorizontal();
             EditorUtils.Line();
@@ -122,6 +123,7 @@ namespace SyadeuEditor.Tree
             if (m_CurrentDrawChilds == 0) EditorUtils.StringRich(notFound, true);
             AfterDraw();
             EditorUtils.Line();
+
             EditorGUILayout.EndVertical();
         }
 
@@ -133,13 +135,16 @@ namespace SyadeuEditor.Tree
                 if (m_Elements[i].Equals(e))
                 {
                     idx = i;
+                    break;
                 }
             }
             if (idx < 0) throw new Exception($"{idx}");
 
-            m_Data = OnRemoveButton?.Invoke(idx);
+            m_Data = OnRemoveButton?.Invoke(e);
+            if (e.Parent != null) e.RemoveParent();
+
             SetupElements(m_Data, m_DataSetup);
-            EditorUtility.SetDirty(Asset);
+            if (Asset != null) EditorUtility.SetDirty(Asset);
         }
     }
     public class VerticalTreeView<T> : VerticalTreeViewEntity where T : class

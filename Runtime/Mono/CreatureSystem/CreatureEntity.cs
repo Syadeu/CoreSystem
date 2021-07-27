@@ -1,25 +1,26 @@
-﻿using UnityEngine;
+﻿using Syadeu.Database;
+using Syadeu.Presentation;
+using System;
+using UnityEngine;
 
 namespace Syadeu.Mono
 {
-    public abstract class CreatureEntity : MonoBehaviour, IRender
+    [Obsolete("", true)]
+    public abstract class CreatureEntity : MonoBehaviour
     {
         private CreatureBrain m_Brain = null;
-        private int m_DataIdx = -1;
+        private DataGameObject m_DataObject;
 
         public CreatureBrain Brain => m_Brain;
-        public int DataIdx => m_DataIdx;
 
         public bool Initialized { get; private set; } = false;
 
-        public bool IsVisible => m_Brain.IsVisible;
-
-        internal void InternalInitialize(CreatureBrain t, int ta)
+        internal void InternalInitialize(CreatureBrain t, DataGameObject obj)
         {
             m_Brain = t;
-            m_DataIdx = ta;
-            
-            OnInitialize(t, ta);
+            m_DataObject = obj;
+
+            OnInitialize(t, obj);
             Initialized = true;
 
             //$"{name}. {GetType().Name}: {ta} : init done".ToLog();
@@ -27,7 +28,7 @@ namespace Syadeu.Mono
         internal void InternalOnTerminate()
         {
             m_Brain = null;
-            m_DataIdx = -1;
+            //m_DataHash = Hash.Empty;
 
             OnTerminate();
             Initialized = false;
@@ -36,17 +37,12 @@ namespace Syadeu.Mono
         internal void InternalOnStart() => OnStart();
 
         protected virtual void OnCreated() { }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="brain">이 크리쳐의 메인 스크립트</param>
-        /// <param name="dataIdx">이 크리쳐의 데이터 인덱스<br/>
-        /// <paramref name="dataIdx"/> == <see cref="CreatureBrain.m_DataIdx"/></param>
-        protected virtual void OnInitialize(CreatureBrain brain, int dataIdx) { }
+
+        protected virtual void OnInitialize(CreatureBrain brain, DataGameObject obj) { }
         protected virtual void OnStart() { }
         protected virtual void OnTerminate() { }
 
-        public virtual void OnVisible() { }
-        public virtual void OnInvisible() { }
+        //public virtual void OnVisible() { }
+        //public virtual void OnInvisible() { }
     }
 }

@@ -33,6 +33,7 @@ namespace Syadeu.Database.Lua
             }
             return LuaVectorUtils.FromVector(Vector3.zero);
         }
+        [System.Obsolete("", true)]
         public static (int, int) PositionToGridCell(double[] position)
         {
             Vector3 pos = LuaVectorUtils.ToVector(position);

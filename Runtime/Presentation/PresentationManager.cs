@@ -45,6 +45,7 @@ namespace Syadeu.Presentation
             public bool m_MainInitDone = false;
             public bool m_BackgroundInitDone = false;
 
+            public ICustomYieldAwaiter m_StartAwaiter;
             public WaitUntil m_WaitUntilInitializeCompleted;
 
             public Action PublicSystemStructDisposer;
@@ -54,9 +55,18 @@ namespace Syadeu.Presentation
                 m_Name = name;
                 m_Hash = hash;
 
+                m_StartAwaiter = new YieldAwaiter()
+                {
+                    m_Predicate = () => m_MainInitDone && m_BackgroundInitDone
+                };
                 m_WaitUntilInitializeCompleted = new WaitUntil(() => m_MainInitDone && m_BackgroundInitDone);
             }
 
+            public sealed class YieldAwaiter : ICustomYieldAwaiter
+            {
+                public Func<bool> m_Predicate;
+                public bool KeepWait => !m_Predicate.Invoke();
+            }
             public bool HasSystem<T>(T system) where T : PresentationSystemEntity
                 => m_Systems.FindFor((other) => other.Equals(system)) != null;
 
@@ -208,20 +218,20 @@ namespace Syadeu.Presentation
 
             CoreSystem.Logger.Log(Channel.Presentation, $"Registration Ended ({groupName.Name.Split('.').Last()}), number of {systems.Length}");
         }
-        internal void StartPresentation(Hash groupHash)
+        internal ICustomYieldAwaiter StartPresentation(Hash groupHash)
         {
             Group group = m_PresentationGroups[groupHash];
             if (group.m_IsStarted)
             {
                 CoreSystem.Logger.LogWarning(Channel.Presentation,
                     $"Presentation Group {group.m_Name.Name} has already started and running. Request ignored.");
-                return;
+                return null;
             }
 
             for (int i = 0; i < group.m_RegisteredSystemTypes.Count; i++)
             {
                 Type t = group.m_RegisteredSystemTypes[i];
-                ConstructorInfo ctor = t.GetConstructor(BindingFlags.Instance | BindingFlags.Public, null, CallingConventions.HasThis, new Type[0], null);
+                ConstructorInfo ctor = t.GetConstructor(BindingFlags.Instance | BindingFlags.Public, null, CallingConventions.HasThis, Array.Empty<Type>(), null);
                 object ins;
                 if (ctor != null)
                 {
@@ -230,6 +240,7 @@ namespace Syadeu.Presentation
                 else ins = Activator.CreateInstance(t);
 
                 PresentationSystemEntity system = (PresentationSystemEntity)ins;
+                group.PublicSystemStructDisposer += ((IDisposable)system).Dispose;
                 group.m_Systems.Add(system);
 
                 group.m_Initializers.Add((IInitPresentation)ins);
@@ -245,6 +256,7 @@ namespace Syadeu.Presentation
             group.m_IsStarted = true;
 
             CoreSystem.Logger.Log(Channel.Presentation, $"{group.m_Name.Name} group is started");
+            return group.m_StartAwaiter;
         }
         internal void StopPresentation(Hash groupHash)
         {
@@ -423,7 +435,6 @@ namespace Syadeu.Presentation
                     }
                 }
 
-                //"running".ToLog();
                 yield return null;
             }
         }

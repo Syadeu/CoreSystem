@@ -45,6 +45,7 @@ namespace Syadeu
 
         internal int WorkerIndex = -1;
         internal List<IJob> ConnectedJobs;
+        internal bool IsPool = false;
 
         static BackgroundJob()
         {
@@ -56,6 +57,14 @@ namespace Syadeu
             ConnectedJobs = new List<IJob>();
             MainJob = null;
             CalledFrom = Environment.StackTrace;
+        }
+        internal void Clear()
+        {
+            Exception = null;
+            CalledFrom = null;
+            Action = null;
+            MainJob = null;
+            ConnectedJobs.Clear();
         }
 
         /// <summary>

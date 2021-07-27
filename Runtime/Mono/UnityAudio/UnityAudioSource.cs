@@ -1,5 +1,5 @@
 ﻿using Syadeu.Database;
-
+using System.Collections;
 using UnityEngine;
 
 #if CORESYSTEM_UNITYAUDIO
@@ -105,8 +105,22 @@ namespace Syadeu.Mono.Audio
             if (AudioClip == null) return false;
 
             AudioSource.Play();
+            StartCoroutine(EndDetector(this, Time.realtimeSinceStartup, AudioClip.length));
 
             return true;
+
+            static IEnumerator EndDetector(UnityAudioSource audioSource, float startTime, float targetTime)
+            {
+                float currentTime = Time.realtimeSinceStartup;
+                while (currentTime < startTime + targetTime)
+                {
+                    currentTime = Time.realtimeSinceStartup;
+                    yield return null;
+                }
+
+                audioSource.Terminate();
+                PoolContainer<UnityAudioSource>.Enqueue(audioSource);
+            }
         }
     }
 }

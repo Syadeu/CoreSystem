@@ -10,10 +10,7 @@ namespace Syadeu.Mono.Audio
 {
     public sealed class UnityAudioManager : StaticManager<UnityAudioManager>
     {
-        private readonly List<UnityAudioSource> m_UnityAudios = new List<UnityAudioSource>();
         private AudioListener m_AudioListener = null;
-
-        public static int CurrentPlaying => Instance.m_UnityAudios.Count;
 
         public static AudioListener AudioListener
         {
@@ -48,28 +45,7 @@ namespace Syadeu.Mono.Audio
         }
         public override void OnStart()
         {
-            StartCoroutine(Updater());
-        }
-        private IEnumerator Updater()
-        {
-            while (true)
-            {
-                for (int i = m_UnityAudios.Count - 1; i >= 0; i--)
-                {
-                    if (!m_UnityAudios[i].IsPlaying)
-                    {
-                        m_UnityAudios[i].Terminate();
-                        PoolContainer<UnityAudioSource>.Enqueue(m_UnityAudios[i]);
-                        m_UnityAudios.RemoveAt(i);
-
-                        continue;
-                    }
-
-                    if (i % 250 == 0) yield return null;
-                }
-
-                yield return null;
-            }
+            //StartCoroutine(Updater());
         }
 
         public static float DistanceFromListener(Transform tr)
@@ -94,7 +70,6 @@ namespace Syadeu.Mono.Audio
             audio.Initialize(content);
             audio.SetPosition(position);
 
-            Instance.m_UnityAudios.Add(audio);
             audio.Play();
         }
         internal static void Play(UnityAudioList.Content content, Transform tr)
@@ -103,7 +78,6 @@ namespace Syadeu.Mono.Audio
             audio.Initialize(content);
             audio.SetPosition(tr);
 
-            Instance.m_UnityAudios.Add(audio);
             audio.Play();
         }
 

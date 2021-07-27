@@ -3,11 +3,13 @@ using System;
 using UnityEngine;
 
 using Syadeu.Database.Lua;
+using Syadeu.Presentation;
 
 namespace Syadeu.Database
 {
     [Serializable]
-    public sealed class ItemType : ItemTypeEntity
+    [System.Obsolete("", true)]
+    public sealed class ItemType : AttributeBase
     {
         [Space]
         [JsonProperty(Order = 3, PropertyName = "Values")] public ValuePairContainer m_Values = new ValuePairContainer();
@@ -16,18 +18,18 @@ namespace Syadeu.Database
 
         public ItemType()
         {
-            m_Name = "NewItemType";
-            m_Hash = Hash.NewHash();
+            Name = "NewItemType";
+            Hash = Hash.NewHash();
         }
         public ItemType(string name)
         {
-            m_Name = name;
-            m_Hash = Hash.NewHash();
+            Name = name;
+            Hash = Hash.NewHash();
         }
         public ItemType(string name, Hash hash)
         {
-            m_Name = name;
-            m_Hash = hash;
+            Name = name;
+            Hash = hash;
         }
         internal ItemTypeProxy GetProxy()
         {
@@ -38,7 +40,8 @@ namespace Syadeu.Database
             return m_Proxy;
         }
     }
-    public sealed class ItemUseableType : ItemTypeEntity
+    [System.Obsolete("", true)]
+    public sealed class ItemUseableType : AttributeBase
     {
         [Space]
         [JsonProperty(Order = 3, PropertyName = "RemoveOnUse")] public bool m_RemoveOnUse = true;
@@ -48,18 +51,18 @@ namespace Syadeu.Database
 
         public ItemUseableType()
         {
-            m_Name = "NewUseableType";
-            m_Hash = Hash.NewHash();
+            Name = "NewUseableType";
+            Hash = Hash.NewHash();
         }
         public ItemUseableType(string name)
         {
-            m_Name = name;
-            m_Hash = Hash.NewHash();
+            Name = name;
+            Hash = Hash.NewHash();
         }
         public ItemUseableType(string name, Hash hash)
         {
-            m_Name = name;
-            m_Hash = hash;
+            Name = name;
+            Hash = hash;
         }
         internal ItemUseableTypeProxy GetProxy()
         {

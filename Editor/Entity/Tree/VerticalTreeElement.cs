@@ -10,9 +10,9 @@ namespace SyadeuEditor.Tree
     {
         public bool m_EnableFoldout = true;
 
-        [SerializeField] protected string m_Name;
+        public string m_Name;
 
-        [NonSerialized] private VerticalTreeViewEntity m_Tree;
+        [NonSerialized] internal VerticalTreeViewEntity m_Tree;
         [NonSerialized] internal VerticalTreeElement m_Parent;
         [NonSerialized] internal List<VerticalTreeElement> m_Childs;
         [NonSerialized] internal bool m_HideElementInTree = false;
@@ -26,9 +26,11 @@ namespace SyadeuEditor.Tree
         public virtual bool HideElementInTree => m_HideElementInTree;
         public bool HasChilds => Childs != null && Childs.Count > 0;
 
+        public abstract object TargetObject { get; }
         public VerticalTreeElement Parent => m_Parent;
         public IReadOnlyList<VerticalTreeElement> Childs => m_Childs;
 
+        public VerticalTreeElement() { }
         public VerticalTreeElement(VerticalTreeViewEntity tree)
         {
             m_Tree = tree;
@@ -41,7 +43,7 @@ namespace SyadeuEditor.Tree
             {
                 RemoveParent();
             }
-            else m_Tree.RemoveElements(this);
+            //else m_Tree.RemoveElements(this);
 
             if (parent.m_Childs == null) parent.m_Childs = new List<VerticalTreeElement>();
             parent.m_Childs.Add(this);
@@ -86,6 +88,7 @@ namespace SyadeuEditor.Tree
         private T m_Target;
         //internal SerializedProperty m_Property;
 
+        public override object TargetObject => m_Target;
         public T Target => m_Target;
 
         public VerticalTreeElement(VerticalTreeView tree, T target) : base(tree)

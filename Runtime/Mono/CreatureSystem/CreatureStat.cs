@@ -1,16 +1,22 @@
 ﻿using Syadeu.Database;
 using Syadeu.Mono.Creature;
+using Syadeu.Presentation;
 using UnityEngine;
 
 namespace Syadeu.Mono
 {
+    [System.Obsolete("", true)]
     public sealed class CreatureStat : CreatureEntity
     {
-        [SerializeField] private ValuePairContainer m_ReflectionValues = new ValuePairContainer();
+        //[SerializeField] private ValuePairContainer m_ReflectionValues = new ValuePairContainer();
         [SerializeField] private ValuePairContainer m_ExclusiveValues = new ValuePairContainer();
         [SerializeField] private ValuePairContainer m_Values = new ValuePairContainer();
 
-        public ValuePairContainer Values => m_Values;
+        public ValuePairContainer Values
+        {
+            get => m_Values;
+            set => m_Values = value;
+        }
 
         public ValuePair this[Hash hash]
         {
@@ -39,22 +45,22 @@ namespace Syadeu.Mono
             }
         }
 
-        protected override void OnInitialize(CreatureBrain brain, int dataIdx)
+        protected override void OnInitialize(CreatureBrain brain, DataGameObject dataObj)
         {
-            ValuePairContainer originalValues = CreatureSettings.Instance.GetPrivateSet(dataIdx).m_Values;
-            for (int i = 0; i < m_ReflectionValues.Count; i++)
-            {
-                if (originalValues.Contains(m_ReflectionValues[i].Hash))
-                {
-                    ValuePair clone = (ValuePair)originalValues.GetValuePair(m_ReflectionValues[i].Hash).Clone();
-                    clone.Name = m_ReflectionValues[i].GetValue<string>();
-                    m_Values.Add(clone);
-                }
-                else
-                {
-                    $"{m_ReflectionValues[i].Name} 의 값을 찾을 수 없음".ToLogError();
-                }
-            }
+            //ValuePairContainer originalValues = CreatureSettings.Instance.GetPrivateSet(dataIdx).m_Values;
+            //for (int i = 0; i < m_ReflectionValues.Count; i++)
+            //{
+            //    if (originalValues.Contains(m_ReflectionValues[i].Hash))
+            //    {
+            //        ValuePair clone = (ValuePair)originalValues.GetValuePair(m_ReflectionValues[i].Hash).Clone();
+            //        clone.Name = m_ReflectionValues[i].GetValue<string>();
+            //        m_Values.Add(clone);
+            //    }
+            //    else
+            //    {
+            //        $"{m_ReflectionValues[i].Name} 의 값을 찾을 수 없음".ToLogError();
+            //    }
+            //}
             for (int i = 0; i < m_ExclusiveValues.Count; i++)
             {
                 m_Values.Add((ValuePair)m_ExclusiveValues[i].Clone());

@@ -10,6 +10,7 @@ using UnityEditor;
 
 namespace Syadeu.Mono
 {
+    [Obsolete("", true)]
     public sealed class CreatureInventory : CreatureEntity
     {
         public enum Type
@@ -80,33 +81,33 @@ namespace Syadeu.Mono
         {
             ItemInstance item = m_Inventory[i];
 
-            if (item.HasType<ItemUseableType>())
-            {
-                ItemUseableType useableType = item.GetType<ItemUseableType>();
-                for (int j = 0; j < useableType.m_OnUse.Count; j++)
-                {
-                    if (useableType.m_OnUse[j] is SerializableClosureValuePair closure)
-                    {
-                        closure.Invoke(Brain.Proxy);
-                    }
-                    else
-                    {
-                        throw new Exception();
-                    }
-                }
+            //if (item.HasType<ItemUseableType>())
+            //{
+            //    ItemUseableType useableType = item.GetType<ItemUseableType>();
+            //    for (int j = 0; j < useableType.m_OnUse.Count; j++)
+            //    {
+            //        if (useableType.m_OnUse[j] is SerializableClosureValuePair closure)
+            //        {
+            //            closure.Invoke(Brain.Proxy);
+            //        }
+            //        else
+            //        {
+            //            throw new Exception();
+            //        }
+            //    }
 
-                item.Data.m_OnUse?.Invoke(Brain);
+            //    item.Data.m_OnUse?.Invoke(Brain);
 
-                if (useableType.m_RemoveOnUse)
-                {
-                    m_Inventory[i].Dispose();
-                    m_Inventory.RemoveAt(i);
-                }
-            }
-            else
-            {
-                $"Item: {item.Data.m_Name} is not a type of useable".ToLog();
-            }
+            //    if (useableType.m_RemoveOnUse)
+            //    {
+            //        m_Inventory[i].Dispose();
+            //        m_Inventory.RemoveAt(i);
+            //    }
+            //}
+            //else
+            //{
+            //    $"Item: {item.Data.Name} is not a type of useable".ToLog();
+            //}
         }
     }
 }

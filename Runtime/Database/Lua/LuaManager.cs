@@ -19,18 +19,18 @@ namespace Syadeu.Database.Lua
         {
             //Debug.Log("LUA: Initialize start");
             CoreSystem.Logger.Log(Channel.Lua, "Registering Proxies");
-            UserData.RegisterProxyType<ItemProxy, Item>(r => r.GetProxy());
-            UserData.RegisterProxyType<ItemInstanceProxy, ItemInstance>(r => r.GetLuaProxy());
-            UserData.RegisterProxyType<ItemTypeProxy, ItemType>(r => r.GetProxy());
-            UserData.RegisterProxyType<ItemUseableTypeProxy, ItemUseableType>(r => r.GetProxy());
-            UserData.RegisterProxyType<ItemEffectTypeProxy, ItemEffectType>(r => r.GetProxy());
-            UserData.RegisterProxyType<CreatureBrainProxy, CreatureBrain>(r => r.Proxy);
+            //UserData.RegisterProxyType<ItemProxy, Item>(r => r.GetProxy());
+            //UserData.RegisterProxyType<ItemInstanceProxy, ItemInstance>(r => r.GetLuaProxy());
+            //UserData.RegisterProxyType<ItemTypeProxy, ItemType>(r => r.GetProxy());
+            //UserData.RegisterProxyType<ItemUseableTypeProxy, ItemUseableType>(r => r.GetProxy());
+            //UserData.RegisterProxyType<ItemEffectTypeProxy, ItemEffectType>(r => r.GetProxy());
+            //UserData.RegisterProxyType<CreatureBrainProxy, CreatureBrain>(r => r.Proxy);
 
             CoreSystem.Logger.Log(Channel.Lua, "Registering Actions");
             RegisterSimpleAction();
             RegisterSimpleAction<string>();
-            RegisterSimpleAction<CreatureBrain>();
-            RegisterSimpleAction<ItemInstance>();
+            //RegisterSimpleAction<CreatureBrain>();
+            //RegisterSimpleAction<ItemInstance>();
 
             CoreSystem.Logger.Log(Channel.Lua, "Registering Script and Globals");
             m_MainScripter = new Script();
@@ -166,5 +166,7 @@ namespace Syadeu.Database.Lua
             );
         }
         #endregion
+
+        public static DynValue GetScriptObject(string key) => Instance.m_MainScripter.Globals.Get(key);
     }
 }

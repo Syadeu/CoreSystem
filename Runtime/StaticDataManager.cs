@@ -7,7 +7,7 @@ using UnityEngine;
 namespace Syadeu
 {
     public abstract class StaticDataManager<T> : IStaticDataManager 
-        where T : class, IStaticDataManager
+        where T : class, IStaticDataManager, IDisposable
     {
         public static bool Initialized => m_Instance != null;
         public SystemFlag Flag => SystemFlag.Data;

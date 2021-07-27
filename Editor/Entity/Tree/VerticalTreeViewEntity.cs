@@ -30,7 +30,7 @@ namespace SyadeuEditor.Tree
         {
             get
             {
-                if (!m_EnableToolbar) throw new Exception();
+                //if (!m_EnableToolbar) throw new Exception();
                 return m_SelectedToolbar;
             }
         }
@@ -87,6 +87,25 @@ namespace SyadeuEditor.Tree
             if (!temp.Any())
             {
                 output = new VerticalFolderTreeElement(this, name);
+                m_Elements.Add(output);
+            }
+            else output = temp.First() as VerticalFolderTreeElement;
+
+            return output;
+        }
+        public VerticalFolderTreeElement GetOrCreateFolder<T>(string name) where T : VerticalFolderTreeElement, new()
+        {
+            name = name.Trim();
+
+            var temp = m_Elements.Where((other) => (other is T) && other.Name.Equals(name));
+
+            VerticalFolderTreeElement output;
+            if (!temp.Any())
+            {
+                output = new T();
+                output.m_Tree = this;
+                output.m_Name = name;
+
                 m_Elements.Add(output);
             }
             else output = temp.First() as VerticalFolderTreeElement;
@@ -183,7 +202,7 @@ namespace SyadeuEditor.Tree
                 EditorGUI.indentLevel += 1;
                 EditorGUI.BeginChangeCheck();
                 e.OnGUI();
-                if (EditorGUI.EndChangeCheck()) EditorUtility.SetDirty(m_Asset);
+                if (EditorGUI.EndChangeCheck() && m_Asset != null) EditorUtility.SetDirty(m_Asset);
                 EditorGUI.indentLevel -= 1;
             }
         }
@@ -205,7 +224,7 @@ namespace SyadeuEditor.Tree
             {
                 RemoveButtonClicked(e);
                 e.Remove();
-                EditorUtility.SetDirty(m_Asset);
+                if (m_Asset != null) EditorUtility.SetDirty(m_Asset);
 
                 return true;
             }
@@ -229,7 +248,7 @@ namespace SyadeuEditor.Tree
             }
             else
             {
-                if (child.Name.Contains(m_SearchString)) return true;
+                if (child.Name.ToLower().Contains(m_SearchString.ToLower())) return true;
             }
 
             if (child.HasChilds)

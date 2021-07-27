@@ -8,7 +8,7 @@ using UnityEngine.TestTools;
 
 public class PresentationSystemTests
 {
-    internal sealed class PresentationTestGroup : PresentationRegisterEntity
+    internal sealed class PresentationTestGroup : PresentationGroupEntity
     {
         public override void Register()
         {

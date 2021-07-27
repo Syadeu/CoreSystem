@@ -35,40 +35,51 @@ namespace SyadeuEditor
             Selection.activeObject = PrefabList.Instance;
             EditorApplication.ExecuteMenuItem("Window/General/Inspector");
         }
-        [MenuItem("CoreSystem/Edit Item Data List", priority = 3)]
+        [MenuItem("CoreSystem/Edit Render Settings", priority = 3)]
         public static void ItemDataListMenu()
         {
-            Selection.activeObject = ItemDataList.Instance;
+            Selection.activeObject = Syadeu.Database.RenderSettings.Instance;
             EditorApplication.ExecuteMenuItem("Window/General/Inspector");
         }
-        [MenuItem("CoreSystem/Edit Scene List", priority = 4)]
+        [MenuItem("CoreSystem/Edit Entity Data List", priority = 4)]
+        public static void EntityDataListMenu()
+        {
+            Selection.activeObject = EntityDataList.Instance;
+            EditorApplication.ExecuteMenuItem("Window/General/Inspector");
+        }
+        [MenuItem("CoreSystem/Edit Scene List", priority = 5)]
         public static void SceneListMenu()
         {
             Selection.activeObject = SceneList.Instance;
             EditorApplication.ExecuteMenuItem("Window/General/Inspector");
         }
-
-        public static CreatureSystemWindow m_CreatureWindow;
-        [MenuItem("CoreSystem/Creature/Window", priority = 200)]
-        public static void CreatureWindow()
+        [MenuItem("CoreSystem/Map Object Window", priority = 6)]
+        public static void MapObjectWindowMenu()
         {
-            if (m_CreatureWindow == null)
-            {
-                m_CreatureWindow = GetWindow<CreatureSystemWindow>();
-                m_CreatureWindow.titleContent = new GUIContent("Creature Window");
-                m_CreatureWindow.minSize = new Vector2(620, m_CreatureWindow.minSize.y);
-                m_CreatureWindow.maxSize = new Vector2(620, m_CreatureWindow.maxSize.y);
-            }
-
-            m_CreatureWindow.Show();
+            Presentation.Map.MapDataWindow.Instance.Show();
         }
 
-        [MenuItem("CoreSystem/Creature/Edit Creature Settings", priority = 201)]
-        public static void CreatureSettingsWindow()
-        {
-            Selection.activeObject = CreatureSettings.Instance;
-            EditorApplication.ExecuteMenuItem("Window/General/Inspector");
-        }
+        //public static CreatureSystemWindow m_CreatureWindow;
+        //[MenuItem("CoreSystem/Creature/Window", priority = 200)]
+        //public static void CreatureWindow()
+        //{
+        //    if (m_CreatureWindow == null)
+        //    {
+        //        m_CreatureWindow = GetWindow<CreatureSystemWindow>();
+        //        m_CreatureWindow.titleContent = new GUIContent("Creature Window");
+        //        m_CreatureWindow.minSize = new Vector2(620, m_CreatureWindow.minSize.y);
+        //        m_CreatureWindow.maxSize = new Vector2(620, m_CreatureWindow.maxSize.y);
+        //    }
+
+        //    m_CreatureWindow.Show();
+        //}
+
+        //[MenuItem("CoreSystem/Creature/Edit Creature Settings", priority = 201)]
+        //public static void CreatureSettingsWindow()
+        //{
+        //    Selection.activeObject = CreatureSettings.Instance;
+        //    EditorApplication.ExecuteMenuItem("Window/General/Inspector");
+        //}
 #if CORESYSTEM_UNITYAUDIO
         static UnityAudioWindow m_UnityAudioWindow;
         [MenuItem("CoreSystem/Unity/Unity Audio Window")]

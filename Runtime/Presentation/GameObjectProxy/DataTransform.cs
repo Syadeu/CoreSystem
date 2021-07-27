@@ -11,7 +11,7 @@ namespace Syadeu.Presentation
 {
     public struct DataTransform : IInternalDataComponent, IReadOnlyTransform, IValidation, IEquatable<DataTransform>
     {
-        const string c_WarningText = "This Data Transform has been destoryed or didn\'t created propery. Request igonored.";
+        const string c_WarningText = "This Data Transform has been destroyed or didn\'t created propery. Request ignored.";
 
         internal static int2 ProxyNull = new int2(-1, -1);
         internal static int2 ProxyQueued = new int2(-2, -2);
@@ -22,11 +22,12 @@ namespace Syadeu.Presentation
         internal int m_PrefabIdx;
         internal bool m_EnableCull;
 
+        internal bool m_IsVisible;
+
         Hash IInternalDataComponent.GameObject => m_GameObject;
         Hash IInternalDataComponent.Idx => m_Idx;
-        DataComponentType IInternalDataComponent.Type => DataComponentType.Transform;
-        bool IInternalDataComponent.HasProxyObject => !m_ProxyIdx.Equals(ProxyNull);
-        internal bool HasProxyObject => !m_ProxyIdx.Equals(ProxyNull);
+        bool IInternalDataComponent.HasProxyObject => !m_ProxyIdx.Equals(ProxyNull) && !m_ProxyIdx.Equals(ProxyQueued);
+        internal bool HasProxyObject => !m_ProxyIdx.Equals(ProxyNull) && !m_ProxyIdx.Equals(ProxyQueued);
         bool IInternalDataComponent.ProxyRequested => m_ProxyIdx.Equals(ProxyQueued);
         internal bool ProxyRequested => m_ProxyIdx.Equals(ProxyQueued);
 
@@ -36,7 +37,6 @@ namespace Syadeu.Presentation
 
         internal Vector3 m_Position;
         internal quaternion m_Rotation;
-
         internal Vector3 m_LocalScale;
 
         internal RecycleableMonobehaviour ProxyObject
@@ -60,12 +60,49 @@ namespace Syadeu.Presentation
             if (!PresentationSystem<RenderSystem>.System.IsInCameraScreen(m_Position)) return;
             PresentationSystem<GameObjectProxySystem>.System.RequestUpdateTransform(m_Idx);
         }
-        public bool IsValid() => !m_GameObject.Equals(Hash.Empty) && !m_Idx.Equals(Hash.Empty) && 
+
+        public bool IsValid() => !m_GameObject.Equals(Hash.Empty) && !m_Idx.Equals(Hash.Empty) &&
+            PresentationSystem<GameObjectProxySystem>.IsValid() &&
             PresentationSystem<GameObjectProxySystem>.System.m_MappedTransformIdxes.ContainsKey(m_Idx) &&
-            PresentationSystem<GameObjectProxySystem>.System.m_MappedGameObjectIdxes.ContainsKey(m_GameObject);
+            PresentationSystem<GameObjectProxySystem>.System.m_MappedGameObjectIdxes.ContainsKey(m_GameObject) &&
+            !PresentationSystem<GameObjectProxySystem>.System.GetDataGameObject(m_GameObject).m_Destroyed;
+        public bool IsVisible()
+        {
+            if (!IsValid()) return false;
+            return GetRef().m_IsVisible;
+        }
+        public void SynchronizeWithProxy()
+        {
+            if (!CoreSystem.IsThisMainthread()) throw new CoreSystemThreadSafeMethodException("SynchronizeWithProxy");
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Presentation,
+                    "transform is not valid");
+                return;
+            }
+
+            PresentationSystem<GameObjectProxySystem>.System.DownloadDataTransform(m_Idx);
+        }
+        public void SetCulling(bool enable)
+        {
+            GetRef().m_EnableCull = enable;
+        }
 
 #pragma warning disable IDE1006 // Naming Styles
 #line hidden
+        public DataGameObject gameObject
+        {
+            get
+            {
+                if (!IsValid())
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);
+                    return default;
+                }
+                return PresentationSystem<GameObjectProxySystem>.System.GetDataGameObject(m_GameObject);
+            }
+        }
+
         /// <summary>
         /// <see langword="true"/>일 경우, 화면 밖에 있을때 자동으로 프록시 오브젝트를 할당 해제합니다.
         /// </summary>
@@ -201,6 +238,10 @@ namespace Syadeu.Presentation
                 RequestUpdate();
             }
         }
+
+        public float4x4 localToWorldMatrix => RenderSystem.LocalToWorldMatrix(position, rotation);
+        public float4x4 worldToLocalMatrix => math.inverse(localToWorldMatrix);
+
         Vector3 IReadOnlyTransform.position => position;
         Vector3 IReadOnlyTransform.eulerAngles => eulerAngles;
         quaternion IReadOnlyTransform.rotation => rotation;

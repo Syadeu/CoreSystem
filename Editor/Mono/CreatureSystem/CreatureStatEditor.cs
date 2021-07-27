@@ -12,10 +12,10 @@ using Google.Apis.Sheets.v4.Data;
 
 namespace SyadeuEditor
 {
+    [System.Obsolete("", true)]
     [CustomEditor(typeof(CreatureStat))]
     public sealed class CreatureStatEditor : EditorEntity<CreatureStat>
     {
-        ValuePairContainer m_ReflectionValues;
         ValuePairContainer m_ExclusiveValues;
         ValuePairContainer m_ActualValues;
 
@@ -25,14 +25,6 @@ namespace SyadeuEditor
         }
         private void OnValidate()
         {
-            m_ReflectionValues = GetFieldValue<ValuePairContainer>("m_ReflectionValues");
-            if (m_ReflectionValues == null)
-            {
-                SetFieldValue("m_ReflectionValues", m_ReflectionValues);
-                EditorUtility.SetDirty(Asset);
-                AssetDatabase.SaveAssets();
-                AssetDatabase.Refresh();
-            }
             m_ExclusiveValues = GetFieldValue<ValuePairContainer>("m_ExclusiveValues");
             if (m_ExclusiveValues == null)
             {
@@ -55,7 +47,6 @@ namespace SyadeuEditor
         {
             EditorGUI.BeginChangeCheck();
             EditorGUI.BeginDisabledGroup(Application.isPlaying);
-            m_ReflectionValues.DrawValueContainer("Reflection Values", ValuePairEditor.DrawMenu.String, null);
             m_ExclusiveValues.DrawValueContainer("Exclusive Values");
             EditorGUI.EndDisabledGroup();
             if (EditorGUI.EndChangeCheck())
@@ -63,7 +54,7 @@ namespace SyadeuEditor
                 EditorUtility.SetDirty(Asset);
             }
 
-            EditorGUI.BeginDisabledGroup(true);
+            EditorGUI.BeginDisabledGroup(!Application.isPlaying);
             m_ActualValues.DrawValueContainer("Actual Values", ValuePairEditor.DrawMenu.None, null);
             EditorGUI.EndDisabledGroup();
 
