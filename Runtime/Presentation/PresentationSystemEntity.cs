@@ -3,7 +3,7 @@ using Syadeu.Presentation.Internal;
 using System;
 using System.Collections;
 
-namespace Syadeu.Presentation.Entities
+namespace Syadeu.Presentation
 {
     /// <summary xml:lang="ko">
     /// <seealso cref="PresentationManager"/>에서 수행할 시스템의 Entity 클래스입니다.

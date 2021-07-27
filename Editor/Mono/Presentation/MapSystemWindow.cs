@@ -52,6 +52,7 @@ namespace SyadeuEditor.Presentation.Map
                     MapDataGUI();
                     break;
                 case 1:
+                    MapGridGUI();
                     break;
                 default:
                     break;
@@ -69,6 +70,20 @@ namespace SyadeuEditor.Presentation.Map
                 default:
                     break;
             }
+        }
+
+        private Reference<SceneDataEntity> m_SceneDataEntity;
+        private void MapGridGUI()
+        {
+            using (new EditorUtils.BoxBlock(Color.gray))
+            {
+                ReflectionHelperEditor.DrawReferenceSelector("Scene data: ", (hash) =>
+                {
+                    m_SceneDataEntity = new Reference<SceneDataEntity>(hash);
+
+                }, m_SceneDataEntity, TypeHelper.TypeOf<SceneDataEntity>.Type);
+            }
+            EditorGUILayout.LabelField("test");
         }
 
         #region Map Data
