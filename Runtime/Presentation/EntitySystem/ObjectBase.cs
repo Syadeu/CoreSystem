@@ -20,7 +20,15 @@ namespace Syadeu.Presentation
         [ReflectionDescription("한글 쓰지마라")]
 #endif
         [JsonProperty(Order = -20, PropertyName = "Name")] public string Name { get; set; }
+        /// <summary>
+        /// 이 오브젝트 엔티티의 오리지널 해쉬입니다.
+        /// <see cref="EntityDataList"/>
+        /// </summary>
         [JsonProperty(Order = -19, PropertyName = "Hash")] [ReflectionSealedView] public Hash Hash { get; set; }
+        /// <summary>
+        /// 이 오브젝트 엔티티의 고유 해쉬입니다.
+        /// </summary>
+        [JsonIgnore] public Hash Idx { get; private set; }
 
         public ObjectBase()
         {
@@ -32,6 +40,7 @@ namespace Syadeu.Presentation
         {
             ObjectBase entity = (ObjectBase)MemberwiseClone();
             entity.Name = string.Copy(Name);
+            entity.Idx = Hash.NewHash();
 
             return entity;
         }

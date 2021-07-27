@@ -59,13 +59,12 @@ namespace Syadeu.Presentation.Map
                             m_SceneDataObjects.Add(targetScene, list);
                         }
 
-                        for (int i = 0; i < data.m_MapData.Length; i++)
-                        {
-                            list.Add(m_EntitySystem.CreateObject(data.m_MapData[i]));
-                        }
+                        list.Add(m_EntitySystem.CreateObject(data.Hash));
+                        //for (int i = 0; i < data.m_MapData.Length; i++)
+                        //{
+                        //    list.Add(m_EntitySystem.CreateObject(data.m_MapData[i]));
+                        //}
                     });
-                    CoreSystem.Logger.Log(Channel.Presentation,
-                        $"Scene Data({data.Name}) is registered.");
 
                     other.RegisterSceneUnloadDependence(data.GetTargetScene(), () =>
                     {
@@ -73,14 +72,16 @@ namespace Syadeu.Presentation.Map
                         {
                             for (int i = 0; i < list.Count; i++)
                             {
-                                MapDataEntity mapData = (MapDataEntity)list[i];
-                                mapData.DestroyChildOnDestroy = false;
-
+                                SceneDataEntity data = (SceneDataEntity)list[i];
+                                data.DestroyChildOnDestroy = false;
                                 m_EntitySystem.DestroyObject(list[i].Idx);
                             }
                             list.Clear();
                         }
                     });
+
+                    CoreSystem.Logger.Log(Channel.Presentation,
+                        $"Scene Data({data.Name}) is registered.");
                 }
 
                 m_SceneSystem = other;
