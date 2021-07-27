@@ -1491,6 +1491,7 @@ namespace Syadeu
                     if (job.IsPool)
                     {
                         job.IsPool = false;
+                        job.Clear();
                         PoolContainer<ForegroundJob>.Enqueue(job);
                     }
 
@@ -1613,6 +1614,7 @@ namespace Syadeu
             if (job.IsPool)
             {
                 job.IsPool = false;
+                job.Clear();
                 PoolContainer<BackgroundJob>.Enqueue(job);
             }
         }

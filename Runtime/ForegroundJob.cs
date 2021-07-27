@@ -49,6 +49,13 @@ namespace Syadeu
 
             CalledFrom = Environment.StackTrace;
         }
+        internal void Clear()
+        {
+            CalledFrom = null;
+            Action = null;
+            MainJob = null;
+            ConnectedJobs.Clear();
+        }
 
         public IJob Start()
         {

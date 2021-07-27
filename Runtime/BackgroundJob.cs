@@ -58,6 +58,14 @@ namespace Syadeu
             MainJob = null;
             CalledFrom = Environment.StackTrace;
         }
+        internal void Clear()
+        {
+            Exception = null;
+            CalledFrom = null;
+            Action = null;
+            MainJob = null;
+            ConnectedJobs.Clear();
+        }
 
         /// <summary>
         /// 이 잡을 수행하도록 리스트에 등록합니다.
