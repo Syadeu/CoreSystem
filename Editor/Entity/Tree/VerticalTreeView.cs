@@ -67,7 +67,8 @@ namespace SyadeuEditor.Tree
             const string box = "Box";
             const string notFound = "Not Found";
 
-            EditorGUILayout.BeginVertical(box);
+            EditorGUILayout.BeginVertical(box, GUILayout.ExpandWidth(false));
+
             EditorUtils.Line();
             BeforeDraw();
             DrawToolbar();
@@ -122,6 +123,7 @@ namespace SyadeuEditor.Tree
             if (m_CurrentDrawChilds == 0) EditorUtils.StringRich(notFound, true);
             AfterDraw();
             EditorUtils.Line();
+
             EditorGUILayout.EndVertical();
         }
 

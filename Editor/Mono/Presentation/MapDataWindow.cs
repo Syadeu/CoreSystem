@@ -123,7 +123,7 @@ namespace SyadeuEditor.Presentation.Map
             }
             public override void OnGUI()
             {
-                using (new EditorUtils.BoxBlock(Color.black))
+                using (new EditorUtils.BoxBlock(Color.black, GUILayout.ExpandWidth(true)))
                 {
                     ReflectionHelperEditor.DrawReferenceSelector("Object",
                         (hash) =>
@@ -215,12 +215,11 @@ namespace SyadeuEditor.Presentation.Map
             {
                 EntityDataList.Instance.SaveData();
             }
-            m_Scroll = GUILayout.BeginScrollView(m_Scroll, false, true);
 
-            //using (new EditorUtils.BoxBlock(Color.white))
-            {
-                m_TreeView.OnGUI();
-            }
+            int screenWidth = Screen.width;
+            m_Scroll = GUILayout.BeginScrollView(m_Scroll, false, false);
+
+            m_TreeView.OnGUI();
 
             GUILayout.EndScrollView();
         }
