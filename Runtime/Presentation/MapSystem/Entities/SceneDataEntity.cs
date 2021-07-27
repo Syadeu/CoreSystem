@@ -2,6 +2,7 @@
 using Syadeu.Mono;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation.Map
 {
@@ -34,7 +35,7 @@ namespace Syadeu.Presentation.Map
             return SceneList.Instance.Scenes[m_SceneIndex];
         }
     }
-    
+    [Preserve]
     internal sealed class SceneDataEntityProcessor : EntityDataProcessor<SceneDataEntity>
     {
         protected override void OnCreated(SceneDataEntity entity)

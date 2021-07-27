@@ -23,9 +23,9 @@ namespace Syadeu.Presentation
     [Preserve]
     internal sealed class CreatePrefabProcessor : AttributeProcessor<CreatePrefabAttribute>
     {
-        protected override void OnCreated(CreatePrefabAttribute attribute, IEntity entity)
+        protected override void OnCreated(CreatePrefabAttribute attribute, IObject entity)
         {
-            Vector3 pos = entity.transform.position;
+            Vector3 pos = ((IEntity)entity).transform.position;
             attribute.PrefabInstance = CreatePrefab(attribute.m_Prefab, pos, quaternion.identity);
         }
         //public void OnProxyCreated(AttributeBase attribute, IEntity entity)
@@ -83,12 +83,12 @@ namespace Syadeu.Presentation
     [Preserve]
     internal sealed class TurnPlayerProcessor : AttributeProcessor<TurnPlayerAttribute>
     {
-        protected override void OnCreated(TurnPlayerAttribute attribute, IEntity entity)
+        protected override void OnCreated(TurnPlayerAttribute attribute, IObject entity)
         {
             attribute.ActivateTurn = attribute.ActivateOnCreate;
             TurnTableManager.AddPlayer(attribute);
         }
-        protected override void OnDestroy(TurnPlayerAttribute attribute, IEntity entity)
+        protected override void OnDestroy(TurnPlayerAttribute attribute, IObject entity)
         {
             TurnTableManager.RemovePlayer(attribute);
         }
@@ -128,9 +128,9 @@ namespace Syadeu.Presentation
     [Preserve]
     internal sealed class CreateEntityProcessor : AttributeProcessor<CreateEntityAttribute>
     {
-        protected override void OnCreated(CreateEntityAttribute attribute, IEntity entity)
+        protected override void OnCreated(CreateEntityAttribute attribute, IObject entity)
         {
-            DataTransform tr = entity.transform;
+            DataTransform tr = ((IEntity)entity).transform;
             attribute.CreatedEntity = CreateEntity(attribute.m_Entity, tr.position, tr.rotation);
         }
     }
