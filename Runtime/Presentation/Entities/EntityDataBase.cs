@@ -1,11 +1,12 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Database;
 using Syadeu.Internal;
+using Syadeu.Presentation.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Presentation.Entities
 {
     /// <summary>
     /// <see cref="EntitySystem"/>에서 엔티티 구조의 제일 하단 abstract 입니다.

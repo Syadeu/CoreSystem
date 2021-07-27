@@ -2,7 +2,7 @@
 using Syadeu.Database;
 using System;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Presentation.Entities
 {
     [Serializable]
     public sealed class CreatureEntity : EntityBase

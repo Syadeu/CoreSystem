@@ -1,6 +1,8 @@
 ﻿using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation;
+using Syadeu.Presentation.Attributes;
+using Syadeu.Presentation.Entities;
 using SyadeuEditor.Tree;
 using System;
 using System.Collections.Generic;

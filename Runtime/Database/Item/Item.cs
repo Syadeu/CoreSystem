@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using UnityEngine;
 using Syadeu.Presentation;
+using Syadeu.Presentation.Entities;
 
 #if UNITY_ADDRESSABLES
 using UnityEngine.AddressableAssets;

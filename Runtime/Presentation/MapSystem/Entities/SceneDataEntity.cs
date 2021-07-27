@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Mono;
+using Syadeu.Presentation.Entities;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Scripting;

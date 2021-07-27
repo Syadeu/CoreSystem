@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using Syadeu.Internal;
 using Syadeu.Presentation;
 using UnityEngine;
+using Syadeu.Presentation.Entities;
 #if UNITY_EDITOR
 #endif
 

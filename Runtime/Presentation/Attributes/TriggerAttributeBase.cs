@@ -1,13 +1,14 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Mono;
+using Syadeu.Presentation.Entities;
 using System;
 using UnityEngine.Scripting;
 
-namespace Syadeu.Presentation.Entities
+namespace Syadeu.Presentation.Attributes
 {
     public abstract class TriggerAttributeBase : AttributeBase { }
 
-    [AttributeAcceptOnly(typeof(EntityBase))]
+    [AttributeAcceptOnly(typeof(Entities.EntityBase))]
     public sealed class EntityTriggerEventAttribute : TriggerAttributeBase
     {
         [JsonIgnore] public Action OnCreated { get; set; }

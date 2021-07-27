@@ -1,4 +1,6 @@
 ﻿using Syadeu.Internal;
+using Syadeu.Presentation.Attributes;
+using Syadeu.Presentation.Entities;
 using System;
 
 namespace Syadeu.Presentation

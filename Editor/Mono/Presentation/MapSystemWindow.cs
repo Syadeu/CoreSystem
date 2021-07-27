@@ -2,6 +2,7 @@
 using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation;
+using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Map;
 using SyadeuEditor.Tree;
 using System;

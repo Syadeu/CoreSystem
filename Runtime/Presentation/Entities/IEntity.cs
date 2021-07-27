@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Presentation.Entities
 {
     /// <summary>
     /// <see cref="EntitySystem"/>을 통해 생성하는(혹은 생성된) <see cref="UnityEngine.GameObject"/>가 있는 엔티티입니다.<br/><br/>

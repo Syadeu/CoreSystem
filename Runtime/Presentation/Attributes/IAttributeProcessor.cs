@@ -1,6 +1,7 @@
 ﻿using Syadeu.Mono;
+using Syadeu.Presentation.Entities;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Presentation.Attributes
 {
     internal interface IAttributeProcessor : IProcessor
     {
