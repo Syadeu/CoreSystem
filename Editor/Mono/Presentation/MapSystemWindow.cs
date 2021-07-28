@@ -259,6 +259,35 @@ namespace SyadeuEditor.Presentation.Map
             m_SceneDataGrid.DrawGL();
             Handles.DrawWireCube(m_SceneDataGrid.bounds.center, m_SceneDataGrid.size);
 
+            if (m_SceneDataGridAtt.m_ExcludeIdxes.Length > 0)
+            {
+                float sizeHalf = m_SceneDataGrid.cellSize * .5f;
+
+                GL.PushMatrix();
+                GridExtensions.DefaultMaterial.SetPass(0);
+                Color color = Color.red;
+                color.a = .5f;
+                GL.Color(color);
+                GL.Begin(GL.QUADS);
+                for (int i = 0; i < m_SceneDataGridAtt.m_ExcludeIdxes.Length; i++)
+                {
+                    Vector3
+                        cellPos = m_SceneDataGrid.GetCellPosition(m_SceneDataGridAtt.m_ExcludeIdxes[i]),
+                        p1 = new Vector3(cellPos.x - sizeHalf, cellPos.y + .1f, cellPos.z - sizeHalf),
+                        p2 = new Vector3(cellPos.x - sizeHalf, cellPos.y + .1f, cellPos.z + sizeHalf),
+                        p3 = new Vector3(cellPos.x + sizeHalf, cellPos.y + .1f, cellPos.z + sizeHalf),
+                        p4 = new Vector3(cellPos.x + sizeHalf, cellPos.y + .1f, cellPos.z - sizeHalf);
+
+                    GL.Vertex(p1);
+                    GL.Vertex(p2);
+                    GL.Vertex(p3);
+                    GL.Vertex(p4);
+                }
+                GL.End();
+                GL.PopMatrix();
+            }
+            
+
             if (!m_debug) return;
 
             int mouseControlID = GUIUtility.GetControlID(FocusType.Passive);
@@ -272,11 +301,18 @@ namespace SyadeuEditor.Presentation.Map
                     {
                         $"{dis} :: {point}".ToLog();
 
-                        var pos = m_SceneDataGrid.GetCellPosition(point);
+                        int idx = m_SceneDataGrid.GetCellIndex(point);
+                        List<int> tempList = m_SceneDataGridAtt.m_ExcludeIdxes.ToList();
 
-                        GameObject temp = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                        temp.transform.SetParent(m_PreviewFolder);
-                        temp.transform.position = pos;
+                        if (tempList.Contains(idx))
+                        {
+                            tempList.Remove(idx);
+                        }
+                        else tempList.Add(idx);
+                        m_SceneDataGridAtt.m_ExcludeIdxes = tempList.ToArray();
+                        //GameObject temp = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                        //temp.transform.SetParent(m_PreviewFolder);
+                        //temp.transform.position = pos;
                     }
 
                     //if (Event.current.button == 0)
