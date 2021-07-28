@@ -43,7 +43,7 @@ namespace SyadeuEditor
         public static Rect GetLastGUIRect() => sceneRect;
         public static Vector3 GetMouseScreenPos(float quantize = 0)
         {
-            Ray ray = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
+            Ray ray = GetMouseScreenRay();
 
             object hit = HandleUtility.RaySnap(ray);
             Vector3 point;
@@ -62,6 +62,7 @@ namespace SyadeuEditor
 
             return point;
         }
+        public static Ray GetMouseScreenRay() => HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
 
         #region Label
 

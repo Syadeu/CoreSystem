@@ -8,6 +8,10 @@ using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
 namespace Syadeu.Database
 {
     [StructLayout(LayoutKind.Sequential)]
@@ -109,7 +113,14 @@ namespace Syadeu.Database
         {
             get
             {
-                if (s_Material == null) s_Material = Resources.GetBuiltinResource<Material>(DEFAULT_MATERIAL);
+                if (s_Material == null)
+                {
+#if UNITY_EDITOR
+                    s_Material = AssetDatabase.GetBuiltinExtraResource<Material>(DEFAULT_MATERIAL);
+                    if (s_Material == null)
+#endif
+                        s_Material = Resources.GetBuiltinResource<Material>(DEFAULT_MATERIAL);
+                }
                 return s_Material;
             }
         }
@@ -478,6 +489,7 @@ namespace Syadeu.Database
         [JsonIgnore] public float3 center => m_AABB.center;
         [JsonIgnore] public float3 size => m_AABB.size;
         [JsonIgnore] public ManagedCell[] cells => m_Cells.Values.ToArray();
+        [JsonIgnore] public AABB bounds => m_AABB;
 
         public ManagedGrid(int3 center, int3 size, float cellSize)
         {

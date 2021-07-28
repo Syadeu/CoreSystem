@@ -117,7 +117,7 @@ namespace SyadeuEditor.Presentation.Map
             m_SceneDataTargetMapDataList = null;
             // GridMapAttribute
             m_SceneDataGridAtt = null;
-            m_SceneDataGrid.Dispose();
+            if (m_SceneDataGrid != null) m_SceneDataGrid.Dispose();
             m_SceneDataGrid = null;
         }
         private void ResetPreviewFolder()
@@ -166,6 +166,8 @@ namespace SyadeuEditor.Presentation.Map
         private GridMapAttribute m_SceneDataGridAtt;
         private ManagedGrid m_SceneDataGrid;
 
+        private bool m_debug = false;
+
         private Vector2 m_SceneDataScroll;
         private void SceneDataGUI()
         {
@@ -196,16 +198,14 @@ namespace SyadeuEditor.Presentation.Map
                             }
                             //
                         }
+
+                        Tools.hidden = true;
                     }
                     else
                     {
-                        m_SceneDataTarget = null;
-                        m_SceneDataTargetMapDataList = null;
+                        ResetAll();
 
-                        // GridMapAttribute
-                        m_SceneDataGridAtt = null;
-                        m_SceneDataGrid.Dispose();
-                        m_SceneDataGrid = null;
+                        Tools.hidden = false;
                     }
 
                 }, m_SceneData, TypeHelper.TypeOf<SceneDataEntity>.Type);
@@ -244,6 +244,8 @@ namespace SyadeuEditor.Presentation.Map
                     }
 
                     EditorGUILayout.LabelField($"{m_SceneDataGrid.gridSize}");
+
+                    m_debug = EditorGUILayout.Toggle(m_debug);
                 }
                 EditorUtils.Line();
             }
@@ -253,55 +255,49 @@ namespace SyadeuEditor.Presentation.Map
         {
             if (m_SceneDataGrid == null) return;
 
+            Selection.activeObject = null;
             m_SceneDataGrid.DrawGL();
-            //Vector3 cellSize = new Vector3(m_SceneDataGrid.cellSize, 1, m_SceneDataGrid.cellSize);
-            //var gridSize = m_SceneDataGrid.gridSize;
+            Handles.DrawWireCube(m_SceneDataGrid.bounds.center, m_SceneDataGrid.size);
 
-            //Vector3 minPos = m_SceneDataGrid.GetCellPosition(0);
-            //minPos.x -= m_SceneDataGrid.cellSize * .5f;
-            //minPos.z += m_SceneDataGrid.cellSize * .5f;
+            if (!m_debug) return;
 
-            //Vector3 maxPos = m_SceneDataGrid.GetCellPosition(gridSize);
-            //maxPos.x += m_SceneDataGrid.cellSize * .5f;
-            //maxPos.z -= m_SceneDataGrid.cellSize * .5f;
+            int mouseControlID = GUIUtility.GetControlID(FocusType.Passive);
+            switch (Event.current.GetTypeForControl(mouseControlID))
+            {
+                case EventType.MouseDown:
+                    GUIUtility.hotControl = mouseControlID;
 
-            //Handles.DrawWireCube(m_SceneDataGrid.GetCellPosition(0), cellSize);
-            //Handles.DrawWireCube(m_SceneDataGrid.GetCellPosition(gridSize), cellSize);
+                    Ray ray = EditorSceneUtils.GetMouseScreenRay();
+                    if (m_SceneDataGrid.bounds.Intersect(ray, out float dis, out var point))
+                    {
+                        $"{dis} :: {point}".ToLog();
+                        GameObject temp = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                        temp.transform.SetParent(m_PreviewFolder);
+                        temp.transform.position = point;
+                    }
 
-            //GL.PushMatrix();
-            //EditorEntity.DefaultMaterial.SetPass(0);
-            //GL.Begin(GL.LINES);
-            //for (int y = 0; y < gridSize.y + 2; y++)
-            //{
-            //    for (int x = 0; x < gridSize.x + 2; x++)
-            //    {
-            //        Vector3
-            //            p1 = new Vector3(
-            //                minPos.x, 
-            //                minPos.y, 
-            //                minPos.z - (m_SceneDataGrid.cellSize * y)),
-            //            p2 = new Vector3(
-            //                maxPos.x, 
-            //                minPos.y, 
-            //                minPos.z - (m_SceneDataGrid.cellSize * y)),
-            //            p3 = new Vector3(
-            //                minPos.x + (m_SceneDataGrid.cellSize * x),
-            //                minPos.y,
-            //                minPos.z),
-            //            p4 = new Vector3(
-            //                minPos.x + (m_SceneDataGrid.cellSize * x),
-            //                minPos.y,
-            //                maxPos.z)
-            //            ;
+                    //if (Event.current.button == 0)
+                    //{
+                        
+                    //}
+                    //else if (Event.current.button == 1)
+                    //{
+                        
+                    //}
 
-            //        GL.Vertex(p1); GL.Vertex(p2);
-            //        GL.Vertex(p3); GL.Vertex(p4);
-            //        //Handles.DrawLine(p1, p2);
-            //        //Handles.DrawLine(p3, p4);
-            //    }
-            //}
-            //GL.End();
-            //GL.PopMatrix();
+                    Event.current.Use();
+                    break;
+
+                case EventType.MouseUp:
+                    GUIUtility.hotControl = 0;
+                    if (Event.current.button == 0)
+                    {
+                        
+                    }
+
+                    Event.current.Use();
+                    break;
+            }
         }
 
         #endregion
