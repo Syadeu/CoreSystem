@@ -283,6 +283,122 @@ namespace SyadeuEditor
 
             GUILayout.EndHorizontal();
         }
+        public static IList DrawList(string name, IList list)
+        {
+            Type declaredType = list.GetType();
+
+            Color color1 = Color.black, color2 = Color.gray, color3 = Color.green;
+            color1.a = .5f; color2.a = .5f; color3.a = .5f;
+            Color originColor = GUI.backgroundColor;
+            int prevIndent = EditorGUI.indentLevel;
+
+            using (new EditorUtils.BoxBlock(color3))
+            {
+                #region Header
+                EditorGUILayout.BeginHorizontal();
+                if (!string.IsNullOrEmpty(name)) EditorUtils.StringRich(name, 13);
+                if (GUILayout.Button("+", GUILayout.Width(20)))
+                {
+                    Array newArr = Array.CreateInstance(declaredType.GetElementType(), list != null ? list.Count + 1 : 1);
+                    if (list != null && list.Count > 0) Array.Copy((Array)list, newArr, list.Count);
+
+                    //setter.Invoke(obj, newArr);
+                    list = newArr;
+                }
+                if (list?.Count > 0 && GUILayout.Button("-", GUILayout.Width(20)))
+                {
+                    Array newArr = Array.CreateInstance(declaredType.GetElementType(), list.Count - 1);
+                    if (list != null && list.Count > 0) Array.Copy((Array)list, newArr, newArr.Length);
+
+                    //setter.Invoke(obj, newArr);
+                    list = newArr;
+                }
+                EditorGUILayout.EndHorizontal();
+                #endregion
+
+                if (list != null)
+                {
+                    Type elementType = declaredType.GetElementType();
+                    MemberInfo[] insider = ReflectionHelper.GetSerializeMemberInfos(elementType);
+
+                    for (int j = 0; j < list.Count; j++)
+                    {
+                        EditorGUI.indentLevel++;
+
+                        GUILayout.BeginHorizontal(EditorUtils.Box);
+                        using (new EditorUtils.BoxBlock(j % 2 == 0 ? color1 : color2))
+                        {
+                            if (list[j] == null) list[j] = Activator.CreateInstance(elementType);
+
+                            #region CoreSystem Types
+                            if (TypeHelper.TypeOf<IReference>.Type.IsAssignableFrom(elementType))
+                            {
+                                IReference objRef = (IReference)list[j];
+                                Type targetType;
+                                Type[] generics = elementType.GetGenericArguments();
+                                if (generics.Length > 0) targetType = elementType.GetGenericArguments()[0];
+                                else targetType = null;
+
+                                DrawReferenceSelector(string.Empty, (idx) =>
+                                {
+                                    ObjectBase objBase = EntityDataList.Instance.GetObject(idx);
+
+                                    Type makedT;
+                                    if (targetType != null) makedT = typeof(Reference<>).MakeGenericType(targetType);
+                                    else makedT = TypeHelper.TypeOf<Reference>.Type;
+
+                                    object temp = TypeHelper.GetConstructorInfo(makedT, TypeHelper.TypeOf<ObjectBase>.Type).Invoke(
+                                        new object[] { objBase });
+
+                                    list[j] = temp;
+                                }, objRef, targetType);
+                            }
+                            else if (elementType.Equals(TypeHelper.TypeOf<LuaScript>.Type))
+                            {
+                                LuaScript scr = (LuaScript)list[j];
+                                if (scr == null)
+                                {
+                                    scr = string.Empty;
+                                    list[j] = scr;
+                                }
+                                scr.DrawFunctionSelector(string.Empty);
+                            }
+                            #endregion
+                            else
+                                list[j] = DrawObject(list[j]);
+                        }
+                        if (GUILayout.Button("-", GUILayout.Width(20)))
+                        {
+                            if (list.IsFixedSize)
+                            {
+                                IList newArr = Array.CreateInstance(declaredType.GetElementType(), list.Count - 1);
+                                if (list != null && list.Count > 0)
+                                {
+                                    for (int a = 0, b = 0; a < list.Count; a++)
+                                    {
+                                        if (a.Equals(j)) continue;
+
+                                        newArr[b] = list[a];
+
+                                        b++;
+                                    }
+                                }
+                                list = newArr;
+                            }
+                            else list.RemoveAt(j);
+
+                            j--;
+                        }
+                        GUILayout.EndHorizontal();
+
+                        if (j + 1 < list.Count) EditorUtils.Line();
+                        EditorGUI.indentLevel--;
+                    }
+                }
+            }
+
+            return list;
+        }
         public static object DrawObject(object obj, params string[] ignores)
         {
             Type objType = obj.GetType();
@@ -299,12 +415,14 @@ namespace SyadeuEditor
                 if (members[i] is FieldInfo field)
                 {
                     declaredType = field.FieldType;
+
                     setter = field.SetValue;
                     getter = field.GetValue;
                 }
                 else if (members[i] is PropertyInfo property)
                 {
                     declaredType = property.PropertyType;
+
                     setter = property.SetValue;
                     getter = property.GetValue;
                 }
@@ -335,119 +453,9 @@ namespace SyadeuEditor
                 }
                 else if (declaredType.IsArray)
                 {
-                    Color color1 = Color.black, color2 = Color.gray, color3 = Color.green;
-                    color1.a = .5f; color2.a = .5f; color3.a = .5f;
-                    Color originColor = GUI.backgroundColor;
-                    int prevIndent = EditorGUI.indentLevel;
+                    IList list = (IList)getter.Invoke(obj);
 
-                    using (new EditorUtils.BoxBlock(color3))
-                    {
-                        IList list = (IList)getter.Invoke(obj);
-                        #region Header
-                        EditorGUILayout.BeginHorizontal();
-                        EditorUtils.StringRich(name, 13);
-                        if (GUILayout.Button("+", GUILayout.Width(20)))
-                        {
-                            Array newArr = Array.CreateInstance(declaredType.GetElementType(), list != null ? list.Count + 1 : 1);
-                            if (list != null && list.Count > 0) Array.Copy((Array)list, newArr, list.Count);
-
-                            setter.Invoke(obj, newArr);
-                            list = newArr;
-                        }
-                        if (list?.Count > 0 && GUILayout.Button("-", GUILayout.Width(20)))
-                        {
-                            Array newArr = Array.CreateInstance(declaredType.GetElementType(), list.Count - 1);
-                            if (list != null && list.Count > 0) Array.Copy((Array)list, newArr, newArr.Length);
-
-                            setter.Invoke(obj, newArr);
-                            list = newArr;
-                        }
-                        EditorGUILayout.EndHorizontal();
-                        #endregion
-                        if (list != null)
-                        {
-                            Type elementType = declaredType.GetElementType();
-                            MemberInfo[] insider = ReflectionHelper.GetSerializeMemberInfos(elementType);
-                            
-                            for (int j = 0; j < list.Count; j++)
-                            {
-                                EditorGUI.indentLevel++;
-
-                                GUILayout.BeginHorizontal(EditorUtils.Box);
-                                using (new EditorUtils.BoxBlock(j % 2 == 0 ? color1 : color2))
-                                {
-                                    if (list[j] == null) list[j] = Activator.CreateInstance(elementType);
-
-                                    #region CoreSystem Types
-                                    if (TypeHelper.TypeOf<IReference>.Type.IsAssignableFrom(elementType))
-                                    {
-                                        IReference objRef = (IReference)list[j];
-                                        Type targetType;
-                                        Type[] generics = elementType.GetGenericArguments();
-                                        if (generics.Length > 0) targetType = elementType.GetGenericArguments()[0];
-                                        else targetType = null;
-
-                                        DrawReferenceSelector(string.Empty, (idx) =>
-                                        {
-                                            ObjectBase objBase = EntityDataList.Instance.GetObject(idx);
-
-                                            Type makedT;
-                                            if (targetType != null) makedT = typeof(Reference<>).MakeGenericType(targetType);
-                                            else makedT = TypeHelper.TypeOf<Reference>.Type;
-
-                                            object temp = TypeHelper.GetConstructorInfo(makedT, TypeHelper.TypeOf<ObjectBase>.Type).Invoke(
-                                                new object[] { objBase });
-
-                                            list[j] = temp;
-                                        }, objRef, targetType);
-                                    }
-                                    else if (elementType.Equals(TypeHelper.TypeOf<LuaScript>.Type))
-                                    {
-                                        LuaScript scr = (LuaScript)list[j];
-                                        if (scr == null)
-                                        {
-                                            scr = string.Empty;
-                                            list[j] = scr;
-                                        }
-                                        scr.DrawFunctionSelector(string.Empty);
-                                    }
-                                    #endregion
-                                    else list[j] = DrawObject(list[j]);
-                                }
-                                if (GUILayout.Button("-", GUILayout.Width(20)))
-                                {
-                                    if (list.IsFixedSize)
-                                    {
-                                        IList newArr = Array.CreateInstance(declaredType.GetElementType(), list.Count - 1);
-                                        if (list != null && list.Count > 0)
-                                        {
-                                            for (int a = 0, b = 0; a < list.Count; a++)
-                                            {
-                                                if (a.Equals(j)) continue;
-
-                                                newArr[b] = list[a];
-
-                                                b++;
-                                            }
-                                        }
-
-                                        setter.Invoke(obj, newArr);
-                                        list = newArr;
-                                    }
-                                    else
-                                    {
-                                        list.RemoveAt(j);
-                                    }
-
-                                    j--;
-                                }
-                                GUILayout.EndHorizontal();
-
-                                if (j + 1 < list.Count) EditorUtils.Line();
-                                EditorGUI.indentLevel--;
-                            }
-                        }
-                    }
+                    setter.Invoke(obj, DrawList(name, list));
                 }
                 #region Unity Types
                 else if (DrawUnityField(obj, declaredType, name, getter, out value))

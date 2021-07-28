@@ -49,15 +49,7 @@ namespace SyadeuEditor.Presentation.Map
             m_SelectedToolbar = GUILayout.Toolbar(m_SelectedToolbar, s_ToolbarNames);
             if (EditorGUI.EndChangeCheck())
             {
-                DestroyImmediate(m_PreviewFolder.gameObject);
-                m_PreviewFolder = new GameObject("Preview").transform;
-                m_PreviewFolder.gameObject.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
-                m_PreviewFolder.gameObject.tag = c_EditorOnly;
-
-                m_MapDataTarget = null;
-                m_MapData = new Reference<MapDataEntity>(Hash.Empty);
-
-                m_SceneData = new Reference<SceneDataEntity>(Hash.Empty);
+                ResetAll();
 
                 SceneView.lastActiveSceneView.Repaint();
                 Tools.hidden = false;
@@ -90,6 +82,7 @@ namespace SyadeuEditor.Presentation.Map
         }
 
         private Transform m_PreviewFolder;
+        private readonly Dictionary<MapDataEntity.Object, GameObject> m_PreviewObjects = new Dictionary<MapDataEntity.Object, GameObject>();
         const string c_EditInPlayingWarning = "Cannot edit data while playing";
         private void SaveNCloseButton()
         {
@@ -100,15 +93,7 @@ namespace SyadeuEditor.Presentation.Map
             }
             if (GUILayout.Button("Close"))
             {
-                DestroyImmediate(m_PreviewFolder.gameObject);
-                m_PreviewFolder = new GameObject("Preview").transform;
-                m_PreviewFolder.gameObject.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
-                m_PreviewFolder.gameObject.tag = c_EditorOnly;
-
-                m_MapDataTarget = null;
-                m_MapData = new Reference<MapDataEntity>(Hash.Empty);
-
-                m_SceneData = new Reference<SceneDataEntity>(Hash.Empty);
+                ResetAll();
 
                 SceneView.lastActiveSceneView.Repaint();
                 EditorGUILayout.EndHorizontal();
@@ -118,10 +103,57 @@ namespace SyadeuEditor.Presentation.Map
             }
             EditorGUILayout.EndHorizontal();
         }
+        private void ResetAll()
+        {
+            ResetPreviewFolder();
+
+            m_MapData = new Reference<MapDataEntity>(Hash.Empty);
+            m_MapDataTarget = null;
+
+            m_SceneData = new Reference<SceneDataEntity>(Hash.Empty);
+            m_SceneDataTarget = null;
+            m_SceneDataTargetMapDataList = null;
+        }
+        private void ResetPreviewFolder()
+        {
+            if (m_PreviewFolder != null) DestroyImmediate(m_PreviewFolder.gameObject);
+            m_PreviewFolder = new GameObject("Preview").transform;
+            m_PreviewFolder.gameObject.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
+            m_PreviewFolder.gameObject.tag = c_EditorOnly;
+
+            m_PreviewObjects.Clear();
+        }
+        private void CreatePreviewObjects(MapDataEntity mapData)
+        {
+            if (mapData.m_Objects == null) mapData.m_Objects = Array.Empty<MapDataEntity.Object>();
+            for (int i = 0; i < mapData.m_Objects.Length; i++)
+            {
+                if (!mapData.m_Objects[i].m_Object.IsValid()) continue;
+
+                PrefabReference prefab = mapData.m_Objects[i].m_Object.GetObject().Prefab;
+                if (prefab.IsValid())
+                {
+                    var temp = prefab.GetObjectSetting().m_RefPrefab.editorAsset;
+
+                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab(temp, m_PreviewFolder);
+                    obj.tag = c_EditorOnly;
+                    obj.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
+
+                    Transform tr = obj.transform;
+                    tr.position = mapData.m_Objects[i].m_Translation;
+                    tr.rotation = mapData.m_Objects[i].m_Rotation;
+                    tr.localScale = mapData.m_Objects[i].m_Scale;
+
+                    m_PreviewObjects.Add(mapData.m_Objects[i], obj);
+                }
+            }
+        }
 
         #region Scene Data
 
         private Reference<SceneDataEntity> m_SceneData;
+        private SceneDataEntity m_SceneDataTarget;
+        Reference<MapDataEntity>[] m_SceneDataTargetMapDataList;
         private Vector2 m_SceneDataScroll;
         private void SceneDataGUI()
         {
@@ -131,6 +163,29 @@ namespace SyadeuEditor.Presentation.Map
                 ReflectionHelperEditor.DrawReferenceSelector("Scene data: ", (hash) =>
                 {
                     m_SceneData = new Reference<SceneDataEntity>(hash);
+
+                    if (m_SceneData.IsValid())
+                    {
+                        m_SceneDataTarget = m_SceneData.GetObject();
+
+                        m_SceneDataTargetMapDataList = (Reference<MapDataEntity>[])TypeHelper.TypeOf<SceneDataEntity>.Type.GetField("m_MapData", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(m_SceneDataTarget);
+                        if (m_SceneDataTargetMapDataList != null)
+                        {
+                            foreach (var item in m_SceneDataTargetMapDataList)
+                            {
+                                if (!item.IsValid()) continue;
+
+                                MapDataEntity mapData = item.GetObject();
+                                CreatePreviewObjects(mapData);
+                            }
+                            //
+                        }
+                    }
+                    else
+                    {
+                        m_SceneDataTarget = null;
+                        m_SceneDataTargetMapDataList = null;
+                    }
 
                 }, m_SceneData, TypeHelper.TypeOf<SceneDataEntity>.Type);
             }
@@ -152,11 +207,22 @@ namespace SyadeuEditor.Presentation.Map
             }
 
             SaveNCloseButton();
+            EditorUtils.Line();
 
             m_SceneDataScroll = GUILayout.BeginScrollView(m_SceneDataScroll, false, false);
-
-
-
+            if (m_SceneDataTarget != null)
+            {
+                GridMapAttribute gridMap = m_SceneDataTarget.GetAttribute<GridMapAttribute>();
+                if (gridMap != null)
+                {
+                    using (new EditorUtils.BoxBlock(Color.gray))
+                    {
+                        EditorUtils.StringRich("GridMap", 13);
+                        ReflectionHelperEditor.DrawObject(gridMap);
+                    }
+                }
+                EditorUtils.Line();
+            }
             GUILayout.EndScrollView();
         }
 
@@ -181,18 +247,17 @@ namespace SyadeuEditor.Presentation.Map
                     {
                         m_MapDataTarget = m_MapData.GetObject();
                         SetupTreeView(m_MapDataTarget);
+                        CreatePreviewObjects(m_MapDataTarget);
 
                         SceneView.lastActiveSceneView.Repaint();
                     }
                     else if (!m_MapDataTarget.Idx.Equals(m_MapData))
                     {
-                        DestroyImmediate(m_PreviewFolder.gameObject);
-                        m_PreviewFolder = new GameObject("Preview").transform;
-                        m_PreviewFolder.gameObject.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
-                        m_PreviewFolder.gameObject.tag = c_EditorOnly;
+                        ResetPreviewFolder();
 
                         m_MapDataTarget = m_MapData.GetObject();
                         SetupTreeView(m_MapDataTarget);
+                        CreatePreviewObjects(m_MapDataTarget);
 
                         SceneView.lastActiveSceneView.Repaint();
                     }
@@ -299,7 +364,7 @@ namespace SyadeuEditor.Presentation.Map
                 .SetupElements(data.m_Objects, (other) =>
                 {
                     MapDataEntity.Object objData = (MapDataEntity.Object)other;
-                    return new TreeObjectElement(m_MapDataTreeView, objData, m_PreviewFolder);
+                    return new TreeObjectElement(m_MapDataTreeView, objData, m_PreviewFolder, m_PreviewObjects);
                 })
                 .MakeAddButton(() =>
                 {
@@ -325,9 +390,10 @@ namespace SyadeuEditor.Presentation.Map
                     int idx = temp.IndexOf(target);
 
                     temp.RemoveAt(idx);
-                    if (element.m_PreviewObject != null)
+                    if (m_PreviewObjects[target] != null)
                     {
-                        DestroyImmediate(element.m_PreviewObject);
+                        DestroyImmediate(m_PreviewObjects[target]);
+                        m_PreviewObjects[target] = null;
                     }
 
                     data.m_Objects = temp.ToArray();
@@ -344,34 +410,38 @@ namespace SyadeuEditor.Presentation.Map
                 {
                     EntityBase temp = Target.m_Object.GetObject();
                     if (temp == null) return "None";
-                    else return $"[{m_Idx}] {temp.Name}";
+                    else return $"{temp.Name}";
                 }
             }
-            private Transform m_Folder;
-            public GameObject m_PreviewObject = null;
-            private int m_Idx;
+            //private Transform m_Folder;
+            //public GameObject m_PreviewObject = null;
+            //private int m_Idx;
 
-            public TreeObjectElement(VerticalTreeView treeView, MapDataEntity.Object target, Transform previewTr) : base(treeView, target)
+            readonly Transform m_Folder;
+            readonly Dictionary<MapDataEntity.Object, GameObject> m_List;
+
+            public TreeObjectElement(VerticalTreeView treeView, MapDataEntity.Object target, Transform folder, Dictionary<MapDataEntity.Object, GameObject> list) : base(treeView, target)
             {
-                m_Folder = previewTr;
-                m_Idx = treeView.Data.IndexOf(target);
+                m_Folder = folder;
+                m_List = list;
+                //m_Idx = treeView.Data.IndexOf(target);
 
-                if (Target.m_Object.IsValid())
-                {
-                    PrefabReference prefab = Target.m_Object.GetObject().Prefab;
-                    if (prefab.IsValid())
-                    {
-                        var temp = prefab.GetObjectSetting().m_RefPrefab.editorAsset;
+                //if (Target.m_Object.IsValid())
+                //{
+                //    PrefabReference prefab = Target.m_Object.GetObject().Prefab;
+                //    if (prefab.IsValid())
+                //    {
+                //        var temp = prefab.GetObjectSetting().m_RefPrefab.editorAsset;
 
-                        m_PreviewObject = (GameObject)PrefabUtility.InstantiatePrefab(temp, m_Folder);
-                        m_PreviewObject.tag = c_EditorOnly;
-                        m_PreviewObject.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
-                        m_PreviewObject.transform.position = Target.m_Translation;
-                        m_PreviewObject.transform.rotation = Target.m_Rotation;
+                //        m_PreviewObject = (GameObject)PrefabUtility.InstantiatePrefab(temp, m_Folder);
+                //        m_PreviewObject.tag = c_EditorOnly;
+                //        m_PreviewObject.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
+                //        m_PreviewObject.transform.position = Target.m_Translation;
+                //        m_PreviewObject.transform.rotation = Target.m_Rotation;
 
-                        UpdatePreviewObject();
-                    }
-                }
+                //        UpdatePreviewObject();
+                //    }
+                //}
             }
             public override void OnGUI()
             {
@@ -383,18 +453,25 @@ namespace SyadeuEditor.Presentation.Map
                             var target = new Reference<EntityBase>(hash);
                             if (!Target.m_Object.Equals(hash))
                             {
-                                if (m_PreviewObject != null) DestroyImmediate(m_PreviewObject);
+                                if (m_List.TryGetValue(Target, out GameObject gameObj))
+                                {
+                                    DestroyImmediate(gameObj);
+                                }
+
+                                //if (m_PreviewObject != null) DestroyImmediate(m_PreviewObject);
 
                                 if (!hash.Equals(Hash.Empty))
                                 {
                                     GameObject temp = target.GetObject().Prefab.GetObjectSetting().m_RefPrefab.editorAsset;
 
-                                    m_PreviewObject = (GameObject)PrefabUtility.InstantiatePrefab(temp, m_Folder);
-                                    m_PreviewObject.tag = c_EditorOnly;
-                                    m_PreviewObject.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
+                                    gameObj = (GameObject)PrefabUtility.InstantiatePrefab(temp, m_Folder);
+                                    gameObj.tag = c_EditorOnly;
+                                    gameObj.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
 
                                     Target.m_Rotation = temp.transform.rotation;
                                     Target.m_Scale = temp.transform.localScale;
+
+                                    m_List[Target] = gameObj;
                                 }
 
                                 UpdatePreviewObject();
@@ -414,9 +491,9 @@ namespace SyadeuEditor.Presentation.Map
             }
             public void UpdatePreviewObject()
             {
-                if (m_PreviewObject == null) return;
+                if (m_List[Target] == null) return;
 
-                Transform tr = m_PreviewObject.transform;
+                Transform tr = m_List[Target].transform;
                 tr.position = Target.m_Translation;
                 tr.rotation = Target.m_Rotation;
                 tr.localScale = Target.m_Scale;
@@ -431,10 +508,10 @@ namespace SyadeuEditor.Presentation.Map
             obj.m_Translation = Handles.PositionHandle(obj.m_Translation, obj.m_Rotation);
             if (EditorGUI.EndChangeCheck())
             {
-                TreeObjectElement element = (TreeObjectElement)m_MapDataTreeView.I_Elements.FindFor((other) => other.TargetObject.Equals(obj));
-                if (element.m_PreviewObject != null)
+                //TreeObjectElement element = (TreeObjectElement)m_MapDataTreeView.I_Elements.FindFor((other) => other.TargetObject.Equals(obj));
+                if (m_PreviewObjects[obj] != null)
                 {
-                    element.m_PreviewObject.transform.position = obj.m_Translation;
+                    m_PreviewObjects[obj].transform.position = obj.m_Translation;
                 }
             }
         }
@@ -444,10 +521,10 @@ namespace SyadeuEditor.Presentation.Map
             obj.m_Rotation = Handles.RotationHandle(obj.m_Rotation, obj.m_Translation);
             if (EditorGUI.EndChangeCheck())
             {
-                TreeObjectElement element = (TreeObjectElement)m_MapDataTreeView.I_Elements.FindFor((other) => other.TargetObject.Equals(obj));
-                if (element.m_PreviewObject != null)
+                //TreeObjectElement element = (TreeObjectElement)m_MapDataTreeView.I_Elements.FindFor((other) => other.TargetObject.Equals(obj));
+                if (m_PreviewObjects[obj] != null)
                 {
-                    element.m_PreviewObject.transform.rotation = obj.m_Rotation;
+                    m_PreviewObjects[obj].transform.rotation = obj.m_Rotation;
                 }
             }
         }
