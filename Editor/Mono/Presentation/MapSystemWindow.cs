@@ -75,12 +75,14 @@ namespace SyadeuEditor.Presentation.Map
                     MapDataSceneGUI(obj);
                     break;
                 case 1:
+                    SceneDataSceneGUI(obj);
                     break;
                 default:
                     break;
             }
         }
 
+        #region Common
         private Transform m_PreviewFolder;
         private readonly Dictionary<MapDataEntity.Object, GameObject> m_PreviewObjects = new Dictionary<MapDataEntity.Object, GameObject>();
         const string c_EditInPlayingWarning = "Cannot edit data while playing";
@@ -113,6 +115,10 @@ namespace SyadeuEditor.Presentation.Map
             m_SceneData = new Reference<SceneDataEntity>(Hash.Empty);
             m_SceneDataTarget = null;
             m_SceneDataTargetMapDataList = null;
+            // GridMapAttribute
+            m_SceneDataGridAtt = null;
+            m_SceneDataGrid.Dispose();
+            m_SceneDataGrid = null;
         }
         private void ResetPreviewFolder()
         {
@@ -148,12 +154,18 @@ namespace SyadeuEditor.Presentation.Map
                 }
             }
         }
+        #endregion
 
         #region Scene Data
 
         private Reference<SceneDataEntity> m_SceneData;
         private SceneDataEntity m_SceneDataTarget;
         Reference<MapDataEntity>[] m_SceneDataTargetMapDataList;
+
+        // GridMapAttribute
+        private GridMapAttribute m_SceneDataGridAtt;
+        private ManagedGrid m_SceneDataGrid;
+
         private Vector2 m_SceneDataScroll;
         private void SceneDataGUI()
         {
@@ -167,6 +179,10 @@ namespace SyadeuEditor.Presentation.Map
                     if (m_SceneData.IsValid())
                     {
                         m_SceneDataTarget = m_SceneData.GetObject();
+                        m_SceneDataGridAtt = m_SceneDataTarget.GetAttribute<GridMapAttribute>();
+
+                        if (m_SceneDataGrid != null) m_SceneDataGrid.Dispose();
+                        m_SceneDataGrid = new ManagedGrid(m_SceneDataGridAtt.m_Center, m_SceneDataGridAtt.m_Size, m_SceneDataGridAtt.m_CellSize);
 
                         m_SceneDataTargetMapDataList = (Reference<MapDataEntity>[])TypeHelper.TypeOf<SceneDataEntity>.Type.GetField("m_MapData", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(m_SceneDataTarget);
                         if (m_SceneDataTargetMapDataList != null)
@@ -185,6 +201,11 @@ namespace SyadeuEditor.Presentation.Map
                     {
                         m_SceneDataTarget = null;
                         m_SceneDataTargetMapDataList = null;
+
+                        // GridMapAttribute
+                        m_SceneDataGridAtt = null;
+                        m_SceneDataGrid.Dispose();
+                        m_SceneDataGrid = null;
                     }
 
                 }, m_SceneData, TypeHelper.TypeOf<SceneDataEntity>.Type);
@@ -212,18 +233,75 @@ namespace SyadeuEditor.Presentation.Map
             m_SceneDataScroll = GUILayout.BeginScrollView(m_SceneDataScroll, false, false);
             if (m_SceneDataTarget != null)
             {
-                GridMapAttribute gridMap = m_SceneDataTarget.GetAttribute<GridMapAttribute>();
-                if (gridMap != null)
+                if (m_SceneDataGridAtt != null)
                 {
                     using (new EditorUtils.BoxBlock(Color.gray))
                     {
                         EditorUtils.StringRich("GridMap", 13);
-                        ReflectionHelperEditor.DrawObject(gridMap);
+                        EditorGUI.BeginDisabledGroup(true);
+                        ReflectionHelperEditor.DrawObject(m_SceneDataGridAtt);
+                        EditorGUI.EndDisabledGroup();
                     }
+
+                    EditorGUILayout.LabelField($"{m_SceneDataGrid.gridSize}");
                 }
                 EditorUtils.Line();
             }
             GUILayout.EndScrollView();
+        }
+        private void SceneDataSceneGUI(SceneView obj)
+        {
+            if (m_SceneDataGrid == null) return;
+
+            m_SceneDataGrid.DrawGL();
+            //Vector3 cellSize = new Vector3(m_SceneDataGrid.cellSize, 1, m_SceneDataGrid.cellSize);
+            //var gridSize = m_SceneDataGrid.gridSize;
+
+            //Vector3 minPos = m_SceneDataGrid.GetCellPosition(0);
+            //minPos.x -= m_SceneDataGrid.cellSize * .5f;
+            //minPos.z += m_SceneDataGrid.cellSize * .5f;
+
+            //Vector3 maxPos = m_SceneDataGrid.GetCellPosition(gridSize);
+            //maxPos.x += m_SceneDataGrid.cellSize * .5f;
+            //maxPos.z -= m_SceneDataGrid.cellSize * .5f;
+
+            //Handles.DrawWireCube(m_SceneDataGrid.GetCellPosition(0), cellSize);
+            //Handles.DrawWireCube(m_SceneDataGrid.GetCellPosition(gridSize), cellSize);
+
+            //GL.PushMatrix();
+            //EditorEntity.DefaultMaterial.SetPass(0);
+            //GL.Begin(GL.LINES);
+            //for (int y = 0; y < gridSize.y + 2; y++)
+            //{
+            //    for (int x = 0; x < gridSize.x + 2; x++)
+            //    {
+            //        Vector3
+            //            p1 = new Vector3(
+            //                minPos.x, 
+            //                minPos.y, 
+            //                minPos.z - (m_SceneDataGrid.cellSize * y)),
+            //            p2 = new Vector3(
+            //                maxPos.x, 
+            //                minPos.y, 
+            //                minPos.z - (m_SceneDataGrid.cellSize * y)),
+            //            p3 = new Vector3(
+            //                minPos.x + (m_SceneDataGrid.cellSize * x),
+            //                minPos.y,
+            //                minPos.z),
+            //            p4 = new Vector3(
+            //                minPos.x + (m_SceneDataGrid.cellSize * x),
+            //                minPos.y,
+            //                maxPos.z)
+            //            ;
+
+            //        GL.Vertex(p1); GL.Vertex(p2);
+            //        GL.Vertex(p3); GL.Vertex(p4);
+            //        //Handles.DrawLine(p1, p2);
+            //        //Handles.DrawLine(p3, p4);
+            //    }
+            //}
+            //GL.End();
+            //GL.PopMatrix();
         }
 
         #endregion

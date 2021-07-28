@@ -15,6 +15,7 @@ namespace Syadeu.Presentation.Map
         [JsonProperty(Order = 0, PropertyName = "Center")] public int3 m_Center;
         [JsonProperty(Order = 1, PropertyName = "Size")] public int3 m_Size;
         [JsonProperty(Order = 2, PropertyName = "CellSize")] public float m_CellSize;
+        [JsonProperty(Order = 4, PropertyName = "ExcludeIdxes")] public int[] m_ExcludeIdxes;
 
         [JsonIgnore] public ManagedGrid Grid { get; internal set; }
     }

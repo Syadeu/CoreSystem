@@ -454,6 +454,7 @@ namespace SyadeuEditor
                 else if (declaredType.IsArray)
                 {
                     IList list = (IList)getter.Invoke(obj);
+                    if (list == null) list = Array.CreateInstance(declaredType.GetElementType(), 0);
 
                     setter.Invoke(obj, DrawList(name, list));
                 }
