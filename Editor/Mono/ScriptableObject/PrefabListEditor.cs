@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using System.IO;
+using System.Linq;
 
 #if UNITY_ADDRESSABLES
 using UnityEditor.AddressableAssets;
@@ -17,39 +18,33 @@ namespace SyadeuEditor
     [CustomEditor(typeof(PrefabList))]
     public class PrefabListEditor : EditorEntity<PrefabList>
     {
-//#if UNITY_ADDRESSABLES
-//        private static AddressableAssetSettings DefaultSettings => AddressableAssetSettingsDefaultObject.GetSettings(true);
-//        private static AddressableAssetGroup m_DefaultGroup;
-//        private static AddressableAssetGroup DefaultGroup
-//        {
-//            get
-//            {
-//                if (m_DefaultGroup == null)
-//                {
-//                    string[] assetGuids = AssetDatabase.FindAssets("PrefabList t:AddressableAssetGroup", new string[] { "Assets/AddressableAssetsData/AssetGroups" });
-//                    if (assetGuids == null || assetGuids.Length == 0)
-//                    {
-//                        m_DefaultGroup = CreateInstance<AddressableAssetGroup>();
-//                        m_DefaultGroup.Name = "PrefabList";
-//                        AssetDatabase.CreateAsset(m_DefaultGroup, "Assets/AddressableAssetsData/AssetGroups/PrefabList.asset");
-
-//                        m_DefaultGroup = AssetDatabase.LoadAssetAtPath<AddressableAssetGroup>("Assets/AddressableAssetsData/AssetGroups/PrefabList.asset");
-//                        m_DefaultGroup.AddSchema(new ContentUpdateGroupSchema()
-//                        {
-//                            StaticContent = true
-//                        });
-//                        m_DefaultGroup.AddSchema(new BundledAssetGroupSchema());
-//                    }
-//                    else
-//                    {
-//                        m_DefaultGroup = AssetDatabase.LoadAssetAtPath<AddressableAssetGroup>(AssetDatabase.GUIDToAssetPath(assetGuids[0]));
-//                    }
-//                }
-//                return m_DefaultGroup;
-//            }
-//        }
-//        const string c_PrefabListAssetPath = "Assets/AddressableAssetsData/PrefabList";
-//#endif
+        //#if UNITY_ADDRESSABLES
+        private static AddressableAssetSettings DefaultSettings => AddressableAssetSettingsDefaultObject.GetSettings(true);
+        private static AddressableAssetGroup m_DefaultGroup;
+        private static AddressableAssetGroup DefaultGroup
+        {
+            get
+            {
+                if (m_DefaultGroup == null)
+                {
+                    var tempList = DefaultSettings.groups.Where((other) => other.Name.Equals("PrefabList"));
+                    if (tempList.Count() == 0)
+                    {
+                        m_DefaultGroup = DefaultSettings.CreateGroup("PrefabList", false, false, true, null);
+                        m_DefaultGroup.AddSchema(new ContentUpdateGroupSchema()
+                        {
+                            StaticContent = true
+                        });
+                        m_DefaultGroup.AddSchema(new BundledAssetGroupSchema());
+                        EditorUtility.SetDirty(m_DefaultGroup);
+                        EditorUtility.SetDirty(DefaultSettings);
+                    }
+                    else m_DefaultGroup = tempList.First();
+                }
+                return m_DefaultGroup;
+            }
+        }
+        //#endif
 
         private bool m_ShowOriginalContents = false;
         private static string[] m_PrefabNames = null;
@@ -63,9 +58,32 @@ namespace SyadeuEditor
             EditorUtils.StringHeader("Prefab List");
             EditorUtils.SectorLine();
 
+            var objSettings = serializedObject.FindProperty("m_ObjectSettings");
+
+            if (GUILayout.Button("Rebase"))
+            {
+                var objSetField = GetField("m_ObjectSettings");
+                List<PrefabList.ObjectSetting> tempList = new List<PrefabList.ObjectSetting>();
+
+                foreach (AddressableAssetEntry item in DefaultGroup.entries)
+                {
+                    AssetReferenceGameObject refObj = new AssetReferenceGameObject(item.guid);
+
+                    tempList.Add(new PrefabList.ObjectSetting
+                    {
+                        m_Name = item.address.Split('/').Last().Split('.').First(),
+                        m_RefPrefab = refObj
+                    });
+                }
+
+                objSetField.SetValue(Asset, tempList);
+                EditorUtility.SetDirty(target);
+                Repaint();
+            }
+
             EditorGUI.BeginChangeCheck();
 
-            var objSettings = serializedObject.FindProperty("m_ObjectSettings");
+            
             EditorGUILayout.PropertyField(objSettings);
 
             if (EditorGUI.EndChangeCheck())
