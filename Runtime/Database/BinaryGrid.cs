@@ -61,6 +61,11 @@ namespace Syadeu.Database
 
         public float3 GetCellPosition(int idx) => GridExtensions.IndexToPosition(in m_AABB, in m_CellSize, in idx);
         public float3 GetCellPosition(int2 location) => GridExtensions.LocationToPosition(in m_AABB, in m_CellSize, in location);
+        public float3 GetCellPosition(float3 position)
+        {
+            int2 idx = GridExtensions.PositionToLocation(in m_AABB, in m_CellSize, in position);
+            return GridExtensions.LocationToPosition(in m_AABB, in m_CellSize, in idx);
+        }
 
         #endregion
 
@@ -299,8 +304,8 @@ namespace Syadeu.Database
         {
             float
                 half = cellSize * .5f,
-                firstCenterX = aabb.min.x + half + (cellSize * 1),
-                firstCenterZ = aabb.max.z - half - (cellSize * 1);
+                firstCenterX = aabb.min.x + half/* + (cellSize * 1)*/,
+                firstCenterZ = aabb.max.z - half /*- (cellSize * 1)*/;
 
             int
                 x = math.abs(Convert.ToInt32((pos.x - firstCenterX) / cellSize)),
@@ -331,10 +336,14 @@ namespace Syadeu.Database
         }
         public static int2 IndexToLocation(in AABB aabb, in float cellSize, in int idx)
         {
+            if (idx == 0) return new int2(0, 0);
+
             int zSize = (int)math.floor(aabb.size.z / cellSize);
 
-            if (idx == 0) return new int2(0, 0);
-            else return new int2(zSize % idx, zSize / idx);
+            int y = idx / zSize;
+            int x = idx - (zSize * y);
+
+            return new int2(x, y);
         }
         public static float3 IndexToPosition(in AABB aabb, in float cellSize, in int idx)
         {
@@ -551,6 +560,11 @@ namespace Syadeu.Database
 
         public float3 GetCellPosition(int idx) => GridExtensions.IndexToPosition(in m_AABB, in m_CellSize, in idx);
         public float3 GetCellPosition(int2 location) => GridExtensions.LocationToPosition(in m_AABB, in m_CellSize, in location);
+        public float3 GetCellPosition(float3 position)
+        {
+            int2 idx = GridExtensions.PositionToLocation(in m_AABB, in m_CellSize, in position);
+            return GridExtensions.LocationToPosition(in m_AABB, in m_CellSize, in idx);
+        }
 
         #endregion
 

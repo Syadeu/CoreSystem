@@ -255,7 +255,7 @@ namespace SyadeuEditor.Presentation.Map
         {
             if (m_SceneDataGrid == null) return;
 
-            Selection.activeObject = null;
+            //Selection.activeObject = null;
             m_SceneDataGrid.DrawGL();
             Handles.DrawWireCube(m_SceneDataGrid.bounds.center, m_SceneDataGrid.size);
 
@@ -271,9 +271,12 @@ namespace SyadeuEditor.Presentation.Map
                     if (m_SceneDataGrid.bounds.Intersect(ray, out float dis, out var point))
                     {
                         $"{dis} :: {point}".ToLog();
+
+                        var pos = m_SceneDataGrid.GetCellPosition(point);
+
                         GameObject temp = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                         temp.transform.SetParent(m_PreviewFolder);
-                        temp.transform.position = point;
+                        temp.transform.position = pos;
                     }
 
                     //if (Event.current.button == 0)
