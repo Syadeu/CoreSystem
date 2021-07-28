@@ -267,8 +267,8 @@ namespace SyadeuEditor.Presentation.Map
                 GridExtensions.DefaultMaterial.SetPass(0);
                 Color color = Color.red;
                 color.a = .5f;
-                GL.Color(color);
                 GL.Begin(GL.QUADS);
+                GL.Color(color);
                 for (int i = 0; i < m_SceneDataGridAtt.m_ExcludeIdxes.Length; i++)
                 {
                     Vector3
