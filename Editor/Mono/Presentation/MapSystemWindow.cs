@@ -207,7 +207,8 @@ namespace SyadeuEditor.Presentation.Map
             }
             private GridMapAttribute.LayerInfo GetLayer(int idx)
             {
-                if (m_SceneDataGridAtt == null || 
+                if (idx == 0 ||
+                    m_SceneDataGridAtt == null || 
                     m_SceneDataGridAtt.m_Layers == null ||
                     m_SceneDataGridAtt.m_Layers.Length <= idx - 1) return null;
 
@@ -216,12 +217,12 @@ namespace SyadeuEditor.Presentation.Map
 
             public void OnGUI()
             {
-                m_Debug = EditorGUILayout.Toggle(m_Debug);
+                //m_Debug = EditorGUILayout.Toggle(m_Debug);
 
                 EditorGUILayout.BeginHorizontal();
                 EditorGUI.BeginChangeCheck();
                 m_SelectedGridLayer = EditorGUILayout.Popup("Grid Layer: ", m_SelectedGridLayer, m_GridLayerNames);
-                if (EditorGUI.EndChangeCheck() && m_SelectedGridLayer != 0)
+                if (EditorGUI.EndChangeCheck())
                 {
                     m_CurrentLayer = GetLayer(m_SelectedGridLayer);
                     SceneView.lastActiveSceneView.Repaint();
@@ -246,13 +247,11 @@ namespace SyadeuEditor.Presentation.Map
 
                     ReloadLayers();
                 }
-                if (GUILayout.Button("C", GUILayout.Width(20)))
-                {
-                    var temp = m_SceneDataGridAtt.m_Layers.ToList();
-                    temp.Add((GridMapAttribute.LayerInfo)GetLayer(m_SelectedGridLayer).Clone());
-                    m_SceneDataGridAtt.m_Layers = temp.ToArray();
 
-                    ReloadLayers();
+                m_Debug = GUILayout.Toggle(m_Debug, "E", EditorUtils.MiniButton, GUILayout.Width(20));
+                if (m_Debug)
+                {
+                    
                 }
                 EditorGUI.EndDisabledGroup();
 
