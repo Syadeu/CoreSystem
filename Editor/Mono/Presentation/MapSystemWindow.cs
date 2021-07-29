@@ -651,6 +651,66 @@ namespace SyadeuEditor.Presentation.Map
             }
 
             Handles.color = origin;
+
+            int mouseControlID = GUIUtility.GetControlID(FocusType.Passive);
+            switch (Event.current.GetTypeForControl(mouseControlID))
+            {
+                case EventType.MouseDown:
+                    
+
+                    if (Event.current.button == 2)
+                    {
+                        GUIUtility.hotControl = mouseControlID;
+
+                        Rect rect = GUILayoutUtility.GetLastRect();
+                        rect.position = Event.current.mousePosition;
+                        
+                        var list = EntityDataList.Instance.m_Objects.Where((other) => other.Value is EntityBase).Select((other) => (EntityBase)other.Value).ToArray();
+                        PopupWindow.Show(rect, SelectorPopup<Hash, EntityBase>.GetWindow(list,
+                            (hash) =>
+                            {
+                                Camera sceneCam = SceneView.lastActiveSceneView.camera;
+                                Vector3 pos = sceneCam.transform.position + (sceneCam.transform.forward * 10f);
+
+                                Reference<EntityBase> refobj = new Reference<EntityBase>(hash);
+                                var objData = new MapDataEntity.Object()
+                                {
+                                    m_Object = refobj,
+                                    m_Translation = pos
+                                };
+
+                                GameObject temp = (GameObject)refobj.GetObject().Prefab.GetObjectSetting().m_RefPrefab.editorAsset;
+                                GameObject gameObj = (GameObject)PrefabUtility.InstantiatePrefab(temp, m_PreviewFolder);
+                                gameObj.tag = c_EditorOnly;
+                                gameObj.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
+
+                                objData.m_Rotation = temp.transform.rotation;
+                                objData.m_Scale = temp.transform.localScale;
+
+                                m_PreviewObjects.Add(objData, gameObj);
+
+                                List<MapDataEntity.Object> tempList = m_MapDataTarget.m_Objects.ToList();
+                                tempList.Add(objData);
+                                m_MapDataTarget.m_Objects = tempList.ToArray();
+
+                                m_MapDataTreeView.Refresh(m_MapDataTarget.m_Objects);
+                            },
+                            (other) => other.Hash));
+
+                        Event.current.Use();
+                    }
+
+                    break;
+                case EventType.MouseUp:
+                    //GUIUtility.hotControl = 0;
+                    //if (Event.current.button == 0)
+                    //{
+
+                    //}
+
+                    //Event.current.Use();
+                    break;
+            }
         }
 
         #region TreeView
@@ -713,9 +773,6 @@ namespace SyadeuEditor.Presentation.Map
                     else return $"{temp.Name}";
                 }
             }
-            //private Transform m_Folder;
-            //public GameObject m_PreviewObject = null;
-            //private int m_Idx;
 
             readonly Transform m_Folder;
             readonly Dictionary<MapDataEntity.Object, GameObject> m_List;
@@ -724,24 +781,6 @@ namespace SyadeuEditor.Presentation.Map
             {
                 m_Folder = folder;
                 m_List = list;
-                //m_Idx = treeView.Data.IndexOf(target);
-
-                //if (Target.m_Object.IsValid())
-                //{
-                //    PrefabReference prefab = Target.m_Object.GetObject().Prefab;
-                //    if (prefab.IsValid())
-                //    {
-                //        var temp = prefab.GetObjectSetting().m_RefPrefab.editorAsset;
-
-                //        m_PreviewObject = (GameObject)PrefabUtility.InstantiatePrefab(temp, m_Folder);
-                //        m_PreviewObject.tag = c_EditorOnly;
-                //        m_PreviewObject.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
-                //        m_PreviewObject.transform.position = Target.m_Translation;
-                //        m_PreviewObject.transform.rotation = Target.m_Rotation;
-
-                //        UpdatePreviewObject();
-                //    }
-                //}
             }
             public override void OnGUI()
             {
