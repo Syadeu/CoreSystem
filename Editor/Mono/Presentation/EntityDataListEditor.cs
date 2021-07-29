@@ -271,6 +271,7 @@ namespace SyadeuEditor
                 m_Type = entity.GetType();
                 m_Deprecated = m_Type.GetCustomAttribute<ObsoleteAttribute>();
                 m_Drawer = ReflectionHelperEditor.GetDrawer(entity, c_DefaultProperties);
+                if (Target.Attributes == null) Target.Attributes = new List<Hash>();
                 m_AttributeDrawer = ReflectionHelperEditor.GetAttributeDrawer(m_Type, Target.Attributes);
             }
             public override void OnGUI()

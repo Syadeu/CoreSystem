@@ -220,6 +220,7 @@ namespace SyadeuEditor
                         EntityDataList.Instance.m_Objects.Add(cloneAtt.Hash, cloneAtt);
 
                         m_CurrentList[i] = cloneAtt.Hash;
+                        OnListChange();
                     }
 
                     EditorGUILayout.EndHorizontal();
