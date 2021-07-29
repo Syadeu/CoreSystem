@@ -4,6 +4,7 @@ using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Internal;
 using Syadeu.ThreadSafe;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -26,6 +27,8 @@ namespace Syadeu.Presentation.Map
         private SceneSystem m_SceneSystem;
         private EntitySystem m_EntitySystem;
         private RenderSystem m_RenderSystem;
+
+        private bool m_Disposed = false;
 
         #region Presentation Methods
         protected override PresentationResult OnInitialize()
@@ -91,6 +94,7 @@ namespace Syadeu.Presentation.Map
                 m_RenderSystem = other;
 
                 m_RenderSystem.OnRender += M_RenderSystem_OnRender;
+                //m_RenderSystem.StartPostRender(OnPostRender());
             });
 
             return base.OnInitializeAsync();
@@ -99,6 +103,7 @@ namespace Syadeu.Presentation.Map
         {
             m_RenderSystem.OnRender -= M_RenderSystem_OnRender;
 
+            m_Disposed = true;
             base.Dispose();
         }
 
@@ -116,6 +121,29 @@ namespace Syadeu.Presentation.Map
                 }
             }
         }
+        //private IEnumerator OnPostRender()
+        //{
+        //    while (!m_Disposed)
+        //    {
+        //        foreach (var item in m_SceneDataObjects)
+        //        {
+        //            for (int i = 0; i < item.Value.Count; i++)
+        //            {
+        //                var gridAtt = item.Value[i].GetAttribute<GridMapAttribute>();
+        //                if (gridAtt == null) continue;
+
+        //                // TODO : 임시 코드
+        //                gridAtt.Grid.DrawGL();
+
+        //                if (i != 0 && i % 100 == 0) yield return null;
+        //            }
+
+        //            yield return null;
+        //        }
+
+        //        yield return null;
+        //    }
+        //}
 
         private void CreateConsoleCommands()
         {

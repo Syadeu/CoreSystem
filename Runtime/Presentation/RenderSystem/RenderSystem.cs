@@ -10,6 +10,7 @@ using Syadeu.Database;
 using Syadeu.Mono;
 using Syadeu.Presentation.Entities;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Unity.Mathematics;
@@ -21,7 +22,6 @@ namespace Syadeu.Presentation
     public sealed class RenderSystem : PresentationSystemEntity<RenderSystem>
     {
         private ObClass<Camera> m_Camera;
-        private Camera m_TopdownCamera;
         private Matrix4x4 m_Matrix4x4;
 
         private readonly List<ObserverObject> m_ObserverList = new List<ObserverObject>();
@@ -42,6 +42,9 @@ namespace Syadeu.Presentation
         public Camera Camera => m_Camera.Value;
         public event Action OnRender;
 
+        internal List<CoreRoutine> m_PreRenderRoutines = new List<CoreRoutine>();
+        internal List<CoreRoutine> m_PostRenderRoutines = new List<CoreRoutine>();
+
         private Vector3 m_ScreenOffset;
 
         #region Presentation Methods
@@ -52,25 +55,30 @@ namespace Syadeu.Presentation
             m_Camera.OnValueChange += (from, to) =>
             {
                 if (to == null) return;
-                if (m_TopdownCamera != null)
-                {
-                    m_TopdownCamera.transform.SetParent(to.transform);
-                }
-                else
-                {
-                    GameObject obj = new GameObject("RenderSystem.Camera");
-                    m_TopdownCamera = obj.AddComponent<Camera>();
-                    //m_TopdownCamera.enabled = false;
-                    m_TopdownCamera.targetDisplay = 1;
+                //if (m_TopdownCamera != null)
+                //{
+                //    m_TopdownCamera.transform.SetParent(to.transform);
+                //}
+                //else
+                //{
+                //    GameObject obj = new GameObject("RenderSystem.Camera");
+                //    m_TopdownCamera = obj.AddComponent<Camera>();
+                //    //m_TopdownCamera.enabled = false;
+                //    m_TopdownCamera.targetDisplay = 1;
 
-                    Vector3 pos = to.transform.position;
-                    pos.y += 50;
-                    m_TopdownCamera.transform.position = pos;
+                //    Vector3 pos = to.transform.position;
+                //    pos.y += 50;
+                //    m_TopdownCamera.transform.position = pos;
 
-                    m_TopdownCamera.transform.SetParent(to.transform);
-                    m_TopdownCamera.transform.eulerAngles = new Vector3(90, 0, 0);
-                }
+                //    m_TopdownCamera.transform.SetParent(to.transform);
+                //    m_TopdownCamera.transform.eulerAngles = new Vector3(90, 0, 0);
+                //}
                 m_Matrix4x4 = GetCameraMatrix4X4(to);
+                if (to.GetComponent<CameraComponent>() == null)
+                {
+                    to.gameObject.AddComponent<CameraComponent>().Initialize(this);
+                }
+                else to.GetComponent<CameraComponent>().Initialize(this);
             };
             m_ScreenOffset = SyadeuSettings.Instance.m_ScreenOffset;
 
@@ -223,6 +231,17 @@ namespace Syadeu.Presentation
                 screenPoint.y < 1 + offset.y;
         }
 
+        public void StartPreRender(IEnumerator iter)
+        {
+            CoreRoutine routine = new CoreRoutine(iter, false);
+            m_PreRenderRoutines.Add(routine);
+        }
+        public void StartPostRender(IEnumerator iter)
+        {
+            CoreRoutine routine = new CoreRoutine(iter, false);
+            m_PostRenderRoutines.Add(routine);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float4x4 TRS(float3 translation, quaternion rotation, float3 scale)
         {
@@ -241,5 +260,62 @@ namespace Syadeu.Presentation
             return new float4x4(r, translation);
         }
         public static float4x4 WorldToLocalMatrix(float3 translation, quaternion rotation) => math.fastinverse(LocalToWorldMatrix(translation, rotation));
+    }
+
+    public sealed class CameraComponent : MonoBehaviour
+    {
+        private RenderSystem m_System;
+
+        public void Initialize(RenderSystem system)
+        {
+            m_System = system;
+        }
+
+        private IEnumerator OnPreRender()
+        {
+            while (true)
+            {
+                for (int i = m_System.m_PreRenderRoutines.Count - 1; i >= 0; i--)
+                {
+                    if (m_System.m_PreRenderRoutines[i].Iterator.Current == null)
+                    {
+                        if (!m_System.m_PreRenderRoutines[i].Iterator.MoveNext())
+                        {
+                            m_System.m_PreRenderRoutines.RemoveAt(i);
+                            continue;
+                        }
+                    }
+                    else
+                    {
+                        throw new NotImplementedException();
+                    }
+                }
+
+                yield return null;
+            }
+        }
+        private IEnumerator OnPostRender()
+        {
+            while (true)
+            {
+                for (int i = m_System.m_PostRenderRoutines.Count - 1; i >= 0; i--)
+                {
+                    if (m_System.m_PostRenderRoutines[i].Iterator.Current == null)
+                    {
+                        if (!m_System.m_PostRenderRoutines[i].Iterator.MoveNext())
+                        {
+                            m_System.m_PostRenderRoutines.RemoveAt(i);
+                            continue;
+                        }
+                    }
+                    else
+                    {
+                        throw new NotImplementedException();
+                    }
+                }
+
+                yield return null;
+            }
+        }
     }
 }
