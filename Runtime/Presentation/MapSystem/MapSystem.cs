@@ -28,6 +28,7 @@ namespace Syadeu.Presentation.Map
         private EntitySystem m_EntitySystem;
         private RenderSystem m_RenderSystem;
 
+        private bool m_DrawGrid = false;
         private bool m_Disposed = false;
 
         #region Presentation Methods
@@ -94,7 +95,6 @@ namespace Syadeu.Presentation.Map
                 m_RenderSystem = other;
 
                 m_RenderSystem.OnRender += M_RenderSystem_OnRender;
-                //m_RenderSystem.StartPostRender(OnPostRender());
             });
 
             return base.OnInitializeAsync();
@@ -109,41 +109,21 @@ namespace Syadeu.Presentation.Map
 
         private void M_RenderSystem_OnRender()
         {
-            foreach (var item in m_SceneDataObjects)
+            if (m_DrawGrid)
             {
-                for (int i = 0; i < item.Value.Count; i++)
+                foreach (var item in m_SceneDataObjects)
                 {
-                    var gridAtt = item.Value[i].GetAttribute<GridMapAttribute>();
-                    if (gridAtt == null) continue;
+                    for (int i = 0; i < item.Value.Count; i++)
+                    {
+                        var gridAtt = item.Value[i].GetAttribute<GridMapAttribute>();
+                        if (gridAtt == null) continue;
 
-                    // TODO : 임시 코드
-                    gridAtt.Grid.DrawGL();
+                        // TODO : 임시 코드
+                        gridAtt.Grid.DrawGL();
+                    }
                 }
             }
         }
-        //private IEnumerator OnPostRender()
-        //{
-        //    while (!m_Disposed)
-        //    {
-        //        foreach (var item in m_SceneDataObjects)
-        //        {
-        //            for (int i = 0; i < item.Value.Count; i++)
-        //            {
-        //                var gridAtt = item.Value[i].GetAttribute<GridMapAttribute>();
-        //                if (gridAtt == null) continue;
-
-        //                // TODO : 임시 코드
-        //                gridAtt.Grid.DrawGL();
-
-        //                if (i != 0 && i % 100 == 0) yield return null;
-        //            }
-
-        //            yield return null;
-        //        }
-
-        //        yield return null;
-        //    }
-        //}
 
         private void CreateConsoleCommands()
         {
@@ -163,6 +143,10 @@ namespace Syadeu.Presentation.Map
                 }
                 m_MapEditorInstance = null;
             }, "close", "mapeditor");
+            ConsoleWindow.CreateCommand((cmd) =>
+            {
+                m_DrawGrid = !m_DrawGrid;
+            }, "draw", "grid");
         }
         #endregion
 
