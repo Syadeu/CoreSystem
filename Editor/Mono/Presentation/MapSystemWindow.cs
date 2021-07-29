@@ -172,7 +172,9 @@ namespace SyadeuEditor.Presentation.Map
             public readonly GridMapAttribute m_SceneDataGridAtt;
             public readonly ManagedGrid m_SceneDataGrid;
             public string[] m_GridLayerNames;
+
             public int m_SelectedGridLayer = 0;
+            public GridMapAttribute.LayerInfo m_CurrentLayer = null;
 
             public bool m_Debug = false;
 
@@ -182,25 +184,94 @@ namespace SyadeuEditor.Presentation.Map
 
                 m_SceneDataGridAtt = att;
                 m_SceneDataGrid = new ManagedGrid(m_SceneDataGridAtt.m_Center, m_SceneDataGridAtt.m_Size, m_SceneDataGridAtt.m_CellSize);
+
+                ReloadLayers();
             }
             public void Dispose()
             {
                 m_SceneDataGrid?.Dispose();
             }
 
+            private void ReloadLayers()
+            {
+                if (m_SceneDataGridAtt.m_Layers == null || m_SceneDataGridAtt.m_Layers.Length == 0)
+                {
+                    m_GridLayerNames = new string[] { "All" };
+                }
+                else
+                {
+                    var temp = m_SceneDataGridAtt.m_Layers.Select((other) => other.m_Name).ToList();
+                    temp.Insert(0, "All");
+                    m_GridLayerNames = temp.ToArray();
+                }
+            }
+            private GridMapAttribute.LayerInfo GetLayer(int idx)
+            {
+                if (m_SceneDataGridAtt == null || 
+                    m_SceneDataGridAtt.m_Layers == null ||
+                    m_SceneDataGridAtt.m_Layers.Length <= idx - 1) return null;
+
+                return m_SceneDataGridAtt.m_Layers[idx - 1];
+            }
+
+            public void OnGUI()
+            {
+                m_Debug = EditorGUILayout.Toggle(m_Debug);
+
+                EditorGUILayout.BeginHorizontal();
+                EditorGUI.BeginChangeCheck();
+                m_SelectedGridLayer = EditorGUILayout.Popup("Grid Layer: ", m_SelectedGridLayer, m_GridLayerNames);
+                if (EditorGUI.EndChangeCheck() && m_SelectedGridLayer != 0)
+                {
+                    m_CurrentLayer = GetLayer(m_SelectedGridLayer);
+                    SceneView.lastActiveSceneView.Repaint();
+                }
+
+                if (GUILayout.Button("+", GUILayout.Width(20)))
+                {
+                    var temp = m_SceneDataGridAtt.m_Layers.ToList();
+                    temp.Add(new GridMapAttribute.LayerInfo());
+                    m_SceneDataGridAtt.m_Layers = temp.ToArray();
+
+                    ReloadLayers();
+
+                    m_SelectedGridLayer = m_SceneDataGridAtt.m_Layers.Length - 1;
+                }
+                EditorGUI.BeginDisabledGroup(m_SelectedGridLayer == 0);
+                if (GUILayout.Button("-", GUILayout.Width(20)))
+                {
+                    var temp = m_SceneDataGridAtt.m_Layers.ToList();
+                    temp.RemoveAt(temp.Count - 1);
+                    m_SceneDataGridAtt.m_Layers = temp.ToArray();
+
+                    ReloadLayers();
+                }
+                if (GUILayout.Button("C", GUILayout.Width(20)))
+                {
+                    var temp = m_SceneDataGridAtt.m_Layers.ToList();
+                    temp.Add((GridMapAttribute.LayerInfo)GetLayer(m_SelectedGridLayer).Clone());
+                    m_SceneDataGridAtt.m_Layers = temp.ToArray();
+
+                    ReloadLayers();
+                }
+                EditorGUI.EndDisabledGroup();
+
+                EditorGUILayout.EndHorizontal();
+            }
             public void OnSceneGUI(SceneView obj)
             {
                 if (m_SceneDataGridAtt == null) return;
 
-                //Selection.activeObject = null;
+                #region Draw Grid & Layers
+
                 m_SceneDataGrid.DrawGL();
                 Handles.DrawWireCube(m_SceneDataGrid.bounds.center, m_SceneDataGrid.size);
 
-                if (m_SceneDataGridAtt.m_ExcludeIdxes == null)
+                if (m_SceneDataGridAtt.m_Layers == null)
                 {
-                    m_SceneDataGridAtt.m_ExcludeIdxes = Array.Empty<GridMapAttribute.LayerInfo>();
+                    m_SceneDataGridAtt.m_Layers = Array.Empty<GridMapAttribute.LayerInfo>();
                 }
-                if (m_SceneDataGridAtt.m_ExcludeIdxes.Length > 0)
+                if (m_SceneDataGridAtt.m_Layers.Length > 0)
                 {
                     float sizeHalf = m_SceneDataGrid.cellSize * .5f;
 
@@ -211,12 +282,32 @@ namespace SyadeuEditor.Presentation.Map
                     GL.Begin(GL.QUADS);
                     GL.Color(color);
 
-                    foreach (var item in m_SceneDataGridAtt.m_ExcludeIdxes)
+                    if (m_CurrentLayer == null)
                     {
-                        for (int i = 0; i < item.m_Indices.Length; i++)
+                        foreach (var item in m_SceneDataGridAtt.m_Layers)
+                        {
+                            for (int i = 0; i < item.m_Indices.Length; i++)
+                            {
+                                Vector3
+                                    cellPos = m_SceneDataGrid.GetCellPosition(item.m_Indices[i]),
+                                    p1 = new Vector3(cellPos.x - sizeHalf, cellPos.y + .1f, cellPos.z - sizeHalf),
+                                    p2 = new Vector3(cellPos.x - sizeHalf, cellPos.y + .1f, cellPos.z + sizeHalf),
+                                    p3 = new Vector3(cellPos.x + sizeHalf, cellPos.y + .1f, cellPos.z + sizeHalf),
+                                    p4 = new Vector3(cellPos.x + sizeHalf, cellPos.y + .1f, cellPos.z - sizeHalf);
+
+                                GL.Vertex(p1);
+                                GL.Vertex(p2);
+                                GL.Vertex(p3);
+                                GL.Vertex(p4);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        for (int i = 0; i < m_CurrentLayer.m_Indices.Length; i++)
                         {
                             Vector3
-                                cellPos = m_SceneDataGrid.GetCellPosition(item.m_Indices[i]),
+                                cellPos = m_SceneDataGrid.GetCellPosition(m_CurrentLayer.m_Indices[i]),
                                 p1 = new Vector3(cellPos.x - sizeHalf, cellPos.y + .1f, cellPos.z - sizeHalf),
                                 p2 = new Vector3(cellPos.x - sizeHalf, cellPos.y + .1f, cellPos.z + sizeHalf),
                                 p3 = new Vector3(cellPos.x + sizeHalf, cellPos.y + .1f, cellPos.z + sizeHalf),
@@ -232,9 +323,9 @@ namespace SyadeuEditor.Presentation.Map
                     GL.End();
                     GL.PopMatrix();
                 }
+                #endregion
 
-
-                if (!m_Debug) return;
+                if (!m_Debug || m_CurrentLayer == null) return;
 
                 int mouseControlID = GUIUtility.GetControlID(FocusType.Passive);
                 switch (Event.current.GetTypeForControl(mouseControlID))
@@ -242,35 +333,33 @@ namespace SyadeuEditor.Presentation.Map
                     case EventType.MouseDown:
                         GUIUtility.hotControl = mouseControlID;
 
-                        Ray ray = EditorSceneUtils.GetMouseScreenRay();
-                        if (m_SceneDataGrid.bounds.Intersect(ray, out float dis, out var point))
+                        if (Event.current.button == 0)
                         {
-                            $"{dis} :: {point}".ToLog();
+                            Ray ray = EditorSceneUtils.GetMouseScreenRay();
+                            if (m_SceneDataGrid.bounds.Intersect(ray, out float dis, out var point))
+                            {
+                                $"{dis} :: {point}".ToLog();
 
-                            int idx = m_SceneDataGrid.GetCellIndex(point);
-                            //List<int> tempList = m_SceneDataGridAtt.m_ExcludeIdxes.ToList();
+                                int idx = m_SceneDataGrid.GetCellIndex(point);
+                                List<int> tempList = m_CurrentLayer.m_Indices.ToList();
 
-                            //if (tempList.Contains(idx))
-                            //{
-                            //    tempList.Remove(idx);
-                            //}
-                            //else tempList.Add(idx);
-                            //m_SceneDataGridAtt.m_ExcludeIdxes = tempList.ToArray();
+                                if (tempList.Contains(idx))
+                                {
+                                    tempList.Remove(idx);
+                                }
+                                else tempList.Add(idx);
+                                m_CurrentLayer.m_Indices = tempList.ToArray();
 
-                            //
-                            //GameObject temp = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                            //temp.transform.SetParent(m_PreviewFolder);
-                            //temp.transform.position = point;
+                                //
+                                //GameObject temp = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                                //temp.transform.SetParent(m_PreviewFolder);
+                                //temp.transform.position = point;
+                            }
                         }
-
-                        //if (Event.current.button == 0)
-                        //{
-
-                        //}
-                        //else if (Event.current.button == 1)
-                        //{
-
-                        //}
+                        else if (Event.current.button == 1)
+                        {
+                            m_Debug = false;
+                        }
 
                         Event.current.Use();
                         break;
@@ -354,12 +443,7 @@ namespace SyadeuEditor.Presentation.Map
             SaveNCloseButton();
             EditorUtils.Line();
 
-            //if (m_SceneDataGridAtt != null)
-            //{
-            //    //EditorGUILayout.LabelField($"{m_SceneDataGrid.gridSize}");
-
-            m_GridMap.m_Debug = EditorGUILayout.Toggle(m_GridMap.m_Debug);
-            //}
+            m_GridMap?.OnGUI();
 
             m_SceneDataScroll = GUILayout.BeginScrollView(m_SceneDataScroll, false, false);
             if (m_SceneDataTarget != null)
