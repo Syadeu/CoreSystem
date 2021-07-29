@@ -664,14 +664,12 @@ namespace SyadeuEditor.Presentation.Map
 
                         Rect rect = GUILayoutUtility.GetLastRect();
                         rect.position = Event.current.mousePosition;
-                        
+                        Vector3 pos = EditorSceneUtils.GetMouseScreenPos();
+
                         var list = EntityDataList.Instance.m_Objects.Where((other) => other.Value is EntityBase).Select((other) => (EntityBase)other.Value).ToArray();
                         PopupWindow.Show(rect, SelectorPopup<Hash, EntityBase>.GetWindow(list,
                             (hash) =>
                             {
-                                Camera sceneCam = SceneView.lastActiveSceneView.camera;
-                                Vector3 pos = sceneCam.transform.position + (sceneCam.transform.forward * 10f);
-
                                 Reference<EntityBase> refobj = new Reference<EntityBase>(hash);
                                 var objData = new MapDataEntity.Object()
                                 {
