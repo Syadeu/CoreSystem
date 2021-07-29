@@ -375,6 +375,9 @@ namespace Syadeu.Presentation
         #region Processor
         private static void ProcessEntityOnCreated(EntitySystem system, IObject entity)
         {
+            CoreSystem.Logger.Log(Channel.Entity,
+                $"Create entity({entity.Name})");
+
             #region Entity
             if (system.m_EntityProcessors.TryGetValue(entity.GetType(), out List<IEntityDataProcessor> entityProcessor))
             {
