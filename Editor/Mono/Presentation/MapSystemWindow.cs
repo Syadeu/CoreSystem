@@ -414,11 +414,11 @@ namespace SyadeuEditor.Presentation.Map
             {
                 ReflectionHelperEditor.DrawReferenceSelector("Scene data: ", (hash) =>
                 {
-                    m_SceneData = new Reference<SceneDataEntity>(hash);
+                    var tempSceneData = new Reference<SceneDataEntity>(hash);
 
-                    if (m_SceneData.IsValid())
+                    if (tempSceneData.IsValid() && !m_SceneData.Equals(tempSceneData))
                     {
-                        m_SceneDataTarget = m_SceneData.GetObject();
+                        m_SceneDataTarget = tempSceneData.GetObject();
 
                         m_GridMap = new GridMapExtension(m_SceneDataTarget.GetAttribute<GridMapAttribute>());
 
@@ -445,6 +445,8 @@ namespace SyadeuEditor.Presentation.Map
 
                         Tools.hidden = false;
                     }
+
+                    m_SceneData = tempSceneData;
 
                 }, m_SceneData, TypeHelper.TypeOf<SceneDataEntity>.Type);
             }
@@ -681,6 +683,7 @@ namespace SyadeuEditor.Presentation.Map
                                 GameObject gameObj = (GameObject)PrefabUtility.InstantiatePrefab(temp, m_PreviewFolder);
                                 gameObj.tag = c_EditorOnly;
                                 gameObj.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
+                                gameObj.transform.position = pos;
 
                                 objData.m_Rotation = temp.transform.rotation;
                                 objData.m_Scale = temp.transform.localScale;
@@ -748,7 +751,7 @@ namespace SyadeuEditor.Presentation.Map
                     int idx = temp.IndexOf(target);
 
                     temp.RemoveAt(idx);
-                    if (m_PreviewObjects[target] != null)
+                    if (m_PreviewObjects.TryGetValue(target, out var tempObj) && tempObj != null)
                     {
                         DestroyImmediate(m_PreviewObjects[target]);
                         m_PreviewObjects[target] = null;
