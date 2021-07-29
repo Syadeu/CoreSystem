@@ -509,6 +509,24 @@ namespace SyadeuEditor.Presentation.Map
         private VerticalTreeView m_MapDataTreeView;
         private void MapDataGUI()
         {
+            #region Scene data selector
+            using (new EditorUtils.BoxBlock(Color.gray))
+            {
+                ReflectionHelperEditor.DrawReferenceSelector("Scene data: ", (hash) =>
+                {
+                    m_SceneData = new Reference<SceneDataEntity>(hash);
+
+                    if (m_SceneData.IsValid())
+                    {
+                        m_SceneDataTarget = m_SceneData.GetObject();
+
+                        m_GridMap = new GridMapExtension(m_SceneDataTarget.GetAttribute<GridMapAttribute>());
+                        SceneView.lastActiveSceneView.Repaint();
+                    }
+                }, m_SceneData, TypeHelper.TypeOf<SceneDataEntity>.Type);
+            }
+            #endregion
+
             #region Map data selector
             using (new EditorUtils.BoxBlock(Color.gray))
             {
@@ -549,6 +567,14 @@ namespace SyadeuEditor.Presentation.Map
                 return;
             }
 
+            if (m_GridMap != null)
+            {
+                using (new EditorUtils.BoxBlock(Color.black))
+                {
+                    m_GridMap.OnGUI();
+                }
+            }
+
             if (!m_MapData.IsValid())
             {
                 EditorGUILayout.Space();
@@ -556,17 +582,22 @@ namespace SyadeuEditor.Presentation.Map
                 return;
             }
 
-            SaveNCloseButton();
+            using (new EditorUtils.BoxBlock(Color.black))
+            {
+                SaveNCloseButton();
 
-            int screenWidth = Screen.width;
-            m_MapDataScroll = GUILayout.BeginScrollView(m_MapDataScroll, false, false);
+                int screenWidth = Screen.width;
+                m_MapDataScroll = GUILayout.BeginScrollView(m_MapDataScroll, false, false);
 
-            m_MapDataTreeView.OnGUI();
+                m_MapDataTreeView.OnGUI();
 
-            GUILayout.EndScrollView();
+                GUILayout.EndScrollView();
+            }
         }
         private void MapDataSceneGUI(SceneView obj)
         {
+            m_GridMap?.OnSceneGUI(obj);
+
             if (m_MapDataTarget == null) return;
 
             Color origin = Handles.color;
@@ -585,10 +616,6 @@ namespace SyadeuEditor.Presentation.Map
 
                 Handles.BeginGUI();
                 GUI.BeginGroup(rect, name, EditorUtils.Box);
-
-                //GUI.Label(rect, "tesasdasdasdasdt");
-                //GUILayout.Label("gfhghfhfggfh");
-                //EditorGUILayout.LabelField("dasiduiouxoi");
 
                 GUI.EndGroup();
                 Handles.EndGUI();
@@ -614,8 +641,6 @@ namespace SyadeuEditor.Presentation.Map
                     default:
                         break;
                 }
-
-
 
                 if (EditorGUI.EndChangeCheck())
                 {

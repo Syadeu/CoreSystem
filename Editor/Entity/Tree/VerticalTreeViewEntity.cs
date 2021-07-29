@@ -208,8 +208,10 @@ namespace SyadeuEditor.Tree
         }
         internal protected void DrawSearchField()
         {
+            Rect rect = GUILayoutUtility.GetLastRect();
+
             EditorGUI.BeginChangeCheck();
-            m_SearchString = m_SearchField.OnGUI(GUILayoutUtility.GetRect(Screen.width, 20), m_SearchString);
+            m_SearchString = m_SearchField.OnGUI(GUILayoutUtility.GetRect(rect.width, 20), m_SearchString);
             if (EditorGUI.EndChangeCheck())
             {
                 SearchFieldChanged(in m_SearchString);
