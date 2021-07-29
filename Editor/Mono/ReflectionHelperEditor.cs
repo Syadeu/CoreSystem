@@ -157,14 +157,14 @@ namespace SyadeuEditor
                 }
                 EditorGUILayout.EndHorizontal();
 
-                EditorGUI.indentLevel += 1;
+                //EditorGUI.indentLevel += 1;
 
                 using (new EditorUtils.BoxBlock(m_Color))
                 {
                     DrawList();
                 }
 
-                EditorGUI.indentLevel -= 1;
+                //EditorGUI.indentLevel -= 1;
 
                 return m_CurrentList;
             }
@@ -229,7 +229,7 @@ namespace SyadeuEditor
                         Color color3 = Color.red;
                         color3.a = .7f;
 
-                        EditorGUI.indentLevel += 1;
+                        //EditorGUI.indentLevel += 1;
 
                         using (new EditorUtils.BoxBlock(color3))
                         {
@@ -249,7 +249,7 @@ namespace SyadeuEditor
                             }
                         }
 
-                        EditorGUI.indentLevel -= 1;
+                        //EditorGUI.indentLevel -= 1;
                     }
 
                     if (m_OpenAttributes[i]) EditorUtils.Line();
