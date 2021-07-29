@@ -748,9 +748,8 @@ namespace SyadeuEditor.Presentation.Map
                     MapDataEntity.Object target = (MapDataEntity.Object)element.TargetObject;
 
                     List<MapDataEntity.Object> temp = data.m_Objects.ToList();
-                    int idx = temp.IndexOf(target);
+                    temp.Remove(target);
 
-                    temp.RemoveAt(idx);
                     if (m_PreviewObjects.TryGetValue(target, out var tempObj) && tempObj != null)
                     {
                         DestroyImmediate(m_PreviewObjects[target]);

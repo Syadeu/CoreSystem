@@ -16,9 +16,9 @@ namespace Syadeu.Presentation
     {
         const string c_NameBase = "New {0}";
 
-#if UNITY_EDITOR
-        [ReflectionDescription("한글 쓰지마라")]
-#endif
+//#if UNITY_EDITOR
+//        [ReflectionDescription("한글 쓰지마라")]
+//#endif
         [JsonProperty(Order = -20, PropertyName = "Name")] public string Name { get; set; }
         /// <summary>
         /// 이 오브젝트 엔티티의 오리지널 해쉬입니다.

@@ -5,6 +5,7 @@ using Syadeu.Internal;
 using Syadeu.Mono;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Internal;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -148,9 +149,69 @@ namespace Syadeu.Presentation
 
             return base.OnPresentationAsync();
         }
+
+        public override void Dispose()
+        {
+            var entityList = m_ObjectEntities.Values.ToArray();
+            for (int i = 0; i < entityList.Length; i++)
+            {
+                var entity = entityList[i];
+
+                CoreSystem.Logger.Log(Channel.Entity,
+    $"Destroying entity({entity.Name})");
+
+                #region Attributes
+                entity.Attributes.ForEach((other) =>
+                {
+                    if (other == null)
+                    {
+                        CoreSystem.Logger.LogWarning(Channel.Presentation,
+                            string.Format(c_AttributeEmptyWarning, entity.Name));
+                        return;
+                    }
+
+                    Type t = other.GetType();
+
+                    if (m_AttributeProcessors.TryGetValue(t, out List<IAttributeProcessor> processors))
+                    {
+                        for (int j = 0; j < processors.Count; j++)
+                        {
+                            IAttributeProcessor processor = processors[j];
+
+                            processor.OnDestroy(other, entity);
+                            processor.OnDestroySync(other, entity);
+                        }
+                    }
+                });
+                #endregion
+
+                #region Entity
+                if (m_EntityProcessors.TryGetValue(entity.GetType(), out List<IEntityDataProcessor> entityProcessor))
+                {
+                    for (int j = 0; j < entityProcessor.Count; j++)
+                    {
+                        IEntityDataProcessor processor = entityProcessor[j];
+
+                        processor.OnDestory(entity);
+                        processor.OnDestorySync(entity);
+                    }
+                }
+                #endregion
+            }
+
+            OnEntityCreated = null;
+            OnEntityDestroy = null;
+
+            m_ObjectHashSet.Clear();
+            m_ObjectEntities.Clear();
+            m_AttributeProcessors.Clear();
+            m_EntityProcessors.Clear();
+            "dispose entity".ToLog();
+            base.Dispose();
+        }
         #endregion
 
-//#line hidden
+#line hidden
         #region Create Entity
         public IEntity LoadEntity(EntityBase.Captured captured)
         {
@@ -378,22 +439,6 @@ namespace Syadeu.Presentation
             CoreSystem.Logger.Log(Channel.Entity,
                 $"Create entity({entity.Name})");
 
-            #region Entity
-            if (system.m_EntityProcessors.TryGetValue(entity.GetType(), out List<IEntityDataProcessor> entityProcessor))
-            {
-                for (int i = 0; i < entityProcessor.Count; i++)
-                {
-                    IEntityDataProcessor processor = entityProcessor[i];
-
-                    processor.OnCreated(entity);
-                    CoreSystem.AddForegroundJob(() =>
-                    {
-                        processor.OnCreatedSync(entity);
-                    });
-                }
-            }
-            #endregion
-
             #region Attributes
             entity.Attributes.ForEach((other) =>
             {
@@ -421,6 +466,22 @@ namespace Syadeu.Presentation
                     CoreSystem.Logger.Log(Channel.Entity, $"Processed OnCreated at entity({entity.Name}), {t.Name}");
                 }
             });
+            #endregion
+
+            #region Entity
+            if (system.m_EntityProcessors.TryGetValue(entity.GetType(), out List<IEntityDataProcessor> entityProcessor))
+            {
+                for (int i = 0; i < entityProcessor.Count; i++)
+                {
+                    IEntityDataProcessor processor = entityProcessor[i];
+
+                    processor.OnCreated(entity);
+                    CoreSystem.AddForegroundJob(() =>
+                    {
+                        processor.OnCreatedSync(entity);
+                    });
+                }
+            }
             #endregion
 
             system.OnEntityCreated?.Invoke(entity);
@@ -466,22 +527,6 @@ namespace Syadeu.Presentation
             CoreSystem.Logger.Log(Channel.Entity,
                 $"Destroying entity({entity.Name})");
 
-            #region Entity
-            if (system.m_EntityProcessors.TryGetValue(entity.GetType(), out List<IEntityDataProcessor> entityProcessor))
-            {
-                for (int i = 0; i < entityProcessor.Count; i++)
-                {
-                    IEntityDataProcessor processor = entityProcessor[i];
-
-                    processor.OnDestory(entity);
-                    CoreSystem.AddForegroundJob(() =>
-                    {
-                        processor.OnDestorySync(entity);
-                    });
-                }
-            }
-            #endregion
-
             #region Attributes
             entity.Attributes.ForEach((other) =>
             {
@@ -508,6 +553,22 @@ namespace Syadeu.Presentation
                     }
                 }
             });
+            #endregion
+
+            #region Entity
+            if (system.m_EntityProcessors.TryGetValue(entity.GetType(), out List<IEntityDataProcessor> entityProcessor))
+            {
+                for (int i = 0; i < entityProcessor.Count; i++)
+                {
+                    IEntityDataProcessor processor = entityProcessor[i];
+
+                    processor.OnDestory(entity);
+                    CoreSystem.AddForegroundJob(() =>
+                    {
+                        processor.OnDestorySync(entity);
+                    });
+                }
+            }
             #endregion
 
             system.OnEntityDestroy?.Invoke(entity);

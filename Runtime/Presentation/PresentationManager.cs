@@ -78,6 +78,7 @@ namespace Syadeu.Presentation
 
                 for (int i = 0; i < m_Systems.Count; i++)
                 {
+                    $"{m_Systems[i].GetType().Name} dispose".ToLog();
                     m_Systems[i].Dispose();
                 }
                 m_Systems.Clear();
@@ -132,6 +133,7 @@ namespace Syadeu.Presentation
 
         public override void Dispose()
         {
+            "dispose pre".ToLog();
             foreach (var item in m_PresentationGroups)
             {
                 item.Value.Reset();

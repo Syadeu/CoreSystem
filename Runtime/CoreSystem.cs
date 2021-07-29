@@ -464,6 +464,17 @@ namespace Syadeu
         {
             s_BlockCreateInstance = true;
 
+            for (int i = 0; i < DataManagers.Count; i++)
+            {
+                try
+                {
+                    DataManagers[i].Dispose();
+                }
+                catch (Exception)
+                {
+                }
+            }
+
             try
             {
                 BackgroundThread.Abort();
@@ -483,17 +494,6 @@ namespace Syadeu
                 BackgroundJobWorkers[i].Worker.Dispose();
             }
             BackgroundJobWorkers.Clear();
-
-            for (int i = 0; i < DataManagers.Count; i++)
-            {
-                try
-                {
-                    DataManagers[i].Dispose();
-                }
-                catch (Exception)
-                {
-                }
-            }
         }
         protected override void OnDestroy()
         {
