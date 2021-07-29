@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Database;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Presentation.Entities
 {
     public sealed class ObjectEntity : EntityBase
     {

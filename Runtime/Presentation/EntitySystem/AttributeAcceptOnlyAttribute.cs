@@ -1,4 +1,6 @@
 ﻿using Syadeu.Internal;
+using Syadeu.Presentation.Attributes;
+using Syadeu.Presentation.Entities;
 using System;
 
 namespace Syadeu.Presentation
@@ -9,14 +11,14 @@ namespace Syadeu.Presentation
         public Type[] Types;
         public AttributeAcceptOnlyAttribute(params Type[] types)
         {
-            for (int i = 0; i < types.Length; i++)
-            {
-                if (!TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(types[i]))
-                {
-                    CoreSystem.Logger.LogError(Channel.Entity, $"Type({types[i].Name}) is not a entity type.");
-                    throw new Exception();
-                }
-            }
+            //for (int i = 0; i < types.Length; i++)
+            //{
+            //    if (!TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(types[i]))
+            //    {
+            //        CoreSystem.Logger.LogError(Channel.Entity, $"Type({types[i].Name}) is not a entity type.");
+            //        throw new Exception();
+            //    }
+            //}
             
             Types = types;
         }
@@ -29,14 +31,14 @@ namespace Syadeu.Presentation
 
         public EntityAcceptOnlyAttribute(params Type[] attributeTypes)
         {
-            for (int i = 0; i < attributeTypes.Length; i++)
-            {
-                if (!TypeHelper.TypeOf<AttributeBase>.Type.IsAssignableFrom(attributeTypes[i]))
-                {
-                    CoreSystem.Logger.LogError(Channel.Entity, $"Type({attributeTypes[i].Name}) is not a attribute type.");
-                    throw new Exception();
-                }
-            }
+            //for (int i = 0; i < attributeTypes.Length; i++)
+            //{
+            //    if (!TypeHelper.TypeOf<AttributeBase>.Type.IsAssignableFrom(attributeTypes[i]))
+            //    {
+            //        CoreSystem.Logger.LogError(Channel.Entity, $"Type({attributeTypes[i].Name}) is not a attribute type.");
+            //        throw new Exception();
+            //    }
+            //}
             
             AttributeTypes = attributeTypes;
         }

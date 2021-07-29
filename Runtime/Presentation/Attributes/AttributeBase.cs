@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Internal;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Presentation.Attributes
 {
     /// <inheritdoc cref="IAttribute"/>
     public abstract class AttributeBase : ObjectBase, IAttribute

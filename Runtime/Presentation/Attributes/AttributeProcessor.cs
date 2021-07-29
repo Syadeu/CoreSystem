@@ -1,10 +1,11 @@
 ﻿using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Mono;
+using Syadeu.Presentation.Entities;
 using System;
 using UnityEngine.Scripting;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Presentation.Attributes
 {
     /// <summary>
     /// <see cref="AttributeBase"/>의 동작부를 선언할 수 있습니다.

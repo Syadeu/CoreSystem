@@ -26,7 +26,7 @@ namespace Syadeu.Presentation
         /// </summary>
         [JsonProperty(Order = -19, PropertyName = "Hash")] [ReflectionSealedView] public Hash Hash { get; set; }
         /// <summary>
-        /// 이 오브젝트 엔티티의 고유 해쉬입니다.
+        /// 이 오브젝트 엔티티의 인스턴스 고유 해쉬입니다.
         /// </summary>
         [JsonIgnore] public Hash Idx { get; private set; }
 

@@ -1,4 +1,5 @@
 ﻿using Syadeu.Database;
+using Syadeu.Presentation.Entities;
 using Syadeu.ThreadSafe;
 using Unity.Mathematics;
 

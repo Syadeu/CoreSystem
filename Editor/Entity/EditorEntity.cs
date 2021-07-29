@@ -13,7 +13,7 @@ namespace SyadeuEditor
     {
         private const string DEFAULT_MATERIAL = "Sprites-Default.mat";
         private static Material s_Material;
-        private static Material DefaultMaterial
+        public static Material DefaultMaterial
         {
             get
             {

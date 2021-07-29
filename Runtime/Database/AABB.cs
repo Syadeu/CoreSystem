@@ -25,16 +25,148 @@ namespace Syadeu.Database
         }
 
 #pragma warning disable IDE1006 // Naming Styles
-        [JsonIgnore] public Vector3 center { get { return m_Center; } set { m_Center = value; } }
-        [JsonIgnore] public Vector3 size { get { return m_Extents * 2.0F; } set { m_Extents = value * 0.5F; } }
-        [JsonIgnore] public Vector3 extents { get { return m_Extents; } set { m_Extents = value; } }
-        [JsonIgnore] public Vector3 min { get { return center - extents; } set { SetMinMax(value, max); } }
-        [JsonIgnore] public Vector3 max { get { return center + extents; } set { SetMinMax(min, value); } }
+        [JsonIgnore] public float3 center { get => m_Center; set { m_Center = value; } }
+        [JsonIgnore] public float3 size { get => m_Extents * 2; set { m_Extents = value * 0.5F; } }
+        [JsonIgnore] public float3 extents { get => m_Extents; set { m_Extents = value; } }
+        [JsonIgnore] public float3 min { get => center - extents; set { SetMinMax(value, max); } }
+        [JsonIgnore] public float3 max { get => center + extents; set { SetMinMax(min, value); } }
 #pragma warning restore IDE1006 // Naming Styles
-        public void SetMinMax(Vector3 min, Vector3 max)
+        public void SetMinMax(float3 min, float3 max)
         {
-            extents = (max - min) * 0.5F;
+            extents = (max - min) * .5f;
             center = min + extents;
         }
+
+        public bool Intersect(Ray ray, out float distance, out float3 point)
+        {
+            point = new float3(float.MaxValue, float.MaxValue, float.MaxValue);
+            distance = float.MaxValue;
+
+            float3 
+                minPos = min,
+                maxPos = max;
+
+            float3x4[] squares = new float3x4[] {
+                new float3x4(
+                    minPos,
+                    new float3(minPos.x, minPos.y, maxPos.z),
+                    new float3(maxPos.x, minPos.y, maxPos.z),
+                    new float3(maxPos.x, minPos.y, minPos.z)
+                    ),
+                new float3x4(
+                    minPos,
+                    new float3(minPos.x, maxPos.y, minPos.z),
+                    new float3(maxPos.x, maxPos.y, minPos.z),
+                    new float3(maxPos.x, minPos.y, maxPos.z)
+                    ),
+                new float3x4(
+                    new float3(maxPos.x, minPos.y, minPos.z),
+                    new float3(maxPos.x, maxPos.y, minPos.z),
+                    new float3(maxPos.x, maxPos.y, maxPos.z),
+                    new float3(maxPos.x, minPos.y, maxPos.z)
+                    ),
+                new float3x4(
+                    new float3(maxPos.x, minPos.y, maxPos.z),
+                    new float3(maxPos.x, maxPos.y, maxPos.z),
+                    new float3(minPos.x, maxPos.y, maxPos.z),
+                    new float3(minPos.x, minPos.y, maxPos.z)
+                    ),
+                new float3x4(
+                    new float3(minPos.x, minPos.y, maxPos.z),
+                    new float3(minPos.x, maxPos.y, maxPos.z),
+                    new float3(minPos.x, maxPos.y, minPos.z),
+                    minPos
+                    ),
+                new float3x4(
+                    new float3(minPos.x, maxPos.y, minPos.z),
+                    new float3(minPos.x, maxPos.y, maxPos.z),
+                    new float3(maxPos.x, maxPos.y, maxPos.z),
+                    new float3(maxPos.x, maxPos.y, minPos.z)
+                    )
+            };
+
+            bool intersect = false;
+            for (int i = 0; i < squares.Length; i++)
+            {
+                if (IntersectQuad(squares[i].c0, squares[i].c1, squares[i].c2, squares[i].c3, ray, out float tempDistance))
+                {
+                    if (tempDistance < distance)
+                    {
+                        distance = tempDistance;
+                        point = ray.origin + (ray.direction * distance);
+                    }
+                    intersect = true;
+                }
+            }
+            return intersect;
+        }
+
+        private static bool IntersectQuad(float3 p1, float3 p2, float3 p3, float3 p4, Ray ray, out float distance)
+        {
+            if (IntersectTriangle(p1, p2, p4, ray, out distance)) return true;
+            else if (IntersectTriangle(p3, p4, p2, ray, out distance)) return true;
+            return false;
+        }
+        /// <summary>
+        /// Checks if the specified ray hits the triagnlge descibed by p1, p2 and p3.
+        /// Möller–Trumbore ray-triangle intersection algorithm implementation.
+        /// </summary>
+        /// <param name="p1">Vertex 1 of the triangle.</param>
+        /// <param name="p2">Vertex 2 of the triangle.</param>
+        /// <param name="p3">Vertex 3 of the triangle.</param>
+        /// <param name="ray">The ray to test hit for.</param>
+        /// <returns><c>true</c> when the ray hits the triangle, otherwise <c>false</c></returns>
+        private static bool IntersectTriangle(float3 p1, float3 p2, float3 p3, Ray ray, out float distance)
+        {
+            distance = 0;
+            // Vectors from p1 to p2/p3 (edges)
+            float3 e1, e2;
+
+            float3 p, q, t;
+            float det, invDet, u, v;
+
+            //Find vectors for two edges sharing vertex/point p1
+            e1 = p2 - p1;
+            e2 = p3 - p1;
+
+            // calculating determinant 
+            p = math.cross(ray.direction, e2);
+
+            //Calculate determinat
+            det = math.dot(e1, p);
+            
+            //if determinant is near zero, ray lies in plane of triangle otherwise not
+            if (det > -math.EPSILON && det < math.EPSILON) { return false; }
+            invDet = 1.0f / det;
+
+            //calculate distance from p1 to ray origin
+            t = ((float3)ray.origin) - p1;
+
+            //Calculate u parameter
+            u = Vector3.Dot(t, p) * invDet;
+
+            //Check for ray hit
+            if (u < 0 || u > 1) { return false; }
+
+            //Prepare to test v parameter
+            q = math.cross(t, e1);
+
+            //Calculate v parameter
+            v = math.dot(ray.direction, q) * invDet;
+
+            //Check for ray hit
+            if (v < 0 || u + v > 1) { return false; }
+
+            distance = (math.dot(e2, q) * invDet);
+            if (distance > math.EPSILON)
+            {
+                //ray does intersect
+                return true;
+            }
+
+            // No hit at all
+            return false;
+        }
+
     }
 }

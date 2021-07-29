@@ -1,8 +1,9 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Database.Lua;
+using Syadeu.Presentation.Entities;
 using UnityEngine.Scripting;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Presentation.Attributes
 {
     [AttributeAcceptOnly(typeof(EntityBase))]
     public sealed class LuaFunctionAttribute : AttributeBase

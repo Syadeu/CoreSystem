@@ -3,6 +3,15 @@
     public struct CoreRoutine : Database.IValidation, System.IEquatable<CoreRoutine>, ICustomYieldAwaiter
     {
         private System.Guid m_Guid;
+        public enum RoutineType
+        {
+            None,
+
+            Foreground = 1 << 0,
+            Background = 1 << 1,
+            
+            Render = Foreground | 1 << 2,
+        }
 
         /// <summary>
         /// 에디터에서 실행되는 루틴인가요?

@@ -3,6 +3,7 @@ using Syadeu.Database;
 using Syadeu.Database.Lua;
 using Syadeu.Internal;
 using Syadeu.Mono;
+using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using System;
 using System.Collections.Generic;
@@ -24,6 +25,9 @@ namespace Syadeu.Presentation
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
+
+        public event Action<IObject> OnEntityCreated;
+        public event Action<IObject> OnEntityDestroy;
 
         private readonly HashSet<Hash> m_ObjectHashSet = new HashSet<Hash>();
         private readonly Dictionary<Hash, IObject> m_ObjectEntities = new Dictionary<Hash, IObject>();
@@ -371,6 +375,9 @@ namespace Syadeu.Presentation
         #region Processor
         private static void ProcessEntityOnCreated(EntitySystem system, IObject entity)
         {
+            CoreSystem.Logger.Log(Channel.Entity,
+                $"Create entity({entity.Name})");
+
             #region Entity
             if (system.m_EntityProcessors.TryGetValue(entity.GetType(), out List<IEntityDataProcessor> entityProcessor))
             {
@@ -415,6 +422,8 @@ namespace Syadeu.Presentation
                 }
             });
             #endregion
+
+            system.OnEntityCreated?.Invoke(entity);
         }
         private static void ProcessEntityOnPresentation(EntitySystem system, IObject entity)
         {
@@ -500,6 +509,8 @@ namespace Syadeu.Presentation
                 }
             });
             #endregion
+
+            system.OnEntityDestroy?.Invoke(entity);
         }
 
         private static void ProcessEntityOnProxyCreated(EntitySystem system, IEntity entity, RecycleableMonobehaviour monoObj)

@@ -1,13 +1,9 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Database;
-using Syadeu.Internal;
-using Syadeu.Mono;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using Syadeu.Presentation.Attributes;
 using Unity.Mathematics;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Presentation.Entities
 {
     /// <summary><inheritdoc cref="IEntity"/></summary>
     /// <remarks>

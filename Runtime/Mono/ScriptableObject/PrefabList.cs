@@ -13,7 +13,7 @@ namespace Syadeu.Mono
         public sealed class ObjectSetting
         {
             public string m_Name;
-            public AssetReferenceGameObject m_RefPrefab;
+            public AssetReference m_RefPrefab;
 
             public Queue<GameObject> Pool { get; } = new Queue<GameObject>();
 

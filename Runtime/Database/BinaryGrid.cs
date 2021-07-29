@@ -8,6 +8,10 @@ using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
 namespace Syadeu.Database
 {
     [StructLayout(LayoutKind.Sequential)]
@@ -22,6 +26,7 @@ namespace Syadeu.Database
         public int2 gridSize => new int2(
             (int)math.floor(m_AABB.size.x / m_CellSize),
             (int)math.floor(m_AABB.size.z / m_CellSize));
+        public float cellSize => m_CellSize;
 
         public BinaryGrid(int3 center, int3 size, float cellSize)
         {
@@ -52,6 +57,14 @@ namespace Syadeu.Database
         {
             if (!HasCell(position)) throw new Exception();
             return GridExtensions.PositionToAABB(in m_AABB, in m_CellSize, in position);
+        }
+
+        public float3 GetCellPosition(int idx) => GridExtensions.IndexToPosition(in m_AABB, in m_CellSize, in idx);
+        public float3 GetCellPosition(int2 location) => GridExtensions.LocationToPosition(in m_AABB, in m_CellSize, in location);
+        public float3 GetCellPosition(float3 position)
+        {
+            int2 idx = GridExtensions.PositionToLocation(in m_AABB, in m_CellSize, in position);
+            return GridExtensions.LocationToPosition(in m_AABB, in m_CellSize, in idx);
         }
 
         #endregion
@@ -99,6 +112,23 @@ namespace Syadeu.Database
     }
     public static class GridExtensions
     {
+        private const string DEFAULT_MATERIAL = "Sprites-Default.mat";
+        private static Material s_Material;
+        public static Material DefaultMaterial
+        {
+            get
+            {
+                if (s_Material == null)
+                {
+#if UNITY_EDITOR
+                    s_Material = AssetDatabase.GetBuiltinExtraResource<Material>(DEFAULT_MATERIAL);
+                    if (s_Material == null)
+#endif
+                        s_Material = Resources.GetBuiltinResource<Material>(DEFAULT_MATERIAL);
+                }
+                return s_Material;
+            }
+        }
         private static readonly Dictionary<Hash, object> m_GridData = new Dictionary<Hash, object>();
 
         private struct Payload<T> where T : unmanaged
@@ -274,8 +304,8 @@ namespace Syadeu.Database
         {
             float
                 half = cellSize * .5f,
-                firstCenterX = aabb.min.x + half + (cellSize * 1),
-                firstCenterZ = aabb.max.z - half - (cellSize * 1);
+                firstCenterX = aabb.min.x + half/* + (cellSize * 1)*/,
+                firstCenterZ = aabb.max.z - half /*- (cellSize * 1)*/;
 
             int
                 x = math.abs(Convert.ToInt32((pos.x - firstCenterX) / cellSize)),
@@ -306,10 +336,14 @@ namespace Syadeu.Database
         }
         public static int2 IndexToLocation(in AABB aabb, in float cellSize, in int idx)
         {
+            if (idx == 0) return new int2(0, 0);
+
             int zSize = (int)math.floor(aabb.size.z / cellSize);
 
-            if (idx == 0) return new int2(0, 0);
-            else return new int2(zSize % idx, zSize / idx);
+            int y = idx / zSize;
+            int x = idx - (zSize * y);
+
+            return new int2(x, y);
         }
         public static float3 IndexToPosition(in AABB aabb, in float cellSize, in int idx)
         {
@@ -329,6 +363,101 @@ namespace Syadeu.Database
         }
         public static int AABBToIndex(in AABB aabb, in AABB cellAabb) => PositionToIndex(in aabb, cellAabb.size.x, cellAabb.center);
         public static int2 AABBToLocation(in AABB aabb, in AABB cellAabb) => PositionToLocation(in aabb, cellAabb.size.x, cellAabb.center);
+
+        #endregion
+
+        #region GL
+
+        public static void DrawGL<T>(this BinaryGrid<T> grid) where T : unmanaged
+        {
+            int2 gridSize = grid.gridSize;
+
+            Vector3 minPos = grid.GetCellPosition(0);
+            minPos.x -= grid.cellSize * .5f;
+            minPos.z += grid.cellSize * .5f;
+
+            Vector3 maxPos = grid.GetCellPosition(gridSize);
+            maxPos.x -= grid.cellSize * .5f;
+            maxPos.z += grid.cellSize * .5f;
+
+            GL.PushMatrix();
+            DefaultMaterial.SetPass(0);
+            GL.Begin(GL.LINES);
+            for (int y = 0; y < gridSize.y + 1; y++)
+            {
+                for (int x = 0; x < gridSize.x + 1; x++)
+                {
+                    Vector3
+                        p1 = new Vector3(
+                            minPos.x,
+                            minPos.y,
+                            minPos.z - (grid.cellSize * y)),
+                        p2 = new Vector3(
+                            maxPos.x,
+                            minPos.y,
+                            minPos.z - (grid.cellSize * y)),
+                        p3 = new Vector3(
+                            minPos.x + (grid.cellSize * x),
+                            minPos.y,
+                            minPos.z),
+                        p4 = new Vector3(
+                            minPos.x + (grid.cellSize * x),
+                            minPos.y,
+                            maxPos.z)
+                        ;
+
+                    GL.Vertex(p1); GL.Vertex(p2);
+                    GL.Vertex(p3); GL.Vertex(p4);
+                }
+            }
+            GL.End();
+            GL.PopMatrix();
+        }
+        public static void DrawGL(this ManagedGrid grid)
+        {
+            int2 gridSize = grid.gridSize;
+
+            Vector3 minPos = grid.GetCellPosition(0);
+            minPos.x -= grid.cellSize * .5f;
+            minPos.z += grid.cellSize * .5f;
+
+            Vector3 maxPos = grid.GetCellPosition(gridSize);
+            maxPos.x -= grid.cellSize * .5f;
+            maxPos.z += grid.cellSize * .5f;
+
+            GL.PushMatrix();
+            DefaultMaterial.SetPass(0);
+            GL.Begin(GL.LINES);
+            for (int y = 0; y < gridSize.y + 1; y++)
+            {
+                for (int x = 0; x < gridSize.x + 1; x++)
+                {
+                    Vector3
+                        p1 = new Vector3(
+                            minPos.x,
+                            minPos.y,
+                            minPos.z - (grid.cellSize * y)),
+                        p2 = new Vector3(
+                            maxPos.x,
+                            minPos.y,
+                            minPos.z - (grid.cellSize * y)),
+                        p3 = new Vector3(
+                            minPos.x + (grid.cellSize * x),
+                            minPos.y,
+                            minPos.z),
+                        p4 = new Vector3(
+                            minPos.x + (grid.cellSize * x),
+                            minPos.y,
+                            maxPos.z)
+                        ;
+
+                    GL.Vertex(p1); GL.Vertex(p2);
+                    GL.Vertex(p3); GL.Vertex(p4);
+                }
+            }
+            GL.End();
+            GL.PopMatrix();
+        }
 
         #endregion
     }
@@ -369,6 +498,7 @@ namespace Syadeu.Database
         [JsonIgnore] public float3 center => m_AABB.center;
         [JsonIgnore] public float3 size => m_AABB.size;
         [JsonIgnore] public ManagedCell[] cells => m_Cells.Values.ToArray();
+        [JsonIgnore] public AABB bounds => m_AABB;
 
         public ManagedGrid(int3 center, int3 size, float cellSize)
         {
@@ -426,6 +556,17 @@ namespace Syadeu.Database
                 m_Cells.Add(idx, cell);
             }
             return cell;
+        }
+
+        public int GetCellIndex(float3 position) => GridExtensions.PositionToIndex(in m_AABB, in m_CellSize, in position);
+        public int2 GetCellLocation(float3 position) => GridExtensions.PositionToLocation(in m_AABB, in m_CellSize, in position);
+
+        public float3 GetCellPosition(int idx) => GridExtensions.IndexToPosition(in m_AABB, in m_CellSize, in idx);
+        public float3 GetCellPosition(int2 location) => GridExtensions.LocationToPosition(in m_AABB, in m_CellSize, in location);
+        public float3 GetCellPosition(float3 position)
+        {
+            int2 idx = GridExtensions.PositionToLocation(in m_AABB, in m_CellSize, in position);
+            return GridExtensions.LocationToPosition(in m_AABB, in m_CellSize, in idx);
         }
 
         #endregion

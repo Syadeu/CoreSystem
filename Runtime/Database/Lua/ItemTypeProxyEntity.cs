@@ -1,4 +1,5 @@
 ﻿using Syadeu.Presentation;
+using Syadeu.Presentation.Attributes;
 
 namespace Syadeu.Database.Lua
 {

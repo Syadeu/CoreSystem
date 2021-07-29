@@ -2,7 +2,7 @@
 using System;
 using UnityEngine.Scripting;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Presentation.Entities
 {
     [Preserve]
     public abstract class EntityDataProcessor : ProcessorBase, IEntityDataProcessor

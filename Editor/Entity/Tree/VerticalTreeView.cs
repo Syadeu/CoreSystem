@@ -63,68 +63,59 @@ namespace SyadeuEditor.Tree
 
         public virtual void OnGUI()
         {
-            const string miniBtt = "miniButton";
-            const string box = "Box";
             const string notFound = "Not Found";
 
-            EditorGUILayout.BeginVertical(box, GUILayout.ExpandWidth(false));
-
-            EditorUtils.Line();
-            BeforeDraw();
-            DrawToolbar();
-            DrawSearchField();
-
-            EditorGUILayout.BeginHorizontal();
-            if (m_DrawAddButton && GUILayout.Button("+", miniBtt))
+            using (new EditorUtils.BoxBlock(Color.white))
             {
-                m_Data = OnAddButton?.Invoke();
-                SetupElements(m_Data, m_DataSetup);
-                if (Asset != null) EditorUtility.SetDirty(Asset);
+                EditorUtils.Line();
+                BeforeDraw();
+                DrawToolbar();
+                DrawSearchField();
+
+                EditorGUILayout.BeginHorizontal(GUILayout.ExpandWidth(true));
+                if (m_DrawAddButton && GUILayout.Button("+", EditorUtils.MiniButton))
+                {
+                    m_Data = OnAddButton?.Invoke();
+                    SetupElements(m_Data, m_DataSetup);
+                    if (Asset != null) EditorUtility.SetDirty(Asset);
+                }
+                if (m_DrawRemoveButton && GUILayout.Button("-", EditorUtils.MiniButton))
+                {
+                    m_Data = OnRemoveButton?.Invoke(m_Elements[m_Data.Count - 1]);
+                    SetupElements(m_Data, m_DataSetup);
+                    if (Asset != null) EditorUtility.SetDirty(Asset);
+                }
+                EditorGUILayout.EndHorizontal();
+                EditorUtils.Line();
+
+                Color color1 = Color.black, color2 = Color.gray;
+                color1.a = .5f; color2.a = .3f;
+
+                m_CurrentDrawChilds = 0;
+                BeforeDrawChilds();
+
+                Color nextColor = color1;
+                for (int i = 0; i < m_Elements.Count; i++)
+                {
+                    if (m_Elements[i].HideElementInTree) continue;
+
+                    using (new EditorUtils.BoxBlock(nextColor))
+                    {
+                        DrawChild(m_Elements[i]);
+                    }
+                    if (m_Elements.Count <= i) continue;
+
+                    m_CurrentDrawChilds += 1;
+                    if (nextColor == color1) nextColor = color2;
+                    else nextColor = color1;
+
+                    if (m_Elements[i].m_Opened && i + 1 < m_Elements.Count) EditorUtils.Line();
+                }
+
+                if (m_CurrentDrawChilds == 0) EditorUtils.StringRich(notFound, true);
+                AfterDraw();
+                EditorUtils.Line();
             }
-            if (m_DrawRemoveButton && GUILayout.Button("-", miniBtt))
-            {
-                m_Data = OnRemoveButton?.Invoke(m_Elements[m_Data.Count - 1]);
-                SetupElements(m_Data, m_DataSetup);
-                if (Asset != null) EditorUtility.SetDirty(Asset);
-            }
-            EditorGUILayout.EndHorizontal();
-            EditorUtils.Line();
-
-            Color originColor = GUI.backgroundColor;
-            Color color1 = Color.black, color2 = Color.gray;
-            color1.a = .5f; color2.a = .3f;
-
-            m_CurrentDrawChilds = 0;
-            BeforeDrawChilds();
-
-            Color beforeColor;
-            GUI.backgroundColor = color1;
-            for (int i = 0; i < m_Elements.Count; i++)
-            {
-                if (m_Elements[i].HideElementInTree) continue;
-
-                EditorGUILayout.BeginVertical(box);
-
-                beforeColor = GUI.backgroundColor;
-                GUI.backgroundColor = originColor;
-                DrawChild(m_Elements[i]);
-                GUI.backgroundColor = beforeColor;
-
-                EditorGUILayout.EndVertical();
-                if (m_Elements.Count <= i) continue;
-
-                m_CurrentDrawChilds += 1;
-                if (beforeColor == color1) GUI.backgroundColor = color2;
-                else GUI.backgroundColor = color1;
-
-                if (m_Elements[i].m_Opened && i + 1 < m_Elements.Count) EditorUtils.Line();
-            }
-            GUI.backgroundColor = originColor;
-            if (m_CurrentDrawChilds == 0) EditorUtils.StringRich(notFound, true);
-            AfterDraw();
-            EditorUtils.Line();
-
-            EditorGUILayout.EndVertical();
         }
 
         internal override void RemoveButtonClicked(VerticalTreeElement e)

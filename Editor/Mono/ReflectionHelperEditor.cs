@@ -17,11 +17,26 @@ using Syadeu.Mono;
 using Syadeu.Presentation;
 using Unity.Mathematics;
 using Syadeu;
+using Syadeu.Presentation.Attributes;
+using Syadeu.Presentation.Entities;
 
 namespace SyadeuEditor
 {
     public sealed class ReflectionHelperEditor
     {
+        static ReflectionHelperEditor s_Instance;
+        static ReflectionHelperEditor Instance
+        {
+            get
+            {
+                if (s_Instance == null) s_Instance = new ReflectionHelperEditor();
+                return s_Instance;
+            }
+        }
+
+        readonly Dictionary<object, Drawer> m_CachedDrawer = new Dictionary<object, Drawer>();
+        readonly Dictionary<object, AttributeListDrawer> m_CachedAttributeListDrawer = new Dictionary<object, AttributeListDrawer>();
+
         static GUIStyle m_SelectorStyle = null;
         static GUIStyle SelectorStyle
         {
@@ -42,7 +57,11 @@ namespace SyadeuEditor
             }
         }
 
-        public sealed class Drawer
+        public abstract class DrawerBase
+        {
+
+        }
+        public sealed class Drawer : DrawerBase
         {
             const string c_EntityObsoleteWarning = "This type has been marked as deprecated.";
 
@@ -79,7 +98,199 @@ namespace SyadeuEditor
                 return DrawObject(m_Instance, m_Ignores);
             }
         }
-        public static Drawer GetDrawer(object ins, params string[] ignore) => new Drawer(ins, ignore);
+        public sealed class AttributeListDrawer : DrawerBase
+        {
+            Color m_Color = Color.black;
+
+            public string m_Name;
+            Type m_EntityType;
+            Type m_ListType;
+            readonly List<Hash> m_CurrentList;
+            bool[] m_OpenAttributes;
+
+            Drawer[] m_AttributeDrawers;
+
+            public AttributeListDrawer(string name, Type entityType, List<Hash> list)
+            {
+                m_Name = name;
+                m_EntityType = entityType;
+                m_ListType = list.GetType();
+                m_CurrentList = list;
+
+                OnListChange();
+            }
+            private void OnListChange()
+            {
+                if (m_CurrentList.Count > 0)
+                {
+                    m_OpenAttributes = new bool[m_CurrentList.Count];
+                    m_AttributeDrawers = new Drawer[m_CurrentList.Count];
+                }
+                else
+                {
+                    m_OpenAttributes = Array.Empty<bool>();
+                    m_AttributeDrawers = Array.Empty<Drawer>();
+                }
+                
+                for (int i = 0; i < m_AttributeDrawers.Length; i++)
+                {
+                    AttributeBase targetAtt = (AttributeBase)EntityDataList.Instance.GetObject(m_CurrentList[i]);
+                    if (targetAtt == null) continue;
+
+                    m_AttributeDrawers[i] = GetDrawer(targetAtt);
+                }
+            }
+
+            public IList<Hash> OnGUI()
+            {
+                if (string.IsNullOrEmpty(m_Name)) m_Name = "Attributes";
+
+                EditorGUILayout.BeginHorizontal();
+                EditorUtils.StringRich(m_Name, 15);
+                if (GUILayout.Button("+", GUILayout.Width(20)))
+                {
+                    m_CurrentList.Add(Hash.Empty);
+
+                    OnListChange();
+                }
+                if (m_CurrentList.Count > 0 && GUILayout.Button("-", GUILayout.Width(20)))
+                {
+                    m_CurrentList.RemoveAt(m_CurrentList.Count - 1);
+
+                    OnListChange();
+                }
+                EditorGUILayout.EndHorizontal();
+
+                //EditorGUI.indentLevel += 1;
+
+                using (new EditorUtils.BoxBlock(m_Color))
+                {
+                    DrawList();
+                }
+
+                //EditorGUI.indentLevel -= 1;
+
+                return m_CurrentList;
+            }
+            private void DrawList()
+            {
+                for (int i = 0; i < m_CurrentList.Count; i++)
+                {
+                    EditorGUILayout.BeginHorizontal();
+
+                    int idx = i;
+                    EditorGUI.BeginChangeCheck();
+                    idx = EditorGUILayout.DelayedIntField(idx, GUILayout.Width(40));
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        if (idx >= m_CurrentList.Count) idx = m_CurrentList.Count - 1;
+
+                        Hash cache = m_CurrentList[i];
+                        m_CurrentList.RemoveAt(i);
+                        m_CurrentList.Insert(idx, cache);
+
+                        OnListChange();
+                    }
+
+                    DrawAttributeSelector(null, (attHash) => m_CurrentList[i] = attHash, m_CurrentList[i], m_EntityType);
+
+                    if (GUILayout.Button("-", GUILayout.Width(20)))
+                    {
+                        if (m_CurrentList.Count == 1)
+                        {
+                            m_CurrentList.Clear();
+                            OnListChange();
+
+                            EditorGUILayout.EndHorizontal();
+                            break;
+                        }
+
+                        m_CurrentList.RemoveAt(i);
+                        OnListChange();
+
+                        if (i != 0) i--;
+                    }
+
+                    m_OpenAttributes[i] = GUILayout.Toggle(m_OpenAttributes[i],
+                        m_OpenAttributes[i] ? EditorUtils.FoldoutOpendString : EditorUtils.FoldoutClosedString
+                        , EditorUtils.MiniButton, GUILayout.Width(20));
+
+                    if (GUILayout.Button("C", GUILayout.Width(20)))
+                    {
+                        AttributeBase cloneAtt = (AttributeBase)EntityDataList.Instance.GetObject(m_CurrentList[i]).Clone();
+
+                        cloneAtt.Hash = Hash.NewHash();
+                        cloneAtt.Name += "_Clone";
+                        EntityDataList.Instance.m_Objects.Add(cloneAtt.Hash, cloneAtt);
+
+                        m_CurrentList[i] = cloneAtt.Hash;
+                        OnListChange();
+                    }
+
+                    EditorGUILayout.EndHorizontal();
+
+                    if (m_OpenAttributes[i])
+                    {
+                        Color color3 = Color.red;
+                        color3.a = .7f;
+
+                        //EditorGUI.indentLevel += 1;
+
+                        using (new EditorUtils.BoxBlock(color3))
+                        {
+                            if (m_AttributeDrawers[i] == null)
+                            {
+                                EditorGUILayout.HelpBox(
+                                    "This attribute is invalid.",
+                                    MessageType.Error);
+                            }
+                            else
+                            {
+                                EditorGUILayout.HelpBox(
+                                    "This is shared attribute. Anything made changes in this inspector view will affect to original attribute directly not only as this entity.",
+                                    MessageType.Info);
+
+                                SetAttribute(m_CurrentList[i], m_AttributeDrawers[i].OnGUI());
+                            }
+                        }
+
+                        //EditorGUI.indentLevel -= 1;
+                    }
+
+                    if (m_OpenAttributes[i]) EditorUtils.Line();
+                }
+            }
+            private static void SetAttribute(Hash attHash, object att)
+            {
+                if (attHash.Equals(Hash.Empty)) return;
+                if (EntityDataList.Instance.m_Objects.ContainsKey(attHash))
+                {
+                    EntityDataList.Instance.m_Objects[attHash] = (AttributeBase)att;
+                }
+                else EntityDataList.Instance.m_Objects.Add(attHash, (AttributeBase)att);
+            }
+        }
+
+        public static Drawer GetDrawer(object ins, params string[] ignore)
+        {
+            if (!Instance.m_CachedDrawer.TryGetValue(ins, out Drawer drawer))
+            {
+                drawer = new Drawer(ins, ignore);
+                Instance.m_CachedDrawer.Add(ins, drawer);
+            }
+
+            return drawer;
+        }
+        public static AttributeListDrawer GetAttributeDrawer(Type fromEntity, List<Hash> list)
+        {
+            if (!Instance.m_CachedAttributeListDrawer.TryGetValue(list, out var drawer))
+            {
+                drawer = new AttributeListDrawer(string.Empty, fromEntity, list);
+                Instance.m_CachedAttributeListDrawer.Add(list, drawer);
+            }
+            return drawer;
+        }
+
         public static void DrawAssetReference(string name, Action<AssetReference> setter, AssetReference refAsset)
         {
             //float iconHeight = EditorGUIUtility.singleLineHeight - EditorGUIUtility.standardVerticalSpacing * 3;
@@ -281,6 +492,134 @@ namespace SyadeuEditor
 
             GUILayout.EndHorizontal();
         }
+        
+        public static IList DrawList(string name, IList list)
+        {
+            Type declaredType = list.GetType();
+
+            Color color1 = Color.black, color2 = Color.gray, color3 = Color.green;
+            color1.a = .5f; color2.a = .5f; color3.a = .5f;
+            Color originColor = GUI.backgroundColor;
+            int prevIndent = EditorGUI.indentLevel;
+
+            using (new EditorUtils.BoxBlock(color3))
+            {
+                #region Header
+                EditorGUILayout.BeginHorizontal();
+                if (!string.IsNullOrEmpty(name)) EditorUtils.StringRich(name, 13);
+                if (GUILayout.Button("+", GUILayout.Width(20)))
+                {
+                    if (list.IsFixedSize)
+                    {
+                        Array newArr = Array.CreateInstance(declaredType.GetElementType(), list != null ? list.Count + 1 : 1);
+                        if (list != null && list.Count > 0) Array.Copy((Array)list, newArr, list.Count);
+                        list = newArr;
+                    }
+                    else
+                    {
+                        list.Add(Activator.CreateInstance(declaredType.GetGenericArguments()[0]));
+                    }
+                }
+                if (list?.Count > 0 && GUILayout.Button("-", GUILayout.Width(20)))
+                {
+                    if (list.IsFixedSize)
+                    {
+                        Array newArr = Array.CreateInstance(declaredType.GetElementType(), list.Count - 1);
+                        if (list != null && list.Count > 0) Array.Copy((Array)list, newArr, newArr.Length);
+                        list = newArr;
+                    }
+                    else
+                    {
+                        list.RemoveAt(list.Count - 1);
+                    }
+                }
+                EditorGUILayout.EndHorizontal();
+                #endregion
+
+                if (list != null)
+                {
+                    Type elementType = declaredType.GetElementType();
+                    MemberInfo[] insider = ReflectionHelper.GetSerializeMemberInfos(elementType);
+
+                    for (int j = 0; j < list.Count; j++)
+                    {
+                        EditorGUI.indentLevel++;
+
+                        GUILayout.BeginHorizontal(EditorUtils.Box);
+                        using (new EditorUtils.BoxBlock(j % 2 == 0 ? color1 : color2))
+                        {
+                            if (list[j] == null) list[j] = Activator.CreateInstance(elementType);
+
+                            #region CoreSystem Types
+                            if (TypeHelper.TypeOf<IReference>.Type.IsAssignableFrom(elementType))
+                            {
+                                IReference objRef = (IReference)list[j];
+                                Type targetType;
+                                Type[] generics = elementType.GetGenericArguments();
+                                if (generics.Length > 0) targetType = elementType.GetGenericArguments()[0];
+                                else targetType = null;
+
+                                DrawReferenceSelector(string.Empty, (idx) =>
+                                {
+                                    ObjectBase objBase = EntityDataList.Instance.GetObject(idx);
+
+                                    Type makedT;
+                                    if (targetType != null) makedT = typeof(Reference<>).MakeGenericType(targetType);
+                                    else makedT = TypeHelper.TypeOf<Reference>.Type;
+
+                                    object temp = TypeHelper.GetConstructorInfo(makedT, TypeHelper.TypeOf<ObjectBase>.Type).Invoke(
+                                        new object[] { objBase });
+
+                                    list[j] = temp;
+                                }, objRef, targetType);
+                            }
+                            else if (elementType.Equals(TypeHelper.TypeOf<LuaScript>.Type))
+                            {
+                                LuaScript scr = (LuaScript)list[j];
+                                if (scr == null)
+                                {
+                                    scr = string.Empty;
+                                    list[j] = scr;
+                                }
+                                scr.DrawFunctionSelector(string.Empty);
+                            }
+                            #endregion
+                            else
+                                list[j] = DrawObject(list[j]);
+                        }
+                        if (GUILayout.Button("-", GUILayout.Width(20)))
+                        {
+                            if (list.IsFixedSize)
+                            {
+                                IList newArr = Array.CreateInstance(declaredType.GetElementType(), list.Count - 1);
+                                if (list != null && list.Count > 0)
+                                {
+                                    for (int a = 0, b = 0; a < list.Count; a++)
+                                    {
+                                        if (a.Equals(j)) continue;
+
+                                        newArr[b] = list[a];
+
+                                        b++;
+                                    }
+                                }
+                                list = newArr;
+                            }
+                            else list.RemoveAt(j);
+
+                            j--;
+                        }
+                        GUILayout.EndHorizontal();
+
+                        if (j + 1 < list.Count) EditorUtils.Line();
+                        EditorGUI.indentLevel--;
+                    }
+                }
+            }
+
+            return list;
+        }
+
         public static object DrawObject(object obj, params string[] ignores)
         {
             Type objType = obj.GetType();
@@ -297,12 +636,14 @@ namespace SyadeuEditor
                 if (members[i] is FieldInfo field)
                 {
                     declaredType = field.FieldType;
+
                     setter = field.SetValue;
                     getter = field.GetValue;
                 }
                 else if (members[i] is PropertyInfo property)
                 {
                     declaredType = property.PropertyType;
+
                     setter = property.SetValue;
                     getter = property.GetValue;
                 }
@@ -333,119 +674,10 @@ namespace SyadeuEditor
                 }
                 else if (declaredType.IsArray)
                 {
-                    Color color1 = Color.black, color2 = Color.gray, color3 = Color.green;
-                    color1.a = .5f; color2.a = .5f; color3.a = .5f;
-                    Color originColor = GUI.backgroundColor;
-                    int prevIndent = EditorGUI.indentLevel;
+                    IList list = (IList)getter.Invoke(obj);
+                    if (list == null) list = Array.CreateInstance(declaredType.GetElementType(), 0);
 
-                    using (new EditorUtils.BoxBlock(color3))
-                    {
-                        IList list = (IList)getter.Invoke(obj);
-                        #region Header
-                        EditorGUILayout.BeginHorizontal();
-                        EditorUtils.StringRich(name, 13);
-                        if (GUILayout.Button("+", GUILayout.Width(20)))
-                        {
-                            Array newArr = Array.CreateInstance(declaredType.GetElementType(), list != null ? list.Count + 1 : 1);
-                            if (list != null && list.Count > 0) Array.Copy((Array)list, newArr, list.Count);
-
-                            setter.Invoke(obj, newArr);
-                            list = newArr;
-                        }
-                        if (list?.Count > 0 && GUILayout.Button("-", GUILayout.Width(20)))
-                        {
-                            Array newArr = Array.CreateInstance(declaredType.GetElementType(), list.Count - 1);
-                            if (list != null && list.Count > 0) Array.Copy((Array)list, newArr, newArr.Length);
-
-                            setter.Invoke(obj, newArr);
-                            list = newArr;
-                        }
-                        EditorGUILayout.EndHorizontal();
-                        #endregion
-                        if (list != null)
-                        {
-                            Type elementType = declaredType.GetElementType();
-                            MemberInfo[] insider = ReflectionHelper.GetSerializeMemberInfos(elementType);
-                            
-                            for (int j = 0; j < list.Count; j++)
-                            {
-                                EditorGUI.indentLevel++;
-
-                                GUILayout.BeginHorizontal(EditorUtils.Box);
-                                using (new EditorUtils.BoxBlock(j % 2 == 0 ? color1 : color2))
-                                {
-                                    if (list[j] == null) list[j] = Activator.CreateInstance(elementType);
-
-                                    #region CoreSystem Types
-                                    if (TypeHelper.TypeOf<IReference>.Type.IsAssignableFrom(elementType))
-                                    {
-                                        IReference objRef = (IReference)list[j];
-                                        Type targetType;
-                                        Type[] generics = elementType.GetGenericArguments();
-                                        if (generics.Length > 0) targetType = elementType.GetGenericArguments()[0];
-                                        else targetType = null;
-
-                                        DrawReferenceSelector(string.Empty, (idx) =>
-                                        {
-                                            ObjectBase objBase = EntityDataList.Instance.GetObject(idx);
-
-                                            Type makedT;
-                                            if (targetType != null) makedT = typeof(Reference<>).MakeGenericType(targetType);
-                                            else makedT = TypeHelper.TypeOf<Reference>.Type;
-
-                                            object temp = TypeHelper.GetConstructorInfo(makedT, TypeHelper.TypeOf<ObjectBase>.Type).Invoke(
-                                                new object[] { objBase });
-
-                                            list[j] = temp;
-                                        }, objRef, targetType);
-                                    }
-                                    else if (elementType.Equals(TypeHelper.TypeOf<LuaScript>.Type))
-                                    {
-                                        LuaScript scr = (LuaScript)list[j];
-                                        if (scr == null)
-                                        {
-                                            scr = string.Empty;
-                                            list[j] = scr;
-                                        }
-                                        scr.DrawFunctionSelector(string.Empty);
-                                    }
-                                    #endregion
-                                    else list[j] = DrawObject(list[j]);
-                                }
-                                if (GUILayout.Button("-", GUILayout.Width(20)))
-                                {
-                                    if (list.IsFixedSize)
-                                    {
-                                        IList newArr = Array.CreateInstance(declaredType.GetElementType(), list.Count - 1);
-                                        if (list != null && list.Count > 0)
-                                        {
-                                            for (int a = 0, b = 0; a < list.Count; a++)
-                                            {
-                                                if (a.Equals(j)) continue;
-
-                                                newArr[b] = list[a];
-
-                                                b++;
-                                            }
-                                        }
-
-                                        setter.Invoke(obj, newArr);
-                                        list = newArr;
-                                    }
-                                    else
-                                    {
-                                        list.RemoveAt(j);
-                                    }
-
-                                    j--;
-                                }
-                                GUILayout.EndHorizontal();
-
-                                if (j + 1 < list.Count) EditorUtils.Line();
-                                EditorGUI.indentLevel--;
-                            }
-                        }
-                    }
+                    setter.Invoke(obj, DrawList(name, list));
                 }
                 #region Unity Types
                 else if (DrawUnityField(obj, declaredType, name, getter, out value))

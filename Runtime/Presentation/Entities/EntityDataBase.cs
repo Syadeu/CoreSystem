@@ -1,11 +1,12 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Database;
 using Syadeu.Internal;
+using Syadeu.Presentation.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Presentation.Entities
 {
     /// <summary>
     /// <see cref="EntitySystem"/>에서 엔티티 구조의 제일 하단 abstract 입니다.
@@ -36,6 +37,33 @@ namespace Syadeu.Presentation
         }
         T IObject.GetAttribute<T>() => (T)((IObject)this).GetAttribute(TypeHelper.TypeOf<T>.Type);
         T[] IObject.GetAttributes<T>() => ((IObject)this).GetAttributes(TypeHelper.TypeOf<T>.Type).Select((other) => (T)other).ToArray();
+
+        public T GetAttribute<T>() where T : AttributeBase
+        {
+            T output = null;
+#if UNITY_EDITOR
+            if (!UnityEngine.Application.isPlaying)
+            {
+                for (int i = 0; i < Attributes.Count; i++)
+                {
+                    AttributeBase att = (AttributeBase)EntityDataList.Instance.GetObject(Attributes[i]);
+                    if (att == null) continue;
+
+                    if (att is T t)
+                    {
+                        output = t;
+                        break;
+                    }
+                }
+            }
+            else
+#endif
+            {
+                IObject entity = this;
+                output = entity.GetAttribute<T>();
+            }
+            return output;
+        }
 
         public abstract bool IsValid();
         public override ObjectBase Copy()

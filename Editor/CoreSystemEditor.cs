@@ -194,6 +194,7 @@ namespace SyadeuEditor
             EditorUtils.SectorLine();
 
             EditorGUILayout.Space();
+            EditorGUILayout.PropertyField(m_DisplayLogChannel);
 
             if (Application.isPlaying)
             {
@@ -209,6 +210,8 @@ namespace SyadeuEditor
                 EditorUtils.StringRich("이 시스템은 실행 중에만 정보를 표시합니다", 12, true);
                 EditorGUILayout.EndVertical();
             }
+
+            serializedObject.ApplyModifiedProperties();
         }
 
         bool m_OpenManagerList = false;
@@ -219,7 +222,6 @@ namespace SyadeuEditor
             EditorUtils.StringHeader("Generals", 15);
             EditorGUI.indentLevel += 1;
 
-            EditorGUILayout.PropertyField(m_DisplayLogChannel);
             m_ManagerView.OnGUI();
 
             EditorGUI.indentLevel -= 1;
@@ -254,8 +256,6 @@ namespace SyadeuEditor
             #endregion
 
             EditorGUI.indentLevel -= 1;
-
-            serializedObject.ApplyModifiedProperties();
         }
 
 #if CORESYSTEM_FMOD

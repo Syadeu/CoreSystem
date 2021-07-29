@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Mono;
+using Syadeu.Presentation.Entities;
 using System;
 using System.Collections;
 //using Syadeu.ThreadSafe;
@@ -11,7 +12,7 @@ using UnityEngine.Experimental.AI;
 
 using ThreadSafeVector3 = Syadeu.ThreadSafe.Vector3;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Presentation.Attributes
 {
     public sealed class NavAgentAttribute : AttributeBase
     {
