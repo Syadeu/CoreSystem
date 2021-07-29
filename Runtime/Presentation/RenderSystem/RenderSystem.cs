@@ -9,6 +9,7 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 using Syadeu.Database;
 using Syadeu.Mono;
 using Syadeu.Presentation.Entities;
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Unity.Mathematics;
@@ -22,7 +23,6 @@ namespace Syadeu.Presentation
         private ObClass<Camera> m_Camera;
         private Camera m_TopdownCamera;
         private Matrix4x4 m_Matrix4x4;
-        //private Matrix4x4 m_TopMatrix4x4;
 
         private readonly List<ObserverObject> m_ObserverList = new List<ObserverObject>();
 
@@ -40,20 +40,14 @@ namespace Syadeu.Presentation
         public override bool EnableAfterPresentation => false;
 
         public Camera Camera => m_Camera.Value;
+        public event Action OnRender;
+
         private Vector3 m_ScreenOffset;
 
-        //Plane[] m_TestPlanes;
+        #region Presentation Methods
 
         protected override PresentationResult OnInitialize()
         {
-            //m_TestPlanes = GeometryUtility.CalculateFrustumPlanes(Camera.main);
-            //for (int i = 0; i < m_TestPlanes.Length; i++)
-            //{
-            //    GameObject p = GameObject.CreatePrimitive(PrimitiveType.Plane);
-            //    p.transform.position = -m_TestPlanes[i].normal * m_TestPlanes[i].distance;
-            //    p.transform.rotation = Quaternion.LookRotation(Vector3.up, m_TestPlanes[i].normal);
-            //}
-
             m_Camera = new ObClass<Camera>(ObValueDetection.Changed);
             m_Camera.OnValueChange += (from, to) =>
             {
@@ -77,12 +71,20 @@ namespace Syadeu.Presentation
                     m_TopdownCamera.transform.eulerAngles = new Vector3(90, 0, 0);
                 }
                 m_Matrix4x4 = GetCameraMatrix4X4(to);
-                //m_TopMatrix4x4 = GetCameraMatrix4X4(m_TopdownCamera);
             };
             m_ScreenOffset = SyadeuSettings.Instance.m_ScreenOffset;
 
+            CoreSystem.Instance.OnRender -= Instance_OnRender;
+            CoreSystem.Instance.OnRender += Instance_OnRender;
+
             return base.OnInitialize();
         }
+
+        private void Instance_OnRender()
+        {
+            OnRender?.Invoke();
+        }
+
         protected override PresentationResult BeforePresentation()
         {
             m_ScreenOffset = SyadeuSettings.Instance.m_ScreenOffset;
@@ -92,7 +94,6 @@ namespace Syadeu.Presentation
                 if (Camera == null) return PresentationResult.Warning("Cam not found");
             }
             m_Matrix4x4 = GetCameraMatrix4X4(m_Camera.Value);
-            //m_TopMatrix4x4 = GetCameraMatrix4X4(m_TopdownCamera);
 
             return base.BeforePresentation();
         }
@@ -129,10 +130,12 @@ namespace Syadeu.Presentation
         }
         public override void Dispose()
         {
-
+            CoreSystem.Instance.OnRender -= Instance_OnRender;
 
             base.Dispose();
         }
+
+        #endregion
 
         public void AddObserver(IRender render)
         {

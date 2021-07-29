@@ -414,6 +414,9 @@ namespace Syadeu
 
         [SerializeField] private Channel m_DisplayLogChannel = Channel.All;
 
+        // Render
+        internal event Action OnRender;
+
         public override bool HideInHierarchy => false;
 
         [RuntimeInitializeOnLoadMethod]
@@ -496,6 +499,11 @@ namespace Syadeu
             
             //Application.quitting -= OnAboutToQuit;
             base.OnDestroy();
+        }
+
+        private void OnRenderObject()
+        {
+            OnRender?.Invoke();
         }
         #endregion
 

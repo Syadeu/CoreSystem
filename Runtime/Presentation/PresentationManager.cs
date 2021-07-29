@@ -19,6 +19,8 @@ namespace Syadeu.Presentation
     {
         const string c_Instance = "Instance";
 
+        #region Initialize
+
         internal class Group
         {
             public Type m_Name;
@@ -108,21 +110,7 @@ namespace Syadeu.Presentation
             const string register = "Register";
 
             List<Type> registers = new List<Type>();
-            //registers.AddRange(CoreSystem.GetInternalTypes(
-            //    (other) => !other.IsAbstract && other.GetInterfaces().FindFor(t => t.Equals(typeof(IPresentationRegister))) != null)
-            //    );
-            //registers.AddRange(CoreSystem.GetMainAssemblyTypes(
-            //    (other) => !other.IsAbstract && other.GetInterfaces().FindFor(t => t.Equals(typeof(IPresentationRegister))) != null));
-
-            //registers.AddRange(AppDomain
-            //    .CurrentDomain.GetAssemblies()
-            //    .Where(a => !a.IsDynamic)
-            //    .SelectMany(a => a.GetTypes())
-            //    .Where(t => !t.IsAbstract && t.GetInterfaces().FindFor(ta => ta.Equals(typeof(IPresentationRegister))) != null)
-                //);
             registers.AddRange(TypeHelper.GetTypes(t => !t.IsAbstract && t.GetInterfaces().FindFor(ta => ta.Equals(TypeHelper.TypeOf<IPresentationRegister>.Type)) != null));
-
-            //Assembly.g
 
             MethodInfo registerMethod = TypeHelper.TypeOf<IPresentationRegister>.Type.GetMethod(register);
 
@@ -141,19 +129,18 @@ namespace Syadeu.Presentation
 
             StartPresentation(m_DefaultGroupHash);
         }
+
         public override void Dispose()
         {
             foreach (var item in m_PresentationGroups)
             {
-                //for (int i = 0; i < item.Value.m_Systems.Count; i++)
-                //{
-                //    item.Value.m_Systems[i].Dispose();
-                //}
                 item.Value.Reset();
             }
 
             base.Dispose();
         }
+
+        #endregion
 
         #region Internals
         internal static void RegisterSystem(Type groupName, SceneReference dependenceScene, params Type[] systems)

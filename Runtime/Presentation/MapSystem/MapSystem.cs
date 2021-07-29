@@ -25,6 +25,7 @@ namespace Syadeu.Presentation.Map
 
         private SceneSystem m_SceneSystem;
         private EntitySystem m_EntitySystem;
+        private RenderSystem m_RenderSystem;
 
         #region Presentation Methods
         protected override PresentationResult OnInitialize()
@@ -85,9 +86,37 @@ namespace Syadeu.Presentation.Map
                 m_SceneSystem = other;
             });
             RequestSystem<EntitySystem>((other) => m_EntitySystem = other);
+            RequestSystem<RenderSystem>((other) =>
+            {
+                m_RenderSystem = other;
+
+                m_RenderSystem.OnRender += M_RenderSystem_OnRender;
+            });
 
             return base.OnInitializeAsync();
         }
+        public override void Dispose()
+        {
+            m_RenderSystem.OnRender -= M_RenderSystem_OnRender;
+
+            base.Dispose();
+        }
+
+        private void M_RenderSystem_OnRender()
+        {
+            foreach (var item in m_SceneDataObjects)
+            {
+                for (int i = 0; i < item.Value.Count; i++)
+                {
+                    var gridAtt = item.Value[i].GetAttribute<GridMapAttribute>();
+                    if (gridAtt == null) continue;
+
+                    // TODO : 임시 코드
+                    gridAtt.Grid.DrawGL();
+                }
+            }
+        }
+
         private void CreateConsoleCommands()
         {
             ConsoleWindow.CreateCommand((cmd) =>

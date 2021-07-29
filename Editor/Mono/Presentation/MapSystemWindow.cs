@@ -182,7 +182,7 @@ namespace SyadeuEditor.Presentation.Map
                 if (att == null) return;
 
                 m_SceneDataGridAtt = att;
-                m_SceneDataGrid = new ManagedGrid(m_SceneDataGridAtt.m_Center, m_SceneDataGridAtt.m_Size, m_SceneDataGridAtt.m_CellSize);
+                m_SceneDataGrid = new ManagedGrid(m_SceneDataGridAtt.Center, m_SceneDataGridAtt.Size, m_SceneDataGridAtt.CellSize);
 
                 ReloadLayers();
             }
@@ -611,6 +611,8 @@ namespace SyadeuEditor.Presentation.Map
                 string name = $"[{i}] {(objData != null ? $"{objData.Name}" : "None")}";
 
                 Vector2 pos = HandleUtility.WorldToGUIPoint(m_MapDataTarget.m_Objects[i].m_Translation);
+                if (!EditorSceneUtils.IsDrawable(pos)) continue;
+
                 pos.x += 20;
                 Rect rect = new Rect(pos, new Vector2(100, 50));
 
