@@ -117,11 +117,9 @@ namespace SyadeuEditor.Presentation.Map
             m_SceneDataTarget = null;
             m_SceneDataTargetMapDataList = null;
             m_AttributeListDrawer = null;
+
             // GridMapAttribute
-            //m_SceneDataGridAtt = null;
-            //if (m_SceneDataGrid != null) m_SceneDataGrid.Dispose();
-            //m_SceneDataGrid = null;
-            m_GridMap.Dispose();
+            m_GridMap?.Dispose();
             m_GridMap = null;
         }
         private void ResetPreviewFolder()
@@ -330,7 +328,7 @@ namespace SyadeuEditor.Presentation.Map
                 if (!m_EditLayer || m_CurrentLayer == null) return;
 
                 int mouseControlID = GUIUtility.GetControlID(FocusType.Passive);
-                Ray ray; float dis; float3 point;
+                Ray ray; float3 point;
                 switch (Event.current.GetTypeForControl(mouseControlID))
                 {
                     case EventType.MouseDown:
@@ -339,10 +337,8 @@ namespace SyadeuEditor.Presentation.Map
                         if (Event.current.button == 0)
                         {
                             ray = EditorSceneUtils.GetMouseScreenRay();
-                            if (m_SceneDataGrid.bounds.Intersect(ray, out dis, out point))
+                            if (m_SceneDataGrid.bounds.Intersect(ray, out _, out point))
                             {
-                                $"{dis} :: {point}".ToLog();
-
                                 int idx = m_SceneDataGrid.GetCellIndex(point);
                                 List<int> tempList = m_CurrentLayer.m_Indices.ToList();
 
@@ -370,10 +366,8 @@ namespace SyadeuEditor.Presentation.Map
                         GUIUtility.hotControl = mouseControlID;
 
                         ray = EditorSceneUtils.GetMouseScreenRay();
-                        if (m_SceneDataGrid.bounds.Intersect(ray, out dis, out point))
+                        if (m_SceneDataGrid.bounds.Intersect(ray, out _, out point))
                         {
-                            $"{dis} :: {point}".ToLog();
-
                             int idx = m_SceneDataGrid.GetCellIndex(point);
                             if (m_AddDrag)
                             {
@@ -427,9 +421,6 @@ namespace SyadeuEditor.Presentation.Map
                         m_SceneDataTarget = m_SceneData.GetObject();
 
                         m_GridMap = new GridMapExtension(m_SceneDataTarget.GetAttribute<GridMapAttribute>());
-
-                        //if (m_SceneDataGrid != null) m_SceneDataGrid.Dispose();
-                        //m_SceneDataGrid = new ManagedGrid(m_SceneDataGridAtt.m_Center, m_SceneDataGridAtt.m_Size, m_SceneDataGridAtt.m_CellSize);
 
                         m_SceneDataTargetMapDataList = (Reference<MapDataEntity>[])TypeHelper.TypeOf<SceneDataEntity>.Type.GetField("m_MapData", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(m_SceneDataTarget);
                         if (m_SceneDataTargetMapDataList != null)
