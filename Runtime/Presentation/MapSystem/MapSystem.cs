@@ -27,10 +27,6 @@ namespace Syadeu.Presentation.Map
         private EntitySystem m_EntitySystem;
         private RenderSystem m_RenderSystem;
 
-        private KeyValuePair<SceneReference, ManagedGrid> m_MainGrid;
-        private bool m_DrawGrid = false;
-        private bool m_Disposed = false;
-
         #region Presentation Methods
         protected override PresentationResult OnInitialize()
         {
@@ -65,20 +61,6 @@ namespace Syadeu.Presentation.Map
                         }
 
                         SceneDataEntity ins = (SceneDataEntity)m_EntitySystem.CreateObject(data.Hash);
-                        var gridAtt = ins.GetAttribute<GridMapAttribute>();
-                        if (gridAtt != null)
-                        {
-                            if (m_MainGrid.Value == null)
-                            {
-                                m_MainGrid = new KeyValuePair<SceneReference, ManagedGrid>(targetScene, gridAtt.Grid);
-                            }
-                            else
-                            {
-                                CoreSystem.Logger.Log(Channel.Entity,
-                                    $"Attempt to load grids more then one at SceneDataEntity({ins.Name}). This is not allowed.");
-                            }
-                        }
-
                         list.Add(ins);
                     });
 
@@ -95,10 +77,6 @@ namespace Syadeu.Presentation.Map
                             list.Clear();
 
                             m_SceneDataObjects.Remove(targetScene);
-                            if (m_MainGrid.Key.Equals(targetScene))
-                            {
-                                m_MainGrid = new KeyValuePair<SceneReference, ManagedGrid>();
-                            }
                         }
                     });
 
@@ -109,29 +87,9 @@ namespace Syadeu.Presentation.Map
                 m_SceneSystem = other;
             });
             RequestSystem<EntitySystem>((other) => m_EntitySystem = other);
-            RequestSystem<RenderSystem>((other) =>
-            {
-                m_RenderSystem = other;
-
-                m_RenderSystem.OnRender += M_RenderSystem_OnRender;
-            });
+            RequestSystem<RenderSystem>((other) => m_RenderSystem = other);
 
             return base.OnInitializeAsync();
-        }
-        public override void Dispose()
-        {
-            m_RenderSystem.OnRender -= M_RenderSystem_OnRender;
-
-            m_Disposed = true;
-            base.Dispose();
-        }
-
-        private void M_RenderSystem_OnRender()
-        {
-            if (m_DrawGrid && m_MainGrid.Value != null)
-            {
-                m_MainGrid.Value.DrawGL();
-            }
         }
 
         private void CreateConsoleCommands()
@@ -152,10 +110,6 @@ namespace Syadeu.Presentation.Map
                 }
                 m_MapEditorInstance = null;
             }, "close", "mapeditor");
-            ConsoleWindow.CreateCommand((cmd) =>
-            {
-                m_DrawGrid = !m_DrawGrid;
-            }, "draw", "grid");
         }
         #endregion
 

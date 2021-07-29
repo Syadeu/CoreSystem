@@ -26,6 +26,9 @@ namespace Syadeu.Presentation
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
+        public event Action<IObject> OnEntityCreated;
+        public event Action<IObject> OnEntityDestroy;
+
         private readonly HashSet<Hash> m_ObjectHashSet = new HashSet<Hash>();
         private readonly Dictionary<Hash, IObject> m_ObjectEntities = new Dictionary<Hash, IObject>();
         private readonly Dictionary<Type, List<IAttributeProcessor>> m_AttributeProcessors = new Dictionary<Type, List<IAttributeProcessor>>();
@@ -416,6 +419,8 @@ namespace Syadeu.Presentation
                 }
             });
             #endregion
+
+            system.OnEntityCreated?.Invoke(entity);
         }
         private static void ProcessEntityOnPresentation(EntitySystem system, IObject entity)
         {
@@ -501,6 +506,8 @@ namespace Syadeu.Presentation
                 }
             });
             #endregion
+
+            system.OnEntityDestroy?.Invoke(entity);
         }
 
         private static void ProcessEntityOnProxyCreated(EntitySystem system, IEntity entity, RecycleableMonobehaviour monoObj)
