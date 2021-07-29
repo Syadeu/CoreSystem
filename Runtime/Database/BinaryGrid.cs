@@ -559,6 +559,7 @@ namespace Syadeu.Database
         }
 
         public int GetCellIndex(float3 position) => GridExtensions.PositionToIndex(in m_AABB, in m_CellSize, in position);
+        public int2 GetCellLocation(float3 position) => GridExtensions.PositionToLocation(in m_AABB, in m_CellSize, in position);
 
         public float3 GetCellPosition(int idx) => GridExtensions.IndexToPosition(in m_AABB, in m_CellSize, in idx);
         public float3 GetCellPosition(int2 location) => GridExtensions.LocationToPosition(in m_AABB, in m_CellSize, in location);

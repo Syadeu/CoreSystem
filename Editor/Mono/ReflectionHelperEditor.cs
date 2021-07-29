@@ -24,6 +24,19 @@ namespace SyadeuEditor
 {
     public sealed class ReflectionHelperEditor
     {
+        static ReflectionHelperEditor s_Instance;
+        static ReflectionHelperEditor Instance
+        {
+            get
+            {
+                if (s_Instance == null) s_Instance = new ReflectionHelperEditor();
+                return s_Instance;
+            }
+        }
+
+        readonly Dictionary<object, Drawer> m_CachedDrawer = new Dictionary<object, Drawer>();
+        readonly Dictionary<object, AttributeListDrawer> m_CachedAttributeListDrawer = new Dictionary<object, AttributeListDrawer>();
+
         static GUIStyle m_SelectorStyle = null;
         static GUIStyle SelectorStyle
         {
@@ -88,12 +101,12 @@ namespace SyadeuEditor
             public string m_Name;
             Type m_EntityType;
             Type m_ListType;
-            IList<Hash> m_CurrentList;
+            readonly List<Hash> m_CurrentList;
             bool[] m_OpenAttributes;
 
             Drawer[] m_AttributeDrawers;
 
-            public AttributeListDrawer(string name, Type entityType, IList<Hash> list)
+            public AttributeListDrawer(string name, Type entityType, List<Hash> list)
             {
                 m_Name = name;
                 m_EntityType = entityType;
@@ -253,10 +266,23 @@ namespace SyadeuEditor
             }
         }
 
-        public static Drawer GetDrawer(object ins, params string[] ignore) => new Drawer(ins, ignore);
-        public static AttributeListDrawer GetAttributeDrawer(Type fromEntity, IList<Hash> list)
+        public static Drawer GetDrawer(object ins, params string[] ignore)
         {
-            AttributeListDrawer drawer = new AttributeListDrawer(string.Empty, fromEntity, list);
+            if (!Instance.m_CachedDrawer.TryGetValue(ins, out Drawer drawer))
+            {
+                drawer = new Drawer(ins, ignore);
+                Instance.m_CachedDrawer.Add(ins, drawer);
+            }
+
+            return drawer;
+        }
+        public static AttributeListDrawer GetAttributeDrawer(Type fromEntity, List<Hash> list)
+        {
+            if (!Instance.m_CachedAttributeListDrawer.TryGetValue(list, out var drawer))
+            {
+                drawer = new AttributeListDrawer(string.Empty, fromEntity, list);
+                Instance.m_CachedAttributeListDrawer.Add(list, drawer);
+            }
             return drawer;
         }
 

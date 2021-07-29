@@ -1,6 +1,9 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Database;
+using Syadeu.Internal;
 using Syadeu.Presentation.Attributes;
+using System;
+using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine.Scripting;
 
@@ -12,10 +15,19 @@ namespace Syadeu.Presentation.Map
     #region Grid Map Attribute
     public sealed class GridMapAttribute : SceneDataAttributeBase
     {
+        public sealed class LayerInfo : IEquatable<LayerInfo>
+        {
+            [JsonProperty(PropertyName = "Hash")][ReflectionSealedView] public Hash m_Hash = Hash.NewHash();
+            [JsonProperty(PropertyName = "Name")] public string m_Name = "NewLayer";
+            [JsonProperty(PropertyName = "Indices")] public int[] m_Indices = Array.Empty<int>();
+
+            public bool Equals(LayerInfo other) => m_Hash.Equals(other.m_Hash);
+        }
+
         [JsonProperty(Order = 0, PropertyName = "Center")] public int3 m_Center;
         [JsonProperty(Order = 1, PropertyName = "Size")] public int3 m_Size;
         [JsonProperty(Order = 2, PropertyName = "CellSize")] public float m_CellSize;
-        [JsonProperty(Order = 4, PropertyName = "ExcludeIdxes")] public int[] m_ExcludeIdxes;
+        [JsonProperty(Order = 3, PropertyName = "CellLayers")] public LayerInfo[] m_ExcludeIdxes;
 
         [JsonIgnore] public ManagedGrid Grid { get; internal set; }
     }
