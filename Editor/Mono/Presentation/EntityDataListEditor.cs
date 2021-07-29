@@ -266,6 +266,8 @@ namespace SyadeuEditor
             readonly ObsoleteAttribute m_Deprecated = null;
             bool[] m_OpenAttributes = Array.Empty<bool>();
 
+            Color temp;
+
             public TreeObjectElement(VerticalTreeView treeView, EntityDataBase entity) : base(treeView, entity)
             {
                 m_Type = entity.GetType();
@@ -273,38 +275,43 @@ namespace SyadeuEditor
                 m_Drawer = ReflectionHelperEditor.GetDrawer(entity, c_DefaultProperties);
                 if (Target.Attributes == null) Target.Attributes = new List<Hash>();
                 m_AttributeDrawer = ReflectionHelperEditor.GetAttributeDrawer(m_Type, Target.Attributes);
+
+                temp = Color.black; temp.a = .5f;
             }
             public override void OnGUI()
             {
-                if (Target.Attributes == null) m_OpenAttributes = Array.Empty<bool>();
-                else if (m_OpenAttributes.Length != Target.Attributes.Count)
+                using (new EditorUtils.BoxBlock(temp))
                 {
-                    m_OpenAttributes = new bool[Target.Attributes.Count];
+                    if (Target.Attributes == null) m_OpenAttributes = Array.Empty<bool>();
+                    else if (m_OpenAttributes.Length != Target.Attributes.Count)
+                    {
+                        m_OpenAttributes = new bool[Target.Attributes.Count];
+                    }
+
+                    if (m_Deprecated != null)
+                    {
+                        EditorGUILayout.HelpBox(c_EntityObsoleteWarning, m_Deprecated.IsError ? MessageType.Error : MessageType.Warning);
+                    }
+                    EditorUtils.StringRich(m_Type.Name, 15);
+
+                    //EditorGUILayout.HelpBox("제발 한글 쓰지마라", MessageType.Warning);
+                    Target.Name = EditorGUILayout.TextField("Name: ", Target.Name);
+                    EditorGUI.BeginDisabledGroup(true);
+                    EditorGUILayout.TextField("Hash: ", Target.Hash.ToString());
+                    EditorGUI.EndDisabledGroup();
+
+                    Color color1 = Color.black;
+                    color1.a = .5f;
+
+                    using (new EditorUtils.BoxBlock(color1))
+                    {
+                        m_AttributeDrawer.OnGUI();
+                    }
+
+                    EditorUtils.Line();
+
+                    EntityDataList.Instance.m_Objects[Target.Hash] = (ObjectBase)m_Drawer.OnGUI(false, true);
                 }
-
-                if (m_Deprecated != null)
-                {
-                    EditorGUILayout.HelpBox(c_EntityObsoleteWarning, m_Deprecated.IsError ? MessageType.Error : MessageType.Warning);
-                }
-                EditorUtils.StringRich(m_Type.Name, 15);
-
-                //EditorGUILayout.HelpBox("제발 한글 쓰지마라", MessageType.Warning);
-                Target.Name = EditorGUILayout.TextField("Name: ", Target.Name);
-                EditorGUI.BeginDisabledGroup(true);
-                EditorGUILayout.TextField("Hash: ", Target.Hash.ToString());
-                EditorGUI.EndDisabledGroup();
-
-                Color color1 = Color.black;
-                color1.a = .5f;
-
-                using (new EditorUtils.BoxBlock(color1))
-                {
-                    m_AttributeDrawer.OnGUI();
-                }
-
-                EditorUtils.Line();
-
-                EntityDataList.Instance.m_Objects[Target.Hash] = (ObjectBase)m_Drawer.OnGUI(false, true);
             }
         }
         private class TreeEntityElement : VerticalTreeElement<EntityBase>
@@ -321,6 +328,8 @@ namespace SyadeuEditor
             readonly ObsoleteAttribute m_Deprecated = null;
             bool[] m_OpenAttributes = Array.Empty<bool>();
 
+            Color temp;
+
             public TreeEntityElement(VerticalTreeView treeView, EntityBase entity) : base(treeView, entity)
             {
                 m_Deprecated = entity.GetType().GetCustomAttribute<ObsoleteAttribute>();
@@ -334,39 +343,44 @@ namespace SyadeuEditor
                 m_Type = Target.GetType();
 
                 m_AttributeDrawer = ReflectionHelperEditor.GetAttributeDrawer(m_Type, Target.Attributes);
+
+                temp = Color.black; temp.a = .5f;
             }
             public override void OnGUI()
             {
-                if (Target.Attributes == null) m_OpenAttributes = Array.Empty<bool>();
-                else if (m_OpenAttributes.Length != Target.Attributes.Count)
+                using (new EditorUtils.BoxBlock(temp))
                 {
-                    m_OpenAttributes = new bool[Target.Attributes.Count];
+                    if (Target.Attributes == null) m_OpenAttributes = Array.Empty<bool>();
+                    else if (m_OpenAttributes.Length != Target.Attributes.Count)
+                    {
+                        m_OpenAttributes = new bool[Target.Attributes.Count];
+                    }
+
+                    if (m_Deprecated != null)
+                    {
+                        EditorGUILayout.HelpBox(c_EntityObsoleteWarning, m_Deprecated.IsError ? MessageType.Error : MessageType.Warning);
+                    }
+                    EditorUtils.StringRich(m_Type.Name, 15);
+
+                    //EditorGUILayout.HelpBox("제발 한글 쓰지마라", MessageType.Warning);
+                    Target.Name = EditorGUILayout.TextField("Name: ", Target.Name);
+                    EditorGUI.BeginDisabledGroup(true);
+                    EditorGUILayout.TextField("Hash: ", Target.Hash.ToString());
+                    EditorGUI.EndDisabledGroup();
+                    ReflectionHelperEditor.DrawPrefabReference("Prefab: ", (idx) => Target.Prefab = idx, Target.Prefab);
+
+                    Color color1 = Color.black, color2 = Color.black;
+                    color1.a = .5f;
+
+                    using (new EditorUtils.BoxBlock(color1))
+                    {
+                        m_AttributeDrawer.OnGUI();
+                    }
+
+                    EditorUtils.Line();
+
+                    EntityDataList.Instance.m_Objects[Target.Hash] = (ObjectBase)m_Drawer.OnGUI(false, true);
                 }
-
-                if (m_Deprecated != null)
-                {
-                    EditorGUILayout.HelpBox(c_EntityObsoleteWarning, m_Deprecated.IsError ? MessageType.Error : MessageType.Warning);
-                }
-                EditorUtils.StringRich(m_Type.Name, 15);
-
-                //EditorGUILayout.HelpBox("제발 한글 쓰지마라", MessageType.Warning);
-                Target.Name = EditorGUILayout.TextField("Name: ", Target.Name);
-                EditorGUI.BeginDisabledGroup(true);
-                EditorGUILayout.TextField("Hash: ", Target.Hash.ToString());
-                EditorGUI.EndDisabledGroup();
-                ReflectionHelperEditor.DrawPrefabReference("Prefab: ", (idx) => Target.Prefab = idx, Target.Prefab);
-
-                Color color1 = Color.black, color2 = Color.black;
-                color1.a = .5f;
-
-                using (new EditorUtils.BoxBlock(color1))
-                {
-                    m_AttributeDrawer.OnGUI();
-                }
-
-                EditorUtils.Line();
-
-                EntityDataList.Instance.m_Objects[Target.Hash] = (ObjectBase)m_Drawer.OnGUI(false, true);
             }
         }
         private class TreeAttributeElement : VerticalTreeElement<AttributeBase>
@@ -390,6 +404,8 @@ namespace SyadeuEditor
             ObsoleteAttribute obsolete;
             ReflectionHelperEditor.Drawer m_Drawer;
 
+            Color temp;
+
             public TreeAttributeElement(VerticalTreeView treeView, AttributeBase att) : base(treeView, att)
             {
                 obsolete = att.GetType().GetCustomAttribute<ObsoleteAttribute>();
@@ -399,11 +415,10 @@ namespace SyadeuEditor
                 //}
                 //else m_Name = Target.Name;
                 m_Drawer = ReflectionHelperEditor.GetDrawer(att);
-
+                temp = Color.black; temp.a = .5f;
             }
             public override void OnGUI()
             {
-                Color temp = Color.black; temp.a = .5f;
                 using (new EditorUtils.BoxBlock(temp))
                 {
                     EntityDataList.Instance.m_Objects[Target.Hash] = (ObjectBase)m_Drawer.OnGUI();

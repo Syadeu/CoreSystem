@@ -57,7 +57,11 @@ namespace SyadeuEditor
             }
         }
 
-        public sealed class Drawer
+        public abstract class DrawerBase
+        {
+
+        }
+        public sealed class Drawer : DrawerBase
         {
             const string c_EntityObsoleteWarning = "This type has been marked as deprecated.";
 
@@ -94,7 +98,7 @@ namespace SyadeuEditor
                 return DrawObject(m_Instance, m_Ignores);
             }
         }
-        public sealed class AttributeListDrawer
+        public sealed class AttributeListDrawer : DrawerBase
         {
             Color m_Color = Color.black;
 
@@ -505,19 +509,29 @@ namespace SyadeuEditor
                 if (!string.IsNullOrEmpty(name)) EditorUtils.StringRich(name, 13);
                 if (GUILayout.Button("+", GUILayout.Width(20)))
                 {
-                    Array newArr = Array.CreateInstance(declaredType.GetElementType(), list != null ? list.Count + 1 : 1);
-                    if (list != null && list.Count > 0) Array.Copy((Array)list, newArr, list.Count);
-
-                    //setter.Invoke(obj, newArr);
-                    list = newArr;
+                    if (list.IsFixedSize)
+                    {
+                        Array newArr = Array.CreateInstance(declaredType.GetElementType(), list != null ? list.Count + 1 : 1);
+                        if (list != null && list.Count > 0) Array.Copy((Array)list, newArr, list.Count);
+                        list = newArr;
+                    }
+                    else
+                    {
+                        list.Add(Activator.CreateInstance(declaredType.GetGenericArguments()[0]));
+                    }
                 }
                 if (list?.Count > 0 && GUILayout.Button("-", GUILayout.Width(20)))
                 {
-                    Array newArr = Array.CreateInstance(declaredType.GetElementType(), list.Count - 1);
-                    if (list != null && list.Count > 0) Array.Copy((Array)list, newArr, newArr.Length);
-
-                    //setter.Invoke(obj, newArr);
-                    list = newArr;
+                    if (list.IsFixedSize)
+                    {
+                        Array newArr = Array.CreateInstance(declaredType.GetElementType(), list.Count - 1);
+                        if (list != null && list.Count > 0) Array.Copy((Array)list, newArr, newArr.Length);
+                        list = newArr;
+                    }
+                    else
+                    {
+                        list.RemoveAt(list.Count - 1);
+                    }
                 }
                 EditorGUILayout.EndHorizontal();
                 #endregion
