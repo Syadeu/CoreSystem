@@ -377,15 +377,15 @@ namespace Syadeu.Database
             minPos.z += grid.cellSize * .5f;
 
             Vector3 maxPos = grid.GetCellPosition(gridSize);
-            maxPos.x += grid.cellSize * .5f;
-            maxPos.z -= grid.cellSize * .5f;
+            maxPos.x -= grid.cellSize * .5f;
+            maxPos.z += grid.cellSize * .5f;
 
             GL.PushMatrix();
             DefaultMaterial.SetPass(0);
             GL.Begin(GL.LINES);
-            for (int y = 0; y < gridSize.y + 2; y++)
+            for (int y = 0; y < gridSize.y + 1; y++)
             {
-                for (int x = 0; x < gridSize.x + 2; x++)
+                for (int x = 0; x < gridSize.x + 1; x++)
                 {
                     Vector3
                         p1 = new Vector3(

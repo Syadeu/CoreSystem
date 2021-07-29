@@ -217,7 +217,7 @@ namespace SyadeuEditor.Presentation.Map
 
             public void OnGUI()
             {
-                //m_Debug = EditorGUILayout.Toggle(m_Debug);
+                EditorUtils.StringRich("GridMapAttribute Extension", 13);
 
                 EditorGUILayout.BeginHorizontal();
                 EditorGUI.BeginChangeCheck();
@@ -442,7 +442,10 @@ namespace SyadeuEditor.Presentation.Map
             SaveNCloseButton();
             EditorUtils.Line();
 
-            m_GridMap?.OnGUI();
+            using (new EditorUtils.BoxBlock(Color.black))
+            {
+                m_GridMap?.OnGUI();
+            }
 
             m_SceneDataScroll = GUILayout.BeginScrollView(m_SceneDataScroll, false, false);
             if (m_SceneDataTarget != null)

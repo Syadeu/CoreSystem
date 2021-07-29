@@ -21,7 +21,7 @@ namespace Syadeu.Presentation.Map
         private UnityEngine.GameObject m_MapEditorInstance;
         private ManagedGrid m_MainGrid;
 
-        private readonly Dictionary<SceneReference, List<IObject>> m_SceneDataObjects = new Dictionary<SceneReference, List<IObject>>();
+        private readonly Dictionary<SceneReference, List<SceneDataEntity>> m_SceneDataObjects = new Dictionary<SceneReference, List<SceneDataEntity>>();
 
         private SceneSystem m_SceneSystem;
         private EntitySystem m_EntitySystem;
@@ -55,11 +55,11 @@ namespace Syadeu.Presentation.Map
                     {
                         if (!m_SceneDataObjects.TryGetValue(targetScene, out var list))
                         {
-                            list = new List<IObject>();
+                            list = new List<SceneDataEntity>();
                             m_SceneDataObjects.Add(targetScene, list);
                         }
 
-                        list.Add(m_EntitySystem.CreateObject(data.Hash));
+                        list.Add((SceneDataEntity)m_EntitySystem.CreateObject(data.Hash));
                     });
 
                     other.RegisterSceneUnloadDependence(targetScene, () =>
@@ -68,7 +68,7 @@ namespace Syadeu.Presentation.Map
                         {
                             for (int i = 0; i < list.Count; i++)
                             {
-                                SceneDataEntity data = (SceneDataEntity)list[i];
+                                SceneDataEntity data = list[i];
                                 data.DestroyChildOnDestroy = false;
                                 m_EntitySystem.DestroyObject(list[i].Idx);
                             }
@@ -109,25 +109,13 @@ namespace Syadeu.Presentation.Map
         }
         #endregion
 
-        public void LoadGrid(byte[] data)
+        public IReadOnlyList<SceneDataEntity> GetCurrentSceneData()
         {
-            m_MainGrid = ManagedGrid.FromBinary(data);
-            ManagedCell[] cells = m_MainGrid.cells;
-            for (int i = 0; i < cells.Length; i++)
+            if (m_SceneDataObjects.TryGetValue(m_SceneSystem.CurrentSceneRef, out var list))
             {
-                if (cells[i].GetValue() is EntityBase.Captured capturedEntity)
-                {
-                    m_EntitySystem.LoadEntity(capturedEntity);
-                }
-                else
-                {
-
-                }
+                return list;
             }
-        }
-        public void SaveGrid()
-        {
-            //m_SceneSystem.CurrentSceneRef.m_SceneGridData = m_MainGrid.ToBinary();
+            return Array.Empty<SceneDataEntity>();
         }
     }
 }
