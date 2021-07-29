@@ -115,10 +115,13 @@ namespace SyadeuEditor.Presentation.Map
             m_SceneData = new Reference<SceneDataEntity>(Hash.Empty);
             m_SceneDataTarget = null;
             m_SceneDataTargetMapDataList = null;
+            m_AttributeListDrawer = null;
             // GridMapAttribute
-            m_SceneDataGridAtt = null;
-            if (m_SceneDataGrid != null) m_SceneDataGrid.Dispose();
-            m_SceneDataGrid = null;
+            //m_SceneDataGridAtt = null;
+            //if (m_SceneDataGrid != null) m_SceneDataGrid.Dispose();
+            //m_SceneDataGrid = null;
+            m_GridMap.Dispose();
+            m_GridMap = null;
         }
         private void ResetPreviewFolder()
         {
@@ -161,14 +164,130 @@ namespace SyadeuEditor.Presentation.Map
         private Reference<SceneDataEntity> m_SceneData;
         private SceneDataEntity m_SceneDataTarget;
         Reference<MapDataEntity>[] m_SceneDataTargetMapDataList;
-
-        // GridMapAttribute
-        private GridMapAttribute m_SceneDataGridAtt;
-        private ManagedGrid m_SceneDataGrid;
-        private bool[] m_SceneDataAttributeOpen;
         private ReflectionHelperEditor.AttributeListDrawer m_AttributeListDrawer;
 
-        private bool m_debug = false;
+        // GridMapAttribute
+        private sealed class GridMapExtension : IDisposable
+        {
+            public readonly GridMapAttribute m_SceneDataGridAtt;
+            public readonly ManagedGrid m_SceneDataGrid;
+            public string[] m_GridLayerNames;
+            public int m_SelectedGridLayer = 0;
+
+            public bool m_Debug = false;
+
+            public GridMapExtension(GridMapAttribute att)
+            {
+                if (att == null) return;
+
+                m_SceneDataGridAtt = att;
+                m_SceneDataGrid = new ManagedGrid(m_SceneDataGridAtt.m_Center, m_SceneDataGridAtt.m_Size, m_SceneDataGridAtt.m_CellSize);
+            }
+            public void Dispose()
+            {
+                m_SceneDataGrid?.Dispose();
+            }
+
+            public void OnSceneGUI(SceneView obj)
+            {
+                if (m_SceneDataGridAtt == null) return;
+
+                //Selection.activeObject = null;
+                m_SceneDataGrid.DrawGL();
+                Handles.DrawWireCube(m_SceneDataGrid.bounds.center, m_SceneDataGrid.size);
+
+                if (m_SceneDataGridAtt.m_ExcludeIdxes == null)
+                {
+                    m_SceneDataGridAtt.m_ExcludeIdxes = Array.Empty<GridMapAttribute.LayerInfo>();
+                }
+                if (m_SceneDataGridAtt.m_ExcludeIdxes.Length > 0)
+                {
+                    float sizeHalf = m_SceneDataGrid.cellSize * .5f;
+
+                    GL.PushMatrix();
+                    GridExtensions.DefaultMaterial.SetPass(0);
+                    Color color = Color.red;
+                    color.a = .5f;
+                    GL.Begin(GL.QUADS);
+                    GL.Color(color);
+
+                    foreach (var item in m_SceneDataGridAtt.m_ExcludeIdxes)
+                    {
+                        for (int i = 0; i < item.m_Indices.Length; i++)
+                        {
+                            Vector3
+                                cellPos = m_SceneDataGrid.GetCellPosition(item.m_Indices[i]),
+                                p1 = new Vector3(cellPos.x - sizeHalf, cellPos.y + .1f, cellPos.z - sizeHalf),
+                                p2 = new Vector3(cellPos.x - sizeHalf, cellPos.y + .1f, cellPos.z + sizeHalf),
+                                p3 = new Vector3(cellPos.x + sizeHalf, cellPos.y + .1f, cellPos.z + sizeHalf),
+                                p4 = new Vector3(cellPos.x + sizeHalf, cellPos.y + .1f, cellPos.z - sizeHalf);
+
+                            GL.Vertex(p1);
+                            GL.Vertex(p2);
+                            GL.Vertex(p3);
+                            GL.Vertex(p4);
+                        }
+                    }
+
+                    GL.End();
+                    GL.PopMatrix();
+                }
+
+
+                if (!m_Debug) return;
+
+                int mouseControlID = GUIUtility.GetControlID(FocusType.Passive);
+                switch (Event.current.GetTypeForControl(mouseControlID))
+                {
+                    case EventType.MouseDown:
+                        GUIUtility.hotControl = mouseControlID;
+
+                        Ray ray = EditorSceneUtils.GetMouseScreenRay();
+                        if (m_SceneDataGrid.bounds.Intersect(ray, out float dis, out var point))
+                        {
+                            $"{dis} :: {point}".ToLog();
+
+                            int idx = m_SceneDataGrid.GetCellIndex(point);
+                            //List<int> tempList = m_SceneDataGridAtt.m_ExcludeIdxes.ToList();
+
+                            //if (tempList.Contains(idx))
+                            //{
+                            //    tempList.Remove(idx);
+                            //}
+                            //else tempList.Add(idx);
+                            //m_SceneDataGridAtt.m_ExcludeIdxes = tempList.ToArray();
+
+                            //
+                            //GameObject temp = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                            //temp.transform.SetParent(m_PreviewFolder);
+                            //temp.transform.position = point;
+                        }
+
+                        //if (Event.current.button == 0)
+                        //{
+
+                        //}
+                        //else if (Event.current.button == 1)
+                        //{
+
+                        //}
+
+                        Event.current.Use();
+                        break;
+
+                    case EventType.MouseUp:
+                        GUIUtility.hotControl = 0;
+                        if (Event.current.button == 0)
+                        {
+
+                        }
+
+                        Event.current.Use();
+                        break;
+                }
+            }
+        }
+        private GridMapExtension m_GridMap;
 
         private Vector2 m_SceneDataScroll;
         private void SceneDataGUI()
@@ -183,10 +302,11 @@ namespace SyadeuEditor.Presentation.Map
                     if (m_SceneData.IsValid())
                     {
                         m_SceneDataTarget = m_SceneData.GetObject();
-                        m_SceneDataGridAtt = m_SceneDataTarget.GetAttribute<GridMapAttribute>();
 
-                        if (m_SceneDataGrid != null) m_SceneDataGrid.Dispose();
-                        m_SceneDataGrid = new ManagedGrid(m_SceneDataGridAtt.m_Center, m_SceneDataGridAtt.m_Size, m_SceneDataGridAtt.m_CellSize);
+                        m_GridMap = new GridMapExtension(m_SceneDataTarget.GetAttribute<GridMapAttribute>());
+
+                        //if (m_SceneDataGrid != null) m_SceneDataGrid.Dispose();
+                        //m_SceneDataGrid = new ManagedGrid(m_SceneDataGridAtt.m_Center, m_SceneDataGridAtt.m_Size, m_SceneDataGridAtt.m_CellSize);
 
                         m_SceneDataTargetMapDataList = (Reference<MapDataEntity>[])TypeHelper.TypeOf<SceneDataEntity>.Type.GetField("m_MapData", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(m_SceneDataTarget);
                         if (m_SceneDataTargetMapDataList != null)
@@ -200,6 +320,8 @@ namespace SyadeuEditor.Presentation.Map
                             }
                             //
                         }
+
+                        m_AttributeListDrawer = ReflectionHelperEditor.GetAttributeDrawer(TypeHelper.TypeOf<SceneDataEntity>.Type, m_SceneDataTarget.Attributes);
 
                         Tools.hidden = true;
                     }
@@ -232,12 +354,12 @@ namespace SyadeuEditor.Presentation.Map
             SaveNCloseButton();
             EditorUtils.Line();
 
-            if (m_SceneDataGridAtt != null)
-            {
-                //EditorGUILayout.LabelField($"{m_SceneDataGrid.gridSize}");
+            //if (m_SceneDataGridAtt != null)
+            //{
+            //    //EditorGUILayout.LabelField($"{m_SceneDataGrid.gridSize}");
 
-                m_debug = EditorGUILayout.Toggle(m_debug);
-            }
+            m_GridMap.m_Debug = EditorGUILayout.Toggle(m_GridMap.m_Debug);
+            //}
 
             m_SceneDataScroll = GUILayout.BeginScrollView(m_SceneDataScroll, false, false);
             if (m_SceneDataTarget != null)
@@ -245,6 +367,7 @@ namespace SyadeuEditor.Presentation.Map
                 using (new EditorUtils.BoxBlock(Color.gray))
                 {
                     EditorUtils.StringRich("SceneData", 13);
+
                     EditorGUI.BeginDisabledGroup(true);
                     ReflectionHelperEditor.DrawObject(m_SceneDataTarget, "Name", "Hash", "m_BindScene", "m_SceneIndex");
 
@@ -252,10 +375,6 @@ namespace SyadeuEditor.Presentation.Map
 
                     EditorUtils.Line();
 
-                    if (m_AttributeListDrawer == null)
-                    {
-                        m_AttributeListDrawer = ReflectionHelperEditor.GetAttributeDrawer(TypeHelper.TypeOf<SceneDataEntity>.Type, m_SceneDataTarget.Attributes);
-                    }
                     m_AttributeListDrawer.OnGUI();
                 }
 
@@ -265,100 +384,7 @@ namespace SyadeuEditor.Presentation.Map
         }
         private void SceneDataSceneGUI(SceneView obj)
         {
-            if (m_SceneDataGrid == null) return;
-
-            //Selection.activeObject = null;
-            m_SceneDataGrid.DrawGL();
-            Handles.DrawWireCube(m_SceneDataGrid.bounds.center, m_SceneDataGrid.size);
-
-            if (m_SceneDataGridAtt.m_ExcludeIdxes == null)
-            {
-                m_SceneDataGridAtt.m_ExcludeIdxes = Array.Empty<GridMapAttribute.LayerInfo>();
-            }
-            if (m_SceneDataGridAtt.m_ExcludeIdxes.Length > 0)
-            {
-                float sizeHalf = m_SceneDataGrid.cellSize * .5f;
-
-                GL.PushMatrix();
-                GridExtensions.DefaultMaterial.SetPass(0);
-                Color color = Color.red;
-                color.a = .5f;
-                GL.Begin(GL.QUADS);
-                GL.Color(color);
-
-                foreach (var item in m_SceneDataGridAtt.m_ExcludeIdxes)
-                {
-                    for (int i = 0; i < item.m_Indices.Length; i++)
-                    {
-                        Vector3
-                            cellPos = m_SceneDataGrid.GetCellPosition(item.m_Indices[i]),
-                            p1 = new Vector3(cellPos.x - sizeHalf, cellPos.y + .1f, cellPos.z - sizeHalf),
-                            p2 = new Vector3(cellPos.x - sizeHalf, cellPos.y + .1f, cellPos.z + sizeHalf),
-                            p3 = new Vector3(cellPos.x + sizeHalf, cellPos.y + .1f, cellPos.z + sizeHalf),
-                            p4 = new Vector3(cellPos.x + sizeHalf, cellPos.y + .1f, cellPos.z - sizeHalf);
-
-                        GL.Vertex(p1);
-                        GL.Vertex(p2);
-                        GL.Vertex(p3);
-                        GL.Vertex(p4);
-                    }
-                }
-                
-                GL.End();
-                GL.PopMatrix();
-            }
-            
-
-            if (!m_debug) return;
-
-            int mouseControlID = GUIUtility.GetControlID(FocusType.Passive);
-            switch (Event.current.GetTypeForControl(mouseControlID))
-            {
-                case EventType.MouseDown:
-                    GUIUtility.hotControl = mouseControlID;
-
-                    Ray ray = EditorSceneUtils.GetMouseScreenRay();
-                    if (m_SceneDataGrid.bounds.Intersect(ray, out float dis, out var point))
-                    {
-                        $"{dis} :: {point}".ToLog();
-
-                        int idx = m_SceneDataGrid.GetCellIndex(point);
-                        //List<int> tempList = m_SceneDataGridAtt.m_ExcludeIdxes.ToList();
-
-                        //if (tempList.Contains(idx))
-                        //{
-                        //    tempList.Remove(idx);
-                        //}
-                        //else tempList.Add(idx);
-                        //m_SceneDataGridAtt.m_ExcludeIdxes = tempList.ToArray();
-
-                        GameObject temp = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                        temp.transform.SetParent(m_PreviewFolder);
-                        temp.transform.position = point;
-                    }
-
-                    //if (Event.current.button == 0)
-                    //{
-                        
-                    //}
-                    //else if (Event.current.button == 1)
-                    //{
-                        
-                    //}
-
-                    Event.current.Use();
-                    break;
-
-                case EventType.MouseUp:
-                    GUIUtility.hotControl = 0;
-                    if (Event.current.button == 0)
-                    {
-                        
-                    }
-
-                    Event.current.Use();
-                    break;
-            }
+            m_GridMap?.OnSceneGUI(obj);
         }
 
         #endregion
