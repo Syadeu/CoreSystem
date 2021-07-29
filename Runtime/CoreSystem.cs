@@ -453,6 +453,8 @@ namespace Syadeu
         }
         public override void OnInitialize()
         {
+            LogManager.s_DisplayLogChannel = m_DisplayLogChannel;
+
             new Thread(BackgroundWorker).Start();
             //ThreadPool.QueueUserWorkItem(BackgroundWorker);
             Application.quitting += OnAboutToQuit;

@@ -36,7 +36,10 @@ namespace Syadeu.Internal
 #line hidden
         public static void Log(Channel channel, ResultFlag result, string msg)
         {
-            if (!s_DisplayLogChannel.HasFlag(channel)) return;
+            if (!s_DisplayLogChannel.HasFlag(channel))
+            {
+                if (result == ResultFlag.Normal) return;
+            }
 
             string text;
             switch (result)
