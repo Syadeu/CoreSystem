@@ -85,6 +85,8 @@ namespace Syadeu
             CoreSystem.DataManagers.Remove(this);
             m_Instance = null;
             CoreSystem.Instance.m_CleanupManagers = true;
+
+            CoreSystem.Logger.Log(Channel.Core, $"DataManager {TypeHelper.TypeOf<T>.Name} has been disposed.");
         }
     }
 }

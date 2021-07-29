@@ -50,7 +50,7 @@ namespace Syadeu.Presentation
             public ICustomYieldAwaiter m_StartAwaiter;
             public WaitUntil m_WaitUntilInitializeCompleted;
 
-            public Action PublicSystemStructDisposer;
+            //public Action PublicSystemStructDisposer;
 
             public Group(Type name, Hash hash)
             {
@@ -78,7 +78,6 @@ namespace Syadeu.Presentation
 
                 for (int i = 0; i < m_Systems.Count; i++)
                 {
-                    $"{m_Systems[i].GetType().Name} dispose".ToLog();
                     m_Systems[i].Dispose();
                 }
                 m_Systems.Clear();
@@ -87,17 +86,11 @@ namespace Syadeu.Presentation
                 m_OnPresentations.Clear();
                 m_AfterPresentations.Clear();
 
-                PublicSystemStructDisposer?.Invoke();
-                PublicSystemStructDisposer = null;
-
                 m_MainthreadSignal = false;
                 m_BackgroundthreadSignal = false;
 
                 m_MainInitDone = false;
                 m_BackgroundInitDone = false;
-
-                PublicSystemStructDisposer?.Invoke();
-                PublicSystemStructDisposer = null;
             }
         }
         private readonly Hash m_DefaultGroupHash = Hash.NewHash(TypeHelper.TypeOf<DefaultPresentationGroup>.Name);
@@ -133,7 +126,6 @@ namespace Syadeu.Presentation
 
         public override void Dispose()
         {
-            "dispose pre".ToLog();
             foreach (var item in m_PresentationGroups)
             {
                 item.Value.Reset();
@@ -229,7 +221,7 @@ namespace Syadeu.Presentation
                 else ins = Activator.CreateInstance(t);
 
                 PresentationSystemEntity system = (PresentationSystemEntity)ins;
-                group.PublicSystemStructDisposer += ((IDisposable)system).Dispose;
+                //group.PublicSystemStructDisposer += ((IDisposable)system).Dispose;
                 group.m_Systems.Add(system);
 
                 group.m_Initializers.Add((IInitPresentation)ins);

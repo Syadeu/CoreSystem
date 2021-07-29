@@ -30,7 +30,9 @@ namespace Syadeu.Presentation
         bool IEquatable<IInternalDataComponent>.Equals(IInternalDataComponent other) => m_Idx.Equals(other.Idx);
         bool IEquatable<DataGameObject>.Equals(DataGameObject other) => m_Idx.Equals(other.m_Idx);
 
-        public bool IsValid() => !m_Idx.Equals(Hash.Empty) && !m_Transform.Equals(Hash.Empty) &&
+        public bool IsValid() =>
+            !m_Idx.Equals(Hash.Empty) && !m_Transform.Equals(Hash.Empty) &&
+            !PresentationSystem<GameObjectProxySystem>.System.Disposed &&
             !GetRef().m_Destroyed &&
             PresentationSystem<GameObjectProxySystem>.System.m_MappedTransformIdxes.ContainsKey(m_Transform) &&
             PresentationSystem<GameObjectProxySystem>.System.m_MappedGameObjectIdxes.ContainsKey(m_Idx);

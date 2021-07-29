@@ -22,7 +22,7 @@ namespace Syadeu.Presentation.Entities
 
         public override bool IsValid()
         {
-            if (m_GameObjectHash.Equals(Hash.Empty) || m_TransformHash.Equals(Hash.Empty) || !m_IsCreated) return false;
+            if (m_GameObjectHash.Equals(Hash.Empty) || m_TransformHash.Equals(Hash.Empty) || !m_IsCreated || PresentationSystem<GameObjectProxySystem>.System.Disposed) return false;
 
             return true;
         }

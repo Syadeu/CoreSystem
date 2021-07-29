@@ -206,7 +206,7 @@ namespace Syadeu.Presentation
             m_ObjectEntities.Clear();
             m_AttributeProcessors.Clear();
             m_EntityProcessors.Clear();
-            "dispose entity".ToLog();
+            
             base.Dispose();
         }
         #endregion

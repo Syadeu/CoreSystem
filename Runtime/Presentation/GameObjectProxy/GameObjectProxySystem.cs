@@ -55,6 +55,9 @@ namespace Syadeu.Presentation
         private RenderSystem m_RenderSystem;
 
         private bool m_LoadingLock = false;
+        private bool m_Disposed = false;
+
+        public bool Disposed => m_Disposed;
 
         #region Presentation Methods
         protected override PresentationResult OnInitialize()
@@ -278,6 +281,8 @@ namespace Syadeu.Presentation
             m_MappedGameObjects.Dispose();
             m_MappedTransforms.Dispose();
             CoreSystem.RemoveBackgroundJobWorker(m_VisibleCheckJobWorker);
+
+            m_Disposed = true;
 
             base.Dispose();
         }

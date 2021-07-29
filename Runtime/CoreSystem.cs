@@ -470,8 +470,9 @@ namespace Syadeu
                 {
                     DataManagers[i].Dispose();
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    Debug.LogException(ex);
                 }
             }
 

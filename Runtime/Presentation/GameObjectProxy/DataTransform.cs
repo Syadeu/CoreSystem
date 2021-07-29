@@ -61,7 +61,9 @@ namespace Syadeu.Presentation
             PresentationSystem<GameObjectProxySystem>.System.RequestUpdateTransform(m_Idx);
         }
 
-        public bool IsValid() => !m_GameObject.Equals(Hash.Empty) && !m_Idx.Equals(Hash.Empty) &&
+        public bool IsValid() =>
+            !m_GameObject.Equals(Hash.Empty) && !m_Idx.Equals(Hash.Empty) &&
+            !PresentationSystem<GameObjectProxySystem>.System.Disposed &&
             PresentationSystem<GameObjectProxySystem>.IsValid() &&
             PresentationSystem<GameObjectProxySystem>.System.m_MappedTransformIdxes.ContainsKey(m_Idx) &&
             PresentationSystem<GameObjectProxySystem>.System.m_MappedGameObjectIdxes.ContainsKey(m_GameObject) &&
