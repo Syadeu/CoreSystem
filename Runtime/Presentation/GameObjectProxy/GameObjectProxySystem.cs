@@ -929,7 +929,7 @@ namespace Syadeu.Presentation
 
                 if (CoreSystem.InstanceGroupTr == null) CoreSystem.InstanceGroupTr = new GameObject("InstanceSystemGroup").transform;
 
-                AssetReferenceGameObject refObject = prefabInfo.m_RefPrefab;
+                AssetReference refObject = prefabInfo.m_RefPrefab;
 
                 var oper = prefabInfo.m_RefPrefab.InstantiateAsync(pos, rot, CoreSystem.InstanceGroupTr);
                 oper.Completed += (other) =>

@@ -8,6 +8,8 @@ namespace Syadeu.Database
     [Serializable]
     public struct PrefabReference : IEquatable<PrefabReference>, IValidation
     {
+        public static PrefabReference Invalid = new PrefabReference(-1);
+
         public int m_Idx;
 
         public PrefabReference(int idx)
@@ -20,6 +22,16 @@ namespace Syadeu.Database
         public PrefabList.ObjectSetting GetObjectSetting() => PrefabList.Instance.ObjectSettings[m_Idx];
 
         public bool IsValid() => 0 <= m_Idx && m_Idx < PrefabList.Instance.ObjectSettings.Count;
+
+        public static PrefabReference Find(string name)
+        {
+            var obj = PrefabList.Instance.ObjectSettings.FindFor((other) => other.m_Name.Equals(name));
+            if (obj != null)
+            {
+                return new PrefabReference(PrefabList.Instance.ObjectSettings.IndexOf(obj));
+            }
+            return Invalid;
+        }
 
         public static implicit operator int(PrefabReference a) => a.m_Idx;
         public static implicit operator PrefabReference(int a) => new PrefabReference(a);

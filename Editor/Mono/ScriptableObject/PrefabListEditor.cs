@@ -44,14 +44,10 @@ namespace SyadeuEditor
             }
         }
 
-        private bool m_ShowOriginalContents = false;
-
         public override void OnInspectorGUI()
         {
             EditorUtils.StringHeader("Prefab List");
             EditorUtils.SectorLine();
-
-            var objSettings = serializedObject.FindProperty("m_ObjectSettings");
 
             if (GUILayout.Button("Rebase"))
             {
@@ -60,13 +56,16 @@ namespace SyadeuEditor
 
                 foreach (AddressableAssetEntry item in DefaultGroup.entries)
                 {
-                    AssetReferenceGameObject refObj = new AssetReferenceGameObject(item.guid);
-
-                    tempList.Add(new PrefabList.ObjectSetting
+                    //if (item.TargetAsset is GameObject)
                     {
-                        m_Name = item.address.Split('/').Last().Split('.').First(),
-                        m_RefPrefab = refObj
-                    });
+                        AssetReference refObj = new AssetReference(item.guid);
+
+                        tempList.Add(new PrefabList.ObjectSetting
+                        {
+                            m_Name = item.address.Split('/').Last().Split('.').First(),
+                            m_RefPrefab = refObj
+                        });
+                    }
                 }
 
                 objSetField.SetValue(Asset, tempList);
@@ -74,19 +73,7 @@ namespace SyadeuEditor
                 Repaint();
             }
 
-            EditorGUI.BeginChangeCheck();
-
-            
-            EditorGUILayout.PropertyField(objSettings);
-
-            if (EditorGUI.EndChangeCheck())
-            {
-                serializedObject.ApplyModifiedProperties();
-            }
-
-            EditorGUILayout.Space();
-            m_ShowOriginalContents = EditorUtils.Foldout(m_ShowOriginalContents, "Original Contents");
-            if (m_ShowOriginalContents) base.OnInspectorGUI();
+            base.OnInspectorGUI();
         }
     }
 }

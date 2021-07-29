@@ -762,7 +762,7 @@ namespace SyadeuEditor.Presentation.Map
 
                                 if (!hash.Equals(Hash.Empty))
                                 {
-                                    GameObject temp = target.GetObject().Prefab.GetObjectSetting().m_RefPrefab.editorAsset;
+                                    GameObject temp = (GameObject)target.GetObject().Prefab.GetObjectSetting().m_RefPrefab.editorAsset;
 
                                     gameObj = (GameObject)PrefabUtility.InstantiatePrefab(temp, m_Folder);
                                     gameObj.tag = c_EditorOnly;
