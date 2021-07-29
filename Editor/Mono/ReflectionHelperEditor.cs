@@ -81,7 +81,185 @@ namespace SyadeuEditor
                 return DrawObject(m_Instance, m_Ignores);
             }
         }
+        public sealed class AttributeListDrawer
+        {
+            Color m_Color = Color.black;
+
+            public string m_Name;
+            Type m_EntityType;
+            Type m_ListType;
+            IList<Hash> m_CurrentList;
+            bool[] m_OpenAttributes;
+
+            Drawer[] m_AttributeDrawers;
+
+            public AttributeListDrawer(string name, Type entityType, IList<Hash> list)
+            {
+                m_Name = name;
+                m_EntityType = entityType;
+                m_ListType = list.GetType();
+                m_CurrentList = list;
+
+                OnListChange();
+            }
+            private void OnListChange()
+            {
+                if (m_CurrentList.Count > 0)
+                {
+                    m_OpenAttributes = new bool[m_CurrentList.Count];
+                    m_AttributeDrawers = new Drawer[m_CurrentList.Count];
+                }
+                else
+                {
+                    m_OpenAttributes = Array.Empty<bool>();
+                    m_AttributeDrawers = Array.Empty<Drawer>();
+                }
+                
+                for (int i = 0; i < m_AttributeDrawers.Length; i++)
+                {
+                    AttributeBase targetAtt = (AttributeBase)EntityDataList.Instance.GetObject(m_CurrentList[i]);
+                    if (targetAtt == null) continue;
+
+                    m_AttributeDrawers[i] = GetDrawer(targetAtt);
+                }
+            }
+
+            public IList<Hash> OnGUI()
+            {
+                if (string.IsNullOrEmpty(m_Name)) m_Name = "Attributes";
+
+                EditorGUILayout.BeginHorizontal();
+                EditorUtils.StringRich(m_Name, 15);
+                if (GUILayout.Button("+", GUILayout.Width(20)))
+                {
+                    m_CurrentList.Add(Hash.Empty);
+
+                    OnListChange();
+                }
+                if (m_CurrentList.Count > 0 && GUILayout.Button("-", GUILayout.Width(20)))
+                {
+                    m_CurrentList.RemoveAt(m_CurrentList.Count - 1);
+
+                    OnListChange();
+                }
+                EditorGUILayout.EndHorizontal();
+
+                EditorGUI.indentLevel += 1;
+
+                using (new EditorUtils.BoxBlock(m_Color))
+                {
+                    DrawList();
+                }
+
+                EditorGUI.indentLevel -= 1;
+
+                return m_CurrentList;
+            }
+            private void DrawList()
+            {
+                for (int i = 0; i < m_CurrentList.Count; i++)
+                {
+                    EditorGUILayout.BeginHorizontal();
+
+                    int idx = i;
+                    EditorGUI.BeginChangeCheck();
+                    idx = EditorGUILayout.DelayedIntField(idx, GUILayout.Width(40));
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        if (idx >= m_CurrentList.Count) idx = m_CurrentList.Count - 1;
+
+                        Hash cache = m_CurrentList[i];
+                        m_CurrentList.RemoveAt(i);
+                        m_CurrentList.Insert(idx, cache);
+
+                        OnListChange();
+                    }
+
+                    DrawAttributeSelector(null, (attHash) => m_CurrentList[i] = attHash, m_CurrentList[i], m_EntityType);
+
+                    if (GUILayout.Button("-", GUILayout.Width(20)))
+                    {
+                        if (m_CurrentList.Count == 1)
+                        {
+                            m_CurrentList.Clear();
+                            OnListChange();
+
+                            EditorGUILayout.EndHorizontal();
+                            break;
+                        }
+
+                        m_CurrentList.RemoveAt(i);
+                        OnListChange();
+
+                        if (i != 0) i--;
+                    }
+
+                    m_OpenAttributes[i] = GUILayout.Toggle(m_OpenAttributes[i],
+                        m_OpenAttributes[i] ? EditorUtils.FoldoutOpendString : EditorUtils.FoldoutClosedString
+                        , EditorUtils.MiniButton, GUILayout.Width(20));
+
+                    if (GUILayout.Button("C", GUILayout.Width(20)))
+                    {
+                        AttributeBase cloneAtt = (AttributeBase)EntityDataList.Instance.GetObject(m_CurrentList[i]).Clone();
+
+                        cloneAtt.Hash = Hash.NewHash();
+                        cloneAtt.Name += "_Clone";
+                        EntityDataList.Instance.m_Objects.Add(cloneAtt.Hash, cloneAtt);
+
+                        m_CurrentList[i] = cloneAtt.Hash;
+                    }
+
+                    EditorGUILayout.EndHorizontal();
+
+                    if (m_OpenAttributes[i])
+                    {
+                        Color color3 = Color.red;
+                        color3.a = .7f;
+
+                        EditorGUI.indentLevel += 1;
+
+                        using (new EditorUtils.BoxBlock(color3))
+                        {
+                            if (m_AttributeDrawers[i] == null)
+                            {
+                                EditorGUILayout.HelpBox(
+                                    "This attribute is invalid.",
+                                    MessageType.Error);
+                            }
+                            else
+                            {
+                                EditorGUILayout.HelpBox(
+                                    "This is shared attribute. Anything made changes in this inspector view will affect to original attribute directly not only as this entity.",
+                                    MessageType.Info);
+
+                                SetAttribute(m_CurrentList[i], m_AttributeDrawers[i].OnGUI());
+                            }
+                        }
+
+                        EditorGUI.indentLevel -= 1;
+                    }
+
+                    if (m_OpenAttributes[i]) EditorUtils.Line();
+                }
+            }
+            private static void SetAttribute(Hash attHash, object att)
+            {
+                if (attHash.Equals(Hash.Empty)) return;
+                if (EntityDataList.Instance.m_Objects.ContainsKey(attHash))
+                {
+                    EntityDataList.Instance.m_Objects[attHash] = (AttributeBase)att;
+                }
+                else EntityDataList.Instance.m_Objects.Add(attHash, (AttributeBase)att);
+            }
+        }
+
         public static Drawer GetDrawer(object ins, params string[] ignore) => new Drawer(ins, ignore);
+        public static AttributeListDrawer GetAttributeDrawer(Type fromEntity, IList<Hash> list)
+        {
+            AttributeListDrawer drawer = new AttributeListDrawer(string.Empty, fromEntity, list);
+            return drawer;
+        }
+
         public static void DrawAssetReference(string name, Action<AssetReference> setter, AssetReference refAsset)
         {
             //float iconHeight = EditorGUIUtility.singleLineHeight - EditorGUIUtility.standardVerticalSpacing * 3;
@@ -283,6 +461,7 @@ namespace SyadeuEditor
 
             GUILayout.EndHorizontal();
         }
+        
         public static IList DrawList(string name, IList list)
         {
             Type declaredType = list.GetType();
@@ -399,6 +578,7 @@ namespace SyadeuEditor
 
             return list;
         }
+
         public static object DrawObject(object obj, params string[] ignores)
         {
             Type objType = obj.GetType();

@@ -262,6 +262,7 @@ namespace SyadeuEditor
 
             readonly Type m_Type;
             readonly ReflectionHelperEditor.Drawer m_Drawer;
+            readonly ReflectionHelperEditor.AttributeListDrawer m_AttributeDrawer;
             readonly ObsoleteAttribute m_Deprecated = null;
             bool[] m_OpenAttributes = Array.Empty<bool>();
 
@@ -270,6 +271,7 @@ namespace SyadeuEditor
                 m_Type = entity.GetType();
                 m_Deprecated = m_Type.GetCustomAttribute<ObsoleteAttribute>();
                 m_Drawer = ReflectionHelperEditor.GetDrawer(entity, c_DefaultProperties);
+                m_AttributeDrawer = ReflectionHelperEditor.GetAttributeDrawer(m_Type, Target.Attributes);
             }
             public override void OnGUI()
             {
@@ -285,131 +287,23 @@ namespace SyadeuEditor
                 }
                 EditorUtils.StringRich(m_Type.Name, 15);
 
-                EditorGUILayout.HelpBox("제발 한글 쓰지마라", MessageType.Warning);
+                //EditorGUILayout.HelpBox("제발 한글 쓰지마라", MessageType.Warning);
                 Target.Name = EditorGUILayout.TextField("Name: ", Target.Name);
                 EditorGUI.BeginDisabledGroup(true);
                 EditorGUILayout.TextField("Hash: ", Target.Hash.ToString());
                 EditorGUI.EndDisabledGroup();
 
-                Color color1 = Color.black, color2 = Color.black;
+                Color color1 = Color.black;
                 color1.a = .5f;
 
                 using (new EditorUtils.BoxBlock(color1))
                 {
-                    if (Target.Attributes == null) Target.Attributes = new List<Hash>();
-                    EditorGUILayout.BeginHorizontal();
-                    EditorUtils.StringRich("Attributes", 15);
-                    if (GUILayout.Button("+", GUILayout.Width(20)))
-                    {
-                        Target.Attributes.Add(Hash.Empty);
-                        return;
-                    }
-                    if (Target.Attributes.Count > 0 && GUILayout.Button("-", GUILayout.Width(20)))
-                    {
-                        Target.Attributes.RemoveAt(Target.Attributes.Count - 1);
-                    }
-                    EditorGUILayout.EndHorizontal();
-
-                    EditorGUI.indentLevel += 1;
-
-                    using (new EditorUtils.BoxBlock(color2))
-                    {
-                        DrawAttributes();
-                    }
-
-                    EditorGUI.indentLevel -= 1;
+                    m_AttributeDrawer.OnGUI();
                 }
 
                 EditorUtils.Line();
 
                 EntityDataList.Instance.m_Objects[Target.Hash] = (ObjectBase)m_Drawer.OnGUI(false, true);
-            }
-
-            private void DrawAttributes()
-            {
-                for (int i = 0; i < Target.Attributes.Count; i++)
-                {
-                    EditorGUILayout.BeginHorizontal();
-
-                    int idx = i;
-                    EditorGUI.BeginChangeCheck();
-                    idx = EditorGUILayout.DelayedIntField(idx, GUILayout.Width(40));
-                    if (EditorGUI.EndChangeCheck())
-                    {
-                        if (idx >= Target.Attributes.Count) idx = Target.Attributes.Count - 1;
-
-                        Hash cache = Target.Attributes[i];
-                        Target.Attributes.RemoveAt(i);
-                        Target.Attributes.Insert(idx, cache);
-                    }
-
-                    ReflectionHelperEditor.DrawAttributeSelector(null, (attHash) => Target.Attributes[i] = attHash, Target.Attributes[i], m_Type);
-
-                    if (GUILayout.Button("-", GUILayout.Width(20)))
-                    {
-                        if (Target.Attributes.Count == 1)
-                        {
-                            Target.Attributes.Clear();
-                            m_OpenAttributes = Array.Empty<bool>();
-                            EditorGUILayout.EndHorizontal();
-                            break;
-                        }
-
-                        var temp = m_OpenAttributes.ToList();
-                        temp.RemoveAt(i);
-                        m_OpenAttributes = temp.ToArray();
-                        Target.Attributes.RemoveAt(i);
-                        if (i != 0) i--;
-                    }
-
-                    m_OpenAttributes[i] = GUILayout.Toggle(m_OpenAttributes[i],
-                        m_OpenAttributes[i] ? EditorUtils.FoldoutOpendString : EditorUtils.FoldoutClosedString
-                        , EditorUtils.MiniButton, GUILayout.Width(20));
-
-                    if (GUILayout.Button("C", GUILayout.Width(20)))
-                    {
-                        AttributeBase cloneAtt = (AttributeBase)EntityDataList.Instance.GetObject(Target.Attributes[i]).Clone();
-
-                        cloneAtt.Hash = Hash.NewHash();
-                        cloneAtt.Name += "_Clone";
-                        EntityDataList.Instance.m_Objects.Add(cloneAtt.Hash, cloneAtt);
-
-                        Target.Attributes[i] = cloneAtt.Hash;
-                    }
-
-                    EditorGUILayout.EndHorizontal();
-
-                    if (m_OpenAttributes[i])
-                    {
-                        Color color3 = Color.red;
-                        color3.a = .7f;
-                        AttributeBase targetAtt = GetSelectedAttribute(Target.Attributes[i]);
-
-                        EditorGUI.indentLevel += 1;
-
-                        using (new EditorUtils.BoxBlock(color3))
-                        {
-                            if (targetAtt == null)
-                            {
-                                EditorGUILayout.HelpBox(
-                                    "This attribute is invalid.",
-                                    MessageType.Error);
-                            }
-                            else
-                            {
-                                EditorGUILayout.HelpBox(
-                                    "This is shared attribute. Anything made changes in this inspector view will affect to original attribute directly not only as this entity.",
-                                    MessageType.Info);
-
-                                SetAttribute(Target.Attributes[i], ReflectionHelperEditor.GetDrawer(targetAtt).OnGUI());
-                            }
-                        }
-
-                        EditorGUI.indentLevel -= 1;
-                    }
-
-                    if (m_OpenAttributes[i]) EditorUtils.Line();
-                }
             }
         }
         private class TreeEntityElement : VerticalTreeElement<EntityBase>
@@ -422,6 +316,7 @@ namespace SyadeuEditor
 
             readonly Type m_Type = null;
             readonly ReflectionHelperEditor.Drawer m_Drawer;
+            readonly ReflectionHelperEditor.AttributeListDrawer m_AttributeDrawer;
             readonly ObsoleteAttribute m_Deprecated = null;
             bool[] m_OpenAttributes = Array.Empty<bool>();
 
@@ -436,6 +331,8 @@ namespace SyadeuEditor
                 m_Drawer = ReflectionHelperEditor.GetDrawer(entity, c_DefaultProperties);
 
                 m_Type = Target.GetType();
+
+                m_AttributeDrawer = ReflectionHelperEditor.GetAttributeDrawer(m_Type, Target.Attributes);
             }
             public override void OnGUI()
             {
@@ -451,7 +348,7 @@ namespace SyadeuEditor
                 }
                 EditorUtils.StringRich(m_Type.Name, 15);
 
-                EditorGUILayout.HelpBox("제발 한글 쓰지마라", MessageType.Warning);
+                //EditorGUILayout.HelpBox("제발 한글 쓰지마라", MessageType.Warning);
                 Target.Name = EditorGUILayout.TextField("Name: ", Target.Name);
                 EditorGUI.BeginDisabledGroup(true);
                 EditorGUILayout.TextField("Hash: ", Target.Hash.ToString());
@@ -463,138 +360,13 @@ namespace SyadeuEditor
 
                 using (new EditorUtils.BoxBlock(color1))
                 {
-                    if (Target.Attributes == null) Target.Attributes = new List<Hash>();
-                    EditorGUILayout.BeginHorizontal();
-                    EditorUtils.StringRich("Attributes", 15);
-                    if (GUILayout.Button("+", GUILayout.Width(20)))
-                    {
-                        Target.Attributes.Add(Hash.Empty);
-                        return;
-                    }
-                    if (Target.Attributes.Count > 0 && GUILayout.Button("-", GUILayout.Width(20)))
-                    {
-                        Target.Attributes.RemoveAt(Target.Attributes.Count - 1);
-                    }
-                    EditorGUILayout.EndHorizontal();
-
-                    EditorGUI.indentLevel += 1;
-
-                    using (new EditorUtils.BoxBlock(color2))
-                    {
-                        DrawAttributes();
-                    }
-
-                    EditorGUI.indentLevel -= 1;
+                    m_AttributeDrawer.OnGUI();
                 }
 
                 EditorUtils.Line();
 
                 EntityDataList.Instance.m_Objects[Target.Hash] = (ObjectBase)m_Drawer.OnGUI(false, true);
             }
-            private void DrawAttributes()
-            {
-                for (int i = 0; i < Target.Attributes.Count; i++)
-                {
-                    EditorGUILayout.BeginHorizontal();
-
-                    int idx = i;
-                    EditorGUI.BeginChangeCheck();
-                    idx = EditorGUILayout.DelayedIntField(idx, GUILayout.Width(40));
-                    if (EditorGUI.EndChangeCheck())
-                    {
-                        if (idx >= Target.Attributes.Count) idx = Target.Attributes.Count - 1;
-
-                        Hash cache = Target.Attributes[i];
-                        Target.Attributes.RemoveAt(i);
-                        Target.Attributes.Insert(idx, cache);
-                    }
-
-                    ReflectionHelperEditor.DrawAttributeSelector(null, (attHash) => Target.Attributes[i] = attHash, Target.Attributes[i], m_Type);
-
-                    if (GUILayout.Button("-", GUILayout.Width(20)))
-                    {
-                        if (Target.Attributes.Count == 1)
-                        {
-                            Target.Attributes.Clear();
-                            m_OpenAttributes = Array.Empty<bool>();
-                            EditorGUILayout.EndHorizontal();
-                            break;
-                        }
-
-                        var temp = m_OpenAttributes.ToList();
-                        temp.RemoveAt(i);
-                        m_OpenAttributes = temp.ToArray();
-                        Target.Attributes.RemoveAt(i);
-                        if (i != 0) i--;
-                    }
-
-                    m_OpenAttributes[i] = GUILayout.Toggle(m_OpenAttributes[i],
-                        m_OpenAttributes[i] ? EditorUtils.FoldoutOpendString : EditorUtils.FoldoutClosedString
-                        , EditorUtils.MiniButton, GUILayout.Width(20));
-
-                    if (GUILayout.Button("C", GUILayout.Width(20)))
-                    {
-                        AttributeBase cloneAtt = (AttributeBase)EntityDataList.Instance.GetObject(Target.Attributes[i]).Clone();
-
-                        cloneAtt.Hash = Hash.NewHash();
-                        cloneAtt.Name += "_Clone";
-                        EntityDataList.Instance.m_Objects.Add(cloneAtt.Hash, cloneAtt);
-
-                        Target.Attributes[i] = cloneAtt.Hash;
-                    }
-
-                    EditorGUILayout.EndHorizontal();
-
-                    if (m_OpenAttributes[i])
-                    {
-                        Color color3 = Color.red;
-                        color3.a = .7f;
-                        AttributeBase targetAtt = GetSelectedAttribute(Target.Attributes[i]);
-
-                        EditorGUI.indentLevel += 1;
-
-                        using (new EditorUtils.BoxBlock(color3))
-                        {
-                            if (targetAtt == null)
-                            {
-                                EditorGUILayout.HelpBox(
-                                    "This attribute is invalid.",
-                                    MessageType.Error);
-                            }
-                            else
-                            {
-                                EditorGUILayout.HelpBox(
-                                    "This is shared attribute. Anything made changes in this inspector view will affect to original attribute directly not only as this entity.",
-                                    MessageType.Info);
-
-                                SetAttribute(Target.Attributes[i], ReflectionHelperEditor.GetDrawer(targetAtt).OnGUI());
-                            }
-                        }
-
-                        EditorGUI.indentLevel -= 1;
-                    }
-
-                    if (m_OpenAttributes[i]) EditorUtils.Line();
-                }
-            }
-        }
-        private static AttributeBase GetSelectedAttribute(Hash attHash)
-        {
-            if (attHash.Equals(Hash.Empty)) return null;
-            if (EntityDataList.Instance.m_Objects.TryGetValue(attHash, out ObjectBase val))
-            {
-                return (AttributeBase)val;
-            }
-            return null;
-        }
-        private static void SetAttribute(Hash attHash, object att)
-        {
-            if (attHash.Equals(Hash.Empty)) return;
-            if (EntityDataList.Instance.m_Objects.ContainsKey(attHash))
-            {
-                EntityDataList.Instance.m_Objects[attHash] = (AttributeBase)att;
-            }
-            else EntityDataList.Instance.m_Objects.Add(attHash, (AttributeBase)att);
         }
         private class TreeAttributeElement : VerticalTreeElement<AttributeBase>
         {

@@ -41,7 +41,7 @@ namespace SyadeuEditor.Presentation.Map
         private void OnGUI()
         {
             EditorGUILayout.Space();
-            EditorUtils.StringHeader("Map System", 20, true);
+            //EditorUtils.StringHeader("Map System", 20, true);
             GUILayout.Space(5);
             EditorUtils.Line();
 
@@ -165,6 +165,8 @@ namespace SyadeuEditor.Presentation.Map
         // GridMapAttribute
         private GridMapAttribute m_SceneDataGridAtt;
         private ManagedGrid m_SceneDataGrid;
+        private bool[] m_SceneDataAttributeOpen;
+        private ReflectionHelperEditor.AttributeListDrawer m_AttributeListDrawer;
 
         private bool m_debug = false;
 
@@ -230,23 +232,33 @@ namespace SyadeuEditor.Presentation.Map
             SaveNCloseButton();
             EditorUtils.Line();
 
+            if (m_SceneDataGridAtt != null)
+            {
+                //EditorGUILayout.LabelField($"{m_SceneDataGrid.gridSize}");
+
+                m_debug = EditorGUILayout.Toggle(m_debug);
+            }
+
             m_SceneDataScroll = GUILayout.BeginScrollView(m_SceneDataScroll, false, false);
             if (m_SceneDataTarget != null)
             {
-                if (m_SceneDataGridAtt != null)
+                using (new EditorUtils.BoxBlock(Color.gray))
                 {
-                    using (new EditorUtils.BoxBlock(Color.gray))
+                    EditorUtils.StringRich("SceneData", 13);
+                    EditorGUI.BeginDisabledGroup(true);
+                    ReflectionHelperEditor.DrawObject(m_SceneDataTarget, "Name", "Hash", "m_BindScene", "m_SceneIndex");
+
+                    EditorGUI.EndDisabledGroup();
+
+                    EditorUtils.Line();
+
+                    if (m_AttributeListDrawer == null)
                     {
-                        EditorUtils.StringRich("GridMap", 13);
-                        EditorGUI.BeginDisabledGroup(true);
-                        ReflectionHelperEditor.DrawObject(m_SceneDataGridAtt);
-                        EditorGUI.EndDisabledGroup();
+                        m_AttributeListDrawer = new ReflectionHelperEditor.AttributeListDrawer(string.Empty, TypeHelper.TypeOf<SceneDataEntity>.Type, m_SceneDataTarget.Attributes);
                     }
-
-                    EditorGUILayout.LabelField($"{m_SceneDataGrid.gridSize}");
-
-                    m_debug = EditorGUILayout.Toggle(m_debug);
+                    m_AttributeListDrawer.OnGUI();
                 }
+
                 EditorUtils.Line();
             }
             GUILayout.EndScrollView();
