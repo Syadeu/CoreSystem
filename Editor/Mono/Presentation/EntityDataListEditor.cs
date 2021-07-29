@@ -342,6 +342,7 @@ namespace SyadeuEditor
 
                 m_Type = Target.GetType();
 
+                if (Target.Attributes == null) Target.Attributes = new List<Hash>();
                 m_AttributeDrawer = ReflectionHelperEditor.GetAttributeDrawer(m_Type, Target.Attributes);
 
                 temp = Color.black; temp.a = .5f;
