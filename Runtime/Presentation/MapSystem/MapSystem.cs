@@ -20,7 +20,6 @@ namespace Syadeu.Presentation.Map
 
         private UnityEngine.GameObject m_MapEditorPrefab;
         private UnityEngine.GameObject m_MapEditorInstance;
-        private ManagedGrid m_MainGrid;
 
         private readonly Dictionary<SceneReference, List<SceneDataEntity>> m_SceneDataObjects = new Dictionary<SceneReference, List<SceneDataEntity>>();
 
@@ -28,6 +27,7 @@ namespace Syadeu.Presentation.Map
         private EntitySystem m_EntitySystem;
         private RenderSystem m_RenderSystem;
 
+        private KeyValuePair<SceneReference, ManagedGrid> m_MainGrid;
         private bool m_DrawGrid = false;
         private bool m_Disposed = false;
 
@@ -64,7 +64,22 @@ namespace Syadeu.Presentation.Map
                             m_SceneDataObjects.Add(targetScene, list);
                         }
 
-                        list.Add((SceneDataEntity)m_EntitySystem.CreateObject(data.Hash));
+                        SceneDataEntity ins = (SceneDataEntity)m_EntitySystem.CreateObject(data.Hash);
+                        var gridAtt = ins.GetAttribute<GridMapAttribute>();
+                        if (gridAtt != null)
+                        {
+                            if (m_MainGrid.Value == null)
+                            {
+                                m_MainGrid = new KeyValuePair<SceneReference, ManagedGrid>(targetScene, gridAtt.Grid);
+                            }
+                            else
+                            {
+                                CoreSystem.Logger.Log(Channel.Entity,
+                                    $"Attempt to load grids more then one at SceneDataEntity({ins.Name}). This is not allowed.");
+                            }
+                        }
+
+                        list.Add(ins);
                     });
 
                     other.RegisterSceneUnloadDependence(targetScene, () =>
@@ -80,6 +95,10 @@ namespace Syadeu.Presentation.Map
                             list.Clear();
 
                             m_SceneDataObjects.Remove(targetScene);
+                            if (m_MainGrid.Key.Equals(targetScene))
+                            {
+                                m_MainGrid = new KeyValuePair<SceneReference, ManagedGrid>();
+                            }
                         }
                     });
 
@@ -109,19 +128,9 @@ namespace Syadeu.Presentation.Map
 
         private void M_RenderSystem_OnRender()
         {
-            if (m_DrawGrid)
+            if (m_DrawGrid && m_MainGrid.Value != null)
             {
-                foreach (var item in m_SceneDataObjects)
-                {
-                    for (int i = 0; i < item.Value.Count; i++)
-                    {
-                        var gridAtt = item.Value[i].GetAttribute<GridMapAttribute>();
-                        if (gridAtt == null) continue;
-
-                        // TODO : 임시 코드
-                        gridAtt.Grid.DrawGL();
-                    }
-                }
+                m_MainGrid.Value.DrawGL();
             }
         }
 
