@@ -8,6 +8,7 @@ using SyadeuEditor.Tree;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
 
@@ -176,7 +177,7 @@ namespace SyadeuEditor.Presentation.Map
             public int m_SelectedGridLayer = 0;
             public GridMapAttribute.LayerInfo m_CurrentLayer = null;
 
-            public bool m_Debug = false;
+            public bool m_EditLayer = false;
 
             public GridMapExtension(GridMapAttribute att)
             {
@@ -224,6 +225,7 @@ namespace SyadeuEditor.Presentation.Map
                 m_SelectedGridLayer = EditorGUILayout.Popup("Grid Layer: ", m_SelectedGridLayer, m_GridLayerNames);
                 if (EditorGUI.EndChangeCheck())
                 {
+                    m_EditLayer = false;
                     m_CurrentLayer = GetLayer(m_SelectedGridLayer);
                     SceneView.lastActiveSceneView.Repaint();
                 }
@@ -248,8 +250,8 @@ namespace SyadeuEditor.Presentation.Map
                     ReloadLayers();
                 }
 
-                m_Debug = GUILayout.Toggle(m_Debug, "E", EditorUtils.MiniButton, GUILayout.Width(20));
-                if (m_Debug)
+                m_EditLayer = GUILayout.Toggle(m_EditLayer, "E", EditorUtils.MiniButton, GUILayout.Width(20));
+                if (m_EditLayer)
                 {
                     
                 }
@@ -257,6 +259,7 @@ namespace SyadeuEditor.Presentation.Map
 
                 EditorGUILayout.EndHorizontal();
             }
+            bool m_AddDrag = false;
             public void OnSceneGUI(SceneView obj)
             {
                 if (m_SceneDataGridAtt == null) return;
@@ -324,9 +327,10 @@ namespace SyadeuEditor.Presentation.Map
                 }
                 #endregion
 
-                if (!m_Debug || m_CurrentLayer == null) return;
+                if (!m_EditLayer || m_CurrentLayer == null) return;
 
                 int mouseControlID = GUIUtility.GetControlID(FocusType.Passive);
+                Ray ray; float dis; float3 point;
                 switch (Event.current.GetTypeForControl(mouseControlID))
                 {
                     case EventType.MouseDown:
@@ -334,8 +338,8 @@ namespace SyadeuEditor.Presentation.Map
 
                         if (Event.current.button == 0)
                         {
-                            Ray ray = EditorSceneUtils.GetMouseScreenRay();
-                            if (m_SceneDataGrid.bounds.Intersect(ray, out float dis, out var point))
+                            ray = EditorSceneUtils.GetMouseScreenRay();
+                            if (m_SceneDataGrid.bounds.Intersect(ray, out dis, out point))
                             {
                                 $"{dis} :: {point}".ToLog();
 
@@ -345,24 +349,54 @@ namespace SyadeuEditor.Presentation.Map
                                 if (tempList.Contains(idx))
                                 {
                                     tempList.Remove(idx);
+                                    m_AddDrag = false;
                                 }
-                                else tempList.Add(idx);
+                                else
+                                {
+                                    tempList.Add(idx);
+                                    m_AddDrag = true;
+                                }
                                 m_CurrentLayer.m_Indices = tempList.ToArray();
-
-                                //
-                                //GameObject temp = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                                //temp.transform.SetParent(m_PreviewFolder);
-                                //temp.transform.position = point;
                             }
                         }
                         else if (Event.current.button == 1)
                         {
-                            m_Debug = false;
+                            m_EditLayer = false;
                         }
 
                         Event.current.Use();
                         break;
+                    case EventType.MouseDrag:
+                        GUIUtility.hotControl = mouseControlID;
 
+                        ray = EditorSceneUtils.GetMouseScreenRay();
+                        if (m_SceneDataGrid.bounds.Intersect(ray, out dis, out point))
+                        {
+                            $"{dis} :: {point}".ToLog();
+
+                            int idx = m_SceneDataGrid.GetCellIndex(point);
+                            if (m_AddDrag)
+                            {
+                                if (!m_CurrentLayer.m_Indices.Contains(idx))
+                                {
+                                    List<int> tempList = m_CurrentLayer.m_Indices.ToList();
+                                    tempList.Add(idx);
+                                    m_CurrentLayer.m_Indices = tempList.ToArray();
+                                }
+                            }
+                            else
+                            {
+                                if (m_CurrentLayer.m_Indices.Contains(idx))
+                                {
+                                    List<int> tempList = m_CurrentLayer.m_Indices.ToList();
+                                    tempList.Remove(idx);
+                                    m_CurrentLayer.m_Indices = tempList.ToArray();
+                                }
+                            }
+                        }
+
+                        Event.current.Use();
+                        break;
                     case EventType.MouseUp:
                         GUIUtility.hotControl = 0;
                         if (Event.current.button == 0)
@@ -372,6 +406,7 @@ namespace SyadeuEditor.Presentation.Map
 
                         Event.current.Use();
                         break;
+                    
                 }
             }
         }
