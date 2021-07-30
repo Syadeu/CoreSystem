@@ -721,22 +721,29 @@ namespace SyadeuEditor.Presentation.Map
             {
                 const float width = 180;
 
-                var objData = m_SelectedGameObject.m_Object.GetObject();
-                var previewObj = m_PreviewObjects[m_SelectedGameObject];
-                Handles.color = Color.white;
+                EntityBase objData = m_SelectedGameObject.m_Object.GetObject();
+                GameObject previewObj = m_PreviewObjects[m_SelectedGameObject];
 
+                #region Scene GUI Overlays
                 string name = $"{(objData != null ? $"{objData.Name}" : "None")}";
-
                 Vector2 pos = HandleUtility.WorldToGUIPoint(m_SelectedGameObject.AABB.max + m_SelectedGameObject.m_Translation);
                 Rect rect = new Rect(pos, new Vector2(width, 85));
 
                 Handles.BeginGUI();
                 GUI.BeginGroup(rect, name, EditorUtils.Box);
 
+                EditorGUI.BeginChangeCheck();
                 m_SelectedGameObject.m_Translation = EditorGUILayout.Vector3Field(string.Empty, m_SelectedGameObject.m_Translation, GUILayout.Width(width - 5), GUILayout.ExpandWidth(false));
+                m_SelectedGameObject.eulerAngles = EditorGUILayout.Vector3Field(string.Empty, m_SelectedGameObject.eulerAngles, GUILayout.Width(width - 5), GUILayout.ExpandWidth(false));
+                if (EditorGUI.EndChangeCheck())
+                {
+                    if (m_PreviewObjects[m_SelectedGameObject] != null)
+                    {
+                        m_PreviewObjects[m_SelectedGameObject].transform.position = m_SelectedGameObject.m_Translation;
+                    }
+                }
 
                 if (GUI.Button(GUILayoutUtility.GetRect(width, 20, GUILayout.ExpandWidth(false)), "Remove"))
-                //if (GUILayout.Button("Remove", GUILayout.ExpandWidth(false)))
                 {
                     if (EditorUtility.DisplayDialog($"Remove ({name})", "Are you sure?", "Remove", "Cancel"))
                     {
@@ -751,6 +758,7 @@ namespace SyadeuEditor.Presentation.Map
                 }
                 GUI.EndGroup();
                 Handles.EndGUI();
+                #endregion
 
                 #region Tools
 
@@ -781,6 +789,7 @@ namespace SyadeuEditor.Presentation.Map
 
                 #endregion
 
+                #region Draw Mesh with GL
                 GridExtensions.DefaultMaterial.SetPass(0);
                 GL.PushMatrix();
                 GL.Begin(GL.TRIANGLES);
@@ -803,6 +812,7 @@ namespace SyadeuEditor.Presentation.Map
                 }
                 GL.End();
                 GL.PopMatrix();
+                #endregion
             }
 
             #endregion
@@ -977,7 +987,6 @@ namespace SyadeuEditor.Presentation.Map
             obj.m_Translation = Handles.PositionHandle(obj.m_Translation, obj.m_Rotation);
             if (EditorGUI.EndChangeCheck())
             {
-                //TreeObjectElement element = (TreeObjectElement)m_MapDataTreeView.I_Elements.FindFor((other) => other.TargetObject.Equals(obj));
                 if (m_PreviewObjects[obj] != null)
                 {
                     m_PreviewObjects[obj].transform.position = obj.m_Translation;
