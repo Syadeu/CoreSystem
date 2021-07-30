@@ -161,15 +161,10 @@ namespace SyadeuEditor
                 }
                 EditorGUILayout.EndHorizontal();
 
-                //EditorGUI.indentLevel += 1;
-
                 using (new EditorUtils.BoxBlock(m_Color))
                 {
                     DrawList();
                 }
-
-                //EditorGUI.indentLevel -= 1;
-
                 return m_CurrentList;
             }
             private void DrawList()
@@ -192,7 +187,16 @@ namespace SyadeuEditor
                         OnListChange();
                     }
 
-                    DrawAttributeSelector(null, (attHash) => m_CurrentList[i] = attHash, m_CurrentList[i], m_EntityType);
+                    DrawAttributeSelector(null, (attHash) =>
+                    {
+                        m_CurrentList[i] = attHash;
+
+                        AttributeBase targetAtt = (AttributeBase)EntityDataList.Instance.GetObject(m_CurrentList[i]);
+                        if (targetAtt != null)
+                        {
+                            m_AttributeDrawers[i] = GetDrawer(targetAtt);
+                        }
+                    }, m_CurrentList[i], m_EntityType);
 
                     if (GUILayout.Button("-", GUILayout.Width(20)))
                     {

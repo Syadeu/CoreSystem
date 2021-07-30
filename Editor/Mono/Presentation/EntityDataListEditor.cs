@@ -18,21 +18,9 @@ namespace SyadeuEditor
     {
         private VerticalTreeView treeView;
 
-        private static string[] m_AttributeNames;
-
         private void OnEnable()
         {
             LuaEditor.Reload();
-            if (Asset.m_Objects == null) m_AttributeNames = Array.Empty<string>();
-            else
-            {
-                var temp = Asset
-                    .GetAttributes()
-                    .Select((other) => other.Name)
-                    .ToList();
-                temp.Insert(0, "None");
-                m_AttributeNames = temp.ToArray();
-            }
 
             List<object> tempList = new List<object>();
             if (Asset.m_Objects != null) tempList.AddRange(Asset.m_Objects.Values);
@@ -169,17 +157,6 @@ namespace SyadeuEditor
         }
         private void RefreshTreeView()
         {
-            if (Asset.m_Objects == null) m_AttributeNames = Array.Empty<string>();
-            else
-            {
-                var temp = Asset
-                    .GetAttributes()
-                    .Select((other) => other.Name)
-                    .ToList();
-                temp.Insert(0, "None");
-                m_AttributeNames = temp.ToArray();
-            }
-
             List<object> tempList = new List<object>();
             if (Asset.m_Objects != null) tempList.AddRange(Asset.m_Objects.Values);
             treeView.Refresh(tempList);
@@ -188,8 +165,6 @@ namespace SyadeuEditor
         {
             if (GUILayout.Button("Clear"))
             {
-                //Asset.m_Entites?.Clear();
-                //Asset.m_Attributes?.Clear();
                 Asset.Purge();
                 EditorUtils.SetDirty(Asset);
                 RefreshTreeView();
@@ -208,7 +183,7 @@ namespace SyadeuEditor
                 AssetDatabase.Refresh();
                 Asset.SaveData();
 
-                RefreshTreeView();
+                //RefreshTreeView();
             }
             EditorGUILayout.EndHorizontal();
             EditorUtils.SectorLine();

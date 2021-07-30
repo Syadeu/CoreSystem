@@ -89,6 +89,14 @@ namespace SyadeuEditor.Presentation.Map
         const string c_EditInPlayingWarning = "Cannot edit data while playing";
         private void SaveNCloseButton()
         {
+            if (GUILayout.Button("Revert"))
+            {
+                EntityDataList.Instance.LoadData();
+
+                ResetAll();
+                SceneView.lastActiveSceneView.Repaint();
+                Tools.hidden = false;
+            }
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("Save"))
             {
@@ -99,10 +107,7 @@ namespace SyadeuEditor.Presentation.Map
                 ResetAll();
 
                 SceneView.lastActiveSceneView.Repaint();
-                EditorGUILayout.EndHorizontal();
-
                 Tools.hidden = false;
-                return;
             }
             EditorGUILayout.EndHorizontal();
         }
@@ -225,6 +230,7 @@ namespace SyadeuEditor.Presentation.Map
 
                 m_SelectedGameObject = target.Key;
                 m_PreviewObjects[m_SelectedGameObject].SetActive(false);
+                Repaint();
             }
         }
         private void DeselectGameObject()
@@ -233,6 +239,8 @@ namespace SyadeuEditor.Presentation.Map
             {
                 m_PreviewObjects[m_SelectedGameObject].SetActive(true);
                 m_SelectedGameObject = null;
+
+                Repaint();
             }
         }
 
@@ -665,6 +673,23 @@ namespace SyadeuEditor.Presentation.Map
                 return;
             }
 
+            if (m_SelectedGameObject != null)
+            {
+                var entity = m_SelectedGameObject.m_Object.GetObject();
+                using (new EditorUtils.BoxBlock(Color.black))
+                {
+                    EditorUtils.StringRich(entity.Name, 13);
+
+                    var gridSizeAtt = entity.GetAttribute<GridSizeAttribute>();
+                    if (gridSizeAtt != null)
+                    {
+                        Vector2Int tempGridSize = new Vector2Int(gridSizeAtt.m_GridSize.x, gridSizeAtt.m_GridSize.y);
+                        tempGridSize = EditorGUILayout.Vector2IntField("Grid Size: ", tempGridSize);
+                        gridSizeAtt.m_GridSize = new int2(tempGridSize.x, tempGridSize.y);
+                    }
+                }
+            }
+
             using (new EditorUtils.BoxBlock(Color.black))
             {
                 SaveNCloseButton();
@@ -761,8 +786,17 @@ namespace SyadeuEditor.Presentation.Map
                 #region Scene GUI Overlays
                 string name = $"{(objData != null ? $"{objData.Name}" : "None")}";
                 AABB selectAabb = m_SelectedGameObject.AABB;
-                Vector2 pos = HandleUtility.WorldToGUIPoint(selectAabb.max);
-                Rect rect = new Rect(pos, new Vector2(width, m_SelectedGameObjectOpen ? 100 : 60));
+                Vector3 worldPos = selectAabb.center; worldPos.y = selectAabb.max.y;
+                Vector2 guiPos = HandleUtility.WorldToGUIPoint(worldPos);
+                if (!EditorSceneUtils.IsDrawable(guiPos)) goto ObjectSelectionDrawTools;
+
+                if (guiPos.x + width > Screen.width) guiPos.x = Screen.width - width;
+                else
+                {
+                    guiPos.x += 50;
+                }
+
+                Rect rect = new Rect(guiPos, new Vector2(width, m_SelectedGameObjectOpen ? 100 : 60));
 
                 Handles.DrawWireCube(selectAabb.center, selectAabb.size);
 
@@ -807,6 +841,7 @@ namespace SyadeuEditor.Presentation.Map
                 #endregion
 
                 if (m_SelectedGameObject == null) goto ObjectSelectionDraw;
+                ObjectSelectionDrawTools:
 
                 #region Tools
 
@@ -864,6 +899,8 @@ namespace SyadeuEditor.Presentation.Map
             }
 
             #endregion
+
+            //GLDrawAllPreviews:
 
             #region GL Draw All previews
             GridExtensions.DefaultMaterial.SetPass(0);
