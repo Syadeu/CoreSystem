@@ -10,6 +10,8 @@ namespace Syadeu.Database
     [JsonConverter(typeof(AABBJsonConverter))]
     public struct AABB
     {
+        public static AABB Zero = new AABB(float3.zero, float3.zero);
+
         internal float3 m_Center;
         internal float3 m_Extents;
 
@@ -206,5 +208,7 @@ namespace Syadeu.Database
             return false;
         }
 
+        public static implicit operator AABB(Bounds a) => new AABB(a.center, a.size);
+        public static implicit operator Bounds(AABB a) => new Bounds(a.center, a.size);
     }
 }

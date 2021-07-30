@@ -108,6 +108,7 @@ namespace SyadeuEditor.Presentation.Map
         }
         private void ResetAll()
         {
+            DeselectGameObject();
             ResetPreviewFolder();
 
             m_MapData = new Reference<MapDataEntity>(Hash.Empty);
@@ -152,10 +153,48 @@ namespace SyadeuEditor.Presentation.Map
                     tr.rotation = mapData.m_Objects[i].m_Rotation;
                     tr.localScale = mapData.m_Objects[i].m_Scale;
 
+                    AABB aabb = new AABB(mapData.m_Objects[i].m_Translation, float3.zero);
+                    foreach (var item in obj.GetComponentsInChildren<Renderer>())
+                    {
+                        aabb.Encapsulate(item.bounds);
+                    }
+                    mapData.m_Objects[i].m_AABBCenter = aabb.center - mapData.m_Objects[i].m_Translation;
+                    mapData.m_Objects[i].m_AABBSize = aabb.size;
+
                     m_PreviewObjects.Add(mapData.m_Objects[i], obj);
                 }
             }
         }
+
+        private MapDataEntity.Object m_SelectedGameObject;
+        private void SelectGameObject(GameObject obj)
+        {
+            var iter = m_PreviewObjects.Where((other) => other.Value.Equals(obj));
+            if (iter.Any())
+            {
+                var target = iter.First();
+                if (m_SelectedGameObject != null)
+                {
+                    if (target.Value.Equals(m_SelectedGameObject)) return;
+                    else
+                    {
+                        DeselectGameObject();
+                    }
+                }
+
+                m_SelectedGameObject = target.Key;
+                m_PreviewObjects[m_SelectedGameObject].SetActive(false);
+            }
+        }
+        private void DeselectGameObject()
+        {
+            if (m_SelectedGameObject != null)
+            {
+                m_PreviewObjects[m_SelectedGameObject].SetActive(true);
+                m_SelectedGameObject = null;
+            }
+        }
+
         #endregion
 
         #region Scene Data
@@ -510,8 +549,6 @@ namespace SyadeuEditor.Presentation.Map
         private Vector2 m_MapDataScroll;
         private VerticalTreeView m_MapDataTreeView;
 
-        private MapDataEntity.Object m_SelectedGameObject;
-
         private void MapDataGUI()
         {
             #region Scene data selector
@@ -607,8 +644,6 @@ namespace SyadeuEditor.Presentation.Map
             if (m_MapDataTarget == null) return;
             Selection.activeObject = null;
 
-           
-
             #region Scene Mouse Event
             int mouseControlID = GUIUtility.GetControlID(FocusType.Passive);
             switch (Event.current.GetTypeForControl(mouseControlID))
@@ -617,31 +652,12 @@ namespace SyadeuEditor.Presentation.Map
                     if (Event.current.button == 0)
                     {
                         var tempObj = HandleUtility.PickGameObject(Event.current.mousePosition, true);
-                        var iter = m_PreviewObjects.Where((other) => other.Value.Equals(tempObj));
-                        if (iter.Any())
-                        {
-                            m_SelectedGameObject = iter.First().Key;
-                            m_PreviewObjects[m_SelectedGameObject].SetActive(false);
-                        }
-                        else
-                        {
-                            if (m_SelectedGameObject != null)
-                            {
-                                m_PreviewObjects[m_SelectedGameObject].SetActive(true);
-                                m_SelectedGameObject = null;
-                            }
-                        }
-
-                        $"{m_SelectedGameObject != null}".ToLog();
+                        SelectGameObject(tempObj);
                     }
                     #region Mouse middle button object creation
                     else if (Event.current.button == 2)
                     {
-                        if (m_SelectedGameObject != null)
-                        {
-                            m_PreviewObjects[m_SelectedGameObject].SetActive(true);
-                            m_SelectedGameObject = null;
-                        }
+                        DeselectGameObject();
 
                         GUIUtility.hotControl = mouseControlID;
 
@@ -675,6 +691,7 @@ namespace SyadeuEditor.Presentation.Map
                                 tempList.Add(objData);
                                 m_MapDataTarget.m_Objects = tempList.ToArray();
 
+                                SelectGameObject(gameObj);
                                 m_MapDataTreeView.Refresh(m_MapDataTarget.m_Objects);
                             },
                             (other) => other.Hash));
@@ -702,19 +719,36 @@ namespace SyadeuEditor.Presentation.Map
             #region Object Selection Draw
             if (m_SelectedGameObject != null)
             {
+                const float width = 180;
+
                 var objData = m_SelectedGameObject.m_Object.GetObject();
                 var previewObj = m_PreviewObjects[m_SelectedGameObject];
                 Handles.color = Color.white;
 
                 string name = $"{(objData != null ? $"{objData.Name}" : "None")}";
 
-                Vector2 pos = HandleUtility.WorldToGUIPoint(m_SelectedGameObject.m_Translation);
-                pos.x += 20;
-                Rect rect = new Rect(pos, new Vector2(100, 50));
+                Vector2 pos = HandleUtility.WorldToGUIPoint(m_SelectedGameObject.AABB.max + m_SelectedGameObject.m_Translation);
+                Rect rect = new Rect(pos, new Vector2(width, 85));
 
                 Handles.BeginGUI();
                 GUI.BeginGroup(rect, name, EditorUtils.Box);
 
+                m_SelectedGameObject.m_Translation = EditorGUILayout.Vector3Field(string.Empty, m_SelectedGameObject.m_Translation, GUILayout.Width(width - 5), GUILayout.ExpandWidth(false));
+
+                if (GUI.Button(GUILayoutUtility.GetRect(width, 20, GUILayout.ExpandWidth(false)), "Remove"))
+                //if (GUILayout.Button("Remove", GUILayout.ExpandWidth(false)))
+                {
+                    if (EditorUtility.DisplayDialog($"Remove ({name})", "Are you sure?", "Remove", "Cancel"))
+                    {
+                        var temp = m_MapDataTarget.m_Objects.ToList();
+                        temp.Remove(m_SelectedGameObject);
+                        m_MapDataTarget.m_Objects = temp.ToArray();
+
+                        m_PreviewObjects.Remove(m_SelectedGameObject);
+                        m_SelectedGameObject = null;
+                        m_MapDataTreeView.Refresh(m_MapDataTarget.m_Objects);
+                    }
+                }
                 GUI.EndGroup();
                 Handles.EndGUI();
 
@@ -773,6 +807,7 @@ namespace SyadeuEditor.Presentation.Map
 
             #endregion
 
+            #region GL Draw All previews
             GridExtensions.DefaultMaterial.SetPass(0);
             GL.PushMatrix();
             GL.Begin(GL.TRIANGLES);
@@ -790,18 +825,6 @@ namespace SyadeuEditor.Presentation.Map
                     var objData = m_MapDataTarget.m_Objects[i].m_Object.GetObject();
                     var previewObj = m_PreviewObjects[m_MapDataTarget.m_Objects[i]];
 
-                    //if (m_SelectedGameObject == null)
-                    //{
-                    //    pos.x += 20;
-                    //    Rect rect = new Rect(pos, new Vector2(100, 50));
-                    //    string name = $"[{i}] {(objData != null ? $"{objData.Name}" : "None")}";
-                    //    Handles.BeginGUI();
-                    //    GUI.BeginGroup(rect, name, EditorUtils.Box);
-
-                    //    GUI.EndGroup();
-                    //    Handles.EndGUI();
-                    //}
-
                     Vector3 objPos = previewObj.transform.position;
 
                     foreach (var item in previewObj.GetComponentsInChildren<MeshFilter>())
@@ -818,6 +841,7 @@ namespace SyadeuEditor.Presentation.Map
             }
             GL.End();
             GL.PopMatrix();
+            #endregion
         }
 
         #region TreeView

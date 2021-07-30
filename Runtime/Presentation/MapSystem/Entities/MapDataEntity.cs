@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Syadeu.Database;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using Syadeu.ThreadSafe;
@@ -17,6 +18,10 @@ namespace Syadeu.Presentation.Map
             [JsonProperty(Order = 3, PropertyName = "Scale")] public float3 m_Scale;
             [JsonProperty(Order = 4, PropertyName = "EnableCull")] public bool m_EnableCull;
 
+            [UnityEngine.Space]
+            [JsonProperty(Order = 5, PropertyName = "AABBCenter")] public float3 m_AABBCenter;
+            [JsonProperty(Order = 6, PropertyName = "AABBSize")] public float3 m_AABBSize;
+
             [JsonIgnore] public float3 eulerAngles
             {
                 get => m_Rotation.Euler().ToThreadSafe() * UnityEngine.Mathf.Rad2Deg;
@@ -26,6 +31,7 @@ namespace Syadeu.Presentation.Map
                     m_Rotation = quaternion.EulerZXY(temp);
                 }
             }
+            [JsonIgnore] public AABB AABB => new AABB(m_AABBCenter, m_AABBSize);
 
             public Object()
             {
