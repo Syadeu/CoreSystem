@@ -1,6 +1,7 @@
 ﻿using Syadeu;
 using Syadeu.Database;
 using Syadeu.Internal;
+using Syadeu.Mono;
 using Syadeu.Presentation;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Map;
@@ -94,6 +95,7 @@ namespace SyadeuEditor.Presentation.Map
                 EntityDataList.Instance.LoadData();
 
                 ResetAll();
+
                 SceneView.lastActiveSceneView.Repaint();
                 Tools.hidden = false;
             }
@@ -116,9 +118,18 @@ namespace SyadeuEditor.Presentation.Map
             DeselectGameObject();
             ResetPreviewFolder();
 
+            ResetMapData();
+            ResetSceneData();
+        }
+        private void ResetMapData()
+        {
             m_MapData = new Reference<MapDataEntity>(Hash.Empty);
             m_MapDataTarget = null;
 
+            SceneView.lastActiveSceneView.Repaint();
+        }
+        private void ResetSceneData()
+        {
             m_SceneData = new Reference<SceneDataEntity>(Hash.Empty);
             m_SceneDataTarget = null;
             m_SceneDataTargetMapDataList = null;
@@ -128,6 +139,7 @@ namespace SyadeuEditor.Presentation.Map
             m_GridMap?.Dispose();
             m_GridMap = null;
         }
+
         private void ResetPreviewFolder()
         {
             if (m_PreviewFolder != null) DestroyImmediate(m_PreviewFolder.gameObject);
@@ -229,7 +241,7 @@ namespace SyadeuEditor.Presentation.Map
                 }
 
                 m_SelectedGameObject = target.Key;
-                m_PreviewObjects[m_SelectedGameObject].SetActive(false);
+                //m_PreviewObjects[m_SelectedGameObject].SetActive(false);
                 Repaint();
             }
         }
@@ -237,7 +249,7 @@ namespace SyadeuEditor.Presentation.Map
         {
             if (m_SelectedGameObject != null)
             {
-                m_PreviewObjects[m_SelectedGameObject].SetActive(true);
+                //m_PreviewObjects[m_SelectedGameObject].SetActive(true);
                 m_SelectedGameObject = null;
 
                 Repaint();
@@ -615,6 +627,13 @@ namespace SyadeuEditor.Presentation.Map
                         SceneView.lastActiveSceneView.Repaint();
                     }
                 }, m_SceneData, TypeHelper.TypeOf<SceneDataEntity>.Type);
+
+                EditorGUI.BeginDisabledGroup(m_SceneDataTarget == null);
+                if (GUILayout.Button("Close"))
+                {
+                    ResetSceneData();
+                }
+                EditorGUI.EndDisabledGroup();
             }
             #endregion
 
@@ -684,9 +703,6 @@ namespace SyadeuEditor.Presentation.Map
                     if (gridSizeAtt != null)
                     {
                         ReflectionHelperEditor.GetDrawer(gridSizeAtt).OnGUI();
-                        //Vector2Int tempGridSize = new Vector2Int(gridSizeAtt.m_GridSize.x, gridSizeAtt.m_GridSize.y);
-                        //tempGridSize = EditorGUILayout.Vector2IntField("Grid Size: ", tempGridSize);
-                        //gridSizeAtt.m_GridSize = new int2(tempGridSize.x, tempGridSize.y);
                     }
                 }
             }
@@ -709,10 +725,12 @@ namespace SyadeuEditor.Presentation.Map
             m_GridMap?.OnSceneGUI(obj);
 
             if (m_MapDataTarget == null) return;
+            int mouseControlID = GUIUtility.GetControlID(FocusType.Passive);
+            int keyboardControlID = GUIUtility.GetControlID(FocusType.Keyboard);
             Selection.activeObject = null;
 
             #region Scene Mouse Event
-            int mouseControlID = GUIUtility.GetControlID(FocusType.Passive);
+            
             switch (Event.current.GetTypeForControl(mouseControlID))
             {
                 case EventType.MouseDown:
@@ -723,9 +741,9 @@ namespace SyadeuEditor.Presentation.Map
                     }
                     else if (Event.current.button == 2)
                     {
-                        DeselectGameObject();
-
                         GUIUtility.hotControl = mouseControlID;
+
+                        DeselectGameObject();
 
                         #region Draw Object Creation PopupWindow
                         Rect rect = GUILayoutUtility.GetLastRect();
@@ -757,9 +775,9 @@ namespace SyadeuEditor.Presentation.Map
                             (other) => other.Hash));
                         #endregion
 
-                        Event.current.Use();
-
                         Repaint();
+
+                        Event.current.Use();
                     }
 
                     break;
@@ -772,77 +790,75 @@ namespace SyadeuEditor.Presentation.Map
 
                     //Event.current.Use();
                     break;
+                default:
+                    break;
             }
             #endregion
 
             #region Object Selection Draw
-            ObjectSelectionDraw:
+            
             if (m_SelectedGameObject != null)
             {
                 const float width = 180;
 
                 EntityBase objData = m_SelectedGameObject.m_Object.GetObject();
                 GameObject previewObj = m_PreviewObjects[m_SelectedGameObject];
+                AABB selectAabb = m_SelectedGameObject.AABB;
 
                 #region Scene GUI Overlays
-                string name = $"{(objData != null ? $"{objData.Name}" : "None")}";
-                AABB selectAabb = m_SelectedGameObject.AABB;
+
                 Vector3 worldPos = selectAabb.center; worldPos.y = selectAabb.max.y;
                 Vector2 guiPos = HandleUtility.WorldToGUIPoint(worldPos);
-                if (!EditorSceneUtils.IsDrawable(guiPos)) goto ObjectSelectionDrawTools;
-
-                if (guiPos.x + width > Screen.width) guiPos.x = Screen.width - width;
-                else
+                if (EditorSceneUtils.IsDrawable(guiPos))
                 {
-                    guiPos.x += 50;
-                }
-
-                Rect rect = new Rect(guiPos, new Vector2(width, m_SelectedGameObjectOpen ? 100 : 60));
-
-                Handles.DrawWireCube(selectAabb.center, selectAabb.size);
-
-                Handles.BeginGUI();
-                GUI.BeginGroup(rect, name, EditorUtils.Box);
-
-                #region TR
-
-                m_SelectedGameObjectOpen = EditorGUILayout.Foldout(m_SelectedGameObjectOpen, "Transform", true);
-
-                if (m_SelectedGameObjectOpen)
-                {
-                    EditorGUI.BeginChangeCheck();
-                    m_SelectedGameObject.m_Translation = EditorGUILayout.Vector3Field(string.Empty, m_SelectedGameObject.m_Translation, GUILayout.Width(width - 5), GUILayout.ExpandWidth(false));
-                    m_SelectedGameObject.eulerAngles = EditorGUILayout.Vector3Field(string.Empty, m_SelectedGameObject.eulerAngles, GUILayout.Width(width - 5), GUILayout.ExpandWidth(false));
-                    if (EditorGUI.EndChangeCheck())
+                    if (guiPos.x + width > Screen.width) guiPos.x = Screen.width - width;
+                    else
                     {
-                        if (m_PreviewObjects[m_SelectedGameObject] != null)
+                        guiPos.x += 50;
+                    }
+                    Rect rect = new Rect(guiPos, new Vector2(width, m_SelectedGameObjectOpen ? 105 : 60));
+
+                    Handles.BeginGUI();
+                    string objName = $"{(objData != null ? $"{objData.Name}" : "None")}";
+                    GUI.BeginGroup(rect, objName, EditorUtils.Box);
+
+                    #region TR
+
+                    m_SelectedGameObjectOpen = EditorGUILayout.Foldout(m_SelectedGameObjectOpen, "Transform", true);
+
+                    if (m_SelectedGameObjectOpen)
+                    {
+                        EditorGUI.BeginChangeCheck();
+                        m_SelectedGameObject.m_Translation = EditorGUILayout.Vector3Field(string.Empty, m_SelectedGameObject.m_Translation, GUILayout.Width(width - 5), GUILayout.ExpandWidth(false));
+                        //m_SelectedGameObject.m_Rotation = EditorGUILayout.Vector3Field(string.Empty, m_SelectedGameObject.eulerAngles, GUILayout.Width(width - 5), GUILayout.ExpandWidth(false));
+                        if (EditorGUI.EndChangeCheck())
                         {
-                            m_PreviewObjects[m_SelectedGameObject].transform.position = m_SelectedGameObject.m_Translation;
+                            if (m_PreviewObjects[m_SelectedGameObject] != null)
+                            {
+                                m_PreviewObjects[m_SelectedGameObject].transform.position = m_SelectedGameObject.m_Translation;
+                            }
                         }
                     }
-                }
 
-                #endregion
+                    #endregion
 
-                if (GUI.Button(GUILayoutUtility.GetRect(width, 20, GUILayout.ExpandWidth(false)), "Remove"))
-                {
-                    if (EditorUtility.DisplayDialog($"Remove ({name})", "Are you sure?", "Remove", "Cancel"))
+                    if (GUI.Button(GUILayoutUtility.GetRect(width, 20, GUILayout.ExpandWidth(false)), "Remove"))
                     {
-                        var temp = m_MapDataTarget.m_Objects.ToList();
-                        temp.Remove(m_SelectedGameObject);
-                        m_MapDataTarget.m_Objects = temp.ToArray();
+                        if (EditorUtility.DisplayDialog($"Remove ({objName})", "Are you sure?", "Remove", "Cancel"))
+                        {
+                            var temp = m_MapDataTarget.m_Objects.ToList();
+                            temp.Remove(m_SelectedGameObject);
+                            m_MapDataTarget.m_Objects = temp.ToArray();
 
-                        m_PreviewObjects.Remove(m_SelectedGameObject);
-                        m_SelectedGameObject = null;
-                        m_MapDataTreeView.Refresh(m_MapDataTarget.m_Objects);
+                            m_PreviewObjects.Remove(m_SelectedGameObject);
+                            m_SelectedGameObject = null;
+                            m_MapDataTreeView.Refresh(m_MapDataTarget.m_Objects);
+                        }
                     }
+                    GUI.EndGroup();
+                    Handles.EndGUI();
                 }
-                GUI.EndGroup();
-                Handles.EndGUI();
                 #endregion
-
-                if (m_SelectedGameObject == null) goto ObjectSelectionDraw;
-                ObjectSelectionDrawTools:
 
                 #region Tools
 
@@ -873,79 +889,36 @@ namespace SyadeuEditor.Presentation.Map
 
                 #endregion
 
-                #region Draw Mesh with GL
-                GridExtensions.DefaultMaterial.SetPass(0);
-                GL.PushMatrix();
-                GL.Begin(GL.TRIANGLES);
+                Handles.color = Color.red;
+                Handles.DrawWireCube(selectAabb.center, selectAabb.size);
+
+                if (Event.current.isKey)
                 {
-                    whiteColor.a = .35f;
-                    GL.Color(whiteColor);
-
-                    Vector3 objPos = previewObj.transform.position;
-
-                    foreach (var item in previewObj.GetComponentsInChildren<MeshFilter>())
+                    if (Event.current.keyCode == KeyCode.Escape)
                     {
-                        Mesh mesh = item.sharedMesh;
-                        for (int a = 0; a < mesh.triangles.Length; a += 3)
-                        {
-                            GL.Vertex(objPos + mesh.vertices[mesh.triangles[a]]);
-                            GL.Vertex(objPos + mesh.vertices[mesh.triangles[a + 1]]);
-                            GL.Vertex(objPos + mesh.vertices[mesh.triangles[a + 2]]);
-                        }
+                        DeselectGameObject();
                     }
                 }
-                GL.End();
-                GL.PopMatrix();
-                #endregion
             }
 
             #endregion
 
-            //GLDrawAllPreviews:
-
             #region GL Draw All previews
-            GridExtensions.DefaultMaterial.SetPass(0);
-            GL.PushMatrix();
-            GL.Begin(GL.TRIANGLES);
-            {
-                whiteColor.a = .25f;
-                GL.Color(whiteColor);
 
+            if (m_SelectedGameObject == null)
+            {
+                whiteColor.a = .5f;
+                Handles.color = whiteColor;
                 for (int i = 0; i < m_MapDataTarget.m_Objects?.Length; i++)
                 {
-                    if (m_SelectedGameObject != null && m_SelectedGameObject.Equals(m_MapDataTarget.m_Objects[i])) continue;
-
                     Vector2 pos = HandleUtility.WorldToGUIPoint(m_MapDataTarget.m_Objects[i].m_Translation);
                     if (!EditorSceneUtils.IsDrawable(pos)) continue;
 
-                    EntityBase objData = m_MapDataTarget.m_Objects[i].m_Object.GetObject();
-                    GameObject previewObj = m_PreviewObjects[m_MapDataTarget.m_Objects[i]];
-
-                    Vector3 objPos = previewObj.transform.position;
-
-                    foreach (var item in previewObj.GetComponentsInChildren<MeshFilter>())
-                    {
-                        Mesh mesh = item.sharedMesh;
-                        for (int a = 0; a < mesh.triangles.Length; a += 3)
-                        {
-                            GL.Vertex(objPos + mesh.vertices[mesh.triangles[a]]);
-                            GL.Vertex(objPos + mesh.vertices[mesh.triangles[a + 1]]);
-                            GL.Vertex(objPos + mesh.vertices[mesh.triangles[a + 2]]);
-                        }
-                    }
+                    AABB aabb = m_MapDataTarget.m_Objects[i].AABB;
+                    Handles.DrawWireCube(aabb.center, aabb.size);
                 }
             }
-            GL.End();
-            GL.PopMatrix();
-            for (int i = 0; i < m_MapDataTarget.m_Objects?.Length; i++)
-            {
-                if (m_SelectedGameObject != null && m_SelectedGameObject.Equals(m_MapDataTarget.m_Objects[i])) continue;
-                Vector2 pos = HandleUtility.WorldToGUIPoint(m_MapDataTarget.m_Objects[i].m_Translation);
-                if (!EditorSceneUtils.IsDrawable(pos)) continue;
-
-                AABB aabb = m_MapDataTarget.m_Objects[i].AABB;
-                Handles.DrawWireCube(aabb.center, aabb.size);
-            }
+            
             #endregion
         }
 
