@@ -431,6 +431,7 @@ namespace Syadeu.Presentation
             ProcessEntityOnCreated(this, clone);
             return ((IObject)clone);
         }
+
 #line default
 
         #region Processor

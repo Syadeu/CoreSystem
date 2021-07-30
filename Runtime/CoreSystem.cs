@@ -826,7 +826,7 @@ namespace Syadeu
             List<Timer> activeTimers = new List<Timer>();
             List<CoreRoutine> waitForRemove = new List<CoreRoutine>();
 
-            int counter = 0, tickCounter = 0;
+            int tickCounter = 0;
             while (true)
             {
                 LogManager.s_DisplayLogChannel = m_DisplayLogChannel;
