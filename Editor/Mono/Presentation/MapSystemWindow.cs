@@ -683,9 +683,10 @@ namespace SyadeuEditor.Presentation.Map
                     var gridSizeAtt = entity.GetAttribute<GridSizeAttribute>();
                     if (gridSizeAtt != null)
                     {
-                        Vector2Int tempGridSize = new Vector2Int(gridSizeAtt.m_GridSize.x, gridSizeAtt.m_GridSize.y);
-                        tempGridSize = EditorGUILayout.Vector2IntField("Grid Size: ", tempGridSize);
-                        gridSizeAtt.m_GridSize = new int2(tempGridSize.x, tempGridSize.y);
+                        ReflectionHelperEditor.GetDrawer(gridSizeAtt).OnGUI();
+                        //Vector2Int tempGridSize = new Vector2Int(gridSizeAtt.m_GridSize.x, gridSizeAtt.m_GridSize.y);
+                        //tempGridSize = EditorGUILayout.Vector2IntField("Grid Size: ", tempGridSize);
+                        //gridSizeAtt.m_GridSize = new int2(tempGridSize.x, tempGridSize.y);
                     }
                 }
             }
