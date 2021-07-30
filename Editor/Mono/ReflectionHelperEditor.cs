@@ -449,7 +449,7 @@ namespace SyadeuEditor
             
             if (!string.IsNullOrEmpty(name))
             {
-                GUILayout.Label(name);
+                GUILayout.Label(name, GUILayout.Width(Screen.width * .25f));
             }
             
             if (GUILayout.Button(displayName, SelectorStyle, GUILayout.ExpandWidth(true)))

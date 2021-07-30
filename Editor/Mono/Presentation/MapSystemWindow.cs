@@ -654,13 +654,13 @@ namespace SyadeuEditor.Presentation.Map
                         var tempObj = HandleUtility.PickGameObject(Event.current.mousePosition, true);
                         SelectGameObject(tempObj);
                     }
-                    #region Mouse middle button object creation
                     else if (Event.current.button == 2)
                     {
                         DeselectGameObject();
 
                         GUIUtility.hotControl = mouseControlID;
 
+                        #region Draw Object Creation PopupWindow
                         Rect rect = GUILayoutUtility.GetLastRect();
                         rect.position = Event.current.mousePosition;
                         Vector3 pos = EditorSceneUtils.GetMouseScreenPos();
@@ -695,15 +695,14 @@ namespace SyadeuEditor.Presentation.Map
                                 m_MapDataTreeView.Refresh(m_MapDataTarget.m_Objects);
                             },
                             (other) => other.Hash));
+                        #endregion
 
                         Event.current.Use();
 
                         Repaint();
                     }
-                    #endregion
 
                     break;
-
                 case EventType.MouseUp:
                     //GUIUtility.hotControl = 0;
                     //if (Event.current.button == 0)
