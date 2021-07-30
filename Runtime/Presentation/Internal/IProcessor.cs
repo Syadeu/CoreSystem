@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Presentation.Internal
 {
     internal interface IProcessor
     {
