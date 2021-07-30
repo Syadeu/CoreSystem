@@ -139,31 +139,64 @@ namespace SyadeuEditor.Presentation.Map
             {
                 if (!mapData.m_Objects[i].m_Object.IsValid()) continue;
 
-                PrefabReference prefab = mapData.m_Objects[i].m_Object.GetObject().Prefab;
-                if (prefab.IsValid())
-                {
-                    var temp = prefab.GetObjectSetting().m_RefPrefab.editorAsset;
+                CreatePreviewObject(mapData.m_Objects[i]);
+                //PrefabReference prefab = mapData.m_Objects[i].m_Object.GetObject().Prefab;
+                //if (prefab.IsValid())
+                //{
+                //    var temp = prefab.GetObjectSetting().m_RefPrefab.editorAsset;
 
-                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab(temp, m_PreviewFolder);
-                    obj.tag = c_EditorOnly;
-                    obj.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
+                //    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab(temp, m_PreviewFolder);
+                //    obj.tag = c_EditorOnly;
+                //    obj.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
 
-                    Transform tr = obj.transform;
-                    tr.position = mapData.m_Objects[i].m_Translation;
-                    tr.rotation = mapData.m_Objects[i].m_Rotation;
-                    tr.localScale = mapData.m_Objects[i].m_Scale;
+                //    Transform tr = obj.transform;
+                //    tr.position = mapData.m_Objects[i].m_Translation;
+                //    tr.rotation = mapData.m_Objects[i].m_Rotation;
+                //    tr.localScale = mapData.m_Objects[i].m_Scale;
 
-                    AABB aabb = new AABB(mapData.m_Objects[i].m_Translation, float3.zero);
-                    foreach (var item in obj.GetComponentsInChildren<Renderer>())
-                    {
-                        aabb.Encapsulate(item.bounds);
-                    }
-                    mapData.m_Objects[i].m_AABBCenter = aabb.center - mapData.m_Objects[i].m_Translation;
-                    mapData.m_Objects[i].m_AABBSize = aabb.size;
+                //    AABB aabb = new AABB(mapData.m_Objects[i].m_Translation, float3.zero);
+                //    foreach (var item in obj.GetComponentsInChildren<Renderer>())
+                //    {
+                //        aabb.Encapsulate(item.bounds);
+                //    }
+                //    mapData.m_Objects[i].m_AABBCenter = aabb.center - mapData.m_Objects[i].m_Translation;
+                //    mapData.m_Objects[i].m_AABBSize = aabb.size;
 
-                    m_PreviewObjects.Add(mapData.m_Objects[i], obj);
-                }
+                //    m_PreviewObjects.Add(mapData.m_Objects[i], obj);
+                //}
             }
+        }
+        private GameObject CreatePreviewObject(MapDataEntity.Object mapDataObj)
+        {
+            if (!mapDataObj.m_Object.IsValid()) return null;
+
+            PrefabReference prefab = mapDataObj.m_Object.GetObject().Prefab;
+            if (prefab.IsValid())
+            {
+                var temp = prefab.GetObjectSetting().m_RefPrefab.editorAsset;
+
+                GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab(temp, m_PreviewFolder);
+                obj.tag = c_EditorOnly;
+                obj.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
+
+                Transform tr = obj.transform;
+                tr.position = mapDataObj.m_Translation;
+                tr.rotation = mapDataObj.m_Rotation;
+                tr.localScale = mapDataObj.m_Scale;
+
+                AABB aabb = new AABB(mapDataObj.m_Translation, float3.zero);
+                foreach (var item in obj.GetComponentsInChildren<Renderer>())
+                {
+                    aabb.Encapsulate(item.bounds);
+                }
+                mapDataObj.m_AABBCenter = aabb.center - mapDataObj.m_Translation;
+                mapDataObj.m_AABBSize = aabb.size;
+
+                m_PreviewObjects.Add(mapDataObj, obj);
+                return obj;
+            }
+
+            return null;
         }
 
         private MapDataEntity.Object m_SelectedGameObject;
@@ -676,23 +709,27 @@ namespace SyadeuEditor.Presentation.Map
                                     m_Translation = pos
                                 };
 
-                                GameObject temp = (GameObject)refobj.GetObject().Prefab.GetObjectSetting().m_RefPrefab.editorAsset;
-                                GameObject gameObj = (GameObject)PrefabUtility.InstantiatePrefab(temp, m_PreviewFolder);
-                                gameObj.tag = c_EditorOnly;
-                                gameObj.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
-                                gameObj.transform.position = pos;
+                                GameObject gameObj = CreatePreviewObject(objData);
 
-                                objData.m_Rotation = temp.transform.rotation;
-                                objData.m_Scale = temp.transform.localScale;
+                                //GameObject temp = (GameObject)refobj.GetObject().Prefab.GetObjectSetting().m_RefPrefab.editorAsset;
+                                //GameObject gameObj = (GameObject)PrefabUtility.InstantiatePrefab(temp, m_PreviewFolder);
+                                //gameObj.tag = c_EditorOnly;
+                                //gameObj.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
+                                //gameObj.transform.position = pos;
 
-                                m_PreviewObjects.Add(objData, gameObj);
+                                //objData.m_Rotation = temp.transform.rotation;
+                                //objData.m_Scale = temp.transform.localScale;
 
-                                List<MapDataEntity.Object> tempList = m_MapDataTarget.m_Objects.ToList();
-                                tempList.Add(objData);
-                                m_MapDataTarget.m_Objects = tempList.ToArray();
+                                //m_PreviewObjects.Add(objData, gameObj);
+
+                                //List<MapDataEntity.Object> tempList = m_MapDataTarget.m_Objects.ToList();
+                                //tempList.Add(objData);
+                                //m_MapDataTarget.m_Objects = tempList.ToArray();
 
                                 SelectGameObject(gameObj);
                                 m_MapDataTreeView.Refresh(m_MapDataTarget.m_Objects);
+
+                                Repaint();
                             },
                             (other) => other.Hash));
                         #endregion
