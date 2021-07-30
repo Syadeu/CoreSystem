@@ -13,10 +13,11 @@
 
         Mono = 1 << 20,
         Data = 1 << 21,
-        Entity = 1 << 22,
 
         Presentation = 1 << 30,
         Scene = 1 << 31,
+        Entity = 1 << 32,
+        Proxy = 1 << 33,
 
         Audio = 1 << 40,
 

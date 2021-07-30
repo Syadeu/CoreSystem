@@ -186,6 +186,7 @@ namespace Syadeu
 
             Instance.BackgroundJobWorkers.RemoveAt(workerIdx);
         }
+        [Obsolete]
         public static void ChangeSettingBackgroundWorker(int workerIndex, bool isStandAlone)
         {
             Instance.BackgroundJobWorkers[workerIndex].standAlone = isStandAlone;
@@ -450,6 +451,7 @@ namespace Syadeu
         private void Awake()
         {
             MainThread = Thread.CurrentThread;
+            LogManager.RegisterThread(LogManager.ThreadInfo.Unity, MainThread);
         }
         public override void OnInitialize()
         {
@@ -799,6 +801,8 @@ namespace Syadeu
         private void BackgroundWorker(System.Object stateInfo)
         {
             BackgroundThread = Thread.CurrentThread;
+            LogManager.RegisterThread(LogManager.ThreadInfo.Background, BackgroundThread);
+
             Thread.CurrentThread.CurrentCulture = global::System.Globalization.CultureInfo.InvariantCulture;
 
 #if UNITY_EDITOR
@@ -1572,6 +1576,7 @@ namespace Syadeu
         private void BackgroundJobRequest(object sender, DoWorkEventArgs e)
         {
             Thread.CurrentThread.CurrentCulture = global::System.Globalization.CultureInfo.InvariantCulture;
+            LogManager.RegisterThread(LogManager.ThreadInfo.Job, Thread.CurrentThread);
             BackgroundJob job = e.Argument as BackgroundJob;
 
             //while (!m_SimWatcher.WaitOne())
@@ -1838,9 +1843,12 @@ namespace Syadeu
 #line hidden
         public struct Logger
         {
-            public static void Log(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Normal, msg);
-            public static void LogWarning(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Warning, msg);
-            public static void LogError(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Error, msg);
+            public static void Log(Channel channel, bool logThread, string msg) => LogManager.Log(channel, ResultFlag.Normal, msg, logThread);
+            public static void Log(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Normal, msg, false);
+            public static void LogWarning(Channel channel, bool logThread, string msg) => LogManager.Log(channel, ResultFlag.Warning, msg, logThread);
+            public static void LogWarning(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Warning, msg, false);
+            public static void LogError(Channel channel, bool logThread, string msg) => LogManager.Log(channel, ResultFlag.Error, msg, logThread);
+            public static void LogError(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Error, msg,false);
 
             public static void NotNull(object obj) => LogManager.NotNull(obj, string.Empty);
             public static void NotNull(object obj, string msg) => LogManager.NotNull(obj, msg);

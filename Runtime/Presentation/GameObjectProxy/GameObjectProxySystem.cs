@@ -85,6 +85,8 @@ namespace Syadeu.Presentation
             m_SceneSystem.OnLoadingEnter += () =>
             {
                 m_LoadingLock = true;
+                CoreSystem.Logger.Log(Channel.Proxy, true,
+                    "Scene on loading enter lambda excute");
 
                 foreach (var item in m_TerminatedProxies)
                 {
