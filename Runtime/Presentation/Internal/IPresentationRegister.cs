@@ -12,6 +12,7 @@ namespace Syadeu.Presentation.Internal
     /// </remarks>
     internal interface IPresentationRegister
     {
+        bool StartOnInitialize { get; }
         /// <summary>
         /// <see langword="null"/> 이 아닐 경우, 해당 씬이 로드되거나 언로드 되면, 자동으로 활성화되고 비활성화 됩니다.
         /// </summary>

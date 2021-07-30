@@ -14,7 +14,9 @@ namespace Syadeu.Presentation
     /// </remarks>
     public abstract class PresentationGroupEntity : IPresentationRegister
     {
+        public virtual bool StartOnInitialize => false;
         public virtual SceneReference DependenceScene => null;
+
         public abstract void Register();
 
         /// <summary>

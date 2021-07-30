@@ -26,7 +26,12 @@ namespace Syadeu.Presentation
         {
             public Type m_Name;
             public Hash m_Hash;
-            public readonly List<Type> m_RegisteredSystemTypes = new List<Type>();
+            public Type[] m_RegisteredSystemTypes = null;
+            public SubSystemAttribute[] m_RequireSystemTypes = null;
+            /// <summary>
+            /// 전부 실행되고 돌아가기 직전이 아닌, 시작 명령이 내려졌을때 <see langword="true"/> 가 됩니다.<br/>
+            /// 전부 실행을 체크하려면 <seealso cref="m_MainInitDone"/> 을 사용하세요.
+            /// </summary>
             public bool m_IsStarted = false;
 
             public IPresentationSystemGroup m_SystemGroup;
@@ -104,25 +109,24 @@ namespace Syadeu.Presentation
         {
             const string register = "Register";
 
-            List<Type> registers = new List<Type>();
-            registers.AddRange(TypeHelper.GetTypes(t => !t.IsAbstract && t.GetInterfaces().FindFor(ta => ta.Equals(TypeHelper.TypeOf<IPresentationRegister>.Type)) != null));
+            Type[] registers = TypeHelper.GetTypes(t => !t.IsAbstract && t.GetInterfaces().FindFor(ta => ta.Equals(TypeHelper.TypeOf<IPresentationRegister>.Type)) != null).ToArray();
 
             MethodInfo registerMethod = TypeHelper.TypeOf<IPresentationRegister>.Type.GetMethod(register);
-
-            for (int i = 0; i < registers.Count; i++)
+            IPresentationRegister[] presentations = new IPresentationRegister[registers.Length];
+            for (int i = 0; i < registers.Length; i++)
             {
-                object ins;
-                PropertyInfo instanceProperty = registers[i].GetProperty(c_Instance, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
-                if (instanceProperty != null)
-                {
-                    ins = instanceProperty.GetGetMethod().Invoke(null, null);
-                }
-                else ins = Activator.CreateInstance(registers[i]);
-
-                registerMethod.Invoke(ins, null);
+                presentations[i] = (IPresentationRegister)Activator.CreateInstance(registers[i]);
+                registerMethod.Invoke(presentations[i], null);
             }
 
             StartPresentation(m_DefaultGroupHash);
+            for (int i = 0; i < presentations.Length; i++)
+            {
+                if (presentations[i].StartOnInitialize)
+                {
+                    StartPresentation(Hash.NewHash(registers[i].Name));
+                }
+            }
         }
 
         public override void Dispose()
@@ -176,6 +180,7 @@ namespace Syadeu.Presentation
                 list.Add(groupHash);
             }
 
+            List<Type> registedTypes = new List<Type>();
             for (int i = 0; i < systems.Length; i++)
             {
                 if (systems[i].IsAbstract || systems[i].IsInterface)
@@ -188,15 +193,20 @@ namespace Syadeu.Presentation
                     throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
                         $"{systems[i].Name}은 PresentationSystemEntity 을 상속받지 않아, 등록할 수 없습니다.");
                 }
-                if (group.m_RegisteredSystemTypes.Contains(systems[i]))
+                if (registedTypes.Contains(systems[i]))
                 {
                     throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
                         $"{systems[i].Name}은 이미 등록된 시스템입니다.");
                 }
-                group.m_RegisteredSystemTypes.Add(systems[i]);
+
+                registedTypes.Add(systems[i]);
+
                 Instance.m_RegisteredGroup.Add(systems[i], groupHash);
                 CoreSystem.Logger.Log(Channel.Presentation, $"System ({groupName.Name.Split('.').Last()}): {systems[i].Name} Registered");
             }
+
+            group.m_RegisteredSystemTypes = registedTypes.ToArray();
+            group.m_RequireSystemTypes = registedTypes.Select((other) => other.GetCustomAttribute<SubSystemAttribute>()).ToArray();
 
             CoreSystem.Logger.Log(Channel.Presentation, $"Registration Ended ({groupName.Name.Split('.').Last()}), number of {systems.Length}");
         }
@@ -210,7 +220,7 @@ namespace Syadeu.Presentation
                 return null;
             }
 
-            for (int i = 0; i < group.m_RegisteredSystemTypes.Count; i++)
+            for (int i = 0; i < group.m_RegisteredSystemTypes.Length; i++)
             {
                 Type t = group.m_RegisteredSystemTypes[i];
                 ConstructorInfo ctor = t.GetConstructor(BindingFlags.Instance | BindingFlags.Public, null, CallingConventions.HasThis, Array.Empty<Type>(), null);
@@ -292,9 +302,40 @@ namespace Syadeu.Presentation
                 group.m_Initializers[i].OnInitialize();
             }
             group.m_MainthreadSignal = true;
-            
 
-            //$"main pre in".ToLog();
+            float dateTime = Time.realtimeSinceStartup;
+            for (int i = 0; i < group.m_RequireSystemTypes.Length; i++)
+            {
+                if (group.m_RequireSystemTypes[i] == null) continue;
+
+                if (!Instance.m_RegisteredGroup.TryGetValue(group.m_RequireSystemTypes[i].m_Target, out Hash groupHash) ||
+                        !Instance.m_PresentationGroups.TryGetValue(groupHash, out Group targetGroup))
+                {
+                    CoreSystem.Logger.LogError(Channel.Presentation,
+                        $"{group.m_RequireSystemTypes[i].m_Target.Name} is not registered. Request ignored.");
+                    continue;
+                }
+
+                if (targetGroup.Equals(group))
+                {
+                    CoreSystem.Logger.LogError(Channel.Presentation,
+                        $"This system({group.m_RegisteredSystemTypes[i].Name}) declared sub system of it\'s own system group. This is not allowed.");
+                    continue;
+                }
+
+                dateTime = Time.realtimeSinceStartup;
+                while (!targetGroup.m_MainInitDone)
+                {
+                    if (dateTime + 10 < Time.realtimeSinceStartup)
+                    {
+                        CoreSystem.Logger.LogWarning(Channel.Presentation,
+                            $"The system group({group.m_Name.Name}) is awaiting too long because waiting system initialize target ({group.m_RequireSystemTypes[i].m_Target.Name})");
+
+                        dateTime = Time.realtimeSinceStartup;
+                    }
+                    yield return null;
+                }
+            }
 
             for (int i = 0; i < group.m_Systems.Count; i++)
             {
@@ -304,13 +345,16 @@ namespace Syadeu.Presentation
                 }
             }
 
-            DateTime dateTime = DateTime.Now;
+            dateTime = Time.realtimeSinceStartup;
             yield return new WaitUntil(() =>
             {
-                ////if (dateTime.Ticks + 1000 < DateTime.Now.Ticks)
-                //{
-                //    "waitting m_BackgroundthreadSignal".ToLog();
-                //}
+                if (dateTime + 10 < Time.realtimeSinceStartup)
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Presentation,
+                        $"The system({group.m_Name.Name}) is awaiting too long. Maybe unexpected handles?");
+
+                    dateTime = Time.realtimeSinceStartup;
+                }
                 return group.m_BackgroundthreadSignal;
             });
             for (int i = 0; i < group.m_Initializers.Count; i++)
