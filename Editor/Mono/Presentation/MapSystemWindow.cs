@@ -853,6 +853,8 @@ namespace SyadeuEditor.Presentation.Map
                             m_PreviewObjects.Remove(m_SelectedGameObject);
                             m_SelectedGameObject = null;
                             m_MapDataTreeView.Refresh(m_MapDataTarget.m_Objects);
+
+                            goto DrawAllPreviewSection;
                         }
                     }
                     GUI.EndGroup();
@@ -902,6 +904,8 @@ namespace SyadeuEditor.Presentation.Map
             }
 
             #endregion
+
+            DrawAllPreviewSection:
 
             #region GL Draw All previews
 

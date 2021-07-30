@@ -4,7 +4,7 @@ using System;
 
 namespace Syadeu.Presentation.Entities
 {
-    [Serializable]
+    [Obsolete]
     public sealed class CreatureEntity : EntityBase
     {
         [JsonProperty(Order = 0, PropertyName = "HP")] public float m_HP;

@@ -3,6 +3,7 @@ using Syadeu.Database;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using Syadeu.ThreadSafe;
+using System;
 using Unity.Mathematics;
 
 namespace Syadeu.Presentation.Map
@@ -10,7 +11,7 @@ namespace Syadeu.Presentation.Map
     [EntityAcceptOnly(typeof(MapDataAttributeBase))]
     public sealed class MapDataEntity : EntityDataBase
     {
-        public class Object
+        public class Object : ICloneable
         {
             [JsonProperty(Order = 0, PropertyName = "Object")] public Reference<EntityBase> m_Object;
             [JsonProperty(Order = 1, PropertyName = "Translation")] public float3 m_Translation;
@@ -38,6 +39,7 @@ namespace Syadeu.Presentation.Map
                 m_Rotation = quaternion.identity;
                 m_EnableCull = true;
             }
+            public object Clone() => MemberwiseClone();
         }
 
         [JsonProperty(Order = 0, PropertyName = "Objects")] public Object[] m_Objects;
@@ -45,10 +47,20 @@ namespace Syadeu.Presentation.Map
         [JsonIgnore] public IEntity[] CreatedEntities { get; internal set; }
         [JsonIgnore] public bool DestroyChildOnDestroy { get; set; } = true;
 
-        public override bool IsValid()
+        public override bool IsValid() => true;
+        public override ObjectBase Copy()
         {
-            return true;
+            MapDataEntity clone = (MapDataEntity)base.Copy();
+            Object[] temp = new Object[m_Objects.Length];
+            for (int i = 0; i < temp.Length; i++)
+            {
+                temp[i] = (Object)m_Objects[i].Clone();
+            }
+            clone.m_Objects = temp;
+            clone.CreatedEntities = null;
+            clone.DestroyChildOnDestroy = true;
 
+            return clone;
         }
     }
     public sealed class MapDataProcessor : EntityDataProcessor<MapDataEntity>
