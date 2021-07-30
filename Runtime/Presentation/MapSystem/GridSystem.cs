@@ -67,7 +67,7 @@ namespace Syadeu.Presentation.Map
                 }
                 else
                 {
-                    CoreSystem.Logger.LogError(Channel.Entity,
+                    CoreSystem.Logger.LogError(Channel.Presentation,
                         $"Attempt to load grids more then one at SceneDataEntity({sceneData.Name}). This is not allowed.");
                 }
             }
