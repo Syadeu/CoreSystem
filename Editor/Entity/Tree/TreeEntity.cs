@@ -28,11 +28,11 @@ namespace SyadeuEditor.Tree
         public void AddElements<T>(IList<T> elements, TreeElementEntity parent, int insertPosition) where T : TreeElementEntity
         {
             if (elements == null)
-                throw new System.ArgumentNullException("elements", "elements is null");
+                throw new System.ArgumentNullException(nameof(elements), "elements is null");
             if (elements.Count == 0)
-                throw new System.ArgumentNullException("elements", "elements Count is 0: nothing to add");
+                throw new System.ArgumentNullException(nameof(elements), "elements Count is 0: nothing to add");
             if (parent == null)
-                throw new System.ArgumentNullException("parent", "parent is null");
+                throw new System.ArgumentNullException(nameof(parent), "parent is null");
 
             if (parent.Childs == null)
                 parent.Childs = new List<TreeElementEntity>();
@@ -169,7 +169,7 @@ namespace SyadeuEditor.Tree
             }
             return new List<int>();
         }
-        private IList<int> GetParentsBelowStackBased(TreeElementEntity searchFromThis)
+        private static IList<int> GetParentsBelowStackBased(TreeElementEntity searchFromThis)
         {
             Stack<TreeElementEntity> stack = new Stack<TreeElementEntity>();
             stack.Push(searchFromThis);
@@ -231,7 +231,7 @@ namespace SyadeuEditor.Tree
         public static void UpdateDepthValues<T>(T root) where T : TreeElementEntity
         {
             if (root == null)
-                throw new System.ArgumentNullException("root", "The root is null");
+                throw new System.ArgumentNullException(nameof(root), "The root is null");
 
             if (!root.HasChilds)
                 return;

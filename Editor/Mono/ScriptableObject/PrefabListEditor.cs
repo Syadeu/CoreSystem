@@ -27,7 +27,7 @@ namespace SyadeuEditor
                 if (m_DefaultGroup == null)
                 {
                     var tempList = DefaultSettings.groups.Where((other) => other.Name.Equals("PrefabList"));
-                    if (tempList.Count() == 0)
+                    if (!tempList.Any())
                     {
                         m_DefaultGroup = DefaultSettings.CreateGroup("PrefabList", false, false, true, null);
                         m_DefaultGroup.AddSchema(new ContentUpdateGroupSchema()
