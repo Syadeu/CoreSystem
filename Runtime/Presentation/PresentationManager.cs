@@ -15,6 +15,7 @@ using UnityEngine.Assertions;
 namespace Syadeu.Presentation
 {
     [StaticManagerIntializeOnLoad]
+    [UnityEngine.AddComponentMenu("")]
     public sealed class PresentationManager : StaticDataManager<PresentationManager>
     {
         const string c_Instance = "Instance";

@@ -750,6 +750,7 @@ namespace SyadeuEditor.Presentation.Map
             #endregion
 
             #region Object Selection Draw
+            ObjectSelectionDraw:
             if (m_SelectedGameObject != null)
             {
                 const float width = 180;
@@ -805,7 +806,7 @@ namespace SyadeuEditor.Presentation.Map
                 Handles.EndGUI();
                 #endregion
 
-                if (m_SelectedGameObject == null) return;
+                if (m_SelectedGameObject == null) goto ObjectSelectionDraw;
 
                 #region Tools
 

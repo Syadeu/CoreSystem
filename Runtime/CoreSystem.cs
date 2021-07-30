@@ -27,6 +27,7 @@ namespace Syadeu
     [StaticManagerDescription(
         "CoreSystem's main system.\n" +
         "You can register all background works through this system.")]
+    [AddComponentMenu("")]
     public sealed class CoreSystem : StaticManager<CoreSystem>
     {
         #region Managers
