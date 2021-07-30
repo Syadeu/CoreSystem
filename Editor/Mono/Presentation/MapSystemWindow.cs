@@ -759,6 +759,8 @@ namespace SyadeuEditor.Presentation.Map
                 Handles.EndGUI();
                 #endregion
 
+                if (m_SelectedGameObject == null) return;
+
                 #region Tools
 
                 EditorGUI.BeginChangeCheck();
@@ -892,7 +894,11 @@ namespace SyadeuEditor.Presentation.Map
                     if (m_PreviewObjects.TryGetValue(target, out var tempObj) && tempObj != null)
                     {
                         DestroyImmediate(m_PreviewObjects[target]);
-                        m_PreviewObjects[target] = null;
+                        if (m_SelectedGameObject.Equals(target))
+                        {
+                            DeselectGameObject();
+                        }
+                        m_PreviewObjects.Remove(target);
                     }
 
                     data.m_Objects = temp.ToArray();
