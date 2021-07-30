@@ -37,16 +37,70 @@ namespace Syadeu.Database
             center = min + extents;
         }
 
+        public bool Intersect(Ray ray)
+        {
+            float3x4[] squares = GetSquares(in this);
+
+            for (int i = 0; i < squares.Length; i++)
+            {
+                if (IntersectQuad(squares[i].c0, squares[i].c1, squares[i].c2, squares[i].c3, ray, out _))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        public bool Intersect(Ray ray, out float distance)
+        {
+            distance = float.MaxValue;
+            float3x4[] squares = GetSquares(in this);
+
+            bool intersect = false;
+            for (int i = 0; i < squares.Length; i++)
+            {
+                if (IntersectQuad(squares[i].c0, squares[i].c1, squares[i].c2, squares[i].c3, ray, out float tempDistance))
+                {
+                    if (tempDistance < distance)
+                    {
+                        distance = tempDistance;
+                    }
+                    intersect = true;
+                }
+            }
+            return intersect;
+        }
         public bool Intersect(Ray ray, out float distance, out float3 point)
         {
             point = new float3(float.MaxValue, float.MaxValue, float.MaxValue);
-            distance = float.MaxValue;
+            bool intersect = Intersect(ray, out distance);
+            if (intersect)
+            {
+                point = ray.origin + (ray.direction * distance);
+            }
 
-            float3 
-                minPos = min,
-                maxPos = max;
+            return intersect;
+        }
+        public bool Intersect(AABB aabb)
+        {
+            return (min.x <= aabb.max.x) && (max.x >= aabb.min.x) &&
+                (min.y <= aabb.max.y) && (max.y >= aabb.min.y) &&
+                (min.z <= aabb.max.z) && (max.z >= aabb.min.z);
+        }
 
-            float3x4[] squares = new float3x4[] {
+        public void Encapsulate(float3 point) => SetMinMax(Vector3.Min(min, point), Vector3.Max(max, point));
+        public void Encapsulate(AABB aabb)
+        {
+            Encapsulate(aabb.center - aabb.extents);
+            Encapsulate(aabb.center + aabb.extents);
+        }
+
+        private static float3x4[] GetSquares(in AABB aabb)
+        {
+            float3
+                minPos = aabb.min,
+                maxPos = aabb.max;
+
+            return new float3x4[] {
                 new float3x4(
                     minPos,
                     new float3(minPos.x, minPos.y, maxPos.z),
@@ -84,23 +138,7 @@ namespace Syadeu.Database
                     new float3(maxPos.x, maxPos.y, minPos.z)
                     )
             };
-
-            bool intersect = false;
-            for (int i = 0; i < squares.Length; i++)
-            {
-                if (IntersectQuad(squares[i].c0, squares[i].c1, squares[i].c2, squares[i].c3, ray, out float tempDistance))
-                {
-                    if (tempDistance < distance)
-                    {
-                        distance = tempDistance;
-                        point = ray.origin + (ray.direction * distance);
-                    }
-                    intersect = true;
-                }
-            }
-            return intersect;
         }
-
         private static bool IntersectQuad(float3 p1, float3 p2, float3 p3, float3 p4, Ray ray, out float distance)
         {
             if (IntersectTriangle(p1, p2, p4, ray, out distance)) return true;
