@@ -10,11 +10,13 @@ namespace Syadeu.Presentation.Map
     [EntityAcceptOnly(typeof(SceneDataAttributeBase))]
     public sealed class SceneDataEntity : EntityDataBase
     {
+#pragma warning disable IDE0044 // Add readonly modifier
         [Tooltip("SceneIndex 의 씬이 로드될때 자동으로 데이터를 생성하나요?")]
         [JsonProperty(Order = 0, PropertyName = "BindScene")] internal bool m_BindScene;
         [Tooltip("SceneList.Scenes 의 Index")]
         [JsonProperty(Order = 1, PropertyName = "SceneIndex")] private int m_SceneIndex;
         [JsonProperty(Order = 2, PropertyName = "MapData")] private Reference<MapDataEntity>[] m_MapData;
+#pragma warning restore IDE0044 // Add readonly modifier
 
         [JsonIgnore] public bool IsMapDataCreated { get; private set; } = false;
         [JsonIgnore] public List<IObject> CreatedMapData { get; } = new List<IObject>();

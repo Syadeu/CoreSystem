@@ -509,6 +509,9 @@ namespace SyadeuEditor.Presentation.Map
         private MapDataEntity m_MapDataTarget;
         private Vector2 m_MapDataScroll;
         private VerticalTreeView m_MapDataTreeView;
+
+        private MapDataEntity.Object m_SelectedGameObject;
+
         private void MapDataGUI()
         {
             #region Scene data selector
@@ -569,7 +572,7 @@ namespace SyadeuEditor.Presentation.Map
                 return;
             }
 
-            if (m_GridMap != null)
+            if (m_GridMap != null && m_GridMap.m_SceneDataGridAtt != null)
             {
                 using (new EditorUtils.BoxBlock(Color.black))
                 {
@@ -596,72 +599,50 @@ namespace SyadeuEditor.Presentation.Map
                 GUILayout.EndScrollView();
             }
         }
+        Color whiteColor = Color.white;
         private void MapDataSceneGUI(SceneView obj)
         {
             m_GridMap?.OnSceneGUI(obj);
 
             if (m_MapDataTarget == null) return;
+            Selection.activeObject = null;
 
-            Color origin = Handles.color;
-            Handles.color = Color.black;
+           
 
-            for (int i = 0; i < m_MapDataTarget.m_Objects?.Length; i++)
-            {
-                var objData = m_MapDataTarget.m_Objects[i].m_Object.GetObject();
-                Handles.color = Color.white;
-
-                string name = $"[{i}] {(objData != null ? $"{objData.Name}" : "None")}";
-
-                Vector2 pos = HandleUtility.WorldToGUIPoint(m_MapDataTarget.m_Objects[i].m_Translation);
-                if (!EditorSceneUtils.IsDrawable(pos)) continue;
-
-                pos.x += 20;
-                Rect rect = new Rect(pos, new Vector2(100, 50));
-
-                Handles.BeginGUI();
-                GUI.BeginGroup(rect, name, EditorUtils.Box);
-
-                GUI.EndGroup();
-                Handles.EndGUI();
-
-                EditorGUI.BeginChangeCheck();
-
-                switch (Tools.current)
-                {
-                    case Tool.View:
-                        break;
-                    case Tool.Move:
-                        DrawMoveTool(m_MapDataTarget.m_Objects[i]);
-                        break;
-                    case Tool.Rotate:
-                        DrawRotationTool(m_MapDataTarget.m_Objects[i]);
-                        break;
-                    case Tool.Scale:
-                        break;
-                    case Tool.Rect:
-                        break;
-                    case Tool.Transform:
-                        break;
-                    default:
-                        break;
-                }
-
-                if (EditorGUI.EndChangeCheck())
-                {
-                    Repaint();
-                }
-            }
-
-            Handles.color = origin;
-
+            #region Scene Mouse Event
             int mouseControlID = GUIUtility.GetControlID(FocusType.Passive);
             switch (Event.current.GetTypeForControl(mouseControlID))
             {
                 case EventType.MouseDown:
-                    
-
-                    if (Event.current.button == 2)
+                    if (Event.current.button == 0)
                     {
+                        var tempObj = HandleUtility.PickGameObject(Event.current.mousePosition, true);
+                        var iter = m_PreviewObjects.Where((other) => other.Value.Equals(tempObj));
+                        if (iter.Any())
+                        {
+                            m_SelectedGameObject = iter.First().Key;
+                            m_PreviewObjects[m_SelectedGameObject].SetActive(false);
+                        }
+                        else
+                        {
+                            if (m_SelectedGameObject != null)
+                            {
+                                m_PreviewObjects[m_SelectedGameObject].SetActive(true);
+                                m_SelectedGameObject = null;
+                            }
+                        }
+
+                        $"{m_SelectedGameObject != null}".ToLog();
+                    }
+                    #region Mouse middle button object creation
+                    else if (Event.current.button == 2)
+                    {
+                        if (m_SelectedGameObject != null)
+                        {
+                            m_PreviewObjects[m_SelectedGameObject].SetActive(true);
+                            m_SelectedGameObject = null;
+                        }
+
                         GUIUtility.hotControl = mouseControlID;
 
                         Rect rect = GUILayoutUtility.GetLastRect();
@@ -699,9 +680,13 @@ namespace SyadeuEditor.Presentation.Map
                             (other) => other.Hash));
 
                         Event.current.Use();
+
+                        Repaint();
                     }
+                    #endregion
 
                     break;
+
                 case EventType.MouseUp:
                     //GUIUtility.hotControl = 0;
                     //if (Event.current.button == 0)
@@ -712,6 +697,127 @@ namespace SyadeuEditor.Presentation.Map
                     //Event.current.Use();
                     break;
             }
+            #endregion
+
+            #region Object Selection Draw
+            if (m_SelectedGameObject != null)
+            {
+                var objData = m_SelectedGameObject.m_Object.GetObject();
+                var previewObj = m_PreviewObjects[m_SelectedGameObject];
+                Handles.color = Color.white;
+
+                string name = $"{(objData != null ? $"{objData.Name}" : "None")}";
+
+                Vector2 pos = HandleUtility.WorldToGUIPoint(m_SelectedGameObject.m_Translation);
+                pos.x += 20;
+                Rect rect = new Rect(pos, new Vector2(100, 50));
+
+                Handles.BeginGUI();
+                GUI.BeginGroup(rect, name, EditorUtils.Box);
+
+                GUI.EndGroup();
+                Handles.EndGUI();
+
+                #region Tools
+
+                EditorGUI.BeginChangeCheck();
+                switch (Tools.current)
+                {
+                    case Tool.View:
+                        break;
+                    case Tool.Move:
+                        DrawMoveTool(m_SelectedGameObject);
+                        break;
+                    case Tool.Rotate:
+                        DrawRotationTool(m_SelectedGameObject);
+                        break;
+                    case Tool.Scale:
+                        break;
+                    case Tool.Rect:
+                        break;
+                    case Tool.Transform:
+                        break;
+                    default:
+                        break;
+                }
+                if (EditorGUI.EndChangeCheck())
+                {
+                    Repaint();
+                }
+
+                #endregion
+
+                GridExtensions.DefaultMaterial.SetPass(0);
+                GL.PushMatrix();
+                GL.Begin(GL.TRIANGLES);
+                {
+                    whiteColor.a = .35f;
+                    GL.Color(whiteColor);
+
+                    Vector3 objPos = previewObj.transform.position;
+
+                    foreach (var item in previewObj.GetComponentsInChildren<MeshFilter>())
+                    {
+                        Mesh mesh = item.sharedMesh;
+                        for (int a = 0; a < mesh.triangles.Length; a += 3)
+                        {
+                            GL.Vertex(objPos + mesh.vertices[mesh.triangles[a]]);
+                            GL.Vertex(objPos + mesh.vertices[mesh.triangles[a + 1]]);
+                            GL.Vertex(objPos + mesh.vertices[mesh.triangles[a + 2]]);
+                        }
+                    }
+                }
+                GL.End();
+                GL.PopMatrix();
+            }
+
+            #endregion
+
+            GridExtensions.DefaultMaterial.SetPass(0);
+            GL.PushMatrix();
+            GL.Begin(GL.TRIANGLES);
+            {
+                whiteColor.a = .25f;
+                GL.Color(whiteColor);
+
+                for (int i = 0; i < m_MapDataTarget.m_Objects?.Length; i++)
+                {
+                    if (m_SelectedGameObject != null && m_SelectedGameObject.Equals(m_MapDataTarget.m_Objects[i])) continue;
+
+                    Vector2 pos = HandleUtility.WorldToGUIPoint(m_MapDataTarget.m_Objects[i].m_Translation);
+                    if (!EditorSceneUtils.IsDrawable(pos)) continue;
+
+                    var objData = m_MapDataTarget.m_Objects[i].m_Object.GetObject();
+                    var previewObj = m_PreviewObjects[m_MapDataTarget.m_Objects[i]];
+
+                    //if (m_SelectedGameObject == null)
+                    //{
+                    //    pos.x += 20;
+                    //    Rect rect = new Rect(pos, new Vector2(100, 50));
+                    //    string name = $"[{i}] {(objData != null ? $"{objData.Name}" : "None")}";
+                    //    Handles.BeginGUI();
+                    //    GUI.BeginGroup(rect, name, EditorUtils.Box);
+
+                    //    GUI.EndGroup();
+                    //    Handles.EndGUI();
+                    //}
+
+                    Vector3 objPos = previewObj.transform.position;
+
+                    foreach (var item in previewObj.GetComponentsInChildren<MeshFilter>())
+                    {
+                        Mesh mesh = item.sharedMesh;
+                        for (int a = 0; a < mesh.triangles.Length; a += 3)
+                        {
+                            GL.Vertex(objPos + mesh.vertices[mesh.triangles[a]]);
+                            GL.Vertex(objPos + mesh.vertices[mesh.triangles[a + 1]]);
+                            GL.Vertex(objPos + mesh.vertices[mesh.triangles[a + 2]]);
+                        }
+                    }
+                }
+            }
+            GL.End();
+            GL.PopMatrix();
         }
 
         #region TreeView

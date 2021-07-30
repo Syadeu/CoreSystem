@@ -17,6 +17,16 @@ namespace Syadeu.Presentation.Map
             [JsonProperty(Order = 3, PropertyName = "Scale")] public float3 m_Scale;
             [JsonProperty(Order = 4, PropertyName = "EnableCull")] public bool m_EnableCull;
 
+            [JsonIgnore] public float3 eulerAngles
+            {
+                get => m_Rotation.Euler().ToThreadSafe() * UnityEngine.Mathf.Rad2Deg;
+                set
+                {
+                    Vector3 temp = new Vector3(value.x * UnityEngine.Mathf.Deg2Rad, value.y * UnityEngine.Mathf.Deg2Rad, value.z * UnityEngine.Mathf.Deg2Rad);
+                    m_Rotation = quaternion.EulerZXY(temp);
+                }
+            }
+
             public Object()
             {
                 m_Rotation = quaternion.identity;
