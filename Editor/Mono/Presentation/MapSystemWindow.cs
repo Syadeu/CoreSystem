@@ -207,6 +207,7 @@ namespace SyadeuEditor.Presentation.Map
         }
 
         private MapDataEntity.Object m_SelectedGameObject;
+        private bool m_SelectedGameObjectOpen = false;
         private void SelectGameObject(GameObject obj)
         {
             var iter = m_PreviewObjects.Where((other) => other.Value.Equals(obj));
@@ -718,17 +719,6 @@ namespace SyadeuEditor.Presentation.Map
 
                                 GameObject gameObj = CreatePreviewObject(objData, true);
 
-                                //GameObject temp = (GameObject)refobj.GetObject().Prefab.GetObjectSetting().m_RefPrefab.editorAsset;
-                                //GameObject gameObj = (GameObject)PrefabUtility.InstantiatePrefab(temp, m_PreviewFolder);
-                                //gameObj.tag = c_EditorOnly;
-                                //gameObj.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
-                                //gameObj.transform.position = pos;
-
-                                //objData.m_Rotation = temp.transform.rotation;
-                                //objData.m_Scale = temp.transform.localScale;
-
-                                //m_PreviewObjects.Add(objData, gameObj);
-
                                 List<MapDataEntity.Object> tempList = m_MapDataTarget.m_Objects.ToList();
                                 tempList.Add(objData);
                                 m_MapDataTarget.m_Objects = tempList.ToArray();
@@ -769,24 +759,34 @@ namespace SyadeuEditor.Presentation.Map
 
                 #region Scene GUI Overlays
                 string name = $"{(objData != null ? $"{objData.Name}" : "None")}";
-                Vector2 pos = HandleUtility.WorldToGUIPoint(m_SelectedGameObject.AABB.max + m_SelectedGameObject.m_Translation);
-                Rect rect = new Rect(pos, new Vector2(width, 85));
+                AABB selectAabb = m_SelectedGameObject.AABB;
+                Vector2 pos = HandleUtility.WorldToGUIPoint(selectAabb.max);
+                Rect rect = new Rect(pos, new Vector2(width, m_SelectedGameObjectOpen ? 100 : 60));
 
-                Handles.DrawWireCube(m_SelectedGameObject.m_AABBCenter, m_SelectedGameObject.m_AABBSize);
+                Handles.DrawWireCube(selectAabb.center, selectAabb.size);
 
                 Handles.BeginGUI();
                 GUI.BeginGroup(rect, name, EditorUtils.Box);
 
-                EditorGUI.BeginChangeCheck();
-                m_SelectedGameObject.m_Translation = EditorGUILayout.Vector3Field(string.Empty, m_SelectedGameObject.m_Translation, GUILayout.Width(width - 5), GUILayout.ExpandWidth(false));
-                m_SelectedGameObject.eulerAngles = EditorGUILayout.Vector3Field(string.Empty, m_SelectedGameObject.eulerAngles, GUILayout.Width(width - 5), GUILayout.ExpandWidth(false));
-                if (EditorGUI.EndChangeCheck())
+                #region TR
+
+                m_SelectedGameObjectOpen = EditorGUILayout.Foldout(m_SelectedGameObjectOpen, "Transform", true);
+
+                if (m_SelectedGameObjectOpen)
                 {
-                    if (m_PreviewObjects[m_SelectedGameObject] != null)
+                    EditorGUI.BeginChangeCheck();
+                    m_SelectedGameObject.m_Translation = EditorGUILayout.Vector3Field(string.Empty, m_SelectedGameObject.m_Translation, GUILayout.Width(width - 5), GUILayout.ExpandWidth(false));
+                    m_SelectedGameObject.eulerAngles = EditorGUILayout.Vector3Field(string.Empty, m_SelectedGameObject.eulerAngles, GUILayout.Width(width - 5), GUILayout.ExpandWidth(false));
+                    if (EditorGUI.EndChangeCheck())
                     {
-                        m_PreviewObjects[m_SelectedGameObject].transform.position = m_SelectedGameObject.m_Translation;
+                        if (m_PreviewObjects[m_SelectedGameObject] != null)
+                        {
+                            m_PreviewObjects[m_SelectedGameObject].transform.position = m_SelectedGameObject.m_Translation;
+                        }
                     }
                 }
+
+                #endregion
 
                 if (GUI.Button(GUILayoutUtility.GetRect(width, 20, GUILayout.ExpandWidth(false)), "Remove"))
                 {
@@ -879,8 +879,8 @@ namespace SyadeuEditor.Presentation.Map
                     Vector2 pos = HandleUtility.WorldToGUIPoint(m_MapDataTarget.m_Objects[i].m_Translation);
                     if (!EditorSceneUtils.IsDrawable(pos)) continue;
 
-                    var objData = m_MapDataTarget.m_Objects[i].m_Object.GetObject();
-                    var previewObj = m_PreviewObjects[m_MapDataTarget.m_Objects[i]];
+                    EntityBase objData = m_MapDataTarget.m_Objects[i].m_Object.GetObject();
+                    GameObject previewObj = m_PreviewObjects[m_MapDataTarget.m_Objects[i]];
 
                     Vector3 objPos = previewObj.transform.position;
 
@@ -898,6 +898,15 @@ namespace SyadeuEditor.Presentation.Map
             }
             GL.End();
             GL.PopMatrix();
+            for (int i = 0; i < m_MapDataTarget.m_Objects?.Length; i++)
+            {
+                if (m_SelectedGameObject != null && m_SelectedGameObject.Equals(m_MapDataTarget.m_Objects[i])) continue;
+                Vector2 pos = HandleUtility.WorldToGUIPoint(m_MapDataTarget.m_Objects[i].m_Translation);
+                if (!EditorSceneUtils.IsDrawable(pos)) continue;
+
+                AABB aabb = m_MapDataTarget.m_Objects[i].AABB;
+                Handles.DrawWireCube(aabb.center, aabb.size);
+            }
             #endregion
         }
 
