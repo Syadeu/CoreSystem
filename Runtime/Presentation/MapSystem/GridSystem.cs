@@ -1,6 +1,7 @@
 ﻿using Syadeu.Database;
 using Syadeu.Mono;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Syadeu.Presentation.Map
 {
@@ -86,7 +87,7 @@ namespace Syadeu.Presentation.Map
         {
             if (m_DrawGrid && m_MainGrid.Value != null)
             {
-                m_MainGrid.Value.Grid.DrawGL();
+                m_MainGrid.Value.Grid.DrawGL(.1f, m_RenderSystem.Camera);
             }
         }
         #endregion

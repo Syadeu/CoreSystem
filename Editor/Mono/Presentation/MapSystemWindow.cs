@@ -364,7 +364,7 @@ namespace SyadeuEditor.Presentation.Map
 
                 #region Draw Grid & Layers
 
-                m_SceneDataGrid.DrawGL();
+                m_SceneDataGrid.DrawGL(.1f);
                 Handles.DrawWireCube(m_SceneDataGrid.bounds.center, m_SceneDataGrid.size);
 
                 if (m_SceneDataGridAtt.m_Layers == null)
