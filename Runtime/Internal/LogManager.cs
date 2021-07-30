@@ -11,6 +11,7 @@ namespace Syadeu.Internal
         const string c_LogText = "<color={0}>{1}</color>";
         const string c_LogBaseText = "[<color={0}>CoreSystem</color>][{1}][{2}]: {3}";
         const string c_LogAssertText = "[<color={0}>CoreSystem</color>][{1}]: {2}";
+        const string c_LogThreadText = "[<color={0}>{1}</color>]";
         private enum StringColor
         {
             black,
@@ -76,7 +77,7 @@ namespace Syadeu.Internal
             string text = string.Empty;
             if (logThread)
             {
-                text = $"[{GetThreadType()}]";
+                text = string.Format(c_LogThreadText, StringColor.fuchsia, GetThreadType());
             }
 
             switch (result)

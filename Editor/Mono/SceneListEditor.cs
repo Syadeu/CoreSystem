@@ -53,7 +53,7 @@ namespace SyadeuEditor
             {
                 EditorGUILayout.LabelField("This scene is not in the scenelist");
 
-                return;
+                //return;
             }
             //EditorUtils.StringHeader("Grid");
             //center = EditorGUILayout.Vector3IntField("Center: ", center);
