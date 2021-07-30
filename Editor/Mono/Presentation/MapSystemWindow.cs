@@ -166,31 +166,38 @@ namespace SyadeuEditor.Presentation.Map
                 //}
             }
         }
-        private GameObject CreatePreviewObject(MapDataEntity.Object mapDataObj)
+        private GameObject CreatePreviewObject(MapDataEntity.Object mapDataObj, bool isFirst = false)
         {
             if (!mapDataObj.m_Object.IsValid()) return null;
 
             PrefabReference prefab = mapDataObj.m_Object.GetObject().Prefab;
             if (prefab.IsValid())
             {
-                var temp = prefab.GetObjectSetting().m_RefPrefab.editorAsset;
+                GameObject temp = (GameObject)prefab.GetObjectSetting().m_RefPrefab.editorAsset;
 
                 GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab(temp, m_PreviewFolder);
                 obj.tag = c_EditorOnly;
                 obj.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
 
                 Transform tr = obj.transform;
+
+                if (isFirst)
+                {
+                    mapDataObj.m_Rotation = tr.rotation;
+                    mapDataObj.m_Scale = tr.localScale;
+
+                    AABB aabb = new AABB(tr.position, float3.zero);
+                    foreach (var item in obj.GetComponentsInChildren<Renderer>())
+                    {
+                        aabb.Encapsulate(item.bounds);
+                    }
+                    mapDataObj.m_AABBCenter = aabb.center - ((float3)tr.position);
+                    mapDataObj.m_AABBSize = aabb.size;
+                }
+
                 tr.position = mapDataObj.m_Translation;
                 tr.rotation = mapDataObj.m_Rotation;
                 tr.localScale = mapDataObj.m_Scale;
-
-                AABB aabb = new AABB(mapDataObj.m_Translation, float3.zero);
-                foreach (var item in obj.GetComponentsInChildren<Renderer>())
-                {
-                    aabb.Encapsulate(item.bounds);
-                }
-                mapDataObj.m_AABBCenter = aabb.center - mapDataObj.m_Translation;
-                mapDataObj.m_AABBSize = aabb.size;
 
                 m_PreviewObjects.Add(mapDataObj, obj);
                 return obj;
@@ -709,7 +716,7 @@ namespace SyadeuEditor.Presentation.Map
                                     m_Translation = pos
                                 };
 
-                                GameObject gameObj = CreatePreviewObject(objData);
+                                GameObject gameObj = CreatePreviewObject(objData, true);
 
                                 //GameObject temp = (GameObject)refobj.GetObject().Prefab.GetObjectSetting().m_RefPrefab.editorAsset;
                                 //GameObject gameObj = (GameObject)PrefabUtility.InstantiatePrefab(temp, m_PreviewFolder);
@@ -722,9 +729,9 @@ namespace SyadeuEditor.Presentation.Map
 
                                 //m_PreviewObjects.Add(objData, gameObj);
 
-                                //List<MapDataEntity.Object> tempList = m_MapDataTarget.m_Objects.ToList();
-                                //tempList.Add(objData);
-                                //m_MapDataTarget.m_Objects = tempList.ToArray();
+                                List<MapDataEntity.Object> tempList = m_MapDataTarget.m_Objects.ToList();
+                                tempList.Add(objData);
+                                m_MapDataTarget.m_Objects = tempList.ToArray();
 
                                 SelectGameObject(gameObj);
                                 m_MapDataTreeView.Refresh(m_MapDataTarget.m_Objects);
@@ -764,6 +771,8 @@ namespace SyadeuEditor.Presentation.Map
                 string name = $"{(objData != null ? $"{objData.Name}" : "None")}";
                 Vector2 pos = HandleUtility.WorldToGUIPoint(m_SelectedGameObject.AABB.max + m_SelectedGameObject.m_Translation);
                 Rect rect = new Rect(pos, new Vector2(width, 85));
+
+                Handles.DrawWireCube(m_SelectedGameObject.m_AABBCenter, m_SelectedGameObject.m_AABBSize);
 
                 Handles.BeginGUI();
                 GUI.BeginGroup(rect, name, EditorUtils.Box);
