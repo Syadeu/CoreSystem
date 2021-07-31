@@ -18,7 +18,7 @@ namespace Syadeu.Presentation.Entities
     {
         public static EntityData<T> Empty => new EntityData<T>(Hash.Empty);
         /// <inheritdoc cref="IEntityData.Idx"/>
-        private readonly Hash m_Idx;
+        internal readonly Hash m_Idx;
 
         internal T Target => m_Idx.Equals(Hash.Empty) ? null : (T)PresentationSystem<EntitySystem>.System.m_ObjectEntities[m_Idx];
 
@@ -142,6 +142,14 @@ namespace Syadeu.Presentation.Entities
 
             CoreSystem.Logger.LogError(Channel.Entity,
                 $"Entity({target.Name}) is not a {TypeHelper.TypeOf<T>.Name}. This is an invalid operation and not allowed.");
+            return Empty;
+        }
+        public static implicit operator Entity<T>(EntityData<IEntityData> a)
+        {
+            if (a.Target is T) return new Entity<T>(a.m_Idx);
+
+            CoreSystem.Logger.LogError(Channel.Entity,
+                $"Entity({a.Name}) is not a {TypeHelper.TypeOf<T>.Name}. This is an invalid operation and not allowed.");
             return Empty;
         }
     }

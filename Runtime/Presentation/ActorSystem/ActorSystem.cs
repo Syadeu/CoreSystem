@@ -27,4 +27,8 @@ namespace Syadeu.Presentation.Actor
     {
         [JsonProperty(Order = 0, PropertyName = "ActorType")] public ActorType m_ActorType;
     }
+    public sealed class ActorGridAttribute : ActorAttributeBase
+    {
+
+    }
 }

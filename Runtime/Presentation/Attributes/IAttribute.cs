@@ -21,6 +21,6 @@ namespace Syadeu.Presentation.Attributes
         [JsonProperty(Order = -11)] string Name { get; }
         [JsonProperty(Order = -10)] Hash Hash { get; }
         
-        [JsonIgnore] IEntityData Parent { get; }
+        [JsonIgnore] EntityData<IEntityData> Parent { get; }
     }
 }

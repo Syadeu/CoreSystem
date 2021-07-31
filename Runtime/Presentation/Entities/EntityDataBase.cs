@@ -99,7 +99,7 @@ namespace Syadeu.Presentation.Entities
                 }
 
                 AttributeBase clone = (AttributeBase)att.Clone();
-                clone.Parent = entity;
+                clone.Parent = new EntityData<IEntityData>(entity.Idx);
                 entity.m_Attributes.Add(clone);
             }
 

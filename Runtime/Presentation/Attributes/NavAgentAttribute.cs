@@ -55,7 +55,7 @@ namespace Syadeu.Presentation.Attributes
             {
                 yield return null;
             }
-            IEntity parent = (IEntity)Parent;
+            Entity<IEntity> parent = Parent;
 
             DataGameObject obj = parent.gameObject;
             DataTransform tr = parent.transform;

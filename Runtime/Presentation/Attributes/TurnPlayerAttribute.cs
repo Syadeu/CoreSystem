@@ -45,14 +45,14 @@ namespace Syadeu.Presentation.Attributes
         public void SetMaxActionPoint(int ap) => m_MaxActionPoint = ap;
         public int UseActionPoint(int ap) => m_CurrentActionPoint -= ap;
 
-        [System.Obsolete("", true)]
-        public IReadOnlyList<int2> GetMoveableCells()
-        {
-            IEntity parent = (IEntity)Parent;
+        //[System.Obsolete("", true)]
+        //public IReadOnlyList<int2> GetMoveableCells()
+        //{
+        //    Entity<IEntity> parent = Parent;
 
-            ref GridManager.GridCell cell = ref parent.GetCurrentCell();
-            return TurnTableManager.GetMoveableCells(in cell, ActionPoint);
-        }
+        //    ref GridManager.GridCell cell = ref parent.GetCurrentCell();
+        //    return TurnTableManager.GetMoveableCells(in cell, ActionPoint);
+        //}
     }
     [Preserve]
     internal sealed class TurnPlayerProcessor : AttributeProcessor<TurnPlayerAttribute>
