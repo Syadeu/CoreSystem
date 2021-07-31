@@ -622,7 +622,7 @@ namespace Syadeu.Presentation
 
         private static void ProcessEntityOnProxyCreated(EntitySystem system, IEntity entity, RecycleableMonobehaviour monoObj)
         {
-            CoreSystem.Logger.Log(Channel.Presentation,
+            CoreSystem.Logger.Log(Channel.Entity,
                 $"Processing OnProxyCreated at {entity.Name}");
 
             //#region Entity
@@ -669,8 +669,8 @@ namespace Syadeu.Presentation
         }
         private static void ProcessEntityOnProxyRemoved(EntitySystem system, IEntity entity, RecycleableMonobehaviour monoObj)
         {
-            CoreSystem.Logger.Log(Channel.Presentation,
-                $"Processing OnProxyRemoved at  {entity.Name}");
+            CoreSystem.Logger.Log(Channel.Entity,
+                $"Processing OnProxyRemoved at {entity.Name}");
 
             //#region Entity
             //if (system.m_EntityProcessors.TryGetValue(entity.GetType(), out List<IEntityDataProcessor> entityProcessor))

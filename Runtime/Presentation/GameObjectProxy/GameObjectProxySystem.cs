@@ -497,6 +497,8 @@ namespace Syadeu.Presentation
 
                         //tr.gameObject.OnProxyCreated();
                         OnDataObjectProxyCreated?.Invoke(tr.gameObject, other);
+                        CoreSystem.Logger.Log(Channel.Proxy,
+                            $"DataGameobject({tr.m_GameObject}) proxy created with new instantiate");
                     });
                 }
                 else
@@ -515,6 +517,8 @@ namespace Syadeu.Presentation
 
                     //tr.gameObject.OnProxyCreated();
                     OnDataObjectProxyCreated?.Invoke(tr.gameObject, other);
+                    CoreSystem.Logger.Log(Channel.Proxy,
+                        $"DataGameobject({tr.m_GameObject}) proxy created, pool remains {pool.Count}");
                 }
             });
         }
@@ -577,6 +581,8 @@ namespace Syadeu.Presentation
 
             OnDataObjectProxyRemoved?.Invoke(tr.gameObject, obj);
             tr.m_ProxyIdx = DataTransform.ProxyNull;
+            CoreSystem.Logger.Log(Channel.Proxy,
+                $"DataGameobject({tr.m_GameObject}) proxy removed.");
 
             prefab = proxyIdx.x;
             return obj;
