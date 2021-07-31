@@ -98,7 +98,7 @@ namespace Syadeu.Database
             Encapsulate(aabb.center + aabb.extents);
         }
 
-        public AABB Rotation(quaternion rot) => CalculateRotation(in this, rot);
+        public AABB Rotation(quaternion rot) => CalculateRotationWithVertices(in this, rot);
 
         private static AABB CalculateRotation(in AABB aabb, quaternion quaternion)
         {
@@ -128,6 +128,24 @@ namespace Syadeu.Database
             //    math.min(originMin + (minPos - originMin), limitMinf),
             //    math.max(originMax + (maxPos - originMax), limitMaxf));
 
+            return temp;
+        }
+        private static AABB CalculateRotationWithVertices(in AABB aabb, quaternion quaternion)
+        {
+            float3 
+                originCenter = aabb.center,
+                originExtents = aabb.extents,
+                originMin = (-originExtents + originCenter),
+                originMax = (originExtents + originCenter);
+            float4x4 trMatrix = float4x4.TRS(originCenter, quaternion, originExtents);
+
+            AABB temp = new AABB(originCenter, float3.zero);
+            float3[] vertices = aabb.vertices;
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                float3 vertex = math.mul(trMatrix, new float4((vertices[i] - originCenter) * 2, 1)).xyz;
+                temp.Encapsulate(vertex);
+            }
             return temp;
         }
         private static float3[] GetVertices(in AABB aabb)
