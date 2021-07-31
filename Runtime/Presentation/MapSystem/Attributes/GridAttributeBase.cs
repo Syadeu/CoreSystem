@@ -22,7 +22,7 @@ namespace Syadeu.Presentation.Map
     [Preserve]
     internal sealed class GridSizeProcessor : AttributeProcessor<GridSizeAttribute>
     {
-        protected override void OnCreated(GridSizeAttribute attribute, IObject entity)
+        protected override void OnCreated(GridSizeAttribute attribute, IEntityData entity)
         {
             
         }

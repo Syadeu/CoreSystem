@@ -8,36 +8,45 @@ using System.Linq;
 
 namespace Syadeu.Presentation.Entities
 {
-    /// <summary>
-    /// <see cref="EntitySystem"/>에서 엔티티 구조의 제일 하단 abstract 입니다.
-    /// </summary>
+    /// <summary><inheritdoc cref="IEntityData"/></summary>
     /// <remarks>
-    /// 이 abstract 를 상속받음으로서 새로운 엔티티 계층 구조를 작성할 수 있습니다.
+    /// 이 <see langword="abstract"/> 를 상속받음으로서 새로운 엔티티 계층 구조를 작성할 수 있습니다.
+    /// <br/><br/>
+    /// class 맴버 선언을 그리 추천하고 싶지 않지만, 필요에 의해 선언이 내부에 되었다면,<br/>
+    /// 해당 값을 복사하여 인스턴스를 만들기 위해 <see cref="ObjectBase.Copy"/>을 override 하여 해당 값을 복사하여야합니다.
+    /// <br/>
     /// </remarks>
-    public abstract class EntityDataBase : ObjectBase, IObject
+    public abstract class EntityDataBase : ObjectBase, IEntityData
     {
+        /// <summary><inheritdoc cref="isCreated"/></summary>
         [JsonIgnore] internal bool m_IsCreated = false;
+        /// <summary><inheritdoc cref="IEntityData.Attributes"/></summary>
         [JsonIgnore] internal List<AttributeBase> m_Attributes;
 
-        Hash IObject.Idx => Idx;
-        List<AttributeBase> IObject.Attributes => m_Attributes;
+        Hash IEntityData.Idx => Idx;
+        List<AttributeBase> IEntityData.Attributes => m_Attributes;
+        /// <summary><inheritdoc cref="m_Attributes"/></summary>
         [JsonProperty(Order = -10, PropertyName = "Attributes")] [UnityEngine.HideInInspector] public List<Hash> Attributes { get; set; }
 
         [JsonIgnore] public bool isCreated => m_IsCreated;
 
-        AttributeBase IObject.GetAttribute(Type t)
+        AttributeBase IEntityData.GetAttribute(Type t)
         {
-            IObject entity = this;
+            IEntityData entity = this;
             return entity.Attributes.FindFor((other) => other.GetType().Equals(t));
         }
-        AttributeBase[] IObject.GetAttributes(Type t)
+        AttributeBase[] IEntityData.GetAttributes(Type t)
         {
-            IObject entity = this;
+            IEntityData entity = this;
             return entity.Attributes.Where((other) => other.GetType().Equals(t)).ToArray();
         }
-        T IObject.GetAttribute<T>() => (T)((IObject)this).GetAttribute(TypeHelper.TypeOf<T>.Type);
-        T[] IObject.GetAttributes<T>() => ((IObject)this).GetAttributes(TypeHelper.TypeOf<T>.Type).Select((other) => (T)other).ToArray();
+        T IEntityData.GetAttribute<T>() => (T)((IEntityData)this).GetAttribute(TypeHelper.TypeOf<T>.Type);
+        T[] IEntityData.GetAttributes<T>() => ((IEntityData)this).GetAttributes(TypeHelper.TypeOf<T>.Type).Select((other) => (T)other).ToArray();
 
+        /// <inheritdoc cref="IEntityData.GetAttribute{T}"/>
+        /// <remarks>
+        /// 에디터용입니다. 런타임에서는 사용을 자제해주세요.
+        /// </remarks>
         public T GetAttribute<T>() where T : AttributeBase
         {
             T output = null;
@@ -59,7 +68,7 @@ namespace Syadeu.Presentation.Entities
             else
 #endif
             {
-                IObject entity = this;
+                IEntityData entity = this;
                 output = entity.GetAttribute<T>();
             }
             return output;

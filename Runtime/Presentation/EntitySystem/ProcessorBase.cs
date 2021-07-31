@@ -20,7 +20,7 @@ namespace Syadeu.Presentation
             return ProxySystem.CreateNewPrefab(prefab, position, rotation, localSize, enableCull);
         }
 
-        protected EntityData<IObject> CreateObject(IReference obj)
+        protected EntityData<IEntityData> CreateObject(IReference obj)
         {
             CoreSystem.Logger.NotNull(obj, "Target object cannot be null");
             return EntitySystem.CreateObject(obj.Hash);

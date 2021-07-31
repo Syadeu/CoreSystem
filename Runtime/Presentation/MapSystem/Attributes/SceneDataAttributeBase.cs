@@ -89,13 +89,13 @@ namespace Syadeu.Presentation.Map
     [Preserve]
     internal sealed class GridMapProcessor : AttributeProcessor<GridMapAttribute>
     {
-        private static SceneDataEntity ToSceneData(IObject entity) => (SceneDataEntity)entity;
+        private static SceneDataEntity ToSceneData(IEntityData entity) => (SceneDataEntity)entity;
 
-        protected override void OnCreated(GridMapAttribute attribute, IObject entity)
+        protected override void OnCreated(GridMapAttribute attribute, IEntityData entity)
         {
             attribute.CreateGrid();
         }
-        protected override void OnDestroy(GridMapAttribute attribute, IObject entity)
+        protected override void OnDestroy(GridMapAttribute attribute, IEntityData entity)
         {
             attribute.DestroyGrid();
         }

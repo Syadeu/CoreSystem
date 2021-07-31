@@ -5,9 +5,9 @@ namespace Syadeu.Presentation.Internal
 {
     internal interface IAttributeProcessor : IProcessor
     {
-        void OnCreated(AttributeBase attribute, IObject entity);
-        void OnCreatedSync(AttributeBase attribute, IObject entity);
-        void OnDestroy(AttributeBase attribute, IObject entity);
-        void OnDestroySync(AttributeBase attribute, IObject entity);
+        void OnCreated(AttributeBase attribute, IEntityData entity);
+        void OnCreatedSync(AttributeBase attribute, IEntityData entity);
+        void OnDestroy(AttributeBase attribute, IEntityData entity);
+        void OnDestroySync(AttributeBase attribute, IEntityData entity);
     }
 }

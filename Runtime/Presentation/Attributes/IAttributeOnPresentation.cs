@@ -9,7 +9,7 @@
     public interface IAttributeOnPresentation
     {
         /// <summary>
-        /// <see cref="IAttributeProcessor.Target"/>에 설정된 <see cref="AttributeBase"/>가 부착된 <see cref="IObject"/>가
+        /// <see cref="IAttributeProcessor.Target"/>에 설정된 <see cref="AttributeBase"/>가 부착된 <see cref="IEntityData"/>가
         /// 매 프레임마다 동작할 메소드입니다.
         /// </summary>
         /// <param name="attribute"></param>
@@ -17,6 +17,6 @@
         /// <remarks>
         /// 비동기 작업입니다. Unity API에 접근하면 에러를 뱉습니다.
         /// </remarks>
-        void OnPresentation(AttributeBase attribute, IObject entity);
+        void OnPresentation(AttributeBase attribute, IEntityData entity);
     }
 }

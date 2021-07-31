@@ -57,12 +57,12 @@ namespace Syadeu.Presentation.Attributes
     [Preserve]
     internal sealed class TurnPlayerProcessor : AttributeProcessor<TurnPlayerAttribute>
     {
-        protected override void OnCreated(TurnPlayerAttribute attribute, IObject entity)
+        protected override void OnCreated(TurnPlayerAttribute attribute, IEntityData entity)
         {
             attribute.ActivateTurn = attribute.ActivateOnCreate;
             TurnTableManager.AddPlayer(attribute);
         }
-        protected override void OnDestroy(TurnPlayerAttribute attribute, IObject entity)
+        protected override void OnDestroy(TurnPlayerAttribute attribute, IEntityData entity)
         {
             TurnTableManager.RemovePlayer(attribute);
         }

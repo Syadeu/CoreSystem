@@ -58,7 +58,7 @@ namespace Syadeu.Presentation.Map
             }, "draw", "grid");
         }
 
-        private void M_EntitySystem_OnEntityCreated(IObject obj)
+        private void M_EntitySystem_OnEntityCreated(IEntityData obj)
         {
             if (obj is SceneDataEntity sceneData)
             {
@@ -83,7 +83,7 @@ namespace Syadeu.Presentation.Map
 
             }
         }
-        private void M_EntitySystem_OnEntityDestroy(IObject obj)
+        private void M_EntitySystem_OnEntityDestroy(IEntityData obj)
         {
             if (obj is SceneDataEntity sceneData)
             {

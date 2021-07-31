@@ -22,10 +22,10 @@ namespace Syadeu.Presentation.Attributes
     public abstract class AttributeProcessor : ProcessorBase, IAttributeProcessor
     {
         Type IProcessor.Target => TargetAttribute;
-        void IAttributeProcessor.OnCreated(AttributeBase attribute, IObject entity) => OnCreated(attribute, (IEntity)entity);
-        void IAttributeProcessor.OnCreatedSync(AttributeBase attribute, IObject entity) => OnCreatedSync(attribute, (IEntity)entity);
-        void IAttributeProcessor.OnDestroy(AttributeBase attribute, IObject entity) => OnDestroy(attribute, (IEntity)entity);
-        void IAttributeProcessor.OnDestroySync(AttributeBase attribute, IObject entity) => OnDestroySync(attribute, (IEntity)entity);
+        void IAttributeProcessor.OnCreated(AttributeBase attribute, IEntityData entity) => OnCreated(attribute, (IEntity)entity);
+        void IAttributeProcessor.OnCreatedSync(AttributeBase attribute, IEntityData entity) => OnCreatedSync(attribute, (IEntity)entity);
+        void IAttributeProcessor.OnDestroy(AttributeBase attribute, IEntityData entity) => OnDestroy(attribute, (IEntity)entity);
+        void IAttributeProcessor.OnDestroySync(AttributeBase attribute, IEntityData entity) => OnDestroySync(attribute, (IEntity)entity);
 
         /// <summary>
         /// 이 프로세서가 타겟으로 삼을 <see cref="AttributeBase"/>입니다.
@@ -68,19 +68,19 @@ namespace Syadeu.Presentation.Attributes
         where T : AttributeBase
     {
         Type IProcessor.Target => TargetAttribute;
-        void IAttributeProcessor.OnCreated(AttributeBase attribute, IObject entity) => OnCreated((T)attribute, entity);
-        void IAttributeProcessor.OnCreatedSync(AttributeBase attribute, IObject entity) => OnCreatedSync((T)attribute, entity);
-        void IAttributeProcessor.OnDestroy(AttributeBase attribute, IObject entity) => OnDestroy((T)attribute, entity);
-        void IAttributeProcessor.OnDestroySync(AttributeBase attribute, IObject entity) => OnDestroySync((T)attribute, entity);
+        void IAttributeProcessor.OnCreated(AttributeBase attribute, IEntityData entity) => OnCreated((T)attribute, entity);
+        void IAttributeProcessor.OnCreatedSync(AttributeBase attribute, IEntityData entity) => OnCreatedSync((T)attribute, entity);
+        void IAttributeProcessor.OnDestroy(AttributeBase attribute, IEntityData entity) => OnDestroy((T)attribute, entity);
+        void IAttributeProcessor.OnDestroySync(AttributeBase attribute, IEntityData entity) => OnDestroySync((T)attribute, entity);
 
         private Type TargetAttribute => TypeHelper.TypeOf<T>.Type;
-        /// <inheritdoc cref="IAttributeProcessor.OnCreated(AttributeBase, IObject)"/>
-        protected virtual void OnCreated(T attribute, IObject entity) { }
-        /// <inheritdoc cref="IAttributeProcessor.OnCreatedSync(AttributeBase, IObject)"/>
-        protected virtual void OnCreatedSync(T attribute, IObject entity) { }
-        /// <inheritdoc cref="IAttributeProcessor.OnDestroy(AttributeBase, IObject)"/>
-        protected virtual void OnDestroy(T attribute, IObject entity) { }
-        /// <inheritdoc cref="IAttributeProcessor.OnDestroySync(AttributeBase, IObject)"/>
-        protected virtual void OnDestroySync(T attribute, IObject entity) { }
+        /// <inheritdoc cref="IAttributeProcessor.OnCreated(AttributeBase, IEntityData)"/>
+        protected virtual void OnCreated(T attribute, IEntityData entity) { }
+        /// <inheritdoc cref="IAttributeProcessor.OnCreatedSync(AttributeBase, IEntityData)"/>
+        protected virtual void OnCreatedSync(T attribute, IEntityData entity) { }
+        /// <inheritdoc cref="IAttributeProcessor.OnDestroy(AttributeBase, IEntityData)"/>
+        protected virtual void OnDestroy(T attribute, IEntityData entity) { }
+        /// <inheritdoc cref="IAttributeProcessor.OnDestroySync(AttributeBase, IEntityData)"/>
+        protected virtual void OnDestroySync(T attribute, IEntityData entity) { }
     }
 }

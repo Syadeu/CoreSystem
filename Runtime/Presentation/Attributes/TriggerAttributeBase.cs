@@ -24,19 +24,19 @@ namespace Syadeu.Presentation.Attributes
     [Preserve]
     internal sealed class EntityTriggerEventProccessor : AttributeProcessor<EntityTriggerEventAttribute>, IAttributeOnProxy, IAttributeOnProxyCreatedSync, IAttributeOnProxyRemovedSync
     {
-        protected override void OnCreated(EntityTriggerEventAttribute attribute, IObject entity)
+        protected override void OnCreated(EntityTriggerEventAttribute attribute, IEntityData entity)
         {
             attribute.OnCreated?.Invoke();
         }
-        protected override void OnCreatedSync(EntityTriggerEventAttribute attribute, IObject entity)
+        protected override void OnCreatedSync(EntityTriggerEventAttribute attribute, IEntityData entity)
         {
             attribute.OnCreatedSync?.Invoke();
         }
-        protected override void OnDestroy(EntityTriggerEventAttribute attribute, IObject entity)
+        protected override void OnDestroy(EntityTriggerEventAttribute attribute, IEntityData entity)
         {
             attribute.OnDestroy?.Invoke();
         }
-        protected override void OnDestroySync(EntityTriggerEventAttribute attribute, IObject entity)
+        protected override void OnDestroySync(EntityTriggerEventAttribute attribute, IEntityData entity)
         {
             attribute.OnDestroySync?.Invoke();
         }
@@ -70,19 +70,19 @@ namespace Syadeu.Presentation.Attributes
     [Preserve]
     internal sealed class EntityDataTriggerEventProcessor : AttributeProcessor<EntityDataTriggerEventAttribute>
     {
-        protected override void OnCreated(EntityDataTriggerEventAttribute attribute, IObject entity)
+        protected override void OnCreated(EntityDataTriggerEventAttribute attribute, IEntityData entity)
         {
             attribute.OnCreated?.Invoke();
         }
-        protected override void OnCreatedSync(EntityDataTriggerEventAttribute attribute, IObject entity)
+        protected override void OnCreatedSync(EntityDataTriggerEventAttribute attribute, IEntityData entity)
         {
             attribute.OnCreatedSync?.Invoke();
         }
-        protected override void OnDestroy(EntityDataTriggerEventAttribute attribute, IObject entity)
+        protected override void OnDestroy(EntityDataTriggerEventAttribute attribute, IEntityData entity)
         {
             attribute.OnDestroy?.Invoke();
         }
-        protected override void OnDestroySync(EntityDataTriggerEventAttribute attribute, IObject entity)
+        protected override void OnDestroySync(EntityDataTriggerEventAttribute attribute, IEntityData entity)
         {
             attribute.OnDestroySync?.Invoke();
         }

@@ -17,7 +17,7 @@ namespace Syadeu.Presentation.Attributes
     {
         const string c_ScriptError = "Lua Function Attribute has an invalid lua function({0}) at Entity({1}). Request ignored.";
 
-        protected override void OnCreated(LuaFunctionAttribute attribute, IObject entity)
+        protected override void OnCreated(LuaFunctionAttribute attribute, IEntityData entity)
         {
             if (attribute.m_OnEntityCreated != null && attribute.m_OnEntityCreated.m_Scripts != null)
             {
@@ -33,7 +33,7 @@ namespace Syadeu.Presentation.Attributes
                 }
             }
         }
-        protected override void OnDestroy(LuaFunctionAttribute attribute, IObject entity)
+        protected override void OnDestroy(LuaFunctionAttribute attribute, IEntityData entity)
         {
             if (attribute.m_OnEntityDestoryed != null && attribute.m_OnEntityDestoryed.m_Scripts != null)
             {

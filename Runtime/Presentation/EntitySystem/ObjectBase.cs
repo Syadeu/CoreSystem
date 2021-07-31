@@ -16,17 +16,16 @@ namespace Syadeu.Presentation
     {
         const string c_NameBase = "New {0}";
 
-//#if UNITY_EDITOR
-//        [ReflectionDescription("한글 쓰지마라")]
-//#endif
+        /// <summary>
+        /// 이 오브젝트의 이름입니다.
+        /// </summary>
         [JsonProperty(Order = -20, PropertyName = "Name")] public string Name { get; set; }
         /// <summary>
-        /// 이 오브젝트 엔티티의 오리지널 해쉬입니다.
-        /// <see cref="EntityDataList"/>
+        /// 이 오브젝트의 오리지널 해쉬입니다.
         /// </summary>
         [JsonProperty(Order = -19, PropertyName = "Hash")] [ReflectionSealedView] public Hash Hash { get; set; }
         /// <summary>
-        /// 이 오브젝트 엔티티의 인스턴스 고유 해쉬입니다.
+        /// 이 오브젝트의 인스턴스 해쉬입니다.
         /// </summary>
         [JsonIgnore] public Hash Idx { get; private set; }
 
