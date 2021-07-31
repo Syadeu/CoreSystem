@@ -1,4 +1,4 @@
-﻿namespace Syadeu.Presentation.Entities
+﻿namespace Syadeu.Presentation.Internal
 {
     internal interface IEntityDataProcessor : IProcessor
     {

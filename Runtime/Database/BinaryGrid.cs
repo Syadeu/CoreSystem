@@ -413,7 +413,7 @@ namespace Syadeu.Database
             GL.End();
             GL.PopMatrix();
         }
-        public static void DrawGL(this ManagedGrid grid)
+        public static void DrawGL(this ManagedGrid grid, float thickness, Camera cam = null)
         {
             int2 gridSize = grid.gridSize;
 
@@ -426,8 +426,19 @@ namespace Syadeu.Database
             maxPos.z += grid.cellSize * .5f;
 
             GL.PushMatrix();
+            if (cam != null)
+            {
+                float3x3 rotmat = new float3x3(quaternion.identity);
+                float4x4 mat = new float4x4(rotmat, float3.zero);
+                GL.MultMatrix(mat);
+                GL.LoadProjectionMatrix(cam.projectionMatrix);
+            }
             DefaultMaterial.SetPass(0);
-            GL.Begin(GL.LINES);
+            GL.Begin(GL.QUADS);
+
+            var xTemp = new Vector3(thickness * .5f, 0, 0);
+            var yTemp = new Vector3(0, 0, thickness * .5f);
+
             for (int y = 0; y < gridSize.y + 1; y++)
             {
                 for (int x = 0; x < gridSize.x + 1; x++)
@@ -435,24 +446,27 @@ namespace Syadeu.Database
                     Vector3
                         p1 = new Vector3(
                             minPos.x,
-                            minPos.y,
+                            minPos.y + .05f,
                             minPos.z - (grid.cellSize * y)),
                         p2 = new Vector3(
                             maxPos.x,
-                            minPos.y,
+                            minPos.y + .05f,
                             minPos.z - (grid.cellSize * y)),
                         p3 = new Vector3(
                             minPos.x + (grid.cellSize * x),
-                            minPos.y,
+                            minPos.y + .05f,
                             minPos.z),
                         p4 = new Vector3(
                             minPos.x + (grid.cellSize * x),
-                            minPos.y,
+                            minPos.y + .05f,
                             maxPos.z)
                         ;
 
-                    GL.Vertex(p1); GL.Vertex(p2);
-                    GL.Vertex(p3); GL.Vertex(p4);
+                    GL.Vertex(p1 - yTemp); GL.Vertex(p2 - yTemp);
+                    GL.Vertex(p2 + yTemp); GL.Vertex(p1 + yTemp);
+
+                    GL.Vertex(p3 - xTemp); GL.Vertex(p4 - xTemp);
+                    GL.Vertex(p4 + xTemp); GL.Vertex(p3 + xTemp);
                 }
             }
             GL.End();

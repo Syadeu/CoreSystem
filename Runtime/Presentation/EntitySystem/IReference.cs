@@ -18,6 +18,8 @@ namespace Syadeu.Presentation
     }
     public struct Reference : IReference
     {
+        public static Reference Empty = new Reference(Hash.Empty);
+
         [JsonProperty(Order = 0, PropertyName = "Hash")] public Hash m_Hash;
 
         [JsonIgnore] Hash IReference.Hash => m_Hash;
@@ -40,6 +42,8 @@ namespace Syadeu.Presentation
     }
     public struct Reference<T> : IReference<T> where T : ObjectBase
     {
+        public static Reference<T> Empty = new Reference<T>(Hash.Empty);
+
         [JsonProperty(Order = 0, PropertyName = "Hash")] public Hash m_Hash;
 
         [JsonIgnore] Hash IReference.Hash => m_Hash;

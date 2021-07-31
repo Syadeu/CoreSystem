@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
 
@@ -18,21 +19,9 @@ namespace SyadeuEditor
     {
         private VerticalTreeView treeView;
 
-        private static string[] m_AttributeNames;
-
         private void OnEnable()
         {
             LuaEditor.Reload();
-            if (Asset.m_Objects == null) m_AttributeNames = Array.Empty<string>();
-            else
-            {
-                var temp = Asset
-                    .GetAttributes()
-                    .Select((other) => other.Name)
-                    .ToList();
-                temp.Insert(0, "None");
-                m_AttributeNames = temp.ToArray();
-            }
 
             List<object> tempList = new List<object>();
             if (Asset.m_Objects != null) tempList.AddRange(Asset.m_Objects.Values);
@@ -169,17 +158,6 @@ namespace SyadeuEditor
         }
         private void RefreshTreeView()
         {
-            if (Asset.m_Objects == null) m_AttributeNames = Array.Empty<string>();
-            else
-            {
-                var temp = Asset
-                    .GetAttributes()
-                    .Select((other) => other.Name)
-                    .ToList();
-                temp.Insert(0, "None");
-                m_AttributeNames = temp.ToArray();
-            }
-
             List<object> tempList = new List<object>();
             if (Asset.m_Objects != null) tempList.AddRange(Asset.m_Objects.Values);
             treeView.Refresh(tempList);
@@ -188,8 +166,6 @@ namespace SyadeuEditor
         {
             if (GUILayout.Button("Clear"))
             {
-                //Asset.m_Entites?.Clear();
-                //Asset.m_Attributes?.Clear();
                 Asset.Purge();
                 EditorUtils.SetDirty(Asset);
                 RefreshTreeView();
@@ -208,7 +184,7 @@ namespace SyadeuEditor
                 AssetDatabase.Refresh();
                 Asset.SaveData();
 
-                RefreshTreeView();
+                //RefreshTreeView();
             }
             EditorGUILayout.EndHorizontal();
             EditorUtils.SectorLine();
@@ -368,7 +344,25 @@ namespace SyadeuEditor
                     EditorGUI.BeginDisabledGroup(true);
                     EditorGUILayout.TextField("Hash: ", Target.Hash.ToString());
                     EditorGUI.EndDisabledGroup();
-                    ReflectionHelperEditor.DrawPrefabReference("Prefab: ", (idx) => Target.Prefab = idx, Target.Prefab);
+                    ReflectionHelperEditor.DrawPrefabReference("Prefab: ",
+                        (idx) =>
+                        {
+                            Target.Prefab = idx;
+                            if (idx >= 0)
+                            {
+                                GameObject temp = (GameObject)Target.Prefab.GetObjectSetting().m_RefPrefab.editorAsset;
+                                Transform tr = temp.transform;
+
+                                AABB aabb = new AABB(tr.position, float3.zero);
+                                foreach (var item in tr.GetComponentsInChildren<Renderer>())
+                                {
+                                    aabb.Encapsulate(item.bounds);
+                                }
+                                Target.Center = aabb.center - ((float3)tr.position);
+                                Target.Size = aabb.size;
+                            }
+                        }
+                        , Target.Prefab);
 
                     Color color1 = Color.black, color2 = Color.black;
                     color1.a = .5f;

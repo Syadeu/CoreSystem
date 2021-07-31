@@ -311,7 +311,7 @@ namespace SyadeuEditor.Tree
             m_Tree.MoveElements(parent, insertIndex, draggedElements);
             SetSelection(selectedIDs, TreeViewSelectionOptions.RevealAndFrame);
         }
-        private bool ValidDrag(TreeViewItem parent, List<TreeViewItem> draggedItems)
+        private static bool ValidDrag(TreeViewItem parent, List<TreeViewItem> draggedItems)
         {
             TreeViewItem currentParent = parent;
             while (currentParent != null)

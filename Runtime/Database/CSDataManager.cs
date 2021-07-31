@@ -16,6 +16,7 @@ namespace Syadeu.Database
         "Internal data work system.\n" +
         "This system do the basic data works like authuring json converter types"
         )]
+    [UnityEngine.AddComponentMenu("")]
     internal sealed class CSDataManager : StaticDataManager<CSDataManager>
     {
         private static bool s_JsonConverterSet = false;

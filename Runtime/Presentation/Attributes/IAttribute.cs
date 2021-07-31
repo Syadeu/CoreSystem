@@ -1,7 +1,8 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Database;
+using Syadeu.Presentation.Entities;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Presentation.Attributes
 {
     /// <summary>
     /// <see cref="EntityBase"/>의 구성부입니다.<br/><br/>
@@ -19,7 +20,7 @@ namespace Syadeu.Presentation
     {
         [JsonProperty(Order = -11)] string Name { get; }
         [JsonProperty(Order = -10)] Hash Hash { get; }
-
+        
         [JsonIgnore] IObject Parent { get; }
     }
 }

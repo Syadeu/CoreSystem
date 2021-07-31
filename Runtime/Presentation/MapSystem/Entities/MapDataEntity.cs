@@ -1,7 +1,9 @@
 ﻿using Newtonsoft.Json;
+using Syadeu.Database;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using Syadeu.ThreadSafe;
+using System;
 using Unity.Mathematics;
 
 namespace Syadeu.Presentation.Map
@@ -9,7 +11,7 @@ namespace Syadeu.Presentation.Map
     [EntityAcceptOnly(typeof(MapDataAttributeBase))]
     public sealed class MapDataEntity : EntityDataBase
     {
-        public class Object
+        public class Object : ICloneable
         {
             [JsonProperty(Order = 0, PropertyName = "Object")] public Reference<EntityBase> m_Object;
             [JsonProperty(Order = 1, PropertyName = "Translation")] public float3 m_Translation;
@@ -17,11 +19,33 @@ namespace Syadeu.Presentation.Map
             [JsonProperty(Order = 3, PropertyName = "Scale")] public float3 m_Scale;
             [JsonProperty(Order = 4, PropertyName = "EnableCull")] public bool m_EnableCull;
 
+            //[UnityEngine.Space]
+            //[JsonProperty(Order = 5, PropertyName = "AABBCenter")] public float3 m_AABBCenter;
+            //[JsonProperty(Order = 6, PropertyName = "AABBSize")] public float3 m_AABBSize;
+
+            [JsonIgnore] public float3 eulerAngles
+            {
+                get => m_Rotation.Euler().ToThreadSafe() * UnityEngine.Mathf.Rad2Deg;
+                set
+                {
+                    Vector3 temp = new Vector3(value.x * UnityEngine.Mathf.Deg2Rad, value.y * UnityEngine.Mathf.Deg2Rad, value.z * UnityEngine.Mathf.Deg2Rad);
+                    m_Rotation = quaternion.EulerZXY(temp);
+                }
+            }
+            [JsonIgnore] public AABB AABB
+            {
+                get
+                {
+                    EntityBase entity = m_Object.GetObject();
+                    return new AABB(entity.Center + m_Translation, entity.Size).Rotation(m_Rotation);
+                }
+            }
             public Object()
             {
                 m_Rotation = quaternion.identity;
                 m_EnableCull = true;
             }
+            public object Clone() => MemberwiseClone();
         }
 
         [JsonProperty(Order = 0, PropertyName = "Objects")] public Object[] m_Objects;
@@ -29,10 +53,20 @@ namespace Syadeu.Presentation.Map
         [JsonIgnore] public IEntity[] CreatedEntities { get; internal set; }
         [JsonIgnore] public bool DestroyChildOnDestroy { get; set; } = true;
 
-        public override bool IsValid()
+        public override bool IsValid() => true;
+        public override ObjectBase Copy()
         {
-            return true;
+            MapDataEntity clone = (MapDataEntity)base.Copy();
+            Object[] temp = new Object[m_Objects.Length];
+            for (int i = 0; i < temp.Length; i++)
+            {
+                temp[i] = (Object)m_Objects[i].Clone();
+            }
+            clone.m_Objects = temp;
+            clone.CreatedEntities = null;
+            clone.DestroyChildOnDestroy = true;
 
+            return clone;
         }
     }
     public sealed class MapDataProcessor : EntityDataProcessor<MapDataEntity>

@@ -48,37 +48,37 @@ namespace Syadeu.Job
         void Await();
     }
 
-    public struct CoreJob : IValidation
-    {
-        private readonly Task p_Task;
-        private readonly bool p_OnBackground;
-        // 0=task, 1=taskT, 2=parallel
-        private readonly int p_JobType;
+    //public struct CoreJob : IValidation
+    //{
+    //    private readonly Task p_Task;
+    //    private readonly bool p_OnBackground;
+    //    // 0=task, 1=taskT, 2=parallel
+    //    private readonly int p_JobType;
 
-        public bool IsDone => p_Task.IsCompleted;
-        public bool IsFaild => p_Task.IsFaulted;
+    //    public bool IsDone => p_Task.IsCompleted;
+    //    public bool IsFaild => p_Task.IsFaulted;
 
-        public bool IsValid() => p_Task != null;
+    //    public bool IsValid() => p_Task != null;
 
-        internal CoreJob(bool onBackground, Action action)
-        {
-            p_Task = new Task(action);
-            p_OnBackground = onBackground;
-            p_JobType = 0;
-        }
+    //    internal CoreJob(bool onBackground, Action action)
+    //    {
+    //        p_Task = new Task(action);
+    //        p_OnBackground = onBackground;
+    //        p_JobType = 0;
+    //    }
 
-        public void Start()
-        {
-            if (!IsValid()) return;
+    //    public void Start()
+    //    {
+    //        if (!IsValid()) return;
 
-            InternalStart();
-        }
-        internal void InternalStart()
-        {
-            if (p_OnBackground) p_Task.Start();
-            else CoreSystem.AddForegroundJob(p_Task.RunSynchronously);
-        }
-    }
+    //        InternalStart();
+    //    }
+    //    internal void InternalStart()
+    //    {
+    //        if (p_OnBackground) p_Task.Start();
+    //        else CoreSystem.AddForegroundJob(p_Task.RunSynchronously);
+    //    }
+    //}
 
     //internal struct CoreJobInfo
     //{

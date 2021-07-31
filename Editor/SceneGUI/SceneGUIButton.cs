@@ -18,7 +18,7 @@ namespace SyadeuEditor
         public bool m_DrawBackground = false;
 
         private GUIContent GUIContent => EditorUtils.TempContent(EditorUtils.String(m_Text, m_Color, m_FontSize));
-        private GUIStyle Style => EditorUtils.BttStyle;
+        private static GUIStyle Style => EditorUtils.BttStyle;
 
         public SceneGUIButton(string text, System.Action onPushsed)
         {

@@ -81,7 +81,7 @@ namespace SyadeuEditor.Tree
             m_Disposed = true;
         }
 
-        protected Rect GetRect(float width, float height) => GUILayoutUtility.GetRect(width, height);
+        protected static Rect GetRect(float width, float height) => GUILayoutUtility.GetRect(width, height);
     }
     public abstract class VerticalTreeElement<T> : VerticalTreeElement where T : class
     {

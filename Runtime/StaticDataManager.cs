@@ -24,7 +24,7 @@ namespace Syadeu
                     {
                         LogManager.Log(Channel.Core, ResultFlag.Warning,
                             $"종료 중에 StaticDataManager<{TypeHelper.TypeOf<T>.Name}> 인스턴스를 생성하려 합니다.\n" +
-                            $"이 요청은 무시됩니다.");
+                            $"이 요청은 무시됩니다.", true);
                         return null;
                     }
                     if (IsMainthread() && !Application.isPlaying) throw new CoreSystemException(CoreSystemExceptionFlag.Database,
@@ -85,6 +85,8 @@ namespace Syadeu
             CoreSystem.DataManagers.Remove(this);
             m_Instance = null;
             CoreSystem.Instance.m_CleanupManagers = true;
+
+            CoreSystem.Logger.Log(Channel.Core, $"DataManager {TypeHelper.TypeOf<T>.Name} has been disposed.");
         }
     }
 }

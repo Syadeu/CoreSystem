@@ -16,6 +16,7 @@ namespace Syadeu.Database
         "Main config name is config.ini in the top of application root folder,\n" +
         "and the sub configs will be inside of /CoreSystem/Configs" +
         "")]
+    [UnityEngine.AddComponentMenu("")]
     public sealed class ConfigLoader : StaticDataManager<ConfigLoader>
     {
         private static string m_GlobalConfigPath = Path.Combine(CoreSystemFolder.CoreSystemDataPath, "config.ini");

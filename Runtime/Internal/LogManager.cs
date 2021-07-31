@@ -1,4 +1,7 @@
-﻿using Syadeu.Database;
+﻿using System.Threading;
+using System.Collections.Concurrent;
+
+using Syadeu.Database;
 using UnityEngine;
 
 namespace Syadeu.Internal
@@ -8,6 +11,7 @@ namespace Syadeu.Internal
         const string c_LogText = "<color={0}>{1}</color>";
         const string c_LogBaseText = "[<color={0}>CoreSystem</color>][{1}][{2}]: {3}";
         const string c_LogAssertText = "[<color={0}>CoreSystem</color>][{1}]: {2}";
+        const string c_LogThreadText = "[<color={0}>{1}</color>]";
         private enum StringColor
         {
             black,
@@ -33,33 +37,67 @@ namespace Syadeu.Internal
             yellow
         }
         internal static Channel s_DisplayLogChannel = Channel.All;
+
+        public enum ThreadInfo
+        {
+            Unity,
+            Background,
+            Job,
+
+            User
+        }
+
+        private static readonly ConcurrentDictionary<Thread, ThreadInfo> m_ThreadInfos = new ConcurrentDictionary<Thread, ThreadInfo>();
+        public static void RegisterThread(ThreadInfo info, Thread t)
+        {
+            if (m_ThreadInfos.TryGetValue(t, out ThreadInfo threadInfo))
+            {
+                m_ThreadInfos[t] = info;
+            }
+            else m_ThreadInfos.TryAdd(t, info);
+        }
+        public static ThreadInfo GetThreadType()
+        {
+            Thread t = Thread.CurrentThread;
+            if (m_ThreadInfos.TryGetValue(t, out ThreadInfo threadInfo))
+            {
+                return threadInfo;
+            }
+            return ThreadInfo.User;
+        }
+
 #line hidden
-        public static void Log(Channel channel, ResultFlag result, string msg)
+        public static void Log(Channel channel, ResultFlag result, string msg, bool logThread)
         {
             if (!s_DisplayLogChannel.HasFlag(channel))
             {
                 if (result == ResultFlag.Normal) return;
             }
 
-            string text;
+            string text = string.Empty;
+            if (logThread)
+            {
+                text = string.Format(c_LogThreadText, StringColor.fuchsia, GetThreadType());
+            }
+
             switch (result)
             {
                 case ResultFlag.Warning:
-                    text = string.Format(c_LogBaseText, StringColor.lime, 
+                    text += string.Format(c_LogBaseText, StringColor.lime, 
                         string.Format(c_LogText, StringColor.orange, result), 
                         string.Format(c_LogText, StringColor.white, channel), 
                         msg);
                     Debug.LogWarning(text);
                     break;
                 case ResultFlag.Error:
-                    text = string.Format(c_LogBaseText, StringColor.lime, 
+                    text += string.Format(c_LogBaseText, StringColor.lime, 
                         string.Format(c_LogText, StringColor.maroon, result),
                         string.Format(c_LogText, StringColor.white, channel),
                         msg);
                     Debug.LogError(text);
                     break;
                 default:
-                    text = string.Format(c_LogBaseText, StringColor.lime, 
+                    text += string.Format(c_LogBaseText, StringColor.lime, 
                         string.Format(c_LogText, StringColor.teal, result),
                         string.Format(c_LogText, StringColor.white, channel),
                         msg);

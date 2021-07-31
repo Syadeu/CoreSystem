@@ -4,6 +4,8 @@ using Syadeu.Internal;
 using Syadeu.Presentation.Attributes;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine.Scripting;
 
@@ -50,14 +52,32 @@ namespace Syadeu.Presentation.Map
         [JsonIgnore] public float CellSize => m_CellSize;
         [JsonIgnore] public int LayerCount => m_Layers.Length;
         [JsonIgnore] public ManagedGrid Grid { get; private set; }
+        [JsonIgnore] public NativeHashSet<int>[] Layers { get; private set; }
 
         public void CreateGrid()
         {
             if (Grid != null) throw new Exception();
+
             Grid = new ManagedGrid(m_Center, m_Size, m_CellSize);
+            Layers = new NativeHashSet<int>[m_Layers.Length];
+            for (int i = 0; i < m_Layers.Length; i++)
+            {
+                Layers[i] = new NativeHashSet<int>(m_Layers[i].m_Indices.Length, Allocator.Persistent);
+                for (int a = 0; a < m_Layers[i].m_Indices.Length; a++)
+                {
+                    Layers[i].Add(m_Layers[i].m_Indices[a]);
+                }
+            }
         }
         public void DestroyGrid()
         {
+            if (Grid == null) throw new Exception();
+
+            for (int i = 0; i < Layers.Length; i++)
+            {
+                Layers[i].Dispose();
+            }
+
             Grid.Dispose();
             Grid = null;
         }
