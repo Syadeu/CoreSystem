@@ -133,7 +133,7 @@ namespace Syadeu.Presentation
         {
             foreach (var item in m_PresentationGroups)
             {
-                item.Value.Reset();
+                if (item.Value.m_IsStarted) item.Value.Reset();
             }
 
             base.Dispose();

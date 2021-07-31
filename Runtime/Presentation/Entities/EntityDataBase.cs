@@ -14,7 +14,7 @@ namespace Syadeu.Presentation.Entities
     /// <remarks>
     /// 이 abstract 를 상속받음으로서 새로운 엔티티 계층 구조를 작성할 수 있습니다.
     /// </remarks>
-    public abstract class EntityDataBase : ObjectBase, IObject, ICloneable
+    public abstract class EntityDataBase : ObjectBase, IObject
     {
         [JsonIgnore] internal bool m_IsCreated = false;
         [JsonIgnore] internal List<AttributeBase> m_Attributes;
@@ -76,6 +76,7 @@ namespace Syadeu.Presentation.Entities
         }
         public override sealed object Clone()
         {
+            const string c_AttributeWarning = "This object({0}) has an invalid attribute({1}) at {2}. This is not allowed.";
             EntityDataBase entity = (EntityDataBase)Copy();
 
             entity.m_Attributes = new List<AttributeBase>();
@@ -84,7 +85,7 @@ namespace Syadeu.Presentation.Entities
                 AttributeBase att = (AttributeBase)EntityDataList.Instance.GetObject(Attributes[i]);
                 if (att == null)
                 {
-                    CoreSystem.Logger.LogError(Channel.Entity, $"This object({Name}) has an invalid attribute({Attributes[i]}) at {i}. This is not allowed.");
+                    CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_AttributeWarning, Name, Attributes[i], i));
                     continue;
                 }
 
@@ -97,5 +98,4 @@ namespace Syadeu.Presentation.Entities
         }
         public override sealed string ToString() => Name;
     }
-    //public sealed class TestMapProcessor : 
 }

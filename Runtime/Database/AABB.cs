@@ -134,9 +134,7 @@ namespace Syadeu.Database
         {
             float3 
                 originCenter = aabb.center,
-                originExtents = aabb.extents,
-                originMin = (-originExtents + originCenter),
-                originMax = (originExtents + originCenter);
+                originExtents = aabb.extents;
             float4x4 trMatrix = float4x4.TRS(originCenter, quaternion, originExtents);
 
             AABB temp = new AABB(originCenter, float3.zero);

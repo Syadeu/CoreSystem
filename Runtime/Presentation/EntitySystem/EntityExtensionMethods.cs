@@ -10,19 +10,14 @@ namespace Syadeu.Presentation
 {
     public static class EntityExtensionMethods
     {
-        public static IEntity GetEntity(this DataGameObject obj)
-        {
-            if (!PresentationSystem<EntitySystem>.IsValid()) return null;
-            return PresentationSystem<EntitySystem>.System.GetEntity(obj.m_Idx);
-        }
-        public static void Destroy(this IEntity entity)
-        {
-            entity.gameObject.Destory();
-        }
-        public static void Destroy(this IObject obj)
-        {
-            PresentationSystem<EntitySystem>.System.DestroyObject(obj.Idx);
-        }
+        //public static void Destroy(this IEntity entity)
+        //{
+        //    entity.gameObject.Destory();
+        //}
+        //public static void Destroy(this IObject obj)
+        //{
+        //    PresentationSystem<EntitySystem>.System.DestroyObject(obj.Idx);
+        //}
 
         [Obsolete("", true)]
         public static ref GridManager.GridCell GetCurrentCell(this IEntity entity)

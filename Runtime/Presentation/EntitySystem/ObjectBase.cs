@@ -49,5 +49,4 @@ namespace Syadeu.Presentation
             return Copy();
         }
     }
-    
 }

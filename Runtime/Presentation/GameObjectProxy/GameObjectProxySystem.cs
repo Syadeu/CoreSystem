@@ -710,6 +710,8 @@ namespace Syadeu.Presentation
         }
         unsafe internal DataGameObject* GetDataGameObjectPointer(Hash objHash)
         {
+            if (m_Disposed) return null;
+
             int idx = m_MappedGameObjectIdxes[objHash];
 
             DataGameObject* obj = ((DataGameObject*)m_MappedGameObjects.GetUnsafePtr()) + idx;
@@ -726,7 +728,8 @@ namespace Syadeu.Presentation
         {
             unsafe
             {
-                return *GetDataGameObjectPointer(hash);
+                DataGameObject* p = GetDataGameObjectPointer(hash);
+                return p == null ? DataGameObject.Null : *p;
             }
         }
         #endregion

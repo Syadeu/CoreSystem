@@ -691,6 +691,9 @@ namespace SyadeuEditor.Presentation.Map
                 {
                     EditorUtils.StringRich(entity.Name, 13);
 
+                    entity.Center = EditorGUILayout.Vector3Field("Center: ", entity.Center);
+                    entity.Size = EditorGUILayout.Vector3Field("Size: ", entity.Size);
+
                     var gridSizeAtt = entity.GetAttribute<GridSizeAttribute>();
                     if (gridSizeAtt != null)
                     {
@@ -795,13 +798,13 @@ namespace SyadeuEditor.Presentation.Map
 
                 EntityBase objData = m_SelectedGameObject.m_Object.GetObject();
                 GameObject previewObj = m_PreviewObjects[m_SelectedGameObject];
-                AABB selectAabb = m_SelectedGameObject.AABB;
+                AABB selectAabb = m_SelectedGameObject.aabb;
 
                 #region Scene GUI Overlays
 
                 Vector3 worldPos = selectAabb.center; worldPos.y = selectAabb.max.y;
                 Vector2 guiPos = HandleUtility.WorldToGUIPoint(worldPos);
-                if (EditorSceneUtils.IsDrawable(guiPos))
+                //if (EditorSceneUtils.IsDrawable(guiPos))
                 {
                     if (guiPos.x + width > Screen.width) guiPos.x = Screen.width - width;
                     else
@@ -915,7 +918,7 @@ namespace SyadeuEditor.Presentation.Map
                     Vector2 pos = HandleUtility.WorldToGUIPoint(m_MapDataTarget.m_Objects[i].m_Translation);
                     if (!EditorSceneUtils.IsDrawable(pos)) continue;
 
-                    AABB aabb = m_MapDataTarget.m_Objects[i].AABB;
+                    AABB aabb = m_MapDataTarget.m_Objects[i].aabb;
                     Handles.DrawWireCube(aabb.center, aabb.size);
                 }
             }

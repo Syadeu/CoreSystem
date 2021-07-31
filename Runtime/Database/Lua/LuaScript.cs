@@ -180,8 +180,9 @@ namespace Syadeu.Database.Lua
                 }
                 else if (TypeHelper.TypeOf<IEntity>.Type.IsAssignableFrom(args[i].Type))
                 {
-                    IEntity entity = dataObj.GetEntity();
-                    temp.Add(entity.GetAttribute(args[i].Type));
+                    throw new NotImplementedException();
+                    //IEntity entity = dataObj.GetEntity();
+                    //temp.Add(entity.GetAttribute(args[i].Type));
                 }
                 else throw new NotImplementedException($"{args[i].Type.Name}");
             }

@@ -1,4 +1,6 @@
-﻿using Syadeu.Presentation.Entities;
+﻿using Newtonsoft.Json;
+using Syadeu.Presentation.Attributes;
+using Syadeu.Presentation.Entities;
 
 namespace Syadeu.Presentation.Actor
 {
@@ -16,5 +18,13 @@ namespace Syadeu.Presentation.Actor
     public sealed class ActorEntity : EntityBase
     {
 
+    }
+
+    [AttributeAcceptOnly(typeof(ActorEntity))]
+    public abstract class ActorAttributeBase : AttributeBase { }
+
+    public sealed class ActorTypeAttribute : ActorAttributeBase
+    {
+        [JsonProperty(Order = 0, PropertyName = "ActorType")] public ActorType m_ActorType;
     }
 }

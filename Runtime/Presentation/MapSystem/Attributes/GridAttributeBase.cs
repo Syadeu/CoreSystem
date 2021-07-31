@@ -12,15 +12,20 @@ namespace Syadeu.Presentation.Map
     #region Grid Size Attribute
     public sealed class GridSizeAttribute : GridAttributeBase
     {
-        [JsonProperty(Order = 0, PropertyName = "GridSize")] public int2 m_GridSize;
-    }
-    //[Preserve]
-    //internal sealed class GridSizeProcessor : AttributeProcessor<GridSizeAttribute>
-    //{
-    //    protected override void OnCreated(GridSizeAttribute attribute, IObject entity)
-    //    {
+        [JsonProperty(Order = 0, PropertyName = "GridLocations")] public int2[] m_GridLocations;
 
-    //    }
-    //}
+        public GridSizeAttribute()
+        {
+            m_GridLocations = new int2[] { int2.zero };
+        }
+    }
+    [Preserve]
+    internal sealed class GridSizeProcessor : AttributeProcessor<GridSizeAttribute>
+    {
+        protected override void OnCreated(GridSizeAttribute attribute, IObject entity)
+        {
+            
+        }
+    }
     #endregion
 }

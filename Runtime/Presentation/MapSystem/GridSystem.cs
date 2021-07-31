@@ -1,5 +1,6 @@
 ﻿using Syadeu.Database;
 using Syadeu.Mono;
+using Syadeu.Presentation.Entities;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -16,6 +17,8 @@ namespace Syadeu.Presentation.Map
 
         private KeyValuePair<SceneDataEntity, GridMapAttribute> m_MainGrid;
         private bool m_DrawGrid = false;
+
+
 
         #region Presentation Methods
         protected override PresentationResult OnInitialize()
@@ -59,7 +62,7 @@ namespace Syadeu.Presentation.Map
         {
             if (obj is SceneDataEntity sceneData)
             {
-                var gridAtt = sceneData.GetAttribute<GridMapAttribute>();
+                GridMapAttribute gridAtt = sceneData.GetAttribute<GridMapAttribute>();
                 if (gridAtt == null) return;
 
                 if (m_MainGrid.Value == null)
@@ -71,6 +74,13 @@ namespace Syadeu.Presentation.Map
                     CoreSystem.Logger.LogError(Channel.Presentation,
                         $"Attempt to load grids more then one at SceneDataEntity({sceneData.Name}). This is not allowed.");
                 }
+            }
+            else if (obj is EntityBase entity)
+            {
+                var gridSizeAtt = entity.GetAttribute<GridSizeAttribute>();
+                if (gridSizeAtt == null) return;
+
+
             }
         }
         private void M_EntitySystem_OnEntityDestroy(IObject obj)

@@ -20,20 +20,19 @@ namespace Syadeu.Presentation
             return ProxySystem.CreateNewPrefab(prefab, position, rotation, localSize, enableCull);
         }
 
-        protected IObject CreateObject(IReference obj)
+        protected EntityData<IObject> CreateObject(IReference obj)
         {
             CoreSystem.Logger.NotNull(obj, "Target object cannot be null");
-
             return EntitySystem.CreateObject(obj.Hash);
         }
 
-        protected IEntity CreateEntity(IReference entity, Vector3 position, quaternion rotation)
+        protected Entity<T> CreateEntity<T>(Reference<T> entity, Vector3 position, quaternion rotation) where T : ObjectBase, IEntity
             => CreateEntity(entity, position, rotation, Vector3.One, true);
-        protected IEntity CreateEntity(IReference entity, Vector3 position, quaternion rotation, Vector3 localSize, bool enableCull)
+        protected Entity<T> CreateEntity<T>(Reference<T> entity, Vector3 position, quaternion rotation, Vector3 localSize, bool enableCull) where T : ObjectBase, IEntity
         {
             CoreSystem.Logger.NotNull(entity, "Target entity cannot be null");
 
-            return EntitySystem.CreateEntity(entity.Hash, position, rotation, localSize, enableCull);
+            return EntitySystem.CreateEntity(entity, position, rotation, localSize, enableCull);
         }
     }
 }

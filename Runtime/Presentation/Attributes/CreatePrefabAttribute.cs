@@ -56,7 +56,7 @@ namespace Syadeu.Presentation.Attributes
     {
         [JsonProperty(Order = 0, PropertyName = "Entity")] public Reference<EntityBase> m_Entity;
         
-        [JsonIgnore] public IEntity CreatedEntity { get; internal set; }
+        [JsonIgnore] public Entity<EntityBase> CreatedEntity { get; internal set; }
     }
     [Preserve]
     internal sealed class CreateEntityProcessor : AttributeProcessor<CreateEntityAttribute>
