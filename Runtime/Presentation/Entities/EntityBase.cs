@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Database;
+using Syadeu.Internal;
 using Syadeu.Presentation.Attributes;
 using Unity.Mathematics;
 
@@ -16,6 +17,17 @@ namespace Syadeu.Presentation.Entities
         [JsonIgnore] internal Hash m_TransformHash;
 
         [JsonProperty(Order = -9, PropertyName = "Prefab")] public PrefabReference Prefab { get; set; }
+
+        /// <summary>
+        /// 이 엔티티의 프리팹 <see cref="Prefab"/>의 AABB Center translation 값입니다.
+        /// </summary>
+        [ReflectionDescription("AABB 의 Center")]
+        [JsonProperty(Order = -8, PropertyName = "Center")] public float3 Center { get; set; }
+        /// <summary>
+        /// 이 엔티티 프리팹 <see cref="Prefab"/>의 AABB Size 값입니다.
+        /// </summary>
+        [ReflectionDescription("AABB 의 Size")]
+        [JsonProperty(Order = -7, PropertyName = "Size")] public float3 Size { get; set; }
 
         [JsonIgnore] public DataGameObject gameObject => PresentationSystem<GameObjectProxySystem>.System.GetDataGameObject(m_GameObjectHash);
         [JsonIgnore] public DataTransform transform => PresentationSystem<GameObjectProxySystem>.System.GetDataTransform(m_TransformHash);

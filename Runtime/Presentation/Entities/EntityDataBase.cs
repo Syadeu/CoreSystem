@@ -21,7 +21,7 @@ namespace Syadeu.Presentation.Entities
 
         Hash IObject.Idx => Idx;
         List<AttributeBase> IObject.Attributes => m_Attributes;
-        [JsonProperty(Order = -8, PropertyName = "Attributes")] [UnityEngine.HideInInspector] public List<Hash> Attributes { get; set; }
+        [JsonProperty(Order = -10, PropertyName = "Attributes")] [UnityEngine.HideInInspector] public List<Hash> Attributes { get; set; }
 
         [JsonIgnore] public bool isCreated => m_IsCreated;
 

@@ -19,9 +19,9 @@ namespace Syadeu.Presentation.Map
             [JsonProperty(Order = 3, PropertyName = "Scale")] public float3 m_Scale;
             [JsonProperty(Order = 4, PropertyName = "EnableCull")] public bool m_EnableCull;
 
-            [UnityEngine.Space]
-            [JsonProperty(Order = 5, PropertyName = "AABBCenter")] public float3 m_AABBCenter;
-            [JsonProperty(Order = 6, PropertyName = "AABBSize")] public float3 m_AABBSize;
+            //[UnityEngine.Space]
+            //[JsonProperty(Order = 5, PropertyName = "AABBCenter")] public float3 m_AABBCenter;
+            //[JsonProperty(Order = 6, PropertyName = "AABBSize")] public float3 m_AABBSize;
 
             [JsonIgnore] public float3 eulerAngles
             {
@@ -32,8 +32,14 @@ namespace Syadeu.Presentation.Map
                     m_Rotation = quaternion.EulerZXY(temp);
                 }
             }
-            [JsonIgnore] public AABB AABB => new AABB(m_AABBCenter + m_Translation, m_AABBSize).Rotation(m_Rotation);
-
+            [JsonIgnore] public AABB AABB
+            {
+                get
+                {
+                    EntityBase entity = m_Object.GetObject();
+                    return new AABB(entity.Center + m_Translation, entity.Size).Rotation(m_Rotation);
+                }
+            }
             public Object()
             {
                 m_Rotation = quaternion.identity;

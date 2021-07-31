@@ -202,14 +202,6 @@ namespace SyadeuEditor.Presentation.Map
                 {
                     mapDataObj.m_Rotation = tr.rotation;
                     mapDataObj.m_Scale = tr.localScale;
-
-                    AABB aabb = new AABB(tr.position, float3.zero);
-                    foreach (var item in obj.GetComponentsInChildren<Renderer>())
-                    {
-                        aabb.Encapsulate(item.bounds);
-                    }
-                    mapDataObj.m_AABBCenter = aabb.center - ((float3)tr.position);
-                    mapDataObj.m_AABBSize = aabb.size;
                 }
 
                 tr.position = mapDataObj.m_Translation;
