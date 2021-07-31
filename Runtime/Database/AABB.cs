@@ -32,6 +32,8 @@ namespace Syadeu.Database
         [JsonIgnore] public float3 extents { get => m_Extents; set { m_Extents = value; } }
         [JsonIgnore] public float3 min { get => center - extents; set { SetMinMax(value, max); } }
         [JsonIgnore] public float3 max { get => center + extents; set { SetMinMax(min, value); } }
+
+        [JsonIgnore] public float3[] vertices => GetVertices(in this);
 #pragma warning restore IDE1006 // Naming Styles
         public void SetMinMax(float3 min, float3 max)
         {
@@ -89,13 +91,63 @@ namespace Syadeu.Database
                 (min.z <= aabb.max.z) && (max.z >= aabb.min.z);
         }
 
-        public void Encapsulate(float3 point) => SetMinMax(Vector3.Min(min, point), Vector3.Max(max, point));
+        public void Encapsulate(float3 point) => SetMinMax(math.min(min, point), math.max(max, point));
         public void Encapsulate(AABB aabb)
         {
             Encapsulate(aabb.center - aabb.extents);
             Encapsulate(aabb.center + aabb.extents);
         }
 
+        public AABB Rotation(quaternion rot) => CalculateRotation(in this, rot);
+
+        private static AABB CalculateRotation(in AABB aabb, quaternion quaternion)
+        {
+            float3 
+                originCenter = aabb.center,
+                originExtents = aabb.extents,
+                originMin = (-originExtents + originCenter),
+                originMax = (originExtents + originCenter);
+            float4x4 trMatrix = float4x4.TRS(originCenter, quaternion, originExtents);
+
+            float3
+                minPos = math.mul(trMatrix, new float4(-originExtents * 2, 1)).xyz,
+                maxPos = math.mul(trMatrix, new float4(originExtents * 2, 1)).xyz;
+
+            AABB temp = new AABB(originCenter, float3.zero);
+
+            //temp.SetMinMax(
+            //    originMin - math.abs(originMin - minPos),
+            //    originMax + math.abs(originMax - maxPos));
+
+            // TODO : 최소 width, height 값이 설정되지않아 무한대로 축소함. 수정할 것.
+            temp.SetMinMax(
+                originMin + (minPos - originMin),
+                originMax + (maxPos - originMax));
+
+            //temp.SetMinMax(
+            //    math.min(originMin + (minPos - originMin), limitMinf),
+            //    math.max(originMax + (maxPos - originMax), limitMaxf));
+
+            return temp;
+        }
+        private static float3[] GetVertices(in AABB aabb)
+        {
+            float3 min = aabb.min;
+            float3 max = aabb.max;
+
+            return new float3[]
+            {
+                min,
+                new float3(min.x, max.y, min.z),
+                new float3(max.x, max.y, min.z),
+                new float3(max.x, min.y, min.z),
+
+                new float3(max.x, min.y, max.z),
+                max,
+                new float3(min.x, max.y, max.z),
+                new float3(min.x, min.y, max.z),
+            };
+        }
         private static float3x4[] GetSquares(in AABB aabb)
         {
             float3

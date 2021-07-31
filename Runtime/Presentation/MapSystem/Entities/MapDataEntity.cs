@@ -32,7 +32,7 @@ namespace Syadeu.Presentation.Map
                     m_Rotation = quaternion.EulerZXY(temp);
                 }
             }
-            [JsonIgnore] public AABB AABB => new AABB(m_AABBCenter + m_Translation, m_AABBSize);
+            [JsonIgnore] public AABB AABB => new AABB(m_AABBCenter + m_Translation, m_AABBSize).Rotation(m_Rotation);
 
             public Object()
             {

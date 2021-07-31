@@ -894,6 +894,11 @@ namespace SyadeuEditor.Presentation.Map
                 Handles.color = Color.red;
                 Handles.DrawWireCube(selectAabb.center, selectAabb.size);
 
+                //Handles.color = Color.blue;
+                //Handles.DrawWireCube(selectAabb.min, Vector3.one * 5);
+                //Handles.color = Color.green;
+                //Handles.DrawWireCube(selectAabb.max, Vector3.one * 5f);
+
                 if (Event.current.isKey)
                 {
                     if (Event.current.keyCode == KeyCode.Escape)

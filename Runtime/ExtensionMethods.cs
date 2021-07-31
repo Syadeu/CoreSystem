@@ -12,6 +12,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization.Formatters.Binary;
 using Unity.Collections;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace Syadeu.Unsafe
