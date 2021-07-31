@@ -20,7 +20,7 @@ namespace Syadeu.Presentation.Entities
         /// <inheritdoc cref="IEntityData.Idx"/>
         private readonly Hash m_Idx;
 
-        public T Target => m_Idx.Equals(Hash.Empty) ? null : (T)PresentationSystem<EntitySystem>.System.m_ObjectEntities[m_Idx];
+        internal T Target => m_Idx.Equals(Hash.Empty) ? null : (T)PresentationSystem<EntitySystem>.System.m_ObjectEntities[m_Idx];
 
         public string Name => Target.Name;
 
@@ -87,9 +87,14 @@ namespace Syadeu.Presentation.Entities
         /// <inheritdoc cref="IEntityData.Idx"/>
         private readonly Hash m_Idx;
 
-        public T Target => m_Idx.Equals(Hash.Empty) ? null : (T)PresentationSystem<EntitySystem>.System.m_ObjectEntities[m_Idx];
+        internal T Target => m_Idx.Equals(Hash.Empty) ? null : (T)PresentationSystem<EntitySystem>.System.m_ObjectEntities[m_Idx];
 
         public string Name => Target.Name;
+
+#pragma warning disable IDE1006 // Naming Styles
+        public DataGameObject gameObject => Target.gameObject;
+        public DataTransform transform => Target.transform;
+#pragma warning restore IDE1006 // Naming Styles
 
         internal Entity(Hash idx)
         {

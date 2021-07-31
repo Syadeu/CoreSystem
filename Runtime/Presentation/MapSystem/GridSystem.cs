@@ -1,6 +1,7 @@
 ﻿using Syadeu.Database;
 using Syadeu.Mono;
 using Syadeu.Presentation.Entities;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,7 +10,7 @@ namespace Syadeu.Presentation.Map
     public sealed class GridSystem : PresentationSystemEntity<GridSystem>
     {
         public override bool EnableBeforePresentation => false;
-        public override bool EnableOnPresentation => false;
+        public override bool EnableOnPresentation => true;
         public override bool EnableAfterPresentation => false;
 
         private EntitySystem m_EntitySystem;
@@ -18,7 +19,7 @@ namespace Syadeu.Presentation.Map
         private KeyValuePair<SceneDataEntity, GridMapAttribute> m_MainGrid;
         private bool m_DrawGrid = false;
 
-
+        private readonly ConcurrentQueue<GridSizeAttribute> m_WaitForRegister = new ConcurrentQueue<GridSizeAttribute>();
 
         #region Presentation Methods
         protected override PresentationResult OnInitialize()
@@ -42,6 +43,24 @@ namespace Syadeu.Presentation.Map
             });
 
             return base.OnInitializeAsync();
+        }
+        protected override PresentationResult OnPresentationAsync()
+        {
+            if (m_MainGrid.Value != null)
+            {
+                int waitForRegisterCount = m_WaitForRegister.Count;
+                if (waitForRegisterCount > 0)
+                {
+                    for (int i = 0; i < waitForRegisterCount; i++)
+                    {
+                        if (!m_WaitForRegister.TryDequeue(out var att)) continue;
+
+                        att.GridSystem = this;
+                    }
+                }
+            }
+
+            return base.OnPresentationAsync();
         }
         public override void Dispose()
         {
@@ -80,7 +99,7 @@ namespace Syadeu.Presentation.Map
                 var gridSizeAtt = entity.GetAttribute<GridSizeAttribute>();
                 if (gridSizeAtt == null) return;
 
-
+                m_WaitForRegister.Enqueue(gridSizeAtt);
             }
         }
         private void M_EntitySystem_OnEntityDestroy(EntityData<IEntityData> obj)

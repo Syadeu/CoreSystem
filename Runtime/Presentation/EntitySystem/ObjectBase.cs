@@ -12,7 +12,7 @@ namespace Syadeu.Presentation
     /// <summary>
     /// <see cref="EntitySystem"/>의 모든 객체들이 참조하는 가장 기본 abstract 입니다.
     /// </summary>
-    public abstract class ObjectBase : ICloneable
+    public abstract class ObjectBase : ICloneable, IDisposable
     {
         const string c_NameBase = "New {0}";
 
@@ -29,10 +29,17 @@ namespace Syadeu.Presentation
         /// </summary>
         [JsonIgnore] public Hash Idx { get; private set; }
 
+        [JsonIgnore] public bool Disposed { get; private set; } = false;
+
         public ObjectBase()
         {
             Name = string.Format(c_NameBase, GetType().Name);
             Hash = Hash.NewHash();
+        }
+        ~ObjectBase()
+        {
+            CoreSystem.Logger.Log(Channel.GC, $"Disposing entity object({Name})");
+            Dispose();
         }
 
         public virtual ObjectBase Copy()
@@ -43,9 +50,14 @@ namespace Syadeu.Presentation
 
             return entity;
         }
-        public virtual object Clone()
+        public virtual object Clone() => Copy();
+
+        public void Dispose()
         {
-            return Copy();
+            if (Disposed) return;
+            OnDispose();
+            Disposed = true;
         }
+        protected virtual void OnDispose() { }
     }
 }

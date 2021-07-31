@@ -30,10 +30,16 @@ namespace Syadeu.Presentation
         /// <summary>
         /// 엔티티가 생성될때 실행되는 이벤트 delegate 입니다.
         /// </summary>
+        /// <remarks>
+        /// 모든 프로세서가 동작한 후, 맨 마지막에 실행됩니다.
+        /// </remarks>
         public event Action<EntityData<IEntityData>> OnEntityCreated;
         /// <summary>
         /// 엔티티가 파괴될때 실행되는 이벤트 delegate 입니다.
         /// </summary>
+        /// <remarks>
+        /// 모든 프로세서가 동작한 후, 맨 마지막에 실행됩니다.
+        /// </remarks>
         public event Action<EntityData<IEntityData>> OnEntityDestroy;
 
         internal readonly HashSet<Hash> m_ObjectHashSet = new HashSet<Hash>();
@@ -148,16 +154,6 @@ namespace Syadeu.Presentation
             m_EntityGameObjects.Remove(obj.m_Idx);
             m_ObjectHashSet.Remove(entityHash);
             m_ObjectEntities.Remove(entityHash);
-
-            //DestroyObject(entityHash);
-            //m_EntityGameObjects.Remove(obj.m_Idx);
-
-            //if (!m_ObjectHashSet.Contains(obj.m_Idx)) return;
-
-            //ProcessEntityOnDestory(this, m_ObjectEntities[obj.m_Idx]);
-
-            //m_ObjectHashSet.Remove(obj.m_Idx);
-            //m_ObjectEntities.Remove(obj.m_Idx);
         }
         protected override PresentationResult OnPresentationAsync()
         {
@@ -598,6 +594,8 @@ namespace Syadeu.Presentation
                         });
                     }
                 }
+
+                other.Dispose();
             });
             #endregion
 
