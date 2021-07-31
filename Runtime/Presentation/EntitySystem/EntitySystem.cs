@@ -404,7 +404,7 @@ namespace Syadeu.Presentation
         }
         public void DestroyObject(Hash hash)
         {
-            if (!m_ObjectHashSet.Contains(hash)) return;
+            if (!m_ObjectHashSet.Contains(hash)) throw new Exception();
 
             ProcessEntityOnDestory(this, m_ObjectEntities[hash]);
 

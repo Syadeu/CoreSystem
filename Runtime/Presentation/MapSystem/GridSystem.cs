@@ -87,7 +87,7 @@ namespace Syadeu.Presentation.Map
         {
             if (obj is SceneDataEntity sceneData)
             {
-                if (m_MainGrid.Value.Equals(sceneData))
+                if (m_MainGrid.Key.Equals(sceneData))
                 {
                     m_MainGrid = new KeyValuePair<SceneDataEntity, GridMapAttribute>();
                 }

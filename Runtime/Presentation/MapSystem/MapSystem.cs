@@ -71,7 +71,7 @@ namespace Syadeu.Presentation.Map
                             for (int i = 0; i < list.Count; i++)
                             {
                                 SceneDataEntity data = list[i];
-                                data.DestroyChildOnDestroy = false;
+                                //data.DestroyChildOnDestroy = false;
                                 m_EntitySystem.DestroyObject(list[i].Idx);
                             }
                             list.Clear();

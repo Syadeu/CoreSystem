@@ -711,8 +711,13 @@ namespace Syadeu.Presentation
         unsafe internal DataGameObject* GetDataGameObjectPointer(Hash objHash)
         {
             if (m_Disposed) return null;
-
-            int idx = m_MappedGameObjectIdxes[objHash];
+            if (!m_MappedGameObjectIdxes.TryGetValue(objHash, out int idx))
+            {
+                CoreSystem.Logger.LogWarning(Channel.Proxy,
+                    $"DataGameObject({objHash}) is already destroyed or not found. Request ignored.");
+                return null;
+            }
+            //int idx = m_MappedGameObjectIdxes[objHash];
 
             DataGameObject* obj = ((DataGameObject*)m_MappedGameObjects.GetUnsafePtr()) + idx;
             return obj;
