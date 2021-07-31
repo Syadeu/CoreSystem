@@ -49,6 +49,8 @@ namespace Syadeu.Presentation
 
 #pragma warning disable IDE1006 // Naming Styles
 #line hidden
+        public bool destroyed { get => m_Destroyed; private set => m_Destroyed = value; }
+
         public DataTransform transform
         {
             get
@@ -69,9 +71,21 @@ namespace Syadeu.Presentation
 #pragma warning restore IDE1006 // Naming Styles
         public void Destory()
         {
-            if (this.Equals(Null)) return;
+            if (this.Equals(Null))
+            {
+                CoreSystem.Logger.LogError(Channel.Proxy,
+                    "Cannot destroy null DataGameObject");
+                return;
+            }
+            if (destroyed)
+            {
+                CoreSystem.Logger.LogError(Channel.Proxy,
+                    $"Cannot destroy DataGameObject({m_Idx}) it\'s already destroyed.");
+                return;
+            }
 
-            GetRef().m_Destroyed = true;
+            //GetRef().m_Destroyed = true;
+            destroyed = true;
             PresentationSystem<GameObjectProxySystem>.System.DestoryDataObject(m_Idx);
         }
 

@@ -27,8 +27,14 @@ namespace Syadeu.Presentation
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
-        public event Action<IEntityData> OnEntityCreated;
-        public event Action<IEntityData> OnEntityDestroy;
+        /// <summary>
+        /// 엔티티가 생성될때 실행되는 이벤트 delegate 입니다.
+        /// </summary>
+        public event Action<EntityData<IEntityData>> OnEntityCreated;
+        /// <summary>
+        /// 엔티티가 파괴될때 실행되는 이벤트 delegate 입니다.
+        /// </summary>
+        public event Action<EntityData<IEntityData>> OnEntityDestroy;
 
         internal readonly HashSet<Hash> m_ObjectHashSet = new HashSet<Hash>();
         internal readonly Dictionary<Hash, IEntityData> m_ObjectEntities = new Dictionary<Hash, IEntityData>();
@@ -107,7 +113,7 @@ namespace Syadeu.Presentation
         }
         protected override PresentationResult OnStartPresentation()
         {
-            //m_ProxySystem.OnDataObjectDestoryAsync += M_ProxySystem_OnDataObjectDestoryAsync;
+            m_ProxySystem.OnDataObjectDestroyAsync += M_ProxySystem_OnDataObjectDestroyAsync;
 
             m_ProxySystem.OnDataObjectProxyCreated += M_ProxySystem_OnDataObjectProxyCreated;
             m_ProxySystem.OnDataObjectProxyRemoved += M_ProxySystem_OnDataObjectProxyRemoved;
@@ -133,15 +139,26 @@ namespace Syadeu.Presentation
             }
         }
 
-        //private void M_ProxySystem_OnDataObjectDestoryAsync(DataGameObject obj)
-        //{
-        //    if (!m_ObjectHashSet.Contains(obj.m_Idx)) return;
+        private void M_ProxySystem_OnDataObjectDestroyAsync(DataGameObject obj)
+        {
+            if (!m_EntityGameObjects.TryGetValue(obj.m_Idx, out Hash entityHash)) return;
 
-        //    ProcessEntityOnDestory(this, m_ObjectEntities[obj.m_Idx]);
+            ProcessEntityOnDestory(this, m_ObjectEntities[entityHash]);
 
-        //    m_ObjectHashSet.Remove(obj.m_Idx);
-        //    m_ObjectEntities.Remove(obj.m_Idx);
-        //}
+            m_EntityGameObjects.Remove(obj.m_Idx);
+            m_ObjectHashSet.Remove(entityHash);
+            m_ObjectEntities.Remove(entityHash);
+
+            //DestroyObject(entityHash);
+            //m_EntityGameObjects.Remove(obj.m_Idx);
+
+            //if (!m_ObjectHashSet.Contains(obj.m_Idx)) return;
+
+            //ProcessEntityOnDestory(this, m_ObjectEntities[obj.m_Idx]);
+
+            //m_ObjectHashSet.Remove(obj.m_Idx);
+            //m_ObjectEntities.Remove(obj.m_Idx);
+        }
         protected override PresentationResult OnPresentationAsync()
         {
             m_ObjectEntities.AsParallel().ForAll((other) =>
@@ -425,6 +442,9 @@ namespace Syadeu.Presentation
         /// <summary>
         /// 해당 엔티티를 즉시 파괴합니다.
         /// </summary>
+        /// <remarks>
+        /// 씬이 전환되는 경우, 해당 씬에서 생성된 <see cref="EntityBase"/>는 자동으로 파괴되므로 호출하지 마세요. 단, <see cref="EntityDataBase"/>(<seealso cref="DataGameObject"/>가 없는 엔티티)는 씬이 전환되어도 자동으로 파괴되지 않습니다.
+        /// </remarks>
         /// <param name="hash"><seealso cref="IEntityData.Idx"/> 값</param>
         public void DestroyObject(Hash hash)
         {
@@ -510,7 +530,7 @@ namespace Syadeu.Presentation
             }
             #endregion
 
-            system.OnEntityCreated?.Invoke(entity);
+            system.OnEntityCreated?.Invoke(new EntityData<IEntityData>(entity.Idx));
         }
         private static void ProcessEntityOnPresentation(EntitySystem system, IEntityData entity)
         {
@@ -597,7 +617,7 @@ namespace Syadeu.Presentation
             }
             #endregion
 
-            system.OnEntityDestroy?.Invoke(entity);
+            system.OnEntityDestroy?.Invoke(new EntityData<IEntityData>(entity.Idx));
         }
 
         private static void ProcessEntityOnProxyCreated(EntitySystem system, IEntity entity, RecycleableMonobehaviour monoObj)

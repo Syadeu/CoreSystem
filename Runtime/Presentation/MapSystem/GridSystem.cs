@@ -58,9 +58,9 @@ namespace Syadeu.Presentation.Map
             }, "draw", "grid");
         }
 
-        private void M_EntitySystem_OnEntityCreated(IEntityData obj)
+        private void M_EntitySystem_OnEntityCreated(EntityData<IEntityData> obj)
         {
-            if (obj is SceneDataEntity sceneData)
+            if (obj.Target is SceneDataEntity sceneData)
             {
                 GridMapAttribute gridAtt = sceneData.GetAttribute<GridMapAttribute>();
                 if (gridAtt == null) return;
@@ -75,7 +75,7 @@ namespace Syadeu.Presentation.Map
                         $"Attempt to load grids more then one at SceneDataEntity({sceneData.Name}). This is not allowed.");
                 }
             }
-            else if (obj is EntityBase entity)
+            else if (obj.Target is EntityBase entity)
             {
                 var gridSizeAtt = entity.GetAttribute<GridSizeAttribute>();
                 if (gridSizeAtt == null) return;
@@ -83,9 +83,9 @@ namespace Syadeu.Presentation.Map
 
             }
         }
-        private void M_EntitySystem_OnEntityDestroy(IEntityData obj)
+        private void M_EntitySystem_OnEntityDestroy(EntityData<IEntityData> obj)
         {
-            if (obj is SceneDataEntity sceneData)
+            if (obj.Target is SceneDataEntity sceneData)
             {
                 if (m_MainGrid.Key.Equals(sceneData))
                 {

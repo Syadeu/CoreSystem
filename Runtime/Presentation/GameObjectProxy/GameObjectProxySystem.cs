@@ -29,7 +29,7 @@ namespace Syadeu.Presentation
         public override bool EnableAfterPresentation => true;
 
         public event Action<DataGameObject> OnDataObjectCreatedAsync;
-        public event Action<DataGameObject> OnDataObjectDestoryAsync;
+        public event Action<DataGameObject> OnDataObjectDestroyAsync;
         public event Action<DataGameObject> OnDataObjectVisibleAsync;
         public event Action<DataGameObject> OnDataObjectInvisibleAsync;
 
@@ -125,7 +125,7 @@ namespace Syadeu.Presentation
                 #region Clear Data GameObjects
                 for (int i = 0; i < m_MappedGameObjects.Length; i++)
                 {
-                    OnDataObjectDestoryAsync?.Invoke(m_MappedGameObjects[i]);
+                    OnDataObjectDestroyAsync?.Invoke(m_MappedGameObjects[i]);
                 }
                 m_MappedGameObjects.Clear();
                 m_MappedGameObjectIdxes.Clear();
@@ -215,7 +215,7 @@ namespace Syadeu.Presentation
                         int objIdx = m_MappedGameObjectIdxes[objHash];
                         int trIdx = m_MappedTransformIdxes[m_MappedGameObjects[objIdx].m_Transform];
 
-                        OnDataObjectDestoryAsync?.Invoke(m_MappedGameObjects[objIdx]);
+                        OnDataObjectDestroyAsync?.Invoke(m_MappedGameObjects[objIdx]);
 
                         if (m_MappedTransforms[trIdx].HasProxyObject)
                         {
