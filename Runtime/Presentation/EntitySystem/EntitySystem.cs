@@ -197,8 +197,8 @@ namespace Syadeu.Presentation
                         {
                             IAttributeProcessor processor = processors[j];
 
-                            processor.OnDestroy(other, entity);
-                            processor.OnDestroySync(other, entity);
+                            processor.OnDestroy(other, new EntityData<IEntityData>(entity.Hash));
+                            processor.OnDestroySync(other, new EntityData<IEntityData>(entity.Hash));
                         }
                     }
                 });
@@ -503,10 +503,10 @@ namespace Syadeu.Presentation
                     {
                         IAttributeProcessor processor = processors[j];
 
-                        processor.OnCreated(other, entity);
+                        processor.OnCreated(other, new EntityData<IEntityData>(entity.Idx));
                         CoreSystem.AddForegroundJob(() =>
                         {
-                            processor.OnCreatedSync(other, entity);
+                            processor.OnCreatedSync(other, new EntityData<IEntityData>(entity.Idx));
                         });
                     }
                     CoreSystem.Logger.Log(Channel.Entity, $"Processed OnCreated at entity({entity.Name}), {t.Name}");
@@ -591,10 +591,10 @@ namespace Syadeu.Presentation
                     {
                         IAttributeProcessor processor = processors[j];
 
-                        processor.OnDestroy(other, entity);
+                        processor.OnDestroy(other, new EntityData<IEntityData>(entity.Idx));
                         CoreSystem.AddForegroundJob(() =>
                         {
-                            processor.OnDestroySync(other, entity);
+                            processor.OnDestroySync(other, new EntityData<IEntityData>(entity.Idx));
                         });
                     }
                 }

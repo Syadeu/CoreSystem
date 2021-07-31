@@ -2,6 +2,7 @@
 using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation.Attributes;
+using Syadeu.Presentation.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -91,11 +92,11 @@ namespace Syadeu.Presentation.Map
     {
         private static SceneDataEntity ToSceneData(IEntityData entity) => (SceneDataEntity)entity;
 
-        protected override void OnCreated(GridMapAttribute attribute, IEntityData entity)
+        protected override void OnCreated(GridMapAttribute attribute, EntityData<IEntityData> entity)
         {
             attribute.CreateGrid();
         }
-        protected override void OnDestroy(GridMapAttribute attribute, IEntityData entity)
+        protected override void OnDestroy(GridMapAttribute attribute, EntityData<IEntityData> entity)
         {
             attribute.DestroyGrid();
         }

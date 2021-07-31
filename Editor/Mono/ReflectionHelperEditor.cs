@@ -588,6 +588,21 @@ namespace SyadeuEditor
                                 scr.DrawFunctionSelector(string.Empty);
                             }
                             #endregion
+                            #region Unity Types
+                            else if (DrawUnityField(list[j], elementType, string.Empty, (other) => list[j], out object value))
+                            {
+                                list[j] = value;
+                            }
+                            else if (DrawUnityMathField(list[j], elementType, string.Empty, (other) => list[j], out value))
+                            {
+                                list[j] = value;
+                            }
+                            else if (elementType.Equals(TypeHelper.TypeOf<AssetReference>.Type))
+                            {
+                                AssetReference refAsset = (AssetReference)list[j];
+                                DrawAssetReference(string.Empty, (other) => list[j] = other, refAsset);
+                            }
+                            #endregion
                             else
                                 list[j] = DrawObject(list[j]);
                         }
@@ -672,19 +687,8 @@ namespace SyadeuEditor
 
                 EditorGUI.BeginDisabledGroup(members[i].GetCustomAttribute<ReflectionSealedViewAttribute>() != null);
 
-                if (DrawSystemField(obj, declaredType, name, getter, out object value))
-                {
-                    setter.Invoke(obj, value);
-                }
-                else if (declaredType.IsArray)
-                {
-                    IList list = (IList)getter.Invoke(obj);
-                    if (list == null) list = Array.CreateInstance(declaredType.GetElementType(), 0);
-
-                    setter.Invoke(obj, DrawList(name, list));
-                }
                 #region Unity Types
-                else if (DrawUnityField(obj, declaredType, name, getter, out value))
+                if (DrawUnityField(obj, declaredType, name, getter, out object value))
                 {
                     setter.Invoke(obj, value);
                 }
@@ -766,6 +770,17 @@ namespace SyadeuEditor
                     DrawPrefabReference(name, (idx) => setter.Invoke(obj, new PrefabReference(idx)), prefabRef);
                 }
                 #endregion
+                else if (DrawSystemField(obj, declaredType, name, getter, out value))
+                {
+                    setter.Invoke(obj, value);
+                }
+                else if (declaredType.IsArray)
+                {
+                    IList list = (IList)getter.Invoke(obj);
+                    if (list == null) list = Array.CreateInstance(declaredType.GetElementType(), 0);
+
+                    setter.Invoke(obj, DrawList(name, list));
+                }
                 else
                 {
                     //setter(obj, DrawObject(getter(obj)));

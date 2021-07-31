@@ -21,9 +21,9 @@ namespace Syadeu.Presentation.Attributes
     [Preserve]
     internal sealed class CreatePrefabProcessor : AttributeProcessor<CreatePrefabAttribute>
     {
-        protected override void OnCreated(CreatePrefabAttribute attribute, IEntityData entity)
+        protected override void OnCreated(CreatePrefabAttribute attribute, EntityData<IEntityData> entity)
         {
-            Vector3 pos = ((IEntity)entity).transform.position;
+            Vector3 pos = ((EntityData<IEntity>)entity).Target.transform.position;
             attribute.PrefabInstance = CreatePrefab(attribute.m_Prefab, pos, quaternion.identity);
         }
         //public void OnProxyCreated(AttributeBase attribute, IEntity entity)
@@ -61,9 +61,9 @@ namespace Syadeu.Presentation.Attributes
     [Preserve]
     internal sealed class CreateEntityProcessor : AttributeProcessor<CreateEntityAttribute>
     {
-        protected override void OnCreated(CreateEntityAttribute attribute, IEntityData entity)
+        protected override void OnCreated(CreateEntityAttribute attribute, EntityData<IEntityData> entity)
         {
-            DataTransform tr = ((IEntity)entity).transform;
+            DataTransform tr = ((EntityData<IEntity>)entity).Target.transform;
             attribute.CreatedEntity = CreateEntity(attribute.m_Entity, tr.position, tr.rotation);
         }
     }
