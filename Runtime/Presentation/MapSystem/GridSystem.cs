@@ -4,6 +4,7 @@ using Syadeu.Presentation.Entities;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace Syadeu.Presentation.Map
@@ -23,7 +24,7 @@ namespace Syadeu.Presentation.Map
         private readonly ConcurrentQueue<GridSizeAttribute> m_WaitForRegister = new ConcurrentQueue<GridSizeAttribute>();
 
         private readonly Dictionary<Entity<IEntity>, int[]> m_EntityGridIndices = new Dictionary<Entity<IEntity>, int[]>();
-        private readonly Dictionary<int, Entity<IEntity>> m_GridEntities = new Dictionary<int, Entity<IEntity>>();
+        private readonly Dictionary<int, List<Entity<IEntity>>> m_GridEntities = new Dictionary<int, List<Entity<IEntity>>>();
 
         public GridMapAttribute GridMap => m_MainGrid.Value;
 
@@ -123,21 +124,83 @@ namespace Syadeu.Presentation.Map
         {
             if (m_DrawGrid && m_MainGrid.Value != null)
             {
-                m_MainGrid.Value.Grid.DrawGL(.1f, m_RenderSystem.Camera);
-
-                float sizeHalf = m_MainGrid.Value.Grid.cellSize * .5f;
-
                 GL.PushMatrix();
-                GridExtensions.DefaultMaterial.SetPass(0);
-                Color color = Color.red;
-                color.a = .5f;
-                GL.Color(color);
+                float3x3 rotmat = new float3x3(quaternion.identity);
+                float4x4 mat = new float4x4(rotmat, float3.zero);
+                GL.MultMatrix(mat);
 
+                GridExtensions.DefaultMaterial.SetPass(0);
+                Color
+                    colorWhite = Color.white,
+                    colorRed = Color.red;
+                colorWhite.a = .7f; colorRed.a = .5f;
+                GL.Begin(GL.QUADS);
+
+                GL.Color(colorWhite);
+                DrawGridGL(m_MainGrid.Value.Grid, .1f);
+
+                GL.Color(colorRed);
                 int[] gridEntities = m_GridEntities.Keys.ToArray();
+                DrawOccupiedCells(m_MainGrid.Value.Grid, gridEntities);
+
+                GL.End();
+                GL.PopMatrix();
+            }
+
+            static void DrawGridGL(ManagedGrid grid, float thickness)
+            {
+                int2 gridSize = grid.gridSize;
+
+                Vector3 minPos = grid.GetCellPosition(0);
+                minPos.x -= grid.cellSize * .5f;
+                minPos.z += grid.cellSize * .5f;
+
+                Vector3 maxPos = grid.GetCellPosition(gridSize);
+                maxPos.x -= grid.cellSize * .5f;
+                maxPos.z += grid.cellSize * .5f;
+
+                var xTemp = new Vector3(thickness * .5f, 0, 0);
+                var yTemp = new Vector3(0, 0, thickness * .5f);
+
+                for (int y = 0; y < gridSize.y + 1; y++)
+                {
+                    for (int x = 0; x < gridSize.x + 1; x++)
+                    {
+                        Vector3
+                            p1 = new Vector3(
+                                minPos.x,
+                                minPos.y + .05f,
+                                minPos.z - (grid.cellSize * y)),
+                            p2 = new Vector3(
+                                maxPos.x,
+                                minPos.y + .05f,
+                                minPos.z - (grid.cellSize * y)),
+                            p3 = new Vector3(
+                                minPos.x + (grid.cellSize * x),
+                                minPos.y + .05f,
+                                minPos.z),
+                            p4 = new Vector3(
+                                minPos.x + (grid.cellSize * x),
+                                minPos.y + .05f,
+                                maxPos.z)
+                            ;
+
+                        GL.Vertex(p1 - yTemp); GL.Vertex(p2 - yTemp);
+                        GL.Vertex(p2 + yTemp); GL.Vertex(p1 + yTemp);
+
+                        GL.Vertex(p3 - xTemp); GL.Vertex(p4 - xTemp);
+                        GL.Vertex(p4 + xTemp); GL.Vertex(p3 + xTemp);
+                    }
+                }
+            }
+            static void DrawOccupiedCells(ManagedGrid grid, int[] gridEntities)
+            {
+                float sizeHalf = grid.cellSize * .5f;
+
                 for (int i = 0; i < gridEntities.Length; i++)
                 {
                     Vector3
-                            cellPos = m_MainGrid.Value.Grid.GetCellPosition(gridEntities[i]),
+                            cellPos = grid.GetCellPosition(gridEntities[i]),
                             p1 = new Vector3(cellPos.x - sizeHalf, cellPos.y + .1f, cellPos.z - sizeHalf),
                             p2 = new Vector3(cellPos.x - sizeHalf, cellPos.y + .1f, cellPos.z + sizeHalf),
                             p3 = new Vector3(cellPos.x + sizeHalf, cellPos.y + .1f, cellPos.z + sizeHalf),
@@ -148,8 +211,6 @@ namespace Syadeu.Presentation.Map
                     GL.Vertex(p3);
                     GL.Vertex(p4);
                 }
-
-                GL.PopMatrix();
             }
         }
         #endregion
@@ -160,16 +221,23 @@ namespace Syadeu.Presentation.Map
             {
                 for (int i = 0; i < cachedIndics.Length; i++)
                 {
-                    m_GridEntities.Remove(cachedIndics[i]);
+                    m_GridEntities[cachedIndics[i]].Remove(entity);
                 }
                 m_EntityGridIndices.Remove(entity);
             }
 
-            m_EntityGridIndices.Add(entity, indices);
             for (int i = 0; i < indices.Length; i++)
             {
-                m_GridEntities.Add(indices[i], entity);
+                if (!m_GridEntities.TryGetValue(indices[i], out var entities))
+                {
+                    entities = new List<Entity<IEntity>>();
+                    m_GridEntities.Add(indices[i], entities);
+                }
+                entities.Add(entity);
             }
+
+            m_EntityGridIndices.Add(entity, indices);
+            $"{entity.Name} in".ToLog();
         }
     }
 }
