@@ -54,6 +54,7 @@ namespace Syadeu.Presentation.Map
         [JsonIgnore] public int LayerCount => m_Layers.Length;
         [JsonIgnore] public ManagedGrid Grid { get; private set; }
         [JsonIgnore] public NativeHashSet<int>[] Layers { get; private set; }
+        [JsonIgnore] private Dictionary<int, List<Entity<IEntity>>> OccupiedCellIndices { get; set; }
 
         public void CreateGrid()
         {
@@ -69,11 +70,13 @@ namespace Syadeu.Presentation.Map
                     Layers[i].Add(m_Layers[i].m_Indices[a]);
                 }
             }
+            OccupiedCellIndices = new Dictionary<int, List<Entity<IEntity>>>();
         }
         public void DestroyGrid()
         {
             if (Grid == null) throw new Exception();
 
+            OccupiedCellIndices = null;
             for (int i = 0; i < Layers.Length; i++)
             {
                 Layers[i].Dispose();
@@ -96,6 +99,7 @@ namespace Syadeu.Presentation.Map
         {
             attribute.CreateGrid();
         }
+
         protected override void OnDestroy(GridMapAttribute attribute, EntityData<IEntityData> entity)
         {
             attribute.DestroyGrid();

@@ -493,6 +493,24 @@ namespace Syadeu.Presentation
 
                 Type t = other.GetType();
 
+                if (!TypeHelper.TypeOf<AttributeBase>.Type.Equals(t.BaseType))
+                {
+                    if (system.m_AttributeProcessors.TryGetValue(t.BaseType, out List<IAttributeProcessor> groupProcessors))
+                    {
+                        for (int j = 0; j < groupProcessors.Count; j++)
+                        {
+                            IAttributeProcessor processor = groupProcessors[j];
+
+                            processor.OnCreated(other, new EntityData<IEntityData>(entity.Idx));
+                            CoreSystem.AddForegroundJob(() =>
+                            {
+                                processor.OnCreatedSync(other, new EntityData<IEntityData>(entity.Idx));
+                            });
+                        }
+                        CoreSystem.Logger.Log(Channel.Entity, $"Processed OnCreated at entity({entity.Name}), {t.Name}");
+                    }
+                }
+
                 if (system.m_AttributeProcessors.TryGetValue(t, out List<IAttributeProcessor> processors))
                 {
                     for (int j = 0; j < processors.Count; j++)

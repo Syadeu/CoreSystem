@@ -3,6 +3,7 @@ using Syadeu.Mono;
 using Syadeu.Presentation.Entities;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Syadeu.Presentation.Map
@@ -20,6 +21,11 @@ namespace Syadeu.Presentation.Map
         private bool m_DrawGrid = false;
 
         private readonly ConcurrentQueue<GridSizeAttribute> m_WaitForRegister = new ConcurrentQueue<GridSizeAttribute>();
+
+        private readonly Dictionary<Entity<IEntity>, int[]> m_EntityGridIndices = new Dictionary<Entity<IEntity>, int[]>();
+        private readonly Dictionary<int, Entity<IEntity>> m_GridEntities = new Dictionary<int, Entity<IEntity>>();
+
+        public GridMapAttribute GridMap => m_MainGrid.Value;
 
         #region Presentation Methods
         protected override PresentationResult OnInitialize()
@@ -56,6 +62,7 @@ namespace Syadeu.Presentation.Map
                         if (!m_WaitForRegister.TryDequeue(out var att)) continue;
 
                         att.GridSystem = this;
+                        UpdateGridEntity(att.Parent, att.GetCurrentGridCells());
                     }
                 }
             }
@@ -117,8 +124,52 @@ namespace Syadeu.Presentation.Map
             if (m_DrawGrid && m_MainGrid.Value != null)
             {
                 m_MainGrid.Value.Grid.DrawGL(.1f, m_RenderSystem.Camera);
+
+                float sizeHalf = m_MainGrid.Value.Grid.cellSize * .5f;
+
+                GL.PushMatrix();
+                GridExtensions.DefaultMaterial.SetPass(0);
+                Color color = Color.red;
+                color.a = .5f;
+                GL.Color(color);
+
+                int[] gridEntities = m_GridEntities.Keys.ToArray();
+                for (int i = 0; i < gridEntities.Length; i++)
+                {
+                    Vector3
+                            cellPos = m_MainGrid.Value.Grid.GetCellPosition(gridEntities[i]),
+                            p1 = new Vector3(cellPos.x - sizeHalf, cellPos.y + .1f, cellPos.z - sizeHalf),
+                            p2 = new Vector3(cellPos.x - sizeHalf, cellPos.y + .1f, cellPos.z + sizeHalf),
+                            p3 = new Vector3(cellPos.x + sizeHalf, cellPos.y + .1f, cellPos.z + sizeHalf),
+                            p4 = new Vector3(cellPos.x + sizeHalf, cellPos.y + .1f, cellPos.z - sizeHalf);
+
+                    GL.Vertex(p1);
+                    GL.Vertex(p2);
+                    GL.Vertex(p3);
+                    GL.Vertex(p4);
+                }
+
+                GL.PopMatrix();
             }
         }
         #endregion
+
+        public void UpdateGridEntity(Entity<IEntity> entity, int[] indices)
+        {
+            if (m_EntityGridIndices.TryGetValue(entity, out int[] cachedIndics))
+            {
+                for (int i = 0; i < cachedIndics.Length; i++)
+                {
+                    m_GridEntities.Remove(cachedIndics[i]);
+                }
+                m_EntityGridIndices.Remove(entity);
+            }
+
+            m_EntityGridIndices.Add(entity, indices);
+            for (int i = 0; i < indices.Length; i++)
+            {
+                m_GridEntities.Add(indices[i], entity);
+            }
+        }
     }
 }

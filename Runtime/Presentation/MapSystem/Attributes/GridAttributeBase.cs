@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Database;
+using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using Unity.Mathematics;
@@ -21,13 +22,35 @@ namespace Syadeu.Presentation.Map
         {
             m_GridLocations = new int2[] { int2.zero };
         }
+
+        public int[] GetCurrentGridCells()
+        {
+            GridSizeAttribute gridsize = Parent.GetAttribute<GridSizeAttribute>();
+            if (gridsize == null)
+            {
+                throw new System.Exception();
+            }
+            GridSystem gridSystem = PresentationSystem<GridSystem>.System;
+            if (gridSystem == null) throw new System.Exception();
+            if (gridSystem.GridMap == null) throw new System.Exception();
+
+            Entity<IEntity> entity = Parent;
+            // TODO : 임시. 이후 gridsize 에 맞춰서 인덱스 반환
+            int p0 = gridSystem.GridMap.Grid.GetCellIndex(entity.transform.position);
+
+            return new int[] { p0 };
+        }
     }
     //[Preserve]
     //internal sealed class GridSizeProcessor : AttributeProcessor<GridSizeAttribute>
     //{
     //    protected override void OnCreated(GridSizeAttribute attribute, EntityData<IEntityData> entity)
     //    {
-            
+    //        GridSystem gridSystem = PresentationSystem<GridSystem>.System;
+    //        if (gridSystem == null) throw new System.Exception("System null");
+    //        if (gridSystem.GridMap == null) throw new System.Exception("Grid null");
+
+    //        gridSystem.UpdateGridEntity(entity, attribute.GetCurrentGridCells());
     //    }
     //}
     #endregion

@@ -19,6 +19,7 @@ namespace Syadeu.Presentation.Map
 #pragma warning restore IDE0044 // Add readonly modifier
 
         [JsonIgnore] public bool IsMapDataCreated { get; private set; } = false;
+        [JsonIgnore] public IReadOnlyList<Reference<MapDataEntity>> MapData => m_MapData;
         [JsonIgnore] public List<EntityData<MapDataEntity>> CreatedMapData { get; } = new List<EntityData<MapDataEntity>>();
 
         [JsonIgnore] public bool DestroyChildOnDestroy { get; set; } = true;
