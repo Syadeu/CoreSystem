@@ -69,7 +69,7 @@ namespace Syadeu.Presentation
 
 #line default
 #pragma warning restore IDE1006 // Naming Styles
-        public void Destory()
+        public void Destroy()
         {
             if (this.Equals(Null))
             {

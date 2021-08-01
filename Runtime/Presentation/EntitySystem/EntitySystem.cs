@@ -451,7 +451,7 @@ namespace Syadeu.Presentation
             if (m_ObjectEntities[hash] is IEntity entity)
             {
                 DataGameObject obj = entity.gameObject;
-                obj.Destory();
+                obj.Destroy();
                 m_EntityGameObjects.Remove(obj.m_Idx);
             }
 
