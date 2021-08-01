@@ -149,7 +149,7 @@ namespace Syadeu.Presentation
         {
             if (!m_EntityGameObjects.TryGetValue(obj.m_Idx, out Hash entityHash)) return;
 
-            ProcessEntityOnDestory(this, m_ObjectEntities[entityHash]);
+            ProcessEntityOnDestroy(this, m_ObjectEntities[entityHash]);
 
             m_EntityGameObjects.Remove(obj.m_Idx);
             m_ObjectHashSet.Remove(entityHash);
@@ -207,8 +207,8 @@ namespace Syadeu.Presentation
                     {
                         IEntityDataProcessor processor = entityProcessor[j];
 
-                        processor.OnDestory(entity);
-                        processor.OnDestorySync(entity);
+                        processor.OnDestroy(entity);
+                        processor.OnDestroySync(entity);
                     }
                 }
                 #endregion
@@ -446,7 +446,7 @@ namespace Syadeu.Presentation
         {
             if (!m_ObjectHashSet.Contains(hash)) throw new Exception();
 
-            ProcessEntityOnDestory(this, m_ObjectEntities[hash]);
+            ProcessEntityOnDestroy(this, m_ObjectEntities[hash]);
 
             if (m_ObjectEntities[hash] is IEntity entity)
             {
@@ -583,7 +583,7 @@ namespace Syadeu.Presentation
             });
             #endregion
         }
-        private static void ProcessEntityOnDestory(EntitySystem system, IEntityData entity)
+        private static void ProcessEntityOnDestroy(EntitySystem system, IEntityData entity)
         {
             CoreSystem.Logger.Log(Channel.Entity,
                 $"Destroying entity({entity.Name})");
@@ -625,10 +625,10 @@ namespace Syadeu.Presentation
                 {
                     IEntityDataProcessor processor = entityProcessor[i];
 
-                    processor.OnDestory(entity);
+                    processor.OnDestroy(entity);
                     CoreSystem.AddForegroundJob(() =>
                     {
-                        processor.OnDestorySync(entity);
+                        processor.OnDestroySync(entity);
                     });
                 }
             }

@@ -4,7 +4,7 @@
     {
         void OnCreated(IEntityData entity);
         void OnCreatedSync(IEntityData entity);
-        void OnDestory(IEntityData entity);
-        void OnDestorySync(IEntityData entity);
+        void OnDestroy(IEntityData entity);
+        void OnDestroySync(IEntityData entity);
     }
 }
