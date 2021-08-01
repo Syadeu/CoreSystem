@@ -119,6 +119,11 @@ namespace Syadeu.Presentation.Map
                     m_MainGrid = new KeyValuePair<SceneDataEntity, GridMapAttribute>();
                 }
             }
+
+            if (obj.Target is IEntity)
+            {
+                RemoveGridEntity(obj);
+            }
         }
         private void M_RenderSystem_OnRender()
         {
@@ -215,7 +220,7 @@ namespace Syadeu.Presentation.Map
         }
         #endregion
 
-        public void UpdateGridEntity(Entity<IEntity> entity, int[] indices)
+        public void RemoveGridEntity(Entity<IEntity> entity)
         {
             if (m_EntityGridIndices.TryGetValue(entity, out int[] cachedIndics))
             {
@@ -225,7 +230,10 @@ namespace Syadeu.Presentation.Map
                 }
                 m_EntityGridIndices.Remove(entity);
             }
-
+        }
+        public void UpdateGridEntity(Entity<IEntity> entity, int[] indices)
+        {
+            RemoveGridEntity(entity);
             for (int i = 0; i < indices.Length; i++)
             {
                 if (!m_GridEntities.TryGetValue(indices[i], out var entities))

@@ -14,15 +14,16 @@ namespace Syadeu.Presentation.Entities
     /// <see cref="EntityBase"/>는 <seealso cref="Entity{T}"/>를 참조하세요.
     /// </remarks>
     /// <typeparam name="T"></typeparam>
-    public struct EntityData<T> : IValidation, IEquatable<EntityData<T>>, IEquatable<T> where T : class, IEntityData
+    public struct EntityData<T> : IValidation, IEquatable<EntityData<T>>, IEquatable<Hash> where T : class, IEntityData
     {
         public static EntityData<T> Empty => new EntityData<T>(Hash.Empty);
         /// <inheritdoc cref="IEntityData.Idx"/>
-        internal readonly Hash m_Idx;
+        private readonly Hash m_Idx;
 
         internal T Target => m_Idx.Equals(Hash.Empty) ? null : (T)PresentationSystem<EntitySystem>.System.m_ObjectEntities[m_Idx];
 
         public string Name => Target.Name;
+        public Hash Idx => m_Idx;
 
         internal EntityData(Hash idx)
         {
@@ -34,7 +35,7 @@ namespace Syadeu.Presentation.Entities
             PresentationSystem<EntitySystem>.System.m_ObjectHashSet.Contains(m_Idx);
 
         public bool Equals(EntityData<T> other) => m_Idx.Equals(other.m_Idx);
-        public bool Equals(T other) => m_Idx.Equals(other.Idx);
+        public bool Equals(Hash other) => m_Idx.Equals(other);
 
         /// <inheritdoc cref="IEntityData.GetAttribute(Type)"/>
         public AttributeBase GetAttribute(Type t) => Target.GetAttribute(t);
@@ -81,7 +82,7 @@ namespace Syadeu.Presentation.Entities
     /// <see cref="EntityDataBase"/>는 <seealso cref="EntityData{T}"/>를 참조하세요.
     /// </remarks>
     /// <typeparam name="T"></typeparam>
-    public struct Entity<T> : IValidation, IEquatable<Entity<T>>, IEquatable<T> where T : class, IEntity
+    public struct Entity<T> : IValidation, IEquatable<Entity<T>>, IEquatable<Hash> where T : class, IEntity
     {
         public static Entity<T> Empty => new Entity<T>(Hash.Empty);
         /// <inheritdoc cref="IEntityData.Idx"/>
@@ -90,6 +91,7 @@ namespace Syadeu.Presentation.Entities
         internal T Target => m_Idx.Equals(Hash.Empty) ? null : (T)PresentationSystem<EntitySystem>.System.m_ObjectEntities[m_Idx];
 
         public string Name => Target.Name;
+        public Hash Idx => m_Idx;
 
 #pragma warning disable IDE1006 // Naming Styles
         public DataGameObject gameObject => Target.gameObject;
@@ -106,7 +108,7 @@ namespace Syadeu.Presentation.Entities
             PresentationSystem<EntitySystem>.System.m_ObjectHashSet.Contains(m_Idx);
 
         public bool Equals(Entity<T> other) => m_Idx.Equals(other.m_Idx);
-        public bool Equals(T other) => m_Idx.Equals(other.Idx);
+        public bool Equals(Hash other) => m_Idx.Equals(other);
 
         /// <inheritdoc cref="IEntityData.GetAttribute(Type)"/>
         public AttributeBase GetAttribute(Type t) => Target.GetAttribute(t);
@@ -146,7 +148,7 @@ namespace Syadeu.Presentation.Entities
         }
         public static implicit operator Entity<T>(EntityData<IEntityData> a)
         {
-            if (a.Target is T) return new Entity<T>(a.m_Idx);
+            if (a.Target is T) return new Entity<T>(a.Idx);
 
             CoreSystem.Logger.LogError(Channel.Entity,
                 $"Entity({a.Name}) is not a {TypeHelper.TypeOf<T>.Name}. This is an invalid operation and not allowed.");
