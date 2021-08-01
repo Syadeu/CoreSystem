@@ -20,10 +20,11 @@ namespace Syadeu.Presentation.Entities
         /// <inheritdoc cref="IEntityData.Idx"/>
         private readonly Hash m_Idx;
 
-        internal T Target => m_Idx.Equals(Hash.Empty) ? null : (T)PresentationSystem<EntitySystem>.System.m_ObjectEntities[m_Idx];
+        public T Target => m_Idx.Equals(Hash.Empty) ? null : (T)PresentationSystem<EntitySystem>.System.m_ObjectEntities[m_Idx];
 
         public string Name => Target.Name;
         public Hash Idx => m_Idx;
+        public Type Type => Target.GetType();
 
         internal EntityData(Hash idx)
         {
@@ -88,10 +89,11 @@ namespace Syadeu.Presentation.Entities
         /// <inheritdoc cref="IEntityData.Idx"/>
         private readonly Hash m_Idx;
 
-        internal T Target => m_Idx.Equals(Hash.Empty) ? null : (T)PresentationSystem<EntitySystem>.System.m_ObjectEntities[m_Idx];
+        public T Target => m_Idx.Equals(Hash.Empty) ? null : (T)PresentationSystem<EntitySystem>.System.m_ObjectEntities[m_Idx];
 
         public string Name => Target.Name;
         public Hash Idx => m_Idx;
+        public Type Type => Target.GetType();
 
 #pragma warning disable IDE1006 // Naming Styles
         public DataGameObject gameObject => Target.gameObject;

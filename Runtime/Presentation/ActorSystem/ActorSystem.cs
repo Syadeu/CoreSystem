@@ -1,50 +1,99 @@
 ﻿using Newtonsoft.Json;
+using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Map;
+using System.Collections.Generic;
+using Unity.Collections;
+using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation.Actor
 {
-    /// <summary>
-    /// 이 시스템은 기본 시스템 그룹에서 실행되지 않습니다.
-    /// </summary>
-    [SubSystem(typeof(EntitySystem))]
     public sealed class ActorSystem : PresentationSystemEntity<ActorSystem>
     {
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
+
+        private NativeHashMap<Hash, Entity<ActorEntity>> m_Players;
+        private readonly Dictionary<ActorType, List<Entity<ActorEntity>>> m_Actors = new Dictionary<ActorType, List<Entity<ActorEntity>>>();
+
+        private EntitySystem m_EntitySystem;
+
+        protected override PresentationResult OnInitializeAsync()
+        {
+            m_Players = new NativeHashMap<Hash, Entity<ActorEntity>>(1024, Allocator.Persistent);
+
+            RequestSystem<EntitySystem>((other) =>
+            {
+                m_EntitySystem = other;
+
+                m_EntitySystem.OnEntityCreated += M_EntitySystem_OnEntityCreated;
+                m_EntitySystem.OnEntityDestroy += M_EntitySystem_OnEntityDestroy;
+            });
+
+
+
+            return base.OnInitializeAsync();
+        }
+
+        private void M_EntitySystem_OnEntityCreated(EntityData<IEntityData> obj)
+        {
+            if (!obj.Type.Equals(TypeHelper.TypeOf<ActorEntity>.Type)) return;
+
+            Entity<ActorEntity> actorRef = obj;
+            m_Players.Add(actorRef.Idx, actorRef);
+
+            ActorEntity actor = actorRef;
+            if (!m_Actors.TryGetValue(actor.ActorType, out var actorList))
+            {
+                actorList = new List<Entity<ActorEntity>>();
+                m_Actors.Add(actor.ActorType, actorList);
+            }
+            actorList.Add(actorRef);
+        }
+        private void M_EntitySystem_OnEntityDestroy(EntityData<IEntityData> obj)
+        {
+            if (!obj.Type.Equals(TypeHelper.TypeOf<ActorEntity>.Type)) return;
+
+            Entity<ActorEntity> actorRef = obj;
+            m_Players.Remove(actorRef.Idx);
+
+            ActorEntity actor = actorRef;
+            m_Actors[actor.ActorType].Remove(actorRef);
+        }
+
+        public override void Dispose()
+        {
+            m_Players.Dispose();
+            m_Actors.Clear();
+
+            base.Dispose();
+        }
     }
 
     public sealed class ActorEntity : EntityBase
     {
+        [JsonProperty(Order = 0, PropertyName = "ActorType")] private ActorType m_ActorType;
 
+        public ActorType ActorType => m_ActorType;
     }
 
     [AttributeAcceptOnly(typeof(ActorEntity))]
     public abstract class ActorAttributeBase : AttributeBase { }
 
-    [ReflectionDescription("이 액터의 타입을 설정합니다.")]
-    public sealed class ActorTypeAttribute : ActorAttributeBase
-    {
-        [JsonProperty(Order = 0, PropertyName = "ActorType")] public ActorType m_ActorType;
-    }
-
-    [ReflectionDescription("이 어트리뷰트 상단에 GridSizeAttribute가 있어야 동작합니다.")]
-    public sealed class ActorGridAttribute : ActorAttributeBase
-    {
-        
-    }
-    //internal sealed class ActorGridProcessor : AttributeProcessor<ActorGridAttribute>
+    //[ReflectionDescription("이 액터의 타입을 설정합니다.")]
+    //public sealed class ActorTypeAttribute : ActorAttributeBase
     //{
-    //    protected override void OnCreated(ActorGridAttribute attribute, EntityData<IEntityData> entity)
+    //    [JsonProperty(Order = 0, PropertyName = "ActorType")] public ActorType m_ActorType;
+    //}
+    //[Preserve]
+    //internal sealed class ActorTypeProcessor : AttributeProcessor<ActorTypeAttribute>
+    //{
+    //    protected override void OnCreated(ActorTypeAttribute attribute, EntityData<IEntityData> entity)
     //    {
-    //        GridSystem gridSystem = PresentationSystem<GridSystem>.System;
-    //        if (gridSystem == null) throw new System.Exception("System null");
-    //        if (gridSystem.GridMap == null) throw new System.Exception("Grid null");
-
-    //        gridSystem.UpdateGridEntity(entity, attribute.GetCurrentGridCells());
+    //        PresentationSystem<ActorSystem>.System.m_Players.Add(entity);
     //    }
     //}
 }
