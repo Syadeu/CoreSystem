@@ -237,7 +237,6 @@ namespace Syadeu.Presentation.Map
             }
 
             m_EntityGridIndices.Add(entity, indices);
-            $"{entity.Name} in".ToLog();
         }
     }
 }
