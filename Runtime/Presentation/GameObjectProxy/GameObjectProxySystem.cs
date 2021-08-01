@@ -533,7 +533,7 @@ namespace Syadeu.Presentation
             m_RequestedJobs.Enqueue(() =>
             {
                 if (m_LoadingLock) return;
-                ReleaseProxy(prefab, obj);
+                ReleaseProxy(trHash, prefab, obj);
             });
         }
         unsafe private RecycleableMonobehaviour DetechProxy(Hash trHash, out PrefabReference prefab)
@@ -552,8 +552,19 @@ namespace Syadeu.Presentation
             prefab = proxyIdx.x;
             return obj;
         }
-        private void ReleaseProxy(PrefabReference prefab, RecycleableMonobehaviour obj)
+        unsafe private void ReleaseProxy(Hash trHash, PrefabReference prefab, RecycleableMonobehaviour obj)
         {
+            ref DataTransform tr = ref *GetDataTransformPointer(trHash);
+            if ((obj.transform.position - tr.position).sqrMagnitude > 1)
+            {
+                CoreSystem.Logger.LogWarning(Channel.Proxy, "Detecting incorrect translation between DataTransform, Proxy. This will be slightly cared but highly suggested do not manipulate Proxy\'s own translation.");
+
+                Transform monoTr = obj.transform;
+
+                tr.m_Position = new ThreadSafe.Vector3(monoTr.position);
+                tr.m_Rotation = monoTr.rotation;
+            }
+
             obj.Terminate();
             obj.transform.position = INIT_POSITION;
 
