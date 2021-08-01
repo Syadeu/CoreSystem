@@ -77,7 +77,7 @@ namespace Syadeu.Presentation.Actor
     {
         [JsonProperty(Order = 0, PropertyName = "ActorType")] private ActorType m_ActorType;
 
-        public ActorType ActorType => m_ActorType;
+        [JsonIgnore] public ActorType ActorType => m_ActorType;
     }
 
     [AttributeAcceptOnly(typeof(ActorEntity))]
