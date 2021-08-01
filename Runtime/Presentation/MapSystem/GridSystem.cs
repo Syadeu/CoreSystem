@@ -63,7 +63,7 @@ namespace Syadeu.Presentation.Map
                         if (!m_WaitForRegister.TryDequeue(out var att)) continue;
 
                         att.GridSystem = this;
-                        UpdateGridEntity(att.Parent, att.GetCurrentGridCells());
+                        att.UpdateGridCell();
                     }
                 }
             }

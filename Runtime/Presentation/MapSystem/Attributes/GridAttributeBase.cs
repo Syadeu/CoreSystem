@@ -22,21 +22,28 @@ namespace Syadeu.Presentation.Map
         {
             m_GridLocations = new int2[] { int2.zero };
         }
+        protected override void OnDispose()
+        {
+            GridSystem = null;
+        }
 
-        public int[] GetCurrentGridCells()
+        public void UpdateGridCell()
+        {
+            GridSystem.UpdateGridEntity(Parent, GetCurrentGridCells());
+        }
+        private int[] GetCurrentGridCells()
         {
             GridSizeAttribute gridsize = Parent.GetAttribute<GridSizeAttribute>();
             if (gridsize == null)
             {
                 throw new System.Exception();
             }
-            GridSystem gridSystem = PresentationSystem<GridSystem>.System;
-            if (gridSystem == null) throw new System.Exception();
-            if (gridSystem.GridMap == null) throw new System.Exception();
+            if (GridSystem == null) throw new System.Exception();
+            if (GridSystem.GridMap == null) throw new System.Exception();
 
             Entity<IEntity> entity = Parent;
             // TODO : 임시. 이후 gridsize 에 맞춰서 인덱스 반환
-            int p0 = gridSystem.GridMap.Grid.GetCellIndex(entity.transform.position);
+            int p0 = GridSystem.GridMap.Grid.GetCellIndex(entity.transform.position);
 
             return new int[] { p0 };
         }

@@ -526,49 +526,12 @@ namespace Syadeu.Presentation
         {
             if (m_LoadingLock) return;
 
-            //ref DataTransform tr = ref *GetDataTransformPointer(trHash);
-            //int2 proxyIdx = tr.m_ProxyIdx;
-            //CoreSystem.Logger.False(proxyIdx.Equals(DataTransform.ProxyNull), $"proxy index null {proxyIdx}");
-
-            //tr.gameObject.OnProxyRemoved();
-            //OnDataObjectProxyRemoved?.Invoke(tr.gameObject);
-            //tr.m_ProxyIdx = DataTransform.ProxyNull;
             RecycleableMonobehaviour obj = DetechProxy(trHash, out var prefab);
 
             m_RequestedJobs.Enqueue(() =>
             {
                 if (m_LoadingLock) return;
-
-                //RecycleableMonobehaviour obj = DetechProxy(trHash, out var prefab);
-
                 ReleaseProxy(prefab, obj);
-                //ref DataTransform tr = ref *GetDataTransformPointer(trHash);
-                //int2 proxyIdx = tr.m_ProxyIdx;
-                //CoreSystem.Logger.False(proxyIdx.Equals(DataTransform.ProxyNull), $"proxy index null {proxyIdx}");
-
-                //RecycleableMonobehaviour obj;
-                //try
-                //{
-                //    //obj = PrefabManager.Instance.RecycleObjects[proxyIdx.x].Instances[proxyIdx.y];
-                //    obj = m_Instances[proxyIdx.x][proxyIdx.y];
-                //}
-                //catch (Exception)
-                //{
-                //    $"{proxyIdx}".ToLog();
-                //    throw;
-                //}
-                //OnDataObjectProxyRemoved?.Invoke(tr.gameObject, obj);
-                //tr.m_ProxyIdx = DataTransform.ProxyNull;
-
-                //obj.Terminate();
-                //obj.transform.position = INIT_POSITION;
-
-                //if (!m_TerminatedProxies.TryGetValue(proxyIdx.x, out Queue<RecycleableMonobehaviour> pool))
-                //{
-                //    pool = new Queue<RecycleableMonobehaviour>();
-                //    m_TerminatedProxies.Add(proxyIdx.x, pool);
-                //}
-                //pool.Enqueue(obj);
             });
         }
         unsafe private RecycleableMonobehaviour DetechProxy(Hash trHash, out PrefabReference prefab)
@@ -617,11 +580,7 @@ namespace Syadeu.Presentation
             Transform oriTr = boxed.ProxyObject.transform;
 
             oriTr.position = boxed.m_Position;
-            //oriTr.localPosition = boxed.m_LocalPosition;
-
             oriTr.rotation = boxed.m_Rotation;
-            //oriTr.localRotation = boxed.m_LocalRotation;
-
             oriTr.localScale = boxed.m_LocalScale;
         }
 
@@ -903,6 +862,9 @@ namespace Syadeu.Presentation
 
         #region Instantiate Prefab From PrefabList
 
+        /// <summary>
+        /// 생성된 프록시 오브젝트들입니다. key 값은 <see cref="PrefabList.m_ObjectSettings"/> 인덱스(<see cref="PrefabReference"/>)이며 value 배열은 상태 구분없이(사용중이던 아니던) 실제 생성된 모노 객체입니다.
+        /// </summary>
         internal readonly Dictionary<int, List<RecycleableMonobehaviour>> m_Instances = new Dictionary<int, List<RecycleableMonobehaviour>>();
         private sealed class PrefabRequester
         {
@@ -958,7 +920,7 @@ namespace Syadeu.Presentation
                     Scene currentScene = m_SceneSystem.CurrentScene;
                     if (!currentScene.Equals(m_RequestedScene))
                     {
-                        CoreSystem.Logger.LogWarning(Channel.Presentation, $"{other.Result.name} is returned because Scene has been changed");
+                        CoreSystem.Logger.LogWarning(Channel.Proxy, $"{other.Result.name} is returned because Scene has been changed");
                         refObject.ReleaseInstance(other.Result);
                         return;
                     }
