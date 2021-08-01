@@ -455,6 +455,7 @@ namespace Syadeu.Presentation
                 m_EntityGameObjects.Remove(obj.m_Idx);
             }
 
+            ((IDisposable)m_ObjectEntities[hash]).Dispose();
             m_ObjectHashSet.Remove(hash);
             m_ObjectEntities.Remove(hash);
         }
