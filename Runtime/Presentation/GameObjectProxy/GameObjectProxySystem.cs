@@ -88,16 +88,16 @@ namespace Syadeu.Presentation
                 CoreSystem.Logger.Log(Channel.Proxy, true,
                     "Scene on loading enter lambda excute");
 
-                foreach (var item in m_TerminatedProxies)
-                {
-                    var prefabInfo = PrefabList.Instance.ObjectSettings[item.Key];
-                    int count = item.Value.Count;
-                    for (int i = 0; i < count; i++)
-                    {
-                        prefabInfo.Pool.Enqueue(item.Value.Dequeue().gameObject);
-                    }
-                }
-                m_TerminatedProxies.Clear();
+                //foreach (var item in m_TerminatedProxies)
+                //{
+                //    var prefabInfo = PrefabList.Instance.ObjectSettings[item.Key];
+                //    int count = item.Value.Count;
+                //    for (int i = 0; i < count; i++)
+                //    {
+                //        prefabInfo.Pool.Enqueue(item.Value.Dequeue().gameObject);
+                //    }
+                //}
+                //m_TerminatedProxies.Clear();
 
                 while (m_RequestDestories.Count > 0)
                 {
@@ -113,9 +113,10 @@ namespace Syadeu.Presentation
                         int2 proxyIdx = m_MappedTransforms[i].m_ProxyIdx;
 
                         var prefabSetting = PrefabList.Instance.ObjectSettings[proxyIdx.x];
-                        GameObject obj = m_Instances[proxyIdx.x][proxyIdx.y].gameObject;
+                        RecycleableMonobehaviour obj = m_Instances[proxyIdx.x][proxyIdx.y];
 
-                        prefabSetting.Pool.Enqueue(obj);
+                        //prefabSetting.Pool.Enqueue(obj);
+                        obj.Terminate();
                     }
                 }
                 m_MappedTransforms.Clear();
@@ -131,12 +132,14 @@ namespace Syadeu.Presentation
                 m_MappedGameObjectIdxes.Clear();
                 #endregion
 
-                #region PrefabQueue Release
+                #region Proxy Release
 
-                for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
-                {
-                    PrefabList.Instance.ObjectSettings[i].Pool.Clear();
-                }
+                m_TerminatedProxies.Clear();
+                m_Instances.Clear();
+                //for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
+                //{
+                //    PrefabList.Instance.ObjectSettings[i].Pool.Clear();
+                //}
 
                 #endregion
 
@@ -467,7 +470,7 @@ namespace Syadeu.Presentation
         }
 
         #region Proxy Object Control
-        private readonly Dictionary<int, Queue<RecycleableMonobehaviour>> m_TerminatedProxies = new Dictionary<int, Queue<RecycleableMonobehaviour>>();
+        
         unsafe private void RequestProxy(Hash objHash, Hash trHash, Action<DataGameObject, RecycleableMonobehaviour> onCompleted)
         {
             if (m_LoadingLock) return;
@@ -475,16 +478,16 @@ namespace Syadeu.Presentation
 
             ref DataTransform tr = ref *GetDataTransformPointer(trHash);
             tr.m_ProxyIdx = DataTransform.ProxyQueued;
-            int prefabIdx = tr.m_PrefabIdx;
+            PrefabReference prefab = tr.m_PrefabIdx;
             
             m_RequestedJobs.Enqueue(() =>
             {
                 if (m_LoadingLock) return;
 
-                if (!m_TerminatedProxies.TryGetValue(prefabIdx, out Queue<RecycleableMonobehaviour> pool) ||
+                if (!m_TerminatedProxies.TryGetValue(prefab, out Queue<RecycleableMonobehaviour> pool) ||
                     pool.Count == 0)
                 {
-                    InstantiatePrefab(prefabIdx, (other) =>
+                    InstantiatePrefab(prefab, (other) =>
                     {
                         ref DataTransform tr = ref *GetDataTransformPointer(trHash);
                         tr.m_ProxyIdx = new int2(tr.m_PrefabIdx, other.m_Idx);
@@ -495,10 +498,9 @@ namespace Syadeu.Presentation
 
                         onCompleted?.Invoke(m_MappedGameObjects[m_MappedGameObjectIdxes[objHash]], other);
 
-                        //tr.gameObject.OnProxyCreated();
                         OnDataObjectProxyCreated?.Invoke(tr.gameObject, other);
                         CoreSystem.Logger.Log(Channel.Proxy,
-                            $"DataGameobject({tr.m_GameObject}) proxy created with new instantiate");
+                            $"DataGameobject({prefab.GetObjectSetting().m_Name}: {tr.m_GameObject}) proxy created with new instantiate");
                     });
                 }
                 else
@@ -865,29 +867,31 @@ namespace Syadeu.Presentation
         /// <summary>
         /// 생성된 프록시 오브젝트들입니다. key 값은 <see cref="PrefabList.m_ObjectSettings"/> 인덱스(<see cref="PrefabReference"/>)이며 value 배열은 상태 구분없이(사용중이던 아니던) 실제 생성된 모노 객체입니다.
         /// </summary>
-        internal readonly Dictionary<int, List<RecycleableMonobehaviour>> m_Instances = new Dictionary<int, List<RecycleableMonobehaviour>>();
+        internal readonly Dictionary<PrefabReference, List<RecycleableMonobehaviour>> m_Instances = new Dictionary<PrefabReference, List<RecycleableMonobehaviour>>();
+        private readonly Dictionary<PrefabReference, Queue<RecycleableMonobehaviour>> m_TerminatedProxies = new Dictionary<PrefabReference, Queue<RecycleableMonobehaviour>>();
+
         private sealed class PrefabRequester
         {
             GameObjectProxySystem m_ProxySystem;
             SceneSystem m_SceneSystem;
             Scene m_RequestedScene;
 
-            public void Setup(GameObjectProxySystem proxySystem, SceneSystem sceneSystem, int prefabIdx, Vector3 pos, Quaternion rot,
+            public void Setup(GameObjectProxySystem proxySystem, SceneSystem sceneSystem, PrefabReference prefabIdx, Vector3 pos, Quaternion rot,
                 Action<RecycleableMonobehaviour> onCompleted)
             {
-                var prefabInfo = PrefabList.Instance.ObjectSettings[prefabIdx];
-
-                if (prefabInfo.Pool.Count > 0)
+                //var prefabInfo = PrefabList.Instance.ObjectSettings[prefabIdx];
+                var prefabInfo = prefabIdx.GetObjectSetting();
+                if (!proxySystem.m_TerminatedProxies.TryGetValue(prefabIdx, out var pool))
                 {
-                    GameObject obj = prefabInfo.Pool.Dequeue();
+                    pool = new Queue<RecycleableMonobehaviour>();
+                    proxySystem.m_TerminatedProxies.Add(prefabIdx, pool);
+                }
+
+                if (pool.Count > 0)
+                {
+                    RecycleableMonobehaviour obj = pool.Dequeue();
                     obj.transform.position = pos;
                     obj.transform.rotation = rot;
-
-                    RecycleableMonobehaviour recycleable = obj.GetComponent<RecycleableMonobehaviour>();
-                    if (recycleable == null)
-                    {
-                        recycleable = obj.AddComponent<ManagedRecycleObject>();
-                    }
 
                     if (!m_ProxySystem.m_Instances.TryGetValue(prefabIdx, out List<RecycleableMonobehaviour> instances))
                     {
@@ -895,12 +899,12 @@ namespace Syadeu.Presentation
                         m_ProxySystem.m_Instances.Add(prefabIdx, instances);
                     }
 
-                    recycleable.m_Idx = instances.Count;
-                    instances.Add(recycleable);
+                    obj.m_Idx = instances.Count;
+                    instances.Add(obj);
 
-                    recycleable.InternalOnCreated();
-                    if (recycleable.InitializeOnCall) recycleable.Initialize();
-                    onCompleted?.Invoke(recycleable);
+                    obj.InternalOnCreated();
+                    if (obj.InitializeOnCall) obj.Initialize();
+                    onCompleted?.Invoke(obj);
 
                     PoolContainer<PrefabRequester>.Enqueue(this);
                     return;
@@ -949,11 +953,11 @@ namespace Syadeu.Presentation
             }
         }
 
-        private void InstantiatePrefab(int idx, Action<RecycleableMonobehaviour> onCompleted)
-            => InstantiatePrefab(idx, INIT_POSITION, Quaternion.identity, onCompleted);
-        private void InstantiatePrefab(int idx, Vector3 position, Quaternion rotation, Action<RecycleableMonobehaviour> onCompleted)
+        private void InstantiatePrefab(PrefabReference prefab, Action<RecycleableMonobehaviour> onCompleted)
+            => InstantiatePrefab(prefab, INIT_POSITION, Quaternion.identity, onCompleted);
+        private void InstantiatePrefab(PrefabReference prefab, Vector3 position, Quaternion rotation, Action<RecycleableMonobehaviour> onCompleted)
         {
-            PoolContainer<PrefabRequester>.Dequeue().Setup(this, m_SceneSystem, idx, position, rotation, onCompleted);
+            PoolContainer<PrefabRequester>.Dequeue().Setup(this, m_SceneSystem, prefab, position, rotation, onCompleted);
         }
 
         #endregion
