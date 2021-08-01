@@ -557,7 +557,7 @@ namespace Syadeu.Presentation
             ref DataTransform tr = ref *GetDataTransformPointer(trHash);
             if ((obj.transform.position - tr.position).sqrMagnitude > 1)
             {
-                CoreSystem.Logger.LogWarning(Channel.Proxy, "Detecting incorrect translation between DataTransform, Proxy. This will be slightly cared but highly suggested do not manipulate Proxy\'s own translation.");
+                CoreSystem.Logger.LogWarning(Channel.Proxy, $"Detecting incorrect translation between DataTransform, Proxy at {prefab.GetObjectSetting().m_Name}. This will be slightly cared but highly suggested do not manipulate Proxy\'s own translation.");
 
                 Transform monoTr = obj.transform;
 
