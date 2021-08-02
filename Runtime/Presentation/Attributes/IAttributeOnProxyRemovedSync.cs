@@ -9,10 +9,10 @@ namespace Syadeu.Presentation.Attributes
     /// </remarks>
     public interface IAttributeOnProxyRemovedSync
     {
-        /// <summary><inheritdoc cref="IAttributeOnProxyRemoved.OnProxyRemoved(AttributeBase, IEntity)"/></summary>
+        /// <summary><inheritdoc cref="IAttributeOnProxyRemoved.OnProxyRemoved(AttributeBase, Entity{IEntity}, RecycleableMonobehaviour))"/></summary>
         /// <remarks>
         /// 비동기 작업에서 오브젝트가 파괴됨으로, 동기 메소드에서 프록시 오브젝트를 호출할때에는 이미 파괴되었을 수 있습니다.
         /// </remarks>
-        void OnProxyRemovedSync(AttributeBase attribute, IEntity entity, RecycleableMonobehaviour monoObj);
+        void OnProxyRemovedSync(AttributeBase attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj);
     }
 }

@@ -77,7 +77,7 @@ namespace Syadeu.Presentation.Attributes
     internal sealed class NavAgentProcessor : AttributeProcessor<NavAgentAttribute>, 
         IAttributeOnProxyCreatedSync, IAttributeOnProxyRemovedSync
     {
-        public void OnProxyCreatedSync(AttributeBase attribute, IEntity entity, RecycleableMonobehaviour monoObj)
+        public void OnProxyCreatedSync(AttributeBase attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
         {
             NavAgentAttribute att = (NavAgentAttribute)attribute;
 
@@ -88,7 +88,7 @@ namespace Syadeu.Presentation.Attributes
 
             att.NavMeshAgent.enabled = true;
         }
-        public void OnProxyRemovedSync(AttributeBase attribute, IEntity entity, RecycleableMonobehaviour monoObj)
+        public void OnProxyRemovedSync(AttributeBase attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
         {
             NavAgentAttribute att = (NavAgentAttribute)attribute;
 

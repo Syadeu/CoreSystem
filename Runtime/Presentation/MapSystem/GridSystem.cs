@@ -11,8 +11,8 @@ namespace Syadeu.Presentation.Map
 {
     public sealed class GridSystem : PresentationSystemEntity<GridSystem>
     {
-        public override bool EnableBeforePresentation => false;
-        public override bool EnableOnPresentation => true;
+        public override bool EnableBeforePresentation => true;
+        public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
         private EntitySystem m_EntitySystem;
@@ -51,7 +51,7 @@ namespace Syadeu.Presentation.Map
 
             return base.OnInitializeAsync();
         }
-        protected override PresentationResult OnPresentationAsync()
+        protected override PresentationResult BeforePresentationAsync()
         {
             if (m_MainGrid.Value != null)
             {
@@ -67,8 +67,7 @@ namespace Syadeu.Presentation.Map
                     }
                 }
             }
-
-            return base.OnPresentationAsync();
+            return base.BeforePresentationAsync();
         }
         public override void Dispose()
         {

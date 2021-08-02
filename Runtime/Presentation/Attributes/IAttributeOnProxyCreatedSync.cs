@@ -9,7 +9,7 @@ namespace Syadeu.Presentation.Attributes
     /// </remarks>
     public interface IAttributeOnProxyCreatedSync
     {
-        /// <summary><inheritdoc cref="IAttributeOnProxyCreatedSync.OnProxyCreated(AttributeBase, IEntity)"/></summary>
-        void OnProxyCreatedSync(AttributeBase attribute, IEntity entity, RecycleableMonobehaviour monoObj);
+        /// <summary><inheritdoc cref="IAttributeOnProxyCreated.OnProxyCreated(AttributeBase, Entity{IEntity}, RecycleableMonobehaviour)"/></summary>
+        void OnProxyCreatedSync(AttributeBase attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj);
     }
 }

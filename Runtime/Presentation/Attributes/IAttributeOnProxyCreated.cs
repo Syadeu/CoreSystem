@@ -13,7 +13,7 @@ namespace Syadeu.Presentation.Attributes
     public interface IAttributeOnProxyCreated
     {
         /// <summary>
-        /// <see cref="IAttributeProcessor.Target"/>에 설정된 <see cref="AttributeBase"/>가 부착된 <see cref="IEntity"/>의
+        /// <see cref="AttributeProcessor.Target"/>에 설정된 <see cref="AttributeBase"/>가 부착된 <see cref="IEntity"/>의
         /// 프록시 오브젝트가 생성되어 부착되었을 때 실행되는 메소드입니다.<br/>
         /// 이 메소드가 호출되었을 때에는 이미 프록시 오브젝트가 생성되어 받아올 수 있습니다.
         /// <seealso cref="IEntity.gameObject"/>에서 <seealso cref="DataGameObject.GetProxyObject"/>로 프록시 오브젝트를 받아올 수 있습니다.
@@ -23,6 +23,6 @@ namespace Syadeu.Presentation.Attributes
         /// </remarks>
         /// <param name="attribute"></param>
         /// <param name="entity"></param>
-        void OnProxyCreated(AttributeBase attribute, IEntity entity, RecycleableMonobehaviour monoObj);
+        void OnProxyCreated(AttributeBase attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj);
     }
 }

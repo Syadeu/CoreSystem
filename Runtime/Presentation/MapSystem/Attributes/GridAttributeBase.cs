@@ -3,6 +3,7 @@ using Syadeu.Database;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
+using System;
 using Unity.Mathematics;
 using UnityEngine.Scripting;
 
@@ -16,7 +17,8 @@ namespace Syadeu.Presentation.Map
     {
         [JsonProperty(Order = 0, PropertyName = "GridLocations")] public int2[] m_GridLocations;
 
-        [JsonIgnore] public GridSystem GridSystem { get; internal set; }
+        [JsonIgnore] internal GridSystem GridSystem { get; set; }
+        [JsonIgnore] public int[] CurrentGridIndices { get; private set; } = Array.Empty<int>();
 
         public GridSizeAttribute()
         {
@@ -29,9 +31,11 @@ namespace Syadeu.Presentation.Map
 
         public void UpdateGridCell()
         {
-            GridSystem.UpdateGridEntity(Parent, GetCurrentGridCells());
+            int[] indices = GetCurrentGridIndices();
+            GridSystem.UpdateGridEntity(Parent, indices);
+            CurrentGridIndices = indices;
         }
-        private int[] GetCurrentGridCells()
+        private int[] GetCurrentGridIndices()
         {
             GridSizeAttribute gridsize = Parent.GetAttribute<GridSizeAttribute>();
             if (gridsize == null)
