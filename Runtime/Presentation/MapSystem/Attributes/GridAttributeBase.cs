@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Database;
+using Syadeu.Internal;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
@@ -18,7 +19,9 @@ namespace Syadeu.Presentation.Map
     /// </summary>
     public sealed class GridSizeAttribute : GridAttributeBase
     {
-        [JsonProperty(Order = 0, PropertyName = "GridLocations")] public int2[] m_GridLocations;
+        [ReflectionDescription("생성시 이 엔티티를 그리드 셀 중앙에 맞춥니다.")]
+        [JsonProperty(Order = 0, PropertyName = "FixedToCenter")] internal bool m_FixedToCenter;
+        [JsonProperty(Order = 1, PropertyName = "GridLocations")] public int2[] m_GridLocations;
 
         [JsonIgnore] internal GridSystem GridSystem { get; set; }
 

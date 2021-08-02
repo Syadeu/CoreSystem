@@ -64,6 +64,15 @@ namespace Syadeu.Presentation.Map
 
                         att.GridSystem = this;
                         att.UpdateGridCell();
+
+                        if (att.m_FixedToCenter)
+                        {
+                            Entity<IEntity> entity = att.Parent;
+                            DataTransform tr = entity.transform;
+                            float3 pos = tr.position;
+
+                            tr.position = IndexToPosition(PositionToIndex(pos));
+                        }
                     }
                 }
             }
