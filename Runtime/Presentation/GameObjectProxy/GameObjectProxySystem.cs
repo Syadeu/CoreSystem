@@ -200,7 +200,7 @@ namespace Syadeu.Presentation
                 if (!m_RemoveProxies.TryDequeue(out var data)) continue;
                 CoreSystem.Logger.NotNull(data);
 
-                RemoveProxy(data.Idx);
+                RemoveProxy(data.Idx, false);
             }
             //m_RemoveProxies.RemoveRange(0, temp2);
             #endregion
@@ -222,7 +222,7 @@ namespace Syadeu.Presentation
 
                         if (m_MappedTransforms[trIdx].HasProxyObject)
                         {
-                            RemoveProxy(m_MappedGameObjects[objIdx].m_Transform);
+                            RemoveProxy(m_MappedGameObjects[objIdx].m_Transform, true);
                         }
 
                         // 여기서 지우면 다른 오브젝트의 인덱스가 헷갈리니까 일단 위치저장
@@ -493,6 +493,7 @@ namespace Syadeu.Presentation
             m_RequestedJobs.Enqueue(() =>
             {
                 if (m_LoadingLock) return;
+                if (!m_MappedGameObjectIdxes.ContainsKey(objHash) || !m_MappedTransformIdxes.ContainsKey(trHash)) return;
 
                 if (!m_TerminatedProxies.TryGetValue(prefab, out Queue<RecycleableMonobehaviour> pool) ||
                     pool.Count == 0)
@@ -534,7 +535,7 @@ namespace Syadeu.Presentation
                 }
             });
         }
-        unsafe private void RemoveProxy(Hash trHash)
+        unsafe private void RemoveProxy(Hash trHash, bool isDestroy)
         {
             if (m_LoadingLock) return;
 
@@ -543,7 +544,8 @@ namespace Syadeu.Presentation
             m_RequestedJobs.Enqueue(() =>
             {
                 if (m_LoadingLock) return;
-                ReleaseProxy(trHash, prefab, obj);
+
+                ReleaseProxy(trHash, prefab, obj, isDestroy);
             });
         }
         unsafe private RecycleableMonobehaviour DetechProxy(Hash trHash, out PrefabReference prefab)
@@ -562,17 +564,20 @@ namespace Syadeu.Presentation
             prefab = proxyIdx.x;
             return obj;
         }
-        unsafe private void ReleaseProxy(Hash trHash, PrefabReference prefab, RecycleableMonobehaviour obj)
+        unsafe private void ReleaseProxy(Hash trHash, PrefabReference prefab, RecycleableMonobehaviour obj, bool isDestroy)
         {
-            ref DataTransform tr = ref *GetDataTransformPointer(trHash);
-            if ((obj.transform.position - tr.position).sqrMagnitude > 1)
+            if (!isDestroy && m_MappedTransformIdxes.ContainsKey(trHash))
             {
-                CoreSystem.Logger.LogWarning(Channel.Proxy, $"Detecting incorrect translation between DataTransform, Proxy at {prefab.GetObjectSetting().m_Name}. This will be slightly cared but highly suggested do not manipulate Proxy\'s own translation.");
+                ref DataTransform tr = ref *GetDataTransformPointer(trHash);
+                if ((obj.transform.position - tr.position).sqrMagnitude > 1)
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Proxy, $"Detecting incorrect translation between DataTransform, Proxy at {prefab.GetObjectSetting().m_Name}. This will be slightly cared but highly suggested do not manipulate Proxy\'s own translation.");
 
-                Transform monoTr = obj.transform;
+                    Transform monoTr = obj.transform;
 
-                tr.m_Position = new ThreadSafe.Vector3(monoTr.position);
-                tr.m_Rotation = monoTr.rotation;
+                    tr.m_Position = new ThreadSafe.Vector3(monoTr.position);
+                    tr.m_Rotation = monoTr.rotation;
+                }
             }
 
             obj.Terminate();
