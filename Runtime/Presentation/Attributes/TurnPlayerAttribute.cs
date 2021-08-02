@@ -2,6 +2,7 @@
 using Syadeu.Mono;
 using Syadeu.Mono.TurnTable;
 using Syadeu.Presentation.Entities;
+using System;
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine.Scripting;
@@ -24,8 +25,17 @@ namespace Syadeu.Presentation.Attributes
         [JsonIgnore] public int ActionPoint
         {
             get => m_CurrentActionPoint;
-            set => m_CurrentActionPoint = value;
+            set
+            {
+                if (!m_CurrentActionPoint.Equals(value))
+                {
+                    m_CurrentActionPoint = value;
+                    OnActionPointChanged.Invoke(value);
+                }
+            }
         }
+
+        public event Action<int> OnActionPointChanged;
 
         public void StartTurn()
         {

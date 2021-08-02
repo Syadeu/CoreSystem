@@ -696,6 +696,12 @@ namespace SyadeuEditor
                 }
                 else throw new NotImplementedException();
 
+                if (members[i] is EventInfo ||
+                    TypeHelper.TypeOf<Delegate>.Type.IsAssignableFrom(declaredType))
+                {
+                    continue;
+                }
+
                 name = ReflectionHelper.SerializeMemberInfoName(members[i]);
 
                 #region Helpbox
