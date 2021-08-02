@@ -135,7 +135,8 @@ namespace SyadeuEditor
                 
                 for (int i = 0; i < m_AttributeDrawers.Length; i++)
                 {
-                    AttributeBase targetAtt = (AttributeBase)EntityDataList.Instance.GetObject(m_CurrentList[i]);
+                    EntityDataList.Instance.m_Objects.TryGetValue(m_CurrentList[i], out var temp);
+                    AttributeBase targetAtt = temp == null ? null : (AttributeBase)temp;
                     if (targetAtt == null) continue;
 
                     m_AttributeDrawers[i] = GetDrawer(targetAtt);
@@ -371,7 +372,9 @@ namespace SyadeuEditor
         private static void DrawAttributeSelector(string name, Action<Hash> setter, Hash current, Type entityType)
         {
             string displayName;
-            AttributeBase att = (AttributeBase)EntityDataList.Instance.GetObject(current);
+            EntityDataList.Instance.m_Objects.TryGetValue(current, out var attVal);
+            //AttributeBase att = (AttributeBase)EntityDataList.Instance.GetObject(current);
+            AttributeBase att = attVal == null ? null : (AttributeBase)attVal;
             if (current.Equals(Hash.Empty)) displayName = "None";
             else if (att == null) displayName = "Attribute Not Found";
             else displayName = att.Name;
