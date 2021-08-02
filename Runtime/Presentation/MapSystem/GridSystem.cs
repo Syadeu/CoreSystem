@@ -245,5 +245,21 @@ namespace Syadeu.Presentation.Map
 
             m_EntityGridIndices.Add(entity, indices);
         }
+
+        public float3 IndexToPosition(int idx)
+        {
+            if (GridMap.Grid == null) throw new System.Exception();
+            return GridMap.Grid.GetCellPosition(idx);
+        }
+        public int PositionToIndex(float3 position)
+        {
+            if (GridMap.Grid == null) throw new System.Exception();
+            return GridMap.Grid.GetCellIndex(position);
+        }
+        public int[] GetRange(int idx, int range)
+        {
+            if (GridMap.Grid == null) throw new System.Exception();
+            return GridMap.Grid.GetRange(in idx, in range);
+        }
     }
 }

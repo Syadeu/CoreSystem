@@ -53,8 +53,7 @@ namespace Syadeu.Presentation.Map
         [JsonIgnore] public float CellSize => m_CellSize;
         [JsonIgnore] public int LayerCount => m_Layers.Length;
         [JsonIgnore] public ManagedGrid Grid { get; private set; }
-        [JsonIgnore] public NativeHashSet<int>[] Layers { get; private set; }
-        [JsonIgnore] private Dictionary<int, List<Entity<IEntity>>> OccupiedCellIndices { get; set; }
+        [JsonIgnore] private NativeHashSet<int>[] Layers { get; set; }
 
         public void CreateGrid()
         {
@@ -70,13 +69,11 @@ namespace Syadeu.Presentation.Map
                     Layers[i].Add(m_Layers[i].m_Indices[a]);
                 }
             }
-            OccupiedCellIndices = new Dictionary<int, List<Entity<IEntity>>>();
         }
         public void DestroyGrid()
         {
             if (Grid == null) throw new Exception();
 
-            OccupiedCellIndices = null;
             for (int i = 0; i < Layers.Length; i++)
             {
                 Layers[i].Dispose();
@@ -89,6 +86,18 @@ namespace Syadeu.Presentation.Map
         public LayerInfo GetLayer(int idx) => m_Layers[idx];
         public LayerInfo GetLayer(Hash hash) => m_Layers.FindFor((other) => other.m_Hash.Equals(hash));
         public LayerInfo GetLayer(string name) => m_Layers.FindFor((other) => other.m_Name.Equals(name));
+
+        public int[] FilterByLayer(int layer, int[] indices)
+        {
+            List<int> temp = new List<int>();
+            for (int i = 0; i < indices.Length; i++)
+            {
+                if (Layers[layer].Contains(indices[i])) continue;
+
+                temp.Add(indices[i]);
+            }
+            return temp.ToArray();
+        }
     }
     [Preserve]
     internal sealed class GridMapProcessor : AttributeProcessor<GridMapAttribute>

@@ -13,12 +13,28 @@ namespace Syadeu.Presentation.Map
     public abstract class GridAttributeBase : AttributeBase { }
 
     #region Grid Size Attribute
+    /// <summary>
+    /// 엔티티를 그리드에 등록하는 어트리뷰트입니다.
+    /// </summary>
     public sealed class GridSizeAttribute : GridAttributeBase
     {
         [JsonProperty(Order = 0, PropertyName = "GridLocations")] public int2[] m_GridLocations;
 
         [JsonIgnore] internal GridSystem GridSystem { get; set; }
+
         [JsonIgnore] public int[] CurrentGridIndices { get; private set; } = Array.Empty<int>();
+        [JsonIgnore] public float3 Center
+        {
+            get
+            {
+                AABB temp = new AABB(GridSystem.IndexToPosition(CurrentGridIndices[0]), float3.zero);
+                for (int i = 1; i < CurrentGridIndices.Length; i++)
+                {
+                    temp.Encapsulate(GridSystem.IndexToPosition(CurrentGridIndices[i]));
+                }
+                return temp.center;
+            }
+        }
 
         public GridSizeAttribute()
         {
@@ -29,12 +45,27 @@ namespace Syadeu.Presentation.Map
             GridSystem = null;
         }
 
+        /// <summary>
+        /// 이 엔티티의 그리드상 좌표를 업데이트합니다.
+        /// </summary>
         public void UpdateGridCell()
         {
             int[] indices = GetCurrentGridIndices();
             GridSystem.UpdateGridEntity(Parent, indices);
+
             CurrentGridIndices = indices;
         }
+        public int[] GetRange(int range, params int[] ignoreLayers)
+        {
+            // TODO : 임시. 이후 gridsize 에 맞춰서 인덱스 반환
+            int[] indices = GridSystem.GetRange(CurrentGridIndices[0], range);
+            for (int i = 0; i < ignoreLayers?.Length; i++)
+            {
+                indices = GridSystem.GridMap.FilterByLayer(ignoreLayers[i], indices);
+            }
+            return indices;
+        }
+
         private int[] GetCurrentGridIndices()
         {
             GridSizeAttribute gridsize = Parent.GetAttribute<GridSizeAttribute>();
@@ -50,6 +81,12 @@ namespace Syadeu.Presentation.Map
             int p0 = GridSystem.GridMap.Grid.GetCellIndex(entity.transform.position);
 
             return new int[] { p0 };
+        }
+
+        public float3 IndexToPosition(int idx)
+        {
+            if (GridSystem == null) throw new System.Exception();
+            return GridSystem.IndexToPosition(idx);
         }
     }
     //[Preserve]

@@ -87,14 +87,6 @@ namespace Syadeu.Presentation.Actor
     {
         [JsonProperty(Order = 0, PropertyName = "Faction")] private Reference<ActorFaction> m_Faction;
 
-        //[JsonIgnore] public ActorType ActorType => m_ActorType;
-
-        //public void test()
-        //{
-        //    InputAction action = null;
-        //    action.type = InputActionType.Button;
-
-        //}
     }
 
     [AttributeAcceptOnly(typeof(ActorEntity))]
@@ -102,8 +94,39 @@ namespace Syadeu.Presentation.Actor
 
     public sealed class ActorStatAttribute : ActorAttributeBase
     {
-        [JsonProperty(Order = 0, PropertyName = "Stats")] public ValuePairContainer m_Stats = new ValuePairContainer();
+        [JsonProperty(Order = 0, PropertyName = "Stats")] private ValuePairContainer m_Stats = new ValuePairContainer();
+
+        [JsonIgnore] public ValuePairContainer Stats => m_Stats;
+
+        public static Hash ToValueHash(string name) => Hash.NewHash(name);
     }
+
+    //public sealed class ActorGridAttribute : ActorAttributeBase
+    //{
+    //    [JsonIgnore] public GridSizeAttribute GridSize { get; internal set; }
+
+    //    public void GetNearbyIndices(int range, params int[] ignoreLayers)
+    //    {
+    //        CoreSystem.Logger.NotNull(GridSize, "GridSizeAttribute not found");
+
+    //        // TODO : 이거 임시, 하나만 계산하는데 나중엔 gridsize에 맞춰서
+    //        int index = GridSize.CurrentGridIndices[0];
+
+            
+    //    }
+    //}
+    //[Preserve]
+    //internal sealed class ActorGridProcessor : AttributeProcessor<ActorGridAttribute>
+    //{
+    //    protected override void OnCreated(ActorGridAttribute attribute, EntityData<IEntityData> entity)
+    //    {
+    //        attribute.GridSize = entity.GetAttribute<GridSizeAttribute>();
+    //        CoreSystem.Logger.NotNull(attribute.GridSize, "GridSizeAttribute not found");
+
+
+    //    }
+    //}
+
     //[ReflectionDescription("이 액터의 타입을 설정합니다.")]
     //public sealed class ActorTypeAttribute : ActorAttributeBase
     //{

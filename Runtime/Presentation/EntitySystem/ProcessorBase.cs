@@ -1,5 +1,6 @@
 ﻿using Syadeu.Database;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Map;
 using Syadeu.ThreadSafe;
 using Unity.Mathematics;
 
@@ -8,7 +9,9 @@ namespace Syadeu.Presentation
     public abstract class ProcessorBase
     {
         internal EntitySystem m_EntitySystem;
+
         protected EntitySystem EntitySystem => m_EntitySystem;
+        protected DataContainerSystem DataContainerSystem => m_EntitySystem.m_DataContainerSystem;
         private GameObjectProxySystem ProxySystem => EntitySystem.m_ProxySystem;
 
         protected DataGameObject CreatePrefab(PrefabReference prefab, Vector3 position, quaternion rotation)

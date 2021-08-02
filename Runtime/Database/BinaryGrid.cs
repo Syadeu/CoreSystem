@@ -585,14 +585,14 @@ namespace Syadeu.Database
 
         #endregion
 
-        public IReadOnlyList<ManagedCell> GetRange(in int idx, in int range)
+        public int[] GetRange(in int idx, in int range)
             => GetRange(GridExtensions.IndexToLocation(in m_AABB, in m_CellSize, in idx), range);
-        public IReadOnlyList<ManagedCell> GetRange(in int2 location, in int range)
+        public int[] GetRange(in int2 location, in int range)
         {
             int2 gridSize = this.gridSize;
             float3 cellSize = new float3(m_CellSize, m_AABB.size.y, m_CellSize);
 
-            List<ManagedCell> targets = new List<ManagedCell>();
+            List<int> targets = new List<int>();
             // 왼쪽 아래 부터 탐색 시작
             int startIdx = (gridSize.y * (location.y + range)) + location.x - range;
 
@@ -604,22 +604,23 @@ namespace Syadeu.Database
                     int temp = startIdx - (yGrid * gridSize.y) + xGrid;
                     if (HasCell(temp))
                     {
-                        if (!m_Cells.TryGetValue(temp, out ManagedCell cell))
-                        {
-                            cell = new ManagedCell(
-                            m_Hash, temp,
-                            GridExtensions.IndexToPosition(in m_AABB, in m_CellSize, in temp),
-                            cellSize
-                            );
-                        }
+                        //if (!m_Cells.TryGetValue(temp, out ManagedCell cell))
+                        //{
+                        //    cell = new ManagedCell(
+                        //    m_Hash, temp,
+                        //    GridExtensions.IndexToPosition(in m_AABB, in m_CellSize, in temp),
+                        //    cellSize
+                        //    );
+                        //}
 
-                        targets.Add(cell);
+                        //targets.Add(cell);
+                        targets.Add(temp);
                     }
                     if (temp >= (gridSize.y * (location.y - yGrid + 2)) + gridSize.x - 1) break;
                 }
             }
 
-            return targets;
+            return targets.ToArray();
         }
 
         public byte[] ToBinary()

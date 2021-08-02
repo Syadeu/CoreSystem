@@ -49,11 +49,15 @@ namespace Syadeu.Presentation
         private readonly Dictionary<Type, List<IAttributeProcessor>> m_AttributeProcessors = new Dictionary<Type, List<IAttributeProcessor>>();
         private readonly Dictionary<Type, List<IEntityDataProcessor>> m_EntityProcessors = new Dictionary<Type, List<IEntityDataProcessor>>();
 
+        internal DataContainerSystem m_DataContainerSystem;
         internal GameObjectProxySystem m_ProxySystem;
 
         #region Presentation Methods
         protected override PresentationResult OnInitializeAsync()
         {
+            RequestSystem<DataContainerSystem>((other) => m_DataContainerSystem = other);
+            RequestSystem<GameObjectProxySystem>((other) => m_ProxySystem = other);
+
             #region Processor Registeration
             Type[] processors = TypeHelper.GetTypes((other) =>
             {
@@ -114,7 +118,6 @@ namespace Syadeu.Presentation
             }
             #endregion
 
-            RequestSystem<GameObjectProxySystem>((other) => m_ProxySystem = other);
             return base.OnInitializeAsync();
         }
         protected override PresentationResult OnStartPresentation()

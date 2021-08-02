@@ -845,6 +845,8 @@ namespace SyadeuEditor.Presentation.Map
                             temp.Remove(m_SelectedGameObject);
                             m_MapDataTarget.m_Objects = temp.ToArray();
 
+                            DestroyImmediate(m_PreviewObjects[m_SelectedGameObject]);
+
                             m_PreviewObjects.Remove(m_SelectedGameObject);
                             m_SelectedGameObject = null;
                             m_MapDataTreeView.Refresh(m_MapDataTarget.m_Objects);
