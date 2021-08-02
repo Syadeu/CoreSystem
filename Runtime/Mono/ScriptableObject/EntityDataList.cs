@@ -172,9 +172,8 @@ namespace Syadeu.Database
 
         public ObjectBase GetObject(Hash hash)
         {
-            if (hash.Equals(Hash.Empty)) return null;
-            if (m_Objects.TryGetValue(hash, out var val)) return val;
-            return null;
+            if (hash.Equals(Hash.Empty)) throw new KeyNotFoundException();
+            return m_Objects[hash];
         }
         public ObjectBase GetObject(string name) => GetObject(m_EntityHash[name]);
         //public EntityBase GetEntity(Hash hash) => m_Entites.FindFor((other) => other.Hash.Equals(hash));

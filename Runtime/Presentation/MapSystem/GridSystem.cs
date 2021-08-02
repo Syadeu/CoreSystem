@@ -147,6 +147,17 @@ namespace Syadeu.Presentation.Map
                 int[] gridEntities = m_GridEntities.Keys.ToArray();
                 DrawOccupiedCells(m_MainGrid.Value.Grid, gridEntities);
 
+                //GL.Color(Color.black);
+                //var temp = m_EntityGridIndices.Keys.ToArray();
+                //for (int i = 0; i < temp.Length; i++)
+                //{
+                //    var indices = GetRange(m_EntityGridIndices[temp[i]][0], 6);
+                //    foreach (var item in indices)
+                //    {
+                //        DrawCell(m_MainGrid.Value.Grid, item);
+                //    }
+                //}
+
                 GL.End();
                 GL.PopMatrix();
             }
@@ -215,6 +226,21 @@ namespace Syadeu.Presentation.Map
                     GL.Vertex(p3);
                     GL.Vertex(p4);
                 }
+            }
+            static void DrawCell(ManagedGrid grid, in int index)
+            {
+                float sizeHalf = grid.cellSize * .5f;
+                Vector3
+                    cellPos = grid.GetCellPosition(index),
+                    p1 = new Vector3(cellPos.x - sizeHalf, cellPos.y + .1f, cellPos.z - sizeHalf),
+                    p2 = new Vector3(cellPos.x - sizeHalf, cellPos.y + .1f, cellPos.z + sizeHalf),
+                    p3 = new Vector3(cellPos.x + sizeHalf, cellPos.y + .1f, cellPos.z + sizeHalf),
+                    p4 = new Vector3(cellPos.x + sizeHalf, cellPos.y + .1f, cellPos.z - sizeHalf);
+
+                GL.Vertex(p1);
+                GL.Vertex(p2);
+                GL.Vertex(p3);
+                GL.Vertex(p4);
             }
         }
         #endregion

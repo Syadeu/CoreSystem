@@ -364,23 +364,33 @@ namespace Syadeu.Presentation
                 throw;
             }
 
-            Transform tr = CoreSystem.GetTransform((GameObject)objSetting.m_RefPrefab.Asset);
-            DataTransform dataTr;
-            try
-            {
-                dataTr = ToDataTransform(tr);
-            }
-            catch (NullReferenceException)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity, $"Prefab({objSetting.m_Name}) is null. Create new prefab request has been ignored.");
-                return default;
-            }
-            catch (Exception)
-            {
-                throw;
-            }
+            //Transform tr;
+            //if (objSetting.m_RefPrefab.Asset == null)
+            //{
+            //    var asyncOper = objSetting.m_RefPrefab.LoadAssetAsync<GameObject>();
+            //    asyncOper.Completed += (oper) =>
+            //    {
 
-            return CreateNewPrefab(prefab, pos, dataTr.m_Rotation, dataTr.m_LocalScale, true);
+            //    };
+            //}
+            //else tr = CoreSystem.GetTransform((GameObject)objSetting.m_RefPrefab.Asset);
+
+            //DataTransform dataTr;
+            //try
+            //{
+            //    dataTr = ToDataTransform(tr);
+            //}
+            //catch (NullReferenceException)
+            //{
+            //    CoreSystem.Logger.LogError(Channel.Entity, $"Prefab({objSetting.m_Name}) is null. Create new prefab request has been ignored.");
+            //    return default;
+            //}
+            //catch (Exception)
+            //{
+            //    throw;
+            //}
+
+            return CreateNewPrefab(prefab, pos, quaternion.identity, Vector3.one, true);
         }
         internal DataGameObject CreateNewPrefab(PrefabReference prefab, 
             Vector3 pos, Quaternion rot, Vector3 localScale, bool enableCull)

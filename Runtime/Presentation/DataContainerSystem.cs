@@ -13,16 +13,23 @@ namespace Syadeu.Presentation
 
         public static Hash ToDataHash(string value) => Hash.NewHash(value, Hash.Algorithm.FNV1a64);
 
+        public bool HasValue(Hash key) => m_DataContainer.ContainsKey(key);
+        public bool HasValue(string key) => HasValue(ToDataHash(key));
+
         public void Enqueue(Hash key, object value) => m_DataContainer.TryAdd(key, value);
         public void Enqueue(string key, object value) => Enqueue(ToDataHash(key), value);
 
         public object Dequeue(Hash key)
         {
             m_DataContainer.TryRemove(key, out var value);
+            if (value == null)
+            {
+                throw new System.Exception("key not found");
+            }
             return value;
         }
         public object Dequeue(string key) => Dequeue(ToDataHash(key));
         public T Dequeue<T>(Hash key) => (T)Dequeue(key);
-        public T Dequeue<T>(string key) => (T)Dequeue(key);
+        public T Dequeue<T>(string key) =>  (T)Dequeue(key);
     }
 }

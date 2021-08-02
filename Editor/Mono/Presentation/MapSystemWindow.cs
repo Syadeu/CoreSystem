@@ -415,6 +415,14 @@ namespace SyadeuEditor.Presentation.Map
                     GL.End();
                     GL.PopMatrix();
                 }
+
+                //for (int i = 0; i < m_SceneDataGrid.length; i++)
+                //{
+                //    float3 pos = m_SceneDataGrid.GetCellPosition(i);
+                //    if (!EditorSceneUtils.IsDrawable(pos)) continue;
+
+                //    Handles.Label(pos, $"{i}");
+                //}
                 #endregion
 
                 if (!m_EditLayer || m_CurrentLayer == null) return;

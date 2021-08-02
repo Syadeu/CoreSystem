@@ -3,9 +3,11 @@ using Syadeu.Internal;
 using Syadeu.Presentation.Attributes;
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 namespace Syadeu.Presentation.Entities
 {
+    [Serializable, StructLayout(LayoutKind.Sequential)]
     /// <summary><inheritdoc cref="IEntityData"/></summary>
     /// <remarks>
     /// 사용자가 <see cref="EntityDataBase"/>를 좀 더 안전하게 접근할 수 있도록 랩핑하는 struct 입니다.<br/>
@@ -87,6 +89,7 @@ namespace Syadeu.Presentation.Entities
             return Empty;
         }
     }
+    [Serializable, StructLayout(LayoutKind.Sequential)]
     /// <summary><inheritdoc cref="IEntity"/></summary>
     /// <remarks>
     /// 사용자가 <see cref="EntityBase"/>를 좀 더 안전하게 접근할 수 있도록 랩핑하는 struct 입니다.<br/>

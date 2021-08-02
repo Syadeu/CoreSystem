@@ -62,6 +62,11 @@ namespace Syadeu.Presentation
             get
             {
                 Assert.IsTrue(IsValid(), $"{TypeHelper.TypeOf<T>.Type.Name} System is not valid");
+                CoreSystem.Logger.NotNull(PresentationManager.Instance, "1");
+                CoreSystem.Logger.NotNull(PresentationManager.Instance.m_PresentationGroups, "2");
+                CoreSystem.Logger.NotNull(PresentationManager.Instance.m_PresentationGroups[Instance.m_GroupHash], "3");
+                CoreSystem.Logger.NotNull(PresentationManager.Instance.m_PresentationGroups[Instance.m_GroupHash].m_Systems[Instance.m_Index], "4");
+
                 try
                 {
                     return (T)PresentationManager.Instance.m_PresentationGroups[Instance.m_GroupHash].m_Systems[Instance.m_Index];
