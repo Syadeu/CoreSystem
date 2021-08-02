@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Unity.Mathematics;
 
 namespace Syadeu.Presentation.Entities
 {
@@ -16,5 +17,14 @@ namespace Syadeu.Presentation.Entities
     {
         [JsonIgnore] DataGameObject gameObject { get; }
         [JsonIgnore] DataTransform transform { get; }
+
+        /// <summary>
+        /// 이 엔티티의 프리팹 <see cref="Prefab"/>의 AABB Center translation 값입니다.
+        /// </summary>
+        [JsonProperty(Order = -8, PropertyName = "Center")] float3 Center { get; }
+        /// <summary>
+        /// 이 엔티티 프리팹 <see cref="Prefab"/>의 AABB Size 값입니다.
+        /// </summary>
+        [JsonProperty(Order = -7, PropertyName = "Size")] public float3 Size { get; }
     }
 }

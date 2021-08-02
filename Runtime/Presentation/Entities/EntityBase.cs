@@ -30,16 +30,8 @@ namespace Syadeu.Presentation.Entities
         /// </summary>
         [JsonProperty(Order = -9, PropertyName = "Prefab")] public PrefabReference Prefab { get; set; }
 
-        /// <summary>
-        /// 이 엔티티의 프리팹 <see cref="Prefab"/>의 AABB Center translation 값입니다.
-        /// </summary>
-        [ReflectionDescription("AABB 의 Center")]
-        [JsonProperty(Order = -8, PropertyName = "Center")] public float3 Center { get; set; }
-        /// <summary>
-        /// 이 엔티티 프리팹 <see cref="Prefab"/>의 AABB Size 값입니다.
-        /// </summary>
-        [ReflectionDescription("AABB 의 Size")]
-        [JsonProperty(Order = -7, PropertyName = "Size")] public float3 Size { get; set; }
+        [ReflectionDescription("AABB 의 Center"), JsonProperty(Order = -8, PropertyName = "Center")] public float3 Center { get; set; }
+        [ReflectionDescription("AABB 의 Size"), JsonProperty(Order = -7, PropertyName = "Size")] public float3 Size { get; set; }
 
         /// <summary>
         /// <see cref="GameObjectProxySystem"/>을 통해 연결된 <see cref="DataGameObject"/> 입니다.

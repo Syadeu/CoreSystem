@@ -4,6 +4,7 @@ using Syadeu.Presentation.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using Unity.Mathematics;
 
 namespace Syadeu.Presentation.Entities
 {
@@ -129,6 +130,17 @@ namespace Syadeu.Presentation.Entities
         public DataGameObject gameObject => Target.gameObject;
         public DataTransform transform => Target.transform;
 #pragma warning restore IDE1006 // Naming Styles
+
+        public float3 Center => Target.Center;
+        public float3 Size => Target.Size;
+        public AABB AABB
+        {
+            get
+            {
+                float3 pos = transform.position;
+                return new AABB(Center + pos, Size).Rotation(transform.rotation);
+            }
+        }
 
         private Entity(Hash idx)
         {
