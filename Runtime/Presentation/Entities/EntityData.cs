@@ -102,6 +102,7 @@ namespace Syadeu.Presentation.Entities
     /// <typeparam name="T"></typeparam>
     public struct Entity<T> : IValidation, IEquatable<Entity<T>>, IEquatable<Hash> where T : class, IEntity
     {
+        private const string c_Invalid = "Invalid";
         public static Entity<T> Empty => new Entity<T>(Hash.Empty);
 
         private static readonly Dictionary<Hash, Entity<T>> m_Entity = new Dictionary<Hash, Entity<T>>();
@@ -122,7 +123,7 @@ namespace Syadeu.Presentation.Entities
 
         public T Target => m_Idx.Equals(Hash.Empty) ? null : (T)PresentationSystem<EntitySystem>.System.m_ObjectEntities[m_Idx];
 
-        public string Name => Target.Name;
+        public string Name => m_Idx.Equals(Hash.Empty) ? c_Invalid : Target.Name;
         public Hash Idx => m_Idx;
         public Type Type => Target.GetType();
 
@@ -168,6 +169,13 @@ namespace Syadeu.Presentation.Entities
         public static implicit operator T(Entity<T> a) => a.Target;
         public static implicit operator Entity<T>(Entity<IEntity> a)
         {
+            if (a.m_Idx.Equals(Hash.Empty))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                $"Cannot convert an empty Entity. This is an invalid operation and not allowed.");
+                return Empty;
+            }
+
             if (a.Target is T) return Entity<T>.GetEntity(a.m_Idx);
 
             CoreSystem.Logger.LogError(Channel.Entity,
