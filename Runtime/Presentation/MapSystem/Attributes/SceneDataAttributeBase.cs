@@ -16,13 +16,15 @@ namespace Syadeu.Presentation.Map
     public abstract class SceneDataAttributeBase : AttributeBase { }
 
     #region Grid Map Attribute
+    [ReflectionDescription("엔티티가 생성되면 자동으로 입력한 크기의 그리드를 생성합니다.")]
     public sealed class GridMapAttribute : SceneDataAttributeBase
     {
+        [Serializable]
         public sealed class LayerInfo : IEquatable<LayerInfo>, ICloneable
         {
-            [JsonProperty(PropertyName = "Hash")][ReflectionSealedView] public Hash m_Hash = Hash.NewHash();
-            [JsonProperty(PropertyName = "Name")] public string m_Name = "NewLayer";
-            [JsonProperty(PropertyName = "Indices")] public int[] m_Indices = Array.Empty<int>();
+            [ReflectionSealedView, JsonProperty(Order = 0, PropertyName = "Hash")] public Hash m_Hash = Hash.NewHash();
+            [JsonProperty(Order = 1, PropertyName = "Name")] public string m_Name = "NewLayer";
+            [JsonProperty(Order = 2, PropertyName = "Indices")] public int[] m_Indices = Array.Empty<int>();
 
             public object Clone()
             {
@@ -83,7 +85,6 @@ namespace Syadeu.Presentation.Map
             Grid.Dispose();
             Grid = null;
         }
-
         protected override void OnDispose()
         {
             if (Grid != null)
@@ -127,8 +128,6 @@ namespace Syadeu.Presentation.Map
     [Preserve]
     internal sealed class GridMapProcessor : AttributeProcessor<GridMapAttribute>
     {
-        private static SceneDataEntity ToSceneData(IEntityData entity) => (SceneDataEntity)entity;
-
         protected override void OnCreated(GridMapAttribute attribute, EntityData<IEntityData> entity)
         {
             attribute.CreateGrid();

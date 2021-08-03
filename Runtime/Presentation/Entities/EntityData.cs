@@ -20,6 +20,7 @@ namespace Syadeu.Presentation.Entities
     /// <typeparam name="T"></typeparam>
     public struct EntityData<T> : IValidation, IEquatable<EntityData<T>>, IEquatable<Hash> where T : class, IEntityData
     {
+        private const string c_Invalid = "Invalid";
         public static EntityData<T> Empty => new EntityData<T>(Hash.Empty);
 
         private static readonly Dictionary<Hash, EntityData<T>> m_EntityData = new Dictionary<Hash, EntityData<T>>();
@@ -38,9 +39,9 @@ namespace Syadeu.Presentation.Entities
 
         public T Target => m_Idx.Equals(Hash.Empty) ? null : (T)PresentationSystem<EntitySystem>.System.m_ObjectEntities[m_Idx];
 
-        public string Name => Target.Name;
+        public string Name => m_Idx.Equals(Hash.Empty) ? c_Invalid : Target.Name;
         public Hash Idx => m_Idx;
-        public Type Type => Target.GetType();
+        public Type Type => m_Idx.Equals(Hash.Empty) ? null : Target.GetType();
 
         private EntityData(Hash idx)
         {
@@ -125,10 +126,10 @@ namespace Syadeu.Presentation.Entities
 
         public string Name => m_Idx.Equals(Hash.Empty) ? c_Invalid : Target.Name;
         public Hash Idx => m_Idx;
-        public Type Type => Target.GetType();
+        public Type Type => m_Idx.Equals(Hash.Empty) ? null : Target.GetType();
 
 #pragma warning disable IDE1006 // Naming Styles
-        public DataGameObject gameObject => Target.gameObject;
+        public DataGameObject gameObject => m_Idx.Equals(Hash.Empty) ? DataGameObject.Null : Target.gameObject;
         public DataTransform transform => Target.transform;
 #pragma warning restore IDE1006 // Naming Styles
 
