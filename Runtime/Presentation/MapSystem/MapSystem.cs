@@ -25,7 +25,7 @@ namespace Syadeu.Presentation.Map
 
         private SceneSystem m_SceneSystem;
         private EntitySystem m_EntitySystem;
-        private RenderSystem m_RenderSystem;
+        private Render.RenderSystem m_RenderSystem;
 
         #region Presentation Methods
         protected override PresentationResult OnInitialize()
@@ -87,7 +87,7 @@ namespace Syadeu.Presentation.Map
                 m_SceneSystem = other;
             });
             RequestSystem<EntitySystem>((other) => m_EntitySystem = other);
-            RequestSystem<RenderSystem>((other) => m_RenderSystem = other);
+            RequestSystem<Render.RenderSystem>((other) => m_RenderSystem = other);
 
             return base.OnInitializeAsync();
         }

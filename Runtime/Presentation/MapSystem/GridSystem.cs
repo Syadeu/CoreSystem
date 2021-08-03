@@ -16,7 +16,7 @@ namespace Syadeu.Presentation.Map
         public override bool EnableAfterPresentation => false;
 
         private EntitySystem m_EntitySystem;
-        private RenderSystem m_RenderSystem;
+        private Render.RenderSystem m_RenderSystem;
 
         private KeyValuePair<SceneDataEntity, GridMapAttribute> m_MainGrid;
         private bool m_DrawGrid = false;
@@ -43,7 +43,7 @@ namespace Syadeu.Presentation.Map
                 m_EntitySystem.OnEntityCreated += M_EntitySystem_OnEntityCreated;
                 m_EntitySystem.OnEntityDestroy += M_EntitySystem_OnEntityDestroy;
             });
-            RequestSystem<RenderSystem>((other) =>
+            RequestSystem<Render.RenderSystem>((other) =>
             {
                 m_RenderSystem = other;
                 m_RenderSystem.OnRender += M_RenderSystem_OnRender;

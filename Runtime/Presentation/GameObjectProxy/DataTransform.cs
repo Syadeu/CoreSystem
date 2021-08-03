@@ -57,7 +57,7 @@ namespace Syadeu.Presentation
         }
         private void RequestUpdate()
         {
-            if (!PresentationSystem<RenderSystem>.System.IsInCameraScreen(m_Position)) return;
+            if (!PresentationSystem<Render.RenderSystem>.System.IsInCameraScreen(m_Position)) return;
             PresentationSystem<GameObjectProxySystem>.System.RequestUpdateTransform(m_Idx);
         }
 
@@ -241,7 +241,7 @@ namespace Syadeu.Presentation
             }
         }
 
-        public float4x4 localToWorldMatrix => RenderSystem.LocalToWorldMatrix(position, rotation);
+        public float4x4 localToWorldMatrix => Render.RenderSystem.LocalToWorldMatrix(position, rotation);
         public float4x4 worldToLocalMatrix => math.inverse(localToWorldMatrix);
 
         Vector3 IReadOnlyTransform.position => position;

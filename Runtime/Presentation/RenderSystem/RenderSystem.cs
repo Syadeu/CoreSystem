@@ -16,7 +16,7 @@ using System.Runtime.CompilerServices;
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Presentation.Render
 {
     [RequireGlobalConfig("General")]
     public sealed class RenderSystem : PresentationSystemEntity<RenderSystem>
@@ -55,24 +55,7 @@ namespace Syadeu.Presentation
             m_Camera.OnValueChange += (from, to) =>
             {
                 if (to == null) return;
-                //if (m_TopdownCamera != null)
-                //{
-                //    m_TopdownCamera.transform.SetParent(to.transform);
-                //}
-                //else
-                //{
-                //    GameObject obj = new GameObject("RenderSystem.Camera");
-                //    m_TopdownCamera = obj.AddComponent<Camera>();
-                //    //m_TopdownCamera.enabled = false;
-                //    m_TopdownCamera.targetDisplay = 1;
 
-                //    Vector3 pos = to.transform.position;
-                //    pos.y += 50;
-                //    m_TopdownCamera.transform.position = pos;
-
-                //    m_TopdownCamera.transform.SetParent(to.transform);
-                //    m_TopdownCamera.transform.eulerAngles = new Vector3(90, 0, 0);
-                //}
                 m_Matrix4x4 = GetCameraMatrix4X4(to);
                 if (to.GetComponent<CameraComponent>() == null)
                 {
@@ -242,24 +225,24 @@ namespace Syadeu.Presentation
             m_PostRenderRoutines.Add(routine);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float4x4 TRS(float3 translation, quaternion rotation, float3 scale)
-        {
-            float3x3 r = new float3x3(rotation);
-            return
-                new float4x4(
-                    new float4(r.c0 * scale.x, 0),
-                    new float4(r.c1 * scale.y, 0),
-                    new float4(r.c2 * scale.z, 0),
-                    new float4(translation, 1)
-                    );
-        }
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //public static float4x4 TRS(float3 translation, quaternion rotation, float3 scale)
+        //{
+        //    float3x3 r = new float3x3(rotation);
+        //    return
+        //        new float4x4(
+        //            new float4(r.c0 * scale.x, 0),
+        //            new float4(r.c1 * scale.y, 0),
+        //            new float4(r.c2 * scale.z, 0),
+        //            new float4(translation, 1)
+        //            );
+        //}
         public static float4x4 LocalToWorldMatrix(float3 translation, quaternion rotation)
         {
             float3x3 r = new float3x3(rotation);
             return new float4x4(r, translation);
         }
-        public static float4x4 WorldToLocalMatrix(float3 translation, quaternion rotation) => math.fastinverse(LocalToWorldMatrix(translation, rotation));
+        public static float4x4 WorldToLocalMatrix(float3 translation, quaternion rotation) => math.inverse(LocalToWorldMatrix(translation, rotation));
     }
 
     public sealed class CameraComponent : MonoBehaviour

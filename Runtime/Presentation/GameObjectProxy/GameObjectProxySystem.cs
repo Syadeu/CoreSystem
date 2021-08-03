@@ -52,7 +52,7 @@ namespace Syadeu.Presentation
         private readonly List<BackgroundJob> m_VisibleCheckJobs = new List<BackgroundJob>();
 
         private SceneSystem m_SceneSystem;
-        private RenderSystem m_RenderSystem;
+        private Render.RenderSystem m_RenderSystem;
 
         private bool m_LoadingLock = false;
         private bool m_Disposed = false;
@@ -76,7 +76,7 @@ namespace Syadeu.Presentation
             m_ModuleBuilder = ab.DefineDynamicModule(aName.Name);
 
             RequestSystem<SceneSystem>((other) => m_SceneSystem = other);
-            RequestSystem<RenderSystem>((other) => m_RenderSystem = other);
+            RequestSystem<Render.RenderSystem>((other) => m_RenderSystem = other);
 
             return base.OnInitializeAsync();
         }
