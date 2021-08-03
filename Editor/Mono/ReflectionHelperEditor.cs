@@ -721,7 +721,16 @@ namespace SyadeuEditor
 
                 #endregion
 
+                var spaces = members[i].GetCustomAttributes<SpaceAttribute>();
+                foreach (var item in spaces)
+                {
+                    EditorGUILayout.Space();
+                }
+
                 EditorGUI.BeginDisabledGroup(members[i].GetCustomAttribute<ReflectionSealedViewAttribute>() != null);
+
+                var header = members[i].GetCustomAttribute<HeaderAttribute>();
+                if (header != null) EditorUtils.StringRich(header.header, 13);
 
                 #region Unity Types
                 if (DrawUnityField(obj, declaredType, name, getter, out object value))

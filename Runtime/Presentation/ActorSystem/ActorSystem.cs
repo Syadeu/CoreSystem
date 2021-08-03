@@ -86,6 +86,7 @@ namespace Syadeu.Presentation.Actor
     {
         [JsonProperty(Order = 0, PropertyName = "Faction")] private Reference<ActorFaction> m_Faction;
 
+        [JsonIgnore] public ActorFaction Faction => m_Faction.IsValid() ? m_Faction.GetObject() : null;
     }
 
     [AttributeAcceptOnly(typeof(ActorEntity))]

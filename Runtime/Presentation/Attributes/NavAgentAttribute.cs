@@ -14,15 +14,17 @@ using ThreadSafeVector3 = Syadeu.ThreadSafe.Vector3;
 
 namespace Syadeu.Presentation.Attributes
 {
+    [AttributeAcceptOnly(typeof(EntityBase))]
     public sealed class NavAgentAttribute : AttributeBase
     {
         [JsonProperty(Order = 0, PropertyName = "AgentType")] public int m_AgentType = 0;
+        [JsonProperty(Order = 1, PropertyName = "BaseOffset")] public float m_BaseOffset = 0;
 
-        //[JsonIgnore] public Vector3 PreviousPosition { get; internal set; }
-        //[JsonIgnore] public Vector3 TargetPosition { get; set; }
-        //[JsonIgnore] public NavMeshQuery NavMeshQuery { get; internal set; }
-        //[JsonIgnore] public PathQueryStatus PathQueryStatus { get; internal set; }
-        //[JsonIgnore] public TVector3[] Path { get; internal set; }
+        [Space, Header("Steering")]
+        [JsonProperty(Order = 2, PropertyName = "Speed")] public float m_Speed = 3.5f;
+        [JsonProperty(Order = 3, PropertyName = "AngularSpeed")] public float m_AngularSpeed = 120;
+        [JsonProperty(Order = 4, PropertyName = "Acceleration")] public float m_Acceleration = 8;
+        [JsonProperty(Order = 5, PropertyName = "StoppingDistance")] public float m_StoppingDistance = 0;
 
         [JsonIgnore] public NavMeshAgent NavMeshAgent { get; internal set; }
         [JsonIgnore] public bool IsMoving { get; internal set; }
@@ -51,14 +53,16 @@ namespace Syadeu.Presentation.Attributes
         }
         private IEnumerator Updater()
         {
+            Entity<IEntity> parent = Parent;
+            DataGameObject obj = parent.gameObject;
+            DataTransform tr = parent.transform;
+
+            if (!obj.HasProxyObject) yield break;
+
             while (NavMeshAgent.pathPending)
             {
                 yield return null;
             }
-            Entity<IEntity> parent = Parent;
-
-            DataGameObject obj = parent.gameObject;
-            DataTransform tr = parent.transform;
 
             while (NavMeshAgent.desiredVelocity.magnitude > 0 &&
                     NavMeshAgent.remainingDistance > .2f)
@@ -74,6 +78,7 @@ namespace Syadeu.Presentation.Attributes
             IsMoving = false;
         }
     }
+
     internal sealed class NavAgentProcessor : AttributeProcessor<NavAgentAttribute>, 
         IAttributeOnProxyCreatedSync, IAttributeOnProxyRemovedSync
     {
@@ -84,7 +89,7 @@ namespace Syadeu.Presentation.Attributes
             att.NavMeshAgent = monoObj.GetComponent<NavMeshAgent>();
             if (att.NavMeshAgent == null) att.NavMeshAgent = monoObj.gameObject.AddComponent<NavMeshAgent>();
 
-            att.NavMeshAgent.agentTypeID = att.m_AgentType;
+            UpdateNavMeshAgent(att, att.NavMeshAgent);
 
             att.NavMeshAgent.enabled = true;
         }
@@ -105,24 +110,16 @@ namespace Syadeu.Presentation.Attributes
             }
         }
 
-        //public void OnPresentation(AttributeBase attribute, IEntity entity)
-        //{
-        //    NavAgentAttribute att = (NavAgentAttribute)attribute;
-        //    DataGameObject obj = entity.gameObject;
-        //    if (!att.PreviousPosition.Equals(att.TargetPosition))
-        //    {
-        //        if (obj.HasProxyObject)
-        //        {
-        //            CoreSystem.AddForegroundJob(() =>
-        //            {
-        //                att.NavMeshAgent.SetDestination(att.TargetPosition);
-        //            });
-        //        }
-        //        else throw new NotImplementedException();
+        private static void UpdateNavMeshAgent(NavAgentAttribute att, NavMeshAgent agent)
+        {
+            agent.agentTypeID = att.m_AgentType;
+            agent.baseOffset = att.m_BaseOffset;
 
-        //        att.PreviousPosition = att.TargetPosition;
-        //    }
-        //}
+            agent.speed = att.m_Speed;
+            agent.angularSpeed = att.m_AngularSpeed;
+            agent.acceleration = att.m_Acceleration;
+            agent.stoppingDistance = att.m_StoppingDistance;
+        }
     }
     //internal sealed class NavMeshProcessor : AttributeProcessor<NavMeshAttribute>, IAttributeOnPresentation
     //{
