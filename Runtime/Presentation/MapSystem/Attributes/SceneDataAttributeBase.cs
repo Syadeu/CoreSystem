@@ -2,6 +2,7 @@
 using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation.Attributes;
+using Syadeu.Presentation.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,13 +16,15 @@ namespace Syadeu.Presentation.Map
     public abstract class SceneDataAttributeBase : AttributeBase { }
 
     #region Grid Map Attribute
+    [ReflectionDescription("엔티티가 생성되면 자동으로 입력한 크기의 그리드를 생성합니다.")]
     public sealed class GridMapAttribute : SceneDataAttributeBase
     {
+        [Serializable]
         public sealed class LayerInfo : IEquatable<LayerInfo>, ICloneable
         {
-            [JsonProperty(PropertyName = "Hash")][ReflectionSealedView] public Hash m_Hash = Hash.NewHash();
-            [JsonProperty(PropertyName = "Name")] public string m_Name = "NewLayer";
-            [JsonProperty(PropertyName = "Indices")] public int[] m_Indices = Array.Empty<int>();
+            [ReflectionSealedView, JsonProperty(Order = 0, PropertyName = "Hash")] public Hash m_Hash = Hash.NewHash();
+            [JsonProperty(Order = 1, PropertyName = "Name")] public string m_Name = "NewLayer";
+            [JsonProperty(Order = 2, PropertyName = "Indices")] public int[] m_Indices = Array.Empty<int>();
 
             public object Clone()
             {
@@ -52,7 +55,7 @@ namespace Syadeu.Presentation.Map
         [JsonIgnore] public float CellSize => m_CellSize;
         [JsonIgnore] public int LayerCount => m_Layers.Length;
         [JsonIgnore] public ManagedGrid Grid { get; private set; }
-        [JsonIgnore] public NativeHashSet<int>[] Layers { get; private set; }
+        [JsonIgnore] private NativeHashSet<int>[] Layers { get; set; }
 
         public void CreateGrid()
         {
@@ -77,25 +80,77 @@ namespace Syadeu.Presentation.Map
             {
                 Layers[i].Dispose();
             }
+            Layers = null;
 
             Grid.Dispose();
             Grid = null;
         }
+        protected override void OnDispose()
+        {
+            if (Grid != null)
+            {
+                Grid.Dispose();
+                Grid = null;
+            }
 
-        public LayerInfo GetLayer(int idx) => m_Layers[idx];
-        public LayerInfo GetLayer(Hash hash) => m_Layers.FindFor((other) => other.m_Hash.Equals(hash));
-        public LayerInfo GetLayer(string name) => m_Layers.FindFor((other) => other.m_Name.Equals(name));
+            if (Layers != null)
+            {
+                for (int i = 0; i < Layers.Length; i++)
+                {
+                    Layers[i].Dispose();
+                }
+                Layers = null;
+            }
+        }
+
+        public int GetLayer(Hash hash)
+        {
+            for (int i = 0; i < m_Layers.Length; i++)
+            {
+                if (m_Layers[i].m_Hash.Equals(hash)) return i;
+            }
+            return -1;
+        }
+        public int GetLayer(string name)
+        {
+            for (int i = 0; i < m_Layers.Length; i++)
+            {
+                if (m_Layers[i].m_Name.Equals(name)) return i;
+            }
+            return -1;
+        }
+
+        public int[] FilterByLayer(int layer, int[] indices, out int[] filteredIndices)
+        {
+            List<int> temp = new List<int>();
+            List<int> filtered = new List<int>();
+            for (int i = 0; i < indices.Length; i++)
+            {
+                if (Layers[layer].Contains(indices[i]))
+                {
+                    filtered.Add(indices[i]);
+                    continue;
+                }
+
+                temp.Add(indices[i]);
+            }
+            filteredIndices = filtered.Count == 0 ? Array.Empty<int>() : filtered.ToArray();
+            return temp.ToArray();
+        }
+        public int[] FilterByLayer(Hash layer, int[] indices, out int[] filteredIndices)
+            => FilterByLayer(GetLayer(layer), indices, out filteredIndices);
+        public int[] FilterByLayer(string layer, int[] indices, out int[] filteredIndices)
+            => FilterByLayer(GetLayer(layer), indices, out filteredIndices);
     }
     [Preserve]
     internal sealed class GridMapProcessor : AttributeProcessor<GridMapAttribute>
     {
-        private static SceneDataEntity ToSceneData(IObject entity) => (SceneDataEntity)entity;
-
-        protected override void OnCreated(GridMapAttribute attribute, IObject entity)
+        protected override void OnCreated(GridMapAttribute attribute, EntityData<IEntityData> entity)
         {
             attribute.CreateGrid();
         }
-        protected override void OnDestroy(GridMapAttribute attribute, IObject entity)
+
+        protected override void OnDestroy(GridMapAttribute attribute, EntityData<IEntityData> entity)
         {
             attribute.DestroyGrid();
         }

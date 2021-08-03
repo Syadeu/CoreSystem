@@ -1,4 +1,5 @@
-﻿using Syadeu.Mono;
+﻿using Newtonsoft.Json;
+using Syadeu.Mono;
 using System;
 using System.Runtime.InteropServices;
 using Unity.Mathematics;
@@ -10,9 +11,9 @@ namespace Syadeu.Database
     {
         public static PrefabReference Invalid = new PrefabReference(-1);
 
-        public int m_Idx;
+        [JsonProperty(Order = 0)] public readonly int m_Idx;
 
-        public PrefabReference(int idx)
+        [JsonConstructor] public PrefabReference(int idx)
         {
             m_Idx = idx;
         }
@@ -34,8 +35,26 @@ namespace Syadeu.Database
         }
 
         public static implicit operator int(PrefabReference a) => a.m_Idx;
-        public static implicit operator PrefabReference(int a) => new PrefabReference(a);
-        public static implicit operator PrefabReference(long a) => new PrefabReference((int)a);
+        public static implicit operator PrefabReference(int a)
+        {
+            if (0 >= a && a >= PrefabList.Instance.ObjectSettings.Count)
+            {
+                CoreSystem.Logger.LogError(Channel.Data,
+                    $"Cannot found prefab index of {a}. Request ignored.");
+                return Invalid;
+            }
+            return new PrefabReference(a);
+        }
+        //public static implicit operator PrefabReference(long a)
+        //{
+        //    if (0 >= a && a >= PrefabList.Instance.ObjectSettings.Count)
+        //    {
+        //        CoreSystem.Logger.LogError(Channel.Data,
+        //            $"Cannot found prefab index of {a}. Request ignored.");
+        //        return Invalid;
+        //    }
+        //    return new PrefabReference((int)a);
+        //}
         public static implicit operator string(PrefabReference a) => a.GetObjectSetting().m_Name;
         public static implicit operator PrefabList.ObjectSetting(PrefabReference a) => a.GetObjectSetting();
     }

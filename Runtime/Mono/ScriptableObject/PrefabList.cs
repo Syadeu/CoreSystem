@@ -15,7 +15,7 @@ namespace Syadeu.Mono
             public string m_Name;
             public AssetReference m_RefPrefab;
 
-            public Queue<GameObject> Pool { get; } = new Queue<GameObject>();
+            //public Queue<GameObject> Pool { get; } = new Queue<GameObject>();
 
             public override string ToString() => m_Name;
         }

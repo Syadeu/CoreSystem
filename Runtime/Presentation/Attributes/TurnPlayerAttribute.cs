@@ -2,6 +2,7 @@
 using Syadeu.Mono;
 using Syadeu.Mono.TurnTable;
 using Syadeu.Presentation.Entities;
+using System;
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine.Scripting;
@@ -24,8 +25,17 @@ namespace Syadeu.Presentation.Attributes
         [JsonIgnore] public int ActionPoint
         {
             get => m_CurrentActionPoint;
-            set => m_CurrentActionPoint = value;
+            set
+            {
+                if (!m_CurrentActionPoint.Equals(value))
+                {
+                    m_CurrentActionPoint = value;
+                    OnActionPointChanged.Invoke(value);
+                }
+            }
         }
+
+        public event Action<int> OnActionPointChanged;
 
         public void StartTurn()
         {
@@ -45,24 +55,24 @@ namespace Syadeu.Presentation.Attributes
         public void SetMaxActionPoint(int ap) => m_MaxActionPoint = ap;
         public int UseActionPoint(int ap) => m_CurrentActionPoint -= ap;
 
-        [System.Obsolete("", true)]
-        public IReadOnlyList<int2> GetMoveableCells()
-        {
-            IEntity parent = (IEntity)Parent;
+        //[System.Obsolete("", true)]
+        //public IReadOnlyList<int2> GetMoveableCells()
+        //{
+        //    Entity<IEntity> parent = Parent;
 
-            ref GridManager.GridCell cell = ref parent.GetCurrentCell();
-            return TurnTableManager.GetMoveableCells(in cell, ActionPoint);
-        }
+        //    ref GridManager.GridCell cell = ref parent.GetCurrentCell();
+        //    return TurnTableManager.GetMoveableCells(in cell, ActionPoint);
+        //}
     }
     [Preserve]
     internal sealed class TurnPlayerProcessor : AttributeProcessor<TurnPlayerAttribute>
     {
-        protected override void OnCreated(TurnPlayerAttribute attribute, IObject entity)
+        protected override void OnCreated(TurnPlayerAttribute attribute, EntityData<IEntityData> entity)
         {
             attribute.ActivateTurn = attribute.ActivateOnCreate;
             TurnTableManager.AddPlayer(attribute);
         }
-        protected override void OnDestroy(TurnPlayerAttribute attribute, IObject entity)
+        protected override void OnDestroy(TurnPlayerAttribute attribute, EntityData<IEntityData> entity)
         {
             TurnTableManager.RemovePlayer(attribute);
         }

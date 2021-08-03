@@ -134,7 +134,8 @@ namespace SyadeuEditor
                 
                 for (int i = 0; i < m_AttributeDrawers.Length; i++)
                 {
-                    AttributeBase targetAtt = (AttributeBase)EntityDataList.Instance.GetObject(m_CurrentList[i]);
+                    EntityDataList.Instance.m_Objects.TryGetValue(m_CurrentList[i], out var temp);
+                    AttributeBase targetAtt = temp == null ? null : (AttributeBase)temp;
                     if (targetAtt == null) continue;
 
                     m_AttributeDrawers[i] = GetDrawer(targetAtt);
@@ -367,15 +368,15 @@ namespace SyadeuEditor
             }
             EditorGUILayout.EndHorizontal();
         }
-        public static void DrawAttributeSelector(string name, Action<Hash> setter, Hash current, Type entityType)
+        private static void DrawAttributeSelector(string name, Action<Hash> setter, Hash current, Type entityType)
         {
             string displayName;
-            AttributeBase att = (AttributeBase)EntityDataList.Instance.GetObject(current);
+            EntityDataList.Instance.m_Objects.TryGetValue(current, out var attVal);
+            //AttributeBase att = (AttributeBase)EntityDataList.Instance.GetObject(current);
+            AttributeBase att = attVal == null ? null : (AttributeBase)attVal;
             if (current.Equals(Hash.Empty)) displayName = "None";
             else if (att == null) displayName = "Attribute Not Found";
             else displayName = att.Name;
-
-            EntityAcceptOnlyAttribute acceptOnly = entityType.GetCustomAttribute<EntityAcceptOnlyAttribute>();
 
             GUILayout.BeginHorizontal();
             GUILayout.Space(EditorGUI.indentLevel * 15);
@@ -387,6 +388,14 @@ namespace SyadeuEditor
 
             if (GUILayout.Button(displayName, SelectorStyle, GUILayout.ExpandWidth(true)))
             {
+                EntityAcceptOnlyAttribute acceptOnly = entityType.GetCustomAttribute<EntityAcceptOnlyAttribute>();
+                if (acceptOnly != null && (
+                    acceptOnly.AttributeTypes == null || 
+                    acceptOnly.AttributeTypes.Length == 0))
+                {
+                    throw new Exception($"entity({entityType.Name}) has null attribute accepts");
+                }
+
                 Rect tempRect = GUILayoutUtility.GetLastRect();
                 tempRect.position = Event.current.mousePosition;
 
@@ -414,12 +423,19 @@ namespace SyadeuEditor
                         AttributeAcceptOnlyAttribute requireEntity = attType.GetCustomAttribute<AttributeAcceptOnlyAttribute>();
                         if (requireEntity == null) return true;
 
-                        for (int i = 0; i < requireEntity.Types.Length; i++)
+                        if (requireEntity.Types == null || requireEntity.Types.Length == 0)
                         {
-                            if (requireEntity.Types[i].IsAssignableFrom(entityType))
+                            return false;
+                        }
+                        else
+                        {
+                            for (int i = 0; i < requireEntity.Types.Length; i++)
                             {
-                                attCheck = true;
-                                break;
+                                if (requireEntity.Types[i].IsAssignableFrom(entityType))
+                                {
+                                    attCheck = true;
+                                    break;
+                                }
                             }
                         }
 
@@ -552,7 +568,17 @@ namespace SyadeuEditor
                         GUILayout.BeginHorizontal(EditorUtils.Box);
                         using (new EditorUtils.BoxBlock(j % 2 == 0 ? color1 : color2))
                         {
-                            if (list[j] == null) list[j] = Activator.CreateInstance(elementType);
+                            if (list[j] == null)
+                            {
+                                if (elementType.Equals(TypeHelper.TypeOf<string>.Type))
+                                {
+                                    list[j] = string.Empty;
+                                }
+                                else
+                                {
+                                    list[j] = Activator.CreateInstance(elementType);
+                                }
+                            }
 
                             #region CoreSystem Types
                             if (TypeHelper.TypeOf<IReference>.Type.IsAssignableFrom(elementType))
@@ -588,6 +614,25 @@ namespace SyadeuEditor
                                 scr.DrawFunctionSelector(string.Empty);
                             }
                             #endregion
+                            #region Unity Types
+                            else if (DrawUnityField(list[j], elementType, string.Empty, (other) => list[j], out object value))
+                            {
+                                list[j] = value;
+                            }
+                            else if (DrawUnityMathField(list[j], elementType, string.Empty, (other) => list[j], out value))
+                            {
+                                list[j] = value;
+                            }
+                            else if (elementType.Equals(TypeHelper.TypeOf<AssetReference>.Type))
+                            {
+                                AssetReference refAsset = (AssetReference)list[j];
+                                DrawAssetReference(string.Empty, (other) => list[j] = other, refAsset);
+                            }
+                            #endregion
+                            else if (DrawSystemField(list[j], elementType, string.Empty, (other) => list[j], out value))
+                            {
+                                list[j] = value;
+                            }
                             else
                                 list[j] = DrawObject(list[j]);
                         }
@@ -653,6 +698,12 @@ namespace SyadeuEditor
                 }
                 else throw new NotImplementedException();
 
+                if (members[i] is EventInfo ||
+                    TypeHelper.TypeOf<Delegate>.Type.IsAssignableFrom(declaredType))
+                {
+                    continue;
+                }
+
                 name = ReflectionHelper.SerializeMemberInfoName(members[i]);
 
                 #region Helpbox
@@ -670,21 +721,19 @@ namespace SyadeuEditor
 
                 #endregion
 
+                var spaces = members[i].GetCustomAttributes<SpaceAttribute>();
+                foreach (var item in spaces)
+                {
+                    EditorGUILayout.Space();
+                }
+
                 EditorGUI.BeginDisabledGroup(members[i].GetCustomAttribute<ReflectionSealedViewAttribute>() != null);
 
-                if (DrawSystemField(obj, declaredType, name, getter, out object value))
-                {
-                    setter.Invoke(obj, value);
-                }
-                else if (declaredType.IsArray)
-                {
-                    IList list = (IList)getter.Invoke(obj);
-                    if (list == null) list = Array.CreateInstance(declaredType.GetElementType(), 0);
+                var header = members[i].GetCustomAttribute<HeaderAttribute>();
+                if (header != null) EditorUtils.StringRich(header.header, 13);
 
-                    setter.Invoke(obj, DrawList(name, list));
-                }
                 #region Unity Types
-                else if (DrawUnityField(obj, declaredType, name, getter, out value))
+                if (DrawUnityField(obj, declaredType, name, getter, out object value))
                 {
                     setter.Invoke(obj, value);
                 }
@@ -766,6 +815,17 @@ namespace SyadeuEditor
                     DrawPrefabReference(name, (idx) => setter.Invoke(obj, new PrefabReference(idx)), prefabRef);
                 }
                 #endregion
+                else if (DrawSystemField(obj, declaredType, name, getter, out value))
+                {
+                    setter.Invoke(obj, value);
+                }
+                else if (declaredType.IsArray)
+                {
+                    IList list = (IList)getter.Invoke(obj);
+                    if (list == null) list = Array.CreateInstance(declaredType.GetElementType(), 0);
+
+                    setter.Invoke(obj, DrawList(name, list));
+                }
                 else
                 {
                     //setter(obj, DrawObject(getter(obj)));
@@ -875,9 +935,20 @@ namespace SyadeuEditor
                 value = EditorGUILayout.ColorField(name, (Color32)getter.Invoke(ins));
                 return true;
             }
-            //else EditorGUILayout.LabelField($"not added {declaredType.Name}");
+            //else if (declaredType.Equals(TypeHelper.TypeOf<InputAction>.Type))
+            //{
+            //    InputAction inputAction = (InputAction)getter.Invoke(ins);
+            //    EditorGUILayout.EnumPopup("inputType: ", inputAction.type);
+            //    for (int i = 0; i < inputAction.controls.Count; i++)
+            //    {
+            //        EditorGUILayout.TextField(inputAction.controls[i].path);
+            //    }
+                
+            //    //new SerializedProperty(inputAction);
+            //}
+                //else EditorGUILayout.LabelField($"not added {declaredType.Name}");
 
-            return false;
+                return false;
         }
         private static bool DrawUnityMathField(object ins, Type declaredType, string name, Func<object, object> getter, out object value)
         {

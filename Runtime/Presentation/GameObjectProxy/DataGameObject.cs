@@ -11,6 +11,8 @@ namespace Syadeu.Presentation
     {
         const string c_WarningText = "This Data GameObject has been destroyed or didn\'t created propery. Request ignored.";
 
+        public static DataGameObject Null = new DataGameObject() { m_Idx = Hash.Empty };
+
         internal Hash m_Idx;
         internal Hash m_Transform;
         internal bool m_Destroyed;
@@ -28,7 +30,7 @@ namespace Syadeu.Presentation
         Hash IInternalDataComponent.Idx => m_Idx;
         bool IInternalDataComponent.ProxyRequested => transform.ProxyRequested;
         bool IEquatable<IInternalDataComponent>.Equals(IInternalDataComponent other) => m_Idx.Equals(other.Idx);
-        bool IEquatable<DataGameObject>.Equals(DataGameObject other) => m_Idx.Equals(other.m_Idx);
+        public bool Equals(DataGameObject other) => m_Idx.Equals(other.m_Idx);
 
         public bool IsValid() =>
             !m_Idx.Equals(Hash.Empty) && !m_Transform.Equals(Hash.Empty) &&
@@ -47,6 +49,8 @@ namespace Syadeu.Presentation
 
 #pragma warning disable IDE1006 // Naming Styles
 #line hidden
+        public bool destroyed { get => m_Destroyed; private set => m_Destroyed = value; }
+
         public DataTransform transform
         {
             get
@@ -65,132 +69,23 @@ namespace Syadeu.Presentation
 
 #line default
 #pragma warning restore IDE1006 // Naming Styles
-
-        //public void AttachComponent<T>(T component) where T : DataComponentEntity
-        //{
-        //    if (!IsValid() || !component.m_Idx.Equals(Hash.Empty))
-        //    {
-        //        CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);
-        //        return;
-        //    }
-
-        //    if (!PresentationSystem<GameObjectProxySystem>.System.m_ComponentList.TryGetValue(m_Idx, out var list))
-        //    {
-        //        list = new System.Collections.Generic.List<DataComponentEntity>();
-        //        PresentationSystem<GameObjectProxySystem>.System.m_ComponentList.Add(m_Idx, list);
-        //    }
-
-        //    component.m_Idx = Hash.NewHash();
-        //    component.m_GameObject = m_Idx;
-
-        //    list.Add(component);
-        //}
-        //public T AddComponent<T>() where T : DataComponentEntity, new()
-        //{
-        //    if (!IsValid())
-        //    {
-        //        CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);
-        //        return null;
-        //    }
-
-        //    if (!PresentationSystem<GameObjectProxySystem>.System.m_ComponentList.TryGetValue(m_Idx, out var list))
-        //    {
-        //        list = new System.Collections.Generic.List<DataComponentEntity>();
-        //        PresentationSystem<GameObjectProxySystem>.System.m_ComponentList.Add(m_Idx, list);
-        //    }
-        //    T t = new T();
-
-        //    t.m_Idx = Hash.NewHash();
-        //    t.m_GameObject = m_Idx;
-
-        //    list.Add(t);
-        //    return t;
-        //}
-        //public DataComponentEntity AddComponent(Type t)
-        //{
-        //    if (!TypeHelper.TypeOf<DataComponentEntity>.Type.IsAssignableFrom(t))
-        //    {
-        //        CoreSystem.Logger.LogError(Channel.Presentation, $"{t.Name} is not DataComponentEntity");
-        //        return null;
-        //    }
-        //    if (!IsValid())
-        //    {
-        //        CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);
-        //        return null;
-        //    }
-
-        //    if (!PresentationSystem<GameObjectProxySystem>.System.m_ComponentList.TryGetValue(m_Idx, out var list))
-        //    {
-        //        list = new System.Collections.Generic.List<DataComponentEntity>();
-        //        PresentationSystem<GameObjectProxySystem>.System.m_ComponentList.Add(m_Idx, list);
-        //    }
-        //    DataComponentEntity component = (DataComponentEntity)Activator.CreateInstance(t);
-
-        //    component.m_Idx = Hash.NewHash();
-        //    component.m_GameObject = m_Idx;
-
-        //    list.Add(component);
-        //    return component;
-        //}
-        //public T GetComponent<T>() where T : DataComponentEntity, new()
-        //{
-        //    if (!IsValid())
-        //    {
-        //        CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);
-        //        return null;
-        //    }
-
-        //    if (!PresentationSystem<GameObjectProxySystem>.System.m_ComponentList.TryGetValue(m_Idx, out var list))
-        //    {
-        //        return null;
-        //    }
-        //    return (T)list.FindFor((other) => other is T);
-        //}
-        //public DataComponentEntity GetComponent(Type t)
-        //{
-        //    if (!TypeHelper.TypeOf<DataComponentEntity>.Type.IsAssignableFrom(t))
-        //    {
-        //        CoreSystem.Logger.LogError(Channel.Presentation, $"{t.Name} is not DataComponentEntity");
-        //        return null;
-        //    }
-        //    if (!IsValid())
-        //    {
-        //        CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);
-        //        return null;
-        //    }
-
-        //    if (!PresentationSystem<GameObjectProxySystem>.System.m_ComponentList.TryGetValue(m_Idx, out var list))
-        //    {
-        //        return null;
-        //    }
-        //    return list.FindFor((other) => other.GetType().Equals(t));
-        //}
-        //public void RemoveComponent<T>(T t) where T : DataComponentEntity
-        //{
-        //    if (!IsValid())
-        //    {
-        //        CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);
-        //        return;
-        //    }
-
-        //    if (!PresentationSystem<GameObjectProxySystem>.System.m_ComponentList.TryGetValue(m_Idx, out var list))
-        //    {
-        //        return;
-        //    }
-
-        //    for (int i = 0; i < list.Count; i++)
-        //    {
-        //        if (list[i].Equals(t))
-        //        {
-        //            list.RemoveAt(i);
-        //            return;
-        //        }
-        //    }
-        //}
-
-        public void Destory()
+        public void Destroy()
         {
-            GetRef().m_Destroyed = true;
+            if (this.Equals(Null))
+            {
+                CoreSystem.Logger.LogError(Channel.Proxy,
+                    "Cannot destroy null DataGameObject");
+                return;
+            }
+            if (destroyed)
+            {
+                CoreSystem.Logger.LogError(Channel.Proxy,
+                    $"Cannot destroy DataGameObject({m_Idx}) it\'s already destroyed.");
+                return;
+            }
+
+            //GetRef().m_Destroyed = true;
+            destroyed = true;
             PresentationSystem<GameObjectProxySystem>.System.DestoryDataObject(m_Idx);
         }
 

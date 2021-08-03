@@ -19,7 +19,8 @@ namespace Syadeu.Presentation.Map
 #pragma warning restore IDE0044 // Add readonly modifier
 
         [JsonIgnore] public bool IsMapDataCreated { get; private set; } = false;
-        [JsonIgnore] public List<IObject> CreatedMapData { get; } = new List<IObject>();
+        [JsonIgnore] public IReadOnlyList<Reference<MapDataEntity>> MapData => m_MapData;
+        [JsonIgnore] public List<EntityData<MapDataEntity>> CreatedMapData { get; } = new List<EntityData<MapDataEntity>>();
 
         [JsonIgnore] public bool DestroyChildOnDestroy { get; set; } = true;
 
@@ -48,9 +49,7 @@ namespace Syadeu.Presentation.Map
 
             for (int i = 0; i < m_MapData.Length; i++)
             {
-                IObject temp = system.CreateObject(m_MapData[i]);
-
-
+                EntityData<MapDataEntity> temp = system.CreateObject(m_MapData[i]);
                 CreatedMapData.Add(temp);
             }
 
@@ -62,10 +61,13 @@ namespace Syadeu.Presentation.Map
 
             for (int i = 0; i < CreatedMapData.Count; i++)
             {
-                MapDataEntity mapData = (MapDataEntity)CreatedMapData[i];
+                MapDataEntity mapData = CreatedMapData[i];
                 mapData.DestroyChildOnDestroy = DestroyChildOnDestroy;
-                mapData.Destroy();
+                CreatedMapData[i].Destroy();
             }
+
+            CreatedMapData.Clear();
+            IsMapDataCreated = false;
         }
     }
     [Preserve]

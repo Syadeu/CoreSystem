@@ -2,9 +2,9 @@
 {
     internal interface IEntityDataProcessor : IProcessor
     {
-        void OnCreated(IObject entity);
-        void OnCreatedSync(IObject entity);
-        void OnDestory(IObject entity);
-        void OnDestorySync(IObject entity);
+        void OnCreated(IEntityData entity);
+        void OnCreatedSync(IEntityData entity);
+        void OnDestroy(IEntityData entity);
+        void OnDestroySync(IEntityData entity);
     }
 }

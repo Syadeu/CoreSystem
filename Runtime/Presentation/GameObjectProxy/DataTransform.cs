@@ -19,7 +19,7 @@ namespace Syadeu.Presentation
         internal Hash m_GameObject;
         internal Hash m_Idx;
         internal int2 m_ProxyIdx;
-        internal int m_PrefabIdx;
+        internal PrefabReference m_PrefabIdx;
         internal bool m_EnableCull;
 
         internal bool m_IsVisible;

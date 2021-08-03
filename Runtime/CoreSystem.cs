@@ -977,7 +977,11 @@ namespace Syadeu
                 }
 
                 m_RoutineChanged = waitForRemove.Count != 0;
-                if (m_RoutineChanged) $"Background Routine rmoved {waitForRemove.Count}".ToLog();
+                if (m_RoutineChanged)
+                {
+                    CoreSystem.Logger.Log(Channel.Core,
+                        $"Background Routine removed {waitForRemove.Count}");
+                }
                 for (int i = 0; i < waitForRemove.Count; i++)
                 {
                     m_CustomBackgroundUpdates.TryRemove(waitForRemove[i], out _);

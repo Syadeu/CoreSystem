@@ -504,6 +504,7 @@ namespace Syadeu.Database
 
         [JsonProperty] private readonly Dictionary<int, ManagedCell> m_Cells;
 
+        [JsonIgnore] public int length => m_Length;
         [JsonIgnore] public int2 gridSize => new int2(
             (int)math.floor(m_AABB.size.x / m_CellSize),
             (int)math.floor(m_AABB.size.z / m_CellSize));
@@ -585,42 +586,28 @@ namespace Syadeu.Database
 
         #endregion
 
-        public IReadOnlyList<ManagedCell> GetRange(in int idx, in int range)
-            => GetRange(GridExtensions.IndexToLocation(in m_AABB, in m_CellSize, in idx), range);
-        public IReadOnlyList<ManagedCell> GetRange(in int2 location, in int range)
+        public int[] GetRange(in int idx, in int range)
         {
             int2 gridSize = this.gridSize;
-            float3 cellSize = new float3(m_CellSize, m_AABB.size.y, m_CellSize);
+            List<int> targets = new List<int>();
 
-            List<ManagedCell> targets = new List<ManagedCell>();
-            // 왼쪽 아래 부터 탐색 시작
-            int startIdx = (gridSize.y * (location.y + range)) + location.x - range;
-
+            int startIdx = idx - range + (gridSize.y * range);
             int height = ((range * 2) + 1);
             for (int yGrid = 0; yGrid < height; yGrid++)
             {
                 for (int xGrid = 0; xGrid < height; xGrid++)
                 {
                     int temp = startIdx - (yGrid * gridSize.y) + xGrid;
-                    if (HasCell(temp))
-                    {
-                        if (!m_Cells.TryGetValue(temp, out ManagedCell cell))
-                        {
-                            cell = new ManagedCell(
-                            m_Hash, temp,
-                            GridExtensions.IndexToPosition(in m_AABB, in m_CellSize, in temp),
-                            cellSize
-                            );
-                        }
 
-                        targets.Add(cell);
-                    }
-                    if (temp >= (gridSize.y * (location.y - yGrid + 2)) + gridSize.x - 1) break;
+                    if (HasCell(temp)) targets.Add(temp);
+                    if (temp >= temp - (temp % gridSize.x) + gridSize.x - 1) break;
                 }
             }
 
-            return targets;
+            return targets.ToArray();
         }
+        public int[] GetRange(in int2 location, in int range)
+            => GetRange(GridExtensions.LocationToIndex(in m_AABB, in m_CellSize, in location), in range);
 
         public byte[] ToBinary()
         {

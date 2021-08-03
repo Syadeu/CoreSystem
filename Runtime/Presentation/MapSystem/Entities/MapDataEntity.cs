@@ -19,10 +19,6 @@ namespace Syadeu.Presentation.Map
             [JsonProperty(Order = 3, PropertyName = "Scale")] public float3 m_Scale;
             [JsonProperty(Order = 4, PropertyName = "EnableCull")] public bool m_EnableCull;
 
-            //[UnityEngine.Space]
-            //[JsonProperty(Order = 5, PropertyName = "AABBCenter")] public float3 m_AABBCenter;
-            //[JsonProperty(Order = 6, PropertyName = "AABBSize")] public float3 m_AABBSize;
-
             [JsonIgnore] public float3 eulerAngles
             {
                 get => m_Rotation.Euler().ToThreadSafe() * UnityEngine.Mathf.Rad2Deg;
@@ -32,7 +28,7 @@ namespace Syadeu.Presentation.Map
                     m_Rotation = quaternion.EulerZXY(temp);
                 }
             }
-            [JsonIgnore] public AABB AABB
+            [JsonIgnore] public AABB aabb
             {
                 get
                 {
@@ -50,11 +46,11 @@ namespace Syadeu.Presentation.Map
 
         [JsonProperty(Order = 0, PropertyName = "Objects")] public Object[] m_Objects;
 
-        [JsonIgnore] public IEntity[] CreatedEntities { get; internal set; }
+        [JsonIgnore] public Entity<EntityBase>[] CreatedEntities { get; internal set; }
         [JsonIgnore] public bool DestroyChildOnDestroy { get; set; } = true;
 
         public override bool IsValid() => true;
-        public override ObjectBase Copy()
+        protected override ObjectBase Copy()
         {
             MapDataEntity clone = (MapDataEntity)base.Copy();
             Object[] temp = new Object[m_Objects.Length];
@@ -73,7 +69,7 @@ namespace Syadeu.Presentation.Map
     {
         protected override void OnCreated(MapDataEntity entity)
         {
-            entity.CreatedEntities = new IEntity[entity.m_Objects.Length];
+            entity.CreatedEntities = new Entity<EntityBase>[entity.m_Objects.Length];
             for (int i = 0; i < entity.m_Objects.Length; i++)
             {
                 entity.CreatedEntities[i] = CreateEntity(entity.m_Objects[i].m_Object, entity.m_Objects[i].m_Translation, entity.m_Objects[i].m_Rotation, entity.m_Objects[i].m_Scale, entity.m_Objects[i].m_EnableCull);

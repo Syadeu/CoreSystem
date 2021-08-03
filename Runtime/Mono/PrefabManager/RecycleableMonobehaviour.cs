@@ -11,11 +11,11 @@ namespace Syadeu.Mono
     /// OnDestroy 함수를 절때 사용하지마세요
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public abstract class RecycleableMonobehaviour : MonoBehaviour, ITerminate
+    public abstract class RecycleableMonobehaviour : MonoBehaviour
     {
         public delegate bool TerminateCondition();
         /// <summary>
-        /// <see cref="PrefabManager.RecycleObject.Instances"/>
+        /// <see cref="Presentation.GameObjectProxySystem.m_Instances"/> value 리스트의 인덱스입니다.
         /// </summary>
         internal int m_Idx = -1;
 
@@ -26,13 +26,11 @@ namespace Syadeu.Mono
         public virtual string DisplayName => name;
         public virtual bool InitializeOnCall => true;
 
-        public Action onTerminate;
-
-        public bool Activated { get; internal set; } = false;
-        public bool WaitForDeletion { get; internal set; } = false;
-#if UNITY_ADDRESSABLES
-        internal bool CreatedWithAddressable { get; set; } = false;
-#endif
+        /// <summary>
+        /// 이 모노 프록시 객체가 <see cref="Presentation.GameObjectProxySystem"/>에서 사용 중인지 반환합니다.
+        /// </summary>
+        public bool Activated { get; private set; } = false;
+        [Obsolete] public bool WaitForDeletion { get; internal set; } = false;
 
         public virtual void Initialize()
         {
@@ -50,8 +48,7 @@ namespace Syadeu.Mono
         protected virtual void OnCreated() { }
         internal void InternalOnCreated() => OnCreated();
         /// <summary>
-        /// GetObject() 함수를 호출했을때 재사용을 위해 실행되는 초기화 함수입니다.<br/>
-        /// Unity 의 OnEnable 함수랑 비슷하다고 보면됨
+        /// <see cref="Presentation.GameObjectProxySystem"/>에서 이 프록시 모노 객체를 재사용을 위해 실행되는 초기화 함수입니다.
         /// </summary>
         protected virtual void OnInitialize() { }
         protected virtual void OnTerminate() { }
@@ -61,23 +58,9 @@ namespace Syadeu.Mono
         /// </summary>
         [Obsolete] public TerminateCondition OnActivated;
 
-        public void Terminate()
+        internal void Terminate()
         {
-            onTerminate?.Invoke();
             OnTerminate();
-
-            //if (CoreSystem.IsThisMainthread())
-            //{
-            //    transform.SetParent(PrefabManager.Instance.transform);
-            //}
-            //else
-            //{
-            //    CoreSystem.AddForegroundJob(() =>
-            //    {
-            //        transform.SetParent(PrefabManager.Instance.transform);
-            //    });
-            //}
-            //gameObject.SetActive(false);
             Activated = false;
         }
     }

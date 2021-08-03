@@ -138,6 +138,8 @@ namespace SyadeuEditor.Presentation.Map
             // GridMapAttribute
             m_GridMap?.Dispose();
             m_GridMap = null;
+
+            SceneView.lastActiveSceneView.Repaint();
         }
 
         private void ResetPreviewFolder()
@@ -258,6 +260,7 @@ namespace SyadeuEditor.Presentation.Map
         private ReflectionHelperEditor.AttributeListDrawer m_AttributeListDrawer;
 
         // GridMapAttribute
+        #region GridMapAttribute
         private sealed class GridMapExtension : IDisposable
         {
             public readonly GridMapAttribute m_SceneDataGridAtt;
@@ -268,6 +271,15 @@ namespace SyadeuEditor.Presentation.Map
             public GridMapAttribute.LayerInfo m_CurrentLayer = null;
 
             public bool m_EditLayer = false;
+
+            private GridMapAttribute.LayerInfo SelectedLayer
+            {
+                get
+                {
+                    if (m_SelectedGridLayer == 0) return null;
+                    return m_SceneDataGridAtt.m_Layers[m_SelectedGridLayer - 1];
+                }
+            }
 
             public GridMapExtension(GridMapAttribute att)
             {
@@ -310,9 +322,15 @@ namespace SyadeuEditor.Presentation.Map
             {
                 EditorUtils.StringRich("GridMapAttribute Extension", 13);
 
+                #region Layer Selector
                 EditorGUILayout.BeginHorizontal();
                 EditorGUI.BeginChangeCheck();
-                m_SelectedGridLayer = EditorGUILayout.Popup("Grid Layer: ", m_SelectedGridLayer, m_GridLayerNames);
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    EditorGUILayout.LabelField("Layer: ", GUILayout.Width(Screen.width * .25f));
+                    m_SelectedGridLayer = EditorGUILayout.Popup(m_SelectedGridLayer, m_GridLayerNames);
+                }
+                
                 if (EditorGUI.EndChangeCheck())
                 {
                     m_EditLayer = false;
@@ -328,16 +346,22 @@ namespace SyadeuEditor.Presentation.Map
 
                     ReloadLayers();
 
-                    m_SelectedGridLayer = m_SceneDataGridAtt.m_Layers.Length - 1;
+                    m_SelectedGridLayer = m_SceneDataGridAtt.m_Layers.Length;
                 }
                 EditorGUI.BeginDisabledGroup(m_SelectedGridLayer == 0);
                 if (GUILayout.Button("-", GUILayout.Width(20)))
                 {
                     var temp = m_SceneDataGridAtt.m_Layers.ToList();
-                    temp.RemoveAt(temp.Count - 1);
+                    temp.RemoveAt(m_SelectedGridLayer - 1);
                     m_SceneDataGridAtt.m_Layers = temp.ToArray();
 
                     ReloadLayers();
+
+                    if (m_SelectedGridLayer < 0) m_SelectedGridLayer = 0;
+                    else if (m_SelectedGridLayer >= m_GridLayerNames.Length)
+                    {
+                        m_SelectedGridLayer = m_GridLayerNames.Length - 1;
+                    }
                 }
 
                 m_EditLayer = GUILayout.Toggle(m_EditLayer, "E", EditorUtils.MiniButton, GUILayout.Width(20));
@@ -348,6 +372,51 @@ namespace SyadeuEditor.Presentation.Map
                 EditorGUI.EndDisabledGroup();
 
                 EditorGUILayout.EndHorizontal();
+
+                #endregion
+
+                EditorUtils.Line();
+
+                // Layer Info
+                #region Layer Info
+                EditorGUI.indentLevel += 1;
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    EditorUtils.StringRich($"Layer: {m_GridLayerNames[m_SelectedGridLayer]}", 13);
+                    EditorGUI.BeginDisabledGroup(m_SelectedGridLayer == 0);
+                    if (GUILayout.Button("Save", GUILayout.Width(50)))
+                    {
+                        EntityDataList.Instance.SaveData(m_SceneDataGridAtt);
+                    }
+                    if (GUILayout.Button("Clear", GUILayout.Width(50)))
+                    {
+                        SelectedLayer.m_Indices = Array.Empty<int>();
+                        SceneView.lastActiveSceneView.Repaint();
+                    }
+                    EditorGUI.EndDisabledGroup();
+                }
+
+                EditorGUI.indentLevel += 1;
+                {
+                    EditorGUI.BeginDisabledGroup(true);
+                    if (m_SelectedGridLayer == 0)
+                    {
+                        int sum = 0;
+                        for (int i = 0; i < m_SceneDataGridAtt.m_Layers.Length; i++)
+                        {
+                            sum += m_SceneDataGridAtt.m_Layers[i].m_Indices.Length;
+                        }
+                        EditorGUILayout.IntField("Indices", sum);
+                    }
+                    else EditorGUILayout.IntField("Indices", SelectedLayer.m_Indices.Length);
+                    EditorGUI.EndDisabledGroup();
+
+                }
+                EditorGUI.indentLevel -= 1;
+                EditorGUI.indentLevel -= 1;
+                #endregion
+
+                EditorUtils.Line();
             }
             bool m_AddDrag = false;
             public void OnSceneGUI(SceneView obj)
@@ -415,6 +484,14 @@ namespace SyadeuEditor.Presentation.Map
                     GL.End();
                     GL.PopMatrix();
                 }
+
+                //for (int i = 0; i < m_SceneDataGrid.length; i++)
+                //{
+                //    float3 pos = m_SceneDataGrid.GetCellPosition(i);
+                //    if (!EditorSceneUtils.IsDrawable(pos)) continue;
+
+                //    Handles.Label(pos, $"{i}");
+                //}
                 #endregion
 
                 if (!m_EditLayer || m_CurrentLayer == null) return;
@@ -496,6 +573,7 @@ namespace SyadeuEditor.Presentation.Map
                 }
             }
         }
+        #endregion
         private GridMapExtension m_GridMap;
 
         private Vector2 m_SceneDataScroll;
@@ -620,12 +698,30 @@ namespace SyadeuEditor.Presentation.Map
                     }
                 }, m_SceneData, TypeHelper.TypeOf<SceneDataEntity>.Type);
 
-                EditorGUI.BeginDisabledGroup(m_SceneDataTarget == null);
-                if (GUILayout.Button("Close"))
+                if (m_GridMap != null && m_GridMap.m_SceneDataGridAtt != null)
                 {
-                    ResetSceneData();
+                    using (new EditorUtils.BoxBlock(Color.black))
+                    {
+                        m_GridMap.OnGUI();
+                    }
                 }
-                EditorGUI.EndDisabledGroup();
+
+                using (new EditorGUI.DisabledGroupScope(m_SceneDataTarget == null))
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    if (GUILayout.Button("Save"))
+                    {
+                        EntityDataList.Instance.SaveData(m_SceneDataTarget);
+                        if (m_GridMap != null)
+                        {
+                            EntityDataList.Instance.SaveData(m_GridMap.m_SceneDataGridAtt);
+                        }
+                    }
+                    if (GUILayout.Button("Close"))
+                    {
+                        ResetSceneData();
+                    }
+                }
             }
             #endregion
 
@@ -669,14 +765,6 @@ namespace SyadeuEditor.Presentation.Map
                 return;
             }
 
-            if (m_GridMap != null && m_GridMap.m_SceneDataGridAtt != null)
-            {
-                using (new EditorUtils.BoxBlock(Color.black))
-                {
-                    m_GridMap.OnGUI();
-                }
-            }
-
             if (!m_MapData.IsValid())
             {
                 EditorGUILayout.Space();
@@ -690,6 +778,9 @@ namespace SyadeuEditor.Presentation.Map
                 using (new EditorUtils.BoxBlock(Color.black))
                 {
                     EditorUtils.StringRich(entity.Name, 13);
+
+                    entity.Center = EditorGUILayout.Vector3Field("Center: ", entity.Center);
+                    entity.Size = EditorGUILayout.Vector3Field("Size: ", entity.Size);
 
                     var gridSizeAtt = entity.GetAttribute<GridSizeAttribute>();
                     if (gridSizeAtt != null)
@@ -795,13 +886,13 @@ namespace SyadeuEditor.Presentation.Map
 
                 EntityBase objData = m_SelectedGameObject.m_Object.GetObject();
                 GameObject previewObj = m_PreviewObjects[m_SelectedGameObject];
-                AABB selectAabb = m_SelectedGameObject.AABB;
+                AABB selectAabb = m_SelectedGameObject.aabb;
 
                 #region Scene GUI Overlays
 
                 Vector3 worldPos = selectAabb.center; worldPos.y = selectAabb.max.y;
                 Vector2 guiPos = HandleUtility.WorldToGUIPoint(worldPos);
-                if (EditorSceneUtils.IsDrawable(guiPos))
+                //if (EditorSceneUtils.IsDrawable(guiPos))
                 {
                     if (guiPos.x + width > Screen.width) guiPos.x = Screen.width - width;
                     else
@@ -841,6 +932,8 @@ namespace SyadeuEditor.Presentation.Map
                             var temp = m_MapDataTarget.m_Objects.ToList();
                             temp.Remove(m_SelectedGameObject);
                             m_MapDataTarget.m_Objects = temp.ToArray();
+
+                            DestroyImmediate(m_PreviewObjects[m_SelectedGameObject]);
 
                             m_PreviewObjects.Remove(m_SelectedGameObject);
                             m_SelectedGameObject = null;
@@ -913,9 +1006,10 @@ namespace SyadeuEditor.Presentation.Map
                 for (int i = 0; i < m_MapDataTarget.m_Objects?.Length; i++)
                 {
                     Vector2 pos = HandleUtility.WorldToGUIPoint(m_MapDataTarget.m_Objects[i].m_Translation);
-                    if (!EditorSceneUtils.IsDrawable(pos)) continue;
+                    if (!m_MapDataTarget.m_Objects[i].m_Object.IsValid() ||
+                        !EditorSceneUtils.IsDrawable(pos)) continue;
 
-                    AABB aabb = m_MapDataTarget.m_Objects[i].AABB;
+                    AABB aabb = m_MapDataTarget.m_Objects[i].aabb;
                     Handles.DrawWireCube(aabb.center, aabb.size);
                 }
             }
