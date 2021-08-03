@@ -207,5 +207,6 @@ namespace Syadeu.Presentation.Entities
                 $"Entity({a.Name}) is not a {TypeHelper.TypeOf<T>.Name}. This is an invalid operation and not allowed.");
             return Empty;
         }
+        public static implicit operator Entity<T>(T a) => GetEntity(a.Idx);
     }
 }

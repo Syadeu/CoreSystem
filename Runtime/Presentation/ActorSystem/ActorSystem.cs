@@ -7,6 +7,9 @@ using Syadeu.Presentation.Map;
 using System;
 using System.Collections.Generic;
 using Unity.Collections;
+using Unity.Jobs;
+using Unity.Mathematics;
+using UnityEngine;
 using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation.Actor
@@ -17,7 +20,7 @@ namespace Syadeu.Presentation.Actor
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
-        private NativeHashMap<Hash, Entity<ActorEntity>> m_Players;
+        private NativeHashMap<Hash, Entity<ActorEntity>> m_PlayerHashMap;
         //private readonly Dictionary<ActorType, List<Entity<ActorEntity>>> m_Actors = new Dictionary<ActorType, List<Entity<ActorEntity>>>();
 
         private EntitySystem m_EntitySystem;
@@ -25,7 +28,7 @@ namespace Syadeu.Presentation.Actor
         #region Presentation Methods
         protected override PresentationResult OnInitializeAsync()
         {
-            m_Players = new NativeHashMap<Hash, Entity<ActorEntity>>(1024, Allocator.Persistent);
+            m_PlayerHashMap = new NativeHashMap<Hash, Entity<ActorEntity>>(1024, Allocator.Persistent);
 
             RequestSystem<EntitySystem>((other) =>
             {
@@ -35,8 +38,6 @@ namespace Syadeu.Presentation.Actor
                 m_EntitySystem.OnEntityDestroy += M_EntitySystem_OnEntityDestroy;
             });
 
-
-
             return base.OnInitializeAsync();
         }
 
@@ -45,48 +46,167 @@ namespace Syadeu.Presentation.Actor
             if (!obj.Type.Equals(TypeHelper.TypeOf<ActorEntity>.Type)) return;
 
             Entity<ActorEntity> actorRef = obj;
-            m_Players.Add(actorRef.Idx, actorRef);
 
-            //ActorEntity actor = actorRef;
-            //if (!m_Actors.TryGetValue(actor.ActorType, out var actorList))
-            //{
-            //    actorList = new List<Entity<ActorEntity>>();
-            //    m_Actors.Add(actor.ActorType, actorList);
-            //}
-            //actorList.Add(actorRef);
+            actorRef.Target.m_ActorSystem = this;
+
+            m_PlayerHashMap.Add(actorRef.Idx, actorRef);
         }
         private void M_EntitySystem_OnEntityDestroy(EntityData<IEntityData> obj)
         {
             if (!obj.Type.Equals(TypeHelper.TypeOf<ActorEntity>.Type)) return;
 
             Entity<ActorEntity> actorRef = obj;
-            m_Players.Remove(actorRef.Idx);
 
-            //ActorEntity actor = actorRef;
-            //m_Actors[actor.ActorType].Remove(actorRef);
+            actorRef.Target.m_ActorSystem = null;
+
+            m_PlayerHashMap.Remove(actorRef.Idx);
         }
 
         public override void Dispose()
         {
-            m_Players.Dispose();
-            //m_Actors.Clear();
+            m_PlayerHashMap.Dispose();
 
             base.Dispose();
         }
         #endregion
 
-        //public IReadOnlyList<Entity<ActorEntity>> GetActors(ActorType actorType)
-        //{
-        //    if (!m_Actors.TryGetValue(actorType, out var actors)) return Array.Empty<Entity<ActorEntity>>();
-        //    return actors;
-        //}
+        #region Raycast
+
+        public Raycaster Raycast(Entity<ActorEntity> from, Ray ray)
+        {
+            NativeArray<Hash> keys = m_PlayerHashMap.GetKeyArray(Allocator.TempJob);
+            NativeList<Raycaster.RaycastHitInfo> hits = new NativeList<Raycaster.RaycastHitInfo>(64, Allocator.Persistent);
+
+            RaycastJob job = new RaycastJob(from, m_PlayerHashMap, keys, ray, hits);
+            return new Raycaster(job.Schedule(keys.Length, 64), hits);
+        }
+
+        public class Raycaster : IDisposable
+        {
+            public struct RaycastHitInfo
+            {
+                private readonly Entity<ActorEntity> m_Entity;
+                private readonly float m_Distance;
+                private readonly float3 m_Point;
+
+                public Entity<ActorEntity> Entity => m_Entity;
+                public float Distance => m_Distance;
+                public float3 Point => m_Point;
+
+                internal RaycastHitInfo(Entity<ActorEntity> entity, float dis, float3 point)
+                {
+                    m_Entity = entity;
+                    m_Distance = dis;
+                    m_Point = point;
+                }
+            }
+
+            private readonly JobHandle m_Job;
+            private readonly NativeList<RaycastHitInfo> m_Hits;
+
+            public bool JobCompleted => m_Job.IsCompleted;
+            public bool Hit
+            {
+                get
+                {
+                    m_Job.Complete();
+                    if (m_Hits.Length > 0) return true;
+                    return false;
+                }
+            }
+            public RaycastHitInfo Target
+            {
+                get
+                {
+                    m_Job.Complete();
+
+                    RaycastHitInfo temp = default;
+                    float dis = float.MaxValue;
+                    for (int i = 0; i < m_Hits.Length; i++)
+                    {
+                        if (m_Hits[i].Distance < dis)
+                        {
+                            dis = m_Hits[i].Distance;
+                            temp = m_Hits[i];
+                        }
+                    }
+
+                    return temp;
+                }
+            }
+            public RaycastHitInfo[] Targets
+            {
+                get
+                {
+                    m_Job.Complete();
+
+                    return m_Hits.ToArray();
+                }
+            }
+
+            internal Raycaster(JobHandle job, NativeList<RaycastHitInfo> hits)
+            {
+                m_Job = job;
+                m_Hits = hits;
+            }
+            ~Raycaster()
+            {
+                Dispose();
+            }
+
+            public void Dispose()
+            {
+                m_Hits.Dispose();
+            }
+        }
+        private struct RaycastJob : IJobParallelFor
+        {
+            [ReadOnly] private readonly Entity<ActorEntity> m_From;
+            [ReadOnly] private readonly NativeHashMap<Hash, Entity<ActorEntity>> m_Players;
+            [ReadOnly] private readonly Ray m_Ray;
+
+            [DeallocateOnJobCompletion]
+            private readonly NativeArray<Hash> m_Keys;
+
+            private readonly NativeList<Raycaster.RaycastHitInfo>.ParallelWriter m_Hits;
+
+            public RaycastJob(Entity<ActorEntity> from, NativeHashMap<Hash, Entity<ActorEntity>> players, NativeArray<Hash> keys, Ray ray, NativeList<Raycaster.RaycastHitInfo> hits)
+            {
+                m_From = from;
+                m_Players = players;
+                m_Ray = ray;
+
+                m_Keys = keys;
+                m_Hits = hits.AsParallelWriter();
+            }
+
+            public void Execute(int index)
+            {
+                if (m_Keys[index].Equals(m_From.Idx)) return;
+
+                Hash key = m_Keys[index];
+                Entity<ActorEntity> target = m_Players[key];
+
+                var targetAABB = target.AABB;
+                if (targetAABB.Intersect(m_Ray, out float dis, out float3 point))
+                {
+                    m_Hits.AddNoResize(new Raycaster.RaycastHitInfo(target, dis, point));
+                }
+            }
+        }
+
+        #endregion
     }
 
     public sealed class ActorEntity : EntityBase
     {
+        [JsonIgnore] internal ActorSystem m_ActorSystem;
+
         [JsonProperty(Order = 0, PropertyName = "Faction")] private Reference<ActorFaction> m_Faction;
 
         [JsonIgnore] public ActorFaction Faction => m_Faction.IsValid() ? m_Faction.GetObject() : null;
+
+        public ActorSystem.Raycaster Raycast(Ray ray) => m_ActorSystem.Raycast(this, ray);
     }
 
     [AttributeAcceptOnly(typeof(ActorEntity))]
