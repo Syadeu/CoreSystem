@@ -73,17 +73,17 @@ namespace Syadeu.Presentation.Map
     [Preserve]
     internal sealed class SceneDataEntityProcessor : EntityDataProcessor<SceneDataEntity>
     {
-        protected override void OnCreated(SceneDataEntity entity)
+        protected override void OnCreated(EntityData<SceneDataEntity> entity)
         {
-            if (!entity.IsValid()) return;
+            if (!entity.Target.IsValid()) return;
 
-            entity.CreateMapData();
+            entity.Target.CreateMapData();
         }
-        protected override void OnDestroy(SceneDataEntity entity)
+        protected override void OnDestroy(EntityData<SceneDataEntity> entity)
         {
-            if (!entity.IsValid()) return;
+            if (!entity.Target.IsValid()) return;
 
-            entity.DestroyMapData();
+            entity.Target.DestroyMapData();
         }
     }
 }

@@ -176,6 +176,7 @@ namespace Syadeu.Presentation
             for (int i = 0; i < entityList.Length; i++)
             {
                 var entity = entityList[i];
+                EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntityData(entity.Idx);
 
                 CoreSystem.Logger.Log(Channel.Entity,
     $"Destroying entity({entity.Name})");
@@ -198,8 +199,8 @@ namespace Syadeu.Presentation
                         {
                             IAttributeProcessor processor = processors[j];
 
-                            processor.OnDestroy(other, EntityData<IEntityData>.GetEntityData(entity.Hash));
-                            processor.OnDestroySync(other, EntityData<IEntityData>.GetEntityData(entity.Hash));
+                            processor.OnDestroy(other, entityData);
+                            processor.OnDestroySync(other, entityData);
                         }
                     }
                 });
@@ -212,8 +213,8 @@ namespace Syadeu.Presentation
                     {
                         IEntityDataProcessor processor = entityProcessor[j];
 
-                        processor.OnDestroy(entity);
-                        processor.OnDestroySync(entity);
+                        processor.OnDestroy(entityData);
+                        processor.OnDestroySync(entityData);
                     }
                 }
                 #endregion
@@ -487,6 +488,8 @@ namespace Syadeu.Presentation
             CoreSystem.Logger.Log(Channel.Entity,
                 $"Create entity({entity.Name})");
 
+            EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntityData(entity.Idx);
+
             #region Attributes
             entity.Attributes.ForEach((other) =>
             {
@@ -507,10 +510,10 @@ namespace Syadeu.Presentation
                         {
                             IAttributeProcessor processor = groupProcessors[j];
 
-                            processor.OnCreated(other, EntityData<IEntityData>.GetEntityData(entity.Idx));
+                            processor.OnCreated(other, entityData);
                             CoreSystem.AddForegroundJob(() =>
                             {
-                                processor.OnCreatedSync(other, EntityData<IEntityData>.GetEntityData(entity.Idx));
+                                processor.OnCreatedSync(other, entityData);
                             });
                         }
                         CoreSystem.Logger.Log(Channel.Entity, $"Processed OnCreated at entity({entity.Name}), {t.Name}");
@@ -523,10 +526,10 @@ namespace Syadeu.Presentation
                     {
                         IAttributeProcessor processor = processors[j];
 
-                        processor.OnCreated(other, EntityData<IEntityData>.GetEntityData(entity.Idx));
+                        processor.OnCreated(other, entityData);
                         CoreSystem.AddForegroundJob(() =>
                         {
-                            processor.OnCreatedSync(other, EntityData<IEntityData>.GetEntityData(entity.Idx));
+                            processor.OnCreatedSync(other, entityData);
                         });
                     }
                     CoreSystem.Logger.Log(Channel.Entity, $"Processed OnCreated at entity({entity.Name}), {t.Name}");
@@ -541,19 +544,21 @@ namespace Syadeu.Presentation
                 {
                     IEntityDataProcessor processor = entityProcessor[i];
 
-                    processor.OnCreated(entity);
+                    processor.OnCreated(entityData);
                     CoreSystem.AddForegroundJob(() =>
                     {
-                        processor.OnCreatedSync(entity);
+                        processor.OnCreatedSync(entityData);
                     });
                 }
             }
             #endregion
 
-            system.OnEntityCreated?.Invoke(EntityData<IEntityData>.GetEntityData(entity.Idx));
+            system.OnEntityCreated?.Invoke(entityData);
         }
         private static void ProcessEntityOnPresentation(EntitySystem system, IEntityData entity)
         {
+            EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntityData(entity.Idx);
+
             //#region Entity
             //if (system.m_EntityProcessors.TryGetValue(t, out List<IEntityProcessor> entityProcessor))
             //{
@@ -582,7 +587,7 @@ namespace Syadeu.Presentation
                     for (int j = 0; j < processors.Count; j++)
                     {
                         if (!(processors[j] is IAttributeOnPresentation onPresentation)) continue;
-                        onPresentation.OnPresentation(other, EntityData<IEntityData>.GetEntityData(entity.Idx));
+                        onPresentation.OnPresentation(other, entityData);
                     }
                 }
             });
@@ -592,6 +597,8 @@ namespace Syadeu.Presentation
         {
             CoreSystem.Logger.Log(Channel.Entity,
                 $"Destroying entity({entity.Name})");
+
+            EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntityData(entity.Idx);
 
             #region Attributes
             entity.Attributes.ForEach((other) =>
@@ -611,10 +618,10 @@ namespace Syadeu.Presentation
                     {
                         IAttributeProcessor processor = processors[j];
 
-                        processor.OnDestroy(other, EntityData<IEntityData>.GetEntityData(entity.Idx));
+                        processor.OnDestroy(other, entityData);
                         CoreSystem.AddForegroundJob(() =>
                         {
-                            processor.OnDestroySync(other, EntityData<IEntityData>.GetEntityData(entity.Idx));
+                            processor.OnDestroySync(other, entityData);
                         });
                     }
                 }
@@ -630,22 +637,24 @@ namespace Syadeu.Presentation
                 {
                     IEntityDataProcessor processor = entityProcessor[i];
 
-                    processor.OnDestroy(entity);
+                    processor.OnDestroy(entityData);
                     CoreSystem.AddForegroundJob(() =>
                     {
-                        processor.OnDestroySync(entity);
+                        processor.OnDestroySync(entityData);
                     });
                 }
             }
             #endregion
 
-            system.OnEntityDestroy?.Invoke(EntityData<IEntityData>.GetEntityData(entity.Idx));
+            system.OnEntityDestroy?.Invoke(entityData);
         }
 
         private static void ProcessEntityOnProxyCreated(EntitySystem system, IEntity entity, RecycleableMonobehaviour monoObj)
         {
             CoreSystem.Logger.Log(Channel.Entity,
                 $"Processing OnProxyCreated at {entity.Name}");
+
+            Entity<IEntity> entityData = Entity<IEntity>.GetEntity(entity.Idx);
 
             //#region Entity
             //if (system.m_EntityProcessors.TryGetValue(entity.GetType(), out List<IEntityDataProcessor> entityProcessor))
@@ -675,13 +684,13 @@ namespace Syadeu.Presentation
                     {
                         if (processors[j] is IAttributeOnProxyCreated onProxyCreated)
                         {
-                            onProxyCreated.OnProxyCreated(other, Entity<IEntity>.GetEntity(entity.Idx), monoObj);
+                            onProxyCreated.OnProxyCreated(other, entityData, monoObj);
                         }
                         if (processors[j] is IAttributeOnProxyCreatedSync sync)
                         {
                             CoreSystem.AddForegroundJob(() =>
                             {
-                                sync.OnProxyCreatedSync(other, Entity<IEntity>.GetEntity(entity.Idx), monoObj);
+                                sync.OnProxyCreatedSync(other, entityData, monoObj);
                             });
                         }
                     }
@@ -693,6 +702,8 @@ namespace Syadeu.Presentation
         {
             CoreSystem.Logger.Log(Channel.Entity,
                 $"Processing OnProxyRemoved at {entity.Name}");
+
+            Entity<IEntity> entityData = Entity<IEntity>.GetEntity(entity.Idx);
 
             //#region Entity
             //if (system.m_EntityProcessors.TryGetValue(entity.GetType(), out List<IEntityDataProcessor> entityProcessor))
@@ -722,13 +733,13 @@ namespace Syadeu.Presentation
                     {
                         if (processors[j] is IAttributeOnProxyRemoved onProxyRemoved)
                         {
-                            onProxyRemoved.OnProxyRemoved(other, Entity<IEntity>.GetEntity(entity.Idx), monoObj);
+                            onProxyRemoved.OnProxyRemoved(other, entityData, monoObj);
                         }
                         if (processors[j] is IAttributeOnProxyRemovedSync sync)
                         {
                             CoreSystem.AddForegroundJob(() =>
                             {
-                                sync.OnProxyRemovedSync(other, Entity<IEntity>.GetEntity(entity.Idx), monoObj);
+                                sync.OnProxyRemovedSync(other, entityData, monoObj);
                             });
                         }
                     }

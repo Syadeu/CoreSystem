@@ -66,7 +66,7 @@ namespace Syadeu.Presentation.Entities
         public Hash Idx => m_Idx;
         public Type Type => m_Idx.Equals(Hash.Empty) ? null : Target.GetType();
 
-        private EntityData(Hash idx)
+        internal EntityData(Hash idx)
         {
             m_Idx = idx;
         }
