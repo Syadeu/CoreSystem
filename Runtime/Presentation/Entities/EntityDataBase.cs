@@ -75,7 +75,7 @@ namespace Syadeu.Presentation.Entities
         }
 
         public abstract bool IsValid();
-        public override ObjectBase Copy()
+        protected override ObjectBase Copy()
         {
             EntityDataBase entity = (EntityDataBase)base.Copy();
             if (Attributes == null) Attributes = new List<Hash>();

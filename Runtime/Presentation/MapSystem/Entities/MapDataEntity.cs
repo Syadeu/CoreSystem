@@ -50,7 +50,7 @@ namespace Syadeu.Presentation.Map
         [JsonIgnore] public bool DestroyChildOnDestroy { get; set; } = true;
 
         public override bool IsValid() => true;
-        public override ObjectBase Copy()
+        protected override ObjectBase Copy()
         {
             MapDataEntity clone = (MapDataEntity)base.Copy();
             Object[] temp = new Object[m_Objects.Length];

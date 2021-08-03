@@ -42,7 +42,14 @@ namespace Syadeu.Presentation
             Dispose();
         }
 
-        public virtual ObjectBase Copy()
+        /// <summary>
+        /// <see cref="EntitySystem"/>에서 이 오브젝트 인스턴스를 생성하기 위해 호출하는 메소드입니다.
+        /// </summary>
+        /// <remarks>
+        /// 엔티티 선언내에 class와 같은 맴버를 포함하고 있다면 반드시 이 메소드를 override 하여 해당 객체를 복사하여야합니다.
+        /// </remarks>
+        /// <returns></returns>
+        protected virtual ObjectBase Copy()
         {
             ObjectBase entity = (ObjectBase)MemberwiseClone();
             entity.Name = string.Copy(Name);
