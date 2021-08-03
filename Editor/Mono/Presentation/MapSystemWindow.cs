@@ -326,7 +326,7 @@ namespace SyadeuEditor.Presentation.Map
                 EditorGUI.BeginChangeCheck();
                 using (new EditorGUILayout.HorizontalScope())
                 {
-                    EditorGUILayout.LabelField("Layer: ", GUILayout.Width(60));
+                    EditorGUILayout.LabelField("Layer: ", GUILayout.Width(Screen.width * .25f));
                     m_SelectedGridLayer = EditorGUILayout.Popup(m_SelectedGridLayer, m_GridLayerNames);
                 }
                 
