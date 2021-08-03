@@ -25,6 +25,30 @@ namespace Syadeu.Presentation.Entities
         private static readonly Dictionary<Hash, EntityData<T>> m_EntityData = new Dictionary<Hash, EntityData<T>>();
         public static EntityData<T> GetEntityData(Hash idx)
         {
+            #region Validation
+            if (idx.Equals(Hash.Empty))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                $"Cannot convert an empty hash to Entity. This is an invalid operation and not allowed.");
+                return Empty;
+            }
+            if (!PresentationSystem<EntitySystem>.System.m_ObjectHashSet.Contains(idx))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot found entity({idx})");
+                return Empty;
+            }
+            IEntityData target = PresentationSystem<EntitySystem>.System.m_ObjectEntities[idx];
+            if (!(target is T))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                $"Entity({target.Name}) is not a {TypeHelper.TypeOf<T>.Name}. This is an invalid operation and not allowed.");
+                return Empty;
+            }
+            #endregion
+
+            if (m_EntityData.Count > 2048) m_EntityData.Clear();
+
             if (!m_EntityData.TryGetValue(idx, out var value))
             {
                 value = new EntityData<T>(idx);
@@ -65,29 +89,9 @@ namespace Syadeu.Presentation.Entities
 
         public void Destroy() => PresentationSystem<EntitySystem>.System.DestroyObject(m_Idx);
 
-        public static implicit operator T(EntityData<T> a) => (T)a.Target;
-        public static implicit operator EntityData<T>(EntityData<IEntityData> a)
-        {
-            if (a.Target is T) return EntityData<T>.GetEntityData(a.m_Idx);
-
-            CoreSystem.Logger.LogError(Channel.Entity,
-                $"Entity({a.Name}) is not a {TypeHelper.TypeOf<T>.Name}. This is an invalid operation and not allowed.");
-            return Empty;
-        }
-        public static implicit operator EntityData<T>(Hash a)
-        {
-            if (!PresentationSystem<EntitySystem>.System.m_ObjectHashSet.Contains(a))
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Cannot found entity({a})");
-                return Empty;
-            }
-            IEntityData target = PresentationSystem<EntitySystem>.System.m_ObjectEntities[a];
-            if (target is T) return EntityData<T>.GetEntityData(a);
-
-            CoreSystem.Logger.LogError(Channel.Entity,
-                $"Entity({target.Name}) is not a {TypeHelper.TypeOf<T>.Name}. This is an invalid operation and not allowed.");
-            return Empty;
-        }
+        public static implicit operator T(EntityData<T> a) => a.Target;
+        public static implicit operator EntityData<T>(EntityData<IEntityData> a) => GetEntityData(a.m_Idx);
+        public static implicit operator EntityData<T>(Hash a) => GetEntityData(a);
+        public static implicit operator EntityData<T>(T a) => GetEntityData(a.Idx);
     }
 }

@@ -30,6 +30,28 @@ namespace Syadeu.Presentation.Entities
         private static readonly Dictionary<Hash, Entity<T>> m_Entity = new Dictionary<Hash, Entity<T>>();
         public static Entity<T> GetEntity(Hash idx)
         {
+            #region Validation
+            if (idx.Equals(Hash.Empty))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                $"Cannot convert an empty hash to Entity. This is an invalid operation and not allowed.");
+                return Empty;
+            }
+            if (!PresentationSystem<EntitySystem>.System.m_ObjectHashSet.Contains(idx))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot found entity({idx})");
+                return Empty;
+            }
+            IEntityData target = PresentationSystem<EntitySystem>.System.m_ObjectEntities[idx];
+            if (!(target is T))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                $"Entity({target.Name}) is not a {TypeHelper.TypeOf<T>.Name}. This is an invalid operation and not allowed.");
+                return Empty;
+            }
+            #endregion
+
             if (m_Entity.Count > 2048) m_Entity.Clear();
 
             if (!m_Entity.TryGetValue(idx, out var value))
@@ -212,45 +234,9 @@ namespace Syadeu.Presentation.Entities
         public void Destroy() => PresentationSystem<EntitySystem>.System.DestroyObject(m_Idx);
 
         public static implicit operator T(Entity<T> a) => a.Target;
-        public static implicit operator Entity<T>(Entity<IEntity> a)
-        {
-            if (a.m_Idx.Equals(Hash.Empty))
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                $"Cannot convert an empty Entity. This is an invalid operation and not allowed.");
-                return Empty;
-            }
-
-            if (a.Target is T) return Entity<T>.GetEntity(a.m_Idx);
-
-            CoreSystem.Logger.LogError(Channel.Entity,
-                $"Entity({a.Name}) is not a {TypeHelper.TypeOf<T>.Name}. This is an invalid operation and not allowed.");
-            return Empty;
-        }
-        public static implicit operator Entity<T>(Hash a)
-        {
-            if (!PresentationSystem<EntitySystem>.System.m_ObjectHashSet.Contains(a))
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Cannot found entity({a})");
-                return Empty;
-            }
-
-            IEntityData target = PresentationSystem<EntitySystem>.System.m_ObjectEntities[a];
-            if (target is T) return Entity<T>.GetEntity(a);
-
-            CoreSystem.Logger.LogError(Channel.Entity,
-                $"Entity({target.Name}) is not a {TypeHelper.TypeOf<T>.Name}. This is an invalid operation and not allowed.");
-            return Empty;
-        }
-        public static implicit operator Entity<T>(EntityData<IEntityData> a)
-        {
-            if (a.Target is T) return Entity<T>.GetEntity(a.Idx);
-
-            CoreSystem.Logger.LogError(Channel.Entity,
-                $"Entity({a.Name}) is not a {TypeHelper.TypeOf<T>.Name}. This is an invalid operation and not allowed.");
-            return Empty;
-        }
+        public static implicit operator Entity<T>(Entity<IEntity> a) => GetEntity(a.m_Idx);
+        public static implicit operator Entity<T>(Hash a) => GetEntity(a);
+        public static implicit operator Entity<T>(EntityData<IEntityData> a) => GetEntity(a.Idx);
         public static implicit operator Entity<T>(T a) => GetEntity(a.Idx);
     }
 }
