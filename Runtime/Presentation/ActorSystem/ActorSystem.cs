@@ -7,7 +7,6 @@ using Syadeu.Presentation.Map;
 using System;
 using System.Collections.Generic;
 using Unity.Collections;
-using UnityEngine.InputSystem;
 using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation.Actor

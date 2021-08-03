@@ -1,4 +1,5 @@
 ﻿using Syadeu.Database;
+using Syadeu.Internal;
 using System.Collections.Concurrent;
 
 namespace Syadeu.Presentation
@@ -29,7 +30,23 @@ namespace Syadeu.Presentation
             return value;
         }
         public object Dequeue(string key) => Dequeue(ToDataHash(key));
-        public T Dequeue<T>(Hash key) => (T)Dequeue(key);
-        public T Dequeue<T>(string key) =>  (T)Dequeue(key);
+        public T Dequeue<T>(Hash key)
+        {
+            object value = Dequeue(key);
+            if (!value.GetType().Equals(TypeHelper.TypeOf<T>.Type))
+            {
+                throw new System.Exception($"Type mismatch. Value is {value.GetType().Name} but requested as {TypeHelper.TypeOf<T>.Name}");
+            }
+            return (T)value;
+        }
+        public T Dequeue<T>(string key)
+        {
+            object value = Dequeue(key);
+            if (!value.GetType().Equals(TypeHelper.TypeOf<T>.Type))
+            {
+                throw new System.Exception($"Type mismatch. Value is {value.GetType().Name} but requested as {TypeHelper.TypeOf<T>.Name}");
+            }
+            return (T)value;
+        }
     }
 }

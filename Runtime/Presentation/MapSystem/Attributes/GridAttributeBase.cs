@@ -64,7 +64,7 @@ namespace Syadeu.Presentation.Map
             int[] indices = GridSystem.GetRange(CurrentGridIndices[0], range);
             for (int i = 0; i < ignoreLayers?.Length; i++)
             {
-                indices = GridSystem.GridMap.FilterByLayer(ignoreLayers[i], indices);
+                indices = GridSystem.GridMap.FilterByLayer(ignoreLayers[i], indices, out _);
             }
             return indices;
         }

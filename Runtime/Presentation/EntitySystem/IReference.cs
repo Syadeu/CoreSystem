@@ -68,7 +68,7 @@ namespace Syadeu.Presentation
             if (EntityDataList.Instance.m_Objects.TryGetValue(m_Hash, out ObjectBase value)) return (T)value;
             return null;
         }
-        public bool IsValid() => !m_Hash.Equals(Hash.Empty);
+        public bool IsValid() => !m_Hash.Equals(Hash.Empty) && EntityDataList.Instance.m_Objects.ContainsKey(m_Hash);
 
         public static implicit operator T(Reference<T> a) => a.GetObject();
         public static implicit operator Hash(Reference<T> a) => a.m_Hash;

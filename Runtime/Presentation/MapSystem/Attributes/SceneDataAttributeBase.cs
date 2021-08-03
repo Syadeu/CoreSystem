@@ -78,24 +78,49 @@ namespace Syadeu.Presentation.Map
             {
                 Layers[i].Dispose();
             }
+            Layers = null;
 
             Grid.Dispose();
             Grid = null;
+        }
+
+        protected override void OnDispose()
+        {
+            if (Grid != null)
+            {
+                Grid.Dispose();
+                Grid = null;
+            }
+
+            if (Layers != null)
+            {
+                for (int i = 0; i < Layers.Length; i++)
+                {
+                    Layers[i].Dispose();
+                }
+                Layers = null;
+            }
         }
 
         public LayerInfo GetLayer(int idx) => m_Layers[idx];
         public LayerInfo GetLayer(Hash hash) => m_Layers.FindFor((other) => other.m_Hash.Equals(hash));
         public LayerInfo GetLayer(string name) => m_Layers.FindFor((other) => other.m_Name.Equals(name));
 
-        public int[] FilterByLayer(int layer, int[] indices)
+        public int[] FilterByLayer(int layer, int[] indices, out int[] filteredIndices)
         {
             List<int> temp = new List<int>();
+            List<int> filtered = new List<int>();
             for (int i = 0; i < indices.Length; i++)
             {
-                if (Layers[layer].Contains(indices[i])) continue;
+                if (Layers[layer].Contains(indices[i]))
+                {
+                    filtered.Add(indices[i]);
+                    continue;
+                }
 
                 temp.Add(indices[i]);
             }
+            filteredIndices = filtered.Count == 0 ? Array.Empty<int>() : filtered.ToArray();
             return temp.ToArray();
         }
     }

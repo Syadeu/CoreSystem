@@ -138,6 +138,8 @@ namespace SyadeuEditor.Presentation.Map
             // GridMapAttribute
             m_GridMap?.Dispose();
             m_GridMap = null;
+
+            SceneView.lastActiveSceneView.Repaint();
         }
 
         private void ResetPreviewFolder()
@@ -628,6 +630,14 @@ namespace SyadeuEditor.Presentation.Map
                     }
                 }, m_SceneData, TypeHelper.TypeOf<SceneDataEntity>.Type);
 
+                if (m_GridMap != null && m_GridMap.m_SceneDataGridAtt != null)
+                {
+                    using (new EditorUtils.BoxBlock(Color.black))
+                    {
+                        m_GridMap.OnGUI();
+                    }
+                }
+
                 EditorGUI.BeginDisabledGroup(m_SceneDataTarget == null);
                 if (GUILayout.Button("Close"))
                 {
@@ -675,14 +685,6 @@ namespace SyadeuEditor.Presentation.Map
             {
                 EditorUtils.StringRich(c_EditInPlayingWarning, 13, true);
                 return;
-            }
-
-            if (m_GridMap != null && m_GridMap.m_SceneDataGridAtt != null)
-            {
-                using (new EditorUtils.BoxBlock(Color.black))
-                {
-                    m_GridMap.OnGUI();
-                }
             }
 
             if (!m_MapData.IsValid())
@@ -926,7 +928,8 @@ namespace SyadeuEditor.Presentation.Map
                 for (int i = 0; i < m_MapDataTarget.m_Objects?.Length; i++)
                 {
                     Vector2 pos = HandleUtility.WorldToGUIPoint(m_MapDataTarget.m_Objects[i].m_Translation);
-                    if (!EditorSceneUtils.IsDrawable(pos)) continue;
+                    if (!m_MapDataTarget.m_Objects[i].m_Object.IsValid() ||
+                        !EditorSceneUtils.IsDrawable(pos)) continue;
 
                     AABB aabb = m_MapDataTarget.m_Objects[i].aabb;
                     Handles.DrawWireCube(aabb.center, aabb.size);

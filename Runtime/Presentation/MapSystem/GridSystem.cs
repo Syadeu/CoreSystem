@@ -291,6 +291,7 @@ namespace Syadeu.Presentation.Map
             if (GridMap.Grid == null) throw new System.Exception();
             return GridMap.Grid.GetCellIndex(position);
         }
+
         public int[] GetRange(int idx, int range)
         {
             if (GridMap.Grid == null) throw new System.Exception();
