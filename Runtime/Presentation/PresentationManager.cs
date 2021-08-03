@@ -56,7 +56,17 @@ namespace Syadeu.Presentation
             public ICustomYieldAwaiter m_StartAwaiter;
             public WaitUntil m_WaitUntilInitializeCompleted;
 
-            //public Action PublicSystemStructDisposer;
+            public bool
+                m_MainthreadBeforePre = false,
+                m_MainthreadOnPre = false,
+                m_MainthreadAfterPre = false,
+
+                m_BackgroundthreadBeforePre = false,
+                m_BackgroundthreadOnPre = false,
+                m_BackgroundthreadAfterPre = false;
+
+            public WaitUntil
+                m_WaitBeforePre, m_WaitOnPre, m_WaitAfterPre;
 
             public Group(Type name, Hash hash)
             {
@@ -68,6 +78,10 @@ namespace Syadeu.Presentation
                     m_Predicate = () => m_MainInitDone && m_BackgroundInitDone
                 };
                 m_WaitUntilInitializeCompleted = new WaitUntil(() => m_MainInitDone && m_BackgroundInitDone);
+
+                m_WaitBeforePre = new WaitUntil(() => m_MainthreadBeforePre && m_BackgroundthreadBeforePre);
+                m_WaitOnPre = new WaitUntil(() => m_MainthreadOnPre && m_BackgroundthreadOnPre);
+                m_WaitAfterPre = new WaitUntil(() => m_MainthreadAfterPre && m_BackgroundthreadAfterPre);
             }
 
             public sealed class YieldAwaiter : ICustomYieldAwaiter
@@ -372,6 +386,8 @@ namespace Syadeu.Presentation
             PresentationResult result;
             while (true)
             {
+                group.m_MainthreadBeforePre = false;
+
                 for (int i = 0; i < group.m_BeforePresentations.Count; i++)
                 {
                     result = group.m_BeforePresentations[i].BeforePresentation();
@@ -380,6 +396,11 @@ namespace Syadeu.Presentation
                         ConsoleWindow.Log(result.m_Message, result.m_Result);
                     }
                 }
+
+                group.m_MainthreadBeforePre = true;
+                yield return group.m_WaitBeforePre;
+                group.m_MainthreadOnPre = false;
+
                 for (int i = 0; i < group.m_OnPresentations.Count; i++)
                 {
                     result = group.m_OnPresentations[i].OnPresentation();
@@ -388,6 +409,11 @@ namespace Syadeu.Presentation
                         ConsoleWindow.Log(result.m_Message, result.m_Result);
                     }
                 }
+
+                group.m_MainthreadOnPre = true;
+                yield return group.m_WaitOnPre;
+                group.m_MainthreadAfterPre = false;
+
                 for (int i = 0; i < group.m_AfterPresentations.Count; i++)
                 {
                     result = group.m_AfterPresentations[i].AfterPresentation();
@@ -396,6 +422,9 @@ namespace Syadeu.Presentation
                         ConsoleWindow.Log(result.m_Message, result.m_Result);
                     }
                 }
+
+                group.m_MainthreadAfterPre = true;
+                yield return group.m_WaitAfterPre;
 
                 yield return null;
             }
@@ -424,18 +453,17 @@ namespace Syadeu.Presentation
                     throw;
                 }
             }
-            //"2".ToLog();
 
             group.m_BackgroundthreadSignal = true;
             group.m_BackgroundInitDone = true;
 
-            //"3".ToLog();
             yield return group.m_WaitUntilInitializeCompleted;
-            //"4".ToLog();
 
             PresentationResult result;
             while (true)
             {
+                group.m_BackgroundthreadBeforePre = false;
+
                 for (int i = 0; i < group.m_BeforePresentations.Count; i++)
                 {
                     result = group.m_BeforePresentations[i].BeforePresentationAsync();
@@ -444,6 +472,11 @@ namespace Syadeu.Presentation
                         ConsoleWindow.Log(result.m_Message, result.m_Result);
                     }
                 }
+
+                group.m_BackgroundthreadBeforePre = true;
+                yield return group.m_WaitBeforePre;
+                group.m_BackgroundthreadOnPre = false;
+
                 for (int i = 0; i < group.m_OnPresentations.Count; i++)
                 {
                     result = group.m_OnPresentations[i].OnPresentationAsync();
@@ -452,6 +485,11 @@ namespace Syadeu.Presentation
                         ConsoleWindow.Log(result.m_Message, result.m_Result);
                     }
                 }
+
+                group.m_BackgroundthreadOnPre = true;
+                yield return group.m_WaitOnPre;
+                group.m_BackgroundthreadAfterPre = false;
+
                 for (int i = 0; i < group.m_AfterPresentations.Count; i++)
                 {
                     result = group.m_AfterPresentations[i].AfterPresentationAsync();
@@ -460,6 +498,9 @@ namespace Syadeu.Presentation
                         ConsoleWindow.Log(result.m_Message, result.m_Result);
                     }
                 }
+
+                group.m_BackgroundthreadAfterPre = true;
+                yield return group.m_WaitAfterPre;
 
                 yield return null;
             }
