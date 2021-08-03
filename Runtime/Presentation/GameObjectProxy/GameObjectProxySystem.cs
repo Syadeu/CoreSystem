@@ -24,7 +24,7 @@ namespace Syadeu.Presentation
     {
         private static Vector3 INIT_POSITION = new Vector3(-9999, -9999, -9999);
 
-        public override bool EnableBeforePresentation => false;
+        public override bool EnableBeforePresentation => true;
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => true;
 
@@ -150,6 +150,32 @@ namespace Syadeu.Presentation
             return base.OnStartPresentation();
         }
 
+        protected override PresentationResult BeforePresentationAsync()
+        {
+            #region Object Proxy Work
+            int temp1 = m_RequestProxies.Count;
+            for (int i = 0; i < temp1; i++)
+            {
+                if (!m_RequestProxies.TryDequeue(out var data) || data.ProxyRequested) continue;
+                CoreSystem.Logger.NotNull(data);
+
+                RequestProxy(data.GameObject, data.Idx, null);
+            }
+
+            int temp2 = m_RemoveProxies.Count;
+            for (int i = 0; i < temp2; i++)
+            {
+                if (!m_RemoveProxies.TryDequeue(out var data)) continue;
+                CoreSystem.Logger.NotNull(data);
+
+                RemoveProxy(data.Idx, false);
+            }
+
+            #endregion
+
+            return base.BeforePresentationAsync();
+        }
+
         protected override PresentationResult AfterPresentation()
         {
             int jobCount = m_RequestedJobs.Count;
@@ -183,28 +209,6 @@ namespace Syadeu.Presentation
         private readonly List<int> m_RemovedGameObjectIdxes = new List<int>();
         protected override PresentationResult AfterPresentationAsync()
         {
-            #region Object Proxy Work
-            int temp1 = m_RequestProxies.Count;
-            for (int i = 0; i < temp1; i++)
-            {
-                if (!m_RequestProxies.TryDequeue(out var data) || data.ProxyRequested) continue;
-                CoreSystem.Logger.NotNull(data);
-
-                RequestProxy(data.GameObject, data.Idx, null);
-                //$"requesting {m_RequestProxies[i].Idx}".ToLog();
-            }
-            //m_RequestProxies.RemoveRange(0, temp1);
-            int temp2 = m_RemoveProxies.Count;
-            for (int i = 0; i < temp2; i++)
-            {
-                if (!m_RemoveProxies.TryDequeue(out var data)) continue;
-                CoreSystem.Logger.NotNull(data);
-
-                RemoveProxy(data.Idx, false);
-            }
-            //m_RemoveProxies.RemoveRange(0, temp2);
-            #endregion
-
             #region Object Destory Work
             int temp3 = m_RequestDestories.Count;
             if (temp3 > 0)
@@ -612,7 +616,7 @@ namespace Syadeu.Presentation
             oriTr.localScale = boxed.m_LocalScale;
         }
 
-        private void ProxyVisibleCheckPararellJob()
+        unsafe private void ProxyVisibleCheckPararellJob()
         {
             const int maxCountForeachJob = 10;
 
@@ -620,7 +624,9 @@ namespace Syadeu.Presentation
 
             int listCount = m_MappedTransforms.Length;
             int div = listCount / maxCountForeachJob;
-            NativeArray<DataTransform>.ReadOnly readOnly = m_MappedTransforms.AsParallelReader();
+
+            DataTransform* trArrayP = (DataTransform*)m_MappedTransforms.GetUnsafePtr();
+
             for (int i = 0; i < div + 1; i++)
             {
                 BackgroundJob job = PoolContainer<BackgroundJob>.Dequeue();
@@ -628,57 +634,49 @@ namespace Syadeu.Presentation
                 m_VisibleCheckJobs.Add(job);
                 int maxIdx = (i + 1) * maxCountForeachJob;
                 if (maxIdx > listCount) maxIdx = listCount;
-                //if (startIdx == maxIdx) break;
-
-                //$"{startIdx} to {maxIdx} :: {listCount}".ToLog();
 
                 job.Action = () =>
                 {
                     for (int j = startIdx; j < maxIdx; j++)
                     {
                         if (m_LoadingLock) break;
-                        //int idx = m_MappedTransformIdxes[m_MappedTransformList[j]];
+                        ref DataTransform tr = ref *(trArrayP + j);
 
-                        if (readOnly[j] is DataTransform tr)
+                        if (!tr.IsValid()) continue;
+                        if (m_RenderSystem.IsInCameraScreen(tr.position))
                         {
-                            if (!tr.IsValid()) continue;
-                            if (m_RenderSystem.IsInCameraScreen(tr.position))
+                            if (tr.m_PrefabIdx >= 0 &&
+                                !tr.ProxyRequested &&
+                                !tr.HasProxyObject)
                             {
-                                if (readOnly[j].m_PrefabIdx >= 0 &&
-                                    !readOnly[j].ProxyRequested &&
-                                    !readOnly[j].HasProxyObject)
-                                {
-                                    //"in".ToLog();
-                                    if (tr.m_EnableCull) m_RequestProxies.Enqueue(tr);
-                                }
-
-                                if (!tr.m_IsVisible)
-                                {
-                                    tr.m_IsVisible = true;
-                                    OnDataObjectVisibleAsync?.Invoke(tr.gameObject);
-                                }
+                                if (tr.m_EnableCull) m_RequestProxies.Enqueue(tr);
                             }
-                            else
-                            {
-                                if (readOnly[j].m_PrefabIdx >= 0 && 
-                                    tr.m_EnableCull && 
-                                    readOnly[j].HasProxyObject)
-                                {
-                                    if (m_RemoveProxies.Contains(tr))
-                                    {
-                                        throw new Exception();
-                                    }
-                                    m_RemoveProxies.Enqueue(tr);
-                                }
 
-                                if (tr.m_IsVisible)
-                                {
-                                    tr.m_IsVisible = false;
-                                    OnDataObjectInvisibleAsync?.Invoke(tr.gameObject);
-                                }
+                            if (!tr.m_IsVisible)
+                            {
+                                tr.m_IsVisible = true;
+                                OnDataObjectVisibleAsync?.Invoke(tr.gameObject);
                             }
                         }
-                        else throw new NotImplementedException();
+                        else
+                        {
+                            if (tr.m_PrefabIdx >= 0 &&
+                                tr.m_EnableCull &&
+                                tr.HasProxyObject)
+                            {
+                                if (m_RemoveProxies.Contains(tr))
+                                {
+                                    throw new Exception();
+                                }
+                                m_RemoveProxies.Enqueue(tr);
+                            }
+
+                            if (tr.m_IsVisible)
+                            {
+                                tr.m_IsVisible = false;
+                                OnDataObjectInvisibleAsync?.Invoke(tr.gameObject);
+                            }
+                        }
                     }
                     PoolContainer<BackgroundJob>.Enqueue(job);
                 };
