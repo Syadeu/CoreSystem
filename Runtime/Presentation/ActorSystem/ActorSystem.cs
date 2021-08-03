@@ -72,128 +72,7 @@ namespace Syadeu.Presentation.Actor
 
         #region Raycast
 
-        public Raycaster Raycast(Entity<ActorEntity> from, Ray ray)
-        {
-            NativeArray<Hash> keys = m_PlayerHashMap.GetKeyArray(Allocator.TempJob);
-            NativeList<Raycaster.RaycastHitInfo> hits = new NativeList<Raycaster.RaycastHitInfo>(64, Allocator.Persistent);
-
-            RaycastJob job = new RaycastJob(from, m_PlayerHashMap, keys, ray, hits);
-            return new Raycaster(job.Schedule(keys.Length, 64), hits);
-        }
-
-        public class Raycaster : IDisposable
-        {
-            public struct RaycastHitInfo
-            {
-                private readonly Entity<ActorEntity> m_Entity;
-                private readonly float m_Distance;
-                private readonly float3 m_Point;
-
-                public Entity<ActorEntity> Entity => m_Entity;
-                public float Distance => m_Distance;
-                public float3 Point => m_Point;
-
-                internal RaycastHitInfo(Entity<ActorEntity> entity, float dis, float3 point)
-                {
-                    m_Entity = entity;
-                    m_Distance = dis;
-                    m_Point = point;
-                }
-            }
-
-            private readonly JobHandle m_Job;
-            private readonly NativeList<RaycastHitInfo> m_Hits;
-
-            public bool JobCompleted => m_Job.IsCompleted;
-            public bool Hit
-            {
-                get
-                {
-                    m_Job.Complete();
-                    if (m_Hits.Length > 0) return true;
-                    return false;
-                }
-            }
-            public RaycastHitInfo Target
-            {
-                get
-                {
-                    m_Job.Complete();
-
-                    RaycastHitInfo temp = default;
-                    float dis = float.MaxValue;
-                    for (int i = 0; i < m_Hits.Length; i++)
-                    {
-                        if (m_Hits[i].Distance < dis)
-                        {
-                            dis = m_Hits[i].Distance;
-                            temp = m_Hits[i];
-                        }
-                    }
-
-                    return temp;
-                }
-            }
-            public RaycastHitInfo[] Targets
-            {
-                get
-                {
-                    m_Job.Complete();
-
-                    return m_Hits.ToArray();
-                }
-            }
-
-            internal Raycaster(JobHandle job, NativeList<RaycastHitInfo> hits)
-            {
-                m_Job = job;
-                m_Hits = hits;
-            }
-            ~Raycaster()
-            {
-                Dispose();
-            }
-
-            public void Dispose()
-            {
-                m_Hits.Dispose();
-            }
-        }
-        private struct RaycastJob : IJobParallelFor
-        {
-            [ReadOnly] private readonly Entity<ActorEntity> m_From;
-            [ReadOnly] private readonly NativeHashMap<Hash, Entity<ActorEntity>> m_Players;
-            [ReadOnly] private readonly Ray m_Ray;
-
-            [DeallocateOnJobCompletion]
-            private readonly NativeArray<Hash> m_Keys;
-
-            private readonly NativeList<Raycaster.RaycastHitInfo>.ParallelWriter m_Hits;
-
-            public RaycastJob(Entity<ActorEntity> from, NativeHashMap<Hash, Entity<ActorEntity>> players, NativeArray<Hash> keys, Ray ray, NativeList<Raycaster.RaycastHitInfo> hits)
-            {
-                m_From = from;
-                m_Players = players;
-                m_Ray = ray;
-
-                m_Keys = keys;
-                m_Hits = hits.AsParallelWriter();
-            }
-
-            public void Execute(int index)
-            {
-                if (m_Keys[index].Equals(m_From.Idx)) return;
-
-                Hash key = m_Keys[index];
-                Entity<ActorEntity> target = m_Players[key];
-
-                var targetAABB = target.AABB;
-                if (targetAABB.Intersect(m_Ray, out float dis, out float3 point))
-                {
-                    m_Hits.AddNoResize(new Raycaster.RaycastHitInfo(target, dis, point));
-                }
-            }
-        }
+        
 
         #endregion
     }
@@ -206,7 +85,7 @@ namespace Syadeu.Presentation.Actor
 
         [JsonIgnore] public ActorFaction Faction => m_Faction.IsValid() ? m_Faction.GetObject() : null;
 
-        public ActorSystem.Raycaster Raycast(Ray ray) => m_ActorSystem.Raycast(this, ray);
+        //public ActorSystem.Raycaster Raycast(Ray ray) => m_ActorSystem.Raycast(this, ray);
     }
 
     [AttributeAcceptOnly(typeof(ActorEntity))]
