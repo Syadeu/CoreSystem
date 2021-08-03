@@ -103,9 +103,22 @@ namespace Syadeu.Presentation.Map
             }
         }
 
-        public LayerInfo GetLayer(int idx) => m_Layers[idx];
-        public LayerInfo GetLayer(Hash hash) => m_Layers.FindFor((other) => other.m_Hash.Equals(hash));
-        public LayerInfo GetLayer(string name) => m_Layers.FindFor((other) => other.m_Name.Equals(name));
+        public int GetLayer(Hash hash)
+        {
+            for (int i = 0; i < m_Layers.Length; i++)
+            {
+                if (m_Layers[i].m_Hash.Equals(hash)) return i;
+            }
+            return -1;
+        }
+        public int GetLayer(string name)
+        {
+            for (int i = 0; i < m_Layers.Length; i++)
+            {
+                if (m_Layers[i].m_Name.Equals(name)) return i;
+            }
+            return -1;
+        }
 
         public int[] FilterByLayer(int layer, int[] indices, out int[] filteredIndices)
         {
@@ -124,6 +137,10 @@ namespace Syadeu.Presentation.Map
             filteredIndices = filtered.Count == 0 ? Array.Empty<int>() : filtered.ToArray();
             return temp.ToArray();
         }
+        public int[] FilterByLayer(Hash layer, int[] indices, out int[] filteredIndices)
+            => FilterByLayer(GetLayer(layer), indices, out filteredIndices);
+        public int[] FilterByLayer(string layer, int[] indices, out int[] filteredIndices)
+            => FilterByLayer(GetLayer(layer), indices, out filteredIndices);
     }
     [Preserve]
     internal sealed class GridMapProcessor : AttributeProcessor<GridMapAttribute>

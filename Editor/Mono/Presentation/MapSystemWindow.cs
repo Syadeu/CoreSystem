@@ -260,6 +260,7 @@ namespace SyadeuEditor.Presentation.Map
         private ReflectionHelperEditor.AttributeListDrawer m_AttributeListDrawer;
 
         // GridMapAttribute
+        #region GridMapAttribute
         private sealed class GridMapExtension : IDisposable
         {
             public readonly GridMapAttribute m_SceneDataGridAtt;
@@ -270,6 +271,15 @@ namespace SyadeuEditor.Presentation.Map
             public GridMapAttribute.LayerInfo m_CurrentLayer = null;
 
             public bool m_EditLayer = false;
+
+            private GridMapAttribute.LayerInfo SelectedLayer
+            {
+                get
+                {
+                    if (m_SelectedGridLayer == 0) return null;
+                    return m_SceneDataGridAtt.m_Layers[m_SelectedGridLayer - 1];
+                }
+            }
 
             public GridMapExtension(GridMapAttribute att)
             {
@@ -314,7 +324,12 @@ namespace SyadeuEditor.Presentation.Map
 
                 EditorGUILayout.BeginHorizontal();
                 EditorGUI.BeginChangeCheck();
-                m_SelectedGridLayer = EditorGUILayout.Popup("Grid Layer: ", m_SelectedGridLayer, m_GridLayerNames);
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    EditorGUILayout.LabelField("Layer: ", GUILayout.Width(60));
+                    m_SelectedGridLayer = EditorGUILayout.Popup(m_SelectedGridLayer, m_GridLayerNames);
+                }
+                
                 if (EditorGUI.EndChangeCheck())
                 {
                     m_EditLayer = false;
@@ -330,13 +345,13 @@ namespace SyadeuEditor.Presentation.Map
 
                     ReloadLayers();
 
-                    m_SelectedGridLayer = m_SceneDataGridAtt.m_Layers.Length - 1;
+                    m_SelectedGridLayer = m_SceneDataGridAtt.m_Layers.Length;
                 }
                 EditorGUI.BeginDisabledGroup(m_SelectedGridLayer == 0);
                 if (GUILayout.Button("-", GUILayout.Width(20)))
                 {
                     var temp = m_SceneDataGridAtt.m_Layers.ToList();
-                    temp.RemoveAt(temp.Count - 1);
+                    temp.RemoveAt(m_SelectedGridLayer - 1);
                     m_SceneDataGridAtt.m_Layers = temp.ToArray();
 
                     ReloadLayers();
@@ -350,6 +365,43 @@ namespace SyadeuEditor.Presentation.Map
                 EditorGUI.EndDisabledGroup();
 
                 EditorGUILayout.EndHorizontal();
+
+                EditorUtils.Line();
+
+                // Layer Info
+                EditorGUI.indentLevel += 1;
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    EditorUtils.StringRich($"Layer: {m_GridLayerNames[m_SelectedGridLayer]}", 13);
+                    EditorGUI.BeginDisabledGroup(m_SelectedGridLayer == 0);
+                    if (GUILayout.Button("Clear", GUILayout.Width(50)))
+                    {
+                        SelectedLayer.m_Indices = Array.Empty<int>();
+                        SceneView.lastActiveSceneView.Repaint();
+                    }
+                    EditorGUI.EndDisabledGroup();
+                }
+
+                EditorGUI.indentLevel += 1;
+                {
+                    EditorGUI.BeginDisabledGroup(true);
+                    if (m_SelectedGridLayer == 0)
+                    {
+                        int sum = 0;
+                        for (int i = 0; i < m_SceneDataGridAtt.m_Layers.Length; i++)
+                        {
+                            sum += m_SceneDataGridAtt.m_Layers[i].m_Indices.Length;
+                        }
+                        EditorGUILayout.IntField("Indices", sum);
+                    }
+                    else EditorGUILayout.IntField("Indices", SelectedLayer.m_Indices.Length);
+                    EditorGUI.EndDisabledGroup();
+
+                }
+                EditorGUI.indentLevel -= 1;
+                EditorGUI.indentLevel -= 1;
+
+                EditorUtils.Line();
             }
             bool m_AddDrag = false;
             public void OnSceneGUI(SceneView obj)
@@ -506,6 +558,7 @@ namespace SyadeuEditor.Presentation.Map
                 }
             }
         }
+        #endregion
         private GridMapExtension m_GridMap;
 
         private Vector2 m_SceneDataScroll;
