@@ -322,6 +322,7 @@ namespace SyadeuEditor.Presentation.Map
             {
                 EditorUtils.StringRich("GridMapAttribute Extension", 13);
 
+                #region Layer Selector
                 EditorGUILayout.BeginHorizontal();
                 EditorGUI.BeginChangeCheck();
                 using (new EditorGUILayout.HorizontalScope())
@@ -355,6 +356,12 @@ namespace SyadeuEditor.Presentation.Map
                     m_SceneDataGridAtt.m_Layers = temp.ToArray();
 
                     ReloadLayers();
+
+                    if (m_SelectedGridLayer < 0) m_SelectedGridLayer = 0;
+                    else if (m_SelectedGridLayer >= m_GridLayerNames.Length)
+                    {
+                        m_SelectedGridLayer = m_GridLayerNames.Length - 1;
+                    }
                 }
 
                 m_EditLayer = GUILayout.Toggle(m_EditLayer, "E", EditorUtils.MiniButton, GUILayout.Width(20));
@@ -366,14 +373,21 @@ namespace SyadeuEditor.Presentation.Map
 
                 EditorGUILayout.EndHorizontal();
 
+                #endregion
+
                 EditorUtils.Line();
 
                 // Layer Info
+                #region Layer Info
                 EditorGUI.indentLevel += 1;
                 using (new EditorGUILayout.HorizontalScope())
                 {
                     EditorUtils.StringRich($"Layer: {m_GridLayerNames[m_SelectedGridLayer]}", 13);
                     EditorGUI.BeginDisabledGroup(m_SelectedGridLayer == 0);
+                    if (GUILayout.Button("Save", GUILayout.Width(50)))
+                    {
+                        EntityDataList.Instance.SaveData(m_SceneDataGridAtt);
+                    }
                     if (GUILayout.Button("Clear", GUILayout.Width(50)))
                     {
                         SelectedLayer.m_Indices = Array.Empty<int>();
@@ -400,6 +414,7 @@ namespace SyadeuEditor.Presentation.Map
                 }
                 EditorGUI.indentLevel -= 1;
                 EditorGUI.indentLevel -= 1;
+                #endregion
 
                 EditorUtils.Line();
             }
@@ -691,12 +706,22 @@ namespace SyadeuEditor.Presentation.Map
                     }
                 }
 
-                EditorGUI.BeginDisabledGroup(m_SceneDataTarget == null);
-                if (GUILayout.Button("Close"))
+                using (new EditorGUI.DisabledGroupScope(m_SceneDataTarget == null))
+                using (new EditorGUILayout.HorizontalScope())
                 {
-                    ResetSceneData();
+                    if (GUILayout.Button("Save"))
+                    {
+                        EntityDataList.Instance.SaveData(m_SceneDataTarget);
+                        if (m_GridMap != null)
+                        {
+                            EntityDataList.Instance.SaveData(m_GridMap.m_SceneDataGridAtt);
+                        }
+                    }
+                    if (GUILayout.Button("Close"))
+                    {
+                        ResetSceneData();
+                    }
                 }
-                EditorGUI.EndDisabledGroup();
             }
             #endregion
 

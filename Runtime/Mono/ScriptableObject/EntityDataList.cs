@@ -2,6 +2,7 @@
 using Syadeu.Internal;
 using Syadeu.Presentation;
 using Syadeu.Presentation.Attributes;
+using Syadeu.Presentation.Entities;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,7 +11,7 @@ using UnityEngine;
 
 namespace Syadeu.Database
 {
-    [PreferBinarySerialization][CustomStaticSetting("Syadeu")]
+    [PreferBinarySerialization] [CustomStaticSetting("Syadeu")]
     public sealed class EntityDataList : StaticSettingEntity<EntityDataList>
     {
         const string jsonPostfix = "*.json";
@@ -40,8 +41,7 @@ namespace Syadeu.Database
             string[] entityPaths = Directory.GetFiles(CoreSystemFolder.EntityPath, jsonPostfix, SearchOption.AllDirectories);
             //m_Entites = new List<EntityBase>();
             Type[] entityTypes = TypeHelper.GetTypes(
-                (other) => TypeHelper.TypeOf<ObjectBase>.Type.IsAssignableFrom(other) &&
-                            !TypeHelper.TypeOf<AttributeBase>.Type.IsAssignableFrom(other));
+                (other) => TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(other));
             for (int i = 0; i < entityPaths.Length; i++)
             {
                 string lastFold = Path.GetFileName(Path.GetDirectoryName(entityPaths[i]));
@@ -88,6 +88,46 @@ namespace Syadeu.Database
                 //m_ObjectHash.Add(temp.Name, temp.Hash);
                 //m_Attributes.Add(temp);
             }
+        }
+        private void DeleteEmptyFolders()
+        {
+            if (!Directory.Exists(CoreSystemFolder.EntityPath)) Directory.CreateDirectory(CoreSystemFolder.EntityPath);
+            if (!Directory.Exists(CoreSystemFolder.AttributePath)) Directory.CreateDirectory(CoreSystemFolder.AttributePath);
+
+            string[] paths = Directory.GetDirectories(CoreSystemFolder.EntityPath);
+            for (int i = 0; i < paths.Length; i++)
+            {
+                if (Directory.GetFiles(paths[i]).Length > 0) continue;
+
+                Directory.Delete(paths[i]);
+            }
+            paths = Directory.GetDirectories(CoreSystemFolder.AttributePath);
+            for (int i = 0; i < paths.Length; i++)
+            {
+                if (Directory.GetFiles(paths[i]).Length > 0) continue;
+
+                Directory.Delete(paths[i]);
+            }
+        }
+        public void SaveData(ObjectBase obj)
+        {
+            if (!Directory.Exists(CoreSystemFolder.EntityPath)) Directory.CreateDirectory(CoreSystemFolder.EntityPath);
+            if (!Directory.Exists(CoreSystemFolder.AttributePath)) Directory.CreateDirectory(CoreSystemFolder.AttributePath);
+
+            Type objType = obj.GetType();
+            string objPath;
+            if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(objType))
+            {
+                objPath = Path.Combine(CoreSystemFolder.EntityPath, objType.Name);
+            }
+            else objPath = Path.Combine(CoreSystemFolder.AttributePath, objType.Name);
+
+            if (!Directory.Exists(objPath)) Directory.CreateDirectory(objPath);
+
+            if (obj.Hash.Equals(Hash.Empty)) obj.Hash = Hash.NewHash();
+
+            File.WriteAllText($"{objPath}/{obj.Name}{json}",
+                JsonConvert.SerializeObject(obj, Formatting.Indented));
         }
         public void SaveData()
         {
@@ -144,18 +184,19 @@ namespace Syadeu.Database
                 }
             }
             else "nothing to save att".ToLog();
+
+            DeleteEmptyFolders();
         }
 
-        public ObjectBase[] GetEntities()
+        public EntityDataBase[] GetEntities()
         {
-            if (m_Objects == null) return Array.Empty<ObjectBase>();
+            if (m_Objects == null) return Array.Empty<EntityDataBase>();
             return m_Objects
                     .Where((other) =>
                     {
-                        return TypeHelper.TypeOf<ObjectBase>.Type.IsAssignableFrom(other.Value.GetType()) &&
-                                !TypeHelper.TypeOf<AttributeBase>.Type.IsAssignableFrom(other.Value.GetType());
+                        return TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(other.Value.GetType());
                     })
-                    .Select((other) => other.Value)
+                    .Select((other) => (EntityDataBase)other.Value)
                     .ToArray();
         }
         public AttributeBase[] GetAttributes()
