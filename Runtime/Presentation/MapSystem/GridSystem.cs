@@ -175,11 +175,11 @@ namespace Syadeu.Presentation.Map
             {
                 int2 gridSize = grid.gridSize;
 
-                Vector3 minPos = grid.GetCellPosition(0);
+                Vector3 minPos = grid.IndexToPosition(0);
                 minPos.x -= grid.cellSize * .5f;
                 minPos.z += grid.cellSize * .5f;
 
-                Vector3 maxPos = grid.GetCellPosition(gridSize);
+                Vector3 maxPos = grid.LocationToPosition(gridSize);
                 maxPos.x -= grid.cellSize * .5f;
                 maxPos.z += grid.cellSize * .5f;
 
@@ -224,7 +224,7 @@ namespace Syadeu.Presentation.Map
                 for (int i = 0; i < gridEntities.Length; i++)
                 {
                     Vector3
-                            cellPos = grid.GetCellPosition(gridEntities[i]),
+                            cellPos = grid.IndexToPosition(gridEntities[i]),
                             p1 = new Vector3(cellPos.x - sizeHalf, cellPos.y + .1f, cellPos.z - sizeHalf),
                             p2 = new Vector3(cellPos.x - sizeHalf, cellPos.y + .1f, cellPos.z + sizeHalf),
                             p3 = new Vector3(cellPos.x + sizeHalf, cellPos.y + .1f, cellPos.z + sizeHalf),
@@ -240,7 +240,7 @@ namespace Syadeu.Presentation.Map
             {
                 float sizeHalf = grid.cellSize * .5f;
                 Vector3
-                    cellPos = grid.GetCellPosition(index),
+                    cellPos = grid.IndexToPosition(index),
                     p1 = new Vector3(cellPos.x - sizeHalf, cellPos.y + .1f, cellPos.z - sizeHalf),
                     p2 = new Vector3(cellPos.x - sizeHalf, cellPos.y + .1f, cellPos.z + sizeHalf),
                     p3 = new Vector3(cellPos.x + sizeHalf, cellPos.y + .1f, cellPos.z + sizeHalf),
@@ -284,12 +284,17 @@ namespace Syadeu.Presentation.Map
         public float3 IndexToPosition(int idx)
         {
             if (GridMap.Grid == null) throw new System.Exception();
-            return GridMap.Grid.GetCellPosition(idx);
+            return GridMap.Grid.IndexToPosition(idx);
+        }
+        public int2 IndexToLocation(int idx)
+        {
+            if (GridMap.Grid == null) throw new System.Exception();
+            return GridMap.Grid.IndexToLocation(idx);
         }
         public int PositionToIndex(float3 position)
         {
             if (GridMap.Grid == null) throw new System.Exception();
-            return GridMap.Grid.GetCellIndex(position);
+            return GridMap.Grid.PositionToIndex(position);
         }
 
         public int[] GetRange(int idx, int range)

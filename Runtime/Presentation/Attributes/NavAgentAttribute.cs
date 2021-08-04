@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Mono;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Map;
 using System;
 using System.Collections;
 //using Syadeu.ThreadSafe;
@@ -75,6 +76,12 @@ namespace Syadeu.Presentation.Attributes
 
             tr.position = new ThreadSafeVector3(PreviousTarget);
             if (NavMeshAgent.isOnNavMesh) NavMeshAgent.ResetPath();
+
+            if (Parent.GetAttribute<GridSizeAttribute>() != null)
+            {
+                Parent.GetAttribute<GridSizeAttribute>().UpdateGridCell();
+            }
+
             IsMoving = false;
         }
     }
@@ -87,7 +94,7 @@ namespace Syadeu.Presentation.Attributes
             NavAgentAttribute att = (NavAgentAttribute)attribute;
 
             att.NavMeshAgent = monoObj.GetComponent<NavMeshAgent>();
-            if (att.NavMeshAgent == null) att.NavMeshAgent = monoObj.gameObject.AddComponent<NavMeshAgent>();
+            if (att.NavMeshAgent == null) att.NavMeshAgent = monoObj.AddComponent<NavMeshAgent>();
 
             UpdateNavMeshAgent(att, att.NavMeshAgent);
 

@@ -417,11 +417,11 @@ namespace Syadeu.Database
         {
             int2 gridSize = grid.gridSize;
 
-            Vector3 minPos = grid.GetCellPosition(0);
+            Vector3 minPos = grid.IndexToPosition(0);
             minPos.x -= grid.cellSize * .5f;
             minPos.z += grid.cellSize * .5f;
 
-            Vector3 maxPos = grid.GetCellPosition(gridSize);
+            Vector3 maxPos = grid.LocationToPosition(gridSize);
             maxPos.x -= grid.cellSize * .5f;
             maxPos.z += grid.cellSize * .5f;
 
@@ -573,12 +573,14 @@ namespace Syadeu.Database
             return cell;
         }
 
-        public int GetCellIndex(float3 position) => GridExtensions.PositionToIndex(in m_AABB, in m_CellSize, in position);
-        public int2 GetCellLocation(float3 position) => GridExtensions.PositionToLocation(in m_AABB, in m_CellSize, in position);
+        public int PositionToIndex(float3 position) => GridExtensions.PositionToIndex(in m_AABB, in m_CellSize, in position);
+        public int2 PositionToLocation(float3 position) => GridExtensions.PositionToLocation(in m_AABB, in m_CellSize, in position);
 
-        public float3 GetCellPosition(int idx) => GridExtensions.IndexToPosition(in m_AABB, in m_CellSize, in idx);
-        public float3 GetCellPosition(int2 location) => GridExtensions.LocationToPosition(in m_AABB, in m_CellSize, in location);
-        public float3 GetCellPosition(float3 position)
+        public float3 IndexToPosition(int idx) => GridExtensions.IndexToPosition(in m_AABB, in m_CellSize, in idx);
+        public int2 IndexToLocation(int idx) => GridExtensions.IndexToLocation(in m_AABB, in m_CellSize, in idx);
+
+        public float3 LocationToPosition(int2 location) => GridExtensions.LocationToPosition(in m_AABB, in m_CellSize, in location);
+        public float3 PositionToPosition(float3 position)
         {
             int2 idx = GridExtensions.PositionToLocation(in m_AABB, in m_CellSize, in position);
             return GridExtensions.LocationToPosition(in m_AABB, in m_CellSize, in idx);

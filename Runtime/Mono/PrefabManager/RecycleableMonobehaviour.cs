@@ -107,7 +107,8 @@ namespace Syadeu.Mono
         {
             m_GameObject = base.gameObject;
             m_Transform = base.transform;
-            m_Components.AddRange(GetComponentsInChildren(TypeHelper.TypeOf<MonoBehaviour>.Type));
+            //m_Components.AddRange(base.GetComponents(TypeHelper.TypeOf<Component>.Type));
+            m_Components.AddRange(GetComponentsInChildren(TypeHelper.TypeOf<Component>.Type, true));
             OnCreated();
         }
         /// <summary>
