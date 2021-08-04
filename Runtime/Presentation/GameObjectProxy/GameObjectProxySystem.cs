@@ -230,9 +230,11 @@ namespace Syadeu.Presentation
                     for (int i = 0; i < temp3; i++)
                     {
                         if (!m_RequestDestories.TryDequeue(out Hash objHash)) continue;
-
+                        
                         int objIdx = m_MappedGameObjectIdxes[objHash];
                         int trIdx = m_MappedTransformIdxes[m_MappedGameObjects[objIdx].m_Transform];
+                        CoreSystem.Logger.Log(Channel.Proxy,
+                            $"Recieved destroy operation at {objIdx}: {objHash}");
 
                         OnDataObjectDestroyAsync?.Invoke(m_MappedGameObjects[objIdx]);
 
@@ -244,16 +246,11 @@ namespace Syadeu.Presentation
 
                         // 여기서 지우면 다른 오브젝트의 인덱스가 헷갈리니까 일단 위치저장
                         m_RemovedTransformIdxes.Add(trIdx);
-                        //m_MappedTransformIdxes.Remove(m_MappedGameObjects[objIdx].m_Transform);
 
                         ((IDisposable)m_MappedGameObjects[objIdx]).Dispose();
 
                         // 여기서 지우면 다른 오브젝트의 인덱스가 헷갈리니까 일단 위치저장
                         m_RemovedGameObjectIdxes.Add(objIdx);
-                        //m_MappedGameObjectIdxes.Remove(objHash);
-
-                        CoreSystem.Logger.Log(Channel.Proxy,
-                            $"Recieved destroy operation at {objIdx}: {objHash}");
                     }
                 }
             }
