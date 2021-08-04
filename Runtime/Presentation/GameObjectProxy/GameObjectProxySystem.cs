@@ -204,7 +204,8 @@ namespace Syadeu.Presentation
             int trUpdateCount = m_UpdateTransforms.Count;
             for (int i = 0; i < trUpdateCount; i++)
             {
-                if (!m_UpdateTransforms.TryDequeue(out Hash trHash)) continue;
+                if (!m_UpdateTransforms.TryDequeue(out Hash trHash) ||
+                    !m_MappedTransformIdxes.ContainsKey(trHash)) continue;
 
                 unsafe
                 {
@@ -224,13 +225,15 @@ namespace Syadeu.Presentation
             return base.BeforePresentation();
         }
 
-        protected override PresentationResult AfterPresentationAsync()
+        protected override PresentationResult AfterPresentation()
         {
+            if (m_LoadingLock) return base.AfterPresentationAsync();
+
             #region Object Destory Work
             int temp3 = m_RequestDestories.Count;
             if (temp3 > 0)
             {
-                if (!m_LoadingLock && m_VisibleCheckJob.IsDone)
+                if (m_VisibleCheckJob.IsDone)
                 {
                     for (int i = 0; i < temp3; i++)
                     {
@@ -273,12 +276,8 @@ namespace Syadeu.Presentation
                 CoreSystem.Logger.Log(Channel.Proxy,
                     $"Data re-indexing started, {m_RemovedGameObjectIdxes.Count}");
 
-                NativeArray<DataGameObject>
-                    tempObjects = new NativeArray<DataGameObject>(m_MappedGameObjects.Length - m_RemovedGameObjectIdxes.Count, Allocator.TempJob);
-                NativeArray<DataTransform>
-                    tempTrs = new NativeArray<DataTransform>(m_MappedTransforms.Length - m_RemovedTransformIdxes.Count, Allocator.TempJob);
-
-                for (int i = 0, j = 0; i < m_MappedGameObjects.Length; i++, j++)
+                int objCount = m_MappedGameObjects.Length;
+                for (int i = 0, j = 0; j < objCount; i++, j++)
                 {
                     if (m_RemovedGameObjectIdxes.Contains(j))
                     {
@@ -289,16 +288,11 @@ namespace Syadeu.Presentation
                         i--;
                         continue;
                     }
-
-                    tempObjects[i] = m_MappedGameObjects[i];
                     m_MappedGameObjectIdxes[m_MappedGameObjects[i].m_Idx] = i;
                 }
 
-                m_MappedGameObjects.Resize(tempObjects.Length, NativeArrayOptions.UninitializedMemory);
-                tempObjects.CopyTo(m_MappedGameObjects);
-                tempObjects.Dispose();
-
-                for (int i = 0, j = 0; i < m_MappedTransforms.Length; i++, j++)
+                int trCount = m_MappedTransforms.Length;
+                for (int i = 0, j = 0; j < trCount; i++, j++)
                 {
                     if (m_RemovedTransformIdxes.Contains(j))
                     {
@@ -309,18 +303,12 @@ namespace Syadeu.Presentation
                         i--;
                         continue;
                     }
-
-                    tempTrs[i] = m_MappedTransforms[i];
                     m_MappedTransformIdxes[m_MappedTransforms[i].m_Idx] = i;
                 }
-
-                m_MappedTransforms.Resize(tempTrs.Length, NativeArrayOptions.UninitializedMemory);
-                tempTrs.CopyTo(m_MappedTransforms);
-                tempTrs.Dispose();
             }
             #endregion
 
-            return base.AfterPresentationAsync();
+            return base.AfterPresentation();
         }
         public override void Dispose()
         {
@@ -346,13 +334,18 @@ namespace Syadeu.Presentation
         }
         #endregion
 
-        internal void DestoryDataObject(Hash objHash)
+        unsafe internal void DestoryDataObject(Hash objHash)
         {
-            if (m_RequestDestories.Contains(objHash))
+            ref DataGameObject obj = ref *GetDataGameObjectPointer(objHash);
+
+            //if (m_RequestDestories.Contains(objHash))
+            if (obj.m_Destroyed)
             {
                 CoreSystem.Logger.LogError(Channel.Presentation, $"Already queued {objHash}");
                 return;
             }
+
+            obj.m_Destroyed = true;
             m_RequestDestories.Enqueue(objHash);
         }
         public void RequestUpdateTransform(Hash trHash)
@@ -547,6 +540,20 @@ namespace Syadeu.Presentation
                 {
                     InstantiatePrefab(prefab, (other) =>
                     {
+                        if (!m_MappedTransformIdxes.ContainsKey(trIdx))
+                        {
+                            if (other.InitializeOnCall) other.Terminate();
+                            other.transform.position = INIT_POSITION;
+
+                            if (!m_TerminatedProxies.TryGetValue(prefab, out Queue<RecycleableMonobehaviour> pool))
+                            {
+                                pool = new Queue<RecycleableMonobehaviour>();
+                                m_TerminatedProxies.Add(prefab, pool);
+                            }
+                            pool.Enqueue(other);
+                            return;
+                        }
+
                         ref DataTransform tr = ref *(p + m_MappedTransformIdxes[trIdx]);
                         tr.m_ProxyIdx = new int2(prefab, other.m_Idx);
 
@@ -554,21 +561,11 @@ namespace Syadeu.Presentation
                         other.transform.rotation = tr.m_Rotation;
                         other.transform.localScale = tr.m_LocalScale;
 
-                        if (other.InitializeOnCall) other.Initialize();
+                        //if (other.InitializeOnCall) other.Initialize();
 
                         OnDataObjectProxyCreated?.Invoke(tr.gameObject, other);
                         CoreSystem.Logger.Log(Channel.Proxy, true,
                             $"DataGameobject({tr.m_GameObject}) proxy created");
-
-                        //obj.Terminate();
-                        //obj.transform.position = INIT_POSITION;
-
-                        //if (!m_TerminatedProxies.TryGetValue(prefab, out Queue<RecycleableMonobehaviour> pool))
-                        //{
-                        //    pool = new Queue<RecycleableMonobehaviour>();
-                        //    m_TerminatedProxies.Add(prefab, pool);
-                        //}
-                        //pool.Enqueue(obj);
                     });
                 }
 
@@ -627,8 +624,8 @@ namespace Syadeu.Presentation
             //    }
             //}
 
-            obj.Terminate();
-            obj.transform.position = INIT_POSITION;
+            if (obj.Activated) obj.Terminate();
+            //obj.transform.position = INIT_POSITION;
 
             if (!m_TerminatedProxies.TryGetValue(prefab, out Queue<RecycleableMonobehaviour> pool))
             {
@@ -753,13 +750,13 @@ namespace Syadeu.Presentation
         unsafe internal DataGameObject* GetDataGameObjectPointer(Hash objHash)
         {
             if (m_Disposed) return null;
-            if (!m_MappedGameObjectIdxes.TryGetValue(objHash, out int idx))
-            {
-                CoreSystem.Logger.LogWarning(Channel.Proxy,
-                    $"DataGameObject({objHash}) is already destroyed or not found. Request ignored.");
-                return null;
-            }
-            //int idx = m_MappedGameObjectIdxes[objHash];
+            //if (!m_MappedGameObjectIdxes.TryGetValue(objHash, out int idx))
+            //{
+            //    CoreSystem.Logger.LogWarning(Channel.Proxy,
+            //        $"DataGameObject({objHash}) is already destroyed or not found. Request ignored.");
+            //    return null;
+            //}
+            int idx = m_MappedGameObjectIdxes[objHash];
 
             DataGameObject* obj = ((DataGameObject*)m_MappedGameObjects.GetUnsafePtr()) + idx;
             return obj;

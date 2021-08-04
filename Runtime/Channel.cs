@@ -20,7 +20,9 @@
         Proxy = 1 << 9,
 
         Audio = 1 << 20,
+
         GC = 1 << 21,
+        Thread = 1 << 22,
 
         All = ~0
     }

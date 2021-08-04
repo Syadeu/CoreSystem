@@ -16,6 +16,8 @@ namespace Syadeu.Mono
     /// <typeparam name="T"></typeparam>
     public abstract class RecycleableMonobehaviour : MonoBehaviour
     {
+        private static Vector3 INIT_POSITION = new Vector3(-9999, -9999, -9999);
+
         public delegate bool TerminateCondition();
         /// <summary>
         /// <see cref="Presentation.GameObjectProxySystem.m_Instances"/> value 리스트의 인덱스입니다.
@@ -121,6 +123,11 @@ namespace Syadeu.Mono
 
         internal void Terminate()
         {
+            CoreSystem.Logger.ThreadBlock(ThreadInfo.Unity);
+            if (!Activated) throw new Exception("not initialized");
+
+            transform.position = INIT_POSITION;
+
             OnTerminate();
             Activated = false;
         }
