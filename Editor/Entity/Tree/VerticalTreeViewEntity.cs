@@ -112,6 +112,10 @@ namespace SyadeuEditor.Tree
 
             return output;
         }
+        public void AddElement<T>(T element) where T : VerticalTreeElement
+        {
+            m_Elements.Add(element);
+        }
 
         protected virtual void BeforeDraw() { }
         protected virtual void BeforeDrawChilds() { }
