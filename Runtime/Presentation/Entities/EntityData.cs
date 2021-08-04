@@ -60,7 +60,7 @@ namespace Syadeu.Presentation.Entities
         /// <inheritdoc cref="IEntityData.Idx"/>
         private readonly Hash m_Idx;
 
-        public T Target => m_Idx.Equals(Hash.Empty) ? null : (T)PresentationSystem<EntitySystem>.System.m_ObjectEntities[m_Idx];
+        public T Target => m_Idx.Equals(Hash.Empty) || CoreSystem.s_BlockCreateInstance ? null : (T)PresentationSystem<EntitySystem>.System.m_ObjectEntities[m_Idx];
 
         public string Name => m_Idx.Equals(Hash.Empty) ? c_Invalid : Target.Name;
         public Hash Idx => m_Idx;

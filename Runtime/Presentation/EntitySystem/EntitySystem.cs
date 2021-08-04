@@ -190,7 +190,8 @@ namespace Syadeu.Presentation
             for (int i = 0; i < entityList.Length; i++)
             {
                 var entity = entityList[i];
-                EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntityData(entity.Idx);
+                //EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntityData(entity.Idx);
+                EntityData<IEntityData> entityData = new EntityData<IEntityData>(entity.Idx);
 
                 CoreSystem.Logger.Log(Channel.Entity,
     $"Destroying entity({entity.Name})");
@@ -468,7 +469,7 @@ namespace Syadeu.Presentation
 
             ProcessEntityOnDestroy(this, m_ObjectEntities[hash]);
 
-            if (m_ObjectEntities[hash] is IEntity entity)
+            if (!CoreSystem.s_BlockCreateInstance && m_ObjectEntities[hash] is IEntity entity)
             {
                 DataGameObject obj = entity.gameObject;
                 obj.Destroy();
