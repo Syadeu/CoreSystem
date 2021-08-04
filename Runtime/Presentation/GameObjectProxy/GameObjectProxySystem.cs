@@ -166,6 +166,8 @@ namespace Syadeu.Presentation
 
         protected override PresentationResult BeforePresentation()
         {
+            const int c_ChunkSize = 100;
+
             if (m_LoadingLock) return base.BeforePresentation();
 
             #region Object Proxy Work
@@ -177,6 +179,7 @@ namespace Syadeu.Presentation
                 if (!m_MappedTransformIdxes.ContainsKey(trIdx)) continue;
 
                 RequestProxy(trIdx);
+                if (i != 0 && i % c_ChunkSize == 0) break;
             }
 
             int removeProxyCount = m_RemoveProxyList.Count;
@@ -187,6 +190,8 @@ namespace Syadeu.Presentation
 
                 RecycleableMonobehaviour obj = DetechProxy(trIdx, out var prefab);
                 ReleaseProxy(prefab, obj);
+
+                if (i != 0 && i % c_ChunkSize == 0) break;
             }
 
             #endregion
@@ -214,6 +219,8 @@ namespace Syadeu.Presentation
                     else if (!dataTr.HasProxyObject) continue;
                 }
                 UpdateDataTransform(trHash);
+
+                if (i != 0 && i % c_ChunkSize == 0) break;
             }
 
             return base.BeforePresentation();
