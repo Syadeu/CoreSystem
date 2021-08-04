@@ -51,6 +51,7 @@ namespace Syadeu.Presentation
         private readonly Dictionary<Type, List<IAttributeProcessor>> m_AttributeProcessors = new Dictionary<Type, List<IAttributeProcessor>>();
         private readonly Dictionary<Type, List<IEntityDataProcessor>> m_EntityProcessors = new Dictionary<Type, List<IEntityDataProcessor>>();
 
+        private readonly Queue<(Action<AttributeBase, EntityData<IEntityData>>, AttributeBase, EntityData<IEntityData>)> m_AttributeSyncOperations = new Queue<(Action<AttributeBase, EntityData<IEntityData>>, AttributeBase, EntityData<IEntityData>)>();
         private readonly Queue<(Action<EntityData<IEntityData>>, EntityData<IEntityData>)> m_EntitySyncOperations = new Queue<(Action<EntityData<IEntityData>>, EntityData<IEntityData>)>();
 
         internal DataContainerSystem m_DataContainerSystem;
@@ -170,6 +171,13 @@ namespace Syadeu.Presentation
             {
                 var temp = m_EntitySyncOperations.Dequeue();
                 temp.Item1.Invoke(temp.Item2);
+            }
+
+            int syncAttOperCount = m_AttributeSyncOperations.Count;
+            for (int i = 0; i < syncAttOperCount; i++)
+            {
+                var temp = m_AttributeSyncOperations.Dequeue();
+                temp.Item1.Invoke(temp.Item2, temp.Item3);
             }
 
             return base.OnPresentation();
@@ -456,6 +464,7 @@ namespace Syadeu.Presentation
 
             return InternalCreateObject(original);
         }
+
         /// <summary>
         /// 해당 엔티티를 즉시 파괴합니다.
         /// </summary>
@@ -526,10 +535,7 @@ namespace Syadeu.Presentation
                             IAttributeProcessor processor = groupProcessors[j];
 
                             processor.OnCreated(other, entityData);
-                            CoreSystem.AddForegroundJob(() =>
-                            {
-                                processor.OnCreatedSync(other, entityData);
-                            });
+                            system.m_AttributeSyncOperations.Enqueue((processor.OnCreatedSync, other, entityData));
                         }
                         CoreSystem.Logger.Log(Channel.Entity, $"Processed OnCreated at entity({entity.Name}), {t.Name}");
                     }
@@ -542,10 +548,7 @@ namespace Syadeu.Presentation
                         IAttributeProcessor processor = processors[j];
 
                         processor.OnCreated(other, entityData);
-                        CoreSystem.AddForegroundJob(() =>
-                        {
-                            processor.OnCreatedSync(other, entityData);
-                        });
+                        system.m_AttributeSyncOperations.Enqueue((processor.OnCreatedSync, other, entityData));
                     }
                     CoreSystem.Logger.Log(Channel.Entity, $"Processed OnCreated at entity({entity.Name}), {t.Name}");
                 }
@@ -561,10 +564,6 @@ namespace Syadeu.Presentation
 
                     processor.OnCreated(entityData);
                     system.m_EntitySyncOperations.Enqueue((processor.OnCreatedSync, entityData));
-                    //CoreSystem.AddForegroundJob(() =>
-                    //{
-                    //    processor.OnCreatedSync(entityData);
-                    //});
                 }
             }
             #endregion
@@ -635,10 +634,7 @@ namespace Syadeu.Presentation
                         IAttributeProcessor processor = processors[j];
 
                         processor.OnDestroy(other, entityData);
-                        CoreSystem.AddForegroundJob(() =>
-                        {
-                            processor.OnDestroySync(other, entityData);
-                        });
+                        system.m_AttributeSyncOperations.Enqueue((processor.OnDestroySync, other, entityData));
                     }
                 }
 
@@ -655,10 +651,6 @@ namespace Syadeu.Presentation
 
                     processor.OnDestroy(entityData);
                     system.m_EntitySyncOperations.Enqueue((processor.OnDestroySync, entityData));
-                    //CoreSystem.AddForegroundJob(() =>
-                    //{
-                    //    processor.OnDestroySync(entityData);
-                    //});
                 }
             }
             #endregion
