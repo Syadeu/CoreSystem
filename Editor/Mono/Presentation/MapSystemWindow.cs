@@ -777,7 +777,7 @@ namespace SyadeuEditor.Presentation.Map
                 var entity = m_SelectedGameObject.m_Object.GetObject();
                 using (new EditorUtils.BoxBlock(Color.black))
                 {
-                    EditorUtils.StringRich(entity.Name, 13);
+                    EditorUtils.StringRich(entity.Name, 15);
 
                     entity.Center = EditorGUILayout.Vector3Field("Center: ", entity.Center);
                     entity.Size = EditorGUILayout.Vector3Field("Size: ", entity.Size);
@@ -787,6 +787,13 @@ namespace SyadeuEditor.Presentation.Map
                     {
                         ReflectionHelperEditor.GetDrawer(gridSizeAtt).OnGUI();
                     }
+
+                    EditorGUILayout.BeginHorizontal();
+                    if (GUILayout.Button("Save"))
+                    {
+                        EntityDataList.Instance.SaveData(entity);
+                    }
+                    EditorGUILayout.EndHorizontal();
                 }
             }
 
