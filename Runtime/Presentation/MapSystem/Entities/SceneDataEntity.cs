@@ -81,7 +81,7 @@ namespace Syadeu.Presentation.Map
         }
         protected override void OnDestroy(EntityData<SceneDataEntity> entity)
         {
-            if (!entity.Target.IsValid()) return;
+            if (entity.Target == null || !entity.Target.IsValid()) return;
 
             entity.Target.DestroyMapData();
         }

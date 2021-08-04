@@ -81,8 +81,7 @@ namespace Syadeu.Presentation.Map
         {
             MapDataEntity entity = e.Target;
 
-            if (!entity.DestroyChildOnDestroy) return;
-
+            if (entity == null || !entity.DestroyChildOnDestroy) return;
             for (int i = 0; i < entity.CreatedEntities.Length; i++)
             {
                 if (entity.CreatedEntities[i].IsValid())
