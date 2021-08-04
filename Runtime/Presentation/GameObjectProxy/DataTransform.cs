@@ -9,7 +9,7 @@ using Unity.Mathematics;
 
 namespace Syadeu.Presentation
 {
-    public struct DataTransform : IInternalDataComponent, IReadOnlyTransform, IValidation, IEquatable<DataTransform>
+    public struct DataTransform : IValidation, IEquatable<DataTransform>
     {
         const string c_WarningText = "This Data Transform has been destroyed or didn\'t created propery. Request ignored.";
 
@@ -20,34 +20,31 @@ namespace Syadeu.Presentation
         internal Hash m_Idx;
         internal int2 m_ProxyIdx;
         internal PrefabReference m_PrefabIdx;
+
         internal bool m_EnableCull;
-
         internal bool m_IsVisible;
-
-        Hash IInternalDataComponent.GameObject => m_GameObject;
-        Hash IInternalDataComponent.Idx => m_Idx;
-        bool IInternalDataComponent.HasProxyObject => !m_ProxyIdx.Equals(ProxyNull) && !m_ProxyIdx.Equals(ProxyQueued);
-        internal bool HasProxyObject => !m_ProxyIdx.Equals(ProxyNull) && !m_ProxyIdx.Equals(ProxyQueued);
-        bool IInternalDataComponent.ProxyRequested => m_ProxyIdx.Equals(ProxyQueued);
-        internal bool ProxyRequested => m_ProxyIdx.Equals(ProxyQueued);
-
-        DataTransform IInternalDataComponent.transform => this;
-        bool IEquatable<IInternalDataComponent>.Equals(IInternalDataComponent other) => m_Idx.Equals(other.Idx);
-        bool IEquatable<DataTransform>.Equals(DataTransform other) => m_Idx.Equals(other.m_Idx);
 
         internal Vector3 m_Position;
         internal quaternion m_Rotation;
         internal Vector3 m_LocalScale;
 
+        #region Methods
+
+        internal bool HasProxyObject => !m_ProxyIdx.Equals(ProxyNull) && !m_ProxyIdx.Equals(ProxyQueued);
+        internal bool ProxyRequested => m_ProxyIdx.Equals(ProxyQueued);
+
+        bool IEquatable<DataTransform>.Equals(DataTransform other) => m_Idx.Equals(other.m_Idx);
+
         internal RecycleableMonobehaviour ProxyObject
         {
             get
             {
-                if (!((IInternalDataComponent)this).HasProxyObject || ((IInternalDataComponent)this).ProxyRequested) return null;
+                if (!HasProxyObject || ProxyRequested) return null;
                 return PresentationSystem<GameObjectProxySystem>.System.m_Instances[m_ProxyIdx.x][m_ProxyIdx.y];
             }
         }
         unsafe private DataTransform* GetPointer() => PresentationSystem<GameObjectProxySystem>.System.GetDataTransformPointer(m_Idx);
+        unsafe private DataTransform* GetReadOnlyPointer() => PresentationSystem<GameObjectProxySystem>.System.GetReadOnlyDataTransformPointer(m_Idx);
         private ref DataTransform GetRef()
         {
             unsafe
@@ -144,7 +141,11 @@ namespace Syadeu.Presentation
                     CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);
                     return Vector3.Zero;
                 }
-                return GetRef().m_Position;
+
+                unsafe
+                {
+                    return (*GetReadOnlyPointer()).m_Position;
+                }
             }
             set
             {
@@ -194,7 +195,10 @@ namespace Syadeu.Presentation
                     CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);
                     return quaternion.identity;
                 }
-                return GetRef().m_Rotation;
+                unsafe
+                {
+                    return (*GetReadOnlyPointer()).m_Rotation;
+                }
             }
             set
             {
@@ -224,7 +228,10 @@ namespace Syadeu.Presentation
                     CoreSystem.Logger.LogWarning(Channel.Presentation, c_WarningText);
                     return Vector3.Zero;
                 }
-                return GetRef().m_LocalScale;
+                unsafe
+                {
+                    return (*GetReadOnlyPointer()).m_LocalScale;
+                }
             }
             set
             {
@@ -244,16 +251,104 @@ namespace Syadeu.Presentation
         public float4x4 localToWorldMatrix => Render.RenderSystem.LocalToWorldMatrix(position, rotation);
         public float4x4 worldToLocalMatrix => math.inverse(localToWorldMatrix);
 
-        Vector3 IReadOnlyTransform.position => position;
-        Vector3 IReadOnlyTransform.eulerAngles => eulerAngles;
-        quaternion IReadOnlyTransform.rotation => rotation;
-
-        Vector3 IReadOnlyTransform.right => right;
-        Vector3 IReadOnlyTransform.up => up;
-        Vector3 IReadOnlyTransform.forward => forward;
-
-        Vector3 IReadOnlyTransform.localScale => localScale;
 #line default
 #pragma warning restore IDE1006 // Naming Styles
+
+        #endregion
+
+        #region ReadOnly
+
+        public readonly struct ReadOnly
+        {
+            unsafe private readonly DataTransform* m_P;
+
+#pragma warning disable IDE1006 // Naming Styles
+            public PrefabReference prefab
+            {
+                get
+                {
+                    unsafe
+                    {
+                        return (*m_P).m_PrefabIdx;
+                    }
+                }
+            }
+
+            public bool isVisible
+            {
+                get
+                {
+                    unsafe
+                    {
+                        return (*m_P).m_IsVisible;
+                    }
+                }
+            }
+
+            public Vector3 position
+            {
+                get
+                {
+                    unsafe
+                    {
+                        return (*m_P).m_Position;
+                    }
+                }
+            }
+            public Vector3 eulerAngles
+            {
+                get
+                {
+                    var temp = rotation.Euler();
+                    return temp.ToThreadSafe() * UnityEngine.Mathf.Rad2Deg;
+                }
+            }
+            public quaternion rotation
+            {
+                get
+                {
+                    unsafe
+                    {
+                        return (*m_P).m_Rotation;
+                    }
+                }
+            }
+
+            public Vector3 right => rotation * Vector3.Right;
+            public Vector3 up => rotation * Vector3.Up;
+            public Vector3 forward => rotation * Vector3.Forward;
+
+            public Vector3 localScale
+            {
+                get
+                {
+                    unsafe
+                    {
+                        return (*m_P).m_LocalScale;
+                    }
+                }
+            }
+
+            public float4x4 localToWorldMatrix => Render.RenderSystem.LocalToWorldMatrix(position, rotation);
+            public float4x4 worldToLocalMatrix => math.inverse(localToWorldMatrix);
+#pragma warning restore IDE1006 // Naming Styles
+
+            unsafe internal ReadOnly(DataTransform* p)
+            {
+                m_P = p;
+            }
+        }
+
+        public ReadOnly AsReadOnly()
+        {
+            ReadOnly readOnly;
+            unsafe
+            {
+                readOnly = new ReadOnly(GetReadOnlyPointer());
+            }
+            return readOnly;
+        }
+
+        #endregion
     }
 }

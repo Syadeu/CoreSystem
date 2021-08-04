@@ -45,8 +45,6 @@ namespace Syadeu.Presentation
         private readonly ConcurrentQueue<Hash> m_UpdateTransforms = new ConcurrentQueue<Hash>();
         private readonly ConcurrentQueue<Action> m_RequestedJobs = new ConcurrentQueue<Action>();
         private readonly ConcurrentQueue<Hash> m_RequestDestories = new ConcurrentQueue<Hash>();
-        //private readonly ConcurrentQueue<IInternalDataComponent> m_RequestProxies = new ConcurrentQueue<IInternalDataComponent>();
-        //private readonly ConcurrentQueue<IInternalDataComponent> m_RemoveProxies = new ConcurrentQueue<IInternalDataComponent>();
 
         private int m_VisibleCheckJobWorker;
         private BackgroundJob m_VisibleCheckJob;
@@ -766,6 +764,13 @@ namespace Syadeu.Presentation
             DataGameObject* obj = ((DataGameObject*)m_MappedGameObjects.GetUnsafePtr()) + idx;
             return obj;
         }
+        unsafe internal DataTransform* GetReadOnlyDataTransformPointer(Hash trHash)
+        {
+            int idx = m_MappedTransformIdxes[trHash];
+            DataTransform* targetTr = ((DataTransform*)m_MappedTransforms.GetUnsafeReadOnlyPtr()) + idx;
+            return targetTr;
+        }
+
         public DataTransform GetDataTransform(Hash hash)
         {
             unsafe
