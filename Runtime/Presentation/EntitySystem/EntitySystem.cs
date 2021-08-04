@@ -51,6 +51,8 @@ namespace Syadeu.Presentation
         private readonly Dictionary<Type, List<IAttributeProcessor>> m_AttributeProcessors = new Dictionary<Type, List<IAttributeProcessor>>();
         private readonly Dictionary<Type, List<IEntityDataProcessor>> m_EntityProcessors = new Dictionary<Type, List<IEntityDataProcessor>>();
 
+        private readonly Queue<(Action<EntityData<IEntityData>>, EntityData<IEntityData>)> m_EntitySyncOperations = new Queue<(Action<EntityData<IEntityData>>, EntityData<IEntityData>)>();
+
         internal DataContainerSystem m_DataContainerSystem;
         internal GameObjectProxySystem m_ProxySystem;
 
@@ -159,6 +161,18 @@ namespace Syadeu.Presentation
             m_EntityGameObjects.Remove(obj.m_Idx);
             m_ObjectHashSet.Remove(entityHash);
             m_ObjectEntities.Remove(entityHash);
+        }
+
+        protected override PresentationResult OnPresentation()
+        {
+            int syncOperCount = m_EntitySyncOperations.Count;
+            for (int i = 0; i < syncOperCount; i++)
+            {
+                var temp = m_EntitySyncOperations.Dequeue();
+                temp.Item1.Invoke(temp.Item2);
+            }
+
+            return base.OnPresentation();
         }
         protected override PresentationResult OnPresentationAsync()
         {
@@ -545,10 +559,11 @@ namespace Syadeu.Presentation
                     IEntityDataProcessor processor = entityProcessor[i];
 
                     processor.OnCreated(entityData);
-                    CoreSystem.AddForegroundJob(() =>
-                    {
-                        processor.OnCreatedSync(entityData);
-                    });
+                    system.m_EntitySyncOperations.Enqueue((processor.OnCreatedSync, entityData));
+                    //CoreSystem.AddForegroundJob(() =>
+                    //{
+                    //    processor.OnCreatedSync(entityData);
+                    //});
                 }
             }
             #endregion
@@ -638,10 +653,11 @@ namespace Syadeu.Presentation
                     IEntityDataProcessor processor = entityProcessor[i];
 
                     processor.OnDestroy(entityData);
-                    CoreSystem.AddForegroundJob(() =>
-                    {
-                        processor.OnDestroySync(entityData);
-                    });
+                    system.m_EntitySyncOperations.Enqueue((processor.OnDestroySync, entityData));
+                    //CoreSystem.AddForegroundJob(() =>
+                    //{
+                    //    processor.OnDestroySync(entityData);
+                    //});
                 }
             }
             #endregion

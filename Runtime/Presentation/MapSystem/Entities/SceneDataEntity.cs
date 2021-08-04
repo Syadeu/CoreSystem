@@ -49,8 +49,8 @@ namespace Syadeu.Presentation.Map
 
             for (int i = 0; i < m_MapData.Length; i++)
             {
-                EntityData<MapDataEntity> temp = system.CreateObject(m_MapData[i]);
-                CreatedMapData.Add(temp);
+                EntityData<IEntityData> temp = system.CreateObject(m_MapData[i]);
+                CreatedMapData.Add(EntityData<MapDataEntity>.GetEntityData(temp.Idx));
             }
 
             IsMapDataCreated = true;

@@ -51,10 +51,10 @@ namespace Syadeu.Presentation.Entities
     public abstract class EntityDataProcessor<T> : ProcessorBase, IEntityDataProcessor where T : EntityDataBase
     {
         Type IProcessor.Target => TargetEntity;
-        void IEntityDataProcessor.OnCreated(EntityData<IEntityData> entity) => OnCreated(entity);
-        void IEntityDataProcessor.OnCreatedSync(EntityData<IEntityData> entity) => OnCreatedSync(entity);
-        void IEntityDataProcessor.OnDestroy(EntityData<IEntityData> entity) => OnDestroy(entity);
-        void IEntityDataProcessor.OnDestroySync(EntityData<IEntityData> entity) => OnDestorySync(entity);
+        void IEntityDataProcessor.OnCreated(EntityData<IEntityData> entity) => OnCreated(new EntityData<T>(entity.Idx));
+        void IEntityDataProcessor.OnCreatedSync(EntityData<IEntityData> entity) => OnCreatedSync(new EntityData<T>(entity.Idx));
+        void IEntityDataProcessor.OnDestroy(EntityData<IEntityData> entity) => OnDestroy(new EntityData<T>(entity.Idx));
+        void IEntityDataProcessor.OnDestroySync(EntityData<IEntityData> entity) => OnDestorySync(new EntityData<T>(entity.Idx));
 
         private Type TargetEntity => TypeHelper.TypeOf<T>.Type;
         /// <inheritdoc cref="EntityDataProcessor.OnCreated(EntityData{IEntityData})"/>
