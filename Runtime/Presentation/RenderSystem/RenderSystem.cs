@@ -57,11 +57,11 @@ namespace Syadeu.Presentation.Render
                 if (to == null) return;
 
                 m_Matrix4x4 = GetCameraMatrix4X4(to);
-                if (to.GetComponent<CameraComponent>() == null)
-                {
-                    to.gameObject.AddComponent<CameraComponent>().Initialize(this);
-                }
-                else to.GetComponent<CameraComponent>().Initialize(this);
+                //if (to.GetComponent<CameraComponent>() == null)
+                //{
+                //    to.gameObject.AddComponent<CameraComponent>().Initialize(this);
+                //}
+                //else to.GetComponent<CameraComponent>().Initialize(this);
             };
             m_ScreenOffset = SyadeuSettings.Instance.m_ScreenOffset;
 
@@ -245,60 +245,60 @@ namespace Syadeu.Presentation.Render
         public static float4x4 WorldToLocalMatrix(float3 translation, quaternion rotation) => math.inverse(LocalToWorldMatrix(translation, rotation));
     }
 
-    public sealed class CameraComponent : MonoBehaviour
-    {
-        private RenderSystem m_System;
+    //public sealed class CameraComponent : MonoBehaviour
+    //{
+    //    private RenderSystem m_System;
 
-        public void Initialize(RenderSystem system)
-        {
-            m_System = system;
-        }
+    //    public void Initialize(RenderSystem system)
+    //    {
+    //        m_System = system;
+    //    }
 
-        private IEnumerator OnPreRender()
-        {
-            while (true)
-            {
-                for (int i = m_System.m_PreRenderRoutines.Count - 1; i >= 0; i--)
-                {
-                    if (m_System.m_PreRenderRoutines[i].Iterator.Current == null)
-                    {
-                        if (!m_System.m_PreRenderRoutines[i].Iterator.MoveNext())
-                        {
-                            m_System.m_PreRenderRoutines.RemoveAt(i);
-                            continue;
-                        }
-                    }
-                    else
-                    {
-                        throw new NotImplementedException();
-                    }
-                }
+    //    private IEnumerator OnPreRender()
+    //    {
+    //        while (true)
+    //        {
+    //            for (int i = m_System.m_PreRenderRoutines.Count - 1; i >= 0; i--)
+    //            {
+    //                if (m_System.m_PreRenderRoutines[i].Iterator.Current == null)
+    //                {
+    //                    if (!m_System.m_PreRenderRoutines[i].Iterator.MoveNext())
+    //                    {
+    //                        m_System.m_PreRenderRoutines.RemoveAt(i);
+    //                        continue;
+    //                    }
+    //                }
+    //                else
+    //                {
+    //                    throw new NotImplementedException();
+    //                }
+    //            }
 
-                yield return null;
-            }
-        }
-        private IEnumerator OnPostRender()
-        {
-            while (true)
-            {
-                for (int i = m_System.m_PostRenderRoutines.Count - 1; i >= 0; i--)
-                {
-                    if (m_System.m_PostRenderRoutines[i].Iterator.Current == null)
-                    {
-                        if (!m_System.m_PostRenderRoutines[i].Iterator.MoveNext())
-                        {
-                            m_System.m_PostRenderRoutines.RemoveAt(i);
-                            continue;
-                        }
-                    }
-                    else
-                    {
-                        throw new NotImplementedException();
-                    }
-                }
+    //            yield return null;
+    //        }
+    //    }
+    //    private IEnumerator OnPostRender()
+    //    {
+    //        while (true)
+    //        {
+    //            for (int i = m_System.m_PostRenderRoutines.Count - 1; i >= 0; i--)
+    //            {
+    //                if (m_System.m_PostRenderRoutines[i].Iterator.Current == null)
+    //                {
+    //                    if (!m_System.m_PostRenderRoutines[i].Iterator.MoveNext())
+    //                    {
+    //                        m_System.m_PostRenderRoutines.RemoveAt(i);
+    //                        continue;
+    //                    }
+    //                }
+    //                else
+    //                {
+    //                    throw new NotImplementedException();
+    //                }
+    //            }
 
-                yield return null;
-            }
-        }
-    }
+    //            yield return null;
+    //        }
+    //    }
+    //}
 }

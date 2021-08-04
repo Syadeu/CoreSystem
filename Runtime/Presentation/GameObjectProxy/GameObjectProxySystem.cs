@@ -295,8 +295,9 @@ namespace Syadeu.Presentation
                     tempObjects[i] = m_MappedGameObjects[i];
                     m_MappedGameObjectIdxes[m_MappedGameObjects[i].m_Idx] = i;
                 }
-                m_MappedGameObjects.Clear();
-                m_MappedGameObjects.AddRange(tempObjects);
+
+                m_MappedGameObjects.Resize(tempObjects.Length, NativeArrayOptions.UninitializedMemory);
+                tempObjects.CopyTo(m_MappedGameObjects);
                 tempObjects.Dispose();
 
                 for (int i = 0, j = 0; i < m_MappedTransforms.Length; i++, j++)
@@ -314,8 +315,9 @@ namespace Syadeu.Presentation
                     tempTrs[i] = m_MappedTransforms[i];
                     m_MappedTransformIdxes[m_MappedTransforms[i].m_Idx] = i;
                 }
-                m_MappedTransforms.Clear();
-                m_MappedTransforms.AddRange(tempTrs);
+
+                m_MappedTransforms.Resize(tempTrs.Length, NativeArrayOptions.UninitializedMemory);
+                tempTrs.CopyTo(m_MappedTransforms);
                 tempTrs.Dispose();
             }
             #endregion
