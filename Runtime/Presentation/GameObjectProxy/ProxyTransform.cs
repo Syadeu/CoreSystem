@@ -134,7 +134,7 @@ namespace Syadeu.Presentation
             {
                 unsafe
                 {
-                    if (m_Pointer == null || !(*m_Pointer).m_Hash.Equals(m_Hash) || (*m_Pointer).m_DestroyQueued) return true;
+                    if (m_Pointer == null || !(*m_Pointer).m_Hash.Equals(m_Hash)) return true;
                 }
                 return false;
             }

@@ -64,7 +64,7 @@ namespace Syadeu.Presentation.Entities
 
         public string Name => m_Idx.Equals(Hash.Empty) ? c_Invalid : Target.Name;
         public Hash Idx => m_Idx;
-        public Type Type => m_Idx.Equals(Hash.Empty) ? null : Target.GetType();
+        public Type Type => m_Idx.Equals(Hash.Empty) ? null : Target?.GetType();
 
         internal EntityData(Hash idx)
         {

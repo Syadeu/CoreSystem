@@ -186,6 +186,8 @@ namespace Syadeu.Presentation
                 ProxyTransform tr = m_RequestDestories.Dequeue();
 
                 OnDataObjectDestroy?.Invoke(tr);
+
+                if (tr.hasProxy && !tr.hasProxyQueued) RemoveProxy(tr);
                 m_ProxyData.Remove(tr);
 
                 if (i != 0 && i % c_ChunkSize == 0) break;
@@ -397,6 +399,8 @@ namespace Syadeu.Presentation
                 m_TerminatedProxies.Add(prefab, pool);
             }
             pool.Enqueue(proxy);
+            CoreSystem.Logger.Log(Channel.Proxy, true,
+                    $"Prefab({prefab.GetObjectSetting().m_Name}) proxy removed.");
         }
 
         #endregion
