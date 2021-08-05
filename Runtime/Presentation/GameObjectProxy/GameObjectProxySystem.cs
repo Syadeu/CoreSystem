@@ -1,22 +1,17 @@
 ﻿using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Mono;
-using Syadeu.Presentation.Entities;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Runtime.InteropServices;
-using System.Threading;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using UnityEngine.Profiling;
-using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.SceneManagement;
 
 namespace Syadeu.Presentation
@@ -44,13 +39,14 @@ namespace Syadeu.Presentation
         
         private readonly ConcurrentQueue<Hash> m_UpdateTransforms = new ConcurrentQueue<Hash>();
         private readonly ConcurrentQueue<Action> m_RequestedJobs = new ConcurrentQueue<Action>();
-        private readonly ConcurrentQueue<Hash> m_RequestDestories = new ConcurrentQueue<Hash>();
 
         private int m_VisibleCheckJobWorker;
         private BackgroundJob m_VisibleCheckJob;
         private readonly List<BackgroundJob> m_VisibleCheckJobs = new List<BackgroundJob>();
 
         NativeQueue<Hash>
+                m_RequestDestories = new NativeQueue<Hash>(Allocator.Persistent),
+
                 m_RequestProxyList = new NativeQueue<Hash>(Allocator.Persistent),
                 m_RemoveProxyList = new NativeQueue<Hash>(Allocator.Persistent),
                 m_VisibleList = new NativeQueue<Hash>(Allocator.Persistent),
@@ -105,10 +101,11 @@ namespace Syadeu.Presentation
                 CoreSystem.Logger.Log(Channel.Proxy, true,
                     "Scene on loading enter lambda excute");
 
-                while (m_RequestDestories.Count > 0)
-                {
-                    m_RequestDestories.TryDequeue(out _);
-                }
+                //while (m_RequestDestories.Count > 0)
+                //{
+                //    m_RequestDestories.TryDequeue(out _);
+                //}
+                m_RequestDestories.Clear();
                 m_RemovedGameObjectIdxes.Clear();
 
                 #region Clear Data Transforms
@@ -230,15 +227,15 @@ namespace Syadeu.Presentation
             if (m_LoadingLock) return base.AfterPresentationAsync();
 
             #region Object Destory Work
-            int temp3 = m_RequestDestories.Count;
-            if (temp3 > 0)
+            int requestDestroyCount = m_RequestDestories.Count;
+            if (requestDestroyCount > 0)
             {
                 if (m_VisibleCheckJob.IsDone)
                 {
-                    for (int i = 0; i < temp3; i++)
+                    for (int i = 0; i < requestDestroyCount; i++)
                     {
-                        if (!m_RequestDestories.TryDequeue(out Hash objHash)) continue;
-                        
+                        Hash objHash = m_RequestDestories.Dequeue();
+
                         int objIdx = m_MappedGameObjectIdxes[objHash];
                         int trIdx = m_MappedTransformIdxes[m_MappedGameObjects[objIdx].m_Transform];
                         CoreSystem.Logger.Log(Channel.Proxy,
@@ -248,7 +245,7 @@ namespace Syadeu.Presentation
 
                         if (m_MappedTransforms[trIdx].HasProxyObject)
                         {
-                            Hash trHash = m_MappedTransforms[trIdx].m_Idx;
+                            Hash trHash = m_MappedTransforms[trIdx].m_Hash;
                             RecycleableMonobehaviour obj = DetechProxy(trHash, out var prefab);
                             m_RequestedJobs.Enqueue(() => ReleaseProxy(trHash, prefab, obj, true));
                         }
@@ -297,14 +294,14 @@ namespace Syadeu.Presentation
                 {
                     if (m_RemovedTransformIdxes.Contains(j))
                     {
-                        m_MappedTransformIdxes.Remove(m_MappedTransforms[i].m_Idx);
+                        m_MappedTransformIdxes.Remove(m_MappedTransforms[i].m_Hash);
 
                         m_RemovedTransformIdxes.Remove(j);
                         m_MappedTransforms.RemoveAt(i);
                         i--;
                         continue;
                     }
-                    m_MappedTransformIdxes[m_MappedTransforms[i].m_Idx] = i;
+                    m_MappedTransformIdxes[m_MappedTransforms[i].m_Hash] = i;
                 }
             }
             #endregion
@@ -323,6 +320,8 @@ namespace Syadeu.Presentation
             m_MappedGameObjects.Dispose();
             m_MappedTransforms.Dispose();
             CoreSystem.RemoveBackgroundJobWorker(m_VisibleCheckJobWorker);
+
+            m_RequestDestories.Dispose();
 
             m_RequestProxyList.Dispose();
             m_RemoveProxyList.Dispose();
@@ -368,7 +367,7 @@ namespace Syadeu.Presentation
             DataTransform trData = new DataTransform()
             {
                 m_GameObject = objHash,
-                m_Idx = trHash,
+                m_Hash = trHash,
                 m_ProxyIdx = DataTransform.ProxyNull,
                 m_PrefabIdx = -1,
                 m_EnableCull = false,
@@ -456,7 +455,7 @@ namespace Syadeu.Presentation
             DataTransform trData = new DataTransform()
             {
                 m_GameObject = objHash,
-                m_Idx = trHash,
+                m_Hash = trHash,
                 m_ProxyIdx = proxyIdx,
                 m_PrefabIdx = prefab,
                 m_EnableCull = enableCull,
@@ -487,35 +486,7 @@ namespace Syadeu.Presentation
             OnDataObjectCreatedAsync?.Invoke(objData);
             return objData;
         }
-        //private DataTransform ToDataTransform(Transform tr)
-        //{
-        //    Vector3
-        //        pos = Vector3.zero, localScale = Vector3.zero;
-        //    Quaternion rotation = Quaternion.identity;
-
-        //    if (CoreSystem.IsThisMainthread())
-        //    {
-        //        pos = tr.position;
-        //        localScale = tr.localScale;
-        //        rotation = tr.rotation;
-        //    }
-        //    else
-        //    {
-        //        CoreSystem.AddForegroundJob(() =>
-        //        {
-        //            pos = tr.position;
-        //            localScale = tr.localScale;
-        //            rotation = tr.rotation;
-        //        }).Await();
-        //    }
-        //    return new DataTransform
-        //    {
-        //        m_Position = new ThreadSafe.Vector3(pos),
-        //        m_LocalScale = new ThreadSafe.Vector3(localScale),
-        //        m_Rotation = rotation
-        //    };
-        //}
-
+        
         #region Proxy Object Control
         
         unsafe private void RequestProxy(Hash trIdx)
@@ -694,7 +665,7 @@ namespace Syadeu.Presentation
                                     //PrefabReference prefab = tr.m_PrefabIdx;
 
                                     //RequestProxy(trArrayP + j);
-                                    m_RequestProxyList.Enqueue(tr.m_Idx);
+                                    m_RequestProxyList.Enqueue(tr.m_Hash);
                                 }
                             }
 
@@ -715,7 +686,7 @@ namespace Syadeu.Presentation
                                 //    throw new Exception();
                                 //}
                                 //m_RemoveProxies.Enqueue(tr);
-                                m_RemoveProxyList.Enqueue(tr.m_Idx);
+                                m_RemoveProxyList.Enqueue(tr.m_Hash);
                             }
 
                             if (tr.m_IsVisible)

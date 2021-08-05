@@ -17,7 +17,7 @@ namespace Syadeu.Presentation
         internal static int2 ProxyQueued = new int2(-2, -2);
 
         internal Hash m_GameObject;
-        internal Hash m_Idx;
+        internal Hash m_Hash;
         internal int2 m_ProxyIdx;
         internal PrefabReference m_PrefabIdx;
 
@@ -33,7 +33,7 @@ namespace Syadeu.Presentation
         internal bool HasProxyObject => !m_ProxyIdx.Equals(ProxyNull) && !m_ProxyIdx.Equals(ProxyQueued);
         internal bool ProxyRequested => m_ProxyIdx.Equals(ProxyQueued);
 
-        bool IEquatable<DataTransform>.Equals(DataTransform other) => m_Idx.Equals(other.m_Idx);
+        bool IEquatable<DataTransform>.Equals(DataTransform other) => m_Hash.Equals(other.m_Hash);
 
         internal RecycleableMonobehaviour ProxyObject
         {
@@ -43,8 +43,8 @@ namespace Syadeu.Presentation
                 return PresentationSystem<GameObjectProxySystem>.System.m_Instances[m_ProxyIdx.x][m_ProxyIdx.y];
             }
         }
-        unsafe private DataTransform* GetPointer() => PresentationSystem<GameObjectProxySystem>.System.GetDataTransformPointer(m_Idx);
-        unsafe private DataTransform* GetReadOnlyPointer() => PresentationSystem<GameObjectProxySystem>.System.GetReadOnlyDataTransformPointer(m_Idx);
+        unsafe private DataTransform* GetPointer() => PresentationSystem<GameObjectProxySystem>.System.GetDataTransformPointer(m_Hash);
+        unsafe private DataTransform* GetReadOnlyPointer() => PresentationSystem<GameObjectProxySystem>.System.GetReadOnlyDataTransformPointer(m_Hash);
         private ref DataTransform GetRef()
         {
             unsafe
@@ -55,14 +55,14 @@ namespace Syadeu.Presentation
         private void RequestUpdate()
         {
             if (!PresentationSystem<Render.RenderSystem>.System.IsInCameraScreen(m_Position)) return;
-            PresentationSystem<GameObjectProxySystem>.System.RequestUpdateTransform(m_Idx);
+            PresentationSystem<GameObjectProxySystem>.System.RequestUpdateTransform(m_Hash);
         }
 
         public bool IsValid() =>
-            !m_GameObject.Equals(Hash.Empty) && !m_Idx.Equals(Hash.Empty) &&
+            !m_GameObject.Equals(Hash.Empty) && !m_Hash.Equals(Hash.Empty) &&
             !PresentationSystem<GameObjectProxySystem>.System.Disposed &&
             PresentationSystem<GameObjectProxySystem>.IsValid() &&
-            PresentationSystem<GameObjectProxySystem>.System.m_MappedTransformIdxes.ContainsKey(m_Idx) &&
+            PresentationSystem<GameObjectProxySystem>.System.m_MappedTransformIdxes.ContainsKey(m_Hash) &&
             PresentationSystem<GameObjectProxySystem>.System.m_MappedGameObjectIdxes.ContainsKey(m_GameObject) &&
             !PresentationSystem<GameObjectProxySystem>.System.GetDataGameObject(m_GameObject).m_Destroyed;
         public bool IsVisible()
@@ -80,7 +80,7 @@ namespace Syadeu.Presentation
                 return;
             }
 
-            PresentationSystem<GameObjectProxySystem>.System.DownloadDataTransform(m_Idx);
+            PresentationSystem<GameObjectProxySystem>.System.DownloadDataTransform(m_Hash);
         }
         public void SetCulling(bool enable)
         {
