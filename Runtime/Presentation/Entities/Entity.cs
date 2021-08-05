@@ -72,8 +72,7 @@ namespace Syadeu.Presentation.Entities
         public Type Type => m_Idx.Equals(Hash.Empty) ? null : Target.GetType();
 
 #pragma warning disable IDE1006 // Naming Styles
-        public DataGameObject gameObject => m_Idx.Equals(Hash.Empty) ? DataGameObject.Null : Target.gameObject;
-        public DataTransform transform => Target.transform;
+        public ProxyTransform transform => Target.transform;
 #pragma warning restore IDE1006 // Naming Styles
 
         public float3 Center => Target.Center;

@@ -134,18 +134,18 @@ namespace Syadeu.Presentation
             return base.OnStartPresentation();
         }
 
-        private void M_ProxySystem_OnDataObjectProxyCreated(DataGameObject obj, RecycleableMonobehaviour monoObj)
+        private void M_ProxySystem_OnDataObjectProxyCreated(ProxyTransform obj, RecycleableMonobehaviour monoObj)
         {
-            if (!m_EntityGameObjects.TryGetValue(obj.m_Idx, out Hash entityHash)) return;
+            if (!m_EntityGameObjects.TryGetValue(obj.index, out Hash entityHash)) return;
 
             if (m_ObjectEntities[entityHash] is IEntity entity)
             {
                 ProcessEntityOnProxyCreated(this, entity, monoObj);
             }
         }
-        private void M_ProxySystem_OnDataObjectProxyRemoved(DataGameObject obj, RecycleableMonobehaviour monoObj)
+        private void M_ProxySystem_OnDataObjectProxyRemoved(ProxyTransform obj, RecycleableMonobehaviour monoObj)
         {
-            if (!m_EntityGameObjects.TryGetValue(obj.m_Idx, out Hash entityHash)) return;
+            if (!m_EntityGameObjects.TryGetValue(obj.index, out Hash entityHash)) return;
 
             if (m_ObjectEntities[entityHash] is IEntity entity)
             {
@@ -153,13 +153,13 @@ namespace Syadeu.Presentation
             }
         }
 
-        private void M_ProxySystem_OnDataObjectDestroyAsync(DataGameObject obj)
+        private void M_ProxySystem_OnDataObjectDestroyAsync(ProxyTransform obj)
         {
-            if (!m_EntityGameObjects.TryGetValue(obj.m_Idx, out Hash entityHash)) return;
+            if (!m_EntityGameObjects.TryGetValue(obj.index, out Hash entityHash)) return;
 
             ProcessEntityOnDestroy(this, m_ObjectEntities[entityHash]);
 
-            m_EntityGameObjects.Remove(obj.m_Idx);
+            m_EntityGameObjects.Remove(obj.index);
             m_ObjectHashSet.Remove(entityHash);
             m_ObjectEntities.Remove(entityHash);
         }
@@ -257,13 +257,13 @@ namespace Syadeu.Presentation
 
 #line hidden
         #region Create Entity
-        public Entity<IEntity> LoadEntity(EntityBase.Captured captured)
-        {
-            EntityBase original = (EntityBase)captured.m_Obj;
-            DataGameObject obj = m_ProxySystem.CreateNewPrefab(original.Prefab, captured.m_Translation, captured.m_Rotation, captured.m_Scale, captured.m_EnableCull);
+        //public Entity<IEntity> LoadEntity(EntityBase.Captured captured)
+        //{
+        //    EntityBase original = (EntityBase)captured.m_Obj;
+        //    ProxyTransform obj = m_ProxySystem.CreateNewPrefab(original.Prefab, captured.m_Translation, captured.m_Rotation, captured.m_Scale, captured.m_EnableCull);
 
-            return InternalCreateEntity(original, obj);
-        }
+        //    return InternalCreateEntity(original, obj);
+        //}
         public Entity<IEntity> CreateEntity(string name, Vector3 position)
         {
             ObjectBase original;
@@ -287,7 +287,7 @@ namespace Syadeu.Presentation
             }
             EntityBase temp = (EntityBase)original;
 
-            DataGameObject obj = m_ProxySystem.CreateNewPrefab(temp.Prefab, position);
+            ProxyTransform obj = m_ProxySystem.CreateNewPrefab(temp.Prefab, position, quaternion.identity, 1, true);
             return InternalCreateEntity(temp, obj);
         }
         /// <summary>
@@ -319,7 +319,7 @@ namespace Syadeu.Presentation
             }
             EntityBase temp = (EntityBase)original;
 
-            DataGameObject obj = m_ProxySystem.CreateNewPrefab(temp.Prefab, position);
+            ProxyTransform obj = m_ProxySystem.CreateNewPrefab(temp.Prefab, position, quaternion.identity, 1, true);
             return InternalCreateEntity(temp, obj);
         }
         public Entity<IEntity> CreateEntity(string name, Vector3 position, Quaternion rotation, Vector3 localSize, bool enableCull)
@@ -345,7 +345,7 @@ namespace Syadeu.Presentation
             }
             EntityBase temp = (EntityBase)original;
 
-            DataGameObject obj = m_ProxySystem.CreateNewPrefab(temp.Prefab, position, rotation, localSize, enableCull);
+            ProxyTransform obj = m_ProxySystem.CreateNewPrefab(temp.Prefab, position, rotation, localSize, enableCull);
             return InternalCreateEntity(temp, obj);
         }
         /// <summary>
@@ -380,21 +380,22 @@ namespace Syadeu.Presentation
             }
             EntityBase temp = (EntityBase)original;
 
-            DataGameObject obj = m_ProxySystem.CreateNewPrefab(temp.Prefab, position, rotation, localSize, enableCull);
+            ProxyTransform obj = m_ProxySystem.CreateNewPrefab(temp.Prefab, position, rotation, localSize, enableCull);
             return InternalCreateEntity(temp, obj);
         }
 
-        private Entity<IEntity> InternalCreateEntity(EntityBase entityBase, DataGameObject obj)
+        private Entity<IEntity> InternalCreateEntity(EntityBase entityBase, ProxyTransform obj)
         {
             EntityBase entity = (EntityBase)entityBase.Clone();
-            entity.m_GameObjectHash = obj.m_Idx;
-            entity.m_TransformHash = obj.m_Transform;
+            //entity.m_GameObjectHash = obj.m_Idx;
+            //entity.m_TransformHash = obj.index;
+            entity.transform = obj;
             entity.m_IsCreated = true;
 
             m_ObjectHashSet.Add(entity.Idx);
             m_ObjectEntities.Add(entity.Idx, entity);
 
-            m_EntityGameObjects.Add(obj.m_Idx, entity.Idx);
+            m_EntityGameObjects.Add(obj.index, entity.Idx);
 
             ProcessEntityOnCreated(this, entity);
             return Entity<IEntity>.GetEntity(entity.Idx);
@@ -480,9 +481,9 @@ namespace Syadeu.Presentation
 
             if (!CoreSystem.s_BlockCreateInstance && m_ObjectEntities[hash] is IEntity entity)
             {
-                DataGameObject obj = entity.gameObject;
+                ProxyTransform obj = entity.transform;
                 obj.Destroy();
-                m_EntityGameObjects.Remove(obj.m_Idx);
+                m_EntityGameObjects.Remove(obj.index);
             }
 
             ((IDisposable)m_ObjectEntities[hash]).Dispose();

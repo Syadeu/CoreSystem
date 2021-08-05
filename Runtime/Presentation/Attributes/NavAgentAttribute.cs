@@ -55,10 +55,9 @@ namespace Syadeu.Presentation.Attributes
         private IEnumerator Updater()
         {
             Entity<IEntity> parent = Parent;
-            DataGameObject obj = parent.gameObject;
-            DataTransform tr = parent.transform;
+            ProxyTransform tr = parent.transform;
 
-            if (!obj.HasProxyObject) yield break;
+            if (!tr.hasProxy) yield break;
 
             while (NavMeshAgent.pathPending)
             {
@@ -68,9 +67,9 @@ namespace Syadeu.Presentation.Attributes
             while (NavMeshAgent.desiredVelocity.magnitude > 0 &&
                     NavMeshAgent.remainingDistance > .2f)
             {
-                if (!obj.HasProxyObject) yield break;
+                if (!tr.hasProxy) yield break;
 
-                parent.transform.SynchronizeWithProxy();
+                //parent.transform.SynchronizeWithProxy();
                 yield return null;
             }
 
@@ -106,13 +105,13 @@ namespace Syadeu.Presentation.Attributes
 
             if (att.IsMoving)
             {
-                DataTransform tr = entity.transform;
+                ProxyTransform tr = entity.transform;
 
                 NavMeshAgent agent = monoObj.GetComponent<NavMeshAgent>();
                 agent.ResetPath();
                 agent.enabled = false;
 
-                tr.position = new ThreadSafeVector3(att.PreviousTarget);
+                tr.position = att.PreviousTarget;
                 att.IsMoving = false;
             }
         }

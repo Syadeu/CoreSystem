@@ -68,7 +68,7 @@ namespace Syadeu.Presentation.Map
                         if (att.m_FixedToCenter)
                         {
                             Entity<IEntity> entity = att.Parent;
-                            DataTransform tr = entity.transform;
+                            ProxyTransform tr = entity.transform;
                             float3 pos = tr.position;
 
                             tr.position = IndexToPosition(PositionToIndex(pos));

@@ -15,7 +15,7 @@ namespace Syadeu.Presentation.Attributes
     {
         [JsonProperty(Order = 0, PropertyName = "Prefab")] public PrefabReference m_Prefab;
 
-        [JsonIgnore] public DataGameObject PrefabInstance { get; internal set; }
+        [JsonIgnore] public ProxyTransform PrefabInstance { get; internal set; }
     }
     [Preserve]
     internal sealed class CreatePrefabProcessor : AttributeProcessor<CreatePrefabAttribute>

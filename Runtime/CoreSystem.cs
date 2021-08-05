@@ -265,7 +265,12 @@ namespace Syadeu
         /// <returns></returns>
         public static BackgroundJob AddBackgroundJob(Action action)
         {
-            BackgroundJob job = PoolContainer<BackgroundJob>.Dequeue();
+            BackgroundJob job;
+            if (!PoolContainer<BackgroundJob>.Initialized)
+            {
+                job = new BackgroundJob(null);
+            }
+            else job = PoolContainer<BackgroundJob>.Dequeue();
             job.Action = action;
             job.IsPool = true;
 
