@@ -143,6 +143,22 @@ namespace Syadeu.Presentation
                 EventDescriptor<ProxyTransform>.Invoke(s_RotationChanged, this);
             }
         }
+        public float3 eulerAngles
+        {
+            get
+            {
+                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+
+                float3 temp = rotation.Euler();
+                return temp * UnityEngine.Mathf.Rad2Deg;
+            }
+            set
+            {
+                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                float3 temp = value * UnityEngine.Mathf.Deg2Rad;
+                rotation = quaternion.EulerZXY(temp);
+            }
+        }
         public float3 scale
         {
             get
@@ -162,6 +178,12 @@ namespace Syadeu.Presentation
 
         public void Destroy()
         {
+            if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+
+            unsafe
+            {
+                m_Pointer->m_Hash = Hash.Empty;
+            }
             PresentationSystem<GameObjectProxySystem>.System.Destroy(this);
         }
     }

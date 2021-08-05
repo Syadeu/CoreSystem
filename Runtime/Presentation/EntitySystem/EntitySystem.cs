@@ -127,7 +127,7 @@ namespace Syadeu.Presentation
         }
         protected override PresentationResult OnStartPresentation()
         {
-            m_ProxySystem.OnDataObjectDestroyAsync += M_ProxySystem_OnDataObjectDestroyAsync;
+            m_ProxySystem.OnDataObjectDestroy += M_ProxySystem_OnDataObjectDestroyAsync;
 
             m_ProxySystem.OnDataObjectProxyCreated += M_ProxySystem_OnDataObjectProxyCreated;
             m_ProxySystem.OnDataObjectProxyRemoved += M_ProxySystem_OnDataObjectProxyRemoved;
@@ -184,10 +184,15 @@ namespace Syadeu.Presentation
         }
         protected override PresentationResult OnPresentationAsync()
         {
-            m_ObjectEntities.AsParallel().ForAll((other) =>
+            //m_ObjectEntities.AsParallel().ForAll((other) =>
+            //{
+            //    ProcessEntityOnPresentation(this, other.Value);
+            //});
+            var temp = m_ObjectEntities.Values.ToArray();
+            for (int i = 0; i < temp.Length; i++)
             {
-                ProcessEntityOnPresentation(this, other.Value);
-            });
+                ProcessEntityOnPresentation(this, temp[i]);
+            }
 
             return base.OnPresentationAsync();
         }

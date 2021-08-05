@@ -224,10 +224,10 @@ namespace Syadeu.Presentation
             }
         }
 
-        public ParallelLoopResult ParallelFor(Action<ProxyTransformData> action)
+        public ParallelLoopResult ParallelFor(Action<ProxyTransform> action)
         {
-            var semaphore = m_Semaphore;
-            semaphore.WaitOne();
+            //var semaphore = m_Semaphore;
+            //semaphore.WaitOne();
 
             bool2* occupiedBuffer = m_OccupiedBuffer;
             ProxyTransformData* transformBuffer = m_TransformBuffer;
@@ -235,17 +235,17 @@ namespace Syadeu.Presentation
             ParallelLoopResult result = Parallel.For(0, m_Length, (i) =>
             {
                 if (!(occupiedBuffer + i)->x) return;
-                action.Invoke(*(transformBuffer + i));
+                action.Invoke(new ProxyTransform(transformBuffer + i, (*(transformBuffer + i)).m_Hash));
             });
 
-            CoreSystem.AddBackgroundJob(() =>
-            {
-                while (!result.IsCompleted)
-                {
-                    CoreSystem.ThreadAwaiter(1);
-                }
-                semaphore.Release();
-            });
+            //CoreSystem.AddBackgroundJob(() =>
+            //{
+            //    while (!result.IsCompleted)
+            //    {
+            //        CoreSystem.ThreadAwaiter(1);
+            //    }
+            //    semaphore.Release();
+            //});
             return result;
         }
 
