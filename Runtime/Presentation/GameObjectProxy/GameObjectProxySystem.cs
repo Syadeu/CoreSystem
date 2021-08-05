@@ -122,7 +122,7 @@ namespace Syadeu.Presentation
                         RecycleableMonobehaviour obj = m_Instances[proxyIdx.x][proxyIdx.y];
 
                         //prefabSetting.Pool.Enqueue(obj);
-                        obj.Terminate();
+                        if (obj.Activated) obj.Terminate();
                     }
                 }
                 m_MappedTransforms.Clear();
