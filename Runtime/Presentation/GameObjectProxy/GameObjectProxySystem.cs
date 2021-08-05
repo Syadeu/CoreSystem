@@ -124,13 +124,12 @@ namespace Syadeu.Presentation
                 $"Proxy requested at {data.index}, {data.prefab.GetObjectSetting().m_Name}");
 
             m_RequestProxyList.Enqueue(data);
-            //RequestProxy(data);
         }
         private void OnProxyTransformProxyRemove(ProxyTransform data)
         {
             CoreSystem.Logger.Log(Channel.Proxy,
                 $"Proxy removed at {data.index}, {data.prefab.GetObjectSetting().m_Name}");
-            //RemoveProxy(data);
+            
             m_RemoveProxyList.Enqueue(data);
         }
 
@@ -168,12 +167,6 @@ namespace Syadeu.Presentation
             return base.OnStartPresentation();
         }
 
-        protected override PresentationResult BeforePresentation()
-        {
-            
-
-            return base.BeforePresentation();
-        }
         protected override PresentationResult AfterPresentation()
         {
             const int c_ChunkSize = 100;

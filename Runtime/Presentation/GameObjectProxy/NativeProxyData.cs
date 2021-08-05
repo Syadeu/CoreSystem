@@ -33,27 +33,27 @@ namespace Syadeu.Presentation
 
         public uint m_Length;
 
-        public ProxyTransformData this[int index]
-        {
-            get
-            {
-                if (!m_Semaphore.WaitOne(0))
-                {
-                    throw new CoreSystemException(CoreSystemExceptionFlag.Proxy,
-                        "Cannot access data while pararell job is running.");
-                }
+        //public ProxyTransformData this[int index]
+        //{
+        //    get
+        //    {
+        //        if (!m_Semaphore.WaitOne(0))
+        //        {
+        //            throw new CoreSystemException(CoreSystemExceptionFlag.Proxy,
+        //                "Cannot access data while pararell job is running.");
+        //        }
 
-                if (index >= m_Length) throw new ArgumentOutOfRangeException(nameof(index));
+        //        if (index >= m_Length) throw new ArgumentOutOfRangeException(nameof(index));
 
-                if (!*(m_OccupiedBuffer + index))
-                {
-                    throw new ArgumentOutOfRangeException(nameof(index));
-                }
+        //        if (!*(m_OccupiedBuffer + index))
+        //        {
+        //            throw new ArgumentOutOfRangeException(nameof(index));
+        //        }
 
-                m_Semaphore.Release();
-                return *(m_TransformBuffer + index);
-            }
-        }
+        //        m_Semaphore.Release();
+        //        return *(m_TransformBuffer + index);
+        //    }
+        //}
 
         public NativeProxyData(uint length, Allocator allocator, NativeArrayOptions options = NativeArrayOptions.ClearMemory)
         {
@@ -221,11 +221,6 @@ namespace Syadeu.Presentation
         }
         public void Clear()
         {
-            //for (int i = 0; i < m_Length; i++)
-            //{
-            //    *(m_OccupiedBuffer + i) = false;
-            //}
-
             UnsafeUtility.MemClear(m_OccupiedBuffer, m_Length * s_BoolenSize);
             UnsafeUtility.MemClear(m_TransformIndexBuffer, m_Length * s_HashSize);
             UnsafeUtility.MemClear(m_TransformBuffer, m_Length * s_TransformSize);
