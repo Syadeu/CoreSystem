@@ -27,7 +27,7 @@ namespace SyadeuEditor
             if (Asset.m_Objects != null) tempList.AddRange(Asset.m_Objects.Values);
 
             treeView = new VerticalTreeView(Asset, serializedObject);
-            treeView.OnDirty += RefreshTreeView;
+            //treeView.OnDirty += RefreshTreeView;
             treeView
                 .SetupElements(tempList, (other) =>
                 {
@@ -63,8 +63,7 @@ namespace SyadeuEditor
                     if (treeView.SelectedToolbar == 0)
                     {
                         Type[] types = TypeHelper.GetTypes((other) => !other.IsAbstract && 
-                            TypeHelper.TypeOf<ObjectBase>.Type.IsAssignableFrom(other) &&
-                            !TypeHelper.TypeOf<AttributeBase>.Type.IsAssignableFrom(other));
+                            TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(other));
 
                         Rect rect = GUILayoutUtility.GetLastRect();
                         rect.position = Event.current.mousePosition;
@@ -76,7 +75,25 @@ namespace SyadeuEditor
                             ObjectBase ins = (ObjectBase)Activator.CreateInstance(t);
 
                             Asset.m_Objects.Add(ins.Hash, ins);
-                            RefreshTreeView();
+
+                            VerticalTreeElement element;
+                            VerticalFolderTreeElement folder;
+                            if (ins is EntityBase entity)
+                            {
+                                folder = treeView.GetOrCreateFolder<ObjectFolder>(entity.GetType().Name);
+                                element = new TreeEntityElement(treeView, entity);
+                            }
+                            else
+                            {
+                                EntityDataBase objBase = (EntityDataBase)ins;
+                                if (objBase.GetType().BaseType.Equals(TypeHelper.TypeOf<EntityDataBase>.Type))
+                                {
+                                    folder = treeView.GetOrCreateFolder<ObjectFolder>(objBase.GetType().Name);
+                                }
+                                else folder = treeView.GetOrCreateFolder<ObjectFolder>(objBase.GetType().BaseType.Name);
+                                element = new TreeObjectElement(treeView, objBase);
+                            }
+                            element.SetParent(folder);
                         },
                         (t) => t,
                         (t) =>
@@ -102,7 +119,10 @@ namespace SyadeuEditor
                             AttributeBase ins = (AttributeBase)Activator.CreateInstance(t);
 
                             Asset.m_Objects.Add(ins.Hash, ins);
-                            RefreshTreeView();
+
+                            var folder = treeView.GetOrCreateFolder<AttributeFolder>(ins.GetType().Name);
+                            var element = new TreeAttributeElement(treeView, ins);
+                            element.SetParent(folder);
                         },
                         (t) => t,
                         (t) =>

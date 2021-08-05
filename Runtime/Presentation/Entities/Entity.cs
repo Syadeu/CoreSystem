@@ -65,15 +65,14 @@ namespace Syadeu.Presentation.Entities
         /// <inheritdoc cref="IEntityData.Idx"/>
         private readonly Hash m_Idx;
 
-        public T Target => m_Idx.Equals(Hash.Empty) ? null : (T)PresentationSystem<EntitySystem>.System.m_ObjectEntities[m_Idx];
+        public T Target => m_Idx.Equals(Hash.Empty) || CoreSystem.s_BlockCreateInstance ? null : (T)PresentationSystem<EntitySystem>.System.m_ObjectEntities[m_Idx];
 
         public string Name => m_Idx.Equals(Hash.Empty) ? c_Invalid : Target.Name;
         public Hash Idx => m_Idx;
         public Type Type => m_Idx.Equals(Hash.Empty) ? null : Target.GetType();
 
 #pragma warning disable IDE1006 // Naming Styles
-        public DataGameObject gameObject => m_Idx.Equals(Hash.Empty) ? DataGameObject.Null : Target.gameObject;
-        public DataTransform transform => Target.transform;
+        public ProxyTransform transform => Target.transform;
 #pragma warning restore IDE1006 // Naming Styles
 
         public float3 Center => Target.Center;

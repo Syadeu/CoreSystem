@@ -14,9 +14,9 @@ namespace Syadeu.Presentation
         protected DataContainerSystem DataContainerSystem => m_EntitySystem.m_DataContainerSystem;
         private GameObjectProxySystem ProxySystem => EntitySystem.m_ProxySystem;
 
-        protected DataGameObject CreatePrefab(PrefabReference prefab, Vector3 position, quaternion rotation)
+        protected ProxyTransform CreatePrefab(PrefabReference prefab, Vector3 position, quaternion rotation)
             => CreatePrefab(prefab, position, rotation, Vector3.One, true);
-        protected DataGameObject CreatePrefab(PrefabReference prefab, Vector3 position, quaternion rotation, Vector3 localSize, bool enableCull)
+        protected ProxyTransform CreatePrefab(PrefabReference prefab, Vector3 position, quaternion rotation, Vector3 localSize, bool enableCull)
         {
             CoreSystem.Logger.NotNull(ProxySystem, "GameObjectProxySystem is not initialized");
 

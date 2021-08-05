@@ -121,7 +121,7 @@ namespace Syadeu.Database.Lua
 
         [JsonProperty(Order = 0, PropertyName = "Functions")] public List<LuaScript> m_Scripts;
 
-        public void Invoke(DataGameObject target)
+        public void Invoke(ProxyTransform target)
         {
             for (int i = 0; i < m_Scripts.Count; i++)
             {
@@ -163,7 +163,7 @@ namespace Syadeu.Database.Lua
                 return false;
             }
         }
-        List<object> ToArgument(DataGameObject dataObj, IList<LuaArg> args)
+        List<object> ToArgument(ProxyTransform dataObj, IList<LuaArg> args)
         {
             if (args == null || args.Count == 0) return null;
             List<object> temp = new List<object>();
@@ -171,10 +171,10 @@ namespace Syadeu.Database.Lua
             {
                 if (TypeHelper.TypeOf<UnityEngine.Object>.Type.IsAssignableFrom(args[i].Type))
                 {
-                    if (!dataObj.HasProxyObject) temp.Add(null);
-                    else temp.Add(dataObj.GetProxyObject().GetComponentInChildren(args[i].Type));
+                    if (!dataObj.hasProxy) temp.Add(null);
+                    else temp.Add(dataObj.proxy.GetComponent(args[i].Type));
                 }
-                else if (args[i].Type.Equals(TypeHelper.TypeOf<DataGameObject>.Type))
+                else if (args[i].Type.Equals(TypeHelper.TypeOf<ProxyTransform>.Type))
                 {
                     temp.Add(dataObj);
                 }

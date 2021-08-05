@@ -37,8 +37,8 @@ namespace Syadeu.Database.Lua
             m_MainScripter = new Script();
             AddGlobal<LuaUtils>("CoreSystem");
             AddGlobal<LuaVectorUtils>("Vector");
-            AddGlobal<LuaItemUtils>("Items");
-            AddGlobal<LuaCreatureUtils>("Creature");
+            //AddGlobal<LuaItemUtils>("Items");
+            //AddGlobal<LuaCreatureUtils>("Creature");
             AddGlobal<RandomUtils>("Random");
 
             CoreSystem.Logger.Log(Channel.Lua, "Registering ScriptLoader");

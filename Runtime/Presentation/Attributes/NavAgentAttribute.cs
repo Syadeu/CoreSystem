@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Mono;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Map;
 using System;
 using System.Collections;
 //using Syadeu.ThreadSafe;
@@ -54,10 +55,9 @@ namespace Syadeu.Presentation.Attributes
         private IEnumerator Updater()
         {
             Entity<IEntity> parent = Parent;
-            DataGameObject obj = parent.gameObject;
-            DataTransform tr = parent.transform;
+            ProxyTransform tr = parent.transform;
 
-            if (!obj.HasProxyObject) yield break;
+            if (!tr.hasProxy) yield break;
 
             while (NavMeshAgent.pathPending)
             {
@@ -67,14 +67,20 @@ namespace Syadeu.Presentation.Attributes
             while (NavMeshAgent.desiredVelocity.magnitude > 0 &&
                     NavMeshAgent.remainingDistance > .2f)
             {
-                if (!obj.HasProxyObject) yield break;
+                if (!tr.hasProxy) yield break;
 
-                parent.transform.SynchronizeWithProxy();
+                //parent.transform.SynchronizeWithProxy();
                 yield return null;
             }
 
             tr.position = new ThreadSafeVector3(PreviousTarget);
             if (NavMeshAgent.isOnNavMesh) NavMeshAgent.ResetPath();
+
+            if (Parent.GetAttribute<GridSizeAttribute>() != null)
+            {
+                Parent.GetAttribute<GridSizeAttribute>().UpdateGridCell();
+            }
+
             IsMoving = false;
         }
     }
@@ -87,7 +93,7 @@ namespace Syadeu.Presentation.Attributes
             NavAgentAttribute att = (NavAgentAttribute)attribute;
 
             att.NavMeshAgent = monoObj.GetComponent<NavMeshAgent>();
-            if (att.NavMeshAgent == null) att.NavMeshAgent = monoObj.gameObject.AddComponent<NavMeshAgent>();
+            if (att.NavMeshAgent == null) att.NavMeshAgent = monoObj.AddComponent<NavMeshAgent>();
 
             UpdateNavMeshAgent(att, att.NavMeshAgent);
 
@@ -99,13 +105,13 @@ namespace Syadeu.Presentation.Attributes
 
             if (att.IsMoving)
             {
-                DataTransform tr = entity.transform;
+                ProxyTransform tr = entity.transform;
 
                 NavMeshAgent agent = monoObj.GetComponent<NavMeshAgent>();
                 agent.ResetPath();
                 agent.enabled = false;
 
-                tr.position = new ThreadSafeVector3(att.PreviousTarget);
+                tr.position = att.PreviousTarget;
                 att.IsMoving = false;
             }
         }

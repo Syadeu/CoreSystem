@@ -120,16 +120,20 @@ namespace SyadeuEditor.Tree
 
         internal override void RemoveButtonClicked(VerticalTreeElement e)
         {
-            int idx = -1;
-            for (int i = 0; i < m_Elements.Count; i++)
-            {
-                if (m_Elements[i].Equals(e))
-                {
-                    idx = i;
-                    break;
-                }
-            }
-            if (idx < 0) throw new Exception($"{idx}");
+            //int idx = -1;
+            //if (e.Parent != null)
+            //{
+
+            //}
+            //for (int i = 0; i < m_Elements.Count; i++)
+            //{
+            //    if (m_Elements[i].Equals(e))
+            //    {
+            //        idx = i;
+            //        break;
+            //    }
+            //}
+            //if (idx < 0) throw new Exception($"{idx}");
 
             m_Data = OnRemoveButton?.Invoke(e);
             if (e.Parent != null) e.RemoveParent();

@@ -251,7 +251,7 @@ namespace Syadeu.Database
             static string ToNames(Type t)
             {
                 string targetName = string.Empty;
-                if (t.BaseType != null && !t.BaseType.Equals(TypeHelper.TypeOf<object>.Type))
+                if (t.BaseType != null && !t.BaseType.Equals(TypeHelper.TypeOf<ObjectBase>.Type))
                 {
                     targetName += ToNames(t.BaseType);
                     targetName += c_UnderScore;

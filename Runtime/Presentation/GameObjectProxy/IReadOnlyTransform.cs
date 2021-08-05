@@ -1,8 +1,10 @@
 ﻿using Syadeu.ThreadSafe;
+using System;
 using Unity.Mathematics;
 
 namespace Syadeu.Presentation
 {
+    [Obsolete("", true)]
     public interface IReadOnlyTransform
     {
         Vector3 position { get; }

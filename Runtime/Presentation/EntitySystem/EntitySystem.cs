@@ -51,6 +51,9 @@ namespace Syadeu.Presentation
         private readonly Dictionary<Type, List<IAttributeProcessor>> m_AttributeProcessors = new Dictionary<Type, List<IAttributeProcessor>>();
         private readonly Dictionary<Type, List<IEntityDataProcessor>> m_EntityProcessors = new Dictionary<Type, List<IEntityDataProcessor>>();
 
+        private readonly Queue<(Action<AttributeBase, EntityData<IEntityData>>, AttributeBase, EntityData<IEntityData>)> m_AttributeSyncOperations = new Queue<(Action<AttributeBase, EntityData<IEntityData>>, AttributeBase, EntityData<IEntityData>)>();
+        private readonly Queue<(Action<EntityData<IEntityData>>, EntityData<IEntityData>)> m_EntitySyncOperations = new Queue<(Action<EntityData<IEntityData>>, EntityData<IEntityData>)>();
+
         internal DataContainerSystem m_DataContainerSystem;
         internal GameObjectProxySystem m_ProxySystem;
 
@@ -124,25 +127,25 @@ namespace Syadeu.Presentation
         }
         protected override PresentationResult OnStartPresentation()
         {
-            m_ProxySystem.OnDataObjectDestroyAsync += M_ProxySystem_OnDataObjectDestroyAsync;
+            m_ProxySystem.OnDataObjectDestroy += M_ProxySystem_OnDataObjectDestroyAsync;
 
             m_ProxySystem.OnDataObjectProxyCreated += M_ProxySystem_OnDataObjectProxyCreated;
             m_ProxySystem.OnDataObjectProxyRemoved += M_ProxySystem_OnDataObjectProxyRemoved;
             return base.OnStartPresentation();
         }
 
-        private void M_ProxySystem_OnDataObjectProxyCreated(DataGameObject obj, RecycleableMonobehaviour monoObj)
+        private void M_ProxySystem_OnDataObjectProxyCreated(ProxyTransform obj, RecycleableMonobehaviour monoObj)
         {
-            if (!m_EntityGameObjects.TryGetValue(obj.m_Idx, out Hash entityHash)) return;
+            if (!m_EntityGameObjects.TryGetValue(obj.index, out Hash entityHash)) return;
 
             if (m_ObjectEntities[entityHash] is IEntity entity)
             {
                 ProcessEntityOnProxyCreated(this, entity, monoObj);
             }
         }
-        private void M_ProxySystem_OnDataObjectProxyRemoved(DataGameObject obj, RecycleableMonobehaviour monoObj)
+        private void M_ProxySystem_OnDataObjectProxyRemoved(ProxyTransform obj, RecycleableMonobehaviour monoObj)
         {
-            if (!m_EntityGameObjects.TryGetValue(obj.m_Idx, out Hash entityHash)) return;
+            if (!m_EntityGameObjects.TryGetValue(obj.index, out Hash entityHash)) return;
 
             if (m_ObjectEntities[entityHash] is IEntity entity)
             {
@@ -150,22 +153,42 @@ namespace Syadeu.Presentation
             }
         }
 
-        private void M_ProxySystem_OnDataObjectDestroyAsync(DataGameObject obj)
+        private void M_ProxySystem_OnDataObjectDestroyAsync(ProxyTransform obj)
         {
-            if (!m_EntityGameObjects.TryGetValue(obj.m_Idx, out Hash entityHash)) return;
+            if (!m_EntityGameObjects.TryGetValue(obj.index, out Hash entityHash)) return;
 
             ProcessEntityOnDestroy(this, m_ObjectEntities[entityHash]);
 
-            m_EntityGameObjects.Remove(obj.m_Idx);
+            m_EntityGameObjects.Remove(obj.index);
             m_ObjectHashSet.Remove(entityHash);
             m_ObjectEntities.Remove(entityHash);
         }
+
+        protected override PresentationResult OnPresentation()
+        {
+            int syncOperCount = m_EntitySyncOperations.Count;
+            for (int i = 0; i < syncOperCount; i++)
+            {
+                var temp = m_EntitySyncOperations.Dequeue();
+                temp.Item1.Invoke(temp.Item2);
+            }
+
+            int syncAttOperCount = m_AttributeSyncOperations.Count;
+            for (int i = 0; i < syncAttOperCount; i++)
+            {
+                var temp = m_AttributeSyncOperations.Dequeue();
+                temp.Item1.Invoke(temp.Item2, temp.Item3);
+            }
+
+            return base.OnPresentation();
+        }
         protected override PresentationResult OnPresentationAsync()
         {
-            m_ObjectEntities.AsParallel().ForAll((other) =>
+            var temp = m_ObjectEntities.Values.ToArray();
+            for (int i = 0; i < temp.Length; i++)
             {
-                ProcessEntityOnPresentation(this, other.Value);
-            });
+                ProcessEntityOnPresentation(this, temp[i]);
+            }
 
             return base.OnPresentationAsync();
         }
@@ -176,6 +199,8 @@ namespace Syadeu.Presentation
             for (int i = 0; i < entityList.Length; i++)
             {
                 var entity = entityList[i];
+                //EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntityData(entity.Idx);
+                EntityData<IEntityData> entityData = new EntityData<IEntityData>(entity.Idx);
 
                 CoreSystem.Logger.Log(Channel.Entity,
     $"Destroying entity({entity.Name})");
@@ -198,8 +223,8 @@ namespace Syadeu.Presentation
                         {
                             IAttributeProcessor processor = processors[j];
 
-                            processor.OnDestroy(other, EntityData<IEntityData>.GetEntityData(entity.Hash));
-                            processor.OnDestroySync(other, EntityData<IEntityData>.GetEntityData(entity.Hash));
+                            processor.OnDestroy(other, entityData);
+                            processor.OnDestroySync(other, entityData);
                         }
                     }
                 });
@@ -212,8 +237,8 @@ namespace Syadeu.Presentation
                     {
                         IEntityDataProcessor processor = entityProcessor[j];
 
-                        processor.OnDestroy(entity);
-                        processor.OnDestroySync(entity);
+                        processor.OnDestroy(entityData);
+                        processor.OnDestroySync(entityData);
                     }
                 }
                 #endregion
@@ -233,13 +258,13 @@ namespace Syadeu.Presentation
 
 #line hidden
         #region Create Entity
-        public Entity<IEntity> LoadEntity(EntityBase.Captured captured)
-        {
-            EntityBase original = (EntityBase)captured.m_Obj;
-            DataGameObject obj = m_ProxySystem.CreateNewPrefab(original.Prefab, captured.m_Translation, captured.m_Rotation, captured.m_Scale, captured.m_EnableCull);
+        //public Entity<IEntity> LoadEntity(EntityBase.Captured captured)
+        //{
+        //    EntityBase original = (EntityBase)captured.m_Obj;
+        //    ProxyTransform obj = m_ProxySystem.CreateNewPrefab(original.Prefab, captured.m_Translation, captured.m_Rotation, captured.m_Scale, captured.m_EnableCull);
 
-            return InternalCreateEntity(original, obj);
-        }
+        //    return InternalCreateEntity(original, obj);
+        //}
         public Entity<IEntity> CreateEntity(string name, Vector3 position)
         {
             ObjectBase original;
@@ -263,7 +288,7 @@ namespace Syadeu.Presentation
             }
             EntityBase temp = (EntityBase)original;
 
-            DataGameObject obj = m_ProxySystem.CreateNewPrefab(temp.Prefab, position);
+            ProxyTransform obj = m_ProxySystem.CreateNewPrefab(temp.Prefab, position, quaternion.identity, 1, true);
             return InternalCreateEntity(temp, obj);
         }
         /// <summary>
@@ -295,7 +320,7 @@ namespace Syadeu.Presentation
             }
             EntityBase temp = (EntityBase)original;
 
-            DataGameObject obj = m_ProxySystem.CreateNewPrefab(temp.Prefab, position);
+            ProxyTransform obj = m_ProxySystem.CreateNewPrefab(temp.Prefab, position, quaternion.identity, 1, true);
             return InternalCreateEntity(temp, obj);
         }
         public Entity<IEntity> CreateEntity(string name, Vector3 position, Quaternion rotation, Vector3 localSize, bool enableCull)
@@ -321,7 +346,7 @@ namespace Syadeu.Presentation
             }
             EntityBase temp = (EntityBase)original;
 
-            DataGameObject obj = m_ProxySystem.CreateNewPrefab(temp.Prefab, position, rotation, localSize, enableCull);
+            ProxyTransform obj = m_ProxySystem.CreateNewPrefab(temp.Prefab, position, rotation, localSize, enableCull);
             return InternalCreateEntity(temp, obj);
         }
         /// <summary>
@@ -356,21 +381,21 @@ namespace Syadeu.Presentation
             }
             EntityBase temp = (EntityBase)original;
 
-            DataGameObject obj = m_ProxySystem.CreateNewPrefab(temp.Prefab, position, rotation, localSize, enableCull);
+            ProxyTransform obj = m_ProxySystem.CreateNewPrefab(temp.Prefab, position, rotation, localSize, enableCull);
             return InternalCreateEntity(temp, obj);
         }
 
-        private Entity<IEntity> InternalCreateEntity(EntityBase entityBase, DataGameObject obj)
+        private Entity<IEntity> InternalCreateEntity(EntityBase entityBase, ProxyTransform obj)
         {
             EntityBase entity = (EntityBase)entityBase.Clone();
-            entity.m_GameObjectHash = obj.m_Idx;
-            entity.m_TransformHash = obj.m_Transform;
+
+            entity.transform = obj;
             entity.m_IsCreated = true;
 
             m_ObjectHashSet.Add(entity.Idx);
             m_ObjectEntities.Add(entity.Idx, entity);
 
-            m_EntityGameObjects.Add(obj.m_Idx, entity.Idx);
+            m_EntityGameObjects.Add(obj.index, entity.Idx);
 
             ProcessEntityOnCreated(this, entity);
             return Entity<IEntity>.GetEntity(entity.Idx);
@@ -440,6 +465,7 @@ namespace Syadeu.Presentation
 
             return InternalCreateObject(original);
         }
+
         /// <summary>
         /// 해당 엔티티를 즉시 파괴합니다.
         /// </summary>
@@ -453,11 +479,12 @@ namespace Syadeu.Presentation
 
             ProcessEntityOnDestroy(this, m_ObjectEntities[hash]);
 
-            if (m_ObjectEntities[hash] is IEntity entity)
+            if (!CoreSystem.s_BlockCreateInstance && m_ObjectEntities[hash] is IEntity entity)
             {
-                DataGameObject obj = entity.gameObject;
+                ProxyTransform obj = entity.transform;
+                Hash index = obj.index;
                 obj.Destroy();
-                m_EntityGameObjects.Remove(obj.m_Idx);
+                m_EntityGameObjects.Remove(index);
             }
 
             ((IDisposable)m_ObjectEntities[hash]).Dispose();
@@ -487,6 +514,8 @@ namespace Syadeu.Presentation
             CoreSystem.Logger.Log(Channel.Entity,
                 $"Create entity({entity.Name})");
 
+            EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntityData(entity.Idx);
+
             #region Attributes
             entity.Attributes.ForEach((other) =>
             {
@@ -507,11 +536,8 @@ namespace Syadeu.Presentation
                         {
                             IAttributeProcessor processor = groupProcessors[j];
 
-                            processor.OnCreated(other, EntityData<IEntityData>.GetEntityData(entity.Idx));
-                            CoreSystem.AddForegroundJob(() =>
-                            {
-                                processor.OnCreatedSync(other, EntityData<IEntityData>.GetEntityData(entity.Idx));
-                            });
+                            processor.OnCreated(other, entityData);
+                            system.m_AttributeSyncOperations.Enqueue((processor.OnCreatedSync, other, entityData));
                         }
                         CoreSystem.Logger.Log(Channel.Entity, $"Processed OnCreated at entity({entity.Name}), {t.Name}");
                     }
@@ -523,11 +549,8 @@ namespace Syadeu.Presentation
                     {
                         IAttributeProcessor processor = processors[j];
 
-                        processor.OnCreated(other, EntityData<IEntityData>.GetEntityData(entity.Idx));
-                        CoreSystem.AddForegroundJob(() =>
-                        {
-                            processor.OnCreatedSync(other, EntityData<IEntityData>.GetEntityData(entity.Idx));
-                        });
+                        processor.OnCreated(other, entityData);
+                        system.m_AttributeSyncOperations.Enqueue((processor.OnCreatedSync, other, entityData));
                     }
                     CoreSystem.Logger.Log(Channel.Entity, $"Processed OnCreated at entity({entity.Name}), {t.Name}");
                 }
@@ -541,19 +564,18 @@ namespace Syadeu.Presentation
                 {
                     IEntityDataProcessor processor = entityProcessor[i];
 
-                    processor.OnCreated(entity);
-                    CoreSystem.AddForegroundJob(() =>
-                    {
-                        processor.OnCreatedSync(entity);
-                    });
+                    processor.OnCreated(entityData);
+                    system.m_EntitySyncOperations.Enqueue((processor.OnCreatedSync, entityData));
                 }
             }
             #endregion
 
-            system.OnEntityCreated?.Invoke(EntityData<IEntityData>.GetEntityData(entity.Idx));
+            system.OnEntityCreated?.Invoke(entityData);
         }
         private static void ProcessEntityOnPresentation(EntitySystem system, IEntityData entity)
         {
+            EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntityData(entity.Idx);
+
             //#region Entity
             //if (system.m_EntityProcessors.TryGetValue(t, out List<IEntityProcessor> entityProcessor))
             //{
@@ -582,7 +604,7 @@ namespace Syadeu.Presentation
                     for (int j = 0; j < processors.Count; j++)
                     {
                         if (!(processors[j] is IAttributeOnPresentation onPresentation)) continue;
-                        onPresentation.OnPresentation(other, EntityData<IEntityData>.GetEntityData(entity.Idx));
+                        onPresentation.OnPresentation(other, entityData);
                     }
                 }
             });
@@ -592,6 +614,8 @@ namespace Syadeu.Presentation
         {
             CoreSystem.Logger.Log(Channel.Entity,
                 $"Destroying entity({entity.Name})");
+
+            EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntityData(entity.Idx);
 
             #region Attributes
             entity.Attributes.ForEach((other) =>
@@ -611,11 +635,8 @@ namespace Syadeu.Presentation
                     {
                         IAttributeProcessor processor = processors[j];
 
-                        processor.OnDestroy(other, EntityData<IEntityData>.GetEntityData(entity.Idx));
-                        CoreSystem.AddForegroundJob(() =>
-                        {
-                            processor.OnDestroySync(other, EntityData<IEntityData>.GetEntityData(entity.Idx));
-                        });
+                        processor.OnDestroy(other, entityData);
+                        system.m_AttributeSyncOperations.Enqueue((processor.OnDestroySync, other, entityData));
                     }
                 }
 
@@ -630,22 +651,21 @@ namespace Syadeu.Presentation
                 {
                     IEntityDataProcessor processor = entityProcessor[i];
 
-                    processor.OnDestroy(entity);
-                    CoreSystem.AddForegroundJob(() =>
-                    {
-                        processor.OnDestroySync(entity);
-                    });
+                    processor.OnDestroy(entityData);
+                    system.m_EntitySyncOperations.Enqueue((processor.OnDestroySync, entityData));
                 }
             }
             #endregion
 
-            system.OnEntityDestroy?.Invoke(EntityData<IEntityData>.GetEntityData(entity.Idx));
+            system.OnEntityDestroy?.Invoke(entityData);
         }
 
         private static void ProcessEntityOnProxyCreated(EntitySystem system, IEntity entity, RecycleableMonobehaviour monoObj)
         {
             CoreSystem.Logger.Log(Channel.Entity,
                 $"Processing OnProxyCreated at {entity.Name}");
+
+            Entity<IEntity> entityData = Entity<IEntity>.GetEntity(entity.Idx);
 
             //#region Entity
             //if (system.m_EntityProcessors.TryGetValue(entity.GetType(), out List<IEntityDataProcessor> entityProcessor))
@@ -675,13 +695,13 @@ namespace Syadeu.Presentation
                     {
                         if (processors[j] is IAttributeOnProxyCreated onProxyCreated)
                         {
-                            onProxyCreated.OnProxyCreated(other, Entity<IEntity>.GetEntity(entity.Idx), monoObj);
+                            onProxyCreated.OnProxyCreated(other, entityData, monoObj);
                         }
                         if (processors[j] is IAttributeOnProxyCreatedSync sync)
                         {
                             CoreSystem.AddForegroundJob(() =>
                             {
-                                sync.OnProxyCreatedSync(other, Entity<IEntity>.GetEntity(entity.Idx), monoObj);
+                                sync.OnProxyCreatedSync(other, entityData, monoObj);
                             });
                         }
                     }
@@ -693,6 +713,8 @@ namespace Syadeu.Presentation
         {
             CoreSystem.Logger.Log(Channel.Entity,
                 $"Processing OnProxyRemoved at {entity.Name}");
+
+            Entity<IEntity> entityData = Entity<IEntity>.GetEntity(entity.Idx);
 
             //#region Entity
             //if (system.m_EntityProcessors.TryGetValue(entity.GetType(), out List<IEntityDataProcessor> entityProcessor))
@@ -722,13 +744,13 @@ namespace Syadeu.Presentation
                     {
                         if (processors[j] is IAttributeOnProxyRemoved onProxyRemoved)
                         {
-                            onProxyRemoved.OnProxyRemoved(other, Entity<IEntity>.GetEntity(entity.Idx), monoObj);
+                            onProxyRemoved.OnProxyRemoved(other, entityData, monoObj);
                         }
                         if (processors[j] is IAttributeOnProxyRemovedSync sync)
                         {
                             CoreSystem.AddForegroundJob(() =>
                             {
-                                sync.OnProxyRemovedSync(other, Entity<IEntity>.GetEntity(entity.Idx), monoObj);
+                                sync.OnProxyRemovedSync(other, entityData, monoObj);
                             });
                         }
                     }

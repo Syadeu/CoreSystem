@@ -81,7 +81,7 @@ namespace Syadeu.Presentation.Map
 
             Entity<IEntity> entity = Parent;
             // TODO : 임시. 이후 gridsize 에 맞춰서 인덱스 반환
-            int p0 = GridSystem.GridMap.Grid.GetCellIndex(entity.transform.position);
+            int p0 = GridSystem.GridMap.Grid.PositionToIndex(entity.transform.position);
 
             return new int[] { p0 };
         }
@@ -90,6 +90,11 @@ namespace Syadeu.Presentation.Map
         {
             if (GridSystem == null) throw new System.Exception();
             return GridSystem.IndexToPosition(idx);
+        }
+        public int2 IndexToLocation(int idx)
+        {
+            if (GridSystem == null) throw new System.Exception();
+            return GridSystem.IndexToLocation(idx);
         }
     }
     //[Preserve]

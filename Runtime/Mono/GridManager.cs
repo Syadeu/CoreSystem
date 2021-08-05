@@ -1167,7 +1167,7 @@ namespace Syadeu.Mono
             public bool Equals(GridCell other) => Location.Equals(other.Location);
             public bool IsVisible()
             {
-                if (Presentation.PresentationSystem<Presentation.RenderSystem>.System.IsInCameraScreen(Bounds.center)) return true;
+                if (Presentation.PresentationSystem<Presentation.Render.RenderSystem>.System.IsInCameraScreen(Bounds.center)) return true;
                 return false;
             }
             #endregion
@@ -1836,7 +1836,7 @@ namespace Syadeu.Mono
                 for (int a = 0; a < grid.Length; a++)
                 {
                     ref var cell = ref grid.GetCell(a);
-                    if (!Presentation.PresentationSystem<Presentation.RenderSystem>.System.IsInCameraScreen(cell.Bounds.center)) continue;
+                    if (!Presentation.PresentationSystem<Presentation.Render.RenderSystem>.System.IsInCameraScreen(cell.Bounds.center)) continue;
 
                     if (!cell.Enabled || cell.BlockedByNavMesh)
                     {

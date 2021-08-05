@@ -67,18 +67,21 @@ namespace Syadeu.Presentation.Map
     }
     public sealed class MapDataProcessor : EntityDataProcessor<MapDataEntity>
     {
-        protected override void OnCreated(MapDataEntity entity)
+        protected override void OnCreated(EntityData<MapDataEntity> e)
         {
+            MapDataEntity entity = e.Target;
+
             entity.CreatedEntities = new Entity<EntityBase>[entity.m_Objects.Length];
             for (int i = 0; i < entity.m_Objects.Length; i++)
             {
                 entity.CreatedEntities[i] = CreateEntity(entity.m_Objects[i].m_Object, entity.m_Objects[i].m_Translation, entity.m_Objects[i].m_Rotation, entity.m_Objects[i].m_Scale, entity.m_Objects[i].m_EnableCull);
             }
         }
-        protected override void OnDestroy(MapDataEntity entity)
+        protected override void OnDestroy(EntityData<MapDataEntity> e)
         {
-            if (!entity.DestroyChildOnDestroy) return;
+            MapDataEntity entity = e.Target;
 
+            if (entity == null || !entity.DestroyChildOnDestroy) return;
             for (int i = 0; i < entity.CreatedEntities.Length; i++)
             {
                 if (entity.CreatedEntities[i].IsValid())

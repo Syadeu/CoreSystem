@@ -49,8 +49,8 @@ namespace Syadeu.Presentation.Map
 
             for (int i = 0; i < m_MapData.Length; i++)
             {
-                EntityData<MapDataEntity> temp = system.CreateObject(m_MapData[i]);
-                CreatedMapData.Add(temp);
+                EntityData<IEntityData> temp = system.CreateObject(m_MapData[i]);
+                CreatedMapData.Add(EntityData<MapDataEntity>.GetEntityData(temp.Idx));
             }
 
             IsMapDataCreated = true;
@@ -73,17 +73,17 @@ namespace Syadeu.Presentation.Map
     [Preserve]
     internal sealed class SceneDataEntityProcessor : EntityDataProcessor<SceneDataEntity>
     {
-        protected override void OnCreated(SceneDataEntity entity)
+        protected override void OnCreated(EntityData<SceneDataEntity> entity)
         {
-            if (!entity.IsValid()) return;
+            if (!entity.Target.IsValid()) return;
 
-            entity.CreateMapData();
+            entity.Target.CreateMapData();
         }
-        protected override void OnDestroy(SceneDataEntity entity)
+        protected override void OnDestroy(EntityData<SceneDataEntity> entity)
         {
-            if (!entity.IsValid()) return;
+            if (entity.Target == null || !entity.Target.IsValid()) return;
 
-            entity.DestroyMapData();
+            entity.Target.DestroyMapData();
         }
     }
 }

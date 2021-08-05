@@ -15,14 +15,14 @@ namespace Syadeu.Presentation.Attributes
     {
         [JsonProperty(Order = 0, PropertyName = "Prefab")] public PrefabReference m_Prefab;
 
-        [JsonIgnore] public DataGameObject PrefabInstance { get; internal set; }
+        [JsonIgnore] public ProxyTransform PrefabInstance { get; internal set; }
     }
     [Preserve]
     internal sealed class CreatePrefabProcessor : AttributeProcessor<CreatePrefabAttribute>
     {
         protected override void OnCreated(CreatePrefabAttribute attribute, EntityData<IEntityData> entity)
         {
-            Vector3 pos = ((EntityData<IEntity>)entity).Target.transform.position;
+            Vector3 pos = ((Entity<IEntity>)entity).Target.transform.position;
             attribute.PrefabInstance = CreatePrefab(attribute.m_Prefab, pos, quaternion.identity);
         }
         //public void OnProxyCreated(AttributeBase attribute, IEntity entity)

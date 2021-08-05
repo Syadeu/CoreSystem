@@ -12,6 +12,9 @@ namespace Syadeu.Internal
         const string c_LogBaseText = "[<color={0}>CoreSystem</color>][{1}][{2}]: {3}";
         const string c_LogAssertText = "[<color={0}>CoreSystem</color>][{1}]: {2}";
         const string c_LogThreadText = "[<color={0}>{1}</color>]";
+
+        const string c_LogThreadErrorText = "This method is not allowed to use in this thread({0}). Accepts only {1}";
+
         private enum StringColor
         {
             black,
@@ -38,15 +41,6 @@ namespace Syadeu.Internal
         }
         internal static Channel s_DisplayLogChannel = Channel.All;
 
-        public enum ThreadInfo
-        {
-            Unity,
-            Background,
-            Job,
-
-            User
-        }
-
         private static readonly ConcurrentDictionary<Thread, ThreadInfo> m_ThreadInfos = new ConcurrentDictionary<Thread, ThreadInfo>();
         public static void RegisterThread(ThreadInfo info, Thread t)
         {
@@ -67,6 +61,15 @@ namespace Syadeu.Internal
         }
 
 #line hidden
+        public static void ThreadBlock(ThreadInfo acceptOnly)
+        {
+            ThreadInfo info = GetThreadType();
+            if (!acceptOnly.HasFlag(info))
+            {
+                Log(Channel.Thread, ResultFlag.Error,
+                    string.Format(c_LogThreadErrorText, info, acceptOnly), false);
+            }
+        }
         public static void Log(Channel channel, ResultFlag result, string msg, bool logThread)
         {
             if (!s_DisplayLogChannel.HasFlag(channel))
@@ -151,5 +154,17 @@ namespace Syadeu.Internal
 
         #endregion
 #line default
+    }
+
+    [System.Flags]
+    public enum ThreadInfo
+    {
+        None,
+
+        Unity = 1 << 0,
+        Background = 1 << 1,
+        Job = 1 << 2,
+
+        User = 1 << 3
     }
 }

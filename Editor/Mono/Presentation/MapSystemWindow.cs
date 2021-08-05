@@ -450,7 +450,7 @@ namespace SyadeuEditor.Presentation.Map
                             for (int i = 0; i < item.m_Indices.Length; i++)
                             {
                                 Vector3
-                                    cellPos = m_SceneDataGrid.GetCellPosition(item.m_Indices[i]),
+                                    cellPos = m_SceneDataGrid.IndexToPosition(item.m_Indices[i]),
                                     p1 = new Vector3(cellPos.x - sizeHalf, cellPos.y + .1f, cellPos.z - sizeHalf),
                                     p2 = new Vector3(cellPos.x - sizeHalf, cellPos.y + .1f, cellPos.z + sizeHalf),
                                     p3 = new Vector3(cellPos.x + sizeHalf, cellPos.y + .1f, cellPos.z + sizeHalf),
@@ -468,7 +468,7 @@ namespace SyadeuEditor.Presentation.Map
                         for (int i = 0; i < m_CurrentLayer.m_Indices.Length; i++)
                         {
                             Vector3
-                                cellPos = m_SceneDataGrid.GetCellPosition(m_CurrentLayer.m_Indices[i]),
+                                cellPos = m_SceneDataGrid.IndexToPosition(m_CurrentLayer.m_Indices[i]),
                                 p1 = new Vector3(cellPos.x - sizeHalf, cellPos.y + .1f, cellPos.z - sizeHalf),
                                 p2 = new Vector3(cellPos.x - sizeHalf, cellPos.y + .1f, cellPos.z + sizeHalf),
                                 p3 = new Vector3(cellPos.x + sizeHalf, cellPos.y + .1f, cellPos.z + sizeHalf),
@@ -508,7 +508,7 @@ namespace SyadeuEditor.Presentation.Map
                             ray = EditorSceneUtils.GetMouseScreenRay();
                             if (m_SceneDataGrid.bounds.Intersect(ray, out _, out point))
                             {
-                                int idx = m_SceneDataGrid.GetCellIndex(point);
+                                int idx = m_SceneDataGrid.PositionToIndex(point);
                                 List<int> tempList = m_CurrentLayer.m_Indices.ToList();
 
                                 if (tempList.Contains(idx))
@@ -537,7 +537,7 @@ namespace SyadeuEditor.Presentation.Map
                         ray = EditorSceneUtils.GetMouseScreenRay();
                         if (m_SceneDataGrid.bounds.Intersect(ray, out _, out point))
                         {
-                            int idx = m_SceneDataGrid.GetCellIndex(point);
+                            int idx = m_SceneDataGrid.PositionToIndex(point);
                             if (m_AddDrag)
                             {
                                 if (!m_CurrentLayer.m_Indices.Contains(idx))
@@ -777,7 +777,7 @@ namespace SyadeuEditor.Presentation.Map
                 var entity = m_SelectedGameObject.m_Object.GetObject();
                 using (new EditorUtils.BoxBlock(Color.black))
                 {
-                    EditorUtils.StringRich(entity.Name, 13);
+                    EditorUtils.StringRich(entity.Name, 15);
 
                     entity.Center = EditorGUILayout.Vector3Field("Center: ", entity.Center);
                     entity.Size = EditorGUILayout.Vector3Field("Size: ", entity.Size);
@@ -787,6 +787,13 @@ namespace SyadeuEditor.Presentation.Map
                     {
                         ReflectionHelperEditor.GetDrawer(gridSizeAtt).OnGUI();
                     }
+
+                    EditorGUILayout.BeginHorizontal();
+                    if (GUILayout.Button("Save"))
+                    {
+                        EntityDataList.Instance.SaveData(entity);
+                    }
+                    EditorGUILayout.EndHorizontal();
                 }
             }
 

@@ -1,71 +1,72 @@
 ﻿using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Mono;
-using Syadeu.Presentation.Entities;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using UnityEngine.Profiling;
-using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.SceneManagement;
 
 namespace Syadeu.Presentation
 {
     internal sealed class GameObjectProxySystem : PresentationSystemEntity<GameObjectProxySystem>
     {
-        private static Vector3 INIT_POSITION = new Vector3(-9999, -9999, -9999);
+        private static readonly Vector3 INIT_POSITION = new Vector3(-9999, -9999, -9999);
 
-        public override bool EnableBeforePresentation => false;
+        public override bool EnableBeforePresentation => true;
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => true;
 
-        public event Action<DataGameObject> OnDataObjectCreatedAsync;
-        public event Action<DataGameObject> OnDataObjectDestroyAsync;
-        public event Action<DataGameObject> OnDataObjectVisibleAsync;
-        public event Action<DataGameObject> OnDataObjectInvisibleAsync;
+        public event Action<ProxyTransform> OnDataObjectCreated;
+        public event Action<ProxyTransform> OnDataObjectDestroy;
+        public event Action<ProxyTransform> OnDataObjectVisible;
+        public event Action<ProxyTransform> OnDataObjectInvisible;
 
-        public event Action<DataGameObject, RecycleableMonobehaviour> OnDataObjectProxyCreated;
-        public event Action<DataGameObject, RecycleableMonobehaviour> OnDataObjectProxyRemoved;
+        public event Action<ProxyTransform, RecycleableMonobehaviour> OnDataObjectProxyCreated;
+        public event Action<ProxyTransform, RecycleableMonobehaviour> OnDataObjectProxyRemoved;
 
-        internal NativeHashMap<Hash, int> m_MappedGameObjectIdxes = new NativeHashMap<Hash, int>(1000, Allocator.Persistent);
-        internal NativeHashMap<Hash, int> m_MappedTransformIdxes = new NativeHashMap<Hash, int>(1000, Allocator.Persistent);
-        internal NativeList<DataGameObject> m_MappedGameObjects = new NativeList<DataGameObject>(1000, Allocator.Persistent);
-        internal NativeList<DataTransform> m_MappedTransforms = new NativeList<DataTransform>(1000, Allocator.Persistent);
-        
-        private readonly ConcurrentQueue<Hash> m_UpdateTransforms = new ConcurrentQueue<Hash>();
-        private readonly ConcurrentQueue<Action> m_RequestedJobs = new ConcurrentQueue<Action>();
-        private readonly ConcurrentQueue<Hash> m_RequestDestories = new ConcurrentQueue<Hash>();
-        private readonly ConcurrentQueue<IInternalDataComponent> m_RequestProxies = new ConcurrentQueue<IInternalDataComponent>();
-        private readonly ConcurrentQueue<IInternalDataComponent> m_RemoveProxies = new ConcurrentQueue<IInternalDataComponent>();
+        NativeQueue<ProxyTransform>
+                m_RequestDestories = new NativeQueue<ProxyTransform>(Allocator.Persistent),
+                m_RequestUpdates = new NativeQueue<ProxyTransform>(Allocator.Persistent),
 
-        private int m_VisibleCheckJobWorker;
-        private BackgroundJob m_VisibleCheckJob;
-        private readonly List<BackgroundJob> m_VisibleCheckJobs = new List<BackgroundJob>();
+                m_RequestProxyList = new NativeQueue<ProxyTransform>(Allocator.Persistent),
+                m_RemoveProxyList = new NativeQueue<ProxyTransform>(Allocator.Persistent),
+                m_VisibleList = new NativeQueue<ProxyTransform>(Allocator.Persistent),
+                m_InvisibleList = new NativeQueue<ProxyTransform>(Allocator.Persistent);
 
         private SceneSystem m_SceneSystem;
-        private RenderSystem m_RenderSystem;
+        private Render.RenderSystem m_RenderSystem;
 
         private bool m_LoadingLock = false;
         private bool m_Disposed = false;
 
         public bool Disposed => m_Disposed;
 
+        private NativeProxyData m_ProxyData;
+
         #region Presentation Methods
         protected override PresentationResult OnInitialize()
         {
-            m_VisibleCheckJobWorker = CoreSystem.CreateNewBackgroundJobWorker(true);
-            m_VisibleCheckJob = new BackgroundJob(ProxyVisibleCheckPararellJob);
+            //m_VisibleCheckJobWorker = CoreSystem.CreateNewBackgroundJobWorker(true);
+            //m_VisibleCheckJob = new BackgroundJob(ProxyVisibleCheckPararellJob);
 
             if (!PoolContainer<PrefabRequester>.Initialized) PoolContainer<PrefabRequester>.Initialize(() => new PrefabRequester(), 10);
+
+            //ConsoleWindow.CreateCommand((cmd) =>
+            //{
+            //    for (int i = 0; i < m_MappedGameObjects.Length; i++)
+            //    {
+            //        DestoryDataObject(m_MappedGameObjects[i].m_Idx);
+            //    }
+            //}, "destroy", "all");
 
             return base.OnInitialize();
         }
@@ -76,10 +77,63 @@ namespace Syadeu.Presentation
             m_ModuleBuilder = ab.DefineDynamicModule(aName.Name);
 
             RequestSystem<SceneSystem>((other) => m_SceneSystem = other);
-            RequestSystem<RenderSystem>((other) => m_RenderSystem = other);
+            RequestSystem<Render.RenderSystem>((other) => m_RenderSystem = other);
+
+            m_ProxyData = new NativeProxyData(1024, Allocator.Persistent);
+            EventDescriptor<ProxyTransform>.AddEvent(ProxyTransform.s_TranslationChanged, OnProxyTransformTranslationChanged);
+            EventDescriptor<ProxyTransform>.AddEvent(ProxyTransform.s_RotationChanged, OnProxyTransformRotationChanged);
+            EventDescriptor<ProxyTransform>.AddEvent(ProxyTransform.s_ScaleChanged, OnProxyTransformScaleChanged);
+            EventDescriptor<ProxyTransform>.AddEvent(ProxyTransform.s_RequestProxy, OnProxyTransformProxyRequested);
+            EventDescriptor<ProxyTransform>.AddEvent(ProxyTransform.s_RemoveProxy, OnProxyTransformProxyRemove);
 
             return base.OnInitializeAsync();
         }
+        private void OnProxyTransformTranslationChanged(ProxyTransform data)
+        {
+            if (!data.hasProxy)
+            {
+                if (!data.hasProxyQueued && m_RenderSystem.IsInCameraScreen(data.position))
+                {
+                    data.RequestProxy();
+                    return;
+                }
+            }
+            else
+            {
+                if (!data.hasProxyQueued)
+                {
+                    m_RequestUpdates.Enqueue(data);
+                }
+            }
+        }
+        private void OnProxyTransformRotationChanged(ProxyTransform data)
+        {
+            if (!data.hasProxy || data.hasProxyQueued) return;
+
+            m_RequestUpdates.Enqueue(data);
+        }
+        private void OnProxyTransformScaleChanged(ProxyTransform data)
+        {
+            if (!data.hasProxy || data.hasProxyQueued) return;
+
+            m_RequestUpdates.Enqueue(data);
+        }
+        private void OnProxyTransformProxyRequested(ProxyTransform data)
+        {
+            CoreSystem.Logger.Log(Channel.Proxy,
+                $"Proxy requested at {data.index}, {data.prefab.GetObjectSetting().m_Name}");
+
+            m_RequestProxyList.Enqueue(data);
+            //RequestProxy(data);
+        }
+        private void OnProxyTransformProxyRemove(ProxyTransform data)
+        {
+            CoreSystem.Logger.Log(Channel.Proxy,
+                $"Proxy removed at {data.index}, {data.prefab.GetObjectSetting().m_Name}");
+            //RemoveProxy(data);
+            m_RemoveProxyList.Enqueue(data);
+        }
+
         protected override PresentationResult OnStartPresentation()
         {
             m_SceneSystem.OnLoadingEnter += () =>
@@ -88,204 +142,163 @@ namespace Syadeu.Presentation
                 CoreSystem.Logger.Log(Channel.Proxy, true,
                     "Scene on loading enter lambda excute");
 
-                //foreach (var item in m_TerminatedProxies)
-                //{
-                //    var prefabInfo = PrefabList.Instance.ObjectSettings[item.Key];
-                //    int count = item.Value.Count;
-                //    for (int i = 0; i < count; i++)
-                //    {
-                //        prefabInfo.Pool.Enqueue(item.Value.Dequeue().gameObject);
-                //    }
-                //}
-                //m_TerminatedProxies.Clear();
+                m_RequestDestories.Clear();
+                m_RequestUpdates.Clear();
 
-                while (m_RequestDestories.Count > 0)
-                {
-                    m_RequestDestories.TryDequeue(out _);
-                }
-                m_RemovedGameObjectIdxes.Clear();
+                m_RequestProxyList.Clear();
+                m_RemoveProxyList.Clear();
+                m_VisibleList.Clear();
+                m_InvisibleList.Clear();
 
-                #region Clear Data Transforms
-                for (int i = 0; i < m_MappedTransforms.Length; i++)
-                {
-                    if (m_MappedTransforms[i].HasProxyObject)
-                    {
-                        int2 proxyIdx = m_MappedTransforms[i].m_ProxyIdx;
-
-                        var prefabSetting = PrefabList.Instance.ObjectSettings[proxyIdx.x];
-                        RecycleableMonobehaviour obj = m_Instances[proxyIdx.x][proxyIdx.y];
-
-                        //prefabSetting.Pool.Enqueue(obj);
-                        obj.Terminate();
-                    }
-                }
-                m_MappedTransforms.Clear();
-                m_MappedTransformIdxes.Clear();
-                #endregion
-
-                #region Clear Data GameObjects
-                for (int i = 0; i < m_MappedGameObjects.Length; i++)
-                {
-                    OnDataObjectDestroyAsync?.Invoke(m_MappedGameObjects[i]);
-                }
-                m_MappedGameObjects.Clear();
-                m_MappedGameObjectIdxes.Clear();
-                #endregion
-
-                #region Proxy Release
-
+                m_Instances.Clear();
                 m_TerminatedProxies.Clear();
-                m_Instances.Clear();
-                //for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
-                //{
-                //    PrefabList.Instance.ObjectSettings[i].Pool.Clear();
-                //}
 
-                #endregion
+                m_ProxyData.For((tr) =>
+                {
+                    OnDataObjectDestroy?.Invoke(tr);
+                });
 
-                m_Instances.Clear();
-
+                m_ProxyData.Clear();
                 m_LoadingLock = false;
             };
+
+            m_VisibleJob = m_ProxyData.ParallelFor((other) =>
+            {
+            });
             return base.OnStartPresentation();
         }
 
+        protected override PresentationResult BeforePresentation()
+        {
+            
+
+            return base.BeforePresentation();
+        }
         protected override PresentationResult AfterPresentation()
         {
-            int jobCount = m_RequestedJobs.Count;
-            for (int i = 0; i < jobCount; i++)
+            const int c_ChunkSize = 100;
+
+            if (m_LoadingLock) return base.AfterPresentation();
+
+            int destroyCount = m_RequestDestories.Count;
+            for (int i = 0; i < destroyCount; i++)
             {
-                if (!m_RequestedJobs.TryDequeue(out Action job)) continue;
-                job.Invoke();
+                ProxyTransform tr = m_RequestDestories.Dequeue();
+
+                OnDataObjectDestroy?.Invoke(tr);
+                m_ProxyData.Remove(tr);
+
+                if (i != 0 && i % c_ChunkSize == 0) break;
             }
 
-            int trUpdateCount = m_UpdateTransforms.Count;
-            for (int i = 0; i < trUpdateCount; i++)
+            int requestUpdateCount = m_RequestUpdates.Count;
+            for (int i = 0; i < requestUpdateCount; i++)
             {
-                if (!m_UpdateTransforms.TryDequeue(out Hash trHash)) continue;
+                ProxyTransform tr = m_RequestUpdates.Dequeue();
+                if (tr.isDestroyed) continue;
 
-                unsafe
-                {
-                    ref DataTransform dataTr = ref *GetDataTransformPointer(trHash);
-                    if (dataTr.ProxyRequested)
-                    {
-                        m_UpdateTransforms.Enqueue(trHash);
-                        continue;
-                    }
-                    else if (!dataTr.HasProxyObject) continue;
-                }
-                UpdateDataTransform(trHash);
+                RecycleableMonobehaviour proxy = tr.proxy;
+                proxy.transform.position = tr.position;
+                proxy.transform.rotation = tr.rotation;
+                proxy.transform.localScale = tr.scale;
+
+                if (i != 0 && i % c_ChunkSize == 0) break;
+            }
+
+            int requestProxyCount = m_RequestProxyList.Count;
+            for (int i = 0; i < requestProxyCount; i++)
+            {
+                ProxyTransform tr = m_RequestProxyList.Dequeue();
+                if (tr.isDestroyed) continue;
+
+                RequestProxy(tr);
+                if (i != 0 && i % c_ChunkSize == 0) break;
+            }
+
+            int removeProxyCount = m_RemoveProxyList.Count;
+            for (int i = 0; i < removeProxyCount; i++)
+            {
+                ProxyTransform tr = m_RemoveProxyList.Dequeue();
+                if (tr.isDestroyed) continue;
+
+                RemoveProxy(tr);
+                if (i != 0 && i % c_ChunkSize == 0) break;
+            }
+
+            int visibleCount = m_VisibleList.Count;
+            for (int i = 0; i < visibleCount; i++)
+            {
+                ProxyTransform tr = m_VisibleList.Dequeue();
+                if (tr.isDestroyed) continue;
+
+                tr.isVisible = true;
+                OnDataObjectVisible?.Invoke(tr);
+
+                if (i != 0 && i % c_ChunkSize == 0) break;
+            }
+            int invisibleCount = m_InvisibleList.Count;
+            for (int i = 0; i < invisibleCount; i++)
+            {
+                ProxyTransform tr = m_InvisibleList.Dequeue();
+                if (tr.isDestroyed) continue;
+
+                tr.isVisible = false;
+                OnDataObjectInvisible?.Invoke(tr);
+
+                if (i != 0 && i % c_ChunkSize == 0) break;
             }
 
             return base.AfterPresentation();
         }
-        private readonly List<int> m_RemovedTransformIdxes = new List<int>();
-        private readonly List<int> m_RemovedGameObjectIdxes = new List<int>();
+
+        ParallelLoopResult m_VisibleJob;
         protected override PresentationResult AfterPresentationAsync()
         {
-            #region Object Proxy Work
-            int temp1 = m_RequestProxies.Count;
-            for (int i = 0; i < temp1; i++)
+            if (m_VisibleJob.IsCompleted)
             {
-                if (!m_RequestProxies.TryDequeue(out var data) || data.ProxyRequested) continue;
-                CoreSystem.Logger.NotNull(data);
-
-                RequestProxy(data.GameObject, data.Idx, null);
-                //$"requesting {m_RequestProxies[i].Idx}".ToLog();
-            }
-            //m_RequestProxies.RemoveRange(0, temp1);
-            int temp2 = m_RemoveProxies.Count;
-            for (int i = 0; i < temp2; i++)
-            {
-                if (!m_RemoveProxies.TryDequeue(out var data)) continue;
-                CoreSystem.Logger.NotNull(data);
-
-                RemoveProxy(data.Idx, false);
-            }
-            //m_RemoveProxies.RemoveRange(0, temp2);
-            #endregion
-
-            #region Object Destory Work
-            int temp3 = m_RequestDestories.Count;
-            if (temp3 > 0)
-            {
-                if (!m_LoadingLock && m_VisibleCheckJob.IsDone)
+                m_VisibleJob = m_ProxyData.ParallelFor((other) =>
                 {
-                    for (int i = 0; i < temp3; i++)
+                    if (other.isDestroyed) return;
+
+                    if (m_RenderSystem.IsInCameraScreen(other.position))
                     {
-                        if (!m_RequestDestories.TryDequeue(out Hash objHash)) continue;
-
-                        int objIdx = m_MappedGameObjectIdxes[objHash];
-                        int trIdx = m_MappedTransformIdxes[m_MappedGameObjects[objIdx].m_Transform];
-
-                        OnDataObjectDestroyAsync?.Invoke(m_MappedGameObjects[objIdx]);
-
-                        if (m_MappedTransforms[trIdx].HasProxyObject)
+                        if (other.enableCull && !other.hasProxy)
                         {
-                            RemoveProxy(m_MappedGameObjects[objIdx].m_Transform, true);
+                            other.RequestProxy();
+                        }
+                        
+                        if (!other.isVisible) m_VisibleList.Enqueue(other);
+                    }
+                    else
+                    {
+                        if (other.hasProxy && !other.hasProxyQueued)
+                        {
+                            other.RemoveProxy();
                         }
 
-                        // 여기서 지우면 다른 오브젝트의 인덱스가 헷갈리니까 일단 위치저장
-                        m_RemovedTransformIdxes.Add(trIdx);
-                        m_MappedTransformIdxes.Remove(m_MappedGameObjects[objIdx].m_Transform);
-
-                        ((IDisposable)m_MappedGameObjects[objIdx]).Dispose();
-
-                        // 여기서 지우면 다른 오브젝트의 인덱스가 헷갈리니까 일단 위치저장
-                        m_RemovedGameObjectIdxes.Add(objIdx);
-                        m_MappedGameObjectIdxes.Remove(objHash);
+                        if (other.isVisible) m_InvisibleList.Enqueue(other);
                     }
-                }
+                });
             }
-            else
-            {
-                if (m_VisibleCheckJob.IsDone)
-                {
-                    m_VisibleCheckJob.Start(m_VisibleCheckJobWorker);
-                }
-            }
-
-            // 데이터 재 인덱싱
-            if (m_RemovedGameObjectIdxes.Count > 0)
-            {
-                List<int> removedObj = m_RemovedGameObjectIdxes.ToList();
-                List<int> removedTr = m_RemovedTransformIdxes.ToList();
-
-                for (int i = 0, j = 0; i < m_MappedGameObjects.Length; i++, j++)
-                {
-                    if (removedObj.Contains(j))
-                    {
-                        m_RemovedGameObjectIdxes.Remove(j);
-                        m_MappedGameObjects.RemoveAt(i);
-                        i--;
-                        continue;
-                    }
-
-                    m_MappedGameObjectIdxes[m_MappedGameObjects[i].m_Idx] = i;
-                }
-                for (int i = 0, j = 0; i < m_MappedTransforms.Length; i++, j++)
-                {
-                    if (removedTr.Contains(j))
-                    {
-                        m_RemovedTransformIdxes.Remove(j);
-                        m_MappedTransforms.RemoveAt(i);
-                        i--;
-                        continue;
-                    }
-                    m_MappedTransformIdxes[m_MappedTransforms[i].m_Idx] = i;
-                }
-            }
-            #endregion
 
             return base.AfterPresentationAsync();
         }
+
         public override void Dispose()
         {
-            m_MappedGameObjectIdxes.Dispose();
-            m_MappedTransformIdxes.Dispose();
-            m_MappedGameObjects.Dispose();
-            m_MappedTransforms.Dispose();
-            CoreSystem.RemoveBackgroundJobWorker(m_VisibleCheckJobWorker);
+            m_RequestDestories.Dispose();
+            m_RequestUpdates.Dispose();
+
+            m_RequestProxyList.Dispose();
+            m_RemoveProxyList.Dispose();
+            m_VisibleList.Dispose();
+            m_InvisibleList.Dispose();
+
+            m_ProxyData.For((tr) =>
+            {
+                OnDataObjectDestroy?.Invoke(tr);
+            });
+            m_ProxyData.Dispose();
 
             m_Disposed = true;
 
@@ -293,443 +306,99 @@ namespace Syadeu.Presentation
         }
         #endregion
 
-        internal void DestoryDataObject(Hash objHash)
-        {
-            if (m_RequestDestories.Contains(objHash))
-            {
-                CoreSystem.Logger.LogError(Channel.Presentation, $"Already queued {objHash}");
-                return;
-            }
-            m_RequestDestories.Enqueue(objHash);
-        }
-        public void RequestUpdateTransform(Hash trHash)
-        {
-            if (m_UpdateTransforms.Contains(trHash))
-            {
-                CoreSystem.Logger.LogWarning(Channel.Presentation, $"Ignore transform({trHash}) update request, already requested");
-                return;
-            }
-
-            m_UpdateTransforms.Enqueue(trHash);
-        }
-
-        internal DataGameObject CreateEmpty(float3 translation, quaternion rotation, float3 scale)
-        {
-            Hash trHash = Hash.NewHash();
-            Hash objHash = Hash.NewHash();
-
-            DataTransform trData = new DataTransform()
-            {
-                m_GameObject = objHash,
-                m_Idx = trHash,
-                m_ProxyIdx = DataTransform.ProxyNull,
-                m_PrefabIdx = -1,
-                m_EnableCull = false,
-
-                m_Position = translation,
-                m_Rotation = rotation,
-                m_LocalScale = scale
-            };
-            DataGameObject objData = new DataGameObject()
-            {
-                m_Idx = objHash,
-                m_Transform = trHash
-            };
-
-            int objIdx = m_MappedGameObjects.Length;
-            m_MappedGameObjects.Add(objData);
-            m_MappedGameObjectIdxes.Add(objHash, objIdx);
-
-            int trIdx = m_MappedTransforms.Length;
-            m_MappedTransforms.Add(trData);
-            m_MappedTransformIdxes.Add(trHash, trIdx);
-
-            OnDataObjectCreatedAsync?.Invoke(objData);
-            return objData;
-        }
-        internal DataGameObject CreateNewPrefab(PrefabReference prefab, Vector3 pos)
-        {
-            PrefabList.ObjectSetting objSetting;
-            try
-            {
-                objSetting = prefab.GetObjectSetting();
-            }
-            catch (KeyNotFoundException)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity, "Prefab is invalid. Create new prefab request has been ignored.");
-                return default;
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-
-            //Transform tr;
-            //if (objSetting.m_RefPrefab.Asset == null)
-            //{
-            //    var asyncOper = objSetting.m_RefPrefab.LoadAssetAsync<GameObject>();
-            //    asyncOper.Completed += (oper) =>
-            //    {
-
-            //    };
-            //}
-            //else tr = CoreSystem.GetTransform((GameObject)objSetting.m_RefPrefab.Asset);
-
-            //DataTransform dataTr;
-            //try
-            //{
-            //    dataTr = ToDataTransform(tr);
-            //}
-            //catch (NullReferenceException)
-            //{
-            //    CoreSystem.Logger.LogError(Channel.Entity, $"Prefab({objSetting.m_Name}) is null. Create new prefab request has been ignored.");
-            //    return default;
-            //}
-            //catch (Exception)
-            //{
-            //    throw;
-            //}
-
-            return CreateNewPrefab(prefab, pos, quaternion.identity, Vector3.one, true);
-        }
-        internal DataGameObject CreateNewPrefab(PrefabReference prefab, 
-            Vector3 pos, Quaternion rot, Vector3 localScale, bool enableCull)
+        public ProxyTransform CreateNewPrefab(PrefabReference prefab, float3 pos, quaternion rot, float3 scale, bool enableCull)
         {
             CoreSystem.Logger.NotNull(m_RenderSystem, $"You've call this method too early or outside of PresentationSystem");
 
-            Hash trHash = Hash.NewHash();
-            Hash objHash = Hash.NewHash();
-
-            int2 proxyIdx = DataTransform.ProxyNull;
+            ProxyTransform tr = m_ProxyData.Add(prefab, pos, rot, scale, enableCull);
             if (!enableCull || m_RenderSystem.IsInCameraScreen(pos))
             {
-                proxyIdx = DataTransform.ProxyQueued;
+                tr.RequestProxy();
             }
+            OnDataObjectCreated?.Invoke(tr);
 
-            ThreadSafe.Vector3 right = ThreadSafe.Vector3.Right;
-            ThreadSafe.Vector3 up = ThreadSafe.Vector3.Up;
-            ThreadSafe.Vector3 forward = ThreadSafe.Vector3.Forward;
-            if (!rot.Equals(Quaternion.identity))
-            {
-                right = new ThreadSafe.Vector3(rot * Vector3.right);
-                up = new ThreadSafe.Vector3(rot * Vector3.up);
-                forward = new ThreadSafe.Vector3(rot * Vector3.right);
-            }
-
-            DataTransform trData = new DataTransform()
-            {
-                m_GameObject = objHash,
-                m_Idx = trHash,
-                m_ProxyIdx = proxyIdx,
-                m_PrefabIdx = prefab,
-                m_EnableCull = enableCull,
-
-                m_Position = new ThreadSafe.Vector3(pos),
-                m_Rotation = rot,
-                m_LocalScale = new ThreadSafe.Vector3(localScale)
-            };
-            DataGameObject objData = new DataGameObject()
-            {
-                m_Idx = objHash,
-                m_Transform = trHash
-            };
-
-            int objIdx = m_MappedGameObjects.Length;
-            m_MappedGameObjects.Add(objData);
-            m_MappedGameObjectIdxes.Add(objHash, objIdx);
-
-            int trIdx = m_MappedTransforms.Length;
-            m_MappedTransforms.Add(trData);
-            m_MappedTransformIdxes.Add(trHash, trIdx);
-
-            if (proxyIdx.Equals(DataTransform.ProxyQueued))
-            {
-                RequestProxy(objHash, trHash, null);
-            }
-
-            OnDataObjectCreatedAsync?.Invoke(objData);
-            return objData;
+            CoreSystem.Logger.Log(Channel.Proxy, true,
+                $"ProxyTransform({prefab.GetObjectSetting().m_Name}) has been created at {pos}");
+            return tr;
         }
-        private DataTransform ToDataTransform(Transform tr)
+        public void Destroy(ProxyTransform proxyTransform)
         {
-            Vector3
-                pos = Vector3.zero, localScale = Vector3.zero;
-            Quaternion rotation = Quaternion.identity;
-
-            if (CoreSystem.IsThisMainthread())
-            {
-                pos = tr.position;
-                localScale = tr.localScale;
-                rotation = tr.rotation;
-            }
-            else
-            {
-                CoreSystem.AddForegroundJob(() =>
-                {
-                    pos = tr.position;
-                    localScale = tr.localScale;
-                    rotation = tr.rotation;
-                }).Await();
-            }
-            return new DataTransform
-            {
-                m_Position = new ThreadSafe.Vector3(pos),
-                m_LocalScale = new ThreadSafe.Vector3(localScale),
-                m_Rotation = rotation
-            };
+            m_RequestDestories.Enqueue(proxyTransform);
         }
 
         #region Proxy Object Control
-        
-        unsafe private void RequestProxy(Hash objHash, Hash trHash, Action<DataGameObject, RecycleableMonobehaviour> onCompleted)
+
+        private void RequestProxy(ProxyTransform proxyTransform)
         {
-            if (m_LoadingLock) return;
-            if (!m_MappedGameObjectIdxes.ContainsKey(objHash) || !m_MappedTransformIdxes.ContainsKey(trHash)) return;
+            CoreSystem.Logger.ThreadBlock(ThreadInfo.Unity);
 
-            ref DataTransform tr = ref *GetDataTransformPointer(trHash);
-            tr.m_ProxyIdx = DataTransform.ProxyQueued;
-            PrefabReference prefab = tr.m_PrefabIdx;
-            
-            m_RequestedJobs.Enqueue(() =>
-            {
-                if (m_LoadingLock) return;
-                if (!m_MappedGameObjectIdxes.ContainsKey(objHash) || !m_MappedTransformIdxes.ContainsKey(trHash)) return;
+            PrefabReference prefab = proxyTransform.prefab;
 
-                if (!m_TerminatedProxies.TryGetValue(prefab, out Queue<RecycleableMonobehaviour> pool) ||
+            if (!m_TerminatedProxies.TryGetValue(prefab, out Queue<RecycleableMonobehaviour> pool) ||
                     pool.Count == 0)
+            {
+                InstantiatePrefab(prefab, (other) =>
                 {
-                    InstantiatePrefab(prefab, (other) =>
+                    if (proxyTransform.isDestroyed)
                     {
-                        ref DataTransform tr = ref *GetDataTransformPointer(trHash);
-                        tr.m_ProxyIdx = new int2(tr.m_PrefabIdx, other.m_Idx);
+                        if (other.InitializeOnCall) other.Terminate();
+                        other.transform.position = INIT_POSITION;
 
-                        other.transform.position = tr.m_Position;
-                        other.transform.rotation = tr.m_Rotation;
-                        other.transform.localScale = tr.m_LocalScale;
+                        if (!m_TerminatedProxies.TryGetValue(prefab, out Queue<RecycleableMonobehaviour> pool))
+                        {
+                            pool = new Queue<RecycleableMonobehaviour>();
+                            m_TerminatedProxies.Add(prefab, pool);
+                        }
+                        pool.Enqueue(other);
+                        return;
+                    }
 
-                        onCompleted?.Invoke(m_MappedGameObjects[m_MappedGameObjectIdxes[objHash]], other);
+                    proxyTransform.SetProxy(new int2(prefab, other.m_Idx));
 
-                        OnDataObjectProxyCreated?.Invoke(tr.gameObject, other);
-                        CoreSystem.Logger.Log(Channel.Proxy,
-                            $"DataGameobject({prefab.GetObjectSetting().m_Name}: {tr.m_GameObject}) proxy created with new instantiate");
-                    });
-                }
-                else
-                {
-                    RecycleableMonobehaviour other = pool.Dequeue();
+                    other.transform.position = proxyTransform.position;
+                    other.transform.rotation = proxyTransform.rotation;
+                    other.transform.localScale = proxyTransform.scale;
 
-                    ref DataTransform tr = ref *GetDataTransformPointer(trHash);
-                    tr.m_ProxyIdx = new int2(tr.m_PrefabIdx, other.m_Idx);
-
-                    other.transform.position = tr.m_Position;
-                    other.transform.rotation = tr.m_Rotation;
-                    other.transform.localScale = tr.m_LocalScale;
-
-                    if (other.InitializeOnCall) other.Initialize();
-                    onCompleted?.Invoke(m_MappedGameObjects[m_MappedGameObjectIdxes[objHash]], other);
-
-                    //tr.gameObject.OnProxyCreated();
-                    OnDataObjectProxyCreated?.Invoke(tr.gameObject, other);
-                    CoreSystem.Logger.Log(Channel.Proxy,
-                        $"DataGameobject({tr.m_GameObject}) proxy created, pool remains {pool.Count}");
-                }
-            });
-        }
-        unsafe private void RemoveProxy(Hash trHash, bool isDestroy)
-        {
-            if (m_LoadingLock) return;
-
-            RecycleableMonobehaviour obj = DetechProxy(trHash, out var prefab);
-
-            m_RequestedJobs.Enqueue(() =>
-            {
-                if (m_LoadingLock) return;
-
-                ReleaseProxy(trHash, prefab, obj, isDestroy);
-            });
-        }
-        unsafe private RecycleableMonobehaviour DetechProxy(Hash trHash, out PrefabReference prefab)
-        {
-            ref DataTransform tr = ref *GetDataTransformPointer(trHash);
-            int2 proxyIdx = tr.m_ProxyIdx;
-            CoreSystem.Logger.False(proxyIdx.Equals(DataTransform.ProxyNull), $"proxy index null {proxyIdx}");
-
-            RecycleableMonobehaviour obj = m_Instances[proxyIdx.x][proxyIdx.y];
-
-            OnDataObjectProxyRemoved?.Invoke(tr.gameObject, obj);
-            tr.m_ProxyIdx = DataTransform.ProxyNull;
-            CoreSystem.Logger.Log(Channel.Proxy,
-                $"DataGameobject({tr.m_GameObject}) proxy removed.");
-
-            prefab = proxyIdx.x;
-            return obj;
-        }
-        unsafe private void ReleaseProxy(Hash trHash, PrefabReference prefab, RecycleableMonobehaviour obj, bool isDestroy)
-        {
-            if (!isDestroy && m_MappedTransformIdxes.ContainsKey(trHash))
-            {
-                ref DataTransform tr = ref *GetDataTransformPointer(trHash);
-                if ((obj.transform.position - tr.position).sqrMagnitude > 1)
-                {
-                    CoreSystem.Logger.LogWarning(Channel.Proxy, $"Detecting incorrect translation between DataTransform, Proxy at {prefab.GetObjectSetting().m_Name}. This will be slightly cared but highly suggested do not manipulate Proxy\'s own translation.");
-
-                    Transform monoTr = obj.transform;
-
-                    tr.m_Position = new ThreadSafe.Vector3(monoTr.position);
-                    tr.m_Rotation = monoTr.rotation;
-                }
+                    OnDataObjectProxyCreated?.Invoke(proxyTransform, other);
+                    CoreSystem.Logger.Log(Channel.Proxy, true,
+                        $"Prefab({proxyTransform.prefab.GetObjectSetting().m_Name}) proxy created");
+                });
             }
+            else
+            {
+                RecycleableMonobehaviour other = pool.Dequeue();
+                proxyTransform.SetProxy(new int2(prefab, other.m_Idx));
 
-            obj.Terminate();
-            obj.transform.position = INIT_POSITION;
+                other.transform.position = proxyTransform.position;
+                other.transform.rotation = proxyTransform.rotation;
+                other.transform.localScale = proxyTransform.scale;
+
+                if (other.InitializeOnCall) other.Initialize();
+
+                OnDataObjectProxyCreated?.Invoke(proxyTransform, other);
+                CoreSystem.Logger.Log(Channel.Proxy, true,
+                    $"Prefab({proxyTransform.prefab.GetObjectSetting().m_Name}) proxy created, pool remains {pool.Count}");
+            }
+        }
+        private void RemoveProxy(ProxyTransform proxyTransform)
+        {
+            PrefabReference prefab = proxyTransform.prefab;
+            RecycleableMonobehaviour proxy = proxyTransform.proxy;
+
+            OnDataObjectProxyRemoved?.Invoke(proxyTransform, proxy);
+
+            proxyTransform.SetProxy(ProxyTransform.ProxyNull);
+
+            if (proxy.Activated) proxy.Terminate();
 
             if (!m_TerminatedProxies.TryGetValue(prefab, out Queue<RecycleableMonobehaviour> pool))
             {
                 pool = new Queue<RecycleableMonobehaviour>();
                 m_TerminatedProxies.Add(prefab, pool);
             }
-            pool.Enqueue(obj);
+            pool.Enqueue(proxy);
         }
 
-        unsafe internal void DownloadDataTransform(Hash trHash)
-        {
-            ref DataTransform boxed = ref *GetDataTransformPointer(trHash);
-            Transform oriTr = boxed.ProxyObject.transform;
-
-            boxed.m_Position = new ThreadSafe.Vector3(oriTr.position);
-            boxed.m_Rotation = oriTr.rotation;
-            boxed.m_LocalScale = new ThreadSafe.Vector3(oriTr.localScale);
-        }
-        unsafe private void UpdateDataTransform(Hash trHash)
-        {
-            if (m_LoadingLock) return;
-
-            ref DataTransform boxed = ref *GetDataTransformPointer(trHash);
-            Transform oriTr = boxed.ProxyObject.transform;
-
-            oriTr.position = boxed.m_Position;
-            oriTr.rotation = boxed.m_Rotation;
-            oriTr.localScale = boxed.m_LocalScale;
-        }
-
-        private void ProxyVisibleCheckPararellJob()
-        {
-            const int maxCountForeachJob = 10;
-
-            if (m_LoadingLock) return;
-
-            int listCount = m_MappedTransforms.Length;
-            int div = listCount / maxCountForeachJob;
-            NativeArray<DataTransform>.ReadOnly readOnly = m_MappedTransforms.AsParallelReader();
-            for (int i = 0; i < div + 1; i++)
-            {
-                BackgroundJob job = PoolContainer<BackgroundJob>.Dequeue();
-                int startIdx = i * maxCountForeachJob;
-                m_VisibleCheckJobs.Add(job);
-                int maxIdx = (i + 1) * maxCountForeachJob;
-                if (maxIdx > listCount) maxIdx = listCount;
-                //if (startIdx == maxIdx) break;
-
-                //$"{startIdx} to {maxIdx} :: {listCount}".ToLog();
-
-                job.Action = () =>
-                {
-                    for (int j = startIdx; j < maxIdx; j++)
-                    {
-                        if (m_LoadingLock) break;
-                        //int idx = m_MappedTransformIdxes[m_MappedTransformList[j]];
-
-                        if (readOnly[j] is DataTransform tr)
-                        {
-                            if (!tr.IsValid()) continue;
-                            if (m_RenderSystem.IsInCameraScreen(tr.position))
-                            {
-                                if (readOnly[j].m_PrefabIdx >= 0 &&
-                                    !readOnly[j].ProxyRequested &&
-                                    !readOnly[j].HasProxyObject)
-                                {
-                                    //"in".ToLog();
-                                    if (tr.m_EnableCull) m_RequestProxies.Enqueue(tr);
-                                }
-
-                                if (!tr.m_IsVisible)
-                                {
-                                    tr.m_IsVisible = true;
-                                    OnDataObjectVisibleAsync?.Invoke(tr.gameObject);
-                                }
-                            }
-                            else
-                            {
-                                if (readOnly[j].m_PrefabIdx >= 0 && 
-                                    tr.m_EnableCull && 
-                                    readOnly[j].HasProxyObject)
-                                {
-                                    if (m_RemoveProxies.Contains(tr))
-                                    {
-                                        throw new Exception();
-                                    }
-                                    m_RemoveProxies.Enqueue(tr);
-                                }
-
-                                if (tr.m_IsVisible)
-                                {
-                                    tr.m_IsVisible = false;
-                                    OnDataObjectInvisibleAsync?.Invoke(tr.gameObject);
-                                }
-                            }
-                        }
-                        else throw new NotImplementedException();
-                    }
-                    PoolContainer<BackgroundJob>.Enqueue(job);
-                };
-                job.Start();
-            }
-
-            for (int i = 0; i < m_VisibleCheckJobs.Count; i++)
-            {
-                m_VisibleCheckJobs[i].Await();
-            }
-            m_VisibleCheckJobs.Clear();
-        }
-        #endregion
-
-        #region Data Pointer
-        unsafe internal DataTransform* GetDataTransformPointer(Hash trHash)
-        {
-            int idx = m_MappedTransformIdxes[trHash];
-
-            DataTransform* targetTr = ((DataTransform*)m_MappedTransforms.GetUnsafePtr()) + idx;
-            return targetTr;
-        }
-        unsafe internal DataGameObject* GetDataGameObjectPointer(Hash objHash)
-        {
-            if (m_Disposed) return null;
-            if (!m_MappedGameObjectIdxes.TryGetValue(objHash, out int idx))
-            {
-                CoreSystem.Logger.LogWarning(Channel.Proxy,
-                    $"DataGameObject({objHash}) is already destroyed or not found. Request ignored.");
-                return null;
-            }
-            //int idx = m_MappedGameObjectIdxes[objHash];
-
-            DataGameObject* obj = ((DataGameObject*)m_MappedGameObjects.GetUnsafePtr()) + idx;
-            return obj;
-        }
-        public DataTransform GetDataTransform(Hash hash)
-        {
-            unsafe
-            {
-                return *GetDataTransformPointer(hash);
-            }
-        }
-        public DataGameObject GetDataGameObject(Hash hash)
-        {
-            unsafe
-            {
-                DataGameObject* p = GetDataGameObjectPointer(hash);
-                return p == null ? DataGameObject.Null : *p;
-            }
-        }
         #endregion
 
         #region Experimental

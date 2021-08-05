@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System;
 using Syadeu.Database;
+using System.Linq;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -78,6 +79,18 @@ namespace Syadeu.Presentation
 #endif
             }
         }
+
+#if UNITY_EDITOR
+        public bool IsInBuild
+        {
+            get
+            {
+                string[] scenes = EditorBuildSettingsScene.GetActiveSceneList(EditorBuildSettings.scenes);
+                if (scenes.Contains(scenePath)) return true;
+                return false;
+            }
+        }
+#endif
 
         public static implicit operator string(SceneReference sceneReference)
         {

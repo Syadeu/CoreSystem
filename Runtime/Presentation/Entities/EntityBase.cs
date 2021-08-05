@@ -16,14 +16,14 @@ namespace Syadeu.Presentation.Entities
     /// </remarks>
     public abstract class EntityBase : EntityDataBase, IEntity
     {
-        /// <summary>
-        /// 연결된 <see cref="DataGameObject"/>의 해쉬 값입니다.
-        /// </summary>
-        [JsonIgnore] internal Hash m_GameObjectHash;
-        /// <summary>
-        /// 연결된 <see cref="DataTransform"/>의 해쉬 값입니다.
-        /// </summary>
-        [JsonIgnore] internal Hash m_TransformHash;
+        ///// <summary>
+        ///// 연결된 <see cref="DataGameObject"/>의 해쉬 값입니다.
+        ///// </summary>
+        //[JsonIgnore] internal Hash m_GameObjectHash;
+        ///// <summary>
+        ///// 연결된 <see cref="DataTransform"/>의 해쉬 값입니다.
+        ///// </summary>
+        //[JsonIgnore] internal Hash m_TransformHash;
 
         /// <summary>
         /// 이 엔티티의 Raw 프리팹 주소입니다.
@@ -33,46 +33,46 @@ namespace Syadeu.Presentation.Entities
         [ReflectionDescription("AABB 의 Center"), JsonProperty(Order = -8, PropertyName = "Center")] public float3 Center { get; set; }
         [ReflectionDescription("AABB 의 Size"), JsonProperty(Order = -7, PropertyName = "Size")] public float3 Size { get; set; }
 
-        /// <summary>
-        /// <see cref="GameObjectProxySystem"/>을 통해 연결된 <see cref="DataGameObject"/> 입니다.
-        /// </summary>
-        [JsonIgnore] public DataGameObject gameObject => PresentationSystem<GameObjectProxySystem>.System.GetDataGameObject(m_GameObjectHash);
+        ///// <summary>
+        ///// <see cref="GameObjectProxySystem"/>을 통해 연결된 <see cref="DataGameObject"/> 입니다.
+        ///// </summary>
+        //[JsonIgnore] public DataGameObject gameObject => PresentationSystem<GameObjectProxySystem>.System.GetDataGameObject(m_GameObjectHash);
         /// <summary>
         /// <see cref="GameObjectProxySystem"/>을 통해 연결된 <see cref="DataTransform"/> 입니다.
         /// </summary>
-        [JsonIgnore] public DataTransform transform => PresentationSystem<GameObjectProxySystem>.System.GetDataTransform(m_TransformHash);
+        [JsonIgnore] public ProxyTransform transform { get; internal set; }
 
         public override bool IsValid()
         {
-            if (m_GameObjectHash.Equals(Hash.Empty) || m_TransformHash.Equals(Hash.Empty) || !m_IsCreated || PresentationSystem<GameObjectProxySystem>.System.Disposed) return false;
+            if (transform.isDestroyed || !m_IsCreated || PresentationSystem<GameObjectProxySystem>.System.Disposed) return false;
 
             return true;
         }
 
-        public sealed class Captured
-        {
-            public float3 m_Translation;
-            public quaternion m_Rotation;
-            public float3 m_Scale;
-            public bool m_EnableCull;
-            public EntityBase m_Obj;
-            public AttributeBase[] m_Atts;
-        }
-        public Captured Capture()
-        {
-            DataTransform tr = transform;
-            EntityBase clone = (EntityBase)Clone();
-            Captured payload = new Captured
-            {
-                m_Translation = tr.m_Position,
-                m_Rotation = tr.m_Rotation,
-                m_Scale = tr.m_LocalScale,
-                m_EnableCull = tr.m_EnableCull,
-                m_Obj = clone,
-                m_Atts = clone.m_Attributes.ToArray()
-            };
+        //public sealed class Captured
+        //{
+        //    public float3 m_Translation;
+        //    public quaternion m_Rotation;
+        //    public float3 m_Scale;
+        //    public bool m_EnableCull;
+        //    public EntityBase m_Obj;
+        //    public AttributeBase[] m_Atts;
+        //}
+        //public Captured Capture()
+        //{
+        //    DataTransform tr = transform;
+        //    EntityBase clone = (EntityBase)Clone();
+        //    Captured payload = new Captured
+        //    {
+        //        m_Translation = tr.m_Position,
+        //        m_Rotation = tr.m_Rotation,
+        //        m_Scale = tr.m_LocalScale,
+        //        m_EnableCull = tr.m_EnableCull,
+        //        m_Obj = clone,
+        //        m_Atts = clone.m_Attributes.ToArray()
+        //    };
 
-            return payload;
-        }
+        //    return payload;
+        //}
     }
 }

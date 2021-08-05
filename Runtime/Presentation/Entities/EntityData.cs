@@ -60,13 +60,13 @@ namespace Syadeu.Presentation.Entities
         /// <inheritdoc cref="IEntityData.Idx"/>
         private readonly Hash m_Idx;
 
-        public T Target => m_Idx.Equals(Hash.Empty) ? null : (T)PresentationSystem<EntitySystem>.System.m_ObjectEntities[m_Idx];
+        public T Target => m_Idx.Equals(Hash.Empty) || CoreSystem.s_BlockCreateInstance ? null : (T)PresentationSystem<EntitySystem>.System.m_ObjectEntities[m_Idx];
 
         public string Name => m_Idx.Equals(Hash.Empty) ? c_Invalid : Target.Name;
         public Hash Idx => m_Idx;
         public Type Type => m_Idx.Equals(Hash.Empty) ? null : Target.GetType();
 
-        private EntityData(Hash idx)
+        internal EntityData(Hash idx)
         {
             m_Idx = idx;
         }
@@ -91,7 +91,7 @@ namespace Syadeu.Presentation.Entities
 
         public static implicit operator T(EntityData<T> a) => a.Target;
         public static implicit operator EntityData<IEntityData>(EntityData<T> a) => GetEntityData(a.m_Idx);
-        public static implicit operator EntityData<T>(EntityData<IEntityData> a) => GetEntityData(a.m_Idx);
+        //public static implicit operator EntityData<T>(EntityData<IEntityData> a) => GetEntityData(a.m_Idx);
         public static implicit operator EntityData<T>(Hash a) => GetEntityData(a);
         public static implicit operator EntityData<T>(T a) => GetEntityData(a.Idx);
     }

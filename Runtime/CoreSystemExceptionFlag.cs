@@ -47,5 +47,6 @@
         Mono,
 
         Presentation,
+        Proxy,
     }
 }
