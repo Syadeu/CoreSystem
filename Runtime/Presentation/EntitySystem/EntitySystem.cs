@@ -184,10 +184,6 @@ namespace Syadeu.Presentation
         }
         protected override PresentationResult OnPresentationAsync()
         {
-            //m_ObjectEntities.AsParallel().ForAll((other) =>
-            //{
-            //    ProcessEntityOnPresentation(this, other.Value);
-            //});
             var temp = m_ObjectEntities.Values.ToArray();
             for (int i = 0; i < temp.Length; i++)
             {
@@ -392,8 +388,7 @@ namespace Syadeu.Presentation
         private Entity<IEntity> InternalCreateEntity(EntityBase entityBase, ProxyTransform obj)
         {
             EntityBase entity = (EntityBase)entityBase.Clone();
-            //entity.m_GameObjectHash = obj.m_Idx;
-            //entity.m_TransformHash = obj.index;
+
             entity.transform = obj;
             entity.m_IsCreated = true;
 
@@ -487,8 +482,9 @@ namespace Syadeu.Presentation
             if (!CoreSystem.s_BlockCreateInstance && m_ObjectEntities[hash] is IEntity entity)
             {
                 ProxyTransform obj = entity.transform;
+                Hash index = obj.index;
                 obj.Destroy();
-                m_EntityGameObjects.Remove(obj.index);
+                m_EntityGameObjects.Remove(index);
             }
 
             ((IDisposable)m_ObjectEntities[hash]).Dispose();

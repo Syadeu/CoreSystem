@@ -12,7 +12,7 @@ namespace Syadeu.Presentation
     [NativeContainer, StructLayout(LayoutKind.Sequential)]
     unsafe internal struct NativeProxyData : IDisposable
     {
-        private static readonly long s_BoolenSize = UnsafeUtility.SizeOf<bool2>();
+        private static readonly long s_BoolenSize = UnsafeUtility.SizeOf<bool>();
         private static readonly long s_HashSize = UnsafeUtility.SizeOf<Hash>();
         private static readonly long s_TransformSize = UnsafeUtility.SizeOf<ProxyTransformData>();
 
@@ -27,7 +27,7 @@ namespace Syadeu.Presentation
         public Allocator m_AllocatorLabel;
         #endregion
 
-        [NativeDisableUnsafePtrRestriction] public bool2* m_OccupiedBuffer;
+        [NativeDisableUnsafePtrRestriction] public bool* m_OccupiedBuffer;
         [NativeDisableUnsafePtrRestriction] public Hash* m_TransformIndexBuffer;
         [NativeDisableUnsafePtrRestriction] public ProxyTransformData* m_TransformBuffer;
 
@@ -45,7 +45,7 @@ namespace Syadeu.Presentation
 
                 if (index >= m_Length) throw new ArgumentOutOfRangeException(nameof(index));
 
-                if (!(m_OccupiedBuffer + index)->x)
+                if (!*(m_OccupiedBuffer + index))
                 {
                     throw new ArgumentOutOfRangeException(nameof(index));
                 }
@@ -87,7 +87,7 @@ namespace Syadeu.Presentation
                 throw new ArgumentException("Allocator must be Temp, TempJob or Persistent", nameof(allocator));
 
             array = default(NativeProxyData);
-            array.m_OccupiedBuffer = (bool2*)UnsafeUtility.Malloc(s_BoolenSize * length, UnsafeUtility.AlignOf<bool2>(), allocator);
+            array.m_OccupiedBuffer = (bool*)UnsafeUtility.Malloc(s_BoolenSize * length, UnsafeUtility.AlignOf<bool>(), allocator);
             array.m_TransformIndexBuffer = (Hash*)UnsafeUtility.Malloc(s_HashSize * length, UnsafeUtility.AlignOf<Hash>(), allocator);
             array.m_TransformBuffer = (ProxyTransformData*)UnsafeUtility.Malloc(s_TransformSize * length, UnsafeUtility.AlignOf<ProxyTransformData>(), allocator);
             array.m_Length = length;
@@ -107,7 +107,7 @@ namespace Syadeu.Presentation
                 transformIndexShiftSize = s_HashSize * (m_Length + length),
                 transformShiftSize = s_TransformSize * (m_Length + length);
 
-            var occupiedBuffer = (bool2*)UnsafeUtility.Malloc(occupiedShiftSize, UnsafeUtility.AlignOf<bool2>(), m_AllocatorLabel);
+            var occupiedBuffer = (bool*)UnsafeUtility.Malloc(occupiedShiftSize, UnsafeUtility.AlignOf<bool>(), m_AllocatorLabel);
             var transformIndexBuffer = (Hash*)UnsafeUtility.Malloc(transformIndexShiftSize, UnsafeUtility.AlignOf<Hash>(), m_AllocatorLabel);
             var transformBuffer = (ProxyTransformData*)UnsafeUtility.Malloc(transformShiftSize, UnsafeUtility.AlignOf<ProxyTransformData>(), m_AllocatorLabel);
 
@@ -138,7 +138,7 @@ namespace Syadeu.Presentation
                 transformIndexShiftSize = s_HashSize * (m_Length - length),
                 transformShiftSize = s_TransformSize * (m_Length - length);
 
-            var occupiedBuffer = (bool2*)UnsafeUtility.Malloc(occupiedShiftSize, UnsafeUtility.AlignOf<bool2>(), m_AllocatorLabel);
+            var occupiedBuffer = (bool*)UnsafeUtility.Malloc(occupiedShiftSize, UnsafeUtility.AlignOf<bool>(), m_AllocatorLabel);
             var transformIndexBuffer = (Hash*)UnsafeUtility.Malloc(transformIndexShiftSize, UnsafeUtility.AlignOf<Hash>(), m_AllocatorLabel);
             var transformBuffer = (ProxyTransformData*)UnsafeUtility.Malloc(transformShiftSize, UnsafeUtility.AlignOf<ProxyTransformData>(), m_AllocatorLabel);
 
@@ -164,7 +164,7 @@ namespace Syadeu.Presentation
             int index = -1;
             for (int i = 0; i < m_Length; i++)
             {
-                if (!(m_OccupiedBuffer + i)->x)
+                if (!*(m_OccupiedBuffer + i))
                 {
                     index = i;
                     break;
@@ -189,6 +189,9 @@ namespace Syadeu.Presentation
                 m_Hash = Hash.NewHash(),
                 m_Prefab = prefab,
                 m_ProxyIndex = ProxyTransform.ProxyNull,
+                m_EnableCull = enableCull,
+                m_IsVisible = false,
+                m_DestroyQueued = false,
 
                 m_Translation = translation,
                 m_Rotation = rotation,
@@ -198,8 +201,7 @@ namespace Syadeu.Presentation
             *(m_TransformIndexBuffer + index) = tr.m_Hash;
             *(m_TransformBuffer + index) = tr;
 
-            (m_OccupiedBuffer + index)->x = true;
-            (m_OccupiedBuffer + index)->y = enableCull;
+            *(m_OccupiedBuffer + index) = true;
 
             ProxyTransform transform = new ProxyTransform(m_TransformBuffer + index, tr.m_Hash);
             return transform;
@@ -209,19 +211,24 @@ namespace Syadeu.Presentation
             AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
 
             ProxyTransformData* p = transform.m_Pointer;
-            if (!p->m_Hash.Equals(transform.m_Hash) || !(m_OccupiedBuffer + p->m_Index)->x)
+            if (!p->m_Hash.Equals(transform.m_Hash) || !*(m_OccupiedBuffer + p->m_Index))
             {
                 throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
             }
 
-            (m_OccupiedBuffer + p->m_Index)->x = false;
+            p->m_Hash = Hash.Empty;
+            *(m_OccupiedBuffer + p->m_Index) = false;
         }
         public void Clear()
         {
-            for (int i = 0; i < m_Length; i++)
-            {
-                (m_OccupiedBuffer + i)->x = false;
-            }
+            //for (int i = 0; i < m_Length; i++)
+            //{
+            //    *(m_OccupiedBuffer + i) = false;
+            //}
+
+            UnsafeUtility.MemClear(m_OccupiedBuffer, m_Length * s_BoolenSize);
+            UnsafeUtility.MemClear(m_TransformIndexBuffer, m_Length * s_HashSize);
+            UnsafeUtility.MemClear(m_TransformBuffer, m_Length * s_TransformSize);
         }
 
         public ParallelLoopResult ParallelFor(Action<ProxyTransform> action)
@@ -229,12 +236,12 @@ namespace Syadeu.Presentation
             //var semaphore = m_Semaphore;
             //semaphore.WaitOne();
 
-            bool2* occupiedBuffer = m_OccupiedBuffer;
+            bool* occupiedBuffer = m_OccupiedBuffer;
             ProxyTransformData* transformBuffer = m_TransformBuffer;
 
             ParallelLoopResult result = Parallel.For(0, m_Length, (i) =>
             {
-                if (!(occupiedBuffer + i)->x) return;
+                if (!*(occupiedBuffer + i)) return;
                 action.Invoke(new ProxyTransform(transformBuffer + i, (*(transformBuffer + i)).m_Hash));
             });
 
@@ -248,6 +255,14 @@ namespace Syadeu.Presentation
             //});
             return result;
         }
+        public void For(Action<ProxyTransform> action)
+        {
+            for (int i = 0; i < m_Length; i++)
+            {
+                if (!*(m_OccupiedBuffer + i)) return;
+                action.Invoke(new ProxyTransform(m_TransformBuffer + i, (*(m_TransformBuffer + i)).m_Hash));
+            }
+        }
 
         [StructLayout(LayoutKind.Sequential)]
         public struct ProxyTransformData
@@ -256,6 +271,9 @@ namespace Syadeu.Presentation
             internal Hash m_Hash;
             internal PrefabReference m_Prefab;
             internal int2 m_ProxyIndex;
+            internal bool m_EnableCull;
+            internal bool m_IsVisible;
+            internal bool m_DestroyQueued;
 
             internal float3 m_Translation;
             internal quaternion m_Rotation;

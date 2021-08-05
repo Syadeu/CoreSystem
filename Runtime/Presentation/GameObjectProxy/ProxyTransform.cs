@@ -45,7 +45,7 @@ namespace Syadeu.Presentation
         internal void RemoveProxy()
         {
             if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
-            if (hasProxy) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Already has proxy");
+            if (!hasProxy) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "does not have proxy");
 
             EventDescriptor<ProxyTransform>.Invoke(s_RemoveProxy, this);
         }
@@ -62,6 +62,37 @@ namespace Syadeu.Presentation
             {
                 if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
                 return Ref.m_Hash;
+            }
+        }
+
+        public bool enableCull
+        {
+            get
+            {
+                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+
+                return Ref.m_EnableCull;
+            }
+            set
+            {
+                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+
+                Ref.m_EnableCull = value;
+            }
+        }
+        public bool isVisible
+        {
+            get
+            {
+                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+
+                return Ref.m_IsVisible;
+            }
+            internal set
+            {
+                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+
+                Ref.m_IsVisible = value;
             }
         }
 
@@ -91,8 +122,10 @@ namespace Syadeu.Presentation
         {
             get
             {
-                if (!hasProxy || hasProxyQueued) return null;
-                return PresentationSystem<GameObjectProxySystem>.System.m_Instances[Ref.m_ProxyIndex.x][Ref.m_ProxyIndex.y];
+                if (isDestroyed || !hasProxy || hasProxyQueued) return null;
+
+                int2 proxyIndex = Ref.m_ProxyIndex;
+                return PresentationSystem<GameObjectProxySystem>.System.m_Instances[proxyIndex.x][proxyIndex.y];
             }
         }
         public bool isDestroyed
@@ -101,7 +134,7 @@ namespace Syadeu.Presentation
             {
                 unsafe
                 {
-                    if (m_Pointer == null || !m_Pointer->m_Hash.Equals(m_Hash)) return true;
+                    if (m_Pointer == null || !(*m_Pointer).m_Hash.Equals(m_Hash) || (*m_Pointer).m_DestroyQueued) return true;
                 }
                 return false;
             }
@@ -182,7 +215,12 @@ namespace Syadeu.Presentation
 
             unsafe
             {
-                m_Pointer->m_Hash = Hash.Empty;
+                if (m_Pointer->m_DestroyQueued)
+                {
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                }
+
+                m_Pointer->m_DestroyQueued = true;
             }
             PresentationSystem<GameObjectProxySystem>.System.Destroy(this);
         }

@@ -87,7 +87,7 @@ namespace Syadeu.Presentation
 
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;
-        public override bool EnableAfterPresentation => false;
+        public override bool EnableAfterPresentation => true;
         public override bool IsStartable
         {
             get
@@ -228,6 +228,17 @@ namespace Syadeu.Presentation
             }
             return base.OnStartPresentation();
         }
+
+        private readonly Queue<Action> m_LoadingEvent = new Queue<Action>();
+        protected override PresentationResult AfterPresentation()
+        {
+            if (!IsSceneLoading && m_LoadingEvent.Count > 0)
+            {
+                m_LoadingEvent.Dequeue().Invoke();
+            }
+
+            return base.AfterPresentation();
+        }
         #endregion
 
         /// <summary>
@@ -261,23 +272,25 @@ namespace Syadeu.Presentation
         /// <param name="startDelay"></param>
         public void LoadScene(int index, float waitDelay, int startDelay)
         {
-            if (!CoreSystem.IsThisMainthread())
-            {
-                CoreSystem.AddForegroundJob(() => LoadScene(index, waitDelay, startDelay)).Await();
-                return;
-            }
+            m_LoadingEvent.Enqueue(() => InternalLoadScene(SceneList.Instance.Scenes[index], waitDelay, startDelay));
 
-            //if (m_CurrentScene.IsValid())
+            //if (!CoreSystem.IsThisMainthread())
             //{
-            //    InternalUnloadScene(m_CurrentScene, (oper) =>
-            //    {
-            //        InternalLoadScene(SceneList.Instance.Scenes[index], startDelay);
-            //    });
+            //    CoreSystem.AddForegroundJob(() => LoadScene(index, waitDelay, startDelay)).Await();
+            //    return;
             //}
-            //else
-            {
-                InternalLoadScene(SceneList.Instance.Scenes[index], waitDelay, startDelay);
-            }
+
+            ////if (m_CurrentScene.IsValid())
+            ////{
+            ////    InternalUnloadScene(m_CurrentScene, (oper) =>
+            ////    {
+            ////        InternalLoadScene(SceneList.Instance.Scenes[index], startDelay);
+            ////    });
+            ////}
+            ////else
+            //{
+            //    InternalLoadScene(SceneList.Instance.Scenes[index], waitDelay, startDelay);
+            //}
         }
 
         /// <summary>
@@ -349,7 +362,7 @@ namespace Syadeu.Presentation
             }
 
             CoreSystem.Logger.Log(Channel.Scene, $"Scene change start from ({m_CurrentScene.name}) to ({Path.GetFileNameWithoutExtension(scene)})");
-            
+
             m_LoadingEnabled = true;
             OnLoadingEnter?.Invoke();
             if (ManagerEntity.InstanceGroupTr != null)
