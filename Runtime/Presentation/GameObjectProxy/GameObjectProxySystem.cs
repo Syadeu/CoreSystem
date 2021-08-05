@@ -187,7 +187,7 @@ namespace Syadeu.Presentation
                 if (!m_MappedTransformIdxes.ContainsKey(trIdx)) continue;
 
                 RecycleableMonobehaviour obj = DetechProxy(trIdx, out var prefab);
-                ReleaseProxy(prefab, obj);
+                ReleaseProxy(trIdx, prefab, obj, false);
 
                 if (i != 0 && i % c_ChunkSize == 0) break;
             }
@@ -248,8 +248,9 @@ namespace Syadeu.Presentation
 
                         if (m_MappedTransforms[trIdx].HasProxyObject)
                         {
-                            RecycleableMonobehaviour obj = DetechProxy(m_MappedTransforms[trIdx].m_Idx, out var prefab);
-                            m_RequestedJobs.Enqueue(() => ReleaseProxy(prefab, obj));
+                            Hash trHash = m_MappedTransforms[trIdx].m_Idx;
+                            RecycleableMonobehaviour obj = DetechProxy(trHash, out var prefab);
+                            m_RequestedJobs.Enqueue(() => ReleaseProxy(trHash, prefab, obj, true));
                         }
 
                         // 여기서 지우면 다른 오브젝트의 인덱스가 헷갈리니까 일단 위치저장
@@ -452,16 +453,6 @@ namespace Syadeu.Presentation
                 proxyIdx = DataTransform.ProxyQueued;
             }
 
-            ThreadSafe.Vector3 right = ThreadSafe.Vector3.Right;
-            ThreadSafe.Vector3 up = ThreadSafe.Vector3.Up;
-            ThreadSafe.Vector3 forward = ThreadSafe.Vector3.Forward;
-            if (!rot.Equals(Quaternion.identity))
-            {
-                right = new ThreadSafe.Vector3(rot * Vector3.right);
-                up = new ThreadSafe.Vector3(rot * Vector3.up);
-                forward = new ThreadSafe.Vector3(rot * Vector3.right);
-            }
-
             DataTransform trData = new DataTransform()
             {
                 m_GameObject = objHash,
@@ -496,39 +487,41 @@ namespace Syadeu.Presentation
             OnDataObjectCreatedAsync?.Invoke(objData);
             return objData;
         }
-        private DataTransform ToDataTransform(Transform tr)
-        {
-            Vector3
-                pos = Vector3.zero, localScale = Vector3.zero;
-            Quaternion rotation = Quaternion.identity;
+        //private DataTransform ToDataTransform(Transform tr)
+        //{
+        //    Vector3
+        //        pos = Vector3.zero, localScale = Vector3.zero;
+        //    Quaternion rotation = Quaternion.identity;
 
-            if (CoreSystem.IsThisMainthread())
-            {
-                pos = tr.position;
-                localScale = tr.localScale;
-                rotation = tr.rotation;
-            }
-            else
-            {
-                CoreSystem.AddForegroundJob(() =>
-                {
-                    pos = tr.position;
-                    localScale = tr.localScale;
-                    rotation = tr.rotation;
-                }).Await();
-            }
-            return new DataTransform
-            {
-                m_Position = new ThreadSafe.Vector3(pos),
-                m_LocalScale = new ThreadSafe.Vector3(localScale),
-                m_Rotation = rotation
-            };
-        }
+        //    if (CoreSystem.IsThisMainthread())
+        //    {
+        //        pos = tr.position;
+        //        localScale = tr.localScale;
+        //        rotation = tr.rotation;
+        //    }
+        //    else
+        //    {
+        //        CoreSystem.AddForegroundJob(() =>
+        //        {
+        //            pos = tr.position;
+        //            localScale = tr.localScale;
+        //            rotation = tr.rotation;
+        //        }).Await();
+        //    }
+        //    return new DataTransform
+        //    {
+        //        m_Position = new ThreadSafe.Vector3(pos),
+        //        m_LocalScale = new ThreadSafe.Vector3(localScale),
+        //        m_Rotation = rotation
+        //    };
+        //}
 
         #region Proxy Object Control
         
         unsafe private void RequestProxy(Hash trIdx)
         {
+            CoreSystem.Logger.ThreadBlock(ThreadInfo.Unity);
+
             DataTransform* p = (DataTransform*)m_MappedTransforms.GetUnsafePtr();
             ref DataTransform tr = ref *(p + m_MappedTransformIdxes[trIdx]);
             PrefabReference prefab = tr.m_PrefabIdx;
@@ -605,24 +598,26 @@ namespace Syadeu.Presentation
             prefab = proxyIdx.x;
             return obj;
         }
-        unsafe private void ReleaseProxy(PrefabReference prefab, RecycleableMonobehaviour obj)
+        unsafe private void ReleaseProxy(Hash trHash, PrefabReference prefab, RecycleableMonobehaviour obj, bool isDestroy)
         {
-            //DataTransform* p = (DataTransform*)m_MappedTransforms.GetUnsafePtr();
-            //ref DataTransform tr = ref *(p + m_MappedTransformIdxes[trIdx]);
+            CoreSystem.Logger.ThreadBlock(ThreadInfo.Unity);
 
-            //if (!isDestroy)
-            //{
-            //    if ((obj.transform.position - tr.position).sqrMagnitude > 1)
-            //    {
-            //        CoreSystem.Logger.LogWarning(Channel.Proxy, 
-            //            $"Detecting incorrect translation between DataTransform, Proxy at {prefab.GetObjectSetting().m_Name}. This will be slightly cared but highly suggested do not manipulate Proxy\'s own translation.");
+            if (!isDestroy)
+            {
+                DataTransform* p = (DataTransform*)m_MappedTransforms.GetUnsafePtr();
+                ref DataTransform tr = ref *(p + m_MappedTransformIdxes[trHash]);
+                if ((obj.transform.position - tr.position).sqrMagnitude > 1)
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Proxy,
+                        $"Detecting incorrect translation between DataTransform, Proxy at {prefab.GetObjectSetting().m_Name}. " +
+                        $"This will be slightly cared but highly suggested do not manipulate Proxy\'s own translation.");
 
-            //        Transform monoTr = obj.transform;
+                    Transform monoTr = obj.transform;
 
-            //        tr.m_Position = new ThreadSafe.Vector3(monoTr.position);
-            //        tr.m_Rotation = monoTr.rotation;
-            //    }
-            //}
+                    tr.m_Position = new ThreadSafe.Vector3(monoTr.position);
+                    tr.m_Rotation = monoTr.rotation;
+                }
+            }
 
             if (obj.Activated) obj.Terminate();
             //obj.transform.position = INIT_POSITION;
@@ -637,6 +632,8 @@ namespace Syadeu.Presentation
 
         unsafe internal void DownloadDataTransform(Hash trHash)
         {
+            CoreSystem.Logger.ThreadBlock(ThreadInfo.Unity);
+
             ref DataTransform boxed = ref *GetDataTransformPointer(trHash);
             Transform oriTr = boxed.ProxyObject.transform;
 
@@ -646,6 +643,8 @@ namespace Syadeu.Presentation
         }
         unsafe private void UpdateDataTransform(Hash trHash)
         {
+            CoreSystem.Logger.ThreadBlock(ThreadInfo.Unity);
+
             if (m_LoadingLock) return;
 
             ref DataTransform boxed = ref *GetDataTransformPointer(trHash);
