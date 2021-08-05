@@ -149,7 +149,7 @@ namespace SyadeuEditor
         public static string String(string text, StringColor color)
             => $"<color={color}>{text}</color>";
         public static string String(string text, int size)
-            => $"<size={size}>{text}</size>";
+            => $"<size={size}>{String(text, EditorGUIUtility.isProSkin ? StringColor.white : StringColor.black)}</size>";
         public static string String(string text, StringColor color, int size)
             => String(String(text, color), size);
         public static void StringHeader(string text, StringColor color, bool center)
