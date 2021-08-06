@@ -169,7 +169,9 @@ namespace Syadeu.Presentation
             m_Length -= length;
         }
 
-        public ProxyTransform Add(PrefabReference prefab, float3 translation, quaternion rotation, float3 scale, bool enableCull)
+        public ProxyTransform Add(PrefabReference prefab, 
+            float3 translation, quaternion rotation, float3 scale, bool enableCull,
+            float3 center, float3 size)
         {
             AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
 
@@ -186,11 +188,11 @@ namespace Syadeu.Presentation
             {
                 if (!m_Semaphore.WaitOne(0))
                 {
-                    return Add(prefab, translation, rotation, scale, enableCull);
+                    return Add(prefab, translation, rotation, scale, enableCull, center, size);
                 }
 
                 Incremental(m_Length);
-                ProxyTransform result = Add(prefab, translation, rotation, scale, enableCull);
+                ProxyTransform result = Add(prefab, translation, rotation, scale, enableCull, center, size);
                 m_Semaphore.Release();
                 return result;
             }
@@ -207,7 +209,10 @@ namespace Syadeu.Presentation
 
                 m_Translation = translation,
                 m_Rotation = rotation,
-                m_Scale = scale
+                m_Scale = scale,
+
+                m_Center = center,
+                m_Size = size
             };
 
             *(m_TransformIndexBuffer + index) = tr.m_Hash;
@@ -298,6 +303,9 @@ namespace Syadeu.Presentation
             internal float3 m_Translation;
             internal quaternion m_Rotation;
             internal float3 m_Scale;
+
+            internal float3 m_Center;
+            internal float3 m_Size;
 
             public float3 translation
             {

@@ -1,7 +1,5 @@
 ﻿using Syadeu.Database;
 using Syadeu.Presentation.Entities;
-using Syadeu.Presentation.Map;
-using Syadeu.ThreadSafe;
 using Unity.Mathematics;
 
 namespace Syadeu.Presentation
@@ -14,13 +12,13 @@ namespace Syadeu.Presentation
         protected DataContainerSystem DataContainerSystem => m_EntitySystem.m_DataContainerSystem;
         private GameObjectProxySystem ProxySystem => EntitySystem.m_ProxySystem;
 
-        protected ProxyTransform CreatePrefab(PrefabReference prefab, Vector3 position, quaternion rotation)
-            => CreatePrefab(prefab, position, rotation, Vector3.One, true);
-        protected ProxyTransform CreatePrefab(PrefabReference prefab, Vector3 position, quaternion rotation, Vector3 localSize, bool enableCull)
+        protected ProxyTransform CreatePrefab(PrefabReference prefab, float3 position, quaternion rotation)
+            => CreatePrefab(prefab, position, rotation, 1, true, float3.zero, 1);
+        protected ProxyTransform CreatePrefab(PrefabReference prefab, float3 position, quaternion rotation, float3 localSize, bool enableCull, float3 center, float3 size)
         {
             CoreSystem.Logger.NotNull(ProxySystem, "GameObjectProxySystem is not initialized");
 
-            return ProxySystem.CreateNewPrefab(prefab, position, rotation, localSize, enableCull);
+            return ProxySystem.CreateNewPrefab(prefab, position, rotation, localSize, enableCull, center, size);
         }
 
         protected EntityData<IEntityData> CreateObject(IReference obj)
@@ -29,9 +27,9 @@ namespace Syadeu.Presentation
             return EntitySystem.CreateObject(obj.Hash);
         }
 
-        protected Entity<T> CreateEntity<T>(Reference<T> entity, Vector3 position, quaternion rotation) where T : ObjectBase, IEntity
-            => CreateEntity(entity, position, rotation, Vector3.One, true);
-        protected Entity<T> CreateEntity<T>(Reference<T> entity, Vector3 position, quaternion rotation, Vector3 localSize, bool enableCull) where T : ObjectBase, IEntity
+        protected Entity<T> CreateEntity<T>(Reference<T> entity, float3 position, quaternion rotation) where T : ObjectBase, IEntity
+            => CreateEntity(entity, position, rotation, 1, true);
+        protected Entity<T> CreateEntity<T>(Reference<T> entity, float3 position, quaternion rotation, float3 localSize, bool enableCull) where T : ObjectBase, IEntity
         {
             CoreSystem.Logger.NotNull(entity, "Target entity cannot be null");
 

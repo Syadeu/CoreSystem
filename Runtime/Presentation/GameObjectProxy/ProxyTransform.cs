@@ -222,12 +222,72 @@ namespace Syadeu.Presentation
             }
         }
 
-        public float3 right => math.mul(rotation, new float3(1, 0, 0));
-        public float3 up => math.mul(rotation, new float3(0, 1, 0));
-        public float3 forward => math.mul(rotation, new float3(0, 0, 1));
+        public float3 right
+        {
+            get
+            {
+                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                return math.mul(Ref.m_Rotation, new float3(1, 0, 0));
+            }
+        }
+        public float3 up
+        {
+            get
+            {
+                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                return math.mul(Ref.m_Rotation, new float3(0, 1, 0));
+            }
+        }
+        public float3 forward
+        {
+            get
+            {
+                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                return math.mul(Ref.m_Rotation, new float3(0, 0, 1));
+            }
+        }
 
-        public float4x4 localToWorldMatrix => Render.RenderSystem.LocalToWorldMatrix(position, rotation);
-        public float4x4 worldToLocalMatrix => math.inverse(localToWorldMatrix);
+        public float3 center
+        {
+            get
+            {
+                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                return Ref.m_Center;
+            }
+        }
+        public float3 size
+        {
+            get
+            {
+                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                return Ref.m_Size;
+            }
+        }
+        public AABB aabb
+        {
+            get
+            {
+                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                return new AABB(Ref.m_Center + Ref.m_Translation, Ref.m_Size).Rotation(Ref.m_Rotation);
+            }
+        }
+
+        public float4x4 localToWorldMatrix
+        {
+            get
+            {
+                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                return Render.RenderSystem.LocalToWorldMatrix(Ref.m_Translation, Ref.m_Rotation);
+            }
+        }
+        public float4x4 worldToLocalMatrix
+        {
+            get
+            {
+                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                return math.inverse(Render.RenderSystem.LocalToWorldMatrix(Ref.m_Translation, Ref.m_Rotation));
+            }
+        }
 
 #pragma warning restore IDE1006 // Naming Styles
 

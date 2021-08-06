@@ -273,7 +273,7 @@ namespace Syadeu.Presentation
 
         //    return InternalCreateEntity(original, obj);
         //}
-        public Entity<IEntity> CreateEntity(string name, Vector3 position)
+        public Entity<IEntity> CreateEntity(string name, float3 position)
         {
             InternalEntityValidation(name, position, out EntityBase temp);
 
@@ -286,14 +286,14 @@ namespace Syadeu.Presentation
         /// <param name="hash"><seealso cref="IEntityData.Hash"/> 값</param>
         /// <param name="position"></param>
         /// <returns></returns>
-        public Entity<IEntity> CreateEntity(Hash hash, Vector3 position)
+        public Entity<IEntity> CreateEntity(Hash hash, float3 position)
         {
             InternalEntityValidation(hash, position, out EntityBase temp);
 
             ProxyTransform obj = InternalCreateProxy(temp, temp.Prefab, position, quaternion.identity, 1, true);
             return InternalCreateEntity(temp, in obj);
         }
-        public Entity<IEntity> CreateEntity(string name, Vector3 position, Quaternion rotation, Vector3 localSize, bool enableCull)
+        public Entity<IEntity> CreateEntity(string name, float3 position, quaternion rotation, float3 localSize, bool enableCull)
         {
             InternalEntityValidation(name, position, out EntityBase temp);
 
@@ -309,7 +309,7 @@ namespace Syadeu.Presentation
         /// <param name="localSize"></param>
         /// <param name="enableCull"></param>
         /// <returns></returns>
-        public Entity<IEntity> CreateEntity(Hash hash, Vector3 position, Quaternion rotation, Vector3 localSize, bool enableCull)
+        public Entity<IEntity> CreateEntity(Hash hash, float3 position, quaternion rotation, float3 localSize, bool enableCull)
         {
             InternalEntityValidation(hash, position, out EntityBase temp);
 
@@ -354,7 +354,7 @@ namespace Syadeu.Presentation
                     $"{from.Name} has an invalid prefab. This is not allowed.");
             }
 
-            return m_ProxySystem.CreateNewPrefab(prefab, pos, rot, scale, enableCull);
+            return m_ProxySystem.CreateNewPrefab(prefab, pos, rot, scale, enableCull, from.Center, from.Size);
         }
         private Entity<IEntity> InternalCreateEntity(EntityBase entityBase, in ProxyTransform obj)
         {
@@ -838,7 +838,7 @@ namespace Syadeu.Presentation
                 Hash key = m_Keys[index];
                 Entity<IEntity> target = Entity<IEntity>.GetEntity(key);
 
-                var targetAABB = target.AABB;
+                var targetAABB = target.transform.aabb;
                 if (targetAABB.Intersect(m_Ray, out float dis, out float3 point))
                 {
                     m_Hits.AddNoResize(new RaycastHitInfo(target, dis, point));

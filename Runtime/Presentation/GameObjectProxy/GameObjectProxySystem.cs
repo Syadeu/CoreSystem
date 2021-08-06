@@ -35,6 +35,7 @@ namespace Syadeu.Presentation
         public event Action<ProxyTransform, RecycleableMonobehaviour> OnDataObjectProxyRemoved;
 
         private NativeProxyData m_ProxyData;
+#pragma warning disable IDE0090 // Use 'new(...)'
         private NativeQueue<ProxyTransform>
                 m_RequestDestories = new NativeQueue<ProxyTransform>(Allocator.Persistent),
                 m_RequestUpdates = new NativeQueue<ProxyTransform>(Allocator.Persistent),
@@ -43,6 +44,7 @@ namespace Syadeu.Presentation
                 m_RemoveProxyList = new NativeQueue<ProxyTransform>(Allocator.Persistent),
                 m_VisibleList = new NativeQueue<ProxyTransform>(Allocator.Persistent),
                 m_InvisibleList = new NativeQueue<ProxyTransform>(Allocator.Persistent);
+#pragma warning restore IDE0090 // Use 'new(...)'
         private ParallelLoopResult m_VisibleJob;
 
         private SceneSystem m_SceneSystem;
@@ -347,11 +349,11 @@ namespace Syadeu.Presentation
         }
         #endregion
 
-        public ProxyTransform CreateNewPrefab(PrefabReference prefab, float3 pos, quaternion rot, float3 scale, bool enableCull)
+        public ProxyTransform CreateNewPrefab(PrefabReference prefab, float3 pos, quaternion rot, float3 scale, bool enableCull, float3 center, float3 size)
         {
             CoreSystem.Logger.NotNull(m_RenderSystem, $"You've call this method too early or outside of PresentationSystem");
 
-            ProxyTransform tr = m_ProxyData.Add(prefab, pos, rot, scale, enableCull);
+            ProxyTransform tr = m_ProxyData.Add(prefab, pos, rot, scale, enableCull, center, size);
             OnDataObjectCreated?.Invoke(tr);
 
             CoreSystem.Logger.Log(Channel.Proxy, true,

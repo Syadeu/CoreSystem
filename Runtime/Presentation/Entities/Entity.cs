@@ -75,17 +75,6 @@ namespace Syadeu.Presentation.Entities
         public ProxyTransform transform => Target.transform;
 #pragma warning restore IDE1006 // Naming Styles
 
-        public float3 Center => Target.Center;
-        public float3 Size => Target.Size;
-        public AABB AABB
-        {
-            get
-            {
-                float3 pos = transform.position;
-                return new AABB(Center + pos, Size).Rotation(transform.rotation);
-            }
-        }
-
         private Entity(Hash idx)
         {
             m_Idx = idx;
