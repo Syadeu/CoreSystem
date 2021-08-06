@@ -256,19 +256,13 @@ namespace Syadeu.Presentation
             [FieldOffset(2)] internal bool m_IsVisible;
             [FieldOffset(3)] internal bool m_DestroyQueued;
 
-            // 3
-
             // 4 bytes
             [FieldOffset(4)] internal int m_Index;
             [FieldOffset(8)] internal int2 m_ProxyIndex;
 
-            // 15
-
             // 8 bytes
             [FieldOffset(16)] internal Hash m_Hash;
             [FieldOffset(24)] internal PrefabReference m_Prefab;
-
-            // 15 + 16 = 31
 
             // 12 bytes
             [FieldOffset(32)] internal float3 m_Translation;
@@ -276,12 +270,8 @@ namespace Syadeu.Presentation
             [FieldOffset(56)] internal float3 m_Center;
             [FieldOffset(68)] internal float3 m_Size;
 
-            // 31 + 48 = 79
-
             // 16 bytes
             [FieldOffset(80)] internal quaternion m_Rotation;
-
-            // 79 + 16 = 95
 
             public float3 translation
             {

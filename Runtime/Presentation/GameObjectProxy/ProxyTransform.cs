@@ -23,6 +23,17 @@ namespace Syadeu.Presentation
         internal static readonly int2 ProxyQueued = new int2(-2, -2);
         #endregion
 
+        [Flags]
+        public enum SynchronizeOption
+        {
+            Position = 0b001,
+            Rotation = 0b010,
+            Scale = 0b100,
+
+            TR = 0b011,
+            TRS = 0b111
+        }
+
         [NativeDisableUnsafePtrRestriction] unsafe internal readonly NativeProxyData.ProxyTransformData* m_Pointer;
         internal readonly Hash m_Hash;
         unsafe internal ProxyTransform(NativeProxyData.ProxyTransformData* p, Hash hash)
@@ -291,6 +302,24 @@ namespace Syadeu.Presentation
 
 #pragma warning restore IDE1006 // Naming Styles
 
+        public void Synchronize(SynchronizeOption option)
+        {
+            CoreSystem.Logger.ThreadBlock(Syadeu.Internal.ThreadInfo.Unity);
+
+            UnityEngine.Transform tr = proxy.transform;
+            if ((option & SynchronizeOption.Position) == SynchronizeOption.Position)
+            {
+                position = tr.position;
+            }
+            if ((option & SynchronizeOption.Rotation) == SynchronizeOption.Rotation)
+            {
+                rotation = tr.rotation;
+            }
+            if ((option & SynchronizeOption.Scale) == SynchronizeOption.Scale)
+            {
+                scale = tr.localScale;
+            }
+        }
         public void Destroy()
         {
             if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");

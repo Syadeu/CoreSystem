@@ -1,6 +1,8 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Mono;
+using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Event;
 using Syadeu.Presentation.Map;
 using System;
 using System.Collections;
@@ -10,8 +12,6 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Experimental.AI;
-
-using ThreadSafeVector3 = Syadeu.ThreadSafe.Vector3;
 
 namespace Syadeu.Presentation.Attributes
 {
@@ -41,6 +41,9 @@ namespace Syadeu.Presentation.Attributes
                 NavMeshAgent.enabled = true;
             }
 
+            PresentationSystem<EventSystem>.System
+                .PostEvent(OnMoveStateChangedEvent.GetEvent(Parent, OnMoveStateChangedEvent.MoveState.AboutToMove));
+
             NavMeshAgent.ResetPath();
             NavMeshAgent.SetDestination(point);
             PreviousTarget = point;
@@ -64,24 +67,34 @@ namespace Syadeu.Presentation.Attributes
                 yield return null;
             }
 
+            PresentationSystem<EventSystem>.System
+                .PostEvent(OnMoveStateChangedEvent.GetEvent(parent, OnMoveStateChangedEvent.MoveState.OnMoving));
+
             while (NavMeshAgent.desiredVelocity.magnitude > 0 &&
                     NavMeshAgent.remainingDistance > .2f)
             {
                 if (!tr.hasProxy) yield break;
 
-                //parent.transform.SynchronizeWithProxy();
+                tr.Synchronize(ProxyTransform.SynchronizeOption.TR);
+                PresentationSystem<EventSystem>.System
+                .PostEvent(OnMoveStateChangedEvent.GetEvent(parent, OnMoveStateChangedEvent.MoveState.OnMoving));
+                
                 yield return null;
             }
 
-            tr.position = new ThreadSafeVector3(PreviousTarget);
+            tr.position = PreviousTarget;
             if (NavMeshAgent.isOnNavMesh) NavMeshAgent.ResetPath();
 
-            if (Parent.GetAttribute<GridSizeAttribute>() != null)
-            {
-                Parent.GetAttribute<GridSizeAttribute>().UpdateGridCell();
-            }
+            PresentationSystem<EventSystem>.System
+            .PostEvent(OnMoveStateChangedEvent.GetEvent(parent, OnMoveStateChangedEvent.MoveState.Stopped));
+            //if (Parent.GetAttribute<GridSizeAttribute>() != null)
+            //{
+            //    Parent.GetAttribute<GridSizeAttribute>().UpdateGridCell();
+            //}
 
             IsMoving = false;
+            PresentationSystem<EventSystem>.System
+                .PostEvent(OnMoveStateChangedEvent.GetEvent(parent, OnMoveStateChangedEvent.MoveState.Idle));
         }
     }
 
@@ -108,12 +121,18 @@ namespace Syadeu.Presentation.Attributes
                 ProxyTransform tr = entity.transform;
 
                 NavMeshAgent agent = monoObj.GetComponent<NavMeshAgent>();
-                agent.ResetPath();
+                if (agent.isOnNavMesh) agent.ResetPath();
                 agent.enabled = false;
 
                 tr.position = att.PreviousTarget;
                 att.IsMoving = false;
+
+                PresentationSystem<EventSystem>.System
+                .PostEvent(OnMoveStateChangedEvent.GetEvent(entity, OnMoveStateChangedEvent.MoveState.Teleported));
             }
+
+            PresentationSystem<EventSystem>.System
+                .PostEvent(OnMoveStateChangedEvent.GetEvent(entity, OnMoveStateChangedEvent.MoveState.Idle));
         }
 
         private static void UpdateNavMeshAgent(NavAgentAttribute att, NavMeshAgent agent)

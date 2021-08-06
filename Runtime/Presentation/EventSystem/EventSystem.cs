@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Presentation.Event
 {
     public sealed class EventSystem : PresentationSystemEntity<EventSystem>
     {
@@ -10,8 +10,8 @@ namespace Syadeu.Presentation
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
-        private readonly Dictionary<Type, SynchronizedEventBase> m_Events = new Dictionary<Type, SynchronizedEventBase>();
-        private readonly Queue<Type> m_PostedEvents = new Queue<Type>();
+        //private readonly Dictionary<Type, SynchronizedEventBase> m_Events = new Dictionary<Type, SynchronizedEventBase>();
+        private readonly Queue<SynchronizedEventBase> m_PostedEvents = new Queue<SynchronizedEventBase>();
 
         protected override PresentationResult BeforePresentation()
         {
@@ -20,7 +20,9 @@ namespace Syadeu.Presentation
             {
                 try
                 {
-                    m_Events[m_PostedEvents.Dequeue()].InternalPost();
+                    var ev = m_PostedEvents.Dequeue();
+                    ev.InternalPost();
+                    ev.InternalTerminate();
                 }
                 catch (Exception ex)
                 {
@@ -34,41 +36,29 @@ namespace Syadeu.Presentation
         }
         public override void Dispose()
         {
-            m_Events.Clear();
             m_PostedEvents.Clear();
 
             base.Dispose();
         }
 
-        public void RegisterEvent<TEvent>() where TEvent : SynchronizedEvent<TEvent>, new()
-        {
-            TEvent e = new TEvent();
-            m_Events.Add(TypeHelper.TypeOf<TEvent>.Type, e);
-        }
+        //public void RegisterEvent<TEvent>() where TEvent : SynchronizedEvent<TEvent>, new()
+        //{
+        //    TEvent e = new TEvent();
+        //    m_Events.Add(TypeHelper.TypeOf<TEvent>.Type, e);
+        //}
 
         public void AddEvent<TEvent>(Action<TEvent> ev) where TEvent : SynchronizedEvent<TEvent>, new()
         {
-            if (m_Events.TryGetValue(TypeHelper.TypeOf<TEvent>.Type, out var value) &&
-                value is TEvent handler)
-            {
-                handler.AddEvent(ev);
-            }
+            SynchronizedEvent<TEvent>.AddEvent(ev);
         }
         public void RemoveEvent<TEvent>(Action<TEvent> ev) where TEvent : SynchronizedEvent<TEvent>, new()
         {
-            if (m_Events.TryGetValue(TypeHelper.TypeOf<TEvent>.Type, out var value) &&
-                value is TEvent handler)
-            {
-                handler.RemoveEvent(ev);
-            }
+            SynchronizedEvent<TEvent>.RemoveEvent(ev);
         }
 
-        public void PostEvent<TEvent>() where TEvent : SynchronizedEvent<TEvent>, new()
+        public void PostEvent<TEvent>(TEvent ev) where TEvent : SynchronizedEvent<TEvent>, new()
         {
-            if (m_Events.TryGetValue(TypeHelper.TypeOf<TEvent>.Type, out var value))
-            {
-                m_PostedEvents.Enqueue(TypeHelper.TypeOf<TEvent>.Type);
-            }
+            m_PostedEvents.Enqueue(ev);
         }
     }
 }

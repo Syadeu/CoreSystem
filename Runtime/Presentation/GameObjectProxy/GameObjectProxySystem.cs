@@ -97,21 +97,6 @@ namespace Syadeu.Presentation
         }
         private void OnProxyTransformTranslationChanged(ProxyTransform data)
         {
-            //if (!data.hasProxy)
-            //{
-            //    if (!data.hasProxyQueued && m_RenderSystem.IsInCameraScreen(data.position))
-            //    {
-            //        data.RequestProxy();
-            //        return;
-            //    }
-            //}
-            //else
-            //{
-            //    if (!data.hasProxyQueued)
-            //    {
-            //        m_RequestUpdates.Enqueue(data);
-            //    }
-            //}
             if (data.hasProxy && !data.hasProxyQueued)
             {
                 m_RequestUpdates.Enqueue(data);

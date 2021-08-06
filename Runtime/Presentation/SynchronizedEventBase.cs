@@ -1,29 +1,40 @@
 ﻿using Syadeu.Database;
 using Syadeu.Internal;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace Syadeu.Presentation
 {
     public abstract class SynchronizedEventBase
     {
         internal abstract void InternalPost();
+        internal abstract void InternalTerminate();
     }
 
     public abstract class SynchronizedEvent<TEvent> : SynchronizedEventBase where TEvent : SynchronizedEvent<TEvent>, new()
     {
-        private static readonly Hash s_Key = Hash.NewHash(TypeHelper.TypeOf<TEvent>.Name);
+        internal static readonly Hash s_Key = Hash.NewHash(TypeHelper.TypeOf<TEvent>.Name);
+        private static readonly Queue<TEvent> m_Pool = new Queue<TEvent>();
 
-        internal void AddEvent(Action<TEvent> ev)
+        internal static void AddEvent(Action<TEvent> ev) => EventDescriptor<TEvent>.AddEvent(s_Key, ev);
+        internal static void RemoveEvent(Action<TEvent> ev) => EventDescriptor<TEvent>.RemoveEvent(s_Key, ev);
+        
+        internal override sealed void InternalPost() => EventDescriptor<TEvent>.Invoke(s_Key, (TEvent)this);
+        internal override sealed void InternalTerminate()
         {
-            EventDescriptor<TEvent>.AddEvent(s_Key, ev);
+            OnTerminate();
+            m_Pool.Enqueue((TEvent)this);
         }
-        internal void RemoveEvent(Action<TEvent> ev)
+
+        public static TEvent Dequeue()
         {
-            EventDescriptor<TEvent>.RemoveEvent(s_Key, ev);
+            if (m_Pool.Count == 0)
+            {
+                return new TEvent();
+            }
+            return m_Pool.Dequeue();
         }
-        internal override sealed void InternalPost()
-        {
-            EventDescriptor<TEvent>.Invoke(s_Key, (TEvent)this);
-        }
+        protected abstract void OnTerminate();
     }
 }
