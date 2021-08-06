@@ -24,7 +24,9 @@ namespace Syadeu.Presentation.Map
         {
             [ReflectionSealedView, JsonProperty(Order = 0, PropertyName = "Hash")] public Hash m_Hash = Hash.NewHash();
             [JsonProperty(Order = 1, PropertyName = "Name")] public string m_Name = "NewLayer";
-            [JsonProperty(Order = 2, PropertyName = "Indices")] public int[] m_Indices = Array.Empty<int>();
+            [ReflectionDescription("반대로 적용합니다.")]
+            [JsonProperty(Order = 2, PropertyName = "Inverse")] public bool m_Inverse = false;
+            [JsonProperty(Order = 3, PropertyName = "Indices")] public int[] m_Indices = Array.Empty<int>();
 
             public object Clone()
             {
@@ -126,10 +128,21 @@ namespace Syadeu.Presentation.Map
             List<int> filtered = new List<int>();
             for (int i = 0; i < indices.Length; i++)
             {
-                if (Layers[layer].Contains(indices[i]))
+                if (m_Layers[layer].m_Inverse)
                 {
-                    filtered.Add(indices[i]);
-                    continue;
+                    if (!Layers[layer].Contains(indices[i]))
+                    {
+                        filtered.Add(indices[i]);
+                        continue;
+                    }
+                }
+                else
+                {
+                    if (Layers[layer].Contains(indices[i]))
+                    {
+                        filtered.Add(indices[i]);
+                        continue;
+                    }
                 }
 
                 temp.Add(indices[i]);
