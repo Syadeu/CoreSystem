@@ -3,6 +3,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+
 using System;
 using System.Linq;
 
@@ -13,6 +14,7 @@ using Syadeu.Database;
 using System.Collections;
 using System.IO;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Map;
@@ -112,8 +114,8 @@ namespace Syadeu.Presentation
 
         private MapSystem m_GridSystem;
         private EntitySystem m_EntitySystem;
-        private readonly Dictionary<SceneReference, List<Action>> m_CustomSceneLoadDependences = new Dictionary<SceneReference, List<Action>>();
-        private readonly Dictionary<SceneReference, List<Action>> m_CustomSceneUnloadDependences = new Dictionary<SceneReference, List<Action>>();
+        private readonly ConcurrentDictionary<SceneReference, List<Action>> m_CustomSceneLoadDependences = new ConcurrentDictionary<SceneReference, List<Action>>();
+        private readonly ConcurrentDictionary<SceneReference, List<Action>> m_CustomSceneUnloadDependences = new ConcurrentDictionary<SceneReference, List<Action>>();
 
         #region Presentation Methods
         protected override PresentationResult OnInitialize()
@@ -247,23 +249,7 @@ namespace Syadeu.Presentation
         /// <param name="startDelay"></param>
         public void LoadStartScene(float waitDelay, int startDelay)
         {
-            if (!CoreSystem.IsThisMainthread())
-            {
-                CoreSystem.AddForegroundJob(() => LoadStartScene(waitDelay, startDelay)).Await();
-                return;
-            }
-
-            //if (m_CurrentScene.IsValid())
-            //{
-            //    InternalUnloadScene(m_CurrentScene, (oper) =>
-            //    {
-            //        InternalLoadScene(SceneList.Instance.StartScene, startDelay);
-            //    });
-            //}
-            //else
-            {
-                InternalLoadScene(SceneList.Instance.StartScene, waitDelay, startDelay);
-            }
+            m_LoadingEvent.Enqueue(() => InternalLoadScene(SceneList.Instance.StartScene, waitDelay, startDelay));
         }
         /// <summary>
         /// <see cref="SceneList.Scenes"/>에 있는 씬을 로드합니다.
@@ -273,24 +259,6 @@ namespace Syadeu.Presentation
         public void LoadScene(int index, float waitDelay, int startDelay)
         {
             m_LoadingEvent.Enqueue(() => InternalLoadScene(SceneList.Instance.Scenes[index], waitDelay, startDelay));
-
-            //if (!CoreSystem.IsThisMainthread())
-            //{
-            //    CoreSystem.AddForegroundJob(() => LoadScene(index, waitDelay, startDelay)).Await();
-            //    return;
-            //}
-
-            ////if (m_CurrentScene.IsValid())
-            ////{
-            ////    InternalUnloadScene(m_CurrentScene, (oper) =>
-            ////    {
-            ////        InternalLoadScene(SceneList.Instance.Scenes[index], startDelay);
-            ////    });
-            ////}
-            ////else
-            //{
-            //    InternalLoadScene(SceneList.Instance.Scenes[index], waitDelay, startDelay);
-            //}
         }
 
         /// <summary>
@@ -303,7 +271,7 @@ namespace Syadeu.Presentation
             if (!m_CustomSceneLoadDependences.TryGetValue(key, out var list))
             {
                 list = new List<Action>();
-                m_CustomSceneLoadDependences.Add(key, list);
+                m_CustomSceneLoadDependences.TryAdd(key, list);
             }
             list.Add(onSceneStart);
         }
@@ -317,7 +285,7 @@ namespace Syadeu.Presentation
             if (!m_CustomSceneUnloadDependences.TryGetValue(key, out var list))
             {
                 list = new List<Action>();
-                m_CustomSceneUnloadDependences.Add(key, list);
+                m_CustomSceneUnloadDependences.TryAdd(key, list);
             }
             list.Add(onSceneStart);
         }

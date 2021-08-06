@@ -66,6 +66,13 @@ namespace Syadeu.Presentation
                 UnsafeUtility.MemClear(m_TransformIndexBuffer, length * s_HashSize);
                 UnsafeUtility.MemClear(m_TransformBuffer, length * s_TransformSize);
             }
+
+            for (int i = 0; i < m_Length; i++)
+            {
+                *(m_OccupiedBuffer + i) = false;
+                *(m_TransformIndexBuffer + i) = default(Hash);
+                (*(m_TransformBuffer + i)) = default(ProxyTransformData);
+            }
         }
         public void Dispose()
         {

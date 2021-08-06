@@ -231,16 +231,23 @@ namespace Syadeu.Presentation
                 #endregion
 
                 #region Entity
-                if (m_EntityProcessors.TryGetValue(entity.GetType(), out List<IEntityDataProcessor> entityProcessor))
-                {
-                    for (int j = 0; j < entityProcessor.Count; j++)
-                    {
-                        IEntityDataProcessor processor = entityProcessor[j];
 
-                        processor.OnDestroy(entityData);
-                        processor.OnDestroySync(entityData);
+                if (m_ObjectEntities.ContainsKey(entityData.Idx))
+                {
+                    if (m_EntityProcessors.TryGetValue(entity.GetType(), out List<IEntityDataProcessor> entityProcessor))
+                    {
+                        for (int j = 0; j < entityProcessor.Count; j++)
+                        {
+                            IEntityDataProcessor processor = entityProcessor[j];
+
+                            processor.OnDestroy(entityData);
+                            processor.OnDestroySync(entityData);
+                        }
                     }
+
+                    OnEntityDestroy?.Invoke(entityData);
                 }
+                
                 #endregion
             }
 
