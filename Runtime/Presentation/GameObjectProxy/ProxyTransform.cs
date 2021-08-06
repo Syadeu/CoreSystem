@@ -9,6 +9,7 @@ namespace Syadeu.Presentation
     [StructLayout(LayoutKind.Sequential)]
     public readonly struct ProxyTransform
     {
+        #region Statics
         public static readonly ProxyTransform Null = new ProxyTransform(Hash.Empty);
         public static readonly Hash s_TranslationChanged = Hash.NewHash("Translation");
         public static readonly Hash s_RotationChanged = Hash.NewHash("Rotation");
@@ -19,6 +20,7 @@ namespace Syadeu.Presentation
 
         internal static readonly int2 ProxyNull = new int2(-1, -1);
         internal static readonly int2 ProxyQueued = new int2(-2, -2);
+        #endregion
 
         [NativeDisableUnsafePtrRestriction] unsafe internal readonly NativeProxyData.ProxyTransformData* m_Pointer;
         internal readonly Hash m_Hash;

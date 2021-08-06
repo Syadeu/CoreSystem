@@ -54,15 +54,18 @@ namespace SyadeuEditor
                 var objSetField = GetField("m_ObjectSettings");
                 List<PrefabList.ObjectSetting> origin = (List<PrefabList.ObjectSetting>)objSetField.GetValue(Asset);
 
+                Queue<int> invalidIndices = new Queue<int>();
                 for (int i = 0; i < origin.Count; i++)
                 {
                     if (origin[i].m_RefPrefab.editorAsset == null)
                     {
+                        CoreSystem.Logger.Log(Channel.Editor,
+                            $"PrefabList found an valid asset at {i}:{origin[i].m_Name}");
+
                         origin[i].m_Name = $"!!INVALID!! {origin[i].m_Name}";
+                        invalidIndices.Enqueue(i);
                     }
                 }
-
-                //List<PrefabList.ObjectSetting> tempList = new List<PrefabList.ObjectSetting>();
 
                 foreach (AddressableAssetEntry item in DefaultGroup.entries)
                 {
@@ -72,10 +75,23 @@ namespace SyadeuEditor
                         continue;
                     }
 
-                    //if (item.TargetAsset is GameObject)
+                    AssetReference refObj = new AssetReference(item.guid);
+                    if (invalidIndices.Count > 0)
                     {
-                        AssetReference refObj = new AssetReference(item.guid);
+                        int targetIdx = invalidIndices.Dequeue();
+                        string previousName = origin[targetIdx].m_Name;
 
+                        origin[targetIdx] = new PrefabList.ObjectSetting
+                        {
+                            m_Name = name,
+                            m_RefPrefab = refObj
+                        };
+
+                        CoreSystem.Logger.Log(Channel.Editor,
+                            $"PrefabList index at {targetIdx}:{previousName} was invalid but replaced to newly added prefab");
+                    }
+                    else
+                    {
                         origin.Add(new PrefabList.ObjectSetting
                         {
                             m_Name = name,
@@ -84,7 +100,6 @@ namespace SyadeuEditor
                     }
                 }
 
-                //objSetField.SetValue(Asset, tempList);
                 EditorUtility.SetDirty(target);
                 Repaint();
             }
