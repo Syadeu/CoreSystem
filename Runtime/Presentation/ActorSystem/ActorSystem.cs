@@ -4,8 +4,6 @@ using Syadeu.Internal;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Map;
-using System;
-using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -75,6 +73,16 @@ namespace Syadeu.Presentation.Actor
         
 
         #endregion
+    }
+
+    public abstract class ActorEntityBase : EntityBase
+    {
+
+    }
+    
+    public sealed class OnMoveEvent : SynchronizedEvent<OnMoveEvent>
+    {
+        public Entity<ActorEntity> Entity;
     }
 
     public sealed class ActorEntity : EntityBase
