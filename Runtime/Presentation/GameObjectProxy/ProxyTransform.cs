@@ -1,5 +1,6 @@
 ﻿using Syadeu.Database;
 using Syadeu.Mono;
+using System;
 using System.Runtime.InteropServices;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
@@ -7,7 +8,7 @@ using Unity.Mathematics;
 namespace Syadeu.Presentation
 {
     [StructLayout(LayoutKind.Sequential)]
-    public readonly struct ProxyTransform
+    public readonly struct ProxyTransform : IEquatable<ProxyTransform>
     {
         #region Statics
         public static readonly ProxyTransform Null = new ProxyTransform(Hash.Empty);
@@ -55,7 +56,6 @@ namespace Syadeu.Presentation
         {
             Ref.m_ProxyIndex = proxyIndex;
         }
-        internal int2 ProxyIndex => Ref.m_ProxyIndex;
 
 #pragma warning disable IDE1006 // Naming Styles
         public Hash index
@@ -136,8 +136,13 @@ namespace Syadeu.Presentation
             {
                 unsafe
                 {
-                    if (m_Pointer == null) return true;
-                    if (!(*m_Pointer).m_Hash.Equals(m_Hash)) return true;
+                    if (m_Hash.Equals(Hash.Empty) || m_Pointer is null) return true;
+                    if (m_Pointer->m_Hash == null)
+                    {
+                        throw new InsufficientMemoryException("");
+                    }
+
+                    if (!m_Pointer->m_Hash.Equals(m_Hash)) return true;
                 }
                 return false;
             }
@@ -227,5 +232,7 @@ namespace Syadeu.Presentation
             }
             PresentationSystem<GameObjectProxySystem>.System.Destroy(this);
         }
+
+        public bool Equals(ProxyTransform other) => m_Hash.Equals(other.m_Hash);
     }
 }

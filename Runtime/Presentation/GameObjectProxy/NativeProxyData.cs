@@ -67,16 +67,20 @@ namespace Syadeu.Presentation
                 UnsafeUtility.MemClear(m_TransformBuffer, length * s_TransformSize);
             }
 
-            for (int i = 0; i < m_Length; i++)
+            for (int i = 0; i < length; i++)
             {
                 *(m_OccupiedBuffer + i) = false;
-                *(m_TransformIndexBuffer + i) = default(Hash);
-                (*(m_TransformBuffer + i)) = default(ProxyTransformData);
+                *(m_TransformIndexBuffer + i) = Hash.Empty;
+                (*(m_TransformBuffer + i)) = ProxyTransformData.Null;
             }
         }
         public void Dispose()
         {
             DisposeSentinel.Dispose(ref m_Safety, ref m_DisposeSentinel);
+
+            UnsafeUtility.MemClear(m_OccupiedBuffer, m_Length * s_BoolenSize);
+            UnsafeUtility.MemClear(m_TransformIndexBuffer, m_Length * s_HashSize);
+            UnsafeUtility.MemClear(m_TransformBuffer, m_Length * s_TransformSize);
 
             UnsafeUtility.Free(m_OccupiedBuffer, m_AllocatorLabel);
             UnsafeUtility.Free(m_TransformIndexBuffer, m_AllocatorLabel);
@@ -103,6 +107,7 @@ namespace Syadeu.Presentation
             // An atomic safety handle is also created automatically.
             DisposeSentinel.Create(out array.m_Safety, out array.m_DisposeSentinel, 1, allocator);
             array.m_Semaphore = new Semaphore(0, 1);
+            array.m_Semaphore.Release();
         }
 
         private void Incremental(uint length)
@@ -217,6 +222,8 @@ namespace Syadeu.Presentation
         {
             AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
 
+            Hash index = transform.index;
+
             ProxyTransformData* p = transform.m_Pointer;
             if (!p->m_Hash.Equals(transform.m_Hash) || !*(m_OccupiedBuffer + p->m_Index))
             {
@@ -225,6 +232,9 @@ namespace Syadeu.Presentation
 
             p->m_Hash = Hash.Empty;
             *(m_OccupiedBuffer + p->m_Index) = false;
+
+            CoreSystem.Logger.Log(Channel.Proxy,
+                $"ProxyTransform({index}) has been destroyed.");
         }
         public void Clear()
         {
@@ -235,8 +245,14 @@ namespace Syadeu.Presentation
 
         public ParallelLoopResult ParallelFor(Action<ProxyTransform> action)
         {
-            //var semaphore = m_Semaphore;
-            //semaphore.WaitOne();
+            CoreSystem.Logger.ThreadBlock(Syadeu.Internal.ThreadInfo.Background | Syadeu.Internal.ThreadInfo.Job | Syadeu.Internal.ThreadInfo.User);
+
+            var semaphore = m_Semaphore;
+            if (!semaphore.WaitOne(1000))
+            {
+                throw new CoreSystemException(CoreSystemExceptionFlag.Proxy,
+                    "Takes too long");
+            }
 
             bool* occupiedBuffer = m_OccupiedBuffer;
             ProxyTransformData* transformBuffer = m_TransformBuffer;
@@ -247,14 +263,14 @@ namespace Syadeu.Presentation
                 action.Invoke(new ProxyTransform(transformBuffer + i, (*(transformBuffer + i)).m_Hash));
             });
 
-            //CoreSystem.AddBackgroundJob(() =>
-            //{
-            //    while (!result.IsCompleted)
-            //    {
-            //        CoreSystem.ThreadAwaiter(1);
-            //    }
-            //    semaphore.Release();
-            //});
+            CoreSystem.AddBackgroundJob(() =>
+            {
+                while (!result.IsCompleted)
+                {
+                    CoreSystem.ThreadAwaiter(1);
+                }
+                semaphore.Release();
+            });
             return result;
         }
         public void For(Action<ProxyTransform> action)
@@ -267,8 +283,10 @@ namespace Syadeu.Presentation
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        public struct ProxyTransformData
+        public struct ProxyTransformData : IEquatable<ProxyTransformData>
         {
+            public static readonly ProxyTransformData Null = new ProxyTransformData();
+
             internal int m_Index;
             internal Hash m_Hash;
             internal PrefabReference m_Prefab;
@@ -296,6 +314,8 @@ namespace Syadeu.Presentation
                 get => m_Scale;
                 set => m_Scale = value;
             }
+
+            public bool Equals(ProxyTransformData other) => m_Hash.Equals(other.m_Hash);
         }
     }
 }

@@ -146,6 +146,7 @@ namespace SyadeuEditor
         }
         #endregion
 
+        #region Scene Menu
         private sealed class SceneMenu
         {
             private SerializedObject serializedObject;
@@ -384,6 +385,10 @@ namespace SyadeuEditor
             private void CloseScene(Scene scene) => EditorSceneManager.CloseScene(scene, true);
         }
 
+        #endregion
+
+        #region Prefab Menu
+
         private sealed class PrefabMenu
         {
             SerializedObject serializedObject;
@@ -498,5 +503,7 @@ namespace SyadeuEditor
             }
             //
         }
+
+        #endregion
     }
 }
