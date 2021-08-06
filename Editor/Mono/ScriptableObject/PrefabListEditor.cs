@@ -104,7 +104,9 @@ namespace SyadeuEditor
                 Repaint();
             }
 
+            EditorGUI.BeginDisabledGroup(true);
             base.OnInspectorGUI();
+            EditorGUI.EndDisabledGroup();
         }
     }
 }
