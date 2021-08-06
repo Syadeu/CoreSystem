@@ -52,8 +52,7 @@ namespace Syadeu.Presentation
 #endif
 
         // This should only ever be set during serialization/deserialization!
-        [SerializeField]
-        private string scenePath = string.Empty;
+        [SerializeField] internal string scenePath = string.Empty;
         //public EntityBase.Captured[] m_SceneObjects;
         //public byte[] m_SceneGridData = Array.Empty<byte>();
 

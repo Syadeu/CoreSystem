@@ -45,12 +45,8 @@ namespace Syadeu.Presentation
         [ConfigValue(Header = "Screen", Name = "ResolutionX")] private int m_ResolutionX;
         [ConfigValue(Header = "Screen", Name = "ResolutionY")] private int m_ResolutionY;
 
-        //private CanvasGroup m_BlackScreen = null;
-        //private Camera m_DefaultCamera = null;
-
         private bool m_LoadingEnabled = false;
         private bool m_LoadingSceneSetupDone = false;
-        //private Timer m_SceneActiveTimer = new Timer();
 
         public Scene CurrentScene => m_CurrentScene;
         public SceneReference CurrentSceneRef => SceneList.Instance.GetScene(m_CurrentScene.path);
@@ -112,10 +108,8 @@ namespace Syadeu.Presentation
         /// </summary>
         public bool IsSceneLoading => m_LoadingEnabled || m_AsyncOperation != null;
 
-        private MapSystem m_GridSystem;
-        private EntitySystem m_EntitySystem;
-        private readonly ConcurrentDictionary<SceneReference, List<Action>> m_CustomSceneLoadDependences = new ConcurrentDictionary<SceneReference, List<Action>>();
-        private readonly ConcurrentDictionary<SceneReference, List<Action>> m_CustomSceneUnloadDependences = new ConcurrentDictionary<SceneReference, List<Action>>();
+        private readonly ConcurrentDictionary<Hash, List<Action>> m_CustomSceneLoadDependences = new ConcurrentDictionary<Hash, List<Action>>();
+        private readonly ConcurrentDictionary<Hash, List<Action>> m_CustomSceneUnloadDependences = new ConcurrentDictionary<Hash, List<Action>>();
 
         #region Presentation Methods
         protected override PresentationResult OnInitialize()
@@ -198,13 +192,6 @@ namespace Syadeu.Presentation
             }
             #endregion
         }
-        protected override PresentationResult OnInitializeAsync()
-        {
-            RequestSystem<MapSystem>((other) => m_GridSystem = other);
-            RequestSystem<EntitySystem>((other) => m_EntitySystem = other);
-
-            return base.OnInitializeAsync();
-        }
         protected override PresentationResult OnStartPresentation()
         {
             if (m_DebugMode)
@@ -268,10 +255,17 @@ namespace Syadeu.Presentation
         /// <param name="onSceneStart"></param>
         public void RegisterSceneLoadDependence(SceneReference key, Action onSceneStart)
         {
-            if (!m_CustomSceneLoadDependences.TryGetValue(key, out var list))
+            if (string.IsNullOrEmpty(key.scenePath))
+            {
+                throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
+                    "Scene is valid");
+            }
+            Hash hash = Hash.NewHash(key.scenePath);
+
+            if (!m_CustomSceneLoadDependences.TryGetValue(hash, out var list))
             {
                 list = new List<Action>();
-                m_CustomSceneLoadDependences.TryAdd(key, list);
+                m_CustomSceneLoadDependences.TryAdd(hash, list);
             }
             list.Add(onSceneStart);
         }
@@ -282,10 +276,17 @@ namespace Syadeu.Presentation
         /// <param name="onSceneStart"></param>
         public void RegisterSceneUnloadDependence(SceneReference key, Action onSceneStart)
         {
-            if (!m_CustomSceneUnloadDependences.TryGetValue(key, out var list))
+            if (string.IsNullOrEmpty(key.scenePath))
+            {
+                throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
+                    "Scene is valid");
+            }
+            Hash hash = Hash.NewHash(key.scenePath);
+
+            if (!m_CustomSceneUnloadDependences.TryGetValue(hash, out var list))
             {
                 list = new List<Action>();
-                m_CustomSceneUnloadDependences.TryAdd(key, list);
+                m_CustomSceneUnloadDependences.TryAdd(hash, list);
             }
             list.Add(onSceneStart);
         }
@@ -294,20 +295,6 @@ namespace Syadeu.Presentation
             Action<float> onLoading, 
             Action<float, float> onAfterLoading, Action onLoadingExit)
         {
-            //CanvasScaler scaler = canvas.GetComponent<CanvasScaler>();
-            //if (scaler == null) scaler = canvas.gameObject.AddComponent<CanvasScaler>();
-            //scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            //scaler.referenceResolution = new Vector2(m_ResolutionX, m_ResolutionY);
-
-            //backgroundImg.rectTransform.sizeDelta = scaler.referenceResolution;
-            //backgroundImg.transform.localPosition = Vector3.zero;
-
-            //cg.interactable = false;
-            //cg.blocksRaycasts = false;
-
-            //m_DefaultCamera = cam;
-            //m_BlackScreen = cg;
-
             OnLoadingEnter += onLoadingEnter;
             OnWaitLoading += onWaitLoading;
             OnLoading += onLoading;
@@ -418,7 +405,8 @@ namespace Syadeu.Presentation
         }
         private static List<ICustomYieldAwaiter> StartSceneDependences(SceneSystem system, SceneReference key)
         {
-            if (system.m_CustomSceneLoadDependences.TryGetValue(key, out List<Action> list))
+            Hash hash = Hash.NewHash(key.scenePath);
+            if (system.m_CustomSceneLoadDependences.TryGetValue(hash, out List<Action> list))
             {
                 for (int i = 0; i < list.Count; i++)
                 {
@@ -443,7 +431,8 @@ namespace Syadeu.Presentation
         }
         private static void StopSceneDependences(SceneSystem system, SceneReference key)
         {
-            if (system.m_CustomSceneUnloadDependences.TryGetValue(key, out List<Action> list))
+            Hash hash = Hash.NewHash(key.scenePath);
+            if (system.m_CustomSceneUnloadDependences.TryGetValue(hash, out List<Action> list))
             {
                 for (int i = 0; i < list.Count; i++)
                 {
@@ -465,22 +454,5 @@ namespace Syadeu.Presentation
             }
         }
         #endregion
-
-        //private static void LoadSceneGrid(EntitySystem entitySystem, GridSystem gridSystem, SceneReference scene)
-        //{
-        //    ManagedGrid grid = ManagedGrid.FromBinary(scene.m_SceneGridData);
-        //    ManagedCell[] cells = grid.cells;
-        //    for (int i = 0; i < cells.Length; i++)
-        //    {
-        //        if (cells[i].GetValue() is EntityBase.Captured capturedEntity)
-        //        {
-        //            entitySystem.LoadEntity(capturedEntity);
-        //        }
-        //        else
-        //        {
-
-        //        }
-        //    }
-        //}
     }
 }
