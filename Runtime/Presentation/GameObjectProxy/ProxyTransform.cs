@@ -137,9 +137,16 @@ namespace Syadeu.Presentation
                 unsafe
                 {
                     if (m_Hash.Equals(Hash.Empty) || m_Pointer is null) return true;
-                    if (m_Pointer->m_Hash == null)
+                    try
                     {
-                        throw new InsufficientMemoryException("");
+                        if (m_Pointer->m_Hash == null)
+                        {
+                            throw new InsufficientMemoryException("");
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        return true;
                     }
 
                     if (!m_Pointer->m_Hash.Equals(m_Hash)) return true;
