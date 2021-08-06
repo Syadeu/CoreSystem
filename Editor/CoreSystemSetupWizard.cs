@@ -67,6 +67,7 @@ namespace SyadeuEditor
             m_SceneMenu = new SceneMenu();
             m_PrefabMenu = new PrefabMenu();
             AddSetup(ToolbarNames.Scene, m_SceneMenu.Predicate);
+            AddSetup(ToolbarNames.Prefab, m_PrefabMenu.Predicate);
         }
         private void OnGUI()
         {
@@ -427,6 +428,11 @@ namespace SyadeuEditor
                 m_AddressableCount = PrefabListEditor.DefaultGroup.entries.Count;
             }
 
+            public bool Predicate()
+            {
+                if (objectSettings.Count - m_InvalidIndices.Count != m_AddressableCount) return false;
+                return true;
+            }
             public void OnGUI()
             {
                 if (GUILayout.Button("Rebase"))
@@ -445,7 +451,20 @@ namespace SyadeuEditor
                     serializedObject.Update();
                     EditorUtils.SetDirty(PrefabList.Instance);
                 }
+
                 m_Scroll = EditorGUILayout.BeginScrollView(m_Scroll);
+
+                using (new EditorUtils.BoxBlock(Color.black))
+                {
+                    if (objectSettings.Count - m_InvalidIndices.Count != m_AddressableCount)
+                    {
+                        EditorUtils.StringRich("Require Rebase", true);
+                    }
+                    else
+                    {
+                        EditorUtils.StringRich("Asset matched with Addressable", true);
+                    }
+                }
 
                 using (new EditorUtils.BoxBlock(Color.black))
                 {
