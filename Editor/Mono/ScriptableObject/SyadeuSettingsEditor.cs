@@ -90,6 +90,8 @@ namespace SyadeuEditor
 
         private void GlobalSettings()
         {
+            SyadeuSettings.Instance.m_DisplayLogChannel = (Channel)EditorGUILayout.EnumFlagsField("Display Log Channel: ", SyadeuSettings.Instance.m_DisplayLogChannel);
+
             EditorGUI.BeginChangeCheck();
             if (m_EnableHelpbox)
             {

@@ -419,8 +419,6 @@ namespace Syadeu
 
         internal bool m_CleanupManagers = false;
 
-        [SerializeField] private Channel m_DisplayLogChannel = Channel.All;
-
         // Render
         internal event Action OnRender;
 
@@ -461,8 +459,6 @@ namespace Syadeu
         }
         public override void OnInitialize()
         {
-            LogManager.s_DisplayLogChannel = m_DisplayLogChannel;
-
             new Thread(BackgroundWorker).Start();
             //ThreadPool.QueueUserWorkItem(BackgroundWorker);
             Application.quitting += OnAboutToQuit;
@@ -835,8 +831,6 @@ namespace Syadeu
             int tickCounter = 0;
             while (true)
             {
-                LogManager.s_DisplayLogChannel = m_DisplayLogChannel;
-
 #if UNITY_EDITOR
                 if (IsEditorPaused) continue;
 #endif

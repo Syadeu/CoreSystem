@@ -1,5 +1,6 @@
 ﻿using Syadeu;
 using Syadeu.Entities;
+using Syadeu.Mono;
 using SyadeuEditor.Tree;
 #if CORESYSTEM_FMOD
 using Syadeu.FMOD;
@@ -18,7 +19,7 @@ namespace SyadeuEditor
     {
         //private bool m_OpenBackgroundRoutines = false;
 
-        private SerializedProperty m_DisplayLogChannel;
+        //private SerializedProperty m_DisplayLogChannel;
 
         private void OnEnable()
         {
@@ -46,7 +47,7 @@ namespace SyadeuEditor
                 ValidateManagerView();
             }
 
-            m_DisplayLogChannel = serializedObject.FindProperty("m_DisplayLogChannel");
+            //m_DisplayLogChannel = serializedObject.FindProperty("m_DisplayLogChannel");
         }
 
         private void OnDisable()
@@ -194,7 +195,8 @@ namespace SyadeuEditor
             EditorUtils.SectorLine();
 
             EditorGUILayout.Space();
-            EditorGUILayout.PropertyField(m_DisplayLogChannel);
+            //EditorGUILayout.PropertyField(m_DisplayLogChannel);
+            SyadeuSettings.Instance.m_DisplayLogChannel = (Channel)EditorGUILayout.EnumFlagsField("Display Log Channel: ", SyadeuSettings.Instance.m_DisplayLogChannel);
 
             if (Application.isPlaying)
             {

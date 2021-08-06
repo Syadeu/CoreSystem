@@ -1,6 +1,7 @@
 ﻿using System.Threading;
 using System.Collections.Concurrent;
 
+using Syadeu.Mono;
 using Syadeu.Database;
 using UnityEngine;
 
@@ -39,7 +40,7 @@ namespace Syadeu.Internal
             white,
             yellow
         }
-        internal static Channel s_DisplayLogChannel = Channel.All;
+        //internal static Channel s_DisplayLogChannel = Channel.All;
 
         private static readonly ConcurrentDictionary<Thread, ThreadInfo> m_ThreadInfos = new ConcurrentDictionary<Thread, ThreadInfo>();
         public static void RegisterThread(ThreadInfo info, Thread t)
@@ -72,7 +73,7 @@ namespace Syadeu.Internal
         }
         public static void Log(Channel channel, ResultFlag result, string msg, bool logThread)
         {
-            if (!s_DisplayLogChannel.HasFlag(channel))
+            if (!SyadeuSettings.Instance.m_DisplayLogChannel.HasFlag(channel))
             {
                 if (result == ResultFlag.Normal) return;
             }
