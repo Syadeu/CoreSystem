@@ -54,7 +54,8 @@ namespace Syadeu
                     m_Instance = Resources.Load<T>($"{path}/" + typeof(T).Name);
                     if (m_Instance == null)
                     {
-                        //$"LOG :: Creating new static setting<{typeof(T).Name}> asset".ToLog();
+                        CoreSystem.Logger.Log(Channel.Core,
+                            $"Creating new static setting<{typeof(T).Name}> asset");
                         m_Instance = CreateInstance<T>();
                         m_Instance.name = $"Syadeu {TypeHelper.TypeOf<T>.Name} Setting Asset";
 

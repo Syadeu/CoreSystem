@@ -377,8 +377,18 @@ namespace SyadeuEditor
                 serializedObject = new SerializedObject(PrefabList.Instance);
                 m_ObjectSettings = serializedObject.FindProperty("m_ObjectSettings");
 
-                objectSettingsFieldInfo = TypeHelper.TypeOf<PrefabList>.Type.GetField("m_ObjectSettings");
-                objectSettings = (List<PrefabList.ObjectSetting>)objectSettingsFieldInfo.GetValue(PrefabList.Instance);
+                objectSettingsFieldInfo = TypeHelper.TypeOf<PrefabList>.Type.GetField("m_ObjectSettings",
+                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                var temp = objectSettingsFieldInfo.GetValue(PrefabList.Instance);
+                
+                if (temp == null)
+                {
+                    objectSettings = new List<PrefabList.ObjectSetting>();
+                    objectSettingsFieldInfo.SetValue(PrefabList.Instance, objectSettings);
+
+                    serializedObject.Update();
+                }
+                else objectSettings = (List<PrefabList.ObjectSetting>)temp;
 
                 for (int i = 0; i < objectSettings.Count; i++)
                 {
@@ -397,6 +407,7 @@ namespace SyadeuEditor
                 {
                     PrefabListEditor.Rebase(objectSettings);
 
+                    m_InvalidIndices.Clear();
                     for (int i = 0; i < objectSettings.Count; i++)
                     {
                         if (objectSettings[i].m_RefPrefab.editorAsset == null)
@@ -410,24 +421,29 @@ namespace SyadeuEditor
                 }
                 m_Scroll = EditorGUILayout.BeginScrollView(m_Scroll);
 
-                if (m_InvalidIndices.Count > 0)
+                using (new EditorUtils.BoxBlock(Color.black))
                 {
-                    using (new EditorUtils.BoxBlock(Color.black))
+                    if (m_InvalidIndices.Count > 0)
                     {
                         EditorGUILayout.HelpBox("We\'ve found invalid asset in PrefabList but normally " +
-                            "it is not an issue. You can ignore this", MessageType.Info);
-
+                        "it is not an issue. You can ignore this", MessageType.Info);
                         EditorUtils.StringRich("Invalid prefab found");
+                        EditorGUI.indentLevel++;
+
                         EditorGUI.BeginDisabledGroup(true);
                         for (int i = 0; i < m_InvalidIndices.Count; i++)
                         {
-                            EditorUtils.StringRich($"Index at {m_InvalidIndices[i]}");
-
-                            EditorGUILayout.PropertyField(m_ObjectSettings.GetArrayElementAtIndex(m_InvalidIndices[i]));
+                            EditorGUILayout.PropertyField(
+                                m_ObjectSettings.GetArrayElementAtIndex(m_InvalidIndices[i]), 
+                                new GUIContent($"Index at {m_InvalidIndices[i]}"));
                         }
                         EditorGUI.EndDisabledGroup();
+
+                        EditorGUI.indentLevel--;
                     }
+                    
                 }
+                
 
                 //
                 EditorGUILayout.EndScrollView();
