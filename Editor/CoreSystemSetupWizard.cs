@@ -14,6 +14,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 namespace SyadeuEditor
 {
@@ -293,8 +294,33 @@ namespace SyadeuEditor
                                 EditorUtils.SetDirty(SceneList.Instance);
                                 EditorSceneManager.SetActiveScene(scene);
 
-                                GameObject loadingScr = new GameObject("Loading Script");
-                                loadingScr.AddComponent<CustomLoadingScene>();
+                                GameObject cameraObj = new GameObject("Loading Camera");
+                                Camera cam = cameraObj.AddComponent<Camera>();
+
+                                GameObject canvasObj = new GameObject("Loading Canvas");
+                                Canvas canvas = canvasObj.AddComponent<Canvas>();
+                                CanvasScaler canvasScaler = canvasObj.AddComponent<CanvasScaler>();
+                                canvasObj.AddComponent<GraphicRaycaster>();
+                                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                                canvasScaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+
+                                GameObject BlackScreenObj = new GameObject("BlackScreen");
+                                BlackScreenObj.transform.SetParent(canvasObj.transform);
+                                CanvasGroup canvasGroup = BlackScreenObj.AddComponent<CanvasGroup>();
+                                Image blackScreenImg = BlackScreenObj.AddComponent<Image>();
+                                blackScreenImg.color = Color.black;
+                                blackScreenImg.rectTransform.sizeDelta = new Vector2(800, 600);
+                                blackScreenImg.rectTransform.anchoredPosition = Vector2.zero;
+
+                                GameObject loadingObj = new GameObject("Loading Script");
+                                CustomLoadingScene loadingScr = loadingObj.AddComponent<CustomLoadingScene>();
+
+                                TypeHelper.TypeOf<CustomLoadingScene>.Type.GetField("m_Camera", BindingFlags.Instance | BindingFlags.NonPublic)
+                                    .SetValue(loadingScr, cam);
+                                TypeHelper.TypeOf<CustomLoadingScene>.Type.GetField("m_FadeGroup", BindingFlags.Instance | BindingFlags.NonPublic)
+                                    .SetValue(loadingScr, canvasGroup);
+
+                                EditorUtility.SetDirty(loadingScr);
 
                                 EditorSceneManager.SaveScene(scene);
 
@@ -425,7 +451,7 @@ namespace SyadeuEditor
                 {
                     if (m_InvalidIndices.Count > 0)
                     {
-                        EditorGUILayout.HelpBox("We\'ve found invalid asset in PrefabList but normally " +
+                        EditorGUILayout.HelpBox("We\'ve found invalid assets in PrefabList but normally " +
                         "it is not an issue. You can ignore this", MessageType.Info);
                         EditorUtils.StringRich("Invalid prefab found");
                         EditorGUI.indentLevel++;
@@ -441,7 +467,10 @@ namespace SyadeuEditor
 
                         EditorGUI.indentLevel--;
                     }
-                    
+                    else
+                    {
+                        EditorGUILayout.HelpBox("All prefabs nominal", MessageType.Info);
+                    }
                 }
                 
 

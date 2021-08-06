@@ -396,13 +396,13 @@ namespace Syadeu.Presentation
         {
             entityData = null;
             ObjectBase original = EntityDataList.Instance.GetObject(name);
-            return InternalEntityDataValidation(name, out entityData);
+            return InternalEntityDataValidation(name, original, out entityData);
         }
         private bool InternalEntityDataValidation(Hash hash, out EntityDataBase entityData)
         {
             entityData = null;
             ObjectBase original = EntityDataList.Instance.GetObject(hash);
-            return InternalEntityDataValidation(hash, out entityData);
+            return InternalEntityDataValidation(hash.ToString(), original, out entityData);
         }
         private bool InternalEntityDataValidation(string name, ObjectBase original, out EntityDataBase entityData)
         {
