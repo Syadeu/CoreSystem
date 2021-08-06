@@ -222,6 +222,13 @@ namespace Syadeu.Presentation
             }
         }
 
+        public float3 right => math.mul(rotation, new float3(1, 0, 0));
+        public float3 up => math.mul(rotation, new float3(0, 1, 0));
+        public float3 forward => math.mul(rotation, new float3(0, 0, 1));
+
+        public float4x4 localToWorldMatrix => Render.RenderSystem.LocalToWorldMatrix(position, rotation);
+        public float4x4 worldToLocalMatrix => math.inverse(localToWorldMatrix);
+
 #pragma warning restore IDE1006 // Naming Styles
 
         public void Destroy()
