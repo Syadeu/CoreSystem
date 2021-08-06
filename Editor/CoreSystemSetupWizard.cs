@@ -4,10 +4,12 @@ using Syadeu.FMOD;
 #endif
 
 using Syadeu;
+using Syadeu.Internal;
 using Syadeu.Mono;
 using Syadeu.Presentation;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -31,7 +33,7 @@ namespace SyadeuEditor
         public enum ToolbarNames
         {
             Scene,
-            Test1,
+            Prefab,
             Test2,
             Test3,
             Test4,
@@ -44,6 +46,7 @@ namespace SyadeuEditor
         GUIStyle iconStyle;
 
         private SceneMenu m_SceneMenu;
+        private PrefabMenu m_PrefabMenu;
         private Rect m_CopyrightRect = new Rect(175, 475, 245, 20);
 
         private void OnEnable()
@@ -61,14 +64,13 @@ namespace SyadeuEditor
             iconStyle.alignment = TextAnchor.MiddleCenter;
 
             m_SceneMenu = new SceneMenu();
+            m_PrefabMenu = new PrefabMenu();
             AddSetup(ToolbarNames.Scene, m_SceneMenu.Predicate);
         }
-        Vector2 pos;
-        Vector2 size;
         private void OnGUI()
         {
             GUILayout.Space(20);
-            EditorUtils.StringHeader("asd", 30, true);
+            EditorUtils.StringHeader("Setup", 30, true);
             GUILayout.Space(10);
             EditorUtils.Line();
             GUILayout.Space(10);
@@ -83,6 +85,9 @@ namespace SyadeuEditor
                 {
                     case ToolbarNames.Scene:
                         m_SceneMenu.OnGUI();
+                        break;
+                    case ToolbarNames.Prefab:
+                        m_PrefabMenu.OnGUI();
                         break;
                     default:
                         break;
@@ -350,6 +355,84 @@ namespace SyadeuEditor
                 return scene;
             }
             private void CloseScene(Scene scene) => EditorSceneManager.CloseScene(scene, true);
+        }
+
+        private sealed class PrefabMenu
+        {
+            SerializedObject serializedObject;
+            SerializedProperty
+                m_ObjectSettings;
+
+            FieldInfo objectSettingsFieldInfo;
+            List<PrefabList.ObjectSetting> objectSettings;
+
+            int m_AddressableCount = 0;
+            readonly List<int> m_InvalidIndices = new List<int>();
+
+            Vector2
+                m_Scroll = Vector2.zero;
+
+            public PrefabMenu()
+            {
+                serializedObject = new SerializedObject(PrefabList.Instance);
+                m_ObjectSettings = serializedObject.FindProperty("m_ObjectSettings");
+
+                objectSettingsFieldInfo = TypeHelper.TypeOf<PrefabList>.Type.GetField("m_ObjectSettings");
+                objectSettings = (List<PrefabList.ObjectSetting>)objectSettingsFieldInfo.GetValue(PrefabList.Instance);
+
+                for (int i = 0; i < objectSettings.Count; i++)
+                {
+                    if (objectSettings[i].m_RefPrefab.editorAsset == null)
+                    {
+                        m_InvalidIndices.Add(i);
+                    }
+                }
+
+                m_AddressableCount = PrefabListEditor.DefaultGroup.entries.Count;
+            }
+
+            public void OnGUI()
+            {
+                if (GUILayout.Button("Rebase"))
+                {
+                    PrefabListEditor.Rebase(objectSettings);
+
+                    for (int i = 0; i < objectSettings.Count; i++)
+                    {
+                        if (objectSettings[i].m_RefPrefab.editorAsset == null)
+                        {
+                            m_InvalidIndices.Add(i);
+                        }
+                    }
+
+                    serializedObject.Update();
+                    EditorUtils.SetDirty(PrefabList.Instance);
+                }
+                m_Scroll = EditorGUILayout.BeginScrollView(m_Scroll);
+
+                if (m_InvalidIndices.Count > 0)
+                {
+                    using (new EditorUtils.BoxBlock(Color.black))
+                    {
+                        EditorGUILayout.HelpBox("We\'ve found invalid asset in PrefabList but normally " +
+                            "it is not an issue. You can ignore this", MessageType.Info);
+
+                        EditorUtils.StringRich("Invalid prefab found");
+                        EditorGUI.BeginDisabledGroup(true);
+                        for (int i = 0; i < m_InvalidIndices.Count; i++)
+                        {
+                            EditorUtils.StringRich($"Index at {m_InvalidIndices[i]}");
+
+                            EditorGUILayout.PropertyField(m_ObjectSettings.GetArrayElementAtIndex(m_InvalidIndices[i]));
+                        }
+                        EditorGUI.EndDisabledGroup();
+                    }
+                }
+
+                //
+                EditorGUILayout.EndScrollView();
+            }
+            //
         }
     }
 }

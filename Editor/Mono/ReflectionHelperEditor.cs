@@ -343,8 +343,10 @@ namespace SyadeuEditor
         }
         public static void DrawPrefabReference(string name, Action<int> setter, PrefabReference current)
         {
+            PrefabList.ObjectSetting objSetting = current.GetObjectSetting();
+
             string displayName;
-            if (current.m_Idx >= 0) displayName = current.GetObjectSetting().m_Name;
+            if (current.m_Idx >= 0) displayName = objSetting == null ? "INVALID" : objSetting.m_Name;
             else displayName = "None";
 
             GUILayout.BeginHorizontal();

@@ -264,7 +264,8 @@ namespace Syadeu.Presentation
         #endregion
 
 #line hidden
-        #region Create Entity
+
+        #region Create EntityBase
         //public Entity<IEntity> LoadEntity(EntityBase.Captured captured)
         //{
         //    EntityBase original = (EntityBase)captured.m_Obj;
@@ -274,29 +275,10 @@ namespace Syadeu.Presentation
         //}
         public Entity<IEntity> CreateEntity(string name, Vector3 position)
         {
-            ObjectBase original;
-            try
-            {
-                original = EntityDataList.Instance.GetObject(name);
-            }
-            catch (KeyNotFoundException)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_EntityNotFoundError, name, position));
-                return Entity<IEntity>.Empty;
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-            if (!(original is EntityBase))
-            {
-                CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_IsNotEntityError, name));
-                return Entity<IEntity>.Empty;
-            }
-            EntityBase temp = (EntityBase)original;
+            InternalEntityValidation(name, position, out EntityBase temp);
 
-            ProxyTransform obj = m_ProxySystem.CreateNewPrefab(temp.Prefab, position, quaternion.identity, 1, true);
-            return InternalCreateEntity(temp, obj);
+            ProxyTransform obj = InternalCreateProxy(temp, temp.Prefab, position, quaternion.identity, 1, true);
+            return InternalCreateEntity(temp, in obj);
         }
         /// <summary>
         /// 
@@ -306,55 +288,17 @@ namespace Syadeu.Presentation
         /// <returns></returns>
         public Entity<IEntity> CreateEntity(Hash hash, Vector3 position)
         {
-            ObjectBase original;
-            try
-            {
-                original = EntityDataList.Instance.GetObject(hash);
-            }
-            catch (KeyNotFoundException)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_EntityNotFoundError, hash, position));
-                return Entity<IEntity>.Empty;
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-            if (!(original is EntityBase))
-            {
-                CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_IsNotEntityError, hash));
-                return Entity<IEntity>.Empty;
-            }
-            EntityBase temp = (EntityBase)original;
+            InternalEntityValidation(hash, position, out EntityBase temp);
 
-            ProxyTransform obj = m_ProxySystem.CreateNewPrefab(temp.Prefab, position, quaternion.identity, 1, true);
-            return InternalCreateEntity(temp, obj);
+            ProxyTransform obj = InternalCreateProxy(temp, temp.Prefab, position, quaternion.identity, 1, true);
+            return InternalCreateEntity(temp, in obj);
         }
         public Entity<IEntity> CreateEntity(string name, Vector3 position, Quaternion rotation, Vector3 localSize, bool enableCull)
         {
-            ObjectBase original;
-            try
-            {
-                original = EntityDataList.Instance.GetObject(name);
-            }
-            catch (KeyNotFoundException)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_EntityNotFoundError, name, position));
-                return Entity<IEntity>.Empty;
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-            if (!(original is EntityBase))
-            {
-                CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_IsNotEntityError, name));
-                return Entity<IEntity>.Empty;
-            }
-            EntityBase temp = (EntityBase)original;
+            InternalEntityValidation(name, position, out EntityBase temp);
 
-            ProxyTransform obj = m_ProxySystem.CreateNewPrefab(temp.Prefab, position, rotation, localSize, enableCull);
-            return InternalCreateEntity(temp, obj);
+            ProxyTransform obj = InternalCreateProxy(temp, temp.Prefab, position, rotation, localSize, enableCull);
+            return InternalCreateEntity(temp, in obj);
         }
         /// <summary>
         /// 
@@ -367,32 +311,52 @@ namespace Syadeu.Presentation
         /// <returns></returns>
         public Entity<IEntity> CreateEntity(Hash hash, Vector3 position, Quaternion rotation, Vector3 localSize, bool enableCull)
         {
-            ObjectBase original;
-            try
+            InternalEntityValidation(hash, position, out EntityBase temp);
+
+            ProxyTransform obj = InternalCreateProxy(temp, temp.Prefab, position, rotation, localSize, enableCull);
+            return InternalCreateEntity(temp, in obj);
+        }
+
+        #region Entity Validation
+        private bool InternalEntityValidation(string name, float3 targetPos, out EntityBase entity)
+        {
+            ObjectBase original = EntityDataList.Instance.GetObject(name);
+            return InternalEntityValidation(name, original, targetPos, out entity);
+        }
+        private bool InternalEntityValidation(Hash hash, float3 targetPos, out EntityBase entity)
+        {
+            ObjectBase original = EntityDataList.Instance.GetObject(hash);
+            return InternalEntityValidation(hash.ToString(), original, targetPos, out entity);
+        }
+        private bool InternalEntityValidation(string key, ObjectBase original, float3 targetPos, out EntityBase entity)
+        {
+            entity = null;
+            if (original == null)
             {
-                original = EntityDataList.Instance.GetObject(hash);
-            }
-            catch (KeyNotFoundException)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_EntityNotFoundError, hash, position));
-                return Entity<IEntity>.Empty;
-            }
-            catch (Exception)
-            {
-                throw;
+                CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_EntityNotFoundError, key, targetPos));
+                return false;
             }
             if (!(original is EntityBase))
             {
-                CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_IsNotEntityError, hash));
-                return Entity<IEntity>.Empty;
+                CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_IsNotEntityError, key));
+                return false;
             }
-            EntityBase temp = (EntityBase)original;
-
-            ProxyTransform obj = m_ProxySystem.CreateNewPrefab(temp.Prefab, position, rotation, localSize, enableCull);
-            return InternalCreateEntity(temp, obj);
+            entity = (EntityBase)original;
+            return true;
         }
+        #endregion
+        private ProxyTransform InternalCreateProxy(EntityBase from,
+            PrefabReference prefab, float3 pos, quaternion rot, float3 scale, bool enableCull)
+        {
+            if (!prefab.IsValid())
+            {
+                throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
+                    $"{from.Name} has an invalid prefab. This is not allowed.");
+            }
 
-        private Entity<IEntity> InternalCreateEntity(EntityBase entityBase, ProxyTransform obj)
+            return m_ProxySystem.CreateNewPrefab(prefab, pos, rot, scale, enableCull);
+        }
+        private Entity<IEntity> InternalCreateEntity(EntityBase entityBase, in ProxyTransform obj)
         {
             EntityBase entity = (EntityBase)entityBase.Clone();
 
@@ -409,6 +373,8 @@ namespace Syadeu.Presentation
         }
         #endregion
 
+        #region Create EntityDataBase
+
         /// <summary>
         /// 
         /// </summary>
@@ -416,62 +382,66 @@ namespace Syadeu.Presentation
         /// <returns></returns>
         public EntityData<IEntityData> CreateObject(Hash hash)
         {
-            ObjectBase original;
-            try
-            {
-                original = EntityDataList.Instance.GetObject(hash);
-            }
-            catch (KeyNotFoundException)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_ObjectNotFoundError, hash));
-                return EntityData<IEntityData>.Empty;
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-            if (original is EntityBase)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity, "You're creating entity with CreateObject method. This is not allowed.");
-                return EntityData<IEntityData>.Empty;
-            }
-            else if (original is AttributeBase)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity, "This object is attribute and cannot be created. Request ignored.");
-                return EntityData<IEntityData>.Empty;
-            }
-
+            InternalEntityDataValidation(hash, out EntityDataBase original);
             return InternalCreateObject(original);
         }
         public EntityData<IEntityData> CreateObject(string name)
         {
-            ObjectBase original;
-            try
-            {
-                original = EntityDataList.Instance.GetObject(name);
-            }
-            catch (KeyNotFoundException)
+            InternalEntityDataValidation(name, out EntityDataBase original);
+            return InternalCreateObject(original);
+        }
+
+        #region EntityData Validation
+        private bool InternalEntityDataValidation(string name, out EntityDataBase entityData)
+        {
+            entityData = null;
+            ObjectBase original = EntityDataList.Instance.GetObject(name);
+            return InternalEntityDataValidation(name, out entityData);
+        }
+        private bool InternalEntityDataValidation(Hash hash, out EntityDataBase entityData)
+        {
+            entityData = null;
+            ObjectBase original = EntityDataList.Instance.GetObject(hash);
+            return InternalEntityDataValidation(hash, out entityData);
+        }
+        private bool InternalEntityDataValidation(string name, ObjectBase original, out EntityDataBase entityData)
+        {
+            entityData = null;
+            if (original == null)
             {
                 CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_ObjectNotFoundError, name));
-                return EntityData<IEntityData>.Empty;
-            }
-            catch (Exception)
-            {
-                throw;
+                return false;
             }
             if (original is EntityBase)
             {
                 CoreSystem.Logger.LogError(Channel.Entity, "You're creating entity with CreateObject method. This is not allowed.");
-                return EntityData<IEntityData>.Empty;
+                return false;
             }
             else if (original is AttributeBase)
             {
                 CoreSystem.Logger.LogError(Channel.Entity, "This object is attribute and cannot be created. Request ignored.");
-                return EntityData<IEntityData>.Empty;
+                return false;
             }
-
-            return InternalCreateObject(original);
+            entityData = (EntityDataBase)original;
+            return true;
         }
+        #endregion
+
+        private EntityData<IEntityData> InternalCreateObject(EntityDataBase obj)
+        {
+            EntityDataBase objClone = (EntityDataBase)obj.Clone();
+            objClone.m_IsCreated = true;
+
+            IEntityData clone = (IEntityData)objClone;
+
+            m_ObjectHashSet.Add(clone.Idx);
+            m_ObjectEntities.Add(clone.Idx, clone);
+
+            ProcessEntityOnCreated(this, clone);
+            return EntityData<IEntityData>.GetEntityData(clone.Idx);
+        }
+
+        #endregion
 
         /// <summary>
         /// 해당 엔티티를 즉시 파괴합니다.
@@ -497,20 +467,6 @@ namespace Syadeu.Presentation
             ((IDisposable)m_ObjectEntities[hash]).Dispose();
             m_ObjectHashSet.Remove(hash);
             m_ObjectEntities.Remove(hash);
-        }
-
-        private EntityData<IEntityData> InternalCreateObject(ObjectBase obj)
-        {
-            EntityDataBase objClone = (EntityDataBase)obj.Clone();
-            objClone.m_IsCreated = true;
-
-            IEntityData clone = (IEntityData)objClone;
-
-            m_ObjectHashSet.Add(clone.Idx);
-            m_ObjectEntities.Add(clone.Idx, clone);
-
-            ProcessEntityOnCreated(this, clone);
-            return EntityData<IEntityData>.GetEntityData(clone.Idx);
         }
 
 #line default

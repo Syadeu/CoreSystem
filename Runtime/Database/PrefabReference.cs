@@ -20,7 +20,11 @@ namespace Syadeu.Database
 
         public bool Equals(PrefabReference other) => m_Idx.Equals(other.m_Idx);
 
-        public PrefabList.ObjectSetting GetObjectSetting() => PrefabList.Instance.ObjectSettings[(int)m_Idx];
+        public PrefabList.ObjectSetting GetObjectSetting()
+        {
+            if (!IsValid()) return null;
+            return PrefabList.Instance.ObjectSettings[(int)m_Idx];
+        }
 
         public bool IsValid() => 0 <= m_Idx && m_Idx < PrefabList.Instance.ObjectSettings.Count;
 
