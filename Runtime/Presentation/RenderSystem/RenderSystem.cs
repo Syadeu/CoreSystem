@@ -185,6 +185,10 @@ namespace Syadeu.Presentation.Render
             return IsInCameraScreen(worldPosition, m_Matrix4x4, m_ScreenOffset) 
                 /*|| IsInCameraScreen(worldPosition, m_TopMatrix4x4, m_ScreenOffset)*/;
         }
+        public bool IsInCameraScreen(float3[] worldVertices)
+        {
+            return IsInCameraScreen(worldVertices, m_Matrix4x4, m_ScreenOffset);
+        }
         /// <summary>
         /// 해당 좌표가 입력한 카메라 내부에 위치하는지 반환합니다.
         /// </summary>
@@ -212,6 +216,14 @@ namespace Syadeu.Presentation.Render
                 screenPoint.x < 1 + offset.x &&
                 screenPoint.y > 0 - offset.y &&
                 screenPoint.y < 1 + offset.y;
+        }
+        internal static bool IsInCameraScreen(float3[] vertices, Matrix4x4 matrix, Vector3 offset)
+        {
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                if (IsInCameraScreen(vertices[i], matrix, offset)) return true;
+            }
+            return false;
         }
 
         public void StartPreRender(IEnumerator iter)

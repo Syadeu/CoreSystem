@@ -304,7 +304,8 @@ namespace Syadeu.Presentation
             {
                 m_VisibleJob = m_ProxyData.ParallelFor((other) =>
                 {
-                    if (m_RenderSystem.IsInCameraScreen(other.position))
+                    // aabb의 꼭지점 중 단 하나라도 화면 내 존재하면 화면에 비추는 것으로 간주함.
+                    if (m_RenderSystem.IsInCameraScreen(other.aabb.vertices))
                     {
                         if (other.enableCull && !other.hasProxy && !other.hasProxyQueued)
                         {
