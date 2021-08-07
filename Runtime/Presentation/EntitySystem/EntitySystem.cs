@@ -78,7 +78,6 @@ namespace Syadeu.Presentation
                 IProcessor processor;
                 if (TypeHelper.TypeOf<IAttributeProcessor>.Type.IsAssignableFrom(processors[i]))
                 {
-                    //IAttributeProcessor processor;
                     if (ctor == null) processor = (IAttributeProcessor)Activator.CreateInstance(processors[i]);
                     else
                     {
@@ -87,7 +86,8 @@ namespace Syadeu.Presentation
 
                     if (!TypeHelper.TypeOf<AttributeBase>.Type.IsAssignableFrom(processor.Target))
                     {
-                        throw new Exception();
+                        throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
+                            $"Attribute processor {processors[i].Name} has an invalid target");
                     }
 
                     if (!m_AttributeProcessors.TryGetValue(processor.Target, out var values))
@@ -99,7 +99,6 @@ namespace Syadeu.Presentation
                 }
                 else
                 {
-                    //IEntityDataProcessor entityProcessor;
                     if (ctor == null) processor = (IEntityDataProcessor)Activator.CreateInstance(processors[i]);
                     else
                     {
@@ -108,7 +107,8 @@ namespace Syadeu.Presentation
 
                     if (!TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(processor.Target))
                     {
-                        throw new Exception();
+                        throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
+                            $"Entity processor {processors[i].Name} has an invalid target");
                     }
 
                     if (!m_EntityProcessors.TryGetValue(processor.Target, out var values))
@@ -122,6 +122,8 @@ namespace Syadeu.Presentation
 
                 ProcessorBase baseProcessor = (ProcessorBase)processor;
                 baseProcessor.m_EntitySystem = this;
+
+                processor.OnInitializeAsync();
             }
             #endregion
 
@@ -133,6 +135,22 @@ namespace Syadeu.Presentation
 
             m_ProxySystem.OnDataObjectProxyCreated += M_ProxySystem_OnDataObjectProxyCreated;
             m_ProxySystem.OnDataObjectProxyRemoved += M_ProxySystem_OnDataObjectProxyRemoved;
+
+            foreach (var item in m_EntityProcessors)
+            {
+                for (int i = 0; i < item.Value.Count; i++)
+                {
+                    item.Value[i].OnInitialize();
+                }
+            }
+            foreach (var item in m_AttributeProcessors)
+            {
+                for (int i = 0; i < item.Value.Count; i++)
+                {
+                    item.Value[i].OnInitialize();
+                }
+            }
+
             return base.OnStartPresentation();
         }
 
@@ -227,6 +245,8 @@ namespace Syadeu.Presentation
 
                             processor.OnDestroy(other, entityData);
                             processor.OnDestroySync(other, entityData);
+
+                            ((IDisposable)processor).Dispose();
                         }
                     }
                 });
@@ -249,8 +269,23 @@ namespace Syadeu.Presentation
 
                     OnEntityDestroy?.Invoke(entityData);
                 }
-                
+
                 #endregion
+
+                foreach (var item in m_EntityProcessors)
+                {
+                    for (int a = 0; a < item.Value.Count; a++)
+                    {
+                        item.Value[a].Dispose();
+                    }
+                }
+                foreach (var item in m_AttributeProcessors)
+                {
+                    for (int a = 0; a < item.Value.Count; a++)
+                    {
+                        item.Value[a].Dispose();
+                    }
+                }
             }
 
             OnEntityCreated = null;

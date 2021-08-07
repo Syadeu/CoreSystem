@@ -4,13 +4,15 @@ using System.Collections.Generic;
 
 namespace Syadeu.Presentation.Event
 {
+    /// <summary>
+    /// <see cref="SynchronizedEvent{TEvent}"/> 들을 처리하는 시스템입니다.
+    /// </summary>
     public sealed class EventSystem : PresentationSystemEntity<EventSystem>
     {
         public override bool EnableBeforePresentation => true;
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
-        //private readonly Dictionary<Type, SynchronizedEventBase> m_Events = new Dictionary<Type, SynchronizedEventBase>();
         private readonly Queue<SynchronizedEventBase> m_PostedEvents = new Queue<SynchronizedEventBase>();
 
         protected override PresentationResult BeforePresentation()
@@ -40,12 +42,6 @@ namespace Syadeu.Presentation.Event
 
             base.Dispose();
         }
-
-        //public void RegisterEvent<TEvent>() where TEvent : SynchronizedEvent<TEvent>, new()
-        //{
-        //    TEvent e = new TEvent();
-        //    m_Events.Add(TypeHelper.TypeOf<TEvent>.Type, e);
-        //}
 
         public void AddEvent<TEvent>(Action<TEvent> ev) where TEvent : SynchronizedEvent<TEvent>, new()
         {
