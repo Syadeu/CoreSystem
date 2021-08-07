@@ -1,6 +1,7 @@
 ﻿using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Mono;
+using Syadeu.Presentation.Render;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -646,11 +647,22 @@ namespace Syadeu.Presentation
                 m_SceneSystem = sceneSystem;
                 m_RequestedScene = m_SceneSystem.CurrentScene;
 
-                if (CoreSystem.InstanceGroupTr == null) CoreSystem.InstanceGroupTr = new GameObject("InstanceSystemGroup").transform;
+                Transform parent;
+                if (prefabInfo.m_IsWorldUI)
+                {
+                    parent = PresentationSystem<WorldCanvasSystem>.System.Canvas.transform;
+                }
+                else
+                {
+                    if (CoreSystem.InstanceGroupTr == null) CoreSystem.InstanceGroupTr = new GameObject("InstanceSystemGroup").transform;
+
+                    parent = CoreSystem.InstanceGroupTr;
+                }
 
                 AssetReference refObject = prefabInfo.m_RefPrefab;
 
-                var oper = prefabInfo.m_RefPrefab.InstantiateAsync(pos, rot, CoreSystem.InstanceGroupTr);
+                //var oper = prefabInfo.m_RefPrefab.InstantiateAsync(pos, rot, CoreSystem.InstanceGroupTr);
+                var oper = prefabInfo.m_RefPrefab.InstantiateAsync(pos, rot, parent);
                 oper.Completed += (other) =>
                 {
                     Scene currentScene = m_SceneSystem.CurrentScene;

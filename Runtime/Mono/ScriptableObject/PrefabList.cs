@@ -14,6 +14,7 @@ namespace Syadeu.Mono
         {
             public string m_Name;
             public AssetReference m_RefPrefab;
+            public bool m_IsWorldUI = false;
 
             //public Queue<GameObject> Pool { get; } = new Queue<GameObject>();
 

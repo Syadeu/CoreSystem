@@ -12,6 +12,8 @@ namespace Syadeu.Presentation.Internal
     public abstract class PresentationSystemEntity : IInitPresentation, 
         IBeforePresentation, IOnPresentation, IAfterPresentation, IDisposable
     {
+        private static UnityEngine.Transform s_PresentationUnityFolder;
+
         public abstract bool EnableBeforePresentation { get; }
         public abstract bool EnableOnPresentation { get; }
         public abstract bool EnableAfterPresentation { get; }
@@ -48,5 +50,25 @@ namespace Syadeu.Presentation.Internal
         PresentationResult IAfterPresentation.AfterPresentationAsync() => AfterPresentationAsync();
 
         public abstract void Dispose();
+
+        protected void DontDestroyOnLoad(UnityEngine.GameObject obj)
+        {
+            CoreSystem.Logger.ThreadBlock(nameof(DontDestroyOnLoad), Syadeu.Internal.ThreadInfo.Unity);
+
+            if (s_PresentationUnityFolder == null)
+            {
+                UnityEngine.GameObject folder = new UnityEngine.GameObject("PresentationSystemFolder");
+                s_PresentationUnityFolder = folder.transform;
+                UnityEngine.Object.DontDestroyOnLoad(folder);
+            }
+
+            obj.transform.SetParent(s_PresentationUnityFolder);
+        }
+        protected void Destroy(UnityEngine.Object obj)
+        {
+            CoreSystem.Logger.ThreadBlock(nameof(Destroy), Syadeu.Internal.ThreadInfo.Unity);
+
+            UnityEngine.Object.Destroy(obj);
+        }
     }
 }

@@ -13,6 +13,7 @@ namespace Syadeu.Presentation
                 TypeHelper.TypeOf<EntitySystem>.Type,
                 TypeHelper.TypeOf<SceneSystem>.Type,
                 TypeHelper.TypeOf<Render.RenderSystem>.Type,
+                TypeHelper.TypeOf<Render.WorldCanvasSystem>.Type,
                 TypeHelper.TypeOf<Map.MapSystem>.Type,
                 TypeHelper.TypeOf<Map.GridSystem>.Type,
                 TypeHelper.TypeOf<Actor.ActorSystem>.Type

@@ -75,8 +75,15 @@ namespace SyadeuEditor
                     CoreSystem.Logger.Log(Channel.Editor,
                         $"PrefabList found an valid asset at {i}:{list[i].m_Name}");
 
-                    list[i].m_Name = $"!!INVALID!! {list[i].m_Name}";
+                    //list[i].m_Name = $"!!INVALID!! {list[i].m_Name}";
                     invalidIndices.Enqueue(i);
+                    continue;
+                }
+
+                if (list[i].m_RefPrefab.editorAsset is GameObject gameobj &&
+                    gameobj.GetComponent<RectTransform>() != null)
+                {
+                    list[i].m_IsWorldUI = true;
                 }
             }
 
@@ -94,10 +101,18 @@ namespace SyadeuEditor
                     int targetIdx = invalidIndices.Dequeue();
                     string previousName = list[targetIdx].m_Name;
 
+                    bool isWorldUI = false;
+                    if (item.TargetAsset is GameObject gameobj &&
+                        gameobj.GetComponent<RectTransform>() != null)
+                    {
+                        isWorldUI = true;
+                    }
+
                     list[targetIdx] = new PrefabList.ObjectSetting
                     {
                         m_Name = name,
-                        m_RefPrefab = refObj
+                        m_RefPrefab = refObj,
+                        m_IsWorldUI = isWorldUI,
                     };
 
                     CoreSystem.Logger.Log(Channel.Editor,
