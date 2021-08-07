@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 
@@ -49,14 +50,33 @@ namespace Syadeu.Internal
         }
         public sealed class Enum<T> where T : struct, IConvertible
         {
+            public static readonly bool IsFlag = TypeOf<T>.Type.GetCustomAttribute<FlagsAttribute>() != null;
             public static readonly string[] Names = Enum.GetNames(TypeOf<T>.Type);
-            public static readonly T[] Values = (T[])Enum.GetValues(TypeOf<T>.Type);
+            public static readonly int[] Values = ((T[])Enum.GetValues(TypeOf<T>.Type)).Select((other) => Convert.ToInt32(other)).ToArray();
 
             public static string ToString(T enumValue)
             {
-                for (int i = 0; i < Values.Length; i++)
+                int target = Convert.ToInt32(enumValue);
+                if (IsFlag)
                 {
-                    if (Values[i].Equals(enumValue)) return Names[i];
+                    string temp = string.Empty;
+                    for (int i = 0; i < Values.Length; i++)
+                    {
+                        if ((target & Values[i]) == Values[i])
+                        {
+                            if (!string.IsNullOrEmpty(temp)) temp += ", ";
+                            temp += Names[i];
+                        }
+                    }
+
+                    return temp;
+                }
+                else
+                {
+                    for (int i = 0; i < Values.Length; i++)
+                    {
+                        if ((target & Values[i]) == Values[i]) return Names[i];
+                    }
                 }
 
                 throw new ArgumentException(nameof(enumValue));
