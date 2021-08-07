@@ -9,8 +9,8 @@ using UnityEngine;
 
 namespace SyadeuEditor
 {
-    [CustomEditor(typeof(SyadeuSettings))]
-    public class SyadeuSettingsEditor : Editor
+    [CustomEditor(typeof(CoreSystemSettings))]
+    public class CoreSystemSettingsEditor : Editor
     {
         public const string CORESYSTEM_UNSAFE = "CORESYSTEM_UNSAFE";
         public const string CORESYSTEM_FMOD = "CORESYSTEM_FMOD";
@@ -27,27 +27,27 @@ namespace SyadeuEditor
 
         private void OnEnable()
         {
-            if (SyadeuSettings.Instance.m_UserTagNameModule == null)
+            if (CoreSystemSettings.Instance.m_UserTagNameModule == null)
             {
                 var userTag = CreateInstance<UserTagNameModule>();
                 userTag.name = "UserTagNameModule";
-                AssetDatabase.AddObjectToAsset(userTag, SyadeuSettings.Instance);
-                AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(SyadeuSettings.Instance));
+                AssetDatabase.AddObjectToAsset(userTag, CoreSystemSettings.Instance);
+                AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(CoreSystemSettings.Instance));
 
-                SyadeuSettings.Instance.m_UserTagNameModule = userTag;
-                EditorUtility.SetDirty(SyadeuSettings.Instance);
+                CoreSystemSettings.Instance.m_UserTagNameModule = userTag;
+                EditorUtility.SetDirty(CoreSystemSettings.Instance);
 
                 AssetDatabase.SaveAssets();
             }
-            if (SyadeuSettings.Instance.m_CustomTagNameModule == null)
+            if (CoreSystemSettings.Instance.m_CustomTagNameModule == null)
             {
                 var customTag = CreateInstance<CustomTagNameModule>();
                 customTag.name = "CustomTagNameModule";
-                AssetDatabase.AddObjectToAsset(customTag, SyadeuSettings.Instance);
-                AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(SyadeuSettings.Instance));
+                AssetDatabase.AddObjectToAsset(customTag, CoreSystemSettings.Instance);
+                AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(CoreSystemSettings.Instance));
 
-                SyadeuSettings.Instance.m_CustomTagNameModule = customTag;
-                EditorUtility.SetDirty(SyadeuSettings.Instance);
+                CoreSystemSettings.Instance.m_CustomTagNameModule = customTag;
+                EditorUtility.SetDirty(CoreSystemSettings.Instance);
 
                 AssetDatabase.SaveAssets();
             }
@@ -81,7 +81,7 @@ namespace SyadeuEditor
             if (m_GlobalOption) GlobalSettings();
             EditorUtils.SectorLine();
 
-            if (EditorGUI.EndChangeCheck()) EditorUtility.SetDirty(SyadeuSettings.Instance);
+            if (EditorGUI.EndChangeCheck()) EditorUtility.SetDirty(CoreSystemSettings.Instance);
 
             EditorGUILayout.Space();
             m_ShowOriginalContents = EditorUtils.Foldout(m_ShowOriginalContents, "Original Contents");
@@ -90,7 +90,7 @@ namespace SyadeuEditor
 
         private void GlobalSettings()
         {
-            SyadeuSettings.Instance.m_DisplayLogChannel = (Channel)EditorGUILayout.EnumFlagsField("Display Log Channel: ", SyadeuSettings.Instance.m_DisplayLogChannel);
+            CoreSystemSettings.Instance.m_DisplayLogChannel = (Channel)EditorGUILayout.EnumFlagsField("Display Log Channel: ", CoreSystemSettings.Instance.m_DisplayLogChannel);
 
             EditorGUI.BeginChangeCheck();
             if (m_EnableHelpbox)
@@ -164,8 +164,8 @@ namespace SyadeuEditor
                     "전부 강제로 Hierarchy에 표시시킵니다.", MessageType.Info);
             }
 
-            SyadeuSettings.Instance.m_VisualizeObjects =
-                EditorGUILayout.ToggleLeft("전부 Hierarchy에 표시", SyadeuSettings.Instance.m_VisualizeObjects);
+            CoreSystemSettings.Instance.m_VisualizeObjects =
+                EditorGUILayout.ToggleLeft("전부 Hierarchy에 표시", CoreSystemSettings.Instance.m_VisualizeObjects);
 
             if (m_EnableHelpbox)
             {
@@ -174,8 +174,8 @@ namespace SyadeuEditor
                     "에디터에서는 작동하지 않고, 빌드에서만 작동합니다.", MessageType.Info);
 
 
-                SyadeuSettings.Instance.m_CrashAfterException =
-                    EditorGUILayout.ToggleLeft("에러 발생 후 강제 크래쉬", SyadeuSettings.Instance.m_CrashAfterException);
+                CoreSystemSettings.Instance.m_CrashAfterException =
+                    EditorGUILayout.ToggleLeft("에러 발생 후 강제 크래쉬", CoreSystemSettings.Instance.m_CrashAfterException);
 
                 //EditorGUILayout.Space();
                 //for (int i = 0; i < m_ManagerNames.Count; i++)

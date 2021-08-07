@@ -21,10 +21,12 @@ namespace Syadeu.Presentation.Entities
         /// <summary><inheritdoc cref="isCreated"/></summary>
         [JsonIgnore] internal bool m_IsCreated = false;
         /// <summary><inheritdoc cref="IEntityData.Attributes"/></summary>
-        [JsonIgnore] internal List<AttributeBase> m_Attributes;
+        [JsonIgnore] internal Dictionary<Type, AttributeBase[]> m_AttributesHashMap;
+        // TODO : 이거 임시, 나중에 최적화시 지울 것
+        [JsonIgnore] internal AttributeBase[] m_Attributes;
 
         Hash IEntityData.Idx => Idx;
-        List<AttributeBase> IEntityData.Attributes => m_Attributes;
+        AttributeBase[] IEntityData.Attributes => m_Attributes;
         /// <summary><inheritdoc cref="m_Attributes"/></summary>
         [JsonProperty(Order = -10, PropertyName = "Attributes")] [UnityEngine.HideInInspector] public List<Hash> Attributes { get; set; }
 
@@ -32,13 +34,13 @@ namespace Syadeu.Presentation.Entities
 
         AttributeBase IEntityData.GetAttribute(Type t)
         {
-            IEntityData entity = this;
-            return entity.Attributes.FindFor((other) => other.GetType().Equals(t));
+            if (!m_AttributesHashMap.TryGetValue(t, out var list)) return null;
+            return list[0];
         }
         AttributeBase[] IEntityData.GetAttributes(Type t)
         {
-            IEntityData entity = this;
-            return entity.Attributes.Where((other) => other.GetType().Equals(t)).ToArray();
+            if (!m_AttributesHashMap.TryGetValue(t, out var list)) return null;
+            return list;
         }
         T IEntityData.GetAttribute<T>() => (T)((IEntityData)this).GetAttribute(TypeHelper.TypeOf<T>.Type);
         T[] IEntityData.GetAttributes<T>() => ((IEntityData)this).GetAttributes(TypeHelper.TypeOf<T>.Type).Select((other) => (T)other).ToArray();
@@ -88,7 +90,9 @@ namespace Syadeu.Presentation.Entities
             const string c_AttributeWarning = "This object({0}) has an invalid attribute({1}) at {2}. This is not allowed.";
             EntityDataBase entity = (EntityDataBase)Copy();
 
-            entity.m_Attributes = new List<AttributeBase>();
+            Dictionary<Type, List<AttributeBase>> tempHashMap = new Dictionary<Type, List<AttributeBase>>();
+
+            entity.m_Attributes = new AttributeBase[Attributes.Count];
             for (int i = 0; i < Attributes.Count; i++)
             {
                 AttributeBase att = (AttributeBase)EntityDataList.Instance.GetObject(Attributes[i]);
@@ -100,7 +104,22 @@ namespace Syadeu.Presentation.Entities
 
                 AttributeBase clone = (AttributeBase)att.Clone();
                 clone.Parent = new EntityData<IEntityData>(entity.Idx);
-                entity.m_Attributes.Add(clone);
+
+                entity.m_Attributes[i] = clone;
+
+                Type attType = clone.GetType();
+                if (!tempHashMap.TryGetValue(attType, out List<AttributeBase> list))
+                {
+                    list = new List<AttributeBase>();
+                    tempHashMap.Add(attType, list);
+                }
+                list.Add(clone);
+            }
+
+            entity.m_AttributesHashMap = new Dictionary<Type, AttributeBase[]>();
+            foreach (var item in tempHashMap)
+            {
+                entity.m_AttributesHashMap.Add(item.Key, item.Value.ToArray());
             }
 
             return entity;

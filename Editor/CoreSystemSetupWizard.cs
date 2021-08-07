@@ -26,7 +26,7 @@ namespace SyadeuEditor
         }
         static void Startup()
         {
-            if (!SyadeuSettings.Instance.m_HideSetupWizard)
+            if (!CoreSystemSettings.Instance.m_HideSetupWizard)
             {
                 CoreSystemMenuItems.CoreSystemSetupWizard();
             }

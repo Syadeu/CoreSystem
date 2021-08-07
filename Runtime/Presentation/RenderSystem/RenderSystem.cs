@@ -63,7 +63,7 @@ namespace Syadeu.Presentation.Render
                 //}
                 //else to.GetComponent<CameraComponent>().Initialize(this);
             };
-            m_ScreenOffset = SyadeuSettings.Instance.m_ScreenOffset;
+            m_ScreenOffset = CoreSystemSettings.Instance.m_ScreenOffset;
 
             CoreSystem.Instance.OnRender -= Instance_OnRender;
             CoreSystem.Instance.OnRender += Instance_OnRender;
@@ -78,7 +78,7 @@ namespace Syadeu.Presentation.Render
 
         protected override PresentationResult BeforePresentation()
         {
-            m_ScreenOffset = SyadeuSettings.Instance.m_ScreenOffset;
+            m_ScreenOffset = CoreSystemSettings.Instance.m_ScreenOffset;
             if (m_Camera.Value == null)
             {
                 m_Camera.Value = Camera.main;

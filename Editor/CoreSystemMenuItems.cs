@@ -24,7 +24,7 @@ namespace SyadeuEditor
         [MenuItem("CoreSystem/Edit Settings", priority = 1)]
         public static void SettingsMenu()
         {
-            Selection.activeObject = SyadeuSettings.Instance;
+            Selection.activeObject = CoreSystemSettings.Instance;
             EditorApplication.ExecuteMenuItem("Window/General/Inspector");
         }
 

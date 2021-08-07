@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Syadeu.Mono
 {
-    public sealed class SyadeuSettings : StaticSettingEntity<SyadeuSettings>
+    public sealed class CoreSystemSettings : StaticSettingEntity<CoreSystemSettings>
     {
         // Modules
         public UserTagNameModule m_UserTagNameModule;

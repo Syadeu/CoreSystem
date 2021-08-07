@@ -79,7 +79,7 @@ namespace Syadeu
 #endif
 
                     //if (ins.DontDestroy) DontDestroyOnLoad(ins.gameObject);
-                    if (!Mono.SyadeuSettings.Instance.m_VisualizeObjects)
+                    if (!Mono.CoreSystemSettings.Instance.m_VisualizeObjects)
                     {
                         if (ins.HideInHierarchy) ins.gameObject.hideFlags = HideFlags.HideAndDontSave;
                     }

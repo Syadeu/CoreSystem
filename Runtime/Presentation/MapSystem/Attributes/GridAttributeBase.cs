@@ -107,7 +107,13 @@ namespace Syadeu.Presentation.Map
         }
         private void OnMoveStateChanged(OnMoveStateChangedEvent ev)
         {
+            GridSizeAttribute att = ev.Entity.GetAttribute<GridSizeAttribute>();
+            if (att == null) return;
 
+            if (ev.State == OnMoveStateChangedEvent.MoveState.Stopped)
+            {
+                att.UpdateGridCell();
+            }
         }
 
         //protected override void OnCreated(GridSizeAttribute attribute, EntityData<IEntityData> entity)

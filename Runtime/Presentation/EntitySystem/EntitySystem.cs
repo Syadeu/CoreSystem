@@ -226,7 +226,7 @@ namespace Syadeu.Presentation
     $"Destroying entity({entity.Name})");
 
                 #region Attributes
-                entity.Attributes.ForEach((other) =>
+                Array.ForEach(entity.Attributes, (other) =>
                 {
                     if (other == null)
                     {
@@ -517,7 +517,7 @@ namespace Syadeu.Presentation
             EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntityData(entity.Idx);
 
             #region Attributes
-            entity.Attributes.ForEach((other) =>
+            Array.ForEach(entity.Attributes, (other) =>
             {
                 if (other == null)
                 {
@@ -588,7 +588,7 @@ namespace Syadeu.Presentation
             //#endregion
 
             #region Attributes
-            entity.Attributes.ForEach((other) =>
+            Array.ForEach(entity.Attributes, (other) =>
             {
                 if (other == null)
                 {
@@ -618,7 +618,7 @@ namespace Syadeu.Presentation
             EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntityData(entity.Idx);
 
             #region Attributes
-            entity.Attributes.ForEach((other) =>
+            Array.ForEach(entity.Attributes, (other) =>
             {
                 if (other == null)
                 {
@@ -679,7 +679,7 @@ namespace Syadeu.Presentation
             //#endregion
 
             #region Attributes
-            entity.Attributes.ForEach((other) =>
+            Array.ForEach(entity.Attributes, (other) =>
             {
                 if (other == null)
                 {
@@ -728,7 +728,7 @@ namespace Syadeu.Presentation
             //#endregion
 
             #region Attributes
-            entity.Attributes.ForEach((other) =>
+            Array.ForEach(entity.Attributes, (other) =>
             {
                 if (other == null)
                 {

@@ -181,22 +181,22 @@ namespace Syadeu.Mono
                 {
                     if (!Application.isPlaying)
                     {
-                        return IsInCameraScreen(worldPosition, GetCameraMatrix4X4(SceneView.lastActiveSceneView.camera), SyadeuSettings.Instance.m_ScreenOffset);
+                        return IsInCameraScreen(worldPosition, GetCameraMatrix4X4(SceneView.lastActiveSceneView.camera), CoreSystemSettings.Instance.m_ScreenOffset);
                     }
                     else
                     {
-                        return IsInCameraScreen(worldPosition, Instance.CamMatrix4x4, SyadeuSettings.Instance.m_ScreenOffset);
+                        return IsInCameraScreen(worldPosition, Instance.CamMatrix4x4, CoreSystemSettings.Instance.m_ScreenOffset);
                     }
                 }
                 catch (UnityException)
                 {
-                    return IsInCameraScreen(worldPosition, Instance.CamMatrix4x4, SyadeuSettings.Instance.m_ScreenOffset);
+                    return IsInCameraScreen(worldPosition, Instance.CamMatrix4x4, CoreSystemSettings.Instance.m_ScreenOffset);
                 }
             }
             else
 #endif
             {
-                return IsInCameraScreen(worldPosition, Instance.CamMatrix4x4, SyadeuSettings.Instance.m_ScreenOffset);
+                return IsInCameraScreen(worldPosition, Instance.CamMatrix4x4, CoreSystemSettings.Instance.m_ScreenOffset);
             }
         }
 

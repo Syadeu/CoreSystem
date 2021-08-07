@@ -13,7 +13,7 @@
         bool DontDestroy { get; }
         /// <summary>
         /// Hierarchy 에서 이 매니저 객체를 표시할지 결정합니다.
-        /// <see cref="Mono.SyadeuSettings.m_VisualizeObjects"/> 가 true일 경우 영향받지 않습니다.
+        /// <see cref="Mono.CoreSystemSettings.m_VisualizeObjects"/> 가 true일 경우 영향받지 않습니다.
         /// </summary>
         bool HideInHierarchy { get; }
         bool ManualInitialize { get; }

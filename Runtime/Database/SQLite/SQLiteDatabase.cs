@@ -978,7 +978,7 @@ namespace Syadeu.Database
                             cmd.Parameters.Clear();
                             try
                             {
-                                if (SyadeuSettings.Instance.m_EnableQueryLog)
+                                if (CoreSystemSettings.Instance.m_EnableQueryLog)
                                 {
                                     $"SQLite 통신 중: {query.Item1}".ToLog();
                                 }

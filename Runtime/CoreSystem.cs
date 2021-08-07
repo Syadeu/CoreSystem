@@ -446,7 +446,7 @@ namespace Syadeu
                 }
                 method.Invoke(null, null);
             }
-            if (SyadeuSettings.Instance.m_EnableLua)
+            if (CoreSystemSettings.Instance.m_EnableLua)
             {
                 Syadeu.Database.Lua.LuaManager.Instance.Initialize();
             }
