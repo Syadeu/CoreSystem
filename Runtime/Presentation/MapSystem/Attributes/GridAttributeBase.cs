@@ -110,7 +110,7 @@ namespace Syadeu.Presentation.Map
             GridSizeAttribute att = ev.Entity.GetAttribute<GridSizeAttribute>();
             if (att == null) return;
 
-            if (ev.State == OnMoveStateChangedEvent.MoveState.Stopped)
+            if ((ev.State & OnMoveStateChangedEvent.MoveState.Stopped) == OnMoveStateChangedEvent.MoveState.Stopped)
             {
                 att.UpdateGridCell();
             }

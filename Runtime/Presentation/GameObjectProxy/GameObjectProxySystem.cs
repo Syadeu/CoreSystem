@@ -1,6 +1,7 @@
 ﻿using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Mono;
+using Syadeu.Presentation.Event;
 using Syadeu.Presentation.Render;
 using System;
 using System.Collections.Concurrent;
@@ -49,7 +50,8 @@ namespace Syadeu.Presentation
         private ParallelLoopResult m_VisibleJob;
 
         private SceneSystem m_SceneSystem;
-        private Render.RenderSystem m_RenderSystem;
+        private RenderSystem m_RenderSystem;
+        private EventSystem m_EventSystem;
 
         private bool m_LoadingLock = false;
         private bool m_Disposed = false;
@@ -81,7 +83,8 @@ namespace Syadeu.Presentation
             m_ModuleBuilder = ab.DefineDynamicModule(aName.Name);
 
             RequestSystem<SceneSystem>((other) => m_SceneSystem = other);
-            RequestSystem<Render.RenderSystem>((other) => m_RenderSystem = other);
+            RequestSystem<RenderSystem>((other) => m_RenderSystem = other);
+            RequestSystem<EventSystem>((other) => m_EventSystem = other);
 
             m_ProxyData = new NativeProxyData(1024, Allocator.Persistent);
             EventDescriptor<ProxyTransform>.AddEvent(ProxyTransform.s_TranslationChanged, OnProxyTransformTranslationChanged);
@@ -606,10 +609,12 @@ namespace Syadeu.Presentation
         private sealed class PrefabRequester
         {
             GameObjectProxySystem m_ProxySystem;
-            SceneSystem m_SceneSystem;
+            SceneSystem SceneSystem => m_ProxySystem.m_SceneSystem;
+            EventSystem EventSystem => m_ProxySystem.m_EventSystem;
+
             Scene m_RequestedScene;
 
-            public void Setup(GameObjectProxySystem proxySystem, SceneSystem sceneSystem, PrefabReference prefabIdx, Vector3 pos, Quaternion rot,
+            public void Setup(GameObjectProxySystem proxySystem, PrefabReference prefabIdx, Vector3 pos, Quaternion rot,
                 Action<RecycleableMonobehaviour> onCompleted)
             {
                 //var prefabInfo = PrefabList.Instance.ObjectSettings[prefabIdx];
@@ -644,8 +649,7 @@ namespace Syadeu.Presentation
                 }
 
                 m_ProxySystem = proxySystem;
-                m_SceneSystem = sceneSystem;
-                m_RequestedScene = m_SceneSystem.CurrentScene;
+                m_RequestedScene = SceneSystem.CurrentScene;
 
                 Transform parent;
                 if (prefabInfo.m_IsWorldUI)
@@ -665,7 +669,7 @@ namespace Syadeu.Presentation
                 var oper = prefabInfo.m_RefPrefab.InstantiateAsync(pos, rot, parent);
                 oper.Completed += (other) =>
                 {
-                    Scene currentScene = m_SceneSystem.CurrentScene;
+                    Scene currentScene = SceneSystem.CurrentScene;
                     if (!currentScene.Equals(m_RequestedScene))
                     {
                         CoreSystem.Logger.LogWarning(Channel.Proxy, $"{other.Result.name} is returned because Scene has been changed");
@@ -691,6 +695,8 @@ namespace Syadeu.Presentation
                     }
 
                     recycleable.m_Idx = instances.Count;
+                    recycleable.m_EventSystem = EventSystem;
+
                     instances.Add(recycleable);
 
                     recycleable.InternalOnCreated();
@@ -706,7 +712,7 @@ namespace Syadeu.Presentation
             => InstantiatePrefab(prefab, INIT_POSITION, Quaternion.identity, onCompleted);
         private void InstantiatePrefab(PrefabReference prefab, Vector3 position, Quaternion rotation, Action<RecycleableMonobehaviour> onCompleted)
         {
-            PoolContainer<PrefabRequester>.Dequeue().Setup(this, m_SceneSystem, prefab, position, rotation, onCompleted);
+            PoolContainer<PrefabRequester>.Dequeue().Setup(this, prefab, position, rotation, onCompleted);
         }
 
         #endregion

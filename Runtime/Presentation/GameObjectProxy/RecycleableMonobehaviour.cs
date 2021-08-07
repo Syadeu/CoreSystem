@@ -1,6 +1,7 @@
 ﻿using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Event;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,7 +17,7 @@ namespace Syadeu.Mono
     /// OnDestroy 함수를 절때 사용하지마세요
     /// </summary>
     /// <typeparam name="T"></typeparam>    
-    public abstract class RecycleableMonobehaviour : MonoBehaviour
+    public abstract class RecycleableMonobehaviour : MonoBehaviour, IValidation
     {
         public delegate bool TerminateCondition();
         /// <summary>
@@ -24,6 +25,7 @@ namespace Syadeu.Mono
         /// </summary>
         internal int m_Idx = -1;
 
+        internal EventSystem m_EventSystem;
         private GameObject m_GameObject;
         private Transform m_Transform;
         internal Entity<IEntity> m_Entity;
@@ -39,6 +41,7 @@ namespace Syadeu.Mono
         /// </summary>
         public new Transform transform => m_Transform;
         public Entity<IEntity> entity => m_Entity;
+        public EventSystem eventSystem => m_EventSystem;
 #pragma warning restore IDE1006 // Naming Styles
         /// <summary>
         /// PrefabManager 인스펙터창에서 보여질 이름입니다.
@@ -133,5 +136,7 @@ namespace Syadeu.Mono
             OnTerminate();
             Activated = false;
         }
+
+        public bool IsValid() => Activated && !m_Entity.Equals(Entity<IEntity>.Empty);
     }
 }

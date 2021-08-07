@@ -1,5 +1,6 @@
 ﻿using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Attributes;
+using System;
 
 namespace Syadeu.Presentation.Event
 {
@@ -11,17 +12,14 @@ namespace Syadeu.Presentation.Event
     /// </remarks>
     public sealed class OnMoveStateChangedEvent : SynchronizedEvent<OnMoveStateChangedEvent>
     {
+        [Flags]
         public enum MoveState
         {
-            None,
-
-            Idle,
-
-            AboutToMove,
-            OnMoving,
-
-            Teleported,
-            Stopped
+            Idle        =   0b00001,
+            AboutToMove =   0b00010,
+            OnMoving    =   0b00100,
+            Teleported  =   0b01000,
+            Stopped     =   0b10000
         }
 
         public Entity<IEntity> Entity { get; private set; }
@@ -37,7 +35,6 @@ namespace Syadeu.Presentation.Event
         protected override void OnTerminate()
         {
             Entity = Entity<IEntity>.Empty;
-            State = MoveState.None;
         }
     }
 }

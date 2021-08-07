@@ -32,6 +32,7 @@ namespace Syadeu.Presentation.Entities
 
         [JsonIgnore] public bool isCreated => m_IsCreated;
 
+        // TODO : 현재 가장 상위 타입만 체크하여 반환하므로 나중에 상속받은 타입도 고려해서 받아오게 수정할 것
         AttributeBase IEntityData.GetAttribute(Type t)
         {
             if (!m_AttributesHashMap.TryGetValue(t, out var list)) return null;

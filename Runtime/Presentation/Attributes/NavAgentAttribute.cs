@@ -29,7 +29,7 @@ namespace Syadeu.Presentation.Attributes
 
         [JsonIgnore] public NavMeshAgent NavMeshAgent { get; internal set; }
         [JsonIgnore] public bool IsMoving { get; internal set; }
-        [JsonIgnore] public Vector3 Direction => NavMeshAgent.desiredVelocity;
+        [JsonIgnore] public Vector3 Direction => NavMeshAgent == null ? Vector3.zero : NavMeshAgent.desiredVelocity;
         [JsonIgnore] private CoreRoutine Routine { get; set; }
         [JsonIgnore] public Vector3 PreviousTarget { get; set; }
 
@@ -87,14 +87,9 @@ namespace Syadeu.Presentation.Attributes
             tr.position = PreviousTarget;
             if (NavMeshAgent.isOnNavMesh) NavMeshAgent.ResetPath();
 
-            eventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(parent, OnMoveStateChangedEvent.MoveState.Stopped));
-            //if (Parent.GetAttribute<GridSizeAttribute>() != null)
-            //{
-            //    Parent.GetAttribute<GridSizeAttribute>().UpdateGridCell();
-            //}
-
             IsMoving = false;
-            eventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(parent, OnMoveStateChangedEvent.MoveState.Idle));
+
+            eventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(parent, OnMoveStateChangedEvent.MoveState.Stopped | OnMoveStateChangedEvent.MoveState.Idle));
         }
     }
 
@@ -127,10 +122,10 @@ namespace Syadeu.Presentation.Attributes
                 tr.position = att.PreviousTarget;
                 att.IsMoving = false;
 
-                EventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(entity, OnMoveStateChangedEvent.MoveState.Teleported));
-
-                EventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(entity, OnMoveStateChangedEvent.MoveState.Idle));
+                EventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(entity, OnMoveStateChangedEvent.MoveState.Teleported | OnMoveStateChangedEvent.MoveState.Idle));
             }
+
+            att.NavMeshAgent = null;
         }
 
         private static void UpdateNavMeshAgent(NavAgentAttribute att, NavMeshAgent agent)
