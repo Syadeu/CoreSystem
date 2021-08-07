@@ -73,8 +73,10 @@ namespace Syadeu.Presentation.Attributes
 
             eventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(parent, OnMoveStateChangedEvent.MoveState.OnMoving));
 
-            while (NavMeshAgent.desiredVelocity.magnitude > 0 &&
-                    NavMeshAgent.remainingDistance > .2f)
+            while (
+                tr.hasProxy &&
+                NavMeshAgent.desiredVelocity.magnitude > 0 &&
+                NavMeshAgent.remainingDistance > .2f)
             {
                 if (!tr.hasProxy) yield break;
 
