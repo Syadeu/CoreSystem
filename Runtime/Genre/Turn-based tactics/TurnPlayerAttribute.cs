@@ -2,6 +2,7 @@
 using Syadeu.Mono;
 using Syadeu.Mono.TurnTable;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Event;
 using System;
 using System.Collections.Generic;
 using Unity.Mathematics;
@@ -40,29 +41,23 @@ namespace Syadeu.Presentation.Attributes
         public void StartTurn()
         {
             CoreSystem.Logger.Log(Channel.Entity, $"{Name} turn start");
+            PresentationSystem<EventSystem>.System.PostEvent(OnTurnStateChanged.GetEvent(Parent, OnTurnStateChanged.TurnState.Start));
         }
         public void EndTurn()
         {
             CoreSystem.Logger.Log(Channel.Entity, $"{Name} turn end");
+            PresentationSystem<EventSystem>.System.PostEvent(OnTurnStateChanged.GetEvent(Parent, OnTurnStateChanged.TurnState.End));
         }
         public void ResetTurnTable()
         {
             m_CurrentActionPoint = m_MaxActionPoint;
 
             CoreSystem.Logger.Log(Channel.Entity, $"{Name} reset turn");
+            PresentationSystem<EventSystem>.System.PostEvent(OnTurnStateChanged.GetEvent(Parent, OnTurnStateChanged.TurnState.Reset));
         }
 
         public void SetMaxActionPoint(int ap) => m_MaxActionPoint = ap;
         public int UseActionPoint(int ap) => m_CurrentActionPoint -= ap;
-
-        //[System.Obsolete("", true)]
-        //public IReadOnlyList<int2> GetMoveableCells()
-        //{
-        //    Entity<IEntity> parent = Parent;
-
-        //    ref GridManager.GridCell cell = ref parent.GetCurrentCell();
-        //    return TurnTableManager.GetMoveableCells(in cell, ActionPoint);
-        //}
     }
     [Preserve]
     internal sealed class TurnPlayerProcessor : AttributeProcessor<TurnPlayerAttribute>
@@ -75,6 +70,32 @@ namespace Syadeu.Presentation.Attributes
         protected override void OnDestroy(TurnPlayerAttribute attribute, EntityData<IEntityData> entity)
         {
             TurnTableManager.RemovePlayer(attribute);
+        }
+    }
+
+    public sealed class OnTurnStateChanged : SynchronizedEvent<OnTurnStateChanged>
+    {
+        public enum TurnState
+        {
+            Reset   =   0b001,
+            Start   =   0b010,
+            End     =   0b100,
+        }
+        public EntityData<IEntityData> Entity { get; private set; }
+        public TurnState State { get; private set; }
+
+        public static OnTurnStateChanged GetEvent(EntityData<IEntityData> target, TurnState state)
+        {
+            var temp = Dequeue();
+
+            temp.Entity = target;
+            temp.State = state;
+
+            return temp;
+        }
+        protected override void OnTerminate()
+        {
+            Entity = EntityData<IEntityData>.Empty;
         }
     }
 }
