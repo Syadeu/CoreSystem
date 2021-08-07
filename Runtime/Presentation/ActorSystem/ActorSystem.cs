@@ -1,7 +1,5 @@
-﻿using Newtonsoft.Json;
-using Syadeu.Database;
+﻿using Syadeu.Database;
 using Syadeu.Internal;
-using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Event;
 using Syadeu.Presentation.Map;
@@ -92,74 +90,4 @@ namespace Syadeu.Presentation.Actor
 
         #endregion
     }
-
-    public abstract class ActorEntityBase : EntityBase
-    {
-
-    }
-    
-    
-
-    public sealed class ActorEntity : EntityBase
-    {
-        [JsonIgnore] internal ActorSystem m_ActorSystem;
-
-        [JsonProperty(Order = 0, PropertyName = "Faction")] private Reference<ActorFaction> m_Faction;
-
-        [JsonIgnore] public ActorFaction Faction => m_Faction.IsValid() ? m_Faction.GetObject() : null;
-
-        //public ActorSystem.Raycaster Raycast(Ray ray) => m_ActorSystem.Raycast(this, ray);
-    }
-
-    [AttributeAcceptOnly(typeof(ActorEntity))]
-    public abstract class ActorAttributeBase : AttributeBase { }
-
-    public sealed class ActorStatAttribute : ActorAttributeBase
-    {
-        [JsonProperty(Order = 0, PropertyName = "Stats")] private ValuePairContainer m_Stats = new ValuePairContainer();
-
-        [JsonIgnore] public ValuePairContainer Stats => m_Stats;
-
-        public static Hash ToValueHash(string name) => Hash.NewHash(name);
-    }
-
-    //public sealed class ActorGridAttribute : ActorAttributeBase
-    //{
-    //    [JsonIgnore] public GridSizeAttribute GridSize { get; internal set; }
-
-    //    public void GetNearbyIndices(int range, params int[] ignoreLayers)
-    //    {
-    //        CoreSystem.Logger.NotNull(GridSize, "GridSizeAttribute not found");
-
-    //        // TODO : 이거 임시, 하나만 계산하는데 나중엔 gridsize에 맞춰서
-    //        int index = GridSize.CurrentGridIndices[0];
-
-            
-    //    }
-    //}
-    //[Preserve]
-    //internal sealed class ActorGridProcessor : AttributeProcessor<ActorGridAttribute>
-    //{
-    //    protected override void OnCreated(ActorGridAttribute attribute, EntityData<IEntityData> entity)
-    //    {
-    //        attribute.GridSize = entity.GetAttribute<GridSizeAttribute>();
-    //        CoreSystem.Logger.NotNull(attribute.GridSize, "GridSizeAttribute not found");
-
-
-    //    }
-    //}
-
-    //[ReflectionDescription("이 액터의 타입을 설정합니다.")]
-    //public sealed class ActorTypeAttribute : ActorAttributeBase
-    //{
-    //    [JsonProperty(Order = 0, PropertyName = "ActorType")] public ActorType m_ActorType;
-    //}
-    //[Preserve]
-    //internal sealed class ActorTypeProcessor : AttributeProcessor<ActorTypeAttribute>
-    //{
-    //    protected override void OnCreated(ActorTypeAttribute attribute, EntityData<IEntityData> entity)
-    //    {
-    //        PresentationSystem<ActorSystem>.System.m_Players.Add(entity);
-    //    }
-    //}
 }
