@@ -145,13 +145,18 @@ namespace Syadeu.Presentation
                 m_VisibleList.Clear();
                 m_InvisibleList.Clear();
 
-                m_Instances.Clear();
-                m_TerminatedProxies.Clear();
-
                 m_ProxyData.For((tr) =>
                 {
                     OnDataObjectDestroy?.Invoke(tr);
+
+                    if (tr.hasProxy && !tr.hasProxyQueued)
+                    {
+                        UnityEngine.Object.Destroy(tr.proxy.gameObject);
+                    }
                 });
+
+                m_Instances.Clear();
+                m_TerminatedProxies.Clear();
 
                 m_ProxyData.Clear();
                 m_LoadingLock = false;

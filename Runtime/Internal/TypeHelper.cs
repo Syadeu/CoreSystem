@@ -8,11 +8,11 @@ namespace Syadeu.Internal
     {
         public sealed class TypeOf<T>
         {
-            public static Type Type = typeof(T);
-            public static string Name = Type.Name;
-            public static string FullName = Type.FullName;
-            public static bool IsAbstract = Type.IsAbstract;
-            public static bool IsArray = Type.IsArray;
+            public static readonly Type Type = typeof(T);
+            public static readonly string Name = Type.Name;
+            public static readonly string FullName = Type.FullName;
+            public static readonly bool IsAbstract = Type.IsAbstract;
+            public static readonly bool IsArray = Type.IsArray;
 
             private static Type[] s_Interfaces = null;
             public static Type[] Interfaces
@@ -47,6 +47,22 @@ namespace Syadeu.Internal
             public static ConstructorInfo GetConstructorInfo(params Type[] args)
                 => TypeHelper.GetConstructorInfo(Type, args);
         }
+        public sealed class Enum<T> where T : struct, IConvertible
+        {
+            public static readonly string[] Names = Enum.GetNames(TypeOf<T>.Type);
+            public static readonly T[] Values = (T[])Enum.GetValues(TypeOf<T>.Type);
+
+            public static string ToString(T enumValue)
+            {
+                for (int i = 0; i < Values.Length; i++)
+                {
+                    if (Values[i].Equals(enumValue)) return Names[i];
+                }
+
+                throw new ArgumentException(nameof(enumValue));
+            }
+        }
+
         private static readonly Assembly[] s_Assemblies = AppDomain.CurrentDomain.GetAssemblies();
         private static readonly Type[] s_AllTypes = s_Assemblies.Where(a => !a.IsDynamic).SelectMany(a => a.GetTypes()).ToArray();
 

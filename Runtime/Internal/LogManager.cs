@@ -68,7 +68,10 @@ namespace Syadeu.Internal
             if (!acceptOnly.HasFlag(info))
             {
                 Log(Channel.Thread, ResultFlag.Error,
-                    string.Format(c_LogThreadErrorText, name, info, acceptOnly), false);
+                    string.Format(c_LogThreadErrorText, name,
+                        TypeHelper.Enum<ThreadInfo>.ToString(info), 
+                        TypeHelper.Enum<ThreadInfo>.ToString(acceptOnly)), 
+                    false);
             }
         }
         public static void Log(Channel channel, ResultFlag result, string msg, bool logThread)
@@ -77,33 +80,36 @@ namespace Syadeu.Internal
             {
                 if (result == ResultFlag.Normal) return;
             }
-
+            Log(TypeHelper.Enum<Channel>.ToString(channel), result, msg, logThread);
+        }
+        public static void Log(string channel, ResultFlag result, string msg, bool logThread)
+        {
             string text = string.Empty;
             if (logThread)
             {
-                text = string.Format(c_LogThreadText, StringColor.fuchsia, GetThreadType());
+                text = string.Format(c_LogThreadText, TypeHelper.Enum<StringColor>.ToString(StringColor.fuchsia), GetThreadType());
             }
-
+            
             switch (result)
             {
                 case ResultFlag.Warning:
-                    text += string.Format(c_LogBaseText, StringColor.lime, 
-                        string.Format(c_LogText, StringColor.orange, result), 
-                        string.Format(c_LogText, StringColor.white, channel), 
+                    text += string.Format(c_LogBaseText, TypeHelper.Enum<StringColor>.ToString(StringColor.lime), 
+                        string.Format(c_LogText, TypeHelper.Enum<StringColor>.ToString(StringColor.orange), TypeHelper.Enum<ResultFlag>.ToString(result)), 
+                        string.Format(c_LogText, TypeHelper.Enum<StringColor>.ToString(StringColor.white), channel), 
                         msg);
                     Debug.LogWarning(text);
                     break;
                 case ResultFlag.Error:
-                    text += string.Format(c_LogBaseText, StringColor.lime, 
-                        string.Format(c_LogText, StringColor.maroon, result),
-                        string.Format(c_LogText, StringColor.white, channel),
+                    text += string.Format(c_LogBaseText, TypeHelper.Enum<StringColor>.ToString(StringColor.lime), 
+                        string.Format(c_LogText, TypeHelper.Enum<StringColor>.ToString(StringColor.maroon), TypeHelper.Enum<ResultFlag>.ToString(result)),
+                        string.Format(c_LogText, TypeHelper.Enum<StringColor>.ToString(StringColor.white), channel),
                         msg);
                     Debug.LogError(text);
                     break;
                 default:
-                    text += string.Format(c_LogBaseText, StringColor.lime, 
-                        string.Format(c_LogText, StringColor.teal, result),
-                        string.Format(c_LogText, StringColor.white, channel),
+                    text += string.Format(c_LogBaseText, TypeHelper.Enum<StringColor>.ToString(StringColor.lime), 
+                        string.Format(c_LogText, TypeHelper.Enum<StringColor>.ToString(StringColor.teal), TypeHelper.Enum<ResultFlag>.ToString(result)),
+                        string.Format(c_LogText, TypeHelper.Enum<StringColor>.ToString(StringColor.white), channel),
                         msg);
                     Debug.Log(text);
                     break;
@@ -113,7 +119,9 @@ namespace Syadeu.Internal
         private static string AssertText(string msg)
         {
             const string assert = "Assert";
-            return string.Format(c_LogAssertText, StringColor.lime, string.Format(c_LogText, StringColor.maroon, assert), msg);
+            return 
+                string.Format(c_LogAssertText, TypeHelper.Enum<StringColor>.ToString(StringColor.lime), 
+                string.Format(c_LogText, TypeHelper.Enum<StringColor>.ToString(StringColor.maroon), assert), msg);
         }
 
         #region Asserts
@@ -155,17 +163,5 @@ namespace Syadeu.Internal
 
         #endregion
 #line default
-    }
-
-    [System.Flags]
-    public enum ThreadInfo
-    {
-        None,
-
-        Unity = 1 << 0,
-        Background = 1 << 1,
-        Job = 1 << 2,
-
-        User = 1 << 3
     }
 }
