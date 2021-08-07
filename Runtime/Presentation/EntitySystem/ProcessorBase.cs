@@ -10,8 +10,32 @@ namespace Syadeu.Presentation
         internal EntitySystem m_EntitySystem;
 
         protected EntitySystem EntitySystem => m_EntitySystem;
-        protected EventSystem EventSystem => m_EntitySystem.m_EventSystem;
-        protected DataContainerSystem DataContainerSystem => m_EntitySystem.m_DataContainerSystem;
+        protected EventSystem EventSystem
+        {
+            get
+            {
+                if (m_EntitySystem.m_EventSystem == null)
+                {
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
+                        $"{nameof(EventSystem)} is not initialized yet. Did you called from OnInitializeAsync?");
+                }
+
+                return m_EntitySystem.m_EventSystem;
+            }
+        }
+        protected DataContainerSystem DataContainerSystem
+        {
+            get
+            {
+                if (m_EntitySystem.m_DataContainerSystem == null)
+                {
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
+                        $"{nameof(DataContainerSystem)} is not initialized yet. Did you called from OnInitializeAsync?");
+                }
+
+                return m_EntitySystem.m_DataContainerSystem;
+            }
+        }
         private GameObjectProxySystem ProxySystem => EntitySystem.m_ProxySystem;
 
         protected ProxyTransform CreatePrefab(PrefabReference prefab, float3 position, quaternion rotation)

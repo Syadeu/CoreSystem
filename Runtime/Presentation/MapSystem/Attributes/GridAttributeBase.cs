@@ -101,7 +101,7 @@ namespace Syadeu.Presentation.Map
     [Preserve]
     internal sealed class GridSizeProcessor : AttributeProcessor<GridSizeAttribute>
     {
-        protected override void OnInitializeAsync()
+        protected override void OnInitialize()
         {
             EventSystem.AddEvent<OnMoveStateChangedEvent>(OnMoveStateChanged);
         }

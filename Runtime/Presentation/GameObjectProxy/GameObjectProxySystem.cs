@@ -217,10 +217,11 @@ namespace Syadeu.Presentation
             {
                 ProxyTransform tr = m_RemoveProxyList.Dequeue();
                 //"in2".ToLog();
-                if (tr.isDestroyed || !tr.hasProxy)
+                if (tr.isDestroyed) continue;
+                if (!tr.hasProxy)
                 {
                     throw new CoreSystemException(CoreSystemExceptionFlag.Proxy,
-                        "Destroyed or does not have any proxy");
+                        "Does not have any proxy");
                 }
 
                 RemoveProxy(tr);
@@ -233,11 +234,11 @@ namespace Syadeu.Presentation
             for (int i = 0; i < visibleCount; i++)
             {
                 ProxyTransform tr = m_VisibleList.Dequeue();
-                if (tr.isDestroyed)
-                {
-                    throw new CoreSystemException(CoreSystemExceptionFlag.Proxy,
-                        "Destroyed");
-                }
+                if (tr.isDestroyed) continue;
+                //{
+                //    throw new CoreSystemException(CoreSystemExceptionFlag.Proxy,
+                //        "Destroyed");
+                //}
 
                 tr.isVisible = true;
                 OnDataObjectVisible?.Invoke(tr);
@@ -248,11 +249,11 @@ namespace Syadeu.Presentation
             for (int i = 0; i < invisibleCount; i++)
             {
                 ProxyTransform tr = m_InvisibleList.Dequeue();
-                if (tr.isDestroyed)
-                {
-                    throw new CoreSystemException(CoreSystemExceptionFlag.Proxy,
-                        "Destroyed");
-                }
+                if (tr.isDestroyed) continue;
+                //{
+                //    throw new CoreSystemException(CoreSystemExceptionFlag.Proxy,
+                //        "Destroyed");
+                //}
 
                 tr.isVisible = false;
                 OnDataObjectInvisible?.Invoke(tr);
