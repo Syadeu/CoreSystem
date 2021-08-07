@@ -26,6 +26,7 @@ namespace Syadeu.Presentation.Render
             m_Canvas.renderMode = RenderMode.WorldSpace;
             obj.AddComponent<CanvasScaler>();
             m_CanvasRaycaster = obj.AddComponent<GraphicRaycaster>();
+            m_CanvasRaycaster.blockingMask = 5;
 
             RequestSystem<RenderSystem>((other) =>
             {

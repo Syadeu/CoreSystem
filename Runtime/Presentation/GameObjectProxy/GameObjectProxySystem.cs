@@ -673,6 +673,11 @@ namespace Syadeu.Presentation
                         return;
                     }
 
+                    if (prefabInfo.m_IsWorldUI)
+                    {
+                        other.Result.layer = 5;
+                    }
+
                     RecycleableMonobehaviour recycleable = other.Result.GetComponent<RecycleableMonobehaviour>();
                     if (recycleable == null)
                     {

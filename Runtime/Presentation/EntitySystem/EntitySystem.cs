@@ -156,21 +156,19 @@ namespace Syadeu.Presentation
 
         private void M_ProxySystem_OnDataObjectProxyCreated(ProxyTransform obj, RecycleableMonobehaviour monoObj)
         {
-            if (!m_EntityGameObjects.TryGetValue(obj.index, out Hash entityHash)) return;
+            if (!m_EntityGameObjects.TryGetValue(obj.index, out Hash entityHash) ||
+                !(m_ObjectEntities[entityHash] is IEntity entity)) return;
 
-            if (m_ObjectEntities[entityHash] is IEntity entity)
-            {
-                ProcessEntityOnProxyCreated(this, entity, monoObj);
-            }
+            monoObj.m_Entity = Entity<IEntity>.GetEntity(entity.Idx);
+            ProcessEntityOnProxyCreated(this, entity, monoObj);
         }
         private void M_ProxySystem_OnDataObjectProxyRemoved(ProxyTransform obj, RecycleableMonobehaviour monoObj)
         {
-            if (!m_EntityGameObjects.TryGetValue(obj.index, out Hash entityHash)) return;
+            if (!m_EntityGameObjects.TryGetValue(obj.index, out Hash entityHash) ||
+                !(m_ObjectEntities[entityHash] is IEntity entity)) return;
 
-            if (m_ObjectEntities[entityHash] is IEntity entity)
-            {
-                ProcessEntityOnProxyRemoved(this, entity, monoObj);
-            }
+            ProcessEntityOnProxyRemoved(this, entity, monoObj);
+            monoObj.m_Entity = Entity<IEntity>.Empty;
         }
 
         private void M_ProxySystem_OnDataObjectDestroyAsync(ProxyTransform obj)
