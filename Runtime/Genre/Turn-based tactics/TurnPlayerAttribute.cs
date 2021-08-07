@@ -31,7 +31,7 @@ namespace Syadeu.Presentation.Attributes
                 if (!m_CurrentActionPoint.Equals(value))
                 {
                     m_CurrentActionPoint = value;
-                    OnActionPointChanged.Invoke(value);
+                    OnActionPointChanged?.Invoke(value);
                 }
             }
         }
@@ -41,19 +41,19 @@ namespace Syadeu.Presentation.Attributes
         public void StartTurn()
         {
             CoreSystem.Logger.Log(Channel.Entity, $"{Name} turn start");
-            PresentationSystem<EventSystem>.System.PostEvent(OnTurnStateChanged.GetEvent(Parent, OnTurnStateChanged.TurnState.Start));
+            PresentationSystem<EventSystem>.System.PostEvent(OnTurnStateChanged.GetEvent(this, OnTurnStateChanged.TurnState.Start));
         }
         public void EndTurn()
         {
             CoreSystem.Logger.Log(Channel.Entity, $"{Name} turn end");
-            PresentationSystem<EventSystem>.System.PostEvent(OnTurnStateChanged.GetEvent(Parent, OnTurnStateChanged.TurnState.End));
+            PresentationSystem<EventSystem>.System.PostEvent(OnTurnStateChanged.GetEvent(this, OnTurnStateChanged.TurnState.End));
         }
         public void ResetTurnTable()
         {
-            m_CurrentActionPoint = m_MaxActionPoint;
+            ActionPoint = m_MaxActionPoint;
 
             CoreSystem.Logger.Log(Channel.Entity, $"{Name} reset turn");
-            PresentationSystem<EventSystem>.System.PostEvent(OnTurnStateChanged.GetEvent(Parent, OnTurnStateChanged.TurnState.Reset));
+            PresentationSystem<EventSystem>.System.PostEvent(OnTurnStateChanged.GetEvent(this, OnTurnStateChanged.TurnState.Reset));
         }
 
         public void SetMaxActionPoint(int ap) => m_MaxActionPoint = ap;
@@ -82,13 +82,15 @@ namespace Syadeu.Presentation.Attributes
             End     =   0b100,
         }
         public EntityData<IEntityData> Entity { get; private set; }
+        public TurnPlayerAttribute Attribute { get; private set; }
         public TurnState State { get; private set; }
 
-        public static OnTurnStateChanged GetEvent(EntityData<IEntityData> target, TurnState state)
+        public static OnTurnStateChanged GetEvent(TurnPlayerAttribute target, TurnState state)
         {
             var temp = Dequeue();
 
-            temp.Entity = target;
+            temp.Entity = target.Parent;
+            temp.Attribute = target;
             temp.State = state;
 
             return temp;
@@ -96,6 +98,7 @@ namespace Syadeu.Presentation.Attributes
         protected override void OnTerminate()
         {
             Entity = EntityData<IEntityData>.Empty;
+            Attribute = null;
         }
     }
 }
