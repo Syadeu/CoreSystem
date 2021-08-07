@@ -304,7 +304,7 @@ namespace Syadeu.Presentation
 
         public void Synchronize(SynchronizeOption option)
         {
-            CoreSystem.Logger.ThreadBlock(Syadeu.Internal.ThreadInfo.Unity);
+            CoreSystem.Logger.ThreadBlock(nameof(ProxyTransform.Synchronize), Syadeu.Internal.ThreadInfo.Unity);
 
             UnityEngine.Transform tr = proxy.transform;
             if ((option & SynchronizeOption.Position) == SynchronizeOption.Position)

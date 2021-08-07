@@ -289,6 +289,8 @@ namespace Syadeu.Presentation
             {
                 m_VisibleJob = m_ProxyData.ParallelFor((other) =>
                 {
+                    if (other.isDestroyed) return;
+
                     // aabb의 꼭지점 중 단 하나라도 화면 내 존재하면 화면에 비추는 것으로 간주함.
                     if (m_RenderSystem.IsInCameraScreen(other.aabb.vertices))
                     {
@@ -357,7 +359,7 @@ namespace Syadeu.Presentation
 
         private void AddProxy(ProxyTransform proxyTransform)
         {
-            CoreSystem.Logger.ThreadBlock(ThreadInfo.Unity);
+            CoreSystem.Logger.ThreadBlock(nameof(GameObjectProxySystem.AddProxy), ThreadInfo.Unity);
 
             PrefabReference prefab = proxyTransform.prefab;
 

@@ -1,5 +1,6 @@
 ﻿using Syadeu.Database;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Event;
 using Unity.Mathematics;
 
 namespace Syadeu.Presentation
@@ -9,6 +10,7 @@ namespace Syadeu.Presentation
         internal EntitySystem m_EntitySystem;
 
         protected EntitySystem EntitySystem => m_EntitySystem;
+        protected EventSystem EventSystem => m_EntitySystem.m_EventSystem;
         protected DataContainerSystem DataContainerSystem => m_EntitySystem.m_DataContainerSystem;
         private GameObjectProxySystem ProxySystem => EntitySystem.m_ProxySystem;
 

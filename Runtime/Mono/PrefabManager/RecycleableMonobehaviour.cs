@@ -124,7 +124,7 @@ namespace Syadeu.Mono
 
         internal void Terminate()
         {
-            CoreSystem.Logger.ThreadBlock(ThreadInfo.Unity);
+            CoreSystem.Logger.ThreadBlock(nameof(RecycleableMonobehaviour.Terminate), ThreadInfo.Unity);
             if (!Activated) throw new Exception("not initialized");
 
             transform.position = INIT_POSITION;

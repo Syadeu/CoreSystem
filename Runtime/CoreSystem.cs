@@ -1847,7 +1847,7 @@ namespace Syadeu
 #line hidden
         public struct Logger
         {
-            public static void ThreadBlock(ThreadInfo thread) => LogManager.ThreadBlock(thread);
+            public static void ThreadBlock(string name, ThreadInfo thread) => LogManager.ThreadBlock(name, thread);
 
             public static void Log(Channel channel, bool logThread, string msg) => LogManager.Log(channel, ResultFlag.Normal, msg, logThread);
             public static void Log(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Normal, msg, false);

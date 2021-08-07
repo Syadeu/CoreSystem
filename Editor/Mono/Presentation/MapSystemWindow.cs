@@ -411,6 +411,11 @@ namespace SyadeuEditor.Presentation.Map
                     else EditorGUILayout.IntField("Indices", SelectedLayer.m_Indices.Length);
                     EditorGUI.EndDisabledGroup();
 
+                    if (m_SelectedGridLayer != 0)
+                    {
+                        m_SceneDataGridAtt.m_Layers[m_SelectedGridLayer - 1].m_Inverse
+                        = EditorGUILayout.ToggleLeft("Inverse", m_SceneDataGridAtt.m_Layers[m_SelectedGridLayer - 1].m_Inverse);
+                    }
                 }
                 EditorGUI.indentLevel -= 1;
                 EditorGUI.indentLevel -= 1;
@@ -421,11 +426,12 @@ namespace SyadeuEditor.Presentation.Map
             bool m_AddDrag = false;
             public void OnSceneGUI(SceneView obj)
             {
+                const float c_LineThinkness = .05f;
                 if (m_SceneDataGridAtt == null) return;
 
                 #region Draw Grid & Layers
 
-                m_SceneDataGrid.DrawGL(.1f);
+                m_SceneDataGrid.DrawGL(c_LineThinkness);
                 Handles.DrawWireCube(m_SceneDataGrid.bounds.center, m_SceneDataGrid.size);
 
                 if (m_SceneDataGridAtt.m_Layers == null)
@@ -451,10 +457,10 @@ namespace SyadeuEditor.Presentation.Map
                             {
                                 Vector3
                                     cellPos = m_SceneDataGrid.IndexToPosition(item.m_Indices[i]),
-                                    p1 = new Vector3(cellPos.x - sizeHalf, cellPos.y + .1f, cellPos.z - sizeHalf),
-                                    p2 = new Vector3(cellPos.x - sizeHalf, cellPos.y + .1f, cellPos.z + sizeHalf),
-                                    p3 = new Vector3(cellPos.x + sizeHalf, cellPos.y + .1f, cellPos.z + sizeHalf),
-                                    p4 = new Vector3(cellPos.x + sizeHalf, cellPos.y + .1f, cellPos.z - sizeHalf);
+                                    p1 = new Vector3(cellPos.x - sizeHalf, cellPos.y + c_LineThinkness, cellPos.z - sizeHalf),
+                                    p2 = new Vector3(cellPos.x - sizeHalf, cellPos.y + c_LineThinkness, cellPos.z + sizeHalf),
+                                    p3 = new Vector3(cellPos.x + sizeHalf, cellPos.y + c_LineThinkness, cellPos.z + sizeHalf),
+                                    p4 = new Vector3(cellPos.x + sizeHalf, cellPos.y + c_LineThinkness, cellPos.z - sizeHalf);
 
                                 GL.Vertex(p1);
                                 GL.Vertex(p2);
@@ -469,10 +475,10 @@ namespace SyadeuEditor.Presentation.Map
                         {
                             Vector3
                                 cellPos = m_SceneDataGrid.IndexToPosition(m_CurrentLayer.m_Indices[i]),
-                                p1 = new Vector3(cellPos.x - sizeHalf, cellPos.y + .1f, cellPos.z - sizeHalf),
-                                p2 = new Vector3(cellPos.x - sizeHalf, cellPos.y + .1f, cellPos.z + sizeHalf),
-                                p3 = new Vector3(cellPos.x + sizeHalf, cellPos.y + .1f, cellPos.z + sizeHalf),
-                                p4 = new Vector3(cellPos.x + sizeHalf, cellPos.y + .1f, cellPos.z - sizeHalf);
+                                p1 = new Vector3(cellPos.x - sizeHalf, cellPos.y + c_LineThinkness, cellPos.z - sizeHalf),
+                                p2 = new Vector3(cellPos.x - sizeHalf, cellPos.y + c_LineThinkness, cellPos.z + sizeHalf),
+                                p3 = new Vector3(cellPos.x + sizeHalf, cellPos.y + c_LineThinkness, cellPos.z + sizeHalf),
+                                p4 = new Vector3(cellPos.x + sizeHalf, cellPos.y + c_LineThinkness, cellPos.z - sizeHalf);
 
                             GL.Vertex(p1);
                             GL.Vertex(p2);

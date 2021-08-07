@@ -193,7 +193,7 @@ namespace Syadeu.Presentation
             Hash index = transform.index;
 
             ProxyTransformData* p = transform.m_Pointer;
-            if (!p->m_Hash.Equals(transform.m_Hash) || !p->m_IsOccupied)
+            if (!p->m_IsOccupied || !p->m_Hash.Equals(transform.m_Hash))
             {
                 throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
             }
@@ -211,7 +211,7 @@ namespace Syadeu.Presentation
 
         public ParallelLoopResult ParallelFor(Action<ProxyTransform> action)
         {
-            CoreSystem.Logger.ThreadBlock(Syadeu.Internal.ThreadInfo.Background | Syadeu.Internal.ThreadInfo.Job | Syadeu.Internal.ThreadInfo.User);
+            CoreSystem.Logger.ThreadBlock(nameof(NativeProxyData.ParallelFor), Syadeu.Internal.ThreadInfo.Background | Syadeu.Internal.ThreadInfo.Job | Syadeu.Internal.ThreadInfo.User);
 
             var semaphore = m_Semaphore;
             if (!semaphore.WaitOne(1000))

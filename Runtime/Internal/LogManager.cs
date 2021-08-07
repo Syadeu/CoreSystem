@@ -14,7 +14,7 @@ namespace Syadeu.Internal
         const string c_LogAssertText = "[<color={0}>CoreSystem</color>][{1}]: {2}";
         const string c_LogThreadText = "[<color={0}>{1}</color>]";
 
-        const string c_LogThreadErrorText = "This method is not allowed to use in this thread({0}). Accepts only {1}";
+        const string c_LogThreadErrorText = "This method({0}) is not allowed to use in this thread({1}). Accepts only {2}";
 
         private enum StringColor
         {
@@ -62,13 +62,13 @@ namespace Syadeu.Internal
         }
 
 #line hidden
-        public static void ThreadBlock(ThreadInfo acceptOnly)
+        public static void ThreadBlock(string name, ThreadInfo acceptOnly)
         {
             ThreadInfo info = GetThreadType();
             if (!acceptOnly.HasFlag(info))
             {
                 Log(Channel.Thread, ResultFlag.Error,
-                    string.Format(c_LogThreadErrorText, info, acceptOnly), false);
+                    string.Format(c_LogThreadErrorText, name, info, acceptOnly), false);
             }
         }
         public static void Log(Channel channel, ResultFlag result, string msg, bool logThread)
