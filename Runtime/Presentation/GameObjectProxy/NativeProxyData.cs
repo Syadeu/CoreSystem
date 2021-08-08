@@ -291,5 +291,11 @@ namespace Syadeu.Presentation
 
             public bool Equals(ProxyTransformData other) => m_Hash.Equals(other.m_Hash);
         }
+        [StructLayout(LayoutKind.Explicit, Size = 96)]
+        private struct DataKeyValuePair
+        {
+            [FieldOffset(0)] internal bool m_IsOccupied;
+            [FieldOffset(16)] internal Hash m_Hash;
+        }
     }
 }

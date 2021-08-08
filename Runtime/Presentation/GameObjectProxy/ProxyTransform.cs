@@ -26,12 +26,12 @@ namespace Syadeu.Presentation
         [Flags]
         public enum SynchronizeOption
         {
-            Position = 0b001,
-            Rotation = 0b010,
-            Scale = 0b100,
+            Position    =   0b001,
+            Rotation    =   0b010,
+            Scale       =   0b100,
 
-            TR = 0b011,
-            TRS = 0b111
+            TR          =   0b011,
+            TRS         =   0b111
         }
 
         [NativeDisableUnsafePtrRestriction] unsafe internal readonly NativeProxyData.ProxyTransformData* m_Pointer;

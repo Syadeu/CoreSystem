@@ -62,6 +62,7 @@ namespace Syadeu.Internal
                     string temp = string.Empty;
                     for (int i = 0; i < Values.Length; i++)
                     {
+                        if (Values[i] == 0 && !target.Equals(0)) continue;
                         if ((target & Values[i]) == Values[i])
                         {
                             if (!string.IsNullOrEmpty(temp)) temp += ", ";
@@ -75,7 +76,7 @@ namespace Syadeu.Internal
                 {
                     for (int i = 0; i < Values.Length; i++)
                     {
-                        if ((target & Values[i]) == Values[i]) return Names[i];
+                        if (target.Equals(Values[i])) return Names[i];
                     }
                 }
 
