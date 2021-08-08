@@ -38,14 +38,14 @@ namespace Syadeu.Presentation
 
         private NativeProxyData m_ProxyData;
 #pragma warning disable IDE0090 // Use 'new(...)'
-        private NativeQueue<ProxyTransform>
-                m_RequestDestories = new NativeQueue<ProxyTransform>(Allocator.Persistent),
-                m_RequestUpdates = new NativeQueue<ProxyTransform>(Allocator.Persistent),
+        private NativeQueue<int>
+                m_RequestDestories,
+                m_RequestUpdates,
 
-                m_RequestProxyList = new NativeQueue<ProxyTransform>(Allocator.Persistent),
-                m_RemoveProxyList = new NativeQueue<ProxyTransform>(Allocator.Persistent),
-                m_VisibleList = new NativeQueue<ProxyTransform>(Allocator.Persistent),
-                m_InvisibleList = new NativeQueue<ProxyTransform>(Allocator.Persistent);
+                m_RequestProxyList,
+                m_RemoveProxyList,
+                m_VisibleList,
+                m_InvisibleList;
 #pragma warning restore IDE0090 // Use 'new(...)'
         private ParallelLoopResult m_VisibleJob;
 
@@ -57,22 +57,20 @@ namespace Syadeu.Presentation
         private bool m_Disposed = false;
 
         public bool Disposed => m_Disposed;
+        public override bool IsStartable => m_VisibleJob.IsCompleted;
 
         #region Presentation Methods
         protected override PresentationResult OnInitialize()
         {
-            //m_VisibleCheckJobWorker = CoreSystem.CreateNewBackgroundJobWorker(true);
-            //m_VisibleCheckJob = new BackgroundJob(ProxyVisibleCheckPararellJob);
-
             if (!PoolContainer<PrefabRequester>.Initialized) PoolContainer<PrefabRequester>.Initialize(() => new PrefabRequester(), 10);
 
-            //ConsoleWindow.CreateCommand((cmd) =>
-            //{
-            //    for (int i = 0; i < m_MappedGameObjects.Length; i++)
-            //    {
-            //        DestoryDataObject(m_MappedGameObjects[i].m_Idx);
-            //    }
-            //}, "destroy", "all");
+            m_RequestDestories = new NativeQueue<int>(Allocator.Persistent);
+            m_RequestUpdates = new NativeQueue<int>(Allocator.Persistent);
+
+            m_RequestProxyList = new NativeQueue<int>(Allocator.Persistent);
+            m_RemoveProxyList = new NativeQueue<int>(Allocator.Persistent);
+            m_VisibleList = new NativeQueue<int>(Allocator.Persistent);
+            m_InvisibleList = new NativeQueue<int>(Allocator.Persistent);
 
             return base.OnInitialize();
         }
@@ -99,38 +97,38 @@ namespace Syadeu.Presentation
 
             return base.OnInitializeAsync();
         }
-        private void OnProxyTransformTranslationChanged(ProxyTransform data)
+        unsafe private void OnProxyTransformTranslationChanged(ProxyTransform data)
         {
             if (data.hasProxy && !data.hasProxyQueued)
             {
-                m_RequestUpdates.Enqueue(data);
+                m_RequestUpdates.Enqueue(data.m_Pointer->m_Index);
             }
         }
-        private void OnProxyTransformRotationChanged(ProxyTransform data)
+        unsafe private void OnProxyTransformRotationChanged(ProxyTransform data)
         {
             if (!data.hasProxy || data.hasProxyQueued) return;
 
-            m_RequestUpdates.Enqueue(data);
+            m_RequestUpdates.Enqueue(data.m_Pointer->m_Index);
         }
-        private void OnProxyTransformScaleChanged(ProxyTransform data)
+        unsafe private void OnProxyTransformScaleChanged(ProxyTransform data)
         {
             if (!data.hasProxy || data.hasProxyQueued) return;
 
-            m_RequestUpdates.Enqueue(data);
+            m_RequestUpdates.Enqueue(data.m_Pointer->m_Index);
         }
-        private void OnProxyTransformProxyRequested(ProxyTransform data)
+        unsafe private void OnProxyTransformProxyRequested(ProxyTransform data)
         {
             CoreSystem.Logger.Log(Channel.Proxy,
                 $"Proxy requested at {data.index}, {data.prefab.GetObjectSetting().m_Name}");
 
-            m_RequestProxyList.Enqueue(data);
+            m_RequestProxyList.Enqueue(data.m_Pointer->m_Index);
         }
-        private void OnProxyTransformProxyRemove(ProxyTransform data)
+        unsafe private void OnProxyTransformProxyRemove(ProxyTransform data)
         {
             CoreSystem.Logger.Log(Channel.Proxy,
                 $"Proxy removed at {data.index}, {data.prefab.GetObjectSetting().m_Name}");
-            
-            m_RemoveProxyList.Enqueue(data);
+
+            m_RemoveProxyList.Enqueue(data.m_Pointer->m_Index);
         }
 
         protected override PresentationResult OnStartPresentation()
@@ -151,6 +149,7 @@ namespace Syadeu.Presentation
 
                 m_ProxyData.For((tr) =>
                 {
+                    "in".ToArray();
                     OnDataObjectDestroy?.Invoke(tr);
 
                     if (tr.hasProxy && !tr.hasProxyQueued)
@@ -179,7 +178,8 @@ namespace Syadeu.Presentation
             int requestUpdateCount = m_RequestUpdates.Count;
             for (int i = 0; i < requestUpdateCount; i++)
             {
-                ProxyTransform tr = m_RequestUpdates.Dequeue();
+                int idx = m_RequestUpdates.Dequeue();
+                ProxyTransform tr = m_ProxyData[idx];
                 //"in0".ToLog();
                 if (tr.isDestroyed || !tr.hasProxy)
                 {
@@ -188,7 +188,7 @@ namespace Syadeu.Presentation
                 }
                 if (tr.hasProxyQueued)
                 {
-                    m_RequestUpdates.Enqueue(tr);
+                    m_RequestUpdates.Enqueue(idx);
                     continue;
                 }
 
@@ -205,7 +205,7 @@ namespace Syadeu.Presentation
             int requestProxyCount = m_RequestProxyList.Count;
             for (int i = 0; i < requestProxyCount; i++)
             {
-                ProxyTransform tr = m_RequestProxyList.Dequeue();
+                ProxyTransform tr = m_ProxyData[m_RequestProxyList.Dequeue()];
                 //"in1".ToLog();
                 if (tr.isDestroyed) continue;
                 //{
@@ -224,7 +224,7 @@ namespace Syadeu.Presentation
             int removeProxyCount = m_RemoveProxyList.Count;
             for (int i = 0; i < removeProxyCount; i++)
             {
-                ProxyTransform tr = m_RemoveProxyList.Dequeue();
+                ProxyTransform tr = m_ProxyData[m_RemoveProxyList.Dequeue()];
                 //"in2".ToLog();
                 if (tr.isDestroyed) continue;
                 if (!tr.hasProxy)
@@ -242,7 +242,7 @@ namespace Syadeu.Presentation
             int visibleCount = m_VisibleList.Count;
             for (int i = 0; i < visibleCount; i++)
             {
-                ProxyTransform tr = m_VisibleList.Dequeue();
+                ProxyTransform tr = m_ProxyData[m_VisibleList.Dequeue()];
                 if (tr.isDestroyed) continue;
                 //{
                 //    throw new CoreSystemException(CoreSystemExceptionFlag.Proxy,
@@ -257,7 +257,7 @@ namespace Syadeu.Presentation
             int invisibleCount = m_InvisibleList.Count;
             for (int i = 0; i < invisibleCount; i++)
             {
-                ProxyTransform tr = m_InvisibleList.Dequeue();
+                ProxyTransform tr = m_ProxyData[m_InvisibleList.Dequeue()];
                 if (tr.isDestroyed) continue;
                 //{
                 //    throw new CoreSystemException(CoreSystemExceptionFlag.Proxy,
@@ -275,7 +275,7 @@ namespace Syadeu.Presentation
             int destroyCount = m_RequestDestories.Count;
             for (int i = 0; i < destroyCount; i++)
             {
-                ProxyTransform tr = m_RequestDestories.Dequeue();
+                ProxyTransform tr = m_ProxyData[m_RequestDestories.Dequeue()];
                 if (tr.isDestroyed)
                 {
                     throw new CoreSystemException(CoreSystemExceptionFlag.Proxy,
@@ -309,7 +309,10 @@ namespace Syadeu.Presentation
                             other.RequestProxy();
                         }
 
-                        if (!other.isVisible) m_VisibleList.Enqueue(other);
+                        unsafe
+                        {
+                            if (!other.isVisible) m_VisibleList.Enqueue(other.m_Pointer->m_Index);
+                        }
                     }
                     else
                     {
@@ -318,7 +321,10 @@ namespace Syadeu.Presentation
                             other.RemoveProxy();
                         }
 
-                        if (other.isVisible) m_InvisibleList.Enqueue(other);
+                        unsafe
+                        {
+                            if (other.isVisible) m_InvisibleList.Enqueue(other.m_Pointer->m_Index);
+                        }
                     }
                 });
             }
@@ -354,13 +360,22 @@ namespace Syadeu.Presentation
             ProxyTransform tr = m_ProxyData.Add(prefab, pos, rot, scale, enableCull, center, size);
             OnDataObjectCreated?.Invoke(tr);
 
-            CoreSystem.Logger.Log(Channel.Proxy, true,
-                $"ProxyTransform({prefab.GetObjectSetting().m_Name}) has been created at {pos}");
+            unsafe
+            {
+                CoreSystem.Logger.Log(Channel.Proxy, true,
+                $"ProxyTransform({prefab.GetObjectSetting().m_Name})" +
+                $"({tr.m_Hash}->{tr.m_Pointer->m_Hash}) " +
+                $"has been created at {pos}");
+            }
+            
             return tr;
         }
         public void Destroy(ProxyTransform proxyTransform)
         {
-            m_RequestDestories.Enqueue(proxyTransform);
+            unsafe
+            {
+                m_RequestDestories.Enqueue(proxyTransform.m_Pointer->m_Index);
+            }
             CoreSystem.Logger.Log(Channel.Proxy,
                 $"Destroy called at {proxyTransform.index}");
         }

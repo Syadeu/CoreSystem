@@ -35,13 +35,13 @@ namespace Syadeu.Presentation
         }
 
         [NativeDisableUnsafePtrRestriction] unsafe internal readonly NativeProxyData.ProxyTransformData* m_Pointer;
-        internal readonly Hash m_Hash;
-        unsafe internal ProxyTransform(NativeProxyData.ProxyTransformData* p, Hash hash)
+        internal readonly ulong m_Hash;
+        unsafe internal ProxyTransform(NativeProxyData.ProxyTransformData* p, ulong hash)
         {
             m_Pointer = p;
             m_Hash = hash;
         }
-        unsafe private ProxyTransform(Hash hash)
+        unsafe private ProxyTransform(ulong hash)
         {
             m_Pointer = null;
             m_Hash = hash;
@@ -147,20 +147,8 @@ namespace Syadeu.Presentation
             {
                 unsafe
                 {
-                    if (m_Hash.Equals(Hash.Empty) || m_Pointer is null) return true;
-                    try
-                    {
-                        if (m_Pointer->m_Hash == null)
-                        {
-                            throw new InsufficientMemoryException("");
-                        }
-                    }
-                    catch (Exception)
-                    {
-                        return true;
-                    }
-
-                    if (!m_Pointer->m_Hash.Equals(m_Hash)) return true;
+                    if (m_Hash.Equals(0) || m_Pointer == null) return true;
+                    if (m_Pointer->m_Hash != m_Hash) return true;
                 }
                 return false;
             }

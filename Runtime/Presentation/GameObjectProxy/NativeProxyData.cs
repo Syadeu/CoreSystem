@@ -23,37 +23,26 @@ namespace Syadeu.Presentation
         // This is a managed object. It can be passed along as the job can't dispose the container, 
         // but needs to be (re)set to null on schedule to prevent job access to a managed object.
         [NativeSetClassTypeToNullOnSchedule] public DisposeSentinel m_DisposeSentinel;
-        [NativeSetClassTypeToNullOnSchedule] public Semaphore m_Semaphore;
+        [NativeSetClassTypeToNullOnSchedule] public Semaphore m_PararellSemaphore;
+        [NativeSetClassTypeToNullOnSchedule] public Semaphore m_WriteSemaphore;
         // Keep track of which memory was allocated (Allocator.Temp/TempJob/Persistent).
         public Allocator m_AllocatorLabel;
         #endregion
 
-        //[NativeDisableUnsafePtrRestriction] public bool* m_OccupiedBuffer;
         [NativeDisableUnsafePtrRestriction] public ProxyTransformData* m_TransformBuffer;
 
         public uint m_Length;
 
-        //public ProxyTransformData this[int index]
-        //{
-        //    get
-        //    {
-        //        if (!m_Semaphore.WaitOne(0))
-        //        {
-        //            throw new CoreSystemException(CoreSystemExceptionFlag.Proxy,
-        //                "Cannot access data while pararell job is running.");
-        //        }
+        public ProxyTransform this[int index]
+        {
+            get
+            {
+                if (index < 0 || index >= m_Length) throw new ArgumentOutOfRangeException(nameof(index));
+                ProxyTransformData* p = m_TransformBuffer + index;
 
-        //        if (index >= m_Length) throw new ArgumentOutOfRangeException(nameof(index));
-
-        //        if (!*(m_OccupiedBuffer + index))
-        //        {
-        //            throw new ArgumentOutOfRangeException(nameof(index));
-        //        }
-
-        //        m_Semaphore.Release();
-        //        return *(m_TransformBuffer + index);
-        //    }
-        //}
+                return new ProxyTransform(p, p->m_Hash);
+            }
+        }
 
         public NativeProxyData(uint length, Allocator allocator, NativeArrayOptions options = NativeArrayOptions.ClearMemory)
         {
@@ -67,7 +56,7 @@ namespace Syadeu.Presentation
 
             for (int i = 0; i < length; i++)
             {
-                (*(m_TransformBuffer + i)) = Null;
+                ((m_TransformBuffer[i])) = default(ProxyTransformData);
             }
         }
         public void Dispose()
@@ -94,8 +83,10 @@ namespace Syadeu.Presentation
             // Create a dispose sentinel to track memory leaks. 
             // An atomic safety handle is also created automatically.
             DisposeSentinel.Create(out array.m_Safety, out array.m_DisposeSentinel, 1, allocator);
-            array.m_Semaphore = new Semaphore(0, 1);
-            array.m_Semaphore.Release();
+            array.m_PararellSemaphore = new Semaphore(0, 1);
+            array.m_WriteSemaphore = new Semaphore(0, 1);
+            array.m_PararellSemaphore.Release();
+            array.m_WriteSemaphore.Release();
         }
 
         private void Incremental(uint length)
@@ -138,6 +129,7 @@ namespace Syadeu.Presentation
             float3 center, float3 size)
         {
             AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
+            m_WriteSemaphore.WaitOne();
 
             int index = -1;
             for (int i = 0; i < m_Length; i++)
@@ -150,23 +142,26 @@ namespace Syadeu.Presentation
             }
             if (index < 0)
             {
-                if (!m_Semaphore.WaitOne(0))
-                {
-                    return Add(prefab, translation, rotation, scale, enableCull, center, size);
-                }
+                //if (!m_WriteSemaphore.WaitOne(0))
+                //{
+                //    return Add(prefab, translation, rotation, scale, enableCull, center, size);
+                //}
 
                 Incremental(m_Length);
+                m_WriteSemaphore.Release();
+
                 ProxyTransform result = Add(prefab, translation, rotation, scale, enableCull, center, size);
-                m_Semaphore.Release();
+                m_WriteSemaphore.Release();
                 return result;
             }
 
+            Hash hash = Hash.NewHash();
             ProxyTransformData tr = new ProxyTransformData
             {
                 m_IsOccupied = true,
 
                 m_Index = index,
-                m_Hash = Hash.NewHash(),
+                m_Hash = hash,
                 m_Prefab = prefab,
                 m_ProxyIndex = ProxyTransform.ProxyNull,
                 m_EnableCull = enableCull,
@@ -180,15 +175,53 @@ namespace Syadeu.Presentation
                 m_Center = center,
                 m_Size = size
             };
+            ProxyTransformData* ptr = &tr;
+            //byte[] bytes = new byte[s_TransformSize];
+            //Marshal.Copy((IntPtr)ptr, bytes, 0, (int)s_TransformSize);
 
-            *(m_TransformBuffer + index) = tr;
+            //GCHandle handle = GCHandle.Alloc(tr, GCHandleType.Pinned);
+            //*(m_TransformBuffer + index) = (ProxyTransformData)handle.Target;
 
-            ProxyTransform transform = new ProxyTransform(m_TransformBuffer + index, tr.m_Hash);
+            //*(m_TransformBuffer + index) = tr;
+            ProxyTransformData* targetP = m_TransformBuffer + index;
+
+            UnsafeUtility.MemCpy(targetP, &tr, s_TransformSize);
+
+            //UnsafeUtility.CopyStructureToPtr(ref tr, targetP);
+
+            $"{targetP->m_Hash}({hash}) {index}".ToLog();
+
+            //Insert(targetP);
+            //UnsafeUtility.MemSet(targetP, tr, s_TransformSize);
+            
+            ProxyTransform transform = new ProxyTransform(targetP, hash);
+            m_WriteSemaphore.Release();
             return transform;
+
+            void Insert(ProxyTransformData* p)
+            {
+                p->m_IsOccupied = true;
+
+                p->m_Index = index;
+                p->m_Hash = Hash.NewHash();
+                p->m_Prefab = prefab;
+                p->m_ProxyIndex = ProxyTransform.ProxyNull;
+                p->m_EnableCull = enableCull;
+                p->m_IsVisible = false;
+                p->m_DestroyQueued = false;
+
+                p->m_Translation = translation;
+                p->m_Rotation = rotation;
+                p->m_Scale = scale;
+
+                p->m_Center = center;
+                p->m_Size = size;
+        }
         }
         public void Remove(ProxyTransform transform)
         {
             AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
+            m_WriteSemaphore.WaitOne();
 
             Hash index = transform.index;
 
@@ -201,6 +234,7 @@ namespace Syadeu.Presentation
             p->m_IsOccupied = false;
             p->m_Hash = Hash.Empty;
 
+            m_WriteSemaphore.Release();
             CoreSystem.Logger.Log(Channel.Proxy,
                 $"ProxyTransform({index}) has been destroyed.");
         }
@@ -213,7 +247,8 @@ namespace Syadeu.Presentation
         {
             CoreSystem.Logger.ThreadBlock(nameof(NativeProxyData.ParallelFor), Syadeu.Internal.ThreadInfo.Background | Syadeu.Internal.ThreadInfo.Job | Syadeu.Internal.ThreadInfo.User);
 
-            var semaphore = m_Semaphore;
+            var semaphore = m_PararellSemaphore;
+            //var writeSemaphore = m_WriteSemaphore;
             if (!semaphore.WaitOne(1000))
             {
                 throw new CoreSystemException(CoreSystemExceptionFlag.Proxy,
@@ -224,8 +259,16 @@ namespace Syadeu.Presentation
 
             ParallelLoopResult result = Parallel.For(0, m_Length, (i) =>
             {
-                if (!(transformBuffer + i)->m_IsOccupied) return;
-                action.Invoke(new ProxyTransform(transformBuffer + i, (*(transformBuffer + i)).m_Hash));
+                //writeSemaphore.WaitOne();
+
+                ProxyTransformData* p = transformBuffer + i;
+                if ((transformBuffer + i)->m_IsOccupied)
+                {
+                    action.Invoke(
+                        new ProxyTransform(p, p->m_Hash));
+                }
+
+                //writeSemaphore.Release();
             });
 
             CoreSystem.AddBackgroundJob(() =>
@@ -261,7 +304,7 @@ namespace Syadeu.Presentation
             [FieldOffset(8)] internal int2 m_ProxyIndex;
 
             // 8 bytes
-            [FieldOffset(16)] internal Hash m_Hash;
+            [FieldOffset(16)] internal ulong m_Hash;
             [FieldOffset(24)] internal PrefabReference m_Prefab;
 
             // 12 bytes
