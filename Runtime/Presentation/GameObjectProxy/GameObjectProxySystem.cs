@@ -289,7 +289,8 @@ namespace Syadeu.Presentation
             ProxyJob proxyJob = new ProxyJob
             {
                 m_ActiveData = m_ProxyData.GetActiveData(Allocator.TempJob),
-                m_Matrix = m_RenderSystem.Matrix4X4,
+                //m_Matrix = m_RenderSystem.Matrix4X4,
+                m_Frustum = m_RenderSystem.Frustum,
 
                 m_Remove = m_RemoveProxyList.AsParallelWriter(),
                 m_Request = m_RequestProxyList.AsParallelWriter(),
@@ -306,7 +307,8 @@ namespace Syadeu.Presentation
         private struct ProxyJob : IJobParallelFor
         {
             [ReadOnly, DeallocateOnJobCompletion] public NativeArray<NativeProxyData.ProxyTransformData> m_ActiveData;
-            [ReadOnly] public float4x4 m_Matrix;
+            //[ReadOnly] public float4x4 m_Matrix;
+            [ReadOnly, DeallocateOnJobCompletion] public CameraFrustum.ReadOnly m_Frustum;
             [WriteOnly] public NativeQueue<int>.ParallelWriter
                 m_Remove,
                 m_Request,
@@ -316,10 +318,11 @@ namespace Syadeu.Presentation
 
             public void Execute(int i)
             {
-                NativeArray<float3> vertices = new NativeArray<float3>(8, Allocator.Temp);
-                m_ActiveData[i].GetAABB(Allocator.Temp).GetVertices(vertices);
+                //NativeArray<float3> vertices = new NativeArray<float3>(8, Allocator.Temp);
+                //m_ActiveData[i].GetAABB(Allocator.Temp).GetVertices(vertices);
 
-                if (RenderSystem.IsInCameraScreen(vertices, m_Matrix, float3.zero))
+                //if (RenderSystem.IsInCameraScreen(vertices, m_Matrix, float3.zero))
+                if (m_Frustum.IntersectsBox(m_ActiveData[i].GetAABB(Allocator.Temp)))
                 {
                     if (m_ActiveData[i].m_EnableCull && 
                         m_ActiveData[i].m_ProxyIndex.Equals(-1) &&                        !m_ActiveData[i].m_ProxyIndex.Equals(-2))
@@ -346,7 +349,7 @@ namespace Syadeu.Presentation
                     }
                 }
 
-                vertices.Dispose();
+                //vertices.Dispose();
             }
         }
 
