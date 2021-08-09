@@ -3,6 +3,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
@@ -239,6 +240,39 @@ namespace Syadeu.Presentation
 
             indices.Dispose();
             return data;
+        }
+        public JobHandle GetActiveData(NativeList<ProxyTransformData> array, JobHandle depends = default)
+        {
+            var indices = m_ActiveMap.GetValueArray(Allocator.TempJob);
+            ////NativeArray<ProxyTransformData> data = new NativeArray<ProxyTransformData>(indices.Length, allocator, NativeArrayOptions.UninitializedMemory);
+            //for (int i = 0; i < indices.Length; i++)
+            //{
+            //    array[i] = m_UnsafeList->m_TransformBuffer[indices[i]];
+            //}
+
+            //indices.Dispose();
+            //return data;
+
+            GetActiveDataJob job = new GetActiveDataJob
+            {
+                m_Indices = indices,
+                m_UnsafeList = m_UnsafeList,
+                m_Array = array
+            };
+            return job.Schedule(indices.Length, depends);
+        }
+
+        //[BurstCompile]
+        private struct GetActiveDataJob : IJobFor
+        {
+            [ReadOnly, DeallocateOnJobCompletion] public NativeArray<int> m_Indices;
+            [NativeDisableUnsafePtrRestriction] public UnsafeList* m_UnsafeList;
+            [WriteOnly] public NativeList<ProxyTransformData> m_Array;
+
+            public void Execute(int i)
+            {
+                m_Array.Add(m_UnsafeList->m_TransformBuffer[m_Indices[i]]);
+            }
         }
 
         //public ParallelLoopResult ParallelFor(Action<ProxyTransform> action)

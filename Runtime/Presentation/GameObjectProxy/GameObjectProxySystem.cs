@@ -25,6 +25,7 @@ namespace Syadeu.Presentation
     internal sealed class GameObjectProxySystem : PresentationSystemEntity<GameObjectProxySystem>
     {
         private static readonly Vector3 INIT_POSITION = new Vector3(-9999, -9999, -9999);
+        private const int c_InitialMemorySize = 1024;
 
         public override bool EnableBeforePresentation => true;
         public override bool EnableOnPresentation => false;
@@ -48,6 +49,9 @@ namespace Syadeu.Presentation
                 m_RemoveProxyList,
                 m_VisibleList,
                 m_InvisibleList;
+
+        //private NativeList<NativeProxyData.ProxyTransformData>
+        //    m_TempActiveData;
 #pragma warning restore IDE0090 // Use 'new(...)'
 
         private SceneSystem m_SceneSystem;
@@ -72,6 +76,8 @@ namespace Syadeu.Presentation
             m_VisibleList = new NativeQueue<int>(Allocator.Persistent);
             m_InvisibleList = new NativeQueue<int>(Allocator.Persistent);
 
+            //m_TempActiveData = new NativeList<NativeProxyData.ProxyTransformData>(Allocator.Persistent);
+
             return base.OnInitialize();
         }
         protected override PresentationResult OnInitializeAsync()
@@ -80,7 +86,7 @@ namespace Syadeu.Presentation
             AssemblyBuilder ab = AppDomain.CurrentDomain.DefineDynamicAssembly(aName, AssemblyBuilderAccess.Run);
             m_ModuleBuilder = ab.DefineDynamicModule(aName.Name);
 
-            m_ProxyData = new NativeProxyData(4, Allocator.Persistent);
+            m_ProxyData = new NativeProxyData(c_InitialMemorySize, Allocator.Persistent);
 
             RequestSystem<SceneSystem>((other) => m_SceneSystem = other);
             RequestSystem<RenderSystem>((other) => m_RenderSystem = other);
@@ -186,12 +192,12 @@ namespace Syadeu.Presentation
                 //}
                 if (tr.hasProxy && !tr.hasProxyQueued)
                 {
-                    throw new CoreSystemException(CoreSystemExceptionFlag.Proxy,
+                    CoreSystem.Logger.LogError(Channel.Proxy,
                         $"Already have proxy, {tr.isDestroyed}:{tr.hasProxy}:{tr.hasProxyQueued}");
                 }
 
                 AddProxy(tr);
-                if (i != 0 && i % c_ChunkSize == 0) break;
+                //if (i != 0 && i % c_ChunkSize == 0) break;
             }
             int removeProxyCount = m_RemoveProxyList.Count;
             for (int i = 0; i < removeProxyCount; i++)
@@ -206,7 +212,7 @@ namespace Syadeu.Presentation
                 }
 
                 RemoveProxy(tr);
-                if (i != 0 && i % c_ChunkSize == 0) break;
+                //if (i != 0 && i % c_ChunkSize == 0) break;
             }
             #endregion
 
@@ -224,7 +230,7 @@ namespace Syadeu.Presentation
                 tr.isVisible = true;
                 OnDataObjectVisible?.Invoke(tr);
 
-                if (i != 0 && i % c_ChunkSize == 0) break;
+                //if (i != 0 && i % c_ChunkSize == 0) break;
             }
             int invisibleCount = m_InvisibleList.Count;
             for (int i = 0; i < invisibleCount; i++)
@@ -239,7 +245,7 @@ namespace Syadeu.Presentation
                 tr.isVisible = false;
                 OnDataObjectInvisible?.Invoke(tr);
 
-                if (i != 0 && i % c_ChunkSize == 0) break;
+                //if (i != 0 && i % c_ChunkSize == 0) break;
             }
             #endregion
 
@@ -263,6 +269,8 @@ namespace Syadeu.Presentation
             }
             #endregion
 
+            //m_TempActiveData.Clear();
+            
             ProxyJob proxyJob = new ProxyJob
             {
                 m_ActiveData = m_ProxyData.GetActiveData(Allocator.TempJob),
@@ -274,7 +282,9 @@ namespace Syadeu.Presentation
                 m_Visible = m_VisibleList.AsParallelWriter(),
                 m_Invisible = m_InvisibleList.AsParallelWriter()
             };
+            //JobHandle getJob = m_ProxyData.GetActiveData(m_TempActiveData);
             m_ProxyJob = proxyJob.Schedule(proxyJob.m_ActiveData.Length, 64);
+            //m_ProxyJob = JobHandle.CombineDependencies(getJob, m_ProxyJob);
 
             return PresentationResult.Normal;
         }
@@ -334,6 +344,8 @@ namespace Syadeu.Presentation
             m_RemoveProxyList.Dispose();
             m_VisibleList.Dispose();
             m_InvisibleList.Dispose();
+
+            //m_TempActiveData.Dispose();
 
             m_ProxyData.For((tr) =>
             {
