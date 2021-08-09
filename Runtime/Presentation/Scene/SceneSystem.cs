@@ -219,12 +219,20 @@ namespace Syadeu.Presentation
         }
 
         private readonly Queue<Action> m_LoadingEvent = new Queue<Action>();
+        private IEnumerator m_LoadingRoutine;
+
         protected override PresentationResult OnPresentation()
         {
             if (!IsSceneLoading && m_LoadingEvent.Count > 0)
             {
                 m_LoadingEvent.Dequeue().Invoke();
             }
+
+            if (m_LoadingRoutine != null)
+            {
+                if (!m_LoadingRoutine.MoveNext()) m_LoadingRoutine = null;
+            }
+
             return base.OnPresentation();
         }
         protected override PresentationResult AfterPresentation()
@@ -339,44 +347,9 @@ namespace Syadeu.Presentation
 
                 OnLoading?.Invoke(0);
                 m_AsyncOperation = SceneManager.LoadSceneAsync(scene, LoadSceneMode.Additive);
-                StartCoroutine(OnLoadingCoroutine(m_AsyncOperation));
 
-                m_AsyncOperation.completed += 
-                    (other) =>
-                    {
-                        CoreSystem.Logger.Log(Channel.Scene, $"Scene({scene.ScenePath}) load completed");
-
-                        m_CurrentScene = SceneManager.GetSceneByPath(scene);
-                        SceneManager.SetActiveScene(m_CurrentScene);
-
-                        onCompleted?.Invoke(other);
-
-                        CoreSystem.Logger.Log(Channel.Scene, "Initialize dependence presentation groups");
-                        List<ICustomYieldAwaiter> awaiters = StartSceneDependences(this, scene);
-                        CoreSystem.WaitInvoke(() =>
-                        {
-                            for (int i = 0; i < awaiters?.Count; i++)
-                            {
-                                if (awaiters[i].KeepWait) return false;
-                            }
-                            return true;
-                        }, () =>
-                        {
-                            CoreSystem.Logger.Log(Channel.Scene,
-                                "Started dependence presentation groups");
-
-                            OnAfterLoading?.Invoke(0, postDelay);
-                            CoreSystem.Logger.Log(Channel.Scene, $"After scene load fake time({postDelay}s) started");
-
-                            CoreSystem.WaitInvoke(postDelay, () =>
-                            {
-                                m_AsyncOperation = null;
-                                OnLoadingExit?.Invoke();
-                                m_LoadingEnabled = false;
-                                CoreSystem.Logger.Log(Channel.Scene, $"Scene({m_CurrentScene.name}) has been fully loaded");
-                            }, (passed) => OnAfterLoading?.Invoke(passed, postDelay));
-                        });
-                    };
+                m_LoadingRoutine = OnLoadingCoroutine(m_AsyncOperation);
+                //StartCoroutine(OnLoadingCoroutine(m_AsyncOperation));
             }, (passed) => OnWaitLoading?.Invoke(passed, preDelay));
 
             IEnumerator OnLoadingCoroutine(AsyncOperation oper)
@@ -387,6 +360,48 @@ namespace Syadeu.Presentation
                     yield return null;
                 }
                 OnLoading?.Invoke(1);
+
+                CoreSystem.Logger.Log(Channel.Scene, $"Scene({scene.ScenePath}) load completed");
+
+                m_CurrentScene = SceneManager.GetSceneByPath(scene);
+                SceneManager.SetActiveScene(m_CurrentScene);
+
+                onCompleted?.Invoke(oper);
+
+                CoreSystem.Logger.Log(Channel.Scene, "Initialize dependence presentation groups");
+                List<ICustomYieldAwaiter> awaiters = StartSceneDependences(this, scene);
+
+                while (!CheckAwaiters(awaiters, out int status))
+                {
+                    yield return null;
+                }
+
+                CoreSystem.Logger.Log(Channel.Scene,
+                        "Started dependence presentation groups");
+
+                OnAfterLoading?.Invoke(0, postDelay);
+                CoreSystem.Logger.Log(Channel.Scene, $"After scene load fake time({postDelay}s) started");
+
+                CoreSystem.WaitInvoke(postDelay, () =>
+                {
+                    m_AsyncOperation = null;
+                    OnLoadingExit?.Invoke();
+                    m_LoadingEnabled = false;
+                    CoreSystem.Logger.Log(Channel.Scene, $"Scene({m_CurrentScene.name}) has been fully loaded");
+                }, (passed) => OnAfterLoading?.Invoke(passed, postDelay));
+            }
+            static bool CheckAwaiters(List<ICustomYieldAwaiter> awaiters, out int status)
+            {
+                for (int i = 0; i < awaiters?.Count; i++)
+                {
+                    if (awaiters[i].KeepWait)
+                    {
+                        status = i;
+                        return false;
+                    }
+                }
+                status = awaiters != null ? awaiters.Count : 0;
+                return true;
             }
         }
         private void InternalUnloadScene(SceneReference scene, Action<AsyncOperation> onCompleted = null)

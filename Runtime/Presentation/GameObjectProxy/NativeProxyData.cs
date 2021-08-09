@@ -175,48 +175,12 @@ namespace Syadeu.Presentation
                 m_Center = center,
                 m_Size = size
             };
-            ProxyTransformData* ptr = &tr;
-            //byte[] bytes = new byte[s_TransformSize];
-            //Marshal.Copy((IntPtr)ptr, bytes, 0, (int)s_TransformSize);
-
-            //GCHandle handle = GCHandle.Alloc(tr, GCHandleType.Pinned);
-            //*(m_TransformBuffer + index) = (ProxyTransformData)handle.Target;
-
-            //*(m_TransformBuffer + index) = tr;
             ProxyTransformData* targetP = m_TransformBuffer + index;
+            *targetP = tr;
 
-            UnsafeUtility.MemCpy(targetP, &tr, s_TransformSize);
-
-            //UnsafeUtility.CopyStructureToPtr(ref tr, targetP);
-
-            $"{targetP->m_Hash}({hash}) {index}".ToLog();
-
-            //Insert(targetP);
-            //UnsafeUtility.MemSet(targetP, tr, s_TransformSize);
-            
             ProxyTransform transform = new ProxyTransform(targetP, hash);
             m_WriteSemaphore.Release();
             return transform;
-
-            void Insert(ProxyTransformData* p)
-            {
-                p->m_IsOccupied = true;
-
-                p->m_Index = index;
-                p->m_Hash = Hash.NewHash();
-                p->m_Prefab = prefab;
-                p->m_ProxyIndex = ProxyTransform.ProxyNull;
-                p->m_EnableCull = enableCull;
-                p->m_IsVisible = false;
-                p->m_DestroyQueued = false;
-
-                p->m_Translation = translation;
-                p->m_Rotation = rotation;
-                p->m_Scale = scale;
-
-                p->m_Center = center;
-                p->m_Size = size;
-        }
         }
         public void Remove(ProxyTransform transform)
         {

@@ -178,24 +178,6 @@ namespace Syadeu.Presentation.Proxy
             semaphore.Release();
             return temp;
         }
-        //public void Destroy(ProxyTransformNew data)
-        //{
-        //    semaphore.WaitOne();
-        //    {
-        //        m_Data.Remove(data);
-        //    }
-        //    semaphore.Release();
-        //}
-
-        //public ProxyTransformNew GetTransform(int index)
-        //{
-        //    semaphore.WaitOne();
-        //    Data data = m_Data[index];
-        //    semaphore.Release();
-
-        //    ProxyTransformNew* tr = stackalloc ProxyTransformNew[1] { new ProxyTransformNew(data) };
-        //    return *tr;
-        //}
 
         [BurstCompile, StructLayout(LayoutKind.Sequential)]
         private struct SearchJob<T> : IJobParallelFor where T : unmanaged, IComparable<Data>
