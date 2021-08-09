@@ -766,6 +766,7 @@ namespace SyadeuEditor.Presentation.Map
                 }, m_MapData, TypeHelper.TypeOf<MapDataEntity>.Type);
 
                 EditorGUILayout.BeginHorizontal();
+                EditorGUI.BeginDisabledGroup(m_MapDataTarget == null);
                 if (GUILayout.Button("Save Map Data"))
                 {
                     EntityDataList.Instance.SaveData(m_MapDataTarget);
@@ -776,6 +777,7 @@ namespace SyadeuEditor.Presentation.Map
                     ResetPreviewFolder();
                     ResetMapData();
                 }
+                EditorGUI.EndDisabledGroup();
                 EditorGUILayout.EndHorizontal();
             }
             #endregion
