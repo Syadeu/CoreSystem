@@ -35,20 +35,23 @@ namespace Syadeu.Presentation
             TRS         =   0b111
         }
 
-        [NativeDisableUnsafePtrRestriction] unsafe internal readonly NativeProxyData.ProxyTransformData* m_Pointer;
+        [NativeDisableUnsafePtrRestriction] unsafe internal readonly NativeProxyData.UnsafeList* m_Pointer;
+        internal readonly int m_Index;
         internal readonly ulong m_Hash;
-        unsafe internal ProxyTransform(NativeProxyData.ProxyTransformData* p, ulong hash)
+        unsafe internal ProxyTransform(NativeProxyData.UnsafeList* p, int index, ulong hash)
         {
             m_Pointer = p;
+            m_Index = index;
             m_Hash = hash;
         }
         unsafe private ProxyTransform(ulong hash)
         {
             m_Pointer = null;
+            m_Index = -1;
             m_Hash = hash;
         }
 
-        unsafe private ref NativeProxyData.ProxyTransformData Ref => ref *m_Pointer;
+        unsafe private ref NativeProxyData.ProxyTransformData Ref => ref *(*m_Pointer)[m_Index];
 
         internal void SetProxy(int2 proxyIndex)
         {
@@ -135,7 +138,7 @@ namespace Syadeu.Presentation
                 unsafe
                 {
                     if (m_Hash.Equals(0) || m_Pointer == null) return true;
-                    if (m_Pointer->m_Hash != m_Hash) return true;
+                    if ((*m_Pointer)[m_Index]->m_Hash != m_Hash) return true;
                 }
                 return false;
             }
@@ -302,12 +305,12 @@ namespace Syadeu.Presentation
 
             unsafe
             {
-                if (m_Pointer->m_DestroyQueued)
+                if ((*m_Pointer)[m_Index]->m_DestroyQueued)
                 {
                     throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
                 }
 
-                m_Pointer->m_DestroyQueued = true;
+                (*m_Pointer)[m_Index]->m_DestroyQueued = true;
             }
             PresentationSystem<GameObjectProxySystem>.System.Destroy(this);
         }

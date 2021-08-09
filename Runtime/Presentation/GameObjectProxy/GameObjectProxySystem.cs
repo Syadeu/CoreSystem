@@ -50,7 +50,7 @@ namespace Syadeu.Presentation
                 m_VisibleList,
                 m_InvisibleList;
 #pragma warning restore IDE0090 // Use 'new(...)'
-        private ParallelLoopResult m_VisibleJob;
+        //private ParallelLoopResult m_VisibleJob;
 
         private SceneSystem m_SceneSystem;
         private RenderSystem m_RenderSystem;
@@ -60,7 +60,7 @@ namespace Syadeu.Presentation
         private bool m_Disposed = false;
 
         public bool Disposed => m_Disposed;
-        public override bool IsStartable => m_VisibleJob.IsCompleted;
+        //public override bool IsStartable => m_VisibleJob.IsCompleted;
 
         #region Presentation Methods
         protected override PresentationResult OnInitialize()
@@ -83,15 +83,15 @@ namespace Syadeu.Presentation
             AssemblyBuilder ab = AppDomain.CurrentDomain.DefineDynamicAssembly(aName, AssemblyBuilderAccess.Run);
             m_ModuleBuilder = ab.DefineDynamicModule(aName.Name);
 
-            m_ProxyData = new NativeProxyData(1024, Allocator.Persistent);
+            m_ProxyData = new NativeProxyData(4, Allocator.Persistent);
 
             RequestSystem<SceneSystem>((other) => m_SceneSystem = other);
             RequestSystem<RenderSystem>((other) => m_RenderSystem = other);
             RequestSystem<EventSystem>(Bind);
 
-            m_VisibleJob = m_ProxyData.ParallelFor((other) =>
-            {
-            });
+            //m_VisibleJob = m_ProxyData.ParallelFor((other) =>
+            //{
+            //});
 
             return base.OnInitializeAsync();
         }
@@ -106,7 +106,7 @@ namespace Syadeu.Presentation
         {
             if (!ev.transform.hasProxy || ev.transform.hasProxyQueued) return;
 
-            m_RequestUpdates.Enqueue(ev.transform.m_Pointer->m_Index);
+            m_RequestUpdates.Enqueue(ev.transform.m_Index);
         }
 
         //unsafe private void OnProxyTransformProxyRequested(ProxyTransform data)
@@ -161,11 +161,11 @@ namespace Syadeu.Presentation
             return base.OnStartPresentation();
         }
 
-        JobHandle job;
+        private JobHandle m_ProxyJob;
         protected override PresentationResult AfterPresentation()
         {
             const int c_ChunkSize = 100;
-            job.Complete();
+            m_ProxyJob.Complete();
 
             if (m_LoadingLock) return base.AfterPresentation();
 
@@ -214,7 +214,7 @@ namespace Syadeu.Presentation
                 }
 
                 AddProxy(tr);
-                //if (i != 0 && i % c_ChunkSize == 0) break;
+                if (i != 0 && i % c_ChunkSize == 0) break;
             }
             int removeProxyCount = m_RemoveProxyList.Count;
             for (int i = 0; i < removeProxyCount; i++)
@@ -229,7 +229,7 @@ namespace Syadeu.Presentation
                 }
 
                 RemoveProxy(tr);
-                //if (i != 0 && i % c_ChunkSize == 0) break;
+                if (i != 0 && i % c_ChunkSize == 0) break;
             }
             #endregion
 
@@ -286,7 +286,6 @@ namespace Syadeu.Presentation
             }
             #endregion
 
-
             ProxyJob proxyJob = new ProxyJob
             {
                 m_ActiveData = m_ProxyData.GetActiveData(Allocator.TempJob),
@@ -298,62 +297,12 @@ namespace Syadeu.Presentation
                 m_Visible = m_VisibleList.AsParallelWriter(),
                 m_Invisible = m_InvisibleList.AsParallelWriter()
             };
-            job = proxyJob.Schedule(proxyJob.m_ActiveData.Length, 64);
+            m_ProxyJob = proxyJob.Schedule(proxyJob.m_ActiveData.Length, 64);
 
             return PresentationResult.Normal;
         }
-        protected override PresentationResult AfterPresentationAsync()
-        {
-            
 
-            //if (m_VisibleJob.IsCompleted)
-            //{
-            //    m_VisibleJob = m_ProxyData.ParallelFor((other) =>
-            //    {
-            //        if (other.isDestroyed) return;
-
-            //        var vertices = other.aabb.GetVertices(Allocator.TempJob);
-            //        // aabb의 꼭지점 중 단 하나라도 화면 내 존재하면 화면에 비추는 것으로 간주함.
-            //        if (m_RenderSystem.IsInCameraScreen(vertices))
-            //        {
-            //            if (other.enableCull && !other.hasProxy && !other.hasProxyQueued)
-            //            {
-            //                //other.RequestProxy();
-            //                unsafe
-            //                {
-            //                    other.SetProxy(ProxyTransform.ProxyQueued);
-            //                    m_RequestProxyList.Enqueue(other.m_Pointer->m_Index);
-            //                }
-            //            }
-
-            //            unsafe
-            //            {
-            //                if (!other.isVisible) m_VisibleList.Enqueue(other.m_Pointer->m_Index);
-            //            }
-            //        }
-            //        else
-            //        {
-            //            if (other.hasProxy && !other.hasProxyQueued)
-            //            {
-            //                unsafe
-            //                {
-            //                    m_RemoveProxyList.Enqueue(other.m_Pointer->m_Index);
-            //                }
-            //            }
-
-            //            unsafe
-            //            {
-            //                if (other.isVisible) m_InvisibleList.Enqueue(other.m_Pointer->m_Index);
-            //            }
-            //        }
-
-            //        vertices.Dispose();
-            //    });
-            //}
-            return base.AfterPresentationAsync();
-        }
-
-        [BurstCompile(CompileSynchronously = true)]
+        [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
         private struct ProxyJob : IJobParallelFor
         {
             [ReadOnly, DeallocateOnJobCompletion] public NativeArray<NativeProxyData.ProxyTransformData> m_ActiveData;
@@ -403,7 +352,7 @@ namespace Syadeu.Presentation
 
         public override void Dispose()
         {
-            job.Complete();
+            m_ProxyJob.Complete();
 
             m_RequestDestories.Dispose();
             m_RequestUpdates.Dispose();
@@ -432,21 +381,17 @@ namespace Syadeu.Presentation
             ProxyTransform tr = m_ProxyData.Add(prefab, pos, rot, scale, enableCull, center, size);
             OnDataObjectCreated?.Invoke(tr);
 
-            unsafe
-            {
-                CoreSystem.Logger.Log(Channel.Proxy, true,
+            CoreSystem.Logger.Log(Channel.Proxy, true,
                 $"ProxyTransform({prefab.GetObjectSetting().m_Name})" +
-                $"({tr.m_Hash}->{tr.m_Pointer->m_Hash}) " +
                 $"has been created at {pos}");
-            }
-            
+
             return tr;
         }
         public void Destroy(ProxyTransform proxyTransform)
         {
             unsafe
             {
-                m_RequestDestories.Enqueue(proxyTransform.m_Pointer->m_Index);
+                m_RequestDestories.Enqueue(proxyTransform.m_Index);
             }
             CoreSystem.Logger.Log(Channel.Proxy,
                 $"Destroy called at {proxyTransform.index}");
