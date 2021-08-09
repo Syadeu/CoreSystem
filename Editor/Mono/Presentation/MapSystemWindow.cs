@@ -876,8 +876,11 @@ namespace SyadeuEditor.Presentation.Map
                 case EventType.MouseDown:
                     if (Event.current.button == 0)
                     {
-                        var tempObj = HandleUtility.PickGameObject(Event.current.mousePosition, true);
-                        SelectGameObject(tempObj);
+                        if (m_SelectedGameObject == null)
+                        {
+                            var tempObj = HandleUtility.PickGameObject(Event.current.mousePosition, true);
+                            SelectGameObject(tempObj);
+                        }
                     }
                     else if (Event.current.button == 2)
                     {
