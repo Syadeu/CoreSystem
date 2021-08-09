@@ -389,7 +389,9 @@ namespace Syadeu.Presentation.Proxy
                 if (!data.m_EnableCull) return;
 
                 AABB aabb = new AABB(data.m_Center + data.m_Translation, data.m_Size).Rotation(data.m_Rotation);
-                if (RenderSystem.IsInCameraScreen(aabb.vertices, m_Matrix, float3.zero))
+                var vertices = aabb.GetVertices(Allocator.Temp);
+
+                if (RenderSystem.IsInCameraScreen(vertices, m_Matrix, float3.zero))
                 {
                     if (data.m_IsVisible) return;
 
@@ -401,6 +403,8 @@ namespace Syadeu.Presentation.Proxy
 
                     m_Invisible.Enqueue(m_ActiveData[i]);
                 }
+
+                vertices.Dispose();
             }
         }
 

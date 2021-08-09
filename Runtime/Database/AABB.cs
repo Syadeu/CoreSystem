@@ -1,12 +1,14 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Database.Converters;
 using System.Runtime.InteropServices;
+using Unity.Burst;
+using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 
 namespace Syadeu.Database
 {
-    [StructLayout(LayoutKind.Sequential)]
+    [BurstCompile, StructLayout(LayoutKind.Sequential)]
     [JsonConverter(typeof(AABBJsonConverter))]
     public struct AABB
     {
@@ -33,7 +35,7 @@ namespace Syadeu.Database
         [JsonIgnore] public float3 min { get => center - extents; set { SetMinMax(value, max); } }
         [JsonIgnore] public float3 max { get => center + extents; set { SetMinMax(min, value); } }
 
-        [JsonIgnore] public float3[] vertices => GetVertices(in this);
+        //[JsonIgnore] public float3[] vertices => GetVertices(in this);
 #pragma warning restore IDE1006 // Naming Styles
         public void SetMinMax(float3 min, float3 max)
         {
@@ -138,12 +140,27 @@ namespace Syadeu.Database
             float4x4 trMatrix = float4x4.TRS(originCenter, quaternion, originExtents);
 
             AABB temp = new AABB(originCenter, float3.zero);
-            float3[] vertices = aabb.vertices;
+            NativeArray<float3> vertices = aabb.GetVertices(Allocator.TempJob);
             for (int i = 0; i < vertices.Length; i++)
             {
                 float3 vertex = math.mul(trMatrix, new float4((vertices[i] - originCenter) * 2, 1)).xyz;
                 temp.Encapsulate(vertex);
             }
+            vertices.Dispose();
+            return temp;
+        }
+        public NativeArray<float3> GetVertices(Allocator allocator)
+        {
+            NativeArray<float3> temp = new NativeArray<float3>(8, allocator);
+            temp[0] = min;
+            temp[1] = new float3(min.x, max.y, min.z);
+            temp[2] = new float3(max.x, max.y, min.z);
+            temp[3] = new float3(max.x, min.y, min.z);
+
+            temp[4] = new float3(max.x, min.y, max.z);
+            temp[5] = max;
+            temp[6] = new float3(min.x, max.y, max.z);
+            temp[7] = new float3(min.x, min.y, max.z);
             return temp;
         }
         private static float3[] GetVertices(in AABB aabb)

@@ -1,5 +1,6 @@
 ﻿using Syadeu.Database;
 using Syadeu.Mono;
+using Syadeu.Presentation.Event;
 using System;
 using System.Runtime.InteropServices;
 using Unity.Collections.LowLevel.Unsafe;
@@ -12,12 +13,12 @@ namespace Syadeu.Presentation
     {
         #region Statics
         public static readonly ProxyTransform Null = new ProxyTransform(Hash.Empty);
-        public static readonly Hash s_TranslationChanged = Hash.NewHash("Translation");
-        public static readonly Hash s_RotationChanged = Hash.NewHash("Rotation");
-        public static readonly Hash s_ScaleChanged = Hash.NewHash("Scale");
+        //public static readonly Hash s_TranslationChanged = Hash.NewHash("Translation");
+        //public static readonly Hash s_RotationChanged = Hash.NewHash("Rotation");
+        //public static readonly Hash s_ScaleChanged = Hash.NewHash("Scale");
 
-        public static readonly Hash s_RequestProxy = Hash.NewHash("RequestProxy");
-        public static readonly Hash s_RemoveProxy = Hash.NewHash("RemoveProxy");
+        //public static readonly Hash s_RequestProxy = Hash.NewHash("RequestProxy");
+        //public static readonly Hash s_RemoveProxy = Hash.NewHash("RemoveProxy");
 
         internal static readonly int2 ProxyNull = new int2(-1, -1);
         internal static readonly int2 ProxyQueued = new int2(-2, -2);
@@ -48,33 +49,19 @@ namespace Syadeu.Presentation
         }
 
         unsafe private ref NativeProxyData.ProxyTransformData Ref => ref *m_Pointer;
-        internal void RequestProxy()
-        {
-            if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
-            if (hasProxy) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Already has proxy");
 
-            Ref.m_ProxyIndex = ProxyQueued;
-            EventDescriptor<ProxyTransform>.Invoke(s_RequestProxy, this);
-        }
-        internal void RemoveProxy()
-        {
-            if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
-            if (!hasProxy) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "does not have proxy");
-
-            EventDescriptor<ProxyTransform>.Invoke(s_RemoveProxy, this);
-        }
         internal void SetProxy(int2 proxyIndex)
         {
             Ref.m_ProxyIndex = proxyIndex;
         }
 
 #pragma warning disable IDE1006 // Naming Styles
-        public Hash index
+        public ulong index
         {
             get
             {
                 if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
-                return Ref.m_Hash;
+                return m_Hash;
             }
         }
 
@@ -172,8 +159,9 @@ namespace Syadeu.Presentation
             set
             {
                 if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+
                 Ref.translation = value;
-                EventDescriptor<ProxyTransform>.Invoke(s_TranslationChanged, this);
+                PresentationSystem<EventSystem>.System.PostEvent(OnTransformChanged.GetEvent(this));
             }
         }
         public quaternion rotation
@@ -187,7 +175,7 @@ namespace Syadeu.Presentation
             {
                 if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
                 Ref.rotation = value;
-                EventDescriptor<ProxyTransform>.Invoke(s_RotationChanged, this);
+                PresentationSystem<EventSystem>.System.PostEvent(OnTransformChanged.GetEvent(this));
             }
         }
         public float3 eulerAngles
@@ -217,7 +205,7 @@ namespace Syadeu.Presentation
             {
                 if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
                 Ref.scale = value;
-                EventDescriptor<ProxyTransform>.Invoke(s_ScaleChanged, this);
+                PresentationSystem<EventSystem>.System.PostEvent(OnTransformChanged.GetEvent(this));
             }
         }
 

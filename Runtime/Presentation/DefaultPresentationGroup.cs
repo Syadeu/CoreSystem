@@ -10,7 +10,6 @@ namespace Syadeu.Presentation
                 TypeHelper.TypeOf<DataContainerSystem>.Type,
                 TypeHelper.TypeOf<Event.EventSystem>.Type,
                 TypeHelper.TypeOf<GameObjectProxySystem>.Type,
-                TypeHelper.TypeOf<Proxy.ProxySystem>.Type,
                 TypeHelper.TypeOf<EntitySystem>.Type,
                 TypeHelper.TypeOf<SceneSystem>.Type,
                 TypeHelper.TypeOf<Render.RenderSystem>.Type,
