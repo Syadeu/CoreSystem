@@ -84,8 +84,8 @@ namespace Syadeu.Presentation
         public event Action OnLoadingExit;
 
         public override bool EnableBeforePresentation => false;
-        public override bool EnableOnPresentation => false;
-        public override bool EnableAfterPresentation => true;
+        public override bool EnableOnPresentation => true;
+        public override bool EnableAfterPresentation => false;
         public override bool IsStartable
         {
             get
@@ -219,12 +219,17 @@ namespace Syadeu.Presentation
         }
 
         private readonly Queue<Action> m_LoadingEvent = new Queue<Action>();
-        protected override PresentationResult AfterPresentation()
+        protected override PresentationResult OnPresentation()
         {
             if (!IsSceneLoading && m_LoadingEvent.Count > 0)
             {
                 m_LoadingEvent.Dequeue().Invoke();
             }
+            return base.OnPresentation();
+        }
+        protected override PresentationResult AfterPresentation()
+        {
+            
 
             return base.AfterPresentation();
         }

@@ -389,6 +389,7 @@ namespace Syadeu.Presentation
                     $"{from.Name} has an invalid prefab. This is not allowed.");
             }
 
+            PresentationSystem<Proxy.ProxySystem>.System.Add(from);
             return m_ProxySystem.CreateNewPrefab(prefab, pos, rot, scale, enableCull, from.Center, from.Size);
         }
         private Entity<IEntity> InternalCreateEntity(EntityBase entityBase, in ProxyTransform obj)

@@ -10,7 +10,9 @@
         "XNode",
         "MoonSharp",
         "Unity.Addressables",
-        "Unity.ResourceManager"
+        "Unity.ResourceManager",
+        "Unity.Burst",
+        "Unity.Entities"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
