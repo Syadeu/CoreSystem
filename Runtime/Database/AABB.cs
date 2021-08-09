@@ -43,6 +43,20 @@ namespace Syadeu.Database
             center = min + extents;
         }
 
+        public bool Contains(float3 position)
+        {
+            float3
+                min = this.min,
+                max = this.max;
+
+            return position.x >= min.x
+                && position.y >= min.y
+                && position.z >= min.z
+                && position.x < max.x
+                && position.y < max.y
+                && position.z < max.z;
+        }
+
         public bool Intersect(Ray ray)
         {
             float3x4[] squares = GetSquares(in this);

@@ -401,6 +401,10 @@ namespace Syadeu.Presentation.Render
 
             public bool IntersectsBox(in AABB box, float frustumPadding = 0)
 			{
+				if (box.Contains(corners[CornerCount - 1]))
+				{
+					return true;
+				}
 				float3 center = box.center;
 				float3 extents = box.extents;
 
@@ -485,12 +489,12 @@ namespace Syadeu.Presentation.Render
 		}
 		public bool IntersectsBox(in AABB box, float frustumPadding = 0)
 		{
-			// Exit early if the box contains the frustum origin
-			//if (box.Contains(_corners[CornerCount - 1]))
-			//{
-			//	return true;
-			//}
-			NativeArray<float3>.ReadOnly
+            //Exit early if the box contains the frustum origin
+            if (box.Contains(m_Corners[CornerCount - 1]))
+            {
+                return true;
+            }
+            NativeArray<float3>.ReadOnly
 				absNormals = m_AbsNormals.AsReadOnly(),
 				planeNormals = m_PlaneNormals.AsReadOnly();
 			NativeArray<float>.ReadOnly planeDistances = m_PlaneDistances.AsReadOnly();
@@ -693,6 +697,7 @@ namespace Syadeu.Presentation.Render
         #endregion
     }
 
+	[Obsolete("", true)]
     public class BoundingFrustum
 	{
 		#region Public fields 
