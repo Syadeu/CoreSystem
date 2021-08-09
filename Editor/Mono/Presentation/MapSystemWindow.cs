@@ -219,7 +219,7 @@ namespace SyadeuEditor.Presentation.Map
 
         private MapDataEntity.Object m_SelectedGameObject;
         private bool m_SelectedGameObjectOpen = false;
-        private void SelectGameObject(GameObject obj)
+        private bool SelectGameObject(GameObject obj)
         {
             var iter = m_PreviewObjects.Where((other) => other.Value.Equals(obj));
             if (iter.Any())
@@ -227,7 +227,7 @@ namespace SyadeuEditor.Presentation.Map
                 var target = iter.First();
                 if (m_SelectedGameObject != null)
                 {
-                    if (target.Value.Equals(m_SelectedGameObject)) return;
+                    if (target.Value.Equals(m_SelectedGameObject)) return true;
                     else
                     {
                         DeselectGameObject();
@@ -237,7 +237,9 @@ namespace SyadeuEditor.Presentation.Map
                 m_SelectedGameObject = target.Key;
                 //m_PreviewObjects[m_SelectedGameObject].SetActive(false);
                 Repaint();
+                return true;
             }
+            return false;
         }
         private void DeselectGameObject()
         {
@@ -686,6 +688,8 @@ namespace SyadeuEditor.Presentation.Map
         private Vector2 m_MapDataScroll;
         private VerticalTreeView m_MapDataTreeView;
 
+        private float3 m_SelectedObjectRotation;
+
         private void MapDataGUI()
         {
             #region Scene data selector
@@ -741,7 +745,7 @@ namespace SyadeuEditor.Presentation.Map
                     if (m_MapDataTarget == null)
                     {
                         m_MapDataTarget = m_MapData.GetObject();
-                        SetupTreeView(m_MapDataTarget);
+                        //SetupTreeView(m_MapDataTarget);
                         CreatePreviewObjects(m_MapDataTarget);
 
                         SceneView.lastActiveSceneView.Repaint();
@@ -751,7 +755,7 @@ namespace SyadeuEditor.Presentation.Map
                         ResetPreviewFolder();
 
                         m_MapDataTarget = m_MapData.GetObject();
-                        SetupTreeView(m_MapDataTarget);
+                        //SetupTreeView(m_MapDataTarget);
                         CreatePreviewObjects(m_MapDataTarget);
 
                         SceneView.lastActiveSceneView.Repaint();
@@ -760,6 +764,19 @@ namespace SyadeuEditor.Presentation.Map
                     Tools.hidden = true;
 
                 }, m_MapData, TypeHelper.TypeOf<MapDataEntity>.Type);
+
+                EditorGUILayout.BeginHorizontal();
+                if (GUILayout.Button("Save Map Data"))
+                {
+                    EntityDataList.Instance.SaveData(m_MapDataTarget);
+                }
+                if (GUILayout.Button("Close Map Data"))
+                {
+                    DeselectGameObject();
+                    ResetPreviewFolder();
+                    ResetMapData();
+                }
+                EditorGUILayout.EndHorizontal();
             }
             #endregion
 
@@ -785,8 +802,33 @@ namespace SyadeuEditor.Presentation.Map
                 {
                     EditorUtils.StringRich(entity.Name, 15);
 
-                    entity.Center = EditorGUILayout.Vector3Field("Center: ", entity.Center);
-                    entity.Size = EditorGUILayout.Vector3Field("Size: ", entity.Size);
+                    EditorGUI.BeginChangeCheck();
+                    m_SelectedGameObject.m_Translation
+                        = EditorGUILayout.Vector3Field("Position", m_SelectedGameObject.m_Translation);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        m_PreviewObjects[m_SelectedGameObject].transform.position
+                            = m_SelectedGameObject.m_Translation;
+                    }
+
+                    EditorGUI.BeginChangeCheck();
+                    m_SelectedObjectRotation
+                        = EditorGUILayout.Vector3Field("Rotation", m_SelectedGameObject.m_Rotation.Euler() * Mathf.Rad2Deg);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        m_SelectedGameObject.m_Rotation
+                            = quaternion.Euler(m_SelectedObjectRotation * Mathf.Deg2Rad);
+
+                        m_PreviewObjects[m_SelectedGameObject].transform.rotation 
+                            = m_SelectedGameObject.m_Rotation;
+                    }
+
+                    EditorGUILayout.Space();
+                    EditorUtils.StringRich("AABB", 13, true);
+                    {
+                        entity.Center = EditorGUILayout.Vector3Field("Center", entity.Center);
+                        entity.Size = EditorGUILayout.Vector3Field("Size", entity.Size);
+                    }
 
                     var gridSizeAtt = entity.GetAttribute<GridSizeAttribute>();
                     if (gridSizeAtt != null)
@@ -803,17 +845,17 @@ namespace SyadeuEditor.Presentation.Map
                 }
             }
 
-            using (new EditorUtils.BoxBlock(Color.black))
-            {
-                SaveNCloseButton();
+            //using (new EditorUtils.BoxBlock(Color.black))
+            //{
+            //    SaveNCloseButton();
 
-                int screenWidth = Screen.width;
-                m_MapDataScroll = GUILayout.BeginScrollView(m_MapDataScroll, false, false);
+            //    int screenWidth = Screen.width;
+            //    m_MapDataScroll = GUILayout.BeginScrollView(m_MapDataScroll, false, false);
 
-                m_MapDataTreeView.OnGUI();
+            //    m_MapDataTreeView.OnGUI();
 
-                GUILayout.EndScrollView();
-            }
+            //    GUILayout.EndScrollView();
+            //}
         }
         Color whiteColor = Color.white;
         private void MapDataSceneGUI(SceneView obj)
