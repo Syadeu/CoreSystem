@@ -1,7 +1,6 @@
 ﻿using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Mono;
-using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Event;
 using Syadeu.Presentation.Render;
 using System;
@@ -50,7 +49,6 @@ namespace Syadeu.Presentation
                 m_VisibleList,
                 m_InvisibleList;
 #pragma warning restore IDE0090 // Use 'new(...)'
-        //private ParallelLoopResult m_VisibleJob;
 
         private SceneSystem m_SceneSystem;
         private RenderSystem m_RenderSystem;
@@ -60,7 +58,6 @@ namespace Syadeu.Presentation
         private bool m_Disposed = false;
 
         public bool Disposed => m_Disposed;
-        //public override bool IsStartable => m_VisibleJob.IsCompleted;
 
         #region Presentation Methods
         protected override PresentationResult OnInitialize()
@@ -89,10 +86,6 @@ namespace Syadeu.Presentation
             RequestSystem<RenderSystem>((other) => m_RenderSystem = other);
             RequestSystem<EventSystem>(Bind);
 
-            //m_VisibleJob = m_ProxyData.ParallelFor((other) =>
-            //{
-            //});
-
             return base.OnInitializeAsync();
         }
         private void Bind(EventSystem other)
@@ -108,21 +101,6 @@ namespace Syadeu.Presentation
 
             m_RequestUpdates.Enqueue(ev.transform.m_Index);
         }
-
-        //unsafe private void OnProxyTransformProxyRequested(ProxyTransform data)
-        //{
-        //    CoreSystem.Logger.Log(Channel.Proxy,
-        //        $"Proxy requested at {data.index}, {data.prefab.GetObjectSetting().m_Name}");
-
-        //    m_RequestProxyList.Enqueue(data.m_Pointer->m_Index);
-        //}
-        //unsafe private void OnProxyTransformProxyRemove(ProxyTransform data)
-        //{
-        //    CoreSystem.Logger.Log(Channel.Proxy,
-        //        $"Proxy removed at {data.index}, {data.prefab.GetObjectSetting().m_Name}");
-
-        //    m_RemoveProxyList.Enqueue(data.m_Pointer->m_Index);
-        //}
 
         protected override PresentationResult OnStartPresentation()
         {
@@ -142,7 +120,6 @@ namespace Syadeu.Presentation
 
                 m_ProxyData.For((tr) =>
                 {
-                    "in".ToArray();
                     OnDataObjectDestroy?.Invoke(tr);
 
                     if (tr.hasProxy && !tr.hasProxyQueued)
@@ -289,7 +266,6 @@ namespace Syadeu.Presentation
             ProxyJob proxyJob = new ProxyJob
             {
                 m_ActiveData = m_ProxyData.GetActiveData(Allocator.TempJob),
-                //m_Matrix = m_RenderSystem.Matrix4X4,
                 m_Frustum = m_RenderSystem.Frustum,
 
                 m_Remove = m_RemoveProxyList.AsParallelWriter(),
@@ -307,7 +283,7 @@ namespace Syadeu.Presentation
         private struct ProxyJob : IJobParallelFor
         {
             [ReadOnly, DeallocateOnJobCompletion] public NativeArray<NativeProxyData.ProxyTransformData> m_ActiveData;
-            //[ReadOnly] public float4x4 m_Matrix;
+            
             [ReadOnly, DeallocateOnJobCompletion] public CameraFrustum.ReadOnly m_Frustum;
             [WriteOnly] public NativeQueue<int>.ParallelWriter
                 m_Remove,
@@ -318,10 +294,6 @@ namespace Syadeu.Presentation
 
             public void Execute(int i)
             {
-                //NativeArray<float3> vertices = new NativeArray<float3>(8, Allocator.Temp);
-                //m_ActiveData[i].GetAABB(Allocator.Temp).GetVertices(vertices);
-
-                //if (RenderSystem.IsInCameraScreen(vertices, m_Matrix, float3.zero))
                 if (m_Frustum.IntersectsBox(m_ActiveData[i].GetAABB(Allocator.Temp)))
                 {
                     if (m_ActiveData[i].m_EnableCull && 
@@ -348,8 +320,6 @@ namespace Syadeu.Presentation
                         m_Invisible.Enqueue(m_ActiveData[i].m_Index);
                     }
                 }
-
-                //vertices.Dispose();
             }
         }
 
@@ -752,26 +722,5 @@ namespace Syadeu.Presentation
         }
 
         #endregion
-    }
-
-    public sealed class OnTransformChanged : SynchronizedEvent<OnTransformChanged>
-    {
-        public Entity<IEntity> entity { get; private set; }
-        public ProxyTransform transform { get; private set; }
-        public static OnTransformChanged GetEvent(ProxyTransform tr)
-        {
-            var temp = Dequeue();
-
-            Hash entityIdx = temp.EntitySystem.m_EntityGameObjects[tr.m_Hash];
-            temp.entity = Entity<IEntity>.GetEntity(entityIdx);
-            temp.transform = tr;
-
-            return temp;
-        }
-        protected override void OnTerminate()
-        {
-            entity = Entity<IEntity>.Empty;
-            transform = ProxyTransform.Null;
-        }
     }
 }

@@ -369,8 +369,8 @@ namespace Syadeu.Presentation.Render
 
 		public float3 Position => m_Position;
 
-		[BurstCompile,
-			NativeContainerIsReadOnly, NativeContainerSupportsDeallocateOnJobCompletion]
+		[BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
+		[NativeContainerIsReadOnly, NativeContainerSupportsDeallocateOnJobCompletion]
 		public readonly struct ReadOnly : IDisposable
         {
 			public readonly float3 position;

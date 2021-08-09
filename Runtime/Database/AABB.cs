@@ -8,7 +8,8 @@ using UnityEngine;
 
 namespace Syadeu.Database
 {
-    [BurstCompile, StructLayout(LayoutKind.Sequential)]
+    [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
+    [StructLayout(LayoutKind.Sequential)]
     [JsonConverter(typeof(AABBJsonConverter))]
     public struct AABB
     {
