@@ -1,5 +1,6 @@
 ﻿using Syadeu.Database;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Render;
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -24,10 +25,10 @@ namespace Syadeu.Presentation.Proxy
         [NativeContainer, BurstCompile(CompileSynchronously = true)]
         private struct DataContainer : IDisposable
         {
-            private int m_LastIndex;
-            private NativeArray<Data> m_Data;
-            private NativeHashMap<ulong, int> m_ActiveData;
-            private NativeQueue<int> m_UnusedIndices;
+            public int m_LastIndex;
+            public NativeArray<Data> m_Data;
+            public NativeHashMap<ulong, int> m_ActiveData;
+            public NativeQueue<int> m_UnusedIndices;
 
             public ProxyTransformNew this[int index]
             {
@@ -131,7 +132,15 @@ namespace Syadeu.Presentation.Proxy
         }
 
         private DataContainer m_Data;
-        public NativeQueue<TranslationData> m_TranslationData;
+
+        private int m_SendedTranslationIndex = 0;
+        private NativeList<TranslationData> m_TranslationData;
+
+        private int m_SendedRotationIndex = 0;
+        private NativeList<RotationData> m_RotationData;
+
+        private int m_SendedScaleIndex = 0;
+        private NativeList<ScaleData> m_ScaleData;
 
         public ProxyTransformNew this[ulong hash]
         {
@@ -149,6 +158,10 @@ namespace Syadeu.Presentation.Proxy
         {
             m_Data = new DataContainer(16384);
 
+            m_TranslationData = new NativeList<TranslationData>(1024, Allocator.Persistent);
+            m_RotationData = new NativeList<RotationData>(1024, Allocator.Persistent);
+            m_ScaleData = new NativeList<ScaleData>(1024, Allocator.Persistent);
+
             return base.OnInitialize();
         }
         protected override PresentationResult OnInitializeAsync()
@@ -158,18 +171,135 @@ namespace Syadeu.Presentation.Proxy
 
             return base.OnInitializeAsync();
         }
+
+        JobHandle m_JobHandle;
+
         protected override PresentationResult BeforePresentation()
         {
-            
+            m_JobHandle.Complete();
 
             return base.BeforePresentation();
+        }
+        protected override PresentationResult AfterPresentation()
+        {
+            if (m_TranslationData.Length > 0)
+            {
+                if (!semaphore.WaitOne(1000))
+                {
+                    throw new Exception("error");
+                }
+                m_JobHandle = ScheduleSetData(m_TranslationData, ref m_SendedTranslationIndex);
+
+                semaphore.Release();
+            }
+            if (m_RotationData.Length > 0)
+            {
+                if (!semaphore.WaitOne(1000))
+                {
+                    throw new Exception("error");
+                }
+                var temp = ScheduleSetData(m_RotationData, ref m_SendedRotationIndex, m_JobHandle);
+                m_JobHandle = JobHandle.CombineDependencies(temp, m_JobHandle);
+
+                semaphore.Release();
+            }
+            if (m_ScaleData.Length > 0)
+            {
+                if (!semaphore.WaitOne(1000))
+                {
+                    throw new Exception("error");
+                }
+                var temp = ScheduleSetData(m_ScaleData, ref m_SendedScaleIndex, m_JobHandle);
+                m_JobHandle = JobHandle.CombineDependencies(temp, m_JobHandle);
+
+                semaphore.Release();
+            }
+
+            return base.AfterPresentation();
         }
         public override void Dispose()
         {
             m_Data.Dispose();
 
+            m_TranslationData.Dispose();
+            m_RotationData.Dispose();
+            m_ScaleData.Dispose();
+
             base.Dispose();
         }
+
+        #region Update TRS
+        private JobHandle ScheduleSetData<T>(NativeList<T> list, ref int sendedIdx, JobHandle depends = default) where T : unmanaged, ISetData
+        {
+            NativeArray<T> temp = new NativeArray<T>(list, Allocator.TempJob);
+            list.Clear();
+            sendedIdx = 0;
+
+            ApplyJob<T> trJob = new ApplyJob<T>(m_Data.m_Data, m_Data.m_ActiveData, temp);
+            return trJob.Schedule(temp.Length, 64, depends);
+        }
+
+        public void UpdateTranslation(ulong hash, float3 translation)
+        {
+            semaphore.WaitOne();
+
+            TranslationData trData = new TranslationData(hash, translation);
+            for (int i = 0; i < m_SendedTranslationIndex; i++)
+            {
+                if (m_TranslationData[i].m_Hash.Equals(trData.m_Hash))
+                {
+                    m_TranslationData[i] = trData;
+                    semaphore.Release();
+                    return;
+                }
+            }
+
+            m_TranslationData.Add(trData);
+            m_SendedTranslationIndex++;
+
+            semaphore.Release();
+        }
+        public void UpdateRotation(ulong hash, quaternion rotation)
+        {
+            semaphore.WaitOne();
+
+            RotationData data = new RotationData(hash, rotation);
+            for (int i = 0; i < m_SendedRotationIndex; i++)
+            {
+                if (m_RotationData[i].m_Hash.Equals(data.m_Hash))
+                {
+                    m_RotationData[i] = data;
+                    semaphore.Release();
+                    return;
+                }
+            }
+
+            m_RotationData.Add(data);
+            m_SendedRotationIndex++;
+
+            semaphore.Release();
+        }
+        public void UpdateScale(ulong hash, float3 scale)
+        {
+            semaphore.WaitOne();
+
+            ScaleData data = new ScaleData(hash, scale);
+            for (int i = 0; i < m_SendedScaleIndex; i++)
+            {
+                if (m_ScaleData[i].m_Hash.Equals(data.m_Hash))
+                {
+                    m_ScaleData[i] = data;
+                    semaphore.Release();
+                    return;
+                }
+            }
+
+            m_ScaleData.Add(data);
+            m_SendedScaleIndex++;
+
+            semaphore.Release();
+        }
+        #endregion
 
         public ProxyTransformNew Add(EntityBase entity)
         {
@@ -179,6 +309,33 @@ namespace Syadeu.Presentation.Proxy
             return temp;
         }
 
+        #region Jobs
+
+        [BurstCompile]
+        private struct ApplyJob<T> : IJobParallelFor where T : unmanaged, ISetData
+        {
+            NativeArray<Data> m_Data;
+            [ReadOnly] NativeHashMap<ulong, int> m_HashMap;
+            [ReadOnly, DeallocateOnJobCompletion] NativeArray<T> m_applyData;
+
+            public ApplyJob(
+                NativeArray<Data> data,
+                NativeHashMap<ulong, int> hashMap,
+                NativeArray<T> applyData)
+            {
+                m_Data = data;
+                m_HashMap = hashMap;
+                m_applyData = applyData;
+            }
+            public void Execute(int i)
+            {
+                T data = m_applyData[i];
+
+                var boxed = m_Data[m_HashMap[data.Hash]];
+                data.SetData(ref boxed);
+                m_Data[m_HashMap[data.Hash]] = boxed;
+            }
+        }
         [BurstCompile, StructLayout(LayoutKind.Sequential)]
         private struct SearchJob<T> : IJobParallelFor where T : unmanaged, IComparable<Data>
         {
@@ -205,19 +362,108 @@ namespace Syadeu.Presentation.Proxy
                 }
             }
         }
+        [BurstCompile]
+        private struct VisibleCheckJob : IJobParallelFor
+        {
+            [ReadOnly] private readonly float4x4 m_Matrix;
+            [ReadOnly] private NativeArray<Data>.ReadOnly m_Data;
+            [ReadOnly, DeallocateOnJobCompletion] private NativeArray<int> m_ActiveData;
+
+            [WriteOnly] private NativeQueue<int>.ParallelWriter m_Visible;
+            [WriteOnly] private NativeQueue<int>.ParallelWriter m_Invisible;
+
+            public VisibleCheckJob(float4x4 matrix, NativeArray<Data> data, NativeHashMap<ulong, int> map,
+                NativeQueue<int> visible, NativeQueue<int> invisible)
+            {
+                m_Matrix = matrix;
+                m_Data = data.AsReadOnly();
+                m_ActiveData = map.GetValueArray(Allocator.TempJob);
+
+                m_Visible = visible.AsParallelWriter();
+                m_Invisible = invisible.AsParallelWriter();
+            }
+
+            public void Execute(int i)
+            {
+                var data = m_Data[m_ActiveData[i]];
+                if (!data.m_EnableCull) return;
+
+                AABB aabb = new AABB(data.m_Center + data.m_Translation, data.m_Size).Rotation(data.m_Rotation);
+                if (RenderSystem.IsInCameraScreen(aabb.vertices, m_Matrix, float3.zero))
+                {
+                    if (data.m_IsVisible) return;
+
+                    m_Visible.Enqueue(m_ActiveData[i]);
+                }
+                else
+                {
+                    if (!data.m_IsVisible) return;
+
+                    m_Invisible.Enqueue(m_ActiveData[i]);
+                }
+            }
+        }
+
+        #endregion
+
+        #region Data Sets
+
+        public interface IHash
+        {
+            ulong Hash { get; }
+        }
+        public interface ISetData : IHash
+        {
+            void SetData(ref Data data);
+        }
 
         [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
-        public readonly struct TranslationData
+        private readonly struct TranslationData : ISetData
         {
             public readonly ulong m_Hash;
             public readonly float3 m_Translation;
-
+            ulong IHash.Hash => m_Hash;
             public TranslationData(ulong hash, float3 position)
             {
                 m_Hash = hash;
                 m_Translation = position;
             }
+            public void SetData(ref Data data)
+            {
+                data.m_Translation = m_Translation;
+            }
         }
+        private readonly struct RotationData : ISetData
+        {
+            public readonly ulong m_Hash;
+            public readonly quaternion m_Rotation;
+            ulong IHash.Hash => m_Hash;
+            public RotationData(ulong hash, quaternion rot)
+            {
+                m_Hash = hash; m_Rotation = rot;
+            }
+            public void SetData(ref Data data)
+            {
+                data.m_Rotation = m_Rotation;
+            }
+        }
+        private readonly struct ScaleData : ISetData
+        {
+            public readonly ulong m_Hash;
+            public readonly float3 m_Scale;
+            ulong IHash.Hash => m_Hash;
+            public ScaleData(ulong hash, float3 scale)
+            {
+                m_Hash = hash; m_Scale = scale;
+            }
+            public void SetData(ref Data data)
+            {
+                data.m_Scale = m_Scale;
+            }
+        }
+
+        #endregion
+
         [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
         public struct Data
         {
@@ -273,8 +519,29 @@ namespace Syadeu.Presentation.Proxy
                 CoreSystem.Logger.ThreadBlock(nameof(position), Syadeu.Internal.ThreadInfo.Unity);
 
                 m_Position = value;
-                PresentationSystem<ProxySystem>.System.m_TranslationData.Enqueue(
-                    new ProxySystem.TranslationData(m_Hash, value));
+                PresentationSystem<ProxySystem>.System.UpdateTranslation(m_Hash, value);
+            }
+        }
+        public quaternion rotation
+        {
+            get => m_Rotation;
+            set
+            {
+                CoreSystem.Logger.ThreadBlock(nameof(position), Syadeu.Internal.ThreadInfo.Unity);
+
+                m_Rotation = value;
+                PresentationSystem<ProxySystem>.System.UpdateRotation(m_Hash, value);
+            }
+        }
+        public float3 scale
+        {
+            get => m_Scale;
+            set
+            {
+                CoreSystem.Logger.ThreadBlock(nameof(position), Syadeu.Internal.ThreadInfo.Unity);
+
+                m_Scale = value;
+                PresentationSystem<ProxySystem>.System.UpdateScale(m_Hash, value);
             }
         }
 
