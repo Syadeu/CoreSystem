@@ -342,7 +342,12 @@ namespace Syadeu.Presentation
                 get => m_Scale;
                 set => m_Scale = value;
             }
+            public AABB aabb => new AABB(m_Center + m_Translation, m_Size).Rotation(m_Rotation);
 
+            public AABB GetAABB(Allocator allocator = Allocator.TempJob)
+            {
+                return new AABB(m_Center + m_Translation, m_Size).Rotation(m_Rotation, allocator);
+            }
             public bool Equals(ProxyTransformData other) => m_Hash.Equals(other.m_Hash);
         }
         [StructLayout(LayoutKind.Explicit, Size = 96)]

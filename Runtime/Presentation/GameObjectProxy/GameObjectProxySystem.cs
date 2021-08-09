@@ -12,8 +12,10 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -159,9 +161,11 @@ namespace Syadeu.Presentation
             return base.OnStartPresentation();
         }
 
+        JobHandle job;
         protected override PresentationResult AfterPresentation()
         {
             const int c_ChunkSize = 100;
+            job.Complete();
 
             if (m_LoadingLock) return base.AfterPresentation();
 
@@ -210,7 +214,7 @@ namespace Syadeu.Presentation
                 }
 
                 AddProxy(tr);
-                if (i != 0 && i % c_ChunkSize == 0) break;
+                //if (i != 0 && i % c_ChunkSize == 0) break;
             }
             int removeProxyCount = m_RemoveProxyList.Count;
             for (int i = 0; i < removeProxyCount; i++)
@@ -225,7 +229,7 @@ namespace Syadeu.Presentation
                 }
 
                 RemoveProxy(tr);
-                if (i != 0 && i % c_ChunkSize == 0) break;
+                //if (i != 0 && i % c_ChunkSize == 0) break;
             }
             #endregion
 
@@ -282,59 +286,125 @@ namespace Syadeu.Presentation
             }
             #endregion
 
+
+            ProxyJob proxyJob = new ProxyJob
+            {
+                m_ActiveData = m_ProxyData.GetActiveData(Allocator.TempJob),
+                m_Matrix = m_RenderSystem.Matrix4X4,
+
+                m_Remove = m_RemoveProxyList.AsParallelWriter(),
+                m_Request = m_RequestProxyList.AsParallelWriter(),
+
+                m_Visible = m_VisibleList.AsParallelWriter(),
+                m_Invisible = m_InvisibleList.AsParallelWriter()
+            };
+            job = proxyJob.Schedule(proxyJob.m_ActiveData.Length, 64);
+
             return PresentationResult.Normal;
         }
         protected override PresentationResult AfterPresentationAsync()
         {
-            if (m_VisibleJob.IsCompleted)
-            {
-                m_VisibleJob = m_ProxyData.ParallelFor((other) =>
-                {
-                    if (other.isDestroyed) return;
+            
 
-                    var vertices = other.aabb.GetVertices(Allocator.TempJob);
-                    // aabb의 꼭지점 중 단 하나라도 화면 내 존재하면 화면에 비추는 것으로 간주함.
-                    if (m_RenderSystem.IsInCameraScreen(vertices))
-                    {
-                        if (other.enableCull && !other.hasProxy && !other.hasProxyQueued)
-                        {
-                            //other.RequestProxy();
-                            unsafe
-                            {
-                                other.SetProxy(ProxyTransform.ProxyQueued);
-                                m_RequestProxyList.Enqueue(other.m_Pointer->m_Index);
-                            }
-                        }
+            //if (m_VisibleJob.IsCompleted)
+            //{
+            //    m_VisibleJob = m_ProxyData.ParallelFor((other) =>
+            //    {
+            //        if (other.isDestroyed) return;
 
-                        unsafe
-                        {
-                            if (!other.isVisible) m_VisibleList.Enqueue(other.m_Pointer->m_Index);
-                        }
-                    }
-                    else
-                    {
-                        if (other.hasProxy && !other.hasProxyQueued)
-                        {
-                            unsafe
-                            {
-                                m_RemoveProxyList.Enqueue(other.m_Pointer->m_Index);
-                            }
-                        }
+            //        var vertices = other.aabb.GetVertices(Allocator.TempJob);
+            //        // aabb의 꼭지점 중 단 하나라도 화면 내 존재하면 화면에 비추는 것으로 간주함.
+            //        if (m_RenderSystem.IsInCameraScreen(vertices))
+            //        {
+            //            if (other.enableCull && !other.hasProxy && !other.hasProxyQueued)
+            //            {
+            //                //other.RequestProxy();
+            //                unsafe
+            //                {
+            //                    other.SetProxy(ProxyTransform.ProxyQueued);
+            //                    m_RequestProxyList.Enqueue(other.m_Pointer->m_Index);
+            //                }
+            //            }
 
-                        unsafe
-                        {
-                            if (other.isVisible) m_InvisibleList.Enqueue(other.m_Pointer->m_Index);
-                        }
-                    }
+            //            unsafe
+            //            {
+            //                if (!other.isVisible) m_VisibleList.Enqueue(other.m_Pointer->m_Index);
+            //            }
+            //        }
+            //        else
+            //        {
+            //            if (other.hasProxy && !other.hasProxyQueued)
+            //            {
+            //                unsafe
+            //                {
+            //                    m_RemoveProxyList.Enqueue(other.m_Pointer->m_Index);
+            //                }
+            //            }
 
-                    vertices.Dispose();
-                });
-            }
+            //            unsafe
+            //            {
+            //                if (other.isVisible) m_InvisibleList.Enqueue(other.m_Pointer->m_Index);
+            //            }
+            //        }
+
+            //        vertices.Dispose();
+            //    });
+            //}
             return base.AfterPresentationAsync();
+        }
+
+        [BurstCompile(CompileSynchronously = true)]
+        private struct ProxyJob : IJobParallelFor
+        {
+            [ReadOnly, DeallocateOnJobCompletion] public NativeArray<NativeProxyData.ProxyTransformData> m_ActiveData;
+            [ReadOnly] public float4x4 m_Matrix;
+            [WriteOnly] public NativeQueue<int>.ParallelWriter
+                m_Remove,
+                m_Request,
+
+                m_Visible,
+                m_Invisible;
+
+            public void Execute(int i)
+            {
+                NativeArray<float3> vertices = new NativeArray<float3>(8, Allocator.Temp);
+                m_ActiveData[i].GetAABB(Allocator.Temp).GetVertices(vertices);
+
+                if (RenderSystem.IsInCameraScreen(vertices, m_Matrix, float3.zero))
+                {
+                    if (m_ActiveData[i].m_EnableCull && 
+                        m_ActiveData[i].m_ProxyIndex.Equals(-1) &&                        !m_ActiveData[i].m_ProxyIndex.Equals(-2))
+                    {
+                        m_Request.Enqueue(m_ActiveData[i].m_Index);
+                    }
+
+                    if (!m_ActiveData[i].m_IsVisible)
+                    {
+                        m_Visible.Enqueue(m_ActiveData[i].m_Index);
+                    }
+                }
+                else
+                {
+                    if (!m_ActiveData[i].m_ProxyIndex.Equals(-1) &&
+                        !m_ActiveData[i].m_ProxyIndex.Equals(-2))
+                    {
+                        m_Remove.Enqueue(m_ActiveData[i].m_Index);
+                    }
+
+                    if (m_ActiveData[i].m_IsVisible)
+                    {
+                        m_Invisible.Enqueue(m_ActiveData[i].m_Index);
+                    }
+                }
+
+                vertices.Dispose();
+            }
         }
 
         public override void Dispose()
         {
+            job.Complete();
+
             m_RequestDestories.Dispose();
             m_RequestUpdates.Dispose();
 
@@ -388,6 +458,7 @@ namespace Syadeu.Presentation
         {
             CoreSystem.Logger.ThreadBlock(nameof(GameObjectProxySystem.AddProxy), ThreadInfo.Unity);
 
+            proxyTransform.SetProxy(-2);
             PrefabReference prefab = proxyTransform.prefab;
 
             if (!m_TerminatedProxies.TryGetValue(prefab, out Queue<RecycleableMonobehaviour> pool) ||

@@ -41,6 +41,8 @@ namespace Syadeu.Presentation.Render
         }
 
         public Camera Camera => m_Camera.Value;
+        public Matrix4x4 Matrix4X4 => m_Matrix4x4;
+
         public event Action<Camera, Camera> OnCameraChanged;
         public event Action OnRender;
 

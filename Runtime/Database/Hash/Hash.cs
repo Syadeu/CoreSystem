@@ -14,7 +14,7 @@ namespace Syadeu.Database
             FNV1a64,
         }
 
-        public static Hash Empty = new Hash(0);
+        public static readonly Hash Empty = new Hash(0);
         public static Hash NewHash(Algorithm algorithm = Algorithm.Default)
         {
             Guid guid = Guid.NewGuid();
