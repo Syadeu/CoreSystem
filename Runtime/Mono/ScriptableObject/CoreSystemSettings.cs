@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Syadeu.Mono
 {
-    public sealed class SyadeuSettings : StaticSettingEntity<SyadeuSettings>
+    public sealed class CoreSystemSettings : StaticSettingEntity<CoreSystemSettings>
     {
         // Modules
         public UserTagNameModule m_UserTagNameModule;
@@ -21,6 +21,7 @@ namespace Syadeu.Mono
         public bool m_CrashAfterException = false;
         [Obsolete] public bool m_EnableAutoStaticInitialize = false;
         public string[] m_AutoInitializeTargetAssembly = new string[] { "Assembly-CSharp" };
+        public Channel m_DisplayLogChannel = Channel.All;
 
         // PrefabManager
         [Header("Prefab Manager")]

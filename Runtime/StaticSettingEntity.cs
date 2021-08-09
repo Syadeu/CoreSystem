@@ -4,6 +4,7 @@ using System.Reflection;
 
 using Syadeu.Entities;
 using Syadeu.Internal;
+using Syadeu.Database;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -54,7 +55,9 @@ namespace Syadeu
                     m_Instance = Resources.Load<T>($"{path}/" + typeof(T).Name);
                     if (m_Instance == null)
                     {
-                        //$"LOG :: Creating new static setting<{typeof(T).Name}> asset".ToLog();
+                        LogManager.Log(TypeHelper.Enum<Channel>.ToString(Channel.Core),
+                            ResultFlag.Normal,
+                            $"Creating new static setting<{typeof(T).Name}> asset", true);
                         m_Instance = CreateInstance<T>();
                         m_Instance.name = $"Syadeu {TypeHelper.TypeOf<T>.Name} Setting Asset";
 

@@ -419,8 +419,6 @@ namespace Syadeu
 
         internal bool m_CleanupManagers = false;
 
-        [SerializeField] private Channel m_DisplayLogChannel = Channel.All;
-
         // Render
         internal event Action OnRender;
 
@@ -448,7 +446,7 @@ namespace Syadeu
                 }
                 method.Invoke(null, null);
             }
-            if (SyadeuSettings.Instance.m_EnableLua)
+            if (CoreSystemSettings.Instance.m_EnableLua)
             {
                 Syadeu.Database.Lua.LuaManager.Instance.Initialize();
             }
@@ -461,8 +459,6 @@ namespace Syadeu
         }
         public override void OnInitialize()
         {
-            LogManager.s_DisplayLogChannel = m_DisplayLogChannel;
-
             new Thread(BackgroundWorker).Start();
             //ThreadPool.QueueUserWorkItem(BackgroundWorker);
             Application.quitting += OnAboutToQuit;
@@ -835,8 +831,6 @@ namespace Syadeu
             int tickCounter = 0;
             while (true)
             {
-                LogManager.s_DisplayLogChannel = m_DisplayLogChannel;
-
 #if UNITY_EDITOR
                 if (IsEditorPaused) continue;
 #endif
@@ -1853,7 +1847,7 @@ namespace Syadeu
 #line hidden
         public struct Logger
         {
-            public static void ThreadBlock(ThreadInfo thread) => LogManager.ThreadBlock(thread);
+            public static void ThreadBlock(string name, ThreadInfo thread) => LogManager.ThreadBlock(name, thread);
 
             public static void Log(Channel channel, bool logThread, string msg) => LogManager.Log(channel, ResultFlag.Normal, msg, logThread);
             public static void Log(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Normal, msg, false);

@@ -78,8 +78,8 @@ namespace Syadeu.Mono
     }
     public static class UserTag
     {
-        public static UserTagFlag GetUserTag(string name) => SyadeuSettings.Instance.m_UserTagNameModule.m_Tags[name];
-        public static CustomTagFlag GetCustomTag(string name) => SyadeuSettings.Instance.m_CustomTagNameModule.m_Tags[name];
+        public static UserTagFlag GetUserTag(string name) => CoreSystemSettings.Instance.m_UserTagNameModule.m_Tags[name];
+        public static CustomTagFlag GetCustomTag(string name) => CoreSystemSettings.Instance.m_CustomTagNameModule.m_Tags[name];
         //public static UserTagFlag GetUserTag(int tag)
         //{
         //    if (tag == 31) return UserTagFlag.UserTag31;

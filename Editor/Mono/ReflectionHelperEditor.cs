@@ -343,14 +343,16 @@ namespace SyadeuEditor
         }
         public static void DrawPrefabReference(string name, Action<int> setter, PrefabReference current)
         {
+            PrefabList.ObjectSetting objSetting = current.GetObjectSetting();
+
             string displayName;
-            if (current.m_Idx >= 0) displayName = current.GetObjectSetting().m_Name;
+            if (current.m_Idx >= 0) displayName = objSetting == null ? "INVALID" : objSetting.m_Name;
             else displayName = "None";
 
             GUILayout.BeginHorizontal();
             GUILayout.Space(EditorGUI.indentLevel * 15);
 
-            if (!string.IsNullOrEmpty(name)) GUILayout.Label(name);
+            if (!string.IsNullOrEmpty(name)) GUILayout.Label(name, GUILayout.Width(Screen.width * .25f));
 
             if (GUILayout.Button(displayName, SelectorStyle, GUILayout.ExpandWidth(true)))
             {

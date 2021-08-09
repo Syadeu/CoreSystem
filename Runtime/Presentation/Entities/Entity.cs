@@ -65,7 +65,7 @@ namespace Syadeu.Presentation.Entities
         /// <inheritdoc cref="IEntityData.Idx"/>
         private readonly Hash m_Idx;
 
-        public T Target => m_Idx.Equals(Hash.Empty) || CoreSystem.s_BlockCreateInstance ? null : (T)PresentationSystem<EntitySystem>.System.m_ObjectEntities[m_Idx];
+        public T Target => m_Idx.Equals(Hash.Empty) ? null : (T)PresentationSystem<EntitySystem>.System.m_ObjectEntities[m_Idx];
 
         public string Name => m_Idx.Equals(Hash.Empty) ? c_Invalid : Target.Name;
         public Hash Idx => m_Idx;
@@ -74,17 +74,6 @@ namespace Syadeu.Presentation.Entities
 #pragma warning disable IDE1006 // Naming Styles
         public ProxyTransform transform => Target.transform;
 #pragma warning restore IDE1006 // Naming Styles
-
-        public float3 Center => Target.Center;
-        public float3 Size => Target.Size;
-        public AABB AABB
-        {
-            get
-            {
-                float3 pos = transform.position;
-                return new AABB(Center + pos, Size).Rotation(transform.rotation);
-            }
-        }
 
         private Entity(Hash idx)
         {

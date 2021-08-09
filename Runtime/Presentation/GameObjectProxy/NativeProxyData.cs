@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Jobs;
 using Unity.Mathematics;
 
 namespace Syadeu.Presentation
@@ -12,6 +13,7 @@ namespace Syadeu.Presentation
     [NativeContainer, StructLayout(LayoutKind.Sequential)]
     unsafe internal struct NativeProxyData : IDisposable
     {
+        public static readonly ProxyTransformData Null = new ProxyTransformData();
         private static readonly long s_BoolenSize = UnsafeUtility.SizeOf<bool>();
         private static readonly long s_HashSize = UnsafeUtility.SizeOf<Hash>();
         private static readonly long s_TransformSize = UnsafeUtility.SizeOf<ProxyTransformData>();
@@ -22,36 +24,25 @@ namespace Syadeu.Presentation
         // This is a managed object. It can be passed along as the job can't dispose the container, 
         // but needs to be (re)set to null on schedule to prevent job access to a managed object.
         [NativeSetClassTypeToNullOnSchedule] public DisposeSentinel m_DisposeSentinel;
-        [NativeSetClassTypeToNullOnSchedule] public Semaphore m_Semaphore;
+        [NativeSetClassTypeToNullOnSchedule] public Semaphore m_PararellSemaphore;
+        [NativeSetClassTypeToNullOnSchedule] public Semaphore m_WriteSemaphore;
         // Keep track of which memory was allocated (Allocator.Temp/TempJob/Persistent).
         public Allocator m_AllocatorLabel;
         #endregion
 
-        [NativeDisableUnsafePtrRestriction] public bool* m_OccupiedBuffer;
-        [NativeDisableUnsafePtrRestriction] public Hash* m_TransformIndexBuffer;
         [NativeDisableUnsafePtrRestriction] public ProxyTransformData* m_TransformBuffer;
+        public NativeHashMap<ulong, int> m_ActiveMap;
 
         public uint m_Length;
 
-        public ProxyTransformData this[int index]
+        public ProxyTransform this[int index]
         {
             get
             {
-                if (!m_Semaphore.WaitOne(0))
-                {
-                    throw new CoreSystemException(CoreSystemExceptionFlag.Proxy,
-                        "Cannot access data while pararell job is running.");
-                }
+                if (index < 0 || index >= m_Length) throw new ArgumentOutOfRangeException(nameof(index));
+                ProxyTransformData* p = m_TransformBuffer + index;
 
-                if (index >= m_Length) throw new ArgumentOutOfRangeException(nameof(index));
-
-                if (!*(m_OccupiedBuffer + index))
-                {
-                    throw new ArgumentOutOfRangeException(nameof(index));
-                }
-
-                m_Semaphore.Release();
-                return *(m_TransformBuffer + index);
+                return new ProxyTransform(p, p->m_Hash);
             }
         }
 
@@ -62,21 +53,24 @@ namespace Syadeu.Presentation
             // Set the memory block to 0 if requested.
             if ((options & NativeArrayOptions.ClearMemory) == NativeArrayOptions.ClearMemory)
             {
-                UnsafeUtility.MemClear(m_OccupiedBuffer, length * s_BoolenSize);
-                UnsafeUtility.MemClear(m_TransformIndexBuffer, length * s_HashSize);
                 UnsafeUtility.MemClear(m_TransformBuffer, length * s_TransformSize);
+            }
+
+            for (int i = 0; i < length; i++)
+            {
+                ((m_TransformBuffer[i])) = default(ProxyTransformData);
             }
         }
         public void Dispose()
         {
             DisposeSentinel.Dispose(ref m_Safety, ref m_DisposeSentinel);
 
-            UnsafeUtility.Free(m_OccupiedBuffer, m_AllocatorLabel);
-            UnsafeUtility.Free(m_TransformIndexBuffer, m_AllocatorLabel);
+            UnsafeUtility.MemClear(m_TransformBuffer, m_Length * s_TransformSize);
+
             UnsafeUtility.Free(m_TransformBuffer, m_AllocatorLabel);
 
-            m_OccupiedBuffer = null;
-            m_TransformIndexBuffer = null;
+            m_ActiveMap.Dispose();
+
             m_TransformBuffer = null;
 
             m_Length = 0;
@@ -87,84 +81,68 @@ namespace Syadeu.Presentation
                 throw new ArgumentException("Allocator must be Temp, TempJob or Persistent", nameof(allocator));
 
             array = default(NativeProxyData);
-            array.m_OccupiedBuffer = (bool*)UnsafeUtility.Malloc(s_BoolenSize * length, UnsafeUtility.AlignOf<bool>(), allocator);
-            array.m_TransformIndexBuffer = (Hash*)UnsafeUtility.Malloc(s_HashSize * length, UnsafeUtility.AlignOf<Hash>(), allocator);
             array.m_TransformBuffer = (ProxyTransformData*)UnsafeUtility.Malloc(s_TransformSize * length, UnsafeUtility.AlignOf<ProxyTransformData>(), allocator);
             array.m_Length = length;
             array.m_AllocatorLabel = allocator;
+
+            array.m_ActiveMap = new NativeHashMap<ulong, int>((int)length, allocator);
+
             // Create a dispose sentinel to track memory leaks. 
             // An atomic safety handle is also created automatically.
             DisposeSentinel.Create(out array.m_Safety, out array.m_DisposeSentinel, 1, allocator);
-            array.m_Semaphore = new Semaphore(0, 1);
+            array.m_PararellSemaphore = new Semaphore(0, 1);
+            array.m_WriteSemaphore = new Semaphore(0, 1);
+            array.m_PararellSemaphore.Release();
+            array.m_WriteSemaphore.Release();
         }
 
         private void Incremental(uint length)
         {
             AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
 
-            long
-                occupiedShiftSize = s_BoolenSize * (m_Length + length),
-                transformIndexShiftSize = s_HashSize * (m_Length + length),
-                transformShiftSize = s_TransformSize * (m_Length + length);
+            long transformShiftSize = s_TransformSize * (m_Length + length);
 
-            var occupiedBuffer = (bool*)UnsafeUtility.Malloc(occupiedShiftSize, UnsafeUtility.AlignOf<bool>(), m_AllocatorLabel);
-            var transformIndexBuffer = (Hash*)UnsafeUtility.Malloc(transformIndexShiftSize, UnsafeUtility.AlignOf<Hash>(), m_AllocatorLabel);
             var transformBuffer = (ProxyTransformData*)UnsafeUtility.Malloc(transformShiftSize, UnsafeUtility.AlignOf<ProxyTransformData>(), m_AllocatorLabel);
 
-            UnsafeUtility.MemClear(occupiedBuffer + m_Length, s_BoolenSize * length);
-            UnsafeUtility.MemClear(transformIndexBuffer + m_Length, s_HashSize * length);
             UnsafeUtility.MemClear(transformBuffer + m_Length, s_TransformSize * length);
 
-            UnsafeUtility.MemCpy(occupiedBuffer, m_OccupiedBuffer, occupiedShiftSize);
-            UnsafeUtility.MemCpy(transformIndexBuffer, m_TransformIndexBuffer, transformIndexShiftSize);
             UnsafeUtility.MemCpy(transformBuffer, m_TransformBuffer, transformShiftSize);
 
-            UnsafeUtility.Free(m_OccupiedBuffer, m_AllocatorLabel);
-            UnsafeUtility.Free(m_TransformIndexBuffer, m_AllocatorLabel);
             UnsafeUtility.Free(m_TransformBuffer, m_AllocatorLabel);
 
-            m_OccupiedBuffer = occupiedBuffer;
-            m_TransformIndexBuffer = transformIndexBuffer;
             m_TransformBuffer = transformBuffer;
-
+            
             m_Length += length;
+            m_ActiveMap.Capacity = (int)m_Length;
         }
         private void Decremental(uint length)
         {
             AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
 
-            long
-                occupiedShiftSize = s_BoolenSize * (m_Length - length),
-                transformIndexShiftSize = s_HashSize * (m_Length - length),
-                transformShiftSize = s_TransformSize * (m_Length - length);
+            long transformShiftSize = s_TransformSize * (m_Length - length);
 
-            var occupiedBuffer = (bool*)UnsafeUtility.Malloc(occupiedShiftSize, UnsafeUtility.AlignOf<bool>(), m_AllocatorLabel);
-            var transformIndexBuffer = (Hash*)UnsafeUtility.Malloc(transformIndexShiftSize, UnsafeUtility.AlignOf<Hash>(), m_AllocatorLabel);
             var transformBuffer = (ProxyTransformData*)UnsafeUtility.Malloc(transformShiftSize, UnsafeUtility.AlignOf<ProxyTransformData>(), m_AllocatorLabel);
 
-            UnsafeUtility.MemCpy(occupiedBuffer, m_OccupiedBuffer, occupiedShiftSize);
-            UnsafeUtility.MemCpy(transformIndexBuffer, m_TransformIndexBuffer, transformIndexShiftSize);
             UnsafeUtility.MemCpy(transformBuffer, m_TransformBuffer, transformShiftSize);
 
-            UnsafeUtility.Free(m_OccupiedBuffer, m_AllocatorLabel);
-            UnsafeUtility.Free(m_TransformIndexBuffer, m_AllocatorLabel);
             UnsafeUtility.Free(m_TransformBuffer, m_AllocatorLabel);
 
-            m_OccupiedBuffer = occupiedBuffer;
-            m_TransformIndexBuffer = transformIndexBuffer;
             m_TransformBuffer = transformBuffer;
 
             m_Length -= length;
         }
 
-        public ProxyTransform Add(PrefabReference prefab, float3 translation, quaternion rotation, float3 scale, bool enableCull)
+        public ProxyTransform Add(PrefabReference prefab, 
+            float3 translation, quaternion rotation, float3 scale, bool enableCull,
+            float3 center, float3 size)
         {
             AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
+            m_WriteSemaphore.WaitOne();
 
             int index = -1;
             for (int i = 0; i < m_Length; i++)
             {
-                if (!*(m_OccupiedBuffer + i))
+                if (!(m_TransformBuffer + i)->m_IsOccupied)
                 {
                     index = i;
                     break;
@@ -172,21 +150,26 @@ namespace Syadeu.Presentation
             }
             if (index < 0)
             {
-                if (!m_Semaphore.WaitOne(0))
-                {
-                    return Add(prefab, translation, rotation, scale, enableCull);
-                }
+                //if (!m_WriteSemaphore.WaitOne(0))
+                //{
+                //    return Add(prefab, translation, rotation, scale, enableCull, center, size);
+                //}
 
                 Incremental(m_Length);
-                ProxyTransform result = Add(prefab, translation, rotation, scale, enableCull);
-                m_Semaphore.Release();
+                m_WriteSemaphore.Release();
+
+                ProxyTransform result = Add(prefab, translation, rotation, scale, enableCull, center, size);
+                m_WriteSemaphore.Release();
                 return result;
             }
 
+            Hash hash = Hash.NewHash();
             ProxyTransformData tr = new ProxyTransformData
             {
+                m_IsOccupied = true,
+
                 m_Index = index,
-                m_Hash = Hash.NewHash(),
+                m_Hash = hash,
                 m_Prefab = prefab,
                 m_ProxyIndex = ProxyTransform.ProxyNull,
                 m_EnableCull = enableCull,
@@ -195,89 +178,154 @@ namespace Syadeu.Presentation
 
                 m_Translation = translation,
                 m_Rotation = rotation,
-                m_Scale = scale
+                m_Scale = scale,
+
+                m_Center = center,
+                m_Size = size
             };
+            ProxyTransformData* targetP = m_TransformBuffer + index;
+            *targetP = tr;
+            m_ActiveMap.Add(hash, index);
 
-            *(m_TransformIndexBuffer + index) = tr.m_Hash;
-            *(m_TransformBuffer + index) = tr;
-
-            *(m_OccupiedBuffer + index) = true;
-
-            ProxyTransform transform = new ProxyTransform(m_TransformBuffer + index, tr.m_Hash);
+            ProxyTransform transform = new ProxyTransform(targetP, hash);
+            m_WriteSemaphore.Release();
             return transform;
         }
         public void Remove(ProxyTransform transform)
         {
             AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
+            m_WriteSemaphore.WaitOne();
+
+            Hash index = transform.index;
 
             ProxyTransformData* p = transform.m_Pointer;
-            if (!p->m_Hash.Equals(transform.m_Hash) || !*(m_OccupiedBuffer + p->m_Index))
+            if (!p->m_IsOccupied || !p->m_Hash.Equals(transform.m_Hash))
             {
                 throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
             }
 
+            p->m_IsOccupied = false;
             p->m_Hash = Hash.Empty;
-            *(m_OccupiedBuffer + p->m_Index) = false;
+            m_ActiveMap.Remove(p->m_Hash);
+
+            m_WriteSemaphore.Release();
+            CoreSystem.Logger.Log(Channel.Proxy,
+                $"ProxyTransform({index}) has been destroyed.");
         }
         public void Clear()
         {
-            //for (int i = 0; i < m_Length; i++)
-            //{
-            //    *(m_OccupiedBuffer + i) = false;
-            //}
-
-            UnsafeUtility.MemClear(m_OccupiedBuffer, m_Length * s_BoolenSize);
-            UnsafeUtility.MemClear(m_TransformIndexBuffer, m_Length * s_HashSize);
             UnsafeUtility.MemClear(m_TransformBuffer, m_Length * s_TransformSize);
+            m_ActiveMap.Clear();
+        }
+
+        public NativeArray<ProxyTransformData> GetActiveData(Allocator allocator)
+        {
+            var indices = m_ActiveMap.GetValueArray(Allocator.TempJob);
+            NativeArray<ProxyTransformData> data = new NativeArray<ProxyTransformData>(indices.Length, allocator, NativeArrayOptions.UninitializedMemory);
+            for (int i = 0; i < indices.Length; i++)
+            {
+                data[i] = m_TransformBuffer[indices[i]];
+            }
+
+            indices.Dispose();
+            return data;
+        }
+
+        private struct ProxyCheckJob : IJobParallelFor
+        {
+            NativeQueue<int>
+                m_Request,
+                m_Remove,
+                m_Visible,
+                m_Invisible;
+
+            public ProxyCheckJob(
+                NativeQueue<int> request, NativeQueue<int> remove,
+                NativeQueue<int> visible, NativeQueue<int> invisible)
+            {
+                m_Request = remove;
+                m_Remove = remove;
+                m_Visible = visible;
+                m_Invisible = visible;
+            }
+            public void Execute(int index)
+            {
+                throw new NotImplementedException();
+            }
         }
 
         public ParallelLoopResult ParallelFor(Action<ProxyTransform> action)
         {
-            //var semaphore = m_Semaphore;
-            //semaphore.WaitOne();
+            CoreSystem.Logger.ThreadBlock(nameof(NativeProxyData.ParallelFor), Syadeu.Internal.ThreadInfo.Background | Syadeu.Internal.ThreadInfo.Job | Syadeu.Internal.ThreadInfo.User);
 
-            bool* occupiedBuffer = m_OccupiedBuffer;
+            var semaphore = m_PararellSemaphore;
+            //var writeSemaphore = m_WriteSemaphore;
+            if (!semaphore.WaitOne(1000))
+            {
+                throw new CoreSystemException(CoreSystemExceptionFlag.Proxy,
+                    "Takes too long");
+            }
+
             ProxyTransformData* transformBuffer = m_TransformBuffer;
 
             ParallelLoopResult result = Parallel.For(0, m_Length, (i) =>
             {
-                if (!*(occupiedBuffer + i)) return;
-                action.Invoke(new ProxyTransform(transformBuffer + i, (*(transformBuffer + i)).m_Hash));
+                //writeSemaphore.WaitOne();
+
+                ProxyTransformData* p = transformBuffer + i;
+                if ((transformBuffer + i)->m_IsOccupied)
+                {
+                    action.Invoke(
+                        new ProxyTransform(p, p->m_Hash));
+                }
+
+                //writeSemaphore.Release();
             });
 
-            //CoreSystem.AddBackgroundJob(() =>
-            //{
-            //    while (!result.IsCompleted)
-            //    {
-            //        CoreSystem.ThreadAwaiter(1);
-            //    }
-            //    semaphore.Release();
-            //});
+            CoreSystem.AddBackgroundJob(() =>
+            {
+                while (!result.IsCompleted)
+                {
+                    CoreSystem.ThreadAwaiter(1);
+                }
+                semaphore.Release();
+            });
             return result;
         }
         public void For(Action<ProxyTransform> action)
         {
             for (int i = 0; i < m_Length; i++)
             {
-                if (!*(m_OccupiedBuffer + i)) return;
+                if (!(m_TransformBuffer + i)->m_IsOccupied) return;
                 action.Invoke(new ProxyTransform(m_TransformBuffer + i, (*(m_TransformBuffer + i)).m_Hash));
             }
         }
 
-        [StructLayout(LayoutKind.Sequential)]
-        public struct ProxyTransformData
+        [StructLayout(LayoutKind.Explicit, Size = 96)]
+        public struct ProxyTransformData : IEquatable<ProxyTransformData>
         {
-            internal int m_Index;
-            internal Hash m_Hash;
-            internal PrefabReference m_Prefab;
-            internal int2 m_ProxyIndex;
-            internal bool m_EnableCull;
-            internal bool m_IsVisible;
-            internal bool m_DestroyQueued;
+            // 1 bytes
+            [FieldOffset(0)] internal bool m_IsOccupied;
+            [FieldOffset(1)] internal bool m_EnableCull;
+            [FieldOffset(2)] internal bool m_IsVisible;
+            [FieldOffset(3)] internal bool m_DestroyQueued;
 
-            internal float3 m_Translation;
-            internal quaternion m_Rotation;
-            internal float3 m_Scale;
+            // 4 bytes
+            [FieldOffset(4)] internal int m_Index;
+            [FieldOffset(8)] internal int2 m_ProxyIndex;
+
+            // 8 bytes
+            [FieldOffset(16)] internal ulong m_Hash;
+            [FieldOffset(24)] internal PrefabReference m_Prefab;
+
+            // 12 bytes
+            [FieldOffset(32)] internal float3 m_Translation;
+            [FieldOffset(44)] internal float3 m_Scale;
+            [FieldOffset(56)] internal float3 m_Center;
+            [FieldOffset(68)] internal float3 m_Size;
+
+            // 16 bytes
+            [FieldOffset(80)] internal quaternion m_Rotation;
 
             public float3 translation
             {
@@ -294,6 +342,19 @@ namespace Syadeu.Presentation
                 get => m_Scale;
                 set => m_Scale = value;
             }
+            public AABB aabb => new AABB(m_Center + m_Translation, m_Size).Rotation(m_Rotation);
+
+            public AABB GetAABB(Allocator allocator = Allocator.TempJob)
+            {
+                return new AABB(m_Center + m_Translation, m_Size).Rotation(m_Rotation, allocator);
+            }
+            public bool Equals(ProxyTransformData other) => m_Hash.Equals(other.m_Hash);
+        }
+        [StructLayout(LayoutKind.Explicit, Size = 96)]
+        private struct DataKeyValuePair
+        {
+            [FieldOffset(0)] internal bool m_IsOccupied;
+            [FieldOffset(16)] internal Hash m_Hash;
         }
     }
 }

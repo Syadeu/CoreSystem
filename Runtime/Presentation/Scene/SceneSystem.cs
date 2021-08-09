@@ -3,6 +3,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+
 using System;
 using System.Linq;
 
@@ -13,6 +14,7 @@ using Syadeu.Database;
 using System.Collections;
 using System.IO;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Map;
@@ -43,12 +45,8 @@ namespace Syadeu.Presentation
         [ConfigValue(Header = "Screen", Name = "ResolutionX")] private int m_ResolutionX;
         [ConfigValue(Header = "Screen", Name = "ResolutionY")] private int m_ResolutionY;
 
-        //private CanvasGroup m_BlackScreen = null;
-        //private Camera m_DefaultCamera = null;
-
         private bool m_LoadingEnabled = false;
         private bool m_LoadingSceneSetupDone = false;
-        //private Timer m_SceneActiveTimer = new Timer();
 
         public Scene CurrentScene => m_CurrentScene;
         public SceneReference CurrentSceneRef => SceneList.Instance.GetScene(m_CurrentScene.path);
@@ -86,8 +84,8 @@ namespace Syadeu.Presentation
         public event Action OnLoadingExit;
 
         public override bool EnableBeforePresentation => false;
-        public override bool EnableOnPresentation => false;
-        public override bool EnableAfterPresentation => true;
+        public override bool EnableOnPresentation => true;
+        public override bool EnableAfterPresentation => false;
         public override bool IsStartable
         {
             get
@@ -110,10 +108,8 @@ namespace Syadeu.Presentation
         /// </summary>
         public bool IsSceneLoading => m_LoadingEnabled || m_AsyncOperation != null;
 
-        private MapSystem m_GridSystem;
-        private EntitySystem m_EntitySystem;
-        private readonly Dictionary<SceneReference, List<Action>> m_CustomSceneLoadDependences = new Dictionary<SceneReference, List<Action>>();
-        private readonly Dictionary<SceneReference, List<Action>> m_CustomSceneUnloadDependences = new Dictionary<SceneReference, List<Action>>();
+        private readonly ConcurrentDictionary<Hash, List<Action>> m_CustomSceneLoadDependences = new ConcurrentDictionary<Hash, List<Action>>();
+        private readonly ConcurrentDictionary<Hash, List<Action>> m_CustomSceneUnloadDependences = new ConcurrentDictionary<Hash, List<Action>>();
 
         #region Presentation Methods
         protected override PresentationResult OnInitialize()
@@ -196,13 +192,6 @@ namespace Syadeu.Presentation
             }
             #endregion
         }
-        protected override PresentationResult OnInitializeAsync()
-        {
-            RequestSystem<MapSystem>((other) => m_GridSystem = other);
-            RequestSystem<EntitySystem>((other) => m_EntitySystem = other);
-
-            return base.OnInitializeAsync();
-        }
         protected override PresentationResult OnStartPresentation()
         {
             if (m_DebugMode)
@@ -230,12 +219,25 @@ namespace Syadeu.Presentation
         }
 
         private readonly Queue<Action> m_LoadingEvent = new Queue<Action>();
-        protected override PresentationResult AfterPresentation()
+        private IEnumerator m_LoadingRoutine;
+
+        protected override PresentationResult OnPresentation()
         {
             if (!IsSceneLoading && m_LoadingEvent.Count > 0)
             {
                 m_LoadingEvent.Dequeue().Invoke();
             }
+
+            if (m_LoadingRoutine != null)
+            {
+                if (!m_LoadingRoutine.MoveNext()) m_LoadingRoutine = null;
+            }
+
+            return base.OnPresentation();
+        }
+        protected override PresentationResult AfterPresentation()
+        {
+            
 
             return base.AfterPresentation();
         }
@@ -247,23 +249,7 @@ namespace Syadeu.Presentation
         /// <param name="startDelay"></param>
         public void LoadStartScene(float waitDelay, int startDelay)
         {
-            if (!CoreSystem.IsThisMainthread())
-            {
-                CoreSystem.AddForegroundJob(() => LoadStartScene(waitDelay, startDelay)).Await();
-                return;
-            }
-
-            //if (m_CurrentScene.IsValid())
-            //{
-            //    InternalUnloadScene(m_CurrentScene, (oper) =>
-            //    {
-            //        InternalLoadScene(SceneList.Instance.StartScene, startDelay);
-            //    });
-            //}
-            //else
-            {
-                InternalLoadScene(SceneList.Instance.StartScene, waitDelay, startDelay);
-            }
+            m_LoadingEvent.Enqueue(() => InternalLoadScene(SceneList.Instance.StartScene, waitDelay, startDelay));
         }
         /// <summary>
         /// <see cref="SceneList.Scenes"/>에 있는 씬을 로드합니다.
@@ -273,24 +259,6 @@ namespace Syadeu.Presentation
         public void LoadScene(int index, float waitDelay, int startDelay)
         {
             m_LoadingEvent.Enqueue(() => InternalLoadScene(SceneList.Instance.Scenes[index], waitDelay, startDelay));
-
-            //if (!CoreSystem.IsThisMainthread())
-            //{
-            //    CoreSystem.AddForegroundJob(() => LoadScene(index, waitDelay, startDelay)).Await();
-            //    return;
-            //}
-
-            ////if (m_CurrentScene.IsValid())
-            ////{
-            ////    InternalUnloadScene(m_CurrentScene, (oper) =>
-            ////    {
-            ////        InternalLoadScene(SceneList.Instance.Scenes[index], startDelay);
-            ////    });
-            ////}
-            ////else
-            //{
-            //    InternalLoadScene(SceneList.Instance.Scenes[index], waitDelay, startDelay);
-            //}
         }
 
         /// <summary>
@@ -300,10 +268,17 @@ namespace Syadeu.Presentation
         /// <param name="onSceneStart"></param>
         public void RegisterSceneLoadDependence(SceneReference key, Action onSceneStart)
         {
-            if (!m_CustomSceneLoadDependences.TryGetValue(key, out var list))
+            if (string.IsNullOrEmpty(key.scenePath))
+            {
+                throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
+                    "Scene is valid");
+            }
+            Hash hash = Hash.NewHash(key.scenePath);
+
+            if (!m_CustomSceneLoadDependences.TryGetValue(hash, out var list))
             {
                 list = new List<Action>();
-                m_CustomSceneLoadDependences.Add(key, list);
+                m_CustomSceneLoadDependences.TryAdd(hash, list);
             }
             list.Add(onSceneStart);
         }
@@ -314,10 +289,17 @@ namespace Syadeu.Presentation
         /// <param name="onSceneStart"></param>
         public void RegisterSceneUnloadDependence(SceneReference key, Action onSceneStart)
         {
-            if (!m_CustomSceneUnloadDependences.TryGetValue(key, out var list))
+            if (string.IsNullOrEmpty(key.scenePath))
+            {
+                throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
+                    "Scene is valid");
+            }
+            Hash hash = Hash.NewHash(key.scenePath);
+
+            if (!m_CustomSceneUnloadDependences.TryGetValue(hash, out var list))
             {
                 list = new List<Action>();
-                m_CustomSceneUnloadDependences.Add(key, list);
+                m_CustomSceneUnloadDependences.TryAdd(hash, list);
             }
             list.Add(onSceneStart);
         }
@@ -326,20 +308,6 @@ namespace Syadeu.Presentation
             Action<float> onLoading, 
             Action<float, float> onAfterLoading, Action onLoadingExit)
         {
-            //CanvasScaler scaler = canvas.GetComponent<CanvasScaler>();
-            //if (scaler == null) scaler = canvas.gameObject.AddComponent<CanvasScaler>();
-            //scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            //scaler.referenceResolution = new Vector2(m_ResolutionX, m_ResolutionY);
-
-            //backgroundImg.rectTransform.sizeDelta = scaler.referenceResolution;
-            //backgroundImg.transform.localPosition = Vector3.zero;
-
-            //cg.interactable = false;
-            //cg.blocksRaycasts = false;
-
-            //m_DefaultCamera = cam;
-            //m_BlackScreen = cg;
-
             OnLoadingEnter += onLoadingEnter;
             OnWaitLoading += onWaitLoading;
             OnLoading += onLoading;
@@ -379,44 +347,9 @@ namespace Syadeu.Presentation
 
                 OnLoading?.Invoke(0);
                 m_AsyncOperation = SceneManager.LoadSceneAsync(scene, LoadSceneMode.Additive);
-                StartCoroutine(OnLoadingCoroutine(m_AsyncOperation));
 
-                m_AsyncOperation.completed += 
-                    (other) =>
-                    {
-                        CoreSystem.Logger.Log(Channel.Scene, $"Scene({scene.ScenePath}) load completed");
-
-                        m_CurrentScene = SceneManager.GetSceneByPath(scene);
-                        SceneManager.SetActiveScene(m_CurrentScene);
-
-                        onCompleted?.Invoke(other);
-
-                        CoreSystem.Logger.Log(Channel.Scene, "Initialize dependence presentation groups");
-                        List<ICustomYieldAwaiter> awaiters = StartSceneDependences(this, scene);
-                        CoreSystem.WaitInvoke(() =>
-                        {
-                            for (int i = 0; i < awaiters?.Count; i++)
-                            {
-                                if (awaiters[i].KeepWait) return false;
-                            }
-                            return true;
-                        }, () =>
-                        {
-                            CoreSystem.Logger.Log(Channel.Scene,
-                                "Started dependence presentation groups");
-
-                            OnAfterLoading?.Invoke(0, postDelay);
-                            CoreSystem.Logger.Log(Channel.Scene, $"After scene load fake time({postDelay}s) started");
-
-                            CoreSystem.WaitInvoke(postDelay, () =>
-                            {
-                                m_AsyncOperation = null;
-                                OnLoadingExit?.Invoke();
-                                m_LoadingEnabled = false;
-                                CoreSystem.Logger.Log(Channel.Scene, $"Scene({m_CurrentScene.name}) has been fully loaded");
-                            }, (passed) => OnAfterLoading?.Invoke(passed, postDelay));
-                        });
-                    };
+                m_LoadingRoutine = OnLoadingCoroutine(m_AsyncOperation);
+                //StartCoroutine(OnLoadingCoroutine(m_AsyncOperation));
             }, (passed) => OnWaitLoading?.Invoke(passed, preDelay));
 
             IEnumerator OnLoadingCoroutine(AsyncOperation oper)
@@ -427,6 +360,48 @@ namespace Syadeu.Presentation
                     yield return null;
                 }
                 OnLoading?.Invoke(1);
+
+                CoreSystem.Logger.Log(Channel.Scene, $"Scene({scene.ScenePath}) load completed");
+
+                m_CurrentScene = SceneManager.GetSceneByPath(scene);
+                SceneManager.SetActiveScene(m_CurrentScene);
+
+                onCompleted?.Invoke(oper);
+
+                CoreSystem.Logger.Log(Channel.Scene, "Initialize dependence presentation groups");
+                List<ICustomYieldAwaiter> awaiters = StartSceneDependences(this, scene);
+
+                while (!CheckAwaiters(awaiters, out int status))
+                {
+                    yield return null;
+                }
+
+                CoreSystem.Logger.Log(Channel.Scene,
+                        "Started dependence presentation groups");
+
+                OnAfterLoading?.Invoke(0, postDelay);
+                CoreSystem.Logger.Log(Channel.Scene, $"After scene load fake time({postDelay}s) started");
+
+                CoreSystem.WaitInvoke(postDelay, () =>
+                {
+                    m_AsyncOperation = null;
+                    OnLoadingExit?.Invoke();
+                    m_LoadingEnabled = false;
+                    CoreSystem.Logger.Log(Channel.Scene, $"Scene({m_CurrentScene.name}) has been fully loaded");
+                }, (passed) => OnAfterLoading?.Invoke(passed, postDelay));
+            }
+            static bool CheckAwaiters(List<ICustomYieldAwaiter> awaiters, out int status)
+            {
+                for (int i = 0; i < awaiters?.Count; i++)
+                {
+                    if (awaiters[i].KeepWait)
+                    {
+                        status = i;
+                        return false;
+                    }
+                }
+                status = awaiters != null ? awaiters.Count : 0;
+                return true;
             }
         }
         private void InternalUnloadScene(SceneReference scene, Action<AsyncOperation> onCompleted = null)
@@ -450,7 +425,8 @@ namespace Syadeu.Presentation
         }
         private static List<ICustomYieldAwaiter> StartSceneDependences(SceneSystem system, SceneReference key)
         {
-            if (system.m_CustomSceneLoadDependences.TryGetValue(key, out List<Action> list))
+            Hash hash = Hash.NewHash(key.scenePath);
+            if (system.m_CustomSceneLoadDependences.TryGetValue(hash, out List<Action> list))
             {
                 for (int i = 0; i < list.Count; i++)
                 {
@@ -475,7 +451,8 @@ namespace Syadeu.Presentation
         }
         private static void StopSceneDependences(SceneSystem system, SceneReference key)
         {
-            if (system.m_CustomSceneUnloadDependences.TryGetValue(key, out List<Action> list))
+            Hash hash = Hash.NewHash(key.scenePath);
+            if (system.m_CustomSceneUnloadDependences.TryGetValue(hash, out List<Action> list))
             {
                 for (int i = 0; i < list.Count; i++)
                 {
@@ -497,22 +474,5 @@ namespace Syadeu.Presentation
             }
         }
         #endregion
-
-        //private static void LoadSceneGrid(EntitySystem entitySystem, GridSystem gridSystem, SceneReference scene)
-        //{
-        //    ManagedGrid grid = ManagedGrid.FromBinary(scene.m_SceneGridData);
-        //    ManagedCell[] cells = grid.cells;
-        //    for (int i = 0; i < cells.Length; i++)
-        //    {
-        //        if (cells[i].GetValue() is EntityBase.Captured capturedEntity)
-        //        {
-        //            entitySystem.LoadEntity(capturedEntity);
-        //        }
-        //        else
-        //        {
-
-        //        }
-        //    }
-        //}
     }
 }

@@ -84,7 +84,7 @@ namespace Syadeu
             }
             else name = $"MonoManager.{TypeHelper.TypeOf<T>.Name}";
 #endif
-            if (!SyadeuSettings.Instance.m_VisualizeObjects)
+            if (!CoreSystemSettings.Instance.m_VisualizeObjects)
             {
                 if (HideInHierarchy) gameObject.hideFlags = HideFlags.HideAndDontSave;
             }

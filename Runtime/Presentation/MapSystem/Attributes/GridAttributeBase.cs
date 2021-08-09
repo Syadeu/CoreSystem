@@ -4,6 +4,7 @@ using Syadeu.Internal;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Event;
 using System;
 using Unity.Mathematics;
 using UnityEngine.Scripting;
@@ -97,17 +98,32 @@ namespace Syadeu.Presentation.Map
             return GridSystem.IndexToLocation(idx);
         }
     }
-    //[Preserve]
-    //internal sealed class GridSizeProcessor : AttributeProcessor<GridSizeAttribute>
-    //{
-    //    protected override void OnCreated(GridSizeAttribute attribute, EntityData<IEntityData> entity)
-    //    {
-    //        GridSystem gridSystem = PresentationSystem<GridSystem>.System;
-    //        if (gridSystem == null) throw new System.Exception("System null");
-    //        if (gridSystem.GridMap == null) throw new System.Exception("Grid null");
+    [Preserve]
+    internal sealed class GridSizeProcessor : AttributeProcessor<GridSizeAttribute>
+    {
+        protected override void OnInitialize()
+        {
+            EventSystem.AddEvent<OnMoveStateChangedEvent>(OnMoveStateChanged);
+        }
+        private void OnMoveStateChanged(OnMoveStateChangedEvent ev)
+        {
+            GridSizeAttribute att = ev.Entity.GetAttribute<GridSizeAttribute>();
+            if (att == null) return;
 
-    //        gridSystem.UpdateGridEntity(entity, attribute.GetCurrentGridCells());
-    //    }
-    //}
+            if ((ev.State & OnMoveStateChangedEvent.MoveState.Stopped) == OnMoveStateChangedEvent.MoveState.Stopped)
+            {
+                att.UpdateGridCell();
+            }
+        }
+
+        //protected override void OnCreated(GridSizeAttribute attribute, EntityData<IEntityData> entity)
+        //{
+        //    GridSystem gridSystem = PresentationSystem<GridSystem>.System;
+        //    if (gridSystem == null) throw new System.Exception("System null");
+        //    if (gridSystem.GridMap == null) throw new System.Exception("Grid null");
+
+        //    gridSystem.UpdateGridEntity(entity, attribute.GetCurrentGridCells());
+        //}
+    }
     #endregion
 }

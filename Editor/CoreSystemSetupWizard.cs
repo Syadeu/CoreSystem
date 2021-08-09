@@ -4,14 +4,17 @@ using Syadeu.FMOD;
 #endif
 
 using Syadeu;
+using Syadeu.Internal;
 using Syadeu.Mono;
 using Syadeu.Presentation;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 namespace SyadeuEditor
 {
@@ -23,7 +26,7 @@ namespace SyadeuEditor
         }
         static void Startup()
         {
-            if (!SyadeuSettings.Instance.m_HideSetupWizard)
+            if (!CoreSystemSettings.Instance.m_HideSetupWizard)
             {
                 CoreSystemMenuItems.CoreSystemSetupWizard();
             }
@@ -31,7 +34,7 @@ namespace SyadeuEditor
         public enum ToolbarNames
         {
             Scene,
-            Test1,
+            Prefab,
             Test2,
             Test3,
             Test4,
@@ -44,6 +47,7 @@ namespace SyadeuEditor
         GUIStyle iconStyle;
 
         private SceneMenu m_SceneMenu;
+        private PrefabMenu m_PrefabMenu;
         private Rect m_CopyrightRect = new Rect(175, 475, 245, 20);
 
         private void OnEnable()
@@ -61,14 +65,14 @@ namespace SyadeuEditor
             iconStyle.alignment = TextAnchor.MiddleCenter;
 
             m_SceneMenu = new SceneMenu();
+            m_PrefabMenu = new PrefabMenu();
             AddSetup(ToolbarNames.Scene, m_SceneMenu.Predicate);
+            AddSetup(ToolbarNames.Prefab, m_PrefabMenu.Predicate);
         }
-        Vector2 pos;
-        Vector2 size;
         private void OnGUI()
         {
             GUILayout.Space(20);
-            EditorUtils.StringHeader("asd", 30, true);
+            EditorUtils.StringHeader("Setup", 30, true);
             GUILayout.Space(10);
             EditorUtils.Line();
             GUILayout.Space(10);
@@ -83,6 +87,9 @@ namespace SyadeuEditor
                 {
                     case ToolbarNames.Scene:
                         m_SceneMenu.OnGUI();
+                        break;
+                    case ToolbarNames.Prefab:
+                        m_PrefabMenu.OnGUI();
                         break;
                     default:
                         break;
@@ -139,6 +146,7 @@ namespace SyadeuEditor
         }
         #endregion
 
+        #region Scene Menu
         private sealed class SceneMenu
         {
             private SerializedObject serializedObject;
@@ -288,8 +296,33 @@ namespace SyadeuEditor
                                 EditorUtils.SetDirty(SceneList.Instance);
                                 EditorSceneManager.SetActiveScene(scene);
 
-                                GameObject loadingScr = new GameObject("Loading Script");
-                                loadingScr.AddComponent<CustomLoadingScene>();
+                                GameObject cameraObj = new GameObject("Loading Camera");
+                                Camera cam = cameraObj.AddComponent<Camera>();
+
+                                GameObject canvasObj = new GameObject("Loading Canvas");
+                                Canvas canvas = canvasObj.AddComponent<Canvas>();
+                                CanvasScaler canvasScaler = canvasObj.AddComponent<CanvasScaler>();
+                                canvasObj.AddComponent<GraphicRaycaster>();
+                                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                                canvasScaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+
+                                GameObject BlackScreenObj = new GameObject("BlackScreen");
+                                BlackScreenObj.transform.SetParent(canvasObj.transform);
+                                CanvasGroup canvasGroup = BlackScreenObj.AddComponent<CanvasGroup>();
+                                Image blackScreenImg = BlackScreenObj.AddComponent<Image>();
+                                blackScreenImg.color = Color.black;
+                                blackScreenImg.rectTransform.sizeDelta = new Vector2(800, 600);
+                                blackScreenImg.rectTransform.anchoredPosition = Vector2.zero;
+
+                                GameObject loadingObj = new GameObject("Loading Script");
+                                CustomLoadingScene loadingScr = loadingObj.AddComponent<CustomLoadingScene>();
+
+                                TypeHelper.TypeOf<CustomLoadingScene>.Type.GetField("m_Camera", BindingFlags.Instance | BindingFlags.NonPublic)
+                                    .SetValue(loadingScr, cam);
+                                TypeHelper.TypeOf<CustomLoadingScene>.Type.GetField("m_FadeGroup", BindingFlags.Instance | BindingFlags.NonPublic)
+                                    .SetValue(loadingScr, canvasGroup);
+
+                                EditorUtility.SetDirty(loadingScr);
 
                                 EditorSceneManager.SaveScene(scene);
 
@@ -351,5 +384,126 @@ namespace SyadeuEditor
             }
             private void CloseScene(Scene scene) => EditorSceneManager.CloseScene(scene, true);
         }
+
+        #endregion
+
+        #region Prefab Menu
+
+        private sealed class PrefabMenu
+        {
+            SerializedObject serializedObject;
+            SerializedProperty
+                m_ObjectSettings;
+
+            FieldInfo objectSettingsFieldInfo;
+            List<PrefabList.ObjectSetting> objectSettings;
+
+            int m_AddressableCount = 0;
+            readonly List<int> m_InvalidIndices = new List<int>();
+
+            Vector2
+                m_Scroll = Vector2.zero;
+
+            public PrefabMenu()
+            {
+                serializedObject = new SerializedObject(PrefabList.Instance);
+                m_ObjectSettings = serializedObject.FindProperty("m_ObjectSettings");
+
+                objectSettingsFieldInfo = TypeHelper.TypeOf<PrefabList>.Type.GetField("m_ObjectSettings",
+                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                var temp = objectSettingsFieldInfo.GetValue(PrefabList.Instance);
+                
+                if (temp == null)
+                {
+                    objectSettings = new List<PrefabList.ObjectSetting>();
+                    objectSettingsFieldInfo.SetValue(PrefabList.Instance, objectSettings);
+
+                    serializedObject.Update();
+                }
+                else objectSettings = (List<PrefabList.ObjectSetting>)temp;
+
+                for (int i = 0; i < objectSettings.Count; i++)
+                {
+                    if (objectSettings[i].m_RefPrefab.editorAsset == null)
+                    {
+                        m_InvalidIndices.Add(i);
+                    }
+                }
+
+                m_AddressableCount = PrefabListEditor.DefaultGroup.entries.Count;
+            }
+
+            public bool Predicate()
+            {
+                if (objectSettings.Count - m_InvalidIndices.Count != m_AddressableCount) return false;
+                return true;
+            }
+            public void OnGUI()
+            {
+                if (GUILayout.Button("Rebase"))
+                {
+                    PrefabListEditor.Rebase(objectSettings);
+
+                    m_InvalidIndices.Clear();
+                    for (int i = 0; i < objectSettings.Count; i++)
+                    {
+                        if (objectSettings[i].m_RefPrefab.editorAsset == null)
+                        {
+                            m_InvalidIndices.Add(i);
+                        }
+                    }
+
+                    serializedObject.Update();
+                    EditorUtils.SetDirty(PrefabList.Instance);
+                }
+
+                m_Scroll = EditorGUILayout.BeginScrollView(m_Scroll);
+
+                using (new EditorUtils.BoxBlock(Color.black))
+                {
+                    if (objectSettings.Count - m_InvalidIndices.Count != m_AddressableCount)
+                    {
+                        EditorUtils.StringRich("Require Rebase", true);
+                    }
+                    else
+                    {
+                        EditorUtils.StringRich("Asset matched with Addressable", true);
+                    }
+                }
+
+                using (new EditorUtils.BoxBlock(Color.black))
+                {
+                    if (m_InvalidIndices.Count > 0)
+                    {
+                        EditorGUILayout.HelpBox("We\'ve found invalid assets in PrefabList but normally " +
+                        "it is not an issue. You can ignore this", MessageType.Info);
+                        EditorUtils.StringRich("Invalid prefab found");
+                        EditorGUI.indentLevel++;
+
+                        EditorGUI.BeginDisabledGroup(true);
+                        for (int i = 0; i < m_InvalidIndices.Count; i++)
+                        {
+                            EditorGUILayout.PropertyField(
+                                m_ObjectSettings.GetArrayElementAtIndex(m_InvalidIndices[i]), 
+                                new GUIContent($"Index at {m_InvalidIndices[i]}"));
+                        }
+                        EditorGUI.EndDisabledGroup();
+
+                        EditorGUI.indentLevel--;
+                    }
+                    else
+                    {
+                        EditorGUILayout.HelpBox("All prefabs nominal", MessageType.Info);
+                    }
+                }
+                
+
+                //
+                EditorGUILayout.EndScrollView();
+            }
+            //
+        }
+
+        #endregion
     }
 }

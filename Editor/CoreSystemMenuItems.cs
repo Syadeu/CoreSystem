@@ -24,7 +24,7 @@ namespace SyadeuEditor
         [MenuItem("CoreSystem/Edit Settings", priority = 1)]
         public static void SettingsMenu()
         {
-            Selection.activeObject = SyadeuSettings.Instance;
+            Selection.activeObject = CoreSystemSettings.Instance;
             EditorApplication.ExecuteMenuItem("Window/General/Inspector");
         }
 
@@ -46,12 +46,12 @@ namespace SyadeuEditor
             Selection.activeObject = EntityDataList.Instance;
             EditorApplication.ExecuteMenuItem("Window/General/Inspector");
         }
-        [MenuItem("CoreSystem/Edit Scene List", priority = 5)]
-        public static void SceneListMenu()
-        {
-            Selection.activeObject = SceneList.Instance;
-            EditorApplication.ExecuteMenuItem("Window/General/Inspector");
-        }
+        //[MenuItem("CoreSystem/Edit Scene List", priority = 5)]
+        //public static void SceneListMenu()
+        //{
+        //    Selection.activeObject = SceneList.Instance;
+        //    EditorApplication.ExecuteMenuItem("Window/General/Inspector");
+        //}
         [MenuItem("CoreSystem/Map System Window", priority = 6)]
         public static void MapSystemWindowMenu()
         {
@@ -79,19 +79,6 @@ namespace SyadeuEditor
         //    Selection.activeObject = CreatureSettings.Instance;
         //    EditorApplication.ExecuteMenuItem("Window/General/Inspector");
         //}
-#if CORESYSTEM_UNITYAUDIO
-        static UnityAudioWindow m_UnityAudioWindow;
-        [MenuItem("CoreSystem/Unity/Unity Audio Window")]
-        public static void UnityAudioWindow()
-        {
-            if (m_UnityAudioWindow == null)
-            {
-                m_UnityAudioWindow = GetWindow<UnityAudioWindow>();
-
-            }
-            m_UnityAudioWindow.ShowUtility();
-        }
-#endif
         static SQLiteWindow m_SQLiteWindow;
         [MenuItem("CoreSystem/SQLite/SQLite Window", priority = 300)]
         public static void Initialize()
@@ -120,6 +107,17 @@ namespace SyadeuEditor
             EditorApplication.ExecuteMenuItem("Window/General/Inspector");
         }
 #elif CORESYSTEM_UNITYAUDIO
+        static UnityAudioWindow m_UnityAudioWindow;
+        [MenuItem("CoreSystem/Unity/Unity Audio Window")]
+        public static void UnityAudioWindow()
+        {
+            if (m_UnityAudioWindow == null)
+            {
+                m_UnityAudioWindow = GetWindow<UnityAudioWindow>();
+
+            }
+            m_UnityAudioWindow.ShowUtility();
+        }
         [MenuItem("CoreSystem/Unity/AudioList")]
         public static void UnityAudioListMenu()
         {

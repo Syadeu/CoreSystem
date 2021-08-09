@@ -1,15 +1,21 @@
 ﻿using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Mono;
+using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Event;
+using Syadeu.Presentation.Render;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -33,40 +39,41 @@ namespace Syadeu.Presentation
         public event Action<ProxyTransform, RecycleableMonobehaviour> OnDataObjectProxyCreated;
         public event Action<ProxyTransform, RecycleableMonobehaviour> OnDataObjectProxyRemoved;
 
-        NativeQueue<ProxyTransform>
-                m_RequestDestories = new NativeQueue<ProxyTransform>(Allocator.Persistent),
-                m_RequestUpdates = new NativeQueue<ProxyTransform>(Allocator.Persistent),
+        private NativeProxyData m_ProxyData;
+#pragma warning disable IDE0090 // Use 'new(...)'
+        private NativeQueue<int>
+                m_RequestDestories,
+                m_RequestUpdates,
 
-                m_RequestProxyList = new NativeQueue<ProxyTransform>(Allocator.Persistent),
-                m_RemoveProxyList = new NativeQueue<ProxyTransform>(Allocator.Persistent),
-                m_VisibleList = new NativeQueue<ProxyTransform>(Allocator.Persistent),
-                m_InvisibleList = new NativeQueue<ProxyTransform>(Allocator.Persistent);
+                m_RequestProxyList,
+                m_RemoveProxyList,
+                m_VisibleList,
+                m_InvisibleList;
+#pragma warning restore IDE0090 // Use 'new(...)'
+        private ParallelLoopResult m_VisibleJob;
 
         private SceneSystem m_SceneSystem;
-        private Render.RenderSystem m_RenderSystem;
+        private RenderSystem m_RenderSystem;
+        private EventSystem m_EventSystem;
 
         private bool m_LoadingLock = false;
         private bool m_Disposed = false;
 
         public bool Disposed => m_Disposed;
-
-        private NativeProxyData m_ProxyData;
+        public override bool IsStartable => m_VisibleJob.IsCompleted;
 
         #region Presentation Methods
         protected override PresentationResult OnInitialize()
         {
-            //m_VisibleCheckJobWorker = CoreSystem.CreateNewBackgroundJobWorker(true);
-            //m_VisibleCheckJob = new BackgroundJob(ProxyVisibleCheckPararellJob);
-
             if (!PoolContainer<PrefabRequester>.Initialized) PoolContainer<PrefabRequester>.Initialize(() => new PrefabRequester(), 10);
 
-            //ConsoleWindow.CreateCommand((cmd) =>
-            //{
-            //    for (int i = 0; i < m_MappedGameObjects.Length; i++)
-            //    {
-            //        DestoryDataObject(m_MappedGameObjects[i].m_Idx);
-            //    }
-            //}, "destroy", "all");
+            m_RequestDestories = new NativeQueue<int>(Allocator.Persistent);
+            m_RequestUpdates = new NativeQueue<int>(Allocator.Persistent);
+
+            m_RequestProxyList = new NativeQueue<int>(Allocator.Persistent);
+            m_RemoveProxyList = new NativeQueue<int>(Allocator.Persistent);
+            m_VisibleList = new NativeQueue<int>(Allocator.Persistent);
+            m_InvisibleList = new NativeQueue<int>(Allocator.Persistent);
 
             return base.OnInitialize();
         }
@@ -76,63 +83,46 @@ namespace Syadeu.Presentation
             AssemblyBuilder ab = AppDomain.CurrentDomain.DefineDynamicAssembly(aName, AssemblyBuilderAccess.Run);
             m_ModuleBuilder = ab.DefineDynamicModule(aName.Name);
 
-            RequestSystem<SceneSystem>((other) => m_SceneSystem = other);
-            RequestSystem<Render.RenderSystem>((other) => m_RenderSystem = other);
-
             m_ProxyData = new NativeProxyData(1024, Allocator.Persistent);
-            EventDescriptor<ProxyTransform>.AddEvent(ProxyTransform.s_TranslationChanged, OnProxyTransformTranslationChanged);
-            EventDescriptor<ProxyTransform>.AddEvent(ProxyTransform.s_RotationChanged, OnProxyTransformRotationChanged);
-            EventDescriptor<ProxyTransform>.AddEvent(ProxyTransform.s_ScaleChanged, OnProxyTransformScaleChanged);
-            EventDescriptor<ProxyTransform>.AddEvent(ProxyTransform.s_RequestProxy, OnProxyTransformProxyRequested);
-            EventDescriptor<ProxyTransform>.AddEvent(ProxyTransform.s_RemoveProxy, OnProxyTransformProxyRemove);
+
+            RequestSystem<SceneSystem>((other) => m_SceneSystem = other);
+            RequestSystem<RenderSystem>((other) => m_RenderSystem = other);
+            RequestSystem<EventSystem>(Bind);
+
+            m_VisibleJob = m_ProxyData.ParallelFor((other) =>
+            {
+            });
 
             return base.OnInitializeAsync();
         }
-        private void OnProxyTransformTranslationChanged(ProxyTransform data)
+        private void Bind(EventSystem other)
         {
-            if (!data.hasProxy)
-            {
-                if (!data.hasProxyQueued && m_RenderSystem.IsInCameraScreen(data.position))
-                {
-                    data.RequestProxy();
-                    return;
-                }
-            }
-            else
-            {
-                if (!data.hasProxyQueued)
-                {
-                    m_RequestUpdates.Enqueue(data);
-                }
-            }
-        }
-        private void OnProxyTransformRotationChanged(ProxyTransform data)
-        {
-            if (!data.hasProxy || data.hasProxyQueued) return;
+            m_EventSystem = other;
 
-            m_RequestUpdates.Enqueue(data);
+            m_EventSystem.AddEvent<OnTransformChanged>(OnTransformChanged);
         }
-        private void OnProxyTransformScaleChanged(ProxyTransform data)
-        {
-            if (!data.hasProxy || data.hasProxyQueued) return;
 
-            m_RequestUpdates.Enqueue(data);
-        }
-        private void OnProxyTransformProxyRequested(ProxyTransform data)
+        unsafe private void OnTransformChanged(OnTransformChanged ev)
         {
-            CoreSystem.Logger.Log(Channel.Proxy,
-                $"Proxy requested at {data.index}, {data.prefab.GetObjectSetting().m_Name}");
+            if (!ev.transform.hasProxy || ev.transform.hasProxyQueued) return;
 
-            m_RequestProxyList.Enqueue(data);
-            //RequestProxy(data);
+            m_RequestUpdates.Enqueue(ev.transform.m_Pointer->m_Index);
         }
-        private void OnProxyTransformProxyRemove(ProxyTransform data)
-        {
-            CoreSystem.Logger.Log(Channel.Proxy,
-                $"Proxy removed at {data.index}, {data.prefab.GetObjectSetting().m_Name}");
-            //RemoveProxy(data);
-            m_RemoveProxyList.Enqueue(data);
-        }
+
+        //unsafe private void OnProxyTransformProxyRequested(ProxyTransform data)
+        //{
+        //    CoreSystem.Logger.Log(Channel.Proxy,
+        //        $"Proxy requested at {data.index}, {data.prefab.GetObjectSetting().m_Name}");
+
+        //    m_RequestProxyList.Enqueue(data.m_Pointer->m_Index);
+        //}
+        //unsafe private void OnProxyTransformProxyRemove(ProxyTransform data)
+        //{
+        //    CoreSystem.Logger.Log(Channel.Proxy,
+        //        $"Proxy removed at {data.index}, {data.prefab.GetObjectSetting().m_Name}");
+
+        //    m_RemoveProxyList.Enqueue(data.m_Pointer->m_Index);
+        //}
 
         protected override PresentationResult OnStartPresentation()
         {
@@ -150,52 +140,52 @@ namespace Syadeu.Presentation
                 m_VisibleList.Clear();
                 m_InvisibleList.Clear();
 
-                m_Instances.Clear();
-                m_TerminatedProxies.Clear();
-
                 m_ProxyData.For((tr) =>
                 {
+                    "in".ToArray();
                     OnDataObjectDestroy?.Invoke(tr);
+
+                    if (tr.hasProxy && !tr.hasProxyQueued)
+                    {
+                        UnityEngine.Object.Destroy(tr.proxy.gameObject);
+                    }
                 });
+
+                m_Instances.Clear();
+                m_TerminatedProxies.Clear();
 
                 m_ProxyData.Clear();
                 m_LoadingLock = false;
             };
 
-            m_VisibleJob = m_ProxyData.ParallelFor((other) =>
-            {
-            });
             return base.OnStartPresentation();
         }
 
-        protected override PresentationResult BeforePresentation()
-        {
-            
-
-            return base.BeforePresentation();
-        }
+        JobHandle job;
         protected override PresentationResult AfterPresentation()
         {
             const int c_ChunkSize = 100;
+            job.Complete();
 
             if (m_LoadingLock) return base.AfterPresentation();
 
-            int destroyCount = m_RequestDestories.Count;
-            for (int i = 0; i < destroyCount; i++)
-            {
-                ProxyTransform tr = m_RequestDestories.Dequeue();
-
-                OnDataObjectDestroy?.Invoke(tr);
-                m_ProxyData.Remove(tr);
-
-                if (i != 0 && i % c_ChunkSize == 0) break;
-            }
-
+            #region Update Proxy
             int requestUpdateCount = m_RequestUpdates.Count;
             for (int i = 0; i < requestUpdateCount; i++)
             {
-                ProxyTransform tr = m_RequestUpdates.Dequeue();
-                if (tr.isDestroyed) continue;
+                int idx = m_RequestUpdates.Dequeue();
+                ProxyTransform tr = m_ProxyData[idx];
+                //"in0".ToLog();
+                if (tr.isDestroyed || !tr.hasProxy)
+                {
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Proxy,
+                        "Destroyed or does not have any proxy");
+                }
+                if (tr.hasProxyQueued)
+                {
+                    m_RequestUpdates.Enqueue(idx);
+                    continue;
+                }
 
                 RecycleableMonobehaviour proxy = tr.proxy;
                 proxy.transform.position = tr.position;
@@ -204,32 +194,55 @@ namespace Syadeu.Presentation
 
                 if (i != 0 && i % c_ChunkSize == 0) break;
             }
+            #endregion
 
+            #region Create / Remove Proxy
             int requestProxyCount = m_RequestProxyList.Count;
             for (int i = 0; i < requestProxyCount; i++)
             {
-                ProxyTransform tr = m_RequestProxyList.Dequeue();
+                ProxyTransform tr = m_ProxyData[m_RequestProxyList.Dequeue()];
+                //"in1".ToLog();
                 if (tr.isDestroyed) continue;
+                //{
+                //    throw new CoreSystemException(CoreSystemExceptionFlag.Proxy,
+                //        "Destroyed");
+                //}
+                if (tr.hasProxy && !tr.hasProxyQueued)
+                {
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Proxy,
+                        $"Already have proxy, {tr.isDestroyed}:{tr.hasProxy}:{tr.hasProxyQueued}");
+                }
 
-                RequestProxy(tr);
-                if (i != 0 && i % c_ChunkSize == 0) break;
+                AddProxy(tr);
+                //if (i != 0 && i % c_ChunkSize == 0) break;
             }
-
             int removeProxyCount = m_RemoveProxyList.Count;
             for (int i = 0; i < removeProxyCount; i++)
             {
-                ProxyTransform tr = m_RemoveProxyList.Dequeue();
+                ProxyTransform tr = m_ProxyData[m_RemoveProxyList.Dequeue()];
+                //"in2".ToLog();
                 if (tr.isDestroyed) continue;
+                if (!tr.hasProxy)
+                {
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Proxy,
+                        "Does not have any proxy");
+                }
 
                 RemoveProxy(tr);
-                if (i != 0 && i % c_ChunkSize == 0) break;
+                //if (i != 0 && i % c_ChunkSize == 0) break;
             }
+            #endregion
 
+            #region Visible / Invisible
             int visibleCount = m_VisibleList.Count;
             for (int i = 0; i < visibleCount; i++)
             {
-                ProxyTransform tr = m_VisibleList.Dequeue();
+                ProxyTransform tr = m_ProxyData[m_VisibleList.Dequeue()];
                 if (tr.isDestroyed) continue;
+                //{
+                //    throw new CoreSystemException(CoreSystemExceptionFlag.Proxy,
+                //        "Destroyed");
+                //}
 
                 tr.isVisible = true;
                 OnDataObjectVisible?.Invoke(tr);
@@ -239,53 +252,159 @@ namespace Syadeu.Presentation
             int invisibleCount = m_InvisibleList.Count;
             for (int i = 0; i < invisibleCount; i++)
             {
-                ProxyTransform tr = m_InvisibleList.Dequeue();
+                ProxyTransform tr = m_ProxyData[m_InvisibleList.Dequeue()];
                 if (tr.isDestroyed) continue;
+                //{
+                //    throw new CoreSystemException(CoreSystemExceptionFlag.Proxy,
+                //        "Destroyed");
+                //}
 
                 tr.isVisible = false;
                 OnDataObjectInvisible?.Invoke(tr);
 
                 if (i != 0 && i % c_ChunkSize == 0) break;
             }
+            #endregion
 
-            return base.AfterPresentation();
+            #region Destroy
+            int destroyCount = m_RequestDestories.Count;
+            for (int i = 0; i < destroyCount; i++)
+            {
+                ProxyTransform tr = m_ProxyData[m_RequestDestories.Dequeue()];
+                if (tr.isDestroyed)
+                {
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Proxy,
+                        "Already destroyed");
+                }
+
+                OnDataObjectDestroy?.Invoke(tr);
+
+                if (tr.hasProxy && !tr.hasProxyQueued) RemoveProxy(tr);
+                m_ProxyData.Remove(tr);
+
+                if (i != 0 && i % c_ChunkSize == 0) break;
+            }
+            #endregion
+
+
+            ProxyJob proxyJob = new ProxyJob
+            {
+                m_ActiveData = m_ProxyData.GetActiveData(Allocator.TempJob),
+                m_Matrix = m_RenderSystem.Matrix4X4,
+
+                m_Remove = m_RemoveProxyList.AsParallelWriter(),
+                m_Request = m_RequestProxyList.AsParallelWriter(),
+
+                m_Visible = m_VisibleList.AsParallelWriter(),
+                m_Invisible = m_InvisibleList.AsParallelWriter()
+            };
+            job = proxyJob.Schedule(proxyJob.m_ActiveData.Length, 64);
+
+            return PresentationResult.Normal;
         }
-
-        ParallelLoopResult m_VisibleJob;
         protected override PresentationResult AfterPresentationAsync()
         {
-            if (m_VisibleJob.IsCompleted)
-            {
-                m_VisibleJob = m_ProxyData.ParallelFor((other) =>
-                {
-                    if (other.isDestroyed) return;
+            
 
-                    if (m_RenderSystem.IsInCameraScreen(other.position))
-                    {
-                        if (other.enableCull && !other.hasProxy)
-                        {
-                            other.RequestProxy();
-                        }
-                        
-                        if (!other.isVisible) m_VisibleList.Enqueue(other);
-                    }
-                    else
-                    {
-                        if (other.hasProxy && !other.hasProxyQueued)
-                        {
-                            other.RemoveProxy();
-                        }
+            //if (m_VisibleJob.IsCompleted)
+            //{
+            //    m_VisibleJob = m_ProxyData.ParallelFor((other) =>
+            //    {
+            //        if (other.isDestroyed) return;
 
-                        if (other.isVisible) m_InvisibleList.Enqueue(other);
-                    }
-                });
-            }
+            //        var vertices = other.aabb.GetVertices(Allocator.TempJob);
+            //        // aabb의 꼭지점 중 단 하나라도 화면 내 존재하면 화면에 비추는 것으로 간주함.
+            //        if (m_RenderSystem.IsInCameraScreen(vertices))
+            //        {
+            //            if (other.enableCull && !other.hasProxy && !other.hasProxyQueued)
+            //            {
+            //                //other.RequestProxy();
+            //                unsafe
+            //                {
+            //                    other.SetProxy(ProxyTransform.ProxyQueued);
+            //                    m_RequestProxyList.Enqueue(other.m_Pointer->m_Index);
+            //                }
+            //            }
 
+            //            unsafe
+            //            {
+            //                if (!other.isVisible) m_VisibleList.Enqueue(other.m_Pointer->m_Index);
+            //            }
+            //        }
+            //        else
+            //        {
+            //            if (other.hasProxy && !other.hasProxyQueued)
+            //            {
+            //                unsafe
+            //                {
+            //                    m_RemoveProxyList.Enqueue(other.m_Pointer->m_Index);
+            //                }
+            //            }
+
+            //            unsafe
+            //            {
+            //                if (other.isVisible) m_InvisibleList.Enqueue(other.m_Pointer->m_Index);
+            //            }
+            //        }
+
+            //        vertices.Dispose();
+            //    });
+            //}
             return base.AfterPresentationAsync();
+        }
+
+        [BurstCompile(CompileSynchronously = true)]
+        private struct ProxyJob : IJobParallelFor
+        {
+            [ReadOnly, DeallocateOnJobCompletion] public NativeArray<NativeProxyData.ProxyTransformData> m_ActiveData;
+            [ReadOnly] public float4x4 m_Matrix;
+            [WriteOnly] public NativeQueue<int>.ParallelWriter
+                m_Remove,
+                m_Request,
+
+                m_Visible,
+                m_Invisible;
+
+            public void Execute(int i)
+            {
+                NativeArray<float3> vertices = new NativeArray<float3>(8, Allocator.Temp);
+                m_ActiveData[i].GetAABB(Allocator.Temp).GetVertices(vertices);
+
+                if (RenderSystem.IsInCameraScreen(vertices, m_Matrix, float3.zero))
+                {
+                    if (m_ActiveData[i].m_EnableCull && 
+                        m_ActiveData[i].m_ProxyIndex.Equals(-1) &&                        !m_ActiveData[i].m_ProxyIndex.Equals(-2))
+                    {
+                        m_Request.Enqueue(m_ActiveData[i].m_Index);
+                    }
+
+                    if (!m_ActiveData[i].m_IsVisible)
+                    {
+                        m_Visible.Enqueue(m_ActiveData[i].m_Index);
+                    }
+                }
+                else
+                {
+                    if (!m_ActiveData[i].m_ProxyIndex.Equals(-1) &&
+                        !m_ActiveData[i].m_ProxyIndex.Equals(-2))
+                    {
+                        m_Remove.Enqueue(m_ActiveData[i].m_Index);
+                    }
+
+                    if (m_ActiveData[i].m_IsVisible)
+                    {
+                        m_Invisible.Enqueue(m_ActiveData[i].m_Index);
+                    }
+                }
+
+                vertices.Dispose();
+            }
         }
 
         public override void Dispose()
         {
+            job.Complete();
+
             m_RequestDestories.Dispose();
             m_RequestUpdates.Dispose();
 
@@ -306,32 +425,40 @@ namespace Syadeu.Presentation
         }
         #endregion
 
-        public ProxyTransform CreateNewPrefab(PrefabReference prefab, float3 pos, quaternion rot, float3 scale, bool enableCull)
+        public ProxyTransform CreateNewPrefab(PrefabReference prefab, float3 pos, quaternion rot, float3 scale, bool enableCull, float3 center, float3 size)
         {
             CoreSystem.Logger.NotNull(m_RenderSystem, $"You've call this method too early or outside of PresentationSystem");
 
-            ProxyTransform tr = m_ProxyData.Add(prefab, pos, rot, scale, enableCull);
-            if (!enableCull || m_RenderSystem.IsInCameraScreen(pos))
-            {
-                tr.RequestProxy();
-            }
+            ProxyTransform tr = m_ProxyData.Add(prefab, pos, rot, scale, enableCull, center, size);
             OnDataObjectCreated?.Invoke(tr);
 
-            CoreSystem.Logger.Log(Channel.Proxy, true,
-                $"ProxyTransform({prefab.GetObjectSetting().m_Name}) has been created at {pos}");
+            unsafe
+            {
+                CoreSystem.Logger.Log(Channel.Proxy, true,
+                $"ProxyTransform({prefab.GetObjectSetting().m_Name})" +
+                $"({tr.m_Hash}->{tr.m_Pointer->m_Hash}) " +
+                $"has been created at {pos}");
+            }
+            
             return tr;
         }
         public void Destroy(ProxyTransform proxyTransform)
         {
-            m_RequestDestories.Enqueue(proxyTransform);
+            unsafe
+            {
+                m_RequestDestories.Enqueue(proxyTransform.m_Pointer->m_Index);
+            }
+            CoreSystem.Logger.Log(Channel.Proxy,
+                $"Destroy called at {proxyTransform.index}");
         }
 
         #region Proxy Object Control
 
-        private void RequestProxy(ProxyTransform proxyTransform)
+        private void AddProxy(ProxyTransform proxyTransform)
         {
-            CoreSystem.Logger.ThreadBlock(ThreadInfo.Unity);
+            CoreSystem.Logger.ThreadBlock(nameof(GameObjectProxySystem.AddProxy), ThreadInfo.Unity);
 
+            proxyTransform.SetProxy(-2);
             PrefabReference prefab = proxyTransform.prefab;
 
             if (!m_TerminatedProxies.TryGetValue(prefab, out Queue<RecycleableMonobehaviour> pool) ||
@@ -397,6 +524,8 @@ namespace Syadeu.Presentation
                 m_TerminatedProxies.Add(prefab, pool);
             }
             pool.Enqueue(proxy);
+            CoreSystem.Logger.Log(Channel.Proxy, true,
+                    $"Prefab({prefab.GetObjectSetting().m_Name}) proxy removed.");
         }
 
         #endregion
@@ -568,10 +697,12 @@ namespace Syadeu.Presentation
         private sealed class PrefabRequester
         {
             GameObjectProxySystem m_ProxySystem;
-            SceneSystem m_SceneSystem;
+            SceneSystem SceneSystem => m_ProxySystem.m_SceneSystem;
+            EventSystem EventSystem => m_ProxySystem.m_EventSystem;
+
             Scene m_RequestedScene;
 
-            public void Setup(GameObjectProxySystem proxySystem, SceneSystem sceneSystem, PrefabReference prefabIdx, Vector3 pos, Quaternion rot,
+            public void Setup(GameObjectProxySystem proxySystem, PrefabReference prefabIdx, Vector3 pos, Quaternion rot,
                 Action<RecycleableMonobehaviour> onCompleted)
             {
                 //var prefabInfo = PrefabList.Instance.ObjectSettings[prefabIdx];
@@ -606,22 +737,37 @@ namespace Syadeu.Presentation
                 }
 
                 m_ProxySystem = proxySystem;
-                m_SceneSystem = sceneSystem;
-                m_RequestedScene = m_SceneSystem.CurrentScene;
+                m_RequestedScene = SceneSystem.CurrentScene;
 
-                if (CoreSystem.InstanceGroupTr == null) CoreSystem.InstanceGroupTr = new GameObject("InstanceSystemGroup").transform;
+                Transform parent;
+                if (prefabInfo.m_IsWorldUI)
+                {
+                    parent = PresentationSystem<WorldCanvasSystem>.System.Canvas.transform;
+                }
+                else
+                {
+                    if (CoreSystem.InstanceGroupTr == null) CoreSystem.InstanceGroupTr = new GameObject("InstanceSystemGroup").transform;
+
+                    parent = CoreSystem.InstanceGroupTr;
+                }
 
                 AssetReference refObject = prefabInfo.m_RefPrefab;
 
-                var oper = prefabInfo.m_RefPrefab.InstantiateAsync(pos, rot, CoreSystem.InstanceGroupTr);
+                //var oper = prefabInfo.m_RefPrefab.InstantiateAsync(pos, rot, CoreSystem.InstanceGroupTr);
+                var oper = prefabInfo.m_RefPrefab.InstantiateAsync(pos, rot, parent);
                 oper.Completed += (other) =>
                 {
-                    Scene currentScene = m_SceneSystem.CurrentScene;
+                    Scene currentScene = SceneSystem.CurrentScene;
                     if (!currentScene.Equals(m_RequestedScene))
                     {
                         CoreSystem.Logger.LogWarning(Channel.Proxy, $"{other.Result.name} is returned because Scene has been changed");
                         refObject.ReleaseInstance(other.Result);
                         return;
+                    }
+
+                    if (prefabInfo.m_IsWorldUI)
+                    {
+                        other.Result.layer = 5;
                     }
 
                     RecycleableMonobehaviour recycleable = other.Result.GetComponent<RecycleableMonobehaviour>();
@@ -637,6 +783,8 @@ namespace Syadeu.Presentation
                     }
 
                     recycleable.m_Idx = instances.Count;
+                    recycleable.m_EventSystem = EventSystem;
+
                     instances.Add(recycleable);
 
                     recycleable.InternalOnCreated();
@@ -652,9 +800,30 @@ namespace Syadeu.Presentation
             => InstantiatePrefab(prefab, INIT_POSITION, Quaternion.identity, onCompleted);
         private void InstantiatePrefab(PrefabReference prefab, Vector3 position, Quaternion rotation, Action<RecycleableMonobehaviour> onCompleted)
         {
-            PoolContainer<PrefabRequester>.Dequeue().Setup(this, m_SceneSystem, prefab, position, rotation, onCompleted);
+            PoolContainer<PrefabRequester>.Dequeue().Setup(this, prefab, position, rotation, onCompleted);
         }
 
         #endregion
+    }
+
+    public sealed class OnTransformChanged : SynchronizedEvent<OnTransformChanged>
+    {
+        public Entity<IEntity> entity { get; private set; }
+        public ProxyTransform transform { get; private set; }
+        public static OnTransformChanged GetEvent(ProxyTransform tr)
+        {
+            var temp = Dequeue();
+
+            Hash entityIdx = temp.EntitySystem.m_EntityGameObjects[tr.m_Hash];
+            temp.entity = Entity<IEntity>.GetEntity(entityIdx);
+            temp.transform = tr;
+
+            return temp;
+        }
+        protected override void OnTerminate()
+        {
+            entity = Entity<IEntity>.Empty;
+            transform = ProxyTransform.Null;
+        }
     }
 }

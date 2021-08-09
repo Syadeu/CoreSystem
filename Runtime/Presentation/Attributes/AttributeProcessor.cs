@@ -22,15 +22,26 @@ namespace Syadeu.Presentation.Attributes
     public abstract class AttributeProcessor : ProcessorBase, IAttributeProcessor
     {
         Type IProcessor.Target => TargetAttribute;
+        void IProcessor.OnInitialize() => OnInitialize();
+        void IProcessor.OnInitializeAsync() => OnInitializeAsync();
         void IAttributeProcessor.OnCreated(AttributeBase attribute, EntityData<IEntityData> entity) => OnCreated(attribute, entity);
         void IAttributeProcessor.OnCreatedSync(AttributeBase attribute, EntityData<IEntityData> entity) => OnCreatedSync(attribute, entity);
         void IAttributeProcessor.OnDestroy(AttributeBase attribute, EntityData<IEntityData> entity) => OnDestroy(attribute, entity);
         void IAttributeProcessor.OnDestroySync(AttributeBase attribute, EntityData<IEntityData> entity) => OnDestroySync(attribute, entity);
+        void IDisposable.Dispose() => OnDispose();
+
+        ~AttributeProcessor()
+        {
+            CoreSystem.Logger.Log(Channel.GC, $"Disposing AttributeProcessor({TargetAttribute.Name})");
+            ((IDisposable)this).Dispose();
+        }
 
         /// <summary>
         /// 이 프로세서가 타겟으로 삼을 <see cref="AttributeBase"/>입니다.
         /// </summary>
         protected abstract Type TargetAttribute { get; }
+        protected virtual void OnInitialize() { }
+        protected virtual void OnInitializeAsync() { }
         /// <summary>
         /// <see cref="Target"/>에 설정된 <see cref="ObjectBase"/>가 부착된 <see cref="IEntityData"/>가
         /// 생성되었을 때 실행되는 메소드입니다.
@@ -61,6 +72,8 @@ namespace Syadeu.Presentation.Attributes
         /// 동기 작업입니다.
         /// </remarks>
         protected virtual void OnDestroySync(AttributeBase attribute, EntityData<IEntityData> entity) { }
+
+        protected virtual void OnDispose() { }
     }
     /// <inheritdoc cref="IAttributeProcessor"/>
     [Preserve]
@@ -68,12 +81,23 @@ namespace Syadeu.Presentation.Attributes
         where T : AttributeBase
     {
         Type IProcessor.Target => TargetAttribute;
+        void IProcessor.OnInitialize() => OnInitialize();
+        void IProcessor.OnInitializeAsync() => OnInitializeAsync();
         void IAttributeProcessor.OnCreated(AttributeBase attribute, EntityData<IEntityData> entity) => OnCreated((T)attribute, entity);
         void IAttributeProcessor.OnCreatedSync(AttributeBase attribute, EntityData<IEntityData> entity) => OnCreatedSync((T)attribute, entity);
         void IAttributeProcessor.OnDestroy(AttributeBase attribute, EntityData<IEntityData> entity) => OnDestroy((T)attribute, entity);
         void IAttributeProcessor.OnDestroySync(AttributeBase attribute, EntityData<IEntityData> entity) => OnDestroySync((T)attribute, entity);
+        void IDisposable.Dispose() => OnDispose();
+
+         ~AttributeProcessor()
+        {
+            CoreSystem.Logger.Log(Channel.GC, $"Disposing AttributeProcessor({TargetAttribute.Name})");
+            ((IDisposable)this).Dispose();
+        }
 
         private Type TargetAttribute => TypeHelper.TypeOf<T>.Type;
+        protected virtual void OnInitialize() { }
+        protected virtual void OnInitializeAsync() { }
         /// <inheritdoc cref="IAttributeProcessor.OnCreated(AttributeBase, EntityData{IEntityData})"/>
         protected virtual void OnCreated(T attribute, EntityData<IEntityData> entity) { }
         /// <inheritdoc cref="IAttributeProcessor.OnCreatedSync(AttributeBase, EntityData{IEntityData})"/>
@@ -82,5 +106,7 @@ namespace Syadeu.Presentation.Attributes
         protected virtual void OnDestroy(T attribute, EntityData<IEntityData> entity) { }
         /// <inheritdoc cref="IAttributeProcessor.OnDestroySync(AttributeBase, EntityData{IEntityData})"/>
         protected virtual void OnDestroySync(T attribute, EntityData<IEntityData> entity) { }
+
+        protected virtual void OnDispose() { }
     }
 }

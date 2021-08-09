@@ -54,42 +54,79 @@ namespace SyadeuEditor
                 var objSetField = GetField("m_ObjectSettings");
                 List<PrefabList.ObjectSetting> origin = (List<PrefabList.ObjectSetting>)objSetField.GetValue(Asset);
 
-                for (int i = 0; i < origin.Count; i++)
-                {
-                    if (origin[i].m_RefPrefab.editorAsset == null)
-                    {
-                        origin[i].m_Name = $"!!INVALID!! {origin[i].m_Name}";
-                    }
-                }
+                Rebase(origin);
 
-                //List<PrefabList.ObjectSetting> tempList = new List<PrefabList.ObjectSetting>();
-
-                foreach (AddressableAssetEntry item in DefaultGroup.entries)
-                {
-                    string name = item.address.Split('/').Last().Split('.').First();
-                    if (origin.Where((other) => other.m_Name.Equals(name)).Any())
-                    {
-                        continue;
-                    }
-
-                    //if (item.TargetAsset is GameObject)
-                    {
-                        AssetReference refObj = new AssetReference(item.guid);
-
-                        origin.Add(new PrefabList.ObjectSetting
-                        {
-                            m_Name = name,
-                            m_RefPrefab = refObj
-                        });
-                    }
-                }
-
-                //objSetField.SetValue(Asset, tempList);
                 EditorUtility.SetDirty(target);
                 Repaint();
             }
 
+            EditorGUI.BeginDisabledGroup(true);
             base.OnInspectorGUI();
+            EditorGUI.EndDisabledGroup();
+        }
+
+        public static void Rebase(List<PrefabList.ObjectSetting> list)
+        {
+            Queue<int> invalidIndices = new Queue<int>();
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (list[i].m_RefPrefab.editorAsset == null)
+                {
+                    CoreSystem.Logger.Log(Channel.Editor,
+                        $"PrefabList found an valid asset at {i}:{list[i].m_Name}");
+
+                    //list[i].m_Name = $"!!INVALID!! {list[i].m_Name}";
+                    invalidIndices.Enqueue(i);
+                    continue;
+                }
+
+                if (list[i].m_RefPrefab.editorAsset is GameObject gameobj &&
+                    gameobj.GetComponent<RectTransform>() != null)
+                {
+                    list[i].m_IsWorldUI = true;
+                }
+            }
+
+            foreach (AddressableAssetEntry item in DefaultGroup.entries)
+            {
+                string name = item.address.Split('/').Last().Split('.').First();
+                if (list.Where((other) => other.m_Name.Equals(name)).Any())
+                {
+                    continue;
+                }
+
+                AssetReference refObj = new AssetReference(item.guid);
+                if (invalidIndices.Count > 0)
+                {
+                    int targetIdx = invalidIndices.Dequeue();
+                    string previousName = list[targetIdx].m_Name;
+
+                    bool isWorldUI = false;
+                    if (item.TargetAsset is GameObject gameobj &&
+                        gameobj.GetComponent<RectTransform>() != null)
+                    {
+                        isWorldUI = true;
+                    }
+
+                    list[targetIdx] = new PrefabList.ObjectSetting
+                    {
+                        m_Name = name,
+                        m_RefPrefab = refObj,
+                        m_IsWorldUI = isWorldUI,
+                    };
+
+                    CoreSystem.Logger.Log(Channel.Editor,
+                        $"PrefabList index at {targetIdx}:{previousName} was invalid but replaced to newly added prefab");
+                }
+                else
+                {
+                    list.Add(new PrefabList.ObjectSetting
+                    {
+                        m_Name = name,
+                        m_RefPrefab = refObj
+                    });
+                }
+            }
         }
     }
 }

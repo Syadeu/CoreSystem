@@ -65,9 +65,9 @@ namespace Syadeu.Mono
             m_ConsoleTextRect = new Rect(m_ConsoleRect.x, m_ConsoleRect.y + m_ConsoleRect.height, Screen.width, 23);
             m_PossibleRect = new Rect(Screen.width * 0.65f, m_ConsoleRect.height * 0.6f, Screen.width * 0.35f, m_ConsoleRect.height * 0.4f);
 
-            if (SyadeuSettings.Instance.m_UseConsole)
+            if (CoreSystemSettings.Instance.m_UseConsole)
             {
-                if (SyadeuSettings.Instance.m_UseOnlyDevelopmentBuild)
+                if (CoreSystemSettings.Instance.m_UseOnlyDevelopmentBuild)
                 {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                     CoreSystem.OnUnityUpdate += InputCheck;
@@ -89,15 +89,15 @@ namespace Syadeu.Mono
         }
         private void Application_logMessageReceived(string condition, string stackTrace, LogType type)
         {
-            if (SyadeuSettings.Instance.m_ConsoleLogWhenLogRecieved &&
-                SyadeuSettings.Instance.m_ConsoleLogTypes.HasFlag(ConvertFlag(type)))
+            if (CoreSystemSettings.Instance.m_ConsoleLogWhenLogRecieved &&
+                CoreSystemSettings.Instance.m_ConsoleLogTypes.HasFlag(ConvertFlag(type)))
             {
-                if (SyadeuSettings.Instance.m_ConsoleLogOnlyIsDevelopment)
+                if (CoreSystemSettings.Instance.m_ConsoleLogOnlyIsDevelopment)
                 {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                     if (ConvertFlag(type) == ResultFlag.Error)
                     {
-                        InternalLogAssert(true, condition, stackTrace, SyadeuSettings.Instance.m_ConsoleThrowWhenErrorRecieved);
+                        InternalLogAssert(true, condition, stackTrace, CoreSystemSettings.Instance.m_ConsoleThrowWhenErrorRecieved);
                     }
                     else InternalLog(condition, StringColor.white);
 #endif
@@ -106,7 +106,7 @@ namespace Syadeu.Mono
                 {
                     if (ConvertFlag(type) == ResultFlag.Error)
                     {
-                        InternalLogAssert(true, condition, stackTrace, SyadeuSettings.Instance.m_ConsoleThrowWhenErrorRecieved);
+                        InternalLogAssert(true, condition, stackTrace, CoreSystemSettings.Instance.m_ConsoleThrowWhenErrorRecieved);
                     }
                     else InternalLog(condition, StringColor.white);
                 }
@@ -154,7 +154,7 @@ namespace Syadeu.Mono
                 {
                     richText = true,
                     alignment = TextAnchor.UpperLeft,
-                    fontSize = SyadeuSettings.Instance.m_ConsoleFontSize,
+                    fontSize = CoreSystemSettings.Instance.m_ConsoleFontSize,
 
                     fixedWidth = Screen.width * .983f
                 };
@@ -167,7 +167,7 @@ namespace Syadeu.Mono
                 {
                     alignment = TextAnchor.MiddleLeft,
                     padding = new RectOffset(3, 0, 0, 0),
-                    fontSize = SyadeuSettings.Instance.m_ConsoleFontSize
+                    fontSize = CoreSystemSettings.Instance.m_ConsoleFontSize
                 };
                 m_ConsoleTextStyle.normal.textColor = new Color(.1f, .8f, .1f);
             }
@@ -176,13 +176,13 @@ namespace Syadeu.Mono
                 m_ConsolePossStyle = new GUIStyle("Label")
                 {
                     richText = true,
-                    fontSize = SyadeuSettings.Instance.m_ConsoleFontSize
+                    fontSize = CoreSystemSettings.Instance.m_ConsoleFontSize
                 };
                 m_ConsolePossStyle.normal.textColor = Color.white;
             }
 
-            if (!SyadeuSettings.Instance.m_UseConsole) return;
-            if (SyadeuSettings.Instance.m_UseOnlyDevelopmentBuild)
+            if (!CoreSystemSettings.Instance.m_UseConsole) return;
+            if (CoreSystemSettings.Instance.m_UseOnlyDevelopmentBuild)
             {
 #if !UNITY_EDITOR || !DEVELOPMENT_BUILD
                 return;
@@ -442,7 +442,7 @@ namespace Syadeu.Mono
             {
                 InternalLog(log, StringColor.maroon);
                 OnErrorReceieved?.Invoke();
-                if (SyadeuSettings.Instance.m_ConsoleThrowWhenErrorRecieved)
+                if (CoreSystemSettings.Instance.m_ConsoleThrowWhenErrorRecieved)
                 {
                     throw new CoreSystemException(CoreSystemExceptionFlag.Console, log);
                 }
@@ -531,38 +531,38 @@ namespace Syadeu.Mono
                 initializer.Equals(CurrentDefinition.m_Initializer)) return CurrentDefinition;
 
             CommandDefinition bestDef = null;
-            for (int i = 0; i < SyadeuSettings.Instance.m_CommandDefinitions.Count; i++)
+            for (int i = 0; i < CoreSystemSettings.Instance.m_CommandDefinitions.Count; i++)
             {
-                if (SyadeuSettings.Instance.m_CommandDefinitions[i] == null)
+                if (CoreSystemSettings.Instance.m_CommandDefinitions[i] == null)
                 {
-                    SyadeuSettings.Instance.m_CommandDefinitions.RemoveAt(i);
+                    CoreSystemSettings.Instance.m_CommandDefinitions.RemoveAt(i);
                     i--;
                     continue;
                 }
 
-                if (SyadeuSettings.Instance.m_CommandDefinitions[i].m_Initializer.Equals(initializer))
+                if (CoreSystemSettings.Instance.m_CommandDefinitions[i].m_Initializer.Equals(initializer))
                 {
-                    if (SyadeuSettings.Instance.m_CommandDefinitions[i].Requires != null)
+                    if (CoreSystemSettings.Instance.m_CommandDefinitions[i].Requires != null)
                     {
-                        if (SyadeuSettings.Instance.m_CommandDefinitions[i].m_Settings.HasFlag(CommandSetting.ShowIfRequiresTrue))
+                        if (CoreSystemSettings.Instance.m_CommandDefinitions[i].m_Settings.HasFlag(CommandSetting.ShowIfRequiresTrue))
                         {
-                            if (SyadeuSettings.Instance.m_CommandDefinitions[i].Requires.Invoke()) bestDef = SyadeuSettings.Instance.m_CommandDefinitions[i];
+                            if (CoreSystemSettings.Instance.m_CommandDefinitions[i].Requires.Invoke()) bestDef = CoreSystemSettings.Instance.m_CommandDefinitions[i];
                         }
-                        else bestDef = SyadeuSettings.Instance.m_CommandDefinitions[i];
+                        else bestDef = CoreSystemSettings.Instance.m_CommandDefinitions[i];
                     }
-                    else bestDef = SyadeuSettings.Instance.m_CommandDefinitions[i];
+                    else bestDef = CoreSystemSettings.Instance.m_CommandDefinitions[i];
                 }
-                else if (SyadeuSettings.Instance.m_CommandDefinitions[i].m_Initializer.StartsWith(initializer))
+                else if (CoreSystemSettings.Instance.m_CommandDefinitions[i].m_Initializer.StartsWith(initializer))
                 {
-                    if (SyadeuSettings.Instance.m_CommandDefinitions[i].Requires != null)
+                    if (CoreSystemSettings.Instance.m_CommandDefinitions[i].Requires != null)
                     {
-                        if (SyadeuSettings.Instance.m_CommandDefinitions[i].m_Settings.HasFlag(CommandSetting.ShowIfRequiresTrue))
+                        if (CoreSystemSettings.Instance.m_CommandDefinitions[i].m_Settings.HasFlag(CommandSetting.ShowIfRequiresTrue))
                         {
-                            if (SyadeuSettings.Instance.m_CommandDefinitions[i].Requires.Invoke()) possibleList.Add(SyadeuSettings.Instance.m_CommandDefinitions[i]);
+                            if (CoreSystemSettings.Instance.m_CommandDefinitions[i].Requires.Invoke()) possibleList.Add(CoreSystemSettings.Instance.m_CommandDefinitions[i]);
                         }
-                        else possibleList.Add(SyadeuSettings.Instance.m_CommandDefinitions[i]);
+                        else possibleList.Add(CoreSystemSettings.Instance.m_CommandDefinitions[i]);
                     }
-                    else possibleList.Add(SyadeuSettings.Instance.m_CommandDefinitions[i]);
+                    else possibleList.Add(CoreSystemSettings.Instance.m_CommandDefinitions[i]);
                 }
             }
 
@@ -666,18 +666,18 @@ namespace Syadeu.Mono
 
         private CommandDefinition FindDefinition(string name)
         {
-            for (int i = 0; i < SyadeuSettings.Instance.m_CommandDefinitions.Count; i++)
+            for (int i = 0; i < CoreSystemSettings.Instance.m_CommandDefinitions.Count; i++)
             {
-                if (SyadeuSettings.Instance.m_CommandDefinitions[i] == null)
+                if (CoreSystemSettings.Instance.m_CommandDefinitions[i] == null)
                 {
-                    SyadeuSettings.Instance.m_CommandDefinitions.RemoveAt(i);
+                    CoreSystemSettings.Instance.m_CommandDefinitions.RemoveAt(i);
                     i--;
                     continue;
                 }
 
-                if (SyadeuSettings.Instance.m_CommandDefinitions[i].m_Initializer.Equals(name))
+                if (CoreSystemSettings.Instance.m_CommandDefinitions[i].m_Initializer.Equals(name))
                 {
-                    return SyadeuSettings.Instance.m_CommandDefinitions[i];
+                    return CoreSystemSettings.Instance.m_CommandDefinitions[i];
                 }
             }
             return null;
@@ -823,7 +823,7 @@ namespace Syadeu.Mono
             {
                 def = ScriptableObject.CreateInstance<CommandDefinition>();
                 def.m_Initializer = lines[0];
-                SyadeuSettings.Instance.m_CommandDefinitions.Add(def);
+                CoreSystemSettings.Instance.m_CommandDefinitions.Add(def);
             }
 
             if (lines.Length < 2)

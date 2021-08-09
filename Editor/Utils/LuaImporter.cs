@@ -19,10 +19,10 @@ namespace SyadeuEditor
     {
         public override void OnImportAsset(AssetImportContext ctx)
         {
-            if (!SyadeuSettings.Instance.m_EnableLua)
+            if (!CoreSystemSettings.Instance.m_EnableLua)
             {
-                SyadeuSettings.Instance.m_EnableLua = true;
-                EditorUtility.SetDirty(SyadeuSettings.Instance);
+                CoreSystemSettings.Instance.m_EnableLua = true;
+                EditorUtility.SetDirty(CoreSystemSettings.Instance);
                 AssetDatabase.SaveAssets();
             }
 

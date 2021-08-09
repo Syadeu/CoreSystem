@@ -150,7 +150,7 @@ namespace Syadeu.Presentation.Map
                 GL.Begin(GL.QUADS);
 
                 GL.Color(colorWhite);
-                DrawGridGL(m_MainGrid.Value.Grid, .1f);
+                DrawGridGL(m_MainGrid.Value.Grid, .05f);
 
                 GL.Color(colorRed);
                 int[] gridEntities = m_GridEntities.Keys.ToArray();

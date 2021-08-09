@@ -1,5 +1,7 @@
 ﻿using Syadeu.Database;
 using Syadeu.Internal;
+using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Event;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,26 +10,28 @@ using UnityEngine.Events;
 
 namespace Syadeu.Mono
 {
+    [DisallowMultipleComponent]
     /// <summary>
     /// 재사용 가능 오브젝트들의 기본 참조 클래스입니다<br/>
     /// Awake, Start 함수를 절때 사용하지마세요 대신 OnInitialize를 사용하세요
     /// OnDestroy 함수를 절때 사용하지마세요
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    public abstract class RecycleableMonobehaviour : MonoBehaviour
+    /// <typeparam name="T"></typeparam>    
+    public abstract class RecycleableMonobehaviour : MonoBehaviour, IValidation
     {
-        private static Vector3 INIT_POSITION = new Vector3(-9999, -9999, -9999);
-
         public delegate bool TerminateCondition();
         /// <summary>
         /// <see cref="Presentation.GameObjectProxySystem.m_Instances"/> value 리스트의 인덱스입니다.
         /// </summary>
         internal int m_Idx = -1;
 
+        internal EventSystem m_EventSystem;
         private GameObject m_GameObject;
         private Transform m_Transform;
+        internal Entity<IEntity> m_Entity;
         private readonly List<Component> m_Components = new List<Component>();
 
+#pragma warning disable IDE1006 // Naming Styles
         /// <summary>
         /// <see cref="Presentation.GameObjectProxySystem"/> 에서 파싱한 <see cref="GameObject"/> 입니다.
         /// </summary>
@@ -36,7 +40,9 @@ namespace Syadeu.Mono
         /// <see cref="Presentation.GameObjectProxySystem"/> 에서 파싱한 <see cref="Transform"/> 입니다.
         /// </summary>
         public new Transform transform => m_Transform;
-
+        public Entity<IEntity> entity => m_Entity;
+        public EventSystem eventSystem => m_EventSystem;
+#pragma warning restore IDE1006 // Naming Styles
         /// <summary>
         /// PrefabManager 인스펙터창에서 보여질 이름입니다.
         /// 런타임에 아무런 영향을 주지않습니다.
@@ -124,13 +130,13 @@ namespace Syadeu.Mono
 
         internal void Terminate()
         {
-            CoreSystem.Logger.ThreadBlock(ThreadInfo.Unity);
+            CoreSystem.Logger.ThreadBlock(nameof(RecycleableMonobehaviour.Terminate), ThreadInfo.Unity);
             if (!Activated) throw new Exception("not initialized");
-
-            transform.position = INIT_POSITION;
 
             OnTerminate();
             Activated = false;
         }
+
+        public bool IsValid() => Activated && !m_Entity.Equals(Entity<IEntity>.Empty);
     }
 }

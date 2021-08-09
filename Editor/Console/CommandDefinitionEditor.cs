@@ -35,8 +35,8 @@ namespace SyadeuEditor
                 EditorUtils.StringRich("Added", StringColor.teal, true);
                 if (EditorUtils.Button("Remove"))
                 {
-                    SyadeuSettings.Instance.m_CommandDefinitions.Remove(m_Def);
-                    EditorUtility.SetDirty(SyadeuSettings.Instance);
+                    CoreSystemSettings.Instance.m_CommandDefinitions.Remove(m_Def);
+                    EditorUtility.SetDirty(CoreSystemSettings.Instance);
                 }
             }
             else
@@ -44,8 +44,8 @@ namespace SyadeuEditor
                 EditorUtils.StringRich("Not Added", StringColor.maroon, true);
                 if (EditorUtils.Button("Add"))
                 {
-                    SyadeuSettings.Instance.m_CommandDefinitions.Add(m_Def);
-                    EditorUtility.SetDirty(SyadeuSettings.Instance);
+                    CoreSystemSettings.Instance.m_CommandDefinitions.Add(m_Def);
+                    EditorUtility.SetDirty(CoreSystemSettings.Instance);
                 }
             }
             EditorUtils.SectorLine();
@@ -64,17 +64,17 @@ namespace SyadeuEditor
 
         private bool IsListed()
         {
-            for (int i = 0; i < SyadeuSettings.Instance.m_CommandDefinitions.Count; i++)
+            for (int i = 0; i < CoreSystemSettings.Instance.m_CommandDefinitions.Count; i++)
             {
-                if (SyadeuSettings.Instance.m_CommandDefinitions[i] == null)
+                if (CoreSystemSettings.Instance.m_CommandDefinitions[i] == null)
                 {
-                    SyadeuSettings.Instance.m_CommandDefinitions.RemoveAt(i);
+                    CoreSystemSettings.Instance.m_CommandDefinitions.RemoveAt(i);
                     i--;
-                    EditorUtils.SetDirty(SyadeuSettings.Instance);
+                    EditorUtils.SetDirty(CoreSystemSettings.Instance);
                     continue;
                 }
 
-                if (SyadeuSettings.Instance.m_CommandDefinitions[i] == m_Def) return true;
+                if (CoreSystemSettings.Instance.m_CommandDefinitions[i] == m_Def) return true;
             }
             return false;
         }

@@ -13,6 +13,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -21,6 +22,10 @@ namespace Syadeu.Presentation.Render
     [RequireGlobalConfig("General")]
     public sealed class RenderSystem : PresentationSystemEntity<RenderSystem>
     {
+        public override bool EnableBeforePresentation => true;
+        public override bool EnableOnPresentation => true;
+        public override bool EnableAfterPresentation => false;
+
         private ObClass<Camera> m_Camera;
         private Matrix4x4 m_Matrix4x4;
 
@@ -35,11 +40,10 @@ namespace Syadeu.Presentation.Render
             public bool m_IsVisible = false;
         }
 
-        public override bool EnableBeforePresentation => true;
-        public override bool EnableOnPresentation => true;
-        public override bool EnableAfterPresentation => false;
-
         public Camera Camera => m_Camera.Value;
+        public Matrix4x4 Matrix4X4 => m_Matrix4x4;
+
+        public event Action<Camera, Camera> OnCameraChanged;
         public event Action OnRender;
 
         internal List<CoreRoutine> m_PreRenderRoutines = new List<CoreRoutine>();
@@ -54,6 +58,7 @@ namespace Syadeu.Presentation.Render
             m_Camera = new ObClass<Camera>(ObValueDetection.Changed);
             m_Camera.OnValueChange += (from, to) =>
             {
+                OnCameraChanged.Invoke(from, to);
                 if (to == null) return;
 
                 m_Matrix4x4 = GetCameraMatrix4X4(to);
@@ -63,7 +68,7 @@ namespace Syadeu.Presentation.Render
                 //}
                 //else to.GetComponent<CameraComponent>().Initialize(this);
             };
-            m_ScreenOffset = SyadeuSettings.Instance.m_ScreenOffset;
+            m_ScreenOffset = CoreSystemSettings.Instance.m_ScreenOffset;
 
             CoreSystem.Instance.OnRender -= Instance_OnRender;
             CoreSystem.Instance.OnRender += Instance_OnRender;
@@ -78,7 +83,7 @@ namespace Syadeu.Presentation.Render
 
         protected override PresentationResult BeforePresentation()
         {
-            m_ScreenOffset = SyadeuSettings.Instance.m_ScreenOffset;
+            m_ScreenOffset = CoreSystemSettings.Instance.m_ScreenOffset;
             if (m_Camera.Value == null)
             {
                 m_Camera.Value = Camera.main;
@@ -185,6 +190,14 @@ namespace Syadeu.Presentation.Render
             return IsInCameraScreen(worldPosition, m_Matrix4x4, m_ScreenOffset) 
                 /*|| IsInCameraScreen(worldPosition, m_TopMatrix4x4, m_ScreenOffset)*/;
         }
+        public bool IsInCameraScreen(float3[] worldVertices)
+        {
+            return IsInCameraScreen(worldVertices, m_Matrix4x4, m_ScreenOffset);
+        }
+        public bool IsInCameraScreen(NativeArray<float3> worldVertices)
+        {
+            return IsInCameraScreen(worldVertices, m_Matrix4x4, m_ScreenOffset);
+        }
         /// <summary>
         /// 해당 좌표가 입력한 카메라 내부에 위치하는지 반환합니다.
         /// </summary>
@@ -212,6 +225,22 @@ namespace Syadeu.Presentation.Render
                 screenPoint.x < 1 + offset.x &&
                 screenPoint.y > 0 - offset.y &&
                 screenPoint.y < 1 + offset.y;
+        }
+        internal static bool IsInCameraScreen(float3[] vertices, Matrix4x4 matrix, Vector3 offset)
+        {
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                if (IsInCameraScreen(vertices[i], matrix, offset)) return true;
+            }
+            return false;
+        }
+        internal static bool IsInCameraScreen(NativeArray<float3> vertices, Matrix4x4 matrix, Vector3 offset)
+        {
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                if (IsInCameraScreen(vertices[i], matrix, offset)) return true;
+            }
+            return false;
         }
 
         public void StartPreRender(IEnumerator iter)
@@ -244,61 +273,4 @@ namespace Syadeu.Presentation.Render
         }
         public static float4x4 WorldToLocalMatrix(float3 translation, quaternion rotation) => math.inverse(LocalToWorldMatrix(translation, rotation));
     }
-
-    //public sealed class CameraComponent : MonoBehaviour
-    //{
-    //    private RenderSystem m_System;
-
-    //    public void Initialize(RenderSystem system)
-    //    {
-    //        m_System = system;
-    //    }
-
-    //    private IEnumerator OnPreRender()
-    //    {
-    //        while (true)
-    //        {
-    //            for (int i = m_System.m_PreRenderRoutines.Count - 1; i >= 0; i--)
-    //            {
-    //                if (m_System.m_PreRenderRoutines[i].Iterator.Current == null)
-    //                {
-    //                    if (!m_System.m_PreRenderRoutines[i].Iterator.MoveNext())
-    //                    {
-    //                        m_System.m_PreRenderRoutines.RemoveAt(i);
-    //                        continue;
-    //                    }
-    //                }
-    //                else
-    //                {
-    //                    throw new NotImplementedException();
-    //                }
-    //            }
-
-    //            yield return null;
-    //        }
-    //    }
-    //    private IEnumerator OnPostRender()
-    //    {
-    //        while (true)
-    //        {
-    //            for (int i = m_System.m_PostRenderRoutines.Count - 1; i >= 0; i--)
-    //            {
-    //                if (m_System.m_PostRenderRoutines[i].Iterator.Current == null)
-    //                {
-    //                    if (!m_System.m_PostRenderRoutines[i].Iterator.MoveNext())
-    //                    {
-    //                        m_System.m_PostRenderRoutines.RemoveAt(i);
-    //                        continue;
-    //                    }
-    //                }
-    //                else
-    //                {
-    //                    throw new NotImplementedException();
-    //                }
-    //            }
-
-    //            yield return null;
-    //        }
-    //    }
-    //}
 }
