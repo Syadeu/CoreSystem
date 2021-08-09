@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Jobs;
 using Unity.Mathematics;
 
 namespace Syadeu.Presentation
@@ -30,6 +31,7 @@ namespace Syadeu.Presentation
         #endregion
 
         [NativeDisableUnsafePtrRestriction] public ProxyTransformData* m_TransformBuffer;
+        public NativeHashMap<ulong, int> m_ActiveMap;
 
         public uint m_Length;
 
@@ -67,6 +69,8 @@ namespace Syadeu.Presentation
 
             UnsafeUtility.Free(m_TransformBuffer, m_AllocatorLabel);
 
+            m_ActiveMap.Dispose();
+
             m_TransformBuffer = null;
 
             m_Length = 0;
@@ -80,6 +84,9 @@ namespace Syadeu.Presentation
             array.m_TransformBuffer = (ProxyTransformData*)UnsafeUtility.Malloc(s_TransformSize * length, UnsafeUtility.AlignOf<ProxyTransformData>(), allocator);
             array.m_Length = length;
             array.m_AllocatorLabel = allocator;
+
+            array.m_ActiveMap = new NativeHashMap<ulong, int>((int)length, allocator);
+
             // Create a dispose sentinel to track memory leaks. 
             // An atomic safety handle is also created automatically.
             DisposeSentinel.Create(out array.m_Safety, out array.m_DisposeSentinel, 1, allocator);
@@ -104,8 +111,9 @@ namespace Syadeu.Presentation
             UnsafeUtility.Free(m_TransformBuffer, m_AllocatorLabel);
 
             m_TransformBuffer = transformBuffer;
-
+            
             m_Length += length;
+            m_ActiveMap.Capacity = (int)m_Length;
         }
         private void Decremental(uint length)
         {
@@ -177,6 +185,7 @@ namespace Syadeu.Presentation
             };
             ProxyTransformData* targetP = m_TransformBuffer + index;
             *targetP = tr;
+            m_ActiveMap.Add(hash, index);
 
             ProxyTransform transform = new ProxyTransform(targetP, hash);
             m_WriteSemaphore.Release();
@@ -197,6 +206,7 @@ namespace Syadeu.Presentation
 
             p->m_IsOccupied = false;
             p->m_Hash = Hash.Empty;
+            m_ActiveMap.Remove(p->m_Hash);
 
             m_WriteSemaphore.Release();
             CoreSystem.Logger.Log(Channel.Proxy,
@@ -205,6 +215,43 @@ namespace Syadeu.Presentation
         public void Clear()
         {
             UnsafeUtility.MemClear(m_TransformBuffer, m_Length * s_TransformSize);
+            m_ActiveMap.Clear();
+        }
+
+        public NativeArray<ProxyTransformData> GetActiveData(Allocator allocator)
+        {
+            var indices = m_ActiveMap.GetValueArray(Allocator.TempJob);
+            NativeArray<ProxyTransformData> data = new NativeArray<ProxyTransformData>(indices.Length, allocator, NativeArrayOptions.UninitializedMemory);
+            for (int i = 0; i < indices.Length; i++)
+            {
+                data[i] = m_TransformBuffer[indices[i]];
+            }
+
+            indices.Dispose();
+            return data;
+        }
+
+        private struct ProxyCheckJob : IJobParallelFor
+        {
+            NativeQueue<int>
+                m_Request,
+                m_Remove,
+                m_Visible,
+                m_Invisible;
+
+            public ProxyCheckJob(
+                NativeQueue<int> request, NativeQueue<int> remove,
+                NativeQueue<int> visible, NativeQueue<int> invisible)
+            {
+                m_Request = remove;
+                m_Remove = remove;
+                m_Visible = visible;
+                m_Invisible = visible;
+            }
+            public void Execute(int index)
+            {
+                throw new NotImplementedException();
+            }
         }
 
         public ParallelLoopResult ParallelFor(Action<ProxyTransform> action)
