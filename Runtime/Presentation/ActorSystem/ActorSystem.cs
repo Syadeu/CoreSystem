@@ -47,7 +47,7 @@ namespace Syadeu.Presentation.Actor
 
         private void M_EntitySystem_OnEntityCreated(EntityData<IEntityData> obj)
         {
-            if (!obj.Type.Equals(TypeHelper.TypeOf<ActorEntity>.Type)) return;
+            if (!TypeHelper.TypeOf<ActorEntity>.Type.IsAssignableFrom(obj.Type)) return;
 
             Entity<ActorEntity> actorRef = obj;
 
@@ -57,7 +57,7 @@ namespace Syadeu.Presentation.Actor
         }
         private void M_EntitySystem_OnEntityDestroy(EntityData<IEntityData> obj)
         {
-            if (!obj.Type.Equals(TypeHelper.TypeOf<ActorEntity>.Type)) return;
+            if (!TypeHelper.TypeOf<ActorEntity>.Type.IsAssignableFrom(obj.Type)) return;
 
             Entity<ActorEntity> actorRef = obj;
 

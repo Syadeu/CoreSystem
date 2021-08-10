@@ -1861,6 +1861,8 @@ namespace Syadeu
 
             public static void True(bool value, string msg) => LogManager.True(value, msg);
             public static void False(bool value, string msg) => LogManager.False(value, msg);
+
+            public static void Unmanaged<T>() where T : unmanaged { }
         }
 #line default
         #endregion

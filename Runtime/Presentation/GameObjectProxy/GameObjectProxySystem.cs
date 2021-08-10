@@ -757,9 +757,15 @@ namespace Syadeu.Presentation
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
+        private GameObjectProxySystem m_ProxySystem;
+
+        #region Presentation Methods
+
         protected override PresentationResult OnInitialize()
         {
             RequestSystem<GameObjectProxySystem>(Bind);
+
+            CoreSystem.Logger.Unmanaged<ComponentID<MonoBehaviour>>();
 
             return base.OnInitialize();
         }
@@ -769,13 +775,49 @@ namespace Syadeu.Presentation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Bind(GameObjectProxySystem other)
         {
+            m_ProxySystem = other;
 
+            m_ProxySystem.OnDataObjectProxyCreated += M_ProxySystem_OnDataObjectProxyCreated;
+            m_ProxySystem.OnDataObjectProxyRemoved += M_ProxySystem_OnDataObjectProxyRemoved;
+        }
+
+        private void M_ProxySystem_OnDataObjectProxyCreated(ProxyTransform arg1, RecycleableMonobehaviour arg2)
+        {
+        }
+        private void M_ProxySystem_OnDataObjectProxyRemoved(ProxyTransform arg1, RecycleableMonobehaviour arg2)
+        {
+        }
+
+        #endregion
+
+        public override void Dispose()
+        {
+            m_ProxySystem = null;
+
+            base.Dispose();
         }
 
         #endregion
     }
-    public struct ComponentID<T> where T : Component
+    public interface IComponentID : IEquatable<IComponentID>
     {
-        public static readonly ulong Hash = Database.Hash.NewHash(TypeHelper.TypeOf<T>.Name);
+        ulong Hash { get; }
+    }
+    public readonly struct ComponentID<T> : IComponentID where T : Component
+    {
+        private static readonly ulong s_Hash = Hash.NewHash(TypeHelper.TypeOf<T>.Name);
+        public static readonly ComponentID<T> ID = new ComponentID<T>();
+
+        ulong IComponentID.Hash => s_Hash;
+        bool IEquatable<IComponentID>.Equals(IComponentID other) => s_Hash.Equals(other.Hash);
+    }
+    public readonly struct ComponentID : IComponentID
+    {
+        private readonly ulong m_Hash;
+
+        ulong IComponentID.Hash => m_Hash;
+        private ComponentID(ulong hash) { m_Hash = hash; }
+        public static IComponentID GetID(Type t) => new ComponentID(Hash.NewHash(t.Name));
+        bool IEquatable<IComponentID>.Equals(IComponentID other) => m_Hash.Equals(other.Hash);
     }
 }

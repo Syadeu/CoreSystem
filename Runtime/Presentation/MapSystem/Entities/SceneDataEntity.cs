@@ -40,16 +40,13 @@ namespace Syadeu.Presentation.Map
             return SceneList.Instance.Scenes[m_SceneIndex];
         }
 
-        public void CreateMapData()
+        public void CreateMapData(EntitySystem entitySystem)
         {
             if (IsMapDataCreated) throw new System.Exception();
-            if (!PresentationSystem<EntitySystem>.IsValid()) throw new System.Exception();
-
-            EntitySystem system = PresentationSystem<EntitySystem>.System;
 
             for (int i = 0; i < m_MapData.Length; i++)
             {
-                EntityData<IEntityData> temp = system.CreateObject(m_MapData[i]);
+                EntityData<IEntityData> temp = entitySystem.CreateObject(m_MapData[i]);
                 CreatedMapData.Add(EntityData<MapDataEntity>.GetEntityData(temp.Idx));
             }
 
@@ -77,7 +74,7 @@ namespace Syadeu.Presentation.Map
         {
             if (!entity.Target.IsValid()) return;
 
-            entity.Target.CreateMapData();
+            entity.Target.CreateMapData(EntitySystem);
         }
         protected override void OnDestroy(EntityData<SceneDataEntity> entity)
         {
