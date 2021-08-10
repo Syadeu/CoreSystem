@@ -803,21 +803,19 @@ namespace Syadeu.Presentation
     {
         ulong Hash { get; }
     }
-    public readonly struct ComponentID<T> : IComponentID where T : Component
+    public readonly struct ComponentID<T> where T : Component
     {
         private static readonly ulong s_Hash = Hash.NewHash(TypeHelper.TypeOf<T>.Name);
-        public static readonly ComponentID<T> ID = new ComponentID<T>();
-
-        ulong IComponentID.Hash => s_Hash;
-        bool IEquatable<IComponentID>.Equals(IComponentID other) => s_Hash.Equals(other.Hash);
+        public static readonly IComponentID ID = new ComponentID(s_Hash);
     }
     public readonly struct ComponentID : IComponentID
     {
         private readonly ulong m_Hash;
 
         ulong IComponentID.Hash => m_Hash;
-        private ComponentID(ulong hash) { m_Hash = hash; }
+        internal ComponentID(ulong hash) { m_Hash = hash; }
         public static IComponentID GetID(Type t) => new ComponentID(Hash.NewHash(t.Name));
         bool IEquatable<IComponentID>.Equals(IComponentID other) => m_Hash.Equals(other.Hash);
+        public override string ToString() => m_Hash.ToString();
     }
 }
