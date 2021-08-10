@@ -230,7 +230,7 @@ namespace Syadeu.Presentation
             {
                 if (!List[i]->m_IsOccupied) continue;
 
-                buffer[i] = *List[i];
+                buffer[j] = *List[i];
                 j++;
             }
 
