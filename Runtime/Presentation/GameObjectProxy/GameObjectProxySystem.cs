@@ -50,8 +50,6 @@ namespace Syadeu.Presentation
                 m_RemoveProxyList,
                 m_VisibleList,
                 m_InvisibleList;
-
-        private NativeList<NativeProxyData.ProxyTransformData> m_TempActiveData;
 #pragma warning restore IDE0090 // Use 'new(...)'
 
         private SceneSystem m_SceneSystem;
@@ -75,8 +73,6 @@ namespace Syadeu.Presentation
             m_RemoveProxyList = new NativeQueue<int>(Allocator.Persistent);
             m_VisibleList = new NativeQueue<int>(Allocator.Persistent);
             m_InvisibleList = new NativeQueue<int>(Allocator.Persistent);
-
-            m_TempActiveData = new NativeList<NativeProxyData.ProxyTransformData>(Allocator.Persistent);
 
             return base.OnInitialize();
         }
@@ -166,6 +162,26 @@ namespace Syadeu.Presentation
 
             if (m_LoadingLock) return base.AfterPresentation();
 
+            #region Destroy
+            int destroyCount = m_RequestDestories.Count;
+            for (int i = 0; i < destroyCount; i++)
+            {
+                ProxyTransform tr = m_ProxyData[m_RequestDestories.Dequeue()];
+                if (tr.isDestroyed)
+                {
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Proxy,
+                        "Already destroyed");
+                }
+
+                OnDataObjectDestroy?.Invoke(tr);
+
+                if (tr.hasProxy && !tr.hasProxyQueued) RemoveProxy(tr);
+                m_ProxyData.Remove(tr);
+
+                //if (i != 0 && i % c_ChunkSize == 0) break;
+            }
+            #endregion
+
             #region Update Proxy
             int requestUpdateCount = m_RequestUpdates.Count;
             for (int i = 0; i < requestUpdateCount; i++)
@@ -189,7 +205,7 @@ namespace Syadeu.Presentation
                 proxy.transform.rotation = tr.rotation;
                 proxy.transform.localScale = tr.scale;
 
-                if (i != 0 && i % c_ChunkSize == 0) break;
+                //if (i != 0 && i % c_ChunkSize == 0) break;
             }
             #endregion
 
@@ -208,6 +224,7 @@ namespace Syadeu.Presentation
                 {
                     CoreSystem.Logger.LogError(Channel.Proxy,
                         $"Already have proxy, {tr.isDestroyed}:{tr.hasProxy}:{tr.hasProxyQueued}");
+                    continue;
                 }
 
                 AddProxy(tr);
@@ -221,8 +238,9 @@ namespace Syadeu.Presentation
                 if (tr.isDestroyed) continue;
                 if (!tr.hasProxy)
                 {
-                    throw new CoreSystemException(CoreSystemExceptionFlag.Proxy,
-                        "Does not have any proxy");
+                    CoreSystem.Logger.LogError(Channel.Proxy,
+                        $"Does not have any proxy");
+                    continue;
                 }
 
                 RemoveProxy(tr);
@@ -263,31 +281,9 @@ namespace Syadeu.Presentation
             }
             #endregion
 
-            #region Destroy
-            int destroyCount = m_RequestDestories.Count;
-            for (int i = 0; i < destroyCount; i++)
-            {
-                ProxyTransform tr = m_ProxyData[m_RequestDestories.Dequeue()];
-                if (tr.isDestroyed)
-                {
-                    throw new CoreSystemException(CoreSystemExceptionFlag.Proxy,
-                        "Already destroyed");
-                }
-
-                OnDataObjectDestroy?.Invoke(tr);
-
-                if (tr.hasProxy && !tr.hasProxyQueued) RemoveProxy(tr);
-                m_ProxyData.Remove(tr);
-
-                if (i != 0 && i % c_ChunkSize == 0) break;
-            }
-            #endregion
-
-            m_TempActiveData.Clear();
-            m_ProxyData.GetActiveData(m_TempActiveData);
             ProxyJob proxyJob = new ProxyJob
             {
-                m_ActiveData = m_TempActiveData.AsParallelReader(),
+                m_ActiveData = m_ProxyData.GetActiveData(Allocator.TempJob),
                 m_Frustum = m_RenderSystem.Frustum,
 
                 m_Remove = m_RemoveProxyList.AsParallelWriter(),
@@ -296,9 +292,7 @@ namespace Syadeu.Presentation
                 m_Visible = m_VisibleList.AsParallelWriter(),
                 m_Invisible = m_InvisibleList.AsParallelWriter()
             };
-            //JobHandle getJob = m_ProxyData.GetActiveData(m_TempActiveData);
             m_ProxyJob = proxyJob.Schedule(proxyJob.m_ActiveData.Length, 64);
-            //m_ProxyJob = JobHandle.CombineDependencies(getJob, m_ProxyJob);
 
             return PresentationResult.Normal;
         }
@@ -306,7 +300,7 @@ namespace Syadeu.Presentation
         [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
         private struct ProxyJob : IJobParallelFor
         {
-            [ReadOnly] public NativeArray<NativeProxyData.ProxyTransformData>.ReadOnly m_ActiveData;
+            [ReadOnly, DeallocateOnJobCompletion] public NativeArray<NativeProxyData.ProxyTransformData> m_ActiveData;
             
             [ReadOnly, DeallocateOnJobCompletion] public CameraFrustum.ReadOnly m_Frustum;
             [WriteOnly] public NativeQueue<int>.ParallelWriter
@@ -360,8 +354,6 @@ namespace Syadeu.Presentation
             m_VisibleList.Dispose();
             m_InvisibleList.Dispose();
 
-            m_TempActiveData.Dispose();
-
             m_ProxyData.For((tr) =>
             {
                 OnDataObjectDestroy?.Invoke(tr);
@@ -403,12 +395,12 @@ namespace Syadeu.Presentation
         {
             CoreSystem.Logger.ThreadBlock(nameof(GameObjectProxySystem.AddProxy), ThreadInfo.Unity);
 
-            proxyTransform.SetProxy(-2);
             PrefabReference prefab = proxyTransform.prefab;
 
             if (!m_TerminatedProxies.TryGetValue(prefab, out Queue<RecycleableMonobehaviour> pool) ||
                     pool.Count == 0)
             {
+                proxyTransform.SetProxy(-2);
                 InstantiatePrefab(prefab, (other) =>
                 {
                     if (proxyTransform.isDestroyed)
