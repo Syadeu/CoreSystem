@@ -286,7 +286,7 @@ namespace Syadeu.Presentation
             where T : PresentationSystemEntity
             where TA : PresentationSystemEntity
         {
-            if (!Instance.m_RegisteredGroup.TryGetValue(typeof(T), out Hash groupHash) ||
+            if (!Instance.m_RegisteredGroup.TryGetValue(TypeHelper.TypeOf<T>.Type, out Hash groupHash) ||
                 !Instance.m_PresentationGroups.TryGetValue(groupHash, out Group group))
             {
                 throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,

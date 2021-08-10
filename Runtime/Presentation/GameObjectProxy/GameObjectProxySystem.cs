@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Unity.Burst;
@@ -87,18 +88,32 @@ namespace Syadeu.Presentation
 
             m_ProxyData = new NativeProxyData(c_InitialMemorySize, Allocator.Persistent);
 
-            RequestSystem<SceneSystem>((other) => m_SceneSystem = other);
-            RequestSystem<RenderSystem>((other) => m_RenderSystem = other);
+            RequestSystem<SceneSystem>(Bind);
+            RequestSystem<RenderSystem>(Bind);
             RequestSystem<EventSystem>(Bind);
 
             return base.OnInitializeAsync();
         }
+
+        #region Binds
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void Bind(SceneSystem other)
+        {
+            m_SceneSystem = other;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void Bind(RenderSystem other)
+        {
+            m_RenderSystem = other;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Bind(EventSystem other)
         {
             m_EventSystem = other;
 
             m_EventSystem.AddEvent<OnTransformChanged>(OnTransformChanged);
         }
+        #endregion
 
         unsafe private void OnTransformChanged(OnTransformChanged ev)
         {
@@ -734,5 +749,33 @@ namespace Syadeu.Presentation
         }
 
         #endregion
+    }
+
+    public sealed class ComponentSystem : PresentationSystemEntity<ComponentSystem>
+    {
+        public override bool EnableBeforePresentation => false;
+        public override bool EnableOnPresentation => false;
+        public override bool EnableAfterPresentation => false;
+
+        protected override PresentationResult OnInitialize()
+        {
+            RequestSystem<GameObjectProxySystem>(Bind);
+
+            return base.OnInitialize();
+        }
+
+        #region Binds
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void Bind(GameObjectProxySystem other)
+        {
+
+        }
+
+        #endregion
+    }
+    public struct ComponentID<T> where T : Component
+    {
+        public static readonly ulong Hash = Database.Hash.NewHash(TypeHelper.TypeOf<T>.Name);
     }
 }
