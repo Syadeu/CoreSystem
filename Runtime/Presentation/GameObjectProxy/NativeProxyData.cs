@@ -1,5 +1,6 @@
 ﻿using Syadeu.Database;
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -220,7 +221,7 @@ namespace Syadeu.Presentation
         {
             UnsafeUtility.MemClear(m_UnsafeList->m_TransformBuffer, m_UnsafeList->m_Length * s_TransformSize);
         }
-
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public NativeArray<ProxyTransformData> GetActiveData(Allocator allocator)
         {
             ProxyTransformData* buffer = stackalloc ProxyTransformData[List.m_Length];
@@ -238,87 +239,6 @@ namespace Syadeu.Presentation
 
             return temp;
         }
-        //public void GetActiveData(NativeList<ProxyTransformData> data)
-        //{
-        //    var indices = m_ActiveMap.GetValueArray(Allocator.TempJob);
-        //    for (int i = 0; i < indices.Length; i++)
-        //    {
-        //        data.Add(in m_UnsafeList->m_TransformBuffer[indices[i]]);
-        //    }
-        //    indices.Dispose();
-        //}
-        //public JobHandle GetActiveData(NativeList<ProxyTransformData> array, JobHandle depends = default)
-        //{
-        //    var indices = m_ActiveMap.GetValueArray(Allocator.TempJob);
-        //    ////NativeArray<ProxyTransformData> data = new NativeArray<ProxyTransformData>(indices.Length, allocator, NativeArrayOptions.UninitializedMemory);
-        //    //for (int i = 0; i < indices.Length; i++)
-        //    //{
-        //    //    array[i] = m_UnsafeList->m_TransformBuffer[indices[i]];
-        //    //}
-
-        //    //indices.Dispose();
-        //    //return data;
-
-        //    GetActiveDataJob job = new GetActiveDataJob
-        //    {
-        //        m_Indices = indices,
-        //        m_UnsafeList = m_UnsafeList,
-        //        m_Array = array
-        //    };
-        //    return job.Schedule(indices.Length, depends);
-        //}
-
-        //[BurstCompile]
-        //private struct GetActiveDataJob : IJobFor
-        //{
-        //    [ReadOnly, DeallocateOnJobCompletion] public NativeArray<int> m_Indices;
-        //    [NativeDisableUnsafePtrRestriction] public UnsafeList* m_UnsafeList;
-        //    [WriteOnly] public NativeList<ProxyTransformData> m_Array;
-
-        //    public void Execute(int i)
-        //    {
-        //        m_Array.Add(m_UnsafeList->m_TransformBuffer[m_Indices[i]]);
-        //    }
-        //}
-
-        //public ParallelLoopResult ParallelFor(Action<ProxyTransform> action)
-        //{
-        //    CoreSystem.Logger.ThreadBlock(nameof(NativeProxyData.ParallelFor), Syadeu.Internal.ThreadInfo.Background | Syadeu.Internal.ThreadInfo.Job | Syadeu.Internal.ThreadInfo.User);
-
-        //    var semaphore = m_PararellSemaphore;
-        //    //var writeSemaphore = m_WriteSemaphore;
-        //    if (!semaphore.WaitOne(1000))
-        //    {
-        //        throw new CoreSystemException(CoreSystemExceptionFlag.Proxy,
-        //            "Takes too long");
-        //    }
-
-        //    ProxyTransformData* transformBuffer = m_TransformBuffer;
-
-        //    ParallelLoopResult result = Parallel.For(0, m_Length, (i) =>
-        //    {
-        //        //writeSemaphore.WaitOne();
-
-        //        ProxyTransformData* p = transformBuffer + i;
-        //        if ((transformBuffer + i)->m_IsOccupied)
-        //        {
-        //            action.Invoke(
-        //                new ProxyTransform(p, p->m_Hash));
-        //        }
-
-        //        //writeSemaphore.Release();
-        //    });
-
-        //    CoreSystem.AddBackgroundJob(() =>
-        //    {
-        //        while (!result.IsCompleted)
-        //        {
-        //            CoreSystem.ThreadAwaiter(1);
-        //        }
-        //        semaphore.Release();
-        //    });
-        //    return result;
-        //}
         public void For(Action<ProxyTransform> action)
         {
             for (int i = 0; i < m_UnsafeList->m_Length; i++)

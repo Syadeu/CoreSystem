@@ -169,16 +169,15 @@ namespace Syadeu.Presentation
                 ProxyTransform tr = m_ProxyData[m_RequestDestories.Dequeue()];
                 if (tr.isDestroyed)
                 {
-                    throw new CoreSystemException(CoreSystemExceptionFlag.Proxy,
-                        "Already destroyed");
+                    CoreSystem.Logger.LogError(Channel.Proxy,
+                        $"Already destroyed");
+                    continue;
                 }
 
                 OnDataObjectDestroy?.Invoke(tr);
 
                 if (tr.hasProxy && !tr.hasProxyQueued) RemoveProxy(tr);
                 m_ProxyData.Remove(tr);
-
-                //if (i != 0 && i % c_ChunkSize == 0) break;
             }
             #endregion
 
@@ -186,15 +185,19 @@ namespace Syadeu.Presentation
             int requestUpdateCount = m_RequestUpdates.Count;
             for (int i = 0; i < requestUpdateCount; i++)
             {
+                if (i != 0 && i % c_ChunkSize == 0) break;
+
                 int idx = m_RequestUpdates.Dequeue();
                 ProxyTransform tr = m_ProxyData[idx];
-                //"in0".ToLog();
-                if (tr.isDestroyed || !tr.hasProxy)
+
+                if (tr.isDestroyed) continue;
+                else if (!tr.hasProxy)
                 {
-                    throw new CoreSystemException(CoreSystemExceptionFlag.Proxy,
-                        "Destroyed or does not have any proxy");
+                    CoreSystem.Logger.LogError(Channel.Proxy,
+                        $"Destroyed or does not have any proxy");
+                    continue;
                 }
-                if (tr.hasProxyQueued)
+                else if (tr.hasProxyQueued)
                 {
                     m_RequestUpdates.Enqueue(idx);
                     continue;
@@ -204,8 +207,6 @@ namespace Syadeu.Presentation
                 proxy.transform.position = tr.position;
                 proxy.transform.rotation = tr.rotation;
                 proxy.transform.localScale = tr.scale;
-
-                //if (i != 0 && i % c_ChunkSize == 0) break;
             }
             #endregion
 
@@ -213,30 +214,29 @@ namespace Syadeu.Presentation
             int requestProxyCount = m_RequestProxyList.Count;
             for (int i = 0; i < requestProxyCount; i++)
             {
+                if (i != 0 && i % c_ChunkSize == 0) break;
+
                 ProxyTransform tr = m_ProxyData[m_RequestProxyList.Dequeue()];
-                //"in1".ToLog();
+                
                 if (tr.isDestroyed) continue;
-                //{
-                //    throw new CoreSystemException(CoreSystemExceptionFlag.Proxy,
-                //        "Destroyed");
-                //}
-                if (tr.hasProxy && !tr.hasProxyQueued)
+                else if (tr.hasProxy && !tr.hasProxyQueued)
                 {
                     CoreSystem.Logger.LogError(Channel.Proxy,
-                        $"Already have proxy, {tr.isDestroyed}:{tr.hasProxy}:{tr.hasProxyQueued}");
+                        $"Already have proxy");
                     continue;
                 }
 
                 AddProxy(tr);
-                //if (i != 0 && i % c_ChunkSize == 0) break;
             }
             int removeProxyCount = m_RemoveProxyList.Count;
             for (int i = 0; i < removeProxyCount; i++)
             {
+                if (i != 0 && i % c_ChunkSize == 0) break;
+
                 ProxyTransform tr = m_ProxyData[m_RemoveProxyList.Dequeue()];
-                //"in2".ToLog();
+
                 if (tr.isDestroyed) continue;
-                if (!tr.hasProxy)
+                else if (!tr.hasProxy)
                 {
                     CoreSystem.Logger.LogError(Channel.Proxy,
                         $"Does not have any proxy");
@@ -244,7 +244,6 @@ namespace Syadeu.Presentation
                 }
 
                 RemoveProxy(tr);
-                //if (i != 0 && i % c_ChunkSize == 0) break;
             }
             #endregion
 
@@ -252,32 +251,25 @@ namespace Syadeu.Presentation
             int visibleCount = m_VisibleList.Count;
             for (int i = 0; i < visibleCount; i++)
             {
+                if (i != 0 && i % c_ChunkSize == 0) break;
+
                 ProxyTransform tr = m_ProxyData[m_VisibleList.Dequeue()];
                 if (tr.isDestroyed) continue;
-                //{
-                //    throw new CoreSystemException(CoreSystemExceptionFlag.Proxy,
-                //        "Destroyed");
-                //}
 
                 tr.isVisible = true;
                 OnDataObjectVisible?.Invoke(tr);
-
-                //if (i != 0 && i % c_ChunkSize == 0) break;
             }
             int invisibleCount = m_InvisibleList.Count;
             for (int i = 0; i < invisibleCount; i++)
             {
+                if (i != 0 && i % c_ChunkSize == 0) break;
+
                 ProxyTransform tr = m_ProxyData[m_InvisibleList.Dequeue()];
+
                 if (tr.isDestroyed) continue;
-                //{
-                //    throw new CoreSystemException(CoreSystemExceptionFlag.Proxy,
-                //        "Destroyed");
-                //}
 
                 tr.isVisible = false;
                 OnDataObjectInvisible?.Invoke(tr);
-
-                //if (i != 0 && i % c_ChunkSize == 0) break;
             }
             #endregion
 
@@ -741,73 +733,5 @@ namespace Syadeu.Presentation
         }
 
         #endregion
-    }
-
-    public sealed class ComponentSystem : PresentationSystemEntity<ComponentSystem>
-    {
-        public override bool EnableBeforePresentation => false;
-        public override bool EnableOnPresentation => false;
-        public override bool EnableAfterPresentation => false;
-
-        private GameObjectProxySystem m_ProxySystem;
-
-        #region Presentation Methods
-
-        protected override PresentationResult OnInitialize()
-        {
-            RequestSystem<GameObjectProxySystem>(Bind);
-
-            CoreSystem.Logger.Unmanaged<ComponentID<MonoBehaviour>>();
-
-            return base.OnInitialize();
-        }
-
-        #region Binds
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Bind(GameObjectProxySystem other)
-        {
-            m_ProxySystem = other;
-
-            m_ProxySystem.OnDataObjectProxyCreated += M_ProxySystem_OnDataObjectProxyCreated;
-            m_ProxySystem.OnDataObjectProxyRemoved += M_ProxySystem_OnDataObjectProxyRemoved;
-        }
-
-        private void M_ProxySystem_OnDataObjectProxyCreated(ProxyTransform arg1, RecycleableMonobehaviour arg2)
-        {
-        }
-        private void M_ProxySystem_OnDataObjectProxyRemoved(ProxyTransform arg1, RecycleableMonobehaviour arg2)
-        {
-        }
-
-        #endregion
-
-        public override void Dispose()
-        {
-            m_ProxySystem = null;
-
-            base.Dispose();
-        }
-
-        #endregion
-    }
-    public interface IComponentID : IEquatable<IComponentID>
-    {
-        ulong Hash { get; }
-    }
-    public readonly struct ComponentID<T> where T : Component
-    {
-        private static readonly ulong s_Hash = Hash.NewHash(TypeHelper.TypeOf<T>.Name);
-        public static readonly IComponentID ID = new ComponentID(s_Hash);
-    }
-    public readonly struct ComponentID : IComponentID
-    {
-        private readonly ulong m_Hash;
-
-        ulong IComponentID.Hash => m_Hash;
-        internal ComponentID(ulong hash) { m_Hash = hash; }
-        public static IComponentID GetID(Type t) => new ComponentID(Hash.NewHash(t.Name));
-        bool IEquatable<IComponentID>.Equals(IComponentID other) => m_Hash.Equals(other.Hash);
-        public override string ToString() => m_Hash.ToString();
     }
 }
