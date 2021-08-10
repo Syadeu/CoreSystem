@@ -22,7 +22,7 @@ namespace Syadeu.Database
         private static readonly Regex s_Whitespace = new Regex(@"\s+");
 
         public Dictionary<Hash, ObjectBase> m_Objects;
-        private Dictionary<string, Hash> m_EntityHash;
+        private Dictionary<ulong, Hash> m_EntityNameHash;
 
         private void OnEnable()
         {
@@ -33,19 +33,20 @@ namespace Syadeu.Database
         public void Purge()
         {
             m_Objects.Clear();
-            m_EntityHash.Clear();
+            m_EntityNameHash.Clear();
         }
 
         public void LoadData()
         {
-            if (!Directory.Exists(CoreSystemFolder.EntityPath)) Directory.CreateDirectory(CoreSystemFolder.EntityPath);
-            if (!Directory.Exists(CoreSystemFolder.AttributePath)) Directory.CreateDirectory(CoreSystemFolder.AttributePath);
+            DirectoryCheck();
 
             m_Objects = new Dictionary<Hash, ObjectBase>();
-            m_EntityHash = new Dictionary<string, Hash>();
+            m_EntityNameHash = new Dictionary<ulong, Hash>();
+
+            #region Load Entities
 
             string[] entityPaths = Directory.GetFiles(CoreSystemFolder.EntityPath, jsonPostfix, SearchOption.AllDirectories);
-            //m_Entites = new List<EntityBase>();
+
             Type[] entityTypes = TypeHelper.GetTypes(
                 (other) => TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(other));
             for (int i = 0; i < entityPaths.Length; i++)
@@ -53,14 +54,14 @@ namespace Syadeu.Database
                 string lastFold = Path.GetFileName(Path.GetDirectoryName(entityPaths[i]));
                 Type t = entityTypes.FindFor((other) => other.Name.Equals(lastFold));
 
-                var obj = JsonConvert.DeserializeObject(File.ReadAllText(entityPaths[i]), t);
+                object obj = JsonConvert.DeserializeObject(File.ReadAllText(entityPaths[i]), t);
                 if (!(obj is ObjectBase))
                 {
                     CoreSystem.Logger.LogWarning(Channel.Entity, $"Entity({t?.Name}) at {entityPaths[i]} is invalid. This entity has been ignored");
                     continue;
                 }
 
-                var temp = (ObjectBase)obj;
+                ObjectBase temp = (ObjectBase)obj;
 
                 if (m_Objects.ContainsKey(temp.Hash))
                 {
@@ -69,12 +70,15 @@ namespace Syadeu.Database
                     continue;
                 }
                 m_Objects.Add(temp.Hash, temp);
-                m_EntityHash.Add(temp.Name, temp.Hash);
-                //m_Entites.Add(temp);
+                m_EntityNameHash.Add(Hash.NewHash(temp.Name), temp.Hash);
             }
 
+            #endregion
+
+            #region Load Attributes
+
             string[] attPaths = Directory.GetFiles(CoreSystemFolder.AttributePath, jsonPostfix, SearchOption.AllDirectories);
-            //m_Attributes = new List<AttributeBase>();
+
             Type[] attTypes = TypeHelper.GetTypes((other) => TypeHelper.TypeOf<AttributeBase>.Type.IsAssignableFrom(other));
             for (int i = 0; i < attPaths.Length; i++)
             {
@@ -106,14 +110,13 @@ namespace Syadeu.Database
                 }
 
                 m_Objects.Add(temp.Hash, temp);
-                //m_ObjectHash.Add(temp.Name, temp.Hash);
-                //m_Attributes.Add(temp);
             }
+
+            #endregion
         }
         private void DeleteEmptyFolders()
         {
-            if (!Directory.Exists(CoreSystemFolder.EntityPath)) Directory.CreateDirectory(CoreSystemFolder.EntityPath);
-            if (!Directory.Exists(CoreSystemFolder.AttributePath)) Directory.CreateDirectory(CoreSystemFolder.AttributePath);
+            DirectoryCheck();
 
             string[] paths = Directory.GetDirectories(CoreSystemFolder.EntityPath);
             for (int i = 0; i < paths.Length; i++)
@@ -132,8 +135,7 @@ namespace Syadeu.Database
         }
         public void SaveData(ObjectBase obj)
         {
-            if (!Directory.Exists(CoreSystemFolder.EntityPath)) Directory.CreateDirectory(CoreSystemFolder.EntityPath);
-            if (!Directory.Exists(CoreSystemFolder.AttributePath)) Directory.CreateDirectory(CoreSystemFolder.AttributePath);
+            DirectoryCheck();
 
             Type objType = obj.GetType();
             string objPath;
@@ -152,8 +154,9 @@ namespace Syadeu.Database
         }
         public void SaveData()
         {
-            if (!Directory.Exists(CoreSystemFolder.EntityPath)) Directory.CreateDirectory(CoreSystemFolder.EntityPath);
-            if (!Directory.Exists(CoreSystemFolder.AttributePath)) Directory.CreateDirectory(CoreSystemFolder.AttributePath);
+            DirectoryCheck();
+
+            #region Save Entities
 
             ObjectBase[] m_Entites = GetEntities();
             if (m_Entites != null)
@@ -179,6 +182,10 @@ namespace Syadeu.Database
                 }
             }
             else "nothing to save entit".ToLog();
+
+            #endregion
+
+            #region Save Attributes
 
             AttributeBase[] m_Attributes = GetAttributes();
             if (m_Attributes != null)
@@ -206,7 +213,73 @@ namespace Syadeu.Database
             }
             else "nothing to save att".ToLog();
 
+            #endregion
+
             DeleteEmptyFolders();
+        }
+
+        public void ReloadData(ref ObjectBase obj)
+        {
+            const string c_InvalidObject = "Object({0}) at {1} is invalid. This object has been ignored.";
+
+            DirectoryCheck();
+            if (!m_Objects.ContainsKey(obj.Hash) || obj.Hash.Equals(Hash.Empty))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    "");
+                return;
+            }
+
+            Type objType = obj.GetType();
+            string objPath;
+
+            #region Get Path
+
+            if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(objType))
+            {
+                objPath = Path.Combine(CoreSystemFolder.EntityPath, objType.Name);
+            }
+            else objPath = Path.Combine(CoreSystemFolder.AttributePath, objType.Name);
+            if (!Directory.Exists(objPath)) Directory.CreateDirectory(objPath);
+
+            #endregion
+
+            ObjectBase reloadedObj;
+
+            #region Read Json
+            try
+            {
+                object temp = JsonConvert.DeserializeObject(File.ReadAllText(objPath), objType);
+                if (!(temp is ObjectBase))
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        string.Format(c_InvalidObject, objType.Name, objPath));
+                    return;
+                }
+
+                reloadedObj = (ObjectBase)temp;
+            }
+            catch (Exception)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    string.Format(c_InvalidObject, objType.Name, objPath));
+                return;
+            }
+            #endregion
+
+            if (!obj.Name.Equals(reloadedObj.Name))
+            {
+                m_EntityNameHash.Remove(Hash.NewHash(obj.Name));
+                m_EntityNameHash.Add(Hash.NewHash(reloadedObj.Name), reloadedObj.Hash);
+            }
+            m_Objects[obj.Hash] = reloadedObj;
+            obj = reloadedObj;
+        }
+
+        private void DirectoryCheck()
+        {
+            if (!Directory.Exists(CoreSystemFolder.EntityPath)) Directory.CreateDirectory(CoreSystemFolder.EntityPath);
+            if (!Directory.Exists(CoreSystemFolder.AttributePath)) Directory.CreateDirectory(CoreSystemFolder.AttributePath);
         }
         #endregion
 
@@ -239,7 +312,7 @@ namespace Syadeu.Database
             if (m_Objects.TryGetValue(hash, out var value)) return value;
             return null;
         }
-        public ObjectBase GetObject(string name) => GetObject(m_EntityHash[name]);
+        public ObjectBase GetObject(string name) => GetObject(m_EntityNameHash[Hash.NewHash(name)]);
 
         private static string ToFileName(ObjectBase obj)
         {
