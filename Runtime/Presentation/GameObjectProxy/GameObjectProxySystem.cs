@@ -50,8 +50,7 @@ namespace Syadeu.Presentation
                 m_VisibleList,
                 m_InvisibleList;
 
-        //private NativeList<NativeProxyData.ProxyTransformData>
-        //    m_TempActiveData;
+        private NativeList<NativeProxyData.ProxyTransformData> m_TempActiveData;
 #pragma warning restore IDE0090 // Use 'new(...)'
 
         private SceneSystem m_SceneSystem;
@@ -76,7 +75,7 @@ namespace Syadeu.Presentation
             m_VisibleList = new NativeQueue<int>(Allocator.Persistent);
             m_InvisibleList = new NativeQueue<int>(Allocator.Persistent);
 
-            //m_TempActiveData = new NativeList<NativeProxyData.ProxyTransformData>(Allocator.Persistent);
+            m_TempActiveData = new NativeList<NativeProxyData.ProxyTransformData>(Allocator.Persistent);
 
             return base.OnInitialize();
         }
@@ -269,11 +268,11 @@ namespace Syadeu.Presentation
             }
             #endregion
 
-            //m_TempActiveData.Clear();
-            
+            m_TempActiveData.Clear();
+            m_ProxyData.GetActiveData(m_TempActiveData);
             ProxyJob proxyJob = new ProxyJob
             {
-                m_ActiveData = m_ProxyData.GetActiveData(Allocator.TempJob),
+                m_ActiveData = m_TempActiveData.AsParallelReader(),
                 m_Frustum = m_RenderSystem.Frustum,
 
                 m_Remove = m_RemoveProxyList.AsParallelWriter(),
@@ -292,7 +291,7 @@ namespace Syadeu.Presentation
         [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
         private struct ProxyJob : IJobParallelFor
         {
-            [ReadOnly, DeallocateOnJobCompletion] public NativeArray<NativeProxyData.ProxyTransformData> m_ActiveData;
+            [ReadOnly] public NativeArray<NativeProxyData.ProxyTransformData>.ReadOnly m_ActiveData;
             
             [ReadOnly, DeallocateOnJobCompletion] public CameraFrustum.ReadOnly m_Frustum;
             [WriteOnly] public NativeQueue<int>.ParallelWriter
@@ -307,7 +306,8 @@ namespace Syadeu.Presentation
                 if (m_Frustum.IntersectsBox(m_ActiveData[i].GetAABB(Allocator.Temp)))
                 {
                     if (m_ActiveData[i].m_EnableCull && 
-                        m_ActiveData[i].m_ProxyIndex.Equals(-1) &&                        !m_ActiveData[i].m_ProxyIndex.Equals(-2))
+                        m_ActiveData[i].m_ProxyIndex.Equals(-1) &&
+                        !m_ActiveData[i].m_ProxyIndex.Equals(-2))
                     {
                         m_Request.Enqueue(m_ActiveData[i].m_Index);
                     }
@@ -345,7 +345,7 @@ namespace Syadeu.Presentation
             m_VisibleList.Dispose();
             m_InvisibleList.Dispose();
 
-            //m_TempActiveData.Dispose();
+            m_TempActiveData.Dispose();
 
             m_ProxyData.For((tr) =>
             {

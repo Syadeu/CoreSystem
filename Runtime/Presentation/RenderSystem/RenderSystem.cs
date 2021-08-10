@@ -399,7 +399,26 @@ namespace Syadeu.Presentation.Render
 				planeDistances.Dispose();
 			}
 
-            public bool IntersectsBox(in AABB box, float frustumPadding = 0)
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			public bool Contains(in float3 point)
+			{
+				for (int i = 0; i < PlaneCount; i++)
+				{
+					var normal = planeNormals[i];
+					var distance = planeDistances[i];
+
+					float dist = normal.x * point.x + normal.y * point.y + normal.z * point.z + distance;
+
+					if (dist < 0f)
+					{
+						return false;
+					}
+				}
+
+				return true;
+			}
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			public bool IntersectsBox(in AABB box, float frustumPadding = 0)
 			{
 				if (box.Contains(corners[CornerCount - 1]))
 				{
@@ -425,6 +444,26 @@ namespace Syadeu.Presentation.Render
 				}
 
 				return true;
+			}
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			public IntersectionType IntersectsSphere(ref Vector3 center, float radius, float frustumPadding = 0)
+			{
+                bool intersecting = false;
+				for (int i = 0; i < PlaneCount; i++)
+				{
+					var normal = planeNormals[i];
+					var distance = planeDistances[i];
+
+					float dist = normal.x * center.x + normal.y * center.y + normal.z * center.z + distance;
+
+					if (dist < -radius - frustumPadding)
+					{
+						return IntersectionType.False;
+					}
+
+					intersecting |= (dist <= radius);
+				}
+				return intersecting ? IntersectionType.Intersects : IntersectionType.Contains;
 			}
 		}
 
@@ -917,7 +956,7 @@ namespace Syadeu.Presentation.Render
 
 				if (dist < -radius - frustumPadding)
 				{
-					return IntersectionType.Disjoint;
+					return IntersectionType.False;
 				}
 
 				intersecting |= (dist <= radius);
@@ -945,7 +984,7 @@ namespace Syadeu.Presentation.Render
 
 				if (dist < -radius - frustumPadding)
 				{
-					return IntersectionType.Disjoint;
+					return IntersectionType.False;
 				}
 
 				intersecting |= (dist <= radius);
@@ -1098,7 +1137,7 @@ namespace Syadeu.Presentation.Render
 
 				if (s + r < -planeDistance - frustumPadding)
 				{
-					return IntersectionType.Disjoint;
+					return IntersectionType.False;
 				}
 
 				intersecting |= (s - r <= -planeDistance);
@@ -1234,7 +1273,7 @@ namespace Syadeu.Presentation.Render
 
 				if (s + r < -planeDistance - frustumPadding)
 				{
-					return IntersectionType.Disjoint;
+					return IntersectionType.False;
 				}
 
 				intersecting |= (s - r <= -planeDistance);
@@ -1357,8 +1396,11 @@ namespace Syadeu.Presentation.Render
 
 	public enum IntersectionType
     {
-		Disjoint,
-		Intersects,
-		Contains
+		False		=	0b001,
+
+		Intersects	=	0b010,
+		Contains	=	0b100,
+
+		True		=	0b110
 	}
 }

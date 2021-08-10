@@ -241,6 +241,15 @@ namespace Syadeu.Presentation
             indices.Dispose();
             return data;
         }
+        public void GetActiveData(NativeList<ProxyTransformData> data)
+        {
+            var indices = m_ActiveMap.GetValueArray(Allocator.TempJob);
+            for (int i = 0; i < indices.Length; i++)
+            {
+                data.Add(m_UnsafeList->m_TransformBuffer[indices[i]]);
+            }
+            indices.Dispose();
+        }
         public JobHandle GetActiveData(NativeList<ProxyTransformData> array, JobHandle depends = default)
         {
             var indices = m_ActiveMap.GetValueArray(Allocator.TempJob);
