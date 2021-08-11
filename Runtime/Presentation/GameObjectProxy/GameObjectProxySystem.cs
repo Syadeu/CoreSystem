@@ -148,9 +148,7 @@ namespace Syadeu.Presentation
         {
             if (ev.transform.isDestroyed) return;
 
-            m_ClusterData.Update(ev.transform.Pointer->m_ClusterID, ev.transform.position);
-            //m_ClusterData.Remove(ev.transform.Pointer->m_ClusterID);
-            //m_ClusterData.Add(ev.transform.position, ev.transform.Pointer);
+            m_ClusterData.Update(in ev.transform.Pointer->m_ClusterID, ev.transform.position);
 
             if (!ev.transform.hasProxy || ev.transform.hasProxyQueued) return;
             
@@ -191,35 +189,6 @@ namespace Syadeu.Presentation
                 m_ProxyData.Remove(tr);
             }
             #endregion
-
-            //#region Update Proxy
-            //int requestUpdateCount = m_RequestUpdates.Count;
-            //for (int i = 0; i < requestUpdateCount; i++)
-            //{
-            //    if (i != 0 && i % c_ChunkSize == 0) break;
-
-            //    int idx = m_RequestUpdates.Dequeue();
-            //    ProxyTransform tr = m_ProxyData[idx];
-
-            //    if (tr.isDestroyed) continue;
-            //    else if (!tr.hasProxy)
-            //    {
-            //        CoreSystem.Logger.LogError(Channel.Proxy,
-            //            $"Destroyed or does not have any proxy");
-            //        continue;
-            //    }
-            //    else if (tr.hasProxyQueued)
-            //    {
-            //        m_RequestUpdates.Enqueue(idx);
-            //        continue;
-            //    }
-
-            //    RecycleableMonobehaviour proxy = tr.proxy;
-            //    proxy.transform.position = tr.position;
-            //    proxy.transform.rotation = tr.rotation;
-            //    proxy.transform.localScale = tr.scale;
-            //}
-            //#endregion
 
             #region Create / Remove Proxy
             int requestProxyCount = m_RequestProxyList.Count;
@@ -284,10 +253,14 @@ namespace Syadeu.Presentation
             }
             #endregion
 
+            CameraFrustum.ReadOnly frustum = m_RenderSystem.Frustum;
+            //NativeArray<ClusterGroup<ProxyTransformData>.ReadOnly> clusterGroups = m_ClusterData.GetGroups(frustum, Allocator.TempJob);
+
+            //clusterGroups.Dispose();
             ProxyJob proxyJob = new ProxyJob
             {
                 m_ActiveData = m_ProxyData.GetActiveData(Allocator.TempJob),
-                m_Frustum = m_RenderSystem.Frustum,
+                m_Frustum = frustum,
 
                 m_Remove = m_RemoveProxyList.AsParallelWriter(),
                 m_Request = m_RequestProxyList.AsParallelWriter(),
@@ -295,7 +268,8 @@ namespace Syadeu.Presentation
                 m_Visible = m_VisibleList.AsParallelWriter(),
                 m_Invisible = m_InvisibleList.AsParallelWriter()
             };
-            m_ProxyJob = proxyJob.Schedule(proxyJob.m_ActiveData.Length, 64);
+            //m_ProxyJob = proxyJob.Schedule(proxyJob.m_ActiveData.Length, 64);
+            m_ProxyJob = proxyJob.Schedule((int)proxyJob.m_ActiveData.Length, 64);
 
             return PresentationResult.Normal;
         }
@@ -304,7 +278,7 @@ namespace Syadeu.Presentation
         private struct ProxyJob : IJobParallelFor
         {
             [ReadOnly, DeallocateOnJobCompletion] public NativeArray<ProxyTransformData> m_ActiveData;
-            
+
             [ReadOnly, DeallocateOnJobCompletion] public CameraFrustum.ReadOnly m_Frustum;
             [WriteOnly] public NativeQueue<int>.ParallelWriter
                 m_Remove,
@@ -317,7 +291,7 @@ namespace Syadeu.Presentation
             {
                 if (m_Frustum.IntersectsBox(m_ActiveData[i].GetAABB(Allocator.Temp)))
                 {
-                    if (m_ActiveData[i].m_EnableCull && 
+                    if (m_ActiveData[i].m_EnableCull &&
                         m_ActiveData[i].m_ProxyIndex.Equals(-1) &&
                         !m_ActiveData[i].m_ProxyIndex.Equals(-2))
                     {

@@ -26,6 +26,7 @@ namespace Syadeu.Presentation.Render
 			m_PlaneNormals;
 		private NativeArray<float> m_PlaneDistances;
 
+		public JobHandle JobHandle => m_UpdateJob;
 		public float3 Position => m_Position;
 
 		[BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
@@ -105,7 +106,7 @@ namespace Syadeu.Presentation.Render
 				return true;
 			}
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			public IntersectionType IntersectsSphere(ref Vector3 center, float radius, float frustumPadding = 0)
+			public IntersectionType IntersectsSphere(ref float3 center, float radius, float frustumPadding = 0)
 			{
                 bool intersecting = false;
 				for (int i = 0; i < PlaneCount; i++)
@@ -173,6 +174,7 @@ namespace Syadeu.Presentation.Render
 
 			return new ReadOnly(ref this, allocator);
 		}
+		public ReadOnly JobReadOnly() => new ReadOnly(ref this, Allocator.Temp);
 
 		#endregion
 

@@ -166,6 +166,7 @@ namespace Syadeu.Presentation.Render
         }
 
 		public CameraFrustum.ReadOnly GetFrustum(Allocator allocator) => m_CameraFrustum.AsReadOnly(allocator);
+		internal CameraFrustum GetRawFrustum() => m_CameraFrustum;
 
 		/// <summary>
 		/// 해당 월드 좌표를 입력한 Matrix 기반으로 2D 좌표값을 반환합니다.
