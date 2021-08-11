@@ -31,12 +31,16 @@ namespace Syadeu.Database
         {
             if (!Directory.Exists(m_SubConfigPath)) Directory.CreateDirectory(m_SubConfigPath);
 
-            using (var rdr = File.OpenText(m_GlobalConfigPath))
+            if (File.Exists(m_GlobalConfigPath))
             {
-                m_Global = new Config(m_GlobalConfigPath, rdr);
-                //m_Locals.Add(Hash.NewHash(config.Name), config);
-                $"{m_Global}".ToLog();
+                using (var rdr = File.OpenText(m_GlobalConfigPath))
+                {
+                    m_Global = new Config(m_GlobalConfigPath, rdr);
+                    //m_Locals.Add(Hash.NewHash(config.Name), config);
+                    $"{m_Global}".ToLog();
+                }
             }
+            else m_Global = new Config("config");
 
             //m_Global = new Config(ConfigLocation.Global, m_GlobalConfigPath);
             string[] subConfigsPath = Directory.GetFiles(m_SubConfigPath);
@@ -73,11 +77,12 @@ namespace Syadeu.Database
                 Hash hash = Hash.NewHash(name);
                 if (!Instance.m_Locals.TryGetValue(hash, out config))
                 {
-                    //config = new Config(ConfigLocation.Sub, 
+                    //config = new Config(ConfigLocation.Sub,
                     //    Path.Combine(m_SubConfigPath, name + ".ini"));
+                    config = new Config(name);
 
-                    //Instance.m_Locals.Add(hash, config);
-                    CoreSystem.Logger.LogError(Channel.Core, "config not found");
+                    Instance.m_Locals.Add(hash, config);
+                    //CoreSystem.Logger.LogError(Channel.Core, "config not found");
                 }
             }
 
@@ -89,7 +94,7 @@ namespace Syadeu.Database
             for (int i = 0; i < fields.Length; i++)
             {
                 var att = fields[i].GetCustomAttribute<ConfigValueAttribute>();
-                object value;
+                Config.ConfigValueBase value;
                 if (string.IsNullOrEmpty(att.Header))
                 {
                     value = config
@@ -102,7 +107,7 @@ namespace Syadeu.Database
                         .GetOrCreateValue(fields[i].FieldType, string.IsNullOrEmpty(att.Name) ? fields[i].Name : att.Name);
                 }
                 //$"{fields[i].Name}: {value}".ToLog();
-                fields[i].SetValue(obj, value);
+                fields[i].SetValue(obj, value.GetValue());
             }
 
             //config.Save();

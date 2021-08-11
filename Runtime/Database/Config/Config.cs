@@ -69,6 +69,7 @@ namespace Syadeu.Database
             public abstract ValueType Type { get; }
 
             public abstract object GetValue();
+            public abstract void SetValue(object value);
         }
         public sealed class StringValue : ConfigValueBase
         {
@@ -78,6 +79,7 @@ namespace Syadeu.Database
             public string Value { get; set; }
 
             public override object GetValue() => Value;
+            public override void SetValue(object value) => Value = value.ToString();
             public override string ToString() => string.Format(c_KeyValue, Name, Value);
         }
         public sealed class IntValue : ConfigValueBase
@@ -88,6 +90,7 @@ namespace Syadeu.Database
             public int Value { get; set; }
 
             public override object GetValue() => Value;
+            public override void SetValue(object value) => Value = int.Parse(value.ToString());
             public override string ToString() => string.Format(c_KeyValue, Name, Value);
         }
         public sealed class SingleValue : ConfigValueBase
@@ -98,6 +101,7 @@ namespace Syadeu.Database
             public float Value { get; set; }
 
             public override object GetValue() => Value;
+            public override void SetValue(object value) => Value = float.Parse(value.ToString());
             public override string ToString() => string.Format(c_KeyValue, Name, Value);
         }
         public sealed class BooleanValue : ConfigValueBase
@@ -108,6 +112,7 @@ namespace Syadeu.Database
             public bool Value { get; set; }
 
             public override object GetValue() => Value;
+            public override void SetValue(object value) => Value = bool.Parse(value.ToString());
             public override string ToString() => string.Format(c_KeyValue, Name, Value);
         }
         public sealed class ConfigHeader : ConfigValueBase
@@ -117,7 +122,7 @@ namespace Syadeu.Database
 
             public Dictionary<string, ConfigValueBase> Values { get; set; }
 
-            public object GetOrCreateValue(Type t, string name)
+            public ConfigValueBase GetOrCreateValue(Type t, string name)
             {
                 if (!Values.TryGetValue(name, out ConfigValueBase value))
                 {
@@ -130,10 +135,11 @@ namespace Syadeu.Database
                     Values.Add(name, value);
                 }
 
-                return value.GetValue();
+                return value;
             }
 
             public override object GetValue() => Values;
+            public override void SetValue(object value) => throw new NotImplementedException(nameof(ConfigHeader.SetValue));
             public override string ToString()
             {
                 const string c_Header = "[{0}]";
@@ -150,6 +156,7 @@ namespace Syadeu.Database
         private Dictionary<string, ConfigValueBase> Values;
 
         public string Name { get; }
+        public int Count => Values.Count;
 
         public Config(string name, TextReader rdr)
         {
@@ -184,6 +191,11 @@ namespace Syadeu.Database
                 var temp = Values[split[0]];
                 $"added {temp.Name}({temp.Type}) : {temp.GetValue()}".ToLog();
             }
+        }
+        public Config(string name)
+        {
+            Name = name;
+            Values = new Dictionary<string, ConfigValueBase>();
         }
         private ConfigHeader MakeHeader(ref string line, string headerTxt, TextReader rdr)
         {
@@ -266,7 +278,7 @@ namespace Syadeu.Database
             return temp;
         }
 
-        public object GetOrCreateValue(Type t, string name)
+        public ConfigValueBase GetOrCreateValue(Type t, string name)
         {
             if (!Values.TryGetValue(name, out ConfigValueBase value))
             {
@@ -279,7 +291,7 @@ namespace Syadeu.Database
                 Values.Add(name, value);
             }
 
-            return value.GetValue();
+            return value;
         }
         public ConfigHeader GetOrCreateHeader(string header)
         {
