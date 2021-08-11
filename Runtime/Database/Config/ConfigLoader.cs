@@ -21,6 +21,7 @@ namespace Syadeu.Database
     {
         private static string m_GlobalConfigPath = Path.Combine(CoreSystemFolder.CoreSystemDataPath, "config.ini");
         private static string m_SubConfigPath = Path.Combine(CoreSystemFolder.CoreSystemDataPath, "Configs");
+        const string c_Ext = ".ini";
 
         private Config m_Global;
         private Dictionary<Hash, Config> m_Locals;
@@ -36,25 +37,52 @@ namespace Syadeu.Database
                 using (var rdr = File.OpenText(m_GlobalConfigPath))
                 {
                     m_Global = new Config(m_GlobalConfigPath, rdr);
-                    //m_Locals.Add(Hash.NewHash(config.Name), config);
-                    $"{m_Global}".ToLog();
+
+                    CoreSystem.Logger.Log(Channel.Core, $"Config {m_Global.Name} loaded");
                 }
             }
             else m_Global = new Config("config");
 
-            //m_Global = new Config(ConfigLocation.Global, m_GlobalConfigPath);
             string[] subConfigsPath = Directory.GetFiles(m_SubConfigPath);
             m_Locals = new Dictionary<Hash, Config>();
             for (int i = 0; i < subConfigsPath.Length; i++)
             {
-                //Config config = new Config(ConfigLocation.Sub, subConfigsPath[i]);
-                //m_Locals.Add(Hash.NewHash(config.Name), config);
-
                 using (var rdr = File.OpenText(subConfigsPath[i]))
                 {
                     Config config = new Config(Path.GetFileNameWithoutExtension(subConfigsPath[i]), rdr);
                     m_Locals.Add(Hash.NewHash(config.Name), config);
-                    $"{config}".ToLog();
+
+                    CoreSystem.Logger.Log(Channel.Core, $"Config {config.Name} loaded");
+                }
+            }
+        }
+
+        public static void Save()
+        {
+            if (Instance.m_Global.Count > 0)
+            {
+                using (var stream = File.Open(m_GlobalConfigPath, FileMode.OpenOrCreate))
+                using (var wr = new StreamWriter(stream))
+                {
+                    wr.Write(Instance.m_Global.ToString());
+
+                    CoreSystem.Logger.Log(Channel.Core, $"Config({Instance.m_Global.Name}) saved");
+                }
+            }
+
+            foreach (var item in Instance.m_Locals.Values)
+            {
+                if (item.Count > 0)
+                {
+                    string path = Path.Combine(m_SubConfigPath, item.Name + c_Ext);
+
+                    using (var stream = File.Open(path, FileMode.OpenOrCreate))
+                    using (var wr = new StreamWriter(stream))
+                    {
+                        wr.Write(item.ToString());
+                    }
+
+                    CoreSystem.Logger.Log(Channel.Core, $"Config({item.Name}) saved");
                 }
             }
         }
@@ -77,12 +105,8 @@ namespace Syadeu.Database
                 Hash hash = Hash.NewHash(name);
                 if (!Instance.m_Locals.TryGetValue(hash, out config))
                 {
-                    //config = new Config(ConfigLocation.Sub,
-                    //    Path.Combine(m_SubConfigPath, name + ".ini"));
                     config = new Config(name);
-
                     Instance.m_Locals.Add(hash, config);
-                    //CoreSystem.Logger.LogError(Channel.Core, "config not found");
                 }
             }
 
@@ -106,11 +130,10 @@ namespace Syadeu.Database
                         .GetOrCreateHeader(att.Header)
                         .GetOrCreateValue(fields[i].FieldType, string.IsNullOrEmpty(att.Name) ? fields[i].Name : att.Name);
                 }
-                //$"{fields[i].Name}: {value}".ToLog();
+
                 fields[i].SetValue(obj, value.GetValue());
             }
 
-            //config.Save();
             CoreSystem.Logger.Log(Channel.Core, $"Config loaded for {t.Name}");
         }
     }

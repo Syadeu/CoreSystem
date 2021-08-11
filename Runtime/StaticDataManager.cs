@@ -45,7 +45,10 @@ namespace Syadeu
                     m_Instance = ins;
                     CoreSystem.Logger.Log(Channel.Core, $"{TypeHelper.TypeOf<T>.Name} is initialized");
 
-                    ConfigLoader.LoadConfig(ins);
+                    if (!TypeHelper.TypeOf<T>.Type.Equals(TypeHelper.TypeOf<ConfigLoader>.Type))
+                    {
+                        ConfigLoader.LoadConfig(ins);
+                    }
                     ins.OnStart();
                 }
 

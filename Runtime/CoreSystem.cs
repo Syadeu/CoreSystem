@@ -468,6 +468,30 @@ namespace Syadeu
         {
             s_BlockCreateInstance = true;
 
+            ConfigLoader.Save();
+
+            for (int i = 0; i < StaticManagers.Count; i++)
+            {
+                try
+                {
+                    StaticManagers[i].Dispose();
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogException(ex);
+                }
+            }
+            for (int i = 0; i < InstanceManagers.Count; i++)
+            {
+                try
+                {
+                    InstanceManagers[i].Dispose();
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogException(ex);
+                }
+            }
             for (int i = 0; i < DataManagers.Count; i++)
             {
                 try

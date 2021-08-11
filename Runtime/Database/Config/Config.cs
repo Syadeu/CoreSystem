@@ -138,7 +138,7 @@ namespace Syadeu.Database
                 return value;
             }
 
-            public override object GetValue() => Values;
+            public override object GetValue() => throw new NotImplementedException(nameof(ConfigHeader.GetValue));
             public override void SetValue(object value) => throw new NotImplementedException(nameof(ConfigHeader.SetValue));
             public override string ToString()
             {
@@ -188,7 +188,7 @@ namespace Syadeu.Database
                 Values.Add(split[0].Trim(), ToValue(split[0].Trim(), split[1].Trim()));
 
 
-                var temp = Values[split[0]];
+                var temp = Values[split[0].Trim()];
                 $"added {temp.Name}({temp.Type}) : {temp.GetValue()}".ToLog();
             }
         }
@@ -224,7 +224,7 @@ namespace Syadeu.Database
 
                 header.Values.Add(split[0].Trim(), ToValue(split[0].Trim(), split[1].Trim()));
 
-                var temp = header.Values[split[0]];
+                var temp = header.Values[split[0].Trim()];
                 $"added {temp.Name}({temp.Type}) : {temp.GetValue()}".ToLog();
             }
 

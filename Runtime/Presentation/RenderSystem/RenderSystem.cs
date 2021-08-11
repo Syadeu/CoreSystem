@@ -18,7 +18,7 @@ using UnityEngine;
 
 namespace Syadeu.Presentation.Render
 {
-    [RequireGlobalConfig("General")]
+    [RequireGlobalConfig("Graphics")]
     public sealed class RenderSystem : PresentationSystemEntity<RenderSystem>
     {
         public override bool EnableBeforePresentation => true;
