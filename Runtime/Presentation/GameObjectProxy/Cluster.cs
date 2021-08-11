@@ -1,5 +1,7 @@
-﻿using Syadeu.Database;
+﻿using log4net.Repository.Hierarchy;
+using Syadeu.Database;
 using System;
+using System.Runtime.InteropServices;
 using Unity.Burst;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
@@ -13,9 +15,9 @@ namespace Syadeu.Presentation
         public const int c_ClusterRange = 25;
 
         [NativeDisableUnsafePtrRestriction] private ClusterGroup<T>* m_Buffer;
-        private long m_Length;
+        private uint m_Length;
 
-        public Cluster(long length)
+        public Cluster(uint length)
         {
             m_Length = length;
 
@@ -23,7 +25,7 @@ namespace Syadeu.Presentation
                 UnsafeUtility.SizeOf<ClusterGroup<T>>() * length,
                 UnsafeUtility.AlignOf<ClusterGroup<T>>(), Unity.Collections.Allocator.Persistent);
 
-            for (int i = 0; i < length; i++)
+            for (uint i = 0; i < length; i++)
             {
                 m_Buffer[i] = new ClusterGroup<T>(i, 64);
             }
@@ -38,14 +40,13 @@ namespace Syadeu.Presentation
             UnsafeUtility.Free(m_Buffer, Unity.Collections.Allocator.Persistent);
         }
 
-        public long GetClusterIndex(float3 translation)
+        public uint GetClusterIndex(float3 translation)
         {
             float3 temp = translation / c_ClusterRange;
-            $"cluster pos: {temp}".ToLog();
+            temp = math.round(temp);
 
-            byte[] bytes = Unsafe.ExtensionMethods.ToBytes(ref temp);
-            uint clusterHash = FNV1a32.Calculate(bytes);
-
+            uint clusterHash = FNV1a32.Calculate(temp.ToString());
+            $"cluster pos: {temp}, hash: {clusterHash}, idx: {clusterHash % m_Length}".ToLog();
             return clusterHash % m_Length;
         }
 
@@ -61,17 +62,29 @@ namespace Syadeu.Presentation
             return m_Buffer[id.GroupIndex];
         }
 
+        public void Update(ClusterID id, float3 translation)
+        {
+            uint idx = GetClusterIndex(translation);
+            if (idx.Equals(id.GroupIndex)) return;
+
+            T* t = Remove(id);
+            uint itemIdx = m_Buffer[idx].Add(t);
+            if (itemIdx < 0)
+            {
+                "cluster full".ToLog();
+            }
+        }
         public ClusterID Add(float3 translation, T* t)
         {
-            long idx = GetClusterIndex(translation);
-            long itemIdx = m_Buffer[idx].Add(t);
+            uint idx = GetClusterIndex(translation);
+            uint itemIdx = m_Buffer[idx].Add(t);
             if (itemIdx < 0)
             {
                 "cluster full".ToLog();
                 return ClusterID.Empty;
             }
 
-            return new ClusterID(idx, itemIdx);
+            return new ClusterID((int)idx, (int)itemIdx);
         }
         public T* Remove(ClusterID id)
         {
@@ -81,11 +94,11 @@ namespace Syadeu.Presentation
 
     unsafe internal struct ClusterGroup<T> : IDisposable where T : unmanaged
     {
-        private readonly long m_GroupIndex;
+        private readonly uint m_GroupIndex;
         [NativeDisableUnsafePtrRestriction] private ClusterItem<T>* m_Buffer;
-        private int m_Length;
+        private uint m_Length;
 
-        public T* this[long index]
+        public T* this[uint index]
         {
             get
             {
@@ -94,8 +107,9 @@ namespace Syadeu.Presentation
                 return m_Buffer[index].m_Pointer;
             }
         }
+        public uint Length => m_Length;
 
-        public ClusterGroup(long gIdx, int length)
+        public ClusterGroup(uint gIdx, uint length)
         {
             m_GroupIndex = gIdx;
             m_Length = length;
@@ -103,32 +117,50 @@ namespace Syadeu.Presentation
             m_Buffer = (ClusterItem<T>*)UnsafeUtility.Malloc(
                 UnsafeUtility.SizeOf<ClusterItem<T>>() * length,
                 UnsafeUtility.AlignOf<ClusterItem<T>>(), Unity.Collections.Allocator.Persistent);
+            UnsafeUtility.MemClear(m_Buffer, UnsafeUtility.SizeOf<ClusterItem<T>>() * m_Length);
         }
         public void Dispose()
         {
             UnsafeUtility.Free(m_Buffer, Unity.Collections.Allocator.Persistent);
         }
-
-        public long Add(T* t)
+        private void Incremental(uint length)
         {
-            long idx = GetUnused();
+            var newBuffer = (ClusterItem<T>*)UnsafeUtility.Malloc(
+                UnsafeUtility.SizeOf<ClusterItem<T>>() * (m_Length + length),
+                UnsafeUtility.AlignOf<ClusterItem<T>>(), Unity.Collections.Allocator.Persistent);
+            
+            UnsafeUtility.MemClear(newBuffer + m_Length, UnsafeUtility.SizeOf<ClusterItem<T>>() * length);
+            UnsafeUtility.MemCpy(newBuffer, m_Buffer, UnsafeUtility.SizeOf<ClusterItem<T>>() * m_Length);
 
+            UnsafeUtility.Free(m_Buffer, Unity.Collections.Allocator.Persistent);
+            m_Buffer = newBuffer;
+
+            m_Length = length;
+        }
+
+        public uint Add(T* t)
+        {
+            CoreSystem.Logger.ThreadBlock(nameof(ClusterGroup<T>.Add), Syadeu.Internal.ThreadInfo.Unity);
+
+            int idx = GetUnused();
             if (idx < 0)
             {
-                // TODO : 여기에 버퍼 사이즈 늘리는거 넣기
-                return idx;
+                Incremental(m_Length);
+                return Add(t);
             }
 
             m_Buffer[idx].m_Pointer = t;
-            return idx;
+            return (uint)idx;
         }
-        public T* RemoveAt(long index)
+        public T* RemoveAt(int index)
         {
+            CoreSystem.Logger.ThreadBlock(nameof(ClusterGroup<T>.Add), Syadeu.Internal.ThreadInfo.Unity);
+
             T* temp = m_Buffer[index].m_Pointer;
             m_Buffer[index].m_Pointer = null;
             return temp;
         }
-        private long GetUnused()
+        private int GetUnused()
         {
             for (int i = 0; i < m_Length; i++)
             {
@@ -142,15 +174,20 @@ namespace Syadeu.Presentation
         public T* m_Pointer;
     }
 
-    public struct ClusterID : IEquatable<ClusterID>
+    [BurstCompile]
+    [StructLayout(LayoutKind.Explicit, Size = 8)]
+    public readonly struct ClusterID : IEquatable<ClusterID>
     {
         public static readonly ClusterID Empty = new ClusterID(-1, -1);
 
-        public long GroupIndex { get; }
-        public long ItemIndex { get; }
+        [FieldOffset(0)] private readonly int m_GroupIndex;
+        [FieldOffset(4)] private readonly int m_ItemIndex;
 
-        public ClusterID(long gIdx, long iIdx) { GroupIndex = gIdx; ItemIndex = iIdx; }
+        public int GroupIndex => m_GroupIndex;
+        public int ItemIndex => m_ItemIndex;
 
-        public bool Equals(ClusterID other) => GroupIndex.Equals(other.GroupIndex) && ItemIndex.Equals(other.ItemIndex);
+        public ClusterID(int gIdx, int iIdx) { m_GroupIndex = gIdx; m_ItemIndex = iIdx; }
+
+        public bool Equals(ClusterID other) => m_GroupIndex.Equals(other.m_GroupIndex) && m_ItemIndex.Equals(other.m_ItemIndex);
     }
 }

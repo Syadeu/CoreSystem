@@ -41,10 +41,11 @@ namespace Syadeu.Presentation
         public event Action<ProxyTransform, RecycleableMonobehaviour> OnDataObjectProxyRemoved;
 
         private NativeProxyData m_ProxyData;
+        private Cluster<ProxyTransformData> m_ClusterData;
 #pragma warning disable IDE0090 // Use 'new(...)'
         private NativeQueue<int>
                 m_RequestDestories,
-                m_RequestUpdates,
+                //m_RequestUpdates,
 
                 m_RequestProxyList,
                 m_RemoveProxyList,
@@ -67,7 +68,7 @@ namespace Syadeu.Presentation
             if (!PoolContainer<PrefabRequester>.Initialized) PoolContainer<PrefabRequester>.Initialize(() => new PrefabRequester(), 10);
 
             m_RequestDestories = new NativeQueue<int>(Allocator.Persistent);
-            m_RequestUpdates = new NativeQueue<int>(Allocator.Persistent);
+            //m_RequestUpdates = new NativeQueue<int>(Allocator.Persistent);
 
             m_RequestProxyList = new NativeQueue<int>(Allocator.Persistent);
             m_RemoveProxyList = new NativeQueue<int>(Allocator.Persistent);
@@ -83,6 +84,7 @@ namespace Syadeu.Presentation
             m_ModuleBuilder = ab.DefineDynamicModule(aName.Name);
 
             m_ProxyData = new NativeProxyData(c_InitialMemorySize, Allocator.Persistent);
+            m_ClusterData = new Cluster<ProxyTransformData>(c_InitialMemorySize);
 
             RequestSystem<SceneSystem>(Bind);
             RequestSystem<RenderSystem>(Bind);
@@ -96,6 +98,37 @@ namespace Syadeu.Presentation
         private void Bind(SceneSystem other)
         {
             m_SceneSystem = other;
+            m_SceneSystem.OnLoadingEnter += M_SceneSystem_OnLoadingEnter;
+        }
+        private void M_SceneSystem_OnLoadingEnter()
+        {
+            m_LoadingLock = true;
+            CoreSystem.Logger.Log(Channel.Proxy, true,
+                "Scene on loading enter lambda excute");
+
+            m_RequestDestories.Clear();
+            //m_RequestUpdates.Clear();
+
+            m_RequestProxyList.Clear();
+            m_RemoveProxyList.Clear();
+            m_VisibleList.Clear();
+            m_InvisibleList.Clear();
+
+            m_ProxyData.For((tr) =>
+            {
+                OnDataObjectDestroy?.Invoke(tr);
+
+                if (tr.hasProxy && !tr.hasProxyQueued)
+                {
+                    UnityEngine.Object.Destroy(tr.proxy.gameObject);
+                }
+            });
+
+            m_Instances.Clear();
+            m_TerminatedProxies.Clear();
+
+            m_ProxyData.Clear();
+            m_LoadingLock = false;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Bind(RenderSystem other)
@@ -113,45 +146,18 @@ namespace Syadeu.Presentation
 
         unsafe private void OnTransformChanged(OnTransformChanged ev)
         {
+            if (ev.transform.isDestroyed) return;
+
+            m_ClusterData.Update(ev.transform.Pointer->m_ClusterID, ev.transform.position);
+            //m_ClusterData.Remove(ev.transform.Pointer->m_ClusterID);
+            //m_ClusterData.Add(ev.transform.position, ev.transform.Pointer);
+
             if (!ev.transform.hasProxy || ev.transform.hasProxyQueued) return;
-
-            m_RequestUpdates.Enqueue(ev.transform.m_Index);
-        }
-
-        protected override PresentationResult OnStartPresentation()
-        {
-            m_SceneSystem.OnLoadingEnter += () =>
-            {
-                m_LoadingLock = true;
-                CoreSystem.Logger.Log(Channel.Proxy, true,
-                    "Scene on loading enter lambda excute");
-
-                m_RequestDestories.Clear();
-                m_RequestUpdates.Clear();
-
-                m_RequestProxyList.Clear();
-                m_RemoveProxyList.Clear();
-                m_VisibleList.Clear();
-                m_InvisibleList.Clear();
-
-                m_ProxyData.For((tr) =>
-                {
-                    OnDataObjectDestroy?.Invoke(tr);
-
-                    if (tr.hasProxy && !tr.hasProxyQueued)
-                    {
-                        UnityEngine.Object.Destroy(tr.proxy.gameObject);
-                    }
-                });
-
-                m_Instances.Clear();
-                m_TerminatedProxies.Clear();
-
-                m_ProxyData.Clear();
-                m_LoadingLock = false;
-            };
-
-            return base.OnStartPresentation();
+            
+            RecycleableMonobehaviour proxy = ev.transform.proxy;
+            proxy.transform.position = ev.transform.position;
+            proxy.transform.rotation = ev.transform.rotation;
+            proxy.transform.localScale = ev.transform.scale;
         }
 
         private JobHandle m_ProxyJob;
@@ -177,38 +183,43 @@ namespace Syadeu.Presentation
                 OnDataObjectDestroy?.Invoke(tr);
 
                 if (tr.hasProxy && !tr.hasProxyQueued) RemoveProxy(tr);
+
+                unsafe
+                {
+                    m_ClusterData.Remove(tr.Pointer->m_ClusterID);
+                }
                 m_ProxyData.Remove(tr);
             }
             #endregion
 
-            #region Update Proxy
-            int requestUpdateCount = m_RequestUpdates.Count;
-            for (int i = 0; i < requestUpdateCount; i++)
-            {
-                if (i != 0 && i % c_ChunkSize == 0) break;
+            //#region Update Proxy
+            //int requestUpdateCount = m_RequestUpdates.Count;
+            //for (int i = 0; i < requestUpdateCount; i++)
+            //{
+            //    if (i != 0 && i % c_ChunkSize == 0) break;
 
-                int idx = m_RequestUpdates.Dequeue();
-                ProxyTransform tr = m_ProxyData[idx];
+            //    int idx = m_RequestUpdates.Dequeue();
+            //    ProxyTransform tr = m_ProxyData[idx];
 
-                if (tr.isDestroyed) continue;
-                else if (!tr.hasProxy)
-                {
-                    CoreSystem.Logger.LogError(Channel.Proxy,
-                        $"Destroyed or does not have any proxy");
-                    continue;
-                }
-                else if (tr.hasProxyQueued)
-                {
-                    m_RequestUpdates.Enqueue(idx);
-                    continue;
-                }
+            //    if (tr.isDestroyed) continue;
+            //    else if (!tr.hasProxy)
+            //    {
+            //        CoreSystem.Logger.LogError(Channel.Proxy,
+            //            $"Destroyed or does not have any proxy");
+            //        continue;
+            //    }
+            //    else if (tr.hasProxyQueued)
+            //    {
+            //        m_RequestUpdates.Enqueue(idx);
+            //        continue;
+            //    }
 
-                RecycleableMonobehaviour proxy = tr.proxy;
-                proxy.transform.position = tr.position;
-                proxy.transform.rotation = tr.rotation;
-                proxy.transform.localScale = tr.scale;
-            }
-            #endregion
+            //    RecycleableMonobehaviour proxy = tr.proxy;
+            //    proxy.transform.position = tr.position;
+            //    proxy.transform.rotation = tr.rotation;
+            //    proxy.transform.localScale = tr.scale;
+            //}
+            //#endregion
 
             #region Create / Remove Proxy
             int requestProxyCount = m_RequestProxyList.Count;
@@ -339,7 +350,7 @@ namespace Syadeu.Presentation
             m_ProxyJob.Complete();
 
             m_RequestDestories.Dispose();
-            m_RequestUpdates.Dispose();
+            //m_RequestUpdates.Dispose();
 
             m_RequestProxyList.Dispose();
             m_RemoveProxyList.Dispose();
@@ -351,6 +362,7 @@ namespace Syadeu.Presentation
                 OnDataObjectDestroy?.Invoke(tr);
             });
             m_ProxyData.Dispose();
+            m_ClusterData.Dispose();
 
             m_Disposed = true;
 
@@ -360,9 +372,16 @@ namespace Syadeu.Presentation
 
         public ProxyTransform CreateNewPrefab(PrefabReference prefab, float3 pos, quaternion rot, float3 scale, bool enableCull, float3 center, float3 size)
         {
+            CoreSystem.Logger.ThreadBlock(nameof(CreateNewPrefab), ThreadInfo.Unity);
+
             CoreSystem.Logger.NotNull(m_RenderSystem, $"You've call this method too early or outside of PresentationSystem");
 
             ProxyTransform tr = m_ProxyData.Add(prefab, pos, rot, scale, enableCull, center, size);
+            unsafe
+            {
+                ClusterID id = m_ClusterData.Add(pos, tr.Pointer);
+                tr.Pointer->m_ClusterID = id;
+            }
             OnDataObjectCreated?.Invoke(tr);
 
             CoreSystem.Logger.Log(Channel.Proxy, true,
@@ -378,7 +397,7 @@ namespace Syadeu.Presentation
                 m_RequestDestories.Enqueue(proxyTransform.m_Index);
             }
             CoreSystem.Logger.Log(Channel.Proxy,
-                $"Destroy called at {proxyTransform.index}");
+                $"Destroy called");
         }
 
         #region Proxy Object Control
