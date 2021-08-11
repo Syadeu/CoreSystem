@@ -5,7 +5,7 @@ namespace Syadeu.Database.Converters
 {
     public sealed class INIFile
     {
-        public static INIFile Empty => new INIFile();
+        public static readonly INIFile Empty = new INIFile();
 
         internal List<ValuePair> m_Values;
         internal List<INIHeader> m_Headers;

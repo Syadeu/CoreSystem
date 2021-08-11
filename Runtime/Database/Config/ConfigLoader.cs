@@ -31,13 +31,27 @@ namespace Syadeu.Database
         {
             if (!Directory.Exists(m_SubConfigPath)) Directory.CreateDirectory(m_SubConfigPath);
 
-            m_Global = new Config(ConfigLocation.Global, m_GlobalConfigPath);
+            using (var rdr = File.OpenText(m_GlobalConfigPath))
+            {
+                m_Global = new Config(m_GlobalConfigPath, rdr);
+                //m_Locals.Add(Hash.NewHash(config.Name), config);
+                $"{m_Global}".ToLog();
+            }
+
+            //m_Global = new Config(ConfigLocation.Global, m_GlobalConfigPath);
             string[] subConfigsPath = Directory.GetFiles(m_SubConfigPath);
             m_Locals = new Dictionary<Hash, Config>();
             for (int i = 0; i < subConfigsPath.Length; i++)
             {
-                Config config = new Config(ConfigLocation.Sub, subConfigsPath[i]);
-                m_Locals.Add(Hash.NewHash(config.Name), config);
+                //Config config = new Config(ConfigLocation.Sub, subConfigsPath[i]);
+                //m_Locals.Add(Hash.NewHash(config.Name), config);
+
+                using (var rdr = File.OpenText(subConfigsPath[i]))
+                {
+                    Config config = new Config(Path.GetFileNameWithoutExtension(subConfigsPath[i]), rdr);
+                    m_Locals.Add(Hash.NewHash(config.Name), config);
+                    $"{config}".ToLog();
+                }
             }
         }
 
@@ -59,9 +73,11 @@ namespace Syadeu.Database
                 Hash hash = Hash.NewHash(name);
                 if (!Instance.m_Locals.TryGetValue(hash, out config))
                 {
-                    config = new Config(ConfigLocation.Sub, 
-                        Path.Combine(m_SubConfigPath, name + ".ini"));
-                    Instance.m_Locals.Add(hash, config);
+                    //config = new Config(ConfigLocation.Sub, 
+                    //    Path.Combine(m_SubConfigPath, name + ".ini"));
+
+                    //Instance.m_Locals.Add(hash, config);
+                    CoreSystem.Logger.LogError(Channel.Core, "config not found");
                 }
             }
 
@@ -76,21 +92,20 @@ namespace Syadeu.Database
                 object value;
                 if (string.IsNullOrEmpty(att.Header))
                 {
-                    value = config.m_INI
-                        .GetOrCreateValue(fields[i].FieldType, string.IsNullOrEmpty(att.Name) ? fields[i].Name : att.Name)
-                        .GetValue();
+                    value = config
+                        .GetOrCreateValue(fields[i].FieldType, string.IsNullOrEmpty(att.Name) ? fields[i].Name : att.Name);
                 }
                 else
                 {
-                    value = config.m_INI.GetOrCreateHeader(att.Header)
-                        .GetOrCreateValue(fields[i].FieldType, string.IsNullOrEmpty(att.Name) ? fields[i].Name : att.Name)
-                        .GetValue();
+                    value = config
+                        .GetOrCreateHeader(att.Header)
+                        .GetOrCreateValue(fields[i].FieldType, string.IsNullOrEmpty(att.Name) ? fields[i].Name : att.Name);
                 }
                 //$"{fields[i].Name}: {value}".ToLog();
                 fields[i].SetValue(obj, value);
             }
 
-            config.Save();
+            //config.Save();
             CoreSystem.Logger.Log(Channel.Core, $"Config loaded for {t.Name}");
         }
     }
