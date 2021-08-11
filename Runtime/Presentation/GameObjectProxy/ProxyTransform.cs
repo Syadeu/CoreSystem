@@ -51,7 +51,7 @@ namespace Syadeu.Presentation
             m_Hash = hash;
         }
 
-        unsafe private ref NativeProxyData.ProxyTransformData Ref => ref *(*m_Pointer)[m_Index];
+        unsafe private ref ProxyTransformData Ref => ref *(*m_Pointer)[m_Index];
 
         internal void SetProxy(int2 proxyIndex)
         {

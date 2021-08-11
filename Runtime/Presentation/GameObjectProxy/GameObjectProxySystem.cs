@@ -292,7 +292,7 @@ namespace Syadeu.Presentation
         [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
         private struct ProxyJob : IJobParallelFor
         {
-            [ReadOnly, DeallocateOnJobCompletion] public NativeArray<NativeProxyData.ProxyTransformData> m_ActiveData;
+            [ReadOnly, DeallocateOnJobCompletion] public NativeArray<ProxyTransformData> m_ActiveData;
             
             [ReadOnly, DeallocateOnJobCompletion] public CameraFrustum.ReadOnly m_Frustum;
             [WriteOnly] public NativeQueue<int>.ParallelWriter

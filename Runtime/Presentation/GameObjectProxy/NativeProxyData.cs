@@ -158,11 +158,6 @@ namespace Syadeu.Presentation
             }
             if (index < 0)
             {
-                //if (!m_WriteSemaphore.WaitOne(0))
-                //{
-                //    return Add(prefab, translation, rotation, scale, enableCull, center, size);
-                //}
-
                 Incremental(m_UnsafeList->m_Length);
                 m_WriteSemaphore.Release();
 
@@ -197,6 +192,7 @@ namespace Syadeu.Presentation
             m_WriteSemaphore.Release();
             return transform;
         }
+
         public void Remove(ProxyTransform transform)
         {
             AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
@@ -248,60 +244,61 @@ namespace Syadeu.Presentation
             }
         }
 
-        [StructLayout(LayoutKind.Explicit, Size = 96)]
-        public struct ProxyTransformData : IEquatable<ProxyTransformData>
+        //[StructLayout(LayoutKind.Explicit, Size = 96)]
+        //private struct DataKeyValuePair
+        //{
+        //    [FieldOffset(0)] internal bool m_IsOccupied;
+        //    [FieldOffset(16)] internal Hash m_Hash;
+        //}
+    }
+
+    [StructLayout(LayoutKind.Explicit, Size = 96)]
+    public struct ProxyTransformData : IEquatable<ProxyTransformData>
+    {
+        // 1 bytes
+        [FieldOffset(0)] internal bool m_IsOccupied;
+        [FieldOffset(1)] internal bool m_EnableCull;
+        [FieldOffset(2)] internal bool m_IsVisible;
+        [FieldOffset(3)] internal bool m_DestroyQueued;
+
+        // 4 bytes
+        [FieldOffset(4)] internal int m_Index;
+        [FieldOffset(8)] internal int2 m_ProxyIndex;
+
+        // 8 bytes
+        [FieldOffset(16)] internal ulong m_Hash;
+        [FieldOffset(24)] internal PrefabReference m_Prefab;
+
+        // 12 bytes
+        [FieldOffset(32)] internal float3 m_Translation;
+        [FieldOffset(44)] internal float3 m_Scale;
+        [FieldOffset(56)] internal float3 m_Center;
+        [FieldOffset(68)] internal float3 m_Size;
+
+        // 16 bytes
+        [FieldOffset(80)] internal quaternion m_Rotation;
+
+        public float3 translation
         {
-            // 1 bytes
-            [FieldOffset(0)] internal bool m_IsOccupied;
-            [FieldOffset(1)] internal bool m_EnableCull;
-            [FieldOffset(2)] internal bool m_IsVisible;
-            [FieldOffset(3)] internal bool m_DestroyQueued;
-
-            // 4 bytes
-            [FieldOffset(4)] internal int m_Index;
-            [FieldOffset(8)] internal int2 m_ProxyIndex;
-
-            // 8 bytes
-            [FieldOffset(16)] internal ulong m_Hash;
-            [FieldOffset(24)] internal PrefabReference m_Prefab;
-
-            // 12 bytes
-            [FieldOffset(32)] internal float3 m_Translation;
-            [FieldOffset(44)] internal float3 m_Scale;
-            [FieldOffset(56)] internal float3 m_Center;
-            [FieldOffset(68)] internal float3 m_Size;
-
-            // 16 bytes
-            [FieldOffset(80)] internal quaternion m_Rotation;
-
-            public float3 translation
-            {
-                get => m_Translation;
-                set => m_Translation = value;
-            }
-            public quaternion rotation
-            {
-                get => m_Rotation;
-                set => m_Rotation = value;
-            }
-            public float3 scale
-            {
-                get => m_Scale;
-                set => m_Scale = value;
-            }
-            public AABB aabb => new AABB(m_Center + m_Translation, m_Size).Rotation(m_Rotation);
-
-            public AABB GetAABB(Allocator allocator = Allocator.TempJob)
-            {
-                return new AABB(m_Center + m_Translation, m_Size).Rotation(m_Rotation, allocator);
-            }
-            public bool Equals(ProxyTransformData other) => m_Hash.Equals(other.m_Hash);
+            get => m_Translation;
+            set => m_Translation = value;
         }
-        [StructLayout(LayoutKind.Explicit, Size = 96)]
-        private struct DataKeyValuePair
+        public quaternion rotation
         {
-            [FieldOffset(0)] internal bool m_IsOccupied;
-            [FieldOffset(16)] internal Hash m_Hash;
+            get => m_Rotation;
+            set => m_Rotation = value;
         }
+        public float3 scale
+        {
+            get => m_Scale;
+            set => m_Scale = value;
+        }
+        public AABB aabb => new AABB(m_Center + m_Translation, m_Size).Rotation(m_Rotation);
+
+        public AABB GetAABB(Allocator allocator = Allocator.TempJob)
+        {
+            return new AABB(m_Center + m_Translation, m_Size).Rotation(m_Rotation, allocator);
+        }
+        public bool Equals(ProxyTransformData other) => m_Hash.Equals(other.m_Hash);
     }
 }
