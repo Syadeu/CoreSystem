@@ -12,10 +12,10 @@ namespace Syadeu.Presentation
     {
         public const int c_ClusterRange = 25;
 
-        [NativeDisableUnsafePtrRestriction] public ClusterGroup<T>* m_Buffer;
-        public int m_Length;
+        [NativeDisableUnsafePtrRestriction] private ClusterGroup<T>* m_Buffer;
+        private long m_Length;
 
-        public Cluster(int length)
+        public Cluster(long length)
         {
             m_Length = length;
 
@@ -25,12 +25,16 @@ namespace Syadeu.Presentation
 
             for (int i = 0; i < length; i++)
             {
-                m_Buffer[i] = new ClusterGroup<T>(64);
+                m_Buffer[i] = new ClusterGroup<T>(i, 64);
             }
         }
 
         public void Dispose()
         {
+            for (int i = 0; i < m_Length; i++)
+            {
+                m_Buffer[i].Dispose();
+            }
             UnsafeUtility.Free(m_Buffer, Unity.Collections.Allocator.Persistent);
         }
 
@@ -50,49 +54,86 @@ namespace Syadeu.Presentation
             long idx = GetClusterIndex(translation);
             return m_Buffer[idx];
         }
+        public ClusterGroup<T> GetGroup(ClusterID id)
+        {
+            if (id.Equals(ClusterID.Empty)) throw new Exception();
+
+            return m_Buffer[id.GroupIndex];
+        }
 
         public ClusterID Add(float3 translation, T* t)
         {
             long idx = GetClusterIndex(translation);
-
-            long itemIdx = m_Buffer[idx].GetUnused();
+            long itemIdx = m_Buffer[idx].Add(t);
             if (itemIdx < 0)
             {
                 "cluster full".ToLog();
                 return ClusterID.Empty;
             }
 
-            m_Buffer[idx].m_Buffer[itemIdx].m_Pointer = t;
             return new ClusterID(idx, itemIdx);
         }
         public T* Remove(ClusterID id)
         {
-            T* temp = m_Buffer[id.GroupIndex].m_Buffer[id.ItemIndex].m_Pointer;
-            m_Buffer[id.GroupIndex].m_Buffer[id.ItemIndex].m_Pointer = null;
-            return temp;
+            return m_Buffer[id.GroupIndex].RemoveAt(id.ItemIndex);
         }
     }
 
-    unsafe internal struct ClusterGroup<T> where T : unmanaged
+    unsafe internal struct ClusterGroup<T> : IDisposable where T : unmanaged
     {
-        [NativeDisableUnsafePtrRestriction] public ClusterItem<T>* m_Buffer;
-        public int m_Length;
+        private readonly long m_GroupIndex;
+        [NativeDisableUnsafePtrRestriction] private ClusterItem<T>* m_Buffer;
+        private int m_Length;
 
-        public ClusterGroup(int length)
+        public T* this[long index]
         {
+            get
+            {
+                if (index >= m_Length) throw new ArgumentOutOfRangeException(nameof(index));
+
+                return m_Buffer[index].m_Pointer;
+            }
+        }
+
+        public ClusterGroup(long gIdx, int length)
+        {
+            m_GroupIndex = gIdx;
             m_Length = length;
 
             m_Buffer = (ClusterItem<T>*)UnsafeUtility.Malloc(
                 UnsafeUtility.SizeOf<ClusterItem<T>>() * length,
                 UnsafeUtility.AlignOf<ClusterItem<T>>(), Unity.Collections.Allocator.Persistent);
         }
-        public long GetUnused()
+        public void Dispose()
+        {
+            UnsafeUtility.Free(m_Buffer, Unity.Collections.Allocator.Persistent);
+        }
+
+        public long Add(T* t)
+        {
+            long idx = GetUnused();
+
+            if (idx < 0)
+            {
+                // TODO : 여기에 버퍼 사이즈 늘리는거 넣기
+                return idx;
+            }
+
+            m_Buffer[idx].m_Pointer = t;
+            return idx;
+        }
+        public T* RemoveAt(long index)
+        {
+            T* temp = m_Buffer[index].m_Pointer;
+            m_Buffer[index].m_Pointer = null;
+            return temp;
+        }
+        private long GetUnused()
         {
             for (int i = 0; i < m_Length; i++)
             {
                 if (m_Buffer[i].m_Pointer == null) return i;
             }
-
             return -1;
         }
     }
@@ -101,13 +142,15 @@ namespace Syadeu.Presentation
         public T* m_Pointer;
     }
 
-    internal struct ClusterID
+    public struct ClusterID : IEquatable<ClusterID>
     {
         public static readonly ClusterID Empty = new ClusterID(-1, -1);
 
-        public long GroupIndex { get; set; }
-        public long ItemIndex { get; set; }
+        public long GroupIndex { get; }
+        public long ItemIndex { get; }
 
         public ClusterID(long gIdx, long iIdx) { GroupIndex = gIdx; ItemIndex = iIdx; }
+
+        public bool Equals(ClusterID other) => GroupIndex.Equals(other.GroupIndex) && ItemIndex.Equals(other.ItemIndex);
     }
 }
