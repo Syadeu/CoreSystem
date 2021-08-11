@@ -468,6 +468,30 @@ namespace Syadeu
         {
             s_BlockCreateInstance = true;
 
+            ConfigLoader.Save();
+
+            for (int i = 0; i < StaticManagers.Count; i++)
+            {
+                try
+                {
+                    StaticManagers[i].Dispose();
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogException(ex);
+                }
+            }
+            for (int i = 0; i < InstanceManagers.Count; i++)
+            {
+                try
+                {
+                    InstanceManagers[i].Dispose();
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogException(ex);
+                }
+            }
             for (int i = 0; i < DataManagers.Count; i++)
             {
                 try
@@ -1861,6 +1885,8 @@ namespace Syadeu
 
             public static void True(bool value, string msg) => LogManager.True(value, msg);
             public static void False(bool value, string msg) => LogManager.False(value, msg);
+
+            public static void Unmanaged<T>() where T : unmanaged { }
         }
 #line default
         #endregion

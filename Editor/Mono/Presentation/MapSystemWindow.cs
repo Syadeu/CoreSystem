@@ -686,7 +686,7 @@ namespace SyadeuEditor.Presentation.Map
         private Reference<MapDataEntity> m_MapData;
         private MapDataEntity m_MapDataTarget;
         private Vector2 m_MapDataScroll;
-        private VerticalTreeView m_MapDataTreeView;
+        //private VerticalTreeView m_MapDataTreeView;
 
         private float3 m_SelectedObjectRotation;
 
@@ -911,7 +911,7 @@ namespace SyadeuEditor.Presentation.Map
                                 m_MapDataTarget.m_Objects = tempList.ToArray();
 
                                 SelectGameObject(gameObj);
-                                m_MapDataTreeView.Refresh(m_MapDataTarget.m_Objects);
+                                //m_MapDataTreeView.Refresh(m_MapDataTarget.m_Objects);
 
                                 Repaint();
                             },
@@ -997,7 +997,7 @@ namespace SyadeuEditor.Presentation.Map
 
                             m_PreviewObjects.Remove(m_SelectedGameObject);
                             m_SelectedGameObject = null;
-                            m_MapDataTreeView.Refresh(m_MapDataTarget.m_Objects);
+                            //m_MapDataTreeView.Refresh(m_MapDataTarget.m_Objects);
 
                             goto DrawAllPreviewSection;
                         }
@@ -1077,135 +1077,135 @@ namespace SyadeuEditor.Presentation.Map
             #endregion
         }
 
-        #region TreeView
-        private void SetupTreeView(MapDataEntity data)
-        {
-            if (m_MapDataTreeView == null) m_MapDataTreeView = new VerticalTreeView(null, null);
+        //#region TreeView
+        //private void SetupTreeView(MapDataEntity data)
+        //{
+        //    if (m_MapDataTreeView == null) m_MapDataTreeView = new VerticalTreeView(null, null);
 
-            if (data.m_Objects == null) data.m_Objects = Array.Empty<MapDataEntity.Object>();
+        //    if (data.m_Objects == null) data.m_Objects = Array.Empty<MapDataEntity.Object>();
 
-            m_MapDataTreeView
-                .SetupElements(data.m_Objects, (other) =>
-                {
-                    MapDataEntity.Object objData = (MapDataEntity.Object)other;
-                    return new TreeObjectElement(m_MapDataTreeView, objData, m_PreviewFolder, m_PreviewObjects);
-                })
-                .MakeAddButton(() =>
-                {
-                    List<MapDataEntity.Object> temp = data.m_Objects.ToList();
+        //    m_MapDataTreeView
+        //        .SetupElements(data.m_Objects, (other) =>
+        //        {
+        //            MapDataEntity.Object objData = (MapDataEntity.Object)other;
+        //            return new TreeObjectElement(m_MapDataTreeView, objData, m_PreviewFolder, m_PreviewObjects);
+        //        })
+        //        .MakeAddButton(() =>
+        //        {
+        //            List<MapDataEntity.Object> temp = data.m_Objects.ToList();
 
-                    var objData = new MapDataEntity.Object();
+        //            var objData = new MapDataEntity.Object();
 
-                    Camera sceneCam = SceneView.lastActiveSceneView.camera;
-                    Vector3 pos = sceneCam.transform.position + (sceneCam.transform.forward * 10f);
-                    objData.m_Translation = pos;
+        //            Camera sceneCam = SceneView.lastActiveSceneView.camera;
+        //            Vector3 pos = sceneCam.transform.position + (sceneCam.transform.forward * 10f);
+        //            objData.m_Translation = pos;
 
-                    temp.Add(objData);
-                    data.m_Objects = temp.ToArray();
+        //            temp.Add(objData);
+        //            data.m_Objects = temp.ToArray();
 
-                    return data.m_Objects;
-                })
-                .MakeRemoveButton((other) =>
-                {
-                    TreeObjectElement element = (TreeObjectElement)other;
-                    MapDataEntity.Object target = (MapDataEntity.Object)element.TargetObject;
+        //            return data.m_Objects;
+        //        })
+        //        .MakeRemoveButton((other) =>
+        //        {
+        //            TreeObjectElement element = (TreeObjectElement)other;
+        //            MapDataEntity.Object target = (MapDataEntity.Object)element.TargetObject;
 
-                    List<MapDataEntity.Object> temp = data.m_Objects.ToList();
-                    temp.Remove(target);
+        //            List<MapDataEntity.Object> temp = data.m_Objects.ToList();
+        //            temp.Remove(target);
 
-                    if (m_PreviewObjects.TryGetValue(target, out var tempObj) && tempObj != null)
-                    {
-                        DestroyImmediate(m_PreviewObjects[target]);
-                        if (m_SelectedGameObject.Equals(target))
-                        {
-                            DeselectGameObject();
-                        }
-                        m_PreviewObjects.Remove(target);
-                    }
+        //            if (m_PreviewObjects.TryGetValue(target, out var tempObj) && tempObj != null)
+        //            {
+        //                DestroyImmediate(m_PreviewObjects[target]);
+        //                if (m_SelectedGameObject.Equals(target))
+        //                {
+        //                    DeselectGameObject();
+        //                }
+        //                m_PreviewObjects.Remove(target);
+        //            }
 
-                    data.m_Objects = temp.ToArray();
+        //            data.m_Objects = temp.ToArray();
 
-                    return data.m_Objects;
-                })
-                ;
-        }
-        private sealed class TreeObjectElement : VerticalTreeElement<MapDataEntity.Object>
-        {
-            public override string Name
-            {
-                get
-                {
-                    EntityBase temp = Target.m_Object.GetObject();
-                    if (temp == null) return "None";
-                    else return $"{temp.Name}";
-                }
-            }
+        //            return data.m_Objects;
+        //        })
+        //        ;
+        //}
+        //private sealed class TreeObjectElement : VerticalTreeElement<MapDataEntity.Object>
+        //{
+        //    public override string Name
+        //    {
+        //        get
+        //        {
+        //            EntityBase temp = Target.m_Object.GetObject();
+        //            if (temp == null) return "None";
+        //            else return $"{temp.Name}";
+        //        }
+        //    }
 
-            readonly Transform m_Folder;
-            readonly Dictionary<MapDataEntity.Object, GameObject> m_List;
+        //    readonly Transform m_Folder;
+        //    readonly Dictionary<MapDataEntity.Object, GameObject> m_List;
 
-            public TreeObjectElement(VerticalTreeView treeView, MapDataEntity.Object target, Transform folder, Dictionary<MapDataEntity.Object, GameObject> list) : base(treeView, target)
-            {
-                m_Folder = folder;
-                m_List = list;
-            }
-            public override void OnGUI()
-            {
-                using (new EditorUtils.BoxBlock(Color.black, GUILayout.ExpandWidth(true)))
-                {
-                    ReflectionHelperEditor.DrawReferenceSelector("Object",
-                        (hash) =>
-                        {
-                            var target = new Reference<EntityBase>(hash);
-                            if (!Target.m_Object.Equals(hash))
-                            {
-                                if (m_List.TryGetValue(Target, out GameObject gameObj))
-                                {
-                                    DestroyImmediate(gameObj);
-                                }
+        //    public TreeObjectElement(VerticalTreeView treeView, MapDataEntity.Object target, Transform folder, Dictionary<MapDataEntity.Object, GameObject> list) : base(treeView, target)
+        //    {
+        //        m_Folder = folder;
+        //        m_List = list;
+        //    }
+        //    public override void OnGUI()
+        //    {
+        //        using (new EditorUtils.BoxBlock(Color.black, GUILayout.ExpandWidth(true)))
+        //        {
+        //            ReflectionHelperEditor.DrawReferenceSelector("Object",
+        //                (hash) =>
+        //                {
+        //                    var target = new Reference<EntityBase>(hash);
+        //                    if (!Target.m_Object.Equals(hash))
+        //                    {
+        //                        if (m_List.TryGetValue(Target, out GameObject gameObj))
+        //                        {
+        //                            DestroyImmediate(gameObj);
+        //                        }
 
-                                //if (m_PreviewObject != null) DestroyImmediate(m_PreviewObject);
+        //                        //if (m_PreviewObject != null) DestroyImmediate(m_PreviewObject);
 
-                                if (!hash.Equals(Hash.Empty))
-                                {
-                                    GameObject temp = (GameObject)target.GetObject().Prefab.GetObjectSetting().m_RefPrefab.editorAsset;
+        //                        if (!hash.Equals(Hash.Empty))
+        //                        {
+        //                            GameObject temp = (GameObject)target.GetObject().Prefab.GetObjectSetting().m_RefPrefab.editorAsset;
 
-                                    gameObj = (GameObject)PrefabUtility.InstantiatePrefab(temp, m_Folder);
-                                    gameObj.tag = c_EditorOnly;
-                                    gameObj.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
+        //                            gameObj = (GameObject)PrefabUtility.InstantiatePrefab(temp, m_Folder);
+        //                            gameObj.tag = c_EditorOnly;
+        //                            gameObj.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
 
-                                    Target.m_Rotation = temp.transform.rotation;
-                                    Target.m_Scale = temp.transform.localScale;
+        //                            Target.m_Rotation = temp.transform.rotation;
+        //                            Target.m_Scale = temp.transform.localScale;
 
-                                    m_List[Target] = gameObj;
-                                }
+        //                            m_List[Target] = gameObj;
+        //                        }
 
-                                UpdatePreviewObject();
-                            }
+        //                        UpdatePreviewObject();
+        //                    }
 
-                            Target.m_Object = target;
+        //                    Target.m_Object = target;
 
-                        }, Target.m_Object, TypeHelper.TypeOf<EntityBase>.Type);
+        //                }, Target.m_Object, TypeHelper.TypeOf<EntityBase>.Type);
 
-                    EditorGUI.BeginChangeCheck();
-                    ReflectionHelperEditor.DrawObject(Target, "m_Object");
-                    if (EditorGUI.EndChangeCheck())
-                    {
-                        UpdatePreviewObject();
-                    }
-                }
-            }
-            public void UpdatePreviewObject()
-            {
-                if (m_List[Target] == null) return;
+        //            EditorGUI.BeginChangeCheck();
+        //            ReflectionHelperEditor.DrawObject(Target, "m_Object");
+        //            if (EditorGUI.EndChangeCheck())
+        //            {
+        //                UpdatePreviewObject();
+        //            }
+        //        }
+        //    }
+        //    public void UpdatePreviewObject()
+        //    {
+        //        if (m_List[Target] == null) return;
 
-                Transform tr = m_List[Target].transform;
-                tr.position = Target.m_Translation;
-                tr.rotation = Target.m_Rotation;
-                tr.localScale = Target.m_Scale;
-            }
-        }
-        #endregion
+        //        Transform tr = m_List[Target].transform;
+        //        tr.position = Target.m_Translation;
+        //        tr.rotation = Target.m_Rotation;
+        //        tr.localScale = Target.m_Scale;
+        //    }
+        //}
+        //#endregion
 
         #region Tool
         private void DrawMoveTool(MapDataEntity.Object obj)

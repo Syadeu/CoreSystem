@@ -28,7 +28,11 @@ namespace Syadeu.Presentation.Entities
         Hash IEntityData.Idx => Idx;
         AttributeBase[] IEntityData.Attributes => m_Attributes;
         /// <summary><inheritdoc cref="m_Attributes"/></summary>
-        [JsonProperty(Order = -10, PropertyName = "Attributes")] [UnityEngine.HideInInspector] public List<Hash> Attributes { get; set; }
+
+        [JsonProperty(Order = -10, PropertyName = "Attributes")]
+        private List<Hash> m_AttributeList = new List<Hash>();
+
+        [JsonIgnore, UnityEngine.HideInInspector] public List<Hash> Attributes => m_AttributeList;
 
         [JsonIgnore] public bool isCreated => m_IsCreated;
 
@@ -81,8 +85,8 @@ namespace Syadeu.Presentation.Entities
         protected override ObjectBase Copy()
         {
             EntityDataBase entity = (EntityDataBase)base.Copy();
-            if (Attributes == null) Attributes = new List<Hash>();
-            entity.Attributes = new List<Hash>(Attributes);
+            if (Attributes == null) m_AttributeList = new List<Hash>();
+            entity.m_AttributeList = new List<Hash>(Attributes);
 
             return entity;
         }

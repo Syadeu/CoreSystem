@@ -1,6 +1,8 @@
 ﻿using Syadeu.Database;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Event;
+using Syadeu.Presentation.Internal;
+using System;
 using Unity.Mathematics;
 
 namespace Syadeu.Presentation
@@ -45,6 +47,11 @@ namespace Syadeu.Presentation
             CoreSystem.Logger.NotNull(ProxySystem, "GameObjectProxySystem is not initialized");
 
             return ProxySystem.CreateNewPrefab(prefab, position, rotation, localSize, enableCull, center, size);
+        }
+
+        protected void RequestSystem<T>(Action<T> setter) where T : PresentationSystemEntity
+        {
+            setter.Invoke(PresentationSystem<T>.System);
         }
 
         protected EntityData<IEntityData> CreateObject(IReference obj)

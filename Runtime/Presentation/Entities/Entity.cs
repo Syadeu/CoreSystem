@@ -67,11 +67,16 @@ namespace Syadeu.Presentation.Entities
 
         public T Target => m_Idx.Equals(Hash.Empty) ? null : (T)PresentationSystem<EntitySystem>.System.m_ObjectEntities[m_Idx];
 
+        /// <inheritdoc cref="IEntityData.Name"/>
         public string Name => m_Idx.Equals(Hash.Empty) ? c_Invalid : Target.Name;
+        /// <inheritdoc cref="IEntityData.Hash"/>
+        public Hash Hash => Target.Hash;
+        /// <inheritdoc cref="IEntityData.Idx"/>
         public Hash Idx => m_Idx;
         public Type Type => m_Idx.Equals(Hash.Empty) ? null : Target.GetType();
 
 #pragma warning disable IDE1006 // Naming Styles
+        /// <inheritdoc cref="EntityBase.transform"/>
         public ProxyTransform transform => Target.transform;
 #pragma warning restore IDE1006 // Naming Styles
 

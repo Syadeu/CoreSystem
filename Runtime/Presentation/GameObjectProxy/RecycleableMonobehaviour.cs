@@ -1,5 +1,6 @@
 ﻿using Syadeu.Database;
 using Syadeu.Internal;
+using Syadeu.Presentation;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Event;
 using System;
@@ -29,7 +30,7 @@ namespace Syadeu.Mono
         private GameObject m_GameObject;
         private Transform m_Transform;
         internal Entity<IEntity> m_Entity;
-        private readonly List<Component> m_Components = new List<Component>();
+        private readonly Dictionary<IComponentID, List<Component>> m_Components = new Dictionary<IComponentID, List<Component>>();
 
 #pragma warning disable IDE1006 // Naming Styles
         /// <summary>
@@ -54,7 +55,6 @@ namespace Syadeu.Mono
         /// 이 모노 프록시 객체가 <see cref="Presentation.GameObjectProxySystem"/>에서 사용 중인지 반환합니다.
         /// </summary>
         public bool Activated { get; private set; } = false;
-        [Obsolete] public bool WaitForDeletion { get; internal set; } = false;
 
         public virtual void Initialize()
         {
@@ -66,21 +66,44 @@ namespace Syadeu.Mono
             Activated = true;
         }
 
+        #region Component Methods
+
         /// <summary>
         /// 이 오브젝트, 혹은 하위 오브젝트의 컴포넌트를 받아옵니다.
         /// </summary>
         /// <remarks>
-        /// <seealso cref="Presentation.GameObjectProxySystem"/>에서 파싱한 컴포넌트를 기반으로 합니다.
+        /// <seealso cref="GameObjectProxySystem"/>에서 파싱한 컴포넌트를 기반으로 합니다.
         /// </remarks>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public new T GetComponent<T>() where T : Component => (T)m_Components.FindFor((other) => other is T);
+        public new T GetComponent<T>() where T : Component
+        {
+            if (!m_Components.TryGetValue(ComponentID<T>.ID, out List<Component> list)) return null;
+
+            return (T)list[0];
+        }
+        public new T[] GetComponents<T>() where T : Component
+        {
+            if (!m_Components.TryGetValue(ComponentID<T>.ID, out List<Component> list)) return null;
+
+            return list.Select((other) => (T)other).ToArray();
+        }
         /// <inheritdoc cref="GetComponent{T}"/>
-        public new T[] GetComponents<T>() where T : Component => m_Components.Where((other) => other is T).Select((other) => (T)other).ToArray();
+        public new Component GetComponent(Type t)
+        {
+            IComponentID id = ComponentID.GetID(t);
+            if (!m_Components.TryGetValue(id, out List<Component> list)) return null;
+
+            return list[0];
+        }
         /// <inheritdoc cref="GetComponent{T}"/>
-        public new Component GetComponent(Type t) => m_Components.FindFor((other) => other.GetType().Equals(t));
-        /// <inheritdoc cref="GetComponent{T}"/>
-        public new Component[] GetComponents(Type t) => m_Components.Where((other) => other.GetType().Equals(t)).ToArray();
+        public new Component[] GetComponents(Type t)
+        {
+            IComponentID id = ComponentID.GetID(t);
+            if (!m_Components.TryGetValue(id, out List<Component> list)) return null;
+
+            return list.ToArray();
+        }
 
         /// <summary>
         /// 이 오브젝트에 새로운 유니티 <see cref="Component"/>를 추가합니다.
@@ -89,21 +112,21 @@ namespace Syadeu.Mono
         /// <returns></returns>
         public T AddComponent<T>() where T : Component
         {
-            T component = null;
-            if (CoreSystem.IsThisMainthread())
-            {
-                component = gameObject.AddComponent<T>();
-                m_Components.Add(component);
-                return component;
-            }
+            CoreSystem.Logger.ThreadBlock(nameof(AddComponent), ThreadInfo.Unity);
 
-            CoreSystem.AddForegroundJob(() =>
+            T component = null;
+            component = gameObject.AddComponent<T>();
+            if (!m_Components.TryGetValue(ComponentID<T>.ID, out var list))
             {
-                component = gameObject.AddComponent<T>();
-                m_Components.Add(component);
-            }).Await();
+                list = new List<Component>();
+                m_Components.Add(ComponentID<T>.ID, list);
+            }
+            list.Add(component);
+
             return component;
         }
+
+        #endregion
 
         /// <summary>
         /// 이 객체가 생성되었을때만 한번 실행하는 함수입니다.
@@ -113,8 +136,29 @@ namespace Syadeu.Mono
         {
             m_GameObject = base.gameObject;
             m_Transform = base.transform;
-            //m_Components.AddRange(base.GetComponents(TypeHelper.TypeOf<Component>.Type));
-            m_Components.AddRange(GetComponentsInChildren(TypeHelper.TypeOf<Component>.Type, true));
+
+            Component[] components = GetComponentsInChildren(TypeHelper.TypeOf<Component>.Type, true);
+            for (int i = 0; i < components.Length; i++)
+            {
+                if (components[i] == null)
+                {
+                    CoreSystem.Logger.Log(Channel.Proxy,
+                        $"{name} has missing component. Fix it!");
+
+                    continue;
+                }
+
+                Type t = components[i].GetType();
+                IComponentID id = ComponentID.GetID(t);
+
+                if (!m_Components.TryGetValue(id, out List<Component> list))
+                {
+                    list = new List<Component>();
+                    m_Components.Add(id, list);
+                }
+                list.Add(components[i]);
+            }
+
             OnCreated();
         }
         /// <summary>
@@ -122,11 +166,6 @@ namespace Syadeu.Mono
         /// </summary>
         protected virtual void OnInitialize() { }
         protected virtual void OnTerminate() { }
-
-        /// <summary>
-        /// False를 반환시키면 이 모노객체는 즉시 <see cref="Terminate"/>됩니다.
-        /// </summary>
-        [Obsolete] public TerminateCondition OnActivated;
 
         internal void Terminate()
         {

@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Database.Converters;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Unity.Burst;
 using Unity.Collections;
@@ -8,7 +9,8 @@ using UnityEngine;
 
 namespace Syadeu.Database
 {
-    [BurstCompile, StructLayout(LayoutKind.Sequential)]
+    [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
+    [StructLayout(LayoutKind.Sequential)]
     [JsonConverter(typeof(AABBJsonConverter))]
     public struct AABB
     {
@@ -37,10 +39,26 @@ namespace Syadeu.Database
 
         //[JsonIgnore] public float3[] vertices => GetVertices(in this);
 #pragma warning restore IDE1006 // Naming Styles
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetMinMax(float3 min, float3 max)
         {
             extents = (max - min) * .5f;
             center = min + extents;
+        }
+
+        public bool Contains(float3 position)
+        {
+            float3
+                min = this.min,
+                max = this.max;
+
+            return position.x >= min.x
+                && position.y >= min.y
+                && position.z >= min.z
+                && position.x < max.x
+                && position.y < max.y
+                && position.z < max.z;
         }
 
         public bool Intersect(Ray ray)
@@ -93,7 +111,9 @@ namespace Syadeu.Database
                 (min.z <= aabb.max.z) && (max.z >= aabb.min.z);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Encapsulate(float3 point) => SetMinMax(math.min(min, point), math.max(max, point));
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Encapsulate(AABB aabb)
         {
             Encapsulate(aabb.center - aabb.extents);
@@ -132,6 +152,7 @@ namespace Syadeu.Database
 
             return temp;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static AABB CalculateRotationWithVertices(in AABB aabb, quaternion quaternion, Allocator allocator)
         {
             float3 
@@ -149,6 +170,7 @@ namespace Syadeu.Database
             vertices.Dispose();
             return temp;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public NativeArray<float3> GetVertices(Allocator allocator)
         {
             NativeArray<float3> temp = new NativeArray<float3>(8, allocator);
@@ -163,6 +185,7 @@ namespace Syadeu.Database
             temp[7] = new float3(min.x, min.y, max.z);
             return temp;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void GetVertices(NativeArray<float3> temp)
         {
             temp[0] = min;
@@ -175,6 +198,7 @@ namespace Syadeu.Database
             temp[6] = new float3(min.x, max.y, max.z);
             temp[7] = new float3(min.x, min.y, max.z);
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static float3[] GetVertices(in AABB aabb)
         {
             float3 min = aabb.min;
@@ -193,6 +217,7 @@ namespace Syadeu.Database
                 new float3(min.x, min.y, max.z),
             };
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static float3x4[] GetSquares(in AABB aabb)
         {
             float3
@@ -238,12 +263,14 @@ namespace Syadeu.Database
                     )
             };
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool IntersectQuad(float3 p1, float3 p2, float3 p3, float3 p4, Ray ray, out float distance)
         {
             if (IntersectTriangle(p1, p2, p4, ray, out distance)) return true;
             else if (IntersectTriangle(p3, p4, p2, ray, out distance)) return true;
             return false;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         /// <summary>
         /// Checks if the specified ray hits the triagnlge descibed by p1, p2 and p3.
         /// Möller–Trumbore ray-triangle intersection algorithm implementation.

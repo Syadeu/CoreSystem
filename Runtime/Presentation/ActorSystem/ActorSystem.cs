@@ -28,26 +28,24 @@ namespace Syadeu.Presentation.Actor
         {
             m_PlayerHashMap = new NativeHashMap<Hash, Entity<ActorEntity>>(1024, Allocator.Persistent);
 
-            RequestSystem<EntitySystem>((other) =>
-            {
-                m_EntitySystem = other;
-
-                m_EntitySystem.OnEntityCreated += M_EntitySystem_OnEntityCreated;
-                m_EntitySystem.OnEntityDestroy += M_EntitySystem_OnEntityDestroy;
-            });
-            RequestSystem<EventSystem>((other) =>
-            {
-                m_EventSystem = other;
-
-                m_EventSystem.AddEvent<OnMoveStateChangedEvent>(OnActorMoveStateChanged);
-            });
+            RequestSystem<EntitySystem>(Bind);
+            RequestSystem<EventSystem>(Bind);
 
             return base.OnInitializeAsync();
         }
 
+        #region Bind
+
+        private void Bind(EntitySystem other)
+        {
+            m_EntitySystem = other;
+
+            m_EntitySystem.OnEntityCreated += M_EntitySystem_OnEntityCreated;
+            m_EntitySystem.OnEntityDestroy += M_EntitySystem_OnEntityDestroy;
+        }
         private void M_EntitySystem_OnEntityCreated(EntityData<IEntityData> obj)
         {
-            if (!obj.Type.Equals(TypeHelper.TypeOf<ActorEntity>.Type)) return;
+            if (!TypeHelper.TypeOf<ActorEntity>.Type.IsAssignableFrom(obj.Type)) return;
 
             Entity<ActorEntity> actorRef = obj;
 
@@ -57,7 +55,7 @@ namespace Syadeu.Presentation.Actor
         }
         private void M_EntitySystem_OnEntityDestroy(EntityData<IEntityData> obj)
         {
-            if (!obj.Type.Equals(TypeHelper.TypeOf<ActorEntity>.Type)) return;
+            if (!TypeHelper.TypeOf<ActorEntity>.Type.IsAssignableFrom(obj.Type)) return;
 
             Entity<ActorEntity> actorRef = obj;
 
@@ -65,6 +63,14 @@ namespace Syadeu.Presentation.Actor
 
             m_PlayerHashMap.Remove(actorRef.Idx);
         }
+        private void Bind(EventSystem other)
+        {
+            m_EventSystem = other;
+
+            m_EventSystem.AddEvent<OnMoveStateChangedEvent>(OnActorMoveStateChanged);
+        }
+
+        #endregion
 
         private void OnActorMoveStateChanged(OnMoveStateChangedEvent ev)
         {
