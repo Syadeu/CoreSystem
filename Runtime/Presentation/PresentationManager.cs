@@ -388,6 +388,12 @@ namespace Syadeu.Presentation
             {
                 group.m_MainthreadBeforePre = false;
 
+                // Unity Jobs
+                for (int i = 0; i < group.m_Systems.Count; i++)
+                {
+                    group.m_Systems[i].m_BeforePresentationJobHandle.Complete();
+                }
+
                 for (int i = 0; i < group.m_BeforePresentations.Count; i++)
                 {
                     result = group.m_BeforePresentations[i].BeforePresentation();
@@ -401,6 +407,12 @@ namespace Syadeu.Presentation
                 yield return group.m_WaitBeforePre;
                 group.m_MainthreadOnPre = false;
 
+                // Unity Jobs
+                for (int i = 0; i < group.m_Systems.Count; i++)
+                {
+                    group.m_Systems[i].m_OnPresentationJobHandle.Complete();
+                }
+
                 for (int i = 0; i < group.m_OnPresentations.Count; i++)
                 {
                     result = group.m_OnPresentations[i].OnPresentation();
@@ -413,6 +425,12 @@ namespace Syadeu.Presentation
                 group.m_MainthreadOnPre = true;
                 yield return group.m_WaitOnPre;
                 group.m_MainthreadAfterPre = false;
+
+                // Unity Jobs
+                for (int i = 0; i < group.m_Systems.Count; i++)
+                {
+                    group.m_Systems[i].m_AfterPresentationJobHandle.Complete();
+                }
 
                 for (int i = 0; i < group.m_AfterPresentations.Count; i++)
                 {

@@ -12,13 +12,7 @@ namespace Syadeu.Presentation
     public readonly struct ProxyTransform : IEquatable<ProxyTransform>
     {
         #region Statics
-        public static readonly ProxyTransform Null = new ProxyTransform(Hash.Empty);
-        //public static readonly Hash s_TranslationChanged = Hash.NewHash("Translation");
-        //public static readonly Hash s_RotationChanged = Hash.NewHash("Rotation");
-        //public static readonly Hash s_ScaleChanged = Hash.NewHash("Scale");
-
-        //public static readonly Hash s_RequestProxy = Hash.NewHash("RequestProxy");
-        //public static readonly Hash s_RemoveProxy = Hash.NewHash("RemoveProxy");
+        public static readonly ProxyTransform Null = new ProxyTransform(-1);
 
         internal static readonly int2 ProxyNull = new int2(-1, -1);
         internal static readonly int2 ProxyQueued = new int2(-2, -2);
@@ -37,21 +31,22 @@ namespace Syadeu.Presentation
 
         [NativeDisableUnsafePtrRestriction] unsafe internal readonly NativeProxyData.UnsafeList* m_Pointer;
         internal readonly int m_Index;
-        internal readonly ulong m_Hash;
-        unsafe internal ProxyTransform(NativeProxyData.UnsafeList* p, int index, ulong hash)
+        internal readonly int m_Generation;
+        unsafe internal ProxyTransform(NativeProxyData.UnsafeList* p, int index, int generation)
         {
             m_Pointer = p;
             m_Index = index;
-            m_Hash = hash;
+            m_Generation = generation;
         }
-        unsafe private ProxyTransform(ulong hash)
+        unsafe private ProxyTransform(int unused)
         {
             m_Pointer = null;
             m_Index = -1;
-            m_Hash = hash;
+            m_Generation = unused;
         }
 
-        unsafe private ref NativeProxyData.ProxyTransformData Ref => ref *(*m_Pointer)[m_Index];
+        unsafe internal ProxyTransformData* Pointer => (*m_Pointer)[m_Index];
+        unsafe private ref ProxyTransformData Ref => ref *(*m_Pointer)[m_Index];
 
         internal void SetProxy(int2 proxyIndex)
         {
@@ -59,12 +54,20 @@ namespace Syadeu.Presentation
         }
 
 #pragma warning disable IDE1006 // Naming Styles
-        public ulong index
+        public int index
         {
             get
             {
                 if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
-                return m_Hash;
+                return m_Index;
+            }
+        }
+        public int generation
+        {
+            get
+            {
+                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                return m_Generation;
             }
         }
 
@@ -137,8 +140,8 @@ namespace Syadeu.Presentation
             {
                 unsafe
                 {
-                    if (m_Hash.Equals(0) || m_Pointer == null) return true;
-                    if (!(*m_Pointer)[m_Index]->m_Hash.Equals(m_Hash)) return true;
+                    if (m_Generation.Equals(-1) || m_Pointer == null) return true;
+                    if (!(*m_Pointer)[m_Index]->m_Generation.Equals(m_Generation)) return true;
                 }
                 return false;
             }
@@ -315,6 +318,8 @@ namespace Syadeu.Presentation
             PresentationSystem<GameObjectProxySystem>.System.Destroy(this);
         }
 
-        public bool Equals(ProxyTransform other) => m_Hash.Equals(other.m_Hash);
+        public bool Equals(ProxyTransform other) => 
+            m_Index.Equals(other.m_Index) && 
+            m_Generation.Equals(other.m_Generation);
     }
 }

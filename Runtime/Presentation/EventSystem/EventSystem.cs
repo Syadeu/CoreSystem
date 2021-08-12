@@ -15,32 +15,60 @@ namespace Syadeu.Presentation.Event
 
         private readonly Queue<SynchronizedEventBase> m_PostedEvents = new Queue<SynchronizedEventBase>();
 
+        private SceneSystem m_SceneSystem;
+
+        private bool m_LoadingLock = false;
+
+        protected override PresentationResult OnInitialize()
+        {
+            RequestSystem<SceneSystem>(Bind);
+
+            return base.OnInitialize();
+        }
+
+        #region Bind
+        private void Bind(SceneSystem other)
+        {
+            m_SceneSystem = other;
+
+            m_SceneSystem.OnLoadingEnter += M_SceneSystem_OnLoadingEnter;
+        }
+        private void M_SceneSystem_OnLoadingEnter()
+        {
+            m_LoadingLock = true;
+
+            m_PostedEvents.Clear();
+
+            m_LoadingLock = false;
+        }
+        #endregion
+
         protected override PresentationResult BeforePresentation()
         {
+            if (m_LoadingLock) return base.BeforePresentation();
+
             int eventCount = m_PostedEvents.Count;
             for (int i = 0; i < eventCount; i++)
             {
+                SynchronizedEventBase ev = m_PostedEvents.Dequeue();
                 try
                 {
-                    var ev = m_PostedEvents.Dequeue();
                     ev.InternalPost();
                     ev.InternalTerminate();
                 }
                 catch (Exception ex)
                 {
                     CoreSystem.Logger.LogError(Channel.Presentation,
-                        "Invalid event has been posted");
+                        $"Invalid event({ev.GetType()}) has been posted");
                     UnityEngine.Debug.LogException(ex);
                 }
             }
 
             return base.BeforePresentation();
         }
-        public override void Dispose()
+        public override void OnDispose()
         {
             m_PostedEvents.Clear();
-
-            base.Dispose();
         }
 
         public void AddEvent<TEvent>(Action<TEvent> ev) where TEvent : SynchronizedEvent<TEvent>, new()

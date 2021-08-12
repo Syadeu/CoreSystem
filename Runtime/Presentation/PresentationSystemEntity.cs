@@ -44,7 +44,7 @@ namespace Syadeu.Presentation
         protected override PresentationResult AfterPresentation() { return PresentationResult.Normal; }
         protected override PresentationResult AfterPresentationAsync() { return PresentationResult.Normal; }
 
-        public override void Dispose() { }
+        public override void OnDispose() { }
 
         /// <summary>
         /// <see cref="OnInitialize"/> 혹은 <see cref="OnInitializeAsync"/> 에서만 수행되야됩니다.

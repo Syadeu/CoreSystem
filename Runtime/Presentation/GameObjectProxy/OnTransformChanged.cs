@@ -17,7 +17,7 @@ namespace Syadeu.Presentation
         {
             var temp = Dequeue();
 
-            Hash entityIdx = temp.EntitySystem.m_EntityGameObjects[tr.m_Hash];
+            Hash entityIdx = temp.EntitySystem.m_EntityGameObjects[tr.m_Index];
             temp.entity = Entity<IEntity>.GetEntity(entityIdx);
             temp.transform = tr;
 

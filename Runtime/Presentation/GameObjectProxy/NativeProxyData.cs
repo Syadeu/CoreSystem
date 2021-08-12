@@ -33,8 +33,8 @@ namespace Syadeu.Presentation
 
         public struct UnsafeList : IDisposable
         {
-            public IntPtr m_Buffer;
-            public int m_Length;
+            [NativeDisableUnsafePtrRestriction] public IntPtr m_Buffer;
+            public uint m_Length;
             public Allocator m_Allocator;
 
             public void* Pointer => m_Buffer.ToPointer();
@@ -42,12 +42,23 @@ namespace Syadeu.Presentation
 
             public ProxyTransformData* this[int index]
             {
-                get => m_TransformBuffer + index;
+                get
+                {
+                    if (index >= m_Length) throw new ArgumentOutOfRangeException(nameof(index) + $"of {m_Length} at {index}");
+                    return m_TransformBuffer + index;
+                }
             }
             public void Dispose()
             {
                 UnsafeUtility.MemClear(m_Buffer.ToPointer(), m_Length * s_TransformSize);
                 UnsafeUtility.Free(m_Buffer.ToPointer(), m_Allocator);
+            }
+
+            public ProxyTransformData ElementAt(int index)
+            {
+                if (index >= m_Length) throw new ArgumentOutOfRangeException(nameof(index) + $" of {m_Length} at {index}");
+
+                return m_TransformBuffer[index];
             }
         }
 
@@ -58,17 +69,17 @@ namespace Syadeu.Presentation
         {
             get
             {
-                if (index < 0 || index >= m_UnsafeList->m_Length) throw new ArgumentOutOfRangeException(nameof(index));
+                if (index < 0 || index >= m_UnsafeList->m_Length) throw new ArgumentOutOfRangeException(nameof(index) + $"index of {index} in {m_UnsafeList->m_Length}");
                 ProxyTransformData* p = (*m_UnsafeList)[index];
 
-                return new ProxyTransform(m_UnsafeList, index, p->m_Hash);
+                return new ProxyTransform(m_UnsafeList, index, p->m_Generation);
             }
         }
         private UnsafeList List => *m_UnsafeList;
 
         public NativeProxyData(int length, Allocator allocator, NativeArrayOptions options = NativeArrayOptions.ClearMemory)
         {
-            Allocate(length, allocator, out this);
+            Allocate(Convert.ToUInt32(length), allocator, out this);
 
             // Set the memory block to 0 if requested.
             if ((options & NativeArrayOptions.ClearMemory) == NativeArrayOptions.ClearMemory)
@@ -84,7 +95,7 @@ namespace Syadeu.Presentation
             UnsafeUtility.MemClear(m_UnsafeList, UnsafeUtility.SizeOf<UnsafeList>());
             UnsafeUtility.Free(m_UnsafeList, m_AllocatorLabel);
         }
-        private static void Allocate(int length, Allocator allocator, out NativeProxyData array)
+        private static void Allocate(uint length, Allocator allocator, out NativeProxyData array)
         {
             if (allocator <= Allocator.None)
                 throw new ArgumentException("Allocator must be Temp, TempJob or Persistent", nameof(allocator));
@@ -106,7 +117,7 @@ namespace Syadeu.Presentation
             array.m_WriteSemaphore.Release();
         }
 
-        private void Incremental(int length)
+        private void Incremental(uint length)
         {
             AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
 
@@ -122,6 +133,7 @@ namespace Syadeu.Presentation
             m_UnsafeList->m_Buffer = (IntPtr)transformBuffer;
 
             m_UnsafeList->m_Length += length;
+            $"increased to {m_UnsafeList->m_Length}".ToLog();
         }
         //private void Decremental(uint length)
         //{
@@ -158,25 +170,28 @@ namespace Syadeu.Presentation
             }
             if (index < 0)
             {
-                //if (!m_WriteSemaphore.WaitOne(0))
-                //{
-                //    return Add(prefab, translation, rotation, scale, enableCull, center, size);
-                //}
-
-                Incremental(m_UnsafeList->m_Length);
+                uint length = m_UnsafeList->m_Length;
+                Incremental(length);
                 m_WriteSemaphore.Release();
 
                 ProxyTransform result = Add(prefab, translation, rotation, scale, enableCull, center, size);
                 return result;
             }
 
-            Hash hash = Hash.NewHash();
+            //Hash hash = Hash.NewHash();
+            ProxyTransformData* targetP = (*m_UnsafeList)[index];
+            int generation = targetP->m_Generation;
+            if (generation.Equals(int.MaxValue)) generation = 0;
+            else generation++;
+
             ProxyTransformData tr = new ProxyTransformData
             {
                 m_IsOccupied = true,
 
                 m_Index = index,
-                m_Hash = hash,
+                //m_Hash = hash,
+                m_Generation = generation,
+
                 m_Prefab = prefab,
                 m_ProxyIndex = ProxyTransform.ProxyNull,
                 m_EnableCull = enableCull,
@@ -190,10 +205,10 @@ namespace Syadeu.Presentation
                 m_Center = center,
                 m_Size = size
             };
-            ProxyTransformData* targetP = (*m_UnsafeList)[index];
+            
             *targetP = tr;
 
-            ProxyTransform transform = new ProxyTransform(m_UnsafeList, index, hash);
+            ProxyTransform transform = new ProxyTransform(m_UnsafeList, index, generation);
             m_WriteSemaphore.Release();
             return transform;
         }
@@ -202,20 +217,20 @@ namespace Syadeu.Presentation
             AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
             m_WriteSemaphore.WaitOne();
 
-            Hash index = transform.index;
+            //Hash index = transform.index;
 
             ProxyTransformData* p = (*m_UnsafeList)[transform.m_Index];
-            if (!p->m_IsOccupied || !p->m_Hash.Equals(transform.m_Hash))
+            if (!p->m_IsOccupied || !p->m_Generation.Equals(transform.m_Generation))
             {
                 throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
             }
 
             p->m_IsOccupied = false;
-            p->m_Hash = Hash.Empty;
+            //p->m_Hash = Hash.Empty;
 
             m_WriteSemaphore.Release();
             CoreSystem.Logger.Log(Channel.Proxy,
-                $"ProxyTransform({index}) has been destroyed.");
+                $"ProxyTransform has been destroyed.");
         }
         public void Clear()
         {
@@ -224,7 +239,8 @@ namespace Syadeu.Presentation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public NativeArray<ProxyTransformData> GetActiveData(Allocator allocator)
         {
-            ProxyTransformData* buffer = stackalloc ProxyTransformData[List.m_Length];
+            // 이게 망할놈임
+            ProxyTransformData[] buffer = new ProxyTransformData[List.m_Length];
             int j = 0;
             for (int i = 0; i < List.m_Length; i++)
             {
@@ -233,9 +249,11 @@ namespace Syadeu.Presentation
                 buffer[j] = *List[i];
                 j++;
             }
+            ProxyTransformData[] arr = new ProxyTransformData[j];
+            Array.Copy(buffer, arr, j);
 
-            NativeArray<ProxyTransformData> temp = new NativeArray<ProxyTransformData>(j, allocator, NativeArrayOptions.UninitializedMemory);
-            UnsafeUtility.MemCpy(temp.GetUnsafePtr(), buffer, s_TransformSize * j);
+            NativeArray<ProxyTransformData> temp = new NativeArray<ProxyTransformData>(arr, allocator);
+            //UnsafeUtility.MemCpy(temp.GetUnsafePtr(), buffer, s_TransformSize * j);
 
             return temp;
         }
@@ -244,64 +262,55 @@ namespace Syadeu.Presentation
             for (int i = 0; i < m_UnsafeList->m_Length; i++)
             {
                 if (!(*m_UnsafeList)[i]->m_IsOccupied) return;
-                action.Invoke(new ProxyTransform(m_UnsafeList, i, (*m_UnsafeList)[i]->m_Hash));
+                action.Invoke(new ProxyTransform(m_UnsafeList, i, (*m_UnsafeList)[i]->m_Generation));
             }
         }
+    }
+    internal struct ProxyTransformData : IEquatable<ProxyTransformData>
+    {
+        internal bool m_IsOccupied;
+        internal bool m_EnableCull;
+        internal bool m_IsVisible;
+        internal bool m_DestroyQueued;
 
-        [StructLayout(LayoutKind.Explicit, Size = 96)]
-        public struct ProxyTransformData : IEquatable<ProxyTransformData>
+        internal ClusterID m_ClusterID;
+        internal int m_Index;
+        internal int2 m_ProxyIndex;
+
+        //internal ulong m_Hash;
+        internal int m_Generation;
+        internal PrefabReference m_Prefab;
+
+        
+        internal float3 m_Translation;
+        internal float3 m_Scale;
+        internal float3 m_Center;
+        internal float3 m_Size;
+
+        
+        internal quaternion m_Rotation;
+
+        public float3 translation
         {
-            // 1 bytes
-            [FieldOffset(0)] internal bool m_IsOccupied;
-            [FieldOffset(1)] internal bool m_EnableCull;
-            [FieldOffset(2)] internal bool m_IsVisible;
-            [FieldOffset(3)] internal bool m_DestroyQueued;
-
-            // 4 bytes
-            [FieldOffset(4)] internal int m_Index;
-            [FieldOffset(8)] internal int2 m_ProxyIndex;
-
-            // 8 bytes
-            [FieldOffset(16)] internal ulong m_Hash;
-            [FieldOffset(24)] internal PrefabReference m_Prefab;
-
-            // 12 bytes
-            [FieldOffset(32)] internal float3 m_Translation;
-            [FieldOffset(44)] internal float3 m_Scale;
-            [FieldOffset(56)] internal float3 m_Center;
-            [FieldOffset(68)] internal float3 m_Size;
-
-            // 16 bytes
-            [FieldOffset(80)] internal quaternion m_Rotation;
-
-            public float3 translation
-            {
-                get => m_Translation;
-                set => m_Translation = value;
-            }
-            public quaternion rotation
-            {
-                get => m_Rotation;
-                set => m_Rotation = value;
-            }
-            public float3 scale
-            {
-                get => m_Scale;
-                set => m_Scale = value;
-            }
-            public AABB aabb => new AABB(m_Center + m_Translation, m_Size).Rotation(m_Rotation);
-
-            public AABB GetAABB(Allocator allocator = Allocator.TempJob)
-            {
-                return new AABB(m_Center + m_Translation, m_Size).Rotation(m_Rotation, allocator);
-            }
-            public bool Equals(ProxyTransformData other) => m_Hash.Equals(other.m_Hash);
+            get => m_Translation;
+            set => m_Translation = value;
         }
-        [StructLayout(LayoutKind.Explicit, Size = 96)]
-        private struct DataKeyValuePair
+        public quaternion rotation
         {
-            [FieldOffset(0)] internal bool m_IsOccupied;
-            [FieldOffset(16)] internal Hash m_Hash;
+            get => m_Rotation;
+            set => m_Rotation = value;
         }
+        public float3 scale
+        {
+            get => m_Scale;
+            set => m_Scale = value;
+        }
+        public AABB aabb => new AABB(m_Center + m_Translation, m_Size).Rotation(m_Rotation);
+
+        public AABB GetAABB(Allocator allocator = Allocator.TempJob)
+        {
+            return new AABB(m_Center + m_Translation, m_Size).Rotation(m_Rotation, allocator);
+        }
+        public bool Equals(ProxyTransformData other) => m_Generation.Equals(other.m_Generation);
     }
 }

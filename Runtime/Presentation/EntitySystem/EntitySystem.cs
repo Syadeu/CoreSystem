@@ -46,7 +46,7 @@ namespace Syadeu.Presentation
 
         internal readonly HashSet<Hash> m_ObjectHashSet = new HashSet<Hash>();
         internal readonly Dictionary<Hash, IEntityData> m_ObjectEntities = new Dictionary<Hash, IEntityData>();
-        internal readonly Dictionary<Hash, Hash> m_EntityGameObjects = new Dictionary<Hash, Hash>();
+        internal readonly Dictionary<int, Hash> m_EntityGameObjects = new Dictionary<int, Hash>();
 
         private readonly Dictionary<Type, List<IAttributeProcessor>> m_AttributeProcessors = new Dictionary<Type, List<IAttributeProcessor>>();
         private readonly Dictionary<Type, List<IEntityDataProcessor>> m_EntityProcessors = new Dictionary<Type, List<IEntityDataProcessor>>();
@@ -211,7 +211,7 @@ namespace Syadeu.Presentation
             return base.OnPresentationAsync();
         }
 
-        public override void Dispose()
+        public override void OnDispose()
         {
             var entityList = m_ObjectEntities.Values.ToArray();
             for (int i = 0; i < entityList.Length; i++)
@@ -293,8 +293,6 @@ namespace Syadeu.Presentation
             m_ObjectEntities.Clear();
             m_AttributeProcessors.Clear();
             m_EntityProcessors.Clear();
-            
-            base.Dispose();
         }
         #endregion
 
@@ -494,7 +492,7 @@ namespace Syadeu.Presentation
             if (!CoreSystem.s_BlockCreateInstance && m_ObjectEntities[hash] is IEntity entity)
             {
                 ProxyTransform obj = entity.transform;
-                Hash index = obj.index;
+                int index = obj.index;
                 obj.Destroy();
                 m_EntityGameObjects.Remove(index);
             }

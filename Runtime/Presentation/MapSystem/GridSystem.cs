@@ -78,12 +78,11 @@ namespace Syadeu.Presentation.Map
             }
             return base.BeforePresentationAsync();
         }
-        public override void Dispose()
+        public override void OnDispose()
         {
             m_EntitySystem.OnEntityCreated -= M_EntitySystem_OnEntityCreated;
             m_EntitySystem.OnEntityDestroy -= M_EntitySystem_OnEntityDestroy;
             m_RenderSystem.OnRender -= M_RenderSystem_OnRender;
-            base.Dispose();
         }
         private void CreateConsoleCommands()
         {
@@ -173,6 +172,7 @@ namespace Syadeu.Presentation.Map
 
             static void DrawGridGL(ManagedGrid grid, float thickness)
             {
+                const float yOffset = .2f;
                 int2 gridSize = grid.gridSize;
 
                 Vector3 minPos = grid.IndexToPosition(0);
@@ -193,19 +193,19 @@ namespace Syadeu.Presentation.Map
                         Vector3
                             p1 = new Vector3(
                                 minPos.x,
-                                minPos.y + .05f,
+                                minPos.y + yOffset,
                                 minPos.z - (grid.cellSize * y)),
                             p2 = new Vector3(
                                 maxPos.x,
-                                minPos.y + .05f,
+                                minPos.y + yOffset,
                                 minPos.z - (grid.cellSize * y)),
                             p3 = new Vector3(
                                 minPos.x + (grid.cellSize * x),
-                                minPos.y + .05f,
+                                minPos.y + yOffset,
                                 minPos.z),
                             p4 = new Vector3(
                                 minPos.x + (grid.cellSize * x),
-                                minPos.y + .05f,
+                                minPos.y + yOffset,
                                 maxPos.z)
                             ;
 
