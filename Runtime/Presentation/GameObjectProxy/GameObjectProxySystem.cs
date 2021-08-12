@@ -158,7 +158,7 @@ namespace Syadeu.Presentation
             proxy.transform.localScale = ev.transform.scale;
         }
 
-        //private JobHandle m_ProxyJob;
+        private NativeList<ClusterGroup<ProxyTransformData>> m_SortedCluster;
         protected override PresentationResult AfterPresentation()
         {
             const int c_ChunkSize = 100;
@@ -194,15 +194,14 @@ namespace Syadeu.Presentation
             int requestProxyCount = m_RequestProxyList.Count;
             for (int i = 0; i < requestProxyCount; i++)
             {
-                if (i != 0 && i % c_ChunkSize == 0) break;
+                //if (i != 0 && i % c_ChunkSize == 0) break;
 
                 ProxyTransform tr = m_ProxyData[m_RequestProxyList.Dequeue()];
                 
                 if (tr.isDestroyed) continue;
                 else if (tr.hasProxy && !tr.hasProxyQueued)
                 {
-                    CoreSystem.Logger.LogError(Channel.Proxy,
-                        $"Already have proxy");
+                    CoreSystem.Logger.LogError(Channel.Proxy, $"Already have proxy");
                     continue;
                 }
 
@@ -211,7 +210,7 @@ namespace Syadeu.Presentation
             int removeProxyCount = m_RemoveProxyList.Count;
             for (int i = 0; i < removeProxyCount; i++)
             {
-                if (i != 0 && i % c_ChunkSize == 0) break;
+                //if (i != 0 && i % c_ChunkSize == 0) break;
 
                 ProxyTransform tr = m_ProxyData[m_RemoveProxyList.Dequeue()];
 
@@ -231,7 +230,7 @@ namespace Syadeu.Presentation
             int visibleCount = m_VisibleList.Count;
             for (int i = 0; i < visibleCount; i++)
             {
-                if (i != 0 && i % c_ChunkSize == 0) break;
+                //if (i != 0 && i % c_ChunkSize == 0) break;
 
                 ProxyTransform tr = m_ProxyData[m_VisibleList.Dequeue()];
                 if (tr.isDestroyed) continue;
@@ -242,7 +241,7 @@ namespace Syadeu.Presentation
             int invisibleCount = m_InvisibleList.Count;
             for (int i = 0; i < invisibleCount; i++)
             {
-                if (i != 0 && i % c_ChunkSize == 0) break;
+                //if (i != 0 && i % c_ChunkSize == 0) break;
 
                 ProxyTransform tr = m_ProxyData[m_InvisibleList.Dequeue()];
 
@@ -253,36 +252,98 @@ namespace Syadeu.Presentation
             }
             #endregion
 
-            CameraFrustum.ReadOnly frustum = m_RenderSystem.GetFrustum(Allocator.TempJob);
-            NativeArray<ClusterGroup<ProxyTransformData>.ReadOnly> clusterGroups = m_ClusterData.GetGroups(frustum, Allocator.TempJob);
+            CameraFrustum frustum = m_RenderSystem.GetRawFrustum();
+            //NativeArray<ClusterGroup<ProxyTransformData>.ReadOnly> clusterGroups = m_ClusterData.GetGroups(frustum, Allocator.TempJob);
 
-            //clusterGroups.Dispose();
-            ProxyJob proxyJob = new ProxyJob
+            //ProxyJob proxyJob = new ProxyJob
+            //{
+            //    //m_ActiveData = m_ProxyData.GetActiveData(Allocator.TempJob),
+            //    m_ActiveData = clusterGroups,
+            //    m_Frustum = frustum,
+
+            //    m_Remove = m_RemoveProxyList.AsParallelWriter(),
+            //    m_Request = m_RequestProxyList.AsParallelWriter(),
+
+            //    m_Visible = m_VisibleList.AsParallelWriter(),
+            //    m_Invisible = m_InvisibleList.AsParallelWriter()
+            //};
+            //ScheduleAt(JobPosition.After, proxyJob, (int)proxyJob.m_ActiveData.Length, 64);
+
+            NativeArray<ClusterGroup<ProxyTransformData>> result = default;
+            if (m_SortedCluster.IsCreated)
             {
-                //m_ActiveData = m_ProxyData.GetActiveData(Allocator.TempJob),
-                m_ActiveData = clusterGroups,
+                result = new NativeArray<ClusterGroup<ProxyTransformData>>(m_SortedCluster, Allocator.TempJob);
+                m_SortedCluster.Dispose();
+            }
+            m_SortedCluster = new NativeList<ClusterGroup<ProxyTransformData>>(Allocator.Persistent);
+            //NativeArray<ClusterGroup<ProxyTransformData>> result
+            //    = new NativeArray<ClusterGroup<ProxyTransformData>>(m_SortedCluster, Allocator.TempJob);
+            //m_SortedCluster.Clear();
+            ClusterJob clusterJob = new ClusterJob
+            {
+                m_ClusterData = m_ClusterData,
                 m_Frustum = frustum,
-
-                m_Remove = m_RemoveProxyList.AsParallelWriter(),
-                m_Request = m_RequestProxyList.AsParallelWriter(),
-
-                m_Visible = m_VisibleList.AsParallelWriter(),
-                m_Invisible = m_InvisibleList.AsParallelWriter()
+                m_Output = m_SortedCluster
             };
-            //m_ProxyJob = proxyJob.Schedule(proxyJob.m_ActiveData.Length, 64);
-            //m_ProxyJob = proxyJob.Schedule((int)proxyJob.m_ActiveData.Length, 64);
-            ScheduleAt(JobPosition.After, proxyJob, (int)proxyJob.m_ActiveData.Length, 64);
+            ScheduleAt(JobPosition.After, clusterJob);
+
+            if (result.IsCreated)
+            {
+                unsafe
+                {
+                    NativeProxyData.UnsafeList list = *m_ProxyData.m_UnsafeList;
+
+                    ProxyJob proxyJob = new ProxyJob
+                    {
+                        //m_ActiveData = m_ProxyData.GetActiveData(Allocator.TempJob),
+                        m_ActiveData = result,
+                        List = list,
+
+                        m_Frustum = frustum,
+
+                        m_Remove = m_RemoveProxyList.AsParallelWriter(),
+                        m_Request = m_RequestProxyList.AsParallelWriter(),
+
+                        m_Visible = m_VisibleList.AsParallelWriter(),
+                        m_Invisible = m_InvisibleList.AsParallelWriter()
+                    };
+                    ScheduleAt(JobPosition.After, proxyJob, (int)proxyJob.m_ActiveData.Length, 64);
+                }
+
+                
+            }
 
             return PresentationResult.Normal;
         }
 
+        private struct ClusterJob : IJob
+        {
+            [ReadOnly] public Cluster<ProxyTransformData> m_ClusterData;
+            [ReadOnly] public CameraFrustum m_Frustum;
+            [WriteOnly] public NativeList<ClusterGroup<ProxyTransformData>> m_Output;
+
+            public void Execute()
+            {
+                for (int i = 0; i < m_ClusterData.Length; i++)
+                {
+                    AABB box = new AABB(m_ClusterData[i].Translation, Cluster<ProxyTransformData>.c_ClusterRange);
+
+                    if (m_Frustum.IntersectsBox(in box))
+                    {
+                        m_Output.Add(m_ClusterData[i]);
+                    }
+                }
+            }
+        }
         [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
         private struct ProxyJob : IJobParallelFor
         {
             //[ReadOnly, DeallocateOnJobCompletion] public NativeArray<ProxyTransformData> m_ActiveData;
-            [ReadOnly, DeallocateOnJobCompletion] public NativeArray<ClusterGroup<ProxyTransformData>.ReadOnly> m_ActiveData;
+            //[ReadOnly, DeallocateOnJobCompletion] public NativeArray<ClusterGroup<ProxyTransformData>.ReadOnly> m_ActiveData;
+            [ReadOnly, DeallocateOnJobCompletion] public NativeArray<ClusterGroup<ProxyTransformData>> m_ActiveData;
+            [ReadOnly] public NativeProxyData.UnsafeList List;
 
-            [ReadOnly, DeallocateOnJobCompletion] public CameraFrustum.ReadOnly m_Frustum;
+            [ReadOnly] public CameraFrustum m_Frustum;
             [WriteOnly] public NativeQueue<int>.ParallelWriter
                 m_Remove,
                 m_Request,
@@ -292,11 +353,11 @@ namespace Syadeu.Presentation
 
             public void Execute(int i)
             {
-                ClusterGroup<ProxyTransformData>.ReadOnly g = m_ActiveData[i];
+                ClusterGroup<ProxyTransformData> g = m_ActiveData[i];
                 for (int j = 0; j < g.Length; j++)
                 {
-                    if (!g.HasElementAt(j)) continue;
-                    ProxyTransformData data = g[j];
+                    if (!g.BeingUsed || !g.HasElementAt(j)) continue;
+                    ProxyTransformData data = List.ElementAt(g[j]);
 
                     if (m_Frustum.IntersectsBox(data.GetAABB(Allocator.Temp)))
                     {
@@ -350,6 +411,8 @@ namespace Syadeu.Presentation
             m_ProxyData.Dispose();
             m_ClusterData.Dispose();
 
+            m_SortedCluster.Dispose();
+
             m_Disposed = true;
         }
         #endregion
@@ -363,7 +426,7 @@ namespace Syadeu.Presentation
             ProxyTransform tr = m_ProxyData.Add(prefab, pos, rot, scale, enableCull, center, size);
             unsafe
             {
-                ClusterID id = m_ClusterData.Add(pos, tr.Pointer);
+                ClusterID id = m_ClusterData.Add(pos, tr.m_Index);
                 tr.Pointer->m_ClusterID = id;
             }
             OnDataObjectCreated?.Invoke(tr);

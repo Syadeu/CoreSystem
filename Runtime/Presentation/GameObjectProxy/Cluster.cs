@@ -30,6 +30,20 @@ namespace Syadeu.Presentation
         private uint m_Length;
 
         #region Properties
+
+        public ClusterGroup<T> this[int index]
+        {
+            get
+            {
+#if UNITY_EDITOR
+                AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
+                AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
+
+                if (index >= m_Length) throw new ArgumentOutOfRangeException(nameof(index));
+#endif
+                return m_Buffer[index];
+            }
+        }
         public int UsedCount
         {
             get
@@ -128,10 +142,10 @@ namespace Syadeu.Presentation
             calculated = math.round(calculated) * c_ClusterRange;
 
             uint clusterHash = FNV1a32.Calculate(calculated.ToString());
-            $"cluster pos: {calculated}, idx: {clusterHash % m_Length}".ToLog();
+            //$"cluster pos: {calculated}, idx: {clusterHash % m_Length}".ToLog();
             return clusterHash % m_Length;
         }
-        public NativeArray<ClusterGroup<T>.ReadOnly> GetGroups(CameraFrustum.ReadOnly frustum, Allocator allocator)
+        public NativeArray<ClusterGroup<T>.ReadOnly> GetGroups(CameraFrustum frustum, Allocator allocator)
         {
 #if UNITY_EDITOR
             AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
@@ -165,6 +179,7 @@ namespace Syadeu.Presentation
             return m_Buffer[id.GroupIndex];
         }
 
+        [WriteAccessRequired]
         public void Update(in ClusterID id, in float3 translation)
         {
 #if UNITY_EDITOR
@@ -177,10 +192,11 @@ namespace Syadeu.Presentation
             uint idx = GetClusterIndex(in translation, out float3 calculated);
             if (idx.Equals(id.GroupIndex)) return;
 
-            T* t = Remove(in id);
-            Add(in idx, in calculated, in t);
+            int arrayIndex = Remove(in id);
+            Add(in idx, in calculated, in arrayIndex);
         }
-        public ClusterID Add(in float3 translation, T* t)
+        [WriteAccessRequired]
+        public ClusterID Add(in float3 translation, in int arrayIndex)
         {
 #if UNITY_EDITOR
             AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
@@ -190,13 +206,13 @@ namespace Syadeu.Presentation
             CoreSystem.Logger.ThreadBlock(nameof(Cluster<T>.Add), Syadeu.Internal.ThreadInfo.Unity);
 
             uint idx = GetClusterIndex(in translation, out float3 calculated);
-            return Add(in idx, in calculated, in t);
+            return Add(in idx, in calculated, in arrayIndex);
         }
-        private ClusterID Add(in uint gIdx, in float3 calculated, in T* t)
+        private ClusterID Add(in uint gIdx, in float3 calculated, in int arrayIndex)
         {
             if (!m_Buffer[gIdx].BeingUsed)
             {
-                m_Buffer[gIdx] = new ClusterGroup<T>(gIdx, calculated, 64);
+                m_Buffer[gIdx] = new ClusterGroup<T>(gIdx, calculated, 128);
             }
             else
             {
@@ -206,7 +222,7 @@ namespace Syadeu.Presentation
                 }
             }
 
-            uint itemIdx = m_Buffer[gIdx].Add(t);
+            uint itemIdx = m_Buffer[gIdx].Add(in arrayIndex);
             if (itemIdx < 0)
             {
                 "cluster full".ToLog();
@@ -215,8 +231,8 @@ namespace Syadeu.Presentation
 
             return new ClusterID((int)gIdx, (int)itemIdx);
         }
-
-        public T* Remove(in ClusterID id)
+        [WriteAccessRequired]
+        public int Remove(in ClusterID id)
         {
 #if UNITY_EDITOR
             AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
@@ -234,6 +250,9 @@ namespace Syadeu.Presentation
     [BurstCompile(CompileSynchronously = true)]
     unsafe internal struct ClusterGroup<T> : IDisposable where T : unmanaged
     {
+        private static readonly int s_BufferSize = UnsafeUtility.SizeOf<ClusterItem<T>>();
+        private static readonly int s_BufferAlign = UnsafeUtility.AlignOf<ClusterItem<T>>();
+
         private readonly uint m_GroupIndex;
         private float3 m_Translation;
         private bool m_BeingUsed;
@@ -242,13 +261,13 @@ namespace Syadeu.Presentation
 
         #region Properties
 
-        public T* this[uint index]
+        public int this[int index]
         {
             get
             {
                 if (index >= m_Length) throw new ArgumentOutOfRangeException(nameof(index));
 
-                return m_Buffer[index].m_Pointer;
+                return m_Buffer[index].m_ArrayIndex;
             }
         }
         public uint Length => m_Length;
@@ -267,11 +286,11 @@ namespace Syadeu.Presentation
             [ReadOnly] public readonly uint Length;
             [ReadOnly] public readonly Allocator Allocator;
 
-            public ref T this[int index]
+            public int this[int index]
             {
                 get
                 {
-                    return ref *Items[index].m_Pointer;
+                    return Items[index].m_ArrayIndex;
                 }
             }
 
@@ -298,7 +317,7 @@ namespace Syadeu.Presentation
             {
                 if (index >= Length) throw new ArgumentOutOfRangeException(nameof(index));
 
-                if (Items[index].m_Pointer == null) return false;
+                if (Items[index].m_IsOccupied == false) return false;
                 return true;
             }
         }
@@ -321,14 +340,20 @@ namespace Syadeu.Presentation
         }
         private void Incremental(uint length)
         {
-            var newBuffer = (ClusterItem<T>*)UnsafeUtility.Malloc(
-                UnsafeUtility.SizeOf<ClusterItem<T>>() * (m_Length + length),
-                UnsafeUtility.AlignOf<ClusterItem<T>>(), Unity.Collections.Allocator.Persistent);
+            $"request {m_Length + length}".ToLog();
+            long shiftedSize = s_BufferSize * (m_Length + length);
+            ClusterItem<T>* newBuffer = (ClusterItem<T>*)UnsafeUtility.Malloc(
+                shiftedSize,
+                s_BufferAlign, Allocator.Persistent);
             
-            UnsafeUtility.MemClear(newBuffer + m_Length, UnsafeUtility.SizeOf<ClusterItem<T>>() * length);
-            UnsafeUtility.MemCpy(newBuffer, m_Buffer, UnsafeUtility.SizeOf<ClusterItem<T>>() * m_Length);
+            UnsafeUtility.MemClear(newBuffer, shiftedSize);
+            UnsafeUtility.MemCpy(newBuffer, m_Buffer, s_BufferSize * m_Length);
+            //for (int i = 0; i < m_Length; i++)
+            //{
+            //    newBuffer[i].m_Pointer = m_Buffer[i].m_Pointer;
+            //}
 
-            UnsafeUtility.Free(m_Buffer, Unity.Collections.Allocator.Persistent);
+            UnsafeUtility.Free(m_Buffer, Allocator.Persistent);
             m_Buffer = newBuffer;
 
             m_Length = length;
@@ -338,7 +363,7 @@ namespace Syadeu.Presentation
 
         #endregion
 
-        public uint Add(in T* t)
+        public uint Add(in int arrayIndex)
         {
             CoreSystem.Logger.ThreadBlock(nameof(ClusterGroup<T>.Add), Syadeu.Internal.ThreadInfo.Unity);
 
@@ -346,25 +371,35 @@ namespace Syadeu.Presentation
             if (idx < 0)
             {
                 Incremental(m_Length);
-                return Add(t);
+                return Add(arrayIndex);
             }
 
-            m_Buffer[idx].m_Pointer = t;
+            m_Buffer[idx].m_ArrayIndex = arrayIndex;
+            m_Buffer[idx].m_IsOccupied = true;
             return (uint)idx;
         }
-        public T* RemoveAt(in int index)
+        public int RemoveAt(in int index)
         {
             CoreSystem.Logger.ThreadBlock(nameof(ClusterGroup<T>.Add), Syadeu.Internal.ThreadInfo.Unity);
 
-            T* temp = m_Buffer[index].m_Pointer;
-            m_Buffer[index].m_Pointer = null;
+            int temp = m_Buffer[index].m_ArrayIndex;
+            m_Buffer[index].m_IsOccupied = false;
             return temp;
         }
+
+        public bool HasElementAt(int i)
+        {
+            if (i >= Length) throw new ArgumentOutOfRangeException(nameof(i));
+
+            if (!m_Buffer[i].m_IsOccupied) return false;
+            return true;
+        }
+
         private int GetUnused()
         {
             for (int i = 0; i < m_Length; i++)
             {
-                if (m_Buffer[i].m_Pointer == null) return i;
+                if (!m_Buffer[i].m_IsOccupied) return i;
             }
             return -1;
         }
@@ -373,7 +408,9 @@ namespace Syadeu.Presentation
     [BurstCompile]
     unsafe internal struct ClusterItem<T> where T : unmanaged
     {
-        [NativeDisableUnsafePtrRestriction] public T* m_Pointer;
+        //[NativeDisableUnsafePtrRestriction] public T* m_Pointer;
+        public bool m_IsOccupied;
+        public int m_ArrayIndex;
     }
 
     [BurstCompile(CompileSynchronously = true)]

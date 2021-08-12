@@ -33,7 +33,7 @@ namespace Syadeu.Presentation
 
         public struct UnsafeList : IDisposable
         {
-            public IntPtr m_Buffer;
+            [NativeDisableUnsafePtrRestriction] public IntPtr m_Buffer;
             public int m_Length;
             public Allocator m_Allocator;
 
@@ -49,6 +49,11 @@ namespace Syadeu.Presentation
                 UnsafeUtility.MemClear(m_Buffer.ToPointer(), m_Length * s_TransformSize);
                 UnsafeUtility.Free(m_Buffer.ToPointer(), m_Allocator);
             }
+
+            public ProxyTransformData ElementAt(int index)
+            {
+                return m_TransformBuffer[index];
+            }
         }
 
         public UnsafeList* m_UnsafeList;
@@ -58,7 +63,7 @@ namespace Syadeu.Presentation
         {
             get
             {
-                if (index < 0 || index >= m_UnsafeList->m_Length) throw new ArgumentOutOfRangeException(nameof(index));
+                if (index < 0 || index >= m_UnsafeList->m_Length) throw new ArgumentOutOfRangeException(nameof(index) + $"index of {index} in {m_UnsafeList->m_Length}");
                 ProxyTransformData* p = (*m_UnsafeList)[index];
 
                 return new ProxyTransform(m_UnsafeList, index, p->m_Generation);
