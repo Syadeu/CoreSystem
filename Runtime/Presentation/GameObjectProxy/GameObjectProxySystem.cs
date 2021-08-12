@@ -339,7 +339,7 @@ namespace Syadeu.Presentation
                     if (!g.BeingUsed || !g.HasElementAt(j)) continue;
                     ProxyTransformData data = List.ElementAt(g[j]);
 
-                    if (m_Frustum.IntersectsBox(data.GetAABB(Allocator.Temp)))
+                    if (m_Frustum.IntersectsBox(data.GetAABB(Allocator.Temp), 10))
                     {
                         if (data.m_EnableCull &&
                             data.m_ProxyIndex.Equals(-1) &&
