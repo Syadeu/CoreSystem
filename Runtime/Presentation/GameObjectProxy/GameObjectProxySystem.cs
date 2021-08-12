@@ -149,7 +149,10 @@ namespace Syadeu.Presentation
         {
             if (ev.transform.isDestroyed) return;
 
-            m_ClusterData.Update(in ev.transform.Pointer->m_ClusterID, ev.transform.position);
+            if (!ev.transform.Pointer->m_ClusterID.Equals(ClusterID.Requested))
+            {
+                m_ClusterData.Update(in ev.transform.Pointer->m_ClusterID, ev.transform.position);
+            }
 
             if (!ev.transform.hasProxy || ev.transform.hasProxyQueued) return;
             
@@ -185,7 +188,10 @@ namespace Syadeu.Presentation
 
                 unsafe
                 {
-                    m_ClusterData.Remove(tr.Pointer->m_ClusterID);
+                    if (!tr.Pointer->m_ClusterID.Equals(ClusterID.Requested))
+                    {
+                        m_ClusterData.Remove(tr.Pointer->m_ClusterID);
+                    }
                 }
                 m_ProxyData.Remove(tr);
             }
@@ -253,6 +259,19 @@ namespace Syadeu.Presentation
             }
             #endregion
 
+            int clusterRequestCount = clusterIDRequests.Count;
+            for (int i = 0; i < clusterRequestCount; i++)
+            {
+                ClusterIDRequest temp = clusterIDRequests.Dequeue();
+                unsafe
+                {
+                    if (m_ProxyData[temp.index].isDestroyed) continue;
+
+                    ClusterID id = m_ClusterData.Add(in temp.translation, in temp.index);
+                    m_ProxyData[temp.index].Pointer->m_ClusterID = id;
+                }
+            }
+
             CameraFrustum frustum = m_RenderSystem.GetRawFrustum();
 
             NativeArray<ClusterGroup<ProxyTransformData>> result = default;
@@ -295,7 +314,7 @@ namespace Syadeu.Presentation
 
             return PresentationResult.Normal;
         }
-
+        [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
         private struct ClusterJob : IJob
         {
             [ReadOnly] public Cluster<ProxyTransformData> m_ClusterData;
@@ -397,6 +416,7 @@ namespace Syadeu.Presentation
         }
         #endregion
 
+        private Queue<ClusterIDRequest> clusterIDRequests = new Queue<ClusterIDRequest>();
         public ProxyTransform CreateNewPrefab(PrefabReference prefab, float3 pos, quaternion rot, float3 scale, bool enableCull, float3 center, float3 size)
         {
             CoreSystem.Logger.ThreadBlock(nameof(CreateNewPrefab), ThreadInfo.Unity);
@@ -406,8 +426,10 @@ namespace Syadeu.Presentation
             ProxyTransform tr = m_ProxyData.Add(prefab, pos, rot, scale, enableCull, center, size);
             unsafe
             {
-                ClusterID id = m_ClusterData.Add(pos, tr.m_Index);
-                tr.Pointer->m_ClusterID = id;
+                clusterIDRequests.Enqueue(new ClusterIDRequest(pos, tr.m_Index));
+                tr.Pointer->m_ClusterID = ClusterID.Requested;
+                //ClusterID id = m_ClusterData.Add(pos, tr.m_Index);
+                //tr.Pointer->m_ClusterID = id;
             }
             OnDataObjectCreated?.Invoke(tr);
 
@@ -425,6 +447,17 @@ namespace Syadeu.Presentation
             }
             CoreSystem.Logger.Log(Channel.Proxy,
                 $"Destroy called");
+        }
+        private struct ClusterIDRequest
+        {
+            public float3 translation;
+            public int index;
+
+            public ClusterIDRequest(float3 tr, int idx)
+            {
+                translation = tr;
+                index = idx;
+            }
         }
 
         #region Proxy Object Control

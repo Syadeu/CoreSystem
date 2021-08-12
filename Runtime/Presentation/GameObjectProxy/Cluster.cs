@@ -229,9 +229,9 @@ namespace Syadeu.Presentation
 #if UNITY_EDITOR
             AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
             AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
-#endif
 
             CoreSystem.Logger.ThreadBlock(nameof(Cluster<T>.Add), Syadeu.Internal.ThreadInfo.Unity);
+#endif
 
             uint idx = GetClusterIndex(in translation, out float3 calculated);
             return Add(in idx, in calculated, in arrayIndex);
@@ -299,7 +299,7 @@ namespace Syadeu.Presentation
             AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
 #endif
 
-            if (id.Equals(ClusterID.Empty)) throw new Exception();
+            if (id.Equals(ClusterID.Empty) || id.Equals(ClusterID.Requested)) throw new Exception();
 
             return m_Buffer[id.GroupIndex].RemoveAt(id.ItemIndex);
         }
@@ -400,7 +400,7 @@ namespace Syadeu.Presentation
         }
         private void Incremental(uint length)
         {
-            $"request {m_Length + length}".ToLog();
+            //$"request {m_Length + length}".ToLog();
             long shiftedSize = s_BufferSize * (m_Length + length);
             ClusterItem<T>* newBuffer = (ClusterItem<T>*)UnsafeUtility.Malloc(
                 shiftedSize,
@@ -480,6 +480,7 @@ namespace Syadeu.Presentation
     public readonly struct ClusterID : IEquatable<ClusterID>
     {
         public static readonly ClusterID Empty = new ClusterID(-1, -1);
+        public static readonly ClusterID Requested = new ClusterID(-2, -2);
 
         [FieldOffset(0)] private readonly int m_GroupIndex;
         [FieldOffset(4)] private readonly int m_ItemIndex;
