@@ -330,7 +330,7 @@ namespace Syadeu.Presentation
             }
         }
 
-        public override void Dispose()
+        public override void OnDispose()
         {
             m_ProxyJob.Complete();
 
@@ -350,8 +350,6 @@ namespace Syadeu.Presentation
             m_ClusterData.Dispose();
 
             m_Disposed = true;
-
-            base.Dispose();
         }
         #endregion
 

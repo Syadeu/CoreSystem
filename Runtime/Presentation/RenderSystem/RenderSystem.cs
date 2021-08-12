@@ -130,12 +130,10 @@ namespace Syadeu.Presentation.Render
 
             return base.OnPresentation();
         }
-        public override void Dispose()
+        public override void OnDispose()
         {
             CoreSystem.Instance.OnRender -= Instance_OnRender;
 			m_CameraFrustum.Dispose();
-
-			base.Dispose();
         }
 
         #endregion

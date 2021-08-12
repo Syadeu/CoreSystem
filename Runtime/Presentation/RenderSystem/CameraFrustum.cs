@@ -16,7 +16,7 @@ namespace Syadeu.Presentation.Render
 		public const int PlaneCount = 6;
 		public const int CornerCount = 8;
 
-		private JobHandle m_UpdateJob;
+		//private JobHandle m_UpdateJob;
 
 		private float3 m_Position;
 		private NativeArray<Plane> m_Planes;
@@ -26,7 +26,7 @@ namespace Syadeu.Presentation.Render
 			m_PlaneNormals;
 		private NativeArray<float> m_PlaneDistances;
 
-		public JobHandle JobHandle => m_UpdateJob;
+		//public JobHandle JobHandle => m_UpdateJob;
 		public float3 Position => m_Position;
 
 		[BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
@@ -158,7 +158,7 @@ namespace Syadeu.Presentation.Render
 
 		public void Dispose()
         {
-			m_UpdateJob.Complete();
+			//m_UpdateJob.Complete();
 
 			m_Planes.Dispose();
 			m_Corners.Dispose();
@@ -170,7 +170,7 @@ namespace Syadeu.Presentation.Render
 		public ReadOnly AsReadOnly(Allocator allocator)
         {
 			CoreSystem.Logger.ThreadBlock(nameof(AsReadOnly), ThreadInfo.Unity);
-			m_UpdateJob.Complete();
+			//m_UpdateJob.Complete();
 
 			return new ReadOnly(ref this, allocator);
 		}
@@ -182,7 +182,7 @@ namespace Syadeu.Presentation.Render
 		public void ScheduleUpdate(CameraData data)
         {
 			CoreSystem.Logger.ThreadBlock(nameof(ScheduleUpdate), ThreadInfo.Unity);
-			m_UpdateJob.Complete();
+			//m_UpdateJob.Complete();
 
 			UpdateJob update = new UpdateJob
 			{
@@ -190,8 +190,17 @@ namespace Syadeu.Presentation.Render
 				data = data
 			};
 			JobHandle jobHandle = update.Schedule();
-			m_UpdateJob = JobHandle.CombineDependencies(m_UpdateJob, jobHandle);
+			//m_UpdateJob = JobHandle.CombineDependencies(m_UpdateJob, jobHandle);
 		}
+		public IJob GetUpdateJob(CameraData data)
+        {
+			return new UpdateJob
+			{
+				frustum = this,
+				data = data
+			};
+		}
+
         private struct UpdateJob : IJob
         {
 			public CameraFrustum frustum;

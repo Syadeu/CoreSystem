@@ -77,7 +77,7 @@ namespace Syadeu.Presentation.Actor
             $"{ev.Entity.Name}: {ev.State}".ToLog();
         }
 
-        public override void Dispose()
+        public override void OnDispose()
         {
             m_PlayerHashMap.Dispose();
 
@@ -85,8 +85,6 @@ namespace Syadeu.Presentation.Actor
             m_EntitySystem.OnEntityDestroy -= M_EntitySystem_OnEntityDestroy;
 
             m_EntitySystem = null;
-
-            base.Dispose();
         }
         #endregion
 

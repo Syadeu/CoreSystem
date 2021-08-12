@@ -78,12 +78,11 @@ namespace Syadeu.Presentation.Map
             }
             return base.BeforePresentationAsync();
         }
-        public override void Dispose()
+        public override void OnDispose()
         {
             m_EntitySystem.OnEntityCreated -= M_EntitySystem_OnEntityCreated;
             m_EntitySystem.OnEntityDestroy -= M_EntitySystem_OnEntityDestroy;
             m_RenderSystem.OnRender -= M_RenderSystem_OnRender;
-            base.Dispose();
         }
         private void CreateConsoleCommands()
         {

@@ -1,5 +1,6 @@
-﻿using Syadeu.Presentation.Entities;
+﻿using log4net.Repository.Hierarchy;
 using System;
+using Unity.Jobs;
 
 namespace Syadeu.Presentation.Internal
 {
@@ -9,8 +10,9 @@ namespace Syadeu.Presentation.Internal
     /// <remarks>
     /// 직접 상속은 허용하지 않습니다. <see cref="PresentationSystemEntity{T}"/>로 상속받아서 사용하세요.
     /// </remarks>
-    public abstract class PresentationSystemEntity : IInitPresentation, 
-        IBeforePresentation, IOnPresentation, IAfterPresentation, IDisposable
+    public abstract partial class PresentationSystemEntity : IInitPresentation, 
+        IBeforePresentation, IOnPresentation, IAfterPresentation, 
+        IDisposable
     {
         private static UnityEngine.Transform s_PresentationUnityFolder;
 
@@ -49,7 +51,12 @@ namespace Syadeu.Presentation.Internal
         PresentationResult IAfterPresentation.AfterPresentation() => AfterPresentation();
         PresentationResult IAfterPresentation.AfterPresentationAsync() => AfterPresentationAsync();
 
-        public abstract void Dispose();
+        public void Dispose()
+        {
+            OnUnityJobsDispose();
+            OnDispose();
+        }
+        public abstract void OnDispose();
 
         protected void DontDestroyOnLoad(UnityEngine.GameObject obj)
         {
@@ -69,6 +76,73 @@ namespace Syadeu.Presentation.Internal
             CoreSystem.Logger.ThreadBlock(nameof(Destroy), Syadeu.Internal.ThreadInfo.Unity);
 
             UnityEngine.Object.Destroy(obj);
+        }
+    }
+
+    /// <summary>
+    /// Unity.Jobs implements
+    /// </summary>
+    public abstract partial class PresentationSystemEntity
+    {
+        private static JobHandle s_GlobalJobHandle;
+
+        private void OnUnityJobsDispose()
+        {
+            s_GlobalJobHandle.Complete();
+        }
+
+        protected void CompleteJob()
+        {
+            CoreSystem.Logger.ThreadBlock(nameof(CompleteJob), Syadeu.Internal.ThreadInfo.Unity);
+
+            s_GlobalJobHandle.Complete();
+        }
+        protected JobHandle Schedule<T>(T job) where T : struct, IJob
+        {
+            JobHandle handle = job.Schedule(s_GlobalJobHandle);
+            s_GlobalJobHandle = JobHandle.CombineDependencies(s_GlobalJobHandle, handle);
+            return handle;
+        }
+        protected JobHandle Schedule<T>(T job, int arrayLength, int innerloopBatchCount) where T : struct, IJobParallelFor
+        {
+            JobHandle handle = job.Schedule(arrayLength, innerloopBatchCount, s_GlobalJobHandle);
+            s_GlobalJobHandle = JobHandle.CombineDependencies(s_GlobalJobHandle, handle);
+            return handle;
+        }
+
+        internal JobHandle m_BeforePresentationJobHandle;
+        internal JobHandle m_OnPresentationJobHandle;
+        internal JobHandle m_AfterPresentationJobHandle;
+
+        protected enum JobPosition
+        {
+            Before,
+            On,
+            After
+        }
+
+        protected JobHandle ScheduleAt<TJob>(JobPosition position, TJob job) where TJob : struct, IJob
+        {
+            JobHandle handle = Schedule(job);
+            CombineDependences(handle, position);
+            return handle;
+        }
+        protected JobHandle ScheduleAt<TJob>(JobPosition position, TJob job, int arrayLength, int innerloopBatchCount) where TJob : struct, IJobParallelFor
+        {
+            JobHandle handle = Schedule(job, arrayLength, innerloopBatchCount);
+            CombineDependences(handle, position);
+            return handle;
+        }
+
+        private void CombineDependences(JobHandle handle, JobPosition position)
+        {
+            if (position == JobPosition.Before) JobHandle.CombineDependencies(m_BeforePresentationJobHandle, handle);
+            else if (position == JobPosition.On) JobHandle.CombineDependencies(m_OnPresentationJobHandle, handle);
+            else if (position == JobPosition.After) JobHandle.CombineDependencies(m_AfterPresentationJobHandle, handle);
+            else
+            {
+                throw new NotImplementedException(position.ToString());
+            }
         }
     }
 }

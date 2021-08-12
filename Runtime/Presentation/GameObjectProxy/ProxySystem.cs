@@ -217,15 +217,13 @@ namespace Syadeu.Presentation.Proxy
 
             return base.AfterPresentation();
         }
-        public override void Dispose()
+        public override void OnDispose()
         {
             m_Data.Dispose();
 
             m_TranslationData.Dispose();
             m_RotationData.Dispose();
             m_ScaleData.Dispose();
-
-            base.Dispose();
         }
 
         #region Update TRS

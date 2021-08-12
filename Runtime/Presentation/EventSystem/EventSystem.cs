@@ -66,11 +66,9 @@ namespace Syadeu.Presentation.Event
 
             return base.BeforePresentation();
         }
-        public override void Dispose()
+        public override void OnDispose()
         {
             m_PostedEvents.Clear();
-
-            base.Dispose();
         }
 
         public void AddEvent<TEvent>(Action<TEvent> ev) where TEvent : SynchronizedEvent<TEvent>, new()

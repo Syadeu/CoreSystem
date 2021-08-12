@@ -211,7 +211,7 @@ namespace Syadeu.Presentation
             return base.OnPresentationAsync();
         }
 
-        public override void Dispose()
+        public override void OnDispose()
         {
             var entityList = m_ObjectEntities.Values.ToArray();
             for (int i = 0; i < entityList.Length; i++)
@@ -293,8 +293,6 @@ namespace Syadeu.Presentation
             m_ObjectEntities.Clear();
             m_AttributeProcessors.Clear();
             m_EntityProcessors.Clear();
-            
-            base.Dispose();
         }
         #endregion
 
