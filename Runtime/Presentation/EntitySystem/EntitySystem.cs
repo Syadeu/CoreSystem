@@ -46,7 +46,7 @@ namespace Syadeu.Presentation
 
         internal readonly HashSet<Hash> m_ObjectHashSet = new HashSet<Hash>();
         internal readonly Dictionary<Hash, IEntityData> m_ObjectEntities = new Dictionary<Hash, IEntityData>();
-        internal readonly Dictionary<int, Hash> m_EntityGameObjects = new Dictionary<int, Hash>();
+        internal readonly Dictionary<Hash, Hash> m_EntityGameObjects = new Dictionary<Hash, Hash>();
 
         private readonly Dictionary<Type, List<IAttributeProcessor>> m_AttributeProcessors = new Dictionary<Type, List<IAttributeProcessor>>();
         private readonly Dictionary<Type, List<IEntityDataProcessor>> m_EntityProcessors = new Dictionary<Type, List<IEntityDataProcessor>>();
@@ -156,7 +156,7 @@ namespace Syadeu.Presentation
 
         private void M_ProxySystem_OnDataObjectProxyCreated(ProxyTransform obj, RecycleableMonobehaviour monoObj)
         {
-            if (!m_EntityGameObjects.TryGetValue(obj.index, out Hash entityHash) ||
+            if (!m_EntityGameObjects.TryGetValue(obj.m_Hash, out Hash entityHash) ||
                 !(m_ObjectEntities[entityHash] is IEntity entity)) return;
 
             monoObj.m_Entity = Entity<IEntity>.GetEntity(entity.Idx);
@@ -164,7 +164,7 @@ namespace Syadeu.Presentation
         }
         private void M_ProxySystem_OnDataObjectProxyRemoved(ProxyTransform obj, RecycleableMonobehaviour monoObj)
         {
-            if (!m_EntityGameObjects.TryGetValue(obj.index, out Hash entityHash) ||
+            if (!m_EntityGameObjects.TryGetValue(obj.m_Hash, out Hash entityHash) ||
                 !(m_ObjectEntities[entityHash] is IEntity entity)) return;
 
             ProcessEntityOnProxyRemoved(this, entity, monoObj);
@@ -173,11 +173,11 @@ namespace Syadeu.Presentation
 
         private void M_ProxySystem_OnDataObjectDestroyAsync(ProxyTransform obj)
         {
-            if (!m_EntityGameObjects.TryGetValue(obj.index, out Hash entityHash)) return;
+            if (!m_EntityGameObjects.TryGetValue(obj.m_Hash, out Hash entityHash)) return;
 
             ProcessEntityOnDestroy(this, m_ObjectEntities[entityHash]);
 
-            m_EntityGameObjects.Remove(obj.index);
+            m_EntityGameObjects.Remove(obj.m_Hash);
             m_ObjectHashSet.Remove(entityHash);
             m_ObjectEntities.Remove(entityHash);
         }
@@ -399,7 +399,7 @@ namespace Syadeu.Presentation
             m_ObjectHashSet.Add(entity.Idx);
             m_ObjectEntities.Add(entity.Idx, entity);
 
-            m_EntityGameObjects.Add(obj.index, entity.Idx);
+            m_EntityGameObjects.Add(obj.m_Hash, entity.Idx);
 
             ProcessEntityOnCreated(this, entity);
             return Entity<IEntity>.GetEntity(entity.Idx);
@@ -492,7 +492,7 @@ namespace Syadeu.Presentation
             if (!CoreSystem.s_BlockCreateInstance && m_ObjectEntities[hash] is IEntity entity)
             {
                 ProxyTransform obj = entity.transform;
-                int index = obj.index;
+                Hash index = obj.m_Hash;
                 obj.Destroy();
                 m_EntityGameObjects.Remove(index);
             }

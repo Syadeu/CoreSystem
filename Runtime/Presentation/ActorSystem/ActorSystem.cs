@@ -74,7 +74,7 @@ namespace Syadeu.Presentation.Actor
 
         private void OnActorMoveStateChanged(OnMoveStateChangedEvent ev)
         {
-            $"{ev.Entity.Name}: {ev.State}".ToLog();
+            //$"{ev.Entity.Name}: {ev.State}".ToLog();
         }
 
         public override void OnDispose()

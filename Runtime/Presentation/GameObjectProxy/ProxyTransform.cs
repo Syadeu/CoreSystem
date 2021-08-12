@@ -32,21 +32,24 @@ namespace Syadeu.Presentation
         [NativeDisableUnsafePtrRestriction] unsafe internal readonly NativeProxyData.UnsafeList* m_Pointer;
         internal readonly int m_Index;
         internal readonly int m_Generation;
-        unsafe internal ProxyTransform(NativeProxyData.UnsafeList* p, int index, int generation)
+        internal readonly Hash m_Hash;
+        unsafe internal ProxyTransform(NativeProxyData.UnsafeList* p, int index, int generation, Hash hash)
         {
             m_Pointer = p;
             m_Index = index;
             m_Generation = generation;
+            m_Hash = hash;
         }
         unsafe private ProxyTransform(int unused)
         {
             m_Pointer = null;
             m_Index = -1;
             m_Generation = unused;
+            m_Hash = Hash.Empty;
         }
 
         unsafe internal ProxyTransformData* Pointer => (*m_Pointer)[m_Index];
-        unsafe private ref ProxyTransformData Ref => ref *(*m_Pointer)[m_Index];
+        unsafe internal ref ProxyTransformData Ref => ref *(*m_Pointer)[m_Index];
 
         internal void SetProxy(int2 proxyIndex)
         {
@@ -141,7 +144,9 @@ namespace Syadeu.Presentation
                 unsafe
                 {
                     if (m_Generation.Equals(-1) || m_Pointer == null) return true;
-                    if (!(*m_Pointer)[m_Index]->m_Generation.Equals(m_Generation)) return true;
+                    if (Ref.m_DestroyQueued || !Ref.m_IsOccupied || 
+                        !m_Hash.Equals(Ref.m_Hash)) return true;
+                    if (!Ref.m_Generation.Equals(m_Generation)) return true;
                 }
                 return false;
             }

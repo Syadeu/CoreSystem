@@ -3,6 +3,7 @@ using Syadeu.Database;
 using Syadeu.Presentation.Render;
 using System;
 using System.Runtime.InteropServices;
+using System.Threading;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -77,6 +78,7 @@ namespace Syadeu.Presentation
         #endregion
 
         #region Constructor
+        [NativeContainer, NativeContainerIsReadOnly]
         public readonly struct ReadOnly : IDisposable
         {
             private readonly ClusterGroup<T>.ReadOnly* Groups;
@@ -109,6 +111,93 @@ namespace Syadeu.Presentation
                     Groups[i].Dispose();
                 }
                 UnsafeUtility.Free(Groups, Allocator);
+            }
+        }
+        [NativeContainer, NativeContainerIsAtomicWriteOnly]
+        public struct ParallelWriter
+        {
+            [NativeDisableUnsafePtrRestriction] internal ClusterGroup<T>* m_Buffer;
+            internal int m_Length;
+
+#if UNITY_EDITOR
+            internal AtomicSafetyHandle m_Safety;
+#endif
+
+            [WriteAccessRequired]
+            public void Update(in ClusterID id, in float3 translation)
+            {
+#if UNITY_EDITOR
+                AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
+                AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
+#endif
+                int idx = GetClusterIndex(in m_Length, in translation, out float3 calculated);
+                if (idx.Equals(id.GroupIndex)) return;
+
+                int arrayIndex = Remove(in id);
+                Add(in idx, in calculated, in arrayIndex);
+            }
+            private ClusterID Add(in int gIdx, in float3 calculated, in int arrayIndex)
+            {
+                if (!m_Buffer[gIdx].BeingUsed)
+                {
+                    m_Buffer[gIdx] = new ClusterGroup<T>(gIdx, calculated, 128);
+                }
+                else
+                {
+                    if (!m_Buffer[gIdx].Translation.Equals(calculated))
+                    {
+                        if (!FindUnOccupiedOrMatchedCalculated(in gIdx, in calculated, out int founded))
+                        {
+                            throw new Exception();
+                        }
+
+                        //$"cluster conflected group lineared {gIdx}->{founded}".ToLog();
+                        return Add(founded, in calculated, in arrayIndex);
+                    }
+                }
+
+                uint itemIdx = m_Buffer[gIdx].Add(in arrayIndex);
+                if (itemIdx < 0)
+                {
+                    "cluster full".ToLog();
+                    return ClusterID.Empty;
+                }
+
+                return new ClusterID((int)gIdx, (int)itemIdx);
+            }
+            [WriteAccessRequired]
+            public int Remove(in ClusterID id)
+            {
+#if UNITY_EDITOR
+                AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
+                AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
+#endif
+
+                if (id.Equals(ClusterID.Empty) || id.Equals(ClusterID.Requested)) throw new Exception();
+
+                return m_Buffer[id.GroupIndex].RemoveAt(id.ItemIndex);
+            }
+            private bool FindUnOccupiedOrMatchedCalculated(in int startFrom, in float3 calculated, out int founded)
+            {
+                for (int i = startFrom; i < m_Length; i++)
+                {
+                    if (!m_Buffer[i].BeingUsed || m_Buffer[i].Translation.Equals(calculated))
+                    {
+                        founded = (int)i;
+                        return true;
+                    }
+                }
+                for (int i = 0; i < startFrom; i++)
+                {
+                    if (!m_Buffer[i].BeingUsed || m_Buffer[i].Translation.Equals(calculated))
+                    {
+                        founded = i;
+                        return true;
+                    }
+                }
+
+                founded = -1;
+                return false;
             }
         }
         public Cluster(int length)
@@ -158,11 +247,30 @@ namespace Syadeu.Presentation
             m_Length = newLength;
         }
 
+        [WriteAccessRequired]
+        public ParallelWriter AsParallelWriter()
+        {
+#if UNITY_EDITOR
+            AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
+            AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
+#endif
+
+            ParallelWriter writer;
+            writer.m_Safety = m_Safety;
+#if UNITY_EDITOR
+            AtomicSafetyHandle.UseSecondaryVersion(ref writer.m_Safety);
+#endif
+            writer.m_Buffer = m_Buffer;
+            writer.m_Length = m_Length;
+
+            return writer;
+        }
+
         #endregion
 
         #region Public Methods
 
-        private int GetClusterIndex(in int length, in float3 translation, out float3 calculated)
+        private static int GetClusterIndex(in int length, in float3 translation, out float3 calculated)
         {
             calculated = (translation / c_ClusterRange);
             calculated = math.round(calculated) * c_ClusterRange;
@@ -214,9 +322,6 @@ namespace Syadeu.Presentation
             AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
             AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
 #endif
-
-            CoreSystem.Logger.ThreadBlock(nameof(Cluster<T>.Update), Syadeu.Internal.ThreadInfo.Unity);
-
             int idx = GetClusterIndex(in translation, out float3 calculated);
             if (idx.Equals(id.GroupIndex)) return;
 
@@ -398,6 +503,12 @@ namespace Syadeu.Presentation
                 UnsafeUtility.SizeOf<ClusterItem<T>>() * length,
                 UnsafeUtility.AlignOf<ClusterItem<T>>(), Allocator.Persistent);
             UnsafeUtility.MemClear(m_Buffer, s_BufferSize * m_Length);
+
+            for (int i = 0; i < length; i++)
+            {
+                m_Buffer[i].m_ArrayIndex = -1;
+                m_Buffer[i].m_IsOccupied = false;
+            }
         }
         void IDisposable.Dispose()
         {
@@ -411,8 +522,13 @@ namespace Syadeu.Presentation
                 shiftedSize,
                 s_BufferAlign, Allocator.Persistent);
             
-            UnsafeUtility.MemClear(newBuffer, shiftedSize);
+            //UnsafeUtility.MemClear(newBuffer, shiftedSize);
             UnsafeUtility.MemCpy(newBuffer, m_Buffer, s_BufferSize * m_Length);
+            for (int i = m_Length; i < m_Length + length; i++)
+            {
+                newBuffer[i].m_ArrayIndex = -1;
+                newBuffer[i].m_IsOccupied = false;
+            }
 
             UnsafeUtility.Free(m_Buffer, Allocator.Persistent);
             m_Buffer = newBuffer;
@@ -428,8 +544,6 @@ namespace Syadeu.Presentation
         {
             if (!m_BeingUsed) throw new NullReferenceException();
 
-            CoreSystem.Logger.ThreadBlock(nameof(ClusterGroup<T>.Add), Syadeu.Internal.ThreadInfo.Unity);
-
             int idx = GetUnused();
             if (idx < 0)
             {
@@ -444,18 +558,19 @@ namespace Syadeu.Presentation
         }
         public int RemoveAt(in int index)
         {
-            CoreSystem.Logger.ThreadBlock(nameof(ClusterGroup<T>.Add), Syadeu.Internal.ThreadInfo.Unity);
+            if (index < 0 || index >= Length) throw new ArgumentOutOfRangeException(nameof(index));
 
             int temp = m_Buffer[index].m_ArrayIndex;
+            m_Buffer[index].m_ArrayIndex = -1;
             m_Buffer[index].m_IsOccupied = false;
             return temp;
         }
 
         public bool HasElementAt(int i)
         {
-            if (i >= Length) throw new ArgumentOutOfRangeException(nameof(i));
+            if (i < 0 || i >= Length) throw new ArgumentOutOfRangeException(nameof(i));
 
-            if (!m_Buffer[i].m_IsOccupied) return false;
+            if (!m_Buffer[i].m_IsOccupied || m_Buffer[i].m_ArrayIndex < 0) return false;
             return true;
         }
 
@@ -463,7 +578,7 @@ namespace Syadeu.Presentation
         {
             for (int i = 0; i < m_Length; i++)
             {
-                if (!m_Buffer[i].m_IsOccupied) return i;
+                if (!m_Buffer[i].m_IsOccupied && m_Buffer[i].m_ArrayIndex < 0) return i;
             }
             return -1;
         }

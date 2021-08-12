@@ -56,7 +56,7 @@ namespace Syadeu.Presentation
 
             public ProxyTransformData ElementAt(int index)
             {
-                if (index >= m_Length) throw new ArgumentOutOfRangeException(nameof(index) + $" of {m_Length} at {index}");
+                if (index < 0 || index >= m_Length) throw new ArgumentOutOfRangeException(nameof(index) + $" of {m_Length} at {index}");
 
                 return m_TransformBuffer[index];
             }
@@ -72,7 +72,7 @@ namespace Syadeu.Presentation
                 if (index < 0 || index >= m_UnsafeList->m_Length) throw new ArgumentOutOfRangeException(nameof(index) + $"index of {index} in {m_UnsafeList->m_Length}");
                 ProxyTransformData* p = (*m_UnsafeList)[index];
 
-                return new ProxyTransform(m_UnsafeList, index, p->m_Generation);
+                return new ProxyTransform(m_UnsafeList, index, p->m_Generation, p->m_Hash);
             }
         }
         private UnsafeList List => *m_UnsafeList;
@@ -104,6 +104,9 @@ namespace Syadeu.Presentation
             array.m_UnsafeList = (UnsafeList*)UnsafeUtility.Malloc(UnsafeUtility.SizeOf<UnsafeList>(), UnsafeUtility.AlignOf<UnsafeList>(), allocator);
 
             array.m_UnsafeList->m_Buffer = (IntPtr)UnsafeUtility.Malloc(s_TransformSize * length, UnsafeUtility.AlignOf<ProxyTransformData>(), allocator);
+
+            UnsafeUtility.MemClear(array.m_UnsafeList->Pointer, s_TransformSize * length);
+
             array.m_UnsafeList->m_Length = length;
             array.m_UnsafeList->m_Allocator = allocator;
             array.m_AllocatorLabel = allocator;
@@ -178,7 +181,7 @@ namespace Syadeu.Presentation
                 return result;
             }
 
-            //Hash hash = Hash.NewHash();
+            Hash hash = Hash.NewHash();
             ProxyTransformData* targetP = (*m_UnsafeList)[index];
             int generation = targetP->m_Generation;
             if (generation.Equals(int.MaxValue)) generation = 0;
@@ -188,8 +191,8 @@ namespace Syadeu.Presentation
             {
                 m_IsOccupied = true,
 
+                m_Hash = hash,
                 m_Index = index,
-                //m_Hash = hash,
                 m_Generation = generation,
 
                 m_Prefab = prefab,
@@ -208,7 +211,7 @@ namespace Syadeu.Presentation
             
             *targetP = tr;
 
-            ProxyTransform transform = new ProxyTransform(m_UnsafeList, index, generation);
+            ProxyTransform transform = new ProxyTransform(m_UnsafeList, index, generation, hash);
             m_WriteSemaphore.Release();
             return transform;
         }
@@ -262,7 +265,7 @@ namespace Syadeu.Presentation
             for (int i = 0; i < m_UnsafeList->m_Length; i++)
             {
                 if (!(*m_UnsafeList)[i]->m_IsOccupied) return;
-                action.Invoke(new ProxyTransform(m_UnsafeList, i, (*m_UnsafeList)[i]->m_Generation));
+                action.Invoke(new ProxyTransform(m_UnsafeList, i, (*m_UnsafeList)[i]->m_Generation, (*m_UnsafeList)[i]->m_Hash));
             }
         }
     }
@@ -277,7 +280,7 @@ namespace Syadeu.Presentation
         internal int m_Index;
         internal int2 m_ProxyIndex;
 
-        //internal ulong m_Hash;
+        internal Hash m_Hash;
         internal int m_Generation;
         internal PrefabReference m_Prefab;
 
@@ -290,6 +293,14 @@ namespace Syadeu.Presentation
         
         internal quaternion m_Rotation;
 
+        public bool destroyed
+        {
+            get
+            {
+                if (!m_IsOccupied || m_DestroyQueued) return true;
+                return false;
+            }
+        }
         public float3 translation
         {
             get => m_Translation;
