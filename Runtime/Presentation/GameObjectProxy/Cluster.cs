@@ -20,6 +20,8 @@ namespace Syadeu.Presentation
     unsafe internal struct Cluster<T> : IDisposable where T : unmanaged
     {
         public const int c_ClusterRange = 25;
+        private static int s_BufferSize = UnsafeUtility.SizeOf<ClusterGroup<T>>();
+        private static int s_BufferAlign = UnsafeUtility.AlignOf<ClusterGroup<T>>();
 
 #if UNITY_EDITOR
         public AtomicSafetyHandle m_Safety;
@@ -131,20 +133,46 @@ namespace Syadeu.Presentation
             }
             UnsafeUtility.Free(m_Buffer, Allocator.Persistent);
         }
+        private void Incremental(uint length)
+        {
+            long shiftedSize = s_BufferSize * (m_Length + length);
+            ClusterGroup<T>* temp = (ClusterGroup<T>*)UnsafeUtility.Malloc(shiftedSize, s_BufferAlign, Allocator.Persistent);
+
+            UnsafeUtility.MemClear(temp, shiftedSize);
+            UnsafeUtility.MemCpy(temp, m_Buffer, s_BufferSize * m_Length);
+
+            //// rehash
+            uint newLength = m_Length + length;
+            //for (int i = 0; i < m_Length; i++)
+            //{
+            //    uint 
+            //        clusterHash = FNV1a32.Calculate(m_Buffer[i].Translation.ToString()),
+            //        index = clusterHash % newLength;
+
+            //    m_Length.
+            //}
+
+            UnsafeUtility.Free(m_Buffer, Allocator.Persistent);
+            m_Buffer = temp;
+
+            m_Length = newLength;
+        }
 
         #endregion
 
         #region Public Methods
 
-        public uint GetClusterIndex(in float3 translation, out float3 calculated)
+        private uint GetClusterIndex(in uint length, in float3 translation, out float3 calculated)
         {
             calculated = (translation / c_ClusterRange);
             calculated = math.round(calculated) * c_ClusterRange;
 
             uint clusterHash = FNV1a32.Calculate(calculated.ToString());
             //$"cluster pos: {calculated}, idx: {clusterHash % m_Length}".ToLog();
-            return clusterHash % m_Length;
+            return clusterHash % length;
         }
+        public uint GetClusterIndex(in float3 translation, out float3 calculated)
+            => GetClusterIndex(in m_Length, in translation, out calculated);
         public NativeArray<ClusterGroup<T>.ReadOnly> GetGroups(CameraFrustum frustum, Allocator allocator)
         {
 #if UNITY_EDITOR
@@ -218,7 +246,15 @@ namespace Syadeu.Presentation
             {
                 if (!m_Buffer[gIdx].Translation.Equals(calculated))
                 {
-                    "cluster conflected group idx".ToLogError();
+                    if (!FindUnOccupiedOrMatchedCalculated(in gIdx, in calculated, out int founded))
+                    {
+                        Incremental(m_Length);
+                        "cluster conflected group increased".ToLog();
+                        return Add(in gIdx, in calculated, in arrayIndex);
+                    }
+
+                    $"cluster conflected group lineared {gIdx}->{founded}".ToLog();
+                    return Add((uint)founded, in calculated, in arrayIndex);
                 }
             }
 
@@ -231,6 +267,30 @@ namespace Syadeu.Presentation
 
             return new ClusterID((int)gIdx, (int)itemIdx);
         }
+
+        private bool FindUnOccupiedOrMatchedCalculated(in uint startFrom, in float3 calculated, out int founded)
+        {
+            for (uint i = startFrom; i < m_Length; i++)
+            {
+                if (!m_Buffer[i].BeingUsed || m_Buffer[i].Translation.Equals(calculated))
+                {
+                    founded = (int)i;
+                    return true;
+                }
+            }
+            for (int i = 0; i < startFrom; i++)
+            {
+                if (!m_Buffer[i].BeingUsed || m_Buffer[i].Translation.Equals(calculated))
+                {
+                    founded = i;
+                    return true;
+                }
+            }
+
+            founded = -1;
+            return false;
+        }
+
         [WriteAccessRequired]
         public int Remove(in ClusterID id)
         {
@@ -365,6 +425,8 @@ namespace Syadeu.Presentation
 
         public uint Add(in int arrayIndex)
         {
+            if (!m_BeingUsed) throw new NullReferenceException();
+
             CoreSystem.Logger.ThreadBlock(nameof(ClusterGroup<T>.Add), Syadeu.Internal.ThreadInfo.Unity);
 
             int idx = GetUnused();

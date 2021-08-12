@@ -26,6 +26,7 @@ namespace Syadeu.Presentation
     internal sealed class GameObjectProxySystem : PresentationSystemEntity<GameObjectProxySystem>
     {
         private static readonly Vector3 INIT_POSITION = new Vector3(-9999, -9999, -9999);
+        //private const int c_InitialMemorySize = 16384;
         private const int c_InitialMemorySize = 1024;
 
         public override bool EnableBeforePresentation => true;
@@ -253,21 +254,6 @@ namespace Syadeu.Presentation
             #endregion
 
             CameraFrustum frustum = m_RenderSystem.GetRawFrustum();
-            //NativeArray<ClusterGroup<ProxyTransformData>.ReadOnly> clusterGroups = m_ClusterData.GetGroups(frustum, Allocator.TempJob);
-
-            //ProxyJob proxyJob = new ProxyJob
-            //{
-            //    //m_ActiveData = m_ProxyData.GetActiveData(Allocator.TempJob),
-            //    m_ActiveData = clusterGroups,
-            //    m_Frustum = frustum,
-
-            //    m_Remove = m_RemoveProxyList.AsParallelWriter(),
-            //    m_Request = m_RequestProxyList.AsParallelWriter(),
-
-            //    m_Visible = m_VisibleList.AsParallelWriter(),
-            //    m_Invisible = m_InvisibleList.AsParallelWriter()
-            //};
-            //ScheduleAt(JobPosition.After, proxyJob, (int)proxyJob.m_ActiveData.Length, 64);
 
             NativeArray<ClusterGroup<ProxyTransformData>> result = default;
             if (m_SortedCluster.IsCreated)
@@ -276,9 +262,6 @@ namespace Syadeu.Presentation
                 m_SortedCluster.Dispose();
             }
             m_SortedCluster = new NativeList<ClusterGroup<ProxyTransformData>>(Allocator.Persistent);
-            //NativeArray<ClusterGroup<ProxyTransformData>> result
-            //    = new NativeArray<ClusterGroup<ProxyTransformData>>(m_SortedCluster, Allocator.TempJob);
-            //m_SortedCluster.Clear();
             ClusterJob clusterJob = new ClusterJob
             {
                 m_ClusterData = m_ClusterData,
@@ -295,7 +278,6 @@ namespace Syadeu.Presentation
 
                     ProxyJob proxyJob = new ProxyJob
                     {
-                        //m_ActiveData = m_ProxyData.GetActiveData(Allocator.TempJob),
                         m_ActiveData = result,
                         List = list,
 
@@ -309,8 +291,6 @@ namespace Syadeu.Presentation
                     };
                     ScheduleAt(JobPosition.After, proxyJob, (int)proxyJob.m_ActiveData.Length, 64);
                 }
-
-                
             }
 
             return PresentationResult.Normal;
