@@ -405,7 +405,7 @@ namespace Syadeu.Presentation
         }
         private void Incremental(int length)
         {
-            $"request {m_Length + length}".ToLog();
+            //$"request {m_Length + length}".ToLog();
             long shiftedSize = s_BufferSize * (m_Length + length);
             ClusterItem<T>* newBuffer = (ClusterItem<T>*)UnsafeUtility.Malloc(
                 shiftedSize,
