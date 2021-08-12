@@ -253,7 +253,7 @@ namespace Syadeu.Presentation
                         return Add(in gIdx, in calculated, in arrayIndex);
                     }
 
-                    $"cluster conflected group lineared {gIdx}->{founded}".ToLog();
+                    //$"cluster conflected group lineared {gIdx}->{founded}".ToLog();
                     return Add(founded, in calculated, in arrayIndex);
                 }
             }
@@ -470,22 +470,22 @@ namespace Syadeu.Presentation
     }
 
     [BurstCompile]
+    //[StructLayout(LayoutKind.Explicit, Size = 5)]
     unsafe internal struct ClusterItem<T> where T : unmanaged
     {
-        //[NativeDisableUnsafePtrRestriction] public T* m_Pointer;
         public bool m_IsOccupied;
         public int m_ArrayIndex;
     }
 
     [BurstCompile(CompileSynchronously = true)]
-    [StructLayout(LayoutKind.Explicit, Size = 8)]
+    //[StructLayout(LayoutKind.Explicit, Size = 8)]
     public readonly struct ClusterID : IEquatable<ClusterID>
     {
         public static readonly ClusterID Empty = new ClusterID(-1, -1);
         public static readonly ClusterID Requested = new ClusterID(-2, -2);
 
-        [FieldOffset(0)] private readonly int m_GroupIndex;
-        [FieldOffset(4)] private readonly int m_ItemIndex;
+        private readonly int m_GroupIndex;
+        private readonly int m_ItemIndex;
 
         public int GroupIndex => m_GroupIndex;
         public int ItemIndex => m_ItemIndex;

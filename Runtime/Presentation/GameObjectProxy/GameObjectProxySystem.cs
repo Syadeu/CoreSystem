@@ -356,6 +356,12 @@ namespace Syadeu.Presentation
                 for (int j = 0; j < clusterGroup.Length; j++)
                 {
                     if (!clusterGroup.BeingUsed || !clusterGroup.HasElementAt(j)) continue;
+
+                    if (clusterGroup[j] >= List.m_Length)
+                    {
+                        $"?? {clusterGroup[j]} >= {List.m_Length}".ToLog();
+                        continue;
+                    }
                     ProxyTransformData data = List.ElementAt(clusterGroup[j]);
 
                     if (m_Frustum.IntersectsBox(data.GetAABB(Allocator.Temp), 10))

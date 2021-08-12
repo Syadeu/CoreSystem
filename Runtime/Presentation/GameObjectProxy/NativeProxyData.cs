@@ -34,7 +34,7 @@ namespace Syadeu.Presentation
         public struct UnsafeList : IDisposable
         {
             [NativeDisableUnsafePtrRestriction] public IntPtr m_Buffer;
-            public int m_Length;
+            public uint m_Length;
             public Allocator m_Allocator;
 
             public void* Pointer => m_Buffer.ToPointer();
@@ -56,7 +56,7 @@ namespace Syadeu.Presentation
 
             public ProxyTransformData ElementAt(int index)
             {
-                if (index >= m_Length) throw new ArgumentOutOfRangeException(nameof(index) + $"of {m_Length} at {index}");
+                if (index >= m_Length) throw new ArgumentOutOfRangeException(nameof(index) + $" of {m_Length} at {index}");
 
                 return m_TransformBuffer[index];
             }
@@ -79,7 +79,7 @@ namespace Syadeu.Presentation
 
         public NativeProxyData(int length, Allocator allocator, NativeArrayOptions options = NativeArrayOptions.ClearMemory)
         {
-            Allocate(length, allocator, out this);
+            Allocate(Convert.ToUInt32(length), allocator, out this);
 
             // Set the memory block to 0 if requested.
             if ((options & NativeArrayOptions.ClearMemory) == NativeArrayOptions.ClearMemory)
@@ -95,7 +95,7 @@ namespace Syadeu.Presentation
             UnsafeUtility.MemClear(m_UnsafeList, UnsafeUtility.SizeOf<UnsafeList>());
             UnsafeUtility.Free(m_UnsafeList, m_AllocatorLabel);
         }
-        private static void Allocate(int length, Allocator allocator, out NativeProxyData array)
+        private static void Allocate(uint length, Allocator allocator, out NativeProxyData array)
         {
             if (allocator <= Allocator.None)
                 throw new ArgumentException("Allocator must be Temp, TempJob or Persistent", nameof(allocator));
@@ -117,7 +117,7 @@ namespace Syadeu.Presentation
             array.m_WriteSemaphore.Release();
         }
 
-        private void Incremental(int length)
+        private void Incremental(uint length)
         {
             AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
 
@@ -133,6 +133,7 @@ namespace Syadeu.Presentation
             m_UnsafeList->m_Buffer = (IntPtr)transformBuffer;
 
             m_UnsafeList->m_Length += length;
+            $"increased to {m_UnsafeList->m_Length}".ToLog();
         }
         //private void Decremental(uint length)
         //{
@@ -169,7 +170,8 @@ namespace Syadeu.Presentation
             }
             if (index < 0)
             {
-                Incremental(m_UnsafeList->m_Length);
+                uint length = m_UnsafeList->m_Length;
+                Incremental(length);
                 m_WriteSemaphore.Release();
 
                 ProxyTransform result = Add(prefab, translation, rotation, scale, enableCull, center, size);
