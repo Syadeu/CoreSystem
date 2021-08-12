@@ -42,7 +42,11 @@ namespace Syadeu.Presentation
 
             public ProxyTransformData* this[int index]
             {
-                get => m_TransformBuffer + index;
+                get
+                {
+                    if (index >= m_Length) throw new ArgumentOutOfRangeException(nameof(index) + $"of {m_Length} at {index}");
+                    return m_TransformBuffer + index;
+                }
             }
             public void Dispose()
             {
@@ -52,6 +56,8 @@ namespace Syadeu.Presentation
 
             public ProxyTransformData ElementAt(int index)
             {
+                if (index >= m_Length) throw new ArgumentOutOfRangeException(nameof(index) + $"of {m_Length} at {index}");
+
                 return m_TransformBuffer[index];
             }
         }

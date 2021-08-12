@@ -352,11 +352,11 @@ namespace Syadeu.Presentation
 
             public void Execute(int i)
             {
-                ClusterGroup<ProxyTransformData> g = m_ActiveData[i];
-                for (int j = 0; j < g.Length; j++)
+                ClusterGroup<ProxyTransformData> clusterGroup = m_ActiveData[i];
+                for (int j = 0; j < clusterGroup.Length; j++)
                 {
-                    if (!g.BeingUsed || !g.HasElementAt(j)) continue;
-                    ProxyTransformData data = List.ElementAt(g[j]);
+                    if (!clusterGroup.BeingUsed || !clusterGroup.HasElementAt(j)) continue;
+                    ProxyTransformData data = List.ElementAt(clusterGroup[j]);
 
                     if (m_Frustum.IntersectsBox(data.GetAABB(Allocator.Temp), 10))
                     {
