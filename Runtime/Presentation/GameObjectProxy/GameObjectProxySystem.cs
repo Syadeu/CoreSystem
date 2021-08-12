@@ -253,13 +253,14 @@ namespace Syadeu.Presentation
             }
             #endregion
 
-            CameraFrustum.ReadOnly frustum = m_RenderSystem.Frustum;
-            //NativeArray<ClusterGroup<ProxyTransformData>.ReadOnly> clusterGroups = m_ClusterData.GetGroups(frustum, Allocator.TempJob);
+            CameraFrustum.ReadOnly frustum = m_RenderSystem.GetFrustum(Allocator.TempJob);
+            NativeArray<ClusterGroup<ProxyTransformData>.ReadOnly> clusterGroups = m_ClusterData.GetGroups(frustum, Allocator.TempJob);
 
             //clusterGroups.Dispose();
             ProxyJob proxyJob = new ProxyJob
             {
-                m_ActiveData = m_ProxyData.GetActiveData(Allocator.TempJob),
+                //m_ActiveData = m_ProxyData.GetActiveData(Allocator.TempJob),
+                m_ActiveData = clusterGroups,
                 m_Frustum = frustum,
 
                 m_Remove = m_RemoveProxyList.AsParallelWriter(),
@@ -277,7 +278,8 @@ namespace Syadeu.Presentation
         [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
         private struct ProxyJob : IJobParallelFor
         {
-            [ReadOnly, DeallocateOnJobCompletion] public NativeArray<ProxyTransformData> m_ActiveData;
+            //[ReadOnly, DeallocateOnJobCompletion] public NativeArray<ProxyTransformData> m_ActiveData;
+            [ReadOnly, DeallocateOnJobCompletion] public NativeArray<ClusterGroup<ProxyTransformData>.ReadOnly> m_ActiveData;
 
             [ReadOnly, DeallocateOnJobCompletion] public CameraFrustum.ReadOnly m_Frustum;
             [WriteOnly] public NativeQueue<int>.ParallelWriter
@@ -289,33 +291,42 @@ namespace Syadeu.Presentation
 
             public void Execute(int i)
             {
-                if (m_Frustum.IntersectsBox(m_ActiveData[i].GetAABB(Allocator.Temp)))
+                ClusterGroup<ProxyTransformData>.ReadOnly g = m_ActiveData[i];
+                for (int j = 0; j < g.Length; j++)
                 {
-                    if (m_ActiveData[i].m_EnableCull &&
-                        m_ActiveData[i].m_ProxyIndex.Equals(-1) &&
-                        !m_ActiveData[i].m_ProxyIndex.Equals(-2))
-                    {
-                        m_Request.Enqueue(m_ActiveData[i].m_Index);
-                    }
+                    if (!g.HasElementAt(j)) continue;
+                    ProxyTransformData data = g[j];
 
-                    if (!m_ActiveData[i].m_IsVisible)
+                    if (m_Frustum.IntersectsBox(data.GetAABB(Allocator.Temp)))
                     {
-                        m_Visible.Enqueue(m_ActiveData[i].m_Index);
+                        if (data.m_EnableCull &&
+                            data.m_ProxyIndex.Equals(-1) &&
+                            !data.m_ProxyIndex.Equals(-2))
+                        {
+                            m_Request.Enqueue(data.m_Index);
+                        }
+
+                        if (!data.m_IsVisible)
+                        {
+                            m_Visible.Enqueue(data.m_Index);
+                        }
+                    }
+                    else
+                    {
+                        if (!data.m_ProxyIndex.Equals(-1) &&
+                            !data.m_ProxyIndex.Equals(-2))
+                        {
+                            m_Remove.Enqueue(data.m_Index);
+                        }
+
+                        if (data.m_IsVisible)
+                        {
+                            m_Invisible.Enqueue(data.m_Index);
+                        }
                     }
                 }
-                else
-                {
-                    if (!m_ActiveData[i].m_ProxyIndex.Equals(-1) &&
-                        !m_ActiveData[i].m_ProxyIndex.Equals(-2))
-                    {
-                        m_Remove.Enqueue(m_ActiveData[i].m_Index);
-                    }
 
-                    if (m_ActiveData[i].m_IsVisible)
-                    {
-                        m_Invisible.Enqueue(m_ActiveData[i].m_Index);
-                    }
-                }
+                //
             }
         }
 

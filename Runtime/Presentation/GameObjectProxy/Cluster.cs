@@ -100,11 +100,11 @@ namespace Syadeu.Presentation
 
         public uint GetClusterIndex(in float3 translation, out float3 calculated)
         {
-            calculated = translation / c_ClusterRange;
+            calculated = (translation / c_ClusterRange) * c_ClusterRange;
             calculated = math.round(calculated);
 
             uint clusterHash = FNV1a32.Calculate(calculated.ToString());
-            //$"cluster pos: {temp}, hash: {clusterHash}, idx: {clusterHash % m_Length}".ToLog();
+            $"cluster pos: {calculated}, idx: {clusterHash % m_Length}".ToLog();
             return clusterHash % m_Length;
         }
 
@@ -116,6 +116,7 @@ namespace Syadeu.Presentation
             for (int i = 0; i < m_Length; i++)
             {
                 AABB box = new AABB(m_Buffer[i].Translation, c_ClusterRange);
+                //$"{box.center} , {box.size}".ToLog();
                 if (frustum.IntersectsBox(in box))
                 {
                     temp.Add(m_Buffer[i].AsReadOnly(allocator));
@@ -240,11 +241,11 @@ namespace Syadeu.Presentation
             [ReadOnly] public readonly uint Length;
             [ReadOnly] public readonly Allocator Allocator;
 
-            public ClusterItem<T> this[int index]
+            public ref T this[int index]
             {
                 get
                 {
-                    return Items[index];
+                    return ref *Items[index].m_Pointer;
                 }
             }
 
@@ -265,6 +266,14 @@ namespace Syadeu.Presentation
             public void Dispose()
             {
                 UnsafeUtility.Free(Items, Allocator);
+            }
+
+            public bool HasElementAt(int index)
+            {
+                if (index >= Length) throw new ArgumentOutOfRangeException(nameof(index));
+
+                if (Items[index].m_Pointer == null) return false;
+                return true;
             }
         }
 
