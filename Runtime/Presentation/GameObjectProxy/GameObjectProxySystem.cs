@@ -158,11 +158,11 @@ namespace Syadeu.Presentation
             proxy.transform.localScale = ev.transform.scale;
         }
 
-        private JobHandle m_ProxyJob;
+        //private JobHandle m_ProxyJob;
         protected override PresentationResult AfterPresentation()
         {
             const int c_ChunkSize = 100;
-            m_ProxyJob.Complete();
+            //m_ProxyJob.Complete();
 
             if (m_LoadingLock) return base.AfterPresentation();
 
@@ -270,7 +270,8 @@ namespace Syadeu.Presentation
                 m_Invisible = m_InvisibleList.AsParallelWriter()
             };
             //m_ProxyJob = proxyJob.Schedule(proxyJob.m_ActiveData.Length, 64);
-            m_ProxyJob = proxyJob.Schedule((int)proxyJob.m_ActiveData.Length, 64);
+            //m_ProxyJob = proxyJob.Schedule((int)proxyJob.m_ActiveData.Length, 64);
+            ScheduleAt(JobPosition.After, proxyJob, (int)proxyJob.m_ActiveData.Length, 64);
 
             return PresentationResult.Normal;
         }
@@ -332,7 +333,7 @@ namespace Syadeu.Presentation
 
         public override void OnDispose()
         {
-            m_ProxyJob.Complete();
+            //m_ProxyJob.Complete();
 
             m_RequestDestories.Dispose();
             //m_RequestUpdates.Dispose();

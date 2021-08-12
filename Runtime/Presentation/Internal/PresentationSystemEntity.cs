@@ -127,7 +127,7 @@ namespace Syadeu.Presentation.Internal
             CombineDependences(handle, position);
             return handle;
         }
-        protected JobHandle ScheduleAt<TJob>(JobPosition position, TJob job, int arrayLength, int innerloopBatchCount) where TJob : struct, IJobParallelFor
+        protected JobHandle ScheduleAt<TJob>(JobPosition position, TJob job, int arrayLength, int innerloopBatchCount = 64) where TJob : struct, IJobParallelFor
         {
             JobHandle handle = Schedule(job, arrayLength, innerloopBatchCount);
             CombineDependences(handle, position);

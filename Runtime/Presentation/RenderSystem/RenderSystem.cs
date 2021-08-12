@@ -23,7 +23,7 @@ namespace Syadeu.Presentation.Render
     {
         public override bool EnableBeforePresentation => true;
         public override bool EnableOnPresentation => true;
-        public override bool EnableAfterPresentation => false;
+        public override bool EnableAfterPresentation => true;
 
         private ObClass<Camera> m_Camera;
         private Matrix4x4 m_Matrix4x4;
@@ -94,7 +94,7 @@ namespace Syadeu.Presentation.Render
             }
             m_Matrix4x4 = GetCameraMatrix4X4(m_Camera.Value);
 
-			m_CameraFrustum.ScheduleUpdate(new CameraData(Camera));
+			//m_CameraFrustum.ScheduleUpdate(new CameraData(Camera));
 			//m_CameraFrustum.Update(Camera);
 
 			return base.BeforePresentation();
@@ -129,6 +129,12 @@ namespace Syadeu.Presentation.Render
             }
 
             return base.OnPresentation();
+        }
+        protected override PresentationResult AfterPresentation()
+        {
+			ScheduleAt(JobPosition.After, m_CameraFrustum.GetUpdateJob(new CameraData(Camera)));
+
+			return base.AfterPresentation();
         }
         public override void OnDispose()
         {

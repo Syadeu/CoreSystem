@@ -179,20 +179,20 @@ namespace Syadeu.Presentation.Render
 		#endregion
 
 		public void Update(Camera cam) => Update(ref this, cam);
-		public void ScheduleUpdate(CameraData data)
-        {
-			CoreSystem.Logger.ThreadBlock(nameof(ScheduleUpdate), ThreadInfo.Unity);
-			//m_UpdateJob.Complete();
+		//public void ScheduleUpdate(CameraData data)
+  //      {
+		//	CoreSystem.Logger.ThreadBlock(nameof(ScheduleUpdate), ThreadInfo.Unity);
+		//	//m_UpdateJob.Complete();
 
-			UpdateJob update = new UpdateJob
-			{
-				frustum = this,
-				data = data
-			};
-			JobHandle jobHandle = update.Schedule();
-			//m_UpdateJob = JobHandle.CombineDependencies(m_UpdateJob, jobHandle);
-		}
-		public IJob GetUpdateJob(CameraData data)
+		//	UpdateJob update = new UpdateJob
+		//	{
+		//		frustum = this,
+		//		data = data
+		//	};
+		//	JobHandle jobHandle = update.Schedule();
+		//	//m_UpdateJob = JobHandle.CombineDependencies(m_UpdateJob, jobHandle);
+		//}
+		public UpdateJob GetUpdateJob(CameraData data)
         {
 			return new UpdateJob
 			{
@@ -201,7 +201,7 @@ namespace Syadeu.Presentation.Render
 			};
 		}
 
-        private struct UpdateJob : IJob
+        public struct UpdateJob : IJob
         {
 			public CameraFrustum frustum;
 			public CameraData data;
