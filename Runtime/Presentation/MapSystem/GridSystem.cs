@@ -172,6 +172,7 @@ namespace Syadeu.Presentation.Map
 
             static void DrawGridGL(ManagedGrid grid, float thickness)
             {
+                const float yOffset = .2f;
                 int2 gridSize = grid.gridSize;
 
                 Vector3 minPos = grid.IndexToPosition(0);
@@ -192,19 +193,19 @@ namespace Syadeu.Presentation.Map
                         Vector3
                             p1 = new Vector3(
                                 minPos.x,
-                                minPos.y + .05f,
+                                minPos.y + yOffset,
                                 minPos.z - (grid.cellSize * y)),
                             p2 = new Vector3(
                                 maxPos.x,
-                                minPos.y + .05f,
+                                minPos.y + yOffset,
                                 minPos.z - (grid.cellSize * y)),
                             p3 = new Vector3(
                                 minPos.x + (grid.cellSize * x),
-                                minPos.y + .05f,
+                                minPos.y + yOffset,
                                 minPos.z),
                             p4 = new Vector3(
                                 minPos.x + (grid.cellSize * x),
-                                minPos.y + .05f,
+                                minPos.y + yOffset,
                                 maxPos.z)
                             ;
 
