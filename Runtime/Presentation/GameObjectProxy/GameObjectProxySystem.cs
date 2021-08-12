@@ -320,6 +320,7 @@ namespace Syadeu.Presentation
 
             if (m_ClusterUpdates.Count > 0)
             {
+                "in update".ToLog();
                 NativeArray<ClusterUpdateRequest> requests = m_ClusterUpdates.ToArray(Allocator.TempJob);
                 m_ClusterUpdates.Clear();
                 ClusterUpdateJob clusterUpdateJob = new ClusterUpdateJob
@@ -382,7 +383,8 @@ namespace Syadeu.Presentation
 
             public void Execute(int i)
             {
-                if (m_Requests[i].transform.isDestroyed) return;
+                if (m_Requests[i].transform.isDestroyQueued ||
+                    m_Requests[i].transform.isDestroyed) return;
 
                 m_ClusterData.Update(m_Requests[i].id, m_Requests[i].translation);
             }

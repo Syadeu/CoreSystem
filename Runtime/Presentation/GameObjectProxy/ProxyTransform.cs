@@ -144,12 +144,16 @@ namespace Syadeu.Presentation
                 unsafe
                 {
                     if (m_Generation.Equals(-1) || m_Pointer == null) return true;
-                    if (Ref.m_DestroyQueued || !Ref.m_IsOccupied || 
+                    if (!Ref.m_IsOccupied || 
                         !m_Hash.Equals(Ref.m_Hash)) return true;
                     if (!Ref.m_Generation.Equals(m_Generation)) return true;
                 }
                 return false;
             }
+        }
+        public bool isDestroyQueued
+        {
+            get => Ref.m_DestroyQueued;
         }
         public PrefabReference prefab
         {
