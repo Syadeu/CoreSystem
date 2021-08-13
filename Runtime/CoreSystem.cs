@@ -1888,6 +1888,25 @@ namespace Syadeu
 
             public static void Unmanaged<T>() where T : unmanaged { }
         }
+        public struct LogTimer : IDisposable
+        {
+            const string c_Log = "Name of {0} takes {1}ms";
+
+            public string Name;
+            public System.Diagnostics.Stopwatch Stopwatch;
+
+            public LogTimer(string name)
+            {
+                Name = name;
+                Stopwatch = global::System.Diagnostics.Stopwatch.StartNew();
+            }
+            public void Dispose()
+            {
+                Stopwatch.Stop();
+                CoreSystem.Logger.Log(Channel.Core,
+                    string.Format(c_Log, Name, Stopwatch.ElapsedMilliseconds));
+            }
+        }
 #line default
         #endregion
 

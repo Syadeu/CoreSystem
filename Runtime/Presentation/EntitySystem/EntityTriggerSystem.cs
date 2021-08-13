@@ -90,9 +90,12 @@ namespace Syadeu.Presentation
             TriggerBoundAttribute[] atts = ev.entity.GetAttributes<TriggerBoundAttribute>();
             if (atts == null) return;
 
-            for (int i = 0; i < atts.Length; i++)
+            using (new CoreSystem.LogTimer())
             {
-                FindAndPostEvent(atts[i]);
+                for (int i = 0; i < atts.Length; i++)
+                {
+                    FindAndPostEvent(atts[i]);
+                }
             }
 
             void FindAndPostEvent(TriggerBoundAttribute att)
