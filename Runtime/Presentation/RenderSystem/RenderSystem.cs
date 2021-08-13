@@ -42,14 +42,14 @@ namespace Syadeu.Presentation.Render
         internal List<CoreRoutine> m_PostRenderRoutines = new List<CoreRoutine>();
 
 		private CameraFrustum m_CameraFrustum;
-        private CameraFrustum m_CopiedFrustum;
+        //private CameraFrustum m_CopiedFrustum;
 
         #region Presentation Methods
 
         protected override PresentationResult OnInitialize()
         {
 			m_CameraFrustum = new CameraFrustum(Camera.main);
-            m_CopiedFrustum = new CameraFrustum(Camera.main);
+            //m_CopiedFrustum = new CameraFrustum(Camera.main);
 
             m_Camera = new ObClass<Camera>(ObValueDetection.Changed);
             m_Camera.OnValueChange += (from, to) =>
@@ -69,7 +69,7 @@ namespace Syadeu.Presentation.Render
         {
             CoreSystem.Instance.OnRender -= Instance_OnRender;
             m_CameraFrustum.Dispose();
-            m_CopiedFrustum.Dispose();
+            //m_CopiedFrustum.Dispose();
         }
 
         private void Instance_OnRender()
@@ -95,7 +95,7 @@ namespace Syadeu.Presentation.Render
         {
             if (Camera == null) return base.AfterPresentation();
 
-            m_CopiedFrustum.Copy(in m_CameraFrustum);
+            //m_CopiedFrustum.Copy(in m_CameraFrustum);
 
             FrustumJob job = new FrustumJob
             {

@@ -124,17 +124,17 @@ namespace Syadeu.Presentation
 #endif
 
             [WriteAccessRequired]
-            public void Update(in ClusterID id, in float3 translation)
+            public ClusterID Update(in ClusterID id, in float3 translation)
             {
 #if UNITY_EDITOR
                 AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
                 AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
 #endif
                 int idx = GetClusterIndex(in m_Length, in translation, out float3 calculated);
-                if (idx.Equals(id.GroupIndex)) return;
+                if (idx.Equals(id.GroupIndex)) return id;
 
                 int arrayIndex = Remove(in id);
-                Add(in idx, in calculated, in arrayIndex);
+                return Add(in idx, in calculated, in arrayIndex);
             }
             private ClusterID Add(in int gIdx, in float3 calculated, in int arrayIndex)
             {
@@ -434,8 +434,9 @@ namespace Syadeu.Presentation
 
                 if (!m_Buffer[index].m_IsOccupied)
                 {
-                    CoreSystem.Logger.LogError(Channel.Proxy,
-                        $"cluster group at {index} is not being used");
+                    //CoreSystem.Logger.LogError(Channel.Proxy,
+                    //    $"cluster group at {index} is not being used");
+                    throw new Exception();
                 }
                 return m_Buffer[index].m_ArrayIndex;
             }
