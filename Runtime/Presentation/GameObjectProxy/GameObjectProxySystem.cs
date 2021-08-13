@@ -612,6 +612,13 @@ namespace Syadeu.Presentation
             PrefabReference prefab = proxyTransform.prefab;
             RecycleableMonobehaviour proxy = proxyTransform.proxy;
 
+            if ((proxy.transform.position - (Vector3)proxyTransform.position).sqrMagnitude > .1f)
+            {
+                proxyTransform.position = proxy.transform.position;
+                CoreSystem.Logger.LogWarning(Channel.Proxy,
+                    "in-corrected translation found. Did you moved proxy transform directly?");
+            }
+
             OnDataObjectProxyRemoved?.Invoke(proxyTransform, proxy);
 
             proxyTransform.SetProxy(ProxyTransform.ProxyNull);

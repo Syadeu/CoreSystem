@@ -33,6 +33,9 @@ namespace Syadeu.Presentation
         {
             m_TriggerBoundArray = Array.Empty<Entity<IEntity>>();
             m_TriggerBoundCluster.Dispose();
+
+            m_EntitySystem = null;
+            m_EventSystem = null;
         }
 
         #region Bind
@@ -86,7 +89,15 @@ namespace Syadeu.Presentation
 
             att.m_ClusterID = m_TriggerBoundCluster.Update(att.m_ClusterID, ev.entity.transform.position);
             ClusterGroup<TriggerBoundAttribute> group = m_TriggerBoundCluster.GetGroup(in att.m_ClusterID);
-            AABB fromAABB = ev.transform.aabb;
+            AABB fromAABB;
+            if (att.m_MatchWithAABB)
+            {
+                fromAABB = ev.transform.aabb;
+            }
+            else
+            {
+                fromAABB = new AABB(att.m_Center + ev.transform.position, att.m_Size);
+            }
 
             for (int i = 0; i < group.Length; i++)
             {
@@ -97,7 +108,6 @@ namespace Syadeu.Presentation
                 Entity<IEntity> target = m_TriggerBoundArray[arrIdx];
 
                 if (!target.transform.aabb.Intersect(fromAABB)) continue;
-
                 m_EventSystem.PostEvent(EntityTriggerBoundEvent.GetEvent(ev.entity, target));
             }
         }
