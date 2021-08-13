@@ -1083,8 +1083,11 @@ namespace SyadeuEditor.Presentation.Map
         }
 
         #region Tool
+        private quaternion invalid = new quaternion(0, 0, 0, 0);
         private void DrawMoveTool(MapDataEntity.Object obj)
         {
+            if (obj.m_Rotation.Equals(invalid)) obj.m_Rotation = quaternion.identity;
+
             EditorGUI.BeginChangeCheck();
             obj.m_Translation = Handles.PositionHandle(obj.m_Translation, obj.m_Rotation);
             if (EditorGUI.EndChangeCheck())
@@ -1097,6 +1100,8 @@ namespace SyadeuEditor.Presentation.Map
         }
         private void DrawRotationTool(MapDataEntity.Object obj)
         {
+            if (obj.m_Rotation.Equals(invalid)) obj.m_Rotation = quaternion.identity;
+
             EditorGUI.BeginChangeCheck();
             obj.m_Rotation = Handles.RotationHandle(obj.m_Rotation, obj.m_Translation);
             if (EditorGUI.EndChangeCheck())
@@ -1109,6 +1114,8 @@ namespace SyadeuEditor.Presentation.Map
         }
         private void DrawScaleTool(MapDataEntity.Object obj)
         {
+            if (obj.m_Rotation.Equals(invalid)) obj.m_Rotation = quaternion.identity;
+
             EditorGUI.BeginChangeCheck();
             obj.m_Scale = Handles.ScaleHandle(obj.m_Scale, obj.m_Translation, obj.m_Rotation, HandleUtility.GetHandleSize(obj.m_Translation));
             if (EditorGUI.EndChangeCheck())

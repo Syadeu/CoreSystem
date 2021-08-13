@@ -1,5 +1,6 @@
 ﻿using log4net.Repository.Hierarchy;
 using System;
+using Unity.Collections;
 using Unity.Jobs;
 
 namespace Syadeu.Presentation.Internal
@@ -109,6 +110,14 @@ namespace Syadeu.Presentation.Internal
             s_GlobalJobHandle = JobHandle.CombineDependencies(s_GlobalJobHandle, handle);
             return handle;
         }
+        protected JobHandle Schedule<T, U>(T job, NativeList<U> list, int innerloopBatchCount) 
+            where T : struct, IJobParallelForDefer
+            where U : unmanaged
+        {
+            JobHandle handle = job.Schedule(list, innerloopBatchCount, s_GlobalJobHandle);
+            s_GlobalJobHandle = JobHandle.CombineDependencies(s_GlobalJobHandle, handle);
+            return handle;
+        }
 
         internal JobHandle m_BeforePresentationJobHandle;
         internal JobHandle m_OnPresentationJobHandle;
@@ -130,6 +139,14 @@ namespace Syadeu.Presentation.Internal
         protected JobHandle ScheduleAt<TJob>(JobPosition position, TJob job, int arrayLength, int innerloopBatchCount = 64) where TJob : struct, IJobParallelFor
         {
             JobHandle handle = Schedule(job, arrayLength, innerloopBatchCount);
+            CombineDependences(handle, position);
+            return handle;
+        }
+        protected JobHandle ScheduleAt<TJob, U>(JobPosition position, TJob job, NativeList<U> list, int innerloopBatchCount = 64) 
+            where TJob : struct, IJobParallelForDefer
+            where U : unmanaged
+        {
+            JobHandle handle = Schedule(job, list, innerloopBatchCount);
             CombineDependences(handle, position);
             return handle;
         }
