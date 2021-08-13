@@ -97,13 +97,29 @@ namespace Syadeu.Presentation.Entities
         #endregion
 
         /// <inheritdoc cref="IEntityData.GetAttribute(Type)"/>
-        public AttributeBase GetAttribute(Type t) => Target.GetAttribute(t);
+        public AttributeBase GetAttribute(Type t)
+        {
+            if (!IsValid()) throw new Exception("not valid");
+            return Target.GetAttribute(t);
+        }
         /// <inheritdoc cref="IEntityData.GetAttributes(Type)"/>
-        public AttributeBase[] GetAttributes(Type t) => Target.GetAttributes(t);
+        public AttributeBase[] GetAttributes(Type t)
+        {
+            if (!IsValid()) throw new Exception("not valid");
+            return Target.GetAttributes(t);
+        }
         /// <inheritdoc cref="IEntityData.GetAttribute(Type)"/>
-        public TA GetAttribute<TA>() where TA : AttributeBase => Target.GetAttribute<TA>();
+        public TA GetAttribute<TA>() where TA : AttributeBase
+        {
+            if (!IsValid()) throw new Exception("not valid");
+            return Target.GetAttribute<TA>();
+        }
         /// <inheritdoc cref="IEntityData.GetAttributes(Type)"/>
-        public TA[] GetAttributes<TA>() where TA : AttributeBase => Target.GetAttributes<TA>();
+        public TA[] GetAttributes<TA>() where TA : AttributeBase
+        {
+            if (!IsValid()) throw new Exception("not valid");
+            return Target.GetAttributes<TA>();
+        }
 
         public void Destroy() => PresentationSystem<EntitySystem>.System.InternalDestroyEntity(m_Idx);
 

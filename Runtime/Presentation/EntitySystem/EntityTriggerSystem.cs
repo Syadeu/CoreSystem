@@ -54,7 +54,9 @@ namespace Syadeu.Presentation
             TriggerBoundAttribute att = obj.GetAttribute<TriggerBoundAttribute>();
             if (att == null) return;
 
-            ClusterID id = m_TriggerBoundCluster.Add(entity.transform.position, FindOrIncrementTriggerBoundArrayIndex());
+            int arrayIndex = FindOrIncrementTriggerBoundArrayIndex();
+            ClusterID id = m_TriggerBoundCluster.Add(entity.transform.position, arrayIndex);
+            m_TriggerBoundArray[arrayIndex] = obj;
 
             att.m_ClusterID = id;
         }
@@ -95,7 +97,21 @@ namespace Syadeu.Presentation
 
             void FindAndPostEvent(TriggerBoundAttribute att)
             {
-                att.m_ClusterID = m_TriggerBoundCluster.Update(att.m_ClusterID, ev.entity.transform.position);
+                var updatedID = m_TriggerBoundCluster.Update(att.m_ClusterID, ev.entity.transform.position);
+                if (!updatedID.Equals(att.m_ClusterID))
+                {
+                    var prevGroup = m_TriggerBoundCluster.GetGroup(in att.m_ClusterID);
+                    for (int i = 0; i < prevGroup.Length; i++)
+                    {
+                        if (!prevGroup.HasElementAt(i)) continue;
+
+                        int arrIdx = prevGroup[i];
+                        Entity<IEntity> target = m_TriggerBoundArray[arrIdx];
+
+                        TryTrigger(in m_EventSystem, ev.entity, in target);
+                    }
+                }
+                att.m_ClusterID = updatedID;
                 ClusterGroup<TriggerBoundAttribute> group = m_TriggerBoundCluster.GetGroup(in att.m_ClusterID);
                 
                 for (int i = 0; i < group.Length; i++)
@@ -126,6 +142,11 @@ namespace Syadeu.Presentation
                         fromAtt.m_Triggered.Add(to);
                         eventSystem.PostEvent(EntityTriggerBoundEvent.GetEvent(from, to, true));
                     }
+                    if (!toAtt.m_Triggered.Contains(from))
+                    {
+                        toAtt.m_Triggered.Add(from);
+                        eventSystem.PostEvent(EntityTriggerBoundEvent.GetEvent(to, from, true));
+                    }
                 }
                 else
                 {
@@ -134,10 +155,17 @@ namespace Syadeu.Presentation
                         fromAtt.m_Triggered.Remove(to);
                         eventSystem.PostEvent(EntityTriggerBoundEvent.GetEvent(from, to, false));
                     }
+                    if (toAtt.m_Triggered.Contains(from))
+                    {
+                        toAtt.m_Triggered.Remove(from);
+                        eventSystem.PostEvent(EntityTriggerBoundEvent.GetEvent(to, from, false));
+                    }
                 }
             }
             static bool CanTriggerable(in TriggerBoundAttribute att, in Entity<IEntity> target)
             {
+                if (att.m_TriggerOnly.Length == 0) return true;
+
                 for (int i = 0; i < att.m_TriggerOnly.Length; i++)
                 {
                     if (att.m_TriggerOnly[i].Equals(target.Hash))

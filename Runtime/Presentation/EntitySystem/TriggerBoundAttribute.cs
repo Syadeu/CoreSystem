@@ -40,6 +40,7 @@ namespace Syadeu.Presentation.Attributes
         }
         private void EntityTriggerBoundEventHandler(EntityTriggerBoundEvent ev)
         {
+            $"{ev.Source.Name}({ev.Source.Idx}) -> {ev.Target.Name}({ev.Target.Idx}) enter?{ev.IsEnter}".ToLog();
         }
     }
 }
