@@ -200,6 +200,7 @@ namespace Syadeu.Presentation
         }
         protected override PresentationResult OnPresentationAsync()
         {
+            // TODO : 이거 매우 심각한 GC 문제를 일으킴.
             var temp = m_ObjectEntities.Values.ToArray();
             for (int i = 0; i < temp.Length; i++)
             {

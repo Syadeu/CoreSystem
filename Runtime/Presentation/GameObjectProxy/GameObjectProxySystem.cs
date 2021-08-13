@@ -54,6 +54,8 @@ namespace Syadeu.Presentation
                 m_InvisibleList;
         private NativeQueue<ClusterUpdateRequest>
                 m_ClusterUpdates;
+        private NativeQueue<ClusterIDRequest>
+                m_ClusterIDRequests;
 #pragma warning restore IDE0090 // Use 'new(...)'
 
         private SceneSystem m_SceneSystem;
@@ -71,7 +73,6 @@ namespace Syadeu.Presentation
             if (!PoolContainer<PrefabRequester>.Initialized) PoolContainer<PrefabRequester>.Initialize(() => new PrefabRequester(), 10);
 
             m_RequestDestories = new NativeQueue<int>(Allocator.Persistent);
-            //m_RequestUpdates = new NativeQueue<int>(Allocator.Persistent);
 
             m_RequestProxyList = new NativeQueue<int>(Allocator.Persistent);
             m_RemoveProxyList = new NativeQueue<int>(Allocator.Persistent);
@@ -79,6 +80,7 @@ namespace Syadeu.Presentation
             m_InvisibleList = new NativeQueue<int>(Allocator.Persistent);
 
             m_ClusterUpdates = new NativeQueue<ClusterUpdateRequest>(Allocator.Persistent);
+            m_ClusterIDRequests = new NativeQueue<ClusterIDRequest>(Allocator.Persistent);
 
             return base.OnInitialize();
         }
@@ -99,10 +101,7 @@ namespace Syadeu.Presentation
         }
         public override void OnDispose()
         {
-            //m_ProxyJob.Complete();
-
             m_RequestDestories.Dispose();
-            //m_RequestUpdates.Dispose();
 
             m_RequestProxyList.Dispose();
             m_RemoveProxyList.Dispose();
@@ -110,6 +109,7 @@ namespace Syadeu.Presentation
             m_InvisibleList.Dispose();
 
             m_ClusterUpdates.Dispose();
+            m_ClusterIDRequests.Dispose();
 
             m_ProxyData.For((tr) =>
             {
@@ -118,7 +118,7 @@ namespace Syadeu.Presentation
             m_ProxyData.Dispose();
             m_ClusterData.Dispose();
 
-            m_SortedCluster.Dispose();
+            if (m_SortedCluster.IsCreated) m_SortedCluster.Dispose();
 
             m_Disposed = true;
         }
@@ -196,7 +196,6 @@ namespace Syadeu.Presentation
         protected override PresentationResult AfterPresentation()
         {
             const int c_ChunkSize = 100;
-            //m_ProxyJob.Complete();
 
             if (m_LoadingLock) return base.AfterPresentation();
 
@@ -302,10 +301,10 @@ namespace Syadeu.Presentation
             }
             #endregion
 
-            int clusterIDRequestCount = clusterIDRequests.Count;
+            int clusterIDRequestCount = m_ClusterIDRequests.Count;
             for (int i = 0; i < clusterIDRequestCount; i++)
             {
-                var temp = clusterIDRequests.Dequeue();
+                var temp = m_ClusterIDRequests.Dequeue();
                 var id = m_ClusterData.Add(temp.translation, temp.index);
 
                 m_ProxyData[temp.index].Ref.m_ClusterID = id;
@@ -431,7 +430,7 @@ namespace Syadeu.Presentation
                     }
                     ProxyTransformData data = List.ElementAt(clusterGroup[j]);
 
-                    if (m_Frustum.IntersectsBox(data.GetAABB(Allocator.Temp), 10))
+                    if (m_Frustum.IntersectsBox(data.GetAABB(), 10))
                     {
                         if (data.m_EnableCull &&
                             data.m_ProxyIndex.Equals(-1) &&
@@ -468,7 +467,6 @@ namespace Syadeu.Presentation
 
         #endregion
 
-        private Queue<ClusterIDRequest> clusterIDRequests = new Queue<ClusterIDRequest>();
         public ProxyTransform CreateNewPrefab(PrefabReference prefab, float3 pos, quaternion rot, float3 scale, bool enableCull, float3 center, float3 size)
         {
             CoreSystem.Logger.ThreadBlock(nameof(CreateNewPrefab), ThreadInfo.Unity);
@@ -478,7 +476,7 @@ namespace Syadeu.Presentation
             ProxyTransform tr = m_ProxyData.Add(prefab, pos, rot, scale, enableCull, center, size);
             unsafe
             {
-                clusterIDRequests.Enqueue(new ClusterIDRequest(pos, tr.m_Index));
+                m_ClusterIDRequests.Enqueue(new ClusterIDRequest(pos, tr.m_Index));
                 tr.Pointer->m_ClusterID = ClusterID.Requested;
             }
             OnDataObjectCreated?.Invoke(tr);

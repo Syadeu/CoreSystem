@@ -37,19 +37,27 @@ namespace Syadeu.Presentation.Map
         }
         protected override PresentationResult OnInitializeAsync()
         {
-            RequestSystem<EntitySystem>((other) =>
-            {
-                m_EntitySystem = other;
-                m_EntitySystem.OnEntityCreated += M_EntitySystem_OnEntityCreated;
-                m_EntitySystem.OnEntityDestroy += M_EntitySystem_OnEntityDestroy;
-            });
-            RequestSystem<Render.RenderSystem>((other) =>
-            {
-                m_RenderSystem = other;
-                m_RenderSystem.OnRender += M_RenderSystem_OnRender;
-            });
+            RequestSystem<EntitySystem>(Bind);
+            RequestSystem<Render.RenderSystem>(Bind);
 
             return base.OnInitializeAsync();
+        }
+        private void Bind(EntitySystem other)
+        {
+            m_EntitySystem = other;
+            m_EntitySystem.OnEntityCreated += M_EntitySystem_OnEntityCreated;
+            m_EntitySystem.OnEntityDestroy += M_EntitySystem_OnEntityDestroy;
+        }
+        private void Bind(Render.RenderSystem other)
+        {
+            m_RenderSystem = other;
+            m_RenderSystem.OnRender += M_RenderSystem_OnRender;
+        }
+        public override void OnDispose()
+        {
+            m_EntitySystem.OnEntityCreated -= M_EntitySystem_OnEntityCreated;
+            m_EntitySystem.OnEntityDestroy -= M_EntitySystem_OnEntityDestroy;
+            m_RenderSystem.OnRender -= M_RenderSystem_OnRender;
         }
         protected override PresentationResult BeforePresentationAsync()
         {
@@ -78,12 +86,7 @@ namespace Syadeu.Presentation.Map
             }
             return base.BeforePresentationAsync();
         }
-        public override void OnDispose()
-        {
-            m_EntitySystem.OnEntityCreated -= M_EntitySystem_OnEntityCreated;
-            m_EntitySystem.OnEntityDestroy -= M_EntitySystem_OnEntityDestroy;
-            m_RenderSystem.OnRender -= M_RenderSystem_OnRender;
-        }
+        
         private void CreateConsoleCommands()
         {
             ConsoleWindow.CreateCommand((cmd) =>

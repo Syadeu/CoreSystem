@@ -69,6 +69,8 @@ namespace Syadeu.Presentation.Event
                         $"Invalid event({ev.GetType()}) has been posted");
                     UnityEngine.Debug.LogException(ex);
                 }
+                CoreSystem.Logger.Log(Channel.Presentation,
+                    $"Posted event : {ev.GetType().Name}");
             }
             return base.OnPresentation();
         }

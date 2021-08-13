@@ -324,9 +324,9 @@ namespace Syadeu.Presentation
         }
         public AABB aabb => new AABB(m_Center + m_Translation, m_Size).Rotation(m_Rotation);
 
-        public AABB GetAABB(Allocator allocator = Allocator.TempJob)
+        public AABB GetAABB()
         {
-            return new AABB(m_Center + m_Translation, m_Size).Rotation(m_Rotation, allocator);
+            return new AABB(m_Center + m_Translation, m_Size).Rotation(m_Rotation);
         }
         public bool Equals(ProxyTransformData other) => m_Generation.Equals(other.m_Generation);
     }

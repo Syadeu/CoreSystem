@@ -120,7 +120,7 @@ namespace Syadeu.Database
             Encapsulate(aabb.center + aabb.extents);
         }
 
-        public AABB Rotation(quaternion rot, Allocator allocator = Allocator.TempJob) => CalculateRotationWithVertices(in this, rot, allocator);
+        public AABB Rotation(quaternion rot) => CalculateRotationWithVertices(in this, rot);
 
         private static AABB CalculateRotation(in AABB aabb, quaternion quaternion)
         {
@@ -153,7 +153,7 @@ namespace Syadeu.Database
             return temp;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static AABB CalculateRotationWithVertices(in AABB aabb, quaternion quaternion, Allocator allocator)
+        private static AABB CalculateRotationWithVertices(in AABB aabb, quaternion quaternion)
         {
             float3 
                 originCenter = aabb.center,
@@ -161,13 +161,28 @@ namespace Syadeu.Database
             float4x4 trMatrix = float4x4.TRS(originCenter, quaternion, originExtents);
 
             AABB temp = new AABB(originCenter, float3.zero);
-            NativeArray<float3> vertices = aabb.GetVertices(allocator);
-            for (int i = 0; i < vertices.Length; i++)
-            {
-                float3 vertex = math.mul(trMatrix, new float4((vertices[i] - originCenter) * 2, 1)).xyz;
-                temp.Encapsulate(vertex);
-            }
-            vertices.Dispose();
+
+            float3
+                min = aabb.min,
+                max = aabb.max,
+
+                a1 = new float3(min.x, max.y, min.z),
+                a2 = new float3(max.x, max.y, min.z),
+                a3 = new float3(max.x, min.y, min.z),
+
+                b1 = new float3(max.x, min.y, max.z),
+                b3 = new float3(min.x, max.y, max.z),
+                b4 = new float3(min.x, min.y, max.z);
+
+            temp.Encapsulate(math.mul(trMatrix, new float4((min - originCenter) * 2, 1)).xyz);
+            temp.Encapsulate(math.mul(trMatrix, new float4((a1 - originCenter) * 2, 1)).xyz);
+            temp.Encapsulate(math.mul(trMatrix, new float4((a2 - originCenter) * 2, 1)).xyz);
+            temp.Encapsulate(math.mul(trMatrix, new float4((a3 - originCenter) * 2, 1)).xyz);
+            temp.Encapsulate(math.mul(trMatrix, new float4((b1 - originCenter) * 2, 1)).xyz);
+            temp.Encapsulate(math.mul(trMatrix, new float4((max - originCenter) * 2, 1)).xyz);
+            temp.Encapsulate(math.mul(trMatrix, new float4((b3 - originCenter) * 2, 1)).xyz);
+            temp.Encapsulate(math.mul(trMatrix, new float4((b4 - originCenter) * 2, 1)).xyz);
+
             return temp;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
