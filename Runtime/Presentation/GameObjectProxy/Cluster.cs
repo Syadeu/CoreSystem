@@ -276,7 +276,7 @@ namespace Syadeu.Presentation
             calculated = math.round(calculated) * c_ClusterRange;
 
             uint clusterHash = FNV1a32.Calculate(calculated.ToString());
-            //$"cluster pos: {calculated}, idx: {clusterHash % m_Length}".ToLog();
+            //$"cluster pos: {calculated}, idx: {clusterHash % m_Length}".ToLog(); 
             return Convert.ToInt32(clusterHash % length);
         }
         public int GetClusterIndex(in float3 translation, out float3 calculated)

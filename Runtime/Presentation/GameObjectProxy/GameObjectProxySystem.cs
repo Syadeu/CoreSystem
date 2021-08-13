@@ -378,7 +378,6 @@ namespace Syadeu.Presentation
 
         #region Jobs
 
-        [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
         private struct ClusterUpdateJob : IJobParallelFor
         {
             [WriteOnly] public Cluster<ProxyTransformData>.ParallelWriter m_ClusterData;

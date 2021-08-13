@@ -44,7 +44,7 @@ namespace Syadeu.Presentation
             {
                 get
                 {
-                    if (index >= m_Length) throw new ArgumentOutOfRangeException(nameof(index) + $"of {m_Length} at {index}");
+                    if (index >= m_Length) throw new ArgumentOutOfRangeException();
                     return m_TransformBuffer + index;
                 }
             }
