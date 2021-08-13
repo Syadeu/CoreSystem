@@ -18,7 +18,7 @@ namespace Syadeu.Presentation
     /// <typeparam name="T"></typeparam>
     [BurstCompile(CompileSynchronously = true)]
     [NativeContainer]
-    unsafe internal struct Cluster<T> : IDisposable where T : unmanaged
+    unsafe internal struct Cluster<T> : IDisposable
     {
         public const int c_ClusterRange = 25;
         private static int s_BufferSize = UnsafeUtility.SizeOf<ClusterGroup<T>>();
@@ -316,17 +316,17 @@ namespace Syadeu.Presentation
         }
 
         [WriteAccessRequired]
-        public void Update(in ClusterID id, in float3 translation)
+        public ClusterID Update(in ClusterID id, in float3 translation)
         {
 #if UNITY_EDITOR
             AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
             AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
 #endif
             int idx = GetClusterIndex(in translation, out float3 calculated);
-            if (idx.Equals(id.GroupIndex)) return;
+            if (idx.Equals(id.GroupIndex)) return id;
 
             int arrayIndex = Remove(in id);
-            Add(in idx, in calculated, in arrayIndex);
+            return Add(in idx, in calculated, in arrayIndex);
         }
         [WriteAccessRequired]
         public ClusterID Add(in float3 translation, in int arrayIndex)
@@ -413,7 +413,7 @@ namespace Syadeu.Presentation
     }
 
     [BurstCompile(CompileSynchronously = true)]
-    unsafe internal struct ClusterGroup<T> : IDisposable where T : unmanaged
+    unsafe internal struct ClusterGroup<T> : IDisposable
     {
         private static readonly int s_BufferSize = UnsafeUtility.SizeOf<ClusterItem<T>>();
         private static readonly int s_BufferAlign = UnsafeUtility.AlignOf<ClusterItem<T>>();
@@ -586,7 +586,7 @@ namespace Syadeu.Presentation
 
     [BurstCompile]
     //[StructLayout(LayoutKind.Explicit, Size = 5)]
-    unsafe internal struct ClusterItem<T> where T : unmanaged
+    unsafe internal struct ClusterItem<T>
     {
         public bool m_IsOccupied;
         public int m_ArrayIndex;
