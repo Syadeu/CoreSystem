@@ -32,7 +32,7 @@ namespace Syadeu.Presentation.Entities
                 $"Cannot convert an empty hash to Entity. This is an invalid operation and not allowed.");
                 return Empty;
             }
-            if (!PresentationSystem<EntitySystem>.System.m_ObjectHashSet.Contains(idx))
+            if (!PresentationSystem<EntitySystem>.System.m_ObjectEntities.ContainsKey(idx))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"Cannot found entity({idx})");
@@ -77,7 +77,7 @@ namespace Syadeu.Presentation.Entities
 
         public bool IsValid() => !m_Idx.Equals(Hash.Empty) && 
             PresentationSystem<EntitySystem>.IsValid() &&
-            PresentationSystem<EntitySystem>.System.m_ObjectHashSet.Contains(m_Idx);
+            PresentationSystem<EntitySystem>.System.m_ObjectEntities.ContainsKey(m_Idx);
 
         public bool Equals(EntityData<T> other) => m_Idx.Equals(other.m_Idx);
         public bool Equals(Hash other) => m_Idx.Equals(other);

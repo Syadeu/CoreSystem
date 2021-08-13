@@ -44,7 +44,6 @@ namespace Syadeu.Presentation
         /// </remarks>
         public event Action<EntityData<IEntityData>> OnEntityDestroy;
 
-        internal readonly HashSet<Hash> m_ObjectHashSet = new HashSet<Hash>();
         internal readonly Dictionary<Hash, IEntityData> m_ObjectEntities = new Dictionary<Hash, IEntityData>();
         internal readonly Dictionary<Hash, Hash> m_EntityGameObjects = new Dictionary<Hash, Hash>();
 
@@ -178,7 +177,6 @@ namespace Syadeu.Presentation
             ProcessEntityOnDestroy(this, m_ObjectEntities[entityHash]);
 
             m_EntityGameObjects.Remove(obj.m_Hash);
-            m_ObjectHashSet.Remove(entityHash);
             m_ObjectEntities.Remove(entityHash);
         }
 
@@ -289,7 +287,6 @@ namespace Syadeu.Presentation
             OnEntityCreated = null;
             OnEntityDestroy = null;
 
-            m_ObjectHashSet.Clear();
             m_ObjectEntities.Clear();
             m_AttributeProcessors.Clear();
             m_EntityProcessors.Clear();
@@ -396,7 +393,6 @@ namespace Syadeu.Presentation
             entity.transform = obj;
             entity.m_IsCreated = true;
 
-            m_ObjectHashSet.Add(entity.Idx);
             m_ObjectEntities.Add(entity.Idx, entity);
 
             m_EntityGameObjects.Add(obj.m_Hash, entity.Idx);
@@ -467,7 +463,6 @@ namespace Syadeu.Presentation
 
             IEntityData clone = (IEntityData)objClone;
 
-            m_ObjectHashSet.Add(clone.Idx);
             m_ObjectEntities.Add(clone.Idx, clone);
 
             ProcessEntityOnCreated(this, clone);
@@ -484,10 +479,11 @@ namespace Syadeu.Presentation
         /// </remarks>
         /// <param name="hash"><seealso cref="IEntityData.Idx"/> 값</param>
         public void DestroyEntity(Entity<IEntity> entity) => InternalDestroyEntity(entity.Idx);
+        /// <inheritdoc cref="DestroyEntity(Entity{IEntity})"/>
         public void DestroyEntity(EntityData<IEntityData> entity) => InternalDestroyEntity(entity.Idx);
         internal void InternalDestroyEntity(Hash hash)
         {
-            if (!m_ObjectHashSet.Contains(hash)) throw new Exception();
+            if (!m_ObjectEntities.ContainsKey(hash)) throw new Exception();
 
             ProcessEntityOnDestroy(this, m_ObjectEntities[hash]);
 
@@ -500,7 +496,6 @@ namespace Syadeu.Presentation
             }
 
             ((IDisposable)m_ObjectEntities[hash]).Dispose();
-            m_ObjectHashSet.Remove(hash);
             m_ObjectEntities.Remove(hash);
         }
 
