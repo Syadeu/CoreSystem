@@ -603,8 +603,8 @@ namespace Syadeu.Presentation
         private readonly int m_GroupIndex;
         private readonly int m_ItemIndex;
 
-        public int GroupIndex => m_GroupIndex;
-        public int ItemIndex => m_ItemIndex;
+        internal int GroupIndex => m_GroupIndex;
+        internal int ItemIndex => m_ItemIndex;
 
         public ClusterID(int gIdx, int iIdx) { m_GroupIndex = gIdx; m_ItemIndex = iIdx; }
 

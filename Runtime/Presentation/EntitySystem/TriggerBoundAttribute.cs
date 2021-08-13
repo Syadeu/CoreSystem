@@ -15,8 +15,6 @@ namespace Syadeu.Presentation.Attributes
     {
         protected override void OnInitialize()
         {
-            EventSystem.AddEvent<OnTransformChanged>(OnTransformChangedEvent);
-
             base.OnInitialize();
         }
         private void OnTransformChangedEvent(OnTransformChanged ev)

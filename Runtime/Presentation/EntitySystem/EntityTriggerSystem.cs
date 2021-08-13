@@ -1,4 +1,5 @@
-﻿using Syadeu.Presentation.Attributes;
+﻿using Syadeu.Database;
+using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using System;
 
@@ -11,15 +12,17 @@ namespace Syadeu.Presentation
         public override bool EnableAfterPresentation => false;
 
         private Cluster<TriggerBoundAttribute> m_TriggerBoundCluster;
-        private TriggerBoundAttribute[] m_TriggerBoundArray;
+        private Entity<IEntity>[] m_TriggerBoundArray;
 
         private EntitySystem m_EntitySystem;
         private Event.EventSystem m_EventSystem;
 
+        #region Presentation Methods
+
         protected override PresentationResult OnInitialize()
         {
             m_TriggerBoundCluster = new Cluster<TriggerBoundAttribute>(1024);
-            m_TriggerBoundArray = new TriggerBoundAttribute[1024];
+            m_TriggerBoundArray = new Entity<IEntity>[1024];
 
             RequestSystem<EntitySystem>(Bind);
             RequestSystem<Event.EventSystem>(Bind);
@@ -67,25 +70,47 @@ namespace Syadeu.Presentation
 
         #endregion
 
-        private int FindOrIncrementTriggerBoundArrayIndex()
-        {
-            for (int i = 0; i < m_TriggerBoundArray.Length; i++)
-            {
-                if (m_TriggerBoundArray[i] == null) return i;
-            }
+        #endregion
 
-            var newArr = new TriggerBoundAttribute[m_TriggerBoundArray.Length * 2];
-            Array.Copy(m_TriggerBoundArray, newArr, m_TriggerBoundArray.Length);
-            m_TriggerBoundArray = newArr;
+        #region Events
 
-            return FindOrIncrementTriggerBoundArrayIndex();
-        }
         private void OnTransformChangedEvent(OnTransformChanged ev)
         {
             var att = ev.entity.GetAttribute<TriggerBoundAttribute>();
             if (att == null) return;
 
             att.m_ClusterID = m_TriggerBoundCluster.Update(att.m_ClusterID, ev.entity.transform.position);
+            ClusterGroup<TriggerBoundAttribute> group = m_TriggerBoundCluster.GetGroup(in att.m_ClusterID);
+            AABB fromAABB = ev.transform.aabb;
+
+            for (int i = 0; i < group.Length; i++)
+            {
+                if (i.Equals(att.m_ClusterID.ItemIndex) ||
+                    !group.HasElementAt(i)) continue;
+
+                int arrIdx = group[i];
+                Entity<IEntity> target = m_TriggerBoundArray[arrIdx];
+
+                if (!target.transform.aabb.Intersect(fromAABB)) continue;
+
+                m_EventSystem.PostEvent(EntityTriggerBoundEvent.GetEvent(ev.entity, target));
+            }
+        }
+
+        #endregion
+
+        private int FindOrIncrementTriggerBoundArrayIndex()
+        {
+            for (int i = 0; i < m_TriggerBoundArray.Length; i++)
+            {
+                if (m_TriggerBoundArray[i].Equals(Entity<IEntity>.Empty)) return i;
+            }
+
+            Entity<IEntity>[] newArr = new Entity<IEntity>[m_TriggerBoundArray.Length * 2];
+            Array.Copy(m_TriggerBoundArray, newArr, m_TriggerBoundArray.Length);
+            m_TriggerBoundArray = newArr;
+
+            return FindOrIncrementTriggerBoundArrayIndex();
         }
     }
 
@@ -94,18 +119,19 @@ namespace Syadeu.Presentation
         public Entity<IEntity> Source { get; private set; }
         public Entity<IEntity> Target { get; private set; }
 
-        public EntityTriggerBoundEvent GetEvent(Entity<IEntity> source, Entity<IEntity> target)
+        public static EntityTriggerBoundEvent GetEvent(Entity<IEntity> source, Entity<IEntity> target)
         {
             var temp = Dequeue();
 
-            Source = source;
-            Target = target;
+            temp.Source = source;
+            temp.Target = target;
 
             return temp;
         }
         protected override void OnTerminate()
         {
-            throw new NotImplementedException();
+            Source = Entity<IEntity>.Empty;
+            Target = Entity<IEntity>.Empty;
         }
     }
 }
