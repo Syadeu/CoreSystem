@@ -29,6 +29,11 @@ namespace Syadeu.Presentation
 
             return base.OnInitialize();
         }
+        public override void OnDispose()
+        {
+            m_TriggerBoundArray = Array.Empty<Entity<IEntity>>();
+            m_TriggerBoundCluster.Dispose();
+        }
 
         #region Bind
 
@@ -56,7 +61,7 @@ namespace Syadeu.Presentation
             if (att == null) return;
 
             int arrayIndex = m_TriggerBoundCluster.Remove(att.m_ClusterID);
-            m_TriggerBoundArray[arrayIndex] = null;
+            m_TriggerBoundArray[arrayIndex] = Entity<IEntity>.Empty;
 
             att.m_ClusterID = ClusterID.Empty;
         }
