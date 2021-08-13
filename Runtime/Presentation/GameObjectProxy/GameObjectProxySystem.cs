@@ -421,7 +421,7 @@ namespace Syadeu.Presentation
                 ClusterGroup<ProxyTransformData> clusterGroup = m_ActiveData[i];
                 for (int j = 0; j < clusterGroup.Length; j++)
                 {
-                    if (!clusterGroup.BeingUsed || !clusterGroup.HasElementAt(j)) continue;
+                    if (!clusterGroup.IsCreated || !clusterGroup.HasElementAt(j)) continue;
 
                     if (clusterGroup[j] >= List.m_Length)
                     {
@@ -548,7 +548,7 @@ namespace Syadeu.Presentation
 
             PrefabReference prefab = proxyTransform.prefab;
 
-            if (!m_TerminatedProxies.TryGetValue(prefab, out Queue<RecycleableMonobehaviour> pool) ||
+            if (!m_TerminatedProxies.TryGetValue(prefab, out Stack<RecycleableMonobehaviour> pool) ||
                     pool.Count == 0)
             {
                 proxyTransform.SetProxy(-2);
@@ -559,12 +559,12 @@ namespace Syadeu.Presentation
                         if (other.InitializeOnCall) other.Terminate();
                         other.transform.position = INIT_POSITION;
 
-                        if (!m_TerminatedProxies.TryGetValue(prefab, out Queue<RecycleableMonobehaviour> pool))
+                        if (!m_TerminatedProxies.TryGetValue(prefab, out Stack<RecycleableMonobehaviour> pool))
                         {
-                            pool = new Queue<RecycleableMonobehaviour>();
+                            pool = new Stack<RecycleableMonobehaviour>();
                             m_TerminatedProxies.Add(prefab, pool);
                         }
-                        pool.Enqueue(other);
+                        pool.Push(other);
                         return;
                     }
 
@@ -581,7 +581,7 @@ namespace Syadeu.Presentation
             }
             else
             {
-                RecycleableMonobehaviour other = pool.Dequeue();
+                RecycleableMonobehaviour other = pool.Pop();
                 proxyTransform.SetProxy(new int2(prefab, other.m_Idx));
 
                 other.transform.position = proxyTransform.position;
@@ -613,12 +613,12 @@ namespace Syadeu.Presentation
 
             if (proxy.Activated) proxy.Terminate();
 
-            if (!m_TerminatedProxies.TryGetValue(prefab, out Queue<RecycleableMonobehaviour> pool))
+            if (!m_TerminatedProxies.TryGetValue(prefab, out Stack<RecycleableMonobehaviour> pool))
             {
-                pool = new Queue<RecycleableMonobehaviour>();
+                pool = new Stack<RecycleableMonobehaviour>();
                 m_TerminatedProxies.Add(prefab, pool);
             }
-            pool.Enqueue(proxy);
+            pool.Push(proxy);
             CoreSystem.Logger.Log(Channel.Proxy, true,
                     $"Prefab({prefab.GetObjectSetting().m_Name}) proxy removed.");
         }
@@ -787,7 +787,7 @@ namespace Syadeu.Presentation
         /// 생성된 프록시 오브젝트들입니다. key 값은 <see cref="PrefabList.m_ObjectSettings"/> 인덱스(<see cref="PrefabReference"/>)이며 value 배열은 상태 구분없이(사용중이던 아니던) 실제 생성된 모노 객체입니다.
         /// </summary>
         internal readonly Dictionary<PrefabReference, List<RecycleableMonobehaviour>> m_Instances = new Dictionary<PrefabReference, List<RecycleableMonobehaviour>>();
-        private readonly Dictionary<PrefabReference, Queue<RecycleableMonobehaviour>> m_TerminatedProxies = new Dictionary<PrefabReference, Queue<RecycleableMonobehaviour>>();
+        private readonly Dictionary<PrefabReference, Stack<RecycleableMonobehaviour>> m_TerminatedProxies = new Dictionary<PrefabReference, Stack<RecycleableMonobehaviour>>();
 
         private sealed class PrefabRequester
         {
@@ -804,13 +804,13 @@ namespace Syadeu.Presentation
                 var prefabInfo = prefabIdx.GetObjectSetting();
                 if (!proxySystem.m_TerminatedProxies.TryGetValue(prefabIdx, out var pool))
                 {
-                    pool = new Queue<RecycleableMonobehaviour>();
+                    pool = new Stack<RecycleableMonobehaviour>();
                     proxySystem.m_TerminatedProxies.Add(prefabIdx, pool);
                 }
 
                 if (pool.Count > 0)
                 {
-                    RecycleableMonobehaviour obj = pool.Dequeue();
+                    RecycleableMonobehaviour obj = pool.Pop();
                     obj.transform.position = pos;
                     obj.transform.rotation = rot;
 

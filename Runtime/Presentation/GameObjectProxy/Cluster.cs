@@ -21,8 +21,8 @@ namespace Syadeu.Presentation
     unsafe internal struct Cluster<T> : IDisposable
     {
         public const int c_ClusterRange = 25;
-        private static int s_BufferSize = UnsafeUtility.SizeOf<ClusterGroup<T>>();
-        private static int s_BufferAlign = UnsafeUtility.AlignOf<ClusterGroup<T>>();
+        private static readonly int s_BufferSize = UnsafeUtility.SizeOf<ClusterGroup<T>>();
+        private static readonly int s_BufferAlign = UnsafeUtility.AlignOf<ClusterGroup<T>>();
 
 #if UNITY_EDITOR
         public AtomicSafetyHandle m_Safety;
@@ -59,7 +59,7 @@ namespace Syadeu.Presentation
                 int count = 0;
                 for (int i = 0; i < m_Length; i++)
                 {
-                    if (m_Buffer[i].BeingUsed) count++;
+                    if (m_Buffer[i].IsCreated) count++;
                 }
                 return count;
             }
@@ -138,7 +138,7 @@ namespace Syadeu.Presentation
             }
             private ClusterID Add(in int gIdx, in float3 calculated, in int arrayIndex)
             {
-                if (!m_Buffer[gIdx].BeingUsed)
+                if (!m_Buffer[gIdx].IsCreated)
                 {
                     m_Buffer[gIdx] = new ClusterGroup<T>(gIdx, calculated, 128);
                 }
@@ -181,7 +181,7 @@ namespace Syadeu.Presentation
             {
                 for (int i = startFrom; i < m_Length; i++)
                 {
-                    if (!m_Buffer[i].BeingUsed || m_Buffer[i].Translation.Equals(calculated))
+                    if (!m_Buffer[i].IsCreated || m_Buffer[i].Translation.Equals(calculated))
                     {
                         founded = (int)i;
                         return true;
@@ -189,7 +189,7 @@ namespace Syadeu.Presentation
                 }
                 for (int i = 0; i < startFrom; i++)
                 {
-                    if (!m_Buffer[i].BeingUsed || m_Buffer[i].Translation.Equals(calculated))
+                    if (!m_Buffer[i].IsCreated || m_Buffer[i].Translation.Equals(calculated))
                     {
                         founded = i;
                         return true;
@@ -343,7 +343,7 @@ namespace Syadeu.Presentation
         }
         private ClusterID Add(in int gIdx, in float3 calculated, in int arrayIndex)
         {
-            if (!m_Buffer[gIdx].BeingUsed)
+            if (!m_Buffer[gIdx].IsCreated)
             {
                 m_Buffer[gIdx] = new ClusterGroup<T>(gIdx, calculated, 128);
             }
@@ -377,7 +377,7 @@ namespace Syadeu.Presentation
         {
             for (int i = startFrom; i < m_Length; i++)
             {
-                if (!m_Buffer[i].BeingUsed || m_Buffer[i].Translation.Equals(calculated))
+                if (!m_Buffer[i].IsCreated || m_Buffer[i].Translation.Equals(calculated))
                 {
                     founded = (int)i;
                     return true;
@@ -385,7 +385,7 @@ namespace Syadeu.Presentation
             }
             for (int i = 0; i < startFrom; i++)
             {
-                if (!m_Buffer[i].BeingUsed || m_Buffer[i].Translation.Equals(calculated))
+                if (!m_Buffer[i].IsCreated || m_Buffer[i].Translation.Equals(calculated))
                 {
                     founded = i;
                     return true;
@@ -419,8 +419,8 @@ namespace Syadeu.Presentation
         private static readonly int s_BufferAlign = UnsafeUtility.AlignOf<ClusterItem<T>>();
 
         private readonly int m_GroupIndex;
-        private float3 m_Translation;
-        private bool m_BeingUsed;
+        private readonly float3 m_Translation;
+        private readonly bool m_IsCreated;
         [NativeDisableUnsafePtrRestriction] private ClusterItem<T>* m_Buffer;
         private int m_Length;
 
@@ -444,7 +444,7 @@ namespace Syadeu.Presentation
         public int Length => m_Length;
 
         public float3 Translation => m_Translation;
-        public bool BeingUsed => m_BeingUsed;
+        public bool IsCreated => m_IsCreated;
 
         #endregion
 
@@ -497,7 +497,7 @@ namespace Syadeu.Presentation
         {
             m_GroupIndex = gIdx;
             m_Translation = translation;
-            m_BeingUsed = true;
+            m_IsCreated = true;
             m_Length = length;
 
             m_Buffer = (ClusterItem<T>*)UnsafeUtility.Malloc(
@@ -543,7 +543,7 @@ namespace Syadeu.Presentation
 
         public uint Add(in int arrayIndex)
         {
-            if (!m_BeingUsed) throw new NullReferenceException();
+            if (!m_IsCreated) throw new NullReferenceException();
 
             int idx = GetUnused();
             if (idx < 0)
