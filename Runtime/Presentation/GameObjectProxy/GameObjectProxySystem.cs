@@ -170,11 +170,11 @@ namespace Syadeu.Presentation
         {
             m_EventSystem = other;
 
-            m_EventSystem.AddEvent<OnTransformChanged>(OnTransformChanged);
+            m_EventSystem.AddEvent<OnTransformChangedEvent>(OnTransformChanged);
         }
         #endregion
 
-        unsafe private void OnTransformChanged(OnTransformChanged ev)
+        unsafe private void OnTransformChanged(OnTransformChangedEvent ev)
         {
             if (ev.transform.isDestroyed) return;
 

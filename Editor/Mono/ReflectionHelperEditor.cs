@@ -728,7 +728,7 @@ namespace SyadeuEditor
                     else if (item is HeaderAttribute header)
                     {
                         EditorUtils.Line();
-                        EditorUtils.StringRich(header.header, 13);
+                        EditorUtils.StringRich(header.header, 15);
                     }
                 }
 

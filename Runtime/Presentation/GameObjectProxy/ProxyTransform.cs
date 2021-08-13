@@ -176,7 +176,7 @@ namespace Syadeu.Presentation
                 if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
 
                 Ref.translation = value;
-                PresentationSystem<EventSystem>.System.PostEvent(OnTransformChanged.GetEvent(this));
+                PresentationSystem<EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
             }
         }
         public quaternion rotation
@@ -190,7 +190,7 @@ namespace Syadeu.Presentation
             {
                 if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
                 Ref.rotation = value;
-                PresentationSystem<EventSystem>.System.PostEvent(OnTransformChanged.GetEvent(this));
+                PresentationSystem<EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
             }
         }
         public float3 eulerAngles
@@ -220,7 +220,7 @@ namespace Syadeu.Presentation
             {
                 if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
                 Ref.scale = value;
-                PresentationSystem<EventSystem>.System.PostEvent(OnTransformChanged.GetEvent(this));
+                PresentationSystem<EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
             }
         }
 

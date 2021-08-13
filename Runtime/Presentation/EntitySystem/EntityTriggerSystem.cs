@@ -1,6 +1,7 @@
 ﻿using Syadeu.Database;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Event;
 using System;
 
 namespace Syadeu.Presentation
@@ -73,7 +74,7 @@ namespace Syadeu.Presentation
         {
             m_EventSystem = other;
 
-            m_EventSystem.AddEvent<OnTransformChanged>(OnTransformChangedEvent);
+            m_EventSystem.AddEvent<OnTransformChangedEvent>(OnTransformChangedEventHandler);
         }
 
         #endregion
@@ -82,7 +83,7 @@ namespace Syadeu.Presentation
 
         #region Events
 
-        private void OnTransformChangedEvent(OnTransformChanged ev)
+        private void OnTransformChangedEventHandler(OnTransformChangedEvent ev)
         {
             TriggerBoundAttribute[] atts = ev.entity.GetAttributes<TriggerBoundAttribute>();
             if (atts == null) return;
@@ -96,16 +97,7 @@ namespace Syadeu.Presentation
             {
                 att.m_ClusterID = m_TriggerBoundCluster.Update(att.m_ClusterID, ev.entity.transform.position);
                 ClusterGroup<TriggerBoundAttribute> group = m_TriggerBoundCluster.GetGroup(in att.m_ClusterID);
-                AABB fromAABB;
-                if (att.m_MatchWithAABB)
-                {
-                    fromAABB = ev.transform.aabb;
-                }
-                else
-                {
-                    fromAABB = new AABB(att.m_Center + ev.transform.position, att.m_Size);
-                }
-
+                
                 for (int i = 0; i < group.Length; i++)
                 {
                     if (i.Equals(att.m_ClusterID.ItemIndex) ||
@@ -114,9 +106,46 @@ namespace Syadeu.Presentation
                     int arrIdx = group[i];
                     Entity<IEntity> target = m_TriggerBoundArray[arrIdx];
 
-                    if (!target.transform.aabb.Intersect(fromAABB)) continue;
-                    m_EventSystem.PostEvent(EntityTriggerBoundEvent.GetEvent(ev.entity, target));
+                    TryTrigger(in m_EventSystem, ev.entity, in target);
                 }
+            }
+            static void TryTrigger(in EventSystem eventSystem, in Entity<IEntity> from, in Entity<IEntity> to)
+            {
+                var fromAtt = from.GetAttribute<TriggerBoundAttribute>();
+                var toAtt = to.GetAttribute<TriggerBoundAttribute>();
+
+                if (!CanTriggerable(in fromAtt, in to)) return;
+
+                AABB fromAABB = fromAtt.m_Inverse ? new AABB(fromAtt.m_Center + from.transform.position, fromAtt.m_Center) : from.transform.aabb;
+                AABB toAABB = toAtt.m_Inverse ? new AABB(toAtt.m_Center + to.transform.position, toAtt.m_Center) : to.transform.aabb;
+                
+                if (fromAABB.Intersect(toAABB))
+                {
+                    if (!fromAtt.m_Triggered.Contains(to))
+                    {
+                        fromAtt.m_Triggered.Add(to);
+                        eventSystem.PostEvent(EntityTriggerBoundEvent.GetEvent(from, to, true));
+                    }
+                }
+                else
+                {
+                    if (fromAtt.m_Triggered.Contains(to))
+                    {
+                        fromAtt.m_Triggered.Remove(to);
+                        eventSystem.PostEvent(EntityTriggerBoundEvent.GetEvent(from, to, false));
+                    }
+                }
+            }
+            static bool CanTriggerable(in TriggerBoundAttribute att, in Entity<IEntity> target)
+            {
+                for (int i = 0; i < att.m_TriggerOnly.Length; i++)
+                {
+                    if (att.m_TriggerOnly[i].Equals(target.Hash))
+                    {
+                        return !att.m_Inverse;
+                    }
+                }
+                return att.m_Inverse;
             }
         }
 
@@ -134,27 +163,6 @@ namespace Syadeu.Presentation
             m_TriggerBoundArray = newArr;
 
             return FindOrIncrementTriggerBoundArrayIndex();
-        }
-    }
-
-    public sealed class EntityTriggerBoundEvent : SynchronizedEvent<EntityTriggerBoundEvent>
-    {
-        public Entity<IEntity> Source { get; private set; }
-        public Entity<IEntity> Target { get; private set; }
-
-        public static EntityTriggerBoundEvent GetEvent(Entity<IEntity> source, Entity<IEntity> target)
-        {
-            var temp = Dequeue();
-
-            temp.Source = source;
-            temp.Target = target;
-
-            return temp;
-        }
-        protected override void OnTerminate()
-        {
-            Source = Entity<IEntity>.Empty;
-            Target = Entity<IEntity>.Empty;
         }
     }
 }
