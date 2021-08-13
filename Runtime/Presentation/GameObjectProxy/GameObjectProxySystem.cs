@@ -255,7 +255,6 @@ namespace Syadeu.Presentation
                     continue;
                 }
 
-                "proxy create".ToLog();
                 AddProxy(tr);
             }
             int removeProxyCount = m_RemoveProxyList.Count;
