@@ -37,7 +37,7 @@ namespace Syadeu.Presentation.Entities
                 $"Cannot convert an empty hash to Entity. This is an invalid operation and not allowed.");
                 return Empty;
             }
-            if (!PresentationSystem<EntitySystem>.System.m_ObjectHashSet.Contains(idx))
+            if (!PresentationSystem<EntitySystem>.System.m_ObjectEntities.ContainsKey(idx))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"Cannot found entity({idx})");
@@ -87,7 +87,7 @@ namespace Syadeu.Presentation.Entities
 
         public bool IsValid() => !m_Idx.Equals(Hash.Empty) &&
             PresentationSystem<EntitySystem>.IsValid() &&
-            PresentationSystem<EntitySystem>.System.m_ObjectHashSet.Contains(m_Idx);
+            PresentationSystem<EntitySystem>.System.m_ObjectEntities.ContainsKey(m_Idx);
 
         public bool Equals(Entity<T> other) => m_Idx.Equals(other.m_Idx);
         public bool Equals(Hash other) => m_Idx.Equals(other);
@@ -97,15 +97,31 @@ namespace Syadeu.Presentation.Entities
         #endregion
 
         /// <inheritdoc cref="IEntityData.GetAttribute(Type)"/>
-        public AttributeBase GetAttribute(Type t) => Target.GetAttribute(t);
+        public AttributeBase GetAttribute(Type t)
+        {
+            if (!IsValid()) throw new Exception("not valid");
+            return Target.GetAttribute(t);
+        }
         /// <inheritdoc cref="IEntityData.GetAttributes(Type)"/>
-        public AttributeBase[] GetAttributes(Type t) => Target.GetAttributes(t);
+        public AttributeBase[] GetAttributes(Type t)
+        {
+            if (!IsValid()) throw new Exception("not valid");
+            return Target.GetAttributes(t);
+        }
         /// <inheritdoc cref="IEntityData.GetAttribute(Type)"/>
-        public TA GetAttribute<TA>() where TA : AttributeBase => Target.GetAttribute<TA>();
+        public TA GetAttribute<TA>() where TA : AttributeBase
+        {
+            if (!IsValid()) throw new Exception("not valid");
+            return Target.GetAttribute<TA>();
+        }
         /// <inheritdoc cref="IEntityData.GetAttributes(Type)"/>
-        public TA[] GetAttributes<TA>() where TA : AttributeBase => Target.GetAttributes<TA>();
+        public TA[] GetAttributes<TA>() where TA : AttributeBase
+        {
+            if (!IsValid()) throw new Exception("not valid");
+            return Target.GetAttributes<TA>();
+        }
 
-        public void Destroy() => PresentationSystem<EntitySystem>.System.DestroyObject(m_Idx);
+        public void Destroy() => PresentationSystem<EntitySystem>.System.InternalDestroyEntity(m_Idx);
 
         public static implicit operator T(Entity<T> a) => a.Target;
         public static implicit operator Entity<IEntity>(Entity<T> a) => GetEntity(a.m_Idx);

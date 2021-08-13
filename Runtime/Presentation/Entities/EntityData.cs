@@ -32,7 +32,7 @@ namespace Syadeu.Presentation.Entities
                 $"Cannot convert an empty hash to Entity. This is an invalid operation and not allowed.");
                 return Empty;
             }
-            if (!PresentationSystem<EntitySystem>.System.m_ObjectHashSet.Contains(idx))
+            if (!PresentationSystem<EntitySystem>.System.m_ObjectEntities.ContainsKey(idx))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"Cannot found entity({idx})");
@@ -62,7 +62,11 @@ namespace Syadeu.Presentation.Entities
 
         public T Target => m_Idx.Equals(Hash.Empty) ? null : (T)PresentationSystem<EntitySystem>.System.m_ObjectEntities[m_Idx];
 
+        /// <inheritdoc cref="IEntityData.Name"/>
         public string Name => m_Idx.Equals(Hash.Empty) ? c_Invalid : Target.Name;
+        /// <inheritdoc cref="IEntityData.Hash"/>
+        public Hash Hash => Target.Hash;
+        /// <inheritdoc cref="IEntityData.Idx"/>
         public Hash Idx => m_Idx;
         public Type Type => m_Idx.Equals(Hash.Empty) ? null : Target?.GetType();
 
@@ -73,7 +77,7 @@ namespace Syadeu.Presentation.Entities
 
         public bool IsValid() => !m_Idx.Equals(Hash.Empty) && 
             PresentationSystem<EntitySystem>.IsValid() &&
-            PresentationSystem<EntitySystem>.System.m_ObjectHashSet.Contains(m_Idx);
+            PresentationSystem<EntitySystem>.System.m_ObjectEntities.ContainsKey(m_Idx);
 
         public bool Equals(EntityData<T> other) => m_Idx.Equals(other.m_Idx);
         public bool Equals(Hash other) => m_Idx.Equals(other);
@@ -87,7 +91,7 @@ namespace Syadeu.Presentation.Entities
         /// <inheritdoc cref="IEntityData.GetAttributes(Type)"/>
         public TA[] GetAttributes<TA>() where TA : AttributeBase => Target.GetAttributes<TA>();
 
-        public void Destroy() => PresentationSystem<EntitySystem>.System.DestroyObject(m_Idx);
+        public void Destroy() => PresentationSystem<EntitySystem>.System.InternalDestroyEntity(m_Idx);
 
         public static implicit operator T(EntityData<T> a) => a.Target;
         public static implicit operator EntityData<IEntityData>(EntityData<T> a) => GetEntityData(a.m_Idx);

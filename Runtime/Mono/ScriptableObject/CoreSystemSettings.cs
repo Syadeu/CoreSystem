@@ -31,10 +31,6 @@ namespace Syadeu.Mono
         [Header("FMOD Manager")]
         public int m_FMODMemoryBlock = 512;
 
-        // RenderManager
-        [Header("Render Manager")]
-        public Vector3 m_ScreenOffset = new Vector3(.4f, .5f, 1);
-
         // SQLiteDatabase
         [Header("SQLite Database")]
         public bool m_EnableQueryLog = false;

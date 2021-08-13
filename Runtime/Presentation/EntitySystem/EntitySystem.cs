@@ -44,9 +44,8 @@ namespace Syadeu.Presentation
         /// </remarks>
         public event Action<EntityData<IEntityData>> OnEntityDestroy;
 
-        internal readonly HashSet<Hash> m_ObjectHashSet = new HashSet<Hash>();
         internal readonly Dictionary<Hash, IEntityData> m_ObjectEntities = new Dictionary<Hash, IEntityData>();
-        internal readonly Dictionary<int, Hash> m_EntityGameObjects = new Dictionary<int, Hash>();
+        internal readonly Dictionary<Hash, Hash> m_EntityGameObjects = new Dictionary<Hash, Hash>();
 
         private readonly Dictionary<Type, List<IAttributeProcessor>> m_AttributeProcessors = new Dictionary<Type, List<IAttributeProcessor>>();
         private readonly Dictionary<Type, List<IEntityDataProcessor>> m_EntityProcessors = new Dictionary<Type, List<IEntityDataProcessor>>();
@@ -156,7 +155,7 @@ namespace Syadeu.Presentation
 
         private void M_ProxySystem_OnDataObjectProxyCreated(ProxyTransform obj, RecycleableMonobehaviour monoObj)
         {
-            if (!m_EntityGameObjects.TryGetValue(obj.index, out Hash entityHash) ||
+            if (!m_EntityGameObjects.TryGetValue(obj.m_Hash, out Hash entityHash) ||
                 !(m_ObjectEntities[entityHash] is IEntity entity)) return;
 
             monoObj.m_Entity = Entity<IEntity>.GetEntity(entity.Idx);
@@ -164,7 +163,7 @@ namespace Syadeu.Presentation
         }
         private void M_ProxySystem_OnDataObjectProxyRemoved(ProxyTransform obj, RecycleableMonobehaviour monoObj)
         {
-            if (!m_EntityGameObjects.TryGetValue(obj.index, out Hash entityHash) ||
+            if (!m_EntityGameObjects.TryGetValue(obj.m_Hash, out Hash entityHash) ||
                 !(m_ObjectEntities[entityHash] is IEntity entity)) return;
 
             ProcessEntityOnProxyRemoved(this, entity, monoObj);
@@ -173,12 +172,11 @@ namespace Syadeu.Presentation
 
         private void M_ProxySystem_OnDataObjectDestroyAsync(ProxyTransform obj)
         {
-            if (!m_EntityGameObjects.TryGetValue(obj.index, out Hash entityHash)) return;
+            if (!m_EntityGameObjects.TryGetValue(obj.m_Hash, out Hash entityHash)) return;
 
             ProcessEntityOnDestroy(this, m_ObjectEntities[entityHash]);
 
-            m_EntityGameObjects.Remove(obj.index);
-            m_ObjectHashSet.Remove(entityHash);
+            m_EntityGameObjects.Remove(obj.m_Hash);
             m_ObjectEntities.Remove(entityHash);
         }
 
@@ -289,7 +287,6 @@ namespace Syadeu.Presentation
             OnEntityCreated = null;
             OnEntityDestroy = null;
 
-            m_ObjectHashSet.Clear();
             m_ObjectEntities.Clear();
             m_AttributeProcessors.Clear();
             m_EntityProcessors.Clear();
@@ -396,10 +393,9 @@ namespace Syadeu.Presentation
             entity.transform = obj;
             entity.m_IsCreated = true;
 
-            m_ObjectHashSet.Add(entity.Idx);
             m_ObjectEntities.Add(entity.Idx, entity);
 
-            m_EntityGameObjects.Add(obj.index, entity.Idx);
+            m_EntityGameObjects.Add(obj.m_Hash, entity.Idx);
 
             ProcessEntityOnCreated(this, entity);
             return Entity<IEntity>.GetEntity(entity.Idx);
@@ -467,7 +463,6 @@ namespace Syadeu.Presentation
 
             IEntityData clone = (IEntityData)objClone;
 
-            m_ObjectHashSet.Add(clone.Idx);
             m_ObjectEntities.Add(clone.Idx, clone);
 
             ProcessEntityOnCreated(this, clone);
@@ -483,22 +478,24 @@ namespace Syadeu.Presentation
         /// 씬이 전환되는 경우, 해당 씬에서 생성된 <see cref="EntityBase"/>는 자동으로 파괴되므로 호출하지 마세요. 단, <see cref="EntityDataBase"/>(<seealso cref="DataGameObject"/>가 없는 엔티티)는 씬이 전환되어도 자동으로 파괴되지 않습니다.
         /// </remarks>
         /// <param name="hash"><seealso cref="IEntityData.Idx"/> 값</param>
-        public void DestroyObject(Hash hash)
+        public void DestroyEntity(Entity<IEntity> entity) => InternalDestroyEntity(entity.Idx);
+        /// <inheritdoc cref="DestroyEntity(Entity{IEntity})"/>
+        public void DestroyEntity(EntityData<IEntityData> entity) => InternalDestroyEntity(entity.Idx);
+        internal void InternalDestroyEntity(Hash hash)
         {
-            if (!m_ObjectHashSet.Contains(hash)) throw new Exception();
+            if (!m_ObjectEntities.ContainsKey(hash)) throw new Exception();
 
             ProcessEntityOnDestroy(this, m_ObjectEntities[hash]);
 
             if (!CoreSystem.s_BlockCreateInstance && m_ObjectEntities[hash] is IEntity entity)
             {
                 ProxyTransform obj = entity.transform;
-                int index = obj.index;
+                Hash index = obj.m_Hash;
                 obj.Destroy();
                 m_EntityGameObjects.Remove(index);
             }
 
             ((IDisposable)m_ObjectEntities[hash]).Dispose();
-            m_ObjectHashSet.Remove(hash);
             m_ObjectEntities.Remove(hash);
         }
 

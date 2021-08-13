@@ -16,8 +16,6 @@ namespace Syadeu.Presentation.Render
 		public const int PlaneCount = 6;
 		public const int CornerCount = 8;
 
-		//private JobHandle m_UpdateJob;
-
 		private float3 m_Position;
 		private NativeArray<Plane> m_Planes;
 		private NativeArray<float3>
@@ -26,7 +24,6 @@ namespace Syadeu.Presentation.Render
 			m_PlaneNormals;
 		private NativeArray<float> m_PlaneDistances;
 
-		//public JobHandle JobHandle => m_UpdateJob;
 		public float3 Position => m_Position;
 
 		[BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
@@ -62,8 +59,14 @@ namespace Syadeu.Presentation.Render
 			public bool Contains(in float3 point) 
 				=> CameraFrustum.Contains(in planeNormals, in planeDistances, in point);
 			public bool IntersectsBox(in AABB box, float frustumPadding = 0)
-				=> CameraFrustum.IntersectsBox(in corners, in absNormals, in planeNormals, in planeDistances,
+            {
+                IntersectionType type = CameraFrustum.IntersectsBox(in corners, in absNormals, in planeNormals, in planeDistances,
 					in box, frustumPadding);
+
+				if ((type & IntersectionType.Intersects) == IntersectionType.Intersects ||
+				(type & IntersectionType.Contains) == IntersectionType.Contains) return true;
+				return false;
+			}
 			public IntersectionType IntersectsSphere(ref float3 center, float radius, float frustumPadding = 0)
 				=> CameraFrustum.IntersectsSphere(in planeNormals, in planeDistances, ref center, radius, frustumPadding);
 		}
@@ -117,48 +120,38 @@ namespace Syadeu.Presentation.Render
 		}
 		public ReadOnly JobReadOnly() => new ReadOnly(ref this, Allocator.Temp);
 
+		public void Copy(in CameraFrustum from)
+        {
+			m_Position = from.m_Position;
+            for (int i = 0; i < CornerCount; i++)
+            {
+				m_Corners[i] = from.m_Corners[i];
+            }
+            for (int i = 0; i < PlaneCount; i++)
+            {
+				m_Planes[i] = from.m_Planes[i];
+				m_AbsNormals[i] = from.m_AbsNormals[i];
+				m_PlaneNormals[i] = from.m_PlaneNormals[i];
+				m_PlaneDistances[i] = from.m_PlaneDistances[i];
+			}
+		}
+
 		#endregion
 
 		public void Update(Camera cam) => Update(ref this, cam);
-		//public void ScheduleUpdate(CameraData data)
-  //      {
-		//	CoreSystem.Logger.ThreadBlock(nameof(ScheduleUpdate), ThreadInfo.Unity);
-		//	//m_UpdateJob.Complete();
-
-		//	UpdateJob update = new UpdateJob
-		//	{
-		//		frustum = this,
-		//		data = data
-		//	};
-		//	JobHandle jobHandle = update.Schedule();
-		//	//m_UpdateJob = JobHandle.CombineDependencies(m_UpdateJob, jobHandle);
-		//}
-		public UpdateJob GetUpdateJob(CameraData data)
-        {
-			return new UpdateJob
-			{
-				frustum = this,
-				data = data
-			};
-		}
 
 		public bool Contains(in float3 point) => Contains(in m_PlaneNormals, in m_PlaneDistances, in point);
 		public bool IntersectsBox(in AABB box, float frustumPadding = 0)
-			=> IntersectsBox(in m_Corners, in m_AbsNormals, in m_PlaneNormals, in m_PlaneDistances,
+        {
+            IntersectionType type = IntersectsBox(in m_Corners, in m_AbsNormals, in m_PlaneNormals, in m_PlaneDistances,
 				in box, frustumPadding);
+
+			if ((type & IntersectionType.Intersects) == IntersectionType.Intersects ||
+				(type & IntersectionType.Contains) == IntersectionType.Contains) return true;
+			return false;
+		}
 		public IntersectionType IntersectsSphere(ref float3 center, float radius, float frustumPadding = 0)
 			=> IntersectsSphere(in m_PlaneNormals, in m_PlaneDistances, ref center, radius, frustumPadding);
-
-		public struct UpdateJob : IJob
-        {
-			public CameraFrustum frustum;
-			public CameraData data;
-
-            public void Execute()
-            {
-				Update(ref frustum, data.position, data.orientation, data.fov, data.nearClipPlane, data.farClipPlane, data.aspect);
-			}
-        }
 
         #region Statics
 
@@ -211,7 +204,7 @@ namespace Syadeu.Presentation.Render
 			}
 		}
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static void Update(ref CameraFrustum other, float3 position, quaternion orientation, float fov, float nearClipPlane, float farClipPlane, float aspect)
+		internal static void Update(ref CameraFrustum other, float3 position, quaternion orientation, float fov, float nearClipPlane, float farClipPlane, float aspect)
 		{
 			other.m_Position = position;
 
@@ -270,7 +263,7 @@ namespace Syadeu.Presentation.Render
 			return true;
 		}
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static bool IntersectsBox(
+		private static IntersectionType IntersectsBox(
 			in NativeArray<float3> corners,
 			in NativeArray<float3> absNormals,
 			in NativeArray<float3> planeNormals,
@@ -280,11 +273,12 @@ namespace Syadeu.Presentation.Render
 		{
 			if (box.Contains(corners[CornerCount - 1]))
 			{
-				return true;
+				return IntersectionType.True;
 			}
 			float3 center = box.center;
 			float3 extents = box.extents;
 
+			bool intersecting = false;
 			for (int i = 0; i < PlaneCount; i++)
 			{
 				float3 abs = absNormals[i];
@@ -297,11 +291,12 @@ namespace Syadeu.Presentation.Render
 
 				if (s + r < -planeDistance - frustumPadding)
 				{
-					return false;
+					return IntersectionType.False;
 				}
+				intersecting |= (s - r <= -planeDistance);
 			}
 
-			return true;
+			return intersecting ? IntersectionType.Intersects : IntersectionType.Contains;
 		}
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static IntersectionType IntersectsSphere(

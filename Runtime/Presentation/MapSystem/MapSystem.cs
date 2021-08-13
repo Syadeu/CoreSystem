@@ -40,57 +40,70 @@ namespace Syadeu.Presentation.Map
         }
         protected override PresentationResult OnInitializeAsync()
         {
-            RequestSystem<SceneSystem>((other) =>
-            {
-                SceneDataEntity[] sceneData = EntityDataList.Instance.m_Objects.Values
+            RequestSystem<SceneSystem>(Bind);
+            RequestSystem<EntitySystem>(Bind);
+            RequestSystem<Render.RenderSystem>(Bind);
+
+            return base.OnInitializeAsync();
+        }
+
+        #region Bind
+        private void Bind(SceneSystem other)
+        {
+            m_SceneSystem = other;
+
+            SceneDataEntity[] sceneData = EntityDataList.Instance.m_Objects.Values
                     .Where((other) => (other is SceneDataEntity sceneData) && sceneData.m_BindScene && sceneData.IsValid())
                     .Select((other) => (SceneDataEntity)other)
                     .ToArray();
 
-                for (int i = 0; i < sceneData.Length; i++)
+            for (int i = 0; i < sceneData.Length; i++)
+            {
+                SceneDataEntity data = sceneData[i];
+                SceneReference targetScene = data.GetTargetScene();
+
+                other.RegisterSceneLoadDependence(targetScene, () =>
                 {
-                    SceneDataEntity data = sceneData[i];
-                    SceneReference targetScene = data.GetTargetScene();
-
-                    other.RegisterSceneLoadDependence(targetScene, () =>
+                    if (!m_SceneDataObjects.TryGetValue(targetScene, out var list))
                     {
-                        if (!m_SceneDataObjects.TryGetValue(targetScene, out var list))
-                        {
-                            list = new List<SceneDataEntity>();
-                            m_SceneDataObjects.Add(targetScene, list);
-                        }
+                        list = new List<SceneDataEntity>();
+                        m_SceneDataObjects.Add(targetScene, list);
+                    }
 
-                        SceneDataEntity ins = (SceneDataEntity)m_EntitySystem.CreateObject(data.Hash);
-                        list.Add(ins);
-                    });
+                    SceneDataEntity ins = (SceneDataEntity)m_EntitySystem.CreateObject(data.Hash);
+                    list.Add(ins);
+                });
 
-                    other.RegisterSceneUnloadDependence(targetScene, () =>
+                other.RegisterSceneUnloadDependence(targetScene, () =>
+                {
+                    if (m_SceneDataObjects.TryGetValue(targetScene, out var list))
                     {
-                        if (m_SceneDataObjects.TryGetValue(targetScene, out var list))
+                        for (int i = 0; i < list.Count; i++)
                         {
-                            for (int i = 0; i < list.Count; i++)
-                            {
-                                SceneDataEntity data = list[i];
-                                data.DestroyChildOnDestroy = false;
-                                m_EntitySystem.DestroyObject(list[i].Idx);
-                            }
-                            list.Clear();
-
-                            m_SceneDataObjects.Remove(targetScene);
+                            SceneDataEntity data = list[i];
+                            data.DestroyChildOnDestroy = false;
+                            m_EntitySystem.InternalDestroyEntity(list[i].Idx);
                         }
-                    });
+                        list.Clear();
 
-                    CoreSystem.Logger.Log(Channel.Presentation,
-                        $"Scene Data({data.Name}) is registered.");
-                }
+                        m_SceneDataObjects.Remove(targetScene);
+                    }
+                });
 
-                m_SceneSystem = other;
-            });
-            RequestSystem<EntitySystem>((other) => m_EntitySystem = other);
-            RequestSystem<Render.RenderSystem>((other) => m_RenderSystem = other);
-
-            return base.OnInitializeAsync();
+                CoreSystem.Logger.Log(Channel.Presentation,
+                    $"Scene Data({data.Name}) is registered.");
+            }
         }
+        private void Bind(EntitySystem other)
+        {
+            m_EntitySystem = other;
+        }
+        private void Bind(Render.RenderSystem other)
+        {
+            m_RenderSystem = other;
+        }
+
+        #endregion
 
         private void CreateConsoleCommands()
         {

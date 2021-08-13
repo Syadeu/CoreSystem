@@ -32,21 +32,24 @@ namespace Syadeu.Presentation
         [NativeDisableUnsafePtrRestriction] unsafe internal readonly NativeProxyData.UnsafeList* m_Pointer;
         internal readonly int m_Index;
         internal readonly int m_Generation;
-        unsafe internal ProxyTransform(NativeProxyData.UnsafeList* p, int index, int generation)
+        internal readonly Hash m_Hash;
+        unsafe internal ProxyTransform(NativeProxyData.UnsafeList* p, int index, int generation, Hash hash)
         {
             m_Pointer = p;
             m_Index = index;
             m_Generation = generation;
+            m_Hash = hash;
         }
         unsafe private ProxyTransform(int unused)
         {
             m_Pointer = null;
             m_Index = -1;
             m_Generation = unused;
+            m_Hash = Hash.Empty;
         }
 
         unsafe internal ProxyTransformData* Pointer => (*m_Pointer)[m_Index];
-        unsafe private ref ProxyTransformData Ref => ref *(*m_Pointer)[m_Index];
+        unsafe internal ref ProxyTransformData Ref => ref *(*m_Pointer)[m_Index];
 
         internal void SetProxy(int2 proxyIndex)
         {
@@ -141,10 +144,16 @@ namespace Syadeu.Presentation
                 unsafe
                 {
                     if (m_Generation.Equals(-1) || m_Pointer == null) return true;
-                    if (!(*m_Pointer)[m_Index]->m_Generation.Equals(m_Generation)) return true;
+                    if (!Ref.m_IsOccupied || 
+                        !m_Hash.Equals(Ref.m_Hash)) return true;
+                    if (!Ref.m_Generation.Equals(m_Generation)) return true;
                 }
                 return false;
             }
+        }
+        public bool isDestroyQueued
+        {
+            get => Ref.m_DestroyQueued;
         }
         public PrefabReference prefab
         {
@@ -167,7 +176,7 @@ namespace Syadeu.Presentation
                 if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
 
                 Ref.translation = value;
-                PresentationSystem<EventSystem>.System.PostEvent(OnTransformChanged.GetEvent(this));
+                PresentationSystem<EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
             }
         }
         public quaternion rotation
@@ -181,7 +190,7 @@ namespace Syadeu.Presentation
             {
                 if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
                 Ref.rotation = value;
-                PresentationSystem<EventSystem>.System.PostEvent(OnTransformChanged.GetEvent(this));
+                PresentationSystem<EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
             }
         }
         public float3 eulerAngles
@@ -211,7 +220,7 @@ namespace Syadeu.Presentation
             {
                 if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
                 Ref.scale = value;
-                PresentationSystem<EventSystem>.System.PostEvent(OnTransformChanged.GetEvent(this));
+                PresentationSystem<EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
             }
         }
 

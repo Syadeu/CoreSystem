@@ -18,7 +18,6 @@ namespace Syadeu.Presentation.Actor
         public override bool EnableAfterPresentation => false;
 
         private NativeHashMap<Hash, Entity<ActorEntity>> m_PlayerHashMap;
-        //private readonly Dictionary<ActorType, List<Entity<ActorEntity>>> m_Actors = new Dictionary<ActorType, List<Entity<ActorEntity>>>();
 
         private EntitySystem m_EntitySystem;
         private EventSystem m_EventSystem;
@@ -74,7 +73,7 @@ namespace Syadeu.Presentation.Actor
 
         private void OnActorMoveStateChanged(OnMoveStateChangedEvent ev)
         {
-            $"{ev.Entity.Name}: {ev.State}".ToLog();
+            //$"{ev.Entity.Name}: {ev.State}".ToLog();
         }
 
         public override void OnDispose()
@@ -94,4 +93,12 @@ namespace Syadeu.Presentation.Actor
 
         #endregion
     }
+
+    //public sealed class AIActorTargetSystem : PresentationSystemEntity<AIActorTargetSystem>
+    //{
+    //    public override bool EnableBeforePresentation => false;
+    //    public override bool EnableOnPresentation => false;
+    //    public override bool EnableAfterPresentation => false;
+
+    //}
 }

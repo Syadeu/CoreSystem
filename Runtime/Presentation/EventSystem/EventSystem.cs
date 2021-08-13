@@ -9,8 +9,8 @@ namespace Syadeu.Presentation.Event
     /// </summary>
     public sealed class EventSystem : PresentationSystemEntity<EventSystem>
     {
-        public override bool EnableBeforePresentation => true;
-        public override bool EnableOnPresentation => false;
+        public override bool EnableBeforePresentation => false;
+        public override bool EnableOnPresentation => true;
         public override bool EnableAfterPresentation => false;
 
         private readonly Queue<SynchronizedEventBase> m_PostedEvents = new Queue<SynchronizedEventBase>();
@@ -18,6 +18,8 @@ namespace Syadeu.Presentation.Event
         private SceneSystem m_SceneSystem;
 
         private bool m_LoadingLock = false;
+
+        #region Presentation Methods
 
         protected override PresentationResult OnInitialize()
         {
@@ -43,9 +45,14 @@ namespace Syadeu.Presentation.Event
         }
         #endregion
 
-        protected override PresentationResult BeforePresentation()
+        public override void OnDispose()
         {
-            if (m_LoadingLock) return base.BeforePresentation();
+            m_PostedEvents.Clear();
+        }
+
+        protected override PresentationResult OnPresentation()
+        {
+            if (m_LoadingLock) return base.OnPresentation();
 
             int eventCount = m_PostedEvents.Count;
             for (int i = 0; i < eventCount; i++)
@@ -63,13 +70,10 @@ namespace Syadeu.Presentation.Event
                     UnityEngine.Debug.LogException(ex);
                 }
             }
+            return base.OnPresentation();
+        }
 
-            return base.BeforePresentation();
-        }
-        public override void OnDispose()
-        {
-            m_PostedEvents.Clear();
-        }
+        #endregion
 
         public void AddEvent<TEvent>(Action<TEvent> ev) where TEvent : SynchronizedEvent<TEvent>, new()
         {
