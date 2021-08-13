@@ -105,7 +105,7 @@ namespace Syadeu.Presentation.Entities
         /// <inheritdoc cref="IEntityData.GetAttributes(Type)"/>
         public TA[] GetAttributes<TA>() where TA : AttributeBase => Target.GetAttributes<TA>();
 
-        public void Destroy() => PresentationSystem<EntitySystem>.System.DestroyObject(m_Idx);
+        public void Destroy() => PresentationSystem<EntitySystem>.System.InternalDestroyEntity(m_Idx);
 
         public static implicit operator T(Entity<T> a) => a.Target;
         public static implicit operator Entity<IEntity>(Entity<T> a) => GetEntity(a.m_Idx);

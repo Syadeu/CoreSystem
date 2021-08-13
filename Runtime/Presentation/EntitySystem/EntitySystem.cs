@@ -483,7 +483,9 @@ namespace Syadeu.Presentation
         /// 씬이 전환되는 경우, 해당 씬에서 생성된 <see cref="EntityBase"/>는 자동으로 파괴되므로 호출하지 마세요. 단, <see cref="EntityDataBase"/>(<seealso cref="DataGameObject"/>가 없는 엔티티)는 씬이 전환되어도 자동으로 파괴되지 않습니다.
         /// </remarks>
         /// <param name="hash"><seealso cref="IEntityData.Idx"/> 값</param>
-        public void DestroyObject(Hash hash)
+        public void DestroyEntity(Entity<IEntity> entity) => InternalDestroyEntity(entity.Idx);
+        public void DestroyEntity(EntityData<IEntityData> entity) => InternalDestroyEntity(entity.Idx);
+        internal void InternalDestroyEntity(Hash hash)
         {
             if (!m_ObjectHashSet.Contains(hash)) throw new Exception();
 
