@@ -239,6 +239,12 @@ namespace Syadeu.Presentation
         {
             UnsafeUtility.MemClear(m_UnsafeList->m_TransformBuffer, m_UnsafeList->m_Length * s_TransformSize);
         }
+
+        public ProxyTransformData ElementAt(int i)
+        {
+            return *List[i];
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public NativeArray<ProxyTransformData> GetActiveData(Allocator allocator)
         {
