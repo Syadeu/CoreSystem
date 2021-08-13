@@ -84,31 +84,39 @@ namespace Syadeu.Presentation
 
         private void OnTransformChangedEvent(OnTransformChanged ev)
         {
-            var att = ev.entity.GetAttribute<TriggerBoundAttribute>();
-            if (att == null) return;
+            TriggerBoundAttribute[] atts = ev.entity.GetAttributes<TriggerBoundAttribute>();
+            if (atts == null) return;
 
-            att.m_ClusterID = m_TriggerBoundCluster.Update(att.m_ClusterID, ev.entity.transform.position);
-            ClusterGroup<TriggerBoundAttribute> group = m_TriggerBoundCluster.GetGroup(in att.m_ClusterID);
-            AABB fromAABB;
-            if (att.m_MatchWithAABB)
+            for (int i = 0; i < atts.Length; i++)
             {
-                fromAABB = ev.transform.aabb;
-            }
-            else
-            {
-                fromAABB = new AABB(att.m_Center + ev.transform.position, att.m_Size);
+                FindAndPostEvent(atts[i]);
             }
 
-            for (int i = 0; i < group.Length; i++)
+            void FindAndPostEvent(TriggerBoundAttribute att)
             {
-                if (i.Equals(att.m_ClusterID.ItemIndex) ||
-                    !group.HasElementAt(i)) continue;
+                att.m_ClusterID = m_TriggerBoundCluster.Update(att.m_ClusterID, ev.entity.transform.position);
+                ClusterGroup<TriggerBoundAttribute> group = m_TriggerBoundCluster.GetGroup(in att.m_ClusterID);
+                AABB fromAABB;
+                if (att.m_MatchWithAABB)
+                {
+                    fromAABB = ev.transform.aabb;
+                }
+                else
+                {
+                    fromAABB = new AABB(att.m_Center + ev.transform.position, att.m_Size);
+                }
 
-                int arrIdx = group[i];
-                Entity<IEntity> target = m_TriggerBoundArray[arrIdx];
+                for (int i = 0; i < group.Length; i++)
+                {
+                    if (i.Equals(att.m_ClusterID.ItemIndex) ||
+                        !group.HasElementAt(i)) continue;
 
-                if (!target.transform.aabb.Intersect(fromAABB)) continue;
-                m_EventSystem.PostEvent(EntityTriggerBoundEvent.GetEvent(ev.entity, target));
+                    int arrIdx = group[i];
+                    Entity<IEntity> target = m_TriggerBoundArray[arrIdx];
+
+                    if (!target.transform.aabb.Intersect(fromAABB)) continue;
+                    m_EventSystem.PostEvent(EntityTriggerBoundEvent.GetEvent(ev.entity, target));
+                }
             }
         }
 

@@ -708,31 +708,33 @@ namespace SyadeuEditor
 
                 name = ReflectionHelper.SerializeMemberInfoName(members[i]);
 
-                #region Helpbox
+                #region Member Attributes
 
-                TooltipAttribute tooltip = members[i].GetCustomAttribute<TooltipAttribute>();
-                if (tooltip != null)
+                var attributes = members[i].GetCustomAttributes();
+                foreach (var item in attributes)
                 {
-                    EditorGUILayout.HelpBox(tooltip.tooltip, MessageType.Info);
-                }
-                ReflectionDescriptionAttribute description = members[i].GetCustomAttribute<ReflectionDescriptionAttribute>();
-                if (description != null)
-                {
-                    EditorGUILayout.HelpBox(description.m_Description, MessageType.Info);
+                    if (item is SpaceAttribute)
+                    {
+                        EditorGUILayout.Space();
+                    }
+                    else if (item is TooltipAttribute tooltip)
+                    {
+                        EditorGUILayout.HelpBox(tooltip.tooltip, MessageType.Info);
+                    }
+                    else if (item is ReflectionDescriptionAttribute description)
+                    {
+                        EditorGUILayout.HelpBox(description.m_Description, MessageType.Info);
+                    }
+                    else if (item is HeaderAttribute header)
+                    {
+                        EditorUtils.Line();
+                        EditorUtils.StringRich(header.header, 13);
+                    }
                 }
 
                 #endregion
 
-                var spaces = members[i].GetCustomAttributes<SpaceAttribute>();
-                foreach (var item in spaces)
-                {
-                    EditorGUILayout.Space();
-                }
-
                 EditorGUI.BeginDisabledGroup(members[i].GetCustomAttribute<ReflectionSealedViewAttribute>() != null);
-
-                var header = members[i].GetCustomAttribute<HeaderAttribute>();
-                if (header != null) EditorUtils.StringRich(header.header, 13);
 
                 #region Unity Types
                 if (DrawUnityField(obj, declaredType, name, getter, out object value))
