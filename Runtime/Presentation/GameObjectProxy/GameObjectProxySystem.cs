@@ -226,13 +226,9 @@ namespace Syadeu.Presentation
 
                 unsafe
                 {
-                    //if (!tr.Pointer->m_ClusterID.Equals(ClusterID.Requested))
-                    {
-                        m_ClusterData.Remove(tr.Pointer->m_ClusterID);
-                    }
+                    m_ClusterData.Remove(tr.Pointer->m_ClusterID);
                 }
                 m_ProxyData.Remove(tr);
-                "destroy".ToLog();
             }
             #endregion
 
@@ -319,7 +315,6 @@ namespace Syadeu.Presentation
 
             if (m_ClusterUpdates.Count > 0)
             {
-                "in update".ToLog();
                 NativeArray<ClusterUpdateRequest> requests = m_ClusterUpdates.ToArray(Allocator.TempJob);
                 m_ClusterUpdates.Clear();
                 ClusterUpdateJob clusterUpdateJob = new ClusterUpdateJob

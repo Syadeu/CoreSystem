@@ -47,9 +47,18 @@ namespace Syadeu.Presentation.Entities
             if (!m_AttributesHashMap.TryGetValue(t, out var list)) return null;
             return list;
         }
-        T IEntityData.GetAttribute<T>() => (T)((IEntityData)this).GetAttribute(TypeHelper.TypeOf<T>.Type);
-        T[] IEntityData.GetAttributes<T>() => ((IEntityData)this).GetAttributes(TypeHelper.TypeOf<T>.Type).Select((other) => (T)other).ToArray();
+        T IEntityData.GetAttribute<T>()
+        {
+            AttributeBase att = ((IEntityData)this).GetAttribute(TypeHelper.TypeOf<T>.Type);
+            return att == null ? null : (T)att;
+        }
+        T[] IEntityData.GetAttributes<T>()
+        {
+            AttributeBase[] atts = ((IEntityData)this).GetAttributes(TypeHelper.TypeOf<T>.Type);
+            if (atts == null) return null;
 
+            return atts.Select((other) => (T)other).ToArray();
+        }
         /// <inheritdoc cref="IEntityData.GetAttribute{T}"/>
         /// <remarks>
         /// 에디터용입니다. 런타임에서는 사용을 자제해주세요.
