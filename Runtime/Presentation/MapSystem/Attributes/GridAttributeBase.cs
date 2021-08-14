@@ -6,6 +6,7 @@ using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Event;
 using System;
+using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine.Scripting;
 
@@ -81,6 +82,14 @@ namespace Syadeu.Presentation.Map
             int p0 = GridSystem.GridMap.Grid.PositionToIndex(entity.transform.position);
 
             return new int[] { p0 };
+        }
+
+        public IReadOnlyList<Entity<IEntity>> GetEntitiesAt(in int index)
+        {
+            if (GridSystem == null) throw new System.Exception();
+            if (GridSystem.GridMap == null) throw new System.Exception();
+
+            return GridSystem.GetEntitiesAt(index);
         }
 
         public float3 IndexToPosition(int idx)

@@ -41,19 +41,19 @@ namespace Syadeu.Presentation.Attributes
         public void StartTurn()
         {
             CoreSystem.Logger.Log(Channel.Entity, $"{Name} turn start");
-            PresentationSystem<EventSystem>.System.PostEvent(OnTurnStateChanged.GetEvent(this, OnTurnStateChanged.TurnState.Start));
+            PresentationSystem<EventSystem>.System.PostEvent(OnTurnStateChangedEvent.GetEvent(this, OnTurnStateChangedEvent.TurnState.Start));
         }
         public void EndTurn()
         {
             CoreSystem.Logger.Log(Channel.Entity, $"{Name} turn end");
-            PresentationSystem<EventSystem>.System.PostEvent(OnTurnStateChanged.GetEvent(this, OnTurnStateChanged.TurnState.End));
+            PresentationSystem<EventSystem>.System.PostEvent(OnTurnStateChangedEvent.GetEvent(this, OnTurnStateChangedEvent.TurnState.End));
         }
         public void ResetTurnTable()
         {
             ActionPoint = m_MaxActionPoint;
 
             CoreSystem.Logger.Log(Channel.Entity, $"{Name} reset turn");
-            PresentationSystem<EventSystem>.System.PostEvent(OnTurnStateChanged.GetEvent(this, OnTurnStateChanged.TurnState.Reset));
+            PresentationSystem<EventSystem>.System.PostEvent(OnTurnStateChangedEvent.GetEvent(this, OnTurnStateChangedEvent.TurnState.Reset));
         }
 
         public void SetMaxActionPoint(int ap) => m_MaxActionPoint = ap;
@@ -73,7 +73,7 @@ namespace Syadeu.Presentation.Attributes
         }
     }
 
-    public sealed class OnTurnStateChanged : SynchronizedEvent<OnTurnStateChanged>
+    public sealed class OnTurnStateChangedEvent : SynchronizedEvent<OnTurnStateChangedEvent>
     {
         public enum TurnState
         {
@@ -85,7 +85,7 @@ namespace Syadeu.Presentation.Attributes
         public TurnPlayerAttribute Attribute { get; private set; }
         public TurnState State { get; private set; }
 
-        public static OnTurnStateChanged GetEvent(TurnPlayerAttribute target, TurnState state)
+        public static OnTurnStateChangedEvent GetEvent(TurnPlayerAttribute target, TurnState state)
         {
             var temp = Dequeue();
 

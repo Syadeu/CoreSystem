@@ -1,6 +1,7 @@
 ﻿using Syadeu.Database;
 using Syadeu.Mono;
 using Syadeu.Presentation.Entities;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -273,7 +274,7 @@ namespace Syadeu.Presentation.Map
             RemoveGridEntity(entity);
             for (int i = 0; i < indices.Length; i++)
             {
-                if (!m_GridEntities.TryGetValue(indices[i], out var entities))
+                if (!m_GridEntities.TryGetValue(indices[i], out List<Entity<IEntity>> entities))
                 {
                     entities = new List<Entity<IEntity>>();
                     m_GridEntities.Add(indices[i], entities);
@@ -282,6 +283,15 @@ namespace Syadeu.Presentation.Map
             }
 
             m_EntityGridIndices.Add(entity, indices);
+        }
+
+        public IReadOnlyList<Entity<IEntity>> GetEntitiesAt(in int index)
+        {
+            if (m_GridEntities.TryGetValue(index, out List<Entity<IEntity>> entities))
+            {
+                return entities;
+            }
+            return Array.Empty<Entity<IEntity>>();
         }
 
         public float3 IndexToPosition(int idx)
