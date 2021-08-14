@@ -41,9 +41,9 @@ namespace Syadeu.Presentation
 
         private AsyncOperation m_AsyncOperation;
 
+#pragma warning disable IDE0044 // Add readonly modifier
         [ConfigValue(Name = "DebugMode")] private bool m_DebugMode;
-        [ConfigValue(Header = "Screen", Name = "ResolutionX")] private int m_ResolutionX;
-        [ConfigValue(Header = "Screen", Name = "ResolutionY")] private int m_ResolutionY;
+#pragma warning restore IDE0044 // Add readonly modifier
 
         private bool m_LoadingEnabled = false;
         private bool m_LoadingSceneSetupDone = false;
@@ -165,6 +165,10 @@ namespace Syadeu.Presentation
 
                     CanvasScaler scaler = obj.GetComponent<CanvasScaler>();
                     scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+
+                    float
+                        m_ResolutionX = ConfigLoader.LoadConfigValue<float>("Graphics", "Resolution", "X"),
+                        m_ResolutionY = ConfigLoader.LoadConfigValue<float>("Graphics", "Resolution", "Y");
                     scaler.referenceResolution = new Vector2(m_ResolutionX, m_ResolutionY);
 
                     Image image = new GameObject("Black Screen").AddComponent<Image>();

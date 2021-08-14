@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Syadeu.Internal;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -86,7 +87,41 @@ namespace Syadeu.Database
                 }
             }
         }
+        public static T LoadConfigValue<T>(string name, string field)
+            => LoadConfigValue<T>(name, string.Empty, field);
+        public static T LoadConfigValue<T>(string name, string header, string field)
+        {
+            const string c_GlobalConfig = "config";
 
+            Config config;
+            if (name.Equals(c_GlobalConfig)) config = Global;
+            else
+            {
+                Hash hash = Hash.NewHash(name);
+                if (!Instance.m_Locals.TryGetValue(hash, out config))
+                {
+                    config = new Config(name);
+                    Instance.m_Locals.Add(hash, config);
+                }
+            }
+
+            Config.ConfigValueBase valueBase;
+            if (string.IsNullOrEmpty(header))
+            {
+                valueBase = config
+                    .GetOrCreateHeader(header)
+                    .GetOrCreateValue(TypeHelper.TypeOf<T>.Type, field);
+            }
+            else valueBase = config.GetOrCreateValue(TypeHelper.TypeOf<T>.Type, field);
+
+            if (!TypeHelper.TypeOf<T>.Type.Equals(valueBase.GetValue().GetType()))
+            {
+                CoreSystem.Logger.LogError(Channel.Data,
+                    "Request config value type not match. " +
+                    $"Requested {TypeHelper.TypeOf<T>.Name} but Expected {valueBase.GetValue().GetType()}");
+            }
+            return (T)valueBase.GetValue();
+        }
         public static void LoadConfig(object obj)
         {
             System.Type t = obj.GetType();

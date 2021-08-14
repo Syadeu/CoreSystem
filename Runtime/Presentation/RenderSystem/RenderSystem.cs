@@ -29,8 +29,8 @@ namespace Syadeu.Presentation.Render
         private ObClass<Camera> m_Camera;
         private Matrix4x4 m_Matrix4x4;
 
-        [ConfigValue(Header = "Screen", Name = "ResolutionX")] private int m_ResolutionX;
-        [ConfigValue(Header = "Screen", Name = "ResolutionY")] private int m_ResolutionY;
+        [ConfigValue(Header = "Resolution", Name = "X")] private int m_ResolutionX;
+        [ConfigValue(Header = "Resolution", Name = "Y")] private int m_ResolutionY;
 
         public Camera Camera => m_Camera.Value;
 		public CameraFrustum.ReadOnly Frustum => GetFrustum(Allocator.TempJob);
