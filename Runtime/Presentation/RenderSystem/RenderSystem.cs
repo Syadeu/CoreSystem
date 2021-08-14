@@ -41,6 +41,7 @@ namespace Syadeu.Presentation.Render
         internal List<CoreRoutine> m_PreRenderRoutines = new List<CoreRoutine>();
         internal List<CoreRoutine> m_PostRenderRoutines = new List<CoreRoutine>();
 
+        private JobHandle m_FrustumJob;
 		private CameraFrustum m_CameraFrustum;
         //private CameraFrustum m_CopiedFrustum;
 
@@ -95,14 +96,12 @@ namespace Syadeu.Presentation.Render
         {
             if (Camera == null) return base.AfterPresentation();
 
-            //m_CopiedFrustum.Copy(in m_CameraFrustum);
-
             FrustumJob job = new FrustumJob
             {
                 m_Frustum = m_CameraFrustum,
                 m_Data = new CameraData(Camera)
             };
-            ScheduleAt(JobPosition.After, job);
+            m_FrustumJob = ScheduleAt(JobPosition.After, job);
 
 			return base.AfterPresentation();
         }
@@ -120,7 +119,11 @@ namespace Syadeu.Presentation.Render
 
         #endregion
 
-        public CameraFrustum.ReadOnly GetFrustum(Allocator allocator) => m_CameraFrustum.AsReadOnly(allocator);
+        public CameraFrustum.ReadOnly GetFrustum(Allocator allocator)
+        {
+            m_FrustumJob.Complete();
+            return m_CameraFrustum.AsReadOnly(allocator);
+        }
 		internal CameraFrustum GetRawFrustum() => m_CameraFrustum;
 
 		/// <summary>
