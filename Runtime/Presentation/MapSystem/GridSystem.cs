@@ -1,6 +1,7 @@
 ﻿using Syadeu.Database;
 using Syadeu.Mono;
 using Syadeu.Presentation.Entities;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -37,19 +38,27 @@ namespace Syadeu.Presentation.Map
         }
         protected override PresentationResult OnInitializeAsync()
         {
-            RequestSystem<EntitySystem>((other) =>
-            {
-                m_EntitySystem = other;
-                m_EntitySystem.OnEntityCreated += M_EntitySystem_OnEntityCreated;
-                m_EntitySystem.OnEntityDestroy += M_EntitySystem_OnEntityDestroy;
-            });
-            RequestSystem<Render.RenderSystem>((other) =>
-            {
-                m_RenderSystem = other;
-                m_RenderSystem.OnRender += M_RenderSystem_OnRender;
-            });
+            RequestSystem<EntitySystem>(Bind);
+            RequestSystem<Render.RenderSystem>(Bind);
 
             return base.OnInitializeAsync();
+        }
+        private void Bind(EntitySystem other)
+        {
+            m_EntitySystem = other;
+            m_EntitySystem.OnEntityCreated += M_EntitySystem_OnEntityCreated;
+            m_EntitySystem.OnEntityDestroy += M_EntitySystem_OnEntityDestroy;
+        }
+        private void Bind(Render.RenderSystem other)
+        {
+            m_RenderSystem = other;
+            m_RenderSystem.OnRender += M_RenderSystem_OnRender;
+        }
+        public override void OnDispose()
+        {
+            m_EntitySystem.OnEntityCreated -= M_EntitySystem_OnEntityCreated;
+            m_EntitySystem.OnEntityDestroy -= M_EntitySystem_OnEntityDestroy;
+            m_RenderSystem.OnRender -= M_RenderSystem_OnRender;
         }
         protected override PresentationResult BeforePresentationAsync()
         {
@@ -78,12 +87,7 @@ namespace Syadeu.Presentation.Map
             }
             return base.BeforePresentationAsync();
         }
-        public override void OnDispose()
-        {
-            m_EntitySystem.OnEntityCreated -= M_EntitySystem_OnEntityCreated;
-            m_EntitySystem.OnEntityDestroy -= M_EntitySystem_OnEntityDestroy;
-            m_RenderSystem.OnRender -= M_RenderSystem_OnRender;
-        }
+        
         private void CreateConsoleCommands()
         {
             ConsoleWindow.CreateCommand((cmd) =>
@@ -270,7 +274,7 @@ namespace Syadeu.Presentation.Map
             RemoveGridEntity(entity);
             for (int i = 0; i < indices.Length; i++)
             {
-                if (!m_GridEntities.TryGetValue(indices[i], out var entities))
+                if (!m_GridEntities.TryGetValue(indices[i], out List<Entity<IEntity>> entities))
                 {
                     entities = new List<Entity<IEntity>>();
                     m_GridEntities.Add(indices[i], entities);
@@ -279,6 +283,15 @@ namespace Syadeu.Presentation.Map
             }
 
             m_EntityGridIndices.Add(entity, indices);
+        }
+
+        public IReadOnlyList<Entity<IEntity>> GetEntitiesAt(in int index)
+        {
+            if (m_GridEntities.TryGetValue(index, out List<Entity<IEntity>> entities))
+            {
+                return entities;
+            }
+            return Array.Empty<Entity<IEntity>>();
         }
 
         public float3 IndexToPosition(int idx)

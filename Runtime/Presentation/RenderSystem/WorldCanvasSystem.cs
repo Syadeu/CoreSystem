@@ -28,14 +28,15 @@ namespace Syadeu.Presentation.Render
             m_CanvasRaycaster = obj.AddComponent<GraphicRaycaster>();
             m_CanvasRaycaster.blockingMask = 5;
 
-            RequestSystem<RenderSystem>((other) =>
-            {
-                m_RenderSystem = other;
-
-                m_RenderSystem.OnCameraChanged += M_RenderSystem_OnCameraChanged;
-            });
+            RequestSystem<RenderSystem>(Bind);
 
             return base.OnInitialize();
+        }
+        private void Bind(RenderSystem other)
+        {
+            m_RenderSystem = other;
+
+            m_RenderSystem.OnCameraChanged += M_RenderSystem_OnCameraChanged;
         }
 
         private void M_RenderSystem_OnCameraChanged(Camera arg1, Camera arg2)

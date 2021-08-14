@@ -1892,18 +1892,20 @@ namespace Syadeu
         {
             const string c_Log = "Name of {0} takes {1}ms";
 
-            public string Name;
-            public System.Diagnostics.Stopwatch Stopwatch;
+            private string Name;
+            private Channel Channel;
+            private System.Diagnostics.Stopwatch Stopwatch;
 
-            public LogTimer(string name)
+            public LogTimer(string name, Channel channel = Channel.Core)
             {
                 Name = name;
+                Channel = channel;
                 Stopwatch = global::System.Diagnostics.Stopwatch.StartNew();
             }
             public void Dispose()
             {
                 Stopwatch.Stop();
-                CoreSystem.Logger.Log(Channel.Core,
+                CoreSystem.Logger.Log(Channel,
                     string.Format(c_Log, Name, Stopwatch.ElapsedMilliseconds));
             }
         }

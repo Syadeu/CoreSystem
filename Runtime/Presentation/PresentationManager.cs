@@ -389,9 +389,12 @@ namespace Syadeu.Presentation
                 group.m_MainthreadBeforePre = false;
 
                 // Unity Jobs
-                for (int i = 0; i < group.m_Systems.Count; i++)
+                //using (new CoreSystem.LogTimer($"{group.m_Name.Name}:m_BeforePresentationJobHandle", Channel.Presentation))
                 {
-                    group.m_Systems[i].m_BeforePresentationJobHandle.Complete();
+                    for (int i = 0; i < group.m_Systems.Count; i++)
+                    {
+                        group.m_Systems[i].m_BeforePresentationJobHandle.Complete();
+                    }
                 }
 
                 for (int i = 0; i < group.m_BeforePresentations.Count; i++)
@@ -408,9 +411,12 @@ namespace Syadeu.Presentation
                 group.m_MainthreadOnPre = false;
 
                 // Unity Jobs
-                for (int i = 0; i < group.m_Systems.Count; i++)
+                //using (new CoreSystem.LogTimer($"{group.m_Name.Name}:m_OnPresentationJobHandle", Channel.Presentation))
                 {
-                    group.m_Systems[i].m_OnPresentationJobHandle.Complete();
+                    for (int i = 0; i < group.m_Systems.Count; i++)
+                    {
+                        group.m_Systems[i].m_OnPresentationJobHandle.Complete();
+                    }
                 }
 
                 for (int i = 0; i < group.m_OnPresentations.Count; i++)
@@ -427,9 +433,12 @@ namespace Syadeu.Presentation
                 group.m_MainthreadAfterPre = false;
 
                 // Unity Jobs
-                for (int i = 0; i < group.m_Systems.Count; i++)
+                //using (new CoreSystem.LogTimer($"{group.m_Name.Name}:m_AfterPresentationJobHandle", Channel.Presentation))
                 {
-                    group.m_Systems[i].m_AfterPresentationJobHandle.Complete();
+                    for (int i = 0; i < group.m_Systems.Count; i++)
+                    {
+                        group.m_Systems[i].m_AfterPresentationJobHandle.Complete();
+                    }
                 }
 
                 for (int i = 0; i < group.m_AfterPresentations.Count; i++)

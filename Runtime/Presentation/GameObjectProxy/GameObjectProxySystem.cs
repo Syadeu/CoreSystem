@@ -54,6 +54,8 @@ namespace Syadeu.Presentation
                 m_InvisibleList;
         private NativeQueue<ClusterUpdateRequest>
                 m_ClusterUpdates;
+        private NativeQueue<ClusterIDRequest>
+                m_ClusterIDRequests;
 #pragma warning restore IDE0090 // Use 'new(...)'
 
         private SceneSystem m_SceneSystem;
@@ -71,7 +73,6 @@ namespace Syadeu.Presentation
             if (!PoolContainer<PrefabRequester>.Initialized) PoolContainer<PrefabRequester>.Initialize(() => new PrefabRequester(), 10);
 
             m_RequestDestories = new NativeQueue<int>(Allocator.Persistent);
-            //m_RequestUpdates = new NativeQueue<int>(Allocator.Persistent);
 
             m_RequestProxyList = new NativeQueue<int>(Allocator.Persistent);
             m_RemoveProxyList = new NativeQueue<int>(Allocator.Persistent);
@@ -79,6 +80,7 @@ namespace Syadeu.Presentation
             m_InvisibleList = new NativeQueue<int>(Allocator.Persistent);
 
             m_ClusterUpdates = new NativeQueue<ClusterUpdateRequest>(Allocator.Persistent);
+            m_ClusterIDRequests = new NativeQueue<ClusterIDRequest>(Allocator.Persistent);
 
             return base.OnInitialize();
         }
@@ -99,10 +101,7 @@ namespace Syadeu.Presentation
         }
         public override void OnDispose()
         {
-            //m_ProxyJob.Complete();
-
             m_RequestDestories.Dispose();
-            //m_RequestUpdates.Dispose();
 
             m_RequestProxyList.Dispose();
             m_RemoveProxyList.Dispose();
@@ -110,6 +109,7 @@ namespace Syadeu.Presentation
             m_InvisibleList.Dispose();
 
             m_ClusterUpdates.Dispose();
+            m_ClusterIDRequests.Dispose();
 
             m_ProxyData.For((tr) =>
             {
@@ -118,7 +118,7 @@ namespace Syadeu.Presentation
             m_ProxyData.Dispose();
             m_ClusterData.Dispose();
 
-            m_SortedCluster.Dispose();
+            if (m_SortedCluster.IsCreated) m_SortedCluster.Dispose();
 
             m_Disposed = true;
         }
@@ -196,7 +196,6 @@ namespace Syadeu.Presentation
         protected override PresentationResult AfterPresentation()
         {
             const int c_ChunkSize = 100;
-            //m_ProxyJob.Complete();
 
             if (m_LoadingLock) return base.AfterPresentation();
 
@@ -302,10 +301,10 @@ namespace Syadeu.Presentation
             }
             #endregion
 
-            int clusterIDRequestCount = clusterIDRequests.Count;
+            int clusterIDRequestCount = m_ClusterIDRequests.Count;
             for (int i = 0; i < clusterIDRequestCount; i++)
             {
-                var temp = clusterIDRequests.Dequeue();
+                var temp = m_ClusterIDRequests.Dequeue();
                 var id = m_ClusterData.Add(temp.translation, temp.index);
 
                 m_ProxyData[temp.index].Ref.m_ClusterID = id;
@@ -420,9 +419,11 @@ namespace Syadeu.Presentation
             public void Execute(int i)
             {
                 ClusterGroup<ProxyTransformData> clusterGroup = m_ActiveData[i];
+                if (!clusterGroup.IsCreated) return;
+
                 for (int j = 0; j < clusterGroup.Length; j++)
                 {
-                    if (!clusterGroup.BeingUsed || !clusterGroup.HasElementAt(j)) continue;
+                    if (!clusterGroup.HasElementAt(j)) continue;
 
                     if (clusterGroup[j] >= List.m_Length)
                     {
@@ -431,7 +432,7 @@ namespace Syadeu.Presentation
                     }
                     ProxyTransformData data = List.ElementAt(clusterGroup[j]);
 
-                    if (m_Frustum.IntersectsBox(data.GetAABB(Allocator.Temp), 10))
+                    if (m_Frustum.IntersectsBox(data.GetAABB(), 10))
                     {
                         if (data.m_EnableCull &&
                             data.m_ProxyIndex.Equals(-1) &&
@@ -468,8 +469,7 @@ namespace Syadeu.Presentation
 
         #endregion
 
-        private Queue<ClusterIDRequest> clusterIDRequests = new Queue<ClusterIDRequest>();
-        public ProxyTransform CreateNewPrefab(PrefabReference prefab, float3 pos, quaternion rot, float3 scale, bool enableCull, float3 center, float3 size)
+        public ProxyTransform CreateNewPrefab(in PrefabReference prefab, in float3 pos, in quaternion rot, in float3 scale, in bool enableCull, in float3 center, in float3 size)
         {
             CoreSystem.Logger.ThreadBlock(nameof(CreateNewPrefab), ThreadInfo.Unity);
 
@@ -478,7 +478,7 @@ namespace Syadeu.Presentation
             ProxyTransform tr = m_ProxyData.Add(prefab, pos, rot, scale, enableCull, center, size);
             unsafe
             {
-                clusterIDRequests.Enqueue(new ClusterIDRequest(pos, tr.m_Index));
+                m_ClusterIDRequests.Enqueue(new ClusterIDRequest(pos, tr.m_Index));
                 tr.Pointer->m_ClusterID = ClusterID.Requested;
             }
             OnDataObjectCreated?.Invoke(tr);
@@ -489,7 +489,7 @@ namespace Syadeu.Presentation
 
             return tr;
         }
-        public void Destroy(ProxyTransform tr)
+        public void Destroy(in ProxyTransform tr)
         {
             CoreSystem.Logger.ThreadBlock(nameof(Destroy), ThreadInfo.Unity);
 
@@ -550,7 +550,7 @@ namespace Syadeu.Presentation
 
             PrefabReference prefab = proxyTransform.prefab;
 
-            if (!m_TerminatedProxies.TryGetValue(prefab, out Queue<RecycleableMonobehaviour> pool) ||
+            if (!m_TerminatedProxies.TryGetValue(prefab, out Stack<RecycleableMonobehaviour> pool) ||
                     pool.Count == 0)
             {
                 proxyTransform.SetProxy(-2);
@@ -561,12 +561,12 @@ namespace Syadeu.Presentation
                         if (other.InitializeOnCall) other.Terminate();
                         other.transform.position = INIT_POSITION;
 
-                        if (!m_TerminatedProxies.TryGetValue(prefab, out Queue<RecycleableMonobehaviour> pool))
+                        if (!m_TerminatedProxies.TryGetValue(prefab, out Stack<RecycleableMonobehaviour> pool))
                         {
-                            pool = new Queue<RecycleableMonobehaviour>();
+                            pool = new Stack<RecycleableMonobehaviour>();
                             m_TerminatedProxies.Add(prefab, pool);
                         }
-                        pool.Enqueue(other);
+                        pool.Push(other);
                         return;
                     }
 
@@ -583,7 +583,7 @@ namespace Syadeu.Presentation
             }
             else
             {
-                RecycleableMonobehaviour other = pool.Dequeue();
+                RecycleableMonobehaviour other = pool.Pop();
                 proxyTransform.SetProxy(new int2(prefab, other.m_Idx));
 
                 other.transform.position = proxyTransform.position;
@@ -615,12 +615,12 @@ namespace Syadeu.Presentation
 
             if (proxy.Activated) proxy.Terminate();
 
-            if (!m_TerminatedProxies.TryGetValue(prefab, out Queue<RecycleableMonobehaviour> pool))
+            if (!m_TerminatedProxies.TryGetValue(prefab, out Stack<RecycleableMonobehaviour> pool))
             {
-                pool = new Queue<RecycleableMonobehaviour>();
+                pool = new Stack<RecycleableMonobehaviour>();
                 m_TerminatedProxies.Add(prefab, pool);
             }
-            pool.Enqueue(proxy);
+            pool.Push(proxy);
             CoreSystem.Logger.Log(Channel.Proxy, true,
                     $"Prefab({prefab.GetObjectSetting().m_Name}) proxy removed.");
         }
@@ -789,7 +789,7 @@ namespace Syadeu.Presentation
         /// 생성된 프록시 오브젝트들입니다. key 값은 <see cref="PrefabList.m_ObjectSettings"/> 인덱스(<see cref="PrefabReference"/>)이며 value 배열은 상태 구분없이(사용중이던 아니던) 실제 생성된 모노 객체입니다.
         /// </summary>
         internal readonly Dictionary<PrefabReference, List<RecycleableMonobehaviour>> m_Instances = new Dictionary<PrefabReference, List<RecycleableMonobehaviour>>();
-        private readonly Dictionary<PrefabReference, Queue<RecycleableMonobehaviour>> m_TerminatedProxies = new Dictionary<PrefabReference, Queue<RecycleableMonobehaviour>>();
+        private readonly Dictionary<PrefabReference, Stack<RecycleableMonobehaviour>> m_TerminatedProxies = new Dictionary<PrefabReference, Stack<RecycleableMonobehaviour>>();
 
         private sealed class PrefabRequester
         {
@@ -806,13 +806,13 @@ namespace Syadeu.Presentation
                 var prefabInfo = prefabIdx.GetObjectSetting();
                 if (!proxySystem.m_TerminatedProxies.TryGetValue(prefabIdx, out var pool))
                 {
-                    pool = new Queue<RecycleableMonobehaviour>();
+                    pool = new Stack<RecycleableMonobehaviour>();
                     proxySystem.m_TerminatedProxies.Add(prefabIdx, pool);
                 }
 
                 if (pool.Count > 0)
                 {
-                    RecycleableMonobehaviour obj = pool.Dequeue();
+                    RecycleableMonobehaviour obj = pool.Pop();
                     obj.transform.position = pos;
                     obj.transform.rotation = rot;
 
