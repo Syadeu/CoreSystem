@@ -16,6 +16,8 @@ namespace Syadeu.Presentation.Render
 		public const int PlaneCount = 6;
 		public const int CornerCount = 8;
 
+		private readonly bool m_IsCreated;
+
 		private float3 m_Position;
 		private NativeArray<Plane> m_Planes;
 		private NativeArray<float3>
@@ -86,6 +88,7 @@ namespace Syadeu.Presentation.Render
 			m_PlaneDistances = new NativeArray<float>(PlaneCount, Allocator.Persistent);
 
 			Update(ref this, cam);
+			m_IsCreated = true;
 		}
 		public CameraFrustum(CameraData cam)
         {
@@ -98,6 +101,7 @@ namespace Syadeu.Presentation.Render
 			m_PlaneDistances = new NativeArray<float>(PlaneCount, Allocator.Persistent);
 
 			Update(ref this, cam.position, cam.orientation, cam.fov, cam.nearClipPlane, cam.farClipPlane, cam.aspect);
+			m_IsCreated = true;
 		}
 
 		public void Dispose()

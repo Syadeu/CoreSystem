@@ -8,43 +8,6 @@ using Unity.Collections.LowLevel.Unsafe;
 
 namespace Syadeu.Database
 {
-    //[Obsolete]
-    //public sealed class Config
-    //{
-    //    internal readonly ConfigLocation m_Location;
-    //    internal readonly Converters.INIFile m_INI;
-
-    //    internal readonly string m_Path;
-
-    //    public string Name => Path.GetFileNameWithoutExtension(m_Path);
-    //    public ConfigLocation Location => m_Location;
-
-    //    internal Config(ConfigLocation location, string path)
-    //    {
-    //        m_Location = location;
-    //        m_Path = path;
-    //        if (!File.Exists(path))
-    //        {
-    //            m_INI = new Converters.INIFile(new List<ValuePair>(), new List<Converters.INIHeader>());
-    //        }
-    //        else
-    //        {
-    //            m_INI = Converters.INIInterface.Read(path);
-    //        }
-    //    }
-
-    //    public object GetValue(string name) => m_INI.GetValue(name)?.GetValue();
-    //    public void SetValue(string name, object value) => m_INI.SetValue(name, value);
-
-    //    public object GetHeaderValue(string header, string valueName) => m_INI.GetHeader(header)?.GetValue(valueName)?.GetValue();
-    //    public void SetHeaderValue(string header, string valueName, object value) => m_INI.GetOrCreateHeader(header).SetValue(valueName, value);
-
-    //    public void Save()
-    //    {
-    //        Converters.INIInterface.Write(m_Path, m_INI);
-    //    }
-    //}
-
     public sealed class Config
     {
         private const string c_HeaderStart = "[";
@@ -124,7 +87,7 @@ namespace Syadeu.Database
 
             public ConfigValueBase GetOrCreateValue(Type t, string name)
             {
-                if (!Values.TryGetValue(name, out ConfigValueBase value))
+                if (!Values.TryGetValue(name.Trim(), out ConfigValueBase value))
                 {
                     if (t.Equals(TypeHelper.TypeOf<int>.Type)) value = new IntValue() { Name = name };
                     else if (t.Equals(TypeHelper.TypeOf<float>.Type)) value = new SingleValue() { Name = name };
@@ -280,7 +243,7 @@ namespace Syadeu.Database
 
         public ConfigValueBase GetOrCreateValue(Type t, string name)
         {
-            if (!Values.TryGetValue(name, out ConfigValueBase value))
+            if (!Values.TryGetValue(name.Trim(), out ConfigValueBase value))
             {
                 if (t.Equals(TypeHelper.TypeOf<int>.Type)) value = new IntValue() { Name = name };
                 else if (t.Equals(TypeHelper.TypeOf<float>.Type)) value = new SingleValue() { Name = name };
@@ -295,7 +258,7 @@ namespace Syadeu.Database
         }
         public ConfigHeader GetOrCreateHeader(string header)
         {
-            if (!Values.TryGetValue(header, out ConfigValueBase value))
+            if (!Values.TryGetValue(header.Trim(), out ConfigValueBase value))
             {
                 value = new ConfigHeader() { Name = header, Values = new Dictionary<string, ConfigValueBase>() };
                 Values.Add(header, value);
