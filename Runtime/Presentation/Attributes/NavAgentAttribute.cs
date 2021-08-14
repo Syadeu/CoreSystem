@@ -142,10 +142,4 @@ namespace Syadeu.Presentation.Attributes
         }
     }
 
-    [AttributeAcceptOnly(typeof(EntityBase))]
-    public sealed class NavObstacleAttribute : AttributeBase
-    {
-
-    }
-
 }

@@ -424,11 +424,19 @@ namespace Syadeu.Presentation
                         throw new Exception();
                     }
                     ProxyTransformData data = List.ElementAt(clusterGroup[j]);
+                    if (!data.m_EnableCull)
+                    {
+                        if (data.m_ProxyIndex.Equals(-1) &&
+                            !data.m_ProxyIndex.Equals(-2))
+                        {
+                            m_Request.Enqueue(data.m_Index);
+                        }
+                        continue;
+                    }
 
                     if (m_Frustum.IntersectsBox(data.GetAABB(), 10))
                     {
-                        if (data.m_EnableCull &&
-                            data.m_ProxyIndex.Equals(-1) &&
+                        if (data.m_ProxyIndex.Equals(-1) &&
                             !data.m_ProxyIndex.Equals(-2))
                         {
                             m_Request.Enqueue(data.m_Index);
