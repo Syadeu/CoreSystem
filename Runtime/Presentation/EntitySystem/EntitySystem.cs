@@ -304,12 +304,13 @@ namespace Syadeu.Presentation
 
         //    return InternalCreateEntity(original, obj);
         //}
-        public Entity<IEntity> CreateEntity(string name, float3 position)
+        public Entity<IEntity> CreateEntity(in string name, in float3 position)
         {
+            CoreSystem.Logger.ThreadBlock(nameof(CreateEntity), ThreadInfo.Unity);
             InternalEntityValidation(name, position, out EntityBase temp);
 
-            ProxyTransform obj = InternalCreateProxy(temp, temp.Prefab, position, quaternion.identity, 1, true);
-            return InternalCreateEntity(temp, in obj);
+            ProxyTransform obj = InternalCreateProxy(in temp, temp.Prefab, in position, quaternion.identity, 1, true);
+            return InternalCreateEntity(in temp, in obj);
         }
         /// <summary>
         /// 
@@ -317,19 +318,21 @@ namespace Syadeu.Presentation
         /// <param name="hash"><seealso cref="IEntityData.Hash"/> 값</param>
         /// <param name="position"></param>
         /// <returns></returns>
-        public Entity<IEntity> CreateEntity(Hash hash, float3 position)
+        public Entity<IEntity> CreateEntity(in Hash hash, in float3 position)
         {
-            InternalEntityValidation(hash, position, out EntityBase temp);
+            CoreSystem.Logger.ThreadBlock(nameof(CreateEntity), ThreadInfo.Unity);
+            InternalEntityValidation(in hash, in position, out EntityBase temp);
 
-            ProxyTransform obj = InternalCreateProxy(temp, temp.Prefab, position, quaternion.identity, 1, true);
-            return InternalCreateEntity(temp, in obj);
+            ProxyTransform obj = InternalCreateProxy(in temp, temp.Prefab, in position, quaternion.identity, 1, true);
+            return InternalCreateEntity(in temp, in obj);
         }
-        public Entity<IEntity> CreateEntity(string name, float3 position, quaternion rotation, float3 localSize, bool enableCull)
+        public Entity<IEntity> CreateEntity(in string name, in float3 position, in quaternion rotation, in float3 localSize, in bool enableCull)
         {
-            InternalEntityValidation(name, position, out EntityBase temp);
+            CoreSystem.Logger.ThreadBlock(nameof(CreateEntity), ThreadInfo.Unity);
+            InternalEntityValidation(in name, in position, out EntityBase temp);
 
-            ProxyTransform obj = InternalCreateProxy(temp, temp.Prefab, position, rotation, localSize, enableCull);
-            return InternalCreateEntity(temp, in obj);
+            ProxyTransform obj = InternalCreateProxy(in temp, temp.Prefab, in position, in rotation, in localSize, in enableCull);
+            return InternalCreateEntity(in temp, in obj);
         }
         /// <summary>
         /// 
@@ -340,26 +343,27 @@ namespace Syadeu.Presentation
         /// <param name="localSize"></param>
         /// <param name="enableCull"></param>
         /// <returns></returns>
-        public Entity<IEntity> CreateEntity(Hash hash, float3 position, quaternion rotation, float3 localSize, bool enableCull)
+        public Entity<IEntity> CreateEntity(in Hash hash, in float3 position, in quaternion rotation, in float3 localSize, in bool enableCull)
         {
-            InternalEntityValidation(hash, position, out EntityBase temp);
+            CoreSystem.Logger.ThreadBlock(nameof(CreateEntity), ThreadInfo.Unity);
+            InternalEntityValidation(in hash, in position, out EntityBase temp);
 
-            ProxyTransform obj = InternalCreateProxy(temp, temp.Prefab, position, rotation, localSize, enableCull);
-            return InternalCreateEntity(temp, in obj);
+            ProxyTransform obj = InternalCreateProxy(in temp, temp.Prefab, in position, in rotation, in localSize, in enableCull);
+            return InternalCreateEntity(in temp, in obj);
         }
 
         #region Entity Validation
-        private bool InternalEntityValidation(string name, float3 targetPos, out EntityBase entity)
+        private bool InternalEntityValidation(in string name, in float3 targetPos, out EntityBase entity)
         {
             ObjectBase original = EntityDataList.Instance.GetObject(name);
-            return InternalEntityValidation(name, original, targetPos, out entity);
+            return InternalEntityValidation(in name, in original, in targetPos, out entity);
         }
-        private bool InternalEntityValidation(Hash hash, float3 targetPos, out EntityBase entity)
+        private bool InternalEntityValidation(in Hash hash, in float3 targetPos, out EntityBase entity)
         {
             ObjectBase original = EntityDataList.Instance.GetObject(hash);
-            return InternalEntityValidation(hash.ToString(), original, targetPos, out entity);
+            return InternalEntityValidation(hash.ToString(), in original, in targetPos, out entity);
         }
-        private bool InternalEntityValidation(string key, ObjectBase original, float3 targetPos, out EntityBase entity)
+        private bool InternalEntityValidation(in string key, in ObjectBase original, in float3 targetPos, out EntityBase entity)
         {
             entity = null;
             if (original == null)
@@ -376,8 +380,8 @@ namespace Syadeu.Presentation
             return true;
         }
         #endregion
-        private ProxyTransform InternalCreateProxy(EntityBase from,
-            PrefabReference prefab, float3 pos, quaternion rot, float3 scale, bool enableCull)
+        private ProxyTransform InternalCreateProxy(in EntityBase from,
+            in PrefabReference prefab, in float3 pos, in quaternion rot, in float3 scale, in bool enableCull)
         {
             if (!prefab.IsValid())
             {
@@ -385,9 +389,9 @@ namespace Syadeu.Presentation
                     $"{from.Name} has an invalid prefab. This is not allowed.");
             }
 
-            return m_ProxySystem.CreateNewPrefab(prefab, pos, rot, scale, enableCull, from.Center, from.Size);
+            return m_ProxySystem.CreateNewPrefab(in prefab, in pos, in rot, in scale, in enableCull, from.Center, from.Size);
         }
-        private Entity<IEntity> InternalCreateEntity(EntityBase entityBase, in ProxyTransform obj)
+        private Entity<IEntity> InternalCreateEntity(in EntityBase entityBase, in ProxyTransform obj)
         {
             EntityBase entity = (EntityBase)entityBase.Clone();
 
@@ -482,7 +486,7 @@ namespace Syadeu.Presentation
         public void DestroyEntity(Entity<IEntity> entity) => InternalDestroyEntity(entity.Idx);
         /// <inheritdoc cref="DestroyEntity(Entity{IEntity})"/>
         public void DestroyEntity(EntityData<IEntityData> entity) => InternalDestroyEntity(entity.Idx);
-        internal void InternalDestroyEntity(Hash hash)
+        internal void InternalDestroyEntity(in Hash hash)
         {
             if (!m_ObjectEntities.ContainsKey(hash)) throw new Exception();
 

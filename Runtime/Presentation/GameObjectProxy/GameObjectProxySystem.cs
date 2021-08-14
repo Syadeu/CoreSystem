@@ -419,9 +419,11 @@ namespace Syadeu.Presentation
             public void Execute(int i)
             {
                 ClusterGroup<ProxyTransformData> clusterGroup = m_ActiveData[i];
+                if (!clusterGroup.IsCreated) return;
+
                 for (int j = 0; j < clusterGroup.Length; j++)
                 {
-                    if (!clusterGroup.IsCreated || !clusterGroup.HasElementAt(j)) continue;
+                    if (!clusterGroup.HasElementAt(j)) continue;
 
                     if (clusterGroup[j] >= List.m_Length)
                     {
@@ -467,7 +469,7 @@ namespace Syadeu.Presentation
 
         #endregion
 
-        public ProxyTransform CreateNewPrefab(PrefabReference prefab, float3 pos, quaternion rot, float3 scale, bool enableCull, float3 center, float3 size)
+        public ProxyTransform CreateNewPrefab(in PrefabReference prefab, in float3 pos, in quaternion rot, in float3 scale, in bool enableCull, in float3 center, in float3 size)
         {
             CoreSystem.Logger.ThreadBlock(nameof(CreateNewPrefab), ThreadInfo.Unity);
 
@@ -487,7 +489,7 @@ namespace Syadeu.Presentation
 
             return tr;
         }
-        public void Destroy(ProxyTransform tr)
+        public void Destroy(in ProxyTransform tr)
         {
             CoreSystem.Logger.ThreadBlock(nameof(Destroy), ThreadInfo.Unity);
 

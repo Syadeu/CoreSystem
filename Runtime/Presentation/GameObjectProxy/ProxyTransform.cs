@@ -324,7 +324,7 @@ namespace Syadeu.Presentation
 
                 (*m_Pointer)[m_Index]->m_DestroyQueued = true;
             }
-            PresentationSystem<GameObjectProxySystem>.System.Destroy(this);
+            PresentationSystem<GameObjectProxySystem>.System.Destroy(in this);
         }
 
         public bool Equals(ProxyTransform other) => 
