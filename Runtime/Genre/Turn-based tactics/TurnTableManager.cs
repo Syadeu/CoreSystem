@@ -1,11 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-using Syadeu;
-using Syadeu.Database;
-using Unity.Mathematics;
-
-namespace Syadeu.Mono.TurnTable
+namespace Syadeu.Presentation.TurnTable
 {
     public sealed class TurnTableManager : StaticManager<TurnTableManager>
     {

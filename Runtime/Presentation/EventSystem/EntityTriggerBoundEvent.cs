@@ -1,7 +1,7 @@
 ﻿using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Presentation.Events
 {
     /// <summary>
     /// <see cref="TriggerBoundAttribute"/> 를 가진 <see cref="Entity{T}"/>가 설정한 바운더리에 들어왔을때 트리거되는 이벤트입니다.

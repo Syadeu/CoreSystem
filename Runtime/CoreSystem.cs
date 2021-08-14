@@ -328,20 +328,6 @@ namespace Syadeu
             if (Thread.CurrentThread == MainThread) return true;
             return false;
         }
-        private void OnGUI()
-        {
-            if (GUILayout.Button("To intro"))
-            {
-                AddBackgroundJob(() =>
-                {
-                    PresentationSystem<SceneSystem>.System.LoadStartScene(1, 5);
-                });
-            }
-            if (GUILayout.Button("To Game"))
-            {
-                PresentationSystem<SceneSystem>.System.LoadScene(0, 1, 5);
-            }
-        }
 
         #region Routines
         public static CoreRoutine StartBackgroundUpdate(object obj, IEnumerator update)

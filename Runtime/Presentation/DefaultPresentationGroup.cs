@@ -8,7 +8,7 @@ namespace Syadeu.Presentation
         {
             RegisterSystem(
                 TypeHelper.TypeOf<DataContainerSystem>.Type,
-                TypeHelper.TypeOf<Event.EventSystem>.Type,
+                TypeHelper.TypeOf<Events.EventSystem>.Type,
                 TypeHelper.TypeOf<GameObjectProxySystem>.Type,
                 TypeHelper.TypeOf<EntitySystem>.Type,
                 TypeHelper.TypeOf<EntityTriggerSystem>.Type,

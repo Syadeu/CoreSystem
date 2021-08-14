@@ -1,6 +1,6 @@
 ﻿using Syadeu.Database;
 using Syadeu.Presentation.Entities;
-using Syadeu.Presentation.Event;
+using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Internal;
 using System;
 using Unity.Mathematics;

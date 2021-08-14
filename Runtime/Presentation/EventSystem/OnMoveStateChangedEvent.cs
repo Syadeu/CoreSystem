@@ -2,7 +2,7 @@
 using Syadeu.Presentation.Attributes;
 using System;
 
-namespace Syadeu.Presentation.Event
+namespace Syadeu.Presentation.Events
 {
     /// <summary>
     /// <see cref="Entity{T}"/>의 이동 상태가 변경되었을때 호출되는 이벤트 객체입니다.

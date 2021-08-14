@@ -55,14 +55,14 @@ namespace Syadeu.Presentation
 
         internal DataContainerSystem m_DataContainerSystem;
         internal GameObjectProxySystem m_ProxySystem;
-        internal Event.EventSystem m_EventSystem;
+        internal Events.EventSystem m_EventSystem;
 
         #region Presentation Methods
         protected override PresentationResult OnInitializeAsync()
         {
             RequestSystem<DataContainerSystem>((other) => m_DataContainerSystem = other);
             RequestSystem<GameObjectProxySystem>((other) => m_ProxySystem = other);
-            RequestSystem<Event.EventSystem>((other) => m_EventSystem = other);
+            RequestSystem<Events.EventSystem>((other) => m_EventSystem = other);
 
             #region Processor Registeration
             Type[] processors = TypeHelper.GetTypes((other) =>

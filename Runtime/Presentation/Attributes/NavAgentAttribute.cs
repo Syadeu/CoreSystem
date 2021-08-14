@@ -2,7 +2,7 @@
 using Syadeu.Mono;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Entities;
-using Syadeu.Presentation.Event;
+using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Map;
 using System;
 using System.Collections;
