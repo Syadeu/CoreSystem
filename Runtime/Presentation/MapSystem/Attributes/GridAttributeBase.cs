@@ -26,6 +26,7 @@ namespace Syadeu.Presentation.Map
 
         [JsonIgnore] internal GridSystem GridSystem { get; set; }
 
+        [JsonIgnore] public float CellSize => GridSystem.GridMap.CellSize;
         [JsonIgnore] public int[] CurrentGridIndices { get; private set; } = Array.Empty<int>();
         [JsonIgnore] public float3 Center
         {
@@ -72,11 +73,6 @@ namespace Syadeu.Presentation.Map
 
         private int[] GetCurrentGridIndices()
         {
-            GridSizeAttribute gridsize = Parent.GetAttribute<GridSizeAttribute>();
-            if (gridsize == null)
-            {
-                throw new System.Exception();
-            }
             if (GridSystem == null) throw new System.Exception();
             if (GridSystem.GridMap == null) throw new System.Exception();
 

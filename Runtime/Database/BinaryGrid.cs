@@ -602,14 +602,13 @@ namespace Syadeu.Database
                     int temp = startIdx - (yGrid * gridSize.y) + xGrid;
 
                     if (HasCell(temp)) targets.Add(temp);
-                    if (temp >= temp - (temp % gridSize.x) + gridSize.x - 1) break;
+                    //if (temp >= temp - (temp % gridSize.x) + gridSize.x - 1) break;
                 }
             }
 
             return targets.ToArray();
         }
-        public int[] GetRange(in int2 location, in int range)
-            => GetRange(GridExtensions.LocationToIndex(in m_AABB, in m_CellSize, in location), in range);
+        public int[] GetRange(in int2 location, in int range) => GetRange(GridExtensions.LocationToIndex(in m_AABB, in m_CellSize, in location), in range);
 
         public byte[] ToBinary()
         {
