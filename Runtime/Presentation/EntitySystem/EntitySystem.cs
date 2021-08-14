@@ -55,14 +55,14 @@ namespace Syadeu.Presentation
 
         internal DataContainerSystem m_DataContainerSystem;
         internal GameObjectProxySystem m_ProxySystem;
-        internal Event.EventSystem m_EventSystem;
+        internal Events.EventSystem m_EventSystem;
 
         #region Presentation Methods
         protected override PresentationResult OnInitializeAsync()
         {
             RequestSystem<DataContainerSystem>((other) => m_DataContainerSystem = other);
             RequestSystem<GameObjectProxySystem>((other) => m_ProxySystem = other);
-            RequestSystem<Event.EventSystem>((other) => m_EventSystem = other);
+            RequestSystem<Events.EventSystem>((other) => m_EventSystem = other);
 
             #region Processor Registeration
             Type[] processors = TypeHelper.GetTypes((other) =>
@@ -389,7 +389,7 @@ namespace Syadeu.Presentation
                     $"{from.Name} has an invalid prefab. This is not allowed.");
             }
 
-            return m_ProxySystem.CreateNewPrefab(in prefab, in pos, in rot, in scale, in enableCull, from.Center, from.Size);
+            return m_ProxySystem.CreateNewPrefab(in prefab, in pos, in rot, in scale, from.m_EnableCull, from.Center, from.Size);
         }
         private Entity<IEntity> InternalCreateEntity(in EntityBase entityBase, in ProxyTransform obj)
         {

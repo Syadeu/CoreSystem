@@ -49,8 +49,7 @@ namespace Syadeu.Presentation.Render
 
         protected override PresentationResult OnInitialize()
         {
-			m_CameraFrustum = new CameraFrustum(Camera.main);
-            //m_CopiedFrustum = new CameraFrustum(Camera.main);
+            m_CameraFrustum = new CameraFrustum(new CameraData());
 
             m_Camera = new ObClass<Camera>(ObValueDetection.Changed);
             m_Camera.OnValueChange += (from, to) =>

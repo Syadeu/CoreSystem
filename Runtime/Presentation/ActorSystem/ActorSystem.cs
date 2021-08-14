@@ -1,7 +1,7 @@
 ﻿using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation.Entities;
-using Syadeu.Presentation.Event;
+using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Map;
 using Unity.Collections;
 using Unity.Jobs;

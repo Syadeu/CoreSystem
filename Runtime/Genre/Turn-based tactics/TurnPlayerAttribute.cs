@@ -1,14 +1,12 @@
 ﻿using Newtonsoft.Json;
-using Syadeu.Mono;
-using Syadeu.Mono.TurnTable;
+
+using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
-using Syadeu.Presentation.Event;
-using System;
-using System.Collections.Generic;
-using Unity.Mathematics;
+using Syadeu.Presentation.Events;
+
 using UnityEngine.Scripting;
 
-namespace Syadeu.Presentation.Attributes
+namespace Syadeu.Presentation.TurnTable
 {
     public sealed class TurnPlayerAttribute : AttributeBase, ITurnPlayer
     {
@@ -30,13 +28,12 @@ namespace Syadeu.Presentation.Attributes
             {
                 if (!m_CurrentActionPoint.Equals(value))
                 {
+                    int prev = m_CurrentActionPoint;
                     m_CurrentActionPoint = value;
-                    OnActionPointChanged?.Invoke(value);
+                    PresentationSystem<EventSystem>.System.PostEvent(OnActionPointChangedEvent.GetEvent(Parent, prev, value));
                 }
             }
         }
-
-        public event Action<int> OnActionPointChanged;
 
         public void StartTurn()
         {

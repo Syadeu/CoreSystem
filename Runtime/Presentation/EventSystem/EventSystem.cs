@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Syadeu.Presentation.Event
+namespace Syadeu.Presentation.Events
 {
     /// <summary>
     /// <see cref="SynchronizedEvent{TEvent}"/> 들을 처리하는 시스템입니다.

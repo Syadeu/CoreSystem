@@ -1,7 +1,7 @@
 ﻿using Syadeu.Database;
 using Syadeu.Presentation.Entities;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Presentation.Events
 {
     /// <summary>
     /// 엔티티의 <see cref="ProxyTransform"/>이 수정될 때 발생되는 이벤트입니다.

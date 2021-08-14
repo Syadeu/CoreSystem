@@ -1,7 +1,7 @@
 ﻿using Syadeu.Database;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
-using Syadeu.Presentation.Event;
+using Syadeu.Presentation.Events;
 using System;
 
 namespace Syadeu.Presentation
@@ -16,7 +16,7 @@ namespace Syadeu.Presentation
         private Entity<IEntity>[] m_TriggerBoundArray;
 
         private EntitySystem m_EntitySystem;
-        private Event.EventSystem m_EventSystem;
+        private Events.EventSystem m_EventSystem;
 
         #region Presentation Methods
 
@@ -26,7 +26,7 @@ namespace Syadeu.Presentation
             m_TriggerBoundArray = new Entity<IEntity>[1024];
 
             RequestSystem<EntitySystem>(Bind);
-            RequestSystem<Event.EventSystem>(Bind);
+            RequestSystem<Events.EventSystem>(Bind);
 
             return base.OnInitialize();
         }
@@ -72,7 +72,7 @@ namespace Syadeu.Presentation
             att.m_ClusterID = ClusterID.Empty;
         }
 
-        private void Bind(Event.EventSystem other)
+        private void Bind(Events.EventSystem other)
         {
             m_EventSystem = other;
 

@@ -2,7 +2,7 @@
 using Syadeu.Mono;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Entities;
-using Syadeu.Presentation.Event;
+using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Map;
 using System;
 using System.Collections;
@@ -140,12 +140,6 @@ namespace Syadeu.Presentation.Attributes
             agent.acceleration = att.m_Acceleration;
             agent.stoppingDistance = att.m_StoppingDistance;
         }
-    }
-
-    [AttributeAcceptOnly(typeof(EntityBase))]
-    public sealed class NavObstacleAttribute : AttributeBase
-    {
-
     }
 
 }

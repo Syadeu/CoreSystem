@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-
-namespace Syadeu.Mono.TurnTable
+﻿namespace Syadeu.Presentation.TurnTable
 {
     public interface ITurnPlayer
     {

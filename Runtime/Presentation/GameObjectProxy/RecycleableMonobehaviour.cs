@@ -2,7 +2,7 @@
 using Syadeu.Internal;
 using Syadeu.Presentation;
 using Syadeu.Presentation.Entities;
-using Syadeu.Presentation.Event;
+using Syadeu.Presentation.Events;
 using System;
 using System.Collections.Generic;
 using System.Linq;
