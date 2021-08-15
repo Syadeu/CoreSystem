@@ -2,6 +2,10 @@
 using Syadeu.Database;
 using Syadeu.Database.Converters;
 using Syadeu.Internal;
+using Syadeu.Presentation.Actor;
+using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Map;
+using System;
 
 namespace Syadeu.Presentation
 {
@@ -73,5 +77,18 @@ namespace Syadeu.Presentation
         public static implicit operator T(Reference<T> a) => a.GetObject();
         public static implicit operator Hash(Reference<T> a) => a.m_Hash;
         public static implicit operator Reference(Reference<T> a) => new Reference(a.m_Hash);
+
+        public static void AOTResolver()
+        {
+            Reference<MapDataEntity> a0 = new Reference<MapDataEntity>();
+            Reference<SceneDataEntity> a1 = new Reference<SceneDataEntity>();
+            Reference<ActorEntity> a2 = new Reference<ActorEntity>();
+            Reference<EntityBase> a3 = new Reference<EntityBase>();
+            Reference<EntityDataBase> a4 = new Reference<EntityDataBase>();
+            Reference<ObjectEntity> a5 = new Reference<ObjectEntity>();
+            Reference<UIObjectEntity> a6 = new Reference<UIObjectEntity>();
+
+            throw new InvalidOperationException();
+        }
     }
 }
