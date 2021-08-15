@@ -1,5 +1,4 @@
-﻿using log4net.Repository.Hierarchy;
-using System;
+﻿using System;
 using Unity.Collections;
 using Unity.Jobs;
 

@@ -2,9 +2,11 @@
 using Newtonsoft.Json.Linq;
 using System;
 using Unity.Mathematics;
+using UnityEngine.Scripting;
 
 namespace Syadeu.Database.Converters
 {
+    [Preserve]
     internal sealed class Int3JsonConverter : JsonConverter<int3>
     {
         public override bool CanRead => true;
@@ -25,6 +27,7 @@ namespace Syadeu.Database.Converters
             writer.WriteEndArray();
         }
     }
+    [Preserve]
     internal sealed class Int2JsonConverter : JsonConverter<int2>
     {
         public override bool CanRead => true;

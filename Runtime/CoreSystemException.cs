@@ -18,7 +18,7 @@ namespace Syadeu
         {
             UnityEngine.Debug.LogError(TextBuilder(from, msg, ex));
 #if !UNITY_EDITOR
-            if (SyadeuSettings.Instance.m_CrashAfterException)
+            if (CoreSystemSettings.Instance.m_CrashAfterException)
             {
                 Utils.ForceCrash(ForcedCrashCategory.FatalError);
             }

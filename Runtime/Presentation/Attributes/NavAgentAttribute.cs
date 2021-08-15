@@ -87,7 +87,10 @@ namespace Syadeu.Presentation.Attributes
             }
 
             tr.position = PreviousTarget;
-            if (NavMeshAgent.isOnNavMesh) NavMeshAgent.ResetPath();
+            if (tr.hasProxy)
+            {
+                if (NavMeshAgent.isOnNavMesh) NavMeshAgent.ResetPath();
+            }
 
             IsMoving = false;
 

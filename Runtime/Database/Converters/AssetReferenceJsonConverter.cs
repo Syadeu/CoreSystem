@@ -3,13 +3,12 @@ using Newtonsoft.Json.Linq;
 using Syadeu.Internal;
 using System;
 
-#if UNITY_ADDRESSABLES
 using UnityEngine.AddressableAssets;
-#endif
+using UnityEngine.Scripting;
 
 namespace Syadeu.Database.Converters
 {
-#if UNITY_ADDRESSABLES
+    [Preserve]
     internal sealed class AssetReferenceJsonConverter : JsonConverter
     {
         public override bool CanWrite => true;
@@ -29,6 +28,4 @@ namespace Syadeu.Database.Converters
             return Activator.CreateInstance(objectType, guid);
         }
     }
-
-#endif
 }

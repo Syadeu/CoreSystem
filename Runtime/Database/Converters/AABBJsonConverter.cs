@@ -2,10 +2,12 @@
 using Newtonsoft.Json.Linq;
 using System;
 using Unity.Mathematics;
+using UnityEngine.Scripting;
 
 namespace Syadeu.Database.Converters
 {
-    public sealed class AABBJsonConverter : JsonConverter<AABB>
+    [Preserve]
+    internal sealed class AABBJsonConverter : JsonConverter<AABB>
     {
         public override bool CanWrite => true;
         public override bool CanRead => true;
