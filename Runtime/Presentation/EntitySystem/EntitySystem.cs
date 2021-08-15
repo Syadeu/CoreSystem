@@ -695,13 +695,6 @@ namespace Syadeu.Presentation
                         {
                             onProxyCreated.OnProxyCreated(other, entityData, monoObj);
                         }
-                        if (processors[j] is IAttributeOnProxyCreatedSync sync)
-                        {
-                            CoreSystem.AddForegroundJob(() =>
-                            {
-                                sync.OnProxyCreatedSync(other, entityData, monoObj);
-                            });
-                        }
                     }
                 }
             });
@@ -743,13 +736,6 @@ namespace Syadeu.Presentation
                         if (processors[j] is IAttributeOnProxyRemoved onProxyRemoved)
                         {
                             onProxyRemoved.OnProxyRemoved(other, entityData, monoObj);
-                        }
-                        if (processors[j] is IAttributeOnProxyRemovedSync sync)
-                        {
-                            CoreSystem.AddForegroundJob(() =>
-                            {
-                                sync.OnProxyRemovedSync(other, entityData, monoObj);
-                            });
                         }
                     }
                 }
