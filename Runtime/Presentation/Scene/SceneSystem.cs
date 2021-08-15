@@ -335,6 +335,8 @@ namespace Syadeu.Presentation
 
             CoreSystem.Logger.Log(Channel.Scene, $"Scene change start from ({m_CurrentScene.name}) to ({Path.GetFileNameWithoutExtension(scene)})");
 
+            CompleteJob();
+
             m_LoadingEnabled = true;
             OnLoadingEnter?.Invoke();
             if (ManagerEntity.InstanceGroupTr != null)

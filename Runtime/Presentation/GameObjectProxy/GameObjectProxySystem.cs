@@ -43,7 +43,6 @@ namespace Syadeu.Presentation
 #pragma warning disable IDE0090 // Use 'new(...)'
         private NativeQueue<int>
                 m_RequestDestories,
-                //m_RequestUpdates,
 
                 m_RequestProxyList,
                 m_RemoveProxyList,
@@ -150,7 +149,11 @@ namespace Syadeu.Presentation
             m_Instances.Clear();
             m_TerminatedProxies.Clear();
 
-            m_ProxyData.Clear();
+            //m_ProxyData.Clear();
+            m_ProxyData.Dispose();
+            m_ClusterData.Dispose();
+            m_ProxyData = new NativeProxyData(c_InitialMemorySize, Allocator.Persistent);
+            m_ClusterData = new Cluster<ProxyTransformData>(c_InitialMemorySize);
             m_LoadingLock = false;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
