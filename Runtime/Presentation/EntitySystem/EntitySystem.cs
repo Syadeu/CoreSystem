@@ -169,7 +169,8 @@ namespace Syadeu.Presentation
 
         private void M_ProxySystem_OnDataObjectDestroyAsync(ProxyTransform obj)
         {
-            if (!m_EntityGameObjects.TryGetValue(obj.m_Hash, out Hash entityHash)) return;
+            if (!m_EntityGameObjects.TryGetValue(obj.m_Hash, out Hash entityHash) ||
+                !m_ObjectEntities.ContainsKey(entityHash)) return;
 
             ProcessEntityOnDestroy(this, m_ObjectEntities[entityHash]);
 
