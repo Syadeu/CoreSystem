@@ -1,6 +1,8 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Utilities;
 using Syadeu.Mono;
 using Syadeu.Presentation.Entities;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Scripting;
@@ -15,7 +17,7 @@ namespace Syadeu.Presentation.Map
         [JsonProperty(Order = 0, PropertyName = "BindScene")] internal bool m_BindScene;
         [Tooltip("SceneList.Scenes 의 Index")]
         [JsonProperty(Order = 1, PropertyName = "SceneIndex")] private int m_SceneIndex;
-        [JsonProperty(Order = 2, PropertyName = "MapData")] private Reference<MapDataEntity>[] m_MapData;
+        [JsonProperty(Order = 2, PropertyName = "MapData")] private Reference<MapDataEntity>[] m_MapData = Array.Empty<Reference<MapDataEntity>>();
 #pragma warning restore IDE0044 // Add readonly modifier
 
         [JsonIgnore] public bool IsMapDataCreated { get; private set; } = false;
@@ -66,6 +68,17 @@ namespace Syadeu.Presentation.Map
 
             CreatedMapData = null;
             IsMapDataCreated = false;
+        }
+
+        [Preserve]
+        static void AOTCodeGeneration()
+        {
+            AotHelper.EnsureType<Reference<SceneDataEntity>>();
+            AotHelper.EnsureList<Reference<SceneDataEntity>>();
+            AotHelper.EnsureType<EntityData<SceneDataEntity>>();
+            AotHelper.EnsureList<EntityData<SceneDataEntity>>();
+            AotHelper.EnsureType<SceneDataEntity>();
+            AotHelper.EnsureList<SceneDataEntity>();
         }
     }
     [Preserve]

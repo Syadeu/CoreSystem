@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Utilities;
 using Syadeu.Database;
 using Syadeu.Database.Converters;
 using Syadeu.Internal;
@@ -86,8 +87,10 @@ namespace Syadeu.Presentation
         [Preserve]
         static void AOTCodeGeneration()
         {
-            Reference<T>[] a0 = new Reference<T>[0];
-            List<Reference<T>> a1 = new List<Reference<T>>();
+            AotHelper.EnsureType<Reference<T>>();
+            AotHelper.EnsureList<Reference<T>>();
+
+            throw new InvalidOperationException();
         }
     }
 }
