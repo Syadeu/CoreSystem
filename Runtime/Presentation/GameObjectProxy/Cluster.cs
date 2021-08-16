@@ -586,7 +586,6 @@ namespace Syadeu.Presentation
     }
 
     [BurstCompile]
-    //[StructLayout(LayoutKind.Explicit, Size = 5)]
     unsafe internal struct ClusterItem<T>
     {
         public bool m_IsOccupied;
@@ -594,7 +593,6 @@ namespace Syadeu.Presentation
     }
 
     [BurstCompile(CompileSynchronously = true)]
-    //[StructLayout(LayoutKind.Explicit, Size = 8)]
     public readonly struct ClusterID : IEquatable<ClusterID>
     {
         public static readonly ClusterID Empty = new ClusterID(-1, -1);

@@ -50,11 +50,13 @@ namespace Syadeu.Presentation.Entities
         {
             AotHelper.EnsureType<Reference<EntityBase>>();
             AotHelper.EnsureList<Reference<EntityBase>>();
-            AotHelper.EnsureType<Entity<EntityBase>>();
+
             AotHelper.EnsureType<Entity<EntityBase>>();
             AotHelper.EnsureList<Entity<EntityBase>>();
+
             AotHelper.EnsureType<EntityData<EntityBase>>();
             AotHelper.EnsureList<EntityData<EntityBase>>();
+
             AotHelper.EnsureList<EntityBase>();
         }
     }

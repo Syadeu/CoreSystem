@@ -295,15 +295,14 @@ namespace Syadeu.Presentation
         internal int m_Generation;
         internal PrefabReference m_Prefab;
 
-        
         internal float3 m_Translation;
         internal float3 m_Scale;
         internal float3 m_Center;
         internal float3 m_Size;
 
-        
         internal quaternion m_Rotation;
 
+#pragma warning disable IDE1006 // Naming Styles
         public bool destroyed
         {
             get
@@ -328,6 +327,7 @@ namespace Syadeu.Presentation
             set => m_Scale = value;
         }
         public AABB aabb => new AABB(m_Center + m_Translation, m_Size).Rotation(m_Rotation);
+#pragma warning restore IDE1006 // Naming Styles
 
         public AABB GetAABB()
         {
