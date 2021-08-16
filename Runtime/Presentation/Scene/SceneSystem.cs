@@ -114,6 +114,7 @@ namespace Syadeu.Presentation
         #region Presentation Methods
         protected override PresentationResult OnInitialize()
         {
+            CreateConsoleCommands();
             if (m_DebugMode)
             {
                 if (SceneManager.GetActiveScene().path.Equals(SceneList.Instance.MasterScene))
@@ -220,6 +221,39 @@ namespace Syadeu.Presentation
                 if (m_DebugMode) StartSceneDependences(this, sceneRef);
             }
             return base.OnStartPresentation();
+        }
+        private void CreateConsoleCommands()
+        {
+            ConsoleWindow.CreateCommand(GetSceneList, "get", "scenes");
+            ConsoleWindow.CreateCommand(LoadStartSceneCmd, "load", "scene", "start");
+            ConsoleWindow.CreateCommand(LoadSceneCmd, "load", "scene");
+
+            void GetSceneList(string cmd)
+            {
+                for (int i = 0; i < SceneList.Instance.Scenes.Count; i++)
+                {
+                    ConsoleWindow.Log($"{i}: {SceneList.Instance.Scenes[i].scenePath}");
+                }
+            }
+            void LoadStartSceneCmd(string cmd)
+            {
+                LoadStartScene(0, 1);
+            }
+            void LoadSceneCmd(string cmd)
+            {
+                if (!int.TryParse(cmd, out int sceneIdx))
+                {
+                    ConsoleWindow.Log($"Invalid argument: {cmd}", ResultFlag.Warning);
+                    return;
+                }
+                if (sceneIdx >= SceneList.Instance.Scenes.Count)
+                {
+                    ConsoleWindow.Log($"Invalid argument: {cmd}, exceeding scene index", ResultFlag.Warning);
+                    return;
+                }
+
+                LoadScene(sceneIdx, 0, 1);
+            }
         }
 
         private readonly Queue<Action> m_LoadingEvent = new Queue<Action>();

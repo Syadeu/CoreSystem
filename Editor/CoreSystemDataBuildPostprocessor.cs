@@ -16,6 +16,11 @@ namespace SyadeuEditor
         public void OnPostprocessBuild(BuildReport report)
         {
             $"{report.summary.outputPath} : is output".ToLog();
+            if (Directory.Exists($"{Path.GetDirectoryName(report.summary.outputPath)}/CoreSystem"))
+            {
+                Directory.Delete($"{Path.GetDirectoryName(report.summary.outputPath)}/CoreSystem");
+            }
+            
             Copy($"{Application.dataPath}/../CoreSystem", $"{Path.GetDirectoryName(report.summary.outputPath)}/CoreSystem");
 
             void Copy(string sourceDir, string targetDir)
