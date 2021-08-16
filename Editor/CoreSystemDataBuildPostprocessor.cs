@@ -5,9 +5,7 @@ using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 
-#if UNITY_ADDRESSABLES
 using UnityEditor.AddressableAssets.Settings;
-#endif
 
 namespace SyadeuEditor
 {
@@ -46,15 +44,13 @@ namespace SyadeuEditor
         }
     }
 
-//#if UNITY_ADDRESSABLES
-//    public sealed class PrefabBuildPreprocessor : IPreprocessBuildWithReport
-//    {
-//        public int callbackOrder => 1000;
+    //public sealed class PrefabBuildPreprocessor : IPreprocessBuildWithReport
+    //{
+    //    public int callbackOrder => 0;
 
-//        public void OnPreprocessBuild(BuildReport report)
-//        {
-//            AddressableAssetSettings.BuildPlayerContent();
-//        }
-//    }
-//#endif
+    //    public void OnPreprocessBuild(BuildReport report)
+    //    {
+    //        AddressableAssetSettings.BuildPlayerContent();
+    //    }
+    //}
 }

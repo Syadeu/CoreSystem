@@ -49,6 +49,10 @@ namespace SyadeuEditor
             EditorUtils.StringHeader("Prefab List");
             EditorUtils.SectorLine();
 
+            if (GUILayout.Button("Build"))
+            {
+                AddressableAssetSettings.BuildPlayerContent();
+            }
             if (GUILayout.Button("Rebase"))
             {
                 var objSetField = GetField("m_ObjectSettings");

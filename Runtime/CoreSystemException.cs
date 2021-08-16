@@ -12,7 +12,7 @@ namespace Syadeu
             {
                 return $"CoreSystem.{from} :: {msg}";
             }
-            return $"CoreSystem.{from} :: {msg}\n호출지점: {ex.StackTrace}";
+            return $"CoreSystem.{from} :: {msg}\n{ex.Message}\n호출지점: {ex.StackTrace}";
         }
         public static void SendCrash(CoreSystemExceptionFlag from, string msg, Exception ex)
         {
