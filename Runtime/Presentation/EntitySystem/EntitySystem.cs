@@ -57,15 +57,12 @@ namespace Syadeu.Presentation
         #region Presentation Methods
         protected override PresentationResult OnInitializeAsync()
         {
-            RequestSystem<DataContainerSystem>((other) => m_DataContainerSystem = other);
-            RequestSystem<GameObjectProxySystem>((other) => m_ProxySystem = other);
-            RequestSystem<Events.EventSystem>((other) => m_EventSystem = other);
+            RequestSystem<DataContainerSystem>(Bind);
+            RequestSystem<GameObjectProxySystem>(Bind);
+            RequestSystem<Events.EventSystem>(Bind);
 
             #region Processor Registeration
-            Type[] processors = TypeHelper.GetTypes((other) =>
-            {
-                return !other.IsAbstract && !other.IsInterface && TypeHelper.TypeOf<IProcessor>.Type.IsAssignableFrom(other);
-            });
+            Type[] processors = TypeHelper.GetTypes(ProcessorPredicate);
             for (int i = 0; i < processors.Length; i++)
             {
                 ConstructorInfo ctor = processors[i].GetConstructor(BindingFlags.Public | BindingFlags.Instance,
@@ -124,72 +121,9 @@ namespace Syadeu.Presentation
             #endregion
 
             return base.OnInitializeAsync();
+
+            static bool ProcessorPredicate(Type other) => !other.IsAbstract && !other.IsInterface && TypeHelper.TypeOf<IProcessor>.Type.IsAssignableFrom(other);
         }
-        protected override PresentationResult OnStartPresentation()
-        {
-            m_ProxySystem.OnDataObjectDestroy += M_ProxySystem_OnDataObjectDestroyAsync;
-
-            m_ProxySystem.OnDataObjectProxyCreated += M_ProxySystem_OnDataObjectProxyCreated;
-            m_ProxySystem.OnDataObjectProxyRemoved += M_ProxySystem_OnDataObjectProxyRemoved;
-
-            foreach (var item in m_EntityProcessors)
-            {
-                for (int i = 0; i < item.Value.Count; i++)
-                {
-                    item.Value[i].OnInitialize();
-                }
-            }
-            foreach (var item in m_AttributeProcessors)
-            {
-                for (int i = 0; i < item.Value.Count; i++)
-                {
-                    item.Value[i].OnInitialize();
-                }
-            }
-
-            return base.OnStartPresentation();
-        }
-
-        private void M_ProxySystem_OnDataObjectProxyCreated(ProxyTransform obj, RecycleableMonobehaviour monoObj)
-        {
-            if (!m_EntityGameObjects.TryGetValue(obj.m_Hash, out Hash entityHash) ||
-                !(m_ObjectEntities[entityHash] is IEntity entity)) return;
-
-            monoObj.m_Entity = Entity<IEntity>.GetEntity(entity.Idx);
-            ProcessEntityOnProxyCreated(this, entity, monoObj);
-        }
-        private void M_ProxySystem_OnDataObjectProxyRemoved(ProxyTransform obj, RecycleableMonobehaviour monoObj)
-        {
-            if (!m_EntityGameObjects.TryGetValue(obj.m_Hash, out Hash entityHash) ||
-                !(m_ObjectEntities[entityHash] is IEntity entity)) return;
-
-            ProcessEntityOnProxyRemoved(this, entity, monoObj);
-            monoObj.m_Entity = Entity<IEntity>.Empty;
-        }
-
-        private void M_ProxySystem_OnDataObjectDestroyAsync(ProxyTransform obj)
-        {
-            if (!m_EntityGameObjects.TryGetValue(obj.m_Hash, out Hash entityHash) ||
-                !m_ObjectEntities.ContainsKey(entityHash)) return;
-
-            ProcessEntityOnDestroy(this, m_ObjectEntities[entityHash]);
-
-            m_EntityGameObjects.Remove(obj.m_Hash);
-            m_ObjectEntities.Remove(entityHash);
-        }
-
-        protected override PresentationResult OnPresentationAsync()
-        {
-            // TODO : 이거 매우 심각한 GC 문제를 일으킴.
-            //var temp = m_ObjectEntities.Values.ToArray();
-            //for (int i = 0; i < temp.Length; i++)
-            //{
-            //    ProcessEntityOnPresentation(this, temp[i]);
-            //}
-
-            return base.OnPresentationAsync();
-        }
-
         public override void OnDispose()
         {
             var entityList = m_ObjectEntities.Values.ToArray();
@@ -269,7 +203,96 @@ namespace Syadeu.Presentation
             m_ObjectEntities.Clear();
             m_AttributeProcessors.Clear();
             m_EntityProcessors.Clear();
+
+            m_ProxySystem.OnDataObjectDestroy -= M_ProxySystem_OnDataObjectDestroyAsync;
+
+            m_ProxySystem.OnDataObjectProxyCreated -= M_ProxySystem_OnDataObjectProxyCreated;
+            m_ProxySystem.OnDataObjectProxyRemoved -= M_ProxySystem_OnDataObjectProxyRemoved;
         }
+
+        #region Binds
+
+        private void Bind(DataContainerSystem other)
+        {
+            m_DataContainerSystem = other;
+        }
+        private void Bind(GameObjectProxySystem other)
+        {
+            m_ProxySystem = other;
+
+            m_ProxySystem.OnDataObjectDestroy += M_ProxySystem_OnDataObjectDestroyAsync;
+
+            m_ProxySystem.OnDataObjectProxyCreated += M_ProxySystem_OnDataObjectProxyCreated;
+            m_ProxySystem.OnDataObjectProxyRemoved += M_ProxySystem_OnDataObjectProxyRemoved;
+        }
+        private void Bind(Events.EventSystem other)
+        {
+            m_EventSystem = other;
+        }
+
+        #endregion
+
+        protected override PresentationResult OnStartPresentation()
+        {
+            foreach (var item in m_EntityProcessors)
+            {
+                for (int i = 0; i < item.Value.Count; i++)
+                {
+                    item.Value[i].OnInitialize();
+                }
+            }
+            foreach (var item in m_AttributeProcessors)
+            {
+                for (int i = 0; i < item.Value.Count; i++)
+                {
+                    item.Value[i].OnInitialize();
+                }
+            }
+
+            return base.OnStartPresentation();
+        }
+
+        private void M_ProxySystem_OnDataObjectProxyCreated(ProxyTransform obj, RecycleableMonobehaviour monoObj)
+        {
+            if (!m_EntityGameObjects.TryGetValue(obj.m_Hash, out Hash entityHash) ||
+                !(m_ObjectEntities[entityHash] is IEntity entity)) return;
+
+            monoObj.m_Entity = Entity<IEntity>.GetEntity(entity.Idx);
+            ProcessEntityOnProxyCreated(this, entity, monoObj);
+        }
+        private void M_ProxySystem_OnDataObjectProxyRemoved(ProxyTransform obj, RecycleableMonobehaviour monoObj)
+        {
+            if (!m_EntityGameObjects.TryGetValue(obj.m_Hash, out Hash entityHash) ||
+                !(m_ObjectEntities[entityHash] is IEntity entity)) return;
+
+            ProcessEntityOnProxyRemoved(this, entity, monoObj);
+            monoObj.m_Entity = Entity<IEntity>.Empty;
+        }
+
+        private void M_ProxySystem_OnDataObjectDestroyAsync(ProxyTransform obj)
+        {
+            if (!m_EntityGameObjects.TryGetValue(obj.m_Hash, out Hash entityHash) ||
+                !m_ObjectEntities.ContainsKey(entityHash)) return;
+
+            ProcessEntityOnDestroy(this, m_ObjectEntities[entityHash]);
+
+            m_EntityGameObjects.Remove(obj.m_Hash);
+            m_ObjectEntities.Remove(entityHash);
+        }
+
+        protected override PresentationResult OnPresentationAsync()
+        {
+            // TODO : 이거 매우 심각한 GC 문제를 일으킴.
+            //var temp = m_ObjectEntities.Values.ToArray();
+            //for (int i = 0; i < temp.Length; i++)
+            //{
+            //    ProcessEntityOnPresentation(this, temp[i]);
+            //}
+
+            return base.OnPresentationAsync();
+        }
+
+        
         #endregion
 
 #line hidden
