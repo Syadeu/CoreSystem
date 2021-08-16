@@ -279,7 +279,7 @@ namespace Syadeu.Presentation
             get
             {
                 if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
-                return Render.RenderSystem.LocalToWorldMatrix(Ref.m_Translation, Ref.m_Rotation);
+                return float4x4.TRS(Ref.m_Translation, Ref.m_Rotation, Ref.m_Scale);
             }
         }
         public float4x4 worldToLocalMatrix
@@ -287,7 +287,7 @@ namespace Syadeu.Presentation
             get
             {
                 if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
-                return math.inverse(Render.RenderSystem.LocalToWorldMatrix(Ref.m_Translation, Ref.m_Rotation));
+                return math.inverse(float4x4.TRS(Ref.m_Translation, Ref.m_Rotation, Ref.m_Scale));
             }
         }
 

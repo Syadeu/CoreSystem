@@ -14,12 +14,12 @@ namespace Syadeu.Presentation.Map
         [SerializeField] internal int m_AgentType = 0;
         [SerializeField] private Vector3 m_Center = Vector3.zero;
         [SerializeField] private Vector3 m_Size = Vector3.one;
-        internal Bounds m_Bounds;
+
+        internal Bounds Bounds => new Bounds(m_Center, m_Size);
 
         private void Awake()
         {
             m_NavMeshData = new NavMeshData();
-            m_Bounds = new Bounds(m_Center, m_Size);
         }
         private void OnEnable()
         {

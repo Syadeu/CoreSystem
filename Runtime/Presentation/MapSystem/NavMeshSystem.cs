@@ -17,7 +17,7 @@ namespace Syadeu.Presentation.Map
 {
     public sealed class NavMeshSystem : PresentationSystemEntity<NavMeshSystem>
     {
-        public override bool EnableBeforePresentation => false;
+        public override bool EnableBeforePresentation => true;
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
@@ -67,8 +67,11 @@ namespace Syadeu.Presentation.Map
             
             foreach (NavMeshComponent agent in m_Agents)
             {
-                "bake".ToLog();
-                NavMeshBuilder.UpdateNavMeshDataAsync(agent.m_NavMeshData, NavMesh.GetSettingsByID(agent.m_AgentType), m_Sources, agent.m_Bounds);
+                $"bake: {m_Sources.Count}".ToLog();
+                Bounds bounds = agent.Bounds;
+
+                NavMeshBuilder.UpdateNavMeshDataAsync(agent.m_NavMeshData, NavMesh.GetSettingsByID(agent.m_AgentType), m_Sources, 
+                    QuantizedBounds(bounds.center, bounds.size));
             }
 
             m_RequireReload = false;
@@ -89,7 +92,7 @@ namespace Syadeu.Presentation.Map
 
             component.m_Registered = true;
             m_Agents.Add(component);
-            m_RequireReload = true;
+            NavMeshBuilder.UpdateNavMeshDataAsync(component.m_NavMeshData, NavMesh.GetSettingsByID(component.m_AgentType), m_Sources, component.Bounds);
             "baker in".ToLog();
         }
         public void RemoveBaker(NavMeshComponent component)
@@ -154,6 +157,8 @@ namespace Syadeu.Presentation.Map
 
                             sources[i] = data;
                         }
+
+                        $"obstacle in at {tr.position}:{meshFilter.Length}".ToLog();
                     }
                     else
                     {
@@ -182,6 +187,19 @@ namespace Syadeu.Presentation.Map
             m_Sources.Clear();
             m_Obstacles.Remove(obstacle);
             m_RequireReload = true;
+        }
+
+        private static float3 Quantize(float3 v, float3 quant)
+        {
+            float x = quant.x * math.floor(v.x / quant.x);
+            float y = quant.y * math.floor(v.y / quant.y);
+            float z = quant.z * math.floor(v.z / quant.z);
+            return new float3(x, y, z);
+        }
+        private static Bounds QuantizedBounds(Vector3 center, Vector3 size)
+        {
+            // Quantize the bounds to update only when theres a 10% change in size
+            return new Bounds(Quantize(center, 0.1f * size), size);
         }
     }
 }
