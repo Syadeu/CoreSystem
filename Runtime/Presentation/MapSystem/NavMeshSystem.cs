@@ -4,7 +4,6 @@ using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Mathematics;
@@ -12,6 +11,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.AI;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace Syadeu.Presentation.Map
 {
@@ -67,6 +67,7 @@ namespace Syadeu.Presentation.Map
             
             foreach (NavMeshComponent agent in m_Agents)
             {
+                "bake".ToLog();
                 NavMeshBuilder.UpdateNavMeshDataAsync(agent.m_NavMeshData, NavMesh.GetSettingsByID(agent.m_AgentType), m_Sources, agent.m_Bounds);
             }
 
@@ -87,6 +88,9 @@ namespace Syadeu.Presentation.Map
             component.m_Handle = NavMesh.AddNavMeshData(component.m_NavMeshData);
 
             component.m_Registered = true;
+            m_Agents.Add(component);
+            m_RequireReload = true;
+            "baker in".ToLog();
         }
         public void RemoveBaker(NavMeshComponent component)
         {
@@ -98,7 +102,7 @@ namespace Syadeu.Presentation.Map
             }
 
             NavMesh.RemoveNavMeshData(component.m_Handle);
-
+            m_Agents.Remove(component);
             component.m_Registered = false;
         }
 
@@ -113,16 +117,22 @@ namespace Syadeu.Presentation.Map
                     $"This entity({obstacle.Parent.Name}) is not valid. Cannot be a obstacle.");
                 return;
             }
-            if (setting.m_RefPrefab.Asset == null)
+
+            AsyncOperationHandle<GameObject> oper;
+            if (setting.m_RefPrefab.IsDone)
             {
-                //Addressables.LoadAssetAsync<UnityEngine.Object>(setting.m_RefPrefab);
-                CoreSystem.Logger.LogError(Channel.Presentation,
-                    $"This entity({obstacle.Parent.Name}) has null prefab. Cannot be a obstacle.");
-                return;
+                 oper = Addressables.LoadAssetAsync<GameObject>(setting.m_RefPrefab);
+            }
+            else
+            {
+                oper = setting.m_RefPrefab.LoadAssetAsync<GameObject>();
             }
 
-            if (setting.m_RefPrefab.Asset is GameObject gameObject)
+            oper.Completed += Oper_Completed;
+            void Oper_Completed(AsyncOperationHandle<GameObject> obj)
             {
+                GameObject gameObject = obj.Result;
+
                 if (obstacle.m_Sources == null)
                 {
                     NavMeshBuildSource[] sources;
@@ -160,63 +170,18 @@ namespace Syadeu.Presentation.Map
 
                     obstacle.m_Sources = sources;
                 }
-            }
-            else
-            {
-                CoreSystem.Logger.LogError(Channel.Presentation,
-                    "This prefab is not a GameObject. Cannot be a obstacle.");
-                return;
-            }
 
-            m_Sources.AddRange(obstacle.m_Sources);
-            m_Obstacles.Add(obstacle);
-            m_RequireReload = true;
+                m_Sources.AddRange(obstacle.m_Sources);
+                m_Obstacles.Add(obstacle);
+                m_RequireReload = true;
+            }
         }
+
         public void RemoveObstacle(NavObstacleAttribute obstacle)
         {
             m_Sources.Clear();
             m_Obstacles.Remove(obstacle);
             m_RequireReload = true;
-        }
-    }
-
-    public sealed class NavMeshComponent : MonoBehaviour
-    {
-        internal bool m_Registered = false;
-        internal NavMeshData m_NavMeshData;
-        internal NavMeshDataInstance m_Handle;
-
-        [SerializeField] internal int m_AgentType = 0;
-        [SerializeField] private Vector3 m_Center = Vector3.zero;
-        [SerializeField] private Vector3 m_Size = Vector3.one;
-        internal Bounds m_Bounds;
-
-        private void Awake()
-        {
-            m_NavMeshData = new NavMeshData();
-            m_Bounds = new Bounds(m_Center, m_Size);
-        }
-        private void OnEnable()
-        {
-            CoreSystem.StartUnityUpdate(this, Authoring(true));
-        }
-        private void OnDisable()
-        {
-            CoreSystem.StartUnityUpdate(this, Authoring(false));
-        }
-
-        private IEnumerator Authoring(bool enable)
-        {
-            while (!PresentationSystem<NavMeshSystem>.IsValid())
-            {
-                yield return null;
-            }
-
-            if (enable)
-            {
-                PresentationSystem<NavMeshSystem>.System.AddBaker(this);
-            }
-            else PresentationSystem<NavMeshSystem>.System.RemoveBaker(this);
         }
     }
 }
