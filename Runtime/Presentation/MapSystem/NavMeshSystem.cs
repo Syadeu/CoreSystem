@@ -106,10 +106,16 @@ namespace Syadeu.Presentation.Map
             CoreSystem.Logger.ThreadBlock(nameof(AddObstacle), ThreadInfo.Unity);
 
             var setting = tr.prefab.GetObjectSetting();
-            if (!setting.m_RefPrefab.IsValid() || setting.m_RefPrefab.Asset == null)
+            if (!setting.m_RefPrefab.IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Presentation,
-                    "This prefab is null. Cannot be a obstacle.");
+                    $"This entity({obstacle.Parent.Name}) is not valid. Cannot be a obstacle.");
+                return;
+            }
+            if (setting.m_RefPrefab.Asset == null)
+            {
+                CoreSystem.Logger.LogError(Channel.Presentation,
+                    $"This entity({obstacle.Parent.Name}) has null prefab. Cannot be a obstacle.");
                 return;
             }
 
