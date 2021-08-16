@@ -1,7 +1,9 @@
 ﻿using System;
+using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation.Internal
 {
+    [RequireImplementors]
     internal interface IProcessor : IDisposable
     {
         /// <summary>

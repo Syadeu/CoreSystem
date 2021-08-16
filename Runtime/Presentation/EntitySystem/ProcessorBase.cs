@@ -4,9 +4,11 @@ using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Internal;
 using System;
 using Unity.Mathematics;
+using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation
 {
+    [RequireDerived]
     public abstract class ProcessorBase
     {
         internal EntitySystem m_EntitySystem;

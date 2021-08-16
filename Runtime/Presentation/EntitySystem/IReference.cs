@@ -6,10 +6,14 @@ using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Map;
 using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation
 {
-    [JsonConverter(typeof(ReferenceJsonConverter))]
+    [RequiredInterface(typeof(IList<>)), RequiredInterface(typeof(IReadOnlyList<>))]
+    [JsonConverter(typeof(ReferenceJsonConverter)), RequireImplementors]
     public interface IReference : IValidation
     {
         Hash Hash { get; }
@@ -33,6 +37,7 @@ namespace Syadeu.Presentation
         {
             m_Hash = hash;
         }
+        [Preserve]
         public Reference(ObjectBase obj)
         {
             m_Hash = obj.Hash;
@@ -78,17 +83,11 @@ namespace Syadeu.Presentation
         public static implicit operator Hash(Reference<T> a) => a.m_Hash;
         public static implicit operator Reference(Reference<T> a) => new Reference(a.m_Hash);
 
-        public static void AOTResolver()
+        [Preserve]
+        static void AOTCodeGeneration()
         {
-            Reference<MapDataEntity> a0 = new Reference<MapDataEntity>();
-            Reference<SceneDataEntity> a1 = new Reference<SceneDataEntity>();
-            Reference<ActorEntity> a2 = new Reference<ActorEntity>();
-            Reference<EntityBase> a3 = new Reference<EntityBase>();
-            Reference<EntityDataBase> a4 = new Reference<EntityDataBase>();
-            Reference<ObjectEntity> a5 = new Reference<ObjectEntity>();
-            Reference<UIObjectEntity> a6 = new Reference<UIObjectEntity>();
-
-            throw new InvalidOperationException();
+            Reference<T>[] a0 = new Reference<T>[0];
+            List<Reference<T>> a1 = new List<Reference<T>>();
         }
     }
 }

@@ -22,6 +22,7 @@ using Syadeu.Database;
 using Syadeu.Database.Lua;
 using Syadeu.Presentation;
 
+[assembly: UnityEngine.Scripting.Preserve]
 namespace Syadeu
 {
     [StaticManagerDescription(

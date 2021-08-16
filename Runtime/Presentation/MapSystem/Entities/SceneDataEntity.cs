@@ -20,7 +20,7 @@ namespace Syadeu.Presentation.Map
 
         [JsonIgnore] public bool IsMapDataCreated { get; private set; } = false;
         [JsonIgnore] public IReadOnlyList<Reference<MapDataEntity>> MapData => m_MapData;
-        [JsonIgnore] public List<EntityData<MapDataEntity>> CreatedMapData { get; } = new List<EntityData<MapDataEntity>>();
+        [JsonIgnore] public EntityData<MapDataEntity>[] CreatedMapData { get; private set; }
 
         [JsonIgnore] public bool DestroyChildOnDestroy { get; set; } = true;
 
@@ -44,10 +44,11 @@ namespace Syadeu.Presentation.Map
         {
             if (IsMapDataCreated) throw new System.Exception();
 
+            CreatedMapData = new EntityData<MapDataEntity>[m_MapData.Length];
             for (int i = 0; i < m_MapData.Length; i++)
             {
                 EntityData<IEntityData> temp = entitySystem.CreateObject(m_MapData[i]);
-                CreatedMapData.Add(EntityData<MapDataEntity>.GetEntityData(temp.Idx));
+                CreatedMapData[i] = EntityData<MapDataEntity>.GetEntityData(temp.Idx);
             }
 
             IsMapDataCreated = true;
@@ -56,14 +57,14 @@ namespace Syadeu.Presentation.Map
         {
             if (!IsMapDataCreated) throw new System.Exception();
 
-            for (int i = 0; i < CreatedMapData.Count; i++)
+            for (int i = 0; i < CreatedMapData.Length; i++)
             {
                 MapDataEntity mapData = CreatedMapData[i];
                 mapData.DestroyChildOnDestroy = DestroyChildOnDestroy;
                 CreatedMapData[i].Destroy();
             }
 
-            CreatedMapData.Clear();
+            CreatedMapData = null;
             IsMapDataCreated = false;
         }
     }

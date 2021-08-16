@@ -46,15 +46,15 @@ namespace SyadeuEditor
         }
     }
 
-#if UNITY_ADDRESSABLES
-    public sealed class PrefabBuildPreprocessor : IPreprocessBuildWithReport
-    {
-        public int callbackOrder => 1000;
+//#if UNITY_ADDRESSABLES
+//    public sealed class PrefabBuildPreprocessor : IPreprocessBuildWithReport
+//    {
+//        public int callbackOrder => 1000;
 
-        public void OnPreprocessBuild(BuildReport report)
-        {
-            AddressableAssetSettings.BuildPlayerContent();
-        }
-    }
-#endif
+//        public void OnPreprocessBuild(BuildReport report)
+//        {
+//            AddressableAssetSettings.BuildPlayerContent();
+//        }
+//    }
+//#endif
 }
