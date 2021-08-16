@@ -13,7 +13,6 @@ using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation
 {
-    [RequiredInterface(typeof(IList<>)), RequiredInterface(typeof(IReadOnlyList<>))]
     [JsonConverter(typeof(ReferenceJsonConverter)), RequireImplementors]
     public interface IReference : IValidation
     {
