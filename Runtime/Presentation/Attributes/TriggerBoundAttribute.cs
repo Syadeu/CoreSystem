@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation.Attributes
 {
