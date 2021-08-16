@@ -521,12 +521,6 @@ namespace SyadeuEditor.Presentation.Map
             #region Map data selector
             using (new EditorUtils.BoxBlock(Color.gray))
             {
-                if (GUILayout.Button("Add"))
-                {
-                    m_SelectedMapData.Add(Reference<MapDataEntity>.Empty);
-                    m_LoadedMapData.Add(null);
-                }
-
                 for (int i = 0; i < m_SelectedMapData.Count; i++)
                 {
                     int index = i;
@@ -545,8 +539,6 @@ namespace SyadeuEditor.Presentation.Map
                         {
                             m_LoadedMapData[index].Dispose();
                             m_LoadedMapData[index] = new MapData(m_PreviewFolder, mapData);
-
-                            SceneView.lastActiveSceneView.Repaint();
                         }
 
                         SceneView.lastActiveSceneView.Repaint();
@@ -579,6 +571,33 @@ namespace SyadeuEditor.Presentation.Map
                     }
                     EditorGUILayout.EndHorizontal();
                 }
+
+                EditorGUILayout.BeginHorizontal();
+                ReflectionHelperEditor.DrawReferenceSelector("Map data: ", (hash) =>
+                {
+                    var newRef = new Reference<MapDataEntity>(hash);
+                    if (m_SelectedMapData.Contains(newRef))
+                    {
+                        "cannot load that already loaded".ToLog();
+                        return;
+                    }
+
+                    MapDataEntity mapData = newRef.GetObject();
+
+                    m_SelectedMapData.Add(newRef);
+                    m_LoadedMapData.Add(new MapData(m_PreviewFolder, mapData));
+
+                    SceneView.lastActiveSceneView.Repaint();
+                    Tools.hidden = true;
+
+                }, Reference<MapDataEntity>.Empty, TypeHelper.TypeOf<MapDataEntity>.Type);
+
+                EditorGUI.BeginDisabledGroup(true);
+                GUILayout.Toggle(false, "E", EditorUtils.MiniButton, GUILayout.Width(20));
+                GUILayout.Button("-", GUILayout.Width(20));
+                EditorGUI.EndDisabledGroup();
+
+                EditorGUILayout.EndHorizontal();
             }
             #endregion
 
