@@ -6,12 +6,14 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using UnityEngine;
+using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation
 {
     /// <summary>
     /// <see cref="EntitySystem"/>의 모든 객체들이 참조하는 가장 기본 abstract 입니다.
     /// </summary>
+    [RequireDerived]
     public abstract class ObjectBase : ICloneable, IDisposable
     {
         const string c_NameBase = "New {0}";

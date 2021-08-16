@@ -90,7 +90,7 @@ namespace Syadeu.Presentation
             TriggerBoundAttribute[] atts = ev.entity.GetAttributes<TriggerBoundAttribute>();
             if (atts == null) return;
 
-            using (new CoreSystem.LogTimer(nameof(OnTransformChangedEventHandler)))
+            using (new CoreSystem.LogTimer(nameof(OnTransformChangedEventHandler), Channel.Entity))
             {
                 for (int i = 0; i < atts.Length; i++)
                 {
@@ -130,22 +130,20 @@ namespace Syadeu.Presentation
             }
             static void TryTrigger(in EventSystem eventSystem, in Entity<IEntity> from, in Entity<IEntity> to)
             {
-                var fromAtt = from.GetAttribute<TriggerBoundAttribute>();
-                var toAtt = to.GetAttribute<TriggerBoundAttribute>();
+                TriggerBoundAttribute fromAtt = from.GetAttribute<TriggerBoundAttribute>();
+                TriggerBoundAttribute toAtt = to.GetAttribute<TriggerBoundAttribute>();
 
-                if (!CanTriggerable(in fromAtt, in to)) return;
-
-                AABB fromAABB = fromAtt.m_Inverse ? new AABB(fromAtt.m_Center + from.transform.position, fromAtt.m_Center) : from.transform.aabb;
-                AABB toAABB = toAtt.m_Inverse ? new AABB(toAtt.m_Center + to.transform.position, toAtt.m_Center) : to.transform.aabb;
+                AABB fromAABB = fromAtt.m_MatchWithAABB ? from.transform.aabb : new AABB(fromAtt.m_Center + from.transform.position, fromAtt.m_Center);
+                AABB toAABB = toAtt.m_MatchWithAABB ? to.transform.aabb : new AABB(toAtt.m_Center + to.transform.position, toAtt.m_Center);
                 
                 if (fromAABB.Intersect(toAABB))
                 {
-                    if (!fromAtt.m_Triggered.Contains(to))
+                    if (CanTriggerable(in fromAtt, in to) && !fromAtt.m_Triggered.Contains(to))
                     {
                         fromAtt.m_Triggered.Add(to);
                         eventSystem.PostEvent(EntityTriggerBoundEvent.GetEvent(from, to, true));
                     }
-                    if (!toAtt.m_Triggered.Contains(from))
+                    if (CanTriggerable(in toAtt, in from) && !toAtt.m_Triggered.Contains(from))
                     {
                         toAtt.m_Triggered.Add(from);
                         eventSystem.PostEvent(EntityTriggerBoundEvent.GetEvent(to, from, true));
@@ -153,12 +151,12 @@ namespace Syadeu.Presentation
                 }
                 else
                 {
-                    if (fromAtt.m_Triggered.Contains(to))
+                    if (CanTriggerable(in fromAtt, in to) && fromAtt.m_Triggered.Contains(to))
                     {
                         fromAtt.m_Triggered.Remove(to);
                         eventSystem.PostEvent(EntityTriggerBoundEvent.GetEvent(from, to, false));
                     }
-                    if (toAtt.m_Triggered.Contains(from))
+                    if (CanTriggerable(in toAtt, in from) && toAtt.m_Triggered.Contains(from))
                     {
                         toAtt.m_Triggered.Remove(from);
                         eventSystem.PostEvent(EntityTriggerBoundEvent.GetEvent(to, from, false));

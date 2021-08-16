@@ -2,9 +2,11 @@
 using Newtonsoft.Json.Linq;
 using System;
 using Unity.Mathematics;
+using UnityEngine.Scripting;
 
 namespace Syadeu.Database.Converters
 {
+    [Preserve]
     internal sealed class QuaternionJsonConvereter : JsonConverter<quaternion>
     {
         public override bool CanRead => true;

@@ -43,7 +43,6 @@ namespace Syadeu.Presentation.Render
 
         private JobHandle m_FrustumJob;
 		private CameraFrustum m_CameraFrustum;
-        //private CameraFrustum m_CopiedFrustum;
 
         #region Presentation Methods
 
@@ -52,13 +51,7 @@ namespace Syadeu.Presentation.Render
             m_CameraFrustum = new CameraFrustum(new CameraData());
 
             m_Camera = new ObClass<Camera>(ObValueDetection.Changed);
-            m_Camera.OnValueChange += (from, to) =>
-            {
-                OnCameraChanged.Invoke(from, to);
-                if (to == null) return;
-
-                m_Matrix4x4 = GetCameraMatrix4X4(to);
-            };
+            m_Camera.OnValueChange += OnCameraChangedHandler;
 
             CoreSystem.Instance.OnRender -= Instance_OnRender;
             CoreSystem.Instance.OnRender += Instance_OnRender;
@@ -67,11 +60,18 @@ namespace Syadeu.Presentation.Render
         }
         public override void OnDispose()
         {
+            m_Camera.OnValueChange -= OnCameraChangedHandler;
             CoreSystem.Instance.OnRender -= Instance_OnRender;
-            m_CameraFrustum.Dispose();
-            //m_CopiedFrustum.Dispose();
-        }
 
+            m_CameraFrustum.Dispose();
+        }
+        private void OnCameraChangedHandler(Camera from, Camera to)
+        {
+            OnCameraChanged.Invoke(from, to);
+            if (to == null) return;
+
+            m_Matrix4x4 = GetCameraMatrix4X4(to);
+        }
         private void Instance_OnRender()
         {
             OnRender?.Invoke();

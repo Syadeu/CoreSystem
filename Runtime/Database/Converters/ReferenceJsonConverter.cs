@@ -3,9 +3,11 @@ using Newtonsoft.Json.Linq;
 using Syadeu.Internal;
 using Syadeu.Presentation;
 using System;
+using UnityEngine.Scripting;
 
 namespace Syadeu.Database.Converters
 {
+    [Preserve]
     internal sealed class ReferenceJsonConverter : JsonConverter<IReference>
     {
         public override bool CanWrite => false;

@@ -185,10 +185,13 @@ namespace Syadeu.Database
                     continue;
                 }
 
-                header.Values.Add(split[0].Trim(), ToValue(split[0].Trim(), split[1].Trim()));
-
-                var temp = header.Values[split[0].Trim()];
-                $"added {temp.Name}({temp.Type}) : {temp.GetValue()}".ToLog();
+                string key = split[0].Trim();
+                if (!header.Values.ContainsKey(key))
+                {
+                    header.Values.Add(key, ToValue(split[0].Trim(), split[1].Trim()));
+                }
+                else CoreSystem.Logger.LogWarning(Channel.Data,
+                    $"Same value key({key}) has been write at {Name}, header({headerTxt}). This is not allowed.");
             }
 
             return header;

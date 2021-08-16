@@ -21,14 +21,15 @@ namespace Syadeu.Presentation
         private static readonly long s_TransformSize = UnsafeUtility.SizeOf<ProxyTransformData>();
 
         #region Safeties
+#if UNITY_EDITOR
         public AtomicSafetyHandle m_Safety;
         // Handle to tell if the container has been disposed.
         // This is a managed object. It can be passed along as the job can't dispose the container, 
         // but needs to be (re)set to null on schedule to prevent job access to a managed object.
         [NativeSetClassTypeToNullOnSchedule] public DisposeSentinel m_DisposeSentinel;
+#endif
         [NativeSetClassTypeToNullOnSchedule] public Semaphore m_PararellSemaphore;
         [NativeSetClassTypeToNullOnSchedule] public Semaphore m_WriteSemaphore;
-        // Keep track of which memory was allocated (Allocator.Temp/TempJob/Persistent).
         #endregion
 
         public struct UnsafeList : IDisposable
@@ -89,7 +90,9 @@ namespace Syadeu.Presentation
         }
         public void Dispose()
         {
+#if UNITY_EDITOR
             DisposeSentinel.Dispose(ref m_Safety, ref m_DisposeSentinel);
+#endif
 
             (*m_UnsafeList).Dispose();
             UnsafeUtility.MemClear(m_UnsafeList, UnsafeUtility.SizeOf<UnsafeList>());
@@ -111,9 +114,9 @@ namespace Syadeu.Presentation
             array.m_UnsafeList->m_Allocator = allocator;
             array.m_AllocatorLabel = allocator;
 
-            // Create a dispose sentinel to track memory leaks. 
-            // An atomic safety handle is also created automatically.
+#if UNITY_EDITOR
             DisposeSentinel.Create(out array.m_Safety, out array.m_DisposeSentinel, 1, allocator);
+#endif
             array.m_PararellSemaphore = new Semaphore(0, 1);
             array.m_WriteSemaphore = new Semaphore(0, 1);
             array.m_PararellSemaphore.Release();
@@ -122,8 +125,6 @@ namespace Syadeu.Presentation
 
         private void Incremental(uint length)
         {
-            AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
-
             long transformShiftSize = s_TransformSize * (m_UnsafeList->m_Length + length);
 
             var transformBuffer = (ProxyTransformData*)UnsafeUtility.Malloc(transformShiftSize, UnsafeUtility.AlignOf<ProxyTransformData>(), m_AllocatorLabel);
@@ -159,7 +160,9 @@ namespace Syadeu.Presentation
             float3 translation, quaternion rotation, float3 scale, bool enableCull,
             float3 center, float3 size)
         {
+#if UNITY_EDITOR
             AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
+#endif
             m_WriteSemaphore.WaitOne();
 
             int index = -1;
@@ -217,7 +220,9 @@ namespace Syadeu.Presentation
         }
         public void Remove(ProxyTransform transform)
         {
+#if UNITY_EDITOR
             AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
+#endif
             m_WriteSemaphore.WaitOne();
 
             //Hash index = transform.index;
@@ -290,15 +295,14 @@ namespace Syadeu.Presentation
         internal int m_Generation;
         internal PrefabReference m_Prefab;
 
-        
         internal float3 m_Translation;
         internal float3 m_Scale;
         internal float3 m_Center;
         internal float3 m_Size;
 
-        
         internal quaternion m_Rotation;
 
+#pragma warning disable IDE1006 // Naming Styles
         public bool destroyed
         {
             get
@@ -323,6 +327,7 @@ namespace Syadeu.Presentation
             set => m_Scale = value;
         }
         public AABB aabb => new AABB(m_Center + m_Translation, m_Size).Rotation(m_Rotation);
+#pragma warning restore IDE1006 // Naming Styles
 
         public AABB GetAABB()
         {

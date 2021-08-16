@@ -1,9 +1,11 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Utilities;
 using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation.Attributes;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation.Entities
 {
@@ -41,6 +43,21 @@ namespace Syadeu.Presentation.Entities
             if (transform.isDestroyed || !m_IsCreated || PresentationSystem<GameObjectProxySystem>.System.Disposed) return false;
 
             return true;
+        }
+
+        [Preserve]
+        static void AOTCodeGeneration()
+        {
+            AotHelper.EnsureType<Reference<EntityBase>>();
+            AotHelper.EnsureList<Reference<EntityBase>>();
+
+            AotHelper.EnsureType<Entity<EntityBase>>();
+            AotHelper.EnsureList<Entity<EntityBase>>();
+
+            AotHelper.EnsureType<EntityData<EntityBase>>();
+            AotHelper.EnsureList<EntityData<EntityBase>>();
+
+            AotHelper.EnsureList<EntityBase>();
         }
     }
 }

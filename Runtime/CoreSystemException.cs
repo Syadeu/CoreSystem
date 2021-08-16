@@ -12,13 +12,13 @@ namespace Syadeu
             {
                 return $"CoreSystem.{from} :: {msg}";
             }
-            return $"CoreSystem.{from} :: {msg}\n호출지점: {ex.StackTrace}";
+            return $"CoreSystem.{from} :: {msg}\n{ex.Message}\n호출지점: {ex.StackTrace}";
         }
         public static void SendCrash(CoreSystemExceptionFlag from, string msg, Exception ex)
         {
             UnityEngine.Debug.LogError(TextBuilder(from, msg, ex));
 #if !UNITY_EDITOR
-            if (SyadeuSettings.Instance.m_CrashAfterException)
+            if (CoreSystemSettings.Instance.m_CrashAfterException)
             {
                 Utils.ForceCrash(ForcedCrashCategory.FatalError);
             }

@@ -1,11 +1,19 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Utilities;
 using Syadeu.Database;
 using Syadeu.Database.Converters;
 using Syadeu.Internal;
+using Syadeu.Presentation.Actor;
+using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Map;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation
 {
-    [JsonConverter(typeof(ReferenceJsonConverter))]
+    [JsonConverter(typeof(ReferenceJsonConverter)), RequireImplementors]
     public interface IReference : IValidation
     {
         Hash Hash { get; }
@@ -29,6 +37,7 @@ namespace Syadeu.Presentation
         {
             m_Hash = hash;
         }
+        [Preserve]
         public Reference(ObjectBase obj)
         {
             m_Hash = obj.Hash;
@@ -73,5 +82,14 @@ namespace Syadeu.Presentation
         public static implicit operator T(Reference<T> a) => a.GetObject();
         public static implicit operator Hash(Reference<T> a) => a.m_Hash;
         public static implicit operator Reference(Reference<T> a) => new Reference(a.m_Hash);
+
+        [Preserve]
+        static void AOTCodeGeneration()
+        {
+            AotHelper.EnsureType<Reference<T>>();
+            AotHelper.EnsureList<Reference<T>>();
+
+            throw new InvalidOperationException();
+        }
     }
 }

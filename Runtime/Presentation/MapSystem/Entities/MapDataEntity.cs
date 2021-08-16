@@ -1,10 +1,12 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Utilities;
 using Syadeu.Database;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using Syadeu.ThreadSafe;
 using System;
 using Unity.Mathematics;
+using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation.Map
 {
@@ -15,7 +17,7 @@ namespace Syadeu.Presentation.Map
         {
             [JsonProperty(Order = 0, PropertyName = "Object")] public Reference<EntityBase> m_Object;
             [JsonProperty(Order = 1, PropertyName = "Translation")] public float3 m_Translation;
-            [JsonProperty(Order = 2, PropertyName = "Rotation")] public quaternion m_Rotation;
+            [JsonProperty(Order = 2, PropertyName = "Rotation")] public quaternion m_Rotation = quaternion.identity;
             [JsonProperty(Order = 3, PropertyName = "Scale")] public float3 m_Scale;
             [JsonProperty(Order = 4, PropertyName = "EnableCull")] public bool m_EnableCull;
 
@@ -63,6 +65,17 @@ namespace Syadeu.Presentation.Map
             clone.DestroyChildOnDestroy = true;
 
             return clone;
+        }
+
+        [Preserve]
+        static void AOTCodeGeneration()
+        {
+            AotHelper.EnsureType<Reference<MapDataEntity>>();
+            AotHelper.EnsureList<Reference<MapDataEntity>>();
+            AotHelper.EnsureType<EntityData<MapDataEntity>>();
+            AotHelper.EnsureList<EntityData<MapDataEntity>>();
+            AotHelper.EnsureType<MapDataEntity>();
+            AotHelper.EnsureList<MapDataEntity>();
         }
     }
     public sealed class MapDataProcessor : EntityDataProcessor<MapDataEntity>

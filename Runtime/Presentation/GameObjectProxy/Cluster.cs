@@ -1,14 +1,10 @@
-﻿using log4net.Repository.Hierarchy;
-using Syadeu.Database;
+﻿using Syadeu.Database;
 using Syadeu.Presentation.Render;
 using System;
-using System.Runtime.InteropServices;
-using System.Threading;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
-using UnityEngine.UIElements;
 
 namespace Syadeu.Presentation
 {
@@ -210,11 +206,15 @@ namespace Syadeu.Presentation
 
             UnsafeUtility.MemClear(m_Buffer, UnsafeUtility.SizeOf<ClusterGroup<T>>() * length);
 
+#if UNITY_EDITOR
             DisposeSentinel.Create(out m_Safety, out m_DisposeSentinel, 1, Allocator.Persistent);
+#endif
         }
         public void Dispose()
         {
+#if UNITY_EDITOR
             DisposeSentinel.Dispose(ref m_Safety, ref m_DisposeSentinel);
+#endif
 
             for (int i = 0; i < m_Length; i++)
             {
@@ -256,8 +256,8 @@ namespace Syadeu.Presentation
 #endif
 
             ParallelWriter writer;
-            writer.m_Safety = m_Safety;
 #if UNITY_EDITOR
+            writer.m_Safety = m_Safety;
             AtomicSafetyHandle.UseSecondaryVersion(ref writer.m_Safety);
 #endif
             writer.m_Buffer = m_Buffer;
@@ -586,7 +586,6 @@ namespace Syadeu.Presentation
     }
 
     [BurstCompile]
-    //[StructLayout(LayoutKind.Explicit, Size = 5)]
     unsafe internal struct ClusterItem<T>
     {
         public bool m_IsOccupied;
@@ -594,7 +593,6 @@ namespace Syadeu.Presentation
     }
 
     [BurstCompile(CompileSynchronously = true)]
-    //[StructLayout(LayoutKind.Explicit, Size = 8)]
     public readonly struct ClusterID : IEquatable<ClusterID>
     {
         public static readonly ClusterID Empty = new ClusterID(-1, -1);

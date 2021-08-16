@@ -1,10 +1,12 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Utilities;
 using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation.Entities
 {
@@ -139,5 +141,15 @@ namespace Syadeu.Presentation.Entities
             return entity;
         }
         public override sealed string ToString() => Name;
+
+        [Preserve]
+        static void AOTCodeGeneration()
+        {
+            AotHelper.EnsureType<Reference<EntityDataBase>>();
+            AotHelper.EnsureList<Reference<EntityDataBase>>();
+            AotHelper.EnsureType<EntityData<EntityDataBase>>();
+            AotHelper.EnsureList<EntityData<EntityDataBase>>();
+            AotHelper.EnsureList<EntityDataBase>();
+        }
     }
 }

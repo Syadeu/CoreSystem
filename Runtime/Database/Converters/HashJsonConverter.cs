@@ -1,9 +1,11 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using UnityEngine.Scripting;
 
 namespace Syadeu.Database.Converters
 {
+    [Preserve]
     internal sealed class HashJsonConverter : JsonConverter<Hash>
     {
         public override bool CanRead => true;

@@ -43,7 +43,6 @@ namespace Syadeu.Presentation
 #pragma warning disable IDE0090 // Use 'new(...)'
         private NativeQueue<int>
                 m_RequestDestories,
-                //m_RequestUpdates,
 
                 m_RequestProxyList,
                 m_RemoveProxyList,
@@ -130,14 +129,24 @@ namespace Syadeu.Presentation
                 "Scene on loading enter lambda excute");
 
             m_RequestDestories.Clear();
-            //m_RequestUpdates.Clear();
 
             m_RequestProxyList.Clear();
             m_RemoveProxyList.Clear();
             m_VisibleList.Clear();
             m_InvisibleList.Clear();
 
-            m_ProxyData.For((tr) =>
+            m_ProxyData.For(DestroyTransform);
+
+            m_Instances.Clear();
+            m_TerminatedProxies.Clear();
+
+            m_ProxyData.Dispose();
+            m_ClusterData.Dispose();
+            m_ProxyData = new NativeProxyData(c_InitialMemorySize, Allocator.Persistent);
+            m_ClusterData = new Cluster<ProxyTransformData>(c_InitialMemorySize);
+            m_LoadingLock = false;
+
+            void DestroyTransform(ProxyTransform tr)
             {
                 OnDataObjectDestroy?.Invoke(tr);
 
@@ -145,13 +154,7 @@ namespace Syadeu.Presentation
                 {
                     UnityEngine.Object.Destroy(tr.proxy.gameObject);
                 }
-            });
-
-            m_Instances.Clear();
-            m_TerminatedProxies.Clear();
-
-            m_ProxyData.Clear();
-            m_LoadingLock = false;
+            }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Bind(RenderSystem other)

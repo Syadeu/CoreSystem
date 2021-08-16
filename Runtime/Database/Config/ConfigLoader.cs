@@ -93,6 +93,8 @@ namespace Syadeu.Database
         {
             const string c_GlobalConfig = "config";
 
+            name = name.Trim(); header = header.Trim(); field = field.Trim();
+
             Config config;
             if (name.Equals(c_GlobalConfig)) config = Global;
             else

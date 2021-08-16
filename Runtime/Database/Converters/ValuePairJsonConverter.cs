@@ -4,9 +4,11 @@ using Syadeu.Internal;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.Scripting;
 
 namespace Syadeu.Database.Converters
 {
+    [Preserve]
     internal class ValuePairJsonConverter : JsonConverter
     {
         private const string c_ValueType = "ValueType";

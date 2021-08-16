@@ -1,6 +1,8 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Utilities;
 using Syadeu.Mono;
 using Syadeu.Presentation.Entities;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Scripting;
@@ -15,12 +17,12 @@ namespace Syadeu.Presentation.Map
         [JsonProperty(Order = 0, PropertyName = "BindScene")] internal bool m_BindScene;
         [Tooltip("SceneList.Scenes 의 Index")]
         [JsonProperty(Order = 1, PropertyName = "SceneIndex")] private int m_SceneIndex;
-        [JsonProperty(Order = 2, PropertyName = "MapData")] private Reference<MapDataEntity>[] m_MapData;
+        [JsonProperty(Order = 2, PropertyName = "MapData")] private Reference<MapDataEntity>[] m_MapData = Array.Empty<Reference<MapDataEntity>>();
 #pragma warning restore IDE0044 // Add readonly modifier
 
         [JsonIgnore] public bool IsMapDataCreated { get; private set; } = false;
         [JsonIgnore] public IReadOnlyList<Reference<MapDataEntity>> MapData => m_MapData;
-        [JsonIgnore] public List<EntityData<MapDataEntity>> CreatedMapData { get; } = new List<EntityData<MapDataEntity>>();
+        [JsonIgnore] public EntityData<MapDataEntity>[] CreatedMapData { get; private set; }
 
         [JsonIgnore] public bool DestroyChildOnDestroy { get; set; } = true;
 
@@ -44,10 +46,11 @@ namespace Syadeu.Presentation.Map
         {
             if (IsMapDataCreated) throw new System.Exception();
 
+            CreatedMapData = new EntityData<MapDataEntity>[m_MapData.Length];
             for (int i = 0; i < m_MapData.Length; i++)
             {
                 EntityData<IEntityData> temp = entitySystem.CreateObject(m_MapData[i]);
-                CreatedMapData.Add(EntityData<MapDataEntity>.GetEntityData(temp.Idx));
+                CreatedMapData[i] = EntityData<MapDataEntity>.GetEntityData(temp.Idx);
             }
 
             IsMapDataCreated = true;
@@ -56,15 +59,26 @@ namespace Syadeu.Presentation.Map
         {
             if (!IsMapDataCreated) throw new System.Exception();
 
-            for (int i = 0; i < CreatedMapData.Count; i++)
+            for (int i = 0; i < CreatedMapData.Length; i++)
             {
                 MapDataEntity mapData = CreatedMapData[i];
                 mapData.DestroyChildOnDestroy = DestroyChildOnDestroy;
                 CreatedMapData[i].Destroy();
             }
 
-            CreatedMapData.Clear();
+            CreatedMapData = null;
             IsMapDataCreated = false;
+        }
+
+        [Preserve]
+        static void AOTCodeGeneration()
+        {
+            AotHelper.EnsureType<Reference<SceneDataEntity>>();
+            AotHelper.EnsureList<Reference<SceneDataEntity>>();
+            AotHelper.EnsureType<EntityData<SceneDataEntity>>();
+            AotHelper.EnsureList<EntityData<SceneDataEntity>>();
+            AotHelper.EnsureType<SceneDataEntity>();
+            AotHelper.EnsureList<SceneDataEntity>();
         }
     }
     [Preserve]
