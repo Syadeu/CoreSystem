@@ -12,7 +12,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.AI;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Presentation.Map
 {
     public sealed class NavMeshSystem : PresentationSystemEntity<NavMeshSystem>
     {
