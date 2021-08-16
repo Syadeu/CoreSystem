@@ -34,6 +34,13 @@ namespace SyadeuEditor.Presentation.Map
         }
         protected override void OnDisable()
         {
+            foreach (var item in m_LoadedMapData)
+            {
+                if (item == null) continue;
+
+                item.Dispose();
+            }
+
             DestroyImmediate(m_PreviewFolder.gameObject);
             Tools.hidden = false;
 
@@ -86,61 +93,18 @@ namespace SyadeuEditor.Presentation.Map
 
         #region Common
         private Transform m_PreviewFolder;
-        //private readonly Dictionary<MapDataEntity.Object, GameObject> m_PreviewObjects = new Dictionary<MapDataEntity.Object, GameObject>();
         const string c_EditInPlayingWarning = "Cannot edit data while playing";
-        //private void SaveNCloseButton()
-        //{
-        //    if (GUILayout.Button("Revert"))
-        //    {
-        //        EntityDataList.Instance.LoadData();
+        private void ResetSceneData()
+        {
+            m_SceneData = new Reference<SceneDataEntity>(Hash.Empty);
+            m_SceneDataTarget = null;
 
-        //        ResetAll();
+            // GridMapAttribute
+            m_GridMap?.Dispose();
+            m_GridMap = null;
 
-        //        SceneView.lastActiveSceneView.Repaint();
-        //        Tools.hidden = false;
-        //    }
-        //    EditorGUILayout.BeginHorizontal();
-        //    if (GUILayout.Button("Save"))
-        //    {
-        //        EntityDataList.Instance.SaveData();
-        //    }
-        //    if (GUILayout.Button("Close"))
-        //    {
-        //        ResetAll();
-
-        //        SceneView.lastActiveSceneView.Repaint();
-        //        Tools.hidden = false;
-        //    }
-        //    EditorGUILayout.EndHorizontal();
-        //}
-        //private void ResetAll()
-        //{
-        //    //DeselectGameObject();
-        //    ResetPreviewFolder();
-
-        //    ResetMapData();
-        //    ResetSceneData();
-        //}
-        //private void ResetMapData()
-        //{
-        //    //m_MapData = new Reference<MapDataEntity>(Hash.Empty);
-        //    m_MapDataTarget = null;
-
-        //    SceneView.lastActiveSceneView.Repaint();
-        //}
-        //private void ResetSceneData()
-        //{
-        //    m_SceneData = new Reference<SceneDataEntity>(Hash.Empty);
-        //    m_SceneDataTarget = null;
-        //    m_SceneDataTargetMapDataList = null;
-        //    m_AttributeListDrawer = null;
-
-        //    // GridMapAttribute
-        //    m_GridMap?.Dispose();
-        //    m_GridMap = null;
-
-        //    SceneView.lastActiveSceneView.Repaint();
-        //}
+            SceneView.lastActiveSceneView.Repaint();
+        }
 
         private void ResetPreviewFolder()
         {
@@ -151,535 +115,333 @@ namespace SyadeuEditor.Presentation.Map
 
             //m_PreviewObjects.Clear();
         }
-        //private void CreatePreviewObjects(MapDataEntity mapData)
-        //{
-        //    if (mapData.m_Objects == null) mapData.m_Objects = Array.Empty<MapDataEntity.Object>();
-        //    for (int i = 0; i < mapData.m_Objects.Length; i++)
-        //    {
-        //        if (!mapData.m_Objects[i].m_Object.IsValid()) continue;
-
-        //        CreatePreviewObject(mapData.m_Objects[i]);
-        //        //PrefabReference prefab = mapData.m_Objects[i].m_Object.GetObject().Prefab;
-        //        //if (prefab.IsValid())
-        //        //{
-        //        //    var temp = prefab.GetObjectSetting().m_RefPrefab.editorAsset;
-
-        //        //    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab(temp, m_PreviewFolder);
-        //        //    obj.tag = c_EditorOnly;
-        //        //    obj.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
-
-        //        //    Transform tr = obj.transform;
-        //        //    tr.position = mapData.m_Objects[i].m_Translation;
-        //        //    tr.rotation = mapData.m_Objects[i].m_Rotation;
-        //        //    tr.localScale = mapData.m_Objects[i].m_Scale;
-
-        //        //    AABB aabb = new AABB(mapData.m_Objects[i].m_Translation, float3.zero);
-        //        //    foreach (var item in obj.GetComponentsInChildren<Renderer>())
-        //        //    {
-        //        //        aabb.Encapsulate(item.bounds);
-        //        //    }
-        //        //    mapData.m_Objects[i].m_AABBCenter = aabb.center - mapData.m_Objects[i].m_Translation;
-        //        //    mapData.m_Objects[i].m_AABBSize = aabb.size;
-
-        //        //    m_PreviewObjects.Add(mapData.m_Objects[i], obj);
-        //        //}
-        //    }
-        //}
-        //private GameObject CreatePreviewObject(MapDataEntity.Object mapDataObj, bool isFirst = false)
-        //{
-        //    if (!mapDataObj.m_Object.IsValid()) return null;
-
-        //    PrefabReference prefab = mapDataObj.m_Object.GetObject().Prefab;
-        //    if (prefab.IsValid())
-        //    {
-        //        GameObject temp = (GameObject)prefab.GetObjectSetting().m_RefPrefab.editorAsset;
-
-        //        GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab(temp, m_PreviewFolder);
-        //        obj.tag = c_EditorOnly;
-        //        obj.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
-
-        //        Transform tr = obj.transform;
-
-        //        if (isFirst)
-        //        {
-        //            mapDataObj.m_Rotation = tr.rotation;
-        //            mapDataObj.m_Scale = tr.localScale;
-        //        }
-
-        //        tr.position = mapDataObj.m_Translation;
-        //        tr.rotation = mapDataObj.m_Rotation;
-        //        tr.localScale = mapDataObj.m_Scale;
-
-        //        m_PreviewObjects.Add(mapDataObj, obj);
-        //        return obj;
-        //    }
-
-        //    return null;
-        //}
-
-        //private MapDataEntity.Object m_SelectedGameObject;
-        
-        //private bool SelectGameObject(GameObject obj)
-        //{
-        //    var iter = m_PreviewObjects.Where((other) => other.Value.Equals(obj));
-        //    if (iter.Any())
-        //    {
-        //        var target = iter.First();
-        //        if (m_SelectedGameObject != null)
-        //        {
-        //            if (target.Value.Equals(m_SelectedGameObject)) return true;
-        //            else
-        //            {
-        //                DeselectGameObject();
-        //            }
-        //        }
-
-        //        m_SelectedGameObject = target.Key;
-        //        //m_PreviewObjects[m_SelectedGameObject].SetActive(false);
-        //        Repaint();
-        //        return true;
-        //    }
-        //    return false;
-        //}
-        //private void DeselectGameObject()
-        //{
-        //    if (m_SelectedGameObject != null)
-        //    {
-        //        //m_PreviewObjects[m_SelectedGameObject].SetActive(true);
-        //        m_SelectedGameObject = null;
-
-        //        Repaint();
-        //    }
-        //}
 
         #endregion
 
-        //#region Scene Data
-
-        //private Reference<SceneDataEntity> m_SceneData;
-        //private SceneDataEntity m_SceneDataTarget;
-        //Reference<MapDataEntity>[] m_SceneDataTargetMapDataList;
-        //private ReflectionHelperEditor.AttributeListDrawer m_AttributeListDrawer;
-
-        //// GridMapAttribute
-        //#region GridMapAttribute
-        //private sealed class GridMapExtension : IDisposable
-        //{
-        //    public readonly GridMapAttribute m_SceneDataGridAtt;
-        //    public readonly ManagedGrid m_SceneDataGrid;
-        //    public string[] m_GridLayerNames;
-
-        //    public int m_SelectedGridLayer = 0;
-        //    public GridMapAttribute.LayerInfo m_CurrentLayer = null;
-
-        //    public bool m_EditLayer = false;
-
-        //    private GridMapAttribute.LayerInfo SelectedLayer
-        //    {
-        //        get
-        //        {
-        //            if (m_SelectedGridLayer == 0) return null;
-        //            return m_SceneDataGridAtt.m_Layers[m_SelectedGridLayer - 1];
-        //        }
-        //    }
-
-        //    public GridMapExtension(GridMapAttribute att)
-        //    {
-        //        if (att == null) return;
-
-        //        m_SceneDataGridAtt = att;
-        //        m_SceneDataGrid = new ManagedGrid(m_SceneDataGridAtt.Center, m_SceneDataGridAtt.Size, m_SceneDataGridAtt.CellSize);
-
-        //        ReloadLayers();
-        //    }
-        //    public void Dispose()
-        //    {
-        //        m_SceneDataGrid?.Dispose();
-        //    }
-
-        //    private void ReloadLayers()
-        //    {
-        //        if (m_SceneDataGridAtt.m_Layers == null || m_SceneDataGridAtt.m_Layers.Length == 0)
-        //        {
-        //            m_GridLayerNames = new string[] { "All" };
-        //        }
-        //        else
-        //        {
-        //            var temp = m_SceneDataGridAtt.m_Layers.Select((other) => other.m_Name).ToList();
-        //            temp.Insert(0, "All");
-        //            m_GridLayerNames = temp.ToArray();
-        //        }
-        //    }
-        //    private GridMapAttribute.LayerInfo GetLayer(int idx)
-        //    {
-        //        if (idx == 0 ||
-        //            m_SceneDataGridAtt == null || 
-        //            m_SceneDataGridAtt.m_Layers == null ||
-        //            m_SceneDataGridAtt.m_Layers.Length <= idx - 1) return null;
-
-        //        return m_SceneDataGridAtt.m_Layers[idx - 1];
-        //    }
-
-        //    public void OnGUI()
-        //    {
-        //        EditorUtils.StringRich("GridMapAttribute Extension", 13);
-
-        //        #region Layer Selector
-        //        EditorGUILayout.BeginHorizontal();
-        //        EditorGUI.BeginChangeCheck();
-        //        using (new EditorGUILayout.HorizontalScope())
-        //        {
-        //            EditorGUILayout.LabelField("Layer: ", GUILayout.Width(Screen.width * .25f));
-        //            m_SelectedGridLayer = EditorGUILayout.Popup(m_SelectedGridLayer, m_GridLayerNames);
-        //        }
-
-        //        if (EditorGUI.EndChangeCheck())
-        //        {
-        //            m_EditLayer = false;
-        //            m_CurrentLayer = GetLayer(m_SelectedGridLayer);
-        //            SceneView.lastActiveSceneView.Repaint();
-        //        }
-
-        //        if (GUILayout.Button("+", GUILayout.Width(20)))
-        //        {
-        //            var temp = m_SceneDataGridAtt.m_Layers.ToList();
-        //            temp.Add(new GridMapAttribute.LayerInfo());
-        //            m_SceneDataGridAtt.m_Layers = temp.ToArray();
-
-        //            ReloadLayers();
-
-        //            m_SelectedGridLayer = m_SceneDataGridAtt.m_Layers.Length;
-        //        }
-        //        EditorGUI.BeginDisabledGroup(m_SelectedGridLayer == 0);
-        //        if (GUILayout.Button("-", GUILayout.Width(20)))
-        //        {
-        //            var temp = m_SceneDataGridAtt.m_Layers.ToList();
-        //            temp.RemoveAt(m_SelectedGridLayer - 1);
-        //            m_SceneDataGridAtt.m_Layers = temp.ToArray();
-
-        //            ReloadLayers();
-
-        //            if (m_SelectedGridLayer < 0) m_SelectedGridLayer = 0;
-        //            else if (m_SelectedGridLayer >= m_GridLayerNames.Length)
-        //            {
-        //                m_SelectedGridLayer = m_GridLayerNames.Length - 1;
-        //            }
-        //        }
-
-        //        m_EditLayer = GUILayout.Toggle(m_EditLayer, "E", EditorUtils.MiniButton, GUILayout.Width(20));
-        //        if (m_EditLayer)
-        //        {
-
-        //        }
-        //        EditorGUI.EndDisabledGroup();
-
-        //        EditorGUILayout.EndHorizontal();
-
-        //        #endregion
-
-        //        EditorUtils.Line();
-
-        //        // Layer Info
-        //        #region Layer Info
-        //        EditorGUI.indentLevel += 1;
-        //        using (new EditorGUILayout.HorizontalScope())
-        //        {
-        //            EditorUtils.StringRich($"Layer: {m_GridLayerNames[m_SelectedGridLayer]}", 13);
-        //            EditorGUI.BeginDisabledGroup(m_SelectedGridLayer == 0);
-        //            if (GUILayout.Button("Save", GUILayout.Width(50)))
-        //            {
-        //                EntityDataList.Instance.SaveData(m_SceneDataGridAtt);
-        //            }
-        //            if (GUILayout.Button("Clear", GUILayout.Width(50)))
-        //            {
-        //                SelectedLayer.m_Indices = Array.Empty<int>();
-        //                SceneView.lastActiveSceneView.Repaint();
-        //            }
-        //            EditorGUI.EndDisabledGroup();
-        //        }
-
-        //        EditorGUI.indentLevel += 1;
-        //        {
-        //            EditorGUI.BeginDisabledGroup(true);
-        //            if (m_SelectedGridLayer == 0)
-        //            {
-        //                int sum = 0;
-        //                for (int i = 0; i < m_SceneDataGridAtt.m_Layers.Length; i++)
-        //                {
-        //                    sum += m_SceneDataGridAtt.m_Layers[i].m_Indices.Length;
-        //                }
-        //                EditorGUILayout.IntField("Indices", sum);
-        //            }
-        //            else EditorGUILayout.IntField("Indices", SelectedLayer.m_Indices.Length);
-        //            EditorGUI.EndDisabledGroup();
-
-        //            if (m_SelectedGridLayer != 0)
-        //            {
-        //                m_SceneDataGridAtt.m_Layers[m_SelectedGridLayer - 1].m_Inverse
-        //                = EditorGUILayout.ToggleLeft("Inverse", m_SceneDataGridAtt.m_Layers[m_SelectedGridLayer - 1].m_Inverse);
-        //            }
-        //        }
-        //        EditorGUI.indentLevel -= 1;
-        //        EditorGUI.indentLevel -= 1;
-        //        #endregion
-
-        //        EditorUtils.Line();
-        //    }
-        //    bool m_AddDrag = false;
-        //    public void OnSceneGUI(SceneView obj)
-        //    {
-        //        const float c_LineThinkness = .05f;
-        //        if (m_SceneDataGridAtt == null) return;
-
-        //        #region Draw Grid & Layers
-
-        //        m_SceneDataGrid.DrawGL(c_LineThinkness);
-        //        Handles.DrawWireCube(m_SceneDataGrid.bounds.center, m_SceneDataGrid.size);
-
-        //        if (m_SceneDataGridAtt.m_Layers == null)
-        //        {
-        //            m_SceneDataGridAtt.m_Layers = Array.Empty<GridMapAttribute.LayerInfo>();
-        //        }
-        //        if (m_SceneDataGridAtt.m_Layers.Length > 0)
-        //        {
-        //            float sizeHalf = m_SceneDataGrid.cellSize * .5f;
-
-        //            GL.PushMatrix();
-        //            GridExtensions.DefaultMaterial.SetPass(0);
-        //            Color color = Color.red;
-        //            color.a = .5f;
-        //            GL.Begin(GL.QUADS);
-        //            GL.Color(color);
-
-        //            if (m_CurrentLayer == null)
-        //            {
-        //                foreach (var item in m_SceneDataGridAtt.m_Layers)
-        //                {
-        //                    for (int i = 0; i < item.m_Indices.Length; i++)
-        //                    {
-        //                        Vector3
-        //                            cellPos = m_SceneDataGrid.IndexToPosition(item.m_Indices[i]),
-        //                            p1 = new Vector3(cellPos.x - sizeHalf, cellPos.y + c_LineThinkness, cellPos.z - sizeHalf),
-        //                            p2 = new Vector3(cellPos.x - sizeHalf, cellPos.y + c_LineThinkness, cellPos.z + sizeHalf),
-        //                            p3 = new Vector3(cellPos.x + sizeHalf, cellPos.y + c_LineThinkness, cellPos.z + sizeHalf),
-        //                            p4 = new Vector3(cellPos.x + sizeHalf, cellPos.y + c_LineThinkness, cellPos.z - sizeHalf);
-
-        //                        GL.Vertex(p1);
-        //                        GL.Vertex(p2);
-        //                        GL.Vertex(p3);
-        //                        GL.Vertex(p4);
-        //                    }
-        //                }
-        //            }
-        //            else
-        //            {
-        //                for (int i = 0; i < m_CurrentLayer.m_Indices.Length; i++)
-        //                {
-        //                    Vector3
-        //                        cellPos = m_SceneDataGrid.IndexToPosition(m_CurrentLayer.m_Indices[i]),
-        //                        p1 = new Vector3(cellPos.x - sizeHalf, cellPos.y + c_LineThinkness, cellPos.z - sizeHalf),
-        //                        p2 = new Vector3(cellPos.x - sizeHalf, cellPos.y + c_LineThinkness, cellPos.z + sizeHalf),
-        //                        p3 = new Vector3(cellPos.x + sizeHalf, cellPos.y + c_LineThinkness, cellPos.z + sizeHalf),
-        //                        p4 = new Vector3(cellPos.x + sizeHalf, cellPos.y + c_LineThinkness, cellPos.z - sizeHalf);
-
-        //                    GL.Vertex(p1);
-        //                    GL.Vertex(p2);
-        //                    GL.Vertex(p3);
-        //                    GL.Vertex(p4);
-        //                }
-        //            }
-
-        //            GL.End();
-        //            GL.PopMatrix();
-        //        }
-
-        //        //for (int i = 0; i < m_SceneDataGrid.length; i++)
-        //        //{
-        //        //    float3 pos = m_SceneDataGrid.GetCellPosition(i);
-        //        //    if (!EditorSceneUtils.IsDrawable(pos)) continue;
-
-        //        //    Handles.Label(pos, $"{i}");
-        //        //}
-        //        #endregion
-
-        //        if (!m_EditLayer || m_CurrentLayer == null) return;
-
-        //        int mouseControlID = GUIUtility.GetControlID(FocusType.Passive);
-        //        Ray ray; float3 point;
-        //        switch (Event.current.GetTypeForControl(mouseControlID))
-        //        {
-        //            case EventType.MouseDown:
-        //                GUIUtility.hotControl = mouseControlID;
-
-        //                if (Event.current.button == 0)
-        //                {
-        //                    ray = EditorSceneUtils.GetMouseScreenRay();
-        //                    if (m_SceneDataGrid.bounds.Intersect(ray, out _, out point))
-        //                    {
-        //                        int idx = m_SceneDataGrid.PositionToIndex(point);
-        //                        List<int> tempList = m_CurrentLayer.m_Indices.ToList();
-
-        //                        if (tempList.Contains(idx))
-        //                        {
-        //                            tempList.Remove(idx);
-        //                            m_AddDrag = false;
-        //                        }
-        //                        else
-        //                        {
-        //                            tempList.Add(idx);
-        //                            m_AddDrag = true;
-        //                        }
-        //                        m_CurrentLayer.m_Indices = tempList.ToArray();
-        //                    }
-        //                }
-        //                else if (Event.current.button == 1)
-        //                {
-        //                    m_EditLayer = false;
-        //                }
-
-        //                Event.current.Use();
-        //                break;
-        //            case EventType.MouseDrag:
-        //                GUIUtility.hotControl = mouseControlID;
-
-        //                ray = EditorSceneUtils.GetMouseScreenRay();
-        //                if (m_SceneDataGrid.bounds.Intersect(ray, out _, out point))
-        //                {
-        //                    int idx = m_SceneDataGrid.PositionToIndex(point);
-        //                    if (m_AddDrag)
-        //                    {
-        //                        if (!m_CurrentLayer.m_Indices.Contains(idx))
-        //                        {
-        //                            List<int> tempList = m_CurrentLayer.m_Indices.ToList();
-        //                            tempList.Add(idx);
-        //                            m_CurrentLayer.m_Indices = tempList.ToArray();
-        //                        }
-        //                    }
-        //                    else
-        //                    {
-        //                        if (m_CurrentLayer.m_Indices.Contains(idx))
-        //                        {
-        //                            List<int> tempList = m_CurrentLayer.m_Indices.ToList();
-        //                            tempList.Remove(idx);
-        //                            m_CurrentLayer.m_Indices = tempList.ToArray();
-        //                        }
-        //                    }
-        //                }
-
-        //                Event.current.Use();
-        //                break;
-        //            case EventType.MouseUp:
-        //                GUIUtility.hotControl = 0;
-        //                if (Event.current.button == 0)
-        //                {
-
-        //                }
-
-        //                Event.current.Use();
-        //                break;
-
-        //        }
-        //    }
-        //}
-        //#endregion
-        //private GridMapExtension m_GridMap;
-
-        //private Vector2 m_SceneDataScroll;
-        //private void SceneDataGUI()
-        //{
-        //    #region Scene data selector
-        //    using (new EditorUtils.BoxBlock(Color.gray))
-        //    {
-        //        ReflectionHelperEditor.DrawReferenceSelector("Scene data: ", (hash) =>
-        //        {
-        //            var tempSceneData = new Reference<SceneDataEntity>(hash);
-
-        //            if (tempSceneData.IsValid() && !m_SceneData.Equals(tempSceneData))
-        //            {
-        //                m_SceneDataTarget = tempSceneData.GetObject();
-
-        //                m_GridMap = new GridMapExtension(m_SceneDataTarget.GetAttribute<GridMapAttribute>());
-
-        //                m_SceneDataTargetMapDataList = (Reference<MapDataEntity>[])TypeHelper.TypeOf<SceneDataEntity>.Type.GetField("m_MapData", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(m_SceneDataTarget);
-        //                if (m_SceneDataTargetMapDataList != null)
-        //                {
-        //                    foreach (var item in m_SceneDataTargetMapDataList)
-        //                    {
-        //                        if (!item.IsValid()) continue;
-
-        //                        MapDataEntity mapData = item.GetObject();
-        //                        CreatePreviewObjects(mapData);
-        //                    }
-        //                    //
-        //                }
-
-        //                m_AttributeListDrawer = ReflectionHelperEditor.GetAttributeDrawer(TypeHelper.TypeOf<SceneDataEntity>.Type, m_SceneDataTarget.Attributes);
-
-        //                Tools.hidden = true;
-        //            }
-        //            else
-        //            {
-        //                ResetAll();
-
-        //                Tools.hidden = false;
-        //            }
-
-        //            m_SceneData = tempSceneData;
-
-        //        }, m_SceneData, TypeHelper.TypeOf<SceneDataEntity>.Type);
-        //    }
-        //    #endregion
-
-        //    EditorUtils.Line();
-
-        //    if (Application.isPlaying)
-        //    {
-        //        EditorUtils.StringRich(c_EditInPlayingWarning, 13, true);
-        //        return;
-        //    }
-
-        //    if (!m_SceneData.IsValid())
-        //    {
-        //        EditorGUILayout.Space();
-        //        EditorUtils.StringRich("Select scene data", 13, true);
-        //        return;
-        //    }
-
-        //    SaveNCloseButton();
-        //    EditorUtils.Line();
-
-        //    using (new EditorUtils.BoxBlock(Color.black))
-        //    {
-        //        m_GridMap?.OnGUI();
-        //    }
-
-        //    m_SceneDataScroll = GUILayout.BeginScrollView(m_SceneDataScroll, false, false);
-        //    if (m_SceneDataTarget != null)
-        //    {
-        //        using (new EditorUtils.BoxBlock(Color.gray))
-        //        {
-        //            EditorUtils.StringRich("SceneData", 13);
-
-        //            EditorGUI.BeginDisabledGroup(true);
-        //            ReflectionHelperEditor.DrawObject(m_SceneDataTarget, "Name", "Hash", "m_BindScene", "m_SceneIndex");
-
-        //            EditorGUI.EndDisabledGroup();
-
-        //            EditorUtils.Line();
-
-        //            m_AttributeListDrawer.OnGUI();
-        //        }
-
-        //        EditorUtils.Line();
-        //    }
-        //    GUILayout.EndScrollView();
-        //}
-        //private void SceneDataSceneGUI(SceneView obj)
-        //{
-        //    m_GridMap?.OnSceneGUI(obj);
-        //}
-
-        //#endregion
+        private Reference<SceneDataEntity> m_SceneData;
+        private SceneDataEntity m_SceneDataTarget;
+
+        #region GridMapAttribute
+        private sealed class GridMapExtension : IDisposable
+        {
+            public readonly GridMapAttribute m_SceneDataGridAtt;
+            public readonly ManagedGrid m_SceneDataGrid;
+            public string[] m_GridLayerNames;
+
+            public int m_SelectedGridLayer = 0;
+            public GridMapAttribute.LayerInfo m_CurrentLayer = null;
+
+            public bool m_EditLayer = false;
+
+            private GridMapAttribute.LayerInfo SelectedLayer
+            {
+                get
+                {
+                    if (m_SelectedGridLayer == 0) return null;
+                    return m_SceneDataGridAtt.m_Layers[m_SelectedGridLayer - 1];
+                }
+            }
+
+            public GridMapExtension(GridMapAttribute att)
+            {
+                if (att == null) return;
+
+                m_SceneDataGridAtt = att;
+                m_SceneDataGrid = new ManagedGrid(m_SceneDataGridAtt.Center, m_SceneDataGridAtt.Size, m_SceneDataGridAtt.CellSize);
+
+                ReloadLayers();
+            }
+            public void Dispose()
+            {
+                m_SceneDataGrid?.Dispose();
+            }
+
+            private void ReloadLayers()
+            {
+                if (m_SceneDataGridAtt.m_Layers == null || m_SceneDataGridAtt.m_Layers.Length == 0)
+                {
+                    m_GridLayerNames = new string[] { "All" };
+                }
+                else
+                {
+                    var temp = m_SceneDataGridAtt.m_Layers.Select((other) => other.m_Name).ToList();
+                    temp.Insert(0, "All");
+                    m_GridLayerNames = temp.ToArray();
+                }
+            }
+            private GridMapAttribute.LayerInfo GetLayer(int idx)
+            {
+                if (idx == 0 ||
+                    m_SceneDataGridAtt == null ||
+                    m_SceneDataGridAtt.m_Layers == null ||
+                    m_SceneDataGridAtt.m_Layers.Length <= idx - 1) return null;
+
+                return m_SceneDataGridAtt.m_Layers[idx - 1];
+            }
+
+            public void OnGUI()
+            {
+                EditorUtils.StringRich("GridMapAttribute Extension", 13);
+
+                #region Layer Selector
+                EditorGUILayout.BeginHorizontal();
+                EditorGUI.BeginChangeCheck();
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    EditorGUILayout.LabelField("Layer: ", GUILayout.Width(Screen.width * .25f));
+                    m_SelectedGridLayer = EditorGUILayout.Popup(m_SelectedGridLayer, m_GridLayerNames);
+                }
+
+                if (EditorGUI.EndChangeCheck())
+                {
+                    m_EditLayer = false;
+                    m_CurrentLayer = GetLayer(m_SelectedGridLayer);
+                    SceneView.lastActiveSceneView.Repaint();
+                }
+
+                if (GUILayout.Button("+", GUILayout.Width(20)))
+                {
+                    var temp = m_SceneDataGridAtt.m_Layers.ToList();
+                    temp.Add(new GridMapAttribute.LayerInfo());
+                    m_SceneDataGridAtt.m_Layers = temp.ToArray();
+
+                    ReloadLayers();
+
+                    m_SelectedGridLayer = m_SceneDataGridAtt.m_Layers.Length;
+                }
+                EditorGUI.BeginDisabledGroup(m_SelectedGridLayer == 0);
+                if (GUILayout.Button("-", GUILayout.Width(20)))
+                {
+                    var temp = m_SceneDataGridAtt.m_Layers.ToList();
+                    temp.RemoveAt(m_SelectedGridLayer - 1);
+                    m_SceneDataGridAtt.m_Layers = temp.ToArray();
+
+                    ReloadLayers();
+
+                    if (m_SelectedGridLayer < 0) m_SelectedGridLayer = 0;
+                    else if (m_SelectedGridLayer >= m_GridLayerNames.Length)
+                    {
+                        m_SelectedGridLayer = m_GridLayerNames.Length - 1;
+                    }
+                }
+
+                m_EditLayer = GUILayout.Toggle(m_EditLayer, "E", EditorUtils.MiniButton, GUILayout.Width(20));
+                if (m_EditLayer)
+                {
+
+                }
+                EditorGUI.EndDisabledGroup();
+
+                EditorGUILayout.EndHorizontal();
+
+                #endregion
+
+                EditorUtils.Line();
+
+                // Layer Info
+                #region Layer Info
+                EditorGUI.indentLevel += 1;
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    EditorUtils.StringRich($"Layer: {m_GridLayerNames[m_SelectedGridLayer]}", 13);
+                    EditorGUI.BeginDisabledGroup(m_SelectedGridLayer == 0);
+                    if (GUILayout.Button("Save", GUILayout.Width(50)))
+                    {
+                        EntityDataList.Instance.SaveData(m_SceneDataGridAtt);
+                    }
+                    if (GUILayout.Button("Clear", GUILayout.Width(50)))
+                    {
+                        SelectedLayer.m_Indices = Array.Empty<int>();
+                        SceneView.lastActiveSceneView.Repaint();
+                    }
+                    EditorGUI.EndDisabledGroup();
+                }
+
+                EditorGUI.indentLevel += 1;
+                {
+                    EditorGUI.BeginDisabledGroup(true);
+                    if (m_SelectedGridLayer == 0)
+                    {
+                        int sum = 0;
+                        for (int i = 0; i < m_SceneDataGridAtt.m_Layers.Length; i++)
+                        {
+                            sum += m_SceneDataGridAtt.m_Layers[i].m_Indices.Length;
+                        }
+                        EditorGUILayout.IntField("Indices", sum);
+                    }
+                    else EditorGUILayout.IntField("Indices", SelectedLayer.m_Indices.Length);
+                    EditorGUI.EndDisabledGroup();
+
+                    if (m_SelectedGridLayer != 0)
+                    {
+                        m_SceneDataGridAtt.m_Layers[m_SelectedGridLayer - 1].m_Inverse
+                        = EditorGUILayout.ToggleLeft("Inverse", m_SceneDataGridAtt.m_Layers[m_SelectedGridLayer - 1].m_Inverse);
+                    }
+                }
+                EditorGUI.indentLevel -= 1;
+                EditorGUI.indentLevel -= 1;
+                #endregion
+
+                EditorUtils.Line();
+            }
+            bool m_AddDrag = false;
+            public void OnSceneGUI(SceneView obj)
+            {
+                const float c_LineThinkness = .05f;
+                if (m_SceneDataGridAtt == null) return;
+
+                #region Draw Grid & Layers
+
+                m_SceneDataGrid.DrawGL(c_LineThinkness);
+                Handles.DrawWireCube(m_SceneDataGrid.bounds.center, m_SceneDataGrid.size);
+
+                if (m_SceneDataGridAtt.m_Layers == null)
+                {
+                    m_SceneDataGridAtt.m_Layers = Array.Empty<GridMapAttribute.LayerInfo>();
+                }
+                if (m_SceneDataGridAtt.m_Layers.Length > 0)
+                {
+                    float sizeHalf = m_SceneDataGrid.cellSize * .5f;
+
+                    GL.PushMatrix();
+                    GridExtensions.DefaultMaterial.SetPass(0);
+                    Color color = Color.red;
+                    color.a = .5f;
+                    GL.Begin(GL.QUADS);
+                    GL.Color(color);
+
+                    if (m_CurrentLayer == null)
+                    {
+                        foreach (var item in m_SceneDataGridAtt.m_Layers)
+                        {
+                            for (int i = 0; i < item.m_Indices.Length; i++)
+                            {
+                                Vector3
+                                    cellPos = m_SceneDataGrid.IndexToPosition(item.m_Indices[i]),
+                                    p1 = new Vector3(cellPos.x - sizeHalf, cellPos.y + c_LineThinkness, cellPos.z - sizeHalf),
+                                    p2 = new Vector3(cellPos.x - sizeHalf, cellPos.y + c_LineThinkness, cellPos.z + sizeHalf),
+                                    p3 = new Vector3(cellPos.x + sizeHalf, cellPos.y + c_LineThinkness, cellPos.z + sizeHalf),
+                                    p4 = new Vector3(cellPos.x + sizeHalf, cellPos.y + c_LineThinkness, cellPos.z - sizeHalf);
+
+                                GL.Vertex(p1);
+                                GL.Vertex(p2);
+                                GL.Vertex(p3);
+                                GL.Vertex(p4);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        for (int i = 0; i < m_CurrentLayer.m_Indices.Length; i++)
+                        {
+                            Vector3
+                                cellPos = m_SceneDataGrid.IndexToPosition(m_CurrentLayer.m_Indices[i]),
+                                p1 = new Vector3(cellPos.x - sizeHalf, cellPos.y + c_LineThinkness, cellPos.z - sizeHalf),
+                                p2 = new Vector3(cellPos.x - sizeHalf, cellPos.y + c_LineThinkness, cellPos.z + sizeHalf),
+                                p3 = new Vector3(cellPos.x + sizeHalf, cellPos.y + c_LineThinkness, cellPos.z + sizeHalf),
+                                p4 = new Vector3(cellPos.x + sizeHalf, cellPos.y + c_LineThinkness, cellPos.z - sizeHalf);
+
+                            GL.Vertex(p1);
+                            GL.Vertex(p2);
+                            GL.Vertex(p3);
+                            GL.Vertex(p4);
+                        }
+                    }
+
+                    GL.End();
+                    GL.PopMatrix();
+                }
+
+                //for (int i = 0; i < m_SceneDataGrid.length; i++)
+                //{
+                //    float3 pos = m_SceneDataGrid.GetCellPosition(i);
+                //    if (!EditorSceneUtils.IsDrawable(pos)) continue;
+
+                //    Handles.Label(pos, $"{i}");
+                //}
+                #endregion
+
+                if (!m_EditLayer || m_CurrentLayer == null) return;
+
+                int mouseControlID = GUIUtility.GetControlID(FocusType.Passive);
+                Ray ray; float3 point;
+                switch (Event.current.GetTypeForControl(mouseControlID))
+                {
+                    case EventType.MouseDown:
+                        GUIUtility.hotControl = mouseControlID;
+
+                        if (Event.current.button == 0)
+                        {
+                            ray = EditorSceneUtils.GetMouseScreenRay();
+                            if (m_SceneDataGrid.bounds.Intersect(ray, out _, out point))
+                            {
+                                int idx = m_SceneDataGrid.PositionToIndex(point);
+                                List<int> tempList = m_CurrentLayer.m_Indices.ToList();
+
+                                if (tempList.Contains(idx))
+                                {
+                                    tempList.Remove(idx);
+                                    m_AddDrag = false;
+                                }
+                                else
+                                {
+                                    tempList.Add(idx);
+                                    m_AddDrag = true;
+                                }
+                                m_CurrentLayer.m_Indices = tempList.ToArray();
+                            }
+                        }
+                        else if (Event.current.button == 1)
+                        {
+                            m_EditLayer = false;
+                        }
+
+                        Event.current.Use();
+                        break;
+                    case EventType.MouseDrag:
+                        GUIUtility.hotControl = mouseControlID;
+
+                        ray = EditorSceneUtils.GetMouseScreenRay();
+                        if (m_SceneDataGrid.bounds.Intersect(ray, out _, out point))
+                        {
+                            int idx = m_SceneDataGrid.PositionToIndex(point);
+                            if (m_AddDrag)
+                            {
+                                if (!m_CurrentLayer.m_Indices.Contains(idx))
+                                {
+                                    List<int> tempList = m_CurrentLayer.m_Indices.ToList();
+                                    tempList.Add(idx);
+                                    m_CurrentLayer.m_Indices = tempList.ToArray();
+                                }
+                            }
+                            else
+                            {
+                                if (m_CurrentLayer.m_Indices.Contains(idx))
+                                {
+                                    List<int> tempList = m_CurrentLayer.m_Indices.ToList();
+                                    tempList.Remove(idx);
+                                    m_CurrentLayer.m_Indices = tempList.ToArray();
+                                }
+                            }
+                        }
+
+                        Event.current.Use();
+                        break;
+                    case EventType.MouseUp:
+                        GUIUtility.hotControl = 0;
+                        if (Event.current.button == 0)
+                        {
+
+                        }
+
+                        Event.current.Use();
+                        break;
+
+                }
+            }
+        }
+        #endregion
+        private GridMapExtension m_GridMap;
 
         #region Map Data
 
@@ -713,48 +475,48 @@ namespace SyadeuEditor.Presentation.Map
 
         private void MapDataGUI()
         {
-            //#region Scene data selector
-            //using (new EditorUtils.BoxBlock(Color.gray))
-            //{
-            //    ReflectionHelperEditor.DrawReferenceSelector("Scene data: ", (hash) =>
-            //    {
-            //        m_SceneData = new Reference<SceneDataEntity>(hash);
+            #region Scene data selector
+            using (new EditorUtils.BoxBlock(Color.gray))
+            {
+                ReflectionHelperEditor.DrawReferenceSelector("Scene data: ", (hash) =>
+                {
+                    m_SceneData = new Reference<SceneDataEntity>(hash);
 
-            //        if (m_SceneData.IsValid())
-            //        {
-            //            m_SceneDataTarget = m_SceneData.GetObject();
+                    if (m_SceneData.IsValid())
+                    {
+                        m_SceneDataTarget = m_SceneData.GetObject();
 
-            //            m_GridMap = new GridMapExtension(m_SceneDataTarget.GetAttribute<GridMapAttribute>());
-            //            SceneView.lastActiveSceneView.Repaint();
-            //        }
-            //    }, m_SceneData, TypeHelper.TypeOf<SceneDataEntity>.Type);
+                        m_GridMap = new GridMapExtension(m_SceneDataTarget.GetAttribute<GridMapAttribute>());
+                        SceneView.lastActiveSceneView.Repaint();
+                    }
+                }, m_SceneData, TypeHelper.TypeOf<SceneDataEntity>.Type);
 
-            //    if (m_GridMap != null && m_GridMap.m_SceneDataGridAtt != null)
-            //    {
-            //        using (new EditorUtils.BoxBlock(Color.black))
-            //        {
-            //            m_GridMap.OnGUI();
-            //        }
-            //    }
+                if (m_GridMap != null && m_GridMap.m_SceneDataGridAtt != null)
+                {
+                    using (new EditorUtils.BoxBlock(Color.black))
+                    {
+                        m_GridMap.OnGUI();
+                    }
+                }
 
-            //    using (new EditorGUI.DisabledGroupScope(m_SceneDataTarget == null))
-            //    using (new EditorGUILayout.HorizontalScope())
-            //    {
-            //        if (GUILayout.Button("Save"))
-            //        {
-            //            EntityDataList.Instance.SaveData(m_SceneDataTarget);
-            //            if (m_GridMap != null)
-            //            {
-            //                EntityDataList.Instance.SaveData(m_GridMap.m_SceneDataGridAtt);
-            //            }
-            //        }
-            //        if (GUILayout.Button("Close"))
-            //        {
-            //            ResetSceneData();
-            //        }
-            //    }
-            //}
-            //#endregion
+                using (new EditorGUI.DisabledGroupScope(m_SceneDataTarget == null))
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    if (GUILayout.Button("Save"))
+                    {
+                        EntityDataList.Instance.SaveData(m_SceneDataTarget);
+                        if (m_GridMap != null)
+                        {
+                            EntityDataList.Instance.SaveData(m_GridMap.m_SceneDataGridAtt);
+                        }
+                    }
+                    if (GUILayout.Button("Close"))
+                    {
+                        ResetSceneData();
+                    }
+                }
+            }
+            #endregion
 
             #region Map data selector
             using (new EditorUtils.BoxBlock(Color.gray))
@@ -898,15 +660,15 @@ namespace SyadeuEditor.Presentation.Map
         Color whiteColor = Color.white;
         private void MapDataSceneGUI(SceneView obj)
         {
-            //m_GridMap?.OnSceneGUI(obj);
+            m_GridMap?.OnSceneGUI(obj);
 
             if (m_LoadedMapData.Count == 0) return;
             int mouseControlID = GUIUtility.GetControlID(FocusType.Passive);
             int keyboardControlID = GUIUtility.GetControlID(FocusType.Keyboard);
-            //Selection.activeObject = null;
+            Selection.activeObject = null;
 
             #region Scene Mouse Event
-            
+
             switch (Event.current.GetTypeForControl(mouseControlID))
             {
                 case EventType.MouseDown:
@@ -942,21 +704,6 @@ namespace SyadeuEditor.Presentation.Map
                                 Reference<EntityBase> refobj = new Reference<EntityBase>(hash);
 
                                 m_SelectedMapObject = m_EditingMapData.Add(refobj, m_PreviewFolder, pos);
-                                //var objData = new MapDataEntity.Object()
-                                //{
-                                //    m_Object = refobj,
-                                //    m_Translation = pos
-                                //};
-
-                                //GameObject gameObj = CreatePreviewObject(objData, true);
-
-                                //List<MapDataEntity.Object> tempList = m_MapDataTarget.m_Objects.ToList();
-                                //tempList.Add(objData);
-                                //m_MapDataTarget.m_Objects = tempList.ToArray();
-
-                                //SelectGameObject(gameObj);
-                                //m_MapDataTreeView.Refresh(m_MapDataTarget.m_Objects);
-
                                 Repaint();
                             },
                             (other) => other.Hash));
@@ -1193,23 +940,17 @@ namespace SyadeuEditor.Presentation.Map
                 {
                     GameObject temp = (GameObject)prefab.GetObjectSetting().m_RefPrefab.editorAsset;
                     m_GameObject = (GameObject)PrefabUtility.InstantiatePrefab(temp, folder);
-
-                    "1".ToLog();
                 }
                 else
                 {
                     m_GameObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
                     m_GameObject.transform.SetParent(folder);
-
-                    "2".ToLog();
                 }
             }
             else
             {
                 m_GameObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 m_GameObject.transform.SetParent(folder);
-
-                "3".ToLog();
             }
 
             m_GameObject.tag = c_EditorOnly;
@@ -1220,8 +961,6 @@ namespace SyadeuEditor.Presentation.Map
             tr.position = m_Data.m_Translation;
             tr.rotation = m_Data.m_Rotation;
             tr.localScale = m_Data.m_Scale;
-
-            $"in {tr.position}".ToLog();
         }
 
         public PrefabReference Prefab
@@ -1333,6 +1072,8 @@ namespace SyadeuEditor.Presentation.Map
 
             Objects.Add(data.Data, data);
             Mapper.Add(data.GameObject, data);
+
+            MapDataEntity.m_Objects = Objects.Keys.ToArray();
 
             return data;
         }
