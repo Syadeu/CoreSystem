@@ -10,6 +10,7 @@ using System.Linq;
 using Unity.Mathematics;
 
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using UnityEngine.AI;
 
 namespace Syadeu.Presentation.Map
@@ -106,7 +107,7 @@ namespace Syadeu.Presentation.Map
             CoreSystem.Logger.ThreadBlock(nameof(AddObstacle), ThreadInfo.Unity);
 
             var setting = tr.prefab.GetObjectSetting();
-            if (!setting.m_RefPrefab.IsValid())
+            if (string.IsNullOrEmpty(setting.m_RefPrefab.AssetGUID))
             {
                 CoreSystem.Logger.LogError(Channel.Presentation,
                     $"This entity({obstacle.Parent.Name}) is not valid. Cannot be a obstacle.");
@@ -114,6 +115,7 @@ namespace Syadeu.Presentation.Map
             }
             if (setting.m_RefPrefab.Asset == null)
             {
+                //Addressables.LoadAssetAsync<UnityEngine.Object>(setting.m_RefPrefab);
                 CoreSystem.Logger.LogError(Channel.Presentation,
                     $"This entity({obstacle.Parent.Name}) has null prefab. Cannot be a obstacle.");
                 return;
