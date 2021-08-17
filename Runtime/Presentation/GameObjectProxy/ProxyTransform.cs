@@ -321,8 +321,6 @@ namespace Syadeu.Presentation
                 {
                     throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
                 }
-
-                (*m_Pointer)[m_Index]->m_DestroyQueued = true;
             }
             PresentationSystem<GameObjectProxySystem>.System.Destroy(in this);
         }

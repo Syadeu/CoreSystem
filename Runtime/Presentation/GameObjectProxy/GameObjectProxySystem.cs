@@ -509,27 +509,19 @@ namespace Syadeu.Presentation
         {
             CoreSystem.Logger.ThreadBlock(nameof(Destroy), ThreadInfo.Unity);
 
-            //OnDataObjectDestroy?.Invoke(tr);
-
-            //if (tr.hasProxy && !tr.hasProxyQueued) RemoveProxy(tr);
-            //else
-            //{
-            //    "in".ToLog();
-            //}
-
-            //unsafe
-            //{
-            //    //if (!tr.Pointer->m_ClusterID.Equals(ClusterID.Requested))
-            //    {
-            //        m_ClusterData.Remove(tr.Pointer->m_ClusterID);
-            //    }
-            //}
-            //m_ProxyData.Remove(tr);
-
             unsafe
             {
-                m_RequestDestories.Enqueue(tr.m_Index);
+                if ((*tr.m_Pointer)[tr.m_Index]->m_DestroyQueued)
+                {
+                    CoreSystem.Logger.LogError(Channel.Proxy, 
+                        "Cannot destroy this proxy because it is already destroyed.");
+                    return;
+                }
+
+                (*tr.m_Pointer)[tr.m_Index]->m_DestroyQueued = true;
             }
+
+            m_RequestDestories.Enqueue(tr.m_Index);
             CoreSystem.Logger.Log(Channel.Proxy,
                 $"Destroy called");
         }
