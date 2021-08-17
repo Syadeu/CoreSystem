@@ -191,7 +191,7 @@ namespace Syadeu.Presentation
         private NativeList<ClusterGroup<ProxyTransformData>> m_SortedCluster;
         protected override PresentationResult AfterPresentation()
         {
-            const int c_ChunkSize = 100;
+            //const int c_ChunkSize = 100;
 
             if (m_LoadingLock) return base.AfterPresentation();
 
@@ -525,30 +525,6 @@ namespace Syadeu.Presentation
             CoreSystem.Logger.Log(Channel.Proxy,
                 $"Destroy called");
         }
-        private struct ClusterIDRequest
-        {
-            public float3 translation;
-            public int index;
-
-            public ClusterIDRequest(float3 tr, int idx)
-            {
-                translation = tr;
-                index = idx;
-            }
-        }
-        private struct ClusterUpdateRequest
-        {
-            public ProxyTransform transform;
-            public ClusterID id;
-            public float3 translation;
-
-            public ClusterUpdateRequest(ProxyTransform transform, ClusterID id, float3 tr)
-            {
-                this.transform = transform;
-                this.id = id;
-                translation = tr;
-            }
-        }
 
         #region Proxy Object Control
 
@@ -750,6 +726,35 @@ namespace Syadeu.Presentation
         private void InstantiatePrefab(PrefabReference prefab, Vector3 position, Quaternion rotation, Action<RecycleableMonobehaviour> onCompleted)
         {
             PoolContainer<PrefabRequester>.Dequeue().Setup(this, prefab, position, rotation, onCompleted);
+        }
+
+        #endregion
+
+        #region Inner Classes
+
+        private struct ClusterIDRequest
+        {
+            public float3 translation;
+            public int index;
+
+            public ClusterIDRequest(float3 tr, int idx)
+            {
+                translation = tr;
+                index = idx;
+            }
+        }
+        private struct ClusterUpdateRequest
+        {
+            public ProxyTransform transform;
+            public ClusterID id;
+            public float3 translation;
+
+            public ClusterUpdateRequest(ProxyTransform transform, ClusterID id, float3 tr)
+            {
+                this.transform = transform;
+                this.id = id;
+                translation = tr;
+            }
         }
 
         #endregion

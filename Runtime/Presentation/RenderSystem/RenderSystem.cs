@@ -202,54 +202,7 @@ namespace Syadeu.Presentation.Render
             }
             return false;
         }
-        //internal static bool IsInCameraScreenWithPlane(NativeArray<float3> vertices, Matrix4x4 matrix, Vector3 offset)
-        //{
-        //    Plane[] planes = GeometryUtility.CalculateFrustumPlanes(matrix);
-        //    Plane plane = new Plane();
-        //    GeometryUtility.
-
-        //    for (int i = 0; i < vertices.Length; i++)
-        //    {
-        //        if (IsInCameraScreen(vertices[i], matrix, offset)) return true;
-        //    }
-        //    return false;
-        //}
-        private static void CalculateFrustumPlanes(Matrix4x4 mat, Plane[] planes)
-        {
-            // left
-            planes[0].normal = new Vector3(mat.m30 + mat.m00, mat.m31 + mat.m01, mat.m32 + mat.m02);
-            planes[0].distance = mat.m33 + mat.m03;
-
-            // right
-            planes[1].normal = new Vector3(mat.m30 - mat.m00, mat.m31 - mat.m01, mat.m32 - mat.m02);
-            planes[1].distance = mat.m33 - mat.m03;
-
-            // bottom
-            planes[2].normal = new Vector3(mat.m30 + mat.m10, mat.m31 + mat.m11, mat.m32 + mat.m12);
-            planes[2].distance = mat.m33 + mat.m13;
-
-            // top
-            planes[3].normal = new Vector3(mat.m30 - mat.m10, mat.m31 - mat.m11, mat.m32 - mat.m12);
-            planes[3].distance = mat.m33 - mat.m13;
-
-            // near
-            planes[4].normal = new Vector3(mat.m30 + mat.m20, mat.m31 + mat.m21, mat.m32 + mat.m22);
-            planes[4].distance = mat.m33 + mat.m23;
-
-            // far
-            planes[5].normal = new Vector3(mat.m30 - mat.m20, mat.m31 - mat.m21, mat.m32 - mat.m22);
-            planes[5].distance = mat.m33 - mat.m23;
-
-            // normalize
-            for (uint i = 0; i < 6; i++)
-            {
-                float length = planes[i].normal.magnitude;
-                planes[i].normal /= length;
-                planes[i].distance /= length;
-            }
-        }
-
-
+        
         public void StartPreRender(IEnumerator iter)
         {
             CoreRoutine routine = new CoreRoutine(iter, false);
@@ -260,34 +213,5 @@ namespace Syadeu.Presentation.Render
             CoreRoutine routine = new CoreRoutine(iter, false);
             m_PostRenderRoutines.Add(routine);
         }
-
-        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        //public static float4x4 TRS(float3 translation, quaternion rotation, float3 scale)
-        //{
-        //    float3x3 r = new float3x3(rotation);
-        //    return
-        //        new float4x4(
-        //            new float4(r.c0 * scale.x, 0),
-        //            new float4(r.c1 * scale.y, 0),
-        //            new float4(r.c2 * scale.z, 0),
-        //            new float4(translation, 1)
-        //            );
-        //}
-        public static float4x4 LocalToWorldMatrix(float3 translation, quaternion rotation)
-        {
-            float3x3 r = new float3x3(rotation);
-            return new float4x4(r, translation);
-        }
-        public static float4x4 WorldToLocalMatrix(float3 translation, quaternion rotation) => math.inverse(LocalToWorldMatrix(translation, rotation));
     }
-
-	public enum IntersectionType
-    {
-		False		=	0b001,
-
-		Intersects	=	0b010,
-		Contains	=	0b100,
-
-		True		=	0b110
-	}
 }
