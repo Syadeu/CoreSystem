@@ -96,6 +96,7 @@ namespace SyadeuEditor
                             element.SetParent(folder);
                         },
                         (t) => t,
+                        null,
                         (t) =>
                         {
                             if (t.GetCustomAttribute<ObsoleteAttribute>() != null)
@@ -125,6 +126,7 @@ namespace SyadeuEditor
                             element.SetParent(folder);
                         },
                         (t) => t,
+                        null,
                         (t) =>
                         {
                             if (t.GetCustomAttribute<ObsoleteAttribute>() != null)

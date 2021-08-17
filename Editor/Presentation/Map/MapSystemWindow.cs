@@ -717,15 +717,19 @@ namespace SyadeuEditor.Presentation.Map
                         Vector3 pos = EditorSceneUtils.GetMouseScreenPos();
 
                         var list = EntityDataList.Instance.m_Objects.Where((other) => other.Value is EntityBase).Select((other) => (EntityBase)other.Value).ToArray();
-                        PopupWindow.Show(rect, SelectorPopup<Hash, EntityBase>.GetWindow(list,
-                            (hash) =>
+                        PopupWindow.Show(rect, SelectorPopup<Hash, EntityBase>.GetWindow
+                            (
+                            list: list,
+                            setter: (hash) =>
                             {
                                 Reference<EntityBase> refobj = new Reference<EntityBase>(hash);
 
                                 m_SelectedMapObject = m_EditingMapData.Add(refobj, m_PreviewFolder, pos);
                                 Repaint();
                             },
-                            (other) => other.Hash));
+                            getter: (other) => other.Hash,
+                            noneValue: Hash.Empty
+                            ));
                         #endregion
 
                         Repaint();

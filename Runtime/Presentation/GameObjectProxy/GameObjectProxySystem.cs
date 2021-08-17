@@ -427,6 +427,8 @@ namespace Syadeu.Presentation
                         throw new Exception();
                     }
                     ProxyTransformData data = List.ElementAt(clusterGroup[j]);
+
+                    if (data.m_Prefab.Equals(PrefabReference.None)) continue;
                     if (!data.m_EnableCull)
                     {
                         if (data.m_ProxyIndex.Equals(-1) &&
