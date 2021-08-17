@@ -50,6 +50,8 @@ namespace Syadeu.Presentation
         private readonly Dictionary<Type, List<IAttributeProcessor>> m_AttributeProcessors = new Dictionary<Type, List<IAttributeProcessor>>();
         private readonly Dictionary<Type, List<IEntityDataProcessor>> m_EntityProcessors = new Dictionary<Type, List<IEntityDataProcessor>>();
 
+        private readonly Queue<Query> m_Queries = new Queue<Query>();
+
         internal DataContainerSystem m_DataContainerSystem;
         internal GameObjectProxySystem m_ProxySystem;
         internal Events.EventSystem m_EventSystem;
@@ -280,6 +282,21 @@ namespace Syadeu.Presentation
             m_ObjectEntities.Remove(entityHash);
         }
 
+        protected override PresentationResult OnPresentation()
+        {
+            if (m_Queries.Count > 0)
+            {
+                int queryCount = m_Queries.Count;
+                for (int i = 0; i < queryCount; i++)
+                {
+                    Query query = m_Queries.Dequeue();
+                    var iter = query.GetEnumerator();
+                    while (iter.MoveNext()) { }
+                    query.Terminate();
+                }
+            }
+            return base.OnPresentation();
+        }
         protected override PresentationResult OnPresentationAsync()
         {
             // TODO : 이거 매우 심각한 GC 문제를 일으킴.
@@ -734,6 +751,122 @@ namespace Syadeu.Presentation
         }
 
         #endregion
+
+        public sealed class Query : System.Collections.IEnumerable
+        {
+            static readonly Stack<Query> m_Pool = new Stack<Query>();
+
+            readonly EntitySystem m_EntitySystem;
+            readonly List<Hash> m_Has = new List<Hash>();
+            readonly List<Hash> m_HasNot = new List<Hash>();
+
+            EntityData<IEntityData> m_Entity;
+            System.Collections.IEnumerator m_Enumerator;
+            
+            internal static Query Dequeue(EntitySystem entitySystem, EntityData<IEntityData> entity)
+            {
+                if (m_Pool.Count == 0) return new Query(entitySystem, entity);
+                else return m_Pool.Pop();
+            }
+            private Query(EntitySystem entitySystem, EntityData<IEntityData> entity)
+            {
+                m_EntitySystem = entitySystem;
+                m_Entity = entity;
+            }
+            internal void Terminate()
+            {
+                m_Has.Clear();
+                m_HasNot.Clear();
+                m_Enumerator = null;
+                m_Entity = EntityData<IEntityData>.Empty;
+                m_Pool.Push(this);
+            }
+
+            public Query Has(Hash attributeHash)
+            {
+                m_Has.Add(attributeHash);
+                return this;
+            }
+            public Query HasNot(Hash attributeHash)
+            {
+                m_HasNot.Add(attributeHash);
+                return this;
+            }
+
+            public void Schedule(Action action)
+            {
+                m_Enumerator = GetEnumerator(action);
+                m_EntitySystem.m_Queries.Enqueue(this);
+            }
+            public void Schedule<T>(Action<T> action, T t)
+            {
+                m_Enumerator = GetEnumerator(action, t);
+                m_EntitySystem.m_Queries.Enqueue(this);
+            }
+            public void Schedule<T0, T1>(Action<T0, T1> action, T0 t0, T1 t1)
+            {
+                m_Enumerator = GetEnumerator(action, t0, t1);
+                m_EntitySystem.m_Queries.Enqueue(this);
+            }
+
+            #region Enumerator
+            private System.Collections.IEnumerator GetEnumerator(Action action)
+            {
+                if (!IsExcutable()) yield break;
+
+                try
+                {
+                    action.Invoke();
+                }
+                catch (Exception)
+                {
+                    yield break;
+                }
+            }
+            private System.Collections.IEnumerator GetEnumerator<T>(Action<T> action, T t)
+            {
+                if (!IsExcutable()) yield break;
+
+                try
+                {
+                    action.Invoke(t);
+                }
+                catch (Exception)
+                {
+                    yield break;
+                }
+            }
+            private System.Collections.IEnumerator GetEnumerator<T0, T1>(Action<T0, T1> action, T0 t0, T1 t1)
+            {
+                if (!IsExcutable()) yield break;
+
+                try
+                {
+                    action.Invoke(t0, t1);
+                }
+                catch (Exception)
+                {
+                    yield break;
+                }
+            }
+
+            public System.Collections.IEnumerator GetEnumerator() => m_Enumerator;
+
+            private bool IsExcutable()
+            {
+                for (int i = 0; i < m_Has.Count; i++)
+                {
+                    if (!m_Entity.HasAttribute(m_Has[i])) return false;
+                }
+                for (int i = 0; i < m_HasNot.Count; i++)
+                {
+                    if (m_Entity.HasAttribute(m_Has[i])) return false;
+                }
+                return true;
+            }
+            #endregion
+        }
+        public Query GetQuery(EntityData<IEntityData> entity) => Query.Dequeue(this, entity);
 
         #region Raycast
         public Raycaster Raycast(Entity<IEntity> from, Ray ray)

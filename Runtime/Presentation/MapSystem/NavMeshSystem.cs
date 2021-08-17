@@ -6,11 +6,13 @@ using Syadeu.Presentation.Events;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Collections;
 using Unity.Mathematics;
 
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.AI;
+using UnityEngine.Experimental.AI;
 using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace Syadeu.Presentation.Map
@@ -123,7 +125,7 @@ namespace Syadeu.Presentation.Map
             component.m_Registered = false;
         }
 
-        public void AddObstacle(NavObstacleAttribute obstacle, ProxyTransform tr, int areaMask = 0)
+        public void AddObstacle(NavObstacleAttribute obstacle, ProxyTransform tr, int areaMask)
         {
             CoreSystem.Logger.ThreadBlock(nameof(AddObstacle), ThreadInfo.Unity);
 
@@ -193,7 +195,6 @@ namespace Syadeu.Presentation.Map
                 m_RequireReload = true;
             }
         }
-
         public void RemoveObstacle(NavObstacleAttribute obstacle)
         {
             m_Sources.Clear();

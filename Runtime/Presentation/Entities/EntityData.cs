@@ -82,6 +82,8 @@ namespace Syadeu.Presentation.Entities
         public bool Equals(EntityData<T> other) => m_Idx.Equals(other.m_Idx);
         public bool Equals(Hash other) => m_Idx.Equals(other);
 
+        /// <inheritdoc cref="IEntityData.HasAttribute(Hash)"/>
+        public bool HasAttribute(Hash attributeHash) => Target.HasAttribute(attributeHash);
         /// <inheritdoc cref="IEntityData.GetAttribute(Type)"/>
         public AttributeBase GetAttribute(Type t) => Target.GetAttribute(t);
         /// <inheritdoc cref="IEntityData.GetAttributes(Type)"/>
