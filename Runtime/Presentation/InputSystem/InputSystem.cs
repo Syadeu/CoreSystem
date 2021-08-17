@@ -2,6 +2,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 using UnityEngine.InputSystem.LowLevel;
 
 namespace Syadeu.Presentation.Input
@@ -22,9 +23,11 @@ namespace Syadeu.Presentation.Input
         {
             InputAction inputAction = new InputAction();
             inputAction.bindingMask = new InputBinding();
+
+            //InputControlPath.TryFindControl<>(Gamepad.current, "leftStick/x");
         }
 
-        public static InputControl ToControl(ControlType controlType)
+        public static InputControl ToControlType(ControlType controlType)
         {
             if (controlType == ControlType.Keyboard) return Keyboard.current;
             else if (controlType == ControlType.Mouse) return Mouse.current;
@@ -39,8 +42,18 @@ namespace Syadeu.Presentation.Input
 
         public Key Key;
 
+        public KeyControl ToControl() => Keyboard.current[Key];
         public bool Equals(KeyboardBinding other) => Key.Equals(other.Key);
-        public override string ToString() => InputControlPath.Combine(InputSystem.ToControl(ControlType), TypeHelper.Enum<Key>.ToString(Key));
+        public override string ToString() => InputControlPath.Combine(InputSystem.ToControlType(ControlType), TypeHelper.Enum<Key>.ToString(Key));
+    }
+    public struct MouseBinding
+    {
+        public ControlType ControlType => ControlType.Mouse;
+
+        public MouseButton MouseButton;
+
+        public InputControl ToControl() => InputControlPath.TryFindControl(Mouse.current, ToString());
+        public override string ToString() => InputControlPath.Combine(InputSystem.ToControlType(ControlType), TypeHelper.Enum<MouseButton>.ToString(MouseButton));
     }
     public struct GamepadBinding
     {
@@ -48,7 +61,8 @@ namespace Syadeu.Presentation.Input
 
         public GamepadButton GamepadButton;
 
-        public override string ToString() => InputControlPath.Combine(InputSystem.ToControl(ControlType), TypeHelper.Enum<GamepadButton>.ToString(GamepadButton));
+        public ButtonControl ToControl() => Gamepad.current[GamepadButton];
+        public override string ToString() => InputControlPath.Combine(InputSystem.ToControlType(ControlType), TypeHelper.Enum<GamepadButton>.ToString(GamepadButton));
     }
 
     public enum ControlType
