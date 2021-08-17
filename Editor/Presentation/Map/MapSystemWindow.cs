@@ -675,6 +675,20 @@ namespace SyadeuEditor.Presentation.Map
                     EditorGUILayout.Space();
                     EditorUtils.StringRich("AABB", 13, true);
                     {
+                        if (GUILayout.Button("Auto"))
+                        {
+                            GameObject temp = (GameObject)entity.Prefab.GetObjectSetting().m_RefPrefab.editorAsset;
+                            Transform tr = temp.transform;
+
+                            AABB aabb = new AABB(float3.zero, float3.zero);
+                            foreach (var item in tr.GetComponentsInChildren<Renderer>())
+                            {
+                                aabb.Encapsulate(item.bounds);
+                            }
+                            entity.Center = aabb.center - ((float3)tr.position);
+                            entity.Size = aabb.size;
+                            SceneView.lastActiveSceneView.Repaint();
+                        }
                         entity.Center = EditorGUILayout.Vector3Field("Center", entity.Center);
                         entity.Size = EditorGUILayout.Vector3Field("Size", entity.Size);
                     }

@@ -218,7 +218,7 @@ namespace Syadeu.Presentation
             else
             {
                 SceneReference sceneRef = SceneList.Instance.GetScene(SceneManager.GetActiveScene().path);
-                if (m_DebugMode) StartSceneDependences(this, sceneRef);
+                if (m_DebugMode && sceneRef != null) StartSceneDependences(this, sceneRef);
             }
             return base.OnStartPresentation();
         }
