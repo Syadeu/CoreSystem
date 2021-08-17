@@ -480,6 +480,12 @@ namespace SyadeuEditor.Presentation.Map
             {
                 ReflectionHelperEditor.DrawReferenceSelector("Scene data: ", (hash) =>
                 {
+                    if (hash.Equals(Hash.Empty))
+                    {
+                        ResetSceneData();
+                        return;
+                    }
+
                     m_SceneData = new Reference<SceneDataEntity>(hash);
 
                     if (m_SceneData.IsValid())
@@ -528,6 +534,19 @@ namespace SyadeuEditor.Presentation.Map
                     EditorGUILayout.BeginHorizontal();
                     ReflectionHelperEditor.DrawReferenceSelector("Map data: ", (hash) =>
                     {
+                        if (hash.Equals(Hash.Empty))
+                        {
+                            if (m_LoadedMapData[index] != null)
+                            {
+                                m_LoadedMapData[index].Dispose();
+                            }
+
+                            m_SelectedMapObject = null;
+                            m_SelectedMapData.RemoveAt(index);
+                            m_LoadedMapData.RemoveAt(index);
+                            return;
+                        }
+
                         m_SelectedMapData[index] = new Reference<MapDataEntity>(hash);
                         MapDataEntity mapData = m_SelectedMapData[index].GetObject();
 

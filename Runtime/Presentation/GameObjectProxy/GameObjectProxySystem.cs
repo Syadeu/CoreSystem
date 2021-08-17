@@ -481,7 +481,16 @@ namespace Syadeu.Presentation
 
             CoreSystem.Logger.NotNull(m_RenderSystem, $"You've call this method too early or outside of PresentationSystem");
 
-            ProxyTransform tr = m_ProxyData.Add(prefab, pos, rot, scale, enableCull, center, size);
+            ProxyTransform tr;
+            if (!prefab.IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Proxy,
+                    $"Trying to create an invalid prefab proxy. This is not allowed. Replaced to empty.");
+
+                tr = m_ProxyData.Add(PrefabReference.None, pos, rot, scale, enableCull, center, size);
+            }
+            else tr = m_ProxyData.Add(prefab, pos, rot, scale, enableCull, center, size);
+
             unsafe
             {
                 m_ClusterIDRequests.Enqueue(new ClusterIDRequest(pos, tr.m_Index));
@@ -490,7 +499,8 @@ namespace Syadeu.Presentation
             OnDataObjectCreated?.Invoke(tr);
 
             CoreSystem.Logger.Log(Channel.Proxy, true,
-                $"ProxyTransform({prefab.GetObjectSetting().m_Name})" +
+                $"ProxyTransform(" +
+                $"{(prefab.GetObjectSetting() != null ? prefab.GetObjectSetting().m_Name : "EMPTY")})" +
                 $"has been created at {pos}");
 
             return tr;

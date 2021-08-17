@@ -23,7 +23,7 @@ namespace Syadeu.Database
 
         public PrefabList.ObjectSetting GetObjectSetting()
         {
-            if (!IsValid()) return null;
+            if (!IsValid() || Equals(None)) return null;
             return PrefabList.Instance.ObjectSettings[(int)m_Idx];
         }
 
