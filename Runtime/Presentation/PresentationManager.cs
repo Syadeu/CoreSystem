@@ -9,13 +9,13 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.Assertions;
 
 namespace Syadeu.Presentation
 {
     [StaticManagerIntializeOnLoad]
-    [UnityEngine.AddComponentMenu("")]
     public sealed class PresentationManager : StaticDataManager<PresentationManager>
     {
         const string c_Instance = "Instance";
@@ -68,6 +68,11 @@ namespace Syadeu.Presentation
             public WaitUntil
                 m_WaitBeforePre, m_WaitOnPre, m_WaitAfterPre;
 
+            public JobHandle 
+                m_BeforePresentationJobHandle,
+                m_OnPresentationJobHandle,
+                m_AfterPresentationJobHandle;
+
             public Group(Type name, Hash hash)
             {
                 m_Name = name;
@@ -111,6 +116,19 @@ namespace Syadeu.Presentation
 
                 m_MainInitDone = false;
                 m_BackgroundInitDone = false;
+            }
+
+            public JobHandle GetJobHandle(int pos)
+            {
+                if (pos == 0) return m_BeforePresentationJobHandle;
+                else if (pos == 1) return m_OnPresentationJobHandle;
+                else return m_AfterPresentationJobHandle;
+            }
+            public void SetJobHandle(int pos, JobHandle jobHandle)
+            {
+                if (pos == 0) m_BeforePresentationJobHandle = JobHandle.CombineDependencies(m_BeforePresentationJobHandle, jobHandle);
+                else if (pos == 1) m_OnPresentationJobHandle = JobHandle.CombineDependencies(m_OnPresentationJobHandle, jobHandle);
+                else m_AfterPresentationJobHandle = JobHandle.CombineDependencies(m_AfterPresentationJobHandle, jobHandle);
             }
         }
         private readonly Hash m_DefaultGroupHash = Hash.NewHash(TypeHelper.TypeOf<DefaultPresentationGroup>.Name);
@@ -246,7 +264,10 @@ namespace Syadeu.Presentation
                 else ins = Activator.CreateInstance(t);
 
                 PresentationSystemEntity system = (PresentationSystemEntity)ins;
-                //group.PublicSystemStructDisposer += ((IDisposable)system).Dispose;
+
+                system.SetJobHandle = group.SetJobHandle;
+                system.GetJobHandle = group.GetJobHandle;
+
                 group.m_Systems.Add(system);
 
                 group.m_Initializers.Add((IInitPresentation)ins);
@@ -389,13 +410,7 @@ namespace Syadeu.Presentation
                 group.m_MainthreadBeforePre = false;
 
                 // Unity Jobs
-                //using (new CoreSystem.LogTimer($"{group.m_Name.Name}:m_BeforePresentationJobHandle", Channel.Presentation))
-                {
-                    for (int i = 0; i < group.m_Systems.Count; i++)
-                    {
-                        group.m_Systems[i].m_BeforePresentationJobHandle.Complete();
-                    }
-                }
+                group.m_BeforePresentationJobHandle.Complete();
 
                 for (int i = 0; i < group.m_BeforePresentations.Count; i++)
                 {
@@ -411,13 +426,7 @@ namespace Syadeu.Presentation
                 group.m_MainthreadOnPre = false;
 
                 // Unity Jobs
-                //using (new CoreSystem.LogTimer($"{group.m_Name.Name}:m_OnPresentationJobHandle", Channel.Presentation))
-                {
-                    for (int i = 0; i < group.m_Systems.Count; i++)
-                    {
-                        group.m_Systems[i].m_OnPresentationJobHandle.Complete();
-                    }
-                }
+                group.m_OnPresentationJobHandle.Complete();
 
                 for (int i = 0; i < group.m_OnPresentations.Count; i++)
                 {
@@ -433,13 +442,7 @@ namespace Syadeu.Presentation
                 group.m_MainthreadAfterPre = false;
 
                 // Unity Jobs
-                //using (new CoreSystem.LogTimer($"{group.m_Name.Name}:m_AfterPresentationJobHandle", Channel.Presentation))
-                {
-                    for (int i = 0; i < group.m_Systems.Count; i++)
-                    {
-                        group.m_Systems[i].m_AfterPresentationJobHandle.Complete();
-                    }
-                }
+                group.m_AfterPresentationJobHandle.Complete();
 
                 for (int i = 0; i < group.m_AfterPresentations.Count; i++)
                 {

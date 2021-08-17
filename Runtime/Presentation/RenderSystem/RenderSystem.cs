@@ -38,9 +38,6 @@ namespace Syadeu.Presentation.Render
         public event Action<Camera, Camera> OnCameraChanged;
         public event Action OnRender;
 
-        internal List<CoreRoutine> m_PreRenderRoutines = new List<CoreRoutine>();
-        internal List<CoreRoutine> m_PostRenderRoutines = new List<CoreRoutine>();
-
         private JobHandle m_FrustumJob;
 		private CameraFrustum m_CameraFrustum;
 
@@ -201,17 +198,6 @@ namespace Syadeu.Presentation.Render
                 if (IsInCameraScreen(vertices[i], matrix, offset)) return true;
             }
             return false;
-        }
-        
-        public void StartPreRender(IEnumerator iter)
-        {
-            CoreRoutine routine = new CoreRoutine(iter, false);
-            m_PreRenderRoutines.Add(routine);
-        }
-        public void StartPostRender(IEnumerator iter)
-        {
-            CoreRoutine routine = new CoreRoutine(iter, false);
-            m_PostRenderRoutines.Add(routine);
         }
     }
 }

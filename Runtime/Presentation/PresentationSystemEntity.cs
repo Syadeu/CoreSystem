@@ -21,15 +21,6 @@ namespace Syadeu.Presentation
     {
         public override bool IsStartable => true;
 
-        public PresentationSystemEntity()
-        {
-            ConfigLoader.LoadConfig(this);
-        }
-        ~PresentationSystemEntity()
-        {
-            Dispose();
-        }
-
         protected override PresentationResult OnInitialize() { return PresentationResult.Normal; }
         protected override PresentationResult OnInitializeAsync() { return PresentationResult.Normal; }
 

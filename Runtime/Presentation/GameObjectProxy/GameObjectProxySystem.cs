@@ -588,7 +588,10 @@ namespace Syadeu.Presentation
 
             if ((proxy.transform.position - (Vector3)proxyTransform.position).sqrMagnitude > .1f)
             {
-                proxyTransform.position = proxy.transform.position;
+                unsafe
+                {
+                    proxyTransform.Pointer->m_Translation = proxy.transform.position;
+                }
                 CoreSystem.Logger.LogWarning(Channel.Proxy,
                     "in-corrected translation found. Did you moved proxy transform directly?");
             }
