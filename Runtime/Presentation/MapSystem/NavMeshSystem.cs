@@ -28,12 +28,17 @@ namespace Syadeu.Presentation.Map
 
         private EventSystem m_EventSystem;
 
+        #region Presentation Methods
+
         protected override PresentationResult OnInitialize()
         {
             RequestSystem<EventSystem>(Bind);
 
             return base.OnInitialize();
         }
+
+        #region Binds
+
         private void Bind(EventSystem other)
         {
             m_EventSystem = other;
@@ -53,6 +58,9 @@ namespace Syadeu.Presentation.Map
             m_Sources.Clear();
             m_RequireReload = true;
         }
+
+        #endregion
+
         public override void OnDispose()
         {
             m_EventSystem.RemoveEvent<OnTransformChangedEvent>(OnTransformChangedEventHandler);
@@ -73,16 +81,17 @@ namespace Syadeu.Presentation.Map
             
             foreach (NavMeshComponent agent in m_Agents)
             {
-                $"bake: {m_Sources.Count}".ToLog();
                 Bounds bounds = agent.Bounds;
 
                 NavMeshBuilder.UpdateNavMeshDataAsync(agent.m_NavMeshData, NavMesh.GetSettingsByID(agent.m_AgentType), m_Sources, 
-                    QuantizedBounds(bounds.center, bounds.size));
+                    QuantizedBounds(bounds.center + agent.transform.position, bounds.size));
             }
 
             m_RequireReload = false;
             return base.BeforePresentation();
         }
+
+        #endregion
 
         public void AddBaker(NavMeshComponent component)
         {
@@ -99,7 +108,6 @@ namespace Syadeu.Presentation.Map
             component.m_Registered = true;
             m_Agents.Add(component);
             NavMeshBuilder.UpdateNavMeshDataAsync(component.m_NavMeshData, NavMesh.GetSettingsByID(component.m_AgentType), m_Sources, component.Bounds);
-            "baker in".ToLog();
         }
         public void RemoveBaker(NavMeshComponent component)
         {
@@ -153,7 +161,6 @@ namespace Syadeu.Presentation.Map
                         for (int i = 0; i < meshFilter.Length; i++)
                         {
                             UnityEngine.Object targetObj = meshFilter[i].sharedMesh;
-                            //$"{tr.position}: {tr.rotation}: {tr.scale}".ToLog();
                             NavMeshBuildSource data = new NavMeshBuildSource
                             {
                                 shape = NavMeshBuildSourceShape.Mesh,
@@ -164,8 +171,6 @@ namespace Syadeu.Presentation.Map
 
                             sources[i] = data;
                         }
-
-                        $"obstacle in at {tr.position}:{meshFilter.Length}".ToLog();
                     }
                     else
                     {
