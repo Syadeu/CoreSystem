@@ -56,6 +56,55 @@ namespace Syadeu.Presentation
             Ref.m_ProxyIndex = proxyIndex;
         }
 
+        public readonly struct ReadOnly
+        {
+            public readonly int index;
+            public readonly int generation;
+
+            public readonly bool enableCull;
+            public readonly bool isVisible;
+
+            public readonly bool hasProxy;
+            public readonly bool hasProxyQueued;
+            public readonly bool isDestroyed;
+            public readonly PrefabReference prefab;
+
+            public readonly float3 position;
+            public readonly quaternion rotation;
+            public readonly float3 scale;
+
+            public readonly float3 center;
+            public readonly float3 size;
+            public readonly AABB aabb;
+
+            unsafe internal ReadOnly(ProxyTransformData* p)
+            {
+                index = (*p).m_Index;
+                generation = (*p).m_Generation;
+
+                enableCull = (*p).m_EnableCull;
+                isVisible = (*p).m_IsVisible;
+
+                int2 proxyIdx = (*p).m_ProxyIndex;
+                hasProxy = !proxyIdx.Equals(ProxyNull);
+                hasProxyQueued = !proxyIdx.Equals(ProxyNull) && proxyIdx.Equals(ProxyQueued);
+                isDestroyed = (*p).destroyed;
+                prefab = (*p).m_Prefab;
+
+                position = (*p).m_Translation;
+                rotation = (*p).m_Rotation;
+                scale = (*p).m_Scale;
+
+                center = (*p).m_Center;
+                size = (*p).m_Size;
+                aabb = (*p).GetAABB();
+            }
+        }
+        public ReadOnly AsReadOnly()
+        {
+            return new ReadOnly();
+        }
+
 #pragma warning disable IDE1006 // Naming Styles
         public int index
         {
