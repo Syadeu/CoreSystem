@@ -42,6 +42,7 @@ namespace Syadeu.Presentation
         {
             m_Hash = obj.Hash;
         }
+        public static Reference GetReference(string name) => new Reference(EntityDataList.Instance.GetObject(name));
 
         public ObjectBase GetObject() => EntityDataList.Instance.m_Objects[m_Hash];
         public bool IsValid() => !m_Hash.Equals(Hash.Empty);
@@ -70,6 +71,7 @@ namespace Syadeu.Presentation
 
             m_Hash = obj.Hash;
         }
+        public static Reference<T> GetReference(string name) => new Reference<T>(EntityDataList.Instance.GetObject(name));
 
         ObjectBase IReference.GetObject() => EntityDataList.Instance.m_Objects[m_Hash];
         public T GetObject()

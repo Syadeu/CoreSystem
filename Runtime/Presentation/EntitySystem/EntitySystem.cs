@@ -757,8 +757,8 @@ namespace Syadeu.Presentation
             static readonly Stack<Query> m_Pool = new Stack<Query>();
 
             readonly EntitySystem m_EntitySystem;
-            readonly List<Hash> m_Has = new List<Hash>();
-            readonly List<Hash> m_HasNot = new List<Hash>();
+            readonly List<Reference> m_Has = new List<Reference>();
+            readonly List<Reference> m_HasNot = new List<Reference>();
 
             EntityData<IEntityData> m_Entity;
             System.Collections.IEnumerator m_Enumerator;
@@ -782,12 +782,12 @@ namespace Syadeu.Presentation
                 m_Pool.Push(this);
             }
 
-            public Query Has(Hash attributeHash)
+            public Query Has(Reference attributeHash)
             {
                 m_Has.Add(attributeHash);
                 return this;
             }
-            public Query HasNot(Hash attributeHash)
+            public Query HasNot(Reference attributeHash)
             {
                 m_HasNot.Add(attributeHash);
                 return this;
