@@ -45,6 +45,12 @@ namespace Syadeu.Presentation.Map
             NavObstacleAttribute obstacleAtt = ev.entity.GetAttribute<NavObstacleAttribute>();
             if (obstacleAtt == null) return;
 
+            for (int i = 0; i < obstacleAtt.m_Sources.Length; i++)
+            {
+                obstacleAtt.m_Sources[i].transform = ev.transform.localToWorldMatrix;
+            }
+
+            m_Sources.Clear();
             m_RequireReload = true;
         }
         public override void OnDispose()
@@ -55,7 +61,7 @@ namespace Syadeu.Presentation.Map
         }
         protected override PresentationResult BeforePresentation()
         {
-            //if (!m_RequireReload) return base.BeforePresentation();
+            if (!m_RequireReload) return base.BeforePresentation();
 
             if (m_Sources.Count == 0)
             {
@@ -74,7 +80,7 @@ namespace Syadeu.Presentation.Map
                     QuantizedBounds(bounds.center, bounds.size));
             }
 
-            //m_RequireReload = false;
+            m_RequireReload = false;
             return base.BeforePresentation();
         }
 
