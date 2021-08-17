@@ -61,6 +61,15 @@ namespace Syadeu.Presentation.Entities
             }
             return value;
         }
+        internal static Entity<T> GetEntityWithoutCheck(Hash idx)
+        {
+            if (!m_Entity.TryGetValue(idx, out var value))
+            {
+                value = new Entity<T>(idx);
+                m_Entity.Add(idx, value);
+            }
+            return value;
+        }
 
         /// <inheritdoc cref="IEntityData.Idx"/>
         private readonly Hash m_Idx;

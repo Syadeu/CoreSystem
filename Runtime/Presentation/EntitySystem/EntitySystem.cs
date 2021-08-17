@@ -5,6 +5,7 @@ using Syadeu.Internal;
 using Syadeu.Mono;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Internal;
 using System;
 using System.Collections.Generic;
@@ -207,6 +208,8 @@ namespace Syadeu.Presentation
             m_EntityProcessors.Clear();
 
             m_ProxySystem.OnDataObjectDestroy -= M_ProxySystem_OnDataObjectDestroyAsync;
+            m_ProxySystem.OnDataObjectVisible -= OnDataObjectVisible;
+            m_ProxySystem.OnDataObjectInvisible -= OnDataObjectInvisible;
 
             m_ProxySystem.OnDataObjectProxyCreated -= M_ProxySystem_OnDataObjectProxyCreated;
             m_ProxySystem.OnDataObjectProxyRemoved -= M_ProxySystem_OnDataObjectProxyRemoved;
@@ -223,10 +226,55 @@ namespace Syadeu.Presentation
             m_ProxySystem = other;
 
             m_ProxySystem.OnDataObjectDestroy += M_ProxySystem_OnDataObjectDestroyAsync;
+            m_ProxySystem.OnDataObjectVisible += OnDataObjectVisible;
+            m_ProxySystem.OnDataObjectInvisible += OnDataObjectInvisible;
 
             m_ProxySystem.OnDataObjectProxyCreated += M_ProxySystem_OnDataObjectProxyCreated;
             m_ProxySystem.OnDataObjectProxyRemoved += M_ProxySystem_OnDataObjectProxyRemoved;
         }
+        private void M_ProxySystem_OnDataObjectDestroyAsync(ProxyTransform obj)
+        {
+            if (!m_EntityGameObjects.TryGetValue(obj.m_Hash, out Hash entityHash) ||
+                !m_ObjectEntities.ContainsKey(entityHash)) return;
+
+            ProcessEntityOnDestroy(this, m_ObjectEntities[entityHash]);
+
+            m_EntityGameObjects.Remove(obj.m_Hash);
+            m_ObjectEntities.Remove(entityHash);
+        }
+        private void OnDataObjectVisible(ProxyTransform tr)
+        {
+            if (!m_EntityGameObjects.TryGetValue(tr.m_Hash, out Hash entityHash) ||
+                !m_ObjectEntities.ContainsKey(entityHash)) return;
+
+            m_EventSystem.PostEvent<OnEntityVisibleEvent>(OnEntityVisibleEvent.GetEvent(
+                Entity<IEntity>.GetEntityWithoutCheck(entityHash), tr));
+        }
+        private void OnDataObjectInvisible(ProxyTransform tr)
+        {
+            if (!m_EntityGameObjects.TryGetValue(tr.m_Hash, out Hash entityHash) ||
+                !m_ObjectEntities.ContainsKey(entityHash)) return;
+
+            m_EventSystem.PostEvent<OnEntityVisibleEvent>(OnEntityVisibleEvent.GetEvent(
+                Entity<IEntity>.GetEntityWithoutCheck(entityHash), tr));
+        }
+        private void M_ProxySystem_OnDataObjectProxyCreated(ProxyTransform obj, RecycleableMonobehaviour monoObj)
+        {
+            if (!m_EntityGameObjects.TryGetValue(obj.m_Hash, out Hash entityHash) ||
+                !(m_ObjectEntities[entityHash] is IEntity entity)) return;
+
+            monoObj.m_Entity = Entity<IEntity>.GetEntity(entity.Idx);
+            ProcessEntityOnProxyCreated(this, entity, monoObj);
+        }
+        private void M_ProxySystem_OnDataObjectProxyRemoved(ProxyTransform obj, RecycleableMonobehaviour monoObj)
+        {
+            if (!m_EntityGameObjects.TryGetValue(obj.m_Hash, out Hash entityHash) ||
+                !(m_ObjectEntities[entityHash] is IEntity entity)) return;
+
+            ProcessEntityOnProxyRemoved(this, entity, monoObj);
+            monoObj.m_Entity = Entity<IEntity>.Empty;
+        }
+        
         private void Bind(Events.EventSystem other)
         {
             m_EventSystem = other;
@@ -252,34 +300,6 @@ namespace Syadeu.Presentation
             }
 
             return base.OnStartPresentation();
-        }
-
-        private void M_ProxySystem_OnDataObjectProxyCreated(ProxyTransform obj, RecycleableMonobehaviour monoObj)
-        {
-            if (!m_EntityGameObjects.TryGetValue(obj.m_Hash, out Hash entityHash) ||
-                !(m_ObjectEntities[entityHash] is IEntity entity)) return;
-
-            monoObj.m_Entity = Entity<IEntity>.GetEntity(entity.Idx);
-            ProcessEntityOnProxyCreated(this, entity, monoObj);
-        }
-        private void M_ProxySystem_OnDataObjectProxyRemoved(ProxyTransform obj, RecycleableMonobehaviour monoObj)
-        {
-            if (!m_EntityGameObjects.TryGetValue(obj.m_Hash, out Hash entityHash) ||
-                !(m_ObjectEntities[entityHash] is IEntity entity)) return;
-
-            ProcessEntityOnProxyRemoved(this, entity, monoObj);
-            monoObj.m_Entity = Entity<IEntity>.Empty;
-        }
-
-        private void M_ProxySystem_OnDataObjectDestroyAsync(ProxyTransform obj)
-        {
-            if (!m_EntityGameObjects.TryGetValue(obj.m_Hash, out Hash entityHash) ||
-                !m_ObjectEntities.ContainsKey(entityHash)) return;
-
-            ProcessEntityOnDestroy(this, m_ObjectEntities[entityHash]);
-
-            m_EntityGameObjects.Remove(obj.m_Hash);
-            m_ObjectEntities.Remove(entityHash);
         }
 
         protected override PresentationResult OnPresentation()

@@ -90,7 +90,7 @@ namespace Syadeu.Presentation
             TriggerBoundAttribute[] atts = ev.entity.GetAttributes<TriggerBoundAttribute>();
             if (atts == null) return;
 
-            using (new CoreSystem.LogTimer(nameof(OnTransformChangedEventHandler), Channel.Entity))
+            using (new CoreSystem.LogTimer(nameof(OnTransformChangedEventHandler), Channel.Debug))
             {
                 for (int i = 0; i < atts.Length; i++)
                 {

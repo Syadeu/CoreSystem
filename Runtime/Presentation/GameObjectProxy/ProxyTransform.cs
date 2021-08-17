@@ -102,7 +102,10 @@ namespace Syadeu.Presentation
         }
         public ReadOnly AsReadOnly()
         {
-            return new ReadOnly();
+            unsafe
+            {
+                return new ReadOnly(Pointer);
+            }
         }
 
 #pragma warning disable IDE1006 // Naming Styles
