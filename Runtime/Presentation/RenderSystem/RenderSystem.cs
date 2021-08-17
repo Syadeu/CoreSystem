@@ -79,7 +79,8 @@ namespace Syadeu.Presentation.Render
             if (m_Camera.Value == null)
             {
                 m_Camera.Value = Camera.main;
-                if (Camera == null) return PresentationResult.Warning("Cam not found");
+                //if (Camera == null) return PresentationResult.Warning("Cam not found");
+                if (Camera == null) return base.BeforePresentation();
             }
             m_Matrix4x4 = GetCameraMatrix4X4(m_Camera.Value);
 
