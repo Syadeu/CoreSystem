@@ -120,9 +120,9 @@ namespace Syadeu.Database
             Encapsulate(aabb.center + aabb.extents);
         }
 
-        public AABB Rotation(quaternion rot) => CalculateRotationWithVertices(in this, rot);
+        public AABB Rotation(in quaternion rot, in float3 scale) => CalculateRotationWithVertices(in this, in rot, in scale);
 
-        private static AABB CalculateRotation(in AABB aabb, quaternion quaternion)
+        private static AABB CalculateRotation(in AABB aabb, in quaternion quaternion)
         {
             float3 
                 originCenter = aabb.center,
@@ -153,12 +153,13 @@ namespace Syadeu.Database
             return temp;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static AABB CalculateRotationWithVertices(in AABB aabb, quaternion quaternion)
+        private static AABB CalculateRotationWithVertices(in AABB aabb, in quaternion quaternion, in float3 scale)
         {
-            float3 
-                originCenter = aabb.center,
-                originExtents = aabb.extents;
-            float4x4 trMatrix = float4x4.TRS(originCenter, quaternion, originExtents);
+            float3
+                originCenter = aabb.center;
+                //originExtents = aabb.extents;
+            //float4x4 trMatrix = float4x4.TRS(originCenter, quaternion, originExtents);
+            float4x4 trMatrix = float4x4.TRS(originCenter, quaternion, scale * .5f);
 
             AABB temp = new AABB(originCenter, float3.zero);
 

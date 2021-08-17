@@ -326,12 +326,12 @@ namespace Syadeu.Presentation
             get => m_Scale;
             set => m_Scale = value;
         }
-        public AABB aabb => new AABB(m_Center + m_Translation, m_Size).Rotation(m_Rotation);
+        //public AABB aabb => new AABB(m_Center + m_Translation, m_Size).Rotation(m_Rotation);
 #pragma warning restore IDE1006 // Naming Styles
 
         public AABB GetAABB()
         {
-            return new AABB(m_Center + m_Translation, m_Size).Rotation(m_Rotation);
+            return new AABB(m_Center + m_Translation, m_Size).Rotation(in m_Rotation, in m_Scale);
         }
         public bool Equals(ProxyTransformData other) => m_Generation.Equals(other.m_Generation);
     }

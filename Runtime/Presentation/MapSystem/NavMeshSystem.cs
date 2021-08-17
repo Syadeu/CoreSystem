@@ -55,7 +55,7 @@ namespace Syadeu.Presentation.Map
         }
         protected override PresentationResult BeforePresentation()
         {
-            if (!m_RequireReload) return base.BeforePresentation();
+            //if (!m_RequireReload) return base.BeforePresentation();
 
             if (m_Sources.Count == 0)
             {
@@ -74,7 +74,7 @@ namespace Syadeu.Presentation.Map
                     QuantizedBounds(bounds.center, bounds.size));
             }
 
-            m_RequireReload = false;
+            //m_RequireReload = false;
             return base.BeforePresentation();
         }
 
@@ -147,6 +147,7 @@ namespace Syadeu.Presentation.Map
                         for (int i = 0; i < meshFilter.Length; i++)
                         {
                             UnityEngine.Object targetObj = meshFilter[i].sharedMesh;
+                            //$"{tr.position}: {tr.rotation}: {tr.scale}".ToLog();
                             NavMeshBuildSource data = new NavMeshBuildSource
                             {
                                 shape = NavMeshBuildSourceShape.Mesh,

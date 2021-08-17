@@ -270,7 +270,7 @@ namespace Syadeu.Presentation
             get
             {
                 if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
-                return new AABB(Ref.m_Center + Ref.m_Translation, Ref.m_Size).Rotation(Ref.m_Rotation);
+                return new AABB(Ref.m_Center + Ref.m_Translation, Ref.m_Size).Rotation(in Ref.m_Rotation, in Ref.m_Scale);
             }
         }
 

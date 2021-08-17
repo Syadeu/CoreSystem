@@ -35,7 +35,7 @@ namespace Syadeu.Presentation.Map
                 get
                 {
                     EntityBase entity = m_Object.GetObject();
-                    return new AABB(entity.Center + m_Translation, entity.Size).Rotation(m_Rotation);
+                    return new AABB(entity.Center + m_Translation, entity.Size).Rotation(in m_Rotation, in m_Scale);
                 }
             }
             public Object()
