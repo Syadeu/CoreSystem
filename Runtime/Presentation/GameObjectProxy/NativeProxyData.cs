@@ -23,12 +23,8 @@ namespace Syadeu.Presentation
         #region Safeties
 #if UNITY_EDITOR
         public AtomicSafetyHandle m_Safety;
-        // Handle to tell if the container has been disposed.
-        // This is a managed object. It can be passed along as the job can't dispose the container, 
-        // but needs to be (re)set to null on schedule to prevent job access to a managed object.
         [NativeSetClassTypeToNullOnSchedule] public DisposeSentinel m_DisposeSentinel;
 #endif
-        [NativeSetClassTypeToNullOnSchedule] public Semaphore m_PararellSemaphore;
         [NativeSetClassTypeToNullOnSchedule] public Semaphore m_WriteSemaphore;
         #endregion
 
@@ -63,8 +59,8 @@ namespace Syadeu.Presentation
             }
         }
 
-        public UnsafeList* m_UnsafeList;
-        public Allocator m_AllocatorLabel;
+        [NativeDisableUnsafePtrRestriction] public UnsafeList* m_UnsafeList;
+        private Allocator m_AllocatorLabel;
 
         public ProxyTransform this[int index]
         {
@@ -117,9 +113,7 @@ namespace Syadeu.Presentation
 #if UNITY_EDITOR
             DisposeSentinel.Create(out array.m_Safety, out array.m_DisposeSentinel, 1, allocator);
 #endif
-            array.m_PararellSemaphore = new Semaphore(0, 1);
             array.m_WriteSemaphore = new Semaphore(0, 1);
-            array.m_PararellSemaphore.Release();
             array.m_WriteSemaphore.Release();
         }
 
@@ -250,7 +244,7 @@ namespace Syadeu.Presentation
             return *List[i];
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Obsolete, MethodImpl(MethodImplOptions.AggressiveInlining)]
         public NativeArray<ProxyTransformData> GetActiveData(Allocator allocator)
         {
             // 이게 망할놈임
