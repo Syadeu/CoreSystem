@@ -43,6 +43,12 @@ namespace Syadeu.Presentation
             PresentationSystem<EntitySystem>.System.DestroyEntity(entity);
         }
 
+        public bool Equals(ITransform other)
+        {
+            if (!(other is UnityTransform tr)) return false;
+            return provider.Equals(tr.provider);
+        }
+
         void IDisposable.Dispose()
         {
             entity = null;

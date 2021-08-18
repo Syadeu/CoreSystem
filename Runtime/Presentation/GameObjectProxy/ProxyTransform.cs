@@ -380,5 +380,11 @@ namespace Syadeu.Presentation
         public bool Equals(ProxyTransform other) => 
             m_Index.Equals(other.m_Index) && 
             m_Generation.Equals(other.m_Generation);
+
+        public bool Equals(ITransform other)
+        {
+            if (!(other is ProxyTransform tr)) return false;
+            return Equals(tr);
+        }
     }
 }

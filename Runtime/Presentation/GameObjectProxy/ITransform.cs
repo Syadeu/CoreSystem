@@ -1,8 +1,9 @@
-﻿using Unity.Mathematics;
+﻿using System;
+using Unity.Mathematics;
 
 namespace Syadeu.Presentation
 {
-    public interface ITransform
+    public interface ITransform : IEquatable<ITransform>
     {
 #pragma warning disable IDE1006 // Naming Styles
         float3 position { get; set; }
