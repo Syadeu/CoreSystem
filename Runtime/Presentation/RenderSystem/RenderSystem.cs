@@ -33,7 +33,7 @@ namespace Syadeu.Presentation.Render
         [ConfigValue(Header = "Resolution", Name = "Y")] private int m_ResolutionY;
 
         public Camera Camera => m_Camera.Value;
-		public CameraFrustum.ReadOnly Frustum => GetFrustum(Allocator.TempJob);
+		public CameraFrustum.ReadOnly Frustum => GetFrustum();
 
         public event Action<Camera, Camera> OnCameraChanged;
         public event Action OnRender;
@@ -116,10 +116,10 @@ namespace Syadeu.Presentation.Render
 
         #endregion
 
-        public CameraFrustum.ReadOnly GetFrustum(Allocator allocator)
+        public CameraFrustum.ReadOnly GetFrustum()
         {
             m_FrustumJob.Complete();
-            return m_CameraFrustum.AsReadOnly(allocator);
+            return m_CameraFrustum.AsReadOnly();
         }
 		internal CameraFrustum GetRawFrustum() => m_CameraFrustum;
 

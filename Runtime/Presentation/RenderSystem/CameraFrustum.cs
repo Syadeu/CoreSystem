@@ -11,11 +11,16 @@ using UnityEngine;
 
 namespace Syadeu.Presentation.Render
 {
+	[NativeContainer]
     public struct CameraFrustum : IDisposable
     {
 		public const int PlaneCount = 6;
 		public const int CornerCount = 8;
 
+#if UNITY_EDITOR
+		public AtomicSafetyHandle m_Safety;
+		[NativeSetClassTypeToNullOnSchedule] public DisposeSentinel m_DisposeSentinel;
+#endif
 		private readonly bool m_IsCreated;
 
 		private float3 m_Position;
@@ -29,8 +34,8 @@ namespace Syadeu.Presentation.Render
 		public float3 Position => m_Position;
 
 		[BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
-		[NativeContainerIsReadOnly, NativeContainerSupportsDeallocateOnJobCompletion]
-		public readonly struct ReadOnly : IDisposable
+		[NativeContainer, NativeContainerIsReadOnly]
+		public struct ReadOnly
         {
 			public readonly float3 position;
 			public readonly NativeArray<Plane> planes;
@@ -40,29 +45,40 @@ namespace Syadeu.Presentation.Render
 				planeNormals;
 			public readonly NativeArray<float> planeDistances;
 
-			internal ReadOnly(ref CameraFrustum data, Allocator allocator)
+#if UNITY_EDITOR
+			internal AtomicSafetyHandle m_Safety;
+#endif
+
+			internal ReadOnly(ref CameraFrustum data)
             {
 				position = data.m_Position;
-				planes = new NativeArray<Plane>(data.m_Planes, allocator);
-				corners = new NativeArray<float3>(data.m_Corners, allocator);
-				absNormals = new NativeArray<float3>(data.m_AbsNormals, allocator);
-				planeNormals = new NativeArray<float3>(data.m_PlaneNormals, allocator);
-				planeDistances = new NativeArray<float>(data.m_PlaneDistances, allocator);
-			}
-            public void Dispose()
-            {
-				planes.Dispose();
-				corners.Dispose();
-				absNormals.Dispose();
-				planeNormals.Dispose();
-				planeDistances.Dispose();
+				planes = data.m_Planes;
+				corners = data.m_Corners;
+				absNormals = data.m_AbsNormals;
+				planeNormals = data.m_PlaneNormals;
+				planeDistances = data.m_PlaneDistances;
+
+#if UNITY_EDITOR
+				m_Safety = data.m_Safety;
+				AtomicSafetyHandle.UseSecondaryVersion(ref m_Safety);
+#endif
 			}
 
-			public bool Contains(in float3 point) 
-				=> CameraFrustum.Contains(in planeNormals, in planeDistances, in point);
+			public bool Contains(in float3 point)
+            {
+#if UNITY_EDITOR
+				AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
+				AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
+#endif
+				return CameraFrustum.Contains(in planeNormals, in planeDistances, in point);
+			}
 			public bool IntersectsBox(in AABB box, float frustumPadding = 0)
             {
-                IntersectionType type = CameraFrustum.IntersectsBox(in corners, in absNormals, in planeNormals, in planeDistances,
+#if UNITY_EDITOR
+				AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
+				AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
+#endif
+				IntersectionType type = CameraFrustum.IntersectsBox(in corners, in absNormals, in planeNormals, in planeDistances,
 					in box, frustumPadding);
 
 				if ((type & IntersectionType.Intersects) == IntersectionType.Intersects ||
@@ -70,7 +86,13 @@ namespace Syadeu.Presentation.Render
 				return false;
 			}
 			public IntersectionType IntersectsSphere(ref float3 center, float radius, float frustumPadding = 0)
-				=> CameraFrustum.IntersectsSphere(in planeNormals, in planeDistances, ref center, radius, frustumPadding);
+            {
+#if UNITY_EDITOR
+				AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
+				AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
+#endif
+				return CameraFrustum.IntersectsSphere(in planeNormals, in planeDistances, ref center, radius, frustumPadding);
+			}
 		}
 
         #region Constructor
@@ -81,11 +103,7 @@ namespace Syadeu.Presentation.Render
 
 			this = default(CameraFrustum);
 
-			m_Corners = new NativeArray<float3>(CornerCount, Allocator.Persistent);
-			m_Planes = new NativeArray<Plane>(PlaneCount, Allocator.Persistent);
-			m_AbsNormals = new NativeArray<float3>(PlaneCount, Allocator.Persistent);
-			m_PlaneNormals = new NativeArray<float3>(PlaneCount, Allocator.Persistent);
-			m_PlaneDistances = new NativeArray<float>(PlaneCount, Allocator.Persistent);
+			Allocate(ref this);
 
 			Update(ref this, cam);
 			m_IsCreated = true;
@@ -94,19 +112,29 @@ namespace Syadeu.Presentation.Render
         {
 			this = default(CameraFrustum);
 
-			m_Corners = new NativeArray<float3>(CornerCount, Allocator.Persistent);
-			m_Planes = new NativeArray<Plane>(PlaneCount, Allocator.Persistent);
-			m_AbsNormals = new NativeArray<float3>(PlaneCount, Allocator.Persistent);
-			m_PlaneNormals = new NativeArray<float3>(PlaneCount, Allocator.Persistent);
-			m_PlaneDistances = new NativeArray<float>(PlaneCount, Allocator.Persistent);
+			Allocate(ref this);
 
 			Update(ref this, cam.position, cam.orientation, cam.fov, cam.nearClipPlane, cam.farClipPlane, cam.aspect);
 			m_IsCreated = true;
 		}
+		private static void Allocate(ref CameraFrustum cameraFrustum)
+        {
+			cameraFrustum.m_Corners = new NativeArray<float3>(CornerCount, Allocator.Persistent);
+			cameraFrustum.m_Planes = new NativeArray<Plane>(PlaneCount, Allocator.Persistent);
+			cameraFrustum.m_AbsNormals = new NativeArray<float3>(PlaneCount, Allocator.Persistent);
+			cameraFrustum.m_PlaneNormals = new NativeArray<float3>(PlaneCount, Allocator.Persistent);
+			cameraFrustum.m_PlaneDistances = new NativeArray<float>(PlaneCount, Allocator.Persistent);
+
+#if UNITY_EDITOR
+			DisposeSentinel.Create(out cameraFrustum.m_Safety, out cameraFrustum.m_DisposeSentinel, 1, Allocator.Persistent);
+#endif
+		}
 
 		public void Dispose()
         {
-			//m_UpdateJob.Complete();
+#if UNITY_EDITOR
+			DisposeSentinel.Dispose(ref m_Safety, ref m_DisposeSentinel);
+#endif
 
 			m_Planes.Dispose();
 			m_Corners.Dispose();
@@ -115,17 +143,21 @@ namespace Syadeu.Presentation.Render
 			m_PlaneDistances.Dispose();
 		}
 
-		public ReadOnly AsReadOnly(Allocator allocator)
+		public ReadOnly AsReadOnly()
         {
 			CoreSystem.Logger.ThreadBlock(nameof(AsReadOnly), ThreadInfo.Unity);
-			//m_UpdateJob.Complete();
-
-			return new ReadOnly(ref this, allocator);
+			return new ReadOnly(ref this);
 		}
-		public ReadOnly JobReadOnly() => new ReadOnly(ref this, Allocator.Temp);
 
 		public void Copy(in CameraFrustum from)
         {
+#if UNITY_EDITOR
+			AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
+			AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
+
+			CoreSystem.Logger.ThreadBlock(nameof(Copy), ThreadInfo.Unity);
+#endif
+
 			m_Position = from.m_Position;
             for (int i = 0; i < CornerCount; i++)
             {
@@ -142,12 +174,33 @@ namespace Syadeu.Presentation.Render
 
 		#endregion
 
-		public void Update(Camera cam) => Update(ref this, cam);
+		public void Update(Camera cam)
+        {
+#if UNITY_EDITOR
+			AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
+			AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
 
-		public bool Contains(in float3 point) => Contains(in m_PlaneNormals, in m_PlaneDistances, in point);
+			CoreSystem.Logger.ThreadBlock(nameof(Update), ThreadInfo.Unity);
+#endif
+			Update(ref this, cam);
+		}
+
+		public bool Contains(in float3 point)
+        {
+#if UNITY_EDITOR
+			AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
+			AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
+#endif
+			return Contains(in m_PlaneNormals, in m_PlaneDistances, in point);
+		}
 		public bool IntersectsBox(in AABB box, float frustumPadding = 0)
         {
-            IntersectionType type = IntersectsBox(in m_Corners, in m_AbsNormals, in m_PlaneNormals, in m_PlaneDistances,
+#if UNITY_EDITOR
+			AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
+			AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
+#endif
+
+			IntersectionType type = IntersectsBox(in m_Corners, in m_AbsNormals, in m_PlaneNormals, in m_PlaneDistances,
 				in box, frustumPadding);
 
 			if ((type & IntersectionType.Intersects) == IntersectionType.Intersects ||
@@ -155,7 +208,13 @@ namespace Syadeu.Presentation.Render
 			return false;
 		}
 		public IntersectionType IntersectsSphere(ref float3 center, float radius, float frustumPadding = 0)
-			=> IntersectsSphere(in m_PlaneNormals, in m_PlaneDistances, ref center, radius, frustumPadding);
+        {
+#if UNITY_EDITOR
+			AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
+			AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
+#endif
+			return IntersectsSphere(in m_PlaneNormals, in m_PlaneDistances, ref center, radius, frustumPadding);
+		}
 
         #region Statics
 
