@@ -100,7 +100,16 @@ namespace Syadeu.Presentation
 
             void FindAndPostEvent(TriggerBoundAttribute att)
             {
-                var updatedID = m_TriggerBoundCluster.Update(att.m_ClusterID, ev.entity.transform.position);
+                if (att.m_Triggered.Count > 0)
+                {
+                    Entity<IEntity>[] tempParsedArr = att.m_Triggered.ToArray();
+                    for (int i = 0; i < tempParsedArr.Length; i++)
+                    {
+                        TryTrigger(in m_EventSystem, ev.entity, att.m_Triggered[i]);
+                    }
+                }
+
+                ClusterID updatedID = m_TriggerBoundCluster.Update(att.m_ClusterID, ev.entity.transform.position);
                 if (!updatedID.Equals(att.m_ClusterID))
                 {
                     var prevGroup = m_TriggerBoundCluster.GetGroup(in att.m_ClusterID);
@@ -114,6 +123,7 @@ namespace Syadeu.Presentation
                         TryTrigger(in m_EventSystem, ev.entity, in target);
                     }
                 }
+
                 att.m_ClusterID = updatedID;
                 ClusterGroup<TriggerBoundAttribute> group = m_TriggerBoundCluster.GetGroup(in att.m_ClusterID);
                 
