@@ -172,17 +172,19 @@ namespace Syadeu.Presentation
 
         unsafe private void OnTransformChanged(OnTransformChangedEvent ev)
         {
-            if (ev.transform.isDestroyed) return;
+            ProxyTransform transform = (ProxyTransform)ev.transform;
 
-            if (!ev.transform.Pointer->m_ClusterID.Equals(ClusterID.Requested))
+            if (transform.isDestroyed) return;
+
+            if (!transform.Pointer->m_ClusterID.Equals(ClusterID.Requested))
             {
                 //m_ClusterData.Update(in ev.transform.Pointer->m_ClusterID, ev.transform.position);
-                m_ClusterUpdates.Enqueue(new ClusterUpdateRequest(ev.transform, ev.transform.Pointer->m_ClusterID, ev.transform.position));
+                m_ClusterUpdates.Enqueue(new ClusterUpdateRequest(transform, transform.Pointer->m_ClusterID, ev.transform.position));
             }
 
-            if (!ev.transform.hasProxy || ev.transform.hasProxyQueued) return;
+            if (!transform.hasProxy || transform.hasProxyQueued) return;
 
-            RecycleableMonobehaviour proxy = ev.transform.proxy;
+            RecycleableMonobehaviour proxy = transform.proxy;
             proxy.transform.position = ev.transform.position;
             proxy.transform.rotation = ev.transform.rotation;
             proxy.transform.localScale = ev.transform.scale;
