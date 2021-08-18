@@ -510,6 +510,8 @@ namespace Syadeu.Presentation
 
         public EntityData<ConvertedEntity> Convert(GameObject obj)
         {
+            CoreSystem.Logger.ThreadBlock(nameof(Convert), ThreadInfo.Unity);
+
             ConvertedEntity temp = new ConvertedEntity
             {
                 Name = obj.name,
