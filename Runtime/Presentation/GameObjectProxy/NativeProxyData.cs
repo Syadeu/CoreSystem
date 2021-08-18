@@ -25,7 +25,6 @@ namespace Syadeu.Presentation
         public AtomicSafetyHandle m_Safety;
         [NativeSetClassTypeToNullOnSchedule] public DisposeSentinel m_DisposeSentinel;
 #endif
-        [NativeSetClassTypeToNullOnSchedule] public Semaphore m_WriteSemaphore;
         #endregion
 
         public struct UnsafeList : IDisposable
@@ -113,8 +112,6 @@ namespace Syadeu.Presentation
 #if UNITY_EDITOR
             DisposeSentinel.Create(out array.m_Safety, out array.m_DisposeSentinel, 1, allocator);
 #endif
-            array.m_WriteSemaphore = new Semaphore(0, 1);
-            array.m_WriteSemaphore.Release();
         }
 
         private void Incremental(uint length)
@@ -157,8 +154,6 @@ namespace Syadeu.Presentation
 #if UNITY_EDITOR
             AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
 #endif
-            m_WriteSemaphore.WaitOne();
-
             int index = -1;
             for (int i = 0; i < m_UnsafeList->m_Length; i++)
             {
@@ -172,7 +167,6 @@ namespace Syadeu.Presentation
             {
                 uint length = m_UnsafeList->m_Length;
                 Incremental(length);
-                m_WriteSemaphore.Release();
 
                 ProxyTransform result = Add(prefab, translation, rotation, scale, enableCull, center, size);
                 return result;
@@ -209,7 +203,6 @@ namespace Syadeu.Presentation
             *targetP = tr;
 
             ProxyTransform transform = new ProxyTransform(m_UnsafeList, index, generation, hash);
-            m_WriteSemaphore.Release();
             return transform;
         }
         public void Remove(ProxyTransform transform)
@@ -217,7 +210,6 @@ namespace Syadeu.Presentation
 #if UNITY_EDITOR
             AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
 #endif
-            m_WriteSemaphore.WaitOne();
 
             //Hash index = transform.index;
 
@@ -228,9 +220,7 @@ namespace Syadeu.Presentation
             }
 
             p->m_IsOccupied = false;
-            //p->m_Hash = Hash.Empty;
 
-            m_WriteSemaphore.Release();
             CoreSystem.Logger.Log(Channel.Proxy,
                 $"ProxyTransform has been destroyed.");
         }
@@ -273,60 +263,5 @@ namespace Syadeu.Presentation
                 action.Invoke(new ProxyTransform(m_UnsafeList, i, (*m_UnsafeList)[i]->m_Generation, (*m_UnsafeList)[i]->m_Hash));
             }
         }
-    }
-    internal struct ProxyTransformData : IEquatable<ProxyTransformData>
-    {
-        internal bool m_IsOccupied;
-        internal bool m_EnableCull;
-        internal bool m_IsVisible;
-        internal bool m_DestroyQueued;
-
-        internal ClusterID m_ClusterID;
-        internal int m_Index;
-        internal int2 m_ProxyIndex;
-
-        internal Hash m_Hash;
-        internal int m_Generation;
-        internal PrefabReference m_Prefab;
-
-        internal float3 m_Translation;
-        internal float3 m_Scale;
-        internal float3 m_Center;
-        internal float3 m_Size;
-
-        internal quaternion m_Rotation;
-
-#pragma warning disable IDE1006 // Naming Styles
-        public bool destroyed
-        {
-            get
-            {
-                if (!m_IsOccupied || m_DestroyQueued) return true;
-                return false;
-            }
-        }
-        public float3 translation
-        {
-            get => m_Translation;
-            set => m_Translation = value;
-        }
-        public quaternion rotation
-        {
-            get => m_Rotation;
-            set => m_Rotation = value;
-        }
-        public float3 scale
-        {
-            get => m_Scale;
-            set => m_Scale = value;
-        }
-        //public AABB aabb => new AABB(m_Center + m_Translation, m_Size).Rotation(m_Rotation);
-#pragma warning restore IDE1006 // Naming Styles
-
-        public AABB GetAABB()
-        {
-            return new AABB(m_Center + m_Translation, m_Size).Rotation(in m_Rotation, in m_Scale);
-        }
-        public bool Equals(ProxyTransformData other) => m_Generation.Equals(other.m_Generation);
     }
 }

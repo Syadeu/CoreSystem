@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace Syadeu.Presentation
 {
+    /// <inheritdoc cref="IComponentID"/>
     public readonly struct ComponentID : IComponentID
     {
         private readonly ulong m_Hash;
@@ -15,6 +16,7 @@ namespace Syadeu.Presentation
         bool IEquatable<IComponentID>.Equals(IComponentID other) => m_Hash.Equals(other.Hash);
         public override string ToString() => m_Hash.ToString();
     }
+    /// <inheritdoc cref="IComponentID"/>
     public readonly struct ComponentID<T> where T : Component
     {
         private static readonly ulong s_Hash = Hash.NewHash(TypeHelper.TypeOf<T>.Name);
