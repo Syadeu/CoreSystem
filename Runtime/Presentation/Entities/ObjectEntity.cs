@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Utilities;
+﻿using Newtonsoft.Json.Utilities;
 using Syadeu.Database;
 using UnityEngine.Scripting;
 

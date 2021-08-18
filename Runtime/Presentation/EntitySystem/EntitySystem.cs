@@ -508,6 +508,25 @@ namespace Syadeu.Presentation
 
         #endregion
 
+        public EntityData<ConvertedEntity> Convert(GameObject obj)
+        {
+            ConvertedEntity temp = new ConvertedEntity
+            {
+                Name = obj.name,
+                Hash = Hash.Empty
+            };
+            ConvertedEntity entity = (ConvertedEntity)temp.Clone();
+
+            entity.gameObject = obj;
+            entity.transform = obj.transform;
+            entity.m_IsCreated = true;
+
+            m_ObjectEntities.Add(entity.Idx, entity);
+
+            ProcessEntityOnCreated(this, entity);
+            return EntityData<ConvertedEntity>.GetEntityData(entity.Idx);
+        }
+
         /// <summary>
         /// 해당 엔티티를 즉시 파괴합니다.
         /// </summary>
