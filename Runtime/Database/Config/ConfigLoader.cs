@@ -168,6 +168,13 @@ namespace Syadeu.Database
                         .GetOrCreateValue(fields[i].FieldType, string.IsNullOrEmpty(att.Name) ? fields[i].Name : att.Name);
                 }
 
+                object targetValue = value.GetValue();
+                if (!targetValue.GetType().Equals(fields[i].FieldType))
+                {
+                    CoreSystem.Logger.LogError(Channel.Core,
+                        $"Config({config.Name}) has an invalid value nameof({value.Name}, {value.Type}). Expected as {fields[i].FieldType.Name} but {targetValue.GetType().Name}. Request ignored.");
+                    continue;
+                }
                 fields[i].SetValue(obj, value.GetValue());
             }
 
