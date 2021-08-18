@@ -211,19 +211,33 @@ namespace Syadeu.Presentation
 
                 OnDataObjectDestroy?.Invoke(tr);
 
-                if (tr.hasProxy) RemoveProxy(tr);
-                else if (tr.hasProxyQueued)
-                {
-                    "on destroy but proxy queued".ToLogError();
-                }
-                else
-                {
-                    "in".ToLog();
-                }
+                if (tr.hasProxy && !tr.hasProxyQueued) RemoveProxy(tr);
+                //else if (tr.hasProxyQueued)
+                //{
+                //    "on destroy but proxy queued".ToLogError();
+                //}
+                //else
+                //{
+                //    "in".ToLog();
+                //}
 
                 unsafe
                 {
-                    m_ClusterData.Remove(tr.Pointer->m_ClusterID);
+                    ClusterID id = tr.Pointer->m_ClusterID;
+                    if (id.Equals(ClusterID.Requested))
+                    {
+                        int tempCount = m_ClusterIDRequests.Count;
+                        for (int a = 0; a < tempCount; a++)
+                        {
+                            var tempID = m_ClusterIDRequests.Dequeue();
+                            if (tempID.index.Equals(tr.Pointer->m_Index))
+                            {
+                                break;
+                            }
+                            else m_ClusterIDRequests.Enqueue(tempID);
+                        }
+                    }
+                    else m_ClusterData.Remove(id);
                 }
                 m_ProxyData.Remove(tr);
             }
@@ -239,7 +253,7 @@ namespace Syadeu.Presentation
 
                 if (tr.isDestroyed)
                 {
-                    CoreSystem.Logger.LogError(Channel.Proxy, $"1 destroyed transform");
+                    //CoreSystem.Logger.LogError(Channel.Proxy, $"1 destroyed transform");
                     continue;
                 }
                 else if (tr.hasProxy && !tr.hasProxyQueued)
@@ -259,7 +273,7 @@ namespace Syadeu.Presentation
 
                 if (tr.isDestroyed)
                 {
-                    CoreSystem.Logger.LogError(Channel.Proxy, $"2 destroyed transform");
+                    //CoreSystem.Logger.LogError(Channel.Proxy, $"2 destroyed transform");
                     continue;
                 }
                 else if (!tr.hasProxy)
