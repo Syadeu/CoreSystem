@@ -218,7 +218,7 @@ namespace Syadeu.Presentation
             else
             {
                 SceneReference sceneRef = SceneList.Instance.GetScene(SceneManager.GetActiveScene().path);
-                if (m_DebugMode) StartSceneDependences(this, sceneRef);
+                if (m_DebugMode && sceneRef != null) StartSceneDependences(this, sceneRef);
             }
             return base.OnStartPresentation();
         }
@@ -273,30 +273,24 @@ namespace Syadeu.Presentation
 
             return base.OnPresentation();
         }
-        protected override PresentationResult AfterPresentation()
-        {
-            
-
-            return base.AfterPresentation();
-        }
         #endregion
 
         /// <summary>
         /// <see cref="SceneList.StartScene"/> 을 로드합니다.
         /// </summary>
-        /// <param name="startDelay"></param>
-        public void LoadStartScene(float waitDelay, int startDelay)
+        /// <param name="postDelay"></param>
+        public void LoadStartScene(float preDelay, float postDelay)
         {
-            m_LoadingEvent.Enqueue(() => InternalLoadScene(SceneList.Instance.StartScene, waitDelay, startDelay));
+            m_LoadingEvent.Enqueue(() => InternalLoadScene(SceneList.Instance.StartScene, preDelay, postDelay));
         }
         /// <summary>
         /// <see cref="SceneList.Scenes"/>에 있는 씬을 로드합니다.
         /// </summary>
         /// <param name="index"></param>
-        /// <param name="startDelay"></param>
-        public void LoadScene(int index, float waitDelay, int startDelay)
+        /// <param name="postDelay"></param>
+        public void LoadScene(int index, float preDelay, float postDelay)
         {
-            m_LoadingEvent.Enqueue(() => InternalLoadScene(SceneList.Instance.Scenes[index], waitDelay, startDelay));
+            m_LoadingEvent.Enqueue(() => InternalLoadScene(SceneList.Instance.Scenes[index], preDelay, postDelay));
         }
 
         /// <summary>

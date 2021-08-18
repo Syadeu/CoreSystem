@@ -5,6 +5,7 @@ using Syadeu.Internal;
 using Syadeu.Mono;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Internal;
 using System;
 using System.Collections.Generic;
@@ -49,6 +50,8 @@ namespace Syadeu.Presentation
 
         private readonly Dictionary<Type, List<IAttributeProcessor>> m_AttributeProcessors = new Dictionary<Type, List<IAttributeProcessor>>();
         private readonly Dictionary<Type, List<IEntityDataProcessor>> m_EntityProcessors = new Dictionary<Type, List<IEntityDataProcessor>>();
+
+        private readonly Queue<Query> m_Queries = new Queue<Query>();
 
         internal DataContainerSystem m_DataContainerSystem;
         internal GameObjectProxySystem m_ProxySystem;
@@ -205,6 +208,8 @@ namespace Syadeu.Presentation
             m_EntityProcessors.Clear();
 
             m_ProxySystem.OnDataObjectDestroy -= M_ProxySystem_OnDataObjectDestroyAsync;
+            m_ProxySystem.OnDataObjectVisible -= OnDataObjectVisible;
+            m_ProxySystem.OnDataObjectInvisible -= OnDataObjectInvisible;
 
             m_ProxySystem.OnDataObjectProxyCreated -= M_ProxySystem_OnDataObjectProxyCreated;
             m_ProxySystem.OnDataObjectProxyRemoved -= M_ProxySystem_OnDataObjectProxyRemoved;
@@ -221,10 +226,55 @@ namespace Syadeu.Presentation
             m_ProxySystem = other;
 
             m_ProxySystem.OnDataObjectDestroy += M_ProxySystem_OnDataObjectDestroyAsync;
+            m_ProxySystem.OnDataObjectVisible += OnDataObjectVisible;
+            m_ProxySystem.OnDataObjectInvisible += OnDataObjectInvisible;
 
             m_ProxySystem.OnDataObjectProxyCreated += M_ProxySystem_OnDataObjectProxyCreated;
             m_ProxySystem.OnDataObjectProxyRemoved += M_ProxySystem_OnDataObjectProxyRemoved;
         }
+        private void M_ProxySystem_OnDataObjectDestroyAsync(ProxyTransform obj)
+        {
+            if (!m_EntityGameObjects.TryGetValue(obj.m_Hash, out Hash entityHash) ||
+                !m_ObjectEntities.ContainsKey(entityHash)) return;
+
+            ProcessEntityOnDestroy(this, m_ObjectEntities[entityHash]);
+
+            m_EntityGameObjects.Remove(obj.m_Hash);
+            m_ObjectEntities.Remove(entityHash);
+        }
+        private void OnDataObjectVisible(ProxyTransform tr)
+        {
+            if (!m_EntityGameObjects.TryGetValue(tr.m_Hash, out Hash entityHash) ||
+                !m_ObjectEntities.ContainsKey(entityHash)) return;
+
+            m_EventSystem.PostEvent<OnEntityVisibleEvent>(OnEntityVisibleEvent.GetEvent(
+                Entity<IEntity>.GetEntityWithoutCheck(entityHash), tr));
+        }
+        private void OnDataObjectInvisible(ProxyTransform tr)
+        {
+            if (!m_EntityGameObjects.TryGetValue(tr.m_Hash, out Hash entityHash) ||
+                !m_ObjectEntities.ContainsKey(entityHash)) return;
+
+            m_EventSystem.PostEvent<OnEntityVisibleEvent>(OnEntityVisibleEvent.GetEvent(
+                Entity<IEntity>.GetEntityWithoutCheck(entityHash), tr));
+        }
+        private void M_ProxySystem_OnDataObjectProxyCreated(ProxyTransform obj, RecycleableMonobehaviour monoObj)
+        {
+            if (!m_EntityGameObjects.TryGetValue(obj.m_Hash, out Hash entityHash) ||
+                !(m_ObjectEntities[entityHash] is IEntity entity)) return;
+
+            monoObj.m_Entity = Entity<IEntity>.GetEntity(entity.Idx);
+            ProcessEntityOnProxyCreated(this, entity, monoObj);
+        }
+        private void M_ProxySystem_OnDataObjectProxyRemoved(ProxyTransform obj, RecycleableMonobehaviour monoObj)
+        {
+            if (!m_EntityGameObjects.TryGetValue(obj.m_Hash, out Hash entityHash) ||
+                !(m_ObjectEntities[entityHash] is IEntity entity)) return;
+
+            ProcessEntityOnProxyRemoved(this, entity, monoObj);
+            monoObj.m_Entity = Entity<IEntity>.Empty;
+        }
+        
         private void Bind(Events.EventSystem other)
         {
             m_EventSystem = other;
@@ -252,34 +302,21 @@ namespace Syadeu.Presentation
             return base.OnStartPresentation();
         }
 
-        private void M_ProxySystem_OnDataObjectProxyCreated(ProxyTransform obj, RecycleableMonobehaviour monoObj)
+        protected override PresentationResult OnPresentation()
         {
-            if (!m_EntityGameObjects.TryGetValue(obj.m_Hash, out Hash entityHash) ||
-                !(m_ObjectEntities[entityHash] is IEntity entity)) return;
-
-            monoObj.m_Entity = Entity<IEntity>.GetEntity(entity.Idx);
-            ProcessEntityOnProxyCreated(this, entity, monoObj);
+            if (m_Queries.Count > 0)
+            {
+                int queryCount = m_Queries.Count;
+                for (int i = 0; i < queryCount; i++)
+                {
+                    Query query = m_Queries.Dequeue();
+                    var iter = query.GetEnumerator();
+                    while (iter.MoveNext()) { }
+                    query.Terminate();
+                }
+            }
+            return base.OnPresentation();
         }
-        private void M_ProxySystem_OnDataObjectProxyRemoved(ProxyTransform obj, RecycleableMonobehaviour monoObj)
-        {
-            if (!m_EntityGameObjects.TryGetValue(obj.m_Hash, out Hash entityHash) ||
-                !(m_ObjectEntities[entityHash] is IEntity entity)) return;
-
-            ProcessEntityOnProxyRemoved(this, entity, monoObj);
-            monoObj.m_Entity = Entity<IEntity>.Empty;
-        }
-
-        private void M_ProxySystem_OnDataObjectDestroyAsync(ProxyTransform obj)
-        {
-            if (!m_EntityGameObjects.TryGetValue(obj.m_Hash, out Hash entityHash) ||
-                !m_ObjectEntities.ContainsKey(entityHash)) return;
-
-            ProcessEntityOnDestroy(this, m_ObjectEntities[entityHash]);
-
-            m_EntityGameObjects.Remove(obj.m_Hash);
-            m_ObjectEntities.Remove(entityHash);
-        }
-
         protected override PresentationResult OnPresentationAsync()
         {
             // TODO : 이거 매우 심각한 GC 문제를 일으킴.
@@ -471,6 +508,34 @@ namespace Syadeu.Presentation
 
         #endregion
 
+        public EntityData<ConvertedEntity> Convert(GameObject obj)
+        {
+            CoreSystem.Logger.ThreadBlock(nameof(Convert), ThreadInfo.Unity);
+
+            ConvertedEntity temp = new ConvertedEntity
+            {
+                Name = obj.name,
+                Hash = Hash.Empty
+            };
+            ConvertedEntity entity = (ConvertedEntity)temp.Clone();
+
+            entity.transform = new UnityTransform
+            {
+                entity = entity,
+                provider = obj.transform
+            };
+
+            ConvertedEntityComponent component = obj.AddComponent<ConvertedEntityComponent>();
+            component.m_Entity = entity;
+
+            entity.m_IsCreated = true;
+
+            m_ObjectEntities.Add(entity.Idx, entity);
+
+            ProcessEntityOnCreated(this, entity);
+            return EntityData<ConvertedEntity>.GetEntityData(entity.Idx);
+        }
+
         /// <summary>
         /// 해당 엔티티를 즉시 파괴합니다.
         /// </summary>
@@ -489,10 +554,17 @@ namespace Syadeu.Presentation
 
             if (!CoreSystem.s_BlockCreateInstance && m_ObjectEntities[hash] is IEntity entity)
             {
-                ProxyTransform obj = entity.transform;
-                Hash index = obj.m_Hash;
-                obj.Destroy();
-                m_EntityGameObjects.Remove(index);
+                if (entity.transform is ProxyTransform tr)
+                {
+                    Hash index = tr.m_Hash;
+                    tr.Destroy();
+                    m_EntityGameObjects.Remove(index);
+                }
+                else if (entity.transform is UnityTransform unityTr)
+                {
+                    UnityEngine.Object.Destroy(unityTr.provider.gameObject);
+                    ((IDisposable)unityTr).Dispose();
+                }
             }
 
             ((IDisposable)m_ObjectEntities[hash]).Dispose();
@@ -735,6 +807,122 @@ namespace Syadeu.Presentation
 
         #endregion
 
+        public sealed class Query : System.Collections.IEnumerable
+        {
+            static readonly Stack<Query> m_Pool = new Stack<Query>();
+
+            readonly EntitySystem m_EntitySystem;
+            readonly List<Reference> m_Has = new List<Reference>();
+            readonly List<Reference> m_HasNot = new List<Reference>();
+
+            EntityData<IEntityData> m_Entity;
+            System.Collections.IEnumerator m_Enumerator;
+            
+            internal static Query Dequeue(EntitySystem entitySystem, EntityData<IEntityData> entity)
+            {
+                if (m_Pool.Count == 0) return new Query(entitySystem, entity);
+                else return m_Pool.Pop();
+            }
+            private Query(EntitySystem entitySystem, EntityData<IEntityData> entity)
+            {
+                m_EntitySystem = entitySystem;
+                m_Entity = entity;
+            }
+            internal void Terminate()
+            {
+                m_Has.Clear();
+                m_HasNot.Clear();
+                m_Enumerator = null;
+                m_Entity = EntityData<IEntityData>.Empty;
+                m_Pool.Push(this);
+            }
+
+            public Query Has(Reference attributeHash)
+            {
+                m_Has.Add(attributeHash);
+                return this;
+            }
+            public Query HasNot(Reference attributeHash)
+            {
+                m_HasNot.Add(attributeHash);
+                return this;
+            }
+
+            public void Schedule(Action action)
+            {
+                m_Enumerator = GetEnumerator(action);
+                m_EntitySystem.m_Queries.Enqueue(this);
+            }
+            public void Schedule<T>(Action<T> action, T t)
+            {
+                m_Enumerator = GetEnumerator(action, t);
+                m_EntitySystem.m_Queries.Enqueue(this);
+            }
+            public void Schedule<T0, T1>(Action<T0, T1> action, T0 t0, T1 t1)
+            {
+                m_Enumerator = GetEnumerator(action, t0, t1);
+                m_EntitySystem.m_Queries.Enqueue(this);
+            }
+
+            #region Enumerator
+            private System.Collections.IEnumerator GetEnumerator(Action action)
+            {
+                if (!IsExcutable()) yield break;
+
+                try
+                {
+                    action.Invoke();
+                }
+                catch (Exception)
+                {
+                    yield break;
+                }
+            }
+            private System.Collections.IEnumerator GetEnumerator<T>(Action<T> action, T t)
+            {
+                if (!IsExcutable()) yield break;
+
+                try
+                {
+                    action.Invoke(t);
+                }
+                catch (Exception)
+                {
+                    yield break;
+                }
+            }
+            private System.Collections.IEnumerator GetEnumerator<T0, T1>(Action<T0, T1> action, T0 t0, T1 t1)
+            {
+                if (!IsExcutable()) yield break;
+
+                try
+                {
+                    action.Invoke(t0, t1);
+                }
+                catch (Exception)
+                {
+                    yield break;
+                }
+            }
+
+            public System.Collections.IEnumerator GetEnumerator() => m_Enumerator;
+
+            private bool IsExcutable()
+            {
+                for (int i = 0; i < m_Has.Count; i++)
+                {
+                    if (!m_Entity.HasAttribute(m_Has[i])) return false;
+                }
+                for (int i = 0; i < m_HasNot.Count; i++)
+                {
+                    if (m_Entity.HasAttribute(m_Has[i])) return false;
+                }
+                return true;
+            }
+            #endregion
+        }
+        public Query GetQuery(EntityData<IEntityData> entity) => Query.Dequeue(this, entity);
+
         #region Raycast
         public Raycaster Raycast(Entity<IEntity> from, Ray ray)
         {
@@ -849,7 +1037,7 @@ namespace Syadeu.Presentation
                 Hash key = m_Keys[index];
                 Entity<IEntity> target = Entity<IEntity>.GetEntity(key);
 
-                var targetAABB = target.transform.aabb;
+                var targetAABB = ((IProxyTransform)target.transform).aabb;
                 if (targetAABB.Intersect(m_Ray, out float dis, out float3 point))
                 {
                     m_Hits.AddNoResize(new RaycastHitInfo(target, dis, point));

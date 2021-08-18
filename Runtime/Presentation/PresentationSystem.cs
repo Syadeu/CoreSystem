@@ -26,7 +26,6 @@ namespace Syadeu.Presentation
                 {
                     if (!PresentationManager.Instance.m_RegisteredGroup.TryGetValue(TypeHelper.TypeOf<T>.Type, out Hash hash))
                     {
-                        "null out1".ToLog();
                         return Null;
                     }
                     var list = PresentationManager.Instance.m_PresentationGroups[hash].m_Systems;
@@ -41,7 +40,6 @@ namespace Syadeu.Presentation
                     }
                     if (idx < 0)
                     {
-                        "null out2".ToLog();
                         return Null;
                     }
                     s_Instance = new PresentationSystem<T>(hash, idx);

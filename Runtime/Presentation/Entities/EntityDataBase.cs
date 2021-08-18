@@ -29,15 +29,15 @@ namespace Syadeu.Presentation.Entities
 
         Hash IEntityData.Idx => Idx;
         AttributeBase[] IEntityData.Attributes => m_Attributes;
-        /// <summary><inheritdoc cref="m_Attributes"/></summary>
 
-        [JsonProperty(Order = -10, PropertyName = "Attributes")]
-        private List<Hash> m_AttributeList = new List<Hash>();
+        /// <summary><inheritdoc cref="m_Attributes"/></summary>
+        [JsonProperty(Order = -10, PropertyName = "Attributes")] private List<Hash> m_AttributeList = new List<Hash>();
 
         [JsonIgnore, UnityEngine.HideInInspector] public List<Hash> Attributes => m_AttributeList;
-
+        [JsonIgnore] private HashSet<Hash> AttritbutesHashSet { get; } = new HashSet<Hash>();
         [JsonIgnore] public bool isCreated => m_IsCreated;
 
+        bool IEntityData.HasAttribute(Hash hash) => AttritbutesHashSet.Contains(hash);
         // TODO : 현재 가장 상위 타입만 체크하여 반환하므로 나중에 상속받은 타입도 고려해서 받아오게 수정할 것
         AttributeBase IEntityData.GetAttribute(Type t)
         {
@@ -71,9 +71,9 @@ namespace Syadeu.Presentation.Entities
 #if UNITY_EDITOR
             if (!UnityEngine.Application.isPlaying)
             {
-                for (int i = 0; i < Attributes.Count; i++)
+                for (int i = 0; i < m_AttributeList.Count; i++)
                 {
-                    AttributeBase att = (AttributeBase)EntityDataList.Instance.GetObject(Attributes[i]);
+                    AttributeBase att = (AttributeBase)EntityDataList.Instance.GetObject(m_AttributeList[i]);
                     if (att == null) continue;
 
                     if (att is T t)
@@ -96,8 +96,8 @@ namespace Syadeu.Presentation.Entities
         protected override ObjectBase Copy()
         {
             EntityDataBase entity = (EntityDataBase)base.Copy();
-            if (Attributes == null) m_AttributeList = new List<Hash>();
-            entity.m_AttributeList = new List<Hash>(Attributes);
+            if (m_AttributeList == null) m_AttributeList = new List<Hash>();
+            entity.m_AttributeList = new List<Hash>(m_AttributeList);
 
             return entity;
         }
@@ -108,13 +108,13 @@ namespace Syadeu.Presentation.Entities
 
             Dictionary<Type, List<AttributeBase>> tempHashMap = new Dictionary<Type, List<AttributeBase>>();
 
-            entity.m_Attributes = new AttributeBase[Attributes.Count];
-            for (int i = 0; i < Attributes.Count; i++)
+            entity.m_Attributes = new AttributeBase[m_AttributeList.Count];
+            for (int i = 0; i < m_AttributeList.Count; i++)
             {
-                AttributeBase att = (AttributeBase)EntityDataList.Instance.GetObject(Attributes[i]);
+                AttributeBase att = (AttributeBase)EntityDataList.Instance.GetObject(m_AttributeList[i]);
                 if (att == null)
                 {
-                    CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_AttributeWarning, Name, Attributes[i], i));
+                    CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_AttributeWarning, Name, m_AttributeList[i], i));
                     continue;
                 }
 
@@ -130,6 +130,7 @@ namespace Syadeu.Presentation.Entities
                     tempHashMap.Add(attType, list);
                 }
                 list.Add(clone);
+                AttritbutesHashSet.Add(m_AttributeList[i]);
             }
 
             entity.m_AttributesHashMap = new Dictionary<Type, AttributeBase[]>();

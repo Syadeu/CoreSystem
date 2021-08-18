@@ -33,13 +33,10 @@ namespace Syadeu.Presentation.Render
         [ConfigValue(Header = "Resolution", Name = "Y")] private int m_ResolutionY;
 
         public Camera Camera => m_Camera.Value;
-		public CameraFrustum.ReadOnly Frustum => GetFrustum(Allocator.TempJob);
+		public CameraFrustum.ReadOnly Frustum => GetFrustum();
 
         public event Action<Camera, Camera> OnCameraChanged;
         public event Action OnRender;
-
-        internal List<CoreRoutine> m_PreRenderRoutines = new List<CoreRoutine>();
-        internal List<CoreRoutine> m_PostRenderRoutines = new List<CoreRoutine>();
 
         private JobHandle m_FrustumJob;
 		private CameraFrustum m_CameraFrustum;
@@ -82,7 +79,8 @@ namespace Syadeu.Presentation.Render
             if (m_Camera.Value == null)
             {
                 m_Camera.Value = Camera.main;
-                if (Camera == null) return PresentationResult.Warning("Cam not found");
+                //if (Camera == null) return PresentationResult.Warning("Cam not found");
+                if (Camera == null) return base.BeforePresentation();
             }
             m_Matrix4x4 = GetCameraMatrix4X4(m_Camera.Value);
 
@@ -118,10 +116,10 @@ namespace Syadeu.Presentation.Render
 
         #endregion
 
-        public CameraFrustum.ReadOnly GetFrustum(Allocator allocator)
+        public CameraFrustum.ReadOnly GetFrustum()
         {
             m_FrustumJob.Complete();
-            return m_CameraFrustum.AsReadOnly(allocator);
+            return m_CameraFrustum.AsReadOnly();
         }
 		internal CameraFrustum GetRawFrustum() => m_CameraFrustum;
 
@@ -131,12 +129,11 @@ namespace Syadeu.Presentation.Render
 		/// <param name="matrix"></param>
 		/// <param name="worldPosition"></param>
 		/// <returns></returns>
-		public static Vector3 GetScreenPoint(Matrix4x4 matrix, Vector3 worldPosition)
+		public static Vector3 GetScreenPoint(float4x4 matrix, float3 worldPosition)
         {
-            Vector4 p4 = worldPosition;
-            p4.w = 1;
-            Vector4 result4 = matrix * p4;
-            Vector3 screenPoint = result4;
+            float4 p4 = new float4(worldPosition, 1);
+            float4 result4 = math.mul(matrix, p4);
+            float3 screenPoint = result4.xyz;
             screenPoint /= -result4.w;
             screenPoint.x = screenPoint.x / 2 + 0.5f;
             screenPoint.y = screenPoint.y / 2 + 0.5f;
@@ -144,8 +141,7 @@ namespace Syadeu.Presentation.Render
 
             return screenPoint;
         }
-        internal static Matrix4x4 GetCameraMatrix4X4(Camera cam) => cam.projectionMatrix * cam.transform.worldToLocalMatrix;
-        /// <inheritdoc cref="IsInCameraScreen(Camera, Vector3)"/>
+        internal static float4x4 GetCameraMatrix4X4(Camera cam) => cam.projectionMatrix * cam.transform.worldToLocalMatrix;
         public bool IsInCameraScreen(Vector3 worldPosition, float3 offset = default)
         {
             return IsInCameraScreen(worldPosition, m_Matrix4x4, offset);
@@ -176,7 +172,7 @@ namespace Syadeu.Presentation.Render
             }
             return true;
         }
-        internal static bool IsInCameraScreen(float3 worldPosition, Matrix4x4 matrix, float3 offset)
+        internal static bool IsInCameraScreen(float3 worldPosition, float4x4 matrix, float3 offset)
         {
             Vector3 screenPoint = GetScreenPoint(matrix, worldPosition);
             
@@ -194,7 +190,7 @@ namespace Syadeu.Presentation.Render
             }
             return false;
         }
-        internal static bool IsInCameraScreen(NativeArray<float3> vertices, Matrix4x4 matrix, Vector3 offset)
+        internal static bool IsInCameraScreen(NativeArray<float3> vertices, float4x4 matrix, Vector3 offset)
         {
             for (int i = 0; i < vertices.Length; i++)
             {
@@ -202,92 +198,5 @@ namespace Syadeu.Presentation.Render
             }
             return false;
         }
-        //internal static bool IsInCameraScreenWithPlane(NativeArray<float3> vertices, Matrix4x4 matrix, Vector3 offset)
-        //{
-        //    Plane[] planes = GeometryUtility.CalculateFrustumPlanes(matrix);
-        //    Plane plane = new Plane();
-        //    GeometryUtility.
-
-        //    for (int i = 0; i < vertices.Length; i++)
-        //    {
-        //        if (IsInCameraScreen(vertices[i], matrix, offset)) return true;
-        //    }
-        //    return false;
-        //}
-        private static void CalculateFrustumPlanes(Matrix4x4 mat, Plane[] planes)
-        {
-            // left
-            planes[0].normal = new Vector3(mat.m30 + mat.m00, mat.m31 + mat.m01, mat.m32 + mat.m02);
-            planes[0].distance = mat.m33 + mat.m03;
-
-            // right
-            planes[1].normal = new Vector3(mat.m30 - mat.m00, mat.m31 - mat.m01, mat.m32 - mat.m02);
-            planes[1].distance = mat.m33 - mat.m03;
-
-            // bottom
-            planes[2].normal = new Vector3(mat.m30 + mat.m10, mat.m31 + mat.m11, mat.m32 + mat.m12);
-            planes[2].distance = mat.m33 + mat.m13;
-
-            // top
-            planes[3].normal = new Vector3(mat.m30 - mat.m10, mat.m31 - mat.m11, mat.m32 - mat.m12);
-            planes[3].distance = mat.m33 - mat.m13;
-
-            // near
-            planes[4].normal = new Vector3(mat.m30 + mat.m20, mat.m31 + mat.m21, mat.m32 + mat.m22);
-            planes[4].distance = mat.m33 + mat.m23;
-
-            // far
-            planes[5].normal = new Vector3(mat.m30 - mat.m20, mat.m31 - mat.m21, mat.m32 - mat.m22);
-            planes[5].distance = mat.m33 - mat.m23;
-
-            // normalize
-            for (uint i = 0; i < 6; i++)
-            {
-                float length = planes[i].normal.magnitude;
-                planes[i].normal /= length;
-                planes[i].distance /= length;
-            }
-        }
-
-
-        public void StartPreRender(IEnumerator iter)
-        {
-            CoreRoutine routine = new CoreRoutine(iter, false);
-            m_PreRenderRoutines.Add(routine);
-        }
-        public void StartPostRender(IEnumerator iter)
-        {
-            CoreRoutine routine = new CoreRoutine(iter, false);
-            m_PostRenderRoutines.Add(routine);
-        }
-
-        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        //public static float4x4 TRS(float3 translation, quaternion rotation, float3 scale)
-        //{
-        //    float3x3 r = new float3x3(rotation);
-        //    return
-        //        new float4x4(
-        //            new float4(r.c0 * scale.x, 0),
-        //            new float4(r.c1 * scale.y, 0),
-        //            new float4(r.c2 * scale.z, 0),
-        //            new float4(translation, 1)
-        //            );
-        //}
-        public static float4x4 LocalToWorldMatrix(float3 translation, quaternion rotation)
-        {
-            float3x3 r = new float3x3(rotation);
-            return new float4x4(r, translation);
-        }
-        public static float4x4 WorldToLocalMatrix(float3 translation, quaternion rotation) => math.inverse(LocalToWorldMatrix(translation, rotation));
     }
-
-	public enum IntersectionType
-    {
-		False		=	0b001,
-
-		Intersects	=	0b010,
-		Contains	=	0b100,
-
-		True		=	0b110
-	}
 }

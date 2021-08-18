@@ -4,6 +4,9 @@ using System.Collections.Concurrent;
 
 namespace Syadeu.Presentation
 {
+    /// <summary>
+    /// 시스템 동기화를 위해 임시로 데이터를 저장할 수 있는 시스템입니다.
+    /// </summary>
     public sealed class DataContainerSystem : PresentationSystemEntity<DataContainerSystem>
     {
         public override bool EnableBeforePresentation => false;

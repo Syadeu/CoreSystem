@@ -41,6 +41,7 @@ namespace Syadeu.Presentation
         /// </summary>
         [JsonIgnore] bool isCreated { get; }
 
+        bool HasAttribute(Hash attributeHash);
         /// <summary>
         /// 이 엔티티가 가지고있는 해당 타입의 어트리뷰트를 가져옵니다.
         /// </summary>

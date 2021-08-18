@@ -9,7 +9,8 @@ namespace Syadeu.Database
     [Serializable]
     public struct PrefabReference : IEquatable<PrefabReference>, IValidation
     {
-        public static PrefabReference Invalid = new PrefabReference(-1);
+        public static readonly PrefabReference Invalid = new PrefabReference(-1);
+        public static readonly PrefabReference None = new PrefabReference(-2);
 
         [JsonProperty(Order = 0)] public readonly long m_Idx;
 
@@ -22,11 +23,11 @@ namespace Syadeu.Database
 
         public PrefabList.ObjectSetting GetObjectSetting()
         {
-            if (!IsValid()) return null;
+            if (!IsValid() || Equals(None)) return null;
             return PrefabList.Instance.ObjectSettings[(int)m_Idx];
         }
 
-        public bool IsValid() => 0 <= m_Idx && m_Idx < PrefabList.Instance.ObjectSettings.Count;
+        public bool IsValid() => !Equals(Invalid) && m_Idx < PrefabList.Instance.ObjectSettings.Count;
 
         public static PrefabReference Find(string name)
         {

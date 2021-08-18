@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Syadeu.Database;
+using System;
 using Unity.Collections;
 using Unity.Jobs;
 
@@ -51,6 +52,14 @@ namespace Syadeu.Presentation.Internal
         PresentationResult IAfterPresentation.AfterPresentation() => AfterPresentation();
         PresentationResult IAfterPresentation.AfterPresentationAsync() => AfterPresentationAsync();
 
+        public PresentationSystemEntity()
+        {
+            ConfigLoader.LoadConfig(this);
+        }
+        ~PresentationSystemEntity()
+        {
+            Dispose();
+        }
         public void Dispose()
         {
             OnUnityJobsDispose();
@@ -118,15 +127,16 @@ namespace Syadeu.Presentation.Internal
             return handle;
         }
 
-        internal JobHandle m_BeforePresentationJobHandle;
-        internal JobHandle m_OnPresentationJobHandle;
-        internal JobHandle m_AfterPresentationJobHandle;
+        internal delegate JobHandle GetJobHandleDelegate(int jobPosition);
+        internal delegate void SetJobHandleDelegate(int jobPosition, JobHandle jobHandle);
+        internal GetJobHandleDelegate GetJobHandle;
+        internal SetJobHandleDelegate SetJobHandle;
 
         protected enum JobPosition
         {
-            Before,
-            On,
-            After
+            Before  =   0,
+            On      =   1,
+            After   =   2
         }
 
         protected JobHandle ScheduleAt<TJob>(JobPosition position, TJob job) where TJob : struct, IJob
@@ -150,15 +160,6 @@ namespace Syadeu.Presentation.Internal
             return handle;
         }
 
-        private void CombineDependences(JobHandle handle, JobPosition position)
-        {
-            if (position == JobPosition.Before) JobHandle.CombineDependencies(m_BeforePresentationJobHandle, handle);
-            else if (position == JobPosition.On) JobHandle.CombineDependencies(m_OnPresentationJobHandle, handle);
-            else if (position == JobPosition.After) JobHandle.CombineDependencies(m_AfterPresentationJobHandle, handle);
-            else
-            {
-                throw new NotImplementedException(position.ToString());
-            }
-        }
+        private void CombineDependences(JobHandle handle, JobPosition position) => SetJobHandle((int)position, handle);
     }
 }

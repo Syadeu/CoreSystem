@@ -6,18 +6,20 @@ using Syadeu.Presentation.Events;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Collections;
 using Unity.Mathematics;
 
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.AI;
+using UnityEngine.Experimental.AI;
 using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace Syadeu.Presentation.Map
 {
     public sealed class NavMeshSystem : PresentationSystemEntity<NavMeshSystem>
     {
-        public override bool EnableBeforePresentation => false;
+        public override bool EnableBeforePresentation => true;
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
@@ -28,12 +30,17 @@ namespace Syadeu.Presentation.Map
 
         private EventSystem m_EventSystem;
 
+        #region Presentation Methods
+
         protected override PresentationResult OnInitialize()
         {
             RequestSystem<EventSystem>(Bind);
 
             return base.OnInitialize();
         }
+
+        #region Binds
+
         private void Bind(EventSystem other)
         {
             m_EventSystem = other;
@@ -45,8 +52,17 @@ namespace Syadeu.Presentation.Map
             NavObstacleAttribute obstacleAtt = ev.entity.GetAttribute<NavObstacleAttribute>();
             if (obstacleAtt == null) return;
 
+            for (int i = 0; i < obstacleAtt.m_Sources.Length; i++)
+            {
+                obstacleAtt.m_Sources[i].transform = ev.transform.localToWorldMatrix;
+            }
+
+            m_Sources.Clear();
             m_RequireReload = true;
         }
+
+        #endregion
+
         public override void OnDispose()
         {
             m_EventSystem.RemoveEvent<OnTransformChangedEvent>(OnTransformChangedEventHandler);
@@ -67,13 +83,17 @@ namespace Syadeu.Presentation.Map
             
             foreach (NavMeshComponent agent in m_Agents)
             {
-                "bake".ToLog();
-                NavMeshBuilder.UpdateNavMeshDataAsync(agent.m_NavMeshData, NavMesh.GetSettingsByID(agent.m_AgentType), m_Sources, agent.m_Bounds);
+                Bounds bounds = agent.Bounds;
+
+                NavMeshBuilder.UpdateNavMeshDataAsync(agent.m_NavMeshData, NavMesh.GetSettingsByID(agent.m_AgentType), m_Sources, 
+                    QuantizedBounds(bounds.center + agent.transform.position, bounds.size));
             }
 
             m_RequireReload = false;
             return base.BeforePresentation();
         }
+
+        #endregion
 
         public void AddBaker(NavMeshComponent component)
         {
@@ -89,8 +109,7 @@ namespace Syadeu.Presentation.Map
 
             component.m_Registered = true;
             m_Agents.Add(component);
-            m_RequireReload = true;
-            "baker in".ToLog();
+            NavMeshBuilder.UpdateNavMeshDataAsync(component.m_NavMeshData, NavMesh.GetSettingsByID(component.m_AgentType), m_Sources, component.Bounds);
         }
         public void RemoveBaker(NavMeshComponent component)
         {
@@ -106,9 +125,14 @@ namespace Syadeu.Presentation.Map
             component.m_Registered = false;
         }
 
-        public void AddObstacle(NavObstacleAttribute obstacle, ProxyTransform tr, int areaMask = 0)
+        public void AddObstacle(NavObstacleAttribute obstacle, ITransform transform, int areaMask)
         {
             CoreSystem.Logger.ThreadBlock(nameof(AddObstacle), ThreadInfo.Unity);
+            if (!(transform is IProxyTransform tr))
+            {
+                CoreSystem.Logger.LogError(Channel.Presentation, "unity tr is not support");
+                return;
+            }
 
             var setting = tr.prefab.GetObjectSetting();
             if (string.IsNullOrEmpty(setting.m_RefPrefab.AssetGUID))
@@ -176,12 +200,24 @@ namespace Syadeu.Presentation.Map
                 m_RequireReload = true;
             }
         }
-
         public void RemoveObstacle(NavObstacleAttribute obstacle)
         {
             m_Sources.Clear();
             m_Obstacles.Remove(obstacle);
             m_RequireReload = true;
+        }
+
+        private static float3 Quantize(float3 v, float3 quant)
+        {
+            float x = quant.x * math.floor(v.x / quant.x);
+            float y = quant.y * math.floor(v.y / quant.y);
+            float z = quant.z * math.floor(v.z / quant.z);
+            return new float3(x, y, z);
+        }
+        private static Bounds QuantizedBounds(Vector3 center, Vector3 size)
+        {
+            // Quantize the bounds to update only when theres a 10% change in size
+            return new Bounds(Quantize(center, 0.1f * size), size);
         }
     }
 }

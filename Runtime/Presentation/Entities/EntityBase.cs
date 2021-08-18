@@ -36,11 +36,11 @@ namespace Syadeu.Presentation.Entities
         /// <summary>
         /// <see cref="GameObjectProxySystem"/>을 통해 연결된 <see cref="DataTransform"/> 입니다.
         /// </summary>
-        [JsonIgnore] public ProxyTransform transform { get; internal set; }
+        [JsonIgnore] public ITransform transform { get; internal set; }
 
         public override bool IsValid()
         {
-            if (transform.isDestroyed || !m_IsCreated || PresentationSystem<GameObjectProxySystem>.System.Disposed) return false;
+            if (Disposed || !m_IsCreated || PresentationSystem<GameObjectProxySystem>.System.Disposed) return false;
 
             return true;
         }

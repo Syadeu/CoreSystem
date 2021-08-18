@@ -21,23 +21,25 @@ namespace SyadeuEditor
         Func<TA, T> m_Getter;
         Action<T> m_Setter;
         Func<TA, string> m_GetName;
+        T m_NoneValue;
 
         void ForceClose()
         {
             m_ShouldClose = true;
         }
 
-        private SelectorPopup(Action<T> setter, Func<TA, T> getter, IList<TA> list, Func<TA, string> getName)
+        private SelectorPopup(Action<T> setter, Func<TA, T> getter, IList<TA> list, T noneValue, Func<TA, string> getName)
         {
             m_SearchField = new SearchField();
             m_Setter = setter;
             m_Getter = getter;
 
+            m_NoneValue = noneValue;
             m_GetName = getName;
 
             m_List = list;
         }
-        public static SelectorPopup<T, TA> GetWindow(IList<TA> list, Action<T> setter, Func<TA, T> getter, Func<TA, string> getName = null)
+        public static SelectorPopup<T, TA> GetWindow(IList<TA> list, Action<T> setter, Func<TA, T> getter, T noneValue, Func<TA, string> getName = null)
         {
             //if (m_Window == null)
             //{
@@ -53,7 +55,7 @@ namespace SyadeuEditor
             //    m_Window.m_ShouldClose = false;
             //}
             //return m_Window;
-            return new SelectorPopup<T, TA>(setter, getter, list, getName);
+            return new SelectorPopup<T, TA>(setter, getter, list, noneValue, getName);
         }
         public override void OnOpen()
         {
@@ -152,6 +154,8 @@ namespace SyadeuEditor
             protected override TreeViewItem BuildRoot()
             {
                 var root = new TreeViewItem(-1, -1);
+
+                root.AddChild(new AttributeTreeViewItem(0, 0, "None", m_Popup.m_NoneValue));
 
                 IList<TA> list = m_Popup.m_List;
                 for (int i = 0; i < list.Count; i++)

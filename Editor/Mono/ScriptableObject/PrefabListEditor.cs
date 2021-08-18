@@ -55,12 +55,13 @@ namespace SyadeuEditor
             }
             if (GUILayout.Button("Rebase"))
             {
-                var objSetField = GetField("m_ObjectSettings");
-                List<PrefabList.ObjectSetting> origin = (List<PrefabList.ObjectSetting>)objSetField.GetValue(Asset);
+                //var objSetField = GetField("m_ObjectSettings");
+                //List<PrefabList.ObjectSetting> origin = (List<PrefabList.ObjectSetting>)objSetField.GetValue(Asset);
 
-                Rebase(origin);
+                //Rebase(origin);
+                Rebase();
 
-                EditorUtility.SetDirty(target);
+                //EditorUtility.SetDirty(target);
                 Repaint();
             }
 
@@ -69,8 +70,10 @@ namespace SyadeuEditor
             EditorGUI.EndDisabledGroup();
         }
 
-        public static void Rebase(List<PrefabList.ObjectSetting> list)
+        public static void Rebase()
         {
+            List<PrefabList.ObjectSetting> list = PrefabList.Instance.ObjectSettings;
+
             Queue<int> invalidIndices = new Queue<int>();
             for (int i = 0; i < list.Count; i++)
             {
@@ -131,6 +134,8 @@ namespace SyadeuEditor
                     });
                 }
             }
+
+            EditorUtility.SetDirty(PrefabList.Instance);
         }
     }
 }

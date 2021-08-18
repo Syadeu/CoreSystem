@@ -480,6 +480,12 @@ namespace SyadeuEditor.Presentation.Map
             {
                 ReflectionHelperEditor.DrawReferenceSelector("Scene data: ", (hash) =>
                 {
+                    if (hash.Equals(Hash.Empty))
+                    {
+                        ResetSceneData();
+                        return;
+                    }
+
                     m_SceneData = new Reference<SceneDataEntity>(hash);
 
                     if (m_SceneData.IsValid())
@@ -528,6 +534,19 @@ namespace SyadeuEditor.Presentation.Map
                     EditorGUILayout.BeginHorizontal();
                     ReflectionHelperEditor.DrawReferenceSelector("Map data: ", (hash) =>
                     {
+                        if (hash.Equals(Hash.Empty))
+                        {
+                            if (m_LoadedMapData[index] != null)
+                            {
+                                m_LoadedMapData[index].Dispose();
+                            }
+
+                            m_SelectedMapObject = null;
+                            m_SelectedMapData.RemoveAt(index);
+                            m_LoadedMapData.RemoveAt(index);
+                            return;
+                        }
+
                         m_SelectedMapData[index] = new Reference<MapDataEntity>(hash);
                         MapDataEntity mapData = m_SelectedMapData[index].GetObject();
 
@@ -656,6 +675,20 @@ namespace SyadeuEditor.Presentation.Map
                     EditorGUILayout.Space();
                     EditorUtils.StringRich("AABB", 13, true);
                     {
+                        if (GUILayout.Button("Auto"))
+                        {
+                            GameObject temp = (GameObject)entity.Prefab.GetObjectSetting().m_RefPrefab.editorAsset;
+                            Transform tr = temp.transform;
+
+                            AABB aabb = new AABB(float3.zero, float3.zero);
+                            foreach (var item in tr.GetComponentsInChildren<Renderer>())
+                            {
+                                aabb.Encapsulate(item.bounds);
+                            }
+                            entity.Center = aabb.center - ((float3)tr.position);
+                            entity.Size = aabb.size;
+                            SceneView.lastActiveSceneView.Repaint();
+                        }
                         entity.Center = EditorGUILayout.Vector3Field("Center", entity.Center);
                         entity.Size = EditorGUILayout.Vector3Field("Size", entity.Size);
                     }
@@ -717,15 +750,19 @@ namespace SyadeuEditor.Presentation.Map
                         Vector3 pos = EditorSceneUtils.GetMouseScreenPos();
 
                         var list = EntityDataList.Instance.m_Objects.Where((other) => other.Value is EntityBase).Select((other) => (EntityBase)other.Value).ToArray();
-                        PopupWindow.Show(rect, SelectorPopup<Hash, EntityBase>.GetWindow(list,
-                            (hash) =>
+                        PopupWindow.Show(rect, SelectorPopup<Hash, EntityBase>.GetWindow
+                            (
+                            list: list,
+                            setter: (hash) =>
                             {
                                 Reference<EntityBase> refobj = new Reference<EntityBase>(hash);
 
                                 m_SelectedMapObject = m_EditingMapData.Add(refobj, m_PreviewFolder, pos);
                                 Repaint();
                             },
-                            (other) => other.Hash));
+                            getter: (other) => other.Hash,
+                            noneValue: Hash.Empty
+                            ));
                         #endregion
 
                         Repaint();

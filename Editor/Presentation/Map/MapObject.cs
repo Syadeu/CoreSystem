@@ -26,7 +26,12 @@ namespace SyadeuEditor.Presentation.Map
             {
                 PrefabReference prefab = m_Data.m_Object.GetObject().Prefab;
 
-                if (prefab.IsValid())
+                if (prefab.Equals(PrefabReference.None))
+                {
+                    m_GameObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    m_GameObject.transform.SetParent(folder);
+                }
+                else if (prefab.IsValid())
                 {
                     GameObject temp = (GameObject)prefab.GetObjectSetting().m_RefPrefab.editorAsset;
                     m_GameObject = (GameObject)PrefabUtility.InstantiatePrefab(temp, folder);
@@ -92,6 +97,8 @@ namespace SyadeuEditor.Presentation.Map
             {
                 m_Data.m_Translation = value;
                 m_GameObject.transform.position = value;
+
+                EntityDataList.Instance.SaveData(Parent.MapDataEntity);
             }
         }
         public Quaternion Rotation
@@ -101,6 +108,8 @@ namespace SyadeuEditor.Presentation.Map
             {
                 m_Data.m_Rotation = value;
                 m_GameObject.transform.rotation = value;
+
+                EntityDataList.Instance.SaveData(Parent.MapDataEntity);
             }
         }
         public Vector3 Scale
@@ -110,6 +119,8 @@ namespace SyadeuEditor.Presentation.Map
             {
                 m_Data.m_Scale = value;
                 m_GameObject.transform.localScale = value;
+
+                EntityDataList.Instance.SaveData(Parent.MapDataEntity);
             }
         }
 

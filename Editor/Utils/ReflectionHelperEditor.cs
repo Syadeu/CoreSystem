@@ -343,11 +343,20 @@ namespace SyadeuEditor
         }
         public static void DrawPrefabReference(string name, Action<int> setter, PrefabReference current)
         {
-            PrefabList.ObjectSetting objSetting = current.GetObjectSetting();
-
             string displayName;
-            if (current.m_Idx >= 0) displayName = objSetting == null ? "INVALID" : objSetting.m_Name;
-            else displayName = "None";
+            if (current.m_Idx >= 0)
+            {
+                PrefabList.ObjectSetting objSetting = current.GetObjectSetting();
+                displayName = objSetting == null ? "INVALID" : objSetting.m_Name;
+            }
+            else if (current.Equals(PrefabReference.None))
+            {
+                displayName = "None";
+            }
+            else
+            {
+                displayName = "INVALID";
+            }
 
             GUILayout.BeginHorizontal();
             GUILayout.Space(EditorGUI.indentLevel * 15);
@@ -366,7 +375,7 @@ namespace SyadeuEditor
                         if (objSet.Equals(PrefabList.Instance.ObjectSettings[i])) return i;
                     }
                     return -1;
-                }));
+                }, -2));
             }
             EditorGUILayout.EndHorizontal();
         }
@@ -449,7 +458,7 @@ namespace SyadeuEditor
                     SelectorPopup<Hash, AttributeBase>.GetWindow(atts, setter, (att) =>
                     {
                         return att.Hash;
-                    })
+                    }, Hash.Empty)
                     );
             }
 
@@ -481,10 +490,15 @@ namespace SyadeuEditor
 
                 if (targetType == null)
                 {
-                    PopupWindow.Show(rect, SelectorPopup<Hash, ObjectBase>.GetWindow(EntityDataList.Instance.m_Objects.Values.ToArray(), setter, (att) =>
-                    {
-                        return att.Hash;
-                    }));
+                    PopupWindow.Show(rect, SelectorPopup<Hash, ObjectBase>.GetWindow(
+                        list: EntityDataList.Instance.m_Objects.Values.ToArray(), 
+                        setter: setter,
+                        getter: (att) =>
+                        {
+                            return att.Hash;
+                        },
+                        noneValue: Hash.Empty
+                        ));
                 }
                 else if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(targetType))
                 {
@@ -493,10 +507,15 @@ namespace SyadeuEditor
                                 targetType.IsAssignableFrom(other.GetType()))
                         .ToArray();
 
-                    PopupWindow.Show(rect, SelectorPopup<Hash, ObjectBase>.GetWindow(entities, setter, (att) =>
-                    {
-                        return att.Hash;
-                    }));
+                    PopupWindow.Show(rect, SelectorPopup<Hash, ObjectBase>.GetWindow(
+                        list: entities,
+                        setter: setter,
+                        getter: (att) =>
+                        {
+                            return att.Hash;
+                        },
+                        noneValue: Hash.Empty
+                        ));
                 }
                 else
                 {
@@ -505,10 +524,15 @@ namespace SyadeuEditor
                                 targetType.IsAssignableFrom(other.GetType()))
                         .ToArray();
 
-                    PopupWindow.Show(rect, SelectorPopup<Hash, AttributeBase>.GetWindow(attributes, setter, (att) =>
-                    {
-                        return att.Hash;
-                    }));
+                    PopupWindow.Show(rect, SelectorPopup<Hash, AttributeBase>.GetWindow(
+                        list: attributes,
+                        setter: setter,
+                        getter: (att) =>
+                        {
+                            return att.Hash;
+                        },
+                        noneValue: Hash.Empty
+                        ));
                 }
             }
 

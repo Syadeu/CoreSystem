@@ -9,7 +9,7 @@ using Unity.Mathematics;
 namespace Syadeu.Presentation
 {
     [StructLayout(LayoutKind.Sequential)]
-    public readonly struct ProxyTransform : IEquatable<ProxyTransform>
+    public readonly struct ProxyTransform : IProxyTransform, IEquatable<ProxyTransform>
     {
         #region Statics
         public static readonly ProxyTransform Null = new ProxyTransform(-1);
@@ -54,6 +54,58 @@ namespace Syadeu.Presentation
         internal void SetProxy(int2 proxyIndex)
         {
             Ref.m_ProxyIndex = proxyIndex;
+        }
+
+        public readonly struct ReadOnly
+        {
+            public readonly int index;
+            public readonly int generation;
+
+            public readonly bool enableCull;
+            public readonly bool isVisible;
+
+            public readonly bool hasProxy;
+            public readonly bool hasProxyQueued;
+            public readonly bool isDestroyed;
+            public readonly PrefabReference prefab;
+
+            public readonly float3 position;
+            public readonly quaternion rotation;
+            public readonly float3 scale;
+
+            public readonly float3 center;
+            public readonly float3 size;
+            public readonly AABB aabb;
+
+            unsafe internal ReadOnly(ProxyTransformData* p)
+            {
+                index = (*p).m_Index;
+                generation = (*p).m_Generation;
+
+                enableCull = (*p).m_EnableCull;
+                isVisible = (*p).m_IsVisible;
+
+                int2 proxyIdx = (*p).m_ProxyIndex;
+                hasProxy = !proxyIdx.Equals(ProxyNull);
+                hasProxyQueued = !proxyIdx.Equals(ProxyNull) && proxyIdx.Equals(ProxyQueued);
+                isDestroyed = (*p).destroyed;
+                prefab = (*p).m_Prefab;
+
+                position = (*p).m_Translation;
+                rotation = (*p).m_Rotation;
+                scale = (*p).m_Scale;
+
+                center = (*p).m_Center;
+                size = (*p).m_Size;
+                aabb = (*p).GetAABB();
+            }
+        }
+        public ReadOnly AsReadOnly()
+        {
+            unsafe
+            {
+                return new ReadOnly(Pointer);
+            }
         }
 
 #pragma warning disable IDE1006 // Naming Styles
@@ -270,7 +322,7 @@ namespace Syadeu.Presentation
             get
             {
                 if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
-                return new AABB(Ref.m_Center + Ref.m_Translation, Ref.m_Size).Rotation(Ref.m_Rotation);
+                return new AABB(Ref.m_Center + Ref.m_Translation, Ref.m_Size).Rotation(in Ref.m_Rotation, in Ref.m_Scale);
             }
         }
 
@@ -279,7 +331,7 @@ namespace Syadeu.Presentation
             get
             {
                 if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
-                return Render.RenderSystem.LocalToWorldMatrix(Ref.m_Translation, Ref.m_Rotation);
+                return float4x4.TRS(Ref.m_Translation, Ref.m_Rotation, Ref.m_Scale);
             }
         }
         public float4x4 worldToLocalMatrix
@@ -287,7 +339,7 @@ namespace Syadeu.Presentation
             get
             {
                 if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
-                return math.inverse(Render.RenderSystem.LocalToWorldMatrix(Ref.m_Translation, Ref.m_Rotation));
+                return math.inverse(float4x4.TRS(Ref.m_Translation, Ref.m_Rotation, Ref.m_Scale));
             }
         }
 
@@ -321,8 +373,6 @@ namespace Syadeu.Presentation
                 {
                     throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
                 }
-
-                (*m_Pointer)[m_Index]->m_DestroyQueued = true;
             }
             PresentationSystem<GameObjectProxySystem>.System.Destroy(in this);
         }
@@ -330,5 +380,11 @@ namespace Syadeu.Presentation
         public bool Equals(ProxyTransform other) => 
             m_Index.Equals(other.m_Index) && 
             m_Generation.Equals(other.m_Generation);
+
+        public bool Equals(ITransform other)
+        {
+            if (!(other is ProxyTransform tr)) return false;
+            return Equals(tr);
+        }
     }
 }

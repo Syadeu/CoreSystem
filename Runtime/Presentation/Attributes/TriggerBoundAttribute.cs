@@ -20,7 +20,7 @@ namespace Syadeu.Presentation.Attributes
 
         [Header("AABB Collusion")]
         [Tooltip("만약 MatchWithAABB가 true일 경우, 아래 설정은 무시됩니다")]
-        [JsonProperty(Order = 2, PropertyName = "MatchWithAABB")] public bool m_MatchWithAABB;
+        [JsonProperty(Order = 2, PropertyName = "MatchWithAABB")] public bool m_MatchWithAABB = true;
         [JsonProperty(Order = 3, PropertyName = "Center")] public float3 m_Center = 0;
         [JsonProperty(Order = 4, PropertyName = "Size")] public float3 m_Size = 1;
 

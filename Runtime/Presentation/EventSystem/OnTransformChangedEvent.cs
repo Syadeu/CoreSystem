@@ -1,5 +1,6 @@
 ﻿using Syadeu.Database;
 using Syadeu.Presentation.Entities;
+using System;
 
 namespace Syadeu.Presentation.Events
 {
@@ -10,15 +11,24 @@ namespace Syadeu.Presentation.Events
     {
 #pragma warning disable IDE1006 // Naming Styles
         public Entity<IEntity> entity { get; private set; }
-        public ProxyTransform transform { get; private set; }
+        public ITransform transform { get; private set; }
 #pragma warning restore IDE1006 // Naming Styles
 
-        public static OnTransformChangedEvent GetEvent(ProxyTransform tr)
+        public static OnTransformChangedEvent GetEvent(ITransform tr)
         {
             var temp = Dequeue();
 
-            Hash entityIdx = temp.EntitySystem.m_EntityGameObjects[tr.m_Hash];
-            temp.entity = Entity<IEntity>.GetEntity(entityIdx);
+            if (tr is ProxyTransform proxyTr)
+            {
+                Hash entityIdx = temp.EntitySystem.m_EntityGameObjects[proxyTr.m_Hash];
+                temp.entity = Entity<IEntity>.GetEntity(entityIdx);
+            }
+            else if (tr is UnityTransform unityTr)
+            {
+                temp.entity = unityTr.entity;
+            }
+            else throw new NotImplementedException();
+
             temp.transform = tr;
 
             return temp;

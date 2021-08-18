@@ -172,17 +172,19 @@ namespace Syadeu.Presentation
 
         unsafe private void OnTransformChanged(OnTransformChangedEvent ev)
         {
-            if (ev.transform.isDestroyed) return;
+            ProxyTransform transform = (ProxyTransform)ev.transform;
 
-            if (!ev.transform.Pointer->m_ClusterID.Equals(ClusterID.Requested))
+            if (transform.isDestroyed) return;
+
+            if (!transform.Pointer->m_ClusterID.Equals(ClusterID.Requested))
             {
                 //m_ClusterData.Update(in ev.transform.Pointer->m_ClusterID, ev.transform.position);
-                m_ClusterUpdates.Enqueue(new ClusterUpdateRequest(ev.transform, ev.transform.Pointer->m_ClusterID, ev.transform.position));
+                m_ClusterUpdates.Enqueue(new ClusterUpdateRequest(transform, transform.Pointer->m_ClusterID, ev.transform.position));
             }
 
-            if (!ev.transform.hasProxy || ev.transform.hasProxyQueued) return;
+            if (!transform.hasProxy || transform.hasProxyQueued) return;
 
-            RecycleableMonobehaviour proxy = ev.transform.proxy;
+            RecycleableMonobehaviour proxy = transform.proxy;
             proxy.transform.position = ev.transform.position;
             proxy.transform.rotation = ev.transform.rotation;
             proxy.transform.localScale = ev.transform.scale;
@@ -191,7 +193,7 @@ namespace Syadeu.Presentation
         private NativeList<ClusterGroup<ProxyTransformData>> m_SortedCluster;
         protected override PresentationResult AfterPresentation()
         {
-            const int c_ChunkSize = 100;
+            //const int c_ChunkSize = 100;
 
             if (m_LoadingLock) return base.AfterPresentation();
 
@@ -209,19 +211,33 @@ namespace Syadeu.Presentation
 
                 OnDataObjectDestroy?.Invoke(tr);
 
-                if (tr.hasProxy) RemoveProxy(tr);
-                else if (tr.hasProxyQueued)
-                {
-                    "on destroy but proxy queued".ToLogError();
-                }
-                else
-                {
-                    "in".ToLog();
-                }
+                if (tr.hasProxy && !tr.hasProxyQueued) RemoveProxy(tr);
+                //else if (tr.hasProxyQueued)
+                //{
+                //    "on destroy but proxy queued".ToLogError();
+                //}
+                //else
+                //{
+                //    "in".ToLog();
+                //}
 
                 unsafe
                 {
-                    m_ClusterData.Remove(tr.Pointer->m_ClusterID);
+                    ClusterID id = tr.Pointer->m_ClusterID;
+                    if (id.Equals(ClusterID.Requested))
+                    {
+                        int tempCount = m_ClusterIDRequests.Count;
+                        for (int a = 0; a < tempCount; a++)
+                        {
+                            var tempID = m_ClusterIDRequests.Dequeue();
+                            if (tempID.index.Equals(tr.Pointer->m_Index))
+                            {
+                                break;
+                            }
+                            else m_ClusterIDRequests.Enqueue(tempID);
+                        }
+                    }
+                    else m_ClusterData.Remove(id);
                 }
                 m_ProxyData.Remove(tr);
             }
@@ -237,7 +253,7 @@ namespace Syadeu.Presentation
 
                 if (tr.isDestroyed)
                 {
-                    CoreSystem.Logger.LogError(Channel.Proxy, $"1 destroyed transform");
+                    //CoreSystem.Logger.LogError(Channel.Proxy, $"1 destroyed transform");
                     continue;
                 }
                 else if (tr.hasProxy && !tr.hasProxyQueued)
@@ -257,7 +273,7 @@ namespace Syadeu.Presentation
 
                 if (tr.isDestroyed)
                 {
-                    CoreSystem.Logger.LogError(Channel.Proxy, $"2 destroyed transform");
+                    //CoreSystem.Logger.LogError(Channel.Proxy, $"2 destroyed transform");
                     continue;
                 }
                 else if (!tr.hasProxy)
@@ -339,7 +355,7 @@ namespace Syadeu.Presentation
 
             unsafe
             {
-                NativeProxyData.UnsafeList list = *m_ProxyData.m_UnsafeList;
+                NativeProxyData.UnsafeList list = m_ProxyData.List;
 
                 ProxyJob proxyJob = new ProxyJob
                 {
@@ -427,6 +443,8 @@ namespace Syadeu.Presentation
                         throw new Exception();
                     }
                     ProxyTransformData data = List.ElementAt(clusterGroup[j]);
+
+                    if (data.m_Prefab.Equals(PrefabReference.None)) continue;
                     if (!data.m_EnableCull)
                     {
                         if (data.m_ProxyIndex.Equals(-1) &&
@@ -479,7 +497,16 @@ namespace Syadeu.Presentation
 
             CoreSystem.Logger.NotNull(m_RenderSystem, $"You've call this method too early or outside of PresentationSystem");
 
-            ProxyTransform tr = m_ProxyData.Add(prefab, pos, rot, scale, enableCull, center, size);
+            ProxyTransform tr;
+            if (!prefab.IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Proxy,
+                    $"Trying to create an invalid prefab proxy. This is not allowed. Replaced to empty.");
+
+                tr = m_ProxyData.Add(PrefabReference.None, pos, rot, scale, enableCull, center, size);
+            }
+            else tr = m_ProxyData.Add(prefab, pos, rot, scale, enableCull, center, size);
+
             unsafe
             {
                 m_ClusterIDRequests.Enqueue(new ClusterIDRequest(pos, tr.m_Index));
@@ -488,7 +515,8 @@ namespace Syadeu.Presentation
             OnDataObjectCreated?.Invoke(tr);
 
             CoreSystem.Logger.Log(Channel.Proxy, true,
-                $"ProxyTransform({prefab.GetObjectSetting().m_Name})" +
+                $"ProxyTransform(" +
+                $"{(prefab.GetObjectSetting() != null ? prefab.GetObjectSetting().m_Name : "EMPTY")})" +
                 $"has been created at {pos}");
 
             return tr;
@@ -497,53 +525,21 @@ namespace Syadeu.Presentation
         {
             CoreSystem.Logger.ThreadBlock(nameof(Destroy), ThreadInfo.Unity);
 
-            //OnDataObjectDestroy?.Invoke(tr);
-
-            //if (tr.hasProxy && !tr.hasProxyQueued) RemoveProxy(tr);
-            //else
-            //{
-            //    "in".ToLog();
-            //}
-
-            //unsafe
-            //{
-            //    //if (!tr.Pointer->m_ClusterID.Equals(ClusterID.Requested))
-            //    {
-            //        m_ClusterData.Remove(tr.Pointer->m_ClusterID);
-            //    }
-            //}
-            //m_ProxyData.Remove(tr);
-
             unsafe
             {
-                m_RequestDestories.Enqueue(tr.m_Index);
+                if ((*tr.m_Pointer)[tr.m_Index]->m_DestroyQueued)
+                {
+                    CoreSystem.Logger.LogError(Channel.Proxy, 
+                        "Cannot destroy this proxy because it is already destroyed.");
+                    return;
+                }
+
+                (*tr.m_Pointer)[tr.m_Index]->m_DestroyQueued = true;
             }
+
+            m_RequestDestories.Enqueue(tr.m_Index);
             CoreSystem.Logger.Log(Channel.Proxy,
                 $"Destroy called");
-        }
-        private struct ClusterIDRequest
-        {
-            public float3 translation;
-            public int index;
-
-            public ClusterIDRequest(float3 tr, int idx)
-            {
-                translation = tr;
-                index = idx;
-            }
-        }
-        private struct ClusterUpdateRequest
-        {
-            public ProxyTransform transform;
-            public ClusterID id;
-            public float3 translation;
-
-            public ClusterUpdateRequest(ProxyTransform transform, ClusterID id, float3 tr)
-            {
-                this.transform = transform;
-                this.id = id;
-                translation = tr;
-            }
         }
 
         #region Proxy Object Control
@@ -608,7 +604,10 @@ namespace Syadeu.Presentation
 
             if ((proxy.transform.position - (Vector3)proxyTransform.position).sqrMagnitude > .1f)
             {
-                proxyTransform.position = proxy.transform.position;
+                unsafe
+                {
+                    proxyTransform.Pointer->m_Translation = proxy.transform.position;
+                }
                 CoreSystem.Logger.LogWarning(Channel.Proxy,
                     "in-corrected translation found. Did you moved proxy transform directly?");
             }
@@ -746,6 +745,35 @@ namespace Syadeu.Presentation
         private void InstantiatePrefab(PrefabReference prefab, Vector3 position, Quaternion rotation, Action<RecycleableMonobehaviour> onCompleted)
         {
             PoolContainer<PrefabRequester>.Dequeue().Setup(this, prefab, position, rotation, onCompleted);
+        }
+
+        #endregion
+
+        #region Inner Classes
+
+        private struct ClusterIDRequest
+        {
+            public float3 translation;
+            public int index;
+
+            public ClusterIDRequest(float3 tr, int idx)
+            {
+                translation = tr;
+                index = idx;
+            }
+        }
+        private struct ClusterUpdateRequest
+        {
+            public ProxyTransform transform;
+            public ClusterID id;
+            public float3 translation;
+
+            public ClusterUpdateRequest(ProxyTransform transform, ClusterID id, float3 tr)
+            {
+                this.transform = transform;
+                this.id = id;
+                translation = tr;
+            }
         }
 
         #endregion

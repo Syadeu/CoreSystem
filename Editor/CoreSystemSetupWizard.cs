@@ -33,6 +33,7 @@ namespace SyadeuEditor
         }
         public enum ToolbarNames
         {
+            General,
             Scene,
             Prefab,
             Test2,
@@ -442,7 +443,8 @@ namespace SyadeuEditor
             {
                 if (GUILayout.Button("Rebase"))
                 {
-                    PrefabListEditor.Rebase(objectSettings);
+                    PrefabListEditor.Rebase();
+                    serializedObject.Update();
 
                     m_InvalidIndices.Clear();
                     for (int i = 0; i < objectSettings.Count; i++)
@@ -452,9 +454,6 @@ namespace SyadeuEditor
                             m_InvalidIndices.Add(i);
                         }
                     }
-
-                    serializedObject.Update();
-                    EditorUtils.SetDirty(PrefabList.Instance);
                 }
 
                 m_Scroll = EditorGUILayout.BeginScrollView(m_Scroll);
