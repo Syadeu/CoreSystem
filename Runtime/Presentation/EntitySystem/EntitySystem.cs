@@ -522,7 +522,10 @@ namespace Syadeu.Presentation
                 entity = entity,
                 provider = obj.transform
             };
-            obj.AddComponent<ConvertedEntityComponent>();
+
+            ConvertedEntityComponent component = obj.AddComponent<ConvertedEntityComponent>();
+            component.m_Entity = entity;
+
             entity.m_IsCreated = true;
 
             m_ObjectEntities.Add(entity.Idx, entity);

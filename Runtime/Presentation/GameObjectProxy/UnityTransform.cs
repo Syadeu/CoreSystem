@@ -1,4 +1,5 @@
 ﻿using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Events;
 using System;
 using Unity.Mathematics;
 using UnityEngine;
@@ -12,39 +13,118 @@ namespace Syadeu.Presentation
 
         public float3 position
         {
-            get => provider.position;
-            set => provider.position = value;
+            get
+            {
+                if (provider == null) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                return provider.position;
+            }
+            set
+            {
+                if (provider == null) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+
+                provider.position = value;
+                PresentationSystem<EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
+            }
         }
         public quaternion rotation
         {
-            get => provider.rotation;
-            set => provider.rotation = value;
+            get
+            {
+                if (provider == null) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                return provider.rotation;
+            }
+            set
+            {
+                if (provider == null) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+
+                provider.rotation = value;
+                PresentationSystem<EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
+            }
         }
         public float3 eulerAngles
         {
-            get => provider.eulerAngles;
-            set => provider.eulerAngles = value;
+            get
+            {
+                if (provider == null) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                return provider.eulerAngles;
+            }
+            set
+            {
+                if (provider == null) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+
+                provider.eulerAngles = value;
+                PresentationSystem<EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
+            }
         }
         public float3 scale
         {
-            get => provider.localScale;
-            set => provider.localScale = value;
+            get
+            {
+                if (provider == null) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                return provider.localScale;
+            }
+            set
+            {
+                if (provider == null) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+
+                provider.localScale = value;
+                PresentationSystem<EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
+            }
         }
 
-        public float3 right => provider.right;
-        public float3 up => provider.up;
-        public float3 forward => provider.forward;
+        public float3 right
+        {
+            get
+            {
+                if (provider == null) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                return provider.right;
+            }
+        }
+        public float3 up
+        {
+            get
+            {
+                if (provider == null) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                return provider.up;
+            }
+        }
+        public float3 forward
+        {
+            get
+            {
+                if (provider == null) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                return provider.forward;
+            }
+        }
 
-        public float4x4 localToWorldMatrix => provider.localToWorldMatrix;
-        public float4x4 worldToLocalMatrix => provider.worldToLocalMatrix;
+        public float4x4 localToWorldMatrix
+        {
+            get
+            {
+                if (provider == null) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                return provider.localToWorldMatrix;
+            }
+        }
+        public float4x4 worldToLocalMatrix
+        {
+            get
+            {
+                if (provider == null) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                return provider.worldToLocalMatrix;
+            }
+        }
 
         public void Destroy()
         {
+            if (provider == null) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+
             PresentationSystem<EntitySystem>.System.DestroyEntity(entity);
         }
 
         public bool Equals(ITransform other)
         {
+            if (provider == null) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+
             if (!(other is UnityTransform tr)) return false;
             return provider.Equals(tr.provider);
         }
