@@ -129,12 +129,11 @@ namespace Syadeu.Presentation.Render
 		/// <param name="matrix"></param>
 		/// <param name="worldPosition"></param>
 		/// <returns></returns>
-		public static Vector3 GetScreenPoint(Matrix4x4 matrix, Vector3 worldPosition)
+		public static Vector3 GetScreenPoint(float4x4 matrix, float3 worldPosition)
         {
-            Vector4 p4 = worldPosition;
-            p4.w = 1;
-            Vector4 result4 = matrix * p4;
-            Vector3 screenPoint = result4;
+            float4 p4 = new float4(worldPosition, 1);
+            float4 result4 = math.mul(matrix, p4);
+            float3 screenPoint = result4.xyz;
             screenPoint /= -result4.w;
             screenPoint.x = screenPoint.x / 2 + 0.5f;
             screenPoint.y = screenPoint.y / 2 + 0.5f;
@@ -142,8 +141,7 @@ namespace Syadeu.Presentation.Render
 
             return screenPoint;
         }
-        internal static Matrix4x4 GetCameraMatrix4X4(Camera cam) => cam.projectionMatrix * cam.transform.worldToLocalMatrix;
-        /// <inheritdoc cref="IsInCameraScreen(Camera, Vector3)"/>
+        internal static float4x4 GetCameraMatrix4X4(Camera cam) => cam.projectionMatrix * cam.transform.worldToLocalMatrix;
         public bool IsInCameraScreen(Vector3 worldPosition, float3 offset = default)
         {
             return IsInCameraScreen(worldPosition, m_Matrix4x4, offset);
@@ -174,7 +172,7 @@ namespace Syadeu.Presentation.Render
             }
             return true;
         }
-        internal static bool IsInCameraScreen(float3 worldPosition, Matrix4x4 matrix, float3 offset)
+        internal static bool IsInCameraScreen(float3 worldPosition, float4x4 matrix, float3 offset)
         {
             Vector3 screenPoint = GetScreenPoint(matrix, worldPosition);
             
@@ -192,7 +190,7 @@ namespace Syadeu.Presentation.Render
             }
             return false;
         }
-        internal static bool IsInCameraScreen(NativeArray<float3> vertices, Matrix4x4 matrix, Vector3 offset)
+        internal static bool IsInCameraScreen(NativeArray<float3> vertices, float4x4 matrix, Vector3 offset)
         {
             for (int i = 0; i < vertices.Length; i++)
             {
