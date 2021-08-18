@@ -58,7 +58,7 @@ namespace Syadeu.Presentation
             }
         }
 
-        [NativeDisableUnsafePtrRestriction] public UnsafeList* m_UnsafeList;
+        [NativeDisableUnsafePtrRestriction] private UnsafeList* m_UnsafeList;
         private Allocator m_AllocatorLabel;
 
         public ProxyTransform this[int index]
@@ -71,7 +71,7 @@ namespace Syadeu.Presentation
                 return new ProxyTransform(m_UnsafeList, index, p->m_Generation, p->m_Hash);
             }
         }
-        private UnsafeList List => *m_UnsafeList;
+        public UnsafeList List => *m_UnsafeList;
 
         public NativeProxyData(int length, Allocator allocator, NativeArrayOptions options = NativeArrayOptions.ClearMemory)
         {
@@ -210,9 +210,6 @@ namespace Syadeu.Presentation
 #if UNITY_EDITOR
             AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
 #endif
-
-            //Hash index = transform.index;
-
             ProxyTransformData* p = (*m_UnsafeList)[transform.m_Index];
             if (!p->m_IsOccupied || !p->m_Generation.Equals(transform.m_Generation))
             {

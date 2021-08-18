@@ -339,7 +339,7 @@ namespace Syadeu.Presentation
 
             unsafe
             {
-                NativeProxyData.UnsafeList list = *m_ProxyData.m_UnsafeList;
+                NativeProxyData.UnsafeList list = m_ProxyData.List;
 
                 ProxyJob proxyJob = new ProxyJob
                 {
