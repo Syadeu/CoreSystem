@@ -125,9 +125,14 @@ namespace Syadeu.Presentation.Map
             component.m_Registered = false;
         }
 
-        public void AddObstacle(NavObstacleAttribute obstacle, ProxyTransform tr, int areaMask)
+        public void AddObstacle(NavObstacleAttribute obstacle, ITransform transform, int areaMask)
         {
             CoreSystem.Logger.ThreadBlock(nameof(AddObstacle), ThreadInfo.Unity);
+            if (!(transform is IProxyTransform tr))
+            {
+                CoreSystem.Logger.LogError(Channel.Presentation, "unity tr is not support");
+                return;
+            }
 
             var setting = tr.prefab.GetObjectSetting();
             if (string.IsNullOrEmpty(setting.m_RefPrefab.AssetGUID))

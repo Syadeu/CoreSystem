@@ -517,8 +517,12 @@ namespace Syadeu.Presentation
             };
             ConvertedEntity entity = (ConvertedEntity)temp.Clone();
 
-            entity.gameObject = obj;
-            entity.transform = obj.transform;
+            entity.transform = new UnityTransform
+            {
+                entity = entity,
+                provider = obj.transform
+            };
+            obj.AddComponent<ConvertedEntityComponent>();
             entity.m_IsCreated = true;
 
             m_ObjectEntities.Add(entity.Idx, entity);
@@ -545,10 +549,17 @@ namespace Syadeu.Presentation
 
             if (!CoreSystem.s_BlockCreateInstance && m_ObjectEntities[hash] is IEntity entity)
             {
-                ProxyTransform obj = entity.transform;
-                Hash index = obj.m_Hash;
-                obj.Destroy();
-                m_EntityGameObjects.Remove(index);
+                if (entity.transform is ProxyTransform tr)
+                {
+                    Hash index = tr.m_Hash;
+                    tr.Destroy();
+                    m_EntityGameObjects.Remove(index);
+                }
+                else if (entity.transform is UnityTransform unityTr)
+                {
+                    UnityEngine.Object.Destroy(unityTr.provider.gameObject);
+                    ((IDisposable)unityTr).Dispose();
+                }
             }
 
             ((IDisposable)m_ObjectEntities[hash]).Dispose();
@@ -1021,7 +1032,7 @@ namespace Syadeu.Presentation
                 Hash key = m_Keys[index];
                 Entity<IEntity> target = Entity<IEntity>.GetEntity(key);
 
-                var targetAABB = target.transform.aabb;
+                var targetAABB = ((IProxyTransform)target.transform).aabb;
                 if (targetAABB.Intersect(m_Ray, out float dis, out float3 point))
                 {
                     m_Hits.AddNoResize(new RaycastHitInfo(target, dis, point));

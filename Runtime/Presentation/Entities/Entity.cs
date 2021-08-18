@@ -86,7 +86,7 @@ namespace Syadeu.Presentation.Entities
 
 #pragma warning disable IDE1006 // Naming Styles
         /// <inheritdoc cref="EntityBase.transform"/>
-        public ProxyTransform transform => Target.transform;
+        public ITransform transform => Target.transform;
 #pragma warning restore IDE1006 // Naming Styles
 
         private Entity(Hash idx)

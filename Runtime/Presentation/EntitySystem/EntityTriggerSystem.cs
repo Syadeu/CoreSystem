@@ -133,8 +133,8 @@ namespace Syadeu.Presentation
                 TriggerBoundAttribute fromAtt = from.GetAttribute<TriggerBoundAttribute>();
                 TriggerBoundAttribute toAtt = to.GetAttribute<TriggerBoundAttribute>();
 
-                AABB fromAABB = fromAtt.m_MatchWithAABB ? from.transform.aabb : new AABB(fromAtt.m_Center + from.transform.position, fromAtt.m_Center);
-                AABB toAABB = toAtt.m_MatchWithAABB ? to.transform.aabb : new AABB(toAtt.m_Center + to.transform.position, toAtt.m_Center);
+                AABB fromAABB = fromAtt.m_MatchWithAABB ? ((IProxyTransform)from.transform).aabb : new AABB(fromAtt.m_Center + from.transform.position, fromAtt.m_Center);
+                AABB toAABB = toAtt.m_MatchWithAABB ? ((IProxyTransform)to.transform).aabb : new AABB(toAtt.m_Center + to.transform.position, toAtt.m_Center);
                 
                 if (fromAABB.Intersect(toAABB))
                 {

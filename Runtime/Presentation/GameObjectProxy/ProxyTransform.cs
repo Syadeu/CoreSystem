@@ -9,7 +9,7 @@ using Unity.Mathematics;
 namespace Syadeu.Presentation
 {
     [StructLayout(LayoutKind.Sequential)]
-    public readonly struct ProxyTransform : IEquatable<ProxyTransform>
+    public readonly struct ProxyTransform : IProxyTransform, IEquatable<ProxyTransform>
     {
         #region Statics
         public static readonly ProxyTransform Null = new ProxyTransform(-1);

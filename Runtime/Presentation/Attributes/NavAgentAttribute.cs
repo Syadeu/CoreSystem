@@ -59,7 +59,12 @@ namespace Syadeu.Presentation.Attributes
         {
             EventSystem eventSystem = PresentationSystem<EventSystem>.System;
             Entity<IEntity> parent = Parent;
-            ProxyTransform tr = parent.transform;
+            if (!(parent.transform is IProxyTransform tr))
+            {
+                CoreSystem.Logger.LogError(Channel.Presentation, "unity tr is not support");
+                yield break;
+            }
+            //ITransform tr = parent.transform;
 
             if (!tr.hasProxy) yield break;
 
@@ -118,7 +123,7 @@ namespace Syadeu.Presentation.Attributes
 
             if (att.IsMoving)
             {
-                ProxyTransform tr = entity.transform;
+                ITransform tr = entity.transform;
 
                 NavMeshAgent agent = monoObj.GetComponent<NavMeshAgent>();
                 if (agent.isOnNavMesh) agent.ResetPath();
