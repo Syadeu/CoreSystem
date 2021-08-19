@@ -10,13 +10,22 @@ namespace Syadeu.Database.Converters
     [Preserve]
     internal sealed class ReferenceJsonConverter : JsonConverter<IReference>
     {
-        public override bool CanWrite => false;
         public override bool CanRead => true;
+        public override bool CanWrite => true;
 
         public override IReference ReadJson(JsonReader reader, Type objectType, IReference existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
-            JObject jo = JObject.Load(reader);
-            Hash hash = jo["Hash"].ToObject<Hash>();
+            JToken jToken = JToken.Load(reader);
+
+            Hash hash;
+            // Prev
+            if (jToken.Type == JTokenType.Object)
+            {
+                JObject jObj = (JObject)jToken;
+                hash = jObj.Value<ulong>("Hash");
+            }
+            else hash = jToken.Value<ulong>();
+
             if (objectType.GenericTypeArguments.Length > 0)
             {
                 Type targetT = typeof(Reference<>).MakeGenericType(objectType.GenericTypeArguments[0]);
@@ -31,7 +40,7 @@ namespace Syadeu.Database.Converters
         }
         public override void WriteJson(JsonWriter writer, IReference value, JsonSerializer serializer)
         {
-            throw new NotImplementedException();
+            writer.WriteValue(value.Hash);
         }
     }
 }

@@ -20,6 +20,7 @@ namespace Syadeu.Database
     internal sealed class CSDataManager : StaticDataManager<CSDataManager>
     {
         private static bool s_JsonConverterSet = false;
+        private static JsonSerializerSettings SerializerSettings = null;
 
         public override void OnInitialize()
         {
@@ -37,20 +38,28 @@ namespace Syadeu.Database
         private static void SetJsonConverters()
         {
             if (s_JsonConverterSet) return;
-
-            JsonConvert.DefaultSettings = () => new JsonSerializerSettings
-            {
-                Converters = new List<JsonConverter>
-                {
-                    new Int2JsonConverter(),
-                    new Int3JsonConverter(),
-                    new Float2JsonConverter(),
-                    new Float3JsonConverter(),
-                    new QuaternionJsonConvereter(),
-                }
-            };
-
+            JsonConvert.DefaultSettings = GetSerializerSettings;
             s_JsonConverterSet = true;
+        }
+        private static JsonSerializerSettings GetSerializerSettings()
+        {
+            if (SerializerSettings == null)
+            {
+                SerializerSettings = new JsonSerializerSettings
+                {
+                    Converters = new List<JsonConverter>
+                    {
+                        new Int2JsonConverter(),
+                        new Int3JsonConverter(),
+                        new Float2JsonConverter(),
+                        new Float3JsonConverter(),
+                        new QuaternionJsonConvereter()
+                        //new PrefabReferenceJsonConvereter()
+                    }
+                };
+            }
+
+            return SerializerSettings;
         }
     }
 }
