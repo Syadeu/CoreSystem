@@ -900,7 +900,13 @@ namespace SyadeuEditor
             }
             else if (declaredType.Equals(TypeHelper.TypeOf<string>.Type))
             {
-                value = EditorGUILayout.TextField(name, (string)getter.Invoke(ins));
+                string currentValue = (string)getter.Invoke(ins);
+                if (currentValue.Length > 10)
+                {
+                    value = EditorGUILayout.TextArea(name, (string)getter.Invoke(ins));
+                }
+                else value = EditorGUILayout.TextField(name, (string)getter.Invoke(ins));
+
                 return true;
             }
             else if (declaredType.IsEnum)
