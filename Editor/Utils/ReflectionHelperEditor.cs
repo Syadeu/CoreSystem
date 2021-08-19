@@ -29,7 +29,11 @@ namespace SyadeuEditor
         {
             get
             {
-                if (s_Instance == null) s_Instance = new ReflectionHelperEditor();
+                if (s_Instance == null)
+                {
+                    s_Instance = new ReflectionHelperEditor();
+                    EditorStyles.textField.wordWrap = true;
+                }
                 return s_Instance;
             }
         }
@@ -900,12 +904,19 @@ namespace SyadeuEditor
             }
             else if (declaredType.Equals(TypeHelper.TypeOf<string>.Type))
             {
-                string currentValue = (string)getter.Invoke(ins);
-                if (currentValue.Length > 10)
+                object stringTarget = getter.Invoke(ins);
+                string currentValue;
+                if (stringTarget == null) currentValue = string.Empty;
+                else currentValue = (string)getter.Invoke(ins);
+
+                if (currentValue.Length > 30)
                 {
-                    value = EditorGUILayout.TextArea(name, (string)getter.Invoke(ins));
+                    Rect rect = GUILayoutUtility.GetLastRect();
+
+                    EditorGUILayout.LabelField(name);
+                    value = EditorGUILayout.TextArea(currentValue, GUILayout.Height(50));
                 }
-                else value = EditorGUILayout.TextField(name, (string)getter.Invoke(ins));
+                else value = EditorGUILayout.TextField(name, currentValue);
 
                 return true;
             }
