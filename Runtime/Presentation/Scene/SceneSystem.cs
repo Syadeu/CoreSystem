@@ -109,7 +109,17 @@ namespace Syadeu.Presentation
         /// </summary>
         public bool IsSceneLoading => m_LoadingEnabled || m_AsyncOperation != null;
 
-        public Transform SceneInstanceFolder => m_SceneInstanceFolder;
+        public Transform SceneInstanceFolder
+        {
+            get
+            {
+                if (m_SceneInstanceFolder == null)
+                {
+                    m_SceneInstanceFolder = new GameObject("Presentation Instances").transform;
+                }
+                return m_SceneInstanceFolder;
+            }
+        }
 
         private readonly ConcurrentDictionary<Hash, List<Action>> m_CustomSceneLoadDependences = new ConcurrentDictionary<Hash, List<Action>>();
         private readonly ConcurrentDictionary<Hash, List<Action>> m_CustomSceneUnloadDependences = new ConcurrentDictionary<Hash, List<Action>>();
@@ -397,8 +407,6 @@ namespace Syadeu.Presentation
                     yield return null;
                 }
                 OnLoading?.Invoke(1);
-
-                m_SceneInstanceFolder = new GameObject("Presentation Instances").transform;
 
                 CoreSystem.Logger.Log(Channel.Scene, $"Scene({scene.ScenePath}) load completed");
 

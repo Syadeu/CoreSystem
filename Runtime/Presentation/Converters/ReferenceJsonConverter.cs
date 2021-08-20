@@ -1,11 +1,12 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation;
 using System;
 using UnityEngine.Scripting;
 
-namespace Syadeu.Database.Converters
+namespace Syadeu.Presentation.Converters
 {
     [Preserve]
     internal sealed class ReferenceJsonConverter : JsonConverter<IReference>
