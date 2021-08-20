@@ -92,7 +92,12 @@ namespace Syadeu.Presentation.Entities
             return output;
         }
 
-        public abstract bool IsValid();
+        public virtual bool IsValid()
+        {
+            if (Disposed || !m_IsCreated || PresentationSystem<GameObjectProxySystem>.System.Disposed) return false;
+
+            return true;
+        }
         protected override ObjectBase Copy()
         {
             EntityDataBase entity = (EntityDataBase)base.Copy();
