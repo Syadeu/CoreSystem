@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
@@ -85,13 +86,26 @@ namespace Syadeu.Internal
         }
 
         private static readonly Assembly[] s_Assemblies = AppDomain.CurrentDomain.GetAssemblies();
-        private static readonly Type[] s_AllTypes = s_Assemblies.Where(a => !a.IsDynamic).SelectMany(a => a.GetTypes()).ToArray();
+        private static readonly Type[] s_AllTypes = s_Assemblies.Where(a => !a.IsDynamic).SelectMany(a => GetLoadableTypes(a)).ToArray();
 
         public static Type[] GetTypes(Func<Type, bool> predictate) => s_AllTypes.Where(predictate).ToArray();
         public static ConstructorInfo GetConstructorInfo(Type t, params Type[] args)
         {
             return t.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
                 null, CallingConventions.HasThis, args, null);
+        }
+
+        private static IEnumerable<Type> GetLoadableTypes(Assembly assembly)
+        {
+            // TODO: Argument validation
+            try
+            {
+                return assembly.GetTypes();
+            }
+            catch (ReflectionTypeLoadException e)
+            {
+                return e.Types.Where(t => t != null);
+            }
         }
     }
 }

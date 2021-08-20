@@ -1,0 +1,25 @@
+{
+    "name": "Syadeu.Presentation",
+    "rootNamespace": "",
+    "references": [
+        "GUID:a35cecc1c26b8eb43b1fcdad25ac3741",
+        "GUID:9e24947de15b9834991c9d8411ea37cf",
+        "GUID:84651a3751eca9349aac36a66bba901b",
+        "GUID:6ade952a417812144aa8d6e9d7547d08",
+        "GUID:2665a8d13d1b3f18800f46e256720795",
+        "GUID:8a2eafa29b15f444eb6d74f94a930e1d",
+        "GUID:e0cd26848372d4e5c891c569017e11f1",
+        "GUID:d8b63aba1907145bea998dd612889d6b",
+        "GUID:e04e6c86a9f3947eb95fded39f9e60cc",
+        "GUID:64dd21a71f05646a89405b0ade11289b"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

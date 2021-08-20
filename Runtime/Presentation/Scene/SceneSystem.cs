@@ -40,6 +40,7 @@ namespace Syadeu.Presentation
         private Scene m_CurrentScene;
 
         private AsyncOperation m_AsyncOperation;
+        private Transform m_SceneInstanceFolder;
 
 #pragma warning disable IDE0044 // Add readonly modifier
         [ConfigValue(Name = "DebugMode")] private bool m_DebugMode;
@@ -107,6 +108,18 @@ namespace Syadeu.Presentation
         /// 현재 씬을 로딩 중인가요?
         /// </summary>
         public bool IsSceneLoading => m_LoadingEnabled || m_AsyncOperation != null;
+
+        public Transform SceneInstanceFolder
+        {
+            get
+            {
+                if (m_SceneInstanceFolder == null)
+                {
+                    m_SceneInstanceFolder = new GameObject("Presentation Instances").transform;
+                }
+                return m_SceneInstanceFolder;
+            }
+        }
 
         private readonly ConcurrentDictionary<Hash, List<Action>> m_CustomSceneLoadDependences = new ConcurrentDictionary<Hash, List<Action>>();
         private readonly ConcurrentDictionary<Hash, List<Action>> m_CustomSceneUnloadDependences = new ConcurrentDictionary<Hash, List<Action>>();
@@ -367,9 +380,9 @@ namespace Syadeu.Presentation
 
             m_LoadingEnabled = true;
             OnLoadingEnter?.Invoke();
-            if (ManagerEntity.InstanceGroupTr != null)
+            if (m_SceneInstanceFolder != null)
             {
-                UnityEngine.Object.Destroy(ManagerEntity.InstanceGroupTr.gameObject);
+                UnityEngine.Object.Destroy(m_SceneInstanceFolder.gameObject);
             }
 
             OnWaitLoading?.Invoke(0, preDelay);

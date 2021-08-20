@@ -5,6 +5,7 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
+using AABB = Syadeu.Database.AABB;
 
 namespace Syadeu.Presentation
 {
