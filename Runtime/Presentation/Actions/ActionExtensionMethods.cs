@@ -27,5 +27,14 @@
 
             action.InternalExecute();
         }
+
+        //public static void Execute<T>(this Reference<ChainedAction> chainedAction, EntityData<IEntityData> entity) where T : ActionBase<T>, new()
+        //{
+        //    var chain = ChainedAction.GetAction(chainedAction);
+        //    for (int i = 0; i < chain.Length; i++)
+        //    {
+
+        //    }
+        //}
     }
 }
