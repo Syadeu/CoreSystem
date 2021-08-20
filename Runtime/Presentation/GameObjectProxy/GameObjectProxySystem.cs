@@ -17,6 +17,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.SceneManagement;
+using AABB = Syadeu.Database.AABB;
 
 namespace Syadeu.Presentation
 {
@@ -690,9 +691,8 @@ namespace Syadeu.Presentation
                 }
                 else
                 {
-                    if (CoreSystem.InstanceGroupTr == null) CoreSystem.InstanceGroupTr = new GameObject("InstanceSystemGroup").transform;
-
-                    parent = CoreSystem.InstanceGroupTr;
+                    CoreSystem.Logger.NotNull(SceneSystem.SceneInstanceFolder);
+                    parent = SceneSystem.SceneInstanceFolder;
                 }
 
                 AssetReference refObject = prefabInfo.m_RefPrefab;

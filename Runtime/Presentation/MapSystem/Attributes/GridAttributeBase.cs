@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine.Scripting;
+using AABB = Syadeu.Database.AABB;
 
 namespace Syadeu.Presentation.Map
 {

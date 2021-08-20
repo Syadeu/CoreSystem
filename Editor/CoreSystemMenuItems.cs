@@ -12,9 +12,6 @@ using UnityEngine;
 
 #if CORESYSTEM_FMOD
 using Syadeu.FMOD;
-#elif CORESYSTEM_UNITYAUDIO
-using Syadeu.Mono.Audio;
-using SyadeuEditor.Audio.Unity;
 #endif
 
 namespace SyadeuEditor
@@ -94,28 +91,11 @@ namespace SyadeuEditor
         }
 
 #if CORESYSTEM_FMOD
-        [MenuItem("Syadeu/FMOD/Edit FMOD Settings", priority = 400)]
+        [MenuItem("CoreSystem/FMOD/Edit FMOD Settings", priority = 400)]
         public static void FMODSettingsMenu()
         {
             Selection.activeObject = FMODSettings.Instance;
             EditorApplication.ExecuteMenuItem("Window/General/Inspector");
-        }
-#elif CORESYSTEM_UNITYAUDIO
-        static UnityAudioWindow m_UnityAudioWindow;
-        [MenuItem("CoreSystem/Unity/Unity Audio Window")]
-        public static void UnityAudioWindow()
-        {
-            if (m_UnityAudioWindow == null)
-            {
-                m_UnityAudioWindow = GetWindow<UnityAudioWindow>();
-
-            }
-            m_UnityAudioWindow.ShowUtility();
-        }
-        [MenuItem("CoreSystem/Unity/AudioList")]
-        public static void UnityAudioListMenu()
-        {
-            Selection.activeObject = UnityAudioList.Instance;
         }
 #endif
 
@@ -158,13 +138,5 @@ namespace SyadeuEditor
         {
             Selection.activeObject = GetGameObject("CoreSystem", true, typeof(CoreSystem));
         }
-
-#if CORESYSTEM_UNITYAUDIO
-        [MenuItem("GameObject/CoreSystem/Audio/Audio Source", false, 10)]
-        public static void AddAudioSource()
-        {
-            Selection.activeObject = GetGameObject("UnityAudioSource", true, typeof(AudioSource), typeof(UnityAudioSource));
-        }
-#endif
     }
 }

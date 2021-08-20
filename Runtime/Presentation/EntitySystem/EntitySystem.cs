@@ -552,7 +552,7 @@ namespace Syadeu.Presentation
 
             ProcessEntityOnDestroy(this, m_ObjectEntities[hash]);
 
-            if (!CoreSystem.s_BlockCreateInstance && m_ObjectEntities[hash] is IEntity entity)
+            if (!CoreSystem.BlockCreateInstance && m_ObjectEntities[hash] is IEntity entity)
             {
                 if (entity.transform is ProxyTransform tr)
                 {

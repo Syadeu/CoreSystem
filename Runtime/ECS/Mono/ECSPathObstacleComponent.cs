@@ -1,10 +1,7 @@
 ﻿using UnityEngine;
 
-using Syadeu.Presentation;
-using Syadeu.Presentation.Attributes;
 using System;
 using UnityEngine.Scripting;
-using Syadeu.Presentation.Entities;
 using Syadeu.Mono;
 
 namespace Syadeu.ECS
@@ -29,27 +26,27 @@ namespace Syadeu.ECS
         }
     }
 
-    [Obsolete("임시")]
-    public sealed class ECSPathObstacleAttribute : AttributeBase
-    {
-    }
-    [Preserve, Obsolete("임시")]
-    internal sealed class ECSPathObstacleProcessor : AttributeProcessor<ECSPathObstacleAttribute>,
-        IAttributeOnProxy
-    {
-        public void OnProxyCreated(AttributeBase attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
-        {
-            ECSPathObstacleComponent component = monoObj.GetComponent<ECSPathObstacleComponent>();
-            if (component == null) return;
+    //[Obsolete("임시")]
+    //public sealed class ECSPathObstacleAttribute : AttributeBase
+    //{
+    //}
+    //[Preserve, Obsolete("임시")]
+    //internal sealed class ECSPathObstacleProcessor : AttributeProcessor<ECSPathObstacleAttribute>,
+    //    IAttributeOnProxy
+    //{
+    //    public void OnProxyCreated(AttributeBase attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
+    //    {
+    //        ECSPathObstacleComponent component = monoObj.GetComponent<ECSPathObstacleComponent>();
+    //        if (component == null) return;
 
-            component.enabled = true;
-        }
-        public void OnProxyRemoved(AttributeBase attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
-        {
-            ECSPathObstacleComponent component = monoObj.GetComponent<ECSPathObstacleComponent>();
-            if (component == null) return;
+    //        component.enabled = true;
+    //    }
+    //    public void OnProxyRemoved(AttributeBase attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
+    //    {
+    //        ECSPathObstacleComponent component = monoObj.GetComponent<ECSPathObstacleComponent>();
+    //        if (component == null) return;
 
-            component.enabled = false;
-        }
-    }
+    //        component.enabled = false;
+    //    }
+    //}
 }

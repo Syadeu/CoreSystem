@@ -19,23 +19,23 @@ namespace Syadeu.Presentation
         //    PresentationSystem<EntitySystem>.System.DestroyObject(obj.Idx);
         //}
 
-        [Obsolete("", true)]
-        public static ref GridManager.GridCell GetCurrentCell(this IEntity entity)
-        {
-            Vector3 pos = entity.transform.position;
-            if (!GridManager.HasGrid(pos))
-            {
-                CoreSystem.Logger.LogError(Channel.Entity, $"This entity({entity.Name}) is not on the Grid");
-                throw new System.Exception();
-            }
-            ref GridManager.Grid grid = ref GridManager.GetGrid(pos);
-            if (!grid.HasCell(pos))
-            {
-                // 이건 버그임
-                throw new System.Exception();
-            }
+        //[Obsolete("", true)]
+        //public static ref GridManager.GridCell GetCurrentCell(this IEntity entity)
+        //{
+        //    Vector3 pos = entity.transform.position;
+        //    if (!GridManager.HasGrid(pos))
+        //    {
+        //        CoreSystem.Logger.LogError(Channel.Entity, $"This entity({entity.Name}) is not on the Grid");
+        //        throw new System.Exception();
+        //    }
+        //    ref GridManager.Grid grid = ref GridManager.GetGrid(pos);
+        //    if (!grid.HasCell(pos))
+        //    {
+        //        // 이건 버그임
+        //        throw new System.Exception();
+        //    }
 
-            return ref grid.GetCell(pos);
-        }
+        //    return ref grid.GetCell(pos);
+        //}
     }
 }

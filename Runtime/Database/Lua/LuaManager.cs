@@ -10,7 +10,7 @@ using UnityEditor;
 namespace Syadeu.Database.Lua
 {
     [UnityEngine.AddComponentMenu("")]
-    internal sealed class LuaManager : StaticDataManager<LuaManager>
+    public sealed class LuaManager : StaticDataManager<LuaManager>
     {
         private Script m_MainScripter;
         private LuaScriptLoader m_ScriptLoader;

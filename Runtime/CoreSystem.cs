@@ -20,7 +20,7 @@ using System.Threading.Tasks;
 using System.Reflection;
 using Syadeu.Database;
 using Syadeu.Database.Lua;
-using Syadeu.Presentation;
+//using Syadeu.Presentation;
 
 [assembly: UnityEngine.Scripting.Preserve]
 namespace Syadeu
@@ -391,6 +391,8 @@ namespace Syadeu
 
         internal static bool s_BlockCreateInstance = false;
 
+        public static bool BlockCreateInstance => s_BlockCreateInstance;
+
         private readonly ManualResetEvent m_SimWatcher = new ManualResetEvent(false);
         internal readonly ConcurrentDictionary<CoreRoutine, object> m_CustomBackgroundUpdates = new ConcurrentDictionary<CoreRoutine, object>();
         internal readonly ConcurrentDictionary<CoreRoutine, object> m_CustomUpdates = new ConcurrentDictionary<CoreRoutine, object>();
@@ -407,7 +409,7 @@ namespace Syadeu
         internal bool m_CleanupManagers = false;
 
         // Render
-        internal event Action OnRender;
+        public event Action OnRender;
 
         public override bool HideInHierarchy => false;
 

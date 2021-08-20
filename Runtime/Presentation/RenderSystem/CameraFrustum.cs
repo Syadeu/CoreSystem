@@ -8,6 +8,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
+using AABB = Syadeu.Database.AABB;
 
 namespace Syadeu.Presentation.Render
 {
