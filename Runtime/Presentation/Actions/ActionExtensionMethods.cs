@@ -25,14 +25,7 @@
                 return;
             }
 
-            try
-            {
-                action.InternalExecute();
-            }
-            catch (System.Exception ex)
-            {
-                CoreSystem.Logger.LogError(Channel.Presentation, ex.Message + ex.StackTrace);
-            }
+            action.InternalExecute();
         }
     }
 }

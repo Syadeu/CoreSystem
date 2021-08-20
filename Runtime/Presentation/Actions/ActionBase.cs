@@ -54,7 +54,15 @@ namespace Syadeu.Presentation.Entities
 
         internal override void InternalExecute()
         {
-            OnExecute();
+            try
+            {
+                OnExecute();
+            }
+            catch (System.Exception ex)
+            {
+                CoreSystem.Logger.LogError(Channel.Presentation, ex.Message + ex.StackTrace);
+            }
+            
             InternalTerminate();
         }
         protected override sealed void OnDispose()
