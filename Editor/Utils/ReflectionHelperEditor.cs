@@ -911,8 +911,6 @@ namespace SyadeuEditor
 
                 if (currentValue.Length > 30)
                 {
-                    Rect rect = GUILayoutUtility.GetLastRect();
-
                     EditorGUILayout.LabelField(name);
                     value = EditorGUILayout.TextArea(currentValue, GUILayout.Height(50));
                 }
