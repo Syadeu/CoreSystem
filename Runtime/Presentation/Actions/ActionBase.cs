@@ -1,4 +1,5 @@
-﻿using Syadeu.Presentation.Attributes;
+﻿using Newtonsoft.Json;
+using Syadeu.Presentation.Attributes;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -7,7 +8,7 @@ namespace Syadeu.Presentation.Entities
     [AttributeAcceptOnly(null)]
     public abstract class ActionBase : AttributeBase
     {
-        protected internal bool m_Terminated = true;
+        [JsonIgnore] protected internal bool m_Terminated = true;
 
         internal virtual void InternalInitialize()
         {
@@ -56,45 +57,13 @@ namespace Syadeu.Presentation.Entities
             OnExecute();
             InternalTerminate();
         }
-
-        protected abstract void OnInitialize();
-        protected abstract void OnTerminate();
-        protected abstract void OnExecute();
-    }
-
-    public static class ActionExtensionMethods
-    {
-        public static T Bind<T>(this Reference<T> other, EntityData<IEntityData> entity) where T : ActionBase<T>, new()
+        protected override sealed void OnDispose()
         {
-            T action = ActionBase<T>.GetAction(other);
-            action.Parent = entity;
-
-            return action;
-        }
-        public static void Execute<T>(this Reference<T> other, EntityData<IEntityData> entity) where T : ActionBase<T>, new()
-        {
-            T action = other.Bind(entity);
-            InternalExecute(action);
+            base.OnDispose();
         }
 
-        public static void Execute<T>(this T other) where T : ActionBase<T>, new() => InternalExecute(other);
-        private static void InternalExecute<T>(T action) where T : ActionBase<T>, new()
-        {
-            if (action.Terminated)
-            {
-                CoreSystem.Logger.LogError(Channel.Presentation,
-                    "This action has been terminated.");
-                return;
-            }
-
-            try
-            {
-                action.InternalExecute();
-            }
-            catch (System.Exception ex)
-            {
-                CoreSystem.Logger.LogError(Channel.Presentation, ex.Message + ex.StackTrace);
-            }
-        }
+        protected virtual void OnInitialize() { }
+        protected virtual void OnTerminate() { }
+        protected virtual void OnExecute() { }
     }
 }

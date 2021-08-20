@@ -535,6 +535,33 @@ namespace Syadeu.Presentation
             ProcessEntityOnCreated(this, entity);
             return EntityData<ConvertedEntity>.GetEntityData(entity.Idx);
         }
+        public EntityData<T> Convert<T>(GameObject obj) where T : EntityDataBase
+        {
+            CoreSystem.Logger.ThreadBlock(nameof(Convert), ThreadInfo.Unity);
+
+            ConvertedEntity temp = new ConvertedEntity
+            {
+                Name = obj.name,
+                Hash = Hash.Empty
+            };
+            ConvertedEntity entity = (ConvertedEntity)temp.Clone();
+
+            entity.transform = new UnityTransform
+            {
+                entity = entity,
+                provider = obj.transform
+            };
+
+            ConvertedEntityComponent component = obj.AddComponent<ConvertedEntityComponent>();
+            component.m_Entity = entity;
+
+            entity.m_IsCreated = true;
+
+            m_ObjectEntities.Add(entity.Idx, entity);
+
+            ProcessEntityOnCreated(this, entity);
+            return EntityData<T>.GetEntityData(entity.Idx);
+        }
 
         /// <summary>
         /// 해당 엔티티를 즉시 파괴합니다.
