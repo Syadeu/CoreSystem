@@ -10,6 +10,8 @@ namespace Syadeu.Presentation
     {
         internal abstract void InternalPost();
         internal abstract void InternalTerminate();
+
+        public virtual bool IsValid() => true;
     }
 
     public abstract class SynchronizedEvent<TEvent> : SynchronizedEventBase where TEvent : SynchronizedEvent<TEvent>, new()
