@@ -87,6 +87,7 @@ namespace Syadeu.Presentation
 
         private void OnTransformChangedEventHandler(OnTransformChangedEvent ev)
         {
+            if (!ev.entity.IsValid()) return;
             TriggerBoundAttribute[] atts = ev.entity.GetAttributes<TriggerBoundAttribute>();
             if (atts == null) return;
 

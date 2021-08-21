@@ -49,6 +49,7 @@ namespace Syadeu.Presentation.Map
         }
         private void OnTransformChangedEventHandler(OnTransformChangedEvent ev)
         {
+            if (!ev.entity.IsValid()) return;
             NavObstacleAttribute obstacleAtt = ev.entity.GetAttribute<NavObstacleAttribute>();
             if (obstacleAtt == null) return;
 
