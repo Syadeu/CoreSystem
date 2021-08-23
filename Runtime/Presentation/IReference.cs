@@ -41,7 +41,8 @@ namespace Syadeu.Presentation
         [Preserve]
         public Reference(ObjectBase obj)
         {
-            m_Hash = obj.Hash;
+            if (obj == null) m_Hash = Hash.Empty;
+            else m_Hash = obj.Hash;
         }
         public static Reference GetReference(string name) => new Reference(EntityDataList.Instance.GetObject(name));
 
@@ -66,6 +67,11 @@ namespace Syadeu.Presentation
         }
         public Reference(ObjectBase obj)
         {
+            if (obj == null)
+            {
+                m_Hash = Hash.Empty;
+                return;
+            }
             CoreSystem.Logger.True(TypeHelper.TypeOf<T>.Type.IsAssignableFrom(obj.GetType()),
                 $"Object reference type is not match\n" +
                 $"{obj.GetType().Name} != {TypeHelper.TypeOf<T>.Type.Name}");

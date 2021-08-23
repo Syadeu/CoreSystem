@@ -254,6 +254,12 @@ namespace SyadeuEditor.Presentation
             {
                 return new ArrayDrawer(list, m_ElementType, (other) => list[i] = other, () => (IList)list[i]);
             }
+
+            else if (TypeHelper.TypeOf<IReference>.Type.IsAssignableFrom(m_ElementType))
+            {
+                return new ReferenceDrawer(list, m_ElementType, (other) => list[i] = other, () => (IReference)list[i]);
+            }
+
             else
             {
                 return new ObjectDrawer(list[i], m_ElementType, string.Empty);
@@ -311,7 +317,16 @@ namespace SyadeuEditor.Presentation
                     {
                         if (m_ElementDrawers[i] == null) continue;
 
+                        EditorGUILayout.BeginHorizontal();
                         m_ElementDrawers[i].OnGUI();
+
+                        if (GUILayout.Button("-", GUILayout.Width(20)))
+                        {
+                            "아직 작동안함".ToLog();
+
+                            GUIUtility.ExitGUI();
+                        }
+                        EditorGUILayout.EndHorizontal();
                     }
                 }
                 EditorGUI.indentLevel--;
