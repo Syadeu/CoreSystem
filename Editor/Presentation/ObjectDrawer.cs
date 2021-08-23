@@ -23,6 +23,18 @@ namespace SyadeuEditor.Presentation
 
         public Func<T> Getter => m_Getter;
 
+        public ObjectDrawer(object parentObject, Type declaredType, Action<T> setter, Func<T> getter)
+        {
+            m_TargetObject = parentObject;
+            m_DelaredType = declaredType;
+            m_Setter = setter;
+            m_Getter = getter;
+
+            m_Attributes = Array.Empty<Attribute>();
+            m_Disable = false;
+
+            Name = string.Empty;
+        }
         public ObjectDrawer(object parentObject, MemberInfo memberInfo)
         {
             m_TargetObject = parentObject;

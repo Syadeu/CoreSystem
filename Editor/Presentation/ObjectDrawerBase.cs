@@ -1,6 +1,7 @@
 ﻿using Syadeu.Internal;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Reflection;
 using Unity.Mathematics;
 using UnityEngine;
@@ -28,7 +29,7 @@ namespace SyadeuEditor.Presentation
             return null;
         }
 
-        public static ObjectDrawerBase ToDrawer(object parentObject, MemberInfo memberInfo)
+        public static ObjectDrawerBase ToDrawer(object parentObject, MemberInfo memberInfo, bool drawName)
         {
             Type declaredType = GetDeclaredType(memberInfo);
 
@@ -39,19 +40,19 @@ namespace SyadeuEditor.Presentation
             }
             else if (declaredType.Equals(TypeHelper.TypeOf<int>.Type))
             {
-                return new IntDrawer(parentObject, memberInfo);
+                return new IntDrawer(parentObject, memberInfo, drawName);
             }
             else if (declaredType.Equals(TypeHelper.TypeOf<bool>.Type))
             {
-                return new BoolenDrawer(parentObject, memberInfo);
+                return new BoolenDrawer(parentObject, memberInfo, drawName);
             }
             else if (declaredType.Equals(TypeHelper.TypeOf<float>.Type))
             {
-                return new FloatDrawer(parentObject, memberInfo);
+                return new FloatDrawer(parentObject, memberInfo, drawName);
             }
             else if (declaredType.Equals(TypeHelper.TypeOf<double>.Type))
             {
-                return new DoubleDrawer(parentObject, memberInfo);
+                return new DoubleDrawer(parentObject, memberInfo, drawName);
             }
             else if (declaredType.Equals(TypeHelper.TypeOf<long>.Type))
             {
@@ -61,7 +62,7 @@ namespace SyadeuEditor.Presentation
             {
                 return new StringDrawer(parentObject, memberInfo);
             }
-            else if (declaredType.IsArray /*|| TypeHelper.TypeOf<IList>.Type.IsAssignableFrom(declaredType)*/)
+            else if (declaredType.IsArray || typeof(IList<>).IsAssignableFrom(declaredType))
             {
                 return new ArrayDrawer(parentObject, memberInfo);
             }
@@ -78,7 +79,7 @@ namespace SyadeuEditor.Presentation
             }
             else if (declaredType.Equals(TypeHelper.TypeOf<int2>.Type))
             {
-                return new Int2Drawer(parentObject, memberInfo);
+                return new Int2Drawer(parentObject, memberInfo, drawName);
             }
             else if (declaredType.Equals(TypeHelper.TypeOf<float3>.Type))
             {

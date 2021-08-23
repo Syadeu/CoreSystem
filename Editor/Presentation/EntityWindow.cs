@@ -428,7 +428,7 @@ namespace SyadeuEditor.Presentation
                 m_ObjectDrawers = new ObjectDrawerBase[m_Members.Length];
                 for (int i = 0; i < m_ObjectDrawers.Length; i++)
                 {
-                    m_ObjectDrawers[i] = ToDrawer(m_TargetObject, m_Members[i]);
+                    m_ObjectDrawers[i] = ToDrawer(m_TargetObject, m_Members[i], true);
                 }
             }
             public override sealed void OnGUI()

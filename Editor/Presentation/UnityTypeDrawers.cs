@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Reflection;
 using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
@@ -41,12 +42,26 @@ namespace SyadeuEditor.Presentation
     }
     public sealed class Int2Drawer : ObjectDrawer<int2>
     {
-        public Int2Drawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
+        private bool m_DrawName;
+
+        public Int2Drawer(object parentObject, MemberInfo memberInfo, bool drawName) : base(parentObject, memberInfo)
+        {
+            m_DrawName = drawName;
+        }
+
+        public Int2Drawer(object parentObject, Type declaredType, Action<int2> setter, Func<int2> getter) : base(parentObject, declaredType, setter, getter)
         {
         }
+
         public override int2 Draw(int2 currentValue)
         {
-            Vector2Int temp = EditorGUILayout.Vector2IntField(Name, new Vector2Int(currentValue.x, currentValue.y));
+            Vector2Int temp;
+            if (m_DrawName)
+            {
+                temp = EditorGUILayout.Vector2IntField(Name, new Vector2Int(currentValue.x, currentValue.y));
+            }
+            else temp = EditorGUILayout.Vector2IntField(string.Empty, new Vector2Int(currentValue.x, currentValue.y));
+
             return new int2(temp.x, temp.y);
         }
     }
