@@ -32,7 +32,14 @@ namespace Syadeu.Presentation.Render
         [ConfigValue(Header = "Resolution", Name = "X")] private int m_ResolutionX;
         [ConfigValue(Header = "Resolution", Name = "Y")] private int m_ResolutionY;
 
-        public Camera Camera => m_Camera.Value;
+        public Camera Camera
+        {
+            get => m_Camera.Value;
+            set
+            {
+                m_Camera.Value = value;
+            }
+        }
 		public CameraFrustum.ReadOnly Frustum => GetFrustum();
 
         public event Action<Camera, Camera> OnCameraChanged;

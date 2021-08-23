@@ -687,6 +687,8 @@ namespace SyadeuEditor.Presentation.Map
                             }
                             entity.Center = aabb.center - ((float3)tr.position);
                             entity.Size = aabb.size;
+
+                            EntityDataList.Instance.SaveData(entity);
                             SceneView.lastActiveSceneView.Repaint();
                         }
                         entity.Center = EditorGUILayout.Vector3Field("Center", entity.Center);

@@ -5,6 +5,7 @@ using System;
 using System.Runtime.InteropServices;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
+using AABB = Syadeu.Database.AABB;
 
 namespace Syadeu.Presentation
 {

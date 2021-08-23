@@ -2,7 +2,6 @@
 using Newtonsoft.Json.Utilities;
 using Syadeu.Database;
 using Syadeu.Internal;
-using Syadeu.Presentation.Attributes;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Scripting;

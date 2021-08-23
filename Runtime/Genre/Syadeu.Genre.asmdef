@@ -1,0 +1,17 @@
+{
+    "name": "Syadeu.Genre",
+    "rootNamespace": "",
+    "references": [
+        "GUID:a35cecc1c26b8eb43b1fcdad25ac3741",
+        "GUID:8bc3a2c31d86c324ba5c080d1b72889b"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

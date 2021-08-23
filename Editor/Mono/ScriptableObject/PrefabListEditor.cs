@@ -44,6 +44,8 @@ namespace SyadeuEditor
             }
         }
 
+        private bool m_Lock = true;
+
         public override void OnInspectorGUI()
         {
             EditorUtils.StringHeader("Prefab List");
@@ -65,7 +67,9 @@ namespace SyadeuEditor
                 Repaint();
             }
 
-            EditorGUI.BeginDisabledGroup(true);
+            m_Lock = EditorGUILayout.Toggle("Lock", m_Lock);
+
+            EditorGUI.BeginDisabledGroup(m_Lock);
             base.OnInspectorGUI();
             EditorGUI.EndDisabledGroup();
         }

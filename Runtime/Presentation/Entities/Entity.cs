@@ -74,7 +74,16 @@ namespace Syadeu.Presentation.Entities
         /// <inheritdoc cref="IEntityData.Idx"/>
         private readonly Hash m_Idx;
 
-        public T Target => m_Idx.Equals(Hash.Empty) ? null : (T)PresentationSystem<EntitySystem>.System.m_ObjectEntities[m_Idx];
+        public T Target
+        {
+            get
+            {
+                if (m_Idx.Equals(Hash.Empty) ||
+                    PresentationSystem<EntitySystem>.System.m_ObjectEntities.TryGetValue(m_Idx, out var value)) return null;
+
+                return (T)value;
+            }
+        }
 
         /// <inheritdoc cref="IEntityData.Name"/>
         public string Name => m_Idx.Equals(Hash.Empty) ? c_Invalid : Target.Name;

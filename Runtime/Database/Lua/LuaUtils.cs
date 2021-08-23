@@ -33,26 +33,26 @@ namespace Syadeu.Database.Lua
             }
             return LuaVectorUtils.FromVector(Vector3.zero);
         }
-        [System.Obsolete("", true)]
-        public static (int, int) PositionToGridCell(double[] position)
-        {
-            Vector3 pos = LuaVectorUtils.ToVector(position);
-            if (!GridManager.HasGrid(pos))
-            {
-                ConsoleWindow.Log($"Grid not found at: {pos}");
-                return (-1, -1);
-            }
+        //[System.Obsolete("", true)]
+        //public static (int, int) PositionToGridCell(double[] position)
+        //{
+        //    Vector3 pos = LuaVectorUtils.ToVector(position);
+        //    if (!GridManager.HasGrid(pos))
+        //    {
+        //        ConsoleWindow.Log($"Grid not found at: {pos}");
+        //        return (-1, -1);
+        //    }
 
-            ref GridManager.Grid grid = ref GridManager.GetGrid(pos);
-            if (!grid.HasCell(pos))
-            {
-                ConsoleWindow.Log($"GridCell not found at: {pos}");
-                return (-1, -1);
-            }
+        //    ref GridManager.Grid grid = ref GridManager.GetGrid(pos);
+        //    if (!grid.HasCell(pos))
+        //    {
+        //        ConsoleWindow.Log($"GridCell not found at: {pos}");
+        //        return (-1, -1);
+        //    }
 
-            ref GridManager.GridCell cell = ref grid.GetCell(pos);
-            return (grid.Idx, cell.Idx);
-        }
+        //    ref GridManager.GridCell cell = ref grid.GetCell(pos);
+        //    return (grid.Idx, cell.Idx);
+        //}
     }
     internal sealed class RandomUtils
     {

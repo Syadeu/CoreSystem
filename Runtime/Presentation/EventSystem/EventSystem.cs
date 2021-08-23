@@ -58,6 +58,7 @@ namespace Syadeu.Presentation.Events
             for (int i = 0; i < eventCount; i++)
             {
                 SynchronizedEventBase ev = m_PostedEvents.Dequeue();
+                if (!ev.IsValid()) continue;
                 try
                 {
                     ev.InternalPost();

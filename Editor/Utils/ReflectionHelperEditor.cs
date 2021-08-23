@@ -29,7 +29,11 @@ namespace SyadeuEditor
         {
             get
             {
-                if (s_Instance == null) s_Instance = new ReflectionHelperEditor();
+                if (s_Instance == null)
+                {
+                    s_Instance = new ReflectionHelperEditor();
+                }
+
                 return s_Instance;
             }
         }
@@ -865,7 +869,7 @@ namespace SyadeuEditor
 
             return obj;
         }
-        private static bool DrawSystemField(object ins, Type declaredType, string name, Func<object, object> getter, out object value)
+        public static bool DrawSystemField(object ins, Type declaredType, string name, Func<object, object> getter, out object value)
         {
             value = null;
             if (declaredType.Equals(TypeHelper.TypeOf<int>.Type))
@@ -900,7 +904,18 @@ namespace SyadeuEditor
             }
             else if (declaredType.Equals(TypeHelper.TypeOf<string>.Type))
             {
-                value = EditorGUILayout.TextField(name, (string)getter.Invoke(ins));
+                object stringTarget = getter.Invoke(ins);
+                string currentValue;
+                if (stringTarget == null) currentValue = string.Empty;
+                else currentValue = (string)getter.Invoke(ins);
+
+                if (currentValue.Length > 30)
+                {
+                    EditorGUILayout.LabelField(name);
+                    value = EditorGUILayout.TextArea(currentValue, GUILayout.Height(50));
+                }
+                else value = EditorGUILayout.TextField(name, currentValue);
+
                 return true;
             }
             else if (declaredType.IsEnum)
@@ -921,7 +936,7 @@ namespace SyadeuEditor
 
             return false;
         }
-        private static bool DrawUnityField(object ins, Type declaredType, string name, Func<object, object> getter, out object value)
+        public static bool DrawUnityField(object ins, Type declaredType, string name, Func<object, object> getter, out object value)
         {
             value = null;
             if (TypeHelper.TypeOf<UnityEngine.Object>.Type.IsAssignableFrom(declaredType))
@@ -978,7 +993,7 @@ namespace SyadeuEditor
 
                 return false;
         }
-        private static bool DrawUnityMathField(object ins, Type declaredType, string name, Func<object, object> getter, out object value)
+        public static bool DrawUnityMathField(object ins, Type declaredType, string name, Func<object, object> getter, out object value)
         {
             value = null;
             if (declaredType.Equals(TypeHelper.TypeOf<int2>.Type))

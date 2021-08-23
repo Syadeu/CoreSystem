@@ -123,7 +123,8 @@ namespace Syadeu.Presentation.Map
         }
         private void M_EntitySystem_OnEntityDestroy(EntityData<IEntityData> obj)
         {
-            if (obj.Target is SceneDataEntity sceneData)
+            if (obj.Target is SceneDataEntity sceneData &&
+                m_MainGrid.Key != null)
             {
                 if (m_MainGrid.Key.Equals(sceneData))
                 {

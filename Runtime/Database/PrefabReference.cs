@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Syadeu.Database.Converters;
 using Syadeu.Mono;
 using System;
 using System.Runtime.InteropServices;
@@ -6,7 +7,7 @@ using Unity.Mathematics;
 
 namespace Syadeu.Database
 {
-    [Serializable]
+    [Serializable, JsonConverter(typeof(PrefabReferenceJsonConvereter))]
     public struct PrefabReference : IEquatable<PrefabReference>, IValidation
     {
         public static readonly PrefabReference Invalid = new PrefabReference(-1);
@@ -14,7 +15,11 @@ namespace Syadeu.Database
 
         [JsonProperty(Order = 0)] public readonly long m_Idx;
 
-        [JsonConstructor] public PrefabReference(int idx)
+        public PrefabReference(int idx)
+        {
+            m_Idx = idx;
+        }
+        public PrefabReference(long idx)
         {
             m_Idx = idx;
         }
