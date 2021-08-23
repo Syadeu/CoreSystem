@@ -6,6 +6,7 @@ using Syadeu.Presentation;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using Unity.Mathematics;
 using UnityEditor;
@@ -175,6 +176,31 @@ namespace SyadeuEditor.Presentation
             color1 = Color.black; color2 = Color.gray; color3 = Color.green;
             color1.a = .5f; color2.a = .5f; color3.a = .5f;
         }
+        public ArrayDrawer(object parentObject, Type declaredType, Action<IList> setter, Func<IList> getter) : base(parentObject, declaredType, setter, getter)
+        {
+            m_DeclaredType = declaredType;
+            if (m_DeclaredType.IsArray)
+            {
+                m_ElementType = m_DeclaredType.GetElementType();
+            }
+            else
+            {
+                try
+                {
+                    m_ElementType = m_DeclaredType.GetGenericArguments()[0];
+                }
+                catch (Exception)
+                {
+                    $"{m_DeclaredType.Name}".ToLog();
+                    throw;
+                }
+            }
+            Reload();
+
+            color1 = Color.black; color2 = Color.gray; color3 = Color.green;
+            color1.a = .5f; color2.a = .5f; color3.a = .5f;
+        }
+
         private void Reload()
         {
             m_ElementDrawers.Clear();
@@ -188,13 +214,45 @@ namespace SyadeuEditor.Presentation
 
         private ObjectDrawerBase GetElementDrawer(IList list, int i)
         {
-            if (m_ElementType.Equals(TypeHelper.TypeOf<int>.Type))
+            if (m_ElementType.IsEnum)
+            {
+                return new EnumDrawer(list, m_ElementType, (other) => list[i] = other, () => (Enum)list[i]);
+            }
+            else if (m_ElementType.Equals(TypeHelper.TypeOf<int>.Type))
             {
                 return new IntDrawer(list, m_ElementType, (other) => list[i] = other, () => (int)list[i]);
             }
             else if (m_ElementType.Equals(TypeHelper.TypeOf<int2>.Type))
             {
                 return new Int2Drawer(list, m_ElementType, (other) => list[i] = other, () => (int2)list[i]);
+            }
+            else if (m_ElementType.Equals(TypeHelper.TypeOf<int3>.Type))
+            {
+                return new Int3Drawer(list, m_ElementType, (other) => list[i] = other, () => (int3)list[i]);
+            }
+            else if (m_ElementType.Equals(TypeHelper.TypeOf<float>.Type))
+            {
+                return new FloatDrawer(list, m_ElementType, (other) => list[i] = other, () => (float)list[i]);
+            }
+            else if (m_ElementType.Equals(TypeHelper.TypeOf<float2>.Type))
+            {
+                return new Float2Drawer(list, m_ElementType, (other) => list[i] = other, () => (float2)list[i]);
+            }
+            else if (m_ElementType.Equals(TypeHelper.TypeOf<float3>.Type))
+            {
+                return new Float3Drawer(list, m_ElementType, (other) => list[i] = other, () => (float3)list[i]);
+            }
+            else if (m_ElementType.Equals(TypeHelper.TypeOf<bool>.Type))
+            {
+                return new BoolenDrawer(list, m_ElementType, (other) => list[i] = other, () => (bool)list[i]);
+            }
+            else if (m_ElementType.Equals(TypeHelper.TypeOf<string>.Type))
+            {
+                return new StringDrawer(list, m_ElementType, (other) => list[i] = other, () => (string)list[i]);
+            }
+            else if (m_ElementType.IsArray || typeof(IList).IsAssignableFrom(m_ElementType))
+            {
+                return new ArrayDrawer(list, m_ElementType, (other) => list[i] = other, () => (IList)list[i]);
             }
             else
             {
@@ -270,6 +328,8 @@ namespace SyadeuEditor.Presentation
         private object m_TargetObject;
         private string m_Name;
 
+        //private Action<object> m_Getter;
+
         public override object TargetObject => m_TargetObject;
         public override string Name => m_Name;
 
@@ -287,6 +347,26 @@ namespace SyadeuEditor.Presentation
                 DrawerBases.Add(drawer);
             }
         }
+        //public ObjectDrawer(object obj, MemberInfo member, string name)
+        //{
+        //    m_TargetObject = obj;
+        //    m_Name = name;
+
+        //    m_Getter = (other) =>
+        //    {
+        //        if (member is FieldInfo field)
+        //        {
+        //            field.GetValue(obj)
+        //        }
+        //    }
+
+        //    MemberInfo[] members = ReflectionHelper.GetSerializeMemberInfos(declaredType);
+        //    for (int a = 0; a < members.Length; a++)
+        //    {
+        //        ObjectDrawerBase drawer = ToDrawer(obj, members[a], true);
+        //        DrawerBases.Add(drawer);
+        //    }
+        //}
 
         public override void OnGUI()
         {
