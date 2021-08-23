@@ -15,6 +15,10 @@ namespace SyadeuEditor.Presentation
         protected override string DisplayName => "Entity Window";
 
         ObjectBaseDrawer[] ObjectBaseDrawers;
+
+        public DataListWindow m_DataListWindow;
+        public ViewWindow m_ViewWindow;
+
         protected override void OnEnable()
         {
             ObjectBaseDrawers = new ObjectBaseDrawer[EntityDataList.Instance.m_Objects.Count];
@@ -25,19 +29,110 @@ namespace SyadeuEditor.Presentation
                 ObjectBaseDrawers[i] = new ObjectBaseDrawer(temp[i]);
             }
 
+            m_DataListWindow = new DataListWindow(this);
+            m_ViewWindow = new ViewWindow(this);
+
             base.OnEnable();
         }
+
+        Rect HeaderPos = new Rect(20, 10, 0, 0);
+        Rect EntityListPos = new Rect(6, 45, 260, 465);
+        Rect ViewPos = new Rect(265, 40, 687, 470);
         private void OnGUI()
         {
-            if (GUILayout.Button("save"))
+            //if (GUILayout.Button("save"))
+            //{
+            //    EntityDataList.Instance.SaveData();
+            //}
+
+            EditorGUI.LabelField(HeaderPos, EditorUtils.String("TEST Header", 20), EditorUtils.HeaderStyle);
+            //HeaderPos = EditorGUILayout.RectField("headerPos", HeaderPos);
+            //EntityListPos = EditorGUILayout.RectField("entitylistPos", EntityListPos);
+
+            BeginWindows();
+
+            m_DataListWindow.OnGUI(EntityListPos, 1);
+            m_ViewWindow.OnGUI(ViewPos, 2);
+            //GUILayout.Window(1, EntityListPos, m_DataListWindow.OnGUI, "", EditorUtils.Box);
+
+            EndWindows();
+            //for (int i = 0; i < ObjectBaseDrawers.Length; i++)
+            //{
+            //    ObjectBaseDrawers[i].OnGUI();
+            //}
+        }
+
+        public sealed class DataListWindow
+        {
+            EntityWindow m_MainWindow;
+
+            Vector2 scroll;
+            Rect m_Position;
+            int selection = 0;
+
+            ObjectBaseDrawer[] Drawers => m_MainWindow.ObjectBaseDrawers;
+
+            public DataListWindow(EntityWindow window)
             {
-                EntityDataList.Instance.SaveData();
+                m_MainWindow = window;
             }
 
-            EditorGUILayout.LabelField("test");
-            for (int i = 0; i < ObjectBaseDrawers.Length; i++)
+            public void OnGUI(Rect pos, int unusedID)
             {
-                ObjectBaseDrawers[i].OnGUI();
+                m_Position = pos;
+
+                GUILayout.Window(unusedID, m_Position, Draw, "", EditorUtils.Box);
+            }
+            private void Draw(int unusedID)
+            {
+                EditorGUILayout.BeginHorizontal();
+
+                GUILayout.Button("test1");
+                GUILayout.Button("test2");
+                GUILayout.Button("test3");
+
+                EditorGUILayout.EndHorizontal();
+
+                scroll = EditorGUILayout.BeginScrollView(scroll, true,true,
+                    GUILayout.MaxWidth(m_Position.width), GUILayout.MaxHeight(m_Position.height));
+
+                selection = GUILayout.SelectionGrid(selection, Drawers.Select((other) => other.Name).ToArray(), 1);
+                //EditorGUILayout.LabelField("test");
+                //for (int i = 0; i < ObjectBaseDrawers.Length; i++)
+                //{
+                //    ObjectBaseDrawers[i].OnGUI();
+                //}
+
+                EditorGUILayout.EndScrollView();
+            }
+        }
+        public sealed class ViewWindow
+        {
+            EntityWindow m_MainWindow;
+            Rect m_Position;
+            Vector2 m_Scroll;
+
+            public ViewWindow(EntityWindow window)
+            {
+                m_MainWindow = window;
+            }
+
+            public void OnGUI(Rect pos, int unusedID)
+            {
+                m_Position = pos;
+                GUILayout.Window(unusedID, m_Position, Draw, "", EditorUtils.Box);
+            }
+            private void Draw(int unusedID)
+            {
+                m_Scroll = EditorGUILayout.BeginScrollView(m_Scroll, true, true,
+                    GUILayout.MaxWidth(m_Position.width), GUILayout.MaxHeight(m_Position.height));
+
+                m_MainWindow.HeaderPos = EditorGUILayout.RectField("headerPos", m_MainWindow. HeaderPos);
+                m_MainWindow.EntityListPos = EditorGUILayout.RectField("entitylistPos", m_MainWindow. EntityListPos);
+
+                m_MainWindow.ViewPos = EditorGUILayout.RectField("ViewPos", m_MainWindow.ViewPos);
+
+                EditorGUILayout.EndScrollView();
             }
         }
 
@@ -83,83 +178,6 @@ namespace SyadeuEditor.Presentation
                     }
                 }
                 EditorUtils.Line();
-            }
-
-            private static ObjectDrawerBase ToDrawer(object parentObject, MemberInfo memberInfo)
-            {
-                Type declaredType = GetDeclaredType(memberInfo);
-
-                #region Primitive Types
-                if (declaredType.IsEnum)
-                {
-                    return new EnumDrawer(parentObject, memberInfo);
-                }
-                else if (declaredType.Equals(TypeHelper.TypeOf<int>.Type))
-                {
-                    return new IntDrawer(parentObject, memberInfo);
-                }
-                else if (declaredType.Equals(TypeHelper.TypeOf<bool>.Type))
-                {
-                    return new BoolenDrawer(parentObject, memberInfo);
-                }
-                else if (declaredType.Equals(TypeHelper.TypeOf<float>.Type))
-                {
-                    return new FloatDrawer(parentObject, memberInfo);
-                }
-                else if (declaredType.Equals(TypeHelper.TypeOf<double>.Type))
-                {
-                    return new DoubleDrawer(parentObject, memberInfo);
-                }
-                else if (declaredType.Equals(TypeHelper.TypeOf<long>.Type))
-                {
-                    return new LongDrawer(parentObject, memberInfo);
-                }
-                else if (declaredType.Equals(TypeHelper.TypeOf<string>.Type))
-                {
-                    return new StringDrawer(parentObject, memberInfo);
-                }
-                #endregion
-
-                #region Unity Types
-                if (declaredType.Equals(TypeHelper.TypeOf<Vector3>.Type))
-                {
-                    return new Vector3Drawer(parentObject, memberInfo);
-                }
-                else if (declaredType.Equals(TypeHelper.TypeOf<float2>.Type))
-                {
-                    return new Float2Drawer(parentObject, memberInfo);
-                }
-                else if (declaredType.Equals(TypeHelper.TypeOf<int2>.Type))
-                {
-                    return new Int2Drawer(parentObject, memberInfo);
-                }
-                else if (declaredType.Equals(TypeHelper.TypeOf<float3>.Type))
-                {
-                    return new Float3Drawer(parentObject, memberInfo);
-                }
-                else if (declaredType.Equals(TypeHelper.TypeOf<int3>.Type))
-                {
-                    return new Int3Drawer(parentObject, memberInfo);
-                }
-                else if (declaredType.Equals(TypeHelper.TypeOf<quaternion>.Type))
-                {
-                    return new quaternionDrawer(parentObject, memberInfo);
-                }
-                else if (declaredType.Equals(TypeHelper.TypeOf<Quaternion>.Type))
-                {
-                    return new QuaternionDrawer(parentObject, memberInfo);
-                }
-                else if (declaredType.Equals(TypeHelper.TypeOf<Color>.Type))
-                {
-                    return new ColorDrawer(parentObject, memberInfo);
-                }
-                else if (declaredType.Equals(TypeHelper.TypeOf<Color32>.Type))
-                {
-                    return new Color32Drawer(parentObject, memberInfo);
-                }
-                #endregion
-
-                return null;
             }
         }
     }

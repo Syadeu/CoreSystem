@@ -4,7 +4,6 @@ using UnityEditor;
 
 namespace SyadeuEditor.Presentation
 {
-    #region Primitive Type Drawers
     public sealed class EnumDrawer : ObjectDrawer<Enum>
     {
         public EnumDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
@@ -79,5 +78,20 @@ namespace SyadeuEditor.Presentation
             return EditorGUILayout.TextField(Name, currentValue);
         }
     }
-    #endregion
+
+    public sealed class ArrayDrawer : ObjectDrawer<Array>
+    {
+        private Type m_ElementType;
+
+        public ArrayDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
+        {
+            Type declaredType = GetDeclaredType(memberInfo);
+            m_ElementType = declaredType.GenericTypeArguments[0];
+
+        }
+        public override Array Draw(Array currentValue)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }
