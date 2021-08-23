@@ -27,6 +27,7 @@ namespace SyadeuEditor.Presentation
             if (generics.Length > 0) targetType = DeclaredType.GetGenericArguments()[0];
             else targetType = null;
 
+            GUILayout.BeginVertical();
             EditorGUILayout.BeginHorizontal();
 
             ReflectionHelperEditor.DrawReferenceSelector(Name, (idx) =>
@@ -48,6 +49,7 @@ namespace SyadeuEditor.Presentation
                         , EditorUtils.MiniButton, GUILayout.Width(20));
 
             EditorGUILayout.EndHorizontal();
+
             if (m_Open)
             {
                 Color color3 = Color.red;
@@ -72,6 +74,7 @@ namespace SyadeuEditor.Presentation
                     }
                 }
             }
+            EditorGUILayout.EndVertical();
 
             return currentValue;
         }
