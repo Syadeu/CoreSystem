@@ -195,15 +195,11 @@ namespace SyadeuEditor.Presentation
             }
         }
 
-        public ArrayDrawer(object parentObject, Type declaredType, Action<IList> setter, Func<IList> getter) : base(parentObject, declaredType, setter, getter)
-        {
-        }
-
         public override IList Draw(IList list)
         {
             if (list == null) list = (IList)Activator.CreateInstance(m_DeclaredType);
 
-            var block = new EditorUtils.BoxBlock(color3);
+            EditorUtils.BoxBlock block = new EditorUtils.BoxBlock(color3);
 
             #region Header
             EditorGUILayout.BeginHorizontal();
@@ -239,128 +235,22 @@ namespace SyadeuEditor.Presentation
             EditorGUILayout.EndHorizontal();
             #endregion
 
-            if (!m_Open)
+            if (m_Open)
             {
-                block.Dispose();
-                return list;
-            }
-
-            EditorGUI.indentLevel++;
-            using (new EditorUtils.BoxBlock(color2))
-            {
-                for (int i = 0; i < m_ElementDrawers.Count; i++)
+                EditorGUI.indentLevel++;
+                using (new EditorUtils.BoxBlock(color2))
                 {
-                    if (m_ElementDrawers[i] == null) continue;
+                    for (int i = 0; i < m_ElementDrawers.Count; i++)
+                    {
+                        if (m_ElementDrawers[i] == null) continue;
 
-                    m_ElementDrawers[i].OnGUI();
+                        m_ElementDrawers[i].OnGUI();
+                    }
                 }
+                EditorGUI.indentLevel--;
             }
-            EditorGUI.indentLevel--;
 
             block.Dispose();
-
-            //for (int j = 0; j < list.Count; j++)
-            //{
-            //    EditorGUI.indentLevel++;
-
-            //    GUILayout.BeginHorizontal(EditorUtils.Box);
-            //    using (new EditorUtils.BoxBlock(j % 2 == 0 ? color1 : color2))
-            //    {
-            //        if (list[j] == null)
-            //        {
-            //            if (m_ElementType.Equals(TypeHelper.TypeOf<string>.Type))
-            //            {
-            //                list[j] = string.Empty;
-            //            }
-            //            else
-            //            {
-            //                list[j] = Activator.CreateInstance(m_ElementType);
-            //            }
-            //        }
-
-            //        #region CoreSystem Types
-            //        if (TypeHelper.TypeOf<IReference>.Type.IsAssignableFrom(m_ElementType))
-            //        {
-            //            IReference objRef = (IReference)list[j];
-            //            Type targetType;
-            //            Type[] generics = m_ElementType.GetGenericArguments();
-            //            if (generics.Length > 0) targetType = m_ElementType.GetGenericArguments()[0];
-            //            else targetType = null;
-
-            //            ReflectionHelperEditor.DrawReferenceSelector(string.Empty, (idx) =>
-            //            {
-            //                ObjectBase objBase = EntityDataList.Instance.GetObject(idx);
-
-            //                Type makedT;
-            //                if (targetType != null) makedT = typeof(Reference<>).MakeGenericType(targetType);
-            //                else makedT = TypeHelper.TypeOf<Reference>.Type;
-
-            //                object temp = TypeHelper.GetConstructorInfo(makedT, TypeHelper.TypeOf<ObjectBase>.Type).Invoke(
-            //                    new object[] { objBase });
-
-            //                list[j] = temp;
-            //            }, objRef, targetType);
-            //        }
-            //        else if (m_ElementType.Equals(TypeHelper.TypeOf<LuaScript>.Type))
-            //        {
-            //            LuaScript scr = (LuaScript)list[j];
-            //            if (scr == null)
-            //            {
-            //                scr = string.Empty;
-            //                list[j] = scr;
-            //            }
-            //            scr.DrawFunctionSelector(string.Empty);
-            //        }
-            //        #endregion
-            //        #region Unity Types
-            //        else if (ReflectionHelperEditor.DrawUnityField(list[j], m_ElementType, string.Empty, (other) => list[j], out object value))
-            //        {
-            //            list[j] = value;
-            //        }
-            //        else if (ReflectionHelperEditor.DrawUnityMathField(list[j], m_ElementType, string.Empty, (other) => list[j], out value))
-            //        {
-            //            list[j] = value;
-            //        }
-            //        else if (m_ElementType.Equals(TypeHelper.TypeOf<AssetReference>.Type))
-            //        {
-            //            AssetReference refAsset = (AssetReference)list[j];
-            //            ReflectionHelperEditor.DrawAssetReference(string.Empty, (other) => list[j] = other, refAsset);
-            //        }
-            //        #endregion
-            //        else if (ReflectionHelperEditor.DrawSystemField(list[j], m_ElementType, string.Empty, (other) => list[j], out value))
-            //        {
-            //            list[j] = value;
-            //        }
-            //        else
-            //            list[j] = ReflectionHelperEditor.DrawObject(list[j]);
-            //    }
-            //    if (GUILayout.Button("-", GUILayout.Width(20)))
-            //    {
-            //        if (list.IsFixedSize)
-            //        {
-            //            IList newArr = Array.CreateInstance(m_ElementType, list.Count - 1);
-            //            if (list != null && list.Count > 0)
-            //            {
-            //                for (int a = 0, b = 0; a < list.Count; a++)
-            //                {
-            //                    if (a.Equals(j)) continue;
-
-            //                    newArr[b] = list[a];
-
-            //                    b++;
-            //                }
-            //            }
-            //            list = newArr;
-            //        }
-            //        else list.RemoveAt(j);
-
-            //        j--;
-            //    }
-            //    GUILayout.EndHorizontal();
-
-            //    if (j + 1 < list.Count) EditorUtils.Line();
-            //    EditorGUI.indentLevel--;
-            //}
 
             return list;
         }

@@ -73,30 +73,45 @@ namespace SyadeuEditor.Presentation
             {
                 return new Vector3Drawer(parentObject, memberInfo);
             }
+            else if (declaredType.Equals(TypeHelper.TypeOf<float3>.Type))
+            {
+                return new Float3Drawer(parentObject, memberInfo, drawName);
+            }
+            else if (declaredType.Equals(TypeHelper.TypeOf<Vector2>.Type))
+            {
+                return new Vector2Drawer(parentObject, memberInfo);
+            }
             else if (declaredType.Equals(TypeHelper.TypeOf<float2>.Type))
             {
-                return new Float2Drawer(parentObject, memberInfo);
+                return new Float2Drawer(parentObject, memberInfo, drawName);
+            }
+
+            else if (declaredType.Equals(TypeHelper.TypeOf<Vector3Int>.Type))
+            {
+                return new Vector3IntDrawer(parentObject, memberInfo);
+            }
+            else if (declaredType.Equals(TypeHelper.TypeOf<int3>.Type))
+            {
+                return new Int3Drawer(parentObject, memberInfo, drawName);
+            }
+            else if (declaredType.Equals(TypeHelper.TypeOf<Vector2Int>.Type))
+            {
+                return new Vector2IntDrawer(parentObject, memberInfo);
             }
             else if (declaredType.Equals(TypeHelper.TypeOf<int2>.Type))
             {
                 return new Int2Drawer(parentObject, memberInfo, drawName);
             }
-            else if (declaredType.Equals(TypeHelper.TypeOf<float3>.Type))
-            {
-                return new Float3Drawer(parentObject, memberInfo);
-            }
-            else if (declaredType.Equals(TypeHelper.TypeOf<int3>.Type))
-            {
-                return new Int3Drawer(parentObject, memberInfo);
-            }
-            else if (declaredType.Equals(TypeHelper.TypeOf<quaternion>.Type))
-            {
-                return new quaternionDrawer(parentObject, memberInfo);
-            }
+
             else if (declaredType.Equals(TypeHelper.TypeOf<Quaternion>.Type))
             {
                 return new QuaternionDrawer(parentObject, memberInfo);
             }
+            else if (declaredType.Equals(TypeHelper.TypeOf<quaternion>.Type))
+            {
+                return new quaternionDrawer(parentObject, memberInfo, drawName);
+            }
+            
             else if (declaredType.Equals(TypeHelper.TypeOf<Color>.Type))
             {
                 return new ColorDrawer(parentObject, memberInfo);

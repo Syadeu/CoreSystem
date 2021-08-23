@@ -8,36 +8,65 @@ namespace SyadeuEditor.Presentation
 {
     public sealed class Float3Drawer : ObjectDrawer<float3>
     {
-        public Float3Drawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
+        private bool m_DrawName;
+
+        public Float3Drawer(object parentObject, MemberInfo memberInfo, bool drawName) : base(parentObject, memberInfo)
+        {
+            m_DrawName = drawName;
+        }
+
+        public Float3Drawer(object parentObject, Type declaredType, Action<float3> setter, Func<float3> getter) : base(parentObject, declaredType, setter, getter)
         {
         }
+
         public override float3 Draw(float3 currentValue)
         {
-            return EditorGUILayout.Vector3Field(Name, currentValue);
+            if (m_DrawName) return EditorGUILayout.Vector3Field(Name, currentValue);
+            return EditorGUILayout.Vector3Field(string.Empty, currentValue);
         }
     }
     public sealed class Int3Drawer : ObjectDrawer<int3>
     {
-        public Int3Drawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
+        private bool m_DrawName;
+
+        public Int3Drawer(object parentObject, MemberInfo memberInfo, bool drawName) : base(parentObject, memberInfo)
+        {
+            m_DrawName = drawName;
+    }
+
+        public Int3Drawer(object parentObject, Type declaredType, Action<int3> setter, Func<int3> getter) : base(parentObject, declaredType, setter, getter)
         {
         }
 
         public override int3 Draw(int3 currentValue)
         {
-            Vector3Int temp = EditorGUILayout.Vector3IntField(Name, new Vector3Int(currentValue.x, currentValue.y, currentValue.z));
+            Vector3Int temp;
+            if (m_DrawName) temp = EditorGUILayout.Vector3IntField(Name, new Vector3Int(currentValue.x, currentValue.y, currentValue.z));
+            else
+            {
+                temp = EditorGUILayout.Vector3IntField(string.Empty, new Vector3Int(currentValue.x, currentValue.y, currentValue.z));
+            }
 
             return new int3(temp.x, temp.y, temp.z);
         }
     }
     public sealed class Float2Drawer : ObjectDrawer<float2>
     {
-        public Float2Drawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
+        private bool m_DrawName;
+
+        public Float2Drawer(object parentObject, MemberInfo memberInfo, bool drawName) : base(parentObject, memberInfo)
+        {
+            m_DrawName = drawName;
+        }
+
+        public Float2Drawer(object parentObject, Type declaredType, Action<float2> setter, Func<float2> getter) : base(parentObject, declaredType, setter, getter)
         {
         }
 
         public override float2 Draw(float2 currentValue)
         {
-            return EditorGUILayout.Vector2Field(Name, currentValue);
+            if (m_DrawName) return EditorGUILayout.Vector2Field(Name, currentValue);
+            return EditorGUILayout.Vector2Field(string.Empty, currentValue);
         }
     }
     public sealed class Int2Drawer : ObjectDrawer<int2>
@@ -67,13 +96,25 @@ namespace SyadeuEditor.Presentation
     }
     public sealed class quaternionDrawer : ObjectDrawer<quaternion>
     {
-        public quaternionDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
+        private bool m_DrawName;
+
+        public quaternionDrawer(object parentObject, MemberInfo memberInfo, bool drawName) : base(parentObject, memberInfo)
+        {
+            m_DrawName = drawName;
+        }
+
+        public quaternionDrawer(object parentObject, Type declaredType, Action<quaternion> setter, Func<quaternion> getter) : base(parentObject, declaredType, setter, getter)
         {
         }
+
         public override quaternion Draw(quaternion currentValue)
         {
-            Vector4 temp =
-                    EditorGUILayout.Vector4Field(Name, currentValue.value);
+            Vector4 temp;
+            if (m_DrawName)
+            {
+                temp = EditorGUILayout.Vector4Field(Name, currentValue.value);
+            }
+            else temp = EditorGUILayout.Vector4Field(string.Empty, currentValue.value);
             return new quaternion(temp);
         }
     }
