@@ -15,20 +15,20 @@ namespace Syadeu.Presentation.Entities
         {
             m_KeyHash = Animator.StringToHash(m_TriggerKey);
         }
-        protected override void OnExecute()
+        protected override void OnExecute(EntityData<IEntityData> entity)
         {
-            if (!(Parent.Target is EntityBase entity))
+            if (!(entity.Target is EntityBase entitybase))
             {
                 CoreSystem.Logger.LogError(Channel.Presentation,
                     "Target is not a EntityBase");
                 return;
             }
             
-            if (entity.transform is IUnityTransform unityTr)
+            if (entitybase.transform is IUnityTransform unityTr)
             {
                 SetTrigger(unityTr.provider);
             }
-            else if (entity.transform is ProxyTransform proxyTr)
+            else if (entitybase.transform is ProxyTransform proxyTr)
             {
                 if (proxyTr.hasProxy && !proxyTr.hasProxyQueued)
                 {

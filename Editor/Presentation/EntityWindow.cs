@@ -2,6 +2,7 @@
 using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation;
+using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using System;
 using System.Collections.Generic;
@@ -31,24 +32,28 @@ namespace SyadeuEditor.Presentation
         {
             EntityDataList.Instance.LoadData();
 
-            var temp = EntityDataList.Instance.m_Objects.Values.ToArray();
-            for (int i = 0; i < temp.Length; i++)
-            {
-                if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(temp[i].GetType()))
-                {
-                    ObjectBaseDrawers.Add(new EntityDrawer(temp[i]));
-                }
-                else
-                {
-                    ObjectBaseDrawers.Add(new ObjectBaseDrawer(temp[i]));
-                }
-            }
-
             m_ToolbarWindow = new ToolbarWindow(this);
             m_DataListWindow = new DataListWindow(this);
             m_ViewWindow = new ViewWindow(this);
 
+            Reload();
+
             base.OnEnable();
+        }
+        public void AddData(ObjectBase other)
+        {
+            ObjectBaseDrawer drawer;
+            if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(other.GetType()))
+            {
+                drawer = new EntityDrawer(other);
+            }
+            else
+            {
+                drawer = new ObjectBaseDrawer(other);
+            }
+
+            ObjectBaseDrawers.Add(drawer);
+            m_DataListWindow.AddData(drawer);
         }
         public void Reload()
         {
@@ -56,7 +61,7 @@ namespace SyadeuEditor.Presentation
             var temp = EntityDataList.Instance.m_Objects.Values.ToArray();
             for (int i = 0; i < temp.Length; i++)
             {
-                ObjectBaseDrawers.Add(new ObjectBaseDrawer(temp[i]));
+                AddData(temp[i]);
             }
 
             m_DataListWindow.Reload();
@@ -101,17 +106,104 @@ namespace SyadeuEditor.Presentation
             EntityWindow m_MainWindow;
             GenericMenu m_FileMenu;
 
+            Rect lastRect;
+
             public ToolbarWindow(EntityWindow window)
             {
                 m_MainWindow = window;
 
                 m_FileMenu = new GenericMenu();
-                m_FileMenu.AddItem(new GUIContent("Load All"), false, LoadAllMenu);
+                m_FileMenu.AddItem(new GUIContent("Save"), false, SaveMenu);
+                m_FileMenu.AddItem(new GUIContent("Load"), false, LoadMenu);
+                m_FileMenu.AddSeparator(string.Empty);
+                m_FileMenu.AddItem(new GUIContent("Add/Entity"), false, AddEntityMenu);
+                m_FileMenu.AddItem(new GUIContent("Add/Attribute"), false, AddAttributeMenu);
+                m_FileMenu.AddItem(new GUIContent("Add/Action"), false, AddActionMenu);
             }
-            private void LoadAllMenu()
+            private void SaveMenu()
+            {
+                EntityDataList.Instance.SaveData();
+            }
+            private void LoadMenu()
             {
                 EntityDataList.Instance.LoadData();
                 m_MainWindow.Reload();
+            }
+            private void AddEntityMenu()
+            {
+                Type[] types = TypeHelper.GetTypes((other) => !other.IsAbstract &&
+                            TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(other));
+
+                PopupWindow.Show(lastRect, SelectorPopup<Type, Type>.GetWindow(types, 
+                    (t) =>
+                    {
+                        if (EntityDataList.Instance.m_Objects == null) EntityDataList.Instance.m_Objects = new Dictionary<Hash, ObjectBase>();
+
+                        ObjectBase ins = (ObjectBase)Activator.CreateInstance(t);
+
+                        EntityDataList.Instance.m_Objects.Add(ins.Hash, ins);
+                        m_MainWindow.AddData(ins);
+                    },
+                    (t) => t,   
+                    null,
+                    (t) =>
+                    {
+                        if (t.GetCustomAttribute<ObsoleteAttribute>() != null)
+                        {
+                            return $"[Deprecated] {t.Name}";
+                        }
+                        else return t.Name;
+                    }));
+            }
+            private void AddAttributeMenu()
+            {
+                Type[] types = TypeHelper.GetTypes((other) => !other.IsAbstract && TypeHelper.TypeOf<AttributeBase>.Type.IsAssignableFrom(other));
+
+                PopupWindow.Show(lastRect, SelectorPopup<Type, Type>.GetWindow(types, 
+                    (t) =>
+                    {
+                        if (EntityDataList.Instance.m_Objects == null) EntityDataList.Instance.m_Objects = new Dictionary<Hash, ObjectBase>();
+
+                        AttributeBase ins = (AttributeBase)Activator.CreateInstance(t);
+
+                        EntityDataList.Instance.m_Objects.Add(ins.Hash, ins);
+                        m_MainWindow.AddData(ins);
+                    },
+                    (t) => t,
+                    null,
+                    (t) =>
+                    {
+                        if (t.GetCustomAttribute<ObsoleteAttribute>() != null)
+                        {
+                            return $"[Deprecated] {t.Name}";
+                        }
+                        else return t.Name;
+                    }));
+            }
+            private void AddActionMenu()
+            {
+                Type[] types = TypeHelper.GetTypes((other) => !other.IsAbstract && TypeHelper.TypeOf<ActionBase>.Type.IsAssignableFrom(other));
+
+                PopupWindow.Show(lastRect, SelectorPopup<Type, Type>.GetWindow(types, 
+                    (t) =>
+                    {
+                        if (EntityDataList.Instance.m_Objects == null) EntityDataList.Instance.m_Objects = new Dictionary<Hash, ObjectBase>();
+
+                        ActionBase ins = (ActionBase)Activator.CreateInstance(t);
+
+                        EntityDataList.Instance.m_Objects.Add(ins.Hash, ins);
+                        m_MainWindow.AddData(ins);
+                    },
+                    (t) => t,
+                    null,
+                    (t) =>
+                    {
+                        if (t.GetCustomAttribute<ObsoleteAttribute>() != null)
+                        {
+                            return $"[Deprecated] {t.Name}";
+                        }
+                        else return t.Name;
+                    }));
             }
 
             public void OnGUI()
@@ -127,10 +219,10 @@ namespace SyadeuEditor.Presentation
             {
                 if (GUILayout.Button("File", EditorStyles.toolbarDropDown))
                 {
-                    Rect rect = GUILayoutUtility.GetLastRect();
-                    rect.position = Event.current.mousePosition;
+                    lastRect = GUILayoutUtility.GetLastRect();
+                    lastRect.position = Event.current.mousePosition;
 
-                    m_FileMenu.DropDown(rect);
+                    m_FileMenu.ShowAsContext();
                     GUIUtility.ExitGUI();
                 }
                 GUILayout.FlexibleSpace();
@@ -157,7 +249,17 @@ namespace SyadeuEditor.Presentation
 
             public sealed class Folder
             {
-                public string Name => Type.Name;
+                public string Name
+                {
+                    get
+                    {
+                        if (Type.GetCustomAttribute<ObsoleteAttribute>() != null)
+                        {
+                            return "[Deprecated] " + Type.Name;
+                        }
+                        return Type.Name;
+                    }
+                }
                 public Type Type;
 
                 public bool Open = false;
@@ -176,6 +278,19 @@ namespace SyadeuEditor.Presentation
 
                 Reload();
             }
+            public void AddData(ObjectBaseDrawer drawer)
+            {
+                Folder baseType = Objects.Find((other) => other.Type.Equals(drawer.Type));
+                if (baseType == null)
+                {
+                    baseType = new Folder
+                    {
+                        Type = drawer.Type
+                    };
+                    Objects.Add(baseType);
+                }
+                baseType.m_Elements.Add(new Element { Target = drawer });
+            }
             public void Reload()
             {
                 if (m_Selection < Drawers.Count)
@@ -187,17 +302,7 @@ namespace SyadeuEditor.Presentation
                 Objects.Clear();
                 for (int i = 0; i < Drawers.Count; i++)
                 {
-                    Folder baseType = Objects.Find((other) => other.Type.Equals(Drawers[i].Type));
-                    if (baseType == null)
-                    {
-                        baseType = new Folder
-                        {
-                            Type = Drawers[i].Type
-                        };
-                        Objects.Add(baseType);
-                    }
-
-                    baseType.m_Elements.Add(new Element { Target = Drawers[i] });
+                    AddData(Drawers[i]);
                 }
 
                 m_SearchText = string.Empty;

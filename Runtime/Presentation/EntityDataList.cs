@@ -113,24 +113,40 @@ namespace Syadeu.Database
             }
 
             #endregion
-        }
-        private void DeleteEmptyFolders()
-        {
-            DirectoryCheck();
 
-            string[] paths = Directory.GetDirectories(CoreSystemFolder.EntityPath);
-            for (int i = 0; i < paths.Length; i++)
+            string[] actionPaths = Directory.GetFiles(CoreSystemFolder.ActionPath, jsonPostfix, SearchOption.AllDirectories);
+
+            Type[] actionTypes = TypeHelper.GetTypes((other) => TypeHelper.TypeOf<ActionBase>.Type.IsAssignableFrom(other));
+            for (int i = 0; i < actionPaths.Length; i++)
             {
-                if (Directory.GetFiles(paths[i]).Length > 0) continue;
+                string lastFold = Path.GetFileName(Path.GetDirectoryName(actionPaths[i]));
+                Type t = actionTypes.FindFor((other) => other.Name.Equals(lastFold));
 
-                Directory.Delete(paths[i]);
-            }
-            paths = Directory.GetDirectories(CoreSystemFolder.AttributePath);
-            for (int i = 0; i < paths.Length; i++)
-            {
-                if (Directory.GetFiles(paths[i]).Length > 0) continue;
+                object obj;
+                try
+                {
+                    obj = JsonConvert.DeserializeObject(File.ReadAllText(actionPaths[i]), t);
+                    if (!(obj is ActionBase))
+                    {
+                        CoreSystem.Logger.LogWarning(Channel.Entity, $"Action({t?.Name}) at {actionPaths[i]} is invalid. This action has been ignored");
+                        continue;
+                    }
+                }
+                catch (Exception)
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Entity, $"Action({t?.Name}) at {actionPaths[i]} is invalid. This action has been ignored");
+                    continue;
+                }
+                var temp = (ActionBase)obj;
 
-                Directory.Delete(paths[i]);
+                if (m_Objects.ContainsKey(temp.Hash))
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Entity, $"Action({t?.Name}) at {actionPaths[i]} is already registered. This action has been ignored and removed.");
+                    File.Delete(actionPaths[i]);
+                    continue;
+                }
+
+                m_Objects.Add(temp.Hash, temp);
             }
         }
         public void SaveData(ObjectBase obj)
@@ -143,7 +159,18 @@ namespace Syadeu.Database
             {
                 objPath = Path.Combine(CoreSystemFolder.EntityPath, objType.Name);
             }
-            else objPath = Path.Combine(CoreSystemFolder.AttributePath, objType.Name);
+            else if (TypeHelper.TypeOf<AttributeBase>.Type.IsAssignableFrom(objType))
+            {
+                objPath = Path.Combine(CoreSystemFolder.AttributePath, objType.Name);
+            }
+            else if (TypeHelper.TypeOf<ActionBase>.Type.IsAssignableFrom(objType))
+            {
+                objPath = Path.Combine(CoreSystemFolder.ActionPath, objType.Name);
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
 
             if (!Directory.Exists(objPath)) Directory.CreateDirectory(objPath);
 
@@ -215,71 +242,65 @@ namespace Syadeu.Database
 
             #endregion
 
+            ActionBase[] actions = GetActions();
+            if (actions != null)
+            {
+                string[] atts = Directory.GetFiles(CoreSystemFolder.ActionPath, jsonPostfix, SearchOption.AllDirectories);
+                for (int i = 0; i < atts.Length; i++)
+                {
+                    string fileName = Path.GetFileNameWithoutExtension(atts[i]);
+                    if (!actions.Where((other) => other.Name.Equals(fileName)).Any())
+                    {
+                        File.Delete(atts[i]);
+                    }
+                }
+
+                for (int i = 0; i < actions.Length; i++)
+                {
+                    string attPath = Path.Combine(CoreSystemFolder.ActionPath, actions[i].GetType().Name);
+                    if (!Directory.Exists(attPath)) Directory.CreateDirectory(attPath);
+
+                    if (actions[i].Hash.Equals(Hash.Empty)) actions[i].Hash = Hash.NewHash();
+
+                    File.WriteAllText(string.Format(c_JsonFilePath, attPath, ToFileName(actions[i])),
+                JsonConvert.SerializeObject(actions[i], Formatting.Indented));
+                }
+            }
+
             DeleteEmptyFolders();
         }
 
-        public void ReloadData(ref ObjectBase obj)
+        private void DeleteEmptyFolders()
         {
-            const string c_InvalidObject = "Object({0}) at {1} is invalid. This object has been ignored.";
-
             DirectoryCheck();
-            if (!m_Objects.ContainsKey(obj.Hash) || obj.Hash.Equals(Hash.Empty))
+
+            string[] paths = Directory.GetDirectories(CoreSystemFolder.EntityPath);
+            for (int i = 0; i < paths.Length; i++)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    "");
-                return;
+                if (Directory.GetFiles(paths[i]).Length > 0) continue;
+
+                Directory.Delete(paths[i]);
             }
-
-            Type objType = obj.GetType();
-            string objPath;
-
-            #region Get Path
-
-            if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(objType))
+            paths = Directory.GetDirectories(CoreSystemFolder.AttributePath);
+            for (int i = 0; i < paths.Length; i++)
             {
-                objPath = Path.Combine(CoreSystemFolder.EntityPath, objType.Name);
+                if (Directory.GetFiles(paths[i]).Length > 0) continue;
+
+                Directory.Delete(paths[i]);
             }
-            else objPath = Path.Combine(CoreSystemFolder.AttributePath, objType.Name);
-            if (!Directory.Exists(objPath)) Directory.CreateDirectory(objPath);
-
-            #endregion
-
-            ObjectBase reloadedObj;
-
-            #region Read Json
-            try
+            paths = Directory.GetDirectories(CoreSystemFolder.ActionPath);
+            for (int i = 0; i < paths.Length; i++)
             {
-                object temp = JsonConvert.DeserializeObject(File.ReadAllText(objPath), objType);
-                if (!(temp is ObjectBase))
-                {
-                    CoreSystem.Logger.LogError(Channel.Entity,
-                        string.Format(c_InvalidObject, objType.Name, objPath));
-                    return;
-                }
+                if (Directory.GetFiles(paths[i]).Length > 0) continue;
 
-                reloadedObj = (ObjectBase)temp;
+                Directory.Delete(paths[i]);
             }
-            catch (Exception)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    string.Format(c_InvalidObject, objType.Name, objPath));
-                return;
-            }
-            #endregion
-
-            if (!obj.Name.Equals(reloadedObj.Name))
-            {
-                m_EntityNameHash.Remove(Hash.NewHash(obj.Name));
-                m_EntityNameHash.Add(Hash.NewHash(reloadedObj.Name), reloadedObj.Hash);
-            }
-            m_Objects[obj.Hash] = reloadedObj;
-            obj = reloadedObj;
         }
-
         private void DirectoryCheck()
         {
             if (!Directory.Exists(CoreSystemFolder.EntityPath)) Directory.CreateDirectory(CoreSystemFolder.EntityPath);
             if (!Directory.Exists(CoreSystemFolder.AttributePath)) Directory.CreateDirectory(CoreSystemFolder.AttributePath);
+            if (!Directory.Exists(CoreSystemFolder.ActionPath)) Directory.CreateDirectory(CoreSystemFolder.ActionPath);
         }
         #endregion
 
@@ -303,6 +324,17 @@ namespace Syadeu.Database
                         return TypeHelper.TypeOf<AttributeBase>.Type.IsAssignableFrom(other.Value.GetType());
                     })
                     .Select((other) => (AttributeBase)other.Value)
+                    .ToArray();
+        }
+        public ActionBase[] GetActions()
+        {
+            if (m_Objects == null) return Array.Empty<ActionBase>();
+            return m_Objects
+                    .Where((other) =>
+                    {
+                        return TypeHelper.TypeOf<ActionBase>.Type.IsAssignableFrom(other.Value.GetType());
+                    })
+                    .Select((other) => (ActionBase)other.Value)
                     .ToArray();
         }
 

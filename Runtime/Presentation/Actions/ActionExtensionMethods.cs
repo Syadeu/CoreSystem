@@ -2,21 +2,14 @@
 {
     public static class ActionExtensionMethods
     {
-        public static T Bind<T>(this Reference<T> other, EntityData<IEntityData> entity) where T : ActionBase<T>, new()
-        {
-            T action = ActionBase<T>.GetAction(other);
-            action.Parent = entity;
-
-            return action;
-        }
         public static void Execute<T>(this Reference<T> other, EntityData<IEntityData> entity) where T : ActionBase<T>, new()
         {
-            T action = other.Bind(entity);
-            InternalExecute(action);
+            T action = ActionBase<T>.GetAction(other);
+            InternalExecute(action, entity);
         }
 
-        public static void Execute<T>(this T other) where T : ActionBase<T>, new() => InternalExecute(other);
-        private static void InternalExecute<T>(T action) where T : ActionBase<T>, new()
+        public static void Execute<T>(this T other, EntityData<IEntityData> entity) where T : ActionBase<T>, new() => InternalExecute(other, entity);
+        private static void InternalExecute<T>(T action, EntityData<IEntityData> entity) where T : ActionBase<T>, new()
         {
             if (action.Terminated)
             {
@@ -25,7 +18,7 @@
                 return;
             }
 
-            action.InternalExecute();
+            action.InternalExecute(entity);
         }
 
         //public static void Execute<T>(this Reference<ChainedAction> chainedAction, EntityData<IEntityData> entity) where T : ActionBase<T>, new()

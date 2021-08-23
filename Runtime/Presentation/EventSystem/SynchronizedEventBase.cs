@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 namespace Syadeu.Presentation
 {
-    public abstract class SynchronizedEventBase
+    public abstract class SynchronizedEventBase : IValidation
     {
         internal abstract void InternalPost();
         internal abstract void InternalTerminate();

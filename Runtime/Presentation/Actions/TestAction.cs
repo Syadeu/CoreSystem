@@ -2,7 +2,7 @@
 {
     public sealed class TestAction : ActionBase<TestAction>
     {
-        protected override void OnExecute()
+        protected override void OnExecute(EntityData<IEntityData> entity)
         {
             "executed".ToLog();
         }
