@@ -43,14 +43,8 @@ namespace SyadeuEditor.Presentation
         public void AddData(ObjectBase other)
         {
             ObjectBaseDrawer drawer;
-            if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(other.GetType()))
-            {
-                drawer = new EntityDrawer(other);
-            }
-            else
-            {
-                drawer = new ObjectBaseDrawer(other);
-            }
+
+            drawer = ObjectBaseDrawer.GetDrawer(other);
 
             ObjectBaseDrawers.Add(drawer);
             m_DataListWindow.AddData(drawer);
@@ -512,6 +506,8 @@ namespace SyadeuEditor.Presentation
 
         public class ObjectBaseDrawer : ObjectDrawerBase
         {
+            protected static readonly Dictionary<ObjectBase, ObjectBaseDrawer> Pool = new Dictionary<ObjectBase, ObjectBaseDrawer>();
+
             public readonly ObjectBase m_TargetObject;
             private Type m_Type;
             private ObsoleteAttribute m_Obsolete;
@@ -523,7 +519,22 @@ namespace SyadeuEditor.Presentation
             public Type Type => m_Type;
             public override string Name => m_TargetObject.Name;
 
-            public ObjectBaseDrawer(ObjectBase objectBase)
+            public static ObjectBaseDrawer GetDrawer(ObjectBase objectBase)
+            {
+                if (Pool.TryGetValue(objectBase, out var drawer)) return drawer;
+
+                if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(objectBase.GetType()))
+                {
+                    drawer = new EntityDrawer(objectBase);
+                }
+                else drawer = new ObjectBaseDrawer(objectBase);
+
+                Pool.Add(objectBase, drawer);
+
+                return drawer;
+            }
+
+            protected ObjectBaseDrawer(ObjectBase objectBase)
             {
                 m_TargetObject = objectBase;
                 m_Type = objectBase.GetType();
