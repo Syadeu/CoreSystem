@@ -46,6 +46,7 @@ namespace SyadeuEditor
         [MenuItem("CoreSystem/Entity Window", priority = 5)]
         public static void EntityWindowMenu()
         {
+            Presentation.EntityWindow.Instance.minSize = new Vector2(950, 500);
             Presentation.EntityWindow.Instance.Show();
         }
         [MenuItem("CoreSystem/Map System Window", priority = 6)]

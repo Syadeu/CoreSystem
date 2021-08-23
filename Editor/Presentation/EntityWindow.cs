@@ -29,6 +29,11 @@ namespace SyadeuEditor.Presentation
         }
         private void OnGUI()
         {
+            if (GUILayout.Button("save"))
+            {
+                EntityDataList.Instance.SaveData();
+            }
+
             EditorGUILayout.LabelField("test");
             for (int i = 0; i < ObjectBaseDrawers.Length; i++)
             {
@@ -120,207 +125,42 @@ namespace SyadeuEditor.Presentation
                 {
                     return new Vector3Drawer(parentObject, memberInfo);
                 }
-                if (declaredType.Equals(TypeHelper.TypeOf<float3>.Type))
+                else if (declaredType.Equals(TypeHelper.TypeOf<float2>.Type))
+                {
+                    return new Float2Drawer(parentObject, memberInfo);
+                }
+                else if (declaredType.Equals(TypeHelper.TypeOf<int2>.Type))
+                {
+                    return new Int2Drawer(parentObject, memberInfo);
+                }
+                else if (declaredType.Equals(TypeHelper.TypeOf<float3>.Type))
                 {
                     return new Float3Drawer(parentObject, memberInfo);
+                }
+                else if (declaredType.Equals(TypeHelper.TypeOf<int3>.Type))
+                {
+                    return new Int3Drawer(parentObject, memberInfo);
+                }
+                else if (declaredType.Equals(TypeHelper.TypeOf<quaternion>.Type))
+                {
+                    return new quaternionDrawer(parentObject, memberInfo);
+                }
+                else if (declaredType.Equals(TypeHelper.TypeOf<Quaternion>.Type))
+                {
+                    return new QuaternionDrawer(parentObject, memberInfo);
+                }
+                else if (declaredType.Equals(TypeHelper.TypeOf<Color>.Type))
+                {
+                    return new ColorDrawer(parentObject, memberInfo);
+                }
+                else if (declaredType.Equals(TypeHelper.TypeOf<Color32>.Type))
+                {
+                    return new Color32Drawer(parentObject, memberInfo);
                 }
                 #endregion
 
                 return null;
             }
-        }
-    }
-
-    public abstract class ObjectDrawerBase : IDisposable
-    {
-        public abstract object TargetObject { get; }
-        public abstract string Name { get; }
-
-        public abstract void OnGUI();
-        public virtual void Dispose() { }
-
-        public static Type GetDeclaredType(MemberInfo memberInfo)
-        {
-            if (memberInfo is FieldInfo field)
-            {
-                return field.FieldType;
-            }
-            else if (memberInfo is PropertyInfo property)
-            {
-                return property.PropertyType;
-            }
-            return null;
-        }
-    }
-    public abstract class ObjectDrawer<T> : ObjectDrawerBase
-    {
-        private object m_TargetObject;
-        private Type m_DelaredType;
-        private Action<T> m_Setter;
-        private Func<T> m_Getter;
-
-        private readonly Attribute[] m_Attributes;
-        private readonly bool m_Disable;
-
-        public override sealed object TargetObject => m_TargetObject;
-        public override string Name { get; }
-        public Type DelaredType => m_DelaredType;
-
-        public ObjectDrawer(object parentObject, MemberInfo memberInfo)
-        {
-            m_TargetObject = parentObject;
-
-            if (memberInfo is FieldInfo field)
-            {
-                m_DelaredType = field.FieldType;
-
-                m_Setter = (other) => field.SetValue(m_TargetObject, other);
-                m_Getter = () =>
-                {
-                    object value = field.GetValue(m_TargetObject);
-                    return value == null ? default(T) : (T)value;
-                };
-            }
-            else if (memberInfo is PropertyInfo property)
-            {
-                m_DelaredType = property.PropertyType;
-
-                m_Setter = (other) => property.SetValue(m_TargetObject, other);
-                m_Getter = () => (T)property.GetValue(m_TargetObject);
-            }
-            else throw new NotImplementedException();
-
-            m_Attributes = memberInfo.GetCustomAttributes().ToArray();
-            m_Disable = m_Attributes.Where((other) => other.Equals(TypeHelper.TypeOf<ReflectionSealedViewAttribute>.Type)).Any();
-
-            Name = ReflectionHelper.SerializeMemberInfoName(memberInfo);
-        }
-
-        public override sealed void OnGUI()
-        {
-            foreach (var item in m_Attributes)
-            {
-                if (item is SpaceAttribute)
-                {
-                    EditorGUILayout.Space();
-                }
-                else if (item is TooltipAttribute tooltip)
-                {
-                    EditorGUILayout.HelpBox(tooltip.tooltip, MessageType.Info);
-                }
-                else if (item is ReflectionDescriptionAttribute description)
-                {
-                    EditorGUILayout.HelpBox(description.m_Description, MessageType.Info);
-                }
-                else if (item is HeaderAttribute header)
-                {
-                    EditorUtils.Line();
-                    EditorUtils.StringRich(header.header, 15);
-                }
-            }
-
-            EditorGUI.BeginDisabledGroup(m_Disable);
-            m_Setter.Invoke(Draw(m_Getter.Invoke()));
-            EditorGUI.EndDisabledGroup();
-        }
-        public abstract T Draw(T currentValue);
-    }
-
-    #region Primitive Type Drawers
-    public sealed class EnumDrawer : ObjectDrawer<Enum>
-    {
-        public EnumDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
-        {
-        }
-        public override Enum Draw(Enum currentValue)
-        {
-            if (DelaredType.GetCustomAttribute<FlagsAttribute>() != null)
-            {
-                return EditorGUILayout.EnumFlagsField(Name, currentValue);
-            }
-            return EditorGUILayout.EnumPopup(Name, currentValue);
-        }
-    }
-    public sealed class IntDrawer : ObjectDrawer<int>
-    {
-        public IntDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
-        {
-        }
-        public override int Draw(int currentValue)
-        {
-            return EditorGUILayout.IntField(Name, currentValue);
-        }
-    }
-    public sealed class BoolenDrawer : ObjectDrawer<bool>
-    {
-        public BoolenDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
-        {
-        }
-        public override bool Draw(bool currentValue)
-        {
-            return EditorGUILayout.Toggle(Name, currentValue);
-        }
-    }
-    public sealed class FloatDrawer : ObjectDrawer<float>
-    {
-        public FloatDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
-        {
-        }
-        public override float Draw(float currentValue)
-        {
-            return EditorGUILayout.FloatField(Name, currentValue);
-        }
-    }
-    public sealed class DoubleDrawer : ObjectDrawer<double>
-    {
-        public DoubleDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
-        {
-        }
-        public override double Draw(double currentValue)
-        {
-            return EditorGUILayout.DoubleField(Name, currentValue);
-        }
-    }
-    public sealed class LongDrawer : ObjectDrawer<long>
-    {
-        public LongDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
-        {
-        }
-        public override long Draw(long currentValue)
-        {
-            return EditorGUILayout.LongField(Name, currentValue);
-        }
-    }
-    public sealed class StringDrawer : ObjectDrawer<string>
-    {
-        public StringDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
-        {
-        }
-        public override string Draw(string currentValue)
-        {
-            return EditorGUILayout.TextField(Name, currentValue);
-        }
-    }
-    #endregion
-
-    public sealed class Float3Drawer : ObjectDrawer<float3>
-    {
-        public Float3Drawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
-        {
-        }
-        public override float3 Draw(float3 currentValue)
-        {
-            return EditorGUILayout.Vector3Field(Name, currentValue);
-        }
-    }
-    public sealed class Vector3Drawer : ObjectDrawer<Vector3>
-    {
-        public Vector3Drawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
-        {
-        }
-        public override Vector3 Draw(Vector3 currentValue)
-        {
-            return EditorGUILayout.Vector3Field(Name, currentValue);
         }
     }
 }
