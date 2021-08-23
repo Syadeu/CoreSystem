@@ -1,5 +1,6 @@
 ﻿using Syadeu.Internal;
 using System;
+using System.Collections;
 using System.Reflection;
 using Unity.Mathematics;
 using UnityEngine;
@@ -59,6 +60,10 @@ namespace SyadeuEditor.Presentation
             else if (declaredType.Equals(TypeHelper.TypeOf<string>.Type))
             {
                 return new StringDrawer(parentObject, memberInfo);
+            }
+            else if (declaredType.IsArray /*|| TypeHelper.TypeOf<IList>.Type.IsAssignableFrom(declaredType)*/)
+            {
+                return new ArrayDrawer(parentObject, memberInfo);
             }
             #endregion
 

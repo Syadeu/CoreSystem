@@ -32,8 +32,8 @@ namespace SyadeuEditor
                 if (s_Instance == null)
                 {
                     s_Instance = new ReflectionHelperEditor();
-                    EditorStyles.textField.wordWrap = true;
                 }
+
                 return s_Instance;
             }
         }
@@ -869,7 +869,7 @@ namespace SyadeuEditor
 
             return obj;
         }
-        private static bool DrawSystemField(object ins, Type declaredType, string name, Func<object, object> getter, out object value)
+        public static bool DrawSystemField(object ins, Type declaredType, string name, Func<object, object> getter, out object value)
         {
             value = null;
             if (declaredType.Equals(TypeHelper.TypeOf<int>.Type))
@@ -936,7 +936,7 @@ namespace SyadeuEditor
 
             return false;
         }
-        private static bool DrawUnityField(object ins, Type declaredType, string name, Func<object, object> getter, out object value)
+        public static bool DrawUnityField(object ins, Type declaredType, string name, Func<object, object> getter, out object value)
         {
             value = null;
             if (TypeHelper.TypeOf<UnityEngine.Object>.Type.IsAssignableFrom(declaredType))
@@ -993,7 +993,7 @@ namespace SyadeuEditor
 
                 return false;
         }
-        private static bool DrawUnityMathField(object ins, Type declaredType, string name, Func<object, object> getter, out object value)
+        public static bool DrawUnityMathField(object ins, Type declaredType, string name, Func<object, object> getter, out object value)
         {
             value = null;
             if (declaredType.Equals(TypeHelper.TypeOf<int2>.Type))

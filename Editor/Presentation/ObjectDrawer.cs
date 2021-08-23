@@ -21,6 +21,8 @@ namespace SyadeuEditor.Presentation
         public override string Name { get; }
         public Type DelaredType => m_DelaredType;
 
+        public Func<T> Getter => m_Getter;
+
         public ObjectDrawer(object parentObject, MemberInfo memberInfo)
         {
             m_TargetObject = parentObject;
