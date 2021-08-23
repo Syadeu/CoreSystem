@@ -1,9 +1,11 @@
-﻿using Syadeu.Internal;
+﻿using Syadeu.Database;
+using Syadeu.Internal;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using Unity.Mathematics;
+using UnityEditor;
 using UnityEngine;
 
 namespace SyadeuEditor.Presentation
@@ -122,7 +124,24 @@ namespace SyadeuEditor.Presentation
             }
             #endregion
 
+            else if (declaredType.Equals(TypeHelper.TypeOf<Hash>.Type))
+            {
+                return new HashDrawer(parentObject, memberInfo);
+            }
+
             return null;
+        }
+    }
+
+    public sealed class HashDrawer : ObjectDrawer<Hash>
+    {
+        public HashDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
+        {
+        }
+        public override Hash Draw(Hash currentValue)
+        {
+            long temp = EditorGUILayout.LongField(Name, long.Parse(currentValue.ToString()));
+            return new Hash(ulong.Parse(temp.ToString()));
         }
     }
 }

@@ -170,14 +170,22 @@ namespace SyadeuEditor.Presentation
                     throw;
                 }
             }
-            for (int i = 0; i < Getter.Invoke()?.Count; i++)
-            {
-                m_ElementDrawers.Add(GetElementDrawer(Getter.Invoke(), i));
-            }
+            Reload();
 
             color1 = Color.black; color2 = Color.gray; color3 = Color.green;
             color1.a = .5f; color2.a = .5f; color3.a = .5f;
         }
+        private void Reload()
+        {
+            m_ElementDrawers.Clear();
+
+            IList list = Getter.Invoke();
+            for (int i = 0; i < list.Count; i++)
+            {
+                m_ElementDrawers.Add(GetElementDrawer(list, i));
+            }
+        }
+
         private ObjectDrawerBase GetElementDrawer(IList list, int i)
         {
             if (m_ElementType.Equals(TypeHelper.TypeOf<int>.Type))
@@ -190,7 +198,6 @@ namespace SyadeuEditor.Presentation
             }
             else
             {
-
                 return new ObjectDrawer(list[i], m_ElementType, string.Empty);
             }
         }
@@ -217,6 +224,7 @@ namespace SyadeuEditor.Presentation
                     list.Add(Activator.CreateInstance(m_ElementType));
                 }
                 m_ElementDrawers.Add(GetElementDrawer(list, list.Count - 1));
+                //Reload();
             }
             if (list.Count > 0 && GUILayout.Button("-", GUILayout.Width(20)))
             {
@@ -231,12 +239,15 @@ namespace SyadeuEditor.Presentation
                     list.RemoveAt(list.Count - 1);
                 }
                 m_ElementDrawers.RemoveAt(m_ElementDrawers.Count - 1);
+                //Reload();
             }
             EditorGUILayout.EndHorizontal();
             #endregion
 
             if (m_Open)
             {
+                //Reload();
+
                 EditorGUI.indentLevel++;
                 using (new EditorUtils.BoxBlock(color2))
                 {

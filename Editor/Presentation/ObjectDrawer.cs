@@ -60,7 +60,7 @@ namespace SyadeuEditor.Presentation
             else throw new NotImplementedException();
 
             m_Attributes = memberInfo.GetCustomAttributes().ToArray();
-            m_Disable = m_Attributes.Where((other) => other.Equals(TypeHelper.TypeOf<ReflectionSealedViewAttribute>.Type)).Any();
+            m_Disable = memberInfo.GetCustomAttribute<ReflectionSealedViewAttribute>() != null;
 
             Name = ReflectionHelper.SerializeMemberInfoName(memberInfo);
         }
