@@ -226,7 +226,6 @@ namespace SyadeuEditor.Presentation
                     list.Add(newValue);
                 }
                 m_ElementDrawers.Add(GetElementDrawer(list, list.Count - 1));
-                //Reload();
             }
             if (list.Count > 0 && GUILayout.Button("-", GUILayout.Width(20)))
             {
@@ -241,15 +240,12 @@ namespace SyadeuEditor.Presentation
                     list.RemoveAt(list.Count - 1);
                 }
                 m_ElementDrawers.RemoveAt(m_ElementDrawers.Count - 1);
-                //Reload();
             }
             EditorGUILayout.EndHorizontal();
             #endregion
 
-            if (m_Open)
+            if (m_Open && m_ElementDrawers.Count > 0)
             {
-                //Reload();
-
                 EditorGUI.indentLevel++;
                 using (new EditorUtils.BoxBlock(color2))
                 {
