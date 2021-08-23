@@ -213,15 +213,17 @@ namespace SyadeuEditor.Presentation
             m_Open = EditorUtils.Foldout(m_Open, Name, 13);
             if (GUILayout.Button("+", GUILayout.Width(20)))
             {
+                object newValue = Activator.CreateInstance(m_ElementType);
                 if (list.IsFixedSize)
                 {
                     Array newArr = Array.CreateInstance(m_ElementType, list.Count + 1);
                     if (list != null && list.Count > 0) Array.Copy((Array)list, newArr, list.Count);
                     list = newArr;
+                    list[list.Count - 1] = newValue;
                 }
                 else
                 {
-                    list.Add(Activator.CreateInstance(m_ElementType));
+                    list.Add(newValue);
                 }
                 m_ElementDrawers.Add(GetElementDrawer(list, list.Count - 1));
                 //Reload();
