@@ -43,6 +43,11 @@ namespace SyadeuEditor
         //    Selection.activeObject = SceneList.Instance;
         //    EditorApplication.ExecuteMenuItem("Window/General/Inspector");
         //}
+        [MenuItem("CoreSystem/Entity Window", priority = 5)]
+        public static void EntityWindowMenu()
+        {
+            Presentation.EntityWindow.Instance.Show();
+        }
         [MenuItem("CoreSystem/Map System Window", priority = 6)]
         public static void MapSystemWindowMenu()
         {

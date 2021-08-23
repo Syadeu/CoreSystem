@@ -1,6 +1,6 @@
 ﻿using Syadeu.Presentation;
 
-namespace SyadeuEditor
+namespace SyadeuEditor.Presentation
 {
     public static class PresentationExtensionMethods
     {
