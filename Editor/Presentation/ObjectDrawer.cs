@@ -19,9 +19,10 @@ namespace SyadeuEditor.Presentation
 
         public override sealed object TargetObject => m_TargetObject;
         public override string Name { get; }
-        public Type DelaredType => m_DelaredType;
+        public Type DeclaredType => m_DelaredType;
 
         public Func<T> Getter => m_Getter;
+        public Action<T> Setter => m_Setter;
 
         public ObjectDrawer(object parentObject, Type declaredType, Action<T> setter, Func<T> getter)
         {

@@ -1,8 +1,11 @@
-﻿using Syadeu.Database;
+﻿using Syadeu;
+using Syadeu.Database;
 using Syadeu.Internal;
+using Syadeu.Presentation;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using Unity.Mathematics;
 using UnityEditor;
@@ -35,6 +38,11 @@ namespace SyadeuEditor.Presentation
         {
             Type declaredType = GetDeclaredType(memberInfo);
 
+            if (declaredType.Equals(TypeHelper.TypeOf<ValuePairContainer>.Type))
+            {
+                return null;
+            }
+
             #region Primitive Types
             if (declaredType.IsEnum)
             {
@@ -64,7 +72,7 @@ namespace SyadeuEditor.Presentation
             {
                 return new StringDrawer(parentObject, memberInfo);
             }
-            else if (declaredType.IsArray || typeof(IList<>).IsAssignableFrom(declaredType))
+            else if (declaredType.IsArray || typeof(IList).IsAssignableFrom(declaredType))
             {
                 return new ArrayDrawer(parentObject, memberInfo);
             }
@@ -124,15 +132,69 @@ namespace SyadeuEditor.Presentation
             }
             #endregion
 
-            else if (declaredType.Equals(TypeHelper.TypeOf<Hash>.Type))
+            Type[] drawerTypes = TypeHelper.GetTypes((other) => TypeHelper.TypeOf< ObjectDrawerBase>.Type.IsAssignableFrom(other));
+
+            var iter = drawerTypes.Where((other) =>
             {
-                return new HashDrawer(parentObject, memberInfo);
+                if (!other.IsAbstract &&
+                    other.BaseType.GenericTypeArguments.Length > 0 &&
+                    other.BaseType.GenericTypeArguments[0].IsAssignableFrom(declaredType)) return true;
+                return false;
+            });
+            if (iter.Any())
+            {
+                return (ObjectDrawerBase)TypeHelper.GetConstructorInfo(iter.First(), TypeHelper.TypeOf<object>.Type, TypeHelper.TypeOf<MemberInfo>.Type).Invoke(new object[] { parentObject, memberInfo });
             }
 
             return null;
         }
     }
 
+    public sealed class PrefabReferenceDrawer : ObjectDrawer<PrefabReference>
+    {
+        public PrefabReferenceDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
+        {
+        }
+        public override PrefabReference Draw(PrefabReference currentValue)
+        {
+            ReflectionHelperEditor.DrawPrefabReference(Name, 
+                (idx) =>
+                {
+                    Setter.Invoke(new PrefabReference(idx));
+                }, 
+                currentValue);
+            return currentValue;
+        }
+    }
+    public sealed class ReferenceDrawer : ObjectDrawer<IReference>
+    {
+        public ReferenceDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
+        {
+        }
+        public override IReference Draw(IReference currentValue)
+        {
+            Type targetType;
+            Type[] generics = DeclaredType.GetGenericArguments();
+            if (generics.Length > 0) targetType = DeclaredType.GetGenericArguments()[0];
+            else targetType = null;
+
+            ReflectionHelperEditor.DrawReferenceSelector(Name, (idx) =>
+            {
+                ObjectBase objBase = EntityDataList.Instance.GetObject(idx);
+
+                Type makedT;
+                if (targetType != null) makedT = typeof(Reference<>).MakeGenericType(targetType);
+                else makedT = TypeHelper.TypeOf<Reference>.Type;
+
+                object temp = TypeHelper.GetConstructorInfo(makedT, TypeHelper.TypeOf<ObjectBase>.Type).Invoke(
+                    new object[] { objBase });
+
+                Setter.Invoke((IReference)temp);
+            }, currentValue, targetType);
+
+            return currentValue;
+        }
+    }
     public sealed class HashDrawer : ObjectDrawer<Hash>
     {
         public HashDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)

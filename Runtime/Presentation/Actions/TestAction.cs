@@ -2,6 +2,8 @@
 {
     public sealed class TestAction : ActionBase<TestAction>
     {
+        public Reference<EntityDataBase> Test;
+
         protected override void OnExecute(EntityData<IEntityData> entity)
         {
             "executed".ToLog();

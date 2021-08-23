@@ -26,7 +26,7 @@ namespace SyadeuEditor.Presentation
 
         public override Enum Draw(Enum currentValue)
         {
-            if (DelaredType.GetCustomAttribute<FlagsAttribute>() != null)
+            if (DeclaredType.GetCustomAttribute<FlagsAttribute>() != null)
             {
                 return EditorGUILayout.EnumFlagsField(Name, currentValue);
             }
