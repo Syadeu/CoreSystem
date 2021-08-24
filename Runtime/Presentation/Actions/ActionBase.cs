@@ -51,7 +51,7 @@ namespace Syadeu.Presentation.Entities
             return (T)m_Pool.Pop();
         }
 
-        internal override void InternalExecute(EntityData<IEntityData> entity)
+        internal override sealed void InternalExecute(EntityData<IEntityData> entity)
         {
             try
             {

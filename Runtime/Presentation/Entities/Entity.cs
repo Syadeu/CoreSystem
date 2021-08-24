@@ -22,7 +22,7 @@ namespace Syadeu.Presentation.Entities
     /// <see cref="EntityDataBase"/>는 <seealso cref="EntityData{T}"/>를 참조하세요.
     /// </remarks>
     /// <typeparam name="T"></typeparam>
-    public struct Entity<T> : IValidation, IEquatable<Entity<T>>, IEquatable<Hash> where T : class, IEntity
+    public readonly struct Entity<T> : IValidation, IEquatable<Entity<T>>, IEquatable<Hash> where T : class, IEntity
     {
         private const string c_Invalid = "Invalid";
         public static Entity<T> Empty => new Entity<T>(Hash.Empty);

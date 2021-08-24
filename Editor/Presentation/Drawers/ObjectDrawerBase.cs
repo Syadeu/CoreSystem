@@ -39,7 +39,7 @@ namespace SyadeuEditor.Presentation
 
             if (declaredType.Equals(TypeHelper.TypeOf<ValuePairContainer>.Type))
             {
-                return null;
+                return new ValuePairContainerDrawer(parentObject, memberInfo);
             }
 
             #region Primitive Types

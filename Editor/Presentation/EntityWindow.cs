@@ -451,7 +451,7 @@ namespace SyadeuEditor.Presentation
 
             protected override void DrawGUI()
             {
-                EditorUtils.StringRich(Name, 20);
+                EditorUtils.StringRich(Name + EditorUtils.String($": {Type.Name}", 11), 20);
                 EditorGUILayout.Space(3);
                 EditorUtils.Line();
 
@@ -565,7 +565,7 @@ namespace SyadeuEditor.Presentation
             }
             protected virtual void DrawGUI()
             {
-                EditorUtils.StringRich(Name, 20);
+                EditorUtils.StringRich(Name + EditorUtils.String($": {Type.Name}", 11), 20);
                 EditorGUILayout.Space(3);
                 EditorUtils.Line();
                 for (int i = 0; i < m_ObjectDrawers.Length; i++)

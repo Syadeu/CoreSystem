@@ -531,7 +531,8 @@ namespace SyadeuEditor
                         {
                             return att.Hash;
                         },
-                        noneValue: Hash.Empty
+                        noneValue: Hash.Empty,
+                        (other) => other.Name
                         ));
                     }
                     catch (ExitGUIException)
@@ -554,14 +555,15 @@ namespace SyadeuEditor
                         {
                             return att.Hash;
                         },
-                        noneValue: Hash.Empty
+                        noneValue: Hash.Empty,
+                        (other) => other.Name
                         ));
                     }
                     catch (ExitGUIException)
                     {
                     }
                 }
-                else
+                else if (TypeHelper.TypeOf<AttributeBase>.Type.IsAssignableFrom(targetType))
                 {
                     AttributeBase[] attributes = EntityDataList.Instance.GetAttributes()
                         .Where((other) => other.GetType().Equals(targetType) ||
@@ -577,7 +579,32 @@ namespace SyadeuEditor
                         {
                             return att.Hash;
                         },
-                        noneValue: Hash.Empty
+                        noneValue: Hash.Empty,
+                        (other) => other.Name
+                        ));
+                    }
+                    catch (ExitGUIException)
+                    {
+                    }
+                }
+                else
+                {
+                    ActionBase[] actionBases = EntityDataList.Instance.GetActions()
+                        .Where((other) => other.GetType().Equals(targetType) ||
+                                targetType.IsAssignableFrom(other.GetType()))
+                        .ToArray();
+
+                    try
+                    {
+                        PopupWindow.Show(rect, SelectorPopup<Hash, ActionBase>.GetWindow(
+                        list: actionBases,
+                        setter: setter,
+                        getter: (att) =>
+                        {
+                            return att.Hash;
+                        },
+                        noneValue: Hash.Empty,
+                        (other) => other.Name
                         ));
                     }
                     catch (ExitGUIException)

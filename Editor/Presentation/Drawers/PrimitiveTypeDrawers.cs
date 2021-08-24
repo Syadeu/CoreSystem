@@ -209,6 +209,17 @@ namespace SyadeuEditor.Presentation
             m_ElementDrawers.Clear();
 
             IList list = Getter.Invoke();
+            if (list == null)
+            {
+                if (DeclaredType.IsArray)
+                {
+                    list = Array.CreateInstance(m_ElementType, 0);
+                }
+                else list = (IList)Activator.CreateInstance(m_DeclaredType);
+
+                Setter.Invoke(list);
+            }
+
             for (int i = 0; i < list.Count; i++)
             {
                 m_ElementDrawers.Add(GetElementDrawer(list, i));

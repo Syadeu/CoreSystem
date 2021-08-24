@@ -17,7 +17,7 @@ namespace Syadeu.Presentation.Entities
     /// <see cref="EntityBase"/>는 <seealso cref="Entity{T}"/>를 참조하세요.
     /// </remarks>
     /// <typeparam name="T"></typeparam>
-    public struct EntityData<T> : IValidation, IEquatable<EntityData<T>>, IEquatable<Hash> where T : class, IEntityData
+    public readonly struct EntityData<T> : IValidation, IEquatable<EntityData<T>>, IEquatable<Hash> where T : class, IEntityData
     {
         private const string c_Invalid = "Invalid";
         public static EntityData<T> Empty => new EntityData<T>(Hash.Empty);
