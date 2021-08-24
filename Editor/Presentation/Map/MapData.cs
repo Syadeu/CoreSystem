@@ -12,17 +12,17 @@ namespace SyadeuEditor.Presentation.Map
 {
     public sealed class MapData : IDisposable
     {
-        public MapDataEntity MapDataEntity;
-        private readonly Dictionary<MapDataEntity.Object, MapObject> Objects = new Dictionary<MapDataEntity.Object, MapObject>();
+        public MapDataEntityBase MapDataEntityBase;
+        private readonly Dictionary<MapDataEntityBase.Object, MapObject> Objects = new Dictionary<MapDataEntityBase.Object, MapObject>();
         private readonly Dictionary<GameObject, MapObject> Mapper = new Dictionary<GameObject, MapObject>();
 
-        public MapData(Transform folder, MapDataEntity mapDataEntity)
+        public MapData(Transform folder, MapDataEntityBase mapDataEntity)
         {
-            MapDataEntity = mapDataEntity;
+            MapDataEntityBase = mapDataEntity;
 
-            for (int i = 0; i < MapDataEntity.m_Objects.Length; i++)
+            for (int i = 0; i < MapDataEntityBase.m_Objects.Length; i++)
             {
-                MapDataEntity.Object mapDataObj = MapDataEntity.m_Objects[i];
+                MapDataEntityBase.Object mapDataObj = MapDataEntityBase.m_Objects[i];
                 MapObject data = new MapObject(this, folder, mapDataObj);
 
                 Objects.Add(mapDataObj, data);
@@ -38,7 +38,7 @@ namespace SyadeuEditor.Presentation.Map
         }
         public MapObject Add(Reference<EntityBase> entity, Transform folder, float3 pos)
         {
-            var objData = new MapDataEntity.Object()
+            var objData = new MapDataEntityBase.Object()
             {
                 m_Object = entity,
                 m_Translation = pos,
@@ -51,7 +51,7 @@ namespace SyadeuEditor.Presentation.Map
             Objects.Add(data.Data, data);
             Mapper.Add(data.GameObject, data);
 
-            MapDataEntity.m_Objects = Objects.Keys.ToArray();
+            MapDataEntityBase.m_Objects = Objects.Keys.ToArray();
 
             return data;
         }
@@ -62,7 +62,7 @@ namespace SyadeuEditor.Presentation.Map
 
             UnityEngine.Object.DestroyImmediate(obj.GameObject);
 
-            if (!withoutSave) MapDataEntity.m_Objects = Objects.Keys.ToArray();
+            if (!withoutSave) MapDataEntityBase.m_Objects = Objects.Keys.ToArray();
         }
 
         public void Dispose()
@@ -73,12 +73,12 @@ namespace SyadeuEditor.Presentation.Map
                 temp[i].Destroy(true);
             }
 
-            EntityDataList.Instance.SaveData(MapDataEntity);
+            EntityDataList.Instance.SaveData(MapDataEntityBase);
 
             Objects.Clear();
             Mapper.Clear();
 
-            MapDataEntity = null;
+            MapDataEntityBase = null;
         }
     }
 }

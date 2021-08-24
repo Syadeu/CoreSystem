@@ -445,7 +445,7 @@ namespace SyadeuEditor.Presentation.Map
 
         #region Map Data
 
-        private List<Reference<MapDataEntity>> m_SelectedMapData = new List<Reference<MapDataEntity>>();
+        private List<Reference<MapDataEntityBase>> m_SelectedMapData = new List<Reference<MapDataEntityBase>>();
         private List<MapData> m_LoadedMapData = new List<MapData>();
         private MapData m_EditingMapData = null;
 
@@ -468,7 +468,7 @@ namespace SyadeuEditor.Presentation.Map
         {
             if (m_SelectedMapObject == null) return;
 
-            EntityDataList.Instance.SaveData(m_SelectedMapObject.Parent.MapDataEntity);
+            EntityDataList.Instance.SaveData(m_SelectedMapObject.Parent.MapDataEntityBase);
             m_SelectedMapObject = null;
             Repaint();
         }
@@ -547,14 +547,14 @@ namespace SyadeuEditor.Presentation.Map
                             return;
                         }
 
-                        m_SelectedMapData[index] = new Reference<MapDataEntity>(hash);
-                        MapDataEntity mapData = m_SelectedMapData[index].GetObject();
+                        m_SelectedMapData[index] = new Reference<MapDataEntityBase>(hash);
+                        MapDataEntityBase mapData = m_SelectedMapData[index].GetObject();
 
                         if (m_LoadedMapData[index] == null)
                         {
                             m_LoadedMapData[index] = new MapData(m_PreviewFolder, mapData);
                         }
-                        else if (!m_LoadedMapData[index].MapDataEntity.Idx.Equals(mapData))
+                        else if (!m_LoadedMapData[index].MapDataEntityBase.Idx.Equals(mapData))
                         {
                             m_LoadedMapData[index].Dispose();
                             m_LoadedMapData[index] = new MapData(m_PreviewFolder, mapData);
@@ -563,7 +563,7 @@ namespace SyadeuEditor.Presentation.Map
                         SceneView.lastActiveSceneView.Repaint();
                         Tools.hidden = true;
 
-                    }, m_SelectedMapData[index], TypeHelper.TypeOf<MapDataEntity>.Type);
+                    }, m_SelectedMapData[index], TypeHelper.TypeOf<MapDataEntityBase>.Type);
 
                     bool selected = m_EditingMapData == null ? false : m_EditingMapData.Equals(m_LoadedMapData[i]);
                     EditorGUI.BeginChangeCheck();
@@ -594,14 +594,14 @@ namespace SyadeuEditor.Presentation.Map
                 EditorGUILayout.BeginHorizontal();
                 ReflectionHelperEditor.DrawReferenceSelector("Map data: ", (hash) =>
                 {
-                    var newRef = new Reference<MapDataEntity>(hash);
+                    var newRef = new Reference<MapDataEntityBase>(hash);
                     if (m_SelectedMapData.Contains(newRef))
                     {
                         "cannot load that already loaded".ToLog();
                         return;
                     }
 
-                    MapDataEntity mapData = newRef.GetObject();
+                    MapDataEntityBase mapData = newRef.GetObject();
 
                     m_SelectedMapData.Add(newRef);
                     m_LoadedMapData.Add(new MapData(m_PreviewFolder, mapData));
@@ -609,7 +609,7 @@ namespace SyadeuEditor.Presentation.Map
                     SceneView.lastActiveSceneView.Repaint();
                     Tools.hidden = true;
 
-                }, Reference<MapDataEntity>.Empty, TypeHelper.TypeOf<MapDataEntity>.Type);
+                }, Reference<MapDataEntityBase>.Empty, TypeHelper.TypeOf<MapDataEntityBase>.Type);
 
                 EditorGUI.BeginDisabledGroup(true);
                 GUILayout.Toggle(false, "E", EditorUtils.MiniButton, GUILayout.Width(20));
@@ -704,7 +704,7 @@ namespace SyadeuEditor.Presentation.Map
                     EditorGUILayout.BeginHorizontal();
                     if (GUILayout.Button("Save"))
                     {
-                        EntityDataList.Instance.SaveData(m_SelectedMapObject.Parent.MapDataEntity);
+                        EntityDataList.Instance.SaveData(m_SelectedMapObject.Parent.MapDataEntityBase);
                         EntityDataList.Instance.SaveData(entity);
                     }
                     EditorGUILayout.EndHorizontal();
@@ -903,13 +903,13 @@ namespace SyadeuEditor.Presentation.Map
                 {
                     if (item == null) continue;
 
-                    for (int i = 0; i < item.MapDataEntity.m_Objects?.Length; i++)
+                    for (int i = 0; i < item.MapDataEntityBase.m_Objects?.Length; i++)
                     {
-                        Vector2 pos = HandleUtility.WorldToGUIPoint(item.MapDataEntity.m_Objects[i].m_Translation);
-                        if (!item.MapDataEntity.m_Objects[i].m_Object.IsValid() ||
+                        Vector2 pos = HandleUtility.WorldToGUIPoint(item.MapDataEntityBase.m_Objects[i].m_Translation);
+                        if (!item.MapDataEntityBase.m_Objects[i].m_Object.IsValid() ||
                             !EditorSceneUtils.IsDrawable(pos)) continue;
 
-                        AABB aabb = item.MapDataEntity.m_Objects[i].aabb;
+                        AABB aabb = item.MapDataEntityBase.m_Objects[i].aabb;
                         Handles.DrawWireCube(aabb.center, aabb.size);
                     }
                 }

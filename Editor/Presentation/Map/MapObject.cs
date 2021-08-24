@@ -98,7 +98,7 @@ namespace SyadeuEditor.Presentation.Map
                 m_Data.m_Translation = value;
                 m_GameObject.transform.position = value;
 
-                EntityDataList.Instance.SaveData(Parent.MapDataEntity);
+                EntityDataList.Instance.SaveData(Parent.MapDataEntityBase);
             }
         }
         public Quaternion Rotation
@@ -109,7 +109,7 @@ namespace SyadeuEditor.Presentation.Map
                 m_Data.m_Rotation = value;
                 m_GameObject.transform.rotation = value;
 
-                EntityDataList.Instance.SaveData(Parent.MapDataEntity);
+                EntityDataList.Instance.SaveData(Parent.MapDataEntityBase);
             }
         }
         public Vector3 Scale
@@ -120,7 +120,7 @@ namespace SyadeuEditor.Presentation.Map
                 m_Data.m_Scale = value;
                 m_GameObject.transform.localScale = value;
 
-                EntityDataList.Instance.SaveData(Parent.MapDataEntity);
+                EntityDataList.Instance.SaveData(Parent.MapDataEntityBase);
             }
         }
 
