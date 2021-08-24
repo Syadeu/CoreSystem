@@ -34,6 +34,7 @@ namespace Syadeu.Presentation.Attributes
         [JsonIgnore] public NavMeshAgent NavMeshAgent { get; internal set; }
         [JsonIgnore] public bool IsMoving { get; internal set; }
         [JsonIgnore] public Vector3 Direction => NavMeshAgent == null ? Vector3.zero : NavMeshAgent.desiredVelocity;
+        [JsonIgnore] public float Speed => Direction.magnitude;
         [JsonIgnore] private CoreRoutine Routine { get; set; }
         [JsonIgnore] public Vector3 PreviousTarget { get; set; }
 
@@ -58,6 +59,8 @@ namespace Syadeu.Presentation.Attributes
             {
                 CoreSystem.RemoveUnityUpdate(Routine);
             }
+
+            // TODO : 이거 시스템 따로노니까 EntitySystem 에서 돌릴 수 있게 개발 할 것
             Routine = CoreSystem.StartUnityUpdate(this, Updater());
         }
         private IEnumerator Updater()
@@ -69,7 +72,6 @@ namespace Syadeu.Presentation.Attributes
                 CoreSystem.Logger.LogError(Channel.Presentation, "unity tr is not support");
                 yield break;
             }
-            //ITransform tr = parent.transform;
 
             if (!tr.hasProxy) yield break;
 
@@ -165,7 +167,9 @@ namespace Syadeu.Presentation.Attributes
             agent.angularSpeed = att.m_AngularSpeed;
             agent.acceleration = att.m_Acceleration;
             agent.stoppingDistance = att.m_StoppingDistance;
+
+            //agent.updatePosition = false;
+            //agent.updateRotation = false;
         }
     }
-
 }

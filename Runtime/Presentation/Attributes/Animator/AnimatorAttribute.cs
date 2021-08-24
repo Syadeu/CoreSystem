@@ -25,8 +25,12 @@ namespace Syadeu.Presentation.Attributes
         public void SetFloat(int key, float value)
         {
             if (Animator == null) return;
-
             Animator.m_Animator.SetFloat(key, value);
+        }
+        public float GetFloat(int key)
+        {
+            if (Animator == null) return 0;
+            return Animator.m_Animator.GetFloat(key);
         }
     }
     internal sealed class AnimatorProcessor : AttributeProcessor<AnimatorAttribute>,
