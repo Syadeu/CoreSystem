@@ -47,6 +47,7 @@ namespace Syadeu.Presentation.Render
 
         private JobHandle m_FrustumJob;
 		private CameraFrustum m_CameraFrustum;
+        private CameraData m_LastCameraData;
 
         #region Presentation Methods
 
@@ -100,10 +101,11 @@ namespace Syadeu.Presentation.Render
         {
             if (Camera == null) return base.AfterPresentation();
 
+            m_LastCameraData = new CameraData(Camera);
             FrustumJob job = new FrustumJob
             {
                 m_Frustum = m_CameraFrustum,
-                m_Data = new CameraData(Camera)
+                m_Data = m_LastCameraData
             };
             m_FrustumJob = ScheduleAt(JobPosition.After, job);
 
@@ -130,13 +132,22 @@ namespace Syadeu.Presentation.Render
         }
 		internal CameraFrustum GetRawFrustum() => m_CameraFrustum;
 
-		/// <summary>
-		/// 해당 월드 좌표를 입력한 Matrix 기반으로 2D 좌표값을 반환합니다.
-		/// </summary>
-		/// <param name="matrix"></param>
-		/// <param name="worldPosition"></param>
-		/// <returns></returns>
-		public static Vector3 GetScreenPoint(float4x4 matrix, float3 worldPosition)
+        public float3 WorldToScreenPoint(float3 worldPosition)
+        {
+            float4x4 tr = new float4x4(new float3x3(m_LastCameraData.orientation), m_LastCameraData.position);
+            float3 point = math.mul(tr, new float4(worldPosition, 1)).xyz;
+            return point;
+        }
+
+        #region Legacy
+
+        /// <summary>
+        /// 해당 월드 좌표를 입력한 Matrix 기반으로 2D 좌표값을 반환합니다.
+        /// </summary>
+        /// <param name="matrix"></param>
+        /// <param name="worldPosition"></param>
+        /// <returns></returns>
+        public static float3 GetScreenPoint(float4x4 matrix, float3 worldPosition)
         {
             float4 p4 = new float4(worldPosition, 1);
             float4 result4 = math.mul(matrix, p4);
@@ -205,5 +216,7 @@ namespace Syadeu.Presentation.Render
             }
             return false;
         }
+
+        #endregion
     }
 }

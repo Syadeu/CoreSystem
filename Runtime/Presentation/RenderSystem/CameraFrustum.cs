@@ -418,23 +418,22 @@ namespace Syadeu.Presentation.Render
 
 			Vector3 toRight = Vector3.right * Mathf.Tan(fovWHalf * Mathf.Deg2Rad) * aspect;
 			Vector3 toTop = Vector3.up * Mathf.Tan(fovWHalf * Mathf.Deg2Rad);
-			var forward = Vector3.forward;
 
-			Vector3 topLeft = (forward - toRight + toTop);
+			Vector3 topLeft = (Vector3.forward - toRight + toTop);
 			float camScale = topLeft.magnitude * farClipPlane;
 
 			topLeft.Normalize();
 			topLeft *= camScale;
 
-			Vector3 topRight = (forward + toRight + toTop);
+			Vector3 topRight = (Vector3.forward + toRight + toTop);
 			topRight.Normalize();
 			topRight *= camScale;
 
-			Vector3 bottomRight = (forward + toRight - toTop);
+			Vector3 bottomRight = (Vector3.forward + toRight - toTop);
 			bottomRight.Normalize();
 			bottomRight *= camScale;
 
-			Vector3 bottomLeft = (forward - toRight - toTop);
+			Vector3 bottomLeft = (Vector3.forward - toRight - toTop);
 			bottomLeft.Normalize();
 			bottomLeft *= camScale;
 
@@ -443,21 +442,21 @@ namespace Syadeu.Presentation.Render
 			_corners[2] = position + math.mul(orientation, topRight);
 			_corners[3] = position + math.mul(orientation, bottomRight);
 
-			topLeft = (forward - toRight + toTop);
+			topLeft = (Vector3.forward - toRight + toTop);
 			camScale = topLeft.magnitude * nearClipPlane;
 
 			topLeft.Normalize();
 			topLeft *= camScale;
 
-			topRight = (forward + toRight + toTop);
+			topRight = (Vector3.forward + toRight + toTop);
 			topRight.Normalize();
 			topRight *= camScale;
 
-			bottomRight = (forward + toRight - toTop);
+			bottomRight = (Vector3.forward + toRight - toTop);
 			bottomRight.Normalize();
 			bottomRight *= camScale;
 
-			bottomLeft = (forward - toRight - toTop);
+			bottomLeft = (Vector3.forward - toRight - toTop);
 			bottomLeft.Normalize();
 			bottomLeft *= camScale;
 
