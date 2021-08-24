@@ -12,6 +12,7 @@ namespace Syadeu.Presentation
                 TypeHelper.TypeOf<GameObjectProxySystem>.Type,
                 TypeHelper.TypeOf<EntitySystem>.Type,
                 TypeHelper.TypeOf<EntityTriggerSystem>.Type,
+                TypeHelper.TypeOf<EntityRaycastSystem>.Type,
                 TypeHelper.TypeOf<SceneSystem>.Type,
                 TypeHelper.TypeOf<Render.RenderSystem>.Type,
                 TypeHelper.TypeOf<Render.WorldCanvasSystem>.Type,

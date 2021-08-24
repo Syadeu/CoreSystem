@@ -13,6 +13,8 @@ namespace Syadeu.Presentation.Render
 {
     public struct CameraData
     {
+		public bool orthographic;
+
 		public float3 position;
 		public quaternion orientation;
 		public float fov;
@@ -35,6 +37,8 @@ namespace Syadeu.Presentation.Render
 			CoreSystem.Logger.ThreadBlock(nameof(CameraData), Syadeu.Internal.ThreadInfo.Unity);
 			Transform tr = cam.transform;
 
+			orthographic = cam.orthographic;
+
 			position = tr.position;
 			orientation = tr.rotation;
 			fov = cam.fieldOfView;
@@ -45,7 +49,7 @@ namespace Syadeu.Presentation.Render
 			pixelWidth = cam.pixelWidth;
 			pixelHeight = cam.pixelHeight;
 
-			if (cam.orthographic) projectionMatrix = float4x4.Ortho(pixelWidth, pixelHeight, nearClipPlane, farClipPlane);
+			if (orthographic) projectionMatrix = float4x4.Ortho(pixelWidth, pixelHeight, nearClipPlane, farClipPlane);
 			else projectionMatrix = float4x4.PerspectiveFov(fov, aspect, nearClipPlane, farClipPlane);
 		}
 	}
