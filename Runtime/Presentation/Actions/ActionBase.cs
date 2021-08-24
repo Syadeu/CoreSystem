@@ -21,26 +21,23 @@ namespace Syadeu.Presentation.Entities
             m_Terminated = true;
         }
         internal abstract void InternalExecute(EntityData<IEntityData> entity);
+
+        public override sealed object Clone() => base.Clone();
+        public override sealed int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+        public override sealed string ToString() => Name;
+        public override sealed bool Equals(object obj)
+        {
+            return base.Equals(obj);
+        }
     }
-    //public sealed class TestStateAction : StatefulActionBase<TestStateAction.StateContainer, TestStateAction>
-    //{
-    //    protected override StateBase<TestStateAction>.State OnExecute(in StateContainer state, in EntityData<IEntityData> entity)
-    //    {
-    //        throw new NotImplementedException();
-    //    }
-
-    //    public sealed class StateContainer : StateBase<TestStateAction>
-    //    {
-    //        protected override void OnTerminate()
-    //        {
-    //            throw new NotImplementedException();
-    //        }
-    //    }
-    //}
-
     public abstract class ActionBase<T> : ActionBase where T : ActionBase
     {
-        private static readonly Stack<ActionBase> m_Pool = new Stack<ActionBase>();
+        private static readonly Dictionary<Reference<T>, Stack<ActionBase>> m_Pool = new Dictionary<Reference<T>, Stack<ActionBase>>();
+
+        private Reference<T> m_Reference;
 
         internal override sealed void InternalInitialize()
         {
@@ -51,20 +48,28 @@ namespace Syadeu.Presentation.Entities
         {
             OnTerminate();
 
-            m_Pool.Push(this);
+            if (!m_Pool.TryGetValue(m_Reference, out var pool))
+            {
+                pool = new Stack<ActionBase>();
+                m_Pool.Add(m_Reference, pool);
+            }
+            pool.Push(this);
+
             base.InternalTerminate();
         }
 
         internal static T GetAction(Reference<T> other)
         {
-            if (m_Pool.Count == 0)
+            if (!m_Pool.TryGetValue(other, out var pool) ||
+                pool.Count == 0)
             {
                 T t = (T)other.GetObject().Clone();
+                (t as ActionBase<T>).m_Reference = other;
                 t.InternalInitialize();
 
                 return t;
             }
-            return (T)m_Pool.Pop();
+            return (T)pool.Pop();
         }
 
         internal override sealed void InternalExecute(EntityData<IEntityData> entity)

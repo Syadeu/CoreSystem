@@ -8,8 +8,10 @@ namespace Syadeu.Presentation.Entities
         where TState : StateBase<TAction>, ITerminate, new()
         where TAction : StatefulActionBase<TState, TAction>
     {
-        private static readonly Stack<ActionBase> m_Pool = new Stack<ActionBase>();
+        private static readonly Dictionary<Reference<TAction>, Stack<ActionBase>> m_Pool = new Dictionary<Reference<TAction>, Stack<ActionBase>>();
         private TState m_State;
+
+        private Reference<TAction> m_Reference;
 
         internal override void InternalInitialize()
         {
@@ -27,6 +29,14 @@ namespace Syadeu.Presentation.Entities
             OnTerminate();
 
             m_State.Terminate();
+
+            if (!m_Pool.TryGetValue(m_Reference,out var pool))
+            {
+                pool = new Stack<ActionBase>();
+                m_Pool.Add(m_Reference, pool);
+            }
+            pool.Push(this);
+
             base.InternalTerminate();
         }
         internal override sealed void InternalExecute(EntityData<IEntityData> entity)
@@ -67,14 +77,16 @@ namespace Syadeu.Presentation.Entities
 
         internal static TAction GetAction(Reference<TAction> other)
         {
-            if (m_Pool.Count == 0)
+            if (!m_Pool.TryGetValue(other, out var pool) ||
+                pool.Count == 0)
             {
                 TAction t = (TAction)other.GetObject().Clone();
+                t.m_Reference = other;
                 t.InternalInitialize();
 
                 return t;
             }
-            return (TAction)m_Pool.Pop();
+            return (TAction)pool.Pop();
         }
 
         protected virtual void OnInitialize() { }

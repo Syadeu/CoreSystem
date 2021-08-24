@@ -15,17 +15,17 @@ using UnityEngine.Scripting;
 namespace Syadeu.Presentation
 {
     [JsonConverter(typeof(ReferenceJsonConverter)), RequireImplementors]
-    public interface IReference : IValidation
+    public interface IReference : IValidation, IEquatable<IReference>
     {
         Hash Hash { get; }
 
         ObjectBase GetObject();
     }
-    public interface IReference<T> : IReference where T : ObjectBase
+    public interface IReference<T> : IReference, IEquatable<IReference<T>> where T : ObjectBase
     {
         new T GetObject();
     }
-    public struct Reference : IReference
+    public struct Reference : IReference, IEquatable<Reference>
     {
         public static Reference Empty = new Reference(Hash.Empty);
 
@@ -49,10 +49,13 @@ namespace Syadeu.Presentation
         public ObjectBase GetObject() => EntityDataList.Instance.m_Objects[m_Hash];
         public bool IsValid() => !m_Hash.Equals(Hash.Empty);
 
+        public bool Equals(IReference other) => m_Hash.Equals(other.Hash);
+        public bool Equals(Reference other) => m_Hash.Equals(other.m_Hash);
+
         public static implicit operator ObjectBase(Reference a) => EntityDataList.Instance.m_Objects[a.m_Hash];
         public static implicit operator Hash(Reference a) => a.m_Hash;
     }
-    public struct Reference<T> : IReference<T> where T : ObjectBase
+    public struct Reference<T> : IReference<T>, IEquatable<Reference<T>> where T : ObjectBase
     {
         public static Reference<T> Empty = new Reference<T>(Hash.Empty);
 
@@ -87,6 +90,10 @@ namespace Syadeu.Presentation
             return null;
         }
         public bool IsValid() => !m_Hash.Equals(Hash.Empty) && EntityDataList.Instance.m_Objects.ContainsKey(m_Hash);
+
+        public bool Equals(IReference other) => m_Hash.Equals(other.Hash);
+        public bool Equals(IReference<T> other) => m_Hash.Equals(other.Hash);
+        public bool Equals(Reference<T> other) => m_Hash.Equals(other.m_Hash);
 
         public static implicit operator T(Reference<T> a) => a.GetObject();
         public static implicit operator Hash(Reference<T> a) => a.m_Hash;
