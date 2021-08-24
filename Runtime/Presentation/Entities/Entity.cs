@@ -123,7 +123,7 @@ namespace Syadeu.Presentation.Entities
         public bool Equals(Hash other) => m_Idx.Equals(other);
 
         #region Raycast
-        public EntitySystem.Raycaster Raycast(Ray ray) => PresentationSystem<EntitySystem>.System.Raycast(this, ray);
+        //public EntitySystem.Raycaster Raycast(Ray ray) => PresentationSystem<EntitySystem>.System.Raycast(this, ray);
         #endregion
 
         /// <inheritdoc cref="IEntityData.GetAttribute(Type)"/>
@@ -154,10 +154,10 @@ namespace Syadeu.Presentation.Entities
         public void Destroy() => PresentationSystem<EntitySystem>.System.InternalDestroyEntity(m_Idx);
 
         public static implicit operator T(Entity<T> a) => a.Target;
-        public static implicit operator Entity<IEntity>(Entity<T> a) => GetEntity(a.m_Idx);
-        public static implicit operator Entity<T>(Entity<IEntity> a) => GetEntity(a.m_Idx);
+        //public static implicit operator Entity<IEntity>(Entity<T> a) => GetEntity(a.m_Idx);
+        //public static implicit operator Entity<T>(Entity<IEntity> a) => GetEntity(a.m_Idx);
         public static implicit operator Entity<T>(Hash a) => GetEntity(a);
-        public static implicit operator Entity<T>(EntityData<IEntityData> a) => GetEntity(a.Idx);
+        public static implicit operator Entity<T>(EntityData<T> a) => GetEntity(a.Idx);
         public static implicit operator Entity<T>(T a) => GetEntity(a.Idx);
     }
 }

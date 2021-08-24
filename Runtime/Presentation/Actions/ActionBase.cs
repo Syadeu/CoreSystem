@@ -6,7 +6,6 @@ using System.Collections.Generic;
 
 namespace Syadeu.Presentation.Entities
 {
-    [AttributeAcceptOnly(null)]
     public abstract class ActionBase : ObjectBase
     {
         [JsonIgnore] private bool m_Terminated = true;
@@ -23,7 +22,7 @@ namespace Syadeu.Presentation.Entities
         }
         internal abstract void InternalExecute(EntityData<IEntityData> entity);
     }
-    public abstract class ActionBase<T> : ActionBase where T : ActionBase, new()
+    public abstract class ActionBase<T> : ActionBase where T : ActionBase
     {
         private static readonly Stack<ActionBase> m_Pool = new Stack<ActionBase>();
 

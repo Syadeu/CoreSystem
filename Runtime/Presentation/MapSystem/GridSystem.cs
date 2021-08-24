@@ -76,7 +76,7 @@ namespace Syadeu.Presentation.Map
 
                         if (att.m_FixedToCenter)
                         {
-                            Entity<IEntity> entity = att.Parent;
+                            Entity<IEntity> entity = att.Parent.As<IEntityData, IEntity>();
                             ITransform tr = entity.transform;
                             float3 pos = tr.position;
 
@@ -134,7 +134,7 @@ namespace Syadeu.Presentation.Map
 
             if (obj.Target is IEntity)
             {
-                RemoveGridEntity(obj);
+                RemoveGridEntity(obj.As<IEntityData, IEntity>());
             }
         }
         private void M_RenderSystem_OnRender()

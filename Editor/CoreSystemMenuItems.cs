@@ -34,8 +34,12 @@ namespace SyadeuEditor
         [MenuItem("CoreSystem/Edit Entity Data List", priority = 4)]
         public static void EntityDataListMenu()
         {
-            Selection.activeObject = EntityDataList.Instance;
-            EditorApplication.ExecuteMenuItem("Window/General/Inspector");
+            //Selection.activeObject = EntityDataList.Instance;
+            //EditorApplication.ExecuteMenuItem("Window/General/Inspector");
+
+            Presentation.EntityWindow.Instance.minSize = new Vector2(950, 500);
+            Presentation.EntityWindow.Instance.maxSize = new Vector2(950, 500);
+            Presentation.EntityWindow.Instance.Show();
         }
         //[MenuItem("CoreSystem/Edit Scene List", priority = 5)]
         //public static void SceneListMenu()
@@ -43,12 +47,12 @@ namespace SyadeuEditor
         //    Selection.activeObject = SceneList.Instance;
         //    EditorApplication.ExecuteMenuItem("Window/General/Inspector");
         //}
-        [MenuItem("CoreSystem/Entity Window", priority = 5)]
-        public static void EntityWindowMenu()
-        {
-            Presentation.EntityWindow.Instance.minSize = new Vector2(950, 500);
-            Presentation.EntityWindow.Instance.Show();
-        }
+        //[MenuItem("CoreSystem/Entity Window", priority = 5)]
+        //public static void EntityWindowMenu()
+        //{
+        //    Presentation.EntityWindow.Instance.minSize = new Vector2(950, 500);
+        //    Presentation.EntityWindow.Instance.Show();
+        //}
         [MenuItem("CoreSystem/Map System Window", priority = 6)]
         public static void MapSystemWindowMenu()
         {

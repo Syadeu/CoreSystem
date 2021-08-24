@@ -2,14 +2,14 @@
 {
     public static class ActionExtensionMethods
     {
-        public static void Execute<T>(this Reference<T> other, EntityData<IEntityData> entity) where T : ActionBase<T>, new()
+        public static void Execute<T>(this Reference<T> other, EntityData<IEntityData> entity) where T : ActionBase<T>
         {
             T action = ActionBase<T>.GetAction(other);
             InternalExecute(action, entity);
         }
 
-        public static void Execute<T>(this T other, EntityData<IEntityData> entity) where T : ActionBase<T>, new() => InternalExecute(other, entity);
-        private static void InternalExecute<T>(T action, EntityData<IEntityData> entity) where T : ActionBase<T>, new()
+        public static void Execute<T>(this T other, EntityData<IEntityData> entity) where T : ActionBase<T> => InternalExecute(other, entity);
+        private static void InternalExecute<T>(T action, EntityData<IEntityData> entity) where T : ActionBase<T>
         {
             if (action.Terminated)
             {

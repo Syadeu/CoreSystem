@@ -96,7 +96,8 @@ namespace Syadeu.Presentation.Entities
         public void Destroy() => PresentationSystem<EntitySystem>.System.InternalDestroyEntity(m_Idx);
 
         public static implicit operator T(EntityData<T> a) => a.Target;
-        public static implicit operator EntityData<IEntityData>(EntityData<T> a) => GetEntityData(a.m_Idx);
+        //public static implicit operator EntityData<IEntityData>(EntityData<T> a) => GetEntityData(a.m_Idx);
+        //public static implicit operator EntityData<T>(Entity<T> a) => GetEntityData(a.m_Idx);
         public static implicit operator EntityData<T>(Hash a) => GetEntityData(a);
         public static implicit operator EntityData<T>(T a) => GetEntityData(a.Idx);
     }

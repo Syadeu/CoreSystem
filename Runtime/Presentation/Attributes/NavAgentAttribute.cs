@@ -42,7 +42,8 @@ namespace Syadeu.Presentation.Attributes
             }
 
             PresentationSystem<EventSystem>.System
-                .PostEvent(OnMoveStateChangedEvent.GetEvent(Parent, OnMoveStateChangedEvent.MoveState.AboutToMove));
+                .PostEvent(OnMoveStateChangedEvent.GetEvent(
+                    Parent.As<IEntityData, IEntity>(), OnMoveStateChangedEvent.MoveState.AboutToMove));
 
             NavMeshAgent.ResetPath();
             NavMeshAgent.SetDestination(point);
@@ -58,7 +59,7 @@ namespace Syadeu.Presentation.Attributes
         private IEnumerator Updater()
         {
             EventSystem eventSystem = PresentationSystem<EventSystem>.System;
-            Entity<IEntity> parent = Parent;
+            Entity<IEntity> parent = Parent.As<IEntityData, IEntity>();
             if (!(parent.transform is IProxyTransform tr))
             {
                 CoreSystem.Logger.LogError(Channel.Presentation, "unity tr is not support");

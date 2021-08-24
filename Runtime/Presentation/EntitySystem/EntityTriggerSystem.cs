@@ -56,7 +56,9 @@ namespace Syadeu.Presentation
 
             int arrayIndex = FindOrIncrementTriggerBoundArrayIndex();
             ClusterID id = m_TriggerBoundCluster.Add(entity.transform.position, arrayIndex);
-            m_TriggerBoundArray[arrayIndex] = obj;
+
+            Entity<IEntity> target = obj.As<IEntityData, IEntity>();
+            m_TriggerBoundArray[arrayIndex] = target;
 
             att.m_ClusterID = id;
         }

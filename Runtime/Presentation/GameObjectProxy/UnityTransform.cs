@@ -118,7 +118,7 @@ namespace Syadeu.Presentation
         {
             if (provider == null) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
 
-            PresentationSystem<EntitySystem>.System.DestroyEntity(entity);
+            PresentationSystem<EntitySystem>.System.DestroyEntity(entity.AsReference<EntityDataBase, IEntity>());
         }
 
         public bool Equals(ITransform other)

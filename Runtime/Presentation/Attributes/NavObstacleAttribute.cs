@@ -39,7 +39,7 @@ namespace Syadeu.Presentation.Attributes
 
         protected override void OnCreated(NavObstacleAttribute attribute, EntityData<IEntityData> e)
         {
-            Entity<IEntity> entity = e;
+            Entity<IEntity> entity = e.As<IEntityData, IEntity>();
             m_NavMeshSystem.AddObstacle(attribute, entity.transform, attribute.m_AreaMask);
         }
         protected override void OnDestroy(NavObstacleAttribute attribute, EntityData<IEntityData> entity)
