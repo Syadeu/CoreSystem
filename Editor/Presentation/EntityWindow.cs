@@ -30,7 +30,7 @@ namespace SyadeuEditor.Presentation
 
         protected override void OnEnable()
         {
-            EntityDataList.Instance.LoadData();
+            EntityDataList.Instance.Purge();
 
             m_ToolbarWindow = new ToolbarWindow(this);
             m_DataListWindow = new DataListWindow(this);
@@ -380,7 +380,7 @@ namespace SyadeuEditor.Presentation
                                 m_MainWindow.Remove(target);
                                 Objects[i].m_Elements.RemoveAt(a);
                                 a--;
-                                GUIUtility.ExitGUI();
+                                //GUIUtility.ExitGUI();
                             }
                             EditorGUILayout.EndHorizontal();
                         }
@@ -518,6 +518,7 @@ namespace SyadeuEditor.Presentation
             public override sealed object TargetObject => m_TargetObject;
             public Type Type => m_Type;
             public override string Name => m_TargetObject.Name;
+            public override int FieldCount => m_ObjectDrawers.Length;
 
             public static ObjectBaseDrawer GetDrawer(ObjectBase objectBase)
             {

@@ -323,10 +323,15 @@ namespace SyadeuEditor.Presentation
                         {
                             if (m_ElementDrawers[i] == null) continue;
 
-                            m_ElementOpen[i] = EditorGUILayout.Foldout(m_ElementOpen[i], $"Element {i}", true);
+                            if (m_ElementDrawers[i].FieldCount > 1)
+                            {
+                                m_ElementOpen[i] = EditorGUILayout.Foldout(m_ElementOpen[i], $"Element {i}", true);
+                            }
+                            else m_ElementOpen[i] = true;
+
                             if (!m_ElementOpen[i]) continue;
 
-                            using (new EditorUtils.BoxBlock(color3))
+                            using (new EditorUtils.BoxBlock(Color.black))
                             {
                                 EditorGUILayout.BeginHorizontal();
 
@@ -338,6 +343,7 @@ namespace SyadeuEditor.Presentation
                                     list = RemoveAt(list, i);
 
                                     //Reload();
+                                    //GUIUtility.ExitGUI()
                                     i--;
                                 }
                                 EditorGUILayout.EndHorizontal();
@@ -387,6 +393,7 @@ namespace SyadeuEditor.Presentation
 
         public override object TargetObject => m_TargetObject;
         public override string Name => m_Name;
+        public override int FieldCount => DrawerBases.Count;
 
         private readonly List<ObjectDrawerBase> DrawerBases = new List<ObjectDrawerBase>();
 

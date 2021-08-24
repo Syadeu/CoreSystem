@@ -394,14 +394,20 @@ namespace SyadeuEditor
                     list = PrefabList.Instance.ObjectSettings;
                 }
 
-                PopupWindow.Show(rect, SelectorPopup<int, PrefabList.ObjectSetting>.GetWindow(list, setter, (objSet) =>
+                try
                 {
-                    for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
+                    PopupWindow.Show(rect, SelectorPopup<int, PrefabList.ObjectSetting>.GetWindow(list, setter, (objSet) =>
                     {
-                        if (objSet.Equals(PrefabList.Instance.ObjectSettings[i])) return i;
-                    }
-                    return -1;
-                }, -2));
+                        for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
+                        {
+                            if (objSet.Equals(PrefabList.Instance.ObjectSettings[i])) return i;
+                        }
+                        return -1;
+                    }, -2));
+                }
+                catch (ExitGUIException)
+                {
+                }
             }
             EditorGUILayout.EndHorizontal();
         }
@@ -516,8 +522,10 @@ namespace SyadeuEditor
 
                 if (targetType == null)
                 {
-                    PopupWindow.Show(rect, SelectorPopup<Hash, ObjectBase>.GetWindow(
-                        list: EntityDataList.Instance.m_Objects.Values.ToArray(), 
+                    try
+                    {
+                        PopupWindow.Show(rect, SelectorPopup<Hash, ObjectBase>.GetWindow(
+                        list: EntityDataList.Instance.m_Objects.Values.ToArray(),
                         setter: setter,
                         getter: (att) =>
                         {
@@ -525,6 +533,10 @@ namespace SyadeuEditor
                         },
                         noneValue: Hash.Empty
                         ));
+                    }
+                    catch (ExitGUIException)
+                    {
+                    }
                 }
                 else if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(targetType))
                 {
@@ -533,7 +545,9 @@ namespace SyadeuEditor
                                 targetType.IsAssignableFrom(other.GetType()))
                         .ToArray();
 
-                    PopupWindow.Show(rect, SelectorPopup<Hash, ObjectBase>.GetWindow(
+                    try
+                    {
+                        PopupWindow.Show(rect, SelectorPopup<Hash, ObjectBase>.GetWindow(
                         list: entities,
                         setter: setter,
                         getter: (att) =>
@@ -542,6 +556,10 @@ namespace SyadeuEditor
                         },
                         noneValue: Hash.Empty
                         ));
+                    }
+                    catch (ExitGUIException)
+                    {
+                    }
                 }
                 else
                 {
@@ -550,7 +568,9 @@ namespace SyadeuEditor
                                 targetType.IsAssignableFrom(other.GetType()))
                         .ToArray();
 
-                    PopupWindow.Show(rect, SelectorPopup<Hash, AttributeBase>.GetWindow(
+                    try
+                    {
+                        PopupWindow.Show(rect, SelectorPopup<Hash, AttributeBase>.GetWindow(
                         list: attributes,
                         setter: setter,
                         getter: (att) =>
@@ -559,6 +579,10 @@ namespace SyadeuEditor
                         },
                         noneValue: Hash.Empty
                         ));
+                    }
+                    catch (ExitGUIException)
+                    {
+                    }
                 }
             }
 

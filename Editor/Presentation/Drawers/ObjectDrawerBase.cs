@@ -15,6 +15,7 @@ namespace SyadeuEditor.Presentation
     {
         public abstract object TargetObject { get; }
         public abstract string Name { get; }
+        public virtual int FieldCount => 1;
 
         public abstract void OnGUI();
         public virtual void Dispose() { }
