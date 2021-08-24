@@ -132,11 +132,33 @@ namespace Syadeu.Presentation.Render
         }
 		internal CameraFrustum GetRawFrustum() => m_CameraFrustum;
 
-        public float3 WorldToScreenPoint(float3 worldPosition)
+        public float4 WorldToScreenPoint(float3 worldPoint)
         {
+            float4x4 projection = float4x4.PerspectiveFov(m_LastCameraData.fov, m_LastCameraData.aspect, m_LastCameraData.nearClipPlane, m_LastCameraData.farClipPlane);
             float4x4 tr = new float4x4(new float3x3(m_LastCameraData.orientation), m_LastCameraData.position);
-            float3 point = math.mul(tr, new float4(worldPosition, 1)).xyz;
-            return point;
+            
+            float4x4 matrix = math.mul(projection, math.fastinverse(tr));
+            // if w == -1 not seen by the cam
+            return math.mul(matrix, new float4(worldPoint, 1));
+        }
+        public float3 ScreenToWorldPoint(float3 screenPoint)
+        {
+            float4x4 projection = float4x4.PerspectiveFov(m_LastCameraData.fov, m_LastCameraData.aspect, m_LastCameraData.nearClipPlane, m_LastCameraData.farClipPlane);
+            float4x4 tr = new float4x4(new float3x3(m_LastCameraData.orientation), m_LastCameraData.position);
+
+            float4x4 matrix = math.inverse(math.mul(projection, math.fastinverse(tr)));
+            float4 temp = new float4
+            {
+                x = 2 * (screenPoint.x / m_LastCameraData.pixelWidth) - 1,
+                y = 2 * (screenPoint.y / m_LastCameraData.pixelHeigth) - 1,
+                z = m_LastCameraData.nearClipPlane,
+                w = 1
+            };
+
+            float4 pos = math.mul(matrix, temp);
+            pos.w = 1 / pos.w;
+            pos.x *= pos.w; pos.y *= pos.w; pos.z *= pos.w;
+            return pos.xyz;
         }
 
         #region Legacy

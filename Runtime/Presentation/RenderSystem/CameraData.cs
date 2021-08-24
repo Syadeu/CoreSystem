@@ -20,6 +20,9 @@ namespace Syadeu.Presentation.Render
 		public float farClipPlane; 
 		public float aspect;
 
+		public float
+			pixelWidth, pixelHeigth;
+
 		public CameraData(Camera cam)
         {
 			CoreSystem.Logger.ThreadBlock(nameof(CameraData), Syadeu.Internal.ThreadInfo.Unity);
@@ -31,6 +34,9 @@ namespace Syadeu.Presentation.Render
 			nearClipPlane = cam.nearClipPlane;
 			farClipPlane = cam.farClipPlane;
 			aspect = cam.aspect;
+
+			pixelWidth = cam.pixelWidth;
+			pixelHeigth = cam.pixelHeight;
         }
 	}
 }
