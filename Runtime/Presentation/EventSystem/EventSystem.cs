@@ -14,6 +14,7 @@ namespace Syadeu.Presentation.Events
         public override bool EnableAfterPresentation => false;
 
         private readonly Queue<SynchronizedEventBase> m_PostedEvents = new Queue<SynchronizedEventBase>();
+        private readonly Queue<Action> m_PostedActions = new Queue<Action>();
 
         private SceneSystem m_SceneSystem;
 
@@ -73,6 +74,23 @@ namespace Syadeu.Presentation.Events
                 CoreSystem.Logger.Log(Channel.Presentation,
                     $"Posted event : {ev.GetType().Name}");
             }
+
+            int actionCount = m_PostedActions.Count;
+            for (int i = 0; i < actionCount; i++)
+            {
+                Action action = m_PostedActions.Dequeue();
+                try
+                {
+                    action.Invoke();
+                }
+                catch (Exception ex)
+                {
+                    CoreSystem.Logger.LogError(Channel.Presentation,
+                        $"Invalid action has been posted");
+                    UnityEngine.Debug.LogException(ex);
+                }
+            }
+
             return base.OnPresentation();
         }
 
@@ -90,6 +108,11 @@ namespace Syadeu.Presentation.Events
         public void PostEvent<TEvent>(TEvent ev) where TEvent : SynchronizedEvent<TEvent>, new()
         {
             m_PostedEvents.Enqueue(ev);
+        }
+
+        public void PostAction(Action action)
+        {
+            m_PostedActions.Enqueue(action);
         }
     }
 }

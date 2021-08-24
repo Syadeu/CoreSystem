@@ -1,4 +1,6 @@
-﻿namespace Syadeu.Presentation.Entities
+﻿using Syadeu.Database;
+
+namespace Syadeu.Presentation.Entities
 {
     public static class ActionExtensionMethods
     {
@@ -6,6 +8,13 @@
         {
             T action = ActionBase<T>.GetAction(other);
             InternalExecute(action, entity);
+        }
+        public static void Execute<TState, TAction>(this Reference<TAction> other, EntityData<IEntityData> entity) 
+            where TState : StateBase<TAction>, ITerminate, new()
+            where TAction : StatefulActionBase<TState, TAction>
+        {
+            TAction action = StatefulActionBase<TState, TAction>.GetAction(other);
+            action.InternalExecute(entity);
         }
 
         public static void Execute<T>(this T other, EntityData<IEntityData> entity) where T : ActionBase<T> => InternalExecute(other, entity);
