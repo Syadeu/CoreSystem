@@ -23,7 +23,7 @@ namespace Syadeu.Presentation.Entities
         public static EntityData<T> Empty => new EntityData<T>(Hash.Empty);
 
         private static readonly Dictionary<Hash, EntityData<T>> m_EntityData = new Dictionary<Hash, EntityData<T>>();
-        public static EntityData<T> GetEntityData(Hash idx)
+        public static EntityData<T> GetEntity(Hash idx)
         {
             #region Validation
             if (idx.Equals(Hash.Empty))
@@ -49,6 +49,15 @@ namespace Syadeu.Presentation.Entities
 
             if (m_EntityData.Count > 2048) m_EntityData.Clear();
 
+            if (!m_EntityData.TryGetValue(idx, out var value))
+            {
+                value = new EntityData<T>(idx);
+                m_EntityData.Add(idx, value);
+            }
+            return value;
+        }
+        public static EntityData<T> GetEntityWithoutCheck(Hash idx)
+        {
             if (!m_EntityData.TryGetValue(idx, out var value))
             {
                 value = new EntityData<T>(idx);
@@ -98,7 +107,7 @@ namespace Syadeu.Presentation.Entities
         public static implicit operator T(EntityData<T> a) => a.Target;
         //public static implicit operator EntityData<IEntityData>(EntityData<T> a) => GetEntityData(a.m_Idx);
         //public static implicit operator EntityData<T>(Entity<T> a) => GetEntityData(a.m_Idx);
-        public static implicit operator EntityData<T>(Hash a) => GetEntityData(a);
-        public static implicit operator EntityData<T>(T a) => GetEntityData(a.Idx);
+        public static implicit operator EntityData<T>(Hash a) => GetEntity(a);
+        public static implicit operator EntityData<T>(T a) => GetEntity(a.Idx);
     }
 }

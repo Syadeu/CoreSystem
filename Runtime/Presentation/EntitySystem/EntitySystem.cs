@@ -299,6 +299,17 @@ namespace Syadeu.Presentation
                 }
             }
 
+            ConsoleWindow.CreateCommand((cmd) =>
+            {
+                while (m_ObjectEntities.Any())
+                {
+                    var temp = m_ObjectEntities.First().Value;
+                    if (!temp.TryAsReference(out var refer)) continue;
+
+                    refer.Destroy();
+                }
+            }, "destroy", "all");
+
             return base.OnStartPresentation();
         }
 
@@ -329,10 +340,9 @@ namespace Syadeu.Presentation
             return base.OnPresentationAsync();
         }
 
-        
         #endregion
 
-#line hidden
+//#line hidden
 
         #region Create EntityBase
 
@@ -503,7 +513,7 @@ namespace Syadeu.Presentation
             m_ObjectEntities.Add(clone.Idx, clone);
 
             ProcessEntityOnCreated(this, clone);
-            return EntityData<IEntityData>.GetEntityData(clone.Idx);
+            return EntityData<IEntityData>.GetEntity(clone.Idx);
         }
 
         #endregion
@@ -533,7 +543,7 @@ namespace Syadeu.Presentation
             m_ObjectEntities.Add(entity.Idx, entity);
 
             ProcessEntityOnCreated(this, entity);
-            return EntityData<ConvertedEntity>.GetEntityData(entity.Idx);
+            return EntityData<ConvertedEntity>.GetEntity(entity.Idx);
         }
         public EntityData<T> Convert<T>(GameObject obj) where T : EntityDataBase
         {
@@ -560,7 +570,7 @@ namespace Syadeu.Presentation
             m_ObjectEntities.Add(entity.Idx, entity);
 
             ProcessEntityOnCreated(this, entity);
-            return EntityData<T>.GetEntityData(entity.Idx);
+            return EntityData<T>.GetEntity(entity.Idx);
         }
 
         /// <summary>
@@ -575,7 +585,12 @@ namespace Syadeu.Presentation
         public void DestroyEntity(EntityData<IEntityData> entity) => InternalDestroyEntity(entity.Idx);
         internal void InternalDestroyEntity(in Hash hash)
         {
-            if (!m_ObjectEntities.ContainsKey(hash)) throw new Exception();
+            if (!m_ObjectEntities.ContainsKey(hash))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Already destroyed entity {hash}");
+                return;
+            }
 
             ProcessEntityOnDestroy(this, m_ObjectEntities[hash]);
 
@@ -607,7 +622,7 @@ namespace Syadeu.Presentation
             CoreSystem.Logger.Log(Channel.Entity,
                 $"Create entity({entity.Name})");
 
-            EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntityData(entity.Idx);
+            EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntity(entity.Idx);
 
             #region Attributes
             Array.ForEach(entity.Attributes, (other) =>
@@ -664,7 +679,7 @@ namespace Syadeu.Presentation
         }
         private static void ProcessEntityOnPresentation(EntitySystem system, IEntityData entity)
         {
-            EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntityData(entity.Idx);
+            EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntity(entity.Idx);
 
             //#region Entity
             //if (system.m_EntityProcessors.TryGetValue(t, out List<IEntityProcessor> entityProcessor))
@@ -705,7 +720,7 @@ namespace Syadeu.Presentation
             CoreSystem.Logger.Log(Channel.Entity,
                 $"Destroying entity({entity.Name})");
 
-            EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntityData(entity.Idx);
+            EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntity(entity.Idx);
 
             #region Attributes
             Array.ForEach(entity.Attributes, (other) =>

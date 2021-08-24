@@ -86,13 +86,13 @@ namespace Syadeu.Presentation.Render
 				(type & IntersectionType.Contains) == IntersectionType.Contains) return true;
 				return false;
 			}
-			public IntersectionType IntersectsSphere(ref float3 center, float radius, float frustumPadding = 0)
+			public IntersectionType IntersectsSphere(in float3 center, in float radius, float frustumPadding = 0)
             {
 #if UNITY_EDITOR
 				AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
 				AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
 #endif
-				return CameraFrustum.IntersectsSphere(in planeNormals, in planeDistances, ref center, radius, frustumPadding);
+				return CameraFrustum.IntersectsSphere(in planeNormals, in planeDistances, in center, in radius, frustumPadding);
 			}
 		}
 
@@ -208,13 +208,13 @@ namespace Syadeu.Presentation.Render
 				(type & IntersectionType.Contains) == IntersectionType.Contains) return true;
 			return false;
 		}
-		public IntersectionType IntersectsSphere(ref float3 center, float radius, float frustumPadding = 0)
+		public IntersectionType IntersectsSphere(in float3 center, in float radius, float frustumPadding = 0)
         {
 #if UNITY_EDITOR
 			AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
 			AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
 #endif
-			return IntersectsSphere(in m_PlaneNormals, in m_PlaneDistances, ref center, radius, frustumPadding);
+			return IntersectsSphere(in m_PlaneNormals, in m_PlaneDistances, in center, in radius, frustumPadding);
 		}
 
         #region Statics
@@ -366,7 +366,7 @@ namespace Syadeu.Presentation.Render
 		private static IntersectionType IntersectsSphere(
 			in NativeArray<float3> planeNormals,
 			in NativeArray<float> planeDistances,
-			ref float3 center, float radius, float frustumPadding = 0)
+			in float3 center, in float radius, float frustumPadding = 0)
 		{
 			bool intersecting = false;
 			for (int i = 0; i < PlaneCount; i++)

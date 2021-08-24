@@ -21,19 +21,29 @@ namespace Syadeu.Presentation
             where T : class, IEntity
             where TA : class, IEntityData
         {
-            return EntityData<TA>.GetEntityData(t.Idx);
+            return EntityData<TA>.GetEntity(t.Idx);
         }
 
+        public static bool TryAsReference<T>(this T t, out EntityData<T> entity)
+            where T : class, IEntityData
+        {
+            entity = EntityData<T>.Empty;
+
+            if (!t.IsValid()) return false;
+
+            entity = EntityData<T>.GetEntityWithoutCheck(t.Idx);
+            return true;
+        }
         public static EntityData<T> AsReference<T>(this T t)
             where T : class, IEntityData
         {
-            return EntityData<T>.GetEntityData(t.Idx);
+            return EntityData<T>.GetEntity(t.Idx);
         }
         public static EntityData<TA> AsReference<T, TA>(this T t)
             where T : class, IEntityData
             where TA : class, IEntityData
         {
-            return EntityData<TA>.GetEntityData(t.Idx);
+            return EntityData<TA>.GetEntity(t.Idx);
         }
     }
 }

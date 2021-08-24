@@ -198,6 +198,8 @@ namespace Syadeu.Presentation
 
             if (m_LoadingLock) return base.AfterPresentation();
 
+            CameraFrustum frustum = m_RenderSystem.GetRawFrustum();
+
             #region Destroy
             int destroyCount = m_RequestDestories.Count;
             for (int i = 0; i < destroyCount; i++)
@@ -212,7 +214,18 @@ namespace Syadeu.Presentation
 
                 OnDataObjectDestroy?.Invoke(tr);
 
-                if (tr.hasProxy && !tr.hasProxyQueued) RemoveProxy(tr);
+                if (tr.hasProxy && !tr.hasProxyQueued)
+                {
+                    RecycleableMonobehaviour proxy = RemoveProxy(tr);
+
+                    var intersection = frustum.IntersectsSphere(proxy.transform.position, proxy.transform.localScale.sqrMagnitude, 1);
+
+                    if ((intersection & IntersectionType.Intersects) == IntersectionType.Intersects ||
+                        (intersection & IntersectionType.Contains) == IntersectionType.Contains)
+                    {
+                        proxy.transform.position = INIT_POSITION;
+                    }
+                }
                 //else if (tr.hasProxyQueued)
                 //{
                 //    "on destroy but proxy queued".ToLogError();
@@ -336,8 +349,6 @@ namespace Syadeu.Presentation
                 };
                 ScheduleAt(JobPosition.On, clusterUpdateJob, requests.Length);
             }
-
-            CameraFrustum frustum = m_RenderSystem.GetRawFrustum();
 
             if (m_SortedCluster.IsCreated)
             {
@@ -598,7 +609,7 @@ namespace Syadeu.Presentation
                     $"Prefab({proxyTransform.prefab.GetObjectSetting().m_Name}) proxy created, pool remains {pool.Count}");
             }
         }
-        private void RemoveProxy(ProxyTransform proxyTransform)
+        private RecycleableMonobehaviour RemoveProxy(ProxyTransform proxyTransform)
         {
             PrefabReference prefab = proxyTransform.prefab;
             RecycleableMonobehaviour proxy = proxyTransform.proxy;
@@ -627,6 +638,7 @@ namespace Syadeu.Presentation
             pool.Push(proxy);
             CoreSystem.Logger.Log(Channel.Proxy, true,
                     $"Prefab({prefab.GetObjectSetting().m_Name}) proxy removed.");
+            return proxy;
         }
 
         #endregion

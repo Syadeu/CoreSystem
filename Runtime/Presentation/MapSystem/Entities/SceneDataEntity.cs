@@ -50,7 +50,7 @@ namespace Syadeu.Presentation.Map
             for (int i = 0; i < m_MapData.Length; i++)
             {
                 EntityData<IEntityData> temp = entitySystem.CreateObject(m_MapData[i]);
-                CreatedMapData[i] = EntityData<MapDataEntity>.GetEntityData(temp.Idx);
+                CreatedMapData[i] = EntityData<MapDataEntity>.GetEntity(temp.Idx);
             }
 
             IsMapDataCreated = true;

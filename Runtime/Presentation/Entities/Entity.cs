@@ -79,7 +79,7 @@ namespace Syadeu.Presentation.Entities
             get
             {
                 if (m_Idx.Equals(Hash.Empty) ||
-                    PresentationSystem<EntitySystem>.System.m_ObjectEntities.TryGetValue(m_Idx, out var value)) return null;
+                    !PresentationSystem<EntitySystem>.System.m_ObjectEntities.TryGetValue(m_Idx, out var value)) return null;
 
                 return (T)value;
             }
@@ -95,7 +95,20 @@ namespace Syadeu.Presentation.Entities
 
 #pragma warning disable IDE1006 // Naming Styles
         /// <inheritdoc cref="EntityBase.transform"/>
-        public ITransform transform => Target.transform;
+        public ITransform transform
+        {
+            get
+            {
+                if (m_Idx.Equals(Hash.Empty))
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        "An empty entity reference trying to call transform.");
+                    return null;
+                }
+
+                return Target.transform;
+            }
+        }
         public bool hasProxy
         {
             get
