@@ -54,6 +54,7 @@ namespace Syadeu.Presentation.Render
         protected override PresentationResult OnInitialize()
         {
             m_CameraFrustum = new CameraFrustum(new CameraData());
+            m_LastCameraData = new CameraData();
 
             m_Camera = new ObClass<Camera>(ObValueDetection.Changed);
             m_Camera.OnValueChange += OnCameraChangedHandler;
@@ -101,7 +102,7 @@ namespace Syadeu.Presentation.Render
         {
             if (Camera == null) return base.AfterPresentation();
 
-            m_LastCameraData = new CameraData(Camera);
+            m_LastCameraData.Update(Camera);
             FrustumJob job = new FrustumJob
             {
                 m_Frustum = m_CameraFrustum,
@@ -143,22 +144,40 @@ namespace Syadeu.Presentation.Render
         }
         public float3 ScreenToWorldPoint(float3 screenPoint)
         {
-            float4x4 projection = float4x4.PerspectiveFov(m_LastCameraData.fov, m_LastCameraData.aspect, m_LastCameraData.nearClipPlane, m_LastCameraData.farClipPlane);
+            float4x4 projection = m_LastCameraData.projectionMatrix;
             float4x4 tr = new float4x4(new float3x3(m_LastCameraData.orientation), m_LastCameraData.position);
 
             float4x4 matrix = math.inverse(math.mul(projection, math.fastinverse(tr)));
             float4 temp = new float4
             {
                 x = 2 * (screenPoint.x / m_LastCameraData.pixelWidth) - 1,
-                y = 2 * (screenPoint.y / m_LastCameraData.pixelHeigth) - 1,
+                y = 2 * (screenPoint.y / m_LastCameraData.pixelHeight) - 1,
                 z = m_LastCameraData.nearClipPlane,
                 w = 1
             };
 
             float4 pos = math.mul(matrix, temp);
+
             pos.w = 1 / pos.w;
             pos.x *= pos.w; pos.y *= pos.w; pos.z *= pos.w;
             return pos.xyz;
+        }
+        public Ray ScreenToRay(float3 screenPoint)
+        {
+            float4x4 projection = m_LastCameraData.projectionMatrix;
+            float4x4 tr = new float4x4(new float3x3(m_LastCameraData.orientation), m_LastCameraData.position);
+
+            float4x4 matrix = math.inverse(math.mul(projection, math.fastinverse(tr)));
+            float4 temp = new float4
+            {
+                x = 2 * (screenPoint.x / m_LastCameraData.pixelWidth) - 1,
+                y = 2 * (screenPoint.y / m_LastCameraData.pixelHeight) - 1,
+                z = m_LastCameraData.nearClipPlane,
+                w = 1
+            };
+
+            float4 pos = math.mul(matrix, temp);
+            return new Ray(m_LastCameraData.position, pos.xyz - m_LastCameraData.position);
         }
 
         #region Legacy

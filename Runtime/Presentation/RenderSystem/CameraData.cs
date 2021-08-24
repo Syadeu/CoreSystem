@@ -21,9 +21,16 @@ namespace Syadeu.Presentation.Render
 		public float aspect;
 
 		public float
-			pixelWidth, pixelHeigth;
+			pixelWidth, pixelHeight;
+
+		public float4x4 projectionMatrix;
 
 		public CameraData(Camera cam)
+        {
+			this = default(CameraData);
+			Update(cam);
+		}
+		public void Update(Camera cam)
         {
 			CoreSystem.Logger.ThreadBlock(nameof(CameraData), Syadeu.Internal.ThreadInfo.Unity);
 			Transform tr = cam.transform;
@@ -36,7 +43,10 @@ namespace Syadeu.Presentation.Render
 			aspect = cam.aspect;
 
 			pixelWidth = cam.pixelWidth;
-			pixelHeigth = cam.pixelHeight;
-        }
+			pixelHeight = cam.pixelHeight;
+
+			if (cam.orthographic) projectionMatrix = float4x4.Ortho(pixelWidth, pixelHeight, nearClipPlane, farClipPlane);
+			else projectionMatrix = float4x4.PerspectiveFov(fov, aspect, nearClipPlane, farClipPlane);
+		}
 	}
 }
