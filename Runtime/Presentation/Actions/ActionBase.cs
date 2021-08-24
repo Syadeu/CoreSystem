@@ -9,6 +9,7 @@ namespace Syadeu.Presentation.Entities
     public abstract class ActionBase : ObjectBase
     {
         [JsonIgnore] private bool m_Terminated = true;
+        [JsonIgnore] internal Reference m_Reference;
 
         public bool Terminated => m_Terminated;
 
@@ -35,9 +36,9 @@ namespace Syadeu.Presentation.Entities
     }
     public abstract class ActionBase<T> : ActionBase where T : ActionBase
     {
-        private static readonly Dictionary<Reference<T>, Stack<ActionBase>> m_Pool = new Dictionary<Reference<T>, Stack<ActionBase>>();
+        private static readonly Dictionary<Reference, Stack<ActionBase>> m_Pool = new Dictionary<Reference, Stack<ActionBase>>();
 
-        private Reference<T> m_Reference;
+        //private Reference<T> m_Reference;
 
         internal override sealed void InternalInitialize()
         {
@@ -64,7 +65,7 @@ namespace Syadeu.Presentation.Entities
                 pool.Count == 0)
             {
                 T t = (T)other.GetObject().Clone();
-                (t as ActionBase<T>).m_Reference = other;
+                t.m_Reference = other;
                 t.InternalInitialize();
 
                 return t;

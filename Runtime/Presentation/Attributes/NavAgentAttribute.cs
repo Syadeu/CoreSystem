@@ -27,6 +27,10 @@ namespace Syadeu.Presentation.Attributes
         [JsonProperty(Order = 4, PropertyName = "Acceleration")] public float m_Acceleration = 8;
         [JsonProperty(Order = 5, PropertyName = "StoppingDistance")] public float m_StoppingDistance = 0;
 
+        [Space, Header("Actions")]
+        [JsonProperty(Order = 6, PropertyName = "OnMoveActions")]
+        public Reference<ActionBase>[] m_OnMoveActions = Array.Empty<Reference<ActionBase>>();
+
         [JsonIgnore] public NavMeshAgent NavMeshAgent { get; internal set; }
         [JsonIgnore] public bool IsMoving { get; internal set; }
         [JsonIgnore] public Vector3 Direction => NavMeshAgent == null ? Vector3.zero : NavMeshAgent.desiredVelocity;
@@ -78,6 +82,7 @@ namespace Syadeu.Presentation.Attributes
             }
 
             eventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(parent, OnMoveStateChangedEvent.MoveState.OnMoving));
+            TriggerOnMoveAction();
 
             while (
                 tr.hasProxy &&
@@ -88,7 +93,9 @@ namespace Syadeu.Presentation.Attributes
 
                 tr.Synchronize(ProxyTransform.SynchronizeOption.TR);
                 eventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(parent, OnMoveStateChangedEvent.MoveState.OnMoving));
-                
+
+                TriggerOnMoveAction();
+
                 yield return null;
             }
 
@@ -98,9 +105,19 @@ namespace Syadeu.Presentation.Attributes
                 if (NavMeshAgent.isOnNavMesh) NavMeshAgent.ResetPath();
             }
 
+            TriggerOnMoveAction();
+
             IsMoving = false;
 
             eventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(parent, OnMoveStateChangedEvent.MoveState.Stopped | OnMoveStateChangedEvent.MoveState.Idle));
+        }
+
+        private void TriggerOnMoveAction()
+        {
+            for (int i = 0; i < m_OnMoveActions.Length; i++)
+            {
+                m_OnMoveActions[i].Execute(Parent);
+            }
         }
     }
 

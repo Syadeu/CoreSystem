@@ -692,6 +692,7 @@ namespace SyadeuEditor
                                 if (generics.Length > 0) targetType = elementType.GetGenericArguments()[0];
                                 else targetType = null;
 
+                                int currentIndex = j;
                                 DrawReferenceSelector(string.Empty, (idx) =>
                                 {
                                     ObjectBase objBase = EntityDataList.Instance.GetObject(idx);
@@ -703,7 +704,7 @@ namespace SyadeuEditor
                                     object temp = TypeHelper.GetConstructorInfo(makedT, TypeHelper.TypeOf<ObjectBase>.Type).Invoke(
                                         new object[] { objBase });
 
-                                    list[j] = temp;
+                                    list[currentIndex] = temp;
                                 }, objRef, targetType);
                             }
                             else if (elementType.Equals(TypeHelper.TypeOf<LuaScript>.Type))

@@ -1,10 +1,7 @@
-﻿using Newtonsoft.Json;
-using Syadeu.Database;
+﻿using Syadeu.Database;
 using Syadeu.Presentation.Entities;
-using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Animations;
 
 namespace Syadeu.Presentation.Attributes
 {
@@ -12,7 +9,7 @@ namespace Syadeu.Presentation.Attributes
     public sealed class AnimatorComponent : MonoBehaviour
     {
         internal AnimatorAttribute m_AnimatorAttribute;
-        private Animator m_Animator;
+        internal Animator m_Animator;
 
         private void Awake()
         {
@@ -38,21 +35,6 @@ namespace Syadeu.Presentation.Attributes
             for (int i = 0; i < actions.Count; i++)
             {
                 actions[i].Execute(m_AnimatorAttribute.Parent);
-            }
-        }
-    }
-
-    public sealed class AnimationTriggerAction : ActionBase<AnimationTriggerAction>
-    {
-        [JsonProperty(Order = 0, PropertyName = "TriggerName")] public string m_TriggerName;
-        [JsonProperty(Order = 1, PropertyName = "TriggerActions")]
-        public Reference<ActionBase>[] m_TriggerActions = Array.Empty<Reference<ActionBase>>();
-
-        protected override void OnExecute(EntityData<IEntityData> entity)
-        {
-            for (int i = 0; i < m_TriggerActions.Length; i++)
-            {
-                m_TriggerActions[i].Execute(entity);
             }
         }
     }

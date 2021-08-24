@@ -2,8 +2,10 @@
 using Syadeu.Database;
 using Syadeu.Mono;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Events;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Syadeu.Presentation.Attributes
 {
@@ -13,12 +15,39 @@ namespace Syadeu.Presentation.Attributes
         [JsonProperty(Order = 0, PropertyName = "TriggerActions")]
         public Reference<AnimationTriggerAction>[] m_TriggerActions = Array.Empty<Reference<AnimationTriggerAction>>();
 
-        [JsonIgnore] public AnimatorComponent Animator { get; internal set; }
+        [Space]
+        [JsonProperty(Order = 10, PropertyName = "OnMoveActions")]
+        public Reference<ActionBase>[] m_OnMoveActions = Array.Empty<Reference<ActionBase>>();
+
+        [JsonIgnore] internal AnimatorComponent Animator { get; set; }
         [JsonIgnore] public Dictionary<Hash, List<Reference<AnimationTriggerAction>>> Actions { get; internal set; }
+
+        public void SetFloat(int key, float value)
+        {
+            if (Animator == null) return;
+
+            Animator.m_Animator.SetFloat(key, value);
+        }
     }
     internal sealed class AnimatorProcessor : AttributeProcessor<AnimatorAttribute>,
         IAttributeOnProxy
     {
+        protected override void OnInitialize()
+        {
+            EventSystem.AddEvent<OnMoveStateChangedEvent>(OnMoveStateChangedEventHandler);
+        }
+        private void OnMoveStateChangedEventHandler(OnMoveStateChangedEvent ev)
+        {
+            AnimatorAttribute att = ev.Entity.GetAttribute<AnimatorAttribute>();
+            if (att == null) return;
+
+            var entity = ev.Entity.As<IEntity, IEntityData>();
+            for (int i = 0; i < att.m_OnMoveActions.Length; i++)
+            {
+                att.m_OnMoveActions[i].Execute(entity);
+            }
+        }
+
         protected override void OnCreated(AnimatorAttribute attribute, EntityData<IEntityData> entity)
         {
             attribute.Actions = new Dictionary<Hash, List<Reference<AnimationTriggerAction>>>();
@@ -62,7 +91,6 @@ namespace Syadeu.Presentation.Attributes
             }
 
             att.Animator.SetActive(true);
-            //att.Animator.get
         }
 
         public void OnProxyRemoved(AttributeBase attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
