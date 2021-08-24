@@ -34,9 +34,9 @@ namespace SyadeuEditor.Presentation
             {
                 ObjectBase objBase = EntityDataList.Instance.GetObject(idx);
 
-                Type makedT;
-                if (targetType != null) makedT = typeof(Reference<>).MakeGenericType(targetType);
-                else makedT = TypeHelper.TypeOf<Reference>.Type;
+                Type makedT = DeclaredType;
+                //if (targetType != null) makedT = typeof(Reference<>).MakeGenericType(targetType);
+                //else makedT = TypeHelper.TypeOf<Reference>.Type;
 
                 object temp = TypeHelper.GetConstructorInfo(makedT, TypeHelper.TypeOf<ObjectBase>.Type).Invoke(
                     new object[] { objBase });
