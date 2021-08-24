@@ -583,9 +583,10 @@ namespace SyadeuEditor.Presentation
                 {
                     drawer.OnGUI();
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    EditorGUILayout.LabelField($"Error at {drawer.Name}");
+                    EditorGUILayout.LabelField($"Error at {drawer.Name} {ex.Message}");
+                    Debug.LogException(ex);
                 }
             }
         }

@@ -7,13 +7,24 @@ using Unity.Mathematics;
 
 namespace Syadeu.Database
 {
-    [Serializable, JsonConverter(typeof(PrefabReferenceJsonConvereter))]
-    public struct PrefabReference : IEquatable<PrefabReference>, IValidation
+    [JsonConverter(typeof(PrefabReferenceJsonConvereter))]
+    public interface IPrefabReference : IEquatable<IPrefabReference>, IValidation
+    {
+        long Index { get; }
+        PrefabList.ObjectSetting GetObjectSetting();
+
+        bool IsNone();
+    }
+
+    [Serializable]
+    public readonly struct PrefabReference : IPrefabReference, IEquatable<PrefabReference>
     {
         public static readonly PrefabReference Invalid = new PrefabReference(-1);
         public static readonly PrefabReference None = new PrefabReference(-2);
 
-        [JsonProperty(Order = 0)] public readonly long m_Idx;
+        private readonly long m_Idx;
+
+        public long Index => m_Idx;
 
         public PrefabReference(int idx)
         {
@@ -25,6 +36,7 @@ namespace Syadeu.Database
         }
 
         public bool Equals(PrefabReference other) => m_Idx.Equals(other.m_Idx);
+        public bool Equals(IPrefabReference other) => m_Idx.Equals(other.Index);
 
         public PrefabList.ObjectSetting GetObjectSetting()
         {
@@ -32,6 +44,7 @@ namespace Syadeu.Database
             return PrefabList.Instance.ObjectSettings[(int)m_Idx];
         }
 
+        bool IPrefabReference.IsNone() => Equals(None);
         public bool IsValid() => !Equals(Invalid) && m_Idx < PrefabList.Instance.ObjectSettings.Count;
 
         public static PrefabReference Find(string name)
@@ -57,5 +70,61 @@ namespace Syadeu.Database
         }
         public static implicit operator string(PrefabReference a) => a.GetObjectSetting().m_Name;
         public static implicit operator PrefabList.ObjectSetting(PrefabReference a) => a.GetObjectSetting();
+    }
+    [Serializable]
+    public readonly struct PrefabReference<T> : IPrefabReference, IEquatable<PrefabReference<T>>
+        where T : UnityEngine.Object
+    {
+        public static readonly PrefabReference<T> Invalid = new PrefabReference<T>(-1);
+        public static readonly PrefabReference<T> None = new PrefabReference<T>(-2);
+
+        private readonly long m_Idx;
+
+        public long Index => m_Idx;
+
+        public PrefabReference(int idx)
+        {
+            m_Idx = idx;
+        }
+        public PrefabReference(long idx)
+        {
+            m_Idx = idx;
+        }
+
+        public bool Equals(PrefabReference<T> other) => m_Idx.Equals(other.m_Idx);
+        public bool Equals(IPrefabReference other) => m_Idx.Equals(other.Index);
+
+        public PrefabList.ObjectSetting GetObjectSetting()
+        {
+            if (!IsValid() || Equals(None)) return null;
+            return PrefabList.Instance.ObjectSettings[(int)m_Idx];
+        }
+
+        bool IPrefabReference.IsNone() => Equals(None);
+        public bool IsValid() => !Equals(Invalid) && m_Idx < PrefabList.Instance.ObjectSettings.Count;
+
+        public static PrefabReference<T> Find(string name)
+        {
+            var obj = PrefabList.Instance.ObjectSettings.FindFor((other) => other.m_Name.Equals(name));
+            if (obj != null)
+            {
+                return new PrefabReference<T>(PrefabList.Instance.ObjectSettings.IndexOf(obj));
+            }
+            return Invalid;
+        }
+
+        public static implicit operator int(PrefabReference<T> a) => (int)a.m_Idx;
+        public static implicit operator PrefabReference<T>(int a)
+        {
+            if (0 >= a && a >= PrefabList.Instance.ObjectSettings.Count)
+            {
+                CoreSystem.Logger.LogError(Channel.Data,
+                    $"Cannot found prefab index of {a}. Request ignored.");
+                return Invalid;
+            }
+            return new PrefabReference<T>(a);
+        }
+        public static implicit operator string(PrefabReference<T> a) => a.GetObjectSetting().m_Name;
+        public static implicit operator PrefabList.ObjectSetting(PrefabReference<T> a) => a.GetObjectSetting();
     }
 }

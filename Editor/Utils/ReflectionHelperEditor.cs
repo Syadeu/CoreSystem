@@ -42,7 +42,7 @@ namespace SyadeuEditor
         readonly Dictionary<object, AttributeListDrawer> m_CachedAttributeListDrawer = new Dictionary<object, AttributeListDrawer>();
 
         static GUIStyle m_SelectorStyle = null;
-        static GUIStyle SelectorStyle
+        public static GUIStyle SelectorStyle
         {
             get
             {
@@ -345,10 +345,10 @@ namespace SyadeuEditor
             EditorGUILayout.EndHorizontal();
             //EditorGUIUtility.SetIconSize(iconSize);
         }
-        public static void DrawPrefabReference(string name, Action<int> setter, PrefabReference current)
+        public static void DrawPrefabReference(string name, Action<int> setter, IPrefabReference current)
         {
             string displayName;
-            if (current.m_Idx >= 0)
+            if (current.Index >= 0)
             {
                 PrefabList.ObjectSetting objSetting = current.GetObjectSetting();
                 displayName = objSetting == null ? "INVALID" : objSetting.m_Name;
@@ -372,7 +372,29 @@ namespace SyadeuEditor
                 Rect rect = GUILayoutUtility.GetLastRect();
                 rect.position = Event.current.mousePosition;
 
-                PopupWindow.Show(rect, SelectorPopup<int, PrefabList.ObjectSetting>.GetWindow(PrefabList.Instance.ObjectSettings, setter, (objSet) =>
+                Type type = current.GetType();
+                List<PrefabList.ObjectSetting> list;
+
+                if (type.GenericTypeArguments.Length > 0)
+                {
+                    list = PrefabList.Instance.ObjectSettings
+                        .Where((other) =>
+                        {
+                            if (other.m_RefPrefab.editorAsset == null) return false;
+
+                            if (type.GenericTypeArguments[0].IsAssignableFrom(other.m_RefPrefab.editorAsset.GetType()))
+                            {
+                                return true;
+                            }
+                            return false;
+                        }).ToList();
+                }
+                else
+                {
+                    list = PrefabList.Instance.ObjectSettings;
+                }
+
+                PopupWindow.Show(rect, SelectorPopup<int, PrefabList.ObjectSetting>.GetWindow(list, setter, (objSet) =>
                 {
                     for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
                     {
