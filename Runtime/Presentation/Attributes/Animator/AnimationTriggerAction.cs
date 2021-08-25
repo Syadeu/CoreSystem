@@ -2,7 +2,7 @@
 using Syadeu.Presentation.Entities;
 using System;
 
-namespace Syadeu.Presentation.Attributes
+namespace Syadeu.Presentation.Actions
 {
     public sealed class AnimationTriggerAction : ActionBase<AnimationTriggerAction>
     {

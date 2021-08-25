@@ -1,7 +1,8 @@
 ﻿using Syadeu.Database;
+using Syadeu.Presentation.Entities;
 using UnityEngine;
 
-namespace Syadeu.Presentation.Entities
+namespace Syadeu.Presentation.Actions
 {
     public sealed class TestAction : ActionBase<TestAction>
     {

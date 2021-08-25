@@ -1,11 +1,12 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Internal;
+using Syadeu.Presentation.Entities;
 using UnityEngine;
 
-namespace Syadeu.Presentation.Entities
+namespace Syadeu.Presentation.Actions
 {
     [ReflectionDescription("Unity Animator 전용입니다")]
-    public sealed class EntityAnimationTriggerAction : ActionBase<EntityAnimationTriggerAction>
+    public sealed class AnimationTriggerKeyAction : ActionBase<AnimationTriggerKeyAction>
     {
         [JsonProperty(Order = 0, PropertyName = "TriggerKey")] private string m_TriggerKey = string.Empty;
 

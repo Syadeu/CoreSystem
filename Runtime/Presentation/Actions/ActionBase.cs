@@ -1,10 +1,11 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Presentation.Attributes;
+using Syadeu.Presentation.Entities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Syadeu.Presentation.Entities
+namespace Syadeu.Presentation.Actions
 {
     public abstract class ActionBase : ObjectBase
     {

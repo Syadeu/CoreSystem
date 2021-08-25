@@ -1,8 +1,9 @@
 ﻿using Syadeu.Database;
+using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using System.Collections.Generic;
 
-namespace Syadeu.Presentation.Entities
+namespace Syadeu.Presentation.Actions
 {
     public abstract class StatefulActionBase<TState, TAction> : ActionBase
         where TState : StateBase<TAction>, ITerminate, new()

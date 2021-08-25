@@ -19,6 +19,7 @@ using Unity.Mathematics;
 using Syadeu;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Actions;
 
 namespace SyadeuEditor
 {

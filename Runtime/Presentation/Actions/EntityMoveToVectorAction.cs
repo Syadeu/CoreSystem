@@ -1,9 +1,10 @@
 ﻿using Newtonsoft.Json;
+using Syadeu.Presentation.Entities;
 using System.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace Syadeu.Presentation.Entities
+namespace Syadeu.Presentation.Actions
 {
     public sealed class EntityMoveToVectorAction : ActionBase<EntityMoveToVectorAction>
     {

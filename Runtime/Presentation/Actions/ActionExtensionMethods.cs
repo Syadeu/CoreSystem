@@ -1,6 +1,7 @@
 ﻿using Syadeu.Database;
+using Syadeu.Presentation.Entities;
 
-namespace Syadeu.Presentation.Entities
+namespace Syadeu.Presentation.Actions
 {
     public static class ActionExtensionMethods
     {
