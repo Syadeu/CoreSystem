@@ -200,63 +200,6 @@ namespace Syadeu.Presentation
 
             CameraFrustum frustum = m_RenderSystem.GetRawFrustum();
 
-            #region Destroy
-            int destroyCount = m_RequestDestories.Count;
-            for (int i = 0; i < destroyCount; i++)
-            {
-                ProxyTransform tr = m_ProxyData[m_RequestDestories.Dequeue()];
-                if (tr.isDestroyed)
-                {
-                    CoreSystem.Logger.LogError(Channel.Proxy,
-                        $"Already destroyed");
-                    continue;
-                }
-
-                OnDataObjectDestroy?.Invoke(tr);
-
-                if (tr.hasProxy && !tr.hasProxyQueued)
-                {
-                    RecycleableMonobehaviour proxy = RemoveProxy(tr);
-
-                    var intersection = frustum.IntersectsSphere(proxy.transform.position, proxy.transform.localScale.sqrMagnitude, 1);
-
-                    if ((intersection & IntersectionType.Intersects) == IntersectionType.Intersects ||
-                        (intersection & IntersectionType.Contains) == IntersectionType.Contains)
-                    {
-                        proxy.transform.position = INIT_POSITION;
-                    }
-                }
-                //else if (tr.hasProxyQueued)
-                //{
-                //    "on destroy but proxy queued".ToLogError();
-                //}
-                //else
-                //{
-                //    "in".ToLog();
-                //}
-
-                unsafe
-                {
-                    ClusterID id = tr.Pointer->m_ClusterID;
-                    if (id.Equals(ClusterID.Requested))
-                    {
-                        int tempCount = m_ClusterIDRequests.Count;
-                        for (int a = 0; a < tempCount; a++)
-                        {
-                            var tempID = m_ClusterIDRequests.Dequeue();
-                            if (tempID.index.Equals(tr.Pointer->m_Index))
-                            {
-                                break;
-                            }
-                            else m_ClusterIDRequests.Enqueue(tempID);
-                        }
-                    }
-                    else m_ClusterData.Remove(id);
-                }
-                m_ProxyData.Remove(tr);
-            }
-            #endregion
-
             #region Create / Remove Proxy
             int requestProxyCount = m_RequestProxyList.Count;
             for (int i = 0; i < requestProxyCount; i++)
@@ -267,7 +210,7 @@ namespace Syadeu.Presentation
 
                 if (tr.isDestroyed)
                 {
-                    //CoreSystem.Logger.LogError(Channel.Proxy, $"1 destroyed transform");
+                    CoreSystem.Logger.LogError(Channel.Proxy, $"1 destroyed transform");
                     continue;
                 }
                 else if (tr.hasProxy && !tr.hasProxyQueued)
@@ -287,7 +230,7 @@ namespace Syadeu.Presentation
 
                 if (tr.isDestroyed)
                 {
-                    //CoreSystem.Logger.LogError(Channel.Proxy, $"2 destroyed transform");
+                    CoreSystem.Logger.LogError(Channel.Proxy, $"2 destroyed transform");
                     continue;
                 }
                 else if (!tr.hasProxy)
@@ -324,6 +267,60 @@ namespace Syadeu.Presentation
 
                 tr.isVisible = false;
                 OnDataObjectInvisible?.Invoke(tr);
+            }
+            #endregion
+
+            #region Destroy
+            int destroyCount = m_RequestDestories.Count;
+            for (int i = 0; i < destroyCount; i++)
+            {
+                ProxyTransform tr = m_ProxyData[m_RequestDestories.Dequeue()];
+                if (tr.isDestroyed)
+                {
+                    CoreSystem.Logger.LogError(Channel.Proxy,
+                        $"Already destroyed");
+                    continue;
+                }
+
+                if (tr.hasProxy && !tr.hasProxyQueued)
+                {
+                    RecycleableMonobehaviour proxy = RemoveProxy(tr);
+
+                    var intersection = frustum.IntersectsSphere(proxy.transform.position, proxy.transform.localScale.sqrMagnitude, 1);
+
+                    if ((intersection & IntersectionType.Intersects) == IntersectionType.Intersects ||
+                        (intersection & IntersectionType.Contains) == IntersectionType.Contains)
+                    {
+                        proxy.transform.position = INIT_POSITION;
+                    }
+                }
+                if (tr.isVisible)
+                {
+                    tr.isVisible = false;
+                    OnDataObjectInvisible?.Invoke(tr);
+                }
+
+                OnDataObjectDestroy?.Invoke(tr);
+
+                unsafe
+                {
+                    ClusterID id = tr.Pointer->m_ClusterID;
+                    if (id.Equals(ClusterID.Requested))
+                    {
+                        int tempCount = m_ClusterIDRequests.Count;
+                        for (int a = 0; a < tempCount; a++)
+                        {
+                            var tempID = m_ClusterIDRequests.Dequeue();
+                            if (tempID.index.Equals(tr.Pointer->m_Index))
+                            {
+                                break;
+                            }
+                            else m_ClusterIDRequests.Enqueue(tempID);
+                        }
+                    }
+                    else m_ClusterData.Remove(id);
+                }
+                m_ProxyData.Remove(tr);
             }
             #endregion
 
