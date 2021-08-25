@@ -518,7 +518,7 @@ namespace Syadeu.Presentation
 
         #endregion
 
-        public EntityData<ConvertedEntity> Convert(GameObject obj)
+        public Entity<ConvertedEntity> Convert(GameObject obj)
         {
             CoreSystem.Logger.ThreadBlock(nameof(Convert), ThreadInfo.Unity);
 
@@ -543,7 +543,7 @@ namespace Syadeu.Presentation
             m_ObjectEntities.Add(entity.Idx, entity);
 
             ProcessEntityOnCreated(this, entity);
-            return EntityData<ConvertedEntity>.GetEntity(entity.Idx);
+            return Entity<ConvertedEntity>.GetEntity(entity.Idx);
         }
         public EntityData<T> Convert<T>(GameObject obj) where T : EntityDataBase
         {

@@ -16,6 +16,7 @@ using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Experimental.GlobalIllumination;
 
 namespace Syadeu.Presentation.Render
 {
@@ -27,6 +28,7 @@ namespace Syadeu.Presentation.Render
         public override bool EnableAfterPresentation => true;
 
         private ObClass<Camera> m_Camera;
+        private ObClass<Light> m_DirectionalLight;
         private Matrix4x4 m_Matrix4x4;
 
         [ConfigValue(Header = "Resolution", Name = "X")] private int m_ResolutionX;
@@ -40,6 +42,21 @@ namespace Syadeu.Presentation.Render
                 m_Camera.Value = value;
             }
         }
+        public Light DirectionalLight
+        {
+            get => m_DirectionalLight.Value;
+            set
+            {
+                if (value.type != UnityEngine.LightType.Directional)
+                {
+                    CoreSystem.Logger.LogError(Channel.Render,
+                        $"{value.name} is not a Directional Light.");
+                    return;
+                }
+
+                m_DirectionalLight.Value = value;
+            }
+        }
 		public CameraFrustum.ReadOnly Frustum => GetFrustum();
 
         public event Action<Camera, Camera> OnCameraChanged;
@@ -49,18 +66,26 @@ namespace Syadeu.Presentation.Render
 		private CameraFrustum m_CameraFrustum;
         private CameraData m_LastCameraData;
 
+        private LightData m_LastDirectionalLightData;
+
+        public CameraData LastCameraData => m_LastCameraData;
+        public LightData LastDirectionalLightData => m_LastDirectionalLightData;
+
         #region Presentation Methods
 
         protected override PresentationResult OnInitialize()
         {
             m_CameraFrustum = new CameraFrustum(new CameraData());
-            m_LastCameraData = new CameraData();
+            m_LastCameraData = new CameraData() { orientation = quaternion.identity };
 
             m_Camera = new ObClass<Camera>(ObValueDetection.Changed);
             m_Camera.OnValueChange += OnCameraChangedHandler;
 
             CoreSystem.Instance.OnRender -= Instance_OnRender;
             CoreSystem.Instance.OnRender += Instance_OnRender;
+
+            m_DirectionalLight = new ObClass<Light>(ObValueDetection.Changed);
+            m_LastDirectionalLightData = new LightData() { orientation = quaternion.identity };
 
             return base.OnInitialize();
         }
@@ -100,6 +125,14 @@ namespace Syadeu.Presentation.Render
         }
         protected override PresentationResult AfterPresentation()
         {
+            if (DirectionalLight != null)
+            {
+                m_LastDirectionalLightData.Update(DirectionalLight);
+
+                //float4x4 matrix = m_LastDirectionalLightData.lightSpace;
+                
+            }
+
             if (Camera == null) return base.AfterPresentation();
 
             m_LastCameraData.Update(Camera);
@@ -162,6 +195,7 @@ namespace Syadeu.Presentation.Render
             pos.x *= pos.w; pos.y *= pos.w; pos.z *= pos.w;
             return pos.xyz;
         }
+        
         public Ray ScreenToRay(float3 screenPoint)
         {
             float4x4 projection = m_LastCameraData.projectionMatrix;
@@ -178,6 +212,16 @@ namespace Syadeu.Presentation.Render
 
             float4 pos = math.mul(matrix, temp);
             return new Ray(m_LastCameraData.position, pos.xyz - m_LastCameraData.position);
+        }
+        public Ray PointToLightRay(float3 worldPoint)
+        {
+            float3 forward = math.mul(LastDirectionalLightData.orientation, new float3(0, 0, 1));
+            return new Ray(worldPoint, forward);
+        }
+
+        public void SetResolution()
+        {
+            //Screen.SetResolution(100,100, FullScreenMode.ExclusiveFullScreen, )
         }
 
         #region Legacy

@@ -6,7 +6,7 @@ using System;
 
 namespace Syadeu.Presentation
 {
-    public sealed class EntityTriggerSystem : PresentationSystemEntity<EntityTriggerSystem>
+    public sealed class EntityBoundSystem : PresentationSystemEntity<EntityBoundSystem>
     {
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;
@@ -15,8 +15,10 @@ namespace Syadeu.Presentation
         private Cluster<TriggerBoundAttribute> m_TriggerBoundCluster;
         private Entity<IEntity>[] m_TriggerBoundArray;
 
+        internal Cluster<TriggerBoundAttribute> BoundCluster => m_TriggerBoundCluster;
+
         private EntitySystem m_EntitySystem;
-        private Events.EventSystem m_EventSystem;
+        private EventSystem m_EventSystem;
 
         #region Presentation Methods
 
@@ -26,7 +28,7 @@ namespace Syadeu.Presentation
             m_TriggerBoundArray = new Entity<IEntity>[1024];
 
             RequestSystem<EntitySystem>(Bind);
-            RequestSystem<Events.EventSystem>(Bind);
+            RequestSystem<EventSystem>(Bind);
 
             return base.OnInitialize();
         }
@@ -74,7 +76,7 @@ namespace Syadeu.Presentation
             att.m_ClusterID = ClusterID.Empty;
         }
 
-        private void Bind(Events.EventSystem other)
+        private void Bind(EventSystem other)
         {
             m_EventSystem = other;
 
