@@ -9,6 +9,7 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 using AABB = Syadeu.Database.AABB;
+using Plane = Syadeu.Database.Plane;
 
 namespace Syadeu.Presentation.Render
 {
@@ -39,7 +40,7 @@ namespace Syadeu.Presentation.Render
 		public struct ReadOnly
         {
 			public readonly float3 position;
-			public readonly NativeArray<Plane> planes;
+			//public readonly NativeArray<Plane> planes;
 			public readonly NativeArray<float3>
 				corners,
 				absNormals,
@@ -53,7 +54,7 @@ namespace Syadeu.Presentation.Render
 			internal ReadOnly(ref CameraFrustum data)
             {
 				position = data.m_Position;
-				planes = data.m_Planes;
+				//planes = data.m_Planes;
 				corners = data.m_Corners;
 				absNormals = data.m_AbsNormals;
 				planeNormals = data.m_PlaneNormals;
@@ -194,13 +195,23 @@ namespace Syadeu.Presentation.Render
 #endif
 			return Contains(in m_PlaneNormals, in m_PlaneDistances, in point);
 		}
-		public bool IntersectsBox(in AABB box, float frustumPadding = 0)
+        public bool IntersectsRay(in Ray ray, out float distance)
+        {
+            distance = float.MaxValue;
+            bool interect = false;
+            for (int i = 0; i < m_Planes.Length; i++)
+            {
+                interect |= m_Planes[i].Raycast(ray, out float dis);
+                if (interect && dis < distance) distance = dis;
+            }
+            return interect;
+        }
+        public bool IntersectsBox(in AABB box, float frustumPadding = 0)
         {
 #if UNITY_EDITOR
 			AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
 			AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
 #endif
-
 			IntersectionType type = IntersectsBox(in m_Corners, in m_AbsNormals, in m_PlaneNormals, in m_PlaneDistances,
 				in box, frustumPadding);
 

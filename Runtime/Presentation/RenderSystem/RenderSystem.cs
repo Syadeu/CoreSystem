@@ -213,11 +213,6 @@ namespace Syadeu.Presentation.Render
             float4 pos = math.mul(matrix, temp);
             return new Ray(m_LastCameraData.position, pos.xyz - m_LastCameraData.position);
         }
-        public Ray PointToLightRay(float3 worldPoint)
-        {
-            float3 forward = math.mul(LastDirectionalLightData.orientation, new float3(0, 0, 1));
-            return new Ray(worldPoint, forward);
-        }
 
         public void SetResolution()
         {

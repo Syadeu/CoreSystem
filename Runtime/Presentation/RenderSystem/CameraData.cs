@@ -88,6 +88,7 @@ namespace Syadeu.Presentation.Render
 
 	public struct LightData
     {
+		public bool isCreated;
 		public LightType type;
 		public LightShadowResolution shadowResolution;
 
@@ -135,6 +136,7 @@ namespace Syadeu.Presentation.Render
 					$"{nameof(LightData)} trying to update null");
 				return;
             }
+			isCreated = true;
 
 			type = light.type;
 			shadowResolution = light.shadowResolution;
@@ -142,6 +144,11 @@ namespace Syadeu.Presentation.Render
 			Transform tr = light.transform;
 			position = tr.position;
 			orientation = tr.rotation;
+		}
+		public Ray PointToRay(float3 point)
+        {
+			float3 forward = math.mul(orientation, new float3(0, 0, 1));
+			return new Ray(point, forward);
 		}
 
 		private static float ToMultiplier(LightShadowResolution resolution)
