@@ -2,7 +2,7 @@
 using Syadeu.Internal;
 using System.Collections.Concurrent;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Presentation.Data
 {
     /// <summary>
     /// 시스템 동기화를 위해 임시로 데이터를 저장할 수 있는 시스템입니다.

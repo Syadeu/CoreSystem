@@ -15,6 +15,7 @@ using Unity.Mathematics;
 using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
+using Syadeu.Presentation.Data;
 
 namespace Syadeu.Presentation
 {

@@ -4,6 +4,7 @@ using Syadeu.Internal;
 using Syadeu.Presentation;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Attributes;
+using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Entities;
 using System;
 using System.Collections.Generic;
@@ -101,6 +102,8 @@ namespace SyadeuEditor.Presentation
             EntityWindow m_MainWindow;
             GenericMenu m_FileMenu;
 
+            bool m_IsLoaded = false;
+
             Rect lastRect;
 
             public ToolbarWindow(EntityWindow window)
@@ -111,80 +114,36 @@ namespace SyadeuEditor.Presentation
                 m_FileMenu.AddItem(new GUIContent("Save"), false, SaveMenu);
                 m_FileMenu.AddItem(new GUIContent("Load"), false, LoadMenu);
                 m_FileMenu.AddSeparator(string.Empty);
-                m_FileMenu.AddItem(new GUIContent("Add/Entity"), false, AddEntityMenu);
-                m_FileMenu.AddItem(new GUIContent("Add/Attribute"), false, AddAttributeMenu);
-                m_FileMenu.AddItem(new GUIContent("Add/Action"), false, AddActionMenu);
+                m_FileMenu.AddItem(new GUIContent("Add/Entity"), false, AddDataMenu<EntityDataBase>);
+                m_FileMenu.AddItem(new GUIContent("Add/Attribute"), false, AddDataMenu<AttributeBase>);
+                m_FileMenu.AddItem(new GUIContent("Add/Action"), false, AddDataMenu<ActionBase>);
+                m_FileMenu.AddItem(new GUIContent("Add/Data"), false, AddDataMenu<DataObjectBase>);
             }
             private void SaveMenu()
             {
+                if (!m_IsLoaded) return;
+
                 EntityDataList.Instance.SaveData();
             }
             private void LoadMenu()
             {
                 EntityDataList.Instance.LoadData();
                 m_MainWindow.Reload();
-            }
-            private void AddEntityMenu()
-            {
-                Type[] types = TypeHelper.GetTypes((other) => !other.IsAbstract &&
-                            TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(other));
 
-                PopupWindow.Show(lastRect, SelectorPopup<Type, Type>.GetWindow(types, 
+                m_IsLoaded = true;
+            }
+            private void AddDataMenu<T>() where T : ObjectBase
+            {
+                if (!m_IsLoaded) LoadMenu();
+
+                Type[] types = TypeHelper.GetTypes((other) => !other.IsAbstract && TypeHelper.TypeOf<T>.Type.IsAssignableFrom(other));
+
+                PopupWindow.Show(lastRect, SelectorPopup<Type, Type>.GetWindow(types,
                     (t) =>
                     {
                         if (EntityDataList.Instance.m_Objects == null) EntityDataList.Instance.m_Objects = new Dictionary<Hash, ObjectBase>();
 
-                        ObjectBase ins = (ObjectBase)Activator.CreateInstance(t);
-
-                        EntityDataList.Instance.m_Objects.Add(ins.Hash, ins);
-                        m_MainWindow.AddData(ins);
-                    },
-                    (t) => t,   
-                    null,
-                    (t) =>
-                    {
-                        if (t.GetCustomAttribute<ObsoleteAttribute>() != null)
-                        {
-                            return $"[Deprecated] {t.Name}";
-                        }
-                        else return t.Name;
-                    }));
-            }
-            private void AddAttributeMenu()
-            {
-                Type[] types = TypeHelper.GetTypes((other) => !other.IsAbstract && TypeHelper.TypeOf<AttributeBase>.Type.IsAssignableFrom(other));
-
-                PopupWindow.Show(lastRect, SelectorPopup<Type, Type>.GetWindow(types, 
-                    (t) =>
-                    {
-                        if (EntityDataList.Instance.m_Objects == null) EntityDataList.Instance.m_Objects = new Dictionary<Hash, ObjectBase>();
-
-                        AttributeBase ins = (AttributeBase)Activator.CreateInstance(t);
-
-                        EntityDataList.Instance.m_Objects.Add(ins.Hash, ins);
-                        m_MainWindow.AddData(ins);
-                    },
-                    (t) => t,
-                    null,
-                    (t) =>
-                    {
-                        if (t.GetCustomAttribute<ObsoleteAttribute>() != null)
-                        {
-                            return $"[Deprecated] {t.Name}";
-                        }
-                        else return t.Name;
-                    }));
-            }
-            private void AddActionMenu()
-            {
-                Type[] types = TypeHelper.GetTypes((other) => !other.IsAbstract && TypeHelper.TypeOf<ActionBase>.Type.IsAssignableFrom(other));
-
-                PopupWindow.Show(lastRect, SelectorPopup<Type, Type>.GetWindow(types, 
-                    (t) =>
-                    {
-                        if (EntityDataList.Instance.m_Objects == null) EntityDataList.Instance.m_Objects = new Dictionary<Hash, ObjectBase>();
-
-                        ActionBase ins = (ActionBase)Activator.CreateInstance(t);
+                        T ins = (T)Activator.CreateInstance(t);
 
                         EntityDataList.Instance.m_Objects.Add(ins.Hash, ins);
                         m_MainWindow.AddData(ins);

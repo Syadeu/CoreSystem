@@ -7,7 +7,7 @@ namespace Syadeu.Presentation
         public override void Register()
         {
             RegisterSystem(
-                TypeHelper.TypeOf<DataContainerSystem>.Type,
+                TypeHelper.TypeOf<Data.DataContainerSystem>.Type,
                 TypeHelper.TypeOf<Events.EventSystem>.Type,
                 TypeHelper.TypeOf<GameObjectProxySystem>.Type,
                 TypeHelper.TypeOf<EntitySystem>.Type,

@@ -49,7 +49,8 @@ namespace Syadeu.Presentation.Actions
             //animator.Animator.transform.rotation = rot;
 
             float
-                speed = navAgent.Speed,
+                //speed = navAgent.Speed,
+                speed = 2,
                 prevSpeed = animator.GetFloat(m_Speed),
                 prevHorizontal = animator.GetFloat(m_Horizontal)
                 //prevVertical = animator.GetFloat(m_Vertical)

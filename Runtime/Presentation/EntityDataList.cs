@@ -3,6 +3,7 @@ using Syadeu.Internal;
 using Syadeu.Presentation;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Attributes;
+using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Entities;
 using System;
 using System.Collections.Generic;
@@ -115,6 +116,8 @@ namespace Syadeu.Database
 
             #endregion
 
+            #region Load Actions
+
             string[] actionPaths = Directory.GetFiles(CoreSystemFolder.ActionPath, jsonPostfix, SearchOption.AllDirectories);
 
             Type[] actionTypes = TypeHelper.GetTypes((other) => TypeHelper.TypeOf<ActionBase>.Type.IsAssignableFrom(other));
@@ -149,12 +152,55 @@ namespace Syadeu.Database
 
                 m_Objects.Add(temp.Hash, temp);
             }
+
+            #endregion
+
+            Load<DataObjectBase>(CoreSystemFolder.DataPath);
+
+            void Load<T>(string path) where T : ObjectBase
+            {
+                string[] dataPaths = Directory.GetFiles(path, jsonPostfix, SearchOption.AllDirectories);
+
+                Type[] dataTypes = TypeHelper.GetTypes((other) => TypeHelper.TypeOf<T>.Type.IsAssignableFrom(other));
+                for (int i = 0; i < dataPaths.Length; i++)
+                {
+                    string lastFold = Path.GetFileName(Path.GetDirectoryName(dataPaths[i]));
+                    Type t = dataTypes.FindFor((other) => other.Name.Equals(lastFold));
+
+                    object obj;
+                    try
+                    {
+                        obj = JsonConvert.DeserializeObject(File.ReadAllText(dataPaths[i]), t);
+                        if (!(obj is T))
+                        {
+                            CoreSystem.Logger.LogWarning(Channel.Entity, $"Data({t?.Name}) at {dataPaths[i]} is invalid. This data has been ignored");
+                            continue;
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        CoreSystem.Logger.LogWarning(Channel.Entity, $"Data({t?.Name}) at {dataPaths[i]} is invalid. This data has been ignored");
+                        continue;
+                    }
+                    T temp = (T)obj;
+
+                    if (m_Objects.ContainsKey(temp.Hash))
+                    {
+                        CoreSystem.Logger.LogWarning(Channel.Entity, $"Data({t?.Name}) at {dataPaths[i]} is already registered. This data has been ignored and removed.");
+                        File.Delete(dataPaths[i]);
+                        continue;
+                    }
+
+                    m_Objects.Add(temp.Hash, temp);
+                }
+            }
         }
-        public void SaveData(ObjectBase obj)
+        public void SaveData<T>(T obj) where T : ObjectBase
         {
             DirectoryCheck();
 
-            Type objType = obj.GetType();
+            //Type objType = obj.GetType();
+            Type objType = TypeHelper.TypeOf<T>.Type;
             string objPath;
             if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(objType))
             {
@@ -167,6 +213,10 @@ namespace Syadeu.Database
             else if (TypeHelper.TypeOf<ActionBase>.Type.IsAssignableFrom(objType))
             {
                 objPath = Path.Combine(CoreSystemFolder.ActionPath, objType.Name);
+            }
+            else if (TypeHelper.TypeOf<DataObjectBase>.Type.IsAssignableFrom(objType))
+            {
+                objPath = Path.Combine(CoreSystemFolder.DataPath, objType.Name);
             }
             else
             {
@@ -243,6 +293,8 @@ namespace Syadeu.Database
 
             #endregion
 
+            #region Save Actions
+
             ActionBase[] actions = GetActions();
             if (actions != null)
             {
@@ -267,8 +319,39 @@ namespace Syadeu.Database
                 JsonConvert.SerializeObject(actions[i], Formatting.Indented));
                 }
             }
+            #endregion
+
+            Save<DataObjectBase>(CoreSystemFolder.DataPath);
 
             DeleteEmptyFolders();
+
+            void Save<T>(string path) where T : ObjectBase
+            {
+                T[] actions = GetData<T>();
+                if (actions != null)
+                {
+                    string[] dataPaths = Directory.GetFiles(path, jsonPostfix, SearchOption.AllDirectories);
+                    for (int i = 0; i < dataPaths.Length; i++)
+                    {
+                        string fileName = Path.GetFileNameWithoutExtension(dataPaths[i]);
+                        if (!actions.Where((other) => other.Name.Equals(fileName)).Any())
+                        {
+                            File.Delete(dataPaths[i]);
+                        }
+                    }
+
+                    for (int i = 0; i < actions.Length; i++)
+                    {
+                        string dataPath = Path.Combine(path, actions[i].GetType().Name);
+                        if (!Directory.Exists(dataPath)) Directory.CreateDirectory(dataPath);
+
+                        if (actions[i].Hash.Equals(Hash.Empty)) actions[i].Hash = Hash.NewHash();
+
+                        File.WriteAllText(string.Format(c_JsonFilePath, dataPath, ToFileName(actions[i])),
+                    JsonConvert.SerializeObject(actions[i], Formatting.Indented));
+                    }
+                }
+            }
         }
 
         private void DeleteEmptyFolders()
@@ -296,15 +379,24 @@ namespace Syadeu.Database
 
                 Directory.Delete(paths[i]);
             }
+            paths = Directory.GetDirectories(CoreSystemFolder.DataPath);
+            for (int i = 0; i < paths.Length; i++)
+            {
+                if (Directory.GetFiles(paths[i]).Length > 0) continue;
+
+                Directory.Delete(paths[i]);
+            }
         }
         private void DirectoryCheck()
         {
             if (!Directory.Exists(CoreSystemFolder.EntityPath)) Directory.CreateDirectory(CoreSystemFolder.EntityPath);
             if (!Directory.Exists(CoreSystemFolder.AttributePath)) Directory.CreateDirectory(CoreSystemFolder.AttributePath);
             if (!Directory.Exists(CoreSystemFolder.ActionPath)) Directory.CreateDirectory(CoreSystemFolder.ActionPath);
+            if (!Directory.Exists(CoreSystemFolder.DataPath)) Directory.CreateDirectory(CoreSystemFolder.DataPath);
         }
         #endregion
 
+        [Obsolete]
         public EntityDataBase[] GetEntities()
         {
             if (m_Objects == null) return Array.Empty<EntityDataBase>();
@@ -316,6 +408,7 @@ namespace Syadeu.Database
                     .Select((other) => (EntityDataBase)other.Value)
                     .ToArray();
         }
+        [Obsolete]
         public AttributeBase[] GetAttributes()
         {
             if (m_Objects == null) return Array.Empty<AttributeBase>();
@@ -327,6 +420,7 @@ namespace Syadeu.Database
                     .Select((other) => (AttributeBase)other.Value)
                     .ToArray();
         }
+        [Obsolete]
         public ActionBase[] GetActions()
         {
             if (m_Objects == null) return Array.Empty<ActionBase>();
@@ -336,6 +430,17 @@ namespace Syadeu.Database
                         return TypeHelper.TypeOf<ActionBase>.Type.IsAssignableFrom(other.Value.GetType());
                     })
                     .Select((other) => (ActionBase)other.Value)
+                    .ToArray();
+        }
+        public T[] GetData<T>() where T : ObjectBase
+        {
+            if (m_Objects == null) return Array.Empty<T>();
+            return m_Objects
+                    .Where((other) =>
+                    {
+                        return TypeHelper.TypeOf<T>.Type.IsAssignableFrom(other.Value.GetType());
+                    })
+                    .Select((other) => (T)other.Value)
                     .ToArray();
         }
 

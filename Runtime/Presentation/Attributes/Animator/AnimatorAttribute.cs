@@ -28,6 +28,11 @@ namespace Syadeu.Presentation.Attributes
             if (Animator == null) return;
             Animator.m_Animator.SetFloat(key, value);
         }
+        public void SetFloat(string key, float value)
+        {
+            if (Animator == null) return;
+            Animator.m_Animator.SetFloat(key, value);
+        }
         public float GetFloat(int key)
         {
             if (Animator == null) return 0;
