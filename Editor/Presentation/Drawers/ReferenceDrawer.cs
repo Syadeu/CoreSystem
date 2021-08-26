@@ -24,7 +24,7 @@ namespace SyadeuEditor.Presentation
         {
             Type targetType;
             Type[] generics = DeclaredType.GetGenericArguments();
-            if (generics.Length > 0) targetType = DeclaredType.GetGenericArguments()[0];
+            if (generics.Length > 0) targetType = generics[0];
             else targetType = null;
 
             GUILayout.BeginVertical();

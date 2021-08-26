@@ -32,7 +32,7 @@ namespace SyadeuEditor.Presentation
 
         protected override void OnEnable()
         {
-            EntityDataList.Instance.Purge();
+            if (!Application.isPlaying) EntityDataList.Instance.Purge();
 
             m_ToolbarWindow = new ToolbarWindow(this);
             m_DataListWindow = new DataListWindow(this);
@@ -127,7 +127,8 @@ namespace SyadeuEditor.Presentation
             }
             private void LoadMenu()
             {
-                EntityDataList.Instance.LoadData();
+                if (!Application.isPlaying) EntityDataList.Instance.LoadData();
+
                 m_MainWindow.Reload();
 
                 m_IsLoaded = true;

@@ -342,6 +342,7 @@ namespace SyadeuEditor.Presentation
 
                             if (!m_ElementOpen[i]) continue;
 
+                            EditorGUI.indentLevel++;
                             using (new EditorUtils.BoxBlock(Color.black))
                             {
                                 EditorGUILayout.BeginHorizontal();
@@ -350,17 +351,14 @@ namespace SyadeuEditor.Presentation
 
                                 if (GUILayout.Button("-", GUILayout.Width(20)))
                                 {
-                                    //"아직 작동안함".ToLog();
                                     list = RemoveAt(list, i);
-
-                                    //Reload();
-                                    //GUIUtility.ExitGUI()
                                     i--;
                                 }
                                 EditorGUILayout.EndHorizontal();
 
                                 if (i + 1 < m_ElementDrawers.Count) EditorUtils.Line();
                             }
+                            EditorGUI.indentLevel--;
                         }
                     }
                     EditorGUI.indentLevel--;

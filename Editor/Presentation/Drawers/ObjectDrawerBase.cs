@@ -145,7 +145,6 @@ namespace SyadeuEditor.Presentation
                 return (ObjectDrawerBase)TypeHelper.GetConstructorInfo(iter.First(), TypeHelper.TypeOf<object>.Type, TypeHelper.TypeOf<MemberInfo>.Type).Invoke(new object[] { parentObject, memberInfo });
             }
 
-            //return new ObjectDrawer(parentObject, memberInfo, string.Empty);
             return null;
         }
     }
