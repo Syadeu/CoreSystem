@@ -1,6 +1,7 @@
 ﻿using Syadeu.Database;
 using System;
 using Unity.Mathematics;
+using AABB = Syadeu.Database.AABB;
 
 namespace Syadeu.Presentation
 {
