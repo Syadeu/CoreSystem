@@ -1,6 +1,7 @@
 ﻿using Syadeu.Database;
 using Syadeu.Presentation.Render;
 using System;
+using System.Collections;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;

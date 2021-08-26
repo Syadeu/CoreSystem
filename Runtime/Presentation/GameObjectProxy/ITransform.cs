@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Syadeu.Database;
+using System;
 using Unity.Mathematics;
 
 namespace Syadeu.Presentation
@@ -17,6 +18,8 @@ namespace Syadeu.Presentation
 
         float4x4 localToWorldMatrix { get; }
         float4x4 worldToLocalMatrix { get; }
+
+        AABB aabb { get; }
 #pragma warning restore IDE1006 // Naming Styles
 
         void Destroy();

@@ -1,5 +1,9 @@
 ﻿using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Unity.Mathematics;
+using UnityEngine;
 
 namespace Syadeu.Presentation
 {
@@ -71,13 +75,45 @@ namespace Syadeu.Presentation
 
         #endregion
 
-        private void Test()
+        public void Raycast(List<RaycastInfo> output, in Ray ray, in float maxDistance = -1)
         {
-            //m_BoundSystem.BoundCluster.
-        }
-        private struct RaycastJob
-        {
+            output.Clear();
+            for (int i = 0; i < m_BoundSystem.BoundCluster.Length; i++)
+            {
+                if (!m_BoundSystem.BoundCluster[i].IsCreated) return;
 
+                ClusterGroup<TriggerBoundAttribute> group = m_BoundSystem.BoundCluster[i];
+                if (!group.AABB.Intersect(ray, out float dis)) continue;
+
+                if (maxDistance > 0 && dis > maxDistance) continue;
+
+                for (int j = 0; j < group.Length; j++)
+                {
+                    if (!group.HasElementAt(j)) continue;
+
+                    Entity<IEntity> entity = m_BoundSystem.TriggerBoundArray[group[j]];
+                    if (!entity.transform.aabb.Intersect(ray, out dis, out float3 point)) continue;
+
+                    if (maxDistance > 0 && dis > maxDistance) continue;
+
+                    RaycastInfo info = new RaycastInfo(entity, true, dis, point);
+                    output.Add(info);
+                }
+            }
+        }
+    }
+
+    public readonly struct RaycastInfo
+    {
+        public readonly Entity<IEntity> entity;
+        public readonly bool hit;
+        
+        public readonly float distance;
+        public readonly float3 point;
+
+        internal RaycastInfo(Entity<IEntity> a, bool b, float c, float3 d)
+        {
+            entity = a; hit = b; distance = c; point = d;
         }
     }
 }

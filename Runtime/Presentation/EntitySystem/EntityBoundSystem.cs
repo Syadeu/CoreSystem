@@ -3,6 +3,7 @@ using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using System;
+using System.Collections.Generic;
 
 namespace Syadeu.Presentation
 {
@@ -16,6 +17,7 @@ namespace Syadeu.Presentation
         private Entity<IEntity>[] m_TriggerBoundArray;
 
         internal Cluster<TriggerBoundAttribute> BoundCluster => m_TriggerBoundCluster;
+        internal IReadOnlyList<Entity<IEntity>> TriggerBoundArray => m_TriggerBoundArray;
 
         private EntitySystem m_EntitySystem;
         private EventSystem m_EventSystem;

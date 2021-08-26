@@ -1,4 +1,5 @@
-﻿using Syadeu.Presentation.Entities;
+﻿using Syadeu.Database;
+using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using System;
 using Unity.Mathematics;
@@ -10,6 +11,7 @@ namespace Syadeu.Presentation
     {
         public ConvertedEntity entity { get; internal set; }
         public Transform provider { get; internal set; }
+        private Renderer[] renderers { get; set; }
 
         public float3 position
         {
@@ -111,6 +113,24 @@ namespace Syadeu.Presentation
             {
                 if (provider == null) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
                 return provider.worldToLocalMatrix;
+            }
+        }
+
+        public AABB aabb
+        {
+            get
+            {
+                if (renderers == null)
+                {
+                    renderers = provider.GetComponentsInChildren<Renderer>();
+                }
+
+                AABB temp = new AABB(position, float3.zero);
+                for (int i = 0; i < renderers.Length; i++)
+                {
+                    temp.Encapsulate(renderers[i].bounds);
+                }
+                return temp;
             }
         }
 

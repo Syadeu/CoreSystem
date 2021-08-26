@@ -413,9 +413,9 @@ namespace Syadeu.Presentation
             {
                 for (int i = 0; i < m_ClusterData.Length; i++)
                 {
-                    AABB box = new AABB(m_ClusterData[i].Translation, Cluster<ProxyTransformData>.c_ClusterRange);
+                    //AABB box = new AABB(m_ClusterData[i].Translation, Cluster<ProxyTransformData>.c_ClusterRange);
 
-                    if (m_Frustum.IntersectsBox(in box))
+                    if (m_Frustum.IntersectsBox(m_ClusterData[i].AABB))
                     {
                         m_Output.Add(m_ClusterData[i]);
                     }
