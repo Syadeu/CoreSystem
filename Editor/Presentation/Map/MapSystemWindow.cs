@@ -64,6 +64,15 @@ namespace SyadeuEditor.Presentation.Map
                 Tools.hidden = false;
             }
 
+            EditorGUI.BeginChangeCheck();
+            m_EnableEdit = EditorGUILayout.ToggleLeft("Enable Edit", m_EnableEdit);
+            if (EditorGUI.EndChangeCheck())
+            {
+                if (!m_EnableEdit) Tools.hidden = false;
+            }
+            if (GUILayout.Button("Show Tools")) Tools.hidden = false;
+            EditorGUILayout.Space();
+
             switch (m_SelectedToolbar)
             {
                 case 0:
@@ -449,6 +458,8 @@ namespace SyadeuEditor.Presentation.Map
         private List<MapData> m_LoadedMapData = new List<MapData>();
         private MapData m_EditingMapData = null;
 
+        private bool m_EnableEdit = true;
+
         // Mouse Selection
         private MapObject m_SelectedMapObject = null;
         private float3 m_SelectedObjectRotation;
@@ -561,7 +572,8 @@ namespace SyadeuEditor.Presentation.Map
                         }
 
                         SceneView.lastActiveSceneView.Repaint();
-                        Tools.hidden = true;
+
+                        if (m_EnableEdit) Tools.hidden = true;
 
                     }, m_SelectedMapData[index], TypeHelper.TypeOf<MapDataEntityBase>.Type);
 
@@ -732,7 +744,7 @@ namespace SyadeuEditor.Presentation.Map
         {
             m_GridMap?.OnSceneGUI(obj);
 
-            if (m_LoadedMapData.Count == 0) return;
+            if (m_LoadedMapData.Count == 0 || !m_EnableEdit) return;
             int mouseControlID = GUIUtility.GetControlID(FocusType.Passive);
             int keyboardControlID = GUIUtility.GetControlID(FocusType.Keyboard);
             Selection.activeObject = null;

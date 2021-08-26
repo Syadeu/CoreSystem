@@ -34,10 +34,12 @@ namespace Syadeu.Presentation.Actions
 
         private static IEnumerator Update(EntityData<IEntityData> executer, EntityAnimationClipEventData data, AnimationClip clip)
         {
-            Entity<IEntity> entity = PresentationSystem<EntitySystem>.System.CreateEntity(data.m_Entity, 0);
-            ProxyTransform tr = (ProxyTransform)entity.transform;
-            tr.enableCull = false;
+            var oper = Addressables.LoadAssetAsync<GameObject>(data.m_Entity.GetObject().Prefab.GetObjectSetting().m_RefPrefab);
+            yield return new WaitUntil(() => oper.IsDone);
 
+            Entity<IEntity> entity = PresentationSystem<EntitySystem>.System.CreateEntity(data.m_Entity, 0, oper.Result.transform.rotation, oper.Result .transform.localScale, false);
+            ProxyTransform tr = (ProxyTransform)entity.transform;
+            
             yield return new WaitUntil(() => tr.proxy != null);
 
             Mono.RecycleableMonobehaviour proxy = tr.proxy;
@@ -59,6 +61,7 @@ namespace Syadeu.Presentation.Actions
 
             animation.clip = clip;
             animation.Play();
+            "clip play".ToLog();
 
             for (int i = 0; i < data.m_OnClipStart.Length; i++)
             {
@@ -72,6 +75,7 @@ namespace Syadeu.Presentation.Actions
                 yield return null;
             }
 
+            "clip end".ToLog();
             for (int i = 0; i < data.m_OnClipEnd.Length; i++)
             {
                 data.m_OnClipEnd[i].Execute(executer);

@@ -53,6 +53,31 @@ namespace Syadeu.Presentation.Attributes
         private void EntityTriggerBoundEventHandler(EntityTriggerBoundEvent ev)
         {
             $"{ev.Source.Name}({ev.Source.Idx}) -> {ev.Target.Name}({ev.Target.Idx}) enter?{ev.IsEnter}".ToLog();
+
+            var source = ev.Source.GetAttribute<TriggerBoundAttribute>();
+            var target = ev.Target.GetAttribute<TriggerBoundAttribute>();
+            if (ev.IsEnter)
+            {
+                for (int i = 0; i < source.m_OnTriggerEnter.Length; i++)
+                {
+                    source.m_OnTriggerEnter[i].Execute(ev.Target.As<IEntity, IEntityData>());
+                }
+                for (int i = 0; i < target.m_OnTriggerEnter.Length; i++)
+                {
+                    target.m_OnTriggerEnter[i].Execute(ev.Source.As<IEntity, IEntityData>());
+                }
+            }
+            else
+            {
+                for (int i = 0; i < source.m_OnTriggerExit.Length; i++)
+                {
+                    source.m_OnTriggerExit[i].Execute(ev.Target.As<IEntity, IEntityData>());
+                }
+                for (int i = 0; i < target.m_OnTriggerExit.Length; i++)
+                {
+                    target.m_OnTriggerExit[i].Execute(ev.Source.As<IEntity, IEntityData>());
+                }
+            }
         }
     }
 }
