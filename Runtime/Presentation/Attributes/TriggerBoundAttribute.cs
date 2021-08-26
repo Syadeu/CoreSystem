@@ -24,7 +24,7 @@ namespace Syadeu.Presentation.Attributes
         [JsonProperty(Order = 3, PropertyName = "Center")] public float3 m_Center = 0;
         [JsonProperty(Order = 4, PropertyName = "Size")] public float3 m_Size = 1;
 
-        [JsonIgnore] internal readonly List<Entity<IEntity>> m_Triggered = new List<Entity<IEntity>>();
+        [JsonIgnore] internal List<Entity<IEntity>> m_Triggered;
         [JsonIgnore] public IReadOnlyList<Entity<IEntity>> Triggered => m_Triggered;
     }
     internal sealed class TriggerBoundProcessor : AttributeProcessor<TriggerBoundAttribute>
@@ -36,6 +36,10 @@ namespace Syadeu.Presentation.Attributes
         protected override void OnDispose()
         {
             EventSystem.RemoveEvent<EntityTriggerBoundEvent>(EntityTriggerBoundEventHandler);
+        }
+        protected override void OnCreated(TriggerBoundAttribute attribute, EntityData<IEntityData> entity)
+        {
+            attribute.m_Triggered = new List<Entity<IEntity>>();
         }
         private void EntityTriggerBoundEventHandler(EntityTriggerBoundEvent ev)
         {
