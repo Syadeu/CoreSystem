@@ -76,31 +76,57 @@ namespace Syadeu.Presentation
 
         #endregion
 
-        public void Raycast(List<RaycastInfo> output, in Ray ray, in float maxDistance = -1)
+        public bool Raycast(in Ray ray, out RaycastInfo info, in float maxDistance = -1)
         {
-            output.Clear();
-            float dis;
+            info = RaycastInfo.Empty;
+
             for (int i = 0; i < m_BoundSystem.BoundCluster.Length; i++)
             {
                 if (!m_BoundSystem.BoundCluster[i].IsCreated) continue;
 
-                //$"search in group {i}".ToLog();
-
                 ClusterGroup<TriggerBoundAttribute> group = m_BoundSystem.BoundCluster[i];
-                //if (!group.AABB.Intersect(ray, out float dis)) continue;
+                if (!group.AABB.Intersect(ray, out float dis)) continue;
 
-                //if (maxDistance > 0 && dis > maxDistance) continue;
+                if (maxDistance > 0 && dis > maxDistance) continue;
 
                 for (int j = 0; j < group.Length; j++)
                 {
                     if (!group.HasElementAt(j)) continue;
 
-                    //$"search entity {j}".ToLog();
+                    Entity<IEntity> entity = m_BoundSystem.TriggerBoundArray[group[j]];
+                    if (!entity.transform.aabb.Intersect(ray, out dis, out float3 point)) continue;
+
+                    if (maxDistance > 0 && dis > maxDistance) continue;
+
+                    if (dis < info.distance)
+                    {
+                        info = new RaycastInfo(entity, true, dis, point);
+                    }
+                }
+            }
+
+            return info.hit;
+        }
+        public void RaycastAll(List<RaycastInfo> output, in Ray ray, in float maxDistance = -1)
+        {
+            output.Clear();
+            for (int i = 0; i < m_BoundSystem.BoundCluster.Length; i++)
+            {
+                if (!m_BoundSystem.BoundCluster[i].IsCreated) continue;
+
+                ClusterGroup<TriggerBoundAttribute> group = m_BoundSystem.BoundCluster[i];
+                if (!group.AABB.Intersect(ray, out float dis)) continue;
+
+                if (maxDistance > 0 && dis > maxDistance) continue;
+
+                for (int j = 0; j < group.Length; j++)
+                {
+                    if (!group.HasElementAt(j)) continue;
 
                     Entity<IEntity> entity = m_BoundSystem.TriggerBoundArray[group[j]];
                     if (!entity.transform.aabb.Intersect(ray, out dis, out float3 point)) continue;
 
-                    //if (maxDistance > 0 && dis > maxDistance) continue;
+                    if (maxDistance > 0 && dis > maxDistance) continue;
 
                     RaycastInfo info = new RaycastInfo(entity, true, dis, point);
                     output.Add(info);

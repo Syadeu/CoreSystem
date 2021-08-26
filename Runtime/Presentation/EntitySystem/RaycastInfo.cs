@@ -5,6 +5,8 @@ namespace Syadeu.Presentation
 {
     public readonly struct RaycastInfo
     {
+        public static readonly RaycastInfo Empty = new RaycastInfo(Entity<IEntity>.Empty, false, float.MaxValue, float3.zero);
+
         public readonly Entity<IEntity> entity;
         public readonly bool hit;
         
