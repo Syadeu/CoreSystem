@@ -191,8 +191,8 @@ namespace Syadeu.Presentation.Render
             float4x4 matrix = math.inverse(math.mul(projection, math.fastinverse(tr)));
             float4 temp = new float4
             {
-                x = 2 * (screenPoint.x / m_LastCameraData.pixelWidth) - 1,
-                y = 2 * (screenPoint.y / m_LastCameraData.pixelHeight) - 1,
+                x = -(2 * (screenPoint.x / m_LastCameraData.pixelWidth) - 1),
+                y = -(2 * (screenPoint.y / m_LastCameraData.pixelHeight) - 1),
                 z = m_LastCameraData.nearClipPlane,
                 w = 1
             };
@@ -329,7 +329,7 @@ namespace Syadeu.Presentation.Render
             //};
 
             float3 pos = ScreenToWorldPoint(screenPoint.xy);
-            return new Ray(m_LastCameraData.position, pos.xyz - m_LastCameraData.position);
+            return new Ray(m_LastCameraData.position, math.normalize(pos - m_LastCameraData.position));
         }
 
         public void SetResolution()

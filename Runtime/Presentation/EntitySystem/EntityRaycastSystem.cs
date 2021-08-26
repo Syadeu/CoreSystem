@@ -79,23 +79,28 @@ namespace Syadeu.Presentation
         public void Raycast(List<RaycastInfo> output, in Ray ray, in float maxDistance = -1)
         {
             output.Clear();
+            float dis;
             for (int i = 0; i < m_BoundSystem.BoundCluster.Length; i++)
             {
-                if (!m_BoundSystem.BoundCluster[i].IsCreated) return;
+                if (!m_BoundSystem.BoundCluster[i].IsCreated) continue;
+
+                //$"search in group {i}".ToLog();
 
                 ClusterGroup<TriggerBoundAttribute> group = m_BoundSystem.BoundCluster[i];
-                if (!group.AABB.Intersect(ray, out float dis)) continue;
+                //if (!group.AABB.Intersect(ray, out float dis)) continue;
 
-                if (maxDistance > 0 && dis > maxDistance) continue;
+                //if (maxDistance > 0 && dis > maxDistance) continue;
 
                 for (int j = 0; j < group.Length; j++)
                 {
                     if (!group.HasElementAt(j)) continue;
 
+                    //$"search entity {j}".ToLog();
+
                     Entity<IEntity> entity = m_BoundSystem.TriggerBoundArray[group[j]];
                     if (!entity.transform.aabb.Intersect(ray, out dis, out float3 point)) continue;
 
-                    if (maxDistance > 0 && dis > maxDistance) continue;
+                    //if (maxDistance > 0 && dis > maxDistance) continue;
 
                     RaycastInfo info = new RaycastInfo(entity, true, dis, point);
                     output.Add(info);
