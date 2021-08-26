@@ -182,6 +182,7 @@ namespace Syadeu.Presentation
             }
             static bool CanTriggerable(in TriggerBoundAttribute att, in Entity<IEntity> target)
             {
+                if (!att.Enabled) return false;
                 if (att.m_TriggerOnly.Length == 0) return true;
 
                 for (int i = 0; i < att.m_TriggerOnly.Length; i++)

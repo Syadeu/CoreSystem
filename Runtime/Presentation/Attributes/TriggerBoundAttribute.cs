@@ -25,6 +25,8 @@ namespace Syadeu.Presentation.Attributes
         [JsonProperty(Order = 4, PropertyName = "Size")] public float3 m_Size = 1;
 
         [JsonIgnore] internal List<Entity<IEntity>> m_Triggered;
+
+        [JsonIgnore] public bool Enabled { get; set; } = true;
         [JsonIgnore] public IReadOnlyList<Entity<IEntity>> Triggered => m_Triggered;
     }
     internal sealed class TriggerBoundProcessor : AttributeProcessor<TriggerBoundAttribute>
