@@ -179,34 +179,44 @@ namespace Syadeu.Presentation.Render
             float4x4 localToWorld = new float4x4(new float3x3(m_LastCameraData.orientation), m_LastCameraData.position);
             float4x4 matrix = math.mul(m_LastCameraData.projectionMatrix, math.fastinverse(localToWorld));
 
-            // if w == -1 not seen by the cam
-            float4 result = math.mul(matrix, new float4(worldPoint, 1));
-            float3 screenPoint = result.xyz;
-
-            screenPoint /= -result.w;
-            screenPoint.x = screenPoint.x / 2 + 0.5f;
-            screenPoint.y = screenPoint.y / 2 + 0.5f;
-            screenPoint.z = -result.w;
-
-            $"{screenPoint}".ToLog();
-            return screenPoint;
+            float4 temp = math.mul(matrix, new float4(worldPoint, 1));
+            float3 point = temp.xyz / -temp.w;
+            point.x += .5f;
+            point.y += .5f;
+            return point;
         }
-        public float3 ScreenToWorldPoint(float2 screenPoint)
+        public float3 ScreenToWorldPoint(float3 screenPoint)
         {
-            float4x4 projection = m_LastCameraData.projectionMatrix;
-            float4x4 tr = new float4x4(new float3x3(m_LastCameraData.orientation), m_LastCameraData.position);
+            float4x4 localToWorld = new float4x4(new float3x3(m_LastCameraData.orientation), m_LastCameraData.position);
+            float4x4 matrix = math.inverse(math.mul(m_LastCameraData.projectionMatrix, math.fastinverse(localToWorld)));
 
-            float4x4 matrix = math.inverse(math.mul(projection, math.fastinverse(tr)));
             float4 temp = new float4
             {
-                x = -(2 * (screenPoint.x / m_LastCameraData.pixelWidth) - 1),
-                y = -(2 * (screenPoint.y / m_LastCameraData.pixelHeight) - 1),
-                z = m_LastCameraData.nearClipPlane,
+                x = -((2 * screenPoint.x) / m_LastCameraData.pixelWidth - 1),
+                y = -((2 * screenPoint.y) / m_LastCameraData.pixelHeight - 1),
+                z = m_LastCameraData.nearClipPlane - .05f,
                 w = 1
             };
 
             float4 pos = math.mul(matrix, temp);
 
+            //float3 campos = m_LastCameraData.position;
+            //float3 dir = campos - pos.xyz;
+            //float3 forward = math.mul(m_LastCameraData.orientation, new float3(0, 0, 1));
+
+            //float distToPlane = math.dot(dir, forward);
+            //if (math.abs(distToPlane) >= math.EPSILON)
+            //{
+            //    if (!m_LastCameraData.orthographic)
+            //    {
+            //        dir *= screenPoint.z / distToPlane;
+            //        return campos + dir;
+            //    }
+
+            //    return pos.xyz - forward * (distToPlane - screenPoint.z);
+            //}
+
+            //return float3.zero;
             pos.w = 1 / pos.w;
             pos.x *= pos.w; pos.y *= pos.w; pos.z *= pos.w;
             return pos.xyz;
@@ -219,10 +229,7 @@ namespace Syadeu.Presentation.Render
                 viewportPoint.z);
         }
 
-        public float3 WorldToScreenPoint(float3 worldPoint)
-        {
-            return ViewportToScreenPoint(WorldToViewportPoint(worldPoint));
-        }
+        public float3 WorldToScreenPoint(float3 worldPoint) => ViewportToScreenPoint(WorldToViewportPoint(worldPoint));
 
         #region Ray
 
@@ -336,7 +343,7 @@ namespace Syadeu.Presentation.Render
 
         public Ray ScreenToRay(float3 screenPoint)
         {
-            float3 pos = ScreenToWorldPoint(screenPoint.xy);
+            float3 pos = ScreenToWorldPoint(screenPoint);
             return new Ray(m_LastCameraData.position, math.normalize(pos - m_LastCameraData.position));
         }
 
