@@ -177,9 +177,9 @@ namespace Syadeu.Presentation.Render
         public float3 WorldToViewportPoint(float3 worldPoint)
         {
             float4x4 localToWorld = new float4x4(new float3x3(m_LastCameraData.orientation), m_LastCameraData.position);
-            float4x4 matrix = math.mul(m_LastCameraData.projectionMatrix, math.fastinverse(localToWorld));
+            float4x4 vp = math.mul(m_LastCameraData.projectionMatrix, math.fastinverse(localToWorld));
 
-            float4 temp = math.mul(matrix, new float4(worldPoint, 1));
+            float4 temp = math.mul(vp, new float4(worldPoint, 1));
             float3 point = temp.xyz / -temp.w;
             point.x += .5f;
             point.y += .5f;
@@ -188,7 +188,7 @@ namespace Syadeu.Presentation.Render
         public float3 ScreenToWorldPoint(float3 screenPoint)
         {
             float4x4 localToWorld = new float4x4(new float3x3(m_LastCameraData.orientation), m_LastCameraData.position);
-            float4x4 matrix = math.inverse(math.mul(m_LastCameraData.projectionMatrix, math.fastinverse(localToWorld)));
+            float4x4 vp = math.inverse(math.mul(m_LastCameraData.projectionMatrix, math.fastinverse(localToWorld)));
 
             float4 temp = new float4
             {
@@ -198,7 +198,7 @@ namespace Syadeu.Presentation.Render
                 w = 1
             };
 
-            float4 pos = math.mul(matrix, temp);
+            float4 pos = math.mul(vp, temp);
 
             //float3 campos = m_LastCameraData.position;
             //float3 dir = campos - pos.xyz;
@@ -341,7 +341,7 @@ namespace Syadeu.Presentation.Render
 
         #endregion
 
-        public Ray ScreenToRay(float3 screenPoint)
+        public Ray ScreenPointToRay(float3 screenPoint)
         {
             float3 pos = ScreenToWorldPoint(screenPoint);
             return new Ray(m_LastCameraData.position, math.normalize(pos - m_LastCameraData.position));
