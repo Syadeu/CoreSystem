@@ -46,6 +46,26 @@ namespace SyadeuEditor.Presentation.Map
                 m_Scale = 1
             };
 
+            EntityBase entityObj = entity.GetObject();
+            if (entityObj.Prefab.IsValid() && entityObj.Prefab.GetObjectSetting() != null)
+            {
+                GameObject temp = (GameObject)entityObj.Prefab.GetObjectSetting().m_RefPrefab.editorAsset;
+                Transform tr = temp.transform;
+
+                AABB aabb = new AABB(float3.zero, float3.zero);
+                foreach (var item in tr.GetComponentsInChildren<Renderer>())
+                {
+                    aabb.Encapsulate(item.bounds);
+                }
+                entityObj.Center = aabb.center - ((float3)tr.position);
+                entityObj.Size = aabb.size;
+            }
+            else
+            {
+                entityObj.Center = 0;
+                entityObj.Size = 1;
+            }
+
             MapObject data = new MapObject(this, folder, objData);
 
             Objects.Add(data.Data, data);

@@ -199,8 +199,8 @@ namespace Syadeu.Database
         {
             DirectoryCheck();
 
-            //Type objType = obj.GetType();
-            Type objType = TypeHelper.TypeOf<T>.Type;
+            Type objType = obj.GetType();
+            //Type objType = TypeHelper.TypeOf<T>.Type;
             string objPath;
             if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(objType))
             {
