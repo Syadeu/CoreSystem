@@ -1,4 +1,5 @@
-﻿using Syadeu.Presentation.Attributes;
+﻿using Syadeu.Internal;
+using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -100,20 +101,6 @@ namespace Syadeu.Presentation
                     output.Add(info);
                 }
             }
-        }
-    }
-
-    public readonly struct RaycastInfo
-    {
-        public readonly Entity<IEntity> entity;
-        public readonly bool hit;
-        
-        public readonly float distance;
-        public readonly float3 point;
-
-        internal RaycastInfo(Entity<IEntity> a, bool b, float c, float3 d)
-        {
-            entity = a; hit = b; distance = c; point = d;
         }
     }
 }
