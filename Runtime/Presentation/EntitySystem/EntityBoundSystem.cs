@@ -1,4 +1,5 @@
 ﻿using Syadeu.Database;
+using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
@@ -159,11 +160,21 @@ namespace Syadeu.Presentation
                     {
                         fromAtt.m_Triggered.Add(to);
                         eventSystem.PostEvent(EntityTriggerBoundEvent.GetEvent(from, to, true));
+
+                        for (int i = 0; i < fromAtt.m_OnTriggerEnter.Length; i++)
+                        {
+                            fromAtt.m_OnTriggerEnter[i].Execute(to.As<IEntity, IEntityData>());
+                        }
                     }
                     if (CanTriggerable(in toAtt, in from) && !toAtt.m_Triggered.Contains(from))
                     {
                         toAtt.m_Triggered.Add(from);
                         eventSystem.PostEvent(EntityTriggerBoundEvent.GetEvent(to, from, true));
+
+                        for (int i = 0; i < toAtt.m_OnTriggerEnter.Length; i++)
+                        {
+                            toAtt.m_OnTriggerEnter[i].Execute(from.As<IEntity, IEntityData>());
+                        }
                     }
                 }
                 else
@@ -172,11 +183,21 @@ namespace Syadeu.Presentation
                     {
                         fromAtt.m_Triggered.Remove(to);
                         eventSystem.PostEvent(EntityTriggerBoundEvent.GetEvent(from, to, false));
+
+                        for (int i = 0; i < fromAtt.m_OnTriggerEnter.Length; i++)
+                        {
+                            fromAtt.m_OnTriggerExit[i].Execute(to.As<IEntity, IEntityData>());
+                        }
                     }
                     if (CanTriggerable(in toAtt, in from) && toAtt.m_Triggered.Contains(from))
                     {
                         toAtt.m_Triggered.Remove(from);
                         eventSystem.PostEvent(EntityTriggerBoundEvent.GetEvent(to, from, false));
+
+                        for (int i = 0; i < toAtt.m_OnTriggerEnter.Length; i++)
+                        {
+                            toAtt.m_OnTriggerExit[i].Execute(from.As<IEntity, IEntityData>());
+                        }
                     }
                 }
             }

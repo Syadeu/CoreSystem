@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using System;
@@ -23,6 +24,12 @@ namespace Syadeu.Presentation.Attributes
         [JsonProperty(Order = 2, PropertyName = "MatchWithAABB")] public bool m_MatchWithAABB = true;
         [JsonProperty(Order = 3, PropertyName = "Center")] public float3 m_Center = 0;
         [JsonProperty(Order = 4, PropertyName = "Size")] public float3 m_Size = 1;
+
+        [Header("Events")]
+        [JsonProperty(Order = 5, PropertyName = "OnTriggerEnter")]
+        public Reference<ActionBase>[] m_OnTriggerEnter = Array.Empty<Reference<ActionBase>>();
+        [JsonProperty(Order = 6, PropertyName = "OnTriggerExit")]
+        public Reference<ActionBase>[] m_OnTriggerExit = Array.Empty<Reference<ActionBase>>();
 
         [JsonIgnore] internal List<Entity<IEntity>> m_Triggered;
 
