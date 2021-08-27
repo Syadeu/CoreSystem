@@ -16,6 +16,7 @@ using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Experimental.GlobalIllumination;
 
 namespace Syadeu.Presentation.Render
 {
@@ -27,6 +28,7 @@ namespace Syadeu.Presentation.Render
         public override bool EnableAfterPresentation => true;
 
         private ObClass<Camera> m_Camera;
+        private ObClass<Light> m_DirectionalLight;
         private Matrix4x4 m_Matrix4x4;
 
         [ConfigValue(Header = "Resolution", Name = "X")] private int m_ResolutionX;
@@ -40,6 +42,21 @@ namespace Syadeu.Presentation.Render
                 m_Camera.Value = value;
             }
         }
+        public Light DirectionalLight
+        {
+            get => m_DirectionalLight.Value;
+            set
+            {
+                if (value.type != UnityEngine.LightType.Directional)
+                {
+                    CoreSystem.Logger.LogError(Channel.Render,
+                        $"{value.name} is not a Directional Light.");
+                    return;
+                }
+
+                m_DirectionalLight.Value = value;
+            }
+        }
 		public CameraFrustum.ReadOnly Frustum => GetFrustum();
 
         public event Action<Camera, Camera> OnCameraChanged;
@@ -47,18 +64,28 @@ namespace Syadeu.Presentation.Render
 
         private JobHandle m_FrustumJob;
 		private CameraFrustum m_CameraFrustum;
+        private CameraData m_LastCameraData;
+
+        private LightData m_LastDirectionalLightData;
+
+        public CameraData LastCameraData => m_LastCameraData;
+        public LightData LastDirectionalLightData => m_LastDirectionalLightData;
 
         #region Presentation Methods
 
         protected override PresentationResult OnInitialize()
         {
             m_CameraFrustum = new CameraFrustum(new CameraData());
+            m_LastCameraData = new CameraData() { orientation = quaternion.identity };
 
             m_Camera = new ObClass<Camera>(ObValueDetection.Changed);
             m_Camera.OnValueChange += OnCameraChangedHandler;
 
             CoreSystem.Instance.OnRender -= Instance_OnRender;
             CoreSystem.Instance.OnRender += Instance_OnRender;
+
+            m_DirectionalLight = new ObClass<Light>(ObValueDetection.Changed);
+            m_LastDirectionalLightData = new LightData() { orientation = quaternion.identity };
 
             return base.OnInitialize();
         }
@@ -98,12 +125,21 @@ namespace Syadeu.Presentation.Render
         }
         protected override PresentationResult AfterPresentation()
         {
+            if (DirectionalLight != null)
+            {
+                m_LastDirectionalLightData.Update(DirectionalLight);
+
+                //float4x4 matrix = m_LastDirectionalLightData.lightSpace;
+                
+            }
+
             if (Camera == null) return base.AfterPresentation();
 
+            m_LastCameraData.Update(Camera);
             FrustumJob job = new FrustumJob
             {
                 m_Frustum = m_CameraFrustum,
-                m_Data = new CameraData(Camera)
+                m_Data = m_LastCameraData
             };
             m_FrustumJob = ScheduleAt(JobPosition.After, job);
 
@@ -130,13 +166,209 @@ namespace Syadeu.Presentation.Render
         }
 		internal CameraFrustum GetRawFrustum() => m_CameraFrustum;
 
-		/// <summary>
-		/// 해당 월드 좌표를 입력한 Matrix 기반으로 2D 좌표값을 반환합니다.
-		/// </summary>
-		/// <param name="matrix"></param>
-		/// <param name="worldPosition"></param>
-		/// <returns></returns>
-		public static Vector3 GetScreenPoint(float4x4 matrix, float3 worldPosition)
+        private float4x4 GetCameraWorldMatrix()
+        {
+            float4x4 projection = m_LastCameraData.projectionMatrix;
+            float4x4 tr = new float4x4(new float3x3(m_LastCameraData.orientation), m_LastCameraData.position);
+
+            return math.inverse(math.mul(projection, math.fastinverse(tr)));
+        }
+
+        public float3 WorldToViewportPoint(float3 worldPoint)
+        {
+            float4x4 localToWorld = new float4x4(new float3x3(m_LastCameraData.orientation), m_LastCameraData.position);
+            float4x4 vp = math.mul(m_LastCameraData.projectionMatrix, math.fastinverse(localToWorld));
+
+            float4 temp = math.mul(vp, new float4(worldPoint, 1));
+            float3 point = temp.xyz / -temp.w;
+            point.x += .5f;
+            point.y += .5f;
+            return point;
+        }
+        public float3 ScreenToWorldPoint(float3 screenPoint)
+        {
+            return m_Camera.Value.ScreenToWorldPoint(screenPoint);
+        }
+        //public float3 ScreenToWorldPoint(float3 screenPoint)
+        //{
+        //    float4x4 localToWorld = new float4x4(new float3x3(m_LastCameraData.orientation), m_LastCameraData.position);
+        //    float4x4 vp = math.inverse(math.mul(m_LastCameraData.projectionMatrix, math.fastinverse(localToWorld)));
+
+        //    float4 temp = new float4
+        //    {
+        //        x = -((2 * screenPoint.x) / m_LastCameraData.pixelWidth - 1),
+        //        y = -((2 * screenPoint.y) / m_LastCameraData.pixelHeight - 1),
+        //        z = m_LastCameraData.nearClipPlane - .05f,
+        //        w = 1
+        //    };
+
+        //    float4 pos = math.mul(vp, temp);
+
+        //    //float3 campos = m_LastCameraData.position;
+        //    //float3 dir = campos - pos.xyz;
+        //    //float3 forward = math.mul(m_LastCameraData.orientation, new float3(0, 0, 1));
+
+        //    //float distToPlane = math.dot(dir, forward);
+        //    //if (math.abs(distToPlane) >= math.EPSILON)
+        //    //{
+        //    //    if (!m_LastCameraData.orthographic)
+        //    //    {
+        //    //        dir *= screenPoint.z / distToPlane;
+        //    //        return campos + dir;
+        //    //    }
+
+        //    //    return pos.xyz - forward * (distToPlane - screenPoint.z);
+        //    //}
+
+        //    //return float3.zero;
+        //    pos.w = 1 / pos.w;
+        //    pos.x *= pos.w; pos.y *= pos.w; pos.z *= pos.w;
+        //    return pos.xyz;
+        //}
+        public float3 ViewportToScreenPoint(float3 viewportPoint)
+        {
+            return new float3(
+                viewportPoint.x * m_LastCameraData.pixelWidth,
+                viewportPoint.y * m_LastCameraData.pixelHeight,
+                viewportPoint.z);
+        }
+
+        public float3 WorldToScreenPoint(float3 worldPoint) => ViewportToScreenPoint(WorldToViewportPoint(worldPoint));
+
+        #region Ray
+
+        //float4x4 GetWorldToCameraMatrix()
+        //{
+        //    float4x4 m = float4x4.Scale(new Vector3(1.0F, 1.0F, -1.0F));
+        //    m = m * GetCameraWorldMatrix();
+        //    return m;
+        //}
+        //float4x4 GetProjectionMatrix() => m_LastCameraData.projectionMatrix;
+        //float4x4 GetWorldToClipMatrix()
+        //{
+        //    float4x4 t = GetProjectionMatrix() * GetWorldToCameraMatrix();
+        //    return t;
+        //}
+        //float4x4 GetCameraToWorldMatrix()
+        //{
+        //    float4x4 m = GetWorldToCameraMatrix();
+        //    return math.inverse(m);
+        //}
+        //bool CameraUnProject(bool ortho, float3 p, float4x4 cameraToWorld, float4x4 clipToWorld, Rect viewport, out float3 outP)
+        //{
+        //    // pixels to -1..1
+        //    float3 in_v;
+        //    in_v.x = (p.x - viewport.x) * 2.0f / viewport.width - 1.0f;
+        //    in_v.y = (p.y - viewport.y) * 2.0f / viewport.height - 1.0f;
+        //    // It does not matter where the point we unproject lies in depth; so we choose 0.95, which
+        //    // is further than near plane and closer than far plane, for precision reasons.
+        //    // In a perspective camera setup (near=0.1, far=1000), a point at 0.95 projected depth is about
+        //    // 5 units from the camera.
+        //    in_v.z = 0.95f;
+
+        //    float3 pointOnPlane = math.mul(clipToWorld, new float4(in_v, 1)).xyz;
+        //    //if (clipToWorld.PerspectiveMultiplyPoint3(in_v, out pointOnPlane))
+        //    {
+        //        // Now we have a point on the plane perpendicular to the viewing direction. We need to return the one that is on the line
+        //        // towards this point, and at p.z distance along camera's viewing axis.
+        //        float3 cameraPos = cameraToWorld.c3.xyz;
+        //        float3 dir = pointOnPlane - cameraPos;
+
+        //        // The camera/projection matrices follow OpenGL convention: positive Z is towards the viewer.
+        //        // So negate it to get into Unity convention.
+        //        float3 forward = -cameraToWorld.c2.xyz;
+        //        float distToPlane = Vector3.Dot(dir, forward);
+        //        if (Mathf.Abs(distToPlane) >= 1.0e-6f)
+        //        {
+        //            //bool isPerspective = clipToWorld.IsPerspective();
+        //            if (!ortho)
+        //            {
+        //                dir *= p.z / distToPlane;
+        //                outP = cameraPos + dir;
+        //            }
+        //            else
+        //            {
+        //                outP = pointOnPlane - forward * (distToPlane - p.z);
+        //            }
+        //            return true;
+        //        }
+        //    }
+        //    outP = new Vector3(0.0f, 0.0f, 0.0f);
+        //    return false;
+        //}
+
+        //public Ray ScreenPointToRay(float2 viewPortPos)
+        //{
+        //    Rect viewport = new Rect(0, 0, Screen.width, Screen.height);
+        //    Ray ray = new Ray();
+        //    float3 o;
+        //    float4x4 clipToWorld = GetCameraWorldMatrix();
+
+        //    float4x4 camToWorld = GetCameraToWorldMatrix();
+        //    if (!CameraUnProject(m_LastCameraData.orthographic, new Vector3(viewPortPos.x, viewPortPos.y, m_LastCameraData.nearClipPlane), camToWorld, clipToWorld, viewport, out o))
+        //    {
+        //        return new Ray(m_LastCameraData.position, new Vector3(0, 0, 1));
+        //    }
+        //    ray.origin = o;
+
+
+
+        //    if (m_LastCameraData.orthographic)
+        //    {
+        //        // In orthographic projection we get better precision by circumventing the whole projection and subtraction.
+        //        //ray.direction = Vector3.Normalize(-camToWorld.GetAxisZ());
+
+        //        float3 forward = new float3(0, 0, 1);
+        //        ray.direction = Vector3.Normalize(-camToWorld.c2.xyz);
+        //    }
+        //    else
+        //    {
+        //        // We need to sample a point much further out than the near clip plane to ensure decimals in the ray direction
+        //        // don't get lost when subtracting the ray origin position.
+        //        if (!CameraUnProject(m_LastCameraData.orthographic, new Vector3(viewPortPos.x, viewPortPos.y, m_LastCameraData.nearClipPlane + 1000), camToWorld, clipToWorld, viewport, out o))
+        //        {
+        //            return new Ray(m_LastCameraData.position, Vector3.forward);
+        //        }
+        //        float3 dir = o - (float3)ray.origin;
+        //        ray.direction = (Vector3.Normalize(dir));
+        //    }
+        //    return ray;
+        //}
+        //public Ray ViewportPointToRay(Vector3 position)
+        //{
+        //    return ScreenPointToRay(new Vector2(position.x * Screen.width, position.y * Screen.height));
+        //}
+        //public Ray ScreenPointToRay(float3 position)
+        //{
+        //    return ViewportPointToRay(new float3(position.x / Screen.width, position.y / Screen.height, position.z));
+        //}
+
+        #endregion
+
+        //public Ray ScreenPointToRay(float3 screenPoint)
+        //{
+        //    float3 pos = ScreenToWorldPoint(screenPoint);
+        //    return new Ray(m_LastCameraData.position, math.normalize(pos - m_LastCameraData.position));
+        //}
+        public Ray ScreenPointToRay(float3 screenPoint)
+        {
+            return m_Camera.Value.ScreenPointToRay(screenPoint);
+        }
+
+        public void SetResolution()
+        {
+            //Screen.SetResolution(100,100, FullScreenMode.ExclusiveFullScreen, )
+        }
+
+        #region Legacy
+
+        /// <summary>
+        /// 해당 월드 좌표를 입력한 Matrix 기반으로 2D 좌표값을 반환합니다.
+        /// </summary>
+        /// <param name="matrix"></param>
+        /// <param name="worldPosition"></param>
+        /// <returns></returns>
+        public static float3 GetScreenPoint(float4x4 matrix, float3 worldPosition)
         {
             float4 p4 = new float4(worldPosition, 1);
             float4 result4 = math.mul(matrix, p4);
@@ -205,5 +437,7 @@ namespace Syadeu.Presentation.Render
             }
             return false;
         }
+
+        #endregion
     }
 }

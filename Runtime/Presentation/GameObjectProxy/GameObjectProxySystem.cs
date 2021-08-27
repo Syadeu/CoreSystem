@@ -198,51 +198,7 @@ namespace Syadeu.Presentation
 
             if (m_LoadingLock) return base.AfterPresentation();
 
-            #region Destroy
-            int destroyCount = m_RequestDestories.Count;
-            for (int i = 0; i < destroyCount; i++)
-            {
-                ProxyTransform tr = m_ProxyData[m_RequestDestories.Dequeue()];
-                if (tr.isDestroyed)
-                {
-                    CoreSystem.Logger.LogError(Channel.Proxy,
-                        $"Already destroyed");
-                    continue;
-                }
-
-                OnDataObjectDestroy?.Invoke(tr);
-
-                if (tr.hasProxy && !tr.hasProxyQueued) RemoveProxy(tr);
-                //else if (tr.hasProxyQueued)
-                //{
-                //    "on destroy but proxy queued".ToLogError();
-                //}
-                //else
-                //{
-                //    "in".ToLog();
-                //}
-
-                unsafe
-                {
-                    ClusterID id = tr.Pointer->m_ClusterID;
-                    if (id.Equals(ClusterID.Requested))
-                    {
-                        int tempCount = m_ClusterIDRequests.Count;
-                        for (int a = 0; a < tempCount; a++)
-                        {
-                            var tempID = m_ClusterIDRequests.Dequeue();
-                            if (tempID.index.Equals(tr.Pointer->m_Index))
-                            {
-                                break;
-                            }
-                            else m_ClusterIDRequests.Enqueue(tempID);
-                        }
-                    }
-                    else m_ClusterData.Remove(id);
-                }
-                m_ProxyData.Remove(tr);
-            }
-            #endregion
+            CameraFrustum frustum = m_RenderSystem.GetRawFrustum();
 
             #region Create / Remove Proxy
             int requestProxyCount = m_RequestProxyList.Count;
@@ -254,7 +210,7 @@ namespace Syadeu.Presentation
 
                 if (tr.isDestroyed)
                 {
-                    //CoreSystem.Logger.LogError(Channel.Proxy, $"1 destroyed transform");
+                    CoreSystem.Logger.LogError(Channel.Proxy, $"1 destroyed transform");
                     continue;
                 }
                 else if (tr.hasProxy && !tr.hasProxyQueued)
@@ -274,7 +230,7 @@ namespace Syadeu.Presentation
 
                 if (tr.isDestroyed)
                 {
-                    //CoreSystem.Logger.LogError(Channel.Proxy, $"2 destroyed transform");
+                    CoreSystem.Logger.LogError(Channel.Proxy, $"2 destroyed transform");
                     continue;
                 }
                 else if (!tr.hasProxy)
@@ -314,6 +270,60 @@ namespace Syadeu.Presentation
             }
             #endregion
 
+            #region Destroy
+            int destroyCount = m_RequestDestories.Count;
+            for (int i = 0; i < destroyCount; i++)
+            {
+                ProxyTransform tr = m_ProxyData[m_RequestDestories.Dequeue()];
+                if (tr.isDestroyed)
+                {
+                    CoreSystem.Logger.LogError(Channel.Proxy,
+                        $"Already destroyed");
+                    continue;
+                }
+
+                if (tr.hasProxy && !tr.hasProxyQueued)
+                {
+                    RecycleableMonobehaviour proxy = RemoveProxy(tr);
+
+                    var intersection = frustum.IntersectsSphere(proxy.transform.position, proxy.transform.localScale.sqrMagnitude, 1);
+
+                    if ((intersection & IntersectionType.Intersects) == IntersectionType.Intersects ||
+                        (intersection & IntersectionType.Contains) == IntersectionType.Contains)
+                    {
+                        proxy.transform.position = INIT_POSITION;
+                    }
+                }
+                if (tr.isVisible)
+                {
+                    tr.isVisible = false;
+                    OnDataObjectInvisible?.Invoke(tr);
+                }
+
+                OnDataObjectDestroy?.Invoke(tr);
+
+                unsafe
+                {
+                    ClusterID id = tr.Pointer->m_ClusterID;
+                    if (id.Equals(ClusterID.Requested))
+                    {
+                        int tempCount = m_ClusterIDRequests.Count;
+                        for (int a = 0; a < tempCount; a++)
+                        {
+                            var tempID = m_ClusterIDRequests.Dequeue();
+                            if (tempID.index.Equals(tr.Pointer->m_Index))
+                            {
+                                break;
+                            }
+                            else m_ClusterIDRequests.Enqueue(tempID);
+                        }
+                    }
+                    else m_ClusterData.Remove(id);
+                }
+                m_ProxyData.Remove(tr);
+            }
+            #endregion
+
             int clusterIDRequestCount = m_ClusterIDRequests.Count;
             for (int i = 0; i < clusterIDRequestCount; i++)
             {
@@ -336,8 +346,6 @@ namespace Syadeu.Presentation
                 };
                 ScheduleAt(JobPosition.On, clusterUpdateJob, requests.Length);
             }
-
-            CameraFrustum frustum = m_RenderSystem.GetRawFrustum();
 
             if (m_SortedCluster.IsCreated)
             {
@@ -405,9 +413,9 @@ namespace Syadeu.Presentation
             {
                 for (int i = 0; i < m_ClusterData.Length; i++)
                 {
-                    AABB box = new AABB(m_ClusterData[i].Translation, Cluster<ProxyTransformData>.c_ClusterRange);
+                    //AABB box = new AABB(m_ClusterData[i].Translation, Cluster<ProxyTransformData>.c_ClusterRange);
 
-                    if (m_Frustum.IntersectsBox(in box))
+                    if (m_Frustum.IntersectsBox(m_ClusterData[i].AABB))
                     {
                         m_Output.Add(m_ClusterData[i]);
                     }
@@ -492,7 +500,7 @@ namespace Syadeu.Presentation
 
         #endregion
 
-        public ProxyTransform CreateNewPrefab(in PrefabReference prefab, in float3 pos, in quaternion rot, in float3 scale, in bool enableCull, in float3 center, in float3 size)
+        public ProxyTransform CreateNewPrefab(in PrefabReference<GameObject> prefab, in float3 pos, in quaternion rot, in float3 scale, in bool enableCull, in float3 center, in float3 size)
         {
             CoreSystem.Logger.ThreadBlock(nameof(CreateNewPrefab), ThreadInfo.Unity);
 
@@ -598,7 +606,7 @@ namespace Syadeu.Presentation
                     $"Prefab({proxyTransform.prefab.GetObjectSetting().m_Name}) proxy created, pool remains {pool.Count}");
             }
         }
-        private void RemoveProxy(ProxyTransform proxyTransform)
+        private RecycleableMonobehaviour RemoveProxy(ProxyTransform proxyTransform)
         {
             PrefabReference prefab = proxyTransform.prefab;
             RecycleableMonobehaviour proxy = proxyTransform.proxy;
@@ -627,6 +635,7 @@ namespace Syadeu.Presentation
             pool.Push(proxy);
             CoreSystem.Logger.Log(Channel.Proxy, true,
                     $"Prefab({prefab.GetObjectSetting().m_Name}) proxy removed.");
+            return proxy;
         }
 
         #endregion

@@ -17,8 +17,12 @@ namespace Syadeu.Database
 
         private const string ENTITYDATA_PATH = "Entities";
         private const string ATTRIBUTES = "Attributes";
+        private const string ACTION = "Actions";
+        private const string DATA = "Data";
         public static string EntityPath => Path.Combine(ModulePath, ENTITYDATA_PATH);
         public static string AttributePath => Path.Combine(ModulePath, ATTRIBUTES);
+        public static string ActionPath => Path.Combine(ModulePath, ACTION);
+        public static string DataPath => Path.Combine(ModulePath, DATA);
 
         #region Item
         private const string ITEMDATA_PATH = "Items";

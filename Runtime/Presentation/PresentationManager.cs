@@ -330,11 +330,21 @@ namespace Syadeu.Presentation
         #endregion
 
         #region Presentation Group Method
+        private static void LogMessage(PresentationResult result)
+        {
+            if (result.m_Result == ResultFlag.Normal) return;
+
+            if (result.m_Result == ResultFlag.Warning) CoreSystem.Logger.LogWarning(Channel.Presentation, result.m_Message);
+            else if (result.m_Result == ResultFlag.Error) CoreSystem.Logger.LogError(Channel.Presentation, result.m_Message);
+        }
         private static IEnumerator Presentation(Group group)
         {
+            PresentationResult result;
+
             for (int i = 0; i < group.m_Initializers.Count; i++)
             {
-                group.m_Initializers[i].OnInitialize();
+                result = group.m_Initializers[i].OnInitialize();
+                LogMessage(result);
             }
             group.m_MainthreadSignal = true;
 
@@ -404,7 +414,6 @@ namespace Syadeu.Presentation
             yield return group.m_WaitUntilInitializeCompleted;
             CoreSystem.Logger.Log(Channel.Presentation, $"Presentation group ({group.m_Name.Name}) started");
 
-            PresentationResult result;
             while (true)
             {
                 group.m_MainthreadBeforePre = false;
@@ -415,10 +424,7 @@ namespace Syadeu.Presentation
                 for (int i = 0; i < group.m_BeforePresentations.Count; i++)
                 {
                     result = group.m_BeforePresentations[i].BeforePresentation();
-                    if (result.m_Result != ResultFlag.Normal)
-                    {
-                        ConsoleWindow.Log(result.m_Message, result.m_Result);
-                    }
+                    LogMessage(result);
                 }
 
                 group.m_MainthreadBeforePre = true;
@@ -431,10 +437,7 @@ namespace Syadeu.Presentation
                 for (int i = 0; i < group.m_OnPresentations.Count; i++)
                 {
                     result = group.m_OnPresentations[i].OnPresentation();
-                    if (result.m_Result != ResultFlag.Normal)
-                    {
-                        ConsoleWindow.Log(result.m_Message, result.m_Result);
-                    }
+                    LogMessage(result);
                 }
 
                 group.m_MainthreadOnPre = true;
@@ -447,10 +450,7 @@ namespace Syadeu.Presentation
                 for (int i = 0; i < group.m_AfterPresentations.Count; i++)
                 {
                     result = group.m_AfterPresentations[i].AfterPresentation();
-                    if (result.m_Result != ResultFlag.Normal)
-                    {
-                        ConsoleWindow.Log(result.m_Message, result.m_Result);
-                    }
+                    LogMessage(result);
                 }
 
                 group.m_MainthreadAfterPre = true;
@@ -461,9 +461,12 @@ namespace Syadeu.Presentation
         }
         private static IEnumerator PresentationAsync(Group group)
         {
+            PresentationResult result;
+
             for (int i = 0; i < group.m_Initializers.Count; i++)
             {
-                group.m_Initializers[i].OnInitializeAsync();
+                result = group.m_Initializers[i].OnInitializeAsync();
+                LogMessage(result);
             }
             //"1".ToLog();
 
@@ -489,7 +492,6 @@ namespace Syadeu.Presentation
 
             yield return group.m_WaitUntilInitializeCompleted;
 
-            PresentationResult result;
             while (true)
             {
                 group.m_BackgroundthreadBeforePre = false;
@@ -497,10 +499,7 @@ namespace Syadeu.Presentation
                 for (int i = 0; i < group.m_BeforePresentations.Count; i++)
                 {
                     result = group.m_BeforePresentations[i].BeforePresentationAsync();
-                    if (result.m_Result != ResultFlag.Normal)
-                    {
-                        ConsoleWindow.Log(result.m_Message, result.m_Result);
-                    }
+                    LogMessage(result);
                 }
 
                 group.m_BackgroundthreadBeforePre = true;
@@ -510,10 +509,7 @@ namespace Syadeu.Presentation
                 for (int i = 0; i < group.m_OnPresentations.Count; i++)
                 {
                     result = group.m_OnPresentations[i].OnPresentationAsync();
-                    if (result.m_Result != ResultFlag.Normal)
-                    {
-                        ConsoleWindow.Log(result.m_Message, result.m_Result);
-                    }
+                    LogMessage(result);
                 }
 
                 group.m_BackgroundthreadOnPre = true;
@@ -523,10 +519,7 @@ namespace Syadeu.Presentation
                 for (int i = 0; i < group.m_AfterPresentations.Count; i++)
                 {
                     result = group.m_AfterPresentations[i].AfterPresentationAsync();
-                    if (result.m_Result != ResultFlag.Normal)
-                    {
-                        ConsoleWindow.Log(result.m_Message, result.m_Result);
-                    }
+                    LogMessage(result);
                 }
 
                 group.m_BackgroundthreadAfterPre = true;

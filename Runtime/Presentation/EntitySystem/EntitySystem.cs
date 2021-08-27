@@ -15,6 +15,7 @@ using Unity.Mathematics;
 using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
+using Syadeu.Presentation.Data;
 
 namespace Syadeu.Presentation
 {
@@ -299,6 +300,17 @@ namespace Syadeu.Presentation
                 }
             }
 
+            ConsoleWindow.CreateCommand((cmd) =>
+            {
+                while (m_ObjectEntities.Any())
+                {
+                    var temp = m_ObjectEntities.First().Value;
+                    if (!temp.TryAsReference(out var refer)) continue;
+
+                    refer.Destroy();
+                }
+            }, "destroy", "all");
+
             return base.OnStartPresentation();
         }
 
@@ -329,13 +341,18 @@ namespace Syadeu.Presentation
             return base.OnPresentationAsync();
         }
 
-        
         #endregion
 
-#line hidden
+//#line hidden
 
         #region Create EntityBase
 
+        /// <summary>
+        /// <inheritdoc cref="CreateEntity(in string, in float3, in quaternion, in float3, in bool)"/>
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="position"></param>
+        /// <returns></returns>
         public Entity<IEntity> CreateEntity(in string name, in float3 position)
         {
             CoreSystem.Logger.ThreadBlock(nameof(CreateEntity), ThreadInfo.Unity);
@@ -345,7 +362,7 @@ namespace Syadeu.Presentation
             return InternalCreateEntity(in temp, in obj);
         }
         /// <summary>
-        /// 
+        /// <inheritdoc cref="CreateEntity(in Hash, in float3, in quaternion, in float3, in bool)"/>
         /// </summary>
         /// <param name="hash"><seealso cref="IEntityData.Hash"/> 값</param>
         /// <param name="position"></param>
@@ -358,6 +375,15 @@ namespace Syadeu.Presentation
             ProxyTransform obj = InternalCreateProxy(in temp, temp.Prefab, in position, quaternion.identity, 1, true);
             return InternalCreateEntity(in temp, in obj);
         }
+        /// <summary>
+        /// 엔티티를 생성합니다. <paramref name="name"/>은 <seealso cref="IEntityData.Name"/> 입니다.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="position"></param>
+        /// <param name="rotation"></param>
+        /// <param name="localSize"></param>
+        /// <param name="enableCull"></param>
+        /// <returns></returns>
         public Entity<IEntity> CreateEntity(in string name, in float3 position, in quaternion rotation, in float3 localSize, in bool enableCull)
         {
             CoreSystem.Logger.ThreadBlock(nameof(CreateEntity), ThreadInfo.Unity);
@@ -367,7 +393,7 @@ namespace Syadeu.Presentation
             return InternalCreateEntity(in temp, in obj);
         }
         /// <summary>
-        /// 
+        /// 엔티티를 생성합니다. <paramref name="hash"/>에는 <seealso cref="Reference"/>값으로 대체 가능합니다.
         /// </summary>
         /// <param name="hash"><seealso cref="IEntityData.Hash"/> 값</param>
         /// <param name="position"></param>
@@ -413,7 +439,7 @@ namespace Syadeu.Presentation
         }
         #endregion
         private ProxyTransform InternalCreateProxy(in EntityBase from,
-            in PrefabReference prefab, in float3 pos, in quaternion rot, in float3 scale, in bool enableCull)
+            in PrefabReference<GameObject> prefab, in float3 pos, in quaternion rot, in float3 scale, in bool enableCull)
         {
             if (!prefab.IsValid())
             {
@@ -442,7 +468,7 @@ namespace Syadeu.Presentation
         #region Create EntityDataBase
 
         /// <summary>
-        /// 
+        /// 데이터 엔티티를 생성합니다. <paramref name="hash"/>는 <seealso cref="Reference"/> 값으로 대체 가능합니다.
         /// </summary>
         /// <param name="hash"><seealso cref="IEntityData.Hash"/> 값</param>
         /// <returns></returns>
@@ -451,6 +477,11 @@ namespace Syadeu.Presentation
             InternalEntityDataValidation(hash, out EntityDataBase original);
             return InternalCreateObject(original);
         }
+        /// <summary>
+        /// 데이터 엔티티를 생성합니다. <paramref name="name"/>은 <seealso cref="IEntityData.Name"/>입니다.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
         public EntityData<IEntityData> CreateObject(string name)
         {
             InternalEntityDataValidation(name, out EntityDataBase original);
@@ -503,12 +534,20 @@ namespace Syadeu.Presentation
             m_ObjectEntities.Add(clone.Idx, clone);
 
             ProcessEntityOnCreated(this, clone);
-            return EntityData<IEntityData>.GetEntityData(clone.Idx);
+            return EntityData<IEntityData>.GetEntity(clone.Idx);
         }
 
         #endregion
 
-        public EntityData<ConvertedEntity> Convert(GameObject obj)
+        /// <summary>
+        /// 이미 생성된 유니티 게임 오브젝트를 엔티티 시스템로 편입시켜 엔티티로 변환하여 반환합니다.
+        /// </summary>
+        /// <remarks>
+        /// <seealso cref="Entity{T}.transform"/> 은 <seealso cref="IUnityTransform"/>을 담습니다.
+        /// </remarks>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public Entity<ConvertedEntity> Convert(GameObject obj)
         {
             CoreSystem.Logger.ThreadBlock(nameof(Convert), ThreadInfo.Unity);
 
@@ -533,41 +572,14 @@ namespace Syadeu.Presentation
             m_ObjectEntities.Add(entity.Idx, entity);
 
             ProcessEntityOnCreated(this, entity);
-            return EntityData<ConvertedEntity>.GetEntityData(entity.Idx);
-        }
-        public EntityData<T> Convert<T>(GameObject obj) where T : EntityDataBase
-        {
-            CoreSystem.Logger.ThreadBlock(nameof(Convert), ThreadInfo.Unity);
-
-            ConvertedEntity temp = new ConvertedEntity
-            {
-                Name = obj.name,
-                Hash = Hash.Empty
-            };
-            ConvertedEntity entity = (ConvertedEntity)temp.Clone();
-
-            entity.transform = new UnityTransform
-            {
-                entity = entity,
-                provider = obj.transform
-            };
-
-            ConvertedEntityComponent component = obj.AddComponent<ConvertedEntityComponent>();
-            component.m_Entity = entity;
-
-            entity.m_IsCreated = true;
-
-            m_ObjectEntities.Add(entity.Idx, entity);
-
-            ProcessEntityOnCreated(this, entity);
-            return EntityData<T>.GetEntityData(entity.Idx);
+            return Entity<ConvertedEntity>.GetEntity(entity.Idx);
         }
 
         /// <summary>
         /// 해당 엔티티를 즉시 파괴합니다.
         /// </summary>
         /// <remarks>
-        /// 씬이 전환되는 경우, 해당 씬에서 생성된 <see cref="EntityBase"/>는 자동으로 파괴되므로 호출하지 마세요. 단, <see cref="EntityDataBase"/>(<seealso cref="DataGameObject"/>가 없는 엔티티)는 씬이 전환되어도 자동으로 파괴되지 않습니다.
+        /// 씬이 전환되는 경우, 해당 씬에서 생성된 <see cref="EntityBase"/>는 자동으로 파괴되므로 호출하지 마세요. 단, <see cref="EntityDataBase"/>(<seealso cref="ITransform"/>이 없는 엔티티)는 씬이 전환되어도 자동으로 파괴되지 않습니다.
         /// </remarks>
         /// <param name="hash"><seealso cref="IEntityData.Idx"/> 값</param>
         public void DestroyEntity(Entity<IEntity> entity) => InternalDestroyEntity(entity.Idx);
@@ -575,7 +587,12 @@ namespace Syadeu.Presentation
         public void DestroyEntity(EntityData<IEntityData> entity) => InternalDestroyEntity(entity.Idx);
         internal void InternalDestroyEntity(in Hash hash)
         {
-            if (!m_ObjectEntities.ContainsKey(hash)) throw new Exception();
+            if (!m_ObjectEntities.ContainsKey(hash))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Already destroyed entity {hash}");
+                return;
+            }
 
             ProcessEntityOnDestroy(this, m_ObjectEntities[hash]);
 
@@ -607,7 +624,7 @@ namespace Syadeu.Presentation
             CoreSystem.Logger.Log(Channel.Entity,
                 $"Create entity({entity.Name})");
 
-            EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntityData(entity.Idx);
+            EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntity(entity.Idx);
 
             #region Attributes
             Array.ForEach(entity.Attributes, (other) =>
@@ -664,7 +681,7 @@ namespace Syadeu.Presentation
         }
         private static void ProcessEntityOnPresentation(EntitySystem system, IEntityData entity)
         {
-            EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntityData(entity.Idx);
+            EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntity(entity.Idx);
 
             //#region Entity
             //if (system.m_EntityProcessors.TryGetValue(t, out List<IEntityProcessor> entityProcessor))
@@ -705,7 +722,7 @@ namespace Syadeu.Presentation
             CoreSystem.Logger.Log(Channel.Entity,
                 $"Destroying entity({entity.Name})");
 
-            EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntityData(entity.Idx);
+            EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntity(entity.Idx);
 
             #region Attributes
             Array.ForEach(entity.Attributes, (other) =>
@@ -949,129 +966,11 @@ namespace Syadeu.Presentation
             }
             #endregion
         }
+        /// <summary>
+        /// [Experiment] 테스트 중인 기능입니다.
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
         public Query GetQuery(EntityData<IEntityData> entity) => Query.Dequeue(this, entity);
-
-        #region Raycast
-        public Raycaster Raycast(Entity<IEntity> from, Ray ray)
-        {
-            NativeArray<Hash> keys = new NativeArray<Hash>(PresentationSystem<EntitySystem>.System.m_EntityGameObjects.Values.ToArray(), Allocator.TempJob);
-
-            NativeList<RaycastHitInfo> hits = new NativeList<RaycastHitInfo>(64, Allocator.Persistent);
-
-            RaycastJob job = new RaycastJob(from, keys, ray, hits);
-            return new Raycaster(job.Schedule(keys.Length, 64), hits);
-        }
-
-        public class Raycaster : IDisposable
-        {
-            private readonly JobHandle m_Job;
-            private readonly NativeList<RaycastHitInfo> m_Hits;
-
-            public bool JobCompleted => m_Job.IsCompleted;
-            public bool Hit
-            {
-                get
-                {
-                    m_Job.Complete();
-                    if (m_Hits.Length > 0) return true;
-                    return false;
-                }
-            }
-            public RaycastHitInfo Target
-            {
-                get
-                {
-                    m_Job.Complete();
-
-                    RaycastHitInfo temp = default;
-                    float dis = float.MaxValue;
-                    for (int i = 0; i < m_Hits.Length; i++)
-                    {
-                        if (m_Hits[i].Distance < dis)
-                        {
-                            dis = m_Hits[i].Distance;
-                            temp = m_Hits[i];
-                        }
-                    }
-
-                    return temp;
-                }
-            }
-            public RaycastHitInfo[] Targets
-            {
-                get
-                {
-                    m_Job.Complete();
-
-                    return m_Hits.ToArray();
-                }
-            }
-
-            internal Raycaster(JobHandle job, NativeList<RaycastHitInfo> hits)
-            {
-                m_Job = job;
-                m_Hits = hits;
-            }
-            ~Raycaster()
-            {
-                Dispose();
-            }
-
-            public void Dispose()
-            {
-                m_Hits.Dispose();
-            }
-        }
-        public struct RaycastHitInfo
-        {
-            private readonly Entity<IEntity> m_Entity;
-            private readonly float m_Distance;
-            private readonly float3 m_Point;
-
-            public Entity<IEntity> Entity => m_Entity;
-            public float Distance => m_Distance;
-            public float3 Point => m_Point;
-
-            internal RaycastHitInfo(Entity<IEntity> entity, float dis, float3 point)
-            {
-                m_Entity = entity;
-                m_Distance = dis;
-                m_Point = point;
-            }
-        }
-        private struct RaycastJob : IJobParallelFor
-        {
-            [ReadOnly] private readonly Entity<IEntity> m_From;
-            [ReadOnly] private readonly Ray m_Ray;
-
-            [DeallocateOnJobCompletion]
-            private readonly NativeArray<Hash> m_Keys;
-
-            private readonly NativeList<RaycastHitInfo>.ParallelWriter m_Hits;
-
-            public RaycastJob(Entity<IEntity> from, NativeArray<Hash> keys, Ray ray, NativeList<RaycastHitInfo> hits)
-            {
-                m_From = from;
-                m_Keys = keys;
-                m_Ray = ray;
-
-                m_Hits = hits.AsParallelWriter();
-            }
-
-            public void Execute(int index)
-            {
-                if (m_Keys[index].Equals(m_From.Idx)) return;
-
-                Hash key = m_Keys[index];
-                Entity<IEntity> target = Entity<IEntity>.GetEntity(key);
-
-                var targetAABB = ((IProxyTransform)target.transform).aabb;
-                if (targetAABB.Intersect(m_Ray, out float dis, out float3 point))
-                {
-                    m_Hits.AddNoResize(new RaycastHitInfo(target, dis, point));
-                }
-            }
-        }
-        #endregion
     }
 }

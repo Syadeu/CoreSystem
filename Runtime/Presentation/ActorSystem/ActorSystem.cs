@@ -46,8 +46,7 @@ namespace Syadeu.Presentation.Actor
         {
             if (!TypeHelper.TypeOf<ActorEntity>.Type.IsAssignableFrom(obj.Type)) return;
 
-            Entity<ActorEntity> actorRef = obj;
-
+            var actorRef = obj.As<IEntityData, ActorEntity>();
             actorRef.Target.m_ActorSystem = this;
 
             m_PlayerHashMap.Add(actorRef.Idx, actorRef);
@@ -56,8 +55,7 @@ namespace Syadeu.Presentation.Actor
         {
             if (!TypeHelper.TypeOf<ActorEntity>.Type.IsAssignableFrom(obj.Type)) return;
 
-            Entity<ActorEntity> actorRef = obj;
-
+            var actorRef = obj.As<IEntityData, ActorEntity>();
             actorRef.Target.m_ActorSystem = null;
 
             m_PlayerHashMap.Remove(actorRef.Idx);

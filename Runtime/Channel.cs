@@ -18,6 +18,7 @@
         Scene = 1 << 7,
         Entity = 1 << 8,
         Proxy = 1 << 9,
+        Render = 1 << 10,
 
         Audio = 1 << 20,
 

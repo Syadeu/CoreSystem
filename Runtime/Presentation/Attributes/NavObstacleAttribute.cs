@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Syadeu.Internal;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Map;
 using UnityEngine.AI;
@@ -7,7 +8,15 @@ using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation.Attributes
 {
+    /// <summary>
+    /// 실시간 NavMesh 베이킹을 위해 고안된 어트리뷰트입니다. 상속받는 <see cref="Entity{T}"/>는 obstacle이 되어 베이킹 됩니다.
+    /// </summary>
+    /// <remarks>
+    /// 이 어트리뷰트 혼자서는 베이킹 되지않고, <see cref="NavMeshComponent"/>으로 베이킹 영역을 지정해야지만 베이킹 됩니다.
+    /// </remarks>
     [AttributeAcceptOnly(typeof(EntityBase))]
+    [ReflectionDescription(
+        "실시간 NavMesh 베이킹을 위해 고안된 어트리뷰트입니다.")]
     public sealed class NavObstacleAttribute : AttributeBase
     {
         public enum ObstacleType
@@ -39,7 +48,7 @@ namespace Syadeu.Presentation.Attributes
 
         protected override void OnCreated(NavObstacleAttribute attribute, EntityData<IEntityData> e)
         {
-            Entity<IEntity> entity = e;
+            Entity<IEntity> entity = e.As<IEntityData, IEntity>();
             m_NavMeshSystem.AddObstacle(attribute, entity.transform, attribute.m_AreaMask);
         }
         protected override void OnDestroy(NavObstacleAttribute attribute, EntityData<IEntityData> entity)

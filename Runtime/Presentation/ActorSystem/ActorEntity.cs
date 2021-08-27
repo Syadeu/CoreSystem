@@ -1,10 +1,12 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Utilities;
 using Syadeu.Presentation.Entities;
+using System.ComponentModel;
 using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation.Actor
 {
+    [DisplayName("Entity: Actor")]
     public sealed class ActorEntity : EntityBase
     {
         [JsonIgnore] internal ActorSystem m_ActorSystem;

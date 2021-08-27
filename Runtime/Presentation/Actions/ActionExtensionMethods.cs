@@ -1,40 +1,138 @@
-﻿namespace Syadeu.Presentation.Entities
+﻿using Syadeu.Database;
+using Syadeu.Internal;
+using Syadeu.Presentation.Entities;
+
+namespace Syadeu.Presentation.Actions
 {
     public static class ActionExtensionMethods
     {
-        public static T Bind<T>(this Reference<T> other, EntityData<IEntityData> entity) where T : ActionBase<T>, new()
-        {
-            T action = ActionBase<T>.GetAction(other);
-            action.Parent = entity;
+        const string c_ErrorIsTerminatedAction = "This action({0}) has been terminated.";
+        const string c_ErrorCompletedWithFailed = "Execution ({0}) completed with failed.";
 
-            return action;
-        }
-        public static void Execute<T>(this Reference<T> other, EntityData<IEntityData> entity) where T : ActionBase<T>, new()
+        public static bool Execute<T>(this Reference<T> other, EntityData<IEntityData> entity) where T : TriggerActionBase
         {
-            T action = other.Bind(entity);
-            InternalExecute(action);
-        }
-
-        public static void Execute<T>(this T other) where T : ActionBase<T>, new() => InternalExecute(other);
-        private static void InternalExecute<T>(T action) where T : ActionBase<T>, new()
-        {
+            T action = TriggerAction<T>.GetAction(other);
             if (action.Terminated)
             {
-                CoreSystem.Logger.LogError(Channel.Presentation,
-                    "This action has been terminated.");
-                return;
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    string.Format(c_ErrorIsTerminatedAction, TypeHelper.TypeOf<T>.Name));
+                return false;
             }
-
-            action.InternalExecute();
+            return action.InternalExecute(entity);
+        }
+        public static bool Execute<T>(this Reference<T> other) where T : InstanceActionBase<T>
+        {
+            T action = InstanceActionBase<T>.GetAction(other);
+            if (action.Terminated)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    string.Format(c_ErrorIsTerminatedAction, TypeHelper.TypeOf<T>.Name));
+                return false;
+            }
+            return action.InternalExecute();
+        }
+        public static bool Execute<T, TTarget>(this Reference<T> other, TTarget t) where T : ParamActionBase<T, TTarget>
+        {
+            T action = ParamActionBase<T, TTarget>.GetAction(other);
+            if (action.Terminated)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    string.Format(c_ErrorIsTerminatedAction, TypeHelper.TypeOf<T>.Name));
+                return false;
+            }
+            return action.InternalExecute(t);
+        }
+        public static bool Execute<T, TTarget, TATarget>(this Reference<T> other, TTarget t, TATarget ta) where T : ParamActionBase<T, TTarget, TATarget>
+        {
+            T action = ParamActionBase<T, TTarget, TTarget>.GetAction(other);
+            if (action.Terminated)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    string.Format(c_ErrorIsTerminatedAction, TypeHelper.TypeOf<T>.Name));
+                return false;
+            }
+            return action.InternalExecute(t, ta);
         }
 
-        //public static void Execute<T>(this Reference<ChainedAction> chainedAction, EntityData<IEntityData> entity) where T : ActionBase<T>, new()
-        //{
-        //    var chain = ChainedAction.GetAction(chainedAction);
-        //    for (int i = 0; i < chain.Length; i++)
-        //    {
+        public static bool Execute<T>(this Reference<T>[] actions, EntityData<IEntityData> entity) where T : TriggerActionBase
+        {
+            bool isFailed = false;
+            for (int i = 0; i < actions.Length; i++)
+            {
+                if (!actions[i].IsValid()) continue;
 
-        //    }
-        //}
+                isFailed |= !actions[i].Execute(entity);
+            }
+
+            if (isFailed)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    string.Format(c_ErrorCompletedWithFailed, TypeHelper.TypeOf<T>.Name));
+            }
+
+            return isFailed;
+        }
+        public static bool Execute<T>(this Reference<T>[] actions) where T : InstanceActionBase<T>
+        {
+            bool isFailed = false;
+            for (int i = 0; i < actions.Length; i++)
+            {
+                if (!actions[i].IsValid()) continue;
+
+                isFailed |= !actions[i].Execute();
+            }
+
+            if (isFailed)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    string.Format(c_ErrorCompletedWithFailed, TypeHelper.TypeOf<T>.Name));
+            }
+
+            return isFailed;
+        }
+        public static bool Execute<T, TTarget>(this Reference<T>[] actions, TTarget target) where T : ParamActionBase<T, TTarget>
+        {
+            bool isFailed = false;
+            for (int i = 0; i < actions.Length; i++)
+            {
+                if (!actions[i].IsValid()) continue;
+
+                isFailed |= !actions[i].Execute(target);
+            }
+
+            if (isFailed)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    string.Format(c_ErrorCompletedWithFailed, TypeHelper.TypeOf<T>.Name));
+            }
+
+            return isFailed;
+        }
+        public static bool Execute<T, TTarget, TATarget>(this Reference<T>[] actions, TTarget t, TATarget ta) where T : ParamActionBase<T, TTarget, TATarget>
+        {
+            bool isFailed = false;
+            for (int i = 0; i < actions.Length; i++)
+            {
+                if (!actions[i].IsValid()) continue;
+
+                isFailed |= !actions[i].Execute(t, ta);
+            }
+
+            if (isFailed)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    string.Format(c_ErrorCompletedWithFailed, TypeHelper.TypeOf<T>.Name));
+            }
+
+            return isFailed;
+        }
+
+        public static void Execute<TState, TAction>(this Reference<TAction> other, EntityData<IEntityData> entity)
+            where TState : StateBase<TAction>, ITerminate, new()
+            where TAction : StatefulActionBase<TState, TAction>
+        {
+            TAction action = StatefulActionBase<TState, TAction>.GetAction(other);
+            action.InternalExecute(entity);
+        }
     }
 }

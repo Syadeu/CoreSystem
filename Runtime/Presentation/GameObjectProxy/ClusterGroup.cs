@@ -1,8 +1,10 @@
-﻿using System;
+﻿using Syadeu.Database;
+using System;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
+using AABB = Syadeu.Database.AABB;
 
 namespace Syadeu.Presentation
 {
@@ -39,6 +41,8 @@ namespace Syadeu.Presentation
 
         public float3 Translation => m_Translation;
         public bool IsCreated => m_IsCreated;
+
+        public AABB AABB { get; }
 
         #endregion
 
@@ -93,6 +97,8 @@ namespace Syadeu.Presentation
             m_Translation = translation;
             m_IsCreated = true;
             m_Length = length;
+
+            AABB = new AABB(translation, Cluster<T>.c_ClusterRange);
 
             m_Buffer = (ClusterItem<T>*)UnsafeUtility.Malloc(
                 UnsafeUtility.SizeOf<ClusterItem<T>>() * length,

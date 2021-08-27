@@ -1,4 +1,5 @@
-﻿using Syadeu.Mono;
+﻿using Syadeu.Internal;
+using Syadeu.Mono;
 using Syadeu.Presentation.Entities;
 using Syadeu.ThreadSafe;
 using System;
@@ -10,32 +11,39 @@ namespace Syadeu.Presentation
 {
     public static class EntityExtensionMethods
     {
-        //public static void Destroy(this IEntity entity)
-        //{
-        //    entity.gameObject.Destory();
-        //}
-        //public static void Destroy(this IObject obj)
-        //{
-        //    PresentationSystem<EntitySystem>.System.DestroyObject(obj.Idx);
-        //}
+        public static Entity<TA> As<T, TA>(this EntityData<T> t)
+            where T : class, IEntityData
+            where TA : class, IEntity
+        {
+            return Entity<TA>.GetEntity(t.Idx);
+        }
+        public static EntityData<TA> As<T, TA>(this Entity<T> t)
+            where T : class, IEntity
+            where TA : class, IEntityData
+        {
+            return EntityData<TA>.GetEntity(t.Idx);
+        }
 
-        //[Obsolete("", true)]
-        //public static ref GridManager.GridCell GetCurrentCell(this IEntity entity)
-        //{
-        //    Vector3 pos = entity.transform.position;
-        //    if (!GridManager.HasGrid(pos))
-        //    {
-        //        CoreSystem.Logger.LogError(Channel.Entity, $"This entity({entity.Name}) is not on the Grid");
-        //        throw new System.Exception();
-        //    }
-        //    ref GridManager.Grid grid = ref GridManager.GetGrid(pos);
-        //    if (!grid.HasCell(pos))
-        //    {
-        //        // 이건 버그임
-        //        throw new System.Exception();
-        //    }
+        public static bool TryAsReference<T>(this T t, out EntityData<T> entity)
+            where T : class, IEntityData
+        {
+            entity = EntityData<T>.Empty;
 
-        //    return ref grid.GetCell(pos);
-        //}
+            if (!t.IsValid()) return false;
+
+            entity = EntityData<T>.GetEntityWithoutCheck(t.Idx);
+            return true;
+        }
+        public static EntityData<T> AsReference<T>(this T t)
+            where T : class, IEntityData
+        {
+            return EntityData<T>.GetEntity(t.Idx);
+        }
+        public static EntityData<TA> AsReference<T, TA>(this T t)
+            where T : class, IEntityData
+            where TA : class, IEntityData
+        {
+            return EntityData<TA>.GetEntity(t.Idx);
+        }
     }
 }

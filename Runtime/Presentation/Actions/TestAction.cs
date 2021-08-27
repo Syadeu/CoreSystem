@@ -1,8 +1,15 @@
-﻿namespace Syadeu.Presentation.Entities
+﻿using Syadeu.Database;
+using Syadeu.Presentation.Entities;
+using UnityEngine;
+
+namespace Syadeu.Presentation.Actions
 {
-    public sealed class TestAction : ActionBase<TestAction>
+    public sealed class TestAction : TriggerAction<TestAction>
     {
-        protected override void OnExecute()
+        public Reference<EntityDataBase> Test;
+        public PrefabReference<GameObject> TestGame;
+
+        protected override void OnExecute(EntityData<IEntityData> entity)
         {
             "executed".ToLog();
         }

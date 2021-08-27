@@ -1,11 +1,12 @@
 ﻿using Newtonsoft.Json;
+using Syadeu.Presentation.Entities;
 using System.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace Syadeu.Presentation.Entities
+namespace Syadeu.Presentation.Actions
 {
-    public sealed class EntityMoveToVectorAction : ActionBase<EntityMoveToVectorAction>
+    public sealed class EntityMoveToVectorAction : TriggerAction<EntityMoveToVectorAction>
     {
         public enum UpdateType
         {
@@ -17,9 +18,9 @@ namespace Syadeu.Presentation.Entities
         [JsonProperty(Order = 1, PropertyName = "UpdateType")] private UpdateType m_UpdateType;
         [JsonProperty(Order = 2, PropertyName = "Speed")] private float m_Speed = 5;
 
-        protected override void OnExecute()
+        protected override void OnExecute(EntityData<IEntityData> e)
         {
-            if (!(Parent.Target is EntityBase entity))
+            if (!(e.Target is EntityBase entity))
             {
                 CoreSystem.Logger.LogError(Channel.Presentation,
                     "Target is not a EntityBase");

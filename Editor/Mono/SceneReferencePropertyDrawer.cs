@@ -5,15 +5,6 @@ using UnityEditor;
 using UnityEngine;
 using UnityEditor.VersionControl;
 
-#if CORESYSTEM_GOOGLE
-using Google.Apis.Sheets.v4.Data;
-#endif
-
-
-#if UNITY_ADDRESSABLES
-
-#endif
-
 namespace SyadeuEditor
 {
     /// <summary>

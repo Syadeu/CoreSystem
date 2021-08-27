@@ -1,4 +1,5 @@
 ﻿using Syadeu.Database;
+using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Internal;
@@ -8,6 +9,9 @@ using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation
 {
+    /// <summary>
+    /// 직접 상속은 허용하지 않습니다.
+    /// </summary>
     [RequireDerived]
     public abstract class ProcessorBase
     {
@@ -53,13 +57,13 @@ namespace Syadeu.Presentation
             return EntitySystem.CreateObject(obj.Hash);
         }
 
-        protected Entity<T> CreateEntity<T>(Reference<T> entity, float3 position, quaternion rotation) where T : ObjectBase, IEntity
-            => CreateEntity(entity, position, rotation, 1, true);
-        protected Entity<T> CreateEntity<T>(Reference<T> entity, float3 position, quaternion rotation, float3 localSize, bool enableCull) where T : ObjectBase, IEntity
+        protected Entity<T> CreateEntity<T>(Reference<T> entity, float3 position, quaternion rotation) where T : EntityBase
+            => CreateEntity(entity, position, rotation, 1);
+        protected Entity<T> CreateEntity<T>(Reference<T> entity, float3 position, quaternion rotation, float3 localSize) where T : EntityBase
         {
             CoreSystem.Logger.NotNull(entity, "Target entity cannot be null");
 
-            return EntitySystem.CreateEntity(entity, position, rotation, localSize, enableCull);
+            return EntitySystem.CreateEntity(entity, position, rotation, localSize, entity.GetObject().m_EnableCull).As<IEntity, T>();
         }
     }
 }

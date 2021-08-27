@@ -58,7 +58,7 @@ namespace Syadeu.Presentation.Map
         public void UpdateGridCell()
         {
             int[] indices = GetCurrentGridIndices();
-            GridSystem.UpdateGridEntity(Parent, indices);
+            GridSystem.UpdateGridEntity(Parent.As<IEntityData, IEntity>(), indices);
 
             CurrentGridIndices = indices;
         }
@@ -78,7 +78,7 @@ namespace Syadeu.Presentation.Map
             if (GridSystem == null) throw new System.Exception();
             if (GridSystem.GridMap == null) throw new System.Exception();
 
-            Entity<IEntity> entity = Parent;
+            Entity<IEntity> entity = Parent.As<IEntityData, IEntity>();
             // TODO : 임시. 이후 gridsize 에 맞춰서 인덱스 반환
             int p0 = GridSystem.GridMap.Grid.PositionToIndex(entity.transform.position);
 

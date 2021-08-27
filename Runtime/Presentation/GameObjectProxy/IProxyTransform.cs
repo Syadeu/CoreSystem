@@ -23,7 +23,6 @@ namespace Syadeu.Presentation
 
         float3 center { get; }
         float3 size { get; }
-        AABB aabb { get; }
 #pragma warning restore IDE1006 // Naming Styles
 
         void Synchronize(ProxyTransform.SynchronizeOption option);

@@ -56,11 +56,13 @@ namespace Syadeu.Database
             throw new NotImplementedException();
         }
 
-        private readonly ulong mBits;
+        [UnityEngine.SerializeField] private ulong mBits;
         public Hash(ulong bits)
         {
             mBits = bits;
         }
+
+        public bool IsEmpty() => Equals(Empty);
 
         public bool Equals(Hash other) => mBits.Equals(other.mBits);
         public override bool Equals(object obj) => (obj is Hash hash) && Equals(hash);

@@ -432,6 +432,11 @@ namespace SyadeuEditor
                 }
 
                 m_AddressableCount = PrefabListEditor.DefaultGroup.entries.Count;
+                var groups = PrefabListEditor.PrefabListGroups;
+                for (int i = 0; i < groups.Length; i++)
+                {
+                    m_AddressableCount += groups[i].entries.Count;
+                }
             }
 
             public bool Predicate()

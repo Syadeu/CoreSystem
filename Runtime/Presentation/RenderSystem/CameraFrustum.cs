@@ -9,6 +9,7 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 using AABB = Syadeu.Database.AABB;
+using Plane = Syadeu.Database.Plane;
 
 namespace Syadeu.Presentation.Render
 {
@@ -39,7 +40,7 @@ namespace Syadeu.Presentation.Render
 		public struct ReadOnly
         {
 			public readonly float3 position;
-			public readonly NativeArray<Plane> planes;
+			//public readonly NativeArray<Plane> planes;
 			public readonly NativeArray<float3>
 				corners,
 				absNormals,
@@ -53,7 +54,7 @@ namespace Syadeu.Presentation.Render
 			internal ReadOnly(ref CameraFrustum data)
             {
 				position = data.m_Position;
-				planes = data.m_Planes;
+				//planes = data.m_Planes;
 				corners = data.m_Corners;
 				absNormals = data.m_AbsNormals;
 				planeNormals = data.m_PlaneNormals;
@@ -86,13 +87,13 @@ namespace Syadeu.Presentation.Render
 				(type & IntersectionType.Contains) == IntersectionType.Contains) return true;
 				return false;
 			}
-			public IntersectionType IntersectsSphere(ref float3 center, float radius, float frustumPadding = 0)
+			public IntersectionType IntersectsSphere(in float3 center, in float radius, float frustumPadding = 0)
             {
 #if UNITY_EDITOR
 				AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
 				AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
 #endif
-				return CameraFrustum.IntersectsSphere(in planeNormals, in planeDistances, ref center, radius, frustumPadding);
+				return CameraFrustum.IntersectsSphere(in planeNormals, in planeDistances, in center, in radius, frustumPadding);
 			}
 		}
 
@@ -194,13 +195,23 @@ namespace Syadeu.Presentation.Render
 #endif
 			return Contains(in m_PlaneNormals, in m_PlaneDistances, in point);
 		}
-		public bool IntersectsBox(in AABB box, float frustumPadding = 0)
+        public bool IntersectsRay(in Ray ray, out float distance)
+        {
+            distance = float.MaxValue;
+            bool interect = false;
+            for (int i = 0; i < m_Planes.Length; i++)
+            {
+                interect |= m_Planes[i].Raycast(ray, out float dis);
+                if (interect && dis < distance) distance = dis;
+            }
+            return interect;
+        }
+        public bool IntersectsBox(in AABB box, float frustumPadding = 0)
         {
 #if UNITY_EDITOR
 			AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
 			AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
 #endif
-
 			IntersectionType type = IntersectsBox(in m_Corners, in m_AbsNormals, in m_PlaneNormals, in m_PlaneDistances,
 				in box, frustumPadding);
 
@@ -208,13 +219,13 @@ namespace Syadeu.Presentation.Render
 				(type & IntersectionType.Contains) == IntersectionType.Contains) return true;
 			return false;
 		}
-		public IntersectionType IntersectsSphere(ref float3 center, float radius, float frustumPadding = 0)
+		public IntersectionType IntersectsSphere(in float3 center, in float radius, float frustumPadding = 0)
         {
 #if UNITY_EDITOR
 			AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
 			AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
 #endif
-			return IntersectsSphere(in m_PlaneNormals, in m_PlaneDistances, ref center, radius, frustumPadding);
+			return IntersectsSphere(in m_PlaneNormals, in m_PlaneDistances, in center, in radius, frustumPadding);
 		}
 
         #region Statics
@@ -366,7 +377,7 @@ namespace Syadeu.Presentation.Render
 		private static IntersectionType IntersectsSphere(
 			in NativeArray<float3> planeNormals,
 			in NativeArray<float> planeDistances,
-			ref float3 center, float radius, float frustumPadding = 0)
+			in float3 center, in float radius, float frustumPadding = 0)
 		{
 			bool intersecting = false;
 			for (int i = 0; i < PlaneCount; i++)
@@ -418,23 +429,22 @@ namespace Syadeu.Presentation.Render
 
 			Vector3 toRight = Vector3.right * Mathf.Tan(fovWHalf * Mathf.Deg2Rad) * aspect;
 			Vector3 toTop = Vector3.up * Mathf.Tan(fovWHalf * Mathf.Deg2Rad);
-			var forward = Vector3.forward;
 
-			Vector3 topLeft = (forward - toRight + toTop);
+			Vector3 topLeft = (Vector3.forward - toRight + toTop);
 			float camScale = topLeft.magnitude * farClipPlane;
 
 			topLeft.Normalize();
 			topLeft *= camScale;
 
-			Vector3 topRight = (forward + toRight + toTop);
+			Vector3 topRight = (Vector3.forward + toRight + toTop);
 			topRight.Normalize();
 			topRight *= camScale;
 
-			Vector3 bottomRight = (forward + toRight - toTop);
+			Vector3 bottomRight = (Vector3.forward + toRight - toTop);
 			bottomRight.Normalize();
 			bottomRight *= camScale;
 
-			Vector3 bottomLeft = (forward - toRight - toTop);
+			Vector3 bottomLeft = (Vector3.forward - toRight - toTop);
 			bottomLeft.Normalize();
 			bottomLeft *= camScale;
 
@@ -443,21 +453,21 @@ namespace Syadeu.Presentation.Render
 			_corners[2] = position + math.mul(orientation, topRight);
 			_corners[3] = position + math.mul(orientation, bottomRight);
 
-			topLeft = (forward - toRight + toTop);
+			topLeft = (Vector3.forward - toRight + toTop);
 			camScale = topLeft.magnitude * nearClipPlane;
 
 			topLeft.Normalize();
 			topLeft *= camScale;
 
-			topRight = (forward + toRight + toTop);
+			topRight = (Vector3.forward + toRight + toTop);
 			topRight.Normalize();
 			topRight *= camScale;
 
-			bottomRight = (forward + toRight - toTop);
+			bottomRight = (Vector3.forward + toRight - toTop);
 			bottomRight.Normalize();
 			bottomRight *= camScale;
 
-			bottomLeft = (forward - toRight - toTop);
+			bottomLeft = (Vector3.forward - toRight - toTop);
 			bottomLeft.Normalize();
 			bottomLeft *= camScale;
 

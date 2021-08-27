@@ -19,7 +19,7 @@ namespace Syadeu.Presentation.Attributes
     {
         protected override void OnCreated(CreateEntityAttribute attribute, EntityData<IEntityData> entity)
         {
-            ITransform tr = ((Entity<IEntity>)entity).Target.transform;
+            ITransform tr = entity.As<IEntityData, IEntity>().Target.transform;
             attribute.CreatedEntity = CreateEntity(attribute.m_Entity, tr.position, tr.rotation);
         }
     }
