@@ -46,7 +46,11 @@ namespace Syadeu.Presentation
         }
         public static Reference GetReference(string name) => new Reference(EntityDataList.Instance.GetObject(name));
 
-        public ObjectBase GetObject() => EntityDataList.Instance.m_Objects[m_Hash];
+        public ObjectBase GetObject()
+        {
+            if (EntityDataList.Instance.m_Objects.TryGetValue(m_Hash, out ObjectBase value)) return value;
+            return null;
+        }
         public bool IsValid() => !m_Hash.Equals(Hash.Empty);
 
         public bool Equals(IReference other) => m_Hash.Equals(other.Hash);
@@ -83,7 +87,11 @@ namespace Syadeu.Presentation
         }
         public static Reference<T> GetReference(string name) => new Reference<T>(EntityDataList.Instance.GetObject(name));
 
-        ObjectBase IReference.GetObject() => EntityDataList.Instance.m_Objects[m_Hash];
+        ObjectBase IReference.GetObject()
+        {
+            if (EntityDataList.Instance.m_Objects.TryGetValue(m_Hash, out ObjectBase value)) return value;
+            return null;
+        }
         public T GetObject()
         {
             if (EntityDataList.Instance.m_Objects.TryGetValue(m_Hash, out ObjectBase value)) return (T)value;

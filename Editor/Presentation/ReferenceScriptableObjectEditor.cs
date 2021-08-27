@@ -14,7 +14,7 @@ namespace SyadeuEditor.Presentation
             PropertyInfo property = GetProperty(nameof(ReferenceScriptableObject.Reference));
             Drawer = new ReferenceDrawer(target, property);
 
-            if (!EntityWindow.Instance.IsDataLoaded)
+            if (!EntityWindow.IsDataLoaded)
             {
                 EntityWindow.Instance.LoadData();
             }

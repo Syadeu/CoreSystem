@@ -1,4 +1,6 @@
 ﻿using Syadeu.Database;
+using Syadeu.Presentation.Entities;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace Syadeu.Presentation
@@ -6,7 +8,7 @@ namespace Syadeu.Presentation
 #if UNITY_EDITOR
     [CreateAssetMenu(fileName = "NewObjectID", menuName = "CoreSystem/Presentation/Reference")]
 #endif
-    public sealed class ReferenceScriptableObject : ScriptableObject
+    public sealed class ReferenceScriptableObject : ScriptableObject, IValidation
     {
         [SerializeField] private ulong m_Hash = 0;
 
@@ -21,6 +23,43 @@ namespace Syadeu.Presentation
             {
                 m_Hash = value.m_Hash;
             }
+        }
+
+        public bool IsValid() => !m_Hash.Equals(0) && Reference.GetObject() != null;
+
+        private bool Validate()
+        {
+            if (!PresentationSystem<EntitySystem>.IsValid() || !IsValid())
+            {
+                return false;
+            }
+            return true;
+        }
+        public Entity<IEntity> CreateEntity(in float3 position)
+        {
+            if (!Validate())
+            {
+                throw new System.Exception();
+            }
+            return PresentationSystem<EntitySystem>.System.CreateEntity(Reference, in position);
+        }
+        public Entity<IEntity> CreateEntity(in float3 position, in quaternion rotation, in float3 localScale,
+            bool enableCull = true)
+        {
+            if (!Validate())
+            {
+                throw new System.Exception();
+            }
+            return PresentationSystem<EntitySystem>.System.CreateEntity(Reference, 
+                in position, in rotation, in localScale, enableCull);
+        }
+        public EntityData<IEntityData> CreateObject()
+        {
+            if (!Validate())
+            {
+                throw new System.Exception();
+            }
+            return PresentationSystem<EntitySystem>.System.CreateObject(Reference);
         }
     }
 }

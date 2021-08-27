@@ -25,7 +25,7 @@ namespace SyadeuEditor.Presentation
 
         readonly List<ObjectBaseDrawer> ObjectBaseDrawers = new List<ObjectBaseDrawer>();
 
-        private bool m_IsDataLoaded = false;
+        private static bool m_IsDataLoaded = false;
 
         public ToolbarWindow m_ToolbarWindow;
         public DataListWindow m_DataListWindow;
@@ -33,7 +33,7 @@ namespace SyadeuEditor.Presentation
 
         public ObjectBaseDrawer m_SelectedObject = null;
 
-        public bool IsDataLoaded => m_IsDataLoaded;
+        public static bool IsDataLoaded => m_IsDataLoaded;
 
         protected override void OnEnable()
         {
@@ -132,14 +132,14 @@ namespace SyadeuEditor.Presentation
             }
             private void SaveMenu()
             {
-                if (!m_MainWindow.m_IsDataLoaded) return;
+                if (!IsDataLoaded) return;
 
                 EntityDataList.Instance.SaveData();
             }
             private void LoadMenu() => m_MainWindow.LoadData();
             private void AddDataMenu<T>() where T : ObjectBase
             {
-                if (!m_MainWindow.IsDataLoaded) LoadMenu();
+                if (!IsDataLoaded) LoadMenu();
 
                 Type[] types = TypeHelper.GetTypes((other) => !other.IsAbstract && TypeHelper.TypeOf<T>.Type.IsAssignableFrom(other));
 
