@@ -1,4 +1,5 @@
 ﻿using Syadeu.Database;
+using Syadeu.Internal;
 using Syadeu.Presentation.Entities;
 
 namespace Syadeu.Presentation.Actions
@@ -59,6 +60,13 @@ namespace Syadeu.Presentation.Actions
 
                 isFailed |= !actions[i].Execute(entity);
             }
+
+            if (isFailed)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Execution ({TypeHelper.TypeOf<T>.Name}) completed with failed.");
+            }
+
             return isFailed;
         }
         public static bool Execute<T>(this Reference<T>[] actions) where T : InstanceActionBase<T>
@@ -70,6 +78,13 @@ namespace Syadeu.Presentation.Actions
 
                 isFailed |= !actions[i].Execute();
             }
+
+            if (isFailed)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Execution ({TypeHelper.TypeOf<T>.Name}) completed with failed.");
+            }
+
             return isFailed;
         }
         public static bool Execute<T, TTarget>(this Reference<T>[] actions, TTarget target) where T : ParamActionBase<T, TTarget>
@@ -81,6 +96,13 @@ namespace Syadeu.Presentation.Actions
 
                 isFailed |= !actions[i].Execute(target);
             }
+
+            if (isFailed)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Execution ({TypeHelper.TypeOf<T>.Name}) completed with failed.");
+            }
+
             return isFailed;
         }
         public static bool Execute<T, TTarget, TATarget>(this Reference<T>[] actions, TTarget t, TATarget ta) where T : ParamActionBase<T, TTarget, TATarget>
@@ -92,6 +114,13 @@ namespace Syadeu.Presentation.Actions
 
                 isFailed |= !actions[i].Execute(t, ta);
             }
+
+            if (isFailed)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Execution ({TypeHelper.TypeOf<T>.Name}) completed with failed.");
+            }
+
             return isFailed;
         }
 
