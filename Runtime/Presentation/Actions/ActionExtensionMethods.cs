@@ -6,13 +6,16 @@ namespace Syadeu.Presentation.Actions
 {
     public static class ActionExtensionMethods
     {
+        const string c_ErrorIsTerminatedAction = "This action({0}) has been terminated.";
+        const string c_ErrorCompletedWithFailed = "Execution ({0}) completed with failed.";
+
         public static bool Execute<T>(this Reference<T> other, EntityData<IEntityData> entity) where T : TriggerActionBase
         {
             T action = TriggerAction<T>.GetAction(other);
             if (action.Terminated)
             {
-                CoreSystem.Logger.LogError(Channel.Presentation,
-                    "This action has been terminated.");
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    string.Format(c_ErrorIsTerminatedAction, TypeHelper.TypeOf<T>.Name));
                 return false;
             }
             return action.InternalExecute(entity);
@@ -22,8 +25,8 @@ namespace Syadeu.Presentation.Actions
             T action = InstanceActionBase<T>.GetAction(other);
             if (action.Terminated)
             {
-                CoreSystem.Logger.LogError(Channel.Presentation,
-                    "This action has been terminated.");
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    string.Format(c_ErrorIsTerminatedAction, TypeHelper.TypeOf<T>.Name));
                 return false;
             }
             return action.InternalExecute();
@@ -33,8 +36,8 @@ namespace Syadeu.Presentation.Actions
             T action = ParamActionBase<T, TTarget>.GetAction(other);
             if (action.Terminated)
             {
-                CoreSystem.Logger.LogError(Channel.Presentation,
-                    "This action has been terminated.");
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    string.Format(c_ErrorIsTerminatedAction, TypeHelper.TypeOf<T>.Name));
                 return false;
             }
             return action.InternalExecute(t);
@@ -44,8 +47,8 @@ namespace Syadeu.Presentation.Actions
             T action = ParamActionBase<T, TTarget, TTarget>.GetAction(other);
             if (action.Terminated)
             {
-                CoreSystem.Logger.LogError(Channel.Presentation,
-                    "This action has been terminated.");
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    string.Format(c_ErrorIsTerminatedAction, TypeHelper.TypeOf<T>.Name));
                 return false;
             }
             return action.InternalExecute(t, ta);
@@ -64,7 +67,7 @@ namespace Syadeu.Presentation.Actions
             if (isFailed)
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Execution ({TypeHelper.TypeOf<T>.Name}) completed with failed.");
+                    string.Format(c_ErrorCompletedWithFailed, TypeHelper.TypeOf<T>.Name));
             }
 
             return isFailed;
@@ -82,7 +85,7 @@ namespace Syadeu.Presentation.Actions
             if (isFailed)
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Execution ({TypeHelper.TypeOf<T>.Name}) completed with failed.");
+                    string.Format(c_ErrorCompletedWithFailed, TypeHelper.TypeOf<T>.Name));
             }
 
             return isFailed;
@@ -100,7 +103,7 @@ namespace Syadeu.Presentation.Actions
             if (isFailed)
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Execution ({TypeHelper.TypeOf<T>.Name}) completed with failed.");
+                    string.Format(c_ErrorCompletedWithFailed, TypeHelper.TypeOf<T>.Name));
             }
 
             return isFailed;
@@ -118,7 +121,7 @@ namespace Syadeu.Presentation.Actions
             if (isFailed)
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Execution ({TypeHelper.TypeOf<T>.Name}) completed with failed.");
+                    string.Format(c_ErrorCompletedWithFailed, TypeHelper.TypeOf<T>.Name));
             }
 
             return isFailed;
@@ -131,27 +134,5 @@ namespace Syadeu.Presentation.Actions
             TAction action = StatefulActionBase<TState, TAction>.GetAction(other);
             action.InternalExecute(entity);
         }
-
-        //public static void Execute<T>(this T other, EntityData<IEntityData> entity) where T : TriggerAction<T> => InternalExecute(other, entity);
-        //private static void InternalExecute<T>(T action, EntityData<IEntityData> entity) where T : TriggerAction<T>
-        //{
-        //    if (action.Terminated)
-        //    {
-        //        CoreSystem.Logger.LogError(Channel.Presentation,
-        //            "This action has been terminated.");
-        //        return;
-        //    }
-
-        //    action.InternalExecute(entity);
-        //}
-
-        //public static void Execute<T>(this Reference<ChainedAction> chainedAction, EntityData<IEntityData> entity) where T : ActionBase<T>, new()
-        //{
-        //    var chain = ChainedAction.GetAction(chainedAction);
-        //    for (int i = 0; i < chain.Length; i++)
-        //    {
-
-        //    }
-        //}
     }
 }
