@@ -126,5 +126,7 @@ namespace Syadeu.Database
         }
         public static implicit operator string(PrefabReference<T> a) => a.GetObjectSetting().m_Name;
         public static implicit operator PrefabList.ObjectSetting(PrefabReference<T> a) => a.GetObjectSetting();
+
+        public static implicit operator PrefabReference(PrefabReference<T> a) => new PrefabReference(a.m_Idx);
     }
 }

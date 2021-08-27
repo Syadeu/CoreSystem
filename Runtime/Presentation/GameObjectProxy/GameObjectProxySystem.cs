@@ -500,7 +500,7 @@ namespace Syadeu.Presentation
 
         #endregion
 
-        public ProxyTransform CreateNewPrefab(in PrefabReference prefab, in float3 pos, in quaternion rot, in float3 scale, in bool enableCull, in float3 center, in float3 size)
+        public ProxyTransform CreateNewPrefab(in PrefabReference<GameObject> prefab, in float3 pos, in quaternion rot, in float3 scale, in bool enableCull, in float3 center, in float3 size)
         {
             CoreSystem.Logger.ThreadBlock(nameof(CreateNewPrefab), ThreadInfo.Unity);
 

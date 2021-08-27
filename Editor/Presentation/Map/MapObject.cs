@@ -58,7 +58,7 @@ namespace SyadeuEditor.Presentation.Map
             tr.localScale = m_Data.m_Scale;
         }
 
-        public PrefabReference Prefab
+        public PrefabReference<GameObject> Prefab
         {
             get => m_Data.m_Object.GetObject().Prefab;
             set

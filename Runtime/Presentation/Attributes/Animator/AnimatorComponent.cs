@@ -26,7 +26,7 @@ namespace Syadeu.Presentation.Attributes
             if (m_AnimatorAttribute == null) return;
 
             Hash hash = Hash.NewHash(evt.stringParameter);
-            if (!m_AnimatorAttribute.Actions.TryGetValue(hash, out List<Reference<AnimationTriggerAction>> actions))
+            if (!m_AnimatorAttribute.AnimationTriggers.TryGetValue(hash, out List<Reference<AnimationTriggerAction>> actions))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"Cannot found {evt.stringParameter} {nameof(AnimationTriggerAction)} at {m_AnimatorAttribute.Parent.Name}");
@@ -36,6 +36,13 @@ namespace Syadeu.Presentation.Attributes
             for (int i = 0; i < actions.Count; i++)
             {
                 actions[i].Execute(m_AnimatorAttribute.Parent);
+            }
+        }
+        private void OnAnimatorMove()
+        {
+            for (int i = 0; i < m_AnimatorAttribute.m_OnMoveActions.Length; i++)
+            {
+                m_AnimatorAttribute.m_OnMoveActions[i].Execute(m_AnimatorAttribute.Parent);
             }
         }
     }

@@ -424,7 +424,7 @@ namespace Syadeu.Presentation
         }
         #endregion
         private ProxyTransform InternalCreateProxy(in EntityBase from,
-            in PrefabReference prefab, in float3 pos, in quaternion rot, in float3 scale, in bool enableCull)
+            in PrefabReference<GameObject> prefab, in float3 pos, in quaternion rot, in float3 scale, in bool enableCull)
         {
             if (!prefab.IsValid())
             {
