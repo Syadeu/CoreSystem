@@ -9,10 +9,8 @@ namespace Syadeu.Presentation.Actions
         where TState : StateBase<TAction>, ITerminate, new()
         where TAction : StatefulActionBase<TState, TAction>
     {
-        private static readonly Dictionary<Reference<TAction>, Stack<ActionBase>> m_Pool = new Dictionary<Reference<TAction>, Stack<ActionBase>>();
+        private static readonly Dictionary<Reference, Stack<ActionBase>> m_Pool = new Dictionary<Reference, Stack<ActionBase>>();
         private TState m_State;
-
-        private Reference<TAction> m_Reference;
 
         internal override void InternalInitialize()
         {
@@ -92,6 +90,6 @@ namespace Syadeu.Presentation.Actions
 
         protected virtual void OnInitialize() { }
         protected virtual void OnTerminate() { }
-        protected abstract StateBase<TAction>.State OnExecute(in TState state, in EntityData<IEntityData> entity);
+        protected virtual StateBase<TAction>.State OnExecute(in TState state, in EntityData<IEntityData> entity) => StateBase<TAction>.State.Success;
     }
 }

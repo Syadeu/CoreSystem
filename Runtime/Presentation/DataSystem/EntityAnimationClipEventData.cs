@@ -15,8 +15,8 @@ namespace Syadeu.Presentation.Data
         [Space]
         [Header("Events")]
         [JsonProperty(Order = 2, PropertyName = "OnClipStart")]
-        public Reference<ActionBase>[] m_OnClipStart = Array.Empty<Reference<ActionBase>>();
+        public Reference<TriggerActionBase>[] m_OnClipStart = Array.Empty<Reference<TriggerActionBase>>();
         [JsonProperty(Order = 3, PropertyName = "OnClipEnd")]
-        public Reference<ActionBase>[] m_OnClipEnd = Array.Empty<Reference<ActionBase>>();
+        public Reference<TriggerActionBase>[] m_OnClipEnd = Array.Empty<Reference<TriggerActionBase>>();
     }
 }

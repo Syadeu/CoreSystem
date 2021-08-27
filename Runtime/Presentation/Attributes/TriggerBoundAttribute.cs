@@ -27,9 +27,9 @@ namespace Syadeu.Presentation.Attributes
 
         [Header("Events")]
         [JsonProperty(Order = 5, PropertyName = "OnTriggerEnter")]
-        public Reference<ActionBase>[] m_OnTriggerEnter = Array.Empty<Reference<ActionBase>>();
+        public Reference<TriggerActionBase>[] m_OnTriggerEnter = Array.Empty<Reference<TriggerActionBase>>();
         [JsonProperty(Order = 6, PropertyName = "OnTriggerExit")]
-        public Reference<ActionBase>[] m_OnTriggerExit = Array.Empty<Reference<ActionBase>>();
+        public Reference<TriggerActionBase>[] m_OnTriggerExit = Array.Empty<Reference<TriggerActionBase>>();
 
         [JsonIgnore] internal List<Entity<IEntity>> m_Triggered;
 

@@ -18,7 +18,7 @@ namespace Syadeu.Presentation.Attributes
 
         [Space]
         [JsonProperty(Order = 10, PropertyName = "OnMoveActions")]
-        public Reference<ActionBase>[] m_OnMoveActions = Array.Empty<Reference<ActionBase>>();
+        public Reference<TriggerActionBase>[] m_OnMoveActions = Array.Empty<Reference<TriggerActionBase>>();
 
         [JsonIgnore] internal AnimatorComponent Animator { get; set; }
         [JsonIgnore] public Dictionary<Hash, List<Reference<AnimationTriggerAction>>> Actions { get; internal set; }

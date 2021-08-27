@@ -45,116 +45,9 @@ namespace Syadeu.Database
             m_Objects = new Dictionary<Hash, ObjectBase>();
             m_EntityNameHash = new Dictionary<ulong, Hash>();
 
-            #region Load Entities
-
-            string[] entityPaths = Directory.GetFiles(CoreSystemFolder.EntityPath, jsonPostfix, SearchOption.AllDirectories);
-
-            Type[] entityTypes = TypeHelper.GetTypes(
-                (other) => TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(other));
-            for (int i = 0; i < entityPaths.Length; i++)
-            {
-                string lastFold = Path.GetFileName(Path.GetDirectoryName(entityPaths[i]));
-                Type t = entityTypes.FindFor((other) => other.Name.Equals(lastFold));
-
-                object obj = JsonConvert.DeserializeObject(File.ReadAllText(entityPaths[i]), t);
-                if (!(obj is ObjectBase))
-                {
-                    CoreSystem.Logger.LogWarning(Channel.Entity, $"Entity({t?.Name}) at {entityPaths[i]} is invalid. This entity has been ignored");
-                    continue;
-                }
-
-                ObjectBase temp = (ObjectBase)obj;
-
-                if (m_Objects.ContainsKey(temp.Hash))
-                {
-                    CoreSystem.Logger.LogWarning(Channel.Entity, $"Entity({t?.Name}) at {entityPaths[i]} is already registered. This entity has been ignored and removed.");
-                    File.Delete(entityPaths[i]);
-                    continue;
-                }
-                m_Objects.Add(temp.Hash, temp);
-                m_EntityNameHash.Add(Hash.NewHash(temp.Name), temp.Hash);
-            }
-
-            #endregion
-
-            #region Load Attributes
-
-            string[] attPaths = Directory.GetFiles(CoreSystemFolder.AttributePath, jsonPostfix, SearchOption.AllDirectories);
-
-            Type[] attTypes = TypeHelper.GetTypes((other) => TypeHelper.TypeOf<AttributeBase>.Type.IsAssignableFrom(other));
-            for (int i = 0; i < attPaths.Length; i++)
-            {
-                string lastFold = Path.GetFileName(Path.GetDirectoryName(attPaths[i]));
-                Type t = attTypes.FindFor((other) => other.Name.Equals(lastFold));
-
-                object obj;
-                try
-                {
-                    obj = JsonConvert.DeserializeObject(File.ReadAllText(attPaths[i]), t);
-                    if (!(obj is AttributeBase))
-                    {
-                        CoreSystem.Logger.LogWarning(Channel.Entity, $"Attribute({t?.Name}) at {attPaths[i]} is invalid. This attribute has been ignored");
-                        continue;
-                    }
-                }
-                catch (Exception)
-                {
-                    CoreSystem.Logger.LogWarning(Channel.Entity, $"Attribute({t?.Name}) at {attPaths[i]} is invalid. This attribute has been ignored");
-                    continue;
-                }
-                var temp = (AttributeBase)obj;
-
-                if (m_Objects.ContainsKey(temp.Hash))
-                {
-                    CoreSystem.Logger.LogWarning(Channel.Entity, $"Attribute({t?.Name}) at {attPaths[i]} is already registered. This attribute has been ignored and removed.");
-                    File.Delete(attPaths[i]);
-                    continue;
-                }
-
-                m_Objects.Add(temp.Hash, temp);
-            }
-
-            #endregion
-
-            #region Load Actions
-
-            string[] actionPaths = Directory.GetFiles(CoreSystemFolder.ActionPath, jsonPostfix, SearchOption.AllDirectories);
-
-            Type[] actionTypes = TypeHelper.GetTypes((other) => TypeHelper.TypeOf<ActionBase>.Type.IsAssignableFrom(other));
-            for (int i = 0; i < actionPaths.Length; i++)
-            {
-                string lastFold = Path.GetFileName(Path.GetDirectoryName(actionPaths[i]));
-                Type t = actionTypes.FindFor((other) => other.Name.Equals(lastFold));
-
-                object obj;
-                try
-                {
-                    obj = JsonConvert.DeserializeObject(File.ReadAllText(actionPaths[i]), t);
-                    if (!(obj is ActionBase))
-                    {
-                        CoreSystem.Logger.LogWarning(Channel.Entity, $"Action({t?.Name}) at {actionPaths[i]} is invalid. This action has been ignored");
-                        continue;
-                    }
-                }
-                catch (Exception)
-                {
-                    CoreSystem.Logger.LogWarning(Channel.Entity, $"Action({t?.Name}) at {actionPaths[i]} is invalid. This action has been ignored");
-                    continue;
-                }
-                var temp = (ActionBase)obj;
-
-                if (m_Objects.ContainsKey(temp.Hash))
-                {
-                    CoreSystem.Logger.LogWarning(Channel.Entity, $"Action({t?.Name}) at {actionPaths[i]} is already registered. This action has been ignored and removed.");
-                    File.Delete(actionPaths[i]);
-                    continue;
-                }
-
-                m_Objects.Add(temp.Hash, temp);
-            }
-
-            #endregion
-
+            Load<EntityDataBase>(CoreSystemFolder.EntityPath);
+            Load<AttributeBase>(CoreSystemFolder.AttributePath);
+            Load<ActionBase>(CoreSystemFolder.ActionPath);
             Load<DataObjectBase>(CoreSystemFolder.DataPath);
 
             void Load<T>(string path) where T : ObjectBase
@@ -234,93 +127,9 @@ namespace Syadeu.Database
         {
             DirectoryCheck();
 
-            #region Save Entities
-
-            ObjectBase[] m_Entites = GetEntities();
-            if (m_Entites != null)
-            {
-                string[] entityPaths = Directory.GetFiles(CoreSystemFolder.EntityPath, jsonPostfix, SearchOption.AllDirectories);
-                for (int i = 0; i < entityPaths.Length; i++)
-                {
-                    string fileName = Path.GetFileNameWithoutExtension(entityPaths[i]);
-                    if (!m_Entites.Where((other) => other.Name.Equals(fileName)).Any())
-                    {
-                        File.Delete(entityPaths[i]);
-                    }
-                }
-                for (int i = 0; i < m_Entites.Length; i++)
-                {
-                    string entityPath = Path.Combine(CoreSystemFolder.EntityPath, m_Entites[i].GetType().Name);
-                    if (!Directory.Exists(entityPath)) Directory.CreateDirectory(entityPath);
-
-                    if (m_Entites[i].Hash.Equals(Hash.Empty)) m_Entites[i].Hash = Hash.NewHash();
-
-                    File.WriteAllText(string.Format(c_JsonFilePath, entityPath, ToFileName(m_Entites[i])),
-                JsonConvert.SerializeObject(m_Entites[i], Formatting.Indented));
-                }
-            }
-            else "nothing to save entit".ToLog();
-
-            #endregion
-
-            #region Save Attributes
-
-            AttributeBase[] m_Attributes = GetAttributes();
-            if (m_Attributes != null)
-            {
-                string[] atts = Directory.GetFiles(CoreSystemFolder.AttributePath, jsonPostfix, SearchOption.AllDirectories);
-                for (int i = 0; i < atts.Length; i++)
-                {
-                    string fileName = Path.GetFileNameWithoutExtension(atts[i]);
-                    if (!m_Attributes.Where((other) => other.Name.Equals(fileName)).Any())
-                    {
-                        File.Delete(atts[i]);
-                    }
-                }
-
-                for (int i = 0; i < m_Attributes.Length; i++)
-                {
-                    string attPath = Path.Combine(CoreSystemFolder.AttributePath, m_Attributes[i].GetType().Name);
-                    if (!Directory.Exists(attPath)) Directory.CreateDirectory(attPath);
-
-                    if (m_Attributes[i].Hash.Equals(Hash.Empty)) m_Attributes[i].Hash = Hash.NewHash();
-
-                    File.WriteAllText(string.Format(c_JsonFilePath, attPath, ToFileName(m_Attributes[i])),
-                JsonConvert.SerializeObject(m_Attributes[i], Formatting.Indented));
-                }
-            }
-            else "nothing to save att".ToLog();
-
-            #endregion
-
-            #region Save Actions
-
-            ActionBase[] actions = GetActions();
-            if (actions != null)
-            {
-                string[] atts = Directory.GetFiles(CoreSystemFolder.ActionPath, jsonPostfix, SearchOption.AllDirectories);
-                for (int i = 0; i < atts.Length; i++)
-                {
-                    string fileName = Path.GetFileNameWithoutExtension(atts[i]);
-                    if (!actions.Where((other) => other.Name.Equals(fileName)).Any())
-                    {
-                        File.Delete(atts[i]);
-                    }
-                }
-
-                for (int i = 0; i < actions.Length; i++)
-                {
-                    string attPath = Path.Combine(CoreSystemFolder.ActionPath, actions[i].GetType().Name);
-                    if (!Directory.Exists(attPath)) Directory.CreateDirectory(attPath);
-
-                    if (actions[i].Hash.Equals(Hash.Empty)) actions[i].Hash = Hash.NewHash();
-
-                    File.WriteAllText(string.Format(c_JsonFilePath, attPath, ToFileName(actions[i])),
-                JsonConvert.SerializeObject(actions[i], Formatting.Indented));
-                }
-            }
-            #endregion
-
+            Save<EntityDataBase>(CoreSystemFolder.EntityPath);
+            Save<AttributeBase>(CoreSystemFolder.AttributePath);
+            Save<ActionBase>(CoreSystemFolder.ActionPath);
             Save<DataObjectBase>(CoreSystemFolder.DataPath);
 
             DeleteEmptyFolders();
@@ -397,18 +206,6 @@ namespace Syadeu.Database
         #endregion
 
         [Obsolete]
-        public EntityDataBase[] GetEntities()
-        {
-            if (m_Objects == null) return Array.Empty<EntityDataBase>();
-            return m_Objects
-                    .Where((other) =>
-                    {
-                        return TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(other.Value.GetType());
-                    })
-                    .Select((other) => (EntityDataBase)other.Value)
-                    .ToArray();
-        }
-        [Obsolete]
         public AttributeBase[] GetAttributes()
         {
             if (m_Objects == null) return Array.Empty<AttributeBase>();
@@ -420,17 +217,10 @@ namespace Syadeu.Database
                     .Select((other) => (AttributeBase)other.Value)
                     .ToArray();
         }
-        [Obsolete]
-        public ActionBase[] GetActions()
+        public ObjectBase[] GetData()
         {
-            if (m_Objects == null) return Array.Empty<ActionBase>();
-            return m_Objects
-                    .Where((other) =>
-                    {
-                        return TypeHelper.TypeOf<ActionBase>.Type.IsAssignableFrom(other.Value.GetType());
-                    })
-                    .Select((other) => (ActionBase)other.Value)
-                    .ToArray();
+            if (m_Objects == null) return Array.Empty<ObjectBase>();
+            return m_Objects.Values.ToArray();
         }
         public T[] GetData<T>() where T : ObjectBase
         {

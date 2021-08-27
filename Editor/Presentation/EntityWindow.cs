@@ -32,8 +32,6 @@ namespace SyadeuEditor.Presentation
 
         protected override void OnEnable()
         {
-            if (!Application.isPlaying) EntityDataList.Instance.Purge();
-
             m_ToolbarWindow = new ToolbarWindow(this);
             m_DataListWindow = new DataListWindow(this);
             m_ViewWindow = new ViewWindow(this);

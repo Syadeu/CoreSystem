@@ -4,11 +4,11 @@ using System;
 
 namespace Syadeu.Presentation.Actions
 {
-    public sealed class AnimationTriggerAction : ActionBase<AnimationTriggerAction>
+    public sealed class AnimationTriggerAction : TriggerAction<AnimationTriggerAction>
     {
         [JsonProperty(Order = 0, PropertyName = "TriggerName")] public string m_TriggerName;
         [JsonProperty(Order = 1, PropertyName = "TriggerActions")]
-        public Reference<ActionBase>[] m_TriggerActions = Array.Empty<Reference<ActionBase>>();
+        public Reference<TriggerActionBase>[] m_TriggerActions = Array.Empty<Reference<TriggerActionBase>>();
 
         protected override void OnExecute(EntityData<IEntityData> entity)
         {

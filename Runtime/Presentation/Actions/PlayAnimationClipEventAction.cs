@@ -8,7 +8,7 @@ using UnityEngine.AddressableAssets;
 
 namespace Syadeu.Presentation.Actions
 {
-    public sealed class PlayAnimationClipEventAction : ActionBase<PlayAnimationClipEventAction>
+    public sealed class PlayAnimationClipEventAction : TriggerAction<PlayAnimationClipEventAction>
     {
         [JsonProperty(Order = 0, PropertyName = "Data")]
         public Reference<EntityAnimationClipEventData> m_Data;

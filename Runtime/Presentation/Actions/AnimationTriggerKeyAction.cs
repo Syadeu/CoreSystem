@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Syadeu.Presentation.Actions
 {
     [ReflectionDescription("Unity Animator 전용입니다")]
-    public sealed class AnimationTriggerKeyAction : ActionBase<AnimationTriggerKeyAction>
+    public sealed class AnimationTriggerKeyAction : TriggerAction<AnimationTriggerKeyAction>
     {
         [JsonProperty(Order = 0, PropertyName = "TriggerKey")] private string m_TriggerKey = string.Empty;
 

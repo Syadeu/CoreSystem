@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Syadeu.Presentation.Actions
 {
-    public sealed class EntityMoveToVectorAction : ActionBase<EntityMoveToVectorAction>
+    public sealed class EntityMoveToVectorAction : TriggerAction<EntityMoveToVectorAction>
     {
         public enum UpdateType
         {
