@@ -1,4 +1,6 @@
-﻿using Syadeu.Presentation.Attributes;
+﻿using Newtonsoft.Json;
+using Syadeu.Presentation.Attributes;
+using Syadeu.Presentation.Entities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -9,10 +11,21 @@ namespace Syadeu.Presentation.Actions
     {
         private static readonly Dictionary<Reference, Stack<ActionBase>> m_Pool = new Dictionary<Reference, Stack<ActionBase>>();
 
+        [JsonProperty(Order = -10, PropertyName = "DebugText")]
+        public string m_DebugText = string.Empty;
+
         internal override sealed void InternalInitialize()
         {
             OnInitialize();
             base.InternalInitialize();
+        }
+        internal override sealed bool InternalExecute(EntityData<IEntityData> entity)
+        {
+            if (!string.IsNullOrEmpty(m_DebugText))
+            {
+                CoreSystem.Logger.Log(Channel.Debug, m_DebugText);
+            }
+            return base.InternalExecute(entity);
         }
         internal override sealed void InternalTerminate()
         {

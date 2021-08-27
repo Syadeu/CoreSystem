@@ -4,7 +4,7 @@ namespace Syadeu.Presentation.Actions
 {
     public abstract class TriggerActionBase : ActionBase
     {
-        internal override sealed bool InternalExecute(EntityData<IEntityData> entity)
+        internal override bool InternalExecute(EntityData<IEntityData> entity)
         {
             if (!entity.IsValid())
             {
