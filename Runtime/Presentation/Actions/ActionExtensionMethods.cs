@@ -27,7 +27,7 @@ namespace Syadeu.Presentation.Actions
             }
             return action.InternalExecute();
         }
-        public static bool Execute<T, TTarget>(this Reference<T> other, TTarget target) where T : ParamAction<T, TTarget>
+        public static bool Execute<T, TTarget>(this Reference<T> other, TTarget t) where T : ParamAction<T, TTarget>
         {
             T action = ParamAction<T, TTarget>.GetAction(other);
             if (action.Terminated)
@@ -36,7 +36,18 @@ namespace Syadeu.Presentation.Actions
                     "This action has been terminated.");
                 return false;
             }
-            return action.InternalExecute(target);
+            return action.InternalExecute(t);
+        }
+        public static bool Execute<T, TTarget, TATarget>(this Reference<T> other, TTarget t, TATarget ta) where T : ParamAction<T, TTarget, TATarget>
+        {
+            T action = ParamAction<T, TTarget, TTarget>.GetAction(other);
+            if (action.Terminated)
+            {
+                CoreSystem.Logger.LogError(Channel.Presentation,
+                    "This action has been terminated.");
+                return false;
+            }
+            return action.InternalExecute(t, ta);
         }
 
         public static bool Execute<T>(this Reference<T>[] actions, EntityData<IEntityData> entity) where T : TriggerActionBase
@@ -63,6 +74,15 @@ namespace Syadeu.Presentation.Actions
             for (int i = 0; i < actions.Length; i++)
             {
                 isFailed |= !actions[i].Execute(target);
+            }
+            return isFailed;
+        }
+        public static bool Execute<T, TTarget, TATarget>(this Reference<T>[] actions, TTarget t, TATarget ta) where T : ParamAction<T, TTarget, TATarget>
+        {
+            bool isFailed = false;
+            for (int i = 0; i < actions.Length; i++)
+            {
+                isFailed |= !actions[i].Execute(t, ta);
             }
             return isFailed;
         }
