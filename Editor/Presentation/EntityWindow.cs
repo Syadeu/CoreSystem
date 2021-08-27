@@ -8,6 +8,7 @@ using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Entities;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using Unity.Mathematics;
@@ -151,11 +152,21 @@ namespace SyadeuEditor.Presentation
                     null,
                     (t) =>
                     {
+                        string output = string.Empty;
+
                         if (t.GetCustomAttribute<ObsoleteAttribute>() != null)
                         {
-                            return $"[Deprecated] {t.Name}";
+                            output += "[Deprecated] ";
                         }
-                        else return t.Name;
+
+                        DisplayNameAttribute displayName = t.GetCustomAttribute<DisplayNameAttribute>();
+                        if (displayName != null)
+                        {
+                            output += displayName.DisplayName;
+                        }
+                        else output += t.Name;
+
+                        return output;
                     }));
             }
 
@@ -206,11 +217,21 @@ namespace SyadeuEditor.Presentation
                 {
                     get
                     {
+                        string output = string.Empty;
+
                         if (Type.GetCustomAttribute<ObsoleteAttribute>() != null)
                         {
-                            return "[Deprecated] " + Type.Name;
+                            output += "[Deprecated] ";
                         }
-                        return Type.Name;
+
+                        DisplayNameAttribute displayName = Type.GetCustomAttribute<DisplayNameAttribute>();
+                        if (displayName != null)
+                        {
+                            output += displayName.DisplayName;
+                        }
+                        else output += Type.Name;
+
+                        return output;
                     }
                 }
                 public Type Type;

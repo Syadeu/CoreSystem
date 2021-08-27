@@ -3,11 +3,13 @@ using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Entities;
 using System.Collections;
+using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
 namespace Syadeu.Presentation.Actions
 {
+    [DisplayName("Action: Play Animation Clip")]
     public sealed class PlayAnimationClipEventAction : TriggerAction<PlayAnimationClipEventAction>
     {
         [JsonProperty(Order = 0, PropertyName = "Data")]

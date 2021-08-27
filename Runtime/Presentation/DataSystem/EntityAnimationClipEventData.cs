@@ -3,10 +3,12 @@ using Syadeu.Database;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Entities;
 using System;
+using System.ComponentModel;
 using UnityEngine;
 
 namespace Syadeu.Presentation.Data
 {
+    [DisplayName("Data: Animation Clip Event Data")]
     public sealed class EntityAnimationClipEventData : DataObjectBase
     {
         [JsonProperty(Order = 0, PropertyName = "Entity")] public Reference<EntityBase> m_Entity;

@@ -1,11 +1,13 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
+using System.ComponentModel;
 using Unity.Mathematics;
 using UnityEngine;
 
 namespace Syadeu.Presentation.Actions
 {
+    [DisplayName("Action: Match Animator to NavAgent")]
     public sealed class NavAgentDirToAnimatorAction : TriggerAction<NavAgentDirToAnimatorAction>
     {
         [JsonProperty(Order = 0, PropertyName = "HorizontalKey")] private string m_HorizontalKey = string.Empty;

@@ -1,10 +1,12 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Internal;
 using Syadeu.Presentation.Entities;
+using System.ComponentModel;
 using UnityEngine;
 
 namespace Syadeu.Presentation.Actions
 {
+    [DisplayName("Action: Animation Key Trigger")]
     [ReflectionDescription("Unity Animator 전용입니다")]
     public sealed class AnimationTriggerKeyAction : TriggerAction<AnimationTriggerKeyAction>
     {
@@ -43,7 +45,7 @@ namespace Syadeu.Presentation.Actions
             }
         }
 
-        private void SetTrigger(Component component)
+        private void SetTrigger(UnityEngine.Component component)
         {
             component.GetComponentInChildren<Animator>().SetTrigger(m_KeyHash);
         }
