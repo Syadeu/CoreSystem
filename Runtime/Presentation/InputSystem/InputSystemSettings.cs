@@ -20,7 +20,6 @@ namespace Syadeu.Presentation.Input
                 = Array.Empty<Reference<ParamAction<InputAction.CallbackContext>>>();
 
             [Header("Actions")]
-            public Reference<InstanceAction> test;
             public Reference<InstanceAction>[] Actions = Array.Empty<Reference<InstanceAction>>();
         }
 
