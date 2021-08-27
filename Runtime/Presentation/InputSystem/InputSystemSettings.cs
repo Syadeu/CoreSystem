@@ -14,7 +14,7 @@ namespace Syadeu.Presentation.Input
         public sealed class CustomInputAction
         {
             public InputAction InputAction;
-            public Reference<TParamAction<InputAction.CallbackContext>> ResponseAction;
+            public Reference<ParamAction<InputAction.CallbackContext>> ResponseAction;
         }
 
         public InputActionAsset m_InputActions = null;

@@ -59,7 +59,7 @@ namespace Syadeu.Presentation.Input
         }
     }
 
-    public sealed class TestInputActionCallback : TParamAction<InputAction.CallbackContext>
+    public sealed class TestInputActionCallback : ParamAction<InputAction.CallbackContext>
     {
         protected override void OnExecute(InputAction.CallbackContext target)
         {

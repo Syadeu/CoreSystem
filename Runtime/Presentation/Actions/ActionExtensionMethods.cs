@@ -27,9 +27,9 @@ namespace Syadeu.Presentation.Actions
             }
             return action.InternalExecute();
         }
-        public static bool Execute<T, TTarget>(this Reference<T> other, TTarget t) where T : ParamAction<T, TTarget>
+        public static bool Execute<T, TTarget>(this Reference<T> other, TTarget t) where T : ParamActionBase<T, TTarget>
         {
-            T action = ParamAction<T, TTarget>.GetAction(other);
+            T action = ParamActionBase<T, TTarget>.GetAction(other);
             if (action.Terminated)
             {
                 CoreSystem.Logger.LogError(Channel.Presentation,
@@ -38,9 +38,9 @@ namespace Syadeu.Presentation.Actions
             }
             return action.InternalExecute(t);
         }
-        public static bool Execute<T, TTarget, TATarget>(this Reference<T> other, TTarget t, TATarget ta) where T : ParamAction<T, TTarget, TATarget>
+        public static bool Execute<T, TTarget, TATarget>(this Reference<T> other, TTarget t, TATarget ta) where T : ParamActionBase<T, TTarget, TATarget>
         {
-            T action = ParamAction<T, TTarget, TTarget>.GetAction(other);
+            T action = ParamActionBase<T, TTarget, TTarget>.GetAction(other);
             if (action.Terminated)
             {
                 CoreSystem.Logger.LogError(Channel.Presentation,
@@ -68,7 +68,7 @@ namespace Syadeu.Presentation.Actions
             }
             return isFailed;
         }
-        public static bool Execute<T, TTarget>(this Reference<T>[] actions, TTarget target) where T : ParamAction<T, TTarget>
+        public static bool Execute<T, TTarget>(this Reference<T>[] actions, TTarget target) where T : ParamActionBase<T, TTarget>
         {
             bool isFailed = false;
             for (int i = 0; i < actions.Length; i++)
@@ -77,7 +77,7 @@ namespace Syadeu.Presentation.Actions
             }
             return isFailed;
         }
-        public static bool Execute<T, TTarget, TATarget>(this Reference<T>[] actions, TTarget t, TATarget ta) where T : ParamAction<T, TTarget, TATarget>
+        public static bool Execute<T, TTarget, TATarget>(this Reference<T>[] actions, TTarget t, TATarget ta) where T : ParamActionBase<T, TTarget, TATarget>
         {
             bool isFailed = false;
             for (int i = 0; i < actions.Length; i++)
