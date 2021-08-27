@@ -42,8 +42,13 @@ namespace SyadeuEditor.Presentation
                 Rect rect = GUILayoutUtility.GetRect(150, 300);
                 rect.position = Event.current.mousePosition;
 
+                ObjectBase[] actionBases = EntityDataList.Instance.GetData<ObjectBase>()
+                        .Where((other) => other.GetType().Equals(targetType) ||
+                                targetType.IsAssignableFrom(other.GetType()))
+                        .ToArray();
+
                 PopupWindow.Show(rect, SelectorPopup<Hash, ObjectBase>.GetWindow(
-                        list: EntityDataList.Instance.m_Objects.Values.ToArray(),
+                        list: actionBases,
                         setter: (hash) =>
                         {
                             ulong temp = hash;
