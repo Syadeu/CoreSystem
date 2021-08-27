@@ -13,7 +13,7 @@ namespace Syadeu.Presentation.Data
         [JsonProperty(Order = 1, PropertyName = "AnimationClip")] public PrefabReference<AnimationClip> m_AnimationClip;
 
         [Space]
-        [Header("Events")]
+        [Header("TriggerActions")]
         [JsonProperty(Order = 2, PropertyName = "OnClipStart")]
         public Reference<TriggerActionBase>[] m_OnClipStart = Array.Empty<Reference<TriggerActionBase>>();
         [JsonProperty(Order = 3, PropertyName = "OnClipEnd")]

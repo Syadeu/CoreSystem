@@ -20,7 +20,7 @@ namespace Syadeu.Mono
 
             public override string ToString() => m_Name;
         }
-        
+
         [SerializeField] private List<ObjectSetting> m_ObjectSettings = new List<ObjectSetting>();
 
         public List<ObjectSetting> ObjectSettings => m_ObjectSettings;

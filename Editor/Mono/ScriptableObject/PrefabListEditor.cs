@@ -5,6 +5,7 @@ using UnityEditor;
 using UnityEngine;
 using System.IO;
 using System.Linq;
+using System;
 
 #if UNITY_ADDRESSABLES
 using UnityEditor.AddressableAssets;
@@ -41,6 +42,20 @@ namespace SyadeuEditor
                     else m_DefaultGroup = tempList.First();
                 }
                 return m_DefaultGroup;
+            }
+        }
+        public static AddressableAssetGroup[] PrefabListGroups
+        {
+            get
+            {
+                var tempList = DefaultSettings.groups.Where((other) =>
+                {
+                    if (!other.Equals(DefaultGroup) && other.HasSchema<PrefabListGroupSchema>()) return true;
+                    return false;
+                });
+                if (!tempList.Any()) return Array.Empty<AddressableAssetGroup>();
+
+                return tempList.ToArray();
             }
         }
 
@@ -98,48 +113,59 @@ namespace SyadeuEditor
                 }
             }
 
-            foreach (AddressableAssetEntry item in DefaultGroup.entries)
+            UpdateGroup(DefaultGroup, invalidIndices);
+            AddressableAssetGroup[] groups = PrefabListGroups;
+            for (int i = 0; i < groups.Length; i++)
             {
-                string name = item.address.Split('/').Last().Split('.').First();
-                if (list.Where((other) => other.m_Name.Equals(name)).Any())
-                {
-                    continue;
-                }
-
-                AssetReference refObj = new AssetReference(item.guid);
-                if (invalidIndices.Count > 0)
-                {
-                    int targetIdx = invalidIndices.Dequeue();
-                    string previousName = list[targetIdx].m_Name;
-
-                    bool isWorldUI = false;
-                    if (item.TargetAsset is GameObject gameobj &&
-                        gameobj.GetComponent<RectTransform>() != null)
-                    {
-                        isWorldUI = true;
-                    }
-
-                    list[targetIdx] = new PrefabList.ObjectSetting
-                    {
-                        m_Name = name,
-                        m_RefPrefab = refObj,
-                        m_IsWorldUI = isWorldUI,
-                    };
-
-                    CoreSystem.Logger.Log(Channel.Editor,
-                        $"PrefabList index at {targetIdx}:{previousName} was invalid but replaced to newly added prefab");
-                }
-                else
-                {
-                    list.Add(new PrefabList.ObjectSetting
-                    {
-                        m_Name = name,
-                        m_RefPrefab = refObj
-                    });
-                }
+                UpdateGroup(groups[i], invalidIndices);
             }
 
             EditorUtility.SetDirty(PrefabList.Instance);
+
+            static void UpdateGroup(AddressableAssetGroup group, Queue<int> invalidIndices)
+            {
+                List<PrefabList.ObjectSetting> list = PrefabList.Instance.ObjectSettings;
+                foreach (AddressableAssetEntry item in group.entries)
+                {
+                    string name = item.address.Split('/').Last().Split('.').First();
+                    if (list.Where((other) => other.m_Name.Equals(name)).Any())
+                    {
+                        continue;
+                    }
+
+                    AssetReference refObj = new AssetReference(item.guid);
+                    if (invalidIndices.Count > 0)
+                    {
+                        int targetIdx = invalidIndices.Dequeue();
+                        string previousName = list[targetIdx].m_Name;
+
+                        bool isWorldUI = false;
+                        if (item.TargetAsset is GameObject gameobj &&
+                            gameobj.GetComponent<RectTransform>() != null)
+                        {
+                            isWorldUI = true;
+                        }
+
+                        list[targetIdx] = new PrefabList.ObjectSetting
+                        {
+                            m_Name = name,
+                            m_RefPrefab = refObj,
+                            m_IsWorldUI = isWorldUI,
+                        };
+
+                        CoreSystem.Logger.Log(Channel.Editor,
+                            $"PrefabList index at {targetIdx}:{previousName} was invalid but replaced to newly added prefab");
+                    }
+                    else
+                    {
+                        list.Add(new PrefabList.ObjectSetting
+                        {
+                            m_Name = name,
+                            m_RefPrefab = refObj
+                        });
+                    }
+                }
+            }
         }
     }
 }
