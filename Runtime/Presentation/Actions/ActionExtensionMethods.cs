@@ -27,7 +27,7 @@ namespace Syadeu.Presentation.Actions
             }
             return action.InternalExecute();
         }
-        public static bool Execute<T, TTarget>(this Reference<T> other, TTarget target) where T : InstanceActionT<TTarget>
+        public static bool Execute<T, TTarget>(this Reference<T> other, TTarget target) where T : InstanceAction<T, TTarget>
         {
             T action = InstanceAction<T, TTarget>.GetAction(other);
             if (action.Terminated)
@@ -57,7 +57,7 @@ namespace Syadeu.Presentation.Actions
             }
             return isFailed;
         }
-        public static bool Execute<T, TTarget>(this Reference<T>[] actions, TTarget target) where T : InstanceActionT<TTarget>
+        public static bool Execute<T, TTarget>(this Reference<T>[] actions, TTarget target) where T : InstanceAction<T, TTarget>
         {
             bool isFailed = false;
             for (int i = 0; i < actions.Length; i++)

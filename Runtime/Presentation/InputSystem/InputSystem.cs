@@ -1,4 +1,5 @@
 ﻿using Syadeu.Internal;
+using Syadeu.Presentation.Actions;
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -28,6 +29,16 @@ namespace Syadeu.Presentation.Input
             m_InputActions.Enable();
             //global::UnityEngine.InputSystem.InputSystem.RegisterInteraction()
 
+            for (int i = 0; i < InputSystemSettings.Instance.m_AdditionalInputActions.Length; i++)
+            {
+                var temp = InputSystemSettings.Instance.m_AdditionalInputActions[i];
+
+                InputSystemSettings.Instance.m_AdditionalInputActions[i].InputAction.performed += (other) =>
+                {
+                    temp.ResponseAction.Execute(other);
+                };
+            }
+
             return base.OnInitialize();
         }
         private void asdasd()
@@ -47,6 +58,16 @@ namespace Syadeu.Presentation.Input
             return null;
         }
     }
+
+    public sealed class TestInputActionCallback : InstanceActionT<InputAction.CallbackContext>
+    {
+        protected override void OnExecute(InputAction.CallbackContext target)
+        {
+            "in".ToLog();
+            base.OnExecute(target);
+        }
+    }
+
     public struct KeyboardBinding : IEquatable<KeyboardBinding>
     {
         public ControlType ControlType => ControlType.Keyboard;
