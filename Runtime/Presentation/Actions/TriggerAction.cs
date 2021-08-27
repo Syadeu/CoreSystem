@@ -5,7 +5,6 @@ using System.Collections.Generic;
 
 namespace Syadeu.Presentation.Actions
 {
-
     public abstract class TriggerAction<T> : TriggerActionBase where T : ActionBase
     {
         private static readonly Dictionary<Reference, Stack<ActionBase>> m_Pool = new Dictionary<Reference, Stack<ActionBase>>();

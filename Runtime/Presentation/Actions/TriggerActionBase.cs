@@ -6,6 +6,13 @@ namespace Syadeu.Presentation.Actions
     {
         internal override sealed void InternalExecute(EntityData<IEntityData> entity)
         {
+            if (!entity.IsValid())
+            {
+                CoreSystem.Logger.LogWarning(Channel.Entity,
+                    $"Cannot trigger this action({Name}) because target entity is invalid");
+                return;
+            }
+
             try
             {
                 OnExecute(entity);

@@ -47,6 +47,15 @@ namespace Syadeu.Presentation.Actions
         }
         private void StartAction()
         {
+            if (!m_State.Entity.IsValid())
+            {
+                CoreSystem.Logger.LogWarning(Channel.Entity,
+                    $"Cannot trigger this action({Name}) because target entity is invalid");
+                
+                InternalTerminate();
+                return;
+            }
+
             m_State.CurrentState = OnExecute(in m_State, m_State.Entity);
             if (m_State.CurrentState == StateBase<TAction>.State.Success)
             {

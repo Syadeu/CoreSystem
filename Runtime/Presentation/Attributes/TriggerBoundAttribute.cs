@@ -25,7 +25,7 @@ namespace Syadeu.Presentation.Attributes
         [JsonProperty(Order = 3, PropertyName = "Center")] public float3 m_Center = 0;
         [JsonProperty(Order = 4, PropertyName = "Size")] public float3 m_Size = 1;
 
-        [Header("Events")]
+        [Header("TriggerActions")]
         [JsonProperty(Order = 5, PropertyName = "OnTriggerEnter")]
         public Reference<TriggerActionBase>[] m_OnTriggerEnter = Array.Empty<Reference<TriggerActionBase>>();
         [JsonProperty(Order = 6, PropertyName = "OnTriggerExit")]
@@ -54,14 +54,14 @@ namespace Syadeu.Presentation.Attributes
         {
             $"{ev.Source.Name}({ev.Source.Idx}) -> {ev.Target.Name}({ev.Target.Idx}) enter?{ev.IsEnter}".ToLog();
 
-            var source = ev.Source.GetAttribute<TriggerBoundAttribute>();
+            //var source = ev.Source.GetAttribute<TriggerBoundAttribute>();
             var target = ev.Target.GetAttribute<TriggerBoundAttribute>();
             if (ev.IsEnter)
             {
-                for (int i = 0; i < source.m_OnTriggerEnter.Length; i++)
-                {
-                    source.m_OnTriggerEnter[i].Execute(ev.Target.As<IEntity, IEntityData>());
-                }
+                //for (int i = 0; i < source.m_OnTriggerEnter.Length; i++)
+                //{
+                //    source.m_OnTriggerEnter[i].Execute(ev.Target.As<IEntity, IEntityData>());
+                //}
                 for (int i = 0; i < target.m_OnTriggerEnter.Length; i++)
                 {
                     target.m_OnTriggerEnter[i].Execute(ev.Source.As<IEntity, IEntityData>());
@@ -69,10 +69,10 @@ namespace Syadeu.Presentation.Attributes
             }
             else
             {
-                for (int i = 0; i < source.m_OnTriggerExit.Length; i++)
-                {
-                    source.m_OnTriggerExit[i].Execute(ev.Target.As<IEntity, IEntityData>());
-                }
+                //for (int i = 0; i < source.m_OnTriggerExit.Length; i++)
+                //{
+                //    source.m_OnTriggerExit[i].Execute(ev.Target.As<IEntity, IEntityData>());
+                //}
                 for (int i = 0; i < target.m_OnTriggerExit.Length; i++)
                 {
                     target.m_OnTriggerExit[i].Execute(ev.Source.As<IEntity, IEntityData>());
