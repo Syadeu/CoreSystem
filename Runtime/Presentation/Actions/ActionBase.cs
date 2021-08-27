@@ -18,7 +18,6 @@ namespace Syadeu.Presentation.Actions
         {
             m_Terminated = true;
         }
-        internal abstract bool InternalExecute(EntityData<IEntityData> entity);
 
         public override sealed object Clone() => base.Clone();
         public override sealed int GetHashCode()

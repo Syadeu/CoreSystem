@@ -38,7 +38,7 @@ namespace Syadeu.Presentation.Actions
 
             base.InternalTerminate();
         }
-        internal override sealed bool InternalExecute(EntityData<IEntityData> entity)
+        internal bool InternalExecute(EntityData<IEntityData> entity)
         {
             if (!entity.IsValid())
             {

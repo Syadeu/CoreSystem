@@ -1,14 +1,10 @@
 ﻿using Newtonsoft.Json;
-using Syadeu.Presentation.Attributes;
-using Syadeu.Presentation.Entities;
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace Syadeu.Presentation.Actions
 {
-    public abstract class TriggerAction<T> : TriggerActionBase where T : TriggerActionBase
+    public abstract class InstanceAction<T> : InstanceActionBase where T : InstanceActionBase
     {
         private static readonly Dictionary<Reference, Stack<ActionBase>> m_Pool = new Dictionary<Reference, Stack<ActionBase>>();
 
@@ -16,13 +12,13 @@ namespace Syadeu.Presentation.Actions
         [JsonProperty(Order = -10, PropertyName = "DebugText")]
         public string m_DebugText = string.Empty;
 
-        internal override sealed bool InternalExecute(EntityData<IEntityData> entity)
+        internal override sealed bool InternalExecute()
         {
             if (!string.IsNullOrEmpty(m_DebugText))
             {
                 CoreSystem.Logger.Log(Channel.Debug, m_DebugText);
             }
-            return base.InternalExecute(entity);
+            return base.InternalExecute();
         }
         internal override sealed void InternalTerminate()
         {

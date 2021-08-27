@@ -25,6 +25,7 @@ namespace Syadeu.Presentation
     {
         new T GetObject();
     }
+    [Serializable]
     public struct Reference : IReference, IEquatable<Reference>
     {
         public static Reference Empty = new Reference(Hash.Empty);
@@ -59,6 +60,7 @@ namespace Syadeu.Presentation
         public static implicit operator ObjectBase(Reference a) => EntityDataList.Instance.m_Objects[a.m_Hash];
         public static implicit operator Hash(Reference a) => a.m_Hash;
     }
+    [Serializable]
     public struct Reference<T> : IReference<T>, IEquatable<Reference<T>> where T : ObjectBase
     {
         public static Reference<T> Empty = new Reference<T>(Hash.Empty);

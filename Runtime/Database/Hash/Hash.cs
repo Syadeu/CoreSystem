@@ -56,7 +56,7 @@ namespace Syadeu.Database
             throw new NotImplementedException();
         }
 
-        private readonly ulong mBits;
+        [UnityEngine.SerializeField] private ulong mBits;
         public Hash(ulong bits)
         {
             mBits = bits;
