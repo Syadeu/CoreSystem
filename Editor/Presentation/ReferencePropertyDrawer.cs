@@ -1,6 +1,8 @@
 ﻿using Syadeu.Database;
+using Syadeu.Internal;
 using Syadeu.Presentation;
 using System;
+using System.Collections;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
@@ -22,9 +24,27 @@ namespace SyadeuEditor.Presentation
             Type t = fieldInfo.FieldType;
 
             Type targetType;
-            Type[] generics = t.GetGenericArguments();
-            if (generics.Length > 0) targetType = generics[0];
-            else targetType = null;
+            if (!t.IsArray && !TypeHelper.TypeOf<IList>.Type.IsAssignableFrom(t))
+            {
+                Type[] generics = t.GetGenericArguments();
+                if (generics.Length > 0) targetType = generics[0];
+                else targetType = null;
+            }
+            else
+            {
+                Type[] generics;
+                if (t.IsArray)
+                {
+                    generics = t.GetElementType().GetGenericArguments();
+                }
+                else
+                {
+                    generics = t.GetGenericArguments()[0].GetGenericArguments();
+                }
+
+                if (generics.Length > 0) targetType = generics[0];
+                else targetType = null;
+            }
 
             string displayName;
             Reference current = new Reference(new Hash((ulong)hashProperty.longValue));
@@ -42,10 +62,25 @@ namespace SyadeuEditor.Presentation
                 Rect rect = GUILayoutUtility.GetRect(150, 300);
                 rect.position = Event.current.mousePosition;
 
-                ObjectBase[] actionBases = EntityDataList.Instance.GetData<ObjectBase>()
-                        .Where((other) => other.GetType().Equals(targetType) ||
+                ObjectBase[] actionBases;
+                var iter = EntityDataList.Instance.GetData<ObjectBase>()
+                        .Where((other) =>
+                        {
+                            if (other.GetType().Equals(targetType) ||
                                 targetType.IsAssignableFrom(other.GetType()))
-                        .ToArray();
+                            {
+                                return true;
+                            }
+                            return false;
+                        });
+                if (iter.Any())
+                {
+                    actionBases = iter.ToArray();
+                }
+                else
+                {
+                    actionBases = Array.Empty<ObjectBase>();
+                }
 
                 PopupWindow.Show(rect, SelectorPopup<Hash, ObjectBase>.GetWindow(
                         list: actionBases,
