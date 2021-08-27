@@ -7,6 +7,7 @@ using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Map;
 using System;
 using System.Collections;
+using System.ComponentModel;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
@@ -15,6 +16,7 @@ using UnityEngine.Experimental.AI;
 
 namespace Syadeu.Presentation.Attributes
 {
+    [DisplayName("Attribute: NavAgent")]
     [AttributeAcceptOnly(typeof(EntityBase))]
     public sealed class NavAgentAttribute : AttributeBase
     {
@@ -27,7 +29,7 @@ namespace Syadeu.Presentation.Attributes
         [JsonProperty(Order = 4, PropertyName = "Acceleration")] public float m_Acceleration = 8;
         [JsonProperty(Order = 5, PropertyName = "StoppingDistance")] public float m_StoppingDistance = 0;
 
-        [Space, Header("Actions")]
+        [Space, Header("TriggerActions")]
         [JsonProperty(Order = 6, PropertyName = "OnMoveActions")]
         public Reference<TriggerActionBase>[] m_OnMoveActions = Array.Empty<Reference<TriggerActionBase>>();
 
