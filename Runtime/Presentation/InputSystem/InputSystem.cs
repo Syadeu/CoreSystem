@@ -32,11 +32,12 @@ namespace Syadeu.Presentation.Input
             {
                 InputSystemSettings.CustomInputAction temp = InputSystemSettings.Instance.m_AdditionalInputActions[i];
 
-                InputSystemSettings.Instance.m_AdditionalInputActions[i].InputAction.performed += (other) =>
+                temp.InputAction.performed += (other) =>
                 {
                     temp.ResponseActions.Execute(other);
                     temp.Actions.Execute();
                 };
+                temp.InputAction.Enable();
             }
 
             return base.OnInitialize();

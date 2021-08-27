@@ -28,6 +28,13 @@ namespace Syadeu.Presentation.Actions
 
         public static T GetAction(Reference<T> other)
         {
+            if (!other.IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    "Trying to get null action");
+                return null;
+            }
+
             T temp;
 
             if (!m_Pool.TryGetValue(other, out var pool) ||

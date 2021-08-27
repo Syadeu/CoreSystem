@@ -55,6 +55,8 @@ namespace Syadeu.Presentation.Actions
             bool isFailed = false;
             for (int i = 0; i < actions.Length; i++)
             {
+                if (!actions[i].IsValid()) continue;
+
                 isFailed |= !actions[i].Execute(entity);
             }
             return isFailed;
@@ -64,6 +66,8 @@ namespace Syadeu.Presentation.Actions
             bool isFailed = false;
             for (int i = 0; i < actions.Length; i++)
             {
+                if (!actions[i].IsValid()) continue;
+
                 isFailed |= !actions[i].Execute();
             }
             return isFailed;
@@ -73,6 +77,8 @@ namespace Syadeu.Presentation.Actions
             bool isFailed = false;
             for (int i = 0; i < actions.Length; i++)
             {
+                if (!actions[i].IsValid()) continue;
+
                 isFailed |= !actions[i].Execute(target);
             }
             return isFailed;
@@ -82,6 +88,8 @@ namespace Syadeu.Presentation.Actions
             bool isFailed = false;
             for (int i = 0; i < actions.Length; i++)
             {
+                if (!actions[i].IsValid()) continue;
+
                 isFailed |= !actions[i].Execute(t, ta);
             }
             return isFailed;
