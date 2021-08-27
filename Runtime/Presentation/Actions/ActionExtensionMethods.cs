@@ -16,12 +16,53 @@ namespace Syadeu.Presentation.Actions
             }
             return action.InternalExecute(entity);
         }
+        public static bool Execute<T>(this Reference<T> other) where T : InstanceAction<T>
+        {
+            T action = InstanceAction<T>.GetAction(other);
+            if (action.Terminated)
+            {
+                CoreSystem.Logger.LogError(Channel.Presentation,
+                    "This action has been terminated.");
+                return false;
+            }
+            return action.InternalExecute();
+        }
+        public static bool Execute<T, TTarget>(this Reference<T> other, TTarget target) where T : InstanceActionT<TTarget>
+        {
+            T action = InstanceAction<T, TTarget>.GetAction(other);
+            if (action.Terminated)
+            {
+                CoreSystem.Logger.LogError(Channel.Presentation,
+                    "This action has been terminated.");
+                return false;
+            }
+            return action.InternalExecute(target);
+        }
+
         public static bool Execute<T>(this Reference<T>[] actions, EntityData<IEntityData> entity) where T : TriggerActionBase
         {
             bool isFailed = false;
             for (int i = 0; i < actions.Length; i++)
             {
                 isFailed |= !actions[i].Execute(entity);
+            }
+            return isFailed;
+        }
+        public static bool Execute<T>(this Reference<T>[] actions) where T : InstanceAction<T>
+        {
+            bool isFailed = false;
+            for (int i = 0; i < actions.Length; i++)
+            {
+                isFailed |= !actions[i].Execute();
+            }
+            return isFailed;
+        }
+        public static bool Execute<T, TTarget>(this Reference<T>[] actions, TTarget target) where T : InstanceActionT<TTarget>
+        {
+            bool isFailed = false;
+            for (int i = 0; i < actions.Length; i++)
+            {
+                isFailed |= !actions[i].Execute(target);
             }
             return isFailed;
         }
