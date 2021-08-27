@@ -4,7 +4,7 @@
     public abstract class TParamAction<T, TA> : ParamAction<TParamAction<T, TA>, T, TA> { }
 
     /// <summary>
-    /// <see cref="InstanceAction{T}"/> 를 사용하세요
+    /// <see cref="TParamAction{T}"/> 를 사용하세요
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <typeparam name="TTarget"></typeparam>
