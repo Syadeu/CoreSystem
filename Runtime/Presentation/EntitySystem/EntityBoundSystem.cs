@@ -8,7 +8,7 @@ using System.Collections.Generic;
 
 namespace Syadeu.Presentation
 {
-    public sealed class EntityBoundSystem : PresentationSystemEntity<EntityBoundSystem>
+    internal sealed class EntityBoundSystem : PresentationSystemEntity<EntityBoundSystem>
     {
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;

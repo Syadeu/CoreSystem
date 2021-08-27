@@ -5,6 +5,9 @@ using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation.Entities
 {
+    /// <summary>
+    /// <see cref="EntityDataBase"/>의 동작부를 선언할 수 있습니다.
+    /// </summary>
     [Preserve]
     public abstract class EntityDataProcessor : ProcessorBase, IEntityDataProcessor
     {
@@ -48,6 +51,8 @@ namespace Syadeu.Presentation.Entities
 
         protected virtual void OnDispose() { }
     }
+    /// <inheritdoc cref="EntityDataProcessor"/>
+    /// <typeparam name="T"></typeparam>
     [Preserve]
     public abstract class EntityDataProcessor<T> : ProcessorBase, IEntityDataProcessor where T : EntityDataBase
     {

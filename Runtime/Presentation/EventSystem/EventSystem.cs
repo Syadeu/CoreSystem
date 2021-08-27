@@ -96,15 +96,30 @@ namespace Syadeu.Presentation.Events
 
         #endregion
 
+        /// <summary>
+        /// 이벤트를 핸들하기 위해 델리게이트를 연결합니다.
+        /// </summary>
+        /// <typeparam name="TEvent"></typeparam>
+        /// <param name="ev"></param>
         public void AddEvent<TEvent>(Action<TEvent> ev) where TEvent : SynchronizedEvent<TEvent>, new()
         {
             SynchronizedEvent<TEvent>.AddEvent(ev);
         }
+        /// <summary>
+        /// 해당 델리게이트를 이벤트에서 제거합니다.
+        /// </summary>
+        /// <typeparam name="TEvent"></typeparam>
+        /// <param name="ev"></param>
         public void RemoveEvent<TEvent>(Action<TEvent> ev) where TEvent : SynchronizedEvent<TEvent>, new()
         {
             SynchronizedEvent<TEvent>.RemoveEvent(ev);
         }
 
+        /// <summary>
+        /// 해당 이벤트를 실행합니다.
+        /// </summary>
+        /// <typeparam name="TEvent"></typeparam>
+        /// <param name="ev"></param>
         public void PostEvent<TEvent>(TEvent ev) where TEvent : SynchronizedEvent<TEvent>, new()
         {
             m_PostedEvents.Enqueue(ev);

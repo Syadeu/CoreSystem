@@ -9,6 +9,9 @@ using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation
 {
+    /// <summary>
+    /// 직접 상속은 허용하지 않습니다.
+    /// </summary>
     [RequireDerived]
     public abstract class ProcessorBase
     {

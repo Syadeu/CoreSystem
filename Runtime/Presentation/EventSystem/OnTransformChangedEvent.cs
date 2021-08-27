@@ -5,8 +5,11 @@ using System;
 namespace Syadeu.Presentation.Events
 {
     /// <summary>
-    /// 엔티티의 <see cref="ProxyTransform"/>이 수정될 때 발생되는 이벤트입니다.
+    /// <see cref="Entity{T}"/>의 <see cref="ITransform"/>이 수정될 때 발생되는 이벤트입니다.
     /// </summary>
+    /// <remarks>
+    /// 현재는 <seealso cref="ITransform.position"/>, <seealso cref="ITransform.rotation"/>, <seealso cref="ITransform.scale"/> 값이 수정되었을때만 호출됩니다.
+    /// </remarks>
     public sealed class OnTransformChangedEvent : SynchronizedEvent<OnTransformChangedEvent>
     {
 #pragma warning disable IDE1006 // Naming Styles

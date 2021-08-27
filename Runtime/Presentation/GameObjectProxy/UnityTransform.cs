@@ -8,6 +8,12 @@ using AABB = Syadeu.Database.AABB;
 
 namespace Syadeu.Presentation
 {
+    /// <summary>
+    /// <see cref="EntitySystem.Convert(GameObject)"/>를 통해 컨버트된 <see cref="Entity{T}"/>의 트랜스폼입니다.
+    /// </summary>
+    /// <remarks>
+    /// 유니티의 <seealso cref="Transform"/>을 직접 수정하지만, 엔티티 시스템에 편입시키기 위해 고안되어 설계되었습니다.
+    /// </remarks>
     public sealed class UnityTransform : IUnityTransform
     {
         public ConvertedEntity entity { get; internal set; }
