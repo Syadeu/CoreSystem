@@ -95,7 +95,7 @@ namespace Syadeu.Presentation
             CoreSystem.Logger.Log(Channel.Presentation, $"Dispose public system struct of {TypeHelper.TypeOf<T>.Name}");
         }
 
-        public static bool IsValid() => Instance.Equals(Null);
+        public static bool IsValid() => !Instance.Equals(Null);
 
         private sealed class SystemAwaiter : CustomYieldInstruction, ICustomYieldAwaiter
         {
