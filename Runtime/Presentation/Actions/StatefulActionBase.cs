@@ -38,12 +38,22 @@ namespace Syadeu.Presentation.Actions
 
             base.InternalTerminate();
         }
-        internal override sealed void InternalExecute(EntityData<IEntityData> entity)
+        internal override sealed bool InternalExecute(EntityData<IEntityData> entity)
         {
+            if (!entity.IsValid())
+            {
+                CoreSystem.Logger.LogWarning(Channel.Entity,
+                    $"Cannot trigger this action({Name}) because target entity is invalid");
+
+                InternalTerminate();
+                return false;
+            }
+
             m_State.CurrentState = StateBase<TAction>.State.AboutToExecute;
             m_State.Entity = entity;
 
             PresentationSystem<EventSystem>.System.PostAction(StartAction);
+            return true;
         }
         private void StartAction()
         {

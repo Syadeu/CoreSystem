@@ -4,15 +4,18 @@ namespace Syadeu.Presentation.Actions
 {
     public abstract class TriggerActionBase : ActionBase
     {
-        internal override sealed void InternalExecute(EntityData<IEntityData> entity)
+        internal override sealed bool InternalExecute(EntityData<IEntityData> entity)
         {
             if (!entity.IsValid())
             {
                 CoreSystem.Logger.LogWarning(Channel.Entity,
                     $"Cannot trigger this action({Name}) because target entity is invalid");
-                return;
+
+                InternalTerminate();
+                return false;
             }
 
+            bool result = true;
             try
             {
                 OnExecute(entity);
@@ -20,9 +23,11 @@ namespace Syadeu.Presentation.Actions
             catch (System.Exception ex)
             {
                 CoreSystem.Logger.LogError(Channel.Presentation, ex.Message + ex.StackTrace);
+                result = false;
             }
 
             InternalTerminate();
+            return result;
         }
 
         protected virtual void OnInitialize() { }

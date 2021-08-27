@@ -5,17 +5,27 @@ namespace Syadeu.Presentation.Actions
 {
     public static class ActionExtensionMethods
     {
-        public static void Execute<T>(this Reference<T> other, EntityData<IEntityData> entity) where T : TriggerActionBase
+        public static bool Execute<T>(this Reference<T> other, EntityData<IEntityData> entity) where T : TriggerActionBase
         {
             T action = TriggerAction<T>.GetAction(other);
             if (action.Terminated)
             {
                 CoreSystem.Logger.LogError(Channel.Presentation,
                     "This action has been terminated.");
-                return;
+                return false;
             }
-            action.InternalExecute(entity);
+            return action.InternalExecute(entity);
         }
+        public static bool Execute<T>(this Reference<T>[] actions, EntityData<IEntityData> entity) where T : TriggerActionBase
+        {
+            bool isFailed = false;
+            for (int i = 0; i < actions.Length; i++)
+            {
+                isFailed |= !actions[i].Execute(entity);
+            }
+            return isFailed;
+        }
+
         public static void Execute<TState, TAction>(this Reference<TAction> other, EntityData<IEntityData> entity)
             where TState : StateBase<TAction>, ITerminate, new()
             where TAction : StatefulActionBase<TState, TAction>

@@ -54,6 +54,7 @@ namespace Syadeu.Presentation.Attributes
         {
             $"{ev.Source.Name}({ev.Source.Idx}) -> {ev.Target.Name}({ev.Target.Idx}) enter?{ev.IsEnter}".ToLog();
 
+            bool result;
             //var source = ev.Source.GetAttribute<TriggerBoundAttribute>();
             var target = ev.Target.GetAttribute<TriggerBoundAttribute>();
             if (ev.IsEnter)
@@ -62,10 +63,8 @@ namespace Syadeu.Presentation.Attributes
                 //{
                 //    source.m_OnTriggerEnter[i].Execute(ev.Target.As<IEntity, IEntityData>());
                 //}
-                for (int i = 0; i < target.m_OnTriggerEnter.Length; i++)
-                {
-                    target.m_OnTriggerEnter[i].Execute(ev.Source.As<IEntity, IEntityData>());
-                }
+
+                result = target.m_OnTriggerEnter.Execute(ev.Source.As<IEntity, IEntityData>());
             }
             else
             {
@@ -73,10 +72,14 @@ namespace Syadeu.Presentation.Attributes
                 //{
                 //    source.m_OnTriggerExit[i].Execute(ev.Target.As<IEntity, IEntityData>());
                 //}
-                for (int i = 0; i < target.m_OnTriggerExit.Length; i++)
-                {
-                    target.m_OnTriggerExit[i].Execute(ev.Source.As<IEntity, IEntityData>());
-                }
+
+                result = target.m_OnTriggerExit.Execute(ev.Source.As<IEntity, IEntityData>());
+            }
+
+            if (!result)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Action has completed with faild at entity({ev.Target.Name})");
             }
         }
     }
