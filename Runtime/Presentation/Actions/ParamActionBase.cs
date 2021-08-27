@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Syadeu.Presentation.Actions
 {
-    public abstract class ParamActionBase<T> : InstanceActionBase where T : ParamActionBase<T>
+    public abstract class ParamActionBase<T> : ActionBase where T : ActionBase
     {
         private static readonly Dictionary<Reference, Stack<ActionBase>> m_Pool = new Dictionary<Reference, Stack<ActionBase>>();
 
@@ -39,6 +39,9 @@ namespace Syadeu.Presentation.Actions
             }
             return (T)pool.Pop();
         }
+
+        protected virtual void OnInitialize() { }
+        protected virtual void OnTerminate() { }
     }
     /// <summary>
     /// <see cref="ParamAction{T}"/> 를 사용하세요

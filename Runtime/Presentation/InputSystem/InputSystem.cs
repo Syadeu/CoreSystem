@@ -35,7 +35,8 @@ namespace Syadeu.Presentation.Input
 
                 InputSystemSettings.Instance.m_AdditionalInputActions[i].InputAction.performed += (other) =>
                 {
-                    temp.ResponseAction.Execute(other);
+                    temp.ResponseActions.Execute(other);
+                    temp.Actions.Execute();
                 };
             }
 

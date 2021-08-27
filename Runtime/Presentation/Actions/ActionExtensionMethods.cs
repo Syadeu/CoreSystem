@@ -16,9 +16,9 @@ namespace Syadeu.Presentation.Actions
             }
             return action.InternalExecute(entity);
         }
-        public static bool Execute<T>(this Reference<T> other) where T : InstanceAction<T>
+        public static bool Execute<T>(this Reference<T> other) where T : InstanceActionBase<T>
         {
-            T action = InstanceAction<T>.GetAction(other);
+            T action = InstanceActionBase<T>.GetAction(other);
             if (action.Terminated)
             {
                 CoreSystem.Logger.LogError(Channel.Presentation,
@@ -59,7 +59,7 @@ namespace Syadeu.Presentation.Actions
             }
             return isFailed;
         }
-        public static bool Execute<T>(this Reference<T>[] actions) where T : InstanceAction<T>
+        public static bool Execute<T>(this Reference<T>[] actions) where T : InstanceActionBase<T>
         {
             bool isFailed = false;
             for (int i = 0; i < actions.Length; i++)
