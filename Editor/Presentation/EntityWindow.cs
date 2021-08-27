@@ -25,11 +25,15 @@ namespace SyadeuEditor.Presentation
 
         readonly List<ObjectBaseDrawer> ObjectBaseDrawers = new List<ObjectBaseDrawer>();
 
+        private bool m_IsDataLoaded = false;
+
         public ToolbarWindow m_ToolbarWindow;
         public DataListWindow m_DataListWindow;
         public ViewWindow m_ViewWindow;
 
         public ObjectBaseDrawer m_SelectedObject = null;
+
+        public bool IsDataLoaded => m_IsDataLoaded;
 
         protected override void OnEnable()
         {
@@ -50,6 +54,15 @@ namespace SyadeuEditor.Presentation
             ObjectBaseDrawers.Add(drawer);
             m_DataListWindow.AddData(drawer);
         }
+
+        public void LoadData()
+        {
+            if (!Application.isPlaying) EntityDataList.Instance.LoadData();
+
+            Reload();
+            m_IsDataLoaded = true;
+        }
+
         public void Reload()
         {
             ObjectBaseDrawers.Clear();
@@ -61,6 +74,7 @@ namespace SyadeuEditor.Presentation
 
             m_DataListWindow.Reload();
         }
+
         public void Remove(ObjectBaseDrawer objectBase)
         {
             ObjectBaseDrawers.Remove(objectBase);
@@ -101,8 +115,6 @@ namespace SyadeuEditor.Presentation
             EntityWindow m_MainWindow;
             GenericMenu m_FileMenu;
 
-            bool m_IsLoaded = false;
-
             Rect lastRect;
 
             public ToolbarWindow(EntityWindow window)
@@ -120,21 +132,14 @@ namespace SyadeuEditor.Presentation
             }
             private void SaveMenu()
             {
-                if (!m_IsLoaded) return;
+                if (!m_MainWindow.m_IsDataLoaded) return;
 
                 EntityDataList.Instance.SaveData();
             }
-            private void LoadMenu()
-            {
-                if (!Application.isPlaying) EntityDataList.Instance.LoadData();
-
-                m_MainWindow.Reload();
-
-                m_IsLoaded = true;
-            }
+            private void LoadMenu() => m_MainWindow.LoadData();
             private void AddDataMenu<T>() where T : ObjectBase
             {
-                if (!m_IsLoaded) LoadMenu();
+                if (!m_MainWindow.IsDataLoaded) LoadMenu();
 
                 Type[] types = TypeHelper.GetTypes((other) => !other.IsAbstract && TypeHelper.TypeOf<T>.Type.IsAssignableFrom(other));
 

@@ -62,6 +62,8 @@ namespace Syadeu.Database
             mBits = bits;
         }
 
+        public bool IsEmpty() => Equals(Empty);
+
         public bool Equals(Hash other) => mBits.Equals(other.mBits);
         public override bool Equals(object obj) => (obj is Hash hash) && Equals(hash);
 
