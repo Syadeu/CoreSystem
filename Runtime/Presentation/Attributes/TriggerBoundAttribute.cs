@@ -19,7 +19,7 @@ namespace Syadeu.Presentation.Attributes
         [JsonProperty(Order = 0, PropertyName = "TriggerOnly")] public Reference<EntityBase>[] m_TriggerOnly = Array.Empty<Reference<EntityBase>>();
         [JsonProperty(Order = 1, PropertyName = "Inverse")] public bool m_Inverse;
 
-        [Header("AABB Collusion")]
+        [Header("AABB Collision")]
         [Tooltip("만약 MatchWithAABB가 true일 경우, 아래 설정은 무시됩니다")]
         [JsonProperty(Order = 2, PropertyName = "MatchWithAABB")] public bool m_MatchWithAABB = true;
         [JsonProperty(Order = 3, PropertyName = "Center")] public float3 m_Center = 0;

@@ -82,6 +82,8 @@ namespace Syadeu.Presentation.Actions
             {
                 data.m_OnClipEnd[i].Execute(executer);
             }
+
+            tr.enableCull = true;
         }
     }
 }

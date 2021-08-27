@@ -15,8 +15,6 @@
     "com.unity.test-framework": "1.1.27"
   },
   "optionalDependencies": {
-    "com.github.siccity.xnode": "https://github.com/Siccity/xNode.git",
-    "syadeu.gamesystem": "https://syadeuglobal:syadeuglobal213!@github.com/Syadeu/GameSystem.git",
     "com.unity.platforms.windows": "0.10.0-preview.10",
     "com.unity.platforms.android": "0.10.0-preview.10",
     "com.unity.platforms.ios": "0.10.0-preview.10",
