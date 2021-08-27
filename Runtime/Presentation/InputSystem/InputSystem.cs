@@ -27,11 +27,10 @@ namespace Syadeu.Presentation.Input
             }
 
             m_InputActions.Enable();
-            //global::UnityEngine.InputSystem.InputSystem.RegisterInteraction()
 
             for (int i = 0; i < InputSystemSettings.Instance.m_AdditionalInputActions.Length; i++)
             {
-                var temp = InputSystemSettings.Instance.m_AdditionalInputActions[i];
+                InputSystemSettings.CustomInputAction temp = InputSystemSettings.Instance.m_AdditionalInputActions[i];
 
                 InputSystemSettings.Instance.m_AdditionalInputActions[i].InputAction.performed += (other) =>
                 {
@@ -42,6 +41,7 @@ namespace Syadeu.Presentation.Input
 
             return base.OnInitialize();
         }
+
         private void asdasd()
         {
             InputAction inputAction = new InputAction();

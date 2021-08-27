@@ -18,6 +18,15 @@ namespace Syadeu.Presentation.Actions
         {
             m_Terminated = true;
         }
+        internal void InternalCreate()
+        {
+            OnCreated();
+        }
+
+        /// <summary>
+        /// 객체가 처음 생성될떄 실행됩니다.
+        /// </summary>
+        protected virtual void OnCreated() { }
 
         public override sealed object Clone() => base.Clone();
         public override sealed int GetHashCode()

@@ -49,16 +49,21 @@ namespace Syadeu.Presentation.Actions
 
         public static T GetAction(Reference<T> other)
         {
+            T temp;
+
             if (!m_Pool.TryGetValue(other, out var pool) ||
                 pool.Count == 0)
             {
                 T t = (T)other.GetObject().Clone();
                 t.m_Reference = other;
-                t.InternalInitialize();
+                t.InternalCreate();
 
-                return t;
+                temp = t;
             }
-            return (T)pool.Pop();
+            else temp = (T)pool.Pop();
+
+            temp.InternalInitialize();
+            return temp;
         }
 
         protected virtual void OnExecute() { }

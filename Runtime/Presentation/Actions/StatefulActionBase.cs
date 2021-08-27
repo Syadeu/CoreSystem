@@ -95,16 +95,21 @@ namespace Syadeu.Presentation.Actions
 
         internal static TAction GetAction(Reference<TAction> other)
         {
+            TAction temp;
+
             if (!m_Pool.TryGetValue(other, out var pool) ||
                 pool.Count == 0)
             {
                 TAction t = (TAction)other.GetObject().Clone();
                 t.m_Reference = other;
-                t.InternalInitialize();
+                t.InternalCreate();
 
-                return t;
+                temp = t;
             }
-            return (TAction)pool.Pop();
+            else temp = (TAction)pool.Pop();
+
+            temp.InternalInitialize();
+            return temp;
         }
 
         protected virtual void OnInitialize() { }
