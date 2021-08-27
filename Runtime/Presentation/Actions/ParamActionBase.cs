@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Syadeu.Presentation.Actions
 {
-    public abstract class InstanceAction<T> : InstanceActionBase where T : InstanceActionBase
+    public abstract class ParamActionBase<T> : InstanceActionBase where T : ParamActionBase<T>
     {
         private static readonly Dictionary<Reference, Stack<ActionBase>> m_Pool = new Dictionary<Reference, Stack<ActionBase>>();
 
@@ -12,27 +12,6 @@ namespace Syadeu.Presentation.Actions
         [JsonProperty(Order = -10, PropertyName = "DebugText")]
         public string m_DebugText = string.Empty;
 
-        internal bool InternalExecute()
-        {
-            if (!string.IsNullOrEmpty(m_DebugText))
-            {
-                CoreSystem.Logger.Log(Channel.Debug, m_DebugText);
-            }
-
-            bool result = true;
-            try
-            {
-                OnExecute();
-            }
-            catch (System.Exception ex)
-            {
-                CoreSystem.Logger.LogError(Channel.Presentation, ex.Message + ex.StackTrace);
-                result = false;
-            }
-
-            InternalTerminate();
-            return result;
-        }
         internal override sealed void InternalTerminate()
         {
             OnTerminate();
@@ -61,6 +40,5 @@ namespace Syadeu.Presentation.Actions
             return (T)pool.Pop();
         }
 
-        protected virtual void OnExecute() { }
     }
 }
