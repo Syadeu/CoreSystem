@@ -29,17 +29,13 @@ namespace Syadeu.Presentation.Actions
         {
             CoreSystem.StartUnityUpdate(this, Update(Executer, m_Data.GetObject(), obj.Result));
         }
-        protected override void OnTerminate()
-        {
-            Executer = EntityData<IEntityData>.Empty;
-        }
 
-        private static IEnumerator Update(EntityData<IEntityData> executer, EntityAnimationClipEventData data, AnimationClip clip)
+        private IEnumerator Update(EntityData<IEntityData> executer, EntityAnimationClipEventData data, AnimationClip clip)
         {
             var oper = Addressables.LoadAssetAsync<GameObject>(data.m_Entity.GetObject().Prefab.GetObjectSetting().m_RefPrefab);
             yield return new WaitUntil(() => oper.IsDone);
 
-            Entity<IEntity> entity = PresentationSystem<EntitySystem>.System.CreateEntity(data.m_Entity, 0, oper.Result.transform.rotation, oper.Result .transform.localScale, false);
+            Entity<IEntity> entity = PresentationSystem<EntitySystem>.System.CreateEntity(data.m_Entity, 0, oper.Result.transform.rotation, oper.Result .transform.localScale);
             ProxyTransform tr = (ProxyTransform)entity.transform;
             
             yield return new WaitUntil(() => tr.proxy != null);
@@ -54,6 +50,8 @@ namespace Syadeu.Presentation.Actions
                 yield break;
             }
 
+            "0".ToLog();
+
             Animation animation = proxy.GetComponent<Animation>();
             if (animation == null)
             {
@@ -63,6 +61,8 @@ namespace Syadeu.Presentation.Actions
 
             animation.clip = clip;
             animation.Play();
+
+            "1".ToLog();
             
             data.m_OnClipStart.Execute(executer);
             data.m_OnClipStartAction.Execute();
@@ -74,10 +74,13 @@ namespace Syadeu.Presentation.Actions
                 yield return null;
             }
 
+            "2".ToLog();
+
             data.m_OnClipEnd.Execute(executer);
             data.m_OnClipEndAction.Execute();
 
             tr.enableCull = true;
+            Executer = EntityData<IEntityData>.Empty;
         }
     }
 }

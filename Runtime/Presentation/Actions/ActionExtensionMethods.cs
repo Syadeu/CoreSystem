@@ -70,7 +70,7 @@ namespace Syadeu.Presentation.Actions
                     string.Format(c_ErrorCompletedWithFailed, TypeHelper.TypeOf<T>.Name));
             }
 
-            return isFailed;
+            return !isFailed;
         }
         public static bool Execute<T>(this Reference<T>[] actions) where T : InstanceActionBase<T>
         {
@@ -88,7 +88,7 @@ namespace Syadeu.Presentation.Actions
                     string.Format(c_ErrorCompletedWithFailed, TypeHelper.TypeOf<T>.Name));
             }
 
-            return isFailed;
+            return !isFailed;
         }
         public static bool Execute<T>(this Reference<ParamAction<T>>[] actions, T target)
         {
@@ -106,7 +106,7 @@ namespace Syadeu.Presentation.Actions
                     string.Format(c_ErrorCompletedWithFailed, TypeHelper.TypeOf<ParamAction<T>>.Name));
             }
 
-            return isFailed;
+            return !isFailed;
         }
         public static bool Execute<T, TA>(this Reference<ParamAction<T, TA>>[] actions, T t, TA ta)
         {
@@ -124,7 +124,7 @@ namespace Syadeu.Presentation.Actions
                     string.Format(c_ErrorCompletedWithFailed, TypeHelper.TypeOf<ParamAction<T, TA>>.Name));
             }
 
-            return isFailed;
+            return !isFailed;
         }
 
         public static void Execute<TState, TAction>(this Reference<TAction> other, EntityData<IEntityData> entity)

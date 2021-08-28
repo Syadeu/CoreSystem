@@ -43,15 +43,14 @@ namespace Syadeu.Presentation
             }
             return PresentationSystem<EntitySystem>.System.CreateEntity(Reference, in position);
         }
-        public Entity<IEntity> CreateEntity(in float3 position, in quaternion rotation, in float3 localScale,
-            bool enableCull = true)
+        public Entity<IEntity> CreateEntity(in float3 position, in quaternion rotation, in float3 localScale)
         {
             if (!Validate())
             {
                 throw new System.Exception();
             }
             return PresentationSystem<EntitySystem>.System.CreateEntity(Reference, 
-                in position, in rotation, in localScale, enableCull);
+                in position, in rotation, in localScale);
         }
         public EntityData<IEntityData> CreateObject()
         {

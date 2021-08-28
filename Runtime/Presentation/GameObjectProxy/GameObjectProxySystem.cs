@@ -453,8 +453,7 @@ namespace Syadeu.Presentation
                     }
                     ProxyTransformData data = List.ElementAt(clusterGroup[j]);
 
-                    if (data.m_Prefab.Equals(PrefabReference.None)) continue;
-                    if (!data.m_EnableCull)
+                    if (!data.m_EnableCull && !data.m_Prefab.Equals(PrefabReference.None))
                     {
                         if (data.m_ProxyIndex.Equals(-1) &&
                             !data.m_ProxyIndex.Equals(-2))
@@ -466,7 +465,8 @@ namespace Syadeu.Presentation
 
                     if (m_Frustum.IntersectsBox(data.GetAABB(), 10))
                     {
-                        if (data.m_ProxyIndex.Equals(-1) &&
+                        if (!data.m_Prefab.Equals(PrefabReference.None) &&
+                            data.m_ProxyIndex.Equals(-1) &&
                             !data.m_ProxyIndex.Equals(-2))
                         {
                             m_Request.Enqueue(data.m_Index);
@@ -479,7 +479,8 @@ namespace Syadeu.Presentation
                     }
                     else
                     {
-                        if (!data.m_ProxyIndex.Equals(-1) &&
+                        if (!data.m_Prefab.Equals(PrefabReference.None) &&
+                            !data.m_ProxyIndex.Equals(-1) &&
                             !data.m_ProxyIndex.Equals(-2))
                         {
                             m_Remove.Enqueue(data.m_Index);
