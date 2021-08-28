@@ -66,11 +66,15 @@ namespace SyadeuEditor.Presentation
         public void Reload()
         {
             ObjectBaseDrawers.Clear();
-            var temp = EntityDataList.Instance.m_Objects.Values.ToArray();
-            for (int i = 0; i < temp.Length; i++)
+            foreach (var item in EntityDataList.Instance.m_Objects.Values)
             {
-                AddData(temp[i]);
+                AddData(item);
             }
+            //var temp = EntityDataList.Instance.m_Objects.Values.ToArray();
+            //for (int i = 0; i < temp.Length; i++)
+            //{
+            //    AddData(temp[i]);
+            //}
 
             m_DataListWindow.Reload();
         }

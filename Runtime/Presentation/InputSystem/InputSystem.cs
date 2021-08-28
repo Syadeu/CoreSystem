@@ -115,15 +115,4 @@ namespace Syadeu.Presentation.Input
         Mouse,
         Gamepad,
     }
-
-
-    //public sealed class ParamActionProcessor : InputProcessor<Vector2>
-    //{
-    //    public Reference<ParamAction<float2>>[] Actions = Array.Empty<Reference<ParamAction<float2>>>();
-
-    //    public override Vector2 Process(Vector2 value, InputControl control)
-    //    {
-    //        Actions.
-    //    }
-    //}
 }
