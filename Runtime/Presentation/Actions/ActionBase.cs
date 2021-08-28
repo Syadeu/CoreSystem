@@ -8,7 +8,7 @@ namespace Syadeu.Presentation.Actions
         [JsonIgnore] private bool m_Terminated = true;
         [JsonIgnore] public Reference m_Reference;
 
-        public bool Terminated => m_Terminated;
+        [JsonIgnore] public bool Terminated => m_Terminated;
 
         internal virtual void InternalInitialize()
         {

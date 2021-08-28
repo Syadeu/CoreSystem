@@ -19,43 +19,65 @@ namespace Syadeu.Presentation.Input
             global::UnityEngine.InputSystem.InputSystem.RegisterInteraction<ParamActionFloat2Interaction>();
         }
 
-        //public Reference<ParamAction<float2>>[] Actions = Array.Empty<Reference<ParamAction<float2>>>();
         public long Action = 0;
+        private bool m_Pressed;
 
         public void Process(ref InputInteractionContext context)
         {
-            //if (context.timerHasExpired)
-            //{
-            //    context.Canceled();
-            //    return;
-            //}
-            //context.action.
-            //switch (context.phase)
-            //{
-            //    case InputActionPhase.Disabled:
-            //        break;
-            //    case InputActionPhase.Waiting:
-            //        break;
-            //    case InputActionPhase.Started:
-            //        break;
-            //    case InputActionPhase.Performed:
-            //        float2 value = context.ReadValue<Vector2>();
+            float2 value;
+            Reference<ParamAction<float2>> reference;
 
-            //        Actions.Execute(value);
-            //        break;
-            //    case InputActionPhase.Canceled:
-            //        break;
-            //    default:
-            //        break;
-            //}
+            if (!m_Pressed)
+            {
+                //var isActuated = context.ControlIsActuated(0.75f);
+                //if (isActuated)
+                {
+                    value = context.ReadValue<Vector2>();
+                    reference = new Reference<ParamAction<float2>>(new Hash((ulong)Action));
+                    reference.Execute(value);
 
-            float2 value = context.ReadValue<Vector2>();
+                    context.Started();
+                }
 
-            Reference<ParamAction<float2>> reference = new Reference<ParamAction<float2>>(new Hash((ulong)Action));
-            reference.Execute(value);
+                m_Pressed = true;
+                return;
+            }
+            // Check if the control is currently actuated past our 3/4 threshold.
+            var isStillActuated = context.ControlIsActuated(0.75f);
+
+            if (isStillActuated)
+            {
+                value = context.ReadValue<Vector2>();
+                reference = new Reference<ParamAction<float2>>(new Hash((ulong)Action));
+                reference.Execute(value);
+
+                context.Performed();
+
+                return;
+            }
+
+            // See for how long the control has been held.
+            var actuationTime = context.time - context.startTime;
+
+            value = context.ReadValue<Vector2>();
+            reference = new Reference<ParamAction<float2>>(new Hash((ulong)Action));
+            reference.Execute(0);
+
+            // Control is no longer actuated above 3/4 threshold. If it was held
+            // for at least a second, perform the action. Otherwise cancel it.
+
+            if (actuationTime >= 1)
+            {
+                context.Performed();
+            }
+            else
+            {
+                context.Canceled();
+            }
         }
         public void Reset()
         {
+            m_Pressed = false;
         }
     }
 }
