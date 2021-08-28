@@ -1,6 +1,7 @@
 ﻿using Syadeu.Internal;
 using Syadeu.Presentation.Actions;
 using System;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
@@ -15,18 +16,23 @@ namespace Syadeu.Presentation.Input
         public override bool EnableAfterPresentation => false;
 
         private bool m_Enable = true;
-        private InputActionAsset m_InputActions;
+        private InputSystemSettings.InputActionContatiner[] m_InputActions;
 
         protected override PresentationResult OnInitialize()
         {
             m_InputActions = InputSystemSettings.Instance.m_InputActions;
-            if (m_InputActions == null)
+            if (m_InputActions.Length == 0)
             {
                 m_Enable = false;
                 return PresentationResult.Warning("InputActions is not set. InputSystem will be offline.");
             }
 
-            m_InputActions.Enable();
+            for (int i = 0; i < m_InputActions.Length; i++)
+            {
+                if (!m_InputActions[i].EnableAtStart) continue;
+
+                m_InputActions[i].InputActions.Enable();
+            }
 
             for (int i = 0; i < InputSystemSettings.Instance.m_AdditionalInputActions.Length; i++)
             {
@@ -105,15 +111,49 @@ namespace Syadeu.Presentation.Input
         Mouse,
         Gamepad,
     }
-    public sealed class MyInteraction : IInputInteraction
+    public sealed class ParamActionFloat2Interaction : IInputInteraction
     {
+        public Reference<ParamAction<float2>>[] Actions = Array.Empty<Reference<ParamAction<float2>>>();
+
         public void Process(ref InputInteractionContext context)
         {
+            //if (context.timerHasExpired)
+            //{
+            //    context.Canceled();
+            //    return;
+            //}
+            //context.action.
+            switch (context.phase)
+            {
+                case InputActionPhase.Disabled:
+                    break;
+                case InputActionPhase.Waiting:
+                    break;
+                case InputActionPhase.Started:
+                    break;
+                case InputActionPhase.Performed:
+                    float2 value = context.ReadValue<Vector2>();
 
+                    Actions.Execute(value);
+                    break;
+                case InputActionPhase.Canceled:
+                    break;
+                default:
+                    break;
+            }
         }
         public void Reset()
         {
-            throw new System.NotImplementedException();
         }
     }
+
+    //public sealed class ParamActionProcessor : InputProcessor<Vector2>
+    //{
+    //    public Reference<ParamAction<float2>>[] Actions = Array.Empty<Reference<ParamAction<float2>>>();
+
+    //    public override Vector2 Process(Vector2 value, InputControl control)
+    //    {
+    //        Actions.
+    //    }
+    //}
 }
