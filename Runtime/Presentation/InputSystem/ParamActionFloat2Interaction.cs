@@ -36,6 +36,7 @@ namespace Syadeu.Presentation.Input
                     reference = new Reference<ParamAction<float2>>(new Hash((ulong)Action));
                     reference.Execute(value);
 
+                    "1".ToLog();
                     context.Started();
                 }
 
@@ -51,6 +52,7 @@ namespace Syadeu.Presentation.Input
                 reference = new Reference<ParamAction<float2>>(new Hash((ulong)Action));
                 reference.Execute(value);
 
+                "2".ToLog();
                 context.Performed();
 
                 return;
@@ -68,10 +70,12 @@ namespace Syadeu.Presentation.Input
 
             if (actuationTime >= 1)
             {
+                "3".ToLog();
                 context.Performed();
             }
             else
             {
+                "4".ToLog();
                 context.Canceled();
             }
         }

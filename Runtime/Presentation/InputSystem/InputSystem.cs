@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
 using UnityEngine.InputSystem.LowLevel;
+using Syadeu.Database;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -19,25 +20,8 @@ namespace Syadeu.Presentation.Input
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
-        private bool m_Enable = true;
-        private InputSystemSettings.InputActionContatiner[] m_InputActions;
-
         protected override PresentationResult OnInitialize()
         {
-            m_InputActions = InputSystemSettings.Instance.m_InputActions;
-            if (m_InputActions.Length == 0)
-            {
-                m_Enable = false;
-                return PresentationResult.Warning("InputActions is not set. InputSystem will be offline.");
-            }
-
-            for (int i = 0; i < m_InputActions.Length; i++)
-            {
-                if (!m_InputActions[i].EnableAtStart) continue;
-
-                m_InputActions[i].InputActions.Enable();
-            }
-
             for (int i = 0; i < InputSystemSettings.Instance.m_AdditionalInputActions.Length; i++)
             {
                 InputSystemSettings.CustomInputAction temp = InputSystemSettings.Instance.m_AdditionalInputActions[i];
@@ -49,7 +33,6 @@ namespace Syadeu.Presentation.Input
                 };
                 temp.InputAction.Enable();
             }
-
             return base.OnInitialize();
         }
 

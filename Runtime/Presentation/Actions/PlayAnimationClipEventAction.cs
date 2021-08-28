@@ -63,12 +63,9 @@ namespace Syadeu.Presentation.Actions
 
             animation.clip = clip;
             animation.Play();
-            "clip play".ToLog();
-
-            for (int i = 0; i < data.m_OnClipStart.Length; i++)
-            {
-                data.m_OnClipStart[i].Execute(executer);
-            }
+            
+            data.m_OnClipStart.Execute(executer);
+            data.m_OnClipStartAction.Execute();
 
             float passed = 0;
             while (passed < clip.length)
@@ -77,11 +74,8 @@ namespace Syadeu.Presentation.Actions
                 yield return null;
             }
 
-            "clip end".ToLog();
-            for (int i = 0; i < data.m_OnClipEnd.Length; i++)
-            {
-                data.m_OnClipEnd[i].Execute(executer);
-            }
+            data.m_OnClipEnd.Execute(executer);
+            data.m_OnClipEndAction.Execute();
 
             tr.enableCull = true;
         }

@@ -5,6 +5,7 @@ using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Input;
 using Unity.Mathematics;
 using UnityEditor;
+using UnityEngine;
 using UnityEngine.InputSystem.Editor;
 
 namespace SyadeuEditor.Presentation
@@ -40,6 +41,12 @@ namespace SyadeuEditor.Presentation
         }
         public override void OnGUI()
         {
+            if (GUILayout.Button("Save"))
+            {
+                ulong temp = m_Reflector.Action.m_Hash;
+                target.Action = (long)temp;
+            }
+
             EditorGUI.BeginChangeCheck();
             Drawer.OnGUI();
             if (EditorGUI.EndChangeCheck())
