@@ -16,6 +16,7 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.SceneManagement;
 using AABB = Syadeu.Database.AABB;
 
@@ -23,7 +24,7 @@ namespace Syadeu.Presentation
 {
     internal sealed class GameObjectProxySystem : PresentationSystemEntity<GameObjectProxySystem>
     {
-        private static readonly Vector3 INIT_POSITION = new Vector3(-9999, -9999, -9999);
+        public static readonly Vector3 INIT_POSITION = new Vector3(-9999, -9999, -9999);
         //private const int c_InitialMemorySize = 16384;
         private const int c_InitialMemorySize = 1024;
 
@@ -54,6 +55,8 @@ namespace Syadeu.Presentation
         private NativeQueue<ClusterIDRequest>
                 m_ClusterIDRequests;
 #pragma warning restore IDE0090 // Use 'new(...)'
+        public Queue<int>
+            m_OverrideRequestProxies = new Queue<int>();
 
         private SceneSystem m_SceneSystem;
         private RenderSystem m_RenderSystem;
@@ -199,6 +202,12 @@ namespace Syadeu.Presentation
             if (m_LoadingLock) return base.AfterPresentation();
 
             CameraFrustum frustum = m_RenderSystem.GetRawFrustum();
+
+            int overrideRequestProxies = m_OverrideRequestProxies.Count;
+            for (int i = 0; i < overrideRequestProxies; i++)
+            {
+                m_RequestProxyList.Enqueue(m_OverrideRequestProxies.Dequeue());
+            }
 
             #region Create / Remove Proxy
             int requestProxyCount = m_RequestProxyList.Count;
@@ -453,8 +462,7 @@ namespace Syadeu.Presentation
                     }
                     ProxyTransformData data = List.ElementAt(clusterGroup[j]);
 
-                    if (data.m_Prefab.Equals(PrefabReference.None)) continue;
-                    if (!data.m_EnableCull)
+                    if (!data.m_EnableCull && !data.m_Prefab.Equals(PrefabReference.None))
                     {
                         if (data.m_ProxyIndex.Equals(-1) &&
                             !data.m_ProxyIndex.Equals(-2))
@@ -466,7 +474,8 @@ namespace Syadeu.Presentation
 
                     if (m_Frustum.IntersectsBox(data.GetAABB(), 10))
                     {
-                        if (data.m_ProxyIndex.Equals(-1) &&
+                        if (!data.m_Prefab.Equals(PrefabReference.None) &&
+                            data.m_ProxyIndex.Equals(-1) &&
                             !data.m_ProxyIndex.Equals(-2))
                         {
                             m_Request.Enqueue(data.m_Index);
@@ -479,7 +488,8 @@ namespace Syadeu.Presentation
                     }
                     else
                     {
-                        if (!data.m_ProxyIndex.Equals(-1) &&
+                        if (!data.m_Prefab.Equals(PrefabReference.None) &&
+                            !data.m_ProxyIndex.Equals(-1) &&
                             !data.m_ProxyIndex.Equals(-2))
                         {
                             m_Remove.Enqueue(data.m_Index);
@@ -522,6 +532,11 @@ namespace Syadeu.Presentation
                 tr.Pointer->m_ClusterID = ClusterID.Requested;
             }
             OnDataObjectCreated?.Invoke(tr);
+
+            if (!enableCull && !prefab.Equals(PrefabReference<GameObject>.None))
+            {
+                m_OverrideRequestProxies.Enqueue(tr.m_Index);
+            }
 
             CoreSystem.Logger.Log(Channel.Proxy, true,
                 $"ProxyTransform(" +
@@ -654,11 +669,15 @@ namespace Syadeu.Presentation
             SceneSystem SceneSystem => m_ProxySystem.m_SceneSystem;
             EventSystem EventSystem => m_ProxySystem.m_EventSystem;
 
+            AssetReference refObject;
+            PrefabReference m_PrefabIdx;
             Scene m_RequestedScene;
+            Action<RecycleableMonobehaviour> m_OnCompleted;
 
             public void Setup(GameObjectProxySystem proxySystem, PrefabReference prefabIdx, Vector3 pos, Quaternion rot,
                 Action<RecycleableMonobehaviour> onCompleted)
             {
+                CoreSystem.Logger.True(prefabIdx.IsValid(), nameof(PrefabReference) + "not valid");
                 //var prefabInfo = PrefabList.Instance.ObjectSettings[prefabIdx];
                 var prefabInfo = prefabIdx.GetObjectSetting();
                 if (!proxySystem.m_TerminatedProxies.TryGetValue(prefabIdx, out var pool))
@@ -691,8 +710,7 @@ namespace Syadeu.Presentation
                 }
 
                 m_ProxySystem = proxySystem;
-                m_RequestedScene = SceneSystem.CurrentScene;
-
+                
                 Transform parent;
                 if (prefabInfo.m_IsWorldUI)
                 {
@@ -704,48 +722,69 @@ namespace Syadeu.Presentation
                     parent = SceneSystem.SceneInstanceFolder;
                 }
 
-                AssetReference refObject = prefabInfo.m_RefPrefab;
+                refObject = prefabInfo.m_RefPrefab;
+                m_PrefabIdx = prefabIdx;
+                m_RequestedScene = SceneSystem.CurrentScene;
+                m_OnCompleted = onCompleted;
 
-                //var oper = prefabInfo.m_RefPrefab.InstantiateAsync(pos, rot, CoreSystem.InstanceGroupTr);
-                var oper = prefabInfo.m_RefPrefab.InstantiateAsync(pos, rot, parent);
-                oper.Completed += (other) =>
+                if (prefabInfo.m_IsRuntimeObject)
                 {
-                    Scene currentScene = SceneSystem.CurrentScene;
-                    if (!currentScene.Equals(m_RequestedScene))
-                    {
-                        CoreSystem.Logger.LogWarning(Channel.Proxy, $"{other.Result.name} is returned because Scene has been changed");
-                        refObject.ReleaseInstance(other.Result);
-                        return;
-                    }
+                    CreatePrefab(prefabInfo.m_Prefab, parent);
+                    return;
+                }
+                var oper = prefabInfo.m_RefPrefab.InstantiateAsync(pos, rot, parent);
+                oper.Completed += CreatePrefab;
+            }
+            private void CreatePrefab(AsyncOperationHandle<GameObject> other)
+            {
+                Scene currentScene = SceneSystem.CurrentScene;
+                if (!currentScene.Equals(m_RequestedScene))
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Proxy, $"{other.Result.name} is returned because Scene has been changed");
+                    refObject.ReleaseInstance(other.Result);
+                    return;
+                }
 
-                    if (prefabInfo.m_IsWorldUI)
-                    {
-                        other.Result.layer = 5;
-                    }
+                CreatePrefab(other.Result);
+            }
+            private void CreatePrefab(GameObject Result, Transform parent = null)
+            {
+                if (parent != null)
+                {
+                    Result.transform.SetParent(parent);
+                }
 
-                    RecycleableMonobehaviour recycleable = other.Result.GetComponent<RecycleableMonobehaviour>();
-                    if (recycleable == null)
-                    {
-                        recycleable = other.Result.AddComponent<ManagedRecycleObject>();
-                    }
+                if (m_PrefabIdx.GetObjectSetting().m_IsWorldUI)
+                {
+                    Result.layer = 5;
+                }
 
-                    if (!m_ProxySystem.m_Instances.TryGetValue(prefabIdx, out List<RecycleableMonobehaviour> instances))
-                    {
-                        instances = new List<RecycleableMonobehaviour>();
-                        m_ProxySystem.m_Instances.Add(prefabIdx, instances);
-                    }
+                RecycleableMonobehaviour recycleable = Result.GetComponent<RecycleableMonobehaviour>();
+                if (recycleable == null)
+                {
+                    recycleable = Result.AddComponent<ManagedRecycleObject>();
+                }
 
-                    recycleable.m_Idx = instances.Count;
-                    recycleable.m_EventSystem = EventSystem;
+                if (!m_ProxySystem.m_Instances.TryGetValue(m_PrefabIdx, out List<RecycleableMonobehaviour> instances))
+                {
+                    instances = new List<RecycleableMonobehaviour>();
+                    m_ProxySystem.m_Instances.Add(m_PrefabIdx, instances);
+                }
 
-                    instances.Add(recycleable);
+                recycleable.m_Idx = instances.Count;
+                recycleable.m_EventSystem = EventSystem;
 
-                    recycleable.InternalOnCreated();
-                    if (recycleable.InitializeOnCall) recycleable.Initialize();
-                    onCompleted?.Invoke(recycleable);
+                instances.Add(recycleable);
 
-                    PoolContainer<PrefabRequester>.Enqueue(this);
-                };
+                recycleable.InternalOnCreated();
+                if (recycleable.InitializeOnCall) recycleable.Initialize();
+                m_OnCompleted?.Invoke(recycleable);
+
+                m_ProxySystem = null;
+                m_PrefabIdx = PrefabReference.Invalid;
+                refObject = null;
+                m_OnCompleted = null;
+                PoolContainer<PrefabRequester>.Enqueue(this);
             }
         }
 

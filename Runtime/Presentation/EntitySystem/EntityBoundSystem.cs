@@ -1,10 +1,16 @@
 ﻿using Syadeu.Database;
+using Syadeu.Mono;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
+using Syadeu.Presentation.Render;
 using System;
 using System.Collections.Generic;
+using Unity.Collections;
+using Unity.Mathematics;
+using UnityEngine;
+using AABB = Syadeu.Database.AABB;
 
 namespace Syadeu.Presentation
 {
@@ -17,11 +23,15 @@ namespace Syadeu.Presentation
         private Cluster<TriggerBoundAttribute> m_TriggerBoundCluster;
         private Entity<IEntity>[] m_TriggerBoundArray;
 
+        private bool m_DrawBounds = false;
+        private NativeArray<float3> m_Vertices;
+
         internal Cluster<TriggerBoundAttribute> BoundCluster => m_TriggerBoundCluster;
         internal IReadOnlyList<Entity<IEntity>> TriggerBoundArray => m_TriggerBoundArray;
 
         private EntitySystem m_EntitySystem;
         private EventSystem m_EventSystem;
+        private RenderSystem m_RenderSystem;
 
         #region Presentation Methods
 
@@ -32,6 +42,7 @@ namespace Syadeu.Presentation
 
             RequestSystem<EntitySystem>(Bind);
             RequestSystem<EventSystem>(Bind);
+            RequestSystem<RenderSystem>(Bind);
 
             return base.OnInitialize();
         }
@@ -40,8 +51,21 @@ namespace Syadeu.Presentation
             m_TriggerBoundArray = Array.Empty<Entity<IEntity>>();
             m_TriggerBoundCluster.Dispose();
 
+            if (m_Vertices.IsCreated) m_Vertices.Dispose();
+
             m_EntitySystem = null;
             m_EventSystem = null;
+        }
+
+        protected override PresentationResult OnStartPresentation()
+        {
+            ConsoleWindow.CreateCommand(EnableDrawTriggerBoundsCmd, "draw", "triggerbounds");
+
+            return base.OnStartPresentation();
+        }
+        private void EnableDrawTriggerBoundsCmd(string cmd)
+        {
+            m_DrawBounds = !m_DrawBounds;
         }
 
         #region Bind
@@ -86,6 +110,47 @@ namespace Syadeu.Presentation
             m_EventSystem.AddEvent<OnTransformChangedEvent>(OnTransformChangedEventHandler);
         }
 
+        private void Bind(RenderSystem other)
+        {
+            m_RenderSystem = other;
+
+            m_RenderSystem.OnRender += M_RenderSystem_OnRender;
+        }
+        private void M_RenderSystem_OnRender()
+        {
+            if (!m_DrawBounds || m_RenderSystem.Camera == null) return;
+
+            if (!m_Vertices.IsCreated)
+            {
+                m_Vertices = new NativeArray<float3>(8, Allocator.Persistent);
+            }
+
+            GL.PushMatrix();
+
+            float3x3 rotmat = new float3x3(quaternion.identity);
+            float4x4 mat = new float4x4(rotmat, float3.zero);
+            GL.MultMatrix(mat);
+            GL.LoadProjectionMatrix(m_RenderSystem.Camera.projectionMatrix);
+            GridExtensions.DefaultMaterial.SetPass(0);
+
+            GL.Begin(GL.LINES);
+            GL.Color(Color.red);
+            for (int i = 0; i < m_TriggerBoundArray.Length; i++)
+            {
+                if (!m_TriggerBoundArray[i].IsValid()) continue;
+
+                var temp = m_TriggerBoundArray[i].transform.aabb;
+                temp.GetVertices(m_Vertices);
+                for (int a = 0; a < m_Vertices.Length; a++)
+                {
+                    GL.Vertex(m_Vertices[a]);
+                }
+            }
+            GL.End();
+
+            GL.PopMatrix();
+        }
+
         #endregion
 
         #endregion
@@ -108,42 +173,48 @@ namespace Syadeu.Presentation
 
             void FindAndPostEvent(TriggerBoundAttribute att)
             {
-                if (att.m_Triggered.Count > 0)
-                {
-                    Entity<IEntity>[] tempParsedArr = att.m_Triggered.ToArray();
-                    for (int i = 0; i < tempParsedArr.Length; i++)
-                    {
-                        TryTrigger(in m_EventSystem, ev.entity, att.m_Triggered[i]);
-                    }
-                }
+                //if (att.m_Triggered.Count > 0)
+                //{
+                //    Entity<IEntity>[] tempParsedArr = att.m_Triggered.ToArray();
+                //    for (int i = 0; i < tempParsedArr.Length; i++)
+                //    {
+                //        TryTrigger(in m_EventSystem, ev.entity, att.m_Triggered[i]);
+                //    }
+                //}
 
                 ClusterID updatedID = m_TriggerBoundCluster.Update(att.m_ClusterID, ev.entity.transform.position);
-                if (!updatedID.Equals(att.m_ClusterID))
-                {
-                    var prevGroup = m_TriggerBoundCluster.GetGroup(in att.m_ClusterID);
-                    for (int i = 0; i < prevGroup.Length; i++)
-                    {
-                        if (!prevGroup.HasElementAt(i)) continue;
+                //if (!updatedID.Equals(att.m_ClusterID))
+                //{
+                //    var prevGroup = m_TriggerBoundCluster.GetGroup(in att.m_ClusterID);
+                //    for (int i = 0; i < prevGroup.Length; i++)
+                //    {
+                //        if (!prevGroup.HasElementAt(i)) continue;
 
-                        int arrIdx = prevGroup[i];
-                        Entity<IEntity> target = m_TriggerBoundArray[arrIdx];
+                //        int arrIdx = prevGroup[i];
+                //        Entity<IEntity> target = m_TriggerBoundArray[arrIdx];
 
-                        TryTrigger(in m_EventSystem, ev.entity, in target);
-                    }
-                }
+                //        TryTrigger(in m_EventSystem, ev.entity, in target);
+                //    }
+                //}
 
                 att.m_ClusterID = updatedID;
-                ClusterGroup<TriggerBoundAttribute> group = m_TriggerBoundCluster.GetGroup(in att.m_ClusterID);
-                
-                for (int i = 0; i < group.Length; i++)
+                //ClusterGroup<TriggerBoundAttribute> group = m_TriggerBoundCluster.GetGroup(in att.m_ClusterID);
+
+                //for (int i = 0; i < group.Length; i++)
+                //{
+                //    if (i.Equals(att.m_ClusterID.ItemIndex) ||
+                //        !group.HasElementAt(i)) continue;
+
+                //    int arrIdx = group[i];
+                //    Entity<IEntity> target = m_TriggerBoundArray[arrIdx];
+
+                //    TryTrigger(in m_EventSystem, ev.entity, in target);
+                //}
+                for (int i = 0; i < m_TriggerBoundArray.Length; i++)
                 {
-                    if (i.Equals(att.m_ClusterID.ItemIndex) ||
-                        !group.HasElementAt(i)) continue;
+                    if (!m_TriggerBoundArray[i].IsValid() || m_TriggerBoundArray[i].Hash.Equals(att.Parent.Hash)) continue;
 
-                    int arrIdx = group[i];
-                    Entity<IEntity> target = m_TriggerBoundArray[arrIdx];
-
-                    TryTrigger(in m_EventSystem, ev.entity, in target);
+                    TryTrigger(in m_EventSystem, ev.entity, in m_TriggerBoundArray[i]);
                 }
             }
             static void TryTrigger(in EventSystem eventSystem, in Entity<IEntity> from, in Entity<IEntity> to)
@@ -151,11 +222,14 @@ namespace Syadeu.Presentation
                 TriggerBoundAttribute fromAtt = from.GetAttribute<TriggerBoundAttribute>();
                 TriggerBoundAttribute toAtt = to.GetAttribute<TriggerBoundAttribute>();
 
-                AABB fromAABB = fromAtt.m_MatchWithAABB ? ((IProxyTransform)from.transform).aabb : new AABB(fromAtt.m_Center + from.transform.position, fromAtt.m_Center);
-                AABB toAABB = toAtt.m_MatchWithAABB ? ((IProxyTransform)to.transform).aabb : new AABB(toAtt.m_Center + to.transform.position, toAtt.m_Center);
-                
+                AABB fromAABB = fromAtt.m_MatchWithAABB ? from.transform.aabb : new AABB(fromAtt.m_Center + from.transform.position, fromAtt.m_Center);
+                AABB toAABB = toAtt.m_MatchWithAABB ? to.transform.aabb : new AABB(toAtt.m_Center + to.transform.position, toAtt.m_Center);
+
+                CoreSystem.Logger.False(fromAtt.m_Triggered == toAtt.m_Triggered, "??");
+
                 if (fromAABB.Intersect(toAABB))
                 {
+                    //"1".ToLog();
                     if (CanTriggerable(in fromAtt, in to) && !fromAtt.m_Triggered.Contains(to))
                     {
                         fromAtt.m_Triggered.Add(to);
@@ -169,12 +243,12 @@ namespace Syadeu.Presentation
                 }
                 else
                 {
-                    if (CanTriggerable(in fromAtt, in to) && fromAtt.m_Triggered.Contains(to))
+                    if (/*CanTriggerable(in fromAtt, in to) &&*/ fromAtt.m_Triggered.Contains(to))
                     {
                         fromAtt.m_Triggered.Remove(to);
                         eventSystem.PostEvent(EntityTriggerBoundEvent.GetEvent(from, to, false));
                     }
-                    if (CanTriggerable(in toAtt, in from) && toAtt.m_Triggered.Contains(from))
+                    if (/*CanTriggerable(in toAtt, in from) && */toAtt.m_Triggered.Contains(from))
                     {
                         toAtt.m_Triggered.Remove(from);
                         eventSystem.PostEvent(EntityTriggerBoundEvent.GetEvent(to, from, false));
@@ -188,12 +262,12 @@ namespace Syadeu.Presentation
 
                 for (int i = 0; i < att.m_TriggerOnly.Length; i++)
                 {
-                    if (att.m_TriggerOnly[i].Equals(target.Hash))
+                    if (att.m_TriggerOnly[i].m_Hash.Equals(target.Hash))
                     {
                         return !att.m_Inverse;
                     }
                 }
-                return att.m_Inverse;
+                return false;
             }
         }
 

@@ -40,10 +40,9 @@ namespace Syadeu.Presentation.Attributes
         }
         private void OnAnimatorMove()
         {
-            for (int i = 0; i < m_AnimatorAttribute.m_OnMoveActions.Length; i++)
-            {
-                m_AnimatorAttribute.m_OnMoveActions[i].Execute(m_AnimatorAttribute.Parent);
-            }
+            if (m_AnimatorAttribute == null) return;
+
+            m_AnimatorAttribute.m_OnMoveActions.Execute(m_AnimatorAttribute.Parent);
         }
     }
 }

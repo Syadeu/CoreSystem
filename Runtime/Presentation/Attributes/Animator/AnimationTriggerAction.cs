@@ -10,14 +10,14 @@ namespace Syadeu.Presentation.Actions
     [DisplayName("Action: Execute Animation TriggerAction")]
     [ReflectionDescription(
         "애니메이션 클립에 달린 TriggerAction이 타겟으로 삼을 액션입니다.")]
-    public sealed class AnimationTriggerAction : TriggerAction<AnimationTriggerAction>
+    public sealed class AnimationTriggerAction : TriggerAction
     {
         [Header("General")]
         [JsonProperty(Order = 0, PropertyName = "TriggerName")] public string m_TriggerName;
 
         [Space, Header("TriggerActions")]
         [JsonProperty(Order = 1, PropertyName = "OnExecute")]
-        private Reference<TriggerActionBase>[] m_OnExecute = Array.Empty<Reference<TriggerActionBase>>();
+        private Reference<TriggerAction>[] m_OnExecute = Array.Empty<Reference<TriggerAction>>();
 
         protected override void OnExecute(EntityData<IEntityData> entity)
         {

@@ -49,7 +49,7 @@ namespace SyadeuEditor.Presentation.Map
             }
 
             m_GameObject.tag = c_EditorOnly;
-            m_GameObject.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
+            m_GameObject.hideFlags = HideFlags.DontSave | HideFlags.NotEditable | HideFlags.HideInInspector;
 
             Transform tr = m_GameObject.transform;
 

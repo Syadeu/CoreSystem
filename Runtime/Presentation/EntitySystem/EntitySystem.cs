@@ -358,7 +358,7 @@ namespace Syadeu.Presentation
             CoreSystem.Logger.ThreadBlock(nameof(CreateEntity), ThreadInfo.Unity);
             InternalEntityValidation(name, position, out EntityBase temp);
 
-            ProxyTransform obj = InternalCreateProxy(in temp, temp.Prefab, in position, quaternion.identity, 1, true);
+            ProxyTransform obj = InternalCreateProxy(in temp, temp.Prefab, in position, quaternion.identity, 1);
             return InternalCreateEntity(in temp, in obj);
         }
         /// <summary>
@@ -372,7 +372,7 @@ namespace Syadeu.Presentation
             CoreSystem.Logger.ThreadBlock(nameof(CreateEntity), ThreadInfo.Unity);
             InternalEntityValidation(in hash, in position, out EntityBase temp);
 
-            ProxyTransform obj = InternalCreateProxy(in temp, temp.Prefab, in position, quaternion.identity, 1, true);
+            ProxyTransform obj = InternalCreateProxy(in temp, temp.Prefab, in position, quaternion.identity, 1);
             return InternalCreateEntity(in temp, in obj);
         }
         /// <summary>
@@ -382,14 +382,13 @@ namespace Syadeu.Presentation
         /// <param name="position"></param>
         /// <param name="rotation"></param>
         /// <param name="localSize"></param>
-        /// <param name="enableCull"></param>
         /// <returns></returns>
-        public Entity<IEntity> CreateEntity(in string name, in float3 position, in quaternion rotation, in float3 localSize, in bool enableCull)
+        public Entity<IEntity> CreateEntity(in string name, in float3 position, in quaternion rotation, in float3 localSize)
         {
             CoreSystem.Logger.ThreadBlock(nameof(CreateEntity), ThreadInfo.Unity);
             InternalEntityValidation(in name, in position, out EntityBase temp);
 
-            ProxyTransform obj = InternalCreateProxy(in temp, temp.Prefab, in position, in rotation, in localSize, in enableCull);
+            ProxyTransform obj = InternalCreateProxy(in temp, temp.Prefab, in position, in rotation, in localSize);
             return InternalCreateEntity(in temp, in obj);
         }
         /// <summary>
@@ -399,14 +398,13 @@ namespace Syadeu.Presentation
         /// <param name="position"></param>
         /// <param name="rotation"></param>
         /// <param name="localSize"></param>
-        /// <param name="enableCull"></param>
         /// <returns></returns>
-        public Entity<IEntity> CreateEntity(in Hash hash, in float3 position, in quaternion rotation, in float3 localSize, in bool enableCull)
+        public Entity<IEntity> CreateEntity(in Hash hash, in float3 position, in quaternion rotation, in float3 localSize)
         {
             CoreSystem.Logger.ThreadBlock(nameof(CreateEntity), ThreadInfo.Unity);
             InternalEntityValidation(in hash, in position, out EntityBase temp);
 
-            ProxyTransform obj = InternalCreateProxy(in temp, temp.Prefab, in position, in rotation, in localSize, in enableCull);
+            ProxyTransform obj = InternalCreateProxy(in temp, temp.Prefab, in position, in rotation, in localSize);
             return InternalCreateEntity(in temp, in obj);
         }
 
@@ -439,7 +437,7 @@ namespace Syadeu.Presentation
         }
         #endregion
         private ProxyTransform InternalCreateProxy(in EntityBase from,
-            in PrefabReference<GameObject> prefab, in float3 pos, in quaternion rot, in float3 scale, in bool enableCull)
+            in PrefabReference<GameObject> prefab, in float3 pos, in quaternion rot, in float3 scale)
         {
             if (!prefab.IsValid())
             {

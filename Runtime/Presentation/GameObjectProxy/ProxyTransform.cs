@@ -139,6 +139,14 @@ namespace Syadeu.Presentation
             {
                 if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
 
+                if (Ref.m_EnableCull == value) return;
+
+                if (!value && !hasProxy && !hasProxyQueued)
+                {
+                    Ref.m_ProxyIndex = ProxyQueued;
+                    PresentationSystem<GameObjectProxySystem>.System.m_OverrideRequestProxies.Enqueue(m_Index);
+                }
+
                 Ref.m_EnableCull = value;
             }
         }

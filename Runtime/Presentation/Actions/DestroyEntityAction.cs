@@ -4,7 +4,7 @@ using System.ComponentModel;
 namespace Syadeu.Presentation.Actions
 {
     [DisplayName("Action: Destroy Entity")]
-    public sealed class DestroyEntityAction : TriggerAction<DestroyEntityAction>
+    public sealed class DestroyEntityAction : TriggerAction
     {
         protected override void OnExecute(EntityData<IEntityData> entity)
         {

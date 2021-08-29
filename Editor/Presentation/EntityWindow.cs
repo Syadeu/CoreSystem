@@ -37,6 +37,12 @@ namespace SyadeuEditor.Presentation
 
         protected override void OnEnable()
         {
+            if (!IsDataLoaded)
+            {
+                ObjectBaseDrawers.Clear();
+                m_DataListWindow?.Reload();
+            }
+
             m_ToolbarWindow = new ToolbarWindow(this);
             m_DataListWindow = new DataListWindow(this);
             m_ViewWindow = new ViewWindow(this);
@@ -66,11 +72,18 @@ namespace SyadeuEditor.Presentation
         public void Reload()
         {
             ObjectBaseDrawers.Clear();
-            var temp = EntityDataList.Instance.m_Objects.Values.ToArray();
-            for (int i = 0; i < temp.Length; i++)
+            if (EntityDataList.Instance.m_Objects != null)
             {
-                AddData(temp[i]);
+                foreach (var item in EntityDataList.Instance.m_Objects.Values)
+                {
+                    AddData(item);
+                }
             }
+            //var temp = EntityDataList.Instance.m_Objects.Values.ToArray();
+            //for (int i = 0; i < temp.Length; i++)
+            //{
+            //    AddData(temp[i]);
+            //}
 
             m_DataListWindow.Reload();
         }

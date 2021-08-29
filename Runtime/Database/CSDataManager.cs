@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using Syadeu.Mono;
 using Syadeu.Database.Converters;
+using Syadeu.Internal;
+using System;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -24,16 +26,26 @@ namespace Syadeu.Database
 
         public override void OnInitialize()
         {
-            SetJsonConverters();
+            Initialize();
         }
 
 #if UNITY_EDITOR
         [InitializeOnLoadMethod]
         public static void SetEditor()
         {
-            SetJsonConverters();
+            Initialize();
         }
 #endif
+        private static void Initialize()
+        {
+            SetJsonConverters();
+
+            Type[] types = TypeHelper.GetTypes((other) => TypeHelper.TypeOf<IStaticInitializer>.Type.IsAssignableFrom(other));
+            for (int i = 0; i < types.Length; i++)
+            {
+                System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(types[i].TypeHandle);
+            }
+        }
 
         private static void SetJsonConverters()
         {

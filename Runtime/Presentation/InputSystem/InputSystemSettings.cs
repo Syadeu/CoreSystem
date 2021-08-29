@@ -23,8 +23,6 @@ namespace Syadeu.Presentation.Input
             public Reference<InstanceAction>[] Actions = Array.Empty<Reference<InstanceAction>>();
         }
 
-        public InputActionAsset m_InputActions = null;
-
         public CustomInputAction[] m_AdditionalInputActions = Array.Empty<CustomInputAction>();
     }
 }

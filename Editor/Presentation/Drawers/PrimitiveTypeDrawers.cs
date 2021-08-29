@@ -143,6 +143,8 @@ namespace SyadeuEditor.Presentation
 
     public sealed class ArrayDrawer : ObjectDrawer<IList>
     {
+        const string c_NameFormat = "{0} <size=9>: {1}</size>";
+
         private Type m_DeclaredType;
         private Type m_ElementType;
 
@@ -289,7 +291,9 @@ namespace SyadeuEditor.Presentation
             {
                 #region Header
                 EditorGUILayout.BeginHorizontal();
-                m_Open = EditorUtils.Foldout(m_Open, Name, 13);
+                m_Open = EditorUtils.Foldout(m_Open, 
+                    string.Format(c_NameFormat, Name, TypeHelper.ToString(m_ElementType))
+                    , 13);
                 if (GUILayout.Button("+", GUILayout.Width(20)))
                 {
                     object newValue = Activator.CreateInstance(m_ElementType);

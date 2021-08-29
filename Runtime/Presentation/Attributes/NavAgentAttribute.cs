@@ -31,7 +31,7 @@ namespace Syadeu.Presentation.Attributes
 
         [Space, Header("TriggerActions")]
         [JsonProperty(Order = 6, PropertyName = "OnMoveActions")]
-        public Reference<TriggerActionBase>[] m_OnMoveActions = Array.Empty<Reference<TriggerActionBase>>();
+        public Reference<TriggerAction>[] m_OnMoveActions = Array.Empty<Reference<TriggerAction>>();
 
         [JsonIgnore] public NavMeshAgent NavMeshAgent { get; internal set; }
         [JsonIgnore] public bool IsMoving { get; internal set; }

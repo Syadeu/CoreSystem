@@ -5,6 +5,12 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
 using UnityEngine.InputSystem.LowLevel;
+using Syadeu.Database;
+
+#if UNITY_EDITOR
+using UnityEditor;
+using UnityEngine.InputSystem.Editor;
+#endif
 
 namespace Syadeu.Presentation.Input
 {
@@ -14,20 +20,8 @@ namespace Syadeu.Presentation.Input
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
-        private bool m_Enable = true;
-        private InputActionAsset m_InputActions;
-
         protected override PresentationResult OnInitialize()
         {
-            m_InputActions = InputSystemSettings.Instance.m_InputActions;
-            if (m_InputActions == null)
-            {
-                m_Enable = false;
-                return PresentationResult.Warning("InputActions is not set. InputSystem will be offline.");
-            }
-
-            m_InputActions.Enable();
-
             for (int i = 0; i < InputSystemSettings.Instance.m_AdditionalInputActions.Length; i++)
             {
                 InputSystemSettings.CustomInputAction temp = InputSystemSettings.Instance.m_AdditionalInputActions[i];
@@ -39,7 +33,6 @@ namespace Syadeu.Presentation.Input
                 };
                 temp.InputAction.Enable();
             }
-
             return base.OnInitialize();
         }
 
@@ -104,16 +97,5 @@ namespace Syadeu.Presentation.Input
         Keyboard,
         Mouse,
         Gamepad,
-    }
-    public sealed class MyInteraction : IInputInteraction
-    {
-        public void Process(ref InputInteractionContext context)
-        {
-
-        }
-        public void Reset()
-        {
-            throw new System.NotImplementedException();
-        }
     }
 }

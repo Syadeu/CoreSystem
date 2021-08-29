@@ -9,9 +9,9 @@ namespace Syadeu.Presentation.Actions
         const string c_ErrorIsTerminatedAction = "This action({0}) has been terminated.";
         const string c_ErrorCompletedWithFailed = "Execution ({0}) completed with failed.";
 
-        public static bool Execute<T>(this Reference<T> other, EntityData<IEntityData> entity) where T : TriggerActionBase
+        public static bool Execute<T>(this Reference<T> other, EntityData<IEntityData> entity) where T : TriggerAction
         {
-            T action = TriggerAction<T>.GetAction(other);
+            T action = TriggerAction.GetAction(other);
             if (action.Terminated)
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
@@ -31,20 +31,20 @@ namespace Syadeu.Presentation.Actions
             }
             return action.InternalExecute();
         }
-        public static bool Execute<T, TTarget>(this Reference<T> other, TTarget t) where T : ParamActionBase<T, TTarget>
+        public static bool Execute<T>(this Reference<ParamAction<T>> other, T t)
         {
-            T action = ParamActionBase<T, TTarget>.GetAction(other);
+            var action = ParamAction<T>.GetAction(other);
             if (action.Terminated)
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    string.Format(c_ErrorIsTerminatedAction, TypeHelper.TypeOf<T>.Name));
+                    string.Format(c_ErrorIsTerminatedAction, action.Name));
                 return false;
             }
             return action.InternalExecute(t);
         }
-        public static bool Execute<T, TTarget, TATarget>(this Reference<T> other, TTarget t, TATarget ta) where T : ParamActionBase<T, TTarget, TATarget>
+        public static bool Execute<T, TA>(this Reference<ParamAction<T, TA>> other, T t, TA ta)
         {
-            T action = ParamActionBase<T, TTarget, TTarget>.GetAction(other);
+            var action = ParamAction<T, TA>.GetAction(other);
             if (action.Terminated)
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
@@ -54,7 +54,7 @@ namespace Syadeu.Presentation.Actions
             return action.InternalExecute(t, ta);
         }
 
-        public static bool Execute<T>(this Reference<T>[] actions, EntityData<IEntityData> entity) where T : TriggerActionBase
+        public static bool Execute<T>(this Reference<T>[] actions, EntityData<IEntityData> entity) where T : TriggerAction
         {
             bool isFailed = false;
             for (int i = 0; i < actions.Length; i++)
@@ -70,7 +70,7 @@ namespace Syadeu.Presentation.Actions
                     string.Format(c_ErrorCompletedWithFailed, TypeHelper.TypeOf<T>.Name));
             }
 
-            return isFailed;
+            return !isFailed;
         }
         public static bool Execute<T>(this Reference<T>[] actions) where T : InstanceActionBase<T>
         {
@@ -88,9 +88,9 @@ namespace Syadeu.Presentation.Actions
                     string.Format(c_ErrorCompletedWithFailed, TypeHelper.TypeOf<T>.Name));
             }
 
-            return isFailed;
+            return !isFailed;
         }
-        public static bool Execute<T, TTarget>(this Reference<T>[] actions, TTarget target) where T : ParamActionBase<T, TTarget>
+        public static bool Execute<T>(this Reference<ParamAction<T>>[] actions, T target)
         {
             bool isFailed = false;
             for (int i = 0; i < actions.Length; i++)
@@ -103,12 +103,12 @@ namespace Syadeu.Presentation.Actions
             if (isFailed)
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    string.Format(c_ErrorCompletedWithFailed, TypeHelper.TypeOf<T>.Name));
+                    string.Format(c_ErrorCompletedWithFailed, TypeHelper.TypeOf<ParamAction<T>>.Name));
             }
 
-            return isFailed;
+            return !isFailed;
         }
-        public static bool Execute<T, TTarget, TATarget>(this Reference<T>[] actions, TTarget t, TATarget ta) where T : ParamActionBase<T, TTarget, TATarget>
+        public static bool Execute<T, TA>(this Reference<ParamAction<T, TA>>[] actions, T t, TA ta)
         {
             bool isFailed = false;
             for (int i = 0; i < actions.Length; i++)
@@ -121,10 +121,10 @@ namespace Syadeu.Presentation.Actions
             if (isFailed)
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    string.Format(c_ErrorCompletedWithFailed, TypeHelper.TypeOf<T>.Name));
+                    string.Format(c_ErrorCompletedWithFailed, TypeHelper.TypeOf<ParamAction<T, TA>>.Name));
             }
 
-            return isFailed;
+            return !isFailed;
         }
 
         public static void Execute<TState, TAction>(this Reference<TAction> other, EntityData<IEntityData> entity)

@@ -48,6 +48,16 @@ namespace Syadeu.Internal
 
             public static ConstructorInfo GetConstructorInfo(params Type[] args)
                 => TypeHelper.GetConstructorInfo(Type, args);
+
+            private static string s_ToString = string.Empty;
+            public static new string ToString()
+            {
+                if (string.IsNullOrEmpty(s_ToString))
+                {
+                    s_ToString = TypeHelper.ToString(Type);
+                }
+                return s_ToString;
+            }
         }
         public sealed class Enum<T> where T : struct, IConvertible
         {
@@ -106,6 +116,29 @@ namespace Syadeu.Internal
             {
                 return e.Types.Where(t => t != null);
             }
+        }
+
+        public static string ToString(Type type)
+        {
+            const string c_TStart = "<";
+            const string c_TEnd = ">";
+            const string c_Pattern = ", {0}";
+
+            string output = type.Name;
+            if (type.GenericTypeArguments.Length != 0)
+            {
+                output = output.Substring(0, output.Length - 2);
+
+                output += c_TStart;
+                output += ToString(type.GenericTypeArguments[0]);
+                for (int i = 1; i < type.GenericTypeArguments.Length; i++)
+                {
+                    string temp = ToString(type.GenericTypeArguments[i]);
+                    output += string.Format(c_Pattern, temp);
+                }
+                output += c_TEnd;
+            }
+            return output;
         }
     }
 }
