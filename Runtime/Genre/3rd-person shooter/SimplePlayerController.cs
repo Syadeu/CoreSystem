@@ -31,10 +31,7 @@ public class SimplePlayerController : MonoBehaviour
     {
         if (m_Camera == null) return;
 
-        Vector3
-            camForward = Vector3.ProjectOnPlane(m_Camera.transform.forward, Vector3.up),
-            camRight = Vector3.ProjectOnPlane(m_Camera.transform.right, Vector3.up);
-        //float orientation = Vector3.SignedAngle(Vector3.forward, camForward, Vector3.up);
+        Vector3 camForward = Vector3.ProjectOnPlane(m_Camera.transform.forward, Vector3.up);
 
         float
             currentSpeed = m_Animator.GetFloat(m_SpeedKey),
@@ -51,13 +48,17 @@ public class SimplePlayerController : MonoBehaviour
 
         quaternion rot = quaternion.LookRotation(camForward, new float3(0, 1, 0));
         float4x4 vp = new float4x4(new float3x3(rot), float3.zero);
-        var point = math.mul(vp, new float4(norm, 0));
+        float3 point = math.mul(vp, new float4(norm, 1)).xyz;
 
         float
-            speed = Mathf.Lerp(currentSpeed, norm.magnitude, m_Speed * Time.deltaTime),
+            horizontal = Vector3.Dot(point, transform.right),
+            vertical = Vector3.Dot(point, transform.forward);
 
-            x = Mathf.Lerp(currentX, Vector3.Dot(point.xyz, transform.right), m_Speed * Time.deltaTime),
-            z = Mathf.Lerp(currentZ, Vector3.Dot(point.xyz, transform.forward), m_Speed * Time.deltaTime);
+        float
+            speed = Mathf.Lerp(currentSpeed, vertical < 0 ? -norm.magnitude : norm.magnitude, m_Speed * Time.deltaTime),
+
+            x = Mathf.Lerp(currentX, horizontal, m_Speed * Time.deltaTime),
+            z = Mathf.Lerp(currentZ, vertical, m_Speed * Time.deltaTime);
 
         m_Animator.SetFloat(m_SpeedKey, speed);
         m_Animator.SetFloat(m_HorizontalKey, x);
