@@ -1,4 +1,5 @@
 ﻿using Syadeu.Database;
+using Syadeu.Mono;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
@@ -22,6 +23,9 @@ namespace Syadeu.Presentation
         private Cluster<TriggerBoundAttribute> m_TriggerBoundCluster;
         private Entity<IEntity>[] m_TriggerBoundArray;
 
+        private bool m_DrawBounds = false;
+        private NativeArray<float3> m_Vertices;
+
         internal Cluster<TriggerBoundAttribute> BoundCluster => m_TriggerBoundCluster;
         internal IReadOnlyList<Entity<IEntity>> TriggerBoundArray => m_TriggerBoundArray;
 
@@ -38,53 +42,10 @@ namespace Syadeu.Presentation
 
             RequestSystem<EntitySystem>(Bind);
             RequestSystem<EventSystem>(Bind);
-            RequestSystem<RenderSystem>((other) =>
-            {
-                m_RenderSystem = other;
-
-                m_RenderSystem.OnRender += M_RenderSystem_OnRender;
-            });
+            RequestSystem<RenderSystem>(Bind);
 
             return base.OnInitialize();
         }
-
-        private bool m_DrawBounds = true;
-        private NativeArray<float3> m_Vertices;
-        private void M_RenderSystem_OnRender()
-        {
-            if (!m_DrawBounds || m_RenderSystem.Camera == null) return;
-
-            if (!m_Vertices.IsCreated)
-            {
-                m_Vertices = new NativeArray<float3>(8, Allocator.Persistent);
-            }
-
-            GL.PushMatrix();
-
-            float3x3 rotmat = new float3x3(quaternion.identity);
-            float4x4 mat = new float4x4(rotmat, float3.zero);
-            GL.MultMatrix(mat);
-            GL.LoadProjectionMatrix(m_RenderSystem.Camera.projectionMatrix);
-            GridExtensions.DefaultMaterial.SetPass(0);
-
-            GL.Begin(GL.LINES);
-            GL.Color(Color.red);
-            for (int i = 0; i < m_TriggerBoundArray.Length; i++)
-            {
-                if (!m_TriggerBoundArray[i].IsValid()) continue;
-
-                var temp = m_TriggerBoundArray[i].transform.aabb;
-                temp.GetVertices(m_Vertices);
-                for (int a = 0; a < m_Vertices.Length; a++)
-                {
-                    GL.Vertex(m_Vertices[a]);
-                }
-            }
-            GL.End();
-
-            GL.PopMatrix();
-        }
-
         public override void OnDispose()
         {
             m_TriggerBoundArray = Array.Empty<Entity<IEntity>>();
@@ -94,6 +55,17 @@ namespace Syadeu.Presentation
 
             m_EntitySystem = null;
             m_EventSystem = null;
+        }
+
+        protected override PresentationResult OnStartPresentation()
+        {
+            ConsoleWindow.CreateCommand(EnableDrawTriggerBoundsCmd, "draw", "triggerbounds");
+
+            return base.OnStartPresentation();
+        }
+        private void EnableDrawTriggerBoundsCmd(string cmd)
+        {
+            m_DrawBounds = !m_DrawBounds;
         }
 
         #region Bind
@@ -136,6 +108,47 @@ namespace Syadeu.Presentation
             m_EventSystem = other;
 
             m_EventSystem.AddEvent<OnTransformChangedEvent>(OnTransformChangedEventHandler);
+        }
+
+        private void Bind(RenderSystem other)
+        {
+            m_RenderSystem = other;
+
+            m_RenderSystem.OnRender += M_RenderSystem_OnRender;
+        }
+        private void M_RenderSystem_OnRender()
+        {
+            if (!m_DrawBounds || m_RenderSystem.Camera == null) return;
+
+            if (!m_Vertices.IsCreated)
+            {
+                m_Vertices = new NativeArray<float3>(8, Allocator.Persistent);
+            }
+
+            GL.PushMatrix();
+
+            float3x3 rotmat = new float3x3(quaternion.identity);
+            float4x4 mat = new float4x4(rotmat, float3.zero);
+            GL.MultMatrix(mat);
+            GL.LoadProjectionMatrix(m_RenderSystem.Camera.projectionMatrix);
+            GridExtensions.DefaultMaterial.SetPass(0);
+
+            GL.Begin(GL.LINES);
+            GL.Color(Color.red);
+            for (int i = 0; i < m_TriggerBoundArray.Length; i++)
+            {
+                if (!m_TriggerBoundArray[i].IsValid()) continue;
+
+                var temp = m_TriggerBoundArray[i].transform.aabb;
+                temp.GetVertices(m_Vertices);
+                for (int a = 0; a < m_Vertices.Length; a++)
+                {
+                    GL.Vertex(m_Vertices[a]);
+                }
+            }
+            GL.End();
+
+            GL.PopMatrix();
         }
 
         #endregion

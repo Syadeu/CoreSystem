@@ -4,7 +4,7 @@ using Syadeu.Presentation.Entities;
 
 namespace Syadeu.Presentation.TurnTable
 {
-    public abstract class TurnActionBase : TriggerAction<TurnActionBase> { }
+    public abstract class TurnActionBase : TriggerAction { }
     public abstract class TurnStatefulActionBase : StatefulActionBase<TurnStatefulActionBase.StateContainer, TurnStatefulActionBase>
     {
         public class StateContainer : StateBase<TurnStatefulActionBase>

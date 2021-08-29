@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Syadeu.Presentation.Actions
 {
-    public abstract class TriggerAction<T> : TriggerActionBase where T : TriggerActionBase
+    public abstract class TriggerAction : TriggerActionBase
     {
         private static readonly Dictionary<Reference, Stack<ActionBase>> m_Pool = new Dictionary<Reference, Stack<ActionBase>>();
 
@@ -38,7 +38,7 @@ namespace Syadeu.Presentation.Actions
             base.InternalTerminate();
         }
 
-        public static T GetAction(Reference<T> other)
+        public static T GetAction<T>(Reference<T> other) where T : TriggerAction
         {
             T temp;
 

@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Syadeu.Presentation.Actions
 {
-    public sealed class TestAction : TriggerAction<TestAction>
+    public sealed class TestAction : TriggerAction
     {
         public Reference<EntityDataBase> Test;
         public PrefabReference<GameObject> TestGame;

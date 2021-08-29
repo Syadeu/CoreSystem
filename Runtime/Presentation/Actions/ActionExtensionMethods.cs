@@ -9,9 +9,9 @@ namespace Syadeu.Presentation.Actions
         const string c_ErrorIsTerminatedAction = "This action({0}) has been terminated.";
         const string c_ErrorCompletedWithFailed = "Execution ({0}) completed with failed.";
 
-        public static bool Execute<T>(this Reference<T> other, EntityData<IEntityData> entity) where T : TriggerActionBase
+        public static bool Execute<T>(this Reference<T> other, EntityData<IEntityData> entity) where T : TriggerAction
         {
-            T action = TriggerAction<T>.GetAction(other);
+            T action = TriggerAction.GetAction(other);
             if (action.Terminated)
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
@@ -54,7 +54,7 @@ namespace Syadeu.Presentation.Actions
             return action.InternalExecute(t, ta);
         }
 
-        public static bool Execute<T>(this Reference<T>[] actions, EntityData<IEntityData> entity) where T : TriggerActionBase
+        public static bool Execute<T>(this Reference<T>[] actions, EntityData<IEntityData> entity) where T : TriggerAction
         {
             bool isFailed = false;
             for (int i = 0; i < actions.Length; i++)

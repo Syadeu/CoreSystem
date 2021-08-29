@@ -16,11 +16,10 @@ namespace Syadeu.Presentation.Data
 
         [Space]
         [Header("TriggerActions")]
-        [Tooltip("Entity 가 타겟이 아닌, 이 액션을 실행한 주체를 인자로 보냅니다.")]
         [JsonProperty(Order = 2, PropertyName = "OnClipStart")]
-        public Reference<TriggerActionBase>[] m_OnClipStart = Array.Empty<Reference<TriggerActionBase>>();
+        public Reference<TriggerAction>[] m_OnClipStart = Array.Empty<Reference<TriggerAction>>();
         [JsonProperty(Order = 3, PropertyName = "OnClipEnd")]
-        public Reference<TriggerActionBase>[] m_OnClipEnd = Array.Empty<Reference<TriggerActionBase>>();
+        public Reference<TriggerAction>[] m_OnClipEnd = Array.Empty<Reference<TriggerAction>>();
 
         [Space]
         [Header("Actions")]

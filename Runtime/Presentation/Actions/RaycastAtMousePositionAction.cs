@@ -15,7 +15,7 @@ namespace Syadeu.Presentation.Actions
     {
         [Header("TriggerActions")]
         [JsonProperty(Order = 0, PropertyName = "OnHit")]
-        private Reference<TriggerActionBase>[] m_OnHit = Array.Empty<Reference<TriggerActionBase>>();
+        private Reference<TriggerAction>[] m_OnHit = Array.Empty<Reference<TriggerAction>>();
 
         [JsonIgnore] private RenderSystem m_RenderSystem;
         [JsonIgnore] private EntityRaycastSystem m_RaycastSystem;

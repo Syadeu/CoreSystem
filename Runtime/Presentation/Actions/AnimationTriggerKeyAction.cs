@@ -8,7 +8,7 @@ namespace Syadeu.Presentation.Actions
 {
     [DisplayName("Action: Animation Key Trigger")]
     [ReflectionDescription("Unity Animator 전용입니다")]
-    public sealed class AnimationTriggerKeyAction : TriggerAction<AnimationTriggerKeyAction>
+    public sealed class AnimationTriggerKeyAction : TriggerAction
     {
         [JsonProperty(Order = 0, PropertyName = "TriggerKey")] private string m_TriggerKey = string.Empty;
 

@@ -16,6 +16,8 @@ namespace Syadeu.Mono
             public AssetReference m_RefPrefab;
             public bool m_IsWorldUI = false;
 
+            [NonSerialized] public bool m_IsRuntimeObject = false;
+            [NonSerialized] public GameObject m_Prefab = null;
             //public Queue<GameObject> Pool { get; } = new Queue<GameObject>();
 
             public override string ToString() => m_Name;

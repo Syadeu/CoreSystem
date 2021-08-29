@@ -15,6 +15,9 @@ namespace Syadeu.Database
 
         bool IsNone();
     }
+    public interface IPrefabReference<T> : IPrefabReference, IEquatable<IPrefabReference<T>>
+    {
+    }
 
     [Serializable]
     public readonly struct PrefabReference : IPrefabReference, IEquatable<PrefabReference>
@@ -72,7 +75,7 @@ namespace Syadeu.Database
         public static implicit operator PrefabList.ObjectSetting(PrefabReference a) => a.GetObjectSetting();
     }
     [Serializable]
-    public readonly struct PrefabReference<T> : IPrefabReference, IEquatable<PrefabReference<T>>
+    public readonly struct PrefabReference<T> : IPrefabReference<T>, IEquatable<PrefabReference<T>>
         where T : UnityEngine.Object
     {
         public static readonly PrefabReference<T> Invalid = new PrefabReference<T>(-1);
@@ -93,6 +96,7 @@ namespace Syadeu.Database
 
         public bool Equals(PrefabReference<T> other) => m_Idx.Equals(other.m_Idx);
         public bool Equals(IPrefabReference other) => m_Idx.Equals(other.Index);
+        public bool Equals(IPrefabReference<T> other) => m_Idx.Equals(other.Index);
 
         public PrefabList.ObjectSetting GetObjectSetting()
         {

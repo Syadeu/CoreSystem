@@ -8,7 +8,7 @@ using UnityEngine;
 namespace Syadeu.Presentation.Actions
 {
     [DisplayName("Action: Match Animator to NavAgent")]
-    public sealed class NavAgentDirToAnimatorAction : TriggerAction<NavAgentDirToAnimatorAction>
+    public sealed class NavAgentDirToAnimatorAction : TriggerAction
     {
         [JsonProperty(Order = 0, PropertyName = "HorizontalKey")] private string m_HorizontalKey = string.Empty;
         [JsonProperty(Order = 1, PropertyName = "VerticalKey")] private string m_VerticalKey = string.Empty;
