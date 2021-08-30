@@ -1,6 +1,7 @@
 ﻿using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation;
+using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Entities;
 using System;
 using System.Collections.Generic;
@@ -21,6 +22,8 @@ namespace SyadeuEditor.Presentation
 
         private readonly TreeViewItem m_Root;
         private readonly List<TreeViewItem> m_Rows = new List<TreeViewItem>();
+
+        public event Action<EntityWindow.ObjectBaseDrawer> OnSelect;
 
         private SearchField m_SearchField;
         private Dictionary<Hash, ObjectBase> Objects => EntityDataList.Instance.m_Objects;
@@ -96,13 +99,13 @@ namespace SyadeuEditor.Presentation
             if (Objects != null)
             {
                 int id = 1;
-                ObjectBaseDrawer drawer;
+                EntityWindow.ObjectBaseDrawer drawer;
                 foreach (var item in Objects?.Values)
                 {
-                    drawer = ObjectBaseDrawer.GetDrawer(item);
+                    drawer = EntityWindow.ObjectBaseDrawer.GetDrawer(item);
 
-                    TreeViewItem folder = BuildBaseType(ref id, m_Root, drawer.Type);
-
+                    BuildBaseType(ref id, m_Root, drawer.Type);
+                    TreeViewItem folder = GetFolder(drawer.Type);
                     //if (folder == null)
                     //{
                     //    folder = new FolderTreeElement(id, drawer.Type);
@@ -132,7 +135,8 @@ namespace SyadeuEditor.Presentation
         private void FindTypesRecursive(Type type, List<Type> types)
         {
             types.Add(type);
-            if (type.BaseType.Equals(TypeHelper.TypeOf<ObjectBase>.Type))
+            if (type.BaseType.Equals(TypeHelper.TypeOf<ObjectBase>.Type) ||
+                type.BaseType.Equals(TypeHelper.TypeOf<InstanceAction>.Type))
             {
                 return;
             }
@@ -165,9 +169,9 @@ namespace SyadeuEditor.Presentation
                     typeRoot.AddChild(folder);
                     m_Rows.Add(folder);
                     id++;
-
-                    typeRoot = folder;
                 }
+
+                typeRoot = folder;
             }
 
             return typeRoot;
@@ -241,160 +245,19 @@ namespace SyadeuEditor.Presentation
         {
             return base.DoesItemMatchSearch(item, search);
         }
-
-        #region Data Drawers
-        public sealed class EntityDrawer : ObjectBaseDrawer
+        protected override void SelectionChanged(IList<int> selectedIds)
         {
-            public EntityDataBase Target => (EntityDataBase)m_TargetObject;
-            readonly ReflectionHelperEditor.AttributeListDrawer m_AttributeDrawer;
-
-            public EntityDrawer(ObjectBase objectBase) : base(objectBase)
+            var list = FindRows(selectedIds);
+            for (int i = 0; i < list.Count; i++)
             {
-                m_AttributeDrawer = ReflectionHelperEditor.GetAttributeDrawer(Type, Target.Attributes);
+                if (list[i] is FolderTreeElement) continue;
+
+                ObjectTreeElement obj = (ObjectTreeElement)list[i];
+                OnSelect?.Invoke(obj.Target);
             }
 
-            protected override void DrawGUI()
-            {
-                EditorUtils.StringRich(Name + EditorUtils.String($": {Type.Name}", 11), 20);
-                EditorGUILayout.Space(3);
-                EditorUtils.Line();
-
-                Target.Name = EditorGUILayout.TextField("Name: ", Target.Name);
-                EditorGUI.BeginDisabledGroup(true);
-                EditorGUILayout.TextField("Hash: ", Target.Hash.ToString());
-                EditorGUI.EndDisabledGroup();
-                if (Target is EntityBase entityBase)
-                {
-                    ReflectionHelperEditor.DrawPrefabReference("Prefab: ",
-                        (idx) =>
-                        {
-                            entityBase.Prefab = idx;
-                            if (idx >= 0)
-                            {
-                                GameObject temp = (GameObject)entityBase.Prefab.GetObjectSetting().m_RefPrefab.editorAsset;
-                                Transform tr = temp.transform;
-
-                                AABB aabb = new AABB(tr.position, float3.zero);
-                                foreach (var item in tr.GetComponentsInChildren<Renderer>())
-                                {
-                                    aabb.Encapsulate(item.bounds);
-                                }
-                                entityBase.Center = aabb.center - ((float3)tr.position);
-                                entityBase.Size = aabb.size;
-                            }
-                        }
-                        , entityBase.Prefab);
-                }
-                using (new EditorUtils.BoxBlock(Color.black))
-                {
-                    m_AttributeDrawer.OnGUI();
-                }
-                EditorUtils.Line();
-
-                for (int i = 0; i < m_ObjectDrawers.Length; i++)
-                {
-                    if (m_ObjectDrawers[i] == null) continue;
-
-                    if (m_ObjectDrawers[i].Name.Equals("Name") ||
-                        m_ObjectDrawers[i].Name.Equals("Hash") ||
-                        m_ObjectDrawers[i].Name.Equals("Prefab") ||
-                        m_ObjectDrawers[i].Name.Equals("Attributes"))
-                    {
-                        continue;
-                    }
-
-                    DrawField(m_ObjectDrawers[i]);
-                }
-            }
+            base.SelectionChanged(selectedIds);
         }
-        public class ObjectBaseDrawer : ObjectDrawerBase
-        {
-            protected static readonly Dictionary<ObjectBase, ObjectBaseDrawer> Pool = new Dictionary<ObjectBase, ObjectBaseDrawer>();
-
-            public readonly ObjectBase m_TargetObject;
-            private Type m_Type;
-            private ObsoleteAttribute m_Obsolete;
-
-            private readonly MemberInfo[] m_Members;
-            protected readonly ObjectDrawerBase[] m_ObjectDrawers;
-
-            public override sealed object TargetObject => m_TargetObject;
-            public Type Type => m_Type;
-            public override string Name => m_TargetObject.Name;
-            public override int FieldCount => m_ObjectDrawers.Length;
-
-            public static ObjectBaseDrawer GetDrawer(ObjectBase objectBase)
-            {
-                if (Pool.TryGetValue(objectBase, out var drawer)) return drawer;
-
-                if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(objectBase.GetType()))
-                {
-                    drawer = new EntityDrawer(objectBase);
-                }
-                else drawer = new ObjectBaseDrawer(objectBase);
-
-                Pool.Add(objectBase, drawer);
-
-                return drawer;
-            }
-
-            protected ObjectBaseDrawer(ObjectBase objectBase)
-            {
-                m_TargetObject = objectBase;
-                m_Type = objectBase.GetType();
-                m_Obsolete = m_Type.GetCustomAttribute<ObsoleteAttribute>();
-
-                m_Members = ReflectionHelper.GetSerializeMemberInfos(m_Type);
-                m_ObjectDrawers = new ObjectDrawerBase[m_Members.Length];
-                for (int i = 0; i < m_ObjectDrawers.Length; i++)
-                {
-                    m_ObjectDrawers[i] = ToDrawer(m_TargetObject, m_Members[i], true);
-                }
-            }
-            public override sealed void OnGUI()
-            {
-                const string c_ObsoleteMsg = "This type marked as deprecated.\n{0}";
-
-                using (new EditorUtils.BoxBlock(Color.black))
-                {
-                    if (m_Obsolete != null)
-                    {
-                        EditorGUILayout.HelpBox(string.Format(c_ObsoleteMsg, m_Obsolete.Message),
-                            m_Obsolete.IsError ? MessageType.Error : MessageType.Warning);
-                    }
-
-                    DrawGUI();
-                }
-            }
-            protected virtual void DrawGUI()
-            {
-                EditorUtils.StringRich(Name + EditorUtils.String($": {Type.Name}", 11), 20);
-                EditorGUILayout.Space(3);
-                EditorUtils.Line();
-                for (int i = 0; i < m_ObjectDrawers.Length; i++)
-                {
-                    DrawField(m_ObjectDrawers[i]);
-                }
-            }
-            protected void DrawField(ObjectDrawerBase drawer)
-            {
-                if (drawer == null)
-                {
-                    EditorGUILayout.LabelField($"not support");
-                    return;
-                }
-                try
-                {
-                    drawer.OnGUI();
-                }
-                catch (Exception ex)
-                {
-                    EditorGUILayout.LabelField($"Error at {drawer.Name} {ex.Message}");
-                    Debug.LogException(ex);
-                }
-            }
-        }
-        #endregion
 
         public class FolderTreeElement : TreeViewItem
         {
@@ -424,7 +287,7 @@ namespace SyadeuEditor.Presentation
         }
         public sealed class ObjectTreeElement : TreeViewItem
         {
-            private ObjectBaseDrawer m_Target;
+            private EntityWindow.ObjectBaseDrawer m_Target;
             private DisplayNameAttribute m_DisplayNameAttribute;
 
             public override string displayName
@@ -439,9 +302,9 @@ namespace SyadeuEditor.Presentation
                     return m_Target.Name;
                 }
             }
-            public ObjectBaseDrawer Target => m_Target;
+            public EntityWindow.ObjectBaseDrawer Target => m_Target;
 
-            public ObjectTreeElement(int id, ObjectBaseDrawer drawer)
+            public ObjectTreeElement(int id, EntityWindow.ObjectBaseDrawer drawer)
             {
                 this.id = id;
                 m_Target = drawer;

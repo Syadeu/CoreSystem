@@ -275,9 +275,15 @@ namespace SyadeuEditor.Presentation
                 MultiColumnHeader = EntityListTreeView.CreateHeader();
                 TreeViewState = new TreeViewState();
                 EntityListTreeView = new EntityListTreeView(TreeViewState);
+                EntityListTreeView.OnSelect += EntityListTreeView_OnSelect;
 
                 Reload();
             }
+            private void EntityListTreeView_OnSelect(ObjectBaseDrawer obj)
+            {
+                m_MainWindow.m_SelectedObject = obj;
+            }
+
             public void AddData(ObjectBaseDrawer drawer)
             {
                 Folder baseType = Objects.Find((other) => other.Type.Equals(drawer.Type));
