@@ -49,7 +49,7 @@ namespace SyadeuEditor.Presentation
             showBorder = true;
             customFoldoutYOffset = (kRowHeights - EditorGUIUtility.singleLineHeight) * 0.5f;
 
-            if (Objects == null || Objects.Count == 0) return;
+            //if (Objects == null || Objects.Count == 0) return;
             Reload();
         }
 
@@ -59,7 +59,7 @@ namespace SyadeuEditor.Presentation
             m_Rows.Clear();
             m_CreationID = 1;
 
-            if (Objects != null)
+            if (Objects != null && Objects.Count > 0)
             {
                 EntityWindow.ObjectBaseDrawer drawer;
                 foreach (var item in Objects?.Values)
@@ -78,6 +78,10 @@ namespace SyadeuEditor.Presentation
                     folder.AddChild(new ObjectTreeElement(m_CreationID, drawer));
                     m_CreationID++;
                 }
+            }
+            else
+            {
+                m_Root.AddChild(new TreeViewItem(m_CreationID, 0, "None"));
             }
 
             SetupDepthsFromParentsAndChildren(m_Root);
@@ -132,10 +136,10 @@ namespace SyadeuEditor.Presentation
             base.RowGUI(args);
         }
 
-        private TreeViewItem m_LastSelectedItem;
-
         protected override bool DoesItemMatchSearch(TreeViewItem item, string search)
         {
+            if (item is FolderTreeElement) return false;
+
             return base.DoesItemMatchSearch(item, search);
         }
         protected override void SelectionChanged(IList<int> selectedIds)
@@ -145,9 +149,10 @@ namespace SyadeuEditor.Presentation
             {
                 if (list[i] is FolderTreeElement) continue;
 
-                m_LastSelectedItem = list[i];
-                ObjectTreeElement obj = (ObjectTreeElement)list[i];
-                OnSelect?.Invoke(obj.Target);
+                if (list[i] is ObjectTreeElement obj)
+                {
+                    OnSelect?.Invoke(obj.Target);
+                }
             }
 
             base.SelectionChanged(selectedIds);

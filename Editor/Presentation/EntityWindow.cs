@@ -416,6 +416,8 @@ namespace SyadeuEditor.Presentation
                 EditorGUILayout.Space(3);
                 EditorUtils.Line();
 
+                DrawDescription();
+
                 Target.Name = EditorGUILayout.TextField("Name: ", Target.Name);
                 EditorGUI.BeginDisabledGroup(true);
                 EditorGUILayout.TextField("Hash: ", Target.Hash.ToString());
@@ -472,6 +474,7 @@ namespace SyadeuEditor.Presentation
             public readonly ObjectBase m_TargetObject;
             private Type m_Type;
             private ObsoleteAttribute m_Obsolete;
+            private ReflectionDescriptionAttribute m_Description;
 
             private readonly MemberInfo[] m_Members;
             protected readonly ObjectDrawerBase[] m_ObjectDrawers;
@@ -501,6 +504,7 @@ namespace SyadeuEditor.Presentation
                 m_TargetObject = objectBase;
                 m_Type = objectBase.GetType();
                 m_Obsolete = m_Type.GetCustomAttribute<ObsoleteAttribute>();
+                m_Description = m_Type.GetCustomAttribute<ReflectionDescriptionAttribute>();
 
                 m_Members = ReflectionHelper.GetSerializeMemberInfos(m_Type);
                 m_ObjectDrawers = new ObjectDrawerBase[m_Members.Length];
@@ -529,6 +533,9 @@ namespace SyadeuEditor.Presentation
                 EditorUtils.StringRich(Name + EditorUtils.String($": {Type.Name}", 11), 20);
                 EditorGUILayout.Space(3);
                 EditorUtils.Line();
+
+                DrawDescription();
+
                 for (int i = 0; i < m_ObjectDrawers.Length; i++)
                 {
                     DrawField(m_ObjectDrawers[i]);
@@ -550,6 +557,12 @@ namespace SyadeuEditor.Presentation
                     EditorGUILayout.LabelField($"Error at {drawer.Name} {ex.Message}");
                     Debug.LogException(ex);
                 }
+            }
+            protected void DrawDescription()
+            {
+                if (m_Description == null) return;
+
+                EditorGUILayout.HelpBox(m_Description.m_Description, MessageType.Info);
             }
         }
     }
