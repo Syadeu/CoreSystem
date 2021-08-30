@@ -1,4 +1,5 @@
-﻿using Syadeu.Database;
+﻿using Syadeu;
+using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation;
 using Syadeu.Presentation.Actions;
@@ -20,37 +21,20 @@ namespace SyadeuEditor.Presentation
         const float kRowHeights = 20f;
         const float kToggleWidth = 18f;
 
+        private int m_CreationID = 0;
+        private SearchField m_SearchField;
         private readonly TreeViewItem m_Root;
         private readonly List<TreeViewItem> m_Rows = new List<TreeViewItem>();
 
+        private readonly EntityWindow m_Window;
+
         public event Action<EntityWindow.ObjectBaseDrawer> OnSelect;
 
-        private SearchField m_SearchField;
         private Dictionary<Hash, ObjectBase> Objects => EntityDataList.Instance.m_Objects;
 
-        public enum Column
+        public EntityListTreeView(EntityWindow mainWindow, TreeViewState state) : base(state)
         {
-            Name
-        }
-        public static MultiColumnHeader CreateHeader()
-        {
-            var Columns = new MultiColumnHeaderState.Column[]
-                {
-                    new MultiColumnHeaderState.Column()
-                    {
-                        autoResize = false,
-                        allowToggleVisibility = false,
-                        headerContent = new GUIContent(Column.Name.ToString()),
-                        headerTextAlignment = TextAlignment.Center,
-                        minWidth = 150
-                    }
-                };
-            var MultiColumnHeaderState = new MultiColumnHeaderState(Columns);
-            return new MultiColumnHeader(MultiColumnHeaderState);
-        }
-
-        public EntityListTreeView(TreeViewState state) : base(state)
-        {
+            m_Window = mainWindow;
             m_SearchField = new SearchField();
 
             m_Root = new TreeViewItem()
@@ -65,29 +49,7 @@ namespace SyadeuEditor.Presentation
             showBorder = true;
             customFoldoutYOffset = (kRowHeights - EditorGUIUtility.singleLineHeight) * 0.5f;
 
-            Reload();
-        }
-        public EntityListTreeView(TreeViewState state, MultiColumnHeader multiColumnHeader) : base(state, multiColumnHeader)
-        {
-            m_SearchField = new SearchField()
-            {
-                autoSetFocusOnFindCommand = false,
-            };
-
-            m_Root = new TreeViewItem()
-            {
-                id = 0,
-                depth = -1,
-                displayName = "Root"
-            };
-
-            rowHeight = kRowHeights;
-            columnIndexForTreeFoldouts = 0;
-            showAlternatingRowBackgrounds = true;
-            showBorder = true;
-            customFoldoutYOffset = (kRowHeights - EditorGUIUtility.singleLineHeight) * 0.5f;
-            extraSpaceBeforeIconAndLabel = kToggleWidth;
-
+            if (Objects == null || Objects.Count == 0) return;
             Reload();
         }
 
@@ -95,27 +57,26 @@ namespace SyadeuEditor.Presentation
         {
             m_Root.children?.Clear();
             m_Rows.Clear();
+            m_CreationID = 1;
 
             if (Objects != null)
             {
-                int id = 1;
                 EntityWindow.ObjectBaseDrawer drawer;
                 foreach (var item in Objects?.Values)
                 {
                     drawer = EntityWindow.ObjectBaseDrawer.GetDrawer(item);
 
-                    BuildBaseType(ref id, m_Root, drawer.Type);
                     TreeViewItem folder = GetFolder(drawer.Type);
-                    //if (folder == null)
-                    //{
-                    //    folder = new FolderTreeElement(id, drawer.Type);
-                    //    m_Root.AddChild(folder);
-                    //    m_Rows.Add(folder);
-                    //    id++;
-                    //}
+                    if (folder == null)
+                    {
+                        folder = new FolderTreeElement(m_CreationID, drawer.Type);
+                        m_Root.AddChild(folder);
+                        m_Rows.Add(folder);
+                        m_CreationID++;
+                    }
 
-                    folder.AddChild(new ObjectTreeElement(id, drawer));
-                    id++;
+                    folder.AddChild(new ObjectTreeElement(m_CreationID, drawer));
+                    m_CreationID++;
                 }
             }
 
@@ -132,49 +93,22 @@ namespace SyadeuEditor.Presentation
             if (iter.Any()) return iter.First();
             return null;
         }
-        private void FindTypesRecursive(Type type, List<Type> types)
-        {
-            types.Add(type);
-            if (type.BaseType.Equals(TypeHelper.TypeOf<ObjectBase>.Type) ||
-                type.BaseType.Equals(TypeHelper.TypeOf<InstanceAction>.Type))
-            {
-                return;
-            }
 
-            FindTypesRecursive(type.BaseType, types);
-        }
-        private TreeViewItem BuildBaseType(ref int id, TreeViewItem root, Type type)
+        public void AddItem(EntityWindow.ObjectBaseDrawer drawer)
         {
-            List<Type> types = new List<Type>();
-            FindTypesRecursive(type, types);
-
-            TreeViewItem typeRoot;
-            Type baseType = types[types.Count - 1];
-            TreeViewItem folder = GetFolder(baseType);
+            TreeViewItem folder = GetFolder(drawer.Type);
             if (folder == null)
             {
-                folder = new FolderTreeElement(id, baseType);
+                folder = new FolderTreeElement(m_CreationID, drawer.Type);
                 m_Root.AddChild(folder);
                 m_Rows.Add(folder);
-                id++;
-            }
-            typeRoot = folder;
-
-            for (int i = types.Count - 2; i >= 0; i--)
-            {
-                folder = GetFolder(types[i]);
-                if (folder == null)
-                {
-                    folder = new FolderTreeElement(id, types[i]);
-                    typeRoot.AddChild(folder);
-                    m_Rows.Add(folder);
-                    id++;
-                }
-
-                typeRoot = folder;
+                m_CreationID++;
             }
 
-            return typeRoot;
+            folder.AddChild(new ObjectTreeElement(m_CreationID, drawer));
+            m_CreationID++;
+
+            SetupDepthsFromParentsAndChildren(m_Root);
         }
 
         public override void OnGUI(Rect rect)
@@ -186,21 +120,6 @@ namespace SyadeuEditor.Presentation
             searchField.height = kRowHeights;
 
             searchString = m_SearchField.OnGUI(searchField, searchString);
-            int keyboard = GUIUtility.GetControlID(FocusType.Keyboard);
-            switch (Event.current.GetTypeForControl(keyboard))
-            {
-                case EventType.KeyDown:
-                    if (Event.current.keyCode == KeyCode.Return)
-                    {
-                        GUIUtility.hotControl = keyboard;
-
-                        Event.current.Use();
-                    }
-                    break;
-                default:
-                    break;
-            }
-            
 
             rect.y += kRowHeights;
             rect.height -= kRowHeights;
@@ -209,37 +128,10 @@ namespace SyadeuEditor.Presentation
         }
         protected override void RowGUI(RowGUIArgs args)
         {
-            if (multiColumnHeader == null)
-            {
-                base.RowGUI(args);
-                return;
-            }
-
-            int visibleColumnCount = args.GetNumVisibleColumns();
-            for (int i = 0; i < visibleColumnCount; i++)
-            {
-                CellGUI(args.GetCellRect(i), args.item, (Column)i, ref args);
-            }
+            base.RowGUI(args);
         }
-        private void CellGUI(Rect cellRect, TreeViewItem item, Column column, ref RowGUIArgs args)
-        {
-            ObjectTreeElement element;
-            switch (column)
-            {
-                case Column.Name:
-                    cellRect = GetCellRectForTreeFoldouts(cellRect);
-                    cellRect.x += GetContentIndent(item);
-                    cellRect.width -= GetContentIndent(item);
-                    CenterRectUsingSingleLineHeight(ref cellRect);
 
-                    GUI.Label(cellRect, item.displayName);
-                    break;
-                default:
-                    break;
-            }
-
-            //base.RowGUI(args);
-        }
+        private TreeViewItem m_LastSelectedItem;
 
         protected override bool DoesItemMatchSearch(TreeViewItem item, string search)
         {
@@ -252,6 +144,7 @@ namespace SyadeuEditor.Presentation
             {
                 if (list[i] is FolderTreeElement) continue;
 
+                m_LastSelectedItem = list[i];
                 ObjectTreeElement obj = (ObjectTreeElement)list[i];
                 OnSelect?.Invoke(obj.Target);
             }
@@ -259,9 +152,47 @@ namespace SyadeuEditor.Presentation
             base.SelectionChanged(selectedIds);
         }
 
+        protected override void ContextClickedItem(int id)
+        {
+            TreeViewItem item = FindItem(id, rootItem);
+
+            GenericMenu menu = new GenericMenu();
+            menu.AddDisabledItem(new GUIContent(item.displayName));
+            menu.AddSeparator(string.Empty);
+            if (item is FolderTreeElement folder)
+            {
+                menu.AddItem(new GUIContent("Add"), false, () =>
+                {
+                    if (EntityDataList.Instance.m_Objects == null) EntityDataList.Instance.m_Objects = new Dictionary<Hash, ObjectBase>();
+
+                    ObjectBase ins = (ObjectBase)Activator.CreateInstance(folder.Type);
+
+                    EntityDataList.Instance.m_Objects.Add(ins.Hash, ins);
+                    var drawer = m_Window.AddData(ins);
+                    AddItem(drawer);
+
+                    Reload();
+                });
+            }
+            else if (item is ObjectTreeElement obj)
+            {
+                menu.AddItem(new GUIContent("Remove"), false, () =>
+                {
+                    m_Window.Remove(obj.Target);
+                    item.parent.children.Remove(item);
+
+                    Reload();
+                });
+            }
+            menu.ShowAsContext();
+
+            base.ContextClickedItem(id);
+        }
+
         public class FolderTreeElement : TreeViewItem
         {
             private Type m_Type;
+            private ObsoleteAttribute m_ObsoleteAttribute;
             private DisplayNameAttribute m_DisplayNameAttribute;
 
             public Type Type => m_Type;
@@ -269,11 +200,19 @@ namespace SyadeuEditor.Presentation
             {
                 get
                 {
-                    //if (m_DisplayNameAttribute != null)
-                    //{
-                    //    return m_DisplayNameAttribute.DisplayName;
-                    //}
-                    return TypeHelper.ToString(m_Type);
+                    string output = string.Empty;
+
+                    if (m_ObsoleteAttribute != null)
+                    {
+                        output += "[Deprecated] ";
+                    }
+                    if (m_DisplayNameAttribute != null)
+                    {
+                        output += m_DisplayNameAttribute.DisplayName;
+                    }
+                    else output += TypeHelper.ToString(m_Type);
+
+                    return output;
                 }
             }
 
@@ -282,6 +221,7 @@ namespace SyadeuEditor.Presentation
                 this.id = id;
                 m_Type = type;
 
+                m_ObsoleteAttribute = type.GetCustomAttribute<ObsoleteAttribute>();
                 m_DisplayNameAttribute = type.GetCustomAttribute<DisplayNameAttribute>();
             }
         }
@@ -294,11 +234,6 @@ namespace SyadeuEditor.Presentation
             {
                 get
                 {
-                    if (m_DisplayNameAttribute != null)
-                    {
-                        return m_DisplayNameAttribute.DisplayName;
-                    }
-
                     return m_Target.Name;
                 }
             }

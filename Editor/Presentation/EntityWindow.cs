@@ -47,16 +47,16 @@ namespace SyadeuEditor.Presentation
 
             base.OnEnable();
         }
-        public void AddData(ObjectBase other)
+        public ObjectBaseDrawer AddData(ObjectBase other)
         {
             ObjectBaseDrawer drawer;
 
             drawer = ObjectBaseDrawer.GetDrawer(other);
             
             ObjectBaseDrawers.Add(drawer);
-            m_DataListWindow.AddData(drawer);
 
             m_SelectedObject = drawer;
+            return drawer;
         }
 
         //public void LoadData()
@@ -216,65 +216,21 @@ namespace SyadeuEditor.Presentation
         {
             EntityWindow m_MainWindow;
 
-            Vector2 m_Scroll;
-            Rect m_Position;
-            int m_Selection = 0;
+            //Vector2 m_Scroll;
+            //Rect m_Position;
+            //int m_Selection = 0;
 
             List<ObjectBaseDrawer> Drawers => m_MainWindow.ObjectBaseDrawers;
 
-            readonly List<Folder> Objects = new List<Folder>();
-            readonly SearchField m_SearchField;
-            
-            string 
-                m_SearchText = string.Empty,
-                m_LoweredSearchText = string.Empty;
-
-            public sealed class Folder
-            {
-                public string Name
-                {
-                    get
-                    {
-                        string output = string.Empty;
-
-                        if (Type.GetCustomAttribute<ObsoleteAttribute>() != null)
-                        {
-                            output += "[Deprecated] ";
-                        }
-
-                        DisplayNameAttribute displayName = Type.GetCustomAttribute<DisplayNameAttribute>();
-                        if (displayName != null)
-                        {
-                            output += displayName.DisplayName;
-                        }
-                        else output += Type.Name;
-
-                        return output;
-                    }
-                }
-                public Type Type;
-
-                public bool Open = false;
-                public readonly List<Element> m_Elements = new List<Element>();
-            }
-            public sealed class Element
-            {
-                //public int Index;
-                public ObjectBaseDrawer Target;
-            }
-
-            private MultiColumnHeader MultiColumnHeader;
             private EntityListTreeView EntityListTreeView;
             private TreeViewState TreeViewState;
 
             public DataListWindow(EntityWindow window)
             {
                 m_MainWindow = window;
-                m_SearchField = new SearchField();
 
-                MultiColumnHeader = EntityListTreeView.CreateHeader();
                 TreeViewState = new TreeViewState();
-                EntityListTreeView = new EntityListTreeView(TreeViewState);
+                EntityListTreeView = new EntityListTreeView(m_MainWindow, TreeViewState);
                 EntityListTreeView.OnSelect += EntityListTreeView_OnSelect;
 
                 Reload();
@@ -284,34 +240,19 @@ namespace SyadeuEditor.Presentation
                 m_MainWindow.m_SelectedObject = obj;
             }
 
-            public void AddData(ObjectBaseDrawer drawer)
-            {
-                Folder baseType = Objects.Find((other) => other.Type.Equals(drawer.Type));
-                if (baseType == null)
-                {
-                    baseType = new Folder
-                    {
-                        Type = drawer.Type
-                    };
-                    Objects.Add(baseType);
-                }
-                baseType.m_Elements.Add(new Element { Target = drawer });
-            }
             public void Reload()
             {
-                if (m_Selection < Drawers.Count)
-                {
-                    m_MainWindow.m_SelectedObject = Drawers[m_Selection];
-                }
-                else m_MainWindow.m_SelectedObject = null;
+                //if (m_Selection < Drawers.Count)
+                //{
+                //    m_MainWindow.m_SelectedObject = Drawers[m_Selection];
+                //}
+                //else m_MainWindow.m_SelectedObject = null;
 
-                Objects.Clear();
-                for (int i = 0; i < Drawers.Count; i++)
-                {
-                    AddData(Drawers[i]);
-                }
+                //for (int i = 0; i < Drawers.Count; i++)
+                //{
+                //    AddData(Drawers[i]);
+                //}
 
-                m_SearchText = string.Empty;
                 EntityListTreeView.Reload();
             }
 
@@ -324,96 +265,96 @@ namespace SyadeuEditor.Presentation
 
                 //GUILayout.Window(unusedID, m_Position, Draw, string.Empty, EditorUtils.Box);
             }
-            private void Draw(int unusedID)
-            {
-                #region Search Field
-                EditorGUI.BeginChangeCheck();
-                m_SearchText = m_SearchField.OnToolbarGUI(GUILayoutUtility.GetRect(m_Position.width, 20), m_SearchText);
-                if (EditorGUI.EndChangeCheck())
-                {
-                    if (string.IsNullOrEmpty(m_SearchText))
-                    {
-                        for (int i = 0; i < Objects.Count; i++)
-                        {
-                            Objects[i].Open = false;
-                        }
+            //private void Draw(int unusedID)
+            //{
+            //    #region Search Field
+            //    EditorGUI.BeginChangeCheck();
+            //    m_SearchText = m_SearchField.OnToolbarGUI(GUILayoutUtility.GetRect(m_Position.width, 20), m_SearchText);
+            //    if (EditorGUI.EndChangeCheck())
+            //    {
+            //        if (string.IsNullOrEmpty(m_SearchText))
+            //        {
+            //            for (int i = 0; i < Objects.Count; i++)
+            //            {
+            //                Objects[i].Open = false;
+            //            }
 
-                        m_LoweredSearchText = string.Empty;
-                    }
-                    else
-                    {
-                        m_LoweredSearchText = m_SearchText.ToLower();
+            //            m_LoweredSearchText = string.Empty;
+            //        }
+            //        else
+            //        {
+            //            m_LoweredSearchText = m_SearchText.ToLower();
 
-                        for (int i = 0; i < Objects.Count; i++)
-                        {
-                            if (Objects[i].m_Elements
-                                .Select((other) => other.Target)
-                                .Where((other) => other.Name.ToLower().Contains(m_SearchText.ToLower()))
-                                .Any())
-                            {
-                                Objects[i].Open = true;
-                            }
-                            else Objects[i].Open = false;
-                        }
-                    }
-                }
-                #endregion
+            //            for (int i = 0; i < Objects.Count; i++)
+            //            {
+            //                if (Objects[i].m_Elements
+            //                    .Select((other) => other.Target)
+            //                    .Where((other) => other.Name.ToLower().Contains(m_SearchText.ToLower()))
+            //                    .Any())
+            //                {
+            //                    Objects[i].Open = true;
+            //                }
+            //                else Objects[i].Open = false;
+            //            }
+            //        }
+            //    }
+            //    #endregion
 
-                m_Scroll = EditorGUILayout.BeginScrollView(m_Scroll, false, true,
-                    GUILayout.MaxWidth(m_Position.width), GUILayout.MaxHeight(m_Position.height));
+            //    m_Scroll = EditorGUILayout.BeginScrollView(m_Scroll, false, true,
+            //        GUILayout.MaxWidth(m_Position.width), GUILayout.MaxHeight(m_Position.height));
 
-                EditorUtils.BoxBlock box = new EditorUtils.BoxBlock(Color.white, GUILayout.MaxWidth(m_Position.width- 20));
-                for (int i = 0; i < Objects.Count; i++)
-                {
-                    Objects[i].Open = EditorGUILayout.Foldout(Objects[i].Open, Objects[i].Name, true);
-                    if (!Objects[i].Open) continue;
+            //    EditorUtils.BoxBlock box = new EditorUtils.BoxBlock(Color.white, GUILayout.MaxWidth(m_Position.width- 20));
+            //    for (int i = 0; i < Objects.Count; i++)
+            //    {
+            //        Objects[i].Open = EditorGUILayout.Foldout(Objects[i].Open, Objects[i].Name, true);
+            //        if (!Objects[i].Open) continue;
 
-                    EditorGUI.indentLevel++;
-                    using (new EditorUtils.BoxBlock(Color.white))
-                    {
-                        for (int a = 0; a < Objects[i].m_Elements.Count; a++)
-                        {
-                            ObjectBaseDrawer target = Objects[i].m_Elements[a].Target;
+            //        EditorGUI.indentLevel++;
+            //        using (new EditorUtils.BoxBlock(Color.white))
+            //        {
+            //            for (int a = 0; a < Objects[i].m_Elements.Count; a++)
+            //            {
+            //                ObjectBaseDrawer target = Objects[i].m_Elements[a].Target;
 
-                            if (!string.IsNullOrEmpty(m_SearchText) &&
-                                !target.Name.ToLower().Contains(m_LoweredSearchText))
-                            {
-                                continue;
-                            }
+            //                if (!string.IsNullOrEmpty(m_SearchText) &&
+            //                    !target.Name.ToLower().Contains(m_LoweredSearchText))
+            //                {
+            //                    continue;
+            //                }
 
-                            bool enabled;
-                            if (m_MainWindow.m_SelectedObject == null) enabled = false;
-                            else
-                            {
-                                enabled = m_MainWindow.m_SelectedObject.Equals(target);
-                            }
+            //                bool enabled;
+            //                if (m_MainWindow.m_SelectedObject == null) enabled = false;
+            //                else
+            //                {
+            //                    enabled = m_MainWindow.m_SelectedObject.Equals(target);
+            //                }
 
-                            EditorGUILayout.BeginHorizontal();
+            //                EditorGUILayout.BeginHorizontal();
 
-                            EditorGUI.BeginChangeCheck();
-                            enabled = GUILayout.Toggle(enabled, target.Name, EditorStyles.toolbarButton);
-                            if (EditorGUI.EndChangeCheck())
-                            {
-                                if (enabled) m_MainWindow.m_SelectedObject = target;
-                            }
+            //                EditorGUI.BeginChangeCheck();
+            //                enabled = GUILayout.Toggle(enabled, target.Name, EditorStyles.toolbarButton);
+            //                if (EditorGUI.EndChangeCheck())
+            //                {
+            //                    if (enabled) m_MainWindow.m_SelectedObject = target;
+            //                }
 
-                            if (GUILayout.Button("-", GUILayout.Width(20)))
-                            {
-                                m_MainWindow.Remove(target);
-                                Objects[i].m_Elements.RemoveAt(a);
-                                a--;
-                                //GUIUtility.ExitGUI();
-                            }
-                            EditorGUILayout.EndHorizontal();
-                        }
-                    }
-                    EditorUtils.Line();
-                    EditorGUI.indentLevel--;
-                }
-                box.Dispose();
+            //                if (GUILayout.Button("-", GUILayout.Width(20)))
+            //                {
+            //                    m_MainWindow.Remove(target);
+            //                    Objects[i].m_Elements.RemoveAt(a);
+            //                    a--;
+            //                    //GUIUtility.ExitGUI();
+            //                }
+            //                EditorGUILayout.EndHorizontal();
+            //            }
+            //        }
+            //        EditorUtils.Line();
+            //        EditorGUI.indentLevel--;
+            //    }
+            //    box.Dispose();
 
-                EditorGUILayout.EndScrollView();
-            }
+            //    EditorGUILayout.EndScrollView();
+            //}
         }
         public sealed class ViewWindow
         {
