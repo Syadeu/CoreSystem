@@ -52,9 +52,7 @@ namespace Syadeu.Presentation.Actions
             ProxyTransform tr = (ProxyTransform)entity.transform;
             tr.enableCull = false;
 
-            PrefabList.ObjectSetting objSettings = data.m_Timeline.GetObjectSetting();
-
-            AsyncOperationHandle<PlayableAsset> oper = Addressables.LoadAssetAsync<PlayableAsset>(objSettings.m_RefPrefab);
+            AsyncOperationHandle<PlayableAsset> oper = data.LoadTimelineAsset();
             yield return new WaitUntil(() => oper.IsDone);
             yield return new WaitForProxy(tr);
 
@@ -118,6 +116,11 @@ namespace Syadeu.Presentation.Actions
 
             m_OnEnd.Execute(entity.As<IEntity, IEntityData>());
             m_OnEndAction.Execute();
+
+            foreach (PlayableBinding item in asset.outputs)
+            {
+                director.ClearGenericBinding(item.sourceObject);
+            }
         }
     }
 }
