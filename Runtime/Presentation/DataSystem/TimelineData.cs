@@ -1,13 +1,19 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Database;
+using Syadeu.Internal;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Entities;
 using System;
+using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.Playables;
 
 namespace Syadeu.Presentation.Data
 {
+    [DisplayName("Data: Timeline Data")]
+    [ReflectionDescription(
+        "PlayPlayableDirectorAction 에서 사용할 수 있는 타임라인 데이터입니다."
+        )]
     public sealed class TimelineData : DataObjectBase
     {
         [JsonProperty(Order = 0, PropertyName = "Entity")] public Reference<EntityBase> m_Entity;

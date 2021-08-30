@@ -5,6 +5,7 @@ using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Entities;
 using System;
 using System.Collections;
+using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Playables;
@@ -12,6 +13,11 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace Syadeu.Presentation.Actions
 {
+    [DisplayName("TriggerAction: Play PlayableDirector")]
+    [ReflectionDescription(
+        "타임라인 액션입니다.\n" +
+        ""
+        )]
     public sealed class PlayPlayableDirectorAction : TriggerAction
     {
         [JsonProperty] private Reference<TimelineData> m_Data;
