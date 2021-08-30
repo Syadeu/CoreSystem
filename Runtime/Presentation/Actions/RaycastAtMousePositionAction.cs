@@ -10,7 +10,7 @@ using UnityEngine.InputSystem;
 
 namespace Syadeu.Presentation.Actions
 {
-    [DisplayName("Action: Raycast At Mouse Position")]
+    [DisplayName("InstanceAction: Raycast At Mouse Position")]
     public sealed class RaycastAtMousePositionAction : InstanceAction
     {
         [Header("TriggerActions")]

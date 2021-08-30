@@ -32,9 +32,9 @@ namespace SyadeuEditor.Presentation
                 TypeHelper.TypeOf<Reflector>.Type,
                 string.Empty);
 
-            if (!EntityWindow.IsDataLoaded)
+            if (!EntityDataList.IsLoaded)
             {
-                EntityWindow.Instance.LoadData();
+                EntityDataList.Instance.LoadData();
             }
 
             base.OnEnable();

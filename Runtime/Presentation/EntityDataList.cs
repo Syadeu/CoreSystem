@@ -22,9 +22,12 @@ namespace Syadeu.Database
         const string c_JsonFilePath = "{0}/{1}" + json;
 
         private static readonly Regex s_Whitespace = new Regex(@"\s+");
+        private static bool s_IsLoaded = false;
 
         public Dictionary<Hash, ObjectBase> m_Objects;
         private Dictionary<ulong, Hash> m_EntityNameHash;
+
+        public static bool IsLoaded => s_IsLoaded;
 
         private void OnEnable()
         {
@@ -49,6 +52,8 @@ namespace Syadeu.Database
             Load<AttributeBase>(CoreSystemFolder.AttributePath);
             Load<ActionBase>(CoreSystemFolder.ActionPath);
             Load<DataObjectBase>(CoreSystemFolder.DataPath);
+
+            s_IsLoaded = true;
 
             void Load<T>(string path) where T : ObjectBase
             {

@@ -7,12 +7,14 @@ using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using Unity.Mathematics;
 using UnityEngine.Scripting;
 using AABB = Syadeu.Database.AABB;
 
 namespace Syadeu.Presentation.Map
 {
+    [DisplayName("Attribute: Entity size on grid")]
     [AttributeAcceptOnly(typeof(EntityBase))]
     public abstract class GridAttributeBase : AttributeBase { }
 

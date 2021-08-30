@@ -279,6 +279,17 @@ namespace Syadeu
                 }
             }
         }
+        public static void RemoveForSwapBack<T>(this NativeList<T> list, T value) where T : unmanaged, IEquatable<T>
+        {
+            for (int i = 0; i < list.Length; i++)
+            {
+                if (list[i].Equals(value))
+                {
+                    list.RemoveAtSwapBack(i);
+                    break;
+                }
+            }
+        }
 
         private static readonly Dictionary<UnityEngine.Object, CoreRoutine> Lerps 
             = new Dictionary<UnityEngine.Object, CoreRoutine>();

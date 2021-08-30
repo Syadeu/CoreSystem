@@ -6,10 +6,12 @@ using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using UnityEngine;
 
 namespace Syadeu.Presentation.Attributes
 {
+    [DisplayName("Attribute: Animator")]
     [AttributeAcceptOnly(typeof(EntityBase))]
     public sealed class AnimatorAttribute : AttributeBase
     {

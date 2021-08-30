@@ -3,11 +3,13 @@ using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
+using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation.TurnTable
 {
+    [DisplayName("Attribute: Turn Player")]
     public sealed class TurnPlayerAttribute : AttributeBase, ITurnPlayer
     {
         [Header("Generals")]

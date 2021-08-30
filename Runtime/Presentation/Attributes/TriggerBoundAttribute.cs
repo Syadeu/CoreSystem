@@ -4,11 +4,13 @@ using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using Unity.Mathematics;
 using UnityEngine;
 
 namespace Syadeu.Presentation.Attributes
 {
+    [DisplayName("Attribute: Trigger Bound")]
     [AttributeAcceptOnly(typeof(EntityBase))]
     public sealed class TriggerBoundAttribute : AttributeBase
     {

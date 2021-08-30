@@ -10,7 +10,7 @@ using UnityEngine.AddressableAssets;
 
 namespace Syadeu.Presentation.Actions
 {
-    [DisplayName("Action: Play Animation Clip")]
+    [DisplayName("TriggerAction: Play Animation Clip")]
     public sealed class PlayAnimationClipEventAction : TriggerAction
     {
         [JsonProperty(Order = 0, PropertyName = "Data")]

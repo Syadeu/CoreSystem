@@ -1,11 +1,13 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Presentation.Entities;
 using System.Collections;
+using System.ComponentModel;
 using Unity.Mathematics;
 using UnityEngine;
 
 namespace Syadeu.Presentation.Actions
 {
+    [DisplayName("TriggerAction: Move to Vector3")]
     public sealed class EntityMoveToVectorAction : TriggerAction
     {
         public enum UpdateType

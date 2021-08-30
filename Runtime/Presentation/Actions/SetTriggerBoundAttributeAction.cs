@@ -5,7 +5,7 @@ using System.ComponentModel;
 
 namespace Syadeu.Presentation.Actions
 {
-    [DisplayName("Action: Set TriggerBoundAttribute")]
+    [DisplayName("TriggerAction: Set TriggerBoundAttribute")]
     public sealed class SetTriggerBoundAttributeAction : TriggerAction
     {
         [JsonProperty(Order = 0, PropertyName = "Enable")] private bool m_Enable;

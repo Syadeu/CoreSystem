@@ -5,6 +5,7 @@ using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -16,6 +17,7 @@ namespace Syadeu.Presentation.Map
     public abstract class SceneDataAttributeBase : AttributeBase { }
 
     #region Grid Map Attribute
+    [DisplayName("Attribute: Grid map")]
     [ReflectionDescription("엔티티가 생성되면 자동으로 입력한 크기의 그리드를 생성합니다.")]
     public sealed class GridMapAttribute : SceneDataAttributeBase
     {

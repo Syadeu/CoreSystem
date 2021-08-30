@@ -25,29 +25,25 @@ namespace SyadeuEditor.Presentation
 
         readonly List<ObjectBaseDrawer> ObjectBaseDrawers = new List<ObjectBaseDrawer>();
 
-        private static bool m_IsDataLoaded = false;
-
         public ToolbarWindow m_ToolbarWindow;
         public DataListWindow m_DataListWindow;
         public ViewWindow m_ViewWindow;
 
         public ObjectBaseDrawer m_SelectedObject = null;
 
-        public static bool IsDataLoaded => m_IsDataLoaded;
+        public static bool IsDataLoaded => EntityDataList.Instance;
 
         protected override void OnEnable()
         {
-            if (!IsDataLoaded)
-            {
-                ObjectBaseDrawers.Clear();
-                m_DataListWindow?.Reload();
-            }
-
             m_ToolbarWindow = new ToolbarWindow(this);
             m_DataListWindow = new DataListWindow(this);
             m_ViewWindow = new ViewWindow(this);
 
-            Reload();
+            if (!IsDataLoaded)
+            {
+                EntityDataList.Instance.LoadData();
+            }
+            else Reload();
 
             base.OnEnable();
         }
@@ -56,18 +52,19 @@ namespace SyadeuEditor.Presentation
             ObjectBaseDrawer drawer;
 
             drawer = ObjectBaseDrawer.GetDrawer(other);
-
+            
             ObjectBaseDrawers.Add(drawer);
             m_DataListWindow.AddData(drawer);
+
+            m_SelectedObject = drawer;
         }
 
-        public void LoadData()
-        {
-            if (!Application.isPlaying) EntityDataList.Instance.LoadData();
+        //public void LoadData()
+        //{
+        //    if (!Application.isPlaying) EntityDataList.Instance.LoadData();
 
-            Reload();
-            m_IsDataLoaded = true;
-        }
+        //    Reload();
+        //}
 
         public void Reload()
         {
@@ -149,7 +146,7 @@ namespace SyadeuEditor.Presentation
 
                 EntityDataList.Instance.SaveData();
             }
-            private void LoadMenu() => m_MainWindow.LoadData();
+            private void LoadMenu() => EntityDataList.Instance.LoadData();
             private void AddDataMenu<T>() where T : ObjectBase
             {
                 if (!IsDataLoaded) LoadMenu();
@@ -227,7 +224,10 @@ namespace SyadeuEditor.Presentation
 
             readonly List<Folder> Objects = new List<Folder>();
             readonly SearchField m_SearchField;
-            string m_SearchText = string.Empty;
+            
+            string 
+                m_SearchText = string.Empty,
+                m_LoweredSearchText = string.Empty;
 
             public sealed class Folder
             {
@@ -262,11 +262,19 @@ namespace SyadeuEditor.Presentation
                 //public int Index;
                 public ObjectBaseDrawer Target;
             }
-            
+
+            private MultiColumnHeader MultiColumnHeader;
+            private EntityListTreeView EntityListTreeView;
+            private TreeViewState TreeViewState;
+
             public DataListWindow(EntityWindow window)
             {
                 m_MainWindow = window;
                 m_SearchField = new SearchField();
+
+                MultiColumnHeader = EntityListTreeView.CreateHeader();
+                TreeViewState = new TreeViewState();
+                EntityListTreeView = new EntityListTreeView(TreeViewState, MultiColumnHeader);
 
                 Reload();
             }
@@ -298,16 +306,21 @@ namespace SyadeuEditor.Presentation
                 }
 
                 m_SearchText = string.Empty;
+                EntityListTreeView.Reload();
             }
 
             public void OnGUI(Rect pos, int unusedID)
             {
-                m_Position = pos;
+                //TreeViewState.searchString = m_SearchField.OnGUI(GUILayoutUtility.GetRect(pos.width, 20), TreeViewState.searchString);
+                EntityListTreeView.OnGUI(pos);
 
-                GUILayout.Window(unusedID, m_Position, Draw, string.Empty, EditorUtils.Box);
+                //m_Position = pos;
+
+                //GUILayout.Window(unusedID, m_Position, Draw, string.Empty, EditorUtils.Box);
             }
             private void Draw(int unusedID)
             {
+                #region Search Field
                 EditorGUI.BeginChangeCheck();
                 m_SearchText = m_SearchField.OnToolbarGUI(GUILayoutUtility.GetRect(m_Position.width, 20), m_SearchText);
                 if (EditorGUI.EndChangeCheck())
@@ -318,9 +331,13 @@ namespace SyadeuEditor.Presentation
                         {
                             Objects[i].Open = false;
                         }
+
+                        m_LoweredSearchText = string.Empty;
                     }
                     else
                     {
+                        m_LoweredSearchText = m_SearchText.ToLower();
+
                         for (int i = 0; i < Objects.Count; i++)
                         {
                             if (Objects[i].m_Elements
@@ -334,6 +351,7 @@ namespace SyadeuEditor.Presentation
                         }
                     }
                 }
+                #endregion
 
                 m_Scroll = EditorGUILayout.BeginScrollView(m_Scroll, false, true,
                     GUILayout.MaxWidth(m_Position.width), GUILayout.MaxHeight(m_Position.height));
@@ -352,7 +370,7 @@ namespace SyadeuEditor.Presentation
                             ObjectBaseDrawer target = Objects[i].m_Elements[a].Target;
 
                             if (!string.IsNullOrEmpty(m_SearchText) &&
-                                !target.Name.ToLower().Contains(m_SearchText.ToLower()))
+                                !target.Name.ToLower().Contains(m_LoweredSearchText))
                             {
                                 continue;
                             }

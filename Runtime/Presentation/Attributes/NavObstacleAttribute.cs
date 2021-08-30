@@ -2,6 +2,7 @@
 using Syadeu.Internal;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Map;
+using System.ComponentModel;
 using UnityEngine.AI;
 using UnityEngine.Scripting;
 //using Syadeu.ThreadSafe;
@@ -14,6 +15,7 @@ namespace Syadeu.Presentation.Attributes
     /// <remarks>
     /// 이 어트리뷰트 혼자서는 베이킹 되지않고, <see cref="NavMeshComponent"/>으로 베이킹 영역을 지정해야지만 베이킹 됩니다.
     /// </remarks>
+    [DisplayName("Attribute: NavObstacle")]
     [AttributeAcceptOnly(typeof(EntityBase))]
     [ReflectionDescription(
         "실시간 NavMesh 베이킹을 위해 고안된 어트리뷰트입니다.")]

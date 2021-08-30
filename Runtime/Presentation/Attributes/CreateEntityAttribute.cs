@@ -1,10 +1,12 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Internal;
 using Syadeu.Presentation.Entities;
+using System.ComponentModel;
 using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation.Attributes
 {
+    [DisplayName("Attribute: Create Entity")]
     [ReflectionDescription(
         "이 어트리뷰트가 달린 Entity가 생성될 때, 같이 생성될 Entity 를 설정할 수 있습니다."
         )]

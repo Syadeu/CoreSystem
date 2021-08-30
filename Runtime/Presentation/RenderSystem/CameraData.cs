@@ -95,6 +95,10 @@ namespace Syadeu.Presentation.Render
 		public float3 position;
 		public quaternion orientation;
 
+		public float3 forward
+        {
+			get => math.mul(orientation, new float3(0, 0, 1));
+        }
 		public float4x4 projectionMatrix
         {
             get

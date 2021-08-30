@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Syadeu.Presentation.Actions
 {
-    [DisplayName("Action: Animation Key Trigger")]
+    [DisplayName("TriggerAction: Trigger Animation Key")]
     [ReflectionDescription("Unity Animator 전용입니다")]
     public sealed class AnimationTriggerKeyAction : TriggerAction
     {
