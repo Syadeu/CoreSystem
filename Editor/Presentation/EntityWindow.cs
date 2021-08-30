@@ -274,7 +274,7 @@ namespace SyadeuEditor.Presentation
 
                 MultiColumnHeader = EntityListTreeView.CreateHeader();
                 TreeViewState = new TreeViewState();
-                EntityListTreeView = new EntityListTreeView(TreeViewState, MultiColumnHeader);
+                EntityListTreeView = new EntityListTreeView(TreeViewState);
 
                 Reload();
             }

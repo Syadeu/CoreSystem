@@ -4,6 +4,7 @@ using Syadeu.Presentation;
 using Syadeu.Presentation.Entities;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using Unity.Mathematics;
@@ -26,21 +27,12 @@ namespace SyadeuEditor.Presentation
 
         public enum Column
         {
-            Type,
             Name
         }
         public static MultiColumnHeader CreateHeader()
         {
             var Columns = new MultiColumnHeaderState.Column[]
                 {
-                    new MultiColumnHeaderState.Column()
-                    {
-                        autoResize = false,
-                        allowToggleVisibility = false,
-                        headerContent = new GUIContent(Column.Type.ToString()),
-                        headerTextAlignment = TextAlignment.Center,
-                        minWidth = 25
-                    },
                     new MultiColumnHeaderState.Column()
                     {
                         autoResize = false,
@@ -64,6 +56,11 @@ namespace SyadeuEditor.Presentation
                 depth = -1,
                 displayName = "Root"
             };
+
+            rowHeight = kRowHeights;
+            showAlternatingRowBackgrounds = true;
+            showBorder = true;
+            customFoldoutYOffset = (kRowHeights - EditorGUIUtility.singleLineHeight) * 0.5f;
 
             Reload();
         }
@@ -103,13 +100,16 @@ namespace SyadeuEditor.Presentation
                 foreach (var item in Objects?.Values)
                 {
                     drawer = ObjectBaseDrawer.GetDrawer(item);
-                    TreeViewItem folder = GetFolder(drawer.Type);
-                    if (folder == null)
-                    {
-                        folder = new FolderTreeElement(id, drawer.Type);
-                        m_Root.AddChild(folder);
-                        id++;
-                    }
+
+                    TreeViewItem folder = BuildBaseType(ref id, m_Root, drawer.Type);
+
+                    //if (folder == null)
+                    //{
+                    //    folder = new FolderTreeElement(id, drawer.Type);
+                    //    m_Root.AddChild(folder);
+                    //    m_Rows.Add(folder);
+                    //    id++;
+                    //}
 
                     folder.AddChild(new ObjectTreeElement(id, drawer));
                     id++;
@@ -128,6 +128,49 @@ namespace SyadeuEditor.Presentation
 
             if (iter.Any()) return iter.First();
             return null;
+        }
+        private void FindTypesRecursive(Type type, List<Type> types)
+        {
+            types.Add(type);
+            if (type.BaseType.Equals(TypeHelper.TypeOf<ObjectBase>.Type))
+            {
+                return;
+            }
+
+            FindTypesRecursive(type.BaseType, types);
+        }
+        private TreeViewItem BuildBaseType(ref int id, TreeViewItem root, Type type)
+        {
+            List<Type> types = new List<Type>();
+            FindTypesRecursive(type, types);
+
+            TreeViewItem typeRoot;
+            Type baseType = types[types.Count - 1];
+            TreeViewItem folder = GetFolder(baseType);
+            if (folder == null)
+            {
+                folder = new FolderTreeElement(id, baseType);
+                m_Root.AddChild(folder);
+                m_Rows.Add(folder);
+                id++;
+            }
+            typeRoot = folder;
+
+            for (int i = types.Count - 2; i >= 0; i--)
+            {
+                folder = GetFolder(types[i]);
+                if (folder == null)
+                {
+                    folder = new FolderTreeElement(id, types[i]);
+                    typeRoot.AddChild(folder);
+                    m_Rows.Add(folder);
+                    id++;
+
+                    typeRoot = folder;
+                }
+            }
+
+            return typeRoot;
         }
 
         public override void OnGUI(Rect rect)
@@ -162,16 +205,9 @@ namespace SyadeuEditor.Presentation
         }
         protected override void RowGUI(RowGUIArgs args)
         {
-            //base.RowGUI(args);
-
-            if (args.item is FolderTreeElement folder)
+            if (multiColumnHeader == null)
             {
-                Rect temp = args.rowRect;
-                temp.x += GetContentIndent(args.item);
-                temp.width -= GetContentIndent(args.item);
-
-                GUI.Label(temp, args.item.displayName);
-
+                base.RowGUI(args);
                 return;
             }
 
@@ -186,17 +222,12 @@ namespace SyadeuEditor.Presentation
             ObjectTreeElement element;
             switch (column)
             {
-                case Column.Type:
-                    //if (item is ObjectTreeElement) break;
-
-                    //cellRect = GetCellRectForTreeFoldouts(cellRect);
-                    //cellRect.x += GetContentIndent(item);
-                    //cellRect.width -= GetContentIndent(item);
-                    //CenterRectUsingSingleLineHeight(ref cellRect);
-
-                    //GUI.Label(cellRect, item.displayName);
-                    break;
                 case Column.Name:
+                    cellRect = GetCellRectForTreeFoldouts(cellRect);
+                    cellRect.x += GetContentIndent(item);
+                    cellRect.width -= GetContentIndent(item);
+                    CenterRectUsingSingleLineHeight(ref cellRect);
+
                     GUI.Label(cellRect, item.displayName);
                     break;
                 default:
@@ -368,27 +399,54 @@ namespace SyadeuEditor.Presentation
         public class FolderTreeElement : TreeViewItem
         {
             private Type m_Type;
+            private DisplayNameAttribute m_DisplayNameAttribute;
 
             public Type Type => m_Type;
-            public override string displayName => TypeHelper.ToString(m_Type);
+            public override string displayName
+            {
+                get
+                {
+                    //if (m_DisplayNameAttribute != null)
+                    //{
+                    //    return m_DisplayNameAttribute.DisplayName;
+                    //}
+                    return TypeHelper.ToString(m_Type);
+                }
+            }
 
             public FolderTreeElement(int id, Type type)
             {
                 this.id = id;
                 m_Type = type;
+
+                m_DisplayNameAttribute = type.GetCustomAttribute<DisplayNameAttribute>();
             }
         }
         public sealed class ObjectTreeElement : TreeViewItem
         {
             private ObjectBaseDrawer m_Target;
+            private DisplayNameAttribute m_DisplayNameAttribute;
 
-            public override string displayName => m_Target.Name;
+            public override string displayName
+            {
+                get
+                {
+                    if (m_DisplayNameAttribute != null)
+                    {
+                        return m_DisplayNameAttribute.DisplayName;
+                    }
+
+                    return m_Target.Name;
+                }
+            }
             public ObjectBaseDrawer Target => m_Target;
 
             public ObjectTreeElement(int id, ObjectBaseDrawer drawer)
             {
                 this.id = id;
                 m_Target = drawer;
+
+                m_DisplayNameAttribute = drawer.Type.GetCustomAttribute<DisplayNameAttribute>();
             }
         }
     }
