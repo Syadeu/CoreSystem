@@ -11,6 +11,7 @@ using UnityEngine.AddressableAssets;
 namespace Syadeu.Presentation.Actions
 {
     [DisplayName("TriggerAction: Play Animation Clip")]
+    [Obsolete("Use PlayPlayableDirectorAction")]
     public sealed class PlayAnimationClipEventAction : TriggerAction
     {
         [JsonProperty(Order = 0, PropertyName = "Data")]
@@ -47,6 +48,15 @@ namespace Syadeu.Presentation.Actions
 
         private IEnumerator Update(EntityData<IEntityData> executer, EntityAnimationClipEventData data, AnimationClip clip)
         {
+            if (!clip.legacy)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Target data({data.Name}) clip({clip.name}) is not a legacy. Cannot play with this action at entity({executer.Name}). Use {nameof(PlayPlayableDirectorAction)} instead.");
+
+                Terminate();
+                yield break;
+            }
+
             float passed = 0;
 
             var oper = Addressables.LoadAssetAsync<GameObject>(data.m_Entity.GetObject().Prefab.GetObjectSetting().m_RefPrefab);
@@ -65,6 +75,7 @@ namespace Syadeu.Presentation.Actions
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"This entity({entity.Name}) does not have animator but requested play animation.");
                 entity.Destroy();
+                Terminate();
                 yield break;
             }
 
@@ -126,6 +137,11 @@ namespace Syadeu.Presentation.Actions
             m_OnEnd.Execute(executer);
             m_OnEndActions.Execute();
 
+            Terminate();
+        }
+
+        private void Terminate()
+        {
             Executer = EntityData<IEntityData>.Empty;
         }
     }

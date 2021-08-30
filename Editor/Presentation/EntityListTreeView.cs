@@ -124,6 +124,7 @@ namespace SyadeuEditor.Presentation
             rect.y += kRowHeights;
             rect.height -= kRowHeights;
 
+            if (rootItem?.children == null || rootItem.children.Count == 0) return;
             base.OnGUI(rect);
         }
         protected override void RowGUI(RowGUIArgs args)

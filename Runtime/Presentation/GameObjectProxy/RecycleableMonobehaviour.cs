@@ -68,6 +68,16 @@ namespace Syadeu.Mono
 
         #region Component Methods
 
+        public T GetOrAddComponent<T>() where T : Component
+        {
+            T component = GetComponent<T>();
+            if (component == null)
+            {
+                component = AddComponent<T>();
+            }
+            return component;
+        }
+
         /// <summary>
         /// 이 오브젝트, 혹은 하위 오브젝트의 컴포넌트를 받아옵니다.
         /// </summary>

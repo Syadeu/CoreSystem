@@ -38,11 +38,11 @@ namespace Syadeu.Presentation.Attributes
                 actions[i].Execute(m_AnimatorAttribute.Parent);
             }
         }
-        private void OnAnimatorMove()
-        {
-            if (m_AnimatorAttribute == null) return;
+        //private void OnAnimatorMove()
+        //{
+        //    if (m_AnimatorAttribute == null) return;
 
-            m_AnimatorAttribute.m_OnMoveActions.Execute(m_AnimatorAttribute.Parent);
-        }
+        //    m_AnimatorAttribute.m_OnMoveActions.Execute(m_AnimatorAttribute.Parent);
+        //}
     }
 }

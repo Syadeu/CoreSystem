@@ -18,10 +18,6 @@ namespace Syadeu.Presentation.Attributes
         [JsonProperty(Order = 0, PropertyName = "AnimationTrigger")]
         public Reference<AnimationTriggerAction>[] m_AnimationTriggers = Array.Empty<Reference<AnimationTriggerAction>>();
 
-        [Space, Header("TriggerActions")]
-        [JsonProperty(Order = 10, PropertyName = "m_OnMoveActions")]
-        public Reference<TriggerAction>[] m_OnMoveActions = Array.Empty<Reference<TriggerAction>>();
-
         [JsonIgnore] internal AnimatorComponent Animator { get; set; }
         [JsonIgnore] public Dictionary<Hash, List<Reference<AnimationTriggerAction>>> AnimationTriggers { get; internal set; }
 

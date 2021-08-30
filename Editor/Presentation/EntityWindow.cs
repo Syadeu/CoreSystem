@@ -59,13 +59,6 @@ namespace SyadeuEditor.Presentation
             return drawer;
         }
 
-        //public void LoadData()
-        //{
-        //    if (!Application.isPlaying) EntityDataList.Instance.LoadData();
-
-        //    Reload();
-        //}
-
         public void Reload()
         {
             ObjectBaseDrawers.Clear();
@@ -146,7 +139,11 @@ namespace SyadeuEditor.Presentation
 
                 EntityDataList.Instance.SaveData();
             }
-            private void LoadMenu() => EntityDataList.Instance.LoadData();
+            private void LoadMenu()
+            {
+                EntityDataList.Instance.LoadData();
+                m_MainWindow.Reload();
+            }
             private void AddDataMenu<T>() where T : ObjectBase
             {
                 if (!IsDataLoaded) LoadMenu();
@@ -162,6 +159,7 @@ namespace SyadeuEditor.Presentation
 
                         EntityDataList.Instance.m_Objects.Add(ins.Hash, ins);
                         m_MainWindow.AddData(ins);
+                        m_MainWindow.Reload();
                     },
                     (t) => t,
                     null,
@@ -232,8 +230,6 @@ namespace SyadeuEditor.Presentation
                 TreeViewState = new TreeViewState();
                 EntityListTreeView = new EntityListTreeView(m_MainWindow, TreeViewState);
                 EntityListTreeView.OnSelect += EntityListTreeView_OnSelect;
-
-                Reload();
             }
             private void EntityListTreeView_OnSelect(ObjectBaseDrawer obj)
             {
@@ -242,6 +238,8 @@ namespace SyadeuEditor.Presentation
 
             public void Reload()
             {
+                if (Drawers.Count == 0) return;
+
                 //if (m_Selection < Drawers.Count)
                 //{
                 //    m_MainWindow.m_SelectedObject = Drawers[m_Selection];
