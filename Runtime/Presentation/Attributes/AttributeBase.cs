@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json;
-using Syadeu.Internal;
 using Syadeu.Presentation.Entities;
 
 namespace Syadeu.Presentation.Attributes

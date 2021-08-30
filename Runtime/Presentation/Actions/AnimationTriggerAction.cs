@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace Syadeu.Presentation.Actions
 {
-    [DisplayName("Action: Execute Animation TriggerAction")]
+    [DisplayName("TriggerAction: Execute Animation")]
     [ReflectionDescription(
         "애니메이션 클립에 달린 TriggerAction이 타겟으로 삼을 액션입니다.")]
     public sealed class AnimationTriggerAction : TriggerAction

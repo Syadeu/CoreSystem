@@ -1,4 +1,5 @@
-﻿using Syadeu.Presentation;
+﻿using Syadeu.Database;
+using Syadeu.Presentation;
 using System.Reflection;
 using UnityEditor;
 
@@ -14,9 +15,9 @@ namespace SyadeuEditor.Presentation
             PropertyInfo property = GetProperty(nameof(ReferenceScriptableObject.Reference));
             Drawer = new ReferenceDrawer(target, property);
 
-            if (!EntityWindow.IsDataLoaded)
+            if (!EntityDataList.IsLoaded)
             {
-                EntityWindow.Instance.LoadData();
+                EntityDataList.Instance.LoadData();
             }
         }
 

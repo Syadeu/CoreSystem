@@ -165,6 +165,7 @@ namespace Syadeu.Presentation.Entities
         }
 
         public void Destroy() => PresentationSystem<EntitySystem>.System.InternalDestroyEntity(m_Idx);
+        public override int GetHashCode() => Hash.GetHashCode();
 
         public static implicit operator T(Entity<T> a) => a.Target;
         //public static implicit operator Entity<IEntity>(Entity<T> a) => GetEntity(a.m_Idx);
