@@ -8,7 +8,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 using AABB = Syadeu.Database.AABB;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Presentation.Proxy
 {
     /// <summary>
     /// translation값을 기준으로 그룹을 정의하는 새로운 방법의 Cluster Data Structure입니다.

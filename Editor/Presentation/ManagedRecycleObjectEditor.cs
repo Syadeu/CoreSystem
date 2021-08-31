@@ -1,8 +1,9 @@
 ﻿using Syadeu.Mono;
 using UnityEngine;
 using UnityEditor;
+using Syadeu.Presentation.Proxy;
 
-namespace SyadeuEditor
+namespace SyadeuEditor.Presentation
 {
     [CustomEditor(typeof(ManagedRecycleObject))]
     public sealed class ManagedRecycleObjectEditor : Editor

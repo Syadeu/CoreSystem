@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Syadeu.Presentation.Proxy;
+using UnityEngine;
 
 namespace Syadeu.Presentation.Entities
 {

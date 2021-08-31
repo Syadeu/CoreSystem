@@ -3,6 +3,7 @@ using Syadeu.Internal;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
+using Syadeu.Presentation.Proxy;
 using System;
 using System.Collections.Generic;
 using System.Linq;

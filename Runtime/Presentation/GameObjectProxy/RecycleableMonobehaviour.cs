@@ -9,7 +9,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Syadeu.Mono
+namespace Syadeu.Presentation.Proxy
 {
     [DisallowMultipleComponent]
     /// <summary>

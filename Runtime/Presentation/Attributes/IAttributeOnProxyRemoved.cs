@@ -1,5 +1,6 @@
 ﻿using Syadeu.Mono;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Proxy;
 
 namespace Syadeu.Presentation.Attributes
 {

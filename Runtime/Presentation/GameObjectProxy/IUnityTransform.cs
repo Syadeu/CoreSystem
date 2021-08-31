@@ -2,7 +2,7 @@
 using System;
 using UnityEngine;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Presentation.Proxy
 {
     public interface IUnityTransform : ITransform, IDisposable
     {

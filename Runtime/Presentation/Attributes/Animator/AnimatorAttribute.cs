@@ -4,6 +4,7 @@ using Syadeu.Mono;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
+using Syadeu.Presentation.Proxy;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;

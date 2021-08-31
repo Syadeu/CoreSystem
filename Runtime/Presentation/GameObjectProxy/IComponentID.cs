@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Presentation.Proxy
 {
     /// <summary>
     /// <see cref="Mono.RecycleableMonobehaviour.m_Components"/>

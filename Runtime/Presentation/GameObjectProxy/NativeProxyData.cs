@@ -10,7 +10,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Mathematics;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Presentation.Proxy
 {
     [NativeContainer, StructLayout(LayoutKind.Sequential)]
     unsafe internal struct NativeProxyData : IDisposable

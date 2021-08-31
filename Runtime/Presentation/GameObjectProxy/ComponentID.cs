@@ -3,7 +3,7 @@ using Syadeu.Internal;
 using System;
 using UnityEngine;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Presentation.Proxy
 {
     /// <inheritdoc cref="IComponentID"/>
     public readonly struct ComponentID : IComponentID

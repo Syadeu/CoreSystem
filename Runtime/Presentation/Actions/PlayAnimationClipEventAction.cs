@@ -2,6 +2,7 @@
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Proxy;
 using System;
 using System.Collections;
 using System.ComponentModel;
@@ -68,7 +69,7 @@ namespace Syadeu.Presentation.Actions
             
             yield return new WaitUntil(() => tr.proxy != null);
 
-            Mono.RecycleableMonobehaviour proxy = tr.proxy;
+            RecycleableMonobehaviour proxy = tr.proxy;
             AnimatorComponent component = proxy.GetComponent<AnimatorComponent>();
             if (component == null)
             {

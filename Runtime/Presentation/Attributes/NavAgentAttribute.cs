@@ -5,6 +5,7 @@ using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Map;
+using Syadeu.Presentation.Proxy;
 using System;
 using System.Collections;
 using System.ComponentModel;

@@ -1,4 +1,5 @@
 ﻿using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Proxy;
 
 namespace Syadeu.Presentation.Events
 {

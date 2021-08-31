@@ -3,7 +3,7 @@ using Syadeu.Mono;
 using Unity.Mathematics;
 using AABB = Syadeu.Database.AABB;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Presentation.Proxy
 {
     public interface IProxyTransform : ITransform
     {

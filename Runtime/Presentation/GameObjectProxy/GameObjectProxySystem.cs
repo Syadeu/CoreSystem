@@ -20,7 +20,7 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.SceneManagement;
 using AABB = Syadeu.Database.AABB;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Presentation.Proxy
 {
     internal sealed class GameObjectProxySystem : PresentationSystemEntity<GameObjectProxySystem>
     {
