@@ -46,7 +46,7 @@ namespace Syadeu.Presentation.Actions
         {
             TimelineData data = m_Data.GetObject();
 
-            AsyncOperationHandle<GameObject> entityOper = Addressables.LoadAssetAsync<GameObject>(data.m_Entity.GetObject().Prefab.GetObjectSetting().m_RefPrefab);
+            AsyncOperationHandle<GameObject> entityOper = data.m_Entity.GetObject().Prefab.LoadAssetAsync();
             yield return new WaitUntil(() => entityOper.IsDone);
             
             Entity<IEntity> entity = PresentationSystem<EntitySystem>.System.CreateEntity(data.m_Entity, 0, entityOper.Result.transform.rotation, entityOper.Result.transform.localScale);

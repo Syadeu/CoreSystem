@@ -52,11 +52,14 @@ namespace Syadeu.Database
         {
             return Addressables.LoadAssetAsync<UnityEngine.Object>(GetObjectSetting().m_RefPrefab);
         }
+        public AsyncOperationHandle<T> LoadAssetAsync<T>() where T : UnityEngine.Object
+        {
+            return Addressables.LoadAssetAsync<T>(GetObjectSetting().m_RefPrefab);
+        }
         public void UnloadAsset()
         {
             GetObjectSetting().m_RefPrefab.ReleaseAsset();
         }
-
 
         bool IPrefabReference.IsNone() => Equals(None);
         public bool IsValid() => !Equals(Invalid) && m_Idx < PrefabList.Instance.ObjectSettings.Count;

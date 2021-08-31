@@ -34,11 +34,7 @@ namespace SyadeuEditor.Presentation
             {
                 ObjectBase objBase = EntityDataList.Instance.GetObject(idx);
 
-                Type makedT = DeclaredType;
-                //if (targetType != null) makedT = typeof(Reference<>).MakeGenericType(targetType);
-                //else makedT = TypeHelper.TypeOf<Reference>.Type;
-
-                object temp = TypeHelper.GetConstructorInfo(makedT, TypeHelper.TypeOf<ObjectBase>.Type).Invoke(
+                object temp = TypeHelper.GetConstructorInfo(DeclaredType, TypeHelper.TypeOf<ObjectBase>.Type).Invoke(
                     new object[] { objBase });
 
                 Setter.Invoke((IReference)temp);
@@ -47,6 +43,26 @@ namespace SyadeuEditor.Presentation
             m_Open = GUILayout.Toggle(m_Open,
                         m_Open ? EditorUtils.FoldoutOpendString : EditorUtils.FoldoutClosedString
                         , EditorUtils.MiniButton, GUILayout.Width(20));
+
+            EditorGUI.BeginDisabledGroup(!currentValue.IsValid());
+            if (GUILayout.Button("C", GUILayout.Width(20)))
+            {
+                ObjectBase clone = (ObjectBase)currentValue.GetObject().Clone();
+
+                clone.Hash = Hash.NewHash();
+                clone.Name += "_Clone";
+                EntityDataList.Instance.m_Objects.Add(clone.Hash, clone);
+
+                object temp = TypeHelper.GetConstructorInfo(DeclaredType, TypeHelper.TypeOf<ObjectBase>.Type).Invoke(
+                    new object[] { clone });
+                currentValue = (IReference)temp;
+
+                if (EntityWindow.IsOpened)
+                {
+                    EntityWindow.Instance.Reload();
+                }
+            }
+            EditorGUI.EndDisabledGroup();
 
             EditorGUILayout.EndHorizontal();
 

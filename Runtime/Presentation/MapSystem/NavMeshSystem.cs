@@ -144,15 +144,7 @@ namespace Syadeu.Presentation.Map
                 return;
             }
 
-            AsyncOperationHandle<GameObject> oper;
-            if (setting.m_RefPrefab.IsDone)
-            {
-                 oper = Addressables.LoadAssetAsync<GameObject>(setting.m_RefPrefab);
-            }
-            else
-            {
-                oper = setting.m_RefPrefab.LoadAssetAsync<GameObject>();
-            }
+            AsyncOperationHandle<GameObject> oper = tr.prefab.LoadAssetAsync<GameObject>();
 
             oper.Completed += Oper_Completed;
             void Oper_Completed(AsyncOperationHandle<GameObject> obj)

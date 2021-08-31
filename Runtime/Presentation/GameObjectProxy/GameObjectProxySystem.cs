@@ -100,6 +100,8 @@ namespace Syadeu.Presentation.Proxy
         }
         public override void OnDispose()
         {
+            ReleaseAllPrefabs();
+
             m_RequestDestories.Dispose();
 
             m_RequestProxyList.Dispose();
@@ -144,8 +146,7 @@ namespace Syadeu.Presentation.Proxy
 
             m_ProxyData.For(DestroyTransform);
 
-            m_Instances.Clear();
-            m_TerminatedProxies.Clear();
+            ReleaseAllPrefabs();
 
             m_ProxyData.Dispose();
             m_ClusterData.Dispose();
@@ -156,11 +157,6 @@ namespace Syadeu.Presentation.Proxy
             void DestroyTransform(ProxyTransform tr)
             {
                 OnDataObjectDestroy?.Invoke(tr);
-
-                if (tr.hasProxy && !tr.hasProxyQueued)
-                {
-                    UnityEngine.Object.Destroy(tr.proxy.gameObject);
-                }
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -796,6 +792,28 @@ namespace Syadeu.Presentation.Proxy
         private void InstantiatePrefab(PrefabReference prefab, Vector3 position, Quaternion rotation, Action<RecycleableMonobehaviour> onCompleted)
         {
             PoolContainer<PrefabRequester>.Dequeue().Setup(this, prefab, position, rotation, onCompleted);
+        }
+        private void ReleaseAllPrefabs()
+        {
+            foreach (var item in m_Instances)
+            {
+                var prefab = item.Key.GetObjectSetting().m_RefPrefab;
+                for (int i = 0; i < item.Value.Count; i++)
+                {
+                    prefab.ReleaseInstance(item.Value[i].gameObject);
+                }
+            }
+            m_Instances.Clear();
+            foreach (var item in m_TerminatedProxies)
+            {
+                int count = item.Value.Count;
+                var prefab = item.Key.GetObjectSetting().m_RefPrefab;
+                for (int i = 0; i < count; i++)
+                {
+                    prefab.ReleaseInstance(item.Value.Pop().gameObject);
+                }
+            }
+            m_TerminatedProxies.Clear();
         }
 
         #endregion

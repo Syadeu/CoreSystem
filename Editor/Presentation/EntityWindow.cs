@@ -31,10 +31,13 @@ namespace SyadeuEditor.Presentation
 
         public ObjectBaseDrawer m_SelectedObject = null;
 
+        public static bool IsOpened { get; private set; }
         public static bool IsDataLoaded => EntityDataList.Instance;
 
         protected override void OnEnable()
         {
+            IsOpened = true;
+
             m_ToolbarWindow = new ToolbarWindow(this);
             m_DataListWindow = new DataListWindow(this);
             m_ViewWindow = new ViewWindow(this);
@@ -47,7 +50,13 @@ namespace SyadeuEditor.Presentation
 
             base.OnEnable();
         }
-        public ObjectBaseDrawer AddData(ObjectBase other)
+        protected override void OnDisable()
+        {
+            IsOpened = false;
+
+            base.OnDisable();
+        }
+        public ObjectBaseDrawer AddData(ObjectBase other, bool select = true)
         {
             ObjectBaseDrawer drawer;
 
@@ -55,7 +64,7 @@ namespace SyadeuEditor.Presentation
             
             ObjectBaseDrawers.Add(drawer);
 
-            m_SelectedObject = drawer;
+            if (select) m_SelectedObject = drawer;
             return drawer;
         }
 

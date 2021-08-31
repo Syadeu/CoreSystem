@@ -38,8 +38,7 @@ namespace Syadeu.Presentation.Actions
         {
             Executer = entity;
 
-            var oper
-                = Addressables.LoadAssetAsync<AnimationClip>(m_Data.GetObject().m_AnimationClip.GetObjectSetting().m_RefPrefab);
+            var oper = m_Data.GetObject().m_AnimationClip.LoadAssetAsync();
             oper.Completed += Oper_Completed;
         }
         private void Oper_Completed(UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle<AnimationClip> obj)
@@ -60,7 +59,7 @@ namespace Syadeu.Presentation.Actions
 
             float passed = 0;
 
-            var oper = Addressables.LoadAssetAsync<GameObject>(data.m_Entity.GetObject().Prefab.GetObjectSetting().m_RefPrefab);
+            var oper = data.m_Entity.GetObject().Prefab.LoadAssetAsync();
             yield return new WaitUntil(() => oper.IsDone);
 
             Entity<IEntity> entity = PresentationSystem<EntitySystem>.System.CreateEntity(data.m_Entity, 0, oper.Result.transform.rotation, oper.Result .transform.localScale);
