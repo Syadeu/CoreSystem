@@ -1,9 +1,11 @@
 ﻿using Newtonsoft.Json.Utilities;
 using Syadeu.Database;
+using System.ComponentModel;
 using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation.Entities
 {
+    [DisplayName("Entity: Object Entity")]
     public sealed class ObjectEntity : EntityBase
     {
         protected override ObjectBase Copy()
