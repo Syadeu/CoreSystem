@@ -32,6 +32,7 @@ namespace Syadeu.Presentation.Events
             temp.State = state;
             return temp;
         }
+        public override bool IsValid() => Entity.IsValid();
         protected override void OnTerminate()
         {
             Entity = Entity<IEntity>.Empty;
