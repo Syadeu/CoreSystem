@@ -1,14 +1,20 @@
 ﻿using Syadeu.Database;
-using Syadeu.Mono;
 using Syadeu.Presentation.Events;
+using Syadeu.Presentation.Entities;
+
 using System;
 using System.Runtime.InteropServices;
+
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
+
 using AABB = Syadeu.Database.AABB;
 
 namespace Syadeu.Presentation.Proxy
 {
+    /// <summary>
+    /// <see cref="Entity{T}"/> 의 트랜스폼입니다.
+    /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     public readonly struct ProxyTransform : IProxyTransform, IEquatable<ProxyTransform>
     {

@@ -69,11 +69,6 @@ namespace SyadeuEditor.Presentation
                     AddData(item);
                 }
             }
-            //var temp = EntityDataList.Instance.m_Objects.Values.ToArray();
-            //for (int i = 0; i < temp.Length; i++)
-            //{
-            //    AddData(temp[i]);
-            //}
 
             m_DataListWindow.Reload();
         }
@@ -203,20 +198,12 @@ namespace SyadeuEditor.Presentation
                     GUIUtility.ExitGUI();
                 }
                 GUILayout.FlexibleSpace();
-                //if (GUILayout.Button("Tools", EditorStyles.toolbarDropDown))
-                //{
-
-                //}
             }
         }
 
         public sealed class DataListWindow
         {
             EntityWindow m_MainWindow;
-
-            //Vector2 m_Scroll;
-            //Rect m_Position;
-            //int m_Selection = 0;
 
             List<ObjectBaseDrawer> Drawers => m_MainWindow.ObjectBaseDrawers;
 
@@ -240,119 +227,13 @@ namespace SyadeuEditor.Presentation
             {
                 if (Drawers.Count == 0) return;
 
-                //if (m_Selection < Drawers.Count)
-                //{
-                //    m_MainWindow.m_SelectedObject = Drawers[m_Selection];
-                //}
-                //else m_MainWindow.m_SelectedObject = null;
-
-                //for (int i = 0; i < Drawers.Count; i++)
-                //{
-                //    AddData(Drawers[i]);
-                //}
-
                 EntityListTreeView.Reload();
             }
 
             public void OnGUI(Rect pos, int unusedID)
             {
-                //TreeViewState.searchString = m_SearchField.OnGUI(GUILayoutUtility.GetRect(pos.width, 20), TreeViewState.searchString);
                 EntityListTreeView.OnGUI(pos);
-
-                //m_Position = pos;
-
-                //GUILayout.Window(unusedID, m_Position, Draw, string.Empty, EditorUtils.Box);
             }
-            //private void Draw(int unusedID)
-            //{
-            //    #region Search Field
-            //    EditorGUI.BeginChangeCheck();
-            //    m_SearchText = m_SearchField.OnToolbarGUI(GUILayoutUtility.GetRect(m_Position.width, 20), m_SearchText);
-            //    if (EditorGUI.EndChangeCheck())
-            //    {
-            //        if (string.IsNullOrEmpty(m_SearchText))
-            //        {
-            //            for (int i = 0; i < Objects.Count; i++)
-            //            {
-            //                Objects[i].Open = false;
-            //            }
-
-            //            m_LoweredSearchText = string.Empty;
-            //        }
-            //        else
-            //        {
-            //            m_LoweredSearchText = m_SearchText.ToLower();
-
-            //            for (int i = 0; i < Objects.Count; i++)
-            //            {
-            //                if (Objects[i].m_Elements
-            //                    .Select((other) => other.Target)
-            //                    .Where((other) => other.Name.ToLower().Contains(m_SearchText.ToLower()))
-            //                    .Any())
-            //                {
-            //                    Objects[i].Open = true;
-            //                }
-            //                else Objects[i].Open = false;
-            //            }
-            //        }
-            //    }
-            //    #endregion
-
-            //    m_Scroll = EditorGUILayout.BeginScrollView(m_Scroll, false, true,
-            //        GUILayout.MaxWidth(m_Position.width), GUILayout.MaxHeight(m_Position.height));
-
-            //    EditorUtils.BoxBlock box = new EditorUtils.BoxBlock(Color.white, GUILayout.MaxWidth(m_Position.width- 20));
-            //    for (int i = 0; i < Objects.Count; i++)
-            //    {
-            //        Objects[i].Open = EditorGUILayout.Foldout(Objects[i].Open, Objects[i].Name, true);
-            //        if (!Objects[i].Open) continue;
-
-            //        EditorGUI.indentLevel++;
-            //        using (new EditorUtils.BoxBlock(Color.white))
-            //        {
-            //            for (int a = 0; a < Objects[i].m_Elements.Count; a++)
-            //            {
-            //                ObjectBaseDrawer target = Objects[i].m_Elements[a].Target;
-
-            //                if (!string.IsNullOrEmpty(m_SearchText) &&
-            //                    !target.Name.ToLower().Contains(m_LoweredSearchText))
-            //                {
-            //                    continue;
-            //                }
-
-            //                bool enabled;
-            //                if (m_MainWindow.m_SelectedObject == null) enabled = false;
-            //                else
-            //                {
-            //                    enabled = m_MainWindow.m_SelectedObject.Equals(target);
-            //                }
-
-            //                EditorGUILayout.BeginHorizontal();
-
-            //                EditorGUI.BeginChangeCheck();
-            //                enabled = GUILayout.Toggle(enabled, target.Name, EditorStyles.toolbarButton);
-            //                if (EditorGUI.EndChangeCheck())
-            //                {
-            //                    if (enabled) m_MainWindow.m_SelectedObject = target;
-            //                }
-
-            //                if (GUILayout.Button("-", GUILayout.Width(20)))
-            //                {
-            //                    m_MainWindow.Remove(target);
-            //                    Objects[i].m_Elements.RemoveAt(a);
-            //                    a--;
-            //                    //GUIUtility.ExitGUI();
-            //                }
-            //                EditorGUILayout.EndHorizontal();
-            //            }
-            //        }
-            //        EditorUtils.Line();
-            //        EditorGUI.indentLevel--;
-            //    }
-            //    box.Dispose();
-
-            //    EditorGUILayout.EndScrollView();
-            //}
         }
         public sealed class ViewWindow
         {
