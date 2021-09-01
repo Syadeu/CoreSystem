@@ -22,6 +22,9 @@ namespace Syadeu.Presentation.Actions
         [JsonProperty(Order = 0, PropertyName = "OnHit")]
         private Reference<TriggerAction>[] m_OnHit = Array.Empty<Reference<TriggerAction>>();
 
+        [Header("Actions")]
+        private Reference<InstanceAction>[] m_OnHitAction = Array.Empty<Reference<InstanceAction>>();
+
         [JsonIgnore] private RenderSystem m_RenderSystem;
         [JsonIgnore] private EntityRaycastSystem m_RaycastSystem;
 
@@ -39,9 +42,10 @@ namespace Syadeu.Presentation.Actions
         protected override void OnExecute()
         {
             Ray ray = m_RenderSystem.ScreenPointToRay(new float3(Mouse.current.position.ReadValue(), 0));
-            m_RaycastSystem.Raycast(in ray, out m_RaycastInfo);
+            if (!m_RaycastSystem.Raycast(in ray, out m_RaycastInfo)) return;
 
             m_OnHit.Execute(m_RaycastInfo.entity.As<IEntity, IEntityData>());
+            m_OnHitAction.Execute();
         }
     }
 }
