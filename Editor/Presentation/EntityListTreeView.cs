@@ -200,8 +200,10 @@ namespace SyadeuEditor.Presentation
             {
                 menu.AddItem(new GUIContent("Remove"), false, () =>
                 {
-                    m_Window.Remove(obj.Target);
                     item.parent.children.Remove(item);
+                    m_Window.Remove(obj.Target);
+
+                    Reload();
                 });
             }
             menu.ShowAsContext();
