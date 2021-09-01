@@ -90,7 +90,7 @@ namespace SyadeuEditor.Presentation
 
             return m_Root;
         }
-        private TreeViewItem GetFolder(Type type)
+        public TreeViewItem GetFolder(Type type)
         {
             var iter = m_Rows.Where((other) => 
                 other is FolderTreeElement folder &&

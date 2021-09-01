@@ -1,4 +1,5 @@
 ﻿using NUnit.Framework;
+using Syadeu;
 using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation;
@@ -281,11 +282,19 @@ namespace SyadeuEditor.Presentation
             }
             public void Select(ObjectBaseDrawer drawer)
             {
-                var iter = EntityListTreeView.GetRows().Where((other) => (other is EntityListTreeView.ObjectTreeElement objEle) && objEle.Target.Equals(drawer));
+                var folder =  EntityListTreeView.GetFolder(drawer.Type);
+                var iter = folder.children.Where((other) => (other is EntityListTreeView.ObjectTreeElement ele) && ele.Target.Equals(drawer));
 
-                if (!iter.Any()) return;
+                if (!iter.Any())
+                {
+                    "in".ToLog();
+                    return;
+                }
 
-                EntityListTreeView.SetSelection(new int[] { iter.First().id });
+                var ele = iter.First();
+                EntityListTreeView.SetExpanded(ele.parent.id, true);
+                EntityListTreeView.FrameItem(ele.id);
+                EntityListTreeView.SetSelection(new int[] { ele.id });
             }
             public void Add(ObjectBaseDrawer drawer)
             {
