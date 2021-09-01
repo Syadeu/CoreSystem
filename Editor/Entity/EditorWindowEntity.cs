@@ -11,7 +11,9 @@ namespace SyadeuEditor
             {
                 if (s_Instance == null)
                 {
-                    s_Instance = CreateWindow<T>();
+                    s_Instance = GetWindow<T>();
+                    if (s_Instance == null) s_Instance = CreateWindow<T>();
+
                     s_Instance.titleContent = new UnityEngine.GUIContent(s_Instance.DisplayName);
                 }
 

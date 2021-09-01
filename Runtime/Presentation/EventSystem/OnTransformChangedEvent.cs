@@ -1,5 +1,6 @@
 ﻿using Syadeu.Database;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Proxy;
 using System;
 
 namespace Syadeu.Presentation.Events

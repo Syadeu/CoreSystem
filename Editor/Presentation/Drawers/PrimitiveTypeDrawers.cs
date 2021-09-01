@@ -294,6 +294,10 @@ namespace SyadeuEditor.Presentation
                 m_Open = EditorUtils.Foldout(m_Open, 
                     string.Format(c_NameFormat, Name, TypeHelper.ToString(m_ElementType))
                     , 13);
+
+                GUILayout.FlexibleSpace();
+                GUILayout.Label(EditorUtils.String($"{list.Count}: ", 10), EditorUtils.HeaderStyle);
+
                 if (GUILayout.Button("+", GUILayout.Width(20)))
                 {
                     object newValue = Activator.CreateInstance(m_ElementType);

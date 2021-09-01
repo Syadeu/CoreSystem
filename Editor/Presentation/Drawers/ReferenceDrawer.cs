@@ -1,7 +1,9 @@
-﻿using Syadeu.Database;
+﻿using Syadeu;
+using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation;
 using System;
+using System.Linq;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
@@ -30,15 +32,11 @@ namespace SyadeuEditor.Presentation
             GUILayout.BeginVertical();
             EditorGUILayout.BeginHorizontal();
 
-            ReflectionHelperEditor.DrawReferenceSelector(Name, (idx) =>
+            DrawReferenceSelector(Name, (idx) =>
             {
                 ObjectBase objBase = EntityDataList.Instance.GetObject(idx);
 
-                Type makedT = DeclaredType;
-                //if (targetType != null) makedT = typeof(Reference<>).MakeGenericType(targetType);
-                //else makedT = TypeHelper.TypeOf<Reference>.Type;
-
-                object temp = TypeHelper.GetConstructorInfo(makedT, TypeHelper.TypeOf<ObjectBase>.Type).Invoke(
+                object temp = TypeHelper.GetConstructorInfo(DeclaredType, TypeHelper.TypeOf<ObjectBase>.Type).Invoke(
                     new object[] { objBase });
 
                 Setter.Invoke((IReference)temp);
@@ -47,6 +45,26 @@ namespace SyadeuEditor.Presentation
             m_Open = GUILayout.Toggle(m_Open,
                         m_Open ? EditorUtils.FoldoutOpendString : EditorUtils.FoldoutClosedString
                         , EditorUtils.MiniButton, GUILayout.Width(20));
+
+            EditorGUI.BeginDisabledGroup(!currentValue.IsValid());
+            if (GUILayout.Button("C", GUILayout.Width(20)))
+            {
+                ObjectBase clone = (ObjectBase)currentValue.GetObject().Clone();
+
+                clone.Hash = Hash.NewHash();
+                clone.Name += "_Clone";
+
+                if (EntityWindow.IsOpened)
+                {
+                    EntityWindow.Instance.Add(clone);
+                }
+                else EntityDataList.Instance.m_Objects.Add(clone.Hash, clone);
+
+                object temp = TypeHelper.GetConstructorInfo(DeclaredType, TypeHelper.TypeOf<ObjectBase>.Type).Invoke(
+                    new object[] { clone });
+                currentValue = (IReference)temp;
+            }
+            EditorGUI.EndDisabledGroup();
 
             EditorGUILayout.EndHorizontal();
 
@@ -70,13 +88,142 @@ namespace SyadeuEditor.Presentation
                             MessageType.Info);
 
                         EntityWindow.ObjectBaseDrawer.GetDrawer(currentValue.GetObject()).OnGUI();
-                        //SetAttribute(m_CurrentList[i], m_AttributeDrawers[i].OnGUI());
                     }
                 }
             }
             EditorGUILayout.EndVertical();
 
             return currentValue;
+        }
+
+        public void DrawReferenceSelector(string name, Action<Hash> setter, IReference current, Type targetType)
+        {
+            GUIContent displayName;
+            if (current == null || current.Hash.Equals(Hash.Empty)) displayName = new GUIContent("None");
+            else
+            {
+                ObjectBase objBase = EntityDataList.Instance.GetObject(current.Hash);
+                if (objBase == null) displayName = new GUIContent("None");
+                else displayName = new GUIContent(objBase.Name);
+            }
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(EditorGUI.indentLevel * 15);
+
+            if (!string.IsNullOrEmpty(name))
+            {
+                GUILayout.Label(name, GUILayout.Width(Screen.width * .25f));
+            }
+
+            Rect fieldRect = GUILayoutUtility.GetRect(displayName, EditorStyles.textField, GUILayout.ExpandWidth(true));
+
+            //GUI.Label(fieldRect, displayName, ReflectionHelperEditor.SelectorStyle);
+            int selectorID = GUIUtility.GetControlID(FocusType.Passive, fieldRect);
+
+            switch (Event.current.GetTypeForControl(selectorID))
+            {
+                case EventType.Repaint:
+                    bool isHover = fieldRect.Contains(Event.current.mousePosition);
+
+                    ReflectionHelperEditor.SelectorStyle.Draw(fieldRect, displayName,
+                        isHover, isActive: true, on: true, false);
+
+                    break;
+                case EventType.ContextClick:
+                    if (!fieldRect.Contains(Event.current.mousePosition)) break;
+
+                    GenericMenu menu = new GenericMenu();
+                    menu.AddDisabledItem(displayName);
+                    menu.AddSeparator(string.Empty);
+
+                    if (current.IsValid())
+                    {
+                        menu.AddItem(new GUIContent("To Reference"), false, () =>
+                        {
+                            EntityWindow.Instance.Select(current);
+                        });
+                    }
+                    else
+                    {
+                        menu.AddDisabledItem(new GUIContent("To Reference"));
+                    }
+                    
+                    menu.ShowAsContext();
+
+                    Event.current.Use();
+                    break;
+                case EventType.MouseDown:
+                    if (!fieldRect.Contains(Event.current.mousePosition)) break;
+
+                    if (Event.current.button == 0)
+                    {
+                        GUIUtility.hotControl = selectorID;
+                        DrawSelectionWindow(setter, targetType);
+                        Event.current.Use();
+                    }
+
+                    break;
+                case EventType.MouseUp:
+                    if (GUIUtility.hotControl == selectorID)
+                    {
+                        GUIUtility.hotControl = 0;
+                    }
+                    break;
+                default:
+                    break;
+            }
+
+            GUILayout.EndHorizontal();
+
+            static void DrawSelectionWindow(Action<Hash> setter, Type targetType)
+            {
+                Rect rect = GUILayoutUtility.GetRect(150, 300);
+                rect.position = Event.current.mousePosition;
+
+                if (targetType == null)
+                {
+                    try
+                    {
+                        PopupWindow.Show(rect, SelectorPopup<Hash, ObjectBase>.GetWindow(
+                        list: EntityDataList.Instance.m_Objects.Values.ToArray(),
+                        setter: setter,
+                        getter: (att) =>
+                        {
+                            return att.Hash;
+                        },
+                        noneValue: Hash.Empty,
+                        (other) => other.Name
+                        ));
+                    }
+                    catch (ExitGUIException)
+                    {
+                    }
+                }
+                else
+                {
+                    ObjectBase[] actionBases = EntityDataList.Instance.GetData<ObjectBase>()
+                        .Where((other) => other.GetType().Equals(targetType) ||
+                                targetType.IsAssignableFrom(other.GetType()))
+                        .ToArray();
+
+                    try
+                    {
+                        PopupWindow.Show(rect, SelectorPopup<Hash, ObjectBase>.GetWindow(
+                        list: actionBases,
+                        setter: setter,
+                        getter: (att) =>
+                        {
+                            return att.Hash;
+                        },
+                        noneValue: Hash.Empty,
+                        (other) => other.Name
+                        ));
+                    }
+                    catch (ExitGUIException)
+                    {
+                    }
+                }
+            }
         }
     }
 }

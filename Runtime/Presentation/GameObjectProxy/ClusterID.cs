@@ -1,7 +1,7 @@
 ﻿using System;
 using Unity.Burst;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Presentation.Proxy
 {
     [BurstCompile(CompileSynchronously = true)]
     public readonly struct ClusterID : IEquatable<ClusterID>

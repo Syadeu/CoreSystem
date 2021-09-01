@@ -20,8 +20,11 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.SceneManagement;
 using AABB = Syadeu.Database.AABB;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Presentation.Proxy
 {
+    /// <summary>
+    /// ** 주의: 어떠한 상황에서든 이 시스템에 직접 접근하는 것은 권장되지 않습니다. **<br/>
+    /// </summary>
     internal sealed class GameObjectProxySystem : PresentationSystemEntity<GameObjectProxySystem>
     {
         public static readonly Vector3 INIT_POSITION = new Vector3(-9999, -9999, -9999);
@@ -97,6 +100,8 @@ namespace Syadeu.Presentation
         }
         public override void OnDispose()
         {
+            ReleaseAllPrefabs();
+
             m_RequestDestories.Dispose();
 
             m_RequestProxyList.Dispose();
@@ -141,8 +146,7 @@ namespace Syadeu.Presentation
 
             m_ProxyData.For(DestroyTransform);
 
-            m_Instances.Clear();
-            m_TerminatedProxies.Clear();
+            ReleaseAllPrefabs();
 
             m_ProxyData.Dispose();
             m_ClusterData.Dispose();
@@ -153,11 +157,6 @@ namespace Syadeu.Presentation
             void DestroyTransform(ProxyTransform tr)
             {
                 OnDataObjectDestroy?.Invoke(tr);
-
-                if (tr.hasProxy && !tr.hasProxyQueued)
-                {
-                    UnityEngine.Object.Destroy(tr.proxy.gameObject);
-                }
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -793,6 +792,19 @@ namespace Syadeu.Presentation
         private void InstantiatePrefab(PrefabReference prefab, Vector3 position, Quaternion rotation, Action<RecycleableMonobehaviour> onCompleted)
         {
             PoolContainer<PrefabRequester>.Dequeue().Setup(this, prefab, position, rotation, onCompleted);
+        }
+        private void ReleaseAllPrefabs()
+        {
+            foreach (var item in m_Instances)
+            {
+                var prefab = item.Key.GetObjectSetting().m_RefPrefab;
+                for (int i = 0; i < item.Value.Count; i++)
+                {
+                    prefab.ReleaseInstance(item.Value[i].gameObject);
+                }
+            }
+            m_Instances.Clear();
+            m_TerminatedProxies.Clear();
         }
 
         #endregion

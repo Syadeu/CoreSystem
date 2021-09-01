@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Proxy;
 using System.Collections;
 using System.ComponentModel;
 using Unity.Mathematics;

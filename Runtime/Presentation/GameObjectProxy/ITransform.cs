@@ -3,7 +3,7 @@ using System;
 using Unity.Mathematics;
 using AABB = Syadeu.Database.AABB;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Presentation.Proxy
 {
     /// <summary>
     /// <see cref="Entities.Entity{T}"/>의 트랜스폼입니다.

@@ -25,6 +25,7 @@ namespace Syadeu.Presentation.Events
 
             return temp;
         }
+        public override bool IsValid() => Source.IsValid() && Target.IsValid();
         protected override void OnTerminate()
         {
             Source = Entity<IEntity>.Empty;

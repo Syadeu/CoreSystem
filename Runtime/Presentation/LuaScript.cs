@@ -7,6 +7,7 @@ using Syadeu.Internal;
 using Syadeu.Presentation;
 using UnityEngine;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Proxy;
 #if UNITY_EDITOR
 #endif
 

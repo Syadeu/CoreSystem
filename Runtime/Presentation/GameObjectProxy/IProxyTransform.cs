@@ -3,8 +3,14 @@ using Syadeu.Mono;
 using Unity.Mathematics;
 using AABB = Syadeu.Database.AABB;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Presentation.Proxy
 {
+    /// <summary>
+    /// 프록시 트랜스폼의 인터페이스입니다.
+    /// </summary>
+    /// <remarks>
+    /// 참조: <seealso cref="ProxyTransform"/>
+    /// </remarks>
     public interface IProxyTransform : ITransform
     {
 #pragma warning disable IDE1006 // Naming Styles

@@ -1,6 +1,7 @@
 ﻿using Syadeu.Database;
 using Syadeu.Mono;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Proxy;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;

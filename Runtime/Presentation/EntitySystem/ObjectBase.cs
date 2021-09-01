@@ -67,6 +67,9 @@ namespace Syadeu.Presentation
             OnDispose();
             Disposed = true;
         }
+        /// <summary>
+        /// 이 인스턴스 객체가 메모리에서 제거될때 실행됩니다.
+        /// </summary>
         protected virtual void OnDispose() { }
     }
 }

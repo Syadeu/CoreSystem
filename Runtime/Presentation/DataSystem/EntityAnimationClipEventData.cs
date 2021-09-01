@@ -9,6 +9,7 @@ using UnityEngine;
 namespace Syadeu.Presentation.Data
 {
     [DisplayName("Data: Animation Clip Event Data")]
+    [Obsolete("Use PlayPlayableDirectorAction")]
     public sealed class EntityAnimationClipEventData : DataObjectBase
     {
         [JsonProperty(Order = 0, PropertyName = "Entity")] public Reference<EntityBase> m_Entity;

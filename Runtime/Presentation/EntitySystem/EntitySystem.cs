@@ -16,6 +16,7 @@ using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
 using Syadeu.Presentation.Data;
+using Syadeu.Presentation.Proxy;
 
 namespace Syadeu.Presentation
 {

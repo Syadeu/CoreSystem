@@ -2,6 +2,7 @@
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Proxy;
 using System;
 using System.Collections;
 using System.ComponentModel;
@@ -11,6 +12,7 @@ using UnityEngine.AddressableAssets;
 namespace Syadeu.Presentation.Actions
 {
     [DisplayName("TriggerAction: Play Animation Clip")]
+    [Obsolete("Use PlayPlayableDirectorAction")]
     public sealed class PlayAnimationClipEventAction : TriggerAction
     {
         [JsonProperty(Order = 0, PropertyName = "Data")]
@@ -36,8 +38,7 @@ namespace Syadeu.Presentation.Actions
         {
             Executer = entity;
 
-            var oper
-                = Addressables.LoadAssetAsync<AnimationClip>(m_Data.GetObject().m_AnimationClip.GetObjectSetting().m_RefPrefab);
+            var oper = m_Data.GetObject().m_AnimationClip.LoadAssetAsync();
             oper.Completed += Oper_Completed;
         }
         private void Oper_Completed(UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle<AnimationClip> obj)
@@ -47,9 +48,18 @@ namespace Syadeu.Presentation.Actions
 
         private IEnumerator Update(EntityData<IEntityData> executer, EntityAnimationClipEventData data, AnimationClip clip)
         {
+            if (!clip.legacy)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Target data({data.Name}) clip({clip.name}) is not a legacy. Cannot play with this action at entity({executer.Name}). Use {nameof(PlayPlayableDirectorAction)} instead.");
+
+                Terminate();
+                yield break;
+            }
+
             float passed = 0;
 
-            var oper = Addressables.LoadAssetAsync<GameObject>(data.m_Entity.GetObject().Prefab.GetObjectSetting().m_RefPrefab);
+            var oper = data.m_Entity.GetObject().Prefab.LoadAssetAsync();
             yield return new WaitUntil(() => oper.IsDone);
 
             Entity<IEntity> entity = PresentationSystem<EntitySystem>.System.CreateEntity(data.m_Entity, 0, oper.Result.transform.rotation, oper.Result .transform.localScale);
@@ -58,13 +68,14 @@ namespace Syadeu.Presentation.Actions
             
             yield return new WaitUntil(() => tr.proxy != null);
 
-            Mono.RecycleableMonobehaviour proxy = tr.proxy;
+            RecycleableMonobehaviour proxy = tr.proxy;
             AnimatorComponent component = proxy.GetComponent<AnimatorComponent>();
             if (component == null)
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"This entity({entity.Name}) does not have animator but requested play animation.");
                 entity.Destroy();
+                Terminate();
                 yield break;
             }
 
@@ -126,6 +137,11 @@ namespace Syadeu.Presentation.Actions
             m_OnEnd.Execute(executer);
             m_OnEndActions.Execute();
 
+            Terminate();
+        }
+
+        private void Terminate()
+        {
             Executer = EntityData<IEntityData>.Empty;
         }
     }

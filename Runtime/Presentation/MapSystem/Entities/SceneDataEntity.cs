@@ -4,11 +4,13 @@ using Syadeu.Mono;
 using Syadeu.Presentation.Entities;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation.Map
 {
+    [DisplayName("EntityData: SceneData")]
     [EntityAcceptOnly(typeof(SceneDataAttributeBase))]
     public sealed class SceneDataEntity : EntityDataBase
     {

@@ -1,8 +1,10 @@
 ﻿using Newtonsoft.Json.Utilities;
+using System.ComponentModel;
 using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation.Entities
 {
+    [DisplayName("Entity: UI Object Entity")]
     public sealed class UIObjectEntity : EntityBase
     {
         [Preserve]

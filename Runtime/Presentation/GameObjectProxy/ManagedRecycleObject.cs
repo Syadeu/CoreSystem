@@ -1,6 +1,6 @@
 ﻿using UnityEngine.Events;
 
-namespace Syadeu.Mono
+namespace Syadeu.Presentation.Proxy
 {
     public sealed class ManagedRecycleObject : RecycleableMonobehaviour
     {

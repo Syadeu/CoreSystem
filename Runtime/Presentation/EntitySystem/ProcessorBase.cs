@@ -3,6 +3,7 @@ using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Internal;
+using Syadeu.Presentation.Proxy;
 using System;
 using Unity.Mathematics;
 using UnityEngine.Scripting;
