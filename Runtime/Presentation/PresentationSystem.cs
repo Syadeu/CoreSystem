@@ -16,7 +16,7 @@ namespace Syadeu.Presentation
     /// <typeparam name="T"></typeparam>
     public struct PresentationSystem<T> : IValidation, IDisposable, IEquatable<PresentationSystem<T>> where T : PresentationSystemEntity
     {
-        public static PresentationSystem<T> Null = new PresentationSystem<T>(Hash.Empty, -1);
+        public static readonly PresentationSystem<T> Null = new PresentationSystem<T>(Hash.Empty, -1);
         private static PresentationSystem<T> s_Instance = Null;
         private static PresentationSystem<T> Instance
         {

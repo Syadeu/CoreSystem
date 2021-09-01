@@ -804,15 +804,6 @@ namespace Syadeu.Presentation.Proxy
                 }
             }
             m_Instances.Clear();
-            foreach (var item in m_TerminatedProxies)
-            {
-                int count = item.Value.Count;
-                var prefab = item.Key.GetObjectSetting().m_RefPrefab;
-                for (int i = 0; i < count; i++)
-                {
-                    prefab.ReleaseInstance(item.Value.Pop().gameObject);
-                }
-            }
             m_TerminatedProxies.Clear();
         }
 
