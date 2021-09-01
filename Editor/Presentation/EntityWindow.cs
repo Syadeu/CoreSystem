@@ -71,6 +71,21 @@ namespace SyadeuEditor.Presentation
 
             m_DataListWindow.Reload();
         }
+
+        public void Select(IReference reference)
+        {
+            var obj = reference.GetObject();
+            if (obj == null) return;
+
+            var iter = ObjectBaseDrawers.Where((other) => other.m_TargetObject.Equals(obj));
+            if (!iter.Any())
+            {
+                return;
+            }
+
+            m_SelectedObject = iter.First();
+            m_DataListWindow.Select(m_SelectedObject);
+        }
         public void Select(ObjectBaseDrawer drawer)
         {
             m_SelectedObject = drawer;
@@ -253,6 +268,17 @@ namespace SyadeuEditor.Presentation
                 m_MainWindow.m_SelectedObject = obj;
             }
 
+            public void Select(IReference reference)
+            {
+                var obj = reference.GetObject();
+                if (obj == null) return;
+
+                var iter = EntityListTreeView.GetRows().Where((other) => (other is EntityListTreeView.ObjectTreeElement objEle) && objEle.Target.m_TargetObject.Equals(obj));
+
+                if (!iter.Any()) return;
+
+                EntityListTreeView.SetSelection(new int[] { iter.First().id });
+            }
             public void Select(ObjectBaseDrawer drawer)
             {
                 var iter = EntityListTreeView.GetRows().Where((other) => (other is EntityListTreeView.ObjectTreeElement objEle) && objEle.Target.Equals(drawer));

@@ -96,7 +96,7 @@ namespace SyadeuEditor.Presentation
             return currentValue;
         }
 
-        public static void DrawReferenceSelector(string name, Action<Hash> setter, IReference current, Type targetType)
+        public void DrawReferenceSelector(string name, Action<Hash> setter, IReference current, Type targetType)
         {
             GUIContent displayName;
             if (current == null || current.Hash.Equals(Hash.Empty)) displayName = new GUIContent("None");
@@ -132,17 +132,15 @@ namespace SyadeuEditor.Presentation
                 case EventType.ContextClick:
                     if (!fieldRect.Contains(Event.current.mousePosition)) break;
 
-                    "in 2".ToLog();
-
                     GenericMenu menu = new GenericMenu();
                     menu.AddDisabledItem(displayName);
                     menu.AddSeparator(string.Empty);
 
                     if (current.IsValid())
                     {
-                        menu.AddItem(new GUIContent("To Reference"), true, () =>
+                        menu.AddItem(new GUIContent("To Reference"), false, () =>
                         {
-
+                            EntityWindow.Instance.Select(current);
                         });
                     }
                     else
