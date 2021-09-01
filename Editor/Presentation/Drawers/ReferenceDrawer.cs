@@ -51,16 +51,21 @@ namespace SyadeuEditor.Presentation
 
                 clone.Hash = Hash.NewHash();
                 clone.Name += "_Clone";
-                EntityDataList.Instance.m_Objects.Add(clone.Hash, clone);
+                //EntityDataList.Instance.m_Objects.Add(clone.Hash, clone);
+                if (EntityWindow.IsOpened)
+                {
+                    EntityWindow.Instance.Add(clone);
+                }
+                else EntityDataList.Instance.m_Objects.Add(clone.Hash, clone);
 
                 object temp = TypeHelper.GetConstructorInfo(DeclaredType, TypeHelper.TypeOf<ObjectBase>.Type).Invoke(
                     new object[] { clone });
                 currentValue = (IReference)temp;
 
-                if (EntityWindow.IsOpened)
-                {
-                    EntityWindow.Instance.Reload();
-                }
+                //if (EntityWindow.IsOpened)
+                //{
+                //    //EntityWindow.Instance.Reload();
+                //}
             }
             EditorGUI.EndDisabledGroup();
 

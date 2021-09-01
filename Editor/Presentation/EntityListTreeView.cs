@@ -20,6 +20,8 @@ namespace SyadeuEditor.Presentation
     {
         const float kRowHeights = 20f;
         const float kToggleWidth = 18f;
+        private static readonly Color s_WarningColor = new Color32(255, 178, 102, 255);
+        private static readonly Color s_ErrorColor = new Color32(255, 102, 102, 255);
 
         private int m_CreationID = 0;
         private SearchField m_SearchField;
@@ -114,6 +116,13 @@ namespace SyadeuEditor.Presentation
 
             SetupDepthsFromParentsAndChildren(m_Root);
         }
+        public void RemoveItem(EntityWindow.ObjectBaseDrawer drawer)
+        {
+            var iter = GetRows().Where((other) => (other is ObjectTreeElement objEle) && objEle.Target.Equals(drawer));
+            if (!iter.Any()) return;
+
+            iter.First().parent.children.Remove(iter.First());
+        }
 
         public override void OnGUI(Rect rect)
         {
@@ -133,7 +142,21 @@ namespace SyadeuEditor.Presentation
         }
         protected override void RowGUI(RowGUIArgs args)
         {
+            if (!(args.item is ElementBase element))
+            {
+                base.RowGUI(args);
+                return;
+            }
+
+            Color origin = GUI.color;
+            if (element.Obsolete != null)
+            {
+                if (element.Obsolete.IsError) GUI.color = s_ErrorColor;
+                else GUI.color = s_WarningColor;
+            }
+
             base.RowGUI(args);
+            GUI.color = origin;
         }
 
         protected override bool DoesItemMatchSearch(TreeViewItem item, string search)
@@ -169,15 +192,8 @@ namespace SyadeuEditor.Presentation
             {
                 menu.AddItem(new GUIContent("Add"), false, () =>
                 {
-                    if (EntityDataList.Instance.m_Objects == null) EntityDataList.Instance.m_Objects = new Dictionary<Hash, ObjectBase>();
-
-                    ObjectBase ins = (ObjectBase)Activator.CreateInstance(folder.Type);
-
-                    EntityDataList.Instance.m_Objects.Add(ins.Hash, ins);
-                    var drawer = m_Window.AddData(ins);
-                    AddItem(drawer);
-
-                    Reload();
+                    var drawer = EntityWindow.Instance.Add(folder.Type);
+                    EntityWindow.Instance.Select(drawer);
                 });
             }
             else if (item is ObjectTreeElement obj)
@@ -186,8 +202,6 @@ namespace SyadeuEditor.Presentation
                 {
                     m_Window.Remove(obj.Target);
                     item.parent.children.Remove(item);
-
-                    Reload();
                 });
             }
             menu.ShowAsContext();
@@ -195,13 +209,18 @@ namespace SyadeuEditor.Presentation
             base.ContextClickedItem(id);
         }
 
-        public class FolderTreeElement : TreeViewItem
+        public abstract class ElementBase : TreeViewItem
+        {
+            public abstract Type Type { get; }
+            public abstract ObsoleteAttribute Obsolete { get; }
+        }
+        public class FolderTreeElement : ElementBase
         {
             private Type m_Type;
             private ObsoleteAttribute m_ObsoleteAttribute;
             private DisplayNameAttribute m_DisplayNameAttribute;
 
-            public Type Type => m_Type;
+            public override Type Type => m_Type;
             public override string displayName
             {
                 get
@@ -221,6 +240,7 @@ namespace SyadeuEditor.Presentation
                     return output;
                 }
             }
+            public override ObsoleteAttribute Obsolete => m_ObsoleteAttribute;
 
             public FolderTreeElement(int id, Type type)
             {
@@ -231,9 +251,10 @@ namespace SyadeuEditor.Presentation
                 m_DisplayNameAttribute = type.GetCustomAttribute<DisplayNameAttribute>();
             }
         }
-        public sealed class ObjectTreeElement : TreeViewItem
+        public sealed class ObjectTreeElement : ElementBase
         {
             private EntityWindow.ObjectBaseDrawer m_Target;
+            private ObsoleteAttribute m_ObsoleteAttribute;
             private DisplayNameAttribute m_DisplayNameAttribute;
 
             public override string displayName
@@ -244,12 +265,15 @@ namespace SyadeuEditor.Presentation
                 }
             }
             public EntityWindow.ObjectBaseDrawer Target => m_Target;
+            public override Type Type => m_Target.Type;
+            public override ObsoleteAttribute Obsolete => m_ObsoleteAttribute;
 
             public ObjectTreeElement(int id, EntityWindow.ObjectBaseDrawer drawer)
             {
                 this.id = id;
                 m_Target = drawer;
 
+                m_ObsoleteAttribute = drawer.Type.GetCustomAttribute<ObsoleteAttribute>();
                 m_DisplayNameAttribute = drawer.Type.GetCustomAttribute<DisplayNameAttribute>();
             }
         }

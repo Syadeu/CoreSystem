@@ -56,17 +56,6 @@ namespace SyadeuEditor.Presentation
 
             base.OnDisable();
         }
-        public ObjectBaseDrawer AddData(ObjectBase other, bool select = true)
-        {
-            ObjectBaseDrawer drawer;
-
-            drawer = ObjectBaseDrawer.GetDrawer(other);
-            
-            ObjectBaseDrawers.Add(drawer);
-
-            if (select) m_SelectedObject = drawer;
-            return drawer;
-        }
 
         public void Reload()
         {
@@ -75,19 +64,58 @@ namespace SyadeuEditor.Presentation
             {
                 foreach (var item in EntityDataList.Instance.m_Objects.Values)
                 {
-                    AddData(item);
+                    //AddData(item);
+                    var drawer = ObjectBaseDrawer.GetDrawer(item);
+                    ObjectBaseDrawers.Add(drawer);
                 }
             }
 
             m_DataListWindow.Reload();
         }
-
-        public void Remove(ObjectBaseDrawer objectBase)
+        public void Select(ObjectBaseDrawer drawer)
         {
-            ObjectBaseDrawers.Remove(objectBase);
-
-            EntityDataList.Instance.m_Objects.Remove(objectBase.m_TargetObject.Hash);
+            m_SelectedObject = drawer;
+            m_DataListWindow.Select(drawer);
         }
+        public ObjectBaseDrawer Add(Type objType)
+        {
+            if (EntityDataList.Instance.m_Objects == null) EntityDataList.Instance.m_Objects = new Dictionary<Hash, ObjectBase>();
+
+            ObjectBase ins = (ObjectBase)Activator.CreateInstance(objType);
+            EntityDataList.Instance.m_Objects.Add(ins.Hash, ins);
+
+            ObjectBaseDrawer drawer = ObjectBaseDrawer.GetDrawer(ins);
+            ObjectBaseDrawers.Add(drawer);
+            m_DataListWindow.Add(drawer);
+            return drawer;
+        }
+        public ObjectBaseDrawer Add(ObjectBase ins)
+        {
+            if (EntityDataList.Instance.m_Objects == null) EntityDataList.Instance.m_Objects = new Dictionary<Hash, ObjectBase>();
+
+            EntityDataList.Instance.m_Objects.Add(ins.Hash, ins);
+
+            ObjectBaseDrawer drawer = ObjectBaseDrawer.GetDrawer(ins);
+            ObjectBaseDrawers.Add(drawer);
+            m_DataListWindow.Add(drawer);
+            return drawer;
+        }
+
+        public void Remove(ObjectBaseDrawer obj)
+        {
+            if (m_SelectedObject.Equals(obj)) m_SelectedObject = null;
+
+            ObjectBaseDrawers.Remove(obj);
+
+            EntityDataList.Instance.m_Objects.Remove(obj.m_TargetObject.Hash);
+        }
+
+        //public void Remove(ObjectBaseDrawer objectBase)
+        //{
+        //    ObjectBaseDrawers.Remove(objectBase);
+
+        //    EntityDataList.Instance.m_Objects.Remove(objectBase.m_TargetObject.Hash);
+        //}
 
         private Rect m_CopyrightRect = new Rect(350, 485, 245, 20);
 
@@ -157,13 +185,14 @@ namespace SyadeuEditor.Presentation
                 PopupWindow.Show(lastRect, SelectorPopup<Type, Type>.GetWindow(types,
                     (t) =>
                     {
-                        if (EntityDataList.Instance.m_Objects == null) EntityDataList.Instance.m_Objects = new Dictionary<Hash, ObjectBase>();
+                        //if (EntityDataList.Instance.m_Objects == null) EntityDataList.Instance.m_Objects = new Dictionary<Hash, ObjectBase>();
 
-                        T ins = (T)Activator.CreateInstance(t);
+                        //T ins = (T)Activator.CreateInstance(t);
 
-                        EntityDataList.Instance.m_Objects.Add(ins.Hash, ins);
-                        m_MainWindow.AddData(ins);
-                        m_MainWindow.Reload();
+                        //EntityDataList.Instance.m_Objects.Add(ins.Hash, ins);
+                        //m_MainWindow.AddData(ins);
+                        var drawer = m_MainWindow.Add(t);
+                        m_MainWindow.m_DataListWindow.Add(drawer);
                     },
                     (t) => t,
                     null,
@@ -232,6 +261,24 @@ namespace SyadeuEditor.Presentation
                 m_MainWindow.m_SelectedObject = obj;
             }
 
+            public void Select(ObjectBaseDrawer drawer)
+            {
+                var iter = EntityListTreeView.GetRows().Where((other) => (other is EntityListTreeView.ObjectTreeElement objEle) && objEle.Target.Equals(drawer));
+
+                if (!iter.Any()) return;
+
+                EntityListTreeView.SetSelection(new int[] { iter.First().id });
+            }
+            public void Add(ObjectBaseDrawer drawer)
+            {
+                EntityListTreeView.AddItem(drawer);
+                EntityListTreeView.Reload();
+            }
+            public void Remove(ObjectBaseDrawer drawer)
+            {
+                EntityListTreeView.RemoveItem(drawer);
+                EntityListTreeView.Reload();
+            }
             public void Reload()
             {
                 if (Drawers.Count == 0) return;
