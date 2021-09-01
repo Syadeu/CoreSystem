@@ -540,54 +540,6 @@ namespace SyadeuEditor
                     {
                     }
                 }
-                //else if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(targetType))
-                //{
-                //    ObjectBase[] entities = EntityDataList.Instance.GetData<EntityDataBase>()
-                //        .Where((other) => other.GetType().Equals(targetType) ||
-                //                targetType.IsAssignableFrom(other.GetType()))
-                //        .ToArray();
-
-                //    try
-                //    {
-                //        PopupWindow.Show(rect, SelectorPopup<Hash, ObjectBase>.GetWindow(
-                //        list: entities,
-                //        setter: setter,
-                //        getter: (att) =>
-                //        {
-                //            return att.Hash;
-                //        },
-                //        noneValue: Hash.Empty,
-                //        (other) => other.Name
-                //        ));
-                //    }
-                //    catch (ExitGUIException)
-                //    {
-                //    }
-                //}
-                //else if (TypeHelper.TypeOf<AttributeBase>.Type.IsAssignableFrom(targetType))
-                //{
-                //    AttributeBase[] attributes = EntityDataList.Instance.GetData<AttributeBase>()
-                //        .Where((other) => other.GetType().Equals(targetType) ||
-                //                targetType.IsAssignableFrom(other.GetType()))
-                //        .ToArray();
-
-                //    try
-                //    {
-                //        PopupWindow.Show(rect, SelectorPopup<Hash, AttributeBase>.GetWindow(
-                //        list: attributes,
-                //        setter: setter,
-                //        getter: (att) =>
-                //        {
-                //            return att.Hash;
-                //        },
-                //        noneValue: Hash.Empty,
-                //        (other) => other.Name
-                //        ));
-                //    }
-                //    catch (ExitGUIException)
-                //    {
-                //    }
-                //}
                 else
                 {
                     ObjectBase[] actionBases = EntityDataList.Instance.GetData<ObjectBase>()

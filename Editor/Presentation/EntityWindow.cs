@@ -64,7 +64,6 @@ namespace SyadeuEditor.Presentation
             {
                 foreach (var item in EntityDataList.Instance.m_Objects.Values)
                 {
-                    //AddData(item);
                     var drawer = ObjectBaseDrawer.GetDrawer(item);
                     ObjectBaseDrawers.Add(drawer);
                 }
@@ -109,13 +108,6 @@ namespace SyadeuEditor.Presentation
 
             EntityDataList.Instance.m_Objects.Remove(obj.m_TargetObject.Hash);
         }
-
-        //public void Remove(ObjectBaseDrawer objectBase)
-        //{
-        //    ObjectBaseDrawers.Remove(objectBase);
-
-        //    EntityDataList.Instance.m_Objects.Remove(objectBase.m_TargetObject.Hash);
-        //}
 
         private Rect m_CopyrightRect = new Rect(350, 485, 245, 20);
 
