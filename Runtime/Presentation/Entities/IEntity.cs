@@ -5,7 +5,7 @@ using Unity.Mathematics;
 namespace Syadeu.Presentation.Entities
 {
     /// <summary>
-    /// <see cref="EntitySystem"/>을 통해 생성하는(혹은 생성된) <see cref="DataGameObject"/>가 있는 엔티티입니다.
+    /// <see cref="EntitySystem"/>을 통해 생성하는(혹은 생성된) <see cref="ProxyTransform"/>이 있는 엔티티입니다.
     /// </summary>
     /// <remarks>
     /// class 맴버 선언을 그리 추천하고 싶지 않지만, 필요에 의해 선언이 내부에 되었다면,<br/>
