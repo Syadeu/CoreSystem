@@ -16,7 +16,10 @@ using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Experimental.GlobalIllumination;
+
+#if ENABLE_URP
+using UnityEngine.Rendering.Universal;
+#endif
 
 namespace Syadeu.Presentation.Render
 {
@@ -28,8 +31,13 @@ namespace Syadeu.Presentation.Render
         public override bool EnableAfterPresentation => true;
 
         private ObClass<Camera> m_Camera;
+#if ENABLE_URP
+        private UniversalAdditionalCameraData m_CameraData;
+#endif
         private ObClass<Light> m_DirectionalLight;
         private Matrix4x4 m_Matrix4x4;
+
+        private readonly List<Camera> m_UICameras = new List<Camera>();
 
         [ConfigValue(Header = "Resolution", Name = "X")] private int m_ResolutionX;
         [ConfigValue(Header = "Resolution", Name = "Y")] private int m_ResolutionY;
@@ -98,10 +106,25 @@ namespace Syadeu.Presentation.Render
         }
         private void OnCameraChangedHandler(Camera from, Camera to)
         {
-            OnCameraChanged.Invoke(from, to);
+            OnCameraChanged?.Invoke(from, to);
             if (to == null) return;
 
             m_Matrix4x4 = GetCameraMatrix4X4(to);
+#if ENABLE_URP
+            m_CameraData = Camera.GetUniversalAdditionalCameraData();
+#endif
+            for (int i = m_UICameras.Count - 1; i >= 0; i--)
+            {
+                if (m_UICameras[i] == null)
+                {
+                    m_UICameras.RemoveAt(i);
+                    continue;
+                }
+
+#if ENABLE_URP
+                m_CameraData.cameraStack.Add(m_UICameras[i]);
+#endif
+            }
         }
         private void Instance_OnRender()
         {
@@ -165,6 +188,21 @@ namespace Syadeu.Presentation.Render
             return m_CameraFrustum.AsReadOnly();
         }
 		internal CameraFrustum GetRawFrustum() => m_CameraFrustum;
+
+        public void AddUICamera(Camera camera)
+        {
+            m_UICameras.Add(camera);
+#if ENABLE_URP
+            if (m_CameraData != null) m_CameraData.cameraStack.Add(camera);
+#endif
+        }
+        public void RemoveUICamera(Camera camera)
+        {
+            m_UICameras.Remove(camera);
+#if ENABLE_URP
+            if (m_CameraData != null) m_CameraData.cameraStack.Remove(camera);
+#endif
+        }
 
         private float4x4 GetCameraWorldMatrix()
         {

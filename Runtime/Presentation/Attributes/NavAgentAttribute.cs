@@ -87,7 +87,7 @@ namespace Syadeu.Presentation.Attributes
             }
 
             eventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(parent, OnMoveStateChangedEvent.MoveState.OnMoving));
-            TriggerOnMoveAction();
+            m_OnMoveActions.Execute(Parent);
 
             while (
                 tr.hasProxy &&
@@ -99,7 +99,7 @@ namespace Syadeu.Presentation.Attributes
                 tr.Synchronize(ProxyTransform.SynchronizeOption.TR);
                 eventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(parent, OnMoveStateChangedEvent.MoveState.OnMoving));
 
-                TriggerOnMoveAction();
+                m_OnMoveActions.Execute(Parent);
 
                 yield return null;
             }
@@ -110,19 +110,10 @@ namespace Syadeu.Presentation.Attributes
                 if (NavMeshAgent.isOnNavMesh) NavMeshAgent.ResetPath();
             }
 
-            TriggerOnMoveAction();
-
             IsMoving = false;
 
             eventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(parent, OnMoveStateChangedEvent.MoveState.Stopped | OnMoveStateChangedEvent.MoveState.Idle));
-        }
-
-        private void TriggerOnMoveAction()
-        {
-            for (int i = 0; i < m_OnMoveActions.Length; i++)
-            {
-                m_OnMoveActions[i].Execute(Parent);
-            }
+            m_OnMoveActions.Execute(Parent);
         }
     }
 
@@ -156,6 +147,7 @@ namespace Syadeu.Presentation.Attributes
                 att.IsMoving = false;
 
                 EventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(entity, OnMoveStateChangedEvent.MoveState.Teleported | OnMoveStateChangedEvent.MoveState.Idle));
+                att.m_OnMoveActions.Execute(entity.As<IEntity, IEntityData>());
             }
 
             att.NavMeshAgent = null;

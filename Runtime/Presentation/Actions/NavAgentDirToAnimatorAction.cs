@@ -59,13 +59,16 @@ namespace Syadeu.Presentation.Actions
                 ;
 
             animator.SetFloat(m_Horizontal, math.lerp(prevHorizontal, speed, Time.deltaTime * m_AnimationSpeed));
-            //animator.SetFloat(m_Vertical, math.lerp(prevVertical, dir.y, Time.deltaTime * m_AnimationSpeed));
+
 
             if (navAgent.IsMoving)
             {
                 animator.SetFloat(m_Speed, math.lerp(prevSpeed, speed, Time.deltaTime * m_AnimationSpeed));
             }
-            else animator.SetFloat(m_Speed, 0);
+            else
+            {
+                animator.SetFloat(m_Speed, 0);
+            }
         }
     }
 }

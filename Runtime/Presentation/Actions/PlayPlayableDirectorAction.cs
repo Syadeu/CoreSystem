@@ -1,9 +1,11 @@
-﻿using Newtonsoft.Json;
+﻿using Cinemachine;
+using Newtonsoft.Json;
 using Syadeu.Internal;
 using Syadeu.Mono;
 using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Proxy;
+using Syadeu.Presentation.Render;
 using System;
 using System.Collections;
 using System.ComponentModel;
@@ -72,6 +74,11 @@ namespace Syadeu.Presentation.Actions
                     director.SetGenericBinding(item.sourceObject, proxy.gameObject);
                     continue;
                 }
+                //if (type.Equals(TypeHelper.TypeOf<CinemachineBrain>.Type))
+                //{
+                //    director.SetGenericBinding(item.sourceObject, PresentationSystem<RenderSystem>.System.Camera.GetComponent<CinemachineBrain>());
+                //    continue;
+                //}
 
                 var component = proxy.GetComponent(type);
                 if (component == null)
