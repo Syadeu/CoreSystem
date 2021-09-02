@@ -252,7 +252,7 @@ namespace Syadeu.Presentation.Proxy
 
             return temp;
         }
-        public void For(Action<ProxyTransform> action)
+        [Obsolete] public void For(Action<ProxyTransform> action)
         {
             for (int i = 0; i < m_UnsafeList->m_Length; i++)
             {
