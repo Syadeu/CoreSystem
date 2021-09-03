@@ -53,9 +53,12 @@ namespace Syadeu.Presentation.TurnTable
 
                 quaternion rot = quaternion.LookRotation(forward, new float3(0, 1, 0));
                 float4x4 vp = new float4x4(rot, float3.zero);
-                float3 point = math.normalize(math.mul(vp, new float4(velocity, 1)).xyz);
+                float3
+                    point = math.normalize(math.mul(vp, new float4(velocity, 1)).xyz),
+                    targetVelocity = point * MoveOffset;
 
-                TargetPosition += point * MoveOffset;
+                $"{AxisVelocity} to {targetVelocity}".ToLog();
+                TargetPosition += targetVelocity;
             }
         }
         public float MoveOffset { get; set; } = .07f;
@@ -126,7 +129,6 @@ namespace Syadeu.Presentation.TurnTable
             m_Movement.MoveOffset = MoveOffset;
             m_Movement.MoveSpeed = MoveSpeed;
 
-            $"{m_Movement.AxisVelocity}".ToLog();
             m_Movement.AxisVelocity = target.ReadValue<Vector2>();
         }
     }
