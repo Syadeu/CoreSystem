@@ -25,11 +25,9 @@ namespace Syadeu.Presentation.TurnTable
                 float3
                     forward = Vector3.ProjectOnPlane(RenderSystem.Camera.transform.forward, Vector3.up),
                     currentPos = m_TargetGroup.transform.position,
-                    project = Vector3.ProjectOnPlane(math.normalize(currentPos - TargetPosition), Vector3.up),
-                    velocity = math.normalize(new float3(project.x, 0, project.y));
+                    project = Vector3.ProjectOnPlane(math.normalize(currentPos - TargetPosition), Vector3.up);
 
                 quaternion rot = quaternion.LookRotation(forward, new float3(0, 1, 0));
-                float4x4 vp = new float4x4(new float3x3(rot), float3.zero);
 
                 float
                     horizontal = math.dot(project, math.mul(rot, Vector3.right)),
@@ -62,7 +60,6 @@ namespace Syadeu.Presentation.TurnTable
                     point = math.normalize(math.mul(vp, new float4(velocity, 1)).xyz),
                     targetVelocity = point * MoveOffset;
 
-                $"{AxisVelocity} to {targetVelocity}".ToLog();
                 TargetPosition += targetVelocity;
             }
         }
@@ -104,8 +101,7 @@ namespace Syadeu.Presentation.TurnTable
 
             while (m_TargetGroup != null)
             {
-                //groupTr.position = math.lerp(groupTr.position, TargetPosition, Time.deltaTime * MoveSpeed);
-                groupTr.position = TargetPosition;
+                groupTr.position = math.lerp(groupTr.position, TargetPosition, Time.deltaTime * MoveSpeed);
 
                 yield return waitForFixedUpdate;
             }

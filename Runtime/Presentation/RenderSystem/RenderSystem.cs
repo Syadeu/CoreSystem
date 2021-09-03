@@ -204,18 +204,17 @@ namespace Syadeu.Presentation.Render
 #endif
         }
 
-        private float4x4 GetCameraWorldMatrix()
-        {
-            float4x4 projection = m_LastCameraData.projectionMatrix;
-            float4x4 tr = new float4x4(new float3x3(m_LastCameraData.orientation), m_LastCameraData.position);
+        //private float4x4 GetCameraWorldMatrix()
+        //{
+        //    float4x4 projection = m_LastCameraData.projectionMatrix;
+        //    float4x4 tr = new float4x4(new float3x3(m_LastCameraData.orientation), m_LastCameraData.position);
 
-            return math.inverse(math.mul(projection, math.fastinverse(tr)));
-        }
+        //    return math.inverse(math.mul(projection, math.fastinverse(tr)));
+        //}
 
         public float3 WorldToViewportPoint(float3 worldPoint)
         {
-            float4x4 localToWorld = new float4x4(new float3x3(m_LastCameraData.orientation), m_LastCameraData.position);
-            float4x4 vp = math.mul(m_LastCameraData.projectionMatrix, math.fastinverse(localToWorld));
+            float4x4 vp = math.mul(m_LastCameraData.projectionMatrix, m_LastCameraData.worldToLocalMatrix);
 
             float4 temp = math.mul(vp, new float4(worldPoint, 1));
             float3 point = temp.xyz / -temp.w;
@@ -264,17 +263,30 @@ namespace Syadeu.Presentation.Render
         //    pos.x *= pos.w; pos.y *= pos.w; pos.z *= pos.w;
         //    return pos.xyz;
         //}
-        public float3 ViewportToScreenPoint(float3 viewportPoint)
-        {
-            return new float3(
-                viewportPoint.x * m_LastCameraData.pixelWidth,
-                viewportPoint.y * m_LastCameraData.pixelHeight,
-                //viewportPoint.z
-                LastCameraData.nearClipPlane
-                );
-        }
+        //public float3 ViewportToScreenPoint(float3 viewportPoint)
+        //{
+        //    $"{viewportPoint} , {m_LastCameraData.pixelWidth} : {m_LastCameraData.pixelHeight}".ToLog();
+        //    return new float3(
+        //        viewportPoint.x * m_LastCameraData.pixelWidth,
+        //        viewportPoint.y * m_LastCameraData.pixelHeight,
+        //        //viewportPoint.z
+        //        LastCameraData.nearClipPlane
+        //        );
+        //}
 
-        public float3 WorldToScreenPoint(float3 worldPoint) => ViewportToScreenPoint(WorldToViewportPoint(worldPoint));
+        //public float3 WorldToScreenPoint(float3 worldPoint) => ViewportToScreenPoint(WorldToViewportPoint(worldPoint));
+        public float3 WorldToScreenPoint(float3 worldPoint) => m_Camera.Value.WorldToScreenPoint(worldPoint);
+        //public float3 WorldToScreenPoint(float3 worldPoint)
+        //{
+        //    float4x4 vp = math.mul(LastCameraData.projectionMatrix, LastCameraData.worldToLocalMatrix);
+        //    float4 temp = math.mul(vp, new float4(worldPoint, 1));
+
+        //    if (temp.w.Equals(0)) return float3.zero;
+
+        //    temp.x = (temp.x / temp.w + 1) * .5f * LastCameraData.pixelWidth;
+        //    temp.y = (temp.y / temp.w + 1) * .5f * LastCameraData.pixelHeight;
+        //    return new float3(temp.xy, worldPoint.z);
+        //}
 
         #region Ray
 
