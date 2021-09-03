@@ -39,6 +39,7 @@ namespace Syadeu.Presentation.Input
             }
 
             private bool m_IsHolding = false;
+            private CoreRoutine m_LastCor;
             private void Performed(InputAction.CallbackContext other)
             {
                 ResponseActions.Execute(other);
@@ -46,7 +47,9 @@ namespace Syadeu.Presentation.Input
 
                 if (Hold && !m_IsHolding)
                 {
-                    CoreSystem.StartUnityUpdate(this, WhileHold(other));
+                    if (m_LastCor.IsValid()) CoreSystem.RemoveUnityUpdate(m_LastCor);
+
+                    m_LastCor = CoreSystem.StartUnityUpdate(this, WhileHold(other));
                     m_IsHolding = true;
                 }
             }
@@ -59,8 +62,6 @@ namespace Syadeu.Presentation.Input
 
                     yield return null;
                 }
-
-                "Exit".ToLog();
             }
             private void Canceled(InputAction.CallbackContext obj)
             {

@@ -22,8 +22,15 @@ namespace Syadeu.Presentation.TurnTable
         {
             get
             {
-                float3 currentPos = m_TargetGroup.transform.position;
-                return math.normalize(currentPos - TargetPosition).xz;
+                float3
+                    forward = Vector3.ProjectOnPlane(RenderSystem.Camera.transform.forward, Vector3.up),
+                    currentPos = m_TargetGroup.transform.position,
+                    project = Vector3.ProjectOnPlane(math.normalize(currentPos - TargetPosition), Vector3.up),
+                    velocity = math.normalize(new float3(project.x, 0, project.y));
+
+
+
+                return math.normalize(project.xz);
             }
             set
             {
@@ -46,13 +53,13 @@ namespace Syadeu.Presentation.TurnTable
 
                 quaternion rot = quaternion.LookRotation(forward, new float3(0, 1, 0));
                 float4x4 vp = new float4x4(rot, float3.zero);
-                float3 point = math.mul(vp, new float4(velocity, 1)).xyz;
+                float3 point = math.normalize(math.mul(vp, new float4(velocity, 1)).xyz);
 
                 TargetPosition += point * MoveOffset;
             }
         }
         public float MoveOffset { get; set; } = .07f;
-        public float MoveSpeed { get; set; } = 4;
+        public float MoveSpeed { get; set; } = 8;
         public float3 TargetPosition
         {
             get
@@ -84,25 +91,31 @@ namespace Syadeu.Presentation.TurnTable
 
         private IEnumerator Updater()
         {
+            WaitForFixedUpdate waitForFixedUpdate = new WaitForFixedUpdate();
             Transform groupTr = m_TargetGroup.transform;
+
             while (m_TargetGroup != null)
             {
-                groupTr.position = math.lerp(groupTr.position, TargetPosition, Time.deltaTime * MoveSpeed);
+                //groupTr.position = math.lerp(groupTr.position, TargetPosition, Time.deltaTime * MoveSpeed);
+                groupTr.position = TargetPosition;
 
-                yield return null;
+                yield return waitForFixedUpdate;
             }
         }
     }
     public sealed class TRPGCameraMovementParamAction : ParamAction<InputAction.CallbackContext>
     {
+        [JsonProperty] public float MoveOffset { get; set; } = .07f;
+        [JsonProperty] public float MoveSpeed { get; set; } = 8;
+
         [JsonIgnore] private CameraComponent m_Camera;
         [JsonIgnore] private TRPGCameraMovement m_Movement;
 
         protected override void OnCreated()
         {
-            CoreSystem.Logger.True(CameraComponent.HasInstance, "Camera null");
+            m_Camera = PresentationSystem<RenderSystem>.System.Camera.GetComponent<CameraComponent>();
+            CoreSystem.Logger.NotNull(m_Camera, "Camera null");
 
-            m_Camera = CameraComponent.Instance;
             m_Movement = m_Camera.GetCameraComponent<TRPGCameraMovement>();
 
             CoreSystem.Logger.NotNull(m_Camera);
@@ -110,6 +123,10 @@ namespace Syadeu.Presentation.TurnTable
         }
         protected override void OnExecute(InputAction.CallbackContext target)
         {
+            m_Movement.MoveOffset = MoveOffset;
+            m_Movement.MoveSpeed = MoveSpeed;
+
+            $"{m_Movement.AxisVelocity}".ToLog();
             m_Movement.AxisVelocity = target.ReadValue<Vector2>();
         }
     }

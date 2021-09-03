@@ -32,12 +32,12 @@ namespace Syadeu.Presentation.Input
         }
         public override void OnDispose()
         {
-            for (int i = 0; i < InputSystemSettings.Instance.m_AdditionalInputActions.Length; i++)
-            {
-                InputSystemSettings.CustomInputAction temp = InputSystemSettings.Instance.m_AdditionalInputActions[i];
+            //for (int i = 0; i < InputSystemSettings.Instance.m_AdditionalInputActions.Length; i++)
+            //{
+            //    InputSystemSettings.CustomInputAction temp = InputSystemSettings.Instance.m_AdditionalInputActions[i];
 
-                temp.Disable();
-            }
+            //    temp.Disable();
+            //}
         }
 
         private void asdasd()

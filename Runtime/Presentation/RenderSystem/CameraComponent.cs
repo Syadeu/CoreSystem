@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Syadeu.Presentation.Render
 {
-    public sealed class CameraComponent : MonoManager<CameraComponent>
+    public sealed class CameraComponent : MonoBehaviour
     {
         [SerializeField] private Camera m_Camera = null;
         [SerializeField] private CinemachineBrain m_CinemachineBrain = null;
@@ -13,14 +13,15 @@ namespace Syadeu.Presentation.Render
 
         private AdditionalCameraComponent[] m_CameraComponents;
 
-        public override void OnInitialize()
+        private void Awake()
         {
             if (m_Camera == null) m_Camera = GetComponentInChildren<Camera>();
             if (m_CinemachineBrain == null) m_CinemachineBrain = GetComponentInChildren<CinemachineBrain>();
-            if (m_TargetGroup == null) m_TargetGroup = GetComponentInChildren<CinemachineTargetGroup>();
+            if (m_TargetGroup == null) m_TargetGroup = transform.parent.GetComponentInChildren<CinemachineTargetGroup>();
 
             CoreSystem.Logger.NotNull(m_Camera);
             CoreSystem.Logger.NotNull(m_CinemachineBrain);
+            CoreSystem.Logger.NotNull(m_TargetGroup);
 
             m_CameraComponents = GetComponentsInChildren<AdditionalCameraComponent>();
             for (int i = 0; i < m_CameraComponents.Length; i++)
@@ -28,10 +29,8 @@ namespace Syadeu.Presentation.Render
                 m_CameraComponents[i].CameraComponent = this;
                 m_CameraComponents[i].InternalInitialize(m_Camera, m_CinemachineBrain, m_TargetGroup);
             }
-
-            StartUnityUpdate(Starter());
         }
-        private IEnumerator Starter()
+        private IEnumerator Start()
         {
             ICustomYieldAwaiter awaiter = PresentationSystem<RenderSystem>.GetAwaiter();
 
