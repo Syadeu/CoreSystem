@@ -28,9 +28,14 @@ namespace Syadeu.Presentation.TurnTable
                     project = Vector3.ProjectOnPlane(math.normalize(currentPos - TargetPosition), Vector3.up),
                     velocity = math.normalize(new float3(project.x, 0, project.y));
 
+                quaternion rot = quaternion.LookRotation(forward, new float3(0, 1, 0));
+                float4x4 vp = new float4x4(new float3x3(rot), float3.zero);
 
+                float
+                    horizontal = math.dot(project, math.mul(rot, Vector3.right)),
+                    vertical = math.dot(project, math.mul(rot, Vector3.forward));
 
-                return math.normalize(project.xz);
+                return new float2(horizontal, vertical);
             }
             set
             {
