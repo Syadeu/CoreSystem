@@ -14,6 +14,7 @@ namespace Syadeu.Presentation.TurnTable
     {
         private CinemachineTargetGroup m_TargetGroup;
 
+        private bool m_WasZero = false;
         private Transform m_TargetTransform = null;
         private float3 m_TargetPosition = 0;
 
@@ -26,19 +27,32 @@ namespace Syadeu.Presentation.TurnTable
             }
             set
             {
-                if (RenderSystem == null) return;
+                if (RenderSystem == null)
+                {
+                    "null return".ToLog();
+                    return;
+                }
+                if (value.Equals(float2.zero))
+                {
+                    if (m_WasZero) return;
+
+                    m_WasZero = true;
+                }
+                else m_WasZero = false;
 
                 float3 
                     forward = Vector3.ProjectOnPlane(RenderSystem.Camera.transform.forward, Vector3.up),
-                    velocity = new float3(value.x, 0, value.y);
+                    velocity = math.normalize(new float3(value.x, 0, value.y));
 
                 quaternion rot = quaternion.LookRotation(forward, new float3(0, 1, 0));
                 float4x4 vp = new float4x4(rot, float3.zero);
                 float3 point = math.mul(vp, new float4(velocity, 1)).xyz;
 
-                TargetPosition = point;
+                TargetPosition += point * MoveOffset;
             }
         }
+        public float MoveOffset { get; set; } = .07f;
+        public float MoveSpeed { get; set; } = 4;
         public float3 TargetPosition
         {
             get
@@ -57,7 +71,9 @@ namespace Syadeu.Presentation.TurnTable
         protected override void OnInitialize(Camera camera, CinemachineBrain brain, CinemachineTargetGroup targetGroup)
         {
             m_TargetGroup = targetGroup;
-            
+            m_TargetPosition = m_TargetGroup.transform.position;
+
+
             StartCoroutine(Updater());
         }
 
@@ -71,7 +87,7 @@ namespace Syadeu.Presentation.TurnTable
             Transform groupTr = m_TargetGroup.transform;
             while (m_TargetGroup != null)
             {
-                groupTr.position = TargetPosition;
+                groupTr.position = math.lerp(groupTr.position, TargetPosition, Time.deltaTime * MoveSpeed);
 
                 yield return null;
             }
