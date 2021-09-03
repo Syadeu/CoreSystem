@@ -81,8 +81,9 @@ namespace Syadeu.Presentation.Render
 			pixelWidth = cam.pixelWidth;
 			pixelHeight = cam.pixelHeight;
 
-			if (orthographic) projectionMatrix = float4x4.Ortho(pixelWidth, pixelHeight, nearClipPlane, farClipPlane);
-			else projectionMatrix = float4x4.PerspectiveFov(fov, aspect, nearClipPlane, farClipPlane);
+			//if (orthographic) projectionMatrix = float4x4.Ortho(pixelWidth, pixelHeight, nearClipPlane, farClipPlane);
+			//else projectionMatrix = float4x4.PerspectiveFov(fov, aspect, nearClipPlane, farClipPlane);
+			projectionMatrix = cam.projectionMatrix;
 		}
 	}
 
