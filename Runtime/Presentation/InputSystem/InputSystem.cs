@@ -26,14 +26,18 @@ namespace Syadeu.Presentation.Input
             {
                 InputSystemSettings.CustomInputAction temp = InputSystemSettings.Instance.m_AdditionalInputActions[i];
 
-                temp.InputAction.performed += (other) =>
-                {
-                    temp.ResponseActions.Execute(other);
-                    temp.Actions.Execute();
-                };
-                temp.InputAction.Enable();
+                temp.Enable();
             }
             return base.OnInitialize();
+        }
+        public override void OnDispose()
+        {
+            for (int i = 0; i < InputSystemSettings.Instance.m_AdditionalInputActions.Length; i++)
+            {
+                InputSystemSettings.CustomInputAction temp = InputSystemSettings.Instance.m_AdditionalInputActions[i];
+
+                temp.Disable();
+            }
         }
 
         private void asdasd()

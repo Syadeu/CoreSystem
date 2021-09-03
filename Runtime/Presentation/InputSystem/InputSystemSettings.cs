@@ -21,6 +21,23 @@ namespace Syadeu.Presentation.Input
 
             [Header("Actions")]
             public Reference<InstanceAction>[] Actions = Array.Empty<Reference<InstanceAction>>();
+
+            public void Enable()
+            {
+                InputAction.performed += Performed;
+                InputAction.Enable();
+            }
+            public void Disable()
+            {
+                InputAction.performed -= Performed;
+                InputAction.Disable();
+            }
+
+            private void Performed(InputAction.CallbackContext other)
+            {
+                ResponseActions.Execute(other);
+                Actions.Execute();
+            }
         }
 
         public CustomInputAction[] m_AdditionalInputActions = Array.Empty<CustomInputAction>();

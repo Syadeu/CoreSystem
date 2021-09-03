@@ -225,6 +225,7 @@ namespace Syadeu.Presentation.Render
         }
         public float3 ScreenToWorldPoint(float3 screenPoint)
         {
+            screenPoint.z = LastCameraData.nearClipPlane;
             return m_Camera.Value.ScreenToWorldPoint(screenPoint);
         }
         //public float3 ScreenToWorldPoint(float3 screenPoint)
@@ -268,7 +269,9 @@ namespace Syadeu.Presentation.Render
             return new float3(
                 viewportPoint.x * m_LastCameraData.pixelWidth,
                 viewportPoint.y * m_LastCameraData.pixelHeight,
-                viewportPoint.z);
+                //viewportPoint.z
+                LastCameraData.nearClipPlane
+                );
         }
 
         public float3 WorldToScreenPoint(float3 worldPoint) => ViewportToScreenPoint(WorldToViewportPoint(worldPoint));

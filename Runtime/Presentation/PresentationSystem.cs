@@ -11,7 +11,7 @@ namespace Syadeu.Presentation
     /// 등록한 프레젠테이션 시스템을 받아오기 위한 struct 입니다.
     /// </summary>
     /// <remarks>
-    /// 이 struct 로 시스템을 받아오려면 먼저 <seealso cref="Entities.PresentationSystemEntity{T}"/> 를 상속받고 시스템을 선언해야됩니다.
+    /// 이 struct 로 시스템을 받아오려면 먼저 <seealso cref="PresentationSystemEntity{T}"/> 를 상속받고 시스템을 선언해야됩니다.
     /// </remarks>
     /// <typeparam name="T"></typeparam>
     public struct PresentationSystem<T> : IValidation, IDisposable, IEquatable<PresentationSystem<T>> where T : PresentationSystemEntity
@@ -96,12 +96,13 @@ namespace Syadeu.Presentation
         }
 
         public static bool IsValid() => !Instance.Equals(Null);
+        public static bool HasInitialized() => IsValid() && PresentationManager.Instance.m_PresentationGroups[Instance.m_GroupHash].m_MainInitDone;
 
         private sealed class SystemAwaiter : CustomYieldInstruction, ICustomYieldAwaiter
         {
             public override bool keepWaiting => ((ICustomYieldAwaiter)this).KeepWait;
 
-            bool ICustomYieldAwaiter.KeepWait => !IsValid();
+            bool ICustomYieldAwaiter.KeepWait => !IsValid() || !HasInitialized();
         }
         public static ICustomYieldAwaiter GetAwaiter() => new SystemAwaiter();
 
