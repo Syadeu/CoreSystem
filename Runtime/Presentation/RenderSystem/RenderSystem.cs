@@ -31,6 +31,7 @@ namespace Syadeu.Presentation.Render
         public override bool EnableAfterPresentation => true;
 
         private ObClass<Camera> m_Camera;
+        private CameraComponent m_CameraComponent = null;
 #if ENABLE_URP
         private UniversalAdditionalCameraData m_CameraData;
 #endif
@@ -50,6 +51,7 @@ namespace Syadeu.Presentation.Render
                 m_Camera.Value = value;
             }
         }
+        public CameraComponent CameraComponent => m_CameraComponent;
         public Light DirectionalLight
         {
             get => m_DirectionalLight.Value;
@@ -107,8 +109,13 @@ namespace Syadeu.Presentation.Render
         private void OnCameraChangedHandler(Camera from, Camera to)
         {
             OnCameraChanged?.Invoke(from, to);
-            if (to == null) return;
+            if (to == null)
+            {
+                m_CameraComponent = null;
+                return;
+            }
 
+            m_CameraComponent = to.GetComponent<CameraComponent>();
             m_Matrix4x4 = GetCameraMatrix4X4(to);
 #if ENABLE_URP
             m_CameraData = Camera.GetUniversalAdditionalCameraData();

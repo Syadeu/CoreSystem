@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 8832134446656746777}
   - component: {fileID: 8832134446656746778}
   - component: {fileID: 52392365545702266}
+  - component: {fileID: 4250786864970038144}
   m_Layer: 0
   m_Name: Camera
   m_TagString: Untagged
@@ -27,8 +28,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8832134446656746779}
-  m_LocalRotation: {x: 0.35355338, y: 0.35355338, z: -0.1464466, w: 0.8535535}
-  m_LocalPosition: {x: -16.79975, y: 23.546658, z: -16.900253}
+  m_LocalRotation: {x: 0.35355344, y: 0.35355344, z: -0.14644669, w: 0.85355335}
+  m_LocalPosition: {x: -16.799746, y: 23.54666, z: -16.900246}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 8832134447479580946}
@@ -155,7 +156,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98a764813178e7e4abca5a2f7a3b1698, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_Camera: {fileID: 8832134446656746777}
   m_CinemachineBrain: {fileID: 8832134446656746776}
+  m_TargetGroup: {fileID: 8832134447878884503}
+  m_SetMainCameraOnInitialize: 1
+--- !u!114 &4250786864970038144
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8832134446656746779}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68ccec800a4731847bd414467b79f67f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &8832134446683109531
 GameObject:
   m_ObjectHideFlags: 0
@@ -545,7 +561,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8832134447924349095}
   m_LocalRotation: {x: 0.38925594, y: -0.5903218, z: 0.38925588, w: 0.59032184}
-  m_LocalPosition: {x: -3.4093456, y: 2.089708, z: 3.416582}
+  m_LocalPosition: {x: 0, y: 1.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 8832134447532774707}
@@ -627,8 +643,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8832134448388041458}
-  m_LocalRotation: {x: 0.35355338, y: 0.35355338, z: -0.1464466, w: 0.8535535}
-  m_LocalPosition: {x: -3.4093456, y: 0.58970815, z: -6.583418}
+  m_LocalRotation: {x: 0.35355344, y: 0.35355344, z: -0.14644669, w: 0.85355335}
+  m_LocalPosition: {x: 0, y: 0, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 8832134446683109530}

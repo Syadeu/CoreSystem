@@ -118,7 +118,7 @@ namespace SyadeuEditor.Presentation
 
         public void Remove(ObjectBaseDrawer obj)
         {
-            if (m_SelectedObject.Equals(obj)) m_SelectedObject = null;
+            if (m_SelectedObject != null && m_SelectedObject.Equals(obj)) m_SelectedObject = null;
 
             ObjectBaseDrawers.Remove(obj);
 
@@ -201,6 +201,8 @@ namespace SyadeuEditor.Presentation
                         //m_MainWindow.AddData(ins);
                         var drawer = m_MainWindow.Add(t);
                         m_MainWindow.m_DataListWindow.Add(drawer);
+
+                        m_MainWindow.Select(drawer);
                     },
                     (t) => t,
                     null,

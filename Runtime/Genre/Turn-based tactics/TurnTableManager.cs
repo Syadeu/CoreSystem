@@ -23,6 +23,8 @@ namespace Syadeu.Presentation.TurnTable
         }
         public static void RemovePlayer(ITurnPlayer player)
         {
+            if (CoreSystem.BlockCreateInstance) return;
+
             for (int i = 0; i < Instance.m_Players.Count; i++)
             {
                 if (Instance.m_Players[i].Equals(player))

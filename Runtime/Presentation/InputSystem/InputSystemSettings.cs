@@ -14,15 +14,24 @@ namespace Syadeu.Presentation.Input
         [Serializable]
         public sealed class CustomInputAction
         {
-            public InputAction InputAction;
-            public bool Hold = false;
+            public string Name;
+
+            [Space]
+            //[SerializeField] private InputAction InputAction = Array.Empty<InputAction>();
+            [SerializeField] private InputAction InputAction = null;
+            [SerializeField] private bool Hold = false;
 
             [Header("Callback Actions")]
-            public Reference<ParamAction<InputAction.CallbackContext>>[] ResponseActions
+            [SerializeField] private Reference<ParamAction<InputAction.CallbackContext>>[] ResponseActions
                 = Array.Empty<Reference<ParamAction<InputAction.CallbackContext>>>();
 
             [Header("Actions")]
-            public Reference<InstanceAction>[] Actions = Array.Empty<Reference<InstanceAction>>();
+            [SerializeField] private Reference<InstanceAction>[] Actions = Array.Empty<Reference<InstanceAction>>();
+
+            public CustomInputAction()
+            {
+                InputAction = new InputAction("new");
+            }
 
             public void Enable()
             {
