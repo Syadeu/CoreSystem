@@ -16,7 +16,10 @@ using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Experimental.GlobalIllumination;
+
+#if ENABLE_URP
+using UnityEngine.Rendering.Universal;
+#endif
 
 namespace Syadeu.Presentation.Render
 {
@@ -28,8 +31,14 @@ namespace Syadeu.Presentation.Render
         public override bool EnableAfterPresentation => true;
 
         private ObClass<Camera> m_Camera;
+        private CameraComponent m_CameraComponent = null;
+#if ENABLE_URP
+        private UniversalAdditionalCameraData m_CameraData;
+#endif
         private ObClass<Light> m_DirectionalLight;
         private Matrix4x4 m_Matrix4x4;
+
+        private readonly List<Camera> m_UICameras = new List<Camera>();
 
         [ConfigValue(Header = "Resolution", Name = "X")] private int m_ResolutionX;
         [ConfigValue(Header = "Resolution", Name = "Y")] private int m_ResolutionY;
@@ -42,6 +51,7 @@ namespace Syadeu.Presentation.Render
                 m_Camera.Value = value;
             }
         }
+        public CameraComponent CameraComponent => m_CameraComponent;
         public Light DirectionalLight
         {
             get => m_DirectionalLight.Value;
@@ -98,10 +108,30 @@ namespace Syadeu.Presentation.Render
         }
         private void OnCameraChangedHandler(Camera from, Camera to)
         {
-            OnCameraChanged.Invoke(from, to);
-            if (to == null) return;
+            OnCameraChanged?.Invoke(from, to);
+            if (to == null)
+            {
+                m_CameraComponent = null;
+                return;
+            }
 
+            m_CameraComponent = to.GetComponent<CameraComponent>();
             m_Matrix4x4 = GetCameraMatrix4X4(to);
+#if ENABLE_URP
+            m_CameraData = Camera.GetUniversalAdditionalCameraData();
+#endif
+            for (int i = m_UICameras.Count - 1; i >= 0; i--)
+            {
+                if (m_UICameras[i] == null)
+                {
+                    m_UICameras.RemoveAt(i);
+                    continue;
+                }
+
+#if ENABLE_URP
+                m_CameraData.cameraStack.Add(m_UICameras[i]);
+#endif
+            }
         }
         private void Instance_OnRender()
         {
@@ -166,18 +196,32 @@ namespace Syadeu.Presentation.Render
         }
 		internal CameraFrustum GetRawFrustum() => m_CameraFrustum;
 
-        private float4x4 GetCameraWorldMatrix()
+        public void AddUICamera(Camera camera)
         {
-            float4x4 projection = m_LastCameraData.projectionMatrix;
-            float4x4 tr = new float4x4(new float3x3(m_LastCameraData.orientation), m_LastCameraData.position);
-
-            return math.inverse(math.mul(projection, math.fastinverse(tr)));
+            m_UICameras.Add(camera);
+#if ENABLE_URP
+            if (m_CameraData != null) m_CameraData.cameraStack.Add(camera);
+#endif
         }
+        public void RemoveUICamera(Camera camera)
+        {
+            m_UICameras.Remove(camera);
+#if ENABLE_URP
+            if (m_CameraData != null) m_CameraData.cameraStack.Remove(camera);
+#endif
+        }
+
+        //private float4x4 GetCameraWorldMatrix()
+        //{
+        //    float4x4 projection = m_LastCameraData.projectionMatrix;
+        //    float4x4 tr = new float4x4(new float3x3(m_LastCameraData.orientation), m_LastCameraData.position);
+
+        //    return math.inverse(math.mul(projection, math.fastinverse(tr)));
+        //}
 
         public float3 WorldToViewportPoint(float3 worldPoint)
         {
-            float4x4 localToWorld = new float4x4(new float3x3(m_LastCameraData.orientation), m_LastCameraData.position);
-            float4x4 vp = math.mul(m_LastCameraData.projectionMatrix, math.fastinverse(localToWorld));
+            float4x4 vp = math.mul(m_LastCameraData.projectionMatrix, m_LastCameraData.worldToLocalMatrix);
 
             float4 temp = math.mul(vp, new float4(worldPoint, 1));
             float3 point = temp.xyz / -temp.w;
@@ -187,6 +231,7 @@ namespace Syadeu.Presentation.Render
         }
         public float3 ScreenToWorldPoint(float3 screenPoint)
         {
+            screenPoint.z = LastCameraData.nearClipPlane;
             return m_Camera.Value.ScreenToWorldPoint(screenPoint);
         }
         //public float3 ScreenToWorldPoint(float3 screenPoint)
@@ -225,15 +270,30 @@ namespace Syadeu.Presentation.Render
         //    pos.x *= pos.w; pos.y *= pos.w; pos.z *= pos.w;
         //    return pos.xyz;
         //}
-        public float3 ViewportToScreenPoint(float3 viewportPoint)
-        {
-            return new float3(
-                viewportPoint.x * m_LastCameraData.pixelWidth,
-                viewportPoint.y * m_LastCameraData.pixelHeight,
-                viewportPoint.z);
-        }
+        //public float3 ViewportToScreenPoint(float3 viewportPoint)
+        //{
+        //    $"{viewportPoint} , {m_LastCameraData.pixelWidth} : {m_LastCameraData.pixelHeight}".ToLog();
+        //    return new float3(
+        //        viewportPoint.x * m_LastCameraData.pixelWidth,
+        //        viewportPoint.y * m_LastCameraData.pixelHeight,
+        //        //viewportPoint.z
+        //        LastCameraData.nearClipPlane
+        //        );
+        //}
 
-        public float3 WorldToScreenPoint(float3 worldPoint) => ViewportToScreenPoint(WorldToViewportPoint(worldPoint));
+        //public float3 WorldToScreenPoint(float3 worldPoint) => ViewportToScreenPoint(WorldToViewportPoint(worldPoint));
+        public float3 WorldToScreenPoint(float3 worldPoint) => m_Camera.Value.WorldToScreenPoint(worldPoint);
+        //public float3 WorldToScreenPoint(float3 worldPoint)
+        //{
+        //    float4x4 vp = math.mul(LastCameraData.projectionMatrix, LastCameraData.worldToLocalMatrix);
+        //    float4 temp = math.mul(vp, new float4(worldPoint, 1));
+
+        //    if (temp.w.Equals(0)) return float3.zero;
+
+        //    temp.x = (temp.x / temp.w + 1) * .5f * LastCameraData.pixelWidth;
+        //    temp.y = (temp.y / temp.w + 1) * .5f * LastCameraData.pixelHeight;
+        //    return new float3(temp.xy, worldPoint.z);
+        //}
 
         #region Ray
 

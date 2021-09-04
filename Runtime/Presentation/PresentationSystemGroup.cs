@@ -17,7 +17,7 @@ namespace Syadeu.Presentation
     public struct PresentationSystemGroup<T> : IPresentationSystemGroup, IEquatable<PresentationSystemGroup<T>>
         where T : PresentationGroupEntity
     {
-        public static PresentationSystemGroup<T> Null = new PresentationSystemGroup<T>(Hash.Empty);
+        public static readonly PresentationSystemGroup<T> Null = new PresentationSystemGroup<T>(Hash.Empty);
         private static PresentationSystemGroup<T> s_Instance = Null;
         private static PresentationSystemGroup<T> Instance
         {

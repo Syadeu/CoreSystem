@@ -14,7 +14,7 @@ namespace Syadeu.Database
     [JsonConverter(typeof(AABBJsonConverter))]
     public struct AABB
     {
-        public static AABB Zero = new AABB(float3.zero, float3.zero);
+        public static readonly AABB Zero = new AABB(float3.zero, float3.zero);
 
         internal float3 m_Center;
         internal float3 m_Extents;

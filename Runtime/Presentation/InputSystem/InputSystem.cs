@@ -20,20 +20,46 @@ namespace Syadeu.Presentation.Input
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
+        private bool m_EnableInput = false;
+        public bool EnableInput
+        {
+            get => m_EnableInput;
+            set
+            {
+                if (m_EnableInput.Equals(value)) return;
+
+                InputSystemSettings settings = InputSystemSettings.Instance;
+                for (int i = 0; i < settings.m_AdditionalInputActions.Length; i++)
+                {
+                    InputSystemSettings.CustomInputAction temp = settings.m_AdditionalInputActions[i];
+
+                    if (value) temp.Enable();
+                    else temp.Disable();
+                }
+
+                m_EnableInput = value;
+            }
+        }
+
         protected override PresentationResult OnInitialize()
         {
-            for (int i = 0; i < InputSystemSettings.Instance.m_AdditionalInputActions.Length; i++)
-            {
-                InputSystemSettings.CustomInputAction temp = InputSystemSettings.Instance.m_AdditionalInputActions[i];
-
-                temp.InputAction.performed += (other) =>
-                {
-                    temp.ResponseActions.Execute(other);
-                    temp.Actions.Execute();
-                };
-                temp.InputAction.Enable();
-            }
             return base.OnInitialize();
+        }
+        public override void OnDispose()
+        {
+            //for (int i = 0; i < InputSystemSettings.Instance.m_AdditionalInputActions.Length; i++)
+            //{
+            //    InputSystemSettings.CustomInputAction temp = InputSystemSettings.Instance.m_AdditionalInputActions[i];
+
+            //    temp.Disable();
+            //}
+        }
+
+        protected override PresentationResult OnStartPresentation()
+        {
+            EnableInput = true;
+
+            return base.OnStartPresentation();
         }
 
         private void asdasd()

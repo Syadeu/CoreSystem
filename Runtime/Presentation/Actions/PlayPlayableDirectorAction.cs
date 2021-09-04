@@ -1,9 +1,11 @@
-﻿using Newtonsoft.Json;
+﻿using Cinemachine;
+using Newtonsoft.Json;
 using Syadeu.Internal;
 using Syadeu.Mono;
 using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Proxy;
+using Syadeu.Presentation.Render;
 using System;
 using System.Collections;
 using System.ComponentModel;
@@ -49,40 +51,63 @@ namespace Syadeu.Presentation.Actions
             AsyncOperationHandle<GameObject> entityOper = data.m_Entity.GetObject().Prefab.LoadAssetAsync();
             yield return new WaitUntil(() => entityOper.IsDone);
             
-            Entity<IEntity> entity = PresentationSystem<EntitySystem>.System.CreateEntity(data.m_Entity, 0, entityOper.Result.transform.rotation, entityOper.Result.transform.localScale);
+            Entity<IEntity> entity = PresentationSystem<EntitySystem>.System.CreateEntity(data.m_Entity, data.m_PositionOffset, Quaternion.Euler(data.m_RotationOffset), entityOper.Result.transform.localScale);
             ProxyTransform tr = (ProxyTransform)entity.transform;
             tr.enableCull = false;
-
-            AsyncOperationHandle<PlayableAsset> oper = data.LoadTimelineAsset();
-            yield return new WaitUntil(() => oper.IsDone);
+            
             yield return new WaitForProxy(tr);
-
-            PlayableAsset asset = oper.Result;
 
             RecycleableMonobehaviour proxy = tr.proxy;
             PlayableDirector director = proxy.GetOrAddComponent<PlayableDirector>();
             director.playOnAwake = false;
-            director.playableAsset = asset;
 
-            foreach (PlayableBinding item in asset.outputs)
+            PlayableAsset asset;
+            if (!data.m_UseObjectTimeline)
             {
-                Type type = item.outputTargetType;
-                if (type.Equals(TypeHelper.TypeOf<GameObject>.Type))
-                {
-                    director.SetGenericBinding(item.sourceObject, proxy.gameObject);
-                    continue;
-                }
+                AsyncOperationHandle<PlayableAsset> oper = data.LoadTimelineAsset();
+                yield return new WaitUntil(() => oper.IsDone);
+                asset = oper.Result;
 
-                var component = proxy.GetComponent(type);
-                if (component == null)
+                director.playableAsset = asset;
+                foreach (PlayableBinding item in asset.outputs)
                 {
-                    CoreSystem.Logger.LogError(Channel.Entity,
-                        $"{m_Data.GetObject().Name} requires {TypeHelper.ToString(type)} " +
-                        $"but {entity.Name} doesn\'t have.");
-                    continue;
-                }
+                    Type type = item.outputTargetType;
+                    if (type.Equals(TypeHelper.TypeOf<GameObject>.Type))
+                    {
+                        director.SetGenericBinding(item.sourceObject, proxy.gameObject);
+                        continue;
+                    }
+                    if (type.Equals(TypeHelper.TypeOf<CinemachineBrain>.Type))
+                    {
+                        director.SetGenericBinding(item.sourceObject, PresentationSystem<RenderSystem>.System.Camera.GetComponent<CinemachineBrain>());
+                        continue;
+                    }
 
-                director.SetGenericBinding(item.sourceObject, component);
+                    var component = proxy.GetComponent(type);
+                    if (component == null)
+                    {
+                        CoreSystem.Logger.LogError(Channel.Entity,
+                            $"{m_Data.GetObject().Name} requires {TypeHelper.ToString(type)} " +
+                            $"but {entity.Name} doesn\'t have.");
+                        continue;
+                    }
+
+                    director.SetGenericBinding(item.sourceObject, component);
+                }
+            }
+            else
+            {
+                asset = director.playableAsset;
+
+                foreach (PlayableBinding item in asset.outputs)
+                {
+                    Type type = item.outputTargetType;
+                    if (type.Equals(TypeHelper.TypeOf<CinemachineBrain>.Type))
+                    {
+                        director.SetGenericBinding(item.sourceObject, PresentationSystem<RenderSystem>.System.Camera.GetComponent<CinemachineBrain>());
+                        continue;
+                    }
+                }
             }
 
             m_OnStart.Execute(entity.As<IEntity, IEntityData>());
@@ -118,9 +143,12 @@ namespace Syadeu.Presentation.Actions
             m_OnEnd.Execute(entity.As<IEntity, IEntityData>());
             m_OnEndAction.Execute();
 
-            foreach (PlayableBinding item in asset.outputs)
+            if (!data.m_UseObjectTimeline)
             {
-                director.ClearGenericBinding(item.sourceObject);
+                foreach (PlayableBinding item in asset.outputs)
+                {
+                    director.ClearGenericBinding(item.sourceObject);
+                }
             }
         }
     }

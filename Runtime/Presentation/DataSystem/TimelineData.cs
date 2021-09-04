@@ -5,6 +5,7 @@ using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Entities;
 using System;
 using System.ComponentModel;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.ResourceManagement.AsyncOperations;
@@ -20,17 +21,22 @@ namespace Syadeu.Presentation.Data
         [JsonProperty(Order = 0, PropertyName = "Entity")] public Reference<EntityBase> m_Entity;
         [JsonProperty(Order = 1, PropertyName = "Timeline")]
         public PrefabReference<PlayableAsset> m_Timeline = PrefabReference<PlayableAsset>.None;
+        [JsonProperty(Order = 2, PropertyName = "UseObjectTimeline")] public bool m_UseObjectTimeline = false;
+
+        [Space, Header("Offset")]
+        [JsonProperty(Order = 3, PropertyName = "PositionOffset")] public float3 m_PositionOffset = 0;
+        [JsonProperty(Order = 4, PropertyName = "RotationOffset")] public float3 m_RotationOffset = 0;
 
         [Space, Header("TriggerActions")]
-        [JsonProperty(Order = 2, PropertyName = "OnTimelineStart")]
+        [JsonProperty(Order = 5, PropertyName = "OnTimelineStart")]
         public Reference<TriggerAction>[] m_OnTimelineStart = Array.Empty<Reference<TriggerAction>>();
-        [JsonProperty(Order = 3, PropertyName = "OnTimelineEnd")]
+        [JsonProperty(Order = 6, PropertyName = "OnTimelineEnd")]
         public Reference<TriggerAction>[] m_OnTimelineEnd = Array.Empty<Reference<TriggerAction>>();
 
         [Space, Header("Actions")]
-        [JsonProperty(Order = 4, PropertyName = "OnTimelineStartAction")]
+        [JsonProperty(Order = 7, PropertyName = "OnTimelineStartAction")]
         public Reference<InstanceAction>[] m_OnTimelineStartAction = Array.Empty<Reference<InstanceAction>>();
-        [JsonProperty(Order = 5, PropertyName = "OnTimelineEndAction")]
+        [JsonProperty(Order = 8, PropertyName = "OnTimelineEndAction")]
         public Reference<InstanceAction>[] m_OnTimelineEndAction = Array.Empty<Reference<InstanceAction>>();
 
         public AsyncOperationHandle<PlayableAsset> LoadTimelineAsset()

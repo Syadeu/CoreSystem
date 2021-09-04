@@ -1,5 +1,4 @@
-﻿using Syadeu.Database;
-using Syadeu.Presentation.Entities;
+﻿using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using System;
 using Unity.Mathematics;
@@ -8,16 +7,10 @@ using AABB = Syadeu.Database.AABB;
 
 namespace Syadeu.Presentation.Proxy
 {
-    /// <summary>
-    /// <see cref="EntitySystem.Convert(GameObject)"/>를 통해 컨버트된 <see cref="Entity{T}"/>의 트랜스폼입니다.
-    /// </summary>
-    /// <remarks>
-    /// 유니티의 <seealso cref="Transform"/>을 직접 수정하지만, 엔티티 시스템에 편입시키기 위해 고안되어 설계되었습니다.
-    /// </remarks>
-    public sealed class UnityTransform : IUnityTransform
+    public sealed class CustomTransform : IUnityTransform
     {
-        public ConvertedEntity entity { get; internal set; }
-        public Transform provider { get; internal set; }
+        public ConvertedEntity entity => throw new NotImplementedException();
+        public Transform provider { get; private set; }
         private Renderer[] renderers { get; set; }
 
         public float3 position
@@ -141,11 +134,17 @@ namespace Syadeu.Presentation.Proxy
             }
         }
 
+        public CustomTransform(Transform tr)
+        {
+            provider = tr;
+            renderers = tr.GetComponentsInChildren<Renderer>();
+        }
+
         public void Destroy()
         {
             if (provider == null) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
 
-            PresentationSystem<EntitySystem>.System.DestroyEntity(entity.AsReference<EntityDataBase, IEntity>());
+            UnityEngine.Object.Destroy(provider.gameObject);
         }
         public bool Equals(ITransform other)
         {
@@ -156,7 +155,6 @@ namespace Syadeu.Presentation.Proxy
         }
         void IDisposable.Dispose()
         {
-            entity = null;
             provider = null;
         }
     }
