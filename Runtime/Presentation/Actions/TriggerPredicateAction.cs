@@ -1,14 +1,12 @@
 ﻿using Newtonsoft.Json;
-using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace Syadeu.Presentation.Actions
 {
-    public abstract class TriggerAction : ActionBase
+    public abstract class TriggerPredicateAction : ActionBase
     {
         private static readonly Dictionary<Reference, Stack<ActionBase>> m_Pool = new Dictionary<Reference, Stack<ActionBase>>();
 
@@ -21,8 +19,9 @@ namespace Syadeu.Presentation.Actions
             OnInitialize();
             base.InternalInitialize();
         }
-        internal bool InternalExecute(EntityData<IEntityData> entity)
+        internal bool InternalExecute(EntityData<IEntityData> entity, out bool predicate)
         {
+            predicate = false;
             if (!string.IsNullOrEmpty(m_DebugText))
             {
                 CoreSystem.Logger.Log(Channel.Debug, m_DebugText);
@@ -40,7 +39,7 @@ namespace Syadeu.Presentation.Actions
             bool result = true;
             try
             {
-                OnExecute(entity);
+                predicate = OnExecute(entity);
             }
             catch (System.Exception ex)
             {
@@ -64,8 +63,7 @@ namespace Syadeu.Presentation.Actions
 
             base.InternalTerminate();
         }
-
-        public static T GetAction<T>(Reference<T> other) where T : TriggerAction
+        public static T GetAction<T>(Reference<T> other) where T : TriggerPredicateAction
         {
             T temp;
 
@@ -86,6 +84,6 @@ namespace Syadeu.Presentation.Actions
 
         protected virtual void OnInitialize() { }
         protected virtual void OnTerminate() { }
-        protected virtual void OnExecute(EntityData<IEntityData> entity) { }
+        protected virtual bool OnExecute(EntityData<IEntityData> entity) { throw new NotImplementedException(); }
     }
 }

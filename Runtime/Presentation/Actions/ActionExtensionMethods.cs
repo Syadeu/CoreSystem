@@ -20,6 +20,18 @@ namespace Syadeu.Presentation.Actions
             }
             return action.InternalExecute(entity);
         }
+        public static bool Execute<T>(this Reference<T> other, EntityData<IEntityData> entity, out bool predicate) where T : TriggerPredicateAction
+        {
+            predicate = false;
+            T action = TriggerPredicateAction.GetAction(other);
+            if (action.Terminated)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    string.Format(c_ErrorIsTerminatedAction, TypeHelper.TypeOf<T>.Name));
+                return false;
+            }
+            return action.InternalExecute(entity, out predicate);
+        }
         public static bool Execute<T>(this Reference<T> other) where T : InstanceActionBase<T>
         {
             T action = InstanceActionBase<T>.GetAction(other);
@@ -62,6 +74,26 @@ namespace Syadeu.Presentation.Actions
                 if (!actions[i].IsValid()) continue;
 
                 isFailed |= !actions[i].Execute(entity);
+            }
+
+            if (isFailed)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    string.Format(c_ErrorCompletedWithFailed, TypeHelper.TypeOf<T>.Name));
+            }
+
+            return !isFailed;
+        }
+        public static bool Execute<T>(this Reference<T>[] actions, EntityData<IEntityData> entity, out bool predicate) where T : TriggerPredicateAction
+        {
+            predicate = false;
+            bool isFailed = false;
+            for (int i = 0; i < actions.Length; i++)
+            {
+                if (!actions[i].IsValid()) continue;
+
+                isFailed |= !actions[i].Execute(entity, out bool result);
+                predicate |= result;
             }
 
             if (isFailed)
