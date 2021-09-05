@@ -168,14 +168,20 @@ namespace Syadeu.Presentation.Map
         private Reference<EntityBase>[] m_TriggerOnly = Array.Empty<Reference<EntityBase>>();
 
         [Header("TriggerActions")]
-        [JsonProperty(Order = 4, PropertyName = "OnDetected")]
+        [Tooltip("자신을 타겟으로 합니다.")]
+        [JsonProperty(Order = 4, PropertyName = "OnDetectedPredicate")]
+        private Reference<TriggerPredicateAction>[] m_OnDetectedPredicate = Array.Empty<Reference<TriggerPredicateAction>>();
+        [JsonProperty(Order = 5, PropertyName = "OnDetected")]
         private Reference<TriggerAction>[] m_OnDetected = Array.Empty<Reference<TriggerAction>>();
-        [JsonProperty(Order = 5, PropertyName = "OnDetectedAtTarget")]
+        [JsonProperty(Order = 6, PropertyName = "OnDetectedAtTarget")]
         private Reference<TriggerAction>[] m_OnDetectedAtTarget = Array.Empty<Reference<TriggerAction>>();
 
-        [JsonProperty(Order = 6, PropertyName = "OnTargeted")]
+        [Tooltip("발견한 상대를 타겟으로 합니다.")]
+        [JsonProperty(Order = 7, PropertyName = "OnTargetedPredicate")]
+        private Reference<TriggerPredicateAction>[] m_OnTargetedPredicate = Array.Empty<Reference<TriggerPredicateAction>>();
+        [JsonProperty(Order = 8, PropertyName = "OnTargeted")]
         private Reference<TriggerAction>[] m_OnTargeted = Array.Empty<Reference<TriggerAction>>();
-        [JsonProperty(Order = 7, PropertyName = "OnTargetedAtTarget")]
+        [JsonProperty(Order = 9, PropertyName = "OnTargetedAtTarget")]
         private Reference<TriggerAction>[] m_OnTargetedAtTarget = Array.Empty<Reference<TriggerAction>>();
 
         [JsonIgnore] internal EventSystem m_EventSystem = null;
@@ -228,15 +234,22 @@ namespace Syadeu.Presentation.Map
                 if (m_Detected.Contains(ev.Entity)) return;
                 var parent = Parent.As<IEntityData, IEntity>();
 
-                m_Detected.Add(ev.Entity);
                 GridDetectorAttribute targetAtt = ev.Entity.GetAttribute<GridDetectorAttribute>();
                 if (targetAtt != null && !targetAtt.m_Targeted.Contains(parent))
                 {
-                    targetAtt.m_Targeted.Add(parent);
-                    targetAtt.m_OnTargeted.Execute(targetAtt.Parent);
-                    targetAtt.m_OnTargetedAtTarget.Execute(Parent);
+                    m_OnTargetedPredicate.Execute(targetAtt.Parent, out bool targetPredicate);
+                    if (targetPredicate)
+                    {
+                        targetAtt.m_Targeted.Add(parent);
+                        targetAtt.m_OnTargeted.Execute(targetAtt.Parent);
+                        targetAtt.m_OnTargetedAtTarget.Execute(Parent);
+                    }
                 }
 
+                m_OnDetectedPredicate.Execute(Parent, out bool predicate);
+                if (!predicate) return;
+
+                m_Detected.Add(ev.Entity);
                 m_EventSystem.PostEvent(OnGridDetectEntityEvent.GetEvent(parent, ev.Entity, true));
 
                 m_OnDetected.Execute(Parent);

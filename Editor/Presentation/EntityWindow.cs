@@ -33,7 +33,7 @@ namespace SyadeuEditor.Presentation
         public ObjectBaseDrawer m_SelectedObject = null;
 
         public static bool IsOpened { get; private set; }
-        public static bool IsDataLoaded => EntityDataList.Instance;
+        public static bool IsDataLoaded => EntityDataList.IsLoaded;
 
         protected override void OnEnable()
         {

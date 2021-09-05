@@ -9,7 +9,7 @@ using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation.Actor
 {
-    [Serializable, AttributeAcceptOnly]
+    [Serializable, AttributeAcceptOnly, Obsolete]
     public sealed class ActorFaction : DataObjectBase
     {
 #pragma warning disable IDE0044 // Add readonly modifier

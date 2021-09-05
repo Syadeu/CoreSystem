@@ -86,14 +86,15 @@ namespace Syadeu.Presentation.Actions
         }
         public static bool Execute<T>(this Reference<T>[] actions, EntityData<IEntityData> entity, out bool predicate) where T : TriggerPredicateAction
         {
-            predicate = false;
-            bool isFailed = false;
+            bool 
+                isFailed = false,
+                isFalse = false;
             for (int i = 0; i < actions.Length; i++)
             {
                 if (!actions[i].IsValid()) continue;
 
                 isFailed |= !actions[i].Execute(entity, out bool result);
-                predicate |= result;
+                isFalse |= !result;
             }
 
             if (isFailed)
@@ -102,6 +103,7 @@ namespace Syadeu.Presentation.Actions
                     string.Format(c_ErrorCompletedWithFailed, TypeHelper.TypeOf<T>.Name));
             }
 
+            predicate = !isFalse;
             return !isFailed;
         }
         public static bool Execute<T>(this Reference<T>[] actions) where T : InstanceActionBase<T>

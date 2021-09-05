@@ -96,7 +96,7 @@ namespace SyadeuEditor.Presentation
             return currentValue;
         }
 
-        public void DrawReferenceSelector(string name, Action<Hash> setter, IReference current, Type targetType)
+        public static void DrawReferenceSelector(string name, Action<Hash> setter, IReference current, Type targetType)
         {
             GUIContent displayName;
             if (current == null || current.Hash.Equals(Hash.Empty)) displayName = new GUIContent("None");
