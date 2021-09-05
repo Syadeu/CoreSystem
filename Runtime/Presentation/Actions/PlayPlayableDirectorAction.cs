@@ -9,6 +9,7 @@ using Syadeu.Presentation.Render;
 using System;
 using System.Collections;
 using System.ComponentModel;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Playables;
@@ -39,8 +40,11 @@ namespace Syadeu.Presentation.Actions
         [JsonProperty(Order = 6, PropertyName = "OnEndActions")]
         private Reference<InstanceAction>[] m_OnEndAction = Array.Empty<Reference<InstanceAction>>();
 
+        [JsonIgnore] private EntityData<IEntityData> m_Executer;
+
         protected override void OnExecute(EntityData<IEntityData> entity)
         {
+            m_Executer = entity;
             CoreSystem.StartUnityUpdate(this, Executer());
         }
 
@@ -50,8 +54,29 @@ namespace Syadeu.Presentation.Actions
 
             AsyncOperationHandle<GameObject> entityOper = data.m_Entity.GetObject().Prefab.LoadAssetAsync();
             yield return new WaitUntil(() => entityOper.IsDone);
-            
-            Entity<IEntity> entity = PresentationSystem<EntitySystem>.System.CreateEntity(data.m_Entity, data.m_PositionOffset, Quaternion.Euler(data.m_RotationOffset), entityOper.Result.transform.localScale);
+
+            float3 pos;
+            quaternion rot;
+            if (data.m_WorldSpace)
+            {
+                pos = data.m_PositionOffset;
+                rot = quaternion.EulerZXY(data.m_RotationOffset);
+            }
+            else
+            {
+                if (m_Executer.Target is EntityBase entityBase)
+                {
+                    pos = entityBase.transform.position + data.m_PositionOffset;
+                    rot = math.mul(m_Executer.As<IEntityData, IEntity>().transform.rotation, quaternion.EulerZXY(data.m_RotationOffset));
+                }
+                else
+                {
+                    pos = data.m_PositionOffset;
+                    rot = quaternion.EulerZXY(data.m_RotationOffset);
+                }
+            }
+
+            Entity<IEntity> entity = PresentationSystem<EntitySystem>.System.CreateEntity(data.m_Entity, pos, rot, entityOper.Result.transform.localScale);
             ProxyTransform tr = (ProxyTransform)entity.transform;
             tr.enableCull = false;
             
@@ -110,7 +135,7 @@ namespace Syadeu.Presentation.Actions
                 }
             }
 
-            m_OnStart.Execute(entity.As<IEntity, IEntityData>());
+            m_OnStart.Execute(m_Executer);
             m_OnStartAction.Execute();
 
             float time = 0;
@@ -140,7 +165,7 @@ namespace Syadeu.Presentation.Actions
                 yield return null;
             }
 
-            m_OnEnd.Execute(entity.As<IEntity, IEntityData>());
+            m_OnEnd.Execute(m_Executer);
             m_OnEndAction.Execute();
 
             if (!data.m_UseObjectTimeline)
@@ -150,6 +175,8 @@ namespace Syadeu.Presentation.Actions
                     director.ClearGenericBinding(item.sourceObject);
                 }
             }
+
+            m_Executer = EntityData<IEntityData>.Empty;
         }
     }
 }

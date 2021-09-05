@@ -12,7 +12,6 @@ namespace Syadeu.Presentation.TurnTable
     {
         private CinemachineTargetGroup m_TargetGroup;
 
-        private bool m_WasZero = false;
         private ITransform m_TargetTransform = null;
         private float3 m_TargetPosition = 0;
 
@@ -40,13 +39,6 @@ namespace Syadeu.Presentation.TurnTable
                     "null return".ToLog();
                     return;
                 }
-                if (value.Equals(float2.zero))
-                {
-                    if (m_WasZero) return;
-
-                    m_WasZero = true;
-                }
-                else m_WasZero = false;
 
                 float3 
                     forward = Vector3.ProjectOnPlane(RenderSystem.Camera.transform.forward, Vector3.up),
