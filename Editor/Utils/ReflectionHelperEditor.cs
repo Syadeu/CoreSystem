@@ -349,19 +349,19 @@ namespace SyadeuEditor
         }
         public static void DrawPrefabReference(string name, Action<int> setter, IPrefabReference current)
         {
-            string displayName;
+            GUIContent displayName;
             if (current.Index >= 0)
             {
                 PrefabList.ObjectSetting objSetting = current.GetObjectSetting();
-                displayName = objSetting == null ? "INVALID" : objSetting.m_Name;
+                displayName = objSetting == null ? new GUIContent("INVALID") : new GUIContent(objSetting.m_Name);
             }
             else if (current.Equals(PrefabReference.None))
             {
-                displayName = "None";
+                displayName = new GUIContent("None");
             }
             else
             {
-                displayName = "INVALID";
+                displayName = new GUIContent("INVALID");
             }
 
             GUILayout.BeginHorizontal();
@@ -369,48 +369,96 @@ namespace SyadeuEditor
 
             if (!string.IsNullOrEmpty(name)) GUILayout.Label(name, GUILayout.Width(Screen.width * .25f));
 
-            if (GUILayout.Button(displayName, SelectorStyle, GUILayout.ExpandWidth(true)))
+            Rect fieldRect = GUILayoutUtility.GetRect(displayName, SelectorStyle, GUILayout.ExpandWidth(true));
+            int selectorID = GUIUtility.GetControlID(FocusType.Passive, fieldRect);
+
+            switch (Event.current.GetTypeForControl(selectorID))
             {
-                Rect rect = GUILayoutUtility.GetLastRect();
-                rect.position = Event.current.mousePosition;
+                case EventType.Repaint:
+                    bool isHover = fieldRect.Contains(Event.current.mousePosition);
 
-                Type type = current.GetType();
-                List<PrefabList.ObjectSetting> list;
+                    SelectorStyle.Draw(fieldRect, displayName, isHover, isActive: true, on: true, false);
+                    break;
+                case EventType.ContextClick:
+                    if (!fieldRect.Contains(Event.current.mousePosition)) break;
 
-                if (type.GenericTypeArguments.Length > 0)
-                {
-                    list = PrefabList.Instance.ObjectSettings
-                        .Where((other) =>
-                        {
-                            if (other.GetEditorAsset() == null) return false;
+                    Event.current.Use();
 
-                            if (type.GenericTypeArguments[0].IsAssignableFrom(other.GetEditorAsset().GetType()))
-                            {
-                                return true;
-                            }
-                            return false;
-                        }).ToList();
-                }
-                else
-                {
-                    list = PrefabList.Instance.ObjectSettings;
-                }
+                    GenericMenu menu = new GenericMenu();
 
-                try
-                {
-                    PopupWindow.Show(rect, SelectorPopup<int, PrefabList.ObjectSetting>.GetWindow(list, setter, (objSet) =>
+                    menu.AddDisabledItem(displayName);
+                    menu.AddSeparator(string.Empty);
+
+                    menu.AddItem(new GUIContent("Select"), false, () =>
                     {
-                        for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
+                        Selection.activeObject = current.GetEditorAsset();
+                        EditorGUIUtility.PingObject(Selection.activeObject);
+                    });
+                    menu.AddDisabledItem(new GUIContent("Edit"));
+
+                    menu.ShowAsContext();
+                    break;
+                case EventType.MouseDown:
+                    if (!fieldRect.Contains(Event.current.mousePosition) ||
+                        Event.current.button != 0) break;
+
+                    Rect rect = GUILayoutUtility.GetLastRect();
+                    rect.position = Event.current.mousePosition;
+
+                    Type type = current.GetType();
+                    List<PrefabList.ObjectSetting> list;
+
+                    if (type.GenericTypeArguments.Length > 0)
+                    {
+                        list = PrefabList.Instance.ObjectSettings
+                            .Where((other) =>
+                            {
+                                if (other.GetEditorAsset() == null) return false;
+
+                                if (type.GenericTypeArguments[0].IsAssignableFrom(other.GetEditorAsset().GetType()))
+                                {
+                                    return true;
+                                }
+                                return false;
+                            }).ToList();
+                    }
+                    else
+                    {
+                        list = PrefabList.Instance.ObjectSettings;
+                    }
+
+                    Event.current.Use();
+
+                    try
+                    {
+                        PopupWindow.Show(rect, SelectorPopup<int, PrefabList.ObjectSetting>.GetWindow(list, setter, (objSet) =>
                         {
-                            if (objSet.Equals(PrefabList.Instance.ObjectSettings[i])) return i;
-                        }
-                        return -1;
-                    }, -2));
-                }
-                catch (ExitGUIException)
-                {
-                }
+                            for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
+                            {
+                                if (objSet.Equals(PrefabList.Instance.ObjectSettings[i])) return i;
+                            }
+                            return -1;
+                        }, -2));
+                    }
+                    catch (ExitGUIException)
+                    {
+                    }
+                    break;
+                case EventType.MouseUp:
+                    if (GUIUtility.hotControl == selectorID)
+                    {
+                        Event.current.Use();
+                        GUIUtility.hotControl = 0;
+                    }
+                    break;
+                default:
+                    break;
             }
+
+            //if (GUILayout.Button(displayName, SelectorStyle, GUILayout.ExpandWidth(true)))
+            //{
+                
+            //}
             EditorGUILayout.EndHorizontal();
         }
         private static void DrawAttributeSelector(string name, Action<Hash> setter, Hash current, Type entityType)
@@ -444,6 +492,8 @@ namespace SyadeuEditor
                 case EventType.ContextClick:
                     if (!fieldRect.Contains(Event.current.mousePosition)) break;
 
+                    Event.current.Use();
+
                     GenericMenu menu = new GenericMenu();
                     menu.AddDisabledItem(displayName);
                     menu.AddSeparator(string.Empty);
@@ -461,8 +511,6 @@ namespace SyadeuEditor
                     }
 
                     menu.ShowAsContext();
-
-                    Event.current.Use();
                     break;
                 case EventType.MouseDown:
                     if (!fieldRect.Contains(Event.current.mousePosition) ||
@@ -523,16 +571,21 @@ namespace SyadeuEditor
                             return true;
                         })
                         .ToArray();
+
+                    Event.current.Use();
+
                     PopupWindow.Show(tempRect,
                         SelectorPopup<Hash, AttributeBase>.GetWindow(atts, setter, (att) =>
                         {
                             return att.Hash;
                         }, Hash.Empty)
                         );
+                    
                     break;
                 case EventType.MouseUp:
                     if (GUIUtility.hotControl == selectorID)
                     {
+                        Event.current.Use();
                         GUIUtility.hotControl = 0;
                     }
                     break;

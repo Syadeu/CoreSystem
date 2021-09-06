@@ -39,11 +39,5 @@ namespace Syadeu.Presentation.Data
         public Reference<InstanceAction>[] m_OnTimelineStartAction = Array.Empty<Reference<InstanceAction>>();
         [JsonProperty(Order = 9, PropertyName = "OnTimelineEndAction")]
         public Reference<InstanceAction>[] m_OnTimelineEndAction = Array.Empty<Reference<InstanceAction>>();
-
-        public AsyncOperationHandle<PlayableAsset> LoadTimelineAsset()
-        {
-            AsyncOperationHandle<PlayableAsset> oper = m_Timeline.LoadAssetAsync();
-            return oper;
-        }
     }
 }

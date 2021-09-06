@@ -15,8 +15,10 @@ namespace SyadeuEditor.Presentation
         {
             if (m_RefPrefabField == null)
             {
-                m_RefPrefabField = TypeHelper.TypeOf<PrefabList.ObjectSetting>.Type.GetField("m_RefPrefab");
+                m_RefPrefabField = TypeHelper.TypeOf<PrefabList.ObjectSetting>.Type
+                    .GetField("m_RefPrefab", BindingFlags.NonPublic | BindingFlags.Instance);
             }
+            if (objectSetting == null) return null;
 
             object value = m_RefPrefabField.GetValue(objectSetting);
             if (value == null) return null;
@@ -28,8 +30,10 @@ namespace SyadeuEditor.Presentation
         {
             if (m_RefPrefabField == null)
             {
-                m_RefPrefabField = TypeHelper.TypeOf<PrefabList.ObjectSetting>.Type.GetField("m_RefPrefab");
+                m_RefPrefabField = TypeHelper.TypeOf<PrefabList.ObjectSetting>.Type
+                    .GetField("m_RefPrefab", BindingFlags.NonPublic | BindingFlags.Instance);
             }
+            if (prefab == null) return null;
 
             object value = m_RefPrefabField.GetValue(prefab.GetObjectSetting());
             if (value == null) return null;

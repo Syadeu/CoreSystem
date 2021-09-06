@@ -74,9 +74,6 @@ namespace Syadeu.Presentation.TurnTable
         {
             m_TargetGroup = targetGroup;
             m_TargetPosition = m_TargetGroup.transform.position;
-
-
-            StartCoroutine(Updater());
         }
 
         protected override void OnRenderStart()
