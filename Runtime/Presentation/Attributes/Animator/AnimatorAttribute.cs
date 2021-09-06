@@ -1,13 +1,11 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Database;
-using Syadeu.Mono;
+using Syadeu.Internal;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Entities;
-using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Proxy;
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.ComponentModel;
 using UnityEngine;
 
@@ -17,15 +15,36 @@ namespace Syadeu.Presentation.Attributes
     [AttributeAcceptOnly(typeof(EntityBase))]
     public sealed class AnimatorAttribute : AttributeBase
     {
+        const string c_KeyNotFoundError = "This animator at entity({0}) does not have key({1}).";
+        const string c_TypeMisMatchError = 
+            "You\'re trying to load invalid type of animator key({0}) value at entity({1}). " +
+            "Expected type of ({2}) but input was ({3}).";
+
         [JsonProperty(Order = 0, PropertyName = "AnimationTrigger")]
         public Reference<AnimationTriggerAction>[] m_AnimationTriggers = Array.Empty<Reference<AnimationTriggerAction>>();
 
         [JsonIgnore] internal AnimatorComponent AnimatorComponent { get; set; }
-        [JsonIgnore] internal Dictionary<int, object> Parameters { get; set; }
+        [JsonIgnore] internal Dictionary<int, object> Parameters { get; set; } = null;
         [JsonIgnore] public Dictionary<Hash, List<Reference<AnimationTriggerAction>>> AnimationTriggers { get; internal set; }
 
         public void SetInteger(int key, int value)
         {
+#if UNITY_EDITOR
+            if (!Parameters.TryGetValue(key, out object target))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity, 
+                    string.Format(c_KeyNotFoundError, Parent.Name, key));
+                return;
+            }
+            if (!(target is int))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    string.Format(c_TypeMisMatchError, key, Parent.Name, 
+                    TypeHelper.ToString(target.GetType()),
+                    TypeHelper.TypeOf<int>.ToString()));
+                return;
+            }
+#endif
             Parameters[key] = value;
             if (AnimatorComponent != null) AnimatorComponent.m_Animator.SetInteger(key, value);
         }
@@ -33,6 +52,22 @@ namespace Syadeu.Presentation.Attributes
 
         public void SetFloat(int key, float value)
         {
+#if UNITY_EDITOR
+            if (!Parameters.TryGetValue(key, out object target))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    string.Format(c_KeyNotFoundError, Parent.Name, key));
+                return;
+            }
+            if (!(target is float))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    string.Format(c_TypeMisMatchError, key, Parent.Name,
+                    TypeHelper.ToString(target.GetType()),
+                    TypeHelper.TypeOf<int>.ToString()));
+                return;
+            }
+#endif
             Parameters[key] = value;
             if (AnimatorComponent != null) AnimatorComponent.m_Animator.SetFloat(key, value);
         }
@@ -41,6 +76,22 @@ namespace Syadeu.Presentation.Attributes
 
         public void SetBool(int key, bool value)
         {
+#if UNITY_EDITOR
+            if (!Parameters.TryGetValue(key, out object target))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    string.Format(c_KeyNotFoundError, Parent.Name, key));
+                return;
+            }
+            if (!(target is bool))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    string.Format(c_TypeMisMatchError, key, Parent.Name,
+                    TypeHelper.ToString(target.GetType()),
+                    TypeHelper.TypeOf<int>.ToString()));
+                return;
+            }
+#endif
             Parameters[key] = value;
             if (AnimatorComponent != null) AnimatorComponent.m_Animator.SetBool(key, value);
         }
@@ -57,27 +108,6 @@ namespace Syadeu.Presentation.Attributes
     {
         protected override void OnCreated(AnimatorAttribute attribute, EntityData<IEntityData> entity)
         {
-            attribute.Parameters = new Dictionary<int, object>();
-            Animator originAnimator = ((GameObject)((ProxyTransform)entity.As<IEntityData, IEntity>().transform).prefab.Asset).GetComponentInChildren<Animator>();
-            for (int i = 0; i < originAnimator.parameterCount; i++)
-            {
-                var param = originAnimator.GetParameter(i);
-                switch (param.type)
-                {
-                    case AnimatorControllerParameterType.Float:
-                        attribute.Parameters.Add(param.nameHash, originAnimator.GetFloat(param.nameHash));
-                        break;
-                    case AnimatorControllerParameterType.Int:
-                        attribute.Parameters.Add(param.nameHash, originAnimator.GetInteger(param.nameHash));
-                        break;
-                    case AnimatorControllerParameterType.Bool:
-                        attribute.Parameters.Add(param.nameHash, originAnimator.GetBool(param.nameHash));
-                        break;
-                    default:
-                        break;
-                }
-            }
-
             attribute.AnimationTriggers = new Dictionary<Hash, List<Reference<AnimationTriggerAction>>>();
             for (int i = 0; i < attribute.m_AnimationTriggers.Length; i++)
             {
@@ -109,11 +139,37 @@ namespace Syadeu.Presentation.Attributes
             }
             att.AnimatorComponent.m_AnimatorAttribute = att;
 
-            foreach (var item in att.Parameters)
+            if (att.Parameters == null)
             {
-                if (item.Value is int integer) att.AnimatorComponent.m_Animator.SetInteger(item.Key, integer);
-                else if (item.Value is float single) att.AnimatorComponent.m_Animator.SetFloat(item.Key, single);
-                else if (item.Value is bool boolen) att.AnimatorComponent.m_Animator.SetBool(item.Key, boolen);
+                att.Parameters = new Dictionary<int, object>();
+                Animator originAnimator = att.AnimatorComponent.m_Animator;
+                for (int i = 0; i < originAnimator.parameterCount; i++)
+                {
+                    var param = originAnimator.GetParameter(i);
+                    switch (param.type)
+                    {
+                        case AnimatorControllerParameterType.Float:
+                            att.Parameters.Add(param.nameHash, originAnimator.GetFloat(param.nameHash));
+                            break;
+                        case AnimatorControllerParameterType.Int:
+                            att.Parameters.Add(param.nameHash, originAnimator.GetInteger(param.nameHash));
+                            break;
+                        case AnimatorControllerParameterType.Bool:
+                            att.Parameters.Add(param.nameHash, originAnimator.GetBool(param.nameHash));
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+            else
+            {
+                foreach (var item in att.Parameters)
+                {
+                    if (item.Value is int integer) att.AnimatorComponent.m_Animator.SetInteger(item.Key, integer);
+                    else if (item.Value is float single) att.AnimatorComponent.m_Animator.SetFloat(item.Key, single);
+                    else if (item.Value is bool boolen) att.AnimatorComponent.m_Animator.SetBool(item.Key, boolen);
+                }
             }
 
             return true;

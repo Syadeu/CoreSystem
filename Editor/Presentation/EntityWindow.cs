@@ -143,9 +143,9 @@ namespace SyadeuEditor.Presentation
             HeaderLinePos.width = Screen.width;
             EditorUtils.Line(HeaderLinePos);
 
-            EntityListPos.height = Screen.height - 70;
+            EntityListPos.height = Screen.height - 95;
             ViewPos.width = Screen.width - EntityListPos.width - 5;
-            ViewPos.height = Screen.height - 70;
+            ViewPos.height = EntityListPos.height;
             BeginWindows();
 
             m_DataListWindow.OnGUI(EntityListPos, 1);
