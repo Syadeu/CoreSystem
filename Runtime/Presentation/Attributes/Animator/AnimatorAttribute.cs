@@ -7,6 +7,7 @@ using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Proxy;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using UnityEngine;
 
@@ -20,6 +21,7 @@ namespace Syadeu.Presentation.Attributes
         public Reference<AnimationTriggerAction>[] m_AnimationTriggers = Array.Empty<Reference<AnimationTriggerAction>>();
 
         [JsonIgnore] internal AnimatorComponent Animator { get; set; }
+        [JsonIgnore] internal Dictionary<int, object> Parameters { get; set; }
         [JsonIgnore] public Dictionary<Hash, List<Reference<AnimationTriggerAction>>> AnimationTriggers { get; internal set; }
 
         public void SetFloat(int key, float value)
@@ -43,6 +45,7 @@ namespace Syadeu.Presentation.Attributes
     {
         protected override void OnCreated(AnimatorAttribute attribute, EntityData<IEntityData> entity)
         {
+            attribute.Parameters = new Dictionary<int, object>();
             attribute.AnimationTriggers = new Dictionary<Hash, List<Reference<AnimationTriggerAction>>>();
             for (int i = 0; i < attribute.m_AnimationTriggers.Length; i++)
             {
@@ -59,6 +62,7 @@ namespace Syadeu.Presentation.Attributes
         }
         protected override void OnDestroy(AnimatorAttribute attribute, EntityData<IEntityData> entity)
         {
+            attribute.Parameters = null;
             attribute.AnimationTriggers = null;
         }
 

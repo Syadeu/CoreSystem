@@ -6,6 +6,7 @@ using UnityEngine;
 using System.IO;
 using System.Linq;
 using System;
+using SyadeuEditor.Presentation;
 
 #if UNITY_ADDRESSABLES
 using UnityEditor.AddressableAssets;
@@ -96,7 +97,7 @@ namespace SyadeuEditor
             Queue<int> invalidIndices = new Queue<int>();
             for (int i = 0; i < list.Count; i++)
             {
-                if (list[i].m_RefPrefab.editorAsset == null)
+                if (list[i].GetEditorAsset() == null)
                 {
                     CoreSystem.Logger.Log(Channel.Editor,
                         $"PrefabList found an valid asset at {i}:{list[i].m_Name}");
@@ -106,7 +107,7 @@ namespace SyadeuEditor
                     continue;
                 }
 
-                if (list[i].m_RefPrefab.editorAsset is GameObject gameobj &&
+                if (list[i].GetEditorAsset() is GameObject gameobj &&
                     gameobj.GetComponent<RectTransform>() != null)
                 {
                     list[i].m_IsWorldUI = true;
@@ -146,23 +147,14 @@ namespace SyadeuEditor
                             isWorldUI = true;
                         }
 
-                        list[targetIdx] = new PrefabList.ObjectSetting
-                        {
-                            m_Name = name,
-                            m_RefPrefab = refObj,
-                            m_IsWorldUI = isWorldUI,
-                        };
+                        list[targetIdx] = new PrefabList.ObjectSetting(name, refObj, isWorldUI);
 
                         CoreSystem.Logger.Log(Channel.Editor,
                             $"PrefabList index at {targetIdx}:{previousName} was invalid but replaced to newly added prefab");
                     }
                     else
                     {
-                        list.Add(new PrefabList.ObjectSetting
-                        {
-                            m_Name = name,
-                            m_RefPrefab = refObj
-                        });
+                        list.Add(new PrefabList.ObjectSetting(name, refObj, false));
                     }
                 }
             }

@@ -33,7 +33,7 @@ namespace SyadeuEditor.Presentation.Map
                 }
                 else if (prefab.IsValid())
                 {
-                    GameObject temp = (GameObject)prefab.GetObjectSetting().m_RefPrefab.editorAsset;
+                    GameObject temp = (GameObject)prefab.GetEditorAsset();
                     m_GameObject = (GameObject)PrefabUtility.InstantiatePrefab(temp, folder);
                 }
                 else
@@ -71,7 +71,7 @@ namespace SyadeuEditor.Presentation.Map
 
                 if (value.IsValid())
                 {
-                    GameObject temp = (GameObject)value.GetObjectSetting().m_RefPrefab.editorAsset;
+                    GameObject temp = (GameObject)value.GetEditorAsset();
                     m_GameObject = (GameObject)PrefabUtility.InstantiatePrefab(temp, folder);
                 }
                 else

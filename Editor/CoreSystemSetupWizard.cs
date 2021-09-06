@@ -7,6 +7,7 @@ using Syadeu;
 using Syadeu.Internal;
 using Syadeu.Mono;
 using Syadeu.Presentation;
+using SyadeuEditor.Presentation;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -425,7 +426,7 @@ namespace SyadeuEditor
 
                 for (int i = 0; i < objectSettings.Count; i++)
                 {
-                    if (objectSettings[i].m_RefPrefab.editorAsset == null)
+                    if (objectSettings[i].GetEditorAsset() == null)
                     {
                         m_InvalidIndices.Add(i);
                     }
@@ -454,7 +455,7 @@ namespace SyadeuEditor
                     m_InvalidIndices.Clear();
                     for (int i = 0; i < objectSettings.Count; i++)
                     {
-                        if (objectSettings[i].m_RefPrefab.editorAsset == null)
+                        if (objectSettings[i].GetEditorAsset() == null)
                         {
                             m_InvalidIndices.Add(i);
                         }

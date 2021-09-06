@@ -382,9 +382,9 @@ namespace SyadeuEditor
                     list = PrefabList.Instance.ObjectSettings
                         .Where((other) =>
                         {
-                            if (other.m_RefPrefab.editorAsset == null) return false;
+                            if (other.GetEditorAsset() == null) return false;
 
-                            if (type.GenericTypeArguments[0].IsAssignableFrom(other.m_RefPrefab.editorAsset.GetType()))
+                            if (type.GenericTypeArguments[0].IsAssignableFrom(other.GetEditorAsset().GetType()))
                             {
                                 return true;
                             }

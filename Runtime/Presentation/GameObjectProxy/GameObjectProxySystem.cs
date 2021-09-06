@@ -668,7 +668,7 @@ namespace Syadeu.Presentation.Proxy
             SceneSystem SceneSystem => m_ProxySystem.m_SceneSystem;
             EventSystem EventSystem => m_ProxySystem.m_EventSystem;
 
-            AssetReference refObject;
+            //AssetReference refObject;
             PrefabReference m_PrefabIdx;
             Scene m_RequestedScene;
             Action<RecycleableMonobehaviour> m_OnCompleted;
@@ -721,7 +721,7 @@ namespace Syadeu.Presentation.Proxy
                     parent = SceneSystem.SceneInstanceFolder;
                 }
 
-                refObject = prefabInfo.m_RefPrefab;
+                //refObject = prefabInfo.m_RefPrefab;
                 m_PrefabIdx = prefabIdx;
                 m_RequestedScene = SceneSystem.CurrentScene;
                 m_OnCompleted = onCompleted;
@@ -731,7 +731,7 @@ namespace Syadeu.Presentation.Proxy
                     CreatePrefab(prefabInfo.m_Prefab, parent);
                     return;
                 }
-                var oper = prefabInfo.m_RefPrefab.InstantiateAsync(pos, rot, parent);
+                var oper = prefabInfo.InstantiateAsync(pos, rot, parent);
                 oper.Completed += CreatePrefab;
             }
             private void CreatePrefab(AsyncOperationHandle<GameObject> other)
@@ -740,7 +740,7 @@ namespace Syadeu.Presentation.Proxy
                 if (!currentScene.Equals(m_RequestedScene))
                 {
                     CoreSystem.Logger.LogWarning(Channel.Proxy, $"{other.Result.name} is returned because Scene has been changed");
-                    refObject.ReleaseInstance(other.Result);
+                    m_PrefabIdx.ReleaseInstance(other.Result);
                     return;
                 }
 
@@ -781,7 +781,6 @@ namespace Syadeu.Presentation.Proxy
 
                 m_ProxySystem = null;
                 m_PrefabIdx = PrefabReference.Invalid;
-                refObject = null;
                 m_OnCompleted = null;
                 PoolContainer<PrefabRequester>.Enqueue(this);
             }
@@ -797,7 +796,7 @@ namespace Syadeu.Presentation.Proxy
         {
             foreach (var item in m_Instances)
             {
-                var prefab = item.Key.GetObjectSetting().m_RefPrefab;
+                var prefab = item.Key.GetObjectSetting();
                 for (int i = 0; i < item.Value.Count; i++)
                 {
                     prefab.ReleaseInstance(item.Value[i].gameObject);

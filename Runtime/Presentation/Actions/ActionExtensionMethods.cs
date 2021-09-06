@@ -7,10 +7,18 @@ namespace Syadeu.Presentation.Actions
     public static class ActionExtensionMethods
     {
         const string c_ErrorIsTerminatedAction = "This action({0}) has been terminated.";
+        const string c_WarningInvalidEntityAction = "This action({0}) has been executed with invalid entity.";
         const string c_ErrorCompletedWithFailed = "Execution ({0}) completed with failed.";
 
         public static bool Execute<T>(this Reference<T> other, EntityData<IEntityData> entity) where T : TriggerAction
         {
+            if (!entity.IsValid())
+            {
+                CoreSystem.Logger.LogWarning(Channel.Entity,
+                    string.Format(c_WarningInvalidEntityAction, TypeHelper.TypeOf<T>.Name));
+                return false;
+            }
+
             T action = TriggerAction.GetAction(other);
             if (action.Terminated)
             {
@@ -22,6 +30,14 @@ namespace Syadeu.Presentation.Actions
         }
         public static bool Execute<T>(this Reference<T> other, EntityData<IEntityData> entity, out bool predicate) where T : TriggerPredicateAction
         {
+            if (!entity.IsValid())
+            {
+                CoreSystem.Logger.LogWarning(Channel.Entity,
+                    string.Format(c_WarningInvalidEntityAction, TypeHelper.TypeOf<T>.Name));
+                predicate = false;
+                return false;
+            }
+
             predicate = false;
             T action = TriggerPredicateAction.GetAction(other);
             if (action.Terminated)
@@ -68,6 +84,13 @@ namespace Syadeu.Presentation.Actions
 
         public static bool Execute<T>(this Reference<T>[] actions, EntityData<IEntityData> entity) where T : TriggerAction
         {
+            if (!entity.IsValid())
+            {
+                CoreSystem.Logger.LogWarning(Channel.Entity,
+                    string.Format(c_WarningInvalidEntityAction, TypeHelper.TypeOf<T>.Name));
+                return false;
+            }
+
             bool isFailed = false;
             for (int i = 0; i < actions.Length; i++)
             {
@@ -86,6 +109,14 @@ namespace Syadeu.Presentation.Actions
         }
         public static bool Execute<T>(this Reference<T>[] actions, EntityData<IEntityData> entity, out bool predicate) where T : TriggerPredicateAction
         {
+            if (!entity.IsValid())
+            {
+                CoreSystem.Logger.LogWarning(Channel.Entity,
+                    string.Format(c_WarningInvalidEntityAction, TypeHelper.TypeOf<T>.Name));
+                predicate = false;
+                return false;
+            }
+
             bool 
                 isFailed = false,
                 isFalse = false;

@@ -396,7 +396,7 @@ namespace SyadeuEditor.Presentation
                             entityBase.Prefab = idx;
                             if (idx >= 0)
                             {
-                                GameObject temp = (GameObject)entityBase.Prefab.GetObjectSetting().m_RefPrefab.editorAsset;
+                                GameObject temp = (GameObject)entityBase.Prefab.GetEditorAsset();
                                 Transform tr = temp.transform;
 
                                 AABB aabb = new AABB(tr.position, float3.zero);

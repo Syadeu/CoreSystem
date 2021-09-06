@@ -86,6 +86,6 @@ namespace Syadeu.Presentation.Actions
 
         protected virtual void OnInitialize() { }
         protected virtual void OnTerminate() { }
-        protected virtual void OnExecute(EntityData<IEntityData> entity) { }
+        protected virtual void OnExecute(EntityData<IEntityData> entity) { throw new NotImplementedException(); }
     }
 }

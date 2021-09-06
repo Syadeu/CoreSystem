@@ -697,7 +697,7 @@ namespace SyadeuEditor.Presentation.Map
                     {
                         if (GUILayout.Button("Auto"))
                         {
-                            GameObject temp = (GameObject)entity.Prefab.GetObjectSetting()?.m_RefPrefab?.editorAsset;
+                            GameObject temp = (GameObject)entity.Prefab.GetEditorAsset();
                             if (temp != null)
                             {
                                 Transform tr = temp.transform;

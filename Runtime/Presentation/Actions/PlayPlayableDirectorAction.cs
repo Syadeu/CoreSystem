@@ -51,10 +51,7 @@ namespace Syadeu.Presentation.Actions
         private IEnumerator Executer()
         {
             TimelineData data = m_Data.GetObject();
-
-            AsyncOperationHandle<GameObject> entityOper = data.m_Entity.GetObject().Prefab.LoadAssetAsync();
-            yield return new WaitUntil(() => entityOper.IsDone);
-
+            
             float3 pos;
             quaternion rot;
             if (data.m_WorldSpace)
@@ -76,7 +73,20 @@ namespace Syadeu.Presentation.Actions
                 }
             }
 
-            Entity<IEntity> entity = PresentationSystem<EntitySystem>.System.CreateEntity(data.m_Entity, pos, rot, entityOper.Result.transform.localScale);
+            EntityBase original = data.m_Entity.GetObject();
+            Entity<IEntity> entity;
+
+            if (original.Prefab.Asset == null)
+            {
+                AsyncOperationHandle<GameObject> entityOper = original.Prefab.LoadAssetAsync();
+                yield return new WaitUntil(() => entityOper.IsDone);
+                entity = PresentationSystem<EntitySystem>.System.CreateEntity(data.m_Entity, pos, rot, entityOper.Result.transform.localScale);
+            }
+            else
+            {
+                entity = PresentationSystem<EntitySystem>.System.CreateEntity(data.m_Entity, pos, rot, original.Prefab.Asset.transform.localScale);
+            }
+            
             ProxyTransform tr = (ProxyTransform)entity.transform;
             tr.enableCull = false;
             
@@ -89,9 +99,16 @@ namespace Syadeu.Presentation.Actions
             PlayableAsset asset;
             if (!data.m_UseObjectTimeline)
             {
-                AsyncOperationHandle<PlayableAsset> oper = data.LoadTimelineAsset();
-                yield return new WaitUntil(() => oper.IsDone);
-                asset = oper.Result;
+                if (data.m_Timeline.Asset == null)
+                {
+                    AsyncOperationHandle<PlayableAsset> oper = data.m_Timeline.LoadAssetAsync();
+                    yield return new WaitUntil(() => oper.IsDone);
+                    asset = oper.Result;
+                }
+                else
+                {
+                    asset = data.m_Timeline.Asset;
+                }
 
                 director.playableAsset = asset;
                 foreach (PlayableBinding item in asset.outputs)

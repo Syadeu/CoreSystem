@@ -17,13 +17,10 @@ namespace Syadeu.Database
             obj.hideFlags = HideFlags.HideInHierarchy;
             obj.transform.position = INIT_POSITION;
 
-            PrefabList.Instance.ObjectSettings.Add(new PrefabList.ObjectSetting
+            PrefabList.Instance.ObjectSettings.Add(new PrefabList.ObjectSetting(name, null, false)
             {
                 m_IsRuntimeObject = true,
-                m_Name = name,
-                m_Prefab = obj,
-
-                m_IsWorldUI = false
+                m_Prefab = obj
             });
             return new PrefabReference<GameObject>(PrefabList.Instance.ObjectSettings.Count - 1);
         }
