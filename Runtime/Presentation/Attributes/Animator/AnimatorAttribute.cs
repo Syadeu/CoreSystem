@@ -45,6 +45,12 @@ namespace Syadeu.Presentation.Attributes
             if (AnimatorComponent != null) AnimatorComponent.m_Animator.SetBool(key, value);
         }
         public bool GetBool(int key) => (bool)Parameters[key];
+
+        public void SetTrigger(int key)
+        {
+            if (AnimatorComponent == null) return;
+            AnimatorComponent.m_Animator.SetTrigger(key);
+        }
     }
     internal sealed class AnimatorProcessor : AttributeProcessor<AnimatorAttribute>,
         IAttributeOnProxy
