@@ -47,7 +47,7 @@ namespace SyadeuEditor.Presentation
             {
                 EntityDataList.Instance.LoadData();
             }
-            else Reload();
+            Reload();
 
             base.OnEnable();
         }
@@ -142,7 +142,10 @@ namespace SyadeuEditor.Presentation
             EditorGUI.LabelField(HeaderPos, EditorUtils.String("Entity Window", 20), EditorUtils.HeaderStyle);
             HeaderLinePos.width = Screen.width;
             EditorUtils.Line(HeaderLinePos);
-            
+
+            EntityListPos.height = Screen.height - 70;
+            ViewPos.width = Screen.width - EntityListPos.width - 5;
+            ViewPos.height = Screen.height - 70;
             BeginWindows();
 
             m_DataListWindow.OnGUI(EntityListPos, 1);
@@ -150,6 +153,9 @@ namespace SyadeuEditor.Presentation
 
             EndWindows();
 
+            m_CopyrightRect.width = Screen.width;
+            m_CopyrightRect.x = 0;
+            m_CopyrightRect.y = Screen.height - 42;
             EditorGUI.LabelField(m_CopyrightRect, EditorUtils.String("Copyright 2021 Syadeu. All rights reserved.", 11), EditorUtils.CenterStyle);
         }
         
@@ -348,7 +354,7 @@ namespace SyadeuEditor.Presentation
                 //m_MainWindow.HeaderLinePos = EditorGUILayout.RectField("HeaderLinePos", m_MainWindow.HeaderLinePos);
                 //m_MainWindow.EntityListPos = EditorGUILayout.RectField("entitylistPos", m_MainWindow. EntityListPos);
 
-                //m_MainWindow.ViewPos = EditorGUILayout.RectField("ViewPos", m_MainWindow.ViewPos);
+                m_MainWindow.ViewPos = EditorGUILayout.RectField("ViewPos", m_MainWindow.ViewPos);
                 //EditorGUILayout.Space();
 
                 #endregion
