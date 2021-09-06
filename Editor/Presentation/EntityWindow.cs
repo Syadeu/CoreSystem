@@ -359,13 +359,16 @@ namespace SyadeuEditor.Presentation
 
                 #endregion
 
-                if (m_MainWindow.m_SelectedObject != null)
+                using (new EditorUtils.BoxBlock(Color.white, GUILayout.Width(m_Position.width - 15)))
                 {
-                    m_MainWindow.m_SelectedObject.OnGUI();
-                }
-                else
-                {
-                    EditorGUILayout.LabelField("select object");
+                    if (m_MainWindow.m_SelectedObject != null)
+                    {
+                        m_MainWindow.m_SelectedObject.OnGUI();
+                    }
+                    else
+                    {
+                        EditorGUILayout.LabelField("select object");
+                    }
                 }
 
                 EditorGUILayout.EndScrollView();
