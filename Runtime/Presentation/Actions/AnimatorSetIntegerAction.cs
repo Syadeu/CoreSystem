@@ -4,10 +4,10 @@ using Syadeu.Presentation.Entities;
 
 namespace Syadeu.Presentation.Actions
 {
-    [System.ComponentModel.DisplayName("TriggerAction: Set Animator Float")]
-    public sealed class AnimationSetFloatAction : AnimatorParameterActionBase
+    [System.ComponentModel.DisplayName("TriggerAction: Set Animator Integer")]
+    public sealed class AnimatorSetIntegerAction : AnimatorParameterActionBase
     {
-        [JsonProperty(Order = 0, PropertyName = "Value")] private float m_Value;
+        [JsonProperty(Order = 0, PropertyName = "Value")] private int m_Value;
 
         protected override void OnExecute(EntityData<IEntityData> entity)
         {
@@ -16,7 +16,7 @@ namespace Syadeu.Presentation.Actions
                 return;
             }
 
-            animator.SetFloat(KeyHash, m_Value);
+            animator.SetInteger(KeyHash, m_Value);
         }
     }
 }

@@ -5,7 +5,7 @@ using Syadeu.Presentation.Entities;
 namespace Syadeu.Presentation.Actions
 {
     [System.ComponentModel.DisplayName("TriggerAction: Set Animator Boolen")]
-    public sealed class AnimationSetBoolAction : AnimatorParameterActionBase
+    public sealed class AnimatorSetBoolAction : AnimatorParameterActionBase
     {
         [JsonProperty(Order = 0, PropertyName = "Value")] private bool m_Value;
 
