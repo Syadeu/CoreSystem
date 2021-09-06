@@ -391,26 +391,6 @@ namespace SyadeuEditor.Presentation
                 if (Target is EntityBase entityBase)
                 {
                     DrawField(m_ObjectDrawers.Where((other) => other.Name.Equals("Prefab")).First());
-
-                    //ReflectionHelperEditor.DrawPrefabReference("Prefab: ",
-                    //    (idx) =>
-                    //    {
-                    //        entityBase.Prefab = idx;
-                    //        if (idx >= 0)
-                    //        {
-                    //            GameObject temp = (GameObject)entityBase.Prefab.GetEditorAsset();
-                    //            Transform tr = temp.transform;
-
-                    //            AABB aabb = new AABB(tr.position, float3.zero);
-                    //            foreach (var item in tr.GetComponentsInChildren<Renderer>())
-                    //            {
-                    //                aabb.Encapsulate(item.bounds);
-                    //            }
-                    //            entityBase.Center = aabb.center - ((float3)tr.position);
-                    //            entityBase.Size = aabb.size;
-                    //        }
-                    //    }
-                    //    , entityBase.Prefab);
                 }
                 using (new EditorUtils.BoxBlock(Color.black))
                 {
