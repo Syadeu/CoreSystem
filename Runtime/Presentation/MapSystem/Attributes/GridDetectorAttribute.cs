@@ -39,11 +39,11 @@ namespace Syadeu.Presentation.Map
         /// <summary>
         /// 내가 발견한
         /// </summary>
-        public IReadOnlyList<Entity<IEntity>> Detected => m_Detected;
+        [JsonIgnore] public IReadOnlyList<Entity<IEntity>> Detected => m_Detected;
         /// <summary>
         /// 나를 발견한
         /// </summary>
-        public IReadOnlyList<Entity<IEntity>> Targeted => m_Targeted;
+        [JsonIgnore] public IReadOnlyList<Entity<IEntity>> Targeted => m_Targeted;
 
         private bool IsTriggerable(Entity<IEntity> target)
         {
