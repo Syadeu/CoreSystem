@@ -37,7 +37,7 @@ namespace SyadeuEditor.Presentation
                 },
                 currentValue);
 
-            EditorGUI.BeginDisabledGroup(!currentValue.IsValid());
+            EditorGUI.BeginDisabledGroup(!currentValue.IsValid() || currentValue.IsNone());
             EditorGUI.BeginChangeCheck();
             m_Open = GUILayout.Toggle(m_Open,
                         m_Open ? EditorUtils.FoldoutOpendString : EditorUtils.FoldoutClosedString
@@ -62,30 +62,17 @@ namespace SyadeuEditor.Presentation
                 EditorGUI.indentLevel++;
 
                 EditorUtils.BoxBlock box = new EditorUtils.BoxBlock(Color.black);
-                Rect rect = GUILayoutUtility.GetLastRect();
-
-                //Editor.CreateEditor(currentValue.GetEditorAsset());
+                
                 m_Editor.DrawHeader();
                 m_Editor.OnInspectorGUI();
 
                 if (m_Editor.HasPreviewGUI())
                 {
+                    Rect rect = GUILayoutUtility.GetLastRect();
                     rect = GUILayoutUtility.GetRect(rect.width, 100);
                     m_Editor.DrawPreview(rect);
                 }
                 
-
-                //PropertyInfo info = TypeHelper.TypeOf<SerializedObject>.Type.GetProperty("inspectorMode",
-                //    BindingFlags.NonPublic | BindingFlags.Instance);
-                //info.SetValue(prefabSerialized, InspectorMode.Normal, null);
-                //SerializedProperty iter = prefabSerialized.GetIterator();
-                //bool enterChilderen = true;
-                //while (iter.NextVisible(enterChilderen))
-                //{
-                //    enterChilderen = false;
-                //    EditorGUILayout.PropertyField(iter, true);
-                //}
-
                 box.Dispose();
 
                 EditorGUI.indentLevel--;
