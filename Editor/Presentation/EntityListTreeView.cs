@@ -160,16 +160,28 @@ namespace SyadeuEditor.Presentation
             GUI.color = origin;
         }
 
-        static Regex regex = new Regex(@"((ref:)[0-9]{18})");
+        static Regex s_SearchReferencerRegex = new Regex(@"((ref:)[0-9]{18})");
+        static Regex s_SearchWithHashRegex = new Regex(@"^([0-9]{18})");
+
         protected override bool DoesItemMatchSearch(TreeViewItem item, string search)
         {
             if (item is FolderTreeElement) return false;
 
-            Match match = regex.Match(search);
-            
-            if (match.Success)
+            Match searchWithHash = s_SearchWithHashRegex.Match(search);
+            if (searchWithHash.Success)
             {
-                string value = match.Value.Replace("ref:", "");
+                var temp = (ObjectTreeElement)item;
+                if (temp.Target.m_TargetObject.Hash.ToString().StartsWith(searchWithHash.Value))
+                {
+                    return true;
+                }
+                return false;
+            }
+
+            Match searchReferencer = s_SearchReferencerRegex.Match(search);
+            if (searchReferencer.Success)
+            {
+                string value = searchReferencer.Value.Replace("ref:", "");
                 var temp = (ObjectTreeElement)item;
                 string json = temp.Target.m_TargetObject.GetRawJson();
 

@@ -500,6 +500,11 @@ namespace SyadeuEditor
 
                     if (att != null)
                     {
+                        menu.AddItem(new GUIContent("Find Referencers"), false, () =>
+                        {
+                            if (!EntityWindow.IsOpened) CoreSystemMenuItems.EntityDataListMenu();
+                            EntityWindow.Instance.m_DataListWindow.SearchString = $"ref:{att.Hash}";
+                        });
                         menu.AddItem(new GUIContent("To Reference"), false, () =>
                         {
                             EntityWindow.Instance.Select(new Reference(att));
@@ -507,6 +512,7 @@ namespace SyadeuEditor
                     }
                     else
                     {
+                        menu.AddDisabledItem(new GUIContent("Find Referencers"));
                         menu.AddDisabledItem(new GUIContent("To Reference"));
                     }
 
