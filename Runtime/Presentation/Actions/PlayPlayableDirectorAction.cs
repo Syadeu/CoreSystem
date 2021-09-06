@@ -57,11 +57,6 @@ namespace Syadeu.Presentation.Actions
         }
         protected override void OnExecute(EntityData<IEntityData> entity)
         {
-            if (!m_Conditional.Execute(entity, out bool predicate) || !predicate)
-            {
-                return;
-            }
-
             PayloadJob job = new PayloadJob
             {
                 m_Data = m_Data,
@@ -69,6 +64,8 @@ namespace Syadeu.Presentation.Actions
 
                 m_StartDelay = m_StartDelay,
                 m_EndDelay = m_EndDelay,
+
+                m_Conditional = m_Conditional,
 
                 m_OnStart = m_OnStart,
                 m_OnStartAction = m_OnStartAction,
@@ -88,6 +85,8 @@ namespace Syadeu.Presentation.Actions
             public float m_StartDelay;
             public float m_EndDelay;
 
+            public Reference<TriggerPredicateAction>[] m_Conditional;
+
             public Reference<TriggerAction>[] m_OnStart;
             public Reference<TriggerAction>[] m_OnEnd;
 
@@ -96,6 +95,11 @@ namespace Syadeu.Presentation.Actions
 
             public IEnumerator Execute()
             {
+                if (!m_Conditional.Execute(m_Executer, out bool predicate) || !predicate)
+                {
+                    yield break;
+                }
+
                 TimelineData data = m_Data.GetObject();
 
                 float3 pos;
