@@ -88,7 +88,7 @@ namespace Syadeu.Presentation.Map
 
                 for (int i = 0; i < m_OnDetected.Length; i++)
                 {
-                    m_OnDetected[i].Execute(Parent);
+                    m_OnDetected[i].Execute(Parent, ev.Entity.As<IEntity, IEntityData>());
                 }
                 return;
             }
@@ -116,32 +116,40 @@ namespace Syadeu.Presentation.Map
 
             [JsonProperty(Order = 1, PropertyName = "If")]
             private Reference<TriggerPredicateAction>[] m_If = Array.Empty<Reference<TriggerPredicateAction>>();
-            [JsonProperty(Order = 2, PropertyName = "Else If")]
+            [JsonProperty(Order = 2, PropertyName = "If Target")]
+            private Reference<TriggerPredicateAction>[] m_IfTarget = Array.Empty<Reference<TriggerPredicateAction>>();
+
+            [Space]
+            [JsonProperty(Order = 3, PropertyName = "Else If")]
             private LogicTrigger[] m_ElseIf = Array.Empty<LogicTrigger>();
 
-            [JsonProperty(Order = 3, PropertyName = "Do")]
+            [Space]
+            [JsonProperty(Order = 4, PropertyName = "Do")]
             private Reference<TriggerAction>[] m_Do = Array.Empty<Reference<TriggerAction>>();
+            [JsonProperty(Order = 5, PropertyName = "Do Target")]
+            private Reference<TriggerAction>[] m_DoTarget = Array.Empty<Reference<TriggerAction>>();
 
             private bool IsExecutable()
             {
-                if (m_If.Length == 0) return false;
+                if (m_If.Length == 0 && m_IfTarget.Length == 0) return false;
                 return true;
             }
-            public bool Execute(EntityData<IEntityData> entity)
+            public bool Execute(EntityData<IEntityData> entity, EntityData<IEntityData> target)
             {
                 if (!IsExecutable()) return false;
 
-                if (!m_If.Execute(entity, out bool predicate) || !predicate)
+                if ((m_If.Execute(entity, out bool thisPredicate) && thisPredicate) &&
+                    (m_IfTarget.Execute(target, out bool targetPredicate) && targetPredicate))
                 {
-                    for (int i = 0; i < m_ElseIf.Length; i++)
-                    {
-                        bool result = m_ElseIf[i].Execute(entity);
-                        if (result) return true;
-                    }
-                    return false;
+                    return m_Do.Execute(entity) && m_DoTarget.Execute(target);
                 }
 
-                return m_Do.Execute(entity);
+                for (int i = 0; i < m_ElseIf.Length; i++)
+                {
+                    bool result = m_ElseIf[i].Execute(entity, target);
+                    if (result) return true;
+                }
+                return false;
             }
         }
     }
