@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using Unity.Mathematics;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
@@ -159,9 +160,25 @@ namespace SyadeuEditor.Presentation
             GUI.color = origin;
         }
 
+        static Regex regex = new Regex(@"((ref:)[0-9]{18})");
         protected override bool DoesItemMatchSearch(TreeViewItem item, string search)
         {
             if (item is FolderTreeElement) return false;
+
+            Match match = regex.Match(search);
+            
+            if (match.Success)
+            {
+                string value = match.Value.Replace("ref:", "");
+                var temp = (ObjectTreeElement)item;
+                string json = temp.Target.m_TargetObject.GetRawJson();
+
+                if (!json.Contains(value))
+                {
+                    return false;
+                }
+                else return true;
+            }
 
             return base.DoesItemMatchSearch(item, search);
         }
@@ -198,6 +215,10 @@ namespace SyadeuEditor.Presentation
             }
             else if (item is ObjectTreeElement obj)
             {
+                menu.AddItem(new GUIContent("Find Referencers"), false, () =>
+                {
+                    m_Window.m_DataListWindow.SearchString = $"ref:{obj.Target.m_TargetObject.Hash}";
+                });
                 menu.AddItem(new GUIContent("Remove"), false, () =>
                 {
                     item.parent.children.Remove(item);

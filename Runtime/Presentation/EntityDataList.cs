@@ -98,7 +98,6 @@ namespace Syadeu.Database
             DirectoryCheck();
 
             Type objType = obj.GetType();
-            //Type objType = TypeHelper.TypeOf<T>.Type;
             string objPath;
             if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(objType))
             {
@@ -247,7 +246,7 @@ namespace Syadeu.Database
         }
         public ObjectBase GetObject(string name) => GetObject(m_EntityNameHash[Hash.NewHash(name)]);
 
-        private static string ToFileName(ObjectBase obj)
+        public static string ToFileName(ObjectBase obj)
         {
             const string c_UnderScore = "_";
             Type t = obj.GetType();

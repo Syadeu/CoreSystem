@@ -264,6 +264,12 @@ namespace SyadeuEditor.Presentation
             private EntityListTreeView EntityListTreeView;
             private TreeViewState TreeViewState;
 
+            public string SearchString
+            {
+                get => EntityListTreeView.searchString;
+                set => EntityListTreeView.searchString = value;
+            }
+
             public DataListWindow(EntityWindow window)
             {
                 m_MainWindow = window;

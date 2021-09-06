@@ -138,6 +138,12 @@ namespace SyadeuEditor.Presentation
 
                     if (current.IsValid())
                     {
+                        menu.AddItem(new GUIContent("Find Referencers"), false, () =>
+                        {
+                            if (!EntityWindow.IsOpened) CoreSystemMenuItems.EntityDataListMenu();
+
+                            EntityWindow.Instance.m_DataListWindow.SearchString = $"ref:{current.Hash}";
+                        });
                         menu.AddItem(new GUIContent("To Reference"), false, () =>
                         {
                             EntityWindow.Instance.Select(current);
@@ -145,6 +151,7 @@ namespace SyadeuEditor.Presentation
                     }
                     else
                     {
+                        menu.AddDisabledItem(new GUIContent("Find Referencers"));
                         menu.AddDisabledItem(new GUIContent("To Reference"));
                     }
                     

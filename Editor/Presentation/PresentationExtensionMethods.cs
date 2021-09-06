@@ -1,6 +1,14 @@
-﻿using Syadeu.Database;
+﻿using Newtonsoft.Json;
+using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Mono;
+using Syadeu.Presentation;
+using Syadeu.Presentation.Actions;
+using Syadeu.Presentation.Attributes;
+using Syadeu.Presentation.Data;
+using Syadeu.Presentation.Entities;
+using System;
+using System.IO;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -40,6 +48,37 @@ namespace SyadeuEditor.Presentation
 
             AssetReference asset = (AssetReference)value;
             return asset.editorAsset;
+        }
+
+        const string c_JsonFilePath = "{0}/{1}.json";
+        public static string GetRawJson(this ObjectBase obj)
+        {
+            Type objType = obj.GetType();
+            string objPath;
+            if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(objType))
+            {
+                objPath = Path.Combine(CoreSystemFolder.EntityPath, objType.Name);
+            }
+            else if (TypeHelper.TypeOf<AttributeBase>.Type.IsAssignableFrom(objType))
+            {
+                objPath = Path.Combine(CoreSystemFolder.AttributePath, objType.Name);
+            }
+            else if (TypeHelper.TypeOf<ActionBase>.Type.IsAssignableFrom(objType))
+            {
+                objPath = Path.Combine(CoreSystemFolder.ActionPath, objType.Name);
+            }
+            else if (TypeHelper.TypeOf<DataObjectBase>.Type.IsAssignableFrom(objType))
+            {
+                objPath = Path.Combine(CoreSystemFolder.DataPath, objType.Name);
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
+
+            string filePath = string.Format(c_JsonFilePath, objPath, EntityDataList.ToFileName(obj));
+            if (!Directory.Exists(objPath) /*|| !File.Exists(filePath)*/) return string.Empty;
+            return File.ReadAllText(filePath);
         }
     }
 }

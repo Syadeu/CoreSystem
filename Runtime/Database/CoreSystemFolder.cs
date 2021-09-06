@@ -23,19 +23,5 @@ namespace Syadeu.Database
         public static string AttributePath => Path.Combine(ModulePath, ATTRIBUTES);
         public static string ActionPath => Path.Combine(ModulePath, ACTION);
         public static string DataPath => Path.Combine(ModulePath, DATA);
-
-        #region Item
-        private const string ITEMDATA_PATH = "Items";
-        private const string ITEMTYPES = "ItemTypes";
-        private const string ITEMEFFECTS = "ItemEffects";
-        public static string ItemPath => Path.Combine(ModulePath, ITEMDATA_PATH);
-        public static string ItemTypePath => Path.Combine(ItemPath, ITEMTYPES);
-        public static string ItemEffectTypePath => Path.Combine(ItemPath, ITEMEFFECTS);
-        #endregion
-
-        //private const string CREATUREDATA_PATH = "Creatures";
-        //private const string CREATURE_ATTRIBUTES = "Attributes";
-        //public static string CreaturePath => Path.Combine(ModulePath, CREATUREDATA_PATH);
-        //public static string CreatureAttributePath => Path.Combine(CreaturePath, CREATURE_ATTRIBUTES);
     }
 }
