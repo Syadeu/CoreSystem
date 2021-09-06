@@ -13,7 +13,8 @@ namespace SyadeuEditor.Presentation
         private readonly ConstructorInfo m_Constructor;
         private bool m_Open = false;
 
-        SerializedObject prefabSerialized = null;
+        //SerializedObject prefabSerialized = null;
+        Editor m_Editor = null;
 
         public PrefabReferenceDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
         {
@@ -45,12 +46,11 @@ namespace SyadeuEditor.Presentation
             {
                 if (m_Open)
                 {
-                    prefabSerialized = new SerializedObject(currentValue.GetEditorAsset());
+                    m_Editor = Editor.CreateEditor(currentValue.GetEditorAsset());
                 }
                 else
                 {
-                    prefabSerialized.ApplyModifiedProperties();
-                    prefabSerialized = null;
+                    m_Editor = null;
                 }
             }
             EditorGUI.EndDisabledGroup();
@@ -62,17 +62,29 @@ namespace SyadeuEditor.Presentation
                 EditorGUI.indentLevel++;
 
                 EditorUtils.BoxBlock box = new EditorUtils.BoxBlock(Color.black);
+                Rect rect = GUILayoutUtility.GetLastRect();
 
-                PropertyInfo info = TypeHelper.TypeOf<SerializedObject>.Type.GetProperty("inspectorMode",
-                    BindingFlags.NonPublic | BindingFlags.Instance);
-                info.SetValue(prefabSerialized, InspectorMode.Normal, null);
-                SerializedProperty iter = prefabSerialized.GetIterator();
-                bool enterChilderen = true;
-                while (iter.NextVisible(enterChilderen))
+                //Editor.CreateEditor(currentValue.GetEditorAsset());
+                m_Editor.DrawHeader();
+                m_Editor.OnInspectorGUI();
+
+                if (m_Editor.HasPreviewGUI())
                 {
-                    enterChilderen = false;
-                    EditorGUILayout.PropertyField(iter, true);
+                    rect = GUILayoutUtility.GetRect(rect.width, 100);
+                    m_Editor.DrawPreview(rect);
                 }
+                
+
+                //PropertyInfo info = TypeHelper.TypeOf<SerializedObject>.Type.GetProperty("inspectorMode",
+                //    BindingFlags.NonPublic | BindingFlags.Instance);
+                //info.SetValue(prefabSerialized, InspectorMode.Normal, null);
+                //SerializedProperty iter = prefabSerialized.GetIterator();
+                //bool enterChilderen = true;
+                //while (iter.NextVisible(enterChilderen))
+                //{
+                //    enterChilderen = false;
+                //    EditorGUILayout.PropertyField(iter, true);
+                //}
 
                 box.Dispose();
 
