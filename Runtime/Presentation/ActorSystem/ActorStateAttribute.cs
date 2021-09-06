@@ -10,6 +10,7 @@ namespace Syadeu.Presentation.Actor
 {
     public sealed class ActorStateAttribute : ActorAttributeBase
     {
+        [Flags]
         public enum StateInfo
         {
             None = 0,

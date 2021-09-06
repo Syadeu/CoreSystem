@@ -952,7 +952,7 @@ namespace Syadeu
                                     waitForRemove.Add(item.Key);
                                 }
                             }
-                            else if (item.Key.Iterator.Current is YieldInstruction baseYield &&
+                            else if (item.Key.Iterator.Current is YieldInstruction &&
                                 !(item.Key.Iterator.Current is UnityEngine.AsyncOperation))
                             {
                                 waitForRemove.Add(item.Key);
