@@ -343,15 +343,31 @@ namespace SyadeuEditor.Presentation
             Rect m_Position;
             Vector2 m_Scroll;
 
+            //GUIStyle m_Style;
+
             public ViewWindow(EntityWindow window)
             {
                 m_MainWindow = window;
+                //m_Style = new GUIStyle();
+                //m_Style.normal.background = new Texture2D(1, 1);
+                //for (int i = 0; i < m_Style.normal.background.height; i++)
+                //{
+                //    for (int j = 0; j < m_Style.normal.background.width; j++)
+                //    {
+                //        m_Style.normal.background.SetPixel(i, j, ColorPalettes.PastelDreams.Yellow);
+                //    }
+                //}
+                //m_Style.normal.background.Apply();
             }
 
             public void OnGUI(Rect pos, int unusedID)
             {
                 m_Position = pos;
+
+                Color origin = GUI.color;
+                GUI.color = ColorPalettes.PastelDreams.Yellow;
                 GUILayout.Window(unusedID, m_Position, Draw, string.Empty, EditorUtils.Box);
+                GUI.color = origin;
             }
             private void Draw(int unusedID)
             {
@@ -370,7 +386,7 @@ namespace SyadeuEditor.Presentation
 
                 #endregion
 
-                using (new EditorUtils.BoxBlock(Color.white, GUILayout.Width(m_Position.width - 15)))
+                using (new EditorUtils.BoxBlock(ColorPalettes.PastelDreams.Yellow, GUILayout.Width(m_Position.width - 15)))
                 {
                     if (m_MainWindow.m_SelectedObject != null)
                     {
@@ -389,11 +405,22 @@ namespace SyadeuEditor.Presentation
         public sealed class EntityDrawer : ObjectBaseDrawer
         {
             public EntityDataBase Target => (EntityDataBase)m_TargetObject;
-            //readonly ReflectionHelperEditor.AttributeListDrawer m_AttributeDrawer;
+
+            GUIContent m_EnableCullName, m_DisableCullName;
+            PrefabReferenceDrawer prefabReferenceDrawer = null;
             AttributeListDrawer attributeListDrawer;
+
             public EntityDrawer(ObjectBase objectBase) : base(objectBase)
             {
-                //m_AttributeDrawer = ReflectionHelperEditor.GetAttributeDrawer(Type, Target.Attributes);
+                m_EnableCullName = new GUIContent("Enable Cull");
+                m_DisableCullName = new GUIContent("Disable Cull");
+
+                if (objectBase is EntityBase)
+                {
+                    prefabReferenceDrawer = (PrefabReferenceDrawer)m_ObjectDrawers.Where((other) => other.Name.Equals("Prefab")).First();
+                    prefabReferenceDrawer.DisableHeader = true;
+                }
+                
                 attributeListDrawer = new AttributeListDrawer(objectBase,
                     TypeHelper.TypeOf<EntityDataBase>.Type.GetField("m_AttributeList", BindingFlags.NonPublic | BindingFlags.Instance));
             }
@@ -410,9 +437,56 @@ namespace SyadeuEditor.Presentation
                 EditorGUI.BeginDisabledGroup(true);
                 EditorGUILayout.TextField("Hash: ", Target.Hash.ToString());
                 EditorGUI.EndDisabledGroup();
-                if (Target is EntityBase entityBase)
+                if (Target is EntityBase entity)
                 {
-                    DrawField(m_ObjectDrawers.Where((other) => other.Name.Equals("Prefab")).First());
+                    using (new EditorUtils.BoxBlock(ColorPalettes.WaterFoam.Teal))
+                    {
+                        EditorUtils.StringRich("Prefab", 15);
+
+                        GUIContent enableCullName = entity.m_EnableCull ? m_DisableCullName : m_EnableCullName;
+                        Rect enableCullRect = GUILayoutUtility.GetRect(
+                            enableCullName, 
+                            EditorStyles.toolbarButton, GUILayout.ExpandWidth(true));
+                        int enableCullID = GUIUtility.GetControlID(FocusType.Passive, enableCullRect);
+                        switch (Event.current.GetTypeForControl(enableCullID))
+                        {
+                            case EventType.Repaint:
+                                bool isHover = enableCullRect.Contains(Event.current.mousePosition);
+
+                                Color origin = GUI.color;
+                                GUI.color = entity.m_EnableCull ? ColorPalettes.PastelDreams.HotPink : ColorPalettes.PastelDreams.TiffanyBlue;
+
+                                EditorStyles.toolbarButton.Draw(enableCullRect,
+                                    isHover, isActive: true, on: true, false);
+                                GUI.color = origin;
+
+                                var temp = new GUIStyle(EditorStyles.label);
+                                temp.alignment = TextAnchor.MiddleCenter;
+                                temp.Draw(enableCullRect, enableCullName, enableCullID);
+                                break;
+                            case EventType.MouseDown:
+                                if (!enableCullRect.Contains(Event.current.mousePosition)) break;
+
+                                if (Event.current.button == 0)
+                                {
+                                    GUIUtility.hotControl = enableCullID;
+                                    entity.m_EnableCull = !entity.m_EnableCull;
+                                    Event.current.Use();
+                                }
+
+                                break;
+                            case EventType.MouseUp:
+                                if (GUIUtility.hotControl == enableCullID)
+                                {
+                                    GUIUtility.hotControl = 0;
+                                }
+                                break;
+                            default:
+                                break;
+                        }
+
+                        DrawField(prefabReferenceDrawer);
+                    }
                 }
                 using (new EditorUtils.BoxBlock(Color.black))
                 {
@@ -430,8 +504,8 @@ namespace SyadeuEditor.Presentation
 
                     if (m_ObjectDrawers[i].Name.Equals("Name") ||
                         m_ObjectDrawers[i].Name.Equals("Hash") ||
-                        m_ObjectDrawers[i].Name.Equals("Prefab") 
-                        //|| m_ObjectDrawers[i].Name.Equals("Attributes")
+                        m_ObjectDrawers[i].Name.Equals("Prefab")
+                        || m_ObjectDrawers[i].Name.Equals("EnableCull")
                         )
                     {
                         continue;
