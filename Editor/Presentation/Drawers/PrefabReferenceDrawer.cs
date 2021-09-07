@@ -17,9 +17,6 @@ namespace SyadeuEditor.Presentation
         private bool m_Open = false;
 
         Editor m_Editor = null;
-        GUIStyle 
-            m_SelectorStyle = null;
-
         bool
             IsHover;
 
@@ -28,18 +25,10 @@ namespace SyadeuEditor.Presentation
         public PrefabReferenceDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
         {
             m_Constructor = TypeHelper.GetConstructorInfo(DeclaredType, TypeHelper.TypeOf<long>.Type);
-
-            m_SelectorStyle = new GUIStyle(EditorStyles.toolbarButton);
-            ColorPalettes.SetBackgroundColor(m_SelectorStyle,
-                ColorPalettes.WaterFoam.TealGreen, ColorPalettes.WaterFoam.Teal, ColorPalettes.WaterFoam.Spearmint);
         }
         public PrefabReferenceDrawer(object parentObject, Type declaredType, Action<IPrefabReference> setter, Func<IPrefabReference> getter) : base(parentObject, declaredType, setter, getter)
         {
             m_Constructor = TypeHelper.GetConstructorInfo(DeclaredType, TypeHelper.TypeOf<long>.Type);
-
-            m_SelectorStyle = new GUIStyle(EditorStyles.toolbarButton);
-            ColorPalettes.SetBackgroundColor(m_SelectorStyle,
-                ColorPalettes.WaterFoam.TealGreen, ColorPalettes.WaterFoam.Teal, ColorPalettes.WaterFoam.Spearmint);
         }
 
         public override IPrefabReference Draw(IPrefabReference currentValue)
@@ -120,14 +109,14 @@ namespace SyadeuEditor.Presentation
 
             if (!string.IsNullOrEmpty(name)) GUILayout.Label(name, GUILayout.Width(Screen.width * .25f));
 
-            Rect fieldRect = GUILayoutUtility.GetRect(displayName, m_SelectorStyle, GUILayout.ExpandWidth(true));
+            Rect fieldRect = GUILayoutUtility.GetRect(displayName, ReflectionHelperEditor.SelectorStyle, GUILayout.ExpandWidth(true));
             int selectorID = GUIUtility.GetControlID(FocusType.Passive, fieldRect);
 
             switch (Event.current.GetTypeForControl(selectorID))
             {
                 case EventType.Repaint:
                     IsHover = fieldRect.Contains(Event.current.mousePosition);
-                    m_SelectorStyle.Draw(fieldRect, displayName, IsHover, isActive: false, on: false, false);
+                    ReflectionHelperEditor.SelectorStyle.Draw(fieldRect, displayName, IsHover, isActive: false, on: false, false);
                     break;
                 case EventType.ContextClick:
                     if (!fieldRect.Contains(Event.current.mousePosition)) break;

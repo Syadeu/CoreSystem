@@ -63,7 +63,7 @@ namespace Syadeu.Database
         public void UnloadAsset() => GetObjectSetting().UnloadAsset();
         public void ReleaseInstance(UnityEngine.GameObject obj) => GetObjectSetting().ReleaseInstance(obj);
 
-        bool IPrefabReference.IsNone() => Equals(None);
+        public bool IsNone() => Equals(None);
         public bool IsValid() => !Equals(Invalid) && m_Idx < PrefabList.Instance.ObjectSettings.Count;
 
         public static PrefabReference Find(string name)
@@ -135,7 +135,7 @@ namespace Syadeu.Database
         public void UnloadAsset() => GetObjectSetting().UnloadAsset();
         public void ReleaseInstance(UnityEngine.GameObject obj) => GetObjectSetting().ReleaseInstance(obj);
 
-        bool IPrefabReference.IsNone() => Equals(None);
+        public bool IsNone() => Equals(None);
         public bool IsValid() => !Equals(Invalid) && m_Idx < PrefabList.Instance.ObjectSettings.Count;
 
         public static PrefabReference<T> Find(string name)

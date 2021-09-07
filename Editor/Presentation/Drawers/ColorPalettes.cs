@@ -39,7 +39,7 @@ namespace SyadeuEditor.Presentation
             var BttPressTex = new Texture2D(1, 1);
             BttPressTex.SetPixel(0, 0, press);
             BttPressTex.Apply();
-;
+
             style.normal.background = BttNormalTex;
             style.hover.background = BttHoverTex;
             style.active.background = BttPressTex;

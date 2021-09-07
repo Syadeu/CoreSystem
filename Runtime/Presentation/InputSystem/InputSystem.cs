@@ -41,6 +41,8 @@ namespace Syadeu.Presentation.Input
             }
         }
 
+        public Vector2 MousePosition => Mouse.current.position.ReadValue();
+
         protected override PresentationResult OnInitialize()
         {
             return base.OnInitialize();

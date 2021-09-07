@@ -105,7 +105,7 @@ namespace Syadeu.Presentation.Entities
             //if (m_AttributeList == null) m_AttributeList = new List<Hash>();
 
             Reference<AttributeBase>[] copy = new Reference<AttributeBase>[m_AttributeList.Length];
-            Array.Copy(m_AttributeList, copy, m_Attributes.Length);
+            Array.Copy(m_AttributeList, copy, m_AttributeList.Length);
             //entity.m_AttributeList = new List<Hash>(m_AttributeList);
             entity.m_AttributeList = copy;
 
