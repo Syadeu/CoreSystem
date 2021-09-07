@@ -23,6 +23,8 @@ namespace Syadeu.Presentation.Map
 
         private readonly List<SceneDataEntity> m_LoadedSceneData = new List<SceneDataEntity>();
 
+        public IReadOnlyList<SceneDataEntity> LoadedSceneData => m_LoadedSceneData;
+
         private SceneSystem m_SceneSystem;
         private EntitySystem m_EntitySystem;
         private Render.RenderSystem m_RenderSystem;
@@ -43,6 +45,53 @@ namespace Syadeu.Presentation.Map
 
             return base.OnInitializeAsync();
         }
+
+        #region Bind
+        private void Bind(SceneSystem other)
+        {
+            m_SceneSystem = other;
+
+            SceneDataEntity[] sceneData = EntityDataList.Instance.m_Objects.Values
+                    .Where((other) => (other is SceneDataEntity sceneData) && sceneData.m_BindScene && sceneData.IsValid())
+                    .Select((other) => (SceneDataEntity)other)
+                    .ToArray();
+
+            for (int i = 0; i < sceneData.Length; i++)
+            {
+                SceneDependence dependence = new SceneDependence
+                {
+                    m_SceneData = new Reference<SceneDataEntity>(sceneData[i])
+                };
+                SceneReference targetScene = sceneData[i].GetTargetScene();
+
+                other.RegisterSceneLoadDependence(targetScene, dependence.RegisterOnSceneLoad);
+                other.RegisterSceneUnloadDependence(targetScene, dependence.RegisterOnSceneLoad);
+
+                m_SceneDependences.Add(dependence);
+
+                CoreSystem.Logger.Log(Channel.Presentation,
+                    $"Scene Data({sceneData[i].Name}) is registered.");
+            }
+        }
+        private void Bind(EntitySystem other)
+        {
+            m_EntitySystem = other;
+        }
+        private void Bind(Render.RenderSystem other)
+        {
+            m_RenderSystem = other;
+        }
+
+        #endregion
+
+        private void CreateConsoleCommands()
+        {
+
+        }
+
+        #endregion
+
+        #region Inner Classes
 
         private struct SceneDependence
         {
@@ -97,93 +146,6 @@ namespace Syadeu.Presentation.Map
             }
         }
 
-        
-
-        #region Bind
-        private void Bind(SceneSystem other)
-        {
-            m_SceneSystem = other;
-
-            SceneDataEntity[] sceneData = EntityDataList.Instance.m_Objects.Values
-                    .Where((other) => (other is SceneDataEntity sceneData) && sceneData.m_BindScene && sceneData.IsValid())
-                    .Select((other) => (SceneDataEntity)other)
-                    .ToArray();
-
-            for (int i = 0; i < sceneData.Length; i++)
-            {
-                SceneDependence dependence = new SceneDependence
-                {
-                    m_SceneData = new Reference<SceneDataEntity>(sceneData[i])
-                };
-                SceneReference targetScene = sceneData[i].GetTargetScene();
-
-                other.RegisterSceneLoadDependence(targetScene, dependence.RegisterOnSceneLoad);
-                other.RegisterSceneUnloadDependence(targetScene, dependence.RegisterOnSceneLoad);
-
-                m_SceneDependences.Add(dependence);
-                //SceneDataEntity data = sceneData[i];
-                //SceneReference targetScene = data.GetTargetScene();
-
-                //other.RegisterSceneLoadDependence(targetScene, () =>
-                //{
-                //    if (!m_SceneDataObjects.TryGetValue(targetScene, out var list))
-                //    {
-                //        list = new List<SceneDataEntity>();
-                //        m_SceneDataObjects.Add(targetScene, list);
-                //    }
-
-                //    SceneDataEntity ins = (SceneDataEntity)m_EntitySystem.CreateObject(data.Hash);
-                //    list.Add(ins);
-
-                //    m_LoadedSceneData.Add(ins);
-                //});
-
-                //other.RegisterSceneUnloadDependence(targetScene, () =>
-                //{
-                //    if (m_SceneDataObjects.TryGetValue(targetScene, out var list))
-                //    {
-                //        for (int i = 0; i < list.Count; i++)
-                //        {
-                //            SceneDataEntity data = list[i];
-                //            data.DestroyChildOnDestroy = false;
-                //            m_EntitySystem.InternalDestroyEntity(data.Idx);
-
-                //            m_LoadedSceneData.Remove(data);
-                //        }
-                //        list.Clear();
-
-                //        m_SceneDataObjects.Remove(targetScene);
-                //    }
-                //});
-
-                CoreSystem.Logger.Log(Channel.Presentation,
-                    $"Scene Data({sceneData[i].Name}) is registered.");
-            }
-        }
-        private void Bind(EntitySystem other)
-        {
-            m_EntitySystem = other;
-        }
-        private void Bind(Render.RenderSystem other)
-        {
-            m_RenderSystem = other;
-        }
-
         #endregion
-
-        private void CreateConsoleCommands()
-        {
-
-        }
-        #endregion
-
-        public IReadOnlyList<SceneDataEntity> GetCurrentSceneData()
-        {
-            if (m_SceneDataObjects.TryGetValue(m_SceneSystem.CurrentSceneRef, out var list))
-            {
-                return list;
-            }
-            return Array.Empty<SceneDataEntity>();
-        }
     }
 }

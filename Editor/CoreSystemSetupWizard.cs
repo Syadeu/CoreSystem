@@ -21,12 +21,21 @@ namespace SyadeuEditor
 {
     public sealed class CoreSystemSetupWizard : EditorWindow
     {
-        static CoreSystemSetupWizard()
-        {
-            EditorApplication.delayCall += Startup;
-        }
+        //static CoreSystemSetupWizard()
+        //{
+        //    EditorApplication.delayCall -= Startup;
+        //    EditorApplication.delayCall += Startup;
+        //}
+        [InitializeOnLoadMethod]
         static void Startup()
         {
+            if (!new GeneralMenu().Predicate() ||
+                !new SceneMenu().Predicate() ||
+                !new PrefabMenu().Predicate())
+            {
+                CoreSystemMenuItems.CoreSystemSetupWizard();
+            }
+
             if (!CoreSystemSettings.Instance.m_HideSetupWizard)
             {
                 CoreSystemMenuItems.CoreSystemSetupWizard();
@@ -48,6 +57,7 @@ namespace SyadeuEditor
         GUIStyle titleStyle;
         GUIStyle iconStyle;
 
+        private GeneralMenu m_GeneralMenu;
         private SceneMenu m_SceneMenu;
         private PrefabMenu m_PrefabMenu;
         private Rect m_CopyrightRect = new Rect(175, 475, 245, 20);
@@ -66,10 +76,14 @@ namespace SyadeuEditor
             iconStyle = new GUIStyle();
             iconStyle.alignment = TextAnchor.MiddleCenter;
 
+            m_GeneralMenu = new GeneralMenu();
             m_SceneMenu = new SceneMenu();
             m_PrefabMenu = new PrefabMenu();
+            AddSetup(ToolbarNames.General, m_GeneralMenu.Predicate);
             AddSetup(ToolbarNames.Scene, m_SceneMenu.Predicate);
             AddSetup(ToolbarNames.Prefab, m_PrefabMenu.Predicate);
+
+            CoreSystemSettings.Instance.m_HideSetupWizard = true;
         }
         private void OnGUI()
         {
@@ -87,6 +101,9 @@ namespace SyadeuEditor
             {
                 switch ((ToolbarNames)m_SelectedToolbar)
                 {
+                    case ToolbarNames.General:
+                        m_GeneralMenu.OnGUI();
+                        break;
                     case ToolbarNames.Scene:
                         m_SceneMenu.OnGUI();
                         break;
@@ -147,6 +164,52 @@ namespace SyadeuEditor
             }
         }
         #endregion
+
+        private sealed class GeneralMenu
+        {
+            SerializedObject m_TagManagerObject;
+            SerializedProperty m_TagProperty, m_LayerProperty;
+
+            static string[] c_RequireTags = new string[] { };
+            static string[] c_RequireLayers = new string[] { };
+
+            List<string> m_MissingTags, m_MissingLayers;
+
+            public GeneralMenu()
+            {
+                UnityEngine.Object tagManagerObject = AssetDatabase.LoadMainAssetAtPath("ProjectSettings/TagManager.asset");
+                m_TagManagerObject = new SerializedObject(tagManagerObject);
+                m_TagProperty = m_TagManagerObject.FindProperty("tags");
+                m_LayerProperty = m_TagManagerObject.FindProperty("layers");
+
+                m_MissingTags = new List<string>(c_RequireTags);
+                for (int i = 0; i < m_TagProperty.arraySize; i++)
+                {
+                    string value = m_TagProperty.GetArrayElementAtIndex(i).stringValue;
+                    if (string.IsNullOrEmpty(value)) continue;
+
+                    m_MissingTags.Remove(value);
+                }
+
+                m_MissingLayers = new List<string>(c_RequireLayers);
+                for (int i = 0; i < m_LayerProperty.arraySize; i++)
+                {
+                    string value = m_LayerProperty.GetArrayElementAtIndex(i).stringValue;
+                    if (string.IsNullOrEmpty(value)) continue;
+
+                    m_MissingLayers.Remove(value);
+                }
+            }
+            public void OnGUI()
+            {
+                
+            }
+            public bool Predicate()
+            {
+                if (m_MissingTags.Count > 0 || m_MissingLayers.Count > 0) return false;
+                return true;
+            }
+        }
 
         #region Scene Menu
         private sealed class SceneMenu

@@ -1,4 +1,5 @@
 ﻿using System;
+using UnityEngine;
 
 namespace Syadeu.Presentation.Map
 {
@@ -21,6 +22,8 @@ namespace Syadeu.Presentation.Map
             m_MapSystem = other;
         }
 
-
+        public void Test()
+        {
+        }
     }
 }
