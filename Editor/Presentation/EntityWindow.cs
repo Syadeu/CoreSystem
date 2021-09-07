@@ -76,11 +76,16 @@ namespace SyadeuEditor.Presentation
         public void Select(IReference reference)
         {
             var obj = reference.GetObject();
-            if (obj == null) return;
+            if (obj == null)
+            {
+                "reference not found return".ToLog();
+                return;
+            }
 
             var iter = ObjectBaseDrawers.Where((other) => other.m_TargetObject.Equals(obj));
             if (!iter.Any())
             {
+                "reference drawer not found return".ToLog();
                 return;
             }
 
