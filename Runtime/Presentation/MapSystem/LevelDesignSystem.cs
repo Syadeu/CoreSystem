@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.Internal;
 
 namespace Syadeu.Presentation.Map
 {
@@ -39,10 +40,23 @@ namespace Syadeu.Presentation.Map
         {
         }
 
-        public void RaycastTerrain()
+        public bool Raycast(Ray ray, out RaycastHit hitInfo, 
+            [DefaultValue("Mathf.Infinity")] float maxDistance = float.PositiveInfinity)
         {
-            //PhysicsScene physicsScene = new PhysicsScene();
-            //physicsScene.
+            return m_SceneSystem.CurrentPhysicsScene.Raycast(ray.origin, ray.direction, 
+                out hitInfo,
+                maxDistance: maxDistance,
+                layerMask: LayerMask.NameToLayer(c_TerrainLayerName),
+                queryTriggerInteraction: QueryTriggerInteraction.Ignore);
+        }
+        public int RaycastAll(Ray ray, RaycastHit[] hitInfos, 
+            [DefaultValue("Mathf.Infinity")] float maxDistance = float.PositiveInfinity)
+        {
+            return m_SceneSystem.CurrentPhysicsScene.Raycast(ray.origin, ray.direction,
+                hitInfos,
+                maxDistance: maxDistance,
+                layerMask: LayerMask.NameToLayer(c_TerrainLayerName),
+                queryTriggerInteraction: QueryTriggerInteraction.Ignore);
         }
     }
 }
