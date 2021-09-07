@@ -461,7 +461,7 @@ namespace SyadeuEditor
             //}
             EditorGUILayout.EndHorizontal();
         }
-        private static void DrawAttributeSelector(string name, Action<Hash> setter, Hash current, Type entityType)
+        public static void DrawAttributeSelector(string name, Action<Hash> setter, Hash current, Type entityType)
         {
             GUIContent displayName;
             EntityDataList.Instance.m_Objects.TryGetValue(current, out var attVal);

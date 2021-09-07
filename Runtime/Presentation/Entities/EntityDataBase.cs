@@ -32,9 +32,9 @@ namespace Syadeu.Presentation.Entities
         AttributeBase[] IEntityData.Attributes => m_Attributes;
 
         /// <summary><inheritdoc cref="m_Attributes"/></summary>
-        [JsonProperty(Order = -10, PropertyName = "Attributes")] private List<Hash> m_AttributeList = new List<Hash>();
+        [JsonProperty(Order = -10, PropertyName = "Attributes")] private Reference<AttributeBase>[] m_AttributeList = Array.Empty<Reference<AttributeBase>>();
 
-        [JsonIgnore, UnityEngine.HideInInspector] public List<Hash> Attributes => m_AttributeList;
+        [JsonIgnore, UnityEngine.HideInInspector] public Reference<AttributeBase>[] Attributes => m_AttributeList;
         [JsonIgnore] private HashSet<Hash> AttritbutesHashSet { get; } = new HashSet<Hash>();
         [JsonIgnore] public bool isCreated => m_IsCreated;
 
@@ -72,7 +72,7 @@ namespace Syadeu.Presentation.Entities
 #if UNITY_EDITOR
             if (!UnityEngine.Application.isPlaying)
             {
-                for (int i = 0; i < m_AttributeList.Count; i++)
+                for (int i = 0; i < m_AttributeList.Length; i++)
                 {
                     AttributeBase att = (AttributeBase)EntityDataList.Instance.GetObject(m_AttributeList[i]);
                     if (att == null) continue;
@@ -102,8 +102,12 @@ namespace Syadeu.Presentation.Entities
         protected override ObjectBase Copy()
         {
             EntityDataBase entity = (EntityDataBase)base.Copy();
-            if (m_AttributeList == null) m_AttributeList = new List<Hash>();
-            entity.m_AttributeList = new List<Hash>(m_AttributeList);
+            //if (m_AttributeList == null) m_AttributeList = new List<Hash>();
+
+            Reference<AttributeBase>[] copy = new Reference<AttributeBase>[m_AttributeList.Length];
+            Array.Copy(m_AttributeList, copy, m_Attributes.Length);
+            //entity.m_AttributeList = new List<Hash>(m_AttributeList);
+            entity.m_AttributeList = copy;
 
             return entity;
         }
@@ -114,8 +118,8 @@ namespace Syadeu.Presentation.Entities
 
             Dictionary<Type, List<AttributeBase>> tempHashMap = new Dictionary<Type, List<AttributeBase>>();
 
-            entity.m_Attributes = new AttributeBase[m_AttributeList.Count];
-            for (int i = 0; i < m_AttributeList.Count; i++)
+            entity.m_Attributes = new AttributeBase[m_AttributeList.Length];
+            for (int i = 0; i < m_AttributeList.Length; i++)
             {
                 AttributeBase att = (AttributeBase)EntityDataList.Instance.GetObject(m_AttributeList[i]);
                 if (att == null)
