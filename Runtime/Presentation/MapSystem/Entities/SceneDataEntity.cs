@@ -89,6 +89,7 @@ namespace Syadeu.Presentation.Map
         private void LoadTerrainData(UnityEngine.TerrainData obj)
         {
             GameObject terrainObj = Terrain.CreateTerrainGameObject(obj);
+            terrainObj.layer = LayerMask.NameToLayer(LevelDesignSystem.c_TerrainLayerName);
             Terrain terrain = terrainObj.GetComponent<Terrain>();
 
             m_CreatedTerrains.Add(terrain);

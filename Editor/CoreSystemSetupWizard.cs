@@ -171,7 +171,7 @@ namespace SyadeuEditor
             SerializedProperty m_TagProperty, m_LayerProperty;
 
             static string[] c_RequireTags = new string[] { };
-            static string[] c_RequireLayers = new string[] { };
+            static string[] c_RequireLayers = new string[] { "Terrain" };
 
             List<string> m_MissingTags, m_MissingLayers;
 
@@ -202,12 +202,98 @@ namespace SyadeuEditor
             }
             public void OnGUI()
             {
-                
+                var block = new EditorUtils.BoxBlock(Color.black);
+
+                EditorUtils.StringRich("Tags", 13);
+                if (m_MissingTags.Count > 0)
+                {
+                    EditorGUILayout.HelpBox($"Number({m_MissingTags.Count}) of Tags are missing", MessageType.Error);
+
+                    for (int i = m_MissingTags.Count - 1; i >= 0; i--)
+                    {
+                        EditorGUILayout.BeginHorizontal();
+
+                        EditorGUILayout.TextField(m_MissingTags[i]);
+                        if (GUILayout.Button("Add", GUILayout.Width(100)))
+                        {
+                            InsertTag(m_MissingTags[i]);
+                            m_MissingTags.RemoveAt(i);
+                        }
+
+                        EditorGUILayout.EndHorizontal();
+                    }
+                }
+                else EditorGUILayout.HelpBox("Nominal", MessageType.Info);
+
+                EditorUtils.Line();
+
+                EditorUtils.StringRich("Layers", 13);
+                if (m_MissingLayers.Count > 0)
+                {
+                    EditorGUILayout.HelpBox($"Number({m_MissingLayers.Count}) of Layers are missing", MessageType.Error);
+
+                    for (int i = m_MissingLayers.Count - 1; i >= 0; i--)
+                    {
+                        EditorGUILayout.BeginHorizontal();
+
+                        EditorGUILayout.TextField(m_MissingLayers[i]);
+                        if (GUILayout.Button("Add", GUILayout.Width(100)))
+                        {
+                            if (!InsertLayer(m_MissingLayers[i]))
+                            {
+                                CoreSystem.Logger.LogError(Channel.Editor,
+                                    $"Could not add layer {m_MissingLayers[i]} because layer is full.");
+                            }
+                            else
+                            {
+                                m_MissingLayers.RemoveAt(i);
+                            }
+                        }
+
+                        EditorGUILayout.EndHorizontal();
+                    }
+                }
+                else EditorGUILayout.HelpBox("Nominal", MessageType.Info);
+
+                block.Dispose();
             }
             public bool Predicate()
             {
                 if (m_MissingTags.Count > 0 || m_MissingLayers.Count > 0) return false;
                 return true;
+            }
+
+            private void InsertTag(string tag)
+            {
+                for (int i = 0; i < m_TagProperty.arraySize; i++)
+                {
+                    string value = m_TagProperty.GetArrayElementAtIndex(i).stringValue;
+                    if (string.IsNullOrEmpty(value))
+                    {
+                        m_TagProperty.GetArrayElementAtIndex(i).stringValue = tag;
+                        m_TagManagerObject.ApplyModifiedProperties();
+                        return;
+                    }
+                }
+
+                m_TagProperty.InsertArrayElementAtIndex(m_TagProperty.arraySize);
+                m_TagProperty.GetArrayElementAtIndex(m_TagProperty.arraySize - 1).stringValue = tag;
+                m_TagManagerObject.ApplyModifiedProperties();
+            }
+            private bool InsertLayer(string layer)
+            {
+                for (int i = 0; i < m_LayerProperty.arraySize; i++)
+                {
+                    string value = m_LayerProperty.GetArrayElementAtIndex(i).stringValue;
+                    if (string.IsNullOrEmpty(value))
+                    {
+                        m_LayerProperty.GetArrayElementAtIndex(i).stringValue = layer;
+                        m_TagManagerObject.ApplyModifiedProperties();
+                        return true;
+                    }
+                }
+
+                return false;
             }
         }
 

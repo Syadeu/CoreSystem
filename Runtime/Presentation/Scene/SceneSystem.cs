@@ -50,6 +50,7 @@ namespace Syadeu.Presentation
         private bool m_LoadingSceneSetupDone = false;
 
         public Scene CurrentScene => m_CurrentScene;
+        public PhysicsScene CurrentPhysicsScene => CurrentScene.GetPhysicsScene();
         public SceneReference CurrentSceneRef => SceneList.Instance.GetScene(m_CurrentScene.path);
 
         /// <summary>
