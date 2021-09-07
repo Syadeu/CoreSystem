@@ -99,10 +99,11 @@ namespace SyadeuEditor.Presentation
         public static void DrawReferenceSelector(string name, Action<Hash> setter, IReference current, Type targetType)
         {
             GUIContent displayName;
+            ObjectBase objBase = null;
             if (current == null || current.Hash.Equals(Hash.Empty)) displayName = new GUIContent("None");
             else
             {
-                ObjectBase objBase = EntityDataList.Instance.GetObject(current.Hash);
+                objBase = EntityDataList.Instance.GetObject(current.Hash);
                 if (objBase == null) displayName = new GUIContent("None");
                 else displayName = new GUIContent(objBase.Name);
             }
@@ -154,6 +155,17 @@ namespace SyadeuEditor.Presentation
                         menu.AddDisabledItem(new GUIContent("Find Referencers"));
                         menu.AddDisabledItem(new GUIContent("To Reference"));
                     }
+
+                    menu.AddSeparator(string.Empty);
+                    if (targetType != null && !targetType.IsAbstract)
+                    {
+                        menu.AddItem(new GUIContent($"Create New {TypeHelper.ToString(targetType)}"), false, () =>
+                        {
+                            var obj = EntityWindow.Instance.Add(targetType).m_TargetObject;
+                            setter.Invoke(obj.Hash);
+                        });
+                    }
+                    else menu.AddDisabledItem(new GUIContent($"Create New {displayName.text}"));
                     
                     menu.ShowAsContext();
 
