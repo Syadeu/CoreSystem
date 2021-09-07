@@ -575,12 +575,21 @@ namespace SyadeuEditor
                 }
                 else objectSettings = (List<PrefabList.ObjectSetting>)temp;
 
+                HashSet<UnityEngine.Object> tempSet = new HashSet<UnityEngine.Object>();
                 for (int i = 0; i < objectSettings.Count; i++)
                 {
-                    if (objectSettings[i].GetEditorAsset() == null)
+                    UnityEngine.Object obj = objectSettings[i].GetEditorAsset();
+                    if (obj == null)
                     {
                         m_InvalidIndices.Add(i);
                     }
+                    if (tempSet.Contains(obj))
+                    {
+                        objectSettings[i] = new PrefabList.ObjectSetting(objectSettings[i].m_Name, null, objectSettings[i].m_IsWorldUI);
+                        m_InvalidIndices.Add(i);
+                    }
+
+                    tempSet.Add(obj);
                 }
 
                 m_AddressableCount = PrefabListEditor.DefaultGroup.entries.Count;
@@ -617,9 +626,9 @@ namespace SyadeuEditor
 
                 using (new EditorUtils.BoxBlock(Color.black))
                 {
-                    if (objectSettings.Count - m_InvalidIndices.Count != m_AddressableCount)
+                    if (!Predicate())
                     {
-                        EditorUtils.StringRich("Require Rebase", true);
+                        EditorUtils.StringRich($"Require Rebase {objectSettings.Count} - {m_InvalidIndices.Count} != {m_AddressableCount}", true);
                     }
                     else
                     {

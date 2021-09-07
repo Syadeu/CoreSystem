@@ -454,7 +454,7 @@ namespace SyadeuEditor.Presentation
                                 bool isHover = enableCullRect.Contains(Event.current.mousePosition);
 
                                 Color origin = GUI.color;
-                                GUI.color = entity.m_EnableCull ? ColorPalettes.PastelDreams.HotPink : ColorPalettes.PastelDreams.TiffanyBlue;
+                                GUI.color = entity.m_EnableCull ? ColorPalettes.PastelDreams.TiffanyBlue : ColorPalettes.PastelDreams.HotPink;
 
                                 EditorStyles.toolbarButton.Draw(enableCullRect,
                                     isHover, isActive: true, on: true, false);
