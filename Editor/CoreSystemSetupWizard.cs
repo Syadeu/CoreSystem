@@ -29,6 +29,8 @@ namespace SyadeuEditor
         [InitializeOnLoadMethod]
         static void Startup()
         {
+            if (Application.isPlaying || EditorApplication.isPlayingOrWillChangePlaymode) return;
+
             if (!new GeneralMenu().Predicate() ||
                 !new SceneMenu().Predicate() ||
                 !new PrefabMenu().Predicate())

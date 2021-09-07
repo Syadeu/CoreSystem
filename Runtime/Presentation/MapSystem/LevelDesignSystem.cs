@@ -16,13 +16,23 @@ namespace Syadeu.Presentation.Map
 
         protected override PresentationResult OnInitialize()
         {
+            RequestSystem<SceneSystem>(Bind);
             RequestSystem<MapSystem>(Bind);
 
             return base.OnInitialize();
         }
+        private void Bind(SceneSystem other)
+        {
+            m_SceneSystem = other;
+        }
         private void Bind(MapSystem other)
         {
             m_MapSystem = other;
+        }
+        public override void OnDispose()
+        {
+            m_SceneSystem = null;
+            m_MapSystem = null;
         }
 
         public void Test()
