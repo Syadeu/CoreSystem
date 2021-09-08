@@ -9,21 +9,25 @@ namespace Syadeu.Presentation.Render
         [SerializeField] private Camera m_Camera = null;
         [SerializeField] private CinemachineBrain m_CinemachineBrain = null;
         [SerializeField] private CinemachineTargetGroup m_TargetGroup = null;
+        [SerializeField] private CinemachineStateDrivenCamera m_StateCamera = null;
         [SerializeField] private bool m_SetMainCameraOnInitialize = true;
 
         private AdditionalCameraComponent[] m_CameraComponents;
 
         public CinemachineBrain Brain => m_CinemachineBrain;
+        public ICinemachineCamera CurrentCamera => m_StateCamera.LiveChild;
 
         private void Awake()
         {
             if (m_Camera == null) m_Camera = GetComponentInChildren<Camera>();
             if (m_CinemachineBrain == null) m_CinemachineBrain = GetComponentInChildren<CinemachineBrain>();
             if (m_TargetGroup == null) m_TargetGroup = transform.parent.GetComponentInChildren<CinemachineTargetGroup>();
+            if (m_StateCamera == null) m_StateCamera = transform.parent.GetComponentInChildren<CinemachineStateDrivenCamera>();
 
             CoreSystem.Logger.NotNull(m_Camera);
             CoreSystem.Logger.NotNull(m_CinemachineBrain);
             CoreSystem.Logger.NotNull(m_TargetGroup);
+            CoreSystem.Logger.NotNull(m_StateCamera);
 
             m_CameraComponents = GetComponentsInChildren<AdditionalCameraComponent>();
             for (int i = 0; i < m_CameraComponents.Length; i++)

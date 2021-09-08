@@ -12,6 +12,7 @@ namespace Syadeu.Presentation.TurnTable
     {
         private CinemachineTargetGroup m_TargetGroup;
 
+        private Transform m_DefaultTarget = null;
         private ITransform m_TargetTransform = null;
         private float3 m_TargetPosition = 0;
         private quaternion m_TargetOrientation = quaternion.EulerZXY(new float3(45, 45, 0));
@@ -86,6 +87,13 @@ namespace Syadeu.Presentation.TurnTable
         {
             m_TargetGroup = targetGroup;
             m_TargetPosition = m_TargetGroup.transform.position;
+
+            GameObject target = new GameObject("Default Target");
+            m_DefaultTarget = target.transform;
+            m_DefaultTarget.SetParent(transform.parent);
+            m_DefaultTarget.position = m_TargetPosition;
+
+            m_TargetGroup.AddMember(m_DefaultTarget, 1, 1);
         }
 
         protected override void OnRenderStart()
@@ -97,10 +105,14 @@ namespace Syadeu.Presentation.TurnTable
         {
             WaitForFixedUpdate waitForFixedUpdate = new WaitForFixedUpdate();
             Transform groupTr = m_TargetGroup.transform;
-
+            
             while (m_TargetGroup != null)
             {
-                groupTr.position = math.lerp(groupTr.position, TargetPosition, Time.deltaTime * MoveSpeed);
+                m_DefaultTarget.position = TargetPosition;
+                CameraComponent.CurrentCamera.VirtualCameraGameObject.transform.rotation
+                    = TargetOrientation;
+
+                //groupTr.position = math.lerp(groupTr.position, TargetPosition, Time.deltaTime * MoveSpeed);
 
                 //quaternion originRot = CameraComponent.Brain.ActiveVirtualCamera.VirtualCameraGameObject.transform.rotation;
                 //CameraComponent.Brain.ActiveVirtualCamera.VirtualCameraGameObject.transform.rotation = new quaternion(math.lerp(originRot.value, TargetOrientation.value, Time.deltaTime * MoveSpeed));

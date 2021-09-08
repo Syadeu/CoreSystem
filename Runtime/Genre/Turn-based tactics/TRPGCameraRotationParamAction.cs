@@ -31,14 +31,14 @@ namespace Syadeu.Presentation.TurnTable
         }
         protected override void OnExecute(InputAction.CallbackContext target)
         {
-            //float3 eulerAngles = m_Movement.TargetOrientation.Euler() * Mathf.Rad2Deg;
-            //$"in => {eulerAngles.x} + {MoveOrientation}".ToLog();
-            //eulerAngles.x += MoveOrientation;
-            //$"in2 => {eulerAngles.x}".ToLog();
-            ////if (eulerAngles.x >= 360) eulerAngles.x -= 360;
-            ////else if (eulerAngles.x <= -360) eulerAngles.x += 360;
+            float3 eulerAngles = m_Movement.TargetOrientation.Euler() * Mathf.Rad2Deg;
+            $"in => {eulerAngles.y} + {MoveOrientation}".ToLog();
+            eulerAngles.y += MoveOrientation;
+            $"in2 => {eulerAngles.y}".ToLog();
+            //if (eulerAngles.x >= 360) eulerAngles.x -= 360;
+            //else if (eulerAngles.x <= -360) eulerAngles.x += 360;
 
-            //m_Movement.TargetOrientation = quaternion.EulerZXY(eulerAngles * Mathf.Deg2Rad);
+            m_Movement.TargetOrientation = quaternion.EulerZXY(eulerAngles * Mathf.Deg2Rad);
         }
     }
 }
