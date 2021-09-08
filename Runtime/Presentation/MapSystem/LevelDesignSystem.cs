@@ -14,9 +14,11 @@ namespace Syadeu.Presentation.Map
 
         public enum TerrainTool
         {
-            None,
+            None    =   0,
             
-            Raise
+            Raise   =   1,
+            Lower   =   2,
+            Flatten =   3
         }
 
         public override bool EnableBeforePresentation => false;
@@ -40,6 +42,8 @@ namespace Syadeu.Presentation.Map
 
             return base.OnInitialize();
         }
+
+#region Binds
         private void Bind(SceneSystem other)
         {
             m_SceneSystem = other;
@@ -57,6 +61,7 @@ namespace Syadeu.Presentation.Map
             m_SceneSystem = null;
             m_MapSystem = null;
         }
+#endregion
 
         private void AddConsoleCommands()
         {
@@ -89,6 +94,24 @@ namespace Syadeu.Presentation.Map
             }
 
             return base.OnPresentation();
+        }
+
+#region Tools
+
+        private void ExecuteTool(TerrainTool tool, Ray ray, in int effectSize, in float effectIncrement = .1f)
+        {
+            switch (tool)
+            {
+                case TerrainTool.Raise:
+                    RaiseTerrain(ray, in effectSize, in effectIncrement);
+                    break;
+                case TerrainTool.Lower:
+                    LowerTerrain(ray, in effectSize, in effectIncrement);
+                    break;
+                case TerrainTool.Flatten:
+                    FlattenTerrain(ray, in effectSize);
+                    break;
+            }
         }
 
         private void RaiseTerrain(Ray ray, in int effectSize, in float effectIncrement)
@@ -235,6 +258,8 @@ namespace Syadeu.Presentation.Map
 
             return true;
         }
+
+#endregion
 
         public bool Raycast(Ray ray, out RaycastHit hitInfo, 
             [DefaultValue("Mathf.Infinity")] float maxDistance = float.PositiveInfinity)
