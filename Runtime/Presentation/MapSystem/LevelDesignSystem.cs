@@ -23,8 +23,8 @@ namespace Syadeu.Presentation.Map
         public override bool EnableOnPresentation => true;
         public override bool EnableAfterPresentation => false;
 
-        private bool m_EnabledTerrainTool = false;
-        private TerrainTool m_SelectedTool = TerrainTool.None;
+        private bool m_EnabledTerrainTool = true;
+        private TerrainTool m_SelectedTool = TerrainTool.Raise;
 
         private SceneSystem m_SceneSystem;
         private RenderSystem m_RenderSystem;
@@ -80,10 +80,10 @@ namespace Syadeu.Presentation.Map
             {
                 if (m_SelectedTool == TerrainTool.Raise)
                 {
-                    if (Mouse.current.press.wasPressedThisFrame)
+                    if (Mouse.current.press.isPressed)
                     {
                         Ray ray = m_RenderSystem.ScreenPointToRay(new float3(Mouse.current.position.ReadValue(), 0));
-                        RaiseTerrain(ray, 10, 5);
+                        RaiseTerrain(ray, 10, .1f);
                     }
                 }
             }
@@ -93,9 +93,128 @@ namespace Syadeu.Presentation.Map
 
         private void RaiseTerrain(Ray ray, in int effectSize, in float effectIncrement)
         {
-            if (!Raycast(ray, out var hit)) return;
-            Terrain terrain = hit.transform.GetComponent<Terrain>();
+            if (!GetTerrainLocation(ray, in effectSize, out Terrain terrain,
+                out int terX, out int terZ))
+            {
+                return;
+            }
 
+            float[,] heights;
+            try
+            {
+                heights = terrain.terrainData.GetHeights(terX, terZ, effectSize, effectSize);
+            }
+            catch (Exception)
+            {
+                return;
+            }
+
+            for (int xx = 0; xx < effectSize; xx++)
+            {
+                for (int yy = 0; yy < effectSize; yy++)
+                {
+                    heights[xx, yy] += (effectIncrement * Time.smoothDeltaTime);
+                }
+            }
+            terrain.terrainData.SetHeights(terX, terZ, heights);
+        }
+        private void LowerTerrain(Ray ray, in int effectSize, in float effectIncrement)
+        {
+            if (!GetTerrainLocation(ray, in effectSize, out Terrain terrain,
+            out int terX, out int terZ))
+            {
+                return;
+            }
+
+            float[,] heights;
+            try
+            {
+                heights = terrain.terrainData.GetHeights(terX, terZ, effectSize, effectSize);
+            }
+            catch (Exception)
+            {
+                return;
+            }
+
+            for (int xx = 0; xx < effectSize; xx++)
+            {
+                for (int yy = 0; yy < effectSize; yy++)
+                {
+                    heights[xx, yy] -= (effectIncrement * Time.smoothDeltaTime);
+                }
+            }
+            terrain.terrainData.SetHeights(terX, terZ, heights);
+        }
+        private void FlattenTerrain(Ray ray, in int effectSize)
+        {
+            if (!GetTerrainLocation(ray, 0, out Terrain terrain,
+            out int terX, out int terZ))
+            {
+                return;
+            }
+
+            float[,] heights;
+            try
+            {
+                heights = terrain.terrainData.GetHeights(terX, terZ, effectSize, effectSize);
+            }
+            catch (Exception)
+            {
+                return;
+            }
+
+            float sampledHeight = SampleHeight(ray);
+            if (sampledHeight < 0) return;
+
+            for (int xx = 0; xx < effectSize; xx++)
+            {
+                for (int yy = 0; yy < effectSize; yy++)
+                {
+                    if (heights[xx, yy] != sampledHeight)
+                    {
+                        heights[xx, yy] = sampledHeight;
+                    }
+                }
+            }
+            terrain.terrainData.SetHeights(terX, terZ, heights);
+        }
+        private float SampleHeight(Ray ray)
+        {
+            if (!GetTerrainLocation(ray, 0, out Terrain terrain,
+            out int terX, out int terZ))
+            {
+                return -1;
+            }
+
+            float height;
+            try
+            {
+                height = terrain.terrainData.GetHeight(terX, terZ);
+            }
+            catch (Exception)
+            {
+                return -1;
+            }
+
+            return Mathf.LerpUnclamped(0f, 1f, height / terrain.terrainData.size.y);
+        }
+
+        private bool GetTerrainLocation(Ray ray, in int effectSize, out Terrain terrain, 
+            out int terX, out int terZ)
+        {
+            terX = 0; terZ = 0;
+            if (!Raycast(ray, out var hit))
+            {
+                terrain = null;
+                return false;
+            }
+            terrain = hit.transform.GetComponent<Terrain>();
+            if (terrain == null)
+            {
+                return false;
+            }
+
+            "in".ToLog();
             float3
                 tempCoord = (hit.point - terrain.GetPosition()),
                 coord = new float3(
@@ -109,31 +228,23 @@ namespace Syadeu.Presentation.Map
                     coord.z * terrain.terrainData.heightmapResolution
                     );
 
-            int 
-                offset = effectSize / 2,
-                terX = (int)locationInTerrain.x - offset,
-                terZ = (int)locationInTerrain.z - offset;
+            int offset = effectSize / 2;
 
-            float[,] heights = terrain.terrainData.GetHeights(terX, terZ, effectSize, effectSize);
-            for (int xx = 0; xx < effectSize; xx++)
-            {
-                for (int yy = 0; yy < effectSize; yy++)
-                {
-                    heights[xx, yy] += (effectIncrement * Time.smoothDeltaTime);
-                }
-            }
+            terX = (int)locationInTerrain.x - offset;
+            terZ = (int)locationInTerrain.z - offset;
 
-            terrain.terrainData.SetHeights(terX, terZ, heights);
+            return true;
         }
 
         public bool Raycast(Ray ray, out RaycastHit hitInfo, 
             [DefaultValue("Mathf.Infinity")] float maxDistance = float.PositiveInfinity)
         {
-            return m_SceneSystem.CurrentPhysicsScene.Raycast(ray.origin, ray.direction, 
+            //return m_SceneSystem.CurrentPhysicsScene.Raycast(ray.origin, ray.direction, 
+            return Physics.Raycast(ray.origin, ray.direction, 
                 out hitInfo,
                 maxDistance: maxDistance,
-                layerMask: LayerMask.NameToLayer(c_TerrainLayerName),
-                queryTriggerInteraction: QueryTriggerInteraction.Ignore);
+                layerMask: LayerMask.GetMask(c_TerrainLayerName),
+                queryTriggerInteraction: QueryTriggerInteraction.Collide);
         }
         public int RaycastAll(Ray ray, RaycastHit[] hitInfos, 
             [DefaultValue("Mathf.Infinity")] float maxDistance = float.PositiveInfinity)
@@ -142,7 +253,7 @@ namespace Syadeu.Presentation.Map
                 hitInfos,
                 maxDistance: maxDistance,
                 layerMask: LayerMask.NameToLayer(c_TerrainLayerName),
-                queryTriggerInteraction: QueryTriggerInteraction.Ignore);
+                queryTriggerInteraction: QueryTriggerInteraction.Collide);
         }
     }
 }
