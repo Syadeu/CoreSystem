@@ -16,10 +16,14 @@ namespace Syadeu.Presentation.Internal
         IDisposable
     {
         private static UnityEngine.Transform s_PresentationUnityFolder;
+        internal Hash m_GroupIndex;
+        internal int m_SystemIndex;
 
         public abstract bool EnableBeforePresentation { get; }
         public abstract bool EnableOnPresentation { get; }
         public abstract bool EnableAfterPresentation { get; }
+
+        public PresentationSystemID SystemID => new PresentationSystemID(m_GroupIndex, m_SystemIndex);
 
         /// <summary>
         /// <see langword="false"/>를 반환하면, 시스템 그룹 전체가 이 값이 <see langword="true"/>가 될때까지 시작을 멈춥니다.

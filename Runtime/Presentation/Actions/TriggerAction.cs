@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Syadeu.Presentation.Actions
 {
-    public abstract class TriggerAction : TriggerActionBase
+    public abstract class TriggerAction : ActionBase
     {
         private static readonly Dictionary<Reference, Stack<ActionBase>> m_Pool = new Dictionary<Reference, Stack<ActionBase>>();
 
@@ -16,13 +16,40 @@ namespace Syadeu.Presentation.Actions
         [JsonProperty(Order = -10, PropertyName = "DebugText")]
         public string m_DebugText = string.Empty;
 
-        internal override sealed bool InternalExecute(EntityData<IEntityData> entity)
+        internal override sealed void InternalInitialize()
+        {
+            OnInitialize();
+            base.InternalInitialize();
+        }
+        internal bool InternalExecute(EntityData<IEntityData> entity)
         {
             if (!string.IsNullOrEmpty(m_DebugText))
             {
                 CoreSystem.Logger.Log(Channel.Debug, m_DebugText);
             }
-            return base.InternalExecute(entity);
+
+            if (!entity.IsValid())
+            {
+                CoreSystem.Logger.LogWarning(Channel.Entity,
+                    $"Cannot trigger this action({Name}) because target entity is invalid");
+
+                InternalTerminate();
+                return false;
+            }
+
+            bool result = true;
+            try
+            {
+                OnExecute(entity);
+            }
+            catch (System.Exception ex)
+            {
+                CoreSystem.Logger.LogError(Channel.Presentation, ex.Message + ex.StackTrace);
+                result = false;
+            }
+
+            InternalTerminate();
+            return result;
         }
         internal override sealed void InternalTerminate()
         {
@@ -56,5 +83,9 @@ namespace Syadeu.Presentation.Actions
             temp.InternalInitialize();
             return temp;
         }
+
+        protected virtual void OnInitialize() { }
+        protected virtual void OnTerminate() { }
+        protected virtual void OnExecute(EntityData<IEntityData> entity) { throw new NotImplementedException(); }
     }
 }

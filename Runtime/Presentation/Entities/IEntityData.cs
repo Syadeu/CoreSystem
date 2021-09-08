@@ -4,7 +4,7 @@ using Syadeu.Presentation.Attributes;
 using System;
 using System.Collections.Generic;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Presentation.Entities
 {
     /// <summary>
     /// <see cref="EntitySystem"/>을 통해 생성(혹은 생성되지 않은 저장된 데이터)한 엔티티 구조의 제일 하단 객체입니다.

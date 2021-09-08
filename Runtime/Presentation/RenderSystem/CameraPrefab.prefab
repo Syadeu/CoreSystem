@@ -54,7 +54,7 @@ MonoBehaviour:
   m_UpdateMethod: 2
   m_BlendUpdateMethod: 1
   m_DefaultBlend:
-    m_Style: 1
+    m_Style: 0
     m_Time: 2
     m_CustomCurve:
       serializedVersion: 2
@@ -159,6 +159,7 @@ MonoBehaviour:
   m_Camera: {fileID: 8832134446656746777}
   m_CinemachineBrain: {fileID: 8832134446656746776}
   m_TargetGroup: {fileID: 8832134447878884503}
+  m_StateCamera: {fileID: 0}
   m_SetMainCameraOnInitialize: 1
 --- !u!114 &4250786864970038144
 MonoBehaviour:
@@ -172,6 +173,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68ccec800a4731847bd414467b79f67f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_MoveAxis:
+    m_Name: Move Axis
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: b43f33a2-e872-4fcc-ba25-9c1a4ae25f1b
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings: []
+    m_Flags: 0
+  m_RotateRight:
+    m_Name: Rotate Right
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: f60973b1-764d-4ea8-a4e5-5061535f61cb
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings: []
+    m_Flags: 0
+  m_RotateLeft:
+    m_Name: Rotate Left
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: 9c7a0ad6-de21-47a2-8ad0-88535ed42320
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings: []
+    m_Flags: 0
 --- !u!1 &8832134446683109531
 GameObject:
   m_ObjectHideFlags: 0
@@ -560,7 +588,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8832134447924349095}
-  m_LocalRotation: {x: 0.38925594, y: -0.5903218, z: 0.38925588, w: 0.59032184}
+  m_LocalRotation: {x: 0.38925594, y: -0.5903218, z: 0.3892559, w: 0.59032184}
   m_LocalPosition: {x: 0, y: 1.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:

@@ -22,12 +22,12 @@ namespace Syadeu.Database
         const string c_JsonFilePath = "{0}/{1}" + json;
 
         private static readonly Regex s_Whitespace = new Regex(@"\s+");
-        private static bool s_IsLoaded = false;
+        private bool m_IsLoaded = false;
 
         public Dictionary<Hash, ObjectBase> m_Objects;
         private Dictionary<ulong, Hash> m_EntityNameHash;
 
-        public static bool IsLoaded => s_IsLoaded;
+        public static bool IsLoaded => Instance.m_IsLoaded;
 
         private void OnEnable()
         {
@@ -53,7 +53,7 @@ namespace Syadeu.Database
             Load<ActionBase>(CoreSystemFolder.ActionPath);
             Load<DataObjectBase>(CoreSystemFolder.DataPath);
 
-            s_IsLoaded = true;
+            m_IsLoaded = true;
 
             void Load<T>(string path) where T : ObjectBase
             {
@@ -98,7 +98,6 @@ namespace Syadeu.Database
             DirectoryCheck();
 
             Type objType = obj.GetType();
-            //Type objType = TypeHelper.TypeOf<T>.Type;
             string objPath;
             if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(objType))
             {
@@ -247,7 +246,7 @@ namespace Syadeu.Database
         }
         public ObjectBase GetObject(string name) => GetObject(m_EntityNameHash[Hash.NewHash(name)]);
 
-        private static string ToFileName(ObjectBase obj)
+        public static string ToFileName(ObjectBase obj)
         {
             const string c_UnderScore = "_";
             Type t = obj.GetType();

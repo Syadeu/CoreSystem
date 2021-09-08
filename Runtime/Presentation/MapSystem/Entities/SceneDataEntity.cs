@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using UnityEngine;
+using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation.Map
@@ -14,17 +15,24 @@ namespace Syadeu.Presentation.Map
     [EntityAcceptOnly(typeof(SceneDataAttributeBase))]
     public sealed class SceneDataEntity : EntityDataBase
     {
+        [JsonProperty(Order = 0, PropertyName = "TerrainData")]
+        private Reference<TerrainData> m_TerrainData = Reference<TerrainData>.Empty;
+        
+        [Space]
 #pragma warning disable IDE0044 // Add readonly modifier
         [Tooltip("SceneIndex 의 씬이 로드될때 자동으로 데이터를 생성하나요?")]
-        [JsonProperty(Order = 0, PropertyName = "BindScene")] internal bool m_BindScene;
+        [JsonProperty(Order = 1, PropertyName = "BindScene")] internal bool m_BindScene;
         [Tooltip("SceneList.Scenes 의 Index")]
-        [JsonProperty(Order = 1, PropertyName = "SceneIndex")] private int m_SceneIndex;
-        [JsonProperty(Order = 2, PropertyName = "MapData")] private Reference<MapDataEntity>[] m_MapData = Array.Empty<Reference<MapDataEntity>>();
+        [JsonProperty(Order = 2, PropertyName = "SceneIndex")] private int m_SceneIndex;
+        [JsonProperty(Order = 3, PropertyName = "MapData")] private Reference<MapDataEntity>[] m_MapData = Array.Empty<Reference<MapDataEntity>>();
 #pragma warning restore IDE0044 // Add readonly modifier
+
+        [JsonIgnore] private readonly List<Terrain> m_CreatedTerrains = new List<Terrain>();
 
         [JsonIgnore] public bool IsMapDataCreated { get; private set; } = false;
         [JsonIgnore] public IReadOnlyList<Reference<MapDataEntity>> MapData => m_MapData;
         [JsonIgnore] public EntityData<MapDataEntity>[] CreatedMapData { get; private set; }
+        [JsonIgnore] public IReadOnlyList<Terrain> CreatedTerrains => m_CreatedTerrains;
 
         [JsonIgnore] public bool DestroyChildOnDestroy { get; set; } = true;
 
@@ -48,6 +56,22 @@ namespace Syadeu.Presentation.Map
         {
             if (IsMapDataCreated) throw new System.Exception();
 
+            if (m_TerrainData.IsValid())
+            {
+                TerrainData terrainData = m_TerrainData.GetObject();
+                for (int i = 0; i < terrainData.m_Data.Length; i++)
+                {
+                    if (!terrainData.m_Data[i].IsValid() || terrainData.m_Data[i].IsNone()) continue;
+
+                    if (terrainData.m_Data[i].Asset == null)
+                    {
+                        var data = terrainData.m_Data[i].LoadAssetAsync();
+                        data.Completed += LoadTerrainDataAsync;
+                    }
+                    else LoadTerrainData(terrainData.m_Data[i].Asset);
+                }
+            }
+
             CreatedMapData = new EntityData<MapDataEntity>[m_MapData.Length];
             for (int i = 0; i < m_MapData.Length; i++)
             {
@@ -57,6 +81,20 @@ namespace Syadeu.Presentation.Map
 
             IsMapDataCreated = true;
         }
+
+        private void LoadTerrainDataAsync(AsyncOperationHandle<UnityEngine.TerrainData> obj)
+        {
+            LoadTerrainData(obj.Result);
+        }
+        private void LoadTerrainData(UnityEngine.TerrainData obj)
+        {
+            GameObject terrainObj = Terrain.CreateTerrainGameObject(obj);
+            terrainObj.layer = LayerMask.NameToLayer(LevelDesignSystem.c_TerrainLayerName);
+            Terrain terrain = terrainObj.GetComponent<Terrain>();
+
+            m_CreatedTerrains.Add(terrain);
+        }
+
         public void DestroyMapData()
         {
             if (!IsMapDataCreated) throw new System.Exception();
@@ -67,6 +105,12 @@ namespace Syadeu.Presentation.Map
                 mapData.DestroyChildOnDestroy = DestroyChildOnDestroy;
                 CreatedMapData[i].Destroy();
             }
+
+            for (int i = 0; i < m_CreatedTerrains.Count; i++)
+            {
+                UnityEngine.Object.Destroy(m_CreatedTerrains[i].gameObject);
+            }
+            m_CreatedTerrains.Clear();
 
             CreatedMapData = null;
             IsMapDataCreated = false;

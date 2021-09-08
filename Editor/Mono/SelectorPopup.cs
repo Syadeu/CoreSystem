@@ -65,7 +65,7 @@ namespace SyadeuEditor
         public override Vector2 GetWindowSize()
         {
             Vector2 result = base.GetWindowSize();
-            result.x += 40;
+            result.x += 80;
             return result;
         }
         public override void OnGUI(Rect rect)

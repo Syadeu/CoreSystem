@@ -136,21 +136,20 @@ namespace Syadeu.Presentation.Map
                 return;
             }
 
-            var setting = tr.prefab.GetObjectSetting();
-            if (string.IsNullOrEmpty(setting.m_RefPrefab.AssetGUID))
+            if (tr.prefab.Asset == null)
             {
-                CoreSystem.Logger.LogError(Channel.Presentation,
-                    $"This entity({obstacle.Parent.Name}) is not valid. Cannot be a obstacle.");
-                return;
+                AsyncOperationHandle<GameObject> oper = tr.prefab.LoadAssetAsync<GameObject>();
+                oper.Completed += Oper_Completed;
             }
+            else Execute(tr.prefab.Asset as GameObject);
 
-            AsyncOperationHandle<GameObject> oper = tr.prefab.LoadAssetAsync<GameObject>();
-
-            oper.Completed += Oper_Completed;
             void Oper_Completed(AsyncOperationHandle<GameObject> obj)
             {
                 GameObject gameObject = obj.Result;
-
+                Execute(gameObject);
+            }
+            void Execute(GameObject gameObject)
+            {
                 if (obstacle.m_Sources == null)
                 {
                     NavMeshBuildSource[] sources;

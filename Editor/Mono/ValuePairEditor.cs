@@ -212,6 +212,8 @@ namespace SyadeuEditor
 
                     using (new EditorGUILayout.HorizontalScope())
                     {
+                        EditorGUILayout.LabelField(container[i].GetValueType().ToString(), GUILayout.Width(65));
+
                         container[i].Name = EditorGUILayout.TextField(container[i].Name, GUILayout.MinWidth(100));
                         switch (valueType)
                         {

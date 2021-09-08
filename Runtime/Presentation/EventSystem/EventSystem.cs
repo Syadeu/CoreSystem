@@ -1,6 +1,10 @@
-﻿using Syadeu.Internal;
+﻿using Syadeu.Database;
+using Syadeu.Internal;
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
+using UnityEngine;
 
 namespace Syadeu.Presentation.Events
 {
@@ -55,6 +59,7 @@ namespace Syadeu.Presentation.Events
         {
             if (m_LoadingLock) return base.OnPresentation();
 
+            #region Event Executer
             int eventCount = m_PostedEvents.Count;
             for (int i = 0; i < eventCount; i++)
             {
@@ -75,6 +80,10 @@ namespace Syadeu.Presentation.Events
                     $"Posted event : {ev.GetType().Name}");
             }
 
+            #endregion
+
+            #region Delegate Executer
+
             int actionCount = m_PostedActions.Count;
             for (int i = 0; i < actionCount; i++)
             {
@@ -90,6 +99,8 @@ namespace Syadeu.Presentation.Events
                     UnityEngine.Debug.LogException(ex);
                 }
             }
+
+            #endregion
 
             return base.OnPresentation();
         }

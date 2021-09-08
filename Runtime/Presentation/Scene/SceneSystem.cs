@@ -50,6 +50,7 @@ namespace Syadeu.Presentation
         private bool m_LoadingSceneSetupDone = false;
 
         public Scene CurrentScene => m_CurrentScene;
+        public PhysicsScene CurrentPhysicsScene => CurrentScene.GetPhysicsScene();
         public SceneReference CurrentSceneRef => SceneList.Instance.GetScene(m_CurrentScene.path);
 
         /// <summary>
@@ -230,8 +231,14 @@ namespace Syadeu.Presentation
             }
             else
             {
-                SceneReference sceneRef = SceneList.Instance.GetScene(SceneManager.GetActiveScene().path);
-                if (m_DebugMode && sceneRef != null) StartSceneDependences(this, sceneRef);
+                Scene currentScene = SceneManager.GetActiveScene();
+
+                SceneReference sceneRef = SceneList.Instance.GetScene(currentScene.path);
+                if (m_DebugMode && sceneRef != null)
+                {
+                    m_CurrentScene = currentScene;
+                    StartSceneDependences(this, sceneRef);
+                }
             }
             return base.OnStartPresentation();
         }

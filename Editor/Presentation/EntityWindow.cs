@@ -33,7 +33,7 @@ namespace SyadeuEditor.Presentation
         public ObjectBaseDrawer m_SelectedObject = null;
 
         public static bool IsOpened { get; private set; }
-        public static bool IsDataLoaded => EntityDataList.Instance;
+        public static bool IsDataLoaded => EntityDataList.IsLoaded;
 
         protected override void OnEnable()
         {
@@ -47,7 +47,7 @@ namespace SyadeuEditor.Presentation
             {
                 EntityDataList.Instance.LoadData();
             }
-            else Reload();
+            Reload();
 
             base.OnEnable();
         }
@@ -76,11 +76,16 @@ namespace SyadeuEditor.Presentation
         public void Select(IReference reference)
         {
             var obj = reference.GetObject();
-            if (obj == null) return;
+            if (obj == null)
+            {
+                "reference not found return".ToLog();
+                return;
+            }
 
             var iter = ObjectBaseDrawers.Where((other) => other.m_TargetObject.Equals(obj));
             if (!iter.Any())
             {
+                "reference drawer not found return".ToLog();
                 return;
             }
 
@@ -142,7 +147,10 @@ namespace SyadeuEditor.Presentation
             EditorGUI.LabelField(HeaderPos, EditorUtils.String("Entity Window", 20), EditorUtils.HeaderStyle);
             HeaderLinePos.width = Screen.width;
             EditorUtils.Line(HeaderLinePos);
-            
+
+            EntityListPos.height = Screen.height - 95;
+            ViewPos.width = Screen.width - EntityListPos.width - 5;
+            ViewPos.height = EntityListPos.height;
             BeginWindows();
 
             m_DataListWindow.OnGUI(EntityListPos, 1);
@@ -150,6 +158,9 @@ namespace SyadeuEditor.Presentation
 
             EndWindows();
 
+            m_CopyrightRect.width = Screen.width;
+            m_CopyrightRect.x = 0;
+            m_CopyrightRect.y = Screen.height - 42;
             EditorGUI.LabelField(m_CopyrightRect, EditorUtils.String("Copyright 2021 Syadeu. All rights reserved.", 11), EditorUtils.CenterStyle);
         }
         
@@ -258,6 +269,12 @@ namespace SyadeuEditor.Presentation
             private EntityListTreeView EntityListTreeView;
             private TreeViewState TreeViewState;
 
+            public string SearchString
+            {
+                get => EntityListTreeView.searchString;
+                set => EntityListTreeView.searchString = value;
+            }
+
             public DataListWindow(EntityWindow window)
             {
                 m_MainWindow = window;
@@ -326,15 +343,31 @@ namespace SyadeuEditor.Presentation
             Rect m_Position;
             Vector2 m_Scroll;
 
+            //GUIStyle m_Style;
+
             public ViewWindow(EntityWindow window)
             {
                 m_MainWindow = window;
+                //m_Style = new GUIStyle();
+                //m_Style.normal.background = new Texture2D(1, 1);
+                //for (int i = 0; i < m_Style.normal.background.height; i++)
+                //{
+                //    for (int j = 0; j < m_Style.normal.background.width; j++)
+                //    {
+                //        m_Style.normal.background.SetPixel(i, j, ColorPalettes.PastelDreams.Yellow);
+                //    }
+                //}
+                //m_Style.normal.background.Apply();
             }
 
             public void OnGUI(Rect pos, int unusedID)
             {
                 m_Position = pos;
+
+                Color origin = GUI.color;
+                GUI.color = ColorPalettes.PastelDreams.Yellow;
                 GUILayout.Window(unusedID, m_Position, Draw, string.Empty, EditorUtils.Box);
+                GUI.color = origin;
             }
             private void Draw(int unusedID)
             {
@@ -353,13 +386,16 @@ namespace SyadeuEditor.Presentation
 
                 #endregion
 
-                if (m_MainWindow.m_SelectedObject != null)
+                using (new EditorUtils.BoxBlock(ColorPalettes.PastelDreams.Yellow, GUILayout.Width(m_Position.width - 15)))
                 {
-                    m_MainWindow.m_SelectedObject.OnGUI();
-                }
-                else
-                {
-                    EditorGUILayout.LabelField("select object");
+                    if (m_MainWindow.m_SelectedObject != null)
+                    {
+                        m_MainWindow.m_SelectedObject.OnGUI();
+                    }
+                    else
+                    {
+                        EditorGUILayout.LabelField("select object");
+                    }
                 }
 
                 EditorGUILayout.EndScrollView();
@@ -369,11 +405,24 @@ namespace SyadeuEditor.Presentation
         public sealed class EntityDrawer : ObjectBaseDrawer
         {
             public EntityDataBase Target => (EntityDataBase)m_TargetObject;
-            readonly ReflectionHelperEditor.AttributeListDrawer m_AttributeDrawer;
+
+            GUIContent m_EnableCullName, m_DisableCullName;
+            PrefabReferenceDrawer prefabReferenceDrawer = null;
+            AttributeListDrawer attributeListDrawer;
 
             public EntityDrawer(ObjectBase objectBase) : base(objectBase)
             {
-                m_AttributeDrawer = ReflectionHelperEditor.GetAttributeDrawer(Type, Target.Attributes);
+                m_EnableCullName = new GUIContent("Enable Cull");
+                m_DisableCullName = new GUIContent("Disable Cull");
+
+                if (objectBase is EntityBase)
+                {
+                    prefabReferenceDrawer = (PrefabReferenceDrawer)m_ObjectDrawers.Where((other) => other.Name.Equals("Prefab")).First();
+                    prefabReferenceDrawer.DisableHeader = true;
+                }
+                
+                attributeListDrawer = new AttributeListDrawer(objectBase,
+                    TypeHelper.TypeOf<EntityDataBase>.Type.GetField("m_AttributeList", BindingFlags.NonPublic | BindingFlags.Instance));
             }
 
             protected override void DrawGUI()
@@ -388,42 +437,76 @@ namespace SyadeuEditor.Presentation
                 EditorGUI.BeginDisabledGroup(true);
                 EditorGUILayout.TextField("Hash: ", Target.Hash.ToString());
                 EditorGUI.EndDisabledGroup();
-                if (Target is EntityBase entityBase)
+                if (Target is EntityBase entity)
                 {
-                    ReflectionHelperEditor.DrawPrefabReference("Prefab: ",
-                        (idx) =>
-                        {
-                            entityBase.Prefab = idx;
-                            if (idx >= 0)
-                            {
-                                GameObject temp = (GameObject)entityBase.Prefab.GetObjectSetting().m_RefPrefab.editorAsset;
-                                Transform tr = temp.transform;
+                    using (new EditorUtils.BoxBlock(ColorPalettes.WaterFoam.Teal))
+                    {
+                        EditorUtils.StringRich("Prefab", 15);
 
-                                AABB aabb = new AABB(tr.position, float3.zero);
-                                foreach (var item in tr.GetComponentsInChildren<Renderer>())
+                        GUIContent enableCullName = entity.m_EnableCull ? m_DisableCullName : m_EnableCullName;
+                        Rect enableCullRect = GUILayoutUtility.GetRect(
+                            enableCullName, 
+                            EditorStyles.toolbarButton, GUILayout.ExpandWidth(true));
+                        int enableCullID = GUIUtility.GetControlID(FocusType.Passive, enableCullRect);
+                        switch (Event.current.GetTypeForControl(enableCullID))
+                        {
+                            case EventType.Repaint:
+                                bool isHover = enableCullRect.Contains(Event.current.mousePosition);
+
+                                Color origin = GUI.color;
+                                GUI.color = entity.m_EnableCull ? ColorPalettes.PastelDreams.TiffanyBlue : ColorPalettes.PastelDreams.HotPink;
+
+                                EditorStyles.toolbarButton.Draw(enableCullRect,
+                                    isHover, isActive: true, on: true, false);
+                                GUI.color = origin;
+
+                                var temp = new GUIStyle(EditorStyles.label);
+                                temp.alignment = TextAnchor.MiddleCenter;
+                                temp.Draw(enableCullRect, enableCullName, enableCullID);
+                                break;
+                            case EventType.MouseDown:
+                                if (!enableCullRect.Contains(Event.current.mousePosition)) break;
+
+                                if (Event.current.button == 0)
                                 {
-                                    aabb.Encapsulate(item.bounds);
+                                    GUIUtility.hotControl = enableCullID;
+                                    entity.m_EnableCull = !entity.m_EnableCull;
+                                    Event.current.Use();
                                 }
-                                entityBase.Center = aabb.center - ((float3)tr.position);
-                                entityBase.Size = aabb.size;
-                            }
+
+                                break;
+                            case EventType.MouseUp:
+                                if (GUIUtility.hotControl == enableCullID)
+                                {
+                                    GUIUtility.hotControl = 0;
+                                }
+                                break;
+                            default:
+                                break;
                         }
-                        , entityBase.Prefab);
+
+                        DrawField(prefabReferenceDrawer);
+                    }
                 }
                 using (new EditorUtils.BoxBlock(Color.black))
                 {
-                    m_AttributeDrawer.OnGUI();
+                    attributeListDrawer.OnGUI();
                 }
                 EditorUtils.Line();
 
                 for (int i = 0; i < m_ObjectDrawers.Length; i++)
                 {
-                    if (m_ObjectDrawers[i] == null) continue;
+                    if (m_ObjectDrawers[i] == null)
+                    {
+                        EditorGUILayout.LabelField("null");
+                        continue;
+                    }
 
                     if (m_ObjectDrawers[i].Name.Equals("Name") ||
                         m_ObjectDrawers[i].Name.Equals("Hash") ||
-                        m_ObjectDrawers[i].Name.Equals("Prefab") ||
-                        m_ObjectDrawers[i].Name.Equals("Attributes"))
+                        m_ObjectDrawers[i].Name.Equals("Prefab")
+                        || m_ObjectDrawers[i].Name.Equals("EnableCull")
+                        )
                     {
                         continue;
                     }
@@ -431,6 +514,175 @@ namespace SyadeuEditor.Presentation
                     DrawField(m_ObjectDrawers[i]);
                 }
             }
+        }
+        public sealed class AttributeListDrawer : ObjectDrawer<Reference<AttributeBase>[]>
+        {
+            private List<ObjectDrawerBase> m_Drawers = new List<ObjectDrawerBase>();
+            private List<bool> m_Open = new List<bool>();
+
+            public AttributeListDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
+            {
+                Reload();
+            }
+            private void Reload()
+            {
+                m_Drawers.Clear();
+                m_Open.Clear();
+
+                Reference<AttributeBase>[] arr = Getter.Invoke();
+
+                for (int i = 0; i < arr.Length; i++)
+                {
+                    if (arr[i].IsValid()) m_Drawers.Add(ObjectBaseDrawer.GetDrawer(arr[i]));
+                    else m_Drawers.Add(null);
+
+                    m_Open.Add(false);
+                }
+            }
+            public override Reference<AttributeBase>[] Draw(Reference<AttributeBase>[] currentValue)
+            {
+                EditorGUILayout.BeginHorizontal();
+                EditorUtils.StringRich(Name, 15);
+                if (GUILayout.Button("+", GUILayout.Width(20)))
+                {
+                    Reference<AttributeBase>[] copy = new Reference<AttributeBase>[currentValue.Length + 1];
+                    if (currentValue.Length > 0)
+                    {
+                        Array.Copy(currentValue, copy, currentValue.Length);
+                    }
+                    
+                    currentValue = copy;
+
+                    m_Drawers.Add(null);
+                    m_Open.Add(false);
+                }
+                if (currentValue.Length > 0 && GUILayout.Button("-", GUILayout.Width(20)))
+                {
+                    Reference<AttributeBase>[] copy = new Reference<AttributeBase>[currentValue.Length - 1];
+                    if (currentValue.Length > 0)
+                    {
+                        Array.Copy(currentValue, copy, copy.Length);
+                    }
+                    
+                    currentValue = copy;
+                    m_Drawers.RemoveAt(m_Drawers.Count - 1);
+                    m_Open.RemoveAt(m_Open.Count - 1);
+                }
+                EditorGUILayout.EndHorizontal();
+
+                using (new EditorUtils.BoxBlock(Color.black))
+                {
+                    for (int i = 0; i < currentValue.Length; i++)
+                    {
+                        EditorGUILayout.BeginHorizontal();
+
+                        int idx = i;
+                        EditorGUI.BeginChangeCheck();
+                        idx = EditorGUILayout.DelayedIntField(idx, GUILayout.Width(40));
+                        if (EditorGUI.EndChangeCheck())
+                        {
+                            if (idx >= currentValue.Length) idx = currentValue.Length - 1;
+
+                            Reference<AttributeBase> cache = currentValue[i];
+                            bool cacheOpen = m_Open[i];
+                            var cacheDrawer = m_Drawers[i];
+
+                            var temp = currentValue.ToList();
+                            temp.RemoveAt(i);
+                            m_Open.RemoveAt(i);
+                            m_Drawers.RemoveAt(i);
+
+                            temp.Insert(idx, cache);
+                            m_Open.Insert(idx, cacheOpen);
+                            m_Drawers.Insert(idx, cacheDrawer);
+
+                            currentValue = temp.ToArray();
+                            Setter.Invoke(currentValue);
+                        }
+
+                        idx = i;
+                        ReflectionHelperEditor.DrawAttributeSelector(null, (attHash) =>
+                        {
+                            currentValue[idx] = new Reference<AttributeBase>(attHash);
+
+                            AttributeBase targetAtt = currentValue[idx].GetObject();
+                            if (targetAtt != null)
+                            {
+                                m_Drawers[idx] = ObjectBaseDrawer.GetDrawer(targetAtt);
+                            }
+                        }, currentValue[idx], TargetObject.GetType());
+
+                        if (GUILayout.Button("-", GUILayout.Width(20)))
+                        {
+                            if (currentValue.Length == 1)
+                            {
+                                currentValue = Array.Empty<Reference<AttributeBase>>();
+                                m_Open.Clear();
+                                m_Drawers.Clear();
+                            }
+                            else
+                            {
+                                var temp = currentValue.ToList();
+                                temp.RemoveAt(i);
+                                m_Open.RemoveAt(i);
+                                m_Drawers.RemoveAt(i);
+                                currentValue = temp.ToArray();
+                                Setter.Invoke(currentValue);
+                            }
+
+                            EditorGUILayout.EndHorizontal();
+                            i--;
+                            continue;
+                        }
+
+                        m_Open[i] = GUILayout.Toggle(m_Open[i], m_Open[i] ? EditorUtils.FoldoutOpendString : EditorUtils.FoldoutClosedString, EditorUtils.MiniButton, GUILayout.Width(20));
+
+                        if (GUILayout.Button("C", GUILayout.Width(20)))
+                        {
+                            AttributeBase cloneAtt = (AttributeBase)EntityDataList.Instance.GetObject(currentValue[i]).Clone();
+
+                            cloneAtt.Hash = Hash.NewHash();
+                            cloneAtt.Name += "_Clone";
+                            EntityDataList.Instance.m_Objects.Add(cloneAtt.Hash, cloneAtt);
+
+                            currentValue[i] = new Reference<AttributeBase>(cloneAtt.Hash);
+                            m_Drawers[i] = ObjectBaseDrawer.GetDrawer(cloneAtt);
+                        }
+
+                        EditorGUILayout.EndHorizontal();
+
+                        if (m_Open[i])
+                        {
+                            Color color3 = Color.red;
+                            color3.a = .7f;
+
+                            using (new EditorUtils.BoxBlock(color3))
+                            {
+                                if (!currentValue[i].IsValid())
+                                {
+                                    EditorGUILayout.HelpBox(
+                                        "This attribute is invalid.",
+                                        MessageType.Error);
+                                }
+                                else
+                                {
+                                    EditorGUILayout.HelpBox(
+                                        "This is shared attribute. Anything made changes in this inspector view will affect to original attribute directly not only as this entity.",
+                                        MessageType.Info);
+
+                                    m_Drawers[i].OnGUI();
+                                    //SetAttribute(m_CurrentList[i], m_AttributeDrawers[i].OnGUI());
+                                }
+                            }
+
+                            EditorUtils.Line();
+                        }
+                    }
+                }
+
+                return currentValue;
+            }
+
         }
 
         public class ObjectBaseDrawer : ObjectDrawerBase

@@ -37,9 +37,14 @@ namespace Syadeu.Presentation.Actions
         protected override void OnExecute(EntityData<IEntityData> entity)
         {
             Executer = entity;
+            EntityAnimationClipEventData data = m_Data.GetObject();
 
-            var oper = m_Data.GetObject().m_AnimationClip.LoadAssetAsync();
-            oper.Completed += Oper_Completed;
+            if (data.m_AnimationClip.Asset == null)
+            {
+                var oper = data.m_AnimationClip.LoadAssetAsync();
+                oper.Completed += Oper_Completed;
+            }
+            else CoreSystem.StartUnityUpdate(this, Update(Executer, data, data.m_AnimationClip.Asset));
         }
         private void Oper_Completed(UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle<AnimationClip> obj)
         {
@@ -59,10 +64,19 @@ namespace Syadeu.Presentation.Actions
 
             float passed = 0;
 
-            var oper = data.m_Entity.GetObject().Prefab.LoadAssetAsync();
-            yield return new WaitUntil(() => oper.IsDone);
-
-            Entity<IEntity> entity = PresentationSystem<EntitySystem>.System.CreateEntity(data.m_Entity, 0, oper.Result.transform.rotation, oper.Result .transform.localScale);
+            EntityBase entityBase = data.m_Entity.GetObject();
+            Entity<IEntity> entity;
+            if (entityBase.Prefab.Asset == null)
+            {
+                var oper = entityBase.Prefab.LoadAssetAsync();
+                yield return new WaitUntil(() => oper.IsDone);
+                entity = PresentationSystem<EntitySystem>.System.CreateEntity(data.m_Entity, 0, oper.Result.transform.rotation, oper.Result.transform.localScale);
+            }
+            else
+            {
+                entity = PresentationSystem<EntitySystem>.System.CreateEntity(data.m_Entity, 0, entityBase.Prefab.Asset.transform.rotation, entityBase.Prefab.Asset.transform.localScale);
+            }
+            
             ProxyTransform tr = (ProxyTransform)entity.transform;
             tr.enableCull = false;
             

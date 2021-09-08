@@ -49,7 +49,7 @@ namespace SyadeuEditor.Presentation.Map
             EntityBase entityObj = entity.GetObject();
             if (entityObj.Prefab.IsValid() && entityObj.Prefab.GetObjectSetting() != null)
             {
-                GameObject temp = (GameObject)entityObj.Prefab.GetObjectSetting().m_RefPrefab.editorAsset;
+                GameObject temp = (GameObject)entityObj.Prefab.GetEditorAsset();
                 Transform tr = temp.transform;
 
                 AABB aabb = new AABB(float3.zero, float3.zero);

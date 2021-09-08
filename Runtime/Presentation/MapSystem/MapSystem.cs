@@ -18,10 +18,12 @@ namespace Syadeu.Presentation.Map
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
-        private UnityEngine.GameObject m_MapEditorPrefab;
-        private UnityEngine.GameObject m_MapEditorInstance;
-
         private readonly Dictionary<SceneReference, List<SceneDataEntity>> m_SceneDataObjects = new Dictionary<SceneReference, List<SceneDataEntity>>();
+        private readonly List<SceneDependence> m_SceneDependences = new List<SceneDependence>();
+
+        private readonly List<SceneDataEntity> m_LoadedSceneData = new List<SceneDataEntity>();
+
+        public IReadOnlyList<SceneDataEntity> LoadedSceneData => m_LoadedSceneData;
 
         private SceneSystem m_SceneSystem;
         private EntitySystem m_EntitySystem;
@@ -30,9 +32,6 @@ namespace Syadeu.Presentation.Map
         #region Presentation Methods
         protected override PresentationResult OnInitialize()
         {
-            m_MapEditorPrefab = UnityEngine.Resources.Load<UnityEngine.GameObject>("MapEditor");
-            CoreSystem.Logger.NotNull(m_MapEditorPrefab);
-
             CreateConsoleCommands();
             //UnityEngine.Object.Instantiate(m_MapEditorPrefab);
 
@@ -59,39 +58,19 @@ namespace Syadeu.Presentation.Map
 
             for (int i = 0; i < sceneData.Length; i++)
             {
-                SceneDataEntity data = sceneData[i];
-                SceneReference targetScene = data.GetTargetScene();
-
-                other.RegisterSceneLoadDependence(targetScene, () =>
+                SceneDependence dependence = new SceneDependence
                 {
-                    if (!m_SceneDataObjects.TryGetValue(targetScene, out var list))
-                    {
-                        list = new List<SceneDataEntity>();
-                        m_SceneDataObjects.Add(targetScene, list);
-                    }
+                    m_SceneData = new Reference<SceneDataEntity>(sceneData[i])
+                };
+                SceneReference targetScene = sceneData[i].GetTargetScene();
 
-                    SceneDataEntity ins = (SceneDataEntity)m_EntitySystem.CreateObject(data.Hash);
-                    list.Add(ins);
-                });
+                other.RegisterSceneLoadDependence(targetScene, dependence.RegisterOnSceneLoad);
+                other.RegisterSceneUnloadDependence(targetScene, dependence.RegisterOnSceneLoad);
 
-                other.RegisterSceneUnloadDependence(targetScene, () =>
-                {
-                    if (m_SceneDataObjects.TryGetValue(targetScene, out var list))
-                    {
-                        for (int i = 0; i < list.Count; i++)
-                        {
-                            SceneDataEntity data = list[i];
-                            data.DestroyChildOnDestroy = false;
-                            m_EntitySystem.InternalDestroyEntity(list[i].Idx);
-                        }
-                        list.Clear();
-
-                        m_SceneDataObjects.Remove(targetScene);
-                    }
-                });
+                m_SceneDependences.Add(dependence);
 
                 CoreSystem.Logger.Log(Channel.Presentation,
-                    $"Scene Data({data.Name}) is registered.");
+                    $"Scene Data({sceneData[i].Name}) is registered.");
             }
         }
         private void Bind(EntitySystem other)
@@ -107,32 +86,66 @@ namespace Syadeu.Presentation.Map
 
         private void CreateConsoleCommands()
         {
-            ConsoleWindow.CreateCommand((cmd) =>
-            {
-                if (m_MapEditorInstance != null)
-                {
-                    UnityEngine.Object.Destroy(m_MapEditorInstance);
-                }
-                m_MapEditorInstance = UnityEngine.Object.Instantiate(m_MapEditorPrefab);
-            }, "open", "mapeditor");
-            ConsoleWindow.CreateCommand((cmd) =>
-            {
-                if (m_MapEditorInstance != null)
-                {
-                    UnityEngine.Object.Destroy(m_MapEditorInstance);
-                }
-                m_MapEditorInstance = null;
-            }, "close", "mapeditor");
+
         }
+
         #endregion
 
-        public IReadOnlyList<SceneDataEntity> GetCurrentSceneData()
+        #region Inner Classes
+
+        private struct SceneDependence
         {
-            if (m_SceneDataObjects.TryGetValue(m_SceneSystem.CurrentSceneRef, out var list))
+            public Reference<SceneDataEntity> m_SceneData;
+            private Hash m_InstanceHash;
+
+            public void RegisterOnSceneLoad()
             {
-                return list;
+                SceneDataEntity data = m_SceneData.GetObject();
+                SceneReference targetScene = data.GetTargetScene();
+
+                MapSystem mapSystem = PresentationSystem<MapSystem>.System;
+
+                if (!mapSystem.m_SceneDataObjects.TryGetValue(targetScene, out var list))
+                {
+                    list = new List<SceneDataEntity>();
+                    mapSystem.m_SceneDataObjects.Add(targetScene, list);
+                }
+
+                SceneDataEntity ins = (SceneDataEntity)mapSystem.m_EntitySystem.CreateObject(data.Hash);
+                list.Add(ins);
+
+                mapSystem.m_LoadedSceneData.Add(ins);
+
+                m_InstanceHash = ins.Idx;
             }
-            return Array.Empty<SceneDataEntity>();
+            public void RegisterOnSceneUnload()
+            {
+                SceneDataEntity data = m_SceneData.GetObject();
+                SceneReference targetScene = data.GetTargetScene();
+
+                MapSystem mapSystem = PresentationSystem<MapSystem>.System;
+
+                data.DestroyChildOnDestroy = false;
+                mapSystem.m_EntitySystem.InternalDestroyEntity(data.Idx);
+
+                mapSystem.m_LoadedSceneData.Remove(data);
+
+                if (mapSystem.m_SceneDataObjects.TryGetValue(targetScene, out var list))
+                {
+                    var iter = list.Where(Predicate);
+                    if (iter.Any())
+                    {
+                        list.Remove(iter.First());
+                    }
+                }
+            }
+            private bool Predicate(SceneDataEntity sceneData)
+            {
+                if (sceneData.Idx.Equals(m_InstanceHash)) return true;
+                return false;
+            }
         }
+
+        #endregion
     }
 }

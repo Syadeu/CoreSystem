@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using Unity.Mathematics;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
@@ -159,9 +160,37 @@ namespace SyadeuEditor.Presentation
             GUI.color = origin;
         }
 
+        static Regex s_SearchReferencerRegex = new Regex(@"((ref:)[0-9]{18})");
+        static Regex s_SearchWithHashRegex = new Regex(@"^([0-9]{18})");
+
         protected override bool DoesItemMatchSearch(TreeViewItem item, string search)
         {
             if (item is FolderTreeElement) return false;
+
+            Match searchWithHash = s_SearchWithHashRegex.Match(search);
+            if (searchWithHash.Success)
+            {
+                var temp = (ObjectTreeElement)item;
+                if (temp.Target.m_TargetObject.Hash.ToString().StartsWith(searchWithHash.Value))
+                {
+                    return true;
+                }
+                return false;
+            }
+
+            Match searchReferencer = s_SearchReferencerRegex.Match(search);
+            if (searchReferencer.Success)
+            {
+                string value = searchReferencer.Value.Replace("ref:", "");
+                var temp = (ObjectTreeElement)item;
+                string json = temp.Target.m_TargetObject.GetRawJson();
+
+                if (!json.Contains(value))
+                {
+                    return false;
+                }
+                else return true;
+            }
 
             return base.DoesItemMatchSearch(item, search);
         }
@@ -198,6 +227,10 @@ namespace SyadeuEditor.Presentation
             }
             else if (item is ObjectTreeElement obj)
             {
+                menu.AddItem(new GUIContent("Find Referencers"), false, () =>
+                {
+                    m_Window.m_DataListWindow.SearchString = $"ref:{obj.Target.m_TargetObject.Hash}";
+                });
                 menu.AddItem(new GUIContent("Remove"), false, () =>
                 {
                     item.parent.children.Remove(item);

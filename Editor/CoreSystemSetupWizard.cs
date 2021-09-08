@@ -4,9 +4,11 @@ using Syadeu.FMOD;
 #endif
 
 using Syadeu;
+using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Mono;
 using Syadeu.Presentation;
+using SyadeuEditor.Presentation;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -18,14 +20,25 @@ using UnityEngine.UI;
 
 namespace SyadeuEditor
 {
-    public sealed class CoreSystemSetupWizard : EditorWindow
+    public sealed class CoreSystemSetupWizard : EditorWindow, IStaticInitializer
     {
         static CoreSystemSetupWizard()
         {
+            EditorApplication.delayCall -= Startup;
             EditorApplication.delayCall += Startup;
         }
         static void Startup()
         {
+            if (Application.isPlaying || EditorApplication.isPlayingOrWillChangePlaymode) return;
+
+            if (!new GeneralMenu().Predicate() ||
+                !new SceneMenu().Predicate() ||
+                !new PrefabMenu().Predicate())
+            {
+                CoreSystemMenuItems.CoreSystemSetupWizard();
+                return;
+            }
+
             if (!CoreSystemSettings.Instance.m_HideSetupWizard)
             {
                 CoreSystemMenuItems.CoreSystemSetupWizard();
@@ -47,6 +60,7 @@ namespace SyadeuEditor
         GUIStyle titleStyle;
         GUIStyle iconStyle;
 
+        private GeneralMenu m_GeneralMenu;
         private SceneMenu m_SceneMenu;
         private PrefabMenu m_PrefabMenu;
         private Rect m_CopyrightRect = new Rect(175, 475, 245, 20);
@@ -65,10 +79,14 @@ namespace SyadeuEditor
             iconStyle = new GUIStyle();
             iconStyle.alignment = TextAnchor.MiddleCenter;
 
+            m_GeneralMenu = new GeneralMenu();
             m_SceneMenu = new SceneMenu();
             m_PrefabMenu = new PrefabMenu();
+            AddSetup(ToolbarNames.General, m_GeneralMenu.Predicate);
             AddSetup(ToolbarNames.Scene, m_SceneMenu.Predicate);
             AddSetup(ToolbarNames.Prefab, m_PrefabMenu.Predicate);
+
+            CoreSystemSettings.Instance.m_HideSetupWizard = true;
         }
         private void OnGUI()
         {
@@ -86,6 +104,9 @@ namespace SyadeuEditor
             {
                 switch ((ToolbarNames)m_SelectedToolbar)
                 {
+                    case ToolbarNames.General:
+                        m_GeneralMenu.OnGUI();
+                        break;
                     case ToolbarNames.Scene:
                         m_SceneMenu.OnGUI();
                         break;
@@ -146,6 +167,138 @@ namespace SyadeuEditor
             }
         }
         #endregion
+
+        private sealed class GeneralMenu
+        {
+            SerializedObject m_TagManagerObject;
+            SerializedProperty m_TagProperty, m_LayerProperty;
+
+            static string[] c_RequireTags = new string[] { };
+            static string[] c_RequireLayers = new string[] { "Terrain" };
+
+            List<string> m_MissingTags, m_MissingLayers;
+
+            public GeneralMenu()
+            {
+                UnityEngine.Object tagManagerObject = AssetDatabase.LoadMainAssetAtPath("ProjectSettings/TagManager.asset");
+                m_TagManagerObject = new SerializedObject(tagManagerObject);
+                m_TagProperty = m_TagManagerObject.FindProperty("tags");
+                m_LayerProperty = m_TagManagerObject.FindProperty("layers");
+
+                m_MissingTags = new List<string>(c_RequireTags);
+                for (int i = 0; i < m_TagProperty.arraySize; i++)
+                {
+                    string value = m_TagProperty.GetArrayElementAtIndex(i).stringValue;
+                    if (string.IsNullOrEmpty(value)) continue;
+
+                    m_MissingTags.Remove(value);
+                }
+
+                m_MissingLayers = new List<string>(c_RequireLayers);
+                for (int i = 0; i < m_LayerProperty.arraySize; i++)
+                {
+                    string value = m_LayerProperty.GetArrayElementAtIndex(i).stringValue;
+                    if (string.IsNullOrEmpty(value)) continue;
+
+                    m_MissingLayers.Remove(value);
+                }
+            }
+            public void OnGUI()
+            {
+                var block = new EditorUtils.BoxBlock(Color.black);
+
+                EditorUtils.StringRich("Tags", 13);
+                if (m_MissingTags.Count > 0)
+                {
+                    EditorGUILayout.HelpBox($"Number({m_MissingTags.Count}) of Tags are missing", MessageType.Error);
+
+                    for (int i = m_MissingTags.Count - 1; i >= 0; i--)
+                    {
+                        EditorGUILayout.BeginHorizontal();
+
+                        EditorGUILayout.TextField(m_MissingTags[i]);
+                        if (GUILayout.Button("Add", GUILayout.Width(100)))
+                        {
+                            InsertTag(m_MissingTags[i]);
+                            m_MissingTags.RemoveAt(i);
+                        }
+
+                        EditorGUILayout.EndHorizontal();
+                    }
+                }
+                else EditorGUILayout.HelpBox("Nominal", MessageType.Info);
+
+                EditorUtils.Line();
+
+                EditorUtils.StringRich("Layers", 13);
+                if (m_MissingLayers.Count > 0)
+                {
+                    EditorGUILayout.HelpBox($"Number({m_MissingLayers.Count}) of Layers are missing", MessageType.Error);
+
+                    for (int i = m_MissingLayers.Count - 1; i >= 0; i--)
+                    {
+                        EditorGUILayout.BeginHorizontal();
+
+                        EditorGUILayout.TextField(m_MissingLayers[i]);
+                        if (GUILayout.Button("Add", GUILayout.Width(100)))
+                        {
+                            if (!InsertLayer(m_MissingLayers[i]))
+                            {
+                                CoreSystem.Logger.LogError(Channel.Editor,
+                                    $"Could not add layer {m_MissingLayers[i]} because layer is full.");
+                            }
+                            else
+                            {
+                                m_MissingLayers.RemoveAt(i);
+                            }
+                        }
+
+                        EditorGUILayout.EndHorizontal();
+                    }
+                }
+                else EditorGUILayout.HelpBox("Nominal", MessageType.Info);
+
+                block.Dispose();
+            }
+            public bool Predicate()
+            {
+                if (m_MissingTags.Count > 0 || m_MissingLayers.Count > 0) return false;
+                return true;
+            }
+
+            private void InsertTag(string tag)
+            {
+                for (int i = 0; i < m_TagProperty.arraySize; i++)
+                {
+                    string value = m_TagProperty.GetArrayElementAtIndex(i).stringValue;
+                    if (string.IsNullOrEmpty(value))
+                    {
+                        m_TagProperty.GetArrayElementAtIndex(i).stringValue = tag;
+                        m_TagManagerObject.ApplyModifiedProperties();
+                        return;
+                    }
+                }
+
+                m_TagProperty.InsertArrayElementAtIndex(m_TagProperty.arraySize);
+                m_TagProperty.GetArrayElementAtIndex(m_TagProperty.arraySize - 1).stringValue = tag;
+                m_TagManagerObject.ApplyModifiedProperties();
+            }
+            private bool InsertLayer(string layer)
+            {
+                for (int i = 0; i < m_LayerProperty.arraySize; i++)
+                {
+                    string value = m_LayerProperty.GetArrayElementAtIndex(i).stringValue;
+                    if (string.IsNullOrEmpty(value))
+                    {
+                        m_LayerProperty.GetArrayElementAtIndex(i).stringValue = layer;
+                        m_TagManagerObject.ApplyModifiedProperties();
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        }
 
         #region Scene Menu
         private sealed class SceneMenu
@@ -423,12 +576,21 @@ namespace SyadeuEditor
                 }
                 else objectSettings = (List<PrefabList.ObjectSetting>)temp;
 
+                HashSet<UnityEngine.Object> tempSet = new HashSet<UnityEngine.Object>();
                 for (int i = 0; i < objectSettings.Count; i++)
                 {
-                    if (objectSettings[i].m_RefPrefab.editorAsset == null)
+                    UnityEngine.Object obj = objectSettings[i].GetEditorAsset();
+                    if (obj == null)
                     {
                         m_InvalidIndices.Add(i);
                     }
+                    if (tempSet.Contains(obj))
+                    {
+                        objectSettings[i] = new PrefabList.ObjectSetting(objectSettings[i].m_Name, null, objectSettings[i].m_IsWorldUI);
+                        m_InvalidIndices.Add(i);
+                    }
+
+                    tempSet.Add(obj);
                 }
 
                 m_AddressableCount = PrefabListEditor.DefaultGroup.entries.Count;
@@ -454,7 +616,7 @@ namespace SyadeuEditor
                     m_InvalidIndices.Clear();
                     for (int i = 0; i < objectSettings.Count; i++)
                     {
-                        if (objectSettings[i].m_RefPrefab.editorAsset == null)
+                        if (objectSettings[i].GetEditorAsset() == null)
                         {
                             m_InvalidIndices.Add(i);
                         }
@@ -465,9 +627,9 @@ namespace SyadeuEditor
 
                 using (new EditorUtils.BoxBlock(Color.black))
                 {
-                    if (objectSettings.Count - m_InvalidIndices.Count != m_AddressableCount)
+                    if (!Predicate())
                     {
-                        EditorUtils.StringRich("Require Rebase", true);
+                        EditorUtils.StringRich($"Require Rebase {objectSettings.Count} - {m_InvalidIndices.Count} != {m_AddressableCount}", true);
                     }
                     else
                     {

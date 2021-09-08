@@ -42,6 +42,24 @@ namespace SyadeuEditor.Presentation
                 return new ValuePairContainerDrawer(parentObject, memberInfo);
             }
 
+            Type[] drawerTypes = TypeHelper.GetTypes((other) => TypeHelper.TypeOf<ObjectDrawerBase>.Type.IsAssignableFrom(other));
+            var iter = drawerTypes.Where((other) =>
+            {
+                if (!other.IsAbstract &&
+                    other.BaseType.GenericTypeArguments.Length > 0 &&
+                    other.BaseType.GenericTypeArguments[0].IsAssignableFrom(declaredType)) return true;
+                return false;
+            });
+            if (iter.Any())
+            {
+                var ctor = TypeHelper.GetConstructorInfo(iter.First(), TypeHelper.TypeOf<object>.Type, TypeHelper.TypeOf<MemberInfo>.Type);
+
+                if (ctor != null)
+                {
+                    return (ObjectDrawerBase)ctor.Invoke(new object[] { parentObject, memberInfo });
+                }
+            }
+
             #region Primitive Types
             if (declaredType.IsEnum)
             {
@@ -130,20 +148,6 @@ namespace SyadeuEditor.Presentation
                 return new Color32Drawer(parentObject, memberInfo);
             }
             #endregion
-
-            Type[] drawerTypes = TypeHelper.GetTypes((other) => TypeHelper.TypeOf< ObjectDrawerBase>.Type.IsAssignableFrom(other));
-
-            var iter = drawerTypes.Where((other) =>
-            {
-                if (!other.IsAbstract &&
-                    other.BaseType.GenericTypeArguments.Length > 0 &&
-                    other.BaseType.GenericTypeArguments[0].IsAssignableFrom(declaredType)) return true;
-                return false;
-            });
-            if (iter.Any())
-            {
-                return (ObjectDrawerBase)TypeHelper.GetConstructorInfo(iter.First(), TypeHelper.TypeOf<object>.Type, TypeHelper.TypeOf<MemberInfo>.Type).Invoke(new object[] { parentObject, memberInfo });
-            }
 
             return null;
         }

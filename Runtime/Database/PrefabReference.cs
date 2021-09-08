@@ -30,6 +30,16 @@ namespace Syadeu.Database
         private readonly long m_Idx;
 
         public long Index => m_Idx;
+        public UnityEngine.Object Asset
+        {
+            get
+            {
+                var set = GetObjectSetting();
+                if (set == null) return null;
+
+                return set.LoadedObject;
+            }
+        }
 
         public PrefabReference(int idx)
         {
@@ -48,20 +58,12 @@ namespace Syadeu.Database
             if (!IsValid() || Equals(None)) return null;
             return PrefabList.Instance.ObjectSettings[(int)m_Idx];
         }
-        public AsyncOperationHandle LoadAssetAsync()
-        {
-            return Addressables.LoadAssetAsync<UnityEngine.Object>(GetObjectSetting().m_RefPrefab);
-        }
-        public AsyncOperationHandle<T> LoadAssetAsync<T>() where T : UnityEngine.Object
-        {
-            return Addressables.LoadAssetAsync<T>(GetObjectSetting().m_RefPrefab);
-        }
-        public void UnloadAsset()
-        {
-            GetObjectSetting().m_RefPrefab.ReleaseAsset();
-        }
+        public AsyncOperationHandle LoadAssetAsync() => GetObjectSetting().LoadAssetAsync();
+        public AsyncOperationHandle<T> LoadAssetAsync<T>() where T : UnityEngine.Object => GetObjectSetting().LoadAssetAsync<T>();
+        public void UnloadAsset() => GetObjectSetting().UnloadAsset();
+        public void ReleaseInstance(UnityEngine.GameObject obj) => GetObjectSetting().ReleaseInstance(obj);
 
-        bool IPrefabReference.IsNone() => Equals(None);
+        public bool IsNone() => Equals(None);
         public bool IsValid() => !Equals(Invalid) && m_Idx < PrefabList.Instance.ObjectSettings.Count;
 
         public static PrefabReference Find(string name)
@@ -98,6 +100,18 @@ namespace Syadeu.Database
         private readonly long m_Idx;
 
         public long Index => m_Idx;
+        public T Asset
+        {
+            get
+            {
+                var set = GetObjectSetting();
+                if (set == null) return null;
+
+                var target = set.LoadedObject;
+                if (target == null) return null;
+                return (T)target;
+            }
+        }
 
         public PrefabReference(int idx)
         {
@@ -117,16 +131,11 @@ namespace Syadeu.Database
             if (!IsValid() || Equals(None)) return null;
             return PrefabList.Instance.ObjectSettings[(int)m_Idx];
         }
-        public AsyncOperationHandle<T> LoadAssetAsync()
-        {
-            return Addressables.LoadAssetAsync<T>(GetObjectSetting().m_RefPrefab);
-        }
-        public void UnloadAsset()
-        {
-            GetObjectSetting().m_RefPrefab.ReleaseAsset();
-        }
+        public AsyncOperationHandle<T> LoadAssetAsync() => GetObjectSetting().LoadAssetAsync<T>();
+        public void UnloadAsset() => GetObjectSetting().UnloadAsset();
+        public void ReleaseInstance(UnityEngine.GameObject obj) => GetObjectSetting().ReleaseInstance(obj);
 
-        bool IPrefabReference.IsNone() => Equals(None);
+        public bool IsNone() => Equals(None);
         public bool IsValid() => !Equals(Invalid) && m_Idx < PrefabList.Instance.ObjectSettings.Count;
 
         public static PrefabReference<T> Find(string name)

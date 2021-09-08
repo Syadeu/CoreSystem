@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json;
-using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Attributes;
@@ -14,11 +13,12 @@ using AABB = Syadeu.Database.AABB;
 
 namespace Syadeu.Presentation.Map
 {
-    [DisplayName("Attribute: Entity size on grid")]
     [AttributeAcceptOnly(typeof(EntityBase))]
     public abstract class GridAttributeBase : AttributeBase { }
 
     #region Grid Size Attribute
+
+    [DisplayName("Attribute: Entity Size On Grid")]
     /// <summary>
     /// 엔티티를 그리드에 등록하는 어트리뷰트입니다.
     /// </summary>
@@ -111,17 +111,33 @@ namespace Syadeu.Presentation.Map
     {
         protected override void OnInitialize()
         {
-            EventSystem.AddEvent<OnMoveStateChangedEvent>(OnMoveStateChanged);
+            EventSystem.AddEvent<OnTransformChangedEvent>(OnTransformChangedEventHandler);
         }
-        private void OnMoveStateChanged(OnMoveStateChangedEvent ev)
+        private void OnTransformChangedEventHandler(OnTransformChangedEvent ev)
         {
-            GridSizeAttribute att = ev.Entity.GetAttribute<GridSizeAttribute>();
+            GridSizeAttribute att = ev.entity.GetAttribute<GridSizeAttribute>();
             if (att == null) return;
 
-            if ((ev.State & OnMoveStateChangedEvent.MoveState.Stopped) == OnMoveStateChangedEvent.MoveState.Stopped)
+            int[] prev = att.CurrentGridIndices;
+            att.UpdateGridCell();
+
+            if (prev.Length != att.CurrentGridIndices.Length)
             {
-                att.UpdateGridCell();
+                EventSystem.PostEvent(OnGridPositionChangedEvent.GetEvent(ev.entity, prev, att.CurrentGridIndices));
+                return;
             }
+            for (int i = 0; i < prev.Length; i++)
+            {
+                if (prev[i] != att.CurrentGridIndices[i])
+                {
+                    EventSystem.PostEvent(OnGridPositionChangedEvent.GetEvent(ev.entity, prev, att.CurrentGridIndices));
+                    break;
+                }
+            }
+        }
+        protected override void OnDispose()
+        {
+            EventSystem.RemoveEvent<OnTransformChangedEvent>(OnTransformChangedEventHandler);
         }
 
         //protected override void OnCreated(GridSizeAttribute attribute, EntityData<IEntityData> entity)
@@ -133,5 +149,7 @@ namespace Syadeu.Presentation.Map
         //    gridSystem.UpdateGridEntity(entity, attribute.GetCurrentGridCells());
         //}
     }
-    #endregion
+
+#endregion
+    
 }

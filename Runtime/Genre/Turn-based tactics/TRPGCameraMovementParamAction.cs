@@ -26,6 +26,11 @@ namespace Syadeu.Presentation.TurnTable
             CoreSystem.Logger.NotNull(m_Camera);
             CoreSystem.Logger.NotNull(m_Movement);
         }
+        protected override void OnDispose()
+        {
+            m_Camera = null;
+            m_Movement = null;
+        }
         protected override void OnExecute(InputAction.CallbackContext target)
         {
             m_Movement.MoveOffset = MoveOffset;

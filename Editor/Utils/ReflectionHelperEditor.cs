@@ -20,6 +20,7 @@ using Syadeu;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Actions;
+using SyadeuEditor.Presentation;
 
 namespace SyadeuEditor
 {
@@ -348,19 +349,19 @@ namespace SyadeuEditor
         }
         public static void DrawPrefabReference(string name, Action<int> setter, IPrefabReference current)
         {
-            string displayName;
+            GUIContent displayName;
             if (current.Index >= 0)
             {
                 PrefabList.ObjectSetting objSetting = current.GetObjectSetting();
-                displayName = objSetting == null ? "INVALID" : objSetting.m_Name;
+                displayName = objSetting == null ? new GUIContent("INVALID") : new GUIContent(objSetting.m_Name);
             }
             else if (current.Equals(PrefabReference.None))
             {
-                displayName = "None";
+                displayName = new GUIContent("None");
             }
             else
             {
-                displayName = "INVALID";
+                displayName = new GUIContent("INVALID");
             }
 
             GUILayout.BeginHorizontal();
@@ -368,59 +369,107 @@ namespace SyadeuEditor
 
             if (!string.IsNullOrEmpty(name)) GUILayout.Label(name, GUILayout.Width(Screen.width * .25f));
 
-            if (GUILayout.Button(displayName, SelectorStyle, GUILayout.ExpandWidth(true)))
+            Rect fieldRect = GUILayoutUtility.GetRect(displayName, SelectorStyle, GUILayout.ExpandWidth(true));
+            int selectorID = GUIUtility.GetControlID(FocusType.Passive, fieldRect);
+
+            switch (Event.current.GetTypeForControl(selectorID))
             {
-                Rect rect = GUILayoutUtility.GetLastRect();
-                rect.position = Event.current.mousePosition;
+                case EventType.Repaint:
+                    bool isHover = fieldRect.Contains(Event.current.mousePosition);
 
-                Type type = current.GetType();
-                List<PrefabList.ObjectSetting> list;
+                    SelectorStyle.Draw(fieldRect, displayName, isHover, isActive: true, on: true, false);
+                    break;
+                case EventType.ContextClick:
+                    if (!fieldRect.Contains(Event.current.mousePosition)) break;
 
-                if (type.GenericTypeArguments.Length > 0)
-                {
-                    list = PrefabList.Instance.ObjectSettings
-                        .Where((other) =>
-                        {
-                            if (other.m_RefPrefab.editorAsset == null) return false;
+                    Event.current.Use();
 
-                            if (type.GenericTypeArguments[0].IsAssignableFrom(other.m_RefPrefab.editorAsset.GetType()))
-                            {
-                                return true;
-                            }
-                            return false;
-                        }).ToList();
-                }
-                else
-                {
-                    list = PrefabList.Instance.ObjectSettings;
-                }
+                    GenericMenu menu = new GenericMenu();
 
-                try
-                {
-                    PopupWindow.Show(rect, SelectorPopup<int, PrefabList.ObjectSetting>.GetWindow(list, setter, (objSet) =>
+                    menu.AddDisabledItem(displayName);
+                    menu.AddSeparator(string.Empty);
+
+                    menu.AddItem(new GUIContent("Select"), false, () =>
                     {
-                        for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
+                        Selection.activeObject = current.GetEditorAsset();
+                        EditorGUIUtility.PingObject(Selection.activeObject);
+                    });
+                    menu.AddDisabledItem(new GUIContent("Edit"));
+
+                    menu.ShowAsContext();
+                    break;
+                case EventType.MouseDown:
+                    if (!fieldRect.Contains(Event.current.mousePosition) ||
+                        Event.current.button != 0) break;
+
+                    Rect rect = GUILayoutUtility.GetLastRect();
+                    rect.position = Event.current.mousePosition;
+
+                    Type type = current.GetType();
+                    List<PrefabList.ObjectSetting> list;
+
+                    if (type.GenericTypeArguments.Length > 0)
+                    {
+                        list = PrefabList.Instance.ObjectSettings
+                            .Where((other) =>
+                            {
+                                if (other.GetEditorAsset() == null) return false;
+
+                                if (type.GenericTypeArguments[0].IsAssignableFrom(other.GetEditorAsset().GetType()))
+                                {
+                                    return true;
+                                }
+                                return false;
+                            }).ToList();
+                    }
+                    else
+                    {
+                        list = PrefabList.Instance.ObjectSettings;
+                    }
+
+                    Event.current.Use();
+
+                    try
+                    {
+                        PopupWindow.Show(rect, SelectorPopup<int, PrefabList.ObjectSetting>.GetWindow(list, setter, (objSet) =>
                         {
-                            if (objSet.Equals(PrefabList.Instance.ObjectSettings[i])) return i;
-                        }
-                        return -1;
-                    }, -2));
-                }
-                catch (ExitGUIException)
-                {
-                }
+                            for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
+                            {
+                                if (objSet.Equals(PrefabList.Instance.ObjectSettings[i])) return i;
+                            }
+                            return -1;
+                        }, -2));
+                    }
+                    catch (ExitGUIException)
+                    {
+                    }
+                    break;
+                case EventType.MouseUp:
+                    if (GUIUtility.hotControl == selectorID)
+                    {
+                        Event.current.Use();
+                        GUIUtility.hotControl = 0;
+                    }
+                    break;
+                default:
+                    break;
             }
+
+            //if (GUILayout.Button(displayName, SelectorStyle, GUILayout.ExpandWidth(true)))
+            //{
+                
+            //}
             EditorGUILayout.EndHorizontal();
         }
-        private static void DrawAttributeSelector(string name, Action<Hash> setter, Hash current, Type entityType)
+        public static void DrawAttributeSelector(string name, Action<Hash> setter, Hash current, Type entityType)
         {
-            string displayName;
+            GUIContent displayName;
             EntityDataList.Instance.m_Objects.TryGetValue(current, out var attVal);
             //AttributeBase att = (AttributeBase)EntityDataList.Instance.GetObject(current);
             AttributeBase att = attVal == null ? null : (AttributeBase)attVal;
-            if (current.Equals(Hash.Empty)) displayName = "None";
-            else if (att == null) displayName = "Attribute Not Found";
-            else displayName = att.Name;
+            if (current.Equals(Hash.Empty)) displayName = new GUIContent("None");
+            else if (att == null) displayName = new GUIContent("Attribute Not Found");
+            else displayName = new GUIContent(att.Name);
 
             GUILayout.BeginHorizontal();
             GUILayout.Space(EditorGUI.indentLevel * 15);
@@ -430,70 +479,138 @@ namespace SyadeuEditor
                 GUILayout.Label(name);
             }
 
-            if (GUILayout.Button(displayName, SelectorStyle, GUILayout.ExpandWidth(true)))
+            Rect fieldRect = GUILayoutUtility.GetRect(displayName, SelectorStyle, GUILayout.ExpandWidth(true));
+            int selectorID = GUIUtility.GetControlID(FocusType.Passive, fieldRect);
+
+            switch (Event.current.GetTypeForControl(selectorID))
             {
-                EntityAcceptOnlyAttribute acceptOnly = entityType.GetCustomAttribute<EntityAcceptOnlyAttribute>();
-                if (acceptOnly != null && (
-                    acceptOnly.AttributeTypes == null || 
-                    acceptOnly.AttributeTypes.Length == 0))
-                {
-                    throw new Exception($"entity({entityType.Name}) has null attribute accepts");
-                }
+                case EventType.Repaint:
+                    bool isHover = fieldRect.Contains(Event.current.mousePosition);
 
-                Rect tempRect = GUILayoutUtility.GetLastRect();
-                tempRect.position = Event.current.mousePosition;
+                    SelectorStyle.Draw(fieldRect, displayName, isHover, isActive: true, on: true, false);
+                    break;
+                case EventType.ContextClick:
+                    if (!fieldRect.Contains(Event.current.mousePosition)) break;
 
-                var atts = EntityDataList.Instance.GetAttributes()
-                    .Where((other) =>
+                    Event.current.Use();
+
+                    GenericMenu menu = new GenericMenu();
+                    menu.AddDisabledItem(displayName);
+                    menu.AddSeparator(string.Empty);
+
+                    if (att != null)
                     {
-                        Type attType = other.GetType();
-                        bool attCheck = false;
-                        if (acceptOnly != null)
+                        menu.AddItem(new GUIContent("Find Referencers"), false, () =>
                         {
-                            for (int i = 0; i < acceptOnly.AttributeTypes.Length; i++)
+                            if (!EntityWindow.IsOpened) CoreSystemMenuItems.EntityDataListMenu();
+                            EntityWindow.Instance.m_DataListWindow.SearchString = $"ref:{att.Hash}";
+                        });
+                        menu.AddItem(new GUIContent("To Reference"), false, () =>
+                        {
+                            EntityWindow.Instance.Select(new Reference(att));
+                        });
+                    }
+                    else
+                    {
+                        menu.AddDisabledItem(new GUIContent("Find Referencers"));
+                        menu.AddDisabledItem(new GUIContent("To Reference"));
+                    }
+
+                    menu.ShowAsContext();
+                    break;
+                case EventType.MouseDown:
+                    if (!fieldRect.Contains(Event.current.mousePosition) ||
+                        Event.current.button != 0) break;
+
+                    EntityAcceptOnlyAttribute acceptOnly = entityType.GetCustomAttribute<EntityAcceptOnlyAttribute>();
+                    if (acceptOnly != null && (
+                        acceptOnly.AttributeTypes == null ||
+                        acceptOnly.AttributeTypes.Length == 0))
+                    {
+                        throw new Exception($"entity({entityType.Name}) has null attribute accepts");
+                    }
+
+                    Rect tempRect = GUILayoutUtility.GetLastRect();
+                    tempRect.position = Event.current.mousePosition;
+
+                    var atts = EntityDataList.Instance.GetData<AttributeBase>()
+                        .Where((other) =>
+                        {
+                            Type attType = other.GetType();
+                            bool attCheck = false;
+                            if (acceptOnly != null)
                             {
-                                if (acceptOnly.AttributeTypes[i].IsAssignableFrom(attType))
+                                for (int i = 0; i < acceptOnly.AttributeTypes.Length; i++)
                                 {
-                                    attCheck = true;
-                                    break;
+                                    if (acceptOnly.AttributeTypes[i].IsAssignableFrom(attType))
+                                    {
+                                        attCheck = true;
+                                        break;
+                                    }
                                 }
                             }
-                        }
-                        else attCheck = true;
+                            else attCheck = true;
 
-                        if (!attCheck) return false;
-                        attCheck = false;
+                            if (!attCheck) return false;
+                            attCheck = false;
 
-                        AttributeAcceptOnlyAttribute requireEntity = attType.GetCustomAttribute<AttributeAcceptOnlyAttribute>();
-                        if (requireEntity == null) return true;
+                            AttributeAcceptOnlyAttribute requireEntity = attType.GetCustomAttribute<AttributeAcceptOnlyAttribute>();
+                            if (requireEntity == null) return true;
 
-                        if (requireEntity.Types == null || requireEntity.Types.Length == 0)
-                        {
-                            return false;
-                        }
-                        else
-                        {
-                            for (int i = 0; i < requireEntity.Types.Length; i++)
+                            if (requireEntity.Types == null || requireEntity.Types.Length == 0)
                             {
-                                if (requireEntity.Types[i].IsAssignableFrom(entityType))
+                                return false;
+                            }
+                            else
+                            {
+                                for (int i = 0; i < requireEntity.Types.Length; i++)
                                 {
-                                    attCheck = true;
-                                    break;
+                                    if (requireEntity.Types[i].IsAssignableFrom(entityType))
+                                    {
+                                        attCheck = true;
+                                        break;
+                                    }
                                 }
                             }
-                        }
 
-                        if (!attCheck) return false;
-                        return true;
-                    })
-                    .ToArray();
-                PopupWindow.Show(tempRect, 
-                    SelectorPopup<Hash, AttributeBase>.GetWindow(atts, setter, (att) =>
+                            if (!attCheck) return false;
+                            return true;
+                        })
+                        .ToArray();
+
+                    Event.current.Use();
+
+                    PopupWindow.Show(tempRect,
+                        SelectorPopup<Hash, AttributeBase>.GetWindow(atts, setter, (att) =>
+                        {
+                            return att.Hash;
+                        }, Hash.Empty)
+                        );
+                    
+                    break;
+                case EventType.MouseUp:
+                    if (GUIUtility.hotControl == selectorID)
                     {
-                        return att.Hash;
-                    }, Hash.Empty)
-                    );
+                        Event.current.Use();
+                        GUIUtility.hotControl = 0;
+                    }
+                    break;
+                default:
+                    break;
             }
+
+            //if (GUILayout.Button(displayName, SelectorStyle, GUILayout.ExpandWidth(true)))
+            //{
+            //    EntityAcceptOnlyAttribute acceptOnly = entityType.GetCustomAttribute<EntityAcceptOnlyAttribute>();
+            //    if (acceptOnly != null && (
+            //        acceptOnly.AttributeTypes == null || 
+            //        acceptOnly.AttributeTypes.Length == 0))
+            //    {
+            //        throw new Exception($"entity({entityType.Name}) has null attribute accepts");
+            //    }
+
+                
+            //}
 
             GUILayout.EndHorizontal();
         }
