@@ -7,6 +7,7 @@ namespace Syadeu.Presentation
         public override void Register()
         {
             RegisterSystem(
+                TypeHelper.TypeOf<CoroutineSystem>.Type,
                 TypeHelper.TypeOf<Data.DataContainerSystem>.Type,
                 TypeHelper.TypeOf<Events.EventSystem>.Type,
                 TypeHelper.TypeOf<Input.InputSystem>.Type,

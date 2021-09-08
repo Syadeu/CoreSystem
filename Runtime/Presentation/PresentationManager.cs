@@ -265,6 +265,9 @@ namespace Syadeu.Presentation
 
                 PresentationSystemEntity system = (PresentationSystemEntity)ins;
 
+                system.m_GroupIndex = groupHash;
+                system.m_SystemIndex = group.m_Systems.Count;
+
                 system.SetJobHandle = group.SetJobHandle;
                 system.GetJobHandle = group.GetJobHandle;
 

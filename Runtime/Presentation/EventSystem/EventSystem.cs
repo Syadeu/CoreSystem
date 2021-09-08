@@ -1,7 +1,9 @@
-﻿using Syadeu.Internal;
+﻿using Syadeu.Database;
+using Syadeu.Internal;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 
 namespace Syadeu.Presentation.Events
@@ -17,9 +19,6 @@ namespace Syadeu.Presentation.Events
 
         private readonly Queue<SynchronizedEventBase> m_PostedEvents = new Queue<SynchronizedEventBase>();
         private readonly Queue<Action> m_PostedActions = new Queue<Action>();
-        private readonly Queue<IEnumerator> m_IterationJobs = new Queue<IEnumerator>();
-
-        private IEnumerator m_CurrentIterationJob = null;
 
         private SceneSystem m_SceneSystem;
 
@@ -103,57 +102,6 @@ namespace Syadeu.Presentation.Events
 
             #endregion
 
-            if (m_CurrentIterationJob != null)
-            {
-                if (m_CurrentIterationJob.Current == null)
-                {
-                    if (!m_CurrentIterationJob.MoveNext())
-                    {
-                        m_CurrentIterationJob = null;
-                    }
-                }
-                else
-                {
-                    if (m_CurrentIterationJob.Current is CustomYieldInstruction @yield && !yield.keepWaiting)
-                    {
-                        if (!m_CurrentIterationJob.MoveNext())
-                        {
-                            m_CurrentIterationJob = null;
-                        }
-                    }
-                    else if (m_CurrentIterationJob.Current is UnityEngine.AsyncOperation oper &&
-                        oper.isDone)
-                    {
-                        if (!m_CurrentIterationJob.MoveNext())
-                        {
-                            m_CurrentIterationJob = null;
-                        }
-                    }
-                    else if (m_CurrentIterationJob.Current is ICustomYieldAwaiter yieldAwaiter &&
-                        !yieldAwaiter.KeepWait)
-                    {
-                        if (!m_CurrentIterationJob.MoveNext())
-                        {
-                            m_CurrentIterationJob = null;
-                        }
-                    }
-                    else if (m_CurrentIterationJob.Current is YieldInstruction &&
-                        !(m_CurrentIterationJob.Current is UnityEngine.AsyncOperation))
-                    {
-                        m_CurrentIterationJob = null;
-                        CoreSystem.Logger.LogError(Channel.Presentation,
-                            $"해당 yield return 타입({m_CurrentIterationJob.Current.GetType().Name})은 지원하지 않습니다");
-                    }
-                }
-            }
-            if (m_CurrentIterationJob == null)
-            {
-                if (m_IterationJobs.Count > 0)
-                {
-                    m_CurrentIterationJob = m_IterationJobs.Dequeue();
-                }
-            }
-
             return base.OnPresentation();
         }
 
@@ -191,11 +139,6 @@ namespace Syadeu.Presentation.Events
         public void PostAction(Action action)
         {
             m_PostedActions.Enqueue(action);
-        }
-
-        public void PostIterationJob<T>(T job) where T : IIterationJob
-        {
-            m_IterationJobs.Enqueue(job.Execute());
         }
     }
 }

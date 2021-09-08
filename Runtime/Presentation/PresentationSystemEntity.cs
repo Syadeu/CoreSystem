@@ -19,6 +19,8 @@ namespace Syadeu.Presentation
     /// <typeparam name="T"></typeparam>
     public abstract class PresentationSystemEntity<T> : PresentationSystemEntity where T : PresentationSystemEntity
     {
+        public new PresentationSystemID<T> SystemID => new PresentationSystemID<T>(m_GroupIndex, m_SystemIndex);
+
         public override bool IsStartable => true;
 
         protected override PresentationResult OnInitialize() { return PresentationResult.Normal; }
