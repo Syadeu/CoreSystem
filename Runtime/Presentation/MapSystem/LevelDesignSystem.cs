@@ -239,8 +239,7 @@ namespace Syadeu.Presentation.Map
         public bool Raycast(Ray ray, out RaycastHit hitInfo, 
             [DefaultValue("Mathf.Infinity")] float maxDistance = float.PositiveInfinity)
         {
-            //return m_SceneSystem.CurrentPhysicsScene.Raycast(ray.origin, ray.direction, 
-            return Physics.Raycast(ray.origin, ray.direction, 
+            return m_SceneSystem.CurrentPhysicsScene.Raycast(ray.origin, ray.direction,
                 out hitInfo,
                 maxDistance: maxDistance,
                 layerMask: LayerMask.GetMask(c_TerrainLayerName),
@@ -252,7 +251,7 @@ namespace Syadeu.Presentation.Map
             return m_SceneSystem.CurrentPhysicsScene.Raycast(ray.origin, ray.direction,
                 hitInfos,
                 maxDistance: maxDistance,
-                layerMask: LayerMask.NameToLayer(c_TerrainLayerName),
+                layerMask: LayerMask.GetMask(c_TerrainLayerName),
                 queryTriggerInteraction: QueryTriggerInteraction.Collide);
         }
     }
