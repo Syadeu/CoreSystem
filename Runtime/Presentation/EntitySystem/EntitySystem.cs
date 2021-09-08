@@ -626,16 +626,16 @@ namespace Syadeu.Presentation
             EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntity(entity.Idx);
 
             #region Attributes
-            Array.ForEach(entity.Attributes, (other) =>
+            for (int i = 0; i < entity.Attributes.Length; i++)
             {
-                if (other == null)
+                if (entity.Attributes[i] == null)
                 {
                     CoreSystem.Logger.LogWarning(Channel.Presentation,
                         string.Format(c_AttributeEmptyWarning, entity.Name));
                     return;
                 }
 
-                Type t = other.GetType();
+                Type t = entity.Attributes[i].GetType();
 
                 if (!TypeHelper.TypeOf<AttributeBase>.Type.Equals(t.BaseType))
                 {
@@ -645,7 +645,7 @@ namespace Syadeu.Presentation
                         {
                             IAttributeProcessor processor = groupProcessors[j];
 
-                            processor.OnCreated(other, entityData);
+                            processor.OnCreated(entity.Attributes[i], entityData);
                         }
                         CoreSystem.Logger.Log(Channel.Entity, $"Processed OnCreated at entity({entity.Name}), {t.Name}");
                     }
@@ -657,11 +657,11 @@ namespace Syadeu.Presentation
                     {
                         IAttributeProcessor processor = processors[j];
 
-                        processor.OnCreated(other, entityData);
+                        processor.OnCreated(entity.Attributes[i], entityData);
                     }
                     CoreSystem.Logger.Log(Channel.Entity, $"Processed OnCreated at entity({entity.Name}), {t.Name}");
                 }
-            });
+            }
             #endregion
 
             #region Entity

@@ -114,17 +114,23 @@ namespace SyadeuEditor
                 }
             }
 
-            UpdateGroup(DefaultGroup, invalidIndices);
+            bool changed = UpdateGroup(DefaultGroup, invalidIndices);
             AddressableAssetGroup[] groups = PrefabListGroups;
             for (int i = 0; i < groups.Length; i++)
             {
-                UpdateGroup(groups[i], invalidIndices);
+                changed |= UpdateGroup(groups[i], invalidIndices);
             }
 
             EditorUtility.SetDirty(PrefabList.Instance);
-
-            static void UpdateGroup(AddressableAssetGroup group, Queue<int> invalidIndices)
+            if (changed)
             {
+                AddressableAssetSettings.BuildPlayerContent();
+            }
+
+            static bool UpdateGroup(AddressableAssetGroup group, Queue<int> invalidIndices)
+            {
+                bool changed = false;
+
                 List<PrefabList.ObjectSetting> list = PrefabList.Instance.ObjectSettings;
                 foreach (AddressableAssetEntry item in group.entries)
                 {
@@ -151,12 +157,16 @@ namespace SyadeuEditor
 
                         CoreSystem.Logger.Log(Channel.Editor,
                             $"PrefabList index at {targetIdx}:{previousName} was invalid but replaced to newly added prefab");
+
+                        changed = true;
                     }
                     else
                     {
                         list.Add(new PrefabList.ObjectSetting(name, refObj, false));
+                        changed = true;
                     }
                 }
+                return changed;
             }
         }
     }

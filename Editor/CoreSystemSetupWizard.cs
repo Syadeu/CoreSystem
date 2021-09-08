@@ -4,6 +4,7 @@ using Syadeu.FMOD;
 #endif
 
 using Syadeu;
+using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Mono;
 using Syadeu.Presentation;
@@ -19,14 +20,13 @@ using UnityEngine.UI;
 
 namespace SyadeuEditor
 {
-    public sealed class CoreSystemSetupWizard : EditorWindow
+    public sealed class CoreSystemSetupWizard : EditorWindow, IStaticInitializer
     {
-        //static CoreSystemSetupWizard()
-        //{
-        //    EditorApplication.delayCall -= Startup;
-        //    EditorApplication.delayCall += Startup;
-        //}
-        [InitializeOnLoadMethod]
+        static CoreSystemSetupWizard()
+        {
+            EditorApplication.delayCall -= Startup;
+            EditorApplication.delayCall += Startup;
+        }
         static void Startup()
         {
             if (Application.isPlaying || EditorApplication.isPlayingOrWillChangePlaymode) return;
@@ -36,6 +36,7 @@ namespace SyadeuEditor
                 !new PrefabMenu().Predicate())
             {
                 CoreSystemMenuItems.CoreSystemSetupWizard();
+                return;
             }
 
             if (!CoreSystemSettings.Instance.m_HideSetupWizard)

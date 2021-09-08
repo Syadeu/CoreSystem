@@ -1,8 +1,8 @@
 ﻿using System.Collections;
 
-namespace Syadeu.Presentation.Events
+namespace Syadeu.Presentation
 {
-    public interface IIterationJob
+    public interface ICoroutineJob
     {
         IEnumerator Execute();
     }

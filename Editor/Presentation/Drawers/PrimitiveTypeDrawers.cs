@@ -277,6 +277,11 @@ namespace SyadeuEditor.Presentation
                 return new ReferenceDrawer(list, m_ElementType, (other) => list[i] = other, () => (IReference)list[i]);
             }
 
+            else if (TypeHelper.TypeOf<IPrefabReference>.Type.IsAssignableFrom(m_ElementType))
+            {
+                return new PrefabReferenceDrawer(list, m_ElementType, (other) => list[i] = other, () => (IPrefabReference)list[i]);
+            }
+
             else
             {
                 return new ObjectDrawer(list[i], m_ElementType, string.Empty);

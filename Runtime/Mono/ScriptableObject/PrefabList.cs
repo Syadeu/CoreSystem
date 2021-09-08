@@ -20,6 +20,8 @@ namespace Syadeu.Mono
             [NonSerialized] public bool m_IsRuntimeObject = false;
             [NonSerialized] public GameObject m_Prefab = null;
 
+            [NonSerialized] private bool m_IsLoaded = false;
+            [NonSerialized] private AsyncOperationHandle m_LoadHandle = default;
             [NonSerialized] private UnityEngine.Object m_LoadedObject = null;
 
             public UnityEngine.Object LoadedObject => m_LoadedObject;
@@ -34,14 +36,26 @@ namespace Syadeu.Mono
             #region Resource Control
             public AsyncOperationHandle LoadAssetAsync()
             {
+                if (m_LoadHandle.IsValid())
+                {
+                    return m_LoadHandle;
+                }
                 if (m_LoadedObject != null)
                 {
                     CoreSystem.Logger.LogError(Channel.Data, "already loaded");
                     return default(AsyncOperationHandle);
                 }
+                if (!m_RefPrefab.RuntimeKeyIsValid())
+                {
+                    CoreSystem.Logger.LogError(Channel.Data, $"{m_Name} is not valid.");
+                    return default(AsyncOperationHandle);
+                }
 
-                var handle = Addressables.LoadAssetAsync<UnityEngine.Object>(m_RefPrefab);
+                var handle = m_RefPrefab.LoadAssetAsync<UnityEngine.Object>();
                 handle.Completed += Handle_Completed;
+
+                m_IsLoaded = true;
+                m_LoadHandle = handle;
                 return handle;
             }
             private void Handle_Completed(AsyncOperationHandle<UnityEngine.Object> obj)
@@ -50,30 +64,59 @@ namespace Syadeu.Mono
             }
             public AsyncOperationHandle<T> LoadAssetAsync<T>() where T : UnityEngine.Object
             {
+                if (m_LoadHandle.IsValid())
+                {
+                    return m_LoadHandle.Convert<T>();
+                }
                 if (m_LoadedObject != null)
                 {
                     CoreSystem.Logger.LogError(Channel.Data, "already loaded");
                     return default(AsyncOperationHandle<T>);
                 }
-                
-                var handle = Addressables.LoadAssetAsync<T>(m_RefPrefab);
+                if (!m_RefPrefab.RuntimeKeyIsValid())
+                {
+                    CoreSystem.Logger.LogError(Channel.Data, $"{m_Name} is not valid.");
+                    return default(AsyncOperationHandle<T>);
+                }
+
+                var handle = m_RefPrefab.LoadAssetAsync<T>();
                 handle.Completed += this.Handle_Completed1;
+
+                m_IsLoaded = true;
+                m_LoadHandle = handle;
                 return handle;
             }
             private void Handle_Completed1<T>(AsyncOperationHandle<T> obj) where T : UnityEngine.Object
             {
                 m_LoadedObject = obj.Result;
+
+                m_LoadHandle = default;
             }
 
             public void UnloadAsset()
             {
+                if (!m_RefPrefab.RuntimeKeyIsValid())
+                {
+                    CoreSystem.Logger.LogError(Channel.Data, $"{m_Name} is not valid.");
+                    return;
+                }
+
                 m_LoadedObject = null;
                 m_RefPrefab.ReleaseAsset();
             }
 
             #endregion
 
-            public AsyncOperationHandle<GameObject> InstantiateAsync(float3 pos, quaternion rot, Transform parent) => m_RefPrefab.InstantiateAsync(pos, rot, parent);
+            public AsyncOperationHandle<GameObject> InstantiateAsync(float3 pos, quaternion rot, Transform parent)
+            {
+                if (!m_RefPrefab.RuntimeKeyIsValid())
+                {
+                    CoreSystem.Logger.LogError(Channel.Data, $"{m_Name} is not valid.");
+                    return default(AsyncOperationHandle<GameObject>);
+                }
+
+                return m_RefPrefab.InstantiateAsync(pos, rot, parent);
+            }
 
             public void ReleaseInstance(GameObject obj) => m_RefPrefab.ReleaseInstance(obj);
 

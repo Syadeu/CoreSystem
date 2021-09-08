@@ -33,8 +33,11 @@ namespace SyadeuEditor.Presentation
 
         public override IPrefabReference Draw(IPrefabReference currentValue)
         {
-            GUILayout.BeginHorizontal();
-            DrawPrefabReference(DisableHeader ? string.Empty : Name,
+            GUILayout.BeginVertical();
+
+            using (new GUILayout.HorizontalScope())
+            {
+                DrawPrefabReference(DisableHeader ? string.Empty : Name,
                 (idx) =>
                 {
                     IPrefabReference prefab = (IPrefabReference)m_Constructor.Invoke(new object[] { idx });
@@ -43,46 +46,48 @@ namespace SyadeuEditor.Presentation
                 },
                 currentValue);
 
-            EditorGUI.BeginDisabledGroup(!currentValue.IsValid() || currentValue.IsNone());
-            EditorGUI.BeginChangeCheck();
-            m_Open = GUILayout.Toggle(m_Open,
-                        m_Open ? EditorUtils.FoldoutOpendString : EditorUtils.FoldoutClosedString
-                        , EditorUtils.MiniButton, GUILayout.Width(20));
-            if (EditorGUI.EndChangeCheck())
-            {
-                if (m_Open)
+                EditorGUI.BeginDisabledGroup(!currentValue.IsValid() || currentValue.IsNone());
+                EditorGUI.BeginChangeCheck();
+                m_Open = GUILayout.Toggle(m_Open,
+                            m_Open ? EditorUtils.FoldoutOpendString : EditorUtils.FoldoutClosedString
+                            , EditorUtils.MiniButton, GUILayout.Width(20));
+                if (EditorGUI.EndChangeCheck())
                 {
-                    m_Editor = Editor.CreateEditor(currentValue.GetEditorAsset());
+                    if (m_Open)
+                    {
+                        m_Editor = Editor.CreateEditor(currentValue.GetEditorAsset());
+                    }
+                    else
+                    {
+                        m_Editor = null;
+                    }
                 }
-                else
-                {
-                    m_Editor = null;
-                }
+                EditorGUI.EndDisabledGroup();
             }
-            EditorGUI.EndDisabledGroup();
-
-            GUILayout.EndHorizontal();
 
             if (m_Open)
             {
                 EditorGUI.indentLevel++;
-
-                EditorUtils.BoxBlock box = new EditorUtils.BoxBlock(Color.black);
-                
-                m_Editor.DrawHeader();
-                m_Editor.OnInspectorGUI();
-
-                if (m_Editor.HasPreviewGUI())
+                using (new GUILayout.VerticalScope())
                 {
-                    Rect rect = GUILayoutUtility.GetLastRect();
-                    rect = GUILayoutUtility.GetRect(rect.width, 100);
-                    m_Editor.DrawPreview(rect);
-                }
-                
-                box.Dispose();
+                    EditorUtils.BoxBlock box = new EditorUtils.BoxBlock(Color.black);
 
+                    m_Editor.DrawHeader();
+                    m_Editor.OnInspectorGUI();
+
+                    if (m_Editor.HasPreviewGUI())
+                    {
+                        Rect rect = GUILayoutUtility.GetLastRect();
+                        rect = GUILayoutUtility.GetRect(rect.width, 100);
+                        m_Editor.DrawPreview(rect);
+                    }
+
+                    box.Dispose();
+                }
                 EditorGUI.indentLevel--;
             }
+
+            GUILayout.EndVertical();
 
             return currentValue;
         }
@@ -104,101 +109,97 @@ namespace SyadeuEditor.Presentation
                 displayName = new GUIContent("INVALID");
             }
 
-            GUILayout.BeginHorizontal();
-            GUILayout.Space(EditorGUI.indentLevel * 15);
-
-            if (!string.IsNullOrEmpty(name)) GUILayout.Label(name, GUILayout.Width(Screen.width * .25f));
-
-            Rect fieldRect = GUILayoutUtility.GetRect(displayName, ReflectionHelperEditor.SelectorStyle, GUILayout.ExpandWidth(true));
-            int selectorID = GUIUtility.GetControlID(FocusType.Passive, fieldRect);
-
-            switch (Event.current.GetTypeForControl(selectorID))
+            using (new GUILayout.HorizontalScope())
             {
-                case EventType.Repaint:
-                    IsHover = fieldRect.Contains(Event.current.mousePosition);
-                    ReflectionHelperEditor.SelectorStyle.Draw(fieldRect, displayName, IsHover, isActive: false, on: false, false);
-                    break;
-                case EventType.ContextClick:
-                    if (!fieldRect.Contains(Event.current.mousePosition)) break;
+                GUILayout.Space(EditorGUI.indentLevel * 15);
 
-                    Event.current.Use();
+                if (!string.IsNullOrEmpty(name)) GUILayout.Label(name, GUILayout.Width(Screen.width * .25f));
 
-                    GenericMenu menu = new GenericMenu();
+                Rect fieldRect = GUILayoutUtility.GetRect(displayName, ReflectionHelperEditor.SelectorStyle, GUILayout.ExpandWidth(true));
+                int selectorID = GUIUtility.GetControlID(FocusType.Passive, fieldRect);
 
-                    menu.AddDisabledItem(displayName);
-                    menu.AddSeparator(string.Empty);
+                switch (Event.current.GetTypeForControl(selectorID))
+                {
+                    case EventType.Repaint:
+                        IsHover = fieldRect.Contains(Event.current.mousePosition);
+                        ReflectionHelperEditor.SelectorStyle.Draw(fieldRect, displayName, IsHover, isActive: false, on: false, false);
+                        break;
+                    case EventType.ContextClick:
+                        if (!fieldRect.Contains(Event.current.mousePosition)) break;
 
-                    menu.AddItem(new GUIContent("Select"), false, () =>
-                    {
-                        Selection.activeObject = current.GetEditorAsset();
-                        EditorGUIUtility.PingObject(Selection.activeObject);
-                    });
-                    menu.AddDisabledItem(new GUIContent("Edit"));
-
-                    menu.ShowAsContext();
-                    break;
-                case EventType.MouseDown:
-                    if (!fieldRect.Contains(Event.current.mousePosition) ||
-                        Event.current.button != 0) break;
-
-                    Rect rect = GUILayoutUtility.GetLastRect();
-                    rect.position = Event.current.mousePosition;
-
-                    Type type = current.GetType();
-                    List<PrefabList.ObjectSetting> list;
-
-                    if (type.GenericTypeArguments.Length > 0)
-                    {
-                        list = PrefabList.Instance.ObjectSettings
-                            .Where((other) =>
-                            {
-                                if (other.GetEditorAsset() == null) return false;
-
-                                if (type.GenericTypeArguments[0].IsAssignableFrom(other.GetEditorAsset().GetType()))
-                                {
-                                    return true;
-                                }
-                                return false;
-                            }).ToList();
-                    }
-                    else
-                    {
-                        list = PrefabList.Instance.ObjectSettings;
-                    }
-
-                    Event.current.Use();
-
-                    try
-                    {
-                        PopupWindow.Show(rect, SelectorPopup<int, PrefabList.ObjectSetting>.GetWindow(list, setter, (objSet) =>
-                        {
-                            for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
-                            {
-                                if (objSet.Equals(PrefabList.Instance.ObjectSettings[i])) return i;
-                            }
-                            return -1;
-                        }, -2));
-                    }
-                    catch (ExitGUIException)
-                    {
-                    }
-                    break;
-                case EventType.MouseUp:
-                    if (GUIUtility.hotControl == selectorID)
-                    {
                         Event.current.Use();
-                        GUIUtility.hotControl = 0;
-                    }
-                    break;
-                default:
-                    break;
+
+                        GenericMenu menu = new GenericMenu();
+
+                        menu.AddDisabledItem(displayName);
+                        menu.AddSeparator(string.Empty);
+
+                        menu.AddItem(new GUIContent("Select"), false, () =>
+                        {
+                            Selection.activeObject = current.GetEditorAsset();
+                            EditorGUIUtility.PingObject(Selection.activeObject);
+                        });
+                        menu.AddDisabledItem(new GUIContent("Edit"));
+
+                        menu.ShowAsContext();
+                        break;
+                    case EventType.MouseDown:
+                        if (!fieldRect.Contains(Event.current.mousePosition) ||
+                            Event.current.button != 0) break;
+
+                        Rect rect = GUILayoutUtility.GetLastRect();
+                        rect.position = Event.current.mousePosition;
+
+                        Type type = current.GetType();
+                        List<PrefabList.ObjectSetting> list;
+
+                        if (type.GenericTypeArguments.Length > 0)
+                        {
+                            list = PrefabList.Instance.ObjectSettings
+                                .Where((other) =>
+                                {
+                                    if (other.GetEditorAsset() == null) return false;
+
+                                    if (type.GenericTypeArguments[0].IsAssignableFrom(other.GetEditorAsset().GetType()))
+                                    {
+                                        return true;
+                                    }
+                                    return false;
+                                }).ToList();
+                        }
+                        else
+                        {
+                            list = PrefabList.Instance.ObjectSettings;
+                        }
+
+                        Event.current.Use();
+
+                        try
+                        {
+                            PopupWindow.Show(rect, SelectorPopup<int, PrefabList.ObjectSetting>.GetWindow(list, setter, (objSet) =>
+                            {
+                                for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
+                                {
+                                    if (objSet.Equals(PrefabList.Instance.ObjectSettings[i])) return i;
+                                }
+                                return -1;
+                            }, -2));
+                        }
+                        catch (ExitGUIException)
+                        {
+                        }
+                        break;
+                    case EventType.MouseUp:
+                        if (GUIUtility.hotControl == selectorID)
+                        {
+                            Event.current.Use();
+                            GUIUtility.hotControl = 0;
+                        }
+                        break;
+                    default:
+                        break;
+                }
             }
-
-            //if (GUILayout.Button(displayName, SelectorStyle, GUILayout.ExpandWidth(true)))
-            //{
-
-            //}
-            EditorGUILayout.EndHorizontal();
         }
     }
 }

@@ -45,15 +45,15 @@ namespace Syadeu.Presentation.Actions
         [JsonProperty(Order = 7, PropertyName = "OnEndActions")]
         private Reference<InstanceAction>[] m_OnEndAction = Array.Empty<Reference<InstanceAction>>();
 
-        [JsonIgnore] private EventSystem m_EventSystem = null;
+        [JsonIgnore] private CoroutineSystem m_CoroutineSystem = null;
 
         protected override void OnCreated()
         {
-            m_EventSystem = PresentationSystem<EventSystem>.System;
+            m_CoroutineSystem = PresentationSystem<CoroutineSystem>.System;
         }
         protected override void OnDispose()
         {
-            m_EventSystem = null;
+            m_CoroutineSystem = null;
         }
         protected override void OnExecute(EntityData<IEntityData> entity)
         {
@@ -74,10 +74,10 @@ namespace Syadeu.Presentation.Actions
                 m_OnEndAction = m_OnEndAction
             };
 
-            m_EventSystem.PostIterationJob(job);
+            m_CoroutineSystem.PostSequenceIterationJob(job);
         }
 
-        private class PayloadJob : IIterationJob
+        private class PayloadJob : ICoroutineJob
         {
             public Reference<TimelineData> m_Data;
             public EntityData<IEntityData> m_Executer;
