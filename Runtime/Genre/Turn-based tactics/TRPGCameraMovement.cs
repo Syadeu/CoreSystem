@@ -22,7 +22,7 @@ namespace Syadeu.Presentation.TurnTable
         private Transform m_DefaultTarget = null;
         private ITransform m_TargetTransform = null;
         private float3 m_TargetPosition = 0;
-        private quaternion m_TargetOrientation = quaternion.EulerZXY(new float3(45, 45, 0));
+        private quaternion m_TargetOrientation = quaternion.EulerZXY(new float3(45, 45, 0) * Mathf.Deg2Rad);
 
         public float2 AxisVelocity
         {
