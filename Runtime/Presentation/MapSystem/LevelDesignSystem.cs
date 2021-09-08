@@ -23,8 +23,8 @@ namespace Syadeu.Presentation.Map
         public override bool EnableOnPresentation => true;
         public override bool EnableAfterPresentation => false;
 
-        private bool m_EnabledTerrainTool = true;
-        private TerrainTool m_SelectedTool = TerrainTool.Raise;
+        private bool m_EnabledTerrainTool = false;
+        private TerrainTool m_SelectedTool = TerrainTool.None;
 
         private SceneSystem m_SceneSystem;
         private RenderSystem m_RenderSystem;

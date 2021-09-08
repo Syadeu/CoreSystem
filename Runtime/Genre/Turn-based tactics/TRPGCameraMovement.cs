@@ -14,6 +14,7 @@ namespace Syadeu.Presentation.TurnTable
 
         private ITransform m_TargetTransform = null;
         private float3 m_TargetPosition = 0;
+        private quaternion m_TargetOrientation = quaternion.EulerZXY(new float3(45, 45, 0));
 
         public float2 AxisVelocity
         {
@@ -24,11 +25,11 @@ namespace Syadeu.Presentation.TurnTable
                     currentPos = m_TargetGroup.transform.position,
                     project = Vector3.ProjectOnPlane(math.normalize(currentPos - TargetPosition), Vector3.up);
 
-                quaternion rot = quaternion.LookRotation(forward, new float3(0, 1, 0));
+                quaternion rot = quaternion.LookRotation(forward, math.up());
 
                 float
-                    horizontal = math.dot(project, math.mul(rot, Vector3.right)),
-                    vertical = math.dot(project, math.mul(rot, Vector3.forward));
+                    horizontal = math.dot(project, math.mul(rot, math.right())),
+                    vertical = math.dot(project, math.mul(rot, math.forward()));
 
                 return new float2(horizontal, vertical);
             }
@@ -44,7 +45,7 @@ namespace Syadeu.Presentation.TurnTable
                     forward = Vector3.ProjectOnPlane(RenderSystem.Camera.transform.forward, Vector3.up),
                     velocity = math.normalize(new float3(value.x, 0, value.y));
 
-                quaternion rot = quaternion.LookRotation(forward, new float3(0, 1, 0));
+                quaternion rot = quaternion.LookRotation(forward, math.up());
                 float4x4 vp = new float4x4(rot, float3.zero);
                 float3
                     point = math.normalize(math.mul(vp, new float4(velocity, 1)).xyz),
@@ -69,6 +70,17 @@ namespace Syadeu.Presentation.TurnTable
                 m_TargetPosition = value;
             }
         }
+        public quaternion TargetOrientation
+        {
+            get
+            {
+                return m_TargetOrientation;
+            }
+            set
+            {
+                m_TargetOrientation = value;
+            }
+        }
 
         protected override void OnInitialize(Camera camera, CinemachineBrain brain, CinemachineTargetGroup targetGroup)
         {
@@ -89,6 +101,9 @@ namespace Syadeu.Presentation.TurnTable
             while (m_TargetGroup != null)
             {
                 groupTr.position = math.lerp(groupTr.position, TargetPosition, Time.deltaTime * MoveSpeed);
+
+                //quaternion originRot = CameraComponent.Brain.ActiveVirtualCamera.VirtualCameraGameObject.transform.rotation;
+                //CameraComponent.Brain.ActiveVirtualCamera.VirtualCameraGameObject.transform.rotation = new quaternion(math.lerp(originRot.value, TargetOrientation.value, Time.deltaTime * MoveSpeed));
 
                 yield return waitForFixedUpdate;
             }

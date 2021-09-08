@@ -13,6 +13,8 @@ namespace Syadeu.Presentation.Render
 
         private AdditionalCameraComponent[] m_CameraComponents;
 
+        public CinemachineBrain Brain => m_CinemachineBrain;
+
         private void Awake()
         {
             if (m_Camera == null) m_Camera = GetComponentInChildren<Camera>();
