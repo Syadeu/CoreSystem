@@ -68,7 +68,7 @@ namespace SyadeuEditor.Presentation
             if (m_Open)
             {
                 EditorGUI.indentLevel++;
-                using (new GUILayout.HorizontalScope())
+                using (new GUILayout.VerticalScope())
                 {
                     EditorUtils.BoxBlock box = new EditorUtils.BoxBlock(Color.black);
 
