@@ -20,6 +20,7 @@ namespace Syadeu.Presentation
                 TypeHelper.TypeOf<Render.WorldCanvasSystem>.Type,
                 TypeHelper.TypeOf<Map.MapSystem>.Type,
                 TypeHelper.TypeOf<Map.GridSystem>.Type,
+                TypeHelper.TypeOf<Map.LevelDesignSystem>.Type,
                 TypeHelper.TypeOf<Map.NavMeshSystem>.Type,
                 TypeHelper.TypeOf<Actor.ActorSystem>.Type
                 );

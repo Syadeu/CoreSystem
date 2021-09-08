@@ -1,6 +1,9 @@
-﻿using System;
+﻿using Syadeu.Mono;
+using Syadeu.Presentation.Render;
+using System;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.Internal;
 
 namespace Syadeu.Presentation.Map
@@ -9,23 +12,41 @@ namespace Syadeu.Presentation.Map
     {
         public const string c_TerrainLayerName = "Terrain";
 
-        public override bool EnableBeforePresentation => throw new NotImplementedException();
-        public override bool EnableOnPresentation => throw new NotImplementedException();
-        public override bool EnableAfterPresentation => throw new NotImplementedException();
+        public enum TerrainTool
+        {
+            None,
+            
+            Raise
+        }
+
+        public override bool EnableBeforePresentation => false;
+        public override bool EnableOnPresentation => true;
+        public override bool EnableAfterPresentation => false;
+
+        private bool m_EnabledTerrainTool = false;
+        private TerrainTool m_SelectedTool = TerrainTool.None;
 
         private SceneSystem m_SceneSystem;
+        private RenderSystem m_RenderSystem;
         private MapSystem m_MapSystem;
 
         protected override PresentationResult OnInitialize()
         {
             RequestSystem<SceneSystem>(Bind);
+            RequestSystem<RenderSystem>(Bind);
             RequestSystem<MapSystem>(Bind);
+
+            AddConsoleCommands();
 
             return base.OnInitialize();
         }
         private void Bind(SceneSystem other)
         {
             m_SceneSystem = other;
+        }
+        private void Bind(RenderSystem other)
+        {
+            m_RenderSystem = other;
         }
         private void Bind(MapSystem other)
         {
@@ -37,8 +58,37 @@ namespace Syadeu.Presentation.Map
             m_MapSystem = null;
         }
 
-        public void Test()
+        private void AddConsoleCommands()
         {
+            ConsoleWindow.CreateCommand((cmd) =>
+            {
+                m_EnabledTerrainTool = true;
+                m_SelectedTool = TerrainTool.Raise;
+
+            }, "enable", "terrain", "raiseTool");
+            ConsoleWindow.CreateCommand((cmd) =>
+            {
+                m_EnabledTerrainTool = false;
+                m_SelectedTool = TerrainTool.None;
+
+            }, "disable", "terrain");
+        }
+
+        protected override PresentationResult OnPresentation()
+        {
+            if (m_EnabledTerrainTool)
+            {
+                if (m_SelectedTool == TerrainTool.Raise)
+                {
+                    if (Mouse.current.press.wasPressedThisFrame)
+                    {
+                        Ray ray = m_RenderSystem.ScreenPointToRay(new float3(Mouse.current.position.ReadValue(), 0));
+                        RaiseTerrain(ray, 10, 5);
+                    }
+                }
+            }
+
+            return base.OnPresentation();
         }
 
         private void RaiseTerrain(Ray ray, in int effectSize, in float effectIncrement)
