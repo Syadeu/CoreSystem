@@ -31,7 +31,7 @@ namespace SyadeuEditor.Presentation
 
         private readonly EntityWindow m_Window;
 
-        public event Action<EntityWindow.ObjectBaseDrawer> OnSelect;
+        public event Action<ObjectBaseDrawer> OnSelect;
 
         private Dictionary<Hash, ObjectBase> Objects => EntityDataList.Instance.m_Objects;
 
@@ -64,10 +64,10 @@ namespace SyadeuEditor.Presentation
 
             if (Objects != null && Objects.Count > 0)
             {
-                EntityWindow.ObjectBaseDrawer drawer;
+                ObjectBaseDrawer drawer;
                 foreach (var item in Objects?.Values)
                 {
-                    drawer = EntityWindow.ObjectBaseDrawer.GetDrawer(item);
+                    drawer = ObjectBaseDrawer.GetDrawer(item);
 
                     TreeViewItem folder = GetFolder(drawer.Type);
                     if (folder == null)
@@ -101,7 +101,7 @@ namespace SyadeuEditor.Presentation
             return null;
         }
 
-        public void AddItem(EntityWindow.ObjectBaseDrawer drawer)
+        public void AddItem(ObjectBaseDrawer drawer)
         {
             TreeViewItem folder = GetFolder(drawer.Type);
             if (folder == null)
@@ -117,7 +117,7 @@ namespace SyadeuEditor.Presentation
 
             SetupDepthsFromParentsAndChildren(m_Root);
         }
-        public void RemoveItem(EntityWindow.ObjectBaseDrawer drawer)
+        public void RemoveItem(ObjectBaseDrawer drawer)
         {
             var iter = GetRows().Where((other) => (other is ObjectTreeElement objEle) && objEle.Target.Equals(drawer));
             if (!iter.Any()) return;
@@ -288,7 +288,7 @@ namespace SyadeuEditor.Presentation
         }
         public sealed class ObjectTreeElement : ElementBase
         {
-            private EntityWindow.ObjectBaseDrawer m_Target;
+            private ObjectBaseDrawer m_Target;
             private ObsoleteAttribute m_ObsoleteAttribute;
             private DisplayNameAttribute m_DisplayNameAttribute;
 
@@ -299,11 +299,11 @@ namespace SyadeuEditor.Presentation
                     return m_Target.Name;
                 }
             }
-            public EntityWindow.ObjectBaseDrawer Target => m_Target;
+            public ObjectBaseDrawer Target => m_Target;
             public override Type Type => m_Target.Type;
             public override ObsoleteAttribute Obsolete => m_ObsoleteAttribute;
 
-            public ObjectTreeElement(int id, EntityWindow.ObjectBaseDrawer drawer)
+            public ObjectTreeElement(int id, ObjectBaseDrawer drawer)
             {
                 this.id = id;
                 m_Target = drawer;

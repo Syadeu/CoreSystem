@@ -122,10 +122,10 @@ namespace SyadeuEditor
             }
 
             EditorUtility.SetDirty(PrefabList.Instance);
-            if (changed)
-            {
-                AddressableAssetSettings.BuildPlayerContent();
-            }
+            //if (changed)
+            //{
+            //    AddressableAssetSettings.BuildPlayerContent();
+            //}
 
             static bool UpdateGroup(AddressableAssetGroup group, Queue<int> invalidIndices)
             {
