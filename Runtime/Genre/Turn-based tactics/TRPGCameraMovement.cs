@@ -5,11 +5,18 @@ using Syadeu.Presentation.Render;
 using System.Collections;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace Syadeu.Presentation.TurnTable
 {
     public sealed class TRPGCameraMovement : AdditionalCameraComponent
     {
+        [SerializeField] private InputAction m_MoveAxis;
+
+        [Space]
+        [SerializeField] private InputAction m_RotateRight;
+        [SerializeField] private InputAction m_RotateLeft;
+
         private CinemachineTargetGroup m_TargetGroup;
 
         private Transform m_DefaultTarget = null;
@@ -94,8 +101,9 @@ namespace Syadeu.Presentation.TurnTable
             m_DefaultTarget.position = m_TargetPosition;
 
             m_TargetGroup.AddMember(m_DefaultTarget, 1, 1);
-        }
 
+            m_MoveAxis.Enable();
+        }
         protected override void OnRenderStart()
         {
             StartCoroutine(Updater());
@@ -108,6 +116,11 @@ namespace Syadeu.Presentation.TurnTable
             
             while (m_TargetGroup != null)
             {
+                if (m_MoveAxis.IsPressed())
+                {
+                    AxisVelocity = m_MoveAxis.ReadValue<Vector2>();
+                }
+
                 m_DefaultTarget.position = TargetPosition;
                 CameraComponent.CurrentCamera.VirtualCameraGameObject.transform.rotation
                     = TargetOrientation;

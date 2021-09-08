@@ -69,4 +69,12 @@ namespace Syadeu.Presentation.Render
             return null;
         }
     }
+
+    public sealed class TestInputAxisProvider : Cinemachine.AxisState.IInputAxisProvider
+    {
+        public float GetAxisValue(int axis)
+        {
+            throw new System.NotImplementedException();
+        }
+    }
 }
