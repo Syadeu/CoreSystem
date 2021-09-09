@@ -26,11 +26,37 @@ namespace SyadeuEditor.Presentation
 
         public PrefabReferenceDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
         {
-            m_Constructor = TypeHelper.GetConstructorInfo(DeclaredType, TypeHelper.TypeOf<long>.Type);
+            m_Constructor = TypeHelper.GetConstructorInfo(DeclaredType, TypeHelper.TypeOf<int>.Type);
+
+            IPrefabReference prefab = Getter.Invoke();
+            if (!prefab.IsNone() && prefab.IsValid())
+            {
+                if (DeclaredType.GenericTypeArguments.Length > 0)
+                {
+                    Type targetType = DeclaredType.GenericTypeArguments[0];
+                    if (!targetType.IsAssignableFrom(prefab.GetEditorAsset().GetType()))
+                    {
+                        Setter.Invoke((IPrefabReference)m_Constructor.Invoke(new object[] { -1 }));
+                    }
+                }
+            }
         }
         public PrefabReferenceDrawer(object parentObject, Type declaredType, Action<IPrefabReference> setter, Func<IPrefabReference> getter) : base(parentObject, declaredType, setter, getter)
         {
-            m_Constructor = TypeHelper.GetConstructorInfo(DeclaredType, TypeHelper.TypeOf<long>.Type);
+            m_Constructor = TypeHelper.GetConstructorInfo(DeclaredType, TypeHelper.TypeOf<int>.Type);
+
+            IPrefabReference prefab = getter.Invoke();
+            if (!prefab.IsNone() && prefab.IsValid())
+            {
+                if (declaredType.GenericTypeArguments.Length > 0)
+                {
+                    Type targetType = declaredType.GenericTypeArguments[0];
+                    if (!targetType.IsAssignableFrom(prefab.GetEditorAsset().GetType()))
+                    {
+                        setter.Invoke((IPrefabReference)m_Constructor.Invoke(new object[] { -1 }));
+                    }
+                }
+            }
         }
 
         public override IPrefabReference Draw(IPrefabReference currentValue)

@@ -173,33 +173,89 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68ccec800a4731847bd414467b79f67f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_MoveOffset: 0.8
+  m_MoveSpeed: 4
   m_MoveAxis:
     m_Name: Move Axis
     m_Type: 0
-    m_ExpectedControlType: 
+    m_ExpectedControlType: Vector2
     m_Id: b43f33a2-e872-4fcc-ba25-9c1a4ae25f1b
     m_Processors: 
     m_Interactions: 
-    m_SingletonActionBindings: []
-    m_Flags: 0
+    m_SingletonActionBindings:
+    - m_Name: 2D Vector
+      m_Id: c2593b4c-ddbe-4fe1-b051-523fecb5bc77
+      m_Path: 2DVector
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Move Axis
+      m_Flags: 4
+    - m_Name: up
+      m_Id: 69515594-d427-4343-b9f0-31a62fcd458e
+      m_Path: <Keyboard>/w
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Move Axis
+      m_Flags: 8
+    - m_Name: down
+      m_Id: c0c2e273-ab63-453e-b644-15e4ef948938
+      m_Path: <Keyboard>/s
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Move Axis
+      m_Flags: 8
+    - m_Name: left
+      m_Id: e6d1c6dc-f599-4e22-ac28-619b95bab83f
+      m_Path: <Keyboard>/a
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Move Axis
+      m_Flags: 8
+    - m_Name: right
+      m_Id: 0a1bde2a-3592-4563-acd6-addc2f43a84b
+      m_Path: <Keyboard>/d
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Move Axis
+      m_Flags: 8
+  m_RotationDegree: 45
   m_RotateRight:
     m_Name: Rotate Right
-    m_Type: 0
-    m_ExpectedControlType: 
+    m_Type: 1
+    m_ExpectedControlType: Button
     m_Id: f60973b1-764d-4ea8-a4e5-5061535f61cb
     m_Processors: 
     m_Interactions: 
-    m_SingletonActionBindings: []
-    m_Flags: 0
+    m_SingletonActionBindings:
+    - m_Name: 
+      m_Id: c6d41711-c74b-4b55-a9ea-048d8b271db8
+      m_Path: <Keyboard>/e
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Rotate Right
+      m_Flags: 0
   m_RotateLeft:
     m_Name: Rotate Left
-    m_Type: 0
-    m_ExpectedControlType: 
+    m_Type: 1
+    m_ExpectedControlType: Button
     m_Id: 9c7a0ad6-de21-47a2-8ad0-88535ed42320
     m_Processors: 
     m_Interactions: 
-    m_SingletonActionBindings: []
-    m_Flags: 0
+    m_SingletonActionBindings:
+    - m_Name: 
+      m_Id: 9a9785f6-4b42-4f43-bec8-5cca3910a4f1
+      m_Path: <Keyboard>/q
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Rotate Left
+      m_Flags: 0
 --- !u!1 &8832134446683109531
 GameObject:
   m_ObjectHideFlags: 0
@@ -588,7 +644,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8832134447924349095}
-  m_LocalRotation: {x: 0.38925594, y: -0.5903218, z: 0.3892559, w: 0.59032184}
+  m_LocalRotation: {x: 0.38925597, y: -0.5903218, z: 0.38925585, w: 0.59032184}
   m_LocalPosition: {x: 0, y: 1.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:

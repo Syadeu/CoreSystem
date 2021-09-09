@@ -24,7 +24,7 @@ namespace Syadeu.Presentation.TurnTable
 
         private Transform m_DefaultTarget = null;
         private ITransform m_TargetTransform = null;
-        private float3 m_TargetPosition = 0;
+        private float3 m_TargetPosition = float3.zero;
         private float3 m_TargetOrientation = new float3(45, 45, 0);
 
         public float2 AxisVelocity
@@ -53,10 +53,11 @@ namespace Syadeu.Presentation.TurnTable
                     "null return".ToLog();
                     return;
                 }
+                else if (value.Equals(float2.zero)) return;
 
-                float3 
+                float3
                     forward = Vector3.ProjectOnPlane(RenderSystem.Camera.transform.forward, Vector3.up),
-                    velocity = math.normalize(new float3(value.x, 0, value.y));
+                    velocity = new float3(value.x, 0, value.y);
 
                 quaternion rot = quaternion.LookRotation(forward, math.up());
                 float4x4 vp = new float4x4(rot, float3.zero);
@@ -167,7 +168,7 @@ namespace Syadeu.Presentation.TurnTable
 
                 Transform orientationTarget = OrientationTarget;
                 orientationTarget.localRotation
-                    = Quaternion.Lerp(orientationTarget.localRotation, Quaternion.Euler(TargetOrientation), Time.deltaTime * MoveSpeed);
+                    = Quaternion.Slerp(orientationTarget.localRotation, Quaternion.Euler(TargetOrientation), Time.deltaTime * MoveSpeed);
 
                 //groupTr.position = math.lerp(groupTr.position, TargetPosition, Time.deltaTime * MoveSpeed);
 
