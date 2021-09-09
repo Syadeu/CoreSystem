@@ -28,6 +28,11 @@
             "name": "com.unity.render-pipelines.universal",
             "expression": "10.5.0",
             "define": "ENABLE_URP"
+        },
+        {
+            "name": "com.unity.cinemachine",
+            "expression": "2.6",
+            "define": "UNITY_CINEMACHINE"
         }
     ],
     "noEngineReferences": false

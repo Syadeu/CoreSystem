@@ -79,19 +79,18 @@ namespace Syadeu.Internal
                         return true;
                     })
                     .ToArray();
+        }
+        private static bool CanSerialized(MemberInfo member)
+        {
+            if (member.GetCustomAttribute<NonSerializedAttribute>(true) != null ||
+                member.GetCustomAttribute<JsonIgnoreAttribute>(true) != null ||
+                member.GetCustomAttribute<HideInInspector>() != null) return false;
 
-            static bool CanSerialized(MemberInfo member)
+            if (member is PropertyInfo property)
             {
-                if (member.GetCustomAttribute<NonSerializedAttribute>(true) != null ||
-                    member.GetCustomAttribute<JsonIgnoreAttribute>(true) != null ||
-                    member.GetCustomAttribute<HideInInspector>() != null) return false;
-
-                if (member is PropertyInfo property)
-                {
-                    if (!property.CanWrite || !property.CanRead) return false;
-                }
-                return true;
+                if (!property.CanWrite || !property.CanRead) return false;
             }
+            return true;
         }
     }
 }

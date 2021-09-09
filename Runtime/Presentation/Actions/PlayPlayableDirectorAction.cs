@@ -1,20 +1,24 @@
-﻿using Cinemachine;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
+
 using Syadeu.Internal;
-using Syadeu.Mono;
 using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Entities;
-using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Proxy;
 using Syadeu.Presentation.Render;
+
 using System;
 using System.Collections;
 using System.ComponentModel;
-using Unity.Mathematics;
+
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 using UnityEngine.Playables;
 using UnityEngine.ResourceManagement.AsyncOperations;
+
+using Unity.Mathematics;
+
+#if UNITY_CINEMACHINE
+using Cinemachine;
+#endif
 
 namespace Syadeu.Presentation.Actions
 {
@@ -169,11 +173,13 @@ namespace Syadeu.Presentation.Actions
                             director.SetGenericBinding(item.sourceObject, proxy.gameObject);
                             continue;
                         }
+#if UNITY_CINEMACHINE
                         if (type.Equals(TypeHelper.TypeOf<CinemachineBrain>.Type))
                         {
                             director.SetGenericBinding(item.sourceObject, PresentationSystem<RenderSystem>.System.Camera.GetComponent<CinemachineBrain>());
                             continue;
                         }
+#endif
 
                         var component = proxy.GetComponent(type);
                         if (component == null)
@@ -194,11 +200,13 @@ namespace Syadeu.Presentation.Actions
                     foreach (PlayableBinding item in asset.outputs)
                     {
                         Type type = item.outputTargetType;
+#if UNITY_CINEMACHINE
                         if (type.Equals(TypeHelper.TypeOf<CinemachineBrain>.Type))
                         {
                             director.SetGenericBinding(item.sourceObject, PresentationSystem<RenderSystem>.System.Camera.GetComponent<CinemachineBrain>());
                             continue;
                         }
+#endif
                     }
                 }
 

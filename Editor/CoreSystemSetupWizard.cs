@@ -87,6 +87,7 @@ namespace SyadeuEditor
             AddSetup(ToolbarNames.Prefab, m_PrefabMenu.Predicate);
 
             CoreSystemSettings.Instance.m_HideSetupWizard = true;
+            EditorUtility.SetDirty(CoreSystemSettings.Instance);
         }
         private void OnGUI()
         {
