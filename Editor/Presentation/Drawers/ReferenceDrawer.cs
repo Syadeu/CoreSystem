@@ -12,7 +12,9 @@ namespace SyadeuEditor.Presentation
 {
     public sealed class ReferenceDrawer : ObjectDrawer<IReference>
     {
-        private bool m_Open;
+        private bool 
+            m_Open, 
+            m_WasEdited = false;
 
         public ReferenceDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
         {
@@ -40,7 +42,13 @@ namespace SyadeuEditor.Presentation
                     new object[] { objBase });
 
                 Setter.Invoke((IReference)temp);
+                m_WasEdited = true;
             }, currentValue, targetType);
+            if (m_WasEdited)
+            {
+                GUI.changed = true;
+                m_WasEdited = false;
+            }
 
             m_Open = GUILayout.Toggle(m_Open,
                         m_Open ? EditorUtils.FoldoutOpendString : EditorUtils.FoldoutClosedString
@@ -87,7 +95,7 @@ namespace SyadeuEditor.Presentation
                             "This is shared reference. Anything made changes in this inspector view will affect to original reference directly.",
                             MessageType.Info);
 
-                        EntityWindow.ObjectBaseDrawer.GetDrawer(currentValue.GetObject()).OnGUI();
+                        ObjectBaseDrawer.GetDrawer(currentValue.GetObject()).OnGUI();
                     }
                 }
             }
@@ -117,8 +125,7 @@ namespace SyadeuEditor.Presentation
             }
 
             Rect fieldRect = GUILayoutUtility.GetRect(displayName, EditorStyles.textField, GUILayout.ExpandWidth(true));
-
-            //GUI.Label(fieldRect, displayName, ReflectionHelperEditor.SelectorStyle);
+            
             int selectorID = GUIUtility.GetControlID(FocusType.Passive, fieldRect);
 
             switch (Event.current.GetTypeForControl(selectorID))
@@ -178,6 +185,7 @@ namespace SyadeuEditor.Presentation
                     {
                         GUIUtility.hotControl = selectorID;
                         DrawSelectionWindow(setter, targetType);
+                        GUI.changed = true;
                         Event.current.Use();
                     }
 

@@ -14,7 +14,9 @@ namespace SyadeuEditor.Presentation
     public sealed class PrefabReferenceDrawer : ObjectDrawer<IPrefabReference>
     {
         private readonly ConstructorInfo m_Constructor;
-        private bool m_Open = false;
+        private bool 
+            m_Open = false,
+            m_WasEdited = false;
 
         Editor m_Editor = null;
         bool
@@ -43,8 +45,13 @@ namespace SyadeuEditor.Presentation
                     IPrefabReference prefab = (IPrefabReference)m_Constructor.Invoke(new object[] { idx });
 
                     Setter.Invoke(prefab);
-                },
-                currentValue);
+                    m_WasEdited = true;
+                }, currentValue);
+                if (m_WasEdited)
+                {
+                    GUI.changed = true;
+                    m_WasEdited = false;
+                }
 
                 EditorGUI.BeginDisabledGroup(!currentValue.IsValid() || currentValue.IsNone());
                 EditorGUI.BeginChangeCheck();
