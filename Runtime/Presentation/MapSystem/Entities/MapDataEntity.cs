@@ -51,8 +51,8 @@ namespace Syadeu.Presentation.Map
             entity.CreatedEntities = new Entity<EntityBase>[entity.m_Objects.Length];
             for (int i = 0; i < entity.m_Objects.Length; i++)
             {
-                if (!entity.m_Objects[i].m_Object.IsValid() ||
-                    entity.m_Objects[i].m_Object.IsEmpty())
+                if (entity.m_Objects[i].m_Object.IsEmpty() || 
+                    !entity.m_Objects[i].m_Object.IsValid())
                 {
                     CoreSystem.Logger.LogError(Channel.Entity,
                         $"Cannot spawn map object in [{e.Name}] element at {i} is not valid.");

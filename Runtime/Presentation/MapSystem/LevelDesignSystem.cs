@@ -10,7 +10,8 @@ namespace Syadeu.Presentation.Map
 {
     public sealed class LevelDesignSystem : PresentationSystemEntity<LevelDesignSystem>
     {
-        public const string c_TerrainLayerName = "Terrain";
+        private const string c_TerrainLayerName = "Terrain";
+        public static readonly LayerMask TerrainLayer = LayerMask.GetMask(c_TerrainLayerName);
 
         public enum TerrainTool
         {
@@ -267,7 +268,7 @@ namespace Syadeu.Presentation.Map
             return m_SceneSystem.CurrentPhysicsScene.Raycast(ray.origin, ray.direction,
                 out hitInfo,
                 maxDistance: maxDistance,
-                layerMask: LayerMask.GetMask(c_TerrainLayerName),
+                layerMask: TerrainLayer,
                 queryTriggerInteraction: QueryTriggerInteraction.Collide);
         }
         public int RaycastAll(Ray ray, RaycastHit[] hitInfos, 
@@ -276,7 +277,7 @@ namespace Syadeu.Presentation.Map
             return m_SceneSystem.CurrentPhysicsScene.Raycast(ray.origin, ray.direction,
                 hitInfos,
                 maxDistance: maxDistance,
-                layerMask: LayerMask.GetMask(c_TerrainLayerName),
+                layerMask: TerrainLayer,
                 queryTriggerInteraction: QueryTriggerInteraction.Collide);
         }
     }
