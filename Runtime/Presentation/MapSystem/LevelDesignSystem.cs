@@ -11,7 +11,7 @@ namespace Syadeu.Presentation.Map
     public sealed class LevelDesignSystem : PresentationSystemEntity<LevelDesignSystem>
     {
         private const string c_TerrainLayerName = "Terrain";
-        public static readonly LayerMask TerrainLayer = LayerMask.GetMask(c_TerrainLayerName);
+        public static readonly LayerMask TerrainLayer = LayerMask.NameToLayer(c_TerrainLayerName);
 
         public enum TerrainTool
         {

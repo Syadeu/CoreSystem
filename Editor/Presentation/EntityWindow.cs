@@ -61,7 +61,6 @@ namespace SyadeuEditor.Presentation
             m_DataListWindow = new DataListWindow(this);
             m_ViewWindow = new ViewWindow(this);
 
-            EntityDataList.Instance.LoadData();
             Reload();
 
             base.OnEnable();
@@ -82,10 +81,10 @@ namespace SyadeuEditor.Presentation
             IsDirty = false;
             Repaint();
         }
-
         public void Reload()
         {
-            ObjectBaseDrawer.Pool.Clear();
+            if (!IsDataLoaded) EntityDataList.Instance.LoadData();
+
             ObjectBaseDrawers.Clear();
             if (EntityDataList.Instance.m_Objects != null)
             {
@@ -120,6 +119,13 @@ namespace SyadeuEditor.Presentation
         }
         public void Select(ObjectBaseDrawer drawer)
         {
+            var iter = ObjectBaseDrawers.Where((other) => other.Equals(drawer));
+            if (!iter.Any())
+            {
+                "reference drawer not found return".ToLog();
+                return;
+            }
+
             m_SelectedObject = drawer;
             m_DataListWindow.Select(drawer);
         }
@@ -163,6 +169,7 @@ namespace SyadeuEditor.Presentation
             IsDirty = true;
         }
 
+        private const string c_CopyrightText = "Copyright 2021 Syadeu. All rights reserved.";
         private Rect m_CopyrightRect = new Rect(350, 485, 245, 20);
 
         Rect HeaderPos = new Rect(20, 33, 0, 0);
@@ -202,7 +209,7 @@ namespace SyadeuEditor.Presentation
             m_CopyrightRect.width = Screen.width;
             m_CopyrightRect.x = 0;
             m_CopyrightRect.y = Screen.height - 42;
-            EditorGUI.LabelField(m_CopyrightRect, EditorUtils.String("Copyright 2021 Syadeu. All rights reserved.", 11), EditorUtils.CenterStyle);
+            EditorGUI.LabelField(m_CopyrightRect, EditorUtils.String(c_CopyrightText, 11), EditorUtils.CenterStyle);
 
             KeyboardShortcuts();
         }
@@ -210,9 +217,16 @@ namespace SyadeuEditor.Presentation
         {
             if (!Event.current.isKey) return;
 
-            if (Event.current.control && Event.current.keyCode == KeyCode.S)
+            if (Event.current.control)
             {
-                if (IsDirty) SaveChanges();
+                if (Event.current.keyCode == KeyCode.S)
+                {
+                    if (IsDirty) SaveChanges();
+                }
+                else if (Event.current.keyCode == KeyCode.R)
+                {
+                    Reload();
+                }
             }
         }
         
@@ -229,7 +243,7 @@ namespace SyadeuEditor.Presentation
 
                 m_FileMenu = new GenericMenu();
                 m_FileMenu.AddItem(new GUIContent("Save Ctrl+S"), false, SaveMenu);
-                m_FileMenu.AddItem(new GUIContent("Load"), false, LoadMenu);
+                m_FileMenu.AddItem(new GUIContent("Load Ctrl+R"), false, LoadMenu);
                 m_FileMenu.AddSeparator(string.Empty);
                 m_FileMenu.AddItem(new GUIContent("Add/Entity"), false, AddDataMenu<EntityDataBase>);
                 m_FileMenu.AddItem(new GUIContent("Add/Attribute"), false, AddDataMenu<AttributeBase>);
@@ -372,7 +386,7 @@ namespace SyadeuEditor.Presentation
             }
             public void Reload()
             {
-                if (Drawers.Count == 0) return;
+                //if (Drawers.Count == 0) return;
 
                 EntityListTreeView.Reload();
             }

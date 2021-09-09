@@ -458,7 +458,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5406410049392454944}
-  m_LocalRotation: {x: 0.3892559, y: -0.5903218, z: 0.3892559, w: 0.59032184}
+  m_LocalRotation: {x: 0.3892559, y: -0.59032184, z: 0.3892559, w: 0.5903218}
   m_LocalPosition: {x: 39.217686, y: 1.4999998, z: 56.28522}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
@@ -544,7 +544,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5433860217253807541}
   m_LocalRotation: {x: 0.35355335, y: 0.3535534, z: -0.14644654, w: 0.8535534}
-  m_LocalPosition: {x: 22.417938, y: 23.546654, z: 39.384975}
+  m_LocalPosition: {x: 20.017939, y: 20.15254, z: 36.984978}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 483651218345756950}
@@ -642,6 +642,7 @@ MonoBehaviour:
   m_Camera: {fileID: 8043639513127252114}
   m_CinemachineBrain: {fileID: 3509375137305498198}
   m_TargetGroup: {fileID: 4429656990285742501}
+  m_StateCamera: {fileID: 0}
   m_SetMainCameraOnInitialize: 1
 --- !u!114 &1146406477
 MonoBehaviour:
@@ -655,6 +656,71 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68ccec800a4731847bd414467b79f67f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_MoveOffset: 1
+  m_MoveAxis:
+    m_Name: Move Axis
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: 1fb82c85-1f79-4fe8-b47e-a77ba3280a2d
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings:
+    - m_Name: 2D Vector
+      m_Id: 5cbca94a-139c-4acb-b319-f82f505a4369
+      m_Path: 2DVector
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Move Axis
+      m_Flags: 4
+    - m_Name: up
+      m_Id: dce23ace-ee15-45f4-bcd1-725448c0ea00
+      m_Path: <Keyboard>/w
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Move Axis
+      m_Flags: 8
+    - m_Name: down
+      m_Id: b298bb7c-c649-4754-b123-af22d3a8b364
+      m_Path: <Keyboard>/s
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Move Axis
+      m_Flags: 8
+    - m_Name: left
+      m_Id: ef183366-7d5a-4a29-942b-57978e8fb7c5
+      m_Path: <Keyboard>/a
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Move Axis
+      m_Flags: 8
+    - m_Name: right
+      m_Id: e6da06f5-6954-47f1-a9ec-15d4297eb605
+      m_Path: <Keyboard>/d
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Move Axis
+      m_Flags: 8
+  m_RotateRight:
+    m_Name: Rotate Right
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: 45dc5a9e-8a61-4184-8144-5202fab1767e
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings: []
+  m_RotateLeft:
+    m_Name: Rotate Left
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: 4e56c684-4bd6-4a59-9765-6c22b9941792
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings: []
 --- !u!1 &6934010429525985290
 GameObject:
   m_ObjectHideFlags: 0
