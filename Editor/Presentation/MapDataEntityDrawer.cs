@@ -34,13 +34,13 @@ namespace SyadeuEditor.Presentation
             ArrayDrawer = (ArrayDrawer)m_ObjectDrawers.Where((other) => other.Name.Equals("Objects")).First();
         }
 
-        private static bool IsValidObject(MapDataEntityBase.Object obj)
+        private static bool IsInvalidObject(MapDataEntityBase.Object obj)
         {
             if (!obj.m_Object.IsValid() || obj.m_Object.IsEmpty())
             {
-                return false;
+                return true;
             }
-            return true;
+            return false;
         }
         private void FindInvalidObjectIndices()
         {
@@ -50,8 +50,11 @@ namespace SyadeuEditor.Presentation
             for (int i = 0; i < Entity.m_Objects.Length; i++)
             {
                 MapDataEntityBase.Object obj = Entity.m_Objects[i];
-                if (!IsValidObject(obj))
+                if (IsInvalidObject(obj))
                 {
+                    obj.m_Object = Reference<Syadeu.Presentation.Entities.EntityBase>.Empty;
+                    GUI.changed = true;
+
                     m_InvalidIndices.Add(i);
                     m_OpenInvalidIndex.Add(false);
                 }
@@ -63,7 +66,28 @@ namespace SyadeuEditor.Presentation
         {
             using (new EditorUtils.BoxBlock(ColorPalettes.TriadicColor.Three))
             {
-                m_OpenInvalidList = EditorUtils.Foldout(m_OpenInvalidList, "Invalid Objects", 13);
+                m_OpenInvalidList = EditorUtils.Foldout(m_OpenInvalidList, "Invalid Objects Founded", 13);
+                if (GUILayout.Button("Remove All"))
+                {
+                    List<MapDataEntityBase.Object> temp = Entity.m_Objects.ToList();
+                    temp.RemoveAll(IsInvalidObject);
+                    Entity.m_Objects = temp.ToArray();
+
+                    List<ObjectDrawerBase> removeList = new List<ObjectDrawerBase>();
+                    for (int i = 0; i < m_InvalidIndices.Count; i++)
+                    {
+                        removeList.Add(ArrayDrawer.m_ElementDrawers[m_InvalidIndices[i]]);
+                    }
+                    for (int i = 0; i < removeList.Count; i++)
+                    {
+                        ArrayDrawer.m_ElementDrawers.Remove(removeList[i]);
+                    }
+
+                    m_InvalidIndices.Clear();
+                    m_OpenInvalidIndex.Clear();
+                    GUI.changed = true;
+                }
+
                 if (!m_OpenInvalidList) return;
 
                 EditorGUILayout.HelpBox(
@@ -83,13 +107,16 @@ namespace SyadeuEditor.Presentation
                         if (GUILayout.Button("Remove", GUILayout.Width(100)))
                         {
                             var temp = Entity.m_Objects.ToList();
-                            temp.RemoveAt(i);
+                            temp.RemoveAt(idx);
                             Entity.m_Objects = temp.ToArray();
+
+                            ArrayDrawer.m_ElementDrawers.RemoveAt(idx);
 
                             m_InvalidIndices.RemoveAt(i);
                             m_OpenInvalidIndex.RemoveAt(i);
                             i--;
 
+                            GUI.changed = true;
                             continue;
                         }
                     }
@@ -101,7 +128,7 @@ namespace SyadeuEditor.Presentation
                         ArrayDrawer.m_ElementDrawers[idx].OnGUI();
                         if (EditorGUI.EndChangeCheck())
                         {
-                            if (IsValidObject(Entity.m_Objects[idx]))
+                            if (!IsInvalidObject(Entity.m_Objects[idx]))
                             {
                                 m_InvalidIndices.RemoveAt(i);
                                 m_OpenInvalidIndex.RemoveAt(i);

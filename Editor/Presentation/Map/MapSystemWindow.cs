@@ -21,13 +21,10 @@ namespace SyadeuEditor.Presentation.Map
 
         protected override string DisplayName => "Map System";
 
-        private static string[] s_ToolbarNames = new string[] { "MapData", "SceneData" };
-        private int m_SelectedToolbar = 0;
-
         protected override void OnEnable()
         {
             m_PreviewFolder = new GameObject("Preview").transform;
-            m_PreviewFolder.gameObject.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
+            m_PreviewFolder.gameObject.hideFlags = HideFlags.DontSave | HideFlags.NotEditable | HideFlags.HideInHierarchy;
             m_PreviewFolder.gameObject.tag = c_EditorOnly;
 
             base.OnEnable();
@@ -55,16 +52,6 @@ namespace SyadeuEditor.Presentation.Map
             EditorUtils.Line();
 
             EditorGUI.BeginChangeCheck();
-            m_SelectedToolbar = GUILayout.Toolbar(m_SelectedToolbar, s_ToolbarNames);
-            if (EditorGUI.EndChangeCheck())
-            {
-                //ResetAll();
-
-                SceneView.lastActiveSceneView.Repaint();
-                Tools.hidden = false;
-            }
-
-            EditorGUI.BeginChangeCheck();
             m_EnableEdit = EditorGUILayout.ToggleLeft("Enable Edit", m_EnableEdit);
             if (EditorGUI.EndChangeCheck())
             {
@@ -73,31 +60,11 @@ namespace SyadeuEditor.Presentation.Map
             if (GUILayout.Button("Show Tools")) Tools.hidden = false;
             EditorGUILayout.Space();
 
-            switch (m_SelectedToolbar)
-            {
-                case 0:
-                    MapDataGUI();
-                    break;
-                case 1:
-                    //SceneDataGUI();
-                    break;
-                default:
-                    break;
-            }
+            MapDataGUI();
         }
         protected override void OnSceneGUI(SceneView obj)
         {
-            switch (m_SelectedToolbar)
-            {
-                case 0:
-                    MapDataSceneGUI(obj);
-                    break;
-                case 1:
-                    //SceneDataSceneGUI(obj);
-                    break;
-                default:
-                    break;
-            }
+            MapDataSceneGUI(obj);
         }
 
         #region Common
@@ -758,8 +725,12 @@ namespace SyadeuEditor.Presentation.Map
                     {
                         if (m_SelectedMapObject == null)
                         {
-                            GameObject tempObj = HandleUtility.PickGameObject(Event.current.mousePosition, true);
+                            GUIUtility.hotControl = mouseControlID;
+
+                            GameObject tempObj = HandleUtility.PickGameObject(Event.current.mousePosition, true, null, null);
                             Select(tempObj);
+
+                            Event.current.Use();
                         }
                     }
                     else if (Event.current.button == 2)

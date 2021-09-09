@@ -10,7 +10,8 @@ namespace Syadeu.Presentation.Map
 {
     public sealed class LevelDesignSystem : PresentationSystemEntity<LevelDesignSystem>
     {
-        public const string c_TerrainLayerName = "Terrain";
+        private const string c_TerrainLayerName = "Terrain";
+        public static readonly LayerMask TerrainLayer = LayerMask.GetMask(c_TerrainLayerName);
 
         public enum TerrainTool
         {
@@ -43,7 +44,7 @@ namespace Syadeu.Presentation.Map
             return base.OnInitialize();
         }
 
-#region Binds
+        #region Binds
         private void Bind(SceneSystem other)
         {
             m_SceneSystem = other;
@@ -61,7 +62,7 @@ namespace Syadeu.Presentation.Map
             m_SceneSystem = null;
             m_MapSystem = null;
         }
-#endregion
+        #endregion
 
         private void AddConsoleCommands()
         {
@@ -96,7 +97,7 @@ namespace Syadeu.Presentation.Map
             return base.OnPresentation();
         }
 
-#region Tools
+        #region Tools
 
         private void ExecuteTool(TerrainTool tool, Ray ray, in int effectSize, in float effectIncrement = .1f)
         {
@@ -259,7 +260,7 @@ namespace Syadeu.Presentation.Map
             return true;
         }
 
-#endregion
+        #endregion
 
         public bool Raycast(Ray ray, out RaycastHit hitInfo, 
             [DefaultValue("Mathf.Infinity")] float maxDistance = float.PositiveInfinity)
@@ -267,7 +268,7 @@ namespace Syadeu.Presentation.Map
             return m_SceneSystem.CurrentPhysicsScene.Raycast(ray.origin, ray.direction,
                 out hitInfo,
                 maxDistance: maxDistance,
-                layerMask: LayerMask.GetMask(c_TerrainLayerName),
+                layerMask: TerrainLayer,
                 queryTriggerInteraction: QueryTriggerInteraction.Collide);
         }
         public int RaycastAll(Ray ray, RaycastHit[] hitInfos, 
@@ -276,7 +277,7 @@ namespace Syadeu.Presentation.Map
             return m_SceneSystem.CurrentPhysicsScene.Raycast(ray.origin, ray.direction,
                 hitInfos,
                 maxDistance: maxDistance,
-                layerMask: LayerMask.GetMask(c_TerrainLayerName),
+                layerMask: TerrainLayer,
                 queryTriggerInteraction: QueryTriggerInteraction.Collide);
         }
     }

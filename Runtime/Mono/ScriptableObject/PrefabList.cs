@@ -4,6 +4,11 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
+using Syadeu.Internal;
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace Syadeu.Mono
 {
@@ -78,15 +83,39 @@ namespace Syadeu.Mono
                     CoreSystem.Logger.LogError(Channel.Data, $"{m_Name} is not valid.");
                     return default(AsyncOperationHandle<T>);
                 }
+#if UNITY_EDITOR
+                if (!TypeHelper.TypeOf<T>.Type.IsAssignableFrom(m_RefPrefab.editorAsset.GetType()))
+                {
+                    CoreSystem.Logger.LogError(Channel.Data, 
+                        $"Trying to load with wrong casting type at {m_Name}. " +
+                        $"Expected {m_RefPrefab.editorAsset.GetType()} but trying {TypeHelper.TypeOf<T>.Type}.");
+                    return default(AsyncOperationHandle<T>);
+                }
+#endif
 
-                var handle = m_RefPrefab.LoadAssetAsync<T>();
-                handle.Completed += this.Handle_Completed1;
+                AsyncOperationHandle<T> handle;
+                try
+                {
+                    handle = m_RefPrefab.LoadAssetAsync<T>();
+                }
+                catch (InvalidKeyException)
+                {
+                    CoreSystem.Logger.LogError(Channel.Data,
+                        $"Prefab({m_RefPrefab.AssetGUID}) is not valid. Maybe didn\'t build?");
+                    return default(AsyncOperationHandle<T>);
+                }
+                catch (Exception)
+                {
+                    throw;
+                }
+
+                handle.Completed += this.AsynHandleOnCompleted;
 
                 m_IsLoaded = true;
                 m_LoadHandle = handle;
                 return handle;
             }
-            private void Handle_Completed1<T>(AsyncOperationHandle<T> obj) where T : UnityEngine.Object
+            private void AsynHandleOnCompleted<T>(AsyncOperationHandle<T> obj) where T : UnityEngine.Object
             {
                 m_LoadedObject = obj.Result;
 

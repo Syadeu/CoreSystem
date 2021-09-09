@@ -43,7 +43,10 @@ namespace SyadeuEditor.Presentation
             }
             if (prefab == null) return null;
 
-            object value = m_RefPrefabField.GetValue(prefab.GetObjectSetting());
+            PrefabList.ObjectSetting set = prefab.GetObjectSetting();
+            if (set == null) return null;
+
+            object value = m_RefPrefabField.GetValue(set);
             if (value == null) return null;
 
             AssetReference asset = (AssetReference)value;

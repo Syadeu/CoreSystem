@@ -76,7 +76,8 @@ namespace Syadeu.Internal
         }
         public static void Log(Channel channel, ResultFlag result, string msg, bool logThread)
         {
-            if (!CoreSystemSettings.Instance.m_DisplayLogChannel.HasFlag(channel))
+            if (channel != Channel.Editor &&
+                !CoreSystemSettings.Instance.m_DisplayLogChannel.HasFlag(channel))
             {
                 if (result == ResultFlag.Normal) return;
             }

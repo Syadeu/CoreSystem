@@ -65,8 +65,15 @@ namespace Syadeu.Presentation.Map
 
                     if (terrainData.m_Data[i].Asset == null)
                     {
-                        var data = terrainData.m_Data[i].LoadAssetAsync();
-                        data.Completed += LoadTerrainDataAsync;
+                        AsyncOperationHandle<UnityEngine.TerrainData> asyncHandle = terrainData.m_Data[i].LoadAssetAsync();
+                        if (!asyncHandle.IsValid())
+                        {
+                            CoreSystem.Logger.LogError(Channel.Entity,
+                                $"Terrain Data({terrainData.Name}) has invalid data element at {terrainData.m_Data[i].GetObjectSetting().m_Name}({i}).");
+                            continue;
+                        }
+
+                        asyncHandle.Completed += LoadTerrainDataAsync;
                     }
                     else LoadTerrainData(terrainData.m_Data[i].Asset);
                 }
@@ -89,7 +96,7 @@ namespace Syadeu.Presentation.Map
         private void LoadTerrainData(UnityEngine.TerrainData obj)
         {
             GameObject terrainObj = Terrain.CreateTerrainGameObject(obj);
-            terrainObj.layer = LayerMask.NameToLayer(LevelDesignSystem.c_TerrainLayerName);
+            terrainObj.layer = LevelDesignSystem.TerrainLayer;
             Terrain terrain = terrainObj.GetComponent<Terrain>();
 
             m_CreatedTerrains.Add(terrain);
