@@ -22,9 +22,25 @@ namespace SyadeuEditor.Presentation
 {
     public sealed class EntityWindow : EditorWindowEntity<EntityWindow>
     {
-        protected override string DisplayName => "Entity Window";
+        protected override string DisplayName
+        {
+            get
+            {
+                if (IsDirty) return "Entity Window *";
+                return "Entity Window";
+            }
+        }
 
         readonly List<ObjectBaseDrawer> ObjectBaseDrawers = new List<ObjectBaseDrawer>();
+
+        public bool IsDirty
+        {
+            get => hasUnsavedChanges;
+            set
+            {
+                hasUnsavedChanges = value;
+            }
+        }
 
         public ToolbarWindow m_ToolbarWindow;
         public DataListWindow m_DataListWindow;
@@ -39,14 +55,13 @@ namespace SyadeuEditor.Presentation
         {
             IsOpened = true;
 
+            saveChangesMessage = "Unsaved changes detected";
+            
             m_ToolbarWindow = new ToolbarWindow(this);
             m_DataListWindow = new DataListWindow(this);
             m_ViewWindow = new ViewWindow(this);
 
-            if (!IsDataLoaded)
-            {
-                EntityDataList.Instance.LoadData();
-            }
+            EntityDataList.Instance.LoadData();
             Reload();
 
             base.OnEnable();
@@ -56,6 +71,16 @@ namespace SyadeuEditor.Presentation
             IsOpened = false;
 
             base.OnDisable();
+        }
+        public override void SaveChanges()
+        {
+            "Entity data saved".ToLog();
+
+            EntityDataList.Instance.SaveData();
+            base.SaveChanges();
+
+            IsDirty = false;
+            Repaint();
         }
 
         public void Reload()
@@ -107,6 +132,8 @@ namespace SyadeuEditor.Presentation
             ObjectBaseDrawer drawer = ObjectBaseDrawer.GetDrawer(ins);
             ObjectBaseDrawers.Add(drawer);
             m_DataListWindow.Add(drawer);
+
+            IsDirty = true;
             return drawer;
         }
         public ObjectBaseDrawer Add(ObjectBase ins)
@@ -118,6 +145,8 @@ namespace SyadeuEditor.Presentation
             ObjectBaseDrawer drawer = ObjectBaseDrawer.GetDrawer(ins);
             ObjectBaseDrawers.Add(drawer);
             m_DataListWindow.Add(drawer);
+
+            IsDirty = true;
             return drawer;
         }
 
@@ -126,8 +155,11 @@ namespace SyadeuEditor.Presentation
             if (m_SelectedObject != null && m_SelectedObject.Equals(obj)) m_SelectedObject = null;
 
             ObjectBaseDrawers.Remove(obj);
+            m_DataListWindow.Remove(obj);
 
             EntityDataList.Instance.m_Objects.Remove(obj.m_TargetObject.Hash);
+
+            IsDirty = true;
         }
 
         private Rect m_CopyrightRect = new Rect(350, 485, 245, 20);
@@ -144,7 +176,15 @@ namespace SyadeuEditor.Presentation
 
             m_ToolbarWindow.OnGUI();
 
-            EditorGUI.LabelField(HeaderPos, EditorUtils.String("Entity Window", 20), EditorUtils.HeaderStyle);
+            string headerString = EditorUtils.String("Entity Window", 20);
+            if (IsDirty)
+            {
+                headerString += EditorUtils.String(": Modified", 10);
+            }
+
+            EditorGUI.LabelField(HeaderPos,
+                headerString, 
+                EditorUtils.HeaderStyle);
             HeaderLinePos.width = Screen.width;
             EditorUtils.Line(HeaderLinePos);
 
@@ -162,6 +202,14 @@ namespace SyadeuEditor.Presentation
             m_CopyrightRect.x = 0;
             m_CopyrightRect.y = Screen.height - 42;
             EditorGUI.LabelField(m_CopyrightRect, EditorUtils.String("Copyright 2021 Syadeu. All rights reserved.", 11), EditorUtils.CenterStyle);
+
+            if (Event.current.isKey)
+            {
+                if (Event.current.control && Event.current.keyCode == KeyCode.S)
+                {
+                    if (IsDirty) SaveChanges();
+                }
+            }
         }
         
         public sealed class ToolbarWindow
@@ -188,7 +236,7 @@ namespace SyadeuEditor.Presentation
             {
                 if (!IsDataLoaded) return;
 
-                EntityDataList.Instance.SaveData();
+                m_MainWindow.SaveChanges();
             }
             private void LoadMenu()
             {
@@ -204,14 +252,7 @@ namespace SyadeuEditor.Presentation
                 PopupWindow.Show(lastRect, SelectorPopup<Type, Type>.GetWindow(types,
                     (t) =>
                     {
-                        //if (EntityDataList.Instance.m_Objects == null) EntityDataList.Instance.m_Objects = new Dictionary<Hash, ObjectBase>();
-
-                        //T ins = (T)Activator.CreateInstance(t);
-
-                        //EntityDataList.Instance.m_Objects.Add(ins.Hash, ins);
-                        //m_MainWindow.AddData(ins);
                         var drawer = m_MainWindow.Add(t);
-                        m_MainWindow.m_DataListWindow.Add(drawer);
 
                         m_MainWindow.Select(drawer);
                     },
@@ -390,7 +431,12 @@ namespace SyadeuEditor.Presentation
                 {
                     if (m_MainWindow.m_SelectedObject != null)
                     {
+                        EditorGUI.BeginChangeCheck();
                         m_MainWindow.m_SelectedObject.OnGUI();
+                        if (EditorGUI.EndChangeCheck())
+                        {
+                            m_MainWindow.IsDirty = true;
+                        }
                     }
                     else
                     {
