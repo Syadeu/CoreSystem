@@ -26,7 +26,7 @@ namespace SyadeuEditor.Presentation
         {
             get
             {
-                if (IsDirty) return "Entity Window *";
+                if (IsDirty) return "Entity Window*";
                 return "Entity Window";
             }
         }
@@ -42,9 +42,12 @@ namespace SyadeuEditor.Presentation
             }
         }
 
+        private WindowType m_CurrentWindow = WindowType.Entity;
+
         public ToolbarWindow m_ToolbarWindow;
-        public DataListWindow m_DataListWindow;
-        public ViewWindow m_ViewWindow;
+
+        public EntityDataListWindow m_DataListWindow;
+        public EntityViewWindow m_ViewWindow;
 
         public ObjectBaseDrawer m_SelectedObject = null;
 
@@ -58,8 +61,8 @@ namespace SyadeuEditor.Presentation
             saveChangesMessage = "Unsaved changes detected";
             
             m_ToolbarWindow = new ToolbarWindow(this);
-            m_DataListWindow = new DataListWindow(this);
-            m_ViewWindow = new ViewWindow(this);
+            m_DataListWindow = new EntityDataListWindow(this);
+            m_ViewWindow = new EntityViewWindow(this);
 
             Reload();
 
@@ -96,6 +99,7 @@ namespace SyadeuEditor.Presentation
             }
 
             m_DataListWindow.Reload();
+            CoreSystem.Logger.Log(Channel.Editor, "Entity data loaded");
         }
 
         public void Select(IReference reference)
@@ -184,7 +188,7 @@ namespace SyadeuEditor.Presentation
 
             m_ToolbarWindow.OnGUI();
 
-            string headerString = EditorUtils.String("Entity Window", 20);
+            string headerString = EditorUtils.String($"{m_CurrentWindow} Window", 20);
             if (IsDirty)
             {
                 headerString += EditorUtils.String(": Modified", 10);
@@ -230,10 +234,19 @@ namespace SyadeuEditor.Presentation
             }
         }
         
+        public enum WindowType
+        {
+            Entity,
+            Converter,
+        }
+
         public sealed class ToolbarWindow
         {
             EntityWindow m_MainWindow;
-            GenericMenu m_FileMenu;
+
+            GenericMenu 
+                m_FileMenu,
+                m_WindowMenu;
 
             Rect lastRect;
 
@@ -315,15 +328,27 @@ namespace SyadeuEditor.Presentation
                     m_FileMenu.ShowAsContext();
                     GUIUtility.ExitGUI();
                 }
+                if (GUILayout.Button("Window", EditorStyles.toolbarDropDown))
+                {
+                    lastRect = GUILayoutUtility.GetLastRect();
+                    lastRect.position = Event.current.mousePosition;
+
+                    m_WindowMenu = new GenericMenu();
+                    m_WindowMenu.AddItem(new GUIContent("Entity"), m_MainWindow.m_CurrentWindow == WindowType.Entity, () => m_MainWindow.m_CurrentWindow = WindowType.Entity);
+                    m_WindowMenu.AddItem(new GUIContent("Converter"), m_MainWindow.m_CurrentWindow == WindowType.Converter, () => m_MainWindow.m_CurrentWindow = WindowType.Converter);
+
+                    m_WindowMenu.ShowAsContext();
+                    GUIUtility.ExitGUI();
+                }
                 GUILayout.FlexibleSpace();
             }
         }
 
-        public sealed class DataListWindow
+        #region Entity Window
+
+        public sealed class EntityDataListWindow
         {
             EntityWindow m_MainWindow;
-
-            List<ObjectBaseDrawer> Drawers => m_MainWindow.ObjectBaseDrawers;
 
             private EntityListTreeView EntityListTreeView;
             private TreeViewState TreeViewState;
@@ -334,7 +359,7 @@ namespace SyadeuEditor.Presentation
                 set => EntityListTreeView.searchString = value;
             }
 
-            public DataListWindow(EntityWindow window)
+            public EntityDataListWindow(EntityWindow window)
             {
                 m_MainWindow = window;
 
@@ -393,30 +418,28 @@ namespace SyadeuEditor.Presentation
 
             public void OnGUI(Rect pos, int unusedID)
             {
+                if (m_MainWindow.m_CurrentWindow != WindowType.Entity)
+                {
+                    Color color = Color.gray;
+                    color.a = .25f;
+
+                    EditorGUI.DrawRect(pos, color);
+                    EditorGUI.LabelField(pos, "Disabled");
+                    return;
+                }
+
                 EntityListTreeView.OnGUI(pos);
             }
         }
-        public sealed class ViewWindow
+        public sealed class EntityViewWindow
         {
             EntityWindow m_MainWindow;
             Rect m_Position;
             Vector2 m_Scroll;
 
-            //GUIStyle m_Style;
-
-            public ViewWindow(EntityWindow window)
+            public EntityViewWindow(EntityWindow window)
             {
                 m_MainWindow = window;
-                //m_Style = new GUIStyle();
-                //m_Style.normal.background = new Texture2D(1, 1);
-                //for (int i = 0; i < m_Style.normal.background.height; i++)
-                //{
-                //    for (int j = 0; j < m_Style.normal.background.width; j++)
-                //    {
-                //        m_Style.normal.background.SetPixel(i, j, ColorPalettes.PastelDreams.Yellow);
-                //    }
-                //}
-                //m_Style.normal.background.Apply();
             }
 
             public void OnGUI(Rect pos, int unusedID)
@@ -463,6 +486,18 @@ namespace SyadeuEditor.Presentation
                 }
 
                 EditorGUILayout.EndScrollView();
+            }
+        }
+
+        #endregion
+
+        public sealed class ConverterListWindow
+        {
+            EntityWindow m_MainWindow;
+
+            public ConverterListWindow(EntityWindow window)
+            {
+                m_MainWindow = window;
             }
         }
     }

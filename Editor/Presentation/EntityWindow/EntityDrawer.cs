@@ -173,13 +173,4 @@ namespace SyadeuEditor.Presentation
             }
         }
     }
-    //[EditorTool("TestTool", typeof(EntityWindow))]
-    //public sealed class TestTool : EditorTool
-    //{
-    //    public override void OnToolGUI(EditorWindow window)
-    //    {
-    //        EditorGUILayout.LabelField("test");
-    //        base.OnToolGUI(window);
-    //    }
-    //}
 }

@@ -11,6 +11,7 @@ using Syadeu.Presentation;
 using SyadeuEditor.Presentation;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -169,8 +170,12 @@ namespace SyadeuEditor
         }
         #endregion
 
+        #region General Menu
         private sealed class GeneralMenu
         {
+            List<string> m_DefinedConstrains;
+
+            #region Tag Manager
             SerializedObject m_TagManagerObject;
             SerializedProperty m_TagProperty, m_LayerProperty;
 
@@ -179,8 +184,23 @@ namespace SyadeuEditor
 
             List<string> m_MissingTags, m_MissingLayers;
 
+            #endregion
+
+            const string 
+                CORESYSTEM_FMOD = "CORESYSTEM_FMOD";
+
+            CoreSystemSettings m_CoreSystemSettings;
+
+            bool
+                m_DefinedFMOD;
+
             public GeneralMenu()
             {
+                PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, out string[] temp);
+                m_DefinedConstrains = temp.ToList();
+
+                #region Tag Manager
+
                 UnityEngine.Object tagManagerObject = AssetDatabase.LoadMainAssetAtPath("ProjectSettings/TagManager.asset");
                 m_TagManagerObject = new SerializedObject(tagManagerObject);
                 m_TagProperty = m_TagManagerObject.FindProperty("tags");
@@ -203,10 +223,51 @@ namespace SyadeuEditor
 
                     m_MissingLayers.Remove(value);
                 }
+
+                if (m_MissingTags.Count > 0 || m_MissingLayers.Count > 0)
+                {
+                    m_OpenTagManager = true;
+                }
+
+                #endregion
+
+                m_CoreSystemSettings = CoreSystemSettings.Instance;
+                m_DefinedFMOD = HasConstrains(CORESYSTEM_FMOD);
+                
             }
             public void OnGUI()
             {
-                var block = new EditorUtils.BoxBlock(Color.black);
+                using (new EditorUtils.BoxBlock(Color.black))
+                {
+                    DrawTagManager();
+                }
+
+                using (new EditorUtils.BoxBlock(Color.black))
+                {
+                    DrawSettings();
+                }
+            }
+            public bool Predicate()
+            {
+                if (!TagManagerPredicate()) return false;
+                return true;
+            }
+
+            #region Tag Manager
+
+            private bool m_OpenTagManager = false;
+
+            private bool TagManagerPredicate()
+            {
+                if (m_MissingTags.Count > 0 || m_MissingLayers.Count > 0) return false;
+                return true;
+            }
+            private void DrawTagManager()
+            {
+                m_OpenTagManager = EditorUtils.Foldout(m_OpenTagManager, "Tag Manager");
+                if (!m_OpenTagManager) return;
+
+                EditorGUI.indentLevel++;
 
                 EditorUtils.StringRich("Tags", 13);
                 if (m_MissingTags.Count > 0)
@@ -259,12 +320,7 @@ namespace SyadeuEditor
                 }
                 else EditorGUILayout.HelpBox("Nominal", MessageType.Info);
 
-                block.Dispose();
-            }
-            public bool Predicate()
-            {
-                if (m_MissingTags.Count > 0 || m_MissingLayers.Count > 0) return false;
-                return true;
+                EditorGUI.indentLevel--;
             }
 
             private void InsertTag(string tag)
@@ -299,7 +355,105 @@ namespace SyadeuEditor
 
                 return false;
             }
+
+            #endregion
+
+            #region CoreSystem Settings
+
+            private bool m_OpenCoreSystemSettings = false;
+
+            private void DrawSettings()
+            {
+                m_OpenCoreSystemSettings = EditorUtils.Foldout(m_OpenCoreSystemSettings, "Settings");
+                if (!m_OpenCoreSystemSettings) return;
+
+                EditorGUI.indentLevel++;
+
+                using (new EditorUtils.BoxBlock(Color.white))
+                {
+                    EditorGUI.indentLevel++;
+                    SettingGlobal();
+                    EditorGUI.indentLevel--;
+                }
+                EditorUtils.Line();
+
+                using (new EditorUtils.BoxBlock(Color.white))
+                {
+                    EditorGUI.indentLevel++;
+                    SettingDefines();
+                    EditorGUI.indentLevel--;
+                }
+                
+                EditorGUI.indentLevel--;
+            }
+            private void SettingGlobal()
+            {
+                EditorUtils.StringRich("Global Settings", 13);
+                EditorGUILayout.Space();
+
+                m_CoreSystemSettings.m_DisplayLogChannel =
+                    (Channel)EditorGUILayout.EnumFlagsField("Display Log Channel", m_CoreSystemSettings.m_DisplayLogChannel);
+
+                m_CoreSystemSettings.m_VisualizeObjects =
+                    EditorGUILayout.ToggleLeft("Visuallize All Managers", m_CoreSystemSettings.m_VisualizeObjects);
+
+                m_CoreSystemSettings.m_CrashAfterException =
+                    EditorGUILayout.ToggleLeft("Crash After Exception", m_CoreSystemSettings.m_CrashAfterException);
+
+                m_CoreSystemSettings.m_HideSetupWizard =
+                    EditorGUILayout.ToggleLeft("Hide Setup Wizard", m_CoreSystemSettings.m_HideSetupWizard);
+
+                m_CoreSystemSettings.m_EnableLua =
+                    EditorGUILayout.ToggleLeft("Enable Lua", m_CoreSystemSettings.m_EnableLua);
+            }
+            private void SettingDefines()
+            {
+                EditorUtils.StringRich("Define Constrains", 13);
+                EditorGUILayout.Space();
+
+                EditorGUI.BeginChangeCheck();
+                m_DefinedFMOD =
+                    EditorGUILayout.ToggleLeft("Define CORESYSTEM_FMOD", m_DefinedFMOD);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    if (m_DefinedFMOD) DefineConstrains(CORESYSTEM_FMOD);
+                    else UndefineContrains(CORESYSTEM_FMOD);
+                }
+            }
+
+            #endregion
+
+            private bool HasConstrains(string name) => m_DefinedConstrains.Contains(name);
+            private void DefineConstrains(params string[] names)
+            {
+                if (names == null || names.Length == 0) return;
+
+                for (int i = 0; i < names.Length; i++)
+                {
+                    if (m_DefinedConstrains.Contains(names[i])) continue;
+
+                    m_DefinedConstrains.Add(names[i]);
+                }
+
+                PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, m_DefinedConstrains.ToArray());
+                UnityEditor.Compilation.CompilationPipeline.RequestScriptCompilation();
+            }
+            private void UndefineContrains(params string[] names)
+            {
+                if (names == null || names.Length == 0) return;
+
+                for (int i = 0; i < names.Length; i++)
+                {
+                    if (!m_DefinedConstrains.Contains(names[i])) continue;
+
+                    m_DefinedConstrains.Remove(names[i]);
+                }
+
+                PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, m_DefinedConstrains.ToArray());
+                UnityEditor.Compilation.CompilationPipeline.RequestScriptCompilation();
+            }
         }
+        #endregion
 
         #region Scene Menu
         private sealed class SceneMenu

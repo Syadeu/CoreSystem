@@ -23,9 +23,9 @@ namespace Syadeu.Mono
         public string[] m_AutoInitializeTargetAssembly = new string[] { "Assembly-CSharp" };
         public Channel m_DisplayLogChannel = Channel.All;
 
-        // PrefabManager
-        [Header("Prefab Manager")]
-        public bool m_PMErrorAutoFix = true;
+        //// PrefabManager
+        //[Header("Prefab Manager")]
+        //public bool m_PMErrorAutoFix = true;
 
         // FMODManager
         [Header("FMOD Manager")]

@@ -22,7 +22,7 @@ namespace Syadeu.Presentation.Entities
         /// <summary>
         /// 이 엔티티의 Raw 프리팹 주소입니다.
         /// </summary>
-        [JsonProperty(Order = -9, PropertyName = "Prefab")] public PrefabReference<GameObject> Prefab { get; set; }
+        [JsonProperty(Order = -9, PropertyName = "Prefab")] public PrefabReference<GameObject> Prefab { get; set; } = PrefabReference<GameObject>.None;
 
         [ReflectionDescription("AABB 의 Center")]
         [JsonProperty(Order = -8, PropertyName = "Center")] public float3 Center { get; set; }
