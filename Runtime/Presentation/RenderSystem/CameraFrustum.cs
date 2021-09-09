@@ -116,7 +116,7 @@ namespace Syadeu.Presentation.Render
 
 			Allocate(ref this);
 
-			Update(ref this, cam.position, cam.orientation, cam.fov, cam.nearClipPlane, cam.farClipPlane, cam.aspect);
+			UpdatePers(ref this, cam.position, cam.orientation, cam.fov, cam.nearClipPlane, cam.farClipPlane, cam.aspect);
 			m_IsCreated = true;
 		}
 		private static void Allocate(ref CameraFrustum cameraFrustum)
@@ -240,7 +240,14 @@ namespace Syadeu.Presentation.Render
 
 			if (cam.orthographic)
 			{
-				CalculateFrustumCornersOrthographic(cam, ref other.m_Corners);
+				CalculateFrustumCornersOrthographic(
+					ref other.m_Corners,
+					other.m_Position,
+					rot,
+					cam.orthographicSize,
+					cam.nearClipPlane,
+					cam.farClipPlane,
+					cam.aspect);
 			}
 			else
 			{
@@ -273,13 +280,13 @@ namespace Syadeu.Presentation.Render
 				var plane = other.m_Planes[i];
 				var normal = plane.normal;
 
-				other.m_AbsNormals[i] = new Vector3(Math.Abs(normal.x), Math.Abs(normal.y), Math.Abs(normal.z));
+				other.m_AbsNormals[i] = math.abs(normal);
 				other.m_PlaneNormals[i] = normal;
 				other.m_PlaneDistances[i] = plane.distance;
 			}
 		}
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static void Update(ref CameraFrustum other, float3 position, quaternion orientation, float fov, float nearClipPlane, float farClipPlane, float aspect)
+		internal static void UpdatePers(ref CameraFrustum other, float3 position, quaternion orientation, float fov, float nearClipPlane, float farClipPlane, float aspect)
 		{
 			other.m_Position = position;
 
@@ -289,7 +296,7 @@ namespace Syadeu.Presentation.Render
 				ref orientation, 
 				fov, nearClipPlane, farClipPlane, aspect);
 
-            float3 forward = math.mul(orientation, new float3(0, 0, 1));
+			float3 forward = math.mul(orientation, math.forward());
 
 			// CORNERS:
 			// [0] = Far Bottom Left,  [1] = Far Top Left,  [2] = Far Top Right,  [3] = Far Bottom Right, 
@@ -304,6 +311,45 @@ namespace Syadeu.Presentation.Render
 			other.m_Planes[3] = new Plane(other.m_Corners[5], other.m_Corners[2], other.m_Corners[1]);
 			other.m_Planes[4] = new Plane(forward, position + forward * nearClipPlane);
 			other.m_Planes[5] = new Plane(-forward, position + forward * farClipPlane);
+
+			for (int i = 0; i < PlaneCount; i++)
+			{
+				var plane = other.m_Planes[i];
+				var normal = plane.normal;
+
+				other.m_AbsNormals[i] = math.abs(normal);
+				other.m_PlaneNormals[i] = normal;
+				other.m_PlaneDistances[i] = plane.distance;
+			}
+		}
+		internal static void UpdateOrtho(ref CameraFrustum other, float3 position, quaternion orientation,
+			float orthographicSize, float nearClipPlane, float farClipPlane, float aspect)
+        {
+			other.m_Position = position;
+
+			CalculateFrustumCornersOrthographic(
+					ref other.m_Corners,
+					other.m_Position,
+					orientation,
+					nearClipPlane,
+					farClipPlane,
+					orthographicSize,
+					aspect);
+
+			float3 forward = math.mul(orientation, math.forward());
+
+			// CORNERS:
+			// [0] = Far Bottom Left,  [1] = Far Top Left,  [2] = Far Top Right,  [3] = Far Bottom Right, 
+			// [4] = Near Bottom Left, [5] = Near Top Left, [6] = Near Top Right, [7] = Near Bottom Right
+
+			// PLANES:
+			// Ordering: [0] = Left, [1] = Right, [2] = Down, [3] = Up, [4] = Near, [5] = Far
+			other.m_Planes[0] = new Plane(other.m_Corners[4], other.m_Corners[1], other.m_Corners[0]);
+			other.m_Planes[1] = new Plane(other.m_Corners[6], other.m_Corners[3], other.m_Corners[2]);
+			other.m_Planes[2] = new Plane(other.m_Corners[7], other.m_Corners[0], other.m_Corners[3]);
+			other.m_Planes[3] = new Plane(other.m_Corners[5], other.m_Corners[2], other.m_Corners[1]);
+			other.m_Planes[4] = new Plane(forward, other.m_Position + forward * nearClipPlane);
+			other.m_Planes[5] = new Plane(-forward, other.m_Position + forward * farClipPlane);
 
 			for (int i = 0; i < PlaneCount; i++)
 			{
@@ -397,17 +443,11 @@ namespace Syadeu.Presentation.Render
 			return intersecting ? IntersectionType.Intersects : IntersectionType.Contains;
 		}
 
-		private static void CalculateFrustumCornersOrthographic(Camera camera, ref NativeArray<float3> _corners)
+		private static void CalculateFrustumCornersOrthographic(ref NativeArray<float3> _corners, float3 position, quaternion orientation, float nearClipPlane, float farClipPlane, float orthographicSize, float aspect)
 		{
-			var camTransform = camera.transform;
-			var position = camTransform.position;
-			var orientation = camTransform.rotation;
-			var farClipPlane = camera.farClipPlane;
-			var nearClipPlane = camera.nearClipPlane;
-
-			var forward = orientation * Vector3.forward;
-			var right = orientation * Vector3.right * camera.orthographicSize * camera.aspect;
-			var up = orientation * Vector3.up * camera.orthographicSize;
+			var forward = math.mul(orientation, math.forward());
+			var right = math.mul(orientation, math.right()) * orthographicSize * aspect;
+			var up = math.mul(orientation, math.up()) * orthographicSize;
 
 			// CORNERS:
 			// [0] = Far Bottom Left,  [1] = Far Top Left,  [2] = Far Top Right,  [3] = Far Bottom Right, 

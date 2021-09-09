@@ -41,8 +41,9 @@ namespace SyadeuEditor.Presentation
                 object temp = TypeHelper.GetConstructorInfo(DeclaredType, TypeHelper.TypeOf<ObjectBase>.Type).Invoke(
                     new object[] { objBase });
 
+                IReference origin = Getter.Invoke();
                 Setter.Invoke((IReference)temp);
-                m_WasEdited = true;
+                m_WasEdited = !origin.Equals(Getter.Invoke());
             }, currentValue, targetType);
             if (m_WasEdited)
             {

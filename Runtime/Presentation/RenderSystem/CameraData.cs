@@ -18,6 +18,7 @@ namespace Syadeu.Presentation.Render
 
 		public float3 position;
 		public quaternion orientation;
+		public float orthographicSize;
 		public float fov;
 		public float nearClipPlane;
 		public float farClipPlane; 
@@ -84,6 +85,7 @@ namespace Syadeu.Presentation.Render
 			//if (orthographic) projectionMatrix = float4x4.Ortho(pixelWidth, pixelHeight, nearClipPlane, farClipPlane);
 			//else projectionMatrix = float4x4.PerspectiveFov(fov, aspect, nearClipPlane, farClipPlane);
 			projectionMatrix = cam.projectionMatrix;
+			orthographicSize = cam.orthographicSize;
 		}
 	}
 

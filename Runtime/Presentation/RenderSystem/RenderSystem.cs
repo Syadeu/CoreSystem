@@ -183,7 +183,28 @@ namespace Syadeu.Presentation.Render
 
             public void Execute()
             {
-                CameraFrustum.Update(ref m_Frustum, m_Data.position, m_Data.orientation, m_Data.fov, m_Data.nearClipPlane, m_Data.farClipPlane, m_Data.aspect);
+                if (m_Data.orthographic)
+                {
+                    CameraFrustum.UpdateOrtho(
+                        ref m_Frustum,
+                        m_Data.position,
+                        m_Data.orientation,
+                        m_Data.orthographicSize,
+                        m_Data.nearClipPlane,
+                        m_Data.farClipPlane,
+                        m_Data.aspect);
+                }
+                else
+                {
+                    CameraFrustum.UpdatePers(
+                        ref m_Frustum, 
+                        m_Data.position, 
+                        m_Data.orientation,
+                        m_Data.fov, 
+                        m_Data.nearClipPlane,
+                        m_Data.farClipPlane, 
+                        m_Data.aspect);
+                }
             }
         }
 

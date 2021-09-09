@@ -44,8 +44,10 @@ namespace SyadeuEditor.Presentation
                 {
                     IPrefabReference prefab = (IPrefabReference)m_Constructor.Invoke(new object[] { idx });
 
+                    IPrefabReference origin = Getter.Invoke();
                     Setter.Invoke(prefab);
-                    m_WasEdited = true;
+
+                    m_WasEdited = !origin.Equals(Getter.Invoke());
                 }, currentValue);
                 if (m_WasEdited)
                 {
