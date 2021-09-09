@@ -87,7 +87,7 @@ namespace SyadeuEditor.Presentation
                             "This is shared reference. Anything made changes in this inspector view will affect to original reference directly.",
                             MessageType.Info);
 
-                        EntityWindow.ObjectBaseDrawer.GetDrawer(currentValue.GetObject()).OnGUI();
+                        ObjectBaseDrawer.GetDrawer(currentValue.GetObject()).OnGUI();
                     }
                 }
             }
