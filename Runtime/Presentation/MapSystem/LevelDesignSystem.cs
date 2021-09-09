@@ -277,5 +277,32 @@ namespace Syadeu.Presentation.Map
                 layerMask: TerrainLayerMask,
                 queryTriggerInteraction: QueryTriggerInteraction.Collide);
         }
+
+        private void temp(ILevelEditor editor)
+        {
+            GUILayout.Window(0, editor.EditorRect, editor.OnGUI, editor.EditorName);
+        }
+    }
+
+    public interface ILevelEditor
+    {
+        string EditorName { get; }
+        Type EditorType { get; }
+        Rect EditorRect { get; }
+
+        void OnGUI(int unusedID);
+    }
+    public abstract class LevelEditorToolBase : ILevelEditor
+    {
+        public virtual string EditorName { get; } = "New LevelEditor";
+        public Type EditorType => GetType();
+        public virtual Rect EditorRect { get; } = Rect.zero;
+
+        public virtual void OnGUI(int unusedID) { }
+    }
+
+    public sealed class TerrainTool : LevelEditorToolBase
+    {
+
     }
 }
