@@ -12,9 +12,11 @@ namespace Syadeu.Presentation.TurnTable
     public sealed class TRPGCameraMovement : AdditionalCameraComponent
     {
         [SerializeField] private float m_MoveOffset = .1f;
+        [SerializeField] private float m_MoveSpeed = 8;
         [SerializeField] private InputAction m_MoveAxis;
 
         [Space]
+        [SerializeField] private float m_RotationDegree = 45;
         [SerializeField] private InputAction m_RotateRight;
         [SerializeField] private InputAction m_RotateLeft;
 
@@ -23,7 +25,7 @@ namespace Syadeu.Presentation.TurnTable
         private Transform m_DefaultTarget = null;
         private ITransform m_TargetTransform = null;
         private float3 m_TargetPosition = 0;
-        private quaternion m_TargetOrientation = quaternion.EulerZXY(new float3(45, 45, 0) * Mathf.Deg2Rad);
+        private float3 m_TargetOrientation = new float3(45, 45, 0);
 
         public float2 AxisVelocity
         {
@@ -44,6 +46,8 @@ namespace Syadeu.Presentation.TurnTable
             }
             set
             {
+                if (!m_InputSystem.System.EnableInput) return;
+
                 if (RenderSystem == null)
                 {
                     "null return".ToLog();
@@ -68,7 +72,14 @@ namespace Syadeu.Presentation.TurnTable
             get => m_MoveOffset;
             set => m_MoveOffset = value;
         }
-        public float MoveSpeed { get; set; } = 8;
+        public float MoveSpeed
+        {
+            get => m_MoveSpeed;
+            set
+            {
+                m_MoveSpeed = value;
+            }
+        }
         public float3 TargetPosition
         {
             get
@@ -83,7 +94,7 @@ namespace Syadeu.Presentation.TurnTable
                 m_TargetPosition = value;
             }
         }
-        public quaternion TargetOrientation
+        public float3 TargetOrientation
         {
             get
             {
@@ -94,6 +105,10 @@ namespace Syadeu.Presentation.TurnTable
                 m_TargetOrientation = value;
             }
         }
+
+        private Transform OrientationTarget => CameraComponent.CurrentCamera.VirtualCameraGameObject.transform;
+
+        private PresentationSystemID<Input.InputSystem> m_InputSystem;
 
         protected override void OnInitialize(Camera camera, CinemachineBrain brain, CinemachineTargetGroup targetGroup)
         {
@@ -106,9 +121,25 @@ namespace Syadeu.Presentation.TurnTable
             m_DefaultTarget.position = m_TargetPosition;
 
             m_TargetGroup.AddMember(m_DefaultTarget, 1, 1);
+            m_InputSystem = PresentationSystem<Input.InputSystem>.SystemID;
+
+            m_RotateLeft.performed += M_RotateLeft_performed;
+            m_RotateRight.performed += M_RotateRight_performed;
 
             m_MoveAxis.Enable();
+            m_RotateLeft.Enable();
+            m_RotateRight.Enable();
         }
+
+        private void M_RotateLeft_performed(InputAction.CallbackContext obj)
+        {
+            m_TargetOrientation.y += m_RotationDegree;
+        }
+        private void M_RotateRight_performed(InputAction.CallbackContext obj)
+        {
+            m_TargetOrientation.y -= m_RotationDegree;
+        }
+
         protected override void OnRenderStart()
         {
             StartCoroutine(Updater());
@@ -117,18 +148,26 @@ namespace Syadeu.Presentation.TurnTable
         private IEnumerator Updater()
         {
             WaitForFixedUpdate waitForFixedUpdate = new WaitForFixedUpdate();
-            Transform groupTr = m_TargetGroup.transform;
             
+            var inputSystem = m_InputSystem.System;
             while (m_TargetGroup != null)
             {
+                if (!inputSystem.EnableInput)
+                {
+                    yield return waitForFixedUpdate;
+                    continue;
+                }
+
                 if (m_MoveAxis.IsPressed())
                 {
                     AxisVelocity = m_MoveAxis.ReadValue<Vector2>();
                 }
 
                 m_DefaultTarget.position = TargetPosition;
-                CameraComponent.CurrentCamera.VirtualCameraGameObject.transform.rotation
-                    = TargetOrientation;
+
+                Transform orientationTarget = OrientationTarget;
+                orientationTarget.localRotation
+                    = Quaternion.Lerp(orientationTarget.localRotation, Quaternion.Euler(TargetOrientation), Time.deltaTime * MoveSpeed);
 
                 //groupTr.position = math.lerp(groupTr.position, TargetPosition, Time.deltaTime * MoveSpeed);
 

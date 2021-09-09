@@ -458,7 +458,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5406410049392454944}
-  m_LocalRotation: {x: 0.3892559, y: -0.59032184, z: 0.3892559, w: 0.5903218}
+  m_LocalRotation: {x: 0.3892559, y: -0.5903218, z: 0.3892559, w: 0.59032184}
   m_LocalPosition: {x: 39.217686, y: 1.4999998, z: 56.28522}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
@@ -657,6 +657,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_MoveOffset: 1
+  m_MoveSpeed: 8
   m_MoveAxis:
     m_Name: Move Axis
     m_Type: 0
@@ -705,22 +706,39 @@ MonoBehaviour:
       m_Groups: 
       m_Action: Move Axis
       m_Flags: 8
+  m_RotationDegree: 45
   m_RotateRight:
     m_Name: Rotate Right
-    m_Type: 0
-    m_ExpectedControlType: 
-    m_Id: 45dc5a9e-8a61-4184-8144-5202fab1767e
+    m_Type: 1
+    m_ExpectedControlType: Button
+    m_Id: f0cef128-9699-4b91-a0e7-6534f5a86470
     m_Processors: 
     m_Interactions: 
-    m_SingletonActionBindings: []
+    m_SingletonActionBindings:
+    - m_Name: 
+      m_Id: 9448aa09-cc62-45ec-9c10-62e339f093ad
+      m_Path: <Keyboard>/e
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Rotate Right
+      m_Flags: 0
   m_RotateLeft:
     m_Name: Rotate Left
-    m_Type: 0
-    m_ExpectedControlType: 
-    m_Id: 4e56c684-4bd6-4a59-9765-6c22b9941792
+    m_Type: 1
+    m_ExpectedControlType: Button
+    m_Id: bd67bb70-4020-43bc-85f1-c4ef61d41346
     m_Processors: 
     m_Interactions: 
-    m_SingletonActionBindings: []
+    m_SingletonActionBindings:
+    - m_Name: 
+      m_Id: d88b0282-fb98-4b45-8e4f-f47a2f0c0a8e
+      m_Path: <Keyboard>/q
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Rotate Left
+      m_Flags: 0
 --- !u!1 &6934010429525985290
 GameObject:
   m_ObjectHideFlags: 0

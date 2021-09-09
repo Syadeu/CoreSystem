@@ -21,7 +21,7 @@ namespace Syadeu.Mono.Console
         {
             for (int i = 0; i < m_Args.Count; i++)
             {
-                if (m_Args[i].m_Field == cmd)
+                if (m_Args[i].m_Field.Equals(cmd))
                 {
                     if (Requires != null)
                     {
