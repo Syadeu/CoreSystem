@@ -14,7 +14,7 @@ namespace SyadeuEditor.Presentation
     /// </summary>
     public class ObjectBaseDrawer : ObjectDrawerBase
     {
-        protected static readonly Dictionary<ObjectBase, ObjectBaseDrawer> Pool = new Dictionary<ObjectBase, ObjectBaseDrawer>();
+        public static readonly Dictionary<ObjectBase, ObjectBaseDrawer> Pool = new Dictionary<ObjectBase, ObjectBaseDrawer>();
 
         public readonly ObjectBase m_TargetObject;
         private Type m_Type;
