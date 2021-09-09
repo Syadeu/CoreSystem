@@ -67,7 +67,7 @@ namespace SyadeuEditor.Presentation
                 if (!m_OpenInvalidList) return;
 
                 EditorGUILayout.HelpBox(
-                    $"Number({m_InvalidIndices.Count}) of ivalid objects in this data were found.\n" +
+                    $"Number({m_InvalidIndices.Count}) of invalid objects in this data were found.\n" +
                     $"Fix it manually."
                     , MessageType.Error);
 
@@ -80,7 +80,7 @@ namespace SyadeuEditor.Presentation
                     {
                         m_OpenInvalidIndex[i]
                         = EditorUtils.Foldout(m_OpenInvalidIndex[i], $"Element At {idx}");
-                        if (GUILayout.Button("Remove", GUILayout.Width(20)))
+                        if (GUILayout.Button("Remove", GUILayout.Width(100)))
                         {
                             var temp = Entity.m_Objects.ToList();
                             temp.RemoveAt(i);
@@ -94,21 +94,24 @@ namespace SyadeuEditor.Presentation
                         }
                     }
 
-                    if (!m_OpenInvalidIndex[i]) continue;
-
-                    EditorGUI.indentLevel++;
-                    EditorGUI.BeginChangeCheck();
-                    ArrayDrawer.m_ElementDrawers[idx].OnGUI();
-                    if (EditorGUI.EndChangeCheck())
+                    if (m_OpenInvalidIndex[i])
                     {
-                        if (IsValidObject(Entity.m_Objects[idx]))
+                        EditorGUI.indentLevel++;
+                        EditorGUI.BeginChangeCheck();
+                        ArrayDrawer.m_ElementDrawers[idx].OnGUI();
+                        if (EditorGUI.EndChangeCheck())
                         {
-                            m_InvalidIndices.RemoveAt(i);
-                            m_OpenInvalidIndex.RemoveAt(i);
-                            i--;
+                            if (IsValidObject(Entity.m_Objects[idx]))
+                            {
+                                m_InvalidIndices.RemoveAt(i);
+                                m_OpenInvalidIndex.RemoveAt(i);
+                                i--;
+                            }
                         }
+                        EditorGUI.indentLevel--;
                     }
-                    EditorGUI.indentLevel--;
+
+                    if (i + 1 < m_InvalidIndices.Count) EditorUtils.Line();
                 }
                 EditorGUI.indentLevel--;
             }
