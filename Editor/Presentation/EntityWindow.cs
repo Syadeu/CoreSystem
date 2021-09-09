@@ -85,6 +85,7 @@ namespace SyadeuEditor.Presentation
 
         public void Reload()
         {
+            ObjectBaseDrawer.Pool.Clear();
             ObjectBaseDrawers.Clear();
             if (EntityDataList.Instance.m_Objects != null)
             {
