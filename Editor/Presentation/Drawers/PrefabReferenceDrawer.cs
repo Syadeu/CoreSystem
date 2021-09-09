@@ -49,6 +49,11 @@ namespace SyadeuEditor.Presentation
                 }, currentValue);
                 if (m_WasEdited)
                 {
+                    if (!currentValue.IsValid() || currentValue.IsNone())
+                    {
+                        m_Open = false;
+                    }
+
                     GUI.changed = true;
                     m_WasEdited = false;
                 }
@@ -79,8 +84,10 @@ namespace SyadeuEditor.Presentation
                 {
                     EditorUtils.BoxBlock box = new EditorUtils.BoxBlock(Color.black);
 
+                    EditorGUI.BeginDisabledGroup(true);
                     m_Editor.DrawHeader();
                     m_Editor.OnInspectorGUI();
+                    EditorGUI.EndDisabledGroup();
 
                     if (m_Editor.HasPreviewGUI())
                     {

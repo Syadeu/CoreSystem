@@ -74,7 +74,7 @@ namespace SyadeuEditor.Presentation
         }
         public override void SaveChanges()
         {
-            "Entity data saved".ToLog();
+            CoreSystem.Logger.Log(Channel.Editor, "Entity data saved");
 
             EntityDataList.Instance.SaveData();
             base.SaveChanges();
@@ -203,12 +203,15 @@ namespace SyadeuEditor.Presentation
             m_CopyrightRect.y = Screen.height - 42;
             EditorGUI.LabelField(m_CopyrightRect, EditorUtils.String("Copyright 2021 Syadeu. All rights reserved.", 11), EditorUtils.CenterStyle);
 
-            if (Event.current.isKey)
+            KeyboardShortcuts();
+        }
+        private void KeyboardShortcuts()
+        {
+            if (!Event.current.isKey) return;
+
+            if (Event.current.control && Event.current.keyCode == KeyCode.S)
             {
-                if (Event.current.control && Event.current.keyCode == KeyCode.S)
-                {
-                    if (IsDirty) SaveChanges();
-                }
+                if (IsDirty) SaveChanges();
             }
         }
         
@@ -224,7 +227,7 @@ namespace SyadeuEditor.Presentation
                 m_MainWindow = window;
 
                 m_FileMenu = new GenericMenu();
-                m_FileMenu.AddItem(new GUIContent("Save"), false, SaveMenu);
+                m_FileMenu.AddItem(new GUIContent("Save Ctrl+S"), false, SaveMenu);
                 m_FileMenu.AddItem(new GUIContent("Load"), false, LoadMenu);
                 m_FileMenu.AddSeparator(string.Empty);
                 m_FileMenu.AddItem(new GUIContent("Add/Entity"), false, AddDataMenu<EntityDataBase>);

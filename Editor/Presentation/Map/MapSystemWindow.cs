@@ -24,7 +24,7 @@ namespace SyadeuEditor.Presentation.Map
         protected override void OnEnable()
         {
             m_PreviewFolder = new GameObject("Preview").transform;
-            m_PreviewFolder.gameObject.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
+            m_PreviewFolder.gameObject.hideFlags = HideFlags.DontSave | HideFlags.NotEditable | HideFlags.HideInHierarchy;
             m_PreviewFolder.gameObject.tag = c_EditorOnly;
 
             base.OnEnable();

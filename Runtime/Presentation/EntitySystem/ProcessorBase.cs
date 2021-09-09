@@ -64,7 +64,10 @@ namespace Syadeu.Presentation
         {
             CoreSystem.Logger.NotNull(entity, "Target entity cannot be null");
 
-            return EntitySystem.CreateEntity(entity, position, rotation, localSize).As<IEntity, T>();
+            Entity<IEntity> target = EntitySystem.CreateEntity(entity, position, rotation, localSize);
+            if (!target.IsValid()) return Entity<T>.Empty;
+
+            return target.As<IEntity, T>();
         }
     }
 }
