@@ -19,6 +19,7 @@ namespace Syadeu.Presentation
     {
         Hash Hash { get; }
 
+        bool IsEmpty();
         ObjectBase GetObject();
     }
     public interface IReference<T> : IReference, IEquatable<IReference<T>> where T : ObjectBase
@@ -52,6 +53,7 @@ namespace Syadeu.Presentation
             if (EntityDataList.Instance.m_Objects.TryGetValue(m_Hash, out ObjectBase value)) return value;
             return null;
         }
+        public bool IsEmpty() => Equals(Empty);
         public bool IsValid() => !m_Hash.Equals(Hash.Empty);
 
         public bool Equals(IReference other) => m_Hash.Equals(other.Hash);
@@ -99,6 +101,8 @@ namespace Syadeu.Presentation
             if (EntityDataList.Instance.m_Objects.TryGetValue(m_Hash, out ObjectBase value)) return (T)value;
             return null;
         }
+
+        public bool IsEmpty() => Equals(Empty);
         public bool IsValid() => !m_Hash.Equals(Hash.Empty) && EntityDataList.Instance.m_Objects.ContainsKey(m_Hash);
 
         public bool Equals(IReference other) => m_Hash.Equals(other.Hash);

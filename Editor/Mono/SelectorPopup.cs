@@ -92,6 +92,8 @@ namespace SyadeuEditor
             if (m_ShouldClose)
             {
                 GUIUtility.hotControl = 0;
+
+                GUI.changed = true;
                 editorWindow.Close();
             }
         }
