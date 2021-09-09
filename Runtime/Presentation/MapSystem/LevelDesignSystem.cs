@@ -43,7 +43,7 @@ namespace Syadeu.Presentation.Map
             return base.OnInitialize();
         }
 
-#region Binds
+        #region Binds
         private void Bind(SceneSystem other)
         {
             m_SceneSystem = other;
@@ -61,7 +61,7 @@ namespace Syadeu.Presentation.Map
             m_SceneSystem = null;
             m_MapSystem = null;
         }
-#endregion
+        #endregion
 
         private void AddConsoleCommands()
         {
@@ -96,7 +96,7 @@ namespace Syadeu.Presentation.Map
             return base.OnPresentation();
         }
 
-#region Tools
+        #region Tools
 
         private void ExecuteTool(TerrainTool tool, Ray ray, in int effectSize, in float effectIncrement = .1f)
         {
@@ -259,7 +259,7 @@ namespace Syadeu.Presentation.Map
             return true;
         }
 
-#endregion
+        #endregion
 
         public bool Raycast(Ray ray, out RaycastHit hitInfo, 
             [DefaultValue("Mathf.Infinity")] float maxDistance = float.PositiveInfinity)
