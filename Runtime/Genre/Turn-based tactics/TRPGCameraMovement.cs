@@ -11,6 +11,7 @@ namespace Syadeu.Presentation.TurnTable
 {
     public sealed class TRPGCameraMovement : AdditionalCameraComponent
     {
+        [SerializeField] private float m_MoveOffset = .1f;
         [SerializeField] private InputAction m_MoveAxis;
 
         [Space]
@@ -62,7 +63,11 @@ namespace Syadeu.Presentation.TurnTable
                 TargetPosition += targetVelocity;
             }
         }
-        public float MoveOffset { get; set; } = .07f;
+        public float MoveOffset
+        {
+            get => m_MoveOffset;
+            set => m_MoveOffset = value;
+        }
         public float MoveSpeed { get; set; } = 8;
         public float3 TargetPosition
         {
