@@ -4,6 +4,7 @@ using Syadeu.Presentation.Entities;
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -17,15 +18,20 @@ namespace SyadeuEditor.Presentation
         PrefabReferenceDrawer prefabReferenceDrawer = null;
         AttributeListDrawer attributeListDrawer;
 
+        bool m_OpenCheckMesh = false;
+        readonly List<MeshFilter> meshFilters = new List<MeshFilter>();
+
         public EntityDrawer(ObjectBase objectBase) : base(objectBase)
         {
             m_EnableCullName = new GUIContent("Enable Cull");
             m_DisableCullName = new GUIContent("Disable Cull");
 
-            if (objectBase is EntityBase)
+            if (objectBase is EntityBase entityBase)
             {
                 prefabReferenceDrawer = (PrefabReferenceDrawer)m_ObjectDrawers.Where((other) => other.Name.Equals("Prefab")).First();
                 prefabReferenceDrawer.DisableHeader = true;
+
+                //if (!CheckMesh(entityBase)) m_OpenCheckMesh = true;
             }
 
             attributeListDrawer = new AttributeListDrawer(objectBase,
@@ -93,12 +99,45 @@ namespace SyadeuEditor.Presentation
                     }
 
                     DrawField(prefabReferenceDrawer);
+
+                    //m_OpenCheckMesh = EditorUtils.Foldout(m_OpenCheckMesh, "Meshes");
+                    //if (m_OpenCheckMesh)
+                    //{
+                    //    EditorGUI.indentLevel++;
+                    //    CheckMesh(entity);
+                    //    EditorGUI.indentLevel--;
+                    //}
                 }
             }
             using (new EditorUtils.BoxBlock(Color.black))
             {
                 attributeListDrawer.OnGUI();
             }
+        }
+        protected bool CheckMesh(EntityBase entity)
+        {
+            if (!(entity.Prefab.GetEditorAsset() is GameObject obj))
+            {
+                return true;
+            }
+
+            bool green = true;
+            meshFilters.Clear();
+            obj.GetComponentsInChildren(true, meshFilters);
+            for (int i = 0; i < meshFilters.Count; i++)
+            {
+                if (!meshFilters[i].sharedMesh.isReadable)
+                {
+                    //EditorGUILayout.ObjectField("Unreadable Mesh Found", meshFilters[i], TypeHelper.TypeOf<MeshFilter>.Type, false);
+                    green = false;
+                }
+                //else
+                //{
+                //    EditorGUILayout.ObjectField("Mesh", meshFilters[i], TypeHelper.TypeOf<MeshFilter>.Type, false);
+                //}
+            }
+
+            return green;
         }
         protected bool IsDrawable(ObjectDrawerBase drawerBase)
         {
