@@ -109,13 +109,13 @@ namespace Syadeu.Mono
                     throw;
                 }
 
-                handle.Completed += this.Handle_Completed1;
+                handle.Completed += this.AsynHandleOnCompleted;
 
                 m_IsLoaded = true;
                 m_LoadHandle = handle;
                 return handle;
             }
-            private void Handle_Completed1<T>(AsyncOperationHandle<T> obj) where T : UnityEngine.Object
+            private void AsynHandleOnCompleted<T>(AsyncOperationHandle<T> obj) where T : UnityEngine.Object
             {
                 m_LoadedObject = obj.Result;
 
