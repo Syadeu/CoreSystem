@@ -82,6 +82,8 @@ namespace SyadeuEditor.Presentation
                 Color color3 = Color.red;
                 color3.a = .7f;
 
+                EditorGUI.indentLevel++;
+
                 using (new EditorUtils.BoxBlock(color3))
                 {
                     if (!currentValue.IsValid())
@@ -99,6 +101,8 @@ namespace SyadeuEditor.Presentation
                         ObjectBaseDrawer.GetDrawer(currentValue.GetObject()).OnGUI();
                     }
                 }
+
+                EditorGUI.indentLevel--;
             }
             EditorGUILayout.EndVertical();
 

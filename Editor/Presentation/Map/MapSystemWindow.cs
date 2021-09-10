@@ -21,25 +21,32 @@ namespace SyadeuEditor.Presentation.Map
 
         protected override string DisplayName => "Map System";
 
+        private MapDataLoader m_MapDataLoader;
+
         protected override void OnEnable()
         {
-            m_PreviewFolder = new GameObject("Preview").transform;
-            m_PreviewFolder.gameObject.hideFlags = HideFlags.DontSave | HideFlags.NotEditable | HideFlags.HideInHierarchy;
-            m_PreviewFolder.gameObject.tag = c_EditorOnly;
+            //m_PreviewFolder = new GameObject("Preview").transform;
+            //m_PreviewFolder.gameObject.hideFlags = HideFlags.DontSave | HideFlags.NotEditable | HideFlags.HideInHierarchy;
+            //m_PreviewFolder.gameObject.tag = c_EditorOnly;
+
+            m_MapDataLoader = new MapDataLoader();
 
             base.OnEnable();
         }
         protected override void OnDisable()
         {
-            foreach (var item in m_LoadedMapData)
-            {
-                if (item == null) continue;
+            //foreach (var item in m_LoadedMapData)
+            //{
+            //    if (item == null) continue;
 
-                item.Dispose();
-            }
+            //    item.Dispose();
+            //}
 
-            DestroyImmediate(m_PreviewFolder.gameObject);
+            //DestroyImmediate(m_PreviewFolder.gameObject);
             Tools.hidden = false;
+
+            m_MapDataLoader.Dispose();
+            m_MapDataLoader = null;
 
             base.OnDisable();
         }
@@ -60,11 +67,12 @@ namespace SyadeuEditor.Presentation.Map
             if (GUILayout.Button("Show Tools")) Tools.hidden = false;
             EditorGUILayout.Space();
 
-            MapDataGUI();
+            //MapDataGUI();
+            m_MapDataLoader.OnGUI();
         }
         protected override void OnSceneGUI(SceneView obj)
         {
-            MapDataSceneGUI(obj);
+            //MapDataSceneGUI(obj);
         }
 
         #region Common
@@ -940,5 +948,194 @@ namespace SyadeuEditor.Presentation.Map
         #endregion
 
         #endregion
+    }
+
+    public sealed class MapDataLoader : IDisposable
+    {
+        private readonly Transform m_Folder;
+
+        private readonly List<Reference<MapDataEntityBase>> m_SelectedMapData = new List<Reference<MapDataEntityBase>>();
+        private readonly List<MapData> m_LoadedMapData = new List<MapData>();
+
+        public MapDataLoader()
+        {
+            m_Folder = new GameObject("MapData Preview").transform;
+            m_Folder.hideFlags = HideFlags.NotEditable | HideFlags.DontSave;
+        }
+        public void OnGUI()
+        {
+            DrawMapDataSelector();
+        }
+        public void OnSceneGUI()
+        {
+
+        }
+
+        private void DrawMapDataSelector()
+        {
+            using (new EditorUtils.BoxBlock(Color.gray))
+            {
+                for (int i = 0; i < m_SelectedMapData.Count; i++)
+                {
+                    int index = i;
+
+                    //EditorGUILayout.BeginHorizontal();
+                    using (new EditorGUILayout.HorizontalScope())
+                    {
+                        DrawMapDataSelector(m_SelectedMapData[index], (other) =>
+                        {
+                            if (other.IsEmpty() || !other.IsValid())
+                            {
+                                m_SelectedMapData.RemoveAt(index);
+
+                                if (m_LoadedMapData[index] != null)
+                                {
+                                    m_LoadedMapData[index].Dispose();
+                                    m_LoadedMapData.RemoveAt(index);
+                                }
+                                return;
+                            }
+
+                            m_SelectedMapData[index] = other;
+
+                            if (m_LoadedMapData[index] != null)
+                            {
+                                m_LoadedMapData[index].Dispose();
+                            }
+                            m_LoadedMapData[index] = new MapData(m_Folder, other);
+                        });
+                    }
+                }
+
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    DrawMapDataSelector(Reference<MapDataEntityBase>.Empty, (other) =>
+                    {
+                        if (m_SelectedMapData.Contains(other))
+                        {
+                            "cannot load that already loaded".ToLog();
+                            return;
+                        }
+
+                        m_SelectedMapData.Add(other);
+                        m_LoadedMapData.Add(new MapData(m_Folder, other));
+                    });
+                }
+                //EditorGUILayout.BeginHorizontal();
+                //ReflectionHelperEditor.DrawReferenceSelector("Map data: ", (hash) =>
+                //{
+                //    var newRef = new Reference<MapDataEntityBase>(hash);
+                //    if (m_SelectedMapData.Contains(newRef))
+                //    {
+                //        "cannot load that already loaded".ToLog();
+                //        return;
+                //    }
+
+                //    MapDataEntityBase mapData = newRef.GetObject();
+
+                //    m_SelectedMapData.Add(newRef);
+                //    m_LoadedMapData.Add(new MapData(m_PreviewFolder, mapData));
+
+                //    SceneView.lastActiveSceneView.Repaint();
+                //    Tools.hidden = true;
+
+                //}, Reference<MapDataEntityBase>.Empty, TypeHelper.TypeOf<MapDataEntityBase>.Type);
+
+                //EditorGUI.BeginDisabledGroup(true);
+                //GUILayout.Toggle(false, "E", EditorUtils.MiniButton, GUILayout.Width(20));
+                //GUILayout.Button("-", GUILayout.Width(20));
+                //EditorGUI.EndDisabledGroup();
+
+                //EditorGUILayout.EndHorizontal();
+            }
+        }
+        public void Dispose()
+        {
+            for (int i = 0; i < m_LoadedMapData.Count; i++)
+            {
+                m_LoadedMapData[i].Dispose();
+            }
+
+            m_SelectedMapData.Clear();
+            m_LoadedMapData.Clear();
+        }
+
+        private static void DrawMapDataSelector(IReference current, Action<Reference<MapDataEntityBase>> setter)
+        {
+            ReflectionHelperEditor.DrawReferenceSelector("Map data: ", (hash) =>
+            {
+                if (hash.Equals(Hash.Empty))
+                {
+                    setter.Invoke(Reference<MapDataEntityBase>.Empty);
+                    return;
+                }
+
+                Reference<MapDataEntityBase> reference = new Reference<MapDataEntityBase>(hash);
+                setter.Invoke(reference);
+            }, current, TypeHelper.TypeOf<MapDataEntityBase>.Type);
+        }
+        public sealed class MapData : IDisposable
+        {
+            const string c_EditorOnly = "EditorOnly";
+
+            private Transform m_Folder = null;
+            private readonly List<GameObject> m_CreatedObjects = new List<GameObject>();
+
+            public MapData(Transform parent, Reference<MapDataEntityBase> reference)
+            {
+                MapDataEntityBase mapData = reference.GetObject();
+
+                m_Folder = new GameObject(mapData.Name).transform;
+                m_Folder.SetParent(parent);
+
+                for (int i = 0; i < mapData.m_Objects.Length; i++)
+                {
+                    GameObject obj = InstantiateObject(parent, mapData.m_Objects[i]);
+                    m_CreatedObjects.Add(obj);
+                }
+            }
+
+            private static GameObject InstantiateObject(Transform parent, MapDataEntityBase.Object target)
+            {
+                GameObject obj;
+                if (!target.m_Object.IsValid() || 
+                    target.m_Object.GetObject().Prefab.IsNone() ||
+                    !target.m_Object.GetObject().Prefab.IsValid())
+                {
+                    obj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    obj.transform.SetParent(parent);
+                }
+                else
+                {
+                    var temp = target.m_Object.GetObject().Prefab.GetEditorAsset();
+                    if (!(temp is GameObject gameObj))
+                    {
+                        obj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                        obj.transform.SetParent(parent);
+                    }
+                    else
+                    {
+                        obj = (GameObject)PrefabUtility.InstantiatePrefab(gameObj, parent);
+                    }
+                    //
+                }
+
+                obj.tag = c_EditorOnly;
+                obj.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
+
+                Transform tr = obj.transform;
+
+                tr.position = target.m_Translation;
+                tr.rotation = target.m_Rotation;
+                tr.localScale = target.m_Scale;
+
+                return obj;
+            }
+
+            public void Dispose()
+            {
+                UnityEngine.Object.DestroyImmediate(m_Folder);
+            }
+        }
     }
 }

@@ -84,6 +84,10 @@ namespace SyadeuEditor.Presentation
             IsDirty = false;
             Repaint();
         }
+        private void OnDestroy()
+        {
+            if (IsDirty) EntityDataList.Instance.LoadData();
+        }
         public void Reload()
         {
             if (!IsDataLoaded) EntityDataList.Instance.LoadData();
