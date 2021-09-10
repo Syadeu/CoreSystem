@@ -181,37 +181,41 @@ namespace SyadeuEditor.Presentation
             }
             else if (addressableCount == editor.targets.Length)
             {
-                GUILayout.BeginHorizontal();
+                EditorUtils.Line();
+                string headerString = EditorUtils.String("Entity", 13);
+                if (currentGroupIdx == 0)
+                {
+                    headerString += EditorUtils.String(": Invalid", 10);
+                }
+                else
+                {
+                    headerString += EditorUtils.String(": Valid", 10);
+                }
+                EditorUtils.StringRich(headerString, true);
 
                 EditorGUI.BeginChangeCheck();
                 currentGroupIdx = EditorGUILayout.Popup(currentGroupIdx, s_EntityGroupNames);
                 if (EditorGUI.EndChangeCheck())
                 {
-                    $"{GetIndexToGroup(currentGroupIdx)?.Name}".ToLog();
+                    Undo.RecordObject(aaSettings, "AddressableAssetSettings");
+
+                    AddressableAssetGroup 
+                        originGroup = entry.parentGroup,
+                        targetGroup = GetIndexToGroup(currentGroupIdx);
+                    
+                    if (targetGroup != null)
+                    {
+                        aaSettings.MoveEntry(entry, targetGroup, false, false);
+
+                        targetGroup.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, targetGroup, false, true);
+                        aaSettings.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, targetGroup, true, false);
+
+                        CoreSystem.Logger.Log(Channel.Editor,
+                            $"Asset({Path.GetFileName(entry.AssetPath)}) added to PrefabList({targetGroup.Name}) from {originGroup.Name}");
+                    }
                 }
 
-                EditorGUILayout.LabelField("addressable");
-                //if (!GUILayout.Toggle(true, s_AddressableAssetToggleText, GUILayout.ExpandWidth(false)))
-                //{
-                //    SetAaEntry(aaSettings, editor.targets, false);
-                //    GUIUtility.ExitGUI();
-                //}
-
-                //if (editor.targets.Length == 1 && entry != null)
-                //{
-                //    string newAddress = EditorGUILayout.DelayedTextField(entry.address, GUILayout.ExpandWidth(true));
-                //    if (newAddress != entry.address)
-                //    {
-                //        if (newAddress.Contains("[") && newAddress.Contains("]"))
-                //            Debug.LogErrorFormat("Rename of address '{0}' cannot contain '[ ]'.", entry.address);
-                //        else
-                //        {
-                //            entry.address = newAddress;
-                //            AddressableAssetUtility.OpenAssetIfUsingVCIntegration(entry.parentGroup, true);
-                //        }
-                //    }
-                //}
-                GUILayout.EndHorizontal();
+                EditorUtils.Line();
             }
             else
             {
