@@ -18,7 +18,8 @@ namespace SyadeuEditor.Presentation
     internal class EntityAssetInspectorGUI : IStaticInitializer
     {
         static string s_DefaultPrefabGroupName = "PrefabList";
-        static AddressableAssetGroup[] s_EntityGroups;
+        static AddressableAssetGroup[] s_EntityGroups = null;
+        static string[] s_EntityGroupNames = null;
 
         static EntityAssetInspectorGUI()
         {
@@ -80,47 +81,79 @@ namespace SyadeuEditor.Presentation
 
         #endregion
 
-        private static void Validate()
+        private static void Validate(out AddressableAssetSettings aaSettings)
         {
-            if (s_EntityGroups != null) return;
+            aaSettings = AddressableAssetSettingsDefaultObject.Settings;
+            if (aaSettings == null) return;
 
-            var aaSettings = AddressableAssetSettingsDefaultObject.Settings;
+            if (s_EntityGroups != null)
+            {
+                if (aaSettings.groups.Where((other) => other.HasSchema<PrefabListGroupSchema>() || other.Name.Equals(s_DefaultPrefabGroupName)).Count() != s_EntityGroups.Length)
+                {
+                    s_EntityGroups = null;
+                }
+            }
+
+            if (s_EntityGroups != null) return;
+            
             s_EntityGroups = aaSettings.groups.Where((other) => other.HasSchema<PrefabListGroupSchema>() || other.Name.Equals(s_DefaultPrefabGroupName)).ToArray();
 
-
+            List<string> names = new List<string>() { "None" };
+            names.AddRange(s_EntityGroups.Select((other) => other.Name));
+            s_EntityGroupNames = names.ToArray();
         }
+        private static int GetGroupIndex(AddressableAssetGroup group)
+        {
+            if (!s_EntityGroups.Contains(group)) return 0;
+
+            for (int i = 0; i < s_EntityGroups.Length; i++)
+            {
+                if (s_EntityGroups[i].Equals(group))
+                {
+                    return i + 1;
+                }
+            }
+            return 0;
+        }
+        private static AddressableAssetGroup GetIndexToGroup(int idx)
+        {
+            if (idx < 0 || idx - 1 >= s_EntityGroups.Length) return null;
+            return s_EntityGroups[idx - 1];
+        }
+
         private static void OnPostHeaderGUI(Editor editor)
         {
             if (editor.targets.Length == 0) return;
 
-            var aaSettings = AddressableAssetSettingsDefaultObject.Settings;
+            Validate(out var aaSettings);
+            int currentGroupIdx = -1;
             AddressableAssetEntry entry = null;
 
             int addressableCount = 0;
             bool foundValidAsset = false;
             bool foundAssetGroup = false;
-            foreach (var t in editor.targets)
-            {
-                foundAssetGroup |= t is AddressableAssetGroup;
-                foundAssetGroup |= t is AddressableAssetGroupSchema;
-                if (GetPathAndGUIDFromTarget(t, out var path, out var guid, out var mainAssetType))
-                {
-                    // Is asset
-                    if (!BuildUtility.IsEditorAssembly(mainAssetType.Assembly))
-                    {
-                        foundValidAsset = true;
 
-                        if (aaSettings != null)
+            foundAssetGroup |= editor.target is AddressableAssetGroup;
+            foundAssetGroup |= editor.target is AddressableAssetGroupSchema;
+            if (GetPathAndGUIDFromTarget(editor.target, out var path, out var guid, out var mainAssetType))
+            {
+                // Is asset
+                if (!BuildUtility.IsEditorAssembly(mainAssetType.Assembly))
+                {
+                    foundValidAsset = true;
+
+                    if (aaSettings != null)
+                    {
+                        entry = aaSettings.FindAssetEntry(guid);
+                        if (entry != null && !entry.IsSubAsset)
                         {
-                            entry = aaSettings.FindAssetEntry(guid);
-                            if (entry != null && !entry.IsSubAsset)
-                            {
-                                addressableCount++;
-                            }
+                            currentGroupIdx = GetGroupIndex(entry.parentGroup);
+                            addressableCount++;
                         }
                     }
                 }
             }
+            if (currentGroupIdx < 0) return;
 
             if (foundAssetGroup)
             {
@@ -149,6 +182,14 @@ namespace SyadeuEditor.Presentation
             else if (addressableCount == editor.targets.Length)
             {
                 GUILayout.BeginHorizontal();
+
+                EditorGUI.BeginChangeCheck();
+                currentGroupIdx = EditorGUILayout.Popup(currentGroupIdx, s_EntityGroupNames);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    $"{GetIndexToGroup(currentGroupIdx)?.Name}".ToLog();
+                }
+
                 EditorGUILayout.LabelField("addressable");
                 //if (!GUILayout.Toggle(true, s_AddressableAssetToggleText, GUILayout.ExpandWidth(false)))
                 //{
