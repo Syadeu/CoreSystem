@@ -996,6 +996,8 @@ namespace SyadeuEditor.Presentation.Map
 
         public MapDataLoader()
         {
+            if (!EntityDataList.IsLoaded) EntityDataList.Instance.LoadData();
+
             m_Folder = new GameObject("MapData Preview").transform;
             m_Folder.gameObject.hideFlags = HideFlags.NotEditable | HideFlags.DontSave;
         }
@@ -1048,6 +1050,34 @@ namespace SyadeuEditor.Presentation.Map
                             Event.current.Use();
                         }
                     }
+                    else if (Event.current.button == 1)
+                    {
+                        //if (m_SelectedObject == null)
+                        //{
+                        //    GameObject obj = HandleUtility.PickGameObject(Event.current.mousePosition, true, null, null);
+
+                        //    m_SelectedObject = GetMapDataObject(obj, out m_SelectedMapData);
+                        //    m_SelectedGameObject = m_SelectedObject == null ? null : obj;
+                        //}
+
+                        if (m_SelectedObject != null)
+                        {
+                            GUIUtility.hotControl = mouseControlID;
+
+                            GenericMenu menu = new GenericMenu();
+                            menu.AddDisabledItem(new GUIContent(m_SelectedObject.m_Object.GetObject().Name));
+                            menu.AddSeparator(string.Empty);
+
+                            menu.AddItem(new GUIContent("Open in Window"), false, () =>
+                            {
+                                EntityWindow.Instance.Select(m_SelectedObject.m_Object);
+                            });
+
+                            menu.ShowAsContext();
+
+                            Event.current.Use();
+                        }
+                    }
                     else if (Event.current.button == 2)
                     {
                         if (m_EditingMapData == null)
@@ -1084,12 +1114,15 @@ namespace SyadeuEditor.Presentation.Map
                                 MapDataEntityBase.Object obj = new MapDataEntityBase.Object
                                 {
                                     m_Object = refobj,
-                                    m_Translation = float3.zero,
+                                    m_Translation = pos,
                                     m_Rotation = quaternion.identity,
                                     m_Scale = 1
                                 };
-                                m_EditingMapData.Add(obj);
 
+                                m_SelectedGameObject = m_EditingMapData.Add(obj);
+                                m_SelectedObject = GetMapDataObject(m_SelectedGameObject, out m_SelectedMapData);
+
+                                m_WasEditedMapDataSelector = true;
                                 //Repaint();
                             },
                             getter: (other) => other.Hash,
@@ -1468,7 +1501,7 @@ namespace SyadeuEditor.Presentation.Map
 
             #region Add & Remove
 
-            public void Add(MapDataEntityBase.Object target)
+            public GameObject Add(MapDataEntityBase.Object target)
             {
                 GameObject obj = InstantiateObject(m_Folder, target);
 
@@ -1479,6 +1512,8 @@ namespace SyadeuEditor.Presentation.Map
 
                 m_MapData.m_Objects = m_MapDataObjects.ToArray();
                 IsDirty = true;
+
+                return obj;
             }
             public void Remove(MapDataEntityBase.Object target)
             {
