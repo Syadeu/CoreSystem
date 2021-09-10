@@ -191,7 +191,9 @@ namespace SyadeuEditor.Presentation
                 {
                     headerString += EditorUtils.String(": Valid", 10);
                 }
-                EditorUtils.StringRich(headerString, true);
+
+                EditorGUILayout.BeginHorizontal();
+                EditorUtils.StringRich(headerString);
 
                 EditorGUI.BeginChangeCheck();
                 currentGroupIdx = EditorGUILayout.Popup(currentGroupIdx, s_EntityGroupNames);
@@ -214,6 +216,7 @@ namespace SyadeuEditor.Presentation
                             $"Asset({Path.GetFileName(entry.AssetPath)}) added to PrefabList({targetGroup.Name}) from {originGroup.Name}");
                     }
                 }
+                EditorGUILayout.EndHorizontal();
 
                 EditorUtils.Line();
             }
