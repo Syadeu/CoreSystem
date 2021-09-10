@@ -82,8 +82,17 @@ namespace Syadeu.Presentation.Map
             CreatedMapData = new EntityData<MapDataEntity>[m_MapData.Length];
             for (int i = 0; i < m_MapData.Length; i++)
             {
+                if (m_MapData[i].IsEmpty() || !m_MapData[i].IsValid())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"MapData(Element At {i}) in SceneData({Name}) is not valid.");
+
+                    CreatedMapData[i] = EntityData<MapDataEntity>.Empty;
+                    continue;
+                }
+
                 EntityData<IEntityData> temp = entitySystem.CreateObject(m_MapData[i]);
-                CreatedMapData[i] = EntityData<MapDataEntity>.GetEntity(temp.Idx);
+                CreatedMapData[i] = temp.Cast<IEntityData, MapDataEntity>();
             }
 
             IsMapDataCreated = true;

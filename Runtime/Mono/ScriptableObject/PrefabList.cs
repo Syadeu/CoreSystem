@@ -136,7 +136,7 @@ namespace Syadeu.Mono
 
             #endregion
 
-            public AsyncOperationHandle<GameObject> InstantiateAsync(float3 pos, quaternion rot, Transform parent)
+            public AsyncOperationHandle<GameObject> InstantiateAsync(in float3 pos, in quaternion rot, in Transform parent)
             {
                 if (!m_RefPrefab.RuntimeKeyIsValid())
                 {

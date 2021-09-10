@@ -45,10 +45,21 @@ namespace SyadeuEditor.Presentation.Map
             //DestroyImmediate(m_PreviewFolder.gameObject);
             Tools.hidden = false;
 
-            m_MapDataLoader.Dispose();
-            m_MapDataLoader = null;
+            if (m_MapDataLoader != null)
+            {
+                m_MapDataLoader.Dispose();
+                m_MapDataLoader = null;
+            }
 
             base.OnDisable();
+        }
+        private void OnDestroy()
+        {
+            if (m_MapDataLoader != null)
+            {
+                m_MapDataLoader.Dispose();
+                m_MapDataLoader = null;
+            }
         }
 
         private void OnGUI()

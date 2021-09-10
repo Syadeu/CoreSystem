@@ -133,6 +133,8 @@ namespace Syadeu.Database
         }
         public AsyncOperationHandle<T> LoadAssetAsync() => GetObjectSetting().LoadAssetAsync<T>();
         public void UnloadAsset() => GetObjectSetting().UnloadAsset();
+
+        public AsyncOperationHandle<UnityEngine.GameObject> InstantiateAysnc(in float3 pos, in quaternion rot, in UnityEngine.Transform parent) => GetObjectSetting().InstantiateAsync(in pos, in rot, in parent);
         public void ReleaseInstance(UnityEngine.GameObject obj) => GetObjectSetting().ReleaseInstance(obj);
 
         public bool IsNone() => Equals(None);

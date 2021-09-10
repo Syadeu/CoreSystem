@@ -303,6 +303,6 @@ namespace Syadeu.Presentation.Map
 
     public sealed class TerrainTool : LevelEditorToolBase
     {
-
+        
     }
 }

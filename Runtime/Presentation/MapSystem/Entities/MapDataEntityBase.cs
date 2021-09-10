@@ -32,6 +32,7 @@ namespace Syadeu.Presentation.Map
             public object Clone() => MemberwiseClone();
         }
 
-        [JsonProperty(Order = 0, PropertyName = "Objects")] public Object[] m_Objects;
+        [JsonProperty(Order = 0, PropertyName = "Center")] public float3 m_Center = float3.zero;
+        [JsonProperty(Order = 1, PropertyName = "Objects")] public Object[] m_Objects = Array.Empty<Object>();
     }
 }

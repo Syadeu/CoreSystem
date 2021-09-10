@@ -24,6 +24,32 @@ namespace Syadeu.Presentation
             return EntityData<TA>.GetEntity(t.Idx);
         }
 
+        public static Entity<TA> Cast<T, TA>(this Entity<T> t)
+            where T : class, IEntity
+            where TA : class, IEntity
+        {
+            return Entity<TA>.GetEntity(t.Idx);
+        }
+        public static EntityData<TA> Cast<T, TA>(this EntityData<T> t)
+            where T : class, IEntityData
+            where TA : class, IEntityData
+        {
+            return EntityData<TA>.GetEntity(t.Idx);
+        }
+
+        public static Entity<TA> CastAs<T, TA>(this EntityData<T> t)
+            where T : class, IEntityData
+            where TA : class, IEntity
+        {
+            return Entity<TA>.GetEntity(t.Idx);
+        }
+        public static EntityData<TA> CastAs<T, TA>(this Entity<T> t)
+            where T : class, IEntity
+            where TA : class, IEntityData
+        {
+            return EntityData<TA>.GetEntity(t.Idx);
+        }
+
         public static bool TryAsReference<T>(this T t, out EntityData<T> entity)
             where T : class, IEntityData
         {
