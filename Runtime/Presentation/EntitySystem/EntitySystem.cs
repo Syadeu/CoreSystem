@@ -448,9 +448,9 @@ namespace Syadeu.Presentation
             }
             entity = (EntityBase)original;
 
-            if (!entity.Prefab.IsValid())
+            if (!entity.Prefab.IsNone() && !entity.Prefab.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_EntityHasInvalidPrefabError, key));
+                CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_EntityHasInvalidPrefabError, original.Name));
                 return false;
             }
 

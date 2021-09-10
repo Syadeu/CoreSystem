@@ -30,12 +30,6 @@ namespace SyadeuEditor.Presentation
             {
                 prefabReferenceDrawer = (PrefabReferenceDrawer)m_ObjectDrawers.Where((other) => other.Name.Equals("Prefab")).First();
                 prefabReferenceDrawer.DisableHeader = true;
-
-                if (!(entityBase.Prefab.GetEditorAsset() is GameObject))
-                {
-                    entityBase.Prefab = Syadeu.Database.PrefabReference<GameObject>.Invalid;
-                }
-                //if (!CheckMesh(entityBase)) m_OpenCheckMesh = true;
             }
 
             attributeListDrawer = new AttributeListDrawer(objectBase,

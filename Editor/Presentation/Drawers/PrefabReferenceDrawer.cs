@@ -137,14 +137,14 @@ namespace SyadeuEditor.Presentation
         private void DrawPrefabReference(string name, Action<int> setter, IPrefabReference current)
         {
             GUIContent displayName;
-            if (current.Index >= 0)
+            if (current.Equals(PrefabReference.None))
+            {
+                displayName = new GUIContent("None");
+            }
+            else if (current.Index >= 0)
             {
                 PrefabList.ObjectSetting objSetting = current.GetObjectSetting();
                 displayName = objSetting == null ? new GUIContent("INVALID") : new GUIContent(objSetting.m_Name);
-            }
-            else if (current.Equals(PrefabReference.None))
-            {
-                displayName = new GUIContent("None");
             }
             else
             {

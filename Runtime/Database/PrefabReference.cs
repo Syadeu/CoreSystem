@@ -138,7 +138,7 @@ namespace Syadeu.Database
         public void ReleaseInstance(UnityEngine.GameObject obj) => GetObjectSetting().ReleaseInstance(obj);
 
         public bool IsNone() => Equals(None);
-        public bool IsValid() => !Equals(Invalid) && m_Idx < PrefabList.Instance.ObjectSettings.Count;
+        public bool IsValid() => !Equals(Invalid) && 0 <= m_Idx && m_Idx < PrefabList.Instance.ObjectSettings.Count;
 
         public static PrefabReference<T> Find(string name)
         {
