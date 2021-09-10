@@ -15,6 +15,7 @@ using UnityEngine.Playables;
 using UnityEngine.ResourceManagement.AsyncOperations;
 
 using Unity.Mathematics;
+using Unity.Collections;
 
 #if UNITY_CINEMACHINE
 using Cinemachine;
@@ -69,19 +70,19 @@ namespace Syadeu.Presentation.Actions
                 m_StartDelay = m_StartDelay,
                 m_EndDelay = m_EndDelay,
 
-                m_Conditional = m_Conditional,
+                m_Conditional = m_Conditional.ToBuffer(Allocator.Persistent),
 
-                m_OnStart = m_OnStart,
-                m_OnStartAction = m_OnStartAction,
+                m_OnStart = m_OnStart.ToBuffer(Allocator.Persistent),
+                m_OnStartAction = m_OnStartAction.ToBuffer(Allocator.Persistent),
 
-                m_OnEnd = m_OnEnd,
-                m_OnEndAction = m_OnEndAction
+                m_OnEnd = m_OnEnd.ToBuffer(Allocator.Persistent),
+                m_OnEndAction = m_OnEndAction.ToBuffer(Allocator.Persistent)
             };
 
             m_CoroutineSystem.PostSequenceIterationJob(job);
         }
 
-        private class PayloadJob : ICoroutineJob
+        private struct PayloadJob : ICoroutineJob, IDisposable
         {
             public Reference<TimelineData> m_Data;
             public EntityData<IEntityData> m_Executer;
@@ -89,14 +90,25 @@ namespace Syadeu.Presentation.Actions
             public float m_StartDelay;
             public float m_EndDelay;
 
-            public Reference<TriggerPredicateAction>[] m_Conditional;
+            public ReferenceArray<Reference<TriggerPredicateAction>> m_Conditional;
 
-            public Reference<TriggerAction>[] m_OnStart;
-            public Reference<TriggerAction>[] m_OnEnd;
+            public ReferenceArray<Reference<TriggerAction>> m_OnStart;
+            public ReferenceArray<Reference<TriggerAction>> m_OnEnd;
 
-            public Reference<InstanceAction>[] m_OnStartAction;
-            public Reference<InstanceAction>[] m_OnEndAction;
+            public ReferenceArray<Reference<InstanceAction>> m_OnStartAction;
+            public ReferenceArray<Reference<InstanceAction>> m_OnEndAction;
 
+            public void Dispose()
+            {
+                m_Data = Reference<TimelineData>.Empty;
+                m_Executer = EntityData<IEntityData>.Empty;
+
+                m_Conditional.Dispose();
+                m_OnStart.Dispose();
+                m_OnEnd.Dispose();
+                m_OnStartAction.Dispose();
+                m_OnEndAction.Dispose();
+            }
             public IEnumerator Execute()
             {
                 if (!m_Conditional.Execute(m_Executer, out bool predicate) || !predicate)
@@ -249,7 +261,7 @@ namespace Syadeu.Presentation.Actions
                     }
                 }
 
-                m_Executer = EntityData<IEntityData>.Empty;
+                Dispose();
             }
         }
     }

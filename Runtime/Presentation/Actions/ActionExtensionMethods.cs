@@ -192,6 +192,117 @@ namespace Syadeu.Presentation.Actions
             return !isFailed;
         }
 
+        public static bool Execute<T>(this ReferenceArray<Reference<T>> actions, EntityData<IEntityData> entity) where T : TriggerAction
+        {
+            if (!entity.IsValid())
+            {
+                CoreSystem.Logger.LogWarning(Channel.Entity,
+                    string.Format(c_WarningInvalidEntityAction, TypeHelper.TypeOf<T>.Name));
+                return false;
+            }
+
+            bool isFailed = false;
+            for (int i = 0; i < actions.Length; i++)
+            {
+                if (!actions[i].IsValid()) continue;
+
+                isFailed |= !actions[i].Execute(entity);
+            }
+
+            if (isFailed)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    string.Format(c_ErrorCompletedWithFailed, TypeHelper.TypeOf<T>.Name));
+            }
+
+            return !isFailed;
+        }
+        public static bool Execute<T>(this ReferenceArray<Reference<T>> actions, EntityData<IEntityData> entity, out bool predicate) where T : TriggerPredicateAction
+        {
+            if (!entity.IsValid())
+            {
+                CoreSystem.Logger.LogWarning(Channel.Entity,
+                    string.Format(c_WarningInvalidEntityAction, TypeHelper.TypeOf<T>.Name));
+                predicate = false;
+                return false;
+            }
+
+            bool
+                isFailed = false,
+                isFalse = false;
+            for (int i = 0; i < actions.Length; i++)
+            {
+                if (!actions[i].IsValid()) continue;
+
+                isFailed |= !actions[i].Execute(entity, out bool result);
+                isFalse |= !result;
+            }
+
+            if (isFailed)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    string.Format(c_ErrorCompletedWithFailed, TypeHelper.TypeOf<T>.Name));
+            }
+
+            predicate = !isFalse;
+            return !isFailed;
+        }
+        public static bool Execute<T>(this ReferenceArray<Reference<T>> actions) 
+            where T : InstanceActionBase<T>
+        {
+            bool isFailed = false;
+            for (int i = 0; i < actions.Length; i++)
+            {
+                if (!actions[i].IsValid()) continue;
+
+                isFailed |= !actions[i].Execute();
+            }
+
+            if (isFailed)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    string.Format(c_ErrorCompletedWithFailed, TypeHelper.TypeOf<T>.Name));
+            }
+
+            return !isFailed;
+        }
+        public static bool Execute<T>(this ReferenceArray<Reference<ParamAction<T>>> actions, T target)
+        {
+            bool isFailed = false;
+            for (int i = 0; i < actions.Length; i++)
+            {
+                if (!actions[i].IsValid()) continue;
+
+                isFailed |= !actions[i].Execute(target);
+            }
+
+            if (isFailed)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    string.Format(c_ErrorCompletedWithFailed, TypeHelper.TypeOf<ParamAction<T>>.Name));
+            }
+
+            return !isFailed;
+        }
+        public static bool Execute<T, TA>(this ReferenceArray<Reference<ParamAction<T, TA>>> actions, T t, TA ta)
+        {
+            bool isFailed = false;
+            for (int i = 0; i < actions.Length; i++)
+            {
+                if (!actions[i].IsValid()) continue;
+
+                isFailed |= !actions[i].Execute(t, ta);
+            }
+
+            if (isFailed)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    string.Format(c_ErrorCompletedWithFailed, TypeHelper.TypeOf<ParamAction<T, TA>>.Name));
+            }
+
+            return !isFailed;
+        }
+
         public static void Execute<TState, TAction>(this Reference<TAction> other, EntityData<IEntityData> entity)
             where TState : StateBase<TAction>, ITerminate, new()
             where TAction : StatefulActionBase<TState, TAction>

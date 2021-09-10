@@ -516,7 +516,11 @@ namespace Syadeu.Presentation.Proxy
             CoreSystem.Logger.NotNull(m_RenderSystem, $"You've call this method too early or outside of PresentationSystem");
 
             ProxyTransform tr;
-            if (!prefab.IsValid())
+            if (prefab.IsNone())
+            {
+                tr = m_ProxyData.Add(PrefabReference.None, pos, rot, scale, enableCull, center, size);
+            }
+            else if (!prefab.IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Proxy,
                     $"Trying to create an invalid prefab proxy. This is not allowed. Replaced to empty.");

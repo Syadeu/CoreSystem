@@ -460,7 +460,7 @@ namespace Syadeu.Presentation
         private ProxyTransform InternalCreateProxy(in EntityBase from,
             in PrefabReference<GameObject> prefab, in float3 pos, in quaternion rot, in float3 scale)
         {
-            if (!prefab.IsValid())
+            if (!prefab.IsNone() && !prefab.IsValid())
             {
                 throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
                     $"{from.Name} has an invalid prefab. This is not allowed.");
