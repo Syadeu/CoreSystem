@@ -25,6 +25,7 @@ namespace Syadeu.Presentation
         private const string c_ObjectNotFoundError = "Object({0}) not found.";
         private const string c_EntityNotFoundError = "Entity({0}) not found. Cannot spawn at {1}";
         private const string c_IsNotEntityError = "This object({0}) is not a entity. Use CreateObject instead";
+        private const string c_EntityHasInvalidPrefabError = "This entity({0}) has an invalid prefab. This is not allowed";
         private const string c_AttributeWarning = "Attribute({0}) on entity({1}) has invaild value. {2}. Request Ignored.";
         private const string c_AttributeEmptyWarning = "Entity({0}) has empty attribute. This is not allowed. Request Ignored.";
 
@@ -446,6 +447,13 @@ namespace Syadeu.Presentation
                 return false;
             }
             entity = (EntityBase)original;
+
+            if (!entity.Prefab.IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_EntityHasInvalidPrefabError, key));
+                return false;
+            }
+
             return true;
         }
         #endregion
