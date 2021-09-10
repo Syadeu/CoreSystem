@@ -1048,43 +1048,60 @@ namespace SyadeuEditor.Presentation.Map
                             Event.current.Use();
                         }
                     }
-                    //else if (Event.current.button == 2)
-                    //{
-                    //    if (m_EditingMapData == null)
-                    //    {
-                    //        "no editting map data".ToLog();
-                    //        return;
-                    //    }
+                    else if (Event.current.button == 2)
+                    {
+                        if (m_EditingMapData == null)
+                        {
+                            "no editting map data".ToLog();
+                            return;
+                        }
 
-                    //    GUIUtility.hotControl = mouseControlID;
+                        GUIUtility.hotControl = mouseControlID;
 
-                    //    DeSelect();
+                        m_SelectedMapData = null;
+                        m_SelectedObject = null;
+                        m_SelectedGameObject = null;
 
-                    //    #region Draw Object Creation PopupWindow
-                    //    Rect rect = GUILayoutUtility.GetLastRect();
-                    //    rect.position = Event.current.mousePosition;
-                    //    Vector3 pos = EditorSceneUtils.GetMouseScreenPos();
+                        #region Draw Object Creation PopupWindow
 
-                    //    var list = EntityDataList.Instance.m_Objects.Where((other) => other.Value is EntityBase).Select((other) => (EntityBase)other.Value).ToArray();
-                    //    PopupWindow.Show(rect, SelectorPopup<Hash, EntityBase>.GetWindow
-                    //        (
-                    //        list: list,
-                    //        setter: (hash) =>
-                    //        {
-                    //            Reference<EntityBase> refobj = new Reference<EntityBase>(hash);
+                        Rect rect = GUILayoutUtility.GetLastRect();
+                        rect.position = Event.current.mousePosition;
+                        Vector3 pos = EditorSceneUtils.GetMouseScreenPos();
 
-                    //            m_SelectedMapObject = m_EditingMapData.Add(refobj, m_PreviewFolder, pos);
-                    //            Repaint();
-                    //        },
-                    //        getter: (other) => other.Hash,
-                    //        noneValue: Hash.Empty
-                    //        ));
-                    //    #endregion
+                        var list = EntityDataList.Instance.m_Objects.Where((other) => other.Value is EntityBase).Select((other) => (EntityBase)other.Value).ToArray();
 
-                    //    Repaint();
+                        PopupWindow.Show(rect, SelectorPopup<Hash, EntityBase>.GetWindow
+                            (
+                            list: list,
+                            setter: (hash) =>
+                            {
+                                if (hash.IsEmpty())
+                                {
+                                    return;
+                                }
 
-                    //    Event.current.Use();
-                    //}
+                                Reference<EntityBase> refobj = new Reference<EntityBase>(hash);
+                                MapDataEntityBase.Object obj = new MapDataEntityBase.Object
+                                {
+                                    m_Object = refobj,
+                                    m_Translation = float3.zero,
+                                    m_Rotation = quaternion.identity,
+                                    m_Scale = 1
+                                };
+                                m_EditingMapData.Add(obj);
+
+                                //Repaint();
+                            },
+                            getter: (other) => other.Hash,
+                            noneValue: Hash.Empty
+                            ));
+
+                        #endregion
+
+                        //Repaint();
+
+                        Event.current.Use();
+                    }
 
                     break;
                 case EventType.MouseUp:
@@ -1173,7 +1190,7 @@ namespace SyadeuEditor.Presentation.Map
                     {
                         DrawMapDataSelector(m_LoadedMapDataReference[index], (other) =>
                         {
-                            if (m_EditingMapData.Equals(m_LoadedMapData[index]))
+                            if (m_EditingMapData != null && m_EditingMapData.Equals(m_LoadedMapData[index]))
                             {
                                 m_EditingMapData = null;
                             }
@@ -1224,7 +1241,7 @@ namespace SyadeuEditor.Presentation.Map
 
                         if (GUILayout.Button("-", GUILayout.Width(20)))
                         {
-                            if (m_EditingMapData.Equals(m_LoadedMapData[index]))
+                            if (m_EditingMapData != null && m_EditingMapData.Equals(m_LoadedMapData[index]))
                             {
                                 m_EditingMapData = null;
                             }
