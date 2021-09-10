@@ -1,0 +1,187 @@
+﻿using UnityEditor;
+using Syadeu.Database;
+using UnityEditor.AddressableAssets;
+using UnityEditor.AddressableAssets.Settings;
+using UnityEngine;
+using System.Collections.Generic;
+using System;
+using System.IO;
+using UnityEditor.Build.Utilities;
+using UnityEditor.AddressableAssets.Build;
+using Syadeu;
+using System.Linq;
+
+namespace SyadeuEditor.Presentation
+{
+    using Object = UnityEngine.Object;
+
+    internal class EntityAssetInspectorGUI : IStaticInitializer
+    {
+        static string s_DefaultPrefabGroupName = "PrefabList";
+        static AddressableAssetGroup[] s_EntityGroups;
+
+        static EntityAssetInspectorGUI()
+        {
+            Editor.finishedDefaultHeaderGUI += OnPostHeaderGUI;
+        }
+
+        #region Addressable Utils
+
+        internal static bool GetPathAndGUIDFromTarget(Object target, out string path, out string guid, out Type mainAssetType)
+        {
+            mainAssetType = null;
+            guid = string.Empty;
+            path = string.Empty;
+            if (target == null)
+                return false;
+            path = AssetDatabase.GetAssetOrScenePath(target);
+            if (!IsPathValidForEntry(path))
+                return false;
+            guid = AssetDatabase.AssetPathToGUID(path);
+            if (string.IsNullOrEmpty(guid))
+                return false;
+            mainAssetType = AssetDatabase.GetMainAssetTypeAtPath(path);
+            if (mainAssetType == null)
+                return false;
+            if (mainAssetType != target.GetType() && !typeof(AssetImporter).IsAssignableFrom(target.GetType()))
+                return false;
+            return true;
+        }
+        static HashSet<string> excludedExtensions = new HashSet<string>(new string[] { ".cs", ".js", ".boo", ".exe", ".dll", ".meta" });
+        internal static bool IsPathValidForEntry(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+                return false;
+            if (!path.StartsWith("assets", StringComparison.OrdinalIgnoreCase) && !IsPathValidPackageAsset(path))
+                return false;
+            if (path == CommonStrings.UnityEditorResourcePath ||
+                path == CommonStrings.UnityDefaultResourcePath ||
+                path == CommonStrings.UnityBuiltInExtraPath)
+                return false;
+            return !excludedExtensions.Contains(Path.GetExtension(path));
+        }
+        internal static bool IsPathValidPackageAsset(string path)
+        {
+            string convertPath = path.ToLower().Replace("\\", "/");
+            string[] splitPath = convertPath.Split('/');
+
+            if (splitPath.Length < 3)
+                return false;
+            if (splitPath[0] != "packages")
+                return false;
+            if (splitPath.Length == 3)
+            {
+                string ext = Path.GetExtension(splitPath[2]);
+                if (ext == ".json" || ext == ".asmdef")
+                    return false;
+            }
+            return true;
+        }
+
+        #endregion
+
+        private static void Validate()
+        {
+            if (s_EntityGroups != null) return;
+
+            var aaSettings = AddressableAssetSettingsDefaultObject.Settings;
+            s_EntityGroups = aaSettings.groups.Where((other) => other.HasSchema<PrefabListGroupSchema>() || other.Name.Equals(s_DefaultPrefabGroupName)).ToArray();
+
+
+        }
+        private static void OnPostHeaderGUI(Editor editor)
+        {
+            if (editor.targets.Length == 0) return;
+
+            var aaSettings = AddressableAssetSettingsDefaultObject.Settings;
+            AddressableAssetEntry entry = null;
+
+            int addressableCount = 0;
+            bool foundValidAsset = false;
+            bool foundAssetGroup = false;
+            foreach (var t in editor.targets)
+            {
+                foundAssetGroup |= t is AddressableAssetGroup;
+                foundAssetGroup |= t is AddressableAssetGroupSchema;
+                if (GetPathAndGUIDFromTarget(t, out var path, out var guid, out var mainAssetType))
+                {
+                    // Is asset
+                    if (!BuildUtility.IsEditorAssembly(mainAssetType.Assembly))
+                    {
+                        foundValidAsset = true;
+
+                        if (aaSettings != null)
+                        {
+                            entry = aaSettings.FindAssetEntry(guid);
+                            if (entry != null && !entry.IsSubAsset)
+                            {
+                                addressableCount++;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (foundAssetGroup)
+            {
+                GUILayout.BeginHorizontal();
+                EditorGUILayout.LabelField("test 123");
+                //GUILayout.Label("Profile: " + AddressableAssetSettingsDefaultObject.GetSettings(true).profileSettings.
+                //    GetProfileName(AddressableAssetSettingsDefaultObject.GetSettings(true).activeProfileId));
+
+                //GUILayout.FlexibleSpace();
+                //if (GUILayout.Button("System Settings", "MiniButton"))
+                //{
+                //    EditorGUIUtility.PingObject(AddressableAssetSettingsDefaultObject.Settings);
+                //    Selection.activeObject = AddressableAssetSettingsDefaultObject.Settings;
+                //}
+                GUILayout.EndHorizontal();
+            }
+
+            if (!foundValidAsset) return;
+
+            if (addressableCount == 0)
+            {
+                EditorGUILayout.LabelField("not addressable");
+                //if (GUILayout.Toggle(false, s_AddressableAssetToggleText, GUILayout.ExpandWidth(false)))
+                //    SetAaEntry(AddressableAssetSettingsDefaultObject.GetSettings(true), editor.targets, true);
+            }
+            else if (addressableCount == editor.targets.Length)
+            {
+                GUILayout.BeginHorizontal();
+                EditorGUILayout.LabelField("addressable");
+                //if (!GUILayout.Toggle(true, s_AddressableAssetToggleText, GUILayout.ExpandWidth(false)))
+                //{
+                //    SetAaEntry(aaSettings, editor.targets, false);
+                //    GUIUtility.ExitGUI();
+                //}
+
+                //if (editor.targets.Length == 1 && entry != null)
+                //{
+                //    string newAddress = EditorGUILayout.DelayedTextField(entry.address, GUILayout.ExpandWidth(true));
+                //    if (newAddress != entry.address)
+                //    {
+                //        if (newAddress.Contains("[") && newAddress.Contains("]"))
+                //            Debug.LogErrorFormat("Rename of address '{0}' cannot contain '[ ]'.", entry.address);
+                //        else
+                //        {
+                //            entry.address = newAddress;
+                //            AddressableAssetUtility.OpenAssetIfUsingVCIntegration(entry.parentGroup, true);
+                //        }
+                //    }
+                //}
+                GUILayout.EndHorizontal();
+            }
+            else
+            {
+                GUILayout.BeginHorizontal();
+                //if (s_ToggleMixed == null)
+                //    s_ToggleMixed = new GUIStyle("ToggleMixed");
+                //if (GUILayout.Toggle(false, s_AddressableAssetToggleText, s_ToggleMixed, GUILayout.ExpandWidth(false)))
+                //    SetAaEntry(AddressableAssetSettingsDefaultObject.GetSettings(true), editor.targets, true);
+                //EditorGUILayout.LabelField(addressableCount + " out of " + editor.targets.Length + " assets are addressable.");
+                GUILayout.EndHorizontal();
+            }
+        }
+    }
+}
