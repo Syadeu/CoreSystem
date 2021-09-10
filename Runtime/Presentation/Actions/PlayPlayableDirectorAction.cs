@@ -16,6 +16,9 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 
 using Unity.Mathematics;
 using Unity.Collections;
+using UnityEngine.Timeline;
+using System.Linq;
+using Syadeu.Presentation.Attributes;
 
 #if UNITY_CINEMACHINE
 using Cinemachine;
@@ -82,6 +85,13 @@ namespace Syadeu.Presentation.Actions
             m_CoroutineSystem.PostSequenceIterationJob(job);
         }
 
+        private struct NotificationReceiver : INotificationReceiver
+        {
+            public void OnNotify(Playable origin, INotification notification, object context)
+            {
+                throw new NotImplementedException();
+            }
+        }
         private struct PayloadJob : ICoroutineJob, IDisposable
         {
             public Reference<TimelineData> m_Data;
@@ -209,17 +219,7 @@ namespace Syadeu.Presentation.Actions
                 {
                     asset = director.playableAsset;
 
-                    foreach (PlayableBinding item in asset.outputs)
-                    {
-                        Type type = item.outputTargetType;
-#if UNITY_CINEMACHINE
-                        if (type.Equals(TypeHelper.TypeOf<CinemachineBrain>.Type))
-                        {
-                            director.SetGenericBinding(item.sourceObject, PresentationSystem<RenderSystem>.System.Camera.GetComponent<CinemachineBrain>());
-                            continue;
-                        }
-#endif
-                    }
+                    Bind(director, asset);
                 }
 
                 m_OnStart.Execute(m_Executer);
@@ -263,6 +263,34 @@ namespace Syadeu.Presentation.Actions
 
                 Dispose();
             }
+
+            private void Bind(PlayableDirector director, PlayableAsset asset)
+            {
+                foreach (PlayableBinding item in asset.outputs)
+                {
+#if UNITY_CINEMACHINE
+                    if (item.sourceObject is CinemachineTrack)
+                    {
+                        director.SetGenericBinding(item.sourceObject, PresentationSystem<RenderSystem>.System.Camera.GetComponent<CinemachineBrain>());
+                        continue;
+                    }
+#endif
+                    if (item.sourceObject is EntityControlTrack entityControlTrack)
+                    {
+                        AnimatorAttribute animator = m_Executer.GetAttribute<AnimatorAttribute>();
+                        CoreSystem.Logger.NotNull(animator, "animator not found");
+
+                        director.SetGenericBinding(item.sourceObject, m_Executer.As<IEntityData, IEntity>().proxy);
+
+                        foreach (EntityControlTrackClip clip in
+                            entityControlTrack.GetClips().Select((other) => (EntityControlTrackClip)other.asset))
+                        {
+                            director.SetReferenceValue(clip.m_Animator.exposedName, animator.AnimatorComponent);
+                        }
+                    }
+                }
+            }
+            //
         }
     }
 }

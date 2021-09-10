@@ -1208,6 +1208,8 @@ namespace SyadeuEditor.Presentation.Map
 
             m_LoadedMapDataReference.Clear();
             m_LoadedMapData.Clear();
+
+            UnityEngine.Object.DestroyImmediate(m_Folder.gameObject);
         }
 
         private bool m_WasEditedMapDataSelector = false;

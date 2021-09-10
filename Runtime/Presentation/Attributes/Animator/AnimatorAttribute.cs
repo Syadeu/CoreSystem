@@ -134,7 +134,7 @@ namespace Syadeu.Presentation.Attributes
             if (att.AnimatorComponent == null)
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"This entity({entity.Name}) has {nameof(AnimatorAttribute)} but cannot found animator");
+                    $"This entity({entity.Name}) has {nameof(AnimatorAttribute)} but cannot found animator({nameof(AnimatorComponent)})");
                 return false;
             }
             att.AnimatorComponent.m_AnimatorAttribute = att;

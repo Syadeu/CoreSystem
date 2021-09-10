@@ -122,6 +122,16 @@ namespace Syadeu.Presentation.Entities
                 }
             }
         }
+        public UnityEngine.Object proxy
+        {
+            get
+            {
+                if (transform is IUnityTransform unity) return unity.provider;
+
+                IProxyTransform tr = (IProxyTransform)transform;
+                return tr.proxy;
+            }
+        }
 #pragma warning restore IDE1006 // Naming Styles
 
         private Entity(Hash idx)

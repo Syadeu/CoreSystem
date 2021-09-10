@@ -3,6 +3,7 @@ using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Entities;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Playables;
 
 namespace Syadeu.Presentation.Attributes
 {
