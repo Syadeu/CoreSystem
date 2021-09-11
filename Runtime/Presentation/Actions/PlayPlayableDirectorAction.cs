@@ -19,6 +19,7 @@ using Unity.Collections;
 using UnityEngine.Timeline;
 using System.Linq;
 using Syadeu.Presentation.Attributes;
+using Syadeu.Presentation.Timeline;
 
 #if UNITY_CINEMACHINE
 using Cinemachine;
@@ -85,14 +86,8 @@ namespace Syadeu.Presentation.Actions
             m_CoroutineSystem.PostSequenceIterationJob(job);
         }
 
-        private struct NotificationReceiver : INotificationReceiver
-        {
-            public void OnNotify(Playable origin, INotification notification, object context)
-            {
-                throw new NotImplementedException();
-            }
-        }
-        private struct PayloadJob : ICoroutineJob, IDisposable
+        
+        private struct PayloadJob : ICoroutineJob
         {
             public Reference<TimelineData> m_Data;
             public EntityData<IEntityData> m_Executer;
@@ -260,8 +255,6 @@ namespace Syadeu.Presentation.Actions
                         director.ClearGenericBinding(item.sourceObject);
                     }
                 }
-
-                Dispose();
             }
 
             private void Bind(PlayableDirector director, PlayableAsset asset)
@@ -285,12 +278,13 @@ namespace Syadeu.Presentation.Actions
                         foreach (EntityControlTrackClip clip in
                             entityControlTrack.GetClips().Select((other) => (EntityControlTrackClip)other.asset))
                         {
-                            director.SetReferenceValue(clip.m_Animator.exposedName, animator.AnimatorComponent);
+                            director.SetReferenceValue(clip.Animator.exposedName, animator.AnimatorComponent);
                         }
                     }
                 }
             }
             //
+
         }
     }
 }

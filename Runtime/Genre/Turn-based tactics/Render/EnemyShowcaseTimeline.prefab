@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5917667882606671240}
   - component: {fileID: 5917667882606671247}
+  - component: {fileID: 8419868904479430326}
   m_Layer: 0
   m_Name: CM vcam5
   m_TagString: Untagged
@@ -67,6 +68,25 @@ MonoBehaviour:
         m_Calls: []
   m_LegacyBlendHint: 0
   m_ComponentOwner: {fileID: 5917667883292823279}
+--- !u!95 &8419868904479430326
+Animator:
+  serializedVersion: 3
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5917667882606671246}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 0}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorControllerStateOnDisable: 0
 --- !u!1 &5917667882674624675
 GameObject:
   m_ObjectHideFlags: 0
@@ -424,6 +444,12 @@ PlayableDirector:
     value: {fileID: 5917667884592644359}
   - key: {fileID: -5411989970963475772, guid: be6b28e53f1bffb499a54326ed29c03d, type: 2}
     value: {fileID: 5917667882606671246}
+  - key: {fileID: 821144801888929232, guid: be6b28e53f1bffb499a54326ed29c03d, type: 2}
+    value: {fileID: 5917667883660698579}
+  - key: {fileID: -8528013273377858702, guid: be6b28e53f1bffb499a54326ed29c03d, type: 2}
+    value: {fileID: 0}
+  - key: {fileID: 5681094188375723569, guid: be6b28e53f1bffb499a54326ed29c03d, type: 2}
+    value: {fileID: 8419868904479430326}
   m_ExposedReferences:
     m_References:
     - 3723d7c02d446944ab87215e3b5c2b85: {fileID: 5917667882606671247}

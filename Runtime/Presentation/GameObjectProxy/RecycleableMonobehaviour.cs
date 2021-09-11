@@ -1,6 +1,7 @@
 ﻿using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation;
+using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using System;
@@ -8,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Playables;
 
 namespace Syadeu.Presentation.Proxy
 {
@@ -18,7 +20,7 @@ namespace Syadeu.Presentation.Proxy
     /// OnDestroy 함수를 절때 사용하지마세요
     /// </summary>
     /// <typeparam name="T"></typeparam>    
-    public abstract class RecycleableMonobehaviour : MonoBehaviour, IValidation
+    public abstract class RecycleableMonobehaviour : MonoBehaviour, IValidation, INotificationReceiver
     {
         public delegate bool TerminateCondition();
         /// <summary>
@@ -187,5 +189,21 @@ namespace Syadeu.Presentation.Proxy
         }
 
         public bool IsValid() => Activated && !m_Entity.Equals(Entity<IEntity>.Empty);
+
+        void INotificationReceiver.OnNotify(Playable origin, INotification notification, object context)
+        {
+            if (notification is Timeline.AnimatorTriggerMarker animtrigger)
+            {
+                AnimatorComponent animator = GetComponent<AnimatorComponent>();
+                if (animator == null)
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"Timeline trying to triggering animator at entity({entity.Name}) but there\'s no animator");
+                    return;
+                }
+
+                animator.m_Animator.SetTrigger(animtrigger.TriggerKey);
+            }
+        }
     }
 }

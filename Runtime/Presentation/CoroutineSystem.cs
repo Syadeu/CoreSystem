@@ -1,4 +1,5 @@
 ﻿using Syadeu.Internal;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -11,57 +12,89 @@ namespace Syadeu.Presentation
         public override bool EnableOnPresentation => true;
         public override bool EnableAfterPresentation => false;
 
-        private readonly Queue<IEnumerator> m_IterationJobs = new Queue<IEnumerator>();
-        private IEnumerator m_CurrentIterationJob = null;
+        private readonly Queue<CoroutineJobPayload> m_IterationJobs = new Queue<CoroutineJobPayload>();
+        private CoroutineJobPayload m_CurrentIterationJob = null;
 
         readonly List<CoroutineJob> m_CoroutineJobs = new List<CoroutineJob>();
-        readonly List<IEnumerator> m_CoroutineIterators = new List<IEnumerator>();
+        readonly List<CoroutineJobPayload> m_CoroutineIterators = new List<CoroutineJobPayload>();
         readonly List<int> m_UsedCoroutineIndices = new List<int>();
         readonly Queue<int> m_TerminatedCoroutineIndices = new Queue<int>();
 
+        public override void OnDispose()
+        {
+            if (m_CurrentIterationJob != null)
+            {
+                m_CurrentIterationJob.Disposable.Dispose();
+            }
+            m_CurrentIterationJob = null;
+            int m_iterjobCount = m_IterationJobs.Count;
+            for (int i = 0; i < m_iterjobCount; i++)
+            {
+                m_IterationJobs.Dequeue().Disposable.Dispose();
+            }
+
+            for (int i = 0; i < m_CoroutineIterators.Count; i++)
+            {
+                if (m_CoroutineIterators[i] == null) continue;
+                m_CoroutineIterators[i].Disposable.Dispose();
+            }
+
+            m_CoroutineJobs.Clear();
+            m_CoroutineIterators.Clear();
+            m_UsedCoroutineIndices.Clear();
+            m_TerminatedCoroutineIndices.Clear();
+
+            base.OnDispose();
+        }
         protected override PresentationResult OnPresentation()
         {
             #region Sequence Iterator Jobs
             if (m_CurrentIterationJob != null)
             {
-                if (m_CurrentIterationJob.Current == null)
+                if (m_CurrentIterationJob.Iter.Current == null)
                 {
-                    if (!m_CurrentIterationJob.MoveNext())
+                    if (!m_CurrentIterationJob.Iter.MoveNext())
                     {
+                        m_CurrentIterationJob.Disposable.Dispose();
                         m_CurrentIterationJob = null;
                     }
                 }
                 else
                 {
-                    if (m_CurrentIterationJob.Current is CustomYieldInstruction @yield && !yield.keepWaiting)
+                    if (m_CurrentIterationJob.Iter.Current is CustomYieldInstruction @yield && !yield.keepWaiting)
                     {
-                        if (!m_CurrentIterationJob.MoveNext())
+                        if (!m_CurrentIterationJob.Iter.MoveNext())
                         {
+                            m_CurrentIterationJob.Disposable.Dispose();
                             m_CurrentIterationJob = null;
                         }
                     }
-                    else if (m_CurrentIterationJob.Current is UnityEngine.AsyncOperation oper &&
+                    else if (m_CurrentIterationJob.Iter.Current is UnityEngine.AsyncOperation oper &&
                         oper.isDone)
                     {
-                        if (!m_CurrentIterationJob.MoveNext())
+                        if (!m_CurrentIterationJob.Iter.MoveNext())
                         {
+                            m_CurrentIterationJob.Disposable.Dispose();
                             m_CurrentIterationJob = null;
                         }
                     }
-                    else if (m_CurrentIterationJob.Current is ICustomYieldAwaiter yieldAwaiter &&
+                    else if (m_CurrentIterationJob.Iter.Current is ICustomYieldAwaiter yieldAwaiter &&
                         !yieldAwaiter.KeepWait)
                     {
-                        if (!m_CurrentIterationJob.MoveNext())
+                        if (!m_CurrentIterationJob.Iter.MoveNext())
                         {
+                            m_CurrentIterationJob.Disposable.Dispose();
                             m_CurrentIterationJob = null;
                         }
                     }
-                    else if (m_CurrentIterationJob.Current is YieldInstruction &&
-                        !(m_CurrentIterationJob.Current is UnityEngine.AsyncOperation))
+                    else if (m_CurrentIterationJob.Iter.Current is YieldInstruction &&
+                        !(m_CurrentIterationJob.Iter.Current is UnityEngine.AsyncOperation))
                     {
-                        m_CurrentIterationJob = null;
                         CoreSystem.Logger.LogError(Channel.Presentation,
-                            $"해당 yield return 타입({m_CurrentIterationJob.Current.GetType().Name})은 지원하지 않습니다");
+                            $"해당 yield return 타입({m_CurrentIterationJob.Iter.Current.GetType().Name})은 지원하지 않습니다");
+
+                        m_CurrentIterationJob.Disposable.Dispose();
+                        m_CurrentIterationJob = null;
                     }
                 }
             }
@@ -78,58 +111,68 @@ namespace Syadeu.Presentation
             for (int i = m_UsedCoroutineIndices.Count - 1; i >= 0; i--)
             {
                 int idx = m_UsedCoroutineIndices[i];
-                IEnumerator iter = m_CoroutineIterators[idx];
-                if (iter.Current == null)
+                CoroutineJobPayload iter = m_CoroutineIterators[idx];
+                if (iter.Iter.Current == null)
                 {
-                    if (!iter.MoveNext())
+                    if (!iter.Iter.MoveNext())
                     {
+                        m_CoroutineIterators[idx].Disposable.Dispose();
                         m_CoroutineIterators[idx] = null;
+
                         m_TerminatedCoroutineIndices.Enqueue(idx);
                         m_UsedCoroutineIndices.RemoveAt(i);
                         continue;
                     }
                 }
 
-                if (iter.Current is CustomYieldInstruction @yield && !yield.keepWaiting)
+                if (iter.Iter.Current is CustomYieldInstruction @yield && !yield.keepWaiting)
                 {
-                    if (!iter.MoveNext())
+                    if (!iter.Iter.MoveNext())
                     {
+                        m_CoroutineIterators[idx].Disposable.Dispose();
                         m_CoroutineIterators[idx] = null;
+
                         m_TerminatedCoroutineIndices.Enqueue(idx);
                         m_UsedCoroutineIndices.RemoveAt(i);
                         continue;
                     }
                 }
-                else if (iter.Current is UnityEngine.AsyncOperation oper && oper.isDone)
+                else if (iter.Iter.Current is UnityEngine.AsyncOperation oper && oper.isDone)
                 {
-                    if (!m_CurrentIterationJob.MoveNext())
+                    if (!m_CurrentIterationJob.Iter.MoveNext())
                     {
+                        m_CoroutineIterators[idx].Disposable.Dispose();
                         m_CoroutineIterators[idx] = null;
+
                         m_TerminatedCoroutineIndices.Enqueue(idx);
                         m_UsedCoroutineIndices.RemoveAt(i);
                         continue;
                     }
                 }
-                else if (iter.Current is ICustomYieldAwaiter yieldAwaiter &&
+                else if (iter.Iter.Current is ICustomYieldAwaiter yieldAwaiter &&
                     !yieldAwaiter.KeepWait)
                 {
-                    if (!m_CurrentIterationJob.MoveNext())
+                    if (!m_CurrentIterationJob.Iter.MoveNext())
                     {
+                        m_CoroutineIterators[idx].Disposable.Dispose();
                         m_CoroutineIterators[idx] = null;
+
                         m_TerminatedCoroutineIndices.Enqueue(idx);
                         m_UsedCoroutineIndices.RemoveAt(i);
                         continue;
                     }
                 }
-                else if (iter.Current is YieldInstruction &&
-                    !(iter.Current is UnityEngine.AsyncOperation))
+                else if (iter.Iter.Current is YieldInstruction &&
+                    !(iter.Iter.Current is UnityEngine.AsyncOperation))
                 {
+                    CoreSystem.Logger.LogError(Channel.Presentation,
+                        $"해당 yield return 타입({m_CurrentIterationJob.Iter.Current.GetType().Name})은 지원하지 않습니다");
+
+                    m_CoroutineIterators[idx].Disposable.Dispose();
                     m_CoroutineIterators[idx] = null;
+
                     m_TerminatedCoroutineIndices.Enqueue(idx);
                     m_UsedCoroutineIndices.RemoveAt(i);
-
-                    CoreSystem.Logger.LogError(Channel.Presentation,
-                        $"해당 yield return 타입({m_CurrentIterationJob.Current.GetType().Name})은 지원하지 않습니다");
                     continue;
                 }
             }
@@ -137,9 +180,19 @@ namespace Syadeu.Presentation
             return base.OnPresentation();
         }
 
+        private class CoroutineJobPayload
+        {
+            public IEnumerator Iter;
+            public IDisposable Disposable;
+        }
+
         public void PostSequenceIterationJob<T>(T job) where T : ICoroutineJob
         {
-            m_IterationJobs.Enqueue(job.Execute());
+            m_IterationJobs.Enqueue(new CoroutineJobPayload
+            {
+                Iter = job.Execute(),
+                Disposable = job
+            });
         }
 
         public CoroutineJob PostCoroutineJob<T>(T job) where T : ICoroutineJob
@@ -154,7 +207,11 @@ namespace Syadeu.Presentation
                     m_Generation = 0
                 };
                 m_CoroutineJobs.Add(coroutineJob);
-                m_CoroutineIterators.Add(job.Execute());
+                m_CoroutineIterators.Add(new CoroutineJobPayload
+                {
+                    Iter = job.Execute(),
+                    Disposable = job
+                });
             }
             else
             {
@@ -162,7 +219,11 @@ namespace Syadeu.Presentation
                 coroutineJob = m_CoroutineJobs[index];
                 coroutineJob.m_Generation++;
                 m_CoroutineJobs[index] = coroutineJob;
-                m_CoroutineIterators[index] = job.Execute();
+                m_CoroutineIterators[index] = new CoroutineJobPayload
+                {
+                    Iter = job.Execute(),
+                    Disposable = job
+                };
             }
             m_UsedCoroutineIndices.Add(coroutineJob.Index);
             return coroutineJob;

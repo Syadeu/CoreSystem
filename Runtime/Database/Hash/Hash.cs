@@ -67,6 +67,8 @@ namespace Syadeu.Database
         public bool Equals(Hash other) => mBits.Equals(other.mBits);
         public override bool Equals(object obj) => (obj is Hash hash) && Equals(hash);
 
+        public int ToInt32() => (int)mBits;
+
         public static bool operator ==(Hash a, Hash b) => (a.mBits == b.mBits);
         public static bool operator !=(Hash a, Hash b) => (a.mBits != b.mBits);
         //public static bool operator ==(Hash a, object b) => ((b == null) && (a == Empty)) || (a == (Hash)b);
