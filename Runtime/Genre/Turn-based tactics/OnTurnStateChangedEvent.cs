@@ -14,6 +14,7 @@ namespace Syadeu.Presentation.TurnTable
         public TurnPlayerAttribute Attribute { get; private set; }
         public TurnState State { get; private set; }
 
+        public override bool IsValid() => Entity.IsValid();
         public static OnTurnStateChangedEvent GetEvent(TurnPlayerAttribute target, TurnState state)
         {
             var temp = Dequeue();

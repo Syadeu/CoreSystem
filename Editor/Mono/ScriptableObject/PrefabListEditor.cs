@@ -100,7 +100,7 @@ namespace SyadeuEditor
                 if (list[i].GetEditorAsset() == null)
                 {
                     CoreSystem.Logger.Log(Channel.Editor,
-                        $"PrefabList found an valid asset at {i}:{list[i].m_Name}");
+                        $"PrefabList found an invalid asset at {i}:{list[i].m_Name}");
 
                     //list[i].m_Name = $"!!INVALID!! {list[i].m_Name}";
                     invalidIndices.Enqueue(i);

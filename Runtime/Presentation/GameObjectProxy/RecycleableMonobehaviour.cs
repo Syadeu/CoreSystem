@@ -203,7 +203,11 @@ namespace Syadeu.Presentation.Proxy
                 }
 
                 animator.m_Animator.SetTrigger(animtrigger.TriggerKey);
+                return;
             }
+
+            CoreSystem.Logger.LogError(Channel.Entity,
+                $"Unhandled marker type: {notification.GetType().Name}");
         }
     }
 }

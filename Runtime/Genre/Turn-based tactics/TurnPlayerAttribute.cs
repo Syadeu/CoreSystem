@@ -44,8 +44,11 @@ namespace Syadeu.Presentation.TurnTable
             }
         }
 
+        [JsonIgnore] public bool IsMyTurn { get; private set; }
+
         public void StartTurn()
         {
+            IsMyTurn = true;
             CoreSystem.Logger.Log(Channel.Entity, $"{Name} turn start");
             PresentationSystem<EventSystem>.System.PostEvent(OnTurnStateChangedEvent.GetEvent(this, OnTurnStateChangedEvent.TurnState.Start));
 
@@ -56,6 +59,7 @@ namespace Syadeu.Presentation.TurnTable
         }
         public void EndTurn()
         {
+            IsMyTurn = false;
             CoreSystem.Logger.Log(Channel.Entity, $"{Name} turn end");
             PresentationSystem<EventSystem>.System.PostEvent(OnTurnStateChangedEvent.GetEvent(this, OnTurnStateChangedEvent.TurnState.End));
 

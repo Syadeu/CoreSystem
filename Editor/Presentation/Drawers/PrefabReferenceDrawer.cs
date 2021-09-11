@@ -112,10 +112,11 @@ namespace SyadeuEditor.Presentation
                 {
                     EditorUtils.BoxBlock box = new EditorUtils.BoxBlock(Color.black);
 
-                    EditorGUI.BeginDisabledGroup(true);
-                    m_Editor.DrawHeader();
-                    m_Editor.OnInspectorGUI();
-                    EditorGUI.EndDisabledGroup();
+                    using (new EditorGUI.DisabledGroupScope(true))
+                    {
+                        m_Editor.DrawHeader();
+                        m_Editor.OnInspectorGUI();
+                    }
 
                     if (m_Editor.HasPreviewGUI())
                     {

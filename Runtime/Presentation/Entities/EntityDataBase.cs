@@ -124,7 +124,7 @@ namespace Syadeu.Presentation.Entities
                 AttributeBase att = (AttributeBase)EntityDataList.Instance.GetObject(m_AttributeList[i]);
                 if (att == null)
                 {
-                    CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_AttributeWarning, Name, m_AttributeList[i], i));
+                    CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_AttributeWarning, Name, m_AttributeList[i].m_Hash, i));
                     continue;
                 }
 
