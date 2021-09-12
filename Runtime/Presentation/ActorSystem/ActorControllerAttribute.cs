@@ -13,11 +13,11 @@ namespace Syadeu.Presentation.Actor
         [Header("General")]
         [JsonProperty(Order = 0, PropertyName = "SetAliveOnCreated")]
         internal bool m_SetAliveOnCreated = true;
-        [JsonProperty(Order = 0, PropertyName = "OnReceivedEvent")]
+        [JsonProperty(Order = 1, PropertyName = "OnReceivedEvent")]
         private Reference<ParamAction<IActorEvent>>[] m_OnReceivedEvent = Array.Empty<Reference<ParamAction<IActorEvent>>>();
 
         [Header("Provider")]
-        [JsonProperty(Order = 1, PropertyName = "Providers")] 
+        [JsonProperty(Order = 2, PropertyName = "Providers")] 
         internal Reference<ActorProviderBase>[] m_Providers = Array.Empty<Reference<ActorProviderBase>>();
 
         [JsonIgnore] internal ActorProviderBase[] Providers { get; set; }
@@ -25,6 +25,7 @@ namespace Syadeu.Presentation.Actor
         public void PostEvent<TEvent>(TEvent ev) where TEvent : unmanaged, IActorEvent
         {
             ev.OnExecute(Parent.CastAs<IEntityData, ActorEntity>());
+
             for (int i = 0; i < Providers.Length; i++)
             {
                 ExecutePostEvent(Providers[i], ev);
