@@ -20,13 +20,25 @@ namespace Syadeu.Presentation.TurnTable
         [SerializeField] private InputAction m_RotateRight;
         [SerializeField] private InputAction m_RotateLeft;
 
+        [Space]
+        [SerializeField] private string m_DefaultViewString = string.Empty;
+        [SerializeField] private string m_AimViewString = string.Empty;
+
         private CinemachineTargetGroup m_TargetGroup;
+        private CinemachineStateDrivenCamera m_StateCamera;
+        private Animator m_CameraAnimator;
 
         private Transform m_DefaultTarget = null;
         private ITransform m_TargetTransform = null;
         private float3 m_TargetPosition = float3.zero;
         private float3 m_TargetOrientation = new float3(45, 45, 0);
 
+        private int
+            m_DefaultViewHash, m_AimViewHash;
+
+        private readonly UpdateTransform[] m_AimTarget = new UpdateTransform[2];
+
+        public TRPGCameraState State { get; private set; } = TRPGCameraState.Normal;
         public float2 AxisVelocity
         {
             get
@@ -111,10 +123,16 @@ namespace Syadeu.Presentation.TurnTable
 
         private PresentationSystemID<Input.InputSystem> m_InputSystem;
 
-        protected override void OnInitialize(Camera camera, CinemachineBrain brain, CinemachineTargetGroup targetGroup)
+        protected override void OnInitialize(Camera camera, CinemachineBrain brain, CinemachineStateDrivenCamera stateDrivenCamera, CinemachineTargetGroup targetGroup)
         {
             m_TargetGroup = targetGroup;
             m_TargetPosition = m_TargetGroup.transform.position;
+
+            m_StateCamera = stateDrivenCamera;
+
+            m_CameraAnimator = stateDrivenCamera.GetComponent<Animator>();
+            m_DefaultViewHash = Animator.StringToHash(m_DefaultViewString);
+            m_AimViewHash = Animator.StringToHash(m_AimViewString);
 
             GameObject target = new GameObject("Default Target");
             m_DefaultTarget = target.transform;
@@ -123,6 +141,16 @@ namespace Syadeu.Presentation.TurnTable
 
             m_TargetGroup.AddMember(m_DefaultTarget, 1, 1);
             m_InputSystem = PresentationSystem<Input.InputSystem>.SystemID;
+
+            for (int i = 0; i < m_AimTarget.Length; i++)
+            {
+                GameObject aimTarget = new GameObject($"Aim Target {i}");
+                m_AimTarget[i] = new UpdateTransform()
+                {
+                    Proxy = aimTarget.transform
+                };
+                m_AimTarget[i].Proxy.SetParent(transform.parent);
+            }
 
             m_RotateLeft.performed += M_RotateLeft_performed;
             m_RotateRight.performed += M_RotateRight_performed;
@@ -170,6 +198,14 @@ namespace Syadeu.Presentation.TurnTable
                 orientationTarget.localRotation
                     = Quaternion.Slerp(orientationTarget.localRotation, Quaternion.Euler(TargetOrientation), Time.deltaTime * MoveSpeed);
 
+                if (State == TRPGCameraState.Aim)
+                {
+                    for (int i = 0; i < m_AimTarget.Length; i++)
+                    {
+                        if (!m_AimTarget[i].IsValid()) continue;
+                        m_AimTarget[i].Update();
+                    }
+                }
                 //groupTr.position = math.lerp(groupTr.position, TargetPosition, Time.deltaTime * MoveSpeed);
 
                 //quaternion originRot = CameraComponent.Brain.ActiveVirtualCamera.VirtualCameraGameObject.transform.rotation;
@@ -187,5 +223,71 @@ namespace Syadeu.Presentation.TurnTable
         {
             m_TargetTransform = tr;
         }
+
+        public void SetNormal()
+        {
+            State = TRPGCameraState.Normal;
+            m_StateCamera.LookAt = m_TargetGroup.transform;
+
+            m_CameraAnimator.Play(m_DefaultViewHash);
+
+            m_TargetGroup.m_Targets = new CinemachineTargetGroup.Target[]
+            {
+                new CinemachineTargetGroup.Target
+                {
+                    target = m_DefaultTarget,
+                    radius = 1,
+                    weight = 1
+                }
+            };
+        }
+        public void SetAim(ITransform from, ITransform target)
+        {
+            State = TRPGCameraState.Aim;
+            m_CameraAnimator.Play(m_AimViewHash);
+
+            m_AimTarget[0].Origin = from;
+            m_AimTarget[1].Origin = target;
+
+            m_TargetGroup.m_Targets = new CinemachineTargetGroup.Target[]
+            {
+                new CinemachineTargetGroup.Target
+                {
+                    target = m_AimTarget[0].Proxy,
+                    radius = 1,
+                    weight = 1
+                }
+                //,
+                //new CinemachineTargetGroup.Target
+                //{
+                //    target = m_AimTarget[1].Proxy,
+                //    radius = 1,
+                //    weight = .5f
+                //}
+            };
+
+            m_StateCamera.LookAt = m_AimTarget[1].Proxy;
+        }
+
+        private class UpdateTransform : IValidation
+        {
+            public ITransform Origin;
+            public Transform Proxy;
+
+            public bool IsValid() => Origin != null && Proxy != null;
+            public void Update()
+            {
+                Proxy.position = Origin.position;
+                Proxy.rotation = Origin.rotation;
+                Proxy.localScale = Origin.scale;
+            }
+        }
+    }
+
+    public enum TRPGCameraState
+    {
+        Normal,
+
+        Aim
     }
 }

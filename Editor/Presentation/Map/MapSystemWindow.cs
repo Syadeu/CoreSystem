@@ -80,6 +80,17 @@ namespace SyadeuEditor.Presentation.Map
 
             //MapDataGUI();
             m_MapDataLoader.OnGUI();
+
+            if (Event.current.isKey)
+            {
+                if (Event.current.control && Event.current.keyCode == KeyCode.S)
+                {
+                    EntityDataList.Instance.SaveData();
+
+                    CoreSystem.Logger.Log(Channel.Editor,
+                        $"Map data Saved");
+                }
+            }
         }
         protected override void OnSceneGUI(SceneView obj)
         {

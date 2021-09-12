@@ -108,6 +108,13 @@ namespace Syadeu.Presentation.Entities
         //public static implicit operator EntityData<IEntityData>(EntityData<T> a) => GetEntityData(a.m_Idx);
         //public static implicit operator EntityData<T>(Entity<T> a) => GetEntityData(a.m_Idx);
         public static implicit operator EntityData<T>(Hash a) => GetEntity(a);
-        public static implicit operator EntityData<T>(T a) => GetEntity(a.Idx);
+        public static implicit operator EntityData<T>(T a)
+        {
+            if (a == null)
+            {
+                return Empty;
+            }
+            return GetEntity(a.Idx);
+        }
     }
 }

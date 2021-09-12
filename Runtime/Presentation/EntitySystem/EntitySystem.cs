@@ -59,12 +59,14 @@ namespace Syadeu.Presentation
         internal DataContainerSystem m_DataContainerSystem;
         internal GameObjectProxySystem m_ProxySystem;
         internal Events.EventSystem m_EventSystem;
+        internal CoroutineSystem m_CoroutineSystem;
 
         #region Presentation Methods
         protected override PresentationResult OnInitializeAsync()
         {
             RequestSystem<DataContainerSystem>(Bind);
             RequestSystem<GameObjectProxySystem>(Bind);
+            RequestSystem<CoroutineSystem>(Bind);
             RequestSystem<Events.EventSystem>(Bind);
 
             #region Processor Registeration
@@ -216,6 +218,11 @@ namespace Syadeu.Presentation
 
             m_ProxySystem.OnDataObjectProxyCreated -= M_ProxySystem_OnDataObjectProxyCreated;
             m_ProxySystem.OnDataObjectProxyRemoved -= M_ProxySystem_OnDataObjectProxyRemoved;
+
+            m_DataContainerSystem = null;
+            m_ProxySystem = null;
+            m_EventSystem = null;
+            m_CoroutineSystem = null;
         }
 
         #region Binds
@@ -281,6 +288,11 @@ namespace Syadeu.Presentation
         private void Bind(Events.EventSystem other)
         {
             m_EventSystem = other;
+        }
+
+        private void Bind(CoroutineSystem other)
+        {
+            m_CoroutineSystem = other;
         }
 
         #endregion

@@ -33,7 +33,7 @@ namespace Syadeu.Presentation.Render
             for (int i = 0; i < m_CameraComponents.Length; i++)
             {
                 m_CameraComponents[i].CameraComponent = this;
-                m_CameraComponents[i].InternalInitialize(m_Camera, m_CinemachineBrain, m_TargetGroup);
+                m_CameraComponents[i].InternalInitialize(m_Camera, m_CinemachineBrain, m_StateCamera, m_TargetGroup);
             }
         }
         private IEnumerator Start()
