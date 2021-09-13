@@ -7,7 +7,7 @@ using Unity.Collections.LowLevel.Unsafe;
 
 namespace Syadeu.Presentation
 {
-    [NativeContainer, NativeContainerIsReadOnly]
+    [NativeContainer]
     public struct ReferenceArray<T> : IDisposable
         where T : unmanaged, IReference
     {
@@ -34,8 +34,61 @@ namespace Syadeu.Presentation
                     return m_Buffer[i];
                 }
             }
+            set
+            {
+#if UNITY_EDITOR
+                AtomicSafetyHandle.CheckDeallocateAndThrow(m_AtomicSafetyHandle);
+                AtomicSafetyHandle.CheckWriteAndThrow(m_AtomicSafetyHandle);
+#endif
+                if (i < 0 || i >= m_Length) throw new IndexOutOfRangeException();
+                unsafe
+                {
+                    m_Buffer[i] = value;
+                }
+            }
         }
         public int Length => m_Length;
+
+        [NativeContainer, NativeContainerIsReadOnly]
+        public struct ReadOnly
+        {
+#if UNITY_EDITOR
+            private AtomicSafetyHandle m_AtomicSafetyHandle;
+#endif
+            unsafe private T* m_Buffer;
+            private readonly int m_Length;
+
+            public T this[int i]
+            {
+                get
+                {
+#if UNITY_EDITOR
+                    AtomicSafetyHandle.CheckDeallocateAndThrow(m_AtomicSafetyHandle);
+                    AtomicSafetyHandle.CheckReadAndThrow(m_AtomicSafetyHandle);
+#endif
+                    if (i < 0 || i >= m_Length) throw new IndexOutOfRangeException();
+                    unsafe
+                    {
+                        return m_Buffer[i];
+                    }
+                }
+            }
+            public int Length => m_Length;
+
+            public ReadOnly(ref ReferenceArray<T> array)
+            {
+#if UNITY_EDITOR
+                m_AtomicSafetyHandle = array.m_AtomicSafetyHandle;
+                AtomicSafetyHandle.UseSecondaryVersion(ref m_AtomicSafetyHandle);
+#endif
+                unsafe
+                {
+                    m_Buffer = array.m_Buffer;
+                }
+                m_Length = array.m_Length;
+            }
+        }
+        public ReadOnly AsReadOnly() => new ReadOnly(ref this);
 
         public ReferenceArray(int length, Allocator allocator, NativeArrayOptions options = NativeArrayOptions.ClearMemory)
         {

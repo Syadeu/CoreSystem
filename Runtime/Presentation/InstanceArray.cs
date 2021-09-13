@@ -10,7 +10,7 @@ namespace Syadeu.Presentation
     public struct InstanceArray<T> : IDisposable
         where T : unmanaged, IInstance
     {
-        unsafe private readonly T* m_Buffer;
+        [NativeDisableUnsafePtrRestriction] unsafe private readonly T* m_Buffer;
         private readonly Allocator m_Allocator;
         private readonly int m_Length;
 
@@ -47,6 +47,47 @@ namespace Syadeu.Presentation
             }
         }
         public int Length => m_Length;
+
+        [NativeContainer, NativeContainerIsReadOnly]
+        public struct ReadOnly
+        {
+#if UNITY_EDITOR
+            private AtomicSafetyHandle m_AtomicSafetyHandle;
+#endif
+            unsafe private T* m_Buffer;
+            private readonly int m_Length;
+
+            public T this[int i]
+            {
+                get
+                {
+#if UNITY_EDITOR
+                    AtomicSafetyHandle.CheckDeallocateAndThrow(m_AtomicSafetyHandle);
+                    AtomicSafetyHandle.CheckReadAndThrow(m_AtomicSafetyHandle);
+#endif
+                    if (i < 0 || i >= m_Length) throw new IndexOutOfRangeException();
+                    unsafe
+                    {
+                        return m_Buffer[i];
+                    }
+                }
+            }
+            public int Length => m_Length;
+
+            public ReadOnly(ref InstanceArray<T> array)
+            {
+#if UNITY_EDITOR
+                m_AtomicSafetyHandle = array.m_AtomicSafetyHandle;
+                AtomicSafetyHandle.UseSecondaryVersion(ref m_AtomicSafetyHandle);
+#endif
+                unsafe
+                {
+                    m_Buffer = array.m_Buffer;
+                }
+                m_Length = array.m_Length;
+            }
+        }
+        public ReadOnly AsReadOnly() => new ReadOnly(ref this);
 
         public InstanceArray(int length, Allocator allocator, NativeArrayOptions options = NativeArrayOptions.ClearMemory)
         {
