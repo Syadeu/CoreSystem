@@ -22,8 +22,6 @@ namespace Syadeu.Presentation.Actor
         public void OnExecute(Entity<ActorEntity> from)
         {
             $"Lifetime changed {from.Name} -> {m_LifeTime}".ToLog();
-
-            throw new System.Exception();
         }
     }
 }
