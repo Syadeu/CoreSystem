@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json;
-using Syadeu.Presentation.Data;
 using System;
 using UnityEngine;
 
@@ -21,14 +20,14 @@ namespace Syadeu.Presentation.Actor
         [JsonProperty(Order = 4, PropertyName = "DefaultWeapon")]
         private Reference<ActorWeaponData> m_DefaultWeapon = Reference<ActorWeaponData>.Empty;
 
-        [JsonIgnore] private ActorWeaponData m_EquipedWeapon;
+        [JsonIgnore] private Instance<ActorWeaponData> m_EquipedWeapon;
 
-        [JsonIgnore] public ActorWeaponData EquipedWeapon => m_EquipedWeapon;
+        [JsonIgnore] public Instance<ActorWeaponData> EquipedWeapon => m_EquipedWeapon;
         [JsonIgnore] public float WeaponDamage
         {
             get
             {
-                if (EquipedWeapon == null)
+                if (EquipedWeapon.IsEmpty())
                 {
                     if (m_DefaultWeapon.IsEmpty()) return 0;
                     else if (!m_DefaultWeapon.IsValid())
@@ -39,29 +38,15 @@ namespace Syadeu.Presentation.Actor
                     }
                 }
 
-                return EquipedWeapon.Damage;
+                return EquipedWeapon.Object.Damage;
             }
         }
-    }
 
-    public class ActorWeaponData : DataObjectBase
-    {
-        [JsonProperty(Order = 0, PropertyName = "WeaponType")]
-        private Reference<ActorWeaponTypeData> m_WeaponType = Reference<ActorWeaponTypeData>.Empty;
-
-        [Space, Header("General")]
-        [JsonProperty(Order = 1, PropertyName = "Damage")] private float m_Damage;
-
-        [JsonIgnore] public float Damage
+        protected override void OnEventReceived<TEvent>(TEvent ev)
         {
-            get
-            {
-                return m_Damage;
-            }
-        }
-    }
-    public class ActorWeaponTypeData : DataObjectBase
-    {
+            if (!(ev is IActorWeaponEquipEvent weaponEquipEvent)) return;
 
+            m_EquipedWeapon = weaponEquipEvent.Weapon;
+        }
     }
 }

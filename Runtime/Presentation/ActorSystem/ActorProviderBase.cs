@@ -32,7 +32,7 @@ namespace Syadeu.Presentation.Actor
         {
             try
             {
-                OnReceivedEvent(ev);
+                OnEventReceived(ev);
             }
             catch (System.Exception ex)
             {
@@ -53,7 +53,7 @@ namespace Syadeu.Presentation.Actor
             m_Parent = Entity<ActorEntity>.Empty;
         }
 
-        protected virtual void OnReceivedEvent<TEvent>(TEvent ev) where TEvent : unmanaged { }
+        protected virtual void OnEventReceived<TEvent>(TEvent ev) where TEvent : unmanaged { }
         protected virtual void OnCreated(Entity<ActorEntity> entity) { }
         protected virtual void OnDestroy(Entity<ActorEntity> entity) { }
 
