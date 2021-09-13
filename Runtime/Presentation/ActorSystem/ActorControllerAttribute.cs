@@ -27,7 +27,12 @@ namespace Syadeu.Presentation.Actor
 
         [JsonIgnore] internal Dictionary<IActorProvider, Type[]> m_ProviderAcceptsOnly;
 
-        public void PostEvent<TEvent>(TEvent ev) where TEvent : unmanaged, IActorEvent
+        public void PostEvent<TEvent>(TEvent ev)
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
+            where TEvent : struct, IActorEvent
+#else
+            where TEvent : unmanaged, IActorEvent
+#endif
         {
             try
             {
@@ -50,7 +55,12 @@ namespace Syadeu.Presentation.Actor
                 disposable.Dispose();
             }
         }
-        private void ExecutePostEvent<TEvent>(IActorProvider provider, TEvent ev) where TEvent : unmanaged, IActorEvent
+        private void ExecutePostEvent<TEvent>(IActorProvider provider, TEvent ev)
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
+            where TEvent : struct, IActorEvent
+#else
+            where TEvent : unmanaged, IActorEvent
+#endif
         {
             Type evType = TypeHelper.TypeOf<TEvent>.Type;
             bool executable;

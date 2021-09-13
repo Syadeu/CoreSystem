@@ -62,7 +62,13 @@ namespace Syadeu.Presentation.Actor
             m_Parent = Entity<ActorEntity>.Empty;
         }
 
-        protected virtual void OnEventReceived<TEvent>(TEvent ev) where TEvent : unmanaged { }
+        protected virtual void OnEventReceived<TEvent>(TEvent ev)
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
+            where TEvent : struct, IActorEvent
+#else
+            where TEvent : unmanaged, IActorEvent
+#endif
+        { }
         protected virtual void OnCreated(Entity<ActorEntity> entity) { }
         protected virtual void OnDestroy(Entity<ActorEntity> entity) { }
 

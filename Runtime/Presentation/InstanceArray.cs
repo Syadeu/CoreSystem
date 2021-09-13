@@ -14,7 +14,7 @@ namespace Syadeu.Presentation
         private readonly Allocator m_Allocator;
         private readonly int m_Length;
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
         private AtomicSafetyHandle m_AtomicSafetyHandle;
         [NativeSetClassTypeToNullOnSchedule] private DisposeSentinel m_DisposeSentinel;
 #endif
@@ -23,7 +23,7 @@ namespace Syadeu.Presentation
         {
             get
             {
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
                 AtomicSafetyHandle.CheckDeallocateAndThrow(m_AtomicSafetyHandle);
                 AtomicSafetyHandle.CheckReadAndThrow(m_AtomicSafetyHandle);
 #endif
@@ -35,7 +35,7 @@ namespace Syadeu.Presentation
             }
             set
             {
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
                 AtomicSafetyHandle.CheckDeallocateAndThrow(m_AtomicSafetyHandle);
                 AtomicSafetyHandle.CheckWriteAndThrow(m_AtomicSafetyHandle);
 #endif
@@ -51,7 +51,7 @@ namespace Syadeu.Presentation
         [NativeContainer, NativeContainerIsReadOnly]
         public struct ReadOnly
         {
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             private AtomicSafetyHandle m_AtomicSafetyHandle;
 #endif
             unsafe private Instance<T>* m_Buffer;
@@ -61,7 +61,7 @@ namespace Syadeu.Presentation
             {
                 get
                 {
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
                     AtomicSafetyHandle.CheckDeallocateAndThrow(m_AtomicSafetyHandle);
                     AtomicSafetyHandle.CheckReadAndThrow(m_AtomicSafetyHandle);
 #endif
@@ -76,7 +76,7 @@ namespace Syadeu.Presentation
 
             public ReadOnly(ref InstanceArray<T> array)
             {
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
                 m_AtomicSafetyHandle = array.m_AtomicSafetyHandle;
                 AtomicSafetyHandle.UseSecondaryVersion(ref m_AtomicSafetyHandle);
 #endif
@@ -103,7 +103,7 @@ namespace Syadeu.Presentation
                 }
             }
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             DisposeSentinel.Create(out m_AtomicSafetyHandle, out m_DisposeSentinel, 1, allocator);
 #endif
         }
@@ -123,7 +123,7 @@ namespace Syadeu.Presentation
                 }
             }
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             DisposeSentinel.Create(out m_AtomicSafetyHandle, out m_DisposeSentinel, 1, allocator);
 #endif
         }
@@ -135,7 +135,7 @@ namespace Syadeu.Presentation
                 UnsafeUtility.Free(m_Buffer, m_Allocator);
             }
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             DisposeSentinel.Dispose(ref m_AtomicSafetyHandle, ref m_DisposeSentinel);
 #endif
         }
