@@ -95,12 +95,17 @@ namespace Syadeu.Presentation.Actions
 
         internal static TAction GetAction(Reference<TAction> other)
         {
+            if (!TryGetEntitySystem(out EntitySystem entitySystem))
+            {
+                return null;
+            }
+
             TAction temp;
 
             if (!m_Pool.TryGetValue(other, out var pool) ||
                 pool.Count == 0)
             {
-                TAction t = (TAction)other.GetObject().Clone();
+                TAction t = entitySystem.CreateInstance(other).Object;
                 t.m_Reference = other;
                 t.InternalCreate();
 

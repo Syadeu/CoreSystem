@@ -67,12 +67,17 @@ namespace Syadeu.Presentation.Actions
 
         public static T GetAction<T>(Reference<T> other) where T : TriggerAction
         {
+            if (!TryGetEntitySystem(out EntitySystem entitySystem))
+            {
+                return null;
+            }
+
             T temp;
 
             if (!m_Pool.TryGetValue(other, out var pool) ||
                 pool.Count == 0)
             {
-                T t = (T)other.GetObject().Clone();
+                T t = entitySystem.CreateInstance(other).Object;
                 t.m_Reference = other;
                 t.InternalCreate();
 

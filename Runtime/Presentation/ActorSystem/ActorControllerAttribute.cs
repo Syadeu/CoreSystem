@@ -20,7 +20,7 @@ namespace Syadeu.Presentation.Actor
         [JsonProperty(Order = 2, PropertyName = "Providers")] 
         internal Reference<ActorProviderBase>[] m_Providers = Array.Empty<Reference<ActorProviderBase>>();
 
-        [JsonIgnore] internal ActorProviderBase[] Providers { get; set; }
+        [JsonIgnore] internal Instance<ActorProviderBase>[] Providers { get; set; }
 
         public void PostEvent<TEvent>(TEvent ev) where TEvent : unmanaged, IActorEvent
         {
@@ -31,11 +31,12 @@ namespace Syadeu.Presentation.Actor
             catch (Exception ex)
             {
                 CoreSystem.Logger.LogError(Channel.Entity, ex);
+                return;
             }
 
             for (int i = 0; i < Providers.Length; i++)
             {
-                ExecutePostEvent(Providers[i], ev);
+                ExecutePostEvent(Providers[i].Object, ev);
             }
             m_OnReceivedEvent.Execute(ev);
         }
@@ -44,13 +45,13 @@ namespace Syadeu.Presentation.Actor
             provider.ReceivedEvent(ev);
         }
 
-        public T GetProvider<T>() where T : ActorProviderBase
+        public Instance<T> GetProvider<T>() where T : ActorProviderBase
         {
             for (int i = 0; i < Providers.Length; i++)
             {
-                if (Providers[i] is T) return (T)Providers[i];
+                if (Providers[i].Object is T) return Providers[i].Cast<ActorProviderBase, T>();
             }
-            return null;
+            return Instance<T>.Empty;
         }
     }
     internal sealed class ActorControllerProcessor : AttributeProcessor<ActorControllerAttribute>
@@ -59,17 +60,17 @@ namespace Syadeu.Presentation.Actor
         {
             Entity<ActorEntity> actor = entity.CastAs<IEntityData, ActorEntity>();
 
-            attribute.Providers = new ActorProviderBase[attribute.m_Providers.Length];
+            attribute.Providers = new Instance<ActorProviderBase>[attribute.m_Providers.Length];
             for (int i = 0; i < attribute.m_Providers.Length; i++)
             {
-                ActorProviderBase clone = (ActorProviderBase)attribute.m_Providers[i].GetObject().Clone();
-                Initialize(actor, clone);
+                Instance<ActorProviderBase> clone = EntitySystem.CreateInstance(attribute.m_Providers[i]);
+                Initialize(actor, clone.Object);
                 attribute.Providers[i] = clone;
             }
 
             for (int i = 0; i < attribute.Providers.Length; i++)
             {
-                ExecuteOnCreated(attribute.Providers[i], actor);
+                ExecuteOnCreated(attribute.Providers[i].Object, actor);
             }
 
             if (attribute.m_SetAliveOnCreated)
@@ -83,8 +84,8 @@ namespace Syadeu.Presentation.Actor
             Entity<ActorEntity> actor = entity.CastAs<IEntityData, ActorEntity>();
             for (int i = 0; i < attribute.Providers.Length; i++)
             {
-                ExecuteOnDestroy(attribute.Providers[i], actor);
-                attribute.Providers[i].Dispose();
+                ExecuteOnDestroy(attribute.Providers[i].Object, actor);
+                EntitySystem.DestroyObject(attribute.Providers[i]);
             }
 
             attribute.Providers = null;

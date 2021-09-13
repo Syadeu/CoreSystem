@@ -71,5 +71,11 @@ namespace Syadeu.Presentation
         {
             return EntityData<TA>.GetEntity(t.Idx);
         }
+
+        public static EntityData<T> As<T>(this Instance<T> t)
+            where T : EntityDataBase
+        {
+            return new EntityData<T>(t.Idx);
+        }
     }
 }

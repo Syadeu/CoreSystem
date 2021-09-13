@@ -21,19 +21,25 @@ namespace Syadeu.Presentation.Actor
         [JsonProperty(Order = 4, PropertyName = "DefaultWeapon")]
         private Reference<ActorWeaponData> m_DefaultWeapon = Reference<ActorWeaponData>.Empty;
 
+        [JsonIgnore] private ActorWeaponData m_EquipedWeapon;
+
+        [JsonIgnore] public ActorWeaponData EquipedWeapon => m_EquipedWeapon;
         [JsonIgnore] public float WeaponDamage
         {
             get
             {
-                if (m_DefaultWeapon.IsEmpty()) return 0;
-                else if (!m_DefaultWeapon.IsValid())
+                if (EquipedWeapon == null)
                 {
-                    CoreSystem.Logger.LogError(Channel.Entity,
-                        $"Entity({Parent.Name}) equiped an invalid weapon.");
-                    return 0;
+                    if (m_DefaultWeapon.IsEmpty()) return 0;
+                    else if (!m_DefaultWeapon.IsValid())
+                    {
+                        CoreSystem.Logger.LogError(Channel.Entity,
+                            $"Entity({Parent.Name}) has an invalid default weapon.");
+                        return 0;
+                    }
                 }
 
-                return m_DefaultWeapon.GetObject().Damage;
+                return EquipedWeapon.Damage;
             }
         }
     }

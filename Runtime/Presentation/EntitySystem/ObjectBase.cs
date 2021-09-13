@@ -29,7 +29,7 @@ namespace Syadeu.Presentation
         /// <summary>
         /// 이 오브젝트의 인스턴스 해쉬입니다.
         /// </summary>
-        [JsonIgnore] public Hash Idx { get; private set; }
+        [JsonIgnore] public Hash Idx { get; private set; } = Hash.Empty;
 
         [JsonIgnore] public bool Disposed { get; private set; } = false;
 

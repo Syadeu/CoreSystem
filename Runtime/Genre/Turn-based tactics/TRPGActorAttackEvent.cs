@@ -27,7 +27,7 @@ namespace Syadeu.Presentation.TurnTable
             }
 
             var weapon = ctr.GetProvider<ActorWeaponProvider>();
-            if (weapon == null)
+            if (weapon.IsEmpty())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                        $"Target entity({m_Target.Name}) doesn\'t have any {nameof(ActorWeaponProvider)}.");
@@ -44,7 +44,7 @@ namespace Syadeu.Presentation.TurnTable
             }
 
             int hp = stat.GetValue<int>(m_StatNameHash);
-            hp -= Mathf.RoundToInt(weapon.WeaponDamage);
+            hp -= Mathf.RoundToInt(weapon.Object.WeaponDamage);
             stat.SetValue(m_StatNameHash, hp);
 
             $"Attacked from {from.Name} to {m_Target.Name}".ToLog();

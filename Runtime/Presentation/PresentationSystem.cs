@@ -78,7 +78,18 @@ namespace Syadeu.Presentation
                 }
             }
         }
-        public static PresentationSystemID<T> SystemID => new PresentationSystemID<T>(Instance.m_GroupHash, Instance.m_Index);
+        public static PresentationSystemID<T> SystemID
+        {
+            get
+            {
+                PresentationSystem<T> ins = Instance;
+                if (ins.m_GroupHash.IsEmpty() || ins.m_Index == -1)
+                {
+                    return PresentationSystemID<T>.Null;
+                }
+                return new PresentationSystemID<T>(ins.m_GroupHash, ins.m_Index);
+            }
+        }
 
         private readonly Hash m_GroupHash;
         private readonly int m_Index;

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Syadeu.Presentation.Entities;
+using System.Collections.Generic;
 using Unity.Collections;
 
 namespace Syadeu.Presentation
@@ -29,6 +30,13 @@ namespace Syadeu.Presentation
                 list.Add(t[i]);
             }
             return list;
+        }
+
+        public static Instance<TA> Cast<T, TA>(this Instance<T> t)
+            where T : ObjectBase
+            where TA : ObjectBase
+        {
+            return new Instance<TA>(t.Idx);
         }
     }
 }

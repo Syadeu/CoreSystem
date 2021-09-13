@@ -29,7 +29,7 @@ namespace Syadeu.Presentation
     [Serializable]
     public struct Reference : IReference, IEquatable<Reference>
     {
-        public static Reference Empty = new Reference(Hash.Empty);
+        public static readonly Reference Empty = new Reference(Hash.Empty);
 
         [JsonProperty(Order = 0, PropertyName = "Hash")] public Hash m_Hash;
 
@@ -65,7 +65,7 @@ namespace Syadeu.Presentation
     [Serializable]
     public struct Reference<T> : IReference<T>, IEquatable<Reference<T>> where T : ObjectBase
     {
-        public static Reference<T> Empty = new Reference<T>(Hash.Empty);
+        public static readonly Reference<T> Empty = new Reference<T>(Hash.Empty);
 
         [JsonProperty(Order = 0, PropertyName = "Hash")] public Hash m_Hash;
 

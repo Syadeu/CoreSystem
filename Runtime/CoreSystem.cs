@@ -421,9 +421,9 @@ namespace Syadeu
         {
             const string InstanceStr = "Instance";
 
-            Application.SetStackTraceLogType(LogType.Log, StackTraceLogType.None);
-            Application.SetStackTraceLogType(LogType.Error, StackTraceLogType.ScriptOnly);
-            Application.SetStackTraceLogType(LogType.Warning, StackTraceLogType.ScriptOnly);
+            //Application.SetStackTraceLogType(LogType.Log, StackTraceLogType.None);
+            //Application.SetStackTraceLogType(LogType.Error, StackTraceLogType.ScriptOnly);
+            //Application.SetStackTraceLogType(LogType.Warning, StackTraceLogType.ScriptOnly);
 
             //PoolContainer<BackgroundJob>.Initialize(() => new BackgroundJob(null), 10);
             PoolContainer<ForegroundJob>.Initialize(() => new ForegroundJob(null), 10);
@@ -1877,6 +1877,7 @@ namespace Syadeu
             public static void LogError(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Error, msg,false);
             public static void LogError(Channel channel, Exception ex, [System.Runtime.CompilerServices.CallerMemberName] string methodName = "")
             {
+#if UNITY_EDITOR
                 const string c_Msg = "Unhandled Exception has been raised while executing {0}.\n{1}\n{2}";
 
                 System.Text.RegularExpressions.Regex temp = new System.Text.RegularExpressions.Regex(@"([a-zA-Z]:[\\[a-zA-Z0-9 .]*]*:[0-9]*)");
@@ -1896,6 +1897,9 @@ namespace Syadeu
                 $"{stackTrace}".ToLog();
 
                 LogError(channel, string.Format(c_Msg, methodName, ex.Message, stackTrace));
+#else
+                LogError(channel, ex.Message + ex.StackTrace);
+#endif
             }
 
             public static void NotNull(object obj) => LogManager.NotNull(obj, string.Empty);

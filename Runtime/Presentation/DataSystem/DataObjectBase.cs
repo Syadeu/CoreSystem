@@ -1,6 +1,4 @@
-﻿using System.ComponentModel;
-
-namespace Syadeu.Presentation.Data
+﻿namespace Syadeu.Presentation.Data
 {
     public abstract class DataObjectBase : ObjectBase
     {

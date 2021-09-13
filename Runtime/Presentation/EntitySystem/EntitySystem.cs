@@ -48,7 +48,7 @@ namespace Syadeu.Presentation
         /// </remarks>
         public event Action<EntityData<IEntityData>> OnEntityDestroy;
 
-        internal readonly Dictionary<Hash, IEntityData> m_ObjectEntities = new Dictionary<Hash, IEntityData>();
+        internal readonly Dictionary<Hash, ObjectBase> m_ObjectEntities = new Dictionary<Hash, ObjectBase>();
         internal readonly Dictionary<Hash, Hash> m_EntityGameObjects = new Dictionary<Hash, Hash>();
 
         private readonly Dictionary<Type, List<IAttributeProcessor>> m_AttributeProcessors = new Dictionary<Type, List<IAttributeProcessor>>();
@@ -137,71 +137,72 @@ namespace Syadeu.Presentation
             var entityList = m_ObjectEntities.Values.ToArray();
             for (int i = 0; i < entityList.Length; i++)
             {
-                var entity = entityList[i];
-                //EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntityData(entity.Idx);
-                EntityData<IEntityData> entityData = new EntityData<IEntityData>(entity.Idx);
-
-                CoreSystem.Logger.Log(Channel.Entity,
-    $"Destroying entity({entity.Name})");
-
-                #region Attributes
-                Array.ForEach(entity.Attributes, (other) =>
+                if ((entityList[i] is IEntityData entity))
                 {
-                    if (other == null)
-                    {
-                        CoreSystem.Logger.LogWarning(Channel.Presentation,
-                            string.Format(c_AttributeEmptyWarning, entity.Name));
-                        return;
-                    }
+                    EntityData<IEntityData> entityData = new EntityData<IEntityData>(entity.Idx);
 
-                    Type t = other.GetType();
+                    CoreSystem.Logger.Log(Channel.Entity,
+        $"Destroying entity({entity.Name})");
 
-                    if (m_AttributeProcessors.TryGetValue(t, out List<IAttributeProcessor> processors))
+                    #region Attributes
+                    Array.ForEach(entity.Attributes, (other) =>
                     {
-                        for (int j = 0; j < processors.Count; j++)
+                        if (other == null)
                         {
-                            IAttributeProcessor processor = processors[j];
-
-                            processor.OnDestroy(other, entityData);
-
-                            ((IDisposable)processor).Dispose();
+                            CoreSystem.Logger.LogWarning(Channel.Presentation,
+                                string.Format(c_AttributeEmptyWarning, entity.Name));
+                            return;
                         }
-                    }
-                });
-                #endregion
 
-                #region Entity
+                        Type t = other.GetType();
 
-                if (m_ObjectEntities.ContainsKey(entityData.Idx))
-                {
-                    if (m_EntityProcessors.TryGetValue(entity.GetType(), out List<IEntityDataProcessor> entityProcessor))
-                    {
-                        for (int j = 0; j < entityProcessor.Count; j++)
+                        if (m_AttributeProcessors.TryGetValue(t, out List<IAttributeProcessor> processors))
                         {
-                            IEntityDataProcessor processor = entityProcessor[j];
+                            for (int j = 0; j < processors.Count; j++)
+                            {
+                                IAttributeProcessor processor = processors[j];
 
-                            processor.OnDestroy(entityData);
+                                processor.OnDestroy(other, entityData);
+
+                                ((IDisposable)processor).Dispose();
+                            }
                         }
-                    }
+                    });
+                    #endregion
 
-                    OnEntityDestroy?.Invoke(entityData);
-                }
+                    #region Entity
 
-                #endregion
-
-                foreach (var item in m_EntityProcessors)
-                {
-                    for (int a = 0; a < item.Value.Count; a++)
+                    if (m_ObjectEntities.ContainsKey(entityData.Idx))
                     {
-                        item.Value[a].Dispose();
+                        if (m_EntityProcessors.TryGetValue(entity.GetType(), out List<IEntityDataProcessor> entityProcessor))
+                        {
+                            for (int j = 0; j < entityProcessor.Count; j++)
+                            {
+                                IEntityDataProcessor processor = entityProcessor[j];
+
+                                processor.OnDestroy(entityData);
+                            }
+                        }
+
+                        OnEntityDestroy?.Invoke(entityData);
                     }
+
+                    #endregion
                 }
-                foreach (var item in m_AttributeProcessors)
+            }
+
+            foreach (var item in m_EntityProcessors)
+            {
+                for (int a = 0; a < item.Value.Count; a++)
                 {
-                    for (int a = 0; a < item.Value.Count; a++)
-                    {
-                        item.Value[a].Dispose();
-                    }
+                    item.Value[a].Dispose();
+                }
+            }
+            foreach (var item in m_AttributeProcessors)
+            {
+                for (int a = 0; a < item.Value.Count; a++)
+                {
+                    item.Value[a].Dispose();
                 }
             }
 
@@ -245,9 +246,10 @@ namespace Syadeu.Presentation
         private void M_ProxySystem_OnDataObjectDestroyAsync(ProxyTransform obj)
         {
             if (!m_EntityGameObjects.TryGetValue(obj.m_Hash, out Hash entityHash) ||
-                !m_ObjectEntities.ContainsKey(entityHash)) return;
+                !m_ObjectEntities.ContainsKey(entityHash) || 
+                !(m_ObjectEntities[entityHash] is IEntityData entity)) return;
 
-            ProcessEntityOnDestroy(this, m_ObjectEntities[entityHash]);
+            ProcessEntityOnDestroy(this, entity);
 
             m_EntityGameObjects.Remove(obj.m_Hash);
             m_ObjectEntities.Remove(entityHash);
@@ -314,16 +316,16 @@ namespace Syadeu.Presentation
                 }
             }
 
-            ConsoleWindow.CreateCommand((cmd) =>
-            {
-                while (m_ObjectEntities.Any())
-                {
-                    var temp = m_ObjectEntities.First().Value;
-                    if (!temp.TryAsReference(out var refer)) continue;
+            //ConsoleWindow.CreateCommand((cmd) =>
+            //{
+            //    while (m_ObjectEntities.Any())
+            //    {
+            //        var temp = m_ObjectEntities.First().Value;
+            //        if (!temp.TryAsReference(out var refer)) continue;
 
-                    refer.Destroy();
-                }
-            }, "destroy", "all");
+            //        refer.Destroy();
+            //    }
+            //}, "destroy", "all");
 
             return base.OnStartPresentation();
         }
@@ -568,13 +570,24 @@ namespace Syadeu.Presentation
 
             IEntityData clone = (IEntityData)objClone;
 
-            m_ObjectEntities.Add(clone.Idx, clone);
+            m_ObjectEntities.Add(clone.Idx, objClone);
 
             ProcessEntityOnCreated(this, clone);
             return EntityData<IEntityData>.GetEntity(clone.Idx);
         }
 
         #endregion
+
+        internal Instance<T> CreateInstance<T>(Reference<T> obj) where T : ObjectBase
+            => CreateInstance<T>(obj.GetObject());
+        internal Instance<T> CreateInstance<T>(ObjectBase obj) where T : ObjectBase
+        {
+            ObjectBase clone = (ObjectBase)obj.Clone();
+
+            m_ObjectEntities.Add(clone.Idx, clone);
+
+            return new Instance<T>(clone.Idx);
+        }
 
         /// <summary>
         /// 이미 생성된 유니티 게임 오브젝트를 엔티티 시스템로 편입시켜 엔티티로 변환하여 반환합니다.
@@ -622,6 +635,7 @@ namespace Syadeu.Presentation
         public void DestroyEntity(Entity<IEntity> entity) => InternalDestroyEntity(entity.Idx);
         /// <inheritdoc cref="DestroyEntity(Entity{IEntity})"/>
         public void DestroyEntity(EntityData<IEntityData> entity) => InternalDestroyEntity(entity.Idx);
+        public void DestroyObject<T>(Instance<T> instance) where T : ObjectBase => InternalDestroyEntity(instance.Object.Idx);
         internal void InternalDestroyEntity(in Hash hash)
         {
             if (!m_ObjectEntities.ContainsKey(hash))
@@ -631,7 +645,10 @@ namespace Syadeu.Presentation
                 return;
             }
 
-            ProcessEntityOnDestroy(this, m_ObjectEntities[hash]);
+            if (m_ObjectEntities[hash] is IEntityData entityData)
+            {
+                ProcessEntityOnDestroy(this, entityData);
+            }
 
             if (!CoreSystem.BlockCreateInstance && m_ObjectEntities[hash] is IEntity entity)
             {

@@ -38,7 +38,7 @@ namespace Syadeu.Presentation.Entities
                     $"Cannot found entity({idx})");
                 return Empty;
             }
-            IEntityData target = PresentationSystem<EntitySystem>.System.m_ObjectEntities[idx];
+            ObjectBase target = PresentationSystem<EntitySystem>.System.m_ObjectEntities[idx];
             if (!(target is T))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
@@ -69,7 +69,16 @@ namespace Syadeu.Presentation.Entities
         /// <inheritdoc cref="IEntityData.Idx"/>
         private readonly Hash m_Idx;
 
-        public T Target => m_Idx.Equals(Hash.Empty) ? null : (T)PresentationSystem<EntitySystem>.System.m_ObjectEntities[m_Idx];
+        public T Target
+        {
+            get
+            {
+                if (m_Idx.Equals(Hash.Empty) ||
+                    !(PresentationSystem<EntitySystem>.System.m_ObjectEntities[m_Idx] is T t)) return null;
+                
+                return t;
+            }
+        }
 
         /// <inheritdoc cref="IEntityData.Name"/>
         public string Name => m_Idx.Equals(Hash.Empty) ? c_Invalid : Target.Name;

@@ -44,7 +44,7 @@ namespace Syadeu.Presentation.Entities
                     $"Cannot found entity({idx})");
                 return Empty;
             }
-            IEntityData target = PresentationSystem<EntitySystem>.System.m_ObjectEntities[idx];
+            ObjectBase target = PresentationSystem<EntitySystem>.System.m_ObjectEntities[idx];
             if (!(target is T))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
@@ -80,9 +80,10 @@ namespace Syadeu.Presentation.Entities
             get
             {
                 if (m_Idx.Equals(Hash.Empty) ||
-                    !PresentationSystem<EntitySystem>.System.m_ObjectEntities.TryGetValue(m_Idx, out var value)) return null;
+                    !PresentationSystem<EntitySystem>.System.m_ObjectEntities.TryGetValue(m_Idx, out var value) ||
+                    !(value is T t)) return null;
 
-                return (T)value;
+                return t;
             }
         }
 
