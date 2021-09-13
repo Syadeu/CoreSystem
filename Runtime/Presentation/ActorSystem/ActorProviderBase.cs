@@ -6,6 +6,9 @@ using Syadeu.Presentation.Events;
 
 namespace Syadeu.Presentation.Actor
 {
+    /// <summary>
+    /// <see cref="ActorControllerAttribute"/> 에서 사용하는 새로운 Provider 를 작성할 수 있습니다.
+    /// </summary>
     public abstract class ActorProviderBase : DataObjectBase, IActorProvider
     {
         [JsonIgnore] private bool m_Initialized = false;

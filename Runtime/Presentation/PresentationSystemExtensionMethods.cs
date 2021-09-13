@@ -38,5 +38,10 @@ namespace Syadeu.Presentation
         {
             return new Instance<TA>(t.Idx);
         }
+        public static Reference<T> AsOriginal<T>(this Instance<T> t)
+            where T : ObjectBase
+        {
+            return new Reference<T>(t.Object.Hash);
+        }
     }
 }
