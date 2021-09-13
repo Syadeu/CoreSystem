@@ -30,7 +30,14 @@ namespace Syadeu.Presentation.Actor
         }
         void IActorProvider.ReceivedEvent<TEvent>(TEvent ev)
         {
-            OnReceivedEvent(ev);
+            try
+            {
+                OnReceivedEvent(ev);
+            }
+            catch (System.Exception ex)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity, ex);
+            }
         }
         void IActorProvider.OnCreated(Entity<ActorEntity> entity)
         {

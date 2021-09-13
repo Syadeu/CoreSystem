@@ -24,7 +24,14 @@ namespace Syadeu.Presentation.Actor
 
         public void PostEvent<TEvent>(TEvent ev) where TEvent : unmanaged, IActorEvent
         {
-            ev.OnExecute(Parent.CastAs<IEntityData, ActorEntity>());
+            try
+            {
+                ev.OnExecute(Parent.CastAs<IEntityData, ActorEntity>());
+            }
+            catch (Exception ex)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity, ex);
+            }
 
             for (int i = 0; i < Providers.Length; i++)
             {

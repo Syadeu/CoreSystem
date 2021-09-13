@@ -38,6 +38,7 @@ namespace SyadeuEditor.Presentation
             get => hasUnsavedChanges;
             set
             {
+                saveChangesMessage = "Unsaved changes detected";
                 hasUnsavedChanges = value;
             }
         }
@@ -58,8 +59,6 @@ namespace SyadeuEditor.Presentation
         {
             IsOpened = true;
 
-            saveChangesMessage = "Unsaved changes detected";
-            
             m_ToolbarWindow = new ToolbarWindow(this);
             m_DataListWindow = new EntityDataListWindow(this);
             m_ViewWindow = new EntityViewWindow(this);
