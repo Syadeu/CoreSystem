@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json;
-using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation.Entities;
 using System;
@@ -43,12 +42,5 @@ namespace Syadeu.Presentation.Actor
             //    targetStat.SetValue(ev.HPStatNameHash, hp);
             //}
         }
-    }
-
-    public interface IActorAttackEvent : IActorEvent, IDisposable
-    {
-        InstanceArray<ActorEntity> Targets { get; }
-        Hash HPStatNameHash { get; }
-        float Damage { get; }
     }
 }

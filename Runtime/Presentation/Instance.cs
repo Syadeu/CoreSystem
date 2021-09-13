@@ -25,6 +25,13 @@ namespace Syadeu.Presentation
         {
             get
             {
+                if (IsEmpty())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                            "Cannot retrived null instance.");
+                    return null;
+                }
+
                 if (m_EntitySystem.IsNull())
                 {
                     m_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
@@ -36,7 +43,14 @@ namespace Syadeu.Presentation
                     }
                 }
 
-                if (!(m_EntitySystem.System.m_ObjectEntities[m_Idx] is T t))
+                if (!m_EntitySystem.System.m_ObjectEntities.TryGetValue(m_Idx, out ObjectBase obj))
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                            $"Target({m_Idx}) is not exist.");
+                    return null;
+                }
+
+                if (!(obj is T t))
                 {
                     CoreSystem.Logger.LogError(Channel.Entity,
                         $"Target is not a {TypeHelper.TypeOf<T>.Name}.");

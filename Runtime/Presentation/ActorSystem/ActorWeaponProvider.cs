@@ -38,6 +38,8 @@ namespace Syadeu.Presentation.Actor
                             $"Entity({Parent.Name}) has an invalid default weapon.");
                         return 0;
                     }
+
+                    return m_DefaultWeapon.GetObject().Damage;
                 }
 
                 return EquipedWeapon.Object.Damage;

@@ -1,6 +1,8 @@
 ﻿using Syadeu.Database;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Entities;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Syadeu.Presentation.TurnTable
@@ -23,10 +25,36 @@ namespace Syadeu.Presentation.TurnTable
 
             m_Damage = 0;
         }
+        public TRPGActorAttackEvent(Entity<ActorEntity> target, Hash targetStatHash)
+        {
+            m_Target = new InstanceArray<ActorEntity>(1, Unity.Collections.Allocator.Temp);
+            m_Target[0] = new Instance<ActorEntity>(target);
+            m_StatNameHash = targetStatHash;
+
+            m_Damage = 0;
+        }
+        public TRPGActorAttackEvent(IEnumerable<Entity<ActorEntity>> targets, string targetStatName)
+        {
+            this = default(TRPGActorAttackEvent);
+
+            m_Target = new InstanceArray<ActorEntity>(targets.Select(Selector), Unity.Collections.Allocator.Temp);
+            m_StatNameHash = ActorStatAttribute.ToValueHash(targetStatName);
+        }
+        public TRPGActorAttackEvent(IEnumerable<Entity<ActorEntity>> targets, Hash targetStatHash)
+        {
+            this = default(TRPGActorAttackEvent);
+
+            m_Target = new InstanceArray<ActorEntity>(targets.Select(Selector), Unity.Collections.Allocator.Temp);
+            m_StatNameHash = targetStatHash;
+        }
+        private Instance<ActorEntity> Selector(Entity<ActorEntity> entity)
+        {
+            return new Instance<ActorEntity>(entity);
+        }
 
         public void Dispose()
         {
-            throw new System.NotImplementedException();
+            m_Target.Dispose();
         }
 
         void IActorEvent.OnExecute(Entity<ActorEntity> from)
@@ -62,8 +90,7 @@ namespace Syadeu.Presentation.TurnTable
             hp -= m_Damage;
             stat.SetValue(m_StatNameHash, hp);
 
-            $"Attacked from {from.Name} to {m_Target[0].Object.Name}".ToLog();
+            $"Attacked from {from.Name} to {m_Target[0].Object.Name} : dmg -> {m_Damage}, current {hp}".ToLog();
         }
     }
 }
-

@@ -1893,9 +1893,6 @@ namespace Syadeu
                     
                     stackTrace = stackTrace.Replace(matches[i].Value, tempuri);
                 }
-
-                $"{stackTrace}".ToLog();
-
                 LogError(channel, string.Format(c_Msg, methodName, ex.Message, stackTrace));
 #else
                 LogError(channel, ex.Message + ex.StackTrace);
