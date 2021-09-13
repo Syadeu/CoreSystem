@@ -5,15 +5,28 @@ using UnityEngine;
 
 namespace Syadeu.Presentation.TurnTable
 {
-    public struct TRPGActorAttackEvent : IActorEvent
+    public struct TRPGActorAttackEvent : IActorAttackEvent
     {
-        private Entity<ActorEntity> m_Target;
+        public InstanceArray<ActorEntity> Targets => throw new System.NotImplementedException();
+        public Hash HPStatNameHash => m_StatNameHash;
+        public float Damage => throw new System.NotImplementedException();
+
+        private InstanceArray<ActorEntity> m_Target;
         private Hash m_StatNameHash;
+        private int m_Damage;
 
         public TRPGActorAttackEvent(Entity<ActorEntity> target, string targetStatName)
         {
-            m_Target = target;
+            m_Target = new InstanceArray<ActorEntity>(1, Unity.Collections.Allocator.Temp);
+            m_Target[0] = new Instance<ActorEntity>(target);
             m_StatNameHash = ActorStatAttribute.ToValueHash(targetStatName);
+
+            m_Damage = 0;
+        }
+
+        public void Dispose()
+        {
+            throw new System.NotImplementedException();
         }
 
         void IActorEvent.OnExecute(Entity<ActorEntity> from)
@@ -22,7 +35,7 @@ namespace Syadeu.Presentation.TurnTable
             if (ctr == null)
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Target entity({m_Target.Name}) doesn\'t have any {nameof(ActorControllerAttribute)}.");
+                    $"Target entity({m_Target[0].Object.Name}) doesn\'t have any {nameof(ActorControllerAttribute)}.");
                 return;
             }
 
@@ -30,24 +43,26 @@ namespace Syadeu.Presentation.TurnTable
             if (weapon.IsEmpty())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                       $"Target entity({m_Target.Name}) doesn\'t have any {nameof(ActorWeaponProvider)}.");
+                       $"Target entity({m_Target[0].Object.Name}) doesn\'t have any {nameof(ActorWeaponProvider)}.");
                 return;
             }
 
-            var stat = m_Target.GetAttribute<ActorStatAttribute>();
+            var stat = m_Target[0].GetAttribute<ActorEntity, ActorStatAttribute>();
             
             if (stat == null)
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Target entity({m_Target.Name}) doesn\'t have any {nameof(ActorStatAttribute)}.");
+                    $"Target entity({m_Target[0].Object.Name}) doesn\'t have any {nameof(ActorStatAttribute)}.");
                 return;
             }
 
+            m_Damage = Mathf.RoundToInt(weapon.Object.WeaponDamage);
+
             int hp = stat.GetValue<int>(m_StatNameHash);
-            hp -= Mathf.RoundToInt(weapon.Object.WeaponDamage);
+            hp -= m_Damage;
             stat.SetValue(m_StatNameHash, hp);
 
-            $"Attacked from {from.Name} to {m_Target.Name}".ToLog();
+            $"Attacked from {from.Name} to {m_Target[0].Object.Name}".ToLog();
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Syadeu.Internal;
 using Syadeu.Mono;
+using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using Syadeu.ThreadSafe;
 using System;
@@ -86,6 +87,12 @@ namespace Syadeu.Presentation
             where T : EntityDataBase
         {
             return new Instance<T>(entity);
+        }
+        public static TA GetAttribute<T, TA>(this Instance<T> t)
+            where T : EntityDataBase
+            where TA : AttributeBase
+        {
+            return t.Object.GetAttribute<TA>();
         }
     }
 }

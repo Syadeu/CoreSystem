@@ -1,9 +1,11 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Database;
+using Syadeu.Internal;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using System;
+using System.Collections.Generic;
 using Unity.Collections;
 using UnityEngine;
 
@@ -23,6 +25,8 @@ namespace Syadeu.Presentation.Actor
 
         [JsonIgnore] internal InstanceArray<ActorProviderBase> m_InstanceProviders;
 
+        [JsonIgnore] internal Dictionary<IActorProvider, Type[]> m_ProviderAcceptsOnly;
+
         public void PostEvent<TEvent>(TEvent ev) where TEvent : unmanaged, IActorEvent
         {
             try
@@ -40,9 +44,32 @@ namespace Syadeu.Presentation.Actor
                 ExecutePostEvent(m_InstanceProviders[i].Object, ev);
             }
             m_OnReceivedEvent.Execute(ev);
+
+            if (ev is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
         }
         private void ExecutePostEvent<TEvent>(IActorProvider provider, TEvent ev) where TEvent : unmanaged, IActorEvent
         {
+            Type evType = TypeHelper.TypeOf<TEvent>.Type;
+            bool executable;
+            if (m_ProviderAcceptsOnly.TryGetValue(provider, out var types))
+            {
+                executable = false;
+                for (int i = 0; i < types.Length; i++)
+                {
+                    if (types[i].IsAssignableFrom(evType))
+                    {
+                        executable = true;
+                        break;
+                    }
+                }
+            }
+            else executable = true;
+
+            if (!executable) return;
+
             provider.ReceivedEvent(ev);
         }
 
@@ -62,10 +89,11 @@ namespace Syadeu.Presentation.Actor
             Entity<ActorEntity> actor = entity.CastAs<IEntityData, ActorEntity>();
 
             attribute.m_InstanceProviders = new InstanceArray<ActorProviderBase>(attribute.m_Providers.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            attribute.m_ProviderAcceptsOnly = new Dictionary<IActorProvider, Type[]>();
             for (int i = 0; i < attribute.m_Providers.Length; i++)
             {
                 Instance<ActorProviderBase> clone = EntitySystem.CreateInstance(attribute.m_Providers[i]);
-                Initialize(actor, clone.Object);
+                Initialize(actor, attribute, clone.Object);
                 attribute.m_InstanceProviders[i] = clone;
             }
 
@@ -91,9 +119,14 @@ namespace Syadeu.Presentation.Actor
 
             attribute.m_InstanceProviders.Dispose();
         }
-        private void Initialize(Entity<ActorEntity> parent, IActorProvider provider)
+        private void Initialize(Entity<ActorEntity> parent, ActorControllerAttribute attribute, IActorProvider provider)
         {
-            provider.Bind(parent, EventSystem, EntitySystem, EntitySystem.m_CoroutineSystem);
+            provider.Bind(parent, attribute, EventSystem, EntitySystem, EntitySystem.m_CoroutineSystem);
+
+            if (provider.ReceiveEventOnly != null)
+            {
+                attribute.m_ProviderAcceptsOnly.Add(provider, provider.ReceiveEventOnly);
+            }
         }
         private void ExecuteOnCreated(IActorProvider provider, Entity<ActorEntity> entity)
         {

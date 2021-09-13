@@ -8,7 +8,7 @@ using System.Linq;
 
 namespace Syadeu.Presentation.TurnTable
 {
-    public sealed class TRPGActorAttackProvider : ActorProviderBase
+    public sealed class TRPGActorAttackProvider : ActorAttackProvider
     {
         [JsonProperty(Order = 0, PropertyName = "AttackRange")] private int m_AttackRange;
 

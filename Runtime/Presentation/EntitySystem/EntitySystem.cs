@@ -838,12 +838,14 @@ namespace Syadeu.Presentation
             //#endregion
 
             #region Attributes
-            Array.ForEach(entity.Attributes, (other) =>
+            for (int i = 0; i < entity.Attributes.Length; i++)
             {
+                var other = entity.Attributes[i];
                 if (other == null)
                 {
                     CoreSystem.Logger.LogWarning(Channel.Presentation,
                         string.Format(c_AttributeEmptyWarning, entity.Name));
+                    continue;
                 }
 
                 Type t = other.GetType();
@@ -858,7 +860,7 @@ namespace Syadeu.Presentation
                         }
                     }
                 }
-            });
+            }
             #endregion
         }
         private static void ProcessEntityOnProxyRemoved(EntitySystem system, IEntity entity, RecycleableMonobehaviour monoObj)
@@ -880,8 +882,9 @@ namespace Syadeu.Presentation
             //#endregion
 
             #region Attributes
-            Array.ForEach(entity.Attributes, (other) =>
+            for (int i = 0; i < entity.Attributes.Length; i++)
             {
+                var other = entity.Attributes[i];
                 if (other == null)
                 {
                     CoreSystem.Logger.LogWarning(Channel.Presentation,
@@ -900,7 +903,7 @@ namespace Syadeu.Presentation
                         }
                     }
                 }
-            });
+            }
             #endregion
         }
 

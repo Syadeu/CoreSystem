@@ -60,6 +60,13 @@ namespace Syadeu.Presentation
                 m_Idx = Hash.Empty;
                 return;
             }
+            if (!(obj is T))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Object({obj.Name}) is not a {TypeHelper.TypeOf<T>.Name}.");
+                m_Idx = Hash.Empty;
+                return;
+            }
 
             m_Idx = obj.Idx;
         }

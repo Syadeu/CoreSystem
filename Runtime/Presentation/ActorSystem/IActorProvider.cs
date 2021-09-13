@@ -1,11 +1,14 @@
 ﻿using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
+using System;
 
 namespace Syadeu.Presentation.Actor
 {
     internal interface IActorProvider
     {
-        void Bind(Entity<ActorEntity> parent, 
+        Type[] ReceiveEventOnly { get; }
+
+        void Bind(Entity<ActorEntity> parent, ActorControllerAttribute actorController,
             EventSystem eventSystem, EntitySystem entitySystem, CoroutineSystem coroutineSystem);
 
         void ReceivedEvent<TEvent>(TEvent ev) where TEvent : unmanaged, IActorEvent;
