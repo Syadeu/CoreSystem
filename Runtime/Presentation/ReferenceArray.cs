@@ -11,7 +11,7 @@ namespace Syadeu.Presentation
     public struct ReferenceArray<T> : IDisposable
         where T : unmanaged, IReference
     {
-        unsafe private readonly T* m_Buffer;
+        [NativeDisableUnsafePtrRestriction] unsafe private readonly T* m_Buffer;
         private readonly Allocator m_Allocator;
         private readonly int m_Length;
 
