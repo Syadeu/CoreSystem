@@ -25,6 +25,7 @@ namespace Syadeu.Presentation.Map
         private Reference<EntityBase>[] m_TriggerOnly = Array.Empty<Reference<EntityBase>>();
 
         [Header("TriggerActions")]
+        [Tooltip("False 를 반환하면 OnDetected 를 실행하지 않습니다.")]
         [JsonProperty(Order = 4, PropertyName = "OnDetectedPredicate")]
         private Reference<TriggerPredicateAction>[] m_OnDetectedPredicate = Array.Empty<Reference<TriggerPredicateAction>>();
         [JsonProperty(Order = 5, PropertyName = "OnDetected")]

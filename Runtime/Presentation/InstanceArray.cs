@@ -8,9 +8,9 @@ namespace Syadeu.Presentation
 {
     [NativeContainer]
     public struct InstanceArray<T> : IDisposable
-        where T : unmanaged, IInstance
+        where T : ObjectBase
     {
-        [NativeDisableUnsafePtrRestriction] unsafe private readonly T* m_Buffer;
+        [NativeDisableUnsafePtrRestriction] unsafe private readonly Instance<T>* m_Buffer;
         private readonly Allocator m_Allocator;
         private readonly int m_Length;
 
@@ -19,7 +19,7 @@ namespace Syadeu.Presentation
         [NativeSetClassTypeToNullOnSchedule] private DisposeSentinel m_DisposeSentinel;
 #endif
 
-        public T this[int i]
+        public Instance<T> this[int i]
         {
             get
             {
@@ -54,10 +54,10 @@ namespace Syadeu.Presentation
 #if UNITY_EDITOR
             private AtomicSafetyHandle m_AtomicSafetyHandle;
 #endif
-            unsafe private T* m_Buffer;
+            unsafe private Instance<T>* m_Buffer;
             private readonly int m_Length;
 
-            public T this[int i]
+            public Instance<T> this[int i]
             {
                 get
                 {
@@ -95,11 +95,11 @@ namespace Syadeu.Presentation
             m_Length = length;
             unsafe
             {
-                m_Buffer = (T*)UnsafeUtility.Malloc(m_Length * UnsafeUtility.SizeOf<T>(), UnsafeUtility.AlignOf<T>(), allocator);
+                m_Buffer = (Instance<T>*)UnsafeUtility.Malloc(m_Length * UnsafeUtility.SizeOf<Instance<T>>(), UnsafeUtility.AlignOf<Instance<T>>(), allocator);
 
                 if ((options & NativeArrayOptions.ClearMemory) == NativeArrayOptions.ClearMemory)
                 {
-                    UnsafeUtility.MemClear(m_Buffer, m_Length * UnsafeUtility.SizeOf<T>());
+                    UnsafeUtility.MemClear(m_Buffer, m_Length * UnsafeUtility.SizeOf<Instance<T>>());
                 }
             }
 
@@ -107,16 +107,16 @@ namespace Syadeu.Presentation
             DisposeSentinel.Create(out m_AtomicSafetyHandle, out m_DisposeSentinel, 1, allocator);
 #endif
         }
-        public InstanceArray(IEnumerable<T> iter, Allocator allocator)
+        public InstanceArray(IEnumerable<Instance<T>> iter, Allocator allocator)
         {
             m_Allocator = allocator;
             m_Length = iter.Count();
             unsafe
             {
-                m_Buffer = (T*)UnsafeUtility.Malloc(m_Length * UnsafeUtility.SizeOf<T>(), UnsafeUtility.AlignOf<T>(), allocator);
+                m_Buffer = (Instance<T>*)UnsafeUtility.Malloc(m_Length * UnsafeUtility.SizeOf<Instance<T>>(), UnsafeUtility.AlignOf<Instance<T>>(), allocator);
 
                 int i = 0;
-                foreach (T item in iter)
+                foreach (Instance<T> item in iter)
                 {
                     m_Buffer[i] = item;
                     i++;

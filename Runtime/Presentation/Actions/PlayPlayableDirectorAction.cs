@@ -30,7 +30,7 @@ namespace Syadeu.Presentation.Actions
     [DisplayName("TriggerAction: Play PlayableDirector")]
     [ReflectionDescription(
         "타임라인 액션입니다.\n" +
-        ""
+        "OnStart -> OnStartAction -> OnTimelineStart -> OnTimelineEnd -> OnEnd -> OnEndAction"
         )]
     public sealed class PlayPlayableDirectorAction : TriggerAction
     {
@@ -39,6 +39,7 @@ namespace Syadeu.Presentation.Actions
         [JsonProperty(Order = 2, PropertyName = "EndDelay")] private float m_EndDelay = 0;
 
         [Space, Header("PredicateActions: Conditional")]
+        [Tooltip("False를 반환하면 이 Timeline 을 실행하지 않습니다.")]
         [JsonProperty(Order = 3, PropertyName = "Conditional")]
         private Reference<TriggerPredicateAction>[] m_Conditional = Array.Empty<Reference<TriggerPredicateAction>>();
 
@@ -86,7 +87,6 @@ namespace Syadeu.Presentation.Actions
             m_CoroutineSystem.PostSequenceIterationJob(job);
         }
 
-        
         private struct PayloadJob : ICoroutineJob
         {
             public Reference<TimelineData> m_Data;

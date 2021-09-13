@@ -21,7 +21,7 @@ namespace Syadeu.Presentation.Actor
         [JsonProperty(Order = 2, PropertyName = "Providers")] 
         internal Reference<ActorProviderBase>[] m_Providers = Array.Empty<Reference<ActorProviderBase>>();
 
-        [JsonIgnore] internal InstanceArray<Instance<ActorProviderBase>> m_InstanceProviders;
+        [JsonIgnore] internal InstanceArray<ActorProviderBase> m_InstanceProviders;
 
         public void PostEvent<TEvent>(TEvent ev) where TEvent : unmanaged, IActorEvent
         {
@@ -61,7 +61,7 @@ namespace Syadeu.Presentation.Actor
         {
             Entity<ActorEntity> actor = entity.CastAs<IEntityData, ActorEntity>();
 
-            attribute.m_InstanceProviders = new InstanceArray<Instance<ActorProviderBase>>(attribute.m_Providers.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            attribute.m_InstanceProviders = new InstanceArray<ActorProviderBase>(attribute.m_Providers.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
             for (int i = 0; i < attribute.m_Providers.Length; i++)
             {
                 Instance<ActorProviderBase> clone = EntitySystem.CreateInstance(attribute.m_Providers[i]);
