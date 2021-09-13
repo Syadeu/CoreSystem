@@ -10,13 +10,13 @@ namespace Syadeu.Presentation
     /// Contains only instance
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public struct Instance<T> : IEquatable<Instance<T>>
+    public struct Instance<T> : IValidation, IEquatable<Instance<T>>
         where T : ObjectBase
     {
         public static readonly Instance<T> Empty = new Instance<T>(Hash.Empty);
         private static PresentationSystemID<EntitySystem> m_EntitySystem = PresentationSystemID<EntitySystem>.Null;
 
-        private readonly Hash m_Idx;
+        private Hash m_Idx;
 
         public Hash Idx => m_Idx;
         public T Object
@@ -62,8 +62,39 @@ namespace Syadeu.Presentation
             m_Idx = obj.Idx;
         }
 
+        public bool IsValid()
+        {
+            if (IsEmpty()) return false;
+            else if (m_EntitySystem.IsNull())
+            {
+                m_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
+                if (m_EntitySystem.IsNull())
+                {
+                    return false;
+                }
+            }
+            else if (!(m_EntitySystem.System.m_ObjectEntities[m_Idx] is T))
+            {
+                return false;
+            }
+
+            return true;
+        }
         public bool IsEmpty() => Equals(Empty);
         public bool Equals(Instance<T> other) => m_Idx.Equals(other.m_Idx);
+
+        public void Destroy()
+        {
+            if (IsEmpty())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    "Cannot destroy an empty instance");
+                return;
+            }
+
+            m_EntitySystem.System.DestroyObject(this);
+            m_Idx = Hash.Empty;
+        }
 
         public static Instance<T> CreateInstance(Reference<T> other)
         {

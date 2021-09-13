@@ -77,5 +77,15 @@ namespace Syadeu.Presentation
         {
             return new EntityData<T>(t.Idx);
         }
+        public static Instance<T> AsInstance<T>(this Entity<T> entity)
+            where T : EntityBase
+        {
+            return new Instance<T>(entity);
+        }
+        public static Instance<T> AsInstance<T>(this EntityData<T> entity)
+            where T : EntityDataBase
+        {
+            return new Instance<T>(entity);
+        }
     }
 }
