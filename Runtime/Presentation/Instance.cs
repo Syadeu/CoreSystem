@@ -10,7 +10,7 @@ namespace Syadeu.Presentation
     /// Contains only instance
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public struct Instance<T> : IValidation, IEquatable<Instance<T>>
+    public struct Instance<T> : IInstance, IEquatable<Instance<T>>
         where T : ObjectBase
     {
         public static readonly Instance<T> Empty = new Instance<T>(Hash.Empty);
@@ -19,6 +19,8 @@ namespace Syadeu.Presentation
         private Hash m_Idx;
 
         public Hash Idx => m_Idx;
+
+        ObjectBase IInstance.Object => Object;
         public T Object
         {
             get
@@ -82,6 +84,7 @@ namespace Syadeu.Presentation
         }
         public bool IsEmpty() => Equals(Empty);
         public bool Equals(Instance<T> other) => m_Idx.Equals(other.m_Idx);
+        public bool Equals(IInstance other) => m_Idx.Equals(other.Idx);
 
         public void Destroy()
         {

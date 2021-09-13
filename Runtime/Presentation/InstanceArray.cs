@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Collections;
@@ -7,9 +6,9 @@ using Unity.Collections.LowLevel.Unsafe;
 
 namespace Syadeu.Presentation
 {
-    [NativeContainer, NativeContainerIsReadOnly]
-    public struct ReferenceArray<T> : IDisposable
-        where T : unmanaged, IReference
+    [NativeContainer]
+    public struct InstanceArray<T> : IDisposable
+        where T : unmanaged, IInstance
     {
         unsafe private readonly T* m_Buffer;
         private readonly Allocator m_Allocator;
@@ -34,10 +33,22 @@ namespace Syadeu.Presentation
                     return m_Buffer[i];
                 }
             }
+            set
+            {
+#if UNITY_EDITOR
+                AtomicSafetyHandle.CheckDeallocateAndThrow(m_AtomicSafetyHandle);
+                AtomicSafetyHandle.CheckWriteAndThrow(m_AtomicSafetyHandle);
+#endif
+                if (i < 0 || i >= m_Length) throw new IndexOutOfRangeException();
+                unsafe
+                {
+                    m_Buffer[i] = value;
+                }
+            }
         }
         public int Length => m_Length;
 
-        public ReferenceArray(int length, Allocator allocator, NativeArrayOptions options = NativeArrayOptions.ClearMemory)
+        public InstanceArray(int length, Allocator allocator, NativeArrayOptions options = NativeArrayOptions.ClearMemory)
         {
             m_Allocator = allocator;
             m_Length = length;
@@ -55,7 +66,7 @@ namespace Syadeu.Presentation
             DisposeSentinel.Create(out m_AtomicSafetyHandle, out m_DisposeSentinel, 1, allocator);
 #endif
         }
-        public ReferenceArray(IEnumerable<T> iter, Allocator allocator)
+        public InstanceArray(IEnumerable<T> iter, Allocator allocator)
         {
             m_Allocator = allocator;
             m_Length = iter.Count();
