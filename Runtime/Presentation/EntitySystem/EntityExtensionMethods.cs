@@ -74,19 +74,19 @@ namespace Syadeu.Presentation
         }
 
         public static EntityData<T> As<T>(this Instance<T> t)
-            where T : EntityDataBase
+            where T : class, IEntityData
         {
             return new EntityData<T>(t.Idx);
         }
         public static Instance<T> AsInstance<T>(this Entity<T> entity)
-            where T : EntityBase
+            where T : class, IEntity
         {
-            return new Instance<T>(entity);
+            return new Instance<T>(entity.Idx);
         }
         public static Instance<T> AsInstance<T>(this EntityData<T> entity)
-            where T : EntityDataBase
+            where T : class, IEntityData
         {
-            return new Instance<T>(entity);
+            return new Instance<T>(entity.Idx);
         }
         public static TA GetAttribute<T, TA>(this Instance<T> t)
             where T : EntityDataBase

@@ -23,6 +23,8 @@ namespace Syadeu.Presentation.Actor
         [JsonIgnore] protected Entity<ActorEntity> Parent => m_Parent;
         [JsonIgnore] protected virtual Type[] ReceiveEventOnly => null;
 
+        [JsonIgnore] protected EventSystem EventSystem => m_EventSystem.System;
+
         [JsonIgnore] Type[] IActorProvider.ReceiveEventOnly => ReceiveEventOnly;
 
         void IActorProvider.Bind(Entity<ActorEntity> parent, ActorControllerAttribute actorController,

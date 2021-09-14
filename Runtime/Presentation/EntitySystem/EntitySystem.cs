@@ -578,9 +578,9 @@ namespace Syadeu.Presentation
 
         #endregion
 
-        internal Instance<T> CreateInstance<T>(Reference<T> obj) where T : ObjectBase
+        internal Instance<T> CreateInstance<T>(Reference<T> obj) where T : class, IObject
             => CreateInstance<T>(obj.GetObject());
-        internal Instance<T> CreateInstance<T>(ObjectBase obj) where T : ObjectBase
+        internal Instance<T> CreateInstance<T>(IObject obj) where T : class, IObject
         {
             ObjectBase clone = (ObjectBase)obj.Clone();
 
@@ -635,7 +635,7 @@ namespace Syadeu.Presentation
         public void DestroyEntity(Entity<IEntity> entity) => InternalDestroyEntity(entity.Idx);
         /// <inheritdoc cref="DestroyEntity(Entity{IEntity})"/>
         public void DestroyEntity(EntityData<IEntityData> entity) => InternalDestroyEntity(entity.Idx);
-        public void DestroyObject<T>(Instance<T> instance) where T : ObjectBase => InternalDestroyEntity(instance.Object.Idx);
+        public void DestroyObject<T>(Instance<T> instance) where T : class, IObject => InternalDestroyEntity(instance.Object.Idx);
         internal void InternalDestroyEntity(in Hash hash)
         {
             if (!m_ObjectEntities.ContainsKey(hash))
@@ -700,7 +700,14 @@ namespace Syadeu.Presentation
                         {
                             IAttributeProcessor processor = groupProcessors[j];
 
-                            processor.OnCreated(entity.Attributes[i], entityData);
+                            try
+                            {
+                                processor.OnCreated(entity.Attributes[i], entityData);
+                            }
+                            catch (Exception ex)
+                            {
+                                CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(IAttributeProcessor.OnCreated));
+                            }
                         }
                         CoreSystem.Logger.Log(Channel.Entity, $"Processed OnCreated at entity({entity.Name}), {t.Name}");
                     }
@@ -712,7 +719,14 @@ namespace Syadeu.Presentation
                     {
                         IAttributeProcessor processor = processors[j];
 
-                        processor.OnCreated(entity.Attributes[i], entityData);
+                        try
+                        {
+                            processor.OnCreated(entity.Attributes[i], entityData);
+                        }
+                        catch (Exception ex)
+                        {
+                            CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(IAttributeProcessor.OnCreated));
+                        }
                     }
                     CoreSystem.Logger.Log(Channel.Entity, $"Processed OnCreated at entity({entity.Name}), {t.Name}");
                 }
@@ -726,7 +740,14 @@ namespace Syadeu.Presentation
                 {
                     IEntityDataProcessor processor = entityProcessor[i];
 
-                    processor.OnCreated(entityData);
+                    try
+                    {
+                        processor.OnCreated(entityData);
+                    }
+                    catch (Exception ex)
+                    {
+                        CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(IEntityDataProcessor.OnCreated));
+                    }
                 }
             }
             #endregion
@@ -796,7 +817,14 @@ namespace Syadeu.Presentation
                     {
                         IAttributeProcessor processor = processors[j];
 
-                        processor.OnDestroy(other, entityData);
+                        try
+                        {
+                            processor.OnDestroy(other, entityData);
+                        }
+                        catch (Exception ex)
+                        {
+                            CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(IAttributeProcessor.OnDestroy));
+                        }
                     }
                 }
 
@@ -811,7 +839,14 @@ namespace Syadeu.Presentation
                 {
                     IEntityDataProcessor processor = entityProcessor[i];
 
-                    processor.OnDestroy(entityData);
+                    try
+                    {
+                        processor.OnDestroy(entityData);
+                    }
+                    catch (Exception ex)
+                    {
+                        CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(IEntityDataProcessor.OnDestroy));
+                    }
                 }
             }
             #endregion
@@ -856,7 +891,14 @@ namespace Syadeu.Presentation
                     {
                         if (processors[j] is IAttributeOnProxyCreated onProxyCreated)
                         {
-                            onProxyCreated.OnProxyCreated(other, entityData, monoObj);
+                            try
+                            {
+                                onProxyCreated.OnProxyCreated(other, entityData, monoObj);
+                            }
+                            catch (Exception ex)
+                            {
+                                CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(IAttributeOnProxyCreated.OnProxyCreated));
+                            }
                         }
                     }
                 }
@@ -899,7 +941,14 @@ namespace Syadeu.Presentation
                     {
                         if (processors[j] is IAttributeOnProxyRemoved onProxyRemoved)
                         {
-                            onProxyRemoved.OnProxyRemoved(other, entityData, monoObj);
+                            try
+                            {
+                                onProxyRemoved.OnProxyRemoved(other, entityData, monoObj);
+                            }
+                            catch (Exception ex)
+                            {
+                                CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(IAttributeOnProxyRemoved.OnProxyRemoved));
+                            }
                         }
                     }
                 }

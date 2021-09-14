@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Database;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
@@ -54,9 +55,16 @@ namespace Syadeu.Internal
         /// <returns></returns>
         public static MemberInfo[] GetSerializeMemberInfos(Type t)
         {
-            return t.GetMembers(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+            return t.GetMembers(
+                BindingFlags.FlattenHierarchy | BindingFlags.Instance |
+                BindingFlags.Public | BindingFlags.NonPublic)
                     .Where((other) =>
                     {
+                        if (other.GetCustomAttribute<JsonPropertyAttribute>() != null)
+                        {
+                            return true;
+                        }
+
                         if (other.MemberType != MemberTypes.Field &&
                             other.MemberType != MemberTypes.Property)
                         {

@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Presentation.Actions;
+using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
@@ -87,6 +88,23 @@ namespace Syadeu.Presentation.TurnTable
     [Preserve]
     internal sealed class TurnPlayerProcessor : AttributeProcessor<TurnPlayerAttribute>
     {
+        protected override void OnInitialize()
+        {
+            EventSystem.AddEvent<OnActionPointChangedEvent>(OnActionPointChangedEventHandler);
+        }
+        protected override void OnDispose()
+        {
+            EventSystem.RemoveEvent<OnActionPointChangedEvent>(OnActionPointChangedEventHandler);
+        }
+        private void OnActionPointChangedEventHandler(OnActionPointChangedEvent ev)
+        {
+            ActorControllerAttribute ctr = ev.Entity.GetAttribute<ActorControllerAttribute>();
+            if (ctr == null) return;
+
+            ActorActionPointChangedUIEvent actorEv = new ActorActionPointChangedUIEvent(ev.From, ev.To);
+            ctr.PostEvent(actorEv);
+        }
+
         protected override void OnCreated(TurnPlayerAttribute attribute, EntityData<IEntityData> entity)
         {
             attribute.ActivateTurn = attribute.ActivateOnCreate;

@@ -3,6 +3,7 @@ using Syadeu.Internal;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using System;
+using Unity.Mathematics;
 
 namespace Syadeu.Presentation
 {
@@ -11,7 +12,7 @@ namespace Syadeu.Presentation
     /// </summary>
     /// <typeparam name="T"></typeparam>
     public struct Instance<T> : IInstance, IEquatable<Instance<T>>
-        where T : ObjectBase
+        where T : class, IObject
     {
         public static readonly Instance<T> Empty = new Instance<T>(Hash.Empty);
         private static PresentationSystemID<EntitySystem> m_EntitySystem = PresentationSystemID<EntitySystem>.Null;
@@ -20,7 +21,7 @@ namespace Syadeu.Presentation
 
         public Hash Idx => m_Idx;
 
-        ObjectBase IInstance.Object => Object;
+        IObject IInstance.Object => Object;
         public T Object
         {
             get
@@ -122,12 +123,29 @@ namespace Syadeu.Presentation
 
         public static Instance<T> CreateInstance(Reference<T> other)
         {
-            if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(TypeHelper.TypeOf<T>.Type) ||
-                TypeHelper.TypeOf<AttributeBase>.Type.IsAssignableFrom(TypeHelper.TypeOf<T>.Type))
+            if (m_EntitySystem.IsNull())
             {
-                CoreSystem.Logger.LogError(Channel.Entity, "You cannot create instance entity or attribute in this method.");
+                m_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
+                if (m_EntitySystem.IsNull())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        "Cannot retrived EntitySystem.");
+                    return Empty;
+                }
+            }
+
+            if (TypeHelper.TypeOf<AttributeBase>.Type.IsAssignableFrom(TypeHelper.TypeOf<T>.Type))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity, "You cannot create instance of attribute.");
                 return Empty;
             }
+
+            if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(TypeHelper.TypeOf<T>.Type))
+            {
+                Instance<IEntity> ins = m_EntitySystem.System.CreateEntity(other, float3.zero).AsInstance();
+                return ins.Cast<IEntity, T>();
+            }
+
             return m_EntitySystem.System.CreateInstance(other);
         }
     }

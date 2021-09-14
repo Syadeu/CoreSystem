@@ -22,7 +22,8 @@ namespace Syadeu.Presentation
         bool IsEmpty();
         ObjectBase GetObject();
     }
-    public interface IReference<T> : IReference, IEquatable<IReference<T>> where T : ObjectBase
+    public interface IReference<T> : IReference, IEquatable<IReference<T>> 
+        where T : class, IObject
     {
         new T GetObject();
     }
@@ -63,7 +64,8 @@ namespace Syadeu.Presentation
         public static implicit operator Hash(Reference a) => a.m_Hash;
     }
     [Serializable]
-    public struct Reference<T> : IReference<T>, IEquatable<Reference<T>> where T : ObjectBase
+    public struct Reference<T> : IReference<T>, IEquatable<Reference<T>> 
+        where T : class, IObject
     {
         public static readonly Reference<T> Empty = new Reference<T>(Hash.Empty);
 
@@ -98,7 +100,8 @@ namespace Syadeu.Presentation
         }
         public T GetObject()
         {
-            if (EntityDataList.Instance.m_Objects.TryGetValue(m_Hash, out ObjectBase value)) return (T)value;
+            if (EntityDataList.Instance.m_Objects.TryGetValue(m_Hash, out ObjectBase value) &&
+                value is T t) return t;
             return null;
         }
 

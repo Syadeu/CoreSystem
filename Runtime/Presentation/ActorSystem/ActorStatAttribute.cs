@@ -32,10 +32,6 @@ namespace Syadeu.Presentation.Actor
             base.OnDispose();
         }
 
-        public void Reset()
-        {
-            m_CurrentStats = (ValuePairContainer)m_Stats.Clone();
-        }
         public T GetOriginalValue<T>(string name) => m_Stats.GetValue<T>(name);
         public T GetOriginalValue<T>(Hash hash) => m_Stats.GetValue<T>(hash);
         public T GetValue<T>(string name) => m_CurrentStats.GetValue<T>(name);
@@ -46,7 +42,6 @@ namespace Syadeu.Presentation.Actor
             m_CurrentStats.SetValue(hash, value);
             OnValueChanged?.Invoke(hash, value);
 
-            ActorControllerAttribute ctr = Parent.GetAttribute<ActorControllerAttribute>();
             Entity<ActorEntity> entity = Parent.CastAs<IEntityData, ActorEntity>();
             for (int i = 0; i < m_EventHandler.Length; i++)
             {
@@ -54,10 +49,6 @@ namespace Syadeu.Presentation.Actor
                 if (!ev.TargetValueNameHash.Equals(hash)) continue;
 
                 m_EventHandler.Invoke(i, entity);
-                //if (ctr != null)
-                //{
-                //    ctr.PostEvent(ev);
-                //}
             }
         }
 
@@ -93,10 +84,5 @@ namespace Syadeu.Presentation.Actor
         {
             attribute.Initialize();
         }
-    }
-
-    public interface IActorStatEvent : IActorEvent
-    {
-        Hash TargetValueNameHash { get; }
     }
 }

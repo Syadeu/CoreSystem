@@ -33,13 +33,13 @@ namespace Syadeu.Presentation
         }
 
         public static Instance<TA> Cast<T, TA>(this Instance<T> t)
-            where T : ObjectBase
-            where TA : ObjectBase
+            where T : class, IObject
+            where TA : class, IObject
         {
             return new Instance<TA>(t.Idx);
         }
         public static Reference<T> AsOriginal<T>(this Instance<T> t)
-            where T : ObjectBase
+            where T : class, IObject
         {
             return new Reference<T>(t.Object.Hash);
         }

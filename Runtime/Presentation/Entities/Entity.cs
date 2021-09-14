@@ -192,5 +192,10 @@ namespace Syadeu.Presentation.Entities
             }
             return GetEntity(a.Idx);
         }
+        public static implicit operator Entity<T>(Instance<T> a)
+        {
+            if (a.IsEmpty() || !a.IsValid()) return Empty;
+            return GetEntityWithoutCheck(a.Idx);
+        }
     }
 }

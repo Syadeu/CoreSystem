@@ -15,7 +15,7 @@ namespace Syadeu.Presentation
         private readonly Queue<CoroutineJobPayload> m_IterationJobs = new Queue<CoroutineJobPayload>();
         private CoroutineJobPayload m_CurrentIterationJob = null;
 
-        readonly List<CoroutineJob> m_CoroutineJobs = new List<CoroutineJob>();
+        internal readonly List<CoroutineJob> m_CoroutineJobs = new List<CoroutineJob>();
         readonly List<CoroutineJobPayload> m_CoroutineIterators = new List<CoroutineJobPayload>();
         readonly List<int> m_UsedCoroutineIndices = new List<int>();
         readonly Queue<int> m_TerminatedCoroutineIndices = new Queue<int>();
@@ -232,11 +232,12 @@ namespace Syadeu.Presentation
         {
             CoreSystem.Logger.ThreadBlock(nameof(StopCoroutineJob), ThreadInfo.Unity);
 
-            if (!job.Generation.Equals(m_CoroutineJobs[job.Index].Generation))
+            if (!job.IsValid()) return;
+            else if (!job.Generation.Equals(m_CoroutineJobs[job.Index].Generation))
             {
                 return;
             }
-            if (m_CoroutineIterators[job.Index] == null)
+            else if (m_CoroutineIterators[job.Index] == null)
             {
                 return;
             }

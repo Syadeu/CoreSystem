@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Syadeu.Internal;
 using Syadeu.Presentation.Entities;
 using System;
 using System.Linq;
@@ -22,8 +23,10 @@ namespace Syadeu.Presentation.Actor
         [JsonProperty(Order = 4, PropertyName = "DefaultWeapon")]
         private Reference<ActorWeaponData> m_DefaultWeapon = Reference<ActorWeaponData>.Empty;
 
+        [JsonIgnore] private Type[] m_ReceiveEventOnly = null;
         [JsonIgnore] private Instance<ActorWeaponData> m_EquipedWeapon;
 
+        [JsonIgnore] protected override Type[] ReceiveEventOnly => m_ReceiveEventOnly;
         [JsonIgnore] public Instance<ActorWeaponData> EquipedWeapon => m_EquipedWeapon;
         [JsonIgnore] public float WeaponDamage
         {
@@ -46,24 +49,13 @@ namespace Syadeu.Presentation.Actor
             }
         }
 
-        protected override void OnEventReceived<TEvent>(TEvent ev)
-        {
-            if (!(ev is IActorWeaponEquipEvent weaponEquipEvent)) return;
-
-            if (!IsEquipable(weaponEquipEvent.Weapon))
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Entity({Parent.Name}) trying to equip weapon({weaponEquipEvent.Weapon.Object.Name}) that doesn\'t fit.");
-                return;
-            }
-
-            m_EquipedWeapon = weaponEquipEvent.Weapon;
-            CoreSystem.Logger.Log(Channel.Entity,
-                $"Entity({Parent.Name}) has equiped weapon({m_EquipedWeapon.Object.Name}).");
-        }
-
         protected override void OnCreated(Entity<ActorEntity> entity)
         {
+            m_ReceiveEventOnly = new Type[]
+            {
+                TypeHelper.TypeOf<IActorWeaponEquipEvent>.Type
+            };
+
             for (int i = 0; i < m_ExcludeWeapon.Length; i++)
             {
                 if (m_IncludeWeapon.Contains(m_ExcludeWeapon[i]))
@@ -80,6 +72,26 @@ namespace Syadeu.Presentation.Actor
                         $"2");
                 }
             }
+        }
+        protected override void OnEventReceived<TEvent>(TEvent ev)
+        {
+            if (ev is IActorWeaponEquipEvent weaponEquipEvent)
+            {
+                ActorWeaponEquipEventHandler(weaponEquipEvent);
+            }
+        }
+        protected virtual void ActorWeaponEquipEventHandler(IActorWeaponEquipEvent ev)
+        {
+            if (!IsEquipable(ev.Weapon))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Entity({Parent.Name}) trying to equip weapon({ev.Weapon.Object.Name}) that doesn\'t fit.");
+                return;
+            }
+
+            m_EquipedWeapon = ev.Weapon;
+            CoreSystem.Logger.Log(Channel.Entity,
+                $"Entity({Parent.Name}) has equiped weapon({m_EquipedWeapon.Object.Name}).");
         }
 
         public bool IsEquipable(Instance<ActorWeaponData> weapon)

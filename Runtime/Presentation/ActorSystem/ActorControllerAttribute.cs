@@ -55,29 +55,6 @@ namespace Syadeu.Presentation.Actor
                 disposable.Dispose();
             }
         }
-        //internal void PostEvent(IActorEvent ev)
-        //{
-        //    try
-        //    {
-        //        ev.OnExecute(Parent.CastAs<IEntityData, ActorEntity>());
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        CoreSystem.Logger.LogError(Channel.Entity, ex);
-        //        return;
-        //    }
-
-        //    for (int i = 0; i < m_InstanceProviders.Length; i++)
-        //    {
-        //        ExecutePostEvent(m_InstanceProviders[i].Object, ev);
-        //    }
-        //    m_OnReceivedEvent.Execute(ev);
-
-        //    if (ev is IDisposable disposable)
-        //    {
-        //        disposable.Dispose();
-        //    }
-        //}
         private void ExecutePostEvent<TEvent>(IActorProvider provider, TEvent ev)
 #if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             where TEvent : struct, IActorEvent

@@ -28,7 +28,7 @@ namespace Syadeu.Presentation.Entities
         // TODO : 이거 임시, 나중에 최적화시 지울 것
         [JsonIgnore] internal AttributeBase[] m_Attributes;
 
-        Hash IEntityData.Idx => Idx;
+        Hash IObject.Idx => Idx;
         AttributeBase[] IEntityData.Attributes => m_Attributes;
 
         /// <summary><inheritdoc cref="m_Attributes"/></summary>
@@ -38,25 +38,104 @@ namespace Syadeu.Presentation.Entities
         [JsonIgnore] private HashSet<Hash> AttritbutesHashSet { get; } = new HashSet<Hash>();
         [JsonIgnore] public bool isCreated => m_IsCreated;
 
-        bool IEntityData.HasAttribute(Hash hash) => AttritbutesHashSet.Contains(hash);
-        // TODO : 현재 가장 상위 타입만 체크하여 반환하므로 나중에 상속받은 타입도 고려해서 받아오게 수정할 것
+        public bool HasAttribute(Hash hash)
+        {
+            if (!m_IsCreated)
+            {
+                for (int i = 0; i < m_AttributeList.Length; i++)
+                {
+                    if (m_AttributeList[i].m_Hash.Equals(hash)) return true;
+                }
+                return false;
+            }
+
+            return AttritbutesHashSet.Contains(hash);
+        }
+        public bool HasAttribute(Type attributeType)
+        {
+            if (!m_IsCreated)
+            {
+                for (int i = 0; i < m_AttributeList.Length; i++)
+                {
+                    if (attributeType.IsAssignableFrom(m_AttributeList[i].GetObject().GetType())) return true;
+                }
+                return false;
+            }
+
+            if (m_AttributesHashMap.ContainsKey(attributeType)) return true;
+            foreach (var item in m_AttributesHashMap)
+            {
+                if (attributeType.IsAssignableFrom(item.Key))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        public bool HasAttribute<T>() where T : AttributeBase => HasAttribute(TypeHelper.TypeOf<T>.Type);
+        
         AttributeBase IEntityData.GetAttribute(Type t)
         {
-            if (!m_AttributesHashMap.TryGetValue(t, out var list)) return null;
-            return list[0];
+            if (!m_IsCreated)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"This object({Name}) is not an instance. {nameof(IEntityData.GetAttribute)} is not allowed.");
+                return null;
+            }
+
+            if (m_AttributesHashMap.TryGetValue(t, out var list)) return list[0];
+
+            for (int i = 0; i < m_Attributes.Length; i++)
+            {
+                if (t.IsAssignableFrom(m_Attributes[i].GetType()))
+                {
+                    return m_Attributes[i];
+                }
+            }
+            return null;
         }
         AttributeBase[] IEntityData.GetAttributes(Type t)
         {
-            if (!m_AttributesHashMap.TryGetValue(t, out var list)) return null;
-            return list;
+            if (!m_IsCreated)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"This object({Name}) is not an instance. {nameof(IEntityData.GetAttributes)} is not allowed.");
+                return null;
+            }
+
+            if (m_AttributesHashMap.TryGetValue(t, out var list)) return list;
+
+            foreach (var item in m_AttributesHashMap)
+            {
+                if (t.IsAssignableFrom(item.Key))
+                {
+                    return item.Value;
+                }
+            }
+
+            return null;
         }
         T IEntityData.GetAttribute<T>()
         {
+            if (!m_IsCreated)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"This object({Name}) is not an instance. {nameof(IEntityData.GetAttribute)} is not allowed.");
+                return null;
+            }
+
             AttributeBase att = ((IEntityData)this).GetAttribute(TypeHelper.TypeOf<T>.Type);
             return att == null ? null : (T)att;
         }
         T[] IEntityData.GetAttributes<T>()
         {
+            if (!m_IsCreated)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"This object({Name}) is not an instance. {nameof(IEntityData.GetAttributes)} is not allowed.");
+                return null;
+            }
+
             AttributeBase[] atts = ((IEntityData)this).GetAttributes(TypeHelper.TypeOf<T>.Type);
             if (atts == null) return null;
 
