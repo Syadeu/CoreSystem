@@ -46,6 +46,7 @@ namespace Syadeu.Presentation.Actor
             m_CurrentStats.SetValue(hash, value);
             OnValueChanged?.Invoke(hash, value);
 
+            ActorControllerAttribute ctr = Parent.GetAttribute<ActorControllerAttribute>();
             Entity<ActorEntity> entity = Parent.CastAs<IEntityData, ActorEntity>();
             for (int i = 0; i < m_EventHandler.Length; i++)
             {
@@ -53,6 +54,10 @@ namespace Syadeu.Presentation.Actor
                 if (!ev.TargetValueNameHash.Equals(hash)) continue;
 
                 m_EventHandler.Invoke(i, entity);
+                //if (ctr != null)
+                //{
+                //    ctr.PostEvent(ev);
+                //}
             }
         }
 
@@ -75,6 +80,7 @@ namespace Syadeu.Presentation.Actor
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"Firing event({id}) has faild.");
+                return;
             }
         }
 
