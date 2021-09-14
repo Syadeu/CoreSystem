@@ -173,7 +173,17 @@ namespace SyadeuEditor
         #region General Menu
         private sealed class GeneralMenu
         {
+            #region Constrains
+
+            const string
+                UNITY_COLLECTIONS_CHECKS = "ENABLE_UNITY_COLLECTIONS_CHECKS",
+                CORESYSTEM_FMOD = "CORESYSTEM_FMOD";
+            bool
+                m_DefinedCollectionsChecks, 
+                m_DefinedFMOD;
             List<string> m_DefinedConstrains;
+
+            #endregion
 
             #region Tag Manager
             SerializedObject m_TagManagerObject;
@@ -186,18 +196,35 @@ namespace SyadeuEditor
 
             #endregion
 
-            const string 
-                CORESYSTEM_FMOD = "CORESYSTEM_FMOD";
-
             CoreSystemSettings m_CoreSystemSettings;
 
-            bool
-                m_DefinedFMOD;
+            #region Unity Audio
+
+            SerializedObject m_UnityAudioManager;
+            SerializedProperty
+                m_UnityAudioDisableAudio,
+
+                m_UnityAudioGlobalVolume,
+                m_UnityAudioRolloffScale,
+                m_UnityAudioDopplerFactor,
+
+                m_UnityAudioRealVoiceCount,
+                m_UnityAudioVirtualVoiceCount,
+                m_UnityAudioDefaultSpeakerMode;
+
+            #endregion
 
             public GeneralMenu()
             {
+                #region Constrains
+
                 PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, out string[] temp);
                 m_DefinedConstrains = temp.ToList();
+
+                m_DefinedCollectionsChecks = HasConstrains(UNITY_COLLECTIONS_CHECKS);
+                m_DefinedFMOD = HasConstrains(CORESYSTEM_FMOD);
+
+                #endregion
 
                 #region Tag Manager
 
@@ -232,11 +259,31 @@ namespace SyadeuEditor
                 #endregion
 
                 m_CoreSystemSettings = CoreSystemSettings.Instance;
-                m_DefinedFMOD = HasConstrains(CORESYSTEM_FMOD);
+
+                #region Unity Audio
+
+                var audioManager = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/AudioManager.asset")[0];
+                m_UnityAudioManager = new SerializedObject(audioManager);
+
+                m_UnityAudioDisableAudio = m_UnityAudioManager.FindProperty("m_DisableAudio");
+
+                m_UnityAudioGlobalVolume = m_UnityAudioManager.FindProperty("m_Volume");
+                m_UnityAudioRolloffScale = m_UnityAudioManager.FindProperty("Rolloff Scale");
+                m_UnityAudioDopplerFactor = m_UnityAudioManager.FindProperty("Doppler Factor");
+
+                m_UnityAudioRealVoiceCount = m_UnityAudioManager.FindProperty("m_RealVoiceCount");
+                m_UnityAudioVirtualVoiceCount = m_UnityAudioManager.FindProperty("m_VirtualVoiceCount");
+                m_UnityAudioDefaultSpeakerMode = m_UnityAudioManager.FindProperty("Default Speaker Mode");
                 
+                #endregion
             }
             public void OnGUI()
             {
+                using (new EditorUtils.BoxBlock(Color.black))
+                {
+                    DrawContrains();
+                }
+
                 using (new EditorUtils.BoxBlock(Color.black))
                 {
                     DrawTagManager();
@@ -246,12 +293,93 @@ namespace SyadeuEditor
                 {
                     DrawSettings();
                 }
+
+                using (new EditorGUI.DisabledGroupScope(m_DefinedFMOD))
+                using (new EditorUtils.BoxBlock(Color.black))
+                {
+                    DrawUnityAudio();
+                }
             }
             public bool Predicate()
             {
                 if (!TagManagerPredicate()) return false;
                 return true;
             }
+
+            #region Contrains
+
+            private bool m_OpenContrains = false;
+
+            private void DrawContrains()
+            {
+                m_OpenContrains = EditorUtils.Foldout(m_OpenContrains, "Constrains");
+                if (!m_OpenContrains) return;
+
+                EditorGUI.indentLevel++;
+
+                EditorUtils.StringRich("Unity Constrains", 13);
+                using (var check = new EditorGUI.ChangeCheckScope())
+                {
+                    m_DefinedCollectionsChecks
+                        = EditorGUILayout.ToggleLeft("Define ENABLE_UNITY_COLLECTIONS_CHECKS", m_DefinedCollectionsChecks);
+
+                    if (check.changed)
+                    {
+                        if (m_DefinedCollectionsChecks) DefineConstrains(UNITY_COLLECTIONS_CHECKS);
+                        else UndefineContrains(UNITY_COLLECTIONS_CHECKS);
+                    }
+                }
+
+                EditorGUILayout.Space();
+                EditorUtils.Line();
+
+                EditorUtils.StringRich("CoreSystem Constrains", 13);
+                using (var check = new EditorGUI.ChangeCheckScope())
+                {
+                    m_DefinedFMOD =
+                        EditorGUILayout.ToggleLeft("Define CORESYSTEM_FMOD", m_DefinedFMOD);
+
+                    if (check.changed)
+                    {
+                        if (m_DefinedFMOD) DefineConstrains(CORESYSTEM_FMOD);
+                        else UndefineContrains(CORESYSTEM_FMOD);
+                    }
+                }
+
+                EditorGUI.indentLevel--;
+            }
+
+            private bool HasConstrains(string name) => m_DefinedConstrains.Contains(name);
+            private void DefineConstrains(params string[] names)
+            {
+                if (names == null || names.Length == 0) return;
+
+                for (int i = 0; i < names.Length; i++)
+                {
+                    if (m_DefinedConstrains.Contains(names[i])) continue;
+
+                    m_DefinedConstrains.Add(names[i]);
+                }
+
+                PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, m_DefinedConstrains.ToArray());
+                UnityEditor.Compilation.CompilationPipeline.RequestScriptCompilation();
+            }
+            private void UndefineContrains(params string[] names)
+            {
+                if (names == null || names.Length == 0) return;
+
+                for (int i = 0; i < names.Length; i++)
+                {
+                    if (!m_DefinedConstrains.Contains(names[i])) continue;
+
+                    m_DefinedConstrains.Remove(names[i]);
+                }
+
+                PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, m_DefinedConstrains.ToArray());
+                UnityEditor.Compilation.CompilationPipeline.RequestScriptCompilation();
+            }
+
+            #endregion
 
             #region Tag Manager
 
@@ -371,87 +499,110 @@ namespace SyadeuEditor
 
                 using (new EditorUtils.BoxBlock(Color.white))
                 {
-                    EditorGUI.indentLevel++;
-                    SettingGlobal();
-                    EditorGUI.indentLevel--;
+                    EditorUtils.StringRich("Global Settings", 13);
+                    EditorGUILayout.Space();
+
+                    m_CoreSystemSettings.m_DisplayLogChannel =
+                        (Channel)EditorGUILayout.EnumFlagsField("Display Log Channel", m_CoreSystemSettings.m_DisplayLogChannel);
+
+                    m_CoreSystemSettings.m_VisualizeObjects =
+                        EditorGUILayout.ToggleLeft("Visuallize All Managers", m_CoreSystemSettings.m_VisualizeObjects);
+
+                    m_CoreSystemSettings.m_CrashAfterException =
+                        EditorGUILayout.ToggleLeft("Crash After Exception", m_CoreSystemSettings.m_CrashAfterException);
+
+                    m_CoreSystemSettings.m_HideSetupWizard =
+                        EditorGUILayout.ToggleLeft("Hide Setup Wizard", m_CoreSystemSettings.m_HideSetupWizard);
+
+                    m_CoreSystemSettings.m_EnableLua =
+                        EditorGUILayout.ToggleLeft("Enable Lua", m_CoreSystemSettings.m_EnableLua);
                 }
                 EditorUtils.Line();
 
-                using (new EditorUtils.BoxBlock(Color.white))
-                {
-                    EditorGUI.indentLevel++;
-                    SettingDefines();
-                    EditorGUI.indentLevel--;
-                }
-                
                 EditorGUI.indentLevel--;
-            }
-            private void SettingGlobal()
-            {
-                EditorUtils.StringRich("Global Settings", 13);
-                EditorGUILayout.Space();
-
-                m_CoreSystemSettings.m_DisplayLogChannel =
-                    (Channel)EditorGUILayout.EnumFlagsField("Display Log Channel", m_CoreSystemSettings.m_DisplayLogChannel);
-
-                m_CoreSystemSettings.m_VisualizeObjects =
-                    EditorGUILayout.ToggleLeft("Visuallize All Managers", m_CoreSystemSettings.m_VisualizeObjects);
-
-                m_CoreSystemSettings.m_CrashAfterException =
-                    EditorGUILayout.ToggleLeft("Crash After Exception", m_CoreSystemSettings.m_CrashAfterException);
-
-                m_CoreSystemSettings.m_HideSetupWizard =
-                    EditorGUILayout.ToggleLeft("Hide Setup Wizard", m_CoreSystemSettings.m_HideSetupWizard);
-
-                m_CoreSystemSettings.m_EnableLua =
-                    EditorGUILayout.ToggleLeft("Enable Lua", m_CoreSystemSettings.m_EnableLua);
-            }
-            private void SettingDefines()
-            {
-                EditorUtils.StringRich("Define Constrains", 13);
-                EditorGUILayout.Space();
-
-                EditorGUI.BeginChangeCheck();
-                m_DefinedFMOD =
-                    EditorGUILayout.ToggleLeft("Define CORESYSTEM_FMOD", m_DefinedFMOD);
-                if (EditorGUI.EndChangeCheck())
-                {
-                    if (m_DefinedFMOD) DefineConstrains(CORESYSTEM_FMOD);
-                    else UndefineContrains(CORESYSTEM_FMOD);
-                }
             }
 
             #endregion
 
-            private bool HasConstrains(string name) => m_DefinedConstrains.Contains(name);
-            private void DefineConstrains(params string[] names)
+            #region Unity Audio
+
+            private bool 
+                m_OpenUnityAudio = false, m_IsUnityAudioModified = false;
+
+            private void DrawUnityAudio()
             {
-                if (names == null || names.Length == 0) return;
+                m_OpenUnityAudio = EditorUtils.Foldout(m_OpenUnityAudio, "Unity Audio");
+                if (!m_OpenUnityAudio) return;
 
-                for (int i = 0; i < names.Length; i++)
+                EditorGUI.indentLevel++;
+                using (new EditorUtils.BoxBlock(Color.white))
                 {
-                    if (m_DefinedConstrains.Contains(names[i])) continue;
+                    using (var check = new EditorGUI.ChangeCheckScope())
+                    {
+                        EditorGUILayout.PropertyField(m_UnityAudioDisableAudio);
 
-                    m_DefinedConstrains.Add(names[i]);
+                        if (check.changed)
+                        {
+                            m_UnityAudioManager.ApplyModifiedProperties();
+                            m_UnityAudioManager.Update();
+                        }
+                    }
+
+                    EditorUtils.Line();
+
+                    if (m_UnityAudioDisableAudio.boolValue)
+                    {
+                        EditorGUILayout.HelpBox("Unity Audio has been disabled", MessageType.Info);
+                        return;
+                    }
+
+                    using (new EditorGUI.DisabledGroupScope(!m_IsUnityAudioModified))
+                    using (new EditorGUILayout.HorizontalScope())
+                    {
+                        if (m_IsUnityAudioModified)
+                        {
+                            EditorGUILayout.LabelField("Modified");
+                        }
+
+                        GUILayout.FlexibleSpace();
+                        if (GUILayout.Button("Apply", GUILayout.Width(100)))
+                        {
+                            m_UnityAudioManager.ApplyModifiedProperties();
+                            m_UnityAudioManager.Update();
+
+                            m_IsUnityAudioModified = false;
+                        }
+                    }
+
+                    EditorGUI.BeginChangeCheck();
+
+                    m_UnityAudioGlobalVolume.floatValue
+                        = EditorGUILayout.Slider("Global Volume", m_UnityAudioGlobalVolume.floatValue, 0, 1);
+                    m_UnityAudioRolloffScale.floatValue
+                        = EditorGUILayout.Slider("Volume Rolloff Scale", m_UnityAudioRolloffScale.floatValue, 0, 1);
+                    m_UnityAudioDopplerFactor.floatValue
+                        = EditorGUILayout.Slider("Doppler Factor", m_UnityAudioDopplerFactor.floatValue, 0, 1);
+
+                    EditorUtils.Line();
+
+                    m_UnityAudioRealVoiceCount.intValue
+                        = EditorGUILayout.IntField("Max Real Voices", m_UnityAudioRealVoiceCount.intValue);
+
+                    m_UnityAudioVirtualVoiceCount.intValue
+                        = EditorGUILayout.IntField("Max Virtual Voices", m_UnityAudioVirtualVoiceCount.intValue);
+
+                    m_UnityAudioDefaultSpeakerMode.intValue =
+                        (int)(AudioSpeakerMode)EditorGUILayout.EnumPopup("Default Speaker Mode", (AudioSpeakerMode)m_UnityAudioDefaultSpeakerMode.intValue);
+
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        m_IsUnityAudioModified = true;
+                    }
                 }
-
-                PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, m_DefinedConstrains.ToArray());
-                UnityEditor.Compilation.CompilationPipeline.RequestScriptCompilation();
+                EditorGUI.indentLevel--;
             }
-            private void UndefineContrains(params string[] names)
-            {
-                if (names == null || names.Length == 0) return;
 
-                for (int i = 0; i < names.Length; i++)
-                {
-                    if (!m_DefinedConstrains.Contains(names[i])) continue;
-
-                    m_DefinedConstrains.Remove(names[i]);
-                }
-
-                PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, m_DefinedConstrains.ToArray());
-                UnityEditor.Compilation.CompilationPipeline.RequestScriptCompilation();
-            }
+            #endregion
         }
         #endregion
 
