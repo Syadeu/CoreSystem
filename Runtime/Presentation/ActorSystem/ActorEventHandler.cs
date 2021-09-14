@@ -39,6 +39,32 @@ namespace Syadeu.Presentation.Actor
                 }
             }
         }
+        public void Remove(ActorEventID id)
+        {
+            for (int i = 0; i < m_Events.Count; i++)
+            {
+                if (m_Events[i].Target.EventID.Equals(id))
+                {
+                    m_Events.RemoveAt(i);
+                    break;
+                }
+            }
+        }
+
+        public bool Invoke(ActorEventID id, Entity<ActorEntity> from)
+        {
+            bool invoked = false;
+            for (int i = 0; i < m_Events.Count; i++)
+            {
+                if (m_Events[i].Target.EventID.Equals(id))
+                {
+                    m_Events[i].Invoke(from);
+                    invoked = true;
+                    break;
+                }
+            }
+            return invoked;
+        }
         public void Invoke(int index, Entity<ActorEntity> from)
         {
             m_Events[index].Invoke(from);

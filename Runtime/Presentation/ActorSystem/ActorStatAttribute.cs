@@ -40,7 +40,7 @@ namespace Syadeu.Presentation.Actor
         public T GetOriginalValue<T>(Hash hash) => m_Stats.GetValue<T>(hash);
         public T GetValue<T>(string name) => m_CurrentStats.GetValue<T>(name);
         public T GetValue<T>(Hash hash) => m_CurrentStats.GetValue<T>(hash);
-        public void SetValue<T>(string name, T value) => SetValue<T>(ToValueHash(name), value);
+        public void SetValue<T>(string name, T value) => SetValue(ToValueHash(name), value);
         public void SetValue<T>(Hash hash, T value)
         {
             m_CurrentStats.SetValue(hash, value);
@@ -63,6 +63,19 @@ namespace Syadeu.Presentation.Actor
         public void UnregisterEvent<T>(T ev) where T : unmanaged, IActorStatEvent
         {
             m_EventHandler.Remove(ev);
+        }
+        public void UnregisterEvent(ActorEventID id)
+        {
+            m_EventHandler.Remove(id);
+        }
+
+        public void FireEvent(ActorEventID id)
+        {
+            if (!m_EventHandler.Invoke(id, Parent.CastAs<IEntityData, ActorEntity>()))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Firing event({id}) has faild.");
+            }
         }
 
         public static Hash ToValueHash(string name) => Hash.NewHash(name);
