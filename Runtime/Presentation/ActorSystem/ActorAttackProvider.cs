@@ -17,7 +17,7 @@ namespace Syadeu.Presentation.Actor
                 AttackEventHandler(attackEvent);
             }
         }
-        private void AttackEventHandler(IActorAttackEvent ev)
+        protected virtual void AttackEventHandler(IActorAttackEvent ev)
         {
             //var weaponProvider = GetProvider<ActorWeaponProvider>();
             //if (weaponProvider.IsEmpty())

@@ -9,16 +9,19 @@ namespace Syadeu.Presentation.TurnTable
 {
     public struct TRPGActorAttackEvent : IActorAttackEvent
     {
-        public InstanceArray<ActorEntity> Targets => throw new System.NotImplementedException();
-        public Hash HPStatNameHash => m_StatNameHash;
-        public float Damage => throw new System.NotImplementedException();
-
+        private ActorEventID m_EventID;
         private InstanceArray<ActorEntity> m_Target;
         private Hash m_StatNameHash;
         private int m_Damage;
 
+        public ActorEventID EventID => m_EventID;
+        public InstanceArray<ActorEntity> Targets => m_Target;
+        public Hash HPStatNameHash => m_StatNameHash;
+        public float Damage => m_Damage;
+
         public TRPGActorAttackEvent(Entity<ActorEntity> target, string targetStatName)
         {
+            m_EventID = ActorEventID.CreateID();
             m_Target = new InstanceArray<ActorEntity>(1, Unity.Collections.Allocator.Temp);
             m_Target[0] = new Instance<ActorEntity>(target);
             m_StatNameHash = ActorStatAttribute.ToValueHash(targetStatName);
@@ -27,6 +30,7 @@ namespace Syadeu.Presentation.TurnTable
         }
         public TRPGActorAttackEvent(Entity<ActorEntity> target, Hash targetStatHash)
         {
+            m_EventID = ActorEventID.CreateID();
             m_Target = new InstanceArray<ActorEntity>(1, Unity.Collections.Allocator.Temp);
             m_Target[0] = new Instance<ActorEntity>(target);
             m_StatNameHash = targetStatHash;
@@ -37,6 +41,7 @@ namespace Syadeu.Presentation.TurnTable
         {
             this = default(TRPGActorAttackEvent);
 
+            m_EventID = ActorEventID.CreateID();
             m_Target = new InstanceArray<ActorEntity>(targets.Select(Selector), Unity.Collections.Allocator.Temp);
             m_StatNameHash = ActorStatAttribute.ToValueHash(targetStatName);
         }
@@ -44,6 +49,7 @@ namespace Syadeu.Presentation.TurnTable
         {
             this = default(TRPGActorAttackEvent);
 
+            m_EventID = ActorEventID.CreateID();
             m_Target = new InstanceArray<ActorEntity>(targets.Select(Selector), Unity.Collections.Allocator.Temp);
             m_StatNameHash = targetStatHash;
         }

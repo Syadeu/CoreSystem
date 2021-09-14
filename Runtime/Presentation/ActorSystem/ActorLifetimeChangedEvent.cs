@@ -1,4 +1,5 @@
-﻿using Syadeu.Presentation.Entities;
+﻿using Syadeu.Database;
+using Syadeu.Presentation.Entities;
 
 namespace Syadeu.Presentation.Actor
 {
@@ -10,12 +11,15 @@ namespace Syadeu.Presentation.Actor
             Dead
         }
 
+        private readonly ActorEventID m_EventID;
         private State m_LifeTime;
 
+        public ActorEventID EventID => m_EventID;
         public State LifeTime => m_LifeTime;
 
         public ActorLifetimeChangedEvent(State lifetime)
         {
+            m_EventID = ActorEventID.CreateID();
             m_LifeTime = lifetime;
         }
 

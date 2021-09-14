@@ -91,21 +91,94 @@ namespace Syadeu.Database
         public bool Contains(string name) => GetValuePairIdx(name) >= 0;
         public bool Contains(Hash hash) => GetValuePairIdx(hash) >= 0;
 
-        public ValuePair GetValuePair(string name) => m_Values[GetValuePairIdx(name)];
-        public ValuePair GetValuePair(Hash hash) => m_Values[GetValuePairIdx(hash)];
-        public object GetValue(string name) => GetValuePair(name).GetValue();
-        public object GetValue(Hash hash) => GetValuePair(hash).GetValue();
-        public T GetValue<T>(string name) => (T)GetValue(name);
-        public T GetValue<T>(Hash hash) => (T)GetValue(hash);
+        public ValuePair GetValuePair(string name)
+        {
+            if (!Contains(name))
+            {
+                CoreSystem.Logger.LogError(Channel.Data,
+                    $"{nameof(ValuePairContainer)} does not have name of {name} value.");
+                return null;
+            }
+            return m_Values[GetValuePairIdx(name)];
+        }
+        public ValuePair GetValuePair(Hash hash)
+        {
+            if (!Contains(hash))
+            {
+                CoreSystem.Logger.LogError(Channel.Data,
+                    $"{nameof(ValuePairContainer)} does not have hash of {hash} value.");
+                return null;
+            }
+            return m_Values[GetValuePairIdx(hash)];
+        }
+        public object GetValue(string name)
+        {
+            ValuePair valuePair = GetValuePair(name);
+            if (valuePair == null)
+            {
+                CoreSystem.Logger.LogError(Channel.Data,
+                    $"{nameof(ValuePairContainer)} does not have name of {name} value.");
+                return null;
+            }
+
+            return valuePair.GetValue();
+        }
+        public object GetValue(Hash hash)
+        {
+            ValuePair valuePair = GetValuePair(hash);
+            if (valuePair == null)
+            {
+                CoreSystem.Logger.LogError(Channel.Data,
+                    $"{nameof(ValuePairContainer)} does not have hash of {hash} value.");
+                return null;
+            }
+
+            return valuePair.GetValue();
+        }
+        public T GetValue<T>(string name)
+        {
+            object value = GetValue(name);
+
+            if (value == null) return default(T);
+            return (T)value;
+        }
+        public T GetValue<T>(Hash hash)
+        {
+            object value = GetValue(hash);
+
+            if (value == null) return default(T);
+            return (T)value;
+        }
         public ValuePair[] GetValuePairs(ValueType valueType) => m_Values.Where((other) => other.GetValueType() == valueType).ToArray();
         public ValuePair[] GetValuePairs(Func<ValuePair, bool> predictate) => m_Values.Where((other) => predictate.Invoke(other)).ToArray();
-        public void SetValue(string name, object value) => m_Values[GetValuePairIdx(name)] = ValuePair.New(name, value);
+        public void SetValue(string name, object value)
+        {
+            if (!Contains(name))
+            {
+                CoreSystem.Logger.LogError(Channel.Data,
+                    $"{nameof(ValuePairContainer)} does not have name of {name} value.");
+                return;
+            }
+            m_Values[GetValuePairIdx(name)] = ValuePair.New(name, value);
+        }
         public void SetValue(Hash hash, object value)
         {
+            if (!Contains(hash))
+            {
+                CoreSystem.Logger.LogError(Channel.Data,
+                    $"{nameof(ValuePairContainer)} does not have hash of {hash} value.");
+                return;
+            }
+
             int idx = GetValuePairIdx(hash);
             var temp = m_Values[idx];
             m_Values[idx] = ValuePair.New(temp.Name, value);
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns>Index</returns>
         public int Add(object value)
         {
             var temp = m_Values.ToList();
@@ -119,7 +192,12 @@ namespace Syadeu.Database
         }
         public void Add(ValuePair valuePair)
         {
-            if (Contains(valuePair.Hash)) throw new Exception("Atempt to add same valuepair");
+            if (Contains(valuePair.Hash))
+            {
+                CoreSystem.Logger.LogError(Channel.Data,
+                    "Atempt to add same ValuePair.");
+                return;
+            }
 
             var temp = m_Values.ToList();
             temp.Add(valuePair);
@@ -127,7 +205,12 @@ namespace Syadeu.Database
         }
         public void Add(string name, object value)
         {
-            if (Contains(name)) throw new Exception();
+            if (Contains(name))
+            {
+                CoreSystem.Logger.LogError(Channel.Data,
+                    $"This {nameof(ValuePairContainer)} already contains name of {name}.");
+                return;
+            }
 
             var temp = m_Values.ToList();
             temp.Add(ValuePair.New(name, value));
@@ -135,6 +218,13 @@ namespace Syadeu.Database
         }
         public void Add<T>(string name, T value)
         {
+            if (Contains(name))
+            {
+                CoreSystem.Logger.LogError(Channel.Data,
+                    $"This {nameof(ValuePairContainer)} already contains name of {name}.");
+                return;
+            }
+
             var temp = m_Values.ToList();
             temp.Add(ValuePair.New(name, value));
             m_Values = temp.ToArray();
@@ -170,6 +260,13 @@ namespace Syadeu.Database
         }
         public void RemoveAt(int i)
         {
+            if (i >= Count)
+            {
+                CoreSystem.Logger.LogError(Channel.Data,
+                    $"{nameof(ValuePairContainer)} raised Out of Range. Request remove index {i} exceed container count {Count}.");
+                return;
+            }
+
             var temp = m_Values.ToList();
             temp.RemoveAt(i);
             m_Values = temp.ToArray();
