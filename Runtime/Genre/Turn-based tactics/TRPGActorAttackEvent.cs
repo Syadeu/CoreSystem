@@ -92,11 +92,11 @@ namespace Syadeu.Presentation.TurnTable
 
             m_Damage = Mathf.RoundToInt(weapon.Object.WeaponDamage);
 
-            int hp = stat.GetValue<int>(m_StatNameHash);
-            hp -= m_Damage;
-            stat.SetValue(m_StatNameHash, hp);
+            //int hp = stat.GetValue<int>(m_StatNameHash);
+            //hp -= m_Damage;
+            //stat.SetValue(m_StatNameHash, hp);
 
-            $"Attacked from {from.Name} to {m_Target[0].Object.Name} : dmg -> {m_Damage}, current {hp}".ToLog();
+            //$"Attacked from {from.Name} to {m_Target[0].Object.Name} : dmg -> {m_Damage}, current {hp}".ToLog();
         }
     }
 }

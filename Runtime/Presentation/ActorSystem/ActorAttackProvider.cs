@@ -19,8 +19,18 @@ namespace Syadeu.Presentation.Actor
                 AttackEventHandler(attackEvent);
             }
         }
-        protected virtual void AttackEventHandler(IActorAttackEvent ev)
+        protected void AttackEventHandler(IActorAttackEvent ev)
         {
+            Instance<ActorWeaponProvider> weaponProvider = GetProvider<ActorWeaponProvider>();
+            if (weaponProvider.IsEmpty()) return;
+
+            Instance<ActorWeaponData> currentWeaponIns = weaponProvider.Object.SelectedWeapon;
+            if (currentWeaponIns.IsEmpty() || currentWeaponIns.IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity, $"Entity({Parent.Name}) current weapon is invalid");
+                return;
+            }
+
             //var weaponProvider = GetProvider<ActorWeaponProvider>();
             //if (weaponProvider.IsEmpty())
             //{
