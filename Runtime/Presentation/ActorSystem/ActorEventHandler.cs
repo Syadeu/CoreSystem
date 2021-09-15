@@ -22,8 +22,29 @@ namespace Syadeu.Presentation.Actor
             }
         }
 
+        public bool Contains<T>(T ev) where T : unmanaged, IActorEvent => Contains(ev.EventID);
+        public bool Contains(ActorEventID id)
+        {
+            for (int i = 0; i < m_Events.Count; i++)
+            {
+                if (m_Events[i].Target.EventID.Equals(id))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         public void Add<T>(T ev) where T : unmanaged, IActorEvent
         {
+#if UNITY_EDITOR
+            if (Contains(ev))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    "You\'re trying to already added actor event with the same event id.");
+                return;
+            }
+#endif
             DelegateWrapper<T> wrapper = new DelegateWrapper<T>(ev);
             m_Events.Add(wrapper);
         }
@@ -58,23 +79,51 @@ namespace Syadeu.Presentation.Actor
             {
                 if (m_Events[i].Target.EventID.Equals(id))
                 {
-                    m_Events[i].Invoke(from);
+                    try
+                    {
+                        m_Events[i].Invoke(from);
+                    }
+                    catch (Exception ex)
+                    {
+                        CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(Invoke));
+                        return false;
+                    }
+                    
                     invoked = true;
                     break;
                 }
             }
             return invoked;
         }
-        public void Invoke(int index, Entity<ActorEntity> from)
+        public bool Invoke(int index, Entity<ActorEntity> from)
         {
-            m_Events[index].Invoke(from);
+            try
+            {
+                m_Events[index].Invoke(from);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(Invoke));
+                return false;
+            }
         }
-        public void Invoke(Entity<ActorEntity> from)
+        public bool Invoke(Entity<ActorEntity> from)
         {
+            bool failed = false;
             for (int i = 0; i < m_Events.Count; i++)
             {
-                m_Events[i].Invoke(from);
+                try
+                {
+                    m_Events[i].Invoke(from);
+                }
+                catch (Exception ex)
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(Invoke));
+                    failed = true;
+                }
             }
+            return failed;
         }
 
         unsafe private struct DelegateWrapper<T> : IDelegateInvoker

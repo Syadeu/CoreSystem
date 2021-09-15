@@ -8,7 +8,7 @@ namespace Syadeu.Presentation.Actor
 {
     public class ActorAttackProvider : ActorProviderBase
     {
-        protected override Type[] ReceiveEventOnly => new Type[] { TypeHelper.TypeOf<IActorAttackEvent>.Type };
+        [JsonIgnore] protected override Type[] ReceiveEventOnly => new Type[] { TypeHelper.TypeOf<IActorAttackEvent>.Type };
 
         protected override void OnEventReceived<TEvent>(TEvent ev)
         {

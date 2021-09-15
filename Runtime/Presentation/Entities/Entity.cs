@@ -28,7 +28,6 @@ namespace Syadeu.Presentation.Entities
         private const string c_Invalid = "Invalid";
         public static Entity<T> Empty => new Entity<T>(Hash.Empty);
 
-        private static readonly Dictionary<Hash, Entity<T>> m_Entity = new Dictionary<Hash, Entity<T>>();
         public static Entity<T> GetEntity(Hash idx)
         {
             #region Validation
@@ -53,23 +52,11 @@ namespace Syadeu.Presentation.Entities
             }
             #endregion
 
-            if (m_Entity.Count > 2048) m_Entity.Clear();
-
-            if (!m_Entity.TryGetValue(idx, out var value))
-            {
-                value = new Entity<T>(idx);
-                m_Entity.Add(idx, value);
-            }
-            return value;
+            return new Entity<T>(idx);
         }
         internal static Entity<T> GetEntityWithoutCheck(Hash idx)
         {
-            if (!m_Entity.TryGetValue(idx, out var value))
-            {
-                value = new Entity<T>(idx);
-                m_Entity.Add(idx, value);
-            }
-            return value;
+            return new Entity<T>(idx);
         }
 
         /// <inheritdoc cref="IEntityData.Idx"/>

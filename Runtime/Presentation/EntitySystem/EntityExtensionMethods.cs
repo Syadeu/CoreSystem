@@ -88,11 +88,5 @@ namespace Syadeu.Presentation
         {
             return new Instance<T>(entity.Idx);
         }
-        public static TA GetAttribute<T, TA>(this Instance<T> t)
-            where T : EntityDataBase
-            where TA : AttributeBase
-        {
-            return t.Object.GetAttribute<TA>();
-        }
     }
 }

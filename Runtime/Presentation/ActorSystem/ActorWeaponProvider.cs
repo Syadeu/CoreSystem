@@ -11,17 +11,17 @@ namespace Syadeu.Presentation.Actor
     {
         [Header("Accept Weapon Types")]
         [JsonProperty(Order = 0, PropertyName = "ExcludeWeapon")]
-        private Reference<ActorWeaponData>[] m_ExcludeWeapon = Array.Empty<Reference<ActorWeaponData>>();
+        protected Reference<ActorWeaponData>[] m_ExcludeWeapon = Array.Empty<Reference<ActorWeaponData>>();
         [JsonProperty(Order = 1, PropertyName = "IncludeWeapon")]
-        private Reference<ActorWeaponData>[] m_IncludeWeapon = Array.Empty<Reference<ActorWeaponData>>();
+        protected Reference<ActorWeaponData>[] m_IncludeWeapon = Array.Empty<Reference<ActorWeaponData>>();
         [JsonProperty(Order = 2, PropertyName = "ExcludeWeaponType")]
-        private Reference<ActorWeaponTypeData>[] m_ExcludeWeaponType = Array.Empty<Reference<ActorWeaponTypeData>>();
+        protected Reference<ActorWeaponTypeData>[] m_ExcludeWeaponType = Array.Empty<Reference<ActorWeaponTypeData>>();
         [JsonProperty(Order = 3, PropertyName = "IncludeWeaponType")]
-        private Reference<ActorWeaponTypeData>[] m_IncludeWeaponType = Array.Empty<Reference<ActorWeaponTypeData>>();
+        protected Reference<ActorWeaponTypeData>[] m_IncludeWeaponType = Array.Empty<Reference<ActorWeaponTypeData>>();
 
         [Header("General")]
         [JsonProperty(Order = 4, PropertyName = "DefaultWeapon")]
-        private Reference<ActorWeaponData> m_DefaultWeapon = Reference<ActorWeaponData>.Empty;
+        protected Reference<ActorWeaponData> m_DefaultWeapon = Reference<ActorWeaponData>.Empty;
 
         [JsonIgnore] private Type[] m_ReceiveEventOnly = null;
         [JsonIgnore] private Instance<ActorWeaponData> m_EquipedWeapon;

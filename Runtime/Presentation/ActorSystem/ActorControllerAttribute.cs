@@ -16,8 +16,8 @@ namespace Syadeu.Presentation.Actor
         [Header("General")]
         [JsonProperty(Order = 0, PropertyName = "SetAliveOnCreated")]
         internal bool m_SetAliveOnCreated = true;
-        [JsonProperty(Order = 1, PropertyName = "OnReceivedEvent")]
-        private Reference<ParamAction<IActorEvent>>[] m_OnReceivedEvent = Array.Empty<Reference<ParamAction<IActorEvent>>>();
+        [JsonProperty(Order = 1, PropertyName = "OnEventReceived")]
+        private Reference<ParamAction<IActorEvent>>[] m_OnEventReceived = Array.Empty<Reference<ParamAction<IActorEvent>>>();
 
         [Header("Provider")]
         [JsonProperty(Order = 2, PropertyName = "Providers")] 
@@ -48,7 +48,7 @@ namespace Syadeu.Presentation.Actor
             {
                 ExecutePostEvent(m_InstanceProviders[i].Object, ev);
             }
-            m_OnReceivedEvent.Execute(ev);
+            m_OnEventReceived.Execute(ev);
 
             if (ev is IDisposable disposable)
             {

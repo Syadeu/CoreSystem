@@ -775,7 +775,6 @@ namespace Syadeu.Presentation.Proxy
                 }
 
                 recycleable.m_Idx = instances.Count;
-                recycleable.m_EventSystem = EventSystem;
 
                 instances.Add(recycleable);
 

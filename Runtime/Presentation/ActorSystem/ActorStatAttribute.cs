@@ -3,10 +3,6 @@ using Syadeu.Database;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation.Actor
@@ -40,20 +36,41 @@ namespace Syadeu.Presentation.Actor
         public void SetValue<T>(Hash hash, T value)
         {
             m_CurrentStats.SetValue(hash, value);
-            OnValueChanged?.Invoke(hash, value);
+            try
+            {
+                OnValueChanged?.Invoke(hash, value);
+            }
+            catch (Exception ex)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(SetValue));
+            }
 
             Entity<ActorEntity> entity = Parent.CastAs<IEntityData, ActorEntity>();
+            bool falied = false;
             for (int i = 0; i < m_EventHandler.Length; i++)
             {
                 IActorStatEvent ev = (IActorStatEvent)m_EventHandler[i];
                 if (!ev.TargetValueNameHash.Equals(hash)) continue;
 
-                m_EventHandler.Invoke(i, entity);
+                falied |= !m_EventHandler.Invoke(i, entity);
+            }
+
+            if (falied)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"{nameof(ActorStatAttribute)} event completed with failed.");
             }
         }
 
         public void RegisterEvent<T>(T ev) where T : unmanaged, IActorStatEvent
         {
+            if (m_EventHandler.Contains(ev))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"You\'re trying to already added actor event with the same event id at entity({Parent.Name}), in {nameof(ActorStatAttribute)}.");
+                return;
+            }
+
             m_EventHandler.Add(ev);
         }
         public void UnregisterEvent<T>(T ev) where T : unmanaged, IActorStatEvent

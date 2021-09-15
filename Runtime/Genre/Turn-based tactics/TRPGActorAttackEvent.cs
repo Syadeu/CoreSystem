@@ -81,7 +81,7 @@ namespace Syadeu.Presentation.TurnTable
                 return;
             }
 
-            var stat = m_Target[0].GetAttribute<ActorEntity, ActorStatAttribute>();
+            var stat = m_Target[0].Object.GetAttribute<ActorStatAttribute>();
             
             if (stat == null)
             {
