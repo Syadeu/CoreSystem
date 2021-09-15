@@ -25,8 +25,9 @@ namespace Syadeu.Presentation.Actor
         [Header("General")]
         [JsonProperty(Order = 4, PropertyName = "DefaultWeapon")]
         protected Reference<ActorWeaponData> m_DefaultWeapon = Reference<ActorWeaponData>.Empty;
-        [JsonProperty(Order = 5, PropertyName = "MaxEquipableWeaponCount")]
-        protected int m_MaxEquipableWeaponCount = 1;
+        [Tooltip("최대로 착용할 수 있는 무기의 개수입니다. 0과 같거나 작을 수 없습니다.")]
+        [JsonProperty(Order = 5, PropertyName = "MaxEquipableCount")]
+        protected int m_MaxEquipableCount = 1;
 
         [Header("TriggerAction")]
         [JsonProperty(Order = 6, PropertyName = "OnWeaponSelected")]
@@ -70,13 +71,13 @@ namespace Syadeu.Presentation.Actor
             {
                 TypeHelper.TypeOf<IActorWeaponEquipEvent>.Type
             };
-            if (m_MaxEquipableWeaponCount <= 0)
+            if (m_MaxEquipableCount <= 0)
             {
-                m_MaxEquipableWeaponCount = 1;
+                m_MaxEquipableCount = 1;
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"Entity({Parent.Name}) in {nameof(ActorWeaponProvider)} Max Equipable Count must be over 0. Force to set 1");
             }
-            m_EquipedWeapons = new InstanceArray<ActorWeaponData>(m_MaxEquipableWeaponCount, Unity.Collections.Allocator.Persistent);
+            m_EquipedWeapons = new InstanceArray<ActorWeaponData>(m_MaxEquipableCount, Unity.Collections.Allocator.Persistent);
 
             for (int i = 0; i < m_ExcludeWeapon.Length; i++)
             {
@@ -185,7 +186,7 @@ namespace Syadeu.Presentation.Actor
 
         public void SelectWeapon(int index)
         {
-            if (index < 0 || index >= m_MaxEquipableWeaponCount)
+            if (index < 0 || index >= m_MaxEquipableCount)
             {
                 CoreSystem.Logger.LogError(Channel.Entity, $"{nameof(SelectWeapon)} index out of range. Index {index}.");
                 return;
