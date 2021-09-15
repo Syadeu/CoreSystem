@@ -1,10 +1,13 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Internal;
 using Syadeu.Presentation.Actions;
+using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using System;
+using System.Collections;
 using System.ComponentModel;
 using System.Linq;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace Syadeu.Presentation.Actor
@@ -29,15 +32,27 @@ namespace Syadeu.Presentation.Actor
         [JsonProperty(Order = 5, PropertyName = "MaxEquipableCount")]
         protected int m_MaxEquipableCount = 1;
 
+        [Header("Weapon Position")]
+        [JsonProperty(Order = 6, PropertyName = "AttachedBone")]
+        protected HumanBodyBones m_AttachedBone = HumanBodyBones.RightHand;
+        [JsonProperty(Order = 7, PropertyName = "WeaponPosOffset")]
+        protected float3 m_WeaponPosOffset = float3.zero;
+        [JsonProperty(Order = 8, PropertyName = "WeaponRotOffset")]
+        protected float3 m_WeaponRotOffset = float3.zero;
+
         [Header("TriggerAction")]
-        [JsonProperty(Order = 6, PropertyName = "OnWeaponSelected")]
+        [JsonProperty(Order = 9, PropertyName = "OnWeaponSelected")]
         protected Reference<TriggerAction>[] m_OnWeaponSelected = Array.Empty<Reference<TriggerAction>>();
-        [JsonProperty(Order = 6, PropertyName = "OnEquipWeapon")]
+        [JsonProperty(Order = 10, PropertyName = "OnEquipWeapon")]
         protected Reference<TriggerAction>[] m_OnEquipWeapon = Array.Empty<Reference<TriggerAction>>();
-        [JsonProperty(Order = 7, PropertyName = "OnUnequipWeapon")]
+        [JsonProperty(Order = 11, PropertyName = "OnUnequipWeapon")]
         protected Reference<TriggerAction>[] m_OnUnequipWeapon = Array.Empty<Reference<TriggerAction>>();
 
         [JsonIgnore] private Type[] m_ReceiveEventOnly = null;
+
+        [JsonIgnore] private AnimatorAttribute m_Animator;
+
+        [JsonIgnore] private Instance<ActorWeaponData> m_DefaultWeaponInstance = Instance<ActorWeaponData>.Empty;
         [JsonIgnore] private InstanceArray<ActorWeaponData> m_EquipedWeapons;
         [JsonIgnore] private int m_SelectedWeaponIndex = 0;
 
@@ -71,6 +86,14 @@ namespace Syadeu.Presentation.Actor
             {
                 TypeHelper.TypeOf<IActorWeaponEquipEvent>.Type
             };
+
+            m_Animator = entity.GetAttribute<AnimatorAttribute>();
+            if (m_Animator == null)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"This entity({entity.Name}) doesn\'t have any {nameof(AnimatorAttribute)}.");
+            }
+
             if (m_MaxEquipableCount <= 0)
             {
                 m_MaxEquipableCount = 1;
@@ -95,6 +118,14 @@ namespace Syadeu.Presentation.Actor
                         $"2");
                 }
             }
+
+            if (!m_DefaultWeapon.IsEmpty() && m_DefaultWeapon.IsValid())
+            {
+                m_DefaultWeaponInstance = m_DefaultWeapon.CreateInstance();
+                m_EquipedWeapons[0] = m_DefaultWeaponInstance;
+                m_OnEquipWeapon.Execute(Parent.CastAs<ActorEntity, IEntityData>());
+                SelectWeapon(0);
+            }
         }
         protected override void OnDispose()
         {
@@ -107,7 +138,7 @@ namespace Syadeu.Presentation.Actor
                 ActorWeaponEquipEventHandler(weaponEquipEvent);
             }
         }
-        protected virtual void ActorWeaponEquipEventHandler(IActorWeaponEquipEvent ev)
+        protected void ActorWeaponEquipEventHandler(IActorWeaponEquipEvent ev)
         {
             if (!IsEquipable(ev.Weapon))
             {
@@ -118,19 +149,29 @@ namespace Syadeu.Presentation.Actor
 
             if ((ev.EquipOptions & ActorWeaponEquipOptions.SwitchWithSelected) == ActorWeaponEquipOptions.SwitchWithSelected)
             {
+                m_OnUnequipWeapon.Execute(Parent.CastAs<ActorEntity, IEntityData>());
+
                 ActorInventoryProvider inventory = GetProvider<ActorInventoryProvider>().Object;
                 if (inventory == null)
                 {
                     CoreSystem.Logger.Log(Channel.Entity,
                         $"Destroying weapon instance({SelectedWeapon.Object.Name}) because there\'s no inventory in this actor({Parent.Name}).");
+
+                    if (SelectedWeapon.Equals(m_DefaultWeaponInstance))
+                    {
+                        m_DefaultWeaponInstance = Instance<ActorWeaponData>.Empty;
+                    }
                     m_EquipedWeapons[m_SelectedWeaponIndex].Destroy();
                 }
                 else
                 {
-                    inventory.Insert(SelectedWeapon.Cast<ActorWeaponData, IObject>());
+                    if (SelectedWeapon.Equals(m_DefaultWeaponInstance))
+                    {
+                        m_EquipedWeapons[m_SelectedWeaponIndex].Destroy();
+                        m_DefaultWeaponInstance = Instance<ActorWeaponData>.Empty;
+                    }
+                    else inventory.Insert(SelectedWeapon.Cast<ActorWeaponData, IObject>());
                 }
-
-                m_OnUnequipWeapon.Execute(Parent.CastAs<ActorEntity, IEntityData>());
 
                 m_EquipedWeapons[m_SelectedWeaponIndex] = ev.Weapon;
 
@@ -146,7 +187,14 @@ namespace Syadeu.Presentation.Actor
             }
             else
             {
-                int emptySpace = GetEmptyEquipSpace();
+                int emptySpace;
+                if (m_EquipedWeapons[0].Equals(m_DefaultWeaponInstance))
+                {
+                    m_EquipedWeapons[0].Destroy();
+                    m_DefaultWeaponInstance = Instance<ActorWeaponData>.Empty;
+                    emptySpace = 0;
+                }
+                else emptySpace = GetEmptyEquipSpace();
 
                 if (emptySpace < 0)
                 {
@@ -225,6 +273,28 @@ namespace Syadeu.Presentation.Actor
             }
 
             return true;
+        }
+
+        private struct WeaponPoser : ICoroutineJob
+        {
+            private Entity<ObjectEntity> m_Weapon;
+
+            public WeaponPoser(Entity<ObjectEntity> weapon)
+            {
+                m_Weapon = weapon;
+            }
+
+            public void Dispose()
+            {
+            }
+            public IEnumerator Execute()
+            {
+                while (m_Weapon.IsValid())
+                {
+
+                    yield return null;
+                }
+            }
         }
     }
 }

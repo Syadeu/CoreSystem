@@ -1,5 +1,6 @@
 ﻿using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
+using Syadeu.Presentation.Proxy;
 using System;
 
 namespace Syadeu.Presentation.Actor
@@ -19,5 +20,8 @@ namespace Syadeu.Presentation.Actor
 #endif
         void OnCreated(Entity<ActorEntity> entity);
         void OnDestroy(Entity<ActorEntity> entity);
+
+        void OnProxyCreated(RecycleableMonobehaviour monoObj);
+        void OnProxyRemoved(RecycleableMonobehaviour monoObj);
     }
 }

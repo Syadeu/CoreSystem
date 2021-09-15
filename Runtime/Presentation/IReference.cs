@@ -10,6 +10,7 @@ using Syadeu.Presentation.Map;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Mathematics;
 using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation
@@ -68,6 +69,7 @@ namespace Syadeu.Presentation
         where T : class, IObject
     {
         public static readonly Reference<T> Empty = new Reference<T>(Hash.Empty);
+        private static PresentationSystemID<EntitySystem> s_EntitySystem = PresentationSystemID<EntitySystem>.Null;
 
         [JsonProperty(Order = 0, PropertyName = "Hash")] public Hash m_Hash;
 
@@ -111,6 +113,39 @@ namespace Syadeu.Presentation
         public bool Equals(IReference other) => m_Hash.Equals(other.Hash);
         public bool Equals(IReference<T> other) => m_Hash.Equals(other.Hash);
         public bool Equals(Reference<T> other) => m_Hash.Equals(other.m_Hash);
+
+        public Instance<T> CreateInstance()
+        {
+            if (IsEmpty() || !IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity, "You cannot create instance of null reference.");
+                return Instance<T>.Empty;
+            }
+
+            if (s_EntitySystem.IsNull())
+            {
+                s_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
+                if (s_EntitySystem.IsNull())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity, "Unexpected error has been raised.");
+                    return Instance<T>.Empty;
+                }
+            }
+
+            Type t = GetObject().GetType();
+            if (TypeHelper.TypeOf<EntityBase>.Type.IsAssignableFrom(t))
+            {
+                var temp = s_EntitySystem.System.CreateEntity(in m_Hash, float3.zero);
+                return new Instance<T>(temp.Idx);
+            }
+            else if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(t))
+            {
+                var temp = s_EntitySystem.System.CreateObject(m_Hash);
+                return new Instance<T>(temp.Idx);
+            }
+
+            return s_EntitySystem.System.CreateInstance(this);
+        }
 
         public static implicit operator T(Reference<T> a) => a.GetObject();
         public static implicit operator Hash(Reference<T> a) => a.m_Hash;

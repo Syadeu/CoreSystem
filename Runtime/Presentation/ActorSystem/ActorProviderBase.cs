@@ -3,6 +3,7 @@ using Syadeu.Database;
 using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
+using Syadeu.Presentation.Proxy;
 using System;
 
 namespace Syadeu.Presentation.Actor
@@ -58,6 +59,14 @@ namespace Syadeu.Presentation.Actor
         {
             OnDestroy(entity);
         }
+        void IActorProvider.OnProxyCreated(RecycleableMonobehaviour monoObj)
+        {
+            OnProxyCreated(monoObj);
+        }
+        void IActorProvider.OnProxyRemoved(RecycleableMonobehaviour monoObj)
+        {
+            OnProxyRemoved(monoObj);
+        }
         protected override void OnDispose()
         {
             m_Initialized = false;
@@ -73,6 +82,8 @@ namespace Syadeu.Presentation.Actor
         { }
         protected virtual void OnCreated(Entity<ActorEntity> entity) { }
         protected virtual void OnDestroy(Entity<ActorEntity> entity) { }
+        protected virtual void OnProxyCreated(RecycleableMonobehaviour monoObj) { }
+        protected virtual void OnProxyRemoved(RecycleableMonobehaviour monoObj) { }
 
         protected Instance<T> GetProvider<T>() where T : ActorProviderBase
         {

@@ -4,6 +4,7 @@ using Syadeu.Internal;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Proxy;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -94,7 +95,8 @@ namespace Syadeu.Presentation.Actor
             return Instance<T>.Empty;
         }
     }
-    internal sealed class ActorControllerProcessor : AttributeProcessor<ActorControllerAttribute>
+    internal sealed class ActorControllerProcessor : AttributeProcessor<ActorControllerAttribute>,
+        IAttributeOnProxy
     {
         protected override void OnCreated(ActorControllerAttribute attribute, EntityData<IEntityData> entity)
         {
@@ -140,13 +142,38 @@ namespace Syadeu.Presentation.Actor
                 attribute.m_ProviderAcceptsOnly.Add(provider, provider.ReceiveEventOnly);
             }
         }
-        private void ExecuteOnCreated(IActorProvider provider, Entity<ActorEntity> entity)
+        private static void ExecuteOnCreated(IActorProvider provider, Entity<ActorEntity> entity)
         {
             provider.OnCreated(entity);
         }
-        private void ExecuteOnDestroy(IActorProvider provider, Entity<ActorEntity> entity)
+        private static void ExecuteOnDestroy(IActorProvider provider, Entity<ActorEntity> entity)
         {
             provider.OnDestroy(entity);
+        }
+
+        public void OnProxyCreated(AttributeBase attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
+        {
+            ActorControllerAttribute att = (ActorControllerAttribute)attribute;
+            for (int i = 0; i < att.m_InstanceProviders.Length; i++)
+            {
+                ExecuteOnProxyCreated(att.m_InstanceProviders[i].Object, monoObj);
+            }
+        }
+        public void OnProxyRemoved(AttributeBase attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
+        {
+            ActorControllerAttribute att = (ActorControllerAttribute)attribute;
+            for (int i = 0; i < att.m_InstanceProviders.Length; i++)
+            {
+                ExecuteOnProxyRemoved(att.m_InstanceProviders[i].Object, monoObj);
+            }
+        }
+        private static void ExecuteOnProxyCreated(IActorProvider provider, RecycleableMonobehaviour monoObj)
+        {
+            provider.OnProxyCreated(monoObj);
+        }
+        private static void ExecuteOnProxyRemoved(IActorProvider provider, RecycleableMonobehaviour monoObj)
+        {
+            provider.OnProxyRemoved(monoObj);
         }
     }
 }

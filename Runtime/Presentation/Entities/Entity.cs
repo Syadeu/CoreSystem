@@ -26,24 +26,36 @@ namespace Syadeu.Presentation.Entities
     public readonly struct Entity<T> : IValidation, IEquatable<Entity<T>>, IEquatable<Hash> where T : class, IEntity
     {
         private const string c_Invalid = "Invalid";
+        private static PresentationSystemID<EntitySystem> s_EntitySystem = PresentationSystemID<EntitySystem>.Null;
+
         public static Entity<T> Empty => new Entity<T>(Hash.Empty);
 
         public static Entity<T> GetEntity(Hash idx)
         {
             #region Validation
+            if (s_EntitySystem.IsNull())
+            {
+                s_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
+                if (s_EntitySystem.IsNull())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        "Cannot retrived EntitySystem.");
+                    return Empty;
+                }
+            }
             if (idx.Equals(Hash.Empty))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                 $"Cannot convert an empty hash to Entity. This is an invalid operation and not allowed.");
                 return Empty;
             }
-            if (!PresentationSystem<EntitySystem>.System.m_ObjectEntities.ContainsKey(idx))
+            if (!s_EntitySystem.System.m_ObjectEntities.ContainsKey(idx))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"Cannot found entity({idx})");
                 return Empty;
             }
-            ObjectBase target = PresentationSystem<EntitySystem>.System.m_ObjectEntities[idx];
+            ObjectBase target = s_EntitySystem.System.m_ObjectEntities[idx];
             if (!(target is T))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
@@ -66,8 +78,19 @@ namespace Syadeu.Presentation.Entities
         {
             get
             {
+                if (s_EntitySystem.IsNull())
+                {
+                    s_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
+                    if (s_EntitySystem.IsNull())
+                    {
+                        CoreSystem.Logger.LogError(Channel.Entity,
+                            "Cannot retrived EntitySystem.");
+                        return null;
+                    }
+                }
+
                 if (m_Idx.Equals(Hash.Empty) ||
-                    !PresentationSystem<EntitySystem>.System.m_ObjectEntities.TryGetValue(m_Idx, out var value) ||
+                    !s_EntitySystem.System.m_ObjectEntities.TryGetValue(m_Idx, out var value) ||
                     !(value is T t)) return null;
 
                 return t;
@@ -127,9 +150,22 @@ namespace Syadeu.Presentation.Entities
             m_Idx = idx;
         }
 
-        public bool IsValid() => !m_Idx.Equals(Hash.Empty) &&
-            PresentationSystem<EntitySystem>.IsValid() &&
-            PresentationSystem<EntitySystem>.System.m_ObjectEntities.ContainsKey(m_Idx);
+        public bool IsValid()
+        {
+            if (s_EntitySystem.IsNull())
+            {
+                s_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
+                if (s_EntitySystem.IsNull())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        "Cannot retrived EntitySystem.");
+                    return false;
+                }
+            }
+
+            return !m_Idx.Equals(Hash.Empty) && s_EntitySystem.IsValid() &&
+                    s_EntitySystem.System.m_ObjectEntities.ContainsKey(m_Idx);
+        }
 
         public bool Equals(Entity<T> other) => m_Idx.Equals(other.m_Idx);
         public bool Equals(Hash other) => m_Idx.Equals(other);
@@ -163,7 +199,21 @@ namespace Syadeu.Presentation.Entities
             return Target.GetAttributes<TA>();
         }
 
-        public void Destroy() => PresentationSystem<EntitySystem>.System.InternalDestroyEntity(m_Idx);
+        public void Destroy()
+        {
+            if (s_EntitySystem.IsNull())
+            {
+                s_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
+                if (s_EntitySystem.IsNull())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        "Cannot retrived EntitySystem.");
+                    return;
+                }
+            }
+
+            s_EntitySystem.System.InternalDestroyEntity(m_Idx);
+        }
         public override int GetHashCode() => Hash.GetHashCode();
 
         public static implicit operator T(Entity<T> a) => a.Target;
