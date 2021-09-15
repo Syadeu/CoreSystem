@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Unity.Mathematics;
+using UnityEditor;
 using UnityEngine;
 
 namespace SyadeuEditor.Presentation
@@ -149,7 +150,24 @@ namespace SyadeuEditor.Presentation
             }
             #endregion
 
-            return null;
+            return new NullDrawer(memberInfo, declaredType);
+        }
+    }
+    public sealed class NullDrawer : ObjectDrawerBase
+    {
+        private string m_Name;
+
+        public override object TargetObject => null;
+        public override string Name => m_Name;
+
+        public NullDrawer(MemberInfo member, Type declaredType)
+        {
+            m_Name = member.MemberType.ToString() + " " + TypeHelper.ToString(declaredType);
+        }
+
+        public override void OnGUI()
+        {
+            EditorGUILayout.LabelField($"Not supported Type: ", Name);
         }
     }
 }

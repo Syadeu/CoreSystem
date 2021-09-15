@@ -14,7 +14,7 @@ namespace Syadeu.Presentation.Actor
         [JsonIgnore] private ValuePairContainer m_CurrentStats;
         [JsonIgnore] private ActorEventHandler m_EventHandler;
 
-        public event Action<Hash, object> OnValueChanged;
+        public event Action<ActorStatAttribute, Hash, object> OnValueChanged;
 
         internal void Initialize()
         {
@@ -38,7 +38,7 @@ namespace Syadeu.Presentation.Actor
             m_CurrentStats.SetValue(hash, value);
             try
             {
-                OnValueChanged?.Invoke(hash, value);
+                OnValueChanged?.Invoke(this, hash, value);
             }
             catch (Exception ex)
             {

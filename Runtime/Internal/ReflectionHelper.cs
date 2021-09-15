@@ -96,7 +96,19 @@ namespace Syadeu.Internal
 
             if (member is PropertyInfo property)
             {
+                if (TypeHelper.TypeOf<Delegate>.Type.IsAssignableFrom(property.PropertyType))
+                {
+                    return false;
+                }
+
                 if (!property.CanWrite || !property.CanRead) return false;
+            }
+            else if (member is FieldInfo field)
+            {
+                if (TypeHelper.TypeOf<Delegate>.Type.IsAssignableFrom(field.FieldType))
+                {
+                    return false;
+                }
             }
             return true;
         }
