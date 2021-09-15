@@ -582,9 +582,29 @@ namespace Syadeu.Presentation
             => CreateInstance<T>(obj.GetObject());
         internal Instance<T> CreateInstance<T>(IObject obj) where T : class, IObject
         {
+            Type objType = obj.GetType();
+            if (TypeHelper.TypeOf<EntityBase>.Type.IsAssignableFrom(objType))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"You should you {nameof(CreateEntity)} on create entity({obj.Name}). This will be slightly cared.");
+                Entity<IEntity> entity = CreateEntity(obj.Hash, float3.zero);
+                return new Instance<T>(entity.Idx);
+            }
+            else if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(objType))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"You should you {nameof(CreateObject)} on create entity({obj.Name}). This will be slightly cared.");
+                EntityData<IEntityData> entity = CreateObject(obj.Hash);
+                return new Instance<T>(entity.Idx);
+            }
+
             ObjectBase clone = (ObjectBase)obj.Clone();
 
             m_ObjectEntities.Add(clone.Idx, clone);
+            if (clone is DataObjectBase dataObject)
+            {
+                dataObject.InternalOnCreated();
+            }
 
             return new Instance<T>(clone.Idx);
         }
@@ -648,6 +668,10 @@ namespace Syadeu.Presentation
             if (m_ObjectEntities[hash] is IEntityData entityData)
             {
                 ProcessEntityOnDestroy(this, entityData);
+            }
+            else if (m_ObjectEntities[hash] is DataObjectBase dataObject)
+            {
+                dataObject.InternalOnDestroy();
             }
 
             if (!CoreSystem.BlockCreateInstance && m_ObjectEntities[hash] is IEntity entity)
