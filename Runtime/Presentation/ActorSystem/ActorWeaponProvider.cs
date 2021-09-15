@@ -29,6 +29,8 @@ namespace Syadeu.Presentation.Actor
         protected int m_MaxEquipableWeaponCount = 1;
 
         [Header("TriggerAction")]
+        [JsonProperty(Order = 6, PropertyName = "OnWeaponSelected")]
+        protected Reference<TriggerAction>[] m_OnWeaponSelected = Array.Empty<Reference<TriggerAction>>();
         [JsonProperty(Order = 6, PropertyName = "OnEquipWeapon")]
         protected Reference<TriggerAction>[] m_OnEquipWeapon = Array.Empty<Reference<TriggerAction>>();
         [JsonProperty(Order = 7, PropertyName = "OnUnequipWeapon")]
@@ -126,7 +128,12 @@ namespace Syadeu.Presentation.Actor
                 {
                     inventory.Insert(SelectedWeapon.Cast<ActorWeaponData, IObject>());
                 }
+
+                m_OnUnequipWeapon.Execute(Parent.CastAs<ActorEntity, IEntityData>());
+
                 m_EquipedWeapons[m_SelectedWeaponIndex] = ev.Weapon;
+
+                m_OnEquipWeapon.Execute(Parent.CastAs<ActorEntity, IEntityData>());
 
                 CoreSystem.Logger.Log(Channel.Entity,
                     $"Entity({Parent.Name}) has equiped weapon({SelectedWeapon.Object.Name}).");
@@ -155,6 +162,9 @@ namespace Syadeu.Presentation.Actor
                 else
                 {
                     m_EquipedWeapons[emptySpace] = ev.Weapon;
+                    m_OnEquipWeapon.Execute(Parent.CastAs<ActorEntity, IEntityData>());
+                    CoreSystem.Logger.Log(Channel.Entity,
+                        $"Entity({Parent.Name}) has equiped weapon({SelectedWeapon.Object.Name}).");
                 }
             }
 
@@ -182,6 +192,7 @@ namespace Syadeu.Presentation.Actor
             }
 
             m_SelectedWeaponIndex = index;
+            m_OnWeaponSelected.Execute(Parent.CastAs<ActorEntity, IEntityData>());
         }
         public bool IsEquipable(Instance<ActorWeaponData> weapon)
         {
