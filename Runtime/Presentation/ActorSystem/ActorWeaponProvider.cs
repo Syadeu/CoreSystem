@@ -3,6 +3,7 @@ using Syadeu.Internal;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Proxy;
 using System;
 using System.Collections;
 using System.ComponentModel;
@@ -50,7 +51,7 @@ namespace Syadeu.Presentation.Actor
 
         [JsonIgnore] private Type[] m_ReceiveEventOnly = null;
 
-        [JsonIgnore] private AnimatorAttribute m_Animator;
+        [JsonIgnore] private CoroutineJob m_WeaponPoser = CoroutineJob.Null;
 
         [JsonIgnore] private Instance<ActorWeaponData> m_DefaultWeaponInstance = Instance<ActorWeaponData>.Empty;
         [JsonIgnore] private InstanceArray<ActorWeaponData> m_EquipedWeapons;
@@ -87,8 +88,7 @@ namespace Syadeu.Presentation.Actor
                 TypeHelper.TypeOf<IActorWeaponEquipEvent>.Type
             };
 
-            m_Animator = entity.GetAttribute<AnimatorAttribute>();
-            if (m_Animator == null)
+            if (!entity.HasAttribute<AnimatorAttribute>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"This entity({entity.Name}) doesn\'t have any {nameof(AnimatorAttribute)}.");
@@ -125,11 +125,19 @@ namespace Syadeu.Presentation.Actor
                 m_EquipedWeapons[0] = m_DefaultWeaponInstance;
                 m_OnEquipWeapon.Execute(Parent.CastAs<ActorEntity, IEntityData>());
                 SelectWeapon(0);
+
+                WeaponPoser weaponPoser = new WeaponPoser(Parent, m_DefaultWeaponInstance, m_AttachedBone, m_WeaponPosOffset, m_WeaponRotOffset);
+                m_WeaponPoser = StartCoroutine(weaponPoser);
             }
         }
         protected override void OnDispose()
         {
             m_EquipedWeapons.Dispose();
+
+            if (!m_WeaponPoser.IsNull() && m_WeaponPoser.IsValid())
+            {
+                m_WeaponPoser.Stop();
+            }
         }
         protected override void OnEventReceived<TEvent>(TEvent ev)
         {
@@ -277,11 +285,21 @@ namespace Syadeu.Presentation.Actor
 
         private struct WeaponPoser : ICoroutineJob
         {
-            private Entity<ObjectEntity> m_Weapon;
+            private Entity<ActorEntity> m_Entity;
+            private Instance<ActorWeaponData> m_Weapon;
 
-            public WeaponPoser(Entity<ObjectEntity> weapon)
+            private HumanBodyBones m_TargetBone;
+            private float3 m_Offset, m_RotOffset;
+
+            public WeaponPoser(Entity<ActorEntity> entity, Instance<ActorWeaponData> weapon,
+                HumanBodyBones targetBone, float3 offset, float3 rotOffset)
             {
+                m_Entity = entity;
                 m_Weapon = weapon;
+
+                m_TargetBone = targetBone;
+                m_Offset = offset;
+                m_RotOffset = rotOffset;
             }
 
             public void Dispose()
@@ -289,8 +307,74 @@ namespace Syadeu.Presentation.Actor
             }
             public IEnumerator Execute()
             {
+                if (!m_Weapon.IsValid()) yield break;
+
+                AnimatorAttribute animator = m_Entity.GetAttribute<AnimatorAttribute>();
+                if (animator == null) yield break;
+
+                ActorWeaponData.OverrideData overrideData = m_Weapon.Object.Overrides;
+                ITransform weaponTr = m_Weapon.Object.PrefabInstance.transform;
+                Transform targetTr = null;
+
                 while (m_Weapon.IsValid())
                 {
+                    if (!m_Entity.hasProxy)
+                    {
+                        targetTr = null;
+
+                        yield return null;
+                        continue;
+                    }
+
+                    if (targetTr == null)
+                    {
+                        if (overrideData.OverrideOptions == ActorWeaponData.OverrideOptions.Override)
+                        {
+                            targetTr = animator.AnimatorComponent.Animator.GetBoneTransform(overrideData.AttachedBone);
+
+                            if (targetTr == null)
+                            {
+                                CoreSystem.Logger.LogError(Channel.Entity,
+                                    $"Could not found bone transform({TypeHelper.Enum<HumanBodyBones>.ToString(overrideData.AttachedBone)}) in entity({m_Entity.Name}).");
+
+                                yield break;
+                            }
+                        }
+                        else
+                        {
+                            targetTr = animator.AnimatorComponent.Animator.GetBoneTransform(m_TargetBone);
+
+                            if (targetTr == null)
+                            {
+                                CoreSystem.Logger.LogError(Channel.Entity,
+                                    $"Could not found bone transform({TypeHelper.Enum<HumanBodyBones>.ToString(m_TargetBone)}) in entity({m_Entity.Name}).");
+
+                                yield break;
+                            }
+                        }
+                    }
+
+                    float3 targetRot = targetTr.eulerAngles;
+                    if (overrideData.OverrideOptions == ActorWeaponData.OverrideOptions.None)
+                    {
+                        targetRot += m_RotOffset;
+                    }
+                    else if (overrideData.OverrideOptions == ActorWeaponData.OverrideOptions.Override)
+                    {
+                        targetRot += overrideData.WeaponRotOffset;
+                    }
+                    weaponTr.rotation = quaternion.EulerZXY(targetRot);
+
+                    float3 targetPos = targetTr.position;
+                    if (overrideData.OverrideOptions == ActorWeaponData.OverrideOptions.None)
+                    {
+                        targetPos += math.mul(weaponTr.rotation, m_Offset);
+                    }
+                    else if (overrideData.OverrideOptions == ActorWeaponData.OverrideOptions.Override)
+                    {
+                        targetPos += math.mul(weaponTr.rotation, overrideData.WeaponPosOffset);
+                    }
+                    weaponTr.position = targetPos;
 
                     yield return null;
                 }

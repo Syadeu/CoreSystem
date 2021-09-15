@@ -174,6 +174,21 @@ namespace Syadeu.Presentation.Entities
         //public EntitySystem.Raycaster Raycast(Ray ray) => PresentationSystem<EntitySystem>.System.Raycast(this, ray);
         #endregion
 
+        public bool HasAttribute(Hash attributeHash)
+        {
+            if (!IsValid()) throw new Exception("not valid");
+            return Target.HasAttribute(attributeHash);
+        }
+        public bool HasAttribute(Type t)
+        {
+            if (!IsValid()) throw new Exception("not valid");
+            return Target.HasAttribute(t);
+        }
+        public bool HasAttribute<TA>() where TA : AttributeBase
+        {
+            if (!IsValid()) throw new Exception("not valid");
+            return Target.HasAttribute<TA>();
+        }
         /// <inheritdoc cref="IEntityData.GetAttribute(Type)"/>
         public AttributeBase GetAttribute(Type t)
         {

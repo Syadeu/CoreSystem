@@ -13,6 +13,8 @@ namespace Syadeu.Presentation.Attributes
         internal AnimatorAttribute m_AnimatorAttribute;
         internal Animator m_Animator;
 
+        public Animator Animator => m_Animator;
+
         private void Awake()
         {
             m_Animator = GetComponent<Animator>();

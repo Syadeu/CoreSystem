@@ -18,6 +18,21 @@ namespace Syadeu.Presentation.Actor
             Override,
             Addictive
         }
+        public struct OverrideData
+        {
+            public OverrideOptions OverrideOptions;
+            public HumanBodyBones AttachedBone;
+            public float3 WeaponPosOffset;
+            public float3 WeaponRotOffset;
+
+            public OverrideData(ActorWeaponData data)
+            {
+                OverrideOptions = data.m_OverrideOptions;
+                AttachedBone = data.m_AttachedBone;
+                WeaponPosOffset = data.m_WeaponPosOffset;
+                WeaponRotOffset = data.m_WeaponRotOffset;
+            }
+        }
 
         [JsonProperty(Order = 0, PropertyName = "WeaponType")]
         protected Reference<ActorWeaponTypeData> m_WeaponType = Reference<ActorWeaponTypeData>.Empty;
@@ -39,6 +54,8 @@ namespace Syadeu.Presentation.Actor
 
         [JsonIgnore] private Entity<ObjectEntity> m_PrefabInstance = Entity<ObjectEntity>.Empty;
 
+        [JsonIgnore] public Entity<ObjectEntity> PrefabInstance => m_PrefabInstance;
+        [JsonIgnore] public OverrideData Overrides => new OverrideData(this);
         [JsonIgnore] public Reference<ActorWeaponTypeData> WeaponType => m_WeaponType;
         [JsonIgnore] public float Damage
         {
