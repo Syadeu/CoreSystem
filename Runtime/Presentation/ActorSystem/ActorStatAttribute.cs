@@ -3,10 +3,12 @@ using Syadeu.Database;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using System;
+using System.ComponentModel;
 using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation.Actor
 {
+    [DisplayName("Attribute: Actor Stat")]
     public sealed class ActorStatAttribute : ActorAttributeBase
     {
         [JsonProperty(Order = 0, PropertyName = "Stats")] private ValuePairContainer m_Stats = new ValuePairContainer();

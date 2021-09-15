@@ -2,10 +2,12 @@
 using Syadeu.Internal;
 using Syadeu.Presentation.Entities;
 using System;
+using System.ComponentModel;
 using UnityEngine;
 
 namespace Syadeu.Presentation.Actor
 {
+    [DisplayName("ActorProvider: Attack Provider")]
     public class ActorAttackProvider : ActorProviderBase
     {
         [JsonIgnore] protected override Type[] ReceiveEventOnly => new Type[] { TypeHelper.TypeOf<IActorAttackEvent>.Type };
@@ -42,5 +44,8 @@ namespace Syadeu.Presentation.Actor
             //    targetStat.SetValue(ev.HPStatNameHash, hp);
             //}
         }
+
+        public bool IsAlly(Entity<ActorEntity> entity) => Parent.Target.Faction.IsAlly(entity.Target.Faction);
+        public bool IsEnemy(Entity<ActorEntity> entity) => Parent.Target.Faction.IsEnemy(entity.Target.Faction);
     }
 }

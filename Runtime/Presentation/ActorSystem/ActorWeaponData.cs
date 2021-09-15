@@ -1,9 +1,11 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Presentation.Data;
+using System.ComponentModel;
 using UnityEngine;
 
 namespace Syadeu.Presentation.Actor
 {
+    [DisplayName("Data: Actor Weapon")]
     public class ActorWeaponData : DataObjectBase
     {
         [JsonProperty(Order = 0, PropertyName = "WeaponType")]

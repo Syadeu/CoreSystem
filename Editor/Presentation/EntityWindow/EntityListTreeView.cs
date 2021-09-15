@@ -93,9 +93,22 @@ namespace SyadeuEditor.Presentation
         }
         public TreeViewItem GetFolder(Type type)
         {
-            var iter = m_Rows.Where((other) => 
-                other is FolderTreeElement folder &&
-                folder.Type.Equals(type));
+            var name = type.GetCustomAttribute<DisplayNameAttribute>();
+            var iter = m_Rows.Where((other) =>
+                {
+                    if (!(other is FolderTreeElement folder)) return false;
+
+                    if (folder.Type.Equals(type))
+                    {
+                        return true;
+                    }
+                    if (name != null && name.DisplayName.Equals(folder.displayName))
+                    {
+                        return true;
+                    }
+
+                    return false;
+                });
 
             if (iter.Any()) return iter.First();
             return null;

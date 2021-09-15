@@ -2,11 +2,13 @@
 using Syadeu.Internal;
 using Syadeu.Presentation.Entities;
 using System;
+using System.ComponentModel;
 using System.Linq;
 using UnityEngine;
 
 namespace Syadeu.Presentation.Actor
 {
+    [DisplayName("ActorProvider: Weapon Provider")]
     public class ActorWeaponProvider : ActorProviderBase
     {
         [Header("Accept Weapon Types")]

@@ -1,15 +1,17 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Utilities;
 using Syadeu.Database;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Entities;
 using System;
 using System.Collections.Generic;
-using Unity.Collections;
+using System.ComponentModel;
 using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation.Actor
 {
+    [DisplayName("Data: Actor Faction")]
     public sealed class ActorFaction : DataObjectBase
     {
 #pragma warning disable IDE0044 // Add readonly modifier
@@ -49,6 +51,19 @@ namespace Syadeu.Presentation.Actor
 
             if (m_EnemiesHashSet.Contains(faction.Hash)) return true;
             return false;
+        }
+
+        [Preserve]
+        static void AOTCodeGeneration()
+        {
+            AotHelper.EnsureType<Instance<ActorFaction>>();
+            AotHelper.EnsureType<InstanceArray<ActorFaction>>();
+            AotHelper.EnsureList<Instance<ActorFaction>>();
+
+            AotHelper.EnsureType<Reference<ActorFaction>>();
+            AotHelper.EnsureList<Reference<ActorFaction>>();
+            AotHelper.EnsureType<ActorFaction>();
+            AotHelper.EnsureList<ActorFaction>();
         }
     }
 }

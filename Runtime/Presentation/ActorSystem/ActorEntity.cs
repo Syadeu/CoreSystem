@@ -18,6 +18,10 @@ namespace Syadeu.Presentation.Actor
         [Preserve]
         static void AOTCodeGeneration()
         {
+            AotHelper.EnsureType<Instance<ActorEntity>>();
+            AotHelper.EnsureType<InstanceArray<ActorEntity>>();
+            AotHelper.EnsureList<Instance<ActorEntity>>();
+
             AotHelper.EnsureType<Reference<ActorEntity>>();
             AotHelper.EnsureList<Reference<ActorEntity>>();
             AotHelper.EnsureType<Entity<ActorEntity>>();

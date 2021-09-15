@@ -20,6 +20,9 @@ namespace Syadeu.Presentation.TurnTable
             m_To = to;
         }
 
+        public void OnExecute(Entity<UIObjectEntity> targetUI)
+        {
+        }
         public void OnExecute(Entity<ActorEntity> from)
         {
         }

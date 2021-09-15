@@ -147,6 +147,7 @@ namespace Syadeu.Presentation.Actor
         {
             if (ev is IActorOverlayUIEvent actorAttackEvent)
             {
+                actorAttackEvent.OnExecute(m_InstanceObject);
                 ActorOverlayUIEventHandler(actorAttackEvent);
                 if (InstanceObject.IsValid())
                 {
@@ -157,7 +158,7 @@ namespace Syadeu.Presentation.Actor
 
         protected virtual void ActorOverlayUIEventHandler(IActorOverlayUIEvent ev)
         {
-
+            
         }
     }
 }

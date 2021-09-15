@@ -6,11 +6,13 @@ using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using Unity.Collections;
 using UnityEngine;
 
 namespace Syadeu.Presentation.Actor
 {
+    [DisplayName("Attribute: Actor Controller")]
     public sealed class ActorControllerAttribute : ActorAttributeBase
     {
         [Header("General")]
