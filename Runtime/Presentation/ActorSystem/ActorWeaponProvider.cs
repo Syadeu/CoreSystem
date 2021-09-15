@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Internal;
+using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Entities;
 using System;
 using System.ComponentModel;
@@ -24,17 +25,27 @@ namespace Syadeu.Presentation.Actor
         [Header("General")]
         [JsonProperty(Order = 4, PropertyName = "DefaultWeapon")]
         protected Reference<ActorWeaponData> m_DefaultWeapon = Reference<ActorWeaponData>.Empty;
+        [JsonProperty(Order = 5, PropertyName = "MaxEquipableWeaponCount")]
+        protected int m_MaxEquipableWeaponCount = 1;
+
+        [Header("TriggerAction")]
+        [JsonProperty(Order = 6, PropertyName = "OnEquipWeapon")]
+        protected Reference<TriggerAction>[] m_OnEquipWeapon = Array.Empty<Reference<TriggerAction>>();
+        [JsonProperty(Order = 7, PropertyName = "OnUnequipWeapon")]
+        protected Reference<TriggerAction>[] m_OnUnequipWeapon = Array.Empty<Reference<TriggerAction>>();
 
         [JsonIgnore] private Type[] m_ReceiveEventOnly = null;
-        [JsonIgnore] private Instance<ActorWeaponData> m_EquipedWeapon;
+        [JsonIgnore] private InstanceArray<ActorWeaponData> m_EquipedWeapons;
+        [JsonIgnore] private int m_SelectedWeaponIndex = 0;
 
         [JsonIgnore] protected override Type[] ReceiveEventOnly => m_ReceiveEventOnly;
-        [JsonIgnore] public Instance<ActorWeaponData> EquipedWeapon => m_EquipedWeapon;
+        [JsonIgnore] public InstanceArray<ActorWeaponData> EquipedWeapons => m_EquipedWeapons;
+        [JsonIgnore] public Instance<ActorWeaponData> SelectedWeapon => m_EquipedWeapons[m_SelectedWeaponIndex];
         [JsonIgnore] public float WeaponDamage
         {
             get
             {
-                if (EquipedWeapon.IsEmpty())
+                if (EquipedWeapons[m_SelectedWeaponIndex].IsEmpty())
                 {
                     if (m_DefaultWeapon.IsEmpty()) return 0;
                     else if (!m_DefaultWeapon.IsValid())
@@ -47,7 +58,7 @@ namespace Syadeu.Presentation.Actor
                     return m_DefaultWeapon.GetObject().Damage;
                 }
 
-                return EquipedWeapon.Object.Damage;
+                return EquipedWeapons[m_SelectedWeaponIndex].Object.Damage;
             }
         }
 
@@ -57,6 +68,13 @@ namespace Syadeu.Presentation.Actor
             {
                 TypeHelper.TypeOf<IActorWeaponEquipEvent>.Type
             };
+            if (m_MaxEquipableWeaponCount <= 0)
+            {
+                m_MaxEquipableWeaponCount = 1;
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Entity({Parent.Name}) in {nameof(ActorWeaponProvider)} Max Equipable Count must be over 0. Force to set 1");
+            }
+            m_EquipedWeapons = new InstanceArray<ActorWeaponData>(m_MaxEquipableWeaponCount, Unity.Collections.Allocator.Persistent);
 
             for (int i = 0; i < m_ExcludeWeapon.Length; i++)
             {
@@ -75,6 +93,10 @@ namespace Syadeu.Presentation.Actor
                 }
             }
         }
+        protected override void OnDispose()
+        {
+            m_EquipedWeapons.Dispose();
+        }
         protected override void OnEventReceived<TEvent>(TEvent ev)
         {
             if (ev is IActorWeaponEquipEvent weaponEquipEvent)
@@ -91,11 +113,76 @@ namespace Syadeu.Presentation.Actor
                 return;
             }
 
-            m_EquipedWeapon = ev.Weapon;
-            CoreSystem.Logger.Log(Channel.Entity,
-                $"Entity({Parent.Name}) has equiped weapon({m_EquipedWeapon.Object.Name}).");
+            if ((ev.EquipOptions & ActorWeaponEquipOptions.SwitchWithSelected) == ActorWeaponEquipOptions.SwitchWithSelected)
+            {
+                ActorInventoryProvider inventory = GetProvider<ActorInventoryProvider>().Object;
+                if (inventory == null)
+                {
+                    CoreSystem.Logger.Log(Channel.Entity,
+                        $"Destroying weapon instance({SelectedWeapon.Object.Name}) because there\'s no inventory in this actor({Parent.Name}).");
+                    m_EquipedWeapons[m_SelectedWeaponIndex].Destroy();
+                }
+                else
+                {
+                    inventory.Insert(SelectedWeapon.Cast<ActorWeaponData, IObject>());
+                }
+                m_EquipedWeapons[m_SelectedWeaponIndex] = ev.Weapon;
+
+                CoreSystem.Logger.Log(Channel.Entity,
+                    $"Entity({Parent.Name}) has equiped weapon({SelectedWeapon.Object.Name}).");
+            }
+            else
+            {
+                int emptySpace = GetEmptyEquipSpace();
+
+                if (emptySpace < 0)
+                {
+                    if ((ev.EquipOptions & ActorWeaponEquipOptions.ToInventoryIfIsFull) == ActorWeaponEquipOptions.ToInventoryIfIsFull)
+                    {
+                        ActorInventoryProvider inventory = GetProvider<ActorInventoryProvider>().Object;
+                        if (inventory == null)
+                        {
+                            CoreSystem.Logger.LogError(Channel.Entity,
+                                $"Destroying equip request weapon instance({ev.Weapon.Object.Name}). There\'s no inventory in this actor({Parent.Name}) but you\'re trying to insert inventory.");
+                            ev.Weapon.Destroy();
+                        }
+                        else
+                        {
+                            inventory.Insert(ev.Weapon.Cast<ActorWeaponData, IObject>());
+                        }
+                    }
+                }
+                else
+                {
+                    m_EquipedWeapons[emptySpace] = ev.Weapon;
+                }
+            }
+
+            
         }
 
+        protected int GetEmptyEquipSpace()
+        {
+            for (int i = 0; i < m_EquipedWeapons.Length; i++)
+            {
+                if (m_EquipedWeapons[i].IsEmpty())
+                {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        public void SelectWeapon(int index)
+        {
+            if (index < 0 || index >= m_MaxEquipableWeaponCount)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity, $"{nameof(SelectWeapon)} index out of range. Index {index}.");
+                return;
+            }
+
+            m_SelectedWeaponIndex = index;
+        }
         public bool IsEquipable(Instance<ActorWeaponData> weapon)
         {
             var original = weapon.AsOriginal();

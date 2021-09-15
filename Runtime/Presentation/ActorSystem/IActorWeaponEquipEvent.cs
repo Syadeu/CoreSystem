@@ -2,6 +2,16 @@
 {
     public interface IActorWeaponEquipEvent
     {
-        public Instance<ActorWeaponData> Weapon { get; }
+        ActorWeaponEquipOptions EquipOptions { get; }
+        Instance<ActorWeaponData> Weapon { get; }
+    }
+
+    public enum ActorWeaponEquipOptions
+    {
+        FollowProviderSettings      =   0,
+
+        SwitchWithSelected          =   0b00001,
+
+        ToInventoryIfIsFull         =   0b00010
     }
 }
