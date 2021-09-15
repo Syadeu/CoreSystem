@@ -52,6 +52,10 @@ namespace Syadeu.Presentation.Actor
         [JsonProperty(Order = 6, PropertyName = "WeaponRotOffset")]
         protected float3 m_WeaponRotOffset = float3.zero;
 
+        [Space, Header("FX")]
+        [JsonProperty(Order = 7, PropertyName = "AttackFX")]
+        protected Reference<FXEntity> m_AttackFX = Reference<FXEntity>.Empty;
+
         [JsonIgnore] private Entity<ObjectEntity> m_PrefabInstance = Entity<ObjectEntity>.Empty;
 
         [JsonIgnore] public Entity<ObjectEntity> PrefabInstance => m_PrefabInstance;

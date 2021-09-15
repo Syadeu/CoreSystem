@@ -154,6 +154,7 @@ namespace Syadeu.Presentation
         [Preserve]
         static void AOTCodeGeneration()
         {
+            AotHelper.EnsureType<ReferenceArray<Reference<T>>>();
             AotHelper.EnsureType<Reference<T>>();
             AotHelper.EnsureList<Reference<T>>();
 
