@@ -136,6 +136,11 @@ namespace Syadeu.Presentation.Actor
 
                 m_OnEquipWeapon.Execute(Parent.CastAs<ActorEntity, IEntityData>());
 
+                if ((ev.EquipOptions & ActorWeaponEquipOptions.SelectWeapon) == ActorWeaponEquipOptions.SelectWeapon)
+                {
+                    SelectWeapon(m_SelectedWeaponIndex);
+                }
+
                 CoreSystem.Logger.Log(Channel.Entity,
                     $"Entity({Parent.Name}) has equiped weapon({SelectedWeapon.Object.Name}).");
             }
@@ -145,7 +150,11 @@ namespace Syadeu.Presentation.Actor
 
                 if (emptySpace < 0)
                 {
-                    if ((ev.EquipOptions & ActorWeaponEquipOptions.ToInventoryIfIsFull) == ActorWeaponEquipOptions.ToInventoryIfIsFull)
+                    if ((ev.EquipOptions & ActorWeaponEquipOptions.DestroyIfIsFull) == ActorWeaponEquipOptions.DestroyIfIsFull)
+                    {
+                        ev.Weapon.Destroy();
+                    }
+                    else if ((ev.EquipOptions & ActorWeaponEquipOptions.ToInventoryIfIsFull) == ActorWeaponEquipOptions.ToInventoryIfIsFull)
                     {
                         ActorInventoryProvider inventory = GetProvider<ActorInventoryProvider>().Object;
                         if (inventory == null)
@@ -164,6 +173,12 @@ namespace Syadeu.Presentation.Actor
                 {
                     m_EquipedWeapons[emptySpace] = ev.Weapon;
                     m_OnEquipWeapon.Execute(Parent.CastAs<ActorEntity, IEntityData>());
+
+                    if ((ev.EquipOptions & ActorWeaponEquipOptions.SelectWeapon) == ActorWeaponEquipOptions.SelectWeapon)
+                    {
+                        SelectWeapon(emptySpace);
+                    }
+
                     CoreSystem.Logger.Log(Channel.Entity,
                         $"Entity({Parent.Name}) has equiped weapon({SelectedWeapon.Object.Name}).");
                 }

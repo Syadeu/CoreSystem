@@ -20,6 +20,9 @@
         /// 빈 착용 공간이 있으면 그 공간에 집어넣고, 만약 없으면 <see cref="ActorInventoryProvider"/> 로 들어갑니다.
         /// <see cref="ActorInventoryProvider"/> 가 없는 경우 에러를 호출한 뒤 즉시 파괴됩니다.
         /// </summary>
-        ToInventoryIfIsFull         =   0b00010
+        ToInventoryIfIsFull         =   0b00010,
+        DestroyIfIsFull             =   0b00100,
+
+        SelectWeapon                =   0b01000,
     }
 }
