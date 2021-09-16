@@ -97,7 +97,8 @@ namespace Syadeu.Presentation
                     return false;
                 }
             }
-            else if (!(m_EntitySystem.System.m_ObjectEntities[m_Idx] is T))
+            else if (m_EntitySystem.System == null || 
+                !(m_EntitySystem.System.m_ObjectEntities[m_Idx] is T))
             {
                 return false;
             }

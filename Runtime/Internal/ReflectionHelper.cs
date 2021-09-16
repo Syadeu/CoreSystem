@@ -39,6 +39,19 @@ namespace Syadeu.Internal
             }
             return false;
         }
+        public static bool IsPrivate(MemberInfo memberInfo)
+        {
+            if (memberInfo is FieldInfo fieldInfo)
+            {
+                return fieldInfo.IsPrivate;
+            }
+            else if (memberInfo is PropertyInfo property)
+            {
+                return property.GetGetMethod().IsPrivate;
+            }
+
+            throw new NotImplementedException();
+        }
 
         /// <summary>
         /// 해당 맴버의 이름을 Serialize 정형화 이름으로 바꾸어 반환합니다.

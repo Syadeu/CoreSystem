@@ -23,6 +23,7 @@ namespace Syadeu.Presentation.Actions
         private Reference<TriggerAction>[] m_OnHit = Array.Empty<Reference<TriggerAction>>();
 
         [Header("Actions")]
+        [JsonProperty(Order = 1, PropertyName = "OnHitAction")]
         private Reference<InstanceAction>[] m_OnHitAction = Array.Empty<Reference<InstanceAction>>();
 
         [JsonIgnore] private RenderSystem m_RenderSystem;
