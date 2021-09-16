@@ -716,14 +716,21 @@ namespace SyadeuEditor.Presentation
 
                     for (int i = 0; i < m_SelectedMembers.Length; i++)
                     {
-                        if (m_SelectedMembers[i].Name.Equals("Name") ||
+                        if (m_SelectedMembers[i] is AttributeListDrawer ||
+                            m_SelectedMembers[i].Name.Equals("Name") ||
                             m_SelectedMembers[i].Name.Equals("Hash") ||
                             m_SelectedMembers[i].Name.Equals("Idx") ||
                             m_SelectedMembers[i].Name.Equals("EnableCull") ||
                             m_SelectedMembers[i].Name.Equals("Prefab") ||
-                            m_SelectedMembers[i].Name.Equals("Transform"))
+                            m_SelectedMembers[i].Name.Equals("Center") ||
+                            m_SelectedMembers[i].Name.Equals("Size") ||
+                            m_SelectedMembers[i].Name.Equals("transform"))
                         {
                             continue;
+                        }
+                        else if (m_SelectedMembers[i] is ArrayDrawer array)
+                        {
+                            if (TypeHelper.TypeOf<IReference>.Type.IsAssignableFrom(array.ElementType)) continue;
                         }
 
                         m_SelectedMembers[i].OnGUI();
@@ -747,8 +754,13 @@ namespace SyadeuEditor.Presentation
                     using (new EditorUtils.BoxBlock(ColorPalettes.WaterFoam.Teal))
                     {
                         EntityDrawer.DrawPrefab(entityBase, true);
-                    }
 
+                        entityBase.Center
+                            = EditorGUILayout.Vector3Field("Center", entityBase.Center);
+                        entityBase.Size
+                            = EditorGUILayout.Vector3Field("Size", entityBase.Size);
+                    }
+                    EditorUtils.Line();
                     using (new EditorUtils.BoxBlock(ColorPalettes.WaterFoam.Teal))
                     {
                         EditorUtils.StringRich("Transform", 15);

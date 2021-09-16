@@ -157,6 +157,8 @@ namespace SyadeuEditor.Presentation
         public readonly List<ObjectDrawerBase> m_ElementDrawers = new List<ObjectDrawerBase>();
         public readonly List<bool> m_ElementOpen = new List<bool>();
 
+        public Type ElementType => m_ElementType;
+
         public ArrayDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
         {
             m_DeclaredType = GetDeclaredType(memberInfo);
