@@ -31,15 +31,16 @@ namespace SyadeuEditor.Presentation
             }
         }
 
-        readonly List<ObjectBaseDrawer> ObjectBaseDrawers = new List<ObjectBaseDrawer>();
-
         public bool IsDirty
         {
             get => hasUnsavedChanges;
             set
             {
-                saveChangesMessage = "Unsaved changes detected";
-                hasUnsavedChanges = value;
+                if (!Application.isPlaying)
+                {
+                    saveChangesMessage = "Unsaved changes detected";
+                    hasUnsavedChanges = value;
+                }
             }
         }
 
@@ -47,10 +48,16 @@ namespace SyadeuEditor.Presentation
 
         public ToolbarWindow m_ToolbarWindow;
 
+        #region Entity Window
+
+        readonly List<ObjectBaseDrawer> ObjectBaseDrawers = new List<ObjectBaseDrawer>();
         public EntityDataListWindow m_DataListWindow;
         public EntityViewWindow m_ViewWindow;
-
         public ObjectBaseDrawer m_SelectedObject = null;
+
+        #endregion
+
+        public DebuggerListWindow m_DebuggerListWindow;
 
         public static bool IsOpened { get; private set; }
         public static bool IsDataLoaded => EntityDataList.IsLoaded;
@@ -62,6 +69,8 @@ namespace SyadeuEditor.Presentation
             m_ToolbarWindow = new ToolbarWindow(this);
             m_DataListWindow = new EntityDataListWindow(this);
             m_ViewWindow = new EntityViewWindow(this);
+
+            m_DebuggerListWindow = new DebuggerListWindow(this);
 
             Reload();
 
@@ -75,6 +84,8 @@ namespace SyadeuEditor.Presentation
         }
         public override void SaveChanges()
         {
+            if (!Application.isPlaying) return;
+
             CoreSystem.Logger.Log(Channel.Editor, "Entity data saved");
 
             EntityDataList.Instance.SaveData();
@@ -85,11 +96,17 @@ namespace SyadeuEditor.Presentation
         }
         private void OnDestroy()
         {
-            if (IsDirty) EntityDataList.Instance.LoadData();
+            if (!Application.isPlaying)
+            {
+                if (IsDirty) EntityDataList.Instance.LoadData();
+            }
         }
         public void Reload()
         {
-            if (!IsDataLoaded) EntityDataList.Instance.LoadData();
+            if (!Application.isPlaying)
+            {
+                if (!IsDataLoaded) EntityDataList.Instance.LoadData();
+            }
 
             ObjectBaseDrawers.Clear();
             if (EntityDataList.Instance.m_Objects != null)
@@ -208,8 +225,20 @@ namespace SyadeuEditor.Presentation
             ViewPos.height = EntityListPos.height;
             BeginWindows();
 
-            m_DataListWindow.OnGUI(EntityListPos, 1);
-            m_ViewWindow.OnGUI(ViewPos, 2);
+            switch (m_CurrentWindow)
+            {
+                default:
+                case WindowType.Entity:
+                    m_DataListWindow.OnGUI(EntityListPos, 1);
+                    m_ViewWindow.OnGUI(ViewPos, 2);
+                    break;
+                case WindowType.Converter:
+
+                    break;
+                case WindowType.Debugger:
+                    m_DebuggerListWindow.OnGUI(EntityListPos, 1);
+                    break;
+            }
 
             EndWindows();
 
@@ -222,9 +251,9 @@ namespace SyadeuEditor.Presentation
         }
         private void KeyboardShortcuts()
         {
-            if (!Event.current.isKey) return;
+            if (!Event.current.isKey || Application.isPlaying) return;
 
-            if (Event.current.control)
+            if (m_CurrentWindow == WindowType.Entity && Event.current.control)
             {
                 if (Event.current.keyCode == KeyCode.S)
                 {
@@ -241,6 +270,7 @@ namespace SyadeuEditor.Presentation
         {
             Entity,
             Converter,
+            Debugger,
         }
 
         public sealed class ToolbarWindow
@@ -337,8 +367,21 @@ namespace SyadeuEditor.Presentation
                     lastRect.position = Event.current.mousePosition;
 
                     m_WindowMenu = new GenericMenu();
-                    m_WindowMenu.AddItem(new GUIContent("Entity"), m_MainWindow.m_CurrentWindow == WindowType.Entity, () => m_MainWindow.m_CurrentWindow = WindowType.Entity);
-                    m_WindowMenu.AddItem(new GUIContent("Converter"), m_MainWindow.m_CurrentWindow == WindowType.Converter, () => m_MainWindow.m_CurrentWindow = WindowType.Converter);
+
+                    if (!Application.isPlaying)
+                    {
+                        m_WindowMenu.AddItem(new GUIContent("Entity"), m_MainWindow.m_CurrentWindow == WindowType.Entity, () => m_MainWindow.m_CurrentWindow = WindowType.Entity);
+
+                        m_WindowMenu.AddItem(new GUIContent("Converter"), m_MainWindow.m_CurrentWindow == WindowType.Converter, () => m_MainWindow.m_CurrentWindow = WindowType.Converter);
+                    }
+                    else
+                    {
+                        m_WindowMenu.AddDisabledItem(new GUIContent("Entity"), m_MainWindow.m_CurrentWindow == WindowType.Entity);
+
+                        m_WindowMenu.AddDisabledItem(new GUIContent("Converter"), m_MainWindow.m_CurrentWindow == WindowType.Converter);
+                    }
+
+                    m_WindowMenu.AddItem(new GUIContent("Debugger"), m_MainWindow.m_CurrentWindow == WindowType.Debugger, () => m_MainWindow.m_CurrentWindow = WindowType.Debugger);
 
                     m_WindowMenu.ShowAsContext();
                     GUIUtility.ExitGUI();
@@ -421,16 +464,6 @@ namespace SyadeuEditor.Presentation
 
             public void OnGUI(Rect pos, int unusedID)
             {
-                if (m_MainWindow.m_CurrentWindow != WindowType.Entity)
-                {
-                    Color color = Color.gray;
-                    color.a = .25f;
-
-                    EditorGUI.DrawRect(pos, color);
-                    EditorGUI.LabelField(pos, "Disabled");
-                    return;
-                }
-
                 EntityListTreeView.OnGUI(pos);
             }
         }
@@ -502,15 +535,187 @@ namespace SyadeuEditor.Presentation
             {
                 m_MainWindow = window;
             }
+
+            public void OnGUI(Rect pos, int unusedID)
+            {
+
+            }
+        }
+
+        public sealed class DebuggerListWindow
+        {
+            EntityWindow m_MainWindow;
+
+            private DebuggerListTreeView ListTreeView;
+            private TreeViewState TreeViewState;
+
+            public DebuggerListWindow(EntityWindow window)
+            {
+                m_MainWindow = window;
+
+                TreeViewState = new TreeViewState();
+                ListTreeView = new DebuggerListTreeView(m_MainWindow, TreeViewState);
+            }
+
+            public void OnGUI(Rect pos, int unusedID)
+            {
+                ListTreeView.OnGUI(pos);
+            }
         }
     }
-    //[EditorTool("TestTool", typeof(EntityWindow))]
-    //public sealed class TestTool : EditorTool
-    //{
-    //    public override void OnToolGUI(EditorWindow window)
-    //    {
-    //        EditorGUILayout.LabelField("test");
-    //        base.OnToolGUI(window);
-    //    }
-    //}
+    
+    public sealed class DebuggerListTreeView : TreeView
+    {
+        const float kRowHeights = 20f;
+        const float kToggleWidth = 18f;
+
+        private int m_CreationID = 0;
+        private SearchField m_SearchField;
+        private readonly TreeViewItem m_Root;
+        private readonly List<TreeViewItem> 
+            m_Rows = new List<TreeViewItem>(),
+            
+            m_EntitiesRow = new List<TreeViewItem>(),
+            m_DataRow = new List<TreeViewItem>(),
+            m_OtherRow = new List<TreeViewItem>();
+
+        private readonly EntityWindow m_Window;
+
+        private EntitySystem m_EntitySystem;
+        private Dictionary<Hash, ObjectBase> m_ObjectEntities;
+        public EntitySystem EntitySystem
+        {
+            get
+            {
+                if (m_EntitySystem == null)
+                {
+                    if (!Application.isPlaying || !PresentationSystem<EntitySystem>.IsValid()) return null;
+
+                    m_EntitySystem = PresentationSystem<EntitySystem>.System;
+                }
+                return m_EntitySystem;
+            }
+        }
+        public Dictionary<Hash, ObjectBase> ObjectEntities
+        {
+            get
+            {
+                if (m_ObjectEntities == null)
+                {
+                    if (EntitySystem == null) return null;
+
+                    m_ObjectEntities = (Dictionary<Hash, ObjectBase>)TypeHelper.TypeOf<EntitySystem>.Type.GetField("m_ObjectEntities", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).GetValue(EntitySystem);
+                }
+
+                return m_ObjectEntities;
+            }
+        }
+
+        public DebuggerListTreeView(EntityWindow mainWindow, TreeViewState state) : base(state)
+        {
+            m_Window = mainWindow;
+            m_SearchField = new SearchField();
+
+            m_Root = new TreeViewItem()
+            {
+                id = 0,
+                depth = -1,
+                displayName = "Root"
+            };
+
+            rowHeight = kRowHeights;
+            showAlternatingRowBackgrounds = true;
+            showBorder = true;
+            customFoldoutYOffset = (kRowHeights - EditorGUIUtility.singleLineHeight) * 0.5f;
+
+            //if (Objects == null || Objects.Count == 0) return;
+            Reload();
+        }
+
+        protected override TreeViewItem BuildRoot()
+        {
+            m_Root.children?.Clear();
+            m_Rows.Clear();
+            m_EntitiesRow.Clear();
+            m_DataRow.Clear();
+            m_OtherRow.Clear();
+            m_CreationID = 1;
+
+            if (ObjectEntities != null)
+            {
+                var list = ObjectEntities.Values.ToArray();
+                foreach (var item in list)
+                {
+                    List<TreeViewItem> targetList;
+                    if (item is EntityDataBase)
+                    {
+                        if (m_EntitiesRow.Count == 0)
+                        {
+                            m_EntitiesRow.Add(new TreeViewItem(m_CreationID, 0, "Entity"));
+                            m_CreationID++;
+                        }
+                        targetList = m_EntitiesRow;
+                    }
+                    else if (item is DataObjectBase)
+                    {
+                        if (m_DataRow.Count == 0)
+                        {
+                            m_DataRow.Add(new TreeViewItem(m_CreationID, 0, "Data"));
+                            m_CreationID++;
+                        }
+                        targetList = m_DataRow;
+                    }
+                    else
+                    {
+                        if (m_OtherRow.Count == 0)
+                        {
+                            m_OtherRow.Add(new TreeViewItem(m_CreationID, 0, "Other"));
+                            m_CreationID++;
+                        }
+                        targetList = m_OtherRow;
+                    }
+
+                    targetList.Add(new ObjectTreeViewItem(m_CreationID, 1, item.Name, item));
+                    m_CreationID++;
+                }
+
+                m_Rows.AddRange(m_EntitiesRow);
+                m_Rows.AddRange(m_DataRow);
+                m_Rows.AddRange(m_OtherRow);
+
+                SetupParentsAndChildrenFromDepths(m_Root, m_Rows);
+            }
+            else
+            {
+                m_Root.AddChild(new TreeViewItem(m_CreationID, 0, "None"));
+            }
+
+            return m_Root;
+        }
+        public override void OnGUI(Rect rect)
+        {
+            Rect searchField = new Rect(rect);
+            searchField.height = kRowHeights;
+
+            if (GUI.Button(searchField, "reload"))
+            {
+                Reload();
+            }
+
+            rect.y += kRowHeights;
+            rect.height -= kRowHeights;
+
+            base.OnGUI(rect);
+        }
+
+        private class ObjectTreeViewItem : TreeViewItem
+        {
+            Instance<ObjectBase> m_ObjectBase;
+
+            public ObjectTreeViewItem(int id, int depth, string displayName, ObjectBase obj) : base(id, depth, displayName)
+            {
+                m_ObjectBase = new Instance<ObjectBase>(obj);
+            }
+        }
+    }
 }
