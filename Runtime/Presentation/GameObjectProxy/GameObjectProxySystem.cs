@@ -175,8 +175,8 @@ namespace Syadeu.Presentation.Proxy
 
         unsafe private void OnTransformChanged(OnTransformChangedEvent ev)
         {
-            ProxyTransform transform = (ProxyTransform)ev.transform;
-
+            if (!(ev.transform is ProxyTransform transform)) return;
+            
             if (transform.isDestroyed) return;
 
             if (!transform.Pointer->m_ClusterID.Equals(ClusterID.Requested))

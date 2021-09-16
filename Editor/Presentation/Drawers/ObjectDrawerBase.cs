@@ -160,14 +160,17 @@ namespace SyadeuEditor.Presentation
         public override object TargetObject => null;
         public override string Name => m_Name;
 
+        private MemberInfo MemberInfo;
+
         public NullDrawer(MemberInfo member, Type declaredType)
         {
-            m_Name = member.MemberType.ToString() + " " + TypeHelper.ToString(declaredType);
+            MemberInfo = member;
+            m_Name = $"Not supported Type: {member.MemberType} {TypeHelper.ToString(declaredType)}";
         }
 
         public override void OnGUI()
         {
-            EditorGUILayout.LabelField($"Not supported Type: ", Name);
+            EditorGUILayout.LabelField(MemberInfo.Name, Name);
         }
     }
 }

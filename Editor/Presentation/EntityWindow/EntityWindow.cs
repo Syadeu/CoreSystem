@@ -605,14 +605,20 @@ namespace SyadeuEditor.Presentation
                             if (other.MemberType != MemberTypes.Field && 
                                 other.MemberType != MemberTypes.Property) return false;
 
-                            if (other.GetCustomAttribute<JsonPropertyAttribute>() != null)
+                            if (other.GetCustomAttribute<ObsoleteAttribute>() != null)
                             {
                                 return false;
                             }
 
                             Type declaredType = ReflectionHelper.GetDeclaredType(other);
 
-                            if (TypeHelper.TypeOf<Delegate>.Type.IsAssignableFrom(declaredType)) return false;
+                            if (TypeHelper.TypeOf<Delegate>.Type.IsAssignableFrom(declaredType) ||
+                                TypeHelper.TypeOf<IReference>.Type.IsAssignableFrom(declaredType))
+                            {
+                                return false;
+                            }
+
+                            if (ReflectionHelper.IsBackingField(other)) return false;
 
                             return true;
                         })
@@ -673,6 +679,13 @@ namespace SyadeuEditor.Presentation
 
                     for (int i = 0; i < m_SelectedMembers.Length; i++)
                     {
+                        if (m_SelectedMembers[i].Name.Equals("Name") ||
+                            m_SelectedMembers[i].Name.Equals("Hash") ||
+                            m_SelectedMembers[i].Name.Equals("Idx"))
+                        {
+                            continue;
+                        }
+
                         m_SelectedMembers[i].OnGUI();
                     }
 
@@ -684,6 +697,7 @@ namespace SyadeuEditor.Presentation
                 EditorGUI.BeginDisabledGroup(true);
                 EditorGUILayout.TextField("Name: ", obj.Name);
                 EditorGUILayout.TextField("Hash: ", obj.Hash.ToString());
+                EditorGUILayout.TextField("Idx: ", obj.Idx.ToString());
                 EditorGUI.EndDisabledGroup();
             }
             private void DrawEntity(EntityDataBase entity)
@@ -849,7 +863,6 @@ namespace SyadeuEditor.Presentation
             var list = FindRows(selectedIds);
             if (list.Count > 0 && list[0] is ObjectTreeViewItem objitem)
             {
-                "in".ToLog();
                 m_Window.m_DebuggerViewWindow.Selected = objitem.m_ObjectBase;
             }
 

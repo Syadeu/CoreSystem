@@ -1,4 +1,5 @@
-﻿using Syadeu;
+﻿using Newtonsoft.Json;
+using Syadeu;
 using Syadeu.Database;
 using Syadeu.Database.Lua;
 using Syadeu.Internal;
@@ -282,6 +283,11 @@ namespace SyadeuEditor.Presentation
                 return new PrefabReferenceDrawer(list, m_ElementType, (other) => list[i] = other, () => (IPrefabReference)list[i]);
             }
 
+            //else if (TypeHelper.TypeOf<ObjectBase>.Type.IsAssignableFrom(m_ElementType))
+            //{
+            //    ObjectBaseDrawer.GetDrawer()
+            //}
+
             else
             {
                 return new ObjectDrawer(list[i], m_ElementType, string.Empty);
@@ -303,6 +309,7 @@ namespace SyadeuEditor.Presentation
                 GUILayout.FlexibleSpace();
                 GUILayout.Label(EditorUtils.String($"{list.Count}: ", 10), EditorUtils.HeaderStyle);
 
+                EditorGUI.BeginDisabledGroup(m_ElementType.IsAbstract);
                 if (GUILayout.Button("+", GUILayout.Width(20)))
                 {
                     object newValue = Activator.CreateInstance(m_ElementType);
@@ -320,6 +327,7 @@ namespace SyadeuEditor.Presentation
                     m_ElementDrawers.Add(GetElementDrawer(list, list.Count - 1));
                     m_ElementOpen.Add(false);
                 }
+                EditorGUI.EndDisabledGroup();
                 if (list.Count > 0 && GUILayout.Button("-", GUILayout.Width(20)))
                 {
                     if (list.IsFixedSize)
@@ -419,12 +427,48 @@ namespace SyadeuEditor.Presentation
 
         private readonly List<ObjectDrawerBase> DrawerBases = new List<ObjectDrawerBase>();
 
+        public ObjectDrawer(object parentObject, Type declaredType, Action<IReference> setter, Func<IReference> getter)
+        {
+        }
+
         public ObjectDrawer(object obj, Type declaredType, string name)
         {
             m_TargetObject = obj;
             m_Name = name;
 
-            MemberInfo[] members = ReflectionHelper.GetSerializeMemberInfos(declaredType);
+            if (declaredType.IsAbstract && obj != null) declaredType = obj.GetType();
+
+            MemberInfo[] members;
+            if (Application.isPlaying)
+            {
+                members = declaredType.GetMembers(
+                        BindingFlags.FlattenHierarchy | BindingFlags.Public |
+                        BindingFlags.NonPublic | BindingFlags.Instance)
+                        .Where((other) =>
+                        {
+                            if (other.MemberType != MemberTypes.Field &&
+                                other.MemberType != MemberTypes.Property) return false;
+
+                            //if (other.GetCustomAttribute<JsonPropertyAttribute>() != null)
+                            //{
+                            //    return false;
+                            //}
+
+                            Type declaredType = ReflectionHelper.GetDeclaredType(other);
+
+                            if (TypeHelper.TypeOf<Delegate>.Type.IsAssignableFrom(declaredType)) return false;
+
+                            if (ReflectionHelper.IsBackingField(other)) return false;
+
+                            return true;
+                        })
+                        .ToArray();
+            }
+            else
+            {
+                members = ReflectionHelper.GetSerializeMemberInfos(declaredType);
+            }
+
             for (int a = 0; a < members.Length; a++)
             {
                 ObjectDrawerBase drawer = ToDrawer(obj, members[a], true);

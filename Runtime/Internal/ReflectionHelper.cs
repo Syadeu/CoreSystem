@@ -21,6 +21,24 @@ namespace Syadeu.Internal
 
             throw new NotImplementedException();
         }
+        public static bool IsProperty(MemberInfo memberInfo)
+        {
+            if (memberInfo is PropertyInfo) return true;
+            else if (memberInfo is FieldInfo field && field.IsPinvokeImpl)
+            {
+                return true;
+            }
+            return false;
+        }
+        public static bool IsBackingField(MemberInfo memberInfo)
+        {
+            if (memberInfo is FieldInfo field &&
+                field.Name.Contains(backingField))
+            {
+                return true;
+            }
+            return false;
+        }
 
         /// <summary>
         /// 해당 맴버의 이름을 Serialize 정형화 이름으로 바꾸어 반환합니다.
