@@ -388,16 +388,17 @@ namespace Syadeu.Presentation.Actor
                         }
                     }
 
-                    float3 targetRot = targetTr.eulerAngles;
+                    quaternion targetRot = targetTr.rotation;
                     if (overrideData.OverrideOptions == ActorWeaponData.OverrideOptions.None)
                     {
-                        targetRot += m_RotOffset;
+                        targetRot *= Quaternion.Euler(m_RotOffset);
                     }
                     else if (overrideData.OverrideOptions == ActorWeaponData.OverrideOptions.Override)
                     {
-                        targetRot += overrideData.WeaponRotOffset;
+                        targetRot *= Quaternion.Euler(overrideData.WeaponRotOffset);
                     }
-                    weaponTr.rotation = Quaternion.Euler(targetRot);
+                    //weaponTr.rotation = Quaternion.Euler(targetRot);
+                    weaponTr.rotation = targetRot;
 
                     float3 targetPos = targetTr.position;
                     if (overrideData.OverrideOptions == ActorWeaponData.OverrideOptions.None)

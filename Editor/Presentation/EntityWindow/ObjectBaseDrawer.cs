@@ -3,6 +3,7 @@ using Syadeu.Presentation;
 using Syadeu.Presentation.Entities;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
@@ -33,11 +34,38 @@ namespace SyadeuEditor.Presentation
         {
             if (Pool.TryGetValue(objectBase, out var drawer)) return drawer;
 
-            if (TypeHelper.TypeOf<Syadeu.Presentation.Map.MapDataEntityBase>.Type.IsAssignableFrom(objectBase.GetType()))
+            Type objType = objectBase.GetType();
+            if (TypeHelper.TypeOf<Syadeu.Presentation.Map.MapDataEntityBase>.Type.IsAssignableFrom(objType))
             {
                 drawer = new MapDataEntityDrawer(objectBase);
+                Pool.Add(objectBase, drawer);
+                return drawer;
             }
-            else if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(objectBase.GetType()))
+
+            Type[] drawerTypes = TypeHelper.GetTypes((other) => TypeHelper.TypeOf<ObjectBaseDrawer>.Type.IsAssignableFrom(other));
+            var iter = drawerTypes.Where((other) =>
+            {
+                if (!other.IsAbstract &&
+                    other.BaseType.GenericTypeArguments.Length > 0 &&
+                    other.BaseType.GenericTypeArguments[0].IsAssignableFrom(objType))
+                {
+                    return true;
+                }
+                return false;
+            });
+            if (iter.Any())
+            {
+                var ctor = TypeHelper.GetConstructorInfo(iter.First(), TypeHelper.TypeOf<ObjectBase>.Type);
+
+                if (ctor != null)
+                {
+                    drawer = (ObjectBaseDrawer)ctor.Invoke(new object[] { objectBase });
+                    Pool.Add(objectBase, drawer);
+                    return drawer;
+                }
+            }
+
+            if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(objType))
             {
                 drawer = new EntityDrawer(objectBase);
             }
@@ -79,16 +107,19 @@ namespace SyadeuEditor.Presentation
         }
         protected virtual void DrawGUI()
         {
-            EditorUtils.StringRich(Name + EditorUtils.String($": {Type.Name}", 11), 20);
-            EditorGUILayout.Space(3);
-            EditorUtils.Line();
-
+            DrawHeader();
             DrawDescription();
 
             for (int i = 0; i < m_ObjectDrawers.Length; i++)
             {
                 DrawField(m_ObjectDrawers[i]);
             }
+        }
+        protected void DrawHeader()
+        {
+            EditorUtils.StringRich(Name + EditorUtils.String($": {Type.Name}", 11), 20);
+            EditorGUILayout.Space(3);
+            EditorUtils.Line();
         }
         protected void DrawField(ObjectDrawerBase drawer)
         {
@@ -113,14 +144,41 @@ namespace SyadeuEditor.Presentation
 
             EditorGUILayout.HelpBox(m_Description.m_Description, MessageType.Info);
         }
+
+        protected bool IsObsolete(out ObsoleteAttribute obsolete)
+        {
+            obsolete = m_Obsolete;
+            if (m_Obsolete == null) return false;
+            return true;
+        }
+        protected MemberInfo GetMember(string name)
+        {
+            for (int i = 0; i < m_Members.Length; i++)
+            {
+                if (m_Members[i].Name.Equals(name)) return m_Members[i];
+            }
+            return null;
+        }
+        protected ObjectDrawerBase GetDrawer(string name)
+        {
+            for (int i = 0; i < m_ObjectDrawers.Length; i++)
+            {
+                if (m_ObjectDrawers[i].Name.Equals(name))
+                {
+                    return m_ObjectDrawers[i];
+                }
+            }
+            return null;
+        }
     }
-    //[EditorTool("TestTool", typeof(EntityWindow))]
-    //public sealed class TestTool : EditorTool
-    //{
-    //    public override void OnToolGUI(EditorWindow window)
-    //    {
-    //        EditorGUILayout.LabelField("test");
-    //        base.OnToolGUI(window);
-    //    }
-    //}
+
+    public abstract class ObjectBaseDrawer<T> : ObjectBaseDrawer
+        where T : ObjectBase
+    {
+        public new T TargetObject => (T)m_TargetObject;
+
+        protected ObjectBaseDrawer(ObjectBase objectBase) : base(objectBase)
+        {
+        }
+    }
 }
