@@ -81,8 +81,8 @@ namespace Syadeu.Internal
         /// <returns></returns>
         public static MemberInfo[] GetSerializeMemberInfos(Type t)
         {
-            return t.GetMembers(
-                BindingFlags.FlattenHierarchy | BindingFlags.Instance |
+            var temp = t.GetMembers(
+                BindingFlags.Instance |
                 BindingFlags.Public | BindingFlags.NonPublic)
                     .Where((other) =>
                     {
@@ -97,22 +97,42 @@ namespace Syadeu.Internal
                             return false;
                         }
 
-                        if (!CanSerialized(other)) return false;
-                        if (other.Name.Contains(backingField))
-                        {
-                            string propertyName = SerializeMemberInfoName(other);
-                            PropertyInfo property = t.GetProperty(propertyName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-                            if (property == null)
-                            {
-                                $"{other.Name} : {propertyName}".ToLog();
-                                return false;
-                            }
-                            if (!CanSerialized(property)) return false;
-                        }
+                        if (IsBackingField(other) || !CanSerialized(other)) return false;
+                        //if (other.Name.Contains(backingField))
+                        //{
+                        //    string propertyName = SerializeMemberInfoName(other);
+                        //    PropertyInfo property = t.GetProperty(propertyName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                        //    if (property == null)
+                        //    {
+                        //        $"{other.Name} : {propertyName}".ToLog();
+                        //        return false;
+                        //    }
+                        //    if (!CanSerialized(property)) return false;
+                        //}
 
                         return true;
                     })
-                    .ToArray();
+                    .ToList();
+
+            temp.Sort(new Comparer());
+            return temp.ToArray();
+        }
+        private struct Comparer : IComparer<MemberInfo>
+        {
+            public int Compare(MemberInfo x, MemberInfo y)
+            {
+                JsonPropertyAttribute 
+                    a = x.GetCustomAttribute<JsonPropertyAttribute>(),
+                    b = y.GetCustomAttribute<JsonPropertyAttribute>();
+
+                if (a == null) return -1;
+                else if (b == null) return 1;
+
+                if (a.Order < b.Order) return -1;
+                else if (a.Order > b.Order) return 1;
+
+                return 0;
+            }
         }
         private static bool CanSerialized(MemberInfo member)
         {

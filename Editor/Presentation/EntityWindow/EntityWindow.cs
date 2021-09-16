@@ -88,7 +88,7 @@ namespace SyadeuEditor.Presentation
         }
         public override void SaveChanges()
         {
-            if (!Application.isPlaying) return;
+            if (Application.isPlaying) return;
 
             CoreSystem.Logger.Log(Channel.Editor, "Entity data saved");
 
@@ -697,7 +697,8 @@ namespace SyadeuEditor.Presentation
                     {
                         if (m_SelectedMembers[i].Name.Equals("Name") ||
                             m_SelectedMembers[i].Name.Equals("Hash") ||
-                            m_SelectedMembers[i].Name.Equals("Idx"))
+                            m_SelectedMembers[i].Name.Equals("Idx") ||
+                            m_SelectedMembers[i].Name.Equals("EnableCull"))
                         {
                             continue;
                         }
