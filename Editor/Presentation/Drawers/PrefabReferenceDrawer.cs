@@ -107,7 +107,6 @@ namespace SyadeuEditor.Presentation
 
             if (m_Open)
             {
-                EditorGUI.indentLevel++;
                 using (new GUILayout.VerticalScope())
                 {
                     EditorUtils.BoxBlock box = new EditorUtils.BoxBlock(Color.black);
@@ -127,7 +126,6 @@ namespace SyadeuEditor.Presentation
 
                     box.Dispose();
                 }
-                EditorGUI.indentLevel--;
             }
 
             GUILayout.EndVertical();

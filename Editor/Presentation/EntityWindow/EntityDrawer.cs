@@ -7,6 +7,8 @@ using System.Reflection;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using Syadeu.Database;
+using Unity.Mathematics;
 
 namespace SyadeuEditor.Presentation
 {
@@ -17,6 +19,10 @@ namespace SyadeuEditor.Presentation
         GUIContent m_EnableCullName, m_DisableCullName;
         PrefabReferenceDrawer prefabReferenceDrawer = null;
         AttributeListDrawer attributeListDrawer;
+
+        bool m_OpenAABB = false;
+        ObjectDrawerBase
+            m_CenterDrawer = null, m_SizeDrawer = null;
 
         bool m_OpenCheckMesh = false;
         readonly List<MeshFilter> meshFilters = new List<MeshFilter>();
@@ -30,6 +36,9 @@ namespace SyadeuEditor.Presentation
             {
                 prefabReferenceDrawer = (PrefabReferenceDrawer)m_ObjectDrawers.Where((other) => other.Name.Equals("Prefab")).First();
                 prefabReferenceDrawer.DisableHeader = true;
+
+                m_CenterDrawer = m_ObjectDrawers.Where((other) => other.Name.Equals("Center")).First();
+                m_SizeDrawer = m_ObjectDrawers.Where((other) => other.Name.Equals("Size")).First();
             }
 
             attributeListDrawer = new AttributeListDrawer(objectBase,
@@ -101,7 +110,53 @@ namespace SyadeuEditor.Presentation
                 {
                     DrawPrefab(entity);
 
+                    EditorGUI.BeginChangeCheck();
                     DrawField(prefabReferenceDrawer);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        if (!entity.Prefab.IsNone() && entity.Prefab.IsValid())
+                        {
+                            GameObject target = ((GameObject)entity.Prefab.GetEditorAsset());
+                            Renderer[] renderers = target.GetComponentsInChildren<Renderer>();
+
+                            AABB aabb = new AABB(target.transform.position, 0);
+                            foreach (var item in renderers)
+                            {
+                                aabb.Encapsulate(item.bounds);
+                            }
+                            entity.Center = aabb.center - ((float3)target.transform.position);
+                            entity.Size = aabb.size;
+                        }
+                    }
+                    m_OpenAABB = EditorUtils.Foldout(m_OpenAABB, "AABB", 13);
+                    if (m_OpenAABB)
+                    {
+                        EditorGUI.indentLevel++;
+
+                        using (new EditorUtils.BoxBlock(Color.white))
+                        {
+                            EditorGUI.BeginDisabledGroup(entity.Prefab.IsNone() || !entity.Prefab.IsValid());
+                            if (GUILayout.Button("Auto"))
+                            {
+                                GameObject target = ((GameObject)entity.Prefab.GetEditorAsset());
+                                Renderer[] renderers = target.GetComponentsInChildren<Renderer>();
+
+                                AABB aabb = new AABB(target.transform.position, 0);
+                                foreach (var item in renderers)
+                                {
+                                    aabb.Encapsulate(item.bounds);
+                                }
+                                entity.Center = aabb.center - ((float3)target.transform.position);
+                                entity.Size = aabb.size;
+                            }
+                            EditorGUI.EndDisabledGroup();
+
+                            DrawField(m_CenterDrawer);
+                            DrawField(m_SizeDrawer);
+                        }
+
+                        EditorGUI.indentLevel--;
+                    }
 
                     //m_OpenCheckMesh = EditorUtils.Foldout(m_OpenCheckMesh, "Meshes");
                     //if (m_OpenCheckMesh)
@@ -112,6 +167,7 @@ namespace SyadeuEditor.Presentation
                     //}
                 }
             }
+            EditorUtils.Line();
             using (new EditorUtils.BoxBlock(Color.black))
             {
                 attributeListDrawer.OnGUI();
@@ -152,8 +208,10 @@ namespace SyadeuEditor.Presentation
 
             if (drawerBase.Name.Equals("Name") ||
                 drawerBase.Name.Equals("Hash") ||
-                drawerBase.Name.Equals("Prefab")
-                || drawerBase.Name.Equals("EnableCull")
+                drawerBase.Name.Equals("Prefab") || 
+                drawerBase.Name.Equals("EnableCull") ||
+                drawerBase.Name.Equals("Center") ||
+                drawerBase.Name.Equals("Size")
                 )
             {
                 return false;
