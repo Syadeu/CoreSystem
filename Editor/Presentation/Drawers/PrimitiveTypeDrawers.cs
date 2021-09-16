@@ -288,10 +288,10 @@ namespace SyadeuEditor.Presentation
                 return new PrefabReferenceDrawer(list, m_ElementType, (other) => list[i] = other, () => (IPrefabReference)list[i]);
             }
 
-            //else if (TypeHelper.TypeOf<ObjectBase>.Type.IsAssignableFrom(m_ElementType))
-            //{
-            //    ObjectBaseDrawer.GetDrawer()
-            //}
+            else if (TypeHelper.TypeOf<UnityEngine.Object>.Type.IsAssignableFrom(m_ElementType))
+            {
+                return new UnityObjectDrawer(list, m_ElementType, (other) => list[i] = other, () => (UnityEngine.Object)list[i]);
+            }
 
             else
             {
