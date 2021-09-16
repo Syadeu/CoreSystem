@@ -232,6 +232,11 @@ namespace SyadeuEditor.Presentation
 
         private ObjectDrawerBase GetElementDrawer(IList list, int i)
         {
+            if (m_ElementType.Equals(TypeHelper.TypeOf<Type>.Type))
+            {
+                return new TypeDrawer(list, m_ElementType, (other) => list[i] = other, () => (Type)list[i]);
+            }
+
             if (m_ElementType.IsEnum)
             {
                 return new EnumDrawer(list, m_ElementType, (other) => list[i] = other, () => (Enum)list[i]);
@@ -442,17 +447,16 @@ namespace SyadeuEditor.Presentation
             if (Application.isPlaying)
             {
                 members = declaredType.GetMembers(
-                        BindingFlags.FlattenHierarchy | BindingFlags.Public |
-                        BindingFlags.NonPublic | BindingFlags.Instance)
+                        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
                         .Where((other) =>
                         {
                             if (other.MemberType != MemberTypes.Field &&
                                 other.MemberType != MemberTypes.Property) return false;
 
-                            //if (other.GetCustomAttribute<JsonPropertyAttribute>() != null)
-                            //{
-                            //    return false;
-                            //}
+                            if (other.GetCustomAttribute<ObsoleteAttribute>() != null)
+                            {
+                                return false;
+                            }
 
                             Type declaredType = ReflectionHelper.GetDeclaredType(other);
 

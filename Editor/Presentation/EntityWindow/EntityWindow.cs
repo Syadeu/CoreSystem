@@ -283,7 +283,6 @@ namespace SyadeuEditor.Presentation
             EntityWindow m_MainWindow;
 
             GenericMenu 
-                m_FileMenu,
                 m_WindowMenu;
 
             Rect lastRect;
@@ -291,15 +290,6 @@ namespace SyadeuEditor.Presentation
             public ToolbarWindow(EntityWindow window)
             {
                 m_MainWindow = window;
-
-                m_FileMenu = new GenericMenu();
-                m_FileMenu.AddItem(new GUIContent("Save Ctrl+S"), false, SaveMenu);
-                m_FileMenu.AddItem(new GUIContent("Load Ctrl+R"), false, LoadMenu);
-                m_FileMenu.AddSeparator(string.Empty);
-                m_FileMenu.AddItem(new GUIContent("Add/Entity"), false, AddDataMenu<EntityDataBase>);
-                m_FileMenu.AddItem(new GUIContent("Add/Attribute"), false, AddDataMenu<AttributeBase>);
-                m_FileMenu.AddItem(new GUIContent("Add/Action"), false, AddDataMenu<ActionBase>);
-                m_FileMenu.AddItem(new GUIContent("Add/Data"), false, AddDataMenu<DataObjectBase>);
             }
             private void SaveMenu()
             {
@@ -363,7 +353,34 @@ namespace SyadeuEditor.Presentation
                     lastRect = GUILayoutUtility.GetLastRect();
                     lastRect.position = Event.current.mousePosition;
 
-                    m_FileMenu.ShowAsContext();
+                    var fileMenu = new GenericMenu();
+                    if (!Application.isPlaying)
+                    {
+                        fileMenu.AddItem(new GUIContent("Save Ctrl+S"), false, SaveMenu);
+                        fileMenu.AddItem(new GUIContent("Load Ctrl+R"), false, LoadMenu);
+                    }
+                    else
+                    {
+                        fileMenu.AddDisabledItem(new GUIContent("Save Ctrl+S"), false);
+                        fileMenu.AddDisabledItem(new GUIContent("Load Ctrl+R"), false);
+                    }
+                    fileMenu.AddSeparator(string.Empty);
+                    if (!Application.isPlaying)
+                    {
+                        fileMenu.AddItem(new GUIContent("Add/Entity"), false, AddDataMenu<EntityDataBase>);
+                        fileMenu.AddItem(new GUIContent("Add/Attribute"), false, AddDataMenu<AttributeBase>);
+                        fileMenu.AddItem(new GUIContent("Add/Action"), false, AddDataMenu<ActionBase>);
+                        fileMenu.AddItem(new GUIContent("Add/Data"), false, AddDataMenu<DataObjectBase>);
+                    }
+                    else
+                    {
+                        fileMenu.AddDisabledItem(new GUIContent("Add/Entity"), false);
+                        fileMenu.AddDisabledItem(new GUIContent("Add/Attribute"), false);
+                        fileMenu.AddDisabledItem(new GUIContent("Add/Action"), false);
+                        fileMenu.AddDisabledItem(new GUIContent("Add/Data"), false);
+                    }
+
+                    fileMenu.ShowAsContext();
                     GUIUtility.ExitGUI();
                 }
                 if (GUILayout.Button("Window", EditorStyles.toolbarDropDown))
@@ -598,8 +615,7 @@ namespace SyadeuEditor.Presentation
 
                     MemberInfo[] temp = entity.GetType()
                         .GetMembers(
-                        BindingFlags.FlattenHierarchy | BindingFlags.Public |
-                        BindingFlags.NonPublic | BindingFlags.Instance)
+                        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
                         .Where((other) =>
                         {
                             if (other.MemberType != MemberTypes.Field && 

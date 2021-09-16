@@ -60,7 +60,21 @@ namespace SyadeuEditor.Presentation
                     m_Setter = null;
                 }
                 else m_Setter = (other) => property.SetValue(m_TargetObject, other);
-                m_Getter = () => (T)property.GetValue(m_TargetObject);
+                m_Getter = () =>
+                {
+                    object temp;
+                    try
+                    {
+                        temp = property.GetValue(m_TargetObject);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogException(ex);
+                        return default(T);
+                    }
+                    
+                    return (T)temp;
+                };
             }
             else throw new NotImplementedException();
 
