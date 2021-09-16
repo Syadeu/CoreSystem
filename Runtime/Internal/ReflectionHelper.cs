@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Syadeu.Internal
 {
-    public sealed class ReflectionHelper
+    public sealed class ReflectionHelper : CLRSingleTone<ReflectionHelper>
     {
         const string backingField = "k__BackingField";
         const string memberPrefix = "m_";
@@ -103,7 +103,7 @@ namespace Syadeu.Internal
             return output;
         }
 
-        private static readonly Dictionary<Type, MemberInfo[]> s_ParsedSerializeMemberInfos = new Dictionary<Type, MemberInfo[]>();
+        private readonly Dictionary<Type, MemberInfo[]> m_ParsedSerializeMemberInfos = new Dictionary<Type, MemberInfo[]>();
 
         /// <summary>
         /// 해당 타입내 Serialize 가 될 수 있는 맴버의 정보를 Array 로 반환합니다.
@@ -112,7 +112,7 @@ namespace Syadeu.Internal
         /// <returns></returns>
         public static MemberInfo[] GetSerializeMemberInfos(Type t)
         {
-            if (s_ParsedSerializeMemberInfos.TryGetValue(t, out MemberInfo[] info))
+            if (Instance.m_ParsedSerializeMemberInfos.TryGetValue(t, out MemberInfo[] info))
             {
                 return info;
             }
@@ -150,9 +150,13 @@ namespace Syadeu.Internal
                     })
                     .ToList();
 
-            temp.Sort(new Comparer());
+            if (temp.Count > 0)
+            {
+                temp.Sort(new Comparer());
+            }
+            
             info = temp.ToArray();
-            s_ParsedSerializeMemberInfos.Add(t, info);
+            Instance.m_ParsedSerializeMemberInfos.Add(t, info);
             return info;
         }
         private struct Comparer : IComparer<MemberInfo>

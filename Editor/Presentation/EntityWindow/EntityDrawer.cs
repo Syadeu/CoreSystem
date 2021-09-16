@@ -128,7 +128,7 @@ namespace SyadeuEditor.Presentation
                             entity.Size = aabb.size;
                         }
                     }
-                    m_OpenAABB = EditorUtils.Foldout(m_OpenAABB, "AABB", 13);
+                    m_OpenAABB = EditorGUILayout.Foldout(m_OpenAABB, "AABB");
                     if (m_OpenAABB)
                     {
                         EditorGUI.indentLevel++;

@@ -143,16 +143,30 @@ namespace SyadeuEditor.Presentation
         }
         public override void OnGUI(Rect rect)
         {
-            Rect searchField = new Rect(rect);
-            searchField.height = kRowHeights;
+            rect.y += 5;
+            rect.height -= 5;
 
-            if (GUI.Button(searchField, "reload"))
             {
-                Reload();
-            }
+                Rect fieldRect = new Rect(rect);
+                fieldRect.height = kRowHeights;
 
-            rect.y += kRowHeights;
-            rect.height -= kRowHeights;
+                if (GUI.Button(fieldRect, "Capture"))
+                {
+                    Reload();
+                }
+
+                rect.y += kRowHeights;
+                rect.height -= kRowHeights;
+            }
+            {
+                Rect fieldRect = new Rect(rect);
+                fieldRect.height = kRowHeights;
+
+                searchString = m_SearchField.OnGUI(fieldRect, searchString);
+
+                rect.y += kRowHeights;
+                rect.height -= kRowHeights;
+            }
 
             base.OnGUI(rect);
         }

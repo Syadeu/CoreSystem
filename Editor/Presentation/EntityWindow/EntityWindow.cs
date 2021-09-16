@@ -9,6 +9,7 @@ using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Proxy;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -72,7 +73,16 @@ namespace SyadeuEditor.Presentation
                 m_CurrentWindow = value;
             }
         }
+        public bool IsFocused { get; private set; } = false;
 
+        private void OnFocus()
+        {
+            IsFocused = true;
+        }
+        private void OnLostFocus()
+        {
+            IsFocused = false;
+        }
         protected override void OnEnable()
         {
             IsOpened = true;
@@ -754,6 +764,16 @@ namespace SyadeuEditor.Presentation
                     using (new EditorUtils.BoxBlock(ColorPalettes.WaterFoam.Teal))
                     {
                         EntityDrawer.DrawPrefab(entityBase, true);
+
+                        if (entityBase.transform is ProxyTransform proxy &&
+                            proxy.hasProxy)
+                        {
+                            EditorGUILayout.ObjectField(proxy.proxy, TypeHelper.TypeOf<RecycleableMonobehaviour>.Type, true);
+                        }
+                        else if (entityBase.transform is UnityTransform unityTr)
+                        {
+                            EditorGUILayout.ObjectField(unityTr.provider, TypeHelper.TypeOf<Transform>.Type, true);
+                        }
 
                         entityBase.Center
                             = EditorGUILayout.Vector3Field("Center", entityBase.Center);
