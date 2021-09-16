@@ -21,6 +21,21 @@ namespace Syadeu.Internal
 
             throw new NotImplementedException();
         }
+        public static T GetValue<T>(MemberInfo memberInfo, object obj)
+        {
+            if (memberInfo is FieldInfo field)
+            {
+                return (T)field.GetValue(obj);
+            }
+            else if (memberInfo is PropertyInfo property)
+            {
+                if (property.GetGetMethod() == null) return default(T);
+
+                return (T)property.GetValue(obj);
+            }
+
+            throw new NotImplementedException();
+        }
         public static bool IsProperty(MemberInfo memberInfo)
         {
             if (memberInfo is PropertyInfo) return true;
@@ -87,6 +102,9 @@ namespace Syadeu.Internal
 
             return output;
         }
+
+        private static readonly Dictionary<Type, MemberInfo[]> s_ParsedSerializeMemberInfos = new Dictionary<Type, MemberInfo[]>();
+
         /// <summary>
         /// 해당 타입내 Serialize 가 될 수 있는 맴버의 정보를 Array 로 반환합니다.
         /// </summary>
@@ -94,6 +112,11 @@ namespace Syadeu.Internal
         /// <returns></returns>
         public static MemberInfo[] GetSerializeMemberInfos(Type t)
         {
+            if (s_ParsedSerializeMemberInfos.TryGetValue(t, out MemberInfo[] info))
+            {
+                return info;
+            }
+
             var temp = t.GetMembers(
                 BindingFlags.Instance |
                 BindingFlags.Public | BindingFlags.NonPublic)
@@ -128,7 +151,9 @@ namespace Syadeu.Internal
                     .ToList();
 
             temp.Sort(new Comparer());
-            return temp.ToArray();
+            info = temp.ToArray();
+            s_ParsedSerializeMemberInfos.Add(t, info);
+            return info;
         }
         private struct Comparer : IComparer<MemberInfo>
         {

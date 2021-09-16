@@ -719,7 +719,9 @@ namespace SyadeuEditor.Presentation
                         if (m_SelectedMembers[i].Name.Equals("Name") ||
                             m_SelectedMembers[i].Name.Equals("Hash") ||
                             m_SelectedMembers[i].Name.Equals("Idx") ||
-                            m_SelectedMembers[i].Name.Equals("EnableCull"))
+                            m_SelectedMembers[i].Name.Equals("EnableCull") ||
+                            m_SelectedMembers[i].Name.Equals("Prefab") ||
+                            m_SelectedMembers[i].Name.Equals("Transform"))
                         {
                             continue;
                         }
@@ -745,6 +747,28 @@ namespace SyadeuEditor.Presentation
                     using (new EditorUtils.BoxBlock(ColorPalettes.WaterFoam.Teal))
                     {
                         EntityDrawer.DrawPrefab(entityBase, true);
+                    }
+
+                    using (new EditorUtils.BoxBlock(ColorPalettes.WaterFoam.Teal))
+                    {
+                        EditorUtils.StringRich("Transform", 15);
+                        EditorGUI.indentLevel++;
+
+                        entityBase.transform.position =
+                EditorGUILayout.Vector3Field("Position", entityBase.transform.position);
+
+                        Vector3 eulerAngles = entityBase.transform.eulerAngles;
+                        EditorGUI.BeginChangeCheck();
+                        eulerAngles = EditorGUILayout.Vector3Field("Rotation", eulerAngles);
+                        if (EditorGUI.EndChangeCheck())
+                        {
+                            entityBase.transform.eulerAngles = eulerAngles;
+                        }
+
+                        entityBase.transform.scale
+                            = EditorGUILayout.Vector3Field("Scale", entityBase.transform.scale);
+
+                        EditorGUI.indentLevel--;
                     }
                 }
             }

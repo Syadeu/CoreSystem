@@ -356,13 +356,27 @@ namespace SyadeuEditor.Presentation
                     EditorGUI.indentLevel++;
                     using (new EditorUtils.BoxBlock(color2))
                     {
+                        MemberInfo firstMember = ReflectionHelper.GetSerializeMemberInfos(m_ElementType)[0];
+
                         for (int i = 0; i < m_ElementDrawers.Count; i++)
                         {
                             if (m_ElementDrawers[i] == null) continue;
 
                             if (m_ElementDrawers[i].FieldCount > 1)
                             {
-                                m_ElementOpen[i] = EditorGUILayout.Foldout(m_ElementOpen[i], $"Element {i}", true);
+                                string value;
+                                if (ReflectionHelper.GetDeclaredType(firstMember).Equals(TypeHelper.TypeOf<string>.Type))
+                                {
+                                    value = ReflectionHelper.GetValue<string>(firstMember, list[i]);
+                                    if (string.IsNullOrEmpty(value))
+                                    {
+                                        value = $"Element {i}";
+                                    }
+                                    
+                                }
+                                else value = $"Element {i}";
+
+                                m_ElementOpen[i] = EditorGUILayout.Foldout(m_ElementOpen[i], value, true);
                             }
                             else m_ElementOpen[i] = true;
 
