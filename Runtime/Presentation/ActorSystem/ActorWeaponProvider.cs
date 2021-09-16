@@ -34,19 +34,21 @@ namespace Syadeu.Presentation.Actor
         protected int m_MaxEquipableCount = 1;
 
         [Header("Weapon Position")]
-        [JsonProperty(Order = 6, PropertyName = "AttachedBone")]
+        [JsonProperty(Order = 6, PropertyName = "UseBone")]
+        protected bool m_UseBone = true;
+        [JsonProperty(Order = 7, PropertyName = "AttachedBone")]
         protected HumanBodyBones m_AttachedBone = HumanBodyBones.RightHand;
-        [JsonProperty(Order = 7, PropertyName = "WeaponPosOffset")]
+        [JsonProperty(Order = 8, PropertyName = "WeaponPosOffset")]
         protected float3 m_WeaponPosOffset = float3.zero;
-        [JsonProperty(Order = 8, PropertyName = "WeaponRotOffset")]
+        [JsonProperty(Order = 9, PropertyName = "WeaponRotOffset")]
         protected float3 m_WeaponRotOffset = float3.zero;
 
         [Header("TriggerAction")]
-        [JsonProperty(Order = 9, PropertyName = "OnWeaponSelected")]
+        [JsonProperty(Order = 10, PropertyName = "OnWeaponSelected")]
         protected Reference<TriggerAction>[] m_OnWeaponSelected = Array.Empty<Reference<TriggerAction>>();
-        [JsonProperty(Order = 10, PropertyName = "OnEquipWeapon")]
+        [JsonProperty(Order = 11, PropertyName = "OnEquipWeapon")]
         protected Reference<TriggerAction>[] m_OnEquipWeapon = Array.Empty<Reference<TriggerAction>>();
-        [JsonProperty(Order = 11, PropertyName = "OnUnequipWeapon")]
+        [JsonProperty(Order = 12, PropertyName = "OnUnequipWeapon")]
         protected Reference<TriggerAction>[] m_OnUnequipWeapon = Array.Empty<Reference<TriggerAction>>();
 
         [JsonIgnore] private Type[] m_ReceiveEventOnly = null;
@@ -245,7 +247,8 @@ namespace Syadeu.Presentation.Actor
         {
             if (SelectedWeapon.IsValid() && SelectedWeapon.Object.PrefabInstance.IsValid())
             {
-                WeaponPoser weaponPoser = new WeaponPoser(Parent, SelectedWeapon, m_AttachedBone, m_WeaponPosOffset, m_WeaponRotOffset);
+                WeaponPoser weaponPoser = new WeaponPoser(Parent, SelectedWeapon, 
+                    m_UseBone, m_AttachedBone, m_WeaponPosOffset, m_WeaponRotOffset);
                 m_WeaponPoser = StartCoroutine(weaponPoser);
             }
         }
@@ -303,15 +306,17 @@ namespace Syadeu.Presentation.Actor
             private Entity<ActorEntity> m_Entity;
             private Instance<ActorWeaponData> m_Weapon;
 
+            private bool m_UseBone;
             private HumanBodyBones m_TargetBone;
             private float3 m_Offset, m_RotOffset;
 
             public WeaponPoser(Entity<ActorEntity> entity, Instance<ActorWeaponData> weapon,
-                HumanBodyBones targetBone, float3 offset, float3 rotOffset)
+                bool useBone, HumanBodyBones targetBone, float3 offset, float3 rotOffset)
             {
                 m_Entity = entity;
                 m_Weapon = weapon;
 
+                m_UseBone = useBone;
                 m_TargetBone = targetBone;
                 m_Offset = offset;
                 m_RotOffset = rotOffset;
@@ -345,7 +350,14 @@ namespace Syadeu.Presentation.Actor
                     {
                         if (overrideData.OverrideOptions == ActorWeaponData.OverrideOptions.Override)
                         {
-                            targetTr = animator.AnimatorComponent.Animator.GetBoneTransform(overrideData.AttachedBone);
+                            if (overrideData.UseBone)
+                            {
+                                targetTr = animator.AnimatorComponent.Animator.GetBoneTransform(overrideData.AttachedBone);
+                            }
+                            else
+                            {
+                                targetTr = animator.AnimatorComponent.transform;
+                            }
 
                             if (targetTr == null)
                             {
@@ -357,7 +369,14 @@ namespace Syadeu.Presentation.Actor
                         }
                         else
                         {
-                            targetTr = animator.AnimatorComponent.Animator.GetBoneTransform(m_TargetBone);
+                            if (m_UseBone)
+                            {
+                                targetTr = animator.AnimatorComponent.Animator.GetBoneTransform(m_TargetBone);
+                            }
+                            else
+                            {
+                                targetTr = animator.AnimatorComponent.transform;
+                            }
 
                             if (targetTr == null)
                             {

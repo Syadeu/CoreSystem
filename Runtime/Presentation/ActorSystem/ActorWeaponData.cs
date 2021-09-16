@@ -23,6 +23,7 @@ namespace Syadeu.Presentation.Actor
             private readonly Instance<ActorWeaponData> m_Instance;
 
             public OverrideOptions OverrideOptions => m_Instance.Object.m_OverrideOptions;
+            public bool UseBone => m_Instance.Object.m_UseBone;
             public HumanBodyBones AttachedBone => m_Instance.Object.m_AttachedBone;
             public float3 WeaponPosOffset => m_Instance.Object.m_WeaponPosOffset;
             public float3 WeaponRotOffset => m_Instance.Object.m_WeaponRotOffset;
@@ -44,15 +45,17 @@ namespace Syadeu.Presentation.Actor
         [Space, Header("Weapon Position")]
         [JsonProperty(Order = 3, PropertyName = "OverrideOptions")]
         protected OverrideOptions m_OverrideOptions = OverrideOptions.None;
-        [JsonProperty(Order = 4, PropertyName = "AttachedBone")]
+        [JsonProperty(Order = 4, PropertyName = "UseBone")]
+        protected bool m_UseBone = true;
+        [JsonProperty(Order = 5, PropertyName = "AttachedBone")]
         protected HumanBodyBones m_AttachedBone = HumanBodyBones.RightHand;
-        [JsonProperty(Order = 5, PropertyName = "WeaponPosOffset")]
+        [JsonProperty(Order = 6, PropertyName = "WeaponPosOffset")]
         protected float3 m_WeaponPosOffset = float3.zero;
-        [JsonProperty(Order = 6, PropertyName = "WeaponRotOffset")]
+        [JsonProperty(Order = 7, PropertyName = "WeaponRotOffset")]
         protected float3 m_WeaponRotOffset = float3.zero;
 
         [Space, Header("FX")]
-        [JsonProperty(Order = 7, PropertyName = "AttackFX")]
+        [JsonProperty(Order = 8, PropertyName = "AttackFX")]
         protected Reference<FXEntity> m_AttackFX = Reference<FXEntity>.Empty;
 
         [JsonIgnore] private Entity<ObjectEntity> m_PrefabInstance = Entity<ObjectEntity>.Empty;

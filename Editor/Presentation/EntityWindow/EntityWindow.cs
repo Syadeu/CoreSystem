@@ -362,7 +362,7 @@ namespace SyadeuEditor.Presentation
                     lastRect.position = Event.current.mousePosition;
 
                     var fileMenu = new GenericMenu();
-                    if (!Application.isPlaying)
+                    if (!Application.isPlaying && m_MainWindow.CurrentWindow == WindowType.Entity)
                     {
                         fileMenu.AddItem(new GUIContent("Save Ctrl+S"), false, SaveMenu);
                         fileMenu.AddItem(new GUIContent("Load Ctrl+R"), false, LoadMenu);
@@ -373,7 +373,7 @@ namespace SyadeuEditor.Presentation
                         fileMenu.AddDisabledItem(new GUIContent("Load Ctrl+R"), false);
                     }
                     fileMenu.AddSeparator(string.Empty);
-                    if (!Application.isPlaying)
+                    if (!Application.isPlaying && m_MainWindow.CurrentWindow == WindowType.Entity)
                     {
                         fileMenu.AddItem(new GUIContent("Add/Entity"), false, AddDataMenu<EntityDataBase>);
                         fileMenu.AddItem(new GUIContent("Add/Attribute"), false, AddDataMenu<AttributeBase>);
@@ -681,6 +681,12 @@ namespace SyadeuEditor.Presentation
                     GUILayout.MaxWidth(m_Position.width), GUILayout.MaxHeight(m_Position.height)))
                 using (new EditorUtils.BoxBlock(Color.black))
                 {
+                    if (!Application.isPlaying)
+                    {
+                        EditorUtils.StringRich("Debugger only works in runtime", true);
+                        return;
+                    }
+
                     if (m_Selected.IsEmpty())
                     {
                         EditorUtils.StringRich("Select Data", true);
