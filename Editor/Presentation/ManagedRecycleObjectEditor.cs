@@ -2,22 +2,19 @@
 using UnityEngine;
 using UnityEditor;
 using Syadeu.Presentation.Proxy;
+using Syadeu.Presentation;
 
 namespace SyadeuEditor.Presentation
 {
     [CustomEditor(typeof(ManagedRecycleObject))]
-    public sealed class ManagedRecycleObjectEditor : Editor
+    public sealed class ManagedRecycleObjectEditor : EditorEntity<ManagedRecycleObject>
     {
-        private ManagedRecycleObject m_Scr;
-
         private SerializedProperty onCreation;
         private SerializedProperty onInitializion;
         private SerializedProperty onTermination;
 
         private void OnEnable()
         {
-            m_Scr = target as ManagedRecycleObject;
-
             onCreation = serializedObject.FindProperty("onCreation");
             onInitializion = serializedObject.FindProperty("onInitializion");
             onTermination = serializedObject.FindProperty("onTermination");
@@ -34,6 +31,36 @@ namespace SyadeuEditor.Presentation
 
             serializedObject.ApplyModifiedProperties();
             //base.OnInspectorGUI();
+
+            if (!Application.isPlaying) return;
+
+            EditorUtils.Line();
+
+            if (!Asset.entity.IsValid())
+            {
+                EditorUtils.StringRich("Invalid Entity", 13, true);
+                return;
+            }
+
+            var drawer = ObjectBaseDrawer.GetDrawer((ObjectBase)Asset.entity.Target);
+            drawer.OnGUI();
+        }
+
+        private void OnSceneGUI()
+        {
+            if (!Asset.entity.IsValid()) return;
+
+            Vector2 guiPos = HandleUtility.WorldToGUIPoint(Asset.transform.position);
+            Handles.BeginGUI();
+
+            Rect rect = new Rect(guiPos, new Vector2(180, 60));
+
+            using (new GUI.GroupScope(rect, Asset.entity.Name, EditorUtils.Box))
+            {
+                EditorGUILayout.LabelField("test");
+            }
+
+            Handles.EndGUI();
         }
     }
 }

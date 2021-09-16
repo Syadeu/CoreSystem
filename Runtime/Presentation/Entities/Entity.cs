@@ -150,6 +150,7 @@ namespace Syadeu.Presentation.Entities
             m_Idx = idx;
         }
 
+        public bool IsEmpty() => Equals(Empty);
         public bool IsValid()
         {
             if (s_EntitySystem.IsNull())

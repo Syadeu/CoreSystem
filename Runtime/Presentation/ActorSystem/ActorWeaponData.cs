@@ -18,19 +18,18 @@ namespace Syadeu.Presentation.Actor
             Override,
             Addictive
         }
-        public struct OverrideData
+        public readonly struct OverrideData
         {
-            public OverrideOptions OverrideOptions;
-            public HumanBodyBones AttachedBone;
-            public float3 WeaponPosOffset;
-            public float3 WeaponRotOffset;
+            private readonly Instance<ActorWeaponData> m_Instance;
+
+            public OverrideOptions OverrideOptions => m_Instance.Object.m_OverrideOptions;
+            public HumanBodyBones AttachedBone => m_Instance.Object.m_AttachedBone;
+            public float3 WeaponPosOffset => m_Instance.Object.m_WeaponPosOffset;
+            public float3 WeaponRotOffset => m_Instance.Object.m_WeaponRotOffset;
 
             public OverrideData(ActorWeaponData data)
             {
-                OverrideOptions = data.m_OverrideOptions;
-                AttachedBone = data.m_AttachedBone;
-                WeaponPosOffset = data.m_WeaponPosOffset;
-                WeaponRotOffset = data.m_WeaponRotOffset;
+                m_Instance = new Instance<ActorWeaponData>(data.Idx);
             }
         }
 
@@ -71,17 +70,20 @@ namespace Syadeu.Presentation.Actor
 
         protected override void OnCreated()
         {
-            if (!m_Prefab.IsValid())
+            if (!m_Prefab.IsEmpty())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"{nameof(ActorWeaponData)}({Name}) has an invalid entity. This is not allowed.");
-                return;
+                if (!m_Prefab.IsValid())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"{nameof(ActorWeaponData)}({Name}) has an invalid entity. This is not allowed.");
+                    return;
+                }
+
+                Instance<ObjectEntity> instance = m_Prefab.CreateInstance();
+                m_PrefabInstance = Entity<ObjectEntity>.GetEntityWithoutCheck(instance.Idx);
+
+                $"weapon({Name}, {m_Prefab.GetObject().Name}) created".ToLog();
             }
-
-            Instance<ObjectEntity> instance = m_Prefab.CreateInstance();
-            m_PrefabInstance = Entity<ObjectEntity>.GetEntityWithoutCheck(instance.Idx);
-
-            "weapon created".ToLog();
         }
         protected override void OnDestroy()
         {

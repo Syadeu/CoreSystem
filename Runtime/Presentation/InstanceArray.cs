@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Syadeu.Database;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Collections;
@@ -7,7 +8,7 @@ using Unity.Collections.LowLevel.Unsafe;
 namespace Syadeu.Presentation
 {
     [NativeContainer]
-    public struct InstanceArray<T> : IDisposable
+    public struct InstanceArray<T> : IValidation, IDisposable
         where T : ObjectBase
     {
         [NativeDisableUnsafePtrRestriction] unsafe private readonly Instance<T>* m_Buffer;
@@ -130,6 +131,8 @@ namespace Syadeu.Presentation
 
         public void Dispose()
         {
+            if (!IsValid()) return;
+
             unsafe
             {
                 UnsafeUtility.Free(m_Buffer, m_Allocator);
@@ -138,6 +141,14 @@ namespace Syadeu.Presentation
 #if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             DisposeSentinel.Dispose(ref m_AtomicSafetyHandle, ref m_DisposeSentinel);
 #endif
+        }
+
+        public bool IsValid()
+        {
+            unsafe
+            {
+                return m_Buffer != null;
+            }
         }
     }
 }

@@ -125,9 +125,6 @@ namespace Syadeu.Presentation.Actor
                 m_EquipedWeapons[0] = m_DefaultWeaponInstance;
                 m_OnEquipWeapon.Execute(Parent.CastAs<ActorEntity, IEntityData>());
                 SelectWeapon(0);
-
-                WeaponPoser weaponPoser = new WeaponPoser(Parent, m_DefaultWeaponInstance, m_AttachedBone, m_WeaponPosOffset, m_WeaponRotOffset);
-                m_WeaponPoser = StartCoroutine(weaponPoser);
             }
         }
         protected override void OnDispose()
@@ -137,6 +134,7 @@ namespace Syadeu.Presentation.Actor
             if (!m_WeaponPoser.IsNull() && m_WeaponPoser.IsValid())
             {
                 m_WeaponPoser.Stop();
+                m_WeaponPoser = CoroutineJob.Null;
             }
         }
         protected override void OnEventReceived<TEvent>(TEvent ev)
@@ -241,6 +239,23 @@ namespace Syadeu.Presentation.Actor
             }
 
             
+        }
+
+        protected override void OnProxyCreated(RecycleableMonobehaviour monoObj)
+        {
+            if (SelectedWeapon.IsValid() && SelectedWeapon.Object.PrefabInstance.IsValid())
+            {
+                WeaponPoser weaponPoser = new WeaponPoser(Parent, SelectedWeapon, m_AttachedBone, m_WeaponPosOffset, m_WeaponRotOffset);
+                m_WeaponPoser = StartCoroutine(weaponPoser);
+            }
+        }
+        protected override void OnProxyRemoved(RecycleableMonobehaviour monoObj)
+        {
+            if (!m_WeaponPoser.IsNull() && m_WeaponPoser.IsValid())
+            {
+                m_WeaponPoser.Stop();
+                m_WeaponPoser = CoroutineJob.Null;
+            }
         }
 
         protected int GetEmptyEquipSpace()
@@ -363,7 +378,7 @@ namespace Syadeu.Presentation.Actor
                     {
                         targetRot += overrideData.WeaponRotOffset;
                     }
-                    weaponTr.rotation = quaternion.EulerZXY(targetRot);
+                    weaponTr.rotation = Quaternion.Euler(targetRot);
 
                     float3 targetPos = targetTr.position;
                     if (overrideData.OverrideOptions == ActorWeaponData.OverrideOptions.None)

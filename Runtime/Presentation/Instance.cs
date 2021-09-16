@@ -62,9 +62,9 @@ namespace Syadeu.Presentation
             }
         }
 
-        public Instance(Hash hash)
+        public Instance(Hash idx)
         {
-            m_Idx = hash;
+            m_Idx = idx;
         }
         public Instance(ObjectBase obj)
         {
