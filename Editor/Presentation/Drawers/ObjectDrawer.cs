@@ -55,7 +55,11 @@ namespace SyadeuEditor.Presentation
             {
                 m_DelaredType = property.PropertyType;
 
-                m_Setter = (other) => property.SetValue(m_TargetObject, other);
+                if (property.GetSetMethod() == null)
+                {
+                    m_Setter = null;
+                }
+                else m_Setter = (other) => property.SetValue(m_TargetObject, other);
                 m_Getter = () => (T)property.GetValue(m_TargetObject);
             }
             else throw new NotImplementedException();
@@ -89,8 +93,12 @@ namespace SyadeuEditor.Presentation
                 }
             }
 
-            EditorGUI.BeginDisabledGroup(m_Disable);
-            m_Setter.Invoke(Draw(m_Getter.Invoke()));
+            EditorGUI.BeginDisabledGroup(m_Disable || m_Setter == null);
+            if (m_Setter == null)
+            {
+                Draw(m_Getter.Invoke());
+            }
+            else m_Setter.Invoke(Draw(m_Getter.Invoke()));
             EditorGUI.EndDisabledGroup();
         }
         public abstract T Draw(T currentValue);

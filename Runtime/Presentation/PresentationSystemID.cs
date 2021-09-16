@@ -74,7 +74,7 @@ namespace Syadeu.Presentation
         public bool IsValid()
         {
 #if UNITY_EDITOR
-            if (m_GroupIndex.IsEmpty() || m_SystemIndex < 0 ||
+            if (m_GroupIndex.IsEmpty() || m_SystemIndex < 0 || !PresentationManager.Initialized ||
                 !PresentationManager.Instance.m_PresentationGroups.TryGetValue(m_GroupIndex, out var g) ||
                 g.m_Systems.Count < m_SystemIndex)
             {

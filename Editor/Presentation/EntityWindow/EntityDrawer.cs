@@ -35,7 +35,54 @@ namespace SyadeuEditor.Presentation
             attributeListDrawer = new AttributeListDrawer(objectBase,
                 TypeHelper.TypeOf<EntityDataBase>.Type.GetField("m_AttributeList", BindingFlags.NonPublic | BindingFlags.Instance));
         }
+        public static void DrawPrefab(EntityBase entity, bool disabled = false)
+        {
+            EditorUtils.StringRich("Prefab", 15);
 
+            GUIContent enableCullName = entity.m_EnableCull ? new GUIContent("Disable Cull") : new GUIContent("Enable Cull");
+            Rect enableCullRect = GUILayoutUtility.GetRect(
+                enableCullName,
+                EditorStyles.toolbarButton, GUILayout.ExpandWidth(true));
+            int enableCullID = GUIUtility.GetControlID(FocusType.Passive, enableCullRect);
+            switch (Event.current.GetTypeForControl(enableCullID))
+            {
+                case EventType.Repaint:
+                    bool isHover = enableCullRect.Contains(Event.current.mousePosition);
+
+                    Color origin = GUI.color;
+                    GUI.color = entity.m_EnableCull ? ColorPalettes.PastelDreams.TiffanyBlue : ColorPalettes.PastelDreams.HotPink;
+
+                    EditorStyles.toolbarButton.Draw(enableCullRect,
+                        isHover, isActive: true, on: true, false);
+                    GUI.color = origin;
+
+                    var temp = new GUIStyle(EditorStyles.label);
+                    temp.alignment = TextAnchor.MiddleCenter;
+                    temp.Draw(enableCullRect, enableCullName, enableCullID);
+                    break;
+                case EventType.MouseDown:
+                    if (disabled) break;
+
+                    if (!enableCullRect.Contains(Event.current.mousePosition)) break;
+
+                    if (Event.current.button == 0)
+                    {
+                        GUIUtility.hotControl = enableCullID;
+                        entity.m_EnableCull = !entity.m_EnableCull;
+                        Event.current.Use();
+                    }
+
+                    break;
+                case EventType.MouseUp:
+                    if (GUIUtility.hotControl == enableCullID)
+                    {
+                        GUIUtility.hotControl = 0;
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
         protected void DrawHeader()
         {
             EditorUtils.StringRich(Name + EditorUtils.String($": {Type.Name}", 11), 20);
@@ -52,49 +99,7 @@ namespace SyadeuEditor.Presentation
             {
                 using (new EditorUtils.BoxBlock(ColorPalettes.WaterFoam.Teal))
                 {
-                    EditorUtils.StringRich("Prefab", 15);
-
-                    GUIContent enableCullName = entity.m_EnableCull ? m_DisableCullName : m_EnableCullName;
-                    Rect enableCullRect = GUILayoutUtility.GetRect(
-                        enableCullName,
-                        EditorStyles.toolbarButton, GUILayout.ExpandWidth(true));
-                    int enableCullID = GUIUtility.GetControlID(FocusType.Passive, enableCullRect);
-                    switch (Event.current.GetTypeForControl(enableCullID))
-                    {
-                        case EventType.Repaint:
-                            bool isHover = enableCullRect.Contains(Event.current.mousePosition);
-
-                            Color origin = GUI.color;
-                            GUI.color = entity.m_EnableCull ? ColorPalettes.PastelDreams.TiffanyBlue : ColorPalettes.PastelDreams.HotPink;
-
-                            EditorStyles.toolbarButton.Draw(enableCullRect,
-                                isHover, isActive: true, on: true, false);
-                            GUI.color = origin;
-
-                            var temp = new GUIStyle(EditorStyles.label);
-                            temp.alignment = TextAnchor.MiddleCenter;
-                            temp.Draw(enableCullRect, enableCullName, enableCullID);
-                            break;
-                        case EventType.MouseDown:
-                            if (!enableCullRect.Contains(Event.current.mousePosition)) break;
-
-                            if (Event.current.button == 0)
-                            {
-                                GUIUtility.hotControl = enableCullID;
-                                entity.m_EnableCull = !entity.m_EnableCull;
-                                Event.current.Use();
-                            }
-
-                            break;
-                        case EventType.MouseUp:
-                            if (GUIUtility.hotControl == enableCullID)
-                            {
-                                GUIUtility.hotControl = 0;
-                            }
-                            break;
-                        default:
-                            break;
-                    }
+                    DrawPrefab(entity);
 
                     DrawField(prefabReferenceDrawer);
 

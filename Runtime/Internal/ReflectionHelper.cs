@@ -14,6 +14,14 @@ namespace Syadeu.Internal
         const string memberPrefix = "m_";
         const string underBar = "_";
 
+        public static Type GetDeclaredType(MemberInfo memberInfo)
+        {
+            if (memberInfo is FieldInfo field) return field.FieldType;
+            else if (memberInfo is PropertyInfo property) return property.PropertyType;
+
+            throw new NotImplementedException();
+        }
+
         /// <summary>
         /// 해당 맴버의 이름을 Serialize 정형화 이름으로 바꾸어 반환합니다.
         /// </summary>

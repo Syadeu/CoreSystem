@@ -1,4 +1,6 @@
-﻿using NUnit.Framework;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+using NUnit.Framework;
 using Syadeu;
 using Syadeu.Database;
 using Syadeu.Internal;
@@ -58,6 +60,7 @@ namespace SyadeuEditor.Presentation
         #endregion
 
         public DebuggerListWindow m_DebuggerListWindow;
+        public DebuggerViewWindow m_DebuggerViewWindow;
 
         public static bool IsOpened { get; private set; }
         public static bool IsDataLoaded => EntityDataList.IsLoaded;
@@ -71,6 +74,7 @@ namespace SyadeuEditor.Presentation
             m_ViewWindow = new EntityViewWindow(this);
 
             m_DebuggerListWindow = new DebuggerListWindow(this);
+            m_DebuggerViewWindow = new DebuggerViewWindow(this);
 
             Reload();
 
@@ -237,6 +241,7 @@ namespace SyadeuEditor.Presentation
                     break;
                 case WindowType.Debugger:
                     m_DebuggerListWindow.OnGUI(EntityListPos, 1);
+                    m_DebuggerViewWindow.OnGUI(ViewPos, 2);
                     break;
             }
 
@@ -542,6 +547,8 @@ namespace SyadeuEditor.Presentation
             }
         }
 
+        #region Debugger
+
         public sealed class DebuggerListWindow
         {
             EntityWindow m_MainWindow;
@@ -562,8 +569,138 @@ namespace SyadeuEditor.Presentation
                 ListTreeView.OnGUI(pos);
             }
         }
+        public sealed class DebuggerViewWindow
+        {
+            EntityWindow m_MainWindow;
+            Rect m_Position;
+            Vector2 m_Scroll;
+
+            private Instance<ObjectBase> m_Selected;
+            private string m_SelectedName = string.Empty;
+            private ObjectDrawerBase[] m_SelectedMembers = null;
+
+            public Instance<ObjectBase> Selected
+            {
+                get => m_Selected;
+                set
+                {
+                    if (value.IsEmpty() || !value.IsValid())
+                    {
+                        $"1: {value.IsEmpty()} :: {value.IsValid()}".ToLog();
+                        m_Selected = Instance<ObjectBase>.Empty;
+                        m_SelectedName = string.Empty;
+                        m_SelectedMembers = null;
+                        return;
+                    }
+
+                    var entity = value.Object;
+                    m_SelectedName = entity.Name + EditorUtils.String($": {entity.GetType().Name}", 11);
+
+                    MemberInfo[] temp = entity.GetType()
+                        .GetMembers(
+                        BindingFlags.FlattenHierarchy | BindingFlags.Public |
+                        BindingFlags.NonPublic | BindingFlags.Instance)
+                        .Where((other) =>
+                        {
+                            if (other.MemberType != MemberTypes.Field && 
+                                other.MemberType != MemberTypes.Property) return false;
+
+                            if (other.GetCustomAttribute<JsonPropertyAttribute>() != null)
+                            {
+                                return false;
+                            }
+
+                            Type declaredType = ReflectionHelper.GetDeclaredType(other);
+
+                            if (TypeHelper.TypeOf<Delegate>.Type.IsAssignableFrom(declaredType)) return false;
+
+                            return true;
+                        })
+                        .ToArray();
+                    m_SelectedMembers = new ObjectDrawerBase[temp.Length];
+                    for (int i = 0; i < temp.Length; i++)
+                    {
+                        m_SelectedMembers[i] = ObjectDrawerBase.ToDrawer(entity, temp[i], true);
+                    }
+
+                    m_Selected = value;
+                }
+            }
+
+            public DebuggerViewWindow(EntityWindow window)
+            {
+                m_MainWindow = window;
+            }
+            public void OnGUI(Rect pos, int unusedID)
+            {
+                m_Position = pos;
+
+                Color origin = GUI.color;
+                GUI.color = ColorPalettes.PastelDreams.Yellow;
+                GUILayout.Window(unusedID, m_Position, Draw, string.Empty, EditorUtils.Box);
+                GUI.color = origin;
+            }
+            private void Draw(int unusedID)
+            {
+                using (var scroll = new EditorGUILayout.ScrollViewScope(m_Scroll, true, true,
+                    GUILayout.MaxWidth(m_Position.width), GUILayout.MaxHeight(m_Position.height)))
+                using (new EditorUtils.BoxBlock(Color.black))
+                {
+                    if (m_Selected.IsEmpty())
+                    {
+                        EditorUtils.StringRich("Select Data", true);
+                        return;
+                    }
+
+                    if (!m_Selected.IsValid())
+                    {
+                        EditorUtils.StringRich("This data has been destroyed", true);
+                        return;
+                    }
+
+                    ObjectBase obj = m_Selected.Object;
+
+                    EditorUtils.StringRich(m_SelectedName, 20);
+                    EditorGUILayout.Space(3);
+                    EditorUtils.Line();
+
+                    DrawDefaultInfomation(obj);
+
+                    if (obj is EntityDataBase entityDataBase)
+                    {
+                        DrawEntity(entityDataBase);
+                    }
+
+                    for (int i = 0; i < m_SelectedMembers.Length; i++)
+                    {
+                        m_SelectedMembers[i].OnGUI();
+                    }
+
+                    m_Scroll = scroll.scrollPosition;
+                }
+            }
+            private void DrawDefaultInfomation(ObjectBase obj)
+            {
+                EditorGUI.BeginDisabledGroup(true);
+                EditorGUILayout.TextField("Name: ", obj.Name);
+                EditorGUILayout.TextField("Hash: ", obj.Hash.ToString());
+                EditorGUI.EndDisabledGroup();
+            }
+            private void DrawEntity(EntityDataBase entity)
+            {
+                if (entity is EntityBase entityBase)
+                {
+                    using (new EditorUtils.BoxBlock(ColorPalettes.WaterFoam.Teal))
+                    {
+                        EntityDrawer.DrawPrefab(entityBase, true);
+                    }
+                }
+            }
+        }
+
+        #endregion
     }
-    
+
     public sealed class DebuggerListTreeView : TreeView
     {
         const float kRowHeights = 20f;
@@ -707,10 +844,21 @@ namespace SyadeuEditor.Presentation
 
             base.OnGUI(rect);
         }
+        protected override void SelectionChanged(IList<int> selectedIds)
+        {
+            var list = FindRows(selectedIds);
+            if (list.Count > 0 && list[0] is ObjectTreeViewItem objitem)
+            {
+                "in".ToLog();
+                m_Window.m_DebuggerViewWindow.Selected = objitem.m_ObjectBase;
+            }
+
+            base.SelectionChanged(selectedIds);
+        }
 
         private class ObjectTreeViewItem : TreeViewItem
         {
-            Instance<ObjectBase> m_ObjectBase;
+            public Instance<ObjectBase> m_ObjectBase;
 
             public ObjectTreeViewItem(int id, int depth, string displayName, ObjectBase obj) : base(id, depth, displayName)
             {
