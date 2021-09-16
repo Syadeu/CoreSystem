@@ -362,9 +362,9 @@ namespace Syadeu.Presentation.Actor
                             if (targetTr == null)
                             {
                                 CoreSystem.Logger.LogError(Channel.Entity,
-                                    $"Could not found bone transform({TypeHelper.Enum<HumanBodyBones>.ToString(overrideData.AttachedBone)}) in entity({m_Entity.Name}).");
+                                    $"Could not found bone transform({TypeHelper.Enum<HumanBodyBones>.ToString(overrideData.AttachedBone)}) in entity({m_Entity.Name}). Force to not use bone.");
 
-                                yield break;
+                                targetTr = animator.AnimatorComponent.transform;
                             }
                         }
                         else
@@ -381,9 +381,9 @@ namespace Syadeu.Presentation.Actor
                             if (targetTr == null)
                             {
                                 CoreSystem.Logger.LogError(Channel.Entity,
-                                    $"Could not found bone transform({TypeHelper.Enum<HumanBodyBones>.ToString(m_TargetBone)}) in entity({m_Entity.Name}).");
+                                    $"Could not found bone transform({TypeHelper.Enum<HumanBodyBones>.ToString(m_TargetBone)}) in entity({m_Entity.Name}). Force to not use bone.");
 
-                                yield break;
+                                targetTr = animator.AnimatorComponent.transform;
                             }
                         }
                     }
