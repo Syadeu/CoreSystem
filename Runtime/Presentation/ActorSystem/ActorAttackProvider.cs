@@ -31,6 +31,11 @@ namespace Syadeu.Presentation.Actor
                 return;
             }
 
+            for (int i = 0; i < ev.Targets.Length; i++)
+            {
+                ev.Targets[i].GetController().PostEvent(new TestActorHitEvent());
+            }
+
             //var weaponProvider = GetProvider<ActorWeaponProvider>();
             //if (weaponProvider.IsEmpty())
             //{

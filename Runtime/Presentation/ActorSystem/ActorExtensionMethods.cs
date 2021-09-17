@@ -21,5 +21,14 @@ namespace Syadeu.Presentation.Actor
 
             ctr.PostEvent(ev);
         }
+
+        public static ActorControllerAttribute GetController(this Entity<ActorEntity> entity)
+        {
+            return entity.GetAttribute<ActorControllerAttribute>();
+        }
+        public static ActorControllerAttribute GetController(this Instance<ActorEntity> instance)
+        {
+            return instance.As().GetAttribute<ActorControllerAttribute>();
+        }
     }
 }
