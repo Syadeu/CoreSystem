@@ -32,10 +32,12 @@ namespace Syadeu.Presentation.Proxy
 
         public TRS Project(TRS parent)
         {
+            quaternion targetRot = math.mul(parent.m_Rotation, m_Rotation);
+
             return new TRS
             {
-                m_Position = parent.m_Position + math.mul(parent.m_Rotation, m_Position),
-                m_Rotation = math.mul(parent.m_Rotation, m_Rotation),
+                m_Position = parent.m_Position + math.mul(targetRot, m_Position),
+                m_Rotation = targetRot,
                 m_Scale = math.mul(parent.m_Scale, m_Scale)
             };
         }
