@@ -91,7 +91,7 @@ namespace Syadeu.Presentation.Actor
                 $"weapon({Name}, {m_Prefab.GetObject().Name}) created".ToLog();
             }
 
-            FireFXBounds((FXBounds.TriggerOptions)~0);
+            //FireFXBounds((FXBounds.TriggerOptions)~0);
         }
         protected override void OnDestroy()
         {

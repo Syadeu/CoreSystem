@@ -34,7 +34,7 @@ namespace Syadeu.Presentation.Proxy
         {
             return new TRS
             {
-                m_Position = math.mul(parent.m_Rotation, m_Position - parent.m_Position),
+                m_Position = parent.m_Position + math.mul(parent.m_Rotation, m_Position),
                 m_Rotation = math.mul(parent.m_Rotation, m_Rotation),
                 m_Scale = math.mul(parent.m_Scale, m_Scale)
             };

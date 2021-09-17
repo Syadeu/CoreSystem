@@ -336,6 +336,8 @@ namespace Syadeu.Presentation.Actor
                 ITransform weaponTr = m_Weapon.Object.PrefabInstance.transform;
                 Transform targetTr = null;
 
+                bool temp = false;
+
                 while (m_Weapon.IsValid())
                 {
                     if (!m_Entity.hasProxy)
@@ -410,6 +412,13 @@ namespace Syadeu.Presentation.Actor
                         targetPos += math.mul(weaponTr.rotation, overrideData.WeaponPosOffset);
                     }
                     weaponTr.position = targetPos;
+
+                    if (!temp)
+                    {
+                        temp = true;
+                        m_Weapon.Object.FireFXBounds((FXBounds.TriggerOptions)~0);
+                    }
+                    
 
                     yield return null;
                 }
