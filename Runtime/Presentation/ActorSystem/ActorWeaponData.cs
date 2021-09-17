@@ -110,18 +110,7 @@ namespace Syadeu.Presentation.Actor
             {
                 if ((m_FXBounds[i].TriggerOption & triggerOptions) == 0) continue;
 
-                var ins = m_FXBounds[i].FXEntity.CreateInstance();
-                Entity<FXEntity> fx = Entity<FXEntity>.GetEntityWithoutCheck(ins.Idx);
-
-                TRS prefabTRS = new TRS(m_PrefabInstance.transform),
-                    trs = m_FXBounds[i].TRS.Project(prefabTRS);
-
-                ITransform tr = fx.transform;
-                tr.position = trs.m_Position;
-                tr.rotation = trs.m_Rotation;
-                tr.scale = trs.m_Scale;
-
-                $"{m_FXBounds[i].FXEntity.GetObject().Name} fired".ToLog();
+                m_FXBounds[i].Fire(m_PrefabInstance.transform);
             }
         }
     }
