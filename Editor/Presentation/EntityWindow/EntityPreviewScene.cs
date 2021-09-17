@@ -81,6 +81,10 @@ namespace SyadeuEditor.Presentation
 
         protected override GUIContent CreateHeaderContent() => m_Header;
 
+        public static FieldInfo GetField<TA>(string name, BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+        {
+            return TypeHelper.TypeOf<TA>.Type.GetField(name, bindingFlags);
+        }
         public static FieldInfo GetField(string name, BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
         {
             return TypeHelper.TypeOf<T>.Type.GetField(name, bindingFlags);
@@ -112,10 +116,17 @@ namespace SyadeuEditor.Presentation
             EditorSceneManager.MoveGameObjectToScene(obj, scene);
             return obj;
         }
+        public GameObject CreateObject(GameObject prefab)
+        {
+            GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+            EditorSceneManager.MoveGameObjectToScene(obj, scene);
+            return obj;
+        }
         public GameObject CreateObject(EntityBase entity)
         {
             UnityEngine.Object asset = entity.Prefab.GetEditorAsset();
             GameObject ins = (GameObject)PrefabUtility.InstantiatePrefab(asset, scene);
+            ins.name = entity.Name;
             return ins;
         }
     }

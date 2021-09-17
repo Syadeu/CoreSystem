@@ -23,6 +23,13 @@ namespace Syadeu.Presentation.Proxy
             m_Rotation = quaternion.EulerZXY(eulerAngles * Mathf.Deg2Rad);
             m_Scale = scale;
         }
+        public TRS(ITransform tr)
+        {
+            m_Position = tr.position;
+            m_Rotation = tr.rotation;
+            m_Scale = tr.scale;
+        }
+
         public TRS Project(TRS parent)
         {
             return new TRS

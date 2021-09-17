@@ -5,6 +5,7 @@ using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Entities;
 using System;
 using System.Reflection;
+using Unity.Mathematics;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -81,7 +82,9 @@ namespace SyadeuEditor.Presentation
     public sealed class ActorWeaponPreviewScene : EntityPreviewScene<ActorWeaponData>
     {
         private FieldInfo 
-            m_PrefabField, m_FXBoundsField;
+            m_PrefabField, m_FXBoundsField, m_FXBoundsEntityField,
+            
+            m_FXBoundsEntityPosField, m_FXBoundsEntityRotField, m_FXBoundsEntityScaleField;
 
         private Reference<ObjectEntity> m_Prefab = Reference<ObjectEntity>.Empty;
         private GameObject m_PrefabInstance = null;
@@ -92,6 +95,11 @@ namespace SyadeuEditor.Presentation
         {
             m_PrefabField = GetField("m_Prefab");
             m_FXBoundsField = GetField("m_FXBounds");
+
+            m_FXBoundsEntityField = GetField<ActorWeaponData.FXBounds>("m_FXEntity");
+            m_FXBoundsEntityPosField = GetField<ActorWeaponData.FXBounds>("m_LocalPosition");
+            m_FXBoundsEntityRotField = GetField<ActorWeaponData.FXBounds>("m_LocalRotation");
+            m_FXBoundsEntityScaleField = GetField<ActorWeaponData.FXBounds>("m_LocalScale");
         }
 
         protected override void OnStageOpened()
@@ -116,7 +124,39 @@ namespace SyadeuEditor.Presentation
 
             for (int i = 0; i < fXBounds.Length; i++)
             {
+                if (fXBounds[i].FXEntity.IsEmpty()) continue;
 
+                if (!fXBounds[i].FXEntity.IsValid())
+                {
+                    if (m_PreviewFXBounds[i] != null)
+                    {
+                        DestroyImmediate(m_PreviewFXBounds[i]);
+                        m_PreviewFXBounds[i] = null;
+                    }
+
+                    m_FXBoundsEntityField.SetValue(fXBounds[i], Reference<FXEntity>.Empty);
+                    continue;
+                }
+
+                FXEntity targetFx = fXBounds[i].FXEntity.GetObject();
+                GameObject targetFxPrefab = (GameObject)targetFx.Prefab.GetEditorAsset();
+
+                if (m_PreviewFXBounds[i] == null)
+                {
+                    m_PreviewFXBounds[i] = CreateObject(targetFxPrefab);
+                    m_PreviewFXBounds[i].name = targetFx.Name;
+                }
+                else if (!PrefabUtility.GetCorrespondingObjectFromSource(m_PreviewFXBounds[i]).Equals(targetFxPrefab))
+                {
+                    DestroyImmediate(m_PreviewFXBounds[i]);
+                    m_PreviewFXBounds[i] = CreateObject(targetFxPrefab);
+                    m_PreviewFXBounds[i].name = targetFx.Name;
+                }
+
+                Transform tr = m_PreviewFXBounds[i].transform;
+                m_FXBoundsEntityPosField.SetValue(fXBounds[i], (float3)tr.position);
+                m_FXBoundsEntityRotField.SetValue(fXBounds[i], (float3)tr.eulerAngles);
+                m_FXBoundsEntityScaleField.SetValue(fXBounds[i], (float3)tr.localScale);
             }
         }
     }

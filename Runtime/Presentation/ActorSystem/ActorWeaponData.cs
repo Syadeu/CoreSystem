@@ -58,10 +58,10 @@ namespace Syadeu.Presentation.Actor
             [JsonProperty(Order = 4, PropertyName = "LocalRotation")]
             private float3 m_LocalRotation;
             [JsonProperty(Order = 5, PropertyName = "LocalScale")]
-            private float3 m_LocalScale;
+            private float3 m_LocalScale = 1;
 
-            public Reference<FXEntity> FXEntity => m_FXEntity;
-            public TRS TRS => new TRS(m_LocalPosition, m_LocalRotation, m_LocalScale);
+            [JsonIgnore] public Reference<FXEntity> FXEntity => m_FXEntity;
+            [JsonIgnore] public TRS TRS => new TRS(m_LocalPosition, m_LocalRotation, m_LocalScale);
         }
 
         [JsonProperty(Order = 0, PropertyName = "WeaponType")]

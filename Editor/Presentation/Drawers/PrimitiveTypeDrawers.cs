@@ -527,6 +527,8 @@ namespace SyadeuEditor.Presentation
                 {
                     list = RemoveAt(list, i);
                     i--;
+
+                    Setter.Invoke(list);
                 }
                 EditorGUILayout.EndHorizontal();
 
@@ -549,9 +551,7 @@ namespace SyadeuEditor.Presentation
 
         private readonly List<ObjectDrawerBase> DrawerBases = new List<ObjectDrawerBase>();
 
-        public ObjectDrawer(object parentObject, Type declaredType, Action<IReference> setter, Func<IReference> getter)
-        {
-        }
+        public IReadOnlyList<ObjectDrawerBase> Drawers => DrawerBases;
 
         public ObjectDrawer(object obj, Type declaredType, string name)
         {
