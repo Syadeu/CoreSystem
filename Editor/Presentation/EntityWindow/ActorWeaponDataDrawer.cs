@@ -118,7 +118,15 @@ namespace SyadeuEditor.Presentation
                 m_PreviewFXBounds[index] = null;
             }
 
-            SceneView.lastActiveSceneView.Repaint();
+            OnSceneGUI(SceneView.lastActiveSceneView);
+
+            if (enable)
+            {
+                Selection.activeGameObject = m_PreviewFXBounds[index];
+                EditorGUIUtility.PingObject(m_PreviewFXBounds[index]);
+
+                SceneView.lastActiveSceneView.LookAt(m_PreviewFXBounds[index].transform.position, Quaternion.AngleAxis(-90, Vector3.up), 3.5f);
+            }
         }
 
         protected override void OnStageFirstTimeOpened()
