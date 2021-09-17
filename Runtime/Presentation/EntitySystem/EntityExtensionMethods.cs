@@ -18,6 +18,11 @@ namespace Syadeu.Presentation
         {
             return Entity<TA>.GetEntity(t.Idx);
         }
+        public static Entity<T> As<T>(this EntityData<T> t)
+            where T : class, IEntity
+        {
+            return Entity<T>.GetEntity(t.Idx);
+        }
         public static EntityData<TA> As<T, TA>(this Entity<T> t)
             where T : class, IEntity
             where TA : class, IEntityData

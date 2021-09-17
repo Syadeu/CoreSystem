@@ -71,7 +71,7 @@ namespace SyadeuEditor.Presentation
 
             if (!m_FXBoundsDrawer.m_Open) return;
             EditorGUI.indentLevel++;
-            ActorWeaponData.FXBounds[] fXBounds = GetValue<ActorWeaponData.FXBounds[]>(m_FXBoundsField);
+            FXBounds[] fXBounds = GetValue<FXBounds[]>(m_FXBoundsField);
 
             for (int i = 0; i < fXBounds.Length; i++)
             {
@@ -134,10 +134,10 @@ namespace SyadeuEditor.Presentation
             m_PrefabField = GetField("m_Prefab");
             m_FXBoundsField = GetField("m_FXBounds");
 
-            m_FXBoundsEntityField = GetField<ActorWeaponData.FXBounds>("m_FXEntity");
-            m_FXBoundsEntityPosField = GetField<ActorWeaponData.FXBounds>("m_LocalPosition");
-            m_FXBoundsEntityRotField = GetField<ActorWeaponData.FXBounds>("m_LocalRotation");
-            m_FXBoundsEntityScaleField = GetField<ActorWeaponData.FXBounds>("m_LocalScale");
+            m_FXBoundsEntityField = GetField<FXBounds>("m_FXEntity");
+            m_FXBoundsEntityPosField = GetField<FXBounds>("m_LocalPosition");
+            m_FXBoundsEntityRotField = GetField<FXBounds>("m_LocalRotation");
+            m_FXBoundsEntityScaleField = GetField<FXBounds>("m_LocalScale");
         }
 
         protected override void OnStageOpened()
@@ -156,7 +156,7 @@ namespace SyadeuEditor.Presentation
         }
         private void CheckValidation()
         {
-            ActorWeaponData.FXBounds[] fXBounds = GetValue<ActorWeaponData.FXBounds[]>(m_FXBoundsField);
+            FXBounds[] fXBounds = GetValue<FXBounds[]>(m_FXBoundsField);
             if (m_PreviewFXBounds.Length != fXBounds.Length)
             {
                 foreach (var item in m_PreviewFXBounds)
@@ -169,7 +169,7 @@ namespace SyadeuEditor.Presentation
         }
         protected override void OnSceneGUI(SceneView obj)
         {
-            ActorWeaponData.FXBounds[] fXBounds = GetValue<ActorWeaponData.FXBounds[]>(m_FXBoundsField);
+            FXBounds[] fXBounds = GetValue<FXBounds[]>(m_FXBoundsField);
             CheckValidation();
 
             for (int i = 0; i < fXBounds.Length; i++)

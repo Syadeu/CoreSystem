@@ -1,6 +1,8 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Utilities;
+using Syadeu.Presentation.Proxy;
 using System.ComponentModel;
+using UnityEngine;
 using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation.Entities
@@ -8,8 +10,9 @@ namespace Syadeu.Presentation.Entities
     [DisplayName("Entity: FX Entity")]
     public sealed class FXEntity : EntityBase
     {
-        [JsonProperty(Order = 0, PropertyName = "HitFX")]
-        private Reference<ParticleEntity> m_HitFX = Reference<ParticleEntity>.Empty;
+        //[JsonProperty(Order = 0, PropertyName = "HitFX")]
+        //private Reference<FXEntity> m_HitFX = Reference<FXEntity>.Empty;
+
 
         [Preserve]
         static void AOTCodeGeneration()
@@ -28,25 +31,24 @@ namespace Syadeu.Presentation.Entities
             AotHelper.EnsureList<FXEntity>();
         }
     }
-
-    [DisplayName("Entity: Particle Entity")]
-    public sealed class ParticleEntity : EntityBase
+    internal sealed class FXEntityProcessor : EntityDataProcessor<FXEntity>,
+        IEntityOnProxyCreated, IEntityOnProxyRemoved
     {
-        [Preserve]
-        static void AOTCodeGeneration()
+        protected override void OnCreated(EntityData<FXEntity> entity)
         {
-            AotHelper.EnsureType<Instance<ParticleEntity>>();
-            AotHelper.EnsureList<Instance<ParticleEntity>>();
-            AotHelper.EnsureType<InstanceArray<ParticleEntity>>();
+            ((ProxyTransform)entity.As().transform).enableCull = false;
+        }
+        public void OnProxyCreated(EntityBase entityBase, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
+        {
+            //monoObj.gameObject.SetActive(false);
+            ParticleSystem particle = monoObj.GetComponent<ParticleSystem>();
 
-            AotHelper.EnsureType<Reference<ParticleEntity>>();
-            AotHelper.EnsureList<Reference<ParticleEntity>>();
-            AotHelper.EnsureType<Entity<ParticleEntity>>();
-            AotHelper.EnsureList<Entity<ParticleEntity>>();
-            AotHelper.EnsureType<EntityData<ParticleEntity>>();
-            AotHelper.EnsureList<EntityData<ParticleEntity>>();
-            AotHelper.EnsureType<ParticleEntity>();
-            AotHelper.EnsureList<ParticleEntity>();
+            ParticleSystem.MainModule main = particle.main;
+            main.playOnAwake = false;
+        }
+        public void OnProxyRemoved(EntityBase entityBase, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
+        {
+            //monoObj.gameObject.SetActive(false);
         }
     }
 }

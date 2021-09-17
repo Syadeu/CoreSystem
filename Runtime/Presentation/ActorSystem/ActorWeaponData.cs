@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Database;
+using Syadeu.Internal;
 using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Proxy;
@@ -20,13 +21,6 @@ namespace Syadeu.Presentation.Actor
             Override,
             Addictive
         }
-        [Flags]
-        public enum TriggerOptions
-        {
-            None,
-
-            OnFire,
-        }
         public readonly struct OverrideData
         {
             private readonly Instance<ActorWeaponData> m_Instance;
@@ -41,27 +35,6 @@ namespace Syadeu.Presentation.Actor
             {
                 m_Instance = new Instance<ActorWeaponData>(data.Idx);
             }
-        }
-        [Serializable]
-        public sealed class FXBounds
-        {
-            [JsonProperty(Order = 0, PropertyName = "Name")]
-            private string m_Name = string.Empty;
-            [JsonProperty(Order = 1, PropertyName = "TriggerOptions")]
-            private TriggerOptions m_TriggerOptions = TriggerOptions.OnFire;
-
-            [Space]
-            [JsonProperty(Order = 2, PropertyName = "FXEntity")]
-            private Reference<FXEntity> m_FXEntity = Reference<FXEntity>.Empty;
-            [JsonProperty(Order = 3, PropertyName = "LocalPosition")]
-            private float3 m_LocalPosition;
-            [JsonProperty(Order = 4, PropertyName = "LocalRotation")]
-            private float3 m_LocalRotation;
-            [JsonProperty(Order = 5, PropertyName = "LocalScale")]
-            private float3 m_LocalScale = 1;
-
-            [JsonIgnore] public Reference<FXEntity> FXEntity => m_FXEntity;
-            [JsonIgnore] public TRS TRS => new TRS(m_LocalPosition, m_LocalRotation, m_LocalScale);
         }
 
         [JsonProperty(Order = 0, PropertyName = "WeaponType")]
@@ -117,10 +90,39 @@ namespace Syadeu.Presentation.Actor
 
                 $"weapon({Name}, {m_Prefab.GetObject().Name}) created".ToLog();
             }
+
+            FireFXBounds((FXBounds.TriggerOptions)~0);
         }
         protected override void OnDestroy()
         {
             m_PrefabInstance.Destroy();
+        }
+
+        public void FireFXBounds(FXBounds.TriggerOptions triggerOptions)
+        {
+            if (m_PrefabInstance.IsEmpty() || !m_PrefabInstance.IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity, $"Cannot fire FX({TypeHelper.Enum<FXBounds.TriggerOptions>.ToString(triggerOptions)}), target entity({m_Prefab.GetObject().Name}) in {Name} has been destroyed or invalid.");
+                return;
+            }
+
+            for (int i = 0; i < m_FXBounds.Length; i++)
+            {
+                if ((m_FXBounds[i].TriggerOption & triggerOptions) == 0) continue;
+
+                var ins = m_FXBounds[i].FXEntity.CreateInstance();
+                Entity<FXEntity> fx = Entity<FXEntity>.GetEntityWithoutCheck(ins.Idx);
+
+                TRS prefabTRS = new TRS(m_PrefabInstance.transform),
+                    trs = m_FXBounds[i].TRS.Project(prefabTRS);
+
+                ITransform tr = fx.transform;
+                tr.position = trs.m_Position;
+                tr.rotation = trs.m_Rotation;
+                tr.scale = trs.m_Scale;
+
+                $"{m_FXBounds[i].FXEntity.GetObject().Name} fired".ToLog();
+            }
         }
     }
 }

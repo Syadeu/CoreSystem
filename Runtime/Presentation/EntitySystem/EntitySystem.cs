@@ -885,16 +885,25 @@ namespace Syadeu.Presentation
 
             Entity<IEntity> entityData = Entity<IEntity>.GetEntity(entity.Idx);
 
-            //#region Entity
-            //if (system.m_EntityProcessors.TryGetValue(entity.GetType(), out List<IEntityDataProcessor> entityProcessor))
-            //{
-            //    for (int i = 0; i < entityProcessor.Count; i++)
-            //    {
-            //        IEntityDataProcessor processor = entityProcessor[i];
-
-            //    }
-            //}
-            //#endregion
+            #region Entity
+            if (system.m_EntityProcessors.TryGetValue(entity.GetType(), out List<IEntityDataProcessor> entityProcessor))
+            {
+                for (int i = 0; i < entityProcessor.Count; i++)
+                {
+                    if (entityProcessor[i] is IEntityOnProxyCreated onProxyCreated)
+                    {
+                        try
+                        {
+                            onProxyCreated.OnProxyCreated((EntityBase)entity, entityData, monoObj);
+                        }
+                        catch (Exception ex)
+                        {
+                            CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(IEntityOnProxyCreated.OnProxyCreated));
+                        }
+                    }
+                }
+            }
+            #endregion
 
             #region Attributes
             for (int i = 0; i < entity.Attributes.Length; i++)
@@ -936,16 +945,25 @@ namespace Syadeu.Presentation
 
             Entity<IEntity> entityData = Entity<IEntity>.GetEntity(entity.Idx);
 
-            //#region Entity
-            //if (system.m_EntityProcessors.TryGetValue(entity.GetType(), out List<IEntityDataProcessor> entityProcessor))
-            //{
-            //    for (int i = 0; i < entityProcessor.Count; i++)
-            //    {
-            //        IEntityDataProcessor processor = entityProcessor[i];
-
-            //    }
-            //}
-            //#endregion
+            #region Entity
+            if (system.m_EntityProcessors.TryGetValue(entity.GetType(), out List<IEntityDataProcessor> entityProcessor))
+            {
+                for (int i = 0; i < entityProcessor.Count; i++)
+                {
+                    if (entityProcessor[i] is IEntityOnProxyRemoved onProxyRemoved)
+                    {
+                        try
+                        {
+                            onProxyRemoved.OnProxyRemoved((EntityBase)entity, entityData, monoObj);
+                        }
+                        catch (Exception ex)
+                        {
+                            CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(IEntityOnProxyRemoved.OnProxyRemoved));
+                        }
+                    }
+                }
+            }
+            #endregion
 
             #region Attributes
             for (int i = 0; i < entity.Attributes.Length; i++)
