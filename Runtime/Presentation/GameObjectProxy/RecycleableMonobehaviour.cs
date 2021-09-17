@@ -56,7 +56,7 @@ namespace Syadeu.Presentation.Proxy
         /// </summary>
         public bool Activated { get; private set; } = false;
 
-        public virtual void Initialize()
+        public void Initialize()
         {
             if (Activated) throw new CoreSystemException(CoreSystemExceptionFlag.RecycleObject,
                 "이미 초기화 된 재사용 오브젝트를 또 초기화하려합니다.");
@@ -138,10 +138,6 @@ namespace Syadeu.Presentation.Proxy
 
         #endregion
 
-        /// <summary>
-        /// 이 객체가 생성되었을때만 한번 실행하는 함수입니다.
-        /// </summary>
-        protected virtual void OnCreated() { }
         internal void InternalOnCreated()
         {
             m_GameObject = base.gameObject;
@@ -171,6 +167,11 @@ namespace Syadeu.Presentation.Proxy
 
             OnCreated();
         }
+
+        /// <summary>
+        /// 이 객체가 생성되었을때만 한번 실행하는 함수입니다.
+        /// </summary>
+        protected virtual void OnCreated() { }
         /// <summary>
         /// <see cref="Presentation.GameObjectProxySystem"/>에서 이 프록시 모노 객체를 재사용을 위해 실행되는 초기화 함수입니다.
         /// </summary>

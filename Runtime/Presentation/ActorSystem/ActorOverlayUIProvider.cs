@@ -31,6 +31,8 @@ namespace Syadeu.Presentation.Actor
             private UpdateType m_UpdateType;
             private float m_UpdateSpeed;
 
+            CoroutineLoop ICoroutineJob.Loop => CoroutineLoop.Transform;
+
             public UpdateJob(Entity<ActorEntity> entity, Entity<UIObjectEntity> ui, 
                 float3 offset, float3 orientationOffset,
                 UpdateType updateType, float updateSpeed)
@@ -52,10 +54,18 @@ namespace Syadeu.Presentation.Actor
                     uiTr = m_UI.transform;
 
                 RenderSystem renderSystem = PresentationSystem<RenderSystem>.System;
-                Transform camTr = renderSystem.Camera.transform;
+                Transform camTr;
+
+                WaitUntil waitUntil = new WaitUntil(() => renderSystem.Camera != null);
 
                 while (true)
                 {
+                    if (renderSystem.Camera == null)
+                    {
+                        yield return waitUntil;
+                    }
+                    camTr = renderSystem.Camera.transform;
+
                     if ((m_UpdateType & UpdateType.Instant) == UpdateType.Instant)
                     {
                         uiTr.position = entityTr.position + m_Offset;

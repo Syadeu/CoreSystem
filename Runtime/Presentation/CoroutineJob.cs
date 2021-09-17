@@ -10,6 +10,7 @@ namespace Syadeu.Presentation
 
         private readonly int m_Idx;
         internal int m_Generation;
+        internal CoroutineLoop m_Loop;
 
         public int Index => m_Idx;
         public int Generation => m_Generation;
@@ -20,6 +21,7 @@ namespace Syadeu.Presentation
 
             m_Idx = index;
             m_Generation = 0;
+            m_Loop = 0;
         }
 
         public bool IsNull() => m_Idx < 0;

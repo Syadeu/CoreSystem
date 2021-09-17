@@ -13,9 +13,10 @@ namespace Syadeu.Presentation.Entities
         [Flags]
         public enum TriggerOptions
         {
-            None        =   0,
+            None            =   0,
 
-            OnFire      =   0b001,
+            OnFire          =   0b001,
+            OnDelayedFire   =   0b010,
         }
         [Flags]
         public enum PlayOptions
@@ -58,6 +59,13 @@ namespace Syadeu.Presentation.Entities
 
         public void Fire(ITransform parent)
         {
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Null return");
+                return;
+            }
+
             if (m_Instance.IsEmpty())
             {
                 m_Instance = m_FXEntity.CreateInstance();

@@ -103,6 +103,8 @@ namespace Syadeu.Presentation.Actions
             public ReferenceArray<Reference<InstanceAction>> m_OnStartAction;
             public ReferenceArray<Reference<InstanceAction>> m_OnEndAction;
 
+            CoroutineLoop ICoroutineJob.Loop => CoroutineLoop.Default;
+
             public void Dispose()
             {
                 m_Data = Reference<TimelineData>.Empty;

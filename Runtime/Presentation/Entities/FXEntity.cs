@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Utilities;
 using Syadeu.Presentation.Proxy;
+using Syadeu.Presentation.Render;
 using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.Scripting;
@@ -10,6 +11,14 @@ namespace Syadeu.Presentation.Entities
     [DisplayName("Entity: FX Entity")]
     public sealed class FXEntity : EntityBase
     {
+        public enum PlayType
+        {
+            Sequence,
+            Random
+        }
+        //[JsonProperty(Order = 8, PropertyName = "FXBounds")]
+        //protected PlayType m_PlayType = PlayType.Sequence;
+
         //[JsonProperty(Order = 0, PropertyName = "HitFX")]
         //private Reference<FXEntity> m_HitFX = Reference<FXEntity>.Empty;
         [JsonIgnore] private ParticleSystem m_ParticleSystem;
@@ -40,6 +49,11 @@ namespace Syadeu.Presentation.Entities
             }
 
             m_ParticleSystem.Play();
+            Render.IPlayable[] playables = m_ParticleSystem.GetComponentsInChildren<Render.IPlayable>();
+            for (int i = 0; i < playables?.Length; i++)
+            {
+                playables[i].Play();
+            }
         }
         public void Stop()
         {

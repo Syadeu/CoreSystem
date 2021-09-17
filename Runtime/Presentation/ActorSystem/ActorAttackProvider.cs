@@ -31,6 +31,8 @@ namespace Syadeu.Presentation.Actor
                 return;
             }
 
+            currentWeaponIns.Object.FireFXBounds(FXBounds.TriggerOptions.OnFire);
+
             for (int i = 0; i < ev.Targets.Length; i++)
             {
                 ev.Targets[i].GetController().PostEvent(new TestActorHitEvent());
