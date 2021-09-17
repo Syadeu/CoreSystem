@@ -63,6 +63,8 @@ namespace SyadeuEditor.Presentation
         {
             base.OnDisable();
             SceneView.duringSceneGui -= PrivateOnSceneGUI;
+
+            if (m_IsOpened) Close();
         }
         private void PrivateOnSceneGUI(SceneView obj)
         {
