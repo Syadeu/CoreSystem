@@ -1,6 +1,7 @@
 ﻿using Syadeu.Internal;
 using Syadeu.Presentation;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Proxy;
 using System.Reflection;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -18,6 +19,7 @@ namespace SyadeuEditor.Presentation
             m_IsOpened = false;
 
         public T Target => m_Target;
+        public bool IsOpened => m_IsOpened;
 
         public void Open(T target)
         {
@@ -118,10 +120,13 @@ namespace SyadeuEditor.Presentation
             EditorSceneManager.MoveGameObjectToScene(obj, scene);
             return obj;
         }
-        public GameObject CreateObject(GameObject prefab)
+        public GameObject CreateObject(GameObject prefab, TRS trs = default)
         {
             GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
             EditorSceneManager.MoveGameObjectToScene(obj, scene);
+            obj.transform.position = trs.m_Position;
+            obj.transform.rotation = trs.m_Rotation;
+            obj.transform.localScale = trs.m_Scale;
             return obj;
         }
         public GameObject CreateObject(EntityBase entity)

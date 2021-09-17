@@ -3,6 +3,7 @@ using Syadeu.Internal;
 using Syadeu.Presentation;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Proxy;
 using System;
 using System.Reflection;
 using Unity.Mathematics;
@@ -48,8 +49,8 @@ namespace SyadeuEditor.Presentation
         {
             using (new EditorGUILayout.HorizontalScope())
             {
-                //m_OpenFXBounds = EditorUtils.Foldout(m_OpenFXBounds, "FXBounds", 13);
                 m_FXBoundsDrawer.DrawHeader();
+                EditorGUI.BeginDisabledGroup(m_PreviewScene != null && m_PreviewScene.IsOpened);
                 if (GUILayout.Button("Open"))
                 {
                     if (m_PreviewScene == null)
@@ -59,10 +60,13 @@ namespace SyadeuEditor.Presentation
 
                     m_PreviewScene.Open(TargetObject);
                 }
+                EditorGUI.EndDisabledGroup();
+                EditorGUI.BeginDisabledGroup(m_PreviewScene == null || !m_PreviewScene.IsOpened);
                 if (GUILayout.Button("Close"))
                 {
-                    StageUtility.GoToMainStage();
+                    m_PreviewScene.Close();
                 }
+                EditorGUI.EndDisabledGroup();
             }
 
             if (!m_FXBoundsDrawer.m_Open) return;
@@ -71,7 +75,19 @@ namespace SyadeuEditor.Presentation
 
             for (int i = 0; i < fXBounds.Length; i++)
             {
-                m_FXBoundsDrawer.DrawElementAt(i);
+                using (new EditorUtils.BoxBlock(Color.white))
+                {
+                    using (new EditorGUI.DisabledGroupScope(m_PreviewScene == null || !m_PreviewScene.IsOpened))
+                    {
+                        if (GUILayout.Button(
+                            m_PreviewScene != null && m_PreviewScene.IsActiveFXBounds(i) ?
+                            "Disable Preview" : "Enable Preview"))
+                        {
+                            m_PreviewScene.SetActiveFXBounds(i, !m_PreviewScene.IsActiveFXBounds(i));
+                        }
+                    }
+                    m_FXBoundsDrawer.DrawElementAt(i);
+                }
             }
 
             EditorGUI.indentLevel--;
@@ -90,6 +106,20 @@ namespace SyadeuEditor.Presentation
         private GameObject m_PrefabInstance = null;
 
         GameObject[] m_PreviewFXBounds = Array.Empty<GameObject>();
+        bool[] m_EnablePreviewFXBounds = Array.Empty<bool>();
+
+        public bool IsActiveFXBounds(int index) => m_EnablePreviewFXBounds[index];
+        public void SetActiveFXBounds(int index, bool enable)
+        {
+            m_EnablePreviewFXBounds[index] = enable;
+            if (!enable)
+            {
+                DestroyImmediate(m_PreviewFXBounds[index]);
+                m_PreviewFXBounds[index] = null;
+            }
+
+            SceneView.lastActiveSceneView.Repaint();
+        }
 
         protected override void OnStageFirstTimeOpened()
         {
@@ -110,17 +140,29 @@ namespace SyadeuEditor.Presentation
                 if (m_PrefabInstance != null) DestroyImmediate(m_PrefabInstance);
 
                 m_PrefabInstance = CreateObject(tempPrefab.GetObject());
+                m_PrefabInstance.transform.hideFlags = HideFlags.NotEditable;
                 m_Prefab = tempPrefab;
             }
-        }
 
-        protected override void OnSceneGUI(SceneView obj)
+            CheckValidation();
+        }
+        private void CheckValidation()
         {
             ActorWeaponData.FXBounds[] fXBounds = GetValue<ActorWeaponData.FXBounds[]>(m_FXBoundsField);
             if (m_PreviewFXBounds.Length != fXBounds.Length)
             {
+                foreach (var item in m_PreviewFXBounds)
+                {
+                    DestroyImmediate(item);
+                }
                 m_PreviewFXBounds = new GameObject[fXBounds.Length];
+                m_EnablePreviewFXBounds = new bool[fXBounds.Length];
             }
+        }
+        protected override void OnSceneGUI(SceneView obj)
+        {
+            ActorWeaponData.FXBounds[] fXBounds = GetValue<ActorWeaponData.FXBounds[]>(m_FXBoundsField);
+            CheckValidation();
 
             for (int i = 0; i < fXBounds.Length; i++)
             {
@@ -138,25 +180,42 @@ namespace SyadeuEditor.Presentation
                     continue;
                 }
 
+                if (!m_EnablePreviewFXBounds[i]) continue;
+
                 FXEntity targetFx = fXBounds[i].FXEntity.GetObject();
                 GameObject targetFxPrefab = (GameObject)targetFx.Prefab.GetEditorAsset();
+                TRS currentTRS = fXBounds[i].TRS;
 
                 if (m_PreviewFXBounds[i] == null)
                 {
-                    m_PreviewFXBounds[i] = CreateObject(targetFxPrefab);
+                    m_PreviewFXBounds[i] = CreateObject(targetFxPrefab, fXBounds[i].TRS);
                     m_PreviewFXBounds[i].name = targetFx.Name;
                 }
                 else if (!PrefabUtility.GetCorrespondingObjectFromSource(m_PreviewFXBounds[i]).Equals(targetFxPrefab))
                 {
                     DestroyImmediate(m_PreviewFXBounds[i]);
-                    m_PreviewFXBounds[i] = CreateObject(targetFxPrefab);
+                    m_PreviewFXBounds[i] = CreateObject(targetFxPrefab, fXBounds[i].TRS);
                     m_PreviewFXBounds[i].name = targetFx.Name;
                 }
 
                 Transform tr = m_PreviewFXBounds[i].transform;
-                m_FXBoundsEntityPosField.SetValue(fXBounds[i], (float3)tr.position);
-                m_FXBoundsEntityRotField.SetValue(fXBounds[i], (float3)tr.eulerAngles);
-                m_FXBoundsEntityScaleField.SetValue(fXBounds[i], (float3)tr.localScale);
+                if (!tr.position.Equals(currentTRS.m_Position))
+                {
+                    m_FXBoundsEntityPosField.SetValue(fXBounds[i], (float3)tr.position);
+                    EntityWindow.Instance.IsDirty = true;
+                }
+                if (!tr.rotation.Equals(currentTRS.m_Rotation))
+                {
+                    m_FXBoundsEntityRotField.SetValue(fXBounds[i], (float3)tr.eulerAngles);
+                    EntityWindow.Instance.IsDirty = true;
+                }
+                if (!tr.localScale.Equals(currentTRS.m_Scale))
+                {
+                    m_FXBoundsEntityScaleField.SetValue(fXBounds[i], (float3)tr.localScale);
+                    EntityWindow.Instance.IsDirty = true;
+                }
+                
+                
             }
         }
     }
