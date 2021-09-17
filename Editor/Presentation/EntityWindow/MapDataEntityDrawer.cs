@@ -31,7 +31,8 @@ namespace SyadeuEditor.Presentation
         {
             FindInvalidObjectIndices();
 
-            ArrayDrawer = (ArrayDrawer)m_ObjectDrawers.Where((other) => other.Name.Equals("Objects")).First();
+            //ArrayDrawer = (ArrayDrawer)Drawers.Where((other) => other.Name.Equals("Objects")).First();
+            ArrayDrawer = GetDrawer<ArrayDrawer>("Objects");
         }
 
         private static bool IsInvalidObject(MapDataEntityBase.Object obj)
@@ -154,14 +155,14 @@ namespace SyadeuEditor.Presentation
                 EditorUtils.Line();
             }
 
-            for (int i = 0; i < m_ObjectDrawers.Length; i++)
+            for (int i = 0; i < Drawers.Length; i++)
             {
-                if (!IsDrawable(m_ObjectDrawers[i]))
+                if (!IsDrawable(Drawers[i]))
                 {
                     continue;
                 }
 
-                DrawField(m_ObjectDrawers[i]);
+                DrawField(Drawers[i]);
             }
         }
     }

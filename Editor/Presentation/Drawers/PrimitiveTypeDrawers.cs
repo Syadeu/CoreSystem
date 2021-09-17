@@ -157,6 +157,8 @@ namespace SyadeuEditor.Presentation
         public readonly List<ObjectDrawerBase> m_ElementDrawers = new List<ObjectDrawerBase>();
         public readonly List<bool> m_ElementOpen = new List<bool>();
 
+        private readonly MemberInfo m_ElementFirstMember;
+
         public Type ElementType => m_ElementType;
 
         public ArrayDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
@@ -178,6 +180,9 @@ namespace SyadeuEditor.Presentation
                     throw;
                 }
             }
+
+            m_ElementFirstMember = ReflectionHelper.GetSerializeMemberInfos(m_ElementType)[0];
+
             Reload();
 
             color1 = Color.black; color2 = Color.gray; color3 = Color.green;
@@ -202,6 +207,9 @@ namespace SyadeuEditor.Presentation
                     throw;
                 }
             }
+
+            m_ElementFirstMember = ReflectionHelper.GetSerializeMemberInfos(m_ElementType)[0];
+
             Reload();
 
             color1 = Color.black; color2 = Color.gray; color3 = Color.green;
@@ -358,8 +366,6 @@ namespace SyadeuEditor.Presentation
                     EditorGUI.indentLevel++;
                     using (new EditorUtils.BoxBlock(color2))
                     {
-                        MemberInfo firstMember = ReflectionHelper.GetSerializeMemberInfos(m_ElementType)[0];
-
                         for (int i = 0; i < m_ElementDrawers.Count; i++)
                         {
                             if (m_ElementDrawers[i] == null) continue;
@@ -367,9 +373,9 @@ namespace SyadeuEditor.Presentation
                             if (m_ElementDrawers[i].FieldCount > 1)
                             {
                                 string value;
-                                if (ReflectionHelper.GetDeclaredType(firstMember).Equals(TypeHelper.TypeOf<string>.Type))
+                                if (ReflectionHelper.GetDeclaredType(m_ElementFirstMember).Equals(TypeHelper.TypeOf<string>.Type))
                                 {
-                                    value = ReflectionHelper.GetValue<string>(firstMember, list[i]);
+                                    value = ReflectionHelper.GetValue<string>(m_ElementFirstMember, list[i]);
                                     if (string.IsNullOrEmpty(value))
                                     {
                                         value = $"Element {i}";
@@ -432,6 +438,101 @@ namespace SyadeuEditor.Presentation
             m_ElementOpen.RemoveAt(i);
 
             return list;
+        }
+
+        public void DrawHeader()
+        {
+            IList list = Getter.Invoke();
+
+            EditorGUILayout.BeginHorizontal();
+            m_Open = EditorUtils.Foldout(m_Open,
+                string.Format(c_NameFormat, Name, TypeHelper.ToString(m_ElementType))
+                , 13);
+
+            GUILayout.FlexibleSpace();
+            GUILayout.Label(EditorUtils.String($"{list.Count}: ", 10), EditorUtils.HeaderStyle);
+
+            EditorGUI.BeginDisabledGroup(m_ElementType.IsAbstract);
+            if (GUILayout.Button("+", GUILayout.Width(20)))
+            {
+                object newValue = Activator.CreateInstance(m_ElementType);
+                if (list.IsFixedSize)
+                {
+                    Array newArr = Array.CreateInstance(m_ElementType, list.Count + 1);
+                    if (list != null && list.Count > 0) Array.Copy((Array)list, newArr, list.Count);
+                    list = newArr;
+                    list[list.Count - 1] = newValue;
+                }
+                else
+                {
+                    list.Add(newValue);
+                }
+                m_ElementDrawers.Add(GetElementDrawer(list, list.Count - 1));
+                m_ElementOpen.Add(false);
+
+                Setter.Invoke(list);
+            }
+            EditorGUI.EndDisabledGroup();
+            if (list.Count > 0 && GUILayout.Button("-", GUILayout.Width(20)))
+            {
+                if (list.IsFixedSize)
+                {
+                    Array newArr = Array.CreateInstance(m_ElementType, list.Count - 1);
+                    if (list != null && list.Count > 0) Array.Copy((Array)list, newArr, newArr.Length);
+                    list = newArr;
+                }
+                else
+                {
+                    list.RemoveAt(list.Count - 1);
+                }
+                m_ElementOpen.RemoveAt(m_ElementOpen.Count - 1);
+                m_ElementDrawers.RemoveAt(m_ElementDrawers.Count - 1);
+
+                Setter.Invoke(list);
+            }
+            EditorGUILayout.EndHorizontal();
+        }
+        public void DrawElementAt(int i)
+        {
+            IList list = Getter.Invoke();
+
+            if (m_ElementDrawers[i].FieldCount > 1)
+            {
+                string value;
+                if (ReflectionHelper.GetDeclaredType(m_ElementFirstMember).Equals(TypeHelper.TypeOf<string>.Type))
+                {
+                    value = ReflectionHelper.GetValue<string>(m_ElementFirstMember, list[i]);
+                    if (string.IsNullOrEmpty(value))
+                    {
+                        value = $"Element {i}";
+                    }
+
+                }
+                else value = $"Element {i}";
+
+                m_ElementOpen[i] = EditorGUILayout.Foldout(m_ElementOpen[i], value, true);
+            }
+            else m_ElementOpen[i] = true;
+
+            if (!m_ElementOpen[i]) return;
+
+            EditorGUI.indentLevel++;
+            using (new EditorUtils.BoxBlock(Color.black))
+            {
+                EditorGUILayout.BeginHorizontal();
+
+                m_ElementDrawers[i].OnGUI();
+
+                if (GUILayout.Button("-", GUILayout.Width(20)))
+                {
+                    list = RemoveAt(list, i);
+                    i--;
+                }
+                EditorGUILayout.EndHorizontal();
+
+                if (i + 1 < m_ElementDrawers.Count) EditorUtils.Line();
+            }
+            EditorGUI.indentLevel--;
         }
     }
 

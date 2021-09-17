@@ -23,12 +23,13 @@ namespace SyadeuEditor.Presentation
         private ReflectionDescriptionAttribute m_Description;
 
         private readonly MemberInfo[] m_Members;
-        protected readonly ObjectDrawerBase[] m_ObjectDrawers;
+        private readonly ObjectDrawerBase[] m_ObjectDrawers;
 
         public override sealed object TargetObject => m_TargetObject;
         public Type Type => m_Type;
         public override string Name => m_TargetObject.Name;
         public override int FieldCount => m_ObjectDrawers.Length;
+        public ObjectDrawerBase[] Drawers => m_ObjectDrawers;
 
         public static ObjectBaseDrawer GetDrawer(ObjectBase objectBase)
         {
@@ -170,6 +171,8 @@ namespace SyadeuEditor.Presentation
             }
             return null;
         }
+        protected T GetDrawer<T>(string name) where T : ObjectDrawerBase
+            => (T)(GetDrawer(name));
     }
 
     public abstract class ObjectBaseDrawer<T> : ObjectBaseDrawer
@@ -179,6 +182,23 @@ namespace SyadeuEditor.Presentation
 
         protected ObjectBaseDrawer(ObjectBase objectBase) : base(objectBase)
         {
+        }
+
+        public static FieldInfo GetField(string name, BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+        {
+            return TypeHelper.TypeOf<T>.Type.GetField(name, bindingFlags);
+        }
+        public static PropertyInfo GetProperty(string name, BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+        {
+            return TypeHelper.TypeOf<T>.Type.GetProperty(name, bindingFlags);
+        }
+        public TA GetValue<TA>(MemberInfo memberInfo)
+        {
+            object value;
+            if (memberInfo is FieldInfo field) value = field.GetValue(TargetObject);
+            else value = ((PropertyInfo)memberInfo).GetValue(TargetObject);
+
+            return value == null ? default(TA) : (TA)value;
         }
     }
 }

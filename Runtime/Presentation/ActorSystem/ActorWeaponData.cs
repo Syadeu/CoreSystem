@@ -2,6 +2,8 @@
 using Syadeu.Database;
 using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Proxy;
+using System;
 using System.ComponentModel;
 using Unity.Mathematics;
 using UnityEngine;
@@ -18,6 +20,13 @@ namespace Syadeu.Presentation.Actor
             Override,
             Addictive
         }
+        [Flags]
+        public enum TriggerOptions
+        {
+            None,
+
+            OnFire,
+        }
         public readonly struct OverrideData
         {
             private readonly Instance<ActorWeaponData> m_Instance;
@@ -32,6 +41,27 @@ namespace Syadeu.Presentation.Actor
             {
                 m_Instance = new Instance<ActorWeaponData>(data.Idx);
             }
+        }
+        [Serializable]
+        public sealed class FXBounds
+        {
+            [JsonProperty(Order = 0, PropertyName = "Name")]
+            private string m_Name = string.Empty;
+            [JsonProperty(Order = 1, PropertyName = "TriggerOptions")]
+            private TriggerOptions m_TriggerOptions = TriggerOptions.OnFire;
+
+            [Space]
+            [JsonProperty(Order = 2, PropertyName = "FXEntity")]
+            private Reference<FXEntity> m_FXEntity = Reference<FXEntity>.Empty;
+            [JsonProperty(Order = 3, PropertyName = "LocalPosition")]
+            private float3 m_LocalPosition;
+            [JsonProperty(Order = 4, PropertyName = "LocalRotation")]
+            private float3 m_LocalRotation;
+            [JsonProperty(Order = 5, PropertyName = "LocalScale")]
+            private float3 m_LocalScale;
+
+            public Reference<FXEntity> FXEntity => m_FXEntity;
+            public TRS TRS => new TRS(m_LocalPosition, m_LocalRotation, m_LocalScale);
         }
 
         [JsonProperty(Order = 0, PropertyName = "WeaponType")]
@@ -55,8 +85,8 @@ namespace Syadeu.Presentation.Actor
         protected float3 m_WeaponRotOffset = float3.zero;
 
         [Space, Header("FX")]
-        [JsonProperty(Order = 8, PropertyName = "AttackFX")]
-        protected Reference<FXEntity> m_AttackFX = Reference<FXEntity>.Empty;
+        [JsonProperty(Order = 8, PropertyName = "FXBounds")]
+        protected FXBounds[] m_FXBounds = Array.Empty<FXBounds>();
 
         [JsonIgnore] private Entity<ObjectEntity> m_PrefabInstance = Entity<ObjectEntity>.Empty;
 

@@ -34,11 +34,14 @@ namespace SyadeuEditor.Presentation
 
             if (objectBase is EntityBase entityBase)
             {
-                prefabReferenceDrawer = (PrefabReferenceDrawer)m_ObjectDrawers.Where((other) => other.Name.Equals("Prefab")).First();
+                //prefabReferenceDrawer = (PrefabReferenceDrawer)m_ObjectDrawers.Where((other) => other.Name.Equals("Prefab")).First();
+                prefabReferenceDrawer = GetDrawer<PrefabReferenceDrawer>("Prefab");
                 prefabReferenceDrawer.DisableHeader = true;
 
-                m_CenterDrawer = m_ObjectDrawers.Where((other) => other.Name.Equals("Center")).First();
-                m_SizeDrawer = m_ObjectDrawers.Where((other) => other.Name.Equals("Size")).First();
+                //m_CenterDrawer = m_ObjectDrawers.Where((other) => other.Name.Equals("Center")).First();
+                //m_SizeDrawer = m_ObjectDrawers.Where((other) => other.Name.Equals("Size")).First();
+                m_CenterDrawer = GetDrawer("Center");
+                m_SizeDrawer = GetDrawer("Size");
             }
 
             attributeListDrawer = new AttributeListDrawer(objectBase,
@@ -223,14 +226,14 @@ namespace SyadeuEditor.Presentation
             DrawHeader();
             EditorUtils.Line();
 
-            for (int i = 0; i < m_ObjectDrawers.Length; i++)
+            for (int i = 0; i < Drawers.Length; i++)
             {
-                if (!IsDrawable(m_ObjectDrawers[i]))
+                if (!IsDrawable(Drawers[i]))
                 {
                     continue;
                 }
 
-                DrawField(m_ObjectDrawers[i]);
+                DrawField(Drawers[i]);
             }
         }
     }
