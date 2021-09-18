@@ -31,7 +31,7 @@ namespace Syadeu.Presentation.Actor
             private UpdateType m_UpdateType;
             private float m_UpdateSpeed;
 
-            CoroutineLoop ICoroutineJob.Loop => CoroutineLoop.Transform;
+            UpdateLoop ICoroutineJob.Loop => UpdateLoop.Transform;
 
             public UpdateJob(Entity<ActorEntity> entity, Entity<UIObjectEntity> ui, 
                 float3 offset, float3 orientationOffset,

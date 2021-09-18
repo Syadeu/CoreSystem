@@ -60,7 +60,7 @@ public partial class SimplePlayerController
                 m_HorizontalKey, m_VerticalKey, m_SpeedKey;
             private float m_AnimatorSpeed;
 
-            public CoroutineLoop Loop => CoroutineLoop.Transform;
+            public UpdateLoop Loop => UpdateLoop.Transform;
 
             public UpdateJob(Entity<ActorEntity> entity, TPSActorInputProvider inputProvider)
             {

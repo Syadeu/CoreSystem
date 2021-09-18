@@ -60,6 +60,11 @@ namespace Syadeu.Presentation.Render
             PresentationSystem<RenderSystem>.System.Camera = m_Camera;
         }
 
+        public void SetTarget(params CinemachineTargetGroup.Target[] targets)
+        {
+            m_TargetGroup.m_Targets = targets;
+        }
+
         public T GetCameraComponent<T>() where T : AdditionalCameraComponent
         {
             for (int i = 0; i < m_CameraComponents.Length; i++)

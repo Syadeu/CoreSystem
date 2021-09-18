@@ -10,7 +10,7 @@ namespace Syadeu.Presentation
 
         private readonly int m_Idx;
         internal int m_Generation;
-        internal CoroutineLoop m_Loop;
+        internal UpdateLoop m_Loop;
 
         public int Index => m_Idx;
         public int Generation => m_Generation;

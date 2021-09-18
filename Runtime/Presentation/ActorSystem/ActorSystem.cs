@@ -17,16 +17,12 @@ namespace Syadeu.Presentation.Actor
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
-        private NativeHashMap<Hash, Entity<ActorEntity>> m_PlayerHashMap;
-
         private EntitySystem m_EntitySystem;
         private EventSystem m_EventSystem;
 
         #region Presentation Methods
         protected override PresentationResult OnInitializeAsync()
         {
-            m_PlayerHashMap = new NativeHashMap<Hash, Entity<ActorEntity>>(1024, Allocator.Persistent);
-
             RequestSystem<EntitySystem>(Bind);
             RequestSystem<EventSystem>(Bind);
 
@@ -46,19 +42,13 @@ namespace Syadeu.Presentation.Actor
         {
             if (!TypeHelper.TypeOf<ActorEntity>.Type.IsAssignableFrom(obj.Type)) return;
 
-            var actorRef = obj.As<IEntityData, ActorEntity>();
-            actorRef.Target.m_ActorSystem = this;
-
-            m_PlayerHashMap.Add(actorRef.Idx, actorRef);
+            //m_PlayerHashMap.Add(obj.Idx, obj.As<IEntityData, ActorEntity>());
         }
         private void M_EntitySystem_OnEntityDestroy(EntityData<IEntityData> obj)
         {
             if (!TypeHelper.TypeOf<ActorEntity>.Type.IsAssignableFrom(obj.Type)) return;
 
-            var actorRef = obj.As<IEntityData, ActorEntity>();
-            actorRef.Target.m_ActorSystem = null;
-
-            m_PlayerHashMap.Remove(actorRef.Idx);
+            //m_PlayerHashMap.Remove(obj.Idx);
         }
         private void Bind(EventSystem other)
         {
@@ -76,19 +66,15 @@ namespace Syadeu.Presentation.Actor
 
         public override void OnDispose()
         {
-            m_PlayerHashMap.Dispose();
-
             m_EntitySystem.OnEntityCreated -= M_EntitySystem_OnEntityCreated;
             m_EntitySystem.OnEntityDestroy -= M_EntitySystem_OnEntityDestroy;
 
             m_EntitySystem = null;
+
+            m_EventSystem.RemoveEvent<OnMoveStateChangedEvent>(OnActorMoveStateChanged);
+
+            m_EventSystem = null;
         }
-        #endregion
-
-        #region Raycast
-
-        
-
         #endregion
     }
 

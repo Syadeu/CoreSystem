@@ -27,6 +27,11 @@ namespace Syadeu.Presentation
             m_UsedTransformIndices = new List<int>();
         readonly Queue<int> m_TerminatedCoroutineIndices = new Queue<int>();
 
+        public event Action OnUpdate;
+        public event Action OnTransformUpdate;
+
+        #region Presentation Methods
+
         protected override PresentationResult OnInitialize()
         {
             PlayerLoopSystem defaultLoop = PlayerLoop.GetCurrentPlayerLoop();
@@ -107,9 +112,11 @@ namespace Syadeu.Presentation
 
             base.OnDispose();
         }
-        
+
         private void PresenationUpdateHandler()
         {
+            OnUpdate?.Invoke();
+
             #region Sequence Iterator Jobs
             if (m_CurrentIterationJob != null)
             {
@@ -169,6 +176,8 @@ namespace Syadeu.Presentation
             }
 
             #endregion
+
+            #region Iterator Jobs
 
             for (int i = m_UsedUpdateIndices.Count - 1; i >= 0; i--)
             {
@@ -238,9 +247,15 @@ namespace Syadeu.Presentation
                     continue;
                 }
             }
+
+            #endregion
         }
         private void PresentationTransformUpdateHandler()
         {
+            OnTransformUpdate?.Invoke();
+
+            #region Iterator Jobs
+
             for (int i = m_UsedTransformIndices.Count - 1; i >= 0; i--)
             {
                 int idx = m_UsedTransformIndices[i];
@@ -309,7 +324,11 @@ namespace Syadeu.Presentation
                     continue;
                 }
             }
+
+            #endregion
         }
+
+        #endregion
 
         private class CoroutineJobPayload
         {
@@ -358,7 +377,7 @@ namespace Syadeu.Presentation
             }
 
             coroutineJob.m_Loop = job.Loop;
-            if (job.Loop == CoroutineLoop.Transform)
+            if (job.Loop == UpdateLoop.Transform)
             {
                 m_UsedTransformIndices.Add(coroutineJob.Index);
             }
@@ -383,7 +402,7 @@ namespace Syadeu.Presentation
             m_CoroutineIterators[job.Index] = null;
             m_TerminatedCoroutineIndices.Enqueue(job.Index);
 
-            if (job.m_Loop == CoroutineLoop.Transform)
+            if (job.m_Loop == UpdateLoop.Transform)
             {
                 m_UsedTransformIndices.Remove(job.Index);
             }

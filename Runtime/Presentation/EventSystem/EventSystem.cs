@@ -17,10 +17,14 @@ namespace Syadeu.Presentation.Events
         public override bool EnableOnPresentation => true;
         public override bool EnableAfterPresentation => false;
 
-        private readonly Queue<SynchronizedEventBase> m_PostedEvents = new Queue<SynchronizedEventBase>();
+        //private readonly Queue<SynchronizedEventBase> m_PostedEvents = new Queue<SynchronizedEventBase>();
+        private readonly Queue<SynchronizedEventBase> 
+            m_UpdateEvents = new Queue<SynchronizedEventBase>(),
+            m_TransformEvents = new Queue<SynchronizedEventBase>();
         private readonly Queue<Action> m_PostedActions = new Queue<Action>();
 
         private SceneSystem m_SceneSystem;
+        private CoroutineSystem m_CoroutineSystem;
 
         private bool m_LoadingLock = false;
 
@@ -29,11 +33,13 @@ namespace Syadeu.Presentation.Events
         protected override PresentationResult OnInitialize()
         {
             RequestSystem<SceneSystem>(Bind);
+            RequestSystem<CoroutineSystem>(Bind);
 
             return base.OnInitialize();
         }
 
         #region Bind
+
         private void Bind(SceneSystem other)
         {
             m_SceneSystem = other;
@@ -44,26 +50,42 @@ namespace Syadeu.Presentation.Events
         {
             m_LoadingLock = true;
 
-            m_PostedEvents.Clear();
+            //m_PostedEvents.Clear();
+            m_UpdateEvents.Clear();
+            m_TransformEvents.Clear();
 
             m_LoadingLock = false;
         }
+
+        private void Bind(CoroutineSystem other)
+        {
+            m_CoroutineSystem = other;
+
+            m_CoroutineSystem.OnUpdate += M_CoroutineSystem_OnUpdate;
+            m_CoroutineSystem.OnTransformUpdate += M_CoroutineSystem_OnTransformUpdate;
+        }
+
         #endregion
 
         public override void OnDispose()
         {
-            m_PostedEvents.Clear();
+            //m_PostedEvents.Clear();
+            m_UpdateEvents.Clear();
+            m_TransformEvents.Clear();
+
+            m_CoroutineSystem.OnUpdate -= M_CoroutineSystem_OnUpdate;
+            m_CoroutineSystem.OnTransformUpdate -= M_CoroutineSystem_OnTransformUpdate;
+
+            m_SceneSystem = null;
+            m_CoroutineSystem = null;
         }
 
-        protected override PresentationResult OnPresentation()
+        private void M_CoroutineSystem_OnUpdate()
         {
-            if (m_LoadingLock) return base.OnPresentation();
-
-            #region Event Executer
-            int eventCount = m_PostedEvents.Count;
+            int eventCount = m_UpdateEvents.Count;
             for (int i = 0; i < eventCount; i++)
             {
-                SynchronizedEventBase ev = m_PostedEvents.Dequeue();
+                SynchronizedEventBase ev = m_UpdateEvents.Dequeue();
                 if (!ev.IsValid()) continue;
                 try
                 {
@@ -79,8 +101,55 @@ namespace Syadeu.Presentation.Events
                 CoreSystem.Logger.Log(Channel.Presentation,
                     $"Posted event : {ev.GetType().Name}");
             }
+        }
+        private void M_CoroutineSystem_OnTransformUpdate()
+        {
+            int eventCount = m_TransformEvents.Count;
+            for (int i = 0; i < eventCount; i++)
+            {
+                SynchronizedEventBase ev = m_TransformEvents.Dequeue();
+                if (!ev.IsValid()) continue;
+                try
+                {
+                    ev.InternalPost();
+                    ev.InternalTerminate();
+                }
+                catch (Exception ex)
+                {
+                    CoreSystem.Logger.LogError(Channel.Presentation,
+                        $"Invalid event({ev.GetType()}) has been posted");
+                    UnityEngine.Debug.LogException(ex);
+                }
+                CoreSystem.Logger.Log(Channel.Presentation,
+                    $"Posted event : {ev.GetType().Name}");
+            }
+        }
+        protected override PresentationResult OnPresentation()
+        {
+            if (m_LoadingLock) return base.OnPresentation();
 
-            #endregion
+            //#region Event Executer
+            //int eventCount = m_PostedEvents.Count;
+            //for (int i = 0; i < eventCount; i++)
+            //{
+            //    SynchronizedEventBase ev = m_PostedEvents.Dequeue();
+            //    if (!ev.IsValid()) continue;
+            //    try
+            //    {
+            //        ev.InternalPost();
+            //        ev.InternalTerminate();
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        CoreSystem.Logger.LogError(Channel.Presentation,
+            //            $"Invalid event({ev.GetType()}) has been posted");
+            //        UnityEngine.Debug.LogException(ex);
+            //    }
+            //    CoreSystem.Logger.Log(Channel.Presentation,
+            //        $"Posted event : {ev.GetType().Name}");
+            //}
+
+            //#endregion
 
             #region Delegate Executer
 
@@ -133,7 +202,17 @@ namespace Syadeu.Presentation.Events
         /// <param name="ev"></param>
         public void PostEvent<TEvent>(TEvent ev) where TEvent : SynchronizedEvent<TEvent>, new()
         {
-            m_PostedEvents.Enqueue(ev);
+            switch (ev.Loop)
+            {
+                default:
+                case UpdateLoop.Default:
+                    m_UpdateEvents.Enqueue(ev);
+                    break;
+                case UpdateLoop.Transform:
+                    m_TransformEvents.Enqueue(ev);
+                    break;
+            }
+            //m_PostedEvents.Enqueue(ev);
         }
 
         public void PostAction(Action action)

@@ -103,7 +103,7 @@ namespace Syadeu.Presentation.Actions
             public ReferenceArray<Reference<InstanceAction>> m_OnStartAction;
             public ReferenceArray<Reference<InstanceAction>> m_OnEndAction;
 
-            CoroutineLoop ICoroutineJob.Loop => CoroutineLoop.Default;
+            UpdateLoop ICoroutineJob.Loop => UpdateLoop.Default;
 
             public void Dispose()
             {

@@ -311,7 +311,7 @@ namespace Syadeu.Presentation.Actor
             private HumanBodyBones m_TargetBone;
             private float3 m_Offset, m_RotOffset;
 
-            CoroutineLoop ICoroutineJob.Loop => CoroutineLoop.Transform;
+            UpdateLoop ICoroutineJob.Loop => UpdateLoop.Transform;
 
             public WeaponPoser(Entity<ActorEntity> entity, Instance<ActorWeaponData> weapon,
                 bool useBone, HumanBodyBones targetBone, float3 offset, float3 rotOffset)
