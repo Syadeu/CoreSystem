@@ -77,11 +77,11 @@ namespace SyadeuEditor.Presentation
                     List<ObjectDrawerBase> removeList = new List<ObjectDrawerBase>();
                     for (int i = 0; i < m_InvalidIndices.Count; i++)
                     {
-                        removeList.Add(ArrayDrawer.m_ElementDrawers[m_InvalidIndices[i]]);
+                        removeList.Add(ArrayDrawer[m_InvalidIndices[i]]);
                     }
                     for (int i = 0; i < removeList.Count; i++)
                     {
-                        ArrayDrawer.m_ElementDrawers.Remove(removeList[i]);
+                        ArrayDrawer.Remove(removeList[i]);
                     }
 
                     m_InvalidIndices.Clear();
@@ -111,7 +111,7 @@ namespace SyadeuEditor.Presentation
                             temp.RemoveAt(idx);
                             Entity.m_Objects = temp.ToArray();
 
-                            ArrayDrawer.m_ElementDrawers.RemoveAt(idx);
+                            ArrayDrawer.RemoveAt(idx);
 
                             m_InvalidIndices.RemoveAt(i);
                             m_OpenInvalidIndex.RemoveAt(i);
@@ -126,7 +126,7 @@ namespace SyadeuEditor.Presentation
                     {
                         EditorGUI.indentLevel++;
                         EditorGUI.BeginChangeCheck();
-                        ArrayDrawer.m_ElementDrawers[idx].OnGUI();
+                        ArrayDrawer[idx].OnGUI();
                         if (EditorGUI.EndChangeCheck())
                         {
                             if (!IsInvalidObject(Entity.m_Objects[idx]))

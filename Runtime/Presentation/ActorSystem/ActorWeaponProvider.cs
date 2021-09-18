@@ -14,6 +14,7 @@ using UnityEngine;
 namespace Syadeu.Presentation.Actor
 {
     [DisplayName("ActorProvider: Weapon Provider")]
+    [ActorProviderRequire(typeof(ActorInventoryProvider))]
     public class ActorWeaponProvider : ActorProviderBase
     {
         [Header("Accept Weapon Types")]

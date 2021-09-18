@@ -6,6 +6,7 @@ using System;
 using System.ComponentModel;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace Syadeu.Presentation.Map
@@ -22,16 +23,34 @@ namespace Syadeu.Presentation.Map
         [JsonProperty(Order = 3, PropertyName = "m_Scale")]
         private float3 m_Scale;
 
-        [JsonIgnore] private Terrain m_TerrainInstance = null;
+        [Space, Header("Terrain NavObstacle")]
+        [JsonProperty(Order = 4, PropertyName = "EnableObstacle")]
+        private bool m_EnableObstacle = false;
+        [JsonProperty(Order = 5, PropertyName = "AreaMask")]
+        private int m_AreaMask = 0;
+
+        [JsonIgnore] internal Terrain m_TerrainInstance = null;
+        [JsonIgnore] private NavMeshSystem m_NavMeshSystem = null; 
+        [JsonIgnore] internal NavMeshBuildSource[] m_Sources = null;
 
         [JsonIgnore] public bool IsCreated => m_TerrainInstance != null;
         [JsonIgnore] public TRS TRS => new TRS(m_Position, m_Rotation, m_Scale);
 
+        protected override void OnCreated()
+        {
+            if (m_EnableObstacle) m_NavMeshSystem = PresentationSystem<NavMeshSystem>.System;
+        }
         protected override void OnDestroy()
         {
             if (m_TerrainInstance != null)
             {
                 UnityEngine.Object.Destroy(m_TerrainInstance.gameObject);
+            }
+
+            if (m_EnableObstacle)
+            {
+                m_NavMeshSystem.RemoveTerrain(this);
+                m_NavMeshSystem = null;
             }
         }
         public void Create(Action<Terrain> onComplete)
@@ -94,6 +113,8 @@ namespace Syadeu.Presentation.Map
             terrainObj.name = string.Format(c_TerrainName, trs.m_Position.x, trs.m_Position.y, trs.m_Position.z);
 #endif
             m_TerrainInstance = terrain;
+
+            if (m_EnableObstacle) m_NavMeshSystem.AddTerrain(this, m_AreaMask);
         }
     }
 }

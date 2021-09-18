@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
 
-public class SimplePlayerController : MonoBehaviour
+public partial class SimplePlayerController : MonoBehaviour
 {
     [SerializeField] private Animator m_Animator;
     [SerializeField] private Transform m_Camera;

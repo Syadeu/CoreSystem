@@ -146,20 +146,29 @@ namespace SyadeuEditor.Presentation
     {
         const string c_NameFormat = "{0} <size=9>: {1}</size>";
 
-        private Type m_DeclaredType;
-        private Type m_ElementType;
+        private readonly Type m_DeclaredType;
+        private readonly Type m_ElementType;
 
-        private Color
+        private readonly Color
             color1, color2, color3;
 
         public bool m_Open = false;
 
-        public readonly List<ObjectDrawerBase> m_ElementDrawers = new List<ObjectDrawerBase>();
-        public readonly List<bool> m_ElementOpen = new List<bool>();
+        private readonly List<ObjectDrawerBase> m_ElementDrawers = new List<ObjectDrawerBase>();
+        private readonly List<bool> m_ElementOpen = new List<bool>();
 
         private readonly MemberInfo m_ElementFirstMember;
 
         public Type ElementType => m_ElementType;
+        public int Count => m_ElementDrawers.Count;
+
+        public ObjectDrawerBase this[int index]
+        {
+            get
+            {
+                return m_ElementDrawers[index];
+            }
+        }
 
         public ArrayDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
         {
@@ -438,6 +447,17 @@ namespace SyadeuEditor.Presentation
             m_ElementOpen.RemoveAt(i);
 
             return list;
+        }
+
+        public void Remove(ObjectDrawerBase obj)
+        {
+            int idx = m_ElementDrawers.IndexOf(obj);
+            RemoveAt(idx);
+        }
+        public void RemoveAt(int index)
+        {
+            m_ElementDrawers.RemoveAt(index);
+            m_ElementOpen.RemoveAt(index);
         }
 
         public void DrawHeader()
