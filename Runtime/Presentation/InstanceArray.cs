@@ -128,6 +128,26 @@ namespace Syadeu.Presentation
             DisposeSentinel.Create(out m_AtomicSafetyHandle, out m_DisposeSentinel, 1, allocator);
 #endif
         }
+        public InstanceArray(IEnumerable<Reference<T>> iter, Allocator allocator)
+        {
+            m_Allocator = allocator;
+            m_Length = iter.Count();
+            unsafe
+            {
+                m_Buffer = (Instance<T>*)UnsafeUtility.Malloc(m_Length * UnsafeUtility.SizeOf<Instance<T>>(), UnsafeUtility.AlignOf<Instance<T>>(), allocator);
+
+                int i = 0;
+                foreach (Reference<T> item in iter)
+                {
+                    m_Buffer[i] = item.CreateInstance();
+                    i++;
+                }
+            }
+
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
+            DisposeSentinel.Create(out m_AtomicSafetyHandle, out m_DisposeSentinel, 1, allocator);
+#endif
+        }
 
         public void Dispose()
         {
