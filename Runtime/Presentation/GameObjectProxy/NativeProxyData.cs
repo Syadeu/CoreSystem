@@ -149,7 +149,7 @@ namespace Syadeu.Presentation.Proxy
 
         public ProxyTransform Add(PrefabReference prefab, 
             float3 translation, quaternion rotation, float3 scale, bool enableCull,
-            float3 center, float3 size)
+            float3 center, float3 size, bool gpuInstanced)
         {
 #if UNITY_EDITOR
             AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
@@ -168,7 +168,7 @@ namespace Syadeu.Presentation.Proxy
                 uint length = m_UnsafeList->m_Length;
                 Incremental(length);
 
-                ProxyTransform result = Add(prefab, translation, rotation, scale, enableCull, center, size);
+                ProxyTransform result = Add(prefab, translation, rotation, scale, enableCull, center, size, gpuInstanced);
                 return result;
             }
 
@@ -197,7 +197,9 @@ namespace Syadeu.Presentation.Proxy
                 m_Scale = scale,
 
                 m_Center = center,
-                m_Size = size
+                m_Size = size,
+
+                m_GpuInstanced = gpuInstanced
             };
             
             *targetP = tr;

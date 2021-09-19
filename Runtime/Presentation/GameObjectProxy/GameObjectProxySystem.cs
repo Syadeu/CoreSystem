@@ -509,7 +509,10 @@ namespace Syadeu.Presentation.Proxy
 
         #endregion
 
-        public ProxyTransform CreateNewPrefab(in PrefabReference<GameObject> prefab, in float3 pos, in quaternion rot, in float3 scale, in bool enableCull, in float3 center, in float3 size)
+        public ProxyTransform CreateNewPrefab(in PrefabReference<GameObject> prefab, 
+            in float3 pos, in quaternion rot, in float3 scale, in bool enableCull, 
+            in float3 center, in float3 size,
+            bool gpuInstanced = false)
         {
             CoreSystem.Logger.ThreadBlock(nameof(CreateNewPrefab), ThreadInfo.Unity);
 
@@ -518,16 +521,16 @@ namespace Syadeu.Presentation.Proxy
             ProxyTransform tr;
             if (prefab.IsNone())
             {
-                tr = m_ProxyData.Add(PrefabReference.None, pos, rot, scale, enableCull, center, size);
+                tr = m_ProxyData.Add(PrefabReference.None, pos, rot, scale, enableCull, center, size, gpuInstanced);
             }
             else if (!prefab.IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Proxy,
                     $"Trying to create an invalid prefab proxy. This is not allowed. Replaced to empty.");
 
-                tr = m_ProxyData.Add(PrefabReference.None, pos, rot, scale, enableCull, center, size);
+                tr = m_ProxyData.Add(PrefabReference.None, pos, rot, scale, enableCull, center, size, gpuInstanced);
             }
-            else tr = m_ProxyData.Add(prefab, pos, rot, scale, enableCull, center, size);
+            else tr = m_ProxyData.Add(prefab, pos, rot, scale, enableCull, center, size, gpuInstanced);
 
             unsafe
             {
@@ -570,6 +573,120 @@ namespace Syadeu.Presentation.Proxy
         }
 
         #region Proxy Object Control
+
+        unsafe private class GPUInstancing
+        {
+            public PrefabReference<GameObject> prefab;
+
+            public class Item
+            {
+                public Material[] Materials;
+                public Mesh Mesh;
+                public Bounds Bounds;
+
+                public TRS LocalTRS;
+
+                public ComputeBuffer ComputeBuffer;
+            }
+
+            public List<ProxyTransform> transforms;
+            public List<Item> items;
+
+            ComputeBuffer ComputeBuffer;
+
+            public void Init(PrefabReference<GameObject> obj)
+            {
+                prefab = obj;
+
+                if (prefab.Asset == null)
+                {
+                    AsyncOperationHandle<GameObject> handle = prefab.LoadAssetAsync();
+                    handle.Completed += InitializeAsync;
+                }
+                else Initialize(prefab.Asset);
+            }
+
+            private void InitializeAsync(AsyncOperationHandle<GameObject> handle)
+            {
+                Initialize(handle.Result);
+            }
+            private void Initialize(GameObject obj)
+            {
+                Renderer[] renderers = obj.GetComponentsInChildren<Renderer>();
+
+                items = new List<Item>();
+
+                for (int i = 0; i < renderers.Length; i++)
+                {
+                    Mesh mesh;
+                    if (renderers[i] is MeshRenderer meshRenderer)
+                    {
+                        mesh = UnityEngine.Object.Instantiate(meshRenderer.GetComponent<MeshFilter>().sharedMesh);
+                    }
+                    else
+                    {
+                        "error not support".ToLogError();
+                        break;
+                    }
+
+                    Material[] 
+                        localMats = renderers[i].sharedMaterials,
+                        instancedMats = new Material[localMats.Length];
+                    for (int a = 0; a < localMats.Length; a++)
+                    {
+                        instancedMats[i] = UnityEngine.Object.Instantiate(localMats[i]);
+                    }
+
+
+                    Item item = new Item()
+                    {
+                        Mesh = mesh,
+                        Materials = instancedMats,
+                        Bounds = renderers[i].bounds,
+                        LocalTRS = new TRS(renderers[i].transform),
+
+                        ComputeBuffer = new ComputeBuffer(1, 5 * sizeof(uint), ComputeBufferType.IndirectArguments)
+                    };
+
+                    items.Add(item);
+                }
+            }
+
+            public void Draw()
+            {
+                for (int i = 0; i < transforms.Count; i++)
+                {
+                    TRS trs = items[i].LocalTRS.Project(new TRS(transforms[i]));
+
+
+                }
+
+                for (int i = 0; i < items.Count; i++)
+                {
+                    // Argument buffer used by DrawMeshInstancedIndirect.
+                    uint[] args = new uint[5] { 0, 0, 0, 0, 0 };
+                    // Arguments for drawing mesh.
+                    // 0 == number of triangle indices, 1 == population, others are only relevant if drawing submeshes.
+                    args[0] = (uint)items[i].Mesh.GetIndexCount(0);
+                    args[1] = (uint)transforms.Count;
+                    args[2] = (uint)items[i].Mesh.GetIndexStart(0);
+                    args[3] = (uint)items[i].Mesh.GetBaseVertex(0);
+
+                    items[i].ComputeBuffer.SetData(args);
+
+                    foreach (var material in items[i].Materials)
+                    {
+                        Graphics.DrawMeshInstancedIndirect(
+                            mesh:           items[i].Mesh,
+                            submeshIndex:   0,
+                            material:       material,
+                            bounds:         items[i].Bounds,
+                            bufferWithArgs: items[i].ComputeBuffer
+                            );
+                    }
+                }
+            }
+        }
 
         private void AddProxy(ProxyTransform proxyTransform)
         {

@@ -29,6 +29,12 @@ namespace Syadeu.Presentation.Proxy
             m_Rotation = tr.rotation;
             m_Scale = tr.scale;
         }
+        public TRS(Transform tr)
+        {
+            m_Position = tr.position;
+            m_Rotation = tr.rotation;
+            m_Scale = tr.localScale;
+        }
 
         public TRS Project(TRS parent)
         {

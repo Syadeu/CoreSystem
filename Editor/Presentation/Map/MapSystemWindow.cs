@@ -1010,6 +1010,8 @@ namespace SyadeuEditor.Presentation.Map
             }
         }
 
+        private Vector2 m_Scroll;
+
         private readonly List<Reference<MapDataEntityBase>> m_LoadedMapDataReference = new List<Reference<MapDataEntityBase>>();
         private readonly List<MapData> m_LoadedMapData = new List<MapData>();
 
@@ -1062,6 +1064,8 @@ namespace SyadeuEditor.Presentation.Map
 
         public void OnGUI()
         {
+            m_Scroll = EditorGUILayout.BeginScrollView(m_Scroll);
+
             using (new EditorUtils.BoxBlock(Color.gray))
             {
                 for (int i = 0; i < m_LoadedMapDataReference.Count; i++)
@@ -1189,6 +1193,32 @@ namespace SyadeuEditor.Presentation.Map
                     m_WasEditedMapDataSelector = false;
                 }
             }
+
+            EditorUtils.Line();
+
+            using (new EditorUtils.BoxBlock(Color.gray))
+            {
+                EditorUtils.StringRich("Lightmapping", 13);
+
+                if (GUILayout.Button("Bake"))
+                {
+                    if (Lightmapping.isRunning)
+                    {
+                        Lightmapping.Cancel();
+                    }
+
+                    if (m_LoadedMapData.Count != 0)
+                    {
+                        Lightmapping.BakeAsync();
+                    }
+                    else
+                    {
+                        "no loaded map data found".ToLog();
+                    }
+                }
+            }
+
+            EditorGUILayout.EndScrollView();
         }
         public void OnSceneGUI()
         {
@@ -1548,9 +1578,28 @@ namespace SyadeuEditor.Presentation.Map
                 tr.rotation = target.m_Rotation;
                 tr.localScale = target.m_Scale;
 
-                obj.isStatic = target.m_Static;
+                //obj.isStatic = target.m_Static;
+                if (target.m_Static)
+                {
+                    SetStaticRecursive(obj);
+                }
 
                 return obj;
+
+                void SetStaticRecursive(GameObject obj)
+                {
+                    for (int i = 0; i < obj.transform.childCount; i++)
+                    {
+                        if (obj.transform.GetChild(i).childCount > 0)
+                        {
+                            SetStaticRecursive(obj.transform.GetChild(i).gameObject);
+                        }
+
+                        obj.transform.GetChild(i).gameObject.isStatic = true;
+                    }
+
+                    obj.isStatic = true;
+                }
             }
 
             public void Dispose()
