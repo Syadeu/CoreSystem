@@ -48,7 +48,8 @@ namespace SyadeuEditor.Presentation
 
         private void OnSceneGUI()
         {
-            if (!Asset.entity.IsValid()) return;
+            if (!Application.isPlaying) return;
+            else if (!Asset.entity.IsValid()) return;
 
             Vector2 guiPos = HandleUtility.WorldToGUIPoint(Asset.transform.position);
             Handles.BeginGUI();

@@ -37,7 +37,7 @@ namespace Syadeu.Presentation.Render
             m_Light.enabled = true;
 
             float time = Time.time - m_StartTime;
-            while (time >= m_TimeMultiplier)
+            while (time < m_TimeMultiplier)
             {
                 time = Time.time - m_StartTime;
                 m_Light.intensity = m_LightCurve.Evaluate(time / m_TimeMultiplier) * m_GraphLastTime;

@@ -8,6 +8,7 @@ using UnityEngine;
 namespace Syadeu.Presentation.Actor
 {
     [DisplayName("ActorProvider: Attack Provider")]
+    [ActorProviderRequire(typeof(ActorWeaponProvider))]
     public class ActorAttackProvider : ActorProviderBase
     {
         [JsonIgnore] protected override Type[] ReceiveEventOnly => new Type[] { TypeHelper.TypeOf<IActorAttackEvent>.Type };

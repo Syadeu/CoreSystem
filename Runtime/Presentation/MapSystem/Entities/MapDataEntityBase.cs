@@ -1,7 +1,9 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Proxy;
 using System;
 using Unity.Mathematics;
+using UnityEngine;
 using AABB = Syadeu.Database.AABB;
 
 namespace Syadeu.Presentation.Map
@@ -16,8 +18,11 @@ namespace Syadeu.Presentation.Map
             [JsonProperty(Order = 2, PropertyName = "Rotation")] public quaternion m_Rotation = quaternion.identity;
             [JsonProperty(Order = 3, PropertyName = "Scale")] public float3 m_Scale;
 
-            [JsonIgnore]
-            public AABB aabb
+            [Space]
+            [JsonProperty(Order = 4, PropertyName = "Static")]
+            public bool m_Static = false;
+
+            [JsonIgnore] public AABB aabb
             {
                 get
                 {
@@ -25,6 +30,8 @@ namespace Syadeu.Presentation.Map
                     return new AABB(entity.Center + m_Translation, entity.Size).Rotation(in m_Rotation, in m_Scale);
                 }
             }
+            [JsonIgnore] public TRS trs => new TRS(m_Translation, m_Rotation, m_Scale);
+
             public Object()
             {
                 m_Rotation = quaternion.identity;

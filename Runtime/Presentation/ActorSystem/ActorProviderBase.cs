@@ -15,7 +15,7 @@ namespace Syadeu.Presentation.Actor
     {
         [JsonIgnore] private bool m_Initialized = false;
         [JsonIgnore] private Entity<ActorEntity> m_Parent = Entity<ActorEntity>.Empty;
-        [JsonIgnore] private Instance<ActorControllerAttribute> m_Controller = Instance<ActorControllerAttribute>.Empty;
+        [JsonIgnore] private ActorControllerAttribute m_Controller = null;
 
         [JsonIgnore] private PresentationSystemID<EventSystem> m_EventSystem;
         [JsonIgnore] private PresentationSystemID<EntitySystem> m_EntitySystem;
@@ -32,7 +32,7 @@ namespace Syadeu.Presentation.Actor
             EventSystem eventSystem, EntitySystem entitySystem, CoroutineSystem coroutineSystem)
         {
             m_Parent = parent;
-            m_Controller = new Instance<ActorControllerAttribute>(actorController);
+            m_Controller = actorController;
 
             m_EventSystem = eventSystem.SystemID;
             m_EntitySystem = entitySystem.SystemID;
@@ -87,11 +87,9 @@ namespace Syadeu.Presentation.Actor
 
         protected Instance<T> GetProvider<T>() where T : ActorProviderBase
         {
-            ActorControllerAttribute ctr = m_Controller.Object;
+            if (m_Controller == null) return Instance<T>.Empty;
 
-            if (ctr == null) return Instance<T>.Empty;
-
-            return ctr.GetProvider<T>();
+            return m_Controller.GetProvider<T>();
         }
 
         protected CoroutineJob StartCoroutine<T>(T coroutine) where T : struct, ICoroutineJob

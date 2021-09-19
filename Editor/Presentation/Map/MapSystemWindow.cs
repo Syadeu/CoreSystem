@@ -25,24 +25,27 @@ namespace SyadeuEditor.Presentation.Map
 
         protected override void OnEnable()
         {
-            //m_PreviewFolder = new GameObject("Preview").transform;
-            //m_PreviewFolder.gameObject.hideFlags = HideFlags.DontSave | HideFlags.NotEditable | HideFlags.HideInHierarchy;
-            //m_PreviewFolder.gameObject.tag = c_EditorOnly;
-
             m_MapDataLoader = new MapDataLoader();
+            EditorApplication.playModeStateChanged -= EditorApplication_playModeStateChanged;
+            EditorApplication.playModeStateChanged += EditorApplication_playModeStateChanged;
 
             base.OnEnable();
         }
+        private void EditorApplication_playModeStateChanged(PlayModeStateChange obj)
+        {
+            if (obj == PlayModeStateChange.ExitingEditMode)
+            {
+                if (m_MapDataLoader != null)
+                {
+                    m_MapDataLoader.Dispose();
+                    m_MapDataLoader = null;
+                }
+                m_MapDataLoader = new MapDataLoader();
+            }
+        }
+
         protected override void OnDisable()
         {
-            //foreach (var item in m_LoadedMapData)
-            //{
-            //    if (item == null) continue;
-
-            //    item.Dispose();
-            //}
-
-            //DestroyImmediate(m_PreviewFolder.gameObject);
             Tools.hidden = false;
 
             if (m_MapDataLoader != null)
@@ -54,6 +57,14 @@ namespace SyadeuEditor.Presentation.Map
             base.OnDisable();
         }
         private void OnDestroy()
+        {
+            if (m_MapDataLoader != null)
+            {
+                m_MapDataLoader.Dispose();
+                m_MapDataLoader = null;
+            }
+        }
+        private void OnValidate()
         {
             if (m_MapDataLoader != null)
             {
@@ -90,6 +101,17 @@ namespace SyadeuEditor.Presentation.Map
                     CoreSystem.Logger.Log(Channel.Editor,
                         $"Map data Saved");
                 }
+            }
+        }
+        private void OnSelectionChange()
+        {
+            if (Selection.activeGameObject != null)
+            {
+                m_MapDataLoader.SelectObject(Selection.activeGameObject);
+            }
+            else if (m_MapDataLoader.SelectedGameObject != null)
+            {
+                m_MapDataLoader.SelectObject(null);
             }
         }
         protected override void OnSceneGUI(SceneView obj)
@@ -975,42 +997,37 @@ namespace SyadeuEditor.Presentation.Map
 
     public sealed class MapDataLoader : IDisposable
     {
-        private readonly Transform m_Folder;
+        private Transform m_FolderInstance;
+        public Transform Folder
+        {
+            get
+            {
+                if (m_FolderInstance == null)
+                {
+                    m_FolderInstance = new GameObject("MapData Preview").transform;
+                }
+                return m_FolderInstance;
+            }
+        }
 
         private readonly List<Reference<MapDataEntityBase>> m_LoadedMapDataReference = new List<Reference<MapDataEntityBase>>();
         private readonly List<MapData> m_LoadedMapData = new List<MapData>();
 
         private readonly List<GameObject> m_CreatedObjects = new List<GameObject>();
-        private bool m_IsDirty = false;
-
+        
         private MapData m_EditingMapData = null;
 
         private MapData m_SelectedMapData = null;
         private MapDataEntityBase.Object m_SelectedObject = null;
         private GameObject m_SelectedGameObject = null;
-        private bool m_SelectedGameObjectOpen = false;
 
-        public bool IsDirty
-        {
-            get
-            {
-                bool temp = false;
-                for (int i = 0; i < m_LoadedMapData.Count; i++)
-                {
-                    temp |= m_LoadedMapData[i].IsDirty;
-                }
-                temp |= m_IsDirty;
+        private bool m_WasEditedMapDataSelector = false;
 
-                return temp;
-            }
-        }
+        public GameObject SelectedGameObject => m_SelectedGameObject;
 
         public MapDataLoader()
         {
             if (!EntityDataList.IsLoaded) EntityDataList.Instance.LoadData();
-
-            m_Folder = new GameObject("MapData Preview").transform;
-            m_Folder.gameObject.hideFlags = HideFlags.NotEditable | HideFlags.DontSave;
         }
 
         private MapDataEntityBase.Object GetMapDataObject(GameObject target, out MapData mapData)
@@ -1030,9 +1047,148 @@ namespace SyadeuEditor.Presentation.Map
             return null;
         }
 
+        public void SelectObject(GameObject obj)
+        {
+            if (obj == null)
+            {
+                m_SelectedObject = null;
+                m_SelectedGameObject = null;
+                return;
+            }
+
+            m_SelectedObject = GetMapDataObject(obj, out m_SelectedMapData);
+            m_SelectedGameObject = m_SelectedObject == null ? null : obj;
+        }
+
         public void OnGUI()
         {
-            DrawMapDataSelector();
+            using (new EditorUtils.BoxBlock(Color.gray))
+            {
+                for (int i = 0; i < m_LoadedMapDataReference.Count; i++)
+                {
+                    int index = i;
+
+                    using (new EditorGUILayout.HorizontalScope())
+                    {
+                        DrawMapDataSelector(m_LoadedMapDataReference[index], (other) =>
+                        {
+                            if (m_EditingMapData != null && m_EditingMapData.Equals(m_LoadedMapData[index]))
+                            {
+                                m_EditingMapData = null;
+                            }
+
+                            if (other.IsEmpty() || !other.IsValid())
+                            {
+                                m_LoadedMapDataReference.RemoveAt(index);
+
+                                if (m_LoadedMapData[index] != null)
+                                {
+                                    m_LoadedMapData[index].Dispose();
+                                    m_LoadedMapData.RemoveAt(index);
+                                }
+                            }
+                            else
+                            {
+                                m_LoadedMapDataReference[index] = other;
+
+                                if (m_LoadedMapData[index] != null)
+                                {
+                                    m_LoadedMapData[index].Dispose();
+                                }
+                                m_LoadedMapData[index] = new MapData(Folder, other);
+                            }
+
+                            m_WasEditedMapDataSelector = true;
+                        });
+
+                        bool isEditing = false;
+                        if (m_EditingMapData != null && m_EditingMapData.Equals(m_LoadedMapData[index]))
+                        {
+                            isEditing = true;
+                        }
+
+                        EditorGUI.BeginChangeCheck();
+                        isEditing = GUILayout.Toggle(isEditing, "E", EditorUtils.MiniButton, GUILayout.Width(20));
+                        if (EditorGUI.EndChangeCheck())
+                        {
+                            if (isEditing) m_EditingMapData = m_LoadedMapData[index];
+                            else
+                            {
+                                if (m_EditingMapData != null && m_EditingMapData.Equals(m_LoadedMapData[index]))
+                                {
+                                    m_EditingMapData = null;
+                                }
+                            }
+                        }
+
+                        if (GUILayout.Button("-", GUILayout.Width(20)))
+                        {
+                            if (m_EditingMapData != null && m_EditingMapData.Equals(m_LoadedMapData[index]))
+                            {
+                                m_EditingMapData = null;
+                            }
+
+                            m_LoadedMapDataReference.RemoveAt(index);
+
+                            if (m_LoadedMapData[index] != null)
+                            {
+                                m_LoadedMapData[index].Dispose();
+                                m_LoadedMapData.RemoveAt(index);
+                            }
+
+                            if (m_LoadedMapData.Count == 0)
+                            {
+                                SelectObject(null);
+
+                                UnityEngine.Object.DestroyImmediate(m_FolderInstance.gameObject);
+                                m_FolderInstance = null;
+                            }
+
+                            i--;
+                            continue;
+                        }
+                    }
+                }
+
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    DrawMapDataSelector(Reference<MapDataEntityBase>.Empty, (other) =>
+                    {
+                        if (other.IsEmpty() || !other.IsValid())
+                        {
+                            "not valid".ToLog();
+                            return;
+                        }
+
+                        if (m_LoadedMapDataReference.Contains(other))
+                        {
+                            "cannot load that already loaded".ToLog();
+                            return;
+                        }
+
+                        m_LoadedMapDataReference.Add(other);
+                        m_LoadedMapData.Add(new MapData(Folder, other));
+
+                        m_WasEditedMapDataSelector = true;
+                    });
+
+                    EditorGUI.BeginDisabledGroup(true);
+                    GUILayout.Toggle(false, "E", EditorUtils.MiniButton, GUILayout.Width(20));
+                    GUILayout.Button("-", GUILayout.Width(20));
+                    EditorGUI.EndDisabledGroup();
+                }
+
+                if (m_WasEditedMapDataSelector)
+                {
+                    m_CreatedObjects.Clear();
+                    for (int i = 0; i < m_LoadedMapData.Count; i++)
+                    {
+                        m_CreatedObjects.AddRange(m_LoadedMapData[i].CreatedObjects);
+                    }
+
+                    m_WasEditedMapDataSelector = false;
+                }
+            }
         }
         public void OnSceneGUI()
         {
@@ -1047,47 +1203,39 @@ namespace SyadeuEditor.Presentation.Map
                 case EventType.MouseDown:
                     if (Event.current.button == 0)
                     {
-                        if (m_SelectedObject == null)
-                        {
-                            GUIUtility.hotControl = mouseControlID;
-
-                            GameObject obj = HandleUtility.PickGameObject(Event.current.mousePosition, true, null, null);
-
-                            m_SelectedObject = GetMapDataObject(obj, out m_SelectedMapData);
-                            m_SelectedGameObject = m_SelectedObject == null ? null : obj;
-
-                            //if (m_SelectedObject != null) $"{m_SelectedObject.name}".ToLog();
-
-                            Event.current.Use();
-                        }
-                    }
-                    else if (Event.current.button == 1)
-                    {
                         //if (m_SelectedObject == null)
                         //{
+                        //    GUIUtility.hotControl = mouseControlID;
+
                         //    GameObject obj = HandleUtility.PickGameObject(Event.current.mousePosition, true, null, null);
 
                         //    m_SelectedObject = GetMapDataObject(obj, out m_SelectedMapData);
                         //    m_SelectedGameObject = m_SelectedObject == null ? null : obj;
+
+                        //    //if (m_SelectedObject != null) $"{m_SelectedObject.name}".ToLog();
+
+                        //    Event.current.Use();
                         //}
+                    }
+                    else if (Event.current.button == 1)
+                    {
+                        //if (m_SelectedObject != null)
+                        //{
+                        //    GUIUtility.hotControl = mouseControlID;
 
-                        if (m_SelectedObject != null)
-                        {
-                            GUIUtility.hotControl = mouseControlID;
+                        //    GenericMenu menu = new GenericMenu();
+                        //    menu.AddDisabledItem(new GUIContent(m_SelectedObject.m_Object.GetObject().Name));
+                        //    menu.AddSeparator(string.Empty);
 
-                            GenericMenu menu = new GenericMenu();
-                            menu.AddDisabledItem(new GUIContent(m_SelectedObject.m_Object.GetObject().Name));
-                            menu.AddSeparator(string.Empty);
+                        //    menu.AddItem(new GUIContent("Open in Window"), false, () =>
+                        //    {
+                        //        EntityWindow.Instance.Select(m_SelectedObject.m_Object);
+                        //    });
 
-                            menu.AddItem(new GUIContent("Open in Window"), false, () =>
-                            {
-                                EntityWindow.Instance.Select(m_SelectedObject.m_Object);
-                            });
+                        //    menu.ShowAsContext();
 
-                            menu.ShowAsContext();
-
-                            Event.current.Use();
-                        }
+                        //    Event.current.Use();
+                        //}
                     }
                     else if (Event.current.button == 2)
                     {
@@ -1161,54 +1309,33 @@ namespace SyadeuEditor.Presentation.Map
 
             #endregion
 
-            #region Keyboard Event
-
-            int keyboardID = GUIUtility.GetControlID(FocusType.Keyboard);
-            switch (Event.current.GetTypeForControl(keyboardID))
-            {
-                case EventType.KeyDown:
-                    if (Event.current.keyCode == KeyCode.Escape)
-                    {
-                        GUIUtility.hotControl = keyboardID;
-
-                        m_SelectedObject = null;
-
-                        Event.current.Use();
-                    }
-                    break;
-                case EventType.KeyUp:
-                    break;
-            }
-
-            #endregion
-
             if (m_SelectedObject != null)
             {
                 DrawSelectedObject();
             }
 
-            #region GL Draw All previews
+            //#region GL Draw All previews
 
-            if (m_SelectedObject == null)
-            {
-                Color temp = Color.white;
-                temp.a = .5f;
-                Handles.color = temp;
+            //if (m_SelectedObject == null)
+            //{
+            //    Color temp = Color.white;
+            //    temp.a = .5f;
+            //    Handles.color = temp;
 
-                for (int i = 0; i < m_CreatedObjects.Count; i++)
-                {
-                    MapDataEntityBase.Object obj = GetMapDataObject(m_CreatedObjects[i], out _);
+            //    for (int i = 0; i < m_CreatedObjects.Count; i++)
+            //    {
+            //        MapDataEntityBase.Object obj = GetMapDataObject(m_CreatedObjects[i], out _);
 
-                    Vector2 pos = HandleUtility.WorldToGUIPoint(obj.m_Translation);
-                    if (!obj.m_Object.IsValid() ||
-                        !EditorSceneUtils.IsDrawable(pos)) continue;
+            //        Vector2 pos = HandleUtility.WorldToGUIPoint(obj.m_Translation);
+            //        if (!obj.m_Object.IsValid() ||
+            //            !EditorSceneUtils.IsDrawable(pos)) continue;
 
-                    AABB aabb = obj.aabb;
-                    Handles.DrawWireCube(aabb.center, aabb.size);
-                }
-            }
+            //        AABB aabb = obj.aabb;
+            //        Handles.DrawWireCube(aabb.center, aabb.size);
+            //    }
+            //}
 
-            #endregion
+            //#endregion
         }
         public void Dispose()
         {
@@ -1220,133 +1347,9 @@ namespace SyadeuEditor.Presentation.Map
             m_LoadedMapDataReference.Clear();
             m_LoadedMapData.Clear();
 
-            UnityEngine.Object.DestroyImmediate(m_Folder.gameObject);
+            UnityEngine.Object.DestroyImmediate(Folder.gameObject);
         }
 
-        private bool m_WasEditedMapDataSelector = false;
-        private void DrawMapDataSelector()
-        {
-            using (new EditorUtils.BoxBlock(Color.gray))
-            {
-                for (int i = 0; i < m_LoadedMapDataReference.Count; i++)
-                {
-                    int index = i;
-
-                    using (new EditorGUILayout.HorizontalScope())
-                    {
-                        DrawMapDataSelector(m_LoadedMapDataReference[index], (other) =>
-                        {
-                            if (m_EditingMapData != null && m_EditingMapData.Equals(m_LoadedMapData[index]))
-                            {
-                                m_EditingMapData = null;
-                            }
-
-                            if (other.IsEmpty() || !other.IsValid())
-                            {
-                                m_LoadedMapDataReference.RemoveAt(index);
-
-                                if (m_LoadedMapData[index] != null)
-                                {
-                                    m_LoadedMapData[index].Dispose();
-                                    m_LoadedMapData.RemoveAt(index);
-                                }
-                            }
-                            else
-                            {
-                                m_LoadedMapDataReference[index] = other;
-
-                                if (m_LoadedMapData[index] != null)
-                                {
-                                    m_LoadedMapData[index].Dispose();
-                                }
-                                m_LoadedMapData[index] = new MapData(m_Folder, other);
-                            }
-
-                            m_WasEditedMapDataSelector = true;
-                        });
-
-                        bool isEditing = false;
-                        if (m_EditingMapData != null && m_EditingMapData.Equals(m_LoadedMapData[index]))
-                        {
-                            isEditing = true;
-                        }
-
-                        EditorGUI.BeginChangeCheck();
-                        isEditing = GUILayout.Toggle(isEditing, "E", EditorUtils.MiniButton, GUILayout.Width(20));
-                        if (EditorGUI.EndChangeCheck())
-                        {
-                            if (isEditing) m_EditingMapData = m_LoadedMapData[index];
-                            else
-                            {
-                                if (m_EditingMapData != null && m_EditingMapData.Equals(m_LoadedMapData[index]))
-                                {
-                                    m_EditingMapData = null;
-                                }
-                            }
-                        }
-
-                        if (GUILayout.Button("-", GUILayout.Width(20)))
-                        {
-                            if (m_EditingMapData != null && m_EditingMapData.Equals(m_LoadedMapData[index]))
-                            {
-                                m_EditingMapData = null;
-                            }
-
-                            m_LoadedMapDataReference.RemoveAt(index);
-
-                            if (m_LoadedMapData[index] != null)
-                            {
-                                m_LoadedMapData[index].Dispose();
-                                m_LoadedMapData.RemoveAt(index);
-                            }
-
-                            i--;
-                            continue;
-                        }
-                    }
-                }
-
-                using (new EditorGUILayout.HorizontalScope())
-                {
-                    DrawMapDataSelector(Reference<MapDataEntityBase>.Empty, (other) =>
-                    {
-                        if (other.IsEmpty() || !other.IsValid())
-                        {
-                            "not valid".ToLog();
-                            return;
-                        }
-
-                        if (m_LoadedMapDataReference.Contains(other))
-                        {
-                            "cannot load that already loaded".ToLog();
-                            return;
-                        }
-
-                        m_LoadedMapDataReference.Add(other);
-                        m_LoadedMapData.Add(new MapData(m_Folder, other));
-
-                        m_WasEditedMapDataSelector = true;
-                    });
-
-                    EditorGUI.BeginDisabledGroup(true);
-                    GUILayout.Toggle(false, "E", EditorUtils.MiniButton, GUILayout.Width(20));
-                    GUILayout.Button("-", GUILayout.Width(20));
-                    EditorGUI.EndDisabledGroup();
-                }
-                
-                if (m_WasEditedMapDataSelector)
-                {
-                    m_CreatedObjects.Clear();
-                    for (int i = 0; i < m_LoadedMapData.Count; i++)
-                    {
-                        m_CreatedObjects.AddRange(m_LoadedMapData[i].CreatedObjects);
-                    }
-
-                    m_WasEditedMapDataSelector = false;
-                }
-            }
-        }
-        
         private void DrawSelectedObject()
         {
             const float width = 180;
@@ -1364,26 +1367,19 @@ namespace SyadeuEditor.Presentation.Map
             {
                 guiPos.x += 50;
             }
-            Rect rect = new Rect(guiPos, new Vector2(width, m_SelectedGameObjectOpen ? 105 : 60));
+            Rect rect = new Rect(guiPos, new Vector2(width, 60));
 
             Handles.BeginGUI();
             string objName = $"{(objData != null ? $"{objData.Name}" : "None")}";
             GUI.BeginGroup(rect, objName, EditorUtils.Box);
 
-            #region TR
+            #region Proxy Copy
 
-            m_SelectedGameObjectOpen = EditorGUILayout.Foldout(m_SelectedGameObjectOpen, "Transform", true);
+            m_SelectedObject.m_Translation = m_SelectedGameObject.transform.position;
+            m_SelectedObject.m_Rotation = m_SelectedGameObject.transform.rotation;
+            m_SelectedObject.m_Scale = m_SelectedGameObject.transform.localScale;
 
-            if (m_SelectedGameObjectOpen)
-            {
-                EditorGUI.BeginChangeCheck();
-                m_SelectedObject.m_Translation = EditorGUILayout.Vector3Field(string.Empty, m_SelectedObject.m_Translation, GUILayout.Width(width - 5), GUILayout.ExpandWidth(false));
-                //m_SelectedGameObject.m_Rotation = EditorGUILayout.Vector3Field(string.Empty, m_SelectedGameObject.eulerAngles, GUILayout.Width(width - 5), GUILayout.ExpandWidth(false));
-                if (EditorGUI.EndChangeCheck())
-                {
-                    m_SelectedGameObject.transform.position = m_SelectedObject.m_Translation;
-                }
-            }
+            m_SelectedObject.m_Static = m_SelectedGameObject.isStatic;
 
             #endregion
 
@@ -1406,42 +1402,6 @@ namespace SyadeuEditor.Presentation.Map
             #endregion
 
             if (m_SelectedObject == null) return;
-
-            #region Tools
-
-            EditorGUI.BeginChangeCheck();
-            switch (Tools.current)
-            {
-                case Tool.View:
-                    break;
-                case Tool.Move:
-                    m_SelectedObject.m_Translation = Handles.PositionHandle(m_SelectedObject.m_Translation, m_SelectedObject.m_Rotation);
-                    break;
-                case Tool.Rotate:
-                    m_SelectedObject.m_Rotation = Handles.RotationHandle(m_SelectedObject.m_Rotation, m_SelectedObject.m_Translation);
-                    break;
-                case Tool.Scale:
-                    m_SelectedObject.m_Scale = Handles.ScaleHandle(m_SelectedObject.m_Scale, m_SelectedObject.m_Translation, m_SelectedObject.m_Rotation, HandleUtility.GetHandleSize(m_SelectedObject.m_Translation));
-                    break;
-                case Tool.Rect:
-                    break;
-                case Tool.Transform:
-                    break;
-                default:
-                    break;
-            }
-            if (EditorGUI.EndChangeCheck())
-            {
-                Transform tr = m_SelectedGameObject.transform;
-                tr.position = m_SelectedObject.m_Translation;
-                tr.localRotation = m_SelectedObject.m_Rotation;
-                tr.localScale = m_SelectedObject.m_Scale;
-
-                //Repaint();
-                m_IsDirty = true;
-            }
-
-            #endregion
 
             Handles.color = Color.red;
             Handles.DrawWireCube(selectAabb.center, selectAabb.size);
@@ -1579,14 +1539,16 @@ namespace SyadeuEditor.Presentation.Map
                     //
                 }
 
-                obj.tag = c_EditorOnly;
-                obj.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
+                //obj.tag = c_EditorOnly;
+                //obj.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
 
                 Transform tr = obj.transform;
 
                 tr.position = target.m_Translation;
                 tr.rotation = target.m_Rotation;
                 tr.localScale = target.m_Scale;
+
+                obj.isStatic = target.m_Static;
 
                 return obj;
             }
