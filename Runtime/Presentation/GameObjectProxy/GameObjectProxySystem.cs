@@ -336,7 +336,6 @@ namespace Syadeu.Presentation.Proxy
                     else m_ClusterData.Remove(id);
                 }
                 m_ProxyData.Remove(tr);
-                "destroy".ToLog();
             }
             #endregion
 

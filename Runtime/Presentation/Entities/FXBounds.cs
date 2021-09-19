@@ -127,7 +127,6 @@ namespace Syadeu.Presentation.Entities
                     yield return null;
                 }
 
-                "exit".ToLog();
                 instance.Destroy();
             }
         }
