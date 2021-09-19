@@ -15,6 +15,12 @@ public partial class SimplePlayerController
     [DisplayName("ActorProvider: TPS Input Provider")]
     public sealed class TPSActorInputProvider : ActorProviderBase
     {
+        public enum MoveType
+        {
+            Walk,
+            Run
+        }
+
         [Header("Animator")]
         [JsonProperty]
         private float m_AnimatorSpeed = 4;
@@ -33,6 +39,7 @@ public partial class SimplePlayerController
         [JsonIgnore] private CoroutineJob m_UpdateJob = CoroutineJob.Null;
 
         [JsonIgnore] public float2 Axis { get; set; }
+        [JsonIgnore] public MoveType Move { get; set; } = MoveType.Run;
 
         protected override void OnCreated(Entity<ActorEntity> entity)
         {
@@ -122,8 +129,18 @@ public partial class SimplePlayerController
                         horizontal = Vector3.Dot(point, tr.right),
                         vertical = Vector3.Dot(point, tr.forward);
 
+                    float speed;
+                    if (vertical > .1f)
+                    {
+                        speed = math.lerp(currentSpeed, input.Move == MoveType.Walk ? 1 : 2, m_AnimatorSpeed * Time.deltaTime);
+                    }
+                    else if (vertical < -.1f)
+                    {
+                        speed = math.lerp(currentSpeed, input.Move == MoveType.Walk ? -1 : -2, m_AnimatorSpeed * Time.deltaTime);
+                    }
+                    else speed = math.lerp(currentSpeed, 0, m_AnimatorSpeed * Time.deltaTime);
                     float
-                        speed = Mathf.Lerp(currentSpeed, vertical < 0 ? -norm.magnitude : norm.magnitude, m_AnimatorSpeed * Time.deltaTime),
+                    //    speed = Mathf.Lerp(currentSpeed, vertical < 0 ? -norm.magnitude : norm.magnitude, m_AnimatorSpeed * Time.deltaTime),
 
                         x = Mathf.Lerp(currentX, horizontal, m_AnimatorSpeed * Time.deltaTime),
                         z = Mathf.Lerp(currentZ, vertical, m_AnimatorSpeed * Time.deltaTime);
