@@ -30,7 +30,12 @@ namespace Syadeu.Presentation.Entities
         {
             get
             {
-                if (m_ParticleSystem == null) return false;
+                if (m_ParticleSystem == null)
+                {
+
+                    if (m_PlayQueued) return true;
+                    return false;
+                }
                 return m_ParticleSystem.isPlaying;
             }
         }

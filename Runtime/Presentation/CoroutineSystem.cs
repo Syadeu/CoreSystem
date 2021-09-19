@@ -12,6 +12,7 @@ namespace Syadeu.Presentation
     {
         public struct PresentationUpdate { }
         public struct PresentationTransformUpdate { }
+        public struct PresentationAfterTransformUpdate { }
 
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;
@@ -24,7 +25,8 @@ namespace Syadeu.Presentation
         readonly List<CoroutineJobPayload> m_CoroutineIterators = new List<CoroutineJobPayload>();
         readonly List<int>
             m_UsedUpdateIndices = new List<int>(),
-            m_UsedTransformIndices = new List<int>();
+            m_UsedTransformIndices = new List<int>(),
+            m_UsedAfterTransformIndices = new List<int>();
         readonly Queue<int> m_TerminatedCoroutineIndices = new Queue<int>();
 
         public event Action OnUpdate;
@@ -74,7 +76,16 @@ namespace Syadeu.Presentation
                         updateDelegate = PresentationTransformUpdateHandler,
                         updateFunction = defaultLoop.subSystemList[i].updateFunction
                     };
+                    PlayerLoopSystem loop2 = new PlayerLoopSystem
+                    {
+                        loopConditionFunction = defaultLoop.subSystemList[i].loopConditionFunction,
+                        subSystemList = Array.Empty<PlayerLoopSystem>(),
+                        type = TypeHelper.TypeOf<PresentationAfterTransformUpdate>.Type,
+                        updateDelegate = PresentationAfterTransformUpdateHandler,
+                        updateFunction = defaultLoop.subSystemList[i].updateFunction
+                    };
                     list.Add(loop);
+                    list.Add(loop2);
                     defaultLoop.subSystemList[i].subSystemList = list.ToArray();
                 }
             }
@@ -327,6 +338,81 @@ namespace Syadeu.Presentation
 
             #endregion
         }
+        private void PresentationAfterTransformUpdateHandler()
+        {
+            #region Iterator Jobs
+
+            for (int i = m_UsedAfterTransformIndices.Count - 1; i >= 0; i--)
+            {
+                int idx = m_UsedAfterTransformIndices[i];
+                CoroutineJobPayload iter = m_CoroutineIterators[idx];
+                if (iter.Iter.Current == null)
+                {
+                    if (!iter.Iter.MoveNext())
+                    {
+                        m_CoroutineIterators[idx].Disposable.Dispose();
+                        m_CoroutineIterators[idx] = null;
+
+                        m_TerminatedCoroutineIndices.Enqueue(idx);
+                        m_UsedAfterTransformIndices.RemoveAt(i);
+                        continue;
+                    }
+                }
+
+                if (iter.Iter.Current is CustomYieldInstruction @yield && !yield.keepWaiting)
+                {
+                    if (!iter.Iter.MoveNext())
+                    {
+                        m_CoroutineIterators[idx].Disposable.Dispose();
+                        m_CoroutineIterators[idx] = null;
+
+                        m_TerminatedCoroutineIndices.Enqueue(idx);
+                        m_UsedAfterTransformIndices.RemoveAt(i);
+                        continue;
+                    }
+                }
+                else if (iter.Iter.Current is UnityEngine.AsyncOperation oper && oper.isDone)
+                {
+                    if (!m_CurrentIterationJob.Iter.MoveNext())
+                    {
+                        m_CoroutineIterators[idx].Disposable.Dispose();
+                        m_CoroutineIterators[idx] = null;
+
+                        m_TerminatedCoroutineIndices.Enqueue(idx);
+                        m_UsedAfterTransformIndices.RemoveAt(i);
+                        continue;
+                    }
+                }
+                else if (iter.Iter.Current is ICustomYieldAwaiter yieldAwaiter &&
+                    !yieldAwaiter.KeepWait)
+                {
+                    if (!m_CurrentIterationJob.Iter.MoveNext())
+                    {
+                        m_CoroutineIterators[idx].Disposable.Dispose();
+                        m_CoroutineIterators[idx] = null;
+
+                        m_TerminatedCoroutineIndices.Enqueue(idx);
+                        m_UsedAfterTransformIndices.RemoveAt(i);
+                        continue;
+                    }
+                }
+                else if (iter.Iter.Current is YieldInstruction &&
+                    !(iter.Iter.Current is UnityEngine.AsyncOperation))
+                {
+                    CoreSystem.Logger.LogError(Channel.Presentation,
+                        $"해당 yield return 타입({m_CurrentIterationJob.Iter.Current.GetType().Name})은 지원하지 않습니다");
+
+                    m_CoroutineIterators[idx].Disposable.Dispose();
+                    m_CoroutineIterators[idx] = null;
+
+                    m_TerminatedCoroutineIndices.Enqueue(idx);
+                    m_UsedAfterTransformIndices.RemoveAt(i);
+                    continue;
+                }
+            }
+
+            #endregion
+        }
 
         #endregion
 
@@ -381,6 +467,10 @@ namespace Syadeu.Presentation
             {
                 m_UsedTransformIndices.Add(coroutineJob.Index);
             }
+            else if (job.Loop == UpdateLoop.AfterTransform)
+            {
+                m_UsedAfterTransformIndices.Add(coroutineJob.Index);
+            }
             else m_UsedUpdateIndices.Add(coroutineJob.Index);
 
             return coroutineJob;
@@ -405,6 +495,10 @@ namespace Syadeu.Presentation
             if (job.m_Loop == UpdateLoop.Transform)
             {
                 m_UsedTransformIndices.Remove(job.Index);
+            }
+            else if (job.m_Loop == UpdateLoop.AfterTransform)
+            {
+                m_UsedAfterTransformIndices.Remove(job.Index);
             }
             else m_UsedUpdateIndices.Remove(job.Index);
         }

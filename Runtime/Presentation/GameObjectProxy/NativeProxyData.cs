@@ -219,6 +219,7 @@ namespace Syadeu.Presentation.Proxy
             }
 
             p->m_IsOccupied = false;
+            p->m_DestroyQueued = false;
 
             CoreSystem.Logger.Log(Channel.Proxy,
                 $"ProxyTransform has been destroyed.");

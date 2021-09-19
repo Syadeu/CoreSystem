@@ -13,6 +13,13 @@ namespace Syadeu.Presentation.TurnTable
         [JsonProperty(Order = 0, PropertyName = "AttackRange")] private int m_AttackRange;
 
         [JsonIgnore] public int AttackRange => m_AttackRange;
+        /// <summary>
+        /// 마지막으로 찾은 타겟의 리스트를 반환합니다.
+        /// </summary>
+        /// <remarks>
+        /// <seealso cref="GetTargetsInRange"/>를 호출하면 여기에 담깁니다.
+        /// </remarks>
+        [JsonIgnore] public IReadOnlyList<Entity<IEntity>> Targets { get; internal set; }
 
         public IReadOnlyList<Entity<IEntity>> GetTargetsInRange()
             => GetTargetsWithin(in m_AttackRange);
@@ -35,6 +42,8 @@ namespace Syadeu.Presentation.TurnTable
 
                 entities.AddRange(gridSize.GetEntitiesAt(indices[i]));
             }
+
+            Targets = entities;
             return entities;
         }
     }

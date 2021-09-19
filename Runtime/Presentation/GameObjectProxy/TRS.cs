@@ -36,13 +36,16 @@ namespace Syadeu.Presentation.Proxy
             m_Scale = tr.localScale;
         }
 
+        public float4x4 LocalToWorldMatrix => float4x4.TRS(m_Position, m_Rotation, m_Scale);
+
         public TRS Project(TRS parent)
         {
             quaternion targetRot = math.mul(parent.m_Rotation, m_Rotation);
+            float4x4 local2world = parent.LocalToWorldMatrix;
 
             return new TRS
             {
-                m_Position = parent.m_Position + math.mul(targetRot, m_Position),
+                m_Position = math.mul(local2world, new float4(m_Position, 1)).xyz,
                 m_Rotation = targetRot,
                 m_Scale = math.mul(parent.m_Scale, m_Scale)
             };

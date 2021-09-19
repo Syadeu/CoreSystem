@@ -7,6 +7,7 @@
         /// <summary>
         /// <see cref="UnityEngine.PlayerLoop.PostLateUpdate"/>
         /// </summary>
-        Transform
+        Transform,
+        AfterTransform,
     }
 }

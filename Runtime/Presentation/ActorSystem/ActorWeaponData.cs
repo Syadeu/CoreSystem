@@ -98,7 +98,7 @@ namespace Syadeu.Presentation.Actor
             m_PrefabInstance.Destroy();
         }
 
-        public void FireFXBounds(FXBounds.TriggerOptions triggerOptions)
+        public void FireFXBounds(PresentationSystemID<CoroutineSystem> coroutineSystem, FXBounds.TriggerOptions triggerOptions)
         {
             if (m_PrefabInstance.IsEmpty() || !m_PrefabInstance.IsValid())
             {
@@ -110,7 +110,7 @@ namespace Syadeu.Presentation.Actor
             {
                 if ((m_FXBounds[i].TriggerOption & triggerOptions) == 0) continue;
 
-                m_FXBounds[i].Fire(m_PrefabInstance.transform);
+                m_FXBounds[i].Fire(coroutineSystem, m_PrefabInstance.transform);
             }
         }
     }

@@ -2,6 +2,7 @@
 using Syadeu.Database;
 using Syadeu.Presentation.Proxy;
 using System;
+using System.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -26,7 +27,7 @@ namespace Syadeu.Presentation.Entities
             Loop            =   0b0001,
             OneShot         =   0b0010,
 
-            DestroyOnEnd    =   0b0100,
+            UpdateTransform    =   0b0100,
         }
 
         [JsonProperty(Order = 0, PropertyName = "Name")]
@@ -46,7 +47,7 @@ namespace Syadeu.Presentation.Entities
         [JsonProperty(Order = 6, PropertyName = "LocalScale")]
         private float3 m_LocalScale = 1;
 
-        [JsonIgnore] private Instance<FXEntity> m_Instance = Instance<FXEntity>.Empty;
+        //[JsonIgnore] private Instance<FXEntity> m_Instance = Instance<FXEntity>.Empty;
 
         [JsonIgnore] public Reference<FXEntity> FXEntity => m_FXEntity;
         [JsonIgnore] public TriggerOptions TriggerOption => m_TriggerOption;
@@ -57,42 +58,78 @@ namespace Syadeu.Presentation.Entities
             return ((IValidation)m_FXEntity).IsValid();
         }
 
-        public void Fire(ITransform parent)
+        public void Fire(PresentationSystemID<CoroutineSystem> coroutineSystem, ITransform parent)
         {
-            if (!IsValid())
+            if (parent is ProxyTransform proxy)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Null return");
-                return;
-            }
+                coroutineSystem.System.PostCoroutineJob(new FireCoroutine
+                {
+                    m_FXEntity = m_FXEntity,
+                    m_PlayOption = m_PlayOption,
+                    TRS = TRS,
 
-            if (m_Instance.IsEmpty())
+                    Parent = proxy
+                });
+            }
+            else
             {
-                m_Instance = m_FXEntity.CreateInstance();
+                CoreSystem.Logger.LogError(Channel.Entity, "");
             }
-            m_Instance.Object.SetPlayOptions(m_PlayOption);
-
-            TRS trs = TRS.Project(new TRS(parent));
-            ITransform tr = m_Instance.Object.transform;
-
-            tr.position = trs.m_Position;
-            tr.rotation = trs.m_Rotation;
-            tr.scale = trs.m_Scale;
-
-            m_Instance.Object.Play();
-
-            $"{m_FXEntity.GetObject().Name} fired".ToLog();
         }
-        public void DestroyInstance()
-        {
-            if (m_Instance.IsEmpty())
-            {
-                CoreSystem.Logger.LogError(Channel.Entity, "Already destroyed.");
-                return;
-            }
 
-            m_Instance.Destroy();
-            m_Instance = Instance<FXEntity>.Empty;
+        private struct FireCoroutine : ICoroutineJob
+        {
+            public Reference<FXEntity> m_FXEntity;
+            public PlayOptions m_PlayOption;
+            public TRS TRS;
+
+            public ProxyTransform Parent;
+
+            public UpdateLoop Loop => UpdateLoop.AfterTransform;
+
+            public void Dispose()
+            {
+            }
+            public IEnumerator Execute()
+            {
+                if (!m_FXEntity.IsValid())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"Null return");
+                    yield break;
+                }
+
+                Instance<FXEntity> instance = m_FXEntity.CreateInstance();
+                FXEntity fx = instance.Object;
+                fx.SetPlayOptions(m_PlayOption);
+
+                ITransform tr = fx.transform;
+
+                TRS trs = TRS.Project(new TRS(Parent));
+                tr.position = trs.m_Position;
+                tr.rotation = trs.m_Rotation;
+                tr.scale = TRS.m_Scale;
+
+                fx.Play();
+
+                $"{m_FXEntity.GetObject().Name} fired".ToLog();
+
+                while (fx.IsPlaying)
+                {
+                    if ((m_PlayOption & PlayOptions.UpdateTransform) == PlayOptions.UpdateTransform)
+                    {
+                        trs = TRS.Project(new TRS(Parent));
+                        tr.position = trs.m_Position;
+                        tr.rotation = trs.m_Rotation;
+                        tr.scale = TRS.m_Scale;
+                    }
+
+                    yield return null;
+                }
+
+                "exit".ToLog();
+                instance.Destroy();
+            }
         }
     }
 }

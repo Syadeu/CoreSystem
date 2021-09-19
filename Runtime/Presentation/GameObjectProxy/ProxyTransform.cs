@@ -178,7 +178,7 @@ namespace Syadeu.Presentation.Proxy
             {
                 if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
 
-                if (Ref.m_GpuInstanced) return false;
+                //if (Ref.m_GpuInstanced) return false;
 
                 if (Ref.m_ProxyIndex.Equals(ProxyNull)) return false;
                 return true;
@@ -190,7 +190,7 @@ namespace Syadeu.Presentation.Proxy
             {
                 if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
 
-                if (Ref.m_GpuInstanced) return false;
+                //if (Ref.m_GpuInstanced) return false;
 
                 if (Ref.m_ProxyIndex.Equals(ProxyNull)) return false;
                 else if (Ref.m_ProxyIndex.Equals(ProxyQueued)) return true;

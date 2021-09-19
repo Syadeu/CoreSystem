@@ -24,7 +24,8 @@ namespace Syadeu.Presentation.Actor
         [JsonIgnore] protected Entity<ActorEntity> Parent => m_Parent;
         [JsonIgnore] protected virtual Type[] ReceiveEventOnly => null;
 
-        [JsonIgnore] protected EventSystem EventSystem => m_EventSystem.System;
+        [JsonIgnore] protected PresentationSystemID<EventSystem> EventSystem => m_EventSystem;
+        [JsonIgnore] protected PresentationSystemID<CoroutineSystem> CoroutineSystem => m_CoroutineSystem;
 
         [JsonIgnore] Type[] IActorProvider.ReceiveEventOnly => ReceiveEventOnly;
 

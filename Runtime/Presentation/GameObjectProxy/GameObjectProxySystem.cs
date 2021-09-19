@@ -177,7 +177,7 @@ namespace Syadeu.Presentation.Proxy
         {
             if (!(ev.transform is ProxyTransform transform)) return;
             
-            if (transform.isDestroyed) return;
+            if (transform.isDestroyed || transform.isDestroyQueued) return;
 
             if (!transform.Pointer->m_ClusterID.Equals(ClusterID.Requested))
             {
@@ -205,7 +205,14 @@ namespace Syadeu.Presentation.Proxy
             int overrideRequestProxies = m_OverrideRequestProxies.Count;
             for (int i = 0; i < overrideRequestProxies; i++)
             {
-                m_RequestProxyList.Enqueue(m_OverrideRequestProxies.Dequeue());
+                int index = m_OverrideRequestProxies.Dequeue();
+                ProxyTransform tr = m_ProxyData[index];
+                if (tr.isDestroyed || tr.isDestroyQueued)
+                {
+                    continue;
+                }
+
+                m_RequestProxyList.Enqueue(index);
             }
 
             #region Create / Remove Proxy
@@ -329,6 +336,7 @@ namespace Syadeu.Presentation.Proxy
                     else m_ClusterData.Remove(id);
                 }
                 m_ProxyData.Remove(tr);
+                "destroy".ToLog();
             }
             #endregion
 
@@ -357,7 +365,7 @@ namespace Syadeu.Presentation.Proxy
 
             if (m_SortedCluster.IsCreated)
             {
-                m_SortedCluster.Clear();
+                //m_SortedCluster.Clear();
                 //m_SortedCluster.RemoveRangeSwapBackWithBeginEnd(0, m_SortedCluster.Length);
             }
             else m_SortedCluster = new NativeList<ClusterGroup<ProxyTransformData>>(Allocator.Persistent);
@@ -404,10 +412,12 @@ namespace Syadeu.Presentation.Proxy
 
             public void Execute(int i)
             {
-                if (m_Requests[i].transform.isDestroyQueued ||
-                    m_Requests[i].transform.isDestroyed) return;
+                ProxyTransform tr = m_Requests[i].transform;
 
-                m_Requests[i].transform.Ref.m_ClusterID = m_ClusterData.Update(m_Requests[i].id, m_Requests[i].translation);
+                if (tr.isDestroyQueued ||
+                    tr.isDestroyed) return;
+
+                tr.Ref.m_ClusterID = m_ClusterData.Update(m_Requests[i].id, m_Requests[i].translation);
             }
         }
         [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
@@ -419,14 +429,28 @@ namespace Syadeu.Presentation.Proxy
 
             public void Execute()
             {
+                int a = 0;
                 for (int i = 0; i < m_ClusterData.Length; i++)
                 {
                     //AABB box = new AABB(m_ClusterData[i].Translation, Cluster<ProxyTransformData>.c_ClusterRange);
 
                     if (m_Frustum.IntersectsBox(m_ClusterData[i].AABB))
                     {
-                        m_Output.Add(m_ClusterData[i]);
+                        if (a < m_Output.Length)
+                        {
+                            m_Output[a] = m_ClusterData[i];
+                            a++;
+                        }
+                        else
+                        {
+                            m_Output.Add(m_ClusterData[i]);
+                        }
                     }
+                }
+
+                for (int i = a; i < m_Output.Length; i++)
+                {
+                    m_Output[i] = ClusterGroup<ProxyTransformData>.Empty;
                 }
             }
         }
@@ -460,6 +484,11 @@ namespace Syadeu.Presentation.Proxy
                         throw new Exception();
                     }
                     ProxyTransformData data = List.ElementAt(clusterGroup[j]);
+                    if (data.destroyed)
+                    {
+                        clusterGroup.RemoveAt(j);
+                        continue;
+                    }
 
                     if (!data.m_EnableCull && !data.m_Prefab.Equals(PrefabReference.None))
                     {
@@ -564,6 +593,7 @@ namespace Syadeu.Presentation.Proxy
                     return;
                 }
 
+                (*tr.m_Pointer)[tr.m_Index]->m_EnableCull = false;
                 (*tr.m_Pointer)[tr.m_Index]->m_DestroyQueued = true;
             }
 
@@ -752,7 +782,7 @@ namespace Syadeu.Presentation.Proxy
                 {
                     proxyTransform.Pointer->m_Translation = proxy.transform.position;
                 }
-                CoreSystem.Logger.LogWarning(Channel.Proxy,
+                CoreSystem.Logger.LogError(Channel.Proxy,
                     "in-corrected translation found. Did you moved proxy transform directly?");
             }
 

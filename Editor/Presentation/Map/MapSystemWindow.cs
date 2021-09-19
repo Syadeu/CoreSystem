@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Unity.Mathematics;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 
 namespace SyadeuEditor.Presentation.Map
@@ -1199,27 +1200,36 @@ namespace SyadeuEditor.Presentation.Map
             using (new EditorUtils.BoxBlock(Color.gray))
             {
                 EditorUtils.StringRich("Lightmapping", 13);
+                LightingSettings lightSettings = Lightmapping.GetLightingSettingsForScene(EditorSceneManager.GetActiveScene());
+                EditorGUILayout.ObjectField("Light Settings", lightSettings, typeof(LightingSettings), false);
 
-                if (GUILayout.Button("Bake"))
-                {
-                    if (Lightmapping.isRunning)
-                    {
-                        Lightmapping.Cancel();
-                    }
+                //if (GUILayout.Button("Bake"))
+                //{
+                //    m_FolderInstance.gameObject.hideFlags = HideFlags.None;
 
-                    if (m_LoadedMapData.Count != 0)
-                    {
-                        Lightmapping.BakeAsync();
-                    }
-                    else
-                    {
-                        "no loaded map data found".ToLog();
-                    }
-                }
+                //    if (Lightmapping.isRunning)
+                //    {
+                //        Lightmapping.ForceStop();
+                //        Lightmapping.Cancel();
+                //    }
+
+                //    if (m_LoadedMapData.Count != 0)
+                //    {
+                //        Lightmapping.ClearLightingDataAsset();
+
+                //        Lightmapping.lightingSettings = lightSettings;
+                //        Lightmapping.BakeAsync();
+                //    }
+                //    else
+                //    {
+                //        "no loaded map data found".ToLog();
+                //    }
+                //}
             }
 
             EditorGUILayout.EndScrollView();
         }
+
         public void OnSceneGUI()
         {
             if (m_LoadedMapData.Count == 0) return;

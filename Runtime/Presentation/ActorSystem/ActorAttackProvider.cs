@@ -26,13 +26,13 @@ namespace Syadeu.Presentation.Actor
             if (weaponProvider.IsEmpty()) return;
 
             Instance<ActorWeaponData> currentWeaponIns = weaponProvider.Object.SelectedWeapon;
-            if (currentWeaponIns.IsEmpty() || currentWeaponIns.IsValid())
+            if (currentWeaponIns.IsEmpty() || !currentWeaponIns.IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Entity, $"Entity({Parent.Name}) current weapon is invalid");
                 return;
             }
 
-            currentWeaponIns.Object.FireFXBounds(FXBounds.TriggerOptions.OnFire);
+            currentWeaponIns.Object.FireFXBounds(CoroutineSystem, FXBounds.TriggerOptions.OnFire);
 
             for (int i = 0; i < ev.Targets.Length; i++)
             {
