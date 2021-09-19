@@ -94,11 +94,11 @@ namespace Syadeu.Presentation.Events
                 }
                 catch (Exception ex)
                 {
-                    CoreSystem.Logger.LogError(Channel.Presentation,
+                    CoreSystem.Logger.LogError(Channel.Event,
                         $"Invalid event({ev.GetType()}) has been posted");
                     UnityEngine.Debug.LogException(ex);
                 }
-                CoreSystem.Logger.Log(Channel.Presentation,
+                CoreSystem.Logger.Log(Channel.Event,
                     $"Posted event : {ev.GetType().Name}");
             }
         }
@@ -116,11 +116,11 @@ namespace Syadeu.Presentation.Events
                 }
                 catch (Exception ex)
                 {
-                    CoreSystem.Logger.LogError(Channel.Presentation,
+                    CoreSystem.Logger.LogError(Channel.Event,
                         $"Invalid event({ev.GetType()}) has been posted");
                     UnityEngine.Debug.LogException(ex);
                 }
-                CoreSystem.Logger.Log(Channel.Presentation,
+                CoreSystem.Logger.Log(Channel.Event,
                     $"Posted event : {ev.GetType().Name}");
             }
         }

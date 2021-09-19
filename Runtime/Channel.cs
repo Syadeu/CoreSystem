@@ -19,6 +19,7 @@
         Entity = 1 << 8,
         Proxy = 1 << 9,
         Render = 1 << 10,
+        Event = 1 << 11,
 
         Audio = 1 << 20,
 

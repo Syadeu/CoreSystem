@@ -42,11 +42,15 @@ namespace Syadeu.Presentation.Actor
         {
             if (!TypeHelper.TypeOf<ActorEntity>.Type.IsAssignableFrom(obj.Type)) return;
 
+            //Entity<ActorEntity> entity = obj.As<IEntityData, ActorEntity>();
+
             //m_PlayerHashMap.Add(obj.Idx, obj.As<IEntityData, ActorEntity>());
         }
         private void M_EntitySystem_OnEntityDestroy(EntityData<IEntityData> obj)
         {
             if (!TypeHelper.TypeOf<ActorEntity>.Type.IsAssignableFrom(obj.Type)) return;
+
+            //Entity<ActorEntity> entity = obj.As<IEntityData, ActorEntity>();
 
             //m_PlayerHashMap.Remove(obj.Idx);
         }

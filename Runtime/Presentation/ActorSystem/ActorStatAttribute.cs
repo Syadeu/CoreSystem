@@ -47,7 +47,7 @@ namespace Syadeu.Presentation.Actor
                 CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(SetValue));
             }
 
-            Entity<ActorEntity> entity = Parent.CastAs<IEntityData, ActorEntity>();
+            Entity<ActorEntity> entity = Parent.As<IEntityData, ActorEntity>();
             bool falied = false;
             for (int i = 0; i < m_EventHandler.Length; i++)
             {
@@ -86,7 +86,7 @@ namespace Syadeu.Presentation.Actor
 
         public void FireEvent(ActorEventID id)
         {
-            if (!m_EventHandler.Invoke(id, Parent.CastAs<IEntityData, ActorEntity>()))
+            if (!m_EventHandler.Invoke(id, Parent.As<IEntityData, ActorEntity>()))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"Firing event({id}) has faild.");

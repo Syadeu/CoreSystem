@@ -39,7 +39,7 @@ namespace Syadeu.Presentation.Actor
         {
             try
             {
-                ev.OnExecute(Parent.CastAs<IEntityData, ActorEntity>());
+                ev.OnExecute(Parent.As<IEntityData, ActorEntity>());
             }
             catch (Exception ex)
             {
@@ -100,7 +100,7 @@ namespace Syadeu.Presentation.Actor
     {
         protected override void OnCreated(ActorControllerAttribute attribute, EntityData<IEntityData> entity)
         {
-            Entity<ActorEntity> actor = entity.CastAs<IEntityData, ActorEntity>();
+            Entity<ActorEntity> actor = entity.As<IEntityData, ActorEntity>();
 
             attribute.m_InstanceProviders = new InstanceArray<ActorProviderBase>(attribute.m_Providers.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
             attribute.m_ProviderAcceptsOnly = new Dictionary<IActorProvider, Type[]>();
@@ -124,7 +124,7 @@ namespace Syadeu.Presentation.Actor
         }
         protected override void OnDestroy(ActorControllerAttribute attribute, EntityData<IEntityData> entity)
         {
-            Entity<ActorEntity> actor = entity.CastAs<IEntityData, ActorEntity>();
+            Entity<ActorEntity> actor = entity.As<IEntityData, ActorEntity>();
             for (int i = 0; i < attribute.m_InstanceProviders.Length; i++)
             {
                 ExecuteOnDestroy(attribute.m_InstanceProviders[i].Object, actor);

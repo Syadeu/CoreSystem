@@ -126,7 +126,7 @@ namespace Syadeu.Presentation.Actor
             {
                 m_DefaultWeaponInstance = m_DefaultWeapon.CreateInstance();
                 m_EquipedWeapons[0] = m_DefaultWeaponInstance;
-                m_OnEquipWeapon.Execute(Parent.CastAs<ActorEntity, IEntityData>());
+                m_OnEquipWeapon.Execute(Parent.As<ActorEntity, IEntityData>());
                 SelectWeapon(0);
             }
         }
@@ -158,7 +158,7 @@ namespace Syadeu.Presentation.Actor
 
             if ((ev.EquipOptions & ActorWeaponEquipOptions.SwitchWithSelected) == ActorWeaponEquipOptions.SwitchWithSelected)
             {
-                m_OnUnequipWeapon.Execute(Parent.CastAs<ActorEntity, IEntityData>());
+                m_OnUnequipWeapon.Execute(Parent.As<ActorEntity, IEntityData>());
 
                 ActorInventoryProvider inventory = GetProvider<ActorInventoryProvider>().Object;
                 if (inventory == null)
@@ -184,7 +184,7 @@ namespace Syadeu.Presentation.Actor
 
                 m_EquipedWeapons[m_SelectedWeaponIndex] = ev.Weapon;
 
-                m_OnEquipWeapon.Execute(Parent.CastAs<ActorEntity, IEntityData>());
+                m_OnEquipWeapon.Execute(Parent.As<ActorEntity, IEntityData>());
 
                 if ((ev.EquipOptions & ActorWeaponEquipOptions.SelectWeapon) == ActorWeaponEquipOptions.SelectWeapon)
                 {
@@ -229,7 +229,7 @@ namespace Syadeu.Presentation.Actor
                 else
                 {
                     m_EquipedWeapons[emptySpace] = ev.Weapon;
-                    m_OnEquipWeapon.Execute(Parent.CastAs<ActorEntity, IEntityData>());
+                    m_OnEquipWeapon.Execute(Parent.As<ActorEntity, IEntityData>());
 
                     if ((ev.EquipOptions & ActorWeaponEquipOptions.SelectWeapon) == ActorWeaponEquipOptions.SelectWeapon)
                     {
@@ -283,7 +283,7 @@ namespace Syadeu.Presentation.Actor
             }
 
             m_SelectedWeaponIndex = index;
-            m_OnWeaponSelected.Execute(Parent.CastAs<ActorEntity, IEntityData>());
+            m_OnWeaponSelected.Execute(Parent.As<ActorEntity, IEntityData>());
         }
         public bool IsEquipable(Instance<ActorWeaponData> weapon)
         {
