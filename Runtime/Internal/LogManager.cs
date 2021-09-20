@@ -74,6 +74,9 @@ namespace Syadeu.Internal
                     false);
             }
         }
+#if UNITY_EDITOR
+        [System.Diagnostics.DebuggerHidden]
+#endif
         public static void Log(Channel channel, ResultFlag result, string msg, bool logThread)
         {
             if (channel != Channel.Editor &&
@@ -83,6 +86,9 @@ namespace Syadeu.Internal
             }
             Log(TypeHelper.Enum<Channel>.ToString(channel), result, msg, logThread);
         }
+#if UNITY_EDITOR
+        [System.Diagnostics.DebuggerHidden]
+#endif
         public static void Log(string channel, ResultFlag result, string msg, bool logThread)
         {
             string text = string.Empty;

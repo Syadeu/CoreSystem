@@ -47,6 +47,22 @@ namespace Syadeu.Presentation.Actor
                 return;
             }
 
+            if (ev is ActorLifetimeChangedEvent lifeTimeChanged)
+            {
+                ActorStateAttribute state = Parent.GetAttribute<ActorStateAttribute>();
+                if (state != null)
+                {
+                    if (lifeTimeChanged.LifeTime == ActorLifetimeChangedEvent.State.Alive)
+                    {
+                        state.State = ActorStateAttribute.StateInfo.Spawn;
+                    }
+                    else
+                    {
+                        state.State = ActorStateAttribute.StateInfo.Dead;
+                    }
+                }
+            }
+
             for (int i = 0; i < m_InstanceProviders.Length; i++)
             {
                 ExecutePostEvent(m_InstanceProviders[i].Object, ev);

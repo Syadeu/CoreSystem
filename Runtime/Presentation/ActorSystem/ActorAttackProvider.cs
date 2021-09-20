@@ -65,11 +65,17 @@ namespace Syadeu.Presentation.Actor
             hp -= Mathf.RoundToInt(ev.Damage);
             m_StatAttribute.SetValue(ev.HPStatNameHash, hp);
 
+            if (hp <= 0)
+            {
+                ActorLifetimeChangedEvent lifetimeChanged = new ActorLifetimeChangedEvent(ActorLifetimeChangedEvent.State.Dead);
+                PostEvent(lifetimeChanged);
+            }
+
             $"{Parent.Name} : {hp} left".ToLog();
         }
         protected virtual void SendHitEvent(Entity<ActorEntity> target, Hash hpStatName, float damage)
         {
-            target.GetController().PostEvent(new TestActorHitEvent(Parent, hpStatName, damage));
+            target.GetController().PostEvent(new ActorHitEvent(Parent, hpStatName, damage));
         }
         protected void AttackEventHandler(IActorAttackEvent ev)
         {

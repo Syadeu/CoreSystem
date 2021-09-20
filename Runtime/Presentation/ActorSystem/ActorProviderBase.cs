@@ -86,6 +86,15 @@ namespace Syadeu.Presentation.Actor
         protected virtual void OnProxyCreated(RecycleableMonobehaviour monoObj) { }
         protected virtual void OnProxyRemoved(RecycleableMonobehaviour monoObj) { }
 
+        protected void PostEvent<TEvent>(TEvent ev)
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
+            where TEvent : struct, IActorEvent
+#else
+            where TEvent : unmanaged, IActorEvent
+#endif
+        {
+            m_Controller.PostEvent(ev);
+        }
         protected Instance<T> GetProvider<T>() where T : ActorProviderBase
         {
             if (m_Controller == null) return Instance<T>.Empty;

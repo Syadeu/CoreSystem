@@ -173,7 +173,7 @@ namespace Syadeu.Presentation.Proxy
 
                 if (id.Equals(ClusterID.Empty) || id.Equals(ClusterID.Requested)) throw new Exception();
 
-                $"{id.GroupIndex}:{id.ItemIndex} rev".ToLog();
+                //$"{id.GroupIndex}:{id.ItemIndex} rev".ToLog();
                 return m_Buffer[id.GroupIndex].RemoveAt(id.ItemIndex);
             }
             private bool FindUnOccupiedOrMatchedCalculated(in int startFrom, in float3 calculated, out int founded)
@@ -409,7 +409,7 @@ namespace Syadeu.Presentation.Proxy
 
             if (id.Equals(ClusterID.Empty) || id.Equals(ClusterID.Requested)) throw new Exception();
 
-            $"{id.GroupIndex}:{id.ItemIndex} rev".ToLog();
+            //$"{id.GroupIndex}:{id.ItemIndex} rev".ToLog();
             return m_Buffer[id.GroupIndex].RemoveAt(id.ItemIndex);
         }
 

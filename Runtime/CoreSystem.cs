@@ -1869,12 +1869,33 @@ namespace Syadeu
         {
             public static void ThreadBlock(string name, ThreadInfo thread) => LogManager.ThreadBlock(name, thread);
 
+#if UNITY_EDITOR
+            [System.Diagnostics.DebuggerHidden]
+#endif
             public static void Log(Channel channel, bool logThread, string msg) => LogManager.Log(channel, ResultFlag.Normal, msg, logThread);
+#if UNITY_EDITOR
+            [System.Diagnostics.DebuggerHidden]
+#endif
             public static void Log(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Normal, msg, false);
+#if UNITY_EDITOR
+            [System.Diagnostics.DebuggerHidden]
+#endif
             public static void LogWarning(Channel channel, bool logThread, string msg) => LogManager.Log(channel, ResultFlag.Warning, msg, logThread);
+#if UNITY_EDITOR
+            [System.Diagnostics.DebuggerHidden]
+#endif
             public static void LogWarning(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Warning, msg, false);
+#if UNITY_EDITOR
+            [System.Diagnostics.DebuggerHidden]
+#endif
             public static void LogError(Channel channel, bool logThread, string msg) => LogManager.Log(channel, ResultFlag.Error, msg, logThread);
+#if UNITY_EDITOR
+            [System.Diagnostics.DebuggerHidden]
+#endif
             public static void LogError(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Error, msg,false);
+#if UNITY_EDITOR
+            [System.Diagnostics.DebuggerHidden]
+#endif
             public static void LogError(Channel channel, Exception ex, [System.Runtime.CompilerServices.CallerMemberName] string methodName = "")
             {
 #if UNITY_EDITOR

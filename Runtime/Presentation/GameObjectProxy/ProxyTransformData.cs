@@ -38,14 +38,14 @@ namespace Syadeu.Presentation.Proxy
             }
             set
             {
-                if (!m_Prefab.IsNone() && m_Prefab.IsValid())
-                {
-                    $"in({m_Prefab.GetObjectSetting().m_Name}) from {m_ClusterID.GroupIndex}:{m_ClusterID.ItemIndex} -> {value.GroupIndex}:{value.ItemIndex}".ToLog();
-                }
-                else
-                {
-                    $"in from {m_ClusterID.GroupIndex}:{m_ClusterID.ItemIndex} -> {value.GroupIndex}:{value.ItemIndex}".ToLog();
-                }
+                //if (!m_Prefab.IsNone() && m_Prefab.IsValid())
+                //{
+                //    $"in({m_Prefab.GetObjectSetting().m_Name}) from {m_ClusterID.GroupIndex}:{m_ClusterID.ItemIndex} -> {value.GroupIndex}:{value.ItemIndex}".ToLog();
+                //}
+                //else
+                //{
+                //    $"in from {m_ClusterID.GroupIndex}:{m_ClusterID.ItemIndex} -> {value.GroupIndex}:{value.ItemIndex}".ToLog();
+                //}
                 
                 m_ClusterID = value;
             }

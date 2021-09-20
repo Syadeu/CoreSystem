@@ -1,15 +1,14 @@
 ﻿using Syadeu.Database;
 using Syadeu.Presentation.Entities;
-using System;
 
 namespace Syadeu.Presentation.Actor
 {
     /// <summary>
-    /// 공격 주체가 받는 이벤트
+    /// 공격 타겟이 받는 이벤트
     /// </summary>
-    public interface IActorAttackEvent : IActorEvent, IDisposable
+    public interface IActorHitEvent : IActorEvent
     {
-        Entity<ActorEntity> Target { get; }
+        Entity<ActorEntity> AttackFrom { get; }
         Hash HPStatNameHash { get; }
         float Damage { get; }
     }
