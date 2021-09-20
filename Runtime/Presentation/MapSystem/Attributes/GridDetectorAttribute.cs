@@ -30,7 +30,7 @@ namespace Syadeu.Presentation.Map
         [JsonProperty(Order = 4, PropertyName = "OnDetectedPredicate")]
         private Reference<TriggerPredicateAction>[] m_OnDetectedPredicate = Array.Empty<Reference<TriggerPredicateAction>>();
         [JsonProperty(Order = 5, PropertyName = "OnDetected")]
-        LogicTrigger[] m_OnDetected = Array.Empty<LogicTrigger>();
+        LogicTriggerAction[] m_OnDetected = Array.Empty<LogicTriggerAction>();
 
         [JsonIgnore] internal EventSystem m_EventSystem = null;
         [JsonIgnore] internal GridSizeAttribute m_GridSize = null;
@@ -97,17 +97,17 @@ namespace Syadeu.Presentation.Map
 
                 for (int i = 0; i < m_OnDetected.Length; i++)
                 {
-                    if (m_MaxDetectionRange > m_OnDetected[i].DetectionRange)
-                    {
-                        if (m_OnDetected[i].DetectionRange < 1)
-                        {
-                            CoreSystem.Logger.LogError(Channel.Entity,
-                                $"Invalid detection range at entity({Parent.Name}) logic({m_OnDetected[i].Name}) index({i}). Range cannot be under 0.");
-                            continue;
-                        }
+                    //if (m_MaxDetectionRange > m_OnDetected[i].DetectionRange)
+                    //{
+                    //    if (m_OnDetected[i].DetectionRange < 1)
+                    //    {
+                    //        CoreSystem.Logger.LogError(Channel.Entity,
+                    //            $"Invalid detection range at entity({Parent.Name}) logic({m_OnDetected[i].Name}) index({i}). Range cannot be under 0.");
+                    //        continue;
+                    //    }
 
-                        if (!IsDetect(range, m_OnDetected[i].DetectionRange, ev.To)) continue;
-                    }
+                    //    if (!IsDetect(range, m_OnDetected[i].DetectionRange, ev.To)) continue;
+                    //}
 
                     m_OnDetected[i].Execute(Parent, ev.Entity.As<IEntity, IEntityData>());
                 }
@@ -129,54 +129,54 @@ namespace Syadeu.Presentation.Map
             }
         }
 
-        [Serializable]
-        public sealed class LogicTrigger
-        {
-            [JsonProperty(Order = 0, PropertyName = "Name")] private string m_Name = string.Empty;
-            [Tooltip("이 로직이 실행될 수 있는 Grid Range 값, MaxDetectionRange 값을 벗어나거나 0 이하가 될 수 없습니다.")]
-            [JsonProperty(Order = 1, PropertyName = "DetectionRange")] private int m_DetectionRange = 6;
+        //[Serializable]
+        //public sealed class LogicTrigger
+        //{
+        //    [JsonProperty(Order = 0, PropertyName = "Name")] private string m_Name = string.Empty;
+        //    [Tooltip("이 로직이 실행될 수 있는 Grid Range 값, MaxDetectionRange 값을 벗어나거나 0 이하가 될 수 없습니다.")]
+        //    [JsonProperty(Order = 1, PropertyName = "DetectionRange")] private int m_DetectionRange = 6;
 
-            [JsonProperty(Order = 2, PropertyName = "If")]
-            private Reference<TriggerPredicateAction>[] m_If = Array.Empty<Reference<TriggerPredicateAction>>();
-            [JsonProperty(Order = 3, PropertyName = "If Target")]
-            private Reference<TriggerPredicateAction>[] m_IfTarget = Array.Empty<Reference<TriggerPredicateAction>>();
+        //    [JsonProperty(Order = 2, PropertyName = "If")]
+        //    private Reference<TriggerPredicateAction>[] m_If = Array.Empty<Reference<TriggerPredicateAction>>();
+        //    [JsonProperty(Order = 3, PropertyName = "If Target")]
+        //    private Reference<TriggerPredicateAction>[] m_IfTarget = Array.Empty<Reference<TriggerPredicateAction>>();
 
-            [Space]
-            [JsonProperty(Order = 4, PropertyName = "Else If")]
-            private LogicTrigger[] m_ElseIf = Array.Empty<LogicTrigger>();
+        //    [Space]
+        //    [JsonProperty(Order = 4, PropertyName = "Else If")]
+        //    private LogicTrigger[] m_ElseIf = Array.Empty<LogicTrigger>();
 
-            [Space]
-            [JsonProperty(Order = 5, PropertyName = "Do")]
-            private Reference<TriggerAction>[] m_Do = Array.Empty<Reference<TriggerAction>>();
-            [JsonProperty(Order = 6, PropertyName = "Do Target")]
-            private Reference<TriggerAction>[] m_DoTarget = Array.Empty<Reference<TriggerAction>>();
+        //    [Space]
+        //    [JsonProperty(Order = 5, PropertyName = "Do")]
+        //    private Reference<TriggerAction>[] m_Do = Array.Empty<Reference<TriggerAction>>();
+        //    [JsonProperty(Order = 6, PropertyName = "Do Target")]
+        //    private Reference<TriggerAction>[] m_DoTarget = Array.Empty<Reference<TriggerAction>>();
 
-            [JsonIgnore] public string Name => m_Name;
-            [JsonIgnore] public int DetectionRange => m_DetectionRange;
+        //    [JsonIgnore] public string Name => m_Name;
+        //    [JsonIgnore] public int DetectionRange => m_DetectionRange;
 
-            private bool IsExecutable()
-            {
-                if (m_If.Length == 0 && m_IfTarget.Length == 0) return false;
-                return true;
-            }
-            public bool Execute(EntityData<IEntityData> entity, EntityData<IEntityData> target)
-            {
-                if (!IsExecutable()) return false;
+        //    private bool IsExecutable()
+        //    {
+        //        if (m_If.Length == 0 && m_IfTarget.Length == 0) return false;
+        //        return true;
+        //    }
+        //    public bool Execute(EntityData<IEntityData> entity, EntityData<IEntityData> target)
+        //    {
+        //        if (!IsExecutable()) return false;
 
-                if ((m_If.Execute(entity, out bool thisPredicate) && thisPredicate) &&
-                    (m_IfTarget.Execute(target, out bool targetPredicate) && targetPredicate))
-                {
-                    return m_Do.Execute(entity) && m_DoTarget.Execute(target);
-                }
+        //        if ((m_If.Execute(entity, out bool thisPredicate) && thisPredicate) &&
+        //            (m_IfTarget.Execute(target, out bool targetPredicate) && targetPredicate))
+        //        {
+        //            return m_Do.Execute(entity) && m_DoTarget.Execute(target);
+        //        }
 
-                for (int i = 0; i < m_ElseIf.Length; i++)
-                {
-                    bool result = m_ElseIf[i].Execute(entity, target);
-                    if (result) return true;
-                }
-                return false;
-            }
-        }
+        //        for (int i = 0; i < m_ElseIf.Length; i++)
+        //        {
+        //            bool result = m_ElseIf[i].Execute(entity, target);
+        //            if (result) return true;
+        //        }
+        //        return false;
+        //    }
+        //}
     }
     internal sealed class GridDetectorProcessor : AttributeProcessor<GridDetectorAttribute>
     {

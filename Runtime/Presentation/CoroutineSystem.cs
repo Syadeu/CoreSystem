@@ -39,15 +39,8 @@ namespace Syadeu.Presentation
             PlayerLoopSystem defaultLoop = PlayerLoop.GetCurrentPlayerLoop();
             for (int i = 0; i < defaultLoop.subSystemList.Length; i++)
             {
-                //$"{i}: {defaultLoop.subSystemList[i].type?.FullName}".ToLog();
-
                 if (defaultLoop.subSystemList[i].type.Equals(TypeHelper.TypeOf<UnityEngine.PlayerLoop.Update>.Type))
                 {
-                    //for (int a = 0; a < defaultLoop.subSystemList[i].subSystemList?.Length; a++)
-                    //{
-                    //    $"{i}_{a}: {defaultLoop.subSystemList[i].subSystemList[a].type.Name}".ToLog();
-                    //}
-                    
                     List<PlayerLoopSystem> list = defaultLoop.subSystemList[i].subSystemList.ToList();
                     PlayerLoopSystem loop = new PlayerLoopSystem
                     {
@@ -60,13 +53,8 @@ namespace Syadeu.Presentation
                     list.Add(loop);
                     defaultLoop.subSystemList[i].subSystemList = list.ToArray();
                 }
-                else if (defaultLoop.subSystemList[i].type.Equals(TypeHelper.TypeOf<UnityEngine.PlayerLoop.PostLateUpdate>.Type))
+                else if (defaultLoop.subSystemList[i].type.Equals(TypeHelper.TypeOf<UnityEngine.PlayerLoop.PreLateUpdate>.Type))
                 {
-                    //for (int a = 0; a < defaultLoop.subSystemList[i].subSystemList?.Length; a++)
-                    //{
-                    //    $"{i}_{a}: {defaultLoop.subSystemList[i].subSystemList[a].type.Name}".ToLog();
-                    //}
-
                     List<PlayerLoopSystem> list = defaultLoop.subSystemList[i].subSystemList.ToList();
                     PlayerLoopSystem loop = new PlayerLoopSystem
                     {

@@ -16,8 +16,10 @@ namespace Syadeu.Presentation.Entities
         {
             None            =   0,
 
-            OnFire          =   0b001,
-            OnDelayedFire   =   0b010,
+            OnFire          =   FireOnSuccess | FireOnFailed,
+            
+            FireOnSuccess   =   0b0001,
+            FireOnFailed    =   0b0010
         }
         [Flags]
         public enum PlayOptions

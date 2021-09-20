@@ -5,7 +5,7 @@
         Default,
 
         /// <summary>
-        /// <see cref="UnityEngine.PlayerLoop.PostLateUpdate"/>
+        /// <see cref="UnityEngine.PlayerLoop.PreLateUpdate"/>
         /// </summary>
         Transform,
         AfterTransform,

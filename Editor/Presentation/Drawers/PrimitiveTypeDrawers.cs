@@ -563,9 +563,13 @@ namespace SyadeuEditor.Presentation
         private object m_TargetObject;
         private string m_Name;
 
-        //private Action<object> m_Getter;
+        private bool 
+            m_EnableFoldout = false, m_Open = false;
 
-        public override object TargetObject => m_TargetObject;
+        private Func<object> m_Getter;
+        private Action<object> m_Setter;
+
+        public override object TargetObject => m_TargetObject == null ? m_Getter.Invoke() : m_TargetObject;
         public override string Name => m_Name;
         public override int FieldCount => DrawerBases.Count;
 
@@ -573,6 +577,71 @@ namespace SyadeuEditor.Presentation
 
         public IReadOnlyList<ObjectDrawerBase> Drawers => DrawerBases;
 
+        public ObjectDrawer(object parentObject, MemberInfo memberInfo, bool foldout)
+        {
+            m_EnableFoldout = foldout;
+            m_TargetObject = null;
+            Type declaredType;
+            if (memberInfo is FieldInfo field)
+            {
+                m_Getter = () => field.GetValue(parentObject);
+                m_Setter = (other) => field.SetValue(parentObject, other);
+                declaredType = field.FieldType;
+            }
+            else if (memberInfo is PropertyInfo property)
+            {
+                m_Getter = () => property.GetValue(parentObject);
+                m_Setter = (other) => property.SetValue(parentObject, other);
+                declaredType = property.PropertyType;
+            }
+            else throw new NotImplementedException();
+
+            var obj = m_Getter.Invoke();
+            if (obj == null && !declaredType.IsAbstract)
+            {
+                m_Setter.Invoke(Activator.CreateInstance(declaredType));
+            }
+
+            m_Name = ReflectionHelper.SerializeMemberInfoName(memberInfo);
+
+            if (declaredType.IsAbstract && obj != null) declaredType = obj.GetType();
+
+            MemberInfo[] members;
+            if (Application.isPlaying)
+            {
+                members = declaredType.GetMembers(
+                        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                        .Where((other) =>
+                        {
+                            if (other.MemberType != MemberTypes.Field &&
+                                other.MemberType != MemberTypes.Property) return false;
+
+                            if (other.GetCustomAttribute<ObsoleteAttribute>() != null)
+                            {
+                                return false;
+                            }
+
+                            Type declaredType = ReflectionHelper.GetDeclaredType(other);
+
+                            if (TypeHelper.TypeOf<Delegate>.Type.IsAssignableFrom(declaredType)) return false;
+
+                            if (ReflectionHelper.IsBackingField(other)) return false;
+
+                            return true;
+                        })
+                        .ToArray();
+            }
+            else
+            {
+                members = ReflectionHelper.GetSerializeMemberInfos(declaredType);
+            }
+
+            for (int a = 0; a < members.Length; a++)
+            {
+                ObjectDrawerBase drawer = ToDrawer(obj, members[a], true);
+                DrawerBases.Add(drawer);
+            }
+        }
         public ObjectDrawer(object obj, Type declaredType, string name)
         {
             m_TargetObject = obj;
@@ -616,31 +685,23 @@ namespace SyadeuEditor.Presentation
                 DrawerBases.Add(drawer);
             }
         }
-        //public ObjectDrawer(object obj, MemberInfo member, string name)
-        //{
-        //    m_TargetObject = obj;
-        //    m_Name = name;
-
-        //    m_Getter = (other) =>
-        //    {
-        //        if (member is FieldInfo field)
-        //        {
-        //            field.GetValue(obj)
-        //        }
-        //    }
-
-        //    MemberInfo[] members = ReflectionHelper.GetSerializeMemberInfos(declaredType);
-        //    for (int a = 0; a < members.Length; a++)
-        //    {
-        //        ObjectDrawerBase drawer = ToDrawer(obj, members[a], true);
-        //        DrawerBases.Add(drawer);
-        //    }
-        //}
-
+        
         public override void OnGUI()
         {
             using (new EditorUtils.BoxBlock(Color.black))
             {
+                if (m_EnableFoldout && FieldCount > 1)
+                {
+                    m_Open = EditorUtils.Foldout(m_Open, Name, 13);
+                }
+
+                if (m_EnableFoldout && FieldCount > 1)
+                {
+                    if (!m_Open) return;
+
+                    EditorGUI.indentLevel++;
+                }
+
                 for (int i = 0; i < DrawerBases.Count; i++)
                 {
                     if (DrawerBases[i] == null)
@@ -651,6 +712,8 @@ namespace SyadeuEditor.Presentation
 
                     DrawerBases[i].OnGUI();
                 }
+
+                if (m_EnableFoldout && FieldCount > 1) EditorGUI.indentLevel--;
             }
         }
     }

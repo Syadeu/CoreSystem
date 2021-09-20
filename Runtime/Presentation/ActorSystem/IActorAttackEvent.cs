@@ -9,7 +9,7 @@ namespace Syadeu.Presentation.Actor
     /// </summary>
     public interface IActorAttackEvent : IActorEvent, IDisposable
     {
-        InstanceArray<ActorEntity> Targets { get; }
+        Entity<ActorEntity> Target { get; }
         Hash HPStatNameHash { get; }
         float Damage { get; }
     }
@@ -19,16 +19,32 @@ namespace Syadeu.Presentation.Actor
     /// </summary>
     public interface IActorHitEvent : IActorEvent
     {
+        Entity<ActorEntity> AttackFrom { get; }
         Hash HPStatNameHash { get; }
         float Damage { get; }
     }
 
     public struct TestActorHitEvent : IActorHitEvent
     {
-        public ActorEventID EventID => throw new NotImplementedException();
+        private ActorEventID m_EventID;
 
-        public Hash HPStatNameHash => throw new NotImplementedException();
-        public float Damage => throw new NotImplementedException();
+        private Entity<ActorEntity> m_AttackFrom;
+        private Hash m_HPStatNameHash;
+        private float m_Damage;
+
+        public ActorEventID EventID => m_EventID;
+
+        public Entity<ActorEntity> AttackFrom => m_AttackFrom;
+        public Hash HPStatNameHash => m_HPStatNameHash;
+        public float Damage => m_Damage;
+
+        public TestActorHitEvent(Entity<ActorEntity> attackFrom, Hash hpStatName, float damage)
+        {
+            m_EventID = ActorEventID.CreateID();
+            m_AttackFrom = attackFrom;
+            m_HPStatNameHash = hpStatName;
+            m_Damage = damage;
+        }
 
         public void OnExecute(Entity<ActorEntity> from)
         {

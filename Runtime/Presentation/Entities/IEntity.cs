@@ -17,15 +17,15 @@ namespace Syadeu.Presentation.Entities
     public interface IEntity : IEntityData
     {
         //[JsonIgnore] DataGameObject gameObject { get; }
-        [JsonIgnore] ITransform transform { get; }
+        ITransform transform { get; }
 
         /// <summary>
         /// 이 엔티티의 프리팹 <see cref="Prefab"/>의 AABB Center translation 값입니다.
         /// </summary>
-        [JsonProperty(Order = -8, PropertyName = "Center")] float3 Center { get; }
+        float3 Center { get; }
         /// <summary>
         /// 이 엔티티 프리팹 <see cref="Prefab"/>의 AABB Size 값입니다.
         /// </summary>
-        [JsonProperty(Order = -7, PropertyName = "Size")] public float3 Size { get; }
+        public float3 Size { get; }
     }
 }

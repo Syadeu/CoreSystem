@@ -540,7 +540,7 @@ namespace Syadeu.Presentation.Proxy
         public ProxyTransform CreateNewPrefab(in PrefabReference<GameObject> prefab, 
             in float3 pos, in quaternion rot, in float3 scale, in bool enableCull, 
             in float3 center, in float3 size,
-            bool gpuInstanced = false)
+            bool gpuInstanced)
         {
             CoreSystem.Logger.ThreadBlock(nameof(CreateNewPrefab), ThreadInfo.Unity);
 
@@ -702,7 +702,7 @@ namespace Syadeu.Presentation.Proxy
                     args[3] = (uint)items[i].Mesh.GetBaseVertex(0);
 
                     items[i].ComputeBuffer.SetData(args);
-
+                    //UnityEngine.Rendering.Universal.
                     foreach (var material in items[i].Materials)
                     {
                         Graphics.DrawMeshInstancedIndirect(
@@ -822,8 +822,9 @@ namespace Syadeu.Presentation.Proxy
             PrefabReference m_PrefabIdx;
             Scene m_RequestedScene;
             Action<RecycleableMonobehaviour> m_OnCompleted;
-
-            public void Setup(GameObjectProxySystem proxySystem, PrefabReference prefabIdx, Vector3 pos, Quaternion rot,
+            
+            public void Setup(GameObjectProxySystem proxySystem, 
+                PrefabReference prefabIdx, Vector3 pos, Quaternion rot,
                 Action<RecycleableMonobehaviour> onCompleted)
             {
                 CoreSystem.Logger.True(prefabIdx.IsValid(), nameof(PrefabReference) + "not valid");
@@ -881,6 +882,7 @@ namespace Syadeu.Presentation.Proxy
                     CreatePrefab(prefabInfo.m_Prefab, parent);
                     return;
                 }
+
                 var oper = prefabInfo.InstantiateAsync(pos, rot, parent);
                 oper.Completed += CreatePrefab;
             }
@@ -928,6 +930,13 @@ namespace Syadeu.Presentation.Proxy
                 if (recycleable.InitializeOnCall) recycleable.Initialize();
                 m_OnCompleted?.Invoke(recycleable);
 
+                //if (m_StaticBatching)
+                //{
+                //    var meshRenderers = Result.GetComponentsInChildren<MeshRenderer>();
+
+                //    StaticBatchingUtility.Combine(meshRenderers.Select((other) => other.gameObject).ToArray(), Result);
+                //}
+
                 m_ProxySystem = null;
                 m_PrefabIdx = PrefabReference.Invalid;
                 m_OnCompleted = null;
@@ -937,7 +946,9 @@ namespace Syadeu.Presentation.Proxy
 
         private void InstantiatePrefab(PrefabReference prefab, Action<RecycleableMonobehaviour> onCompleted)
             => InstantiatePrefab(prefab, INIT_POSITION, Quaternion.identity, onCompleted);
-        private void InstantiatePrefab(PrefabReference prefab, Vector3 position, Quaternion rotation, Action<RecycleableMonobehaviour> onCompleted)
+        private void InstantiatePrefab(PrefabReference prefab, 
+            Vector3 position, Quaternion rotation,
+            Action<RecycleableMonobehaviour> onCompleted)
         {
             PoolContainer<PrefabRequester>.Dequeue().Setup(this, prefab, position, rotation, onCompleted);
         }

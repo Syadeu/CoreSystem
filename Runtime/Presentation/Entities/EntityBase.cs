@@ -24,14 +24,16 @@ namespace Syadeu.Presentation.Entities
         /// </summary>
         [JsonProperty(Order = -9, PropertyName = "Prefab")] public PrefabReference<GameObject> Prefab { get; set; } = PrefabReference<GameObject>.None;
 
+        [JsonProperty(Order = -8, PropertyName = "StaticBatching")] public bool StaticBatching { get; set; } = false;
+
         [ReflectionDescription("AABB 의 Center")]
-        [JsonProperty(Order = -8, PropertyName = "Center")] public float3 Center { get; set; }
+        [JsonProperty(Order = -7, PropertyName = "Center")] public float3 Center { get; set; }
 
         [ReflectionDescription("AABB 의 Size")]
-        [JsonProperty(Order = -7, PropertyName = "Size")] public float3 Size { get; set; }
+        [JsonProperty(Order = -6, PropertyName = "Size")] public float3 Size { get; set; }
 
         [Space]
-        [JsonProperty(Order = -6, PropertyName = "EnableCull")] public bool m_EnableCull = true;
+        [JsonProperty(Order = -5, PropertyName = "EnableCull")] public bool m_EnableCull = true;
 
         /// <summary>
         /// <see cref="GameObjectProxySystem"/>을 통해 연결된 <see cref="DataTransform"/> 입니다.

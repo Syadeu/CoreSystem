@@ -95,7 +95,7 @@ namespace SyadeuEditor.Presentation
                     break;
             }
         }
-        protected void DrawHeader()
+        protected new void DrawHeader()
         {
             EditorUtils.StringRich(Name + EditorUtils.String($": {Type.Name}", 11), 20);
             EditorGUILayout.Space(3);

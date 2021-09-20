@@ -150,7 +150,8 @@ namespace SyadeuEditor.Presentation
             }
             #endregion
 
-            return new NullDrawer(memberInfo, declaredType);
+            //return new NullDrawer(memberInfo, declaredType);
+            return new ObjectDrawer(parentObject, memberInfo, true);
         }
     }
     public sealed class NullDrawer : ObjectDrawerBase

@@ -10,20 +10,19 @@ namespace Syadeu.Presentation.TurnTable
     public struct TRPGActorAttackEvent : IActorAttackEvent
     {
         private ActorEventID m_EventID;
-        private InstanceArray<ActorEntity> m_Target;
+        private Entity<ActorEntity> m_Target;
         private Hash m_StatNameHash;
         private int m_Damage;
 
         public ActorEventID EventID => m_EventID;
-        public InstanceArray<ActorEntity> Targets => m_Target;
+        public Entity<ActorEntity> Target => m_Target;
         public Hash HPStatNameHash => m_StatNameHash;
         public float Damage => m_Damage;
 
         public TRPGActorAttackEvent(Entity<ActorEntity> target, string targetStatName)
         {
             m_EventID = ActorEventID.CreateID();
-            m_Target = new InstanceArray<ActorEntity>(1, Unity.Collections.Allocator.Temp);
-            m_Target[0] = new Instance<ActorEntity>(target);
+            m_Target = target;
             m_StatNameHash = ActorStatAttribute.ToValueHash(targetStatName);
 
             m_Damage = 0;
@@ -31,27 +30,10 @@ namespace Syadeu.Presentation.TurnTable
         public TRPGActorAttackEvent(Entity<ActorEntity> target, Hash targetStatHash)
         {
             m_EventID = ActorEventID.CreateID();
-            m_Target = new InstanceArray<ActorEntity>(1, Unity.Collections.Allocator.Temp);
-            m_Target[0] = new Instance<ActorEntity>(target);
+            m_Target = target;
             m_StatNameHash = targetStatHash;
 
             m_Damage = 0;
-        }
-        public TRPGActorAttackEvent(IEnumerable<Entity<ActorEntity>> targets, string targetStatName)
-        {
-            this = default(TRPGActorAttackEvent);
-
-            m_EventID = ActorEventID.CreateID();
-            m_Target = new InstanceArray<ActorEntity>(targets.Select(Selector), Unity.Collections.Allocator.Temp);
-            m_StatNameHash = ActorStatAttribute.ToValueHash(targetStatName);
-        }
-        public TRPGActorAttackEvent(IEnumerable<Entity<ActorEntity>> targets, Hash targetStatHash)
-        {
-            this = default(TRPGActorAttackEvent);
-
-            m_EventID = ActorEventID.CreateID();
-            m_Target = new InstanceArray<ActorEntity>(targets.Select(Selector), Unity.Collections.Allocator.Temp);
-            m_StatNameHash = targetStatHash;
         }
         private Instance<ActorEntity> Selector(Entity<ActorEntity> entity)
         {
@@ -60,7 +42,6 @@ namespace Syadeu.Presentation.TurnTable
 
         public void Dispose()
         {
-            m_Target.Dispose();
         }
 
         void IActorEvent.OnExecute(Entity<ActorEntity> from)
@@ -69,7 +50,7 @@ namespace Syadeu.Presentation.TurnTable
             if (ctr == null)
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Target entity({m_Target[0].Object.Name}) doesn\'t have any {nameof(ActorControllerAttribute)}.");
+                    $"Target entity({m_Target.Name}) doesn\'t have any {nameof(ActorControllerAttribute)}.");
                 return;
             }
 
@@ -77,16 +58,16 @@ namespace Syadeu.Presentation.TurnTable
             if (weapon.IsEmpty())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                       $"Target entity({m_Target[0].Object.Name}) doesn\'t have any {nameof(ActorWeaponProvider)}.");
+                       $"Target entity({m_Target.Name}) doesn\'t have any {nameof(ActorWeaponProvider)}.");
                 return;
             }
 
-            var stat = m_Target[0].Object.GetAttribute<ActorStatAttribute>();
+            var stat = m_Target.GetAttribute<ActorStatAttribute>();
             
             if (stat == null)
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Target entity({m_Target[0].Object.Name}) doesn\'t have any {nameof(ActorStatAttribute)}.");
+                    $"Target entity({m_Target.Name}) doesn\'t have any {nameof(ActorStatAttribute)}.");
                 return;
             }
 

@@ -102,7 +102,9 @@ namespace Syadeu.Presentation.Actor
         {
             if (m_PrefabInstance.IsEmpty() || !m_PrefabInstance.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity, $"Cannot fire FX({TypeHelper.Enum<FXBounds.TriggerOptions>.ToString(triggerOptions)}), target entity({m_Prefab.GetObject().Name}) in {Name} has been destroyed or invalid.");
+                CoreSystem.Logger.LogError(Channel.Entity, 
+                    $"Cannot fire FX({TypeHelper.Enum<FXBounds.TriggerOptions>.ToString(triggerOptions)}), " +
+                    $"target prefab in {Name} is invalid.");
                 return;
             }
 

@@ -480,7 +480,7 @@ namespace Syadeu.Presentation
                     $"{from.Name} has an invalid prefab. This is not allowed.");
             }
 
-            return m_ProxySystem.CreateNewPrefab(in prefab, in pos, in rot, in scale, from.m_EnableCull, from.Center, from.Size);
+            return m_ProxySystem.CreateNewPrefab(in prefab, in pos, in rot, in scale, from.m_EnableCull, from.Center, from.Size, from.StaticBatching);
         }
         private Entity<IEntity> InternalCreateEntity(in EntityBase entityBase, in ProxyTransform obj)
         {
