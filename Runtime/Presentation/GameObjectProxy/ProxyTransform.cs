@@ -120,7 +120,7 @@ namespace Syadeu.Presentation.Proxy
         {
             get
             {
-                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
                 return m_Index;
             }
         }
@@ -128,7 +128,7 @@ namespace Syadeu.Presentation.Proxy
         {
             get
             {
-                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
                 return m_Generation;
             }
         }
@@ -137,13 +137,13 @@ namespace Syadeu.Presentation.Proxy
         {
             get
             {
-                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
 
                 return Ref.m_EnableCull;
             }
             set
             {
-                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
 
                 if (Ref.m_EnableCull == value) return;
 
@@ -160,13 +160,13 @@ namespace Syadeu.Presentation.Proxy
         {
             get
             {
-                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
 
                 return Ref.m_IsVisible;
             }
             internal set
             {
-                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
 
                 Ref.m_IsVisible = value;
             }
@@ -176,7 +176,7 @@ namespace Syadeu.Presentation.Proxy
         {
             get
             {
-                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
 
                 //if (Ref.m_GpuInstanced) return false;
 
@@ -188,7 +188,7 @@ namespace Syadeu.Presentation.Proxy
         {
             get
             {
-                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
 
                 //if (Ref.m_GpuInstanced) return false;
 
@@ -202,7 +202,7 @@ namespace Syadeu.Presentation.Proxy
         {
             get
             {
-                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
 
                 return Ref.m_GpuInstanced;
             }
@@ -212,7 +212,7 @@ namespace Syadeu.Presentation.Proxy
         {
             get
             {
-                if (isDestroyed || !hasProxy || hasProxyQueued) return null;
+                if (isDestroyed || isDestroyQueued || !hasProxy || hasProxyQueued) return null;
 
                 int2 proxyIndex = Ref.m_ProxyIndex;
                 return PresentationSystem<GameObjectProxySystem>.System.m_Instances[proxyIndex.x][proxyIndex.y];
@@ -240,7 +240,7 @@ namespace Syadeu.Presentation.Proxy
         {
             get
             {
-                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
                 return Ref.m_Prefab;
             }
         }
@@ -249,12 +249,12 @@ namespace Syadeu.Presentation.Proxy
         {
             get
             {
-                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
                 return Ref.translation;
             }
             set
             {
-                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
 
                 Ref.translation = value;
                 PresentationSystem<EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
@@ -264,12 +264,12 @@ namespace Syadeu.Presentation.Proxy
         {
             get
             {
-                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
                 return Ref.rotation;
             }
             set
             {
-                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
                 Ref.rotation = value;
                 PresentationSystem<EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
             }
@@ -278,14 +278,14 @@ namespace Syadeu.Presentation.Proxy
         {
             get
             {
-                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
 
                 float3 temp = rotation.Euler();
                 return temp * UnityEngine.Mathf.Rad2Deg;
             }
             set
             {
-                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
                 float3 temp = value * UnityEngine.Mathf.Deg2Rad;
                 rotation = quaternion.EulerZXY(temp);
             }
@@ -294,12 +294,12 @@ namespace Syadeu.Presentation.Proxy
         {
             get
             {
-                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
                 return Ref.scale;
             }
             set
             {
-                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
                 Ref.scale = value;
                 PresentationSystem<EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
             }
@@ -309,7 +309,7 @@ namespace Syadeu.Presentation.Proxy
         {
             get
             {
-                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
                 return math.mul(Ref.m_Rotation, new float3(1, 0, 0));
             }
         }
@@ -317,7 +317,7 @@ namespace Syadeu.Presentation.Proxy
         {
             get
             {
-                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
                 return math.mul(Ref.m_Rotation, new float3(0, 1, 0));
             }
         }
@@ -325,7 +325,7 @@ namespace Syadeu.Presentation.Proxy
         {
             get
             {
-                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
                 return math.mul(Ref.m_Rotation, new float3(0, 0, 1));
             }
         }
@@ -334,7 +334,7 @@ namespace Syadeu.Presentation.Proxy
         {
             get
             {
-                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
                 return Ref.m_Center;
             }
         }
@@ -342,7 +342,7 @@ namespace Syadeu.Presentation.Proxy
         {
             get
             {
-                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
                 return Ref.m_Size;
             }
         }
@@ -350,7 +350,7 @@ namespace Syadeu.Presentation.Proxy
         {
             get
             {
-                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
                 return new AABB(Ref.m_Center + Ref.m_Translation, Ref.m_Size).Rotation(in Ref.m_Rotation, in Ref.m_Scale);
             }
         }
@@ -359,7 +359,7 @@ namespace Syadeu.Presentation.Proxy
         {
             get
             {
-                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
                 return float4x4.TRS(Ref.m_Translation, Ref.m_Rotation, Ref.m_Scale);
             }
         }
@@ -367,7 +367,7 @@ namespace Syadeu.Presentation.Proxy
         {
             get
             {
-                if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
                 return math.inverse(float4x4.TRS(Ref.m_Translation, Ref.m_Rotation, Ref.m_Scale));
             }
         }
@@ -377,6 +377,8 @@ namespace Syadeu.Presentation.Proxy
         public void Synchronize(SynchronizeOption option)
         {
             CoreSystem.Logger.ThreadBlock(nameof(ProxyTransform.Synchronize), Syadeu.Internal.ThreadInfo.Unity);
+
+            if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
 
             UnityEngine.Transform tr = proxy.transform;
             if ((option & SynchronizeOption.Position) == SynchronizeOption.Position)

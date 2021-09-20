@@ -12,7 +12,7 @@ namespace Syadeu.Presentation.Proxy
         public bool m_IsVisible;
         public bool m_DestroyQueued;
 
-        public ClusterID m_ClusterID;
+        private ClusterID m_ClusterID;
         public int m_Index;
         public int2 m_ProxyIndex;
 
@@ -30,6 +30,26 @@ namespace Syadeu.Presentation.Proxy
         public bool m_GpuInstanced;
 
 #pragma warning disable IDE1006 // Naming Styles
+        public ClusterID clusterID
+        {
+            get
+            {
+                return m_ClusterID;
+            }
+            set
+            {
+                if (!m_Prefab.IsNone() && m_Prefab.IsValid())
+                {
+                    $"in({m_Prefab.GetObjectSetting().m_Name}) from {m_ClusterID.GroupIndex}:{m_ClusterID.ItemIndex} -> {value.GroupIndex}:{value.ItemIndex}".ToLog();
+                }
+                else
+                {
+                    $"in from {m_ClusterID.GroupIndex}:{m_ClusterID.ItemIndex} -> {value.GroupIndex}:{value.ItemIndex}".ToLog();
+                }
+                
+                m_ClusterID = value;
+            }
+        }
         public bool destroyed
         {
             get

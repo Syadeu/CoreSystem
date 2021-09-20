@@ -222,7 +222,7 @@ namespace Syadeu.Presentation.Proxy
             p->m_DestroyQueued = false;
 
             CoreSystem.Logger.Log(Channel.Proxy,
-                $"ProxyTransform has been destroyed.");
+                $"ProxyTransform({p->m_Prefab.GetObjectSetting().m_Name}) has been destroyed.");
         }
         public void Clear()
         {

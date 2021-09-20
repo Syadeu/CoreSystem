@@ -128,7 +128,7 @@ namespace Syadeu.Presentation.Proxy
                 AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
                 AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
 #endif
-                int idx = GetClusterIndex(in m_Length, in translation, out float3 calculated);
+                int idx = GetClusterIndex(m_Length, in translation, out float3 calculated);
                 if (idx.Equals(id.GroupIndex)) return id;
 
                 int arrayIndex = Remove(in id);
@@ -173,6 +173,7 @@ namespace Syadeu.Presentation.Proxy
 
                 if (id.Equals(ClusterID.Empty) || id.Equals(ClusterID.Requested)) throw new Exception();
 
+                $"{id.GroupIndex}:{id.ItemIndex} rev".ToLog();
                 return m_Buffer[id.GroupIndex].RemoveAt(id.ItemIndex);
             }
             private bool FindUnOccupiedOrMatchedCalculated(in int startFrom, in float3 calculated, out int founded)
@@ -254,7 +255,7 @@ namespace Syadeu.Presentation.Proxy
         {
 #if UNITY_EDITOR
             AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
-            AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
+            //AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
 #endif
 
             ParallelWriter writer;
@@ -278,7 +279,7 @@ namespace Syadeu.Presentation.Proxy
             calculated = math.round(calculated) * c_ClusterRange;
 
             uint clusterHash = FNV1a32.Calculate(calculated.ToString());
-            //$"cluster pos: {calculated}, idx: {clusterHash % m_Length}".ToLog(); 
+            //$"cluster pos: {calculated}, idx: {clusterHash} % {length}".ToLog();
             return Convert.ToInt32(clusterHash % length);
         }
         public int GetClusterIndex(in float3 translation, out float3 calculated)
@@ -408,6 +409,7 @@ namespace Syadeu.Presentation.Proxy
 
             if (id.Equals(ClusterID.Empty) || id.Equals(ClusterID.Requested)) throw new Exception();
 
+            $"{id.GroupIndex}:{id.ItemIndex} rev".ToLog();
             return m_Buffer[id.GroupIndex].RemoveAt(id.ItemIndex);
         }
 

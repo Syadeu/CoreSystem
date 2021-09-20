@@ -55,6 +55,8 @@ namespace Syadeu.Presentation.Proxy
                 m_InvisibleList;
         private NativeQueue<ClusterUpdateRequest>
                 m_ClusterUpdates;
+        private NativeList<ClusterUpdateRequest>
+                m_TempSortedUpdateList;
         private NativeQueue<ClusterIDRequest>
                 m_ClusterIDRequests;
 #pragma warning restore IDE0090 // Use 'new(...)'
@@ -83,6 +85,7 @@ namespace Syadeu.Presentation.Proxy
             m_InvisibleList = new NativeQueue<int>(Allocator.Persistent);
 
             m_ClusterUpdates = new NativeQueue<ClusterUpdateRequest>(Allocator.Persistent);
+            m_TempSortedUpdateList = new NativeList<ClusterUpdateRequest>(Allocator.Persistent);
             m_ClusterIDRequests = new NativeQueue<ClusterIDRequest>(Allocator.Persistent);
 
             return base.OnInitialize();
@@ -110,6 +113,7 @@ namespace Syadeu.Presentation.Proxy
             m_InvisibleList.Dispose();
 
             m_ClusterUpdates.Dispose();
+            m_TempSortedUpdateList.Dispose();
             m_ClusterIDRequests.Dispose();
 
             m_ProxyData.For((tr) =>
@@ -179,21 +183,21 @@ namespace Syadeu.Presentation.Proxy
             
             if (transform.isDestroyed || transform.isDestroyQueued) return;
 
-            if (!transform.Pointer->m_ClusterID.Equals(ClusterID.Requested))
+            if (!transform.Pointer->clusterID.Equals(ClusterID.Requested))
             {
-                //m_ClusterData.Update(in ev.transform.Pointer->m_ClusterID, ev.transform.position);
-                m_ClusterUpdates.Enqueue(new ClusterUpdateRequest(transform, transform.Pointer->m_ClusterID, ev.transform.position));
+                m_ClusterUpdates.Enqueue(new ClusterUpdateRequest(transform, transform.Pointer->clusterID, transform.position));
             }
 
             if (!transform.hasProxy || transform.hasProxyQueued) return;
 
             RecycleableMonobehaviour proxy = transform.proxy;
-            proxy.transform.position = ev.transform.position;
-            proxy.transform.rotation = ev.transform.rotation;
-            proxy.transform.localScale = ev.transform.scale;
+            proxy.transform.position = transform.position;
+            proxy.transform.rotation = transform.rotation;
+            proxy.transform.localScale = transform.scale;
         }
 
         private NativeList<ClusterGroup<ProxyTransformData>> m_SortedCluster;
+
         protected override PresentationResult AfterPresentation()
         {
             //const int c_ChunkSize = 100;
@@ -223,7 +227,7 @@ namespace Syadeu.Presentation.Proxy
 
                 ProxyTransform tr = m_ProxyData[m_RequestProxyList.Dequeue()];
 
-                if (tr.isDestroyed)
+                if (!tr.Ref.m_IsOccupied || tr.Ref.m_DestroyQueued)
                 {
                     CoreSystem.Logger.LogError(Channel.Proxy, $"1 destroyed transform");
                     continue;
@@ -266,7 +270,7 @@ namespace Syadeu.Presentation.Proxy
                 //if (i != 0 && i % c_ChunkSize == 0) break;
 
                 ProxyTransform tr = m_ProxyData[m_VisibleList.Dequeue()];
-                if (tr.isDestroyed) continue;
+                if (tr.Ref.m_IsOccupied || tr.Ref.m_DestroyQueued) continue;
 
                 tr.isVisible = true;
                 OnDataObjectVisible?.Invoke(tr);
@@ -277,8 +281,7 @@ namespace Syadeu.Presentation.Proxy
                 //if (i != 0 && i % c_ChunkSize == 0) break;
 
                 ProxyTransform tr = m_ProxyData[m_InvisibleList.Dequeue()];
-
-                if (tr.isDestroyed) continue;
+                if (tr.Ref.m_IsOccupied || tr.Ref.m_DestroyQueued) continue;
 
                 tr.isVisible = false;
                 OnDataObjectInvisible?.Invoke(tr);
@@ -297,7 +300,8 @@ namespace Syadeu.Presentation.Proxy
                     continue;
                 }
 
-                if (tr.hasProxy && !tr.hasProxyQueued)
+                if (!tr.Ref.m_ProxyIndex.Equals(ProxyTransform.ProxyNull) && 
+                    !tr.Ref.m_ProxyIndex.Equals(ProxyTransform.ProxyQueued))
                 {
                     RecycleableMonobehaviour proxy = RemoveProxy(tr);
 
@@ -309,9 +313,9 @@ namespace Syadeu.Presentation.Proxy
                         proxy.transform.position = INIT_POSITION;
                     }
                 }
-                if (tr.isVisible)
+                if (tr.Ref.m_IsVisible)
                 {
-                    tr.isVisible = false;
+                    tr.Ref.m_IsVisible = false;
                     OnDataObjectInvisible?.Invoke(tr);
                 }
 
@@ -319,7 +323,7 @@ namespace Syadeu.Presentation.Proxy
 
                 unsafe
                 {
-                    ClusterID id = tr.Pointer->m_ClusterID;
+                    ClusterID id = tr.Pointer->clusterID;
                     if (id.Equals(ClusterID.Requested))
                     {
                         int tempCount = m_ClusterIDRequests.Count;
@@ -345,7 +349,7 @@ namespace Syadeu.Presentation.Proxy
                 var temp = m_ClusterIDRequests.Dequeue();
                 var id = m_ClusterData.Add(temp.translation, temp.index);
 
-                m_ProxyData[temp.index].Ref.m_ClusterID = id;
+                m_ProxyData[temp.index].Ref.clusterID = id;
             }
 
             #region Jobs
@@ -354,12 +358,22 @@ namespace Syadeu.Presentation.Proxy
             {
                 NativeArray<ClusterUpdateRequest> requests = m_ClusterUpdates.ToArray(Allocator.TempJob);
                 m_ClusterUpdates.Clear();
+                m_TempSortedUpdateList.Clear();
+
+                ClusterUpdateSortJob clusterUpdateSortJob = new ClusterUpdateSortJob
+                {
+                    m_ClusterData = m_ClusterData,
+                    m_Request = requests,
+                    m_SortedRequests = m_TempSortedUpdateList
+                };
+                ScheduleAt(JobPosition.On, clusterUpdateSortJob);
+
                 ClusterUpdateJob clusterUpdateJob = new ClusterUpdateJob
                 {
                     m_ClusterData = m_ClusterData.AsParallelWriter(),
-                    m_Requests = requests
+                    m_Requests = m_TempSortedUpdateList.AsDeferredJobArray()
                 };
-                ScheduleAt(JobPosition.On, clusterUpdateJob, requests.Length);
+                ScheduleAt(JobPosition.On, clusterUpdateJob, m_TempSortedUpdateList);
             }
 
             if (m_SortedCluster.IsCreated)
@@ -404,10 +418,29 @@ namespace Syadeu.Presentation.Proxy
 
         #region Jobs
 
-        private struct ClusterUpdateJob : IJobParallelFor
+        private struct ClusterUpdateSortJob : IJob
+        {
+            public Cluster<ProxyTransformData> m_ClusterData;
+            [DeallocateOnJobCompletion] public NativeArray<ClusterUpdateRequest> m_Request;
+            public NativeList<ClusterUpdateRequest> m_SortedRequests;
+
+            public void Execute()
+            {
+                NativeHashSet<ProxyTransform> m_Listed = new NativeHashSet<ProxyTransform>(m_Request.Length, Allocator.Temp);
+
+                for (int i = m_Request.Length - 1; i >= 0; i--)
+                {
+                    if (m_Listed.Contains(m_Request[i].transform)) continue;
+
+                    m_SortedRequests.Add(m_Request[i]);
+                    m_Listed.Add(m_Request[i].transform);
+                }
+            }
+        }
+        private struct ClusterUpdateJob : IJobParallelForDefer
         {
             [WriteOnly] public Cluster<ProxyTransformData>.ParallelWriter m_ClusterData;
-            [ReadOnly, DeallocateOnJobCompletion] public NativeArray<ClusterUpdateRequest> m_Requests;
+            [ReadOnly] public NativeArray<ClusterUpdateRequest> m_Requests;
 
             public void Execute(int i)
             {
@@ -416,7 +449,14 @@ namespace Syadeu.Presentation.Proxy
                 if (tr.isDestroyQueued ||
                     tr.isDestroyed) return;
 
-                tr.Ref.m_ClusterID = m_ClusterData.Update(m_Requests[i].id, m_Requests[i].translation);
+                ClusterID 
+                    current = tr.Ref.clusterID,
+                    updated = m_ClusterData.Update(m_Requests[i].id, m_Requests[i].translation);
+                
+                if (!current.Equals(updated))
+                {
+                    tr.Ref.clusterID = updated;
+                }
             }
         }
         [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
@@ -483,11 +523,11 @@ namespace Syadeu.Presentation.Proxy
                         throw new Exception();
                     }
                     ProxyTransformData data = List.ElementAt(clusterGroup[j]);
-                    if (data.destroyed)
-                    {
-                        clusterGroup.RemoveAt(j);
-                        continue;
-                    }
+                    //if (data.destroyed)
+                    //{
+                    //    clusterGroup.RemoveAt(j);
+                    //    continue;
+                    //}
 
                     if (!data.m_EnableCull && !data.m_Prefab.Equals(PrefabReference.None))
                     {
@@ -563,7 +603,7 @@ namespace Syadeu.Presentation.Proxy
             unsafe
             {
                 m_ClusterIDRequests.Enqueue(new ClusterIDRequest(pos, tr.m_Index));
-                tr.Pointer->m_ClusterID = ClusterID.Requested;
+                tr.Pointer->clusterID = ClusterID.Requested;
             }
             OnDataObjectCreated?.Invoke(tr);
 
@@ -598,7 +638,7 @@ namespace Syadeu.Presentation.Proxy
 
             m_RequestDestories.Enqueue(tr.m_Index);
             CoreSystem.Logger.Log(Channel.Proxy,
-                $"Destroy called");
+                $"Destroy({tr.Ref.m_Prefab.GetObjectSetting().m_Name}) called");
         }
 
         #region Proxy Object Control
@@ -770,17 +810,17 @@ namespace Syadeu.Presentation.Proxy
                     $"Prefab({proxyTransform.prefab.GetObjectSetting().m_Name}) proxy created, pool remains {pool.Count}");
             }
         }
-        private RecycleableMonobehaviour RemoveProxy(ProxyTransform proxyTransform)
+        unsafe private RecycleableMonobehaviour RemoveProxy(ProxyTransform proxyTransform)
         {
-            PrefabReference prefab = proxyTransform.prefab;
-            RecycleableMonobehaviour proxy = proxyTransform.proxy;
+            PrefabReference prefab = proxyTransform.Ref.m_Prefab;
 
-            if ((proxy.transform.position - (Vector3)proxyTransform.position).sqrMagnitude > .1f)
+            int2 proxyIndex = proxyTransform.Ref.m_ProxyIndex;
+            RecycleableMonobehaviour proxy = m_Instances[proxyIndex.x][proxyIndex.y];
+
+            if ((proxy.transform.position - (Vector3)proxyTransform.Pointer->m_Translation).sqrMagnitude > .1f)
             {
-                unsafe
-                {
-                    proxyTransform.Pointer->m_Translation = proxy.transform.position;
-                }
+                proxyTransform.Pointer->m_Translation = proxy.transform.position;
+
                 CoreSystem.Logger.LogError(Channel.Proxy,
                     "in-corrected translation found. Did you moved proxy transform directly?");
             }
