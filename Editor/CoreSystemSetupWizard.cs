@@ -177,9 +177,11 @@ namespace SyadeuEditor
 
             const string
                 UNITY_COLLECTIONS_CHECKS = "ENABLE_UNITY_COLLECTIONS_CHECKS",
+                CORESYSTEM_MOTIONMATCHING = "CORESYSTEM_MOTIONMATCHING",
                 CORESYSTEM_FMOD = "CORESYSTEM_FMOD";
             bool
                 m_DefinedCollectionsChecks, 
+                m_DefinedMotionMatching,
                 m_DefinedFMOD;
             List<string> m_DefinedConstrains;
 
@@ -222,6 +224,7 @@ namespace SyadeuEditor
                 m_DefinedConstrains = temp.ToList();
 
                 m_DefinedCollectionsChecks = HasConstrains(UNITY_COLLECTIONS_CHECKS);
+                m_DefinedMotionMatching = HasConstrains(CORESYSTEM_MOTIONMATCHING);
                 m_DefinedFMOD = HasConstrains(CORESYSTEM_FMOD);
 
                 #endregion
@@ -343,6 +346,22 @@ namespace SyadeuEditor
                     {
                         if (m_DefinedFMOD) DefineConstrains(CORESYSTEM_FMOD);
                         else UndefineContrains(CORESYSTEM_FMOD);
+                    }
+                }
+
+                EditorGUILayout.Space();
+                EditorUtils.Line();
+
+                EditorUtils.StringRich("Third Party Constrains", 13);
+                using (var check = new EditorGUI.ChangeCheckScope())
+                {
+                    m_DefinedMotionMatching =
+                        EditorGUILayout.ToggleLeft("Define CORESYSTEM_MOTIONMATCHING", m_DefinedMotionMatching);
+
+                    if (check.changed)
+                    {
+                        if (m_DefinedMotionMatching) DefineConstrains(CORESYSTEM_MOTIONMATCHING);
+                        else UndefineContrains(CORESYSTEM_MOTIONMATCHING);
                     }
                 }
 

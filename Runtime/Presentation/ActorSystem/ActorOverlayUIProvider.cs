@@ -10,17 +10,27 @@ using UnityEngine;
 
 namespace Syadeu.Presentation.Actor
 {
+    /// <summary>
+    /// <see cref="ActorOverlayUIAttributeBase"/> 와 페어로 작동합니다.
+    /// </summary>
     public class ActorOverlayUIProvider : ActorProviderBase
     {
         [Flags]
         public enum UpdateType
         {
-            Manual          =   0,
+            Manual                  =   0,
             
-            Lerp            =   0b001,
-            Instant         =   0b010,
+            Lerp                    =   0b0001,
+            Instant                 =   0b0010,
 
-            SyncOrientation =   0b100,
+            /// <summary>
+            /// 카메라와 오리엔테이션을 맞춥니다.
+            /// </summary>
+            SyncCameraOrientation   =   0b0100,
+            /// <summary>
+            /// 부모(이 엔티티의 <seealso cref="ITransform"/>)와 오리엔테이션을 맞춥니다.
+            /// </summary>
+            SyncParentOrientation   =   0b1000
         }
         private struct UpdateJob : ICoroutineJob
         {
@@ -31,7 +41,7 @@ namespace Syadeu.Presentation.Actor
             private UpdateType m_UpdateType;
             private float m_UpdateSpeed;
 
-            UpdateLoop ICoroutineJob.Loop => UpdateLoop.Transform;
+            UpdateLoop ICoroutineJob.Loop => UpdateLoop.AfterTransform;
 
             public UpdateJob(Entity<ActorEntity> entity, Entity<UIObjectEntity> ui, 
                 float3 offset, float3 orientationOffset,
@@ -76,16 +86,42 @@ namespace Syadeu.Presentation.Actor
                             = math.lerp(uiTr.position, entityTr.position + m_Offset, Time.deltaTime * m_UpdateSpeed);
                     }
 
-                    if ((m_UpdateType & UpdateType.SyncOrientation) == UpdateType.SyncOrientation)
+                    Quaternion offset = Quaternion.Euler(m_OrientationOffset);
+                    if ((m_UpdateType & UpdateType.SyncCameraOrientation) == UpdateType.SyncCameraOrientation)
                     {
                         Quaternion orientation = Quaternion.LookRotation(camTr.forward, Vector3.up);
+
                         if ((m_UpdateType & UpdateType.Instant) == UpdateType.Instant)
                         {
-                            uiTr.rotation = orientation;
+                            uiTr.rotation = orientation * offset;
                         }
                         else if ((m_UpdateType & UpdateType.Lerp) == UpdateType.Lerp)
                         {
-                            uiTr.rotation = Quaternion.Lerp(uiTr.rotation, orientation, Time.deltaTime * m_UpdateSpeed);
+                            uiTr.rotation = Quaternion.Lerp(uiTr.rotation, orientation * offset, Time.deltaTime * m_UpdateSpeed);
+                        }
+                    }
+                    else if ((m_UpdateType & UpdateType.SyncParentOrientation) == UpdateType.SyncParentOrientation)
+                    {
+                        Quaternion orientation = entityTr.rotation;
+
+                        if ((m_UpdateType & UpdateType.Instant) == UpdateType.Instant)
+                        {
+                            uiTr.rotation = orientation * offset;
+                        }
+                        else if ((m_UpdateType & UpdateType.Lerp) == UpdateType.Lerp)
+                        {
+                            uiTr.rotation = Quaternion.Lerp(uiTr.rotation, orientation * offset, Time.deltaTime * m_UpdateSpeed);
+                        }
+                    }
+                    else
+                    {
+                        if ((m_UpdateType & UpdateType.Instant) == UpdateType.Instant)
+                        {
+                            uiTr.rotation = offset;
+                        }
+                        else if ((m_UpdateType & UpdateType.Lerp) == UpdateType.Lerp)
+                        {
+                            uiTr.rotation = Quaternion.Lerp(uiTr.rotation, offset, Time.deltaTime * m_UpdateSpeed);
                         }
                     }
 
@@ -97,7 +133,7 @@ namespace Syadeu.Presentation.Actor
         [JsonProperty(Order = 0, PropertyName = "Prefab")]
         protected Reference<UIObjectEntity> m_Prefab = Reference<UIObjectEntity>.Empty;
         [JsonProperty(Order = 1, PropertyName = "UpdateType")]
-        protected UpdateType m_UpdateType = UpdateType.Instant;
+        protected UpdateType m_UpdateType = UpdateType.Instant | UpdateType.SyncCameraOrientation;
         [JsonProperty(Order = 2, PropertyName = "UpdateSpeed")]
         protected float m_UpdateSpeed = 4;
 

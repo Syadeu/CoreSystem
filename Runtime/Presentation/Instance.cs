@@ -141,13 +141,35 @@ namespace Syadeu.Presentation
                 return Empty;
             }
 
-            if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(TypeHelper.TypeOf<T>.Type))
+            if (TypeHelper.TypeOf<EntityBase>.Type.IsAssignableFrom(TypeHelper.TypeOf<T>.Type))
             {
                 Instance<IEntity> ins = m_EntitySystem.System.CreateEntity(other, float3.zero).AsInstance();
                 return ins.Cast<IEntity, T>();
             }
+            else if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(TypeHelper.TypeOf<T>.Type))
+            {
+                Instance<IEntityData> ins = m_EntitySystem.System.CreateObject(other).AsInstance();
+                return ins.Cast<IEntityData, T>();
+            }
 
             return m_EntitySystem.System.CreateInstance(other);
+        }
+        public static Instance<TA> CreateInstance<TA>(Reference<TA> other, float3 pos, quaternion rot, float3 localScale)
+            where TA : class, IEntity
+        {
+            if (m_EntitySystem.IsNull())
+            {
+                m_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
+                if (m_EntitySystem.IsNull())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        "Cannot retrived EntitySystem.");
+                    return Instance<TA>.Empty;
+                }
+            }
+
+            Instance<IEntity> ins = m_EntitySystem.System.CreateEntity(other, in pos, in rot, in localScale).AsInstance();
+            return ins.Cast<IEntity, TA>();
         }
     }
 }
