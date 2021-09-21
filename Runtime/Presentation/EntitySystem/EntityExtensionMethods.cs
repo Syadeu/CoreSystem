@@ -7,6 +7,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using Unity.Mathematics;
 
 namespace Syadeu.Presentation
 {
@@ -92,6 +93,17 @@ namespace Syadeu.Presentation
             where T : class, IEntityData
         {
             return new Instance<T>(entity.Idx);
+        }
+
+        public static Instance<T> CreateInstance<T>(this Reference<T> other, float3 pos, quaternion rot, float3 localScale)
+            where T : class, IEntity
+        {
+            return Instance<T>.CreateInstance(other, pos, rot, localScale);
+        }
+        public static Instance<T> CreateInstance<T>(this Reference<T> other)
+            where T : class, IEntityData
+        {
+            return Instance<T>.CreateInstance(other);
         }
     }
 }
