@@ -84,7 +84,7 @@ namespace Syadeu.Presentation.Map
 
             if (ObstacleLayer.IsCreated) ObstacleLayer.Dispose();
 
-            Grid.Dispose();
+            //Grid.Dispose();
             //Grid = null;
         }
         public void SetObstacleLayers(params int[] layers)
@@ -108,11 +108,11 @@ namespace Syadeu.Presentation.Map
         }
         protected override void OnDispose()
         {
-            //if (Grid != null)
-            {
-                Grid.Dispose();
-                //Grid = null;
-            }
+            ////if (Grid != null)
+            //{
+            //    //Grid.Dispose();
+            //    //Grid = null;
+            //}
 
             if (Layers != null)
             {

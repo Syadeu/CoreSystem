@@ -413,15 +413,90 @@ namespace Syadeu.Presentation.Map
         private static int GetSqrMagnitude(int2 location) => (location.x * location.x) + (location.y * location.y);
     }
 
-    public struct GridPathfindingJob : IJobParallelFor
+    public struct GridPathfindingJob16 : IJobParallelFor
     {
+        [ReadOnly] private ManagedGrid m_Grid;
+        [ReadOnly] private NativeHashSet<int> m_IgnoreLayers;
+        [ReadOnly, DeallocateOnJobCompletion] private NativeArray<int2> m_From2TargetsTemp;
+        [ReadOnly] private NativeArray<int2>.ReadOnly m_From2Targets;
+
+        [WriteOnly] public NativeList<GridPath16>.ParallelWriter m_Results;
+
+        public GridPathfindingJob16(ManagedGrid grid, NativeArray<int2> from2Targets, NativeList<GridPath16>.ParallelWriter results, NativeHashSet<int> ignoreLayers = default)
+        {
+            m_Grid = grid;
+            m_IgnoreLayers = ignoreLayers;
+
+            m_From2TargetsTemp = from2Targets;
+            m_From2Targets = m_From2TargetsTemp.AsReadOnly();
+
+            m_Results = results;
+        }
+
         public void Execute(int index)
         {
             throw new NotImplementedException();
         }
     }
-    public struct GridPath
+    public struct GridPath16
     {
+        public GridPathTile a, b, c, d;
+        public GridPathTile e, f, g, h;
+        public GridPathTile i, j, k, l;
+        public GridPathTile m, n, o, p;
+
+        public GridPathTile this[int index]
+        {
+            get
+            {
+                switch (index)
+                {
+                    case 0: return a;
+                    case 1: return b;
+                    case 2: return c;
+                    case 3: return d;
+                    case 4: return e;
+                    case 5: return f;
+                    case 6: return g;
+                    case 7: return h;
+                    case 8: return i;
+                    case 9: return j;
+                    case 10: return k;
+                    case 11: return l;
+                    case 12: return m;
+                    case 13: return n;
+                    case 14: return o;
+                    case 15: return p;
+                }
+
+                throw new IndexOutOfRangeException();
+            }
+            set
+            {
+                switch (index)
+                {
+                    case 0: { a = value; return; };
+                    case 1: { b = value; return; };
+                    case 2: { c = value; return; };
+                    case 3: { d = value; return; };
+                    case 4: { e = value; return; };
+                    case 5: { f = value; return; };
+                    case 6: { g = value; return; };
+                    case 7: { h = value; return; };
+                    case 8: { i = value; return; };
+                    case 9: { j = value; return; };
+                    case 10: { k = value; return; };
+                    case 11: { l = value; return; };
+                    case 12: { m = value; return; };
+                    case 13: { n = value; return; };
+                    case 14: { o = value; return; };
+                    case 15: { p = value; return; };
+                }
+
+                throw new IndexOutOfRangeException();
+            }
+        }
+        public int Length => 16;
 
     }
     public struct GridPathTile

@@ -28,6 +28,8 @@ namespace Syadeu.Presentation.Map
         [Space, Header("Navigation")]
         [JsonProperty(Order = 2, PropertyName = "AllowOverlapping")]
         private bool m_AllowOverlapping = false;
+        [JsonProperty(Order = 3, PropertyName = "ObstacleLayers")] 
+        private int[] m_ObstacleLayers = Array.Empty<int>();
 
         [JsonIgnore] internal GridSystem GridSystem { get; set; }
 

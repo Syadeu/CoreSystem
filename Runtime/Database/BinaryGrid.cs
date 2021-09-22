@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
+using Unity.Collections.LowLevel.Unsafe;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -494,7 +495,7 @@ namespace Syadeu.Database
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct ManagedGrid : IDisposable
+    public struct ManagedGrid
     {
         [JsonProperty] internal readonly Hash m_Hash;
         [JsonProperty] private readonly AABB m_AABB;
@@ -656,11 +657,6 @@ namespace Syadeu.Database
         //        return serializer.Deserialize<ManagedGrid>(rd);
         //    }
         //}
-
-        public void Dispose()
-        {
-            //m_Cells.Clear();
-        }
     }
     public sealed class ManagedCell
     {
