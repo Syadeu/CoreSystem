@@ -178,7 +178,7 @@ namespace Syadeu.Presentation.Map
                 GL.PopMatrix();
             }
 
-            static void DrawGridGL(ManagedGrid grid, float thickness)
+            static void DrawGridGL(BinaryGrid grid, float thickness)
             {
                 const float yOffset = .2f;
                 int2 gridSize = grid.gridSize;
@@ -225,7 +225,7 @@ namespace Syadeu.Presentation.Map
                     }
                 }
             }
-            static void DrawOccupiedCells(ManagedGrid grid, int[] gridEntities)
+            static void DrawOccupiedCells(BinaryGrid grid, int[] gridEntities)
             {
                 float sizeHalf = grid.cellSize * .5f;
 
@@ -244,7 +244,7 @@ namespace Syadeu.Presentation.Map
                     GL.Vertex(p4);
                 }
             }
-            static void DrawCell(ManagedGrid grid, in int index)
+            static void DrawCell(BinaryGrid grid, in int index)
             {
                 float sizeHalf = grid.cellSize * .5f;
                 Vector3
@@ -415,14 +415,14 @@ namespace Syadeu.Presentation.Map
 
     public struct GridPathfindingJob16 : IJobParallelFor
     {
-        [ReadOnly] private ManagedGrid m_Grid;
+        [ReadOnly] private BinaryGrid m_Grid;
         [ReadOnly] private NativeHashSet<int> m_IgnoreLayers;
         [ReadOnly, DeallocateOnJobCompletion] private NativeArray<int2> m_From2TargetsTemp;
         [ReadOnly] private NativeArray<int2>.ReadOnly m_From2Targets;
 
         [WriteOnly] public NativeList<GridPath16>.ParallelWriter m_Results;
 
-        public GridPathfindingJob16(ManagedGrid grid, NativeArray<int2> from2Targets, NativeList<GridPath16>.ParallelWriter results, NativeHashSet<int> ignoreLayers = default)
+        public GridPathfindingJob16(BinaryGrid grid, NativeArray<int2> from2Targets, NativeList<GridPath16>.ParallelWriter results, NativeHashSet<int> ignoreLayers = default)
         {
             m_Grid = grid;
             m_IgnoreLayers = ignoreLayers;
@@ -557,7 +557,7 @@ namespace Syadeu.Presentation.Map
             return true;
         }
         public bool HasParent() => parent >= 0;
-        public void Calculate(in ManagedGrid grid, in NativeHashSet<int> ignoreLayers = default)
+        public void Calculate(in BinaryGrid grid, in NativeHashSet<int> ignoreLayers = default)
         {
             int2 current = grid.IndexToLocation(in location);
 

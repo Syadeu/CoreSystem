@@ -14,7 +14,7 @@ namespace SyadeuEditor
     {
         SceneReference m_CurrentScene;
 
-        ManagedGrid grid;
+        BinaryGrid grid;
         float cellSize = 2.5f;
         Vector3Int center;
         Vector3Int size;

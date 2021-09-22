@@ -414,7 +414,7 @@ namespace Syadeu.Database
             GL.End();
             GL.PopMatrix();
         }
-        public static void DrawGL(this ManagedGrid grid, float thickness, Camera cam = null)
+        public static void DrawGL(this BinaryGrid grid, float thickness, Camera cam = null)
         {
             int2 gridSize = grid.gridSize;
 
@@ -495,7 +495,7 @@ namespace Syadeu.Database
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct ManagedGrid
+    public struct BinaryGrid
     {
         [JsonProperty] internal readonly Hash m_Hash;
         [JsonProperty] private readonly AABB m_AABB;
@@ -516,7 +516,7 @@ namespace Syadeu.Database
         //[JsonIgnore] public ManagedCell[] cells => m_Cells.Values.ToArray();
         [JsonIgnore] public AABB bounds => m_AABB;
 
-        public ManagedGrid(int3 center, int3 size, float cellSize)
+        public BinaryGrid(int3 center, int3 size, float cellSize)
         {
             m_Hash = Hash.NewHash();
             m_AABB = new AABB(center, size);
@@ -540,7 +540,7 @@ namespace Syadeu.Database
 
             return HasCell(GridExtensions.LocationToIndex(m_AABB, x, y));
         }
-        public bool HasCell(float3 position) => HasCell(GridExtensions.PositionToIndex(in m_AABB, in m_CellSize, position));
+        public bool HasCell(float3 position) => m_AABB.Contains(position) && HasCell(GridExtensions.PositionToIndex(in m_AABB, in m_CellSize, position));
 
         //public ManagedCell GetCell(int idx)
         //{

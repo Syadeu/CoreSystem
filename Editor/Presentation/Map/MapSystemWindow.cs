@@ -155,7 +155,7 @@ namespace SyadeuEditor.Presentation.Map
         private sealed class GridMapExtension : IDisposable
         {
             public readonly GridMapAttribute m_SceneDataGridAtt;
-            public readonly ManagedGrid m_SceneDataGrid;
+            public readonly BinaryGrid m_SceneDataGrid;
             public string[] m_GridLayerNames;
 
             public int m_SelectedGridLayer = 0;
@@ -177,7 +177,7 @@ namespace SyadeuEditor.Presentation.Map
                 if (att == null) return;
 
                 m_SceneDataGridAtt = att;
-                m_SceneDataGrid = new ManagedGrid(m_SceneDataGridAtt.Center, m_SceneDataGridAtt.Size, m_SceneDataGridAtt.CellSize);
+                m_SceneDataGrid = new BinaryGrid(m_SceneDataGridAtt.Center, m_SceneDataGridAtt.Size, m_SceneDataGridAtt.CellSize);
 
                 ReloadLayers();
             }

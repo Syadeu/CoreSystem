@@ -53,7 +53,7 @@ namespace Syadeu.Presentation.Map
         [JsonIgnore] public int3 Size => m_Size;
         [JsonIgnore] public float CellSize => m_CellSize;
         [JsonIgnore] public int LayerCount => m_Layers.Length;
-        [JsonIgnore] public ManagedGrid Grid { get; private set; }
+        [JsonIgnore] public BinaryGrid Grid { get; private set; }
         [JsonIgnore] private NativeHashSet<int>[] Layers { get; set; }
         [JsonIgnore] public NativeHashSet<int> ObstacleLayer { get; private set; }
 
@@ -61,7 +61,7 @@ namespace Syadeu.Presentation.Map
         {
             //if (Grid != null) throw new Exception();
 
-            Grid = new ManagedGrid(m_Center, m_Size, m_CellSize);
+            Grid = new BinaryGrid(m_Center, m_Size, m_CellSize);
             Layers = new NativeHashSet<int>[m_Layers.Length];
             for (int i = 0; i < m_Layers.Length; i++)
             {
