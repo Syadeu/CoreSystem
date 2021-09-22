@@ -494,7 +494,7 @@ namespace Syadeu.Database
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public sealed class ManagedGrid : IDisposable
+    public struct ManagedGrid : IDisposable
     {
         [JsonProperty] internal readonly Hash m_Hash;
         [JsonProperty] private readonly AABB m_AABB;
@@ -502,7 +502,7 @@ namespace Syadeu.Database
         [JsonProperty] private readonly int m_Length;
         [JsonProperty] private readonly float m_CellSize;
 
-        [JsonProperty] private readonly Dictionary<int, ManagedCell> m_Cells;
+        //[JsonProperty] private readonly Dictionary<int, ManagedCell> m_Cells;
 
         [JsonIgnore] public int length => m_Length;
         [JsonIgnore] public int2 gridSize => new int2(
@@ -512,7 +512,7 @@ namespace Syadeu.Database
         [JsonIgnore] public float cellSize => m_CellSize;
         [JsonIgnore] public float3 center => m_AABB.center;
         [JsonIgnore] public float3 size => m_AABB.size;
-        [JsonIgnore] public ManagedCell[] cells => m_Cells.Values.ToArray();
+        //[JsonIgnore] public ManagedCell[] cells => m_Cells.Values.ToArray();
         [JsonIgnore] public AABB bounds => m_AABB;
 
         public ManagedGrid(int3 center, int3 size, float cellSize)
@@ -521,7 +521,7 @@ namespace Syadeu.Database
             m_AABB = new AABB(center, size);
 
             m_CellSize = cellSize;
-            m_Cells = new Dictionary<int, ManagedCell>();
+            //m_Cells = new Dictionary<int, ManagedCell>();
 
             int
                 xSize = (int)math.floor(size.x / cellSize),
@@ -541,45 +541,47 @@ namespace Syadeu.Database
         }
         public bool HasCell(float3 position) => HasCell(GridExtensions.PositionToIndex(in m_AABB, in m_CellSize, position));
 
-        public ManagedCell GetCell(int idx)
-        {
-            if (idx >= m_Length) throw new Exception();
+        //public ManagedCell GetCell(int idx)
+        //{
+        //    if (idx >= m_Length) throw new Exception();
 
-            if (!m_Cells.TryGetValue(idx, out var cell))
-            {
-                cell = new ManagedCell(
-                            m_Hash, idx,
-                            GridExtensions.IndexToPosition(in m_AABB, in m_CellSize, in idx),
-                            m_CellSize
-                            );
-                m_Cells.Add(idx, cell);
-            }
-            return cell;
-        }
-        public ManagedCell GetCell(float3 position)
-        {
-            if (!HasCell(position)) throw new Exception();
+        //    if (!m_Cells.TryGetValue(idx, out var cell))
+        //    {
+        //        cell = new ManagedCell(
+        //                    m_Hash, idx,
+        //                    GridExtensions.IndexToPosition(in m_AABB, in m_CellSize, in idx),
+        //                    m_CellSize
+        //                    );
+        //        m_Cells.Add(idx, cell);
+        //    }
+        //    return cell;
+        //}
+        //public ManagedCell GetCell(float3 position)
+        //{
+        //    if (!HasCell(position)) throw new Exception();
 
-            int idx = GridExtensions.PositionToIndex(in m_AABB, in m_CellSize, in position);
-            if (!m_Cells.TryGetValue(idx, out var cell))
-            {
-                cell = new ManagedCell(
-                            m_Hash, idx,
-                            GridExtensions.IndexToPosition(in m_AABB, in m_CellSize, in idx),
-                            m_CellSize
-                            );
-                m_Cells.Add(idx, cell);
-            }
-            return cell;
-        }
+        //    int idx = GridExtensions.PositionToIndex(in m_AABB, in m_CellSize, in position);
+        //    if (!m_Cells.TryGetValue(idx, out var cell))
+        //    {
+        //        cell = new ManagedCell(
+        //                    m_Hash, idx,
+        //                    GridExtensions.IndexToPosition(in m_AABB, in m_CellSize, in idx),
+        //                    m_CellSize
+        //                    );
+        //        m_Cells.Add(idx, cell);
+        //    }
+        //    return cell;
+        //}
 
         public int PositionToIndex(float3 position) => GridExtensions.PositionToIndex(in m_AABB, in m_CellSize, in position);
         public int2 PositionToLocation(float3 position) => GridExtensions.PositionToLocation(in m_AABB, in m_CellSize, in position);
 
-        public float3 IndexToPosition(int idx) => GridExtensions.IndexToPosition(in m_AABB, in m_CellSize, in idx);
-        public int2 IndexToLocation(int idx) => GridExtensions.IndexToLocation(in m_AABB, in m_CellSize, in idx);
+        public float3 IndexToPosition(in int idx) => GridExtensions.IndexToPosition(in m_AABB, in m_CellSize, in idx);
+        public int2 IndexToLocation(in int idx) => GridExtensions.IndexToLocation(in m_AABB, in m_CellSize, in idx);
 
         public float3 LocationToPosition(int2 location) => GridExtensions.LocationToPosition(in m_AABB, in m_CellSize, in location);
+        public int LocationToIndex(in int2 location) => GridExtensions.LocationToIndex(in m_AABB, in m_CellSize, in location);
+
         public float3 PositionToPosition(float3 position)
         {
             int2 idx = GridExtensions.PositionToLocation(in m_AABB, in m_CellSize, in position);
@@ -610,30 +612,54 @@ namespace Syadeu.Database
         }
         public int[] GetRange(in int2 location, in int range) => GetRange(GridExtensions.LocationToIndex(in m_AABB, in m_CellSize, in location), in range);
 
-        public byte[] ToBinary()
+        public int2 GetDirection(in int from, in Direction direction)
+            => GetDirection(IndexToLocation(in from), in direction);
+        public int2 GetDirection(in int2 from, in Direction direction)
         {
-            using (System.IO.MemoryStream ms = new System.IO.MemoryStream())
-            using (Newtonsoft.Json.Bson.BsonDataWriter wr = new Newtonsoft.Json.Bson.BsonDataWriter(ms))
+            int2 location = from;
+            if ((direction & Direction.Up) == Direction.Up)
             {
-                Newtonsoft.Json.JsonSerializer serializer = new Newtonsoft.Json.JsonSerializer();
-                serializer.Serialize(wr, this);
+                location.y += 1;
+            }
+            if ((direction & Direction.Down) == Direction.Down)
+            {
+                location.y -= 1;
+            }
+            if ((direction & Direction.Left) == Direction.Left)
+            {
+                location.x -= 1;
+            }
+            if ((direction & Direction.Right) == Direction.Right)
+            {
+                location.x += 1;
+            }
+            return location;
+        }
 
-                return ms.ToArray();
-            }
-        }
-        public static ManagedGrid FromBinary(in byte[] data)
-        {
-            using (System.IO.MemoryStream ms = new System.IO.MemoryStream(data))
-            using (Newtonsoft.Json.Bson.BsonDataReader rd = new Newtonsoft.Json.Bson.BsonDataReader(ms))
-            {
-                Newtonsoft.Json.JsonSerializer serializer = new Newtonsoft.Json.JsonSerializer();
-                return serializer.Deserialize<ManagedGrid>(rd);
-            }
-        }
+        //public byte[] ToBinary()
+        //{
+        //    using (System.IO.MemoryStream ms = new System.IO.MemoryStream())
+        //    using (Newtonsoft.Json.Bson.BsonDataWriter wr = new Newtonsoft.Json.Bson.BsonDataWriter(ms))
+        //    {
+        //        Newtonsoft.Json.JsonSerializer serializer = new Newtonsoft.Json.JsonSerializer();
+        //        serializer.Serialize(wr, this);
+
+        //        return ms.ToArray();
+        //    }
+        //}
+        //public static ManagedGrid FromBinary(in byte[] data)
+        //{
+        //    using (System.IO.MemoryStream ms = new System.IO.MemoryStream(data))
+        //    using (Newtonsoft.Json.Bson.BsonDataReader rd = new Newtonsoft.Json.Bson.BsonDataReader(ms))
+        //    {
+        //        Newtonsoft.Json.JsonSerializer serializer = new Newtonsoft.Json.JsonSerializer();
+        //        return serializer.Deserialize<ManagedGrid>(rd);
+        //    }
+        //}
 
         public void Dispose()
         {
-            m_Cells.Clear();
+            //m_Cells.Clear();
         }
     }
     public sealed class ManagedCell

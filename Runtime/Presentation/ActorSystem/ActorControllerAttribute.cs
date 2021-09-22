@@ -54,11 +54,17 @@ namespace Syadeu.Presentation.Actor
                 {
                     if (lifeTimeChanged.LifeTime == ActorLifetimeChangedEvent.State.Alive)
                     {
-                        state.State = ActorStateAttribute.StateInfo.Spawn;
+                        if ((state.State & ActorStateAttribute.StateInfo.Spawn) != ActorStateAttribute.StateInfo.Spawn)
+                        {
+                            state.State = ActorStateAttribute.StateInfo.Spawn;
+                        }
                     }
                     else
                     {
-                        state.State = ActorStateAttribute.StateInfo.Dead;
+                        if ((state.State & ActorStateAttribute.StateInfo.Dead) != ActorStateAttribute.StateInfo.Dead)
+                        {
+                            state.State = ActorStateAttribute.StateInfo.Dead;
+                        }
                     }
                 }
             }

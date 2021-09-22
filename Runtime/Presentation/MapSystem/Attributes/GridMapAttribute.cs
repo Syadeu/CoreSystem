@@ -55,10 +55,11 @@ namespace Syadeu.Presentation.Map
         [JsonIgnore] public int LayerCount => m_Layers.Length;
         [JsonIgnore] public ManagedGrid Grid { get; private set; }
         [JsonIgnore] private NativeHashSet<int>[] Layers { get; set; }
+        [JsonIgnore] public NativeHashSet<int> ObstacleLayer { get; private set; }
 
         public void CreateGrid()
         {
-            if (Grid != null) throw new Exception();
+            //if (Grid != null) throw new Exception();
 
             Grid = new ManagedGrid(m_Center, m_Size, m_CellSize);
             Layers = new NativeHashSet<int>[m_Layers.Length];
@@ -73,7 +74,7 @@ namespace Syadeu.Presentation.Map
         }
         public void DestroyGrid()
         {
-            if (Grid == null) throw new Exception();
+            //if (Grid == null) throw new Exception();
 
             for (int i = 0; i < Layers.Length; i++)
             {
@@ -81,15 +82,36 @@ namespace Syadeu.Presentation.Map
             }
             Layers = null;
 
+            if (ObstacleLayer.IsCreated) ObstacleLayer.Dispose();
+
             Grid.Dispose();
-            Grid = null;
+            //Grid = null;
+        }
+        public void SetObstacleLayers(params int[] layers)
+        {
+            int count = 0;
+            for (int i = 0; i < layers.Length; i++)
+            {
+                count += m_Layers[layers[i]].m_Indices.Length;
+            }
+
+            if (ObstacleLayer.IsCreated) ObstacleLayer.Dispose();
+            ObstacleLayer = new NativeHashSet<int>(count, Allocator.Persistent);
+
+            for (int i = 0; i < layers.Length; i++)
+            {
+                foreach (var item in m_Layers[layers[i]].m_Indices)
+                {
+                    ObstacleLayer.Add(item);
+                }
+            }
         }
         protected override void OnDispose()
         {
-            if (Grid != null)
+            //if (Grid != null)
             {
                 Grid.Dispose();
-                Grid = null;
+                //Grid = null;
             }
 
             if (Layers != null)
@@ -151,6 +173,11 @@ namespace Syadeu.Presentation.Map
             => FilterByLayer(GetLayer(layer), indices, out filteredIndices);
         public int[] FilterByLayer(string layer, int[] indices, out int[] filteredIndices)
             => FilterByLayer(GetLayer(layer), indices, out filteredIndices);
+
+        public bool LayerContains(in int layer, in int index)
+        {
+            return Layers[layer].Contains(index);
+        }
     }
     [Preserve]
     internal sealed class GridMapProcessor : AttributeProcessor<GridMapAttribute>

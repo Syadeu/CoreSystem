@@ -1,4 +1,5 @@
-﻿using Syadeu.Database;
+﻿using Newtonsoft.Json;
+using Syadeu.Database;
 using Syadeu.Presentation.Actor;
 using UnityEngine;
 
@@ -6,21 +7,21 @@ namespace Syadeu.Presentation.TurnTable
 {
     public sealed class TRPGActorOverlayUIProvider : ActorOverlayUIProvider
     {
-        //Texture2D temp;
+        //[JsonIgnore] Texture2D temp;
 
-        protected override void OnCreated()
-        {
-            //temp = new Texture2D(1, 1);
-            //temp.SetPixels(new Color[] { Color.white });
-            //temp.Apply();
+        //protected override void OnCreated()
+        //{
+        //    temp = new Texture2D(1, 1);
+        //    temp.SetPixels(new Color[] { Color.white });
+        //    temp.Apply();
 
-            //GridExtensions.DefaultMaterial;
+        //    //GridExtensions.DefaultMaterial;
 
-            base.OnCreated();
-        }
-        private void DrawGrid()
-        {
+        //    base.OnCreated();
+        //}
+        //private void DrawGrid()
+        //{
             
-        }
+        //}
     }
 }

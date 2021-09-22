@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using Unity.Mathematics;
+using UnityEngine;
 using UnityEngine.Scripting;
 using AABB = Syadeu.Database.AABB;
 
@@ -21,7 +22,12 @@ namespace Syadeu.Presentation.Map
     {
         [ReflectionDescription("생성시 이 엔티티를 그리드 셀 중앙에 맞춥니다.")]
         [JsonProperty(Order = 0, PropertyName = "FixedToCenter")] internal bool m_FixedToCenter;
-        [JsonProperty(Order = 1, PropertyName = "GridLocations")] public int2[] m_GridLocations;
+        [JsonProperty(Order = 1, PropertyName = "GridLocations")]
+        public int2[] m_GridLocations = Array.Empty<int2>();
+
+        [Space, Header("Navigation")]
+        [JsonProperty(Order = 2, PropertyName = "AllowOverlapping")]
+        private bool m_AllowOverlapping = false;
 
         [JsonIgnore] internal GridSystem GridSystem { get; set; }
 
@@ -39,11 +45,8 @@ namespace Syadeu.Presentation.Map
                 return temp.center;
             }
         }
+        [JsonIgnore] public bool AllowOverlapping => m_AllowOverlapping;
 
-        public GridSizeAttribute()
-        {
-            m_GridLocations = new int2[] { int2.zero };
-        }
         protected override void OnDispose()
         {
             GridSystem = null;
@@ -89,23 +92,72 @@ namespace Syadeu.Presentation.Map
             return new int[] { p0 };
         }
 
+        public bool GetPath(int to, List<GridPathTile> path, int maxPathLength)
+        {
+            return GridSystem.GetPath(CurrentGridIndices[0], to, path, maxPathLength);
+        }
+
         public IReadOnlyList<Entity<IEntity>> GetEntitiesAt(in int index)
         {
-            if (GridSystem == null) throw new System.Exception();
+            if (GridSystem == null)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"{nameof(GridSystem)} not found.");
+                return Array.Empty<Entity<IEntity>>();
+            }
+
             if (GridSystem.GridMap == null) throw new System.Exception();
+
+            return GridSystem.GetEntitiesAt(index);
+        }
+        public IReadOnlyList<Entity<IEntity>> GetEntitiesAt(in int2 location)
+        {
+            if (GridSystem == null)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"{nameof(GridSystem)} not found.");
+                return Array.Empty<Entity<IEntity>>();
+            }
+
+            if (GridSystem.GridMap == null) throw new System.Exception();
+
+            int index = LocationToIndex(in location);
 
             return GridSystem.GetEntitiesAt(index);
         }
 
         public float3 IndexToPosition(int idx)
         {
-            if (GridSystem == null) throw new System.Exception();
+            if (GridSystem == null)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"{nameof(GridSystem)} not found.");
+                return 0;
+            }
+
             return GridSystem.IndexToPosition(idx);
         }
         public int2 IndexToLocation(int idx)
         {
-            if (GridSystem == null) throw new System.Exception();
+            if (GridSystem == null)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"{nameof(GridSystem)} not found.");
+                return 0;
+            }
+
             return GridSystem.IndexToLocation(idx);
+        }
+        public int LocationToIndex(in int2 location)
+        {
+            if (GridSystem == null)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"{nameof(GridSystem)} not found.");
+                return 0;
+            }
+
+            return GridSystem.LocationToIndex(in location);
         }
     }
 

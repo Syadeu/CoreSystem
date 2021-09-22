@@ -183,7 +183,7 @@ namespace SyadeuEditor.Presentation.Map
             }
             public void Dispose()
             {
-                m_SceneDataGrid?.Dispose();
+                //m_SceneDataGrid?.Dispose();
             }
 
             private void ReloadLayers()

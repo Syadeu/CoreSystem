@@ -31,6 +31,7 @@ namespace Syadeu.Presentation
 
         public event Action OnUpdate;
         public event Action OnTransformUpdate;
+        public event Action OnAfterTransformUpdate;
 
         #region Presentation Methods
 
@@ -328,6 +329,8 @@ namespace Syadeu.Presentation
         }
         private void PresentationAfterTransformUpdateHandler()
         {
+            OnAfterTransformUpdate?.Invoke();
+
             #region Iterator Jobs
 
             for (int i = m_UsedAfterTransformIndices.Count - 1; i >= 0; i--)
