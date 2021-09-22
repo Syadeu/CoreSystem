@@ -6,6 +6,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -413,19 +414,26 @@ namespace Syadeu.Presentation.Map
         private static int GetSqrMagnitude(int2 location) => (location.x * location.x) + (location.y * location.y);
     }
 
+    [BurstCompile(CompileSynchronously = true)]
     public struct GridPathfindingJob16 : IJobParallelFor
     {
+        const int c_MaxIteration = 32;
+
         [ReadOnly] private BinaryGrid m_Grid;
-        [ReadOnly] private NativeHashSet<int> m_IgnoreLayers;
+        [ReadOnly] private NativeHashSet<int> m_IgnoreIndices;
         [ReadOnly, DeallocateOnJobCompletion] private NativeArray<int2> m_From2TargetsTemp;
         [ReadOnly] private NativeArray<int2>.ReadOnly m_From2Targets;
 
-        [WriteOnly] public NativeList<GridPath16>.ParallelWriter m_Results;
+        [WriteOnly] public NativeArray<GridPath16> m_Results;
 
-        public GridPathfindingJob16(BinaryGrid grid, NativeArray<int2> from2Targets, NativeList<GridPath16>.ParallelWriter results, NativeHashSet<int> ignoreLayers = default)
+        public GridPathfindingJob16(
+            BinaryGrid grid, 
+            NativeArray<int2> from2Targets, 
+            NativeArray<GridPath16> results, 
+            NativeHashSet<int> ignoreIndices = default)
         {
             m_Grid = grid;
-            m_IgnoreLayers = ignoreLayers;
+            m_IgnoreIndices = ignoreIndices;
 
             m_From2TargetsTemp = from2Targets;
             m_From2Targets = m_From2TargetsTemp.AsReadOnly();
@@ -435,11 +443,90 @@ namespace Syadeu.Presentation.Map
 
         public void Execute(int index)
         {
-            throw new NotImplementedException();
+            GridPath16 path = new GridPath16();
+            path.Initialize();
+
+            int
+                from = m_From2Targets[index].x,
+                to = m_From2Targets[index].y;
+
+            int2 toLocation = m_Grid.IndexToLocation(in to);
+
+            GridPathTile tile = new GridPathTile(from);
+            tile.Calculate(m_Grid, m_IgnoreIndices);
+
+            int count = 0;
+            int iteration = 0;
+            while (
+                iteration < c_MaxIteration &&
+                count < 16 &&
+                path[count - 1].location != to)
+            {
+                GridPathTile lastTileData = path[count - 1];
+                if (lastTileData.IsBlocked())
+                {
+                    path[count] = GridPathTile.Empty;
+                    count--;
+
+                    if (count <= 0) break;
+
+                    GridPathTile parentTile = path[count];
+                    parentTile.opened[lastTileData.direction] = false;
+                    path[count] = parentTile;
+                }
+                else
+                {
+                    int nextDirection = GetLowestCost(ref lastTileData, toLocation);
+
+                    GridPathTile nextTile = lastTileData.GetNext(nextDirection);
+                    nextTile.Calculate(m_Grid, m_IgnoreIndices);
+                    path[count] = nextTile;
+                    count++;
+                }
+
+                iteration++;
+            }
+
+            //$"from({from})->to({to}) found {path.Count}".ToLog();
+            //for (int i = 0; i < path.Count; i++)
+            //{
+            //    $"{path[i].location} asd".ToLog();
+            //}
+
+            path.result = path[count].location == to ? GridPath16.Result.Success : GridPath16.Result.Failed;
+
+            m_Results[index] = path;
+        }
+
+        private int GetLowestCost(ref GridPathTile prev, int2 to)
+        {
+            int lowest = -1;
+            int cost = int.MaxValue;
+
+            for (int i = 0; i < 4; i++)
+            {
+                if (!prev.opened[i]) continue;
+
+                int tempCost = prev.GetCost(i, to);
+
+                if (tempCost < cost)
+                {
+                    lowest = i;
+                    cost = tempCost;
+                }
+            }
+
+            return lowest;
         }
     }
     public struct GridPath16
     {
+        public enum Result
+        {
+            Failed,
+            Success
+        }
+
         public GridPathTile a, b, c, d;
         public GridPathTile e, f, g, h;
         public GridPathTile i, j, k, l;
@@ -498,9 +585,20 @@ namespace Syadeu.Presentation.Map
         }
         public int Length => 16;
 
+        public Result result;
+
+        public void Initialize()
+        {
+            for (int i = 0; i < 16; i++)
+            {
+                this[i] = GridPathTile.Empty;
+            }
+        }
     }
-    public struct GridPathTile
+    public struct GridPathTile : IEquatable<GridPathTile>
     {
+        public static readonly GridPathTile Empty = new GridPathTile(-1);
+
         public int parent;
         public int direction;
         public int location;
@@ -583,5 +681,9 @@ namespace Syadeu.Presentation.Map
                 openedLocations[i] = nextTempLocation;
             }
         }
+
+        public bool IsEmpty() => Equals(Empty);
+        public bool Equals(GridPathTile other)
+            => parent.Equals(other) && direction.Equals(other.direction) && location.Equals(other.location);
     }
 }
