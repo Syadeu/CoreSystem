@@ -412,6 +412,12 @@ namespace Syadeu.Presentation.Map
 
             return path[path.Count - 1].position.index == to;
         }
+        public JobHandle ExecutePathfinding(NativeArray<int2> from2Target, NativeArray<GridPath16> results)
+        {
+            GridPathfindingJob16 job = new GridPathfindingJob16(GridMap.Grid, from2Target, results);
+            JobHandle handle = job.Schedule(from2Target.Length, 64);
+            return handle;
+        }
 
         public IReadOnlyList<Entity<IEntity>> GetEntitiesAt(in int index)
         {
@@ -510,7 +516,6 @@ namespace Syadeu.Presentation.Map
             BinaryGrid grid, 
             NativeArray<int2> from2Targets, 
             NativeArray<GridPath16> results,
-            GridBurstExtensions.Functions functions,
             NativeHashSet<int> ignoreIndices = default)
         {
             m_Grid = grid;
@@ -521,7 +526,7 @@ namespace Syadeu.Presentation.Map
 
             m_Results = results;
 
-            m_Functions = functions;
+            m_Functions = GridBurstExtensions.f_Functions;
         }
 
         public void Execute(int index)
@@ -612,7 +617,7 @@ namespace Syadeu.Presentation.Map
             return lowest;
         }
 
-        public void Calculate(
+        private void Calculate(
             FunctionPointer<GridBurstExtensions.LocationInt2ToIndex> func, 
             ref GridPathTile pathTile,
             in BinaryGrid grid, in NativeHashSet<int> ignoreLayers = default)

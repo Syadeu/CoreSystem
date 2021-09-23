@@ -1,6 +1,7 @@
 ﻿using Unity.Mathematics;
 using Unity.Burst;
 using AOT;
+using System.Runtime.CompilerServices;
 
 #if UNITY_EDITOR
 #endif
@@ -58,6 +59,7 @@ namespace Syadeu.Database
 
         #region Get Index
         [BurstCompile]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [MonoPInvokeCallback(typeof(LocationInt2ToIndex))]
         private static int f_LocationToIndex(in AABB aabb, in float cellSize, in int2 xy)
         {
@@ -66,6 +68,7 @@ namespace Syadeu.Database
         }
 
         [BurstCompile]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [MonoPInvokeCallback(typeof(LocationIntToIndex))]
         private static int f_LocationToIndex(in AABB aabb, in float cellSize, in int x, in int y)
         {
@@ -78,24 +81,33 @@ namespace Syadeu.Database
         #region Get Location
 
         [BurstCompile]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [MonoPInvokeCallback(typeof(IndexIntToLocation))]
         private static void f_IndexToLocation(in AABB aabb, in float cellSize, in int idx, ref int2 output)
         {
-            if (idx == 0)
+            //if (idx == 0)
+            //{
+            //    output = int2.zero;
+            //    return;
+            //}
+
+            if (Unity.Burst.CompilerServices.Hint.Unlikely(idx == 0))
             {
                 output = int2.zero;
-                return;
             }
+            else
+            {
+                int zSize = (int)math.floor(aabb.size.z / cellSize);
 
-            int zSize = (int)math.floor(aabb.size.z / cellSize);
+                int y = idx / zSize;
+                int x = idx - (zSize * y);
 
-            int y = idx / zSize;
-            int x = idx - (zSize * y);
-
-            output = new int2(x, y);
+                output = new int2(x, y);
+            }
         }
 
         [BurstCompile]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [MonoPInvokeCallback(typeof(PositionFloat3ToLocation))]
         private static void f_PositionToLocation(in AABB aabb, in float cellSize, in float3 pos, ref int2 output)
         {
