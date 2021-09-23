@@ -110,6 +110,14 @@ namespace Syadeu.Presentation.Map
                 }
                 
                 UpdateGridEntity(entity, in att.m_CurrentGridIndices);
+
+                if (att.m_CurrentGridIndices.Length == 1)
+                {
+                    entity.AddComponent<GridDataComponent>(new GridDataComponent()
+                    {
+                        position = new GridPosition(att.m_CurrentGridIndices[0], p0)
+                    });
+                }
             }
         }
         private void RemoveGridEntity(Entity<IEntity> entity)
@@ -163,7 +171,7 @@ namespace Syadeu.Presentation.Map
             m_RenderSystem = null;
             m_EventSystem = null;
         }
-        protected override PresentationResult BeforePresentationAsync()
+        protected override PresentationResult BeforePresentation()
         {
             if (m_MainGrid != null)
             {
@@ -187,7 +195,7 @@ namespace Syadeu.Presentation.Map
                     }
                 }
             }
-            return base.BeforePresentationAsync();
+            return base.BeforePresentation();
         }
         
         private void CreateConsoleCommands()
@@ -496,6 +504,11 @@ namespace Syadeu.Presentation.Map
         }
         private int GetSqrMagnitude(int index) => GetSqrMagnitude(IndexToLocation(index));
         private static int GetSqrMagnitude(int2 location) => (location.x * location.x) + (location.y * location.y);
+    }
+
+    public struct GridDataComponent : IEntityComponent
+    {
+        public GridPosition position;
     }
 
     [BurstCompile(CompileSynchronously = true)]

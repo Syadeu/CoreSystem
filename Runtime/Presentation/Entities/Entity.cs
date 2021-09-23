@@ -215,6 +215,18 @@ namespace Syadeu.Presentation.Entities
             return Target.GetAttributes<TA>();
         }
 
+        public void AddComponent<TData>(TData data)
+            where TData : unmanaged, IEntityComponent
+        {
+            PresentationSystem<EntityComponentSystem>.System.AddComponent(
+                EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx), data);
+        }
+        public TData GetComponent<TData>()
+            where TData : unmanaged, IEntityComponent
+        {
+            return PresentationSystem<EntityComponentSystem>.System.GetComponent<TData>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
+        }
+
         public void Destroy()
         {
             if (s_EntitySystem.IsNull())

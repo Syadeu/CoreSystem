@@ -693,6 +693,10 @@ namespace Syadeu.Presentation
             m_ObjectEntities.Remove(hash);
         }
 
+        internal bool IsDestroyed(in Hash idx)
+        {
+            return !m_ObjectEntities.ContainsKey(idx);
+        }
 
 #line default
 

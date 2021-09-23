@@ -98,6 +98,18 @@ namespace Syadeu.Presentation.Entities
         /// <inheritdoc cref="IEntityData.GetAttributes(Type)"/>
         public TA[] GetAttributes<TA>() where TA : AttributeBase => Target.GetAttributes<TA>();
 
+        public void AddComponent<TData>(TData data)
+           where TData : unmanaged, IEntityComponent
+        {
+            PresentationSystem<EntityComponentSystem>.System.AddComponent(
+                EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx), data);
+        }
+        public TData GetComponent<TData>()
+            where TData : unmanaged, IEntityComponent
+        {
+            return PresentationSystem<EntityComponentSystem>.System.GetComponent<TData>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
+        }
+
         public void Destroy() => PresentationSystem<EntitySystem>.System.InternalDestroyEntity(m_Idx);
 
         public static implicit operator T(EntityData<T> a) => a.Target;
