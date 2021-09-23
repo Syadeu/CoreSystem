@@ -319,10 +319,11 @@ namespace Syadeu.Database
             int2 location = PositionToLocation(in aabb, in cellSize, in pos);
             return LocationToIndex(in aabb, in cellSize, in location);
         }
+
         public static int LocationToIndex(in AABB aabb, in float cellSize, in int2 xy) => LocationToIndex(in aabb, in cellSize, in xy.x, in xy.y);
         public static int LocationToIndex(in AABB aabb, in float cellSize, in int x, in int y)
         {
-            int zSize = Mathf.FloorToInt(aabb.size.z / cellSize);
+            int zSize = (int)math.floor(aabb.size.z / cellSize);
             return zSize * y + x;
         }
         public static float3 LocationToPosition(in AABB aabb, in float cellSize, in int2 xy) => LocationToPosition(in aabb, in cellSize, in xy.x, in xy.y);
@@ -335,6 +336,7 @@ namespace Syadeu.Database
                 targetZ = aabb.max.z - half - (cellSize * y);
             return new float3(targetX, targetY, targetZ);
         }
+
         public static int2 IndexToLocation(in AABB aabb, in float cellSize, in int idx)
         {
             if (idx == 0) return new int2(0, 0);

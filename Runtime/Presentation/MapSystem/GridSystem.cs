@@ -504,10 +504,13 @@ namespace Syadeu.Presentation.Map
 
         [WriteOnly] public NativeArray<GridPath16> m_Results;
 
+        private GridBurstExtensions.Functions m_Functions;
+
         public GridPathfindingJob16(
             BinaryGrid grid, 
             NativeArray<int2> from2Targets, 
-            NativeArray<GridPath16> results, 
+            NativeArray<GridPath16> results,
+            GridBurstExtensions.Functions functions,
             NativeHashSet<int> ignoreIndices = default)
         {
             m_Grid = grid;
@@ -517,6 +520,8 @@ namespace Syadeu.Presentation.Map
             m_From2Targets = m_From2TargetsTemp.AsReadOnly();
 
             m_Results = results;
+
+            m_Functions = functions;
         }
 
         public void Execute(int index)
@@ -530,7 +535,8 @@ namespace Syadeu.Presentation.Map
                 toLocation = m_Grid.IndexToLocation(in to);
 
             GridPathTile tile = new GridPathTile(from, fromLocation);
-            tile.Calculate(m_Grid, m_IgnoreIndices);
+            Calculate(m_Functions.p_LocationInt2ToIndex, ref tile, in m_Grid, in m_IgnoreIndices);
+            //tile.Calculate(m_Grid, m_IgnoreIndices);
 
             NativeList<GridPathTile> pathList = new NativeList<GridPathTile>(16, Allocator.Temp);
             pathList.Add(tile);
@@ -559,7 +565,8 @@ namespace Syadeu.Presentation.Map
                     int nextDirection = GetLowestCost(ref lastTileData, toLocation);
 
                     GridPathTile nextTile = lastTileData.GetNext(nextDirection);
-                    nextTile.Calculate(m_Grid, m_IgnoreIndices);
+                    Calculate(m_Functions.p_LocationInt2ToIndex, ref nextTile, in m_Grid, in m_IgnoreIndices);
+                    //nextTile.Calculate(m_Grid, m_IgnoreIndices);
                     pathList.Add(nextTile);
                 }
 
@@ -604,85 +611,32 @@ namespace Syadeu.Presentation.Map
 
             return lowest;
         }
-    }
-    public struct GridPath16
-    {
-        public enum Result
+
+        public void Calculate(
+            FunctionPointer<GridBurstExtensions.LocationInt2ToIndex> func, 
+            ref GridPathTile pathTile,
+            in BinaryGrid grid, in NativeHashSet<int> ignoreLayers = default)
         {
-            Failed,
-            Success
-        }
-
-        public GridPathTile a, b, c, d;
-        public GridPathTile e, f, g, h;
-        public GridPathTile i, j, k, l;
-        public GridPathTile m, n, o, p;
-
-        private int m_PathLength;
-
-        public GridPathTile this[int index]
-        {
-            get
+            for (int i = 0; i < 4; i++)
             {
-                switch (index)
+                int2 nextTempLocation = grid.GetDirection(in pathTile.position.location, (Direction)(1 << i));
+                if (nextTempLocation.Equals(pathTile.parent.location)) continue;
+
+                int nextTemp = func.Invoke(grid.bounds, grid.cellSize, nextTempLocation);
+                //int nextTemp = grid.LocationToIndex(nextTempLocation);
+                if (ignoreLayers.IsCreated)
                 {
-                    case 0: return a;
-                    case 1: return b;
-                    case 2: return c;
-                    case 3: return d;
-                    case 4: return e;
-                    case 5: return f;
-                    case 6: return g;
-                    case 7: return h;
-                    case 8: return i;
-                    case 9: return j;
-                    case 10: return k;
-                    case 11: return l;
-                    case 12: return m;
-                    case 13: return n;
-                    case 14: return o;
-                    case 15: return p;
+                    if (ignoreLayers.Contains(nextTemp))
+                    {
+                        pathTile.opened[i] = false;
+                        pathTile.openedPositions.RemoveAt(i);
+                        continue;
+                    }
                 }
 
-                throw new IndexOutOfRangeException();
+                pathTile.opened[i] = true;
+                pathTile.openedPositions.UpdateAt(i, nextTemp, nextTempLocation);
             }
-            set
-            {
-                switch (index)
-                {
-                    case 0: { a = value; return; };
-                    case 1: { b = value; return; };
-                    case 2: { c = value; return; };
-                    case 3: { d = value; return; };
-                    case 4: { e = value; return; };
-                    case 5: { f = value; return; };
-                    case 6: { g = value; return; };
-                    case 7: { h = value; return; };
-                    case 8: { i = value; return; };
-                    case 9: { j = value; return; };
-                    case 10: { k = value; return; };
-                    case 11: { l = value; return; };
-                    case 12: { m = value; return; };
-                    case 13: { n = value; return; };
-                    case 14: { o = value; return; };
-                    case 15: { p = value; return; };
-                }
-
-                throw new IndexOutOfRangeException();
-            }
-        }
-        public int PathLength => m_PathLength;
-
-        public Result result;
-
-        public void Initialize(int pathLength)
-        {
-            for (int i = 0; i < 16; i++)
-            {
-                this[i] = GridPathTile.Empty;
-            }
-
-            m_PathLength = pathLength;
         }
     }
     public struct GridPathTile : IEquatable<GridPathTile>
@@ -746,8 +700,9 @@ namespace Syadeu.Presentation.Map
             for (int i = 0; i < 4; i++)
             {
                 int2 nextTempLocation = grid.GetDirection(in position.location, (Direction)(1 << i));
-                if (nextTempLocation.Equals(parent)) continue;
+                if (nextTempLocation.Equals(parent.location)) continue;
 
+                //int nextTemp = GridBurstExtensions.p_LocationInt2ToIndex.Invoke(grid.bounds, grid.cellSize, nextTempLocation);
                 int nextTemp = grid.LocationToIndex(nextTempLocation);
                 if (ignoreLayers.IsCreated)
                 {
