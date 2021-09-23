@@ -18,7 +18,7 @@ namespace Syadeu.Presentation
 
         private long m_EntityLength;
         private NativeArray<EntityComponentBuffer> m_ComponentBuffer;
-        private readonly HashSet<int> m_InitializedBufferIndex = new HashSet<int>();
+        //private readonly HashSet<int> m_InitializedBufferIndex = new HashSet<int>();
 
         private EntitySystem m_EntitySystem;
 
@@ -36,7 +36,7 @@ namespace Syadeu.Presentation
             }
             else length = types.Length * 2;
 
-            EntityComponentBuffer* tempBuffer = stackalloc EntityComponentBuffer[length];
+            EntityComponentBuffer[] tempBuffer = new EntityComponentBuffer[length];
             for (int i = 0; i < types.Length; i++)
             {
                 int 
@@ -59,8 +59,8 @@ namespace Syadeu.Presentation
                 };
             }
 
-            m_ComponentBuffer = new NativeArray<EntityComponentBuffer>(length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-            UnsafeUtility.MemCpy(m_ComponentBuffer.GetUnsafePtr(), tempBuffer, UnsafeUtility.SizeOf<EntityComponentBuffer>() * length);
+            m_ComponentBuffer = new NativeArray<EntityComponentBuffer>(tempBuffer, Allocator.Persistent);
+            //UnsafeUtility.MemCpy(m_ComponentBuffer.GetUnsafePtr(), tempBuffer, UnsafeUtility.SizeOf<EntityComponentBuffer>() * length);
 
             RequestSystem<EntitySystem>(Bind);
 
@@ -78,7 +78,8 @@ namespace Syadeu.Presentation
         {
             for (int i = 0; i < m_ComponentBuffer.Length; i++)
             {
-                if (!m_InitializedBufferIndex.Contains(i)) continue;
+                //if (!m_InitializedBufferIndex.Contains(i)) continue;
+                if (m_ComponentBuffer[i].length == 0) continue;
 
                 m_ComponentBuffer[i].Dispose();
             }
@@ -124,7 +125,7 @@ namespace Syadeu.Presentation
                 boxed.length = EntityComponentBuffer.c_InitialCount;
                 m_ComponentBuffer[componentIdx] = boxed;
 
-                m_InitializedBufferIndex.Add(componentIdx);
+                //m_InitializedBufferIndex.Add(componentIdx);
             }
 
             int entityIdx = entity.Idx.ToInt32() % m_ComponentBuffer[componentIdx].length;
@@ -185,6 +186,8 @@ namespace Syadeu.Presentation
             ((T*)m_ComponentBuffer[componentIdx].buffer)[entityIdx] = data;
             m_ComponentBuffer[componentIdx].occupied[entityIdx] = true;
             m_ComponentBuffer[componentIdx].entity[entityIdx] = entity.Idx;
+
+            $"Component {TypeHelper.TypeOf<T>.Name} set at entity({entity.Name})".ToLog();
         }
         public T GetComponent<T>(EntityData<IEntityData> entity) where T : unmanaged, IEntityComponent
         {
