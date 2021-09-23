@@ -3,6 +3,7 @@ using Syadeu.Internal;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
+using Syadeu.Presentation.Proxy;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -31,23 +32,9 @@ namespace Syadeu.Presentation.Map
         [JsonProperty(Order = 3, PropertyName = "ObstacleLayers")] 
         private int[] m_ObstacleLayers = Array.Empty<int>();
 
-        //[JsonIgnore] internal GridSystem GridSystem { get; set; }
         [JsonIgnore] internal int[] m_CurrentGridIndices = Array.Empty<int>();
 
-        //[JsonIgnore] public float CellSize => GridSystem.GridMap.CellSize;
         [JsonIgnore] public int[] CurrentGridIndices => m_CurrentGridIndices;
-        //[JsonIgnore] public float3 Center
-        //{
-        //    get
-        //    {
-        //        AABB temp = new AABB(GridSystem.IndexToPosition(CurrentGridIndices[0]), float3.zero);
-        //        for (int i = 1; i < CurrentGridIndices.Length; i++)
-        //        {
-        //            temp.Encapsulate(GridSystem.IndexToPosition(CurrentGridIndices[i]));
-        //        }
-        //        return temp.center;
-        //    }
-        //}
         [JsonIgnore] public bool AllowOverlapping => m_AllowOverlapping;
 
         //protected override void OnDispose()
@@ -148,6 +135,26 @@ namespace Syadeu.Presentation.Map
     [Preserve]
     internal sealed class GridSizeProcessor : AttributeProcessor<GridSizeAttribute>
     {
+        private GridSystem m_GridSystem;
+
+        protected override void OnInitialize()
+        {
+            RequestSystem<GridSystem>(Bind);
+        }
+        private void Bind(GridSystem other)
+        {
+            m_GridSystem = other;
+        }
+
+        protected override void OnCreated(GridSizeAttribute attribute, EntityData<IEntityData> e)
+        {
+            m_GridSystem.RegisterGridSize(attribute);
+        }
+        protected override void OnDestroy(GridSizeAttribute attribute, EntityData<IEntityData> entity)
+        {
+            m_GridSystem.UnregisterGridSize(attribute);
+        }
+
         //protected override void OnInitialize()
         //{
         //    EventSystem.AddEvent<OnTransformChangedEvent>(OnTransformChangedEventHandler);

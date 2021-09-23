@@ -59,7 +59,6 @@ namespace Syadeu.Database
 
         #region Get Index
         [BurstCompile]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [MonoPInvokeCallback(typeof(LocationInt2ToIndex))]
         private static int f_LocationToIndex(in AABB aabb, in float cellSize, in int2 xy)
         {
@@ -68,7 +67,6 @@ namespace Syadeu.Database
         }
 
         [BurstCompile]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [MonoPInvokeCallback(typeof(LocationIntToIndex))]
         private static int f_LocationToIndex(in AABB aabb, in float cellSize, in int x, in int y)
         {
@@ -81,7 +79,6 @@ namespace Syadeu.Database
         #region Get Location
 
         [BurstCompile]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [MonoPInvokeCallback(typeof(IndexIntToLocation))]
         private static void f_IndexToLocation(in AABB aabb, in float cellSize, in int idx, ref int2 output)
         {
@@ -107,7 +104,6 @@ namespace Syadeu.Database
         }
 
         [BurstCompile]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [MonoPInvokeCallback(typeof(PositionFloat3ToLocation))]
         private static void f_PositionToLocation(in AABB aabb, in float cellSize, in float3 pos, ref int2 output)
         {

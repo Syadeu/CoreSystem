@@ -182,13 +182,25 @@ namespace Syadeu.Presentation.Map
     [Preserve]
     internal sealed class GridMapProcessor : AttributeProcessor<GridMapAttribute>
     {
+        private GridSystem m_GridSystem;
+
+        protected override void OnInitialize()
+        {
+            RequestSystem<GridSystem>(Bind);
+        }
+        private void Bind(GridSystem other)
+        {
+            m_GridSystem = other;
+        }
+
         protected override void OnCreated(GridMapAttribute attribute, EntityData<IEntityData> entity)
         {
             attribute.CreateGrid();
+            m_GridSystem.RegisterGrid(attribute);
         }
-
         protected override void OnDestroy(GridMapAttribute attribute, EntityData<IEntityData> entity)
         {
+            m_GridSystem.UnregisterGrid(attribute);
             attribute.DestroyGrid();
         }
     }

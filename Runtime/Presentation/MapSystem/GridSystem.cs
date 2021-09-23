@@ -24,7 +24,7 @@ namespace Syadeu.Presentation.Map
         private Render.RenderSystem m_RenderSystem;
         private Events.EventSystem m_EventSystem;
 
-        private KeyValuePair<SceneDataEntity, GridMapAttribute> m_MainGrid;
+        private GridMapAttribute m_MainGrid;
         private bool m_DrawGrid = false;
 
         private readonly ConcurrentQueue<GridSizeAttribute> m_WaitForRegister = new ConcurrentQueue<GridSizeAttribute>();
@@ -32,9 +32,10 @@ namespace Syadeu.Presentation.Map
         private readonly Dictionary<Entity<IEntity>, int[]> m_EntityGridIndices = new Dictionary<Entity<IEntity>, int[]>();
         private readonly Dictionary<int, List<Entity<IEntity>>> m_GridEntities = new Dictionary<int, List<Entity<IEntity>>>();
 
-        private GridMapAttribute GridMap => m_MainGrid.Value;
+        private GridMapAttribute GridMap => m_MainGrid;
 
         #region Presentation Methods
+
         protected override PresentationResult OnInitialize()
         {
             CreateConsoleCommands();
@@ -55,8 +56,6 @@ namespace Syadeu.Presentation.Map
         private void Bind(EntitySystem other)
         {
             m_EntitySystem = other;
-            m_EntitySystem.OnEntityCreated += M_EntitySystem_OnEntityCreated;
-            m_EntitySystem.OnEntityDestroy += M_EntitySystem_OnEntityDestroy;
         }
         private void Bind(Render.RenderSystem other)
         {
@@ -81,9 +80,9 @@ namespace Syadeu.Presentation.Map
             GridSizeAttribute att = ev.entity.GetAttribute<GridSizeAttribute>();
             if (att == null) return;
 
-            UpdateGridLocation(ev.entity, att);
+            UpdateGridLocation(ev.entity, att, true);
         }
-        private void UpdateGridLocation(Entity<IEntity> entity, GridSizeAttribute att)
+        private void UpdateGridLocation(Entity<IEntity> entity, GridSizeAttribute att, bool postEvent)
         {
             if (att.m_CurrentGridIndices.Length != att.m_GridLocations.Length)
             {
@@ -93,25 +92,24 @@ namespace Syadeu.Presentation.Map
             bool gridChanged = false;
 
             int2 p0 = GridMap.Grid.PositionToLocation(entity.transform.position);
-            int a0 = GridMap.Grid.LocationToIndex(p0);
-            if (!a0.Equals(att.m_CurrentGridIndices[0])) gridChanged = true;
-
             for (int i = 0; i < att.m_GridLocations.Length; i++)
             {
-                if (att.m_GridLocations[i].Equals(int2.zero)) continue;
-
                 int aTemp = GridMap.Grid.LocationToIndex(p0 + att.m_GridLocations[i]);
-                if (!aTemp.Equals(att.m_CurrentGridIndices[i + 1]))
+                if (!aTemp.Equals(att.m_CurrentGridIndices[i]))
                 {
                     gridChanged = true;
                 }
-                att.m_CurrentGridIndices[i + 1] = aTemp;
+                att.m_CurrentGridIndices[i] = aTemp;
             }
 
             if (gridChanged)
             {
-                m_EventSystem.PostEvent(Events.OnGridPositionChangedEvent.GetEvent(entity, att.CurrentGridIndices));
-                UpdateGridEntity(entity, att.m_CurrentGridIndices);
+                if (postEvent)
+                {
+                    m_EventSystem.PostEvent(Events.OnGridPositionChangedEvent.GetEvent(entity, att.CurrentGridIndices));
+                }
+                
+                UpdateGridEntity(entity, in att.m_CurrentGridIndices);
             }
         }
         private void RemoveGridEntity(Entity<IEntity> entity)
@@ -120,33 +118,43 @@ namespace Syadeu.Presentation.Map
             {
                 for (int i = 0; i < cachedIndics.Length; i++)
                 {
+                    if (!m_GridEntities.ContainsKey(cachedIndics[i]))
+                    {
+                        $"{cachedIndics[i]} notfound?".ToLog();
+                        continue;
+                    }
+
                     m_GridEntities[cachedIndics[i]].Remove(entity);
                 }
                 m_EntityGridIndices.Remove(entity);
             }
         }
-        private void UpdateGridEntity(Entity<IEntity> entity, int[] indices)
+        private void UpdateGridEntity(Entity<IEntity> entity, in int[] indices)
         {
             RemoveGridEntity(entity);
-            for (int i = 0; i < indices.Length; i++)
+
+            int[] clone = new int[indices.Length];
+            Array.Copy(indices, clone, indices.Length);
+
+            for (int i = 0; i < clone.Length; i++)
             {
-                if (!m_GridEntities.TryGetValue(indices[i], out List<Entity<IEntity>> entities))
+                if (!m_GridEntities.TryGetValue(clone[i], out List<Entity<IEntity>> entities))
                 {
                     entities = new List<Entity<IEntity>>();
-                    m_GridEntities.Add(indices[i], entities);
+                    m_GridEntities.Add(clone[i], entities);
                 }
                 entities.Add(entity);
+
+                $"{entity.Name} :: {clone[i]}".ToLog();
             }
 
-            m_EntityGridIndices.Add(entity, indices);
+            m_EntityGridIndices.Add(entity, clone);
         }
 
         #endregion
 
         public override void OnDispose()
         {
-            m_EntitySystem.OnEntityCreated -= M_EntitySystem_OnEntityCreated;
-            m_EntitySystem.OnEntityDestroy -= M_EntitySystem_OnEntityDestroy;
             m_RenderSystem.OnRender -= M_RenderSystem_OnRender;
 
             m_EventSystem.RemoveEvent<Events.OnTransformChangedEvent>(OnTransformChangedEventHandler);
@@ -157,7 +165,7 @@ namespace Syadeu.Presentation.Map
         }
         protected override PresentationResult BeforePresentationAsync()
         {
-            if (m_MainGrid.Value != null)
+            if (m_MainGrid != null)
             {
                 int waitForRegisterCount = m_WaitForRegister.Count;
                 if (waitForRegisterCount > 0)
@@ -175,7 +183,7 @@ namespace Syadeu.Presentation.Map
                             tr.position = IndexToPosition(PositionToIndex(pos));
                         }
 
-                        UpdateGridLocation(entity, att);
+                        UpdateGridLocation(entity, att, false);
                     }
                 }
             }
@@ -190,50 +198,9 @@ namespace Syadeu.Presentation.Map
             }, "draw", "grid");
         }
 
-        private void M_EntitySystem_OnEntityCreated(EntityData<IEntityData> obj)
-        {
-            if (obj.Target is SceneDataEntity sceneData)
-            {
-                GridMapAttribute gridAtt = sceneData.GetAttribute<GridMapAttribute>();
-                if (gridAtt == null) return;
-
-                if (m_MainGrid.Value == null)
-                {
-                    m_MainGrid = new KeyValuePair<SceneDataEntity, GridMapAttribute>(sceneData, gridAtt);
-                }
-                else
-                {
-                    CoreSystem.Logger.LogError(Channel.Presentation,
-                        $"Attempt to load grids more then one at SceneDataEntity({sceneData.Name}). This is not allowed.");
-                }
-            }
-            else if (obj.Target is EntityBase entity)
-            {
-                var gridSizeAtt = entity.GetAttribute<GridSizeAttribute>();
-                if (gridSizeAtt == null) return;
-
-                m_WaitForRegister.Enqueue(gridSizeAtt);
-            }
-        }
-        private void M_EntitySystem_OnEntityDestroy(EntityData<IEntityData> obj)
-        {
-            if (obj.Target is SceneDataEntity sceneData &&
-                m_MainGrid.Key != null)
-            {
-                if (m_MainGrid.Key.Equals(sceneData))
-                {
-                    m_MainGrid = new KeyValuePair<SceneDataEntity, GridMapAttribute>();
-                }
-            }
-
-            if (obj.Target is IEntity)
-            {
-                RemoveGridEntity(obj.As<IEntityData, IEntity>());
-            }
-        }
         private void M_RenderSystem_OnRender()
         {
-            if (m_DrawGrid && m_MainGrid.Value != null)
+            if (m_DrawGrid && m_MainGrid != null)
             {
                 GL.PushMatrix();
                 float3x3 rotmat = new float3x3(quaternion.identity);
@@ -248,11 +215,11 @@ namespace Syadeu.Presentation.Map
                 GL.Begin(GL.QUADS);
 
                 GL.Color(colorWhite);
-                DrawGridGL(m_MainGrid.Value.Grid, .05f);
+                DrawGridGL(m_MainGrid.Grid, .05f);
 
                 GL.Color(colorRed);
                 int[] gridEntities = m_GridEntities.Keys.ToArray();
-                DrawOccupiedCells(m_MainGrid.Value.Grid, gridEntities);
+                DrawOccupiedCells(m_MainGrid.Grid, gridEntities);
 
                 //GL.Color(Color.black);
                 //var temp = m_EntityGridIndices.Keys.ToArray();
@@ -351,6 +318,39 @@ namespace Syadeu.Presentation.Map
                 GL.Vertex(p4);
             }
         }
+        #endregion
+
+        #region Register
+
+        public void RegisterGrid(GridMapAttribute gridMap)
+        {
+            if (m_MainGrid == null)
+            {
+                m_MainGrid = gridMap;
+            }
+            else
+            {
+                CoreSystem.Logger.LogError(Channel.Presentation,
+                    $"Attempt to load grids more then one at SceneDataEntity({gridMap.Parent.Name}). This is not allowed.");
+            }
+        }
+        public void UnregisterGrid(GridMapAttribute gridMap)
+        {
+            if (m_MainGrid.Equals(gridMap))
+            {
+                m_MainGrid = null;
+            }
+        }
+
+        public void RegisterGridSize(GridSizeAttribute gridSize)
+        {
+            m_WaitForRegister.Enqueue(gridSize);
+        }
+        public void UnregisterGridSize(GridSizeAttribute gridSize)
+        {
+            RemoveGridEntity(gridSize.Parent.As<IEntityData, IEntity>());
+        }
+
         #endregion
 
         public bool GetPath(int from, int to, List<GridPathTile> path, int maxPathLength, int maxIteration = 32)
@@ -510,7 +510,7 @@ namespace Syadeu.Presentation.Map
 
         [WriteOnly] public NativeArray<GridPath16> m_Results;
 
-        private GridBurstExtensions.Functions m_Functions;
+        //private GridBurstExtensions.Functions m_Functions;
 
         public GridPathfindingJob16(
             BinaryGrid grid, 
@@ -526,7 +526,7 @@ namespace Syadeu.Presentation.Map
 
             m_Results = results;
 
-            m_Functions = GridBurstExtensions.f_Functions;
+            //m_Functions = GridBurstExtensions.f_Functions;
         }
 
         public void Execute(int index)
@@ -540,8 +540,8 @@ namespace Syadeu.Presentation.Map
                 toLocation = m_Grid.IndexToLocation(in to);
 
             GridPathTile tile = new GridPathTile(from, fromLocation);
-            Calculate(m_Functions.p_LocationInt2ToIndex, ref tile, in m_Grid, in m_IgnoreIndices);
-            //tile.Calculate(m_Grid, m_IgnoreIndices);
+            //Calculate(m_Functions.p_LocationInt2ToIndex, ref tile, in m_Grid, in m_IgnoreIndices);
+            tile.Calculate(in m_Grid, in m_IgnoreIndices);
 
             NativeList<GridPathTile> pathList = new NativeList<GridPathTile>(16, Allocator.Temp);
             pathList.Add(tile);
@@ -570,8 +570,8 @@ namespace Syadeu.Presentation.Map
                     int nextDirection = GetLowestCost(ref lastTileData, toLocation);
 
                     GridPathTile nextTile = lastTileData.GetNext(nextDirection);
-                    Calculate(m_Functions.p_LocationInt2ToIndex, ref nextTile, in m_Grid, in m_IgnoreIndices);
-                    //nextTile.Calculate(m_Grid, m_IgnoreIndices);
+                    //Calculate(m_Functions.p_LocationInt2ToIndex, ref nextTile, in m_Grid, in m_IgnoreIndices);
+                    nextTile.Calculate(in m_Grid, in m_IgnoreIndices);
                     pathList.Add(nextTile);
                 }
 

@@ -15,6 +15,7 @@ namespace Syadeu.Presentation
                 TypeHelper.TypeOf<EntitySystem>.Type,
                 TypeHelper.TypeOf<EntityBoundSystem>.Type,
                 TypeHelper.TypeOf<EntityRaycastSystem>.Type,
+                TypeHelper.TypeOf<EntityComponentSystem>.Type,
                 TypeHelper.TypeOf<SceneSystem>.Type,
                 TypeHelper.TypeOf<Render.RenderSystem>.Type,
                 TypeHelper.TypeOf<Render.WorldCanvasSystem>.Type,
