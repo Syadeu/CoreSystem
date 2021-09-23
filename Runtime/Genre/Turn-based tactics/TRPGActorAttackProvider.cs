@@ -21,6 +21,13 @@ namespace Syadeu.Presentation.TurnTable
         /// </remarks>
         [JsonIgnore] public IReadOnlyList<Entity<IEntity>> Targets { get; internal set; }
 
+        [JsonIgnore] private GridSystem m_GridSystem;
+
+        protected override void OnCreated()
+        {
+            m_GridSystem = PresentationSystem<GridSystem>.System;
+        }
+
         public IReadOnlyList<Entity<IEntity>> GetTargetsInRange()
             => GetTargetsWithin(in m_AttackRange);
         public IReadOnlyList<Entity<IEntity>> GetTargetsWithin(in int range)
@@ -40,7 +47,7 @@ namespace Syadeu.Presentation.TurnTable
             {
                 if (gridSize.CurrentGridIndices.Contains(indices[i])) continue;
 
-                entities.AddRange(gridSize.GetEntitiesAt(indices[i]));
+                entities.AddRange(m_GridSystem.GetEntitiesAt(indices[i]));
             }
 
             Targets = entities;
