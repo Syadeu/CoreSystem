@@ -15,8 +15,10 @@ namespace Syadeu.Presentation.Actor
                 return false;
             }
 
+            GridSizeComponent component = gridSize.Parent.GetComponent<GridSizeComponent>();
+
             int2
-                current = PresentationSystem<GridSystem>.System.IndexToLocation(gridSize.CurrentGridIndices[0]),
+                current = component.positions[0].location,
                 targetReletive = PresentationSystem<GridSystem>.System.IndexToLocation(to) - current,
                 adaptive = new int2(targetReletive.x < 0 ? -1 : 1, targetReletive.y < 0 ? -1 : 1),
                 targetReletiveAbs = math.abs(targetReletive);

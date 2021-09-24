@@ -40,28 +40,37 @@ namespace Syadeu.Internal
             white,
             yellow
         }
-        //internal static Channel s_DisplayLogChannel = Channel.All;
 
+#if UNITY_EDITOR
         private static readonly ConcurrentDictionary<Thread, ThreadInfo> m_ThreadInfos = new ConcurrentDictionary<Thread, ThreadInfo>();
+#endif
+        [System.Diagnostics.Conditional("UNITY_EDITOR")]
         public static void RegisterThread(ThreadInfo info, Thread t)
         {
+#if UNITY_EDITOR
             if (m_ThreadInfos.TryGetValue(t, out ThreadInfo threadInfo))
             {
                 m_ThreadInfos[t] = info;
             }
             else m_ThreadInfos.TryAdd(t, info);
+#endif
         }
         public static ThreadInfo GetThreadType()
         {
+#if UNITY_EDITOR
             Thread t = Thread.CurrentThread;
             if (m_ThreadInfos.TryGetValue(t, out ThreadInfo threadInfo))
             {
                 return threadInfo;
             }
             return ThreadInfo.User;
+#else
+            return ThreadInfo.Unity;
+#endif
         }
 
 #line hidden
+        [System.Diagnostics.Conditional("UNITY_EDITOR")]
         public static void ThreadBlock(string name, ThreadInfo acceptOnly)
         {
             ThreadInfo info = GetThreadType();

@@ -9,7 +9,20 @@ namespace Syadeu.Presentation.Map
         public int4 index;
         public int2x4 location;
 
-        public int Length => 4;
+        public int Length
+        {
+            get
+            {
+                int length = 0;
+                for (int i = 0; i < 4; i++)
+                {
+                    if (this[i].IsEmpty()) continue;
+
+                    length += 1;
+                }
+                return length;
+            }
+        }
 
         int2 IGridPosition.this[int i]
         {

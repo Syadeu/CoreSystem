@@ -45,28 +45,34 @@ namespace Syadeu.Presentation
             return new Reference<T>(t.Object.Hash);
         }
 
-        public static NativeArray<T> GetNativeArray<T>(this ArrayWrapper<T> wrapper) where T : unmanaged
-        {
-            AtomicSafetyHandle.CheckGetSecondaryDataPointerAndThrow(wrapper.m_Safety);
+        //public static NativeArray<T> GetNativeArray<T>(this ArrayWrapper<T> wrapper) where T : unmanaged
+        //{
+        //    if (!wrapper.m_NativeArray)
+        //    {
+        //        CoreSystem.Logger.LogError(Channel.Data, "Is not NativeArray");
+        //        return default(NativeArray<T>);
+        //    }
 
-            NativeArray<T> arr;
-            unsafe
-            {
-                arr = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<T>(
-                    wrapper.m_Buffer,
-                    wrapper.Length,
-                    Allocator.Invalid);
-            }
+        //    AtomicSafetyHandle.CheckGetSecondaryDataPointerAndThrow(wrapper.m_Safety);
 
-            AtomicSafetyHandle safety = wrapper.m_Safety;
+        //    NativeArray<T> arr;
+        //    unsafe
+        //    {
+        //        arr = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<T>(
+        //            wrapper.m_Buffer,
+        //            wrapper.Length,
+        //            Allocator.Invalid);
+        //    }
 
-            AtomicSafetyHandle.CheckWriteAndBumpSecondaryVersion(safety);
-            AtomicSafetyHandle.UseSecondaryVersion(ref safety);
-            AtomicSafetyHandle.SetAllowSecondaryVersionWriting(safety, true);
+        //    AtomicSafetyHandle safety = wrapper.m_Safety;
 
-            NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref arr, safety);
+        //    AtomicSafetyHandle.CheckWriteAndBumpSecondaryVersion(safety);
+        //    AtomicSafetyHandle.UseSecondaryVersion(ref safety);
+        //    AtomicSafetyHandle.SetAllowSecondaryVersionWriting(safety, true);
 
-            return arr;
-        }
+        //    NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref arr, safety);
+
+        //    return arr;
+        //}
     }
 }

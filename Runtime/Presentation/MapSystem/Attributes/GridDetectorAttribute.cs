@@ -63,12 +63,12 @@ namespace Syadeu.Presentation.Map
             return false;
         }
 
-        private static bool IsDetect(int[] range, int maxRange, int[] to)
+        private static bool IsDetect(int[] range, int maxRange, GridPosition4 to)
         {
             bool detect = false;
             for (int i = 0; i < to.Length; i++)
             {
-                if (range.Contains(to[i]))
+                if (range.Contains(to[i].index))
                 {
                     detect = true;
                     break;
@@ -81,7 +81,9 @@ namespace Syadeu.Presentation.Map
         {
             if (ev.Entity.Equals(Parent) && !IsTriggerable(ev.Entity)) return;
 
-            int[] range = m_GridSize.GetRange(m_MaxDetectionRange, m_IgnoreLayers);
+            GridSizeComponent component = ev.Entity.GetComponent<GridSizeComponent>();
+
+            int[] range = component.GetRange(m_MaxDetectionRange, m_IgnoreLayers);
             bool detect = IsDetect(range, m_MaxDetectionRange, ev.To);
 
             if (detect)

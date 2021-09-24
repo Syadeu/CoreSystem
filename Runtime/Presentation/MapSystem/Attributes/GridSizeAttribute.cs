@@ -32,9 +32,9 @@ namespace Syadeu.Presentation.Map
         [JsonProperty(Order = 3, PropertyName = "ObstacleLayers")] 
         private int[] m_ObstacleLayers = Array.Empty<int>();
 
-        [JsonIgnore] internal int[] m_CurrentGridIndices = Array.Empty<int>();
+        //[JsonIgnore] internal int[] m_CurrentGridIndices = Array.Empty<int>();
 
-        [JsonIgnore] public int[] CurrentGridIndices => m_CurrentGridIndices;
+        //[JsonIgnore] public int[] CurrentGridIndices => m_CurrentGridIndices;
         [JsonIgnore] public bool AllowOverlapping => m_AllowOverlapping;
 
         //protected override void OnDispose()
@@ -52,13 +52,13 @@ namespace Syadeu.Presentation.Map
 
         //    CurrentGridIndices = indices;
         //}
-        public int[] GetRange(int range, params int[] ignoreLayers)
-        {
-            GridSystem grid = PresentationSystem<GridSystem>.System;
+        //public int[] GetRange(int range, params int[] ignoreLayers)
+        //{
+        //    GridSystem grid = PresentationSystem<GridSystem>.System;
 
-            int[] indices = grid.GetRange(CurrentGridIndices, range, ignoreLayers);
-            return indices;
-        }
+        //    int[] indices = grid.GetRange(CurrentGridIndices, range, ignoreLayers);
+        //    return indices;
+        //}
 
         //private int[] GetCurrentGridIndices()
         //{
@@ -72,10 +72,10 @@ namespace Syadeu.Presentation.Map
         //    return new int[] { p0 };
         //}
 
-        public bool GetPath(int to, List<GridPathTile> path, int maxPathLength)
-        {
-            return PresentationSystem<GridSystem>.System.GetPath(CurrentGridIndices[0], to, path, maxPathLength);
-        }
+        //public bool GetPath(int to, List<GridPathTile> path, int maxPathLength)
+        //{
+        //    return PresentationSystem<GridSystem>.System.GetPath(CurrentGridIndices[0], to, path, maxPathLength);
+        //}
 
         //public IReadOnlyList<Entity<IEntity>> GetEntitiesAt(in int index)
         //{

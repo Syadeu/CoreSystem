@@ -34,8 +34,6 @@ namespace Syadeu.Presentation.Map
         private readonly Dictionary<Entity<IEntity>, int[]> m_EntityGridIndices = new Dictionary<Entity<IEntity>, int[]>();
         private readonly Dictionary<int, List<Entity<IEntity>>> m_GridEntities = new Dictionary<int, List<Entity<IEntity>>>();
 
-        private readonly List<IDisposable> disposables = new List<IDisposable>();
-
         private GridMapAttribute GridMap => m_MainGrid;
 
         #region Presentation Methods
@@ -88,9 +86,19 @@ namespace Syadeu.Presentation.Map
         }
         private void UpdateGridLocation(Entity<IEntity> entity, GridSizeAttribute att, bool postEvent)
         {
-            if (att.m_CurrentGridIndices.Length != att.m_GridLocations.Length)
+            GridSizeComponent component;
+            if (!entity.HasComponent<GridSizeComponent>())
             {
-                att.m_CurrentGridIndices = new int[att.m_GridLocations.Length];
+                component = entity.AddComponent(new GridSizeComponent()
+                {
+                    m_GridSystem = SystemID,
+
+                    positions = GridPosition4.Empty
+                });
+            }
+            else
+            {
+                component = entity.GetComponent<GridSizeComponent>();
             }
 
             bool gridChanged = false;
@@ -99,49 +107,24 @@ namespace Syadeu.Presentation.Map
             for (int i = 0; i < att.m_GridLocations.Length; i++)
             {
                 int aTemp = GridMap.Grid.LocationToIndex(p0 + att.m_GridLocations[i]);
-                if (!aTemp.Equals(att.m_CurrentGridIndices[i]))
+                if (!aTemp.Equals(component.positions[i].index))
                 {
                     gridChanged = true;
                 }
-                att.m_CurrentGridIndices[i] = aTemp;
+
+                component.positions[i] = new GridPosition(aTemp, p0 + att.m_GridLocations[i]);
             }
 
             if (gridChanged)
             {
                 if (postEvent)
                 {
-                    m_EventSystem.PostEvent(Events.OnGridPositionChangedEvent.GetEvent(entity, att.CurrentGridIndices));
+                    m_EventSystem.PostEvent(Events.OnGridPositionChangedEvent.GetEvent(entity, component.positions));
                 }
                 
-                UpdateGridEntity(entity, in att.m_CurrentGridIndices);
+                UpdateGridEntity(entity, in component.positions);
 
-                if (!entity.HasComponent<GridSizeComponent>())
-                {
-                    NativeArray<GridPosition> positions = new NativeArray<GridPosition>(att.m_CurrentGridIndices.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-
-                    disposables.Add(positions);
-                    
-                    for (int i = 0; i < positions.Length; i++)
-                    {
-                        positions[i] = new GridPosition(att.m_CurrentGridIndices[i], GridMap.Grid.IndexToLocation(att.m_CurrentGridIndices[i]));
-                    }
-                    
-                    unsafe
-                    {
-                        entity.AddComponent(new GridSizeComponent()
-                        {
-                            positions = ArrayWrapper<GridPosition>.Convert(positions)
-                        });
-                    }
-                }
-                else
-                {
-                    GridSizeComponent component = entity.GetComponent<GridSizeComponent>();
-                    for (int i = 0; i < component.positions.Length; i++)
-                    {
-                        component.positions[i] = new GridPosition(att.m_CurrentGridIndices[i], GridMap.Grid.IndexToLocation(att.m_CurrentGridIndices[i]));
-                    }
-                }
+                entity.AddComponent(component);
             }
         }
         private void RemoveGridEntity(Entity<IEntity> entity)
@@ -161,12 +144,15 @@ namespace Syadeu.Presentation.Map
                 m_EntityGridIndices.Remove(entity);
             }
         }
-        private void UpdateGridEntity(Entity<IEntity> entity, in int[] indices)
+        private void UpdateGridEntity(Entity<IEntity> entity, in GridPosition4 indices)
         {
             RemoveGridEntity(entity);
 
             int[] clone = new int[indices.Length];
-            Array.Copy(indices, clone, indices.Length);
+            for (int i = 0; i < indices.Length; i++)
+            {
+                clone[i] = indices[i].index;
+            }
 
             for (int i = 0; i < clone.Length; i++)
             {
@@ -190,11 +176,6 @@ namespace Syadeu.Presentation.Map
             m_RenderSystem.OnRender -= M_RenderSystem_OnRender;
 
             m_EventSystem.RemoveEvent<Events.OnTransformChangedEvent>(OnTransformChangedEventHandler);
-
-            for (int i = 0; i < disposables.Count; i++)
-            {
-                disposables[i].Dispose();
-            }
 
             m_EntitySystem = null;
             m_RenderSystem = null;
@@ -497,12 +478,12 @@ namespace Syadeu.Presentation.Map
             return GridMap.Grid.PositionToIndex(position);
         }
 
-        public int[] GetRange(int[] idx, int range, params int[] ignoreLayers)
+        public int[] GetRange(int idx, int range, params int[] ignoreLayers)
         {
             //if (GridMap.Grid == null) throw new System.Exception();
 
             // TODO : 임시. 이후 gridsize 에 맞춰서 인덱스 반환
-            int[] temp = GridMap.Grid.GetRange(in idx[0], in range);
+            int[] temp = GridMap.Grid.GetRange(in idx, in range);
             for (int i = 0; i < ignoreLayers?.Length; i++)
             {
                 temp = GridMap.FilterByLayer(ignoreLayers[i], temp, out _);
@@ -537,7 +518,29 @@ namespace Syadeu.Presentation.Map
 
     public struct GridSizeComponent : IEntityComponent
     {
-        public ArrayWrapper<GridPosition> positions;
+        internal PresentationSystemID<GridSystem> m_GridSystem;
+
+        public GridPosition4 positions;
+
+        public bool IsInIndex(int index)
+        {
+            for (int i = 0; i < positions.Length; i++)
+            {
+                if (positions[i].index == index) return true;
+            }
+            return false;
+        }
+        public int[] GetRange(int range, params int[] ignoreLayers)
+        {
+            GridSystem grid = m_GridSystem.System;
+
+            int[] indices = grid.GetRange(positions[0].index, range, ignoreLayers);
+            return indices;
+        }
+        public bool GetPath(int to, List<GridPathTile> path, int maxPathLength)
+        {
+            return m_GridSystem.System.GetPath(positions[0].index, to, path, maxPathLength);
+        }
     }
 
     [BurstCompile(CompileSynchronously = true)]

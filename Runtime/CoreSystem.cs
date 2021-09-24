@@ -1867,6 +1867,7 @@ namespace Syadeu
 #line hidden
         public struct Logger
         {
+            [System.Diagnostics.Conditional("UNITY_EDITOR")]
             public static void ThreadBlock(string name, ThreadInfo thread) => LogManager.ThreadBlock(name, thread);
 
 #if UNITY_EDITOR
@@ -1926,6 +1927,7 @@ namespace Syadeu
             public static void True(bool value, string msg) => LogManager.True(value, msg);
             public static void False(bool value, string msg) => LogManager.False(value, msg);
 
+            [System.Diagnostics.Conditional("UNITY_EDITOR")]
             public static void Unmanaged<T>() where T : unmanaged { }
         }
         public struct LogTimer : IDisposable

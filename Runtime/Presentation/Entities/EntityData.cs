@@ -223,17 +223,17 @@ namespace Syadeu.Presentation.Entities
 
         #region Components
 
-        public void AddComponent<TComponent>(TComponent data)
+        public TComponent AddComponent<TComponent>(TComponent data)
             where TComponent : unmanaged, IEntityComponent
         {
             if (!IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"You\'re trying to access to an invalid entity. This is not allowed.");
-                return;
+                return default(TComponent);
             }
 
-            PresentationSystem<EntityComponentSystem>.System.AddComponent(
+            return PresentationSystem<EntityComponentSystem>.System.AddComponent(
                 EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx), data);
         }
         public bool HasComponent<TComponent>()
@@ -280,7 +280,7 @@ namespace Syadeu.Presentation.Entities
             s_EntitySystem.System.InternalDestroyEntity(m_Idx);
         }
 
-        public override int GetHashCode() => Hash.ToInt32();
+        public override int GetHashCode() => Target.GetHashCode();
 
         public static implicit operator T(EntityData<T> a) => a.Target;
         //public static implicit operator EntityData<IEntityData>(EntityData<T> a) => GetEntityData(a.m_Idx);
