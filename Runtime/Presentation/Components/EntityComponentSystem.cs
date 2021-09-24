@@ -195,9 +195,11 @@ namespace Syadeu.Presentation.Components
         public bool HasComponent<TComponent>(EntityData<IEntityData> entity) 
             where TComponent : unmanaged, IEntityComponent
         {
-            int
-                componentIdx = math.abs(TypeHelper.TypeOf<TComponent>.Type.GetHashCode()) % m_ComponentBuffer.Length,
-                entityIdx = entity.Idx.ToInt32() % m_ComponentBuffer[componentIdx].length;
+            int componentIdx = math.abs(TypeHelper.TypeOf<TComponent>.Type.GetHashCode()) % m_ComponentBuffer.Length;
+
+            if (m_ComponentBuffer[componentIdx].length == 0) return false;
+
+            int entityIdx = entity.Idx.ToInt32() % m_ComponentBuffer[componentIdx].length;
 
             if (!m_ComponentBuffer[componentIdx].occupied[entityIdx])
             {

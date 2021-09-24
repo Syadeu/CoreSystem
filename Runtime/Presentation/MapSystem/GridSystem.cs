@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Unity.Burst;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
@@ -32,6 +33,8 @@ namespace Syadeu.Presentation.Map
 
         private readonly Dictionary<Entity<IEntity>, int[]> m_EntityGridIndices = new Dictionary<Entity<IEntity>, int[]>();
         private readonly Dictionary<int, List<Entity<IEntity>>> m_GridEntities = new Dictionary<int, List<Entity<IEntity>>>();
+
+        private readonly List<IDisposable> disposables = new List<IDisposable>();
 
         private GridMapAttribute GridMap => m_MainGrid;
 
@@ -112,12 +115,32 @@ namespace Syadeu.Presentation.Map
                 
                 UpdateGridEntity(entity, in att.m_CurrentGridIndices);
 
-                if (att.m_CurrentGridIndices.Length == 1)
+                if (!entity.HasComponent<GridSizeComponent>())
                 {
-                    entity.AddComponent<GridDataComponent>(new GridDataComponent()
+                    NativeArray<GridPosition> positions = new NativeArray<GridPosition>(att.m_CurrentGridIndices.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+
+                    disposables.Add(positions);
+                    
+                    for (int i = 0; i < positions.Length; i++)
                     {
-                        position = new GridPosition(att.m_CurrentGridIndices[0], p0)
-                    });
+                        positions[i] = new GridPosition(att.m_CurrentGridIndices[i], GridMap.Grid.IndexToLocation(att.m_CurrentGridIndices[i]));
+                    }
+                    
+                    unsafe
+                    {
+                        entity.AddComponent(new GridSizeComponent()
+                        {
+                            positions = ArrayWrapper<GridPosition>.Convert(positions)
+                        });
+                    }
+                }
+                else
+                {
+                    GridSizeComponent component = entity.GetComponent<GridSizeComponent>();
+                    for (int i = 0; i < component.positions.Length; i++)
+                    {
+                        component.positions[i] = new GridPosition(att.m_CurrentGridIndices[i], GridMap.Grid.IndexToLocation(att.m_CurrentGridIndices[i]));
+                    }
                 }
             }
         }
@@ -167,6 +190,11 @@ namespace Syadeu.Presentation.Map
             m_RenderSystem.OnRender -= M_RenderSystem_OnRender;
 
             m_EventSystem.RemoveEvent<Events.OnTransformChangedEvent>(OnTransformChangedEventHandler);
+
+            for (int i = 0; i < disposables.Count; i++)
+            {
+                disposables[i].Dispose();
+            }
 
             m_EntitySystem = null;
             m_RenderSystem = null;
@@ -507,9 +535,9 @@ namespace Syadeu.Presentation.Map
         private static int GetSqrMagnitude(int2 location) => (location.x * location.x) + (location.y * location.y);
     }
 
-    public struct GridDataComponent : IEntityComponent
+    public struct GridSizeComponent : IEntityComponent
     {
-        public GridPosition position;
+        public ArrayWrapper<GridPosition> positions;
     }
 
     [BurstCompile(CompileSynchronously = true)]

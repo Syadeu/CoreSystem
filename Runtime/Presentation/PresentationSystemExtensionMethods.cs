@@ -1,6 +1,7 @@
 ﻿using Syadeu.Presentation.Entities;
 using System.Collections.Generic;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 
 namespace Syadeu.Presentation
 {
@@ -42,6 +43,30 @@ namespace Syadeu.Presentation
             where T : class, IObject
         {
             return new Reference<T>(t.Object.Hash);
+        }
+
+        public static NativeArray<T> GetNativeArray<T>(this ArrayWrapper<T> wrapper) where T : unmanaged
+        {
+            AtomicSafetyHandle.CheckGetSecondaryDataPointerAndThrow(wrapper.m_Safety);
+
+            NativeArray<T> arr;
+            unsafe
+            {
+                arr = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<T>(
+                    wrapper.m_Buffer,
+                    wrapper.Length,
+                    Allocator.Invalid);
+            }
+
+            AtomicSafetyHandle safety = wrapper.m_Safety;
+
+            AtomicSafetyHandle.CheckWriteAndBumpSecondaryVersion(safety);
+            AtomicSafetyHandle.UseSecondaryVersion(ref safety);
+            AtomicSafetyHandle.SetAllowSecondaryVersionWriting(safety, true);
+
+            NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref arr, safety);
+
+            return arr;
         }
     }
 }
