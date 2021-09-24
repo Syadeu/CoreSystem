@@ -22,7 +22,7 @@ namespace Syadeu.Presentation.Components
         public override bool EnableAfterPresentation => false;
 
         private long m_EntityLength;
-        internal NativeArray<EntityComponentBuffer> m_ComponentBuffer;
+        private NativeArray<EntityComponentBuffer> m_ComponentBuffer;
 
         private EntitySystem m_EntitySystem;
 
@@ -244,14 +244,18 @@ namespace Syadeu.Presentation.Components
         public QueryBuilder<TComponent> CreateQueryBuilder<TComponent>() where TComponent : unmanaged, IEntityComponent
         {
             int componentIdx = math.abs(TypeHelper.TypeOf<TComponent>.Type.GetHashCode()) % m_ComponentBuffer.Length;
-
             
-            QueryBuilder<TComponent> queryBuilder = new QueryBuilder<TComponent>
+            if (!PoolContainer<QueryBuilder<TComponent>>.Initialized)
             {
-                ComponentIndex = componentIdx,
-            };
+                PoolContainer<QueryBuilder<TComponent>>.Initialize(QueryBuilder<TComponent>.QueryFactory, 32);
+            }
 
-            return queryBuilder;
+            QueryBuilder<TComponent> builder = PoolContainer<QueryBuilder<TComponent>>.Dequeue();
+            builder.Entities = m_ComponentBuffer[componentIdx].entity;
+            builder.Components = (TComponent*)m_ComponentBuffer[componentIdx].buffer;
+            builder.Length = m_ComponentBuffer[componentIdx].length;
+
+            return builder;
         }
 
         unsafe internal struct EntityComponentBuffer : IDisposable

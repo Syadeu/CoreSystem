@@ -1,4 +1,6 @@
-﻿using Syadeu.Presentation.Entities;
+﻿using Syadeu.Database;
+using Syadeu.Presentation.Entities;
+using System.Threading;
 using System.Threading.Tasks;
 using Unity.Burst;
 
@@ -9,8 +11,23 @@ namespace Syadeu.Presentation.Components
     {
         private static EntityComponentSystem s_System = null;
 
-        internal int ComponentIndex;
+        static QueryBuilder()
+        {
+            PoolContainer<ParallelJob>.Initialize(JobFactory, 32);
+        }
+        internal static QueryBuilder<TComponent> QueryFactory()
+        {
+            return new QueryBuilder<TComponent>();
+        }
+        private static ParallelJob JobFactory()
+        {
+            return new ParallelJob();
+        }
+
         private EntityComponentDelegate<EntityData<IEntityData>, TComponent> FunctionPointer;
+        unsafe internal EntityData<IEntityData>* Entities;
+        unsafe internal TComponent* Components;
+        internal int Length;
 
         public static QueryBuilder<TComponent> ForEach(EntityComponentDelegate<EntityData<IEntityData>, TComponent> action)
         {
@@ -28,37 +45,32 @@ namespace Syadeu.Presentation.Components
 
         public void Run()
         {
-            ParallelJob job = new ParallelJob
-            {
-                FunctionPointer = FunctionPointer
-            };
+            ParallelJob job = PoolContainer<ParallelJob>.Dequeue();
+            job.FunctionPointer = FunctionPointer;
 
             unsafe
             {
-                job.Entities = s_System.m_ComponentBuffer[ComponentIndex].entity;
-                job.Components = (TComponent*)s_System.m_ComponentBuffer[ComponentIndex].buffer;
+                job.Entities = Entities;
+                job.Components = Components;
             }
 
-            int length = s_System.m_ComponentBuffer[ComponentIndex].length;
-            for (int i = 0; i < length; i++)
+            for (int i = 0; i < Length; i++)
             {
                 job.Execute(i);
             }
         }
         public void Schedule()
         {
-            ParallelJob job = new ParallelJob
-            {
-                FunctionPointer = FunctionPointer
-            };
+            ParallelJob job = PoolContainer<ParallelJob>.Dequeue();
+            job.FunctionPointer = FunctionPointer;
 
             unsafe
             {
-                job.Entities = s_System.m_ComponentBuffer[ComponentIndex].entity;
-                job.Components = (TComponent*)s_System.m_ComponentBuffer[ComponentIndex].buffer;
+                job.Entities = Entities;
+                job.Components = Components;
             }
 
-            Parallel.For(0, s_System.m_ComponentBuffer[ComponentIndex].length, job.Execute);
+            job.Schedule(0, Length);
         }
 
         unsafe private class ParallelJob
@@ -66,13 +78,43 @@ namespace Syadeu.Presentation.Components
             public EntityData<IEntityData>* Entities;
             public TComponent* Components;
 
+            private int Count, Processed = 0;
             public EntityComponentDelegate<EntityData<IEntityData>, TComponent> FunctionPointer;
+
+            public void Schedule(int start, int count)
+            {
+                Count = count;
+                var result = Parallel.For(start, count, Init, Execute, Finally);
+            }
 
             public void Execute(int i)
             {
                 if (Entities[i].IsEmpty()) return;
 
                 FunctionPointer.Invoke(Entities[i], in Components[i]);
+            }
+            private int Init()
+            {
+                return 0;
+            }
+            private int Execute(int i, ParallelLoopState state, int processed)
+            {
+                if (!Entities[i].IsEmpty())
+                {
+                    FunctionPointer.Invoke(Entities[i], in Components[i]);
+                }
+
+                return processed += 1;
+            }
+            private void Finally(int processed)
+            {
+                Interlocked.Add(ref Processed, processed);
+                
+                if (Processed == Count)
+                {
+                    $"{Processed} Processed, Done".ToLog();
+                    PoolContainer<ParallelJob>.Enqueue(this);
+                }
             }
         }
     }
