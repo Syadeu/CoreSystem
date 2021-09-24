@@ -17,10 +17,6 @@ namespace Syadeu.Database
         public delegate void IndexIntToLocation(in AABB aabb, in float cellSize, in int idx, ref int2 output);
         public delegate void PositionFloat3ToLocation(in AABB aabb, in float cellSize, in float3 pos, ref int2 output);
 
-        public static readonly Functions f_Functions = new Functions(
-            p_LocationIntToIndex, p_LocationInt2ToIndex,
-            p_IndexIntToLocation, p_PositionFloat3ToLocation);
-
         /*              */
 
         public static readonly FunctionPointer<LocationIntToIndex> p_LocationIntToIndex = BurstCompiler.CompileFunctionPointer<LocationIntToIndex>(f_LocationToIndex);
@@ -33,28 +29,22 @@ namespace Syadeu.Database
 
         /*              */
 
-        public readonly struct Functions
+        public static int LocationToIndex(in AABB aabb, in float cellSize, in int2 xy)
+            => p_LocationInt2ToIndex.Invoke(in aabb, in cellSize, in xy);
+        public static int LocationToIndex(in AABB aabb, in float cellSize, in int x, in int y)
+            => p_LocationIntToIndex.Invoke(in aabb, in cellSize, in x, in y);
+
+        public static int2 IndexToLocation(in AABB aabb, in float cellSize, in int idx)
         {
-            public readonly FunctionPointer<LocationIntToIndex> p_LocationIntToIndex;
-            public readonly FunctionPointer<LocationInt2ToIndex> p_LocationInt2ToIndex;
-
-            public readonly FunctionPointer<IndexIntToLocation> p_IndexIntToLocation;
-            public readonly FunctionPointer<PositionFloat3ToLocation> p_PositionFloat3ToLocation;
-
-            public Functions(
-                FunctionPointer<LocationIntToIndex> p0,
-                FunctionPointer<LocationInt2ToIndex> p1,
-
-                FunctionPointer<IndexIntToLocation> a0,
-                FunctionPointer<PositionFloat3ToLocation> a1
-                )
-            {
-                p_LocationIntToIndex = p0;
-                p_LocationInt2ToIndex = p1;
-
-                p_IndexIntToLocation = a0;
-                p_PositionFloat3ToLocation = a1;
-            }
+            int2 output = new int2();
+            p_IndexIntToLocation.Invoke(in aabb, in cellSize, in idx, ref output);
+            return output;
+        }
+        public static int2 PositionToLocation(in AABB aabb, in float cellSize, in float3 pos)
+        {
+            int2 output = new int2();
+            p_PositionFloat3ToLocation.Invoke(in aabb, in cellSize, in pos, ref output);
+            return output;
         }
 
         #region Get Index
