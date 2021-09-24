@@ -1,6 +1,7 @@
 ﻿using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation.Attributes;
+using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Proxy;
 using System;
 using System.Collections.Generic;
@@ -78,6 +79,13 @@ namespace Syadeu.Presentation.Entities
         {
             get
             {
+                if (IsEmpty())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        "An empty entity reference trying to access transform.");
+                    return null;
+                }
+
                 if (s_EntitySystem.IsNull())
                 {
                     s_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
@@ -89,9 +97,13 @@ namespace Syadeu.Presentation.Entities
                     }
                 }
 
-                if (m_Idx.Equals(Hash.Empty) ||
-                    !s_EntitySystem.System.m_ObjectEntities.TryGetValue(m_Idx, out var value) ||
-                    !(value is T t)) return null;
+                if (!s_EntitySystem.System.m_ObjectEntities.TryGetValue(m_Idx, out var value) ||
+                    !(value is T t))
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"Entity validation error. This entity is not an {TypeHelper.TypeOf<T>.ToString()} but {TypeHelper.ToString(value.GetType())}.");
+                    return null;
+                }
 
                 return t;
             }
@@ -111,10 +123,10 @@ namespace Syadeu.Presentation.Entities
         {
             get
             {
-                if (m_Idx.Equals(Hash.Empty))
+                if (IsEmpty())
                 {
                     CoreSystem.Logger.LogError(Channel.Entity,
-                        "An empty entity reference trying to call transform.");
+                        "An empty entity reference trying to access transform.");
                     return null;
                 }
 
@@ -153,6 +165,8 @@ namespace Syadeu.Presentation.Entities
         public bool IsEmpty() => Equals(Empty);
         public bool IsValid()
         {
+            if (IsEmpty()) return false;
+
             if (s_EntitySystem.IsNull())
             {
                 s_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
@@ -163,69 +177,148 @@ namespace Syadeu.Presentation.Entities
                     return false;
                 }
             }
+            else if (!s_EntitySystem.IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                        "Cannot retrived EntitySystem. The system has been destroyed.");
+                return false;
+            }
 
-            return !m_Idx.Equals(Hash.Empty) && s_EntitySystem.IsValid() &&
-                    s_EntitySystem.System.m_ObjectEntities.ContainsKey(m_Idx);
+            return s_EntitySystem.System.m_ObjectEntities.ContainsKey(m_Idx);
         }
 
         public bool Equals(Entity<T> other) => m_Idx.Equals(other.m_Idx);
         public bool Equals(Hash other) => m_Idx.Equals(other);
 
-        #region Raycast
-        //public EntitySystem.Raycaster Raycast(Ray ray) => PresentationSystem<EntitySystem>.System.Raycast(this, ray);
-        #endregion
+        #region Attributes
 
+        /// <inheritdoc cref="IEntityData.HasAttribute(Hash)"/>
         public bool HasAttribute(Hash attributeHash)
         {
-            if (!IsValid()) throw new Exception("not valid");
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                return false;
+            }
+
             return Target.HasAttribute(attributeHash);
         }
         public bool HasAttribute(Type t)
         {
-            if (!IsValid()) throw new Exception("not valid");
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                return false;
+            }
+
             return Target.HasAttribute(t);
         }
         public bool HasAttribute<TA>() where TA : AttributeBase
         {
-            if (!IsValid()) throw new Exception("not valid");
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                return false;
+            }
+
             return Target.HasAttribute<TA>();
         }
         /// <inheritdoc cref="IEntityData.GetAttribute(Type)"/>
         public AttributeBase GetAttribute(Type t)
         {
-            if (!IsValid()) throw new Exception("not valid");
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                return null;
+            }
+
             return Target.GetAttribute(t);
         }
         /// <inheritdoc cref="IEntityData.GetAttributes(Type)"/>
         public AttributeBase[] GetAttributes(Type t)
         {
-            if (!IsValid()) throw new Exception("not valid");
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                return null;
+            }
+
             return Target.GetAttributes(t);
         }
         /// <inheritdoc cref="IEntityData.GetAttribute(Type)"/>
         public TA GetAttribute<TA>() where TA : AttributeBase
         {
-            if (!IsValid()) throw new Exception("not valid");
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                return null;
+            }
+
             return Target.GetAttribute<TA>();
         }
         /// <inheritdoc cref="IEntityData.GetAttributes(Type)"/>
         public TA[] GetAttributes<TA>() where TA : AttributeBase
         {
-            if (!IsValid()) throw new Exception("not valid");
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                return null;
+            }
+
             return Target.GetAttributes<TA>();
         }
 
-        public void AddComponent<TData>(TData data)
-            where TData : unmanaged, IEntityComponent
+        #endregion
+
+        #region Components
+
+        public void AddComponent<TComponent>(TComponent data)
+            where TComponent : unmanaged, IEntityComponent
         {
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                return;
+            }
+
             PresentationSystem<EntityComponentSystem>.System.AddComponent(
                 EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx), data);
         }
-        public TData GetComponent<TData>()
-            where TData : unmanaged, IEntityComponent
+        public bool HasComponent<TComponent>()
+            where TComponent : unmanaged, IEntityComponent
         {
-            return PresentationSystem<EntityComponentSystem>.System.GetComponent<TData>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                return false;
+            }
+
+            return PresentationSystem<EntityComponentSystem>.System.HasComponent<TComponent>(
+                EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
         }
+        public TComponent GetComponent<TComponent>()
+            where TComponent : unmanaged, IEntityComponent
+        {
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                return default(TComponent);
+            }
+
+            return PresentationSystem<EntityComponentSystem>.System.GetComponent<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
+        }
+
+        #endregion
 
         public void Destroy()
         {
@@ -242,7 +335,8 @@ namespace Syadeu.Presentation.Entities
 
             s_EntitySystem.System.InternalDestroyEntity(m_Idx);
         }
-        public override int GetHashCode() => Hash.GetHashCode();
+
+        public override int GetHashCode() => Hash.ToInt32();
 
         public static implicit operator T(Entity<T> a) => a.Target;
         //public static implicit operator Entity<IEntity>(Entity<T> a) => GetEntity(a.m_Idx);
