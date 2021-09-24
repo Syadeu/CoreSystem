@@ -43,10 +43,11 @@ namespace Syadeu.Presentation.Components
             return builder;
         }
 
-        public void Run()
+        private ParallelJob LocalInitialize()
         {
             ParallelJob job = PoolContainer<ParallelJob>.Dequeue();
             job.FunctionPointer = FunctionPointer;
+            job.Builder = this;
 
             unsafe
             {
@@ -54,27 +55,15 @@ namespace Syadeu.Presentation.Components
                 job.Components = Components;
             }
 
-            for (int i = 0; i < Length; i++)
-            {
-                job.Execute(i);
-            }
+            return job;
         }
-        public void Schedule()
-        {
-            ParallelJob job = PoolContainer<ParallelJob>.Dequeue();
-            job.FunctionPointer = FunctionPointer;
-
-            unsafe
-            {
-                job.Entities = Entities;
-                job.Components = Components;
-            }
-
-            job.Schedule(0, Length);
-        }
+        public void Run() => LocalInitialize().Run(0, Length);
+        public void Schedule() => LocalInitialize().Schedule(0, Length);
 
         unsafe private class ParallelJob
         {
+            public QueryBuilder<TComponent> Builder = null;
+
             public EntityData<IEntityData>* Entities;
             public TComponent* Components;
 
@@ -86,13 +75,25 @@ namespace Syadeu.Presentation.Components
                 Count = count;
                 var result = Parallel.For(start, count, Init, Execute, Finally);
             }
+            public void Run(int start, int count)
+            {
+                for (int i = start; i < count; i++)
+                {
+                    Execute(i);
+                }
 
-            public void Execute(int i)
+                PoolContainer<ParallelJob>.Enqueue(this);
+                PoolContainer<QueryBuilder<TComponent>>.Enqueue(Builder);
+                Builder = null;
+            }
+
+            private void Execute(int i)
             {
                 if (Entities[i].IsEmpty()) return;
 
                 FunctionPointer.Invoke(Entities[i], in Components[i]);
             }
+
             private int Init()
             {
                 return 0;
@@ -114,6 +115,9 @@ namespace Syadeu.Presentation.Components
                 {
                     $"{Processed} Processed, Done".ToLog();
                     PoolContainer<ParallelJob>.Enqueue(this);
+
+                    PoolContainer<QueryBuilder<TComponent>>.Enqueue(Builder);
+                    Builder = null;
                 }
             }
         }
