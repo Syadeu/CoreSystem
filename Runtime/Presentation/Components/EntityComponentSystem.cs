@@ -1,8 +1,11 @@
-﻿using Syadeu.Database;
+﻿using AOT;
+using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation.Entities;
 using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
+using System.Runtime.InteropServices;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -238,15 +241,18 @@ namespace Syadeu.Presentation.Components
             return ((TComponent*)m_ComponentBuffer[componentIdx].buffer)[entityIdx];
         }
 
-        public QueryBuilder<TComponent> ForEach<TComponent>(EntityComponentDelegate<EntityData<IEntityData>, TComponent> action) where TComponent : unmanaged, IEntityComponent
+        public QueryBuilder<TComponent> CreateQueryBuilder<TComponent>() where TComponent : unmanaged, IEntityComponent
         {
             int componentIdx = math.abs(TypeHelper.TypeOf<TComponent>.Type.GetHashCode()) % m_ComponentBuffer.Length;
+
+            
 
             QueryBuilder<TComponent> queryBuilder = new QueryBuilder<TComponent>
             {
                 SystemID = SystemID,
                 ComponentIndex = componentIdx,
-                FunctionPointer = BurstCompiler.CompileFunctionPointer(action)
+                //FunctionPointer = BurstCompiler.CompileFunctionPointer(action)
+                //FunctionPointer = func.Data.FunctionPointer
             };
 
             return queryBuilder;
@@ -272,29 +278,107 @@ namespace Syadeu.Presentation.Components
                 UnsafeUtility.Free(buffer, Allocator.Persistent);
             }
         }
-
-        
     }
 
+    //public delegate void BurstDelegate<TEntity, TComponent>(TEntity entity, TComponent component, EntityComponentDelegate<TEntity, TComponent> action) where TComponent : unmanaged, IEntityComponent;
+
     public delegate void EntityComponentDelegate<TEntity, TComponent>(in TEntity entity, in TComponent component) where TComponent : unmanaged, IEntityComponent;
+
+    //[BurstCompile(CompileSynchronously = true)]
+    //internal static class BurstFunctions
+    //{
+    //    [BurstCompile(CompileSynchronously = true)]
+    //    //[MonoPInvokeCallback(typeof(BurstDelegate<,>))]
+    //    public static void EntityComponentDelegate<TEntity, TComponent>(
+    //        TEntity entity, TComponent component, 
+    //        EntityComponentDelegate<TEntity, TComponent> action)
+    //        where TComponent : unmanaged, IEntityComponent
+    //    {
+    //        action.Invoke(in entity, in component);
+    //    }
+    //}
 
     internal struct EntityComponentConstrains
     {
         public PresentationSystemID<EntityComponentSystem> SystemID;
     }
+    internal struct EntityComponentFuction<TComponent> where TComponent : unmanaged, IEntityComponent
+    {
+        public FunctionPointer<EntityComponentDelegate<EntityData<IEntityData>, TComponent>> FunctionPointer;
+    }
+    //public class test
+    //{
+    //    public Delegate ddelegate;
 
+    //    public EntityComponentDelegate<EntityData<IEntityData>, TComponent> ttt<TComponent>(EntityData<IEntityData> t, TComponent ta)
+    //    {
+    //        ddelegate.DynamicInvoke(null, t, ta);
+    //    }
+    //}
     public struct QueryBuilder<TComponent>
         where TComponent : unmanaged, IEntityComponent
     {
         internal PresentationSystemID<EntityComponentSystem> SystemID;
         internal int ComponentIndex;
-        internal FunctionPointer<EntityComponentDelegate<EntityData<IEntityData>, TComponent>> FunctionPointer;
+        private FunctionPointer<Delegate> FunctionPointer;
+        internal bool BurstCompile;
 
         public static QueryBuilder<TComponent> ForEach(EntityComponentDelegate<EntityData<IEntityData>, TComponent> action)
         {
-            return SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>().Data.SystemID.System.ForEach(action);
+            //if (!(action.Body is MethodCallExpression member))
+            //{
+            //    "?? error".ToLog();
+            //    return default(QueryBuilder<TComponent>);
+            //}
+            
+
+            QueryBuilder<TComponent> builder = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>().Data.SystemID.System.CreateQueryBuilder<TComponent>();
+
+
+
+            //EntityComponentDelegate<EntityData<IEntityData>, TComponent> lambda = (EntityComponentDelegate<EntityData<IEntityData>, TComponent>)Delegate.CreateDelegate(typeof(EntityComponentDelegate<EntityData<IEntityData>, TComponent>), firstArgument: null, action.Method);
+
+            //var p = BurstCompiler.CompileFunctionPointer(lambda);
+
+            //if (action.Target == null)
+            //{
+            //    builder.FunctionPointer = BurstCompiler.CompileFunctionPointer(action);
+            //}
+            //else
+            {
+                builder.FunctionPointer = new FunctionPointer<Delegate>(Marshal.GetFunctionPointerForDelegate(action));
+            }
+            
+            //builder.FunctionPointer = p;
+            //builder.FunctionPointer.Invoke(default, default);
+
+            return builder;
         }
-        public JobHandle Schedule()
+        public QueryBuilder<TComponent> WithBurst()
+        {
+            if (FunctionPointer.Invoke.Target == null)
+            {
+                "static".ToLog();
+            }
+            else
+            {
+                "instance".ToLog();
+            }
+
+            //SharedStatic<EntityComponentFuction<TComponent>> func = SharedStatic<EntityComponentFuction<TComponent>>.GetOrCreate<EntityComponentFuction<TComponent>>();
+
+            //if (!func.Data.FunctionPointer.IsCreated)
+            //{
+            //    func.Data.FunctionPointer = BurstCompiler.CompileFunctionPointer(Delegate);
+            //}
+
+            //FunctionPointer = func.Data.FunctionPointer;
+            //BurstCompile = true;
+            "not support".ToLog();
+            return this;
+        }
+
+        public void Schedule()
         {
             EntityComponentSystem system = SystemID.System;
 
@@ -309,23 +393,29 @@ namespace Syadeu.Presentation.Components
                 job.Components = (TComponent*)system.m_ComponentBuffer[ComponentIndex].buffer;
             }
 
-            return job.Schedule(system.m_ComponentBuffer[ComponentIndex].length, 64);
+            //if (BurstCompile)
+            {
+                job.Schedule(system.m_ComponentBuffer[ComponentIndex].length, 64);
+                return;
+            }
+
+            //job.Run(system.m_ComponentBuffer[ComponentIndex].length);
         }
 
-        [BurstCompile(CompileSynchronously = true)]
+        //[BurstCompile(CompileSynchronously = true)]
         unsafe private struct ParallelJob : IJobParallelFor
         {
             [ReadOnly, NativeDisableUnsafePtrRestriction] public EntityData<IEntityData>* Entities;
             [ReadOnly, NativeDisableUnsafePtrRestriction] public TComponent* Components;
 
-            public FunctionPointer<EntityComponentDelegate<EntityData<IEntityData>, TComponent>> FunctionPointer;
+            [ReadOnly] public FunctionPointer<Delegate> FunctionPointer;
 
             public void Execute(int i)
             {
                 if (Entities[i].IsEmpty()) return;
 
 
-                FunctionPointer.Invoke(Entities[i], in Components[i]);
+                ((EntityComponentDelegate<EntityData<IEntityData>, TComponent>)FunctionPointer.Invoke)(Entities[i], in Components[i]);
             }
         }
     }
