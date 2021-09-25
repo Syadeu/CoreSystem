@@ -12,6 +12,7 @@ using System.Reflection;
 using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.LowLevel;
 
 namespace Syadeu.Presentation
 {
@@ -44,7 +45,7 @@ namespace Syadeu.Presentation
 
             public readonly ConcurrentQueue<Action> m_RequestSystemDelegates = new ConcurrentQueue<Action>();
 
-            public CoreRoutine MainPresentation;
+            //public CoreRoutine MainPresentation;
             public CoreRoutine BackgroundPresentation;
 
             public bool m_MainthreadSignal = false;
@@ -130,6 +131,52 @@ namespace Syadeu.Presentation
                 else if (pos == 1) m_OnPresentationJobHandle = JobHandle.CombineDependencies(m_OnPresentationJobHandle, jobHandle);
                 else m_AfterPresentationJobHandle = JobHandle.CombineDependencies(m_AfterPresentationJobHandle, jobHandle);
             }
+
+            public void BeforePresentation()
+            {
+                m_MainthreadBeforePre = false;
+
+                // Unity Jobs
+                m_BeforePresentationJobHandle.Complete();
+
+                for (int i = 0; i < m_BeforePresentations.Count; i++)
+                {
+                    PresentationResult result = m_BeforePresentations[i].BeforePresentation();
+                    LogMessage(result);
+                }
+
+                m_MainthreadBeforePre = true;
+            }
+            public void OnPresentation()
+            {
+                m_MainthreadOnPre = false;
+
+                // Unity Jobs
+                m_OnPresentationJobHandle.Complete();
+
+                for (int i = 0; i < m_OnPresentations.Count; i++)
+                {
+                    PresentationResult result = m_OnPresentations[i].OnPresentation();
+                    LogMessage(result);
+                }
+
+                m_MainthreadOnPre = true;
+            }
+            public void AfterPresentation()
+            {
+                m_MainthreadAfterPre = false;
+
+                // Unity Jobs
+                m_AfterPresentationJobHandle.Complete();
+
+                for (int i = 0; i < m_AfterPresentations.Count; i++)
+                {
+                    PresentationResult result = m_AfterPresentations[i].AfterPresentation();
+                    LogMessage(result);
+                }
+
+                m_MainthreadAfterPre = true;
+            }
         }
         private readonly Hash m_DefaultGroupHash = Hash.NewHash(TypeHelper.TypeOf<DefaultPresentationGroup>.Name);
 
@@ -140,6 +187,8 @@ namespace Syadeu.Presentation
         public override void OnInitialize()
         {
             const string register = "Register";
+
+            SetPlayerLoop();
 
             Type[] registers = TypeHelper.GetTypes(t => !t.IsAbstract && t.GetInterfaces().FindFor(ta => ta.Equals(TypeHelper.TypeOf<IPresentationRegister>.Type)) != null).ToArray();
 
@@ -160,7 +209,98 @@ namespace Syadeu.Presentation
                 }
             }
         }
+        private void SetPlayerLoop()
+        {
+            PlayerLoopSystem defaultLoop = PlayerLoop.GetCurrentPlayerLoop();
+            for (int i = 0; i < defaultLoop.subSystemList.Length; i++)
+            {
+                if (defaultLoop.subSystemList[i].type.Equals(TypeHelper.TypeOf<UnityEngine.PlayerLoop.PreUpdate>.Type))
+                {
+                    List<PlayerLoopSystem> list = defaultLoop.subSystemList[i].subSystemList.ToList();
+                    PlayerLoopSystem loop = new PlayerLoopSystem
+                    {
+                        loopConditionFunction = defaultLoop.subSystemList[i].loopConditionFunction,
+                        subSystemList = Array.Empty<PlayerLoopSystem>(),
+                        type = TypeHelper.TypeOf<PresentationLoop.PresentationPreUpdate>.Type,
+                        updateDelegate = PresentationPreUpdate,
+                        updateFunction = defaultLoop.subSystemList[i].updateFunction
+                    };
+                    list.Add(loop);
+                    defaultLoop.subSystemList[i].subSystemList = list.ToArray();
+                }
+                else if (defaultLoop.subSystemList[i].type.Equals(TypeHelper.TypeOf<UnityEngine.PlayerLoop.Update>.Type))
+                {
+                    List<PlayerLoopSystem> list = defaultLoop.subSystemList[i].subSystemList.ToList();
+                    PlayerLoopSystem loop = new PlayerLoopSystem
+                    {
+                        loopConditionFunction = defaultLoop.subSystemList[i].loopConditionFunction,
+                        subSystemList = Array.Empty<PlayerLoopSystem>(),
+                        type = TypeHelper.TypeOf<PresentationLoop.PresentationBeforeUpdate>.Type,
+                        updateDelegate = PresentationBeforeUpdate,
+                        updateFunction = defaultLoop.subSystemList[i].updateFunction
+                    };
+                    PlayerLoopSystem loop1 = new PlayerLoopSystem
+                    {
+                        loopConditionFunction = defaultLoop.subSystemList[i].loopConditionFunction,
+                        subSystemList = Array.Empty<PlayerLoopSystem>(),
+                        type = TypeHelper.TypeOf<PresentationLoop.PresentationOnUpdate>.Type,
+                        updateDelegate = PresentationOnUpdate,
+                        updateFunction = defaultLoop.subSystemList[i].updateFunction
+                    };
+                    PlayerLoopSystem loop2 = new PlayerLoopSystem
+                    {
+                        loopConditionFunction = defaultLoop.subSystemList[i].loopConditionFunction,
+                        subSystemList = Array.Empty<PlayerLoopSystem>(),
+                        type = TypeHelper.TypeOf<PresentationLoop.PresentationAfterUpdate>.Type,
+                        updateDelegate = PresentationAfterUpdate,
+                        updateFunction = defaultLoop.subSystemList[i].updateFunction
+                    };
+                    list.Add(loop);
+                    list.Add(loop1);
+                    list.Add(loop2);
+                    defaultLoop.subSystemList[i].subSystemList = list.ToArray();
+                }
+                else if (defaultLoop.subSystemList[i].type.Equals(TypeHelper.TypeOf<UnityEngine.PlayerLoop.PreLateUpdate>.Type))
+                {
+                    List<PlayerLoopSystem> list = defaultLoop.subSystemList[i].subSystemList.ToList();
+                    PlayerLoopSystem loop = new PlayerLoopSystem
+                    {
+                        loopConditionFunction = defaultLoop.subSystemList[i].loopConditionFunction,
+                        subSystemList = Array.Empty<PlayerLoopSystem>(),
+                        type = TypeHelper.TypeOf<PresentationLoop.PresentationLateUpdate.TransformUpdate>.Type,
+                        updateDelegate = PresentationLateTransformUpdate,
+                        updateFunction = defaultLoop.subSystemList[i].updateFunction
+                    };
+                    PlayerLoopSystem loop2 = new PlayerLoopSystem
+                    {
+                        loopConditionFunction = defaultLoop.subSystemList[i].loopConditionFunction,
+                        subSystemList = Array.Empty<PlayerLoopSystem>(),
+                        type = TypeHelper.TypeOf<PresentationLoop.PresentationLateUpdate.AfterTransformUpdate>.Type,
+                        updateDelegate = PresentationLateAfterTransformUpdate,
+                        updateFunction = defaultLoop.subSystemList[i].updateFunction
+                    };
+                    list.Add(loop);
+                    list.Add(loop2);
+                    defaultLoop.subSystemList[i].subSystemList = list.ToArray();
+                }
+                else if (defaultLoop.subSystemList[i].type.Equals(TypeHelper.TypeOf<UnityEngine.PlayerLoop.PostLateUpdate>.Type))
+                {
+                    List<PlayerLoopSystem> list = defaultLoop.subSystemList[i].subSystemList.ToList();
+                    PlayerLoopSystem loop = new PlayerLoopSystem
+                    {
+                        loopConditionFunction = defaultLoop.subSystemList[i].loopConditionFunction,
+                        subSystemList = Array.Empty<PlayerLoopSystem>(),
+                        type = TypeHelper.TypeOf<PresentationLoop.PresentationPostUpdate>.Type,
+                        updateDelegate = PresentationPostUpdate,
+                        updateFunction = defaultLoop.subSystemList[i].updateFunction
+                    };
+                    list.Add(loop);
+                    defaultLoop.subSystemList[i].subSystemList = list.ToArray();
+                }
+            }
 
+            PlayerLoop.SetPlayerLoop(defaultLoop);
+        }
         public override void Dispose()
         {
             foreach (var item in m_PresentationGroups)
@@ -168,7 +308,56 @@ namespace Syadeu.Presentation
                 if (item.Value.m_IsStarted) item.Value.Reset();
             }
 
+            PlayerLoopSystem defaultLoop = PlayerLoop.GetDefaultPlayerLoop();
+            PlayerLoop.SetPlayerLoop(defaultLoop);
+
             base.Dispose();
+        }
+
+        #endregion
+
+        #region Player Loops
+
+        public event Action PreUpdate;
+        
+        public event Action BeforeUpdate;
+        public event Action Update;
+        public event Action AfterUpdate;
+        public event Action TransformUpdate;
+        public event Action AfterTransformUpdate;
+
+        public event Action PostUpdate;
+
+        private void PresentationPreUpdate()
+        {
+            PreUpdate?.Invoke();
+        }
+
+        private void PresentationBeforeUpdate()
+        {
+            BeforeUpdate?.Invoke();
+        }
+        private void PresentationOnUpdate()
+        {
+            Update?.Invoke();
+        }
+        private void PresentationAfterUpdate()
+        {
+            AfterUpdate?.Invoke();
+        }
+
+        private void PresentationLateTransformUpdate()
+        {
+            TransformUpdate?.Invoke();
+        }
+        private void PresentationLateAfterTransformUpdate()
+        {
+            AfterTransformUpdate?.Invoke();
+        }
+
+        private void PresentationPostUpdate()
+        {
+            PostUpdate?.Invoke();
         }
 
         #endregion
@@ -281,7 +470,8 @@ namespace Syadeu.Presentation
                 //$"System ({group.m_Name.Name}): {system.GetType().Name} Start".ToLog();
             }
 
-            group.MainPresentation = Instance.StartUnityUpdate(Presentation(group));
+            //group.MainPresentation = Instance.StartUnityUpdate(Presentation(group));
+            Instance.StartUnityUpdate(Presentation(group));
             group.BackgroundPresentation = Instance.StartBackgroundUpdate(PresentationAsync(group));
             group.m_IsStarted = true;
 
@@ -298,8 +488,12 @@ namespace Syadeu.Presentation
                 return;
             }
 
-            Instance.StopUnityUpdate(group.MainPresentation);
-            Instance.StopUnityUpdate(group.BackgroundPresentation);
+            Instance.BeforeUpdate -= group.BeforePresentation;
+            Instance.Update -= group.OnPresentation;
+            Instance.AfterUpdate -= group.AfterPresentation;
+
+            //Instance.StopUnityUpdate(group.MainPresentation);
+            Instance.StopBackgroundUpdate(group.BackgroundPresentation);
 
             group.Reset();
 
@@ -417,50 +611,9 @@ namespace Syadeu.Presentation
             yield return group.m_WaitUntilInitializeCompleted;
             CoreSystem.Logger.Log(Channel.Presentation, $"Presentation group ({group.m_Name.Name}) started");
 
-            while (true)
-            {
-                group.m_MainthreadBeforePre = false;
-
-                // Unity Jobs
-                group.m_BeforePresentationJobHandle.Complete();
-
-                for (int i = 0; i < group.m_BeforePresentations.Count; i++)
-                {
-                    result = group.m_BeforePresentations[i].BeforePresentation();
-                    LogMessage(result);
-                }
-
-                group.m_MainthreadBeforePre = true;
-                yield return group.m_WaitBeforePre;
-                group.m_MainthreadOnPre = false;
-
-                // Unity Jobs
-                group.m_OnPresentationJobHandle.Complete();
-
-                for (int i = 0; i < group.m_OnPresentations.Count; i++)
-                {
-                    result = group.m_OnPresentations[i].OnPresentation();
-                    LogMessage(result);
-                }
-
-                group.m_MainthreadOnPre = true;
-                yield return group.m_WaitOnPre;
-                group.m_MainthreadAfterPre = false;
-
-                // Unity Jobs
-                group.m_AfterPresentationJobHandle.Complete();
-
-                for (int i = 0; i < group.m_AfterPresentations.Count; i++)
-                {
-                    result = group.m_AfterPresentations[i].AfterPresentation();
-                    LogMessage(result);
-                }
-
-                group.m_MainthreadAfterPre = true;
-                yield return group.m_WaitAfterPre;
-
-                yield return null;
-            }
+            Instance.BeforeUpdate += group.BeforePresentation;
+            Instance.Update += group.OnPresentation;
+            Instance.AfterUpdate += group.AfterPresentation;
         }
         private static IEnumerator PresentationAsync(Group group)
         {

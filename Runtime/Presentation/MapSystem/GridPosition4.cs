@@ -16,7 +16,7 @@ namespace Syadeu.Presentation.Map
                 int length = 0;
                 for (int i = 0; i < 4; i++)
                 {
-                    if (this[i].IsEmpty()) continue;
+                    if (this[i].IsEmpty()) break;
 
                     length += 1;
                 }

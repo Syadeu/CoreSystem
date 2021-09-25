@@ -98,21 +98,31 @@ namespace Syadeu.Presentation.Actor
             m_PrefabInstance.Destroy();
         }
 
-        public void FireFXBounds(PresentationSystemID<CoroutineSystem> coroutineSystem, FXBounds.TriggerOptions triggerOptions)
+        public void FireFXBounds(ITransform sender,
+            PresentationSystemID<CoroutineSystem> coroutineSystem, FXBounds.TriggerOptions triggerOptions)
         {
-            if (m_PrefabInstance.IsEmpty() || !m_PrefabInstance.IsValid())
+            ITransform targetTr;
+            if (m_PrefabInstance.IsEmpty())
+            {
+                targetTr = sender;
+            }
+            else if (!m_PrefabInstance.IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Entity, 
                     $"Cannot fire FX({TypeHelper.Enum<FXBounds.TriggerOptions>.ToString(triggerOptions)}), " +
                     $"target prefab in {Name} is invalid.");
                 return;
             }
+            else
+            {
+                targetTr = m_PrefabInstance.transform;
+            }
 
             for (int i = 0; i < m_FXBounds.Length; i++)
             {
                 if ((m_FXBounds[i].TriggerOption & triggerOptions) == 0) continue;
 
-                m_FXBounds[i].Fire(coroutineSystem, m_PrefabInstance.transform);
+                m_FXBounds[i].Fire(coroutineSystem, targetTr);
             }
         }
     }

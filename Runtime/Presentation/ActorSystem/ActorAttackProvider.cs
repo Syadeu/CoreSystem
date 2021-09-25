@@ -97,12 +97,12 @@ namespace Syadeu.Presentation.Actor
 
             if (m_OnAttack.Execute(parent, target))
             {
-                currentWeaponIns.Object.FireFXBounds(CoroutineSystem, FXBounds.TriggerOptions.FireOnSuccess);
+                currentWeaponIns.Object.FireFXBounds(Parent.transform, CoroutineSystem, FXBounds.TriggerOptions.FireOnSuccess);
                 SendHitEvent(ev.Target, ev.HPStatNameHash, ev.Damage);
             }
             else
             {
-                currentWeaponIns.Object.FireFXBounds(CoroutineSystem, FXBounds.TriggerOptions.FireOnFailed);
+                currentWeaponIns.Object.FireFXBounds(Parent.transform, CoroutineSystem, FXBounds.TriggerOptions.FireOnFailed);
             }
 
             //for (int i = 0; i < ev.Targets.Length; i++)

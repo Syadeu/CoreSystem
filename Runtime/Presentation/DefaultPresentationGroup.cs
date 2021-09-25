@@ -23,7 +23,8 @@ namespace Syadeu.Presentation
                 TypeHelper.TypeOf<Map.GridSystem>.Type,
                 TypeHelper.TypeOf<Map.LevelDesignSystem>.Type,
                 TypeHelper.TypeOf<Map.NavMeshSystem>.Type,
-                TypeHelper.TypeOf<Actor.ActorSystem>.Type
+                TypeHelper.TypeOf<Actor.ActorSystem>.Type,
+                TypeHelper.TypeOf<Actions.ActionSystem>.Type
                 );
         }
     }

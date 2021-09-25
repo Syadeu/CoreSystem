@@ -1,6 +1,5 @@
 ﻿using Syadeu.Database;
 using Syadeu.Mono;
-using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Proxy;
 using System;
@@ -371,6 +370,56 @@ namespace Syadeu.Presentation.Map
 
         #endregion
 
+        public bool HasPath([NoAlias] int from, [NoAlias] int to, [NoAlias] int maxPathLength, out int pathFound, [NoAlias] int maxIteration = 32)
+        {
+            int2
+                fromLocation = GridMap.Grid.IndexToLocation(in from),
+                toLocation = GridMap.Grid.IndexToLocation(in to);
+
+            GridPathTile tile = new GridPathTile(from, fromLocation);
+            tile.Calculate(GridMap.Grid, GridMap.ObstacleLayer);
+
+            unsafe
+            {
+                GridPathTile* path = stackalloc GridPathTile[maxPathLength];
+                path[0] = tile;
+
+                pathFound = 1;
+                int iteration = 0;
+                while (
+                    iteration < maxIteration &&
+                    pathFound < maxPathLength &&
+                    path[pathFound - 1].position.index != to)
+                {
+                    GridPathTile lastTileData = path[pathFound - 1];
+                    if (lastTileData.IsBlocked())
+                    {
+                        //path.RemoveAt(path.Count - 1);
+                        pathFound--;
+
+                        if (pathFound == 0) break;
+
+                        GridPathTile parentTile = path[pathFound - 1];
+                        parentTile.opened[lastTileData.direction] = false;
+                        path[pathFound - 1] = parentTile;
+                    }
+                    else
+                    {
+                        int nextDirection = GetLowestCost(ref lastTileData, toLocation);
+
+                        GridPathTile nextTile = lastTileData.GetNext(nextDirection);
+                        nextTile.Calculate(GridMap.Grid, GridMap.ObstacleLayer);
+
+                        path[pathFound] = (nextTile);
+                        pathFound++;
+                    }
+
+                    iteration++;
+                }
+
+                return path[pathFound - 1].position.index == to;
+            }
+        }
         public bool GetPath(int from, int to, List<GridPathTile> path, int maxPathLength, int maxIteration = 32)
         {
             int2
@@ -421,12 +470,6 @@ namespace Syadeu.Presentation.Map
                 
                 iteration++;
             }
-
-            //$"from({from})->to({to}) found {path.Count}".ToLog();
-            //for (int i = 0; i < path.Count; i++)
-            //{
-            //    $"{path[i].location} asd".ToLog();
-            //}
 
             return path[path.Count - 1].position.index == to;
         }
@@ -514,33 +557,6 @@ namespace Syadeu.Presentation.Map
         }
         private int GetSqrMagnitude(int index) => GetSqrMagnitude(IndexToLocation(index));
         private static int GetSqrMagnitude(int2 location) => (location.x * location.x) + (location.y * location.y);
-    }
-
-    public struct GridSizeComponent : IEntityComponent
-    {
-        internal PresentationSystemID<GridSystem> m_GridSystem;
-
-        public GridPosition4 positions;
-
-        public bool IsInIndex(int index)
-        {
-            for (int i = 0; i < positions.Length; i++)
-            {
-                if (positions[i].index == index) return true;
-            }
-            return false;
-        }
-        public int[] GetRange(int range, params int[] ignoreLayers)
-        {
-            GridSystem grid = m_GridSystem.System;
-
-            int[] indices = grid.GetRange(positions[0].index, range, ignoreLayers);
-            return indices;
-        }
-        public bool GetPath(int to, List<GridPathTile> path, int maxPathLength)
-        {
-            return m_GridSystem.System.GetPath(positions[0].index, to, path, maxPathLength);
-        }
     }
 
     [BurstCompile(CompileSynchronously = true)]

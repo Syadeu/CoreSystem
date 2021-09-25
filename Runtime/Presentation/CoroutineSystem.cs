@@ -10,9 +10,9 @@ namespace Syadeu.Presentation
 {
     public sealed class CoroutineSystem : PresentationSystemEntity<CoroutineSystem>
     {
-        public struct PresentationUpdate { }
-        public struct PresentationTransformUpdate { }
-        public struct PresentationAfterTransformUpdate { }
+        //public struct PresentationUpdate { }
+        //public struct PresentationTransformUpdate { }
+        //public struct PresentationAfterTransformUpdate { }
 
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;
@@ -29,57 +29,18 @@ namespace Syadeu.Presentation
             m_UsedAfterTransformIndices = new List<int>();
         readonly Queue<int> m_TerminatedCoroutineIndices = new Queue<int>();
 
-        public event Action OnUpdate;
-        public event Action OnTransformUpdate;
-        public event Action OnAfterTransformUpdate;
-
         #region Presentation Methods
 
         protected override PresentationResult OnInitialize()
         {
-            PlayerLoopSystem defaultLoop = PlayerLoop.GetCurrentPlayerLoop();
-            for (int i = 0; i < defaultLoop.subSystemList.Length; i++)
-            {
-                if (defaultLoop.subSystemList[i].type.Equals(TypeHelper.TypeOf<UnityEngine.PlayerLoop.Update>.Type))
-                {
-                    List<PlayerLoopSystem> list = defaultLoop.subSystemList[i].subSystemList.ToList();
-                    PlayerLoopSystem loop = new PlayerLoopSystem
-                    {
-                        loopConditionFunction = defaultLoop.subSystemList[i].loopConditionFunction,
-                        subSystemList = Array.Empty<PlayerLoopSystem>(),
-                        type = TypeHelper.TypeOf<PresentationUpdate>.Type,
-                        updateDelegate = PresenationUpdateHandler,
-                        updateFunction = defaultLoop.subSystemList[i].updateFunction
-                    };
-                    list.Add(loop);
-                    defaultLoop.subSystemList[i].subSystemList = list.ToArray();
-                }
-                else if (defaultLoop.subSystemList[i].type.Equals(TypeHelper.TypeOf<UnityEngine.PlayerLoop.PreLateUpdate>.Type))
-                {
-                    List<PlayerLoopSystem> list = defaultLoop.subSystemList[i].subSystemList.ToList();
-                    PlayerLoopSystem loop = new PlayerLoopSystem
-                    {
-                        loopConditionFunction = defaultLoop.subSystemList[i].loopConditionFunction,
-                        subSystemList = Array.Empty<PlayerLoopSystem>(),
-                        type = TypeHelper.TypeOf<PresentationTransformUpdate>.Type,
-                        updateDelegate = PresentationTransformUpdateHandler,
-                        updateFunction = defaultLoop.subSystemList[i].updateFunction
-                    };
-                    PlayerLoopSystem loop2 = new PlayerLoopSystem
-                    {
-                        loopConditionFunction = defaultLoop.subSystemList[i].loopConditionFunction,
-                        subSystemList = Array.Empty<PlayerLoopSystem>(),
-                        type = TypeHelper.TypeOf<PresentationAfterTransformUpdate>.Type,
-                        updateDelegate = PresentationAfterTransformUpdateHandler,
-                        updateFunction = defaultLoop.subSystemList[i].updateFunction
-                    };
-                    list.Add(loop);
-                    list.Add(loop2);
-                    defaultLoop.subSystemList[i].subSystemList = list.ToArray();
-                }
-            }
-
-            PlayerLoop.SetPlayerLoop(defaultLoop);
+#if UNITY_EDITOR
+            PresentationManager.Instance.Update -= PresenationUpdateHandler;
+            PresentationManager.Instance.TransformUpdate -= PresentationTransformUpdateHandler;
+            PresentationManager.Instance.AfterTransformUpdate -= PresentationAfterTransformUpdateHandler;
+#endif
+            PresentationManager.Instance.Update += PresenationUpdateHandler;
+            PresentationManager.Instance.TransformUpdate += PresentationTransformUpdateHandler;
+            PresentationManager.Instance.AfterTransformUpdate += PresentationAfterTransformUpdateHandler;
 
             return base.OnInitialize();
         }
@@ -107,16 +68,15 @@ namespace Syadeu.Presentation
             m_UsedUpdateIndices.Clear();
             m_TerminatedCoroutineIndices.Clear();
 
-            PlayerLoopSystem defaultLoop = PlayerLoop.GetDefaultPlayerLoop();
-            PlayerLoop.SetPlayerLoop(defaultLoop);
+            PresentationManager.Instance.Update -= PresenationUpdateHandler;
+            PresentationManager.Instance.TransformUpdate -= PresentationTransformUpdateHandler;
+            PresentationManager.Instance.AfterTransformUpdate -= PresentationAfterTransformUpdateHandler;
 
             base.OnDispose();
         }
 
         private void PresenationUpdateHandler()
         {
-            OnUpdate?.Invoke();
-
             #region Sequence Iterator Jobs
             if (m_CurrentIterationJob != null)
             {
@@ -252,8 +212,6 @@ namespace Syadeu.Presentation
         }
         private void PresentationTransformUpdateHandler()
         {
-            OnTransformUpdate?.Invoke();
-
             #region Iterator Jobs
 
             for (int i = m_UsedTransformIndices.Count - 1; i >= 0; i--)
@@ -329,8 +287,6 @@ namespace Syadeu.Presentation
         }
         private void PresentationAfterTransformUpdateHandler()
         {
-            OnAfterTransformUpdate?.Invoke();
-
             #region Iterator Jobs
 
             for (int i = m_UsedAfterTransformIndices.Count - 1; i >= 0; i--)

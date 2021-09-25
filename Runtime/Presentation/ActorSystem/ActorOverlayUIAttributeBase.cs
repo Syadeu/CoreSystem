@@ -18,9 +18,15 @@ namespace Syadeu.Presentation.Actor
         {
             OnUIEventReceived(ev);
         }
+        internal void EventReceived<TEvent>(TEvent ev) where TEvent : IActorEvent
+        {
+            OnEventReceived(ev);
+        }
 
         protected virtual void OnUICreated(Entity<ActorEntity> parent) { }
         protected virtual void OnUIEventReceived<TEvent>(TEvent ev) where TEvent : IActorOverlayUIEvent
+        { }
+        protected virtual void OnEventReceived<TEvent>(TEvent ev) where TEvent : IActorEvent
         { }
     }
 }

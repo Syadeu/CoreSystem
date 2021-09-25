@@ -2,6 +2,7 @@
 
 namespace Syadeu.Presentation
 {
+    [System.Diagnostics.Conditional("UNITY_EDITOR")]
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
     public sealed class EntityAcceptOnlyAttribute : Attribute
     {

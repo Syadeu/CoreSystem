@@ -150,10 +150,10 @@ namespace Syadeu.Presentation.Actor
         [JsonIgnore] private UpdateJob m_UpdateJob;
         [JsonIgnore] private CoroutineJob m_UpdateCoroutine;
 
-        [JsonIgnore] protected override Type[] ReceiveEventOnly => new Type[]
-            {
-                TypeHelper.TypeOf<IActorOverlayUIEvent>.Type
-            };
+        //[JsonIgnore] protected override Type[] ReceiveEventOnly => new Type[]
+        //    {
+        //        TypeHelper.TypeOf<IActorOverlayUIEvent>.Type
+        //    };
         [JsonIgnore] public Entity<UIObjectEntity> InstanceObject => m_InstanceObject;
 
         protected override sealed void OnCreated(Entity<ActorEntity> entity)
@@ -198,6 +198,13 @@ namespace Syadeu.Presentation.Actor
                 if (InstanceObject.IsValid())
                 {
                     InstanceObject.GetAttribute<ActorOverlayUIAttributeBase>().UIEventReceived(actorAttackEvent);
+                }
+            }
+            else
+            {
+                if (InstanceObject.IsValid())
+                {
+                    InstanceObject.GetAttribute<ActorOverlayUIAttributeBase>().EventReceived(ev);
                 }
             }
         }
