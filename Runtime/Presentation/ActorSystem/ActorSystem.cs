@@ -116,7 +116,7 @@ namespace Syadeu.Presentation.Actor
             return SystemEventResult.Success;
         }
 
-        private EventHandler<TEvent> EventHandlerFactory<TEvent>()
+        private static EventHandler<TEvent> EventHandlerFactory<TEvent>()
 #if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             where TEvent : struct, IActorEvent
 #else
@@ -150,6 +150,29 @@ namespace Syadeu.Presentation.Actor
             {
                 return TypeHelper.TypeOf<TEvent>.ToString();
             }
+        }
+
+        [Preserve]
+        static void AOTCodeGeneration()
+        {
+            AOTCodeGenerator<ActorLifetimeChangedEvent>();
+            AOTCodeGenerator<ActorHitEvent>();
+
+            throw new System.InvalidOperationException();
+        }
+        public static void AOTCodeGenerator<TEvent>()
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
+            where TEvent : struct, IActorEvent
+#else
+            where TEvent : unmanaged, IActorEvent
+#endif
+        {
+            ActorSystem system = null;
+            IEventHandler handler = null;
+
+            system.ScheduleEvent<TEvent>(null, default);
+            EventHandlerFactory<TEvent>();
+            handler = new EventHandler<TEvent>();
         }
     }
 

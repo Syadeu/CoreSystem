@@ -79,5 +79,13 @@ namespace Syadeu.Presentation.TurnTable
 
             //$"Attacked from {from.Name} to {m_Target[0].Object.Name} : dmg -> {m_Damage}, current {hp}".ToLog();
         }
+
+        [UnityEngine.Scripting.Preserve]
+        static void AOTCodeGeneration()
+        {
+            ActorSystem.AOTCodeGenerator<TRPGActorAttackEvent>();
+
+            throw new System.InvalidOperationException();
+        }
     }
 }

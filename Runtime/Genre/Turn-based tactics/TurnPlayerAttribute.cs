@@ -96,7 +96,7 @@ namespace Syadeu.Presentation.TurnTable
             ActorControllerAttribute ctr = ev.Entity.GetAttribute<ActorControllerAttribute>();
             if (ctr == null) return;
 
-            ActorActionPointChangedUIEvent actorEv = new ActorActionPointChangedUIEvent(ev.From, ev.To);
+            TRPGActorActionPointChangedUIEvent actorEv = new TRPGActorActionPointChangedUIEvent(ev.From, ev.To);
             ctr.PostEvent(actorEv);
         }
 
