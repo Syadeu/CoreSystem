@@ -359,7 +359,7 @@ namespace Syadeu.Presentation
 
         #endregion
 
-//#line hidden
+#line hidden
 
         #region Create EntityBase
 
@@ -578,10 +578,15 @@ namespace Syadeu.Presentation
 
         #endregion
 
+        #region Create Instance
+
         internal Instance<T> CreateInstance<T>(Reference<T> obj) where T : class, IObject
             => CreateInstance<T>(obj.GetObject());
+        internal Instance CreateInstance(Reference obj)
+            => CreateInstance(obj.GetObject());
         internal Instance<T> CreateInstance<T>(IObject obj) where T : class, IObject
         {
+#if UNITY_EDITOR
             Type objType = obj.GetType();
             if (TypeHelper.TypeOf<EntityBase>.Type.IsAssignableFrom(objType))
             {
@@ -597,7 +602,36 @@ namespace Syadeu.Presentation
                 EntityData<IEntityData> entity = CreateObject(obj.Hash);
                 return new Instance<T>(entity.Idx);
             }
+#endif
+            ObjectBase clone = InternalCreateInstance(obj);
 
+            return new Instance<T>(clone.Idx);
+        }
+        internal Instance CreateInstance(IObject obj)
+        {
+#if UNITY_EDITOR
+            Type objType = obj.GetType();
+            if (TypeHelper.TypeOf<EntityBase>.Type.IsAssignableFrom(objType))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"You should you {nameof(CreateEntity)} on create entity({obj.Name}). This will be slightly cared.");
+                Entity<IEntity> entity = CreateEntity(obj.Hash, float3.zero);
+                return new Instance(entity.Idx);
+            }
+            else if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(objType))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"You should you {nameof(CreateObject)} on create entity({obj.Name}). This will be slightly cared.");
+                EntityData<IEntityData> entity = CreateObject(obj.Hash);
+                return new Instance(entity.Idx);
+            }
+#endif
+            ObjectBase clone = InternalCreateInstance(obj);
+
+            return new Instance(clone.Idx);
+        }
+        private ObjectBase InternalCreateInstance(IObject obj)
+        {
             ObjectBase clone = (ObjectBase)obj.Clone();
 
             m_ObjectEntities.Add(clone.Idx, clone);
@@ -606,44 +640,12 @@ namespace Syadeu.Presentation
                 dataObject.InternalOnCreated();
             }
 
-            return new Instance<T>(clone.Idx);
+            return clone;
         }
 
-        /// <summary>
-        /// 이미 생성된 유니티 게임 오브젝트를 엔티티 시스템로 편입시켜 엔티티로 변환하여 반환합니다.
-        /// </summary>
-        /// <remarks>
-        /// <seealso cref="Entity{T}.transform"/> 은 <seealso cref="IUnityTransform"/>을 담습니다.
-        /// </remarks>
-        /// <param name="obj"></param>
-        /// <returns></returns>
-        public Entity<ConvertedEntity> Convert(GameObject obj)
-        {
-            CoreSystem.Logger.ThreadBlock(nameof(Convert), ThreadInfo.Unity);
+        #endregion
 
-            ConvertedEntity temp = new ConvertedEntity
-            {
-                Name = obj.name,
-                Hash = Hash.Empty
-            };
-            ConvertedEntity entity = (ConvertedEntity)temp.Clone();
-
-            entity.transform = new UnityTransform
-            {
-                entity = entity,
-                provider = obj.transform
-            };
-
-            ConvertedEntityComponent component = obj.AddComponent<ConvertedEntityComponent>();
-            component.m_Entity = entity;
-
-            entity.m_IsCreated = true;
-
-            m_ObjectEntities.Add(entity.Idx, entity);
-
-            ProcessEntityOnCreated(this, entity);
-            return Entity<ConvertedEntity>.GetEntity(entity.Idx);
-        }
+        #region Destroy
 
         /// <summary>
         /// 해당 엔티티를 즉시 파괴합니다.
@@ -655,7 +657,8 @@ namespace Syadeu.Presentation
         public void DestroyEntity(Entity<IEntity> entity) => InternalDestroyEntity(entity.Idx);
         /// <inheritdoc cref="DestroyEntity(Entity{IEntity})"/>
         public void DestroyEntity(EntityData<IEntityData> entity) => InternalDestroyEntity(entity.Idx);
-        public void DestroyObject<T>(Instance<T> instance) where T : class, IObject => InternalDestroyEntity(instance.Object.Idx);
+        public void DestroyObject<T>(Instance<T> instance) where T : class, IObject => InternalDestroyEntity(instance.Idx);
+        public void DestroyObject(Instance instance) => InternalDestroyEntity(instance.Idx);
         internal void InternalDestroyEntity(in Hash hash)
         {
             if (!m_ObjectEntities.ContainsKey(hash))
@@ -697,6 +700,8 @@ namespace Syadeu.Presentation
         {
             return !m_ObjectEntities.ContainsKey(idx);
         }
+
+        #endregion
 
 #line default
 
@@ -1004,6 +1009,44 @@ namespace Syadeu.Presentation
 
         #endregion
 
+        #region Experiments
+
+        /// <summary>
+        /// 이미 생성된 유니티 게임 오브젝트를 엔티티 시스템로 편입시켜 엔티티로 변환하여 반환합니다.
+        /// </summary>
+        /// <remarks>
+        /// <seealso cref="Entity{T}.transform"/> 은 <seealso cref="IUnityTransform"/>을 담습니다.
+        /// </remarks>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public Entity<ConvertedEntity> Convert(GameObject obj)
+        {
+            CoreSystem.Logger.ThreadBlock(nameof(Convert), ThreadInfo.Unity);
+
+            ConvertedEntity temp = new ConvertedEntity
+            {
+                Name = obj.name,
+                Hash = Hash.Empty
+            };
+            ConvertedEntity entity = (ConvertedEntity)temp.Clone();
+
+            entity.transform = new UnityTransform
+            {
+                entity = entity,
+                provider = obj.transform
+            };
+
+            ConvertedEntityComponent component = obj.AddComponent<ConvertedEntityComponent>();
+            component.m_Entity = entity;
+
+            entity.m_IsCreated = true;
+
+            m_ObjectEntities.Add(entity.Idx, entity);
+
+            ProcessEntityOnCreated(this, entity);
+            return Entity<ConvertedEntity>.GetEntity(entity.Idx);
+        }
+
         public sealed class Query : System.Collections.IEnumerable
         {
             static readonly Stack<Query> m_Pool = new Stack<Query>();
@@ -1124,5 +1167,7 @@ namespace Syadeu.Presentation
         /// <param name="entity"></param>
         /// <returns></returns>
         public Query GetQuery(EntityData<IEntityData> entity) => Query.Dequeue(this, entity);
+
+        #endregion
     }
 }

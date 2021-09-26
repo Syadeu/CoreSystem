@@ -32,7 +32,7 @@ namespace Syadeu.Presentation.Actions
         "타임라인 액션입니다.\n" +
         "OnStart -> OnStartAction -> OnTimelineStart -> OnTimelineEnd -> OnEnd -> OnEndAction"
         )]
-    public sealed class PlayPlayableDirectorAction : TriggerAction
+    public sealed class PlayPlayableDirectorAction : TriggerAction, IActionSequence
     {
         [JsonProperty] private Reference<TimelineData> m_Data;
         [JsonProperty(Order = 1, PropertyName = "StartDelay")] private float m_StartDelay = 0;
@@ -55,7 +55,15 @@ namespace Syadeu.Presentation.Actions
         [JsonProperty(Order = 7, PropertyName = "OnEndActions")]
         private Reference<InstanceAction>[] m_OnEndAction = Array.Empty<Reference<InstanceAction>>();
 
+        [Space, Header("Sequence")]
+        [JsonProperty(Order = 8, PropertyName = "AfterDelay")]
+        private float m_AfterDelay = 0;
+
         [JsonIgnore] private CoroutineSystem m_CoroutineSystem = null;
+        [JsonIgnore] private bool m_KeepWait = false;
+
+        [JsonIgnore] public bool KeepWait => m_KeepWait;
+        [JsonIgnore] public float AfterDelay => m_AfterDelay;
 
         protected override void OnCreated()
         {
@@ -67,8 +75,11 @@ namespace Syadeu.Presentation.Actions
         }
         protected override void OnExecute(EntityData<IEntityData> entity)
         {
+            m_KeepWait = true;
+
             PayloadJob job = new PayloadJob
             {
+                m_Caller = new Instance<PlayPlayableDirectorAction>(Idx),
                 m_Data = m_Data,
                 m_Executer = entity,
 
@@ -86,9 +97,14 @@ namespace Syadeu.Presentation.Actions
 
             m_CoroutineSystem.PostSequenceIterationJob(job);
         }
+        protected override void OnTerminate()
+        {
+            m_KeepWait = false;
+        }
 
         private struct PayloadJob : ICoroutineJob
         {
+            public Instance<PlayPlayableDirectorAction> m_Caller;
             public Reference<TimelineData> m_Data;
             public EntityData<IEntityData> m_Executer;
 
@@ -107,6 +123,9 @@ namespace Syadeu.Presentation.Actions
 
             public void Dispose()
             {
+                m_Caller.Object.m_KeepWait = false;
+
+                m_Caller = Instance<PlayPlayableDirectorAction>.Empty;
                 m_Data = Reference<TimelineData>.Empty;
                 m_Executer = EntityData<IEntityData>.Empty;
 

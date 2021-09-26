@@ -33,6 +33,12 @@ namespace Syadeu.Presentation
             return list;
         }
 
+        public static Reference<T> As<T>(this IReference reference)
+            where T : class, IObject
+        {
+            return new Reference<T>(reference.Hash);
+        }
+
         public static Instance<TA> Cast<T, TA>(this Instance<T> t)
             where T : class, IObject
             where TA : class, IObject

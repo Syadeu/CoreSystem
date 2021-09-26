@@ -88,6 +88,29 @@ namespace Syadeu.Presentation.Actions
             temp.InternalInitialize();
             return temp;
         }
+        public static TriggerAction GetAction(Reference other)
+        {
+            if (!TryGetEntitySystem(out EntitySystem entitySystem))
+            {
+                return null;
+            }
+
+            TriggerAction temp;
+
+            if (!m_Pool.TryGetValue(other, out var pool) ||
+                pool.Count == 0)
+            {
+                TriggerAction t = (TriggerAction)entitySystem.CreateInstance(other).Object;
+                t.m_Reference = other;
+                t.InternalCreate();
+
+                temp = t;
+            }
+            else temp = (TriggerAction)pool.Pop();
+
+            temp.InternalInitialize();
+            return temp;
+        }
 
         protected virtual void OnInitialize() { }
         protected virtual void OnTerminate() { }

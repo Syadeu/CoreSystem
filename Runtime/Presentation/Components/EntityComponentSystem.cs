@@ -43,13 +43,12 @@ namespace Syadeu.Presentation.Components
             EntityComponentBuffer[] tempBuffer = new EntityComponentBuffer[length];
             for (int i = 0; i < types.Length; i++)
             {
-                if (!m_ComponentIndices.TryGetValue(types[i], out int componentIdx))
+                if (!m_ComponentIndices.TryGetValue(types[i], out int idx))
                 {
-                    componentIdx = math.abs(types[i].GetHashCode());
-                    m_ComponentIndices.Add(types[i], componentIdx);
+                    idx = math.abs(types[i].GetHashCode()) % tempBuffer.Length;
+                    m_ComponentIndices.Add(types[i], idx);
                 }
 
-                int idx = componentIdx % tempBuffer.Length;
                 var temp = new EntityComponentBuffer()
                 {
                     index = idx,
@@ -70,6 +69,7 @@ namespace Syadeu.Presentation.Components
                 UnsafeUtility.MemClear(idxBuffer, idxSize);
                 UnsafeUtility.MemClear(buffer, bufferSize);
 
+                temp.SetIndex(idx);
                 temp.Initialize(occBuffer, idxBuffer, buffer, EntityComponentBuffer.c_InitialCount);
 
                 tempBuffer[idx] = temp;
@@ -111,6 +111,22 @@ namespace Syadeu.Presentation.Components
         private void Bind(EntitySystem other)
         {
             m_EntitySystem = other;
+
+            m_EntitySystem.OnEntityDestroy += M_EntitySystem_OnEntityDestroy;
+        }
+        private void M_EntitySystem_OnEntityDestroy(EntityData<IEntityData> obj)
+        {
+            foreach (var item in m_ComponentIndices.Keys)
+            {
+                int2 index = GetIndex(item, obj);
+                if (!m_ComponentBuffer[index.x].Find(obj, ref index.y))
+                {
+                    continue;
+                }
+
+                m_ComponentBuffer[index.x].occupied[index.y] = false;
+                $"{item.Name} component at {obj.Name} removed".ToLog();
+            }
         }
 
         #endregion
@@ -122,15 +138,25 @@ namespace Syadeu.Presentation.Components
         {
             if (!m_ComponentIndices.TryGetValue(t, out int componentIdx))
             {
-                componentIdx = math.abs(t.GetHashCode());
-                m_ComponentIndices.Add(t, componentIdx);
+                //componentIdx = math.abs(t.GetHashCode());
+                //m_ComponentIndices.Add(t, componentIdx);
+                throw new Exception();
             }
 
-            return componentIdx % m_ComponentBuffer.Length;
+            return componentIdx;
         }
         private int GetEntityIndex(int componentIdx, EntityData<IEntityData> entity)
         {
-            return m_ComponentBuffer[componentIdx].length == 0 ? -1 : math.abs(entity.GetHashCode()) % m_ComponentBuffer[componentIdx].length;
+            int idx = math.abs(entity.GetHashCode()) % EntityComponentBuffer.c_InitialCount;
+            return idx;
+        }
+        private int2 GetIndex(Type t, EntityData<IEntityData> entity)
+        {
+            int
+                cIdx = GetComponentIndex(t),
+                eIdx = GetEntityIndex(cIdx, entity);
+
+            return new int2(cIdx, eIdx);
         }
         private int2 GetIndex<TComponent>(EntityData<IEntityData> entity)
         {
@@ -152,60 +178,28 @@ namespace Syadeu.Presentation.Components
                 throw new Exception();
             }
 
-            if (m_ComponentBuffer[index.x].occupied[index.y] &&
-                !m_ComponentBuffer[index.x].entity[index.y].Idx.Equals(entity.Idx) &&
-                m_EntitySystem != null &&
-                !m_EntitySystem.IsDestroyed(m_ComponentBuffer[index.x].entity[index.y].Idx))
+            if (!m_ComponentBuffer[index.x].IsValidFor(in index.y, entity) &&
+                !m_ComponentBuffer[index.x].Find(entity, ref index.y))
             {
-                //int length = m_ComponentBuffer[index.x].length * 2;
-                //long
-                //    occSize = UnsafeUtility.SizeOf<bool>() * length,
-                //    idxSize = UnsafeUtility.SizeOf<EntityData<IEntityData>>() * length,
-                //    bufferSize = UnsafeUtility.SizeOf<TComponent>() * length;
-                //void*
-                //    occBuffer = UnsafeUtility.Malloc(occSize, UnsafeUtility.AlignOf<bool>(), Allocator.Persistent),
-                //    idxBuffer = UnsafeUtility.Malloc(occSize, UnsafeUtility.AlignOf<EntityData<IEntityData>>(), Allocator.Persistent),
-                //    buffer = UnsafeUtility.Malloc(bufferSize, UnsafeUtility.AlignOf<TComponent>(), Allocator.Persistent);
+                "require increment".ToLog();
 
-                //UnsafeUtility.MemClear(occBuffer, occSize);
-                //UnsafeUtility.MemClear(idxBuffer, idxSize);
-                //UnsafeUtility.MemClear(buffer, bufferSize);
+                EntityComponentBuffer boxed = m_ComponentBuffer[index.x];
+                boxed.Increment<TComponent>();
+                m_ComponentBuffer[index.x] = boxed;
 
-                //for (int i = 0; i < m_ComponentBuffer[index.x].length; i++)
-                //{
-                //    if (!m_ComponentBuffer[index.x].occupied[i]) continue;
-
-                //    int newEntityIdx = math.abs(m_ComponentBuffer[index.x].entity[i].GetHashCode()) % length;
-
-                //    if (((bool*)occBuffer)[newEntityIdx])
-                //    {
-                //        "... conflect again".ToLogError();
-                //    }
-
-                //    ((bool*)occBuffer)[newEntityIdx] = true;
-                //    ((EntityData<IEntityData>*)idxBuffer)[newEntityIdx] = m_ComponentBuffer[index.x].entity[i];
-                //    ((TComponent*)buffer)[newEntityIdx] = ((TComponent*)m_ComponentBuffer[index.x].buffer)[i];
-                //}
-
-                ////EntityComponentBuffer boxed = m_ComponentBuffer[index.x];
-
-                ////UnsafeUtility.Free(boxed.occupied, Allocator.Persistent);
-                ////UnsafeUtility.Free(boxed.entity, Allocator.Persistent);
-                ////UnsafeUtility.Free(boxed.buffer, Allocator.Persistent);
-
-                ////boxed.occupied = (bool*)occBuffer;
-                ////boxed.entity = (EntityData<IEntityData>*)idxBuffer;
-                ////boxed.buffer = buffer;
-                ////boxed.length = length;
-                ////m_ComponentBuffer[index.x] = boxed;
-
-                //m_ComponentBuffer[index.x].Initialize(occBuffer, idxBuffer, buffer, length);
-
-                //$"Component {TypeHelper.TypeOf<TComponent>.Name} buffer increased to {length}".ToLog();
-
-                //return AddComponent(entity, data);
-                throw new Exception();
+                if (!m_ComponentBuffer[index.x].Find(entity, ref index.y))
+                {
+                    throw new Exception();
+                }
             }
+
+            //if (m_ComponentBuffer[index.x].occupied[index.y] &&
+            //    !m_ComponentBuffer[index.x].entity[index.y].Idx.Equals(entity.Idx) &&
+            //    m_EntitySystem != null &&
+            //    !m_EntitySystem.IsDestroyed(m_ComponentBuffer[index.x].entity[index.y].Idx))
+            //{
+            //    throw new Exception();
+            //}
 
             ((TComponent*)m_ComponentBuffer[index.x].buffer)[index.y] = data;
             m_ComponentBuffer[index.x].occupied[index.y] = true;
@@ -220,23 +214,26 @@ namespace Syadeu.Presentation.Components
         {
             int2 index = GetIndex<TComponent>(entity);
 
-            if (m_ComponentBuffer[index.x].length == 0) return false;
+            if (m_ComponentBuffer[index.x].length == 0)
+            {
+                throw new Exception();
+            }
 
-            if (!m_ComponentBuffer[index.x].occupied[index.y])
+            if (!m_ComponentBuffer[index.x].Find(entity, ref index.y))
             {
                 return false;
             }
 
-            if (!m_ComponentBuffer[index.x].entity[index.y].Idx.Equals(entity.Idx))
-            {
-                if (!m_EntitySystem.IsDestroyed(m_ComponentBuffer[index.x].entity[index.y].Idx))
-                {
-                    CoreSystem.Logger.LogError(Channel.Entity,
-                        $"Component({TypeHelper.TypeOf<TComponent>.Name}) validation error. Maybe conflect.");
-                }
+            //if (!m_ComponentBuffer[index.x].entity[index.y].Idx.Equals(entity.Idx))
+            //{
+            //    if (!m_EntitySystem.IsDestroyed(m_ComponentBuffer[index.x].entity[index.y].Idx))
+            //    {
+            //        CoreSystem.Logger.LogError(Channel.Entity,
+            //            $"Component({TypeHelper.TypeOf<TComponent>.Name}) validation error. Maybe conflect.");
+            //    }
 
-                return false;
-            }
+            //    return false;
+            //}
 
             return true;
         }
@@ -244,20 +241,25 @@ namespace Syadeu.Presentation.Components
         {
             int2 index = GetIndex<TComponent>(entity);
 
-            if (!m_ComponentBuffer[index.x].occupied[index.y])
+            if (m_ComponentBuffer[index.x].length == 0)
+            {
+                throw new Exception();
+            }
+
+            if (!m_ComponentBuffer[index.x].Find(entity, ref index.y))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"Entity({entity.Name}) doesn\'t have component({TypeHelper.TypeOf<TComponent>.Name})");
                 return default(TComponent);
             }
 
-            if (!m_ComponentBuffer[index.x].entity[index.y].Idx.Equals(entity.Idx) &&
-                !m_EntitySystem.IsDestroyed(m_ComponentBuffer[index.x].entity[index.y].Idx))
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Component({TypeHelper.TypeOf<TComponent>.Name}) validation error. Maybe conflect.");
-                return default(TComponent);
-            }
+            //if (!m_ComponentBuffer[index.x].entity[index.y].Idx.Equals(entity.Idx) &&
+            //    !m_EntitySystem.IsDestroyed(m_ComponentBuffer[index.x].entity[index.y].Idx))
+            //{
+            //    CoreSystem.Logger.LogError(Channel.Entity,
+            //        $"Component({TypeHelper.TypeOf<TComponent>.Name}) validation error. Maybe conflect.");
+            //    return default(TComponent);
+            //}
 
             return ((TComponent*)m_ComponentBuffer[index.x].buffer)[index.y];
         }
@@ -296,10 +298,10 @@ namespace Syadeu.Presentation.Components
         {
             public const int c_InitialCount = 512;
 
-            //public Hash hash;
             public int index;
 
             public int length;
+            public int increased;
 
             [NativeDisableUnsafePtrRestriction] public bool* occupied;
             [NativeDisableUnsafePtrRestriction] public EntityData<IEntityData>* entity;
@@ -315,6 +317,11 @@ namespace Syadeu.Presentation.Components
                     }
                 }
             }
+
+            public void SetIndex(in int index)
+            {
+                this.index = index;
+            }
             public void Initialize(void* occupied, void* entity, void* buffer, int length)
             {
                 if (IsCreated)
@@ -328,6 +335,69 @@ namespace Syadeu.Presentation.Components
                 this.entity = (EntityData<IEntityData>*)entity;
                 this.buffer = buffer;
                 this.length = length;
+                increased = 1;
+            }
+            public void Increment<TComponent>() where TComponent : unmanaged, IEntityComponent
+            {
+                if (!IsCreated) throw new Exception();
+
+                int count = c_InitialCount * (increased + 1);
+                long
+                    occSize = UnsafeUtility.SizeOf<bool>() * count,
+                    idxSize = UnsafeUtility.SizeOf<EntityData<IEntityData>>() * count,
+                    bufferSize = UnsafeUtility.SizeOf<TComponent>() * count;
+                void*
+                    occBuffer = UnsafeUtility.Malloc(occSize, UnsafeUtility.AlignOf<bool>(), Allocator.Persistent),
+                    idxBuffer = UnsafeUtility.Malloc(idxSize, UnsafeUtility.AlignOf<EntityData<IEntityData>>(), Allocator.Persistent),
+                    buffer = UnsafeUtility.Malloc(bufferSize, UnsafeUtility.AlignOf<TComponent>(), Allocator.Persistent);
+
+                UnsafeUtility.MemClear(occBuffer, occSize);
+                UnsafeUtility.MemClear(idxBuffer, idxSize);
+                UnsafeUtility.MemClear(buffer, bufferSize);
+
+                UnsafeUtility.MemCpy(occBuffer, occupied, UnsafeUtility.SizeOf<bool>() * length);
+                UnsafeUtility.MemCpy(idxBuffer, entity, UnsafeUtility.SizeOf<EntityData<IEntityData>>() * length);
+                UnsafeUtility.MemCpy(buffer, buffer, UnsafeUtility.SizeOf<TComponent>() * length);
+
+                UnsafeUtility.Free(this.occupied, Allocator.Persistent);
+                UnsafeUtility.Free(this.entity, Allocator.Persistent);
+                UnsafeUtility.Free(this.buffer, Allocator.Persistent);
+
+                this.occupied = (bool*)occBuffer;
+                this.entity = (EntityData<IEntityData>*)idxBuffer;
+                this.buffer = buffer;
+
+                increased += 1;
+                length = c_InitialCount * increased;
+            }
+
+            public bool IsValidFor(in int entityIndex, EntityData<IEntityData> entity)
+            {
+                if (!occupied[entityIndex] || this.entity[entityIndex].Idx.Equals(entity.Idx)) return true;
+                return false;
+            }
+            public bool Find(EntityData<IEntityData> entity, ref int entityIndex)
+            {
+                if (length == 0)
+                {
+                    entityIndex = -1;
+                    return false;
+                }
+
+                for (int i = 0; i < increased; i++)
+                {
+                    int idx = (c_InitialCount * i) + entityIndex;
+
+                    if (!occupied[idx]) continue;
+                    else if (this.entity[idx].Idx.Equals(entity.Idx))
+                    {
+                        entityIndex = idx;
+                        return true;
+                    }
+                }
+
+                entityIndex = -1;
+                return false;
             }
 
             public void Dispose()

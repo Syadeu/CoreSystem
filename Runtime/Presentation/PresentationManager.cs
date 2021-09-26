@@ -318,15 +318,15 @@ namespace Syadeu.Presentation
 
         #region Player Loops
 
-        public event Action PreUpdate;
+        internal event Action PreUpdate;
         
-        public event Action BeforeUpdate;
-        public event Action Update;
-        public event Action AfterUpdate;
-        public event Action TransformUpdate;
-        public event Action AfterTransformUpdate;
+        internal event Action BeforeUpdate;
+        internal event Action Update;
+        internal event Action AfterUpdate;
+        internal event Action TransformUpdate;
+        internal event Action AfterTransformUpdate;
 
-        public event Action PostUpdate;
+        internal event Action PostUpdate;
 
         private void PresentationPreUpdate()
         {
