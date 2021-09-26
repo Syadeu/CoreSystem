@@ -49,28 +49,8 @@ namespace Syadeu.Presentation.Components
                     m_ComponentIndices.Add(types[i], idx);
                 }
 
-                var temp = new EntityComponentBuffer()
-                {
-                    index = idx,
-
-                    length = 0
-                };
-
-                long
-                    occSize = UnsafeUtility.SizeOf<bool>() * EntityComponentBuffer.c_InitialCount,
-                    idxSize = UnsafeUtility.SizeOf<EntityData<IEntityData>>() * EntityComponentBuffer.c_InitialCount,
-                    bufferSize = UnsafeUtility.SizeOf(types[i]) * EntityComponentBuffer.c_InitialCount;
-                void*
-                    occBuffer = UnsafeUtility.Malloc(occSize, UnsafeUtility.AlignOf<bool>(), Allocator.Persistent),
-                    idxBuffer = UnsafeUtility.Malloc(idxSize, UnsafeUtility.AlignOf<EntityData<IEntityData>>(), Allocator.Persistent),
-                    buffer = UnsafeUtility.Malloc(bufferSize, AlignOf(types[i]), Allocator.Persistent);
-
-                UnsafeUtility.MemClear(occBuffer, occSize);
-                UnsafeUtility.MemClear(idxBuffer, idxSize);
-                UnsafeUtility.MemClear(buffer, bufferSize);
-
-                temp.SetIndex(idx);
-                temp.Initialize(occBuffer, idxBuffer, buffer, EntityComponentBuffer.c_InitialCount);
+                var temp = new EntityComponentBuffer();
+                temp.Initialize(idx, UnsafeUtility.SizeOf(types[i]), AlignOf(types[i]));
 
                 tempBuffer[idx] = temp;
             }
@@ -124,7 +104,7 @@ namespace Syadeu.Presentation.Components
                     continue;
                 }
 
-                m_ComponentBuffer[index.x].occupied[index.y] = false;
+                m_ComponentBuffer[index.x].m_OccupiedBuffer[index.y] = false;
                 $"{item.Name} component at {obj.Name} removed".ToLog();
             }
         }
@@ -173,7 +153,7 @@ namespace Syadeu.Presentation.Components
 
             int2 index = GetIndex<TComponent>(entity);
 
-            if (m_ComponentBuffer[index.x].length == 0)
+            if (!m_ComponentBuffer[index.x].IsCreated)
             {
                 throw new Exception();
             }
@@ -201,9 +181,9 @@ namespace Syadeu.Presentation.Components
             //    throw new Exception();
             //}
 
-            ((TComponent*)m_ComponentBuffer[index.x].buffer)[index.y] = data;
-            m_ComponentBuffer[index.x].occupied[index.y] = true;
-            m_ComponentBuffer[index.x].entity[index.y] = entity;
+            ((TComponent*)m_ComponentBuffer[index.x].m_ComponentBuffer)[index.y] = data;
+            m_ComponentBuffer[index.x].m_OccupiedBuffer[index.y] = true;
+            m_ComponentBuffer[index.x].m_EntityBuffer[index.y] = entity;
 
             $"Component {TypeHelper.TypeOf<TComponent>.Name} set at entity({entity.Name})".ToLog();
 
@@ -214,7 +194,7 @@ namespace Syadeu.Presentation.Components
         {
             int2 index = GetIndex<TComponent>(entity);
 
-            if (m_ComponentBuffer[index.x].length == 0)
+            if (!m_ComponentBuffer[index.x].IsCreated)
             {
                 throw new Exception();
             }
@@ -241,7 +221,7 @@ namespace Syadeu.Presentation.Components
         {
             int2 index = GetIndex<TComponent>(entity);
 
-            if (m_ComponentBuffer[index.x].length == 0)
+            if (!m_ComponentBuffer[index.x].IsCreated)
             {
                 throw new Exception();
             }
@@ -261,7 +241,7 @@ namespace Syadeu.Presentation.Components
             //    return default(TComponent);
             //}
 
-            return ((TComponent*)m_ComponentBuffer[index.x].buffer)[index.y];
+            return ((TComponent*)m_ComponentBuffer[index.x].m_ComponentBuffer)[index.y];
         }
 
         public QueryBuilder<TComponent> CreateQueryBuilder<TComponent>() where TComponent : unmanaged, IEntityComponent
@@ -274,9 +254,9 @@ namespace Syadeu.Presentation.Components
             }
 
             QueryBuilder<TComponent> builder = PoolContainer<QueryBuilder<TComponent>>.Dequeue();
-            builder.Entities = m_ComponentBuffer[componentIdx].entity;
-            builder.Components = (TComponent*)m_ComponentBuffer[componentIdx].buffer;
-            builder.Length = m_ComponentBuffer[componentIdx].length;
+            builder.Entities = m_ComponentBuffer[componentIdx].m_EntityBuffer;
+            builder.Components = (TComponent*)m_ComponentBuffer[componentIdx].m_ComponentBuffer;
+            builder.Length = m_ComponentBuffer[componentIdx].Length;
 
             return builder;
         }
@@ -298,50 +278,45 @@ namespace Syadeu.Presentation.Components
         {
             public const int c_InitialCount = 512;
 
-            public int index;
+            private int m_Index;
 
-            public int length;
-            public int increased;
+            private int m_Length;
+            private int m_Increased;
 
-            [NativeDisableUnsafePtrRestriction] public bool* occupied;
-            [NativeDisableUnsafePtrRestriction] public EntityData<IEntityData>* entity;
-            [NativeDisableUnsafePtrRestriction] public void* buffer;
+            [NativeDisableUnsafePtrRestriction] public bool* m_OccupiedBuffer;
+            [NativeDisableUnsafePtrRestriction] public EntityData<IEntityData>* m_EntityBuffer;
+            [NativeDisableUnsafePtrRestriction] public void* m_ComponentBuffer;
 
-            public bool IsCreated
+            public bool IsCreated => m_ComponentBuffer != null;
+            public int Length => m_Length;
+
+            public void Initialize(int index, int size, int align)
             {
-                get
-                {
-                    unsafe
-                    {
-                        return buffer != null;
-                    }
-                }
-            }
+                long
+                    occSize = UnsafeUtility.SizeOf<bool>() * c_InitialCount,
+                    idxSize = UnsafeUtility.SizeOf<EntityData<IEntityData>>() * c_InitialCount,
+                    bufferSize = size * c_InitialCount;
+                void*
+                    occBuffer = UnsafeUtility.Malloc(occSize, UnsafeUtility.AlignOf<bool>(), Allocator.Persistent),
+                    idxBuffer = UnsafeUtility.Malloc(idxSize, UnsafeUtility.AlignOf<EntityData<IEntityData>>(), Allocator.Persistent),
+                    buffer = UnsafeUtility.Malloc(bufferSize, align, Allocator.Persistent);
 
-            public void SetIndex(in int index)
-            {
-                this.index = index;
-            }
-            public void Initialize(void* occupied, void* entity, void* buffer, int length)
-            {
-                if (IsCreated)
-                {
-                    UnsafeUtility.Free(occupied, Allocator.Persistent);
-                    UnsafeUtility.Free(entity, Allocator.Persistent);
-                    UnsafeUtility.Free(buffer, Allocator.Persistent);
-                }
+                UnsafeUtility.MemClear(occBuffer, occSize);
+                UnsafeUtility.MemClear(idxBuffer, idxSize);
+                UnsafeUtility.MemClear(buffer, bufferSize);
 
-                this.occupied = (bool*)occupied;
-                this.entity = (EntityData<IEntityData>*)entity;
-                this.buffer = buffer;
-                this.length = length;
-                increased = 1;
+                this.m_Index = index;
+                this.m_OccupiedBuffer = (bool*)occBuffer;
+                this.m_EntityBuffer = (EntityData<IEntityData>*)idxBuffer;
+                this.m_ComponentBuffer = buffer;
+                this.m_Length = c_InitialCount;
+                m_Increased = 1;
             }
             public void Increment<TComponent>() where TComponent : unmanaged, IEntityComponent
             {
                 if (!IsCreated) throw new Exception();
 
-                int count = c_InitialCount * (increased + 1);
+                int count = c_InitialCount * (m_Increased + 1);
                 long
                     occSize = UnsafeUtility.SizeOf<bool>() * count,
                     idxSize = UnsafeUtility.SizeOf<EntityData<IEntityData>>() * count,
@@ -355,41 +330,41 @@ namespace Syadeu.Presentation.Components
                 UnsafeUtility.MemClear(idxBuffer, idxSize);
                 UnsafeUtility.MemClear(buffer, bufferSize);
 
-                UnsafeUtility.MemCpy(occBuffer, occupied, UnsafeUtility.SizeOf<bool>() * length);
-                UnsafeUtility.MemCpy(idxBuffer, entity, UnsafeUtility.SizeOf<EntityData<IEntityData>>() * length);
-                UnsafeUtility.MemCpy(buffer, buffer, UnsafeUtility.SizeOf<TComponent>() * length);
+                UnsafeUtility.MemCpy(occBuffer, m_OccupiedBuffer, UnsafeUtility.SizeOf<bool>() * m_Length);
+                UnsafeUtility.MemCpy(idxBuffer, m_EntityBuffer, UnsafeUtility.SizeOf<EntityData<IEntityData>>() * m_Length);
+                UnsafeUtility.MemCpy(buffer, buffer, UnsafeUtility.SizeOf<TComponent>() * m_Length);
 
-                UnsafeUtility.Free(this.occupied, Allocator.Persistent);
-                UnsafeUtility.Free(this.entity, Allocator.Persistent);
-                UnsafeUtility.Free(this.buffer, Allocator.Persistent);
+                UnsafeUtility.Free(this.m_OccupiedBuffer, Allocator.Persistent);
+                UnsafeUtility.Free(this.m_EntityBuffer, Allocator.Persistent);
+                UnsafeUtility.Free(this.m_ComponentBuffer, Allocator.Persistent);
 
-                this.occupied = (bool*)occBuffer;
-                this.entity = (EntityData<IEntityData>*)idxBuffer;
-                this.buffer = buffer;
+                this.m_OccupiedBuffer = (bool*)occBuffer;
+                this.m_EntityBuffer = (EntityData<IEntityData>*)idxBuffer;
+                this.m_ComponentBuffer = buffer;
 
-                increased += 1;
-                length = c_InitialCount * increased;
+                m_Increased += 1;
+                m_Length = c_InitialCount * m_Increased;
             }
 
             public bool IsValidFor(in int entityIndex, EntityData<IEntityData> entity)
             {
-                if (!occupied[entityIndex] || this.entity[entityIndex].Idx.Equals(entity.Idx)) return true;
+                if (!m_OccupiedBuffer[entityIndex] || this.m_EntityBuffer[entityIndex].Idx.Equals(entity.Idx)) return true;
                 return false;
             }
             public bool Find(EntityData<IEntityData> entity, ref int entityIndex)
             {
-                if (length == 0)
+                if (m_Length == 0)
                 {
                     entityIndex = -1;
                     return false;
                 }
 
-                for (int i = 0; i < increased; i++)
+                for (int i = 0; i < m_Increased; i++)
                 {
                     int idx = (c_InitialCount * i) + entityIndex;
 
-                    if (!occupied[idx]) continue;
-                    else if (this.entity[idx].Idx.Equals(entity.Idx))
+                    if (!m_OccupiedBuffer[idx]) continue;
+                    else if (this.m_EntityBuffer[idx].Idx.Equals(entity.Idx))
                     {
                         entityIndex = idx;
                         return true;
@@ -408,9 +383,9 @@ namespace Syadeu.Presentation.Components
                     return;
                 }
 
-                UnsafeUtility.Free(occupied, Allocator.Persistent);
-                UnsafeUtility.Free(entity, Allocator.Persistent);
-                UnsafeUtility.Free(buffer, Allocator.Persistent);
+                UnsafeUtility.Free(m_OccupiedBuffer, Allocator.Persistent);
+                UnsafeUtility.Free(m_EntityBuffer, Allocator.Persistent);
+                UnsafeUtility.Free(m_ComponentBuffer, Allocator.Persistent);
             }
         }
     }
