@@ -1,23 +1,26 @@
 ﻿using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Events;
 using Unity.Collections;
 
 namespace Syadeu.Presentation.Actions
 {
-    public sealed class ActionSystem : PresentationSystemEntity<ActionSystem>
+    public sealed class ActionSystem : PresentationSystemEntity<ActionSystem>,
+        ISystemEventScheduler
     {
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
         private NativeQueue<Payload> m_ScheduledActions;
-        private ActionContainer m_CurrentAction = new ActionContainer();
+        private readonly ActionContainer m_CurrentAction = new ActionContainer();
+
+        private EventSystem m_EventSystem;
 
         protected override PresentationResult OnInitialize()
         {
-            m_ScheduledActions = new NativeQueue<Payload>(Allocator.Persistent);
+            RequestSystem<EventSystem>(Bind);
 
-            PresentationManager.Instance.PreUpdate += PresentationPreUpdate;
-            PresentationManager.Instance.PostUpdate += PresentationPostUpdate;
+            m_ScheduledActions = new NativeQueue<Payload>(Allocator.Persistent);
 
             return base.OnInitialize();
         }
@@ -25,99 +28,116 @@ namespace Syadeu.Presentation.Actions
         {
             m_ScheduledActions.Dispose();
 
-            PresentationManager.Instance.PreUpdate -= PresentationPreUpdate;
-            PresentationManager.Instance.PostUpdate -= PresentationPostUpdate;
-
             base.OnDispose();
         }
 
-        private void PresentationPreUpdate()
+        #region Binds
+
+        private void Bind(EventSystem other)
         {
-            if (m_CurrentAction.IsEmpty())
-            {
-                int scheduledCount = m_ScheduledActions.Count;
-                
-                for (int i = 0; i < scheduledCount && m_CurrentAction.IsEmpty(); i++)
-                {
-                    Payload temp = m_ScheduledActions.Dequeue();
-                    switch (temp.actionType)
-                    {
-                        case ActionType.Instance:
-                            InstanceAction action = InstanceAction.GetAction(temp.action);
-
-                            if (action is IActionSequence sequence)
-                            {
-                                m_CurrentAction.Terminate = action.InternalTerminate;
-                                m_CurrentAction.Sequence = sequence;
-
-                                action.InternalExecute();
-
-                                // Early out
-                                if (!sequence.KeepWait)
-                                {
-                                    action.InternalTerminate();
-                                    m_CurrentAction.Clear();
-                                }
-                            }
-                            else
-                            {
-                                action.InternalExecute();
-                                action.InternalTerminate();
-                            }
-                            
-                            break;
-                        case ActionType.Trigger:
-                            TriggerAction triggerAction = TriggerAction.GetAction(temp.action);
-
-                            if (triggerAction is IActionSequence triggerActionSequence)
-                            {
-                                m_CurrentAction.Terminate = triggerAction.InternalTerminate;
-                                m_CurrentAction.Sequence = triggerActionSequence;
-
-                                triggerAction.InternalExecute(temp.entity);
-
-                                // Early out
-                                if (!triggerActionSequence.KeepWait)
-                                {
-                                    triggerAction.InternalTerminate();
-                                    m_CurrentAction.Clear();
-                                }
-                            }
-                            else
-                            {
-                                triggerAction.InternalExecute(temp.entity);
-                                triggerAction.InternalTerminate();
-                            }
-
-                            break;
-                    }
-
-                    CoreSystem.Logger.Log(Channel.Presentation,
-                        $"Execute scheduled action({temp.action.GetObject().Name})");
-                }
-            }
-            else
-            {
-                if (!m_CurrentAction.Sequence.KeepWait)
-                {
-                    if (!m_CurrentAction.TimerStarted)
-                    {
-                        m_CurrentAction.TimerStarted = true;
-                        m_CurrentAction.StartTime = UnityEngine.Time.time;
-                    }
-                    
-                    if (UnityEngine.Time.time - m_CurrentAction.StartTime 
-                        >= m_CurrentAction.Sequence.AfterDelay)
-                    {
-                        m_CurrentAction.Terminate.Invoke();
-                        m_CurrentAction.Clear();
-                    }
-                }
-            }
+            m_EventSystem = other;
         }
-        private void PresentationPostUpdate()
-        {
 
+        #endregion
+
+        SystemEventResult ISystemEventScheduler.Execute()
+        {
+            if (!m_CurrentAction.IsEmpty())
+            {
+                if (m_CurrentAction.Sequence.KeepWait) return SystemEventResult.Wait;
+
+                if (!m_CurrentAction.TimerStarted)
+                {
+                    m_CurrentAction.TimerStarted = true;
+                    m_CurrentAction.StartTime = UnityEngine.Time.time;
+                }
+
+                if (UnityEngine.Time.time - m_CurrentAction.StartTime
+                    < m_CurrentAction.Sequence.AfterDelay)
+                {
+                    return SystemEventResult.Wait;
+                }
+
+                m_CurrentAction.Terminate.Invoke();
+                m_CurrentAction.Clear();
+                return SystemEventResult.Success;
+            }
+
+            Payload temp = m_ScheduledActions.Dequeue();
+            switch (temp.actionType)
+            {
+                case ActionType.Instance:
+                    InstanceAction action = InstanceAction.GetAction(temp.action);
+
+                    if (action is IActionSequence sequence)
+                    {
+                        m_CurrentAction.Terminate = action.InternalTerminate;
+                        m_CurrentAction.Sequence = sequence;
+
+                        action.InternalExecute();
+
+                        // Early out
+                        if (!sequence.KeepWait)
+                        {
+                            action.InternalTerminate();
+                            m_CurrentAction.Clear();
+
+                            CoreSystem.Logger.Log(Channel.Action,
+                                $"Execute scheduled action({temp.action.GetObject().GetType().Name}: {temp.action.GetObject().Name})");
+                            return SystemEventResult.Success;
+                        }
+
+                        CoreSystem.Logger.Log(Channel.Action,
+                            $"Execute scheduled action({temp.action.GetObject().GetType().Name}: {temp.action.GetObject().Name}) with awaits.");
+
+                        return SystemEventResult.Wait;
+                    }
+
+                    action.InternalExecute();
+                    action.InternalTerminate();
+
+                    CoreSystem.Logger.Log(Channel.Action,
+                        $"Execute scheduled action({temp.action.GetObject().GetType().Name}: {temp.action.GetObject().Name})");
+
+                    return SystemEventResult.Success;
+                case ActionType.Trigger:
+                    TriggerAction triggerAction = TriggerAction.GetAction(temp.action);
+
+                    if (triggerAction is IActionSequence triggerActionSequence)
+                    {
+                        m_CurrentAction.Terminate = triggerAction.InternalTerminate;
+                        m_CurrentAction.Sequence = triggerActionSequence;
+
+                        triggerAction.InternalExecute(temp.entity);
+
+                        // Early out
+                        if (!triggerActionSequence.KeepWait)
+                        {
+                            triggerAction.InternalTerminate();
+                            m_CurrentAction.Clear();
+
+                            CoreSystem.Logger.Log(Channel.Action,
+                                $"Execute scheduled action({temp.action.GetObject().GetType().Name}: {temp.action.GetObject().Name})");
+                            return SystemEventResult.Success;
+                        }
+
+                        CoreSystem.Logger.Log(Channel.Action,
+                            $"Execute scheduled action({temp.action.GetObject().GetType().Name}: {temp.action.GetObject().Name}) with awaits.");
+
+                        return SystemEventResult.Wait;
+                    }
+
+                    triggerAction.InternalExecute(temp.entity);
+                    triggerAction.InternalTerminate();
+
+                    CoreSystem.Logger.Log(Channel.Action,
+                        $"Execute scheduled action({temp.action.GetObject().GetType().Name}: {temp.action.GetObject().Name})");
+
+                    return SystemEventResult.Success;
+            }
+
+            
+            return SystemEventResult.Failed;
         }
 
         public void ScheduleInstanceAction<T>(Reference<T> action)
@@ -130,6 +150,7 @@ namespace Syadeu.Presentation.Actions
             };
 
             m_ScheduledActions.Enqueue(payload);
+            m_EventSystem.TakeQueueTicket(this);
         }
         public void ScheduleTriggerAction<T>(Reference<T> action, EntityData<IEntityData> entity)
             where T : TriggerAction
@@ -142,6 +163,7 @@ namespace Syadeu.Presentation.Actions
             };
 
             m_ScheduledActions.Enqueue(payload);
+            m_EventSystem.TakeQueueTicket(this);
         }
 
         private enum ActionType

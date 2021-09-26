@@ -51,10 +51,6 @@ namespace Syadeu.Presentation.Actions
         protected override void OnDispose() { }
 
         public override sealed object Clone() => base.Clone();
-        public override sealed int GetHashCode()
-        {
-            return base.GetHashCode();
-        }
         public override sealed string ToString() => Name;
         public override sealed bool Equals(object obj)
         {

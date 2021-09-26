@@ -57,7 +57,7 @@ namespace Syadeu.Presentation.TurnTable
             CoreSystem.Logger.Log(Channel.Entity, $"{Name} turn start");
             PresentationSystem<EventSystem>.System.PostEvent(OnTurnStateChangedEvent.GetEvent(this, OnTurnStateChangedEvent.TurnState.Start));
 
-            m_OnStartTurnActions.Execute(Parent);
+            m_OnStartTurnActions.Schedule(Parent);
         }
         public void EndTurn()
         {
@@ -65,7 +65,7 @@ namespace Syadeu.Presentation.TurnTable
             CoreSystem.Logger.Log(Channel.Entity, $"{Name} turn end");
             PresentationSystem<EventSystem>.System.PostEvent(OnTurnStateChangedEvent.GetEvent(this, OnTurnStateChangedEvent.TurnState.End));
 
-            m_OnEndTurnActions.Execute(Parent);
+            m_OnEndTurnActions.Schedule(Parent);
         }
         public void ResetTurnTable()
         {
@@ -74,7 +74,7 @@ namespace Syadeu.Presentation.TurnTable
             CoreSystem.Logger.Log(Channel.Entity, $"{Name} reset turn");
             PresentationSystem<EventSystem>.System.PostEvent(OnTurnStateChangedEvent.GetEvent(this, OnTurnStateChangedEvent.TurnState.Reset));
 
-            m_OnResetTurnActions.Execute(Parent);
+            m_OnResetTurnActions.Schedule(Parent);
         }
 
         public void SetMaxActionPoint(int ap) => m_MaxActionPoint = ap;

@@ -3,6 +3,7 @@ using Syadeu.Internal;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Map;
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -11,7 +12,8 @@ using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation.Actor
 {
-    public sealed class ActorSystem : PresentationSystemEntity<ActorSystem>
+    public sealed class ActorSystem : PresentationSystemEntity<ActorSystem>,
+        ISystemEventScheduler
     {
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;
@@ -80,13 +82,89 @@ namespace Syadeu.Presentation.Actor
             m_EventSystem = null;
         }
         #endregion
+
+        private readonly Queue<IEventHandler> m_ScheduledEvents = new Queue<IEventHandler>();
+
+        public void ScheduleEvent<TEvent>(ActorEventDelegate<TEvent> post, TEvent ev)
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
+            where TEvent : struct, IActorEvent
+#else
+            where TEvent : unmanaged, IActorEvent
+#endif
+        {
+            if (!PoolContainer<EventHandler<TEvent>>.Initialized)
+            {
+                PoolContainer<EventHandler<TEvent>>.Initialize(EventHandlerFactory<TEvent>, 32);
+            }
+
+            EventHandler<TEvent> handler = PoolContainer<EventHandler<TEvent>>.Dequeue();
+            
+            handler.m_EventPost = post;
+            handler.m_Event = ev;
+
+            m_ScheduledEvents.Enqueue(handler);
+            m_EventSystem.TakeQueueTicket(this);
+        }
+
+        SystemEventResult ISystemEventScheduler.Execute()
+        {
+            IEventHandler handler = m_ScheduledEvents.Dequeue();
+            handler.Post();
+
+            CoreSystem.Logger.Log(Channel.Action,
+                $"Execute scheduled actor event({handler.GetEventName()})");
+            return SystemEventResult.Success;
+        }
+
+        private EventHandler<TEvent> EventHandlerFactory<TEvent>()
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
+            where TEvent : struct, IActorEvent
+#else
+            where TEvent : unmanaged, IActorEvent
+#endif
+        {
+            return new EventHandler<TEvent>();
+        }
+        private interface IEventHandler
+        {
+            void Post();
+
+            string GetEventName();
+        }
+        private sealed class EventHandler<TEvent> : IEventHandler
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
+            where TEvent : struct, IActorEvent
+#else
+            where TEvent : unmanaged, IActorEvent
+#endif
+        {
+            public TEvent m_Event;
+            public ActorEventDelegate<TEvent> m_EventPost;
+
+            void IEventHandler.Post()
+            {
+                m_EventPost.Invoke(m_Event);
+                PoolContainer<EventHandler<TEvent>>.Enqueue(this);
+            }
+            string IEventHandler.GetEventName()
+            {
+                return TypeHelper.TypeOf<TEvent>.ToString();
+            }
+        }
     }
 
-    //public sealed class AIActorTargetSystem : PresentationSystemEntity<AIActorTargetSystem>
-    //{
-    //    public override bool EnableBeforePresentation => false;
-    //    public override bool EnableOnPresentation => false;
-    //    public override bool EnableAfterPresentation => false;
+    public delegate void ActorEventDelegate<TEvent>(TEvent ev)
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
+            where TEvent : struct, IActorEvent;
+#else
+            where TEvent : unmanaged, IActorEvent;
+#endif
 
-    //}
+        //public sealed class AIActorTargetSystem : PresentationSystemEntity<AIActorTargetSystem>
+        //{
+        //    public override bool EnableBeforePresentation => false;
+        //    public override bool EnableOnPresentation => false;
+        //    public override bool EnableAfterPresentation => false;
+
+        //}
 }

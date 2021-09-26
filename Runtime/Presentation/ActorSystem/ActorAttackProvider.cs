@@ -95,7 +95,7 @@ namespace Syadeu.Presentation.Actor
 
             
 
-            if (m_OnAttack.Execute(parent, target))
+            if (m_OnAttack.Schedule(parent, target))
             {
                 currentWeaponIns.Object.FireFXBounds(Parent.transform, CoroutineSystem, FXBounds.TriggerOptions.FireOnSuccess);
                 SendHitEvent(ev.Target, ev.HPStatNameHash, ev.Damage);

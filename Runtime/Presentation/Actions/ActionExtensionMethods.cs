@@ -26,7 +26,11 @@ namespace Syadeu.Presentation.Actions
                     string.Format(c_ErrorIsTerminatedAction, TypeHelper.TypeOf<T>.Name));
                 return false;
             }
-            return action.InternalExecute(entity);
+
+            bool result = action.InternalExecute(entity);
+            action.InternalTerminate();
+
+            return result;
         }
         public static bool Execute<T>(this Reference<T> other, EntityData<IEntityData> entity, out bool predicate) where T : TriggerPredicateAction
         {
@@ -324,6 +328,29 @@ namespace Syadeu.Presentation.Actions
             where T : TriggerAction
         {
             PresentationSystem<ActionSystem>.System.ScheduleTriggerAction(action, entity);
+        }
+
+        public static void Schedule<T>(this Reference<T>[] actions)
+            where T : InstanceAction
+        {
+            if (actions == null || actions.Length == 0) return;
+
+            ActionSystem system = PresentationSystem<ActionSystem>.System;
+            for (int i = 0; i < actions.Length; i++)
+            {
+                system.ScheduleInstanceAction(actions[i]);
+            }
+        }
+        public static void Schedule<T>(this Reference<T>[] actions, EntityData<IEntityData> entity)
+            where T : TriggerAction
+        {
+            if (actions == null || actions.Length == 0) return;
+
+            ActionSystem system = PresentationSystem<ActionSystem>.System;
+            for (int i = 0; i < actions.Length; i++)
+            {
+                system.ScheduleTriggerAction(actions[i], entity);
+            }
         }
     }
 }

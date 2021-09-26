@@ -68,5 +68,27 @@ namespace Syadeu.Presentation.Actions
             }
             return false;
         }
+        public bool Schedule(EntityData<IEntityData> entity, EntityData<IEntityData> target)
+        {
+            if (!IsExecutable())
+            {
+                m_Do.Schedule(entity); m_DoTarget.Schedule(target);
+                return true;
+            }
+
+            if ((m_If.Execute(entity, out bool thisPredicate) && thisPredicate) &&
+               (m_IfTarget.Execute(target, out bool targetPredicate) && targetPredicate))
+            {
+                m_Do.Schedule(entity); m_DoTarget.Schedule(target);
+                return true;
+            }
+
+            for (int i = 0; i < m_ElseIf.Length; i++)
+            {
+                bool result = m_ElseIf[i].Schedule(entity, target);
+                if (result) return true;
+            }
+            return false;
+        }
     }
 }

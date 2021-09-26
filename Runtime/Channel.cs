@@ -20,6 +20,7 @@
         Proxy = 1 << 9,
         Render = 1 << 10,
         Event = 1 << 11,
+        Action = 1 << 12,
 
         Audio = 1 << 20,
 

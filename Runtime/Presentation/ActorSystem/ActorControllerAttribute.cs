@@ -32,6 +32,16 @@ namespace Syadeu.Presentation.Actor
 
         [JsonIgnore] internal Dictionary<IActorProvider, Type[]> m_ProviderAcceptsOnly;
 
+        public void ScheduleEvent<TEvent>(TEvent ev)
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
+            where TEvent : struct, IActorEvent
+#else
+            where TEvent : unmanaged, IActorEvent
+#endif
+        {
+            ActorSystem system = PresentationSystem<ActorSystem>.System;
+            system.ScheduleEvent(PostEvent, ev);
+        }
         public void PostEvent<TEvent>(TEvent ev)
 #if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             where TEvent : struct, IActorEvent

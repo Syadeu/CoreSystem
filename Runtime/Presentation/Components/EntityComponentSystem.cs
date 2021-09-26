@@ -152,14 +152,15 @@ namespace Syadeu.Presentation.Components
             CoreSystem.Logger.ThreadBlock(nameof(AddComponent), ThreadInfo.Unity);
 
             int2 index = GetIndex<TComponent>(entity);
+            $"entity({entity.Name}) -> {index} add component".ToLog();
 
             if (!m_ComponentBuffer[index.x].IsCreated)
             {
                 throw new Exception();
             }
 
-            if (!m_ComponentBuffer[index.x].IsValidFor(in index.y, entity) &&
-                !m_ComponentBuffer[index.x].Find(entity, ref index.y))
+            if (!m_ComponentBuffer[index.x].Find(entity, ref index.y) &&
+                !m_ComponentBuffer[index.x].FindEmpty(entity, ref index.y))
             {
                 "require increment".ToLog();
 
@@ -173,14 +174,6 @@ namespace Syadeu.Presentation.Components
                 }
             }
 
-            //if (m_ComponentBuffer[index.x].occupied[index.y] &&
-            //    !m_ComponentBuffer[index.x].entity[index.y].Idx.Equals(entity.Idx) &&
-            //    m_EntitySystem != null &&
-            //    !m_EntitySystem.IsDestroyed(m_ComponentBuffer[index.x].entity[index.y].Idx))
-            //{
-            //    throw new Exception();
-            //}
-
             ((TComponent*)m_ComponentBuffer[index.x].m_ComponentBuffer)[index.y] = data;
             m_ComponentBuffer[index.x].m_OccupiedBuffer[index.y] = true;
             m_ComponentBuffer[index.x].m_EntityBuffer[index.y] = entity;
@@ -188,6 +181,22 @@ namespace Syadeu.Presentation.Components
             $"Component {TypeHelper.TypeOf<TComponent>.Name} set at entity({entity.Name})".ToLog();
 
             return data;
+        }
+        public void RemoveComponent<TComponent>(EntityData<IEntityData> entity)
+        {
+            int2 index = GetIndex<TComponent>(entity);
+
+            if (!m_ComponentBuffer[index.x].IsCreated)
+            {
+                throw new Exception();
+            }
+
+            if (!m_ComponentBuffer[index.x].Find(entity, ref index.y))
+            {
+                return;
+            }
+
+            m_ComponentBuffer[index.x].m_OccupiedBuffer[index.y] = false;
         }
         public bool HasComponent<TComponent>(EntityData<IEntityData> entity) 
             where TComponent : unmanaged, IEntityComponent
@@ -203,17 +212,6 @@ namespace Syadeu.Presentation.Components
             {
                 return false;
             }
-
-            //if (!m_ComponentBuffer[index.x].entity[index.y].Idx.Equals(entity.Idx))
-            //{
-            //    if (!m_EntitySystem.IsDestroyed(m_ComponentBuffer[index.x].entity[index.y].Idx))
-            //    {
-            //        CoreSystem.Logger.LogError(Channel.Entity,
-            //            $"Component({TypeHelper.TypeOf<TComponent>.Name}) validation error. Maybe conflect.");
-            //    }
-
-            //    return false;
-            //}
 
             return true;
         }
@@ -232,14 +230,6 @@ namespace Syadeu.Presentation.Components
                     $"Entity({entity.Name}) doesn\'t have component({TypeHelper.TypeOf<TComponent>.Name})");
                 return default(TComponent);
             }
-
-            //if (!m_ComponentBuffer[index.x].entity[index.y].Idx.Equals(entity.Idx) &&
-            //    !m_EntitySystem.IsDestroyed(m_ComponentBuffer[index.x].entity[index.y].Idx))
-            //{
-            //    CoreSystem.Logger.LogError(Channel.Entity,
-            //        $"Component({TypeHelper.TypeOf<TComponent>.Name}) validation error. Maybe conflect.");
-            //    return default(TComponent);
-            //}
 
             return ((TComponent*)m_ComponentBuffer[index.x].m_ComponentBuffer)[index.y];
         }
@@ -346,16 +336,10 @@ namespace Syadeu.Presentation.Components
                 m_Length = c_InitialCount * m_Increased;
             }
 
-            public bool IsValidFor(in int entityIndex, EntityData<IEntityData> entity)
-            {
-                if (!m_OccupiedBuffer[entityIndex] || this.m_EntityBuffer[entityIndex].Idx.Equals(entity.Idx)) return true;
-                return false;
-            }
             public bool Find(EntityData<IEntityData> entity, ref int entityIndex)
             {
                 if (m_Length == 0)
                 {
-                    entityIndex = -1;
                     return false;
                 }
 
@@ -371,7 +355,25 @@ namespace Syadeu.Presentation.Components
                     }
                 }
 
-                entityIndex = -1;
+                return false;
+            }
+            public bool FindEmpty(EntityData<IEntityData> entity, ref int entityIndex)
+            {
+                if (m_Length == 0)
+                {
+                    return false;
+                }
+
+                for (int i = 0; i < m_Increased; i++)
+                {
+                    int idx = (c_InitialCount * i) + entityIndex;
+
+                    if (m_OccupiedBuffer[idx]) continue;
+
+                    entityIndex = idx;
+                    return true;
+                }
+
                 return false;
             }
 

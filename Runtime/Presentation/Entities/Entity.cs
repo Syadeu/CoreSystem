@@ -317,6 +317,18 @@ namespace Syadeu.Presentation.Entities
 
             return PresentationSystem<EntityComponentSystem>.System.GetComponent<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
         }
+        public void RemoveComponent<TComponent>()
+            where TComponent : unmanaged, IEntityComponent
+        {
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                return;
+            }
+
+            PresentationSystem<EntityComponentSystem>.System.RemoveComponent<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
+        }
 
         #endregion
 

@@ -8,7 +8,7 @@ namespace Syadeu.Presentation.TurnTable
         public static void Attack(this Entity<ActorEntity> other, Entity<ActorEntity> target, string targetStatName = "HP")
         {
             TRPGActorAttackEvent ev = new TRPGActorAttackEvent(target, targetStatName);
-            ev.PostEvent(other);
+            ev.ScheduleEvent(other);
         }
         public static void Attack(this Entity<ActorEntity> other, int index, string targetStatName = "HP")
         {
@@ -20,19 +20,26 @@ namespace Syadeu.Presentation.TurnTable
                 return;
             }
 
-            var attProvider = ctr.GetProvider<TRPGActorAttackProvider>();
+            Instance<TRPGActorAttackProvider> attProvider = ctr.GetProvider<TRPGActorAttackProvider>();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (attProvider.IsEmpty())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"This entity({other.Name}) doesn\'t have any {nameof(TRPGActorAttackProvider)}.");
                 return;
             }
-
+            else if (attProvider.Object.Targets.Count < index)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Index({index}) is out of range. Target count is {attProvider.Object.Targets.Count}.");
+                return;
+            }
+#endif
             TRPGActorAttackEvent ev = new TRPGActorAttackEvent(
                 attProvider.Object.Targets[index].Cast<IEntity, ActorEntity>(), 
                 targetStatName);
 
-            ev.PostEvent(other);
+            ev.ScheduleEvent(other);
         }
     }
 }

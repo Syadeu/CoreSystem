@@ -48,7 +48,6 @@ namespace Syadeu.Presentation.Actions
                 result = false;
             }
 
-            InternalTerminate();
             return result;
         }
         internal override sealed void InternalTerminate()
