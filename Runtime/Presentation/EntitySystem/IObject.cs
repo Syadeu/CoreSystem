@@ -4,7 +4,7 @@ using System;
 
 namespace Syadeu.Presentation
 {
-    public interface IObject : ICloneable
+    public interface IObject : ICloneable, IEquatable<IObject>
     {
         /// <summary>
         /// 이 오브젝트 엔티티의 이름입니다.

@@ -14,7 +14,7 @@ namespace Syadeu.Presentation
     /// <see cref="EntitySystem"/>의 모든 객체들이 참조하는 가장 기본 abstract 입니다.
     /// </summary>
     [RequireDerived]
-    public abstract class ObjectBase : IObject, IDisposable
+    public abstract class ObjectBase : IObject, IDisposable, IEquatable<ObjectBase>
     {
         const string c_NameBase = "New {0}";
 
@@ -76,5 +76,8 @@ namespace Syadeu.Presentation
         {
             return base.GetHashCode();
         }
+
+        public bool Equals(IObject other) => Hash.Equals(other.Hash);
+        public bool Equals(ObjectBase other) => Hash.Equals(other.Hash);
     }
 }
