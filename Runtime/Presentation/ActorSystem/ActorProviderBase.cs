@@ -86,6 +86,15 @@ namespace Syadeu.Presentation.Actor
         protected virtual void OnProxyCreated(RecycleableMonobehaviour monoObj) { }
         protected virtual void OnProxyRemoved(RecycleableMonobehaviour monoObj) { }
 
+        protected void ScheduleEvent<TEvent>(TEvent ev)
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
+            where TEvent : struct, IActorEvent
+#else
+            where TEvent : unmanaged, IActorEvent
+#endif
+        {
+            m_Controller.ScheduleEvent(ev);
+        }
         protected void PostEvent<TEvent>(TEvent ev)
 #if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             where TEvent : struct, IActorEvent

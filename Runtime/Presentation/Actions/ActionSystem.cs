@@ -199,9 +199,4 @@ namespace Syadeu.Presentation.Actions
             public EntityData<IEntityData> entity;
         }
     }
-    public interface IActionSequence
-    {
-        bool KeepWait { get; }
-        float AfterDelay { get; }
-    }
 }

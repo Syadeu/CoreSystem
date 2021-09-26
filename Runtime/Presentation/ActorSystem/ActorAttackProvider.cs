@@ -75,7 +75,7 @@ namespace Syadeu.Presentation.Actor
         }
         protected virtual void SendHitEvent(Entity<ActorEntity> target, Hash hpStatName, float damage)
         {
-            target.GetController().PostEvent(new ActorHitEvent(Parent, hpStatName, damage));
+            target.GetController().ScheduleEvent(new ActorHitEvent(Parent, hpStatName, damage));
         }
         protected void AttackEventHandler(IActorAttackEvent ev)
         {

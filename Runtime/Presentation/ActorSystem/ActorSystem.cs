@@ -169,6 +169,7 @@ namespace Syadeu.Presentation.Actor
         {
             ActorSystem system = null;
             IEventHandler handler = null;
+            ActorEventDelegate<TEvent> temp = null;
 
             system.ScheduleEvent<TEvent>(null, default);
             EventHandlerFactory<TEvent>();
