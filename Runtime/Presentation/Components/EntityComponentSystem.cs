@@ -106,29 +106,7 @@ namespace Syadeu.Presentation.Components
         private void Bind(EntitySystem other)
         {
             m_EntitySystem = other;
-
-            m_EntitySystem.OnEntityDestroy += M_EntitySystem_OnEntityDestroy;
         }
-        private void M_EntitySystem_OnEntityDestroy(EntityData<IEntityData> obj)
-        {
-            
-
-            //foreach (var item in m_ComponentIndices.Keys)
-            //{
-            //    int2 index = GetIndex(item, obj);
-            //    if (!m_ComponentBuffer[index.x].Find(obj, ref index.y))
-            //    {
-            //        continue;
-            //    }
-
-            //    m_ComponentBuffer[index.x].m_OccupiedBuffer[index.y] = false;
-
-
-            //    $"{item.Name} component at {obj.Name} removed".ToLog();
-            //}
-        }
-
-        
 
         #endregion
 
@@ -462,9 +440,4 @@ namespace Syadeu.Presentation.Components
     }
 
     public delegate void EntityComponentDelegate<TEntity, TComponent>(in TEntity entity, in TComponent component) where TComponent : unmanaged, IEntityComponent;
-
-    public interface INotifyComponent<TComponent> where TComponent : unmanaged, IEntityComponent
-    {
-        EntityData<IEntityData> Parent { get; }
-    }
 }
