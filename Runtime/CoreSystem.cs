@@ -500,13 +500,13 @@ namespace Syadeu
                 }
             }
 
-            try
-            {
-                BackgroundThread.Abort();
-            }
-            catch (Exception)
-            {
-            }
+            //try
+            //{
+            //    BackgroundThread.Abort();
+            //}
+            //catch (Exception)
+            //{
+            //}
             m_CustomBackgroundUpdates.Clear();
 
             for (int i = 0; i < BackgroundJobWorkers.Count; i++)
@@ -833,7 +833,6 @@ namespace Syadeu
             OnBackgroundUpdateSampler = UnityEngine.Profiling.CustomSampler.Create("BackgroundUpdate");
             OnBackgroundJobSampler = UnityEngine.Profiling.CustomSampler.Create("BackgroundJob");
             OnBackgroundTimerSampler = UnityEngine.Profiling.CustomSampler.Create("BackgroundTimer");
-            UnityEngine.Profiling.Profiler.BeginThreadProfiling("Syadeu", "CoreSystem");
 #endif
 
             do
@@ -853,6 +852,8 @@ namespace Syadeu
             {
 #if UNITY_EDITOR
                 if (IsEditorPaused) continue;
+
+                UnityEngine.Profiling.Profiler.BeginThreadProfiling("Syadeu", "CoreSystem");
 #endif
                 if (!m_SimWatcher.WaitOne(1, true))
                 {
@@ -1241,7 +1242,9 @@ namespace Syadeu
                 //ThreadAwaiter(10);
                 m_SimWatcher.Reset();
 
-                UnityEngine.Profiling.Profiler.EndThreadProfiling("Syadeu", "CoreSystem");
+#if UNITY_EDITOR
+                UnityEngine.Profiling.Profiler.EndThreadProfiling();
+#endif
                 if (s_BlockCreateInstance) break;
             }
         }

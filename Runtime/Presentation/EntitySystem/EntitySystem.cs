@@ -48,6 +48,8 @@ namespace Syadeu.Presentation
         /// </remarks>
         public event Action<EntityData<IEntityData>> OnEntityDestroy;
 
+        private Unity.Mathematics.Random m_Random;
+
         internal readonly Dictionary<Hash, ObjectBase> m_ObjectEntities = new Dictionary<Hash, ObjectBase>();
         internal readonly Dictionary<Hash, Hash> m_EntityGameObjects = new Dictionary<Hash, Hash>();
 
@@ -67,6 +69,9 @@ namespace Syadeu.Presentation
         #region Presentation Methods
         protected override PresentationResult OnInitialize()
         {
+            m_Random = new Unity.Mathematics.Random();
+            m_Random.InitState();
+
             PresentationManager.Instance.PreUpdate += Instance_PreUpdate;
 
             return base.OnInitialize();
@@ -482,6 +487,7 @@ namespace Syadeu.Presentation
 
             entity.transform = obj;
             entity.m_IsCreated = true;
+            entity.m_HashCode = m_Random.NextInt(0, int.MaxValue);
 
             m_ObjectEntities.Add(entity.Idx, entity);
 
@@ -562,6 +568,7 @@ namespace Syadeu.Presentation
         {
             EntityDataBase objClone = (EntityDataBase)obj.Clone();
             objClone.m_IsCreated = true;
+            objClone.m_HashCode = m_Random.NextInt(0, int.MaxValue);
 
             IEntityData clone = (IEntityData)objClone;
 
@@ -628,6 +635,8 @@ namespace Syadeu.Presentation
         private ObjectBase InternalCreateInstance(IObject obj)
         {
             ObjectBase clone = (ObjectBase)obj.Clone();
+
+            clone.m_HashCode = m_Random.NextInt(0, int.MaxValue);
 
             m_ObjectEntities.Add(clone.Idx, clone);
             if (clone is DataObjectBase dataObject)

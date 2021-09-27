@@ -443,7 +443,35 @@ namespace Syadeu.Presentation.Entities
             s_EntitySystem.System.InternalDestroyEntity(m_Idx);
         }
 
-        public override int GetHashCode() => Target.GetHashCode();
+        public override int GetHashCode()
+        {
+            if (IsEmpty())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    "An empty entity reference trying to access transform.");
+                return 0;
+            }
+
+            if (s_EntitySystem.IsNull())
+            {
+                s_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
+                if (s_EntitySystem.IsNull())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        "Cannot retrived EntitySystem.");
+                    return 0;
+                }
+            }
+
+            if (!s_EntitySystem.System.m_ObjectEntities.TryGetValue(m_Idx, out ObjectBase value))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Destroyed entity.");
+                return 0;
+            }
+
+            return value.GetHashCode();
+        }
 
         public static implicit operator T(Entity<T> a) => a.Target;
         //public static implicit operator Entity<IEntity>(Entity<T> a) => GetEntity(a.m_Idx);

@@ -44,7 +44,7 @@ namespace Syadeu.Presentation
                 {
                     throw new Exception();
                 }
-                return PresentationManager.Instance.m_PresentationGroups[m_GroupHash].m_Systems;
+                return PresentationManager.Instance.m_PresentationGroups[m_GroupHash].Systems;
             }
         }
 
