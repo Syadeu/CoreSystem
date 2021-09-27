@@ -20,12 +20,6 @@ namespace Syadeu.Presentation.Actor
 
         [JsonIgnore] private ActorStatAttribute m_StatAttribute;
 
-        [JsonIgnore] protected override Type[] ReceiveEventOnly => new Type[]
-        {
-            TypeHelper.TypeOf<IActorAttackEvent>.Type,
-            TypeHelper.TypeOf<IActorHitEvent>.Type
-        };
-
         protected override void OnCreated(Entity<ActorEntity> entity)
         {
             m_StatAttribute = entity.GetAttribute<ActorStatAttribute>();
@@ -75,7 +69,8 @@ namespace Syadeu.Presentation.Actor
         }
         protected virtual void SendHitEvent(Entity<ActorEntity> target, Hash hpStatName, float damage)
         {
-            target.GetController().ScheduleEvent(new ActorHitEvent(Parent, hpStatName, damage));
+            ActorControllerComponent component = target.GetComponent<ActorControllerComponent>();
+            component.ScheduleEvent(new ActorHitEvent(Parent, hpStatName, damage));
         }
         protected void AttackEventHandler(IActorAttackEvent ev)
         {

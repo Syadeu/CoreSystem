@@ -11,15 +11,14 @@ namespace Syadeu.Presentation.Actor
             where TEvent : unmanaged, IActorEvent
 #endif
         {
-            var ctr = other.GetAttribute<ActorControllerAttribute>();
-            if (ctr == null)
+            if (!other.HasComponent<ActorControllerComponent>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"This entity({other.Name}) doesn\'t have any {nameof(ActorControllerAttribute)}. Cannot post event({ev.GetType().Name}).");
+                    $"This entity({other.Name}) doesn\'t have any {nameof(ActorControllerComponent)}. Cannot post event({ev.GetType().Name}).");
                 return;
             }
 
-            ctr.ScheduleEvent(ev);
+            other.GetComponent<ActorControllerComponent>().ScheduleEvent(ev);
         }
         public static void PostEvent<TEvent>(this TEvent ev, Entity<ActorEntity> other)
 #if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -28,15 +27,14 @@ namespace Syadeu.Presentation.Actor
             where TEvent : unmanaged, IActorEvent
 #endif
         {
-            var ctr = other.GetAttribute<ActorControllerAttribute>();
-            if (ctr == null)
+            if (!other.HasComponent<ActorControllerComponent>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"This entity({other.Name}) doesn\'t have any {nameof(ActorControllerAttribute)}. Cannot post event({ev.GetType().Name}).");
+                    $"This entity({other.Name}) doesn\'t have any {nameof(ActorControllerComponent)}. Cannot post event({ev.GetType().Name}).");
                 return;
             }
 
-            ctr.PostEvent(ev);
+            other.GetComponent<ActorControllerComponent>().PostEvent(ev);
         }
 
         public static ActorControllerAttribute GetController(this Entity<ActorEntity> entity)

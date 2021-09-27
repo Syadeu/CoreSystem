@@ -46,15 +46,14 @@ namespace Syadeu.Presentation.TurnTable
 
         void IActorEvent.OnExecute(Entity<ActorEntity> from)
         {
-            var ctr = from.GetAttribute<ActorControllerAttribute>();
-            if (ctr == null)
+            if (!from.HasComponent<ActorControllerComponent>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Target entity({m_Target.Name}) doesn\'t have any {nameof(ActorControllerAttribute)}.");
+                    $"Target entity({m_Target.Name}) doesn\'t have any {nameof(ActorControllerComponent)}.");
                 return;
             }
 
-            var weapon = ctr.GetProvider<ActorWeaponProvider>();
+            var weapon = from.GetComponent<ActorControllerComponent>().GetProvider<ActorWeaponProvider>();
             if (weapon.IsEmpty())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,

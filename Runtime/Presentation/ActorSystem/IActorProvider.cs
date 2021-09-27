@@ -7,9 +7,9 @@ namespace Syadeu.Presentation.Actor
 {
     internal interface IActorProvider
     {
-        Type[] ReceiveEventOnly { get; }
+        //Type[] ReceiveEventOnly { get; }
 
-        void Bind(Entity<ActorEntity> parent, ActorControllerAttribute actorController,
+        void Bind(Entity<ActorEntity> parent,
             EventSystem eventSystem, EntitySystem entitySystem, CoroutineSystem coroutineSystem);
 
         void ReceivedEvent<TEvent>(TEvent ev)

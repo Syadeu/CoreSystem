@@ -52,15 +52,12 @@ namespace Syadeu.Presentation.Actor
         [JsonProperty(Order = 12, PropertyName = "OnUnequipWeapon")]
         protected Reference<TriggerAction>[] m_OnUnequipWeapon = Array.Empty<Reference<TriggerAction>>();
 
-        [JsonIgnore] private Type[] m_ReceiveEventOnly = null;
-
         [JsonIgnore] private CoroutineJob m_WeaponPoser = CoroutineJob.Null;
 
         [JsonIgnore] private Instance<ActorWeaponData> m_DefaultWeaponInstance = Instance<ActorWeaponData>.Empty;
         [JsonIgnore] private InstanceArray<ActorWeaponData> m_EquipedWeapons;
         [JsonIgnore] private int m_SelectedWeaponIndex = 0;
 
-        [JsonIgnore] protected override Type[] ReceiveEventOnly => m_ReceiveEventOnly;
         [JsonIgnore] public InstanceArray<ActorWeaponData> EquipedWeapons => m_EquipedWeapons;
         [JsonIgnore] public Instance<ActorWeaponData> SelectedWeapon => m_EquipedWeapons[m_SelectedWeaponIndex];
         [JsonIgnore] public float WeaponDamage
@@ -86,11 +83,6 @@ namespace Syadeu.Presentation.Actor
 
         protected override void OnCreated(Entity<ActorEntity> entity)
         {
-            m_ReceiveEventOnly = new Type[]
-            {
-                TypeHelper.TypeOf<IActorWeaponEquipEvent>.Type
-            };
-
             if (!entity.HasAttribute<AnimatorAttribute>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,

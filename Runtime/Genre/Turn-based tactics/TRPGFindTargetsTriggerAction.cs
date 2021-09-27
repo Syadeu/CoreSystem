@@ -21,14 +21,14 @@ namespace Syadeu.Presentation.TurnTable
             Entity<ActorEntity> actor = entity.As<IEntityData, ActorEntity>();
             ActorControllerAttribute ctr = actor.GetController();
 
-            if (ctr == null)
+            if (!actor.HasComponent<ActorControllerComponent>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"This entity({entity.Name}) doesn\'t have any {nameof(ActorControllerAttribute)}.");
+                    $"This entity({entity.Name}) doesn\'t have any {nameof(ActorControllerComponent)}.");
                 return;
             }
 
-            Instance<TRPGActorAttackProvider> attProvider = ctr.GetProvider<TRPGActorAttackProvider>();
+            Instance<TRPGActorAttackProvider> attProvider = actor.GetComponent<ActorControllerComponent>().GetProvider<TRPGActorAttackProvider>();
 
             if (attProvider.IsEmpty())
             {

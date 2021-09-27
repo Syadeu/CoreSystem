@@ -93,11 +93,10 @@ namespace Syadeu.Presentation.TurnTable
         }
         private void OnActionPointChangedEventHandler(OnActionPointChangedEvent ev)
         {
-            ActorControllerAttribute ctr = ev.Entity.GetAttribute<ActorControllerAttribute>();
-            if (ctr == null) return;
+            if (!ev.Entity.HasComponent<ActorControllerComponent>()) return;
 
             TRPGActorActionPointChangedUIEvent actorEv = new TRPGActorActionPointChangedUIEvent(ev.From, ev.To);
-            ctr.PostEvent(actorEv);
+            ev.Entity.GetComponent<ActorControllerComponent>().PostEvent(actorEv);
         }
 
         protected override void OnCreated(TurnPlayerAttribute attribute, EntityData<IEntityData> entity)

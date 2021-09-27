@@ -60,6 +60,7 @@ namespace Syadeu.Presentation
         internal GameObjectProxySystem m_ProxySystem;
         internal Events.EventSystem m_EventSystem;
         internal CoroutineSystem m_CoroutineSystem;
+        internal Actor.ActorSystem m_ActorSystem;
 
         #region Presentation Methods
         protected override PresentationResult OnInitializeAsync()
@@ -68,6 +69,7 @@ namespace Syadeu.Presentation
             RequestSystem<GameObjectProxySystem>(Bind);
             RequestSystem<CoroutineSystem>(Bind);
             RequestSystem<Events.EventSystem>(Bind);
+            RequestSystem<Actor.ActorSystem>(Bind);
 
             #region Processor Registeration
             Type[] processors = TypeHelper.GetTypes(ProcessorPredicate);
@@ -297,6 +299,11 @@ namespace Syadeu.Presentation
             m_CoroutineSystem = other;
         }
 
+        private void Bind(Actor.ActorSystem other)
+        {
+            m_ActorSystem = other;
+        }
+
         #endregion
 
         protected override PresentationResult OnStartPresentation()
@@ -471,6 +478,7 @@ namespace Syadeu.Presentation
             return true;
         }
         #endregion
+
         private ProxyTransform InternalCreateProxy(in EntityBase from,
             in PrefabReference<GameObject> prefab, in float3 pos, in quaternion rot, in float3 scale)
         {
@@ -496,6 +504,7 @@ namespace Syadeu.Presentation
             ProcessEntityOnCreated(this, entity);
             return Entity<IEntity>.GetEntity(entity.Idx);
         }
+
         #endregion
 
         #region Create EntityDataBase

@@ -24,7 +24,11 @@ namespace Syadeu.Presentation.Components
         private long m_EntityLength;
         private NativeArray<EntityComponentBuffer> m_ComponentBuffer;
 
+        private readonly Dictionary<Type, int> m_ComponentIndices = new Dictionary<Type, int>();
+
         private EntitySystem m_EntitySystem;
+
+        #region Presentation Methods
 
         protected override PresentationResult OnInitialize()
         {
@@ -111,7 +115,7 @@ namespace Syadeu.Presentation.Components
 
         #endregion
 
-        private readonly Dictionary<Type, int> m_ComponentIndices = new Dictionary<Type, int>();
+        #endregion
 
         private int GetComponentIndex<TComponent>() => GetComponentIndex(TypeHelper.TypeOf<TComponent>.Type);
         private int GetComponentIndex(Type t)
@@ -258,6 +262,8 @@ namespace Syadeu.Presentation.Components
             return UnsafeUtility.SizeOf(temp) - UnsafeUtility.SizeOf(t);
         }
 
+        #region Inner Classes
+
         [StructLayout(LayoutKind.Sequential)]
         private struct AlignOfHelper<T> where T : struct
         {
@@ -390,6 +396,8 @@ namespace Syadeu.Presentation.Components
                 UnsafeUtility.Free(m_ComponentBuffer, Allocator.Persistent);
             }
         }
+
+        #endregion
     }
 
     public delegate void EntityComponentDelegate<TEntity, TComponent>(in TEntity entity, in TComponent component) where TComponent : unmanaged, IEntityComponent;

@@ -19,6 +19,8 @@ namespace Syadeu.Presentation.Actor
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
+        private readonly Queue<IEventHandler> m_ScheduledEvents = new Queue<IEventHandler>();
+
         private EntitySystem m_EntitySystem;
         private EventSystem m_EventSystem;
 
@@ -83,28 +85,7 @@ namespace Syadeu.Presentation.Actor
         }
         #endregion
 
-        private readonly Queue<IEventHandler> m_ScheduledEvents = new Queue<IEventHandler>();
-
-        public void ScheduleEvent<TEvent>(ActorEventDelegate<TEvent> post, TEvent ev)
-#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
-            where TEvent : struct, IActorEvent
-#else
-            where TEvent : unmanaged, IActorEvent
-#endif
-        {
-            if (!PoolContainer<EventHandler<TEvent>>.Initialized)
-            {
-                PoolContainer<EventHandler<TEvent>>.Initialize(EventHandlerFactory<TEvent>, 32);
-            }
-
-            EventHandler<TEvent> handler = PoolContainer<EventHandler<TEvent>>.Dequeue();
-            
-            handler.m_EventPost = post;
-            handler.m_Event = ev;
-
-            m_ScheduledEvents.Enqueue(handler);
-            m_EventSystem.TakeQueueTicket(this);
-        }
+        #region ISystemEventScheduler
 
         SystemEventResult ISystemEventScheduler.Execute()
         {
@@ -152,6 +133,29 @@ namespace Syadeu.Presentation.Actor
             }
         }
 
+        #endregion
+
+        public void ScheduleEvent<TEvent>(ActorEventDelegate<TEvent> post, TEvent ev)
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
+            where TEvent : struct, IActorEvent
+#else
+            where TEvent : unmanaged, IActorEvent
+#endif
+        {
+            if (!PoolContainer<EventHandler<TEvent>>.Initialized)
+            {
+                PoolContainer<EventHandler<TEvent>>.Initialize(EventHandlerFactory<TEvent>, 32);
+            }
+
+            EventHandler<TEvent> handler = PoolContainer<EventHandler<TEvent>>.Dequeue();
+            
+            handler.m_EventPost = post;
+            handler.m_Event = ev;
+
+            m_ScheduledEvents.Enqueue(handler);
+            m_EventSystem.TakeQueueTicket(this);
+        }
+
         [Preserve]
         static void AOTCodeGeneration()
         {
@@ -183,12 +187,4 @@ namespace Syadeu.Presentation.Actor
 #else
             where TEvent : unmanaged, IActorEvent;
 #endif
-
-        //public sealed class AIActorTargetSystem : PresentationSystemEntity<AIActorTargetSystem>
-        //{
-        //    public override bool EnableBeforePresentation => false;
-        //    public override bool EnableOnPresentation => false;
-        //    public override bool EnableAfterPresentation => false;
-
-        //}
 }
