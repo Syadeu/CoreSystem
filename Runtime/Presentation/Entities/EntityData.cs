@@ -81,11 +81,17 @@ namespace Syadeu.Presentation.Entities
                     }
                 }
 
-                if (!s_EntitySystem.System.m_ObjectEntities.TryGetValue(m_Idx, out var value) ||
-                    !(value is T t))
+                if (!s_EntitySystem.System.m_ObjectEntities.TryGetValue(m_Idx, out var value))
                 {
                     CoreSystem.Logger.LogError(Channel.Entity,
-                        $"Entity validation error. This entity is not an {TypeHelper.TypeOf<T>.ToString()} but {TypeHelper.ToString(value.GetType())}.");
+                        $"Destroyed entity.");
+                    return null;
+                }
+
+                if (!(value is T t))
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"Entity validation error. This entity is not an {TypeHelper.TypeOf<T>.ToString()} but {TypeHelper.ToString(value?.GetType())}.");
                     return null;
                 }
 

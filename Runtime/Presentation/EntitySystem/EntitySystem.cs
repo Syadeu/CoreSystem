@@ -54,6 +54,7 @@ namespace Syadeu.Presentation
         private readonly Dictionary<Type, List<IAttributeProcessor>> m_AttributeProcessors = new Dictionary<Type, List<IAttributeProcessor>>();
         private readonly Dictionary<Type, List<IEntityDataProcessor>> m_EntityProcessors = new Dictionary<Type, List<IEntityDataProcessor>>();
 
+        private readonly List<Hash> m_DestroyedObjectsInThisFrame = new List<Hash>();
         private readonly Queue<Query> m_Queries = new Queue<Query>();
 
         internal DataContainerSystem m_DataContainerSystem;
@@ -64,6 +65,22 @@ namespace Syadeu.Presentation
         internal Components.EntityComponentSystem m_ComponentSystem;
 
         #region Presentation Methods
+        protected override PresentationResult OnInitialize()
+        {
+            PresentationManager.Instance.PreUpdate += Instance_PreUpdate;
+
+            return base.OnInitialize();
+        }
+        private void Instance_PreUpdate()
+        {
+            for (int i = 0; i < m_DestroyedObjectsInThisFrame.Count; i++)
+            {
+                m_ObjectEntities.Remove(m_DestroyedObjectsInThisFrame[i]);
+            }
+
+            m_DestroyedObjectsInThisFrame.Clear();
+        }
+
         protected override PresentationResult OnInitializeAsync()
         {
             RequestSystem<DataContainerSystem>(Bind);
@@ -166,6 +183,8 @@ namespace Syadeu.Presentation
                 }
             }
 
+            PresentationManager.Instance.PreUpdate -= Instance_PreUpdate;
+
             OnEntityCreated = null;
             OnEntityDestroy = null;
 
@@ -213,7 +232,9 @@ namespace Syadeu.Presentation
             ProcessEntityOnDestroy(this, entity);
 
             m_EntityGameObjects.Remove(obj.m_Hash);
-            m_ObjectEntities.Remove(entityHash);
+
+            m_DestroyedObjectsInThisFrame.Add(entityHash);
+            //m_ObjectEntities.Remove(entityHash);
         }
         private void OnDataObjectVisible(ProxyTransform tr)
         {
@@ -663,19 +684,43 @@ namespace Syadeu.Presentation
                     }
                 }
             }
-            else if (m_ObjectEntities[hash] is DataObjectBase dataObject)
+            else
             {
-                dataObject.InternalOnDestroy();
+                if (m_ObjectEntities[hash] is DataObjectBase dataObject)
+                {
+                    dataObject.InternalOnDestroy();
+                }
+            }
+
+            var interfaceTypes = GetComponentInterface(m_ObjectEntities[hash].GetType());
+            foreach (var interfaceType in interfaceTypes)
+            {
+                m_ComponentSystem.RemoveComponent(m_ObjectEntities[hash], interfaceType);
             }
 
             ((IDisposable)m_ObjectEntities[hash]).Dispose();
-            m_ObjectEntities.Remove(hash);
+            //m_ObjectEntities.Remove(hash);
+            m_DestroyedObjectsInThisFrame.Add(hash);
         }
 
         internal bool IsDestroyed(in Hash idx)
         {
             return !m_ObjectEntities.ContainsKey(idx);
         }
+
+        private static IEnumerable<Type> GetComponentInterface(Type t)
+        {
+            return t.GetInterfaces()
+                .Where(i => i.IsGenericType)
+                .Where(i => i.GetGenericTypeDefinition() == typeof(Components.INotifyComponent<>));
+        }
+        //private static IEnumerable<Type> GetComponentGenerics(Type t)
+        //{
+        //    return t.GetInterfaces()
+        //        .Where(i => i.IsGenericType)
+        //        .Where(i => i.GetGenericTypeDefinition() == typeof(Components.INotifyComponent<>))
+        //        .Select(i => i.GetGenericArguments().First());
+        //}
 
         #endregion
 
@@ -763,6 +808,7 @@ namespace Syadeu.Presentation
 
             system.OnEntityCreated?.Invoke(entityData);
         }
+
         private static void ProcessEntityOnPresentation(EntitySystem system, IEntityData entity)
         {
             EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntity(entity.Idx);
@@ -838,6 +884,12 @@ namespace Syadeu.Presentation
                     }
                 }
 
+                var interfaceTypes = GetComponentInterface(other.GetType());
+                foreach (var interfaceType in interfaceTypes)
+                {
+                    system.m_ComponentSystem.RemoveComponent(other, interfaceType);
+                }
+
                 other.Dispose();
             }
             #endregion
@@ -863,14 +915,6 @@ namespace Syadeu.Presentation
 
             system.OnEntityDestroy?.Invoke(entityData);
         }
-
-        //private static IEnumerable<Type> GetComponentGenerics(Type t)
-        //{
-        //    return t.GetInterfaces()
-        //        .Where(i => i.IsGenericType)
-        //        .Where(i => i.GetGenericTypeDefinition() == typeof(Components.INotifyComponent<>))
-        //        .Select(i => i.GetGenericArguments().First());
-        //}
 
         private static void ProcessEntityOnProxyCreated(EntitySystem system, IEntity entity, RecycleableMonobehaviour monoObj)
         {

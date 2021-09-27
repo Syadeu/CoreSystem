@@ -5,8 +5,10 @@ using System;
 
 namespace Syadeu.Presentation.Actor
 {
-    public struct ActorControllerComponent : IEntityComponent
+    public struct ActorControllerComponent : IEntityComponent, IDisposable
     {
+        internal PresentationSystemID<EntitySystem> m_EntitySystem;
+
         internal Entity<ActorEntity> m_Parent;
         internal InstanceArray<ActorProviderBase> m_InstanceProviders;
         internal ReferenceArray<Reference<ParamAction<IActorEvent>>> m_OnEventReceived;
@@ -106,6 +108,23 @@ namespace Syadeu.Presentation.Actor
                 if (m_InstanceProviders[i].Object is T) return m_InstanceProviders[i].Cast<ActorProviderBase, T>();
             }
             return Instance<T>.Empty;
+        }
+
+        public void Dispose()
+        {
+            for (int i = 0; i < m_InstanceProviders.Length; i++)
+            {
+                ExecuteOnDestroy(m_InstanceProviders[i].Object, m_Parent);
+                m_EntitySystem.System.DestroyObject(m_InstanceProviders[i]);
+            }
+
+            m_InstanceProviders.Dispose();
+            m_OnEventReceived.Dispose();
+            "dispose in".ToLog();
+        }
+        private static void ExecuteOnDestroy(IActorProvider provider, Entity<ActorEntity> entity)
+        {
+            provider.OnDestroy(entity);
         }
     }
 }

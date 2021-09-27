@@ -37,6 +37,7 @@ namespace Syadeu.Presentation.Actor
             ActorControllerComponent component = new ActorControllerComponent();
             Entity<ActorEntity> actor = entity.As<IEntityData, ActorEntity>();
 
+            component.m_EntitySystem = m_EntitySystem.SystemID;
             component.m_Parent = actor;
             component.m_InstanceProviders = new InstanceArray<ActorProviderBase>(attribute.m_Providers.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
             component.m_OnEventReceived = attribute.m_OnEventReceived.ToBuffer(Allocator.Persistent);
@@ -44,7 +45,7 @@ namespace Syadeu.Presentation.Actor
             for (int i = 0; i < attribute.m_Providers.Length; i++)
             {
                 Instance<ActorProviderBase> clone = EntitySystem.CreateInstance(attribute.m_Providers[i]);
-                Initialize(actor, clone.Object);
+                Initialize(entity, clone.Object);
                 component.m_InstanceProviders[i] = clone;
             }
 
@@ -63,19 +64,19 @@ namespace Syadeu.Presentation.Actor
         }
         protected override void OnDestroy(ActorControllerAttribute attribute, EntityData<IEntityData> entity)
         {
-            ActorControllerComponent component = entity.GetComponent<ActorControllerComponent>();
+            //ActorControllerComponent component = entity.GetComponent<ActorControllerComponent>();
 
-            Entity<ActorEntity> actor = entity.As<IEntityData, ActorEntity>();
-            for (int i = 0; i < component.m_InstanceProviders.Length; i++)
-            {
-                ExecuteOnDestroy(component.m_InstanceProviders[i].Object, actor);
-                EntitySystem.DestroyObject(component.m_InstanceProviders[i]);
-            }
+            //Entity<ActorEntity> actor = entity.As<IEntityData, ActorEntity>();
+            //for (int i = 0; i < component.m_InstanceProviders.Length; i++)
+            //{
+            //    ExecuteOnDestroy(component.m_InstanceProviders[i].Object, actor);
+            //    EntitySystem.DestroyObject(component.m_InstanceProviders[i]);
+            //}
 
-            component.m_InstanceProviders.Dispose();
-            component.m_OnEventReceived.Dispose();
+            //component.m_InstanceProviders.Dispose();
+            //component.m_OnEventReceived.Dispose();
         }
-        private void Initialize(Entity<ActorEntity> parent, IActorProvider provider)
+        private void Initialize(EntityData<IEntityData> parent, IActorProvider provider)
         {
             provider.Bind(parent, EventSystem, EntitySystem, EntitySystem.m_CoroutineSystem);
 

@@ -45,11 +45,9 @@ namespace Syadeu.Presentation.Actor
 #if UNITY_EDITOR
             if (m_StatAttribute == null) return;
 #endif
-            EntityData<IEntityData>
-                    parent = Parent.As<ActorEntity, IEntityData>(),
-                    target = ev.AttackFrom.As<ActorEntity, IEntityData>();
+            EntityData<IEntityData> target = ev.AttackFrom.As<ActorEntity, IEntityData>();
 
-            if (!m_OnHit.Execute(parent, target))
+            if (!m_OnHit.Execute(Parent, target))
             {
                 $"{Parent.Name} : hit failed attacked from {target.Name}".ToLog();
                 return;
@@ -70,7 +68,7 @@ namespace Syadeu.Presentation.Actor
         protected virtual void SendHitEvent(Entity<ActorEntity> target, Hash hpStatName, float damage)
         {
             ActorControllerComponent component = target.GetComponent<ActorControllerComponent>();
-            component.ScheduleEvent(new ActorHitEvent(Parent, hpStatName, damage));
+            component.ScheduleEvent(new ActorHitEvent(Parent.As<IEntityData, ActorEntity>(), hpStatName, damage));
         }
         protected void AttackEventHandler(IActorAttackEvent ev)
         {
@@ -85,18 +83,17 @@ namespace Syadeu.Presentation.Actor
                 return;
             }
 
-            EntityData<IEntityData>
-                    parent = Parent.As<ActorEntity, IEntityData>(),
-                    target = ev.Target.As<ActorEntity, IEntityData>();
+            EntityData<IEntityData> target = ev.Target.As<ActorEntity, IEntityData>();
+            Entity<ActorEntity> parent = Parent.As<IEntityData, ActorEntity>();
 
-            if (m_OnAttack.Schedule(parent, target))
+            if (m_OnAttack.Schedule(Parent, target))
             {
-                currentWeaponIns.Object.FireFXBounds(Parent.transform, CoroutineSystem, FXBounds.TriggerOptions.FireOnSuccess);
+                currentWeaponIns.Object.FireFXBounds(parent.transform, CoroutineSystem, FXBounds.TriggerOptions.FireOnSuccess);
                 SendHitEvent(ev.Target, ev.HPStatNameHash, ev.Damage);
             }
             else
             {
-                currentWeaponIns.Object.FireFXBounds(Parent.transform, CoroutineSystem, FXBounds.TriggerOptions.FireOnFailed);
+                currentWeaponIns.Object.FireFXBounds(parent.transform, CoroutineSystem, FXBounds.TriggerOptions.FireOnFailed);
             }
 
             //for (int i = 0; i < ev.Targets.Length; i++)
@@ -128,7 +125,7 @@ namespace Syadeu.Presentation.Actor
             //}
         }
 
-        public bool IsAlly(Entity<ActorEntity> entity) => Parent.Target.Faction.IsAlly(entity.Target.Faction);
-        public bool IsEnemy(Entity<ActorEntity> entity) => Parent.Target.Faction.IsEnemy(entity.Target.Faction);
+        public bool IsAlly(Entity<ActorEntity> entity) => Parent.As<IEntityData, ActorEntity>().Target.Faction.IsAlly(entity.Target.Faction);
+        public bool IsEnemy(Entity<ActorEntity> entity) => Parent.As<IEntityData, ActorEntity>().Target.Faction.IsEnemy(entity.Target.Faction);
     }
 }

@@ -57,7 +57,7 @@ namespace Syadeu.Presentation.Actor
         protected override void OnCreated(Entity<ActorEntity> entity)
         {
             ActorWeaponComponent component = new ActorWeaponComponent();
-            component.m_Parent = Parent;
+            component.m_Parent = Parent.As<IEntityData, ActorEntity>();
             component.m_Provider = new Instance<ActorWeaponProvider>(Idx);
 
             component.m_WeaponPoser = CoroutineJob.Null;
@@ -97,7 +97,7 @@ namespace Syadeu.Presentation.Actor
             {
                 component.m_DefaultWeaponInstance = m_DefaultWeapon.CreateInstance();
                 component.m_EquipedWeapons[0] = component.m_DefaultWeaponInstance;
-                m_OnEquipWeapon.Execute(Parent.As<ActorEntity, IEntityData>());
+                m_OnEquipWeapon.Execute(Parent);
                 component.SelectWeapon(0);
             }
 
@@ -105,7 +105,7 @@ namespace Syadeu.Presentation.Actor
         }
         protected override void OnDispose()
         {
-            Parent.RemoveComponent<ActorWeaponComponent>();
+            //Parent.RemoveComponent<ActorWeaponComponent>();
         }
         protected override void OnEventReceived<TEvent>(TEvent ev)
         {
@@ -127,7 +127,7 @@ namespace Syadeu.Presentation.Actor
 
             if ((ev.EquipOptions & ActorWeaponEquipOptions.SwitchWithSelected) == ActorWeaponEquipOptions.SwitchWithSelected)
             {
-                m_OnUnequipWeapon.Execute(Parent.As<ActorEntity, IEntityData>());
+                m_OnUnequipWeapon.Execute(Parent);
 
                 ActorInventoryProvider inventory = GetProvider<ActorInventoryProvider>().Object;
                 if (inventory == null)
@@ -153,7 +153,7 @@ namespace Syadeu.Presentation.Actor
 
                 component.m_EquipedWeapons[component.m_SelectedWeaponIndex] = ev.Weapon;
 
-                m_OnEquipWeapon.Execute(Parent.As<ActorEntity, IEntityData>());
+                m_OnEquipWeapon.Execute(Parent);
 
                 if ((ev.EquipOptions & ActorWeaponEquipOptions.SelectWeapon) == ActorWeaponEquipOptions.SelectWeapon)
                 {
@@ -198,7 +198,7 @@ namespace Syadeu.Presentation.Actor
                 else
                 {
                     component.m_EquipedWeapons[emptySpace] = ev.Weapon;
-                    m_OnEquipWeapon.Execute(Parent.As<ActorEntity, IEntityData>());
+                    m_OnEquipWeapon.Execute(Parent);
 
                     if ((ev.EquipOptions & ActorWeaponEquipOptions.SelectWeapon) == ActorWeaponEquipOptions.SelectWeapon)
                     {
@@ -220,7 +220,7 @@ namespace Syadeu.Presentation.Actor
             if (component.SelectedWeapon.IsValid() && 
                 component.SelectedWeapon.Object.PrefabInstance.IsValid())
             {
-                WeaponPoser weaponPoser = new WeaponPoser(Parent, component.SelectedWeapon, 
+                WeaponPoser weaponPoser = new WeaponPoser(Parent.As<IEntityData, ActorEntity>(), component.SelectedWeapon, 
                     m_UseBone, m_AttachedBone, m_WeaponPosOffset, m_WeaponRotOffset);
                 component.m_WeaponPoser = StartCoroutine(weaponPoser);
 

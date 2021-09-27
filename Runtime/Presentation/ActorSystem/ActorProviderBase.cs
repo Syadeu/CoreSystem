@@ -14,19 +14,19 @@ namespace Syadeu.Presentation.Actor
     public abstract class ActorProviderBase : DataObjectBase, IActorProvider
     {
         [JsonIgnore] private bool m_Initialized = false;
-        [JsonIgnore] private Entity<ActorEntity> m_Parent = Entity<ActorEntity>.Empty;
+        [JsonIgnore] private EntityData<IEntityData> m_Parent = EntityData<IEntityData>.Empty;
 
         [JsonIgnore] private PresentationSystemID<EventSystem> m_EventSystem;
         [JsonIgnore] private PresentationSystemID<EntitySystem> m_EntitySystem;
         [JsonIgnore] private PresentationSystemID<CoroutineSystem> m_CoroutineSystem;
 
-        [JsonIgnore] protected Entity<ActorEntity> Parent => m_Parent;
+        [JsonIgnore] public EntityData<IEntityData> Parent => m_Parent;
         [JsonIgnore] protected ActorControllerComponent Component => m_Parent.GetComponent<ActorControllerComponent>();
 
         [JsonIgnore] protected PresentationSystemID<EventSystem> EventSystem => m_EventSystem;
         [JsonIgnore] protected PresentationSystemID<CoroutineSystem> CoroutineSystem => m_CoroutineSystem;
 
-        void IActorProvider.Bind(Entity<ActorEntity> parent,
+        void IActorProvider.Bind(EntityData<IEntityData> parent,
             EventSystem eventSystem, EntitySystem entitySystem, CoroutineSystem coroutineSystem)
         {
             m_Parent = parent;
@@ -67,7 +67,7 @@ namespace Syadeu.Presentation.Actor
         protected override void OnDispose()
         {
             m_Initialized = false;
-            m_Parent = Entity<ActorEntity>.Empty;
+            m_Parent = EntityData<IEntityData>.Empty;
         }
 
         protected virtual void OnEventReceived<TEvent>(TEvent ev)

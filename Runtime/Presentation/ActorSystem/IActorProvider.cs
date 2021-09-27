@@ -9,7 +9,7 @@ namespace Syadeu.Presentation.Actor
     {
         //Type[] ReceiveEventOnly { get; }
 
-        void Bind(Entity<ActorEntity> parent,
+        void Bind(EntityData<IEntityData> parent,
             EventSystem eventSystem, EntitySystem entitySystem, CoroutineSystem coroutineSystem);
 
         void ReceivedEvent<TEvent>(TEvent ev)

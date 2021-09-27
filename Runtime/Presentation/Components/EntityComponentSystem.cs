@@ -1,9 +1,11 @@
 ﻿using AOT;
 using Syadeu.Database;
 using Syadeu.Internal;
+using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Entities;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -109,18 +111,24 @@ namespace Syadeu.Presentation.Components
         }
         private void M_EntitySystem_OnEntityDestroy(EntityData<IEntityData> obj)
         {
-            foreach (var item in m_ComponentIndices.Keys)
-            {
-                int2 index = GetIndex(item, obj);
-                if (!m_ComponentBuffer[index.x].Find(obj, ref index.y))
-                {
-                    continue;
-                }
+            
 
-                m_ComponentBuffer[index.x].m_OccupiedBuffer[index.y] = false;
-                $"{item.Name} component at {obj.Name} removed".ToLog();
-            }
+            //foreach (var item in m_ComponentIndices.Keys)
+            //{
+            //    int2 index = GetIndex(item, obj);
+            //    if (!m_ComponentBuffer[index.x].Find(obj, ref index.y))
+            //    {
+            //        continue;
+            //    }
+
+            //    m_ComponentBuffer[index.x].m_OccupiedBuffer[index.y] = false;
+
+
+            //    $"{item.Name} component at {obj.Name} removed".ToLog();
+            //}
         }
+
+        
 
         #endregion
 
@@ -138,7 +146,7 @@ namespace Syadeu.Presentation.Components
 
             return componentIdx;
         }
-        private int GetEntityIndex(int componentIdx, EntityData<IEntityData> entity)
+        private int GetEntityIndex(EntityData<IEntityData> entity)
         {
             int idx = math.abs(entity.GetHashCode()) % EntityComponentBuffer.c_InitialCount;
             return idx;
@@ -147,7 +155,7 @@ namespace Syadeu.Presentation.Components
         {
             int
                 cIdx = GetComponentIndex(t),
-                eIdx = GetEntityIndex(cIdx, entity);
+                eIdx = GetEntityIndex(entity);
 
             return new int2(cIdx, eIdx);
         }
@@ -155,7 +163,7 @@ namespace Syadeu.Presentation.Components
         {
             int
                 cIdx = GetComponentIndex<TComponent>(),
-                eIdx = GetEntityIndex(cIdx, entity);
+                eIdx = GetEntityIndex(entity);
 
             return new int2(cIdx, eIdx);
         }
@@ -220,11 +228,23 @@ namespace Syadeu.Presentation.Components
                     disposable.Dispose();
                 }
             }
+
+            $"{TypeHelper.TypeOf<TComponent>.Name} component at {entity.Name} removed".ToLog();
         }
         public void RemoveComponent(EntityData<IEntityData> entity, Type componentType)
         {
             MethodInfo method = m_RemoveComponentMethod.MakeGenericMethod(componentType);
             method.Invoke(this, new object[] { entity });
+        }
+        public void RemoveComponent(ObjectBase obj, Type interfaceType)
+        {
+            const string c_Parent = "Parent";
+
+            PropertyInfo property = interfaceType
+                .GetProperty(c_Parent, TypeHelper.TypeOf<EntityData<IEntityData>>.Type);
+
+            EntityData<IEntityData> entity = (EntityData<IEntityData>)property.GetValue(obj);
+            RemoveComponent(entity, interfaceType.GetGenericArguments().First());
         }
         public bool HasComponent<TComponent>(EntityData<IEntityData> entity) 
             where TComponent : unmanaged, IEntityComponent
@@ -443,9 +463,8 @@ namespace Syadeu.Presentation.Components
 
     public delegate void EntityComponentDelegate<TEntity, TComponent>(in TEntity entity, in TComponent component) where TComponent : unmanaged, IEntityComponent;
 
-    public interface INotifyComponent<TComponent>
-        where TComponent : unmanaged, IEntityComponent
+    public interface INotifyComponent<TComponent> where TComponent : unmanaged, IEntityComponent
     {
-        //TComponent GetComponent();
+        EntityData<IEntityData> Parent { get; }
     }
 }

@@ -129,6 +129,11 @@ namespace Syadeu.Internal
             const string c_TEnd = ">";
             const string c_Pattern = ", {0}";
 
+            if (type == null)
+            {
+                return "UNKNOWN NULL";
+            }
+
             string output = type.Name;
             if (type.GenericTypeArguments.Length != 0)
             {
