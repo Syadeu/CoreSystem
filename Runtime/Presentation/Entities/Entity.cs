@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -28,6 +29,7 @@ namespace Syadeu.Presentation.Entities
     {
         private const string c_Invalid = "Invalid";
         private static PresentationSystemID<EntitySystem> s_EntitySystem = PresentationSystemID<EntitySystem>.Null;
+        internal static PresentationSystemID<EntityComponentSystem> s_ComponentSystem = PresentationSystemID<EntityComponentSystem>.Null;
 
         public static Entity<T> Empty => new Entity<T>(Hash.Empty);
 
@@ -296,8 +298,18 @@ namespace Syadeu.Presentation.Entities
                 return default(TComponent);
             }
 
-            return PresentationSystem<EntityComponentSystem>.System.AddComponent(
-                EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx), data);
+            if (s_ComponentSystem.IsNull())
+            {
+                s_ComponentSystem = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>().Data.SystemID;
+                if (s_ComponentSystem.IsNull())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"Cannot retrived {nameof(EntityComponentSystem)}.");
+                    return default(TComponent);
+                }
+            }
+
+            return s_ComponentSystem.System.AddComponent(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx), data);
         }
         public bool HasComponent<TComponent>()
             where TComponent : unmanaged, IEntityComponent
@@ -309,8 +321,40 @@ namespace Syadeu.Presentation.Entities
                 return false;
             }
 
-            return PresentationSystem<EntityComponentSystem>.System.HasComponent<TComponent>(
-                EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
+            if (s_ComponentSystem.IsNull())
+            {
+                s_ComponentSystem = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>().Data.SystemID;
+                if (s_ComponentSystem.IsNull())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"Cannot retrived {nameof(EntityComponentSystem)}.");
+                    return false;
+                }
+            }
+
+            return s_ComponentSystem.System.HasComponent<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
+        }
+        public bool HasComponent(Type componentType)
+        {
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                return false;
+            }
+
+            if (s_ComponentSystem.IsNull())
+            {
+                s_ComponentSystem = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>().Data.SystemID;
+                if (s_ComponentSystem.IsNull())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"Cannot retrived {nameof(EntityComponentSystem)}.");
+                    return false;
+                }
+            }
+
+            return s_ComponentSystem.System.HasComponent(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx), componentType);
         }
         public TComponent GetComponent<TComponent>()
             where TComponent : unmanaged, IEntityComponent
@@ -322,7 +366,18 @@ namespace Syadeu.Presentation.Entities
                 return default(TComponent);
             }
 
-            return PresentationSystem<EntityComponentSystem>.System.GetComponent<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
+            if (s_ComponentSystem.IsNull())
+            {
+                s_ComponentSystem = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>().Data.SystemID;
+                if (s_ComponentSystem.IsNull())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"Cannot retrived {nameof(EntityComponentSystem)}.");
+                    return default(TComponent);
+                }
+            }
+
+            return s_ComponentSystem.System.GetComponent<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
         }
         public void RemoveComponent<TComponent>()
             where TComponent : unmanaged, IEntityComponent
@@ -334,7 +389,40 @@ namespace Syadeu.Presentation.Entities
                 return;
             }
 
-            PresentationSystem<EntityComponentSystem>.System.RemoveComponent<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
+            if (s_ComponentSystem.IsNull())
+            {
+                s_ComponentSystem = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>().Data.SystemID;
+                if (s_ComponentSystem.IsNull())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"Cannot retrived {nameof(EntityComponentSystem)}.");
+                    return;
+                }
+            }
+
+            s_ComponentSystem.System.RemoveComponent<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
+        }
+        public void RemoveComponent(Type componentType)
+        {
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                return;
+            }
+
+            if (s_ComponentSystem.IsNull())
+            {
+                s_ComponentSystem = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>().Data.SystemID;
+                if (s_ComponentSystem.IsNull())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"Cannot retrived {nameof(EntityComponentSystem)}.");
+                    return;
+                }
+            }
+
+            s_ComponentSystem.System.RemoveComponent(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx), componentType);
         }
 
         #endregion

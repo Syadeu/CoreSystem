@@ -1,5 +1,6 @@
 ﻿namespace Syadeu.Presentation.Actor
 {
+    [System.Flags]
     public enum ActorWeaponEquipOptions
     {
         FollowProviderSettings      =   0,

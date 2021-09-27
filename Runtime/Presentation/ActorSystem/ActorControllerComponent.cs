@@ -110,7 +110,7 @@ namespace Syadeu.Presentation.Actor
             return Instance<T>.Empty;
         }
 
-        public void Dispose()
+        void IDisposable.Dispose()
         {
             for (int i = 0; i < m_InstanceProviders.Length; i++)
             {
@@ -120,7 +120,6 @@ namespace Syadeu.Presentation.Actor
 
             m_InstanceProviders.Dispose();
             m_OnEventReceived.Dispose();
-            "dispose in".ToLog();
         }
         private static void ExecuteOnDestroy(IActorProvider provider, Entity<ActorEntity> entity)
         {

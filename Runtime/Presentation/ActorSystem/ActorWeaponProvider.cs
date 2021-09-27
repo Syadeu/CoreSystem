@@ -57,15 +57,15 @@ namespace Syadeu.Presentation.Actor
         protected override void OnCreated(Entity<ActorEntity> entity)
         {
             ActorWeaponComponent component = new ActorWeaponComponent();
-            component.m_Parent = Parent.As<IEntityData, ActorEntity>();
+            component.m_Parent = entity;
             component.m_Provider = new Instance<ActorWeaponProvider>(Idx);
 
             component.m_WeaponPoser = CoroutineJob.Null;
 
-            if (!entity.HasAttribute<AnimatorAttribute>())
+            if (m_UseBone && !entity.HasAttribute<AnimatorAttribute>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"This entity({entity.Name}) doesn\'t have any {nameof(AnimatorAttribute)}.");
+                    $"This entity({entity.Name}) doesn\'t have any {nameof(AnimatorAttribute)} but UseBone.");
             }
 
             if (m_MaxEquipableCount <= 0)
@@ -102,10 +102,6 @@ namespace Syadeu.Presentation.Actor
             }
 
             Parent.AddComponent(component);
-        }
-        protected override void OnDispose()
-        {
-            //Parent.RemoveComponent<ActorWeaponComponent>();
         }
         protected override void OnEventReceived<TEvent>(TEvent ev)
         {
