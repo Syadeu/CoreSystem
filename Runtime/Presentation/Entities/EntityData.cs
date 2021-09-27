@@ -95,6 +95,13 @@ namespace Syadeu.Presentation.Entities
                     return null;
                 }
 
+                if (!CoreSystem.BlockCreateInstance &&
+                    s_EntitySystem.System.IsMarkedAsDestroyed(m_Idx))
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"Accessing entity({value.Name}) that will be destroy in the next frame.");
+                }
+
                 return t;
             }
         }
@@ -134,7 +141,7 @@ namespace Syadeu.Presentation.Entities
                 return false;
             }
 
-            return s_EntitySystem.System.m_ObjectEntities.ContainsKey(m_Idx);
+            return !s_EntitySystem.System.IsDestroyed(m_Idx);
         }
 
         public bool Equals(EntityData<T> other) => m_Idx.Equals(other.m_Idx);

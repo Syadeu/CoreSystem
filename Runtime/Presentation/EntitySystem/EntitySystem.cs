@@ -158,11 +158,13 @@ namespace Syadeu.Presentation
             var entityList = m_ObjectEntities.Values.ToArray();
             for (int i = 0; i < entityList.Length; i++)
             {
-                //if (entityList[i] is IEntityData entity)
-                //{
-                //    ProcessEntityOnDestroy(this, entity);
-                //}
-                //else
+                if (m_DestroyedObjectsInThisFrame.Contains(entityList[i].Idx)) continue;
+
+                if (entityList[i] is IEntityData entity)
+                {
+                    ProcessEntityOnDestroy(this, entity);
+                }
+                else
                 {
                     InternalDestroyEntity(entityList[i].Idx);
                 }
@@ -664,6 +666,16 @@ namespace Syadeu.Presentation
                 
                 return;
             }
+            else if (m_DestroyedObjectsInThisFrame.Contains(hash))
+            {
+                if (!CoreSystem.BlockCreateInstance)
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"This entity({m_ObjectEntities[hash].Name}) marked as destroyed");
+                }
+                
+                return;
+            }
 
             if (m_ObjectEntities[hash] is IEntityData entityData)
             {
@@ -706,6 +718,10 @@ namespace Syadeu.Presentation
         internal bool IsDestroyed(in Hash idx)
         {
             return !m_ObjectEntities.ContainsKey(idx);
+        }
+        internal bool IsMarkedAsDestroyed(in Hash idx)
+        {
+            return m_DestroyedObjectsInThisFrame.Contains(idx);
         }
 
         private static IEnumerable<Type> GetComponentInterface(Type t)
