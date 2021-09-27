@@ -24,6 +24,7 @@ namespace Syadeu.Presentation.Components
 
         private long m_EntityLength;
         private NativeArray<EntityComponentBuffer> m_ComponentBuffer;
+        private MethodInfo m_RemoveComponentMethod;
 
         private readonly Dictionary<Type, int> m_ComponentIndices = new Dictionary<Type, int>();
 
@@ -69,6 +70,13 @@ namespace Syadeu.Presentation.Components
             constrains.Data.SystemID = SystemID;
 
             return base.OnInitialize();
+        }
+        protected override PresentationResult OnInitializeAsync()
+        {
+            m_RemoveComponentMethod = TypeHelper.TypeOf<EntityComponentSystem>.Type.GetMethod(nameof(RemoveComponent),
+                new Type[] { TypeHelper.TypeOf<EntityData<IEntityData>>.Type });
+
+            return base.OnInitializeAsync();
         }
         private bool CollectTypes<T>(Type t)
         {
@@ -215,10 +223,7 @@ namespace Syadeu.Presentation.Components
         }
         public void RemoveComponent(EntityData<IEntityData> entity, Type componentType)
         {
-            MethodInfo method = TypeHelper.TypeOf<EntityComponentSystem>.Type.GetMethod(nameof(RemoveComponent),
-                new Type[] { TypeHelper.TypeOf<EntityData<IEntityData>>.Type });
-
-            method =  method.MakeGenericMethod(componentType);
+            MethodInfo method = m_RemoveComponentMethod.MakeGenericMethod(componentType);
             method.Invoke(this, new object[] { entity });
         }
         public bool HasComponent<TComponent>(EntityData<IEntityData> entity) 
