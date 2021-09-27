@@ -1,10 +1,13 @@
 ﻿using AOT;
 using Syadeu.Database;
 using Syadeu.Internal;
+using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Entities;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using Unity.Burst;
 using Unity.Collections;
@@ -23,8 +26,13 @@ namespace Syadeu.Presentation.Components
 
         private long m_EntityLength;
         private NativeArray<EntityComponentBuffer> m_ComponentBuffer;
+        private MethodInfo m_RemoveComponentMethod;
+
+        private readonly Dictionary<Type, int> m_ComponentIndices = new Dictionary<Type, int>();
 
         private EntitySystem m_EntitySystem;
+
+        #region Presentation Methods
 
         protected override PresentationResult OnInitialize()
         {
@@ -65,6 +73,13 @@ namespace Syadeu.Presentation.Components
 
             return base.OnInitialize();
         }
+        protected override PresentationResult OnInitializeAsync()
+        {
+            m_RemoveComponentMethod = TypeHelper.TypeOf<EntityComponentSystem>.Type.GetMethod(nameof(RemoveComponent),
+                new Type[] { TypeHelper.TypeOf<EntityData<IEntityData>>.Type });
+
+            return base.OnInitializeAsync();
+        }
         private bool CollectTypes<T>(Type t)
         {
             if (t.IsAbstract || t.IsInterface) return false;
@@ -91,27 +106,11 @@ namespace Syadeu.Presentation.Components
         private void Bind(EntitySystem other)
         {
             m_EntitySystem = other;
-
-            m_EntitySystem.OnEntityDestroy += M_EntitySystem_OnEntityDestroy;
-        }
-        private void M_EntitySystem_OnEntityDestroy(EntityData<IEntityData> obj)
-        {
-            foreach (var item in m_ComponentIndices.Keys)
-            {
-                int2 index = GetIndex(item, obj);
-                if (!m_ComponentBuffer[index.x].Find(obj, ref index.y))
-                {
-                    continue;
-                }
-
-                m_ComponentBuffer[index.x].m_OccupiedBuffer[index.y] = false;
-                $"{item.Name} component at {obj.Name} removed".ToLog();
-            }
         }
 
         #endregion
 
-        private readonly Dictionary<Type, int> m_ComponentIndices = new Dictionary<Type, int>();
+        #endregion
 
         private int GetComponentIndex<TComponent>() => GetComponentIndex(TypeHelper.TypeOf<TComponent>.Type);
         private int GetComponentIndex(Type t)
@@ -125,7 +124,7 @@ namespace Syadeu.Presentation.Components
 
             return componentIdx;
         }
-        private int GetEntityIndex(int componentIdx, EntityData<IEntityData> entity)
+        private int GetEntityIndex(EntityData<IEntityData> entity)
         {
             int idx = math.abs(entity.GetHashCode()) % EntityComponentBuffer.c_InitialCount;
             return idx;
@@ -134,7 +133,7 @@ namespace Syadeu.Presentation.Components
         {
             int
                 cIdx = GetComponentIndex(t),
-                eIdx = GetEntityIndex(cIdx, entity);
+                eIdx = GetEntityIndex(entity);
 
             return new int2(cIdx, eIdx);
         }
@@ -142,7 +141,7 @@ namespace Syadeu.Presentation.Components
         {
             int
                 cIdx = GetComponentIndex<TComponent>(),
-                eIdx = GetEntityIndex(cIdx, entity);
+                eIdx = GetEntityIndex(entity);
 
             return new int2(cIdx, eIdx);
         }
@@ -183,6 +182,7 @@ namespace Syadeu.Presentation.Components
             return data;
         }
         public void RemoveComponent<TComponent>(EntityData<IEntityData> entity)
+            where TComponent : unmanaged, IEntityComponent
         {
             int2 index = GetIndex<TComponent>(entity);
 
@@ -197,6 +197,32 @@ namespace Syadeu.Presentation.Components
             }
 
             m_ComponentBuffer[index.x].m_OccupiedBuffer[index.y] = false;
+
+            unsafe
+            {
+                TComponent* buffer = (TComponent*)m_ComponentBuffer[index.x].m_ComponentBuffer;
+                if (buffer[index.y] is IDisposable disposable)
+                {
+                    disposable.Dispose();
+                }
+            }
+
+            $"{TypeHelper.TypeOf<TComponent>.Name} component at {entity.Name} removed".ToLog();
+        }
+        public void RemoveComponent(EntityData<IEntityData> entity, Type componentType)
+        {
+            MethodInfo method = m_RemoveComponentMethod.MakeGenericMethod(componentType);
+            method.Invoke(this, new object[] { entity });
+        }
+        public void RemoveComponent(ObjectBase obj, Type interfaceType)
+        {
+            const string c_Parent = "Parent";
+
+            PropertyInfo property = interfaceType
+                .GetProperty(c_Parent, TypeHelper.TypeOf<EntityData<IEntityData>>.Type);
+
+            EntityData<IEntityData> entity = (EntityData<IEntityData>)property.GetValue(obj);
+            RemoveComponent(entity, interfaceType.GetGenericArguments().First());
         }
         public bool HasComponent<TComponent>(EntityData<IEntityData> entity) 
             where TComponent : unmanaged, IEntityComponent
@@ -215,7 +241,24 @@ namespace Syadeu.Presentation.Components
 
             return true;
         }
-        public TComponent GetComponent<TComponent>(EntityData<IEntityData> entity) where TComponent : unmanaged, IEntityComponent
+        public bool HasComponent(EntityData<IEntityData> entity, Type componentType)
+        {
+            int2 index = GetIndex(componentType, entity);
+
+            if (!m_ComponentBuffer[index.x].IsCreated)
+            {
+                throw new Exception();
+            }
+
+            if (!m_ComponentBuffer[index.x].Find(entity, ref index.y))
+            {
+                return false;
+            }
+
+            return true;
+        }
+        public TComponent GetComponent<TComponent>(EntityData<IEntityData> entity) 
+            where TComponent : unmanaged, IEntityComponent
         {
             int2 index = GetIndex<TComponent>(entity);
 
@@ -257,6 +300,8 @@ namespace Syadeu.Presentation.Components
 
             return UnsafeUtility.SizeOf(temp) - UnsafeUtility.SizeOf(t);
         }
+
+        #region Inner Classes
 
         [StructLayout(LayoutKind.Sequential)]
         private struct AlignOfHelper<T> where T : struct
@@ -390,6 +435,8 @@ namespace Syadeu.Presentation.Components
                 UnsafeUtility.Free(m_ComponentBuffer, Allocator.Persistent);
             }
         }
+
+        #endregion
     }
 
     public delegate void EntityComponentDelegate<TEntity, TComponent>(in TEntity entity, in TComponent component) where TComponent : unmanaged, IEntityComponent;

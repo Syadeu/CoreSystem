@@ -14,26 +14,22 @@ namespace Syadeu.Presentation.Actor
     public abstract class ActorProviderBase : DataObjectBase, IActorProvider
     {
         [JsonIgnore] private bool m_Initialized = false;
-        [JsonIgnore] private Entity<ActorEntity> m_Parent = Entity<ActorEntity>.Empty;
-        [JsonIgnore] private ActorControllerAttribute m_Controller = null;
+        [JsonIgnore] private EntityData<IEntityData> m_Parent = EntityData<IEntityData>.Empty;
 
         [JsonIgnore] private PresentationSystemID<EventSystem> m_EventSystem;
         [JsonIgnore] private PresentationSystemID<EntitySystem> m_EntitySystem;
         [JsonIgnore] private PresentationSystemID<CoroutineSystem> m_CoroutineSystem;
 
-        [JsonIgnore] protected Entity<ActorEntity> Parent => m_Parent;
-        [JsonIgnore] protected virtual Type[] ReceiveEventOnly => null;
+        [JsonIgnore] public EntityData<IEntityData> Parent => m_Parent;
+        [JsonIgnore] protected ActorControllerComponent Component => m_Parent.GetComponent<ActorControllerComponent>();
 
         [JsonIgnore] protected PresentationSystemID<EventSystem> EventSystem => m_EventSystem;
         [JsonIgnore] protected PresentationSystemID<CoroutineSystem> CoroutineSystem => m_CoroutineSystem;
 
-        [JsonIgnore] Type[] IActorProvider.ReceiveEventOnly => ReceiveEventOnly;
-
-        void IActorProvider.Bind(Entity<ActorEntity> parent, ActorControllerAttribute actorController,
+        void IActorProvider.Bind(EntityData<IEntityData> parent,
             EventSystem eventSystem, EntitySystem entitySystem, CoroutineSystem coroutineSystem)
         {
             m_Parent = parent;
-            m_Controller = actorController;
 
             m_EventSystem = eventSystem.SystemID;
             m_EntitySystem = entitySystem.SystemID;
@@ -71,7 +67,7 @@ namespace Syadeu.Presentation.Actor
         protected override void OnDispose()
         {
             m_Initialized = false;
-            m_Parent = Entity<ActorEntity>.Empty;
+            m_Parent = EntityData<IEntityData>.Empty;
         }
 
         protected virtual void OnEventReceived<TEvent>(TEvent ev)
@@ -93,7 +89,7 @@ namespace Syadeu.Presentation.Actor
             where TEvent : unmanaged, IActorEvent
 #endif
         {
-            m_Controller.ScheduleEvent(ev);
+            Component.ScheduleEvent(ev);
         }
         protected void PostEvent<TEvent>(TEvent ev)
 #if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -102,13 +98,11 @@ namespace Syadeu.Presentation.Actor
             where TEvent : unmanaged, IActorEvent
 #endif
         {
-            m_Controller.PostEvent(ev);
+            Component.PostEvent(ev);
         }
         protected Instance<T> GetProvider<T>() where T : ActorProviderBase
         {
-            if (m_Controller == null) return Instance<T>.Empty;
-
-            return m_Controller.GetProvider<T>();
+            return Component.GetProvider<T>();
         }
 
         protected CoroutineJob StartCoroutine<T>(T coroutine) where T : struct, ICoroutineJob

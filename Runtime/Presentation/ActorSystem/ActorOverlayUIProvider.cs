@@ -167,7 +167,7 @@ namespace Syadeu.Presentation.Actor
 
             m_InstanceObject = Instance<UIObjectEntity>.CreateInstance(m_Prefab);
             m_InstanceObject.transform.position = entity.transform.position + m_Offset;
-            m_InstanceObject.GetAttribute<ActorOverlayUIAttributeBase>().UICreated(Parent);
+            m_InstanceObject.GetAttribute<ActorOverlayUIAttributeBase>().UICreated(Parent.As<IEntityData, ActorEntity>());
 
             if (m_UpdateType != UpdateType.Manual)
             {

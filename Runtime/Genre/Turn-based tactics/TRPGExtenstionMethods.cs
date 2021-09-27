@@ -12,15 +12,15 @@ namespace Syadeu.Presentation.TurnTable
         }
         public static void Attack(this Entity<ActorEntity> other, int index, string targetStatName = "HP")
         {
-            var ctr = other.GetController();
-            if (ctr == null)
+            //var ctr = other.GetController();
+            if (!other.HasComponent<ActorControllerComponent>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"This entity({other.Name}) doesn\'t have any {nameof(ActorControllerAttribute)}.");
+                    $"This entity({other.Name}) doesn\'t have any {nameof(ActorControllerComponent)}.");
                 return;
             }
 
-            Instance<TRPGActorAttackProvider> attProvider = ctr.GetProvider<TRPGActorAttackProvider>();
+            Instance<TRPGActorAttackProvider> attProvider = other.GetComponent<ActorControllerComponent>().GetProvider<TRPGActorAttackProvider>();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (attProvider.IsEmpty())
             {

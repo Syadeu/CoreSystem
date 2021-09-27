@@ -46,19 +46,17 @@ namespace Syadeu.Presentation.TurnTable
 
         void IActorEvent.OnExecute(Entity<ActorEntity> from)
         {
-            var ctr = from.GetAttribute<ActorControllerAttribute>();
-            if (ctr == null)
+            if (!from.HasComponent<ActorControllerComponent>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Target entity({m_Target.Name}) doesn\'t have any {nameof(ActorControllerAttribute)}.");
+                    $"Target entity({m_Target.Name}) doesn\'t have any {nameof(ActorControllerComponent)}.");
                 return;
             }
 
-            var weapon = ctr.GetProvider<ActorWeaponProvider>();
-            if (weapon.IsEmpty())
+            if (!from.HasComponent<ActorWeaponComponent>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                       $"Target entity({m_Target.Name}) doesn\'t have any {nameof(ActorWeaponProvider)}.");
+                       $"Target entity({m_Target.Name}) doesn\'t have any {nameof(ActorWeaponComponent)}.");
                 return;
             }
 
@@ -71,7 +69,9 @@ namespace Syadeu.Presentation.TurnTable
                 return;
             }
 
-            m_Damage = Mathf.RoundToInt(weapon.Object.WeaponDamage);
+            ActorWeaponComponent weaponComponent = from.GetComponent<ActorWeaponComponent>();
+
+            m_Damage = Mathf.RoundToInt(weaponComponent.WeaponDamage);
 
             //int hp = stat.GetValue<int>(m_StatNameHash);
             //hp -= m_Damage;

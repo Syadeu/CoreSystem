@@ -1,9 +1,12 @@
 ﻿using System;
+using Unity.Burst;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Jobs;
 using Unity.Jobs.LowLevel.Unsafe;
 
 namespace Syadeu.Presentation.Entities
 {
+    [JobProducerType(typeof(IJobParallelForEntitiesExtensions.JobParallelForEntitiesProducer<>))]
     public interface IJobParallelForEntities
     {
         void Execute(int length);
@@ -11,7 +14,7 @@ namespace Syadeu.Presentation.Entities
 
     public static class IJobParallelForEntitiesExtensions
     {
-        internal struct JobParallelForBatchProducer<T> where T : struct, IJobParallelForEntities
+        internal struct JobParallelForEntitiesProducer<T> where T : struct, IJobParallelForEntities
         {
             static IntPtr s_JobReflectionData;
 
@@ -51,6 +54,32 @@ namespace Syadeu.Presentation.Entities
                     }
                 }
             }
+        }
+
+        public static JobHandle Schedule<T>(this T jobData, [NoAlias] int length, [NoAlias] int innerloopBatchCount, 
+            JobHandle dependsOn = new JobHandle())
+            where T : struct, IJobParallelForEntities
+        {
+            unsafe
+            {
+                return ScheduleInternal(ref jobData, innerloopBatchCount, length, dependsOn);
+            }
+        }
+
+        private static unsafe JobHandle ScheduleInternal<T>(ref T jobData,
+            [NoAlias] int innerloopBatchCount,
+            [NoAlias] int length,
+            JobHandle dependsOn) 
+            
+            where T : struct, IJobParallelForEntities
+        {
+            var scheduleParams = new JobsUtility.JobScheduleParameters(
+                UnsafeUtility.AddressOf(ref jobData),
+                JobParallelForEntitiesProducer<T>.Initialize(), dependsOn,
+                ScheduleMode.Parallel);
+
+            return JobsUtility.ScheduleParallelFor(ref scheduleParams, innerloopBatchCount,
+                length);
         }
     }
 }

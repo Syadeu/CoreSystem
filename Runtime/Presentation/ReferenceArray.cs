@@ -1,4 +1,6 @@
-﻿using System;
+﻿#undef ENABLE_UNITY_COLLECTIONS_CHECKS
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
