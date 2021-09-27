@@ -179,12 +179,12 @@ namespace Syadeu.Presentation.Actor
             EventHandlerFactory<TEvent>();
             handler = new EventHandler<TEvent>();
         }
-    }
 
-    public delegate void ActorEventDelegate<TEvent>(TEvent ev)
+        public delegate void ActorEventDelegate<TEvent>(TEvent ev)
 #if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             where TEvent : struct, IActorEvent;
 #else
             where TEvent : unmanaged, IActorEvent;
 #endif
+    }
 }

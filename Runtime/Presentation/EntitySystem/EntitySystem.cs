@@ -75,6 +75,7 @@ namespace Syadeu.Presentation
         {
             for (int i = 0; i < m_DestroyedObjectsInThisFrame.Count; i++)
             {
+                ((IDisposable)m_ObjectEntities[m_DestroyedObjectsInThisFrame[i]]).Dispose();
                 m_ObjectEntities.Remove(m_DestroyedObjectsInThisFrame[i]);
             }
 
@@ -236,7 +237,6 @@ namespace Syadeu.Presentation
             m_EntityGameObjects.Remove(obj.m_Hash);
 
             m_DestroyedObjectsInThisFrame.Add(entityHash);
-            //m_ObjectEntities.Remove(entityHash);
         }
         private void OnDataObjectVisible(ProxyTransform tr)
         {
@@ -609,14 +609,14 @@ namespace Syadeu.Presentation
             if (TypeHelper.TypeOf<EntityBase>.Type.IsAssignableFrom(objType))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"You should you {nameof(CreateEntity)} on create entity({obj.Name}). This will be slightly cared.");
+                    $"You should you {nameof(CreateEntity)} on create entity({obj.Name}). This will be slightly cared but not in build.");
                 Entity<IEntity> entity = CreateEntity(obj.Hash, float3.zero);
                 return new Instance(entity.Idx);
             }
             else if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(objType))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"You should you {nameof(CreateObject)} on create entity({obj.Name}). This will be slightly cared.");
+                    $"You should you {nameof(CreateObject)} on create entity({obj.Name}). This will be slightly cared but not in build.");
                 EntityData<IEntityData> entity = CreateObject(obj.Hash);
                 return new Instance(entity.Idx);
             }
@@ -656,6 +656,7 @@ namespace Syadeu.Presentation
         public void DestroyObject(Instance instance) => InternalDestroyEntity(instance.Idx);
         internal void InternalDestroyEntity(in Hash hash)
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (!m_ObjectEntities.ContainsKey(hash))
             {
                 if (!CoreSystem.BlockCreateInstance)
@@ -676,7 +677,7 @@ namespace Syadeu.Presentation
                 
                 return;
             }
-
+#endif
             if (m_ObjectEntities[hash] is IEntityData entityData)
             {
                 ProcessEntityOnDestroy(this, entityData);
@@ -710,8 +711,6 @@ namespace Syadeu.Presentation
                 m_ComponentSystem.RemoveComponent(m_ObjectEntities[hash], interfaceType);
             }
 
-            ((IDisposable)m_ObjectEntities[hash]).Dispose();
-            //m_ObjectEntities.Remove(hash);
             m_DestroyedObjectsInThisFrame.Add(hash);
         }
 
