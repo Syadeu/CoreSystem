@@ -22,7 +22,20 @@ namespace Syadeu.Presentation
         {
             get
             {
-                if (IsNull() || !IsValid()) return null;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                if (IsNull())
+                {
+                    CoreSystem.Logger.LogError(Channel.Presentation,
+                        $"Cannot retrived system. ID is null.");
+                    return null;
+                }
+                else if (!IsValid())
+                {
+                    CoreSystem.Logger.LogError(Channel.Presentation,
+                        $"Cannot retrived system. ID is invalid.");
+                    return null;
+                }
+#endif
 
                 var g = PresentationManager.Instance.m_PresentationGroups[m_GroupIndex];
                 return g.Systems[m_SystemIndex];
@@ -64,6 +77,7 @@ namespace Syadeu.Presentation
         {
             get
             {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                 if (IsNull())
                 {
                     CoreSystem.Logger.LogError(Channel.Presentation,
@@ -76,7 +90,7 @@ namespace Syadeu.Presentation
                         $"Cannot retrived system {TypeHelper.TypeOf<T>.Name}. ID is invalid.");
                     return null;
                 }
-
+#endif
                 var g = PresentationManager.Instance.m_PresentationGroups[m_GroupIndex];
                 return (T)g.Systems[m_SystemIndex];
             }

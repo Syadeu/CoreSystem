@@ -1,6 +1,8 @@
-﻿namespace Syadeu.Presentation.TurnTable
+﻿using System;
+
+namespace Syadeu.Presentation.TurnTable
 {
-    public interface ITurnPlayer
+    public interface ITurnPlayer : IEquatable<ITurnPlayer>
     {
         //string name { get; }
         //Transform transform { get; }

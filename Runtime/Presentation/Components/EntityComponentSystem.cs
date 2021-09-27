@@ -257,7 +257,7 @@ namespace Syadeu.Presentation.Components
 
             return true;
         }
-        public TComponent GetComponent<TComponent>(EntityData<IEntityData> entity) 
+        public ref TComponent GetComponent<TComponent>(EntityData<IEntityData> entity) 
             where TComponent : unmanaged, IEntityComponent
         {
             int2 index = GetIndex<TComponent>(entity);
@@ -271,10 +271,9 @@ namespace Syadeu.Presentation.Components
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"Entity({entity.Name}) doesn\'t have component({TypeHelper.TypeOf<TComponent>.Name})");
-                return default(TComponent);
             }
 
-            return ((TComponent*)m_ComponentBuffer[index.x].m_ComponentBuffer)[index.y];
+            return ref ((TComponent*)m_ComponentBuffer[index.x].m_ComponentBuffer)[index.y];
         }
 
         public QueryBuilder<TComponent> CreateQueryBuilder<TComponent>() where TComponent : unmanaged, IEntityComponent

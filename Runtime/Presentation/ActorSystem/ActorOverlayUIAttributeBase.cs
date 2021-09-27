@@ -7,7 +7,7 @@ namespace Syadeu.Presentation.Actor
     [AttributeAcceptOnly(typeof(UIObjectEntity))]
     public abstract class ActorOverlayUIAttributeBase : AttributeBase
     {
-        [JsonIgnore] protected Entity<ActorEntity> ParentEntity { get; private set; }
+        [JsonIgnore] public Entity<ActorEntity> ParentEntity { get; private set; }
 
         internal void UICreated(Entity<ActorEntity> parent)
         {

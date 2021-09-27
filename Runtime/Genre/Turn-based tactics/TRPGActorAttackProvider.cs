@@ -11,6 +11,7 @@ namespace Syadeu.Presentation.TurnTable
     public sealed class TRPGActorAttackProvider : ActorAttackProvider
     {
         [JsonProperty(Order = 0, PropertyName = "AttackRange")] private int m_AttackRange;
+        [JsonProperty(Order = 1, PropertyName = "DefaultConsumeAP")] private int m_DefaultConsumeAP = 1;
 
         [JsonIgnore] public int AttackRange => m_AttackRange;
         /// <summary>

@@ -750,6 +750,8 @@ namespace Syadeu.Presentation
 
 #line default
 
+        public int CreateHashCode() => m_Random.NextInt(int.MinValue, int.MaxValue);
+
         #region Processor
         private static void ProcessEntityOnCreated(EntitySystem system, IEntityData entity)
         {
