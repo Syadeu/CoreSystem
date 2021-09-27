@@ -74,6 +74,9 @@ namespace Syadeu.Presentation.Actions
                         m_CurrentAction.Terminate = action.InternalTerminate;
                         m_CurrentAction.Sequence = sequence;
 
+                        CoreSystem.Logger.Log(Channel.Action,
+                                $"Execute scheduled action({temp.action.GetObject().GetType().Name}: {temp.action.GetObject().Name})");
+
                         action.InternalExecute();
 
                         // Early out
@@ -82,22 +85,17 @@ namespace Syadeu.Presentation.Actions
                             action.InternalTerminate();
                             m_CurrentAction.Clear();
 
-                            CoreSystem.Logger.Log(Channel.Action,
-                                $"Execute scheduled action({temp.action.GetObject().GetType().Name}: {temp.action.GetObject().Name})");
                             return SystemEventResult.Success;
                         }
-
-                        CoreSystem.Logger.Log(Channel.Action,
-                            $"Execute scheduled action({temp.action.GetObject().GetType().Name}: {temp.action.GetObject().Name}) with awaits.");
 
                         return SystemEventResult.Wait;
                     }
 
-                    action.InternalExecute();
-                    action.InternalTerminate();
-
                     CoreSystem.Logger.Log(Channel.Action,
                         $"Execute scheduled action({temp.action.GetObject().GetType().Name}: {temp.action.GetObject().Name})");
+
+                    action.InternalExecute();
+                    action.InternalTerminate();
 
                     return SystemEventResult.Success;
                 case ActionType.Trigger:
@@ -108,6 +106,9 @@ namespace Syadeu.Presentation.Actions
                         m_CurrentAction.Terminate = triggerAction.InternalTerminate;
                         m_CurrentAction.Sequence = triggerActionSequence;
 
+                        CoreSystem.Logger.Log(Channel.Action,
+                                $"Execute scheduled action({temp.action.GetObject().GetType().Name}: {temp.action.GetObject().Name})");
+
                         triggerAction.InternalExecute(temp.entity);
 
                         // Early out
@@ -116,22 +117,17 @@ namespace Syadeu.Presentation.Actions
                             triggerAction.InternalTerminate();
                             m_CurrentAction.Clear();
 
-                            CoreSystem.Logger.Log(Channel.Action,
-                                $"Execute scheduled action({temp.action.GetObject().GetType().Name}: {temp.action.GetObject().Name})");
                             return SystemEventResult.Success;
                         }
-
-                        CoreSystem.Logger.Log(Channel.Action,
-                            $"Execute scheduled action({temp.action.GetObject().GetType().Name}: {temp.action.GetObject().Name}) with awaits.");
 
                         return SystemEventResult.Wait;
                     }
 
-                    triggerAction.InternalExecute(temp.entity);
-                    triggerAction.InternalTerminate();
-
                     CoreSystem.Logger.Log(Channel.Action,
                         $"Execute scheduled action({temp.action.GetObject().GetType().Name}: {temp.action.GetObject().Name})");
+
+                    triggerAction.InternalExecute(temp.entity);
+                    triggerAction.InternalTerminate();
 
                     return SystemEventResult.Success;
             }

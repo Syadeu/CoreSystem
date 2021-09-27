@@ -1241,6 +1241,7 @@ namespace Syadeu
                 //ThreadAwaiter(10);
                 m_SimWatcher.Reset();
 
+                UnityEngine.Profiling.Profiler.EndThreadProfiling("Syadeu", "CoreSystem");
                 if (s_BlockCreateInstance) break;
             }
         }

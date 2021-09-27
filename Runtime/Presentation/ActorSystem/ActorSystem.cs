@@ -109,10 +109,12 @@ namespace Syadeu.Presentation.Actor
         SystemEventResult ISystemEventScheduler.Execute()
         {
             IEventHandler handler = m_ScheduledEvents.Dequeue();
-            handler.Post();
 
             CoreSystem.Logger.Log(Channel.Action,
                 $"Execute scheduled actor event({handler.GetEventName()})");
+
+            handler.Post();
+
             return SystemEventResult.Success;
         }
 

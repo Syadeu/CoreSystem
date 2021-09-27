@@ -251,6 +251,9 @@ namespace Syadeu.Presentation.Events
             SynchronizedEventBase ev = m_ScheduledEvents.Dequeue();
             if (ev.IsValid())
             {
+                CoreSystem.Logger.Log(Channel.Action,
+                    $"Execute scheduled event({ev.GetType().Name})");
+
                 try
                 {
                     ev.InternalPost();
@@ -265,9 +268,6 @@ namespace Syadeu.Presentation.Events
                 CoreSystem.Logger.Log(Channel.Event,
                     $"Posted event : {ev.GetType().Name}");
             }
-
-            CoreSystem.Logger.Log(Channel.Action,
-                $"Execute scheduled event({ev.GetType().Name})");
 
             return SystemEventResult.Success;
         }
