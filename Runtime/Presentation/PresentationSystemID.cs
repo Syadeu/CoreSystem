@@ -1,4 +1,5 @@
 ﻿using Syadeu.Database;
+using Syadeu.Internal;
 using Syadeu.Presentation.Internal;
 using System;
 
@@ -63,7 +64,18 @@ namespace Syadeu.Presentation
         {
             get
             {
-                if (IsNull() || !IsValid()) return null;
+                if (IsNull())
+                {
+                    CoreSystem.Logger.LogError(Channel.Presentation,
+                        $"Cannot retrived system {TypeHelper.TypeOf<T>.Name}. ID is null.");
+                    return null;
+                }
+                else if (!IsValid())
+                {
+                    CoreSystem.Logger.LogError(Channel.Presentation,
+                        $"Cannot retrived system {TypeHelper.TypeOf<T>.Name}. ID is invalid.");
+                    return null;
+                }
 
                 var g = PresentationManager.Instance.m_PresentationGroups[m_GroupIndex];
                 return (T)g.Systems[m_SystemIndex];

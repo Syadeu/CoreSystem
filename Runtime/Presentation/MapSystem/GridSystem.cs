@@ -94,6 +94,7 @@ namespace Syadeu.Presentation.Map
 
                     positions = GridPosition4.Empty
                 });
+                "add grid size component in".ToLog();
             }
             else
             {
