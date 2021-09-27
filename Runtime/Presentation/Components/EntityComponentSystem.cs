@@ -5,6 +5,7 @@ using Syadeu.Presentation.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using Unity.Burst;
 using Unity.Collections;
@@ -187,6 +188,7 @@ namespace Syadeu.Presentation.Components
             return data;
         }
         public void RemoveComponent<TComponent>(EntityData<IEntityData> entity)
+            where TComponent : unmanaged, IEntityComponent
         {
             int2 index = GetIndex<TComponent>(entity);
 
@@ -201,6 +203,23 @@ namespace Syadeu.Presentation.Components
             }
 
             m_ComponentBuffer[index.x].m_OccupiedBuffer[index.y] = false;
+
+            unsafe
+            {
+                TComponent* buffer = (TComponent*)m_ComponentBuffer[index.x].m_ComponentBuffer;
+                if (buffer[index.y] is IDisposable disposable)
+                {
+                    disposable.Dispose();
+                }
+            }
+        }
+        public void RemoveComponent(EntityData<IEntityData> entity, Type componentType)
+        {
+            MethodInfo method = TypeHelper.TypeOf<EntityComponentSystem>.Type.GetMethod(nameof(RemoveComponent),
+                new Type[] { TypeHelper.TypeOf<EntityData<IEntityData>>.Type });
+
+            method =  method.MakeGenericMethod(componentType);
+            method.Invoke(this, new object[] { entity });
         }
         public bool HasComponent<TComponent>(EntityData<IEntityData> entity) 
             where TComponent : unmanaged, IEntityComponent
@@ -219,7 +238,24 @@ namespace Syadeu.Presentation.Components
 
             return true;
         }
-        public TComponent GetComponent<TComponent>(EntityData<IEntityData> entity) where TComponent : unmanaged, IEntityComponent
+        public bool HasComponent(EntityData<IEntityData> entity, Type componentType)
+        {
+            int2 index = GetIndex(componentType, entity);
+
+            if (!m_ComponentBuffer[index.x].IsCreated)
+            {
+                throw new Exception();
+            }
+
+            if (!m_ComponentBuffer[index.x].Find(entity, ref index.y))
+            {
+                return false;
+            }
+
+            return true;
+        }
+        public TComponent GetComponent<TComponent>(EntityData<IEntityData> entity) 
+            where TComponent : unmanaged, IEntityComponent
         {
             int2 index = GetIndex<TComponent>(entity);
 
@@ -401,4 +437,10 @@ namespace Syadeu.Presentation.Components
     }
 
     public delegate void EntityComponentDelegate<TEntity, TComponent>(in TEntity entity, in TComponent component) where TComponent : unmanaged, IEntityComponent;
+
+    public interface INotifyComponent<TComponent>
+        where TComponent : unmanaged, IEntityComponent
+    {
+        //TComponent GetComponent();
+    }
 }

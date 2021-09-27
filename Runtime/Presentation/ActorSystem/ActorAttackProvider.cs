@@ -74,10 +74,11 @@ namespace Syadeu.Presentation.Actor
         }
         protected void AttackEventHandler(IActorAttackEvent ev)
         {
-            Instance<ActorWeaponProvider> weaponProvider = GetProvider<ActorWeaponProvider>();
-            if (weaponProvider.IsEmpty()) return;
+            if (!Parent.HasComponent<ActorWeaponComponent>()) return;
 
-            Instance<ActorWeaponData> currentWeaponIns = weaponProvider.Object.SelectedWeapon;
+            ActorWeaponComponent component = Parent.GetComponent<ActorWeaponComponent>();
+
+            Instance<ActorWeaponData> currentWeaponIns = component.SelectedWeapon;
             if (currentWeaponIns.IsEmpty() || !currentWeaponIns.IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Entity, $"Entity({Parent.Name}) current weapon is invalid");
@@ -87,8 +88,6 @@ namespace Syadeu.Presentation.Actor
             EntityData<IEntityData>
                     parent = Parent.As<ActorEntity, IEntityData>(),
                     target = ev.Target.As<ActorEntity, IEntityData>();
-
-            
 
             if (m_OnAttack.Schedule(parent, target))
             {

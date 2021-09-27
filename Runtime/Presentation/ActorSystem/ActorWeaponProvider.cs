@@ -2,6 +2,7 @@
 using Syadeu.Internal;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Attributes;
+using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Proxy;
 using System;
@@ -15,74 +16,52 @@ namespace Syadeu.Presentation.Actor
 {
     [DisplayName("ActorProvider: Weapon Provider")]
     [ActorProviderRequire(typeof(ActorInventoryProvider))]
-    public class ActorWeaponProvider : ActorProviderBase
+    public sealed class ActorWeaponProvider : ActorProviderBase,
+        INotifyComponent<ActorWeaponComponent>
     {
         [Header("Accept Weapon Types")]
         [JsonProperty(Order = 0, PropertyName = "ExcludeWeapon")]
-        protected Reference<ActorWeaponData>[] m_ExcludeWeapon = Array.Empty<Reference<ActorWeaponData>>();
+        internal Reference<ActorWeaponData>[] m_ExcludeWeapon = Array.Empty<Reference<ActorWeaponData>>();
         [JsonProperty(Order = 1, PropertyName = "IncludeWeapon")]
-        protected Reference<ActorWeaponData>[] m_IncludeWeapon = Array.Empty<Reference<ActorWeaponData>>();
+        internal Reference<ActorWeaponData>[] m_IncludeWeapon = Array.Empty<Reference<ActorWeaponData>>();
         [JsonProperty(Order = 2, PropertyName = "ExcludeWeaponType")]
-        protected Reference<ActorWeaponTypeData>[] m_ExcludeWeaponType = Array.Empty<Reference<ActorWeaponTypeData>>();
+        internal Reference<ActorWeaponTypeData>[] m_ExcludeWeaponType = Array.Empty<Reference<ActorWeaponTypeData>>();
         [JsonProperty(Order = 3, PropertyName = "IncludeWeaponType")]
-        protected Reference<ActorWeaponTypeData>[] m_IncludeWeaponType = Array.Empty<Reference<ActorWeaponTypeData>>();
+        internal Reference<ActorWeaponTypeData>[] m_IncludeWeaponType = Array.Empty<Reference<ActorWeaponTypeData>>();
 
         [Header("General")]
         [JsonProperty(Order = 4, PropertyName = "DefaultWeapon")]
-        protected Reference<ActorWeaponData> m_DefaultWeapon = Reference<ActorWeaponData>.Empty;
+        internal Reference<ActorWeaponData> m_DefaultWeapon = Reference<ActorWeaponData>.Empty;
         [Tooltip("최대로 착용할 수 있는 무기의 개수입니다. 0과 같거나 작을 수 없습니다.")]
         [JsonProperty(Order = 5, PropertyName = "MaxEquipableCount")]
-        protected int m_MaxEquipableCount = 1;
+        internal int m_MaxEquipableCount = 1;
 
         [Header("Weapon Position")]
         [JsonProperty(Order = 6, PropertyName = "UseBone")]
-        protected bool m_UseBone = true;
+        internal bool m_UseBone = true;
         [JsonProperty(Order = 7, PropertyName = "AttachedBone")]
-        protected HumanBodyBones m_AttachedBone = HumanBodyBones.RightHand;
+        internal HumanBodyBones m_AttachedBone = HumanBodyBones.RightHand;
         [JsonProperty(Order = 8, PropertyName = "WeaponPosOffset")]
-        protected float3 m_WeaponPosOffset = float3.zero;
+        internal float3 m_WeaponPosOffset = float3.zero;
         [JsonProperty(Order = 9, PropertyName = "WeaponRotOffset")]
-        protected float3 m_WeaponRotOffset = float3.zero;
+        internal float3 m_WeaponRotOffset = float3.zero;
 
         [Header("TriggerAction")]
         [JsonProperty(Order = 10, PropertyName = "OnWeaponSelected")]
-        protected Reference<TriggerAction>[] m_OnWeaponSelected = Array.Empty<Reference<TriggerAction>>();
+        internal Reference<TriggerAction>[] m_OnWeaponSelected = Array.Empty<Reference<TriggerAction>>();
         [JsonProperty(Order = 11, PropertyName = "OnEquipWeapon")]
-        protected Reference<TriggerAction>[] m_OnEquipWeapon = Array.Empty<Reference<TriggerAction>>();
+        internal Reference<TriggerAction>[] m_OnEquipWeapon = Array.Empty<Reference<TriggerAction>>();
         [JsonProperty(Order = 12, PropertyName = "OnUnequipWeapon")]
-        protected Reference<TriggerAction>[] m_OnUnequipWeapon = Array.Empty<Reference<TriggerAction>>();
-
-        [JsonIgnore] private CoroutineJob m_WeaponPoser = CoroutineJob.Null;
-
-        [JsonIgnore] private Instance<ActorWeaponData> m_DefaultWeaponInstance = Instance<ActorWeaponData>.Empty;
-        [JsonIgnore] private InstanceArray<ActorWeaponData> m_EquipedWeapons;
-        [JsonIgnore] private int m_SelectedWeaponIndex = 0;
-
-        [JsonIgnore] public InstanceArray<ActorWeaponData> EquipedWeapons => m_EquipedWeapons;
-        [JsonIgnore] public Instance<ActorWeaponData> SelectedWeapon => m_EquipedWeapons[m_SelectedWeaponIndex];
-        [JsonIgnore] public float WeaponDamage
-        {
-            get
-            {
-                if (EquipedWeapons[m_SelectedWeaponIndex].IsEmpty())
-                {
-                    if (m_DefaultWeapon.IsEmpty()) return 0;
-                    else if (!m_DefaultWeapon.IsValid())
-                    {
-                        CoreSystem.Logger.LogError(Channel.Entity,
-                            $"Entity({Parent.Name}) has an invalid default weapon.");
-                        return 0;
-                    }
-
-                    return m_DefaultWeapon.GetObject().Damage;
-                }
-
-                return EquipedWeapons[m_SelectedWeaponIndex].Object.Damage;
-            }
-        }
+        internal Reference<TriggerAction>[] m_OnUnequipWeapon = Array.Empty<Reference<TriggerAction>>();
 
         protected override void OnCreated(Entity<ActorEntity> entity)
         {
+            ActorWeaponComponent component = new ActorWeaponComponent();
+            component.m_Parent = Parent;
+            component.m_Provider = new Instance<ActorWeaponProvider>(Idx);
+
+            component.m_WeaponPoser = CoroutineJob.Null;
+
             if (!entity.HasAttribute<AnimatorAttribute>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
@@ -95,7 +74,7 @@ namespace Syadeu.Presentation.Actor
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"Entity({Parent.Name}) in {nameof(ActorWeaponProvider)} Max Equipable Count must be over 0. Force to set 1");
             }
-            m_EquipedWeapons = new InstanceArray<ActorWeaponData>(m_MaxEquipableCount, Unity.Collections.Allocator.Persistent);
+            component.m_EquipedWeapons = new InstanceArray<ActorWeaponData>(m_MaxEquipableCount, Unity.Collections.Allocator.Persistent);
 
             for (int i = 0; i < m_ExcludeWeapon.Length; i++)
             {
@@ -116,21 +95,17 @@ namespace Syadeu.Presentation.Actor
 
             if (!m_DefaultWeapon.IsEmpty() && m_DefaultWeapon.IsValid())
             {
-                m_DefaultWeaponInstance = m_DefaultWeapon.CreateInstance();
-                m_EquipedWeapons[0] = m_DefaultWeaponInstance;
+                component.m_DefaultWeaponInstance = m_DefaultWeapon.CreateInstance();
+                component.m_EquipedWeapons[0] = component.m_DefaultWeaponInstance;
                 m_OnEquipWeapon.Execute(Parent.As<ActorEntity, IEntityData>());
-                SelectWeapon(0);
+                component.SelectWeapon(0);
             }
+
+            Parent.AddComponent(component);
         }
         protected override void OnDispose()
         {
-            m_EquipedWeapons.Dispose();
-
-            if (!m_WeaponPoser.IsNull() && m_WeaponPoser.IsValid())
-            {
-                m_WeaponPoser.Stop();
-                m_WeaponPoser = CoroutineJob.Null;
-            }
+            Parent.RemoveComponent<ActorWeaponComponent>();
         }
         protected override void OnEventReceived<TEvent>(TEvent ev)
         {
@@ -139,9 +114,11 @@ namespace Syadeu.Presentation.Actor
                 ActorWeaponEquipEventHandler(weaponEquipEvent);
             }
         }
-        protected void ActorWeaponEquipEventHandler(IActorWeaponEquipEvent ev)
+        private void ActorWeaponEquipEventHandler(IActorWeaponEquipEvent ev)
         {
-            if (!IsEquipable(ev.Weapon))
+            ActorWeaponComponent component = Parent.GetComponent<ActorWeaponComponent>();
+
+            if (!component.IsEquipable(ev.Weapon))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"Entity({Parent.Name}) trying to equip weapon({ev.Weapon.Object.Name}) that doesn\'t fit.");
@@ -156,46 +133,46 @@ namespace Syadeu.Presentation.Actor
                 if (inventory == null)
                 {
                     CoreSystem.Logger.Log(Channel.Entity,
-                        $"Destroying weapon instance({SelectedWeapon.Object.Name}) because there\'s no inventory in this actor({Parent.Name}).");
+                        $"Destroying weapon instance({component.SelectedWeapon.Object.Name}) because there\'s no inventory in this actor({Parent.Name}).");
 
-                    if (SelectedWeapon.Equals(m_DefaultWeaponInstance))
+                    if (component.SelectedWeapon.Equals(component.m_DefaultWeaponInstance))
                     {
-                        m_DefaultWeaponInstance = Instance<ActorWeaponData>.Empty;
+                        component.m_DefaultWeaponInstance = Instance<ActorWeaponData>.Empty;
                     }
-                    m_EquipedWeapons[m_SelectedWeaponIndex].Destroy();
+                    component.m_EquipedWeapons[component.m_SelectedWeaponIndex].Destroy();
                 }
                 else
                 {
-                    if (SelectedWeapon.Equals(m_DefaultWeaponInstance))
+                    if (component.SelectedWeapon.Equals(component.m_DefaultWeaponInstance))
                     {
-                        m_EquipedWeapons[m_SelectedWeaponIndex].Destroy();
-                        m_DefaultWeaponInstance = Instance<ActorWeaponData>.Empty;
+                        component.m_EquipedWeapons[component.m_SelectedWeaponIndex].Destroy();
+                        component.m_DefaultWeaponInstance = Instance<ActorWeaponData>.Empty;
                     }
-                    else inventory.Insert(SelectedWeapon.Cast<ActorWeaponData, IObject>());
+                    else inventory.Insert(component.SelectedWeapon.Cast<ActorWeaponData, IObject>());
                 }
 
-                m_EquipedWeapons[m_SelectedWeaponIndex] = ev.Weapon;
+                component.m_EquipedWeapons[component.m_SelectedWeaponIndex] = ev.Weapon;
 
                 m_OnEquipWeapon.Execute(Parent.As<ActorEntity, IEntityData>());
 
                 if ((ev.EquipOptions & ActorWeaponEquipOptions.SelectWeapon) == ActorWeaponEquipOptions.SelectWeapon)
                 {
-                    SelectWeapon(m_SelectedWeaponIndex);
+                    component.SelectWeapon(component.m_SelectedWeaponIndex);
                 }
 
                 CoreSystem.Logger.Log(Channel.Entity,
-                    $"Entity({Parent.Name}) has equiped weapon({SelectedWeapon.Object.Name}).");
+                    $"Entity({Parent.Name}) has equiped weapon({component.SelectedWeapon.Object.Name}).");
             }
             else
             {
                 int emptySpace;
-                if (m_EquipedWeapons[0].Equals(m_DefaultWeaponInstance))
+                if (component.m_EquipedWeapons[0].Equals(component.m_DefaultWeaponInstance))
                 {
-                    m_EquipedWeapons[0].Destroy();
-                    m_DefaultWeaponInstance = Instance<ActorWeaponData>.Empty;
+                    component.m_EquipedWeapons[0].Destroy();
+                    component.m_DefaultWeaponInstance = Instance<ActorWeaponData>.Empty;
                     emptySpace = 0;
                 }
-                else emptySpace = GetEmptyEquipSpace();
+                else emptySpace = GetEmptyEquipSpace(in component);
 
                 if (emptySpace < 0)
                 {
@@ -220,78 +197,60 @@ namespace Syadeu.Presentation.Actor
                 }
                 else
                 {
-                    m_EquipedWeapons[emptySpace] = ev.Weapon;
+                    component.m_EquipedWeapons[emptySpace] = ev.Weapon;
                     m_OnEquipWeapon.Execute(Parent.As<ActorEntity, IEntityData>());
 
                     if ((ev.EquipOptions & ActorWeaponEquipOptions.SelectWeapon) == ActorWeaponEquipOptions.SelectWeapon)
                     {
-                        SelectWeapon(emptySpace);
+                        component.SelectWeapon(emptySpace);
                     }
 
                     CoreSystem.Logger.Log(Channel.Entity,
-                        $"Entity({Parent.Name}) has equiped weapon({SelectedWeapon.Object.Name}).");
+                        $"Entity({Parent.Name}) has equiped weapon({component.SelectedWeapon.Object.Name}).");
                 }
             }
 
-            
+            Parent.AddComponent(component);
         }
 
         protected override void OnProxyCreated(RecycleableMonobehaviour monoObj)
         {
-            if (SelectedWeapon.IsValid() && SelectedWeapon.Object.PrefabInstance.IsValid())
+            ActorWeaponComponent component = Parent.GetComponent<ActorWeaponComponent>();
+
+            if (component.SelectedWeapon.IsValid() && 
+                component.SelectedWeapon.Object.PrefabInstance.IsValid())
             {
-                WeaponPoser weaponPoser = new WeaponPoser(Parent, SelectedWeapon, 
+                WeaponPoser weaponPoser = new WeaponPoser(Parent, component.SelectedWeapon, 
                     m_UseBone, m_AttachedBone, m_WeaponPosOffset, m_WeaponRotOffset);
-                m_WeaponPoser = StartCoroutine(weaponPoser);
+                component.m_WeaponPoser = StartCoroutine(weaponPoser);
+
+                Parent.AddComponent(component);
             }
         }
         protected override void OnProxyRemoved(RecycleableMonobehaviour monoObj)
         {
-            if (!m_WeaponPoser.IsNull() && m_WeaponPoser.IsValid())
+            ActorWeaponComponent component = Parent.GetComponent<ActorWeaponComponent>();
+
+            if (!component.m_WeaponPoser.IsNull() &&
+                component.m_WeaponPoser.IsValid())
             {
-                m_WeaponPoser.Stop();
-                m_WeaponPoser = CoroutineJob.Null;
+                component.m_WeaponPoser.Stop();
+                component.m_WeaponPoser = CoroutineJob.Null;
+
+                Parent.AddComponent(component);
             }
         }
 
-        protected int GetEmptyEquipSpace()
+        private int GetEmptyEquipSpace(in ActorWeaponComponent component)
         {
-            for (int i = 0; i < m_EquipedWeapons.Length; i++)
+            for (int i = 0; i < component.m_EquipedWeapons.Length; i++)
             {
-                if (m_EquipedWeapons[i].IsEmpty())
+                if (component.m_EquipedWeapons[i].IsEmpty())
                 {
                     return i;
                 }
             }
             return -1;
-        }
-
-        public void SelectWeapon(int index)
-        {
-            if (index < 0 || index >= m_MaxEquipableCount)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity, $"{nameof(SelectWeapon)} index out of range. Index {index}.");
-                return;
-            }
-
-            m_SelectedWeaponIndex = index;
-            m_OnWeaponSelected.Execute(Parent.As<ActorEntity, IEntityData>());
-        }
-        public bool IsEquipable(Instance<ActorWeaponData> weapon)
-        {
-            var original = weapon.AsOriginal();
-            var weaponObj = weapon.Object;
-
-            if (m_ExcludeWeaponType.Contains(weaponObj.WeaponType))
-            {
-                if (!m_IncludeWeapon.Contains(original)) return false;
-            }
-            else if (m_IncludeWeaponType.Contains(weaponObj.WeaponType))
-            {
-                if (m_ExcludeWeapon.Contains(original)) return false;
-            }
-
-            return true;
         }
 
         private struct WeaponPoser : ICoroutineJob
