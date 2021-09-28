@@ -33,19 +33,19 @@ namespace Syadeu.Presentation.TurnTable
     {
         protected override void OnInitialize()
         {
-            EventSystem.AddEvent<OnActionPointChangedEvent>(OnActionPointChangedEventHandler);
+            //EventSystem.AddEvent<OnActionPointChangedEvent>(OnActionPointChangedEventHandler);
         }
         protected override void OnDispose()
         {
-            EventSystem.RemoveEvent<OnActionPointChangedEvent>(OnActionPointChangedEventHandler);
+            //EventSystem.RemoveEvent<OnActionPointChangedEvent>(OnActionPointChangedEventHandler);
         }
-        private void OnActionPointChangedEventHandler(OnActionPointChangedEvent ev)
-        {
-            if (!ev.Entity.HasComponent<ActorControllerComponent>()) return;
+        //private void OnActionPointChangedEventHandler(OnActionPointChangedEvent ev)
+        //{
+        //    if (!ev.Entity.HasComponent<ActorControllerComponent>()) return;
 
-            TRPGActorActionPointChangedUIEvent actorEv = new TRPGActorActionPointChangedUIEvent(ev.From, ev.To);
-            ev.Entity.GetComponent<ActorControllerComponent>().PostEvent(actorEv);
-        }
+        //    TRPGActorActionPointChangedUIEvent actorEv = new TRPGActorActionPointChangedUIEvent(ev.From, ev.To);
+        //    ev.Entity.GetComponent<ActorControllerComponent>().PostEvent(actorEv);
+        //}
 
         protected override void OnCreated(TurnPlayerAttribute attribute, EntityData<IEntityData> entity)
         {

@@ -14,17 +14,27 @@ namespace Syadeu.Presentation.Actor
             ParentEntity = parent;
             OnUICreated(parent);
         }
-        internal void UIEventReceived<TEvent>(TEvent ev) where TEvent : IActorOverlayUIEvent
+        internal void UIEventReceived<TEvent>(TEvent ev) 
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
+            where TEvent : struct, IActorEvent
+#else
+            where TEvent : unmanaged, IActorEvent
+#endif
         {
             OnUIEventReceived(ev);
         }
-        internal void EventReceived<TEvent>(TEvent ev) where TEvent : IActorEvent
+        internal void EventReceived<TEvent>(TEvent ev)
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
+            where TEvent : struct, IActorEvent
+#else
+            where TEvent : unmanaged, IActorEvent
+#endif
         {
             OnEventReceived(ev);
         }
 
         protected virtual void OnUICreated(Entity<ActorEntity> parent) { }
-        protected virtual void OnUIEventReceived<TEvent>(TEvent ev) where TEvent : IActorOverlayUIEvent
+        protected virtual void OnUIEventReceived<TEvent>(TEvent ev) where TEvent : IActorEvent
         { }
         protected virtual void OnEventReceived<TEvent>(TEvent ev) where TEvent : IActorEvent
         { }

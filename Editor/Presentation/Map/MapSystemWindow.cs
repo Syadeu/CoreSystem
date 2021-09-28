@@ -1079,7 +1079,10 @@ namespace SyadeuEditor.Presentation.Map
             for (int i = 0; i < obj.Length; i++)
             {
                 m_SelectedObjects[i] = GetMapDataObject(obj[i], out m_SelectedMapData);
-                m_SelectedMapData.SetDirty();
+                if (m_SelectedMapData != null)
+                {
+                    m_SelectedMapData.SetDirty();
+                }
             }
 
             //m_SelectedObjects = GetMapDataObject(obj, out m_SelectedMapData);

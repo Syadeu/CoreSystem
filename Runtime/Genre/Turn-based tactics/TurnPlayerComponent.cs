@@ -1,4 +1,5 @@
 ﻿using Syadeu.Presentation.Actions;
+using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
@@ -32,6 +33,10 @@ namespace Syadeu.Presentation.TurnTable
                     int prev = m_CurrentActionPoint;
                     m_CurrentActionPoint = value;
                     PresentationSystem<EventSystem>.System.PostEvent(OnActionPointChangedEvent.GetEvent(m_Parent, prev, value));
+
+                    TRPGActorActionPointChangedUIEvent actorEv = new TRPGActorActionPointChangedUIEvent(prev, value);
+                    var ctr = m_Parent.GetComponent<ActorControllerComponent>();
+                    ctr.PostEvent(actorEv);
                 }
             }
         }

@@ -130,19 +130,19 @@ namespace Syadeu.Presentation.Actor
             }
         }
 
-        [JsonProperty(Order = 0, PropertyName = "Prefab")]
+        [JsonProperty(Order = -10, PropertyName = "Prefab")]
         protected Reference<UIObjectEntity> m_Prefab = Reference<UIObjectEntity>.Empty;
-        [JsonProperty(Order = 1, PropertyName = "UpdateType")]
+        [JsonProperty(Order = -9, PropertyName = "UpdateType")]
         protected UpdateType m_UpdateType = UpdateType.Instant | UpdateType.SyncCameraOrientation;
-        [JsonProperty(Order = 2, PropertyName = "UpdateSpeed")]
+        [JsonProperty(Order = -8, PropertyName = "UpdateSpeed")]
         protected float m_UpdateSpeed = 4;
 
         [Space, Header("Position")]
-        [JsonProperty(Order = 3, PropertyName = "Offset")]
+        [JsonProperty(Order = -7, PropertyName = "Offset")]
         protected float3 m_Offset = float3.zero;
 
         [Space, Header("Orientation")]
-        [JsonProperty(Order = 4, PropertyName = "OrientationOffset")]
+        [JsonProperty(Order = -6, PropertyName = "OrientationOffset")]
         protected float3 m_OrientationOffset = float3.zero;
         
         [JsonIgnore] private Entity<UIObjectEntity> m_InstanceObject = Entity<UIObjectEntity>.Empty;
@@ -191,17 +191,18 @@ namespace Syadeu.Presentation.Actor
         }
         protected override sealed void OnEventReceived<TEvent>(TEvent ev)
         {
-            if (ev is IActorOverlayUIEvent actorAttackEvent)
+            if (ev is IActorOverlayUIEvent overlayEv)
             {
-                actorAttackEvent.OnExecute(m_InstanceObject);
-                ActorOverlayUIEventHandler(actorAttackEvent);
+                overlayEv.OnExecute(m_InstanceObject);
+                ActorOverlayUIEventHandler(ev);
                 if (InstanceObject.IsValid())
                 {
-                    InstanceObject.GetAttribute<ActorOverlayUIAttributeBase>().UIEventReceived(actorAttackEvent);
+                    InstanceObject.GetAttribute<ActorOverlayUIAttributeBase>().UIEventReceived(ev);
                 }
             }
             else
             {
+                ActorEventHandler(ev);
                 if (InstanceObject.IsValid())
                 {
                     InstanceObject.GetAttribute<ActorOverlayUIAttributeBase>().EventReceived(ev);
@@ -209,9 +210,24 @@ namespace Syadeu.Presentation.Actor
             }
         }
 
-        protected virtual void ActorOverlayUIEventHandler(IActorOverlayUIEvent ev)
-        {
-            
-        }
+        /// <summary>
+        /// <see cref="IActorOverlayUIEvent"/> 만 들어옵니다.
+        /// </summary>
+        /// <typeparam name="TEvent"></typeparam>
+        /// <param name="ev"></param>
+        protected virtual void ActorOverlayUIEventHandler<TEvent>(TEvent ev)
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
+            where TEvent : struct, IActorEvent
+#else
+            where TEvent : unmanaged, IActorEvent
+#endif
+        { }
+        protected virtual void ActorEventHandler<TEvent>(TEvent ev)
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
+            where TEvent : struct, IActorEvent
+#else
+            where TEvent : unmanaged, IActorEvent
+#endif
+        { }
     }
 }
