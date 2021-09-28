@@ -369,7 +369,7 @@ namespace Syadeu.Presentation
             {
                 IsBackground = true
             };
-            m_PresentationThread.Start();
+            m_PresentationThread.Start(this);
         }
         private void SetPlayerLoop()
         {
@@ -533,54 +533,73 @@ namespace Syadeu.Presentation
             m_OnUpdateAsyncSemaphore = new ManualResetEvent(false),
             m_AfterUpdateAsyncSemaphore = new ManualResetEvent(false);
 
-        private void PresentationAsyncUpdate(object obj)
-        {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            Unity.Profiling.ProfilerMarker
-                beforeSemaphoreMarker = new Unity.Profiling.ProfilerMarker("Semaphore.WaitOne (BeforeUpdate)"),
-                onSemaphoreMarker = new Unity.Profiling.ProfilerMarker("Semaphore.WaitOne (OnUpdate)"),
-                afterSemaphoreMarker = new Unity.Profiling.ProfilerMarker("Semaphore.WaitOne (AfterUpdate)"),
+        private static Unity.Profiling.ProfilerMarker
+            simSemaphoreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Internal, "Semaphore.WaitOne (Simulation)"),
 
-                PresentationUpdateMarker = new Unity.Profiling.ProfilerMarker("PresentationAsyncUpdate"),
+            beforeSemaphoreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Internal, "Semaphore.WaitOne (BeforeUpdate)"),
+            onSemaphoreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Internal, "Semaphore.WaitOne (OnUpdate)"),
+            afterSemaphoreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Internal, "Semaphore.WaitOne (AfterUpdate)");
 
-                beforeUpdateMarker = new Unity.Profiling.ProfilerMarker("BeforeUpdate"),
-                onUpdateMarker = new Unity.Profiling.ProfilerMarker("OnUpdate"),
-                afterUpdateMarker = new Unity.Profiling.ProfilerMarker("AfterUpdate");
+        private static UnityEngine.Profiling.CustomSampler
+            PresentationUpdateMarker = UnityEngine.Profiling.CustomSampler.Create("PresentationAsyncUpdate"),
+
+            beforeUpdateMarker = UnityEngine.Profiling.CustomSampler.Create("BeforeUpdate"),
+            onUpdateMarker = UnityEngine.Profiling.CustomSampler.Create("OnUpdate"),
+            afterUpdateMarker = UnityEngine.Profiling.CustomSampler.Create("AfterUpdate");
 #endif
+        private static void PresentationAsyncUpdate(object obj)
+        {
+            PresentationManager mgr = (PresentationManager)obj;
+            Thread.CurrentThread.CurrentCulture = global::System.Globalization.CultureInfo.InvariantCulture;
+
+            CoreSystem.SimulateWatcher.WaitOne();
 
             while (!CoreSystem.BlockCreateInstance)
             {
-                CoreSystem.SimulateWatcher.WaitOne();
-
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 UnityEngine.Profiling.Profiler.BeginThreadProfiling("Syadeu", "CoreSystem.Presentation");
                 PresentationUpdateMarker.Begin();
+
+                using (simSemaphoreMarker.Auto())
+#endif
+                {
+                    while (!CoreSystem.BlockCreateInstance)
+                    {
+                        if (CoreSystem.SimulateWatcher.WaitOne(1)) break;
+                    }
+                    //if (!CoreSystem.SimulateWatcher.WaitOne(1)) continue;
+
+                    //CoreSystem.SimulateWatcher.WaitOne();
+                }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                 beforeSemaphoreMarker.Begin();
 #endif
                 while (!CoreSystem.BlockCreateInstance)
                 {
-                    if (m_BeforeUpdateAsyncSemaphore.WaitOne(1)) break;
+                    if (mgr.m_BeforeUpdateAsyncSemaphore.WaitOne(1)) break;
                 }
                 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 beforeSemaphoreMarker.End();
                 beforeUpdateMarker.Begin();
 #endif
-                BeforeUpdateAsync?.Invoke();
-                m_BeforeUpdateAsyncSemaphore.Reset();
-                //for (int i = 0; i < 100000; i++)
-                //{
-                //    Math.Sqrt(2.5f);
-                //}
-                //"before".ToLog();
+                {
+                    mgr.BeforeUpdateAsync?.Invoke();
+                    mgr.m_BeforeUpdateAsyncSemaphore.Reset();
+                    for (int i = 0; i < 100000; i++)
+                    {
+                        Math.Sqrt(2.5f);
+                    }
+                    "before".ToLog();
+                }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 beforeUpdateMarker.End();
                 onSemaphoreMarker.Begin();
 #endif
-
                 while (!CoreSystem.BlockCreateInstance)
                 {
-                    if (m_OnUpdateAsyncSemaphore.WaitOne(1)) break;
+                    if (mgr.m_OnUpdateAsyncSemaphore.WaitOne(1)) break;
                 }
                 
                 
@@ -588,33 +607,33 @@ namespace Syadeu.Presentation
                 onSemaphoreMarker.End();
                 onUpdateMarker.Begin();
 #endif
-                UpdateAsync?.Invoke();
-                m_OnUpdateAsyncSemaphore.Reset();
-                //for (int i = 0; i < 100000; i++)
-                //{
-                //    Math.Sqrt(2.5f);
-                //}
-                //"on".ToLog();
+                mgr.UpdateAsync?.Invoke();
+                mgr.m_OnUpdateAsyncSemaphore.Reset();
+                for (int i = 0; i < 100000; i++)
+                {
+                    Math.Sqrt(2.5f);
+                }
+                "on".ToLog();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 onUpdateMarker.End();
                 afterSemaphoreMarker.Begin();
 #endif
                 while (!CoreSystem.BlockCreateInstance)
                 {
-                    if (m_AfterUpdateAsyncSemaphore.WaitOne(1)) break;
+                    if (mgr.m_AfterUpdateAsyncSemaphore.WaitOne(1)) break;
                 }
                 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 afterSemaphoreMarker.End();
                 afterUpdateMarker.Begin();
 #endif
-                AfterUpdateAsync?.Invoke();
-                m_AfterUpdateAsyncSemaphore.Reset();
-                //for (int i = 0; i < 100000; i++)
-                //{
-                //    Math.Sqrt(2.5f);
-                //}
-                //"after".ToLog();
+                mgr.AfterUpdateAsync?.Invoke();
+                mgr.m_AfterUpdateAsyncSemaphore.Reset();
+                for (int i = 0; i < 100000; i++)
+                {
+                    Math.Sqrt(2.5f);
+                }
+                "after".ToLog();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 afterUpdateMarker.End();
                 PresentationUpdateMarker.End();
@@ -622,9 +641,9 @@ namespace Syadeu.Presentation
 #endif
             }
 
-            m_BeforeUpdateAsyncSemaphore.Dispose();
-            m_OnUpdateAsyncSemaphore.Dispose();
-            m_AfterUpdateAsyncSemaphore.Dispose();
+            mgr.m_BeforeUpdateAsyncSemaphore.Dispose();
+            mgr.m_OnUpdateAsyncSemaphore.Dispose();
+            mgr.m_AfterUpdateAsyncSemaphore.Dispose();
 
             "thread out".ToLog();
         }
