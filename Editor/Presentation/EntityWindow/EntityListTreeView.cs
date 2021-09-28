@@ -240,6 +240,16 @@ namespace SyadeuEditor.Presentation
             }
             else if (item is ObjectTreeElement obj)
             {
+                menu.AddItem(new GUIContent("Duplicate"), false, () =>
+                {
+                    ObjectBase clone = (ObjectBase)obj.Target.m_TargetObject.Clone();
+
+                    clone.Hash = Hash.NewHash();
+                    clone.Name += "_Clone";
+
+                    EntityWindow.Instance.Select(EntityWindow.Instance.Add(clone));
+                });
+
                 menu.AddItem(new GUIContent("Find Referencers"), false, () =>
                 {
                     m_Window.m_DataListWindow.SearchString = $"ref:{obj.Target.m_TargetObject.Hash}";
