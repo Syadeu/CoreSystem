@@ -364,12 +364,18 @@ namespace Syadeu.Presentation
                     StartPresentation(Hash.NewHash(registers[i].Name));
                 }
             }
-
+            
+            StartUnityUpdate(ThreadStart());
+        }
+        private IEnumerator ThreadStart()
+        {
             m_PresentationThread = new Thread(PresentationAsyncUpdate)
             {
                 IsBackground = true
             };
             m_PresentationThread.Start(this);
+
+            yield break;
         }
         private void SetPlayerLoop()
         {
@@ -529,9 +535,9 @@ namespace Syadeu.Presentation
         }
 
         private ManualResetEvent
-            m_BeforeUpdateAsyncSemaphore = new ManualResetEvent(false),
-            m_OnUpdateAsyncSemaphore = new ManualResetEvent(false),
-            m_AfterUpdateAsyncSemaphore = new ManualResetEvent(false);
+            m_BeforeUpdateAsyncSemaphore = new ManualResetEvent(true),
+            m_OnUpdateAsyncSemaphore = new ManualResetEvent(true),
+            m_AfterUpdateAsyncSemaphore = new ManualResetEvent(true);
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         private static Unity.Profiling.ProfilerMarker
@@ -558,6 +564,8 @@ namespace Syadeu.Presentation
             while (!CoreSystem.BlockCreateInstance)
             {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+                if (CoreSystem.IsEditorPaused) continue;
+
                 UnityEngine.Profiling.Profiler.BeginThreadProfiling("Syadeu", "CoreSystem.Presentation");
                 PresentationUpdateMarker.Begin();
 
@@ -566,7 +574,7 @@ namespace Syadeu.Presentation
                 {
                     while (!CoreSystem.BlockCreateInstance)
                     {
-                        if (CoreSystem.SimulateWatcher.WaitOne(1)) break;
+                        if (CoreSystem.SimulateWatcher.WaitOne(100)) break;
                     }
                     //if (!CoreSystem.SimulateWatcher.WaitOne(1)) continue;
 
@@ -587,11 +595,11 @@ namespace Syadeu.Presentation
                 {
                     mgr.BeforeUpdateAsync?.Invoke();
                     mgr.m_BeforeUpdateAsyncSemaphore.Reset();
-                    for (int i = 0; i < 100000; i++)
-                    {
-                        Math.Sqrt(2.5f);
-                    }
-                    "before".ToLog();
+                    //for (int i = 0; i < 100000; i++)
+                    //{
+                    //    Math.Sqrt(2.5f);
+                    //}
+                    //UnityEngine.Debug.Log("before");
                 }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 beforeUpdateMarker.End();
@@ -609,11 +617,11 @@ namespace Syadeu.Presentation
 #endif
                 mgr.UpdateAsync?.Invoke();
                 mgr.m_OnUpdateAsyncSemaphore.Reset();
-                for (int i = 0; i < 100000; i++)
-                {
-                    Math.Sqrt(2.5f);
-                }
-                "on".ToLog();
+                //for (int i = 0; i < 100000; i++)
+                //{
+                //    Math.Sqrt(2.5f);
+                //}
+                //UnityEngine.Debug.Log("on");
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 onUpdateMarker.End();
                 afterSemaphoreMarker.Begin();
@@ -629,11 +637,11 @@ namespace Syadeu.Presentation
 #endif
                 mgr.AfterUpdateAsync?.Invoke();
                 mgr.m_AfterUpdateAsyncSemaphore.Reset();
-                for (int i = 0; i < 100000; i++)
-                {
-                    Math.Sqrt(2.5f);
-                }
-                "after".ToLog();
+                //for (int i = 0; i < 100000; i++)
+                //{
+                //    Math.Sqrt(2.5f);
+                //}
+                //UnityEngine.Debug.Log("after");
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 afterUpdateMarker.End();
                 PresentationUpdateMarker.End();
@@ -645,7 +653,7 @@ namespace Syadeu.Presentation
             mgr.m_OnUpdateAsyncSemaphore.Dispose();
             mgr.m_AfterUpdateAsyncSemaphore.Dispose();
 
-            "thread out".ToLog();
+            UnityEngine.Debug.Log("thread out");
         }
 
         #endregion

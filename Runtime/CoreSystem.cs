@@ -549,7 +549,7 @@ namespace Syadeu
         internal static readonly Dictionary<CoreRoutine, object> m_EditorSceneCoroutines = new Dictionary<CoreRoutine, object>();
         private static readonly List<(int progressID, Func<int, IEnumerator> task)> m_EditorTasks = new List<(int, Func<int, IEnumerator>)>();
 
-        private static bool IsEditorPaused = false;
+        public static bool IsEditorPaused = false;
 
         [InitializeOnLoadMethod]
         private static void EditorInitialize()
