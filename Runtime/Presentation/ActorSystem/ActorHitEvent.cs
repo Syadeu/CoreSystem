@@ -12,6 +12,7 @@ namespace Syadeu.Presentation.Actor
         private float m_Damage;
 
         public ActorEventID EventID => m_EventID;
+        bool IActorEvent.BurstCompile => true;
 
         public Entity<ActorEntity> AttackFrom => m_AttackFrom;
         public Hash HPStatNameHash => m_HPStatNameHash;
@@ -27,7 +28,7 @@ namespace Syadeu.Presentation.Actor
 
         public void OnExecute(Entity<ActorEntity> from)
         {
-            $"{from.Name} hit".ToLog();
+            UnityEngine.Debug.Log($"{from.RawName} hit");
         }
     }
 }

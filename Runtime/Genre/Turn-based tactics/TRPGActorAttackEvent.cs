@@ -15,6 +15,8 @@ namespace Syadeu.Presentation.TurnTable
         private int m_Damage;
 
         public ActorEventID EventID => m_EventID;
+        bool IActorEvent.BurstCompile => false;
+
         public Entity<ActorEntity> Target => m_Target;
         public Hash HPStatNameHash => m_StatNameHash;
         public float Damage => m_Damage;

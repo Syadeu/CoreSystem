@@ -25,13 +25,13 @@ namespace Syadeu.Presentation.Entities
     /// <see cref="EntityDataBase"/>는 <seealso cref="EntityData{T}"/>를 참조하세요.
     /// </remarks>
     /// <typeparam name="T"></typeparam>
-    public readonly struct Entity<T> : IValidation, IEquatable<Entity<T>>, IEquatable<Hash> where T : class, IEntity
+    public struct Entity<T> : IValidation, IEquatable<Entity<T>>, IEquatable<Hash> where T : class, IEntity
     {
         private const string c_Invalid = "Invalid";
         private static PresentationSystemID<EntitySystem> s_EntitySystem = PresentationSystemID<EntitySystem>.Null;
         internal static PresentationSystemID<EntityComponentSystem> s_ComponentSystem = PresentationSystemID<EntityComponentSystem>.Null;
 
-        public static Entity<T> Empty => new Entity<T>(Hash.Empty);
+        public static Entity<T> Empty => new Entity<T>(Hash.Empty, null);
 
         public static Entity<T> GetEntity(Hash idx)
         {
@@ -67,15 +67,27 @@ namespace Syadeu.Presentation.Entities
             }
             #endregion
 
-            return new Entity<T>(idx);
+            return new Entity<T>(idx, target.Name);
         }
         internal static Entity<T> GetEntityWithoutCheck(Hash idx)
         {
-            return new Entity<T>(idx);
+            if (s_EntitySystem.IsNull())
+            {
+                s_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
+                if (s_EntitySystem.IsNull())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        "Cannot retrived EntitySystem.");
+                    return Empty;
+                }
+            }
+            ObjectBase target = s_EntitySystem.System.m_ObjectEntities[idx];
+            return new Entity<T>(idx, target.Name);
         }
 
         /// <inheritdoc cref="IEntityData.Idx"/>
         private readonly Hash m_Idx;
+        private FixedString128Bytes m_Name;
 
         public T Target
         {
@@ -118,8 +130,9 @@ namespace Syadeu.Presentation.Entities
             }
         }
 
+        public FixedString128Bytes RawName => m_Name;
         /// <inheritdoc cref="IEntityData.Name"/>
-        public string Name => m_Idx.Equals(Hash.Empty) ? c_Invalid : Target.Name;
+        public string Name => m_Idx.Equals(Hash.Empty) ? c_Invalid : m_Name.ConvertToString();
         /// <inheritdoc cref="IEntityData.Hash"/>
         public Hash Hash => Target.Hash;
         /// <inheritdoc cref="IEntityData.Idx"/>
@@ -166,9 +179,15 @@ namespace Syadeu.Presentation.Entities
         }
 #pragma warning restore IDE1006 // Naming Styles
 
-        private Entity(Hash idx)
+        private Entity(Hash idx, string name)
         {
             m_Idx = idx;
+
+            if (string.IsNullOrEmpty(name))
+            {
+                m_Name = default(FixedString128Bytes);
+            }
+            else m_Name = name;
         }
 
         public bool IsEmpty() => Equals(Empty);

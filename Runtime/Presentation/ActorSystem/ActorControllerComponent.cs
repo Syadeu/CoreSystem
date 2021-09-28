@@ -1,7 +1,10 @@
-﻿using Syadeu.Presentation.Actions;
+﻿using Syadeu.Internal;
+using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using System;
+using Unity.Burst;
+using Unity.Jobs;
 
 namespace Syadeu.Presentation.Actor
 {
@@ -23,6 +26,53 @@ namespace Syadeu.Presentation.Actor
             ActorSystem system = PresentationSystem<ActorSystem>.System;
             system.ScheduleEvent(PostEvent, ev);
         }
+
+        [BurstCompile]
+        private struct EventJob<TEvent> : IJob
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
+            where TEvent : struct, IActorEvent
+#else
+            where TEvent : unmanaged, IActorEvent
+#endif
+        {
+            public Entity<ActorEntity> m_Entity;
+            public TEvent m_Event;
+
+            public void Execute()
+            {
+                m_Event.OnExecute(m_Entity);
+            }
+        }
+        private void InternalPostEvent<TEvent>(TEvent ev)
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
+            where TEvent : struct, IActorEvent
+#else
+            where TEvent : unmanaged, IActorEvent
+#endif
+        {
+            if (ev.BurstCompile)
+            {
+                EventJob<TEvent> eventJob = new EventJob<TEvent>()
+                {
+                    m_Entity = m_Parent,
+                    m_Event = ev
+                };
+                eventJob.Run();
+            }
+            else
+            {
+                try
+                {
+                    ev.OnExecute(m_Parent);
+                }
+                catch (Exception ex)
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity, ex);
+                    return;
+                }
+            }
+        }
+
         public void PostEvent<TEvent>(TEvent ev)
 #if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             where TEvent : struct, IActorEvent
@@ -30,15 +80,7 @@ namespace Syadeu.Presentation.Actor
             where TEvent : unmanaged, IActorEvent
 #endif
         {
-            try
-            {
-                ev.OnExecute(m_Parent);
-            }
-            catch (Exception ex)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity, ex);
-                return;
-            }
+            InternalPostEvent(ev);
 
             if (ev is ActorLifetimeChangedEvent lifeTimeChanged)
             {

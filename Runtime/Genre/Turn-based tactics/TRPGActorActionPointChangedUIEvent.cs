@@ -11,6 +11,8 @@ namespace Syadeu.Presentation.TurnTable
             m_From, m_To;
 
         public ActorEventID EventID => m_EventID;
+        bool IActorEvent.BurstCompile => true;
+
         public int From => m_From;
         public int To => m_To;
 

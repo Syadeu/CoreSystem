@@ -1,5 +1,6 @@
 ﻿using Syadeu.Database;
 using Syadeu.Presentation.Entities;
+using Unity.Burst;
 
 namespace Syadeu.Presentation.Actor
 {
@@ -15,6 +16,7 @@ namespace Syadeu.Presentation.Actor
         private State m_LifeTime;
 
         public ActorEventID EventID => m_EventID;
+        bool IActorEvent.BurstCompile => true;
         public State LifeTime => m_LifeTime;
 
         public ActorLifetimeChangedEvent(State lifetime)
@@ -25,7 +27,8 @@ namespace Syadeu.Presentation.Actor
 
         public void OnExecute(Entity<ActorEntity> from)
         {
-            $"Lifetime changed {from.Name} -> {m_LifeTime}".ToLog();
+            //PrintLog(from);
+            UnityEngine.Debug.Log($"Lifetime changed {from.RawName} -> {m_LifeTime}");
         }
     }
 }
