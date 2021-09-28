@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Unity.Burst;
+using Unity.Collections;
 
 namespace Syadeu.Presentation.Entities
 {
@@ -19,30 +20,40 @@ namespace Syadeu.Presentation.Entities
     /// <see cref="EntityBase"/>는 <seealso cref="Entity{T}"/>를 참조하세요.
     /// </remarks>
     /// <typeparam name="T"></typeparam>
-    public readonly struct EntityData<T> : IValidation, IEquatable<EntityData<T>>, IEquatable<Hash> where T : class, IEntityData
+    public struct EntityData<T> : IValidation, IEquatable<EntityData<T>>, IEquatable<Hash> where T : class, IEntityData
     {
         private const string c_Invalid = "Invalid";
         private static PresentationSystemID<EntitySystem> s_EntitySystem = PresentationSystemID<EntitySystem>.Null;
         internal static PresentationSystemID<EntityComponentSystem> s_ComponentSystem = PresentationSystemID<EntityComponentSystem>.Null;
 
-        public static EntityData<T> Empty => new EntityData<T>(Hash.Empty);
+        public static EntityData<T> Empty => new EntityData<T>(Hash.Empty, null);
 
         public static EntityData<T> GetEntity(Hash idx)
         {
             #region Validation
+            if (s_EntitySystem.IsNull())
+            {
+                s_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
+                if (s_EntitySystem.IsNull())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        "Cannot retrived EntitySystem.");
+                    return Empty;
+                }
+            }
             if (idx.Equals(Hash.Empty))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                 $"Cannot convert an empty hash to Entity. This is an invalid operation and not allowed.");
                 return Empty;
             }
-            if (!PresentationSystem<EntitySystem>.System.m_ObjectEntities.ContainsKey(idx))
+            if (!s_EntitySystem.System.m_ObjectEntities.ContainsKey(idx))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"Cannot found entity({idx})");
                 return Empty;
             }
-            ObjectBase target = PresentationSystem<EntitySystem>.System.m_ObjectEntities[idx];
+            ObjectBase target = s_EntitySystem.System.m_ObjectEntities[idx];
             if (!(target is T))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
@@ -51,15 +62,27 @@ namespace Syadeu.Presentation.Entities
             }
             #endregion
 
-            return new EntityData<T>(idx);
+            return new EntityData<T>(idx, target.Name);
         }
         public static EntityData<T> GetEntityWithoutCheck(Hash idx)
         {
-            return new EntityData<T>(idx);
+            if (s_EntitySystem.IsNull())
+            {
+                s_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
+                if (s_EntitySystem.IsNull())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        "Cannot retrived EntitySystem.");
+                    return Empty;
+                }
+            }
+            ObjectBase target = s_EntitySystem.System.m_ObjectEntities[idx];
+            return new EntityData<T>(idx, target.Name);
         }
 
         /// <inheritdoc cref="IEntityData.Idx"/>
         private readonly Hash m_Idx;
+        private FixedString128Bytes m_Name;
 
         public T Target
         {
@@ -108,6 +131,7 @@ namespace Syadeu.Presentation.Entities
             }
         }
 
+        public FixedString128Bytes RawName => m_Name;
         /// <inheritdoc cref="IEntityData.Name"/>
         public string Name => m_Idx.Equals(Hash.Empty) ? c_Invalid : Target.Name;
         /// <inheritdoc cref="IEntityData.Hash"/>
@@ -116,9 +140,14 @@ namespace Syadeu.Presentation.Entities
         public Hash Idx => m_Idx;
         public Type Type => m_Idx.Equals(Hash.Empty) ? null : Target?.GetType();
 
-        internal EntityData(Hash idx)
+        internal EntityData(Hash idx, string name)
         {
             m_Idx = idx;
+            if (string.IsNullOrEmpty(name))
+            {
+                m_Name = default(FixedString128Bytes);
+            }
+            else m_Name = name;
         }
 
         public bool IsEmpty() => Equals(Empty);

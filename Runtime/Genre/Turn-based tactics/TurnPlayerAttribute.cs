@@ -2,6 +2,7 @@
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Attributes;
+using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using System;
@@ -12,7 +13,8 @@ using UnityEngine.Scripting;
 namespace Syadeu.Presentation.TurnTable
 {
     [DisplayName("Attribute: Turn Player")]
-    public sealed class TurnPlayerAttribute : AttributeBase
+    public sealed class TurnPlayerAttribute : AttributeBase,
+        INotifyComponent<TurnPlayerComponent>
     {
         [Header("Generals")]
         [JsonProperty(Order = 0, PropertyName = "ActivateOnCreate")] internal bool m_ActivateOnCreate = true;

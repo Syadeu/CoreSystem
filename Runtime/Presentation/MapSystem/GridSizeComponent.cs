@@ -1,5 +1,6 @@
 ﻿using Syadeu.Presentation.Components;
 using System.Collections.Generic;
+using Unity.Collections;
 using Unity.Mathematics;
 
 namespace Syadeu.Presentation.Map
@@ -8,6 +9,7 @@ namespace Syadeu.Presentation.Map
     {
         internal PresentationSystemID<GridSystem> m_GridSystem;
 
+        internal FixedList32Bytes<int> m_ObstacleLayers;
         public GridPosition4 positions;
 
         public float3 IndexToPosition(in int index)

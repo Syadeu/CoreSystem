@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Scripting;
@@ -30,9 +31,9 @@ namespace Syadeu.Presentation.Map
 
         [Space, Header("Navigation")]
         [JsonProperty(Order = 2, PropertyName = "AllowOverlapping")]
-        private bool m_AllowOverlapping = false;
+        internal bool m_AllowOverlapping = false;
         [JsonProperty(Order = 3, PropertyName = "ObstacleLayers")] 
-        private int[] m_ObstacleLayers = Array.Empty<int>();
+        internal int[] m_ObstacleLayers = Array.Empty<int>();
 
         [JsonIgnore] public bool AllowOverlapping => m_AllowOverlapping;
     }
@@ -53,6 +54,16 @@ namespace Syadeu.Presentation.Map
 
         protected override void OnCreated(GridSizeAttribute attribute, EntityData<IEntityData> e)
         {
+            GridSizeComponent component = new GridSizeComponent();
+
+            FixedList32Bytes<int> obstacleLayers = new FixedList32Bytes<int>();
+            for (int i = 0; i < attribute.m_ObstacleLayers.Length; i++)
+            {
+                obstacleLayers.Add(attribute.m_ObstacleLayers[i]);
+            }
+
+            e.AddComponent(component);
+
             m_GridSystem.RegisterGridSize(attribute);
         }
         protected override void OnDestroy(GridSizeAttribute attribute, EntityData<IEntityData> entity)

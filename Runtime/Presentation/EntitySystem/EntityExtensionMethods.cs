@@ -69,7 +69,7 @@ namespace Syadeu.Presentation
         public static EntityData<T> As<T>(this Instance<T> t)
             where T : class, IEntityData
         {
-            return new EntityData<T>(t.Idx);
+            return EntityData<T>.GetEntity(t.Idx);
         }
         public static Instance<T> AsInstance<T>(this Entity<T> entity)
             where T : class, IEntity
