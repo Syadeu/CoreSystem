@@ -76,19 +76,21 @@ namespace SyadeuEditor.Presentation.Map
 
         private void OnGUI()
         {
-            EditorGUILayout.Space();
-            //EditorUtils.StringHeader("Map System", 20, true);
+            using (new EditorUtils.BoxBlock(Color.black))
+            {
+                EditorUtils.StringHeader("Map System", 20, true);
+            }
             GUILayout.Space(5);
             EditorUtils.Line();
 
-            EditorGUI.BeginChangeCheck();
-            m_EnableEdit = EditorGUILayout.ToggleLeft("Enable Edit", m_EnableEdit);
-            if (EditorGUI.EndChangeCheck())
-            {
-                if (!m_EnableEdit) Tools.hidden = false;
-            }
-            if (GUILayout.Button("Show Tools")) Tools.hidden = false;
-            EditorGUILayout.Space();
+            //EditorGUI.BeginChangeCheck();
+            //m_EnableEdit = EditorGUILayout.ToggleLeft("Enable Edit", m_EnableEdit);
+            //if (EditorGUI.EndChangeCheck())
+            //{
+            //    if (!m_EnableEdit) Tools.hidden = false;
+            //}
+            //if (GUILayout.Button("Show Tools")) Tools.hidden = false;
+            //EditorGUILayout.Space();
 
             //MapDataGUI();
             m_MapDataLoader.OnGUI();

@@ -10,6 +10,7 @@ using UnityEngine;
 
 namespace SyadeuEditor.Presentation.Map
 {
+    [System.Obsolete]
     public sealed class MapData : IDisposable
     {
         public MapDataEntityBase MapDataEntityBase;
