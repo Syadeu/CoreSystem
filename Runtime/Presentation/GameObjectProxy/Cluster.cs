@@ -68,7 +68,7 @@ namespace Syadeu.Presentation.Proxy
             {
 #if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
                 AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
-                AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
+                //AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
 #endif
                 return m_Length;
             }
