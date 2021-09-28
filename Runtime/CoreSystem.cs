@@ -539,6 +539,8 @@ namespace Syadeu
 
         #region Worker Thread
 
+        public static ManualResetEvent SimulateWatcher => Instance.m_SimWatcher;
+
         #region Editor
 #if UNITY_EDITOR
         private static IEnumerator m_EditorCoroutine = null;

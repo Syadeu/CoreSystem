@@ -550,6 +550,8 @@ namespace Syadeu.Presentation
 
             while (!CoreSystem.BlockCreateInstance)
             {
+                CoreSystem.SimulateWatcher.WaitOne();
+
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 UnityEngine.Profiling.Profiler.BeginThreadProfiling("Syadeu", "CoreSystem.Presentation");
                 PresentationUpdateMarker.Begin();
@@ -566,10 +568,10 @@ namespace Syadeu.Presentation
 #endif
                 BeforeUpdateAsync?.Invoke();
                 m_BeforeUpdateAsyncSemaphore.Reset();
-                for (int i = 0; i < 100000; i++)
-                {
-                    Math.Sqrt(2.5f);
-                }
+                //for (int i = 0; i < 100000; i++)
+                //{
+                //    Math.Sqrt(2.5f);
+                //}
                 //"before".ToLog();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 beforeUpdateMarker.End();
@@ -588,10 +590,10 @@ namespace Syadeu.Presentation
 #endif
                 UpdateAsync?.Invoke();
                 m_OnUpdateAsyncSemaphore.Reset();
-                for (int i = 0; i < 100000; i++)
-                {
-                    Math.Sqrt(2.5f);
-                }
+                //for (int i = 0; i < 100000; i++)
+                //{
+                //    Math.Sqrt(2.5f);
+                //}
                 //"on".ToLog();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 onUpdateMarker.End();
@@ -608,10 +610,10 @@ namespace Syadeu.Presentation
 #endif
                 AfterUpdateAsync?.Invoke();
                 m_AfterUpdateAsyncSemaphore.Reset();
-                for (int i = 0; i < 100000; i++)
-                {
-                    Math.Sqrt(2.5f);
-                }
+                //for (int i = 0; i < 100000; i++)
+                //{
+                //    Math.Sqrt(2.5f);
+                //}
                 //"after".ToLog();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 afterUpdateMarker.End();
