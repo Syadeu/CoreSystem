@@ -818,6 +818,8 @@ namespace Syadeu
         private bool m_RoutineChanged = false;
         public event Action OnRoutineChanged;
 
+        public event Action AsyncBackgroundUpdate;
+
         public int GetCustomBackgroundUpdateCount() => m_CustomBackgroundUpdates.Count;
         public int GetCustomUpdateCount() => m_CustomUpdates.Count;
         public IReadOnlyList<CoreRoutine> GetCustomBackgroundUpdates() => m_CustomBackgroundUpdates.Keys.ToArray();
@@ -836,8 +838,6 @@ namespace Syadeu
             OnBackgroundUpdateSampler = UnityEngine.Profiling.CustomSampler.Create("BackgroundUpdate");
             OnBackgroundJobSampler = UnityEngine.Profiling.CustomSampler.Create("BackgroundJob");
             OnBackgroundTimerSampler = UnityEngine.Profiling.CustomSampler.Create("BackgroundTimer");
-
-            UnityEngine.Profiling.Profiler.BeginThreadProfiling("Syadeu", "CoreSystem");
 #endif
 
             do
@@ -872,6 +872,7 @@ namespace Syadeu
                 }
 
 #if UNITY_EDITOR
+                UnityEngine.Profiling.Profiler.BeginThreadProfiling("Syadeu", "CoreSystem");
                 OnBackgroundStartSampler.Begin();
 #endif
                 #region OnBackgroundStart
@@ -1235,6 +1236,7 @@ namespace Syadeu
                 #endregion
 #if UNITY_EDITOR
                 OnBackgroundTimerSampler.End();
+                UnityEngine.Profiling.Profiler.EndThreadProfiling();
 #endif
                 //counter++;
                 //if (counter % 1000 == 0)
@@ -1243,12 +1245,14 @@ namespace Syadeu
                 //    counter = 0;
                 //}
                 //ThreadAwaiter(10);
+                AsyncBackgroundUpdate?.Invoke();
+
                 m_SimWatcher.Reset();
 
                 if (s_BlockCreateInstance) break;
             }
 #if UNITY_EDITOR
-            UnityEngine.Profiling.Profiler.EndThreadProfiling();
+            
 #endif
         }
         private IEnumerator UnityWorker()

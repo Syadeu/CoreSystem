@@ -9,6 +9,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -337,6 +338,8 @@ namespace Syadeu.Presentation
         internal readonly Dictionary<Type, Hash> m_RegisteredGroup = new Dictionary<Type, Hash>();
         internal readonly Dictionary<string, List<Hash>> m_DependenceSceneList = new Dictionary<string, List<Hash>>();
 
+        private Thread m_PresentationThread;
+
         public override void OnInitialize()
         {
             const string register = "Register";
@@ -361,6 +364,12 @@ namespace Syadeu.Presentation
                     StartPresentation(Hash.NewHash(registers[i].Name));
                 }
             }
+
+            m_PresentationThread = new Thread(PresentationAsyncUpdate)
+            {
+                IsBackground = true
+            };
+            m_PresentationThread.Start();
         }
         private void SetPlayerLoop()
         {
@@ -474,8 +483,11 @@ namespace Syadeu.Presentation
         internal event Action PreUpdate;
         
         internal event Action BeforeUpdate;
+        internal event Action BeforeUpdateAsync;
         internal event Action Update;
+        internal event Action UpdateAsync;
         internal event Action AfterUpdate;
+        internal event Action AfterUpdateAsync;
         internal event Action TransformUpdate;
         internal event Action AfterTransformUpdate;
 
@@ -488,14 +500,17 @@ namespace Syadeu.Presentation
 
         private void PresentationBeforeUpdate()
         {
+            m_BeforeUpdateAsyncSemaphore.Set();
             BeforeUpdate?.Invoke();
         }
         private void PresentationOnUpdate()
         {
+            m_OnUpdateAsyncSemaphore.Set();
             Update?.Invoke();
         }
         private void PresentationAfterUpdate()
         {
+            m_AfterUpdateAsyncSemaphore.Set();
             AfterUpdate?.Invoke();
         }
 
@@ -511,6 +526,105 @@ namespace Syadeu.Presentation
         private void PresentationPostUpdate()
         {
             PostUpdate?.Invoke();
+        }
+
+        private ManualResetEvent
+            m_BeforeUpdateAsyncSemaphore = new ManualResetEvent(false),
+            m_OnUpdateAsyncSemaphore = new ManualResetEvent(false),
+            m_AfterUpdateAsyncSemaphore = new ManualResetEvent(false);
+
+        private void PresentationAsyncUpdate(object obj)
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Unity.Profiling.ProfilerMarker
+                beforeSemaphoreMarker = new Unity.Profiling.ProfilerMarker("Semaphore.WaitOne (BeforeUpdate)"),
+                onSemaphoreMarker = new Unity.Profiling.ProfilerMarker("Semaphore.WaitOne (OnUpdate)"),
+                afterSemaphoreMarker = new Unity.Profiling.ProfilerMarker("Semaphore.WaitOne (AfterUpdate)"),
+
+                PresentationUpdateMarker = new Unity.Profiling.ProfilerMarker("PresentationAsyncUpdate"),
+
+                beforeUpdateMarker = new Unity.Profiling.ProfilerMarker("BeforeUpdate"),
+                onUpdateMarker = new Unity.Profiling.ProfilerMarker("OnUpdate"),
+                afterUpdateMarker = new Unity.Profiling.ProfilerMarker("AfterUpdate");
+#endif
+
+            while (!CoreSystem.BlockCreateInstance)
+            {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                UnityEngine.Profiling.Profiler.BeginThreadProfiling("Syadeu", "CoreSystem.Presentation");
+                PresentationUpdateMarker.Begin();
+                beforeSemaphoreMarker.Begin();
+#endif
+                while (!CoreSystem.BlockCreateInstance)
+                {
+                    if (m_BeforeUpdateAsyncSemaphore.WaitOne(1)) break;
+                }
+                
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                beforeSemaphoreMarker.End();
+                beforeUpdateMarker.Begin();
+#endif
+                BeforeUpdateAsync?.Invoke();
+                m_BeforeUpdateAsyncSemaphore.Reset();
+                for (int i = 0; i < 100000; i++)
+                {
+                    Math.Sqrt(2.5f);
+                }
+                //"before".ToLog();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                beforeUpdateMarker.End();
+                onSemaphoreMarker.Begin();
+#endif
+
+                while (!CoreSystem.BlockCreateInstance)
+                {
+                    if (m_OnUpdateAsyncSemaphore.WaitOne(1)) break;
+                }
+                
+                
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                onSemaphoreMarker.End();
+                onUpdateMarker.Begin();
+#endif
+                UpdateAsync?.Invoke();
+                m_OnUpdateAsyncSemaphore.Reset();
+                for (int i = 0; i < 100000; i++)
+                {
+                    Math.Sqrt(2.5f);
+                }
+                //"on".ToLog();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                onUpdateMarker.End();
+                afterSemaphoreMarker.Begin();
+#endif
+                while (!CoreSystem.BlockCreateInstance)
+                {
+                    if (m_AfterUpdateAsyncSemaphore.WaitOne(1)) break;
+                }
+                
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                afterSemaphoreMarker.End();
+                afterUpdateMarker.Begin();
+#endif
+                AfterUpdateAsync?.Invoke();
+                m_AfterUpdateAsyncSemaphore.Reset();
+                for (int i = 0; i < 100000; i++)
+                {
+                    Math.Sqrt(2.5f);
+                }
+                //"after".ToLog();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                afterUpdateMarker.End();
+                PresentationUpdateMarker.End();
+                UnityEngine.Profiling.Profiler.EndThreadProfiling();
+#endif
+            }
+
+            m_BeforeUpdateAsyncSemaphore.Dispose();
+            m_OnUpdateAsyncSemaphore.Dispose();
+            m_AfterUpdateAsyncSemaphore.Dispose();
+
+            "thread out".ToLog();
         }
 
         #endregion
@@ -649,7 +763,10 @@ namespace Syadeu.Presentation
             Instance.AfterUpdate -= group.AfterPresentation;
 
             //Instance.StopUnityUpdate(group.MainPresentation);
-            Instance.StopBackgroundUpdate(group.BackgroundPresentation);
+            //Instance.StopBackgroundUpdate(group.BackgroundPresentation);
+            Instance.BeforeUpdateAsync -= group.BeforePresentationAsync;
+            Instance.UpdateAsync -= group.OnPresentationAsync;
+            Instance.AfterUpdateAsync -= group.AfterPresentationAsync;
 
             group.Reset();
 
@@ -763,7 +880,7 @@ namespace Syadeu.Presentation
         }
         private static IEnumerator PresentationAsync(Group group)
         {
-            PresentationResult result;
+            #region Initialize
 
             group.InitializeAsync();
 
@@ -787,31 +904,37 @@ namespace Syadeu.Presentation
             group.m_BackgroundthreadSignal = true;
             group.m_BackgroundInitDone = true;
 
+            #endregion
+
             yield return group.m_WaitUntilInitializeCompleted;
 
-            while (true)
-            {
-                group.m_BackgroundthreadBeforePre = false;
+            Instance.BeforeUpdateAsync += group.BeforePresentationAsync;
+            Instance.UpdateAsync += group.OnPresentationAsync;
+            Instance.AfterUpdateAsync += group.AfterPresentationAsync;
 
-                group.BeforePresentationAsync();
+            //while (true)
+            //{
+            //    group.m_BackgroundthreadBeforePre = false;
 
-                group.m_BackgroundthreadBeforePre = true;
-                yield return group.m_WaitBeforePre;
-                group.m_BackgroundthreadOnPre = false;
+            //    group.BeforePresentationAsync();
 
-                group.OnPresentationAsync();
+            //    group.m_BackgroundthreadBeforePre = true;
+            //    yield return group.m_WaitBeforePre;
+            //    group.m_BackgroundthreadOnPre = false;
 
-                group.m_BackgroundthreadOnPre = true;
-                yield return group.m_WaitOnPre;
-                group.m_BackgroundthreadAfterPre = false;
+            //    group.OnPresentationAsync();
 
-                group.AfterPresentationAsync();
+            //    group.m_BackgroundthreadOnPre = true;
+            //    yield return group.m_WaitOnPre;
+            //    group.m_BackgroundthreadAfterPre = false;
 
-                group.m_BackgroundthreadAfterPre = true;
-                yield return group.m_WaitAfterPre;
+            //    group.AfterPresentationAsync();
 
-                yield return null;
-            }
+            //    group.m_BackgroundthreadAfterPre = true;
+            //    yield return group.m_WaitAfterPre;
+
+            //    yield return null;
+            //}
         }
         #endregion
     }
