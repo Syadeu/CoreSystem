@@ -93,6 +93,56 @@ namespace SyadeuEditor.Presentation.Map
             //EditorGUILayout.Space();
 
             //MapDataGUI();
+            #region Scene data selector
+            using (new EditorUtils.BoxBlock(Color.gray))
+            {
+                using (new EditorGUI.DisabledGroupScope(m_SceneDataTarget == null))
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    if (GUILayout.Button("Save"))
+                    {
+                        EntityDataList.Instance.SaveData(m_SceneDataTarget);
+                        if (m_GridMap != null)
+                        {
+                            EntityDataList.Instance.SaveData(m_GridMap.m_SceneDataGridAtt);
+                        }
+                    }
+                    if (GUILayout.Button("Close"))
+                    {
+                        ResetSceneData();
+                    }
+                }
+                ReflectionHelperEditor.DrawReferenceSelector("Scene data: ", (hash) =>
+                {
+                    if (hash.Equals(Hash.Empty))
+                    {
+                        ResetSceneData();
+                        return;
+                    }
+
+                    m_SceneData = new Reference<SceneDataEntity>(hash);
+
+                    if (m_SceneData.IsValid())
+                    {
+                        m_SceneDataTarget = m_SceneData.GetObject();
+
+                        m_GridMap = new GridMapExtension(m_SceneDataTarget.GetAttribute<GridMapAttribute>());
+                        SceneView.lastActiveSceneView.Repaint();
+                    }
+                }, m_SceneData, TypeHelper.TypeOf<SceneDataEntity>.Type);
+
+                if (m_GridMap != null && m_GridMap.m_SceneDataGridAtt != null)
+                {
+                    using (new EditorUtils.BoxBlock(Color.black))
+                    {
+                        m_GridMap.OnGUI();
+                    }
+                }
+            }
+            #endregion
+
+            EditorUtils.Line();
+
             m_MapDataLoader.OnGUI();
 
             if (Event.current.isKey)
@@ -120,6 +170,7 @@ namespace SyadeuEditor.Presentation.Map
         protected override void OnSceneGUI(SceneView obj)
         {
             //MapDataSceneGUI(obj);
+            m_GridMap?.OnSceneGUI(obj);
             m_MapDataLoader.OnSceneGUI();
         }
 
