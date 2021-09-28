@@ -199,6 +199,10 @@ namespace SyadeuEditor.Presentation
                 currentGroupIdx = EditorGUILayout.Popup(currentGroupIdx, s_EntityGroupNames);
                 if (EditorGUI.EndChangeCheck())
                 {
+                    List<string> names = new List<string>() { "None" };
+                    names.AddRange(s_EntityGroups.Select((other) => other.Name));
+                    s_EntityGroupNames = names.ToArray();
+
                     Undo.RecordObject(aaSettings, "AddressableAssetSettings");
 
                     AddressableAssetGroup 
