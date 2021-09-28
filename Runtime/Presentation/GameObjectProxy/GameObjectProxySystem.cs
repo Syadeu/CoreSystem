@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -61,6 +62,8 @@ namespace Syadeu.Presentation.Proxy
                 m_ClusterIDRequests;
         private NativeList<ClusterGroup<ProxyTransformData>> 
                 m_SortedCluster;
+
+        private NativeReference<int> m_ProxyClusterCounter;
 #pragma warning restore IDE0090 // Use 'new(...)'
         public Queue<int>
             m_OverrideRequestProxies = new Queue<int>();
@@ -106,7 +109,8 @@ namespace Syadeu.Presentation.Proxy
             m_TempSortedUpdateList = new NativeList<ClusterUpdateRequest>(Allocator.Persistent);
             m_ClusterIDRequests = new NativeQueue<ClusterIDRequest>(Allocator.Persistent);
 
-            m_SortedCluster = new NativeList<ClusterGroup<ProxyTransformData>>(Allocator.Persistent);
+            m_SortedCluster = new NativeList<ClusterGroup<ProxyTransformData>>(1024, Allocator.Persistent);
+            m_ProxyClusterCounter = new NativeReference<int>(0, AllocatorManager.Persistent);
 
             return base.OnInitialize();
         }
@@ -144,6 +148,7 @@ namespace Syadeu.Presentation.Proxy
             m_ClusterData.Dispose();
 
             m_SortedCluster.Dispose();
+            m_ProxyClusterCounter.Dispose();
 
             m_Disposed = true;
         }
@@ -216,7 +221,7 @@ namespace Syadeu.Presentation.Proxy
             proxy.transform.localScale = transform.scale;
         }
 
-        protected override PresentationResult AfterPresentation()
+        unsafe protected override PresentationResult AfterPresentation()
         {
             //const int c_ChunkSize = 100;
 
@@ -439,13 +444,17 @@ namespace Syadeu.Presentation.Proxy
                 ScheduleAt(JobPosition.On, clusterUpdateJob, m_TempSortedUpdateList);
             }
 
+            m_SortedCluster.Clear();
+            //var deferredSortedCluster = m_SortedCluster.AsDeferredJobArray();
             ClusterJob clusterJob = new ClusterJob
             {
                 m_ClusterData = m_ClusterData,
                 m_Frustum = frustum,
-                m_Output = m_SortedCluster
+                m_Output = m_SortedCluster.AsParallelWriter(),
+
+                m_Count = (int*)m_ProxyClusterCounter.GetUnsafePtrWithoutChecks()
             };
-            ScheduleAt(JobPosition.On, clusterJob);
+            ScheduleAt(JobPosition.On, clusterJob, m_ClusterData.Length);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             s_HandleScheduleClusterUpdateMarker.End();
             s_HandleScheduleProxyUpdateMarker.Begin();
@@ -456,6 +465,7 @@ namespace Syadeu.Presentation.Proxy
 
                 ProxyJob proxyJob = new ProxyJob
                 {
+                    m_Count = (int*)m_ProxyClusterCounter.GetUnsafeReadOnlyPtr(),
                     m_ActiveData = m_SortedCluster.AsDeferredJobArray(),
                     List = list,
 
@@ -535,42 +545,53 @@ namespace Syadeu.Presentation.Proxy
             }
         }
         [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
-        private struct ClusterJob : IJob
+        unsafe private struct ClusterJob : IJobParallelFor
         {
             [ReadOnly] public Cluster<ProxyTransformData> m_ClusterData;
             [ReadOnly] public CameraFrustum m_Frustum;
-            [WriteOnly] public NativeList<ClusterGroup<ProxyTransformData>> m_Output;
+            [WriteOnly] public NativeList<ClusterGroup<ProxyTransformData>>.ParallelWriter m_Output;
 
-            public void Execute()
+            [NativeDisableUnsafePtrRestriction] public int* m_Count;
+
+            public void Execute(int i)
             {
-                int a = 0;
-                for (int i = 0; i < m_ClusterData.Length; i++)
+                if (m_Frustum.IntersectsBox(m_ClusterData[i].AABB))
                 {
-                    //AABB box = new AABB(m_ClusterData[i].Translation, Cluster<ProxyTransformData>.c_ClusterRange);
-
-                    if (m_Frustum.IntersectsBox(m_ClusterData[i].AABB))
-                    {
-                        if (a < m_Output.Length)
-                        {
-                            m_Output[a] = m_ClusterData[i];
-                            a++;
-                        }
-                        else
-                        {
-                            m_Output.Add(m_ClusterData[i]);
-                        }
-                    }
-                }
-
-                for (int i = a; i < m_Output.Length; i++)
-                {
-                    m_Output[i] = ClusterGroup<ProxyTransformData>.Empty;
+                    m_Output.AddNoResize(m_ClusterData[i]);
+                    Interlocked.Increment(ref *m_Count);
                 }
             }
+            //public void Execute()
+            //{
+            //    int a = 0;
+            //    for (int i = 0; i < m_ClusterData.Length; i++)
+            //    {
+            //        //AABB box = new AABB(m_ClusterData[i].Translation, Cluster<ProxyTransformData>.c_ClusterRange);
+
+            //        if (m_Frustum.IntersectsBox(m_ClusterData[i].AABB))
+            //        {
+            //            if (a < m_Output.Length)
+            //            {
+            //                m_Output[a] = m_ClusterData[i];
+            //                a++;
+            //            }
+            //            else
+            //            {
+            //                m_Output.Add(m_ClusterData[i]);
+            //            }
+            //        }
+            //    }
+
+            //    for (int i = a; i < m_Output.Length; i++)
+            //    {
+            //        m_Output[i] = ClusterGroup<ProxyTransformData>.Empty;
+            //    }
+            //}
         }
         [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
-        private struct ProxyJob : IJobParallelForDefer
+        unsafe private struct ProxyJob : IJobParallelForDefer
         {
+            [NativeDisableUnsafePtrRestriction, ReadOnly] public int* m_Count;
             [ReadOnly] public NativeArray<ClusterGroup<ProxyTransformData>> m_ActiveData;
             [ReadOnly] public NativeProxyData.UnsafeList List;
 
@@ -585,8 +606,18 @@ namespace Syadeu.Presentation.Proxy
 
             public void Execute(int i)
             {
+                if (*m_Count <= i)
+                {
+                    UnityEngine.Debug.Log("max reach return");
+                    return;
+                }
+
                 ClusterGroup<ProxyTransformData> clusterGroup = m_ActiveData[i];
-                if (!clusterGroup.IsCreated) return;
+                if (!clusterGroup.IsCreated)
+                {
+                    //UnityEngine.Debug.LogError($"invalid cluster group{i}({m_ActiveData[i].Translation.x}.{m_ActiveData[i].Translation.y}.{m_ActiveData[i].Translation.z}) in return");
+                    return;
+                }
 
                 for (int j = 0; j < clusterGroup.Length; j++)
                 {
@@ -594,8 +625,8 @@ namespace Syadeu.Presentation.Proxy
 
                     if (clusterGroup[j] >= List.m_Length)
                     {
-                        //$"?? {clusterGroup[j]} >= {List.m_Length}".ToLog();
-                        throw new Exception();
+                        UnityEngine.Debug.LogError($"invalid cluster group{i}({m_ActiveData[i].Translation.x}.{m_ActiveData[i].Translation.y}.{m_ActiveData[i].Translation.z}) ?? {clusterGroup[j]} >= {List.m_Length}");
+                        continue;
                     }
                     ProxyTransformData data = List.ElementAt(clusterGroup[j]);
                     //if (data.destroyed)

@@ -457,6 +457,7 @@ namespace Syadeu
         {
             new Thread(BackgroundWorker).Start();
             //ThreadPool.QueueUserWorkItem(BackgroundWorker);
+            Application.quitting -= OnAboutToQuit;
             Application.quitting += OnAboutToQuit;
             StartCoroutine(UnityWorker());
         }
@@ -519,6 +520,8 @@ namespace Syadeu
                 BackgroundJobWorkers[i].Worker.Dispose();
             }
             BackgroundJobWorkers.Clear();
+
+            Application.quitting -= OnAboutToQuit;
         }
         protected override void OnDestroy()
         {
