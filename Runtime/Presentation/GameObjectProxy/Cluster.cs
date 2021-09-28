@@ -22,7 +22,7 @@ namespace Syadeu.Presentation.Proxy
         private static readonly int s_BufferSize = UnsafeUtility.SizeOf<ClusterGroup<T>>();
         private static readonly int s_BufferAlign = UnsafeUtility.AlignOf<ClusterGroup<T>>();
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
         public AtomicSafetyHandle m_Safety;
         [NativeSetClassTypeToNullOnSchedule] public DisposeSentinel m_DisposeSentinel;
 #endif
@@ -36,7 +36,7 @@ namespace Syadeu.Presentation.Proxy
         {
             get
             {
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
                 AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
                 AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
 
@@ -49,7 +49,7 @@ namespace Syadeu.Presentation.Proxy
         {
             get
             {
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
                 AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
                 AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
 #endif
@@ -66,7 +66,7 @@ namespace Syadeu.Presentation.Proxy
         {
             get
             {
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
                 AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
                 AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
 #endif
@@ -117,14 +117,14 @@ namespace Syadeu.Presentation.Proxy
             [NativeDisableUnsafePtrRestriction] internal ClusterGroup<T>* m_Buffer;
             internal int m_Length;
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             internal AtomicSafetyHandle m_Safety;
 #endif
 
             [WriteAccessRequired]
             public ClusterID Update(in ClusterID id, in float3 translation)
             {
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
                 AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
                 AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
 #endif
@@ -146,7 +146,9 @@ namespace Syadeu.Presentation.Proxy
                     {
                         if (!FindUnOccupiedOrMatchedCalculated(in gIdx, in calculated, out int founded))
                         {
-                            throw new Exception();
+                            UnityEngine.Debug.LogError(
+                                $"Cluster Conflect Error. Could not resolve translation {calculated.x}.{calculated.y}.{calculated.z}");
+                            return ClusterID.Empty;
                         }
 
                         //$"cluster conflected group lineared {gIdx}->{founded}".ToLog();
@@ -157,7 +159,9 @@ namespace Syadeu.Presentation.Proxy
                 uint itemIdx = m_Buffer[gIdx].Add(in arrayIndex);
                 if (itemIdx < 0)
                 {
-                    "cluster full".ToLog();
+                    UnityEngine.Debug.LogError(
+                            $"Cluster Is Full. Could not resolve translation {calculated.x}.{calculated.y}.{calculated.z}");
+
                     return ClusterID.Empty;
                 }
 
@@ -166,7 +170,7 @@ namespace Syadeu.Presentation.Proxy
             [WriteAccessRequired]
             public int Remove(in ClusterID id)
             {
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
                 AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
                 AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
 #endif
@@ -209,13 +213,13 @@ namespace Syadeu.Presentation.Proxy
 
             UnsafeUtility.MemClear(m_Buffer, UnsafeUtility.SizeOf<ClusterGroup<T>>() * length);
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             DisposeSentinel.Create(out m_Safety, out m_DisposeSentinel, 1, Allocator.Persistent);
 #endif
         }
         public void Dispose()
         {
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             DisposeSentinel.Dispose(ref m_Safety, ref m_DisposeSentinel);
 #endif
 
@@ -253,13 +257,13 @@ namespace Syadeu.Presentation.Proxy
         [WriteAccessRequired]
         public ParallelWriter AsParallelWriter()
         {
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
             //AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
 #endif
 
             ParallelWriter writer;
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             writer.m_Safety = m_Safety;
             AtomicSafetyHandle.UseSecondaryVersion(ref writer.m_Safety);
 #endif
@@ -278,15 +282,19 @@ namespace Syadeu.Presentation.Proxy
             calculated = (translation / c_ClusterRange);
             calculated = math.round(calculated) * c_ClusterRange;
 
-            uint clusterHash = FNV1a32.Calculate(calculated.ToString());
+            CalculateFNV(calculated, out uint clusterHash);
             //$"cluster pos: {calculated}, idx: {clusterHash} % {length}".ToLog();
             return Convert.ToInt32(clusterHash % length);
         }
+
+        [BurstDiscard]
+        private static void CalculateFNV(float3 float3, out uint value) => value = FNV1a32.Calculate(float3.ToString());
+
         public int GetClusterIndex(in float3 translation, out float3 calculated)
             => GetClusterIndex(in m_Length, in translation, out calculated);
         public NativeArray<ClusterGroup<T>.ReadOnly> GetGroups(CameraFrustum frustum, Allocator allocator)
         {
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
             AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
 #endif
@@ -308,7 +316,7 @@ namespace Syadeu.Presentation.Proxy
         }
         public ClusterGroup<T> GetGroup(in ClusterID id)
         {
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
             AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
 #endif
@@ -321,7 +329,7 @@ namespace Syadeu.Presentation.Proxy
         [WriteAccessRequired]
         public ClusterID Update(in ClusterID id, in float3 translation)
         {
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
             AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
 #endif
@@ -334,7 +342,7 @@ namespace Syadeu.Presentation.Proxy
         [WriteAccessRequired]
         public ClusterID Add(in float3 translation, in int arrayIndex)
         {
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
             AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
 
@@ -402,7 +410,7 @@ namespace Syadeu.Presentation.Proxy
         [WriteAccessRequired]
         public int Remove(in ClusterID id)
         {
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
             AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
 #endif

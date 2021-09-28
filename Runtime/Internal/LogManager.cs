@@ -3,7 +3,9 @@ using System.Collections.Concurrent;
 
 using Syadeu.Mono;
 using Syadeu.Database;
+
 using UnityEngine;
+using Unity.Collections;
 
 namespace Syadeu.Internal
 {
@@ -124,6 +126,43 @@ namespace Syadeu.Internal
                     break;
                 default:
                     text += string.Format(c_LogBaseText, TypeHelper.Enum<StringColor>.ToString(StringColor.lime), 
+                        string.Format(c_LogText, TypeHelper.Enum<StringColor>.ToString(StringColor.teal), TypeHelper.Enum<ResultFlag>.ToString(result)),
+                        string.Format(c_LogText, TypeHelper.Enum<StringColor>.ToString(StringColor.white), channel),
+                        msg);
+                    Debug.Log(text);
+                    break;
+            }
+        }
+
+#if UNITY_EDITOR
+        [System.Diagnostics.DebuggerHidden]
+#endif
+        public static void Log(in FixedString128Bytes channel, ResultFlag result, in FixedString128Bytes msg, bool logThread)
+        {
+            string text = string.Empty;
+            if (logThread)
+            {
+                text = string.Format(c_LogThreadText, TypeHelper.Enum<StringColor>.ToString(StringColor.fuchsia), GetThreadType());
+            }
+
+            switch (result)
+            {
+                case ResultFlag.Warning:
+                    text += string.Format(c_LogBaseText, TypeHelper.Enum<StringColor>.ToString(StringColor.lime),
+                        string.Format(c_LogText, TypeHelper.Enum<StringColor>.ToString(StringColor.orange), TypeHelper.Enum<ResultFlag>.ToString(result)),
+                        string.Format(c_LogText, TypeHelper.Enum<StringColor>.ToString(StringColor.white), channel),
+                        msg);
+                    Debug.LogWarning(text);
+                    break;
+                case ResultFlag.Error:
+                    text += string.Format(c_LogBaseText, TypeHelper.Enum<StringColor>.ToString(StringColor.lime),
+                        string.Format(c_LogText, TypeHelper.Enum<StringColor>.ToString(StringColor.maroon), TypeHelper.Enum<ResultFlag>.ToString(result)),
+                        string.Format(c_LogText, TypeHelper.Enum<StringColor>.ToString(StringColor.white), channel),
+                        msg);
+                    Debug.LogError(text);
+                    break;
+                default:
+                    text += string.Format(c_LogBaseText, TypeHelper.Enum<StringColor>.ToString(StringColor.lime),
                         string.Format(c_LogText, TypeHelper.Enum<StringColor>.ToString(StringColor.teal), TypeHelper.Enum<ResultFlag>.ToString(result)),
                         string.Format(c_LogText, TypeHelper.Enum<StringColor>.ToString(StringColor.white), channel),
                         msg);

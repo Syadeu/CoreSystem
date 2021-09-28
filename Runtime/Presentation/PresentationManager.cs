@@ -102,13 +102,13 @@ namespace Syadeu.Presentation
                 m_WaitAfterPre = new WaitUntil(() => m_MainthreadAfterPre && m_BackgroundthreadAfterPre);
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-                m_InitializeMarker = new Unity.Profiling.ProfilerMarker($"{m_Name.Name}.Initialize");
-                m_InitializeAsyncMarker = new Unity.Profiling.ProfilerMarker($"{m_Name.Name}.InitializeAsync");
-                m_StartPreMarker = new Unity.Profiling.ProfilerMarker($"{m_Name.Name}.StartPresentation");
+                m_InitializeMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{m_Name.Name}.Initialize");
+                m_InitializeAsyncMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{m_Name.Name}.InitializeAsync");
+                m_StartPreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{m_Name.Name}.StartPresentation");
 
-                m_BeforePreMarker = new Unity.Profiling.ProfilerMarker($"{m_Name.Name}.BeforePresentation");
-                m_OnPreMarker = new Unity.Profiling.ProfilerMarker($"{m_Name.Name}.OnPresentation");
-                m_AfterPreMarker = new Unity.Profiling.ProfilerMarker($"{m_Name.Name}.AfterPresentation");
+                m_BeforePreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{m_Name.Name}.BeforePresentation");
+                m_OnPreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{m_Name.Name}.OnPresentation");
+                m_AfterPreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{m_Name.Name}.AfterPresentation");
 
                 m_BeforePreSystemMarkers = new List<Unity.Profiling.ProfilerMarker>();
                 m_OnPreSystemMarkers = new List<Unity.Profiling.ProfilerMarker>();
@@ -132,21 +132,21 @@ namespace Syadeu.Presentation
                 {
                     m_BeforePresentations.Add(system);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-                    m_BeforePreSystemMarkers.Add(new Unity.Profiling.ProfilerMarker($"{system.GetType().Name}"));
+                    m_BeforePreSystemMarkers.Add(new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{system.GetType().Name}"));
 #endif
                 }
                 if (system.EnableOnPresentation)
                 {
                     m_OnPresentations.Add(system);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-                    m_OnPreSystemMarkers.Add(new Unity.Profiling.ProfilerMarker($"{system.GetType().Name}"));
+                    m_OnPreSystemMarkers.Add(new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{system.GetType().Name}"));
 #endif
                 }
                 if (system.EnableAfterPresentation)
                 {
                     m_AfterPresentations.Add(system);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-                    m_AfterPreSystemMarkers.Add(new Unity.Profiling.ProfilerMarker($"{system.GetType().Name}"));
+                    m_AfterPreSystemMarkers.Add(new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{system.GetType().Name}"));
 #endif
                 }
             }
@@ -483,76 +483,34 @@ namespace Syadeu.Presentation
 
         private void PresentationPreUpdate()
         {
-#if UNITY_EDITOR
-            UnityEngine.Profiling.Profiler.BeginSample("CoreSystem.Presentation.PreUpdate");
-#endif
             PreUpdate?.Invoke();
-#if UNITY_EDITOR
-            UnityEngine.Profiling.Profiler.EndSample();
-#endif
         }
 
         private void PresentationBeforeUpdate()
         {
-#if UNITY_EDITOR
-            UnityEngine.Profiling.Profiler.BeginSample("CoreSystem.Presentation.BeforeUpdate");
-#endif
             BeforeUpdate?.Invoke();
-#if UNITY_EDITOR
-            UnityEngine.Profiling.Profiler.EndSample();
-#endif
         }
         private void PresentationOnUpdate()
         {
-#if UNITY_EDITOR
-            UnityEngine.Profiling.Profiler.BeginSample("CoreSystem.Presentation.Update");
-#endif
             Update?.Invoke();
-#if UNITY_EDITOR
-            UnityEngine.Profiling.Profiler.EndSample();
-#endif
         }
         private void PresentationAfterUpdate()
         {
-#if UNITY_EDITOR
-            UnityEngine.Profiling.Profiler.BeginSample("CoreSystem.Presentation.AfterUpdate");
-#endif
             AfterUpdate?.Invoke();
-#if UNITY_EDITOR
-            UnityEngine.Profiling.Profiler.EndSample();
-#endif
         }
 
         private void PresentationLateTransformUpdate()
         {
-#if UNITY_EDITOR
-            UnityEngine.Profiling.Profiler.BeginSample("CoreSystem.Presentation.TransformUpdate");
-#endif
             TransformUpdate?.Invoke();
-#if UNITY_EDITOR
-            UnityEngine.Profiling.Profiler.EndSample();
-#endif
         }
         private void PresentationLateAfterTransformUpdate()
         {
-#if UNITY_EDITOR
-            UnityEngine.Profiling.Profiler.BeginSample("CoreSystem.Presentation.AfterTransformUpdate");
-#endif
             AfterTransformUpdate?.Invoke();
-#if UNITY_EDITOR
-            UnityEngine.Profiling.Profiler.EndSample();
-#endif
         }
 
         private void PresentationPostUpdate()
         {
-#if UNITY_EDITOR
-            UnityEngine.Profiling.Profiler.BeginSample("CoreSystem.Presentation.PostUpdate");
-#endif
             PostUpdate?.Invoke();
-#if UNITY_EDITOR
-            UnityEngine.Profiling.Profiler.EndSample();
-#endif
         }
 
         #endregion
@@ -617,7 +575,17 @@ namespace Syadeu.Presentation
 
                 registedTypes.Add(systems[i]);
 
-                Instance.m_RegisteredGroup.Add(systems[i], groupHash);
+                if (Instance.m_RegisteredGroup.ContainsKey(systems[i]))
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Presentation,
+                        $"Multiple system({TypeHelper.ToString(systems[i])}, in group {TypeHelper.ToString(groupName)}) detected. " +
+                        $"This instance will not gathered by PresentationSystem<T> but PresentationSystemGroup<T>.Systems.");
+                }
+                else
+                {
+                    Instance.m_RegisteredGroup.Add(systems[i], groupHash);
+                }
+                
                 CoreSystem.Logger.Log(Channel.Presentation, $"System ({groupName.Name.Split('.').Last()}): {systems[i].Name} Registered");
             }
 

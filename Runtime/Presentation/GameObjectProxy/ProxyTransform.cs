@@ -40,6 +40,7 @@ namespace Syadeu.Presentation.Proxy
         internal readonly int m_Index;
         internal readonly int m_Generation;
         internal readonly Hash m_Hash;
+
         unsafe internal ProxyTransform(NativeProxyData.UnsafeList* p, int index, int generation, Hash hash)
         {
             m_Pointer = p;
@@ -411,11 +412,12 @@ namespace Syadeu.Presentation.Proxy
         public bool Equals(ProxyTransform other) => 
             m_Index.Equals(other.m_Index) && 
             m_Generation.Equals(other.m_Generation);
-
         public bool Equals(ITransform other)
         {
             if (!(other is ProxyTransform tr)) return false;
             return Equals(tr);
         }
+
+        public override int GetHashCode() => m_Index;
     }
 }

@@ -31,7 +31,7 @@ namespace Syadeu.Presentation.Proxy
         //private const int c_InitialMemorySize = 16384;
         private const int c_InitialMemorySize = 1024;
 
-        public override bool EnableBeforePresentation => true;
+        public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => true;
 
@@ -59,9 +59,27 @@ namespace Syadeu.Presentation.Proxy
                 m_TempSortedUpdateList;
         private NativeQueue<ClusterIDRequest>
                 m_ClusterIDRequests;
+        private NativeList<ClusterGroup<ProxyTransformData>> 
+                m_SortedCluster;
 #pragma warning restore IDE0090 // Use 'new(...)'
         public Queue<int>
             m_OverrideRequestProxies = new Queue<int>();
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        private static readonly Unity.Profiling.ProfilerMarker
+            s_HandleOverrideProxyRequestsMarker = new Unity.Profiling.ProfilerMarker("Handle Override Proxy Requests"),
+            s_HandleCreateProxiesMarker = new Unity.Profiling.ProfilerMarker("Handle Create Proxies"),
+            s_HandleRemoveProxiesMarker = new Unity.Profiling.ProfilerMarker("Handle Remove Proxies"),
+            s_HandleVisibleProxiesMarker = new Unity.Profiling.ProfilerMarker("Handle Visible Proxies"),
+            s_HandleInvisibleProxiesMarker = new Unity.Profiling.ProfilerMarker("Handle Invisible Proxies"),
+            s_HandleDestroyProxiesMarker = new Unity.Profiling.ProfilerMarker("Handle Destroy Proxies"),
+
+            s_HandleApplyClusterIDMarker = new Unity.Profiling.ProfilerMarker("Handle Apply ClusterID"),
+
+            s_HandleJobsMarker = new Unity.Profiling.ProfilerMarker("Handle Jobs"),
+            s_HandleScheduleClusterUpdateMarker = new Unity.Profiling.ProfilerMarker("Handle Schedule Cluster Update"),
+            s_HandleScheduleProxyUpdateMarker = new Unity.Profiling.ProfilerMarker("Handle Schedule Proxy Update");
+#endif
 
         private SceneSystem m_SceneSystem;
         private RenderSystem m_RenderSystem;
@@ -87,6 +105,8 @@ namespace Syadeu.Presentation.Proxy
             m_ClusterUpdates = new NativeQueue<ClusterUpdateRequest>(Allocator.Persistent);
             m_TempSortedUpdateList = new NativeList<ClusterUpdateRequest>(Allocator.Persistent);
             m_ClusterIDRequests = new NativeQueue<ClusterIDRequest>(Allocator.Persistent);
+
+            m_SortedCluster = new NativeList<ClusterGroup<ProxyTransformData>>(Allocator.Persistent);
 
             return base.OnInitialize();
         }
@@ -123,7 +143,7 @@ namespace Syadeu.Presentation.Proxy
             m_ProxyData.Dispose();
             m_ClusterData.Dispose();
 
-            if (m_SortedCluster.IsCreated) m_SortedCluster.Dispose();
+            m_SortedCluster.Dispose();
 
             m_Disposed = true;
         }
@@ -196,8 +216,6 @@ namespace Syadeu.Presentation.Proxy
             proxy.transform.localScale = transform.scale;
         }
 
-        private NativeList<ClusterGroup<ProxyTransformData>> m_SortedCluster;
-
         protected override PresentationResult AfterPresentation()
         {
             //const int c_ChunkSize = 100;
@@ -206,6 +224,10 @@ namespace Syadeu.Presentation.Proxy
 
             CameraFrustum frustum = m_RenderSystem.GetRawFrustum();
 
+            #region Override Proxy Requests
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            s_HandleOverrideProxyRequestsMarker.Begin();
+#endif
             int overrideRequestProxies = m_OverrideRequestProxies.Count;
             for (int i = 0; i < overrideRequestProxies; i++)
             {
@@ -218,8 +240,15 @@ namespace Syadeu.Presentation.Proxy
 
                 m_RequestProxyList.Enqueue(index);
             }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            s_HandleOverrideProxyRequestsMarker.End();
+#endif
+            #endregion
 
             #region Create / Remove Proxy
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            s_HandleCreateProxiesMarker.Begin();
+#endif
             int requestProxyCount = m_RequestProxyList.Count;
             for (int i = 0; i < requestProxyCount; i++)
             {
@@ -240,6 +269,10 @@ namespace Syadeu.Presentation.Proxy
 
                 AddProxy(tr);
             }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            s_HandleCreateProxiesMarker.End();
+            s_HandleRemoveProxiesMarker.Begin();
+#endif
             int removeProxyCount = m_RemoveProxyList.Count;
             for (int i = 0; i < removeProxyCount; i++)
             {
@@ -261,9 +294,15 @@ namespace Syadeu.Presentation.Proxy
 
                 RemoveProxy(tr);
             }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            s_HandleRemoveProxiesMarker.End();
+#endif
             #endregion
 
             #region Visible / Invisible
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            s_HandleVisibleProxiesMarker.Begin();
+#endif
             int visibleCount = m_VisibleList.Count;
             for (int i = 0; i < visibleCount; i++)
             {
@@ -275,6 +314,10 @@ namespace Syadeu.Presentation.Proxy
                 tr.isVisible = true;
                 OnDataObjectVisible?.Invoke(tr);
             }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            s_HandleVisibleProxiesMarker.End();
+            s_HandleInvisibleProxiesMarker.Begin();
+#endif
             int invisibleCount = m_InvisibleList.Count;
             for (int i = 0; i < invisibleCount; i++)
             {
@@ -286,9 +329,15 @@ namespace Syadeu.Presentation.Proxy
                 tr.isVisible = false;
                 OnDataObjectInvisible?.Invoke(tr);
             }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            s_HandleInvisibleProxiesMarker.End();
+#endif
             #endregion
 
             #region Destroy
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            s_HandleDestroyProxiesMarker.Begin();
+#endif
             int destroyCount = m_RequestDestories.Count;
             for (int i = 0; i < destroyCount; i++)
             {
@@ -341,8 +390,15 @@ namespace Syadeu.Presentation.Proxy
                 }
                 m_ProxyData.Remove(tr);
             }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            s_HandleDestroyProxiesMarker.End();
+#endif
             #endregion
 
+            #region Apply ClusterID Requests
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            s_HandleApplyClusterIDMarker.Begin();
+#endif
             int clusterIDRequestCount = m_ClusterIDRequests.Count;
             for (int i = 0; i < clusterIDRequestCount; i++)
             {
@@ -351,9 +407,16 @@ namespace Syadeu.Presentation.Proxy
 
                 m_ProxyData[temp.index].Ref.clusterID = id;
             }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            s_HandleApplyClusterIDMarker.End();
+#endif
+            #endregion
 
             #region Jobs
-
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            s_HandleJobsMarker.Begin();
+            s_HandleScheduleClusterUpdateMarker.Begin();
+#endif
             if (m_ClusterUpdates.Count > 0)
             {
                 NativeArray<ClusterUpdateRequest> requests = m_ClusterUpdates.ToArray(Allocator.TempJob);
@@ -376,13 +439,6 @@ namespace Syadeu.Presentation.Proxy
                 ScheduleAt(JobPosition.On, clusterUpdateJob, m_TempSortedUpdateList);
             }
 
-            if (m_SortedCluster.IsCreated)
-            {
-                //m_SortedCluster.Clear();
-                //m_SortedCluster.RemoveRangeSwapBackWithBeginEnd(0, m_SortedCluster.Length);
-            }
-            else m_SortedCluster = new NativeList<ClusterGroup<ProxyTransformData>>(Allocator.Persistent);
-
             ClusterJob clusterJob = new ClusterJob
             {
                 m_ClusterData = m_ClusterData,
@@ -390,7 +446,10 @@ namespace Syadeu.Presentation.Proxy
                 m_Output = m_SortedCluster
             };
             ScheduleAt(JobPosition.On, clusterJob);
-
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            s_HandleScheduleClusterUpdateMarker.End();
+            s_HandleScheduleProxyUpdateMarker.Begin();
+#endif
             unsafe
             {
                 NativeProxyData.UnsafeList list = m_ProxyData.List;
@@ -410,7 +469,10 @@ namespace Syadeu.Presentation.Proxy
                 };
                 ScheduleAt(JobPosition.On, proxyJob, m_SortedCluster, 64);
             }
-
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            s_HandleScheduleProxyUpdateMarker.End();
+            s_HandleJobsMarker.End();
+#endif
             #endregion
 
             return PresentationResult.Normal;
@@ -418,14 +480,23 @@ namespace Syadeu.Presentation.Proxy
 
         #region Jobs
 
+        [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
         private struct ClusterUpdateSortJob : IJob
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            private static readonly Unity.Profiling.ProfilerMarker s_Marker
+                = new Unity.Profiling.ProfilerMarker("ClusterUpdateSort Job");
+#endif
+
             public Cluster<ProxyTransformData> m_ClusterData;
             [DeallocateOnJobCompletion] public NativeArray<ClusterUpdateRequest> m_Request;
             public NativeList<ClusterUpdateRequest> m_SortedRequests;
 
             public void Execute()
             {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                s_Marker.Begin();
+#endif
                 NativeHashSet<ProxyTransform> m_Listed = new NativeHashSet<ProxyTransform>(m_Request.Length, Allocator.Temp);
 
                 for (int i = m_Request.Length - 1; i >= 0; i--)
@@ -435,8 +506,12 @@ namespace Syadeu.Presentation.Proxy
                     m_SortedRequests.Add(m_Request[i]);
                     m_Listed.Add(m_Request[i].transform);
                 }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                s_Marker.End();
+#endif
             }
         }
+        [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
         private struct ClusterUpdateJob : IJobParallelForDefer
         {
             [WriteOnly] public Cluster<ProxyTransformData>.ParallelWriter m_ClusterData;
