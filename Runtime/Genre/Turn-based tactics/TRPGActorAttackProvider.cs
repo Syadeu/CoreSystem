@@ -1,6 +1,5 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Presentation.Actor;
-using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Map;
 using System;
@@ -64,45 +63,6 @@ namespace Syadeu.Presentation.TurnTable
 
             Targets = entities;
             return entities;
-        }
-    }
-
-    public sealed class TRPGActorMoveProvider : ActorProviderBase,
-        INotifyComponent<TRPGActorMoveComponent>
-    {
-        protected override void OnCreated()
-        {
-            TRPGActorMoveComponent component = new TRPGActorMoveComponent();
-
-            component.m_Parent = Parent;
-
-            Parent.AddComponent(component);
-        }
-    }
-
-    public struct TRPGActorMoveComponent : IEntityComponent
-    {
-        internal EntityData<IEntityData> m_Parent;
-
-        public void GetMoveablePositions()
-        {
-            var gridSystem = PresentationSystem<GridSystem>.System;
-            if (!m_Parent.HasComponent<TurnPlayerComponent>())
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"This entity({m_Parent.Name}) doesn\'t have any {nameof(TurnPlayerComponent)}.");
-                return;
-            }
-            else if (!m_Parent.HasComponent<GridSizeComponent>())
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"This entity({m_Parent.Name}) doesn\'t have any {nameof(GridSizeComponent)}.");
-                return;
-            }
-
-            var turnPlayer = m_Parent.GetComponent<TurnPlayerComponent>();
-            var gridsize = m_Parent.GetComponent<GridSizeComponent>();
-            gridsize.GetRange(turnPlayer.ActionPoint);
         }
     }
 }

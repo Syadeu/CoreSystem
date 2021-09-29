@@ -421,6 +421,51 @@ namespace Syadeu.Presentation.Map
                 return path[pathFound - 1].position.index == to;
             }
         }
+        public bool GetPath64(in int from, in int to, in int maxPathLength, ref FixedList64Bytes<GridPathTile> path, in int maxIteration = 32)
+        {
+            int2
+                fromLocation = GridMap.Grid.IndexToLocation(in from),
+                toLocation = GridMap.Grid.IndexToLocation(in to);
+
+            GridPathTile tile = new GridPathTile(from, fromLocation);
+            tile.Calculate(GridMap.Grid, GridMap.ObstacleLayer);
+
+            path.Clear();
+            path.Add(tile);
+
+            int iteration = 0;
+            while (
+                iteration < maxIteration &&
+                path.Length < maxPathLength &&
+                path[path.Length - 1].position.index != to)
+            {
+                GridPathTile lastTileData = path[path.Length - 1];
+                if (lastTileData.IsBlocked())
+                {
+                    path.RemoveAt(path.Length - 1);
+
+                    if (path.Length == 0) break;
+
+                    GridPathTile parentTile = path[path.Length - 1];
+                    parentTile.opened[lastTileData.direction] = false;
+                    path[path.Length - 1] = parentTile;
+                }
+                else
+                {
+                    int nextDirection = GetLowestCost(ref lastTileData, toLocation);
+
+                    GridPathTile nextTile = lastTileData.GetNext(nextDirection);
+                    nextTile.Calculate(GridMap.Grid, GridMap.ObstacleLayer);
+                    path.Add(nextTile);
+                }
+
+                iteration++;
+            }
+
+            return path[path.Length - 1].position.index == to;
+        }
+
+        [Obsolete]
         public bool GetPath(int from, int to, List<GridPathTile> path, int maxPathLength, int maxIteration = 32)
         {
             int2
@@ -474,6 +519,8 @@ namespace Syadeu.Presentation.Map
 
             return path[path.Count - 1].position.index == to;
         }
+
+        [Obsolete("", true)]
         public JobHandle ExecutePathfinding(NativeArray<int2> from2Target, NativeArray<GridPath16> results)
         {
             GridPathfindingJob16 job = new GridPathfindingJob16(GridMap.Grid, from2Target, results);
@@ -522,6 +569,7 @@ namespace Syadeu.Presentation.Map
             return GridMap.Grid.PositionToIndex(position);
         }
 
+        [Obsolete]
         public int[] GetRange(int idx, int range, params int[] ignoreLayers)
         {
             //if (GridMap.Grid == null) throw new System.Exception();
@@ -531,6 +579,37 @@ namespace Syadeu.Presentation.Map
             for (int i = 0; i < ignoreLayers?.Length; i++)
             {
                 temp = GridMap.FilterByLayer(ignoreLayers[i], temp, out _);
+            }
+
+            return temp;
+        }
+
+        public FixedList32Bytes<int> GetRange32(in int idx, in int range, in FixedList32Bytes<int> ignoreLayers)
+        {
+            FixedList32Bytes<int> temp = GridMap.Grid.GetRange32(in idx, in range);
+            for (int i = 0; i < ignoreLayers.Length; i++)
+            {
+                temp = GridMap.FilterByLayer32(ignoreLayers[i], in temp);
+            }
+
+            return temp;
+        }
+        public FixedList64Bytes<int> GetRange64(in int idx, in int range, in FixedList64Bytes<int> ignoreLayers)
+        {
+            FixedList64Bytes<int> temp = GridMap.Grid.GetRange64(in idx, in range);
+            for (int i = 0; i < ignoreLayers.Length; i++)
+            {
+                temp = GridMap.FilterByLayer64(ignoreLayers[i], in temp);
+            }
+
+            return temp;
+        }
+        public FixedList128Bytes<int> GetRange128(in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
+        {
+            FixedList128Bytes<int> temp = GridMap.Grid.GetRange128(in idx, in range);
+            for (int i = 0; i < ignoreLayers.Length; i++)
+            {
+                temp = GridMap.FilterByLayer128(ignoreLayers[i], in temp);
             }
 
             return temp;

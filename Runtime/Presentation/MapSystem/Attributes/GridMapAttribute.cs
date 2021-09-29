@@ -141,6 +141,86 @@ namespace Syadeu.Presentation.Map
             return -1;
         }
 
+        public FixedList128Bytes<int> FilterByLayer128(in int layer, in FixedList128Bytes<int> indices)
+        {
+            FixedList128Bytes<int> temp = new FixedList128Bytes<int>();
+            for (int i = 0; i < indices.Length; i++)
+            {
+                if (m_Layers[layer].m_Inverse)
+                {
+                    if (!Layers[layer].Contains(indices[i]))
+                    {
+                        //filtered.Add(indices[i]);
+                        continue;
+                    }
+                }
+                else
+                {
+                    if (Layers[layer].Contains(indices[i]))
+                    {
+                        //filtered.Add(indices[i]);
+                        continue;
+                    }
+                }
+
+                temp.Add(indices[i]);
+            }
+            return temp;
+        }
+        public FixedList64Bytes<int> FilterByLayer64(in int layer, in FixedList64Bytes<int> indices)
+        {
+            FixedList64Bytes<int> temp = new FixedList64Bytes<int>();
+            for (int i = 0; i < indices.Length; i++)
+            {
+                if (m_Layers[layer].m_Inverse)
+                {
+                    if (!Layers[layer].Contains(indices[i]))
+                    {
+                        //filtered.Add(indices[i]);
+                        continue;
+                    }
+                }
+                else
+                {
+                    if (Layers[layer].Contains(indices[i]))
+                    {
+                        //filtered.Add(indices[i]);
+                        continue;
+                    }
+                }
+
+                temp.Add(indices[i]);
+            }
+            return temp;
+        }
+        public FixedList32Bytes<int> FilterByLayer32(in int layer, in FixedList32Bytes<int> indices)
+        {
+            FixedList32Bytes<int> temp = new FixedList32Bytes<int>();
+            for (int i = 0; i < indices.Length; i++)
+            {
+                if (m_Layers[layer].m_Inverse)
+                {
+                    if (!Layers[layer].Contains(indices[i]))
+                    {
+                        //filtered.Add(indices[i]);
+                        continue;
+                    }
+                }
+                else
+                {
+                    if (Layers[layer].Contains(indices[i]))
+                    {
+                        //filtered.Add(indices[i]);
+                        continue;
+                    }
+                }
+
+                temp.Add(indices[i]);
+            }
+            return temp;
+        }
+
+        [Obsolete]
         public int[] FilterByLayer(int layer, int[] indices, out int[] filteredIndices)
         {
             List<int> temp = new List<int>();
@@ -169,8 +249,10 @@ namespace Syadeu.Presentation.Map
             filteredIndices = filtered.Count == 0 ? Array.Empty<int>() : filtered.ToArray();
             return temp.ToArray();
         }
+        [Obsolete]
         public int[] FilterByLayer(Hash layer, int[] indices, out int[] filteredIndices)
             => FilterByLayer(GetLayer(layer), indices, out filteredIndices);
+        [Obsolete]
         public int[] FilterByLayer(string layer, int[] indices, out int[] filteredIndices)
             => FilterByLayer(GetLayer(layer), indices, out filteredIndices);
 

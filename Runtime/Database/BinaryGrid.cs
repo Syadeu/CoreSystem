@@ -593,6 +593,103 @@ namespace Syadeu.Database
 
         #endregion
 
+        #region Get Ranges
+
+        public FixedList32Bytes<int> GetRange32(in int idx, in int range)
+        {
+            int2 gridSize = this.gridSize;
+            FixedList32Bytes<int> targets = new FixedList32Bytes<int>();
+
+            int count = 0;
+
+            int startIdx = idx - range + (gridSize.y * range);
+            int height = ((range * 2) + 1);
+            for (int yGrid = 0; yGrid < height; yGrid++)
+            {
+                for (int xGrid = 0; xGrid < height; xGrid++)
+                {
+                    int temp = startIdx - (yGrid * gridSize.y) + xGrid;
+
+                    if (HasCell(temp))
+                    {
+                        if (count >= 32)
+                        {
+                            Debug.LogError("GetRange32 Exceeding 32 ranges");
+                            continue;
+                        }
+
+                        targets.Add(temp);
+                        count += 1;
+                    }
+                    //if (temp >= temp - (temp % gridSize.x) + gridSize.x - 1) break;
+                }
+            }
+            return targets;
+        }
+        public FixedList64Bytes<int> GetRange64(in int idx, in int range)
+        {
+            int2 gridSize = this.gridSize;
+            FixedList64Bytes<int> targets = new FixedList64Bytes<int>();
+
+            int count = 0;
+
+            int startIdx = idx - range + (gridSize.y * range);
+            int height = ((range * 2) + 1);
+            for (int yGrid = 0; yGrid < height; yGrid++)
+            {
+                for (int xGrid = 0; xGrid < height; xGrid++)
+                {
+                    int temp = startIdx - (yGrid * gridSize.y) + xGrid;
+
+                    if (HasCell(temp))
+                    {
+                        if (count >= 64)
+                        {
+                            Debug.LogError("GetRange64 Exceeding 64 ranges");
+                            continue;
+                        }
+
+                        targets.Add(temp);
+                        count += 1;
+                    }
+                    //if (temp >= temp - (temp % gridSize.x) + gridSize.x - 1) break;
+                }
+            }
+            return targets;
+        }
+        public FixedList128Bytes<int> GetRange128(in int idx, in int range)
+        {
+            int2 gridSize = this.gridSize;
+            FixedList128Bytes<int> targets = new FixedList128Bytes<int>();
+
+            int count = 0;
+
+            int startIdx = idx - range + (gridSize.y * range);
+            int height = ((range * 2) + 1);
+            for (int yGrid = 0; yGrid < height; yGrid++)
+            {
+                for (int xGrid = 0; xGrid < height; xGrid++)
+                {
+                    int temp = startIdx - (yGrid * gridSize.y) + xGrid;
+
+                    if (HasCell(temp))
+                    {
+                        if (count >= 128)
+                        {
+                            Debug.LogError("GetRange128 Exceeding 128 ranges");
+                            continue;
+                        }
+
+                        targets.Add(temp);
+                        count += 1;
+                    }
+                    //if (temp >= temp - (temp % gridSize.x) + gridSize.x - 1) break;
+                }
+            }
+            return targets;
+        }
+
+        [Obsolete]
         public int[] GetRange(in int idx, in int range)
         {
             int2 gridSize = this.gridSize;
@@ -613,7 +710,10 @@ namespace Syadeu.Database
 
             return targets.ToArray();
         }
+        [Obsolete]
         public int[] GetRange(in int2 location, in int range) => GetRange(GridExtensions.LocationToIndex(in m_AABB, in m_CellSize, in location), in range);
+
+        #endregion
 
         public int2 GetDirection(in int from, in Direction direction)
             => GetDirection(IndexToLocation(in from), in direction);
