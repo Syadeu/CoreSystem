@@ -89,10 +89,7 @@ namespace Syadeu.Presentation.TurnTable
                 column = lastRow.location.x - firstRow.location.x;
 
             outlines.Clear();
-            outlines = new FixedList64Bytes<GridPosition>();
-
             vertices.Clear();
-            vertices = new FixedList128Bytes<float3>();
 
             for (int yy = 0; yy < row; yy++)
             {
@@ -141,8 +138,10 @@ namespace Syadeu.Presentation.TurnTable
                         continue;
                     }
 
+                    // 첫번째 줄일때
                     if (yy == 0)
                     {
+                        // 줄을 아래로 밀어서 존재하는 타일을 찾는다.
                         bool found = false;
                         for (int i = 0; i < row; i++)
                         {
@@ -160,8 +159,10 @@ namespace Syadeu.Presentation.TurnTable
                         vertices.Add(gridsize.IndexToPosition(currentpos.index) + upleft);
                         vertices.Add(gridsize.IndexToPosition(currentpos.index) + upright);
                     }
+                    // 마지막 줄일때
                     else if (yy == row - 1)
                     {
+                        // 줄을 위로 밀어서 존재하는 타일을 찾는다.
                         bool found = false;
                         for (int i = 0; i < row; i++)
                         {
@@ -179,10 +180,13 @@ namespace Syadeu.Presentation.TurnTable
                         vertices.Add(gridsize.IndexToPosition(currentpos.index) + downleft);
                         vertices.Add(gridsize.IndexToPosition(currentpos.index) + downright);
                     }
+                    // 그 사이 줄일때
                     else
                     {
+                        // 첫번째 행이면
                         if (xx == 0)
                         {
+                            // 행을 오른쪽으로 밀어서 존재하는 타일을 찾는다.
                             bool found = false;
                             for (int i = 0; i < column; i++)
                             {
@@ -200,8 +204,10 @@ namespace Syadeu.Presentation.TurnTable
                             vertices.Add(gridsize.IndexToPosition(currentpos.index) + upleft);
                             vertices.Add(gridsize.IndexToPosition(currentpos.index) + downleft);
                         }
+                        // 마지막 행이면
                         else
                         {
+                            // 행을 왼쪽으로 밀어서 존재하는 타일을 찾는다.
                             bool found = false;
                             for (int i = 0; i < column; i++)
                             {

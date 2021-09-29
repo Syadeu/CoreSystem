@@ -8,7 +8,7 @@ using System.Runtime.CompilerServices;
 
 namespace Syadeu.Database
 {
-    [BurstCompile]
+    [BurstCompile(CompileSynchronously = true)]
     public static class GridBurstExtensions
     {
         public delegate int LocationInt2ToIndex(in AABB aabb, in float cellSize, in int2 xy);
@@ -17,40 +17,40 @@ namespace Syadeu.Database
         public delegate void IndexIntToLocation(in AABB aabb, in float cellSize, in int idx, ref int2 output);
         public delegate void PositionFloat3ToLocation(in AABB aabb, in float cellSize, in float3 pos, ref int2 output);
 
-        /*              */
+        ///*              */
 
-        public static readonly FunctionPointer<LocationIntToIndex> p_LocationIntToIndex = BurstCompiler.CompileFunctionPointer<LocationIntToIndex>(f_LocationToIndex);
-        public static readonly FunctionPointer<LocationInt2ToIndex> p_LocationInt2ToIndex = BurstCompiler.CompileFunctionPointer<LocationInt2ToIndex>(f_LocationToIndex);
+        //public static readonly FunctionPointer<LocationIntToIndex> p_LocationIntToIndex = BurstCompiler.CompileFunctionPointer<LocationIntToIndex>(f_LocationToIndex);
+        //public static readonly FunctionPointer<LocationInt2ToIndex> p_LocationInt2ToIndex = BurstCompiler.CompileFunctionPointer<LocationInt2ToIndex>(f_LocationToIndex);
 
-        /*              */
+        ///*              */
 
-        public static readonly FunctionPointer<IndexIntToLocation> p_IndexIntToLocation = BurstCompiler.CompileFunctionPointer<IndexIntToLocation>(f_IndexToLocation);
-        public static readonly FunctionPointer<PositionFloat3ToLocation> p_PositionFloat3ToLocation = BurstCompiler.CompileFunctionPointer<PositionFloat3ToLocation>(f_PositionToLocation);
+        //public static readonly FunctionPointer<IndexIntToLocation> p_IndexIntToLocation = BurstCompiler.CompileFunctionPointer<IndexIntToLocation>(f_IndexToLocation);
+        //public static readonly FunctionPointer<PositionFloat3ToLocation> p_PositionFloat3ToLocation = BurstCompiler.CompileFunctionPointer<PositionFloat3ToLocation>(f_PositionToLocation);
 
-        /*              */
+        ///*              */
 
-        public static int LocationToIndex(in AABB aabb, in float cellSize, in int2 xy)
-            => p_LocationInt2ToIndex.Invoke(in aabb, in cellSize, in xy);
-        public static int LocationToIndex(in AABB aabb, in float cellSize, in int x, in int y)
-            => p_LocationIntToIndex.Invoke(in aabb, in cellSize, in x, in y);
+        //public static int LocationToIndex(in AABB aabb, in float cellSize, in int2 xy)
+        //    => p_LocationInt2ToIndex.Invoke(in aabb, in cellSize, in xy);
+        //public static int LocationToIndex(in AABB aabb, in float cellSize, in int x, in int y)
+        //    => p_LocationIntToIndex.Invoke(in aabb, in cellSize, in x, in y);
 
-        public static int2 IndexToLocation(in AABB aabb, in float cellSize, in int idx)
-        {
-            int2 output = new int2();
-            p_IndexIntToLocation.Invoke(in aabb, in cellSize, in idx, ref output);
-            return output;
-        }
-        public static int2 PositionToLocation(in AABB aabb, in float cellSize, in float3 pos)
-        {
-            int2 output = new int2();
-            p_PositionFloat3ToLocation.Invoke(in aabb, in cellSize, in pos, ref output);
-            return output;
-        }
+        //public static int2 IndexToLocation(in AABB aabb, in float cellSize, in int idx)
+        //{
+        //    int2 output = new int2();
+        //    p_IndexIntToLocation.Invoke(in aabb, in cellSize, in idx, ref output);
+        //    return output;
+        //}
+        //public static int2 PositionToLocation(in AABB aabb, in float cellSize, in float3 pos)
+        //{
+        //    int2 output = new int2();
+        //    p_PositionFloat3ToLocation.Invoke(in aabb, in cellSize, in pos, ref output);
+        //    return output;
+        //}
 
         #region Get Index
         [BurstCompile]
         [MonoPInvokeCallback(typeof(LocationInt2ToIndex))]
-        private static int f_LocationToIndex(in AABB aabb, in float cellSize, in int2 xy)
+        public static int f_LocationToIndex(in AABB aabb, in float cellSize, in int2 xy)
         {
             int zSize = (int)math.floor(aabb.size.z / cellSize);
             return zSize * xy.y + xy.x;
@@ -58,7 +58,7 @@ namespace Syadeu.Database
 
         [BurstCompile]
         [MonoPInvokeCallback(typeof(LocationIntToIndex))]
-        private static int f_LocationToIndex(in AABB aabb, in float cellSize, in int x, in int y)
+        public static int f_LocationToIndex(in AABB aabb, in float cellSize, in int x, in int y)
         {
             int zSize = (int)math.floor(aabb.size.z / cellSize);
             return zSize * y + x;
@@ -70,7 +70,7 @@ namespace Syadeu.Database
 
         [BurstCompile]
         [MonoPInvokeCallback(typeof(IndexIntToLocation))]
-        private static void f_IndexToLocation(in AABB aabb, in float cellSize, in int idx, ref int2 output)
+        public static void f_IndexToLocation(in AABB aabb, in float cellSize, in int idx, ref int2 output)
         {
             //if (idx == 0)
             //{
@@ -95,7 +95,7 @@ namespace Syadeu.Database
 
         [BurstCompile]
         [MonoPInvokeCallback(typeof(PositionFloat3ToLocation))]
-        private static void f_PositionToLocation(in AABB aabb, in float cellSize, in float3 pos, ref int2 output)
+        public static void f_PositionToLocation(in AABB aabb, in float cellSize, in float3 pos, ref int2 output)
         {
             float
                 half = cellSize * .5f,
