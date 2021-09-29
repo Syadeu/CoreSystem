@@ -3,6 +3,7 @@ using Syadeu.Internal;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Map;
+using System;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
@@ -87,16 +88,16 @@ namespace Syadeu.Presentation.Actor
 
         #region ISystemEventScheduler
 
-        SystemEventResult ISystemEventScheduler.Execute()
+        void ISystemEventScheduler.Execute(ScheduledEventHandler handler)
         {
-            IEventHandler handler = m_ScheduledEvents.Dequeue();
+            IEventHandler ev = m_ScheduledEvents.Dequeue();
 
             CoreSystem.Logger.Log(Channel.Action,
-                $"Execute scheduled actor event({handler.GetEventName()})");
+                $"Execute scheduled actor event({ev.GetEventName()})");
 
-            handler.Post();
+            ev.Post();
 
-            return SystemEventResult.Success;
+            handler.SetEvent(SystemEventResult.Success, ev.EventType);
         }
 
         private static EventHandler<TEvent> EventHandlerFactory<TEvent>()
@@ -110,6 +111,8 @@ namespace Syadeu.Presentation.Actor
         }
         private interface IEventHandler
         {
+            Type EventType { get; }
+
             void Post();
 
             string GetEventName();
@@ -123,6 +126,8 @@ namespace Syadeu.Presentation.Actor
         {
             public TEvent m_Event;
             public ActorEventDelegate<TEvent> m_EventPost;
+
+            public Type EventType => TypeHelper.TypeOf<TEvent>.Type;
 
             void IEventHandler.Post()
             {

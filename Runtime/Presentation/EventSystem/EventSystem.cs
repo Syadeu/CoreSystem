@@ -1,5 +1,4 @@
 ﻿using Syadeu.Database;
-using Syadeu.Internal;
 using Syadeu.Presentation.Internal;
 using System;
 using System.Collections;
@@ -25,8 +24,9 @@ namespace Syadeu.Presentation.Events
         private readonly Queue<Action> m_PostedActions = new Queue<Action>();
         private readonly Queue<ISystemEventScheduler> m_SystemTickets = new Queue<ISystemEventScheduler>();
 
+        private readonly ScheduledEventHandler m_ScheduledEventHandler = new ScheduledEventHandler();
         private ISystemEventScheduler m_CurrentTicket;
-        private SystemEventResult m_CurrentTicketResult = SystemEventResult.Success;
+        private bool m_PausedScheduledEvent = false;
 
         private SceneSystem m_SceneSystem;
         private CoroutineSystem m_CoroutineSystem;
@@ -108,7 +108,10 @@ namespace Syadeu.Presentation.Events
         {
             if (m_LoadingLock) return base.OnPresentation();
 
-            ExecuteSystemTickets();
+            if (!m_PausedScheduledEvent)
+            {
+                ExecuteSystemTickets();
+            }
 
             int eventCount = m_UpdateEvents.Count;
             for (int i = 0; i < eventCount; i++)
@@ -198,6 +201,11 @@ namespace Syadeu.Presentation.Events
             TakeQueueTicket(this);
         }
 
+        public void SetPauseScheduleEvent(bool pause)
+        {
+            m_PausedScheduledEvent = pause;
+        }
+
         public void PostAction(Action action)
         {
             m_PostedActions.Enqueue(action);
@@ -205,18 +213,18 @@ namespace Syadeu.Presentation.Events
 
         private void ExecuteSystemTickets()
         {
-            if ((m_CurrentTicketResult & SystemEventResult.Wait) == SystemEventResult.Wait)
+            if ((m_ScheduledEventHandler.m_Result & SystemEventResult.Wait) == SystemEventResult.Wait)
             {
                 try
                 {
-                    m_CurrentTicketResult = m_CurrentTicket.Execute();
+                    m_CurrentTicket.Execute(m_ScheduledEventHandler);
                 }
                 catch (Exception)
                 {
-                    m_CurrentTicketResult = SystemEventResult.Failed;
+                    m_ScheduledEventHandler.m_Result = SystemEventResult.Failed;
                 }
 
-                if ((m_CurrentTicketResult & SystemEventResult.Wait) == SystemEventResult.Wait)
+                if ((m_ScheduledEventHandler.m_Result & SystemEventResult.Wait) == SystemEventResult.Wait)
                 {
                     return;
                 }
@@ -229,14 +237,14 @@ namespace Syadeu.Presentation.Events
 
                 try
                 {
-                    m_CurrentTicketResult = m_CurrentTicket.Execute();
+                    m_CurrentTicket.Execute(m_ScheduledEventHandler);
                 }
                 catch (Exception)
                 {
-                    m_CurrentTicketResult = SystemEventResult.Failed;
+                    m_ScheduledEventHandler.m_Result = SystemEventResult.Failed;
                 }
 
-                if ((m_CurrentTicketResult & SystemEventResult.Wait) == SystemEventResult.Wait)
+                if ((m_ScheduledEventHandler.m_Result & SystemEventResult.Wait) == SystemEventResult.Wait)
                 {
                     break;
                 }
@@ -248,13 +256,14 @@ namespace Syadeu.Presentation.Events
             m_SystemTickets.Enqueue(scheduler);
         }
 
-        SystemEventResult ISystemEventScheduler.Execute()
+        void ISystemEventScheduler.Execute(ScheduledEventHandler handler)
         {
             SynchronizedEventBase ev = m_ScheduledEvents.Dequeue();
+            Type evType = ev.GetType();
             if (ev.IsValid())
             {
                 CoreSystem.Logger.Log(Channel.Action,
-                    $"Execute scheduled event({ev.GetType().Name})");
+                    $"Execute scheduled event({evType.Name})");
 
                 try
                 {
@@ -264,14 +273,14 @@ namespace Syadeu.Presentation.Events
                 catch (Exception ex)
                 {
                     CoreSystem.Logger.LogError(Channel.Event,
-                        $"Invalid event({ev.GetType().Name}) has been posted");
+                        $"Invalid event({evType.Name}) has been posted");
                     UnityEngine.Debug.LogException(ex);
                 }
                 CoreSystem.Logger.Log(Channel.Event,
-                    $"Posted event : {ev.GetType().Name}");
+                    $"Posted event : {evType.Name}");
             }
 
-            return SystemEventResult.Success;
+            handler.SetEvent(SystemEventResult.Success, evType);
         }
     }
 }

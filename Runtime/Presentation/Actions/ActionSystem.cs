@@ -40,11 +40,15 @@ namespace Syadeu.Presentation.Actions
 
         #endregion
 
-        SystemEventResult ISystemEventScheduler.Execute()
+        void ISystemEventScheduler.Execute(ScheduledEventHandler handler)
         {
             if (!m_CurrentAction.IsEmpty())
             {
-                if (m_CurrentAction.Sequence.KeepWait) return SystemEventResult.Wait;
+                if (m_CurrentAction.Sequence.KeepWait)
+                {
+                    handler.SetEvent(SystemEventResult.Wait, m_CurrentAction.Sequence.GetType());
+                    return;
+                }
 
                 if (!m_CurrentAction.TimerStarted)
                 {
@@ -55,12 +59,15 @@ namespace Syadeu.Presentation.Actions
                 if (UnityEngine.Time.time - m_CurrentAction.StartTime
                     < m_CurrentAction.Sequence.AfterDelay)
                 {
-                    return SystemEventResult.Wait;
+                    handler.SetEvent(SystemEventResult.Wait, m_CurrentAction.Sequence.GetType());
+                    return;
                 }
 
                 m_CurrentAction.Terminate.Invoke();
                 m_CurrentAction.Clear();
-                return SystemEventResult.Success;
+
+                handler.SetEvent(SystemEventResult.Success, m_CurrentAction.Sequence.GetType());
+                return;
             }
 
             Payload temp = m_ScheduledActions.Dequeue();
@@ -85,10 +92,12 @@ namespace Syadeu.Presentation.Actions
                             action.InternalTerminate();
                             m_CurrentAction.Clear();
 
-                            return SystemEventResult.Success;
+                            handler.SetEvent(SystemEventResult.Success, m_CurrentAction.Sequence.GetType());
+                            return;
                         }
 
-                        return SystemEventResult.Wait;
+                        handler.SetEvent(SystemEventResult.Wait, m_CurrentAction.Sequence.GetType());
+                        return;
                     }
 
                     CoreSystem.Logger.Log(Channel.Action,
@@ -97,7 +106,8 @@ namespace Syadeu.Presentation.Actions
                     action.InternalExecute();
                     action.InternalTerminate();
 
-                    return SystemEventResult.Success;
+                    handler.SetEvent(SystemEventResult.Success, m_CurrentAction.Sequence.GetType());
+                    return;
                 case ActionType.Trigger:
                     TriggerAction triggerAction = TriggerAction.GetAction(temp.action);
 
@@ -117,10 +127,12 @@ namespace Syadeu.Presentation.Actions
                             triggerAction.InternalTerminate();
                             m_CurrentAction.Clear();
 
-                            return SystemEventResult.Success;
+                            handler.SetEvent(SystemEventResult.Success, m_CurrentAction.Sequence.GetType());
+                            return;
                         }
 
-                        return SystemEventResult.Wait;
+                        handler.SetEvent(SystemEventResult.Wait, m_CurrentAction.Sequence.GetType());
+                        return;
                     }
 
                     CoreSystem.Logger.Log(Channel.Action,
@@ -129,11 +141,11 @@ namespace Syadeu.Presentation.Actions
                     triggerAction.InternalExecute(temp.entity);
                     triggerAction.InternalTerminate();
 
-                    return SystemEventResult.Success;
+                    handler.SetEvent(SystemEventResult.Success, m_CurrentAction.Sequence.GetType());
+                    return;
             }
 
-            
-            return SystemEventResult.Failed;
+            handler.SetEvent(SystemEventResult.Failed, m_CurrentAction.Sequence.GetType());
         }
 
         public void ScheduleInstanceAction<T>(Reference<T> action)

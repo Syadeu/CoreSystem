@@ -13,6 +13,6 @@
         /// 수행 대상이 되었을 때 실행하는 메소드입니다.
         /// </summary>
         /// <returns></returns>
-        SystemEventResult Execute();
+        void Execute(ScheduledEventHandler handler);
     }
 }
