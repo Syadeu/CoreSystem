@@ -356,6 +356,16 @@ namespace Syadeu.Presentation.Map
 
         #endregion
 
+        public void SetObstacleLayers(params int[] layers)
+        {
+            GridMap.SetObstacleLayers(layers);
+        }
+        public void AddObstacleLayers(params int[] layers)
+        {
+            GridMap.AddObstacleLayers(layers);
+        }
+        public int[] GetLayer(in int layer) => GridMap.GetLayer(in layer);
+
         public bool HasPath([NoAlias] int from, [NoAlias] int to, [NoAlias] int maxPathLength, out int pathFound, [NoAlias] int maxIteration = 32)
         {
             int2
@@ -406,14 +416,14 @@ namespace Syadeu.Presentation.Map
                 return path[pathFound - 1].position.index == to;
             }
         }
-        public bool GetPath64(in int from, in int to, in int maxPathLength, ref GridPath64 path, in int maxIteration = 32)
+        public bool GetPath64(in int from, in int to, in int maxPathLength, ref GridPath64 path, in NativeHashSet<int> ignoreIndices = default, in int maxIteration = 32)
         {
             int2
                 fromLocation = GridMap.Grid.IndexToLocation(in from),
                 toLocation = GridMap.Grid.IndexToLocation(in to);
 
             GridPathTile tile = new GridPathTile(from, fromLocation);
-            tile.Calculate(GridMap.Grid, GridMap.ObstacleLayer);
+            tile.Calculate(GridMap.Grid, GridMap.ObstacleLayer, ignoreIndices);
 
             path.Clear();
             path.Add(tile);
@@ -440,7 +450,7 @@ namespace Syadeu.Presentation.Map
                     int nextDirection = GetLowestCost(ref lastTileData, in toLocation);
 
                     GridPathTile nextTile = lastTileData.GetNext(nextDirection);
-                    nextTile.Calculate(GridMap.Grid, GridMap.ObstacleLayer);
+                    nextTile.Calculate(GridMap.Grid, GridMap.ObstacleLayer, ignoreIndices);
                     path.Add(nextTile);
                 }
 
@@ -844,6 +854,39 @@ namespace Syadeu.Presentation.Map
                 if (ignoreLayers.IsCreated)
                 {
                     if (ignoreLayers.Contains(nextTemp))
+                    {
+                        opened[i] = false;
+                        openedPositions.RemoveAt(i);
+                        continue;
+                    }
+                }
+
+                opened[i] = true;
+                openedPositions.UpdateAt(i, nextTemp, nextTempLocation);
+            }
+        }
+        public void Calculate(in BinaryGrid grid, in NativeHashSet<int> ignoreLayers, in NativeHashSet<int> additionalIgnore = default)
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                int2 nextTempLocation = grid.GetDirection(in position.location, (Direction)(1 << i));
+                if (nextTempLocation.Equals(parent.location)) continue;
+
+                //int nextTemp = GridBurstExtensions.p_LocationInt2ToIndex.Invoke(grid.bounds, grid.cellSize, nextTempLocation);
+                int nextTemp = grid.LocationToIndex(nextTempLocation);
+                if (ignoreLayers.IsCreated)
+                {
+                    if (ignoreLayers.Contains(nextTemp))
+                    {
+                        opened[i] = false;
+                        openedPositions.RemoveAt(i);
+                        continue;
+                    }
+                }
+
+                if (additionalIgnore.IsCreated)
+                {
+                    if (additionalIgnore.Contains(nextTemp))
                     {
                         opened[i] = false;
                         openedPositions.RemoveAt(i);

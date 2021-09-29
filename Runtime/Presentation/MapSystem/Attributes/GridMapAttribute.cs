@@ -55,6 +55,8 @@ namespace Syadeu.Presentation.Map
         [JsonIgnore] public int LayerCount => m_Layers.Length;
         [JsonIgnore] public BinaryGrid Grid { get; private set; }
         [JsonIgnore] private NativeHashSet<int>[] Layers { get; set; }
+
+        [JsonIgnore] public FixedList32Bytes<int> m_ObstacleLayerIndices = new FixedList32Bytes<int>();
         [JsonIgnore] public NativeHashSet<int> ObstacleLayer { get; private set; }
 
         public void CreateGrid()
@@ -89,17 +91,38 @@ namespace Syadeu.Presentation.Map
         }
         public void SetObstacleLayers(params int[] layers)
         {
-            int count = 0;
+            if (ObstacleLayer.IsCreated) ObstacleLayer.Dispose();
+            ObstacleLayer = new NativeHashSet<int>(4096, Allocator.Persistent);
+            m_ObstacleLayerIndices.Clear();
             for (int i = 0; i < layers.Length; i++)
             {
-                count += m_Layers[layers[i]].m_Indices.Length;
+                m_ObstacleLayerIndices.Add(layers[i]);
             }
 
-            if (ObstacleLayer.IsCreated) ObstacleLayer.Dispose();
-            ObstacleLayer = new NativeHashSet<int>(count, Allocator.Persistent);
+            for (int i = 0; i < layers.Length; i++)
+            {
+                foreach (var item in m_Layers[layers[i]].m_Indices)
+                {
+                    ObstacleLayer.Add(item);
+                }
+            }
+        }
+        public void AddObstacleLayers(params int[] layers)
+        {
+            if (!ObstacleLayer.IsCreated)
+            {
+                ObstacleLayer = new NativeHashSet<int>(4096, Allocator.Persistent);
+            }
 
             for (int i = 0; i < layers.Length; i++)
             {
+                if (m_ObstacleLayerIndices.Contains(layers[i]))
+                {
+                    "already added".ToLogError();
+                    continue;
+                }
+
+                m_ObstacleLayerIndices.Add(layers[i]);
                 foreach (var item in m_Layers[layers[i]].m_Indices)
                 {
                     ObstacleLayer.Add(item);
@@ -122,8 +145,14 @@ namespace Syadeu.Presentation.Map
                 }
                 Layers = null;
             }
+
+            if (ObstacleLayer.IsCreated) ObstacleLayer.Dispose();
         }
 
+        public int[] GetLayer(in int layer)
+        {
+            return m_Layers[layer].m_Indices;
+        }
         public int GetLayer(Hash hash)
         {
             for (int i = 0; i < m_Layers.Length; i++)
@@ -141,9 +170,11 @@ namespace Syadeu.Presentation.Map
             return -1;
         }
 
-        public FixedList128Bytes<int> FilterByLayer128(in int layer, in FixedList128Bytes<int> indices)
+        #region Filter
+
+        public FixedList32Bytes<int> FilterByLayer32(in int layer, in FixedList32Bytes<int> indices)
         {
-            FixedList128Bytes<int> temp = new FixedList128Bytes<int>();
+            FixedList32Bytes<int> temp = new FixedList32Bytes<int>();
             for (int i = 0; i < indices.Length; i++)
             {
                 if (m_Layers[layer].m_Inverse)
@@ -193,9 +224,9 @@ namespace Syadeu.Presentation.Map
             }
             return temp;
         }
-        public FixedList32Bytes<int> FilterByLayer32(in int layer, in FixedList32Bytes<int> indices)
+        public FixedList128Bytes<int> FilterByLayer128(in int layer, in FixedList128Bytes<int> indices)
         {
-            FixedList32Bytes<int> temp = new FixedList32Bytes<int>();
+            FixedList128Bytes<int> temp = new FixedList128Bytes<int>();
             for (int i = 0; i < indices.Length; i++)
             {
                 if (m_Layers[layer].m_Inverse)
@@ -255,6 +286,8 @@ namespace Syadeu.Presentation.Map
         [Obsolete]
         public int[] FilterByLayer(string layer, int[] indices, out int[] filteredIndices)
             => FilterByLayer(GetLayer(layer), indices, out filteredIndices);
+
+        #endregion
 
         public bool LayerContains(in int layer, in int index)
         {

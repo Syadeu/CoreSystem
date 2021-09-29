@@ -36,6 +36,8 @@ namespace Syadeu.Presentation.Map
         internal int[] m_ObstacleLayers = Array.Empty<int>();
 
         [JsonIgnore] public bool AllowOverlapping => m_AllowOverlapping;
+
+        [JsonIgnore] internal NativeHashSet<int> ObstacleLayers { get; set; }
     }
 
     [Preserve]
@@ -54,6 +56,17 @@ namespace Syadeu.Presentation.Map
 
         protected override void OnCreated(GridSizeAttribute attribute, EntityData<IEntityData> e)
         {
+            attribute.ObstacleLayers = new NativeHashSet<int>(4096, Allocator.Persistent);
+            
+            for (int i = 0; i < attribute.m_ObstacleLayers.Length; i++)
+            {
+                int[] indices = m_GridSystem.GetLayer(attribute.m_ObstacleLayers[i]);
+                foreach (var item in indices)
+                {
+                    attribute.ObstacleLayers.Add(item);
+                }
+            }
+
             GridSizeComponent component = new GridSizeComponent();
 
             FixedList32Bytes<int> obstacleLayers = new FixedList32Bytes<int>();
@@ -61,6 +74,8 @@ namespace Syadeu.Presentation.Map
             {
                 obstacleLayers.Add(attribute.m_ObstacleLayers[i]);
             }
+
+            component.m_Parent = e;
             component.m_ObstacleLayers = obstacleLayers;
 
             e.AddComponent(component);
@@ -69,6 +84,8 @@ namespace Syadeu.Presentation.Map
         }
         protected override void OnDestroy(GridSizeAttribute attribute, EntityData<IEntityData> entity)
         {
+            attribute.ObstacleLayers.Dispose();
+
             m_GridSystem.UnregisterGridSize(attribute);
         }
 

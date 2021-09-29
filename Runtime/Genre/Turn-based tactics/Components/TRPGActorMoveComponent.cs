@@ -1,6 +1,7 @@
 ﻿using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Map;
+using System;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -29,6 +30,41 @@ namespace Syadeu.Presentation.TurnTable
             }
             return true;
         }
+
+        #region Get Moveable GridPositions
+
+        [BurstDiscard]
+        public INativeList<GridPosition> GetMoveablePositions()
+        {
+            if (!SafetyChecks()) return default(FixedList32Bytes<GridPosition>);
+
+            var turnPlayer = m_Parent.GetComponent<TurnPlayerComponent>();
+            int maxValue = turnPlayer.ActionPoint * turnPlayer.ActionPoint;
+
+            if (maxValue < 32) return GetMoveablePositions32();
+            else if (maxValue < 64) return GetMoveablePositions64();
+            else if (maxValue < 128) return GetMoveablePositions128();
+
+            throw new NotImplementedException();
+        }
+        public FixedList32Bytes<GridPosition> GetMoveablePositions32()
+        {
+            if (!SafetyChecks()) return default(FixedList64Bytes<GridPosition>);
+
+            var turnPlayer = m_Parent.GetComponent<TurnPlayerComponent>();
+            var gridsize = m_Parent.GetComponent<GridSizeComponent>();
+            var range = gridsize.GetRange32(turnPlayer.ActionPoint);
+
+            FixedList32Bytes<GridPosition> indices = new FixedList32Bytes<GridPosition>();
+            for (int i = 0; i < range.Length; i++)
+            {
+                if (!gridsize.HasPath(range[i], turnPlayer.ActionPoint)) continue;
+
+                indices.Add(gridsize.GetGridPosition(range[i]));
+            }
+
+            return indices;
+        }
         public FixedList64Bytes<GridPosition> GetMoveablePositions64()
         {
             if (!SafetyChecks()) return default(FixedList64Bytes<GridPosition>);
@@ -47,6 +83,27 @@ namespace Syadeu.Presentation.TurnTable
 
             return indices;
         }
+        public FixedList128Bytes<GridPosition> GetMoveablePositions128()
+        {
+            if (!SafetyChecks()) return default(FixedList64Bytes<GridPosition>);
+
+            var turnPlayer = m_Parent.GetComponent<TurnPlayerComponent>();
+            var gridsize = m_Parent.GetComponent<GridSizeComponent>();
+            var range = gridsize.GetRange128(turnPlayer.ActionPoint);
+
+            FixedList128Bytes<GridPosition> indices = new FixedList128Bytes<GridPosition>();
+            for (int i = 0; i < range.Length; i++)
+            {
+                if (!gridsize.HasPath(range[i], turnPlayer.ActionPoint)) continue;
+
+                indices.Add(gridsize.GetGridPosition(range[i]));
+            }
+
+            return indices;
+        }
+
+        #endregion
+
         public FixedList64Bytes<GridPath64> GetMoveablePath64()
         {
             if (!SafetyChecks()) return default(FixedList64Bytes<GridPath64>);

@@ -1,4 +1,5 @@
 ﻿using Syadeu.Presentation.Components;
+using Syadeu.Presentation.Entities;
 using System;
 using System.Collections.Generic;
 using Unity.Collections;
@@ -9,6 +10,7 @@ namespace Syadeu.Presentation.Map
     public struct GridSizeComponent : IEntityComponent
     {
         internal PresentationSystemID<GridSystem> m_GridSystem;
+        internal EntityData<IEntityData> m_Parent;
 
         internal FixedList32Bytes<int> m_ObstacleLayers;
         public FixedList32Bytes<GridPosition> positions;
@@ -81,7 +83,9 @@ namespace Syadeu.Presentation.Map
 
         public bool GetPath64(in int to, ref GridPath64 path, in int maxPathLength, in int maxIteration = 32)
         {
-            return m_GridSystem.System.GetPath64(positions[0].index, in to, in maxPathLength, ref path, in maxIteration);
+            return m_GridSystem.System.GetPath64(
+                positions[0].index, in to, in maxPathLength, ref path, 
+                m_Parent.GetAttribute<GridSizeAttribute>().ObstacleLayers, in maxIteration);
         }
 
         public GridPosition GetGridPosition(in int index)
