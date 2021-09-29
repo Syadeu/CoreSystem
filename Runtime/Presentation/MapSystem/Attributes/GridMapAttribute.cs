@@ -250,6 +250,83 @@ namespace Syadeu.Presentation.Map
             }
             return temp;
         }
+        public FixedList512Bytes<int> FilterByLayer512(in int layer, in FixedList512Bytes<int> indices)
+        {
+            FixedList512Bytes<int> temp = new FixedList512Bytes<int>();
+            for (int i = 0; i < indices.Length; i++)
+            {
+                if (m_Layers[layer].m_Inverse)
+                {
+                    if (!Layers[layer].Contains(indices[i]))
+                    {
+                        //filtered.Add(indices[i]);
+                        continue;
+                    }
+                }
+                else
+                {
+                    if (Layers[layer].Contains(indices[i]))
+                    {
+                        //filtered.Add(indices[i]);
+                        continue;
+                    }
+                }
+
+                temp.Add(indices[i]);
+            }
+            return temp;
+        }
+        public FixedList4096Bytes<int> FilterByLayer1024(in int layer, in FixedList4096Bytes<int> indices)
+        {
+            FixedList4096Bytes<int> temp = new FixedList4096Bytes<int>();
+            for (int i = 0; i < indices.Length; i++)
+            {
+                if (m_Layers[layer].m_Inverse)
+                {
+                    if (!Layers[layer].Contains(indices[i]))
+                    {
+                        //filtered.Add(indices[i]);
+                        continue;
+                    }
+                }
+                else
+                {
+                    if (Layers[layer].Contains(indices[i]))
+                    {
+                        //filtered.Add(indices[i]);
+                        continue;
+                    }
+                }
+
+                temp.Add(indices[i]);
+            }
+            return temp;
+        }
+
+        public void FilterByLayer(in int layer, ref NativeList<int> indices)
+        {
+            for (int i = indices.Length - 1; i >= 0; i--)
+            {
+                if (m_Layers[layer].m_Inverse)
+                {
+                    if (!Layers[layer].Contains(indices[i]))
+                    {
+                        //filtered.Add(indices[i]);
+                        indices.RemoveAtSwapBack(indices[i]);
+                        continue;
+                    }
+                }
+                else
+                {
+                    if (Layers[layer].Contains(indices[i]))
+                    {
+                        //filtered.Add(indices[i]);
+                        indices.RemoveAtSwapBack(indices[i]);
+                        continue;
+                    }
+                }
+            }
+        }
 
         [Obsolete]
         public int[] FilterByLayer(int layer, int[] indices, out int[] filteredIndices)

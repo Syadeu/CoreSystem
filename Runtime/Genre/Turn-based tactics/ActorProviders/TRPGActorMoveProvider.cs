@@ -1,18 +1,19 @@
 ﻿using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Components;
+using Syadeu.Presentation.Entities;
 
 namespace Syadeu.Presentation.TurnTable
 {
     public sealed class TRPGActorMoveProvider : ActorProviderBase,
         INotifyComponent<TRPGActorMoveComponent>
     {
-        protected override void OnCreated()
+        protected override void OnCreated(Entity<ActorEntity> entity)
         {
             TRPGActorMoveComponent component = new TRPGActorMoveComponent();
 
-            component.m_Parent = Parent;
+            component.m_Parent = entity.As<ActorEntity, IEntityData>();
 
-            Parent.AddComponent(component);
+            entity.AddComponent(component);
         }
     }
 }

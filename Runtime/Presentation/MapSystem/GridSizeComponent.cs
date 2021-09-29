@@ -1,4 +1,5 @@
-﻿using Syadeu.Presentation.Components;
+﻿using Syadeu.Database;
+using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using System;
 using System.Collections.Generic;
@@ -7,13 +8,13 @@ using Unity.Mathematics;
 
 namespace Syadeu.Presentation.Map
 {
-    public struct GridSizeComponent : IEntityComponent
+    public struct GridSizeComponent : IEntityComponent, IValidation
     {
         internal PresentationSystemID<GridSystem> m_GridSystem;
         internal EntityData<IEntityData> m_Parent;
 
-        internal FixedList32Bytes<int> m_ObstacleLayers;
-        public FixedList32Bytes<GridPosition> positions;
+        internal FixedList128Bytes<int> m_ObstacleLayers;
+        public FixedList512Bytes<GridPosition> positions;
 
         public float CellSize => m_GridSystem.System.CellSize;
 
@@ -44,26 +45,38 @@ namespace Syadeu.Presentation.Map
             return indices;
         }
 
-        public FixedList128Bytes<int> GetRange128(in int range)
+        public FixedList32Bytes<int> GetRange8(in int range)
         {
             GridSystem grid = m_GridSystem.System;
 
-            FixedList128Bytes<int> indices = grid.GetRange128(positions[0].index, in range, m_ObstacleLayers);
+            FixedList32Bytes<int> indices = grid.GetRange8(positions[0].index, in range, m_ObstacleLayers);
             return indices;
         }
-        public FixedList64Bytes<int> GetRange64(in int range)
+        public FixedList64Bytes<int> GetRange16(in int range)
         {
             GridSystem grid = m_GridSystem.System;
 
-            FixedList64Bytes<int> indices = grid.GetRange64(positions[0].index, in range, m_ObstacleLayers);
+            FixedList64Bytes<int> indices = grid.GetRange16(positions[0].index, in range, m_ObstacleLayers);
             return indices;
         }
-        public FixedList32Bytes<int> GetRange32(in int range)
+        public FixedList128Bytes<int> GetRange32(in int range)
         {
             GridSystem grid = m_GridSystem.System;
 
-            FixedList32Bytes<int> indices = grid.GetRange32(positions[0].index, in range, m_ObstacleLayers);
+            FixedList128Bytes<int> indices = grid.GetRange32(positions[0].index, in range, m_ObstacleLayers);
             return indices;
+        }
+        public FixedList4096Bytes<int> GetRange1024(in int range)
+        {
+            GridSystem grid = m_GridSystem.System;
+
+            FixedList4096Bytes<int> indices = grid.GetRange1024(positions[0].index, in range, m_ObstacleLayers);
+            return indices;
+        }
+        public void GetRange(ref NativeList<int> list, in int range)
+        {
+            GridSystem grid = m_GridSystem.System;
+            grid.GetRange(ref list, positions[0].index, in range, m_ObstacleLayers);
         }
 
         public bool HasPath(int to, int maxPathLength)
@@ -81,7 +94,7 @@ namespace Syadeu.Presentation.Map
             return m_GridSystem.System.GetPath(positions[0].index, to, path, maxPathLength);
         }
 
-        public bool GetPath64(in int to, ref GridPath64 path, in int maxPathLength, in int maxIteration = 32)
+        public bool GetPath64(in int to, ref GridPath32 path, in int maxPathLength, in int maxIteration = 32)
         {
             return m_GridSystem.System.GetPath64(
                 positions[0].index, in to, in maxPathLength, ref path, 
@@ -96,5 +109,7 @@ namespace Syadeu.Presentation.Map
         {
             return new GridPosition(m_GridSystem.System.LocationToIndex(location), location);
         }
+
+        public bool IsValid() => !m_GridSystem.IsNull() && m_GridSystem.IsValid();
     }
 }

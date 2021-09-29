@@ -2,6 +2,7 @@
 using Syadeu.Presentation.Internal;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace Syadeu.Presentation
 {
@@ -19,6 +20,8 @@ namespace Syadeu.Presentation
     /// <typeparam name="T"></typeparam>
     public abstract class PresentationSystemEntity<T> : PresentationSystemEntity where T : PresentationSystemEntity
     {
+        private readonly List<UnityEngine.GameObject> m_CreatedGameObjects = new List<UnityEngine.GameObject>();
+
         public new PresentationSystemID<T> SystemID => new PresentationSystemID<T>(m_GroupIndex, m_SystemIndex);
 
         public override bool IsStartable => true;
@@ -37,6 +40,14 @@ namespace Syadeu.Presentation
         protected override PresentationResult AfterPresentation() { return PresentationResult.Normal; }
         protected override PresentationResult AfterPresentationAsync() { return PresentationResult.Normal; }
 
+        internal override sealed void InternalOnDispose()
+        {
+            for (int i = 0; i < m_CreatedGameObjects.Count; i++)
+            {
+                Destroy(m_CreatedGameObjects[i]);
+            }
+            m_CreatedGameObjects.Clear();
+        }
         public override void OnDispose() { }
 
         /// <summary>
@@ -51,5 +62,16 @@ namespace Syadeu.Presentation
         protected CoreRoutine StartBackgroundCoroutine(IEnumerator cor) => CoreSystem.StartBackgroundUpdate(this, cor);
         protected void StopCoroutine(CoreRoutine routine) => CoreSystem.RemoveUnityUpdate(routine);
         protected void StopBackgroundCoroutine(CoreRoutine routine) => CoreSystem.RemoveBackgroundUpdate(routine);
+
+        protected UnityEngine.GameObject CreateGameObject(string name)
+        {
+            CoreSystem.Logger.ThreadBlock(nameof(DontDestroyOnLoad), Syadeu.Internal.ThreadInfo.Unity);
+
+            UnityEngine.GameObject obj = new UnityEngine.GameObject(name);
+
+            //obj.transform.SetParent(s_PresentationUnityFolder);
+
+            return obj;
+        }
     }
 }

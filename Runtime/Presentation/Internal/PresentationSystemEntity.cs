@@ -1,5 +1,6 @@
 ﻿using Syadeu.Database;
 using System;
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
 
@@ -16,6 +17,7 @@ namespace Syadeu.Presentation.Internal
         IDisposable
     {
         private static UnityEngine.Transform s_PresentationUnityFolder;
+        
         internal Hash m_GroupIndex;
         internal int m_SystemIndex;
 
@@ -66,9 +68,11 @@ namespace Syadeu.Presentation.Internal
         }
         public void Dispose()
         {
+            InternalOnDispose();
             OnUnityJobsDispose();
             OnDispose();
         }
+        internal virtual void InternalOnDispose() { }
         public abstract void OnDispose();
 
         protected void DontDestroyOnLoad(UnityEngine.GameObject obj)

@@ -595,7 +595,7 @@ namespace Syadeu.Database
 
         #region Get Ranges
 
-        public FixedList32Bytes<int> GetRange32(in int idx, in int range)
+        public FixedList32Bytes<int> GetRange8(in int idx, in int range)
         {
             int2 gridSize = this.gridSize;
             FixedList32Bytes<int> targets = new FixedList32Bytes<int>();
@@ -612,12 +612,6 @@ namespace Syadeu.Database
 
                     if (HasCell(temp))
                     {
-                        if (count >= 32)
-                        {
-                            Debug.LogError("GetRange32 Exceeding 32 ranges");
-                            continue;
-                        }
-
                         targets.Add(temp);
                         count += 1;
                     }
@@ -626,7 +620,7 @@ namespace Syadeu.Database
             }
             return targets;
         }
-        public FixedList64Bytes<int> GetRange64(in int idx, in int range)
+        public FixedList64Bytes<int> GetRange16(in int idx, in int range)
         {
             int2 gridSize = this.gridSize;
             FixedList64Bytes<int> targets = new FixedList64Bytes<int>();
@@ -643,12 +637,6 @@ namespace Syadeu.Database
 
                     if (HasCell(temp))
                     {
-                        if (count >= 64)
-                        {
-                            Debug.LogError("GetRange64 Exceeding 64 ranges");
-                            continue;
-                        }
-
                         targets.Add(temp);
                         count += 1;
                     }
@@ -657,7 +645,7 @@ namespace Syadeu.Database
             }
             return targets;
         }
-        public FixedList128Bytes<int> GetRange128(in int idx, in int range)
+        public FixedList128Bytes<int> GetRange32(in int idx, in int range)
         {
             int2 gridSize = this.gridSize;
             FixedList128Bytes<int> targets = new FixedList128Bytes<int>();
@@ -674,12 +662,6 @@ namespace Syadeu.Database
 
                     if (HasCell(temp))
                     {
-                        if (count >= 128)
-                        {
-                            Debug.LogError("GetRange128 Exceeding 128 ranges");
-                            continue;
-                        }
-
                         targets.Add(temp);
                         count += 1;
                     }
@@ -687,6 +669,56 @@ namespace Syadeu.Database
                 }
             }
             return targets;
+        }
+        public FixedList4096Bytes<int> GetRange1024(in int idx, in int range)
+        {
+            int2 gridSize = this.gridSize;
+            FixedList4096Bytes<int> targets = new FixedList4096Bytes<int>();
+
+            int count = 0;
+
+            int startIdx = idx - range + (gridSize.y * range);
+            int height = ((range * 2) + 1);
+            for (int yGrid = 0; yGrid < height; yGrid++)
+            {
+                for (int xGrid = 0; xGrid < height; xGrid++)
+                {
+                    int temp = startIdx - (yGrid * gridSize.y) + xGrid;
+
+                    if (HasCell(temp))
+                    {
+                        targets.Add(temp);
+                        count += 1;
+                    }
+                    //if (temp >= temp - (temp % gridSize.x) + gridSize.x - 1) break;
+                }
+            }
+            return targets;
+        }
+
+        public void GetRange(ref NativeList<int> targets, in int idx, in int range)
+        {
+            targets.Clear();
+            int2 gridSize = this.gridSize;
+
+            int count = 0;
+
+            int startIdx = idx - range + (gridSize.y * range);
+            int height = ((range * 2) + 1);
+            for (int yGrid = 0; yGrid < height; yGrid++)
+            {
+                for (int xGrid = 0; xGrid < height; xGrid++)
+                {
+                    int temp = startIdx - (yGrid * gridSize.y) + xGrid;
+
+                    if (HasCell(temp))
+                    {
+                        targets.Add(temp);
+                        count += 1;
+                    }
+                    //if (temp >= temp - (temp % gridSize.x) + gridSize.x - 1) break;
+                }
+            }
         }
 
         [Obsolete]

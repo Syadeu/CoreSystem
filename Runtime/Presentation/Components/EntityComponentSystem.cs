@@ -239,6 +239,12 @@ namespace Syadeu.Presentation.Components
                 return false;
             }
 
+            if (((TComponent*)m_ComponentBuffer[index.x].m_ComponentBuffer)[index.y] is IValidation validation &&
+                !validation.IsValid())
+            {
+                return false;
+            }
+
             return true;
         }
         public bool HasComponent(EntityData<IEntityData> entity, Type componentType)

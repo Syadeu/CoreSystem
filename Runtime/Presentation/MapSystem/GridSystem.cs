@@ -129,7 +129,7 @@ namespace Syadeu.Presentation.Map
                 m_EntityGridIndices.Remove(entity);
             }
         }
-        private void UpdateGridEntity(Entity<IEntity> entity, in FixedList32Bytes<GridPosition> indices)
+        private void UpdateGridEntity(Entity<IEntity> entity, in FixedList512Bytes<GridPosition> indices)
         {
             RemoveGridEntity(entity);
 
@@ -185,6 +185,8 @@ namespace Syadeu.Presentation.Map
 
                             tr.position = IndexToPosition(PositionToIndex(pos));
                         }
+                        ref GridSizeComponent component = ref entity.GetComponent<GridSizeComponent>();
+                        component.m_GridSystem = SystemID;
 
                         UpdateGridLocation(entity, att, false);
                     }
@@ -416,7 +418,7 @@ namespace Syadeu.Presentation.Map
                 return path[pathFound - 1].position.index == to;
             }
         }
-        public bool GetPath64(in int from, in int to, in int maxPathLength, ref GridPath64 path, in NativeHashSet<int> ignoreIndices = default, in int maxIteration = 32)
+        public bool GetPath64(in int from, in int to, in int maxPathLength, ref GridPath32 path, in NativeHashSet<int> ignoreIndices = default, in int maxIteration = 32)
         {
             int2
                 fromLocation = GridMap.Grid.IndexToLocation(in from),
@@ -426,38 +428,55 @@ namespace Syadeu.Presentation.Map
             tile.Calculate(GridMap.Grid, GridMap.ObstacleLayer, ignoreIndices);
 
             path.Clear();
-            path.Add(tile);
 
-            int iteration = 0;
-            while (
-                iteration < maxIteration &&
-                path.Length < maxPathLength &&
-                path[path.Length - 1].position.index != to)
+            unsafe
             {
-                GridPathTile lastTileData = path[path.Length - 1];
-                if (lastTileData.IsBlocked())
+                GridPathTile* list = stackalloc GridPathTile[512];
+                list[0] = tile;
+
+                int iteration = 0; int count = 1;
+                while (
+                    iteration < maxIteration &&
+                    count < maxPathLength &&
+                    list[count - 1].position.index != to)
                 {
-                    path.RemoveAt(path.Length - 1);
+                    GridPathTile lastTileData = list[count - 1];
+                    if (lastTileData.IsBlocked())
+                    {
+                        //path.RemoveAt(path.Length - 1);
+                        count -= 1;
 
-                    if (path.Length == 0) break;
+                        if (path.Length == 0) break;
 
-                    GridPathTile parentTile = path[path.Length - 1];
-                    parentTile.opened[lastTileData.direction] = false;
-                    path[path.Length - 1] = parentTile;
+                        GridPathTile parentTile = list[count - 1];
+                        parentTile.opened[lastTileData.direction] = false;
+                        list[count - 1] = parentTile;
+                    }
+                    else
+                    {
+                        int nextDirection = GetLowestCost(ref lastTileData, in toLocation);
+
+                        GridPathTile nextTile = lastTileData.GetNext(nextDirection);
+                        nextTile.Calculate(GridMap.Grid, GridMap.ObstacleLayer, ignoreIndices);
+                        
+                        list[count] = (nextTile);
+                        count += 1;
+                    }
+
+                    iteration++;
                 }
-                else
+
+                for (int i = 0; i < count; i++)
                 {
-                    int nextDirection = GetLowestCost(ref lastTileData, in toLocation);
-
-                    GridPathTile nextTile = lastTileData.GetNext(nextDirection);
-                    nextTile.Calculate(GridMap.Grid, GridMap.ObstacleLayer, ignoreIndices);
-                    path.Add(nextTile);
+                    path.Add(new GridTile()
+                    {
+                        index = list[i].position.index,
+                        parent = list[i].parent.index
+                    });
                 }
 
-                iteration++;
+                return list[count - 1].position.index == to;
             }
-
-            return path[path.Length - 1].position.index == to;
         }
 
         [Obsolete]
@@ -515,14 +534,6 @@ namespace Syadeu.Presentation.Map
             return path[path.Count - 1].position.index == to;
         }
 
-        [Obsolete("", true)]
-        public JobHandle ExecutePathfinding(NativeArray<int2> from2Target, NativeArray<GridPath16> results)
-        {
-            GridPathfindingJob16 job = new GridPathfindingJob16(GridMap.Grid, from2Target, results);
-            JobHandle handle = job.Schedule(from2Target.Length, 64);
-            return handle;
-        }
-
         public IReadOnlyList<Entity<IEntity>> GetEntitiesAt(in int index)
         {
             if (m_GridEntities.TryGetValue(index, out List<Entity<IEntity>> entities))
@@ -536,6 +547,8 @@ namespace Syadeu.Presentation.Map
             int index = LocationToIndex(in location);
             return GetEntitiesAt(index);
         }
+
+        #region Utils
 
         public float3 IndexToPosition(int idx)
         {
@@ -568,6 +581,10 @@ namespace Syadeu.Presentation.Map
             return GridMap.Grid.PositionToIndex(position);
         }
 
+        #endregion
+
+        #region Get Range
+
         [Obsolete]
         public int[] GetRange(int idx, int range, params int[] ignoreLayers)
         {
@@ -583,9 +600,9 @@ namespace Syadeu.Presentation.Map
             return temp;
         }
 
-        public FixedList32Bytes<int> GetRange32(in int idx, in int range, in FixedList32Bytes<int> ignoreLayers)
+        public FixedList32Bytes<int> GetRange8(in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
         {
-            FixedList32Bytes<int> temp = GridMap.Grid.GetRange32(in idx, in range);
+            FixedList32Bytes<int> temp = GridMap.Grid.GetRange8(in idx, in range);
             for (int i = 0; i < ignoreLayers.Length; i++)
             {
                 temp = GridMap.FilterByLayer32(ignoreLayers[i], in temp);
@@ -593,9 +610,9 @@ namespace Syadeu.Presentation.Map
 
             return temp;
         }
-        public FixedList64Bytes<int> GetRange64(in int idx, in int range, in FixedList64Bytes<int> ignoreLayers)
+        public FixedList64Bytes<int> GetRange16(in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
         {
-            FixedList64Bytes<int> temp = GridMap.Grid.GetRange64(in idx, in range);
+            FixedList64Bytes<int> temp = GridMap.Grid.GetRange16(in idx, in range);
             for (int i = 0; i < ignoreLayers.Length; i++)
             {
                 temp = GridMap.FilterByLayer64(ignoreLayers[i], in temp);
@@ -603,9 +620,9 @@ namespace Syadeu.Presentation.Map
 
             return temp;
         }
-        public FixedList128Bytes<int> GetRange128(in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
+        public FixedList128Bytes<int> GetRange32(in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
         {
-            FixedList128Bytes<int> temp = GridMap.Grid.GetRange128(in idx, in range);
+            FixedList128Bytes<int> temp = GridMap.Grid.GetRange32(in idx, in range);
             for (int i = 0; i < ignoreLayers.Length; i++)
             {
                 temp = GridMap.FilterByLayer128(ignoreLayers[i], in temp);
@@ -613,6 +630,26 @@ namespace Syadeu.Presentation.Map
 
             return temp;
         }
+        public FixedList4096Bytes<int> GetRange1024(in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
+        {
+            FixedList4096Bytes<int> temp = GridMap.Grid.GetRange1024(in idx, in range);
+            for (int i = 0; i < ignoreLayers.Length; i++)
+            {
+                temp = GridMap.FilterByLayer1024(ignoreLayers[i], in temp);
+            }
+
+            return temp;
+        }
+        public void GetRange(ref NativeList<int> list, in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
+        {
+            GridMap.Grid.GetRange(ref list, in idx, in range);
+            for (int i = 0; i < ignoreLayers.Length; i++)
+            {
+                GridMap.FilterByLayer(ignoreLayers[i], ref list);
+            }
+        }
+
+        #endregion
 
         private int GetLowestCost(ref GridPathTile prev, in int2 to)
         {
@@ -638,151 +675,11 @@ namespace Syadeu.Presentation.Map
         private static int GetSqrMagnitude(int2 location) => (location.x * location.x) + (location.y * location.y);
     }
 
-    [BurstCompile(CompileSynchronously = true)]
-    public struct GridPathfindingJob16 : IJobParallelFor
+    [BurstCompatible]
+    public struct GridTile
     {
-        const int c_MaxIteration = 64;
-
-        [ReadOnly] private BinaryGrid m_Grid;
-        [ReadOnly] private NativeHashSet<int> m_IgnoreIndices;
-        [ReadOnly, DeallocateOnJobCompletion] private NativeArray<int2> m_From2TargetsTemp;
-        [ReadOnly] private NativeArray<int2>.ReadOnly m_From2Targets;
-
-        [WriteOnly] public NativeArray<GridPath16> m_Results;
-
-        //private GridBurstExtensions.Functions m_Functions;
-
-        public GridPathfindingJob16(
-            BinaryGrid grid, 
-            NativeArray<int2> from2Targets, 
-            NativeArray<GridPath16> results,
-            NativeHashSet<int> ignoreIndices = default)
-        {
-            m_Grid = grid;
-            m_IgnoreIndices = ignoreIndices;
-
-            m_From2TargetsTemp = from2Targets;
-            m_From2Targets = m_From2TargetsTemp.AsReadOnly();
-
-            m_Results = results;
-
-            //m_Functions = GridBurstExtensions.f_Functions;
-        }
-
-        public void Execute(int index)
-        {
-            int
-                from = m_From2Targets[index].x,
-                to = m_From2Targets[index].y;
-
-            int2
-                fromLocation = m_Grid.IndexToLocation(in from),
-                toLocation = m_Grid.IndexToLocation(in to);
-
-            GridPathTile tile = new GridPathTile(from, fromLocation);
-            //Calculate(m_Functions.p_LocationInt2ToIndex, ref tile, in m_Grid, in m_IgnoreIndices);
-            tile.Calculate(in m_Grid, in m_IgnoreIndices);
-
-            NativeList<GridPathTile> pathList = new NativeList<GridPathTile>(16, Allocator.Temp);
-            pathList.Add(tile);
-
-            int iteration = 0;
-            while (
-                iteration < c_MaxIteration &&
-                pathList.Length < 16 &&
-                pathList[pathList.Length - 1].position.index != to)
-            {
-                GridPathTile lastTileData = pathList[pathList.Length - 1];
-                if (lastTileData.IsBlocked())
-                {
-                    pathList[pathList.Length - 1] = GridPathTile.Empty;
-                    pathList.RemoveAtSwapBack(pathList.Length - 1);
-                    //count--;
-
-                    if (pathList.Length == 0) break;
-
-                    GridPathTile parentTile = pathList[pathList.Length - 1];
-                    parentTile.opened[lastTileData.direction] = false;
-                    pathList[pathList.Length - 1] = parentTile;
-                }
-                else
-                {
-                    int nextDirection = GetLowestCost(ref lastTileData, toLocation);
-
-                    GridPathTile nextTile = lastTileData.GetNext(nextDirection);
-                    //Calculate(m_Functions.p_LocationInt2ToIndex, ref nextTile, in m_Grid, in m_IgnoreIndices);
-                    nextTile.Calculate(in m_Grid, in m_IgnoreIndices);
-                    pathList.Add(nextTile);
-                }
-
-                iteration++;
-            }
-
-            //$"from({from})->to({to}) found {path.Count}".ToLog();
-            //for (int i = 0; i < path.Count; i++)
-            //{
-            //    $"{path[i].location} asd".ToLog();
-            //}
-
-            GridPath16 path = new GridPath16();
-            path.Initialize(pathList.Length);
-            for (int i = 0; i < pathList.Length; i++)
-            {
-                path[i] = pathList[i];
-            }
-
-            path.result = path[pathList.Length - 1].position.index == to ? GridPath16.Result.Success : GridPath16.Result.Failed;
-
-            m_Results[index] = path;
-        }
-
-        private int GetLowestCost(ref GridPathTile prev, int2 to)
-        {
-            int lowest = -1;
-            int cost = int.MaxValue;
-
-            for (int i = 0; i < 4; i++)
-            {
-                if (!prev.opened[i]) continue;
-
-                int tempCost = prev.GetCost(i, to);
-
-                if (tempCost < cost)
-                {
-                    lowest = i;
-                    cost = tempCost;
-                }
-            }
-
-            return lowest;
-        }
-
-        private void Calculate(
-            FunctionPointer<GridBurstExtensions.LocationInt2ToIndex> func, 
-            ref GridPathTile pathTile,
-            in BinaryGrid grid, in NativeHashSet<int> ignoreLayers = default)
-        {
-            for (int i = 0; i < 4; i++)
-            {
-                int2 nextTempLocation = grid.GetDirection(in pathTile.position.location, (Direction)(1 << i));
-                if (nextTempLocation.Equals(pathTile.parent.location)) continue;
-
-                int nextTemp = func.Invoke(grid.bounds, grid.cellSize, nextTempLocation);
-                //int nextTemp = grid.LocationToIndex(nextTempLocation);
-                if (ignoreLayers.IsCreated)
-                {
-                    if (ignoreLayers.Contains(nextTemp))
-                    {
-                        pathTile.opened[i] = false;
-                        pathTile.openedPositions.RemoveAt(i);
-                        continue;
-                    }
-                }
-
-                pathTile.opened[i] = true;
-                pathTile.openedPositions.UpdateAt(i, nextTemp, nextTempLocation);
-            }
-        }
+        public int parent;
+        public int index;
     }
 
     [BurstCompatible]

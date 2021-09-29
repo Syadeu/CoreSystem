@@ -6,6 +6,7 @@ namespace Syadeu.Presentation.Map
     public struct GridPosition : IGridPosition, IEquatable<GridPosition>
     {
         public static readonly GridPosition Empty = new GridPosition(-1, -1);
+        public const int c_Size = 12;
 
         public int index;
         public int2 location;

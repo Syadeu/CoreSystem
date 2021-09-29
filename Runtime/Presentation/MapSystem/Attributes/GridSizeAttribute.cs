@@ -77,6 +77,11 @@ namespace Syadeu.Presentation.Map
 
             component.m_Parent = e;
             component.m_ObstacleLayers = obstacleLayers;
+            component.positions = new FixedList512Bytes<GridPosition>();
+            for (int i = 0; i < attribute.m_GridLocations.Length; i++)
+            {
+                component.positions.Add(new GridPosition());
+            }
 
             e.AddComponent(component);
 
