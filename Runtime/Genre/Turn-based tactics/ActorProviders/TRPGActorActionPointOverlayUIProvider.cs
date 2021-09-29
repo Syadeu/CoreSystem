@@ -5,7 +5,7 @@ namespace Syadeu.Presentation.TurnTable
     /// <summary>
     /// <see cref="TRPGActionPointOverlayUI"/>
     /// </summary>
-    public sealed class TRPGActionPointOverlayUIProvider : ActorOverlayUIProvider
+    public sealed class TRPGActorActionPointOverlayUIProvider : ActorOverlayUIProvider
     {
 
     }
