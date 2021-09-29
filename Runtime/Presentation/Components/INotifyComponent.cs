@@ -9,7 +9,7 @@ namespace Syadeu.Presentation.Components
     /// </summary>
     /// <remarks>
     /// 사용자가 유동적으로 컴포넌트를 추가 및 제거하고 싶다면 이 구현부를 상속받아서는 안됩니다.<br/>
-    /// 이 구현부가 가르키는 컴포넌트는 사용자에 의해 제거되서는 안됩니다.
+    /// 이 구현부로 선언된 컴포넌트(<typeparamref name="TComponent"/>)는 사용자에 의해 제거되서는 안됩니다.
     /// </remarks>
     /// <typeparam name="TComponent"></typeparam>
     public interface INotifyComponent<TComponent> where TComponent : unmanaged, IEntityComponent

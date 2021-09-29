@@ -1,5 +1,6 @@
 ﻿using Syadeu.Database;
 using Syadeu.Internal;
+using Syadeu.Presentation.Internal;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -241,7 +242,8 @@ namespace Syadeu.Presentation.Events
                 }
             }
         }
-        public void TakeQueueTicket(ISystemEventScheduler scheduler)
+        public void TakeQueueTicket<TSystem>(TSystem scheduler) 
+            where TSystem : PresentationSystemEntity, ISystemEventScheduler
         {
             m_SystemTickets.Enqueue(scheduler);
         }

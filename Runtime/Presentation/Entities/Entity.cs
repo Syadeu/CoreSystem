@@ -307,6 +307,7 @@ namespace Syadeu.Presentation.Entities
 
         #region Components
 
+        /// <inheritdoc cref="EntityData{T}.AddComponent{TComponent}(TComponent)"/>
         public TComponent AddComponent<TComponent>(TComponent data)
             where TComponent : unmanaged, IEntityComponent
         {
@@ -330,6 +331,7 @@ namespace Syadeu.Presentation.Entities
 
             return s_ComponentSystem.System.AddComponent(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx), data);
         }
+        /// <inheritdoc cref="EntityData{T}.HasComponent{TComponent}"/>
         public bool HasComponent<TComponent>()
             where TComponent : unmanaged, IEntityComponent
         {
@@ -353,8 +355,17 @@ namespace Syadeu.Presentation.Entities
 
             return s_ComponentSystem.System.HasComponent<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
         }
+        /// <inheritdoc cref="EntityData{T}.HasComponent(Type)"/>
         public bool HasComponent(Type componentType)
         {
+#if UNITY_EDITOR
+            if (!TypeHelper.TypeOf<IEntityComponent>.Type.IsAssignableFrom(componentType))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Type {TypeHelper.ToString(componentType)} is not an {nameof(IEntityComponent)}.");
+                return false;
+            }
+#endif
             if (!IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
@@ -375,6 +386,7 @@ namespace Syadeu.Presentation.Entities
 
             return s_ComponentSystem.System.HasComponent(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx), componentType);
         }
+        /// <inheritdoc cref="EntityData{T}.GetComponent{TComponent}"/>
         public ref TComponent GetComponent<TComponent>()
             where TComponent : unmanaged, IEntityComponent
         {
@@ -398,6 +410,7 @@ namespace Syadeu.Presentation.Entities
 
             return ref s_ComponentSystem.System.GetComponent<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
         }
+        /// <inheritdoc cref="EntityData{T}.RemoveComponent{TComponent}"/>
         public void RemoveComponent<TComponent>()
             where TComponent : unmanaged, IEntityComponent
         {
@@ -421,8 +434,17 @@ namespace Syadeu.Presentation.Entities
 
             s_ComponentSystem.System.RemoveComponent<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
         }
+        /// <inheritdoc cref="EntityData{T}.RemoveComponent(Type)"/>
         public void RemoveComponent(Type componentType)
         {
+#if UNITY_EDITOR
+            if (!TypeHelper.TypeOf<IEntityComponent>.Type.IsAssignableFrom(componentType))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Type {TypeHelper.ToString(componentType)} is not an {nameof(IEntityComponent)}.");
+                return;
+            }
+#endif
             if (!IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,

@@ -267,6 +267,15 @@ namespace Syadeu.Presentation.Entities
 
         #region Components
 
+        /// <summary>
+        /// <typeparamref name="TComponent"/> 를 이 엔티티에 추가합니다.
+        /// </summary>
+        /// <remarks>
+        /// 추가된 컴포넌트는 <seealso cref="GetComponent{TComponent}"/> 를 통해 받아올 수 있습니다.
+        /// </remarks>
+        /// <typeparam name="TComponent"></typeparam>
+        /// <param name="data"></param>
+        /// <returns></returns>
         public TComponent AddComponent<TComponent>(TComponent data)
             where TComponent : unmanaged, IEntityComponent
         {
@@ -290,6 +299,11 @@ namespace Syadeu.Presentation.Entities
 
             return s_ComponentSystem.System.AddComponent(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx), data);
         }
+        /// <summary>
+        /// <typeparamref name="TComponent"/> 컴포넌트가 있는지 반환합니다.
+        /// </summary>
+        /// <typeparam name="TComponent"></typeparam>
+        /// <returns></returns>
         public bool HasComponent<TComponent>()
             where TComponent : unmanaged, IEntityComponent
         {
@@ -313,8 +327,24 @@ namespace Syadeu.Presentation.Entities
 
             return s_ComponentSystem.System.HasComponent<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
         }
+        /// <summary>
+        /// 해당 타입의 컴포넌트가 있는지 반환합니다.
+        /// </summary>
+        /// <remarks>
+        /// 타입이 <seealso cref="IEntityComponent"/> 를 상속받지 않으면 에디터에서만 오류를 반환합니다.
+        /// </remarks>
+        /// <param name="componentType"></param>
+        /// <returns></returns>
         public bool HasComponent(Type componentType)
         {
+#if UNITY_EDITOR
+            if (!TypeHelper.TypeOf<IEntityComponent>.Type.IsAssignableFrom(componentType))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Type {TypeHelper.ToString(componentType)} is not an {nameof(IEntityComponent)}.");
+                return false;
+            }
+#endif
             if (!IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
@@ -335,6 +365,15 @@ namespace Syadeu.Presentation.Entities
 
             return s_ComponentSystem.System.HasComponent(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx), componentType);
         }
+        /// <summary>
+        /// <typeparamref name="TComponent"/> 컴포넌트를 가져옵니다.
+        /// </summary>
+        /// <remarks>
+        /// 컴포넌트가 없는 경우 에러를 뱉습니다. <seealso cref="HasComponent{TComponent}"/> 를 통해
+        /// 목표 컴포넌트가 존재하는지 확인 할 수 있습니다.
+        /// </remarks>
+        /// <typeparam name="TComponent"></typeparam>
+        /// <returns></returns>
         public ref TComponent GetComponent<TComponent>()
             where TComponent : unmanaged, IEntityComponent
         {
@@ -358,6 +397,13 @@ namespace Syadeu.Presentation.Entities
 
             return ref s_ComponentSystem.System.GetComponent<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
         }
+        /// <summary>
+        /// <typeparamref name="TComponent"/> 컴포넌트를 제거합니다.
+        /// </summary>
+        /// <remarks>
+        /// 컴포넌트를 제거할때 해당 컴포넌트가 <seealso cref="IDisposable"/> 를 상속받고 있으면 자동으로 수행합니다.
+        /// </remarks>
+        /// <typeparam name="TComponent"></typeparam>
         public void RemoveComponent<TComponent>()
             where TComponent : unmanaged, IEntityComponent
         {
@@ -381,8 +427,24 @@ namespace Syadeu.Presentation.Entities
 
             s_ComponentSystem.System.RemoveComponent<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
         }
+        /// <summary>
+        /// 해당 컴포넌트를 제거합니다.
+        /// </summary>
+        /// <remarks>
+        /// 컴포넌트를 제거할때 해당 컴포넌트가 <seealso cref="IDisposable"/> 를 상속받고 있으면 자동으로 수행합니다.<br/>
+        /// 해당 타입이 <seealso cref="IEntityComponent"/> 를 상속받지 않는다면 에디터에서만 오류를 반환합니다.
+        /// </remarks>
+        /// <param name="componentType"></param>
         public void RemoveComponent(Type componentType)
         {
+#if UNITY_EDITOR
+            if (!TypeHelper.TypeOf<IEntityComponent>.Type.IsAssignableFrom(componentType))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Type {TypeHelper.ToString(componentType)} is not an {nameof(IEntityComponent)}.");
+                return;
+            }
+#endif
             if (!IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
