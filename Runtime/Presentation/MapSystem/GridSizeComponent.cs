@@ -13,9 +13,15 @@ namespace Syadeu.Presentation.Map
         internal FixedList32Bytes<int> m_ObstacleLayers;
         public FixedList32Bytes<GridPosition> positions;
 
+        public float CellSize => m_GridSystem.System.CellSize;
+
         public float3 IndexToPosition(in int index)
         {
             return m_GridSystem.System.IndexToPosition(index);
+        }
+        public float3 LocationToPosition(in int2 location)
+        {
+            return m_GridSystem.System.LocationToPosition(in location);
         }
 
         public bool IsInIndex(int index)
@@ -73,9 +79,18 @@ namespace Syadeu.Presentation.Map
             return m_GridSystem.System.GetPath(positions[0].index, to, path, maxPathLength);
         }
 
-        public bool GetPath64(in int to, ref FixedList64Bytes<GridPathTile> path, in int maxPathLength, in int maxIteration = 32)
+        public bool GetPath64(in int to, ref GridPath64 path, in int maxPathLength, in int maxIteration = 32)
         {
             return m_GridSystem.System.GetPath64(positions[0].index, in to, in maxPathLength, ref path, in maxIteration);
+        }
+
+        public GridPosition GetGridPosition(in int index)
+        {
+            return new GridPosition(index, m_GridSystem.System.IndexToLocation(index));
+        }
+        public GridPosition GetGridPosition(in int2 location)
+        {
+            return new GridPosition(m_GridSystem.System.LocationToIndex(location), location);
         }
     }
 }

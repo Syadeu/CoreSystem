@@ -2,6 +2,7 @@
 
 namespace Syadeu.Presentation.Map
 {
+    [Obsolete]
     public struct GridPath16
     {
         public enum Result

@@ -34,6 +34,7 @@ namespace Syadeu.Presentation.Map
         private readonly Dictionary<int, List<Entity<IEntity>>> m_GridEntities = new Dictionary<int, List<Entity<IEntity>>>();
 
         private GridMapAttribute GridMap => m_MainGrid;
+        public float CellSize => m_MainGrid.Grid.cellSize;
 
         #region Presentation Methods
 
@@ -405,7 +406,7 @@ namespace Syadeu.Presentation.Map
                 return path[pathFound - 1].position.index == to;
             }
         }
-        public bool GetPath64(in int from, in int to, in int maxPathLength, ref FixedList64Bytes<GridPathTile> path, in int maxIteration = 32)
+        public bool GetPath64(in int from, in int to, in int maxPathLength, ref GridPath64 path, in int maxIteration = 32)
         {
             int2
                 fromLocation = GridMap.Grid.IndexToLocation(in from),
@@ -436,7 +437,7 @@ namespace Syadeu.Presentation.Map
                 }
                 else
                 {
-                    int nextDirection = GetLowestCost(ref lastTileData, toLocation);
+                    int nextDirection = GetLowestCost(ref lastTileData, in toLocation);
 
                     GridPathTile nextTile = lastTileData.GetNext(nextDirection);
                     nextTile.Calculate(GridMap.Grid, GridMap.ObstacleLayer);
@@ -547,6 +548,10 @@ namespace Syadeu.Presentation.Map
 
             return GridMap.Grid.LocationToIndex(in location);
         }
+        public float3 LocationToPosition(in int2 location)
+        {
+            return GridMap.Grid.LocationToPosition(location);
+        }
         public int PositionToIndex(float3 position)
         {
             //if (GridMap.Grid == null) throw new System.Exception();
@@ -599,7 +604,7 @@ namespace Syadeu.Presentation.Map
             return temp;
         }
 
-        private int GetLowestCost(ref GridPathTile prev, int2 to)
+        private int GetLowestCost(ref GridPathTile prev, in int2 to)
         {
             int lowest = -1;
             int cost = int.MaxValue;
@@ -769,6 +774,8 @@ namespace Syadeu.Presentation.Map
             }
         }
     }
+
+    [BurstCompatible]
     public struct GridPathTile : IEquatable<GridPathTile>
     {
         public static readonly GridPathTile Empty = new GridPathTile(-1, -1);

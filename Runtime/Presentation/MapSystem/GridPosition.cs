@@ -1,8 +1,9 @@
-﻿using Unity.Mathematics;
+﻿using System;
+using Unity.Mathematics;
 
 namespace Syadeu.Presentation.Map
 {
-    public struct GridPosition : IGridPosition
+    public struct GridPosition : IGridPosition, IEquatable<GridPosition>
     {
         public static readonly GridPosition Empty = new GridPosition(-1, -1);
 
@@ -37,5 +38,7 @@ namespace Syadeu.Presentation.Map
 
             return true;
         }
+
+        public bool Equals(GridPosition other) => index.Equals(other.index) && location.Equals(other.location);
     }
 }
