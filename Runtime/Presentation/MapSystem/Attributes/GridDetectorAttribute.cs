@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using Unity.Collections;
 using UnityEngine;
 
 namespace Syadeu.Presentation.Map
@@ -63,7 +64,7 @@ namespace Syadeu.Presentation.Map
             return false;
         }
 
-        private static bool IsDetect(int[] range, int maxRange, GridPosition4 to)
+        private static bool IsDetect(int[] range, int maxRange, FixedList32Bytes<GridPosition> to)
         {
             bool detect = false;
             for (int i = 0; i < to.Length; i++)

@@ -11,7 +11,7 @@ namespace Syadeu.Presentation.Map
         internal PresentationSystemID<GridSystem> m_GridSystem;
 
         internal FixedList32Bytes<int> m_ObstacleLayers;
-        public GridPosition4 positions;
+        public FixedList32Bytes<GridPosition> positions;
 
         public float3 IndexToPosition(in int index)
         {

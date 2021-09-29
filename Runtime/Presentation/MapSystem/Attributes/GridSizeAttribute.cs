@@ -61,6 +61,7 @@ namespace Syadeu.Presentation.Map
             {
                 obstacleLayers.Add(attribute.m_ObstacleLayers[i]);
             }
+            component.m_ObstacleLayers = obstacleLayers;
 
             e.AddComponent(component);
 

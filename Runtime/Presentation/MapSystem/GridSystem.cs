@@ -85,21 +85,7 @@ namespace Syadeu.Presentation.Map
         }
         private void UpdateGridLocation(Entity<IEntity> entity, GridSizeAttribute att, bool postEvent)
         {
-            GridSizeComponent component;
-            if (!entity.HasComponent<GridSizeComponent>())
-            {
-                component = entity.AddComponent(new GridSizeComponent()
-                {
-                    m_GridSystem = SystemID,
-
-                    positions = GridPosition4.Empty
-                });
-                "add grid size component in".ToLog();
-            }
-            else
-            {
-                component = entity.GetComponent<GridSizeComponent>();
-            }
+            ref GridSizeComponent component = ref entity.GetComponent<GridSizeComponent>();
 
             bool gridChanged = false;
 
@@ -123,8 +109,6 @@ namespace Syadeu.Presentation.Map
                 }
                 
                 UpdateGridEntity(entity, in component.positions);
-
-                entity.AddComponent(component);
             }
         }
         private void RemoveGridEntity(Entity<IEntity> entity)
@@ -144,7 +128,7 @@ namespace Syadeu.Presentation.Map
                 m_EntityGridIndices.Remove(entity);
             }
         }
-        private void UpdateGridEntity(Entity<IEntity> entity, in GridPosition4 indices)
+        private void UpdateGridEntity(Entity<IEntity> entity, in FixedList32Bytes<GridPosition> indices)
         {
             RemoveGridEntity(entity);
 

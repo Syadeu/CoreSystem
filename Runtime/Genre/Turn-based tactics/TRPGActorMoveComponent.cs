@@ -9,27 +9,31 @@ namespace Syadeu.Presentation.TurnTable
     {
         internal EntityData<IEntityData> m_Parent;
 
-        public FixedList32Bytes<int> GetMoveablePositions64()
+        private bool SafetyChecks()
         {
-            var gridSystem = PresentationSystem<GridSystem>.System;
             if (!m_Parent.HasComponent<TurnPlayerComponent>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"This entity({m_Parent.Name}) doesn\'t have any {nameof(TurnPlayerComponent)}.");
-                return default(FixedList32Bytes<int>);
+                    $"This entity({m_Parent.RawName}) doesn\'t have any {nameof(TurnPlayerComponent)}.");
+                return false;
             }
             else if (!m_Parent.HasComponent<GridSizeComponent>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"This entity({m_Parent.Name}) doesn\'t have any {nameof(GridSizeComponent)}.");
-                return default(FixedList32Bytes<int>);
+                    $"This entity({m_Parent.RawName}) doesn\'t have any {nameof(GridSizeComponent)}.");
+                return false;
             }
+            return true;
+        }
+        public FixedList64Bytes<int> GetMoveablePositions64()
+        {
+            if (!SafetyChecks()) return default(FixedList64Bytes<int>);
 
             var turnPlayer = m_Parent.GetComponent<TurnPlayerComponent>();
             var gridsize = m_Parent.GetComponent<GridSizeComponent>();
             var range = gridsize.GetRange64(turnPlayer.ActionPoint);
 
-            FixedList32Bytes<int> indices = new FixedList32Bytes<int>();
+            FixedList64Bytes<int> indices = new FixedList64Bytes<int>();
             for (int i = 0; i < range.Length; i++)
             {
                 if (!gridsize.HasPath(range[i], turnPlayer.ActionPoint)) continue;
