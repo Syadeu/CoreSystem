@@ -5,9 +5,12 @@ using Newtonsoft.Json;
 using Syadeu.Database;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Proxy;
+using System.ComponentModel;
 
 namespace Syadeu.Presentation.TurnTable
 {
+    [DisplayName("Attribute: TRPG ActionPoint UI")]
+    [Description("UIObjectEntity 에 달리는 어트리뷰트")]
     public sealed class TRPGActionPointUIAttribute : ActorOverlayUIAttributeBase
     {
         [Header("General")]
