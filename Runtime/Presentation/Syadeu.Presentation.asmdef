@@ -34,6 +34,11 @@
             "name": "com.unity.cinemachine",
             "expression": "2.6",
             "define": "UNITY_CINEMACHINE"
+        },
+        {
+            "name": "com.unity.render-pipelines.high-definition",
+            "expression": "10.5.1",
+            "define": "CORESYSTEM_HDRP"
         }
     ],
     "noEngineReferences": false
