@@ -9,12 +9,10 @@ namespace Syadeu.Presentation.TurnTable
 {
     public struct TRPGActorAttackEvent : IActorAttackEvent
     {
-        private ActorEventID m_EventID;
         private Entity<ActorEntity> m_Target;
         private Hash m_StatNameHash;
         private int m_Damage;
 
-        public ActorEventID EventID => m_EventID;
         bool IActorEvent.BurstCompile => false;
 
         public Entity<ActorEntity> Target => m_Target;
@@ -23,7 +21,6 @@ namespace Syadeu.Presentation.TurnTable
 
         public TRPGActorAttackEvent(Entity<ActorEntity> target, string targetStatName)
         {
-            m_EventID = ActorEventID.CreateID();
             m_Target = target;
             m_StatNameHash = ActorStatAttribute.ToValueHash(targetStatName);
 
@@ -31,7 +28,6 @@ namespace Syadeu.Presentation.TurnTable
         }
         public TRPGActorAttackEvent(Entity<ActorEntity> target, Hash targetStatHash)
         {
-            m_EventID = ActorEventID.CreateID();
             m_Target = target;
             m_StatNameHash = targetStatHash;
 

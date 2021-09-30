@@ -34,6 +34,12 @@ namespace Syadeu.Presentation.Actor
         }
 
         protected virtual void OnUICreated(Entity<ActorEntity> parent) { }
+
+        /// <summary>
+        /// <seealso cref="IActorOverlayUIEvent"/>
+        /// </summary>
+        /// <typeparam name="TEvent"></typeparam>
+        /// <param name="ev"></param>
         protected virtual void OnUIEventReceived<TEvent>(TEvent ev) where TEvent : IActorEvent
         { }
         protected virtual void OnEventReceived<TEvent>(TEvent ev) where TEvent : IActorEvent

@@ -6,11 +6,9 @@ namespace Syadeu.Presentation.TurnTable
 {
     public struct TRPGActorActionPointChangedUIEvent : IActorOverlayUIEvent
     {
-        private ActorEventID m_EventID;
         private int
             m_From, m_To;
 
-        public ActorEventID EventID => m_EventID;
         bool IActorEvent.BurstCompile => true;
 
         public int From => m_From;
@@ -18,7 +16,6 @@ namespace Syadeu.Presentation.TurnTable
 
         public TRPGActorActionPointChangedUIEvent(int from, int to)
         {
-            m_EventID = ActorEventID.CreateID();
             m_From = from;
             m_To = to;
         }

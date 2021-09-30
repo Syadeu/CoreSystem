@@ -1,10 +1,14 @@
 ﻿using Syadeu.Mono;
+using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Proxy;
 using TMPro;
 using UnityEngine;
 
 namespace Syadeu.Presentation.TurnTable
 {
+    /// <summary>
+    /// <seealso cref="TRPGActionPointUIAttribute"/>
+    /// </summary>
     public sealed class TRPGActionPointOverlayUI : RecycleableMonobehaviour
     {
         [SerializeField] private CanvasGroup m_CanvasGroup;

@@ -158,13 +158,14 @@ namespace Syadeu.Presentation.Actor
 
         protected override sealed void OnCreated(Entity<ActorEntity> entity)
         {
+#if UNITY_EDITOR
             if (!m_Prefab.GetObject().HasAttribute<ActorOverlayUIAttributeBase>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"Attached UI entity({m_Prefab.GetObject().Name}) at entity({Parent.Name}) has no {nameof(ActorOverlayUIAttributeBase)}.");
                 return;
             }
-
+#endif
             m_InstanceObject = Instance<UIObjectEntity>.CreateInstance(m_Prefab);
             m_InstanceObject.transform.position = entity.transform.position + m_Offset;
             m_InstanceObject.GetAttribute<ActorOverlayUIAttributeBase>().UICreated(Parent.As<IEntityData, ActorEntity>());
@@ -182,8 +183,7 @@ namespace Syadeu.Presentation.Actor
                 m_InstanceObject.Destroy();
             }
 
-            if (m_UpdateCoroutine.IsValid() && 
-                m_UpdateType != UpdateType.Manual)
+            if (m_UpdateCoroutine.IsValid())
             {
                 m_UpdateCoroutine.Stop();
                 m_UpdateJob = default;
