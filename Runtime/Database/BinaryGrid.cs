@@ -709,6 +709,7 @@ namespace Syadeu.Database
 
                     if (HasCell(temp))
                     {
+                        //$"add {temp}".ToLog();
                         targets.Add(temp);
                         count += 1;
                     }
@@ -731,7 +732,11 @@ namespace Syadeu.Database
                 {
                     int temp = startIdx - (yGrid * gridSize.y) + xGrid;
 
-                    if (HasCell(temp)) targets.Add(temp);
+                    if (HasCell(temp))
+                    {
+                        //$"add {temp}".ToLog();
+                        targets.Add(temp);
+                    }
                     //if (temp >= temp - (temp % gridSize.x) + gridSize.x - 1) break;
                 }
             }

@@ -325,7 +325,7 @@ namespace Syadeu.Presentation.Map
                     if (!Layers[layer].Contains(indices[i]))
                     {
                         //filtered.Add(indices[i]);
-                        indices.RemoveAtSwapBack(indices[i]);
+                        indices.RemoveAt(indices[i]);
                         continue;
                     }
                 }
@@ -334,7 +334,7 @@ namespace Syadeu.Presentation.Map
                     if (Layers[layer].Contains(indices[i]))
                     {
                         //filtered.Add(indices[i]);
-                        indices.RemoveAtSwapBack(indices[i]);
+                        indices.RemoveAt(indices[i]);
                         continue;
                     }
                 }
@@ -384,7 +384,7 @@ namespace Syadeu.Presentation.Map
         private void CalculateSubGridIndex(in int index, out int gridIdx, out int targetIndex)
         {
             gridIdx = -1; targetIndex = -1;
-            if (index - Grid.length < 0) return;
+            if (index < Grid.length) return;
 
             targetIndex = index - Grid.length;
             for (int i = 0; i < SubGrids.Length; i++)
@@ -414,7 +414,12 @@ namespace Syadeu.Presentation.Map
         private BinaryGrid GetTargetGrid(in int index, out int targetIndex)
         {
             CalculateSubGridIndex(in index, out int gridIdx, out targetIndex);
-            if (gridIdx < 0) return Grid;
+
+            if (gridIdx < 0)
+            {
+                targetIndex = index;
+                return Grid;
+            }
 
             return SubGrids[gridIdx];
         }
@@ -604,6 +609,10 @@ namespace Syadeu.Presentation.Map
             var grid = GetTargetGrid(in idx, out int targetIdx);
 
             grid.GetRange(ref list, in targetIdx, in range);
+            for (int i = 0; i < list.Length; i++)
+            {
+                //$"{list[i]}".ToLog();
+            }
             for (int i = 0; i < ignoreLayers.Length; i++)
             {
                 FilterByLayer(ignoreLayers[i], ref list);
