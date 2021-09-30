@@ -193,8 +193,8 @@ namespace Syadeu.Presentation.TurnTable
                 }
             }
         }
-        public void CalculateMoveableOutline(NativeArray<GridPosition> moveables,
-            ref NativeList<GridPosition> outlines, ref NativeList<float3> vertices)
+        public void CalculateMoveableOutlineVertices(NativeArray<GridPosition> moveables,
+            ref NativeList<float3> vertices)
         {
             var gridsize = m_Parent.GetComponent<GridSizeComponent>();
             float cellsize = gridsize.CellSize * .5f;
@@ -209,26 +209,36 @@ namespace Syadeu.Presentation.TurnTable
                 firstRow = moveables[0],
                 lastRow = moveables[moveables.Length - 1];
 
-            int yMax = math.abs(firstRow.location.y - lastRow.location.y);
-
-            outlines.Clear();
             vertices.Clear();
 
-            outlines.Add(firstRow);
+            // first cell
+            {
+                vertices.Add(gridsize.IndexToPosition(firstRow.index) + downright);
+                vertices.Add(gridsize.IndexToPosition(firstRow.index) + downleft);
+            }
+
             int count = moveables.Length - 1;
             for (int i = 1; i < count; i++)
             {
                 if (moveables[i - 1].location.y != moveables[i].location.y)
                 {
-                    outlines.Add(moveables[i]);
+                    vertices.Add(gridsize.IndexToPosition(moveables[i].index) + downright);
+                    vertices.Add(gridsize.IndexToPosition(moveables[i].index) + downleft);
                 }
             }
-            outlines.Add(lastRow);
+            
+            // last cell
+            {
+                vertices.Add(gridsize.IndexToPosition(lastRow.index) + upleft);
+                vertices.Add(gridsize.IndexToPosition(lastRow.index) + upright);
+            }
+
             for (int i = count - 1; i >= 1; i--)
             {
                 if (moveables[i + 1].location.y != moveables[i].location.y)
                 {
-                    outlines.Add(moveables[i]);
+                    vertices.Add(gridsize.IndexToPosition(moveables[i].index) + upleft);
+                    vertices.Add(gridsize.IndexToPosition(moveables[i].index) + upright);
                 }
             }
         }

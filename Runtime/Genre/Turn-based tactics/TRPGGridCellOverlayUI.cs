@@ -1,17 +1,19 @@
-﻿using DG.Tweening;
+﻿#if CORESYSTEM_DOTWEEN
+using DG.Tweening;
+#endif
+
 using Syadeu;
 using Syadeu.Database;
-using Syadeu.Mono;
-using Syadeu.Presentation;
-using Syadeu.Presentation.Actor;
-using Syadeu.Presentation.Attributes;
-using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Input;
 using Syadeu.Presentation.Proxy;
+
 using System;
 using System.Collections;
+
 using TMPro;
+
 using Unity.Mathematics;
+
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.EventSystems;
@@ -118,8 +120,10 @@ namespace Syadeu.Presentation.TurnTable
             }
             else color = m_DisabledColor;
 
+#if CORESYSTEM_DOTWEEN
             m_BackgroundImg.DOKill();
             m_BackgroundImg.DOColor(color, .25f);
+#endif
         }
 
         public void OnPointerUp(PointerEventData data)
@@ -175,15 +179,20 @@ namespace Syadeu.Presentation.TurnTable
         {
             if (m_Initialized) throw new Exception();
 
+#if CORESYSTEM_DOTWEEN
             m_CanvasGroup.DOKill(true);
             m_CanvasGroup.alpha = 0;
             m_CanvasGroup.DOFade(1, .25f);
+#endif
+
             m_CanvasGroup.blocksRaycasts = true;
         }
         public void Terminate()
         {
+#if CORESYSTEM_DOTWEEN
             m_CanvasGroup.DOKill(false);
             m_CanvasGroup.DOFade(0, .25f);
+#endif
             m_CanvasGroup.blocksRaycasts = false;
 
             SetStateColor(State.Normal);

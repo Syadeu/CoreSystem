@@ -1,3 +1,4 @@
+#include "HLSLSpport.cginc"
 #include "/Math.cginc"
 
 struct Crater {

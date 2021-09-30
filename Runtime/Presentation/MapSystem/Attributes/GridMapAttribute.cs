@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using Unity.Collections;
 using Unity.Mathematics;
+using UnityEngine;
 using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation.Map
@@ -39,6 +40,12 @@ namespace Syadeu.Presentation.Map
 
             public static implicit operator Hash(LayerInfo a) => a.m_Hash;
         }
+        [Serializable]
+        public sealed class SubGrid
+        {
+            [JsonProperty(Order = 0, PropertyName = "Center")] public int3 m_Center;
+            [JsonProperty(Order = 1, PropertyName = "Size")] public int3 m_Size;
+        }
 
         [JsonProperty(Order = 0, PropertyName = "Center")] private int3 m_Center;
         [JsonProperty(Order = 1, PropertyName = "Size")] private int3 m_Size;
@@ -49,20 +56,22 @@ namespace Syadeu.Presentation.Map
             m_Name = "Default"
         }};
 
+        [Header("Sub Grid")]
+        private SubGrid[] m_SubGrids = Array.Empty<SubGrid>();
+
         [JsonIgnore] public int3 Center => m_Center;
         [JsonIgnore] public int3 Size => m_Size;
         [JsonIgnore] public float CellSize => m_CellSize;
         [JsonIgnore] public int LayerCount => m_Layers.Length;
-        [JsonIgnore] public BinaryGrid Grid { get; private set; }
+        [JsonIgnore] public BinaryGrid Grid { get; set; }
+        [JsonIgnore] private BinaryGrid[] SubGrids { get; set; }
         [JsonIgnore] private NativeHashSet<int>[] Layers { get; set; }
 
-        [JsonIgnore] public FixedList32Bytes<int> m_ObstacleLayerIndices = new FixedList32Bytes<int>();
+        [JsonIgnore] public List<int> m_ObstacleLayerIndices = new List<int>();
         [JsonIgnore] public NativeHashSet<int> ObstacleLayer { get; private set; }
 
         public void CreateGrid()
         {
-            //if (Grid != null) throw new Exception();
-
             Grid = new BinaryGrid(m_Center, m_Size, m_CellSize);
             Layers = new NativeHashSet<int>[m_Layers.Length];
             for (int i = 0; i < m_Layers.Length; i++)
@@ -72,6 +81,12 @@ namespace Syadeu.Presentation.Map
                 {
                     Layers[i].Add(m_Layers[i].m_Indices[a]);
                 }
+            }
+
+            SubGrids = new BinaryGrid[m_SubGrids.Length];
+            for (int i = 0; i < m_SubGrids.Length; i++)
+            {
+                SubGrids[i] = new BinaryGrid(m_SubGrids[i].m_Center, m_SubGrids[i].m_Size, m_CellSize);
             }
         }
         public void DestroyGrid()
@@ -147,27 +162,6 @@ namespace Syadeu.Presentation.Map
             }
 
             if (ObstacleLayer.IsCreated) ObstacleLayer.Dispose();
-        }
-
-        public int[] GetLayer(in int layer)
-        {
-            return m_Layers[layer].m_Indices;
-        }
-        public int GetLayer(Hash hash)
-        {
-            for (int i = 0; i < m_Layers.Length; i++)
-            {
-                if (m_Layers[i].m_Hash.Equals(hash)) return i;
-            }
-            return -1;
-        }
-        public int GetLayer(string name)
-        {
-            for (int i = 0; i < m_Layers.Length; i++)
-            {
-                if (m_Layers[i].m_Name.Equals(name)) return i;
-            }
-            return -1;
         }
 
         #region Filter
@@ -366,10 +360,215 @@ namespace Syadeu.Presentation.Map
 
         #endregion
 
+        #region Gets
+
+        private void CalculateSubGridIndex(in int index, out int gridIdx, out int targetIndex)
+        {
+            gridIdx = -1; targetIndex = -1;
+            if (index - Grid.length < 0) return;
+
+            targetIndex = index - Grid.length;
+            for (int i = 0; i < SubGrids.Length; i++)
+            {
+                if (targetIndex < SubGrids.Length)
+                {
+                    gridIdx = i;
+                    break;
+                }
+
+                targetIndex -= SubGrids.Length;
+            }
+        }
+        private BinaryGrid GetTargetGrid(in int index, out int targetIndex)
+        {
+            CalculateSubGridIndex(in index, out int gridIdx, out targetIndex);
+            if (gridIdx < 0) return Grid;
+
+            return SubGrids[gridIdx];
+        }
+
+        public GridPosition GetGridPosition(in float3 position)
+        {
+            BinaryGrid targetGrid = default(BinaryGrid);
+            int index = 0;
+            if (!Grid.HasCell(in position))
+            {
+                index += Grid.length;
+                bool found = false;
+                for (int i = 0; i < SubGrids.Length; i++)
+                {
+                    if (SubGrids[i].HasCell(in position))
+                    {
+                        targetGrid = SubGrids[i];
+
+                        index += targetGrid.PositionToIndex(position);
+
+                        found = true;
+                        break;
+                    }
+
+                    index += SubGrids[i].length;
+                }
+
+                if (!found) return GridPosition.Empty;
+            }
+            else
+            {
+                targetGrid = Grid;
+                index = targetGrid.PositionToIndex(position);
+            }
+
+            return new GridPosition(
+                index,
+                targetGrid.PositionToLocation(position)
+                );
+        }
+        public float3 GetPosition(in GridPosition position)
+        {
+            CalculateSubGridIndex(in position.index, out int gridIdx, out int index);
+            if (gridIdx < 0) return Grid.IndexToPosition(in position.index);
+
+            return SubGrids[gridIdx].IndexToPosition(in index);
+        }
+        public float3 GetPosition(in int index)
+        {
+            BinaryGrid grid = GetTargetGrid(in index, out int targetIndex);
+
+            return grid.IndexToPosition(in targetIndex);
+        }
+        public int2 GetLocation(in int index)
+        {
+            BinaryGrid grid = GetTargetGrid(in index, out int targetIndex);
+
+            return grid.IndexToLocation(in targetIndex);
+        }
+
+        public int GetIndex(in float3 position)
+        {
+            return GetGridPosition(in position).index;
+        }
+
+        #endregion
+
+        #region Math
+
+        public GridPosition Add(in GridPosition pos, in int2 location)
+        {
+            BinaryGrid grid = GetTargetGrid(in pos.index, out _);
+            int2 temp = pos.location + location;
+
+            return new GridPosition(grid.LocationToIndex(temp), temp);
+        }
+
+        #endregion
+
+        #region Layers
+
+        public int[] GetLayer(in int layer)
+        {
+            return m_Layers[layer].m_Indices;
+        }
+        public int GetLayer(Hash hash)
+        {
+            for (int i = 0; i < m_Layers.Length; i++)
+            {
+                if (m_Layers[i].m_Hash.Equals(hash)) return i;
+            }
+            return -1;
+        }
+        public int GetLayer(string name)
+        {
+            for (int i = 0; i < m_Layers.Length; i++)
+            {
+                if (m_Layers[i].m_Name.Equals(name)) return i;
+            }
+            return -1;
+        }
+
         public bool LayerContains(in int layer, in int index)
         {
             return Layers[layer].Contains(index);
         }
+
+        #endregion
+
+        #region Get Ranges
+
+        [Obsolete]
+        public int[] GetRange(int idx, int range, params int[] ignoreLayers)
+        {
+            var grid = GetTargetGrid(in idx, out int targetIdx);
+
+            // TODO : 임시. 이후 gridsize 에 맞춰서 인덱스 반환
+            int[] temp = grid.GetRange(in targetIdx, in range);
+            for (int i = 0; i < ignoreLayers?.Length; i++)
+            {
+                temp = FilterByLayer(ignoreLayers[i], temp, out _);
+            }
+
+            return temp;
+        }
+        public FixedList32Bytes<int> GetRange8(in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
+        {
+            var grid = GetTargetGrid(in idx, out int targetIdx);
+
+            FixedList32Bytes<int> temp = grid.GetRange8(in targetIdx, in range);
+            for (int i = 0; i < ignoreLayers.Length; i++)
+            {
+                temp = FilterByLayer32(ignoreLayers[i], in temp);
+            }
+
+            return temp;
+        }
+        public FixedList64Bytes<int> GetRange16(in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
+        {
+            var grid = GetTargetGrid(in idx, out int targetIdx);
+
+            FixedList64Bytes<int> temp = grid.GetRange16(in targetIdx, in range);
+            for (int i = 0; i < ignoreLayers.Length; i++)
+            {
+                temp = FilterByLayer64(ignoreLayers[i], in temp);
+            }
+
+            return temp;
+        }
+        public FixedList128Bytes<int> GetRange32(in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
+        {
+            var grid = GetTargetGrid(in idx, out int targetIdx);
+
+            FixedList128Bytes<int> temp = grid.GetRange32(in targetIdx, in range);
+            for (int i = 0; i < ignoreLayers.Length; i++)
+            {
+                temp = FilterByLayer128(ignoreLayers[i], in temp);
+            }
+
+            return temp;
+        }
+        public FixedList4096Bytes<int> GetRange1024(in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
+        {
+            var grid = GetTargetGrid(in idx, out int targetIdx);
+
+            FixedList4096Bytes<int> temp = grid.GetRange1024(in targetIdx, in range);
+            for (int i = 0; i < ignoreLayers.Length; i++)
+            {
+                temp = FilterByLayer1024(ignoreLayers[i], in temp);
+            }
+
+            return temp;
+        }
+        public void GetRange(ref NativeList<int> list, in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
+        {
+            var grid = GetTargetGrid(in idx, out int targetIdx);
+
+            grid.GetRange(ref list, in targetIdx, in range);
+            for (int i = 0; i < ignoreLayers.Length; i++)
+            {
+                FilterByLayer(ignoreLayers[i], ref list);
+            }
+        }
+
+        #endregion
+
     }
     [Preserve]
     internal sealed class GridMapProcessor : AttributeProcessor<GridMapAttribute>

@@ -177,10 +177,12 @@ namespace SyadeuEditor
 
             const string
                 UNITY_COLLECTIONS_CHECKS = "ENABLE_UNITY_COLLECTIONS_CHECKS",
+                CORESYSTEM_DOTWEEN = "CORESYSTEM_DOTWEEN",
                 CORESYSTEM_MOTIONMATCHING = "CORESYSTEM_MOTIONMATCHING",
                 CORESYSTEM_FMOD = "CORESYSTEM_FMOD";
             bool
                 m_DefinedCollectionsChecks, 
+                m_DefinedDotween,
                 m_DefinedMotionMatching,
                 m_DefinedFMOD;
             List<string> m_DefinedConstrains;
@@ -224,6 +226,7 @@ namespace SyadeuEditor
                 m_DefinedConstrains = temp.ToList();
 
                 m_DefinedCollectionsChecks = HasConstrains(UNITY_COLLECTIONS_CHECKS);
+                m_DefinedDotween = HasConstrains(CORESYSTEM_DOTWEEN);
                 m_DefinedMotionMatching = HasConstrains(CORESYSTEM_MOTIONMATCHING);
                 m_DefinedFMOD = HasConstrains(CORESYSTEM_FMOD);
 
@@ -353,6 +356,18 @@ namespace SyadeuEditor
                 EditorUtils.Line();
 
                 EditorUtils.StringRich("Third Party Constrains", 13);
+
+                using (var check = new EditorGUI.ChangeCheckScope())
+                {
+                    m_DefinedDotween =
+                        EditorGUILayout.ToggleLeft("Define CORESYSTEM_DOTWEEN", m_DefinedDotween);
+
+                    if (check.changed)
+                    {
+                        if (m_DefinedDotween) DefineConstrains(CORESYSTEM_DOTWEEN);
+                        else UndefineContrains(CORESYSTEM_DOTWEEN);
+                    }
+                }
                 using (var check = new EditorGUI.ChangeCheckScope())
                 {
                     m_DefinedMotionMatching =

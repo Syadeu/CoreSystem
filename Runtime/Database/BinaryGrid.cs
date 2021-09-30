@@ -15,6 +15,7 @@ using UnityEditor;
 
 namespace Syadeu.Database
 {
+    [Obsolete]
     [StructLayout(LayoutKind.Sequential)]
     public partial struct BinaryGrid<T> : IDisposable where T : unmanaged
     {
@@ -478,6 +479,7 @@ namespace Syadeu.Database
 
         #endregion
     }
+    [Obsolete]
     public partial struct BinaryCell<T> : IValidation where T : unmanaged
     {
         internal readonly Hash m_Parent;
@@ -497,34 +499,28 @@ namespace Syadeu.Database
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct BinaryGrid
+    public struct BinaryGrid : IValidation, IEquatable<BinaryGrid>
     {
-        [JsonProperty] internal readonly Hash m_Hash;
-        [JsonProperty] private readonly AABB m_AABB;
+        private readonly AABB m_AABB;
 
-        [JsonProperty] private readonly int m_Length;
-        [JsonProperty] private readonly float m_CellSize;
+        private readonly int m_Length;
+        private readonly float m_CellSize;
 
-        //[JsonProperty] private readonly Dictionary<int, ManagedCell> m_Cells;
-
-        [JsonIgnore] public int length => m_Length;
-        [JsonIgnore] public int2 gridSize => new int2(
+        public int length => m_Length;
+        public int2 gridSize => new int2(
             (int)math.floor(m_AABB.size.x / m_CellSize),
             (int)math.floor(m_AABB.size.z / m_CellSize));
 
-        [JsonIgnore] public float cellSize => m_CellSize;
-        [JsonIgnore] public float3 center => m_AABB.center;
-        [JsonIgnore] public float3 size => m_AABB.size;
-        //[JsonIgnore] public ManagedCell[] cells => m_Cells.Values.ToArray();
-        [JsonIgnore] public AABB bounds => m_AABB;
+        public float cellSize => m_CellSize;
+        public float3 center => m_AABB.center;
+        public float3 size => m_AABB.size;
+        public AABB bounds => m_AABB;
 
         public BinaryGrid(int3 center, int3 size, float cellSize)
         {
-            m_Hash = Hash.NewHash();
             m_AABB = new AABB(center, size);
 
             m_CellSize = cellSize;
-            //m_Cells = new Dictionary<int, ManagedCell>();
 
             int
                 xSize = (int)math.floor(size.x / cellSize),
@@ -542,7 +538,7 @@ namespace Syadeu.Database
 
             return HasCell(GridExtensions.LocationToIndex(m_AABB, x, y));
         }
-        public bool HasCell(float3 position) => m_AABB.Contains(position) && HasCell(GridExtensions.PositionToIndex(in m_AABB, in m_CellSize, position));
+        public bool HasCell(in float3 position) => m_AABB.Contains(position) && HasCell(GridExtensions.PositionToIndex(in m_AABB, in m_CellSize, in position));
 
         //public ManagedCell GetCell(int idx)
         //{
@@ -771,27 +767,13 @@ namespace Syadeu.Database
             return location;
         }
 
-        //public byte[] ToBinary()
-        //{
-        //    using (System.IO.MemoryStream ms = new System.IO.MemoryStream())
-        //    using (Newtonsoft.Json.Bson.BsonDataWriter wr = new Newtonsoft.Json.Bson.BsonDataWriter(ms))
-        //    {
-        //        Newtonsoft.Json.JsonSerializer serializer = new Newtonsoft.Json.JsonSerializer();
-        //        serializer.Serialize(wr, this);
-
-        //        return ms.ToArray();
-        //    }
-        //}
-        //public static ManagedGrid FromBinary(in byte[] data)
-        //{
-        //    using (System.IO.MemoryStream ms = new System.IO.MemoryStream(data))
-        //    using (Newtonsoft.Json.Bson.BsonDataReader rd = new Newtonsoft.Json.Bson.BsonDataReader(ms))
-        //    {
-        //        Newtonsoft.Json.JsonSerializer serializer = new Newtonsoft.Json.JsonSerializer();
-        //        return serializer.Deserialize<ManagedGrid>(rd);
-        //    }
-        //}
+        public bool IsValid() => m_Length != 0;
+        public bool Equals(BinaryGrid other)
+        {
+            return m_Length == other.length && m_CellSize == other.cellSize && m_AABB.Equals(other.m_AABB);
+        }
     }
+    [Obsolete]
     public sealed class ManagedCell
     {
         [JsonProperty] internal readonly Hash m_Parent;

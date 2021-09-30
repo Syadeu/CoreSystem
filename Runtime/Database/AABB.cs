@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Database.Converters;
+using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Unity.Burst;
@@ -12,7 +13,7 @@ namespace Syadeu.Database
     [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
     [StructLayout(LayoutKind.Sequential)]
     [JsonConverter(typeof(AABBJsonConverter))]
-    public struct AABB
+    public struct AABB : IEquatable<AABB>
     {
         public static readonly AABB Zero = new AABB(float3.zero, float3.zero);
 
@@ -346,6 +347,11 @@ namespace Syadeu.Database
 
             // No hit at all
             return false;
+        }
+
+        public bool Equals(AABB other)
+        {
+            return m_Center.Equals(other.m_Center) && m_Extents.Equals(other.m_Extents);
         }
 
         public static implicit operator AABB(Bounds a) => new AABB(a.center, a.size);

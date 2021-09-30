@@ -34,7 +34,7 @@ namespace Syadeu.Presentation.Map
         private readonly Dictionary<int, List<Entity<IEntity>>> m_GridEntities = new Dictionary<int, List<Entity<IEntity>>>();
 
         private GridMapAttribute GridMap => m_MainGrid;
-        public float CellSize => m_MainGrid.Grid.cellSize;
+        public float CellSize => m_MainGrid.CellSize;
 
         #region Presentation Methods
 
@@ -90,17 +90,29 @@ namespace Syadeu.Presentation.Map
 
             bool gridChanged = false;
 
-            int2 p0 = GridMap.Grid.PositionToLocation(entity.transform.position);
+            GridPosition p0 = GridMap.GetGridPosition(entity.transform.position);
             for (int i = 0; i < att.m_GridLocations.Length; i++)
             {
-                int aTemp = GridMap.Grid.LocationToIndex(p0 + att.m_GridLocations[i]);
-                if (!aTemp.Equals(component.positions[i].index))
+                GridPosition aTemp = GridMap.Add(p0, att.m_GridLocations[i]);
+                if (!aTemp.Equals(component.positions[i]))
                 {
                     gridChanged = true;
                 }
 
-                component.positions[i] = new GridPosition(aTemp, p0 + att.m_GridLocations[i]);
+                component.positions[i] = aTemp;
             }
+
+            //int2 p0 = GridMap.Grid.PositionToLocation(entity.transform.position);
+            //for (int i = 0; i < att.m_GridLocations.Length; i++)
+            //{
+            //    int aTemp = GridMap.Grid.LocationToIndex(p0 + att.m_GridLocations[i]);
+            //    if (!aTemp.Equals(component.positions[i].index))
+            //    {
+            //        gridChanged = true;
+            //    }
+
+            //    component.positions[i] = new GridPosition(aTemp, p0 + att.m_GridLocations[i]);
+            //}
 
             if (gridChanged)
             {
@@ -421,8 +433,8 @@ namespace Syadeu.Presentation.Map
         public bool GetPath64(in int from, in int to, in int maxPathLength, ref GridPath32 path, in NativeHashSet<int> ignoreIndices = default, in int maxIteration = 32)
         {
             int2
-                fromLocation = GridMap.Grid.IndexToLocation(in from),
-                toLocation = GridMap.Grid.IndexToLocation(in to);
+                fromLocation = GridMap.GetLocation(in from),
+                toLocation = GridMap.GetLocation(in to);
 
             GridPathTile tile = new GridPathTile(from, fromLocation);
             tile.Calculate(GridMap.Grid, GridMap.ObstacleLayer, ignoreIndices);
@@ -479,60 +491,60 @@ namespace Syadeu.Presentation.Map
             }
         }
 
-        [Obsolete]
-        public bool GetPath(int from, int to, List<GridPathTile> path, int maxPathLength, int maxIteration = 32)
-        {
-            int2
-                fromLocation = GridMap.Grid.IndexToLocation(in from),
-                toLocation = GridMap.Grid.IndexToLocation(in to);
+        //[Obsolete]
+        //public bool GetPath(int from, int to, List<GridPathTile> path, int maxPathLength, int maxIteration = 32)
+        //{
+        //    int2
+        //        fromLocation = GridMap.Grid.IndexToLocation(in from),
+        //        toLocation = GridMap.Grid.IndexToLocation(in to);
 
-            GridPathTile tile = new GridPathTile(from, fromLocation);
-            tile.Calculate(GridMap.Grid, GridMap.ObstacleLayer);
+        //    GridPathTile tile = new GridPathTile(from, fromLocation);
+        //    tile.Calculate(GridMap.Grid, GridMap.ObstacleLayer);
 
-            if (path == null)
-            {
-                path = new List<GridPathTile>()
-                {
-                    tile
-                };
-            }
-            else
-            {
-                path.Clear();
-                path.Add(tile);
-            }
+        //    if (path == null)
+        //    {
+        //        path = new List<GridPathTile>()
+        //        {
+        //            tile
+        //        };
+        //    }
+        //    else
+        //    {
+        //        path.Clear();
+        //        path.Add(tile);
+        //    }
 
-            int iteration = 0;
-            while (
-                iteration < maxIteration &&
-                path.Count < maxPathLength &&
-                path[path.Count - 1].position.index != to)
-            {
-                GridPathTile lastTileData = path[path.Count - 1];
-                if (lastTileData.IsBlocked())
-                {
-                    path.RemoveAt(path.Count - 1);
+        //    int iteration = 0;
+        //    while (
+        //        iteration < maxIteration &&
+        //        path.Count < maxPathLength &&
+        //        path[path.Count - 1].position.index != to)
+        //    {
+        //        GridPathTile lastTileData = path[path.Count - 1];
+        //        if (lastTileData.IsBlocked())
+        //        {
+        //            path.RemoveAt(path.Count - 1);
 
-                    if (path.Count == 0) break;
+        //            if (path.Count == 0) break;
 
-                    GridPathTile parentTile = path[path.Count - 1];
-                    parentTile.opened[lastTileData.direction] = false;
-                    path[path.Count - 1] = parentTile;
-                }
-                else
-                {
-                    int nextDirection = GetLowestCost(ref lastTileData, toLocation);
+        //            GridPathTile parentTile = path[path.Count - 1];
+        //            parentTile.opened[lastTileData.direction] = false;
+        //            path[path.Count - 1] = parentTile;
+        //        }
+        //        else
+        //        {
+        //            int nextDirection = GetLowestCost(ref lastTileData, toLocation);
 
-                    GridPathTile nextTile = lastTileData.GetNext(nextDirection);
-                    nextTile.Calculate(GridMap.Grid, GridMap.ObstacleLayer);
-                    path.Add(nextTile);
-                }
+        //            GridPathTile nextTile = lastTileData.GetNext(nextDirection);
+        //            nextTile.Calculate(GridMap.Grid, GridMap.ObstacleLayer);
+        //            path.Add(nextTile);
+        //        }
                 
-                iteration++;
-            }
+        //        iteration++;
+        //    }
 
-            return path[path.Count - 1].position.index == to;
-        }
+        //    return path[path.Count - 1].position.index == to;
+        //}
 
         public IReadOnlyList<Entity<IEntity>> GetEntitiesAt(in int index)
         {
@@ -542,43 +554,22 @@ namespace Syadeu.Presentation.Map
             }
             return Array.Empty<Entity<IEntity>>();
         }
-        public IReadOnlyList<Entity<IEntity>> GetEntitiesAt(in int2 location)
-        {
-            int index = LocationToIndex(in location);
-            return GetEntitiesAt(index);
-        }
 
         #region Utils
 
         public float3 IndexToPosition(int idx)
         {
-            //if (GridMap.Grid == null) throw new System.Exception();
-            return GridMap.Grid.IndexToPosition(idx);
+            return GridMap.GetPosition(idx);
         }
         public int2 IndexToLocation(int idx)
         {
             //if (GridMap.Grid == null) throw new System.Exception();
-            return GridMap.Grid.IndexToLocation(idx);
+            return GridMap.GetLocation(idx);
         }
-        public int LocationToIndex(in int2 location)
-        {
-            //if (GridMap.Grid == null)
-            //{
-            //    CoreSystem.Logger.LogError(Channel.Presentation,
-            //        "Grid not found.");
-            //    return 0;
-            //}
 
-            return GridMap.Grid.LocationToIndex(in location);
-        }
-        public float3 LocationToPosition(in int2 location)
-        {
-            return GridMap.Grid.LocationToPosition(location);
-        }
         public int PositionToIndex(float3 position)
         {
-            //if (GridMap.Grid == null) throw new System.Exception();
-            return GridMap.Grid.PositionToIndex(position);
+            return GridMap.GetIndex(position);
         }
 
         #endregion
@@ -587,67 +578,18 @@ namespace Syadeu.Presentation.Map
 
         [Obsolete]
         public int[] GetRange(int idx, int range, params int[] ignoreLayers)
-        {
-            //if (GridMap.Grid == null) throw new System.Exception();
-
-            // TODO : 임시. 이후 gridsize 에 맞춰서 인덱스 반환
-            int[] temp = GridMap.Grid.GetRange(in idx, in range);
-            for (int i = 0; i < ignoreLayers?.Length; i++)
-            {
-                temp = GridMap.FilterByLayer(ignoreLayers[i], temp, out _);
-            }
-
-            return temp;
-        }
+            => GridMap.GetRange(idx, range, ignoreLayers);
 
         public FixedList32Bytes<int> GetRange8(in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
-        {
-            FixedList32Bytes<int> temp = GridMap.Grid.GetRange8(in idx, in range);
-            for (int i = 0; i < ignoreLayers.Length; i++)
-            {
-                temp = GridMap.FilterByLayer32(ignoreLayers[i], in temp);
-            }
-
-            return temp;
-        }
+            => GridMap.GetRange8(in idx, in range, in ignoreLayers);
         public FixedList64Bytes<int> GetRange16(in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
-        {
-            FixedList64Bytes<int> temp = GridMap.Grid.GetRange16(in idx, in range);
-            for (int i = 0; i < ignoreLayers.Length; i++)
-            {
-                temp = GridMap.FilterByLayer64(ignoreLayers[i], in temp);
-            }
-
-            return temp;
-        }
+            => GridMap.GetRange16(in idx, in range, in ignoreLayers);
         public FixedList128Bytes<int> GetRange32(in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
-        {
-            FixedList128Bytes<int> temp = GridMap.Grid.GetRange32(in idx, in range);
-            for (int i = 0; i < ignoreLayers.Length; i++)
-            {
-                temp = GridMap.FilterByLayer128(ignoreLayers[i], in temp);
-            }
-
-            return temp;
-        }
+            => GridMap.GetRange32(in idx, in range, in ignoreLayers);
         public FixedList4096Bytes<int> GetRange1024(in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
-        {
-            FixedList4096Bytes<int> temp = GridMap.Grid.GetRange1024(in idx, in range);
-            for (int i = 0; i < ignoreLayers.Length; i++)
-            {
-                temp = GridMap.FilterByLayer1024(ignoreLayers[i], in temp);
-            }
-
-            return temp;
-        }
+            => GridMap.GetRange1024(in idx, in range, in ignoreLayers);
         public void GetRange(ref NativeList<int> list, in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
-        {
-            GridMap.Grid.GetRange(ref list, in idx, in range);
-            for (int i = 0; i < ignoreLayers.Length; i++)
-            {
-                GridMap.FilterByLayer(ignoreLayers[i], ref list);
-            }
-        }
+            => GridMap.GetRange(ref list, in idx, in range, in ignoreLayers);
 
         #endregion
 
@@ -673,131 +615,5 @@ namespace Syadeu.Presentation.Map
         }
         private int GetSqrMagnitude(int index) => GetSqrMagnitude(IndexToLocation(index));
         private static int GetSqrMagnitude(int2 location) => (location.x * location.x) + (location.y * location.y);
-    }
-
-    [BurstCompatible]
-    public struct GridTile
-    {
-        public int parent;
-        public int index;
-    }
-
-    [BurstCompatible]
-    public struct GridPathTile : IEquatable<GridPathTile>
-    {
-        public static readonly GridPathTile Empty = new GridPathTile(-1, -1);
-
-        public GridPosition parent;
-        public int direction;
-        public GridPosition position;
-
-        public bool4 opened;
-        public GridPosition4 openedPositions;
-        private int4 costs;
-
-        public GridPathTile(int index, int2 location)
-        {
-            this.parent = GridPosition.Empty;
-            this.direction = -1;
-            this.position = new GridPosition(index, location);
-
-            opened = false;
-            openedPositions = GridPosition4.Empty;
-            costs = -1;
-        }
-        public GridPathTile(GridPosition parent, GridPosition position, int direction)
-        {
-            this.parent = parent;
-            this.direction = direction;
-            this.position = position;
-
-            opened = false;
-            openedPositions = GridPosition4.Empty;
-            costs = -1;
-        }
-
-        public int GetCost(int direction, int2 to)
-        {
-            if (costs[direction] < 0)
-            {
-                int2 temp = openedPositions.location[direction] - to;
-                costs[direction] = (temp.x * temp.x) + (temp.y * temp.y);
-            }
-
-            return costs[direction];
-        }
-        public GridPathTile GetNext(int direction)
-        {
-            return new GridPathTile(position, openedPositions[direction], direction);
-        }
-        public bool IsRoot() => parent.IsEmpty();
-        public bool IsBlocked()
-        {
-            for (int i = 0; i < 4; i++)
-            {
-                if (opened[i]) return false;
-            }
-            return true;
-        }
-        public void Calculate(in BinaryGrid grid, in NativeHashSet<int> ignoreLayers = default)
-        {
-            for (int i = 0; i < 4; i++)
-            {
-                int2 nextTempLocation = grid.GetDirection(in position.location, (Direction)(1 << i));
-                if (nextTempLocation.Equals(parent.location)) continue;
-
-                //int nextTemp = GridBurstExtensions.p_LocationInt2ToIndex.Invoke(grid.bounds, grid.cellSize, nextTempLocation);
-                int nextTemp = grid.LocationToIndex(nextTempLocation);
-                if (ignoreLayers.IsCreated)
-                {
-                    if (ignoreLayers.Contains(nextTemp))
-                    {
-                        opened[i] = false;
-                        openedPositions.RemoveAt(i);
-                        continue;
-                    }
-                }
-
-                opened[i] = true;
-                openedPositions.UpdateAt(i, nextTemp, nextTempLocation);
-            }
-        }
-        public void Calculate(in BinaryGrid grid, in NativeHashSet<int> ignoreLayers, in NativeHashSet<int> additionalIgnore = default)
-        {
-            for (int i = 0; i < 4; i++)
-            {
-                int2 nextTempLocation = grid.GetDirection(in position.location, (Direction)(1 << i));
-                if (nextTempLocation.Equals(parent.location)) continue;
-
-                //int nextTemp = GridBurstExtensions.p_LocationInt2ToIndex.Invoke(grid.bounds, grid.cellSize, nextTempLocation);
-                int nextTemp = grid.LocationToIndex(nextTempLocation);
-                if (ignoreLayers.IsCreated)
-                {
-                    if (ignoreLayers.Contains(nextTemp))
-                    {
-                        opened[i] = false;
-                        openedPositions.RemoveAt(i);
-                        continue;
-                    }
-                }
-
-                if (additionalIgnore.IsCreated)
-                {
-                    if (additionalIgnore.Contains(nextTemp))
-                    {
-                        opened[i] = false;
-                        openedPositions.RemoveAt(i);
-                        continue;
-                    }
-                }
-
-                opened[i] = true;
-                openedPositions.UpdateAt(i, nextTemp, nextTempLocation);
-            }
-        }
-
-        public bool IsEmpty() => Equals(Empty);
-        public bool Equals(GridPathTile other)
-            => parent.Equals(other) && direction.Equals(other.direction) && position.Equals(other.position);
     }
 }

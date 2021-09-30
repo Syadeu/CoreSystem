@@ -22,10 +22,6 @@ namespace Syadeu.Presentation.Map
         {
             return m_GridSystem.System.IndexToPosition(index);
         }
-        public float3 LocationToPosition(in int2 location)
-        {
-            return m_GridSystem.System.LocationToPosition(in location);
-        }
 
         public bool IsInIndex(int index)
         {
@@ -88,11 +84,11 @@ namespace Syadeu.Presentation.Map
             return m_GridSystem.System.HasPath(positions[0].index, to, maxPathLength, out pathCount);
         }
 
-        [Obsolete]
-        public bool GetPath(int to, List<GridPathTile> path, int maxPathLength)
-        {
-            return m_GridSystem.System.GetPath(positions[0].index, to, path, maxPathLength);
-        }
+        //[Obsolete]
+        //public bool GetPath(int to, List<GridPathTile> path, int maxPathLength)
+        //{
+        //    return m_GridSystem.System.GetPath(positions[0].index, to, path, maxPathLength);
+        //}
 
         public bool GetPath64(in int to, ref GridPath32 path, in int maxPathLength, in int maxIteration = 32)
         {
@@ -104,10 +100,6 @@ namespace Syadeu.Presentation.Map
         public GridPosition GetGridPosition(in int index)
         {
             return new GridPosition(index, m_GridSystem.System.IndexToLocation(index));
-        }
-        public GridPosition GetGridPosition(in int2 location)
-        {
-            return new GridPosition(m_GridSystem.System.LocationToIndex(location), location);
         }
 
         public bool IsValid() => !m_GridSystem.IsNull() && m_GridSystem.IsValid();
