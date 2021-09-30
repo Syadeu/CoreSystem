@@ -1443,7 +1443,7 @@ namespace SyadeuEditor.Presentation.Map
 
             if (m_SelectedObjects != null)
             {
-                for (int i = 0; i < m_SelectedObjects.Length; i++)
+                for (int i = 0; i < m_SelectedObjects?.Length; i++)
                 {
                     if (m_SelectedObjects[i] == null) continue;
 
