@@ -408,6 +408,17 @@ namespace Syadeu.Presentation
                 }
                 else if (presentations[i].DependenceGroup != null)
                 {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                    if (presentations[i].DependenceGroup.IsAbstract ||
+                        presentations[i].DependenceGroup.IsInterface)
+                    {
+                        CoreSystem.Logger.LogError(Channel.Presentation,
+                            $"On Presentation Group({presentations[i].GetType().Name}), " +
+                            $"dependence group cannot be an abstract or interface and must be absolute type." +
+                            $"{presentations[i].DependenceGroup.Name} is not allowed.");
+                        continue;
+                    }
+#endif
                     Hash groupHash = GroupToHash(presentations[i].DependenceGroup);
                     if (!Instance.m_PresentationGroups.TryGetValue(groupHash, out Group group))
                     {
