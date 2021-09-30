@@ -10,10 +10,6 @@ namespace Syadeu.Presentation
 {
     public sealed class CoroutineSystem : PresentationSystemEntity<CoroutineSystem>
     {
-        //public struct PresentationUpdate { }
-        //public struct PresentationTransformUpdate { }
-        //public struct PresentationAfterTransformUpdate { }
-
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;

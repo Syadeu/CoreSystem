@@ -124,6 +124,30 @@ namespace Syadeu.Presentation
             }
             public bool HasSystem<T>(T system) where T : PresentationSystemEntity
                 => m_Systems.FindFor((other) => other.Equals(system)) != null;
+            public bool TryGetSystem(Type type, out PresentationSystemEntity system)
+            {
+                for (int i = 0; i < m_Systems.Count; i++)
+                {
+                    if (type.IsAssignableFrom(m_Systems[i].GetType()))
+                    {
+                        system = m_Systems[i];
+                        return true;
+                    }
+                }
+                system = null;
+                return false;
+            }
+            public bool TryGetSystem<T>(out T system) where T : PresentationSystemEntity
+            {
+                if (!TryGetSystem(TypeHelper.TypeOf<T>.Type, out PresentationSystemEntity temp))
+                {
+                    system = null;
+                    return false;
+                }
+
+                system = (T)temp;
+                return true;
+            }
 
             public void Add(PresentationSystemEntity system)
             {
@@ -332,7 +356,7 @@ namespace Syadeu.Presentation
                 }
             }
         }
-        private readonly Hash m_DefaultGroupHash = Hash.NewHash(TypeHelper.TypeOf<DefaultPresentationGroup>.Name);
+        private readonly Hash m_DefaultGroupHash = GroupToHash(TypeHelper.TypeOf<DefaultPresentationGroup>.Type);
 
         internal readonly Dictionary<Hash, Group> m_PresentationGroups = new Dictionary<Hash, Group>();
         internal readonly Dictionary<Type, Hash> m_RegisteredGroup = new Dictionary<Type, Hash>();
@@ -659,6 +683,12 @@ namespace Syadeu.Presentation
         #endregion
 
         #region Internals
+
+        private static Hash GroupToHash(Type group)
+        {
+            return Hash.NewHash(group.Name);
+        }
+
         internal static void RegisterSystem(Type groupName, SceneReference dependenceScene, params Type[] systems)
         {
             if (dependenceScene != null)
@@ -667,7 +697,7 @@ namespace Syadeu.Presentation
             }
             else CoreSystem.Logger.Log(Channel.Presentation, $"Registration start ({groupName.Name.Split('.').Last()}), number of {systems.Length}");
 
-            Hash groupHash = Hash.NewHash(groupName.Name);
+            Hash groupHash = GroupToHash(groupName);
             if (!Instance.m_PresentationGroups.TryGetValue(groupHash, out Group group))
             {
                 group = new Group(groupName, groupHash);
@@ -802,6 +832,7 @@ namespace Syadeu.Presentation
             CoreSystem.Logger.Log(Channel.Presentation, $"{group.m_Name.Name} group is stopped");
         }
 
+        [Obsolete]
         internal static void RegisterRequestSystem<T, TA>(Action<TA> setter) 
             where T : PresentationSystemEntity
             where TA : PresentationSystemEntity
@@ -826,6 +857,42 @@ namespace Syadeu.Presentation
             });
             //"request in".ToLog();
         }
+        internal static void RegisterRequest<TGroup, TSystem>(Action<TSystem> setter)
+            where TGroup : PresentationGroupEntity
+            where TSystem : PresentationSystemEntity
+        {
+            Hash groupHash = GroupToHash(TypeHelper.TypeOf<TGroup>.Type);
+
+            if (!Instance.m_PresentationGroups.TryGetValue(groupHash, out Group group))
+            {
+                throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
+                    $"시스템 {typeof(TGroup).Name} 은 등록되지 않았습니다.");
+            }
+
+            if (group.m_IsStarted && !group.m_MainthreadSignal)
+            {
+                group.m_RequestSystemDelegates.Enqueue(() =>
+                {
+                    TSystem system = PresentationSystem<TSystem>.System;
+                    if (system == null)
+                    {
+                        CoreSystem.Logger.LogError(Channel.Presentation, $"Requested system ({TypeHelper.TypeOf<TSystem>.Name}) not found");
+                    }
+                    else CoreSystem.Logger.Log(Channel.Presentation, $"Requested system ({TypeHelper.TypeOf<TSystem>.Name}) found");
+
+                    setter.Invoke(system);
+                });
+            }
+
+            if (group.TryGetSystem<TSystem>(out TSystem system))
+            {
+                setter.Invoke(system);
+                return;
+            }
+
+            throw new Exception("unknown");
+        }
+
         #endregion
 
         #region Presentation Group Method
