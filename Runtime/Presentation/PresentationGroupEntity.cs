@@ -1,4 +1,5 @@
 ﻿using Syadeu.Presentation.Internal;
+using System;
 
 namespace Syadeu.Presentation
 {
@@ -15,6 +16,7 @@ namespace Syadeu.Presentation
     public abstract class PresentationGroupEntity : IPresentationRegister
     {
         public virtual bool StartOnInitialize => false;
+        public virtual Type DependenceGroup => null;
         public virtual SceneReference DependenceScene => null;
 
         public abstract void Register();

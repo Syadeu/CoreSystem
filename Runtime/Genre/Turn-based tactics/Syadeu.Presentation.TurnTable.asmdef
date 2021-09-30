@@ -1,6 +1,6 @@
 {
-    "name": "Syadeu.Genre",
-    "rootNamespace": "",
+    "name": "Syadeu.Presentation.TurnTable",
+    "rootNamespace": "Syadeu.Presentation.TurnTable",
     "references": [
         "GUID:a35cecc1c26b8eb43b1fcdad25ac3741",
         "GUID:8bc3a2c31d86c324ba5c080d1b72889b",
@@ -25,7 +25,9 @@
         "Newtonsoft.Json.dll"
     ],
     "autoReferenced": true,
-    "defineConstraints": [],
+    "defineConstraints": [
+        "CORESYSTEM_TURNBASESYSTEM"
+    ],
     "versionDefines": [
         {
             "name": "com.unity.render-pipelines.high-definition",

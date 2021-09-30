@@ -41,14 +41,17 @@ namespace Syadeu.Presentation
             m_TriggerBoundCluster = new Cluster<TriggerBoundAttribute>(1024);
             m_TriggerBoundArray = new Entity<IEntity>[1024];
 
-            RequestSystem<EntitySystem>(Bind);
-            RequestSystem<EventSystem>(Bind);
-            RequestSystem<RenderSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, EntitySystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, RenderSystem>(Bind);
 
             return base.OnInitialize();
         }
         public override void OnDispose()
         {
+            m_EntitySystem.OnEntityCreated -= M_EntitySystem_OnEntityCreated;
+            m_EntitySystem.OnEntityDestroy -= M_EntitySystem_OnEntityDestroy;
+
             m_TriggerBoundArray = Array.Empty<Entity<IEntity>>();
             m_TriggerBoundCluster.Dispose();
 

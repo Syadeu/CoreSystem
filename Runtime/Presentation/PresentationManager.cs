@@ -45,6 +45,7 @@ namespace Syadeu.Presentation
             private readonly List<IAfterPresentation> m_AfterPresentations = new List<IAfterPresentation>();
 
             public readonly ConcurrentQueue<Action> m_RequestSystemDelegates = new ConcurrentQueue<Action>();
+            private readonly List<Hash> m_GroupDependences = new List<Hash>();
 
             //public CoreRoutine MainPresentation;
             public CoreRoutine BackgroundPresentation;
@@ -196,6 +197,14 @@ namespace Syadeu.Presentation
                 m_BackgroundInitDone = false;
             }
 
+            public void AddGroupDependence(Hash groupHash)
+            {
+                m_GroupDependences.Add(groupHash);
+            }
+            public List<Hash> GetGroupDependences() => m_GroupDependences;
+
+            #region Unity Jobs
+
             public JobHandle GetJobHandle(int pos)
             {
                 if (pos == 0) return m_BeforePresentationJobHandle;
@@ -208,6 +217,10 @@ namespace Syadeu.Presentation
                 else if (pos == 1) m_OnPresentationJobHandle = JobHandle.CombineDependencies(m_OnPresentationJobHandle, jobHandle);
                 else m_AfterPresentationJobHandle = JobHandle.CombineDependencies(m_AfterPresentationJobHandle, jobHandle);
             }
+
+            #endregion
+
+            #region Presentation Methods
 
             public void Initialize()
             {
@@ -355,6 +368,8 @@ namespace Syadeu.Presentation
                     LogMessage(result);
                 }
             }
+
+            #endregion
         }
         private readonly Hash m_DefaultGroupHash = GroupToHash(TypeHelper.TypeOf<DefaultPresentationGroup>.Type);
 
@@ -380,12 +395,44 @@ namespace Syadeu.Presentation
                 registerMethod.Invoke(presentations[i], null);
             }
 
+            m_BeforeUpdateAsyncSemaphore = new ManualResetEvent(true);
+            m_OnUpdateAsyncSemaphore = new ManualResetEvent(true);
+            m_AfterUpdateAsyncSemaphore = new ManualResetEvent(true);
+
             StartPresentation(m_DefaultGroupHash);
             for (int i = 0; i < presentations.Length; i++)
             {
                 if (presentations[i].StartOnInitialize)
                 {
-                    StartPresentation(Hash.NewHash(registers[i].Name));
+                    StartPresentation(GroupToHash(registers[i]));
+                }
+                else if (presentations[i].DependenceGroup != null)
+                {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                    if (presentations[i].DependenceGroup.IsAbstract ||
+                        presentations[i].DependenceGroup.IsInterface)
+                    {
+                        CoreSystem.Logger.LogError(Channel.Presentation,
+                            $"On Presentation Group({presentations[i].GetType().Name}), " +
+                            $"dependence group cannot be an abstract or interface and must be absolute type." +
+                            $"{presentations[i].DependenceGroup.Name} is not allowed.");
+                        continue;
+                    }
+#endif
+                    Hash groupHash = GroupToHash(presentations[i].DependenceGroup);
+                    if (!Instance.m_PresentationGroups.TryGetValue(groupHash, out Group group))
+                    {
+                        throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
+                            $"시스템 그룹 {presentations[i].DependenceGroup.Name} 은 등록되지 않았습니다.");
+                    }
+
+                    if (group.m_IsStarted)
+                    {
+                        StartPresentation(GroupToHash(registers[i]));
+                        continue;
+                    }
+
+                    group.AddGroupDependence(GroupToHash(presentations[i].DependenceGroup));
                 }
             }
             
@@ -495,9 +542,20 @@ namespace Syadeu.Presentation
         }
         public override void Dispose()
         {
+            PresentationSystemEntity.s_GlobalJobHandle.Complete();
             foreach (var item in m_PresentationGroups)
             {
-                if (item.Value.m_IsStarted) item.Value.Reset();
+                if (item.Value.m_IsStarted)
+                {
+                    BeforeUpdate -= item.Value.BeforePresentation;
+                    BeforeUpdateAsync -= item.Value.BeforePresentationAsync;
+                    Update -= item.Value.OnPresentation;
+                    UpdateAsync -= item.Value.OnPresentationAsync;
+                    AfterUpdate -= item.Value.AfterPresentation;
+                    AfterUpdateAsync -= item.Value.AfterPresentationAsync;
+
+                    item.Value.Reset();
+                }
             }
 
             PlayerLoopSystem defaultLoop = PlayerLoop.GetDefaultPlayerLoop();
@@ -559,9 +617,9 @@ namespace Syadeu.Presentation
         }
 
         private ManualResetEvent
-            m_BeforeUpdateAsyncSemaphore = new ManualResetEvent(true),
-            m_OnUpdateAsyncSemaphore = new ManualResetEvent(true),
-            m_AfterUpdateAsyncSemaphore = new ManualResetEvent(true);
+            m_BeforeUpdateAsyncSemaphore,
+            m_OnUpdateAsyncSemaphore,
+            m_AfterUpdateAsyncSemaphore;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         private static Unity.Profiling.ProfilerMarker
@@ -600,9 +658,7 @@ namespace Syadeu.Presentation
                     {
                         if (CoreSystem.SimulateWatcher.WaitOne(100)) break;
                     }
-                    //if (!CoreSystem.SimulateWatcher.WaitOne(1)) continue;
-
-                    //CoreSystem.SimulateWatcher.WaitOne();
+                    if (CoreSystem.BlockCreateInstance) break;
                 }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 beforeSemaphoreMarker.Begin();
@@ -611,6 +667,7 @@ namespace Syadeu.Presentation
                 {
                     if (mgr.m_BeforeUpdateAsyncSemaphore.WaitOne(1)) break;
                 }
+                if (CoreSystem.BlockCreateInstance) break;
                 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 beforeSemaphoreMarker.End();
@@ -633,8 +690,8 @@ namespace Syadeu.Presentation
                 {
                     if (mgr.m_OnUpdateAsyncSemaphore.WaitOne(1)) break;
                 }
-                
-                
+                if (CoreSystem.BlockCreateInstance) break;
+
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 onSemaphoreMarker.End();
                 onUpdateMarker.Begin();
@@ -654,7 +711,8 @@ namespace Syadeu.Presentation
                 {
                     if (mgr.m_AfterUpdateAsyncSemaphore.WaitOne(1)) break;
                 }
-                
+                if (CoreSystem.BlockCreateInstance) break;
+
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 afterSemaphoreMarker.End();
                 afterUpdateMarker.Begin();
@@ -805,6 +863,13 @@ namespace Syadeu.Presentation
             group.m_IsStarted = true;
 
             CoreSystem.Logger.Log(Channel.Presentation, $"{group.m_Name.Name} group is started");
+
+            List<Hash> connectedGroups = group.GetGroupDependences();
+            for (int i = 0; i < connectedGroups.Count; i++)
+            {
+                StartPresentation(connectedGroups[i]);
+            }
+
             return group.m_StartAwaiter;
         }
         internal void StopPresentation(Hash groupHash)
@@ -866,7 +931,7 @@ namespace Syadeu.Presentation
             if (!Instance.m_PresentationGroups.TryGetValue(groupHash, out Group group))
             {
                 throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
-                    $"시스템 {typeof(TGroup).Name} 은 등록되지 않았습니다.");
+                    $"시스템 그룹 {typeof(TGroup).Name} 은 등록되지 않았습니다.");
             }
 
             if (group.m_IsStarted && !group.m_MainthreadSignal)
@@ -882,6 +947,7 @@ namespace Syadeu.Presentation
 
                     setter.Invoke(system);
                 });
+                return;
             }
 
             if (group.TryGetSystem<TSystem>(out TSystem system))
