@@ -1445,7 +1445,9 @@ namespace SyadeuEditor.Presentation.Map
             {
                 for (int i = 0; i < m_SelectedObjects.Length; i++)
                 {
-                    DrawSelectedObject(i);
+                    if (m_SelectedObjects[i] == null) continue;
+
+                    DrawSelectedObject(m_SelectedObjects[i], m_SelectedGameObjects[i]);
                 }
             }
 
@@ -1485,12 +1487,12 @@ namespace SyadeuEditor.Presentation.Map
             UnityEngine.Object.DestroyImmediate(Folder.gameObject);
         }
 
-        private void DrawSelectedObject(int i)
+        private void DrawSelectedObject(MapDataEntityBase.Object obj, GameObject proxy)
         {
             const float width = 180;
 
-            EntityBase objData = m_SelectedObjects[i].m_Object.GetObject();
-            AABB selectAabb = m_SelectedObjects[i].aabb;
+            EntityBase objData = obj.m_Object.GetObject();
+            AABB selectAabb = obj.aabb;
 
             #region Scene GUI Overlays
 
@@ -1510,11 +1512,11 @@ namespace SyadeuEditor.Presentation.Map
 
             #region Proxy Copy
 
-            m_SelectedObjects[i].m_Translation = m_SelectedGameObjects[i].transform.position;
-            m_SelectedObjects[i].m_Rotation = m_SelectedGameObjects[i].transform.rotation;
-            m_SelectedObjects[i].m_Scale = m_SelectedGameObjects[i].transform.localScale;
+            obj.m_Translation = proxy.transform.position;
+            obj.m_Rotation = proxy.transform.rotation;
+            obj.m_Scale = proxy.transform.localScale;
 
-            m_SelectedObjects[i].m_Static = m_SelectedGameObjects[i].isStatic;
+            obj.m_Static = proxy.isStatic;
 
             #endregion
 
@@ -1522,7 +1524,7 @@ namespace SyadeuEditor.Presentation.Map
             {
                 if (EditorUtility.DisplayDialog($"Remove ({objName})", "Are you sure?", "Remove", "Cancel"))
                 {
-                    m_SelectedMapData.Remove(m_SelectedGameObjects[i]);
+                    m_SelectedMapData.Remove(proxy);
                     
                     m_SelectedGameObjects = null;
                     m_SelectedMapData = null;

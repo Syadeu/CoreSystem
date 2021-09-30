@@ -1,4 +1,6 @@
-﻿using BehaviorDesigner.Runtime.Tasks;
+﻿#if CORESYSTEM_TURNBASESYSTEM
+
+using BehaviorDesigner.Runtime.Tasks;
 using Syadeu.Presentation.TurnTable;
 using UnityEngine;
 
@@ -17,3 +19,5 @@ namespace Syadeu.Presentation.BehaviorTree
             => PresentationBehaviorTreeUtility.LoadAttributeFromMono(m_Target, nameof(LoadTurnPlayerAttribute), out m_TurnPlayer);
     }
 }
+
+#endif

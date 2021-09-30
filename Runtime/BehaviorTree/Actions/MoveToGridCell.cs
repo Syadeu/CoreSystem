@@ -1,4 +1,6 @@
-﻿using BehaviorDesigner.Runtime;
+﻿#if CORESYSTEM_TURNBASESYSTEM
+
+using BehaviorDesigner.Runtime;
 using BehaviorDesigner.Runtime.Tasks;
 using Syadeu.Presentation.Map;
 using Syadeu.Presentation.TurnTable;
@@ -63,3 +65,5 @@ namespace Syadeu.Presentation.BehaviorTree
         }
     }
 }
+
+#endif

@@ -41,9 +41,9 @@ namespace Syadeu.Presentation
             m_TriggerBoundCluster = new Cluster<TriggerBoundAttribute>(1024);
             m_TriggerBoundArray = new Entity<IEntity>[1024];
 
-            RequestSystem<EntitySystem>(Bind);
-            RequestSystem<EventSystem>(Bind);
-            RequestSystem<RenderSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, EntitySystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, RenderSystem>(Bind);
 
             return base.OnInitialize();
         }
@@ -94,7 +94,6 @@ namespace Syadeu.Presentation
             m_TriggerBoundArray[arrayIndex] = target;
 
             att.m_ClusterID = id;
-            $"bounds att added {obj.Name} {att.m_ClusterID.GroupIndex} :: {att.m_ClusterID.ItemIndex}".ToLog();
         }
         private void M_EntitySystem_OnEntityDestroy(EntityData<IEntityData> obj)
         {
@@ -102,7 +101,6 @@ namespace Syadeu.Presentation
             TriggerBoundAttribute att = obj.GetAttribute<TriggerBoundAttribute>();
             if (att == null) return;
 
-            $"removing {obj.Name} {att.m_ClusterID.GroupIndex} :: {att.m_ClusterID.ItemIndex}".ToLog();
             int arrayIndex = m_TriggerBoundCluster.Remove(att.m_ClusterID);
             m_TriggerBoundArray[arrayIndex] = Entity<IEntity>.Empty;
 
