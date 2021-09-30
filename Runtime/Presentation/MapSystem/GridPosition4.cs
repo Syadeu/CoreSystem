@@ -54,6 +54,11 @@ namespace Syadeu.Presentation.Map
             this.index[i] = index;
             this.location[i] = location;
         }
+        public void UpdateAt(int i, GridPosition position)
+        {
+            this.index[i] = position.index;
+            this.location[i] = position.location;
+        }
         public void RemoveAt(int i)
         {
             this.index[i] = -1;

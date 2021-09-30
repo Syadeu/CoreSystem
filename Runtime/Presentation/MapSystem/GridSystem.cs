@@ -232,11 +232,11 @@ namespace Syadeu.Presentation.Map
                 GL.Begin(GL.QUADS);
 
                 GL.Color(colorWhite);
-                DrawGridGL(m_MainGrid.Grid, .05f);
+                m_MainGrid.DrawGridGL(.05f);
 
                 GL.Color(colorRed);
                 int[] gridEntities = m_GridEntities.Keys.ToArray();
-                DrawOccupiedCells(m_MainGrid.Grid, gridEntities);
+                m_MainGrid.DrawOccupiedCells(gridEntities);
 
                 //GL.Color(Color.black);
                 //var temp = m_EntityGridIndices.Keys.ToArray();
@@ -383,11 +383,11 @@ namespace Syadeu.Presentation.Map
         public bool HasPath([NoAlias] int from, [NoAlias] int to, [NoAlias] int maxPathLength, out int pathFound, [NoAlias] int maxIteration = 32)
         {
             int2
-                fromLocation = GridMap.Grid.IndexToLocation(in from),
-                toLocation = GridMap.Grid.IndexToLocation(in to);
+                fromLocation = GridMap.GetLocation(in from),
+                toLocation = GridMap.GetLocation(in to);
 
             GridPathTile tile = new GridPathTile(from, fromLocation);
-            tile.Calculate(GridMap.Grid, GridMap.ObstacleLayer);
+            tile.Calculate(GridMap, GridMap.ObstacleLayer);
 
             unsafe
             {
@@ -418,7 +418,7 @@ namespace Syadeu.Presentation.Map
                         int nextDirection = GetLowestCost(ref lastTileData, toLocation);
 
                         GridPathTile nextTile = lastTileData.GetNext(nextDirection);
-                        nextTile.Calculate(GridMap.Grid, GridMap.ObstacleLayer);
+                        nextTile.Calculate(GridMap, GridMap.ObstacleLayer);
 
                         path[pathFound] = (nextTile);
                         pathFound++;
@@ -437,7 +437,7 @@ namespace Syadeu.Presentation.Map
                 toLocation = GridMap.GetLocation(in to);
 
             GridPathTile tile = new GridPathTile(from, fromLocation);
-            tile.Calculate(GridMap.Grid, GridMap.ObstacleLayer, ignoreIndices);
+            tile.Calculate(GridMap, GridMap.ObstacleLayer, ignoreIndices);
 
             path.Clear();
 
@@ -469,7 +469,7 @@ namespace Syadeu.Presentation.Map
                         int nextDirection = GetLowestCost(ref lastTileData, in toLocation);
 
                         GridPathTile nextTile = lastTileData.GetNext(nextDirection);
-                        nextTile.Calculate(GridMap.Grid, GridMap.ObstacleLayer, ignoreIndices);
+                        nextTile.Calculate(GridMap, GridMap.ObstacleLayer, ignoreIndices);
                         
                         list[count] = (nextTile);
                         count += 1;

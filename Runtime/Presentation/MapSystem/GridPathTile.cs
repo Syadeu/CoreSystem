@@ -62,38 +62,15 @@ namespace Syadeu.Presentation.Map
             }
             return true;
         }
-        public void Calculate(in BinaryGrid grid, in NativeHashSet<int> ignoreLayers = default)
+        public void Calculate(in GridMapAttribute grid, in NativeHashSet<int> ignoreLayers = default, in NativeHashSet<int> additionalIgnore = default)
         {
             for (int i = 0; i < 4; i++)
             {
-                int2 nextTempLocation = grid.GetDirection(in position.location, (Direction)(1 << i));
-                if (nextTempLocation.Equals(parent.location)) continue;
+                GridPosition nextTempLocation = grid.GetDirection(in position.index, (Direction)(1 << i));
+                if (nextTempLocation.Equals(parent)) continue;
 
                 //int nextTemp = GridBurstExtensions.p_LocationInt2ToIndex.Invoke(grid.bounds, grid.cellSize, nextTempLocation);
-                int nextTemp = grid.LocationToIndex(nextTempLocation);
-                if (ignoreLayers.IsCreated)
-                {
-                    if (ignoreLayers.Contains(nextTemp))
-                    {
-                        opened[i] = false;
-                        openedPositions.RemoveAt(i);
-                        continue;
-                    }
-                }
-
-                opened[i] = true;
-                openedPositions.UpdateAt(i, nextTemp, nextTempLocation);
-            }
-        }
-        public void Calculate(in BinaryGrid grid, in NativeHashSet<int> ignoreLayers, in NativeHashSet<int> additionalIgnore = default)
-        {
-            for (int i = 0; i < 4; i++)
-            {
-                int2 nextTempLocation = grid.GetDirection(in position.location, (Direction)(1 << i));
-                if (nextTempLocation.Equals(parent.location)) continue;
-
-                //int nextTemp = GridBurstExtensions.p_LocationInt2ToIndex.Invoke(grid.bounds, grid.cellSize, nextTempLocation);
-                int nextTemp = grid.LocationToIndex(nextTempLocation);
+                int nextTemp = nextTempLocation.index;
                 if (ignoreLayers.IsCreated)
                 {
                     if (ignoreLayers.Contains(nextTemp))
@@ -115,9 +92,42 @@ namespace Syadeu.Presentation.Map
                 }
 
                 opened[i] = true;
-                openedPositions.UpdateAt(i, nextTemp, nextTempLocation);
+                openedPositions.UpdateAt(i, nextTempLocation);
             }
         }
+        //public void Calculate(in BinaryGrid grid, in NativeHashSet<int> ignoreLayers = default, in NativeHashSet<int> additionalIgnore = default)
+        //{
+        //    for (int i = 0; i < 4; i++)
+        //    {
+        //        int2 nextTempLocation = grid.GetDirection(in position.location, (Direction)(1 << i));
+        //        if (nextTempLocation.Equals(parent.location)) continue;
+
+        //        //int nextTemp = GridBurstExtensions.p_LocationInt2ToIndex.Invoke(grid.bounds, grid.cellSize, nextTempLocation);
+        //        int nextTemp = grid.LocationToIndex(nextTempLocation);
+        //        if (ignoreLayers.IsCreated)
+        //        {
+        //            if (ignoreLayers.Contains(nextTemp))
+        //            {
+        //                opened[i] = false;
+        //                openedPositions.RemoveAt(i);
+        //                continue;
+        //            }
+        //        }
+
+        //        if (additionalIgnore.IsCreated)
+        //        {
+        //            if (additionalIgnore.Contains(nextTemp))
+        //            {
+        //                opened[i] = false;
+        //                openedPositions.RemoveAt(i);
+        //                continue;
+        //            }
+        //        }
+
+        //        opened[i] = true;
+        //        openedPositions.UpdateAt(i, nextTemp, nextTempLocation);
+        //    }
+        //}
 
         public bool IsEmpty() => Equals(Empty);
         public bool Equals(GridPathTile other)

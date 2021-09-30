@@ -63,7 +63,7 @@ namespace Syadeu.Presentation.Map
         [JsonIgnore] public int3 Size => m_Size;
         [JsonIgnore] public float CellSize => m_CellSize;
         [JsonIgnore] public int LayerCount => m_Layers.Length;
-        [JsonIgnore] public BinaryGrid Grid { get; set; }
+        [JsonIgnore] private BinaryGrid Grid { get; set; }
         [JsonIgnore] private BinaryGrid[] SubGrids { get; set; }
         [JsonIgnore] private NativeHashSet<int>[] Layers { get; set; }
 
@@ -379,6 +379,19 @@ namespace Syadeu.Presentation.Map
                 targetIndex -= SubGrids.Length;
             }
         }
+        private int ConvertToWorldIndex(in int gridIdx, in int index)
+        {
+            if (gridIdx < 0) return index;
+
+            int output = Grid.length;
+            for (int i = 0; i < gridIdx - 1; i++)
+            {
+                output += SubGrids[i].length;
+            }
+
+            output += index;
+            return output;
+        }
         private BinaryGrid GetTargetGrid(in int index, out int targetIndex)
         {
             CalculateSubGridIndex(in index, out int gridIdx, out targetIndex);
@@ -446,6 +459,17 @@ namespace Syadeu.Presentation.Map
         public int GetIndex(in float3 position)
         {
             return GetGridPosition(in position).index;
+        }
+
+        public GridPosition GetDirection(in int from, in Direction direction)
+        {
+            CalculateSubGridIndex(in from, out int gridIdx, out int idx);
+            BinaryGrid grid = gridIdx < 0 ? Grid : SubGrids[gridIdx];
+
+            int2 location = grid.GetDirection(in idx, in direction);
+
+            int calIdx = grid.LocationToIndex(location);
+            return new GridPosition(ConvertToWorldIndex(in gridIdx, in calIdx), location);
         }
 
         #endregion
@@ -569,6 +593,94 @@ namespace Syadeu.Presentation.Map
 
         #endregion
 
+        #region GL
+
+        public void DrawGridGL(float thinkness) => DrawGridGL(Grid, thinkness);
+        public void DrawOccupiedCells(int[] gridEntities) => DrawOccupiedCells(Grid, gridEntities);
+
+        static void DrawGridGL(BinaryGrid grid, float thickness)
+        {
+            const float yOffset = .2f;
+            int2 gridSize = grid.gridSize;
+
+            Vector3 minPos = grid.IndexToPosition(0);
+            minPos.x -= grid.cellSize * .5f;
+            minPos.z += grid.cellSize * .5f;
+
+            Vector3 maxPos = grid.LocationToPosition(gridSize);
+            maxPos.x -= grid.cellSize * .5f;
+            maxPos.z += grid.cellSize * .5f;
+
+            var xTemp = new Vector3(thickness * .5f, 0, 0);
+            var yTemp = new Vector3(0, 0, thickness * .5f);
+
+            for (int y = 0; y < gridSize.y + 1; y++)
+            {
+                for (int x = 0; x < gridSize.x + 1; x++)
+                {
+                    Vector3
+                        p1 = new Vector3(
+                            minPos.x,
+                            minPos.y + yOffset,
+                            minPos.z - (grid.cellSize * y)),
+                        p2 = new Vector3(
+                            maxPos.x,
+                            minPos.y + yOffset,
+                            minPos.z - (grid.cellSize * y)),
+                        p3 = new Vector3(
+                            minPos.x + (grid.cellSize * x),
+                            minPos.y + yOffset,
+                            minPos.z),
+                        p4 = new Vector3(
+                            minPos.x + (grid.cellSize * x),
+                            minPos.y + yOffset,
+                            maxPos.z)
+                        ;
+
+                    GL.Vertex(p1 - yTemp); GL.Vertex(p2 - yTemp);
+                    GL.Vertex(p2 + yTemp); GL.Vertex(p1 + yTemp);
+
+                    GL.Vertex(p3 - xTemp); GL.Vertex(p4 - xTemp);
+                    GL.Vertex(p4 + xTemp); GL.Vertex(p3 + xTemp);
+                }
+            }
+        }
+        static void DrawOccupiedCells(BinaryGrid grid, int[] gridEntities)
+        {
+            float sizeHalf = grid.cellSize * .5f;
+
+            for (int i = 0; i < gridEntities.Length; i++)
+            {
+                Vector3
+                        cellPos = grid.IndexToPosition(gridEntities[i]),
+                        p1 = new Vector3(cellPos.x - sizeHalf, cellPos.y + .1f, cellPos.z - sizeHalf),
+                        p2 = new Vector3(cellPos.x - sizeHalf, cellPos.y + .1f, cellPos.z + sizeHalf),
+                        p3 = new Vector3(cellPos.x + sizeHalf, cellPos.y + .1f, cellPos.z + sizeHalf),
+                        p4 = new Vector3(cellPos.x + sizeHalf, cellPos.y + .1f, cellPos.z - sizeHalf);
+
+                GL.Vertex(p1);
+                GL.Vertex(p2);
+                GL.Vertex(p3);
+                GL.Vertex(p4);
+            }
+        }
+        static void DrawCell(BinaryGrid grid, in int index)
+        {
+            float sizeHalf = grid.cellSize * .5f;
+            Vector3
+                cellPos = grid.IndexToPosition(index),
+                p1 = new Vector3(cellPos.x - sizeHalf, cellPos.y + .1f, cellPos.z - sizeHalf),
+                p2 = new Vector3(cellPos.x - sizeHalf, cellPos.y + .1f, cellPos.z + sizeHalf),
+                p3 = new Vector3(cellPos.x + sizeHalf, cellPos.y + .1f, cellPos.z + sizeHalf),
+                p4 = new Vector3(cellPos.x + sizeHalf, cellPos.y + .1f, cellPos.z - sizeHalf);
+
+            GL.Vertex(p1);
+            GL.Vertex(p2);
+            GL.Vertex(p3);
+            GL.Vertex(p4);
+        }
+
+        #endregion
     }
     [Preserve]
     internal sealed class GridMapProcessor : AttributeProcessor<GridMapAttribute>
