@@ -49,6 +49,9 @@ namespace Syadeu.Presentation
         }
         public override void OnDispose()
         {
+            m_EntitySystem.OnEntityCreated -= M_EntitySystem_OnEntityCreated;
+            m_EntitySystem.OnEntityDestroy -= M_EntitySystem_OnEntityDestroy;
+
             m_TriggerBoundArray = Array.Empty<Entity<IEntity>>();
             m_TriggerBoundCluster.Dispose();
 
@@ -91,6 +94,7 @@ namespace Syadeu.Presentation
             m_TriggerBoundArray[arrayIndex] = target;
 
             att.m_ClusterID = id;
+            $"bounds att added {obj.Name} {att.m_ClusterID.GroupIndex} :: {att.m_ClusterID.ItemIndex}".ToLog();
         }
         private void M_EntitySystem_OnEntityDestroy(EntityData<IEntityData> obj)
         {
@@ -98,6 +102,7 @@ namespace Syadeu.Presentation
             TriggerBoundAttribute att = obj.GetAttribute<TriggerBoundAttribute>();
             if (att == null) return;
 
+            $"removing {obj.Name} {att.m_ClusterID.GroupIndex} :: {att.m_ClusterID.ItemIndex}".ToLog();
             int arrayIndex = m_TriggerBoundCluster.Remove(att.m_ClusterID);
             m_TriggerBoundArray[arrayIndex] = Entity<IEntity>.Empty;
 

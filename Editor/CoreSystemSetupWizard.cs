@@ -179,11 +179,13 @@ namespace SyadeuEditor
                 UNITY_COLLECTIONS_CHECKS = "ENABLE_UNITY_COLLECTIONS_CHECKS",
                 CORESYSTEM_DOTWEEN = "CORESYSTEM_DOTWEEN",
                 CORESYSTEM_MOTIONMATCHING = "CORESYSTEM_MOTIONMATCHING",
+                CORESYSTEM_BEHAVIORTREE = "CORESYSTEM_BEHAVIORTREE",
                 CORESYSTEM_FMOD = "CORESYSTEM_FMOD";
             bool
                 m_DefinedCollectionsChecks, 
                 m_DefinedDotween,
                 m_DefinedMotionMatching,
+                m_DefinedBehaviorTree,
                 m_DefinedFMOD;
             List<string> m_DefinedConstrains;
 
@@ -228,6 +230,7 @@ namespace SyadeuEditor
                 m_DefinedCollectionsChecks = HasConstrains(UNITY_COLLECTIONS_CHECKS);
                 m_DefinedDotween = HasConstrains(CORESYSTEM_DOTWEEN);
                 m_DefinedMotionMatching = HasConstrains(CORESYSTEM_MOTIONMATCHING);
+                m_DefinedBehaviorTree = HasConstrains(CORESYSTEM_BEHAVIORTREE);
                 m_DefinedFMOD = HasConstrains(CORESYSTEM_FMOD);
 
                 #endregion
@@ -377,6 +380,17 @@ namespace SyadeuEditor
                     {
                         if (m_DefinedMotionMatching) DefineConstrains(CORESYSTEM_MOTIONMATCHING);
                         else UndefineContrains(CORESYSTEM_MOTIONMATCHING);
+                    }
+                }
+                using (var check = new EditorGUI.ChangeCheckScope())
+                {
+                    m_DefinedBehaviorTree =
+                        EditorGUILayout.ToggleLeft("Define CORESYSTEM_BEHAVIORTREE", m_DefinedBehaviorTree);
+
+                    if (check.changed)
+                    {
+                        if (m_DefinedBehaviorTree) DefineConstrains(CORESYSTEM_BEHAVIORTREE);
+                        else UndefineContrains(CORESYSTEM_BEHAVIORTREE);
                     }
                 }
 

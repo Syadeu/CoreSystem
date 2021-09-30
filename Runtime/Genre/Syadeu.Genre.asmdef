@@ -11,14 +11,19 @@
         "GUID:9e24947de15b9834991c9d8411ea37cf",
         "GUID:75469ad4d38634e559750d17036d5f7c",
         "GUID:6055be8ebefd69e48b49212b09b47b2f",
-        "GUID:4bcac134974b4cf45ad39eaa137a56a5",
-        "GUID:50264317de3e0454aa3b478b2ddb9461"
+        "GUID:bc030fa7ba60bec40ba1c2f670cbf9ea",
+        "GUID:68f13b45e03a9554385548cd7a38cb02"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
-    "overrideReferences": false,
-    "precompiledReferences": [],
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "DOTween.dll",
+        "DemiLib.dll",
+        "DOTweenPro.dll",
+        "Newtonsoft.Json.dll"
+    ],
     "autoReferenced": true,
     "defineConstraints": [],
     "versionDefines": [

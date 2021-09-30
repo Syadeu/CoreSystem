@@ -101,7 +101,7 @@ namespace Syadeu.Presentation.Internal
     /// </summary>
     public abstract partial class PresentationSystemEntity
     {
-        private static JobHandle s_GlobalJobHandle;
+        internal static JobHandle s_GlobalJobHandle;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         private readonly static Unity.Profiling.ProfilerMarker

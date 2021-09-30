@@ -415,7 +415,7 @@ namespace Syadeu.Presentation.Proxy
             AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
 #endif
 
-            if (id.Equals(ClusterID.Empty) || id.Equals(ClusterID.Requested)) throw new Exception();
+            if (id.Equals(ClusterID.Empty) || id.Equals(ClusterID.Requested)) throw new Exception($"{id.GroupIndex} :: {id.ItemIndex}");
 
             //$"{id.GroupIndex}:{id.ItemIndex} rev".ToLog();
             return m_Buffer[id.GroupIndex].RemoveAt(id.ItemIndex);

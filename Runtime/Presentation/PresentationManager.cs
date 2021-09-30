@@ -380,6 +380,10 @@ namespace Syadeu.Presentation
                 registerMethod.Invoke(presentations[i], null);
             }
 
+            m_BeforeUpdateAsyncSemaphore = new ManualResetEvent(true);
+            m_OnUpdateAsyncSemaphore = new ManualResetEvent(true);
+            m_AfterUpdateAsyncSemaphore = new ManualResetEvent(true);
+
             StartPresentation(m_DefaultGroupHash);
             for (int i = 0; i < presentations.Length; i++)
             {
@@ -495,9 +499,20 @@ namespace Syadeu.Presentation
         }
         public override void Dispose()
         {
+            PresentationSystemEntity.s_GlobalJobHandle.Complete();
             foreach (var item in m_PresentationGroups)
             {
-                if (item.Value.m_IsStarted) item.Value.Reset();
+                if (item.Value.m_IsStarted)
+                {
+                    BeforeUpdate -= item.Value.BeforePresentation;
+                    BeforeUpdateAsync -= item.Value.BeforePresentationAsync;
+                    Update -= item.Value.OnPresentation;
+                    UpdateAsync -= item.Value.OnPresentationAsync;
+                    AfterUpdate -= item.Value.AfterPresentation;
+                    AfterUpdateAsync -= item.Value.AfterPresentationAsync;
+
+                    item.Value.Reset();
+                }
             }
 
             PlayerLoopSystem defaultLoop = PlayerLoop.GetDefaultPlayerLoop();
@@ -559,9 +574,9 @@ namespace Syadeu.Presentation
         }
 
         private ManualResetEvent
-            m_BeforeUpdateAsyncSemaphore = new ManualResetEvent(true),
-            m_OnUpdateAsyncSemaphore = new ManualResetEvent(true),
-            m_AfterUpdateAsyncSemaphore = new ManualResetEvent(true);
+            m_BeforeUpdateAsyncSemaphore,
+            m_OnUpdateAsyncSemaphore,
+            m_AfterUpdateAsyncSemaphore;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         private static Unity.Profiling.ProfilerMarker
@@ -600,9 +615,7 @@ namespace Syadeu.Presentation
                     {
                         if (CoreSystem.SimulateWatcher.WaitOne(100)) break;
                     }
-                    //if (!CoreSystem.SimulateWatcher.WaitOne(1)) continue;
-
-                    //CoreSystem.SimulateWatcher.WaitOne();
+                    if (CoreSystem.BlockCreateInstance) break;
                 }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 beforeSemaphoreMarker.Begin();
@@ -611,6 +624,7 @@ namespace Syadeu.Presentation
                 {
                     if (mgr.m_BeforeUpdateAsyncSemaphore.WaitOne(1)) break;
                 }
+                if (CoreSystem.BlockCreateInstance) break;
                 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 beforeSemaphoreMarker.End();
@@ -633,8 +647,8 @@ namespace Syadeu.Presentation
                 {
                     if (mgr.m_OnUpdateAsyncSemaphore.WaitOne(1)) break;
                 }
-                
-                
+                if (CoreSystem.BlockCreateInstance) break;
+
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 onSemaphoreMarker.End();
                 onUpdateMarker.Begin();
@@ -654,7 +668,8 @@ namespace Syadeu.Presentation
                 {
                     if (mgr.m_AfterUpdateAsyncSemaphore.WaitOne(1)) break;
                 }
-                
+                if (CoreSystem.BlockCreateInstance) break;
+
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 afterSemaphoreMarker.End();
                 afterUpdateMarker.Begin();
@@ -882,6 +897,7 @@ namespace Syadeu.Presentation
 
                     setter.Invoke(system);
                 });
+                return;
             }
 
             if (group.TryGetSystem<TSystem>(out TSystem system))
