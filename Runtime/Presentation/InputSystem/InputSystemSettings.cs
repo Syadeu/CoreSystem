@@ -74,6 +74,9 @@ namespace Syadeu.Presentation.Input
             }
             private void Canceled(InputAction.CallbackContext obj)
             {
+                ResponseActions.Execute(obj);
+                Actions.Execute();
+
                 m_IsHolding = false;
             }
         }

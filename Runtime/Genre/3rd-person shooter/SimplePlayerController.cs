@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
 
-public class SimplePlayerController : MonoBehaviour
+public partial class SimplePlayerController : MonoBehaviour
 {
     [SerializeField] private Animator m_Animator;
     [SerializeField] private Transform m_Camera;
 
-    [SerializeField] private string m_HorizontalKeyString;
-    [SerializeField] private string m_VerticalKeyString;
-    [SerializeField] private string m_SpeedKeyString;
+    [SerializeField] private string m_HorizontalKeyString = "Horizontal";
+    [SerializeField] private string m_VerticalKeyString = "Vertical";
+    [SerializeField] private string m_SpeedKeyString = "Speed";
 
     [SerializeField] private float m_Speed = 4;
 
@@ -20,7 +20,10 @@ public class SimplePlayerController : MonoBehaviour
 
     private void Awake()
     {
-        m_Animator = GetComponentInChildren<Animator>();
+        if (m_Animator == null)
+        {
+            m_Animator = GetComponentInChildren<Animator>();
+        }
 
         m_HorizontalKey = Animator.StringToHash(m_HorizontalKeyString);
         m_VerticalKey = Animator.StringToHash(m_VerticalKeyString);

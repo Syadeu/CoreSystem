@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
+using Unity.Collections.LowLevel.Unsafe;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -14,6 +15,7 @@ using UnityEditor;
 
 namespace Syadeu.Database
 {
+    [Obsolete]
     [StructLayout(LayoutKind.Sequential)]
     public partial struct BinaryGrid<T> : IDisposable where T : unmanaged
     {
@@ -318,10 +320,11 @@ namespace Syadeu.Database
             int2 location = PositionToLocation(in aabb, in cellSize, in pos);
             return LocationToIndex(in aabb, in cellSize, in location);
         }
+
         public static int LocationToIndex(in AABB aabb, in float cellSize, in int2 xy) => LocationToIndex(in aabb, in cellSize, in xy.x, in xy.y);
         public static int LocationToIndex(in AABB aabb, in float cellSize, in int x, in int y)
         {
-            int zSize = Mathf.FloorToInt(aabb.size.z / cellSize);
+            int zSize = (int)math.floor(aabb.size.z / cellSize);
             return zSize * y + x;
         }
         public static float3 LocationToPosition(in AABB aabb, in float cellSize, in int2 xy) => LocationToPosition(in aabb, in cellSize, in xy.x, in xy.y);
@@ -334,6 +337,7 @@ namespace Syadeu.Database
                 targetZ = aabb.max.z - half - (cellSize * y);
             return new float3(targetX, targetY, targetZ);
         }
+
         public static int2 IndexToLocation(in AABB aabb, in float cellSize, in int idx)
         {
             if (idx == 0) return new int2(0, 0);
@@ -413,7 +417,7 @@ namespace Syadeu.Database
             GL.End();
             GL.PopMatrix();
         }
-        public static void DrawGL(this ManagedGrid grid, float thickness, Camera cam = null)
+        public static void DrawGL(this BinaryGrid grid, float thickness, Camera cam = null)
         {
             int2 gridSize = grid.gridSize;
 
@@ -475,6 +479,7 @@ namespace Syadeu.Database
 
         #endregion
     }
+    [Obsolete]
     public partial struct BinaryCell<T> : IValidation where T : unmanaged
     {
         internal readonly Hash m_Parent;
@@ -494,34 +499,28 @@ namespace Syadeu.Database
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public sealed class ManagedGrid : IDisposable
+    public struct BinaryGrid : IValidation, IEquatable<BinaryGrid>
     {
-        [JsonProperty] internal readonly Hash m_Hash;
-        [JsonProperty] private readonly AABB m_AABB;
+        private readonly AABB m_AABB;
 
-        [JsonProperty] private readonly int m_Length;
-        [JsonProperty] private readonly float m_CellSize;
+        private readonly int m_Length;
+        private readonly float m_CellSize;
 
-        [JsonProperty] private readonly Dictionary<int, ManagedCell> m_Cells;
-
-        [JsonIgnore] public int length => m_Length;
-        [JsonIgnore] public int2 gridSize => new int2(
+        public int length => m_Length;
+        public int2 gridSize => new int2(
             (int)math.floor(m_AABB.size.x / m_CellSize),
             (int)math.floor(m_AABB.size.z / m_CellSize));
 
-        [JsonIgnore] public float cellSize => m_CellSize;
-        [JsonIgnore] public float3 center => m_AABB.center;
-        [JsonIgnore] public float3 size => m_AABB.size;
-        [JsonIgnore] public ManagedCell[] cells => m_Cells.Values.ToArray();
-        [JsonIgnore] public AABB bounds => m_AABB;
+        public float cellSize => m_CellSize;
+        public float3 center => m_AABB.center;
+        public float3 size => m_AABB.size;
+        public AABB bounds => m_AABB;
 
-        public ManagedGrid(int3 center, int3 size, float cellSize)
+        public BinaryGrid(int3 center, int3 size, float cellSize)
         {
-            m_Hash = Hash.NewHash();
             m_AABB = new AABB(center, size);
 
             m_CellSize = cellSize;
-            m_Cells = new Dictionary<int, ManagedCell>();
 
             int
                 xSize = (int)math.floor(size.x / cellSize),
@@ -539,47 +538,49 @@ namespace Syadeu.Database
 
             return HasCell(GridExtensions.LocationToIndex(m_AABB, x, y));
         }
-        public bool HasCell(float3 position) => HasCell(GridExtensions.PositionToIndex(in m_AABB, in m_CellSize, position));
+        public bool HasCell(in float3 position) => m_AABB.Contains(position) && HasCell(GridExtensions.PositionToIndex(in m_AABB, in m_CellSize, in position));
 
-        public ManagedCell GetCell(int idx)
-        {
-            if (idx >= m_Length) throw new Exception();
+        //public ManagedCell GetCell(int idx)
+        //{
+        //    if (idx >= m_Length) throw new Exception();
 
-            if (!m_Cells.TryGetValue(idx, out var cell))
-            {
-                cell = new ManagedCell(
-                            m_Hash, idx,
-                            GridExtensions.IndexToPosition(in m_AABB, in m_CellSize, in idx),
-                            m_CellSize
-                            );
-                m_Cells.Add(idx, cell);
-            }
-            return cell;
-        }
-        public ManagedCell GetCell(float3 position)
-        {
-            if (!HasCell(position)) throw new Exception();
+        //    if (!m_Cells.TryGetValue(idx, out var cell))
+        //    {
+        //        cell = new ManagedCell(
+        //                    m_Hash, idx,
+        //                    GridExtensions.IndexToPosition(in m_AABB, in m_CellSize, in idx),
+        //                    m_CellSize
+        //                    );
+        //        m_Cells.Add(idx, cell);
+        //    }
+        //    return cell;
+        //}
+        //public ManagedCell GetCell(float3 position)
+        //{
+        //    if (!HasCell(position)) throw new Exception();
 
-            int idx = GridExtensions.PositionToIndex(in m_AABB, in m_CellSize, in position);
-            if (!m_Cells.TryGetValue(idx, out var cell))
-            {
-                cell = new ManagedCell(
-                            m_Hash, idx,
-                            GridExtensions.IndexToPosition(in m_AABB, in m_CellSize, in idx),
-                            m_CellSize
-                            );
-                m_Cells.Add(idx, cell);
-            }
-            return cell;
-        }
+        //    int idx = GridExtensions.PositionToIndex(in m_AABB, in m_CellSize, in position);
+        //    if (!m_Cells.TryGetValue(idx, out var cell))
+        //    {
+        //        cell = new ManagedCell(
+        //                    m_Hash, idx,
+        //                    GridExtensions.IndexToPosition(in m_AABB, in m_CellSize, in idx),
+        //                    m_CellSize
+        //                    );
+        //        m_Cells.Add(idx, cell);
+        //    }
+        //    return cell;
+        //}
 
         public int PositionToIndex(float3 position) => GridExtensions.PositionToIndex(in m_AABB, in m_CellSize, in position);
         public int2 PositionToLocation(float3 position) => GridExtensions.PositionToLocation(in m_AABB, in m_CellSize, in position);
 
-        public float3 IndexToPosition(int idx) => GridExtensions.IndexToPosition(in m_AABB, in m_CellSize, in idx);
-        public int2 IndexToLocation(int idx) => GridExtensions.IndexToLocation(in m_AABB, in m_CellSize, in idx);
+        public float3 IndexToPosition(in int idx) => GridExtensions.IndexToPosition(in m_AABB, in m_CellSize, in idx);
+        public int2 IndexToLocation(in int idx) => GridExtensions.IndexToLocation(in m_AABB, in m_CellSize, in idx);
 
         public float3 LocationToPosition(int2 location) => GridExtensions.LocationToPosition(in m_AABB, in m_CellSize, in location);
+        public int LocationToIndex(in int2 location) => GridExtensions.LocationToIndex(in m_AABB, in m_CellSize, in location);
+
         public float3 PositionToPosition(float3 position)
         {
             int2 idx = GridExtensions.PositionToLocation(in m_AABB, in m_CellSize, in position);
@@ -588,6 +589,135 @@ namespace Syadeu.Database
 
         #endregion
 
+        #region Get Ranges
+
+        public FixedList32Bytes<int> GetRange8(in int idx, in int range)
+        {
+            int2 gridSize = this.gridSize;
+            FixedList32Bytes<int> targets = new FixedList32Bytes<int>();
+
+            int count = 0;
+
+            int startIdx = idx - range + (gridSize.y * range);
+            int height = ((range * 2) + 1);
+            for (int yGrid = 0; yGrid < height; yGrid++)
+            {
+                for (int xGrid = 0; xGrid < height; xGrid++)
+                {
+                    int temp = startIdx - (yGrid * gridSize.y) + xGrid;
+
+                    if (HasCell(temp))
+                    {
+                        targets.Add(temp);
+                        count += 1;
+                    }
+                    //if (temp >= temp - (temp % gridSize.x) + gridSize.x - 1) break;
+                }
+            }
+            return targets;
+        }
+        public FixedList64Bytes<int> GetRange16(in int idx, in int range)
+        {
+            int2 gridSize = this.gridSize;
+            FixedList64Bytes<int> targets = new FixedList64Bytes<int>();
+
+            int count = 0;
+
+            int startIdx = idx - range + (gridSize.y * range);
+            int height = ((range * 2) + 1);
+            for (int yGrid = 0; yGrid < height; yGrid++)
+            {
+                for (int xGrid = 0; xGrid < height; xGrid++)
+                {
+                    int temp = startIdx - (yGrid * gridSize.y) + xGrid;
+
+                    if (HasCell(temp))
+                    {
+                        targets.Add(temp);
+                        count += 1;
+                    }
+                    //if (temp >= temp - (temp % gridSize.x) + gridSize.x - 1) break;
+                }
+            }
+            return targets;
+        }
+        public FixedList128Bytes<int> GetRange32(in int idx, in int range)
+        {
+            int2 gridSize = this.gridSize;
+            FixedList128Bytes<int> targets = new FixedList128Bytes<int>();
+
+            int count = 0;
+
+            int startIdx = idx - range + (gridSize.y * range);
+            int height = ((range * 2) + 1);
+            for (int yGrid = 0; yGrid < height; yGrid++)
+            {
+                for (int xGrid = 0; xGrid < height; xGrid++)
+                {
+                    int temp = startIdx - (yGrid * gridSize.y) + xGrid;
+
+                    if (HasCell(temp))
+                    {
+                        targets.Add(temp);
+                        count += 1;
+                    }
+                    //if (temp >= temp - (temp % gridSize.x) + gridSize.x - 1) break;
+                }
+            }
+            return targets;
+        }
+        public FixedList4096Bytes<int> GetRange1024(in int idx, in int range)
+        {
+            int2 gridSize = this.gridSize;
+            FixedList4096Bytes<int> targets = new FixedList4096Bytes<int>();
+
+            int count = 0;
+
+            int startIdx = idx - range + (gridSize.y * range);
+            int height = ((range * 2) + 1);
+            for (int yGrid = 0; yGrid < height; yGrid++)
+            {
+                for (int xGrid = 0; xGrid < height; xGrid++)
+                {
+                    int temp = startIdx - (yGrid * gridSize.y) + xGrid;
+
+                    if (HasCell(temp))
+                    {
+                        targets.Add(temp);
+                        count += 1;
+                    }
+                    //if (temp >= temp - (temp % gridSize.x) + gridSize.x - 1) break;
+                }
+            }
+            return targets;
+        }
+
+        public void GetRange(ref NativeList<int> targets, in int idx, in int range)
+        {
+            targets.Clear();
+            int2 gridSize = this.gridSize;
+
+            int count = 0;
+
+            int startIdx = idx - range + (gridSize.y * range);
+            int height = ((range * 2) + 1);
+            for (int yGrid = 0; yGrid < height; yGrid++)
+            {
+                for (int xGrid = 0; xGrid < height; xGrid++)
+                {
+                    int temp = startIdx - (yGrid * gridSize.y) + xGrid;
+
+                    if (HasCell(temp))
+                    {
+                        targets.Add(temp);
+                        count += 1;
+                    }
+                    //if (temp >= temp - (temp % gridSize.x) + gridSize.x - 1) break;
+                }
+            }
+        }
+
+        [Obsolete]
         public int[] GetRange(in int idx, in int range)
         {
             int2 gridSize = this.gridSize;
@@ -608,34 +738,42 @@ namespace Syadeu.Database
 
             return targets.ToArray();
         }
+        [Obsolete]
         public int[] GetRange(in int2 location, in int range) => GetRange(GridExtensions.LocationToIndex(in m_AABB, in m_CellSize, in location), in range);
 
-        public byte[] ToBinary()
-        {
-            using (System.IO.MemoryStream ms = new System.IO.MemoryStream())
-            using (Newtonsoft.Json.Bson.BsonDataWriter wr = new Newtonsoft.Json.Bson.BsonDataWriter(ms))
-            {
-                Newtonsoft.Json.JsonSerializer serializer = new Newtonsoft.Json.JsonSerializer();
-                serializer.Serialize(wr, this);
+        #endregion
 
-                return ms.ToArray();
-            }
-        }
-        public static ManagedGrid FromBinary(in byte[] data)
+        public int2 GetDirection(in int from, in Direction direction)
+            => GetDirection(IndexToLocation(in from), in direction);
+        public int2 GetDirection(in int2 from, in Direction direction)
         {
-            using (System.IO.MemoryStream ms = new System.IO.MemoryStream(data))
-            using (Newtonsoft.Json.Bson.BsonDataReader rd = new Newtonsoft.Json.Bson.BsonDataReader(ms))
+            int2 location = from;
+            if ((direction & Direction.Up) == Direction.Up)
             {
-                Newtonsoft.Json.JsonSerializer serializer = new Newtonsoft.Json.JsonSerializer();
-                return serializer.Deserialize<ManagedGrid>(rd);
+                location.y += 1;
             }
+            if ((direction & Direction.Down) == Direction.Down)
+            {
+                location.y -= 1;
+            }
+            if ((direction & Direction.Left) == Direction.Left)
+            {
+                location.x -= 1;
+            }
+            if ((direction & Direction.Right) == Direction.Right)
+            {
+                location.x += 1;
+            }
+            return location;
         }
 
-        public void Dispose()
+        public bool IsValid() => m_Length != 0;
+        public bool Equals(BinaryGrid other)
         {
-            m_Cells.Clear();
+            return m_Length == other.length && m_CellSize == other.cellSize && m_AABB.Equals(other.m_AABB);
         }
     }
+    [Obsolete]
     public sealed class ManagedCell
     {
         [JsonProperty] internal readonly Hash m_Parent;

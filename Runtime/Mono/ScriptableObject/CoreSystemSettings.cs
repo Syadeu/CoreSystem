@@ -3,7 +3,7 @@ using Syadeu.Mono.Console;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace Syadeu.Mono
@@ -23,9 +23,9 @@ namespace Syadeu.Mono
         public string[] m_AutoInitializeTargetAssembly = new string[] { "Assembly-CSharp" };
         public Channel m_DisplayLogChannel = Channel.All;
 
-        // PrefabManager
-        [Header("Prefab Manager")]
-        public bool m_PMErrorAutoFix = true;
+        //// PrefabManager
+        //[Header("Prefab Manager")]
+        //public bool m_PMErrorAutoFix = true;
 
         // FMODManager
         [Header("FMOD Manager")]
@@ -54,6 +54,12 @@ namespace Syadeu.Mono
         // Lua
         [Header("Lua Manager")]
         public bool m_EnableLua = false;
+
+        // TRPG Extensions
+        [Header("TRPG Grid System")]
+        public float m_TRPGGridLineWidth = .1f;
+        public Material m_TRPGGridLineMaterial;
+
     }
 }
  

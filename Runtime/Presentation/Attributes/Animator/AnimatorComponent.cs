@@ -1,16 +1,25 @@
 ﻿using Syadeu.Database;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Proxy;
+using System;
 using System.Collections.Generic;
+using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Playables;
 
 namespace Syadeu.Presentation.Attributes
 {
     [RequireComponent(typeof(Animator))]
     public sealed class AnimatorComponent : MonoBehaviour
     {
-        internal AnimatorAttribute m_AnimatorAttribute;
-        internal Animator m_Animator;
+        [SerializeField] private bool m_EnableRootMotion = true;
+
+        [NonSerialized] internal ITransform m_Transform;
+        [NonSerialized] internal AnimatorAttribute m_AnimatorAttribute;
+        [NonSerialized] internal Animator m_Animator;
+
+        public Animator Animator => m_Animator;
 
         private void Awake()
         {
@@ -38,11 +47,15 @@ namespace Syadeu.Presentation.Attributes
                 actions[i].Execute(m_AnimatorAttribute.Parent);
             }
         }
-        //private void OnAnimatorMove()
-        //{
-        //    if (m_AnimatorAttribute == null) return;
+        private void OnAnimatorMove()
+        {
+            if (m_AnimatorAttribute == null) return;
 
-        //    m_AnimatorAttribute.m_OnMoveActions.Execute(m_AnimatorAttribute.Parent);
-        //}
+            if (m_EnableRootMotion)
+            {
+                m_Transform.position += (float3)m_Animator.deltaPosition;
+                m_Transform.rotation *= m_Animator.deltaRotation;
+            }
+        }
     }
 }

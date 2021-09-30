@@ -13,7 +13,7 @@ namespace Syadeu.Presentation.Actions
         private static readonly Dictionary<Reference, Stack<ActionBase>> m_Pool = new Dictionary<Reference, Stack<ActionBase>>();
 
         [Header("Debug")]
-        [JsonProperty(Order = -10, PropertyName = "DebugText")]
+        [JsonProperty(Order = 9999, PropertyName = "DebugText")]
         public string m_DebugText = string.Empty;
 
         internal override sealed void InternalInitialize()
@@ -48,7 +48,6 @@ namespace Syadeu.Presentation.Actions
                 result = false;
             }
 
-            InternalTerminate();
             return result;
         }
         internal override sealed void InternalTerminate()
@@ -67,18 +66,46 @@ namespace Syadeu.Presentation.Actions
 
         public static T GetAction<T>(Reference<T> other) where T : TriggerAction
         {
+            if (!TryGetEntitySystem(out EntitySystem entitySystem))
+            {
+                return null;
+            }
+
             T temp;
 
             if (!m_Pool.TryGetValue(other, out var pool) ||
                 pool.Count == 0)
             {
-                T t = (T)other.GetObject().Clone();
+                T t = entitySystem.CreateInstance(other).Object;
                 t.m_Reference = other;
                 t.InternalCreate();
 
                 temp = t;
             }
             else temp = (T)pool.Pop();
+
+            temp.InternalInitialize();
+            return temp;
+        }
+        public static TriggerAction GetAction(Reference other)
+        {
+            if (!TryGetEntitySystem(out EntitySystem entitySystem))
+            {
+                return null;
+            }
+
+            TriggerAction temp;
+
+            if (!m_Pool.TryGetValue(other, out var pool) ||
+                pool.Count == 0)
+            {
+                TriggerAction t = (TriggerAction)entitySystem.CreateInstance(other).Object;
+                t.m_Reference = other;
+                t.InternalCreate();
+
+                temp = t;
+            }
+            else temp = (TriggerAction)pool.Pop();
 
             temp.InternalInitialize();
             return temp;

@@ -34,7 +34,7 @@ namespace SyadeuEditor
         [MenuItem("CoreSystem/Edit Entity Data List", priority = 4)]
         public static void EntityDataListMenu()
         {
-            Presentation.EntityWindow.Instance.minSize = new Vector2(950, 500);
+            Presentation.EntityWindow.Instance.minSize = new Vector2(600, 300);
             Presentation.EntityWindow.Instance.Show();
         }
         //[MenuItem("CoreSystem/Edit Scene List", priority = 5)]

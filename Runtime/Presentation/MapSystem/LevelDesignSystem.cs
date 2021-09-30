@@ -12,6 +12,7 @@ namespace Syadeu.Presentation.Map
     {
         private const string c_TerrainLayerName = "Terrain";
         public static readonly LayerMask TerrainLayer = LayerMask.NameToLayer(c_TerrainLayerName);
+        public static readonly LayerMask TerrainLayerMask = LayerMask.GetMask(c_TerrainLayerName);
 
         public enum TerrainTool
         {
@@ -66,31 +67,20 @@ namespace Syadeu.Presentation.Map
 
         private void AddConsoleCommands()
         {
-            ConsoleWindow.CreateCommand((cmd) =>
-            {
-                m_EnabledTerrainTool = true;
-                m_SelectedTool = TerrainTool.Raise;
-
-            }, "enable", "terrain", "raiseTool");
-            ConsoleWindow.CreateCommand((cmd) =>
-            {
-                m_EnabledTerrainTool = false;
-                m_SelectedTool = TerrainTool.None;
-
-            }, "disable", "terrain");
+            ConsoleWindow.CreateCommand((cmd) => SelectTool(TerrainTool.Raise), "enable", "terrain", "raiseTool");
+            ConsoleWindow.CreateCommand((cmd) => SelectTool(TerrainTool.Lower), "enable", "terrain", "lowerTool");
+            ConsoleWindow.CreateCommand((cmd) => SelectTool(TerrainTool.Flatten), "enable", "terrain", "flattenTool");
+            ConsoleWindow.CreateCommand((cmd) => SelectTool(TerrainTool.None), "disable", "terrain");
         }
 
         protected override PresentationResult OnPresentation()
         {
             if (m_EnabledTerrainTool)
             {
-                if (m_SelectedTool == TerrainTool.Raise)
+                if (Mouse.current.press.isPressed)
                 {
-                    if (Mouse.current.press.isPressed)
-                    {
-                        Ray ray = m_RenderSystem.ScreenPointToRay(new float3(Mouse.current.position.ReadValue(), 0));
-                        RaiseTerrain(ray, 10, .1f);
-                    }
+                    Ray ray = m_RenderSystem.ScreenPointToRay(new float3(Mouse.current.position.ReadValue(), 0));
+                    ExecuteTool(m_SelectedTool, ray, 10);
                 }
             }
 
@@ -99,6 +89,13 @@ namespace Syadeu.Presentation.Map
 
         #region Tools
 
+        private void SelectTool(TerrainTool tool)
+        {
+            m_SelectedTool = tool;
+            m_EnabledTerrainTool = tool != TerrainTool.None;
+
+            $"tool select {tool}".ToLog();
+        }
         private void ExecuteTool(TerrainTool tool, Ray ray, in int effectSize, in float effectIncrement = .1f)
         {
             switch (tool)
@@ -268,7 +265,7 @@ namespace Syadeu.Presentation.Map
             return m_SceneSystem.CurrentPhysicsScene.Raycast(ray.origin, ray.direction,
                 out hitInfo,
                 maxDistance: maxDistance,
-                layerMask: TerrainLayer,
+                layerMask: TerrainLayerMask,
                 queryTriggerInteraction: QueryTriggerInteraction.Collide);
         }
         public int RaycastAll(Ray ray, RaycastHit[] hitInfos, 
@@ -277,8 +274,35 @@ namespace Syadeu.Presentation.Map
             return m_SceneSystem.CurrentPhysicsScene.Raycast(ray.origin, ray.direction,
                 hitInfos,
                 maxDistance: maxDistance,
-                layerMask: TerrainLayer,
+                layerMask: TerrainLayerMask,
                 queryTriggerInteraction: QueryTriggerInteraction.Collide);
         }
+
+        private void temp(ILevelEditor editor)
+        {
+            GUILayout.Window(0, editor.EditorRect, editor.OnGUI, editor.EditorName);
+        }
+    }
+
+    public interface ILevelEditor
+    {
+        string EditorName { get; }
+        Type EditorType { get; }
+        Rect EditorRect { get; }
+
+        void OnGUI(int unusedID);
+    }
+    public abstract class LevelEditorToolBase : ILevelEditor
+    {
+        public virtual string EditorName { get; } = "New LevelEditor";
+        public Type EditorType => GetType();
+        public virtual Rect EditorRect { get; } = Rect.zero;
+
+        public virtual void OnGUI(int unusedID) { }
+    }
+
+    public sealed class TerrainTool : LevelEditorToolBase
+    {
+        
     }
 }

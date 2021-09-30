@@ -1,8 +1,11 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Presentation.Actions;
+using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Attributes;
+using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
+using System;
 using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.Scripting;
@@ -10,87 +13,52 @@ using UnityEngine.Scripting;
 namespace Syadeu.Presentation.TurnTable
 {
     [DisplayName("Attribute: Turn Player")]
-    public sealed class TurnPlayerAttribute : AttributeBase, ITurnPlayer
+    public sealed class TurnPlayerAttribute : AttributeBase,
+        INotifyComponent<TurnPlayerComponent>
     {
         [Header("Generals")]
-        [JsonProperty(Order = 0, PropertyName = "ActivateOnCreate")] private bool m_ActivateOnCreate = true;
-        [JsonProperty(Order = 1, PropertyName = "TurnSpeed")] private float m_TurnSpeed = 0;
-        [JsonProperty(Order = 2, PropertyName = "MaxActionPoint")] private int m_MaxActionPoint = 6;
+        [JsonProperty(Order = 0, PropertyName = "ActivateOnCreate")] internal bool m_ActivateOnCreate = true;
+        [JsonProperty(Order = 1, PropertyName = "TurnSpeed")] internal float m_TurnSpeed = 0;
+        [JsonProperty(Order = 2, PropertyName = "MaxActionPoint")] internal int m_MaxActionPoint = 6;
 
         [Space]
         [Header("Actions")]
-        [JsonProperty(Order = 3, PropertyName = "OnStartTurn")] private Reference<TurnActionBase>[] m_OnStartTurnActions;
-        [JsonProperty(Order = 4, PropertyName = "OnEndTurn")] private Reference<TurnActionBase>[] m_OnEndTurnActions;
-        [JsonProperty(Order = 5, PropertyName = "OnResetTurn")] private Reference<TurnActionBase>[] m_OnResetTurnActions;
-
-        [JsonIgnore] private int m_CurrentActionPoint = 6;
-
-        [JsonIgnore] public bool ActivateOnCreate => m_ActivateOnCreate;
-        [JsonIgnore] public string DisplayName => Name;
-        [JsonIgnore] public float TurnSpeed => m_TurnSpeed;
-        [JsonIgnore] public bool ActivateTurn { get; set; }
-        [JsonIgnore] public int MaxActionPoint => m_MaxActionPoint;
-        [JsonIgnore] public int ActionPoint
-        {
-            get => m_CurrentActionPoint;
-            set
-            {
-                if (!m_CurrentActionPoint.Equals(value))
-                {
-                    int prev = m_CurrentActionPoint;
-                    m_CurrentActionPoint = value;
-                    PresentationSystem<EventSystem>.System.PostEvent(OnActionPointChangedEvent.GetEvent(Parent, prev, value));
-                }
-            }
-        }
-
-        public void StartTurn()
-        {
-            CoreSystem.Logger.Log(Channel.Entity, $"{Name} turn start");
-            PresentationSystem<EventSystem>.System.PostEvent(OnTurnStateChangedEvent.GetEvent(this, OnTurnStateChangedEvent.TurnState.Start));
-
-            for (int i = 0; i < m_OnStartTurnActions.Length; i++)
-            {
-                m_OnStartTurnActions[i].Execute(Parent);
-            }
-        }
-        public void EndTurn()
-        {
-            CoreSystem.Logger.Log(Channel.Entity, $"{Name} turn end");
-            PresentationSystem<EventSystem>.System.PostEvent(OnTurnStateChangedEvent.GetEvent(this, OnTurnStateChangedEvent.TurnState.End));
-
-            for (int i = 0; i < m_OnEndTurnActions.Length; i++)
-            {
-                m_OnEndTurnActions[i].Execute(Parent);
-            }
-        }
-        public void ResetTurnTable()
-        {
-            ActionPoint = m_MaxActionPoint;
-
-            CoreSystem.Logger.Log(Channel.Entity, $"{Name} reset turn");
-            PresentationSystem<EventSystem>.System.PostEvent(OnTurnStateChangedEvent.GetEvent(this, OnTurnStateChangedEvent.TurnState.Reset));
-
-            for (int i = 0; i < m_OnResetTurnActions.Length; i++)
-            {
-                m_OnResetTurnActions[i].Execute(Parent);
-            }
-        }
-
-        public void SetMaxActionPoint(int ap) => m_MaxActionPoint = ap;
-        public int UseActionPoint(int ap) => m_CurrentActionPoint -= ap;
+        [JsonProperty(Order = 3, PropertyName = "OnStartTurn")]
+        internal Reference<TriggerAction>[] m_OnStartTurnActions = Array.Empty<Reference<TriggerAction>>();
+        [JsonProperty(Order = 4, PropertyName = "OnEndTurn")]
+        internal Reference<TriggerAction>[] m_OnEndTurnActions = Array.Empty<Reference<TriggerAction>>();
+        [JsonProperty(Order = 5, PropertyName = "OnResetTurn")]
+        internal Reference<TriggerAction>[] m_OnResetTurnActions = Array.Empty<Reference<TriggerAction>>();
     }
     [Preserve]
     internal sealed class TurnPlayerProcessor : AttributeProcessor<TurnPlayerAttribute>
     {
+        protected override void OnInitialize()
+        {
+            //EventSystem.AddEvent<OnActionPointChangedEvent>(OnActionPointChangedEventHandler);
+        }
+        protected override void OnDispose()
+        {
+            //EventSystem.RemoveEvent<OnActionPointChangedEvent>(OnActionPointChangedEventHandler);
+        }
+        //private void OnActionPointChangedEventHandler(OnActionPointChangedEvent ev)
+        //{
+        //    if (!ev.Entity.HasComponent<ActorControllerComponent>()) return;
+
+        //    TRPGActorActionPointChangedUIEvent actorEv = new TRPGActorActionPointChangedUIEvent(ev.From, ev.To);
+        //    ev.Entity.GetComponent<ActorControllerComponent>().PostEvent(actorEv);
+        //}
+
         protected override void OnCreated(TurnPlayerAttribute attribute, EntityData<IEntityData> entity)
         {
-            attribute.ActivateTurn = attribute.ActivateOnCreate;
-            TurnTableManager.AddPlayer(attribute);
+            TurnPlayerComponent component = new TurnPlayerComponent(attribute, EntitySystem.CreateHashCode());
+            component = entity.AddComponent(component);
+
+            TurnTableManager.AddPlayer(component);
         }
         protected override void OnDestroy(TurnPlayerAttribute attribute, EntityData<IEntityData> entity)
         {
-            TurnTableManager.RemovePlayer(attribute);
+            TurnTableManager.RemovePlayer(entity.GetComponent<TurnPlayerComponent>());
         }
     }
 }

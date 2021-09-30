@@ -59,8 +59,8 @@ namespace Syadeu.Presentation.Entities
         Type IProcessor.Target => TargetEntity;
         void IProcessor.OnInitialize() => OnInitialize();
         void IProcessor.OnInitializeAsync() => OnInitializeAsync();
-        void IEntityDataProcessor.OnCreated(EntityData<IEntityData> entity) => OnCreated(new EntityData<T>(entity.Idx));
-        void IEntityDataProcessor.OnDestroy(EntityData<IEntityData> entity) => OnDestroy(new EntityData<T>(entity.Idx));
+        void IEntityDataProcessor.OnCreated(EntityData<IEntityData> entity) => OnCreated(EntityData<T>.GetEntityWithoutCheck(entity.Idx));
+        void IEntityDataProcessor.OnDestroy(EntityData<IEntityData> entity) => OnDestroy(EntityData<T>.GetEntityWithoutCheck(entity.Idx));
         void IDisposable.Dispose() => OnDispose();
 
         ~EntityDataProcessor()

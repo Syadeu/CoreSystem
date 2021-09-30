@@ -105,4 +105,3 @@ namespace Syadeu.Presentation.TurnTable
         }
     }
 }
-

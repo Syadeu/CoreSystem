@@ -14,9 +14,11 @@ namespace Syadeu.Presentation
     /// <see cref="EntitySystem"/>의 모든 객체들이 참조하는 가장 기본 abstract 입니다.
     /// </summary>
     [RequireDerived]
-    public abstract class ObjectBase : ICloneable, IDisposable
+    public abstract class ObjectBase : IObject, IDisposable, IEquatable<ObjectBase>
     {
         const string c_NameBase = "New {0}";
+
+        [JsonIgnore] internal int m_HashCode;
 
         /// <summary>
         /// 이 오브젝트의 이름입니다.
@@ -29,7 +31,7 @@ namespace Syadeu.Presentation
         /// <summary>
         /// 이 오브젝트의 인스턴스 해쉬입니다.
         /// </summary>
-        [JsonIgnore] public Hash Idx { get; private set; }
+        [JsonIgnore] public Hash Idx { get; private set; } = Hash.Empty;
 
         [JsonIgnore] public bool Disposed { get; private set; } = false;
 
@@ -71,5 +73,13 @@ namespace Syadeu.Presentation
         /// 이 인스턴스 객체가 메모리에서 제거될때 실행됩니다.
         /// </summary>
         protected virtual void OnDispose() { }
+
+        public override sealed int GetHashCode()
+        {
+            return m_HashCode;
+        }
+
+        public bool Equals(IObject other) => Hash.Equals(other.Hash);
+        public bool Equals(ObjectBase other) => Hash.Equals(other.Hash);
     }
 }

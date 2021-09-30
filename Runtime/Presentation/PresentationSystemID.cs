@@ -1,4 +1,5 @@
 ﻿using Syadeu.Database;
+using Syadeu.Internal;
 using Syadeu.Presentation.Internal;
 using System;
 
@@ -21,10 +22,23 @@ namespace Syadeu.Presentation
         {
             get
             {
-                if (IsNull() || !IsValid()) return null;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                if (IsNull())
+                {
+                    CoreSystem.Logger.LogError(Channel.Presentation,
+                        $"Cannot retrived system. ID is null.");
+                    return null;
+                }
+                else if (!IsValid())
+                {
+                    CoreSystem.Logger.LogError(Channel.Presentation,
+                        $"Cannot retrived system. ID is invalid.");
+                    return null;
+                }
+#endif
 
                 var g = PresentationManager.Instance.m_PresentationGroups[m_GroupIndex];
-                return g.m_Systems[m_SystemIndex];
+                return g.Systems[m_SystemIndex];
             }
         }
 
@@ -34,7 +48,7 @@ namespace Syadeu.Presentation
 #if UNITY_EDITOR
             if (m_GroupIndex.IsEmpty() || m_SystemIndex < 0 ||
                 !PresentationManager.Instance.m_PresentationGroups.TryGetValue(m_GroupIndex, out var g) ||
-                g.m_Systems.Count < m_SystemIndex)
+                g.Count < m_SystemIndex)
             {
                 return false;
             }
@@ -63,10 +77,22 @@ namespace Syadeu.Presentation
         {
             get
             {
-                if (IsNull() || !IsValid()) return null;
-
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                if (IsNull())
+                {
+                    CoreSystem.Logger.LogError(Channel.Presentation,
+                        $"Cannot retrived system {TypeHelper.TypeOf<T>.Name}. ID is null.");
+                    return null;
+                }
+                else if (!IsValid())
+                {
+                    CoreSystem.Logger.LogError(Channel.Presentation,
+                        $"Cannot retrived system {TypeHelper.TypeOf<T>.Name}. ID is invalid.");
+                    return null;
+                }
+#endif
                 var g = PresentationManager.Instance.m_PresentationGroups[m_GroupIndex];
-                return (T)g.m_Systems[m_SystemIndex];
+                return (T)g.Systems[m_SystemIndex];
             }
         }
 
@@ -74,14 +100,14 @@ namespace Syadeu.Presentation
         public bool IsValid()
         {
 #if UNITY_EDITOR
-            if (m_GroupIndex.IsEmpty() || m_SystemIndex < 0 ||
+            if (m_GroupIndex.IsEmpty() || m_SystemIndex < 0 || !PresentationManager.Initialized ||
                 !PresentationManager.Instance.m_PresentationGroups.TryGetValue(m_GroupIndex, out var g) ||
-                g.m_Systems.Count < m_SystemIndex)
+                g.Systems.Count < m_SystemIndex)
             {
                 return false;
             }
 
-            if (!(g.m_Systems[m_SystemIndex] is T)) return false;
+            if (!(g.Systems[m_SystemIndex] is T)) return false;
 #endif
             return true;
         }

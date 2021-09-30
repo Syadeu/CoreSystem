@@ -5,6 +5,7 @@ using Syadeu.Presentation.Entities;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using Unity.Collections;
 using UnityEngine;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.Scripting;
@@ -16,7 +17,7 @@ namespace Syadeu.Presentation.Map
     public sealed class SceneDataEntity : EntityDataBase
     {
         [JsonProperty(Order = 0, PropertyName = "TerrainData")]
-        private Reference<TerrainData> m_TerrainData = Reference<TerrainData>.Empty;
+        internal Reference<TerrainData>[] m_TerrainData = Array.Empty<Reference<TerrainData>>();
         
         [Space]
 #pragma warning disable IDE0044 // Add readonly modifier
@@ -27,12 +28,11 @@ namespace Syadeu.Presentation.Map
         [JsonProperty(Order = 3, PropertyName = "MapData")] private Reference<MapDataEntity>[] m_MapData = Array.Empty<Reference<MapDataEntity>>();
 #pragma warning restore IDE0044 // Add readonly modifier
 
-        [JsonIgnore] private readonly List<Terrain> m_CreatedTerrains = new List<Terrain>();
+        [JsonIgnore] internal InstanceArray<TerrainData> m_CreatedTerrains;
 
         [JsonIgnore] public bool IsMapDataCreated { get; private set; } = false;
         [JsonIgnore] public IReadOnlyList<Reference<MapDataEntity>> MapData => m_MapData;
         [JsonIgnore] public EntityData<MapDataEntity>[] CreatedMapData { get; private set; }
-        [JsonIgnore] public IReadOnlyList<Terrain> CreatedTerrains => m_CreatedTerrains;
 
         [JsonIgnore] public bool DestroyChildOnDestroy { get; set; } = true;
 
@@ -56,50 +56,23 @@ namespace Syadeu.Presentation.Map
         {
             if (IsMapDataCreated) throw new System.Exception();
 
-            if (m_TerrainData.IsValid())
-            {
-                TerrainData terrainData = m_TerrainData.GetObject();
-                for (int i = 0; i < terrainData.m_Data.Length; i++)
-                {
-                    if (!terrainData.m_Data[i].IsValid() || terrainData.m_Data[i].IsNone()) continue;
-
-                    if (terrainData.m_Data[i].Asset == null)
-                    {
-                        AsyncOperationHandle<UnityEngine.TerrainData> asyncHandle = terrainData.m_Data[i].LoadAssetAsync();
-                        if (!asyncHandle.IsValid())
-                        {
-                            CoreSystem.Logger.LogError(Channel.Entity,
-                                $"Terrain Data({terrainData.Name}) has invalid data element at {terrainData.m_Data[i].GetObjectSetting().m_Name}({i}).");
-                            continue;
-                        }
-
-                        asyncHandle.Completed += LoadTerrainDataAsync;
-                    }
-                    else LoadTerrainData(terrainData.m_Data[i].Asset);
-                }
-            }
-
             CreatedMapData = new EntityData<MapDataEntity>[m_MapData.Length];
             for (int i = 0; i < m_MapData.Length; i++)
             {
+                if (m_MapData[i].IsEmpty() || !m_MapData[i].IsValid())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"MapData(Element At {i}) in SceneData({Name}) is not valid.");
+
+                    CreatedMapData[i] = EntityData<MapDataEntity>.Empty;
+                    continue;
+                }
+
                 EntityData<IEntityData> temp = entitySystem.CreateObject(m_MapData[i]);
-                CreatedMapData[i] = EntityData<MapDataEntity>.GetEntity(temp.Idx);
+                CreatedMapData[i] = temp.Cast<IEntityData, MapDataEntity>();
             }
 
             IsMapDataCreated = true;
-        }
-
-        private void LoadTerrainDataAsync(AsyncOperationHandle<UnityEngine.TerrainData> obj)
-        {
-            LoadTerrainData(obj.Result);
-        }
-        private void LoadTerrainData(UnityEngine.TerrainData obj)
-        {
-            GameObject terrainObj = Terrain.CreateTerrainGameObject(obj);
-            terrainObj.layer = LevelDesignSystem.TerrainLayer;
-            Terrain terrain = terrainObj.GetComponent<Terrain>();
-
-            m_CreatedTerrains.Add(terrain);
         }
 
         public void DestroyMapData()
@@ -112,12 +85,6 @@ namespace Syadeu.Presentation.Map
                 mapData.DestroyChildOnDestroy = DestroyChildOnDestroy;
                 CreatedMapData[i].Destroy();
             }
-
-            for (int i = 0; i < m_CreatedTerrains.Count; i++)
-            {
-                UnityEngine.Object.Destroy(m_CreatedTerrains[i].gameObject);
-            }
-            m_CreatedTerrains.Clear();
 
             CreatedMapData = null;
             IsMapDataCreated = false;
@@ -142,12 +109,25 @@ namespace Syadeu.Presentation.Map
             if (!entity.Target.IsValid()) return;
 
             entity.Target.CreateMapData(EntitySystem);
+            SceneDataEntity sceneData = entity.Target;
+
+            sceneData.m_CreatedTerrains = new InstanceArray<TerrainData>(sceneData.m_TerrainData, Allocator.Persistent);
+            for (int i = 0; i < sceneData.m_CreatedTerrains.Length; i++)
+            {
+                sceneData.m_CreatedTerrains[i].Object.Create(null);
+            }
         }
         protected override void OnDestroy(EntityData<SceneDataEntity> entity)
         {
             if (entity.Target == null || !entity.Target.IsValid()) return;
 
             entity.Target.DestroyMapData();
+            SceneDataEntity sceneData = entity.Target;
+            for (int i = 0; i < sceneData.m_CreatedTerrains.Length; i++)
+            {
+                sceneData.m_CreatedTerrains[i].Destroy();
+            }
+            sceneData.m_CreatedTerrains.Dispose();
         }
     }
 }

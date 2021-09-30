@@ -6,6 +6,10 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Burst;
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
+using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -19,8 +23,9 @@ namespace Syadeu.Presentation.Map
 
         private EntitySystem m_EntitySystem;
         private Render.RenderSystem m_RenderSystem;
+        private Events.EventSystem m_EventSystem;
 
-        private KeyValuePair<SceneDataEntity, GridMapAttribute> m_MainGrid;
+        private GridMapAttribute m_MainGrid;
         private bool m_DrawGrid = false;
 
         private readonly ConcurrentQueue<GridSizeAttribute> m_WaitForRegister = new ConcurrentQueue<GridSizeAttribute>();
@@ -28,9 +33,11 @@ namespace Syadeu.Presentation.Map
         private readonly Dictionary<Entity<IEntity>, int[]> m_EntityGridIndices = new Dictionary<Entity<IEntity>, int[]>();
         private readonly Dictionary<int, List<Entity<IEntity>>> m_GridEntities = new Dictionary<int, List<Entity<IEntity>>>();
 
-        public GridMapAttribute GridMap => m_MainGrid.Value;
+        private GridMapAttribute GridMap => m_MainGrid;
+        public float CellSize => m_MainGrid.CellSize;
 
         #region Presentation Methods
+
         protected override PresentationResult OnInitialize()
         {
             CreateConsoleCommands();
@@ -41,29 +48,139 @@ namespace Syadeu.Presentation.Map
         {
             RequestSystem<EntitySystem>(Bind);
             RequestSystem<Render.RenderSystem>(Bind);
+            RequestSystem<Events.EventSystem>(Bind);
 
             return base.OnInitializeAsync();
         }
+
+        #region Binds
+
         private void Bind(EntitySystem other)
         {
             m_EntitySystem = other;
-            m_EntitySystem.OnEntityCreated += M_EntitySystem_OnEntityCreated;
-            m_EntitySystem.OnEntityDestroy += M_EntitySystem_OnEntityDestroy;
         }
         private void Bind(Render.RenderSystem other)
         {
             m_RenderSystem = other;
             m_RenderSystem.OnRender += M_RenderSystem_OnRender;
         }
+        private void Bind(Events.EventSystem other)
+        {
+            m_EventSystem = other;
+
+            m_EventSystem.AddEvent<Events.OnTransformChangedEvent>(OnTransformChangedEventHandler);
+        }
+
+        #endregion
+
+        #region Event Handlers
+
+        private void OnTransformChangedEventHandler(Events.OnTransformChangedEvent ev)
+        {
+            if (GridMap == null) return;
+
+            GridSizeAttribute att = ev.entity.GetAttribute<GridSizeAttribute>();
+            if (att == null) return;
+
+            UpdateGridLocation(ev.entity, att, true);
+        }
+        private void UpdateGridLocation(Entity<IEntity> entity, GridSizeAttribute att, bool postEvent)
+        {
+            ref GridSizeComponent component = ref entity.GetComponent<GridSizeComponent>();
+
+            bool gridChanged = false;
+
+            GridPosition p0 = GridMap.GetGridPosition(entity.transform.position);
+            for (int i = 0; i < att.m_GridLocations.Length; i++)
+            {
+                GridPosition aTemp = GridMap.Add(p0, att.m_GridLocations[i]);
+                if (!aTemp.Equals(component.positions[i]))
+                {
+                    gridChanged = true;
+                }
+
+                component.positions[i] = aTemp;
+            }
+
+            //int2 p0 = GridMap.Grid.PositionToLocation(entity.transform.position);
+            //for (int i = 0; i < att.m_GridLocations.Length; i++)
+            //{
+            //    int aTemp = GridMap.Grid.LocationToIndex(p0 + att.m_GridLocations[i]);
+            //    if (!aTemp.Equals(component.positions[i].index))
+            //    {
+            //        gridChanged = true;
+            //    }
+
+            //    component.positions[i] = new GridPosition(aTemp, p0 + att.m_GridLocations[i]);
+            //}
+
+            if (gridChanged)
+            {
+                if (postEvent)
+                {
+                    m_EventSystem.PostEvent(Events.OnGridPositionChangedEvent.GetEvent(entity, component.positions));
+                }
+                
+                UpdateGridEntity(entity, in component.positions);
+            }
+        }
+        private void RemoveGridEntity(Entity<IEntity> entity)
+        {
+            if (m_EntityGridIndices.TryGetValue(entity, out int[] cachedIndics))
+            {
+                for (int i = 0; i < cachedIndics.Length; i++)
+                {
+                    if (!m_GridEntities.ContainsKey(cachedIndics[i]))
+                    {
+                        $"{cachedIndics[i]} notfound?".ToLog();
+                        continue;
+                    }
+
+                    m_GridEntities[cachedIndics[i]].Remove(entity);
+                }
+                m_EntityGridIndices.Remove(entity);
+            }
+        }
+        private void UpdateGridEntity(Entity<IEntity> entity, in FixedList512Bytes<GridPosition> indices)
+        {
+            RemoveGridEntity(entity);
+
+            int[] clone = new int[indices.Length];
+            for (int i = 0; i < indices.Length; i++)
+            {
+                clone[i] = indices[i].index;
+            }
+
+            for (int i = 0; i < clone.Length; i++)
+            {
+                if (!m_GridEntities.TryGetValue(clone[i], out List<Entity<IEntity>> entities))
+                {
+                    entities = new List<Entity<IEntity>>();
+                    m_GridEntities.Add(clone[i], entities);
+                }
+                entities.Add(entity);
+
+                $"{entity.Name} :: {clone[i]}".ToLog();
+            }
+
+            m_EntityGridIndices.Add(entity, clone);
+        }
+
+        #endregion
+
         public override void OnDispose()
         {
-            m_EntitySystem.OnEntityCreated -= M_EntitySystem_OnEntityCreated;
-            m_EntitySystem.OnEntityDestroy -= M_EntitySystem_OnEntityDestroy;
             m_RenderSystem.OnRender -= M_RenderSystem_OnRender;
+
+            m_EventSystem.RemoveEvent<Events.OnTransformChangedEvent>(OnTransformChangedEventHandler);
+
+            m_EntitySystem = null;
+            m_RenderSystem = null;
+            m_EventSystem = null;
         }
-        protected override PresentationResult BeforePresentationAsync()
+        protected override PresentationResult BeforePresentation()
         {
-            if (m_MainGrid.Value != null)
+            if (m_MainGrid != null)
             {
                 int waitForRegisterCount = m_WaitForRegister.Count;
                 if (waitForRegisterCount > 0)
@@ -72,21 +189,22 @@ namespace Syadeu.Presentation.Map
                     {
                         if (!m_WaitForRegister.TryDequeue(out var att)) continue;
 
-                        att.GridSystem = this;
-                        att.UpdateGridCell();
-
+                        Entity<IEntity> entity = att.Parent.As<IEntityData, IEntity>();
                         if (att.m_FixedToCenter)
                         {
-                            Entity<IEntity> entity = att.Parent.As<IEntityData, IEntity>();
                             ITransform tr = entity.transform;
                             float3 pos = tr.position;
 
                             tr.position = IndexToPosition(PositionToIndex(pos));
                         }
+                        ref GridSizeComponent component = ref entity.GetComponent<GridSizeComponent>();
+                        component.m_GridSystem = SystemID;
+
+                        UpdateGridLocation(entity, att, false);
                     }
                 }
             }
-            return base.BeforePresentationAsync();
+            return base.BeforePresentation();
         }
         
         private void CreateConsoleCommands()
@@ -97,50 +215,9 @@ namespace Syadeu.Presentation.Map
             }, "draw", "grid");
         }
 
-        private void M_EntitySystem_OnEntityCreated(EntityData<IEntityData> obj)
-        {
-            if (obj.Target is SceneDataEntity sceneData)
-            {
-                GridMapAttribute gridAtt = sceneData.GetAttribute<GridMapAttribute>();
-                if (gridAtt == null) return;
-
-                if (m_MainGrid.Value == null)
-                {
-                    m_MainGrid = new KeyValuePair<SceneDataEntity, GridMapAttribute>(sceneData, gridAtt);
-                }
-                else
-                {
-                    CoreSystem.Logger.LogError(Channel.Presentation,
-                        $"Attempt to load grids more then one at SceneDataEntity({sceneData.Name}). This is not allowed.");
-                }
-            }
-            else if (obj.Target is EntityBase entity)
-            {
-                var gridSizeAtt = entity.GetAttribute<GridSizeAttribute>();
-                if (gridSizeAtt == null) return;
-
-                m_WaitForRegister.Enqueue(gridSizeAtt);
-            }
-        }
-        private void M_EntitySystem_OnEntityDestroy(EntityData<IEntityData> obj)
-        {
-            if (obj.Target is SceneDataEntity sceneData &&
-                m_MainGrid.Key != null)
-            {
-                if (m_MainGrid.Key.Equals(sceneData))
-                {
-                    m_MainGrid = new KeyValuePair<SceneDataEntity, GridMapAttribute>();
-                }
-            }
-
-            if (obj.Target is IEntity)
-            {
-                RemoveGridEntity(obj.As<IEntityData, IEntity>());
-            }
-        }
         private void M_RenderSystem_OnRender()
         {
-            if (m_DrawGrid && m_MainGrid.Value != null)
+            if (m_DrawGrid && m_MainGrid != null)
             {
                 GL.PushMatrix();
                 float3x3 rotmat = new float3x3(quaternion.identity);
@@ -155,11 +232,11 @@ namespace Syadeu.Presentation.Map
                 GL.Begin(GL.QUADS);
 
                 GL.Color(colorWhite);
-                DrawGridGL(m_MainGrid.Value.Grid, .05f);
+                m_MainGrid.DrawGridGL(.05f);
 
                 GL.Color(colorRed);
                 int[] gridEntities = m_GridEntities.Keys.ToArray();
-                DrawOccupiedCells(m_MainGrid.Value.Grid, gridEntities);
+                m_MainGrid.DrawOccupiedCells(gridEntities);
 
                 //GL.Color(Color.black);
                 //var temp = m_EntityGridIndices.Keys.ToArray();
@@ -176,7 +253,7 @@ namespace Syadeu.Presentation.Map
                 GL.PopMatrix();
             }
 
-            static void DrawGridGL(ManagedGrid grid, float thickness)
+            static void DrawGridGL(BinaryGrid grid, float thickness)
             {
                 const float yOffset = .2f;
                 int2 gridSize = grid.gridSize;
@@ -223,7 +300,7 @@ namespace Syadeu.Presentation.Map
                     }
                 }
             }
-            static void DrawOccupiedCells(ManagedGrid grid, int[] gridEntities)
+            static void DrawOccupiedCells(BinaryGrid grid, int[] gridEntities)
             {
                 float sizeHalf = grid.cellSize * .5f;
 
@@ -242,7 +319,7 @@ namespace Syadeu.Presentation.Map
                     GL.Vertex(p4);
                 }
             }
-            static void DrawCell(ManagedGrid grid, in int index)
+            static void DrawCell(BinaryGrid grid, in int index)
             {
                 float sizeHalf = grid.cellSize * .5f;
                 Vector3
@@ -260,32 +337,214 @@ namespace Syadeu.Presentation.Map
         }
         #endregion
 
-        public void RemoveGridEntity(Entity<IEntity> entity)
-        {
-            if (m_EntityGridIndices.TryGetValue(entity, out int[] cachedIndics))
-            {
-                for (int i = 0; i < cachedIndics.Length; i++)
-                {
-                    m_GridEntities[cachedIndics[i]].Remove(entity);
-                }
-                m_EntityGridIndices.Remove(entity);
-            }
-        }
-        public void UpdateGridEntity(Entity<IEntity> entity, int[] indices)
-        {
-            RemoveGridEntity(entity);
-            for (int i = 0; i < indices.Length; i++)
-            {
-                if (!m_GridEntities.TryGetValue(indices[i], out List<Entity<IEntity>> entities))
-                {
-                    entities = new List<Entity<IEntity>>();
-                    m_GridEntities.Add(indices[i], entities);
-                }
-                entities.Add(entity);
-            }
+        #region Register
 
-            m_EntityGridIndices.Add(entity, indices);
+        public void RegisterGrid(GridMapAttribute gridMap)
+        {
+            if (m_MainGrid == null)
+            {
+                m_MainGrid = gridMap;
+            }
+            else
+            {
+                CoreSystem.Logger.LogError(Channel.Presentation,
+                    $"Attempt to load grids more then one at SceneDataEntity({gridMap.Parent.Name}). This is not allowed.");
+            }
         }
+        public void UnregisterGrid(GridMapAttribute gridMap)
+        {
+            if (m_MainGrid.Equals(gridMap))
+            {
+                m_MainGrid = null;
+            }
+        }
+
+        public void RegisterGridSize(GridSizeAttribute gridSize)
+        {
+            m_WaitForRegister.Enqueue(gridSize);
+        }
+        public void UnregisterGridSize(GridSizeAttribute gridSize)
+        {
+            RemoveGridEntity(gridSize.Parent.As<IEntityData, IEntity>());
+        }
+
+        #endregion
+
+        public void SetObstacleLayers(params int[] layers)
+        {
+            GridMap.SetObstacleLayers(layers);
+        }
+        public void AddObstacleLayers(params int[] layers)
+        {
+            GridMap.AddObstacleLayers(layers);
+        }
+        public int[] GetLayer(in int layer) => GridMap.GetLayer(in layer);
+
+        public bool HasPath([NoAlias] int from, [NoAlias] int to, [NoAlias] int maxPathLength, out int pathFound, [NoAlias] int maxIteration = 32)
+        {
+            int2
+                fromLocation = GridMap.GetLocation(in from),
+                toLocation = GridMap.GetLocation(in to);
+
+            GridPathTile tile = new GridPathTile(from, fromLocation);
+            tile.Calculate(GridMap, GridMap.ObstacleLayer);
+
+            unsafe
+            {
+                GridPathTile* path = stackalloc GridPathTile[maxPathLength];
+                path[0] = tile;
+
+                pathFound = 1;
+                int iteration = 0;
+                while (
+                    iteration < maxIteration &&
+                    pathFound < maxPathLength &&
+                    path[pathFound - 1].position.index != to)
+                {
+                    GridPathTile lastTileData = path[pathFound - 1];
+                    if (lastTileData.IsBlocked())
+                    {
+                        //path.RemoveAt(path.Count - 1);
+                        pathFound--;
+
+                        if (pathFound == 0) break;
+
+                        GridPathTile parentTile = path[pathFound - 1];
+                        parentTile.opened[lastTileData.direction] = false;
+                        path[pathFound - 1] = parentTile;
+                    }
+                    else
+                    {
+                        int nextDirection = GetLowestCost(ref lastTileData, toLocation);
+
+                        GridPathTile nextTile = lastTileData.GetNext(nextDirection);
+                        nextTile.Calculate(GridMap, GridMap.ObstacleLayer);
+
+                        path[pathFound] = (nextTile);
+                        pathFound++;
+                    }
+
+                    iteration++;
+                }
+
+                return path[pathFound - 1].position.index == to;
+            }
+        }
+        public bool GetPath64(in int from, in int to, in int maxPathLength, ref GridPath32 path, in NativeHashSet<int> ignoreIndices = default, in int maxIteration = 32)
+        {
+            int2
+                fromLocation = GridMap.GetLocation(in from),
+                toLocation = GridMap.GetLocation(in to);
+
+            GridPathTile tile = new GridPathTile(from, fromLocation);
+            tile.Calculate(GridMap, GridMap.ObstacleLayer, ignoreIndices);
+
+            path.Clear();
+
+            unsafe
+            {
+                GridPathTile* list = stackalloc GridPathTile[512];
+                list[0] = tile;
+
+                int iteration = 0; int count = 1;
+                while (
+                    iteration < maxIteration &&
+                    count < maxPathLength &&
+                    list[count - 1].position.index != to)
+                {
+                    GridPathTile lastTileData = list[count - 1];
+                    if (lastTileData.IsBlocked())
+                    {
+                        //path.RemoveAt(path.Length - 1);
+                        count -= 1;
+
+                        if (path.Length == 0) break;
+
+                        GridPathTile parentTile = list[count - 1];
+                        parentTile.opened[lastTileData.direction] = false;
+                        list[count - 1] = parentTile;
+                    }
+                    else
+                    {
+                        int nextDirection = GetLowestCost(ref lastTileData, in toLocation);
+
+                        GridPathTile nextTile = lastTileData.GetNext(nextDirection);
+                        nextTile.Calculate(GridMap, GridMap.ObstacleLayer, ignoreIndices);
+                        
+                        list[count] = (nextTile);
+                        count += 1;
+                    }
+
+                    iteration++;
+                }
+
+                for (int i = 0; i < count; i++)
+                {
+                    path.Add(new GridTile()
+                    {
+                        index = list[i].position.index,
+                        parent = list[i].parent.index
+                    });
+                }
+
+                return list[count - 1].position.index == to;
+            }
+        }
+
+        //[Obsolete]
+        //public bool GetPath(int from, int to, List<GridPathTile> path, int maxPathLength, int maxIteration = 32)
+        //{
+        //    int2
+        //        fromLocation = GridMap.Grid.IndexToLocation(in from),
+        //        toLocation = GridMap.Grid.IndexToLocation(in to);
+
+        //    GridPathTile tile = new GridPathTile(from, fromLocation);
+        //    tile.Calculate(GridMap.Grid, GridMap.ObstacleLayer);
+
+        //    if (path == null)
+        //    {
+        //        path = new List<GridPathTile>()
+        //        {
+        //            tile
+        //        };
+        //    }
+        //    else
+        //    {
+        //        path.Clear();
+        //        path.Add(tile);
+        //    }
+
+        //    int iteration = 0;
+        //    while (
+        //        iteration < maxIteration &&
+        //        path.Count < maxPathLength &&
+        //        path[path.Count - 1].position.index != to)
+        //    {
+        //        GridPathTile lastTileData = path[path.Count - 1];
+        //        if (lastTileData.IsBlocked())
+        //        {
+        //            path.RemoveAt(path.Count - 1);
+
+        //            if (path.Count == 0) break;
+
+        //            GridPathTile parentTile = path[path.Count - 1];
+        //            parentTile.opened[lastTileData.direction] = false;
+        //            path[path.Count - 1] = parentTile;
+        //        }
+        //        else
+        //        {
+        //            int nextDirection = GetLowestCost(ref lastTileData, toLocation);
+
+        //            GridPathTile nextTile = lastTileData.GetNext(nextDirection);
+        //            nextTile.Calculate(GridMap.Grid, GridMap.ObstacleLayer);
+        //            path.Add(nextTile);
+        //        }
+                
+        //        iteration++;
+        //    }
+
+        //    return path[path.Count - 1].position.index == to;
+        //}
 
         public IReadOnlyList<Entity<IEntity>> GetEntitiesAt(in int index)
         {
@@ -296,26 +555,65 @@ namespace Syadeu.Presentation.Map
             return Array.Empty<Entity<IEntity>>();
         }
 
+        #region Utils
+
         public float3 IndexToPosition(int idx)
         {
-            if (GridMap.Grid == null) throw new System.Exception();
-            return GridMap.Grid.IndexToPosition(idx);
+            return GridMap.GetPosition(idx);
         }
         public int2 IndexToLocation(int idx)
         {
-            if (GridMap.Grid == null) throw new System.Exception();
-            return GridMap.Grid.IndexToLocation(idx);
-        }
-        public int PositionToIndex(float3 position)
-        {
-            if (GridMap.Grid == null) throw new System.Exception();
-            return GridMap.Grid.PositionToIndex(position);
+            //if (GridMap.Grid == null) throw new System.Exception();
+            return GridMap.GetLocation(idx);
         }
 
-        public int[] GetRange(int idx, int range)
+        public int PositionToIndex(float3 position)
         {
-            if (GridMap.Grid == null) throw new System.Exception();
-            return GridMap.Grid.GetRange(in idx, in range);
+            return GridMap.GetIndex(position);
         }
+
+        #endregion
+
+        #region Get Range
+
+        [Obsolete]
+        public int[] GetRange(int idx, int range, params int[] ignoreLayers)
+            => GridMap.GetRange(idx, range, ignoreLayers);
+
+        public FixedList32Bytes<int> GetRange8(in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
+            => GridMap.GetRange8(in idx, in range, in ignoreLayers);
+        public FixedList64Bytes<int> GetRange16(in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
+            => GridMap.GetRange16(in idx, in range, in ignoreLayers);
+        public FixedList128Bytes<int> GetRange32(in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
+            => GridMap.GetRange32(in idx, in range, in ignoreLayers);
+        public FixedList4096Bytes<int> GetRange1024(in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
+            => GridMap.GetRange1024(in idx, in range, in ignoreLayers);
+        public void GetRange(ref NativeList<int> list, in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
+            => GridMap.GetRange(ref list, in idx, in range, in ignoreLayers);
+
+        #endregion
+
+        private int GetLowestCost(ref GridPathTile prev, in int2 to)
+        {
+            int lowest = -1;
+            int cost = int.MaxValue;
+
+            for (int i = 0; i < 4; i++)
+            {
+                if (!prev.opened[i]) continue;
+
+                int tempCost = prev.GetCost(i, to);
+
+                if (tempCost < cost)
+                {
+                    lowest = i;
+                    cost = tempCost;
+                }
+            }
+
+            return lowest;
+        }
+        private int GetSqrMagnitude(int index) => GetSqrMagnitude(IndexToLocation(index));
+        private static int GetSqrMagnitude(int2 location) => (location.x * location.x) + (location.y * location.y);
     }
 }

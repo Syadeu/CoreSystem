@@ -1,4 +1,5 @@
-﻿using Syadeu;
+﻿using Newtonsoft.Json;
+using Syadeu;
 using Syadeu.Database;
 using Syadeu.Database.Lua;
 using Syadeu.Internal;
@@ -145,16 +146,29 @@ namespace SyadeuEditor.Presentation
     {
         const string c_NameFormat = "{0} <size=9>: {1}</size>";
 
-        private Type m_DeclaredType;
-        private Type m_ElementType;
+        private readonly Type m_DeclaredType;
+        private readonly Type m_ElementType;
 
-        private Color
+        private readonly Color
             color1, color2, color3;
 
         public bool m_Open = false;
 
-        public readonly List<ObjectDrawerBase> m_ElementDrawers = new List<ObjectDrawerBase>();
-        public readonly List<bool> m_ElementOpen = new List<bool>();
+        private readonly List<ObjectDrawerBase> m_ElementDrawers = new List<ObjectDrawerBase>();
+        private readonly List<bool> m_ElementOpen = new List<bool>();
+
+        private readonly MemberInfo m_ElementFirstMember;
+
+        public Type ElementType => m_ElementType;
+        public int Count => m_ElementDrawers.Count;
+
+        public ObjectDrawerBase this[int index]
+        {
+            get
+            {
+                return m_ElementDrawers[index];
+            }
+        }
 
         public ArrayDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
         {
@@ -175,6 +189,9 @@ namespace SyadeuEditor.Presentation
                     throw;
                 }
             }
+
+            m_ElementFirstMember = ReflectionHelper.GetSerializeMemberInfos(m_ElementType)[0];
+
             Reload();
 
             color1 = Color.black; color2 = Color.gray; color3 = Color.green;
@@ -199,6 +216,9 @@ namespace SyadeuEditor.Presentation
                     throw;
                 }
             }
+
+            m_ElementFirstMember = ReflectionHelper.GetSerializeMemberInfos(m_ElementType)[0];
+
             Reload();
 
             color1 = Color.black; color2 = Color.gray; color3 = Color.green;
@@ -231,6 +251,11 @@ namespace SyadeuEditor.Presentation
 
         private ObjectDrawerBase GetElementDrawer(IList list, int i)
         {
+            if (m_ElementType.Equals(TypeHelper.TypeOf<Type>.Type))
+            {
+                return new TypeDrawer(list, m_ElementType, (other) => list[i] = other, () => (Type)list[i]);
+            }
+
             if (m_ElementType.IsEnum)
             {
                 return new EnumDrawer(list, m_ElementType, (other) => list[i] = other, () => (Enum)list[i]);
@@ -282,6 +307,11 @@ namespace SyadeuEditor.Presentation
                 return new PrefabReferenceDrawer(list, m_ElementType, (other) => list[i] = other, () => (IPrefabReference)list[i]);
             }
 
+            else if (TypeHelper.TypeOf<UnityEngine.Object>.Type.IsAssignableFrom(m_ElementType))
+            {
+                return new UnityObjectDrawer(list, m_ElementType, (other) => list[i] = other, () => (UnityEngine.Object)list[i]);
+            }
+
             else
             {
                 return new ObjectDrawer(list[i], m_ElementType, string.Empty);
@@ -303,6 +333,7 @@ namespace SyadeuEditor.Presentation
                 GUILayout.FlexibleSpace();
                 GUILayout.Label(EditorUtils.String($"{list.Count}: ", 10), EditorUtils.HeaderStyle);
 
+                EditorGUI.BeginDisabledGroup(m_ElementType.IsAbstract);
                 if (GUILayout.Button("+", GUILayout.Width(20)))
                 {
                     object newValue = Activator.CreateInstance(m_ElementType);
@@ -320,6 +351,7 @@ namespace SyadeuEditor.Presentation
                     m_ElementDrawers.Add(GetElementDrawer(list, list.Count - 1));
                     m_ElementOpen.Add(false);
                 }
+                EditorGUI.EndDisabledGroup();
                 if (list.Count > 0 && GUILayout.Button("-", GUILayout.Width(20)))
                 {
                     if (list.IsFixedSize)
@@ -349,7 +381,19 @@ namespace SyadeuEditor.Presentation
 
                             if (m_ElementDrawers[i].FieldCount > 1)
                             {
-                                m_ElementOpen[i] = EditorGUILayout.Foldout(m_ElementOpen[i], $"Element {i}", true);
+                                string value;
+                                if (ReflectionHelper.GetDeclaredType(m_ElementFirstMember).Equals(TypeHelper.TypeOf<string>.Type))
+                                {
+                                    value = ReflectionHelper.GetValue<string>(m_ElementFirstMember, list[i]);
+                                    if (string.IsNullOrEmpty(value))
+                                    {
+                                        value = $"Element {i}";
+                                    }
+                                    
+                                }
+                                else value = $"Element {i}";
+
+                                m_ElementOpen[i] = EditorGUILayout.Foldout(m_ElementOpen[i], value, true);
                             }
                             else m_ElementOpen[i] = true;
 
@@ -404,6 +448,114 @@ namespace SyadeuEditor.Presentation
 
             return list;
         }
+
+        public void Remove(ObjectDrawerBase obj)
+        {
+            int idx = m_ElementDrawers.IndexOf(obj);
+            RemoveAt(idx);
+        }
+        public void RemoveAt(int index)
+        {
+            m_ElementDrawers.RemoveAt(index);
+            m_ElementOpen.RemoveAt(index);
+        }
+
+        public void DrawHeader()
+        {
+            IList list = Getter.Invoke();
+
+            EditorGUILayout.BeginHorizontal();
+            m_Open = EditorUtils.Foldout(m_Open,
+                string.Format(c_NameFormat, Name, TypeHelper.ToString(m_ElementType))
+                , 13);
+
+            GUILayout.FlexibleSpace();
+            GUILayout.Label(EditorUtils.String($"{list.Count}: ", 10), EditorUtils.HeaderStyle);
+
+            EditorGUI.BeginDisabledGroup(m_ElementType.IsAbstract);
+            if (GUILayout.Button("+", GUILayout.Width(20)))
+            {
+                object newValue = Activator.CreateInstance(m_ElementType);
+                if (list.IsFixedSize)
+                {
+                    Array newArr = Array.CreateInstance(m_ElementType, list.Count + 1);
+                    if (list != null && list.Count > 0) Array.Copy((Array)list, newArr, list.Count);
+                    list = newArr;
+                    list[list.Count - 1] = newValue;
+                }
+                else
+                {
+                    list.Add(newValue);
+                }
+                m_ElementDrawers.Add(GetElementDrawer(list, list.Count - 1));
+                m_ElementOpen.Add(false);
+
+                Setter.Invoke(list);
+            }
+            EditorGUI.EndDisabledGroup();
+            if (list.Count > 0 && GUILayout.Button("-", GUILayout.Width(20)))
+            {
+                if (list.IsFixedSize)
+                {
+                    Array newArr = Array.CreateInstance(m_ElementType, list.Count - 1);
+                    if (list != null && list.Count > 0) Array.Copy((Array)list, newArr, newArr.Length);
+                    list = newArr;
+                }
+                else
+                {
+                    list.RemoveAt(list.Count - 1);
+                }
+                m_ElementOpen.RemoveAt(m_ElementOpen.Count - 1);
+                m_ElementDrawers.RemoveAt(m_ElementDrawers.Count - 1);
+
+                Setter.Invoke(list);
+            }
+            EditorGUILayout.EndHorizontal();
+        }
+        public void DrawElementAt(int i)
+        {
+            IList list = Getter.Invoke();
+
+            if (m_ElementDrawers[i].FieldCount > 1)
+            {
+                string value;
+                if (ReflectionHelper.GetDeclaredType(m_ElementFirstMember).Equals(TypeHelper.TypeOf<string>.Type))
+                {
+                    value = ReflectionHelper.GetValue<string>(m_ElementFirstMember, list[i]);
+                    if (string.IsNullOrEmpty(value))
+                    {
+                        value = $"Element {i}";
+                    }
+
+                }
+                else value = $"Element {i}";
+
+                m_ElementOpen[i] = EditorGUILayout.Foldout(m_ElementOpen[i], value, true);
+            }
+            else m_ElementOpen[i] = true;
+
+            if (!m_ElementOpen[i]) return;
+
+            EditorGUI.indentLevel++;
+            using (new EditorUtils.BoxBlock(Color.black))
+            {
+                EditorGUILayout.BeginHorizontal();
+
+                m_ElementDrawers[i].OnGUI();
+
+                if (GUILayout.Button("-", GUILayout.Width(20)))
+                {
+                    list = RemoveAt(list, i);
+                    i--;
+
+                    Setter.Invoke(list);
+                }
+                EditorGUILayout.EndHorizontal();
+
+                if (i + 1 < m_ElementDrawers.Count) EditorUtils.Line();
+            }
+            EditorGUI.indentLevel--;
+        }
     }
 
     public sealed class ObjectDrawer : ObjectDrawerBase
@@ -411,51 +563,145 @@ namespace SyadeuEditor.Presentation
         private object m_TargetObject;
         private string m_Name;
 
-        //private Action<object> m_Getter;
+        private bool 
+            m_EnableFoldout = false, m_Open = false;
 
-        public override object TargetObject => m_TargetObject;
+        private Func<object> m_Getter;
+        private Action<object> m_Setter;
+
+        public override object TargetObject => m_TargetObject == null ? m_Getter.Invoke() : m_TargetObject;
         public override string Name => m_Name;
         public override int FieldCount => DrawerBases.Count;
 
         private readonly List<ObjectDrawerBase> DrawerBases = new List<ObjectDrawerBase>();
 
-        public ObjectDrawer(object obj, Type declaredType, string name)
-        {
-            m_TargetObject = obj;
-            m_Name = name;
+        public IReadOnlyList<ObjectDrawerBase> Drawers => DrawerBases;
 
-            MemberInfo[] members = ReflectionHelper.GetSerializeMemberInfos(declaredType);
+        public ObjectDrawer(object parentObject, MemberInfo memberInfo, bool foldout)
+        {
+            m_EnableFoldout = foldout;
+            m_TargetObject = null;
+            Type declaredType;
+            if (memberInfo is FieldInfo field)
+            {
+                m_Getter = () => field.GetValue(parentObject);
+                m_Setter = (other) => field.SetValue(parentObject, other);
+                declaredType = field.FieldType;
+            }
+            else if (memberInfo is PropertyInfo property)
+            {
+                m_Getter = () => property.GetValue(parentObject);
+                m_Setter = (other) => property.SetValue(parentObject, other);
+                declaredType = property.PropertyType;
+            }
+            else throw new NotImplementedException();
+
+            var obj = m_Getter.Invoke();
+            if (obj == null && !declaredType.IsAbstract)
+            {
+                m_Setter.Invoke(Activator.CreateInstance(declaredType));
+            }
+
+            m_Name = ReflectionHelper.SerializeMemberInfoName(memberInfo);
+
+            if (declaredType.IsAbstract && obj != null) declaredType = obj.GetType();
+
+            MemberInfo[] members;
+            if (Application.isPlaying)
+            {
+                members = declaredType.GetMembers(
+                        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                        .Where((other) =>
+                        {
+                            if (other.MemberType != MemberTypes.Field &&
+                                other.MemberType != MemberTypes.Property) return false;
+
+                            if (other.GetCustomAttribute<ObsoleteAttribute>() != null)
+                            {
+                                return false;
+                            }
+
+                            Type declaredType = ReflectionHelper.GetDeclaredType(other);
+
+                            if (TypeHelper.TypeOf<Delegate>.Type.IsAssignableFrom(declaredType)) return false;
+
+                            if (ReflectionHelper.IsBackingField(other)) return false;
+
+                            return true;
+                        })
+                        .ToArray();
+            }
+            else
+            {
+                members = ReflectionHelper.GetSerializeMemberInfos(declaredType);
+            }
+
             for (int a = 0; a < members.Length; a++)
             {
                 ObjectDrawerBase drawer = ToDrawer(obj, members[a], true);
                 DrawerBases.Add(drawer);
             }
         }
-        //public ObjectDrawer(object obj, MemberInfo member, string name)
-        //{
-        //    m_TargetObject = obj;
-        //    m_Name = name;
+        public ObjectDrawer(object obj, Type declaredType, string name)
+        {
+            m_TargetObject = obj;
+            m_Name = name;
 
-        //    m_Getter = (other) =>
-        //    {
-        //        if (member is FieldInfo field)
-        //        {
-        //            field.GetValue(obj)
-        //        }
-        //    }
+            if (declaredType.IsAbstract && obj != null) declaredType = obj.GetType();
 
-        //    MemberInfo[] members = ReflectionHelper.GetSerializeMemberInfos(declaredType);
-        //    for (int a = 0; a < members.Length; a++)
-        //    {
-        //        ObjectDrawerBase drawer = ToDrawer(obj, members[a], true);
-        //        DrawerBases.Add(drawer);
-        //    }
-        //}
+            MemberInfo[] members;
+            if (Application.isPlaying)
+            {
+                members = declaredType.GetMembers(
+                        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                        .Where((other) =>
+                        {
+                            if (other.MemberType != MemberTypes.Field &&
+                                other.MemberType != MemberTypes.Property) return false;
 
+                            if (other.GetCustomAttribute<ObsoleteAttribute>() != null)
+                            {
+                                return false;
+                            }
+
+                            Type declaredType = ReflectionHelper.GetDeclaredType(other);
+
+                            if (TypeHelper.TypeOf<Delegate>.Type.IsAssignableFrom(declaredType)) return false;
+
+                            if (ReflectionHelper.IsBackingField(other)) return false;
+
+                            return true;
+                        })
+                        .ToArray();
+            }
+            else
+            {
+                members = ReflectionHelper.GetSerializeMemberInfos(declaredType);
+            }
+
+            for (int a = 0; a < members.Length; a++)
+            {
+                ObjectDrawerBase drawer = ToDrawer(obj, members[a], true);
+                DrawerBases.Add(drawer);
+            }
+        }
+        
         public override void OnGUI()
         {
             using (new EditorUtils.BoxBlock(Color.black))
             {
+                if (m_EnableFoldout && FieldCount > 1)
+                {
+                    m_Open = EditorUtils.Foldout(m_Open, Name, 13);
+                }
+
+                if (m_EnableFoldout && FieldCount > 1)
+                {
+                    if (!m_Open) return;
+
+                    EditorGUI.indentLevel++;
+                }
+
                 for (int i = 0; i < DrawerBases.Count; i++)
                 {
                     if (DrawerBases[i] == null)
@@ -466,6 +712,8 @@ namespace SyadeuEditor.Presentation
 
                     DrawerBases[i].OnGUI();
                 }
+
+                if (m_EnableFoldout && FieldCount > 1) EditorGUI.indentLevel--;
             }
         }
     }

@@ -62,20 +62,10 @@ namespace Syadeu.Presentation.Attributes
             var target = ev.Target.GetAttribute<TriggerBoundAttribute>();
             if (ev.IsEnter)
             {
-                //for (int i = 0; i < source.m_OnTriggerEnter.Length; i++)
-                //{
-                //    source.m_OnTriggerEnter[i].Execute(ev.Target.As<IEntity, IEntityData>());
-                //}
-
                 result = target.m_OnTriggerEnter.Execute(ev.Source.As<IEntity, IEntityData>());
             }
             else
             {
-                //for (int i = 0; i < source.m_OnTriggerExit.Length; i++)
-                //{
-                //    source.m_OnTriggerExit[i].Execute(ev.Target.As<IEntity, IEntityData>());
-                //}
-
                 result = target.m_OnTriggerExit.Execute(ev.Source.As<IEntity, IEntityData>());
             }
 

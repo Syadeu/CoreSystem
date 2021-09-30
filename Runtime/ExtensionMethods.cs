@@ -76,17 +76,24 @@ namespace Syadeu
     {
         private const string c_Indent = "    ";
 
+#line hidden
+#if UNITY_EDITOR
+        [System.Diagnostics.DebuggerHidden]
+#endif
         public static void ToLogError(this string log, UnityEngine.Object target = null)
         {
 #if UNITY_EDITOR
-            if (target == null) Debug.LogError(log);
+            if (target == null) CoreSystem.Logger.LogError(Channel.Debug, log);
             else Debug.LogError(log, target);
 #endif
         }
+#if UNITY_EDITOR
+        [System.Diagnostics.DebuggerHidden]
+#endif
         public static void ToLog(this string log, UnityEngine.Object target = null)
         {
 #if UNITY_EDITOR
-            if (target == null) Debug.Log(log);
+            if (target == null) CoreSystem.Logger.Log(Channel.Debug, log);
             else Debug.Log(log, target);
 #endif
         }
@@ -104,6 +111,7 @@ namespace Syadeu
             txt += log;
             ConsoleWindow.Log(txt, flag);
         }
+#line default
 
         public static T Clamp<T>(this T val, T min, T max) where T : IComparable<T>
         {

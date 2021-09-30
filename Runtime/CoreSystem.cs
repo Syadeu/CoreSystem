@@ -16,11 +16,14 @@ using UnityEditor;
 
 using UnityEngine.Diagnostics;
 using UnityEngine.Networking;
+
+using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Reflection;
 using Syadeu.Database;
 using Syadeu.Database.Lua;
-//using Syadeu.Presentation;
+
+using Debug = UnityEngine.Debug;
 
 [assembly: UnityEngine.Scripting.Preserve]
 namespace Syadeu
@@ -418,6 +421,10 @@ namespace Syadeu
         {
             const string InstanceStr = "Instance";
 
+            //Application.SetStackTraceLogType(LogType.Log, StackTraceLogType.None);
+            //Application.SetStackTraceLogType(LogType.Error, StackTraceLogType.ScriptOnly);
+            //Application.SetStackTraceLogType(LogType.Warning, StackTraceLogType.ScriptOnly);
+
             //PoolContainer<BackgroundJob>.Initialize(() => new BackgroundJob(null), 10);
             PoolContainer<ForegroundJob>.Initialize(() => new ForegroundJob(null), 10);
 
@@ -450,6 +457,7 @@ namespace Syadeu
         {
             new Thread(BackgroundWorker).Start();
             //ThreadPool.QueueUserWorkItem(BackgroundWorker);
+            Application.quitting -= OnAboutToQuit;
             Application.quitting += OnAboutToQuit;
             StartCoroutine(UnityWorker());
         }
@@ -493,13 +501,13 @@ namespace Syadeu
                 }
             }
 
-            try
-            {
-                BackgroundThread.Abort();
-            }
-            catch (Exception)
-            {
-            }
+            //try
+            //{
+            //    BackgroundThread.Abort();
+            //}
+            //catch (Exception)
+            //{
+            //}
             m_CustomBackgroundUpdates.Clear();
 
             for (int i = 0; i < BackgroundJobWorkers.Count; i++)
@@ -512,6 +520,8 @@ namespace Syadeu
                 BackgroundJobWorkers[i].Worker.Dispose();
             }
             BackgroundJobWorkers.Clear();
+
+            Application.quitting -= OnAboutToQuit;
         }
         protected override void OnDestroy()
         {
@@ -529,6 +539,8 @@ namespace Syadeu
 
         #region Worker Thread
 
+        public static ManualResetEvent SimulateWatcher => Instance.m_SimWatcher;
+
         #region Editor
 #if UNITY_EDITOR
         private static IEnumerator m_EditorCoroutine = null;
@@ -537,7 +549,7 @@ namespace Syadeu
         internal static readonly Dictionary<CoreRoutine, object> m_EditorSceneCoroutines = new Dictionary<CoreRoutine, object>();
         private static readonly List<(int progressID, Func<int, IEnumerator> task)> m_EditorTasks = new List<(int, Func<int, IEnumerator>)>();
 
-        private static bool IsEditorPaused = false;
+        public static bool IsEditorPaused = false;
 
         [InitializeOnLoadMethod]
         private static void EditorInitialize()
@@ -808,6 +820,8 @@ namespace Syadeu
         private bool m_RoutineChanged = false;
         public event Action OnRoutineChanged;
 
+        public event Action AsyncBackgroundUpdate;
+
         public int GetCustomBackgroundUpdateCount() => m_CustomBackgroundUpdates.Count;
         public int GetCustomUpdateCount() => m_CustomUpdates.Count;
         public IReadOnlyList<CoreRoutine> GetCustomBackgroundUpdates() => m_CustomBackgroundUpdates.Keys.ToArray();
@@ -826,7 +840,6 @@ namespace Syadeu
             OnBackgroundUpdateSampler = UnityEngine.Profiling.CustomSampler.Create("BackgroundUpdate");
             OnBackgroundJobSampler = UnityEngine.Profiling.CustomSampler.Create("BackgroundJob");
             OnBackgroundTimerSampler = UnityEngine.Profiling.CustomSampler.Create("BackgroundTimer");
-            UnityEngine.Profiling.Profiler.BeginThreadProfiling("Syadeu", "CoreSystem");
 #endif
 
             do
@@ -861,6 +874,7 @@ namespace Syadeu
                 }
 
 #if UNITY_EDITOR
+                UnityEngine.Profiling.Profiler.BeginThreadProfiling("Syadeu", "CoreSystem");
                 OnBackgroundStartSampler.Begin();
 #endif
                 #region OnBackgroundStart
@@ -1224,6 +1238,7 @@ namespace Syadeu
                 #endregion
 #if UNITY_EDITOR
                 OnBackgroundTimerSampler.End();
+                UnityEngine.Profiling.Profiler.EndThreadProfiling();
 #endif
                 //counter++;
                 //if (counter % 1000 == 0)
@@ -1232,10 +1247,15 @@ namespace Syadeu
                 //    counter = 0;
                 //}
                 //ThreadAwaiter(10);
+                AsyncBackgroundUpdate?.Invoke();
+
                 m_SimWatcher.Reset();
 
                 if (s_BlockCreateInstance) break;
             }
+#if UNITY_EDITOR
+            
+#endif
         }
         private IEnumerator UnityWorker()
         {
@@ -1860,14 +1880,59 @@ namespace Syadeu
 #line hidden
         public struct Logger
         {
+            [System.Diagnostics.Conditional("UNITY_EDITOR")]
             public static void ThreadBlock(string name, ThreadInfo thread) => LogManager.ThreadBlock(name, thread);
 
+#if UNITY_EDITOR
+            [System.Diagnostics.DebuggerHidden]
+#endif
             public static void Log(Channel channel, bool logThread, string msg) => LogManager.Log(channel, ResultFlag.Normal, msg, logThread);
+#if UNITY_EDITOR
+            [System.Diagnostics.DebuggerHidden]
+#endif
             public static void Log(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Normal, msg, false);
+#if UNITY_EDITOR
+            [System.Diagnostics.DebuggerHidden]
+#endif
             public static void LogWarning(Channel channel, bool logThread, string msg) => LogManager.Log(channel, ResultFlag.Warning, msg, logThread);
+#if UNITY_EDITOR
+            [System.Diagnostics.DebuggerHidden]
+#endif
             public static void LogWarning(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Warning, msg, false);
+#if UNITY_EDITOR
+            [System.Diagnostics.DebuggerHidden]
+#endif
             public static void LogError(Channel channel, bool logThread, string msg) => LogManager.Log(channel, ResultFlag.Error, msg, logThread);
+#if UNITY_EDITOR
+            [System.Diagnostics.DebuggerHidden]
+#endif
             public static void LogError(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Error, msg,false);
+#if UNITY_EDITOR
+            [System.Diagnostics.DebuggerHidden]
+#endif
+            public static void LogError(Channel channel, Exception ex, [System.Runtime.CompilerServices.CallerMemberName] string methodName = "")
+            {
+#if UNITY_EDITOR
+                const string c_Msg = "Unhandled Exception has been raised while executing {0}.\n{1}\n{2}";
+
+                System.Text.RegularExpressions.Regex temp = new System.Text.RegularExpressions.Regex(@"([a-zA-Z]:[\\[a-zA-Z0-9 .]*]*:[0-9]*)");
+
+                string stackTrace = ex.StackTrace;
+                var matches = temp.Matches(stackTrace);
+                for (int i = 0; i < matches.Count; i++)
+                {
+                    string[] split = matches[i].Value.Split(':');
+
+                    string line = split[2];
+                    string tempuri = $"<a href=\"{split[0]+":"+ split[1]}\" line=\"{line}\">{split[0] + ":" + split[1]}</a>";
+                    
+                    stackTrace = stackTrace.Replace(matches[i].Value, tempuri);
+                }
+                LogError(channel, string.Format(c_Msg, methodName, ex.Message, stackTrace));
+#else
+                LogError(channel, ex.Message + ex.StackTrace);
+#endif
+            }
 
             public static void NotNull(object obj) => LogManager.NotNull(obj, string.Empty);
             public static void NotNull(object obj, string msg) => LogManager.NotNull(obj, msg);
@@ -1875,6 +1940,7 @@ namespace Syadeu
             public static void True(bool value, string msg) => LogManager.True(value, msg);
             public static void False(bool value, string msg) => LogManager.False(value, msg);
 
+            [System.Diagnostics.Conditional("UNITY_EDITOR")]
             public static void Unmanaged<T>() where T : unmanaged { }
         }
         public struct LogTimer : IDisposable

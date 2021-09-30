@@ -1,5 +1,5 @@
 ﻿using Syadeu.Database;
-using Syadeu.Internal;
+using Syadeu.Presentation.Internal;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -11,16 +11,25 @@ namespace Syadeu.Presentation.Events
     /// <summary>
     /// <see cref="SynchronizedEvent{TEvent}"/> 들을 처리하는 시스템입니다.
     /// </summary>
-    public sealed class EventSystem : PresentationSystemEntity<EventSystem>
+    public sealed class EventSystem : PresentationSystemEntity<EventSystem>, ISystemEventScheduler
     {
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => true;
         public override bool EnableAfterPresentation => false;
 
-        private readonly Queue<SynchronizedEventBase> m_PostedEvents = new Queue<SynchronizedEventBase>();
+        private readonly Queue<SynchronizedEventBase> 
+            m_UpdateEvents = new Queue<SynchronizedEventBase>(),
+            m_TransformEvents = new Queue<SynchronizedEventBase>(),
+            m_ScheduledEvents = new Queue<SynchronizedEventBase>();
         private readonly Queue<Action> m_PostedActions = new Queue<Action>();
+        private readonly Queue<ISystemEventScheduler> m_SystemTickets = new Queue<ISystemEventScheduler>();
+
+        private readonly ScheduledEventHandler m_ScheduledEventHandler = new ScheduledEventHandler();
+        private ISystemEventScheduler m_CurrentTicket;
+        private bool m_PausedScheduledEvent = false;
 
         private SceneSystem m_SceneSystem;
+        private CoroutineSystem m_CoroutineSystem;
 
         private bool m_LoadingLock = false;
 
@@ -29,11 +38,13 @@ namespace Syadeu.Presentation.Events
         protected override PresentationResult OnInitialize()
         {
             RequestSystem<SceneSystem>(Bind);
+            RequestSystem<CoroutineSystem>(Bind);
 
             return base.OnInitialize();
         }
 
         #region Bind
+
         private void Bind(SceneSystem other)
         {
             m_SceneSystem = other;
@@ -44,26 +55,39 @@ namespace Syadeu.Presentation.Events
         {
             m_LoadingLock = true;
 
-            m_PostedEvents.Clear();
+            //m_PostedEvents.Clear();
+            m_UpdateEvents.Clear();
+            m_TransformEvents.Clear();
 
             m_LoadingLock = false;
         }
+
+        private void Bind(CoroutineSystem other)
+        {
+            m_CoroutineSystem = other;
+
+            PresentationManager.Instance.TransformUpdate += M_CoroutineSystem_OnTransformUpdate;
+        }
+
         #endregion
 
         public override void OnDispose()
         {
-            m_PostedEvents.Clear();
+            m_UpdateEvents.Clear();
+            m_TransformEvents.Clear();
+
+            PresentationManager.Instance.TransformUpdate -= M_CoroutineSystem_OnTransformUpdate;
+
+            m_SceneSystem = null;
+            m_CoroutineSystem = null;
         }
 
-        protected override PresentationResult OnPresentation()
+        private void M_CoroutineSystem_OnTransformUpdate()
         {
-            if (m_LoadingLock) return base.OnPresentation();
-
-            #region Event Executer
-            int eventCount = m_PostedEvents.Count;
+            int eventCount = m_TransformEvents.Count;
             for (int i = 0; i < eventCount; i++)
             {
-                SynchronizedEventBase ev = m_PostedEvents.Dequeue();
+                SynchronizedEventBase ev = m_TransformEvents.Dequeue();
                 if (!ev.IsValid()) continue;
                 try
                 {
@@ -72,15 +96,42 @@ namespace Syadeu.Presentation.Events
                 }
                 catch (Exception ex)
                 {
-                    CoreSystem.Logger.LogError(Channel.Presentation,
+                    CoreSystem.Logger.LogError(Channel.Event,
                         $"Invalid event({ev.GetType()}) has been posted");
                     UnityEngine.Debug.LogException(ex);
                 }
-                CoreSystem.Logger.Log(Channel.Presentation,
+                CoreSystem.Logger.Log(Channel.Event,
                     $"Posted event : {ev.GetType().Name}");
             }
+        }
+        protected override PresentationResult OnPresentation()
+        {
+            if (m_LoadingLock) return base.OnPresentation();
 
-            #endregion
+            if (!m_PausedScheduledEvent)
+            {
+                ExecuteSystemTickets();
+            }
+
+            int eventCount = m_UpdateEvents.Count;
+            for (int i = 0; i < eventCount; i++)
+            {
+                SynchronizedEventBase ev = m_UpdateEvents.Dequeue();
+                if (!ev.IsValid()) continue;
+                try
+                {
+                    ev.InternalPost();
+                    ev.InternalTerminate();
+                }
+                catch (Exception ex)
+                {
+                    CoreSystem.Logger.LogError(Channel.Event,
+                        $"Invalid event({ev.GetType().Name}) has been posted");
+                    UnityEngine.Debug.LogException(ex);
+                }
+                CoreSystem.Logger.Log(Channel.Event,
+                    $"Posted event : {ev.GetType().Name}");
+            }
 
             #region Delegate Executer
 
@@ -133,12 +184,103 @@ namespace Syadeu.Presentation.Events
         /// <param name="ev"></param>
         public void PostEvent<TEvent>(TEvent ev) where TEvent : SynchronizedEvent<TEvent>, new()
         {
-            m_PostedEvents.Enqueue(ev);
+            switch (ev.Loop)
+            {
+                default:
+                case UpdateLoop.Default:
+                    m_UpdateEvents.Enqueue(ev);
+                    break;
+                case UpdateLoop.Transform:
+                    m_TransformEvents.Enqueue(ev);
+                    break;
+            }
+        }
+        public void ScheduleEvent<TEvent>(TEvent ev) where TEvent : SynchronizedEvent<TEvent>, new()
+        {
+            m_ScheduledEvents.Enqueue(ev);
+            TakeQueueTicket(this);
+        }
+
+        public void SetPauseScheduleEvent(bool pause)
+        {
+            m_PausedScheduledEvent = pause;
         }
 
         public void PostAction(Action action)
         {
             m_PostedActions.Enqueue(action);
+        }
+
+        private void ExecuteSystemTickets()
+        {
+            if ((m_ScheduledEventHandler.m_Result & SystemEventResult.Wait) == SystemEventResult.Wait)
+            {
+                try
+                {
+                    m_CurrentTicket.Execute(m_ScheduledEventHandler);
+                }
+                catch (Exception)
+                {
+                    m_ScheduledEventHandler.m_Result = SystemEventResult.Failed;
+                }
+
+                if ((m_ScheduledEventHandler.m_Result & SystemEventResult.Wait) == SystemEventResult.Wait)
+                {
+                    return;
+                }
+            }
+
+            int count = m_SystemTickets.Count;
+            for (int i = 0; i < count; i++)
+            {
+                m_CurrentTicket = m_SystemTickets.Dequeue();
+
+                try
+                {
+                    m_CurrentTicket.Execute(m_ScheduledEventHandler);
+                }
+                catch (Exception)
+                {
+                    m_ScheduledEventHandler.m_Result = SystemEventResult.Failed;
+                }
+
+                if ((m_ScheduledEventHandler.m_Result & SystemEventResult.Wait) == SystemEventResult.Wait)
+                {
+                    break;
+                }
+            }
+        }
+        public void TakeQueueTicket<TSystem>(TSystem scheduler) 
+            where TSystem : PresentationSystemEntity, ISystemEventScheduler
+        {
+            m_SystemTickets.Enqueue(scheduler);
+        }
+
+        void ISystemEventScheduler.Execute(ScheduledEventHandler handler)
+        {
+            SynchronizedEventBase ev = m_ScheduledEvents.Dequeue();
+            Type evType = ev.GetType();
+            if (ev.IsValid())
+            {
+                CoreSystem.Logger.Log(Channel.Action,
+                    $"Execute scheduled event({evType.Name})");
+
+                try
+                {
+                    ev.InternalPost();
+                    ev.InternalTerminate();
+                }
+                catch (Exception ex)
+                {
+                    CoreSystem.Logger.LogError(Channel.Event,
+                        $"Invalid event({evType.Name}) has been posted");
+                    UnityEngine.Debug.LogException(ex);
+                }
+                CoreSystem.Logger.Log(Channel.Event,
+                    $"Posted event : {evType.Name}");
+            }
+
+            handler.SetEvent(SystemEventResult.Success, evType);
         }
     }
 }

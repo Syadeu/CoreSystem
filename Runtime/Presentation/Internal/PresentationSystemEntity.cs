@@ -1,5 +1,6 @@
 ﻿using Syadeu.Database;
 using System;
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
 
@@ -16,6 +17,7 @@ namespace Syadeu.Presentation.Internal
         IDisposable
     {
         private static UnityEngine.Transform s_PresentationUnityFolder;
+        
         internal Hash m_GroupIndex;
         internal int m_SystemIndex;
 
@@ -66,9 +68,11 @@ namespace Syadeu.Presentation.Internal
         }
         public void Dispose()
         {
+            InternalOnDispose();
             OnUnityJobsDispose();
             OnDispose();
         }
+        internal virtual void InternalOnDispose() { }
         public abstract void OnDispose();
 
         protected void DontDestroyOnLoad(UnityEngine.GameObject obj)
@@ -99,35 +103,72 @@ namespace Syadeu.Presentation.Internal
     {
         private static JobHandle s_GlobalJobHandle;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        private readonly static Unity.Profiling.ProfilerMarker
+            s_CompleteJobMarker = new Unity.Profiling.ProfilerMarker("Complete Job"),
+            s_ScheduleJobMarker = new Unity.Profiling.ProfilerMarker("Schedule Job"),
+            s_ScheduleAtPositionJobMarker = new Unity.Profiling.ProfilerMarker("Schedule At Position Job");
+#endif
+
         private void OnUnityJobsDispose()
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            s_CompleteJobMarker.Begin();
+#endif
             s_GlobalJobHandle.Complete();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            s_CompleteJobMarker.End();
+#endif
         }
 
         protected void CompleteJob()
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            s_CompleteJobMarker.Begin();
+#endif
             CoreSystem.Logger.ThreadBlock(nameof(CompleteJob), Syadeu.Internal.ThreadInfo.Unity);
 
             s_GlobalJobHandle.Complete();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            s_CompleteJobMarker.End();
+#endif
         }
         protected JobHandle Schedule<T>(T job) where T : struct, IJob
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            s_ScheduleJobMarker.Begin();
+#endif
             JobHandle handle = job.Schedule(s_GlobalJobHandle);
             s_GlobalJobHandle = JobHandle.CombineDependencies(s_GlobalJobHandle, handle);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            s_ScheduleJobMarker.End();
+#endif
             return handle;
         }
         protected JobHandle Schedule<T>(T job, int arrayLength, int innerloopBatchCount) where T : struct, IJobParallelFor
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            s_ScheduleJobMarker.Begin();
+#endif
             JobHandle handle = job.Schedule(arrayLength, innerloopBatchCount, s_GlobalJobHandle);
             s_GlobalJobHandle = JobHandle.CombineDependencies(s_GlobalJobHandle, handle);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            s_ScheduleJobMarker.End();
+#endif
             return handle;
         }
         protected JobHandle Schedule<T, U>(T job, NativeList<U> list, int innerloopBatchCount) 
             where T : struct, IJobParallelForDefer
             where U : unmanaged
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            s_ScheduleJobMarker.Begin();
+#endif
             JobHandle handle = job.Schedule(list, innerloopBatchCount, s_GlobalJobHandle);
             s_GlobalJobHandle = JobHandle.CombineDependencies(s_GlobalJobHandle, handle);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            s_ScheduleJobMarker.End();
+#endif
             return handle;
         }
 
@@ -145,22 +186,40 @@ namespace Syadeu.Presentation.Internal
 
         protected JobHandle ScheduleAt<TJob>(JobPosition position, TJob job) where TJob : struct, IJob
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            s_ScheduleAtPositionJobMarker.Begin();
+#endif
             JobHandle handle = Schedule(job);
             CombineDependences(handle, position);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            s_ScheduleAtPositionJobMarker.End();
+#endif
             return handle;
         }
         protected JobHandle ScheduleAt<TJob>(JobPosition position, TJob job, int arrayLength, int innerloopBatchCount = 64) where TJob : struct, IJobParallelFor
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            s_ScheduleAtPositionJobMarker.Begin();
+#endif
             JobHandle handle = Schedule(job, arrayLength, innerloopBatchCount);
             CombineDependences(handle, position);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            s_ScheduleAtPositionJobMarker.End();
+#endif
             return handle;
         }
         protected JobHandle ScheduleAt<TJob, U>(JobPosition position, TJob job, NativeList<U> list, int innerloopBatchCount = 64) 
             where TJob : struct, IJobParallelForDefer
             where U : unmanaged
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            s_ScheduleAtPositionJobMarker.Begin();
+#endif
             JobHandle handle = Schedule(job, list, innerloopBatchCount);
             CombineDependences(handle, position);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            s_ScheduleAtPositionJobMarker.End();
+#endif
             return handle;
         }
 

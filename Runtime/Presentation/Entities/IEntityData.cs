@@ -16,21 +16,14 @@ namespace Syadeu.Presentation.Entities
     /// 이 인터페이스의 직접 상속은 허용하지않습니다.<br/>
     /// 오브젝트를 선언하고싶다면 <seealso cref="Entities.EntityDataBase"/>를 상속하세요.
     /// </remarks>
-    public interface IEntityData : IValidation
+    public interface IEntityData : IObject, IValidation
     {
-        /// <summary>
-        /// 이 오브젝트 엔티티의 오리지널 해쉬입니다.
-        /// <see cref="EntityDataList"/>
-        /// </summary>
-        [JsonIgnore] Hash Hash { get; }
-        /// <summary>
-        /// 이 오브젝트 엔티티의 인스턴스 고유 해쉬입니다.
-        /// </summary>
-        [JsonIgnore] Hash Idx { get; }
-        /// <summary>
-        /// 이 오브젝트 엔티티의 이름입니다.
-        /// </summary>
-        [JsonProperty(Order = -30, PropertyName = "Name")] string Name { get; }
+        
+        //[JsonIgnore] Hash Hash { get; }
+        
+        //[JsonIgnore] Hash Idx { get; }
+        
+        //[JsonProperty(Order = -30, PropertyName = "Name")] string Name { get; }
         /// <summary>
         /// 이 엔티티가 가지고 있는 <see cref="AttributeBase"/> 배열입니다.
         /// </summary>
@@ -42,6 +35,8 @@ namespace Syadeu.Presentation.Entities
         [JsonIgnore] bool isCreated { get; }
 
         bool HasAttribute(Hash attributeHash);
+        bool HasAttribute(Type attributeType);
+        bool HasAttribute<T>() where T : AttributeBase;
         /// <summary>
         /// 이 엔티티가 가지고있는 해당 타입의 어트리뷰트를 가져옵니다.
         /// </summary>

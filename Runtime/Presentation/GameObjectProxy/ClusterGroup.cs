@@ -11,6 +11,8 @@ namespace Syadeu.Presentation.Proxy
     [BurstCompile(CompileSynchronously = true)]
     internal unsafe struct ClusterGroup<T> : IDisposable
     {
+        public static readonly ClusterGroup<T> Empty = default(ClusterGroup<T>);
+
         private static readonly int s_BufferSize = UnsafeUtility.SizeOf<ClusterItem<T>>();
         private static readonly int s_BufferAlign = UnsafeUtility.AlignOf<ClusterItem<T>>();
 
@@ -179,7 +181,7 @@ namespace Syadeu.Presentation.Proxy
         {
             for (int i = 0; i < m_Length; i++)
             {
-                if (!m_Buffer[i].m_IsOccupied && m_Buffer[i].m_ArrayIndex < 0) return i;
+                if (!m_Buffer[i].m_IsOccupied) return i;
             }
             return -1;
         }

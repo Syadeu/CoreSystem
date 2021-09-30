@@ -30,8 +30,20 @@ namespace Syadeu.Mono
             => Instance.InternalCreateCommand(action, arguments);
         
         public static event Action OnErrorReceieved;
+        public static event Action<bool> OnWindowOpened;
 
-        public bool Opened { get; private set; } = false;
+        private bool m_Opened = false;
+
+        public bool Opened
+        {
+            get => m_Opened;
+            set
+            {
+                m_Opened = value;
+
+                OnWindowOpened?.Invoke(m_Opened);
+            }
+        }
 
         #region Initialze
 

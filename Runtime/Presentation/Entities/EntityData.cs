@@ -1,9 +1,12 @@
 ﻿using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation.Attributes;
+using Syadeu.Presentation.Components;
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using Unity.Burst;
+using Unity.Collections;
 
 namespace Syadeu.Presentation.Entities
 {
@@ -17,28 +20,40 @@ namespace Syadeu.Presentation.Entities
     /// <see cref="EntityBase"/>는 <seealso cref="Entity{T}"/>를 참조하세요.
     /// </remarks>
     /// <typeparam name="T"></typeparam>
-    public readonly struct EntityData<T> : IValidation, IEquatable<EntityData<T>>, IEquatable<Hash> where T : class, IEntityData
+    public struct EntityData<T> : IValidation, IEquatable<EntityData<T>>, IEquatable<Hash> where T : class, IEntityData
     {
         private const string c_Invalid = "Invalid";
-        public static EntityData<T> Empty => new EntityData<T>(Hash.Empty);
+        private static PresentationSystemID<EntitySystem> s_EntitySystem = PresentationSystemID<EntitySystem>.Null;
+        internal static PresentationSystemID<EntityComponentSystem> s_ComponentSystem = PresentationSystemID<EntityComponentSystem>.Null;
 
-        private static readonly Dictionary<Hash, EntityData<T>> m_EntityData = new Dictionary<Hash, EntityData<T>>();
+        public static EntityData<T> Empty => new EntityData<T>(Hash.Empty, null);
+
         public static EntityData<T> GetEntity(Hash idx)
         {
             #region Validation
+            if (s_EntitySystem.IsNull())
+            {
+                s_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
+                if (s_EntitySystem.IsNull())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        "Cannot retrived EntitySystem.");
+                    return Empty;
+                }
+            }
             if (idx.Equals(Hash.Empty))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                 $"Cannot convert an empty hash to Entity. This is an invalid operation and not allowed.");
                 return Empty;
             }
-            if (!PresentationSystem<EntitySystem>.System.m_ObjectEntities.ContainsKey(idx))
+            if (!s_EntitySystem.System.m_ObjectEntities.ContainsKey(idx))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"Cannot found entity({idx})");
                 return Empty;
             }
-            IEntityData target = PresentationSystem<EntitySystem>.System.m_ObjectEntities[idx];
+            ObjectBase target = s_EntitySystem.System.m_ObjectEntities[idx];
             if (!(target is T))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
@@ -47,30 +62,76 @@ namespace Syadeu.Presentation.Entities
             }
             #endregion
 
-            if (m_EntityData.Count > 2048) m_EntityData.Clear();
-
-            if (!m_EntityData.TryGetValue(idx, out var value))
-            {
-                value = new EntityData<T>(idx);
-                m_EntityData.Add(idx, value);
-            }
-            return value;
+            return new EntityData<T>(idx, target.Name);
         }
         public static EntityData<T> GetEntityWithoutCheck(Hash idx)
         {
-            if (!m_EntityData.TryGetValue(idx, out var value))
+            if (s_EntitySystem.IsNull())
             {
-                value = new EntityData<T>(idx);
-                m_EntityData.Add(idx, value);
+                s_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
+                if (s_EntitySystem.IsNull())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        "Cannot retrived EntitySystem.");
+                    return Empty;
+                }
             }
-            return value;
+            ObjectBase target = s_EntitySystem.System.m_ObjectEntities[idx];
+            return new EntityData<T>(idx, target.Name);
         }
 
         /// <inheritdoc cref="IEntityData.Idx"/>
         private readonly Hash m_Idx;
+        private FixedString128Bytes m_Name;
 
-        public T Target => m_Idx.Equals(Hash.Empty) ? null : (T)PresentationSystem<EntitySystem>.System.m_ObjectEntities[m_Idx];
+        public T Target
+        {
+            get
+            {
+                if (IsEmpty())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        "An empty entity reference trying to access transform.");
+                    return null;
+                }
 
+                if (s_EntitySystem.IsNull())
+                {
+                    s_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
+                    if (s_EntitySystem.IsNull())
+                    {
+                        CoreSystem.Logger.LogError(Channel.Entity,
+                            "Cannot retrived EntitySystem.");
+                        return null;
+                    }
+                }
+
+                if (!s_EntitySystem.System.m_ObjectEntities.TryGetValue(m_Idx, out ObjectBase value))
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"Destroyed entity.");
+                    return null;
+                }
+
+                if (!(value is T t))
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"Entity validation error. This entity is not an {TypeHelper.TypeOf<T>.ToString()} but {TypeHelper.ToString(value?.GetType())}.");
+                    return null;
+                }
+
+                if (!CoreSystem.BlockCreateInstance &&
+                    s_EntitySystem.System.IsMarkedAsDestroyed(m_Idx))
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"Accessing entity({value.Name}) that will be destroy in the next frame.");
+                }
+
+                return t;
+            }
+        }
+
+        public FixedString128Bytes RawName => m_Name;
         /// <inheritdoc cref="IEntityData.Name"/>
         public string Name => m_Idx.Equals(Hash.Empty) ? c_Invalid : Target.Name;
         /// <inheritdoc cref="IEntityData.Hash"/>
@@ -79,35 +140,396 @@ namespace Syadeu.Presentation.Entities
         public Hash Idx => m_Idx;
         public Type Type => m_Idx.Equals(Hash.Empty) ? null : Target?.GetType();
 
-        internal EntityData(Hash idx)
+        internal EntityData(Hash idx, string name)
         {
             m_Idx = idx;
+            if (string.IsNullOrEmpty(name))
+            {
+                m_Name = default(FixedString128Bytes);
+            }
+            else m_Name = name;
         }
 
-        public bool IsValid() => !m_Idx.Equals(Hash.Empty) && 
-            PresentationSystem<EntitySystem>.IsValid() &&
-            PresentationSystem<EntitySystem>.System.m_ObjectEntities.ContainsKey(m_Idx);
+        public bool IsEmpty() => Equals(Empty);
+        public bool IsValid()
+        {
+            if (IsEmpty()) return false;
+
+            if (s_EntitySystem.IsNull())
+            {
+                s_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
+                if (s_EntitySystem.IsNull())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        "Cannot retrived EntitySystem.");
+                    return false;
+                }
+            }
+            else if (!s_EntitySystem.IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                        "Cannot retrived EntitySystem. The system has been destroyed.");
+                return false;
+            }
+
+            return !s_EntitySystem.System.IsDestroyed(m_Idx);
+        }
 
         public bool Equals(EntityData<T> other) => m_Idx.Equals(other.m_Idx);
         public bool Equals(Hash other) => m_Idx.Equals(other);
 
-        /// <inheritdoc cref="IEntityData.HasAttribute(Hash)"/>
-        public bool HasAttribute(Hash attributeHash) => Target.HasAttribute(attributeHash);
-        /// <inheritdoc cref="IEntityData.GetAttribute(Type)"/>
-        public AttributeBase GetAttribute(Type t) => Target.GetAttribute(t);
-        /// <inheritdoc cref="IEntityData.GetAttributes(Type)"/>
-        public AttributeBase[] GetAttributes(Type t) => Target.GetAttributes(t);
-        /// <inheritdoc cref="IEntityData.GetAttribute(Type)"/>
-        public TA GetAttribute<TA>() where TA : AttributeBase => Target.GetAttribute<TA>();
-        /// <inheritdoc cref="IEntityData.GetAttributes(Type)"/>
-        public TA[] GetAttributes<TA>() where TA : AttributeBase => Target.GetAttributes<TA>();
+        #region Attributes
 
-        public void Destroy() => PresentationSystem<EntitySystem>.System.InternalDestroyEntity(m_Idx);
+        /// <inheritdoc cref="IEntityData.HasAttribute(Hash)"/>
+        public bool HasAttribute(Hash attributeHash)
+        {
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                return false;
+            }
+
+            return Target.HasAttribute(attributeHash);
+        }
+        public bool HasAttribute(Type t)
+        {
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                return false;
+            }
+
+            return Target.HasAttribute(t);
+        }
+        public bool HasAttribute<TA>() where TA : AttributeBase
+        {
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                return false;
+            }
+
+            return Target.HasAttribute<TA>();
+        }
+        /// <inheritdoc cref="IEntityData.GetAttribute(Type)"/>
+        public AttributeBase GetAttribute(Type t)
+        {
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                return null;
+            }
+
+            return Target.GetAttribute(t);
+        }
+        /// <inheritdoc cref="IEntityData.GetAttributes(Type)"/>
+        public AttributeBase[] GetAttributes(Type t)
+        {
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                return null;
+            }
+
+            return Target.GetAttributes(t);
+        }
+        /// <inheritdoc cref="IEntityData.GetAttribute(Type)"/>
+        public TA GetAttribute<TA>() where TA : AttributeBase
+        {
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                return null;
+            }
+
+            return Target.GetAttribute<TA>();
+        }
+        /// <inheritdoc cref="IEntityData.GetAttributes(Type)"/>
+        public TA[] GetAttributes<TA>() where TA : AttributeBase
+        {
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                return null;
+            }
+
+            return Target.GetAttributes<TA>();
+        }
+
+        #endregion
+
+        #region Components
+
+        /// <summary>
+        /// <typeparamref name="TComponent"/> 를 이 엔티티에 추가합니다.
+        /// </summary>
+        /// <remarks>
+        /// 추가된 컴포넌트는 <seealso cref="GetComponent{TComponent}"/> 를 통해 받아올 수 있습니다.
+        /// </remarks>
+        /// <typeparam name="TComponent"></typeparam>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        public TComponent AddComponent<TComponent>(TComponent data)
+            where TComponent : unmanaged, IEntityComponent
+        {
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                return default(TComponent);
+            }
+
+            if (s_ComponentSystem.IsNull())
+            {
+                s_ComponentSystem = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>().Data.SystemID;
+                if (s_ComponentSystem.IsNull())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"Cannot retrived {nameof(EntityComponentSystem)}.");
+                    return default(TComponent);
+                }
+            }
+
+            return s_ComponentSystem.System.AddComponent(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx), data);
+        }
+        /// <summary>
+        /// <typeparamref name="TComponent"/> 컴포넌트가 있는지 반환합니다.
+        /// </summary>
+        /// <typeparam name="TComponent"></typeparam>
+        /// <returns></returns>
+        public bool HasComponent<TComponent>()
+            where TComponent : unmanaged, IEntityComponent
+        {
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                return false;
+            }
+
+            if (s_ComponentSystem.IsNull())
+            {
+                s_ComponentSystem = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>().Data.SystemID;
+                if (s_ComponentSystem.IsNull())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"Cannot retrived {nameof(EntityComponentSystem)}.");
+                    return false;
+                }
+            }
+
+            return s_ComponentSystem.System.HasComponent<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
+        }
+        /// <summary>
+        /// 해당 타입의 컴포넌트가 있는지 반환합니다.
+        /// </summary>
+        /// <remarks>
+        /// 타입이 <seealso cref="IEntityComponent"/> 를 상속받지 않으면 에디터에서만 오류를 반환합니다.
+        /// </remarks>
+        /// <param name="componentType"></param>
+        /// <returns></returns>
+        public bool HasComponent(Type componentType)
+        {
+#if UNITY_EDITOR
+            if (!TypeHelper.TypeOf<IEntityComponent>.Type.IsAssignableFrom(componentType))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Type {TypeHelper.ToString(componentType)} is not an {nameof(IEntityComponent)}.");
+                return false;
+            }
+#endif
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                return false;
+            }
+
+            if (s_ComponentSystem.IsNull())
+            {
+                s_ComponentSystem = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>().Data.SystemID;
+                if (s_ComponentSystem.IsNull())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"Cannot retrived {nameof(EntityComponentSystem)}.");
+                    return false;
+                }
+            }
+
+            return s_ComponentSystem.System.HasComponent(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx), componentType);
+        }
+        /// <summary>
+        /// <typeparamref name="TComponent"/> 컴포넌트를 가져옵니다.
+        /// </summary>
+        /// <remarks>
+        /// 컴포넌트가 없는 경우 에러를 뱉습니다. <seealso cref="HasComponent{TComponent}"/> 를 통해
+        /// 목표 컴포넌트가 존재하는지 확인 할 수 있습니다.
+        /// </remarks>
+        /// <typeparam name="TComponent"></typeparam>
+        /// <returns></returns>
+        public ref TComponent GetComponent<TComponent>()
+            where TComponent : unmanaged, IEntityComponent
+        {
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                //return default(TComponent);
+            }
+
+            if (s_ComponentSystem.IsNull())
+            {
+                s_ComponentSystem = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>().Data.SystemID;
+                if (s_ComponentSystem.IsNull())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"Cannot retrived {nameof(EntityComponentSystem)}.");
+                    //return default(TComponent);
+                }
+            }
+
+            return ref s_ComponentSystem.System.GetComponent<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
+        }
+        /// <summary>
+        /// <typeparamref name="TComponent"/> 컴포넌트를 제거합니다.
+        /// </summary>
+        /// <remarks>
+        /// 컴포넌트를 제거할때 해당 컴포넌트가 <seealso cref="IDisposable"/> 를 상속받고 있으면 자동으로 수행합니다.
+        /// </remarks>
+        /// <typeparam name="TComponent"></typeparam>
+        public void RemoveComponent<TComponent>()
+            where TComponent : unmanaged, IEntityComponent
+        {
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                return;
+            }
+
+            if (s_ComponentSystem.IsNull())
+            {
+                s_ComponentSystem = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>().Data.SystemID;
+                if (s_ComponentSystem.IsNull())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"Cannot retrived {nameof(EntityComponentSystem)}.");
+                    return;
+                }
+            }
+
+            s_ComponentSystem.System.RemoveComponent<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
+        }
+        /// <summary>
+        /// 해당 컴포넌트를 제거합니다.
+        /// </summary>
+        /// <remarks>
+        /// 컴포넌트를 제거할때 해당 컴포넌트가 <seealso cref="IDisposable"/> 를 상속받고 있으면 자동으로 수행합니다.<br/>
+        /// 해당 타입이 <seealso cref="IEntityComponent"/> 를 상속받지 않는다면 에디터에서만 오류를 반환합니다.
+        /// </remarks>
+        /// <param name="componentType"></param>
+        public void RemoveComponent(Type componentType)
+        {
+#if UNITY_EDITOR
+            if (!TypeHelper.TypeOf<IEntityComponent>.Type.IsAssignableFrom(componentType))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Type {TypeHelper.ToString(componentType)} is not an {nameof(IEntityComponent)}.");
+                return;
+            }
+#endif
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                return;
+            }
+
+            if (s_ComponentSystem.IsNull())
+            {
+                s_ComponentSystem = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>().Data.SystemID;
+                if (s_ComponentSystem.IsNull())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"Cannot retrived {nameof(EntityComponentSystem)}.");
+                    return;
+                }
+            }
+
+            s_ComponentSystem.System.RemoveComponent(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx), componentType);
+        }
+
+        #endregion
+
+        public void Destroy()
+        {
+            if (s_EntitySystem.IsNull())
+            {
+                s_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
+                if (s_EntitySystem.IsNull())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        "Cannot retrived EntitySystem.");
+                    return;
+                }
+            }
+
+            s_EntitySystem.System.InternalDestroyEntity(m_Idx);
+        }
+
+        public override int GetHashCode()
+        {
+            if (IsEmpty())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    "An empty entity reference trying to access transform.");
+                return 0;
+            }
+
+            if (s_EntitySystem.IsNull())
+            {
+                s_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
+                if (s_EntitySystem.IsNull())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        "Cannot retrived EntitySystem.");
+                    return 0;
+                }
+            }
+
+            if (!s_EntitySystem.System.m_ObjectEntities.TryGetValue(m_Idx, out ObjectBase value))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Destroyed entity.");
+                return 0;
+            }
+
+            return value.GetHashCode();
+        }
 
         public static implicit operator T(EntityData<T> a) => a.Target;
         //public static implicit operator EntityData<IEntityData>(EntityData<T> a) => GetEntityData(a.m_Idx);
         //public static implicit operator EntityData<T>(Entity<T> a) => GetEntityData(a.m_Idx);
         public static implicit operator EntityData<T>(Hash a) => GetEntity(a);
-        public static implicit operator EntityData<T>(T a) => GetEntity(a.Idx);
+        public static implicit operator EntityData<T>(T a)
+        {
+            if (a == null)
+            {
+                return Empty;
+            }
+            return GetEntity(a.Idx);
+        }
+        public static implicit operator EntityData<T>(Instance<T> a)
+        {
+            if (a.IsEmpty() || !a.IsValid()) return Empty;
+            return GetEntityWithoutCheck(a.Idx);
+        }
     }
 }

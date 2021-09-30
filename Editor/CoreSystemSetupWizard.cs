@@ -11,6 +11,7 @@ using Syadeu.Presentation;
 using SyadeuEditor.Presentation;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -87,6 +88,7 @@ namespace SyadeuEditor
             AddSetup(ToolbarNames.Prefab, m_PrefabMenu.Predicate);
 
             CoreSystemSettings.Instance.m_HideSetupWizard = true;
+            EditorUtility.SetDirty(CoreSystemSettings.Instance);
         }
         private void OnGUI()
         {
@@ -168,8 +170,26 @@ namespace SyadeuEditor
         }
         #endregion
 
+        #region General Menu
         private sealed class GeneralMenu
         {
+            #region Constrains
+
+            const string
+                UNITY_COLLECTIONS_CHECKS = "ENABLE_UNITY_COLLECTIONS_CHECKS",
+                CORESYSTEM_DOTWEEN = "CORESYSTEM_DOTWEEN",
+                CORESYSTEM_MOTIONMATCHING = "CORESYSTEM_MOTIONMATCHING",
+                CORESYSTEM_FMOD = "CORESYSTEM_FMOD";
+            bool
+                m_DefinedCollectionsChecks, 
+                m_DefinedDotween,
+                m_DefinedMotionMatching,
+                m_DefinedFMOD;
+            List<string> m_DefinedConstrains;
+
+            #endregion
+
+            #region Tag Manager
             SerializedObject m_TagManagerObject;
             SerializedProperty m_TagProperty, m_LayerProperty;
 
@@ -178,8 +198,42 @@ namespace SyadeuEditor
 
             List<string> m_MissingTags, m_MissingLayers;
 
+            #endregion
+
+            CoreSystemSettings m_CoreSystemSettings;
+
+            #region Unity Audio
+
+            SerializedObject m_UnityAudioManager;
+            SerializedProperty
+                m_UnityAudioDisableAudio,
+
+                m_UnityAudioGlobalVolume,
+                m_UnityAudioRolloffScale,
+                m_UnityAudioDopplerFactor,
+
+                m_UnityAudioRealVoiceCount,
+                m_UnityAudioVirtualVoiceCount,
+                m_UnityAudioDefaultSpeakerMode;
+
+            #endregion
+
             public GeneralMenu()
             {
+                #region Constrains
+
+                PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, out string[] temp);
+                m_DefinedConstrains = temp.ToList();
+
+                m_DefinedCollectionsChecks = HasConstrains(UNITY_COLLECTIONS_CHECKS);
+                m_DefinedDotween = HasConstrains(CORESYSTEM_DOTWEEN);
+                m_DefinedMotionMatching = HasConstrains(CORESYSTEM_MOTIONMATCHING);
+                m_DefinedFMOD = HasConstrains(CORESYSTEM_FMOD);
+
+                #endregion
+
+                #region Tag Manager
+
                 UnityEngine.Object tagManagerObject = AssetDatabase.LoadMainAssetAtPath("ProjectSettings/TagManager.asset");
                 m_TagManagerObject = new SerializedObject(tagManagerObject);
                 m_TagProperty = m_TagManagerObject.FindProperty("tags");
@@ -202,10 +256,180 @@ namespace SyadeuEditor
 
                     m_MissingLayers.Remove(value);
                 }
+
+                if (m_MissingTags.Count > 0 || m_MissingLayers.Count > 0)
+                {
+                    m_OpenTagManager = true;
+                }
+
+                #endregion
+
+                m_CoreSystemSettings = CoreSystemSettings.Instance;
+
+                #region Unity Audio
+
+                var audioManager = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/AudioManager.asset")[0];
+                m_UnityAudioManager = new SerializedObject(audioManager);
+
+                m_UnityAudioDisableAudio = m_UnityAudioManager.FindProperty("m_DisableAudio");
+
+                m_UnityAudioGlobalVolume = m_UnityAudioManager.FindProperty("m_Volume");
+                m_UnityAudioRolloffScale = m_UnityAudioManager.FindProperty("Rolloff Scale");
+                m_UnityAudioDopplerFactor = m_UnityAudioManager.FindProperty("Doppler Factor");
+
+                m_UnityAudioRealVoiceCount = m_UnityAudioManager.FindProperty("m_RealVoiceCount");
+                m_UnityAudioVirtualVoiceCount = m_UnityAudioManager.FindProperty("m_VirtualVoiceCount");
+                m_UnityAudioDefaultSpeakerMode = m_UnityAudioManager.FindProperty("Default Speaker Mode");
+                
+                #endregion
             }
             public void OnGUI()
             {
-                var block = new EditorUtils.BoxBlock(Color.black);
+                using (new EditorUtils.BoxBlock(Color.black))
+                {
+                    DrawContrains();
+                }
+
+                using (new EditorUtils.BoxBlock(Color.black))
+                {
+                    DrawTagManager();
+                }
+
+                using (new EditorUtils.BoxBlock(Color.black))
+                {
+                    DrawSettings();
+                }
+
+                using (new EditorGUI.DisabledGroupScope(m_DefinedFMOD))
+                using (new EditorUtils.BoxBlock(Color.black))
+                {
+                    DrawUnityAudio();
+                }
+            }
+            public bool Predicate()
+            {
+                if (!TagManagerPredicate()) return false;
+                return true;
+            }
+
+            #region Contrains
+
+            private bool m_OpenContrains = false;
+
+            private void DrawContrains()
+            {
+                m_OpenContrains = EditorUtils.Foldout(m_OpenContrains, "Constrains");
+                if (!m_OpenContrains) return;
+
+                EditorGUI.indentLevel++;
+
+                EditorUtils.StringRich("Unity Constrains", 13);
+                using (var check = new EditorGUI.ChangeCheckScope())
+                {
+                    m_DefinedCollectionsChecks
+                        = EditorGUILayout.ToggleLeft("Define ENABLE_UNITY_COLLECTIONS_CHECKS", m_DefinedCollectionsChecks);
+
+                    if (check.changed)
+                    {
+                        if (m_DefinedCollectionsChecks) DefineConstrains(UNITY_COLLECTIONS_CHECKS);
+                        else UndefineContrains(UNITY_COLLECTIONS_CHECKS);
+                    }
+                }
+
+                EditorGUILayout.Space();
+                EditorUtils.Line();
+
+                EditorUtils.StringRich("CoreSystem Constrains", 13);
+                using (var check = new EditorGUI.ChangeCheckScope())
+                {
+                    m_DefinedFMOD =
+                        EditorGUILayout.ToggleLeft("Define CORESYSTEM_FMOD", m_DefinedFMOD);
+
+                    if (check.changed)
+                    {
+                        if (m_DefinedFMOD) DefineConstrains(CORESYSTEM_FMOD);
+                        else UndefineContrains(CORESYSTEM_FMOD);
+                    }
+                }
+
+                EditorGUILayout.Space();
+                EditorUtils.Line();
+
+                EditorUtils.StringRich("Third Party Constrains", 13);
+
+                using (var check = new EditorGUI.ChangeCheckScope())
+                {
+                    m_DefinedDotween =
+                        EditorGUILayout.ToggleLeft("Define CORESYSTEM_DOTWEEN", m_DefinedDotween);
+
+                    if (check.changed)
+                    {
+                        if (m_DefinedDotween) DefineConstrains(CORESYSTEM_DOTWEEN);
+                        else UndefineContrains(CORESYSTEM_DOTWEEN);
+                    }
+                }
+                using (var check = new EditorGUI.ChangeCheckScope())
+                {
+                    m_DefinedMotionMatching =
+                        EditorGUILayout.ToggleLeft("Define CORESYSTEM_MOTIONMATCHING", m_DefinedMotionMatching);
+
+                    if (check.changed)
+                    {
+                        if (m_DefinedMotionMatching) DefineConstrains(CORESYSTEM_MOTIONMATCHING);
+                        else UndefineContrains(CORESYSTEM_MOTIONMATCHING);
+                    }
+                }
+
+                EditorGUI.indentLevel--;
+            }
+
+            private bool HasConstrains(string name) => m_DefinedConstrains.Contains(name);
+            private void DefineConstrains(params string[] names)
+            {
+                if (names == null || names.Length == 0) return;
+
+                for (int i = 0; i < names.Length; i++)
+                {
+                    if (m_DefinedConstrains.Contains(names[i])) continue;
+
+                    m_DefinedConstrains.Add(names[i]);
+                }
+
+                PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, m_DefinedConstrains.ToArray());
+                UnityEditor.Compilation.CompilationPipeline.RequestScriptCompilation();
+            }
+            private void UndefineContrains(params string[] names)
+            {
+                if (names == null || names.Length == 0) return;
+
+                for (int i = 0; i < names.Length; i++)
+                {
+                    if (!m_DefinedConstrains.Contains(names[i])) continue;
+
+                    m_DefinedConstrains.Remove(names[i]);
+                }
+
+                PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, m_DefinedConstrains.ToArray());
+                UnityEditor.Compilation.CompilationPipeline.RequestScriptCompilation();
+            }
+
+            #endregion
+
+            #region Tag Manager
+
+            private bool m_OpenTagManager = false;
+
+            private bool TagManagerPredicate()
+            {
+                if (m_MissingTags.Count > 0 || m_MissingLayers.Count > 0) return false;
+                return true;
+            }
+            private void DrawTagManager()
+            {
+                m_OpenTagManager = EditorUtils.Foldout(m_OpenTagManager, "Tag Manager");
+                if (!m_OpenTagManager) return;
+
+                EditorGUI.indentLevel++;
 
                 EditorUtils.StringRich("Tags", 13);
                 if (m_MissingTags.Count > 0)
@@ -258,12 +482,7 @@ namespace SyadeuEditor
                 }
                 else EditorGUILayout.HelpBox("Nominal", MessageType.Info);
 
-                block.Dispose();
-            }
-            public bool Predicate()
-            {
-                if (m_MissingTags.Count > 0 || m_MissingLayers.Count > 0) return false;
-                return true;
+                EditorGUI.indentLevel--;
             }
 
             private void InsertTag(string tag)
@@ -298,7 +517,128 @@ namespace SyadeuEditor
 
                 return false;
             }
+
+            #endregion
+
+            #region CoreSystem Settings
+
+            private bool m_OpenCoreSystemSettings = false;
+
+            private void DrawSettings()
+            {
+                m_OpenCoreSystemSettings = EditorUtils.Foldout(m_OpenCoreSystemSettings, "Settings");
+                if (!m_OpenCoreSystemSettings) return;
+
+                EditorGUI.indentLevel++;
+
+                using (new EditorUtils.BoxBlock(Color.white))
+                {
+                    EditorUtils.StringRich("Global Settings", 13);
+                    EditorGUILayout.Space();
+
+                    m_CoreSystemSettings.m_DisplayLogChannel =
+                        (Channel)EditorGUILayout.EnumFlagsField("Display Log Channel", m_CoreSystemSettings.m_DisplayLogChannel);
+
+                    m_CoreSystemSettings.m_VisualizeObjects =
+                        EditorGUILayout.ToggleLeft("Visuallize All Managers", m_CoreSystemSettings.m_VisualizeObjects);
+
+                    m_CoreSystemSettings.m_CrashAfterException =
+                        EditorGUILayout.ToggleLeft("Crash After Exception", m_CoreSystemSettings.m_CrashAfterException);
+
+                    m_CoreSystemSettings.m_HideSetupWizard =
+                        EditorGUILayout.ToggleLeft("Hide Setup Wizard", m_CoreSystemSettings.m_HideSetupWizard);
+
+                    m_CoreSystemSettings.m_EnableLua =
+                        EditorGUILayout.ToggleLeft("Enable Lua", m_CoreSystemSettings.m_EnableLua);
+                }
+                EditorUtils.Line();
+
+                EditorGUI.indentLevel--;
+            }
+
+            #endregion
+
+            #region Unity Audio
+
+            private bool 
+                m_OpenUnityAudio = false, m_IsUnityAudioModified = false;
+
+            private void DrawUnityAudio()
+            {
+                m_OpenUnityAudio = EditorUtils.Foldout(m_OpenUnityAudio, "Unity Audio");
+                if (!m_OpenUnityAudio) return;
+
+                EditorGUI.indentLevel++;
+                using (new EditorUtils.BoxBlock(Color.white))
+                {
+                    using (var check = new EditorGUI.ChangeCheckScope())
+                    {
+                        EditorGUILayout.PropertyField(m_UnityAudioDisableAudio);
+
+                        if (check.changed)
+                        {
+                            m_UnityAudioManager.ApplyModifiedProperties();
+                            m_UnityAudioManager.Update();
+                        }
+                    }
+
+                    EditorUtils.Line();
+
+                    if (m_UnityAudioDisableAudio.boolValue)
+                    {
+                        EditorGUILayout.HelpBox("Unity Audio has been disabled", MessageType.Info);
+                        return;
+                    }
+
+                    using (new EditorGUI.DisabledGroupScope(!m_IsUnityAudioModified))
+                    using (new EditorGUILayout.HorizontalScope())
+                    {
+                        if (m_IsUnityAudioModified)
+                        {
+                            EditorGUILayout.LabelField("Modified");
+                        }
+
+                        GUILayout.FlexibleSpace();
+                        if (GUILayout.Button("Apply", GUILayout.Width(100)))
+                        {
+                            m_UnityAudioManager.ApplyModifiedProperties();
+                            m_UnityAudioManager.Update();
+
+                            m_IsUnityAudioModified = false;
+                        }
+                    }
+
+                    EditorGUI.BeginChangeCheck();
+
+                    m_UnityAudioGlobalVolume.floatValue
+                        = EditorGUILayout.Slider("Global Volume", m_UnityAudioGlobalVolume.floatValue, 0, 1);
+                    m_UnityAudioRolloffScale.floatValue
+                        = EditorGUILayout.Slider("Volume Rolloff Scale", m_UnityAudioRolloffScale.floatValue, 0, 1);
+                    m_UnityAudioDopplerFactor.floatValue
+                        = EditorGUILayout.Slider("Doppler Factor", m_UnityAudioDopplerFactor.floatValue, 0, 1);
+
+                    EditorUtils.Line();
+
+                    m_UnityAudioRealVoiceCount.intValue
+                        = EditorGUILayout.IntField("Max Real Voices", m_UnityAudioRealVoiceCount.intValue);
+
+                    m_UnityAudioVirtualVoiceCount.intValue
+                        = EditorGUILayout.IntField("Max Virtual Voices", m_UnityAudioVirtualVoiceCount.intValue);
+
+                    m_UnityAudioDefaultSpeakerMode.intValue =
+                        (int)(AudioSpeakerMode)EditorGUILayout.EnumPopup("Default Speaker Mode", (AudioSpeakerMode)m_UnityAudioDefaultSpeakerMode.intValue);
+
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        m_IsUnityAudioModified = true;
+                    }
+                }
+                EditorGUI.indentLevel--;
+            }
+
+            #endregion
         }
+        #endregion
 
         #region Scene Menu
         private sealed class SceneMenu

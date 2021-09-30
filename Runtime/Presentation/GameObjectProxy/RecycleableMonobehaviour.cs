@@ -1,6 +1,7 @@
 ﻿using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation;
+using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using System;
@@ -8,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Playables;
 
 namespace Syadeu.Presentation.Proxy
 {
@@ -18,7 +20,7 @@ namespace Syadeu.Presentation.Proxy
     /// OnDestroy 함수를 절때 사용하지마세요
     /// </summary>
     /// <typeparam name="T"></typeparam>    
-    public abstract class RecycleableMonobehaviour : MonoBehaviour, IValidation
+    public abstract class RecycleableMonobehaviour : MonoBehaviour, IValidation, INotificationReceiver
     {
         public delegate bool TerminateCondition();
         /// <summary>
@@ -26,7 +28,6 @@ namespace Syadeu.Presentation.Proxy
         /// </summary>
         internal int m_Idx = -1;
 
-        internal EventSystem m_EventSystem;
         private GameObject m_GameObject;
         private Transform m_Transform;
         internal Entity<IEntity> m_Entity;
@@ -42,7 +43,6 @@ namespace Syadeu.Presentation.Proxy
         /// </summary>
         public new Transform transform => m_Transform;
         public Entity<IEntity> entity => m_Entity;
-        public EventSystem eventSystem => m_EventSystem;
 #pragma warning restore IDE1006 // Naming Styles
         /// <summary>
         /// PrefabManager 인스펙터창에서 보여질 이름입니다.
@@ -56,7 +56,7 @@ namespace Syadeu.Presentation.Proxy
         /// </summary>
         public bool Activated { get; private set; } = false;
 
-        public virtual void Initialize()
+        public void Initialize()
         {
             if (Activated) throw new CoreSystemException(CoreSystemExceptionFlag.RecycleObject,
                 "이미 초기화 된 재사용 오브젝트를 또 초기화하려합니다.");
@@ -138,10 +138,6 @@ namespace Syadeu.Presentation.Proxy
 
         #endregion
 
-        /// <summary>
-        /// 이 객체가 생성되었을때만 한번 실행하는 함수입니다.
-        /// </summary>
-        protected virtual void OnCreated() { }
         internal void InternalOnCreated()
         {
             m_GameObject = base.gameObject;
@@ -171,6 +167,11 @@ namespace Syadeu.Presentation.Proxy
 
             OnCreated();
         }
+
+        /// <summary>
+        /// 이 객체가 생성되었을때만 한번 실행하는 함수입니다.
+        /// </summary>
+        protected virtual void OnCreated() { }
         /// <summary>
         /// <see cref="Presentation.GameObjectProxySystem"/>에서 이 프록시 모노 객체를 재사용을 위해 실행되는 초기화 함수입니다.
         /// </summary>
@@ -187,5 +188,25 @@ namespace Syadeu.Presentation.Proxy
         }
 
         public bool IsValid() => Activated && !m_Entity.Equals(Entity<IEntity>.Empty);
+
+        void INotificationReceiver.OnNotify(Playable origin, INotification notification, object context)
+        {
+            if (notification is Timeline.AnimatorTriggerMarker animtrigger)
+            {
+                AnimatorComponent animator = GetComponent<AnimatorComponent>();
+                if (animator == null)
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"Timeline trying to triggering animator at entity({entity.Name}) but there\'s no animator");
+                    return;
+                }
+
+                animator.m_Animator.SetTrigger(animtrigger.TriggerKey);
+                return;
+            }
+
+            CoreSystem.Logger.LogError(Channel.Entity,
+                $"Unhandled marker type: {notification.GetType().Name}");
+        }
     }
 }

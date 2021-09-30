@@ -8,6 +8,8 @@ namespace Syadeu.Presentation
     /// </summary>
     public abstract class SynchronizedEventBase : IValidation
     {
+        public virtual UpdateLoop Loop => UpdateLoop.Default;
+
         internal abstract void InternalPost();
         internal abstract void InternalTerminate();
 

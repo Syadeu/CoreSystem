@@ -23,6 +23,7 @@ namespace Syadeu.Presentation.Attributes
         [JsonProperty(Order = 0, PropertyName = "AnimationTrigger")]
         public Reference<AnimationTriggerAction>[] m_AnimationTriggers = Array.Empty<Reference<AnimationTriggerAction>>();
 
+        [JsonIgnore] public bool IsInitialized => Parameters != null;
         [JsonIgnore] internal AnimatorComponent AnimatorComponent { get; set; }
         [JsonIgnore] internal Dictionary<int, object> Parameters { get; set; } = null;
         [JsonIgnore] public Dictionary<Hash, List<Reference<AnimationTriggerAction>>> AnimationTriggers { get; internal set; }
@@ -134,9 +135,10 @@ namespace Syadeu.Presentation.Attributes
             if (att.AnimatorComponent == null)
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"This entity({entity.Name}) has {nameof(AnimatorAttribute)} but cannot found animator");
+                    $"This entity({entity.Name}) has {nameof(AnimatorAttribute)} but cannot found animator({nameof(AnimatorComponent)})");
                 return false;
             }
+            att.AnimatorComponent.m_Transform = entity.transform;
             att.AnimatorComponent.m_AnimatorAttribute = att;
 
             if (att.Parameters == null)
@@ -190,6 +192,7 @@ namespace Syadeu.Presentation.Attributes
             AnimatorAttribute att = (AnimatorAttribute)attribute;
 
             att.AnimatorComponent.SetActive(false);
+            att.AnimatorComponent.m_Transform = null;
             att.AnimatorComponent.m_AnimatorAttribute = null;
             att.AnimatorComponent = null;
         }

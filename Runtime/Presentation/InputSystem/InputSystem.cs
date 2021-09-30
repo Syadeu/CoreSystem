@@ -6,6 +6,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
 using UnityEngine.InputSystem.LowLevel;
 using Syadeu.Database;
+using Syadeu.Mono;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -45,8 +46,14 @@ namespace Syadeu.Presentation.Input
 
         protected override PresentationResult OnInitialize()
         {
+            ConsoleWindow.OnWindowOpened += ConsoleWindow_OnWindowOpened;
             return base.OnInitialize();
         }
+        private void ConsoleWindow_OnWindowOpened(bool opened)
+        {
+            EnableInput = !opened;
+        }
+
         public override void OnDispose()
         {
             //for (int i = 0; i < InputSystemSettings.Instance.m_AdditionalInputActions.Length; i++)

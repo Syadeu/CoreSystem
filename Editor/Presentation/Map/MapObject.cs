@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace SyadeuEditor.Presentation.Map
 {
+    [System.Obsolete]
     public sealed class MapObject
     {
         const string c_EditorOnly = "EditorOnly";

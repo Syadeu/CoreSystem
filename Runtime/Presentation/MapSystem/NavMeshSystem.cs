@@ -26,6 +26,7 @@ namespace Syadeu.Presentation.Map
 
         private readonly List<NavMeshComponent> m_Agents = new List<NavMeshComponent>();
         private readonly List<NavObstacleAttribute> m_Obstacles = new List<NavObstacleAttribute>();
+        private readonly List<TerrainData> m_Terrains = new List<TerrainData>();
         private readonly List<NavMeshBuildSource> m_Sources = new List<NavMeshBuildSource>();
         private bool m_RequireReload = false;
 
@@ -81,6 +82,10 @@ namespace Syadeu.Presentation.Map
                 {
                     m_Sources.AddRange(item);
                 }
+                foreach (NavMeshBuildSource[] item in m_Terrains.Select((other) => other.m_Sources))
+                {
+                    m_Sources.AddRange(item);
+                }
             }
             
             foreach (NavMeshComponent agent in m_Agents)
@@ -127,6 +132,30 @@ namespace Syadeu.Presentation.Map
             component.m_Registered = false;
         }
 
+        public void AddTerrain(TerrainData terrainData, int areaMask)
+        {
+            CoreSystem.Logger.ThreadBlock(nameof(AddTerrain), ThreadInfo.Unity);
+
+            if (terrainData.m_TerrainInstance == null)
+            {
+                CoreSystem.Logger.LogError(Channel.Presentation, "Terrain is not an instance");
+                return;
+            }
+
+            Transform tr = terrainData.m_TerrainInstance.transform;
+            NavMeshBuildSource source = new NavMeshBuildSource
+            {
+                shape = NavMeshBuildSourceShape.Terrain,
+                sourceObject = terrainData.m_TerrainInstance.terrainData,
+                transform = float4x4.TRS(tr.position, quaternion.identity, 1),
+                area = areaMask
+            };
+            terrainData.m_Sources = new NavMeshBuildSource[] { source };
+
+            m_Sources.AddRange(terrainData.m_Sources);
+            m_Terrains.Add(terrainData);
+            m_RequireReload = true;
+        }
         public void AddObstacle(NavObstacleAttribute obstacle, ITransform transform, int areaMask)
         {
             CoreSystem.Logger.ThreadBlock(nameof(AddObstacle), ThreadInfo.Unity);
@@ -195,8 +224,18 @@ namespace Syadeu.Presentation.Map
         }
         public void RemoveObstacle(NavObstacleAttribute obstacle)
         {
+            CoreSystem.Logger.ThreadBlock(nameof(RemoveObstacle), ThreadInfo.Unity);
+
             m_Sources.Clear();
             m_Obstacles.Remove(obstacle);
+            m_RequireReload = true;
+        }
+        public void RemoveTerrain(TerrainData terrainData)
+        {
+            CoreSystem.Logger.ThreadBlock(nameof(RemoveObstacle), ThreadInfo.Unity);
+
+            m_Sources.Clear();
+            m_Terrains.Remove(terrainData);
             m_RequireReload = true;
         }
 

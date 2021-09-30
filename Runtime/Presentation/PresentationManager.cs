@@ -9,9 +9,11 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.LowLevel;
 
 namespace Syadeu.Presentation
 {
@@ -36,15 +38,15 @@ namespace Syadeu.Presentation
 
             public IPresentationSystemGroup m_SystemGroup;
 
-            public readonly List<PresentationSystemEntity> m_Systems = new List<PresentationSystemEntity>();
-            public readonly List<IInitPresentation> m_Initializers = new List<IInitPresentation>();
-            public readonly List<IBeforePresentation> m_BeforePresentations = new List<IBeforePresentation>();
-            public readonly List<IOnPresentation> m_OnPresentations = new List<IOnPresentation>();
-            public readonly List<IAfterPresentation> m_AfterPresentations = new List<IAfterPresentation>();
+            private readonly List<PresentationSystemEntity> m_Systems = new List<PresentationSystemEntity>();
+            private readonly List<IInitPresentation> m_Initializers = new List<IInitPresentation>();
+            private readonly List<IBeforePresentation> m_BeforePresentations = new List<IBeforePresentation>();
+            private readonly List<IOnPresentation> m_OnPresentations = new List<IOnPresentation>();
+            private readonly List<IAfterPresentation> m_AfterPresentations = new List<IAfterPresentation>();
 
             public readonly ConcurrentQueue<Action> m_RequestSystemDelegates = new ConcurrentQueue<Action>();
 
-            public CoreRoutine MainPresentation;
+            //public CoreRoutine MainPresentation;
             public CoreRoutine BackgroundPresentation;
 
             public bool m_MainthreadSignal = false;
@@ -73,6 +75,18 @@ namespace Syadeu.Presentation
                 m_OnPresentationJobHandle,
                 m_AfterPresentationJobHandle;
 
+            public int Count => m_Systems.Count;
+            public List<PresentationSystemEntity> Systems => m_Systems;
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            private Unity.Profiling.ProfilerMarker
+                m_InitializeMarker, m_InitializeAsyncMarker, m_StartPreMarker,
+                m_BeforePreMarker, m_OnPreMarker, m_AfterPreMarker;
+
+            private List<Unity.Profiling.ProfilerMarker>
+                m_BeforePreSystemMarkers, m_OnPreSystemMarkers, m_AfterPreSystemMarkers;
+#endif
+
             public Group(Type name, Hash hash)
             {
                 m_Name = name;
@@ -87,6 +101,20 @@ namespace Syadeu.Presentation
                 m_WaitBeforePre = new WaitUntil(() => m_MainthreadBeforePre && m_BackgroundthreadBeforePre);
                 m_WaitOnPre = new WaitUntil(() => m_MainthreadOnPre && m_BackgroundthreadOnPre);
                 m_WaitAfterPre = new WaitUntil(() => m_MainthreadAfterPre && m_BackgroundthreadAfterPre);
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                m_InitializeMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{m_Name.Name}.Initialize");
+                m_InitializeAsyncMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{m_Name.Name}.InitializeAsync");
+                m_StartPreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{m_Name.Name}.StartPresentation");
+
+                m_BeforePreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{m_Name.Name}.BeforePresentation");
+                m_OnPreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{m_Name.Name}.OnPresentation");
+                m_AfterPreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{m_Name.Name}.AfterPresentation");
+
+                m_BeforePreSystemMarkers = new List<Unity.Profiling.ProfilerMarker>();
+                m_OnPreSystemMarkers = new List<Unity.Profiling.ProfilerMarker>();
+                m_AfterPreSystemMarkers = new List<Unity.Profiling.ProfilerMarker>();
+#endif
             }
 
             public sealed class YieldAwaiter : ICustomYieldAwaiter
@@ -96,7 +124,57 @@ namespace Syadeu.Presentation
             }
             public bool HasSystem<T>(T system) where T : PresentationSystemEntity
                 => m_Systems.FindFor((other) => other.Equals(system)) != null;
+            public bool TryGetSystem(Type type, out PresentationSystemEntity system)
+            {
+                for (int i = 0; i < m_Systems.Count; i++)
+                {
+                    if (type.IsAssignableFrom(m_Systems[i].GetType()))
+                    {
+                        system = m_Systems[i];
+                        return true;
+                    }
+                }
+                system = null;
+                return false;
+            }
+            public bool TryGetSystem<T>(out T system) where T : PresentationSystemEntity
+            {
+                if (!TryGetSystem(TypeHelper.TypeOf<T>.Type, out PresentationSystemEntity temp))
+                {
+                    system = null;
+                    return false;
+                }
 
+                system = (T)temp;
+                return true;
+            }
+
+            public void Add(PresentationSystemEntity system)
+            {
+                m_Systems.Add(system);
+                m_Initializers.Add(system);
+                if (system.EnableBeforePresentation)
+                {
+                    m_BeforePresentations.Add(system);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                    m_BeforePreSystemMarkers.Add(new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{system.GetType().Name}"));
+#endif
+                }
+                if (system.EnableOnPresentation)
+                {
+                    m_OnPresentations.Add(system);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                    m_OnPreSystemMarkers.Add(new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{system.GetType().Name}"));
+#endif
+                }
+                if (system.EnableAfterPresentation)
+                {
+                    m_AfterPresentations.Add(system);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                    m_AfterPreSystemMarkers.Add(new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{system.GetType().Name}"));
+#endif
+                }
+            }
             public void Reset()
             {
                 m_IsStarted = false;
@@ -130,16 +208,167 @@ namespace Syadeu.Presentation
                 else if (pos == 1) m_OnPresentationJobHandle = JobHandle.CombineDependencies(m_OnPresentationJobHandle, jobHandle);
                 else m_AfterPresentationJobHandle = JobHandle.CombineDependencies(m_AfterPresentationJobHandle, jobHandle);
             }
+
+            public void Initialize()
+            {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                m_InitializeMarker.Begin();
+#endif
+                for (int i = 0; i < m_Initializers.Count; i++)
+                {
+                    PresentationResult result = m_Initializers[i].OnInitialize();
+                    LogMessage(result);
+                }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                m_InitializeMarker.End();
+#endif
+            }
+            public void InitializeAsync()
+            {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                m_InitializeAsyncMarker.Begin();
+#endif
+                for (int i = 0; i < m_Initializers.Count; i++)
+                {
+                    PresentationResult result = m_Initializers[i].OnInitializeAsync();
+                    LogMessage(result);
+                }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                m_InitializeAsyncMarker.End();
+#endif
+            }
+            public void OnStartPresentation()
+            {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                m_StartPreMarker.Begin();
+#endif
+                for (int i = 0; i < m_Initializers.Count; i++)
+                {
+                    m_Initializers[i].OnStartPresentation();
+                }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                m_StartPreMarker.End();
+#endif
+            }
+            public void BeforePresentation()
+            {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                m_BeforePreMarker.Begin();
+#endif
+                m_MainthreadBeforePre = false;
+
+                // Unity Jobs
+                m_BeforePresentationJobHandle.Complete();
+
+                for (int i = 0; i < m_BeforePresentations.Count; i++)
+                {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                    m_BeforePreSystemMarkers[i].Begin();
+#endif
+                    PresentationResult result = m_BeforePresentations[i].BeforePresentation();
+                    LogMessage(result);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                    m_BeforePreSystemMarkers[i].End();
+#endif
+                }
+
+                m_MainthreadBeforePre = true;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                m_BeforePreMarker.End();
+#endif
+            }
+            public void BeforePresentationAsync()
+            {
+                for (int i = 0; i < m_BeforePresentations.Count; i++)
+                {
+                    PresentationResult result = m_BeforePresentations[i].BeforePresentationAsync();
+                    LogMessage(result);
+                }
+            }
+            public void OnPresentation()
+            {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                m_OnPreMarker.Begin();
+#endif
+                m_MainthreadOnPre = false;
+
+                // Unity Jobs
+                m_OnPresentationJobHandle.Complete();
+
+                for (int i = 0; i < m_OnPresentations.Count; i++)
+                {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                    m_OnPreSystemMarkers[i].Begin();
+#endif
+                    PresentationResult result = m_OnPresentations[i].OnPresentation();
+                    LogMessage(result);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                    m_OnPreSystemMarkers[i].End();
+#endif
+                }
+
+                m_MainthreadOnPre = true;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                m_OnPreMarker.End();
+#endif
+            }
+            public void OnPresentationAsync()
+            {
+                for (int i = 0; i < m_OnPresentations.Count; i++)
+                {
+                    PresentationResult result = m_OnPresentations[i].OnPresentationAsync();
+                    LogMessage(result);
+                }
+            }
+            public void AfterPresentation()
+            {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                m_AfterPreMarker.Begin();
+#endif
+                m_MainthreadAfterPre = false;
+
+                // Unity Jobs
+                m_AfterPresentationJobHandle.Complete();
+
+                for (int i = 0; i < m_AfterPresentations.Count; i++)
+                {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                    m_AfterPreSystemMarkers[i].Begin();
+#endif
+                    PresentationResult result = m_AfterPresentations[i].AfterPresentation();
+                    LogMessage(result);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                    m_AfterPreSystemMarkers[i].End();
+#endif
+                }
+
+                m_MainthreadAfterPre = true;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                m_AfterPreMarker.End();
+#endif
+            }
+            public void AfterPresentationAsync()
+            {
+                for (int i = 0; i < m_AfterPresentations.Count; i++)
+                {
+                    PresentationResult result = m_AfterPresentations[i].AfterPresentationAsync();
+                    LogMessage(result);
+                }
+            }
         }
-        private readonly Hash m_DefaultGroupHash = Hash.NewHash(TypeHelper.TypeOf<DefaultPresentationGroup>.Name);
+        private readonly Hash m_DefaultGroupHash = GroupToHash(TypeHelper.TypeOf<DefaultPresentationGroup>.Type);
 
         internal readonly Dictionary<Hash, Group> m_PresentationGroups = new Dictionary<Hash, Group>();
         internal readonly Dictionary<Type, Hash> m_RegisteredGroup = new Dictionary<Type, Hash>();
         internal readonly Dictionary<string, List<Hash>> m_DependenceSceneList = new Dictionary<string, List<Hash>>();
 
+        private Thread m_PresentationThread;
+
         public override void OnInitialize()
         {
             const string register = "Register";
+
+            SetPlayerLoop();
 
             Type[] registers = TypeHelper.GetTypes(t => !t.IsAbstract && t.GetInterfaces().FindFor(ta => ta.Equals(TypeHelper.TypeOf<IPresentationRegister>.Type)) != null).ToArray();
 
@@ -159,8 +388,111 @@ namespace Syadeu.Presentation
                     StartPresentation(Hash.NewHash(registers[i].Name));
                 }
             }
+            
+            StartUnityUpdate(ThreadStart());
         }
+        private IEnumerator ThreadStart()
+        {
+            m_PresentationThread = new Thread(PresentationAsyncUpdate)
+            {
+                IsBackground = true
+            };
+            m_PresentationThread.Start(this);
 
+            yield break;
+        }
+        private void SetPlayerLoop()
+        {
+            PlayerLoopSystem defaultLoop = PlayerLoop.GetCurrentPlayerLoop();
+            for (int i = 0; i < defaultLoop.subSystemList.Length; i++)
+            {
+                if (defaultLoop.subSystemList[i].type.Equals(TypeHelper.TypeOf<UnityEngine.PlayerLoop.PreUpdate>.Type))
+                {
+                    List<PlayerLoopSystem> list = defaultLoop.subSystemList[i].subSystemList.ToList();
+                    PlayerLoopSystem loop = new PlayerLoopSystem
+                    {
+                        loopConditionFunction = defaultLoop.subSystemList[i].loopConditionFunction,
+                        subSystemList = Array.Empty<PlayerLoopSystem>(),
+                        type = TypeHelper.TypeOf<PresentationLoop.PresentationPreUpdate>.Type,
+                        updateDelegate = PresentationPreUpdate,
+                        updateFunction = defaultLoop.subSystemList[i].updateFunction
+                    };
+                    list.Add(loop);
+                    defaultLoop.subSystemList[i].subSystemList = list.ToArray();
+                }
+                else if (defaultLoop.subSystemList[i].type.Equals(TypeHelper.TypeOf<UnityEngine.PlayerLoop.Update>.Type))
+                {
+                    List<PlayerLoopSystem> list = defaultLoop.subSystemList[i].subSystemList.ToList();
+                    PlayerLoopSystem loop = new PlayerLoopSystem
+                    {
+                        loopConditionFunction = defaultLoop.subSystemList[i].loopConditionFunction,
+                        subSystemList = Array.Empty<PlayerLoopSystem>(),
+                        type = TypeHelper.TypeOf<PresentationLoop.PresentationBeforeUpdate>.Type,
+                        updateDelegate = PresentationBeforeUpdate,
+                        updateFunction = defaultLoop.subSystemList[i].updateFunction
+                    };
+                    PlayerLoopSystem loop1 = new PlayerLoopSystem
+                    {
+                        loopConditionFunction = defaultLoop.subSystemList[i].loopConditionFunction,
+                        subSystemList = Array.Empty<PlayerLoopSystem>(),
+                        type = TypeHelper.TypeOf<PresentationLoop.PresentationOnUpdate>.Type,
+                        updateDelegate = PresentationOnUpdate,
+                        updateFunction = defaultLoop.subSystemList[i].updateFunction
+                    };
+                    PlayerLoopSystem loop2 = new PlayerLoopSystem
+                    {
+                        loopConditionFunction = defaultLoop.subSystemList[i].loopConditionFunction,
+                        subSystemList = Array.Empty<PlayerLoopSystem>(),
+                        type = TypeHelper.TypeOf<PresentationLoop.PresentationAfterUpdate>.Type,
+                        updateDelegate = PresentationAfterUpdate,
+                        updateFunction = defaultLoop.subSystemList[i].updateFunction
+                    };
+                    list.Add(loop);
+                    list.Add(loop1);
+                    list.Add(loop2);
+                    defaultLoop.subSystemList[i].subSystemList = list.ToArray();
+                }
+                else if (defaultLoop.subSystemList[i].type.Equals(TypeHelper.TypeOf<UnityEngine.PlayerLoop.PreLateUpdate>.Type))
+                {
+                    List<PlayerLoopSystem> list = defaultLoop.subSystemList[i].subSystemList.ToList();
+                    PlayerLoopSystem loop = new PlayerLoopSystem
+                    {
+                        loopConditionFunction = defaultLoop.subSystemList[i].loopConditionFunction,
+                        subSystemList = Array.Empty<PlayerLoopSystem>(),
+                        type = TypeHelper.TypeOf<PresentationLoop.PresentationLateUpdate.TransformUpdate>.Type,
+                        updateDelegate = PresentationLateTransformUpdate,
+                        updateFunction = defaultLoop.subSystemList[i].updateFunction
+                    };
+                    PlayerLoopSystem loop2 = new PlayerLoopSystem
+                    {
+                        loopConditionFunction = defaultLoop.subSystemList[i].loopConditionFunction,
+                        subSystemList = Array.Empty<PlayerLoopSystem>(),
+                        type = TypeHelper.TypeOf<PresentationLoop.PresentationLateUpdate.AfterTransformUpdate>.Type,
+                        updateDelegate = PresentationLateAfterTransformUpdate,
+                        updateFunction = defaultLoop.subSystemList[i].updateFunction
+                    };
+                    list.Add(loop);
+                    list.Add(loop2);
+                    defaultLoop.subSystemList[i].subSystemList = list.ToArray();
+                }
+                else if (defaultLoop.subSystemList[i].type.Equals(TypeHelper.TypeOf<UnityEngine.PlayerLoop.PostLateUpdate>.Type))
+                {
+                    List<PlayerLoopSystem> list = defaultLoop.subSystemList[i].subSystemList.ToList();
+                    PlayerLoopSystem loop = new PlayerLoopSystem
+                    {
+                        loopConditionFunction = defaultLoop.subSystemList[i].loopConditionFunction,
+                        subSystemList = Array.Empty<PlayerLoopSystem>(),
+                        type = TypeHelper.TypeOf<PresentationLoop.PresentationPostUpdate>.Type,
+                        updateDelegate = PresentationPostUpdate,
+                        updateFunction = defaultLoop.subSystemList[i].updateFunction
+                    };
+                    list.Add(loop);
+                    defaultLoop.subSystemList[i].subSystemList = list.ToArray();
+                }
+            }
+
+            PlayerLoop.SetPlayerLoop(defaultLoop);
+        }
         public override void Dispose()
         {
             foreach (var item in m_PresentationGroups)
@@ -168,12 +500,195 @@ namespace Syadeu.Presentation
                 if (item.Value.m_IsStarted) item.Value.Reset();
             }
 
+            PlayerLoopSystem defaultLoop = PlayerLoop.GetDefaultPlayerLoop();
+            PlayerLoop.SetPlayerLoop(defaultLoop);
+
             base.Dispose();
         }
 
         #endregion
 
+        #region Player Loops
+
+        internal event Action PreUpdate;
+        
+        internal event Action BeforeUpdate;
+        internal event Action BeforeUpdateAsync;
+        internal event Action Update;
+        internal event Action UpdateAsync;
+        internal event Action AfterUpdate;
+        internal event Action AfterUpdateAsync;
+        internal event Action TransformUpdate;
+        internal event Action AfterTransformUpdate;
+
+        internal event Action PostUpdate;
+
+        private void PresentationPreUpdate()
+        {
+            PreUpdate?.Invoke();
+        }
+
+        private void PresentationBeforeUpdate()
+        {
+            m_BeforeUpdateAsyncSemaphore.Set();
+            BeforeUpdate?.Invoke();
+        }
+        private void PresentationOnUpdate()
+        {
+            m_OnUpdateAsyncSemaphore.Set();
+            Update?.Invoke();
+        }
+        private void PresentationAfterUpdate()
+        {
+            m_AfterUpdateAsyncSemaphore.Set();
+            AfterUpdate?.Invoke();
+        }
+
+        private void PresentationLateTransformUpdate()
+        {
+            TransformUpdate?.Invoke();
+        }
+        private void PresentationLateAfterTransformUpdate()
+        {
+            AfterTransformUpdate?.Invoke();
+        }
+
+        private void PresentationPostUpdate()
+        {
+            PostUpdate?.Invoke();
+        }
+
+        private ManualResetEvent
+            m_BeforeUpdateAsyncSemaphore = new ManualResetEvent(true),
+            m_OnUpdateAsyncSemaphore = new ManualResetEvent(true),
+            m_AfterUpdateAsyncSemaphore = new ManualResetEvent(true);
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        private static Unity.Profiling.ProfilerMarker
+            simSemaphoreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Internal, "Semaphore.WaitOne (Simulation)"),
+
+            beforeSemaphoreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Internal, "Semaphore.WaitOne (BeforeUpdate)"),
+            onSemaphoreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Internal, "Semaphore.WaitOne (OnUpdate)"),
+            afterSemaphoreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Internal, "Semaphore.WaitOne (AfterUpdate)");
+
+        private static UnityEngine.Profiling.CustomSampler
+            PresentationUpdateMarker = UnityEngine.Profiling.CustomSampler.Create("PresentationAsyncUpdate"),
+
+            beforeUpdateMarker = UnityEngine.Profiling.CustomSampler.Create("BeforeUpdate"),
+            onUpdateMarker = UnityEngine.Profiling.CustomSampler.Create("OnUpdate"),
+            afterUpdateMarker = UnityEngine.Profiling.CustomSampler.Create("AfterUpdate");
+#endif
+        private static void PresentationAsyncUpdate(object obj)
+        {
+            PresentationManager mgr = (PresentationManager)obj;
+            Thread.CurrentThread.CurrentCulture = global::System.Globalization.CultureInfo.InvariantCulture;
+
+            CoreSystem.SimulateWatcher.WaitOne();
+
+            while (!CoreSystem.BlockCreateInstance)
+            {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                if (CoreSystem.IsEditorPaused) continue;
+
+                UnityEngine.Profiling.Profiler.BeginThreadProfiling("Syadeu", "CoreSystem.Presentation");
+                PresentationUpdateMarker.Begin();
+
+                using (simSemaphoreMarker.Auto())
+#endif
+                {
+                    while (!CoreSystem.BlockCreateInstance)
+                    {
+                        if (CoreSystem.SimulateWatcher.WaitOne(100)) break;
+                    }
+                    //if (!CoreSystem.SimulateWatcher.WaitOne(1)) continue;
+
+                    //CoreSystem.SimulateWatcher.WaitOne();
+                }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                beforeSemaphoreMarker.Begin();
+#endif
+                while (!CoreSystem.BlockCreateInstance)
+                {
+                    if (mgr.m_BeforeUpdateAsyncSemaphore.WaitOne(1)) break;
+                }
+                
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                beforeSemaphoreMarker.End();
+                beforeUpdateMarker.Begin();
+#endif
+                {
+                    mgr.BeforeUpdateAsync?.Invoke();
+                    mgr.m_BeforeUpdateAsyncSemaphore.Reset();
+                    //for (int i = 0; i < 100000; i++)
+                    //{
+                    //    Math.Sqrt(2.5f);
+                    //}
+                    //UnityEngine.Debug.Log("before");
+                }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                beforeUpdateMarker.End();
+                onSemaphoreMarker.Begin();
+#endif
+                while (!CoreSystem.BlockCreateInstance)
+                {
+                    if (mgr.m_OnUpdateAsyncSemaphore.WaitOne(1)) break;
+                }
+                
+                
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                onSemaphoreMarker.End();
+                onUpdateMarker.Begin();
+#endif
+                mgr.UpdateAsync?.Invoke();
+                mgr.m_OnUpdateAsyncSemaphore.Reset();
+                //for (int i = 0; i < 100000; i++)
+                //{
+                //    Math.Sqrt(2.5f);
+                //}
+                //UnityEngine.Debug.Log("on");
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                onUpdateMarker.End();
+                afterSemaphoreMarker.Begin();
+#endif
+                while (!CoreSystem.BlockCreateInstance)
+                {
+                    if (mgr.m_AfterUpdateAsyncSemaphore.WaitOne(1)) break;
+                }
+                
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                afterSemaphoreMarker.End();
+                afterUpdateMarker.Begin();
+#endif
+                mgr.AfterUpdateAsync?.Invoke();
+                mgr.m_AfterUpdateAsyncSemaphore.Reset();
+                //for (int i = 0; i < 100000; i++)
+                //{
+                //    Math.Sqrt(2.5f);
+                //}
+                //UnityEngine.Debug.Log("after");
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                afterUpdateMarker.End();
+                PresentationUpdateMarker.End();
+                UnityEngine.Profiling.Profiler.EndThreadProfiling();
+#endif
+            }
+
+            mgr.m_BeforeUpdateAsyncSemaphore.Dispose();
+            mgr.m_OnUpdateAsyncSemaphore.Dispose();
+            mgr.m_AfterUpdateAsyncSemaphore.Dispose();
+
+            UnityEngine.Debug.Log("thread out");
+        }
+
+        #endregion
+
         #region Internals
+
+        private static Hash GroupToHash(Type group)
+        {
+            return Hash.NewHash(group.Name);
+        }
+
         internal static void RegisterSystem(Type groupName, SceneReference dependenceScene, params Type[] systems)
         {
             if (dependenceScene != null)
@@ -182,7 +697,7 @@ namespace Syadeu.Presentation
             }
             else CoreSystem.Logger.Log(Channel.Presentation, $"Registration start ({groupName.Name.Split('.').Last()}), number of {systems.Length}");
 
-            Hash groupHash = Hash.NewHash(groupName.Name);
+            Hash groupHash = GroupToHash(groupName);
             if (!Instance.m_PresentationGroups.TryGetValue(groupHash, out Group group))
             {
                 group = new Group(groupName, groupHash);
@@ -233,7 +748,17 @@ namespace Syadeu.Presentation
 
                 registedTypes.Add(systems[i]);
 
-                Instance.m_RegisteredGroup.Add(systems[i], groupHash);
+                if (Instance.m_RegisteredGroup.ContainsKey(systems[i]))
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Presentation,
+                        $"Multiple system({TypeHelper.ToString(systems[i])}, in group {TypeHelper.ToString(groupName)}) detected. " +
+                        $"This instance will not gathered by PresentationSystem<T> but PresentationSystemGroup<T>.Systems.");
+                }
+                else
+                {
+                    Instance.m_RegisteredGroup.Add(systems[i], groupHash);
+                }
+                
                 CoreSystem.Logger.Log(Channel.Presentation, $"System ({groupName.Name.Split('.').Last()}): {systems[i].Name} Registered");
             }
 
@@ -266,22 +791,16 @@ namespace Syadeu.Presentation
                 PresentationSystemEntity system = (PresentationSystemEntity)ins;
 
                 system.m_GroupIndex = groupHash;
-                system.m_SystemIndex = group.m_Systems.Count;
+                system.m_SystemIndex = group.Count;
 
                 system.SetJobHandle = group.SetJobHandle;
                 system.GetJobHandle = group.GetJobHandle;
 
-                group.m_Systems.Add(system);
-
-                group.m_Initializers.Add((IInitPresentation)ins);
-                if (system.EnableBeforePresentation) group.m_BeforePresentations.Add(system);
-                if (system.EnableOnPresentation) group.m_OnPresentations.Add(system);
-                if (system.EnableAfterPresentation) group.m_AfterPresentations.Add(system);
-
-                //$"System ({group.m_Name.Name}): {system.GetType().Name} Start".ToLog();
+                group.Add(system);
             }
 
-            group.MainPresentation = Instance.StartUnityUpdate(Presentation(group));
+            //group.MainPresentation = Instance.StartUnityUpdate(Presentation(group));
+            Instance.StartUnityUpdate(Presentation(group));
             group.BackgroundPresentation = Instance.StartBackgroundUpdate(PresentationAsync(group));
             group.m_IsStarted = true;
 
@@ -298,14 +817,22 @@ namespace Syadeu.Presentation
                 return;
             }
 
-            Instance.StopUnityUpdate(group.MainPresentation);
-            Instance.StopUnityUpdate(group.BackgroundPresentation);
+            Instance.BeforeUpdate -= group.BeforePresentation;
+            Instance.Update -= group.OnPresentation;
+            Instance.AfterUpdate -= group.AfterPresentation;
+
+            //Instance.StopUnityUpdate(group.MainPresentation);
+            //Instance.StopBackgroundUpdate(group.BackgroundPresentation);
+            Instance.BeforeUpdateAsync -= group.BeforePresentationAsync;
+            Instance.UpdateAsync -= group.OnPresentationAsync;
+            Instance.AfterUpdateAsync -= group.AfterPresentationAsync;
 
             group.Reset();
 
             CoreSystem.Logger.Log(Channel.Presentation, $"{group.m_Name.Name} group is stopped");
         }
 
+        [Obsolete]
         internal static void RegisterRequestSystem<T, TA>(Action<TA> setter) 
             where T : PresentationSystemEntity
             where TA : PresentationSystemEntity
@@ -330,6 +857,42 @@ namespace Syadeu.Presentation
             });
             //"request in".ToLog();
         }
+        internal static void RegisterRequest<TGroup, TSystem>(Action<TSystem> setter)
+            where TGroup : PresentationGroupEntity
+            where TSystem : PresentationSystemEntity
+        {
+            Hash groupHash = GroupToHash(TypeHelper.TypeOf<TGroup>.Type);
+
+            if (!Instance.m_PresentationGroups.TryGetValue(groupHash, out Group group))
+            {
+                throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
+                    $"시스템 {typeof(TGroup).Name} 은 등록되지 않았습니다.");
+            }
+
+            if (group.m_IsStarted && !group.m_MainthreadSignal)
+            {
+                group.m_RequestSystemDelegates.Enqueue(() =>
+                {
+                    TSystem system = PresentationSystem<TSystem>.System;
+                    if (system == null)
+                    {
+                        CoreSystem.Logger.LogError(Channel.Presentation, $"Requested system ({TypeHelper.TypeOf<TSystem>.Name}) not found");
+                    }
+                    else CoreSystem.Logger.Log(Channel.Presentation, $"Requested system ({TypeHelper.TypeOf<TSystem>.Name}) found");
+
+                    setter.Invoke(system);
+                });
+            }
+
+            if (group.TryGetSystem<TSystem>(out TSystem system))
+            {
+                setter.Invoke(system);
+                return;
+            }
+
+            throw new Exception("unknown");
+        }
+
         #endregion
 
         #region Presentation Group Method
@@ -342,13 +905,7 @@ namespace Syadeu.Presentation
         }
         private static IEnumerator Presentation(Group group)
         {
-            PresentationResult result;
-
-            for (int i = 0; i < group.m_Initializers.Count; i++)
-            {
-                result = group.m_Initializers[i].OnInitialize();
-                LogMessage(result);
-            }
+            group.Initialize();
             group.m_MainthreadSignal = true;
 
             float dateTime = Time.realtimeSinceStartup;
@@ -385,9 +942,9 @@ namespace Syadeu.Presentation
                 }
             }
 
-            for (int i = 0; i < group.m_Systems.Count; i++)
+            for (int i = 0; i < group.Count; i++)
             {
-                while (!group.m_Systems[i].IsStartable)
+                while (!group.Systems[i].IsStartable)
                 {
                     yield return null;
                 }
@@ -405,73 +962,23 @@ namespace Syadeu.Presentation
                 }
                 return group.m_BackgroundthreadSignal;
             });
-            for (int i = 0; i < group.m_Initializers.Count; i++)
-            {
-                group.m_Initializers[i].OnStartPresentation();
-            }
+
+            group.OnStartPresentation();
             
-            //group.m_IsPresentationStarted = true;
-            //OnPresentationStarted?.Invoke();
             group.m_MainInitDone = true;
 
             yield return group.m_WaitUntilInitializeCompleted;
             CoreSystem.Logger.Log(Channel.Presentation, $"Presentation group ({group.m_Name.Name}) started");
 
-            while (true)
-            {
-                group.m_MainthreadBeforePre = false;
-
-                // Unity Jobs
-                group.m_BeforePresentationJobHandle.Complete();
-
-                for (int i = 0; i < group.m_BeforePresentations.Count; i++)
-                {
-                    result = group.m_BeforePresentations[i].BeforePresentation();
-                    LogMessage(result);
-                }
-
-                group.m_MainthreadBeforePre = true;
-                yield return group.m_WaitBeforePre;
-                group.m_MainthreadOnPre = false;
-
-                // Unity Jobs
-                group.m_OnPresentationJobHandle.Complete();
-
-                for (int i = 0; i < group.m_OnPresentations.Count; i++)
-                {
-                    result = group.m_OnPresentations[i].OnPresentation();
-                    LogMessage(result);
-                }
-
-                group.m_MainthreadOnPre = true;
-                yield return group.m_WaitOnPre;
-                group.m_MainthreadAfterPre = false;
-
-                // Unity Jobs
-                group.m_AfterPresentationJobHandle.Complete();
-
-                for (int i = 0; i < group.m_AfterPresentations.Count; i++)
-                {
-                    result = group.m_AfterPresentations[i].AfterPresentation();
-                    LogMessage(result);
-                }
-
-                group.m_MainthreadAfterPre = true;
-                yield return group.m_WaitAfterPre;
-
-                yield return null;
-            }
+            Instance.BeforeUpdate += group.BeforePresentation;
+            Instance.Update += group.OnPresentation;
+            Instance.AfterUpdate += group.AfterPresentation;
         }
         private static IEnumerator PresentationAsync(Group group)
         {
-            PresentationResult result;
+            #region Initialize
 
-            for (int i = 0; i < group.m_Initializers.Count; i++)
-            {
-                result = group.m_Initializers[i].OnInitializeAsync();
-                LogMessage(result);
-            }
-            //"1".ToLog();
+            group.InitializeAsync();
 
             yield return new WaitUntil(() => group.m_MainthreadSignal);
             int requestSystemCount = group.m_RequestSystemDelegates.Count;
@@ -493,43 +1000,37 @@ namespace Syadeu.Presentation
             group.m_BackgroundthreadSignal = true;
             group.m_BackgroundInitDone = true;
 
+            #endregion
+
             yield return group.m_WaitUntilInitializeCompleted;
 
-            while (true)
-            {
-                group.m_BackgroundthreadBeforePre = false;
+            Instance.BeforeUpdateAsync += group.BeforePresentationAsync;
+            Instance.UpdateAsync += group.OnPresentationAsync;
+            Instance.AfterUpdateAsync += group.AfterPresentationAsync;
 
-                for (int i = 0; i < group.m_BeforePresentations.Count; i++)
-                {
-                    result = group.m_BeforePresentations[i].BeforePresentationAsync();
-                    LogMessage(result);
-                }
+            //while (true)
+            //{
+            //    group.m_BackgroundthreadBeforePre = false;
 
-                group.m_BackgroundthreadBeforePre = true;
-                yield return group.m_WaitBeforePre;
-                group.m_BackgroundthreadOnPre = false;
+            //    group.BeforePresentationAsync();
 
-                for (int i = 0; i < group.m_OnPresentations.Count; i++)
-                {
-                    result = group.m_OnPresentations[i].OnPresentationAsync();
-                    LogMessage(result);
-                }
+            //    group.m_BackgroundthreadBeforePre = true;
+            //    yield return group.m_WaitBeforePre;
+            //    group.m_BackgroundthreadOnPre = false;
 
-                group.m_BackgroundthreadOnPre = true;
-                yield return group.m_WaitOnPre;
-                group.m_BackgroundthreadAfterPre = false;
+            //    group.OnPresentationAsync();
 
-                for (int i = 0; i < group.m_AfterPresentations.Count; i++)
-                {
-                    result = group.m_AfterPresentations[i].AfterPresentationAsync();
-                    LogMessage(result);
-                }
+            //    group.m_BackgroundthreadOnPre = true;
+            //    yield return group.m_WaitOnPre;
+            //    group.m_BackgroundthreadAfterPre = false;
 
-                group.m_BackgroundthreadAfterPre = true;
-                yield return group.m_WaitAfterPre;
+            //    group.AfterPresentationAsync();
 
-                yield return null;
-            }
+            //    group.m_BackgroundthreadAfterPre = true;
+            //    yield return group.m_WaitAfterPre;
+
+            //    yield return null;
+            //}
         }
         #endregion
     }

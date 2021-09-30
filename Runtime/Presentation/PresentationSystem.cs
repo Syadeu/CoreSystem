@@ -28,7 +28,7 @@ namespace Syadeu.Presentation
                     {
                         return Null;
                     }
-                    var list = PresentationManager.Instance.m_PresentationGroups[hash].m_Systems;
+                    var list = PresentationManager.Instance.m_PresentationGroups[hash].Systems;
                     int idx = -1;
                     for (int i = 0; i < list.Count; i++)
                     {
@@ -63,11 +63,11 @@ namespace Syadeu.Presentation
                 CoreSystem.Logger.NotNull(PresentationManager.Instance, "1");
                 CoreSystem.Logger.NotNull(PresentationManager.Instance.m_PresentationGroups, "2");
                 CoreSystem.Logger.NotNull(PresentationManager.Instance.m_PresentationGroups[Instance.m_GroupHash], "3");
-                CoreSystem.Logger.NotNull(PresentationManager.Instance.m_PresentationGroups[Instance.m_GroupHash].m_Systems[Instance.m_Index], "4");
+                CoreSystem.Logger.NotNull(PresentationManager.Instance.m_PresentationGroups[Instance.m_GroupHash].Systems[Instance.m_Index], "4");
 
                 try
                 {
-                    return (T)PresentationManager.Instance.m_PresentationGroups[Instance.m_GroupHash].m_Systems[Instance.m_Index];
+                    return (T)PresentationManager.Instance.m_PresentationGroups[Instance.m_GroupHash].Systems[Instance.m_Index];
                 }
                 catch (Exception ex)
                 {
@@ -78,7 +78,18 @@ namespace Syadeu.Presentation
                 }
             }
         }
-        public static PresentationSystemID<T> SystemID => new PresentationSystemID<T>(Instance.m_GroupHash, Instance.m_Index);
+        public static PresentationSystemID<T> SystemID
+        {
+            get
+            {
+                PresentationSystem<T> ins = Instance;
+                if (ins.m_GroupHash.IsEmpty() || ins.m_Index == -1)
+                {
+                    return PresentationSystemID<T>.Null;
+                }
+                return new PresentationSystemID<T>(ins.m_GroupHash, ins.m_Index);
+            }
+        }
 
         private readonly Hash m_GroupHash;
         private readonly int m_Index;

@@ -48,6 +48,7 @@ namespace Syadeu.Internal
 
             public static ConstructorInfo GetConstructorInfo(params Type[] args)
                 => TypeHelper.GetConstructorInfo(Type, args);
+            public static FieldInfo GetFieldInfo(string name) => TypeHelper.GetFieldInfo(Type, name);
 
             private static string s_ToString = string.Empty;
             public static new string ToString()
@@ -104,6 +105,10 @@ namespace Syadeu.Internal
             return t.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
                 null, CallingConventions.HasThis, args, null);
         }
+        public static FieldInfo GetFieldInfo(Type type, string name, BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+        {
+            return type.GetField(name, bindingFlags);
+        }
 
         private static IEnumerable<Type> GetLoadableTypes(Assembly assembly)
         {
@@ -123,6 +128,11 @@ namespace Syadeu.Internal
             const string c_TStart = "<";
             const string c_TEnd = ">";
             const string c_Pattern = ", {0}";
+
+            if (type == null)
+            {
+                return "UNKNOWN NULL";
+            }
 
             string output = type.Name;
             if (type.GenericTypeArguments.Length != 0)

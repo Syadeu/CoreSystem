@@ -2,6 +2,7 @@
 using Syadeu.Presentation.Internal;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace Syadeu.Presentation
 {
@@ -19,6 +20,8 @@ namespace Syadeu.Presentation
     /// <typeparam name="T"></typeparam>
     public abstract class PresentationSystemEntity<T> : PresentationSystemEntity where T : PresentationSystemEntity
     {
+        private readonly List<UnityEngine.GameObject> m_CreatedGameObjects = new List<UnityEngine.GameObject>();
+
         public new PresentationSystemID<T> SystemID => new PresentationSystemID<T>(m_GroupIndex, m_SystemIndex);
 
         public override bool IsStartable => true;
@@ -37,19 +40,46 @@ namespace Syadeu.Presentation
         protected override PresentationResult AfterPresentation() { return PresentationResult.Normal; }
         protected override PresentationResult AfterPresentationAsync() { return PresentationResult.Normal; }
 
+        internal override sealed void InternalOnDispose()
+        {
+            for (int i = 0; i < m_CreatedGameObjects.Count; i++)
+            {
+                Destroy(m_CreatedGameObjects[i]);
+            }
+            m_CreatedGameObjects.Clear();
+        }
         public override void OnDispose() { }
 
         /// <summary>
         /// <see cref="OnInitialize"/> 혹은 <see cref="OnInitializeAsync"/> 에서만 수행되야됩니다.
         /// </summary>
-        /// <typeparam name="TA"></typeparam>
+        /// <typeparam name="TSystem"></typeparam>
         /// <param name="setter"></param>
-        protected void RequestSystem<TA>(Action<TA> setter) where TA : PresentationSystemEntity
-            => PresentationManager.RegisterRequestSystem<T, TA>(setter);
+        [Obsolete]
+        protected void RequestSystem<TSystem>(Action<TSystem> setter) where TSystem : PresentationSystemEntity
+            => PresentationManager.RegisterRequest<DefaultPresentationGroup, TSystem>(setter);
+
+        protected void RequestSystem<TGroup, TSystem>(Action<TSystem> setter)
+            where TGroup : PresentationGroupEntity
+            where TSystem : PresentationSystemEntity
+        {
+            PresentationManager.RegisterRequest<TGroup, TSystem>(setter);
+        }
 
         protected CoreRoutine StartCoroutine(IEnumerator cor) => CoreSystem.StartUnityUpdate(this, cor);
         protected CoreRoutine StartBackgroundCoroutine(IEnumerator cor) => CoreSystem.StartBackgroundUpdate(this, cor);
         protected void StopCoroutine(CoreRoutine routine) => CoreSystem.RemoveUnityUpdate(routine);
         protected void StopBackgroundCoroutine(CoreRoutine routine) => CoreSystem.RemoveBackgroundUpdate(routine);
+
+        protected UnityEngine.GameObject CreateGameObject(string name)
+        {
+            CoreSystem.Logger.ThreadBlock(nameof(DontDestroyOnLoad), Syadeu.Internal.ThreadInfo.Unity);
+
+            UnityEngine.GameObject obj = new UnityEngine.GameObject(name);
+
+            //obj.transform.SetParent(s_PresentationUnityFolder);
+
+            return obj;
+        }
     }
 }

@@ -10,6 +10,7 @@ using Syadeu.Presentation.Map;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Mathematics;
 using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation
@@ -22,14 +23,15 @@ namespace Syadeu.Presentation
         bool IsEmpty();
         ObjectBase GetObject();
     }
-    public interface IReference<T> : IReference, IEquatable<IReference<T>> where T : ObjectBase
+    public interface IReference<T> : IReference, IEquatable<IReference<T>> 
+        where T : class, IObject
     {
         new T GetObject();
     }
     [Serializable]
     public struct Reference : IReference, IEquatable<Reference>
     {
-        public static Reference Empty = new Reference(Hash.Empty);
+        public static readonly Reference Empty = new Reference(Hash.Empty);
 
         [JsonProperty(Order = 0, PropertyName = "Hash")] public Hash m_Hash;
 
@@ -63,9 +65,11 @@ namespace Syadeu.Presentation
         public static implicit operator Hash(Reference a) => a.m_Hash;
     }
     [Serializable]
-    public struct Reference<T> : IReference<T>, IEquatable<Reference<T>> where T : ObjectBase
+    public struct Reference<T> : IReference<T>, IEquatable<Reference<T>> 
+        where T : class, IObject
     {
-        public static Reference<T> Empty = new Reference<T>(Hash.Empty);
+        public static readonly Reference<T> Empty = new Reference<T>(Hash.Empty);
+        private static PresentationSystemID<EntitySystem> s_EntitySystem = PresentationSystemID<EntitySystem>.Null;
 
         [JsonProperty(Order = 0, PropertyName = "Hash")] public Hash m_Hash;
 
@@ -98,7 +102,8 @@ namespace Syadeu.Presentation
         }
         public T GetObject()
         {
-            if (EntityDataList.Instance.m_Objects.TryGetValue(m_Hash, out ObjectBase value)) return (T)value;
+            if (EntityDataList.Instance.m_Objects.TryGetValue(m_Hash, out ObjectBase value) &&
+                value is T t) return t;
             return null;
         }
 
@@ -109,6 +114,39 @@ namespace Syadeu.Presentation
         public bool Equals(IReference<T> other) => m_Hash.Equals(other.Hash);
         public bool Equals(Reference<T> other) => m_Hash.Equals(other.m_Hash);
 
+        public Instance<T> CreateInstance()
+        {
+            if (IsEmpty() || !IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity, "You cannot create instance of null reference.");
+                return Instance<T>.Empty;
+            }
+
+            if (s_EntitySystem.IsNull())
+            {
+                s_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
+                if (s_EntitySystem.IsNull())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity, "Unexpected error has been raised.");
+                    return Instance<T>.Empty;
+                }
+            }
+
+            Type t = GetObject().GetType();
+            if (TypeHelper.TypeOf<EntityBase>.Type.IsAssignableFrom(t))
+            {
+                var temp = s_EntitySystem.System.CreateEntity(in m_Hash, float3.zero);
+                return new Instance<T>(temp.Idx);
+            }
+            else if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(t))
+            {
+                var temp = s_EntitySystem.System.CreateObject(m_Hash);
+                return new Instance<T>(temp.Idx);
+            }
+
+            return s_EntitySystem.System.CreateInstance(this);
+        }
+
         public static implicit operator T(Reference<T> a) => a.GetObject();
         public static implicit operator Hash(Reference<T> a) => a.m_Hash;
         public static implicit operator Reference(Reference<T> a) => new Reference(a.m_Hash);
@@ -116,6 +154,7 @@ namespace Syadeu.Presentation
         [Preserve]
         static void AOTCodeGeneration()
         {
+            AotHelper.EnsureType<ReferenceArray<Reference<T>>>();
             AotHelper.EnsureType<Reference<T>>();
             AotHelper.EnsureList<Reference<T>>();
 

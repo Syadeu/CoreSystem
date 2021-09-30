@@ -10,6 +10,7 @@ using Syadeu.Presentation.Entities;
 using System;
 using System.IO;
 using System.Reflection;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -33,6 +34,24 @@ namespace SyadeuEditor.Presentation
 
             AssetReference asset = (AssetReference)value;
             return asset.editorAsset;
+        }
+        public static string GetEditorAssetPath(this IPrefabReference prefab)
+        {
+            if (m_RefPrefabField == null)
+            {
+                m_RefPrefabField = TypeHelper.TypeOf<PrefabList.ObjectSetting>.Type
+                    .GetField("m_RefPrefab", BindingFlags.NonPublic | BindingFlags.Instance);
+            }
+            if (prefab == null) return string.Empty;
+
+            PrefabList.ObjectSetting set = prefab.GetObjectSetting();
+            if (set == null) return string.Empty;
+
+            object value = m_RefPrefabField.GetValue(set);
+            if (value == null) return string.Empty;
+
+            AssetReference asset = (AssetReference)value;
+            return AssetDatabase.GetAssetPath(asset.editorAsset);
         }
         public static UnityEngine.Object GetEditorAsset(this IPrefabReference prefab)
         {

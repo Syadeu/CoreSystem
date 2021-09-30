@@ -13,6 +13,8 @@ namespace Syadeu.Presentation.Events
     /// </remarks>
     public sealed class OnTransformChangedEvent : SynchronizedEvent<OnTransformChangedEvent>
     {
+        public override UpdateLoop Loop => UpdateLoop.Transform;
+
 #pragma warning disable IDE1006 // Naming Styles
         public Entity<IEntity> entity { get; private set; }
         public ITransform transform { get; private set; }

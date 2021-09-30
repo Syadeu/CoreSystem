@@ -7,27 +7,49 @@ namespace Syadeu.Presentation.Proxy
 {
     internal struct ProxyTransformData : IEquatable<ProxyTransformData>
     {
-        internal bool m_IsOccupied;
-        internal bool m_EnableCull;
-        internal bool m_IsVisible;
-        internal bool m_DestroyQueued;
+        public bool m_IsOccupied;
+        public bool m_EnableCull;
+        public bool m_IsVisible;
+        public bool m_DestroyQueued;
 
-        internal ClusterID m_ClusterID;
-        internal int m_Index;
-        internal int2 m_ProxyIndex;
+        private ClusterID m_ClusterID;
+        public int m_Index;
+        public int2 m_ProxyIndex;
 
-        internal Hash m_Hash;
-        internal int m_Generation;
-        internal PrefabReference m_Prefab;
+        public Hash m_Hash;
+        public int m_Generation;
+        public PrefabReference m_Prefab;
 
-        internal float3 m_Translation;
-        internal float3 m_Scale;
-        internal float3 m_Center;
-        internal float3 m_Size;
+        public float3 m_Translation;
+        public float3 m_Scale;
+        public float3 m_Center;
+        public float3 m_Size;
 
-        internal quaternion m_Rotation;
+        public quaternion m_Rotation;
+
+        public bool m_GpuInstanced;
 
 #pragma warning disable IDE1006 // Naming Styles
+        public ClusterID clusterID
+        {
+            get
+            {
+                return m_ClusterID;
+            }
+            set
+            {
+                //if (!m_Prefab.IsNone() && m_Prefab.IsValid())
+                //{
+                //    $"in({m_Prefab.GetObjectSetting().m_Name}) from {m_ClusterID.GroupIndex}:{m_ClusterID.ItemIndex} -> {value.GroupIndex}:{value.ItemIndex}".ToLog();
+                //}
+                //else
+                //{
+                //    $"in from {m_ClusterID.GroupIndex}:{m_ClusterID.ItemIndex} -> {value.GroupIndex}:{value.ItemIndex}".ToLog();
+                //}
+                
+                m_ClusterID = value;
+            }
+        }
         public bool destroyed
         {
             get
