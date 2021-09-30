@@ -75,6 +75,12 @@ namespace Syadeu.Presentation
 
         #endregion
 
+        public static TSystem GetSystem<TSystem>()
+            where TSystem : PresentationSystemEntity
+        {
+            return PresentationManager.GetSystem<T, TSystem>();
+        }
+
         /// <summary>
         /// 이 그룹이 유효한지 반환합니다.
         /// </summary>

@@ -938,14 +938,14 @@ namespace Syadeu.Presentation
             {
                 group.m_RequestSystemDelegates.Enqueue(() =>
                 {
-                    TSystem system = PresentationSystem<TSystem>.System;
-                    if (system == null)
+                    //TSystem system = PresentationSystem<TSystem>.System;
+                    if (!group.TryGetSystem<TSystem>(out TSystem target))
                     {
                         CoreSystem.Logger.LogError(Channel.Presentation, $"Requested system ({TypeHelper.TypeOf<TSystem>.Name}) not found");
                     }
                     else CoreSystem.Logger.Log(Channel.Presentation, $"Requested system ({TypeHelper.TypeOf<TSystem>.Name}) found");
 
-                    setter.Invoke(system);
+                    setter.Invoke(target);
                 });
                 return;
             }
@@ -957,6 +957,26 @@ namespace Syadeu.Presentation
             }
 
             throw new Exception("unknown");
+        }
+        internal static TSystem GetSystem<TGroup, TSystem>()
+            where TGroup : PresentationGroupEntity
+            where TSystem : PresentationSystemEntity
+        {
+            Hash groupHash = GroupToHash(TypeHelper.TypeOf<TGroup>.Type);
+
+            if (!Instance.m_PresentationGroups.TryGetValue(groupHash, out Group group))
+            {
+                throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
+                    $"시스템 그룹 {typeof(TGroup).Name} 은 등록되지 않았습니다.");
+            }
+
+            if (!group.TryGetSystem<TSystem>(out TSystem target))
+            {
+                CoreSystem.Logger.LogError(Channel.Presentation, $"Requested system ({TypeHelper.TypeOf<TSystem>.Name}) not found");
+            }
+            else CoreSystem.Logger.Log(Channel.Presentation, $"Requested system ({TypeHelper.TypeOf<TSystem>.Name}) found");
+
+            return target;
         }
 
         #endregion

@@ -33,13 +33,20 @@ namespace Syadeu.Presentation.TurnTable
     [Preserve]
     internal sealed class TurnPlayerProcessor : AttributeProcessor<TurnPlayerAttribute>
     {
+        private TRPGTurnTableSystem m_TurnTableSystem;
+
         protected override void OnInitialize()
         {
             //EventSystem.AddEvent<OnActionPointChangedEvent>(OnActionPointChangedEventHandler);
+            RequestSystem<TRPGSystemGroup, TRPGTurnTableSystem>(Bind);
         }
         protected override void OnDispose()
         {
             //EventSystem.RemoveEvent<OnActionPointChangedEvent>(OnActionPointChangedEventHandler);
+        }
+        private void Bind(TRPGTurnTableSystem other)
+        {
+            m_TurnTableSystem = other;
         }
         //private void OnActionPointChangedEventHandler(OnActionPointChangedEvent ev)
         //{
@@ -54,11 +61,11 @@ namespace Syadeu.Presentation.TurnTable
             TurnPlayerComponent component = new TurnPlayerComponent(attribute, EntitySystem.CreateHashCode());
             component = entity.AddComponent(component);
 
-            TurnTableManager.AddPlayer(component);
+            m_TurnTableSystem.AddPlayer(component);
         }
         protected override void OnDestroy(TurnPlayerAttribute attribute, EntityData<IEntityData> entity)
         {
-            TurnTableManager.RemovePlayer(entity.GetComponent<TurnPlayerComponent>());
+            m_TurnTableSystem.RemovePlayer(entity.GetComponent<TurnPlayerComponent>());
         }
     }
 }

@@ -35,7 +35,7 @@ namespace Syadeu.Presentation.BehaviorTree
                 return TaskStatus.Failure;
             }
 
-            TurnTableManager.NextTurn();
+            PresentationSystemGroup<TRPGSystemGroup>.GetSystem<TRPGTurnTableSystem>().NextTurn();
 
             return TaskStatus.Success;
         }

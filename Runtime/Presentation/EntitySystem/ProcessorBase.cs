@@ -47,9 +47,16 @@ namespace Syadeu.Presentation
         }
         private GameObjectProxySystem ProxySystem => EntitySystem.m_ProxySystem;
 
-        protected void RequestSystem<T>(Action<T> setter) where T : PresentationSystemEntity
+        [Obsolete]
+        protected void RequestSystem<TSystem>(Action<TSystem> setter) where TSystem : PresentationSystemEntity
         {
-            setter.Invoke(PresentationSystem<T>.System);
+            PresentationManager.RegisterRequest<DefaultPresentationGroup, TSystem>(setter);
+        }
+        protected void RequestSystem<TGroup, TSystem>(Action<TSystem> setter)
+            where TGroup : PresentationGroupEntity
+            where TSystem : PresentationSystemEntity
+        {
+            PresentationManager.RegisterRequest<TGroup, TSystem>(setter);
         }
 
         protected EntityData<IEntityData> CreateObject(IReference obj)

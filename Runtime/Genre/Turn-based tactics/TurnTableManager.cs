@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 namespace Syadeu.Presentation.TurnTable
 {
+    [System.Obsolete("Use TRPGTurnTableSystem", true)]
     public sealed class TurnTableManager : StaticManager<TurnTableManager>
     {
         private readonly List<ITurnPlayer> m_Players = new List<ITurnPlayer>();
