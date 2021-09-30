@@ -43,8 +43,9 @@ namespace Syadeu.Presentation.Map
         [Serializable]
         public sealed class SubGrid
         {
-            [JsonProperty(Order = 0, PropertyName = "Center")] public int3 m_Center;
-            [JsonProperty(Order = 1, PropertyName = "Size")] public int3 m_Size;
+            [JsonProperty(Order = 0, PropertyName = "Name")] public string m_Name;
+            [JsonProperty(Order = 1, PropertyName = "Center")] public int3 m_Center;
+            [JsonProperty(Order = 2, PropertyName = "Size")] public int3 m_Size;
         }
 
         [JsonProperty(Order = 0, PropertyName = "Center")] private int3 m_Center;
@@ -57,6 +58,7 @@ namespace Syadeu.Presentation.Map
         }};
 
         [Header("Sub Grid")]
+        [JsonProperty(Order = 4, PropertyName = "SubGrids")]
         private SubGrid[] m_SubGrids = Array.Empty<SubGrid>();
 
         [JsonIgnore] public int3 Center => m_Center;
@@ -86,8 +88,25 @@ namespace Syadeu.Presentation.Map
             SubGrids = new BinaryGrid[m_SubGrids.Length];
             for (int i = 0; i < m_SubGrids.Length; i++)
             {
+#if UNITY_EDITOR
+                if (m_SubGrids[i].m_Size.Equals(int3.zero))
+                {
+                    CoreSystem.Logger.LogError(Channel.Presentation,
+                        $"Sub Grid {m_SubGrids[i].m_Name} at {i} size is zero. This is not allowed.");
+                }
+#endif
                 SubGrids[i] = new BinaryGrid(m_SubGrids[i].m_Center, m_SubGrids[i].m_Size, m_CellSize);
             }
+#if UNITY_EDITOR
+            for (int i = 0; i < SubGrids.Length; i++)
+            {
+                if (Grid.bounds.Intersect(SubGrids[i].bounds))
+                {
+                    CoreSystem.Logger.LogError(Channel.Presentation,
+                        $"Sub Grid {m_SubGrids[i].m_Name} intersects with main grid. Are you intended?");
+                }
+            }
+#endif
         }
         public void DestroyGrid()
         {

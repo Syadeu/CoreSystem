@@ -41,5 +41,6 @@ namespace Syadeu.Presentation.Map
         }
 
         public bool Equals(GridPosition other) => index.Equals(other.index) && location.Equals(other.location);
+        public override int GetHashCode() => index;
     }
 }
