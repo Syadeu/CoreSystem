@@ -84,6 +84,24 @@ namespace Syadeu.Presentation
         {
             for (int i = 0; i < m_DestroyedObjectsInThisFrame.Count; i++)
             {
+                if (m_ObjectEntities[m_DestroyedObjectsInThisFrame[i]] is IEntityData entityData)
+                {
+                    if (!CoreSystem.BlockCreateInstance && m_ObjectEntities[m_DestroyedObjectsInThisFrame[i]] is IEntity entity)
+                    {
+                        if (entity.transform is ProxyTransform tr)
+                        {
+                            Hash index = tr.m_Hash;
+                            tr.Destroy();
+                            m_EntityGameObjects.Remove(index);
+                        }
+                        else if (entity.transform is UnityTransform unityTr)
+                        {
+                            UnityEngine.Object.Destroy(unityTr.provider.gameObject);
+                            ((IDisposable)unityTr).Dispose();
+                        }
+                    }
+                }
+
                 ((IDisposable)m_ObjectEntities[m_DestroyedObjectsInThisFrame[i]]).Dispose();
                 m_ObjectEntities.Remove(m_DestroyedObjectsInThisFrame[i]);
             }
@@ -298,6 +316,8 @@ namespace Syadeu.Presentation
         }
         private void M_ProxySystem_OnDataObjectProxyRemoved(ProxyTransform tr, RecycleableMonobehaviour monoObj)
         {
+            if (!m_EntityGameObjects.ContainsKey(tr.m_Hash)) return;
+
 #if DEBUG_MODE
             if (!m_EntityGameObjects.TryGetValue(tr.m_Hash, out Hash eCheckHash) ||
                 !m_ObjectEntities.ContainsKey(eCheckHash))
@@ -734,20 +754,20 @@ namespace Syadeu.Presentation
             {
                 ProcessEntityOnDestroy(this, entityData);
 
-                if (!CoreSystem.BlockCreateInstance && m_ObjectEntities[hash] is IEntity entity)
-                {
-                    if (entity.transform is ProxyTransform tr)
-                    {
-                        Hash index = tr.m_Hash;
-                        tr.Destroy();
-                        m_EntityGameObjects.Remove(index);
-                    }
-                    else if (entity.transform is UnityTransform unityTr)
-                    {
-                        UnityEngine.Object.Destroy(unityTr.provider.gameObject);
-                        ((IDisposable)unityTr).Dispose();
-                    }
-                }
+                //if (!CoreSystem.BlockCreateInstance && m_ObjectEntities[hash] is IEntity entity)
+                //{
+                //    if (entity.transform is ProxyTransform tr)
+                //    {
+                //        Hash index = tr.m_Hash;
+                //        tr.Destroy();
+                //        m_EntityGameObjects.Remove(index);
+                //    }
+                //    else if (entity.transform is UnityTransform unityTr)
+                //    {
+                //        UnityEngine.Object.Destroy(unityTr.provider.gameObject);
+                //        ((IDisposable)unityTr).Dispose();
+                //    }
+                //}
             }
             else
             {

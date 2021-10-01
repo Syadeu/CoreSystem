@@ -1070,6 +1070,11 @@ namespace Syadeu.Presentation.Proxy
 #if DEBUG_MODE
                 s_CreateMarker.Begin();
 #endif
+                if (Result.GetComponentInChildren<RectTransform>() != null)
+                {
+                    parent = PresentationSystem<DefaultPresentationGroup, WorldCanvasSystem>.System.Canvas.transform;
+                }
+
                 if (parent != null)
                 {
                     Result.transform.SetParent(parent);
@@ -1141,7 +1146,7 @@ namespace Syadeu.Presentation.Proxy
 
 #endregion
 
-#region Inner Classes
+        #region Inner Classes
 
         private struct ClusterIDRequest
         {
@@ -1168,6 +1173,6 @@ namespace Syadeu.Presentation.Proxy
             }
         }
 
-#endregion
+        #endregion
     }
 }

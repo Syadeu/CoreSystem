@@ -5,6 +5,7 @@ using DG.Tweening;
 using Syadeu;
 using Syadeu.Database;
 using Syadeu.Presentation.Input;
+using Syadeu.Presentation.Map;
 using Syadeu.Presentation.Proxy;
 
 using System;
@@ -65,17 +66,16 @@ namespace Syadeu.Presentation.TurnTable
 
         public Color Color => m_BackgroundImg.color;
 
-        public int GridIndex { get; private set; }
+        public GridPosition GridPosition { get; private set; }
         public int RequireAP { get; private set; }
 
         public State CurrentState { get; private set; } = State.Normal;
         public bool IsValid() => m_Initialized && m_RecycleComponent.IsValid();
 
         private TextMeshProUGUI testAP;
-        public void Initialize(int gridIndex, int requireAP)
+        public void Initialize(GridPosition position)
         {
-            GridIndex = gridIndex;
-            RequireAP = requireAP;
+            GridPosition = position;
 
             if (testAP == null)
             {
@@ -91,7 +91,7 @@ namespace Syadeu.Presentation.TurnTable
 
                 testAP.alignment = TextAlignmentOptions.Center;
             }
-            testAP.text = $"{gridIndex}:{requireAP}";
+            testAP.text = $"{position.index}:{position.location.x},{position.location.y}";
 
             m_Initialized = true;
         }
@@ -130,7 +130,7 @@ namespace Syadeu.Presentation.TurnTable
         {
             if (!IsValid()) return;
 
-            if (!PresentationSystem<InputSystem>.System.EnableInput ||
+            if (!PresentationSystem<DefaultPresentationGroup, InputSystem>.System.EnableInput ||
                 data.button != PointerEventData.InputButton.Left) return;
 
             DeSelect();

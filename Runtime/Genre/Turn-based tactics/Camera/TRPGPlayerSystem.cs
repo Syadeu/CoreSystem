@@ -5,7 +5,7 @@ using Syadeu.Presentation.TurnTable.UI;
 namespace Syadeu.Presentation.TurnTable
 {
     [SubSystem(typeof(RenderSystem))]
-    public sealed class TRPGCameraSystem : PresentationSystemEntity<TRPGCameraSystem>
+    public sealed class TRPGPlayerSystem : PresentationSystemEntity<TRPGPlayerSystem>
     {
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;
@@ -34,6 +34,9 @@ namespace Syadeu.Presentation.TurnTable
 
             m_RenderSystem = null;
             m_EventSystem = null;
+            m_TurnTableSystem = null;
+            m_TRPGCameraMovement = null;
+            m_TRPGGridSystem = null;
         }
 
         #region Binds
@@ -79,7 +82,7 @@ namespace Syadeu.Presentation.TurnTable
                     m_TRPGCameraMovement.SetNormal();
 
                     //var move = m_TurnTableSystem.CurrentTurn.GetComponent<TRPGActorMoveComponent>();
-                    m_TRPGGridSystem.DrawMoveableGridBounds(m_TurnTableSystem.CurrentTurn);
+                    m_TRPGGridSystem.DrawUICell(m_TurnTableSystem.CurrentTurn);
 
                     break;
                 case ShortcutType.Attack:

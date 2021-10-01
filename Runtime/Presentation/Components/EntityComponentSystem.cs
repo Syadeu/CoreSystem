@@ -169,7 +169,7 @@ namespace Syadeu.Presentation.Components
                 boxed.Increment<TComponent>();
                 m_ComponentBuffer[index.x] = boxed;
 
-                if (!m_ComponentBuffer[index.x].Find(entity, ref index.y))
+                if (!m_ComponentBuffer[index.x].FindEmpty(entity, ref index.y))
                 {
                     throw new Exception();
                 }

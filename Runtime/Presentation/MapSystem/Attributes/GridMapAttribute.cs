@@ -61,6 +61,10 @@ namespace Syadeu.Presentation.Map
         [JsonProperty(Order = 4, PropertyName = "SubGrids")]
         private SubGrid[] m_SubGrids = Array.Empty<SubGrid>();
 
+        [Header("Cell Overray UI")]
+        [JsonProperty(Order = 5, PropertyName = "CellUIPrefab")]
+        internal Reference<UIObjectEntity> m_CellUIPrefab = Reference<UIObjectEntity>.Empty;
+
         [JsonIgnore] public int3 Center => m_Center;
         [JsonIgnore] public int3 Size => m_Size;
         [JsonIgnore] public float CellSize => m_CellSize;
@@ -71,6 +75,7 @@ namespace Syadeu.Presentation.Map
 
         [JsonIgnore] public List<int> m_ObstacleLayerIndices = new List<int>();
         [JsonIgnore] public NativeHashSet<int> ObstacleLayer { get; private set; }
+        [JsonIgnore] public Mesh CellMesh { get; private set; }
 
         public void CreateGrid()
         {
@@ -107,6 +112,29 @@ namespace Syadeu.Presentation.Map
                 }
             }
 #endif
+
+            float halfCell = m_CellSize * .5f;
+            CellMesh = new Mesh();
+            CellMesh.vertices = new Vector3[]
+            {
+                new Vector3(-halfCell, 0, halfCell),
+                new Vector3(halfCell, 0, halfCell),
+                new Vector3(halfCell, 0, -halfCell),
+                new Vector3(-halfCell, 0, -halfCell)
+            };
+            CellMesh.triangles = new int[]
+            {
+                0, 1, 2,
+                0, 2, 3
+            };
+            CellMesh.uv = new Vector2[]
+            {
+                new Vector2(0, 1),
+                new Vector2(0, 1),
+                new Vector2(0, 1),
+                new Vector2(0, 1)
+            };
+            CellMesh.RecalculateBounds();
         }
         public void DestroyGrid()
         {
@@ -722,7 +750,7 @@ namespace Syadeu.Presentation.Map
 
         protected override void OnInitialize()
         {
-            RequestSystem<GridSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, GridSystem>(Bind);
         }
         private void Bind(GridSystem other)
         {

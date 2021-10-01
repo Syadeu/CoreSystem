@@ -1,5 +1,6 @@
 ﻿using Syadeu.Database;
 using Syadeu.Mono;
+using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Proxy;
 using System;
@@ -35,6 +36,7 @@ namespace Syadeu.Presentation.Map
 
         private GridMapAttribute GridMap => m_MainGrid;
         public float CellSize => m_MainGrid.CellSize;
+        public Mesh CellMesh => m_MainGrid.CellMesh;
 
         #region Presentation Methods
 
@@ -537,6 +539,22 @@ namespace Syadeu.Presentation.Map
             => GridMap.GetRange1024(in idx, in range, in ignoreLayers);
         public void GetRange(ref NativeList<int> list, in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
             => GridMap.GetRange(ref list, in idx, in range, in ignoreLayers);
+
+        #endregion
+
+        #region UI
+
+        public Entity<IEntity> PlaceUICell(GridPosition position, float heightOffset = .25f)
+        {
+            Entity<IEntity> entity = 
+                m_EntitySystem.CreateEntity(
+                    GridMap.m_CellUIPrefab, 
+                    IndexToPosition(position.index) + new float3(0, heightOffset, 0), 
+                    quaternion.EulerZXY(new float3(90, 0, 0) * Mathf.Deg2Rad), 
+                    1);
+
+            return entity;
+        }
 
         #endregion
 

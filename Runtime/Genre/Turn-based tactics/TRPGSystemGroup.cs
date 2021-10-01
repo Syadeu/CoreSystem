@@ -12,7 +12,7 @@ namespace Syadeu.Presentation.TurnTable
         {
             RegisterSystem(
                 TypeHelper.TypeOf<EventSystem>.Type,
-                TypeHelper.TypeOf<TRPGCameraSystem>.Type,
+                TypeHelper.TypeOf<TRPGPlayerSystem>.Type,
                 TypeHelper.TypeOf<TRPGTurnTableSystem>.Type,
                 TypeHelper.TypeOf<TRPGGridSystem>.Type,
                 TypeHelper.TypeOf<UI.TRPGCanvasUISystem>.Type

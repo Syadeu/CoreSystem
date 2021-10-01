@@ -1,16 +1,20 @@
 ﻿using Syadeu.Mono;
+using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Input;
 using Syadeu.Presentation.Map;
+using System.Collections.Generic;
 using Unity.Collections;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace Syadeu.Presentation.TurnTable
 {
+    [SubSystem(typeof(GridSystem))]
     public sealed class TRPGGridSystem : PresentationSystemEntity<TRPGGridSystem>
     {
         public override bool EnableBeforePresentation => false;
-        public override bool EnableOnPresentation => false;
+        public override bool EnableOnPresentation => true;
         public override bool EnableAfterPresentation => false;
 
         private LineRenderer m_GridBoundsLineRenderer;
@@ -18,7 +22,11 @@ namespace Syadeu.Presentation.TurnTable
         private NativeList<Vector3> m_GridBoundsTempOutlines;
         private bool[] m_GridBoundsMouseOver;
 
+        private bool m_IsDrawingGrids = false;
+        private readonly List<Entity<IEntity>> m_DrawnCellUIEntities = new List<Entity<IEntity>>();
+
         private InputSystem m_InputSystem;
+        private GridSystem m_GridSystem;
 
         protected override PresentationResult OnInitialize()
         {
@@ -41,6 +49,7 @@ namespace Syadeu.Presentation.TurnTable
             m_GridBoundsTempOutlines = new NativeList<Vector3>(512, Allocator.Persistent);
 
             RequestSystem<DefaultPresentationGroup, InputSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, GridSystem>(Bind);
 
             return base.OnInitialize();
         }
@@ -54,21 +63,26 @@ namespace Syadeu.Presentation.TurnTable
         {
             m_InputSystem = other;
         }
-
-        private EntityData<IEntityData> m_DrawingEntityTarget;
-        private bool m_IsDrawingGrids = false;
-
-        protected override PresentationResult OnPresentationAsync()
+        private void Bind(GridSystem other)
         {
-            return base.OnPresentationAsync();
+            m_GridSystem = other;
         }
 
-        public void DrawMoveableGridBounds(EntityData<IEntityData> entity)
+        public void DrawUICell(EntityData<IEntityData> entity)
         {
             if (!entity.HasComponent<TRPGActorMoveComponent>())
             {
                 "error".ToLogError();
                 return;
+            }
+
+            if (m_IsDrawingGrids)
+            {
+                for (int i = 0; i < m_DrawnCellUIEntities.Count; i++)
+                {
+                    m_DrawnCellUIEntities[i].Destroy();
+                }
+                m_DrawnCellUIEntities.Clear();
             }
 
             TRPGActorMoveComponent move = entity.GetComponent<TRPGActorMoveComponent>();
@@ -79,8 +93,36 @@ namespace Syadeu.Presentation.TurnTable
             m_GridBoundsLineRenderer.SetPositions(m_GridBoundsTempOutlines);
             m_GridBoundsMouseOver = new bool[m_GridBoundsLineRenderer.positionCount];
 
-            m_DrawingEntityTarget = entity;
+            for (int i = 0; i < m_GridBoundsTempMoveables.Length; i++)
+            {
+                Entity<IEntity> ui = m_GridSystem.PlaceUICell(m_GridBoundsTempMoveables[i]);
+
+                ui.AddComponent(new TRPGGridCellComponent()
+                {
+                    m_GridPosition = m_GridBoundsTempMoveables[i]
+                });
+
+                m_DrawnCellUIEntities.Add(ui);
+            }
+
             m_IsDrawingGrids = true;
         }
+        public void ClearUICell()
+        {
+            if (!m_IsDrawingGrids) return;
+
+            for (int i = 0; i < m_DrawnCellUIEntities.Count; i++)
+            {
+                m_DrawnCellUIEntities[i].Destroy();
+            }
+            m_DrawnCellUIEntities.Clear();
+
+            m_IsDrawingGrids = false;
+        }
+    }
+
+    public struct TRPGGridCellComponent : IEntityComponent
+    {
+        public GridPosition m_GridPosition;
     }
 }
