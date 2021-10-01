@@ -73,8 +73,8 @@ namespace Syadeu.Presentation.TurnTable
 
             TRPGActorMoveComponent move = entity.GetComponent<TRPGActorMoveComponent>();
             move.GetMoveablePositions(ref m_GridBoundsTempMoveables);
-            move.CalculateMoveableOutline(m_GridBoundsTempMoveables, ref m_GridBoundsTempOutlines);
-            $"{m_GridBoundsTempMoveables.Length} :: {m_GridBoundsTempOutlines.Length}".ToLog();
+            move.CalculateMoveableOutlineVertices(m_GridBoundsTempMoveables, ref m_GridBoundsTempOutlines);
+            
             m_GridBoundsLineRenderer.positionCount = m_GridBoundsTempOutlines.Length;
             m_GridBoundsLineRenderer.SetPositions(m_GridBoundsTempOutlines);
             m_GridBoundsMouseOver = new bool[m_GridBoundsLineRenderer.positionCount];
