@@ -640,23 +640,23 @@ namespace Syadeu.Presentation
             m_OnUpdateAsyncSemaphore,
             m_AfterUpdateAsyncSemaphore;
 
-#if DEBUG_MODE
-        private static Unity.Profiling.ProfilerMarker
-            simSemaphoreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Internal, "Semaphore.WaitOne (Simulation)"),
-
-            beforeSemaphoreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Internal, "Semaphore.WaitOne (BeforeUpdate)"),
-            onSemaphoreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Internal, "Semaphore.WaitOne (OnUpdate)"),
-            afterSemaphoreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Internal, "Semaphore.WaitOne (AfterUpdate)");
-
-        private static UnityEngine.Profiling.CustomSampler
-            PresentationUpdateMarker = UnityEngine.Profiling.CustomSampler.Create("PresentationAsyncUpdate"),
-
-            beforeUpdateMarker = UnityEngine.Profiling.CustomSampler.Create("BeforeUpdate"),
-            onUpdateMarker = UnityEngine.Profiling.CustomSampler.Create("OnUpdate"),
-            afterUpdateMarker = UnityEngine.Profiling.CustomSampler.Create("AfterUpdate");
-#endif
         private static void PresentationAsyncUpdate(object obj)
         {
+#if DEBUG_MODE
+            Unity.Profiling.ProfilerMarker
+                simSemaphoreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Internal, "Semaphore.WaitOne (Simulation)"),
+
+                beforeSemaphoreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Internal, "Semaphore.WaitOne (BeforeUpdate)"),
+                onSemaphoreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Internal, "Semaphore.WaitOne (OnUpdate)"),
+                afterSemaphoreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Internal, "Semaphore.WaitOne (AfterUpdate)");
+
+            UnityEngine.Profiling.CustomSampler
+                PresentationUpdateMarker = UnityEngine.Profiling.CustomSampler.Create("PresentationAsyncUpdate"),
+
+                beforeUpdateMarker = UnityEngine.Profiling.CustomSampler.Create("BeforeUpdate"),
+                onUpdateMarker = UnityEngine.Profiling.CustomSampler.Create("OnUpdate"),
+                afterUpdateMarker = UnityEngine.Profiling.CustomSampler.Create("AfterUpdate");
+#endif
             PresentationManager mgr = (PresentationManager)obj;
             Thread.CurrentThread.CurrentCulture = global::System.Globalization.CultureInfo.InvariantCulture;
 

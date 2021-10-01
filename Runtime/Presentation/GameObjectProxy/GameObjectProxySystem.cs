@@ -968,15 +968,23 @@ namespace Syadeu.Presentation.Proxy
             SceneSystem SceneSystem => m_ProxySystem.m_SceneSystem;
             EventSystem EventSystem => m_ProxySystem.m_EventSystem;
 
-            //AssetReference refObject;
             PrefabReference m_PrefabIdx;
             Scene m_RequestedScene;
             Action<RecycleableMonobehaviour> m_OnCompleted;
-            
+
+#if DEBUG_MODE
+            private static Unity.Profiling.ProfilerMarker
+                s_SetupMarker = new Unity.Profiling.ProfilerMarker("PrefabRequester: Setup"), 
+                s_CreateMarker = new Unity.Profiling.ProfilerMarker("PrefabRequester: Create Prefab");
+#endif
+
             public void Setup(GameObjectProxySystem proxySystem, 
                 PrefabReference prefabIdx, Vector3 pos, Quaternion rot,
                 Action<RecycleableMonobehaviour> onCompleted)
             {
+#if DEBUG_MODE
+                s_SetupMarker.Begin();
+#endif
                 CoreSystem.Logger.True(prefabIdx.IsValid(), nameof(PrefabReference) + "not valid");
                 //var prefabInfo = PrefabList.Instance.ObjectSettings[prefabIdx];
                 var prefabInfo = prefabIdx.GetObjectSetting();
@@ -1006,6 +1014,9 @@ namespace Syadeu.Presentation.Proxy
                     onCompleted?.Invoke(obj);
 
                     PoolContainer<PrefabRequester>.Enqueue(this);
+#if DEBUG_MODE
+                    s_SetupMarker.End();
+#endif
                     return;
                 }
 
@@ -1030,11 +1041,17 @@ namespace Syadeu.Presentation.Proxy
                 if (prefabInfo.m_IsRuntimeObject)
                 {
                     CreatePrefab(prefabInfo.m_Prefab, parent);
+#if DEBUG_MODE
+                    s_SetupMarker.End();
+#endif
                     return;
                 }
 
                 var oper = prefabInfo.InstantiateAsync(pos, rot, parent);
                 oper.Completed += CreatePrefab;
+#if DEBUG_MODE
+                s_SetupMarker.End();
+#endif
             }
             private void CreatePrefab(AsyncOperationHandle<GameObject> other)
             {
@@ -1050,6 +1067,9 @@ namespace Syadeu.Presentation.Proxy
             }
             private void CreatePrefab(GameObject Result, Transform parent = null)
             {
+#if DEBUG_MODE
+                s_CreateMarker.Begin();
+#endif
                 if (parent != null)
                 {
                     Result.transform.SetParent(parent);
@@ -1091,6 +1111,9 @@ namespace Syadeu.Presentation.Proxy
                 m_PrefabIdx = PrefabReference.Invalid;
                 m_OnCompleted = null;
                 PoolContainer<PrefabRequester>.Enqueue(this);
+#if DEBUG_MODE
+                s_CreateMarker.End();
+#endif
             }
         }
 
@@ -1116,9 +1139,9 @@ namespace Syadeu.Presentation.Proxy
             m_TerminatedProxies.Clear();
         }
 
-        #endregion
+#endregion
 
-        #region Inner Classes
+#region Inner Classes
 
         private struct ClusterIDRequest
         {
@@ -1145,6 +1168,6 @@ namespace Syadeu.Presentation.Proxy
             }
         }
 
-        #endregion
+#endregion
     }
 }
