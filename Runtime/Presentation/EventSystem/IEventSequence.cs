@@ -1,6 +1,6 @@
 ﻿namespace Syadeu.Presentation.Actions
 {
-    public interface IActionSequence
+    public interface IEventSequence
     {
         bool KeepWait { get; }
         float AfterDelay { get; }

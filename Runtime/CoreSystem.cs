@@ -1886,6 +1886,8 @@ namespace Syadeu
         {
             [System.Diagnostics.Conditional("DEBUG_MODE")]
             public static void ThreadBlock(string name, ThreadInfo thread) => LogManager.ThreadBlock(name, thread);
+            [System.Diagnostics.Conditional("DEBUG_MODE")]
+            public static void ThreadBlock(ThreadInfo thread, [System.Runtime.CompilerServices.CallerMemberName] string methodName = "") => LogManager.ThreadBlock(methodName, thread);
 
 #if DEBUG_MODE
             [System.Diagnostics.DebuggerHidden]
