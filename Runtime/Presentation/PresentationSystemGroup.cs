@@ -17,19 +17,21 @@ namespace Syadeu.Presentation
     /// <remarks>
     /// 특정 시스템만 불러오려면 <seealso cref="PresentationSystem{T}"/>으로 호출하세요.
     /// </remarks>
-    /// <typeparam name="T"></typeparam>
-    public struct PresentationSystemGroup<T> : IPresentationSystemGroup, IEquatable<PresentationSystemGroup<T>>
-        where T : PresentationGroupEntity
+    /// <typeparam name="TGroup">
+    /// <seealso cref="PresentationGroupEntity"/> 를 상속받는 시스템 그룹.
+    /// </typeparam>
+    public struct PresentationSystemGroup<TGroup> : IPresentationSystemGroup, IEquatable<PresentationSystemGroup<TGroup>>
+        where TGroup : PresentationGroupEntity
     {
-        public static readonly PresentationSystemGroup<T> Null = new PresentationSystemGroup<T>(Hash.Empty);
-        private static PresentationSystemGroup<T> s_Instance = Null;
-        private static PresentationSystemGroup<T> Instance
+        public static readonly PresentationSystemGroup<TGroup> Null = new PresentationSystemGroup<TGroup>(Hash.Empty);
+        private static PresentationSystemGroup<TGroup> s_Instance = Null;
+        private static PresentationSystemGroup<TGroup> Instance
         {
             get
             {
                 if (!((IValidation)s_Instance).IsValid())
                 {
-                    s_Instance = new PresentationSystemGroup<T>(Hash.NewHash(TypeHelper.TypeOf<T>.Name));
+                    s_Instance = new PresentationSystemGroup<TGroup>(Hash.NewHash(TypeHelper.TypeOf<TGroup>.Name));
                 }
                 return s_Instance;
             }
@@ -72,7 +74,7 @@ namespace Syadeu.Presentation
         {
             return m_GroupHash.Equals(other.GroupHash);
         }
-        bool IEquatable<PresentationSystemGroup<T>>.Equals(PresentationSystemGroup<T> other)
+        bool IEquatable<PresentationSystemGroup<TGroup>>.Equals(PresentationSystemGroup<TGroup> other)
         {
             return m_GroupHash.Equals(other.m_GroupHash);
         }
@@ -82,7 +84,7 @@ namespace Syadeu.Presentation
         public static TSystem GetSystem<TSystem>()
             where TSystem : PresentationSystemEntity
         {
-            return PresentationManager.GetSystem<T, TSystem>(out _);
+            return PresentationManager.GetSystem<TGroup, TSystem>(out _);
         }
 
         /// <summary>

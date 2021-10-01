@@ -1,10 +1,17 @@
-﻿using Syadeu.Database;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation.Internal;
 using System;
 
 namespace Syadeu.Presentation
 {
+    /// <summary>
+    /// 시스템(<seealso cref="PresentationSystemEntity{T}"/>) 을 unmanaged 타입으로 레퍼런스하는 ID 입니다.
+    /// </summary>
     public readonly struct PresentationSystemID : IValidation, IEquatable<PresentationSystemID>
     {
         public static readonly PresentationSystemID Null = new PresentationSystemID(Hash.Empty, 0);
@@ -22,7 +29,7 @@ namespace Syadeu.Presentation
         {
             get
             {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if DEBUG_MODE
                 if (IsNull())
                 {
                     CoreSystem.Logger.LogError(Channel.Presentation,
@@ -45,7 +52,7 @@ namespace Syadeu.Presentation
         public bool IsNull() => this.Equals(Null);
         public bool IsValid()
         {
-#if UNITY_EDITOR
+#if DEBUG_MODE
             if (m_GroupIndex.IsEmpty() || m_SystemIndex < 0 ||
                 !PresentationManager.Instance.m_PresentationGroups.TryGetValue(m_GroupIndex, out var g) ||
                 g.Count < m_SystemIndex)
@@ -59,10 +66,11 @@ namespace Syadeu.Presentation
         public bool Equals(PresentationSystemID other)
             => m_GroupIndex.Equals(other.m_GroupIndex) && m_SystemIndex.Equals(other.m_SystemIndex);
     }
-    public readonly struct PresentationSystemID<T> : IValidation, IEquatable<PresentationSystemID<T>>
-        where T : PresentationSystemEntity
+    /// <inheritdoc cref="PresentationSystemID"/>
+    public readonly struct PresentationSystemID<TSystem> : IValidation, IEquatable<PresentationSystemID<TSystem>>
+        where TSystem : PresentationSystemEntity
     {
-        public static readonly PresentationSystemID<T> Null = new PresentationSystemID<T>(Hash.Empty, 0);
+        public static readonly PresentationSystemID<TSystem> Null = new PresentationSystemID<TSystem>(Hash.Empty, 0);
 
         private readonly Hash m_GroupIndex;
         private readonly int m_SystemIndex;
@@ -73,33 +81,36 @@ namespace Syadeu.Presentation
             m_SystemIndex = system;
         }
 
-        public T System
+        /// <summary>
+        /// 시스템 <typeparamref name="TSystem"/> 의 인스턴스 입니다.
+        /// </summary>
+        public TSystem System
         {
             get
             {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if DEBUG_MODE
                 if (IsNull())
                 {
                     CoreSystem.Logger.LogError(Channel.Presentation,
-                        $"Cannot retrived system {TypeHelper.TypeOf<T>.Name}. ID is null.");
+                        $"Cannot retrived system {TypeHelper.TypeOf<TSystem>.Name}. ID is null.");
                     return null;
                 }
                 else if (!IsValid())
                 {
                     CoreSystem.Logger.LogError(Channel.Presentation,
-                        $"Cannot retrived system {TypeHelper.TypeOf<T>.Name}. ID is invalid.");
+                        $"Cannot retrived system {TypeHelper.TypeOf<TSystem>.Name}. ID is invalid.");
                     return null;
                 }
 #endif
                 var g = PresentationManager.Instance.m_PresentationGroups[m_GroupIndex];
-                return (T)g.Systems[m_SystemIndex];
+                return (TSystem)g.Systems[m_SystemIndex];
             }
         }
 
         public bool IsNull() => this.Equals(Null);
         public bool IsValid()
         {
-#if UNITY_EDITOR
+#if DEBUG_MODE
             if (m_GroupIndex.IsEmpty() || m_SystemIndex < 0 || !PresentationManager.Initialized ||
                 !PresentationManager.Instance.m_PresentationGroups.TryGetValue(m_GroupIndex, out var g) ||
                 g.Systems.Count < m_SystemIndex)
@@ -107,15 +118,15 @@ namespace Syadeu.Presentation
                 return false;
             }
 
-            if (!(g.Systems[m_SystemIndex] is T)) return false;
+            if (!(g.Systems[m_SystemIndex] is TSystem)) return false;
 #endif
             return true;
         }
 
-        public bool Equals(PresentationSystemID<T> other)
+        public bool Equals(PresentationSystemID<TSystem> other)
             => m_GroupIndex.Equals(other.m_GroupIndex) && m_SystemIndex.Equals(other.m_SystemIndex);
 
-        public static implicit operator PresentationSystemID(PresentationSystemID<T> other)
+        public static implicit operator PresentationSystemID(PresentationSystemID<TSystem> other)
         {
             return new PresentationSystemID(other.m_GroupIndex, other.m_SystemIndex);
         }

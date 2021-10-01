@@ -126,6 +126,19 @@ namespace Syadeu.Presentation
         public bool Equals(PresentationSystem<T> other) => m_GroupHash.Equals(other.m_GroupHash) && m_Index.Equals(other.m_Index);
     }
 
+    /// <summary>
+    /// 등록한 프레젠테이션 시스템을 받아오기 위한 struct 입니다.
+    /// </summary>
+    /// <remarks>
+    /// 이 struct 로 시스템을 받아오려면 먼저 <seealso cref="PresentationSystemEntity{T}"/> 를 상속받고 시스템을 선언해야됩니다.
+    /// </remarks>
+    /// <typeparam name="TGroup">
+    /// <seealso cref="PresentationGroupEntity"/> 를 상속받는 시스템 그룹.
+    /// 기본 시스템은 <seealso cref="DefaultPresentationGroup"/> 을 참조하세요.
+    /// </typeparam>
+    /// <typeparam name="TSystem">
+    /// <seealso cref="PresentationSystemEntity{T}"/> 를 상속받는 시스템.
+    /// </typeparam>
     public readonly struct PresentationSystem<TGroup, TSystem> : IValidation
         where TGroup : PresentationGroupEntity
         where TSystem : PresentationSystemEntity
@@ -166,6 +179,9 @@ namespace Syadeu.Presentation
                 return s_Instance;
             }
         }
+        /// <summary>
+        /// 이 시스템(<typeparamref name="TSystem"/>) 이 속한 시스템 그룹(<seealso cref="PresentationGroupEntity"/>) 입니다.
+        /// </summary>
         public static IPresentationSystemGroup SystemGroup
         {
             get
@@ -174,6 +190,9 @@ namespace Syadeu.Presentation
                 return PresentationManager.Instance.m_PresentationGroups[Instance.m_GroupHash].m_SystemGroup;
             }
         }
+        /// <summary>
+        /// 시스템 <typeparamref name="TSystem"/> 의 인스턴스 입니다.
+        /// </summary>
         public static TSystem System
         {
             get
@@ -185,6 +204,9 @@ namespace Syadeu.Presentation
                 return PresentationManager.GetSystem<TSystem>(in ins.m_GroupHash, in ins.m_Index);
             }
         }
+        /// <summary>
+        /// 시스템 <typeparamref name="TSystem"/> 의 ID 입니다.
+        /// </summary>
         public static PresentationSystemID<TSystem> SystemID
         {
             get
