@@ -88,8 +88,22 @@ namespace Syadeu.Presentation.Proxy
         /// <returns></returns>
         public new T GetComponent<T>() where T : Component
         {
-            if (!m_Components.TryGetValue(ComponentID<T>.ID, out List<Component> list)) return null;
+            if (TypeHelper.TypeOf<T>.IsAbstract)
+            {
+                foreach (var item in m_Components.Values)
+                {
+                    for (int i = 0; i < item.Count; i++)
+                    {
+                        if (TypeHelper.TypeOf<T>.Type.IsAssignableFrom(item[i].GetType()))
+                        {
+                            return (T)item[i];
+                        }
+                    }
+                }
+                return null;
+            }
 
+            if (!m_Components.TryGetValue(ComponentID<T>.ID, out List<Component> list)) return null;
             return (T)list[0];
         }
         public new T[] GetComponents<T>() where T : Component
@@ -101,6 +115,22 @@ namespace Syadeu.Presentation.Proxy
         /// <inheritdoc cref="GetComponent{T}"/>
         public new Component GetComponent(Type t)
         {
+            if (t.IsAbstract)
+            {
+                foreach (var item in m_Components.Values)
+                {
+                    for (int i = 0; i < item.Count; i++)
+                    {
+                        if (t.IsAssignableFrom(item[i].GetType()))
+                        {
+                            return item[i];
+                        }
+                    }
+                }
+
+                return null;
+            }
+
             IComponentID id = ComponentID.GetID(t);
             if (!m_Components.TryGetValue(id, out List<Component> list)) return null;
 

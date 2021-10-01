@@ -123,9 +123,9 @@ namespace Syadeu.Presentation.Proxy
             m_ProxyData = new NativeProxyData(c_InitialMemorySize, Allocator.Persistent);
             m_ClusterData = new Cluster<ProxyTransformData>(c_InitialMemorySize);
 
-            RequestSystem<PresentationGroupEntity, SceneSystem>(Bind);
-            RequestSystem<PresentationGroupEntity, RenderSystem>(Bind);
-            RequestSystem<PresentationGroupEntity, EventSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, SceneSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, RenderSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
 
             return base.OnInitializeAsync();
         }

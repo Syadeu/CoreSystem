@@ -945,13 +945,23 @@ namespace Syadeu.Presentation
             where TGroup : PresentationGroupEntity
             where TSystem : PresentationSystemEntity
         {
+#if DEBUG_MODE
+            if (TypeHelper.TypeOf<TGroup>.IsAbstract || TypeHelper.TypeOf<TGroup>.Type.IsInterface)
+            {
+                CoreSystem.Logger.LogError(Channel.Presentation,
+                    $"Requesting group type must be not abstract or interface but {TypeHelper.TypeOf<TGroup>.Name} is.");
+                return;
+            }
+#endif
             Hash groupHash = GroupToHash(TypeHelper.TypeOf<TGroup>.Type);
-
-            if (!Instance.m_PresentationGroups.TryGetValue(groupHash, out Group group))
+#if DEBUG_MODE
+            if (!Instance.m_PresentationGroups.ContainsKey(groupHash))
             {
                 throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
                     $"시스템 그룹 {typeof(TGroup).Name} 은 등록되지 않았습니다.");
             }
+#endif
+            Group group = Instance.m_PresentationGroups[groupHash];
 
             if (group.m_IsStarted && !group.m_MainthreadSignal)
             {
