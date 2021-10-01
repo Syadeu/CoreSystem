@@ -149,7 +149,7 @@ namespace Syadeu.Presentation.Components
             return new int2(cIdx, eIdx);
         }
 
-        public TComponent AddComponent<TComponent>(EntityData<IEntityData> entity, TComponent data) where TComponent : unmanaged, IEntityComponent
+        public TComponent AddComponent<TComponent>(in EntityData<IEntityData> entity, in TComponent data) where TComponent : unmanaged, IEntityComponent
         {
             CoreSystem.Logger.ThreadBlock(nameof(AddComponent), ThreadInfo.Unity);
 

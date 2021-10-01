@@ -123,9 +123,9 @@ namespace Syadeu.Presentation.Proxy
             m_ProxyData = new NativeProxyData(c_InitialMemorySize, Allocator.Persistent);
             m_ClusterData = new Cluster<ProxyTransformData>(c_InitialMemorySize);
 
-            RequestSystem<SceneSystem>(Bind);
-            RequestSystem<RenderSystem>(Bind);
-            RequestSystem<EventSystem>(Bind);
+            RequestSystem<PresentationGroupEntity, SceneSystem>(Bind);
+            RequestSystem<PresentationGroupEntity, RenderSystem>(Bind);
+            RequestSystem<PresentationGroupEntity, EventSystem>(Bind);
 
             return base.OnInitializeAsync();
         }
@@ -1014,7 +1014,7 @@ namespace Syadeu.Presentation.Proxy
                 Transform parent;
                 if (prefabInfo.m_IsWorldUI)
                 {
-                    parent = PresentationSystem<WorldCanvasSystem>.System.Canvas.transform;
+                    parent = PresentationSystem<DefaultPresentationGroup, WorldCanvasSystem>.System.Canvas.transform;
                 }
                 else
                 {

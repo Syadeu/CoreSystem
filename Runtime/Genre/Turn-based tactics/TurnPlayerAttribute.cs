@@ -13,6 +13,7 @@ using UnityEngine.Scripting;
 namespace Syadeu.Presentation.TurnTable
 {
     [DisplayName("Attribute: Turn Player")]
+    [AttributeAcceptOnly(typeof(ActorEntity))]
     public sealed class TurnPlayerAttribute : AttributeBase,
         INotifyComponent<TurnPlayerComponent>
     {
@@ -37,29 +38,26 @@ namespace Syadeu.Presentation.TurnTable
 
         protected override void OnInitialize()
         {
-            //EventSystem.AddEvent<OnActionPointChangedEvent>(OnActionPointChangedEventHandler);
             RequestSystem<TRPGSystemGroup, TRPGTurnTableSystem>(Bind);
         }
         protected override void OnDispose()
         {
-            //EventSystem.RemoveEvent<OnActionPointChangedEvent>(OnActionPointChangedEventHandler);
+            m_TurnTableSystem = null;
         }
+
+        #region Binds
+
         private void Bind(TRPGTurnTableSystem other)
         {
             m_TurnTableSystem = other;
         }
-        //private void OnActionPointChangedEventHandler(OnActionPointChangedEvent ev)
-        //{
-        //    if (!ev.Entity.HasComponent<ActorControllerComponent>()) return;
 
-        //    TRPGActorActionPointChangedUIEvent actorEv = new TRPGActorActionPointChangedUIEvent(ev.From, ev.To);
-        //    ev.Entity.GetComponent<ActorControllerComponent>().PostEvent(actorEv);
-        //}
+        #endregion
 
         protected override void OnCreated(TurnPlayerAttribute attribute, EntityData<IEntityData> entity)
         {
             TurnPlayerComponent component = new TurnPlayerComponent(attribute, EntitySystem.CreateHashCode());
-            component = entity.AddComponent(component);
+            component = entity.AddComponent(in component);
 
             m_TurnTableSystem.AddPlayer(component);
         }

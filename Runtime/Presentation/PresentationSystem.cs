@@ -140,6 +140,20 @@ namespace Syadeu.Presentation
         {
             get
             {
+#if DEBUG_MODE
+                if (TypeHelper.TypeOf<TGroup>.Type.IsAbstract)
+                {
+                    CoreSystem.Logger.LogError(Channel.Presentation,
+                        $"Group cannot be abstract.");
+                    return Null;
+                }
+                if (TypeHelper.TypeOf<TSystem>.Type.IsAbstract)
+                {
+                    CoreSystem.Logger.LogError(Channel.Presentation,
+                        $"System cannot be abstract.");
+                    return Null;
+                }
+#endif
                 if (!((IValidation)s_Instance).IsValid())
                 {
                     if (!PresentationManager.TryGetSystem<TGroup, TSystem>(out _, out Hash gHash, out int systemIdx))

@@ -316,7 +316,7 @@ namespace Syadeu.Presentation.Entities
         #region Components
 
         /// <inheritdoc cref="EntityData{T}.AddComponent{TComponent}(TComponent)"/>
-        public TComponent AddComponent<TComponent>(TComponent data)
+        public TComponent AddComponent<TComponent>(in TComponent data)
             where TComponent : unmanaged, IEntityComponent
         {
 #if DEBUG_MODE
@@ -338,7 +338,7 @@ namespace Syadeu.Presentation.Entities
                 }
             }
 
-            return s_ComponentSystem.System.AddComponent(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx), data);
+            return s_ComponentSystem.System.AddComponent(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx), in data);
         }
         /// <inheritdoc cref="EntityData{T}.HasComponent{TComponent}"/>
         public bool HasComponent<TComponent>()

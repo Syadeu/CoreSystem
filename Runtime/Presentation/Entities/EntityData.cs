@@ -290,7 +290,7 @@ namespace Syadeu.Presentation.Entities
         /// <typeparam name="TComponent"></typeparam>
         /// <param name="data"></param>
         /// <returns></returns>
-        public TComponent AddComponent<TComponent>(TComponent data)
+        public TComponent AddComponent<TComponent>(in TComponent data)
             where TComponent : unmanaged, IEntityComponent
         {
 #if DEBUG_MODE
@@ -312,7 +312,7 @@ namespace Syadeu.Presentation.Entities
                 }
             }
 
-            return s_ComponentSystem.System.AddComponent(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx), data);
+            return s_ComponentSystem.System.AddComponent(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx), in data);
         }
         /// <summary>
         /// <typeparamref name="TComponent"/> 컴포넌트가 있는지 반환합니다.

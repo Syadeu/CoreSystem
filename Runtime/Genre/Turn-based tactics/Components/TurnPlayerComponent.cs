@@ -32,7 +32,7 @@ namespace Syadeu.Presentation.TurnTable
                 {
                     int prev = m_CurrentActionPoint;
                     m_CurrentActionPoint = value;
-                    PresentationSystem<EventSystem>.System.PostEvent(OnActionPointChangedEvent.GetEvent(m_Parent, prev, value));
+                    PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnActionPointChangedEvent.GetEvent(m_Parent, prev, value));
 
                     TRPGActorActionPointChangedUIEvent actorEv = new TRPGActorActionPointChangedUIEvent(prev, value);
                     var ctr = m_Parent.GetComponent<ActorControllerComponent>();
@@ -62,7 +62,7 @@ namespace Syadeu.Presentation.TurnTable
             ref TurnPlayerComponent me = ref m_Parent.GetComponent<TurnPlayerComponent>();
             me.IsMyTurn = true;
             CoreSystem.Logger.Log(Channel.Entity, $"{DisplayName} turn start");
-            PresentationSystem<EventSystem>.System.PostEvent(OnTurnStateChangedEvent.GetEvent(m_Parent, OnTurnStateChangedEvent.TurnState.Start));
+            PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTurnStateChangedEvent.GetEvent(m_Parent, OnTurnStateChangedEvent.TurnState.Start));
 
             TurnPlayerAttribute att = m_Parent.GetAttribute<TurnPlayerAttribute>();
             att.m_OnStartTurnActions.Schedule(m_Parent);
@@ -72,7 +72,7 @@ namespace Syadeu.Presentation.TurnTable
             ref TurnPlayerComponent me = ref m_Parent.GetComponent<TurnPlayerComponent>();
             me.IsMyTurn = false;
             CoreSystem.Logger.Log(Channel.Entity, $"{DisplayName} turn end");
-            PresentationSystem<EventSystem>.System.PostEvent(OnTurnStateChangedEvent.GetEvent(m_Parent, OnTurnStateChangedEvent.TurnState.End));
+            PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTurnStateChangedEvent.GetEvent(m_Parent, OnTurnStateChangedEvent.TurnState.End));
 
             TurnPlayerAttribute att = m_Parent.GetAttribute<TurnPlayerAttribute>();
             att.m_OnEndTurnActions.Schedule(m_Parent);
@@ -83,7 +83,7 @@ namespace Syadeu.Presentation.TurnTable
             me.ActionPoint = me.m_MaxActionPoint;
 
             CoreSystem.Logger.Log(Channel.Entity, $"{DisplayName} reset turn");
-            PresentationSystem<EventSystem>.System.PostEvent(OnTurnStateChangedEvent.GetEvent(m_Parent, OnTurnStateChangedEvent.TurnState.Reset));
+            PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTurnStateChangedEvent.GetEvent(m_Parent, OnTurnStateChangedEvent.TurnState.Reset));
 
             TurnPlayerAttribute att = m_Parent.GetAttribute<TurnPlayerAttribute>();
             att.m_OnResetTurnActions.Schedule(m_Parent);
