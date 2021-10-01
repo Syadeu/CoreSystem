@@ -1,5 +1,8 @@
-﻿namespace Syadeu.Presentation.TurnTable
+﻿using System;
+
+namespace Syadeu.Presentation.TurnTable
 {
+    [Obsolete("", true)]
     public interface ITurnObject
     {
         string DisplayName { get; }

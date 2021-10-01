@@ -59,11 +59,11 @@ namespace Syadeu.Presentation.TurnTable
             TurnPlayerComponent component = new TurnPlayerComponent(attribute, EntitySystem.CreateHashCode());
             component = entity.AddComponent(in component);
 
-            m_TurnTableSystem.AddPlayer(component);
+            m_TurnTableSystem.AddPlayer(entity);
         }
         protected override void OnDestroy(TurnPlayerAttribute attribute, EntityData<IEntityData> entity)
         {
-            m_TurnTableSystem.RemovePlayer(entity.GetComponent<TurnPlayerComponent>());
+            m_TurnTableSystem.RemovePlayer(entity);
         }
     }
 }

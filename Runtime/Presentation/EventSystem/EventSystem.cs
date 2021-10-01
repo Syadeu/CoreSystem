@@ -37,8 +37,8 @@ namespace Syadeu.Presentation.Events
 
         protected override PresentationResult OnInitialize()
         {
-            RequestSystem<SceneSystem>(Bind);
-            RequestSystem<CoroutineSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, SceneSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, CoroutineSystem>(Bind);
 
             return base.OnInitialize();
         }

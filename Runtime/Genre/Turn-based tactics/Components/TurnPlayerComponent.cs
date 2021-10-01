@@ -8,7 +8,8 @@ using Unity.Collections;
 
 namespace Syadeu.Presentation.TurnTable
 {
-    public struct TurnPlayerComponent : IEntityComponent, ITurnPlayer, IEquatable<TurnPlayerComponent>
+    public struct TurnPlayerComponent : IEntityComponent, 
+        IEquatable<TurnPlayerComponent>, IComparable<TurnPlayerComponent>
     {
         private EntityData<IEntityData> m_Parent;
         private int m_HashCode;
@@ -17,8 +18,7 @@ namespace Syadeu.Presentation.TurnTable
         private int m_MaxActionPoint;
 
         private int m_CurrentActionPoint;
-        
-        public string DisplayName => m_Parent.Name;
+
         public float TurnSpeed => m_TurnSpeed;
         public bool ActivateTurn { get; set; }
         public int MaxActionPoint => m_MaxActionPoint;
@@ -41,7 +41,7 @@ namespace Syadeu.Presentation.TurnTable
             }
         }
 
-        public bool IsMyTurn { get; private set; }
+        public bool IsMyTurn { get; internal set; }
 
         internal TurnPlayerComponent(TurnPlayerAttribute turnPlayer, int hashCode)
         {
@@ -57,41 +57,16 @@ namespace Syadeu.Presentation.TurnTable
             IsMyTurn = false;
         }
 
-        public void StartTurn()
-        {
-            ref TurnPlayerComponent me = ref m_Parent.GetComponent<TurnPlayerComponent>();
-            me.IsMyTurn = true;
-            CoreSystem.Logger.Log(Channel.Entity, $"{DisplayName} turn start");
-            PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTurnStateChangedEvent.GetEvent(m_Parent, OnTurnStateChangedEvent.TurnState.Start));
-
-            TurnPlayerAttribute att = m_Parent.GetAttribute<TurnPlayerAttribute>();
-            att.m_OnStartTurnActions.Schedule(m_Parent);
-        }
-        public void EndTurn()
-        {
-            ref TurnPlayerComponent me = ref m_Parent.GetComponent<TurnPlayerComponent>();
-            me.IsMyTurn = false;
-            CoreSystem.Logger.Log(Channel.Entity, $"{DisplayName} turn end");
-            PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTurnStateChangedEvent.GetEvent(m_Parent, OnTurnStateChangedEvent.TurnState.End));
-
-            TurnPlayerAttribute att = m_Parent.GetAttribute<TurnPlayerAttribute>();
-            att.m_OnEndTurnActions.Schedule(m_Parent);
-        }
-        public void ResetTurnTable()
-        {
-            ref TurnPlayerComponent me = ref m_Parent.GetComponent<TurnPlayerComponent>();
-            me.ActionPoint = me.m_MaxActionPoint;
-
-            CoreSystem.Logger.Log(Channel.Entity, $"{DisplayName} reset turn");
-            PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTurnStateChangedEvent.GetEvent(m_Parent, OnTurnStateChangedEvent.TurnState.Reset));
-
-            TurnPlayerAttribute att = m_Parent.GetAttribute<TurnPlayerAttribute>();
-            att.m_OnResetTurnActions.Schedule(m_Parent);
-        }
-
         public override int GetHashCode() => m_HashCode;
         public bool Equals(TurnPlayerComponent other) => m_HashCode.Equals(other.m_HashCode);
-        public bool Equals(ITurnPlayer other) => GetHashCode().Equals(other.GetHashCode());
+
+        public int CompareTo(TurnPlayerComponent other)
+        {
+            if (TurnSpeed < other.TurnSpeed) return 1;
+            else if (TurnSpeed == other.TurnSpeed) return 0;
+            
+            return -1;
+        }
     }
 }
 

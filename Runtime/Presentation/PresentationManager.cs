@@ -981,7 +981,15 @@ namespace Syadeu.Presentation
 
             if (group.TryGetSystem<TSystem>(out TSystem system, out _))
             {
-                setter.Invoke(system);
+                try
+                {
+                    setter.Invoke(system);
+                }
+                catch (Exception ex)
+                {
+                    CoreSystem.Logger.LogError(Channel.Presentation, ex);
+                }
+                
                 return;
             }
 

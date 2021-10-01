@@ -1,4 +1,7 @@
-﻿using System.Collections;
+﻿using Syadeu.Presentation.Actions;
+using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Events;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace Syadeu.Presentation.TurnTable
@@ -9,13 +12,31 @@ namespace Syadeu.Presentation.TurnTable
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
-        private readonly List<ITurnObject> m_Players = new List<ITurnObject>();
-        private readonly LinkedList<ITurnObject> m_TurnTable = new LinkedList<ITurnObject>();
-        private LinkedListNode<ITurnObject> m_CurrentTurn = null;
+        private readonly List<EntityData<IEntityData>> m_Players = new List<EntityData<IEntityData>>();
+        private readonly LinkedList<EntityData<IEntityData>> m_TurnTable = new LinkedList<EntityData<IEntityData>>();
+        private LinkedListNode<EntityData<IEntityData>> m_CurrentTurn = null;
 
-        public ITurnObject CurrentTurn => m_CurrentTurn.Value;
+        public EntityData<IEntityData> CurrentTurn => m_CurrentTurn.Value;
 
-        public void AddPlayer(ITurnObject player)
+        private EventSystem m_EventSystem;
+
+        protected override PresentationResult OnInitialize()
+        {
+            RequestSystem<TRPGSystemGroup, EventSystem>(Bind);
+
+            return base.OnInitialize();
+        }
+        public override void OnDispose()
+        {
+            base.OnDispose();
+        }
+
+        private void Bind(EventSystem other)
+        {
+            m_EventSystem = other;
+        }
+
+        public void AddPlayer(EntityData<IEntityData> player)
         {
             if (m_Players.Contains(player))
             {
@@ -23,7 +44,7 @@ namespace Syadeu.Presentation.TurnTable
             }
             m_Players.Add(player);
         }
-        public void RemovePlayer(ITurnObject player)
+        public void RemovePlayer(EntityData<IEntityData> player)
         {
             for (int i = 0; i < m_Players.Count; i++)
             {
@@ -35,6 +56,40 @@ namespace Syadeu.Presentation.TurnTable
             }
         }
 
+        private void StartTurn(EntityData<IEntityData> entity)
+        {
+            ref TurnPlayerComponent player = ref entity.GetComponent<TurnPlayerComponent>();
+            player.IsMyTurn = true;
+            CoreSystem.Logger.Log(Channel.Entity, $"{entity.Name} turn start");
+            m_EventSystem.PostEvent(
+                OnTurnStateChangedEvent.GetEvent(entity, OnTurnStateChangedEvent.TurnState.Start));
+
+            entity.GetAttribute<TurnPlayerAttribute>().m_OnStartTurnActions.Schedule(entity);
+        }
+        private void EndTurn(EntityData<IEntityData> entity)
+        {
+            ref TurnPlayerComponent player = ref entity.GetComponent<TurnPlayerComponent>();
+            player.IsMyTurn = false;
+            CoreSystem.Logger.Log(Channel.Entity, $"{entity.Name} turn end");
+            m_EventSystem.PostEvent(
+                OnTurnStateChangedEvent.GetEvent(entity, OnTurnStateChangedEvent.TurnState.End));
+
+            entity.GetAttribute<TurnPlayerAttribute>().m_OnEndTurnActions.Schedule(entity);
+        }
+        private ref TurnPlayerComponent ResetTurn(EntityData<IEntityData> entity)
+        {
+            ref TurnPlayerComponent player = ref entity.GetComponent<TurnPlayerComponent>();
+            player.ActionPoint = player.MaxActionPoint;
+
+            CoreSystem.Logger.Log(Channel.Entity, $"{entity.Name} reset turn");
+            m_EventSystem.PostEvent(
+                OnTurnStateChangedEvent.GetEvent(entity, OnTurnStateChangedEvent.TurnState.Reset));
+
+            entity.GetAttribute<TurnPlayerAttribute>().m_OnResetTurnActions.Schedule(entity);
+
+            return ref player;
+        }
+
         public void StartTurnTable()
         {
             if (m_Players.Count == 0)
@@ -44,7 +99,8 @@ namespace Syadeu.Presentation.TurnTable
             else
             {
                 InternalInitializeTable();
-                m_CurrentTurn.Value.StartTurn();
+
+                StartTurn(CurrentTurn);
             }
         }
         private IEnumerator WaitForJoinPlayer()
@@ -53,32 +109,27 @@ namespace Syadeu.Presentation.TurnTable
             {
                 yield return null;
             }
+
             InternalInitializeTable();
-            m_CurrentTurn.Value.StartTurn();
+
+            StartTurn(CurrentTurn);
         }
 
         private void InternalInitializeTable()
         {
             m_TurnTable.Clear();
-            List<ITurnObject> tempList = new List<ITurnObject>();
+            List<EntityData<IEntityData>> tempList = new List<EntityData<IEntityData>>();
             for (int i = 0; i < m_Players.Count; i++)
             {
-                m_Players[i].ResetTurnTable();
+                TurnPlayerComponent player = ResetTurn(m_Players[i]);
 
-                if (m_Players[i].ActivateTurn)
+                if (player.ActivateTurn)
                 {
                     tempList.Add(m_Players[i]);
                 }
             }
 
-            tempList.Sort((x, y) =>
-            {
-                if (y == null) return 1;
-
-                if (x.TurnSpeed < y.TurnSpeed) return 1;
-                else if (x.TurnSpeed == y.TurnSpeed) return 0;
-                else return -1;
-            });
+            tempList.Sort();
 
             for (int i = tempList.Count - 1; i >= 0; i--)
             {
@@ -88,10 +139,8 @@ namespace Syadeu.Presentation.TurnTable
         }
         public void NextTurn()
         {
-            //if (Instance.m_CurrentTurn.Value.IsMyTurn)
-            {
-                m_CurrentTurn.Value.EndTurn();
-            }
+            EndTurn(m_CurrentTurn.Value);
+
             var prev = m_CurrentTurn;
             m_CurrentTurn = m_CurrentTurn.Next;
 
@@ -100,8 +149,8 @@ namespace Syadeu.Presentation.TurnTable
                 InternalInitializeTable();
             }
 
-            $"next turn called: {prev.Value.DisplayName} => {m_CurrentTurn.Value.DisplayName}".ToLog();
-            m_CurrentTurn.Value.StartTurn();
+            $"next turn called: {prev.Value.Name} => {m_CurrentTurn.Value.Name}".ToLog();
+            StartTurn(m_CurrentTurn.Value);
         }
     }
 }
