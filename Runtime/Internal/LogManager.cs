@@ -1,4 +1,8 @@
-﻿using System.Threading;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using System.Threading;
 using System.Collections.Concurrent;
 
 using Syadeu.Mono;
@@ -43,13 +47,13 @@ namespace Syadeu.Internal
             yellow
         }
 
-#if UNITY_EDITOR
+#if DEBUG_MODE
         private static readonly ConcurrentDictionary<Thread, ThreadInfo> m_ThreadInfos = new ConcurrentDictionary<Thread, ThreadInfo>();
 #endif
-        [System.Diagnostics.Conditional("UNITY_EDITOR")]
+        [System.Diagnostics.Conditional("DEBUG_MODE")]
         public static void RegisterThread(ThreadInfo info, Thread t)
         {
-#if UNITY_EDITOR
+#if DEBUG_MODE
             if (m_ThreadInfos.TryGetValue(t, out ThreadInfo threadInfo))
             {
                 m_ThreadInfos[t] = info;
@@ -59,7 +63,7 @@ namespace Syadeu.Internal
         }
         public static ThreadInfo GetThreadType()
         {
-#if UNITY_EDITOR
+#if DEBUG_MODE
             Thread t = Thread.CurrentThread;
             if (m_ThreadInfos.TryGetValue(t, out ThreadInfo threadInfo))
             {
@@ -72,7 +76,7 @@ namespace Syadeu.Internal
         }
 
 #line hidden
-        [System.Diagnostics.Conditional("UNITY_EDITOR")]
+        [System.Diagnostics.Conditional("DEBUG_MODE")]
         public static void ThreadBlock(string name, ThreadInfo acceptOnly)
         {
             ThreadInfo info = GetThreadType();
@@ -85,9 +89,10 @@ namespace Syadeu.Internal
                     false);
             }
         }
-#if UNITY_EDITOR
+#if DEBUG_MODE
         [System.Diagnostics.DebuggerHidden]
 #endif
+        [System.Diagnostics.Conditional("DEBUG_MODE")]
         public static void Log(Channel channel, ResultFlag result, string msg, bool logThread)
         {
             if (channel != Channel.Editor &&
@@ -97,9 +102,10 @@ namespace Syadeu.Internal
             }
             Log(TypeHelper.Enum<Channel>.ToString(channel), result, msg, logThread);
         }
-#if UNITY_EDITOR
+#if DEBUG_MODE
         [System.Diagnostics.DebuggerHidden]
 #endif
+        [System.Diagnostics.Conditional("DEBUG_MODE")]
         public static void Log(string channel, ResultFlag result, string msg, bool logThread)
         {
             string text = string.Empty;
@@ -134,9 +140,10 @@ namespace Syadeu.Internal
             }
         }
 
-#if UNITY_EDITOR
+#if DEBUG_MODE
         [System.Diagnostics.DebuggerHidden]
 #endif
+        [System.Diagnostics.Conditional("DEBUG_MODE")]
         public static void Log(in FixedString128Bytes channel, ResultFlag result, in FixedString128Bytes msg, bool logThread)
         {
             string text = string.Empty;
@@ -180,6 +187,8 @@ namespace Syadeu.Internal
         }
 
         #region Asserts
+
+        [System.Diagnostics.Conditional("DEBUG_MODE")]
         public static void Null(object obj, string msg)
         {
             const string defaultMsg = "Object is not null. Expected null";
@@ -189,6 +198,7 @@ namespace Syadeu.Internal
 
             Debug.LogError(AssertText(msg));
         }
+        [System.Diagnostics.Conditional("DEBUG_MODE")]
         public static void NotNull(object obj, string msg)
         {
             const string defaultMsg = "Object is null. Expected not null";
@@ -199,6 +209,7 @@ namespace Syadeu.Internal
             Debug.LogError(AssertText(msg));
         }
 
+        [System.Diagnostics.Conditional("DEBUG_MODE")]
         public static void True(bool value, string msg)
         {
             const string defaultMsg = "{0} is false. Expected true";
@@ -207,6 +218,7 @@ namespace Syadeu.Internal
 
             Debug.LogError(AssertText(msg));
         }
+        [System.Diagnostics.Conditional("DEBUG_MODE")]
         public static void False(bool value, string msg)
         {
             const string defaultMsg = "{0} is true. Expected false";

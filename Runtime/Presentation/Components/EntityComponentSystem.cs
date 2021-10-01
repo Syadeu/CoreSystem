@@ -1,4 +1,7 @@
-﻿using AOT;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
 using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation.Actor;

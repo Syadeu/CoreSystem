@@ -1,4 +1,8 @@
-﻿using Syadeu.Database;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Mono;
 using Syadeu.Unsafe;
@@ -77,22 +81,22 @@ namespace Syadeu
         private const string c_Indent = "    ";
 
 #line hidden
-#if UNITY_EDITOR
+#if DEBUG_MODE
         [System.Diagnostics.DebuggerHidden]
 #endif
         public static void ToLogError(this string log, UnityEngine.Object target = null)
         {
-#if UNITY_EDITOR
+#if DEBUG_MODE
             if (target == null) CoreSystem.Logger.LogError(Channel.Debug, log);
             else Debug.LogError(log, target);
 #endif
         }
-#if UNITY_EDITOR
+#if DEBUG_MODE
         [System.Diagnostics.DebuggerHidden]
 #endif
         public static void ToLog(this string log, UnityEngine.Object target = null)
         {
-#if UNITY_EDITOR
+#if DEBUG_MODE
             if (target == null) CoreSystem.Logger.Log(Channel.Debug, log);
             else Debug.Log(log, target);
 #endif
