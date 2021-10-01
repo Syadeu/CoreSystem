@@ -52,10 +52,10 @@ namespace Syadeu.Presentation.TurnTable
 
             var turnPlayer = m_Parent.GetComponent<TurnPlayerComponent>();
             var gridsize = m_Parent.GetComponent<GridSizeComponent>();
-
+            
             NativeList<int> range = new NativeList<int>(512, Allocator.Temp);
             gridsize.GetRange(ref range, turnPlayer.ActionPoint);
-
+            $"ragne {range.Length}".ToLog();
             gridPositions.Clear();
             for (int i = 0; i < range.Length; i++)
             {

@@ -40,7 +40,7 @@ namespace Syadeu.Presentation.TurnTable
             m_GridBoundsTempMoveables = new NativeList<GridPosition>(512, Allocator.Persistent);
             m_GridBoundsTempOutlines = new NativeList<Vector3>(512, Allocator.Persistent);
 
-            RequestSystem<InputSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, InputSystem>(Bind);
 
             return base.OnInitialize();
         }
@@ -55,7 +55,7 @@ namespace Syadeu.Presentation.TurnTable
             m_InputSystem = other;
         }
 
-        private Entity<IEntity> m_DrawingEntityTarget;
+        private EntityData<IEntityData> m_DrawingEntityTarget;
         private bool m_IsDrawingGrids = false;
 
         protected override PresentationResult OnPresentationAsync()
@@ -63,7 +63,7 @@ namespace Syadeu.Presentation.TurnTable
             return base.OnPresentationAsync();
         }
 
-        public void DrawMoveableGridBounds(Entity<IEntity> entity)
+        public void DrawMoveableGridBounds(EntityData<IEntityData> entity)
         {
             if (!entity.HasComponent<TRPGActorMoveComponent>())
             {
@@ -74,7 +74,7 @@ namespace Syadeu.Presentation.TurnTable
             TRPGActorMoveComponent move = entity.GetComponent<TRPGActorMoveComponent>();
             move.GetMoveablePositions(ref m_GridBoundsTempMoveables);
             move.CalculateMoveableOutline(m_GridBoundsTempMoveables, ref m_GridBoundsTempOutlines);
-
+            $"{m_GridBoundsTempMoveables.Length} :: {m_GridBoundsTempOutlines.Length}".ToLog();
             m_GridBoundsLineRenderer.positionCount = m_GridBoundsTempOutlines.Length;
             m_GridBoundsLineRenderer.SetPositions(m_GridBoundsTempOutlines);
             m_GridBoundsMouseOver = new bool[m_GridBoundsLineRenderer.positionCount];

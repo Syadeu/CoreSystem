@@ -28,7 +28,7 @@ namespace Syadeu.Presentation.TurnTable
         }
         public override void OnDispose()
         {
-            base.OnDispose();
+            m_EventSystem = null;
         }
 
         private void Bind(EventSystem other)

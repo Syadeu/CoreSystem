@@ -383,8 +383,12 @@ namespace Syadeu.Presentation.Map
 
         private void CalculateSubGridIndex(in int index, out int gridIdx, out int targetIndex)
         {
-            gridIdx = -1; targetIndex = -1;
-            if (index < Grid.length) return;
+            gridIdx = -1;
+            if (index < Grid.length)
+            {
+                targetIndex = index;
+                return;
+            }
 
             targetIndex = index - Grid.length;
             for (int i = 0; i < SubGrids.Length; i++)
@@ -492,8 +496,9 @@ namespace Syadeu.Presentation.Map
 
             int2 location = grid.GetDirection(in idx, in direction);
 
-            int calIdx = grid.LocationToIndex(location);
-            return new GridPosition(ConvertToWorldIndex(in gridIdx, in calIdx), location);
+            int cellIdx = grid.LocationToIndex(location);
+
+            return new GridPosition(ConvertToWorldIndex(in gridIdx, in cellIdx), location);
         }
 
         #endregion

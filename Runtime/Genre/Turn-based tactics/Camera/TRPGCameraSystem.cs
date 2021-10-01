@@ -17,12 +17,14 @@ namespace Syadeu.Presentation.TurnTable
         private EventSystem m_EventSystem;
         private TRPGTurnTableSystem m_TurnTableSystem;
         private TRPGCameraMovement m_TRPGCameraMovement;
+        private TRPGGridSystem m_TRPGGridSystem;
 
         protected override PresentationResult OnInitialize()
         {
             RequestSystem<DefaultPresentationGroup, RenderSystem>(Bind);
             RequestSystem<TRPGSystemGroup, EventSystem>(Bind);
             RequestSystem<TRPGSystemGroup, TRPGTurnTableSystem>(Bind);
+            RequestSystem<TRPGSystemGroup, TRPGGridSystem>(Bind);
 
             return base.OnInitialize();
         }
@@ -50,6 +52,10 @@ namespace Syadeu.Presentation.TurnTable
         {
             m_TurnTableSystem = other;
         }
+        private void Bind(TRPGGridSystem other)
+        {
+            m_TRPGGridSystem = other;
+        }
 
         #endregion
 
@@ -63,13 +69,7 @@ namespace Syadeu.Presentation.TurnTable
         private void TRPGShortcutUIPressedEventHandler(TRPGShortcutUIPressedEvent ev)
         {
             "ev shortcut".ToLog();
-            //if (!(m_TurnTableSystem.CurrentTurn is TurnPlayerComponent turnPlayer))
-            //{
-            //    "not player".ToLog();
-            //    return;
-            //}
-
-            //turnPlayer.
+            
 
             switch (ev.Shortcut)
             {
@@ -77,6 +77,10 @@ namespace Syadeu.Presentation.TurnTable
                 case ShortcutType.None:
                 case ShortcutType.Move:
                     m_TRPGCameraMovement.SetNormal();
+
+                    //var move = m_TurnTableSystem.CurrentTurn.GetComponent<TRPGActorMoveComponent>();
+                    m_TRPGGridSystem.DrawMoveableGridBounds(m_TurnTableSystem.CurrentTurn);
+
                     break;
                 case ShortcutType.Attack:
                     break;
