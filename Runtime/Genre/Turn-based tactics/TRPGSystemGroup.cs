@@ -11,7 +11,8 @@ namespace Syadeu.Presentation.TurnTable
         {
             RegisterSystem(
                 TypeHelper.TypeOf<TRPGTurnTableSystem>.Type,
-                TypeHelper.TypeOf<TRPGGridSystem>.Type
+                TypeHelper.TypeOf<TRPGGridSystem>.Type,
+                TypeHelper.TypeOf<UI.TRPGCanvasUISystem>.Type
                 );
         }
     }

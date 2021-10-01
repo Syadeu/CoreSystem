@@ -7,6 +7,7 @@ using UnityEngine.InputSystem.Controls;
 using UnityEngine.InputSystem.LowLevel;
 using Syadeu.Database;
 using Syadeu.Mono;
+using System.Collections.Generic;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -17,11 +18,15 @@ namespace Syadeu.Presentation.Input
 {
     public sealed class InputSystem : PresentationSystemEntity<InputSystem>
     {
+        private const string c_KeyboardBinding = "<Keyboard>/{0}";
+
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
         private bool m_EnableInput = false;
+        private readonly List<InputAction> m_CreatedInputActions = new List<InputAction>();
+
         public bool EnableInput
         {
             get => m_EnableInput;
@@ -41,7 +46,6 @@ namespace Syadeu.Presentation.Input
                 m_EnableInput = value;
             }
         }
-
         public Vector2 MousePosition => Mouse.current.position.ReadValue();
 
         protected override PresentationResult OnInitialize()
@@ -56,12 +60,12 @@ namespace Syadeu.Presentation.Input
 
         public override void OnDispose()
         {
-            //for (int i = 0; i < InputSystemSettings.Instance.m_AdditionalInputActions.Length; i++)
-            //{
-            //    InputSystemSettings.CustomInputAction temp = InputSystemSettings.Instance.m_AdditionalInputActions[i];
-
-            //    temp.Disable();
-            //}
+            for (int i = 0; i < m_CreatedInputActions.Count; i++)
+            {
+                m_CreatedInputActions[i].Disable();
+                m_CreatedInputActions[i].Dispose();
+            }
+            m_CreatedInputActions.Clear();
         }
 
         protected override PresentationResult OnStartPresentation()
@@ -71,12 +75,26 @@ namespace Syadeu.Presentation.Input
             return base.OnStartPresentation();
         }
 
-        private void asdasd()
+        public InputAction AddKeyboardBinding(int number, bool isNumpad, InputActionType type)
         {
-            InputAction inputAction = new InputAction();
-            inputAction.bindingMask = new InputBinding();
+            const string c_Numpad = "numpad{0}";
 
-            //InputControlPath.TryFindControl<>(Gamepad.current, "leftStick/x");
+            InputAction action;
+            if (isNumpad)
+            {
+                action = new InputAction(binding:
+                    string.Format(c_KeyboardBinding, string.Format(c_Numpad, number)),
+                    type: type);
+            }
+            else
+            {
+                action = new InputAction(binding:
+                    string.Format(c_KeyboardBinding, number),
+                    type: type);
+            }
+
+            m_CreatedInputActions.Add(action);
+            return action;
         }
 
         public static InputControl ToControlType(ControlType controlType)

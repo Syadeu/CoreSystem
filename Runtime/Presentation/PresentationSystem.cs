@@ -226,6 +226,13 @@ namespace Syadeu.Presentation
             m_Index = idx;
         }
 
+        private sealed class SystemAwaiter : CustomYieldInstruction, ICustomYieldAwaiter
+        {
+            public override bool keepWaiting => ((ICustomYieldAwaiter)this).KeepWait;
+
+            bool ICustomYieldAwaiter.KeepWait => !IsValid() || !HasInitialized();
+        }
+        public static ICustomYieldAwaiter GetAwaiter() => new SystemAwaiter();
         bool IValidation.IsValid() => !m_GroupHash.IsEmpty() && m_Index >= 0;
 
         public static bool IsValid() => !Instance.Equals(Null);

@@ -24,7 +24,7 @@ using UnityEngine.UI;
 namespace Syadeu.Presentation.TurnTable
 {
     public sealed class TRPGGridCellOverlayUI : OnScreenControl, ITerminate, IValidation,
-    IPointerDownHandler, IPointerUpHandler, IPointerEnterHandler, IPointerExitHandler
+        IPointerDownHandler, IPointerUpHandler, IPointerEnterHandler, IPointerExitHandler
     {
         public enum State
         {

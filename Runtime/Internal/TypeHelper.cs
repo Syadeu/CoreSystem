@@ -63,6 +63,8 @@ namespace Syadeu.Internal
         public sealed class Enum<T> where T : struct, IConvertible
         {
             public static readonly bool IsFlag = TypeOf<T>.Type.GetCustomAttribute<FlagsAttribute>() != null;
+            public static readonly int Length = ((T[])Enum.GetValues(TypeOf<T>.Type)).Select((other) => Convert.ToInt32(other)).Count();
+
             public static readonly string[] Names = Enum.GetNames(TypeOf<T>.Type);
             public static readonly int[] Values = ((T[])Enum.GetValues(TypeOf<T>.Type)).Select((other) => Convert.ToInt32(other)).ToArray();
 
