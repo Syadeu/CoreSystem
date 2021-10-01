@@ -1,4 +1,8 @@
-﻿using Syadeu.Database;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Components;
@@ -36,21 +40,23 @@ namespace Syadeu.Presentation.Entities
         public static Entity<T> GetEntity(Hash idx)
         {
             #region Validation
+#if DEBUG_MODE
+            if (idx.Equals(Hash.Empty))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                $"Cannot convert an empty hash to Entity. This is an invalid operation and not allowed.");
+                return Empty;
+            }
+#endif
             if (s_EntitySystem.IsNull())
             {
-                s_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
+                s_EntitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.SystemID;
                 if (s_EntitySystem.IsNull())
                 {
                     CoreSystem.Logger.LogError(Channel.Entity,
                         "Cannot retrived EntitySystem.");
                     return Empty;
                 }
-            }
-            if (idx.Equals(Hash.Empty))
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                $"Cannot convert an empty hash to Entity. This is an invalid operation and not allowed.");
-                return Empty;
             }
             if (!s_EntitySystem.System.m_ObjectEntities.ContainsKey(idx))
             {
@@ -73,7 +79,7 @@ namespace Syadeu.Presentation.Entities
         {
             if (s_EntitySystem.IsNull())
             {
-                s_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
+                s_EntitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.SystemID;
                 if (s_EntitySystem.IsNull())
                 {
                     CoreSystem.Logger.LogError(Channel.Entity,
@@ -93,16 +99,17 @@ namespace Syadeu.Presentation.Entities
         {
             get
             {
+#if DEBUG_MODE
                 if (IsEmpty())
                 {
                     CoreSystem.Logger.LogError(Channel.Entity,
                         "An empty entity reference trying to access transform.");
                     return null;
                 }
-
+#endif
                 if (s_EntitySystem.IsNull())
                 {
-                    s_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
+                    s_EntitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.SystemID;
                     if (s_EntitySystem.IsNull())
                     {
                         CoreSystem.Logger.LogError(Channel.Entity,
@@ -145,13 +152,14 @@ namespace Syadeu.Presentation.Entities
         {
             get
             {
+#if DEBUG_MODE
                 if (IsEmpty())
                 {
                     CoreSystem.Logger.LogError(Channel.Entity,
                         "An empty entity reference trying to access transform.");
                     return null;
                 }
-
+#endif
                 return Target.transform;
             }
         }
@@ -197,7 +205,7 @@ namespace Syadeu.Presentation.Entities
 
             if (s_EntitySystem.IsNull())
             {
-                s_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
+                s_EntitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.SystemID;
                 if (s_EntitySystem.IsNull())
                 {
                     CoreSystem.Logger.LogError(Channel.Entity,
@@ -311,13 +319,14 @@ namespace Syadeu.Presentation.Entities
         public TComponent AddComponent<TComponent>(TComponent data)
             where TComponent : unmanaged, IEntityComponent
         {
+#if DEBUG_MODE
             if (!IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"You\'re trying to access to an invalid entity. This is not allowed.");
                 return default(TComponent);
             }
-
+#endif
             if (s_ComponentSystem.IsNull())
             {
                 s_ComponentSystem = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>().Data.SystemID;
@@ -335,13 +344,14 @@ namespace Syadeu.Presentation.Entities
         public bool HasComponent<TComponent>()
             where TComponent : unmanaged, IEntityComponent
         {
+#if DEBUG_MODE
             if (!IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"You\'re trying to access to an invalid entity. This is not allowed.");
                 return false;
             }
-
+#endif
             if (s_ComponentSystem.IsNull())
             {
                 s_ComponentSystem = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>().Data.SystemID;
@@ -358,21 +368,21 @@ namespace Syadeu.Presentation.Entities
         /// <inheritdoc cref="EntityData{T}.HasComponent(Type)"/>
         public bool HasComponent(Type componentType)
         {
-#if UNITY_EDITOR
+#if DEBUG_MODE
             if (!TypeHelper.TypeOf<IEntityComponent>.Type.IsAssignableFrom(componentType))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"Type {TypeHelper.ToString(componentType)} is not an {nameof(IEntityComponent)}.");
                 return false;
             }
-#endif
+
             if (!IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"You\'re trying to access to an invalid entity. This is not allowed.");
                 return false;
             }
-
+#endif
             if (s_ComponentSystem.IsNull())
             {
                 s_ComponentSystem = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>().Data.SystemID;
@@ -390,13 +400,14 @@ namespace Syadeu.Presentation.Entities
         public ref TComponent GetComponent<TComponent>()
             where TComponent : unmanaged, IEntityComponent
         {
+#if DEBUG_MODE
             if (!IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"You\'re trying to access to an invalid entity. This is not allowed.");
                 //return default(TComponent);
             }
-
+#endif
             if (s_ComponentSystem.IsNull())
             {
                 s_ComponentSystem = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>().Data.SystemID;
@@ -414,13 +425,14 @@ namespace Syadeu.Presentation.Entities
         public void RemoveComponent<TComponent>()
             where TComponent : unmanaged, IEntityComponent
         {
+#if DEBUG_MODE
             if (!IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"You\'re trying to access to an invalid entity. This is not allowed.");
                 return;
             }
-
+#endif
             if (s_ComponentSystem.IsNull())
             {
                 s_ComponentSystem = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>().Data.SystemID;
@@ -437,21 +449,21 @@ namespace Syadeu.Presentation.Entities
         /// <inheritdoc cref="EntityData{T}.RemoveComponent(Type)"/>
         public void RemoveComponent(Type componentType)
         {
-#if UNITY_EDITOR
+#if DEBUG_MODE
             if (!TypeHelper.TypeOf<IEntityComponent>.Type.IsAssignableFrom(componentType))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"Type {TypeHelper.ToString(componentType)} is not an {nameof(IEntityComponent)}.");
                 return;
             }
-#endif
+
             if (!IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"You\'re trying to access to an invalid entity. This is not allowed.");
                 return;
             }
-
+#endif
             if (s_ComponentSystem.IsNull())
             {
                 s_ComponentSystem = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>().Data.SystemID;
@@ -470,9 +482,17 @@ namespace Syadeu.Presentation.Entities
 
         public void Destroy()
         {
+#if DEBUG_MODE
+            if (IsEmpty())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    "An empty entity reference trying to destroy.");
+                return;
+            }
+#endif
             if (s_EntitySystem.IsNull())
             {
-                s_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
+                s_EntitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.SystemID;
                 if (s_EntitySystem.IsNull())
                 {
                     CoreSystem.Logger.LogError(Channel.Entity,
@@ -486,16 +506,17 @@ namespace Syadeu.Presentation.Entities
 
         public override int GetHashCode()
         {
+#if DEBUG_MODE
             if (IsEmpty())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     "An empty entity reference trying to access transform.");
                 return 0;
             }
-
+#endif
             if (s_EntitySystem.IsNull())
             {
-                s_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
+                s_EntitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.SystemID;
                 if (s_EntitySystem.IsNull())
                 {
                     CoreSystem.Logger.LogError(Channel.Entity,

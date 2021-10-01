@@ -1,4 +1,8 @@
-﻿using Syadeu.Database;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Internal;
@@ -78,7 +82,7 @@ namespace Syadeu.Presentation
         public static TSystem GetSystem<TSystem>()
             where TSystem : PresentationSystemEntity
         {
-            return PresentationManager.GetSystem<T, TSystem>();
+            return PresentationManager.GetSystem<T, TSystem>(out _);
         }
 
         /// <summary>

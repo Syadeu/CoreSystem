@@ -1,4 +1,8 @@
-﻿using Syadeu.Database;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Syadeu.Database;
 using Syadeu.Mono;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Internal;
@@ -39,9 +43,9 @@ namespace Syadeu.Presentation.Map
         }
         protected override PresentationResult OnInitializeAsync()
         {
-            RequestSystem<SceneSystem>(Bind);
-            RequestSystem<EntitySystem>(Bind);
-            RequestSystem<Render.RenderSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, SceneSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, EntitySystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, Render.RenderSystem>(Bind);
 
             return base.OnInitializeAsync();
         }

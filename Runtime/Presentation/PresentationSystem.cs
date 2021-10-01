@@ -1,4 +1,8 @@
-﻿using Syadeu.Database;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation.Internal;
 using System;
@@ -14,6 +18,7 @@ namespace Syadeu.Presentation
     /// 이 struct 로 시스템을 받아오려면 먼저 <seealso cref="PresentationSystemEntity{T}"/> 를 상속받고 시스템을 선언해야됩니다.
     /// </remarks>
     /// <typeparam name="T"></typeparam>
+    [Obsolete("Use PresentationSystem<TGroup, TSystem> instead")]
     public struct PresentationSystem<T> : IValidation, IDisposable, IEquatable<PresentationSystem<T>> where T : PresentationSystemEntity
     {
         public static readonly PresentationSystem<T> Null = new PresentationSystem<T>(Hash.Empty, -1);
@@ -119,5 +124,75 @@ namespace Syadeu.Presentation
         public static ICustomYieldAwaiter GetAwaiter() => new SystemAwaiter();
 
         public bool Equals(PresentationSystem<T> other) => m_GroupHash.Equals(other.m_GroupHash) && m_Index.Equals(other.m_Index);
+    }
+
+    public readonly struct PresentationSystem<TGroup, TSystem> : IValidation
+        where TGroup : PresentationGroupEntity
+        where TSystem : PresentationSystemEntity
+    {
+        public static readonly PresentationSystem<TGroup, TSystem> Null = new PresentationSystem<TGroup, TSystem>(Hash.Empty, -1);
+        private static PresentationSystem<TGroup, TSystem> s_Instance = Null;
+        
+        private readonly Hash m_GroupHash;
+        private readonly int m_Index;
+
+        private static PresentationSystem<TGroup, TSystem> Instance
+        {
+            get
+            {
+                if (!((IValidation)s_Instance).IsValid())
+                {
+                    if (!PresentationManager.TryGetSystem<TGroup, TSystem>(out _, out Hash gHash, out int systemIdx))
+                    {
+                        return Null;
+                    }
+
+                    s_Instance = new PresentationSystem<TGroup, TSystem>(gHash, systemIdx);
+                }
+                return s_Instance;
+            }
+        }
+        public static IPresentationSystemGroup SystemGroup
+        {
+            get
+            {
+                if (!IsValid()) throw new Exception();
+                return PresentationManager.Instance.m_PresentationGroups[Instance.m_GroupHash].m_SystemGroup;
+            }
+        }
+        public static TSystem System
+        {
+            get
+            {
+#if DEBUG_MODE
+                Assert.IsTrue(IsValid(), $"{TypeHelper.TypeOf<TSystem>.Type.Name} System is not valid");
+#endif
+                PresentationSystem<TGroup, TSystem> ins = Instance;
+                return PresentationManager.GetSystem<TSystem>(in ins.m_GroupHash, in ins.m_Index);
+            }
+        }
+        public static PresentationSystemID<TSystem> SystemID
+        {
+            get
+            {
+                PresentationSystem<TGroup, TSystem> ins = Instance;
+                if (ins.m_GroupHash.IsEmpty() || ins.m_Index == -1)
+                {
+                    return PresentationSystemID<TSystem>.Null;
+                }
+                return new PresentationSystemID<TSystem>(ins.m_GroupHash, ins.m_Index);
+            }
+        }
+
+        private PresentationSystem(Hash groupHash, int idx)
+        {
+            m_GroupHash = groupHash;
+            m_Index = idx;
+        }
+
+        bool IValidation.IsValid() => !m_GroupHash.IsEmpty() && m_Index >= 0;
+
+        public static bool IsValid() => !Instance.Equals(Null);
+        public static bool HasInitialized() => IsValid() && PresentationManager.Instance.m_PresentationGroups[Instance.m_GroupHash].m_MainInitDone;
     }
 }

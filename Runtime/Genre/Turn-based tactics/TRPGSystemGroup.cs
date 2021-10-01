@@ -1,10 +1,11 @@
 ﻿using Syadeu.Internal;
+using System;
 
 namespace Syadeu.Presentation.TurnTable
 {
     public sealed class TRPGSystemGroup : PresentationGroupEntity
     {
-        public override bool StartOnInitialize => true;
+        public override Type DependenceGroup => TypeHelper.TypeOf<DefaultPresentationGroup>.Type;
 
         public override void Register()
         {

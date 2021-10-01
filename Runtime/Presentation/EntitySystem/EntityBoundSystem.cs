@@ -1,4 +1,8 @@
-﻿using Syadeu.Database;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Syadeu.Database;
 using Syadeu.Mono;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Attributes;
@@ -11,6 +15,7 @@ using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
+
 using AABB = Syadeu.Database.AABB;
 
 namespace Syadeu.Presentation

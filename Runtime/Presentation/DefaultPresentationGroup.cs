@@ -2,7 +2,7 @@
 
 namespace Syadeu.Presentation
 {
-    internal sealed class DefaultPresentationGroup : PresentationGroupEntity
+    public sealed class DefaultPresentationGroup : PresentationGroupEntity
     {
         public override void Register()
         {
