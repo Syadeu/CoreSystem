@@ -23,7 +23,7 @@ namespace Syadeu.Presentation.Actor
             where TEvent : unmanaged, IActorEvent
 #endif
         {
-            ActorSystem system = PresentationSystem<ActorSystem>.System;
+            ActorSystem system = PresentationSystem<DefaultPresentationGroup, ActorSystem>.System;
             system.ScheduleEvent(PostEvent, ev);
         }
 

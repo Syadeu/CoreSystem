@@ -23,6 +23,7 @@ namespace Syadeu.Presentation.TurnTable
 
         private RenderSystem m_RenderSystem;
         private CoroutineSystem m_CoroutineSystem;
+        private NavMeshSystem m_NavMeshSystem;
 
         private EventSystem m_EventSystem;
         private TRPGTurnTableSystem m_TurnTableSystem;
@@ -33,6 +34,7 @@ namespace Syadeu.Presentation.TurnTable
         {
             RequestSystem<DefaultPresentationGroup, RenderSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, CoroutineSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, NavMeshSystem>(Bind);
             RequestSystem<TRPGSystemGroup, EventSystem>(Bind);
             RequestSystem<TRPGSystemGroup, TRPGTurnTableSystem>(Bind);
             RequestSystem<TRPGSystemGroup, TRPGGridSystem>(Bind);
@@ -46,6 +48,7 @@ namespace Syadeu.Presentation.TurnTable
 
             m_RenderSystem = null;
             m_EventSystem = null;
+            m_NavMeshSystem = null;
             m_TurnTableSystem = null;
             m_TRPGCameraMovement = null;
             m_TRPGGridSystem = null;
@@ -60,6 +63,10 @@ namespace Syadeu.Presentation.TurnTable
         private void Bind(CoroutineSystem other)
         {
             m_CoroutineSystem = other;
+        }
+        private void Bind(NavMeshSystem other)
+        {
+            m_NavMeshSystem = other;
         }
         private void Bind(EventSystem other)
         {
@@ -86,23 +93,27 @@ namespace Syadeu.Presentation.TurnTable
             return base.OnStartPresentation();
         }
 
+        private void DisableCurrentShortcut()
+        {
+            switch (m_CurrentShortcut)
+            {
+                default:
+                case ShortcutType.None:
+                case ShortcutType.Move:
+                    m_TRPGGridSystem.ClearUICell();
+
+                    break;
+                case ShortcutType.Attack:
+                    break;
+            }
+        }
         private void TRPGShortcutUIPressedEventHandler(TRPGShortcutUIPressedEvent ev)
         {
             "ev shortcut".ToLog();
 
             if (m_CurrentShortcut != ev.Shortcut)
             {
-                switch (m_CurrentShortcut)
-                {
-                    default:
-                    case ShortcutType.None:
-                    case ShortcutType.Move:
-                        m_TRPGGridSystem.ClearUICell();
-
-                        break;
-                    case ShortcutType.Attack:
-                        break;
-                }
+                DisableCurrentShortcut();
             }
 
             switch (ev.Shortcut)
@@ -163,7 +174,8 @@ namespace Syadeu.Presentation.TurnTable
         }
         private void TRPGGridCellUIPressedEventHandler(TRPGGridCellUIPressedEvent ev)
         {
-            m_TRPGGridSystem.ClearUICell();
+            DisableCurrentShortcut();
+            m_CurrentShortcut = ShortcutType.None;
 
             MoveToCell(m_TurnTableSystem.CurrentTurn, ev.Position);
             //var move = m_TurnTableSystem.CurrentTurn.GetComponent<TRPGActorMoveComponent>();
@@ -195,7 +207,11 @@ namespace Syadeu.Presentation.TurnTable
             }
 
             // TODO : 타일대로 이동안하니 나중에 수정할 것
-            navAgent.MoveTo(move.TileToPosition(m_LastPath[m_LastPath.Length - 1]));
+            //navAgent.MoveTo(move.TileToPosition(m_LastPath[m_LastPath.Length - 1]));
+            //m_NavMeshSystem.MoveTo(entity.As<IEntityData, IEntity>(), 
+            //    move.TileToPosition(m_LastPath[m_LastPath.Length - 1]), new ActorMoveEvent(0));
+            m_NavMeshSystem.MoveTo(entity.As<IEntityData, IEntity>(),
+                m_LastPath, new ActorMoveEvent(0));
 
             ref TurnPlayerComponent turnPlayer = ref entity.GetComponent<TurnPlayerComponent>();
             int requireAp = m_LastPath.Length;

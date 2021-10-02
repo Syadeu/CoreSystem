@@ -425,6 +425,30 @@ namespace Syadeu.Presentation.Entities
 
             return ref s_ComponentSystem.System.GetComponent<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
         }
+        unsafe public TComponent* GetComponentPointer<TComponent>()
+            where TComponent : unmanaged, IEntityComponent
+        {
+#if DEBUG_MODE
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                //return default(TComponent);
+            }
+#endif
+            if (s_ComponentSystem.IsNull())
+            {
+                s_ComponentSystem = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>().Data.SystemID;
+                if (s_ComponentSystem.IsNull())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"Cannot retrived {nameof(EntityComponentSystem)}.");
+                    //return default(TComponent);
+                }
+            }
+
+            return s_ComponentSystem.System.GetComponentPointer<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
+        }
         /// <inheritdoc cref="EntityData{T}.RemoveComponent{TComponent}"/>
         public void RemoveComponent<TComponent>()
             where TComponent : unmanaged, IEntityComponent

@@ -13,7 +13,7 @@ namespace Syadeu.Presentation.Attributes
     /// 실시간 NavMesh 베이킹을 위해 고안된 어트리뷰트입니다. 상속받는 <see cref="Entity{T}"/>는 obstacle이 되어 베이킹 됩니다.
     /// </summary>
     /// <remarks>
-    /// 이 어트리뷰트 혼자서는 베이킹 되지않고, <see cref="NavMeshComponent"/>으로 베이킹 영역을 지정해야지만 베이킹 됩니다.
+    /// 이 어트리뷰트 혼자서는 베이킹 되지않고, <see cref="NavMeshBaker"/>으로 베이킹 영역을 지정해야지만 베이킹 됩니다.
     /// </remarks>
     [DisplayName("Attribute: NavObstacle")]
     [AttributeAcceptOnly(typeof(EntityBase))]

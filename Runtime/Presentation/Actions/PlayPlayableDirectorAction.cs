@@ -20,6 +20,7 @@ using UnityEngine.Timeline;
 using System.Linq;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Timeline;
+using Syadeu.Presentation.Events;
 
 #if UNITY_CINEMACHINE
 using Cinemachine;

@@ -1,4 +1,4 @@
-﻿namespace Syadeu.Presentation.Actions
+﻿namespace Syadeu.Presentation.Events
 {
     public interface IEventSequence
     {

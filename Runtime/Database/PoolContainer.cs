@@ -12,24 +12,13 @@ namespace Syadeu.Database
 
         private static readonly ConcurrentQueue<T> m_List;
         private static Func<T> m_InstantiateFunc;
-        //private static int m_MaxCount;
         private static int m_Count = 0;
-
-        //private static Timer m_ReleaseTimer;
-        //private static BackgroundJob m_ResetTimerJob;
-        //private static int m_ReleaseTriggerCount;
-        //private static bool m_ReleaseCalled = false;
-
-        //public static event Action<int, T> OnReleaseObject;
 
         public static bool Initialized => m_Initialized;
 
         static PoolContainer()
         {
             m_List = new ConcurrentQueue<T>();
-
-            //m_MaxCount = -1;
-            //m_ReleaseTriggerCount = 10;
         }
 
         public static void Initialize(Func<T> instantiate, int initialCount/*, int maxCount*/)
@@ -97,57 +86,25 @@ namespace Syadeu.Database
             //}
         }
 
-        //public static void SetReleaseTime(int seconds)
-        //{
-        //    if (!m_Initialized) throw new Exception("Not Initialized");
+        public static void Dispose()
+        {
+            int count = m_List.Count;
+            for (int i = 0; i < count; i++)
+            {
+                if (!m_List.TryDequeue(out var temp))
+                {
+                    i--;
+                    continue;
+                }
 
-        //    if (m_ReleaseTimer == null)
-        //    {
-        //        m_ReleaseTimer = new Timer()
-        //            .SetTargetTime(seconds)
-        //            .OnTimerEnd(ReleaseObjects);
-        //        m_ResetTimerJob = new BackgroundJob(ResetTimer);
-        //    }
-        //    else m_ReleaseTimer.SetTargetTime(seconds);
-        //}
-        //public static void ReleaseObjects()
-        //{
-        //    if (!m_Initialized) throw new Exception("Not Initialized");
+                if (temp is IDisposable disposable)
+                {
+                    disposable.Dispose();
+                }
+            }
 
-        //    for (int i = 0; i < m_List.Count; i++)
-        //    {
-        //        OnReleaseObject?.Invoke(i, (T)m_List[i]);
-        //        if (m_List[i] is IDisposable disposable) disposable.Dispose();
-        //    }
-
-        //    m_Count -= m_List.Count;
-        //    m_List.Clear();
-        //}
-
-        //private static void ResetTimer()
-        //{
-        //    if (m_ReleaseTimer != null)
-        //    {
-        //        m_ReleaseTimer.Kill();
-        //        if (ValidateReleaseTrigger() && !m_ReleaseCalled)
-        //        {
-        //            m_ReleaseCalled = true;
-        //            while (m_ReleaseTimer.IsTimerActive())
-        //            {
-        //                CoreSystem.ThreadAwaiter(10);
-        //            }
-        //            m_ReleaseTimer.Start();
-        //        }
-        //        else m_ReleaseCalled = false;
-        //    }
-        //}
-        //private static bool ValidateReleaseTrigger()
-        //{
-        //    if (m_List.Count >= m_ReleaseTriggerCount)
-        //    {
-        //        return true;
-        //    }
-        //    return false;
-        //}
+            m_InstantiateFunc = null;
+            m_Initialized = false;
+        }
     }
 }

@@ -5,7 +5,7 @@ using UnityEngine.AI;
 
 namespace Syadeu.Presentation.Map
 {
-    public sealed class NavMeshComponent : MonoBehaviour
+    public sealed class NavMeshBaker : MonoBehaviour
     {
         internal bool m_Registered = false;
         internal NavMeshData m_NavMeshData;
@@ -32,16 +32,13 @@ namespace Syadeu.Presentation.Map
 
         private IEnumerator Authoring(bool enable)
         {
-            while (!PresentationSystem<NavMeshSystem>.IsValid())
-            {
-                yield return null;
-            }
+            yield return PresentationSystem<DefaultPresentationGroup, NavMeshSystem>.GetAwaiter();
 
             if (enable)
             {
-                PresentationSystem<NavMeshSystem>.System.AddBaker(this);
+                PresentationSystem<DefaultPresentationGroup, NavMeshSystem>.System.AddBaker(this);
             }
-            else PresentationSystem<NavMeshSystem>.System.RemoveBaker(this);
+            else PresentationSystem<DefaultPresentationGroup, NavMeshSystem>.System.RemoveBaker(this);
         }
     }
 }

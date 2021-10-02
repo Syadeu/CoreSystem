@@ -18,7 +18,7 @@ namespace Syadeu.Presentation.Actions
 
         protected override PresentationResult OnInitialize()
         {
-            RequestSystem<EventSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
 
             m_ScheduledActions = new NativeQueue<Payload>(Allocator.Persistent);
 
@@ -63,10 +63,11 @@ namespace Syadeu.Presentation.Actions
                     return;
                 }
 
+                handler.SetEvent(SystemEventResult.Success, m_CurrentAction.Sequence.GetType());
+
                 m_CurrentAction.Terminate.Invoke();
                 m_CurrentAction.Clear();
 
-                handler.SetEvent(SystemEventResult.Success, m_CurrentAction.Sequence.GetType());
                 return;
             }
 
@@ -92,7 +93,7 @@ namespace Syadeu.Presentation.Actions
                             action.InternalTerminate();
                             m_CurrentAction.Clear();
 
-                            handler.SetEvent(SystemEventResult.Success, m_CurrentAction.Sequence.GetType());
+                            handler.SetEvent(SystemEventResult.Success, sequence.GetType());
                             return;
                         }
 

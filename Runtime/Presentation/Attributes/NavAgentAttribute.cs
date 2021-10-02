@@ -2,6 +2,7 @@
 using Syadeu.Mono;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Actor;
+using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Map;
@@ -19,7 +20,8 @@ namespace Syadeu.Presentation.Attributes
 {
     [DisplayName("Attribute: NavAgent")]
     [AttributeAcceptOnly(typeof(EntityBase))]
-    public sealed class NavAgentAttribute : AttributeBase
+    public sealed class NavAgentAttribute : AttributeBase,
+        INotifyComponent<NavAgentCompoonent>
     {
         [JsonProperty(Order = 0, PropertyName = "AgentType")] public int m_AgentType = 0;
         [JsonProperty(Order = 1, PropertyName = "BaseOffset")] public float m_BaseOffset = 0;
@@ -41,6 +43,7 @@ namespace Syadeu.Presentation.Attributes
         [JsonIgnore] private CoreRoutine Routine { get; set; }
         [JsonIgnore] public Vector3 PreviousTarget { get; set; }
 
+        [Obsolete]
         public void MoveTo(Vector3 point)
         {
             if (!NavMeshAgent.isOnNavMesh)
@@ -120,6 +123,10 @@ namespace Syadeu.Presentation.Attributes
     internal sealed class NavAgentProcessor : AttributeProcessor<NavAgentAttribute>, 
         IAttributeOnProxy
     {
+        protected override void OnCreated(NavAgentAttribute attribute, EntityData<IEntityData> entity)
+        {
+            entity.AddComponent(new NavAgentCompoonent());
+        }
         public void OnProxyCreated(AttributeBase attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
         {
             NavAgentAttribute att = (NavAgentAttribute)attribute;
@@ -135,20 +142,20 @@ namespace Syadeu.Presentation.Attributes
         {
             NavAgentAttribute att = (NavAgentAttribute)attribute;
 
-            if (att.IsMoving)
-            {
-                ITransform tr = entity.transform;
+            //if (att.IsMoving)
+            //{
+            //    ITransform tr = entity.transform;
 
-                NavMeshAgent agent = monoObj.GetComponent<NavMeshAgent>();
-                if (agent.isOnNavMesh) agent.ResetPath();
-                agent.enabled = false;
+            //    NavMeshAgent agent = monoObj.GetComponent<NavMeshAgent>();
+            //    if (agent.isOnNavMesh) agent.ResetPath();
+            //    agent.enabled = false;
 
-                tr.position = att.PreviousTarget;
-                att.IsMoving = false;
+            //    tr.position = att.PreviousTarget;
+            //    att.IsMoving = false;
 
-                EventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(entity, OnMoveStateChangedEvent.MoveState.Teleported | OnMoveStateChangedEvent.MoveState.Idle));
-                att.m_OnMoveActions.Execute(entity.As<IEntity, IEntityData>());
-            }
+            //    EventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(entity, OnMoveStateChangedEvent.MoveState.Teleported | OnMoveStateChangedEvent.MoveState.Idle));
+            //    att.m_OnMoveActions.Execute(entity.As<IEntity, IEntityData>());
+            //}
 
             att.NavMeshAgent = null;
         }

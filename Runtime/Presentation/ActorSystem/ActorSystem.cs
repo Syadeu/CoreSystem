@@ -21,6 +21,7 @@ namespace Syadeu.Presentation.Actor
         public override bool EnableAfterPresentation => false;
 
         private readonly Queue<IEventHandler> m_ScheduledEvents = new Queue<IEventHandler>();
+        private EventContainer m_CurrentEvent = null;
 
         private EntitySystem m_EntitySystem;
         private EventSystem m_EventSystem;
@@ -90,16 +91,86 @@ namespace Syadeu.Presentation.Actor
 
         void ISystemEventScheduler.Execute(ScheduledEventHandler handler)
         {
+            if (m_CurrentEvent != null)
+            {
+                if (m_CurrentEvent.Sequence.KeepWait)
+                {
+                    handler.SetEvent(SystemEventResult.Wait, m_CurrentEvent.Sequence.GetType());
+                    return;
+                }
+
+                if (!m_CurrentEvent.TimerStarted)
+                {
+                    m_CurrentEvent.TimerStarted = true;
+                    m_CurrentEvent.StartTime = UnityEngine.Time.time;
+                }
+
+                if (UnityEngine.Time.time - m_CurrentEvent.StartTime
+                    < m_CurrentEvent.Sequence.AfterDelay)
+                {
+                    handler.SetEvent(SystemEventResult.Wait, m_CurrentEvent.Sequence.GetType());
+                    return;
+                }
+
+                handler.SetEvent(SystemEventResult.Success, m_CurrentEvent.Sequence.GetType());
+
+                m_CurrentEvent.Clear();
+
+                return;
+            }
+
             IEventHandler ev = m_ScheduledEvents.Dequeue();
 
-            CoreSystem.Logger.Log(Channel.Action,
-                $"Execute scheduled actor event({ev.GetEventName()})");
+            if (ev is IEventSequence sequence)
+            {
+                m_CurrentEvent.Sequence = sequence;
 
-            ev.Post();
+                CoreSystem.Logger.Log(Channel.Action,
+                    $"Execute scheduled actor event({ev.GetEventName()})");
 
-            handler.SetEvent(SystemEventResult.Success, ev.EventType);
+                ev.Post();
+
+                // Early out
+                if (!sequence.KeepWait)
+                {
+                    handler.SetEvent(SystemEventResult.Success, ev.EventType);
+                    m_CurrentEvent.Clear();
+
+                    return;
+                }
+
+                handler.SetEvent(SystemEventResult.Wait, ev.EventType);
+            }
+            else
+            {
+                CoreSystem.Logger.Log(Channel.Action,
+                    $"Execute scheduled actor event({ev.GetEventName()})");
+
+                ev.Post();
+
+                handler.SetEvent(SystemEventResult.Success, ev.EventType);
+            }
         }
 
+        private class EventContainer
+        {
+            public IEventSequence Sequence;
+
+            public bool TimerStarted;
+            public float StartTime;
+
+            public bool IsEmpty()
+            {
+                return Sequence == null;
+            }
+            public void Clear()
+            {
+                Sequence = null;
+
+                TimerStarted = false;
+                StartTime = 0;
+            }
+        }
         private static EventHandler<TEvent> EventHandlerFactory<TEvent>()
 #if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             where TEvent : struct, IActorEvent

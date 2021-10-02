@@ -282,6 +282,24 @@ namespace Syadeu.Presentation.Components
 
             return ref ((TComponent*)m_ComponentBuffer[index.x].m_ComponentBuffer)[index.y];
         }
+        public TComponent* GetComponentPointer<TComponent>(EntityData<IEntityData> entity) 
+            where TComponent : unmanaged, IEntityComponent
+        {
+            int2 index = GetIndex<TComponent>(entity);
+
+            if (!m_ComponentBuffer[index.x].IsCreated)
+            {
+                throw new Exception();
+            }
+
+            if (!m_ComponentBuffer[index.x].Find(entity, ref index.y))
+            {
+                CoreSystem.Logger.LogError(Channel.Component,
+                    $"Entity({entity.Name}) doesn\'t have component({TypeHelper.TypeOf<TComponent>.Name})");
+            }
+
+            return ((TComponent*)m_ComponentBuffer[index.x].m_ComponentBuffer) + index.y;
+        }
 
         public QueryBuilder<TComponent> CreateQueryBuilder<TComponent>() where TComponent : unmanaged, IEntityComponent
         {
