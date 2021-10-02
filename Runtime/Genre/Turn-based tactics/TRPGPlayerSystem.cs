@@ -18,6 +18,7 @@ namespace Syadeu.Presentation.TurnTable
 
         public override bool IsStartable => m_RenderSystem.CameraComponent != null;
 
+        private ShortcutType m_CurrentShortcut = ShortcutType.None;
         private GridPath32 m_LastPath;
 
         private RenderSystem m_RenderSystem;
@@ -89,11 +90,34 @@ namespace Syadeu.Presentation.TurnTable
         {
             "ev shortcut".ToLog();
 
+            if (m_CurrentShortcut != ev.Shortcut)
+            {
+                switch (m_CurrentShortcut)
+                {
+                    default:
+                    case ShortcutType.None:
+                    case ShortcutType.Move:
+                        m_TRPGGridSystem.ClearUICell();
+
+                        break;
+                    case ShortcutType.Attack:
+                        break;
+                }
+            }
+
             switch (ev.Shortcut)
             {
                 default:
                 case ShortcutType.None:
                 case ShortcutType.Move:
+                    if (m_CurrentShortcut == ShortcutType.Move)
+                    {
+                        m_TRPGGridSystem.ClearUICell();
+
+                        m_CurrentShortcut = ShortcutType.None;
+                        return;
+                    }
+
                     NavAgentAttribute navAgent = m_TurnTableSystem.CurrentTurn.GetAttribute<NavAgentAttribute>();
                     if (navAgent == null)
                     {
@@ -106,19 +130,34 @@ namespace Syadeu.Presentation.TurnTable
                         return;
                     }
 
-                    if (m_TRPGGridSystem.IsDrawingUIGrid)
-                    {
-                        m_TRPGGridSystem.ClearUICell();
-                        return;
-                    }
-
                     m_TRPGCameraMovement.SetNormal();
 
-                    //var move = m_TurnTableSystem.CurrentTurn.GetComponent<TRPGActorMoveComponent>();
                     m_TRPGGridSystem.DrawUICell(m_TurnTableSystem.CurrentTurn);
+                    m_CurrentShortcut = ShortcutType.Move;
 
                     break;
                 case ShortcutType.Attack:
+                    if (m_CurrentShortcut == ShortcutType.Attack)
+                    {
+                        m_TRPGCameraMovement.SetNormal();
+
+                        m_CurrentShortcut = ShortcutType.None;
+                        return;
+                    }
+
+                    Instance<TRPGActorAttackProvider> attProvider = m_TurnTableSystem.CurrentTurn.GetComponent<ActorControllerComponent>().GetProvider<TRPGActorAttackProvider>();
+                    var targets = attProvider.Object.GetTargetsInRange();
+                    var tr = m_TurnTableSystem.CurrentTurn.As<IEntityData, IEntity>().transform;
+
+                    $"{targets.Count} found".ToLog();
+                    for (int i = 0; i < targets.Count; i++)
+                    {
+                        $"{targets[i].Name} found".ToLog();
+                        m_TRPGCameraMovement.SetAim(tr, targets[i].transform);
+                    }
+
+                    m_CurrentShortcut = ShortcutType.Attack;
+
                     break;
             }
         }

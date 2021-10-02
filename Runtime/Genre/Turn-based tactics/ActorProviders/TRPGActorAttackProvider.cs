@@ -40,7 +40,6 @@ namespace Syadeu.Presentation.TurnTable
             => GetTargetsWithin(in m_AttackRange);
         public IReadOnlyList<Entity<IEntity>> GetTargetsWithin(in int range)
         {
-            //GridSizeAttribute gridSize = Parent.GetAttribute<GridSizeAttribute>();
             if (!Parent.HasComponent<GridSizeComponent>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
@@ -48,6 +47,9 @@ namespace Syadeu.Presentation.TurnTable
 
                 return Array.Empty<Entity<IEntity>>();
             }
+
+            GridSizeComponent gridSize = Parent.GetComponent<GridSizeComponent>();
+            gridSize.GetRange(ref m_TempGetRange, in range);
 
             List<Entity<IEntity>> entities = new List<Entity<IEntity>>();
             for (int i = 0; i < m_TempGetRange.Length; i++)
