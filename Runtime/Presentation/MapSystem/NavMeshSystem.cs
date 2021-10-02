@@ -36,7 +36,7 @@ namespace Syadeu.Presentation.Map
 
         protected override PresentationResult OnInitialize()
         {
-            RequestSystem<EventSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
 
             return base.OnInitialize();
         }

@@ -406,7 +406,7 @@ namespace Syadeu.Presentation.Proxy
                     throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
                 }
             }
-            PresentationSystem<GameObjectProxySystem>.System.Destroy(in this);
+            PresentationSystem<DefaultPresentationGroup, GameObjectProxySystem>.System.Destroy(in this);
         }
 
         public bool Equals(ProxyTransform other) => 

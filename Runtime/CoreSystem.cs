@@ -1,4 +1,8 @@
-﻿using Syadeu.Mono;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Syadeu.Mono;
 using Syadeu.Entities;
 using Syadeu.Internal;
 using System;
@@ -289,7 +293,7 @@ namespace Syadeu
         {
             if (job.MainJob != null)
             {
-#if UNITY_EDITOR
+#if DEBUG_MODE
                 throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, 
                         "이 잡은 메인 잡이 아닙니다. 메인 잡을 실행하세요");
 #else
@@ -1880,39 +1884,48 @@ namespace Syadeu
 #line hidden
         public struct Logger
         {
-            [System.Diagnostics.Conditional("UNITY_EDITOR")]
+            [System.Diagnostics.Conditional("DEBUG_MODE")]
             public static void ThreadBlock(string name, ThreadInfo thread) => LogManager.ThreadBlock(name, thread);
+            [System.Diagnostics.Conditional("DEBUG_MODE")]
+            public static void ThreadBlock(ThreadInfo thread, [System.Runtime.CompilerServices.CallerMemberName] string methodName = "") => LogManager.ThreadBlock(methodName, thread);
 
-#if UNITY_EDITOR
+#if DEBUG_MODE
             [System.Diagnostics.DebuggerHidden]
 #endif
+            [System.Diagnostics.Conditional("DEBUG_MODE")]
             public static void Log(Channel channel, bool logThread, string msg) => LogManager.Log(channel, ResultFlag.Normal, msg, logThread);
-#if UNITY_EDITOR
+#if DEBUG_MODE
             [System.Diagnostics.DebuggerHidden]
 #endif
+            [System.Diagnostics.Conditional("DEBUG_MODE")]
             public static void Log(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Normal, msg, false);
-#if UNITY_EDITOR
+#if DEBUG_MODE
             [System.Diagnostics.DebuggerHidden]
 #endif
+            [System.Diagnostics.Conditional("DEBUG_MODE")]
             public static void LogWarning(Channel channel, bool logThread, string msg) => LogManager.Log(channel, ResultFlag.Warning, msg, logThread);
-#if UNITY_EDITOR
+#if DEBUG_MODE
             [System.Diagnostics.DebuggerHidden]
 #endif
+            [System.Diagnostics.Conditional("DEBUG_MODE")]
             public static void LogWarning(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Warning, msg, false);
-#if UNITY_EDITOR
+#if DEBUG_MODE
             [System.Diagnostics.DebuggerHidden]
 #endif
+            [System.Diagnostics.Conditional("DEBUG_MODE")]
             public static void LogError(Channel channel, bool logThread, string msg) => LogManager.Log(channel, ResultFlag.Error, msg, logThread);
-#if UNITY_EDITOR
+#if DEBUG_MODE
             [System.Diagnostics.DebuggerHidden]
 #endif
+            [System.Diagnostics.Conditional("DEBUG_MODE")]
             public static void LogError(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Error, msg,false);
-#if UNITY_EDITOR
+#if DEBUG_MODE
             [System.Diagnostics.DebuggerHidden]
 #endif
+            [System.Diagnostics.Conditional("DEBUG_MODE")]
             public static void LogError(Channel channel, Exception ex, [System.Runtime.CompilerServices.CallerMemberName] string methodName = "")
             {
-#if UNITY_EDITOR
+#if DEBUG_MODE
                 const string c_Msg = "Unhandled Exception has been raised while executing {0}.\n{1}\n{2}";
 
                 System.Text.RegularExpressions.Regex temp = new System.Text.RegularExpressions.Regex(@"([a-zA-Z]:[\\[a-zA-Z0-9 .]*]*:[0-9]*)");
@@ -1934,13 +1947,17 @@ namespace Syadeu
 #endif
             }
 
+            [System.Diagnostics.Conditional("DEBUG_MODE")]
             public static void NotNull(object obj) => LogManager.NotNull(obj, string.Empty);
+            [System.Diagnostics.Conditional("DEBUG_MODE")]
             public static void NotNull(object obj, string msg) => LogManager.NotNull(obj, msg);
 
+            [System.Diagnostics.Conditional("DEBUG_MODE")]
             public static void True(bool value, string msg) => LogManager.True(value, msg);
+            [System.Diagnostics.Conditional("DEBUG_MODE")]
             public static void False(bool value, string msg) => LogManager.False(value, msg);
 
-            [System.Diagnostics.Conditional("UNITY_EDITOR")]
+            [System.Diagnostics.Conditional("DEBUG_MODE")]
             public static void Unmanaged<T>() where T : unmanaged { }
         }
         public struct LogTimer : IDisposable
@@ -1967,7 +1984,7 @@ namespace Syadeu
 #line default
         #endregion
 
-#if UNITY_EDITOR
+#if DEBUG_MODE
         #region Debug Only
 
         public class DebugLineClass

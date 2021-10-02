@@ -21,6 +21,7 @@
         Render = 1 << 10,
         Event = 1 << 11,
         Action = 1 << 12,
+        Component = 1 << 13,
 
         Audio = 1 << 20,
 

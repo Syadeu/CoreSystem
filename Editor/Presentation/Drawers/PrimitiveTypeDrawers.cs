@@ -590,7 +590,18 @@ namespace SyadeuEditor.Presentation
             }
             else if (memberInfo is PropertyInfo property)
             {
-                m_Getter = () => property.GetValue(parentObject);
+                m_Getter = () =>
+                {
+                    try
+                    {
+                        return property.GetValue(parentObject);
+                    }
+                    catch (Exception ex)
+                    {
+                        CoreSystem.Logger.LogError(Channel.Editor, ex);
+                    }
+                    return null;
+                };
                 m_Setter = (other) => property.SetValue(parentObject, other);
                 declaredType = property.PropertyType;
             }

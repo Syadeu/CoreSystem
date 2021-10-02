@@ -177,6 +177,7 @@ namespace SyadeuEditor
 
             const string
                 UNITY_COLLECTIONS_CHECKS = "ENABLE_UNITY_COLLECTIONS_CHECKS",
+                CORESYSTEM_DISABLE_CHECKS = "CORESYSTEM_DISABLE_CHECKS",
 
                 CORESYSTEM_TURNBASESYSTEM = "CORESYSTEM_TURNBASESYSTEM",
 
@@ -186,6 +187,7 @@ namespace SyadeuEditor
                 CORESYSTEM_FMOD = "CORESYSTEM_FMOD";
             bool
                 m_DefinedCollectionsChecks, 
+                m_DefinedCoresystemChecks,
 
                 m_DefinedTurnBasedSystem,
 
@@ -234,6 +236,7 @@ namespace SyadeuEditor
                 m_DefinedConstrains = temp.ToList();
 
                 m_DefinedCollectionsChecks = HasConstrains(UNITY_COLLECTIONS_CHECKS);
+                m_DefinedCoresystemChecks = HasConstrains(CORESYSTEM_DISABLE_CHECKS);
 
                 m_DefinedTurnBasedSystem = HasConstrains(CORESYSTEM_TURNBASESYSTEM);
 
@@ -352,6 +355,17 @@ namespace SyadeuEditor
                 EditorUtils.Line();
 
                 EditorUtils.StringRich("CoreSystem Constrains", 13);
+                using (var check = new EditorGUI.ChangeCheckScope())
+                {
+                    m_DefinedCoresystemChecks =
+                        EditorGUILayout.ToggleLeft("Define CORESYSTEM_DISABLE_CHECKS", m_DefinedCoresystemChecks);
+
+                    if (check.changed)
+                    {
+                        if (m_DefinedCoresystemChecks) DefineConstrains(CORESYSTEM_DISABLE_CHECKS);
+                        else UndefineContrains(CORESYSTEM_DISABLE_CHECKS);
+                    }
+                }
                 using (var check = new EditorGUI.ChangeCheckScope())
                 {
                     m_DefinedTurnBasedSystem =

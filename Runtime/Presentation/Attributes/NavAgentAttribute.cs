@@ -49,7 +49,7 @@ namespace Syadeu.Presentation.Attributes
                 NavMeshAgent.enabled = true;
             }
 
-            PresentationSystem<EventSystem>.System
+            PresentationSystem<DefaultPresentationGroup, EventSystem>.System
                 .PostEvent(OnMoveStateChangedEvent.GetEvent(
                     Parent.As<IEntityData, IEntity>(), OnMoveStateChangedEvent.MoveState.AboutToMove));
 
@@ -68,7 +68,7 @@ namespace Syadeu.Presentation.Attributes
         }
         private IEnumerator Updater()
         {
-            EventSystem eventSystem = PresentationSystem<EventSystem>.System;
+            EventSystem eventSystem = PresentationSystem<DefaultPresentationGroup, EventSystem>.System;
             Entity<IEntity> parent = Parent.As<IEntityData, IEntity>();
             if (!(parent.transform is IProxyTransform tr))
             {

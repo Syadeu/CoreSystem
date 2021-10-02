@@ -1,5 +1,6 @@
 ﻿using Syadeu.Database;
 using Syadeu.Mono;
+using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Proxy;
 using System;
@@ -35,6 +36,7 @@ namespace Syadeu.Presentation.Map
 
         private GridMapAttribute GridMap => m_MainGrid;
         public float CellSize => m_MainGrid.CellSize;
+        public Mesh CellMesh => m_MainGrid.CellMesh;
 
         #region Presentation Methods
 
@@ -380,7 +382,9 @@ namespace Syadeu.Presentation.Map
         }
         public int[] GetLayer(in int layer) => GridMap.GetLayer(in layer);
 
-        public bool HasPath([NoAlias] int from, [NoAlias] int to, [NoAlias] int maxPathLength, out int pathFound, [NoAlias] int maxIteration = 32)
+        public bool HasPath(
+            [NoAlias] int from, [NoAlias] int to, [NoAlias] int maxPathLength, 
+            out int pathFound, [NoAlias] int maxIteration = 32)
         {
             int2
                 fromLocation = GridMap.GetLocation(in from),
@@ -391,7 +395,7 @@ namespace Syadeu.Presentation.Map
 
             unsafe
             {
-                GridPathTile* path = stackalloc GridPathTile[maxPathLength];
+                GridPathTile* path = stackalloc GridPathTile[512];
                 path[0] = tile;
 
                 pathFound = 1;
@@ -430,7 +434,7 @@ namespace Syadeu.Presentation.Map
                 return path[pathFound - 1].position.index == to;
             }
         }
-        public bool GetPath64(in int from, in int to, in int maxPathLength, ref GridPath32 path, in NativeHashSet<int> ignoreIndices = default, in int maxIteration = 32)
+        public bool GetPath32(in int from, in int to, in int maxPathLength, ref GridPath32 path, in NativeHashSet<int> ignoreIndices = default, in int maxIteration = 32)
         {
             int2
                 fromLocation = GridMap.GetLocation(in from),
@@ -491,61 +495,6 @@ namespace Syadeu.Presentation.Map
             }
         }
 
-        //[Obsolete]
-        //public bool GetPath(int from, int to, List<GridPathTile> path, int maxPathLength, int maxIteration = 32)
-        //{
-        //    int2
-        //        fromLocation = GridMap.Grid.IndexToLocation(in from),
-        //        toLocation = GridMap.Grid.IndexToLocation(in to);
-
-        //    GridPathTile tile = new GridPathTile(from, fromLocation);
-        //    tile.Calculate(GridMap.Grid, GridMap.ObstacleLayer);
-
-        //    if (path == null)
-        //    {
-        //        path = new List<GridPathTile>()
-        //        {
-        //            tile
-        //        };
-        //    }
-        //    else
-        //    {
-        //        path.Clear();
-        //        path.Add(tile);
-        //    }
-
-        //    int iteration = 0;
-        //    while (
-        //        iteration < maxIteration &&
-        //        path.Count < maxPathLength &&
-        //        path[path.Count - 1].position.index != to)
-        //    {
-        //        GridPathTile lastTileData = path[path.Count - 1];
-        //        if (lastTileData.IsBlocked())
-        //        {
-        //            path.RemoveAt(path.Count - 1);
-
-        //            if (path.Count == 0) break;
-
-        //            GridPathTile parentTile = path[path.Count - 1];
-        //            parentTile.opened[lastTileData.direction] = false;
-        //            path[path.Count - 1] = parentTile;
-        //        }
-        //        else
-        //        {
-        //            int nextDirection = GetLowestCost(ref lastTileData, toLocation);
-
-        //            GridPathTile nextTile = lastTileData.GetNext(nextDirection);
-        //            nextTile.Calculate(GridMap.Grid, GridMap.ObstacleLayer);
-        //            path.Add(nextTile);
-        //        }
-                
-        //        iteration++;
-        //    }
-
-        //    return path[path.Count - 1].position.index == to;
-        //}
-
         public IReadOnlyList<Entity<IEntity>> GetEntitiesAt(in int index)
         {
             if (m_GridEntities.TryGetValue(index, out List<Entity<IEntity>> entities))
@@ -590,6 +539,22 @@ namespace Syadeu.Presentation.Map
             => GridMap.GetRange1024(in idx, in range, in ignoreLayers);
         public void GetRange(ref NativeList<int> list, in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
             => GridMap.GetRange(ref list, in idx, in range, in ignoreLayers);
+
+        #endregion
+
+        #region UI
+
+        public Entity<IEntity> PlaceUICell(GridPosition position, float heightOffset = .25f)
+        {
+            Entity<IEntity> entity = 
+                m_EntitySystem.CreateEntity(
+                    GridMap.m_CellUIPrefab, 
+                    IndexToPosition(position.index) + new float3(0, heightOffset, 0), 
+                    quaternion.EulerZXY(new float3(90, 0, 0) * Mathf.Deg2Rad), 
+                    1);
+
+            return entity;
+        }
 
         #endregion
 

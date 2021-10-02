@@ -18,7 +18,8 @@ namespace Syadeu.Presentation
     /// C#에서는 클래스가 소멸해도 해당 인스턴스의 <see langword="static"/> 필드, 프로퍼티 값은 메모리에서 방출되지 않습니다.
     /// </remarks>
     /// <typeparam name="T"></typeparam>
-    public abstract class PresentationSystemEntity<T> : PresentationSystemEntity where T : PresentationSystemEntity
+    public abstract class PresentationSystemEntity<T> : PresentationSystemEntity, IEquatable<PresentationSystemEntity<T>>
+        where T : PresentationSystemEntity
     {
         private readonly List<UnityEngine.GameObject> m_CreatedGameObjects = new List<UnityEngine.GameObject>();
 
@@ -58,7 +59,16 @@ namespace Syadeu.Presentation
         [Obsolete]
         protected void RequestSystem<TSystem>(Action<TSystem> setter) where TSystem : PresentationSystemEntity
             => PresentationManager.RegisterRequest<DefaultPresentationGroup, TSystem>(setter);
-
+        /// <summary>
+        /// 시스템을 요청합니다. <typeparamref name="TGroup"/> 은 요청할 <typeparamref name="TSystem"/>이 속한 그룹입니다.
+        /// </summary>
+        /// <remarks>
+        /// <seealso cref="OnInitialize"/> 혹은 <seealso cref="OnInitializeAsync"/> 에서만 수행되어야합니다.<br/>
+        /// 기본 시스템 그룹은 <seealso cref="DefaultPresentationGroup"/> 입니다.
+        /// </remarks>
+        /// <typeparam name="TGroup"></typeparam>
+        /// <typeparam name="TSystem"></typeparam>
+        /// <param name="setter"></param>
         protected void RequestSystem<TGroup, TSystem>(Action<TSystem> setter)
             where TGroup : PresentationGroupEntity
             where TSystem : PresentationSystemEntity
@@ -81,5 +91,7 @@ namespace Syadeu.Presentation
 
             return obj;
         }
+
+        public bool Equals(PresentationSystemEntity<T> other) => m_GroupIndex.Equals(other.m_GroupIndex) && m_SystemIndex == other.m_SystemIndex;
     }
 }

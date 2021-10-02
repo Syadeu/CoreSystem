@@ -1,4 +1,8 @@
-﻿using Syadeu.Database;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Mono;
 using Syadeu.Presentation.Entities;
@@ -79,7 +83,7 @@ namespace Syadeu.Presentation
             public int Count => m_Systems.Count;
             public List<PresentationSystemEntity> Systems => m_Systems;
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if DEBUG_MODE
             private Unity.Profiling.ProfilerMarker
                 m_InitializeMarker, m_InitializeAsyncMarker, m_StartPreMarker,
                 m_BeforePreMarker, m_OnPreMarker, m_AfterPreMarker;
@@ -125,22 +129,37 @@ namespace Syadeu.Presentation
             }
             public bool HasSystem<T>(T system) where T : PresentationSystemEntity
                 => m_Systems.FindFor((other) => other.Equals(system)) != null;
-            public bool TryGetSystem(Type type, out PresentationSystemEntity system)
+
+            public TSystem GetSystem<TSystem>(in int systemIdx) where TSystem : PresentationSystemEntity
+            {
+                for (int i = 0; i < m_Systems.Count; i++)
+                {
+                    if (TypeHelper.TypeOf<TSystem>.Type.IsAssignableFrom(m_Systems[i].GetType()))
+                    {
+                        return (TSystem)m_Systems[i];
+                    }
+                }
+
+                return null;
+            }
+            public bool TryGetSystem(Type type, out PresentationSystemEntity system, out int systemIdx)
             {
                 for (int i = 0; i < m_Systems.Count; i++)
                 {
                     if (type.IsAssignableFrom(m_Systems[i].GetType()))
                     {
                         system = m_Systems[i];
+                        systemIdx = i;
                         return true;
                     }
                 }
+                systemIdx = -1;
                 system = null;
                 return false;
             }
-            public bool TryGetSystem<T>(out T system) where T : PresentationSystemEntity
+            public bool TryGetSystem<T>(out T system, out int systemIdx) where T : PresentationSystemEntity
             {
-                if (!TryGetSystem(TypeHelper.TypeOf<T>.Type, out PresentationSystemEntity temp))
+                if (!TryGetSystem(TypeHelper.TypeOf<T>.Type, out PresentationSystemEntity temp, out systemIdx))
                 {
                     system = null;
                     return false;
@@ -157,21 +176,21 @@ namespace Syadeu.Presentation
                 if (system.EnableBeforePresentation)
                 {
                     m_BeforePresentations.Add(system);
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if DEBUG_MODE
                     m_BeforePreSystemMarkers.Add(new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{system.GetType().Name}"));
 #endif
                 }
                 if (system.EnableOnPresentation)
                 {
                     m_OnPresentations.Add(system);
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if DEBUG_MODE
                     m_OnPreSystemMarkers.Add(new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{system.GetType().Name}"));
 #endif
                 }
                 if (system.EnableAfterPresentation)
                 {
                     m_AfterPresentations.Add(system);
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if DEBUG_MODE
                     m_AfterPreSystemMarkers.Add(new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{system.GetType().Name}"));
 #endif
                 }
@@ -224,7 +243,7 @@ namespace Syadeu.Presentation
 
             public void Initialize()
             {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if DEBUG_MODE
                 m_InitializeMarker.Begin();
 #endif
                 for (int i = 0; i < m_Initializers.Count; i++)
@@ -232,13 +251,13 @@ namespace Syadeu.Presentation
                     PresentationResult result = m_Initializers[i].OnInitialize();
                     LogMessage(result);
                 }
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if DEBUG_MODE
                 m_InitializeMarker.End();
 #endif
             }
             public void InitializeAsync()
             {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if DEBUG_MODE
                 m_InitializeAsyncMarker.Begin();
 #endif
                 for (int i = 0; i < m_Initializers.Count; i++)
@@ -246,26 +265,26 @@ namespace Syadeu.Presentation
                     PresentationResult result = m_Initializers[i].OnInitializeAsync();
                     LogMessage(result);
                 }
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if DEBUG_MODE
                 m_InitializeAsyncMarker.End();
 #endif
             }
             public void OnStartPresentation()
             {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if DEBUG_MODE
                 m_StartPreMarker.Begin();
 #endif
                 for (int i = 0; i < m_Initializers.Count; i++)
                 {
                     m_Initializers[i].OnStartPresentation();
                 }
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if DEBUG_MODE
                 m_StartPreMarker.End();
 #endif
             }
             public void BeforePresentation()
             {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if DEBUG_MODE
                 m_BeforePreMarker.Begin();
 #endif
                 m_MainthreadBeforePre = false;
@@ -275,18 +294,18 @@ namespace Syadeu.Presentation
 
                 for (int i = 0; i < m_BeforePresentations.Count; i++)
                 {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if DEBUG_MODE
                     m_BeforePreSystemMarkers[i].Begin();
 #endif
                     PresentationResult result = m_BeforePresentations[i].BeforePresentation();
                     LogMessage(result);
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if DEBUG_MODE
                     m_BeforePreSystemMarkers[i].End();
 #endif
                 }
 
                 m_MainthreadBeforePre = true;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if DEBUG_MODE
                 m_BeforePreMarker.End();
 #endif
             }
@@ -300,7 +319,7 @@ namespace Syadeu.Presentation
             }
             public void OnPresentation()
             {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if DEBUG_MODE
                 m_OnPreMarker.Begin();
 #endif
                 m_MainthreadOnPre = false;
@@ -310,18 +329,18 @@ namespace Syadeu.Presentation
 
                 for (int i = 0; i < m_OnPresentations.Count; i++)
                 {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if DEBUG_MODE
                     m_OnPreSystemMarkers[i].Begin();
 #endif
                     PresentationResult result = m_OnPresentations[i].OnPresentation();
                     LogMessage(result);
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if DEBUG_MODE
                     m_OnPreSystemMarkers[i].End();
 #endif
                 }
 
                 m_MainthreadOnPre = true;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if DEBUG_MODE
                 m_OnPreMarker.End();
 #endif
             }
@@ -335,7 +354,7 @@ namespace Syadeu.Presentation
             }
             public void AfterPresentation()
             {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if DEBUG_MODE
                 m_AfterPreMarker.Begin();
 #endif
                 m_MainthreadAfterPre = false;
@@ -345,18 +364,18 @@ namespace Syadeu.Presentation
 
                 for (int i = 0; i < m_AfterPresentations.Count; i++)
                 {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if DEBUG_MODE
                     m_AfterPreSystemMarkers[i].Begin();
 #endif
                     PresentationResult result = m_AfterPresentations[i].AfterPresentation();
                     LogMessage(result);
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if DEBUG_MODE
                     m_AfterPreSystemMarkers[i].End();
 #endif
                 }
 
                 m_MainthreadAfterPre = true;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if DEBUG_MODE
                 m_AfterPreMarker.End();
 #endif
             }
@@ -408,7 +427,7 @@ namespace Syadeu.Presentation
                 }
                 else if (presentations[i].DependenceGroup != null)
                 {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if DEBUG_MODE
                     if (presentations[i].DependenceGroup.IsAbstract ||
                         presentations[i].DependenceGroup.IsInterface)
                     {
@@ -621,23 +640,23 @@ namespace Syadeu.Presentation
             m_OnUpdateAsyncSemaphore,
             m_AfterUpdateAsyncSemaphore;
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        private static Unity.Profiling.ProfilerMarker
-            simSemaphoreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Internal, "Semaphore.WaitOne (Simulation)"),
-
-            beforeSemaphoreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Internal, "Semaphore.WaitOne (BeforeUpdate)"),
-            onSemaphoreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Internal, "Semaphore.WaitOne (OnUpdate)"),
-            afterSemaphoreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Internal, "Semaphore.WaitOne (AfterUpdate)");
-
-        private static UnityEngine.Profiling.CustomSampler
-            PresentationUpdateMarker = UnityEngine.Profiling.CustomSampler.Create("PresentationAsyncUpdate"),
-
-            beforeUpdateMarker = UnityEngine.Profiling.CustomSampler.Create("BeforeUpdate"),
-            onUpdateMarker = UnityEngine.Profiling.CustomSampler.Create("OnUpdate"),
-            afterUpdateMarker = UnityEngine.Profiling.CustomSampler.Create("AfterUpdate");
-#endif
         private static void PresentationAsyncUpdate(object obj)
         {
+#if DEBUG_MODE
+            Unity.Profiling.ProfilerMarker
+                simSemaphoreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Internal, "Semaphore.WaitOne (Simulation)"),
+
+                beforeSemaphoreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Internal, "Semaphore.WaitOne (BeforeUpdate)"),
+                onSemaphoreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Internal, "Semaphore.WaitOne (OnUpdate)"),
+                afterSemaphoreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Internal, "Semaphore.WaitOne (AfterUpdate)");
+
+            UnityEngine.Profiling.CustomSampler
+                PresentationUpdateMarker = UnityEngine.Profiling.CustomSampler.Create("PresentationAsyncUpdate"),
+
+                beforeUpdateMarker = UnityEngine.Profiling.CustomSampler.Create("BeforeUpdate"),
+                onUpdateMarker = UnityEngine.Profiling.CustomSampler.Create("OnUpdate"),
+                afterUpdateMarker = UnityEngine.Profiling.CustomSampler.Create("AfterUpdate");
+#endif
             PresentationManager mgr = (PresentationManager)obj;
             Thread.CurrentThread.CurrentCulture = global::System.Globalization.CultureInfo.InvariantCulture;
 
@@ -645,7 +664,7 @@ namespace Syadeu.Presentation
 
             while (!CoreSystem.BlockCreateInstance)
             {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if DEBUG_MODE
                 if (CoreSystem.IsEditorPaused) continue;
 
                 UnityEngine.Profiling.Profiler.BeginThreadProfiling("Syadeu", "CoreSystem.Presentation");
@@ -660,7 +679,7 @@ namespace Syadeu.Presentation
                     }
                     if (CoreSystem.BlockCreateInstance) break;
                 }
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if DEBUG_MODE
                 beforeSemaphoreMarker.Begin();
 #endif
                 while (!CoreSystem.BlockCreateInstance)
@@ -669,7 +688,7 @@ namespace Syadeu.Presentation
                 }
                 if (CoreSystem.BlockCreateInstance) break;
                 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if DEBUG_MODE
                 beforeSemaphoreMarker.End();
                 beforeUpdateMarker.Begin();
 #endif
@@ -682,7 +701,7 @@ namespace Syadeu.Presentation
                     //}
                     //UnityEngine.Debug.Log("before");
                 }
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if DEBUG_MODE
                 beforeUpdateMarker.End();
                 onSemaphoreMarker.Begin();
 #endif
@@ -692,7 +711,7 @@ namespace Syadeu.Presentation
                 }
                 if (CoreSystem.BlockCreateInstance) break;
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if DEBUG_MODE
                 onSemaphoreMarker.End();
                 onUpdateMarker.Begin();
 #endif
@@ -703,7 +722,7 @@ namespace Syadeu.Presentation
                 //    Math.Sqrt(2.5f);
                 //}
                 //UnityEngine.Debug.Log("on");
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if DEBUG_MODE
                 onUpdateMarker.End();
                 afterSemaphoreMarker.Begin();
 #endif
@@ -713,7 +732,7 @@ namespace Syadeu.Presentation
                 }
                 if (CoreSystem.BlockCreateInstance) break;
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if DEBUG_MODE
                 afterSemaphoreMarker.End();
                 afterUpdateMarker.Begin();
 #endif
@@ -724,7 +743,7 @@ namespace Syadeu.Presentation
                 //    Math.Sqrt(2.5f);
                 //}
                 //UnityEngine.Debug.Log("after");
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if DEBUG_MODE
                 afterUpdateMarker.End();
                 PresentationUpdateMarker.End();
                 UnityEngine.Profiling.Profiler.EndThreadProfiling();
@@ -742,7 +761,7 @@ namespace Syadeu.Presentation
 
         #region Internals
 
-        private static Hash GroupToHash(Type group)
+        internal static Hash GroupToHash(Type group)
         {
             return Hash.NewHash(group.Name);
         }
@@ -926,6 +945,61 @@ namespace Syadeu.Presentation
             where TGroup : PresentationGroupEntity
             where TSystem : PresentationSystemEntity
         {
+#if DEBUG_MODE
+            if (TypeHelper.TypeOf<TGroup>.IsAbstract || TypeHelper.TypeOf<TGroup>.Type.IsInterface)
+            {
+                CoreSystem.Logger.LogError(Channel.Presentation,
+                    $"Requesting group type must be not abstract or interface but {TypeHelper.TypeOf<TGroup>.Name} is.");
+                return;
+            }
+#endif
+            Hash groupHash = GroupToHash(TypeHelper.TypeOf<TGroup>.Type);
+#if DEBUG_MODE
+            if (!Instance.m_PresentationGroups.ContainsKey(groupHash))
+            {
+                throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
+                    $"시스템 그룹 {typeof(TGroup).Name} 은 등록되지 않았습니다.");
+            }
+#endif
+            Group group = Instance.m_PresentationGroups[groupHash];
+
+            if (group.m_IsStarted && !group.m_MainthreadSignal)
+            {
+                group.m_RequestSystemDelegates.Enqueue(() =>
+                {
+                    //TSystem system = PresentationSystem<TSystem>.System;
+                    if (!group.TryGetSystem<TSystem>(out TSystem target, out _))
+                    {
+                        CoreSystem.Logger.LogError(Channel.Presentation, $"Requested system ({TypeHelper.TypeOf<TSystem>.Name}) not found");
+                    }
+                    else CoreSystem.Logger.Log(Channel.Presentation, $"Requested system ({TypeHelper.TypeOf<TSystem>.Name}) found");
+
+                    setter.Invoke(target);
+                });
+                return;
+            }
+
+            if (group.TryGetSystem<TSystem>(out TSystem system, out _))
+            {
+                try
+                {
+                    setter.Invoke(system);
+                }
+                catch (Exception ex)
+                {
+                    CoreSystem.Logger.LogError(Channel.Presentation, ex);
+                }
+                
+                return;
+            }
+
+            CoreSystem.Logger.LogError(Channel.Presentation,
+                $"Requested system ({TypeHelper.TypeOf<TSystem>.Name}) is not part of group {TypeHelper.TypeOf<TGroup>.Name}");
+        }
+        internal static TSystem GetSystem<TGroup, TSystem>(out int systemIdx)
+            where TGroup : PresentationGroupEntity
+            where TSystem : PresentationSystemEntity
+        {
             Hash groupHash = GroupToHash(TypeHelper.TypeOf<TGroup>.Type);
 
             if (!Instance.m_PresentationGroups.TryGetValue(groupHash, out Group group))
@@ -934,34 +1008,51 @@ namespace Syadeu.Presentation
                     $"시스템 그룹 {typeof(TGroup).Name} 은 등록되지 않았습니다.");
             }
 
-            if (group.m_IsStarted && !group.m_MainthreadSignal)
+            if (!group.TryGetSystem<TSystem>(out TSystem target, out systemIdx))
             {
-                group.m_RequestSystemDelegates.Enqueue(() =>
-                {
-                    TSystem system = PresentationSystem<TSystem>.System;
-                    if (system == null)
-                    {
-                        CoreSystem.Logger.LogError(Channel.Presentation, $"Requested system ({TypeHelper.TypeOf<TSystem>.Name}) not found");
-                    }
-                    else CoreSystem.Logger.Log(Channel.Presentation, $"Requested system ({TypeHelper.TypeOf<TSystem>.Name}) found");
+                CoreSystem.Logger.LogError(Channel.Presentation, $"Requested system ({TypeHelper.TypeOf<TSystem>.Name}) not found");
+            }
+            else CoreSystem.Logger.Log(Channel.Presentation, $"Requested system ({TypeHelper.TypeOf<TSystem>.Name}) found");
 
-                    setter.Invoke(system);
-                });
-                return;
+            return target;
+        }
+        internal static bool TryGetSystem<TGroup, TSystem>(out TSystem system, out Hash groupHash, out int systemIdx)
+            where TGroup : PresentationGroupEntity
+            where TSystem : PresentationSystemEntity
+        {
+            groupHash = GroupToHash(TypeHelper.TypeOf<TGroup>.Type);
+
+            if (!Instance.m_PresentationGroups.TryGetValue(groupHash, out Group group))
+            {
+                systemIdx = -1;
+                system = null;
+                return false;
             }
 
-            if (group.TryGetSystem<TSystem>(out TSystem system))
+            if (!group.TryGetSystem<TSystem>(out system, out systemIdx))
             {
-                setter.Invoke(system);
-                return;
+                return false;
+            }
+            else CoreSystem.Logger.Log(Channel.Presentation, $"Requested system ({TypeHelper.TypeOf<TSystem>.Name}) found");
+
+            return true;
+        }
+        internal static TSystem GetSystem<TSystem>(in Hash groupHash, in int systemIdx)
+            where TSystem : PresentationSystemEntity
+        {
+            if (!Instance.m_PresentationGroups.TryGetValue(groupHash, out Group group))
+            {
+                return null;
             }
 
-            throw new Exception("unknown");
+            return group.GetSystem<TSystem>(in systemIdx);
         }
 
         #endregion
 
         #region Presentation Group Method
+
+        [System.Diagnostics.Conditional("DEBUG_MODE")]
         private static void LogMessage(PresentationResult result)
         {
             if (result.m_Result == ResultFlag.Normal) return;
@@ -986,14 +1077,14 @@ namespace Syadeu.Presentation
                         $"{group.m_RequireSystemTypes[i].m_Target.Name} is not registered. Request ignored.");
                     continue;
                 }
-
+#if DEBUG_MODE
                 if (targetGroup.Equals(group))
                 {
                     CoreSystem.Logger.LogError(Channel.Presentation,
                         $"This system({group.m_RegisteredSystemTypes[i].Name}) declared sub system of it\'s own system group. This is not allowed.");
                     continue;
                 }
-
+#endif
                 dateTime = Time.realtimeSinceStartup;
                 while (!targetGroup.m_MainInitDone)
                 {
@@ -1073,30 +1164,6 @@ namespace Syadeu.Presentation
             Instance.BeforeUpdateAsync += group.BeforePresentationAsync;
             Instance.UpdateAsync += group.OnPresentationAsync;
             Instance.AfterUpdateAsync += group.AfterPresentationAsync;
-
-            //while (true)
-            //{
-            //    group.m_BackgroundthreadBeforePre = false;
-
-            //    group.BeforePresentationAsync();
-
-            //    group.m_BackgroundthreadBeforePre = true;
-            //    yield return group.m_WaitBeforePre;
-            //    group.m_BackgroundthreadOnPre = false;
-
-            //    group.OnPresentationAsync();
-
-            //    group.m_BackgroundthreadOnPre = true;
-            //    yield return group.m_WaitOnPre;
-            //    group.m_BackgroundthreadAfterPre = false;
-
-            //    group.AfterPresentationAsync();
-
-            //    group.m_BackgroundthreadAfterPre = true;
-            //    yield return group.m_WaitAfterPre;
-
-            //    yield return null;
-            //}
         }
         #endregion
     }

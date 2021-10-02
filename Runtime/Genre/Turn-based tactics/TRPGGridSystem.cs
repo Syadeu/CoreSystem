@@ -1,16 +1,22 @@
 ﻿using Syadeu.Mono;
+using Syadeu.Presentation.Actor;
+using Syadeu.Presentation.Attributes;
+using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Input;
 using Syadeu.Presentation.Map;
+using System.Collections.Generic;
 using Unity.Collections;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace Syadeu.Presentation.TurnTable
 {
+    [SubSystem(typeof(GridSystem))]
     public sealed class TRPGGridSystem : PresentationSystemEntity<TRPGGridSystem>
     {
         public override bool EnableBeforePresentation => false;
-        public override bool EnableOnPresentation => false;
+        public override bool EnableOnPresentation => true;
         public override bool EnableAfterPresentation => false;
 
         private LineRenderer m_GridBoundsLineRenderer;
@@ -18,7 +24,13 @@ namespace Syadeu.Presentation.TurnTable
         private NativeList<Vector3> m_GridBoundsTempOutlines;
         private bool[] m_GridBoundsMouseOver;
 
+        private bool m_IsDrawingGrids = false;
+        private readonly List<Entity<IEntity>> m_DrawnCellUIEntities = new List<Entity<IEntity>>();
+
+        public bool IsDrawingUIGrid => m_IsDrawingGrids;
+
         private InputSystem m_InputSystem;
+        private GridSystem m_GridSystem;
 
         protected override PresentationResult OnInitialize()
         {
@@ -40,7 +52,8 @@ namespace Syadeu.Presentation.TurnTable
             m_GridBoundsTempMoveables = new NativeList<GridPosition>(512, Allocator.Persistent);
             m_GridBoundsTempOutlines = new NativeList<Vector3>(512, Allocator.Persistent);
 
-            RequestSystem<InputSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, InputSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, GridSystem>(Bind);
 
             return base.OnInitialize();
         }
@@ -50,20 +63,20 @@ namespace Syadeu.Presentation.TurnTable
             m_GridBoundsTempOutlines.Dispose();
         }
 
+        #region Binds
+
         private void Bind(InputSystem other)
         {
             m_InputSystem = other;
         }
-
-        private Entity<IEntity> m_DrawingEntityTarget;
-        private bool m_IsDrawingGrids = false;
-
-        protected override PresentationResult OnPresentationAsync()
+        private void Bind(GridSystem other)
         {
-            return base.OnPresentationAsync();
+            m_GridSystem = other;
         }
 
-        public void DrawMoveableGridBounds(Entity<IEntity> entity)
+        #endregion
+
+        public void DrawUICell(EntityData<IEntityData> entity)
         {
             if (!entity.HasComponent<TRPGActorMoveComponent>())
             {
@@ -71,16 +84,55 @@ namespace Syadeu.Presentation.TurnTable
                 return;
             }
 
+            if (m_IsDrawingGrids)
+            {
+                for (int i = 0; i < m_DrawnCellUIEntities.Count; i++)
+                {
+                    m_DrawnCellUIEntities[i].Destroy();
+                }
+                m_DrawnCellUIEntities.Clear();
+            }
+
             TRPGActorMoveComponent move = entity.GetComponent<TRPGActorMoveComponent>();
             move.GetMoveablePositions(ref m_GridBoundsTempMoveables);
-            move.CalculateMoveableOutline(m_GridBoundsTempMoveables, ref m_GridBoundsTempOutlines);
-
+            move.CalculateMoveableOutlineVertices(m_GridBoundsTempMoveables, ref m_GridBoundsTempOutlines);
+            
             m_GridBoundsLineRenderer.positionCount = m_GridBoundsTempOutlines.Length;
             m_GridBoundsLineRenderer.SetPositions(m_GridBoundsTempOutlines);
             m_GridBoundsMouseOver = new bool[m_GridBoundsLineRenderer.positionCount];
 
-            m_DrawingEntityTarget = entity;
+            for (int i = 0; i < m_GridBoundsTempMoveables.Length; i++)
+            {
+                Entity<IEntity> ui = m_GridSystem.PlaceUICell(m_GridBoundsTempMoveables[i]);
+
+                ui.AddComponent(new TRPGGridCellComponent()
+                {
+                    m_GridPosition = m_GridBoundsTempMoveables[i]
+                });
+
+                m_DrawnCellUIEntities.Add(ui);
+            }
+
             m_IsDrawingGrids = true;
         }
+        public void ClearUICell()
+        {
+            if (!m_IsDrawingGrids) return;
+
+            for (int i = 0; i < m_DrawnCellUIEntities.Count; i++)
+            {
+                m_DrawnCellUIEntities[i].Destroy();
+            }
+
+            m_GridBoundsLineRenderer.positionCount = 0;
+            m_DrawnCellUIEntities.Clear();
+
+            m_IsDrawingGrids = false;
+        }
+    }
+
+    public struct TRPGGridCellComponent : IEntityComponent
+    {
+        public GridPosition m_GridPosition;
     }
 }

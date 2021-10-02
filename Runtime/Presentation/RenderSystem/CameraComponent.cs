@@ -1,4 +1,8 @@
-﻿using Cinemachine;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Cinemachine;
 using Syadeu.Presentation.Proxy;
 using System.Collections;
 using System.Collections.Generic;
@@ -57,16 +61,11 @@ namespace Syadeu.Presentation.Render
         }
         private IEnumerator Start()
         {
-            ICustomYieldAwaiter awaiter = PresentationSystem<RenderSystem>.GetAwaiter();
-
-            while (awaiter.KeepWait)
-            {
-                yield return null;
-            }
+            yield return PresentationSystem<DefaultPresentationGroup, RenderSystem>.GetAwaiter();
 
             if (m_SetMainCameraOnInitialize) SetMainCamera();
 
-            RenderSystem renderSystem = PresentationSystem<RenderSystem>.System;
+            RenderSystem renderSystem = PresentationSystem<DefaultPresentationGroup, RenderSystem>.System;
             for (int i = 0; i < m_CameraComponents.Length; i++)
             {
                 m_CameraComponents[i].RenderSystem = renderSystem;
@@ -86,7 +85,7 @@ namespace Syadeu.Presentation.Render
 
         public void SetMainCamera()
         {
-            PresentationSystem<RenderSystem>.System.Camera = m_Camera;
+            PresentationSystem<DefaultPresentationGroup, RenderSystem>.System.Camera = m_Camera;
         }
 
         public void SetTarget(params CinemachineTargetGroup.Target[] targets)

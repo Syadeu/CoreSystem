@@ -1,4 +1,7 @@
-﻿using AOT;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
 using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation.Actor;
@@ -146,12 +149,11 @@ namespace Syadeu.Presentation.Components
             return new int2(cIdx, eIdx);
         }
 
-        public TComponent AddComponent<TComponent>(EntityData<IEntityData> entity, TComponent data) where TComponent : unmanaged, IEntityComponent
+        public TComponent AddComponent<TComponent>(in EntityData<IEntityData> entity, in TComponent data) where TComponent : unmanaged, IEntityComponent
         {
             CoreSystem.Logger.ThreadBlock(nameof(AddComponent), ThreadInfo.Unity);
 
             int2 index = GetIndex<TComponent>(entity);
-            $"entity({entity.Name}) -> {index} add component".ToLog();
 
             if (!m_ComponentBuffer[index.x].IsCreated)
             {
@@ -161,13 +163,11 @@ namespace Syadeu.Presentation.Components
             if (!m_ComponentBuffer[index.x].Find(entity, ref index.y) &&
                 !m_ComponentBuffer[index.x].FindEmpty(entity, ref index.y))
             {
-                "require increment".ToLog();
-
                 EntityComponentBuffer boxed = m_ComponentBuffer[index.x];
                 boxed.Increment<TComponent>();
                 m_ComponentBuffer[index.x] = boxed;
 
-                if (!m_ComponentBuffer[index.x].Find(entity, ref index.y))
+                if (!m_ComponentBuffer[index.x].FindEmpty(entity, ref index.y))
                 {
                     throw new Exception();
                 }
@@ -177,8 +177,8 @@ namespace Syadeu.Presentation.Components
             m_ComponentBuffer[index.x].m_OccupiedBuffer[index.y] = true;
             m_ComponentBuffer[index.x].m_EntityBuffer[index.y] = entity;
 
-            $"Component {TypeHelper.TypeOf<TComponent>.Name} set at entity({entity.Name})".ToLog();
-
+            CoreSystem.Logger.Log(Channel.Component,
+                $"Component {TypeHelper.TypeOf<TComponent>.Name} set at entity({entity.Name}), index {index}");
             return data;
         }
         public void RemoveComponent<TComponent>(EntityData<IEntityData> entity)
@@ -207,7 +207,8 @@ namespace Syadeu.Presentation.Components
                 }
             }
 
-            $"{TypeHelper.TypeOf<TComponent>.Name} component at {entity.Name} removed".ToLog();
+            CoreSystem.Logger.Log(Channel.Component,
+                $"{TypeHelper.TypeOf<TComponent>.Name} component at {entity.Name} removed");
         }
         public void RemoveComponent(EntityData<IEntityData> entity, Type componentType)
         {
@@ -275,7 +276,7 @@ namespace Syadeu.Presentation.Components
 
             if (!m_ComponentBuffer[index.x].Find(entity, ref index.y))
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(Channel.Component,
                     $"Entity({entity.Name}) doesn\'t have component({TypeHelper.TypeOf<TComponent>.Name})");
             }
 
@@ -372,7 +373,7 @@ namespace Syadeu.Presentation.Components
 
                 UnsafeUtility.MemCpy(occBuffer, m_OccupiedBuffer, UnsafeUtility.SizeOf<bool>() * m_Length);
                 UnsafeUtility.MemCpy(idxBuffer, m_EntityBuffer, UnsafeUtility.SizeOf<EntityData<IEntityData>>() * m_Length);
-                UnsafeUtility.MemCpy(buffer, buffer, UnsafeUtility.SizeOf<TComponent>() * m_Length);
+                UnsafeUtility.MemCpy(buffer, m_ComponentBuffer, UnsafeUtility.SizeOf<TComponent>() * m_Length);
 
                 UnsafeUtility.Free(this.m_OccupiedBuffer, Allocator.Persistent);
                 UnsafeUtility.Free(this.m_EntityBuffer, Allocator.Persistent);
@@ -384,6 +385,8 @@ namespace Syadeu.Presentation.Components
 
                 m_Increased += 1;
                 m_Length = c_InitialCount * m_Increased;
+
+                CoreSystem.Logger.Log(Channel.Component, $"increased {TypeHelper.TypeOf<TComponent>.Name} {m_Length} :: {m_Increased}");
             }
 
             public bool Find(EntityData<IEntityData> entity, ref int entityIndex)

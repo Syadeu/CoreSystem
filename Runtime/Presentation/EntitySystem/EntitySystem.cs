@@ -1,4 +1,8 @@
-﻿using MoonSharp.Interpreter;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using MoonSharp.Interpreter;
 using Syadeu.Database;
 using Syadeu.Database.Lua;
 using Syadeu.Internal;
@@ -80,6 +84,24 @@ namespace Syadeu.Presentation
         {
             for (int i = 0; i < m_DestroyedObjectsInThisFrame.Count; i++)
             {
+                if (m_ObjectEntities[m_DestroyedObjectsInThisFrame[i]] is IEntityData entityData)
+                {
+                    if (!CoreSystem.BlockCreateInstance && m_ObjectEntities[m_DestroyedObjectsInThisFrame[i]] is IEntity entity)
+                    {
+                        if (entity.transform is ProxyTransform tr)
+                        {
+                            Hash index = tr.m_Hash;
+                            tr.Destroy();
+                            m_EntityGameObjects.Remove(index);
+                        }
+                        else if (entity.transform is UnityTransform unityTr)
+                        {
+                            UnityEngine.Object.Destroy(unityTr.provider.gameObject);
+                            ((IDisposable)unityTr).Dispose();
+                        }
+                    }
+                }
+
                 ((IDisposable)m_ObjectEntities[m_DestroyedObjectsInThisFrame[i]]).Dispose();
                 m_ObjectEntities.Remove(m_DestroyedObjectsInThisFrame[i]);
             }
@@ -89,12 +111,12 @@ namespace Syadeu.Presentation
 
         protected override PresentationResult OnInitializeAsync()
         {
-            RequestSystem<DataContainerSystem>(Bind);
-            RequestSystem<GameObjectProxySystem>(Bind);
-            RequestSystem<CoroutineSystem>(Bind);
-            RequestSystem<Events.EventSystem>(Bind);
-            RequestSystem<Actor.ActorSystem>(Bind);
-            RequestSystem<Components.EntityComponentSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, DataContainerSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, GameObjectProxySystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, CoroutineSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, Events.EventSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, Actor.ActorSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, Components.EntityComponentSystem>(Bind);
 
             #region Processor Registeration
             Type[] processors = TypeHelper.GetTypes(ProcessorPredicate);
@@ -245,32 +267,68 @@ namespace Syadeu.Presentation
         }
         private void OnDataObjectVisible(ProxyTransform tr)
         {
-            if (!m_EntityGameObjects.TryGetValue(tr.m_Hash, out Hash entityHash) ||
-                !m_ObjectEntities.ContainsKey(entityHash)) return;
+#if DEBUG_MODE
+            if (!m_EntityGameObjects.TryGetValue(tr.m_Hash, out Hash eCheckHash) ||
+                !m_ObjectEntities.ContainsKey(eCheckHash))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Internal EntitySystem error. ProxyTransform doesn\'t have entity.");
+                return;
+            }
+#endif
+            Hash entityHash = m_EntityGameObjects[tr.m_Hash];
 
             m_EventSystem.PostEvent<OnEntityVisibleEvent>(OnEntityVisibleEvent.GetEvent(
                 Entity<IEntity>.GetEntityWithoutCheck(entityHash), tr));
         }
         private void OnDataObjectInvisible(ProxyTransform tr)
         {
-            if (!m_EntityGameObjects.TryGetValue(tr.m_Hash, out Hash entityHash) ||
-                !m_ObjectEntities.ContainsKey(entityHash)) return;
+#if DEBUG_MODE
+            if (!m_EntityGameObjects.TryGetValue(tr.m_Hash, out Hash eCheckHash) ||
+                !m_ObjectEntities.ContainsKey(eCheckHash))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Internal EntitySystem error. ProxyTransform doesn\'t have entity.");
+                return;
+            }
+#endif
+            Hash entityHash = m_EntityGameObjects[tr.m_Hash];
 
             m_EventSystem.PostEvent<OnEntityVisibleEvent>(OnEntityVisibleEvent.GetEvent(
                 Entity<IEntity>.GetEntityWithoutCheck(entityHash), tr));
         }
-        private void M_ProxySystem_OnDataObjectProxyCreated(ProxyTransform obj, RecycleableMonobehaviour monoObj)
+        private void M_ProxySystem_OnDataObjectProxyCreated(ProxyTransform tr, RecycleableMonobehaviour monoObj)
         {
-            if (!m_EntityGameObjects.TryGetValue(obj.m_Hash, out Hash entityHash) ||
-                !(m_ObjectEntities[entityHash] is IEntity entity)) return;
+#if DEBUG_MODE
+            if (!m_EntityGameObjects.TryGetValue(tr.m_Hash, out Hash eCheckHash) ||
+                !m_ObjectEntities.ContainsKey(eCheckHash))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Internal EntitySystem error. ProxyTransform doesn\'t have entity.");
+                return;
+            }
+#endif
+            Hash entityHash = m_EntityGameObjects[tr.m_Hash];
+            IEntity entity = (IEntity)m_ObjectEntities[entityHash];
 
             monoObj.m_Entity = Entity<IEntity>.GetEntity(entity.Idx);
             ProcessEntityOnProxyCreated(this, entity, monoObj);
         }
-        private void M_ProxySystem_OnDataObjectProxyRemoved(ProxyTransform obj, RecycleableMonobehaviour monoObj)
+        private void M_ProxySystem_OnDataObjectProxyRemoved(ProxyTransform tr, RecycleableMonobehaviour monoObj)
         {
-            if (!m_EntityGameObjects.TryGetValue(obj.m_Hash, out Hash entityHash) ||
-                !(m_ObjectEntities[entityHash] is IEntity entity)) return;
+            if (!m_EntityGameObjects.ContainsKey(tr.m_Hash)) return;
+
+#if DEBUG_MODE
+            if (!m_EntityGameObjects.TryGetValue(tr.m_Hash, out Hash eCheckHash) ||
+                !m_ObjectEntities.ContainsKey(eCheckHash))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Internal EntitySystem error. ProxyTransform doesn\'t have entity.");
+                return;
+            }
+#endif
+            Hash entityHash = m_EntityGameObjects[tr.m_Hash];
+            IEntity entity = (IEntity)m_ObjectEntities[entityHash];
 
             ProcessEntityOnProxyRemoved(this, entity, monoObj);
             monoObj.m_Entity = Entity<IEntity>.Empty;
@@ -447,6 +505,7 @@ namespace Syadeu.Presentation
         }
         private bool InternalEntityValidation(in string key, in ObjectBase original, in float3 targetPos, out EntityBase entity)
         {
+#if DEBUG_MODE
             entity = null;
             if (original == null)
             {
@@ -458,14 +517,15 @@ namespace Syadeu.Presentation
                 CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_IsNotEntityError, key));
                 return false;
             }
+#endif
             entity = (EntityBase)original;
-
+#if DEBUG_MODE
             if (!entity.Prefab.IsNone() && !entity.Prefab.IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_EntityHasInvalidPrefabError, original.Name));
                 return false;
             }
-
+#endif
             return true;
         }
         #endregion
@@ -473,12 +533,13 @@ namespace Syadeu.Presentation
         private ProxyTransform InternalCreateProxy(in EntityBase from,
             in PrefabReference<GameObject> prefab, in float3 pos, in quaternion rot, in float3 scale)
         {
+#if DEBUG_MODE
             if (!prefab.IsNone() && !prefab.IsValid())
             {
                 throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
                     $"{from.Name} has an invalid prefab. This is not allowed.");
             }
-
+#endif
             return m_ProxySystem.CreateNewPrefab(in prefab, in pos, in rot, in scale, from.m_EnableCull, from.Center, from.Size, from.StaticBatching);
         }
         private Entity<IEntity> InternalCreateEntity(in EntityBase entityBase, in ProxyTransform obj)
@@ -543,6 +604,7 @@ namespace Syadeu.Presentation
         }
         private bool InternalEntityDataValidation(string name, ObjectBase original, out EntityDataBase entityData)
         {
+#if DEBUG_MODE
             entityData = null;
             if (original == null)
             {
@@ -559,6 +621,7 @@ namespace Syadeu.Presentation
                 CoreSystem.Logger.LogError(Channel.Entity, "This object is attribute and cannot be created. Request ignored.");
                 return false;
             }
+#endif
             entityData = (EntityDataBase)original;
             return true;
         }
@@ -588,7 +651,7 @@ namespace Syadeu.Presentation
             => CreateInstance(obj.GetObject());
         internal Instance<T> CreateInstance<T>(IObject obj) where T : class, IObject
         {
-#if UNITY_EDITOR
+#if DEBUG_MODE
             Type objType = obj.GetType();
             if (TypeHelper.TypeOf<EntityBase>.Type.IsAssignableFrom(objType))
             {
@@ -611,7 +674,7 @@ namespace Syadeu.Presentation
         }
         internal Instance CreateInstance(IObject obj)
         {
-#if UNITY_EDITOR
+#if DEBUG_MODE
             Type objType = obj.GetType();
             if (TypeHelper.TypeOf<EntityBase>.Type.IsAssignableFrom(objType))
             {
@@ -665,7 +728,7 @@ namespace Syadeu.Presentation
         public void DestroyObject(Instance instance) => InternalDestroyEntity(instance.Idx);
         internal void InternalDestroyEntity(in Hash hash)
         {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if DEBUG_MODE
             if (!m_ObjectEntities.ContainsKey(hash))
             {
                 if (!CoreSystem.BlockCreateInstance)
@@ -691,20 +754,20 @@ namespace Syadeu.Presentation
             {
                 ProcessEntityOnDestroy(this, entityData);
 
-                if (!CoreSystem.BlockCreateInstance && m_ObjectEntities[hash] is IEntity entity)
-                {
-                    if (entity.transform is ProxyTransform tr)
-                    {
-                        Hash index = tr.m_Hash;
-                        tr.Destroy();
-                        m_EntityGameObjects.Remove(index);
-                    }
-                    else if (entity.transform is UnityTransform unityTr)
-                    {
-                        UnityEngine.Object.Destroy(unityTr.provider.gameObject);
-                        ((IDisposable)unityTr).Dispose();
-                    }
-                }
+                //if (!CoreSystem.BlockCreateInstance && m_ObjectEntities[hash] is IEntity entity)
+                //{
+                //    if (entity.transform is ProxyTransform tr)
+                //    {
+                //        Hash index = tr.m_Hash;
+                //        tr.Destroy();
+                //        m_EntityGameObjects.Remove(index);
+                //    }
+                //    else if (entity.transform is UnityTransform unityTr)
+                //    {
+                //        UnityEngine.Object.Destroy(unityTr.provider.gameObject);
+                //        ((IDisposable)unityTr).Dispose();
+                //    }
+                //}
             }
             else
             {
@@ -718,8 +781,19 @@ namespace Syadeu.Presentation
             foreach (var interfaceType in interfaceTypes)
             {
                 m_ComponentSystem.RemoveComponent(m_ObjectEntities[hash], interfaceType);
+#if DEBUG_MODE
+                Debug_RemoveComponent(m_ObjectEntities[hash], interfaceType.GetGenericArguments()[0]);
+#endif
             }
 
+#if DEBUG_MODE
+            if (Debug_HasComponent(m_ObjectEntities[hash], out int count, out string names))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Entity({m_ObjectEntities[hash].Name}) has " +
+                    $"number of {count} components that didn\'t disposed. {names}");
+            }
+#endif
             m_DestroyedObjectsInThisFrame.Add(hash);
         }
 
@@ -749,6 +823,104 @@ namespace Syadeu.Presentation
         #endregion
 
 #line default
+
+#if DEBUG_MODE
+        private readonly Dictionary<Hash, List<Type>> m_AddedComponents = new Dictionary<Hash, List<Type>>();
+
+        private bool Debug_HasComponent(ObjectBase entity, out int count, out string names)
+        {
+            if (m_AddedComponents.TryGetValue(entity.Idx, out var list))
+            {
+                count = list.Count;
+                names = list[0].Name;
+                for (int i = 1; i < list.Count; i++)
+                {
+                    names += $", {list[i].Name}";
+                }
+
+                return true;
+            }
+
+            count = 0;
+            names = string.Empty;
+            return false;
+        }
+        internal void Debug_AddComponent<TComponent>(EntityData<IEntityData> entity)
+        {
+            if (!m_AddedComponents.TryGetValue(entity.Idx, out var list))
+            {
+                list = new List<Type>();
+                m_AddedComponents.Add(entity.Idx, list);
+            }
+
+            if (!list.Contains(TypeHelper.TypeOf<TComponent>.Type))
+            {
+                list.Add(TypeHelper.TypeOf<TComponent>.Type);
+            }
+        }
+        internal void Debug_RemoveComponent<TComponent>(ObjectBase entity)
+            => Debug_RemoveComponent(entity, TypeHelper.TypeOf<TComponent>.Type);
+        internal void Debug_RemoveComponent(ObjectBase entity, Type component)
+        {
+            if (entity is Actor.ActorProviderBase actorProvider)
+            {
+                Debug_RemoveComponent(actorProvider.Parent, component);
+                return;
+            }
+
+            if (!m_AddedComponents.TryGetValue(entity.Idx, out var list))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Entity({entity.Name}) doesn\'t have component at all.");
+                return;
+            }
+
+            if (!list.Contains(component))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Entity({entity.Name}) doesn\'t have {component.Name}.");
+                return;
+            }
+
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (list[i].Equals(component))
+                {
+                    list.RemoveAt(i);
+                    break;
+                }
+            }
+            if (list.Count == 0) m_AddedComponents.Remove(entity.Idx);
+        }
+        internal void Debug_RemoveComponent<TComponent>(EntityData<IEntityData> entity)
+            => Debug_RemoveComponent(entity, TypeHelper.TypeOf<TComponent>.Type);
+        internal void Debug_RemoveComponent(EntityData<IEntityData> entity, Type component)
+        {
+            if (!m_AddedComponents.TryGetValue(entity.Idx, out var list))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Entity({entity.Name}) doesn\'t have component at all.");
+                return;
+            }
+
+            if (!list.Contains(component))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Entity({entity.Name}) doesn\'t have {component.Name}.");
+                return;
+            }
+
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (list[i].Equals(component))
+                {
+                    list.RemoveAt(i);
+                    break;
+                }
+            }
+            if (list.Count == 0) m_AddedComponents.Remove(entity.Idx);
+        }
+#endif
 
         public int CreateHashCode() => m_Random.NextInt(int.MinValue, int.MaxValue);
 
@@ -914,6 +1086,9 @@ namespace Syadeu.Presentation
                 foreach (var interfaceType in interfaceTypes)
                 {
                     system.m_ComponentSystem.RemoveComponent(other, interfaceType);
+#if DEBUG_MODE
+                    system.Debug_RemoveComponent((ObjectBase)entity, interfaceType.GetGenericArguments()[0]);
+#endif
                 }
 
                 other.Dispose();

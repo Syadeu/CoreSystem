@@ -1,4 +1,8 @@
-﻿using Syadeu.Mono;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Syadeu.Mono;
 using Syadeu.Presentation.Render;
 using System;
 using Unity.Mathematics;

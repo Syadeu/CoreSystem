@@ -36,21 +36,21 @@ namespace Syadeu.Presentation.Actor
         {
             private Entity<ActorEntity> m_Entity;
             private Entity<UIObjectEntity> m_UI;
-            private float3 
-                m_Offset, m_OrientationOffset;
+            private Instance<ActorOverlayUIProvider> m_Provider;
+
             private UpdateType m_UpdateType;
             private float m_UpdateSpeed;
 
             UpdateLoop ICoroutineJob.Loop => UpdateLoop.AfterTransform;
 
             public UpdateJob(Entity<ActorEntity> entity, Entity<UIObjectEntity> ui, 
-                float3 offset, float3 orientationOffset,
+                Instance<ActorOverlayUIProvider> provider,
                 UpdateType updateType, float updateSpeed)
             {
                 m_Entity = entity;
                 m_UI = ui;
-                m_Offset = offset;
-                m_OrientationOffset = orientationOffset;
+                m_Provider = provider;
+
                 m_UpdateType = updateType;
                 m_UpdateSpeed = updateSpeed;
             }
@@ -63,7 +63,8 @@ namespace Syadeu.Presentation.Actor
                     entityTr = m_Entity.transform,
                     uiTr = m_UI.transform;
 
-                RenderSystem renderSystem = PresentationSystem<RenderSystem>.System;
+                ActorOverlayUIProvider provider = m_Provider.Object;
+                RenderSystem renderSystem = PresentationSystem<DefaultPresentationGroup, RenderSystem>.System;
                 Transform camTr;
 
                 WaitUntil waitUntil = new WaitUntil(() => renderSystem.Camera != null);
@@ -78,15 +79,15 @@ namespace Syadeu.Presentation.Actor
 
                     if ((m_UpdateType & UpdateType.Instant) == UpdateType.Instant)
                     {
-                        uiTr.position = entityTr.position + m_Offset;
+                        uiTr.position = entityTr.position + provider.m_Offset;
                     }
                     else if ((m_UpdateType & UpdateType.Lerp) == UpdateType.Lerp)
                     {
                         uiTr.position
-                            = math.lerp(uiTr.position, entityTr.position + m_Offset, Time.deltaTime * m_UpdateSpeed);
+                            = math.lerp(uiTr.position, entityTr.position + provider.m_Offset, Time.deltaTime * m_UpdateSpeed);
                     }
 
-                    Quaternion offset = Quaternion.Euler(m_OrientationOffset);
+                    Quaternion offset = Quaternion.Euler(provider.m_OrientationOffset);
                     if ((m_UpdateType & UpdateType.SyncCameraOrientation) == UpdateType.SyncCameraOrientation)
                     {
                         Quaternion orientation = Quaternion.LookRotation(camTr.forward, Vector3.up);
@@ -172,7 +173,9 @@ namespace Syadeu.Presentation.Actor
 
             if (m_UpdateType != UpdateType.Manual)
             {
-                m_UpdateJob = new UpdateJob(entity, m_InstanceObject, m_Offset, m_OrientationOffset, m_UpdateType, m_UpdateSpeed);
+                m_UpdateJob = new UpdateJob(entity, m_InstanceObject, 
+                    new Instance<ActorOverlayUIProvider>(this),
+                    m_UpdateType, m_UpdateSpeed);
                 m_UpdateCoroutine = StartCoroutine(m_UpdateJob);
             }
         }

@@ -1,4 +1,8 @@
-﻿using Syadeu.Database;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Syadeu.Database;
 using Syadeu.Mono;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Internal;
@@ -39,9 +43,9 @@ namespace Syadeu.Presentation.Map
         }
         protected override PresentationResult OnInitializeAsync()
         {
-            RequestSystem<SceneSystem>(Bind);
-            RequestSystem<EntitySystem>(Bind);
-            RequestSystem<Render.RenderSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, SceneSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, EntitySystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, Render.RenderSystem>(Bind);
 
             return base.OnInitializeAsync();
         }
@@ -103,7 +107,7 @@ namespace Syadeu.Presentation.Map
                 SceneDataEntity data = m_SceneData.GetObject();
                 SceneReference targetScene = data.GetTargetScene();
 
-                MapSystem mapSystem = PresentationSystem<MapSystem>.System;
+                MapSystem mapSystem = PresentationSystem<DefaultPresentationGroup, MapSystem>.System;
 
                 if (!mapSystem.m_SceneDataObjects.TryGetValue(targetScene, out var list))
                 {
@@ -123,7 +127,7 @@ namespace Syadeu.Presentation.Map
                 SceneDataEntity data = m_SceneData.GetObject();
                 SceneReference targetScene = data.GetTargetScene();
 
-                MapSystem mapSystem = PresentationSystem<MapSystem>.System;
+                MapSystem mapSystem = PresentationSystem<DefaultPresentationGroup, MapSystem>.System;
 
                 data.DestroyChildOnDestroy = false;
                 mapSystem.m_EntitySystem.InternalDestroyEntity(data.Idx);

@@ -95,7 +95,10 @@ namespace Syadeu.Presentation.Actor
         }
         protected override void OnDestroy()
         {
-            m_PrefabInstance.Destroy();
+            if (!m_PrefabInstance.IsEmpty())
+            {
+                m_PrefabInstance.Destroy();
+            }
         }
 
         public void FireFXBounds(ITransform sender,

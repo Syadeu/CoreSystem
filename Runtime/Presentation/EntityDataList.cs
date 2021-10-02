@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace Syadeu.Database
@@ -54,45 +55,119 @@ namespace Syadeu.Database
             Load<DataObjectBase>(CoreSystemFolder.DataPath);
 
             m_IsLoaded = true;
+        }
+        public async void LoadDataAsync(Action onComplete)
+        {
+            DirectoryCheck();
 
-            void Load<T>(string path) where T : ObjectBase
+            m_Objects = new Dictionary<Hash, ObjectBase>();
+            m_EntityNameHash = new Dictionary<ulong, Hash>();
+
+            var iter1 = LoadAsync<EntityDataBase>(CoreSystemFolder.EntityPath);
+            var iter2 = LoadAsync<AttributeBase>(CoreSystemFolder.AttributePath);
+            var iter3 = LoadAsync<ActionBase>(CoreSystemFolder.ActionPath);
+            var iter4 = LoadAsync<DataObjectBase>(CoreSystemFolder.DataPath);
+            
+            await Task.Run(async () =>
             {
-                string[] dataPaths = Directory.GetFiles(path, jsonPostfix, SearchOption.AllDirectories);
-
-                Type[] dataTypes = TypeHelper.GetTypes((other) => TypeHelper.TypeOf<T>.Type.IsAssignableFrom(other));
-                for (int i = 0; i < dataPaths.Length; i++)
+                while (!iter1.IsCompleted)
                 {
-                    string lastFold = Path.GetFileName(Path.GetDirectoryName(dataPaths[i]));
-                    Type t = dataTypes.FindFor((other) => other.Name.Equals(lastFold));
+                    await Task.Yield();
+                }
+                while (!iter2.IsCompleted)
+                {
+                    await Task.Yield();
+                }
+                while (!iter3.IsCompleted)
+                {
+                    await Task.Yield();
+                }
+                while (!iter4.IsCompleted)
+                {
+                    await Task.Yield();
+                }
 
-                    object obj;
-                    try
+                onComplete?.Invoke();
+            });
+        }
+
+        private ParallelLoopResult LoadAsync<T>(string path) where T : ObjectBase
+        {
+            string[] dataPaths = Directory.GetFiles(path, jsonPostfix, SearchOption.AllDirectories);
+
+            Type[] dataTypes = TypeHelper.GetTypes(TypePredicate<T>);
+
+            return Parallel.For(0, dataPaths.Length, (i) =>
+            {
+                string lastFold = Path.GetFileName(Path.GetDirectoryName(dataPaths[i]));
+                Type t = dataTypes.FindFor((other) => other.Name.Equals(lastFold));
+
+                object obj;
+                try
+                {
+                    obj = JsonConvert.DeserializeObject(File.ReadAllText(dataPaths[i]), t);
+                    if (!(obj is T))
                     {
-                        obj = JsonConvert.DeserializeObject(File.ReadAllText(dataPaths[i]), t);
-                        if (!(obj is T))
-                        {
-                            CoreSystem.Logger.LogWarning(Channel.Entity, $"Data({t?.Name}) at {dataPaths[i]} is invalid. This data has been ignored");
-                            continue;
-                        }
+                        CoreSystem.Logger.LogWarning(Channel.Entity, $"Data({t?.Name}) at {dataPaths[i]} is invalid. This data has been ignored");
+                        return;
                     }
-                    catch (Exception)
+                }
+                catch (Exception)
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Entity, $"Data({t?.Name}) at {dataPaths[i]} is invalid. This data has been ignored");
+                    return;
+                }
+                T temp = (T)obj;
+
+                if (m_Objects.ContainsKey(temp.Hash))
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Entity, $"Data({t?.Name}) at {dataPaths[i]} is already registered. This data has been ignored and removed.");
+                    File.Delete(dataPaths[i]);
+                    return;
+                }
+
+                m_Objects.Add(temp.Hash, temp);
+            });
+        }
+        private void Load<T>(string path) where T : ObjectBase
+        {
+            string[] dataPaths = Directory.GetFiles(path, jsonPostfix, SearchOption.AllDirectories);
+
+            Type[] dataTypes = TypeHelper.GetTypes(TypePredicate<T>);
+            for (int i = 0; i < dataPaths.Length; i++)
+            {
+                string lastFold = Path.GetFileName(Path.GetDirectoryName(dataPaths[i]));
+                Type t = dataTypes.FindFor((other) => other.Name.Equals(lastFold));
+
+                object obj;
+                try
+                {
+                    obj = JsonConvert.DeserializeObject(File.ReadAllText(dataPaths[i]), t);
+                    if (!(obj is T))
                     {
                         CoreSystem.Logger.LogWarning(Channel.Entity, $"Data({t?.Name}) at {dataPaths[i]} is invalid. This data has been ignored");
                         continue;
                     }
-                    T temp = (T)obj;
-
-                    if (m_Objects.ContainsKey(temp.Hash))
-                    {
-                        CoreSystem.Logger.LogWarning(Channel.Entity, $"Data({t?.Name}) at {dataPaths[i]} is already registered. This data has been ignored and removed.");
-                        File.Delete(dataPaths[i]);
-                        continue;
-                    }
-
-                    m_Objects.Add(temp.Hash, temp);
                 }
+                catch (Exception)
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Entity, $"Data({t?.Name}) at {dataPaths[i]} is invalid. This data has been ignored");
+                    continue;
+                }
+                T temp = (T)obj;
+
+                if (m_Objects.ContainsKey(temp.Hash))
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Entity, $"Data({t?.Name}) at {dataPaths[i]} is already registered. This data has been ignored and removed.");
+                    File.Delete(dataPaths[i]);
+                    continue;
+                }
+
+                m_Objects.Add(temp.Hash, temp);
             }
         }
+        private bool TypePredicate<T>(Type other) => TypeHelper.TypeOf<T>.Type.IsAssignableFrom(other);
+
         public void SaveData<T>(T obj) where T : ObjectBase
         {
             DirectoryCheck();

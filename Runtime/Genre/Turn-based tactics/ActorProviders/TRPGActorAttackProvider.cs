@@ -5,6 +5,7 @@ using Syadeu.Presentation.Map;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Collections;
 
 namespace Syadeu.Presentation.TurnTable
 {
@@ -13,6 +14,7 @@ namespace Syadeu.Presentation.TurnTable
         [JsonProperty(Order = 0, PropertyName = "AttackRange")] private int m_AttackRange;
         [JsonProperty(Order = 1, PropertyName = "DefaultConsumeAP")] private int m_DefaultConsumeAP = 1;
 
+        [JsonIgnore] private NativeList<int> m_TempGetRange;
         [JsonIgnore] public int AttackRange => m_AttackRange;
         /// <summary>
         /// 마지막으로 찾은 타겟의 리스트를 반환합니다.
@@ -27,6 +29,11 @@ namespace Syadeu.Presentation.TurnTable
         protected override void OnCreated()
         {
             m_GridSystem = PresentationSystem<GridSystem>.System;
+            m_TempGetRange = new NativeList<int>(512, Allocator.Persistent);
+        }
+        protected override void OnDestroy()
+        {
+            m_TempGetRange.Dispose();
         }
 
         public IReadOnlyList<Entity<IEntity>> GetTargetsInRange()
@@ -42,18 +49,18 @@ namespace Syadeu.Presentation.TurnTable
                 return Array.Empty<Entity<IEntity>>();
             }
 
-            GridSizeComponent component = Parent.GetComponent<GridSizeComponent>();
-
-            int[] indices = component.GetRange(range);
             List<Entity<IEntity>> entities = new List<Entity<IEntity>>();
-            for (int i = 0; i < indices.Length; i++)
+            for (int i = 0; i < m_TempGetRange.Length; i++)
             {
                 //if (component.positions.Contains(indices[i])) continue;
-
-                IReadOnlyList<Entity<IEntity>> targets = m_GridSystem.GetEntitiesAt(indices[i]);
+                //$"{m_TempGetRange[i]}".ToLog();
+                IReadOnlyList<Entity<IEntity>> targets = m_GridSystem.GetEntitiesAt(m_TempGetRange[i]);
                 for (int j = 0; j < targets.Count; j++)
                 {
-                    if (targets[j].Equals(Parent.Idx)) continue;
+                    if (targets[j].Idx.Equals(Parent.Idx))
+                    {
+                        continue;
+                    }
 
                     entities.Add(targets[j]);
                 }

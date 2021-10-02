@@ -6,6 +6,7 @@ using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.Scripting;
@@ -13,6 +14,7 @@ using UnityEngine.Scripting;
 namespace Syadeu.Presentation.TurnTable
 {
     [DisplayName("Attribute: Turn Player")]
+    [AttributeAcceptOnly(typeof(ActorEntity))]
     public sealed class TurnPlayerAttribute : AttributeBase,
         INotifyComponent<TurnPlayerComponent>
     {
@@ -33,32 +35,49 @@ namespace Syadeu.Presentation.TurnTable
     [Preserve]
     internal sealed class TurnPlayerProcessor : AttributeProcessor<TurnPlayerAttribute>
     {
+        private TRPGTurnTableSystem m_TurnTableSystem;
+        private readonly Queue<EntityData<IEntityData>> m_WaitForRegister = new Queue<EntityData<IEntityData>>();
+
         protected override void OnInitialize()
         {
-            //EventSystem.AddEvent<OnActionPointChangedEvent>(OnActionPointChangedEventHandler);
+            RequestSystem<TRPGSystemGroup, TRPGTurnTableSystem>(Bind);
         }
         protected override void OnDispose()
         {
-            //EventSystem.RemoveEvent<OnActionPointChangedEvent>(OnActionPointChangedEventHandler);
+            m_TurnTableSystem = null;
         }
-        //private void OnActionPointChangedEventHandler(OnActionPointChangedEvent ev)
-        //{
-        //    if (!ev.Entity.HasComponent<ActorControllerComponent>()) return;
 
-        //    TRPGActorActionPointChangedUIEvent actorEv = new TRPGActorActionPointChangedUIEvent(ev.From, ev.To);
-        //    ev.Entity.GetComponent<ActorControllerComponent>().PostEvent(actorEv);
-        //}
+        #region Binds
+
+        private void Bind(TRPGTurnTableSystem other)
+        {
+            m_TurnTableSystem = other;
+
+            int count = m_WaitForRegister.Count;
+            for (int i = 0; i < count; i++)
+            {
+                m_TurnTableSystem.AddPlayer(m_WaitForRegister.Dequeue());
+            }
+        }
+
+        #endregion
 
         protected override void OnCreated(TurnPlayerAttribute attribute, EntityData<IEntityData> entity)
         {
             TurnPlayerComponent component = new TurnPlayerComponent(attribute, EntitySystem.CreateHashCode());
-            component = entity.AddComponent(component);
+            component = entity.AddComponent(in component);
 
-            TurnTableManager.AddPlayer(component);
+            if (m_TurnTableSystem == null)
+            {
+                m_WaitForRegister.Enqueue(entity);
+                return;
+            }
+
+            m_TurnTableSystem.AddPlayer(entity);
         }
         protected override void OnDestroy(TurnPlayerAttribute attribute, EntityData<IEntityData> entity)
         {
-            TurnTableManager.RemovePlayer(entity.GetComponent<TurnPlayerComponent>());
+            m_TurnTableSystem.RemovePlayer(entity);
         }
     }
 }

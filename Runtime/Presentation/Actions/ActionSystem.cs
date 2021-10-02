@@ -76,7 +76,7 @@ namespace Syadeu.Presentation.Actions
                 case ActionType.Instance:
                     InstanceAction action = InstanceAction.GetAction(temp.action);
 
-                    if (action is IActionSequence sequence)
+                    if (action is IEventSequence sequence)
                     {
                         m_CurrentAction.Terminate = action.InternalTerminate;
                         m_CurrentAction.Sequence = sequence;
@@ -111,7 +111,7 @@ namespace Syadeu.Presentation.Actions
                 case ActionType.Trigger:
                     TriggerAction triggerAction = TriggerAction.GetAction(temp.action);
 
-                    if (triggerAction is IActionSequence triggerActionSequence)
+                    if (triggerAction is IEventSequence triggerActionSequence)
                     {
                         m_CurrentAction.Terminate = triggerAction.InternalTerminate;
                         m_CurrentAction.Sequence = triggerActionSequence;
@@ -182,7 +182,7 @@ namespace Syadeu.Presentation.Actions
         private class ActionContainer
         {
             public System.Action Terminate;
-            public IActionSequence Sequence;
+            public IEventSequence Sequence;
 
             public bool TimerStarted;
             public float StartTime;

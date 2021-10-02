@@ -61,6 +61,10 @@ namespace Syadeu.Presentation.Map
         [JsonProperty(Order = 4, PropertyName = "SubGrids")]
         private SubGrid[] m_SubGrids = Array.Empty<SubGrid>();
 
+        [Header("Cell Overray UI")]
+        [JsonProperty(Order = 5, PropertyName = "CellUIPrefab")]
+        internal Reference<UIObjectEntity> m_CellUIPrefab = Reference<UIObjectEntity>.Empty;
+
         [JsonIgnore] public int3 Center => m_Center;
         [JsonIgnore] public int3 Size => m_Size;
         [JsonIgnore] public float CellSize => m_CellSize;
@@ -71,6 +75,7 @@ namespace Syadeu.Presentation.Map
 
         [JsonIgnore] public List<int> m_ObstacleLayerIndices = new List<int>();
         [JsonIgnore] public NativeHashSet<int> ObstacleLayer { get; private set; }
+        [JsonIgnore] public Mesh CellMesh { get; private set; }
 
         public void CreateGrid()
         {
@@ -107,6 +112,29 @@ namespace Syadeu.Presentation.Map
                 }
             }
 #endif
+
+            float halfCell = m_CellSize * .5f;
+            CellMesh = new Mesh();
+            CellMesh.vertices = new Vector3[]
+            {
+                new Vector3(-halfCell, 0, halfCell),
+                new Vector3(halfCell, 0, halfCell),
+                new Vector3(halfCell, 0, -halfCell),
+                new Vector3(-halfCell, 0, -halfCell)
+            };
+            CellMesh.triangles = new int[]
+            {
+                0, 1, 2,
+                0, 2, 3
+            };
+            CellMesh.uv = new Vector2[]
+            {
+                new Vector2(0, 1),
+                new Vector2(0, 1),
+                new Vector2(0, 1),
+                new Vector2(0, 1)
+            };
+            CellMesh.RecalculateBounds();
         }
         public void DestroyGrid()
         {
@@ -325,7 +353,7 @@ namespace Syadeu.Presentation.Map
                     if (!Layers[layer].Contains(indices[i]))
                     {
                         //filtered.Add(indices[i]);
-                        indices.RemoveAtSwapBack(indices[i]);
+                        indices.RemoveAt(indices[i]);
                         continue;
                     }
                 }
@@ -334,7 +362,7 @@ namespace Syadeu.Presentation.Map
                     if (Layers[layer].Contains(indices[i]))
                     {
                         //filtered.Add(indices[i]);
-                        indices.RemoveAtSwapBack(indices[i]);
+                        indices.RemoveAt(indices[i]);
                         continue;
                     }
                 }
@@ -383,8 +411,12 @@ namespace Syadeu.Presentation.Map
 
         private void CalculateSubGridIndex(in int index, out int gridIdx, out int targetIndex)
         {
-            gridIdx = -1; targetIndex = -1;
-            if (index - Grid.length < 0) return;
+            gridIdx = -1;
+            if (index < Grid.length)
+            {
+                targetIndex = index;
+                return;
+            }
 
             targetIndex = index - Grid.length;
             for (int i = 0; i < SubGrids.Length; i++)
@@ -414,7 +446,12 @@ namespace Syadeu.Presentation.Map
         private BinaryGrid GetTargetGrid(in int index, out int targetIndex)
         {
             CalculateSubGridIndex(in index, out int gridIdx, out targetIndex);
-            if (gridIdx < 0) return Grid;
+
+            if (gridIdx < 0)
+            {
+                targetIndex = index;
+                return Grid;
+            }
 
             return SubGrids[gridIdx];
         }
@@ -487,8 +524,9 @@ namespace Syadeu.Presentation.Map
 
             int2 location = grid.GetDirection(in idx, in direction);
 
-            int calIdx = grid.LocationToIndex(location);
-            return new GridPosition(ConvertToWorldIndex(in gridIdx, in calIdx), location);
+            int cellIdx = grid.LocationToIndex(location);
+
+            return new GridPosition(ConvertToWorldIndex(in gridIdx, in cellIdx), location);
         }
 
         #endregion
@@ -604,6 +642,10 @@ namespace Syadeu.Presentation.Map
             var grid = GetTargetGrid(in idx, out int targetIdx);
 
             grid.GetRange(ref list, in targetIdx, in range);
+            for (int i = 0; i < list.Length; i++)
+            {
+                //$"{list[i]}".ToLog();
+            }
             for (int i = 0; i < ignoreLayers.Length; i++)
             {
                 FilterByLayer(ignoreLayers[i], ref list);
@@ -708,7 +750,7 @@ namespace Syadeu.Presentation.Map
 
         protected override void OnInitialize()
         {
-            RequestSystem<GridSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, GridSystem>(Bind);
         }
         private void Bind(GridSystem other)
         {

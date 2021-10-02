@@ -32,7 +32,7 @@ namespace Syadeu.Presentation.Actions
         "타임라인 액션입니다.\n" +
         "OnStart -> OnStartAction -> OnTimelineStart -> OnTimelineEnd -> OnEnd -> OnEndAction"
         )]
-    public sealed class PlayPlayableDirectorAction : TriggerAction, IActionSequence
+    public sealed class PlayPlayableDirectorAction : TriggerAction, IEventSequence
     {
         [JsonProperty] private Reference<TimelineData> m_Data;
         [JsonProperty(Order = 1, PropertyName = "StartDelay")] private float m_StartDelay = 0;
