@@ -91,7 +91,7 @@ namespace Syadeu.Presentation.TurnTable
 
                 testAP.alignment = TextAlignmentOptions.Center;
             }
-            testAP.text = $"{position.index}:{position.location.x},{position.location.y}";
+            testAP.text = $"{position.location.x},{position.location.y}";
 
             m_Initialized = true;
         }

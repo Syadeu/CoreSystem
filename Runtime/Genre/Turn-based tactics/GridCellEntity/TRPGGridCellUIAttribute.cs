@@ -1,4 +1,5 @@
 ﻿using Syadeu.Presentation.Attributes;
+using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Map;
 using Syadeu.Presentation.Proxy;
@@ -7,7 +8,8 @@ using System.ComponentModel;
 namespace Syadeu.Presentation.TurnTable
 {
     [DisplayName("Attribute: TRPG GridCell UI")]
-    public sealed class TRPGGridCellUIAttribute : AttributeBase
+    public sealed class TRPGGridCellUIAttribute : AttributeBase,
+        INotifyComponent<TRPGGridCellComponent>
     {
 
     }

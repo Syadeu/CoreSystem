@@ -163,8 +163,6 @@ namespace Syadeu.Presentation.Components
             if (!m_ComponentBuffer[index.x].Find(entity, ref index.y) &&
                 !m_ComponentBuffer[index.x].FindEmpty(entity, ref index.y))
             {
-                "require increment".ToLog();
-
                 EntityComponentBuffer boxed = m_ComponentBuffer[index.x];
                 boxed.Increment<TComponent>();
                 m_ComponentBuffer[index.x] = boxed;
@@ -375,7 +373,7 @@ namespace Syadeu.Presentation.Components
 
                 UnsafeUtility.MemCpy(occBuffer, m_OccupiedBuffer, UnsafeUtility.SizeOf<bool>() * m_Length);
                 UnsafeUtility.MemCpy(idxBuffer, m_EntityBuffer, UnsafeUtility.SizeOf<EntityData<IEntityData>>() * m_Length);
-                UnsafeUtility.MemCpy(buffer, buffer, UnsafeUtility.SizeOf<TComponent>() * m_Length);
+                UnsafeUtility.MemCpy(buffer, m_ComponentBuffer, UnsafeUtility.SizeOf<TComponent>() * m_Length);
 
                 UnsafeUtility.Free(this.m_OccupiedBuffer, Allocator.Persistent);
                 UnsafeUtility.Free(this.m_EntityBuffer, Allocator.Persistent);
@@ -387,6 +385,8 @@ namespace Syadeu.Presentation.Components
 
                 m_Increased += 1;
                 m_Length = c_InitialCount * m_Increased;
+
+                CoreSystem.Logger.Log(Channel.Component, $"increased {TypeHelper.TypeOf<TComponent>.Name} {m_Length} :: {m_Increased}");
             }
 
             public bool Find(EntityData<IEntityData> entity, ref int entityIndex)
