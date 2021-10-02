@@ -373,6 +373,11 @@ namespace Syadeu.Presentation.Map
                 ref NavAgentCompoonent agent = ref m_Entity.GetComponent<NavAgentCompoonent>();
                 agent.m_IsMoving = moving;
             }
+            private void SetDirection(float3 dir)
+            {
+                ref NavAgentCompoonent agent = ref m_Entity.GetComponent<NavAgentCompoonent>();
+                agent.m_Direction = dir;
+            }
             public IEnumerator Execute()
             {
                 EventSystem eventSystem = PresentationSystem<DefaultPresentationGroup, EventSystem>.System;
@@ -445,6 +450,9 @@ namespace Syadeu.Presentation.Map
                         continue;
                     }
 
+                    float3 dir = (float3)agent.nextPosition - tr.position;
+                    SetDirection(dir);
+
                     tr.position = agent.nextPosition;
                     tr.Synchronize(ProxyTransform.SynchronizeOption.Rotation);
 
@@ -510,7 +518,8 @@ namespace Syadeu.Presentation.Map
     {
         internal bool m_IsMoving;
         internal float3 m_Direction;
-        internal float m_Speed;
         internal float3 m_PreviousTarget;
+
+        public float Speed => math.sqrt(math.mul(m_Direction, m_Direction));
     }
 }
