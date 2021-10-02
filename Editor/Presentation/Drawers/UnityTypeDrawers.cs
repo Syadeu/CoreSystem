@@ -25,6 +25,25 @@ namespace SyadeuEditor.Presentation
             return EditorGUILayout.Vector3Field(string.Empty, currentValue);
         }
     }
+    public sealed class Float4Drawer : ObjectDrawer<float4>
+    {
+        private bool m_DrawName;
+
+        public Float4Drawer(object parentObject, MemberInfo memberInfo, bool drawName) : base(parentObject, memberInfo)
+        {
+            m_DrawName = drawName;
+        }
+
+        public Float4Drawer(object parentObject, Type declaredType, Action<float4> setter, Func<float4> getter) : base(parentObject, declaredType, setter, getter)
+        {
+        }
+
+        public override float4 Draw(float4 currentValue)
+        {
+            if (m_DrawName) return EditorGUILayout.Vector4Field(Name, currentValue);
+            return EditorGUILayout.Vector4Field(string.Empty, currentValue);
+        }
+    }
     public sealed class Int3Drawer : ObjectDrawer<int3>
     {
         private bool m_DrawName;
@@ -119,6 +138,16 @@ namespace SyadeuEditor.Presentation
         }
     }
 
+    public sealed class Vector4Drawer : ObjectDrawer<Vector4>
+    {
+        public Vector4Drawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
+        {
+        }
+        public override Vector4 Draw(Vector4 currentValue)
+        {
+            return EditorGUILayout.Vector4Field(Name, currentValue);
+        }
+    }
     public sealed class Vector3Drawer : ObjectDrawer<Vector3>
     {
         public Vector3Drawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)

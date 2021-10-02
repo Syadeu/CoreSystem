@@ -145,9 +145,25 @@ namespace Syadeu.Presentation.Actor
 
         public Instance<T> GetProvider<T>() where T : ActorProviderBase
         {
+            if (TypeHelper.TypeOf<T>.IsAbstract)
+            {
+                for (int i = 0; i < m_InstanceProviders.Length; i++)
+                {
+                    if (TypeHelper.TypeOf<T>.Type.IsAssignableFrom(m_InstanceProviders[i].Object.GetType()))
+                    {
+                        return m_InstanceProviders[i].Cast<ActorProviderBase, T>();
+                    }
+                }
+
+                return Instance<T>.Empty;
+            }
+
             for (int i = 0; i < m_InstanceProviders.Length; i++)
             {
-                if (m_InstanceProviders[i].Object is T) return m_InstanceProviders[i].Cast<ActorProviderBase, T>();
+                if (m_InstanceProviders[i].Object is T)
+                {
+                    return m_InstanceProviders[i].Cast<ActorProviderBase, T>();
+                }
             }
             return Instance<T>.Empty;
         }

@@ -107,7 +107,7 @@ namespace Syadeu.Presentation.Map
                 SceneDataEntity data = m_SceneData.GetObject();
                 SceneReference targetScene = data.GetTargetScene();
 
-                MapSystem mapSystem = PresentationSystem<MapSystem>.System;
+                MapSystem mapSystem = PresentationSystem<DefaultPresentationGroup, MapSystem>.System;
 
                 if (!mapSystem.m_SceneDataObjects.TryGetValue(targetScene, out var list))
                 {
@@ -127,7 +127,7 @@ namespace Syadeu.Presentation.Map
                 SceneDataEntity data = m_SceneData.GetObject();
                 SceneReference targetScene = data.GetTargetScene();
 
-                MapSystem mapSystem = PresentationSystem<MapSystem>.System;
+                MapSystem mapSystem = PresentationSystem<DefaultPresentationGroup, MapSystem>.System;
 
                 data.DestroyChildOnDestroy = false;
                 mapSystem.m_EntitySystem.InternalDestroyEntity(data.Idx);

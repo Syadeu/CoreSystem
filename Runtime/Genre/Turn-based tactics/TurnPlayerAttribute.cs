@@ -6,6 +6,7 @@ using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.Scripting;
@@ -35,6 +36,7 @@ namespace Syadeu.Presentation.TurnTable
     internal sealed class TurnPlayerProcessor : AttributeProcessor<TurnPlayerAttribute>
     {
         private TRPGTurnTableSystem m_TurnTableSystem;
+        private readonly Queue<EntityData<IEntityData>> m_WaitForRegister = new Queue<EntityData<IEntityData>>();
 
         protected override void OnInitialize()
         {
@@ -50,6 +52,12 @@ namespace Syadeu.Presentation.TurnTable
         private void Bind(TRPGTurnTableSystem other)
         {
             m_TurnTableSystem = other;
+
+            int count = m_WaitForRegister.Count;
+            for (int i = 0; i < count; i++)
+            {
+                m_TurnTableSystem.AddPlayer(m_WaitForRegister.Dequeue());
+            }
         }
 
         #endregion
@@ -58,6 +66,12 @@ namespace Syadeu.Presentation.TurnTable
         {
             TurnPlayerComponent component = new TurnPlayerComponent(attribute, EntitySystem.CreateHashCode());
             component = entity.AddComponent(in component);
+
+            if (m_TurnTableSystem == null)
+            {
+                m_WaitForRegister.Enqueue(entity);
+                return;
+            }
 
             m_TurnTableSystem.AddPlayer(entity);
         }

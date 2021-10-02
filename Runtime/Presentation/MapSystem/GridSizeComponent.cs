@@ -23,7 +23,7 @@ namespace Syadeu.Presentation.Map
             return m_GridSystem.System.IndexToPosition(index);
         }
 
-        public bool IsInIndex(int index)
+        public bool IsMyIndex(int index)
         {
             for (int i = 0; i < positions.Length; i++)
             {
@@ -90,9 +90,9 @@ namespace Syadeu.Presentation.Map
         //    return m_GridSystem.System.GetPath(positions[0].index, to, path, maxPathLength);
         //}
 
-        public bool GetPath64(in int to, ref GridPath32 path, in int maxPathLength, in int maxIteration = 32)
+        public bool GetPath32(in int to, ref GridPath32 path, in int maxPathLength, in int maxIteration = 32)
         {
-            return m_GridSystem.System.GetPath64(
+            return m_GridSystem.System.GetPath32(
                 positions[0].index, in to, in maxPathLength, ref path, 
                 m_Parent.GetAttribute<GridSizeAttribute>().ObstacleLayers, in maxIteration);
         }

@@ -1,4 +1,6 @@
 ﻿using Syadeu.Mono;
+using Syadeu.Presentation.Actor;
+using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Input;
@@ -24,6 +26,8 @@ namespace Syadeu.Presentation.TurnTable
 
         private bool m_IsDrawingGrids = false;
         private readonly List<Entity<IEntity>> m_DrawnCellUIEntities = new List<Entity<IEntity>>();
+
+        public bool IsDrawingUIGrid => m_IsDrawingGrids;
 
         private InputSystem m_InputSystem;
         private GridSystem m_GridSystem;
@@ -59,6 +63,8 @@ namespace Syadeu.Presentation.TurnTable
             m_GridBoundsTempOutlines.Dispose();
         }
 
+        #region Binds
+
         private void Bind(InputSystem other)
         {
             m_InputSystem = other;
@@ -67,6 +73,8 @@ namespace Syadeu.Presentation.TurnTable
         {
             m_GridSystem = other;
         }
+
+        #endregion
 
         public void DrawUICell(EntityData<IEntityData> entity)
         {
@@ -115,6 +123,8 @@ namespace Syadeu.Presentation.TurnTable
             {
                 m_DrawnCellUIEntities[i].Destroy();
             }
+
+            m_GridBoundsLineRenderer.positionCount = 0;
             m_DrawnCellUIEntities.Clear();
 
             m_IsDrawingGrids = false;

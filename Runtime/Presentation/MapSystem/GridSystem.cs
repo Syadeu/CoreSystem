@@ -434,7 +434,7 @@ namespace Syadeu.Presentation.Map
                 return path[pathFound - 1].position.index == to;
             }
         }
-        public bool GetPath64(in int from, in int to, in int maxPathLength, ref GridPath32 path, in NativeHashSet<int> ignoreIndices = default, in int maxIteration = 32)
+        public bool GetPath32(in int from, in int to, in int maxPathLength, ref GridPath32 path, in NativeHashSet<int> ignoreIndices = default, in int maxIteration = 32)
         {
             int2
                 fromLocation = GridMap.GetLocation(in from),

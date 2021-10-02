@@ -60,6 +60,10 @@ namespace Syadeu.Presentation.TurnTable
             for (int i = 0; i < range.Length; i++)
             {
                 if (!gridsize.HasPath(range[i], turnPlayer.ActionPoint)) continue;
+                else if (gridsize.IsMyIndex(range[i]))
+                {
+                    continue;
+                }
 
                 gridPositions.Add(gridsize.GetGridPosition(range[i]));
             }
@@ -140,6 +144,17 @@ namespace Syadeu.Presentation.TurnTable
 
         #endregion
 
+        public bool GetPath(in GridPosition position, ref GridPath32 path)
+        {
+            var gridsize = m_Parent.GetComponent<GridSizeComponent>();
+            return gridsize.GetPath32(in position.index, ref path, 32);
+        }
+        public float3 TileToPosition(in GridTile tile)
+        {
+            var gridsize = m_Parent.GetComponent<GridSizeComponent>();
+            return gridsize.IndexToPosition(tile.index);
+        }
+
         public void GetMoveablePath64(List<GridPath32> indices)
         {
             if (!SafetyChecks()) return;
@@ -153,7 +168,7 @@ namespace Syadeu.Presentation.TurnTable
             GridPath32 path = GridPath32.Create();
             for (int i = 0; i < range.Length; i++)
             {
-                if (!gridsize.GetPath64(range[i], ref path, turnPlayer.ActionPoint)) continue;
+                if (!gridsize.GetPath32(range[i], ref path, turnPlayer.ActionPoint)) continue;
 
                 indices.Add(path);
 
@@ -205,11 +220,30 @@ namespace Syadeu.Presentation.TurnTable
                 downleft = new float3(-cellsize, heightOffset, -cellsize),
                 downright = new float3(cellsize, heightOffset, -cellsize);
 
+            vertices.Clear();
+
+            if (moveables.Length == 0)
+            {
+                vertices.Add(gridsize.IndexToPosition(gridsize.positions[0].index) + upright);
+                vertices.Add(gridsize.IndexToPosition(gridsize.positions[0].index) + downright);
+                vertices.Add(gridsize.IndexToPosition(gridsize.positions[0].index) + downleft);
+                vertices.Add(gridsize.IndexToPosition(gridsize.positions[0].index) + upleft);
+
+                return;
+            }
+            else if (moveables.Length == 1)
+            {
+                vertices.Add(gridsize.IndexToPosition(moveables[0].index) + upright);
+                vertices.Add(gridsize.IndexToPosition(moveables[0].index) + downright);
+                vertices.Add(gridsize.IndexToPosition(moveables[0].index) + downleft);
+                vertices.Add(gridsize.IndexToPosition(moveables[0].index) + upleft);
+
+                return;
+            }
+
             GridPosition
                 firstRow = moveables[0],
                 lastRow = moveables[moveables.Length - 1];
-
-            vertices.Clear();
 
             // first cell
             {

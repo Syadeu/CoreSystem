@@ -242,6 +242,11 @@ namespace SyadeuEditor.Presentation
             HeaderLinePos.width = Screen.width;
             EditorUtils.Line(HeaderLinePos);
 
+            if (Application.isPlaying && m_CurrentWindow != WindowType.Debugger)
+            {
+                m_CurrentWindow = WindowType.Debugger;
+            }
+
             EntityListPos.height = Screen.height - 95;
             ViewPos.width = Screen.width - EntityListPos.width - 5;
             ViewPos.height = EntityListPos.height;
@@ -251,8 +256,12 @@ namespace SyadeuEditor.Presentation
             {
                 default:
                 case WindowType.Entity:
-                    m_DataListWindow.OnGUI(EntityListPos, 1);
-                    m_ViewWindow.OnGUI(ViewPos, 2);
+                    if (!Application.isPlaying)
+                    {
+                        m_DataListWindow.OnGUI(EntityListPos, 1);
+                        m_ViewWindow.OnGUI(ViewPos, 2);
+                    }
+                    
                     break;
                 case WindowType.Converter:
 

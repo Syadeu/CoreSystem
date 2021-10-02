@@ -97,7 +97,15 @@ namespace SyadeuEditor.Presentation
             #endregion
 
             #region Unity Types
-            if (declaredType.Equals(TypeHelper.TypeOf<Vector3>.Type))
+            if (declaredType.Equals(TypeHelper.TypeOf<Vector4>.Type))
+            {
+                return new Vector4Drawer(parentObject, memberInfo);
+            }
+            else if (declaredType.Equals(TypeHelper.TypeOf<float4>.Type))
+            {
+                return new Float4Drawer(parentObject, memberInfo, drawName);
+            }
+            else if (declaredType.Equals(TypeHelper.TypeOf<Vector3>.Type))
             {
                 return new Vector3Drawer(parentObject, memberInfo);
             }
@@ -150,8 +158,8 @@ namespace SyadeuEditor.Presentation
             }
             #endregion
 
-            //return new NullDrawer(memberInfo, declaredType);
-            return new ObjectDrawer(parentObject, memberInfo, true);
+            return new NullDrawer(memberInfo, declaredType);
+            //return new ObjectDrawer(parentObject, memberInfo, true);
         }
     }
     public sealed class NullDrawer : ObjectDrawerBase
