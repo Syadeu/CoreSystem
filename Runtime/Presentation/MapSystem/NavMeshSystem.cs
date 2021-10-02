@@ -314,7 +314,7 @@ namespace Syadeu.Presentation.Map
             }
 
             NativeList<float3> position = new NativeList<float3>(path.Length, Allocator.Persistent);
-            for (int i = 0; i < path.Length; i++)
+            for (int i = 1; i < path.Length; i++)
             {
                 position.Add(m_GridSystem.IndexToPosition(path[i].index));
             }
@@ -404,7 +404,7 @@ namespace Syadeu.Presentation.Map
                         entity, OnMoveStateChangedEvent.MoveState.AboutToMove));
 
                 NavMeshAgent agent = tr.proxy.GetComponent<NavMeshAgent>();
-                agent.updatePosition = false;
+                //agent.updatePosition = false;
                 //agent.updateRotation = false;
 
                 if (!agent.isOnNavMesh)
@@ -433,7 +433,7 @@ namespace Syadeu.Presentation.Map
                         continue;
                     }
 
-                    if (agent.remainingDistance < .25f)
+                    if (agent.remainingDistance < 1f)
                     {
                         m_Positions.RemoveAt(0);
                         if (m_Positions.Length == 0)
@@ -453,8 +453,7 @@ namespace Syadeu.Presentation.Map
                     float3 dir = (float3)agent.nextPosition - tr.position;
                     SetDirection(dir);
 
-                    tr.position = agent.nextPosition;
-                    tr.Synchronize(ProxyTransform.SynchronizeOption.Rotation);
+                    tr.Synchronize(ProxyTransform.SynchronizeOption.TR);
 
                     eventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(
                         entity, OnMoveStateChangedEvent.MoveState.OnMoving));
@@ -462,6 +461,23 @@ namespace Syadeu.Presentation.Map
 
                     yield return null;
                 }
+
+                while (tr.hasProxy && agent.remainingDistance > .1f)
+                {
+                    float3 dir = (float3)agent.nextPosition - tr.position;
+                    SetDirection(dir);
+
+                    tr.Synchronize(ProxyTransform.SynchronizeOption.TR);
+
+                    eventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(
+                        entity, OnMoveStateChangedEvent.MoveState.OnMoving));
+                    navAgent.m_OnMoveActions.Execute(m_Entity);
+
+                    yield return null;
+                }
+
+                SetDirection(0);
+                tr.Synchronize(ProxyTransform.SynchronizeOption.TR);
 
                 SetIsMoving(false);
                 agent.ResetPath();
@@ -488,7 +504,7 @@ namespace Syadeu.Presentation.Map
 
     public struct ActorMoveEvent : IActorEvent, IEventSequence
     {
-        private Entity<ActorEntity> m_Entity;
+        private EntityData<IEntityData> m_Entity;
         private float m_AfterDelay;
 
         public bool KeepWait
@@ -502,15 +518,15 @@ namespace Syadeu.Presentation.Map
         public float AfterDelay => m_AfterDelay;
         public bool BurstCompile => false;
 
-        public ActorMoveEvent(float afterDelay)
+        public ActorMoveEvent(EntityData<IEntityData> entity, float afterDelay)
         {
-            m_Entity = Entity<ActorEntity>.Empty;
+            m_Entity = entity;
             m_AfterDelay = afterDelay;
         }
 
         public void OnExecute(Entity<ActorEntity> from)
         {
-            m_Entity = from;
+
         }
     }
 

@@ -21,7 +21,9 @@ namespace Syadeu.Presentation.Actor
         public override bool EnableAfterPresentation => false;
 
         private readonly Queue<IEventHandler> m_ScheduledEvents = new Queue<IEventHandler>();
-        private EventContainer m_CurrentEvent = null;
+        private readonly EventContainer m_CurrentEvent = new EventContainer();
+
+        public Entity<ActorEntity> CurrentEventActor => m_CurrentEvent.Actor;
 
         private EntitySystem m_EntitySystem;
         private EventSystem m_EventSystem;
@@ -91,7 +93,7 @@ namespace Syadeu.Presentation.Actor
 
         void ISystemEventScheduler.Execute(ScheduledEventHandler handler)
         {
-            if (m_CurrentEvent != null)
+            if (m_CurrentEvent.Sequence != null)
             {
                 if (m_CurrentEvent.Sequence.KeepWait)
                 {
@@ -121,9 +123,10 @@ namespace Syadeu.Presentation.Actor
 
             IEventHandler ev = m_ScheduledEvents.Dequeue();
 
-            if (ev is IEventSequence sequence)
+            if (ev.EventSequence != null)
             {
-                m_CurrentEvent.Sequence = sequence;
+                m_CurrentEvent.Actor = ev.Actor;
+                m_CurrentEvent.Sequence = ev.EventSequence;
 
                 CoreSystem.Logger.Log(Channel.Action,
                     $"Execute scheduled actor event({ev.GetEventName()})");
@@ -131,7 +134,7 @@ namespace Syadeu.Presentation.Actor
                 ev.Post();
 
                 // Early out
-                if (!sequence.KeepWait)
+                if (!ev.EventSequence.KeepWait)
                 {
                     handler.SetEvent(SystemEventResult.Success, ev.EventType);
                     m_CurrentEvent.Clear();
@@ -154,6 +157,7 @@ namespace Syadeu.Presentation.Actor
 
         private class EventContainer
         {
+            public Entity<ActorEntity> Actor;
             public IEventSequence Sequence;
 
             public bool TimerStarted;
@@ -165,6 +169,7 @@ namespace Syadeu.Presentation.Actor
             }
             public void Clear()
             {
+                Actor = Entity<ActorEntity>.Empty;
                 Sequence = null;
 
                 TimerStarted = false;
@@ -182,7 +187,9 @@ namespace Syadeu.Presentation.Actor
         }
         private interface IEventHandler
         {
+            Entity<ActorEntity> Actor { get; }
             Type EventType { get; }
+            IEventSequence EventSequence { get; }
 
             void Post();
 
@@ -195,10 +202,20 @@ namespace Syadeu.Presentation.Actor
             where TEvent : unmanaged, IActorEvent
 #endif
         {
+            public Entity<ActorEntity> m_Actor;
             public TEvent m_Event;
             public ActorEventDelegate<TEvent> m_EventPost;
 
+            public Entity<ActorEntity> Actor => m_Actor;
             public Type EventType => TypeHelper.TypeOf<TEvent>.Type;
+            public IEventSequence EventSequence
+            {
+                get
+                {
+                    if (m_Event is IEventSequence sequence) return sequence;
+                    return null;
+                }
+            } 
 
             void IEventHandler.Post()
             {
@@ -213,7 +230,7 @@ namespace Syadeu.Presentation.Actor
 
         #endregion
 
-        public void ScheduleEvent<TEvent>(ActorEventDelegate<TEvent> post, TEvent ev)
+        public void ScheduleEvent<TEvent>(Entity<ActorEntity> actor, ActorEventDelegate<TEvent> post, TEvent ev)
 #if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             where TEvent : struct, IActorEvent
 #else
@@ -226,7 +243,8 @@ namespace Syadeu.Presentation.Actor
             }
 
             EventHandler<TEvent> handler = PoolContainer<EventHandler<TEvent>>.Dequeue();
-            
+
+            handler.m_Actor = actor;
             handler.m_EventPost = post;
             handler.m_Event = ev;
 
@@ -253,7 +271,7 @@ namespace Syadeu.Presentation.Actor
             IEventHandler handler = null;
             ActorEventDelegate<TEvent> temp = null;
 
-            system.ScheduleEvent<TEvent>(null, default);
+            system.ScheduleEvent<TEvent>(Entity<ActorEntity>.Empty, null, default);
             EventHandlerFactory<TEvent>();
             handler = new EventHandler<TEvent>();
         }

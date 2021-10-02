@@ -16,6 +16,19 @@ namespace Syadeu.Presentation.Actor
         internal InstanceArray<ActorProviderBase> m_InstanceProviders;
         internal ReferenceArray<Reference<ParamAction<IActorEvent>>> m_OnEventReceived;
 
+        public bool IsBusy()
+        {
+            ActorSystem system = PresentationSystem<DefaultPresentationGroup, ActorSystem>.System;
+            if (!system.CurrentEventActor.IsEmpty())
+            {
+                if (system.CurrentEventActor.Idx.Equals(m_Parent.Idx))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         public void ScheduleEvent<TEvent>(TEvent ev)
 #if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             where TEvent : struct, IActorEvent
@@ -24,7 +37,7 @@ namespace Syadeu.Presentation.Actor
 #endif
         {
             ActorSystem system = PresentationSystem<DefaultPresentationGroup, ActorSystem>.System;
-            system.ScheduleEvent(PostEvent, ev);
+            system.ScheduleEvent(m_Parent, PostEvent, ev);
         }
 
         [BurstCompile]

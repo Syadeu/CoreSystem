@@ -63,7 +63,7 @@ namespace Syadeu.Presentation.TurnTable.UI
         {
             m_EndTurn = endTurn;
 
-            endTurn.Initialize(m_TurnTableSystem);
+            endTurn.Initialize(m_TurnTableSystem, m_EventSystem);
         }
     }
 }

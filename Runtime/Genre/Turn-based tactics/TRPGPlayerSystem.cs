@@ -110,6 +110,12 @@ namespace Syadeu.Presentation.TurnTable
         private void TRPGShortcutUIPressedEventHandler(TRPGShortcutUIPressedEvent ev)
         {
             "ev shortcut".ToLog();
+            ActorControllerComponent ctr = m_TurnTableSystem.CurrentTurn.GetComponent<ActorControllerComponent>();
+            if (ctr.IsBusy())
+            {
+                "busy out".ToLog();
+                return;
+            }
 
             if (m_CurrentShortcut != ev.Shortcut)
             {
@@ -211,7 +217,7 @@ namespace Syadeu.Presentation.TurnTable
             //m_NavMeshSystem.MoveTo(entity.As<IEntityData, IEntity>(), 
             //    move.TileToPosition(m_LastPath[m_LastPath.Length - 1]), new ActorMoveEvent(0));
             m_NavMeshSystem.MoveTo(entity.As<IEntityData, IEntity>(),
-                m_LastPath, new ActorMoveEvent(0));
+                m_LastPath, new ActorMoveEvent(entity, 1));
 
             ref TurnPlayerComponent turnPlayer = ref entity.GetComponent<TurnPlayerComponent>();
             int requireAp = m_LastPath.Length;

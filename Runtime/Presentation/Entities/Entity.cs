@@ -405,7 +405,12 @@ namespace Syadeu.Presentation.Entities
             where TComponent : unmanaged, IEntityComponent
         {
 #if DEBUG_MODE
-            if (!IsValid())
+            if (IsEmpty())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"You\'re trying to access to empty entity. This is not allowed.");
+            }
+            else if (!IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"You\'re trying to access to an invalid entity. This is not allowed.");

@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using Syadeu.Presentation.Events;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
@@ -10,6 +11,7 @@ namespace Syadeu.Presentation.TurnTable.UI
     {
         private Button m_Button;
         private TRPGTurnTableSystem m_TurnTableSystem;
+        private EventSystem m_EventSystem;
 
         private void Awake()
         {
@@ -22,9 +24,16 @@ namespace Syadeu.Presentation.TurnTable.UI
 
             PresentationSystem<TRPGSystemGroup, TRPGCanvasUISystem>.System.AuthoringEndTurn(this);
         }
-        internal void Initialize(TRPGTurnTableSystem turnTableSystem)
+        private void OnDestroy()
+        {
+            m_TurnTableSystem = null;
+            m_EventSystem = null;
+        }
+
+        internal void Initialize(TRPGTurnTableSystem turnTableSystem, EventSystem eventSystem)
         {
             m_TurnTableSystem = turnTableSystem;
+            m_EventSystem = eventSystem;
         }
 
         internal void Click()
@@ -32,6 +41,7 @@ namespace Syadeu.Presentation.TurnTable.UI
             "Click endturn".ToLog();
 
             m_TurnTableSystem.NextTurn();
+            m_EventSystem.PostEvent(TRPGEndTurnUIPressedEvent.GetEvent());
         }
         internal void OnKeyboardPressed(InputAction.CallbackContext obj)
         {
