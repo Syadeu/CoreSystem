@@ -125,7 +125,21 @@ namespace Syadeu.Presentation.Actor
             //}
         }
 
-        public bool IsAlly(Entity<ActorEntity> entity) => Parent.As<IEntityData, ActorEntity>().Target.Faction.IsAlly(entity.Target.Faction);
-        public bool IsEnemy(Entity<ActorEntity> entity) => Parent.As<IEntityData, ActorEntity>().Target.Faction.IsEnemy(entity.Target.Faction);
+        public bool IsAlly(Entity<ActorEntity> entity)
+        {
+            ActorFactionComponent
+                my = Parent.GetComponent<ActorFactionComponent>(),
+                target = entity.GetComponent<ActorFactionComponent>();
+
+            return my.IsAllies(in target);
+        }
+        public bool IsEnemy(Entity<ActorEntity> entity)
+        {
+            ActorFactionComponent
+                my = Parent.GetComponent<ActorFactionComponent>(),
+                target = entity.GetComponent<ActorFactionComponent>();
+
+            return my.IsEnemies(in target);
+        }
     }
 }

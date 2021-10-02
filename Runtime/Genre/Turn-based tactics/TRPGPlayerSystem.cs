@@ -29,6 +29,7 @@ namespace Syadeu.Presentation.TurnTable
         private TRPGTurnTableSystem m_TurnTableSystem;
         private TRPGCameraMovement m_TRPGCameraMovement;
         private TRPGGridSystem m_TRPGGridSystem;
+        private TRPGCanvasUISystem m_TRPGCanvasUISystem;
 
         protected override PresentationResult OnInitialize()
         {
@@ -38,6 +39,7 @@ namespace Syadeu.Presentation.TurnTable
             RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
             RequestSystem<TRPGSystemGroup, TRPGTurnTableSystem>(Bind);
             RequestSystem<TRPGSystemGroup, TRPGGridSystem>(Bind);
+            RequestSystem<TRPGSystemGroup, TRPGCanvasUISystem>(Bind);
 
             return base.OnInitialize();
         }
@@ -47,6 +49,7 @@ namespace Syadeu.Presentation.TurnTable
             m_EventSystem.RemoveEvent<TRPGGridCellUIPressedEvent>(TRPGGridCellUIPressedEventHandler);
             m_EventSystem.RemoveEvent<TRPGEndTurnUIPressedEvent>(TRPGEndTurnUIPressedEventHandler);
             m_EventSystem.RemoveEvent<TRPGEndTurnEvent>(TRPGEndTurnEventHandler);
+            m_EventSystem.RemoveEvent<OnTurnStateChangedEvent>(OnTurnStateChangedEventHandler);
 
             m_RenderSystem = null;
             m_EventSystem = null;
@@ -54,6 +57,7 @@ namespace Syadeu.Presentation.TurnTable
             m_TurnTableSystem = null;
             m_TRPGCameraMovement = null;
             m_TRPGGridSystem = null;
+            m_TRPGCanvasUISystem = null;
         }
 
         #region Binds
@@ -78,6 +82,7 @@ namespace Syadeu.Presentation.TurnTable
             m_EventSystem.AddEvent<TRPGGridCellUIPressedEvent>(TRPGGridCellUIPressedEventHandler);
             m_EventSystem.AddEvent<TRPGEndTurnUIPressedEvent>(TRPGEndTurnUIPressedEventHandler);
             m_EventSystem.AddEvent<TRPGEndTurnEvent>(TRPGEndTurnEventHandler);
+            m_EventSystem.AddEvent<OnTurnStateChangedEvent>(OnTurnStateChangedEventHandler);
         }
         private void Bind(TRPGTurnTableSystem other)
         {
@@ -86,6 +91,10 @@ namespace Syadeu.Presentation.TurnTable
         private void Bind(TRPGGridSystem other)
         {
             m_TRPGGridSystem = other;
+        }
+        private void Bind(TRPGCanvasUISystem other)
+        {
+            m_TRPGCanvasUISystem = other;
         }
 
         #endregion
@@ -193,11 +202,22 @@ namespace Syadeu.Presentation.TurnTable
         }
         private void TRPGEndTurnUIPressedEventHandler(TRPGEndTurnUIPressedEvent ev)
         {
+            m_TRPGCanvasUISystem.SetEndTurn(true);
+            m_TRPGCanvasUISystem.SetShortcuts(true, false);
+
             m_EventSystem.ScheduleEvent(TRPGEndTurnEvent.GetEvent());
         }
         private void TRPGEndTurnEventHandler(TRPGEndTurnEvent ev)
         {
             m_TurnTableSystem.NextTurn();
+        }
+        private void OnTurnStateChangedEventHandler(OnTurnStateChangedEvent ev)
+        {
+            ActorFactionComponent faction = ev.Entity.GetComponent<ActorFactionComponent>();
+            if (faction.FactionType != FactionType.Player || ev.State != OnTurnStateChangedEvent.TurnState.Start) return;
+
+            m_TRPGCanvasUISystem.SetEndTurn(false);
+            m_TRPGCanvasUISystem.SetShortcuts(false, true);
         }
 
         public void MoveToCell(EntityData<IEntityData> entity, GridPosition position)
@@ -224,10 +244,6 @@ namespace Syadeu.Presentation.TurnTable
                 return;
             }
 
-            // TODO : 타일대로 이동안하니 나중에 수정할 것
-            //navAgent.MoveTo(move.TileToPosition(m_LastPath[m_LastPath.Length - 1]));
-            //m_NavMeshSystem.MoveTo(entity.As<IEntityData, IEntity>(), 
-            //    move.TileToPosition(m_LastPath[m_LastPath.Length - 1]), new ActorMoveEvent(0));
             m_NavMeshSystem.MoveTo(entity.As<IEntityData, IEntity>(),
                 m_LastPath, new ActorMoveEvent(entity, 1));
 
@@ -235,18 +251,6 @@ namespace Syadeu.Presentation.TurnTable
             int requireAp = m_LastPath.Length;
 
             turnPlayer.ActionPoint -= requireAp;
-        }
-    }
-
-    public sealed class TRPGEndTurnEvent : SynchronizedEvent<TRPGEndTurnEvent>
-    {
-        public static TRPGEndTurnEvent GetEvent()
-        {
-            var ev = Dequeue();
-            return ev;
-        }
-        protected override void OnTerminate()
-        {
         }
     }
 }

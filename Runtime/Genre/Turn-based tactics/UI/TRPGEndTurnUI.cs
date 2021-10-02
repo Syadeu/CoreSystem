@@ -13,6 +13,18 @@ namespace Syadeu.Presentation.TurnTable.UI
         private TRPGTurnTableSystem m_TurnTableSystem;
         private EventSystem m_EventSystem;
 
+        private bool m_IsHide = false;
+
+        public bool Hide
+        {
+            get => m_IsHide;
+            set
+            {
+                m_IsHide = value;
+                gameObject.SetActive(!m_IsHide);
+            }
+        }
+
         private void Awake()
         {
             m_Button = GetComponent<Button>();
@@ -39,6 +51,7 @@ namespace Syadeu.Presentation.TurnTable.UI
         internal void Click()
         {
             "Click endturn".ToLog();
+            if (m_IsHide) return;
 
             m_EventSystem.PostEvent(TRPGEndTurnUIPressedEvent.GetEvent());
         }

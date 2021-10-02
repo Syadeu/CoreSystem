@@ -86,6 +86,8 @@ namespace Syadeu.Presentation.TurnTable.UI
         private void Click()
         {
             "Click".ToLog();
+            if (!m_Enabled || m_IsHide) return;
+
             m_EventSystem.PostEvent(TRPGShortcutUIPressedEvent.GetEvent(this, m_ShortcutType));
         }
 

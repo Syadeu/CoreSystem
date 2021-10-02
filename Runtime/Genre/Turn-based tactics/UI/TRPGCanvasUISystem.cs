@@ -69,5 +69,24 @@ namespace Syadeu.Presentation.TurnTable.UI
 
             endTurn.Initialize(m_TurnTableSystem, m_EventSystem);
         }
+
+        public void SetEndTurn(bool hide)
+        {
+            m_EndTurn.Hide = hide;
+        }
+        public void SetShortcuts(bool hide, bool enable)
+        {
+            for (int i = 1; i < m_Shortcuts.Length; i++)
+            {
+                if (m_Shortcuts[i] == null)
+                {
+                    "no shortcut found".ToLog();
+                    continue;
+                }
+
+                m_Shortcuts[i].Hide = hide;
+                m_Shortcuts[i].Enable = enable;
+            }
+        }
     }
 }
