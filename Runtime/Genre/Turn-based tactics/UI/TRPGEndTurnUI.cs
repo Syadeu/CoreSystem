@@ -40,7 +40,6 @@ namespace Syadeu.Presentation.TurnTable.UI
         {
             "Click endturn".ToLog();
 
-            m_TurnTableSystem.NextTurn();
             m_EventSystem.PostEvent(TRPGEndTurnUIPressedEvent.GetEvent());
         }
         internal void OnKeyboardPressed(InputAction.CallbackContext obj)

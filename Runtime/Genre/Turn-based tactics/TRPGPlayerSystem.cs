@@ -35,7 +35,7 @@ namespace Syadeu.Presentation.TurnTable
             RequestSystem<DefaultPresentationGroup, RenderSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, CoroutineSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, NavMeshSystem>(Bind);
-            RequestSystem<TRPGSystemGroup, EventSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
             RequestSystem<TRPGSystemGroup, TRPGTurnTableSystem>(Bind);
             RequestSystem<TRPGSystemGroup, TRPGGridSystem>(Bind);
 
@@ -45,6 +45,8 @@ namespace Syadeu.Presentation.TurnTable
         {
             m_EventSystem.RemoveEvent<TRPGShortcutUIPressedEvent>(TRPGShortcutUIPressedEventHandler);
             m_EventSystem.RemoveEvent<TRPGGridCellUIPressedEvent>(TRPGGridCellUIPressedEventHandler);
+            m_EventSystem.RemoveEvent<TRPGEndTurnUIPressedEvent>(TRPGEndTurnUIPressedEventHandler);
+            m_EventSystem.RemoveEvent<TRPGEndTurnEvent>(TRPGEndTurnEventHandler);
 
             m_RenderSystem = null;
             m_EventSystem = null;
@@ -74,6 +76,8 @@ namespace Syadeu.Presentation.TurnTable
 
             m_EventSystem.AddEvent<TRPGShortcutUIPressedEvent>(TRPGShortcutUIPressedEventHandler);
             m_EventSystem.AddEvent<TRPGGridCellUIPressedEvent>(TRPGGridCellUIPressedEventHandler);
+            m_EventSystem.AddEvent<TRPGEndTurnUIPressedEvent>(TRPGEndTurnUIPressedEventHandler);
+            m_EventSystem.AddEvent<TRPGEndTurnEvent>(TRPGEndTurnEventHandler);
         }
         private void Bind(TRPGTurnTableSystem other)
         {
@@ -187,6 +191,14 @@ namespace Syadeu.Presentation.TurnTable
             //var move = m_TurnTableSystem.CurrentTurn.GetComponent<TRPGActorMoveComponent>();
             //move.movet
         }
+        private void TRPGEndTurnUIPressedEventHandler(TRPGEndTurnUIPressedEvent ev)
+        {
+            m_EventSystem.ScheduleEvent(TRPGEndTurnEvent.GetEvent());
+        }
+        private void TRPGEndTurnEventHandler(TRPGEndTurnEvent ev)
+        {
+            m_TurnTableSystem.NextTurn();
+        }
 
         public void MoveToCell(EntityData<IEntityData> entity, GridPosition position)
         {
@@ -223,6 +235,18 @@ namespace Syadeu.Presentation.TurnTable
             int requireAp = m_LastPath.Length;
 
             turnPlayer.ActionPoint -= requireAp;
+        }
+    }
+
+    public sealed class TRPGEndTurnEvent : SynchronizedEvent<TRPGEndTurnEvent>
+    {
+        public static TRPGEndTurnEvent GetEvent()
+        {
+            var ev = Dequeue();
+            return ev;
+        }
+        protected override void OnTerminate()
+        {
         }
     }
 }

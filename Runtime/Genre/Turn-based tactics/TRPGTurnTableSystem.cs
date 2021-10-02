@@ -20,9 +20,11 @@ namespace Syadeu.Presentation.TurnTable
 
         private EventSystem m_EventSystem;
 
+        #region Presentation Methods
+
         protected override PresentationResult OnInitialize()
         {
-            RequestSystem<TRPGSystemGroup, EventSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
 
             return base.OnInitialize();
         }
@@ -35,6 +37,8 @@ namespace Syadeu.Presentation.TurnTable
         {
             m_EventSystem = other;
         }
+
+        #endregion
 
         public void AddPlayer(EntityData<IEntityData> player)
         {

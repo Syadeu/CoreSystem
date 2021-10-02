@@ -941,7 +941,11 @@ namespace Syadeu.Presentation
             });
             //"request in".ToLog();
         }
-        internal static void RegisterRequest<TGroup, TSystem>(Action<TSystem> setter)
+        internal static void RegisterRequest<TGroup, TSystem>(Action<TSystem> setter
+#if DEBUG_MODE
+            , string methodName
+#endif
+            )
             where TGroup : PresentationGroupEntity
             where TSystem : PresentationSystemEntity
         {
@@ -967,12 +971,16 @@ namespace Syadeu.Presentation
             {
                 group.m_RequestSystemDelegates.Enqueue(() =>
                 {
-                    //TSystem system = PresentationSystem<TSystem>.System;
                     if (!group.TryGetSystem<TSystem>(out TSystem target, out _))
                     {
-                        CoreSystem.Logger.LogError(Channel.Presentation, $"Requested system ({TypeHelper.TypeOf<TSystem>.Name}) not found");
+#if DEBUG_MODE
+                        CoreSystem.Logger.LogError(Channel.Presentation, $"Requested system ({TypeHelper.TypeOf<TSystem>.Name}) not found, from {methodName}");
+#endif
+                        return;
+
                     }
-                    else CoreSystem.Logger.Log(Channel.Presentation, $"Requested system ({TypeHelper.TypeOf<TSystem>.Name}) found");
+
+                    CoreSystem.Logger.Log(Channel.Presentation, $"Requested system ({TypeHelper.TypeOf<TSystem>.Name}) found");
 
                     setter.Invoke(target);
                 });
@@ -993,8 +1001,10 @@ namespace Syadeu.Presentation
                 return;
             }
 
+#if DEBUG_MODE
             CoreSystem.Logger.LogError(Channel.Presentation,
-                $"Requested system ({TypeHelper.TypeOf<TSystem>.Name}) is not part of group {TypeHelper.TypeOf<TGroup>.Name}");
+                $"Requested system ({TypeHelper.TypeOf<TSystem>.Name}) is not part of group {TypeHelper.TypeOf<TGroup>.Name}, from {methodName}");
+#endif
         }
         internal static TSystem GetSystem<TGroup, TSystem>(out int systemIdx)
             where TGroup : PresentationGroupEntity

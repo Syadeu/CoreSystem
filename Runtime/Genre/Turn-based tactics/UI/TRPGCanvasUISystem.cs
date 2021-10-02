@@ -34,6 +34,8 @@ namespace Syadeu.Presentation.TurnTable.UI
             m_TurnTableSystem = null;
         }
 
+        #region Binds
+
         private void Bind(EventSystem other)
         {
             m_EventSystem = other;
@@ -46,6 +48,8 @@ namespace Syadeu.Presentation.TurnTable.UI
         {
             m_TurnTableSystem = other;
         }
+
+        #endregion
 
         public void AuthoringShortcut(TRPGShortcutUI shortcut, ShortcutType shortcutType)
         {

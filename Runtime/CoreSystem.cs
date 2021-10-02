@@ -1283,6 +1283,9 @@ namespace Syadeu
                     OnBackgroundThreadDead?.Invoke();
                     m_BackgroundDeadFlag = true;
 
+                    UnityEngine.LowLevel.PlayerLoopSystem defaultLoop = UnityEngine.LowLevel.PlayerLoop.GetDefaultPlayerLoop();
+                    UnityEngine.LowLevel.PlayerLoop.SetPlayerLoop(defaultLoop);
+
 #if UNITY_EDITOR
                     throw new CoreSystemException(CoreSystemExceptionFlag.Background, 
                             "에러로 인해 백그라운드 스레드가 강제 종료되었습니다");
