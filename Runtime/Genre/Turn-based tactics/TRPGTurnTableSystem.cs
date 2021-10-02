@@ -129,7 +129,7 @@ namespace Syadeu.Presentation.TurnTable
                 }
             }
 
-            tempList.Sort();
+            tempList.Sort(0, tempList.Count, new TurnPlayerComparer());
 
             for (int i = tempList.Count - 1; i >= 0; i--)
             {
@@ -151,6 +151,21 @@ namespace Syadeu.Presentation.TurnTable
 
             $"next turn called: {prev.Value.Name} => {m_CurrentTurn.Value.Name}".ToLog();
             StartTurn(m_CurrentTurn.Value);
+        }
+
+        private struct TurnPlayerComparer : IComparer<EntityData<IEntityData>>
+        {
+            public int Compare(EntityData<IEntityData> xE, EntityData<IEntityData> yE)
+            {
+                TurnPlayerComponent 
+                    x = xE.GetComponent<TurnPlayerComponent>(),
+                    y = yE.GetComponent<TurnPlayerComponent>();
+
+                if (x.TurnSpeed < y.TurnSpeed) return 1;
+                else if (x.TurnSpeed == y.TurnSpeed) return 0;
+
+                return -1;
+            }
         }
     }
 }

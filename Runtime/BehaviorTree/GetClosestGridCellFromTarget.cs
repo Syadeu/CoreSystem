@@ -62,12 +62,12 @@ namespace Syadeu.Presentation.BehaviorTree
             GridPath32 path = new GridPath32();
             for (int i = 0; i < range.Length; i++)
             {
-                if (targetComponent.IsInIndex(range[i]) || thisComponent.IsInIndex(range[i]))
+                if (targetComponent.IsMyIndex(range[i]) || thisComponent.IsMyIndex(range[i]))
                 {
                     continue;
                 }
 
-                if (!thisComponent.GetPath64(range[i], ref path, currentAp))
+                if (!thisComponent.GetPath32(range[i], ref path, currentAp))
                 {
                     continue;
                 }

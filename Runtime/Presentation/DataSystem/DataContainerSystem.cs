@@ -47,7 +47,7 @@ namespace Syadeu.Presentation.Data
             object value = Dequeue(key);
             if (!value.GetType().Equals(TypeHelper.TypeOf<T>.Type))
             {
-                throw new System.Exception($"Type mismatch. Value is {value.GetType().Name} but requested as {TypeHelper.TypeOf<T>.Name}");
+                throw new System.Exception($"Type mismatch. Value is {TypeHelper.ToString(value.GetType())} but requested as {TypeHelper.TypeOf<T>.ToString()}");
             }
             return (T)value;
         }
