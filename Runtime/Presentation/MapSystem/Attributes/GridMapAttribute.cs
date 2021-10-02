@@ -353,7 +353,7 @@ namespace Syadeu.Presentation.Map
                     if (!Layers[layer].Contains(indices[i]))
                     {
                         //filtered.Add(indices[i]);
-                        indices.RemoveAt(indices[i]);
+                        indices.RemoveAt(i);
                         continue;
                     }
                 }
@@ -362,7 +362,7 @@ namespace Syadeu.Presentation.Map
                     if (Layers[layer].Contains(indices[i]))
                     {
                         //filtered.Add(indices[i]);
-                        indices.RemoveAt(indices[i]);
+                        indices.RemoveAt(i);
                         continue;
                     }
                 }
@@ -432,7 +432,14 @@ namespace Syadeu.Presentation.Map
         }
         private int ConvertToWorldIndex(in int gridIdx, in int index)
         {
-            if (gridIdx < 0) return index;
+            if (gridIdx < 0)
+            {
+                if (Grid.length < index)
+                {
+                    return -1;
+                }
+                return index;
+            }
 
             int output = Grid.length;
             for (int i = 0; i < gridIdx - 1; i++)
@@ -441,6 +448,11 @@ namespace Syadeu.Presentation.Map
             }
 
             output += index;
+            if (SubGrids[gridIdx].length < output)
+            {
+                output = -1;
+            }
+
             return output;
         }
         private BinaryGrid GetTargetGrid(in int index, out int targetIndex)
@@ -526,7 +538,10 @@ namespace Syadeu.Presentation.Map
 
             int cellIdx = grid.LocationToIndex(location);
 
-            return new GridPosition(ConvertToWorldIndex(in gridIdx, in cellIdx), location);
+            int worldIdx = ConvertToWorldIndex(in gridIdx, in cellIdx);
+
+            if (worldIdx < 0) return GridPosition.Empty;
+            return new GridPosition(worldIdx, location);
         }
 
         #endregion
@@ -642,10 +657,6 @@ namespace Syadeu.Presentation.Map
             var grid = GetTargetGrid(in idx, out int targetIdx);
 
             grid.GetRange(ref list, in targetIdx, in range);
-            for (int i = 0; i < list.Length; i++)
-            {
-                //$"{list[i]}".ToLog();
-            }
             for (int i = 0; i < ignoreLayers.Length; i++)
             {
                 FilterByLayer(ignoreLayers[i], ref list);

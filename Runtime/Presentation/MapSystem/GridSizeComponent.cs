@@ -84,11 +84,10 @@ namespace Syadeu.Presentation.Map
             return m_GridSystem.System.HasPath(positions[0].index, to, maxPathLength, out pathCount);
         }
 
-        //[Obsolete]
-        //public bool GetPath(int to, List<GridPathTile> path, int maxPathLength)
-        //{
-        //    return m_GridSystem.System.GetPath(positions[0].index, to, path, maxPathLength);
-        //}
+        public bool HasDirection(GridPosition position, Direction direction, out GridPosition target)
+        {
+            return m_GridSystem.System.HasDirection(in position.index, in direction, out target);
+        }
 
         public bool GetPath32(in int to, ref GridPath32 path, in int maxPathLength, in int maxIteration = 32)
         {
