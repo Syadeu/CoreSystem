@@ -1,6 +1,5 @@
 ﻿using Syadeu.Database;
 using Syadeu.Mono;
-using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Proxy;
 using System;
@@ -33,6 +32,8 @@ namespace Syadeu.Presentation.Map
 
         private readonly Dictionary<Entity<IEntity>, int[]> m_EntityGridIndices = new Dictionary<Entity<IEntity>, int[]>();
         private readonly Dictionary<int, List<Entity<IEntity>>> m_GridEntities = new Dictionary<int, List<Entity<IEntity>>>();
+
+        private readonly List<Entity<IEntity>> m_DrawnCellUIEntities = new List<Entity<IEntity>>();
 
         private GridMapAttribute GridMap => m_MainGrid;
         public float CellSize => m_MainGrid.CellSize;
@@ -564,7 +565,24 @@ namespace Syadeu.Presentation.Map
                     quaternion.EulerZXY(new float3(90, 0, 0) * Mathf.Deg2Rad), 
                     1);
 
+            m_DrawnCellUIEntities.Add(entity);
+            entity.AddComponent(new GridCellComponent()
+            {
+                m_GridPosition = position
+            });
+
             return entity;
+        }
+        public void ClearUICell()
+        {
+            for (int i = 0; i < m_DrawnCellUIEntities.Count; i++)
+            {
+                m_DrawnCellUIEntities[i].RemoveComponent<GridCellComponent>();
+
+                m_DrawnCellUIEntities[i].Destroy();
+            }
+
+            m_DrawnCellUIEntities.Clear();
         }
 
         #endregion
@@ -592,137 +610,4 @@ namespace Syadeu.Presentation.Map
         private int GetSqrMagnitude(int index) => GetSqrMagnitude(IndexToLocation(index));
         private static int GetSqrMagnitude(int2 location) => (location.x * location.x) + (location.y * location.y);
     }
-
-    unsafe public static class EdgeHelpers
-    {
-        public struct Edge
-        {
-            public int v1;
-            public int v2;
-            public int triangleIndex;
-            public Edge(int aV1, int aV2, int aIndex)
-            {
-                v1 = aV1;
-                v2 = aV2;
-                triangleIndex = aIndex;
-            }
-        }
-
-        public static void Calculate(ref NativeList<Vector3> vertices)
-        {
-            int triCount = vertices.Length * 3;
-            FixedList4096Bytes<Edge> tri = new FixedList4096Bytes<Edge>();
-            for (int i = 0, j = 0; i < vertices.Length; i += 4, j += 6)
-            {
-                tri.Add(new Edge(i, i + 1, j));
-                tri.Add(new Edge(i + 1, i + 2, j));
-                tri.Add(new Edge(i + 2, i, j));
-
-                tri.Add(new Edge(i, i + 2, j + 3));
-                tri.Add(new Edge(i + 2, i + 3, j + 3));
-                tri.Add(new Edge(i + 3, i, j + 3));
-            }
-
-            for (int i = tri.Length - 1; i > 0; i--)
-            {
-                for (int n = i - 1; n >= 0; n--)
-                {
-                    if (tri[i].v1 == tri[n].v2 && tri[i].v2 == tri[n].v1)
-                    {
-                        tri.RemoveAtSwapBack(i);
-                        tri.RemoveAtSwapBack(n);
-                        i--;
-                    }
-                }
-            }
-
-            for (int i = 0; i < tri.Length - 2; i++)
-            {
-                Edge E = tri[i];
-                for (int n = i + 1; n < tri.Length; n++)
-                {
-                    Edge a = tri[n];
-                    if (E.v2 == a.v1)
-                    {
-                        // in this case they are already in order so just continoue with the next one
-                        if (n == i + 1)
-                            break;
-                        // if we found a match, swap them with the next one after "i"
-                        tri[n] = tri[i + 1];
-                        tri[i + 1] = a;
-                        break;
-                    }
-                }
-            }
-
-            Vector3* pos = stackalloc Vector3[tri.Length * 2];
-            for (int i = 0, j = 0; i < tri.Length; i++, j += 2)
-            {
-                pos[j] = (vertices[tri[i].v1]);
-                pos[j + 1] = vertices[tri[i].v2];
-            }
-
-            vertices.Clear();
-            vertices.AddRange(pos, tri.Length * 2);
-        }
-
-        public static List<Edge> GetEdges(int[] aIndices)
-        {
-            List<Edge> result = new List<Edge>();
-            for (int i = 0; i < aIndices.Length; i += 3)
-            {
-                int v1 = aIndices[i];
-                int v2 = aIndices[i + 1];
-                int v3 = aIndices[i + 2];
-                result.Add(new Edge(v1, v2, i));
-                result.Add(new Edge(v2, v3, i));
-                result.Add(new Edge(v3, v1, i));
-            }
-            return result;
-        }
-
-        public static List<Edge> FindBoundary(this List<Edge> aEdges)
-        {
-            List<Edge> result = new List<Edge>(aEdges);
-            for (int i = result.Count - 1; i > 0; i--)
-            {
-                for (int n = i - 1; n >= 0; n--)
-                {
-                    if (result[i].v1 == result[n].v2 && result[i].v2 == result[n].v1)
-                    {
-                        // shared edge so remove both
-                        result.RemoveAt(i);
-                        result.RemoveAt(n);
-                        i--;
-                        break;
-                    }
-                }
-            }
-            return result;
-        }
-        public static List<Edge> SortEdges(this List<Edge> aEdges)
-        {
-            List<Edge> result = new List<Edge>(aEdges);
-            for (int i = 0; i < result.Count - 2; i++)
-            {
-                Edge E = result[i];
-                for (int n = i + 1; n < result.Count; n++)
-                {
-                    Edge a = result[n];
-                    if (E.v2 == a.v1)
-                    {
-                        // in this case they are already in order so just continoue with the next one
-                        if (n == i + 1)
-                            break;
-                        // if we found a match, swap them with the next one after "i"
-                        result[n] = result[i + 1];
-                        result[i + 1] = a;
-                        break;
-                    }
-                }
-            }
-            return result;
-        }
-    }
-
 }

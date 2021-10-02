@@ -61,10 +61,6 @@ namespace Syadeu.Presentation.TurnTable
             for (int i = 0; i < range.Length; i++)
             {
                 if (!gridsize.HasPath(range[i], turnPlayer.ActionPoint)) continue;
-                else if (gridsize.IsMyIndex(range[i]))
-                {
-                    continue;
-                }
 
                 gridPositions.Add(gridsize.GetGridPosition(range[i]));
             }
