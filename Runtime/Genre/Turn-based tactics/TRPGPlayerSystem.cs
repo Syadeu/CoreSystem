@@ -94,6 +94,18 @@ namespace Syadeu.Presentation.TurnTable
                 default:
                 case ShortcutType.None:
                 case ShortcutType.Move:
+                    NavAgentAttribute navAgent = m_TurnTableSystem.CurrentTurn.GetAttribute<NavAgentAttribute>();
+                    if (navAgent == null)
+                    {
+                        CoreSystem.Logger.LogError(Channel.Entity,
+                            $"Entity({m_TurnTableSystem.CurrentTurn.Name}) doesn\'t have {nameof(NavAgentAttribute)} attribute.");
+                        return;
+                    }
+                    else if (navAgent.IsMoving)
+                    {
+                        return;
+                    }
+
                     if (m_TRPGGridSystem.IsDrawingUIGrid)
                     {
                         m_TRPGGridSystem.ClearUICell();

@@ -89,7 +89,7 @@ namespace Syadeu.Presentation.TurnTable.UI
             m_EventSystem.PostEvent(TRPGShortcutUIPressedEvent.GetEvent(this, m_ShortcutType));
         }
 
-        public void OnKeyboardPressed(InputAction.CallbackContext obj)
+        internal void OnKeyboardPressed(InputAction.CallbackContext obj)
         {
             Click();
         }

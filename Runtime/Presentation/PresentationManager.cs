@@ -993,7 +993,8 @@ namespace Syadeu.Presentation
                 return;
             }
 
-            throw new Exception("unknown");
+            CoreSystem.Logger.LogError(Channel.Presentation,
+                $"Requested system ({TypeHelper.TypeOf<TSystem>.Name}) is not part of group {TypeHelper.TypeOf<TGroup>.Name}");
         }
         internal static TSystem GetSystem<TGroup, TSystem>(out int systemIdx)
             where TGroup : PresentationGroupEntity
