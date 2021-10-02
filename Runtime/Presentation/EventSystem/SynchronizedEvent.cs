@@ -31,7 +31,7 @@ namespace Syadeu.Presentation
             if (m_Pool.Count == 0)
             {
                 TEvent temp = new TEvent();
-                temp.EntitySystem = PresentationSystem<EntitySystem>.System;
+                temp.EntitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
                 return temp;
             }
             return m_Pool.Dequeue();
