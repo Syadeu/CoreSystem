@@ -111,12 +111,12 @@ namespace Syadeu.Presentation
 
         protected override PresentationResult OnInitializeAsync()
         {
-            RequestSystem<DataContainerSystem>(Bind);
-            RequestSystem<GameObjectProxySystem>(Bind);
-            RequestSystem<CoroutineSystem>(Bind);
-            RequestSystem<Events.EventSystem>(Bind);
-            RequestSystem<Actor.ActorSystem>(Bind);
-            RequestSystem<Components.EntityComponentSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, DataContainerSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, GameObjectProxySystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, CoroutineSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, Events.EventSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, Actor.ActorSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, Components.EntityComponentSystem>(Bind);
 
             #region Processor Registeration
             Type[] processors = TypeHelper.GetTypes(ProcessorPredicate);
@@ -781,8 +781,19 @@ namespace Syadeu.Presentation
             foreach (var interfaceType in interfaceTypes)
             {
                 m_ComponentSystem.RemoveComponent(m_ObjectEntities[hash], interfaceType);
+#if DEBUG_MODE
+                Debug_RemoveComponent(m_ObjectEntities[hash], interfaceType.GetGenericArguments()[0]);
+#endif
             }
 
+#if DEBUG_MODE
+            if (Debug_HasComponent(m_ObjectEntities[hash], out int count, out string names))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Entity({m_ObjectEntities[hash].Name}) has " +
+                    $"number of {count} components that didn\'t disposed. {names}");
+            }
+#endif
             m_DestroyedObjectsInThisFrame.Add(hash);
         }
 
@@ -812,6 +823,104 @@ namespace Syadeu.Presentation
         #endregion
 
 #line default
+
+#if DEBUG_MODE
+        private readonly Dictionary<Hash, List<Type>> m_AddedComponents = new Dictionary<Hash, List<Type>>();
+
+        private bool Debug_HasComponent(ObjectBase entity, out int count, out string names)
+        {
+            if (m_AddedComponents.TryGetValue(entity.Idx, out var list))
+            {
+                count = list.Count;
+                names = list[0].Name;
+                for (int i = 1; i < list.Count; i++)
+                {
+                    names += $", {list[i].Name}";
+                }
+
+                return true;
+            }
+
+            count = 0;
+            names = string.Empty;
+            return false;
+        }
+        internal void Debug_AddComponent<TComponent>(EntityData<IEntityData> entity)
+        {
+            if (!m_AddedComponents.TryGetValue(entity.Idx, out var list))
+            {
+                list = new List<Type>();
+                m_AddedComponents.Add(entity.Idx, list);
+            }
+
+            if (!list.Contains(TypeHelper.TypeOf<TComponent>.Type))
+            {
+                list.Add(TypeHelper.TypeOf<TComponent>.Type);
+            }
+        }
+        internal void Debug_RemoveComponent<TComponent>(ObjectBase entity)
+            => Debug_RemoveComponent(entity, TypeHelper.TypeOf<TComponent>.Type);
+        internal void Debug_RemoveComponent(ObjectBase entity, Type component)
+        {
+            if (entity is Actor.ActorProviderBase actorProvider)
+            {
+                Debug_RemoveComponent(actorProvider.Parent, component);
+                return;
+            }
+
+            if (!m_AddedComponents.TryGetValue(entity.Idx, out var list))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Entity({entity.Name}) doesn\'t have component at all.");
+                return;
+            }
+
+            if (!list.Contains(component))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Entity({entity.Name}) doesn\'t have {component.Name}.");
+                return;
+            }
+
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (list[i].Equals(component))
+                {
+                    list.RemoveAt(i);
+                    break;
+                }
+            }
+            if (list.Count == 0) m_AddedComponents.Remove(entity.Idx);
+        }
+        internal void Debug_RemoveComponent<TComponent>(EntityData<IEntityData> entity)
+            => Debug_RemoveComponent(entity, TypeHelper.TypeOf<TComponent>.Type);
+        internal void Debug_RemoveComponent(EntityData<IEntityData> entity, Type component)
+        {
+            if (!m_AddedComponents.TryGetValue(entity.Idx, out var list))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Entity({entity.Name}) doesn\'t have component at all.");
+                return;
+            }
+
+            if (!list.Contains(component))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Entity({entity.Name}) doesn\'t have {component.Name}.");
+                return;
+            }
+
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (list[i].Equals(component))
+                {
+                    list.RemoveAt(i);
+                    break;
+                }
+            }
+            if (list.Count == 0) m_AddedComponents.Remove(entity.Idx);
+        }
+#endif
 
         public int CreateHashCode() => m_Random.NextInt(int.MinValue, int.MaxValue);
 
@@ -977,6 +1086,9 @@ namespace Syadeu.Presentation
                 foreach (var interfaceType in interfaceTypes)
                 {
                     system.m_ComponentSystem.RemoveComponent(other, interfaceType);
+#if DEBUG_MODE
+                    system.Debug_RemoveComponent((ObjectBase)entity, interfaceType.GetGenericArguments()[0]);
+#endif
                 }
 
                 other.Dispose();

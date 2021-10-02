@@ -312,7 +312,11 @@ namespace Syadeu.Presentation.Entities
                 }
             }
 
-            return s_ComponentSystem.System.AddComponent(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx), in data);
+            EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx);
+#if DEBUG_MODE
+            s_EntitySystem.System.Debug_AddComponent<TComponent>(entity);
+#endif
+            return s_ComponentSystem.System.AddComponent(entity, in data);
         }
         /// <summary>
         /// <typeparamref name="TComponent"/> 컴포넌트가 있는지 반환합니다.
@@ -443,7 +447,11 @@ namespace Syadeu.Presentation.Entities
                 }
             }
 
-            s_ComponentSystem.System.RemoveComponent<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
+            EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx);
+#if DEBUG_MODE
+            s_EntitySystem.System.Debug_RemoveComponent<TComponent>(entity);
+#endif
+            s_ComponentSystem.System.RemoveComponent<TComponent>(entity);
         }
         /// <summary>
         /// 해당 컴포넌트를 제거합니다.
@@ -481,7 +489,11 @@ namespace Syadeu.Presentation.Entities
                 }
             }
 
-            s_ComponentSystem.System.RemoveComponent(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx), componentType);
+            EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx);
+#if DEBUG_MODE
+            s_EntitySystem.System.Debug_RemoveComponent(entity, componentType);
+#endif
+            s_ComponentSystem.System.RemoveComponent(entity, componentType);
         }
 
         #endregion

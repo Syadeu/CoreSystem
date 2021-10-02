@@ -338,7 +338,11 @@ namespace Syadeu.Presentation.Entities
                 }
             }
 
-            return s_ComponentSystem.System.AddComponent(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx), in data);
+            EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx);
+#if DEBUG_MODE
+            s_EntitySystem.System.Debug_AddComponent<TComponent>(entity);
+#endif
+            return s_ComponentSystem.System.AddComponent(entity, in data);
         }
         /// <inheritdoc cref="EntityData{T}.HasComponent{TComponent}"/>
         public bool HasComponent<TComponent>()
@@ -444,7 +448,11 @@ namespace Syadeu.Presentation.Entities
                 }
             }
 
-            s_ComponentSystem.System.RemoveComponent<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
+            EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx);
+#if DEBUG_MODE
+            s_EntitySystem.System.Debug_RemoveComponent<TComponent>(entity);
+#endif
+            s_ComponentSystem.System.RemoveComponent<TComponent>(entity);
         }
         /// <inheritdoc cref="EntityData{T}.RemoveComponent(Type)"/>
         public void RemoveComponent(Type componentType)
@@ -475,7 +483,11 @@ namespace Syadeu.Presentation.Entities
                 }
             }
 
-            s_ComponentSystem.System.RemoveComponent(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx), componentType);
+            EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx);
+#if DEBUG_MODE
+            s_EntitySystem.System.Debug_RemoveComponent(entity, componentType);
+#endif
+            s_ComponentSystem.System.RemoveComponent(entity, componentType);
         }
 
         #endregion
