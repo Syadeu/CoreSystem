@@ -1,4 +1,8 @@
-﻿using Syadeu.Database;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation.Entities;
 
@@ -322,12 +326,12 @@ namespace Syadeu.Presentation.Actions
         public static void Schedule<T>(this Reference<T> action)
             where T : InstanceAction
         {
-            PresentationSystem<ActionSystem>.System.ScheduleInstanceAction(action);
+            PresentationSystem<DefaultPresentationGroup, ActionSystem>.System.ScheduleInstanceAction(action);
         }
         public static void Schedule<T>(this Reference<T> action, EntityData<IEntityData> entity)
             where T : TriggerAction
         {
-            PresentationSystem<ActionSystem>.System.ScheduleTriggerAction(action, entity);
+            PresentationSystem<DefaultPresentationGroup, ActionSystem>.System.ScheduleTriggerAction(action, entity);
         }
 
         public static void Schedule<T>(this Reference<T>[] actions)
@@ -335,7 +339,7 @@ namespace Syadeu.Presentation.Actions
         {
             if (actions == null || actions.Length == 0) return;
 
-            ActionSystem system = PresentationSystem<ActionSystem>.System;
+            ActionSystem system = PresentationSystem<DefaultPresentationGroup, ActionSystem>.System;
             for (int i = 0; i < actions.Length; i++)
             {
                 system.ScheduleInstanceAction(actions[i]);
@@ -346,7 +350,7 @@ namespace Syadeu.Presentation.Actions
         {
             if (actions == null || actions.Length == 0) return;
 
-            ActionSystem system = PresentationSystem<ActionSystem>.System;
+            ActionSystem system = PresentationSystem<DefaultPresentationGroup, ActionSystem>.System;
             for (int i = 0; i < actions.Length; i++)
             {
                 system.ScheduleTriggerAction(actions[i], entity);

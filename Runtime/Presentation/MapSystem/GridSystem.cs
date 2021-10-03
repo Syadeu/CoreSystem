@@ -1,4 +1,8 @@
-﻿using Syadeu.Database;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Syadeu.Database;
 using Syadeu.Mono;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Proxy;
@@ -209,8 +213,6 @@ namespace Syadeu.Presentation.Map
 
                             tr.position = IndexToPosition(PositionToIndex(pos));
                         }
-                        ref GridSizeComponent component = ref entity.GetComponent<GridSizeComponent>();
-                        component.m_GridSystem = SystemID;
 
                         UpdateGridLocation(entity, att, false);
                     }
@@ -556,7 +558,6 @@ namespace Syadeu.Presentation.Map
                         {
                             nextTile.parent = fromPos;
                             nextTile.parentArrayIdx = 0;
-                            "replace".ToLog();
                         }
 
                         path[count] = (nextTile);

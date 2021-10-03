@@ -8,10 +8,6 @@ namespace Syadeu.Presentation.Actions
     {
         private static readonly Dictionary<Reference, Stack<ActionBase>> m_Pool = new Dictionary<Reference, Stack<ActionBase>>();
 
-        [Header("Debug")]
-        [JsonProperty(Order = -10, PropertyName = "DebugText")]
-        public string m_DebugText = string.Empty;
-
         internal override sealed void InternalTerminate()
         {
             OnTerminate();
@@ -70,9 +66,9 @@ namespace Syadeu.Presentation.Actions
     {
         internal bool InternalExecute(TTarget target)
         {
-            if (!string.IsNullOrEmpty(m_DebugText))
+            if (!string.IsNullOrEmpty(p_DebugText))
             {
-                CoreSystem.Logger.Log(Channel.Debug, m_DebugText);
+                CoreSystem.Logger.Log(Channel.Debug, p_DebugText);
             }
 
             bool result = true;
@@ -96,9 +92,9 @@ namespace Syadeu.Presentation.Actions
     {
         internal bool InternalExecute(TTarget t, TATarget ta)
         {
-            if (!string.IsNullOrEmpty(m_DebugText))
+            if (!string.IsNullOrEmpty(p_DebugText))
             {
-                CoreSystem.Logger.Log(Channel.Debug, m_DebugText);
+                CoreSystem.Logger.Log(Channel.Debug, p_DebugText);
             }
 
             bool result = true;

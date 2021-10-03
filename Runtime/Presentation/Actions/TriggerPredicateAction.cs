@@ -11,7 +11,7 @@ namespace Syadeu.Presentation.Actions
         private static readonly Dictionary<Reference, Stack<ActionBase>> m_Pool = new Dictionary<Reference, Stack<ActionBase>>();
 
         [Header("Debug")]
-        [JsonProperty(Order = -10, PropertyName = "DebugText")]
+        [JsonProperty(Order = 9999, PropertyName = "DebugText")]
         public string m_DebugText = string.Empty;
 
         internal override sealed void InternalInitialize()

@@ -1,11 +1,16 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Presentation.Entities;
+using UnityEngine;
 
 namespace Syadeu.Presentation.Actions
 {
     public abstract class ActionBase : ObjectBase
     {
         private static PresentationSystemID<EntitySystem> m_EntitySystem = PresentationSystemID<EntitySystem>.Null;
+
+        [Header("Debug")]
+        [JsonProperty(Order = 9999, PropertyName = "DebugText")]
+        protected string p_DebugText = string.Empty;
 
         [JsonIgnore] private bool m_Terminated = true;
         [JsonIgnore] public Reference m_Reference;
@@ -16,7 +21,7 @@ namespace Syadeu.Presentation.Actions
         {
             if (m_EntitySystem.IsNull())
             {
-                m_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
+                m_EntitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.SystemID;
                 if (m_EntitySystem.IsNull())
                 {
                     CoreSystem.Logger.LogError(Channel.Entity,
@@ -50,7 +55,14 @@ namespace Syadeu.Presentation.Actions
         /// </summary>
         protected override void OnDispose() { }
 
-        public override sealed object Clone() => base.Clone();
+        public override sealed object Clone()
+        {
+            ActionBase actionBase = (ActionBase)base.Clone();
+
+            actionBase.p_DebugText = string.Copy(p_DebugText);
+
+            return actionBase;
+        }
         public override sealed string ToString() => Name;
         public override sealed bool Equals(object obj)
         {
