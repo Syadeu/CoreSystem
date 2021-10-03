@@ -432,10 +432,8 @@ namespace Syadeu.Presentation.Map
                         ref GridPathTile parentTile = ref path[lastTileData.parentArrayIdx];
                         parentTile.opened[lastTileData.direction] = false;
 
-                        $"in {currentTileIdx} -> {lastTileData.parentArrayIdx}".ToLog();
                         currentTileIdx = lastTileData.parentArrayIdx;
 
-                        //Debug.Break();
                         iteration++;
                         continue;
                     }
@@ -479,13 +477,14 @@ namespace Syadeu.Presentation.Map
                         }
                     }
 
-                    pathFound = 0;
+                    int sortedFound = 0;
                     GridPathTile current = path[count - 1];
-                    for (int i = 0; i < pathFound && current.position.index != from; i++, pathFound++)
+                    for (int i = 0; i < pathFound && current.position.index != from; i++, sortedFound++)
                     {
                         current = path[current.parentArrayIdx];
                     }
 
+                    pathFound = sortedFound;
                     return true;
                 }
             }
