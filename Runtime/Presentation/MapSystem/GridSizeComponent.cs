@@ -75,13 +75,15 @@ namespace Syadeu.Presentation.Map
             grid.GetRange(ref list, positions[0].index, in range, m_ObstacleLayers);
         }
 
-        public bool HasPath(int to, int maxPathLength)
+        public bool HasPath(int to, in int maxIteration = 32) => HasPath(in to, out _, maxIteration);
+        public bool HasPath(in int to, out int pathCount, in int maxIteration = 32)
         {
-            return m_GridSystem.System.HasPath(positions[0].index, to, maxPathLength, out _);
-        }
-        public bool HasPath(int to, int maxPathLength, out int pathCount)
-        {
-            return m_GridSystem.System.HasPath(positions[0].index, to, maxPathLength, out pathCount);
+            return m_GridSystem.System.HasPath(
+                positions[0].index, 
+                to, 
+                out pathCount, 
+                m_Parent.GetAttribute<GridSizeAttribute>().ObstacleLayers,
+                maxIteration);
         }
 
         public bool HasDirection(GridPosition position, Direction direction, out GridPosition target)
@@ -89,11 +91,14 @@ namespace Syadeu.Presentation.Map
             return m_GridSystem.System.HasDirection(in position.index, in direction, out target);
         }
 
-        public bool GetPath32(in int to, ref GridPath32 path, in int maxPathLength, in int maxIteration = 32)
+        public bool GetPath64(in int to, ref GridPath64 path, in int maxIteration = 32)
         {
-            return m_GridSystem.System.GetPath32(
-                positions[0].index, in to, in maxPathLength, ref path, 
-                m_Parent.GetAttribute<GridSizeAttribute>().ObstacleLayers, in maxIteration);
+            return m_GridSystem.System.GetPath64(
+                positions[0].index, 
+                in to, 
+                ref path, 
+                m_Parent.GetAttribute<GridSizeAttribute>().ObstacleLayers, 
+                in maxIteration);
         }
 
         public GridPosition GetGridPosition(in int index)

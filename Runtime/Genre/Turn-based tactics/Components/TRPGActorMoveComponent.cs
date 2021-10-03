@@ -60,7 +60,8 @@ namespace Syadeu.Presentation.TurnTable
             gridPositions.Clear();
             for (int i = 0; i < range.Length; i++)
             {
-                if (!gridsize.HasPath(range[i], turnPlayer.ActionPoint)) continue;
+                if (!gridsize.HasPath(range[i], out int pathCount) ||
+                    pathCount > turnPlayer.ActionPoint) continue;
 
                 gridPositions.Add(gridsize.GetGridPosition(range[i]));
             }
@@ -77,7 +78,8 @@ namespace Syadeu.Presentation.TurnTable
             FixedList32Bytes<GridPosition> indices = new FixedList32Bytes<GridPosition>();
             for (int i = 0; i < range.Length; i++)
             {
-                if (!gridsize.HasPath(range[i], turnPlayer.ActionPoint)) continue;
+                if (!gridsize.HasPath(range[i], out int pathCount) ||
+                        pathCount > turnPlayer.ActionPoint) continue;
 
                 indices.Add(gridsize.GetGridPosition(range[i]));
             }
@@ -95,7 +97,8 @@ namespace Syadeu.Presentation.TurnTable
             FixedList64Bytes<GridPosition> indices = new FixedList64Bytes<GridPosition>();
             for (int i = 0; i < range.Length; i++)
             {
-                if (!gridsize.HasPath(range[i], turnPlayer.ActionPoint)) continue;
+                if (!gridsize.HasPath(range[i], out int pathCount) ||
+                        pathCount > turnPlayer.ActionPoint) continue;
 
                 indices.Add(gridsize.GetGridPosition(range[i]));
             }
@@ -113,7 +116,8 @@ namespace Syadeu.Presentation.TurnTable
             FixedList128Bytes<GridPosition> indices = new FixedList128Bytes<GridPosition>();
             for (int i = 0; i < range.Length; i++)
             {
-                if (!gridsize.HasPath(range[i], turnPlayer.ActionPoint)) continue;
+                if (!gridsize.HasPath(range[i], out int pathCount) ||
+                        pathCount > turnPlayer.ActionPoint) continue;
 
                 indices.Add(gridsize.GetGridPosition(range[i]));
             }
@@ -131,7 +135,8 @@ namespace Syadeu.Presentation.TurnTable
             FixedList4096Bytes<GridPosition> indices = new FixedList4096Bytes<GridPosition>();
             for (int i = 0; i < range.Length; i++)
             {
-                if (!gridsize.HasPath(range[i], turnPlayer.ActionPoint)) continue;
+                if (!gridsize.HasPath(range[i], out int pathCount) ||
+                        pathCount > turnPlayer.ActionPoint) continue;
 
                 indices.Add(gridsize.GetGridPosition(range[i]));
             }
@@ -141,10 +146,10 @@ namespace Syadeu.Presentation.TurnTable
 
         #endregion
 
-        public bool GetPath(in GridPosition position, ref GridPath32 path)
+        public bool GetPath(in GridPosition position, ref GridPath64 path)
         {
             var gridsize = m_Parent.GetComponent<GridSizeComponent>();
-            return gridsize.GetPath32(in position.index, ref path, 32);
+            return gridsize.GetPath64(in position.index, ref path, 32);
         }
         public float3 TileToPosition(in GridTile tile)
         {
@@ -152,7 +157,7 @@ namespace Syadeu.Presentation.TurnTable
             return gridsize.IndexToPosition(tile.index);
         }
 
-        public void GetMoveablePath64(List<GridPath32> indices)
+        public void GetMoveablePath64(List<GridPath64> indices)
         {
             if (!SafetyChecks()) return;
 
@@ -162,17 +167,23 @@ namespace Syadeu.Presentation.TurnTable
 
             indices.Clear();
             //FixedList64Bytes<GridPath32> indices = new FixedList64Bytes<GridPath32>();
-            GridPath32 path = GridPath32.Create();
+            GridPath64 path = GridPath64.Create();
             for (int i = 0; i < range.Length; i++)
             {
-                if (!gridsize.GetPath32(range[i], ref path, turnPlayer.ActionPoint)) continue;
+                if (!gridsize.GetPath64(range[i], ref path, turnPlayer.ActionPoint)) continue;
 
                 indices.Add(path);
 
-                if (i + 1 < range.Length) path = GridPath32.Create();
+                if (i + 1 < range.Length) path = GridPath64.Create();
             }
 
             //return indices;
+        }
+
+        public void MoveTo(in GridPath64 path, in ActorMoveEvent ev)
+        {
+            NavMeshSystem navMesh = PresentationSystem<DefaultPresentationGroup, NavMeshSystem>.System;
+            navMesh.MoveTo(m_Parent.As<IEntityData, IEntity>(), path, ev);
         }
 
         public void CalculateMoveableOutline(NativeArray<GridPosition> moveables, 

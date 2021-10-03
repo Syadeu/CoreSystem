@@ -304,7 +304,7 @@ namespace Syadeu.Presentation.Map
 
             entity.GetComponent<ActorControllerComponent>().ScheduleEvent(ev);
         }
-        public void MoveTo(Entity<IEntity> entity, GridPath32 path, ActorMoveEvent ev)
+        public void MoveTo(Entity<IEntity> entity, GridPath64 path, ActorMoveEvent ev)
         {
             NavAgentAttribute navAgent = entity.GetAttribute<NavAgentAttribute>();
             if (navAgent == null)

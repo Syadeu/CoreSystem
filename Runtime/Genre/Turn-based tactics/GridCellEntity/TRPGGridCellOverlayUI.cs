@@ -60,7 +60,7 @@ namespace Syadeu.Presentation.TurnTable
         private bool m_Initialized = false;
         private TRPGGridSystem m_TRPGGridSystem;
         private TRPGTurnTableSystem m_TurnTableSystem;
-        private GridPath32 m_TempPath = new GridPath32();
+        private GridPath64 m_TempPath = new GridPath64();
 
         protected override string controlPathInternal
         {

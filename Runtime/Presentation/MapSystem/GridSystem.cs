@@ -384,116 +384,147 @@ namespace Syadeu.Presentation.Map
         public int[] GetLayer(in int layer) => GridMap.GetLayer(in layer);
 
         public bool HasPath(
-            [NoAlias] int from, [NoAlias] int to, [NoAlias] int maxPathLength, 
-            out int pathFound, [NoAlias] int maxIteration = 32)
+            [NoAlias] int from, 
+            [NoAlias] int to,
+            out int pathFound,
+            in NativeHashSet<int> ignoreIndices = default,
+            [NoAlias] int maxIteration = 32)
         {
             int2
                 fromLocation = GridMap.GetLocation(in from),
                 toLocation = GridMap.GetLocation(in to);
 
-            GridPathTile tile = new GridPathTile(from, fromLocation);
-            tile.Calculate(GridMap, GridMap.ObstacleLayer);
+            GridPathTile tile = new GridPathTile(-1, 0, from, fromLocation);
+            Calculate(ref tile, GridMap.ObstacleLayer, in ignoreIndices);
 
             unsafe
             {
                 GridPathTile* path = stackalloc GridPathTile[512];
                 path[0] = tile;
 
-                pathFound = 1;
+                pathFound = 1; int count = 1;
                 int iteration = 0;
                 while (
                     iteration < maxIteration &&
-                    pathFound < maxPathLength &&
-                    path[pathFound - 1].position.index != to)
+                    count < 512 &&
+                    path[count - 1].position.index != to)
                 {
-                    GridPathTile lastTileData = path[pathFound - 1];
+                    ref GridPathTile lastTileData = ref path[pathFound - 1];
                     if (lastTileData.IsBlocked())
                     {
-                        //path.RemoveAt(path.Count - 1);
                         pathFound--;
 
                         if (pathFound == 0) break;
 
-                        GridPathTile parentTile = path[pathFound - 1];
+                        ref GridPathTile parentTile = ref path[lastTileData.parentArrayIdx];
                         parentTile.opened[lastTileData.direction] = false;
-                        path[pathFound - 1] = parentTile;
-                    }
-                    else
-                    {
-                        int nextDirection = GetLowestCost(ref lastTileData, toLocation);
 
-                        GridPathTile nextTile = lastTileData.GetNext(nextDirection);
-                        nextTile.Calculate(GridMap, GridMap.ObstacleLayer);
-
-                        path[pathFound] = (nextTile);
-                        pathFound++;
-                    }
-
-                    iteration++;
-                }
-
-                return path[pathFound - 1].position.index == to;
-            }
-        }
-        public bool GetPath32(in int from, in int to, in int maxPathLength, ref GridPath32 path, in NativeHashSet<int> ignoreIndices = default, in int maxIteration = 32)
-        {
-            int2
-                fromLocation = GridMap.GetLocation(in from),
-                toLocation = GridMap.GetLocation(in to);
-
-            GridPathTile tile = new GridPathTile(from, fromLocation);
-            tile.Calculate(GridMap, GridMap.ObstacleLayer, ignoreIndices);
-
-            path.Clear();
-
-            unsafe
-            {
-                GridPathTile* list = stackalloc GridPathTile[512];
-                list[0] = tile;
-
-                int iteration = 0; int count = 1;
-                while (
-                    iteration < maxIteration &&
-                    count < maxPathLength &&
-                    list[count - 1].position.index != to)
-                {
-                    GridPathTile lastTileData = list[count - 1];
-                    if (lastTileData.IsBlocked())
-                    {
-                        //path.RemoveAt(path.Length - 1);
-                        count -= 1;
-
-                        if (path.Length == 0) break;
-
-                        GridPathTile parentTile = list[count - 1];
-                        parentTile.opened[lastTileData.direction] = false;
-                        list[count - 1] = parentTile;
+                        iteration++;
                     }
                     else
                     {
                         int nextDirection = GetLowestCost(ref lastTileData, in toLocation);
 
-                        GridPathTile nextTile = lastTileData.GetNext(nextDirection);
-                        nextTile.Calculate(GridMap, GridMap.ObstacleLayer, ignoreIndices);
+                        GridPathTile nextTile = GetNext(lastTileData.arrayIdx, count, ref lastTileData, in nextDirection);
+                        Calculate(ref nextTile, GridMap.ObstacleLayer, in ignoreIndices);
+
+                        path[count] = (nextTile);
+                        pathFound++;
+                        count++;
+                    }
+                }
+
+                // Path Found
+                if (path[count - 1].position.index == to)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+        public bool GetPath64(in int from, in int to, ref GridPath64 paths, 
+            in NativeHashSet<int> ignoreIndices = default, in int maxIteration = 32)
+        {
+            int2
+                fromLocation = GridMap.GetLocation(in from),
+                toLocation = GridMap.GetLocation(in to);
+
+            GridPathTile tile = new GridPathTile(-1, 0, from, fromLocation);
+            Calculate(ref tile, GridMap.ObstacleLayer, in ignoreIndices);
+
+            paths.Clear();
+
+            unsafe
+            {
+                GridPathTile* path = stackalloc GridPathTile[512];
+                path[0] = tile;
+
+                int pathFound = 1, count = 1;
+                int iteration = 0;
+                while (
+                    iteration < maxIteration &&
+                    count < 512 &&
+                    path[count - 1].position.index != to)
+                {
+                    ref GridPathTile lastTileData = ref path[pathFound - 1];
+                    if (lastTileData.IsBlocked())
+                    {
+                        pathFound--;
+
+                        if (pathFound == 0) break;
+
+                        ref GridPathTile parentTile = ref path[lastTileData.parentArrayIdx];
+                        parentTile.opened[lastTileData.direction] = false;
                         
-                        list[count] = (nextTile);
-                        count += 1;
+                        iteration++;
+                    }
+                    else
+                    {
+                        int nextDirection = GetLowestCost(ref lastTileData, in toLocation);
+
+                        GridPathTile nextTile = GetNext(lastTileData.arrayIdx, count, ref lastTileData, in nextDirection);
+                        Calculate(ref nextTile, GridMap.ObstacleLayer, in ignoreIndices);
+
+                        path[count] = (nextTile);
+                        pathFound++;
+                        count++;
+                    }
+                }
+
+                // Path Found
+                if (path[count - 1].position.index == to)
+                {
+                    GridTile* arr = stackalloc GridTile[pathFound];
+
+                    int length = 0;
+                    GridPathTile current = path[count - 1];
+                    for (int i = 0; i < pathFound && current.position.index != from; i++, length++)
+                    {
+                        arr[i] = (new GridTile()
+                        {
+                            index = current.position.index,
+                            parent = current.parent.index
+                        });
+
+                        current = path[current.parentArrayIdx];
                     }
 
-                    iteration++;
-                }
-
-                for (int i = 0; i < count; i++)
-                {
-                    path.Add(new GridTile()
+                    paths.Add(new GridTile()
                     {
-                        index = list[i].position.index,
-                        parent = list[i].parent.index
+                        parent = -1,
+                        index = from
                     });
-                }
+                    for (int i = length - 1; i >= 0; i--)
+                    {
+                        paths.Add(new GridTile(new int2(arr[i].parent, arr[i].index)));
+                    }
 
-                return list[count - 1].position.index == to;
+                    return true;
+                }
             }
+
+            return false;
         }
 
         public IReadOnlyList<Entity<IEntity>> GetEntitiesAt(in int index)
@@ -587,6 +618,45 @@ namespace Syadeu.Presentation.Map
 
         #endregion
 
+        private GridPathTile GetNext(in int parentArrayIdx, in int arrayIdx, ref GridPathTile tile, in int direction)
+        {
+            return new GridPathTile(parentArrayIdx, arrayIdx, tile.position, tile.openedPositions[direction], direction);
+        }
+        private void Calculate(ref GridPathTile tile,
+            in NativeHashSet<int> ignoreLayers = default, in NativeHashSet<int> additionalIgnore = default)
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                GridPosition nextTempLocation = GridMap.GetDirection(in tile.position.index, (Direction)(1 << i));
+                if (nextTempLocation.Equals(tile.parent)) continue;
+
+                //int nextTemp = GridBurstExtensions.p_LocationInt2ToIndex.Invoke(grid.bounds, grid.cellSize, nextTempLocation);
+                int nextTemp = nextTempLocation.index;
+                if (ignoreLayers.IsCreated)
+                {
+                    if (ignoreLayers.Contains(nextTemp))
+                    {
+                        tile.opened[i] = false;
+                        tile.openedPositions.RemoveAt(i);
+                        continue;
+                    }
+                }
+
+                if (additionalIgnore.IsCreated)
+                {
+                    if (additionalIgnore.Contains(nextTemp))
+                    {
+                        tile.opened[i] = false;
+                        tile.openedPositions.RemoveAt(i);
+                        continue;
+                    }
+                }
+
+                tile.opened[i] = true;
+                tile.openedPositions[i] = nextTempLocation;
+                //tile.openedPositions.UpdateAt(i, nextTempLocation);
+            }
+        }
         private int GetLowestCost(ref GridPathTile prev, in int2 to)
         {
             int lowest = -1;

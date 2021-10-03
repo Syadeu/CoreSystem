@@ -147,7 +147,7 @@ namespace Syadeu.Presentation.TurnTable
             m_IsDrawingGrids = false;
         }
 
-        public void DrawUIPath(in GridPath32 path, float heightOffset = .5f)
+        public void DrawUIPath(in GridPath64 path, float heightOffset = .5f)
         {
             if (m_IsDrawingPaths)
             {

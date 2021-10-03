@@ -19,7 +19,7 @@ namespace Syadeu.Presentation.TurnTable
         public override bool IsStartable => m_RenderSystem.CameraComponent != null;
 
         private ShortcutType m_CurrentShortcut = ShortcutType.None;
-        private GridPath32 m_LastPath;
+        private GridPath64 m_LastPath;
 
         private RenderSystem m_RenderSystem;
         private CoroutineSystem m_CoroutineSystem;
