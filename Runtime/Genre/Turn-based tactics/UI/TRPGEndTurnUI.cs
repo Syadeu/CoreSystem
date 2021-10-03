@@ -50,7 +50,6 @@ namespace Syadeu.Presentation.TurnTable.UI
 
         internal void Click()
         {
-            "Click endturn".ToLog();
             if (m_IsHide) return;
 
             m_EventSystem.PostEvent(TRPGEndTurnUIPressedEvent.GetEvent());

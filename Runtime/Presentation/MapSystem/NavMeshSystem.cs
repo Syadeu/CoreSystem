@@ -404,7 +404,7 @@ namespace Syadeu.Presentation.Map
                         entity, OnMoveStateChangedEvent.MoveState.AboutToMove));
 
                 NavMeshAgent agent = tr.proxy.GetComponent<NavMeshAgent>();
-                //agent.updatePosition = false;
+                agent.updatePosition = false;
                 //agent.updateRotation = false;
 
                 if (!agent.isOnNavMesh)
@@ -453,7 +453,8 @@ namespace Syadeu.Presentation.Map
                     float3 dir = (float3)agent.nextPosition - tr.position;
                     SetDirection(dir);
 
-                    tr.Synchronize(ProxyTransform.SynchronizeOption.TR);
+                    tr.position = agent.nextPosition;
+                    tr.Synchronize(ProxyTransform.SynchronizeOption.Rotation);
 
                     eventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(
                         entity, OnMoveStateChangedEvent.MoveState.OnMoving));
@@ -467,7 +468,8 @@ namespace Syadeu.Presentation.Map
                     float3 dir = (float3)agent.nextPosition - tr.position;
                     SetDirection(dir);
 
-                    tr.Synchronize(ProxyTransform.SynchronizeOption.TR);
+                    tr.position = agent.nextPosition;
+                    tr.Synchronize(ProxyTransform.SynchronizeOption.Rotation);
 
                     eventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(
                         entity, OnMoveStateChangedEvent.MoveState.OnMoving));
@@ -477,7 +479,8 @@ namespace Syadeu.Presentation.Map
                 }
 
                 SetDirection(0);
-                tr.Synchronize(ProxyTransform.SynchronizeOption.TR);
+                tr.position = agent.nextPosition;
+                tr.Synchronize(ProxyTransform.SynchronizeOption.Rotation);
 
                 SetIsMoving(false);
                 agent.ResetPath();

@@ -101,13 +101,16 @@ namespace Syadeu.Presentation
         protected void StopCoroutine(CoreRoutine routine) => CoreSystem.RemoveUnityUpdate(routine);
         protected void StopBackgroundCoroutine(CoreRoutine routine) => CoreSystem.RemoveBackgroundUpdate(routine);
 
-        protected UnityEngine.GameObject CreateGameObject(string name)
+        protected UnityEngine.GameObject CreateGameObject(string name, bool isStatic)
         {
             CoreSystem.Logger.ThreadBlock(nameof(DontDestroyOnLoad), Syadeu.Internal.ThreadInfo.Unity);
 
             UnityEngine.GameObject obj = new UnityEngine.GameObject(name);
 
-            //obj.transform.SetParent(s_PresentationUnityFolder);
+            if (isStatic)
+            {
+                DontDestroyOnLoad(obj);
+            }
 
             return obj;
         }

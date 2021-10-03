@@ -16,7 +16,7 @@ namespace Syadeu.Presentation.Internal
         IBeforePresentation, IOnPresentation, IAfterPresentation, 
         IDisposable
     {
-        private static UnityEngine.Transform s_PresentationUnityFolder;
+        internal static UnityEngine.Transform s_PresentationUnityFolder;
         
         internal Hash m_GroupIndex;
         internal int m_SystemIndex;

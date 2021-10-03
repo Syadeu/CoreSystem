@@ -114,6 +114,7 @@ namespace Syadeu.Presentation.TurnTable
                 case ShortcutType.None:
                 case ShortcutType.Move:
                     m_TRPGGridSystem.ClearUICell();
+                    m_TRPGGridSystem.ClearUIPath();
 
                     break;
                 case ShortcutType.Attack:
@@ -122,7 +123,6 @@ namespace Syadeu.Presentation.TurnTable
         }
         private void TRPGShortcutUIPressedEventHandler(TRPGShortcutUIPressedEvent ev)
         {
-            "ev shortcut".ToLog();
             ActorControllerComponent ctr = m_TurnTableSystem.CurrentTurn.GetComponent<ActorControllerComponent>();
             if (ctr.IsBusy())
             {
@@ -143,6 +143,7 @@ namespace Syadeu.Presentation.TurnTable
                     if (m_CurrentShortcut == ShortcutType.Move)
                     {
                         m_TRPGGridSystem.ClearUICell();
+                        m_TRPGGridSystem.ClearUIPath();
 
                         m_CurrentShortcut = ShortcutType.None;
                         return;
