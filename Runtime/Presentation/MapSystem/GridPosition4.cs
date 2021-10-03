@@ -43,6 +43,22 @@ namespace Syadeu.Presentation.Map
             this.index = index;
             this.location = location;
         }
+        public GridPosition4(GridPosition a0, GridPosition a1, GridPosition a2, GridPosition a3)
+        {
+            this = default(GridPosition4);
+
+            index[0] = a0.index;
+            location[0] = a0.location;
+            
+            index[1] = a1.index;
+            location[1] = a1.location;
+
+            index[2] = a2.index;
+            location[2] = a2.location;
+
+            index[3] = a3.index;
+            location[3] = a3.location;
+        }
 
         public void Update(int4 index, int2x4 location)
         {
@@ -76,6 +92,29 @@ namespace Syadeu.Presentation.Map
             }
 
             return true;
+        }
+
+        public bool Contains(GridPosition pos)
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                if (index[i].Equals(pos.index) && location[i].Equals(pos.location))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        internal bool Contains(GridPathTile pos)
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                if (index[i].Equals(pos.position.index) && location[i].Equals(pos.position.location))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }

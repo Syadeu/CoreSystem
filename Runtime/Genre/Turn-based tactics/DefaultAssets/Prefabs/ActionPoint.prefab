@@ -472,7 +472,7 @@ MonoBehaviour:
   m_FullHpText:
   - {fileID: 6757957764360330982}
   - {fileID: 1491942117132522972}
-  m_HpText: {fileID: 6757957764360330982}
+  m_HpText: {fileID: 8459352506881852241}
 --- !u!114 &2154471283167489712
 MonoBehaviour:
   m_ObjectHideFlags: 0

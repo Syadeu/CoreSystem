@@ -52,15 +52,13 @@ namespace Syadeu.Presentation.BehaviorTree
             ref TurnPlayerComponent turnPlayer = ref m_ThisGridSize.GridSizeAttribute.Parent.GetComponent<TurnPlayerComponent>();
 
             GridPath64 path = GridPath64.Create();
-            if (!component.GetPath64(index, ref path, turnPlayer.ActionPoint))
-            {
-                return TaskStatus.Failure;
-            }
+            component.GetPath64(index, ref path);
 
             TRPGActorMoveComponent move = m_ThisGridSize.GridSizeAttribute.Parent.GetComponent<TRPGActorMoveComponent>();
             move.MoveTo(in path, new ActorMoveEvent(m_ThisGridSize.GridSizeAttribute.Parent, 1));
 
             //float3 pos = PresentationSystem<GridSystem>.System.IndexToPosition(index);
+
 
             turnPlayer.ActionPoint -= path.Length;
             //m_ThisNavAgent.NavAgentAttribute.MoveTo(pos);

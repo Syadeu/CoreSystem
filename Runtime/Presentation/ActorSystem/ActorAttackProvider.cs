@@ -1,4 +1,8 @@
-﻿using Newtonsoft.Json;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Newtonsoft.Json;
 using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation.Actions;
@@ -42,8 +46,13 @@ namespace Syadeu.Presentation.Actor
         }
         protected void HitEventHandler(IActorHitEvent ev)
         {
-#if UNITY_EDITOR
-            if (m_StatAttribute == null) return;
+#if DEBUG_MODE
+            if (m_StatAttribute == null)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"{Parent.Name} doesn\'t have {nameof(ActorStatAttribute)}");
+                return;
+            }
 #endif
             EntityData<IEntityData> target = ev.AttackFrom.As<ActorEntity, IEntityData>();
 
@@ -63,7 +72,7 @@ namespace Syadeu.Presentation.Actor
                 PostEvent(lifetimeChanged);
             }
 
-            $"{Parent.Name} : {hp} left".ToLog();
+            $"{Parent.Name} : {hp} left, dmg {ev.Damage}".ToLog();
         }
         protected virtual void SendHitEvent(Entity<ActorEntity> target, Hash hpStatName, float damage)
         {

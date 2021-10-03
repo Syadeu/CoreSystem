@@ -149,18 +149,6 @@ namespace Syadeu.Presentation.TurnTable
                         return;
                     }
 
-                    NavAgentAttribute navAgent = m_TurnTableSystem.CurrentTurn.GetAttribute<NavAgentAttribute>();
-                    if (navAgent == null)
-                    {
-                        CoreSystem.Logger.LogError(Channel.Entity,
-                            $"Entity({m_TurnTableSystem.CurrentTurn.Name}) doesn\'t have {nameof(NavAgentAttribute)} attribute.");
-                        return;
-                    }
-                    else if (navAgent.IsMoving)
-                    {
-                        return;
-                    }
-
                     m_TRPGCameraMovement.SetNormal();
 
                     m_TRPGGridSystem.DrawUICell(m_TurnTableSystem.CurrentTurn);

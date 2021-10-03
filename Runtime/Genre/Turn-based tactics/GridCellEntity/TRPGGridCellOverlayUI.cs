@@ -169,9 +169,14 @@ namespace Syadeu.Presentation.TurnTable
             SetState(State.Highlighted);
 
             var move = m_TurnTableSystem.CurrentTurn.GetComponent<TRPGActorMoveComponent>();
-            move.GetPath(GridPosition, ref m_TempPath);
-
-            m_TRPGGridSystem.DrawUIPath(in m_TempPath);
+            if (move.GetPath(GridPosition, ref m_TempPath))
+            {
+                m_TRPGGridSystem.DrawUIPath(in m_TempPath);
+            }
+            else
+            {
+                "path not found".ToLog();
+            }
         }
         public void OnPointerExit(PointerEventData eventData)
         {

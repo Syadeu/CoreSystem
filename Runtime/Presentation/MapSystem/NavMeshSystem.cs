@@ -529,7 +529,8 @@ namespace Syadeu.Presentation.Map
 
         public void OnExecute(Entity<ActorEntity> from)
         {
-
+            ref NavAgentCompoonent agent = ref m_Entity.GetComponent<NavAgentCompoonent>();
+            agent.m_IsMoving = true;
         }
     }
 
@@ -539,6 +540,8 @@ namespace Syadeu.Presentation.Map
         internal float3 m_Direction;
         internal float3 m_PreviousTarget;
 
+        public bool IsMoving => m_IsMoving;
         public float Speed => math.sqrt(math.mul(m_Direction, m_Direction));
+        public float3 Direction => m_Direction;
     }
 }

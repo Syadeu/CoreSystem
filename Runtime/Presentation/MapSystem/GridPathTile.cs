@@ -30,7 +30,7 @@ namespace Syadeu.Presentation.Map
             this.direction = -1;
             this.position = new GridPosition(index, location);
 
-            opened = false;
+            opened = true;
             openedPositions = GridPosition4.Empty;
             costs = -1;
         }
@@ -43,7 +43,7 @@ namespace Syadeu.Presentation.Map
             this.direction = direction;
             this.position = position;
 
-            opened = false;
+            opened = true;
             openedPositions = GridPosition4.Empty;
             costs = -1;
         }
