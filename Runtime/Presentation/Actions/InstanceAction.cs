@@ -1,4 +1,8 @@
-﻿using Newtonsoft.Json;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Newtonsoft.Json;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -8,15 +12,11 @@ namespace Syadeu.Presentation.Actions
     {
         private static readonly Dictionary<Reference, Stack<ActionBase>> m_Pool = new Dictionary<Reference, Stack<ActionBase>>();
 
-        [Header("Debug")]
-        [JsonProperty(Order = 9999, PropertyName = "DebugText")]
-        public string m_DebugText = string.Empty;
-
         internal bool InternalExecute()
         {
-            if (!string.IsNullOrEmpty(m_DebugText))
+            if (!string.IsNullOrEmpty(p_DebugText))
             {
-                CoreSystem.Logger.Log(Channel.Debug, m_DebugText);
+                CoreSystem.Logger.Log(Channel.Debug, p_DebugText);
             }
 
             bool result = true;

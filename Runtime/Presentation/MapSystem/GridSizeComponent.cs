@@ -69,10 +69,27 @@ namespace Syadeu.Presentation.Map
             FixedList4096Bytes<int> indices = grid.GetRange1024(positions[0].index, in range, m_ObstacleLayers);
             return indices;
         }
+
+        /// <summary>
+        /// <see cref="GridSizeAttribute.m_ObstacleLayers"/> 에서 지정한 레이어를 기반으로,
+        /// <paramref name="range"/> 범위 만큼 반환합니다.
+        /// </summary>
+        /// <remarks>
+        /// <paramref name="list"/> 는 자동으로 Clear 됩니다. 
+        /// 직접 레이어를 지정하고 싶으면 
+        /// <seealso cref="GetRange(ref NativeList{int}, in int, in FixedList128Bytes{int})"/> 를 사용하세요.
+        /// </remarks>
+        /// <param name="list"></param>
+        /// <param name="range"></param>
         public void GetRange(ref NativeList<int> list, in int range)
         {
             GridSystem grid = m_GridSystem.System;
             grid.GetRange(ref list, positions[0].index, in range, m_ObstacleLayers);
+        }
+        public void GetRange(ref NativeList<int> list, in int range, in FixedList128Bytes<int> ignoreLayers)
+        {
+            GridSystem grid = m_GridSystem.System;
+            grid.GetRange(ref list, positions[0].index, in range, ignoreLayers);
         }
 
         public bool HasPath(int to, in int maxIteration = 32) => HasPath(in to, out _, maxIteration);

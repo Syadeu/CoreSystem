@@ -96,10 +96,11 @@ namespace Syadeu.Internal
         public static void Log(Channel channel, ResultFlag result, string msg, bool logThread)
         {
             if (channel != Channel.Editor &&
-                !CoreSystemSettings.Instance.m_DisplayLogChannel.HasFlag(channel))
+                ((CoreSystemSettings.Instance.m_DisplayLogChannel | channel) != CoreSystemSettings.Instance.m_DisplayLogChannel))
             {
                 if (result == ResultFlag.Normal) return;
             }
+
             Log(TypeHelper.Enum<Channel>.ToString(channel), result, msg, logThread);
         }
 #if DEBUG_MODE

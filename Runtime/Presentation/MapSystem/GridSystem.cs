@@ -1,4 +1,8 @@
-﻿using Syadeu.Database;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Syadeu.Database;
 using Syadeu.Mono;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Proxy;
@@ -556,7 +560,6 @@ namespace Syadeu.Presentation.Map
                         {
                             nextTile.parent = fromPos;
                             nextTile.parentArrayIdx = 0;
-                            "replace".ToLog();
                         }
 
                         path[count] = (nextTile);

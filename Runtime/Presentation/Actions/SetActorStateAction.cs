@@ -1,4 +1,8 @@
-﻿using Newtonsoft.Json;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Newtonsoft.Json;
 using Syadeu.Database;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Entities;
@@ -22,6 +26,7 @@ namespace Syadeu.Presentation.Actions
                 return;
             }
 
+            "asdasdasdasdasd".ToLog();
             stateAttribute.State = m_State;
         }
     }

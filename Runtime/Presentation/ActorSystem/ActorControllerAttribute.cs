@@ -38,7 +38,9 @@ namespace Syadeu.Presentation.Actor
     {
         protected override void OnCreated(ActorControllerAttribute attribute, EntityData<IEntityData> entity)
         {
-            ActorControllerComponent component = new ActorControllerComponent();
+            entity.AddComponent(new ActorControllerComponent());
+            ref ActorControllerComponent component = ref entity.GetComponent<ActorControllerComponent>();
+
             Entity<ActorEntity> actor = entity.As<IEntityData, ActorEntity>();
 
             component.m_EntitySystem = m_EntitySystem.SystemID;

@@ -1887,45 +1887,45 @@ namespace Syadeu
 #line hidden
         public struct Logger
         {
-            [System.Diagnostics.Conditional("DEBUG_MODE")]
+            //[System.Diagnostics.Conditional("DEBUG_MODE")]
             public static void ThreadBlock(string name, ThreadInfo thread) => LogManager.ThreadBlock(name, thread);
-            [System.Diagnostics.Conditional("DEBUG_MODE")]
+            //[System.Diagnostics.Conditional("DEBUG_MODE")]
             public static void ThreadBlock(ThreadInfo thread, [System.Runtime.CompilerServices.CallerMemberName] string methodName = "") => LogManager.ThreadBlock(methodName, thread);
 
 #if DEBUG_MODE
             [System.Diagnostics.DebuggerHidden]
 #endif
-            [System.Diagnostics.Conditional("DEBUG_MODE")]
+            //[System.Diagnostics.Conditional("DEBUG_MODE")]
             public static void Log(Channel channel, bool logThread, string msg) => LogManager.Log(channel, ResultFlag.Normal, msg, logThread);
 #if DEBUG_MODE
             [System.Diagnostics.DebuggerHidden]
 #endif
-            [System.Diagnostics.Conditional("DEBUG_MODE")]
+            //[System.Diagnostics.Conditional("DEBUG_MODE")]
             public static void Log(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Normal, msg, false);
 #if DEBUG_MODE
             [System.Diagnostics.DebuggerHidden]
 #endif
-            [System.Diagnostics.Conditional("DEBUG_MODE")]
+            //[System.Diagnostics.Conditional("DEBUG_MODE")]
             public static void LogWarning(Channel channel, bool logThread, string msg) => LogManager.Log(channel, ResultFlag.Warning, msg, logThread);
 #if DEBUG_MODE
             [System.Diagnostics.DebuggerHidden]
 #endif
-            [System.Diagnostics.Conditional("DEBUG_MODE")]
+            //[System.Diagnostics.Conditional("DEBUG_MODE")]
             public static void LogWarning(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Warning, msg, false);
 #if DEBUG_MODE
             [System.Diagnostics.DebuggerHidden]
 #endif
-            [System.Diagnostics.Conditional("DEBUG_MODE")]
+            //[System.Diagnostics.Conditional("DEBUG_MODE")]
             public static void LogError(Channel channel, bool logThread, string msg) => LogManager.Log(channel, ResultFlag.Error, msg, logThread);
 #if DEBUG_MODE
             [System.Diagnostics.DebuggerHidden]
 #endif
-            [System.Diagnostics.Conditional("DEBUG_MODE")]
+            //[System.Diagnostics.Conditional("DEBUG_MODE")]
             public static void LogError(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Error, msg,false);
 #if DEBUG_MODE
             [System.Diagnostics.DebuggerHidden]
 #endif
-            [System.Diagnostics.Conditional("DEBUG_MODE")]
+            //[System.Diagnostics.Conditional("DEBUG_MODE")]
             public static void LogError(Channel channel, Exception ex, [System.Runtime.CompilerServices.CallerMemberName] string methodName = "")
             {
 #if DEBUG_MODE
@@ -1950,17 +1950,17 @@ namespace Syadeu
 #endif
             }
 
-            [System.Diagnostics.Conditional("DEBUG_MODE")]
+            //[System.Diagnostics.Conditional("DEBUG_MODE")]
             public static void NotNull(object obj) => LogManager.NotNull(obj, string.Empty);
-            [System.Diagnostics.Conditional("DEBUG_MODE")]
+            //[System.Diagnostics.Conditional("DEBUG_MODE")]
             public static void NotNull(object obj, string msg) => LogManager.NotNull(obj, msg);
 
-            [System.Diagnostics.Conditional("DEBUG_MODE")]
+            //[System.Diagnostics.Conditional("DEBUG_MODE")]
             public static void True(bool value, string msg) => LogManager.True(value, msg);
-            [System.Diagnostics.Conditional("DEBUG_MODE")]
+            //[System.Diagnostics.Conditional("DEBUG_MODE")]
             public static void False(bool value, string msg) => LogManager.False(value, msg);
 
-            [System.Diagnostics.Conditional("DEBUG_MODE")]
+            //[System.Diagnostics.Conditional("DEBUG_MODE")]
             public static void Unmanaged<T>() where T : unmanaged { }
         }
         public struct LogTimer : IDisposable

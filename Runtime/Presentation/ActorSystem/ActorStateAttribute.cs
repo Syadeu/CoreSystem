@@ -38,7 +38,6 @@ namespace Syadeu.Presentation.Actor
         [JsonProperty(Order = 0, PropertyName = "OnDead")]
         private Reference<TriggerAction>[] m_OnDead = Array.Empty<Reference<TriggerAction>>();
 
-        [JsonIgnore] internal EventSystem m_EventSystem = null;
         [JsonIgnore] private StateInfo m_State = StateInfo.Idle;
 
         [JsonIgnore] public StateInfo State
@@ -58,20 +57,10 @@ namespace Syadeu.Presentation.Actor
                 if ((value & StateInfo.Dead) == StateInfo.Dead) m_OnDead.Execute(Parent);
                 m_OnStateChanged.Execute(Parent);
 
-                m_EventSystem.PostEvent(OnActorStateChangedEvent.GetEvent(
-                    Parent.As<IEntityData, ActorEntity>(), prev, m_State));
+                PresentationSystem<DefaultPresentationGroup, EventSystem>.System
+                    .PostEvent(OnActorStateChangedEvent.GetEvent(
+                        Parent.As<IEntityData, ActorEntity>(), prev, m_State));
             }
-        }
-    }
-    internal sealed class ActorStateProcessor : AttributeProcessor<ActorStateAttribute>
-    {
-        protected override void OnCreated(ActorStateAttribute attribute, EntityData<IEntityData> entity)
-        {
-            attribute.m_EventSystem = EventSystem;
-        }
-        protected override void OnDestroy(ActorStateAttribute attribute, EntityData<IEntityData> entity)
-        {
-            attribute.m_EventSystem = null;
         }
     }
 }

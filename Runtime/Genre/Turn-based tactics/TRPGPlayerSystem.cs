@@ -191,6 +191,8 @@ namespace Syadeu.Presentation.TurnTable
         }
         private void TRPGEndTurnUIPressedEventHandler(TRPGEndTurnUIPressedEvent ev)
         {
+            DisableCurrentShortcut();
+
             m_TRPGCanvasUISystem.SetEndTurn(true);
             m_TRPGCanvasUISystem.SetShortcuts(true, false);
 
