@@ -22,7 +22,16 @@ namespace Syadeu.Presentation.BehaviorTree
 
         public override TaskStatus OnUpdate()
         {
-            var attackProvider = m_ThisActorController.GetProvider<TRPGActorAttackProvider>();
+            Instance<TRPGActorAttackProvider> attackProvider = m_ThisActorController.GetProvider<TRPGActorAttackProvider>();
+            if (!attackProvider.IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Entity({m_ThisActorController.ActorController.Parent.Name}) " +
+                    $"doesn\'t have any {nameof(TRPGActorAttackProvider)}");
+
+                return TaskStatus.Failure;
+            }
+
             m_Result = attackProvider.Object.GetTargetsInRange();
 
             if (m_Result.Count > 0) return TaskStatus.Success;

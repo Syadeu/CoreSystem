@@ -35,7 +35,7 @@ namespace Syadeu.Presentation
 
                 if (m_EntitySystem.IsNull())
                 {
-                    m_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
+                    m_EntitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.SystemID;
                     if (m_EntitySystem.IsNull())
                     {
                         CoreSystem.Logger.LogError(Channel.Entity,
@@ -91,7 +91,7 @@ namespace Syadeu.Presentation
             if (IsEmpty()) return false;
             else if (m_EntitySystem.IsNull())
             {
-                m_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
+                m_EntitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.SystemID;
                 if (m_EntitySystem.IsNull())
                 {
                     return false;
@@ -126,7 +126,7 @@ namespace Syadeu.Presentation
         {
             if (m_EntitySystem.IsNull())
             {
-                m_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
+                m_EntitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.SystemID;
                 if (m_EntitySystem.IsNull())
                 {
                     CoreSystem.Logger.LogError(Channel.Entity,
@@ -159,7 +159,7 @@ namespace Syadeu.Presentation
         {
             if (m_EntitySystem.IsNull())
             {
-                m_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
+                m_EntitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.SystemID;
                 if (m_EntitySystem.IsNull())
                 {
                     CoreSystem.Logger.LogError(Channel.Entity,
@@ -195,7 +195,7 @@ namespace Syadeu.Presentation
 
                 if (m_EntitySystem.IsNull())
                 {
-                    m_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
+                    m_EntitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.SystemID;
                     if (m_EntitySystem.IsNull())
                     {
                         CoreSystem.Logger.LogError(Channel.Entity,
@@ -237,7 +237,7 @@ namespace Syadeu.Presentation
             if (IsEmpty()) return false;
             else if (m_EntitySystem.IsNull())
             {
-                m_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
+                m_EntitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.SystemID;
                 if (m_EntitySystem.IsNull())
                 {
                     return false;
@@ -273,7 +273,7 @@ namespace Syadeu.Presentation
             }
             else if (m_EntitySystem.IsNull())
             {
-                m_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
+                m_EntitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.SystemID;
                 if (m_EntitySystem.IsNull())
                 {
                     CoreSystem.Logger.LogError(Channel.Entity,
@@ -308,7 +308,7 @@ namespace Syadeu.Presentation
         {
             if (m_EntitySystem.IsNull())
             {
-                m_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
+                m_EntitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.SystemID;
                 if (m_EntitySystem.IsNull())
                 {
                     CoreSystem.Logger.LogError(Channel.Entity,
