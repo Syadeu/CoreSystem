@@ -26,7 +26,6 @@ namespace Syadeu.Presentation.Actions
                 return;
             }
 
-            "asdasdasdasdasd".ToLog();
             stateAttribute.State = m_State;
         }
     }

@@ -213,8 +213,6 @@ namespace Syadeu.Presentation.Map
 
                             tr.position = IndexToPosition(PositionToIndex(pos));
                         }
-                        ref GridSizeComponent component = ref entity.GetComponent<GridSizeComponent>();
-                        component.m_GridSystem = SystemID;
 
                         UpdateGridLocation(entity, att, false);
                     }
