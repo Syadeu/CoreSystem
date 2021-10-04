@@ -35,7 +35,7 @@ namespace Syadeu.Presentation.Components
         {
             if (s_System == null)
             {
-                s_System = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>().Data.SystemID.System;
+                s_System = EntityComponentSystem.Constants.SystemID.System;
             }
 
             QueryBuilder<TComponent> builder = s_System.CreateQueryBuilder<TComponent>();

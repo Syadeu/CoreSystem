@@ -27,17 +27,24 @@ namespace Syadeu.Presentation.Components
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
-        private NativeArray<EntityComponentBuffer> m_ComponentBuffer;
+        private NativeArray<ComponentBuffer> m_ComponentArrayBuffer;
         private MethodInfo m_RemoveComponentMethod;
 
-        private readonly Dictionary<Type, int> m_ComponentIndices = new Dictionary<Type, int>();
-        
+#if DEBUG_MODE
+        private static Unity.Profiling.ProfilerMarker
+            s_GetComponentMarker = new Unity.Profiling.ProfilerMarker("get_GetComponent"),
+            s_GetComponentReadOnlyMarker = new Unity.Profiling.ProfilerMarker("get_GetComponentReadOnly"),
+            s_GetComponentPointerMarker = new Unity.Profiling.ProfilerMarker("get_GetComponentPointer");
+#endif
+
         private EntitySystem m_EntitySystem;
 
         #region Presentation Methods
 
         protected override PresentationResult OnInitialize()
         {
+            RequestSystem<DefaultPresentationGroup, EntitySystem>(Bind);
+
             // 버퍼를 생성하기 위해 미리 모든 컴포넌트 타입들의 정보를 가져옵니다.
             Type[] types = TypeHelper.GetTypes(CollectTypes<IEntityComponent>);
 
@@ -49,35 +56,32 @@ namespace Syadeu.Presentation.Components
             }
             else length = types.Length * 2;
 
-            EntityComponentBuffer[] tempBuffer = new EntityComponentBuffer[length];
+            ComponentBuffer[] tempBuffer = new ComponentBuffer[length];
             for (int i = 0; i < types.Length; i++)
             {
-                // 왜인지는 모르겠지만 Type.GetHash() 의 정보가 런타임 중 간혹 유효하지 않은 값 (0) 을 뱉어서
-                // Dictionary 에 미리 파싱합니다.
-                if (!m_ComponentIndices.TryGetValue(types[i], out int idx))
-                {
-                    idx = math.abs(types[i].GetHashCode()) % tempBuffer.Length;
-                    m_ComponentIndices.Add(types[i], idx);
-                }
+                // 왜인지는 모르겠지만 Type.GetHash() 의 정보가 런타임 중 간혹 유효하지 않은 값 (0) 을 뱉어서 미리 파싱합니다.
+                int idx = math.abs(types[i].GetHashCode()) % tempBuffer.Length;
+                ComponentType.GetValue(types[i]).Data = idx;
 
                 // 새로운 버퍼를 생성하고, heap 에 메모리를 할당합니다.
-                EntityComponentBuffer temp = new EntityComponentBuffer();
+                ComponentBuffer temp = new ComponentBuffer();
                 temp.Initialize(idx, UnsafeUtility.SizeOf(types[i]), AlignOf(types[i]));
 
                 tempBuffer[idx] = temp;
             }
 
-            m_ComponentBuffer = new NativeArray<EntityComponentBuffer>(tempBuffer, Allocator.Persistent);
-            
-            RequestSystem<DefaultPresentationGroup, EntitySystem>(Bind);
+            m_ComponentArrayBuffer = new NativeArray<ComponentBuffer>(tempBuffer, Allocator.Persistent);
 
-            SharedStatic<EntityComponentConstrains> constrains = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>();
-
-            constrains.Data.SystemID = SystemID;
+            ConstructSharedStatics();
 
             PresentationManager.Instance.PreUpdate += Presentation_PreUpdate;
 
             return base.OnInitialize();
+        }
+        private void ConstructSharedStatics()
+        {
+            Constants.Value.Data.SystemID = SystemID;
+            
         }
 
         private void Presentation_PreUpdate()
@@ -106,19 +110,21 @@ namespace Syadeu.Presentation.Components
         
         public override void OnDispose()
         {
+            PresentationManager.Instance.PreUpdate -= Presentation_PreUpdate;
+
             int count = m_DisposedComponents.Count;
             for (int i = 0; i < count; i++)
             {
                 m_DisposedComponents.Dequeue().Dispose();
             }
 
-            for (int i = 0; i < m_ComponentBuffer.Length; i++)
+            for (int i = 0; i < m_ComponentArrayBuffer.Length; i++)
             {
-                if (!m_ComponentBuffer[i].IsCreated) continue;
+                if (!m_ComponentArrayBuffer[i].IsCreated) continue;
 
-                m_ComponentBuffer[i].Dispose();
+                m_ComponentArrayBuffer[i].Dispose();
             }
-            m_ComponentBuffer.Dispose();
+            m_ComponentArrayBuffer.Dispose();
 
             m_EntitySystem = null;
         }
@@ -136,11 +142,12 @@ namespace Syadeu.Presentation.Components
 
         #region Hashing
 
-        private int GetComponentIndex<TComponent>() => GetComponentIndex(TypeHelper.TypeOf<TComponent>.Type);
-        private int GetComponentIndex(Type t)
+        private static int GetComponentIndex<TComponent>() => GetComponentIndex(TypeHelper.TypeOf<TComponent>.Type);
+        private static int GetComponentIndex(Type t)
         {
+            int idx = ComponentType.GetValue(t).Data;
 #if DEBUG_MODE
-            if (!m_ComponentIndices.ContainsKey(t))
+            if (idx == 0)
             {
                 CoreSystem.Logger.LogError(Channel.Component,
                     $"Component buffer error. " +
@@ -149,14 +156,14 @@ namespace Syadeu.Presentation.Components
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
 #endif
-            return m_ComponentIndices[t];
-        }
-        private int GetEntityIndex(EntityData<IEntityData> entity)
-        {
-            int idx = math.abs(entity.GetHashCode()) % EntityComponentBuffer.c_InitialCount;
             return idx;
         }
-        private int2 GetIndex(Type t, EntityData<IEntityData> entity)
+        private static int GetEntityIndex(EntityData<IEntityData> entity)
+        {
+            int idx = math.abs(entity.GetHashCode()) % ComponentBuffer.c_InitialCount;
+            return idx;
+        }
+        private static int2 GetIndex(Type t, EntityData<IEntityData> entity)
         {
             int
                 cIdx = GetComponentIndex(t),
@@ -164,7 +171,7 @@ namespace Syadeu.Presentation.Components
 
             return new int2(cIdx, eIdx);
         }
-        private int2 GetIndex<TComponent>(EntityData<IEntityData> entity)
+        private static int2 GetIndex<TComponent>(EntityData<IEntityData> entity)
         {
             int
                 cIdx = GetComponentIndex<TComponent>(),
@@ -181,9 +188,9 @@ namespace Syadeu.Presentation.Components
         private struct DisposedComponent<TComponent> : IDisposable
             where TComponent : unmanaged, IEntityComponent
         {
-            private static EntityComponentBuffer* s_Buffer;
+            private static ComponentBuffer* s_Buffer;
 
-            public static void Initialize(EntityComponentBuffer* componentBuffer)
+            public static void Initialize(ComponentBuffer* componentBuffer)
             {
                 s_Buffer = componentBuffer;
             }
@@ -212,9 +219,10 @@ namespace Syadeu.Presentation.Components
         }
 
         public void ComponentBufferSafetyCheck<TComponent>(out bool result)
+            where TComponent : unmanaged, IEntityComponent
         {
 #if DEBUG_MODE
-            if (!m_ComponentIndices.ContainsKey(TypeHelper.TypeOf<TComponent>.Type))
+            if (ComponentType<TComponent>.Index == 0)
             {
                 CoreSystem.Logger.LogError(Channel.Component,
                     $"Component buffer error. " +
@@ -226,23 +234,23 @@ namespace Syadeu.Presentation.Components
 #endif
             result = true;
         }
-        public EntityComponentBuffer GetComponentBuffer<TComponent>()
+        public ComponentBuffer GetComponentBuffer<TComponent>()
         {
             int idx = GetComponentIndex<TComponent>();
 
-            return UnsafeUtility.ReadArrayElement<EntityComponentBuffer>(m_ComponentBuffer.GetUnsafeReadOnlyPtr(), idx);
+            return UnsafeUtility.ReadArrayElement<ComponentBuffer>(m_ComponentArrayBuffer.GetUnsafeReadOnlyPtr(), idx);
         }
-        public EntityComponentBuffer* GetComponentBufferPointer<TComponent>()
+        public ComponentBuffer* GetComponentBufferPointer<TComponent>()
         {
             int idx = GetComponentIndex<TComponent>();
 
-            return ((EntityComponentBuffer*)m_ComponentBuffer.GetUnsafeReadOnlyPtr()) + idx;
+            return ((ComponentBuffer*)m_ComponentArrayBuffer.GetUnsafeReadOnlyPtr()) + idx;
         }
         public IntPtr GetComponentBufferPointerIntPtr<TComponent>()
         {
             int idx = GetComponentIndex<TComponent>();
 
-            return (IntPtr)((EntityComponentBuffer*)m_ComponentBuffer.GetUnsafeReadOnlyPtr() + idx);
+            return (IntPtr)((ComponentBuffer*)m_ComponentArrayBuffer.GetUnsafeReadOnlyPtr() + idx);
         }
 
         public TComponent AddComponent<TComponent>(in EntityData<IEntityData> entity, in TComponent data) where TComponent : unmanaged, IEntityComponent
@@ -251,7 +259,7 @@ namespace Syadeu.Presentation.Components
 
             int2 index = GetIndex<TComponent>(entity);
 #if DEBUG_MODE
-            if (!m_ComponentBuffer[index.x].IsCreated)
+            if (!m_ComponentArrayBuffer[index.x].IsCreated)
             {
                 CoreSystem.Logger.LogError(Channel.Component,
                     $"Component buffer error. " +
@@ -260,14 +268,14 @@ namespace Syadeu.Presentation.Components
                 return data;
             }
 #endif
-            if (!m_ComponentBuffer[index.x].Find(entity, ref index.y) &&
-                !m_ComponentBuffer[index.x].FindEmpty(entity, ref index.y))
+            if (!m_ComponentArrayBuffer[index.x].Find(entity, ref index.y) &&
+                !m_ComponentArrayBuffer[index.x].FindEmpty(entity, ref index.y))
             {
-                EntityComponentBuffer boxed = m_ComponentBuffer[index.x];
+                ComponentBuffer boxed = m_ComponentArrayBuffer[index.x];
                 boxed.Increment<TComponent>();
-                m_ComponentBuffer[index.x] = boxed;
+                m_ComponentArrayBuffer[index.x] = boxed;
 
-                if (!m_ComponentBuffer[index.x].FindEmpty(entity, ref index.y))
+                if (!m_ComponentArrayBuffer[index.x].FindEmpty(entity, ref index.y))
                 {
                     CoreSystem.Logger.LogError(Channel.Component,
                         $"Component buffer error. " +
@@ -277,9 +285,9 @@ namespace Syadeu.Presentation.Components
                 }
             }
 
-            ((TComponent*)m_ComponentBuffer[index.x].m_ComponentBuffer)[index.y] = data;
-            m_ComponentBuffer[index.x].m_OccupiedBuffer[index.y] = true;
-            m_ComponentBuffer[index.x].m_EntityBuffer[index.y] = entity;
+            ((TComponent*)m_ComponentArrayBuffer[index.x].m_ComponentBuffer)[index.y] = data;
+            m_ComponentArrayBuffer[index.x].m_OccupiedBuffer[index.y] = true;
+            m_ComponentArrayBuffer[index.x].m_EntityBuffer[index.y] = entity;
 
             CoreSystem.Logger.Log(Channel.Component,
                 $"Component {TypeHelper.TypeOf<TComponent>.Name} set at entity({entity.Name}), index {index}");
@@ -290,7 +298,7 @@ namespace Syadeu.Presentation.Components
         {
             int2 index = GetIndex<TComponent>(entity);
 #if DEBUG_MODE
-            if (!m_ComponentBuffer[index.x].IsCreated)
+            if (!m_ComponentArrayBuffer[index.x].IsCreated)
             {
                 CoreSystem.Logger.LogError(Channel.Component,
                     $"Component buffer error. " +
@@ -299,7 +307,7 @@ namespace Syadeu.Presentation.Components
                 return;
             }
 #endif
-            DisposedComponent<TComponent>.Initialize((EntityComponentBuffer*)m_ComponentBuffer.GetUnsafePtr());
+            DisposedComponent<TComponent>.Initialize((ComponentBuffer*)m_ComponentArrayBuffer.GetUnsafePtr());
 
             DisposedComponent<TComponent> dispose = new DisposedComponent<TComponent>()
             {
@@ -338,7 +346,7 @@ namespace Syadeu.Presentation.Components
         {
             int2 index = GetIndex<TComponent>(entity);
 #if DEBUG_MODE
-            if (!m_ComponentBuffer[index.x].IsCreated)
+            if (!m_ComponentArrayBuffer[index.x].IsCreated)
             {
                 CoreSystem.Logger.LogError(Channel.Component,
                     $"Component buffer error. " +
@@ -347,12 +355,12 @@ namespace Syadeu.Presentation.Components
                 return false;
             }
 #endif
-            if (!m_ComponentBuffer[index.x].Find(entity, ref index.y))
+            if (!m_ComponentArrayBuffer[index.x].Find(entity, ref index.y))
             {
                 return false;
             }
 
-            if (((TComponent*)m_ComponentBuffer[index.x].m_ComponentBuffer)[index.y] is IValidation validation &&
+            if (((TComponent*)m_ComponentArrayBuffer[index.x].m_ComponentBuffer)[index.y] is IValidation validation &&
                 !validation.IsValid())
             {
                 return false;
@@ -364,7 +372,7 @@ namespace Syadeu.Presentation.Components
         {
             int2 index = GetIndex(componentType, entity);
 #if DEBUG_MODE
-            if (!m_ComponentBuffer[index.x].IsCreated)
+            if (!m_ComponentArrayBuffer[index.x].IsCreated)
             {
                 CoreSystem.Logger.LogError(Channel.Component,
                     $"Component buffer error. " +
@@ -373,7 +381,7 @@ namespace Syadeu.Presentation.Components
                 return false;
             }
 #endif
-            if (!m_ComponentBuffer[index.x].Find(entity, ref index.y))
+            if (!m_ComponentArrayBuffer[index.x].Find(entity, ref index.y))
             {
                 return false;
             }
@@ -383,9 +391,12 @@ namespace Syadeu.Presentation.Components
         public ref TComponent GetComponent<TComponent>(EntityData<IEntityData> entity) 
             where TComponent : unmanaged, IEntityComponent
         {
+#if DEBUG_MODE
+            s_GetComponentMarker.Begin();
+#endif
             int2 index = GetIndex<TComponent>(entity);
 #if DEBUG_MODE
-            if (!m_ComponentBuffer[index.x].IsCreated)
+            if (!m_ComponentArrayBuffer[index.x].IsCreated)
             {
                 CoreSystem.Logger.LogError(Channel.Component,
                     $"Component buffer error. " +
@@ -394,7 +405,7 @@ namespace Syadeu.Presentation.Components
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
 
-            if (!m_ComponentBuffer[index.x].Find(entity, ref index.y))
+            if (!m_ComponentArrayBuffer[index.x].Find(entity, ref index.y))
             {
                 CoreSystem.Logger.LogError(Channel.Component,
                     $"Entity({entity.Name}) doesn\'t have component({TypeHelper.TypeOf<TComponent>.Name})");
@@ -402,14 +413,52 @@ namespace Syadeu.Presentation.Components
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
 #endif
-            return ref ((TComponent*)m_ComponentBuffer[index.x].m_ComponentBuffer)[index.y];
+            IJobParallelForEntitiesExtensions.CompleteAllJobs();
+#if DEBUG_MODE
+            s_GetComponentMarker.End();
+#endif
+            return ref ((TComponent*)m_ComponentArrayBuffer[index.x].m_ComponentBuffer)[index.y];
+        }
+        public TComponent GetComponentReadOnly<TComponent>(EntityData<IEntityData> entity)
+            where TComponent : unmanaged, IEntityComponent
+        {
+#if DEBUG_MODE
+            s_GetComponentReadOnlyMarker.Begin();
+#endif
+            int2 index = GetIndex<TComponent>(entity);
+#if DEBUG_MODE
+            if (!m_ComponentArrayBuffer[index.x].IsCreated)
+            {
+                CoreSystem.Logger.LogError(Channel.Component,
+                    $"Component buffer error. " +
+                    $"Didn\'t collected this component({TypeHelper.TypeOf<TComponent>.Name}) infomation at initializing stage.");
+
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
+            }
+
+            if (!m_ComponentArrayBuffer[index.x].Find(entity, ref index.y))
+            {
+                CoreSystem.Logger.LogError(Channel.Component,
+                    $"Entity({entity.Name}) doesn\'t have component({TypeHelper.TypeOf<TComponent>.Name})");
+
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
+            }
+#endif
+            TComponent boxed = ((TComponent*)m_ComponentArrayBuffer[index.x].m_ComponentBuffer)[index.y];
+#if DEBUG_MODE
+            s_GetComponentReadOnlyMarker.End();
+#endif
+            return boxed;
         }
         public TComponent* GetComponentPointer<TComponent>(EntityData<IEntityData> entity) 
             where TComponent : unmanaged, IEntityComponent
         {
+#if DEBUG_MODE
+            s_GetComponentPointerMarker.Begin();
+#endif
             int2 index = GetIndex<TComponent>(entity);
 #if DEBUG_MODE
-            if (!m_ComponentBuffer[index.x].IsCreated)
+            if (!m_ComponentArrayBuffer[index.x].IsCreated)
             {
                 CoreSystem.Logger.LogError(Channel.Component,
                     $"Component buffer error. " +
@@ -418,15 +467,17 @@ namespace Syadeu.Presentation.Components
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
 
-            if (!m_ComponentBuffer[index.x].Find(entity, ref index.y))
+            if (!m_ComponentArrayBuffer[index.x].Find(entity, ref index.y))
             {
                 CoreSystem.Logger.LogError(Channel.Component,
                     $"Entity({entity.Name}) doesn\'t have component({TypeHelper.TypeOf<TComponent>.Name})");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
+
+            s_GetComponentPointerMarker.End();
 #endif
-            return ((TComponent*)m_ComponentBuffer[index.x].m_ComponentBuffer) + index.y;
+            return ((TComponent*)m_ComponentArrayBuffer[index.x].m_ComponentBuffer) + index.y;
         }
 
         #endregion
@@ -434,7 +485,7 @@ namespace Syadeu.Presentation.Components
         [Obsolete("Use IJobParallelForEntities")]
         public QueryBuilder<TComponent> CreateQueryBuilder<TComponent>() where TComponent : unmanaged, IEntityComponent
         {
-            int componentIdx = math.abs(TypeHelper.TypeOf<TComponent>.Type.GetHashCode()) % m_ComponentBuffer.Length;
+            int componentIdx = math.abs(TypeHelper.TypeOf<TComponent>.Type.GetHashCode()) % m_ComponentArrayBuffer.Length;
             
             if (!PoolContainer<QueryBuilder<TComponent>>.Initialized)
             {
@@ -442,9 +493,9 @@ namespace Syadeu.Presentation.Components
             }
 
             QueryBuilder<TComponent> builder = PoolContainer<QueryBuilder<TComponent>>.Dequeue();
-            builder.Entities = m_ComponentBuffer[componentIdx].m_EntityBuffer;
-            builder.Components = (TComponent*)m_ComponentBuffer[componentIdx].m_ComponentBuffer;
-            builder.Length = m_ComponentBuffer[componentIdx].Length;
+            builder.Entities = m_ComponentArrayBuffer[componentIdx].m_EntityBuffer;
+            builder.Components = (TComponent*)m_ComponentArrayBuffer[componentIdx].m_ComponentBuffer;
+            builder.Length = m_ComponentArrayBuffer[componentIdx].Length;
 
             return builder;
         }
@@ -470,13 +521,63 @@ namespace Syadeu.Presentation.Components
 
         #region Inner Classes
 
+        public struct Constants
+        {
+            public static SharedStatic<EntityComponentConstrains> Value = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem, Constants>();
+
+            public static PresentationSystemID<EntityComponentSystem> SystemID => Value.Data.SystemID;
+        }
+        public struct ComponentType
+        {
+            public static SharedStatic<int> GetValue(Type componentType)
+            {
+                return SharedStatic<int>.GetOrCreate(
+                    TypeHelper.TypeOf<EntityComponentSystem>.Type,
+                    componentType, (uint)UnsafeUtility.AlignOf<int>());
+            }
+        }
+        public struct ComponentType<TComponent> where TComponent : unmanaged, IEntityComponent
+        {
+            public static readonly SharedStatic<int> Value
+                = SharedStatic<int>.GetOrCreate<EntityComponentSystem, TComponent>((uint)UnsafeUtility.AlignOf<int>());
+
+            public static int Index => Value.Data;
+        }
+
         [StructLayout(LayoutKind.Sequential)]
         private struct AlignOfHelper<T> where T : struct
         {
             public byte dummy;
             public T data;
         }
-        unsafe internal struct EntityComponentBuffer : IDisposable
+        unsafe internal struct EntityComponents
+        {
+            private readonly ComponentBuffer* m_Buffer;
+            private readonly uint m_Length;
+
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            //private AtomicSafetyHandle m_SafetyHandle;
+#endif
+
+            public EntityComponents(ComponentBuffer* buffer, uint length)
+            {
+                m_Buffer = buffer;
+                m_Length = length;
+
+                //DisposeSentinel.
+            }
+
+            public ComponentBuffer* GetBuffer(int index)
+            {
+                if (index < 0 || index > m_Length)
+                {
+                    throw new IndexOutOfRangeException();
+                }
+
+                return m_Buffer + index;
+            }
+        }
+        unsafe internal struct ComponentBuffer : IDisposable
         {
             public const int c_InitialCount = 512;
 

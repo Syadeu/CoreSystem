@@ -33,7 +33,6 @@ namespace Syadeu.Presentation.Entities
     {
         private const string c_Invalid = "Invalid";
         private static PresentationSystemID<EntitySystem> s_EntitySystem = PresentationSystemID<EntitySystem>.Null;
-        internal static PresentationSystemID<EntityComponentSystem> s_ComponentSystem = PresentationSystemID<EntityComponentSystem>.Null;
 
         public static Entity<T> Empty => new Entity<T>(Hash.Empty, null);
 
@@ -328,23 +327,19 @@ namespace Syadeu.Presentation.Entities
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
 #endif
-            if (s_ComponentSystem.IsNull())
+            if (EntityComponentSystem.Constants.SystemID.IsNull())
             {
-                s_ComponentSystem = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>().Data.SystemID;
-                if (s_ComponentSystem.IsNull())
-                {
-                    CoreSystem.Logger.LogError(Channel.Entity,
-                        $"Cannot retrived {nameof(EntityComponentSystem)}.");
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot retrived {nameof(EntityComponentSystem)}.");
 
-                    throw new InvalidOperationException($"Component buffer error. See Error Log.");
-                }
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
 
             EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx);
 #if DEBUG_MODE
             s_EntitySystem.System.Debug_AddComponent<TComponent>(entity);
 #endif
-            return s_ComponentSystem.System.AddComponent(entity, in data);
+            return EntityComponentSystem.Constants.SystemID.System.AddComponent(entity, in data);
         }
         /// <inheritdoc cref="EntityData{T}.HasComponent{TComponent}"/>
         public bool HasComponent<TComponent>()
@@ -358,18 +353,14 @@ namespace Syadeu.Presentation.Entities
                 return false;
             }
 #endif
-            if (s_ComponentSystem.IsNull())
+            if (EntityComponentSystem.Constants.SystemID.IsNull())
             {
-                s_ComponentSystem = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>().Data.SystemID;
-                if (s_ComponentSystem.IsNull())
-                {
-                    CoreSystem.Logger.LogError(Channel.Entity,
-                        $"Cannot retrived {nameof(EntityComponentSystem)}.");
-                    return false;
-                }
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot retrived {nameof(EntityComponentSystem)}.");
+                return false;
             }
 
-            return s_ComponentSystem.System.HasComponent<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
+            return EntityComponentSystem.Constants.SystemID.System.HasComponent<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
         }
         /// <inheritdoc cref="EntityData{T}.HasComponent(Type)"/>
         public bool HasComponent(Type componentType)
@@ -389,18 +380,14 @@ namespace Syadeu.Presentation.Entities
                 return false;
             }
 #endif
-            if (s_ComponentSystem.IsNull())
+            if (EntityComponentSystem.Constants.SystemID.IsNull())
             {
-                s_ComponentSystem = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>().Data.SystemID;
-                if (s_ComponentSystem.IsNull())
-                {
-                    CoreSystem.Logger.LogError(Channel.Entity,
-                        $"Cannot retrived {nameof(EntityComponentSystem)}.");
-                    return false;
-                }
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot retrived {nameof(EntityComponentSystem)}.");
+                return false;
             }
 
-            return s_ComponentSystem.System.HasComponent(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx), componentType);
+            return EntityComponentSystem.Constants.SystemID.System.HasComponent(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx), componentType);
         }
         /// <inheritdoc cref="EntityData{T}.GetComponent{TComponent}"/>
         public ref TComponent GetComponent<TComponent>()
@@ -422,19 +409,38 @@ namespace Syadeu.Presentation.Entities
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
 #endif
-            if (s_ComponentSystem.IsNull())
+            if (EntityComponentSystem.Constants.SystemID.IsNull())
             {
-                s_ComponentSystem = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>().Data.SystemID;
-                if (s_ComponentSystem.IsNull())
-                {
-                    CoreSystem.Logger.LogError(Channel.Entity,
-                        $"Cannot retrived {nameof(EntityComponentSystem)}.");
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot retrived {nameof(EntityComponentSystem)}.");
 
-                    throw new InvalidOperationException($"Component buffer error. See Error Log.");
-                }
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
 
-            return ref s_ComponentSystem.System.GetComponent<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
+            return ref EntityComponentSystem.Constants.SystemID.System.GetComponent<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
+        }
+        /// <inheritdoc cref="EntityData{T}.GetComponentReadOnly{TComponent}"/>
+        public TComponent GetComponentReadOnly<TComponent>()
+            where TComponent : unmanaged, IEntityComponent
+        {
+#if DEBUG_MODE
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
+            }
+#endif
+            if (EntityComponentSystem.Constants.SystemID.IsNull())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot retrived {nameof(EntityComponentSystem)}.");
+
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
+            }
+
+            return EntityComponentSystem.Constants.SystemID.System.GetComponentReadOnly<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
         }
         /// <inheritdoc cref="EntityData{T}.GetComponentPointer{TComponent}"/>
         unsafe public TComponent* GetComponentPointer<TComponent>()
@@ -449,19 +455,15 @@ namespace Syadeu.Presentation.Entities
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
 #endif
-            if (s_ComponentSystem.IsNull())
+            if (EntityComponentSystem.Constants.SystemID.IsNull())
             {
-                s_ComponentSystem = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>().Data.SystemID;
-                if (s_ComponentSystem.IsNull())
-                {
-                    CoreSystem.Logger.LogError(Channel.Entity,
-                        $"Cannot retrived {nameof(EntityComponentSystem)}.");
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot retrived {nameof(EntityComponentSystem)}.");
 
-                    throw new InvalidOperationException($"Component buffer error. See Error Log.");
-                }
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
 
-            return s_ComponentSystem.System.GetComponentPointer<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
+            return EntityComponentSystem.Constants.SystemID.System.GetComponentPointer<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
         }
         /// <inheritdoc cref="EntityData{T}.RemoveComponent{TComponent}"/>
         public void RemoveComponent<TComponent>()
@@ -475,22 +477,18 @@ namespace Syadeu.Presentation.Entities
                 return;
             }
 #endif
-            if (s_ComponentSystem.IsNull())
+            if (EntityComponentSystem.Constants.SystemID.IsNull())
             {
-                s_ComponentSystem = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>().Data.SystemID;
-                if (s_ComponentSystem.IsNull())
-                {
-                    CoreSystem.Logger.LogError(Channel.Entity,
-                        $"Cannot retrived {nameof(EntityComponentSystem)}.");
-                    return;
-                }
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot retrived {nameof(EntityComponentSystem)}.");
+                return;
             }
 
             EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx);
 #if DEBUG_MODE
             s_EntitySystem.System.Debug_RemoveComponent<TComponent>(entity);
 #endif
-            s_ComponentSystem.System.RemoveComponent<TComponent>(entity);
+            EntityComponentSystem.Constants.SystemID.System.RemoveComponent<TComponent>(entity);
         }
         /// <inheritdoc cref="EntityData{T}.RemoveComponent(Type)"/>
         public void RemoveComponent(Type componentType)
@@ -510,22 +508,18 @@ namespace Syadeu.Presentation.Entities
                 return;
             }
 #endif
-            if (s_ComponentSystem.IsNull())
+            if (EntityComponentSystem.Constants.SystemID.IsNull())
             {
-                s_ComponentSystem = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>().Data.SystemID;
-                if (s_ComponentSystem.IsNull())
-                {
-                    CoreSystem.Logger.LogError(Channel.Entity,
-                        $"Cannot retrived {nameof(EntityComponentSystem)}.");
-                    return;
-                }
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot retrived {nameof(EntityComponentSystem)}.");
+                return;
             }
 
             EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx);
 #if DEBUG_MODE
             s_EntitySystem.System.Debug_RemoveComponent(entity, componentType);
 #endif
-            s_ComponentSystem.System.RemoveComponent(entity, componentType);
+            EntityComponentSystem.Constants.SystemID.System.RemoveComponent(entity, componentType);
         }
 
         #endregion

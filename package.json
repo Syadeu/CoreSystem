@@ -4,6 +4,7 @@
   "displayName": "Syadeu CoreSystem",
   "description": "Syadeu CoreSystem Package.",
   "unity": "2020.2",
+  "unityRelease": "1f1",
   "dependencies": {
     "com.unity.burst": "1.5.6",
     "com.unity.jobs": "0.11.0-preview.6",
@@ -11,7 +12,8 @@
     "com.unity.addressables": "1.16.19",
     "com.unity.inputsystem": "1.1.0-preview.3",
     "com.unity.nuget.newtonsoft-json": "2.0.0",
-    "com.unity.test-framework": "1.1.27"
+    "com.unity.test-framework": "1.1.27",
+    "com.unity.nuget.mono-cecil": "1.10.1"
   },
   "optionalDependencies": {
     "com.unity.cinemachine": "2.6.10",
@@ -31,5 +33,10 @@
   "author": {
     "name": "Syadeu",
     "email": "syadeu@gmail.com"
+  },
+  "repository": {
+    "url": "https://github.com/Syadeu/CoreSystem.git",
+    "type": "git",
+    "revision": "4c5f79d26983d3a9cc714474a979ee5fc7629080"
   }
 }

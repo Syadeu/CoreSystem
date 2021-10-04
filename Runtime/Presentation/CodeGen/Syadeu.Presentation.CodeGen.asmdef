@@ -1,0 +1,31 @@
+{
+    "name": "Syadeu.Presentation.CodeGen",
+    "rootNamespace": "Syadeu.Presentation.CodeGen",
+    "references": [
+        "GUID:2665a8d13d1b3f18800f46e256720795",
+        "GUID:e0cd26848372d4e5c891c569017e11f1",
+        "GUID:8a2eafa29b15f444eb6d74f94a930e1d",
+        "GUID:9c6dda6c7922c624cb7ea9a7f1c7d54a",
+        "GUID:b75d3cd3037d383a8d1e2f9a26d73d8a",
+        "GUID:4f5c0c83dfd6a0743834baba2b4de79e",
+        "GUID:5c1ff9bd975acec488150743d53a93ca",
+        "GUID:c5ecc461727906345a35491a0440694f"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Unity.Collections.LowLevel.ILSupport.dll",
+        "Mono.Cecil.dll",
+        "Mono.Cecil.Mdb.dll",
+        "Mono.Cecil.Pdb.dll",
+        "Mono.Cecil.Rocks.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

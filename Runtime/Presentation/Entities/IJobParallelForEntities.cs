@@ -20,9 +20,42 @@ namespace Syadeu.Presentation.Entities
         void Execute(in EntityData<IEntityData> entity, in TComponent component);
     }
 
+    public static class IJobParallelForEntitiesInterfaces
+        //where TComponent : unmanaged, IEntityComponent
+    {
+        public delegate void EntityComponentDelegate<TComponent>(in EntityData<IEntityData> entity, in TComponent component) where TComponent : unmanaged, IEntityComponent;
+
+        public static void Temp<TComponent>(EntityComponentDelegate<EntityData<IEntityData>, TComponent> action)
+            where TComponent : unmanaged, IEntityComponent
+        {
+
+        }
+
+        //public static void Temp1(in EntityData<IEntityData> entity, in TComponent component)
+        //{
+
+        //}
+
+        public struct Job<TComponent> : IJobParallelForEntities<TComponent>
+            where TComponent : unmanaged, IEntityComponent
+        {
+            public void Execute(in EntityData<IEntityData> entity, in TComponent component)
+            {
+                throw new NotImplementedException();
+            }
+        }
+        internal struct JobTestProducer<TComponent>
+            where TComponent : unmanaged, IEntityComponent
+        {
+            public IntPtr m_JobReflectionData;
+
+
+        }
+    }
+
     public static class IJobParallelForEntitiesExtensions
     {
-        private static JobHandle m_GlobalJobHandle;
+        private static JobHandle s_GlobalJobHandle;
 
         internal struct JobParallelForEntitiesProducer<T, TComponent> 
             where T : struct, IJobParallelForEntities<TComponent>
@@ -74,8 +107,8 @@ namespace Syadeu.Presentation.Entities
             }
             private unsafe static void PrivateExecute(ref T jobData, in int i)
             {
-                EntityComponentSystem.EntityComponentBuffer* p = (EntityComponentSystem.EntityComponentBuffer*)s_ComponentBuffer;
-                ref EntityComponentSystem.EntityComponentBuffer buffer = ref *p;
+                EntityComponentSystem.ComponentBuffer* p = (EntityComponentSystem.ComponentBuffer*)s_ComponentBuffer;
+                ref EntityComponentSystem.ComponentBuffer buffer = ref *p;
 
                 buffer.HasElementAt(i, out bool result);
                 if (!result) return;
@@ -117,7 +150,8 @@ namespace Syadeu.Presentation.Entities
         {
             var scheduleParams = new JobsUtility.JobScheduleParameters(
                 UnsafeUtility.AddressOf(ref jobData),
-                JobParallelForEntitiesProducer<T, TComponent>.Initialize(), dependsOn,
+                JobParallelForEntitiesProducer<T, TComponent>.Initialize(),
+                JobHandle.CombineDependencies(s_GlobalJobHandle, dependsOn),
                 ScheduleMode.Parallel);
 
             EntityComponentSystem system = PresentationSystem<DefaultPresentationGroup, EntityComponentSystem>.System;
@@ -125,10 +159,10 @@ namespace Syadeu.Presentation.Entities
             system.ComponentBufferSafetyCheck<TComponent>(out bool result);
             if (!result) return default(JobHandle);
 #endif
-            EntityComponentSystem.EntityComponentBuffer buffer = system.GetComponentBuffer<TComponent>();
+            EntityComponentSystem.ComponentBuffer buffer = system.GetComponentBuffer<TComponent>();
 
             JobHandle handle = JobsUtility.ScheduleParallelFor(ref scheduleParams, buffer.Length, innerloopBatchCount);
-            JobHandle.CombineDependencies(m_GlobalJobHandle, handle);
+            JobHandle.CombineDependencies(s_GlobalJobHandle, handle);
 
             return handle;
         }
@@ -137,7 +171,7 @@ namespace Syadeu.Presentation.Entities
         {
             CoreSystem.Logger.ThreadBlock(Syadeu.Internal.ThreadInfo.Unity);
 
-            m_GlobalJobHandle.Complete();
+            s_GlobalJobHandle.Complete();
         }
     }
 
