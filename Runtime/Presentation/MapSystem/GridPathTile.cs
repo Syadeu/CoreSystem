@@ -5,6 +5,9 @@ using Unity.Mathematics;
 
 namespace Syadeu.Presentation.Map
 {
+    /// <summary>
+    /// For Pathfinding only
+    /// </summary>
     [BurstCompatible]
     internal struct GridPathTile : IEquatable<GridPathTile>
     {

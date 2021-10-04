@@ -1,4 +1,8 @@
-﻿using Syadeu.Presentation.Actions;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using System.Collections;

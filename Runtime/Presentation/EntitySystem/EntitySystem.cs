@@ -55,7 +55,7 @@ namespace Syadeu.Presentation
         private Unity.Mathematics.Random m_Random;
 
         internal readonly Dictionary<Hash, ObjectBase> m_ObjectEntities = new Dictionary<Hash, ObjectBase>();
-        internal readonly Dictionary<Hash, Hash> m_EntityGameObjects = new Dictionary<Hash, Hash>();
+        internal NativeHashMap<Hash, Hash> m_EntityGameObjects;
 
         private readonly Dictionary<Type, List<IAttributeProcessor>> m_AttributeProcessors = new Dictionary<Type, List<IAttributeProcessor>>();
         private readonly Dictionary<Type, List<IEntityDataProcessor>> m_EntityProcessors = new Dictionary<Type, List<IEntityDataProcessor>>();
@@ -75,6 +75,8 @@ namespace Syadeu.Presentation
         {
             m_Random = new Unity.Mathematics.Random();
             m_Random.InitState();
+
+            m_EntityGameObjects = new NativeHashMap<Hash, Hash>(10240, Allocator.Persistent);
 
             PresentationManager.Instance.PreUpdate += Instance_PreUpdate;
 
@@ -228,6 +230,8 @@ namespace Syadeu.Presentation
 
             m_ProxySystem.OnDataObjectProxyCreated -= M_ProxySystem_OnDataObjectProxyCreated;
             m_ProxySystem.OnDataObjectProxyRemoved -= M_ProxySystem_OnDataObjectProxyRemoved;
+
+            m_EntityGameObjects.Dispose();
 
             m_DataContainerSystem = null;
             m_ProxySystem = null;

@@ -186,6 +186,8 @@ namespace Syadeu.Presentation.Map
 
         public override void OnDispose()
         {
+            ClearUICell();
+
             m_RenderSystem.OnRender -= M_RenderSystem_OnRender;
 
             m_EventSystem.RemoveEvent<Events.OnTransformChangedEvent>(OnTransformChangedEventHandler);
@@ -384,6 +386,8 @@ namespace Syadeu.Presentation.Map
 
         #endregion
 
+        #region Layers
+
         public void SetObstacleLayers(params int[] layers)
         {
             GridMap.SetObstacleLayers(layers);
@@ -393,6 +397,8 @@ namespace Syadeu.Presentation.Map
             GridMap.AddObstacleLayers(layers);
         }
         public int[] GetLayer(in int layer) => GridMap.GetLayer(in layer);
+
+        #endregion
 
         public IReadOnlyList<Entity<IEntity>> GetEntitiesAt(in int index)
         {
@@ -415,6 +421,13 @@ namespace Syadeu.Presentation.Map
             int2
                 fromLocation = GridMap.GetLocation(in from),
                 toLocation = GridMap.GetLocation(in to);
+            GridPosition fromPos = new GridPosition(from, fromLocation);
+            GridPosition4 four = new GridPosition4(
+                GetDirection(in from, (Direction)(1 << 0)),
+                GetDirection(in from, (Direction)(1 << 1)),
+                GetDirection(in from, (Direction)(1 << 2)),
+                GetDirection(in from, (Direction)(1 << 3))
+                );
 
             GridPathTile tile = new GridPathTile(-1, 0, from, fromLocation);
             Calculate(ref tile, GridMap.ObstacleLayer, in ignoreIndices);
@@ -459,6 +472,12 @@ namespace Syadeu.Presentation.Map
 
                     if (isNew)
                     {
+                        if (four.Contains(nextTile))
+                        {
+                            nextTile.parent = fromPos;
+                            nextTile.parentArrayIdx = 0;
+                        }
+
                         path[count] = (nextTile);
                         currentTileIdx = count;
                         count++;
@@ -474,22 +493,6 @@ namespace Syadeu.Presentation.Map
                 // Path Found
                 if (path[count - 1].position.index == to)
                 {
-                    GridPosition fromPos = new GridPosition(from, fromLocation);
-                    GridPosition4 four = new GridPosition4(
-                        GetDirection(in from, (Direction)(1 << 0)),
-                        GetDirection(in from, (Direction)(1 << 1)),
-                        GetDirection(in from, (Direction)(1 << 2)),
-                        GetDirection(in from, (Direction)(1 << 3))
-                        );
-                    for (int i = 0; i < count; i++)
-                    {
-                        if (four.Contains(path[i]))
-                        {
-                            path[i].parent = fromPos;
-                            path[i].parentArrayIdx = 0;
-                        }
-                    }
-
                     int sortedFound = 0;
                     GridPathTile current = path[count - 1];
                     for (int i = 0; i < pathFound && current.position.index != from; i++, sortedFound++)

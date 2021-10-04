@@ -115,17 +115,22 @@ namespace Syadeu.Presentation.Components
 
         #endregion
 
+        #region Hashing
+
         private int GetComponentIndex<TComponent>() => GetComponentIndex(TypeHelper.TypeOf<TComponent>.Type);
         private int GetComponentIndex(Type t)
         {
-            if (!m_ComponentIndices.TryGetValue(t, out int componentIdx))
+#if DEBUG_MODE
+            if (!m_ComponentIndices.ContainsKey(t))
             {
-                //componentIdx = math.abs(t.GetHashCode());
-                //m_ComponentIndices.Add(t, componentIdx);
-                throw new Exception();
-            }
+                CoreSystem.Logger.LogError(Channel.Component,
+                    $"Component buffer error. " +
+                    $"Didn\'t collected this component({t.Name}) infomation at initializing stage.");
 
-            return componentIdx;
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
+            }
+#endif
+            return m_ComponentIndices[t];
         }
         private int GetEntityIndex(EntityData<IEntityData> entity)
         {
@@ -149,17 +154,32 @@ namespace Syadeu.Presentation.Components
             return new int2(cIdx, eIdx);
         }
 
+        #endregion
+
+        #region Component Methods
+
+        public EntityComponentBuffer GetComponentBuffer<TComponent>()
+        {
+            int idx = GetComponentIndex<TComponent>();
+
+            return UnsafeUtility.ReadArrayElement<EntityComponentBuffer>(m_ComponentBuffer.GetUnsafeReadOnlyPtr(), idx);
+        }
+
         public TComponent AddComponent<TComponent>(in EntityData<IEntityData> entity, in TComponent data) where TComponent : unmanaged, IEntityComponent
         {
             CoreSystem.Logger.ThreadBlock(nameof(AddComponent), ThreadInfo.Unity);
 
             int2 index = GetIndex<TComponent>(entity);
-
+#if DEBUG_MODE
             if (!m_ComponentBuffer[index.x].IsCreated)
             {
-                throw new Exception();
-            }
+                CoreSystem.Logger.LogError(Channel.Component,
+                    $"Component buffer error. " +
+                    $"Didn\'t collected this component({TypeHelper.TypeOf<TComponent>.Name}) infomation at initializing stage.");
 
+                return data;
+            }
+#endif
             if (!m_ComponentBuffer[index.x].Find(entity, ref index.y) &&
                 !m_ComponentBuffer[index.x].FindEmpty(entity, ref index.y))
             {
@@ -169,7 +189,11 @@ namespace Syadeu.Presentation.Components
 
                 if (!m_ComponentBuffer[index.x].FindEmpty(entity, ref index.y))
                 {
-                    throw new Exception();
+                    CoreSystem.Logger.LogError(Channel.Component,
+                        $"Component buffer error. " +
+                        $"Component({TypeHelper.TypeOf<TComponent>.Name}) Hash has been conflected twice. Maybe need to increase default buffer size?");
+
+                    throw new InvalidOperationException($"Component buffer error. See Error Log.");
                 }
             }
 
@@ -185,12 +209,16 @@ namespace Syadeu.Presentation.Components
             where TComponent : unmanaged, IEntityComponent
         {
             int2 index = GetIndex<TComponent>(entity);
-
+#if DEBUG_MODE
             if (!m_ComponentBuffer[index.x].IsCreated)
             {
-                throw new Exception();
-            }
+                CoreSystem.Logger.LogError(Channel.Component,
+                    $"Component buffer error. " +
+                    $"Didn\'t collected this component({TypeHelper.TypeOf<TComponent>.Name}) infomation at initializing stage.");
 
+                return;
+            }
+#endif
             if (!m_ComponentBuffer[index.x].Find(entity, ref index.y))
             {
                 return;
@@ -229,12 +257,16 @@ namespace Syadeu.Presentation.Components
             where TComponent : unmanaged, IEntityComponent
         {
             int2 index = GetIndex<TComponent>(entity);
-
+#if DEBUG_MODE
             if (!m_ComponentBuffer[index.x].IsCreated)
             {
-                throw new Exception();
-            }
+                CoreSystem.Logger.LogError(Channel.Component,
+                    $"Component buffer error. " +
+                    $"Didn\'t collected this component({TypeHelper.TypeOf<TComponent>.Name}) infomation at initializing stage.");
 
+                return false;
+            }
+#endif
             if (!m_ComponentBuffer[index.x].Find(entity, ref index.y))
             {
                 return false;
@@ -251,12 +283,16 @@ namespace Syadeu.Presentation.Components
         public bool HasComponent(EntityData<IEntityData> entity, Type componentType)
         {
             int2 index = GetIndex(componentType, entity);
-
+#if DEBUG_MODE
             if (!m_ComponentBuffer[index.x].IsCreated)
             {
-                throw new Exception();
-            }
+                CoreSystem.Logger.LogError(Channel.Component,
+                    $"Component buffer error. " +
+                    $"Didn\'t collected this component({componentType.Name}) infomation at initializing stage.");
 
+                return false;
+            }
+#endif
             if (!m_ComponentBuffer[index.x].Find(entity, ref index.y))
             {
                 return false;
@@ -268,38 +304,52 @@ namespace Syadeu.Presentation.Components
             where TComponent : unmanaged, IEntityComponent
         {
             int2 index = GetIndex<TComponent>(entity);
-
+#if DEBUG_MODE
             if (!m_ComponentBuffer[index.x].IsCreated)
             {
-                throw new Exception();
+                CoreSystem.Logger.LogError(Channel.Component,
+                    $"Component buffer error. " +
+                    $"Didn\'t collected this component({TypeHelper.TypeOf<TComponent>.Name}) infomation at initializing stage.");
+
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
 
             if (!m_ComponentBuffer[index.x].Find(entity, ref index.y))
             {
                 CoreSystem.Logger.LogError(Channel.Component,
                     $"Entity({entity.Name}) doesn\'t have component({TypeHelper.TypeOf<TComponent>.Name})");
-            }
 
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
+            }
+#endif
             return ref ((TComponent*)m_ComponentBuffer[index.x].m_ComponentBuffer)[index.y];
         }
         public TComponent* GetComponentPointer<TComponent>(EntityData<IEntityData> entity) 
             where TComponent : unmanaged, IEntityComponent
         {
             int2 index = GetIndex<TComponent>(entity);
-
+#if DEBUG_MODE
             if (!m_ComponentBuffer[index.x].IsCreated)
             {
-                throw new Exception();
+                CoreSystem.Logger.LogError(Channel.Component,
+                    $"Component buffer error. " +
+                    $"Didn\'t collected this component({TypeHelper.TypeOf<TComponent>.Name}) infomation at initializing stage.");
+
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
 
             if (!m_ComponentBuffer[index.x].Find(entity, ref index.y))
             {
                 CoreSystem.Logger.LogError(Channel.Component,
                     $"Entity({entity.Name}) doesn\'t have component({TypeHelper.TypeOf<TComponent>.Name})");
-            }
 
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
+            }
+#endif
             return ((TComponent*)m_ComponentBuffer[index.x].m_ComponentBuffer) + index.y;
         }
+
+        #endregion
 
         public QueryBuilder<TComponent> CreateQueryBuilder<TComponent>() where TComponent : unmanaged, IEntityComponent
         {
@@ -318,12 +368,16 @@ namespace Syadeu.Presentation.Components
             return builder;
         }
 
+        #region Utils
+
         private static int AlignOf(Type t)
         {
             Type temp = typeof(AlignOfHelper<>).MakeGenericType(t);
 
             return UnsafeUtility.SizeOf(temp) - UnsafeUtility.SizeOf(t);
         }
+
+        #endregion
 
         #region Inner Classes
 
@@ -446,6 +500,23 @@ namespace Syadeu.Presentation.Components
                 }
 
                 return false;
+            }
+
+            public void HasElementAt(int i, out bool result)
+            {
+                result = m_OccupiedBuffer[i];
+            }
+            public void ElementAt<TComponent>(int i, out EntityData<IEntityData> entity, out TComponent component)
+                where TComponent : unmanaged, IEntityComponent
+            {
+                entity = m_EntityBuffer[i];
+                component = ((TComponent*)m_ComponentBuffer)[i];
+            }
+            public void ElementAt<TComponent>(int i, out EntityData<IEntityData> entity, out TComponent* component)
+                where TComponent : unmanaged, IEntityComponent
+            {
+                entity = m_EntityBuffer[i];
+                component = ((TComponent*)m_ComponentBuffer) + i;
             }
 
             public void Dispose()
