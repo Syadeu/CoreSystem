@@ -298,7 +298,8 @@ namespace Syadeu.Presentation.Entities
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"You\'re trying to access to an invalid entity. This is not allowed.");
-                return default(TComponent);
+
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
 #endif
             if (s_ComponentSystem.IsNull())
@@ -308,7 +309,8 @@ namespace Syadeu.Presentation.Entities
                 {
                     CoreSystem.Logger.LogError(Channel.Entity,
                         $"Cannot retrived {nameof(EntityComponentSystem)}.");
-                    return default(TComponent);
+
+                    throw new InvalidOperationException($"Component buffer error. See Error Log.");
                 }
             }
 
@@ -402,7 +404,8 @@ namespace Syadeu.Presentation.Entities
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"You\'re trying to access to an invalid entity. This is not allowed.");
-                //return default(TComponent);
+
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
 #endif
             if (s_ComponentSystem.IsNull())
@@ -412,11 +415,43 @@ namespace Syadeu.Presentation.Entities
                 {
                     CoreSystem.Logger.LogError(Channel.Entity,
                         $"Cannot retrived {nameof(EntityComponentSystem)}.");
-                    //return default(TComponent);
+
+                    throw new InvalidOperationException($"Component buffer error. See Error Log.");
                 }
             }
 
             return ref s_ComponentSystem.System.GetComponent<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
+        }
+        /// <summary>
+        /// <typeparamref name="TComponent"/> 의 포인터 주소를 가져옵니다.
+        /// </summary>
+        /// <typeparam name="TComponent"></typeparam>
+        /// <returns></returns>
+        unsafe public TComponent* GetComponentPointer<TComponent>()
+            where TComponent : unmanaged, IEntityComponent
+        {
+#if DEBUG_MODE
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
+            }
+#endif
+            if (s_ComponentSystem.IsNull())
+            {
+                s_ComponentSystem = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>().Data.SystemID;
+                if (s_ComponentSystem.IsNull())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"Cannot retrived {nameof(EntityComponentSystem)}.");
+
+                    throw new InvalidOperationException($"Component buffer error. See Error Log.");
+                }
+            }
+
+            return s_ComponentSystem.System.GetComponentPointer<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
         }
         /// <summary>
         /// <typeparamref name="TComponent"/> 컴포넌트를 제거합니다.

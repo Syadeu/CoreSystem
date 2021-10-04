@@ -22,6 +22,8 @@ namespace Syadeu.Presentation.Entities
 
     public static class IJobParallelForEntitiesExtensions
     {
+        private static JobHandle m_GlobalJobHandle;
+
         internal struct JobParallelForEntitiesProducer<T, TComponent> 
             where T : struct, IJobParallelForEntities<TComponent>
             where TComponent : unmanaged, IEntityComponent
@@ -125,7 +127,17 @@ namespace Syadeu.Presentation.Entities
 #endif
             EntityComponentSystem.EntityComponentBuffer buffer = system.GetComponentBuffer<TComponent>();
 
-            return JobsUtility.ScheduleParallelFor(ref scheduleParams, buffer.Length, innerloopBatchCount);
+            JobHandle handle = JobsUtility.ScheduleParallelFor(ref scheduleParams, buffer.Length, innerloopBatchCount);
+            JobHandle.CombineDependencies(m_GlobalJobHandle, handle);
+
+            return handle;
+        }
+
+        internal static void CompleteAllJobs()
+        {
+            CoreSystem.Logger.ThreadBlock(Syadeu.Internal.ThreadInfo.Unity);
+
+            m_GlobalJobHandle.Complete();
         }
     }
 

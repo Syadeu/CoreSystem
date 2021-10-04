@@ -27,23 +27,21 @@ namespace Syadeu.Presentation.Components
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
-        private long m_EntityLength;
         private NativeArray<EntityComponentBuffer> m_ComponentBuffer;
         private MethodInfo m_RemoveComponentMethod;
 
         private readonly Dictionary<Type, int> m_ComponentIndices = new Dictionary<Type, int>();
-
+        
         private EntitySystem m_EntitySystem;
 
         #region Presentation Methods
 
         protected override PresentationResult OnInitialize()
         {
-            Type[] entityTypes = TypeHelper.GetTypes(CollectTypes<IEntityData>);
-            m_EntityLength = entityTypes.LongLength;
-
+            // 버퍼를 생성하기 위해 미리 모든 컴포넌트 타입들의 정보를 가져옵니다.
             Type[] types = TypeHelper.GetTypes(CollectTypes<IEntityComponent>);
 
+            // Hashing 을 위해 최소 버퍼 사이즈인 512 값보다 낮으면 강제로 버퍼 사이즈를 1024 로 맞춥니다.
             int length;
             if (types.Length < 512)
             {
@@ -54,28 +52,50 @@ namespace Syadeu.Presentation.Components
             EntityComponentBuffer[] tempBuffer = new EntityComponentBuffer[length];
             for (int i = 0; i < types.Length; i++)
             {
+                // 왜인지는 모르겠지만 Type.GetHash() 의 정보가 런타임 중 간혹 유효하지 않은 값 (0) 을 뱉어서
+                // Dictionary 에 미리 파싱합니다.
                 if (!m_ComponentIndices.TryGetValue(types[i], out int idx))
                 {
                     idx = math.abs(types[i].GetHashCode()) % tempBuffer.Length;
                     m_ComponentIndices.Add(types[i], idx);
                 }
 
-                var temp = new EntityComponentBuffer();
+                // 새로운 버퍼를 생성하고, heap 에 메모리를 할당합니다.
+                EntityComponentBuffer temp = new EntityComponentBuffer();
                 temp.Initialize(idx, UnsafeUtility.SizeOf(types[i]), AlignOf(types[i]));
 
                 tempBuffer[idx] = temp;
             }
 
             m_ComponentBuffer = new NativeArray<EntityComponentBuffer>(tempBuffer, Allocator.Persistent);
-
-            RequestSystem<EntitySystem>(Bind);
+            
+            RequestSystem<DefaultPresentationGroup, EntitySystem>(Bind);
 
             SharedStatic<EntityComponentConstrains> constrains = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>();
 
             constrains.Data.SystemID = SystemID;
 
+            PresentationManager.Instance.PreUpdate += Presentation_PreUpdate;
+
             return base.OnInitialize();
         }
+
+        private void Presentation_PreUpdate()
+        {
+            if (m_DisposedComponents.Count > 0)
+            {
+                // Parallel Job 이 수행되고 있는 중에 컴포넌트가 제거되면 안되므로
+                // 먼저 모든 Job 을 완료합니다.
+                IJobParallelForEntitiesExtensions.CompleteAllJobs();
+
+                int count = m_DisposedComponents.Count;
+                for (int i = 0; i < count; i++)
+                {
+                    m_DisposedComponents.Dequeue().Dispose();
+                }
+            }
+        }
+
         protected override PresentationResult OnInitializeAsync()
         {
             m_RemoveComponentMethod = TypeHelper.TypeOf<EntityComponentSystem>.Type.GetMethod(nameof(RemoveComponent),
@@ -83,16 +103,15 @@ namespace Syadeu.Presentation.Components
 
             return base.OnInitializeAsync();
         }
-        private bool CollectTypes<T>(Type t)
-        {
-            if (t.IsAbstract || t.IsInterface) return false;
-
-            if (TypeHelper.TypeOf<T>.Type.IsAssignableFrom(t)) return true;
-
-            return false;
-        }
+        
         public override void OnDispose()
         {
+            int count = m_DisposedComponents.Count;
+            for (int i = 0; i < count; i++)
+            {
+                m_DisposedComponents.Dequeue().Dispose();
+            }
+
             for (int i = 0; i < m_ComponentBuffer.Length; i++)
             {
                 if (!m_ComponentBuffer[i].IsCreated) continue;
@@ -157,6 +176,40 @@ namespace Syadeu.Presentation.Components
         #endregion
 
         #region Component Methods
+
+        private readonly Queue<IDisposable> m_DisposedComponents = new Queue<IDisposable>();
+        private struct DisposedComponent<TComponent> : IDisposable
+            where TComponent : unmanaged, IEntityComponent
+        {
+            private static EntityComponentBuffer* s_Buffer;
+
+            public static void Initialize(EntityComponentBuffer* componentBuffer)
+            {
+                s_Buffer = componentBuffer;
+            }
+
+            public EntityData<IEntityData> entity;
+            public int2 index;
+
+            public void Dispose()
+            {
+                if (!s_Buffer[index.x].Find(entity, ref index.y))
+                {
+                    return;
+                }
+
+                s_Buffer[index.x].m_OccupiedBuffer[index.y] = false;
+
+                TComponent* buffer = (TComponent*)s_Buffer[index.x].m_ComponentBuffer;
+                if (buffer[index.y] is IDisposable disposable)
+                {
+                    disposable.Dispose();
+                }
+
+                CoreSystem.Logger.Log(Channel.Component,
+                    $"{TypeHelper.TypeOf<TComponent>.Name} component at {entity.RawName} removed");
+            }
+        }
 
         public void ComponentBufferSafetyCheck<TComponent>(out bool result)
         {
@@ -246,24 +299,24 @@ namespace Syadeu.Presentation.Components
                 return;
             }
 #endif
-            if (!m_ComponentBuffer[index.x].Find(entity, ref index.y))
+            DisposedComponent<TComponent>.Initialize((EntityComponentBuffer*)m_ComponentBuffer.GetUnsafePtr());
+
+            DisposedComponent<TComponent> dispose = new DisposedComponent<TComponent>()
             {
-                return;
-            }
+                index = index,
+                entity = entity
+            };
 
-            m_ComponentBuffer[index.x].m_OccupiedBuffer[index.y] = false;
-
-            unsafe
+            if (CoreSystem.BlockCreateInstance)
             {
-                TComponent* buffer = (TComponent*)m_ComponentBuffer[index.x].m_ComponentBuffer;
-                if (buffer[index.y] is IDisposable disposable)
-                {
-                    disposable.Dispose();
-                }
+                dispose.Dispose();
             }
-
-            CoreSystem.Logger.Log(Channel.Component,
-                $"{TypeHelper.TypeOf<TComponent>.Name} component at {entity.Name} removed");
+            else
+            {
+                m_DisposedComponents.Enqueue(dispose);
+                CoreSystem.Logger.Log(Channel.Component,
+                    $"{TypeHelper.TypeOf<TComponent>.Name} component at {entity.Name} remove queued.");
+            }
         }
         public void RemoveComponent(EntityData<IEntityData> entity, Type componentType)
         {
@@ -378,6 +431,7 @@ namespace Syadeu.Presentation.Components
 
         #endregion
 
+        [Obsolete("Use IJobParallelForEntities")]
         public QueryBuilder<TComponent> CreateQueryBuilder<TComponent>() where TComponent : unmanaged, IEntityComponent
         {
             int componentIdx = math.abs(TypeHelper.TypeOf<TComponent>.Type.GetHashCode()) % m_ComponentBuffer.Length;
@@ -397,6 +451,14 @@ namespace Syadeu.Presentation.Components
 
         #region Utils
 
+        private static bool CollectTypes<T>(Type t)
+        {
+            if (t.IsAbstract || t.IsInterface) return false;
+
+            if (TypeHelper.TypeOf<T>.Type.IsAssignableFrom(t)) return true;
+
+            return false;
+        }
         private static int AlignOf(Type t)
         {
             Type temp = typeof(AlignOfHelper<>).MakeGenericType(t);

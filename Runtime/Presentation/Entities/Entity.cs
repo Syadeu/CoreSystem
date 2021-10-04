@@ -324,7 +324,8 @@ namespace Syadeu.Presentation.Entities
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"You\'re trying to access to an invalid entity. This is not allowed.");
-                return default(TComponent);
+
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
 #endif
             if (s_ComponentSystem.IsNull())
@@ -334,7 +335,8 @@ namespace Syadeu.Presentation.Entities
                 {
                     CoreSystem.Logger.LogError(Channel.Entity,
                         $"Cannot retrived {nameof(EntityComponentSystem)}.");
-                    return default(TComponent);
+
+                    throw new InvalidOperationException($"Component buffer error. See Error Log.");
                 }
             }
 
@@ -409,12 +411,15 @@ namespace Syadeu.Presentation.Entities
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"You\'re trying to access to empty entity. This is not allowed.");
+
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
             else if (!IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"You\'re trying to access to an invalid entity. This is not allowed.");
-                //return default(TComponent);
+
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
 #endif
             if (s_ComponentSystem.IsNull())
@@ -424,12 +429,14 @@ namespace Syadeu.Presentation.Entities
                 {
                     CoreSystem.Logger.LogError(Channel.Entity,
                         $"Cannot retrived {nameof(EntityComponentSystem)}.");
-                    //return default(TComponent);
+
+                    throw new InvalidOperationException($"Component buffer error. See Error Log.");
                 }
             }
 
             return ref s_ComponentSystem.System.GetComponent<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
         }
+        /// <inheritdoc cref="EntityData{T}.GetComponentPointer{TComponent}"/>
         unsafe public TComponent* GetComponentPointer<TComponent>()
             where TComponent : unmanaged, IEntityComponent
         {
@@ -438,7 +445,8 @@ namespace Syadeu.Presentation.Entities
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"You\'re trying to access to an invalid entity. This is not allowed.");
-                //return default(TComponent);
+
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
 #endif
             if (s_ComponentSystem.IsNull())
@@ -448,7 +456,8 @@ namespace Syadeu.Presentation.Entities
                 {
                     CoreSystem.Logger.LogError(Channel.Entity,
                         $"Cannot retrived {nameof(EntityComponentSystem)}.");
-                    //return default(TComponent);
+
+                    throw new InvalidOperationException($"Component buffer error. See Error Log.");
                 }
             }
 
