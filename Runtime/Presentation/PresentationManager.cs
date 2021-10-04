@@ -33,7 +33,7 @@ namespace Syadeu.Presentation
             public Type m_Name;
             public Hash m_Hash;
             public Type[] m_RegisteredSystemTypes = null;
-            public SubSystemAttribute[] m_RequireSystemTypes = null;
+            public (Type group, Type system)[] m_RequireSystemTypes = null;
             /// <summary>
             /// 전부 실행되고 돌아가기 직전이 아닌, 시작 명령이 내려졌을때 <see langword="true"/> 가 됩니다.<br/>
             /// 전부 실행을 체크하려면 <seealso cref="m_MainInitDone"/> 을 사용하세요.
@@ -129,6 +129,14 @@ namespace Syadeu.Presentation
             }
             public bool HasSystem<T>(T system) where T : PresentationSystemEntity
                 => m_Systems.FindFor((other) => other.Equals(system)) != null;
+            public bool HasSystem(Type systemType)
+            {
+                for (int i = 0; i < m_RegisteredSystemTypes.Length; i++)
+                {
+                    if (m_RegisteredSystemTypes[i].Equals(systemType)) return true;
+                }
+                return false;
+            }
 
             public TSystem GetSystem<TSystem>(in int systemIdx) where TSystem : PresentationSystemEntity
             {
@@ -393,7 +401,7 @@ namespace Syadeu.Presentation
         private readonly Hash m_DefaultGroupHash = GroupToHash(TypeHelper.TypeOf<DefaultPresentationGroup>.Type);
 
         internal readonly Dictionary<Hash, Group> m_PresentationGroups = new Dictionary<Hash, Group>();
-        internal readonly Dictionary<Type, Hash> m_RegisteredGroup = new Dictionary<Type, Hash>();
+        //internal readonly Dictionary<Type, Hash> m_RegisteredGroup = new Dictionary<Type, Hash>();
         internal readonly Dictionary<string, List<Hash>> m_DependenceSceneList = new Dictionary<string, List<Hash>>();
 
         private Thread m_PresentationThread;
@@ -825,22 +833,31 @@ namespace Syadeu.Presentation
 
                 registedTypes.Add(systems[i]);
 
-                if (Instance.m_RegisteredGroup.ContainsKey(systems[i]))
-                {
-                    CoreSystem.Logger.LogWarning(Channel.Presentation,
-                        $"Multiple system({TypeHelper.ToString(systems[i])}, in group {TypeHelper.ToString(groupName)}) detected. " +
-                        $"This instance will not gathered by PresentationSystem<T> but PresentationSystemGroup<T>.Systems.");
-                }
-                else
-                {
-                    Instance.m_RegisteredGroup.Add(systems[i], groupHash);
-                }
+                //if (Instance.m_RegisteredGroup.ContainsKey(systems[i]))
+                //{
+                //    CoreSystem.Logger.LogWarning(Channel.Presentation,
+                //        $"Multiple system({TypeHelper.ToString(systems[i])}, in group {TypeHelper.ToString(groupName)}) detected. " +
+                //        $"This instance will not gathered by PresentationSystem<T> but PresentationSystemGroup<T>.Systems.");
+                //}
+                //else
+                //{
+                //    Instance.m_RegisteredGroup.Add(systems[i], groupHash);
+                //}
                 
                 CoreSystem.Logger.Log(Channel.Presentation, $"System ({groupName.Name.Split('.').Last()}): {systems[i].Name} Registered");
             }
 
             group.m_RegisteredSystemTypes = registedTypes.ToArray();
-            group.m_RequireSystemTypes = registedTypes.Select((other) => other.GetCustomAttribute<SubSystemAttribute>()).ToArray();
+
+            var requireIter = registedTypes
+                .Where((other) => other.GetCustomAttribute<SubSystemAttribute>() != null)
+                .Select((other) => other.GetCustomAttribute<SubSystemAttribute>())
+                .Select((other) => (other.m_TargetGroup, other.m_TargetSystem));
+            if (requireIter.Any())
+            {
+                group.m_RequireSystemTypes = requireIter.ToArray();
+            }
+            else group.m_RequireSystemTypes = Array.Empty<(Type, Type)>();
 
             CoreSystem.Logger.Log(Channel.Presentation, $"Registration Ended ({groupName.Name.Split('.').Last()}), number of {systems.Length}");
         }
@@ -916,35 +933,11 @@ namespace Syadeu.Presentation
             CoreSystem.Logger.Log(Channel.Presentation, $"{group.m_Name.Name} group is stopped");
         }
 
-        [Obsolete]
-        internal static void RegisterRequestSystem<T, TA>(Action<TA> setter) 
-            where T : PresentationSystemEntity
-            where TA : PresentationSystemEntity
-        {
-            if (!Instance.m_RegisteredGroup.TryGetValue(TypeHelper.TypeOf<T>.Type, out Hash groupHash) ||
-                !Instance.m_PresentationGroups.TryGetValue(groupHash, out Group group))
-            {
-                throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
-                    $"시스템 {typeof(T).Name} 은 등록되지 않았습니다.");
-            }
-
-            group.m_RequestSystemDelegates.Enqueue(() =>
-            {
-                TA system = PresentationSystem<TA>.System;
-                if (system == null)
-                {
-                    CoreSystem.Logger.LogError(Channel.Presentation, $"Requested system ({TypeHelper.TypeOf<TA>.Name}) not found");
-                }
-                else CoreSystem.Logger.Log(Channel.Presentation, $"Requested system ({TypeHelper.TypeOf<TA>.Name}) found");
-
-                setter.Invoke(system);
-            });
-            //"request in".ToLog();
-        }
         internal static void RegisterRequest<TGroup, TSystem>(Action<TSystem> setter
 #if DEBUG_MODE
             , string methodName
 #endif
+            , Hash calledGroupHash = default
             )
             where TGroup : PresentationGroupEntity
             where TSystem : PresentationSystemEntity
@@ -969,6 +962,16 @@ namespace Syadeu.Presentation
 
             if (group.m_IsStarted && !group.m_MainthreadSignal)
             {
+                // From System Request
+                if (!calledGroupHash.IsEmpty())
+                {
+                    // 요청한 시스템과 다른 그룹에 속할 경우
+                    if (!group.Equals(Instance.m_PresentationGroups[calledGroupHash]))
+                    {
+
+                    }
+                }
+
                 group.m_RequestSystemDelegates.Enqueue(() =>
                 {
                     if (!group.TryGetSystem<TSystem>(out TSystem target, out _))
@@ -1078,13 +1081,14 @@ namespace Syadeu.Presentation
             float dateTime = Time.realtimeSinceStartup;
             for (int i = 0; i < group.m_RequireSystemTypes.Length; i++)
             {
-                if (group.m_RequireSystemTypes[i] == null) continue;
+                //if (group.m_RequireSystemTypes[i] == null) continue;
 
-                if (!Instance.m_RegisteredGroup.TryGetValue(group.m_RequireSystemTypes[i].m_Target, out Hash groupHash) ||
-                        !Instance.m_PresentationGroups.TryGetValue(groupHash, out Group targetGroup))
+                Hash groupHash = GroupToHash(group.m_RequireSystemTypes[i].group);
+
+                if (!Instance.m_PresentationGroups.TryGetValue(groupHash, out Group targetGroup))
                 {
                     CoreSystem.Logger.LogError(Channel.Presentation,
-                        $"{group.m_RequireSystemTypes[i].m_Target.Name} is not registered. Request ignored.");
+                        $"{group.m_RequireSystemTypes[i].system.Name} is not registered. Request ignored.");
                     continue;
                 }
 #if DEBUG_MODE
@@ -1101,7 +1105,7 @@ namespace Syadeu.Presentation
                     if (dateTime + 10 < Time.realtimeSinceStartup)
                     {
                         CoreSystem.Logger.LogWarning(Channel.Presentation,
-                            $"The system group({group.m_Name.Name}) is awaiting too long because waiting system initialize target ({group.m_RequireSystemTypes[i].m_Target.Name})");
+                            $"The system group({group.m_Name.Name}) is awaiting too long because waiting system initialize target ({group.m_RequireSystemTypes[i].system.Name})");
 
                         dateTime = Time.realtimeSinceStartup;
                     }

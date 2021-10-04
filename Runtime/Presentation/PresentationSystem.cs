@@ -29,10 +29,8 @@ namespace Syadeu.Presentation
             {
                 if (!((IValidation)s_Instance).IsValid())
                 {
-                    if (!PresentationManager.Instance.m_RegisteredGroup.TryGetValue(TypeHelper.TypeOf<T>.Type, out Hash hash))
-                    {
-                        return Null;
-                    }
+                    Hash hash = PresentationManager.GroupToHash(TypeHelper.TypeOf<DefaultPresentationGroup>.Type);
+
                     var list = PresentationManager.Instance.m_PresentationGroups[hash].Systems;
                     int idx = -1;
                     for (int i = 0; i < list.Count; i++)

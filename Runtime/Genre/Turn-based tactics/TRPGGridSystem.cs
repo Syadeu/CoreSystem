@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace Syadeu.Presentation.TurnTable
 {
-    [SubSystem(typeof(GridSystem))]
+    [SubSystem(typeof(DefaultPresentationGroup), typeof(GridSystem))]
     public sealed class TRPGGridSystem : PresentationSystemEntity<TRPGGridSystem>
     {
         public override bool EnableBeforePresentation => false;

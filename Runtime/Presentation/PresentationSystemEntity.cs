@@ -70,6 +70,7 @@ namespace Syadeu.Presentation
 #if DEBUG_MODE
                 , methodName
 #endif
+                , m_GroupIndex
                 );
         /// <summary>
         /// 시스템을 요청합니다. <typeparamref name="TGroup"/> 은 요청할 <typeparamref name="TSystem"/>이 속한 그룹입니다.
@@ -93,6 +94,7 @@ namespace Syadeu.Presentation
 #if DEBUG_MODE
                 , methodName
 #endif
+                , m_GroupIndex
                 );
         }
 

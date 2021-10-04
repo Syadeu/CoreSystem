@@ -9,7 +9,7 @@ using System.Collections;
 
 namespace Syadeu.Presentation.TurnTable
 {
-    [SubSystem(typeof(RenderSystem))]
+    [SubSystem(typeof(DefaultPresentationGroup), typeof(RenderSystem))]
     public sealed class TRPGPlayerSystem : PresentationSystemEntity<TRPGPlayerSystem>
     {
         public override bool EnableBeforePresentation => false;

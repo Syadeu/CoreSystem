@@ -9,11 +9,13 @@ namespace Syadeu.Presentation
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
     public sealed class SubSystemAttribute : Attribute
     {
-        internal Type m_Target;
+        internal Type m_TargetGroup;
+        internal Type m_TargetSystem;
 
-        public SubSystemAttribute(Type target)
+        public SubSystemAttribute(Type group, Type target)
         {
-            m_Target = target;
+            m_TargetGroup = group;
+            m_TargetSystem = target;
         }
     }
 }
