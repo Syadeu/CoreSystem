@@ -30,8 +30,6 @@ namespace Syadeu.Presentation.TurnTable.UI
         }
         public override void OnDispose()
         {
-            m_EventSystem.RemoveEvent<TRPGShortcutUIPressedEvent>(TRPGShortcutUIPressedEventHandler);
-
             m_EventSystem = null;
             m_InputSystem = null;
             m_TurnTableSystem = null;
@@ -42,8 +40,6 @@ namespace Syadeu.Presentation.TurnTable.UI
         private void Bind(EventSystem other)
         {
             m_EventSystem = other;
-
-            m_EventSystem.AddEvent<TRPGShortcutUIPressedEvent>(TRPGShortcutUIPressedEventHandler);
         }
         private void Bind(Input.InputSystem other)
         {
@@ -55,23 +51,6 @@ namespace Syadeu.Presentation.TurnTable.UI
         }
 
         #endregion
-
-        private void TRPGShortcutUIPressedEventHandler(TRPGShortcutUIPressedEvent ev)
-        {
-            m_FireUI.Open(false);
-
-            switch (ev.Shortcut)
-            {
-                default:
-                case ShortcutType.None:
-                case ShortcutType.Move:
-                    break;
-                case ShortcutType.Attack:
-
-                    m_FireUI.Open(true);
-                    break;
-            }
-        }
 
         public void AuthoringShortcut(TRPGShortcutUI shortcut, ShortcutType shortcutType, int index)
         {
@@ -113,6 +92,10 @@ namespace Syadeu.Presentation.TurnTable.UI
                 m_Shortcuts[i].Hide = hide;
                 m_Shortcuts[i].Enable = enable;
             }
+        }
+        public void SetFire(bool hide)
+        {
+            m_FireUI.Open(!hide);
         }
     }
 }

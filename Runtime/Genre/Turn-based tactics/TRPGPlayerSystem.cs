@@ -122,6 +122,8 @@ namespace Syadeu.Presentation.TurnTable
 
                     break;
                 case ShortcutType.Attack:
+                    m_TRPGCameraMovement.SetNormal();
+                    m_TRPGCanvasUISystem.SetFire(true);
                     break;
             }
         }
@@ -153,8 +155,7 @@ namespace Syadeu.Presentation.TurnTable
                 case ShortcutType.Move:
                     if (m_CurrentShortcut == ShortcutType.Move)
                     {
-                        m_TRPGGridSystem.ClearUICell();
-                        m_TRPGGridSystem.ClearUIPath();
+                        DisableCurrentShortcut();
 
                         m_CurrentShortcut = ShortcutType.None;
                         return;
@@ -169,7 +170,7 @@ namespace Syadeu.Presentation.TurnTable
                 case ShortcutType.Attack:
                     if (m_CurrentShortcut == ShortcutType.Attack)
                     {
-                        m_TRPGCameraMovement.SetNormal();
+                        DisableCurrentShortcut();
 
                         m_CurrentShortcut = ShortcutType.None;
                         return;
@@ -182,6 +183,8 @@ namespace Syadeu.Presentation.TurnTable
 
                         return;
                     }
+
+                    m_TRPGCanvasUISystem.SetFire(false);
 
                     Instance<TRPGActorAttackProvider> attProvider = ctr.GetProvider<TRPGActorAttackProvider>();
                     var targets = attProvider.Object.GetTargetsInRange();

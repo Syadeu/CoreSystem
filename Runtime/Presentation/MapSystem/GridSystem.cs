@@ -472,12 +472,6 @@ namespace Syadeu.Presentation.Map
 
                     if (isNew)
                     {
-                        if (four.Contains(nextTile))
-                        {
-                            nextTile.parent = fromPos;
-                            nextTile.parentArrayIdx = 0;
-                        }
-
                         path[count] = (nextTile);
                         currentTileIdx = count;
                         count++;
@@ -493,6 +487,15 @@ namespace Syadeu.Presentation.Map
                 // Path Found
                 if (path[count - 1].position.index == to)
                 {
+                    for (int i = 0; i < count; i++)
+                    {
+                        if (four.Contains(path[i]))
+                        {
+                            path[i].parent = fromPos;
+                            path[i].parentArrayIdx = 0;
+                        }
+                    }
+
                     int sortedFound = 0;
                     GridPathTile current = path[count - 1];
                     for (int i = 0; i < pathFound && current.position.index != from; i++, sortedFound++)
@@ -550,9 +553,18 @@ namespace Syadeu.Presentation.Map
                         if (pathFound <= 0) break;
 
                         ref GridPathTile parentTile = ref path[lastTileData.parentArrayIdx];
-                        parentTile.opened[lastTileData.direction] = false;
 
-                        $"in {currentTileIdx} -> {lastTileData.parentArrayIdx}".ToLog();
+                        $"in {lastTileData.position.location} -> {parentTile.position.location}".ToLog();
+                        //Parent
+                        if (currentTileIdx == 0)
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            parentTile.opened[lastTileData.direction] = false;
+                        }
+                        
                         currentTileIdx = lastTileData.parentArrayIdx;
 
                         //Debug.Break();
@@ -568,12 +580,6 @@ namespace Syadeu.Presentation.Map
 
                     if (isNew)
                     {
-                        if (four.Contains(nextTile))
-                        {
-                            nextTile.parent = fromPos;
-                            nextTile.parentArrayIdx = 0;
-                        }
-
                         path[count] = (nextTile);
                         currentTileIdx = count;
                         count++;
@@ -589,6 +595,15 @@ namespace Syadeu.Presentation.Map
                 // Path Found
                 if (path[count - 1].position.index == to)
                 {
+                    for (int i = 0; i < count; i++)
+                    {
+                        if (four.Contains(path[i]))
+                        {
+                            path[i].parent = fromPos;
+                            path[i].parentArrayIdx = 0;
+                        }
+                    }
+
                     GridTile* arr = stackalloc GridTile[pathFound];
 
                     int length = 0;
