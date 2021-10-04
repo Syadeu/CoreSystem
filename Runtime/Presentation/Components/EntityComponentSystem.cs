@@ -158,11 +158,38 @@ namespace Syadeu.Presentation.Components
 
         #region Component Methods
 
+        public void ComponentBufferSafetyCheck<TComponent>(out bool result)
+        {
+#if DEBUG_MODE
+            if (!m_ComponentIndices.ContainsKey(TypeHelper.TypeOf<TComponent>.Type))
+            {
+                CoreSystem.Logger.LogError(Channel.Component,
+                    $"Component buffer error. " +
+                    $"Didn\'t collected this component({TypeHelper.TypeOf<TComponent>.ToString()}) infomation at initializing stage.");
+
+                result = false;
+                return;
+            }
+#endif
+            result = true;
+        }
         public EntityComponentBuffer GetComponentBuffer<TComponent>()
         {
             int idx = GetComponentIndex<TComponent>();
 
             return UnsafeUtility.ReadArrayElement<EntityComponentBuffer>(m_ComponentBuffer.GetUnsafeReadOnlyPtr(), idx);
+        }
+        public EntityComponentBuffer* GetComponentBufferPointer<TComponent>()
+        {
+            int idx = GetComponentIndex<TComponent>();
+
+            return ((EntityComponentBuffer*)m_ComponentBuffer.GetUnsafeReadOnlyPtr()) + idx;
+        }
+        public IntPtr GetComponentBufferPointerIntPtr<TComponent>()
+        {
+            int idx = GetComponentIndex<TComponent>();
+
+            return (IntPtr)((EntityComponentBuffer*)m_ComponentBuffer.GetUnsafeReadOnlyPtr() + idx);
         }
 
         public TComponent AddComponent<TComponent>(in EntityData<IEntityData> entity, in TComponent data) where TComponent : unmanaged, IEntityComponent

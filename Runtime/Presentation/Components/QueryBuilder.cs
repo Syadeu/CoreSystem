@@ -1,11 +1,13 @@
 ﻿using Syadeu.Database;
 using Syadeu.Presentation.Entities;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Unity.Burst;
 
 namespace Syadeu.Presentation.Components
 {
+    [Obsolete("Use IJobParallelForEntities")]
     public sealed class QueryBuilder<TComponent>
         where TComponent : unmanaged, IEntityComponent
     {

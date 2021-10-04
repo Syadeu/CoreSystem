@@ -1,4 +1,7 @@
-﻿using Syadeu.Database;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
 using Syadeu.Presentation.Components;
 using System;
 using System.Collections.Generic;
@@ -24,6 +27,7 @@ namespace Syadeu.Presentation.Entities
             where TComponent : unmanaged, IEntityComponent
         {
             static IntPtr s_JobReflectionData;
+            static IntPtr s_ComponentBuffer;
 
             public static IntPtr Initialize()
             {
@@ -37,13 +41,17 @@ namespace Syadeu.Presentation.Entities
 #endif
                 }
 
+                if (s_ComponentBuffer == IntPtr.Zero)
+                {
+                    s_ComponentBuffer = PresentationSystem<DefaultPresentationGroup, EntityComponentSystem>.System.GetComponentBufferPointerIntPtr<TComponent>();
+                }
+
                 return s_JobReflectionData;
             }
 
             public delegate void ExecuteJobFunction(ref T jobData, IntPtr additionalPtr, IntPtr bufferRangePatchData, ref JobRanges ranges, int jobIndex);
             public unsafe static void Execute(ref T jobData, IntPtr additionalPtr, IntPtr bufferRangePatchData, ref JobRanges ranges, int jobIndex)
             {
-                EntityComponentSystem.EntityComponentBuffer buffer = PresentationSystem<DefaultPresentationGroup, EntityComponentSystem>.System.GetComponentBuffer<TComponent>();
                 while (true)
                 {
                     if (!JobsUtility.GetWorkStealingRange(
@@ -58,15 +66,21 @@ namespace Syadeu.Presentation.Entities
 #endif
                     for (int i = begin; i < end; i++)
                     {
-                        buffer.HasElementAt(i, out bool result);
-                        if (!result) continue;
-
-                        buffer.ElementAt<TComponent>(i, out var entity, out TComponent component);
-                        //EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(current.Idx);
-
-                        jobData.Execute(in entity, in component);
+                        PrivateExecute(ref jobData, in i);
                     }
                 }
+            }
+            private unsafe static void PrivateExecute(ref T jobData, in int i)
+            {
+                EntityComponentSystem.EntityComponentBuffer* p = (EntityComponentSystem.EntityComponentBuffer*)s_ComponentBuffer;
+                ref EntityComponentSystem.EntityComponentBuffer buffer = ref *p;
+
+                buffer.HasElementAt(i, out bool result);
+                if (!result) return;
+
+                buffer.ElementAt<TComponent>(i, out EntityData<IEntityData> entity, out TComponent component);
+
+                jobData.Execute(in entity, in component);
             }
         }
 
@@ -104,7 +118,12 @@ namespace Syadeu.Presentation.Entities
                 JobParallelForEntitiesProducer<T, TComponent>.Initialize(), dependsOn,
                 ScheduleMode.Parallel);
 
-            var buffer = PresentationSystem<DefaultPresentationGroup, EntityComponentSystem>.System.GetComponentBuffer<TComponent>();
+            EntityComponentSystem system = PresentationSystem<DefaultPresentationGroup, EntityComponentSystem>.System;
+#if DEBUG_MODE
+            system.ComponentBufferSafetyCheck<TComponent>(out bool result);
+            if (!result) return default(JobHandle);
+#endif
+            EntityComponentSystem.EntityComponentBuffer buffer = system.GetComponentBuffer<TComponent>();
 
             return JobsUtility.ScheduleParallelFor(ref scheduleParams, buffer.Length, innerloopBatchCount);
         }
