@@ -394,6 +394,17 @@ namespace Syadeu.Presentation.Map
         }
         public int[] GetLayer(in int layer) => GridMap.GetLayer(in layer);
 
+        public IReadOnlyList<Entity<IEntity>> GetEntitiesAt(in int index)
+        {
+            if (m_GridEntities.TryGetValue(index, out List<Entity<IEntity>> entities))
+            {
+                return entities;
+            }
+            return Array.Empty<Entity<IEntity>>();
+        }
+
+        #region Pathfinder
+
         public bool HasPath(
             [NoAlias] int from, 
             [NoAlias] int to,
@@ -607,14 +618,7 @@ namespace Syadeu.Presentation.Map
             return false;
         }
 
-        public IReadOnlyList<Entity<IEntity>> GetEntitiesAt(in int index)
-        {
-            if (m_GridEntities.TryGetValue(index, out List<Entity<IEntity>> entities))
-            {
-                return entities;
-            }
-            return Array.Empty<Entity<IEntity>>();
-        }
+        #endregion
 
         #region Utils
 
