@@ -12,14 +12,14 @@ namespace Syadeu.Presentation.Timeline
     {
         //public EntityControlTrackBehaviour template = new EntityControlTrackBehaviour ();
 
-        [SerializeField] private ExposedReference<AnimatorComponent> m_Animator;
+        //[SerializeField] private ExposedReference<AnimatorComponent> m_Animator;
 
         public ClipCaps clipCaps
         {
             get { return ClipCaps.None; }
         }
 
-        public ExposedReference<AnimatorComponent> Animator => m_Animator;
+        //public ExposedReference<AnimatorComponent> Animator => m_Animator;
 
         public override Playable CreatePlayable(PlayableGraph graph, GameObject owner)
         {
@@ -31,7 +31,7 @@ namespace Syadeu.Presentation.Timeline
             IExposedPropertyTable resolver = graph.GetResolver();
 
             EntityControlTrackBehaviour clone = playable.GetBehaviour();
-            clone.Initialize(m_Animator.Resolve(resolver));
+            clone.Initialize(/*m_Animator.Resolve(resolver)*/);
             return playable;
         }
     }

@@ -281,27 +281,31 @@ namespace Syadeu.Presentation.Actions
 
             private void Bind(PlayableDirector director, PlayableAsset asset)
             {
+                //AnimatorAttribute animator = m_Executer.GetAttribute<AnimatorAttribute>();
+                CinemachineBrain cinemachine = PresentationSystem<DefaultPresentationGroup, RenderSystem>.System.Camera.GetComponent<CinemachineBrain>();
+
+                //CoreSystem.Logger.NotNull(animator, "animator not found");
+                CoreSystem.Logger.NotNull(cinemachine, "cinemachine not found");
+
                 foreach (PlayableBinding item in asset.outputs)
                 {
 #if UNITY_CINEMACHINE
                     if (item.sourceObject is CinemachineTrack)
                     {
-                        director.SetGenericBinding(item.sourceObject, PresentationSystem<RenderSystem>.System.Camera.GetComponent<CinemachineBrain>());
+                        director.SetGenericBinding(item.sourceObject, cinemachine);
                         continue;
                     }
 #endif
+
                     if (item.sourceObject is EntityControlTrack entityControlTrack)
                     {
-                        AnimatorAttribute animator = m_Executer.GetAttribute<AnimatorAttribute>();
-                        CoreSystem.Logger.NotNull(animator, "animator not found");
-
                         director.SetGenericBinding(item.sourceObject, m_Executer.As<IEntityData, IEntity>().proxy);
 
-                        foreach (EntityControlTrackClip clip in
-                            entityControlTrack.GetClips().Select((other) => (EntityControlTrackClip)other.asset))
-                        {
-                            director.SetReferenceValue(clip.Animator.exposedName, animator.AnimatorComponent);
-                        }
+                        //foreach (EntityControlTrackClip clip in
+                        //    entityControlTrack.GetClips().Select((other) => (EntityControlTrackClip)other.asset))
+                        //{
+                        //    director.SetReferenceValue(clip.Animator.exposedName, animator.AnimatorComponent);
+                        //}
                     }
                 }
             }

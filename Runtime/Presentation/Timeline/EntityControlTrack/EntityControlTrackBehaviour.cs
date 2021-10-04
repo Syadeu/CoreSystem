@@ -9,14 +9,14 @@ namespace Syadeu.Presentation.Timeline
     [Serializable]
     public class EntityControlTrackBehaviour : PlayableBehaviour
     {
-        private AnimatorComponent m_Animator;
+        //private AnimatorComponent m_Animator;
 
         public override void OnPlayableCreate(Playable playable)
         {
         }
-        public void Initialize(AnimatorComponent animator)
+        public void Initialize(/*AnimatorComponent animator*/)
         {
-            m_Animator = animator;
+            //m_Animator = animator;
         }
     }
 }
