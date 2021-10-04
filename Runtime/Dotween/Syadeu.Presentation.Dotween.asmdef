@@ -1,0 +1,24 @@
+{
+    "name": "Syadeu.Presentation.Dotween",
+    "rootNamespace": "Syadeu.Presentation.Dotween",
+    "references": [
+        "Syadeu",
+        "DOTween.Modules",
+        "DOTweenPro.Scripts"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "DemiLib.dll",
+        "DOTween.dll",
+        "DOTweenPro.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "CORESYSTEM_DOTWEEN"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

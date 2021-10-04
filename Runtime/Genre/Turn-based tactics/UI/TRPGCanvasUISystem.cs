@@ -12,6 +12,7 @@ namespace Syadeu.Presentation.TurnTable.UI
 
         private TRPGShortcutUI[] m_Shortcuts;
         private TRPGEndTurnUI m_EndTurn;
+        private TRPGFireUI m_FireUI;
 
         private EventSystem m_EventSystem;
         private Input.InputSystem m_InputSystem;
@@ -29,6 +30,8 @@ namespace Syadeu.Presentation.TurnTable.UI
         }
         public override void OnDispose()
         {
+            m_EventSystem.RemoveEvent<TRPGShortcutUIPressedEvent>(TRPGShortcutUIPressedEventHandler);
+
             m_EventSystem = null;
             m_InputSystem = null;
             m_TurnTableSystem = null;
@@ -39,6 +42,8 @@ namespace Syadeu.Presentation.TurnTable.UI
         private void Bind(EventSystem other)
         {
             m_EventSystem = other;
+
+            m_EventSystem.AddEvent<TRPGShortcutUIPressedEvent>(TRPGShortcutUIPressedEventHandler);
         }
         private void Bind(Input.InputSystem other)
         {
@@ -50,6 +55,23 @@ namespace Syadeu.Presentation.TurnTable.UI
         }
 
         #endregion
+
+        private void TRPGShortcutUIPressedEventHandler(TRPGShortcutUIPressedEvent ev)
+        {
+            m_FireUI.Open(false);
+
+            switch (ev.Shortcut)
+            {
+                default:
+                case ShortcutType.None:
+                case ShortcutType.Move:
+                    break;
+                case ShortcutType.Attack:
+
+                    m_FireUI.Open(true);
+                    break;
+            }
+        }
 
         public void AuthoringShortcut(TRPGShortcutUI shortcut, ShortcutType shortcutType, int index)
         {
@@ -67,6 +89,11 @@ namespace Syadeu.Presentation.TurnTable.UI
             m_EndTurn = endTurn;
 
             endTurn.Initialize(m_TurnTableSystem, m_EventSystem);
+        }
+
+        public void AuthoringFire(TRPGFireUI fire)
+        {
+            m_FireUI = fire;
         }
 
         public void SetEndTurn(bool hide)

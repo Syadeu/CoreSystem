@@ -12,7 +12,8 @@
         "Unity.InputSystem",
         "Unity.TextMeshPro",
         "DOTween.Modules",
-        "DOTweenPro.Scripts"
+        "DOTweenPro.Scripts",
+        "Syadeu.Presentation.Dotween"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -26,7 +27,8 @@
     ],
     "autoReferenced": true,
     "defineConstraints": [
-        "CORESYSTEM_TURNBASESYSTEM"
+        "CORESYSTEM_TURNBASESYSTEM",
+        "CORESYSTEM_DOTWEEN"
     ],
     "versionDefines": [
         {
