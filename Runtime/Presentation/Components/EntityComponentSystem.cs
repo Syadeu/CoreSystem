@@ -30,6 +30,8 @@ namespace Syadeu.Presentation.Components
         private NativeArray<ComponentBuffer> m_ComponentArrayBuffer;
         private MethodInfo m_RemoveComponentMethod;
 
+        private Unity.Mathematics.Random m_Random;
+
 #if DEBUG_MODE
         private static Unity.Profiling.ProfilerMarker
             s_GetComponentMarker = new Unity.Profiling.ProfilerMarker("get_GetComponent"),
@@ -43,6 +45,9 @@ namespace Syadeu.Presentation.Components
 
         protected override PresentationResult OnInitialize()
         {
+            m_Random = new Unity.Mathematics.Random();
+            m_Random.InitState();
+
             RequestSystem<DefaultPresentationGroup, EntitySystem>(Bind);
 
             // 버퍼를 생성하기 위해 미리 모든 컴포넌트 타입들의 정보를 가져옵니다.
@@ -60,7 +65,7 @@ namespace Syadeu.Presentation.Components
             for (int i = 0; i < types.Length; i++)
             {
                 // 왜인지는 모르겠지만 Type.GetHash() 의 정보가 런타임 중 간혹 유효하지 않은 값 (0) 을 뱉어서 미리 파싱합니다.
-                int idx = math.abs(types[i].GetHashCode()) % tempBuffer.Length;
+                int idx = math.abs(CreateHashCode()) % tempBuffer.Length;
                 ComponentType.GetValue(types[i]).Data = idx;
 
                 // 새로운 버퍼를 생성하고, heap 에 메모리를 할당합니다.
@@ -142,7 +147,23 @@ namespace Syadeu.Presentation.Components
 
         #region Hashing
 
-        private static int GetComponentIndex<TComponent>() => GetComponentIndex(TypeHelper.TypeOf<TComponent>.Type);
+        public int CreateHashCode() => m_Random.NextInt(int.MinValue, int.MaxValue);
+
+        private static int GetComponentIndex<TComponent>()
+        {
+            int idx = ComponentType<TComponent>.Index;
+#if DEBUG_MODE
+            if (idx == 0)
+            {
+                CoreSystem.Logger.LogError(Channel.Component,
+                    $"Component buffer error. " +
+                    $"Didn\'t collected this component({TypeHelper.TypeOf<TComponent>.Name}) infomation at initializing stage.");
+
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
+            }
+#endif
+            return idx;
+        }
         private static int GetComponentIndex(Type t)
         {
             int idx = ComponentType.GetValue(t).Data;
@@ -536,7 +557,7 @@ namespace Syadeu.Presentation.Components
                     componentType, (uint)UnsafeUtility.AlignOf<int>());
             }
         }
-        public struct ComponentType<TComponent> where TComponent : unmanaged, IEntityComponent
+        public struct ComponentType<TComponent>
         {
             public static readonly SharedStatic<int> Value
                 = SharedStatic<int>.GetOrCreate<EntityComponentSystem, TComponent>((uint)UnsafeUtility.AlignOf<int>());
