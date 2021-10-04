@@ -1,4 +1,8 @@
-﻿using Syadeu.Presentation.Actor;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
@@ -123,6 +127,13 @@ namespace Syadeu.Presentation.TurnTable
         }
         private void TRPGShortcutUIPressedEventHandler(TRPGShortcutUIPressedEvent ev)
         {
+            if (!m_TurnTableSystem.CurrentTurn.HasComponent<ActorControllerComponent>())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Entity({m_TurnTableSystem.CurrentTurn.RawName}) doesn\'t have {nameof(ActorControllerComponent)}.");
+                return;
+            }
+
             ActorControllerComponent ctr = m_TurnTableSystem.CurrentTurn.GetComponent<ActorControllerComponent>();
             if (ctr.IsBusy())
             {
@@ -164,7 +175,15 @@ namespace Syadeu.Presentation.TurnTable
                         return;
                     }
 
-                    Instance<TRPGActorAttackProvider> attProvider = m_TurnTableSystem.CurrentTurn.GetComponent<ActorControllerComponent>().GetProvider<TRPGActorAttackProvider>();
+                    if (!ctr.HasProvider<TRPGActorAttackProvider>())
+                    {
+                        CoreSystem.Logger.LogError(Channel.Entity,
+                            $"Entity({m_TurnTableSystem.CurrentTurn.RawName}) doesn\'t have {nameof(TRPGActorAttackProvider)}.");
+
+                        return;
+                    }
+
+                    Instance<TRPGActorAttackProvider> attProvider = ctr.GetProvider<TRPGActorAttackProvider>();
                     var targets = attProvider.Object.GetTargetsInRange();
                     var tr = m_TurnTableSystem.CurrentTurn.As<IEntityData, IEntity>().transform;
 

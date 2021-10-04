@@ -695,8 +695,6 @@ namespace Syadeu.Presentation.Map
         {
             for (int i = 0; i < m_DrawnCellUIEntities.Count; i++)
             {
-                m_DrawnCellUIEntities[i].RemoveComponent<GridCellComponent>();
-
                 m_DrawnCellUIEntities[i].Destroy();
             }
 

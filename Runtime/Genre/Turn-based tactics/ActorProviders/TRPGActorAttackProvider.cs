@@ -4,11 +4,13 @@ using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Map;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using Unity.Collections;
 
 namespace Syadeu.Presentation.TurnTable
 {
+    [DisplayName("ActorProvider: TRPG Attack Provider")]
     public sealed class TRPGActorAttackProvider : ActorAttackProvider
     {
         [JsonProperty(Order = 0, PropertyName = "AttackRange")] private int m_AttackRange;

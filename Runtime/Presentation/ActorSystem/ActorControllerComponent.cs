@@ -1,4 +1,8 @@
-﻿using Syadeu.Internal;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Syadeu.Internal;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
@@ -102,9 +106,9 @@ namespace Syadeu.Presentation.Actor
                 {
                     if (lifeTimeChanged.LifeTime == ActorLifetimeChangedEvent.State.Alive)
                     {
-                        if ((state.State & ActorStateAttribute.StateInfo.Spawn) != ActorStateAttribute.StateInfo.Spawn)
+                        if ((state.State & ActorStateAttribute.StateInfo.Spawn | ActorStateAttribute.StateInfo.Idle) != (ActorStateAttribute.StateInfo.Spawn | ActorStateAttribute.StateInfo.Idle))
                         {
-                            state.State = ActorStateAttribute.StateInfo.Spawn;
+                            state.State = ActorStateAttribute.StateInfo.Spawn | ActorStateAttribute.StateInfo.Idle;
                         }
                     }
                     else
@@ -156,6 +160,30 @@ namespace Syadeu.Presentation.Actor
             provider.ReceivedEvent(ev);
         }
 
+        public bool HasProvider<T>() where T : ActorProviderBase
+        {
+            if (TypeHelper.TypeOf<T>.IsAbstract)
+            {
+                for (int i = 0; i < m_InstanceProviders.Length; i++)
+                {
+                    if (TypeHelper.TypeOf<T>.Type.IsAssignableFrom(m_InstanceProviders[i].Object.GetType()))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            for (int i = 0; i < m_InstanceProviders.Length; i++)
+            {
+                if (m_InstanceProviders[i].Object is T)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
         public Instance<T> GetProvider<T>() where T : ActorProviderBase
         {
             if (TypeHelper.TypeOf<T>.IsAbstract)

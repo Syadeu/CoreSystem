@@ -18,9 +18,9 @@ namespace Syadeu.Presentation.Actor
     public class ActorAttackProvider : ActorProviderBase
     {
         [JsonProperty(Order = -10, PropertyName = "OnAttack")]
-        protected LogicTriggerAction m_OnAttack = new LogicTriggerAction();
+        protected LogicTriggerAction[] m_OnAttack = Array.Empty<LogicTriggerAction>();
         [JsonProperty(Order = -9, PropertyName = "OnHit")]
-        protected LogicTriggerAction m_OnHit = new LogicTriggerAction();
+        protected LogicTriggerAction[] m_OnHit = Array.Empty<LogicTriggerAction>();
 
         [JsonIgnore] private ActorStatAttribute m_StatAttribute;
 
@@ -56,10 +56,12 @@ namespace Syadeu.Presentation.Actor
 #endif
             EntityData<IEntityData> target = ev.AttackFrom.As<ActorEntity, IEntityData>();
 
-            if (!m_OnHit.Execute(Parent, target))
+            for (int i = 0; i < m_OnHit.Length; i++)
             {
-                $"{Parent.Name} : hit failed attacked from {target.Name}".ToLog();
-                return;
+                if (!m_OnHit[i].Schedule(Parent, target))
+                {
+                    $"{Parent.Name} : hit failed attacked from {target.Name}".ToLog();
+                }
             }
 
             int hp = m_StatAttribute.GetValue<int>(ev.HPStatNameHash);
@@ -95,7 +97,13 @@ namespace Syadeu.Presentation.Actor
             EntityData<IEntityData> target = ev.Target.As<ActorEntity, IEntityData>();
             Entity<ActorEntity> parent = Parent.As<IEntityData, ActorEntity>();
 
-            if (m_OnAttack.Schedule(Parent, target))
+            bool isFailed = false;
+            for (int i = 0; i < m_OnAttack.Length; i++)
+            {
+                isFailed |= !m_OnAttack[i].Schedule(Parent, target);
+            }
+
+            if (isFailed)
             {
                 currentWeaponIns.Object.FireFXBounds(parent.transform, CoroutineSystem, FXBounds.TriggerOptions.FireOnSuccess);
                 SendHitEvent(ev.Target, ev.HPStatNameHash, ev.Damage);

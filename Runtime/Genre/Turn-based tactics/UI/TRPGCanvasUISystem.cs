@@ -51,14 +51,13 @@ namespace Syadeu.Presentation.TurnTable.UI
 
         #endregion
 
-        public void AuthoringShortcut(TRPGShortcutUI shortcut, ShortcutType shortcutType)
+        public void AuthoringShortcut(TRPGShortcutUI shortcut, ShortcutType shortcutType, int index)
         {
-            int idx = (int)shortcutType;
-            m_Shortcuts[idx] = shortcut;
+            m_Shortcuts[(int)shortcutType] = shortcut;
 
             shortcut.Initialize(this, m_EventSystem);
 
-            InputAction inputAction = m_InputSystem.AddKeyboardBinding(idx, false, InputActionType.Button);
+            InputAction inputAction = m_InputSystem.AddKeyboardBinding(index, false, InputActionType.Button);
             inputAction.performed += shortcut.OnKeyboardPressed;
             inputAction.Enable();
         }
