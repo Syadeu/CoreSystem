@@ -45,11 +45,25 @@ namespace Syadeu.Presentation.Actor
 
             component.m_EntitySystem = m_EntitySystem.SystemID;
             component.m_Parent = actor;
-            component.m_InstanceProviders = new InstanceArray<ActorProviderBase>(attribute.m_Providers.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            component.m_InstanceProviders = new InstanceArray<ActorProviderBase>(attribute.m_Providers.Length, Allocator.Persistent
+#if DEBUG_MODE
+                , NativeArrayOptions.ClearMemory
+#else
+                , NativeArrayOptions.UninitializedMemory
+#endif
+                );
             component.m_OnEventReceived = attribute.m_OnEventReceived.ToBuffer(Allocator.Persistent);
             
             for (int i = 0; i < attribute.m_Providers.Length; i++)
             {
+#if DEBUG_MODE
+                if (attribute.m_Providers[i].IsEmpty() || !attribute.m_Providers[i].IsValid())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"Entity({actor.RawName}) has an invalid provider at {i}. This is not allowed.");
+                    continue;
+                }
+#endif
                 Instance<ActorProviderBase> clone = EntitySystem.CreateInstance(attribute.m_Providers[i]);
                 Initialize(entity, clone.Object);
                 component.m_InstanceProviders[i] = clone;

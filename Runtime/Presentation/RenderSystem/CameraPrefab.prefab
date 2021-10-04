@@ -225,6 +225,7 @@ MonoBehaviour:
       m_Flags: 0
   m_DefaultViewString: TopView
   m_AimViewString: AimView
+  m_DefaultTopViewHeight: 0
 --- !u!1 &8832134446683109531
 GameObject:
   m_ObjectHideFlags: 0
@@ -733,7 +734,7 @@ MonoBehaviour:
     LensShift: {x: 0, y: 0}
   m_Transitions:
     m_BlendHint: 0
-    m_InheritPosition: 0
+    m_InheritPosition: 1
     m_OnCameraLive:
       m_PersistentCalls:
         m_Calls: []
@@ -753,4 +754,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Offset: {x: -7, y: 4.8, z: -28.5}
   m_ApplyAfter: 0
-  m_PreserveComposition: 0
+  m_PreserveComposition: 1
