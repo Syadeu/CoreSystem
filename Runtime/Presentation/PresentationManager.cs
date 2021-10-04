@@ -937,7 +937,6 @@ namespace Syadeu.Presentation
 #if DEBUG_MODE
             , string methodName
 #endif
-            , Hash calledGroupHash = default
             )
             where TGroup : PresentationGroupEntity
             where TSystem : PresentationSystemEntity
@@ -962,16 +961,6 @@ namespace Syadeu.Presentation
 
             if (group.m_IsStarted && !group.m_MainthreadSignal)
             {
-                // From System Request
-                if (!calledGroupHash.IsEmpty())
-                {
-                    // 요청한 시스템과 다른 그룹에 속할 경우
-                    if (!group.Equals(Instance.m_PresentationGroups[calledGroupHash]))
-                    {
-
-                    }
-                }
-
                 group.m_RequestSystemDelegates.Enqueue(() =>
                 {
                     if (!group.TryGetSystem<TSystem>(out TSystem target, out _))
