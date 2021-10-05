@@ -840,6 +840,26 @@ namespace Syadeu.Presentation
             UnityEngine.Debug.Log("thread out");
         }
 
+
+        // TODO: Debug, Profiling 을 위해 따로 Wrapping
+        private void AddPreUpdate(Action action)
+        {
+            PreUpdate += action;
+        }
+        private void RemovePreUpdate(Action action)
+        {
+            PreUpdate -= action;
+        }
+
+        private void AddPostUpdate(Action action)
+        {
+
+        }
+        private void RemovePostUpdate(Action action)
+        {
+
+        }
+
         [System.Diagnostics.Conditional("DEBUG_MODE")]
         private static void TestStress()
         {
@@ -1253,5 +1273,16 @@ namespace Syadeu.Presentation
             Instance.AfterUpdateAsync += group.AfterPresentationAsync;
         }
         #endregion
+
+        private sealed class UpdateHelper
+        {
+            public Action m_Action;
+            public string m_CalledFrom;
+
+            public void Invoke()
+            {
+                m_Action.Invoke();
+            }
+        }
     }
 }
