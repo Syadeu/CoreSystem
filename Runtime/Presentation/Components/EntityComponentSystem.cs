@@ -64,18 +64,13 @@ namespace Syadeu.Presentation.Components
             ComponentBuffer[] tempBuffer = new ComponentBuffer[length];
             for (int i = 0; i < types.Length; i++)
             {
-                // 왜인지는 모르겠지만 Type.GetHash() 의 정보가 런타임 중 간혹 유효하지 않은 값 (0) 을 뱉어서 미리 파싱합니다.
-                int idx = math.abs(CreateHashCode()) % tempBuffer.Length;
-                ComponentType.GetValue(types[i]).Data = idx;
-
-                // 새로운 버퍼를 생성하고, heap 에 메모리를 할당합니다.
-                ComponentBuffer temp = new ComponentBuffer();
-                temp.Initialize(idx, UnsafeUtility.SizeOf(types[i]), AlignOf(types[i]));
-
-                tempBuffer[idx] = temp;
+                ComponentBuffer buffer = BuildComponentBuffer(types[i], length, out int idx);
+                tempBuffer[idx] = buffer;
             }
 
             m_ComponentArrayBuffer = new NativeArray<ComponentBuffer>(tempBuffer, Allocator.Persistent);
+            
+            DisposedComponent.Initialize((ComponentBuffer*)m_ComponentArrayBuffer.GetUnsafePtr());
 
             ConstructSharedStatics();
 
@@ -166,7 +161,7 @@ namespace Syadeu.Presentation.Components
         }
         private static int GetComponentIndex(Type t)
         {
-            int idx = ComponentType.GetValue(t).Data;
+            int idx = ComponentType.GetValue(t).Data.Index;
 #if DEBUG_MODE
             if (idx == 0)
             {
@@ -205,39 +200,128 @@ namespace Syadeu.Presentation.Components
 
         #region Component Methods
 
+        private ComponentBuffer BuildComponentBuffer(Type componentType, int totalLength, out int idx)
+        {
+            if (IsZeroSizeStruct(componentType))
+            {
+                CoreSystem.Logger.LogError(Channel.Component,
+                    $"Zero sized wrapper struct({TypeHelper.ToString(componentType)}) is in component list.");
+            }
+
+            ComponentBuffer temp = new ComponentBuffer();
+
+            idx = math.abs(CreateHashCode()) % totalLength;
+            // 왜인지는 모르겠지만 Type.GetHash() 의 정보가 런타임 중 간혹 유효하지 않은 값 (0) 을 뱉어서 미리 파싱합니다.
+            TypeInfo runtimeTypeInfo = TypeInfo.Construct(componentType, idx, UnsafeUtility.SizeOf(componentType), AlignOf(componentType));
+            ComponentType.GetValue(componentType).Data = runtimeTypeInfo;
+
+            // 새로운 버퍼를 생성하고, heap 에 메모리를 할당합니다.
+            temp.Initialize(runtimeTypeInfo, runtimeTypeInfo.Size, runtimeTypeInfo.Align);
+
+            return temp;
+        }
+
         private readonly Queue<IDisposable> m_DisposedComponents = new Queue<IDisposable>();
-        private struct DisposedComponent<TComponent> : IDisposable
-            where TComponent : unmanaged, IEntityComponent
+
+        private struct DisposedComponent : IDisposable
         {
             private static ComponentBuffer* s_Buffer;
 
-            public static void Initialize(ComponentBuffer* componentBuffer)
+            private int2 index;
+            private EntityData<IEntityData> entity;
+            
+            public static void Initialize(ComponentBuffer* buffer)
             {
-                s_Buffer = componentBuffer;
+                s_Buffer = buffer;
             }
-
-            public EntityData<IEntityData> entity;
-            public int2 index;
+            public static DisposedComponent Construct(int2 index, EntityData<IEntityData> entity)
+            {
+                return new DisposedComponent()
+                {
+                    index = index,
+                    entity = entity
+                };
+            }
 
             public void Dispose()
             {
                 if (!s_Buffer[index.x].Find(entity, ref index.y))
                 {
+                    "could\'nt find component target".ToLogError();
                     return;
                 }
 
                 s_Buffer[index.x].m_OccupiedBuffer[index.y] = false;
 
-                TComponent* buffer = (TComponent*)s_Buffer[index.x].m_ComponentBuffer;
-                if (buffer[index.y] is IDisposable disposable)
+                void* buffer = s_Buffer[index.x].m_ComponentBuffer;
+
+                IntPtr p = (IntPtr)buffer;
+                // Align 은 필요없음.
+                p = IntPtr.Add(p, s_Buffer[index.x].TypeInfo.Size * index.y);
+
+                object obj = Marshal.PtrToStructure(p, s_Buffer[index.x].TypeInfo.Type);
+
+                if (obj is IDisposable disposable)
                 {
                     disposable.Dispose();
+
+                    CoreSystem.Logger.Log(Channel.Component,
+                        $"{s_Buffer[index.x].TypeInfo.Type.Name} component at {entity.RawName} disposed.");
                 }
 
                 CoreSystem.Logger.Log(Channel.Component,
-                    $"{TypeHelper.TypeOf<TComponent>.Name} component at {entity.RawName} removed");
+                    $"{s_Buffer[index.x].TypeInfo.Type.Name} component at {entity.RawName} removed");
             }
         }
+        //private struct DisposedComponent<TComponent> : IDisposable
+        //    where TComponent : unmanaged, IEntityComponent
+        //{
+        //    private static ComponentBuffer* s_Buffer;
+
+        //    public static void Initialize(ComponentBuffer* componentBuffer)
+        //    {
+        //        s_Buffer = componentBuffer;
+        //    }
+
+        //    public EntityData<IEntityData> entity;
+        //    public int2 index;
+
+        //    public void Dispose()
+        //    {
+        //        if (!s_Buffer[index.x].Find(entity, ref index.y))
+        //        {
+        //            return;
+        //        }
+
+        //        s_Buffer[index.x].m_OccupiedBuffer[index.y] = false;
+
+        //        TComponent* buffer = (TComponent*)s_Buffer[index.x].m_ComponentBuffer;
+        //        if (buffer[index.y] is IDisposable disposable)
+        //        {
+        //            disposable.Dispose();
+
+        //            IntPtr p = (IntPtr)buffer;
+        //            p = IntPtr.Add(p, sizeof(TComponent) * index.y);
+
+        //            object obj = Marshal.PtrToStructure(p, typeof(TComponent));
+        //            if (obj is TComponent component)
+        //            {
+        //                IntPtr test = (IntPtr)(buffer + index.y);
+        //                $"{test.ToInt64()} == {p.ToInt64()} ? {test == p}".ToLog();
+
+        //                $"yes, {sizeof(TComponent)} : {AlignOf(typeof(TComponent))}, {index.y}".ToLog();
+
+        //            }
+
+        //            //IDisposable test = UnsafeUtility.ReadArrayElement<IDisposable>(buffer, index.y);
+        //            //if (test != null) "test success".ToLog();
+        //            //else "test fail?".ToLog();
+        //        }
+
+        //        CoreSystem.Logger.Log(Channel.Component,
+        //            $"{TypeHelper.TypeOf<TComponent>.Name} component at {entity.RawName} removed");
+        //    }
+        //}
 
         public void ComponentBufferSafetyCheck<TComponent>(out bool result)
             where TComponent : unmanaged, IEntityComponent
@@ -328,13 +412,14 @@ namespace Syadeu.Presentation.Components
                 return;
             }
 #endif
-            DisposedComponent<TComponent>.Initialize((ComponentBuffer*)m_ComponentArrayBuffer.GetUnsafePtr());
+            //DisposedComponent<TComponent>.Initialize((ComponentBuffer*)m_ComponentArrayBuffer.GetUnsafePtr());
 
-            DisposedComponent<TComponent> dispose = new DisposedComponent<TComponent>()
-            {
-                index = index,
-                entity = entity
-            };
+            //DisposedComponent<TComponent> dispose = new DisposedComponent<TComponent>()
+            //{
+            //    index = index,
+            //    entity = entity
+            //};
+            DisposedComponent dispose = DisposedComponent.Construct(index, entity);
 
             if (CoreSystem.BlockCreateInstance)
             {
@@ -523,6 +608,12 @@ namespace Syadeu.Presentation.Components
 
         #region Utils
 
+        // https://stackoverflow.com/a/27851610
+        private static bool IsZeroSizeStruct(Type t)
+        {
+            return t.IsValueType && !t.IsPrimitive &&
+                t.GetFields((BindingFlags)0x34).All(fi => IsZeroSizeStruct(fi.FieldType));
+        }
         private static bool CollectTypes<T>(Type t)
         {
             if (t.IsAbstract || t.IsInterface) return false;
@@ -548,21 +639,47 @@ namespace Syadeu.Presentation.Components
 
             public static PresentationSystemID<EntityComponentSystem> SystemID => Value.Data.SystemID;
         }
+        public struct TypeInfo
+        {
+            private readonly RuntimeTypeHandle m_TypeHandle;
+            private readonly int m_TypeIndex;
+            private readonly int m_Size;
+            private readonly int m_Align;
+
+            public Type Type => Type.GetTypeFromHandle(m_TypeHandle);
+            public int Index => m_TypeIndex;
+            public int Size => m_Size;
+            public int Align => m_Align;
+
+            private TypeInfo(Type type, int index, int size, int align)
+            {
+                m_TypeHandle = type.TypeHandle;
+                m_TypeIndex = index;
+                m_Size = size;
+                m_Align = align;
+            }
+
+            public static TypeInfo Construct(Type type, int index, int size, int align)
+            {
+                return new TypeInfo(type, index, size, align);
+            }
+        }
         public struct ComponentType
         {
-            public static SharedStatic<int> GetValue(Type componentType)
+            public static SharedStatic<TypeInfo> GetValue(Type componentType)
             {
-                return SharedStatic<int>.GetOrCreate(
+                return SharedStatic<TypeInfo>.GetOrCreate(
                     TypeHelper.TypeOf<EntityComponentSystem>.Type,
-                    componentType, (uint)UnsafeUtility.AlignOf<int>());
+                    componentType, (uint)UnsafeUtility.AlignOf<TypeInfo>());
             }
         }
         public struct ComponentType<TComponent>
         {
-            public static readonly SharedStatic<int> Value
-                = SharedStatic<int>.GetOrCreate<EntityComponentSystem, TComponent>((uint)UnsafeUtility.AlignOf<int>());
+            private static readonly SharedStatic<TypeInfo> Value
+                = SharedStatic<TypeInfo>.GetOrCreate<EntityComponentSystem, TComponent>((uint)UnsafeUtility.AlignOf<TypeInfo>());
 
-            public static int Index => Value.Data;
+            public static Type Type => Value.Data.Type;
+            public static int Index => Value.Data.Index;
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -602,7 +719,7 @@ namespace Syadeu.Presentation.Components
         {
             public const int c_InitialCount = 512;
 
-            private int m_Index;
+            private TypeInfo m_ComponentTypeInfo;
 
             private int m_Length;
             private int m_Increased;
@@ -611,10 +728,11 @@ namespace Syadeu.Presentation.Components
             [NativeDisableUnsafePtrRestriction] public EntityData<IEntityData>* m_EntityBuffer;
             [NativeDisableUnsafePtrRestriction] public void* m_ComponentBuffer;
 
+            public TypeInfo TypeInfo => m_ComponentTypeInfo;
             public bool IsCreated => m_ComponentBuffer != null;
             public int Length => m_Length;
 
-            public void Initialize(int index, int size, int align)
+            public void Initialize(TypeInfo typeInfo, int size, int align)
             {
                 long
                     occSize = UnsafeUtility.SizeOf<bool>() * c_InitialCount,
@@ -629,7 +747,7 @@ namespace Syadeu.Presentation.Components
                 UnsafeUtility.MemClear(idxBuffer, idxSize);
                 UnsafeUtility.MemClear(buffer, bufferSize);
 
-                this.m_Index = index;
+                this.m_ComponentTypeInfo = typeInfo;
                 this.m_OccupiedBuffer = (bool*)occBuffer;
                 this.m_EntityBuffer = (EntityData<IEntityData>*)idxBuffer;
                 this.m_ComponentBuffer = buffer;

@@ -59,6 +59,8 @@ namespace Syadeu.Presentation.Actions
         [Space, Header("Sequence")]
         [JsonProperty(Order = 8, PropertyName = "AfterDelay")]
         private float m_AfterDelay = 0;
+        [JsonProperty(Order = 9, PropertyName = "DestroyTimelineAfterFinished")]
+        private bool m_DestroyTimelineAfterFinished = true;
 
         [JsonIgnore] private CoroutineSystem m_CoroutineSystem = null;
         [JsonIgnore] private bool m_KeepWait = false;
@@ -68,7 +70,7 @@ namespace Syadeu.Presentation.Actions
 
         protected override void OnCreated()
         {
-            m_CoroutineSystem = PresentationSystem<CoroutineSystem>.System;
+            m_CoroutineSystem = PresentationSystem<DefaultPresentationGroup, CoroutineSystem>.System;
         }
         protected override void OnDispose()
         {
@@ -173,11 +175,11 @@ namespace Syadeu.Presentation.Actions
                 {
                     AsyncOperationHandle<GameObject> entityOper = original.Prefab.LoadAssetAsync();
                     yield return new WaitUntil(() => entityOper.IsDone);
-                    entity = PresentationSystem<EntitySystem>.System.CreateEntity(data.m_Entity, pos, rot, entityOper.Result.transform.localScale);
+                    entity = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.CreateEntity(data.m_Entity, pos, rot, entityOper.Result.transform.localScale);
                 }
                 else
                 {
-                    entity = PresentationSystem<EntitySystem>.System.CreateEntity(data.m_Entity, pos, rot, original.Prefab.Asset.transform.localScale);
+                    entity = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.CreateEntity(data.m_Entity, pos, rot, original.Prefab.Asset.transform.localScale);
                 }
 
                 ProxyTransform tr = (ProxyTransform)entity.transform;
@@ -215,7 +217,7 @@ namespace Syadeu.Presentation.Actions
 #if UNITY_CINEMACHINE
                         if (type.Equals(TypeHelper.TypeOf<CinemachineBrain>.Type))
                         {
-                            director.SetGenericBinding(item.sourceObject, PresentationSystem<RenderSystem>.System.Camera.GetComponent<CinemachineBrain>());
+                            director.SetGenericBinding(item.sourceObject, PresentationSystem<DefaultPresentationGroup, RenderSystem>.System.Camera.GetComponent<CinemachineBrain>());
                             continue;
                         }
 #endif
@@ -276,6 +278,11 @@ namespace Syadeu.Presentation.Actions
                     {
                         director.ClearGenericBinding(item.sourceObject);
                     }
+                }
+
+                if (m_Caller.Object.m_DestroyTimelineAfterFinished)
+                {
+                    entity.Destroy();
                 }
             }
 
