@@ -93,6 +93,26 @@ namespace Syadeu.Presentation.Components
 
             return base.OnInitialize();
         }
+        private ComponentBuffer BuildComponentBuffer(Type componentType, int totalLength, out int idx)
+        {
+            if (IsZeroSizeStruct(componentType))
+            {
+                CoreSystem.Logger.LogError(Channel.Component,
+                    $"Zero sized wrapper struct({TypeHelper.ToString(componentType)}) is in component list.");
+            }
+
+            ComponentBuffer temp = new ComponentBuffer();
+
+            idx = math.abs(CreateHashCode()) % totalLength;
+            // 왜인지는 모르겠지만 Type.GetHashCode() 의 정보가 런타임 중 간혹 유효하지 않은 값 (0) 을 뱉어서 미리 파싱합니다.
+            TypeInfo runtimeTypeInfo = TypeInfo.Construct(componentType, idx, UnsafeUtility.SizeOf(componentType), AlignOf(componentType));
+            ComponentType.GetValue(componentType).Data = runtimeTypeInfo;
+
+            // 새로운 버퍼를 생성하고, heap 에 메모리를 할당합니다.
+            temp.Initialize(runtimeTypeInfo, runtimeTypeInfo.Size, runtimeTypeInfo.Align);
+
+            return temp;
+        }
         private void ConstructSharedStatics()
         {
             Constants.Value.Data.SystemID = SystemID;
@@ -214,27 +234,6 @@ namespace Syadeu.Presentation.Components
         #endregion
 
         #region Component Methods
-
-        private ComponentBuffer BuildComponentBuffer(Type componentType, int totalLength, out int idx)
-        {
-            if (IsZeroSizeStruct(componentType))
-            {
-                CoreSystem.Logger.LogError(Channel.Component,
-                    $"Zero sized wrapper struct({TypeHelper.ToString(componentType)}) is in component list.");
-            }
-
-            ComponentBuffer temp = new ComponentBuffer();
-
-            idx = math.abs(CreateHashCode()) % totalLength;
-            // 왜인지는 모르겠지만 Type.GetHash() 의 정보가 런타임 중 간혹 유효하지 않은 값 (0) 을 뱉어서 미리 파싱합니다.
-            TypeInfo runtimeTypeInfo = TypeInfo.Construct(componentType, idx, UnsafeUtility.SizeOf(componentType), AlignOf(componentType));
-            ComponentType.GetValue(componentType).Data = runtimeTypeInfo;
-
-            // 새로운 버퍼를 생성하고, heap 에 메모리를 할당합니다.
-            temp.Initialize(runtimeTypeInfo, runtimeTypeInfo.Size, runtimeTypeInfo.Align);
-
-            return temp;
-        }
 
         /// <summary>
         /// DEBUG_MODE 중에 해당 컴포넌트가 제대로 사용될 수 있는지 확인합니다.
@@ -674,7 +673,53 @@ namespace Syadeu.Presentation.Components
             public byte dummy;
             public T data;
         }
-        unsafe internal struct EntityComponents
+
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+        private sealed class ComponentBufferAtomicSafety : IDisposable
+        {
+            private AtomicSafetyHandle m_SafetyHandle;
+            private DisposeSentinel m_DisposeSentinel;
+            private TypeInfo m_TypeInfo;
+
+            private bool m_Disposed;
+
+            public AtomicSafetyHandle SafetyHandle => m_SafetyHandle;
+
+            private ComponentBufferAtomicSafety()
+            {
+                DisposeSentinel.Create(out m_SafetyHandle, out m_DisposeSentinel, 1, Allocator.Persistent);
+            }
+
+            public static ComponentBufferAtomicSafety Construct(TypeInfo typeInfo)
+            {
+                ComponentBufferAtomicSafety temp = new ComponentBufferAtomicSafety();
+                temp.m_TypeInfo = typeInfo;
+                return temp;
+            }
+
+            public void CheckExistsAndThrow()
+            {
+                if (m_Disposed)
+                {
+                    throw new Exception();
+                }
+
+                AtomicSafetyHandle.CheckExistsAndThrow(m_SafetyHandle);
+            }
+            public void Dispose()
+            {
+                CheckExistsAndThrow();
+
+                CoreSystem.Logger.Log(Channel.Component,
+                    $"Safely disposed component buffer of {TypeHelper.ToString(m_TypeInfo.Type)}");
+
+                DisposeSentinel.Dispose(ref m_SafetyHandle, ref m_DisposeSentinel);
+                m_Disposed = true;
+            }
+        }
+#endif
+
+        internal struct EntityComponents
         {
             private readonly ComponentBuffer* m_Buffer;
             private readonly uint m_Length;
@@ -701,7 +746,7 @@ namespace Syadeu.Presentation.Components
                 return m_Buffer + index;
             }
         }
-        unsafe internal struct ComponentBuffer : IDisposable
+        internal struct ComponentBuffer : IDisposable
         {
             public const int c_InitialCount = 512;
 
@@ -718,7 +763,7 @@ namespace Syadeu.Presentation.Components
             public bool IsCreated => m_ComponentBuffer != null;
             public int Length => m_Length;
 
-            public void Initialize(TypeInfo typeInfo, int size, int align)
+            public void Initialize(in TypeInfo typeInfo, in int size, in int align)
             {
                 long
                     occSize = UnsafeUtility.SizeOf<bool>() * c_InitialCount,
@@ -730,6 +775,7 @@ namespace Syadeu.Presentation.Components
                     buffer = UnsafeUtility.Malloc(bufferSize, align, Allocator.Persistent);
 
                 UnsafeUtility.MemClear(occBuffer, occSize);
+                // TODO: 할당되지도 않았는데 엔티티와 데이터 버퍼는 초기화 할 필요가 있나?
                 UnsafeUtility.MemClear(idxBuffer, idxSize);
                 UnsafeUtility.MemClear(buffer, bufferSize);
 
@@ -739,6 +785,11 @@ namespace Syadeu.Presentation.Components
                 this.m_ComponentBuffer = buffer;
                 this.m_Length = c_InitialCount;
                 m_Increased = 1;
+
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+                CLSTypedDictionary<ComponentBufferAtomicSafety>.SetValue(m_ComponentTypeInfo.Type,
+                    ComponentBufferAtomicSafety.Construct(typeInfo));
+#endif
             }
             public void Increment<TComponent>() where TComponent : unmanaged, IEntityComponent
             {
@@ -845,6 +896,12 @@ namespace Syadeu.Presentation.Components
                 UnsafeUtility.Free(m_OccupiedBuffer, Allocator.Persistent);
                 UnsafeUtility.Free(m_EntityBuffer, Allocator.Persistent);
                 UnsafeUtility.Free(m_ComponentBuffer, Allocator.Persistent);
+
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+                ComponentBufferAtomicSafety safety 
+                    = CLSTypedDictionary<ComponentBufferAtomicSafety>.GetValue(m_ComponentTypeInfo.Type);
+                safety.Dispose();
+#endif
             }
         }
 
