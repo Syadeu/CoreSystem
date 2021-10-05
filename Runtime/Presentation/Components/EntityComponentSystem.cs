@@ -40,7 +40,9 @@ namespace Syadeu.Presentation.Components
 
         private NativeArray<ComponentBuffer> m_ComponentArrayBuffer;
         private NativeQueue<DisposedComponent> m_DisposedComponents;
-        private MethodInfo m_RemoveComponentMethod;
+        //private MethodInfo m_RemoveComponentMethod;
+
+        private UnsafeMultiHashMap<int, int> m_ComponentHashMap;
 
         private Unity.Mathematics.Random m_Random;
 
@@ -85,6 +87,8 @@ namespace Syadeu.Presentation.Components
             m_ComponentArrayBuffer = new NativeArray<ComponentBuffer>(tempBuffer, Allocator.Persistent);
             m_DisposedComponents = new NativeQueue<DisposedComponent>(Allocator.Persistent);
 
+            m_ComponentHashMap = new UnsafeMultiHashMap<int, int>(length, AllocatorManager.Persistent);
+
             DisposedComponent.Initialize((ComponentBuffer*)m_ComponentArrayBuffer.GetUnsafePtr());
 
             ConstructSharedStatics();
@@ -116,14 +120,9 @@ namespace Syadeu.Presentation.Components
         private void ConstructSharedStatics()
         {
             Constants.Value.Data.SystemID = SystemID;
-            
-        }
-        protected override PresentationResult OnInitializeAsync()
-        {
-            m_RemoveComponentMethod = TypeHelper.TypeOf<EntityComponentSystem>.Type.GetMethod(nameof(RemoveComponent),
-                new Type[] { TypeHelper.TypeOf<EntityData<IEntityData>>.Type });
 
-            return base.OnInitializeAsync();
+            //UntypedUnsafeHashMap test = new UntypedUnsafeHashMap();
+            
         }
         
         public override void OnDispose()
@@ -144,6 +143,8 @@ namespace Syadeu.Presentation.Components
                 m_ComponentArrayBuffer[i].Dispose();
             }
             m_ComponentArrayBuffer.Dispose();
+
+            m_ComponentHashMap.Dispose();
 
             m_EntitySystem = null;
         }
@@ -311,6 +312,8 @@ namespace Syadeu.Presentation.Components
             m_ComponentArrayBuffer[index.x].m_OccupiedBuffer[index.y] = true;
             m_ComponentArrayBuffer[index.x].m_EntityBuffer[index.y] = entity;
 
+            m_ComponentHashMap.Add(index.y, index.y);
+
             CoreSystem.Logger.Log(Channel.Component,
                 $"Component {TypeHelper.TypeOf<TComponent>.Name} set at entity({entity.Name}), index {index}");
             return data;
@@ -329,13 +332,8 @@ namespace Syadeu.Presentation.Components
                 return;
             }
 #endif
-            //DisposedComponent<TComponent>.Initialize((ComponentBuffer*)m_ComponentArrayBuffer.GetUnsafePtr());
+            m_ComponentHashMap.Remove(index.y, index.y);
 
-            //DisposedComponent<TComponent> dispose = new DisposedComponent<TComponent>()
-            //{
-            //    index = index,
-            //    entity = entity
-            //};
             DisposedComponent dispose = DisposedComponent.Construct(index, entity);
 
             if (CoreSystem.BlockCreateInstance)
@@ -351,9 +349,37 @@ namespace Syadeu.Presentation.Components
         }
         public void RemoveComponent(EntityData<IEntityData> entity, Type componentType)
         {
-            MethodInfo method = m_RemoveComponentMethod.MakeGenericMethod(componentType);
-            method.Invoke(this, new object[] { entity });
+            int2 index = GetIndex(componentType, entity);
+#if DEBUG_MODE
+            if (!m_ComponentArrayBuffer[index.x].IsCreated)
+            {
+                CoreSystem.Logger.LogError(Channel.Component,
+                    $"Component buffer error. " +
+                    $"Didn\'t collected this component({TypeHelper.ToString(componentType)}) infomation at initializing stage.");
+
+                return;
+            }
+#endif
+            m_ComponentHashMap.Remove(index.y, index.y);
+            
+            DisposedComponent dispose = DisposedComponent.Construct(index, entity);
+
+            if (CoreSystem.BlockCreateInstance)
+            {
+                dispose.Dispose();
+            }
+            else
+            {
+                m_DisposedComponents.Enqueue(dispose);
+                CoreSystem.Logger.Log(Channel.Component,
+                    $"{TypeHelper.ToString(componentType)} component at {entity.Name} remove queued.");
+            }
         }
+        /// <summary>
+        /// TODO: Reflection 이 일어나서 SharedStatic 으로 interface 해싱 후 받아오는 게 좋아보임.
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <param name="interfaceType"></param>
         public void RemoveComponent(ObjectBase obj, Type interfaceType)
         {
             const string c_Parent = "Parent";
@@ -534,12 +560,12 @@ namespace Syadeu.Presentation.Components
         /// </remarks>
         /// <param name="t"></param>
         /// <returns></returns>
-        private static bool IsZeroSizeStruct(Type t)
+        internal static bool IsZeroSizeStruct(Type t)
         {
             return t.IsValueType && !t.IsPrimitive &&
                 t.GetFields((BindingFlags)0x34).All(fi => IsZeroSizeStruct(fi.FieldType));
         }
-        private static bool CollectTypes<T>(Type t)
+        internal static bool CollectTypes<T>(Type t)
         {
             if (t.IsAbstract || t.IsInterface) return false;
 
@@ -547,11 +573,21 @@ namespace Syadeu.Presentation.Components
 
             return false;
         }
-        private static int AlignOf(Type t)
+        internal static int AlignOf(Type t)
         {
             Type temp = typeof(AlignOfHelper<>).MakeGenericType(t);
 
             return UnsafeUtility.SizeOf(temp) - UnsafeUtility.SizeOf(t);
+        }
+
+        internal static bool IsComponentType(Type t)
+        {
+            if (!TypeHelper.TypeOf<IEntityComponent>.Type.IsAssignableFrom(t))
+            {
+                return false;
+            }
+
+            return true;
         }
 
         #endregion
@@ -564,55 +600,7 @@ namespace Syadeu.Presentation.Components
 
             public static PresentationSystemID<EntityComponentSystem> SystemID => Value.Data.SystemID;
         }
-        /// <summary>
-        /// Runtime 중 기본 <see cref="System.Type"/> 의 정보를 저장하고, 해당 타입의 binary 크기, alignment를 저장합니다.
-        /// </summary>
-        public struct TypeInfo
-        {
-            private readonly RuntimeTypeHandle m_TypeHandle;
-            private readonly int m_TypeIndex;
-            private readonly int m_Size;
-            private readonly int m_Align;
-
-            public Type Type => Type.GetTypeFromHandle(m_TypeHandle);
-            public int Index => m_TypeIndex;
-            public int Size => m_Size;
-            public int Align => m_Align;
-
-            private TypeInfo(Type type, int index, int size, int align)
-            {
-                m_TypeHandle = type.TypeHandle;
-                m_TypeIndex = index;
-                m_Size = size;
-                m_Align = align;
-            }
-
-            public static TypeInfo Construct(Type type, int index, int size, int align)
-            {
-                return new TypeInfo(type, index, size, align);
-            }
-            public static TypeInfo Construct(Type type, int index)
-            {
-                return new TypeInfo(type, index, UnsafeUtility.SizeOf(type), AlignOf(type));
-            }
-        }
-        public struct ComponentType
-        {
-            public static SharedStatic<TypeInfo> GetValue(Type componentType)
-            {
-                return SharedStatic<TypeInfo>.GetOrCreate(
-                    TypeHelper.TypeOf<EntityComponentSystem>.Type,
-                    componentType, (uint)UnsafeUtility.AlignOf<TypeInfo>());
-            }
-        }
-        public struct ComponentType<TComponent>
-        {
-            private static readonly SharedStatic<TypeInfo> Value
-                = SharedStatic<TypeInfo>.GetOrCreate<EntityComponentSystem, TComponent>((uint)UnsafeUtility.AlignOf<TypeInfo>());
-
-            public static Type Type => Value.Data.Type;
-            public static int Index => Value.Data.Index;
-        }
+        
 
         /// <summary>
         /// Frame 단위로 Presentation 이 진행되기 떄문에, 해당 프레임에서 제거된 프레임일지어도
@@ -894,22 +882,77 @@ namespace Syadeu.Presentation.Components
 
     public delegate void EntityComponentDelegate<TEntity, TComponent>(in TEntity entity, in TComponent component) where TComponent : unmanaged, IEntityComponent;
 
+    /// <summary>
+    /// Runtime 중 기본 <see cref="System.Type"/> 의 정보를 저장하고, 해당 타입의 binary 크기, alignment를 저장합니다.
+    /// </summary>
+    public struct TypeInfo
+    {
+        private readonly RuntimeTypeHandle m_TypeHandle;
+        private readonly int m_TypeIndex;
+        private readonly int m_Size;
+        private readonly int m_Align;
+
+        public Type Type => Type.GetTypeFromHandle(m_TypeHandle);
+        public int Index => m_TypeIndex;
+        public int Size => m_Size;
+        public int Align => m_Align;
+
+        private TypeInfo(Type type, int index, int size, int align)
+        {
+            m_TypeHandle = type.TypeHandle;
+            m_TypeIndex = index;
+            m_Size = size;
+            m_Align = align;
+        }
+
+        public static TypeInfo Construct(Type type, int index, int size, int align)
+        {
+            return new TypeInfo(type, index, size, align);
+        }
+        public static TypeInfo Construct(Type type, int index)
+        {
+            if (!UnsafeUtility.IsBlittable(type) || !UnsafeUtility.IsUnmanaged(type))
+            {
+                CoreSystem.Logger.LogError(Channel.Component,
+                    $"Could not resovle type of {TypeHelper.ToString(type)} is not ValueType.");
+
+                return new TypeInfo(type, index, 0, 0);
+            }
+
+            return new TypeInfo(type, index, UnsafeUtility.SizeOf(type), EntityComponentSystem.AlignOf(type));
+        }
+    }
+    public struct ComponentType
+    {
+        public static SharedStatic<TypeInfo> GetValue(Type componentType)
+        {
+            return SharedStatic<TypeInfo>.GetOrCreate(
+                TypeHelper.TypeOf<EntityComponentSystem>.Type,
+                componentType, (uint)UnsafeUtility.AlignOf<TypeInfo>());
+        }
+    }
+    public struct ComponentType<TComponent>
+    {
+        private static readonly SharedStatic<TypeInfo> Value
+            = SharedStatic<TypeInfo>.GetOrCreate<EntityComponentSystem, TComponent>((uint)UnsafeUtility.AlignOf<TypeInfo>());
+
+        public static Type Type => Value.Data.Type;
+        public static int Index => Value.Data.Index;
+    }
+
     [Obsolete("In development")]
     public struct EntityComponentBuffer
     {
-
+        unsafe private UntypedUnsafeHashMap* componentMap;
+        private int m_TypeIndex;
 
         unsafe internal static EntityComponentBuffer Create(
-            EntityComponentSystem.ComponentBuffer* pointer)
+            EntityComponentSystem.ComponentBuffer* pointer, UntypedUnsafeHashMap* componentMap)
         {
             CheckIsAllocated(pointer);
 
-            var temp = new EntityComponentBuffer();
-
-            for (int i = 0; i < pointer->Length; i++)
-            {
-                
-            }
+            EntityComponentBuffer temp = new EntityComponentBuffer();
+            temp.componentMap = componentMap;
 
             return temp;
         }
@@ -962,6 +1005,49 @@ namespace Syadeu.Presentation.Components
             //{
 
             //}
+        }
+
+        public EntityComponentBuffer SetTargetComponent<TComponent>()
+            where TComponent : unmanaged, IEntityComponent
+        {
+            m_TypeIndex = ComponentType<TComponent>.Index;
+
+            return this;
+        }
+        public EntityComponentBuffer SetTargetComponent(Type componentType)
+        {
+            if (!UnsafeUtility.IsBlittable(componentType) || !UnsafeUtility.IsUnmanaged(componentType))
+            {
+                CoreSystem.Logger.LogError(Channel.Component,
+                    $"Could not resovle type of {TypeHelper.ToString(componentType)} is not ValueType.");
+
+                return this;
+            }
+            else if (!EntityComponentSystem.IsComponentType(componentType))
+            {
+                CoreSystem.Logger.LogError(Channel.Component,
+                    $"Type({TypeHelper.ToString(componentType)}) is not a component type. " +
+                    $"All components must inheritance {nameof(IEntityComponent)}.");
+
+                return this;
+            }
+
+            m_TypeIndex = ComponentType.GetValue(componentType).Data.Index;
+
+            return this;
+        }
+        unsafe public void Build()
+        {
+            ref UnsafeMultiHashMap<int, int> cache 
+                = ref UnsafeUtility.As<UntypedUnsafeHashMap, UnsafeMultiHashMap<int, int>>(ref *componentMap);
+
+            if (cache.TryGetFirstValue(m_TypeIndex, out int componentIdx, out var iterator))
+            {
+                do
+                {
+
+                } while (cache.TryGetNextValue(out componentIdx, ref iterator));
+            }
         }
     }
     [Obsolete("In development")]
