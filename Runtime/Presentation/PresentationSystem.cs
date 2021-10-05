@@ -199,7 +199,7 @@ namespace Syadeu.Presentation
                 Assert.IsTrue(IsValid(), $"{TypeHelper.TypeOf<TSystem>.Type.Name} System is not valid");
 #endif
                 PresentationSystem<TGroup, TSystem> ins = Instance;
-                return PresentationManager.GetSystem<TSystem>(in ins.m_GroupHash, in ins.m_Index);
+                return PresentationManager.GetSystem<TSystem>(in ins.m_GroupHash);
             }
         }
         /// <summary>

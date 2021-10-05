@@ -79,6 +79,20 @@ namespace Syadeu.Internal
         [System.Diagnostics.Conditional("DEBUG_MODE")]
         public static void ThreadBlock(string name, ThreadInfo acceptOnly)
         {
+            if ((acceptOnly & ThreadInfo.Unity) == ThreadInfo.Unity)
+            {
+                if (!UnityEditorInternal.InternalEditorUtility.CurrentThreadIsMainThread())
+                {
+                    Log(Channel.Thread, ResultFlag.Error,
+                        string.Format(c_LogThreadErrorText, name,
+                            TypeHelper.Enum<ThreadInfo>.ToString(ThreadInfo.Unity),
+                            TypeHelper.Enum<ThreadInfo>.ToString(acceptOnly)),
+                        false);
+                }
+
+                return;
+            }
+
             ThreadInfo info = GetThreadType();
             if (!acceptOnly.HasFlag(info))
             {

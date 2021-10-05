@@ -52,7 +52,7 @@ namespace Syadeu.Presentation
             private readonly List<Hash> m_GroupDependences = new List<Hash>();
 
             //public CoreRoutine MainPresentation;
-            public CoreRoutine BackgroundPresentation;
+            //public CoreRoutine BackgroundPresentation;
 
             public bool m_MainthreadSignal = false;
             public bool m_BackgroundthreadSignal = false;
@@ -86,10 +86,12 @@ namespace Syadeu.Presentation
 #if DEBUG_MODE
             private Unity.Profiling.ProfilerMarker
                 m_InitializeMarker, m_InitializeAsyncMarker, m_StartPreMarker,
+                m_BeforePreJobMarker, m_OnPreJobMarker, m_AfterPreJobMarker,
                 m_BeforePreMarker, m_OnPreMarker, m_AfterPreMarker;
 
             private List<Unity.Profiling.ProfilerMarker>
-                m_BeforePreSystemMarkers, m_OnPreSystemMarkers, m_AfterPreSystemMarkers;
+                m_BeforePreSystemMarkers, m_OnPreSystemMarkers, m_AfterPreSystemMarkers,
+                m_BeforePreAsyncSystemMarkers, m_OnPreAsyncSystemMarkers, m_AfterPreAsyncSystemMarkers;
 #endif
 
             public Group(Type name, Hash hash)
@@ -107,10 +109,14 @@ namespace Syadeu.Presentation
                 m_WaitOnPre = new WaitUntil(() => m_MainthreadOnPre && m_BackgroundthreadOnPre);
                 m_WaitAfterPre = new WaitUntil(() => m_MainthreadAfterPre && m_BackgroundthreadAfterPre);
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if DEBUG_MODE
                 m_InitializeMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{m_Name.Name}.Initialize");
                 m_InitializeAsyncMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{m_Name.Name}.InitializeAsync");
                 m_StartPreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{m_Name.Name}.StartPresentation");
+
+                m_BeforePreJobMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{m_Name.Name}.BeforePresentation Complete JobHandle");
+                m_OnPreJobMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{m_Name.Name}.OnPresentation Complete JobHandle");
+                m_AfterPreJobMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{m_Name.Name}.AfterPresentation Complete JobHandle");
 
                 m_BeforePreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{m_Name.Name}.BeforePresentation");
                 m_OnPreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{m_Name.Name}.OnPresentation");
@@ -119,6 +125,9 @@ namespace Syadeu.Presentation
                 m_BeforePreSystemMarkers = new List<Unity.Profiling.ProfilerMarker>();
                 m_OnPreSystemMarkers = new List<Unity.Profiling.ProfilerMarker>();
                 m_AfterPreSystemMarkers = new List<Unity.Profiling.ProfilerMarker>();
+                m_BeforePreAsyncSystemMarkers = new List<Unity.Profiling.ProfilerMarker>();
+                m_OnPreAsyncSystemMarkers = new List<Unity.Profiling.ProfilerMarker>();
+                m_AfterPreAsyncSystemMarkers = new List<Unity.Profiling.ProfilerMarker>();
 #endif
             }
 
@@ -138,7 +147,7 @@ namespace Syadeu.Presentation
                 return false;
             }
 
-            public TSystem GetSystem<TSystem>(in int systemIdx) where TSystem : PresentationSystemEntity
+            public TSystem GetSystem<TSystem>() where TSystem : PresentationSystemEntity
             {
                 for (int i = 0; i < m_Systems.Count; i++)
                 {
@@ -186,6 +195,7 @@ namespace Syadeu.Presentation
                     m_BeforePresentations.Add(system);
 #if DEBUG_MODE
                     m_BeforePreSystemMarkers.Add(new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{system.GetType().Name}"));
+                    m_BeforePreAsyncSystemMarkers.Add(new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{system.GetType().Name}"));
 #endif
                 }
                 if (system.EnableOnPresentation)
@@ -193,6 +203,7 @@ namespace Syadeu.Presentation
                     m_OnPresentations.Add(system);
 #if DEBUG_MODE
                     m_OnPreSystemMarkers.Add(new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{system.GetType().Name}"));
+                    m_OnPreAsyncSystemMarkers.Add(new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{system.GetType().Name}"));
 #endif
                 }
                 if (system.EnableAfterPresentation)
@@ -200,6 +211,7 @@ namespace Syadeu.Presentation
                     m_AfterPresentations.Add(system);
 #if DEBUG_MODE
                     m_AfterPreSystemMarkers.Add(new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{system.GetType().Name}"));
+                    m_AfterPreAsyncSystemMarkers.Add(new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{system.GetType().Name}"));
 #endif
                 }
             }
@@ -298,18 +310,22 @@ namespace Syadeu.Presentation
                 m_MainthreadBeforePre = false;
 
                 // Unity Jobs
-                m_BeforePresentationJobHandle.Complete();
+#if DEBUG_MODE
+                using (m_BeforePreJobMarker.Auto())
+#endif
+                {
+                    m_BeforePresentationJobHandle.Complete();
+                }
 
                 for (int i = 0; i < m_BeforePresentations.Count; i++)
                 {
 #if DEBUG_MODE
-                    m_BeforePreSystemMarkers[i].Begin();
+                    using (m_BeforePreSystemMarkers[i].Auto())
 #endif
-                    PresentationResult result = m_BeforePresentations[i].BeforePresentation();
-                    LogMessage(result);
-#if DEBUG_MODE
-                    m_BeforePreSystemMarkers[i].End();
-#endif
+                    {
+                        PresentationResult result = m_BeforePresentations[i].BeforePresentation();
+                        LogMessage(result);
+                    }
                 }
 
                 m_MainthreadBeforePre = true;
@@ -321,8 +337,13 @@ namespace Syadeu.Presentation
             {
                 for (int i = 0; i < m_BeforePresentations.Count; i++)
                 {
-                    PresentationResult result = m_BeforePresentations[i].BeforePresentationAsync();
-                    LogMessage(result);
+#if DEBUG_MODE
+                    using (m_BeforePreAsyncSystemMarkers[i].Auto())
+#endif
+                    {
+                        PresentationResult result = m_BeforePresentations[i].BeforePresentationAsync();
+                        LogMessage(result);
+                    }
                 }
             }
             public void OnPresentation()
@@ -333,18 +354,22 @@ namespace Syadeu.Presentation
                 m_MainthreadOnPre = false;
 
                 // Unity Jobs
-                m_OnPresentationJobHandle.Complete();
+#if DEBUG_MODE
+                using (m_OnPreJobMarker.Auto())
+#endif
+                {
+                    m_OnPresentationJobHandle.Complete();
+                }
 
                 for (int i = 0; i < m_OnPresentations.Count; i++)
                 {
 #if DEBUG_MODE
-                    m_OnPreSystemMarkers[i].Begin();
+                    using (m_OnPreSystemMarkers[i].Auto())
 #endif
-                    PresentationResult result = m_OnPresentations[i].OnPresentation();
-                    LogMessage(result);
-#if DEBUG_MODE
-                    m_OnPreSystemMarkers[i].End();
-#endif
+                    {
+                        PresentationResult result = m_OnPresentations[i].OnPresentation();
+                        LogMessage(result);
+                    }
                 }
 
                 m_MainthreadOnPre = true;
@@ -356,8 +381,13 @@ namespace Syadeu.Presentation
             {
                 for (int i = 0; i < m_OnPresentations.Count; i++)
                 {
-                    PresentationResult result = m_OnPresentations[i].OnPresentationAsync();
-                    LogMessage(result);
+#if DEBUG_MODE
+                    using (m_OnPreAsyncSystemMarkers[i].Auto())
+#endif
+                    {
+                        PresentationResult result = m_OnPresentations[i].OnPresentationAsync();
+                        LogMessage(result);
+                    }
                 }
             }
             public void AfterPresentation()
@@ -368,18 +398,22 @@ namespace Syadeu.Presentation
                 m_MainthreadAfterPre = false;
 
                 // Unity Jobs
-                m_AfterPresentationJobHandle.Complete();
+#if DEBUG_MODE
+                using (m_AfterPreJobMarker.Auto())
+#endif
+                {
+                    m_AfterPresentationJobHandle.Complete();
+                }
 
                 for (int i = 0; i < m_AfterPresentations.Count; i++)
                 {
 #if DEBUG_MODE
-                    m_AfterPreSystemMarkers[i].Begin();
+                    using (m_AfterPreSystemMarkers[i].Auto())
 #endif
-                    PresentationResult result = m_AfterPresentations[i].AfterPresentation();
-                    LogMessage(result);
-#if DEBUG_MODE
-                    m_AfterPreSystemMarkers[i].End();
-#endif
+                    {
+                        PresentationResult result = m_AfterPresentations[i].AfterPresentation();
+                        LogMessage(result);
+                    }
                 }
 
                 m_MainthreadAfterPre = true;
@@ -391,8 +425,13 @@ namespace Syadeu.Presentation
             {
                 for (int i = 0; i < m_AfterPresentations.Count; i++)
                 {
-                    PresentationResult result = m_AfterPresentations[i].AfterPresentationAsync();
-                    LogMessage(result);
+#if DEBUG_MODE
+                    using (m_AfterPreAsyncSystemMarkers[i].Auto())
+#endif
+                    {
+                        PresentationResult result = m_AfterPresentations[i].AfterPresentationAsync();
+                        LogMessage(result);
+                    }
                 }
             }
 
@@ -401,7 +440,6 @@ namespace Syadeu.Presentation
         private readonly Hash m_DefaultGroupHash = GroupToHash(TypeHelper.TypeOf<DefaultPresentationGroup>.Type);
 
         internal readonly Dictionary<Hash, Group> m_PresentationGroups = new Dictionary<Hash, Group>();
-        //internal readonly Dictionary<Type, Hash> m_RegisteredGroup = new Dictionary<Type, Hash>();
         internal readonly Dictionary<string, List<Hash>> m_DependenceSceneList = new Dictionary<string, List<Hash>>();
 
         private Thread m_PresentationThread;
@@ -608,24 +646,54 @@ namespace Syadeu.Presentation
 
         internal event Action PostUpdate;
 
+#if DEBUG_MODE
+        private Unity.Profiling.ProfilerMarker
+                m_PrePresentationMarker = new Unity.Profiling.ProfilerMarker("Update Method (PreUpdate)"),
+                m_PostPresentationMarker = new Unity.Profiling.ProfilerMarker("Update Method (PostUpdate)"),
+
+                m_BeforeSemaphoreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Internal, "Semaphore.Set (BeforeUpdate)"),
+                m_OnSemaphoreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Internal, "Semaphore.Set (OnUpdate)"),
+                m_AfterSemaphoreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Internal, "Semaphore.Set (AfterUpdate)");
+#endif
+
         private void PresentationPreUpdate()
         {
-            PreUpdate?.Invoke();
+#if DEBUG_MODE
+            using (m_PrePresentationMarker.Auto())
+#endif
+            {
+                PreUpdate?.Invoke();
+            }
         }
 
         private void PresentationBeforeUpdate()
         {
-            m_BeforeUpdateAsyncSemaphore.Set();
+#if DEBUG_MODE
+            using (m_BeforeSemaphoreMarker.Auto())
+#endif
+            {
+                m_BeforeUpdateAsyncSemaphore.Set();
+            }
             BeforeUpdate?.Invoke();
         }
         private void PresentationOnUpdate()
         {
-            m_OnUpdateAsyncSemaphore.Set();
+#if DEBUG_MODE
+            using (m_OnSemaphoreMarker.Auto())
+#endif
+            {
+                m_OnUpdateAsyncSemaphore.Set();
+            }
             Update?.Invoke();
         }
         private void PresentationAfterUpdate()
         {
-            m_AfterUpdateAsyncSemaphore.Set();
+#if DEBUG_MODE
+            using (m_AfterSemaphoreMarker.Auto())
+#endif
+            {
+                m_AfterUpdateAsyncSemaphore.Set();
+            }
             AfterUpdate?.Invoke();
         }
 
@@ -640,7 +708,12 @@ namespace Syadeu.Presentation
 
         private void PresentationPostUpdate()
         {
-            PostUpdate?.Invoke();
+#if DEBUG_MODE
+            using (m_PostPresentationMarker.Auto())
+#endif
+            {
+                PostUpdate?.Invoke();
+            }
         }
 
         private ManualResetEvent
@@ -683,7 +756,7 @@ namespace Syadeu.Presentation
                 {
                     while (!CoreSystem.BlockCreateInstance)
                     {
-                        if (CoreSystem.SimulateWatcher.WaitOne(100)) break;
+                        if (CoreSystem.SimulateWatcher.WaitOne(1)) break;
                     }
                     if (CoreSystem.BlockCreateInstance) break;
                 }
@@ -701,13 +774,11 @@ namespace Syadeu.Presentation
                 beforeUpdateMarker.Begin();
 #endif
                 {
+                    //"in befor".ToLog();
                     mgr.BeforeUpdateAsync?.Invoke();
                     mgr.m_BeforeUpdateAsyncSemaphore.Reset();
-                    //for (int i = 0; i < 100000; i++)
-                    //{
-                    //    Math.Sqrt(2.5f);
-                    //}
-                    //UnityEngine.Debug.Log("before");
+
+                    //TestStress();
                 }
 #if DEBUG_MODE
                 beforeUpdateMarker.End();
@@ -723,13 +794,13 @@ namespace Syadeu.Presentation
                 onSemaphoreMarker.End();
                 onUpdateMarker.Begin();
 #endif
-                mgr.UpdateAsync?.Invoke();
-                mgr.m_OnUpdateAsyncSemaphore.Reset();
-                //for (int i = 0; i < 100000; i++)
-                //{
-                //    Math.Sqrt(2.5f);
-                //}
-                //UnityEngine.Debug.Log("on");
+                {
+                    //"in on".ToLog();
+                    mgr.UpdateAsync?.Invoke();
+                    mgr.m_OnUpdateAsyncSemaphore.Reset();
+
+                    //TestStress();
+                }
 #if DEBUG_MODE
                 onUpdateMarker.End();
                 afterSemaphoreMarker.Begin();
@@ -744,13 +815,13 @@ namespace Syadeu.Presentation
                 afterSemaphoreMarker.End();
                 afterUpdateMarker.Begin();
 #endif
-                mgr.AfterUpdateAsync?.Invoke();
-                mgr.m_AfterUpdateAsyncSemaphore.Reset();
-                //for (int i = 0; i < 100000; i++)
-                //{
-                //    Math.Sqrt(2.5f);
-                //}
-                //UnityEngine.Debug.Log("after");
+                {
+                    //"in after".ToLog();
+                    mgr.AfterUpdateAsync?.Invoke();
+                    mgr.m_AfterUpdateAsyncSemaphore.Reset();
+
+                    //TestStress();
+                }
 #if DEBUG_MODE
                 afterUpdateMarker.End();
                 PresentationUpdateMarker.End();
@@ -763,6 +834,15 @@ namespace Syadeu.Presentation
             mgr.m_AfterUpdateAsyncSemaphore.Dispose();
 
             UnityEngine.Debug.Log("thread out");
+        }
+
+        [System.Diagnostics.Conditional("DEBUG_MODE")]
+        private static void TestStress()
+        {
+            for (int i = 0; i < 100000; i++)
+            {
+                Math.Sqrt(2.5f);
+            }
         }
 
         #endregion
@@ -895,7 +975,7 @@ namespace Syadeu.Presentation
 
             //group.MainPresentation = Instance.StartUnityUpdate(Presentation(group));
             Instance.StartUnityUpdate(Presentation(group));
-            group.BackgroundPresentation = Instance.StartBackgroundUpdate(PresentationAsync(group));
+            Instance.StartBackgroundUpdate(PresentationAsync(group));
             group.m_IsStarted = true;
 
             CoreSystem.Logger.Log(Channel.Presentation, $"{group.m_Name.Name} group is started");
@@ -1039,7 +1119,7 @@ namespace Syadeu.Presentation
 
             return true;
         }
-        internal static TSystem GetSystem<TSystem>(in Hash groupHash, in int systemIdx)
+        internal static TSystem GetSystem<TSystem>(in Hash groupHash)
             where TSystem : PresentationSystemEntity
         {
             if (!Instance.m_PresentationGroups.TryGetValue(groupHash, out Group group))
@@ -1047,7 +1127,7 @@ namespace Syadeu.Presentation
                 return null;
             }
 
-            return group.GetSystem<TSystem>(in systemIdx);
+            return group.GetSystem<TSystem>();
         }
 
         #endregion
