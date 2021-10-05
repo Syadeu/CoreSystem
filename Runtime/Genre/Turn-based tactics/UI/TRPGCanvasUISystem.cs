@@ -14,6 +14,11 @@ namespace Syadeu.Presentation.TurnTable.UI
         private TRPGEndTurnUI m_EndTurn;
         private TRPGFireUI m_FireUI;
 
+        private bool 
+            m_EndTurnHide = false,
+            m_ShortcutsHide = false,
+            m_FireHide = false;
+
         private EventSystem m_EventSystem;
         private Input.InputSystem m_InputSystem;
         private TRPGTurnTableSystem m_TurnTableSystem;
@@ -61,6 +66,8 @@ namespace Syadeu.Presentation.TurnTable.UI
             InputAction inputAction = m_InputSystem.AddKeyboardBinding(index, false, InputActionType.Button);
             inputAction.performed += shortcut.OnKeyboardPressed;
             inputAction.Enable();
+
+            shortcut.Hide = m_ShortcutsHide;
         }
 
         public void AuthoringEndTurn(TRPGEndTurnUI endTurn)
@@ -68,16 +75,21 @@ namespace Syadeu.Presentation.TurnTable.UI
             m_EndTurn = endTurn;
 
             endTurn.Initialize(m_TurnTableSystem, m_EventSystem);
+
+            m_EndTurn.Hide = m_EndTurnHide;
         }
 
         public void AuthoringFire(TRPGFireUI fire)
         {
             m_FireUI = fire;
+            m_FireUI.Open(!m_FireHide);
         }
 
         public void SetEndTurn(bool hide)
         {
-            m_EndTurn.Hide = hide;
+            if (m_EndTurn != null) m_EndTurn.Hide = hide;
+
+            m_EndTurnHide = hide;
         }
         public void SetShortcuts(bool hide, bool enable)
         {
@@ -92,10 +104,20 @@ namespace Syadeu.Presentation.TurnTable.UI
                 m_Shortcuts[i].Hide = hide;
                 m_Shortcuts[i].Enable = enable;
             }
+
+            m_ShortcutsHide = hide;
         }
         public void SetFire(bool hide)
         {
-            m_FireUI.Open(!hide);
+            if (m_FireUI != null) m_FireUI.Open(!hide);
+
+            m_FireHide = hide;
+        }
+
+        public void SetPlayerUI(bool enable)
+        {
+            SetEndTurn(!enable);
+            SetShortcuts(!enable, true);
         }
     }
 }

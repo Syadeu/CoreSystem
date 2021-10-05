@@ -45,7 +45,7 @@ namespace Syadeu.Presentation.Map
 
         #region Presentation Methods
 
-        protected override PresentationResult OnInitialize()
+protected override PresentationResult OnInitialize()
         {
             CreateConsoleCommands();
 
@@ -53,9 +53,9 @@ namespace Syadeu.Presentation.Map
         }
         protected override PresentationResult OnInitializeAsync()
         {
-            RequestSystem<EntitySystem>(Bind);
-            RequestSystem<Render.RenderSystem>(Bind);
-            RequestSystem<Events.EventSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, EntitySystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, Render.RenderSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, Events.EventSystem>(Bind);
 
             return base.OnInitializeAsync();
         }
@@ -220,6 +220,7 @@ namespace Syadeu.Presentation.Map
                     }
                 }
             }
+
             return base.BeforePresentation();
         }
         
@@ -644,6 +645,10 @@ namespace Syadeu.Presentation.Map
         {
             return GridMap.GetPosition(idx);
         }
+        public GridPosition IndexToGridPosition(int idx)
+        {
+            return GridMap.GetGridPosition(in idx);
+        }
         public int2 IndexToLocation(int idx)
         {
             //if (GridMap.Grid == null) throw new System.Exception();
@@ -655,6 +660,10 @@ namespace Syadeu.Presentation.Map
             return GridMap.GetIndex(position);
         }
 
+        public GridPosition GetGridPosition(float3 position)
+        {
+            return GridMap.GetGridPosition(in position);
+        }
         public GridPosition GetDirection(in int from, in Direction direction)
         {
             return GridMap.GetDirection(in from, in direction);
@@ -689,6 +698,16 @@ namespace Syadeu.Presentation.Map
 
         #region UI
 
+        public void TestPlaceUICell(GridPosition position, float heightOffset = .25f)
+        {
+            float3 pos = IndexToPosition(position.index) + new float3(0, heightOffset, 0);
+
+            GameObject temp = new GameObject();
+            temp.AddComponent<MeshFilter>().sharedMesh = GridMap.CellMesh;
+            temp.AddComponent<MeshRenderer>().material = GridMap.CellMaterial;
+
+            temp.transform.position = pos;
+        }
         public Entity<IEntity> PlaceUICell(GridPosition position, float heightOffset = .25f)
         {
             Entity<IEntity> entity = 

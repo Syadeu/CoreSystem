@@ -107,6 +107,8 @@ namespace Syadeu.Presentation.TurnTable
         {
             m_TRPGCameraMovement = m_RenderSystem.CameraComponent.GetCameraComponent<TRPGCameraMovement>();
 
+            m_TRPGCanvasUISystem.SetPlayerUI(false);
+
             return base.OnStartPresentation();
         }
 
@@ -215,8 +217,7 @@ namespace Syadeu.Presentation.TurnTable
         {
             DisableCurrentShortcut();
 
-            m_TRPGCanvasUISystem.SetEndTurn(true);
-            m_TRPGCanvasUISystem.SetShortcuts(true, false);
+            m_TRPGCanvasUISystem.SetPlayerUI(false);
 
             m_EventSystem.ScheduleEvent(TRPGEndTurnEvent.GetEvent());
         }
@@ -229,8 +230,7 @@ namespace Syadeu.Presentation.TurnTable
             ActorFactionComponent faction = ev.Entity.GetComponent<ActorFactionComponent>();
             if (faction.FactionType != FactionType.Player || ev.State != OnTurnStateChangedEvent.TurnState.Start) return;
 
-            m_TRPGCanvasUISystem.SetEndTurn(false);
-            m_TRPGCanvasUISystem.SetShortcuts(false, true);
+            m_TRPGCanvasUISystem.SetPlayerUI(true);
         }
 
         public void MoveToCell(EntityData<IEntityData> entity, GridPosition position)

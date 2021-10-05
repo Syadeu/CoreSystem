@@ -3,6 +3,7 @@ using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Render;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -75,7 +76,9 @@ namespace Syadeu.Presentation.Map
 
         [JsonIgnore] public List<int> m_ObstacleLayerIndices = new List<int>();
         [JsonIgnore] public NativeHashSet<int> ObstacleLayer { get; private set; }
+
         [JsonIgnore] public Mesh CellMesh { get; private set; }
+        [JsonIgnore] public Material CellMaterial { get; private set; }
 
         public void CreateGrid()
         {
@@ -135,6 +138,8 @@ namespace Syadeu.Presentation.Map
                 new Vector2(0, 1)
             };
             CellMesh.RecalculateBounds();
+
+            CellMaterial = new Material(Shader.Find(RenderSystem.s_DefaultShaderName));
         }
         public void DestroyGrid()
         {
@@ -503,6 +508,12 @@ namespace Syadeu.Presentation.Map
                 index,
                 targetGrid.PositionToLocation(position)
                 );
+        }
+        public GridPosition GetGridPosition(in int idx)
+        {
+            BinaryGrid grid = GetTargetGrid(in idx, out int targetIndex);
+
+            return new GridPosition(idx, grid.IndexToLocation(in targetIndex));
         }
         public float3 GetPosition(in GridPosition position)
         {
