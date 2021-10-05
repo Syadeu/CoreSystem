@@ -107,8 +107,8 @@ namespace Syadeu.Presentation.Entities
             }
             private unsafe static void PrivateExecute(ref T jobData, in int i)
             {
-                EntityComponentSystem.ComponentBuffer* p = (EntityComponentSystem.ComponentBuffer*)s_ComponentBuffer;
-                ref EntityComponentSystem.ComponentBuffer buffer = ref *p;
+                ComponentBuffer* p = (ComponentBuffer*)s_ComponentBuffer;
+                ref ComponentBuffer buffer = ref *p;
 
                 buffer.HasElementAt(i, out bool result);
                 if (!result) return;
@@ -159,7 +159,7 @@ namespace Syadeu.Presentation.Entities
             system.ComponentBufferSafetyCheck<TComponent>(out bool result);
             if (!result) return default(JobHandle);
 #endif
-            EntityComponentSystem.ComponentBuffer buffer = system.GetComponentBuffer<TComponent>();
+            ComponentBuffer buffer = system.GetComponentBuffer<TComponent>();
 
             JobHandle handle = JobsUtility.ScheduleParallelFor(ref scheduleParams, buffer.Length, innerloopBatchCount);
             JobHandle.CombineDependencies(s_GlobalJobHandle, handle);

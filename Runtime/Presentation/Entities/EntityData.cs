@@ -86,7 +86,7 @@ namespace Syadeu.Presentation.Entities
         }
 
         /// <inheritdoc cref="IEntityData.Idx"/>
-        private readonly Hash m_Idx;
+        private readonly EntityID m_Idx;
         private FixedString128Bytes m_Name;
 
         public T Target
@@ -143,7 +143,7 @@ namespace Syadeu.Presentation.Entities
         /// <inheritdoc cref="IEntityData.Hash"/>
         public Hash Hash => Target.Hash;
         /// <inheritdoc cref="IEntityData.Idx"/>
-        public Hash Idx => m_Idx;
+        public EntityID Idx => m_Idx;
         public Type Type => m_Idx.Equals(Hash.Empty) ? null : Target?.GetType();
 
         internal EntityData(Hash idx, string name)

@@ -70,6 +70,7 @@ namespace Syadeu.Presentation.Map
         [JsonIgnore] public int3 Size => m_Size;
         [JsonIgnore] public float CellSize => m_CellSize;
         [JsonIgnore] public int LayerCount => m_Layers.Length;
+        [JsonIgnore] public int GridCellCapacity => Grid.length;
         [JsonIgnore] private BinaryGrid Grid { get; set; }
         [JsonIgnore] private BinaryGrid[] SubGrids { get; set; }
         [JsonIgnore] private NativeHashSet<int>[] Layers { get; set; }

@@ -71,7 +71,7 @@ namespace Syadeu.Presentation.TurnTable
             ref TRPGActorAttackComponent att = ref Parent.GetComponent<TRPGActorAttackComponent>();
             if (att.m_HasTarget)
             {
-                att.m_CurrentTargets.Dispose();
+                //att.m_CurrentTargets.Dispose();
             }
 
             List<Entity<IEntity>> entities = new List<Entity<IEntity>>();
@@ -95,7 +95,7 @@ namespace Syadeu.Presentation.TurnTable
             
             if (entities.Count > 0)
             {
-                att.m_CurrentTargets = entities.GetEnumerator();
+                //att.m_CurrentTargets = entities.GetEnumerator();
                 att.m_TargetCount = entities.Count;
             }
             else
