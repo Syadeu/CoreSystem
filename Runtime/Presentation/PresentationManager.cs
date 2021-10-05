@@ -729,14 +729,20 @@ namespace Syadeu.Presentation
 
                 beforeSemaphoreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Internal, "Semaphore.WaitOne (BeforeUpdate)"),
                 onSemaphoreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Internal, "Semaphore.WaitOne (OnUpdate)"),
-                afterSemaphoreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Internal, "Semaphore.WaitOne (AfterUpdate)");
+                afterSemaphoreMarker = new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Internal, "Semaphore.WaitOne (AfterUpdate)"),
+
+                beforeUpdateMarker = new Unity.Profiling.ProfilerMarker("BeforeUpdate"),
+                onUpdateMarker = new Unity.Profiling.ProfilerMarker("OnUpdate"),
+                afterUpdateMarker = new Unity.Profiling.ProfilerMarker("AfterUpdate");
 
             UnityEngine.Profiling.CustomSampler
-                PresentationUpdateMarker = UnityEngine.Profiling.CustomSampler.Create("PresentationAsyncUpdate"),
+                PresentationUpdateMarker = UnityEngine.Profiling.CustomSampler.Create("PresentationAsyncUpdate");
 
-                beforeUpdateMarker = UnityEngine.Profiling.CustomSampler.Create("BeforeUpdate"),
-                onUpdateMarker = UnityEngine.Profiling.CustomSampler.Create("OnUpdate"),
-                afterUpdateMarker = UnityEngine.Profiling.CustomSampler.Create("AfterUpdate");
+                //beforeUpdateMarker = UnityEngine.Profiling.CustomSampler.Create("BeforeUpdate"),
+                //onUpdateMarker = UnityEngine.Profiling.CustomSampler.Create("OnUpdate"),
+                //afterUpdateMarker = UnityEngine.Profiling.CustomSampler.Create("AfterUpdate");
+
+            UnityEngine.Profiling.Profiler.BeginThreadProfiling("Syadeu", "CoreSystem.Presentation");
 #endif
             PresentationManager mgr = (PresentationManager)obj;
             Thread.CurrentThread.CurrentCulture = global::System.Globalization.CultureInfo.InvariantCulture;
@@ -748,7 +754,6 @@ namespace Syadeu.Presentation
 #if DEBUG_MODE
                 if (CoreSystem.IsEditorPaused) continue;
 
-                UnityEngine.Profiling.Profiler.BeginThreadProfiling("Syadeu", "CoreSystem.Presentation");
                 PresentationUpdateMarker.Begin();
 
                 using (simSemaphoreMarker.Auto())
@@ -761,17 +766,17 @@ namespace Syadeu.Presentation
                     if (CoreSystem.BlockCreateInstance) break;
                 }
 #if DEBUG_MODE
-                beforeSemaphoreMarker.Begin();
+                using (beforeSemaphoreMarker.Auto())
 #endif
-                while (!CoreSystem.BlockCreateInstance)
                 {
-                    if (mgr.m_BeforeUpdateAsyncSemaphore.WaitOne(1)) break;
+                    while (!CoreSystem.BlockCreateInstance)
+                    {
+                        if (mgr.m_BeforeUpdateAsyncSemaphore.WaitOne(1)) break;
+                    }
+                    if (CoreSystem.BlockCreateInstance) break;
                 }
-                if (CoreSystem.BlockCreateInstance) break;
-                
 #if DEBUG_MODE
-                beforeSemaphoreMarker.End();
-                beforeUpdateMarker.Begin();
+                using (beforeUpdateMarker.Auto())
 #endif
                 {
                     //"in befor".ToLog();
@@ -781,18 +786,18 @@ namespace Syadeu.Presentation
                     //TestStress();
                 }
 #if DEBUG_MODE
-                beforeUpdateMarker.End();
-                onSemaphoreMarker.Begin();
+                using (onSemaphoreMarker.Auto())
 #endif
-                while (!CoreSystem.BlockCreateInstance)
                 {
-                    if (mgr.m_OnUpdateAsyncSemaphore.WaitOne(1)) break;
+                    while (!CoreSystem.BlockCreateInstance)
+                    {
+                        if (mgr.m_OnUpdateAsyncSemaphore.WaitOne(1)) break;
+                    }
+                    if (CoreSystem.BlockCreateInstance) break;
                 }
-                if (CoreSystem.BlockCreateInstance) break;
-
+                
 #if DEBUG_MODE
-                onSemaphoreMarker.End();
-                onUpdateMarker.Begin();
+                using (onUpdateMarker.Auto())
 #endif
                 {
                     //"in on".ToLog();
@@ -802,18 +807,17 @@ namespace Syadeu.Presentation
                     //TestStress();
                 }
 #if DEBUG_MODE
-                onUpdateMarker.End();
-                afterSemaphoreMarker.Begin();
+                using (afterSemaphoreMarker.Auto())
 #endif
-                while (!CoreSystem.BlockCreateInstance)
                 {
-                    if (mgr.m_AfterUpdateAsyncSemaphore.WaitOne(1)) break;
+                    while (!CoreSystem.BlockCreateInstance)
+                    {
+                        if (mgr.m_AfterUpdateAsyncSemaphore.WaitOne(1)) break;
+                    }
+                    if (CoreSystem.BlockCreateInstance) break;
                 }
-                if (CoreSystem.BlockCreateInstance) break;
-
 #if DEBUG_MODE
-                afterSemaphoreMarker.End();
-                afterUpdateMarker.Begin();
+                using (afterUpdateMarker.Auto())
 #endif
                 {
                     //"in after".ToLog();
@@ -823,9 +827,7 @@ namespace Syadeu.Presentation
                     //TestStress();
                 }
 #if DEBUG_MODE
-                afterUpdateMarker.End();
                 PresentationUpdateMarker.End();
-                UnityEngine.Profiling.Profiler.EndThreadProfiling();
 #endif
             }
 
@@ -833,6 +835,9 @@ namespace Syadeu.Presentation
             mgr.m_OnUpdateAsyncSemaphore.Dispose();
             mgr.m_AfterUpdateAsyncSemaphore.Dispose();
 
+#if DEBUG_MODE
+            UnityEngine.Profiling.Profiler.EndThreadProfiling();
+#endif
             UnityEngine.Debug.Log("thread out");
         }
 
