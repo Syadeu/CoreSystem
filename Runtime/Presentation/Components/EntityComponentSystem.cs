@@ -588,6 +588,10 @@ namespace Syadeu.Presentation.Components
             {
                 return new TypeInfo(type, index, size, align);
             }
+            public static TypeInfo Construct(Type type, int index)
+            {
+                return new TypeInfo(type, index, UnsafeUtility.SizeOf(type), AlignOf(type));
+            }
         }
         public struct ComponentType
         {
@@ -647,9 +651,7 @@ namespace Syadeu.Presentation.Components
 
                 void* buffer = s_Buffer[index.x].m_ComponentBuffer;
 
-                IntPtr p = (IntPtr)buffer;
-                // Align 은 필요없음.
-                p = IntPtr.Add(p, s_Buffer[index.x].TypeInfo.Size * index.y);
+                IntPtr p = s_Buffer[index.x].ElementAt(index.y);
 
                 object obj = Marshal.PtrToStructure(p, s_Buffer[index.x].TypeInfo.Type);
 
@@ -719,33 +721,6 @@ namespace Syadeu.Presentation.Components
         }
 #endif
 
-        internal struct EntityComponents
-        {
-            private readonly ComponentBuffer* m_Buffer;
-            private readonly uint m_Length;
-
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-            //private AtomicSafetyHandle m_SafetyHandle;
-#endif
-
-            public EntityComponents(ComponentBuffer* buffer, uint length)
-            {
-                m_Buffer = buffer;
-                m_Length = length;
-
-                //DisposeSentinel.
-            }
-
-            public ComponentBuffer* GetBuffer(int index)
-            {
-                if (index < 0 || index > m_Length)
-                {
-                    throw new IndexOutOfRangeException();
-                }
-
-                return m_Buffer + index;
-            }
-        }
         internal struct ComponentBuffer : IDisposable
         {
             public const int c_InitialCount = 512;
@@ -885,6 +860,13 @@ namespace Syadeu.Presentation.Components
                 component = ((TComponent*)m_ComponentBuffer) + i;
             }
 
+            public IntPtr ElementAt(int i)
+            {
+                IntPtr p = (IntPtr)m_ComponentBuffer;
+                // Align 은 필요없음.
+                return IntPtr.Add(p, TypeInfo.Size * i);
+            }
+
             public void Dispose()
             {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -908,4 +890,90 @@ namespace Syadeu.Presentation.Components
     }
 
     public delegate void EntityComponentDelegate<TEntity, TComponent>(in TEntity entity, in TComponent component) where TComponent : unmanaged, IEntityComponent;
+
+    public struct EntityComponentBuffer
+    {
+
+
+        unsafe internal static EntityComponentBuffer Create(
+            EntityComponentSystem.ComponentBuffer* pointer)
+        {
+            CheckIsAllocated(pointer);
+
+            var temp = new EntityComponentBuffer();
+
+            for (int i = 0; i < pointer->Length; i++)
+            {
+                
+            }
+
+            return temp;
+        }
+        unsafe private static bool CheckIsAllocated(EntityComponentSystem.ComponentBuffer* pointer)
+        {
+            if (pointer->IsCreated)
+            {
+                return true;
+            }
+
+            "not allocated component buffer".ToLogError();
+            return false;
+        }
+        unsafe private static void AddIfIsExist(EntityComponentSystem.ComponentBuffer* pointer, in int length)
+        {
+            List<ComponentChunk> chunks = new List<ComponentChunk>();
+
+            for (int i = 0, count = 0; i < length; i++)
+            {
+                pointer->HasElementAt(i, out bool has);
+                if (!has)
+                {
+                    if (count == 0)
+                    {
+                        continue;
+                    }
+
+                    var chunk = new ComponentChunk(pointer->ElementAt(i), count);
+                    count = 0;
+
+                    chunks.Add(chunk);
+                    continue;
+                }
+
+
+            }
+
+            
+            //if (!has)
+            //{
+            //    if (i < length)
+            //    {
+            //        i++;
+            //        AddIfIsExist(pointer, in length, ref i);
+            //    }
+            //    return;
+            //}
+
+            //while (pointer->)
+            //{
+
+            //}
+        }
+    }
+    unsafe internal struct ComponentChunk
+    {
+        public void* m_Pointer;
+        public int m_Count;
+
+        public ComponentChunk(void* p, int count)
+        {
+            m_Pointer = p;
+            m_Count = count;
+        }
+        public ComponentChunk(IntPtr p, int count)
+        {
+            m_Pointer = p.ToPointer();
+            m_Count = count;
+        }
+    }
 }
