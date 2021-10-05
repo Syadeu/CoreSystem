@@ -857,6 +857,11 @@ namespace Syadeu.Presentation.Components
                 // Align 은 필요없음.
                 return IntPtr.Add(p, TypeInfo.Size * i);
             }
+            public void ElementAt(int i, out IntPtr ptr, out EntityData<IEntityData> entity)
+            {
+                ptr = ElementAt(i);
+                entity = m_EntityBuffer[i];
+            }
 
             public void Dispose()
             {
@@ -943,15 +948,16 @@ namespace Syadeu.Presentation.Components
     [Obsolete("In development")]
     public struct EntityComponentBuffer
     {
+        unsafe private EntityComponentSystem.ComponentBuffer* buffer;
         unsafe private UntypedUnsafeHashMap* componentMap;
         private int m_TypeIndex;
 
         unsafe internal static EntityComponentBuffer Create(
             EntityComponentSystem.ComponentBuffer* pointer, UntypedUnsafeHashMap* componentMap)
         {
-            CheckIsAllocated(pointer);
-
             EntityComponentBuffer temp = new EntityComponentBuffer();
+
+            temp.buffer = pointer;
             temp.componentMap = componentMap;
 
             return temp;
@@ -1036,8 +1042,12 @@ namespace Syadeu.Presentation.Components
 
             return this;
         }
-        unsafe public void Build()
+
+        unsafe public void Run()
         {
+            EntityComponentSystem.ComponentBuffer* target = buffer + m_TypeIndex;
+            CheckIsAllocated(target);
+
             ref UnsafeMultiHashMap<int, int> cache 
                 = ref UnsafeUtility.As<UntypedUnsafeHashMap, UnsafeMultiHashMap<int, int>>(ref *componentMap);
 
@@ -1045,6 +1055,8 @@ namespace Syadeu.Presentation.Components
             {
                 do
                 {
+                    target->ElementAt(componentIdx, out IntPtr componentPtr, out EntityData<IEntityData> entity);
+
 
                 } while (cache.TryGetNextValue(out componentIdx, ref iterator));
             }
