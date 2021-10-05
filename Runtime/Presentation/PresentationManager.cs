@@ -754,8 +754,6 @@ namespace Syadeu.Presentation
 #if DEBUG_MODE
                 if (CoreSystem.IsEditorPaused) continue;
 
-                PresentationUpdateMarker.Begin();
-
                 using (simSemaphoreMarker.Auto())
 #endif
                 {
@@ -766,6 +764,7 @@ namespace Syadeu.Presentation
                     if (CoreSystem.BlockCreateInstance) break;
                 }
 #if DEBUG_MODE
+                PresentationUpdateMarker.Begin();
                 using (beforeSemaphoreMarker.Auto())
 #endif
                 {
