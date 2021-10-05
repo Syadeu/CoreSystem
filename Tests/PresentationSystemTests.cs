@@ -127,9 +127,11 @@ public class PresentationSystemTests
         public bool m_TestBoolen;
     }
 
-    [Test]
-    public void QueryTest()
+    [UnityTest]
+    public IEnumerator QueryTest()
     {
+        yield return PresentationSystem<DefaultPresentationGroup, EntitySystem>.GetAwaiter();
+
         TypeInfo
             a0 = ComponentType<TestComponent_1>.TypeInfo,
             a1 = ComponentType<TestComponent_2>.TypeInfo,
@@ -142,7 +144,9 @@ public class PresentationSystemTests
             query3 = ComponentTypeQuery.Combine(a3, a2),
             query4 = ComponentTypeQuery.Combine(a2, a0);
 
-        Debug.Log($"{query1.GetHashCode()} == {query2.GetHashCode()}");
+
+        Debug.Log(
+            $"{query1.GetHashCode()}({a0.GetHashCode()}, {a1.GetHashCode()}) == {query2.GetHashCode()} ? {query1.GetHashCode() == query2.GetHashCode()}");
         Debug.Log($"{query3.GetHashCode()}");
         Debug.Log($"{query4.GetHashCode()}");
     }

@@ -44,6 +44,8 @@ namespace Syadeu.Presentation.Components
 
         private UnsafeMultiHashMap<int, int> m_ComponentHashMap;
 
+        private Unity.Mathematics.Random m_Random;
+
 #if DEBUG_MODE
         private static Unity.Profiling.ProfilerMarker
             s_GetComponentMarker = new Unity.Profiling.ProfilerMarker("get_GetComponent"),
@@ -57,6 +59,11 @@ namespace Syadeu.Presentation.Components
 
         protected override PresentationResult OnInitialize()
         {
+            // Type Hashing 을 위해 랜덤 생성자를 만듭니다.
+            // 왜인지 모르겠지만 간혈적으로 Type.GetHashCode() 가 0 을 반환하여, 직접 값을 만듭니다.
+            m_Random = new Unity.Mathematics.Random();
+            m_Random.InitState();
+
             RequestSystem<DefaultPresentationGroup, EntitySystem>(Bind);
 
             // 버퍼를 생성하기 위해 미리 모든 컴포넌트 타입들의 정보를 가져옵니다.
@@ -92,7 +99,8 @@ namespace Syadeu.Presentation.Components
         }
         private ComponentBuffer BuildComponentBuffer(Type componentType, int totalLength, out int idx)
         {
-            idx = math.abs(HashGenerator.CreateHashCode()) % totalLength;
+            int hashCode = CreateHashCode();
+            idx = math.abs(hashCode) % totalLength;
 
             if (IsZeroSizeStruct(componentType))
             {
@@ -100,7 +108,7 @@ namespace Syadeu.Presentation.Components
                     $"Zero sized wrapper struct({TypeHelper.ToString(componentType)}) is in component list.");
             }
             
-            if (!UnsafeUtility.IsBlittable(componentType) || UnsafeUtility.IsUnmanaged(componentType))
+            if (/*!UnsafeUtility.IsBlittable(componentType) ||*/ !UnsafeUtility.IsUnmanaged(componentType))
             {
                 CoreSystem.Logger.LogError(Channel.Component,
                     $"managed struct({TypeHelper.ToString(componentType)}) is in component list.");
@@ -111,7 +119,8 @@ namespace Syadeu.Presentation.Components
             ComponentBuffer temp = new ComponentBuffer();
 
             // 왜인지는 모르겠지만 Type.GetHashCode() 의 정보가 런타임 중 간혹 유효하지 않은 값 (0) 을 뱉어서 미리 파싱합니다.
-            TypeInfo runtimeTypeInfo = TypeInfo.Construct(componentType, idx, UnsafeUtility.SizeOf(componentType), AlignOf(componentType));
+            TypeInfo runtimeTypeInfo 
+                = TypeInfo.Construct(componentType, idx, UnsafeUtility.SizeOf(componentType), AlignOf(componentType), hashCode);
             ComponentType.GetValue(componentType).Data = runtimeTypeInfo;
 
             // 새로운 버퍼를 생성하고, heap 에 메모리를 할당합니다.
@@ -143,6 +152,22 @@ namespace Syadeu.Presentation.Components
                 if (!m_ComponentArrayBuffer[i].IsCreated) continue;
 
                 m_ComponentArrayBuffer[i].Dispose();
+
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+                ComponentBufferAtomicSafety safety
+                    = CLSTypedDictionary<ComponentBufferAtomicSafety>.GetValue(m_ComponentArrayBuffer[i].TypeInfo.Type);
+
+                if (!safety.Disposed)
+                {
+                    if (!CoreSystem.BlockCreateInstance)
+                    {
+                        CoreSystem.Logger.LogError(Channel.Component,
+                            $"Component({TypeHelper.ToString(m_ComponentArrayBuffer[i].TypeInfo.Type)}) buffer has not safely disposed.");
+                    }
+
+                    safety.Dispose();
+                }
+#endif
             }
             m_ComponentArrayBuffer.Dispose();
 
@@ -179,6 +204,8 @@ namespace Syadeu.Presentation.Components
         #endregion
 
         #region Hashing
+
+        public int CreateHashCode() => m_Random.NextInt(int.MinValue, int.MaxValue);
 
         private static int GetComponentIndex<TComponent>()
         {
@@ -686,6 +713,7 @@ namespace Syadeu.Presentation.Components
         private bool m_Disposed;
 
         public AtomicSafetyHandle SafetyHandle => m_SafetyHandle;
+        public bool Disposed => m_Disposed;
 
         private ComponentBufferAtomicSafety()
         {
@@ -908,7 +936,7 @@ namespace Syadeu.Presentation.Components
         public int Size => m_Size;
         public int Align => m_Align;
 
-        private TypeInfo(Type type, int index, int size, int align)
+        private TypeInfo(Type type, int index, int size, int align, int hashCode)
         {
             m_TypeHandle = type.TypeHandle;
             m_TypeIndex = index;
@@ -917,25 +945,27 @@ namespace Syadeu.Presentation.Components
 
             unchecked
             {
-                m_HashCode = m_TypeIndex * 397 ^ HashGenerator.CreateHashCode();
+                int hash = hashCode;
+                $"{m_TypeIndex} * {397} ^ {hash}".ToLog();
+                m_HashCode = m_TypeIndex * 397 ^ hash;
             }
         }
 
-        public static TypeInfo Construct(Type type, int index, int size, int align)
+        public static TypeInfo Construct(Type type, int index, int size, int align, int hashCode)
         {
-            return new TypeInfo(type, index, size, align);
+            return new TypeInfo(type, index, size, align, hashCode);
         }
-        public static TypeInfo Construct(Type type, int index)
+        public static TypeInfo Construct(Type type, int index, int hashCode)
         {
-            if (!UnsafeUtility.IsBlittable(type) || !UnsafeUtility.IsUnmanaged(type))
+            if (!UnsafeUtility.IsUnmanaged(type))
             {
                 CoreSystem.Logger.LogError(Channel.Component,
                     $"Could not resovle type of {TypeHelper.ToString(type)} is not ValueType.");
 
-                return new TypeInfo(type, index, 0, 0);
+                return new TypeInfo(type, index, 0, 0, hashCode);
             }
 
-            return new TypeInfo(type, index, UnsafeUtility.SizeOf(type), EntityComponentSystem.AlignOf(type));
+            return new TypeInfo(type, index, UnsafeUtility.SizeOf(type), EntityComponentSystem.AlignOf(type), hashCode);
         }
 
         public override int GetHashCode() => m_HashCode;
