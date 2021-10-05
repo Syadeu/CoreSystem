@@ -887,19 +887,18 @@ namespace Syadeu.Presentation.Components
 
             public void Dispose()
             {
-                if (!IsCreated)
-                {
-                    "??".ToLogError();
-                    return;
-                }
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+                ComponentBufferAtomicSafety safety
+                    = CLSTypedDictionary<ComponentBufferAtomicSafety>.GetValue(m_ComponentTypeInfo.Type);
+
+                safety.CheckExistsAndThrow();
+#endif
 
                 UnsafeUtility.Free(m_OccupiedBuffer, Allocator.Persistent);
                 UnsafeUtility.Free(m_EntityBuffer, Allocator.Persistent);
                 UnsafeUtility.Free(m_ComponentBuffer, Allocator.Persistent);
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-                ComponentBufferAtomicSafety safety 
-                    = CLSTypedDictionary<ComponentBufferAtomicSafety>.GetValue(m_ComponentTypeInfo.Type);
                 safety.Dispose();
 #endif
             }
