@@ -41,11 +41,10 @@ namespace Syadeu.Presentation.Map
 
         private GridMapAttribute GridMap => m_MainGrid;
         public float CellSize => m_MainGrid.CellSize;
-        public Mesh CellMesh => m_MainGrid.CellMesh;
 
         #region Presentation Methods
 
-protected override PresentationResult OnInitialize()
+        protected override PresentationResult OnInitialize()
         {
             CreateConsoleCommands();
 
