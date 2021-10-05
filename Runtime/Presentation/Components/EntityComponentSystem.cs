@@ -945,9 +945,8 @@ namespace Syadeu.Presentation.Components
 
             unchecked
             {
-                int hash = hashCode;
-                $"{m_TypeIndex} * {397} ^ {hash}".ToLog();
-                m_HashCode = m_TypeIndex * 397 ^ hash;
+                // https://stackoverflow.com/questions/102742/why-is-397-used-for-resharper-gethashcode-override
+                m_HashCode = m_TypeIndex * 397 ^ hashCode;
             }
         }
 
@@ -1069,7 +1068,7 @@ namespace Syadeu.Presentation.Components
             if (!UnsafeUtility.IsBlittable(componentType) || !UnsafeUtility.IsUnmanaged(componentType))
             {
                 CoreSystem.Logger.LogError(Channel.Component,
-                    $"Could not resovle type of {TypeHelper.ToString(componentType)} is not ValueType.");
+                    $"Could not resolve type of {TypeHelper.ToString(componentType)} is not ValueType.");
 
                 return this;
             }
@@ -1112,9 +1111,12 @@ namespace Syadeu.Presentation.Components
     }
     public struct ComponentTypeQuery
     {
-        public const int c_PrimeConstant = 397;
+        private const int c_ConstantPrime = 31;
+        public const int ReadOnly = 1 << (c_ConstantPrime * 1);
+        public const int WriteOnly = 1 << (c_ConstantPrime * 2);
+        public const int ReadWrite = ReadOnly | WriteOnly;
 
-        private int m_HashCode;
+        private readonly int m_HashCode;
 
         private ComponentTypeQuery(int hashCode)
         {
@@ -1125,12 +1127,36 @@ namespace Syadeu.Presentation.Components
             int hashCode;
             unchecked
             {
-                hashCode = lhs.GetHashCode() * c_PrimeConstant ^ rhs.GetHashCode();
+                hashCode = lhs.GetHashCode() ^ rhs.GetHashCode();
+            }
+            return new ComponentTypeQuery(hashCode);
+        }
+        public static ComponentTypeQuery Combine(TypeInfo lhs, TypeInfo rhs, params TypeInfo[] other)
+        {
+            int hashCode;
+            unchecked
+            {
+                hashCode = lhs.GetHashCode() ^ rhs.GetHashCode();
+
+                for (int i = 0; i < other.Length; i++)
+                {
+                    hashCode = hashCode ^ other[i].GetHashCode();
+                }
             }
             return new ComponentTypeQuery(hashCode);
         }
 
         public override int GetHashCode() => m_HashCode;
+
+        public static ComponentTypeQuery operator ^(ComponentTypeQuery x, int y)
+        {
+            int hash;
+            unchecked
+            {
+                hash = x.GetHashCode() ^ y;
+            }
+            return new ComponentTypeQuery(hash);
+        }
     }
 
     [Obsolete("In development")]

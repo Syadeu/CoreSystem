@@ -141,13 +141,28 @@ public class PresentationSystemTests
         ComponentTypeQuery
             query1 = ComponentTypeQuery.Combine(a0, a1),
             query2 = ComponentTypeQuery.Combine(a1, a0),
-            query3 = ComponentTypeQuery.Combine(a3, a2),
-            query4 = ComponentTypeQuery.Combine(a2, a0);
+            query3 = ComponentTypeQuery.Combine(a3, a2, a0),
+            query4 = ComponentTypeQuery.Combine(a2, a0, a3),
+            query5 = ComponentTypeQuery.Combine(a2, a0, a3, a1),
+            query6 = ComponentTypeQuery.Combine(a2, a0, a3, a1),
+            query7 = ComponentTypeQuery.Combine(a2, a0, a3, a1, a3, a2),
+            query8 = ComponentTypeQuery.Combine(a2, a0, a3, a1) ^ ComponentTypeQuery.ReadWrite,
+            query9 = ComponentTypeQuery.Combine(a2, a0, a3, a1) ^ ComponentTypeQuery.WriteOnly;
 
+        if ((query9.GetHashCode() & ComponentTypeQuery.WriteOnly) == ComponentTypeQuery.WriteOnly)
+        {
+            Debug.Log("query9 is write only");
+        }
+
+        var temp = query8 ^ ComponentTypeQuery.ReadOnly;
 
         Debug.Log(
-            $"{query1.GetHashCode()}({a0.GetHashCode()}, {a1.GetHashCode()}) == {query2.GetHashCode()} ? {query1.GetHashCode() == query2.GetHashCode()}");
-        Debug.Log($"{query3.GetHashCode()}");
-        Debug.Log($"{query4.GetHashCode()}");
+            $"{temp.GetHashCode()} == {query9.GetHashCode()} ? {temp.GetHashCode() == query9.GetHashCode()}");
+
+        //Debug.Log(
+        //    $"{query1.GetHashCode()} == {query2.GetHashCode()} ? {query1.GetHashCode() == query2.GetHashCode()}");
+        //Debug.Log($"{query3.GetHashCode()} == {query4.GetHashCode()} ? {query3.GetHashCode() == query4.GetHashCode()}");
+        //Debug.Log($"{query5.GetHashCode()} == {query6.GetHashCode()} ? {query5.GetHashCode() == query6.GetHashCode()}");
+        //Debug.Log($"{query7.GetHashCode()} == {query1.GetHashCode()} ? {query7.GetHashCode() == query1.GetHashCode()}");
     }
 }
