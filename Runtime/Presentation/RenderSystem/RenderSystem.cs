@@ -31,9 +31,9 @@ namespace Syadeu.Presentation.Render
         public override bool EnableAfterPresentation => true;
 
 #if CORESYSTEM_URP
-
+        public const string s_DefaultShaderName = "Universal Render Pipeline/Lit";
 #elif CORESYSTEM_HDRP
-
+        public const string s_DefaultShaderName = "Universal Render Pipeline/Lit";
 #else
         public const string s_DefaultShaderName = "Standard";
 #endif
