@@ -21,6 +21,17 @@ using UnityEngine;
 
 namespace Syadeu.Presentation.Components
 {
+    /// <summary>
+    /// <see cref="EntityData{T}"/> 컴포넌트 시스템입니다.
+    /// </summary>
+    /// <remarks>
+    /// 컴포넌트는 Dispose 패턴을 따르며, <seealso cref="IDisposable"/> 를 컴포넌트가 상속받고 있으면
+    /// 체크하여 해당 컴포넌트가 제거될 시 수행됩니다. <seealso cref="INotifyComponent{TComponent}"/> 를 통해
+    /// 상속받는 <seealso cref="ObjectBase"/> 가 파괴될 시 같이 파괴되도록 수행할 수 있습니다.<br/>
+    /// <br/>
+    /// 사용자는 직접 이 시스템을 통하여 컴포넌트 관련 작업을 수행하는 것이 아닌, <seealso cref="EntityData{T}.AddComponent{TComponent}(in TComponent)"/>
+    /// 등과 같은 간접 메소드를 통해 작업을 수행할 수 있습니다. 자세한 기능은 <seealso cref="EntityData{T}"/> 를 참조하세요.
+    /// </remarks>
     unsafe internal sealed class EntityComponentSystem : PresentationSystemEntity<EntityComponentSystem>
     {
         public override bool EnableBeforePresentation => false;
@@ -28,6 +39,7 @@ namespace Syadeu.Presentation.Components
         public override bool EnableAfterPresentation => false;
 
         private NativeArray<ComponentBuffer> m_ComponentArrayBuffer;
+        private NativeQueue<DisposedComponent> m_DisposedComponents;
         private MethodInfo m_RemoveComponentMethod;
 
         private Unity.Mathematics.Random m_Random;
@@ -45,6 +57,8 @@ namespace Syadeu.Presentation.Components
 
         protected override PresentationResult OnInitialize()
         {
+            // Type Hashing 을 위해 랜덤 생성자를 만듭니다.
+            // 왜인지 모르겠지만 간혈적으로 Type.GetHashCode() 가 0 을 반환하여, 직접 값을 만듭니다.
             m_Random = new Unity.Mathematics.Random();
             m_Random.InitState();
 
@@ -69,7 +83,8 @@ namespace Syadeu.Presentation.Components
             }
 
             m_ComponentArrayBuffer = new NativeArray<ComponentBuffer>(tempBuffer, Allocator.Persistent);
-            
+            m_DisposedComponents = new NativeQueue<DisposedComponent>(Allocator.Persistent);
+
             DisposedComponent.Initialize((ComponentBuffer*)m_ComponentArrayBuffer.GetUnsafePtr());
 
             ConstructSharedStatics();
@@ -83,23 +98,6 @@ namespace Syadeu.Presentation.Components
             Constants.Value.Data.SystemID = SystemID;
             
         }
-
-        private void Presentation_PreUpdate()
-        {
-            if (m_DisposedComponents.Count > 0)
-            {
-                // Parallel Job 이 수행되고 있는 중에 컴포넌트가 제거되면 안되므로
-                // 먼저 모든 Job 을 완료합니다.
-                IJobParallelForEntitiesExtensions.CompleteAllJobs();
-
-                int count = m_DisposedComponents.Count;
-                for (int i = 0; i < count; i++)
-                {
-                    m_DisposedComponents.Dequeue().Dispose();
-                }
-            }
-        }
-
         protected override PresentationResult OnInitializeAsync()
         {
             m_RemoveComponentMethod = TypeHelper.TypeOf<EntityComponentSystem>.Type.GetMethod(nameof(RemoveComponent),
@@ -117,6 +115,7 @@ namespace Syadeu.Presentation.Components
             {
                 m_DisposedComponents.Dequeue().Dispose();
             }
+            m_DisposedComponents.Dispose();
 
             for (int i = 0; i < m_ComponentArrayBuffer.Length; i++)
             {
@@ -137,6 +136,22 @@ namespace Syadeu.Presentation.Components
         }
 
         #endregion
+
+        private void Presentation_PreUpdate()
+        {
+            if (m_DisposedComponents.Count > 0)
+            {
+                // Parallel Job 이 수행되고 있는 중에 컴포넌트가 제거되면 안되므로
+                // 먼저 모든 Job 을 완료합니다.
+                IJobParallelForEntitiesExtensions.CompleteAllJobs();
+
+                int count = m_DisposedComponents.Count;
+                for (int i = 0; i < count; i++)
+                {
+                    m_DisposedComponents.Dequeue().Dispose();
+                }
+            }
+        }
 
         #endregion
 
@@ -221,108 +236,11 @@ namespace Syadeu.Presentation.Components
             return temp;
         }
 
-        private readonly Queue<IDisposable> m_DisposedComponents = new Queue<IDisposable>();
-
-        private struct DisposedComponent : IDisposable
-        {
-            private static ComponentBuffer* s_Buffer;
-
-            private int2 index;
-            private EntityData<IEntityData> entity;
-            
-            public static void Initialize(ComponentBuffer* buffer)
-            {
-                s_Buffer = buffer;
-            }
-            public static DisposedComponent Construct(int2 index, EntityData<IEntityData> entity)
-            {
-                return new DisposedComponent()
-                {
-                    index = index,
-                    entity = entity
-                };
-            }
-
-            public void Dispose()
-            {
-                if (!s_Buffer[index.x].Find(entity, ref index.y))
-                {
-                    "could\'nt find component target".ToLogError();
-                    return;
-                }
-
-                s_Buffer[index.x].m_OccupiedBuffer[index.y] = false;
-
-                void* buffer = s_Buffer[index.x].m_ComponentBuffer;
-
-                IntPtr p = (IntPtr)buffer;
-                // Align 은 필요없음.
-                p = IntPtr.Add(p, s_Buffer[index.x].TypeInfo.Size * index.y);
-
-                object obj = Marshal.PtrToStructure(p, s_Buffer[index.x].TypeInfo.Type);
-
-                if (obj is IDisposable disposable)
-                {
-                    disposable.Dispose();
-
-                    CoreSystem.Logger.Log(Channel.Component,
-                        $"{s_Buffer[index.x].TypeInfo.Type.Name} component at {entity.RawName} disposed.");
-                }
-
-                CoreSystem.Logger.Log(Channel.Component,
-                    $"{s_Buffer[index.x].TypeInfo.Type.Name} component at {entity.RawName} removed");
-            }
-        }
-        //private struct DisposedComponent<TComponent> : IDisposable
-        //    where TComponent : unmanaged, IEntityComponent
-        //{
-        //    private static ComponentBuffer* s_Buffer;
-
-        //    public static void Initialize(ComponentBuffer* componentBuffer)
-        //    {
-        //        s_Buffer = componentBuffer;
-        //    }
-
-        //    public EntityData<IEntityData> entity;
-        //    public int2 index;
-
-        //    public void Dispose()
-        //    {
-        //        if (!s_Buffer[index.x].Find(entity, ref index.y))
-        //        {
-        //            return;
-        //        }
-
-        //        s_Buffer[index.x].m_OccupiedBuffer[index.y] = false;
-
-        //        TComponent* buffer = (TComponent*)s_Buffer[index.x].m_ComponentBuffer;
-        //        if (buffer[index.y] is IDisposable disposable)
-        //        {
-        //            disposable.Dispose();
-
-        //            IntPtr p = (IntPtr)buffer;
-        //            p = IntPtr.Add(p, sizeof(TComponent) * index.y);
-
-        //            object obj = Marshal.PtrToStructure(p, typeof(TComponent));
-        //            if (obj is TComponent component)
-        //            {
-        //                IntPtr test = (IntPtr)(buffer + index.y);
-        //                $"{test.ToInt64()} == {p.ToInt64()} ? {test == p}".ToLog();
-
-        //                $"yes, {sizeof(TComponent)} : {AlignOf(typeof(TComponent))}, {index.y}".ToLog();
-
-        //            }
-
-        //            //IDisposable test = UnsafeUtility.ReadArrayElement<IDisposable>(buffer, index.y);
-        //            //if (test != null) "test success".ToLog();
-        //            //else "test fail?".ToLog();
-        //        }
-
-        //        CoreSystem.Logger.Log(Channel.Component,
-        //            $"{TypeHelper.TypeOf<TComponent>.Name} component at {entity.RawName} removed");
-        //    }
-        //}
-
+        /// <summary>
+        /// DEBUG_MODE 중에 해당 컴포넌트가 제대로 사용될 수 있는지 확인합니다.
+        /// </summary>
+        /// <typeparam name="TComponent"></typeparam>
+        /// <param name="result"></param>
         public void ComponentBufferSafetyCheck<TComponent>(out bool result)
             where TComponent : unmanaged, IEntityComponent
         {
@@ -608,7 +526,15 @@ namespace Syadeu.Presentation.Components
 
         #region Utils
 
-        // https://stackoverflow.com/a/27851610
+        /// <summary>
+        /// Wrapper struct (아무 ValueType 맴버도 갖지 않은 구조체) 는 C# CLS 에서 무조건 1 byte 를 갖습니다. 
+        /// 해당 컴포넌트 타입이 버퍼에 올라갈 필요가 있는지를 확인하여 메모리 낭비를 줄입니다.
+        /// </summary>
+        /// <remarks>
+        /// https://stackoverflow.com/a/27851610
+        /// </remarks>
+        /// <param name="t"></param>
+        /// <returns></returns>
         private static bool IsZeroSizeStruct(Type t)
         {
             return t.IsValueType && !t.IsPrimitive &&
@@ -680,6 +606,66 @@ namespace Syadeu.Presentation.Components
 
             public static Type Type => Value.Data.Type;
             public static int Index => Value.Data.Index;
+        }
+
+        /// <summary>
+        /// Frame 단위로 Presentation 이 진행되기 떄문에, 해당 프레임에서 제거된 프레임일지어도
+        /// 같은 프레임내에서 접근하는 Data Access Call 을 허용하기 위해 다음 프레임에 제거되도록 합니다.
+        /// </summary>
+        /// <remarks>
+        /// <seealso cref="m_DisposedComponents"/> queue 에 저장되어 다음 Player Loop 의 
+        /// <seealso cref="PresentationManager.PreUpdate"/> 에서 Dipose 됩니다.
+        /// </remarks>
+        private struct DisposedComponent : IDisposable
+        {
+            private static ComponentBuffer* s_Buffer;
+
+            private int2 index;
+            private EntityData<IEntityData> entity;
+
+            public static void Initialize(ComponentBuffer* buffer)
+            {
+                s_Buffer = buffer;
+            }
+            public static DisposedComponent Construct(int2 index, EntityData<IEntityData> entity)
+            {
+                return new DisposedComponent()
+                {
+                    index = index,
+                    entity = entity
+                };
+            }
+
+            public void Dispose()
+            {
+                if (!s_Buffer[index.x].Find(entity, ref index.y))
+                {
+                    "could\'nt find component target".ToLogError();
+                    return;
+                }
+
+                s_Buffer[index.x].m_OccupiedBuffer[index.y] = false;
+
+                void* buffer = s_Buffer[index.x].m_ComponentBuffer;
+
+                IntPtr p = (IntPtr)buffer;
+                // Align 은 필요없음.
+                p = IntPtr.Add(p, s_Buffer[index.x].TypeInfo.Size * index.y);
+
+                object obj = Marshal.PtrToStructure(p, s_Buffer[index.x].TypeInfo.Type);
+
+                // 해당 컴포넌트가 IDisposable 인터페이스를 상속받으면 해당 인터페이스를 실행
+                if (obj is IDisposable disposable)
+                {
+                    disposable.Dispose();
+
+                    CoreSystem.Logger.Log(Channel.Component,
+                        $"{s_Buffer[index.x].TypeInfo.Type.Name} component at {entity.RawName} disposed.");
+                }
+
+                CoreSystem.Logger.Log(Channel.Component,
+                    $"{s_Buffer[index.x].TypeInfo.Type.Name} component at {entity.RawName} removed");
+            }
         }
 
         [StructLayout(LayoutKind.Sequential)]
