@@ -1,4 +1,5 @@
 ﻿using Syadeu.Internal;
+using System;
 
 namespace Syadeu.Presentation
 {
@@ -21,13 +22,23 @@ namespace Syadeu.Presentation
                 TypeHelper.TypeOf<Render.WorldCanvasSystem>.Type,
                 TypeHelper.TypeOf<Map.MapSystem>.Type,
                 TypeHelper.TypeOf<Map.GridSystem>.Type,
-                TypeHelper.TypeOf<Map.LevelDesignSystem>.Type,
                 TypeHelper.TypeOf<Map.NavMeshSystem>.Type,
                 TypeHelper.TypeOf<Actor.ActorSystem>.Type,
 
                 TypeHelper.TypeOf<Proxy.GameObjectProxySystem>.Type,
                 TypeHelper.TypeOf<Render.RenderSystem>.Type,
                 TypeHelper.TypeOf<SceneSystem>.Type
+                );
+        }
+    }
+    public sealed class LevelDesignPresentationGroup : PresentationGroupEntity
+    {
+        public override Type DependenceGroup => TypeHelper.TypeOf<DefaultPresentationGroup>.Type;
+
+        public override void Register()
+        {
+            RegisterSystem(
+                TypeHelper.TypeOf<Map.LevelDesignSystem>.Type
                 );
         }
     }

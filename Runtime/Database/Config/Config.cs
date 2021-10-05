@@ -85,15 +85,15 @@ namespace Syadeu.Database
 
             public Dictionary<string, ConfigValueBase> Values { get; set; }
 
-            public ConfigValueBase GetOrCreateValue(Type t, string name)
+            public ConfigValueBase GetOrCreateValue(Type t, string name, ConfigValueAttribute att)
             {
                 if (!Values.TryGetValue(name.Trim(), out ConfigValueBase value))
                 {
-                    if (t.Equals(TypeHelper.TypeOf<int>.Type)) value = new IntValue() { Name = name };
-                    else if (t.Equals(TypeHelper.TypeOf<float>.Type)) value = new SingleValue() { Name = name };
-                    else if (t.Equals(TypeHelper.TypeOf<double>.Type)) value = new SingleValue() { Name = name };
-                    else if (t.Equals(TypeHelper.TypeOf<bool>.Type)) value = new BooleanValue() { Name = name };
-                    else value = new StringValue() { Name = name };
+                    if (t.Equals(TypeHelper.TypeOf<int>.Type)) value = new IntValue() { Name = name, Value = att == null ? 0 : att.DefaultInt32 };
+                    else if (t.Equals(TypeHelper.TypeOf<float>.Type)) value = new SingleValue() { Name = name, Value = att == null ? 0 : att.DefaultSingle };
+                    else if (t.Equals(TypeHelper.TypeOf<double>.Type)) value = new SingleValue() { Name = name, Value = att == null ? 0 : att.DefaultSingle };
+                    else if (t.Equals(TypeHelper.TypeOf<bool>.Type)) value = new BooleanValue() { Name = name, Value = att == null ? false : att.DefaultBoolen };
+                    else value = new StringValue() { Name = name, Value = att == null ? string.Empty : att.DefaultString };
 
                     Values.Add(name, value);
                 }
@@ -244,15 +244,15 @@ namespace Syadeu.Database
             return temp;
         }
 
-        public ConfigValueBase GetOrCreateValue(Type t, string name)
+        public ConfigValueBase GetOrCreateValue(Type t, string name, ConfigValueAttribute att)
         {
             if (!Values.TryGetValue(name.Trim(), out ConfigValueBase value))
             {
-                if (t.Equals(TypeHelper.TypeOf<int>.Type)) value = new IntValue() { Name = name };
-                else if (t.Equals(TypeHelper.TypeOf<float>.Type)) value = new SingleValue() { Name = name };
-                else if (t.Equals(TypeHelper.TypeOf<double>.Type)) value = new SingleValue() { Name = name };
-                else if (t.Equals(TypeHelper.TypeOf<bool>.Type)) value = new BooleanValue() { Name = name };
-                else value = new StringValue() { Name = name };
+                if (t.Equals(TypeHelper.TypeOf<int>.Type)) value = new IntValue() { Name = name, Value = att == null ? 0 : att.DefaultInt32 };
+                else if (t.Equals(TypeHelper.TypeOf<float>.Type)) value = new SingleValue() { Name = name, Value = att == null ? 0 : att.DefaultSingle };
+                else if (t.Equals(TypeHelper.TypeOf<double>.Type)) value = new SingleValue() { Name = name, Value = att == null ? 0 : att.DefaultSingle };
+                else if (t.Equals(TypeHelper.TypeOf<bool>.Type)) value = new BooleanValue() { Name = name, Value = att == null ? false : att.DefaultBoolen };
+                else value = new StringValue() { Name = name, Value = att == null ? string.Empty : att.DefaultString };
 
                 Values.Add(name, value);
             }

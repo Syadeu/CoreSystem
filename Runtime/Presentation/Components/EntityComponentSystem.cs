@@ -564,6 +564,9 @@ namespace Syadeu.Presentation.Components
 
             public static PresentationSystemID<EntityComponentSystem> SystemID => Value.Data.SystemID;
         }
+        /// <summary>
+        /// Runtime 중 기본 <see cref="System.Type"/> 의 정보를 저장하고, 해당 타입의 binary 크기, alignment를 저장합니다.
+        /// </summary>
         public struct TypeInfo
         {
             private readonly RuntimeTypeHandle m_TypeHandle;
@@ -891,6 +894,7 @@ namespace Syadeu.Presentation.Components
 
     public delegate void EntityComponentDelegate<TEntity, TComponent>(in TEntity entity, in TComponent component) where TComponent : unmanaged, IEntityComponent;
 
+    [Obsolete("In development")]
     public struct EntityComponentBuffer
     {
 
@@ -960,6 +964,7 @@ namespace Syadeu.Presentation.Components
             //}
         }
     }
+    [Obsolete("In development")]
     unsafe internal struct ComponentChunk
     {
         public void* m_Pointer;

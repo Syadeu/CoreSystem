@@ -112,9 +112,9 @@ namespace Syadeu.Database
             {
                 valueBase = config
                     .GetOrCreateHeader(header)
-                    .GetOrCreateValue(TypeHelper.TypeOf<T>.Type, field);
+                    .GetOrCreateValue(TypeHelper.TypeOf<T>.Type, field, null);
             }
-            else valueBase = config.GetOrCreateValue(TypeHelper.TypeOf<T>.Type, field);
+            else valueBase = config.GetOrCreateValue(TypeHelper.TypeOf<T>.Type, field, null);
 
             if (!TypeHelper.TypeOf<T>.Type.Equals(valueBase.GetValue().GetType()))
             {
@@ -154,18 +154,24 @@ namespace Syadeu.Database
 
             for (int i = 0; i < fields.Length; i++)
             {
-                var att = fields[i].GetCustomAttribute<ConfigValueAttribute>();
+                ConfigValueAttribute att = fields[i].GetCustomAttribute<ConfigValueAttribute>();
                 Config.ConfigValueBase value;
                 if (string.IsNullOrEmpty(att.Header))
                 {
                     value = config
-                        .GetOrCreateValue(fields[i].FieldType, string.IsNullOrEmpty(att.Name) ? fields[i].Name : att.Name);
+                        .GetOrCreateValue(
+                            fields[i].FieldType, 
+                            string.IsNullOrEmpty(att.Name) ? fields[i].Name : att.Name,
+                            att);
                 }
                 else
                 {
                     value = config
                         .GetOrCreateHeader(att.Header)
-                        .GetOrCreateValue(fields[i].FieldType, string.IsNullOrEmpty(att.Name) ? fields[i].Name : att.Name);
+                        .GetOrCreateValue(
+                            fields[i].FieldType, 
+                            string.IsNullOrEmpty(att.Name) ? fields[i].Name : att.Name,
+                            att);
                 }
 
                 object targetValue = value.GetValue();
