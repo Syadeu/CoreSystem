@@ -185,6 +185,11 @@ namespace Syadeu.Presentation.TurnTable
             NavMeshSystem navMesh = PresentationSystem<DefaultPresentationGroup, NavMeshSystem>.System;
             navMesh.MoveTo(m_Parent.As<IEntityData, IEntity>(), path, ev);
         }
+        public void MoveTo(in float3 point, in ActorMoveEvent ev)
+        {
+            NavMeshSystem navMesh = PresentationSystem<DefaultPresentationGroup, NavMeshSystem>.System;
+            navMesh.MoveTo(m_Parent.As<IEntityData, IEntity>(), point, ev);
+        }
 
         public void CalculateMoveableOutline(NativeArray<GridPosition> moveables, 
             ref NativeList<UnityEngine.Vector3> outlines, float heightOffset = .25f)

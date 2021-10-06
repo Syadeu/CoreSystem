@@ -40,9 +40,9 @@ namespace Syadeu.Presentation.Map
 
         protected override PresentationResult OnInitialize()
         {
-            RequestSystem<SceneSystem>(Bind);
-            RequestSystem<RenderSystem>(Bind);
-            RequestSystem<MapSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, SceneSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, RenderSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, MapSystem>(Bind);
 
             AddConsoleCommands();
 

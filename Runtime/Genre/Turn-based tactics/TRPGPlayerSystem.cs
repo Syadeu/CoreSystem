@@ -41,6 +41,9 @@ namespace Syadeu.Presentation.TurnTable
         private InputSystem m_InputSystem;
         private EntityRaycastSystem m_EntityRaycastSystem;
 
+        // LevelDesignPresentationGroup
+        private LevelDesignSystem m_LevelDesignSystem;
+
         private TRPGTurnTableSystem m_TurnTableSystem;
         private TRPGCameraMovement m_TRPGCameraMovement;
         private TRPGGridSystem m_TRPGGridSystem;
@@ -54,6 +57,7 @@ namespace Syadeu.Presentation.TurnTable
             RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, InputSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, EntityRaycastSystem>(Bind);
+            RequestSystem<LevelDesignPresentationGroup, LevelDesignSystem>(Bind);
             RequestSystem<TRPGSystemGroup, TRPGTurnTableSystem>(Bind);
             RequestSystem<TRPGSystemGroup, TRPGGridSystem>(Bind);
             RequestSystem<TRPGSystemGroup, TRPGCanvasUISystem>(Bind);
@@ -79,6 +83,8 @@ namespace Syadeu.Presentation.TurnTable
             m_EventSystem = null;
             m_InputSystem = null;
             m_EntityRaycastSystem = null;
+
+            m_LevelDesignSystem = null;
 
             m_TurnTableSystem = null;
             m_TRPGCameraMovement = null;
@@ -152,12 +158,44 @@ namespace Syadeu.Presentation.TurnTable
         }
         private void M_RightMouseButtonAction_performed(UnityEngine.InputSystem.InputAction.CallbackContext obj)
         {
-            
+            if (!m_TurnTableSystem.Enabled)
+            {
+                if (m_SelectedEntities.Length > 0)
+                {
+                    EntityMoveHandler();
+                }
+
+            }
+            else
+            {
+
+            }
+        }
+        private void EntityMoveHandler()
+        {
+            Ray ray = m_RenderSystem.ScreenPointToRay(new Unity.Mathematics.float3(m_InputSystem.MousePosition, 0));
+
+            m_LevelDesignSystem.Raycast(ray, out var hit);
+            for (int i = 0; i < m_SelectedEntities.Length; i++)
+            {
+                if (!m_SelectedEntities[i].HasComponent<TRPGActorMoveComponent>())
+                {
+                    "no move component".ToLog();
+                    continue;
+                }
+
+                var move = m_SelectedEntities[i].GetComponent<TRPGActorMoveComponent>();
+                move.MoveTo(hit.point, new ActorMoveEvent(m_SelectedEntities[i].As<IEntity, IEntityData>()));
+            }
         }
 
         private void Bind(EntityRaycastSystem other)
         {
             m_EntityRaycastSystem = other;
+        }
+        private void Bind(LevelDesignSystem other)
+        {
+            m_LevelDesignSystem = other;
         }
 
         private void Bind(TRPGTurnTableSystem other)

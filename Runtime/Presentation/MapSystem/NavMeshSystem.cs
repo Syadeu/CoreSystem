@@ -526,6 +526,11 @@ namespace Syadeu.Presentation.Map
             m_Entity = entity;
             m_AfterDelay = afterDelay;
         }
+        public ActorMoveEvent(EntityData<IEntityData> entity)
+        {
+            m_Entity = entity;
+            m_AfterDelay = 0;
+        }
 
         public void OnExecute(Entity<ActorEntity> from)
         {
