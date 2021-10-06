@@ -33,7 +33,7 @@ namespace Syadeu.Presentation.Render
 #if CORESYSTEM_URP
         public const string s_DefaultShaderName = "Universal Render Pipeline/Lit";
 #elif CORESYSTEM_HDRP
-        public const string s_DefaultShaderName = "Universal Render Pipeline/Lit";
+        public const string s_DefaultShaderName = "HDRP/Lit";
 #else
         public const string s_DefaultShaderName = "Standard";
 #endif

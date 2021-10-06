@@ -369,7 +369,7 @@ namespace Syadeu.Presentation.Map
         }
         public void UnregisterGrid(GridMapAttribute gridMap)
         {
-            if (m_MainGrid.Equals(gridMap))
+            if (m_MainGrid != null && m_MainGrid.Equals(gridMap))
             {
                 m_MainGrid = null;
             }
