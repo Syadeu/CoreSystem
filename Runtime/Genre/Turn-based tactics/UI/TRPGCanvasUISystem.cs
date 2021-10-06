@@ -63,7 +63,7 @@ namespace Syadeu.Presentation.TurnTable.UI
 
             shortcut.Initialize(this, m_EventSystem);
 
-            InputAction inputAction = m_InputSystem.AddKeyboardBinding(index, false, InputActionType.Button);
+            InputAction inputAction = m_InputSystem.GetKeyboardBinding(index, false, InputActionType.Button);
             inputAction.performed += shortcut.OnKeyboardPressed;
             inputAction.Enable();
 

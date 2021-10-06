@@ -19,6 +19,7 @@ namespace Syadeu.Presentation.Input
     public sealed class InputSystem : PresentationSystemEntity<InputSystem>
     {
         private const string c_KeyboardBinding = "<Keyboard>/{0}";
+        private const string c_MouseBinding = "<Mouse>/{0}";
 
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;
@@ -75,7 +76,55 @@ namespace Syadeu.Presentation.Input
             return base.OnStartPresentation();
         }
 
-        public InputAction AddKeyboardBinding(int number, bool isNumpad, InputActionType type)
+        public InputAction GetMouseButtonBinding(MouseButton mouseButton, InputActionType type)
+        {
+            const string
+                c_LeftButton = "leftButton",
+                c_RightButton = "rightButton",
+                c_MiddleButton = "middleButton",
+                c_ForwardButton = "forwardButton",
+                c_BackButton = "backButton";
+
+            InputAction action;
+            switch (mouseButton)
+            {
+                default:
+                case MouseButton.Left:
+                    action = new InputAction(
+                        binding: string.Format(c_MouseBinding, c_LeftButton),
+                        type: type
+                        );
+                    break;
+                case MouseButton.Right:
+                    action = new InputAction(
+                        binding: string.Format(c_MouseBinding, c_RightButton),
+                        type: type
+                        );
+                    break;
+                case MouseButton.Middle:
+                    action = new InputAction(
+                        binding: string.Format(c_MouseBinding, c_MiddleButton),
+                        type: type
+                        );
+                    break;
+                case MouseButton.Forward:
+                    action = new InputAction(
+                        binding: string.Format(c_MouseBinding, c_ForwardButton),
+                        type: type
+                        );
+                    break;
+                case MouseButton.Back:
+                    action = new InputAction(
+                        binding: string.Format(c_MouseBinding, c_BackButton),
+                        type: type
+                        );
+                    break;
+            }
+
+            m_CreatedInputActions.Add(action);
+            return action;
+        }
+        public InputAction GetKeyboardBinding(int number, bool isNumpad, InputActionType type)
         {
             const string c_Numpad = "numpad{0}";
 

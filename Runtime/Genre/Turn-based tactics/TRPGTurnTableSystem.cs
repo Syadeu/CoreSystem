@@ -20,6 +20,9 @@ namespace Syadeu.Presentation.TurnTable
         private readonly LinkedList<EntityData<IEntityData>> m_TurnTable = new LinkedList<EntityData<IEntityData>>();
         private LinkedListNode<EntityData<IEntityData>> m_CurrentTurn = null;
 
+        private bool m_TurnTableEnabled = false;
+
+        public bool Enabled => m_TurnTableEnabled;
         public EntityData<IEntityData> CurrentTurn => m_CurrentTurn.Value;
 
         private EventSystem m_EventSystem;
@@ -110,11 +113,24 @@ namespace Syadeu.Presentation.TurnTable
 
                 StartTurn(CurrentTurn);
             }
+            m_TurnTableEnabled = true;
+
+            m_EventSystem.PostEvent(OnTurnTableStateChangedEvent.GetEvent(m_TurnTableEnabled));
         }
+        public void StopTurnTable()
+        {
+            m_TurnTableEnabled = false;
+            InternalClearTable();
+
+            m_EventSystem.PostEvent(OnTurnTableStateChangedEvent.GetEvent(m_TurnTableEnabled));
+        }
+
         private IEnumerator WaitForJoinPlayer()
         {
             while (m_Players.Count == 0)
             {
+                if (!m_TurnTableEnabled) yield break;
+
                 yield return null;
             }
 
@@ -145,6 +161,12 @@ namespace Syadeu.Presentation.TurnTable
             }
             m_CurrentTurn = m_TurnTable.First;
         }
+        private void InternalClearTable()
+        {
+            m_TurnTable.Clear();
+            m_CurrentTurn = null;
+        }
+
         public void NextTurn()
         {
             EndTurn(m_CurrentTurn.Value);

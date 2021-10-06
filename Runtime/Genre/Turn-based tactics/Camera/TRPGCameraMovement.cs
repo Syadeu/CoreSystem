@@ -143,7 +143,7 @@ namespace Syadeu.Presentation.TurnTable
             m_DefaultTarget.position = m_TargetPosition + new float3(0, m_DefaultTopViewHeight, 0);
 
             m_TargetGroup.AddMember(m_DefaultTarget, 1, 1);
-            m_InputSystem = PresentationSystem<Input.InputSystem>.SystemID;
+            m_InputSystem = PresentationSystem<DefaultPresentationGroup, Input.InputSystem>.SystemID;
 
             for (int i = 0; i < m_AimTarget.Length; i++)
             {

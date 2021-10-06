@@ -3,6 +3,7 @@ using Syadeu;
 using Syadeu.Presentation;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.TestTools;

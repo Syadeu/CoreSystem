@@ -6,10 +6,13 @@ using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
+using Syadeu.Presentation.Input;
 using Syadeu.Presentation.Map;
 using Syadeu.Presentation.Render;
 using Syadeu.Presentation.TurnTable.UI;
 using System.Collections;
+using Unity.Collections;
+using UnityEngine;
 
 namespace Syadeu.Presentation.TurnTable
 {
@@ -25,11 +28,19 @@ namespace Syadeu.Presentation.TurnTable
         private ShortcutType m_CurrentShortcut = ShortcutType.None;
         private GridPath64 m_LastPath;
 
+        private NativeList<Entity<IEntity>> m_SelectedEntities;
+
+        private UnityEngine.InputSystem.InputAction
+            m_LeftMouseButtonAction,
+            m_RightMouseButtonAction;
+
         private RenderSystem m_RenderSystem;
         private CoroutineSystem m_CoroutineSystem;
         private NavMeshSystem m_NavMeshSystem;
-
         private EventSystem m_EventSystem;
+        private InputSystem m_InputSystem;
+        private EntityRaycastSystem m_EntityRaycastSystem;
+
         private TRPGTurnTableSystem m_TurnTableSystem;
         private TRPGCameraMovement m_TRPGCameraMovement;
         private TRPGGridSystem m_TRPGGridSystem;
@@ -41,9 +52,13 @@ namespace Syadeu.Presentation.TurnTable
             RequestSystem<DefaultPresentationGroup, CoroutineSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, NavMeshSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, InputSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, EntityRaycastSystem>(Bind);
             RequestSystem<TRPGSystemGroup, TRPGTurnTableSystem>(Bind);
             RequestSystem<TRPGSystemGroup, TRPGGridSystem>(Bind);
             RequestSystem<TRPGSystemGroup, TRPGCanvasUISystem>(Bind);
+
+            m_SelectedEntities = new NativeList<Entity<IEntity>>(4, AllocatorManager.Persistent);
 
             return base.OnInitialize();
         }
@@ -54,10 +69,17 @@ namespace Syadeu.Presentation.TurnTable
             m_EventSystem.RemoveEvent<TRPGEndTurnUIPressedEvent>(TRPGEndTurnUIPressedEventHandler);
             m_EventSystem.RemoveEvent<TRPGEndTurnEvent>(TRPGEndTurnEventHandler);
             m_EventSystem.RemoveEvent<OnTurnStateChangedEvent>(OnTurnStateChangedEventHandler);
+            m_EventSystem.RemoveEvent<OnTurnTableStateChangedEvent>(OnTurnTableStateChangedEventHandler);
+
+            m_SelectedEntities.Dispose();
 
             m_RenderSystem = null;
-            m_EventSystem = null;
+            m_CoroutineSystem = null;
             m_NavMeshSystem = null;
+            m_EventSystem = null;
+            m_InputSystem = null;
+            m_EntityRaycastSystem = null;
+
             m_TurnTableSystem = null;
             m_TRPGCameraMovement = null;
             m_TRPGGridSystem = null;
@@ -87,7 +109,57 @@ namespace Syadeu.Presentation.TurnTable
             m_EventSystem.AddEvent<TRPGEndTurnUIPressedEvent>(TRPGEndTurnUIPressedEventHandler);
             m_EventSystem.AddEvent<TRPGEndTurnEvent>(TRPGEndTurnEventHandler);
             m_EventSystem.AddEvent<OnTurnStateChangedEvent>(OnTurnStateChangedEventHandler);
+            m_EventSystem.AddEvent<OnTurnTableStateChangedEvent>(OnTurnTableStateChangedEventHandler);
         }
+        private void Bind(InputSystem other)
+        {
+            m_InputSystem = other;
+
+            m_LeftMouseButtonAction = m_InputSystem.GetMouseButtonBinding(
+                UnityEngine.InputSystem.LowLevel.MouseButton.Left, 
+                UnityEngine.InputSystem.InputActionType.Button);
+
+            m_LeftMouseButtonAction.performed += M_LeftMouseButtonAction_performed;
+
+            m_RightMouseButtonAction = m_InputSystem.GetMouseButtonBinding(
+                UnityEngine.InputSystem.LowLevel.MouseButton.Right,
+                UnityEngine.InputSystem.InputActionType.Button
+                );
+
+            m_RightMouseButtonAction.performed += M_RightMouseButtonAction_performed;
+
+            m_LeftMouseButtonAction.Enable();
+            m_RightMouseButtonAction.Enable();
+        }
+
+        private void M_LeftMouseButtonAction_performed(UnityEngine.InputSystem.InputAction.CallbackContext obj)
+        {
+            if (m_EntityRaycastSystem == null || m_RenderSystem == null) return;
+
+            Ray ray = m_RenderSystem.ScreenPointToRay(new Unity.Mathematics.float3(m_InputSystem.MousePosition, 0));
+            m_EntityRaycastSystem.Raycast(in ray, out RaycastInfo info);
+
+            if (info.hit)
+            {
+                $"hit: {info.hit}".ToLog();
+                
+                SelectEntity(info.entity);
+            }
+            else
+            {
+                ClearSelectedEntities();
+            }
+        }
+        private void M_RightMouseButtonAction_performed(UnityEngine.InputSystem.InputAction.CallbackContext obj)
+        {
+            
+        }
+
+        private void Bind(EntityRaycastSystem other)
+        {
+            m_EntityRaycastSystem = other;
+        }
+
         private void Bind(TRPGTurnTableSystem other)
         {
             m_TurnTableSystem = other;
@@ -128,10 +200,21 @@ namespace Syadeu.Presentation.TurnTable
                     m_TRPGCanvasUISystem.SetFire(true);
                     break;
             }
+
+            m_CurrentShortcut = ShortcutType.None;
         }
+
+        #region Event Handlers
+
         private void TRPGShortcutUIPressedEventHandler(TRPGShortcutUIPressedEvent ev)
         {
-            if (!m_TurnTableSystem.CurrentTurn.HasComponent<ActorControllerComponent>())
+            if (ev.Shortcut == m_CurrentShortcut)
+            {
+                "same return".ToLog();
+                DisableCurrentShortcut();
+                return;
+            }
+            else if (!m_TurnTableSystem.CurrentTurn.HasComponent<ActorControllerComponent>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"Entity({m_TurnTableSystem.CurrentTurn.RawName}) doesn\'t have {nameof(ActorControllerComponent)}.");
@@ -145,24 +228,13 @@ namespace Syadeu.Presentation.TurnTable
                 return;
             }
 
-            if (m_CurrentShortcut != ev.Shortcut)
-            {
-                DisableCurrentShortcut();
-            }
+            DisableCurrentShortcut();
 
             switch (ev.Shortcut)
             {
                 default:
                 case ShortcutType.None:
                 case ShortcutType.Move:
-                    if (m_CurrentShortcut == ShortcutType.Move)
-                    {
-                        DisableCurrentShortcut();
-
-                        m_CurrentShortcut = ShortcutType.None;
-                        return;
-                    }
-
                     m_TRPGCameraMovement.SetNormal();
 
                     m_TRPGGridSystem.DrawUICell(m_TurnTableSystem.CurrentTurn);
@@ -170,14 +242,6 @@ namespace Syadeu.Presentation.TurnTable
 
                     break;
                 case ShortcutType.Attack:
-                    if (m_CurrentShortcut == ShortcutType.Attack)
-                    {
-                        DisableCurrentShortcut();
-
-                        m_CurrentShortcut = ShortcutType.None;
-                        return;
-                    }
-
                     if (!ctr.HasProvider<TRPGActorAttackProvider>())
                     {
                         CoreSystem.Logger.LogError(Channel.Entity,
@@ -231,6 +295,31 @@ namespace Syadeu.Presentation.TurnTable
             if (faction.FactionType != FactionType.Player || ev.State != OnTurnStateChangedEvent.TurnState.Start) return;
 
             m_TRPGCanvasUISystem.SetPlayerUI(true);
+        }
+        private void OnTurnTableStateChangedEventHandler(OnTurnTableStateChangedEvent ev)
+        {
+            if (!ev.Enabled)
+            {
+                m_TRPGCanvasUISystem.SetPlayerUI(false);
+            }
+        }
+
+        #endregion
+
+        public void SelectEntity(Entity<IEntity> entity)
+        {
+            ClearSelectedEntities();
+            m_SelectedEntities.Add(entity);
+
+            $"select entity {entity.RawName}".ToLog();
+        }
+        public void DeSelectEntity(Entity<IEntity> entity)
+        {
+            m_SelectedEntities.RemoveFor(entity);
+        }
+        public void ClearSelectedEntities()
+        {
+            m_SelectedEntities.Clear();
         }
 
         public void MoveToCell(EntityData<IEntityData> entity, GridPosition position)
