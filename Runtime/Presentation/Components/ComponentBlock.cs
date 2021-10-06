@@ -60,8 +60,6 @@ namespace Syadeu.Presentation.Components
 
         public ComponentTypeQuery Add(TypeInfo typeInfo)
         {
-            //if (m_HashCode == 0) return new ComponentTypeQuery(typeInfo.GetHashCode());
-
             return new ComponentTypeQuery(unchecked(m_HashCode ^ typeInfo.GetHashCode()));
         }
 
@@ -76,7 +74,7 @@ namespace Syadeu.Presentation.Components
             int a0, a1;
             unchecked
             {
-                a0 = m_HashCode ^ ~s_All.GetHashCode();
+                a0 = m_HashCode ^ s_All.GetHashCode();
                 a1 = a0 | typeInfo.GetHashCode();
             }
 
