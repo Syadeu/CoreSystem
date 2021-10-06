@@ -42,6 +42,10 @@ namespace Syadeu.Presentation.Components
         private NativeQueue<DisposedComponent> m_DisposedComponents;
         //private MethodInfo m_RemoveComponentMethod;
 
+        /// <summary>
+        /// Key => <see cref="ComponentBuffer.TypeInfo"/>.GetHashCode()<br/>
+        /// Value => <see cref="ComponentBuffer.m_ComponentBuffer"/> index
+        /// </summary>
         private UnsafeMultiHashMap<int, int> m_ComponentHashMap;
 
         private Unity.Mathematics.Random m_Random;
@@ -88,8 +92,12 @@ namespace Syadeu.Presentation.Components
             m_DisposedComponents = new NativeQueue<DisposedComponent>(Allocator.Persistent);
 
             m_ComponentHashMap = new UnsafeMultiHashMap<int, int>(length, AllocatorManager.Persistent);
+            ref UntypedUnsafeHashMap hashMap =
+                ref UnsafeUtility.As<UnsafeMultiHashMap<int, int>, UntypedUnsafeHashMap>(ref m_ComponentHashMap);
 
-            DisposedComponent.Initialize((ComponentBuffer*)m_ComponentArrayBuffer.GetUnsafePtr());
+            DisposedComponent.Initialize(
+                (ComponentBuffer*)m_ComponentArrayBuffer.GetUnsafePtr(),
+                (UntypedUnsafeHashMap*)UnsafeUtility.AddressOf(ref hashMap));
 
             ConstructSharedStatics();
 
@@ -97,7 +105,7 @@ namespace Syadeu.Presentation.Components
 
             return base.OnInitialize();
         }
-        private ComponentBuffer BuildComponentBuffer(Type componentType, int totalLength, out int idx)
+        private ComponentBuffer BuildComponentBuffer(Type componentType, in int totalLength, out int idx)
         {
             int hashCode = CreateHashCode();
             idx = math.abs(hashCode) % totalLength;
@@ -123,6 +131,8 @@ namespace Syadeu.Presentation.Components
                 = TypeInfo.Construct(componentType, idx, UnsafeUtility.SizeOf(componentType), AlignOf(componentType), hashCode);
             ComponentType.GetValue(componentType).Data = runtimeTypeInfo;
 
+            ComponentTypeQuery.s_All = ComponentTypeQuery.s_All.Add(runtimeTypeInfo);
+            
             // 새로운 버퍼를 생성하고, heap 에 메모리를 할당합니다.
             temp.Initialize(runtimeTypeInfo, runtimeTypeInfo.Size, runtimeTypeInfo.Align);
 
@@ -339,7 +349,7 @@ namespace Syadeu.Presentation.Components
             m_ComponentArrayBuffer[index.x].m_OccupiedBuffer[index.y] = true;
             m_ComponentArrayBuffer[index.x].m_EntityBuffer[index.y] = entity;
 
-            m_ComponentHashMap.Add(index.y, index.y);
+            m_ComponentHashMap.Add(m_ComponentArrayBuffer[index.x].TypeInfo.GetHashCode(), index.y);
 
             CoreSystem.Logger.Log(Channel.Component,
                 $"Component {TypeHelper.TypeOf<TComponent>.Name} set at entity({entity.Name}), index {index}");
@@ -359,8 +369,6 @@ namespace Syadeu.Presentation.Components
                 return;
             }
 #endif
-            m_ComponentHashMap.Remove(index.y, index.y);
-
             DisposedComponent dispose = DisposedComponent.Construct(index, entity);
 
             if (CoreSystem.BlockCreateInstance)
@@ -387,8 +395,6 @@ namespace Syadeu.Presentation.Components
                 return;
             }
 #endif
-            m_ComponentHashMap.Remove(index.y, index.y);
-            
             DisposedComponent dispose = DisposedComponent.Construct(index, entity);
 
             if (CoreSystem.BlockCreateInstance)
@@ -576,6 +582,32 @@ namespace Syadeu.Presentation.Components
             return builder;
         }
 
+        [Obsolete("In development")]
+        public void ECB(EntityComponentBuffer ecb)
+        {
+            ref UntypedUnsafeHashMap hashMap = 
+                ref UnsafeUtility.As<UnsafeMultiHashMap<int, int>, UntypedUnsafeHashMap>(ref m_ComponentHashMap);
+            //UnsafeUtility.
+
+            unsafe
+            {
+                //m_ComponentHashMap.ke
+
+                //if (m_ComponentHashMap.TryGetFirstValue(m_TypeIndex, out int i, out var iterator))
+                //{
+                //    do
+                //    {
+                //        target->HasElementAt(i, out bool has);
+                //        if (!has) continue;
+
+                //        target->ElementAt(i, out IntPtr componentPtr, out EntityData<IEntityData> entity);
+
+
+                //    } while (cache.TryGetNextValue(out i, ref iterator));
+                //}
+            }
+        }
+
         #region Utils
 
         /// <summary>
@@ -639,13 +671,18 @@ namespace Syadeu.Presentation.Components
         private struct DisposedComponent : IDisposable
         {
             private static ComponentBuffer* s_Buffer;
+            /// <summary>
+            /// <see cref="EntityComponentSystem.m_ComponentHashMap"/>
+            /// </summary>
+            private static UntypedUnsafeHashMap* s_HashMap;
 
             private int2 index;
             private EntityData<IEntityData> entity;
 
-            public static void Initialize(ComponentBuffer* buffer)
+            public static void Initialize(ComponentBuffer* buffer, UntypedUnsafeHashMap* hashMap)
             {
                 s_Buffer = buffer;
+                s_HashMap = hashMap;
             }
             public static DisposedComponent Construct(int2 index, EntityData<IEntityData> entity)
             {
@@ -664,15 +701,17 @@ namespace Syadeu.Presentation.Components
                     return;
                 }
 
+                ref UnsafeMultiHashMap<int, int> hashMap
+                    = ref UnsafeUtility.As<UntypedUnsafeHashMap, UnsafeMultiHashMap<int, int>>(ref *s_HashMap);
+                
+                hashMap.Remove(s_Buffer[index.x].TypeInfo.GetHashCode(), index.y);
+
                 s_Buffer[index.x].m_OccupiedBuffer[index.y] = false;
 
                 void* buffer = s_Buffer[index.x].m_ComponentBuffer;
 
                 IntPtr p = s_Buffer[index.x].ElementAt(index.y);
 
-                //UnsafeList unsafeList = new UnsafeList();
-                //unsafeList.
-                //UnsafeUtility.ptr
                 object obj = Marshal.PtrToStructure(p, s_Buffer[index.x].TypeInfo.Type);
 
                 // 해당 컴포넌트가 IDisposable 인터페이스를 상속받으면 해당 인터페이스를 실행
@@ -695,8 +734,6 @@ namespace Syadeu.Presentation.Components
             public byte dummy;
             public T data;
         }
-
-
 
         #endregion
     }
@@ -922,7 +959,7 @@ namespace Syadeu.Presentation.Components
     /// <summary>
     /// Runtime 중 기본 <see cref="System.Type"/> 의 정보를 저장하고, 해당 타입의 binary 크기, alignment를 저장합니다.
     /// </summary>
-    public struct TypeInfo
+    public readonly struct TypeInfo
     {
         private readonly RuntimeTypeHandle m_TypeHandle;
         private readonly int m_TypeIndex;
@@ -986,180 +1023,13 @@ namespace Syadeu.Presentation.Components
         public static Type Type => Value.Data.Type;
         public static TypeInfo TypeInfo => Value.Data;
         public static int Index => Value.Data.Index;
+        public static ComponentTypeQuery Query => ComponentTypeQuery.Create(TypeInfo);
     }
 
-    [Obsolete("In development")]
-    public struct EntityComponentBuffer
-    {
-        unsafe private ComponentBuffer* buffer;
-        unsafe private UntypedUnsafeHashMap* componentMap;
-        private int m_TypeIndex;
+    
+    
 
-        unsafe internal static EntityComponentBuffer InternalCreate(
-            ComponentBuffer* pointer, UntypedUnsafeHashMap* componentMap)
-        {
-            EntityComponentBuffer temp = new EntityComponentBuffer();
-
-            temp.buffer = pointer;
-            temp.componentMap = componentMap;
-
-            return temp;
-        }
-        unsafe private static bool CheckIsAllocated(ComponentBuffer* pointer)
-        {
-            if (pointer->IsCreated)
-            {
-                return true;
-            }
-
-            "not allocated component buffer".ToLogError();
-            return false;
-        }
-        unsafe private static void AddIfIsExist(ComponentBuffer* pointer, in int length)
-        {
-            List<ComponentChunk> chunks = new List<ComponentChunk>();
-
-            for (int i = 0, count = 0; i < length; i++)
-            {
-                pointer->HasElementAt(i, out bool has);
-                if (!has)
-                {
-                    if (count == 0)
-                    {
-                        continue;
-                    }
-
-                    var chunk = new ComponentChunk(pointer->ElementAt(i), count);
-                    count = 0;
-
-                    chunks.Add(chunk);
-                    continue;
-                }
-
-
-            }
-
-            
-            //if (!has)
-            //{
-            //    if (i < length)
-            //    {
-            //        i++;
-            //        AddIfIsExist(pointer, in length, ref i);
-            //    }
-            //    return;
-            //}
-
-            //while (pointer->)
-            //{
-
-            //}
-        }
-
-        public EntityComponentBuffer SetTargetComponent<TComponent>()
-            where TComponent : unmanaged, IEntityComponent
-        {
-            m_TypeIndex = ComponentType<TComponent>.Index;
-
-            return this;
-        }
-        public EntityComponentBuffer SetTargetComponent(Type componentType)
-        {
-            if (!UnsafeUtility.IsBlittable(componentType) || !UnsafeUtility.IsUnmanaged(componentType))
-            {
-                CoreSystem.Logger.LogError(Channel.Component,
-                    $"Could not resolve type of {TypeHelper.ToString(componentType)} is not ValueType.");
-
-                return this;
-            }
-            else if (!EntityComponentSystem.IsComponentType(componentType))
-            {
-                CoreSystem.Logger.LogError(Channel.Component,
-                    $"Type({TypeHelper.ToString(componentType)}) is not a component type. " +
-                    $"All components must inheritance {nameof(IEntityComponent)}.");
-
-                return this;
-            }
-
-            m_TypeIndex = ComponentType.GetValue(componentType).Data.Index;
-
-            return this;
-        }
-
-        unsafe public void Run()
-        {
-            ComponentBuffer* target = buffer + m_TypeIndex;
-            CheckIsAllocated(target);
-
-            ref UnsafeMultiHashMap<int, int> cache 
-                = ref UnsafeUtility.As<UntypedUnsafeHashMap, UnsafeMultiHashMap<int, int>>(ref *componentMap);
-
-            if (cache.TryGetFirstValue(m_TypeIndex, out int i, out var iterator))
-            {
-                do
-                {
-                    target->HasElementAt(i, out bool has);
-                    if (!has) continue;
-
-                    target->ElementAt(i, out IntPtr componentPtr, out EntityData<IEntityData> entity);
-
-
-                } while (cache.TryGetNextValue(out i, ref iterator));
-            }
-        }
-
-    }
-    public struct ComponentTypeQuery
-    {
-        private const int c_ConstantPrime = 31;
-        public const int ReadOnly = 1 << (c_ConstantPrime * 1);
-        public const int WriteOnly = 1 << (c_ConstantPrime * 2);
-        public const int ReadWrite = ReadOnly | WriteOnly;
-
-        private readonly int m_HashCode;
-
-        private ComponentTypeQuery(int hashCode)
-        {
-            m_HashCode = hashCode;
-        }
-        public static ComponentTypeQuery Combine(TypeInfo lhs, TypeInfo rhs)
-        {
-            int hashCode;
-            unchecked
-            {
-                hashCode = lhs.GetHashCode() ^ rhs.GetHashCode();
-            }
-            return new ComponentTypeQuery(hashCode);
-        }
-        public static ComponentTypeQuery Combine(TypeInfo lhs, TypeInfo rhs, params TypeInfo[] other)
-        {
-            int hashCode;
-            unchecked
-            {
-                hashCode = lhs.GetHashCode() ^ rhs.GetHashCode();
-
-                for (int i = 0; i < other.Length; i++)
-                {
-                    hashCode = hashCode ^ other[i].GetHashCode();
-                }
-            }
-            return new ComponentTypeQuery(hashCode);
-        }
-
-        public override int GetHashCode() => m_HashCode;
-
-        public static ComponentTypeQuery operator ^(ComponentTypeQuery x, int y)
-        {
-            int hash;
-            unchecked
-            {
-                hash = x.GetHashCode() ^ y;
-            }
-            return new ComponentTypeQuery(hash);
-        }
-    }
-
-    [Obsolete("In development")]
+    
     unsafe internal struct ComponentChunk
     {
         public void* m_Pointer;

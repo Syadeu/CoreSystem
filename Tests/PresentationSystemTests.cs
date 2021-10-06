@@ -130,6 +130,7 @@ public class PresentationSystemTests
     [UnityTest]
     public IEnumerator QueryTest()
     {
+        //yield return new WaitForSeconds(1);
         yield return PresentationSystem<DefaultPresentationGroup, EntitySystem>.GetAwaiter();
 
         TypeInfo
@@ -143,21 +144,40 @@ public class PresentationSystemTests
             query2 = ComponentTypeQuery.Combine(a1, a0),
             query3 = ComponentTypeQuery.Combine(a3, a2, a0),
             query4 = ComponentTypeQuery.Combine(a2, a0, a3),
-            query5 = ComponentTypeQuery.Combine(a2, a0, a3, a1),
+
+            query5 = ComponentTypeQuery.Combine(a2, a3, a1),
+
             query6 = ComponentTypeQuery.Combine(a2, a0, a3, a1),
-            query7 = ComponentTypeQuery.Combine(a2, a0, a3, a1, a3, a2),
             query8 = ComponentTypeQuery.Combine(a2, a0, a3, a1) ^ ComponentTypeQuery.ReadWrite,
             query9 = ComponentTypeQuery.Combine(a2, a0, a3, a1) ^ ComponentTypeQuery.WriteOnly;
 
-        if ((query9.GetHashCode() & ComponentTypeQuery.WriteOnly) == ComponentTypeQuery.WriteOnly)
-        {
-            Debug.Log("query9 is write only");
-        }
+        Debug.Log($"Default: {query5} :: a0: {a0.GetHashCode()}");
 
-        var temp = query8 ^ ComponentTypeQuery.ReadOnly;
+        Debug.Log($"{query5.Has(a0)}");
 
-        Debug.Log(
-            $"{temp.GetHashCode()} == {query9.GetHashCode()} ? {temp.GetHashCode() == query9.GetHashCode()}");
+        //Debug.Log($"{query9.GetHashCode() | ComponentTypeQuery.WriteOnly} == {query9 ^ ComponentTypeQuery.WriteOnly}\n" +
+        //    $"{(query9.GetHashCode() | ComponentTypeQuery.WriteOnly) == (query9 ^ ComponentTypeQuery.WriteOnly).GetHashCode()}");
+
+
+
+        //if ((query9.GetHashCode() ^ ComponentTypeQuery.ReadOnly) == (query9.GetHashCode() ^ ComponentTypeQuery.ReadOnly))
+        //{
+        //    Debug.Log("query9 is write only");
+        //}
+
+        //if ((query9.GetHashCode() & a0.GetHashCode()) == a0.GetHashCode())
+        //{
+        //    Debug.Log("qua9 has a0");
+        //}
+
+        //var temp = query8 ^ ComponentTypeQuery.ReadOnly;
+
+        //Debug.Log($"original : {query6} :: write : {query9} \n readwrite {query8}");
+
+        //Debug.Log($"rww{(query9 ^ ComponentTypeQuery.ReadOnly)}, rd{(query9 ^ ComponentTypeQuery.WriteOnly)}");
+        //Debug.Log($"{ComponentTypeQuery.ReadOnly} :: {ComponentTypeQuery.WriteOnly}");
+        //Debug.Log(
+        //    $"{temp.GetHashCode()} == {query9.GetHashCode()} ? {temp.GetHashCode() == query9.GetHashCode()}");
 
         //Debug.Log(
         //    $"{query1.GetHashCode()} == {query2.GetHashCode()} ? {query1.GetHashCode() == query2.GetHashCode()}");
