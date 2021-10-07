@@ -28,21 +28,11 @@ namespace Syadeu.Presentation.TurnTable
         private ShortcutType m_CurrentShortcut = ShortcutType.None;
         private GridPath64 m_LastPath;
 
-        private NativeList<Entity<IEntity>> m_SelectedEntities;
-
-        private UnityEngine.InputSystem.InputAction
-            m_LeftMouseButtonAction,
-            m_RightMouseButtonAction;
-
         private RenderSystem m_RenderSystem;
         private CoroutineSystem m_CoroutineSystem;
         private NavMeshSystem m_NavMeshSystem;
         private EventSystem m_EventSystem;
-        private InputSystem m_InputSystem;
         private EntityRaycastSystem m_EntityRaycastSystem;
-
-        // LevelDesignPresentationGroup
-        private LevelDesignSystem m_LevelDesignSystem;
 
         private TRPGTurnTableSystem m_TurnTableSystem;
         private TRPGCameraMovement m_TRPGCameraMovement;
@@ -57,14 +47,11 @@ namespace Syadeu.Presentation.TurnTable
             RequestSystem<DefaultPresentationGroup, CoroutineSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, NavMeshSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
-            RequestSystem<DefaultPresentationGroup, InputSystem>(Bind);
+            //RequestSystem<DefaultPresentationGroup, InputSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, EntityRaycastSystem>(Bind);
-            RequestSystem<LevelDesignPresentationGroup, LevelDesignSystem>(Bind);
             RequestSystem<TRPGSystemGroup, TRPGTurnTableSystem>(Bind);
             RequestSystem<TRPGSystemGroup, TRPGGridSystem>(Bind);
             RequestSystem<TRPGSystemGroup, TRPGCanvasUISystem>(Bind);
-
-            m_SelectedEntities = new NativeList<Entity<IEntity>>(4, AllocatorManager.Persistent);
 
             return base.OnInitialize();
         }
@@ -77,16 +64,12 @@ namespace Syadeu.Presentation.TurnTable
             m_EventSystem.RemoveEvent<OnTurnStateChangedEvent>(OnTurnStateChangedEventHandler);
             m_EventSystem.RemoveEvent<OnTurnTableStateChangedEvent>(OnTurnTableStateChangedEventHandler);
 
-            m_SelectedEntities.Dispose();
-
             m_RenderSystem = null;
             m_CoroutineSystem = null;
             m_NavMeshSystem = null;
             m_EventSystem = null;
-            m_InputSystem = null;
+            //m_InputSystem = null;
             m_EntityRaycastSystem = null;
-
-            m_LevelDesignSystem = null;
 
             m_TurnTableSystem = null;
             m_TRPGCameraMovement = null;
@@ -119,85 +102,10 @@ namespace Syadeu.Presentation.TurnTable
             m_EventSystem.AddEvent<OnTurnStateChangedEvent>(OnTurnStateChangedEventHandler);
             m_EventSystem.AddEvent<OnTurnTableStateChangedEvent>(OnTurnTableStateChangedEventHandler);
         }
-        private void Bind(InputSystem other)
-        {
-            m_InputSystem = other;
-
-            m_LeftMouseButtonAction = m_InputSystem.GetMouseButtonBinding(
-                UnityEngine.InputSystem.LowLevel.MouseButton.Left, 
-                UnityEngine.InputSystem.InputActionType.Button);
-
-            m_LeftMouseButtonAction.performed += M_LeftMouseButtonAction_performed;
-
-            m_RightMouseButtonAction = m_InputSystem.GetMouseButtonBinding(
-                UnityEngine.InputSystem.LowLevel.MouseButton.Right,
-                UnityEngine.InputSystem.InputActionType.Button
-                );
-
-            m_RightMouseButtonAction.performed += M_RightMouseButtonAction_performed;
-
-            m_LeftMouseButtonAction.Enable();
-            m_RightMouseButtonAction.Enable();
-        }
-
-        private void M_LeftMouseButtonAction_performed(UnityEngine.InputSystem.InputAction.CallbackContext obj)
-        {
-            if (m_EntityRaycastSystem == null || m_RenderSystem == null) return;
-
-            Ray ray = m_RenderSystem.ScreenPointToRay(new Unity.Mathematics.float3(m_InputSystem.MousePosition, 0));
-            m_EntityRaycastSystem.Raycast(in ray, out RaycastInfo info);
-
-            if (info.hit)
-            {
-                $"hit: {info.hit}".ToLog();
-                
-                SelectEntity(info.entity);
-            }
-            else
-            {
-                ClearSelectedEntities();
-            }
-        }
-        private void M_RightMouseButtonAction_performed(UnityEngine.InputSystem.InputAction.CallbackContext obj)
-        {
-            if (!m_TurnTableSystem.Enabled)
-            {
-                if (m_SelectedEntities.Length > 0)
-                {
-                    EntityMoveHandler();
-                }
-
-            }
-            else
-            {
-
-            }
-        }
-        private void EntityMoveHandler()
-        {
-            Ray ray = m_RenderSystem.ScreenPointToRay(new Unity.Mathematics.float3(m_InputSystem.MousePosition, 0));
-
-            m_LevelDesignSystem.Raycast(ray, out var hit);
-            for (int i = 0; i < m_SelectedEntities.Length; i++)
-            {
-                if (!m_SelectedEntities[i].HasComponent<TRPGActorMoveComponent>())
-                {
-                    "no move component".ToLog();
-                    continue;
-                }
-
-                var move = m_SelectedEntities[i].GetComponent<TRPGActorMoveComponent>();
-                move.MoveTo(hit.point, new ActorMoveEvent(m_SelectedEntities[i].As<IEntity, IEntityData>()));
-            }
-        }
 
         private void Bind(EntityRaycastSystem other)
         {
             m_EntityRaycastSystem = other;
-        }
-        private void Bind(LevelDesignSystem other)
-        {
-            m_LevelDesignSystem = other;
         }
 
         private void Bind(TRPGTurnTableSystem other)
@@ -347,22 +255,6 @@ namespace Syadeu.Presentation.TurnTable
         }
 
         #endregion
-
-        public void SelectEntity(Entity<IEntity> entity)
-        {
-            ClearSelectedEntities();
-            m_SelectedEntities.Add(entity);
-
-            $"select entity {entity.RawName}".ToLog();
-        }
-        public void DeSelectEntity(Entity<IEntity> entity)
-        {
-            m_SelectedEntities.RemoveFor(entity);
-        }
-        public void ClearSelectedEntities()
-        {
-            m_SelectedEntities.Clear();
-        }
 
         public void MoveToCell(EntityData<IEntityData> entity, GridPosition position)
         {
