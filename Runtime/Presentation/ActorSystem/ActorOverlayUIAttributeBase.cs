@@ -14,15 +14,6 @@ namespace Syadeu.Presentation.Actor
             ParentEntity = parent;
             OnUICreated(parent);
         }
-        internal void UIEventReceived<TEvent>(TEvent ev) 
-#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
-            where TEvent : struct, IActorEvent
-#else
-            where TEvent : unmanaged, IActorEvent
-#endif
-        {
-            OnUIEventReceived(ev);
-        }
         internal void EventReceived<TEvent>(TEvent ev)
 #if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             where TEvent : struct, IActorEvent
@@ -35,13 +26,6 @@ namespace Syadeu.Presentation.Actor
 
         protected virtual void OnUICreated(Entity<ActorEntity> parent) { }
 
-        /// <summary>
-        /// <seealso cref="IActorOverlayUIEvent"/>
-        /// </summary>
-        /// <typeparam name="TEvent"></typeparam>
-        /// <param name="ev"></param>
-        protected virtual void OnUIEventReceived<TEvent>(TEvent ev) where TEvent : IActorEvent
-        { }
         protected virtual void OnEventReceived<TEvent>(TEvent ev) where TEvent : IActorEvent
         { }
     }

@@ -11,6 +11,7 @@ using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Proxy;
+using Syadeu.Presentation.Render;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -36,6 +37,21 @@ namespace Syadeu.Presentation.Actor
     internal sealed class ActorControllerProcessor : AttributeProcessor<ActorControllerAttribute>,
         IAttributeOnProxy
     {
+        WorldCanvasSystem m_WorldCanvasSystem;
+
+        protected override void OnInitialize()
+        {
+            RequestSystem<DefaultPresentationGroup, WorldCanvasSystem>(Bind);
+        }
+        private void Bind(WorldCanvasSystem other)
+        {
+            m_WorldCanvasSystem = other;
+        }
+        protected override void OnDispose()
+        {
+            m_WorldCanvasSystem = null;
+        }
+
         protected override void OnCreated(ActorControllerAttribute attribute, EntityData<IEntityData> entity)
         {
             entity.AddComponent(new ActorControllerComponent());
@@ -98,7 +114,7 @@ namespace Syadeu.Presentation.Actor
         }
         private void Initialize(EntityData<IEntityData> parent, IActorProvider provider)
         {
-            provider.Bind(parent, EventSystem, EntitySystem, EntitySystem.m_CoroutineSystem);
+            provider.Bind(parent, EventSystem, EntitySystem, EntitySystem.m_CoroutineSystem, m_WorldCanvasSystem);
 
             //if (provider.ReceiveEventOnly != null)
             //{

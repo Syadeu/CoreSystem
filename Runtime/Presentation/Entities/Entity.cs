@@ -184,6 +184,7 @@ namespace Syadeu.Presentation.Entities
                 return tr.proxy;
             }
         }
+
 #pragma warning restore IDE1006 // Naming Styles
 
         private Entity(Hash idx, string name)

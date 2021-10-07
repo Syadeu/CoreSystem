@@ -24,21 +24,18 @@ namespace Syadeu.Presentation.TurnTable
         {
             m_HPNameHash = ActorStatAttribute.ToValueHash(m_HPStatName);
         }
-        protected override void OnUIEventReceived<TEvent>(TEvent ev)
-        {
-            if (ev is TRPGActorActionPointChangedUIEvent apChangedEv)
-            {
-                if (m_CurrentProxy != null)
-                {
-                    m_CurrentProxy.SetAPText(apChangedEv.To);
-                }
-            }
-        }
         protected override void OnEventReceived<TEvent>(TEvent ev)
         {
             if (ev is ActorHitEvent hitEvent)
             {
                 ActorHitEventHandler(hitEvent);
+            }
+            else if (ev is TRPGActorActionPointChangedEvent apChangedEv)
+            {
+                if (m_CurrentProxy != null)
+                {
+                    m_CurrentProxy.SetAPText(apChangedEv.To);
+                }
             }
         }
 
