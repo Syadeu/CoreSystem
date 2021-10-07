@@ -77,6 +77,7 @@ namespace Syadeu.Presentation.Map
 
         public void DestroyMapData()
         {
+            "destroy in".ToLog();
             if (!IsMapDataCreated) throw new System.Exception();
 
             for (int i = 0; i < CreatedMapData.Length; i++)

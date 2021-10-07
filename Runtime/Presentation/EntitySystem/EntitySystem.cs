@@ -85,11 +85,13 @@ namespace Syadeu.Presentation
         }
         private void Instance_PreUpdate()
         {
+            if (CoreSystem.BlockCreateInstance) return;
+
             for (int i = 0; i < m_DestroyedObjectsInThisFrame.Count; i++)
             {
                 if (m_ObjectEntities[m_DestroyedObjectsInThisFrame[i]] is IEntityData entityData)
                 {
-                    if (!CoreSystem.BlockCreateInstance && m_ObjectEntities[m_DestroyedObjectsInThisFrame[i]] is IEntity entity)
+                    if (m_ObjectEntities[m_DestroyedObjectsInThisFrame[i]] is IEntity entity)
                     {
                         if (entity.transform is ProxyTransform tr)
                         {
@@ -103,10 +105,18 @@ namespace Syadeu.Presentation
                             ((IDisposable)unityTr).Dispose();
                         }
                     }
+                    else
+                    {
+                        ((IDisposable)m_ObjectEntities[m_DestroyedObjectsInThisFrame[i]]).Dispose();
+                        m_ObjectEntities.Remove(m_DestroyedObjectsInThisFrame[i]);
+                    }
+                }
+                else
+                {
+                    ((IDisposable)m_ObjectEntities[m_DestroyedObjectsInThisFrame[i]]).Dispose();
+                    m_ObjectEntities.Remove(m_DestroyedObjectsInThisFrame[i]);
                 }
 
-                //((IDisposable)m_ObjectEntities[m_DestroyedObjectsInThisFrame[i]]).Dispose();
-                //m_ObjectEntities.Remove(m_DestroyedObjectsInThisFrame[i]);
             }
 
             m_DestroyedObjectsInThisFrame.Clear();

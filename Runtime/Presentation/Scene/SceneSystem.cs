@@ -127,9 +127,11 @@ namespace Syadeu.Presentation
                 {
                     m_SceneInstanceFolder = new GameObject("Presentation Instances").transform;
 
-                    CoreSystem.Logger.False(IsMasterScene, "masterscene instance folder error");
-
-                    SceneManager.MoveGameObjectToScene(m_SceneInstanceFolder.gameObject, CurrentScene);
+                    //CoreSystem.Logger.False(IsMasterScene, "masterscene instance folder error");
+                    if (!m_IsDebugScene)
+                    {
+                        SceneManager.MoveGameObjectToScene(m_SceneInstanceFolder.gameObject, m_MasterScene);
+                    }
                 }
                 return m_SceneInstanceFolder;
             }

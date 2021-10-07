@@ -10,8 +10,8 @@ namespace Syadeu.Presentation
 
         protected override void Start()
         {
-            if (m_Camera == null) throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
-                "Camera 는 null 이 될 수 없습니다.");
+            //if (m_Camera == null) throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
+            //    "Camera 는 null 이 될 수 없습니다.");
             if (m_FadeGroup == null) throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
                 "FadeGroup 은 null 이 될 수 없습니다.");
 

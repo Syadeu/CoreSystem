@@ -1945,6 +1945,7 @@ namespace Syadeu
                     stackTrace = stackTrace.Replace(matches[i].Value, tempuri);
                 }
                 LogError(channel, string.Format(c_Msg, methodName, ex.Message, stackTrace));
+                Debug.LogException(ex);
 #else
                 LogError(channel, ex.Message + ex.StackTrace);
 #endif

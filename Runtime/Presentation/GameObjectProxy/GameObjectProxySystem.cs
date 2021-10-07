@@ -983,11 +983,11 @@ namespace Syadeu.Presentation.Proxy
                 Action<RecycleableMonobehaviour> onCompleted)
             {
                 m_ProxySystem = proxySystem;
-                if (SceneSystem.IsSceneLoading)
-                {
-                    CoreSystem.Logger.LogWarning(Channel.Proxy, $"{prefabIdx.Index} is returned because Scene has been changed");
-                    return;
-                }
+                //if (SceneSystem.IsSceneLoading)
+                //{
+                //    CoreSystem.Logger.LogWarning(Channel.Proxy, $"{prefabIdx.Index} is returned because Scene has been changed");
+                //    return;
+                //}
 
 #if DEBUG_MODE
                 s_SetupMarker.Begin();
@@ -1027,16 +1027,16 @@ namespace Syadeu.Presentation.Proxy
                     return;
                 }
 
-                Transform parent;
-                if (prefabInfo.m_IsWorldUI)
-                {
-                    parent = PresentationSystem<DefaultPresentationGroup, WorldCanvasSystem>.System.Canvas.transform;
-                }
-                else
-                {
-                    CoreSystem.Logger.NotNull(SceneSystem.SceneInstanceFolder);
-                    parent = SceneSystem.SceneInstanceFolder;
-                }
+                //Transform parent;
+                //if (prefabInfo.m_IsWorldUI)
+                //{
+                //    parent = PresentationSystem<DefaultPresentationGroup, WorldCanvasSystem>.System.Canvas.transform;
+                //}
+                //else
+                //{
+                //    CoreSystem.Logger.NotNull(SceneSystem.SceneInstanceFolder);
+                //    parent = SceneSystem.SceneInstanceFolder;
+                //}
 
                 //refObject = prefabInfo.m_RefPrefab;
                 m_PrefabIdx = prefabIdx;
@@ -1045,14 +1045,14 @@ namespace Syadeu.Presentation.Proxy
 
                 if (prefabInfo.m_IsRuntimeObject)
                 {
-                    CreatePrefab(prefabInfo.m_Prefab, parent);
+                    CreatePrefab(prefabInfo.m_Prefab);
 #if DEBUG_MODE
                     s_SetupMarker.End();
 #endif
                     return;
                 }
 
-                var oper = prefabInfo.InstantiateAsync(pos, rot, parent);
+                var oper = prefabInfo.InstantiateAsync(pos, rot, null);
                 oper.Completed += CreatePrefab;
 #if DEBUG_MODE
                 s_SetupMarker.End();
@@ -1061,29 +1061,30 @@ namespace Syadeu.Presentation.Proxy
             private void CreatePrefab(AsyncOperationHandle<GameObject> other)
             {
                 Scene currentScene = SceneSystem.CurrentScene;
-                if (!currentScene.Equals(m_RequestedScene) || SceneSystem.IsSceneLoading)
-                {
-                    CoreSystem.Logger.LogWarning(Channel.Proxy, $"{other.Result.name} is returned because Scene has been changed");
-                    m_PrefabIdx.ReleaseInstance(other.Result);
-                    return;
-                }
+                //if (!currentScene.Equals(m_RequestedScene) || SceneSystem.IsSceneLoading)
+                //{
+                //    CoreSystem.Logger.LogError(Channel.Proxy, $"{other.Result.name} is returned because Scene has been changed");
+                //    m_PrefabIdx.ReleaseInstance(other.Result);
+                //    return;
+                //}
 
                 CreatePrefab(other.Result);
             }
-            private void CreatePrefab(GameObject Result, Transform parent = null)
+            private void CreatePrefab(GameObject Result)
             {
 #if DEBUG_MODE
                 s_CreateMarker.Begin();
 #endif
+                Transform tr;
                 if (Result.GetComponentInChildren<RectTransform>() != null)
                 {
-                    parent = PresentationSystem<DefaultPresentationGroup, WorldCanvasSystem>.System.Canvas.transform;
+                    tr = PresentationSystem<DefaultPresentationGroup, WorldCanvasSystem>.System.Canvas.transform;
                 }
-
-                if (parent != null)
+                else
                 {
-                    Result.transform.SetParent(parent);
+                    tr = SceneSystem.SceneInstanceFolder;
                 }
+                Result.transform.SetParent(tr);
 
                 if (m_PrefabIdx.GetObjectSetting().m_IsWorldUI)
                 {
