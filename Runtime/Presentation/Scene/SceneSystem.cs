@@ -58,6 +58,8 @@ namespace Syadeu.Presentation
         public SceneReference CurrentSceneRef => SceneList.Instance.GetScene(m_CurrentScene.path);
 
         public bool IsDebugScene => m_IsDebugScene;
+        public bool IsMasterScene => CurrentScene.Equals(m_MasterScene);
+        public bool IsStartScene => CurrentSceneRef.Equals(SceneList.Instance.StartScene);
 
         public event Action OnSceneChangeCalled;
         /// <summary>
@@ -220,6 +222,10 @@ namespace Syadeu.Presentation
             }
             #endregion
         }
+        public override void OnDispose()
+        {
+            PresentationManager.Instance.PostUpdate -= Instance_PostUpdate;
+        }
 
         private void Instance_PostUpdate()
         {
@@ -266,6 +272,8 @@ namespace Syadeu.Presentation
                 }
 
                 m_IsDebugScene = true;
+
+                OnSceneChangeCalled?.Invoke();
             }
             return base.OnStartPresentation();
         }
