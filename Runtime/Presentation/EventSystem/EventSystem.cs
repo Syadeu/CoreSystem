@@ -2,6 +2,7 @@
 #define DEBUG_MODE
 #endif
 
+using Syadeu.Internal;
 using Syadeu.Presentation.Internal;
 using System;
 using System.Collections;
@@ -30,6 +31,10 @@ namespace Syadeu.Presentation.Events
         private readonly ScheduledEventHandler m_ScheduledEventHandler = new ScheduledEventHandler();
         private ISystemEventScheduler m_CurrentTicket;
         private bool m_PausedScheduledEvent = false;
+
+#if DEBUG_MODE
+        private readonly HashSet<int> m_AddedEvents = new HashSet<int>();
+#endif
 
         private SceneSystem m_SceneSystem;
         private CoroutineSystem m_CoroutineSystem;
@@ -168,6 +173,16 @@ namespace Syadeu.Presentation.Events
         /// <param name="ev"></param>
         public void AddEvent<TEvent>(Action<TEvent> ev) where TEvent : SynchronizedEvent<TEvent>, new()
         {
+#if DEBUG_MODE
+            int hash = ev.GetHashCode();
+            if (m_AddedEvents.Contains(hash))
+            {
+                CoreSystem.Logger.LogError(Channel.Event,
+                    $"Attemp to add same delegate event({ev.Method.Name}) at {TypeHelper.TypeOf<TEvent>.ToString()}.");
+                return;
+            }
+            m_AddedEvents.Add(hash);
+#endif
             SynchronizedEvent<TEvent>.AddEvent(ev);
         }
         /// <summary>
@@ -177,6 +192,10 @@ namespace Syadeu.Presentation.Events
         /// <param name="ev"></param>
         public void RemoveEvent<TEvent>(Action<TEvent> ev) where TEvent : SynchronizedEvent<TEvent>, new()
         {
+#if DEBUG_MODE
+            int hash = ev.GetHashCode();
+            m_AddedEvents.Remove(hash);
+#endif
             SynchronizedEvent<TEvent>.RemoveEvent(ev);
         }
 

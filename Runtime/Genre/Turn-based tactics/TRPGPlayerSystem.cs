@@ -49,6 +49,8 @@ namespace Syadeu.Presentation.TurnTable
         private TRPGGridSystem m_TRPGGridSystem;
         private TRPGCanvasUISystem m_TRPGCanvasUISystem;
 
+        #region Presentation Methods
+
         protected override PresentationResult OnInitialize()
         {
             RequestSystem<DefaultPresentationGroup, RenderSystem>(Bind);
@@ -221,6 +223,8 @@ namespace Syadeu.Presentation.TurnTable
 
             return base.OnStartPresentation();
         }
+
+        #endregion
 
         private void DisableCurrentShortcut()
         {
