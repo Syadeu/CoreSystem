@@ -17,29 +17,50 @@ namespace Syadeu.Presentation.Render
         public override bool EnableAfterPresentation => false;
 
         private Canvas m_Canvas;
-        private Transform m_CanvasTransform;
+        //private Transform m_CanvasTransform;
         private GraphicRaycaster m_CanvasRaycaster;
 
         private UnsafeMultiHashMap<Entity<IEntity>, Entity<UIObjectEntity>> m_AttachedUIHashMap;
 
+        private SceneSystem m_SceneSystem;
         private RenderSystem m_RenderSystem;
         private CoroutineSystem m_CoroutineSystem;
 
-        public Canvas Canvas => m_Canvas;
+        public Canvas Canvas
+        {
+            get
+            {
+                if (m_Canvas == null)
+                {
+                    GameObject obj = m_SceneSystem.CreateGameObject("World Canvas");
+                    m_Canvas = obj.AddComponent<Canvas>();
+                    m_Canvas.renderMode = RenderMode.WorldSpace;
+                    m_Canvas.worldCamera = m_RenderSystem.Camera;
+                    obj.AddComponent<CanvasScaler>();
+                }
+
+                return m_Canvas;
+            }
+        }
+        public GraphicRaycaster CanvasRaycaster
+        {
+            get
+            {
+                if (m_CanvasRaycaster == null)
+                {
+                    m_CanvasRaycaster = Canvas.gameObject.AddComponent<GraphicRaycaster>();
+                    m_CanvasRaycaster.blockingMask = LayerMask.GetMask("UI");
+                }
+
+                return m_CanvasRaycaster;
+            }
+        }
 
         #region Presentation Methods
 
         protected override PresentationResult OnInitialize()
         {
-            GameObject obj = new GameObject("World Canvas");
-            m_CanvasTransform = obj.transform;
-            DontDestroyOnLoad(obj);
-            m_Canvas = obj.AddComponent<Canvas>();
-            m_Canvas.renderMode = RenderMode.WorldSpace;
-            obj.AddComponent<CanvasScaler>();
-            m_CanvasRaycaster = obj.AddComponent<GraphicRaycaster>();
-            m_CanvasRaycaster.blockingMask = LayerMask.GetMask("UI");
-
+            RequestSystem<DefaultPresentationGroup, SceneSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, RenderSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, CoroutineSystem>(Bind);
 
@@ -59,13 +80,30 @@ namespace Syadeu.Presentation.Render
 
             m_AttachedUIHashMap.Dispose();
 
-            Destroy(m_Canvas.gameObject);
+            if (m_Canvas != null)
+            {
+                Destroy(m_Canvas.gameObject);
+            }
 
             m_RenderSystem = null;
             m_CoroutineSystem = null;
         }
 
         #region Binds
+
+        private void Bind(SceneSystem other)
+        {
+            m_SceneSystem = other;
+
+            //GameObject obj = new GameObject("World Canvas");
+            //m_CanvasTransform = obj.transform;
+            //DontDestroyOnLoad(obj);
+            //m_Canvas = obj.AddComponent<Canvas>();
+            //m_Canvas.renderMode = RenderMode.WorldSpace;
+            //obj.AddComponent<CanvasScaler>();
+            //m_CanvasRaycaster = obj.AddComponent<GraphicRaycaster>();
+            //m_CanvasRaycaster.blockingMask = LayerMask.GetMask("UI");
+        }
 
         private void Bind(RenderSystem other)
         {
@@ -75,7 +113,10 @@ namespace Syadeu.Presentation.Render
         }
         private void M_RenderSystem_OnCameraChanged(Camera arg1, Camera arg2)
         {
-            m_Canvas.worldCamera = arg2;
+            if (m_Canvas != null)
+            {
+                m_Canvas.worldCamera = arg2;
+            }
         }
 
         private void Bind(CoroutineSystem other)
