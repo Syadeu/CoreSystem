@@ -196,7 +196,10 @@ namespace Syadeu.Presentation
 
                 if (entityList[i] is IEntityData entity)
                 {
+                    //ProcessEntityOnDestroy(this, entity);
                     ProcessEntityOnDestroy(this, entity);
+
+                    RemoveAllComponents(entity.Idx);
                 }
                 else
                 {

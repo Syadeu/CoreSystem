@@ -70,10 +70,14 @@ namespace Syadeu.Presentation
 
         public void AddLayerEntity(Reference<TriggerBoundLayer> layer, Entity<IEntity> entity)
         {
+            if (layer.IsEmpty()) return;
+
             m_LayerMap.Add(new LayerInfo(layer), entity);
         }
         public void RemoveLayerEntity(Reference<TriggerBoundLayer> layer, Entity<IEntity> entity)
         {
+            if (layer.IsEmpty()) return;
+
             m_LayerMap.Remove(new LayerInfo(layer), entity);
         }
 

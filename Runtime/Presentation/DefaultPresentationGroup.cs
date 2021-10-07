@@ -12,6 +12,12 @@ namespace Syadeu.Presentation
                 TypeHelper.TypeOf<Actions.ActionSystem>.Type,
                 TypeHelper.TypeOf<CoroutineSystem>.Type,
 
+                TypeHelper.TypeOf<EntitySystem>.Type,
+                TypeHelper.TypeOf<EntityBoundSystem>.Type,
+                TypeHelper.TypeOf<EntityRaycastSystem>.Type,
+                TypeHelper.TypeOf<Components.EntityComponentSystem>.Type,
+                TypeHelper.TypeOf<Proxy.GameObjectProxySystem>.Type,
+
                 TypeHelper.TypeOf<Data.DataContainerSystem>.Type,
                 TypeHelper.TypeOf<Input.InputSystem>.Type,
 
@@ -20,12 +26,6 @@ namespace Syadeu.Presentation
                 TypeHelper.TypeOf<Map.GridSystem>.Type,
                 TypeHelper.TypeOf<Map.NavMeshSystem>.Type,
                 TypeHelper.TypeOf<Actor.ActorSystem>.Type,
-
-                TypeHelper.TypeOf<EntitySystem>.Type,
-                TypeHelper.TypeOf<EntityBoundSystem>.Type,
-                TypeHelper.TypeOf<EntityRaycastSystem>.Type,
-                TypeHelper.TypeOf<Components.EntityComponentSystem>.Type,
-                TypeHelper.TypeOf<Proxy.GameObjectProxySystem>.Type,
 
                 TypeHelper.TypeOf<Render.RenderSystem>.Type,
                 TypeHelper.TypeOf<SceneSystem>.Type
