@@ -497,7 +497,13 @@ namespace Syadeu.Presentation.Map
                     index += SubGrids[i].length;
                 }
 
-                if (!found) return GridPosition.Empty;
+                if (!found)
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"Could not found an valid grid position for {position}.");
+
+                    return GridPosition.Empty;
+                }
             }
             else
             {
@@ -565,7 +571,14 @@ namespace Syadeu.Presentation.Map
             BinaryGrid grid = GetTargetGrid(in pos.index, out _);
             int2 temp = pos.location + location;
 
-            return new GridPosition(grid.LocationToIndex(temp), temp);
+            var output = new GridPosition(grid.LocationToIndex(temp), temp);
+
+            if (output.index < 0)
+            {
+                $"{output.index} error {pos.location} + {location} = {pos.location + location}".ToLogError();
+            }
+
+            return output;
         }
 
         #endregion

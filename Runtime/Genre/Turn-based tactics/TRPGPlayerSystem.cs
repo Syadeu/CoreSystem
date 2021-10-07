@@ -49,9 +49,9 @@ namespace Syadeu.Presentation.TurnTable
             RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
             //RequestSystem<DefaultPresentationGroup, InputSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, EntityRaycastSystem>(Bind);
-            RequestSystem<TRPGSystemGroup, TRPGTurnTableSystem>(Bind);
-            RequestSystem<TRPGSystemGroup, TRPGGridSystem>(Bind);
-            RequestSystem<TRPGSystemGroup, TRPGCanvasUISystem>(Bind);
+            RequestSystem<TRPGIngameSystemGroup, TRPGTurnTableSystem>(Bind);
+            RequestSystem<TRPGIngameSystemGroup, TRPGGridSystem>(Bind);
+            RequestSystem<TRPGIngameSystemGroup, TRPGCanvasUISystem>(Bind);
 
             return base.OnInitialize();
         }

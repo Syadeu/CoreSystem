@@ -64,9 +64,9 @@ namespace Syadeu.Presentation.TurnTable.UI
         }
         private IEnumerator Start()
         {
-            yield return PresentationSystem<TRPGSystemGroup, TRPGCanvasUISystem>.GetAwaiter();
+            yield return PresentationSystem<TRPGIngameSystemGroup, TRPGCanvasUISystem>.GetAwaiter();
 
-            PresentationSystem<TRPGSystemGroup, TRPGCanvasUISystem>
+            PresentationSystem<TRPGIngameSystemGroup, TRPGCanvasUISystem>
                 .System
                 .AuthoringShortcut(this, m_ShortcutType, m_Index + 1);
         }

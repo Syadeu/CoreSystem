@@ -40,7 +40,7 @@ namespace Syadeu.Presentation.TurnTable
             RequestSystem<DefaultPresentationGroup, InputSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, EntityRaycastSystem>(Bind);
             RequestSystem<LevelDesignPresentationGroup, LevelDesignSystem>(Bind);
-            RequestSystem<TRPGSystemGroup, TRPGTurnTableSystem>(Bind);
+            RequestSystem<TRPGIngameSystemGroup, TRPGTurnTableSystem>(Bind);
 
             m_SelectedEntities = new NativeList<Entity<IEntity>>(4, AllocatorManager.Persistent);
 

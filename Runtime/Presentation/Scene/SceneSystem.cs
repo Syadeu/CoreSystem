@@ -46,6 +46,10 @@ namespace Syadeu.Presentation
         [ConfigValue(Name = "DebugMode")] private bool m_DebugMode;
 #pragma warning restore IDE0044 // Add readonly modifier
 
+        private readonly Queue<Action> m_LoadingEvent = new Queue<Action>();
+        private IEnumerator m_LoadingRoutine;
+
+        private bool m_IsDebugScene = false;
         private bool m_LoadingEnabled = false;
         private bool m_LoadingSceneSetupDone = false;
 
@@ -53,6 +57,9 @@ namespace Syadeu.Presentation
         public PhysicsScene CurrentPhysicsScene => CurrentScene.GetPhysicsScene();
         public SceneReference CurrentSceneRef => SceneList.Instance.GetScene(m_CurrentScene.path);
 
+        public bool IsDebugScene => m_IsDebugScene;
+
+        public event Action OnSceneChangeCalled;
         /// <summary>
         /// 로딩 콜이 실행되었을때 맨 처음으로 발생하는 이벤트입니다.
         /// </summary>
@@ -86,7 +93,7 @@ namespace Syadeu.Presentation
         public event Action OnLoadingExit;
 
         public override bool EnableBeforePresentation => false;
-        public override bool EnableOnPresentation => true;
+        public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
         public override bool IsStartable
         {
@@ -142,6 +149,8 @@ namespace Syadeu.Presentation
                 SetupMasterScene();
                 SetupLoadingScene();
             }
+
+            PresentationManager.Instance.PostUpdate += Instance_PostUpdate;
 
             return base.OnInitialize();
 
@@ -211,6 +220,22 @@ namespace Syadeu.Presentation
             }
             #endregion
         }
+
+        private void Instance_PostUpdate()
+        {
+            if (!IsSceneLoading && m_LoadingEvent.Count > 0)
+            {
+                m_LoadingEvent.Dequeue().Invoke();
+
+                OnSceneChangeCalled?.Invoke();
+            }
+
+            if (m_LoadingRoutine != null)
+            {
+                if (!m_LoadingRoutine.MoveNext()) m_LoadingRoutine = null;
+            }
+        }
+
         protected override PresentationResult OnStartPresentation()
         {
             if (m_DebugMode)
@@ -239,6 +264,8 @@ namespace Syadeu.Presentation
                     m_CurrentScene = currentScene;
                     StartSceneDependences(this, sceneRef);
                 }
+
+                m_IsDebugScene = true;
             }
             return base.OnStartPresentation();
         }
@@ -276,23 +303,6 @@ namespace Syadeu.Presentation
             }
         }
 
-        private readonly Queue<Action> m_LoadingEvent = new Queue<Action>();
-        private IEnumerator m_LoadingRoutine;
-
-        protected override PresentationResult OnPresentation()
-        {
-            if (!IsSceneLoading && m_LoadingEvent.Count > 0)
-            {
-                m_LoadingEvent.Dequeue().Invoke();
-            }
-
-            if (m_LoadingRoutine != null)
-            {
-                if (!m_LoadingRoutine.MoveNext()) m_LoadingRoutine = null;
-            }
-
-            return base.OnPresentation();
-        }
         #endregion
 
         /// <summary>

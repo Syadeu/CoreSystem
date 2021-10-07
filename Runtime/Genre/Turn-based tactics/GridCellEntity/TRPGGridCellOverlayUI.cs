@@ -79,11 +79,11 @@ namespace Syadeu.Presentation.TurnTable
 
         private IEnumerator Start()
         {
-            yield return PresentationSystem<TRPGSystemGroup, TRPGGridSystem>.GetAwaiter();
-            yield return PresentationSystem<TRPGSystemGroup, TRPGTurnTableSystem>.GetAwaiter();
+            yield return PresentationSystem<TRPGIngameSystemGroup, TRPGGridSystem>.GetAwaiter();
+            yield return PresentationSystem<TRPGIngameSystemGroup, TRPGTurnTableSystem>.GetAwaiter();
 
-            m_TRPGGridSystem = PresentationSystem<TRPGSystemGroup, TRPGGridSystem>.System;
-            m_TurnTableSystem = PresentationSystem<TRPGSystemGroup, TRPGTurnTableSystem>.System;
+            m_TRPGGridSystem = PresentationSystem<TRPGIngameSystemGroup, TRPGGridSystem>.System;
+            m_TurnTableSystem = PresentationSystem<TRPGIngameSystemGroup, TRPGTurnTableSystem>.System;
         }
         private void OnDestroy()
         {

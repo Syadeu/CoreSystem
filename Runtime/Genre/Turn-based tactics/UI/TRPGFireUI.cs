@@ -33,9 +33,9 @@ namespace Syadeu.Presentation.TurnTable.UI
         }
         private IEnumerator Start()
         {
-            yield return PresentationSystem<TRPGSystemGroup, TRPGCanvasUISystem>.GetAwaiter();
+            yield return PresentationSystem<TRPGIngameSystemGroup, TRPGCanvasUISystem>.GetAwaiter();
 
-            PresentationSystem<TRPGSystemGroup, TRPGCanvasUISystem>.System.AuthoringFire(this);
+            PresentationSystem<TRPGIngameSystemGroup, TRPGCanvasUISystem>.System.AuthoringFire(this);
             //gameObject.SetActive(false);
             Open(false);
         }
