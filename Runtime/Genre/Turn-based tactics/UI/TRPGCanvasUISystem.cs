@@ -43,6 +43,10 @@ namespace Syadeu.Presentation.TurnTable.UI
         }
         public override void OnDispose()
         {
+            m_Shortcuts = null;
+            m_EndTurn = null;
+            m_FireUI = null;
+
             m_EventSystem = null;
             m_InputSystem = null;
             m_TurnTableSystem = null;

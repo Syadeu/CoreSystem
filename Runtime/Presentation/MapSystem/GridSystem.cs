@@ -709,6 +709,16 @@ namespace Syadeu.Presentation.Map
         }
         public Entity<IEntity> PlaceUICell(GridPosition position, float heightOffset = .25f)
         {
+#if DEBUG_MODE
+            if (GridMap.m_CellUIPrefab.IsEmpty() || !GridMap.m_CellUIPrefab.IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot place grid ui cell at {position} because there\'s no valid CellEntity " +
+                    $"in {nameof(GridMapAttribute)}({GridMap.Name}, MapData: {GridMap.Parent.Name})");
+
+                return Entity<IEntity>.Empty;
+            }
+#endif
             Entity<IEntity> entity = 
                 m_EntitySystem.CreateEntity(
                     GridMap.m_CellUIPrefab, 

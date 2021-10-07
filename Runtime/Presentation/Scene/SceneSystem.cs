@@ -374,6 +374,17 @@ namespace Syadeu.Presentation
             list.Add(onSceneStart);
         }
 
+        public GameObject CreateGameObject(string name)
+        {
+            CoreSystem.Logger.ThreadBlock(Syadeu.Internal.ThreadInfo.Unity);
+
+            GameObject obj = new GameObject(name);
+
+            obj.transform.SetParent(SceneInstanceFolder);
+
+            return obj;
+        }
+
         internal void SetLoadingScene(Action onLoadingEnter, Action<float, float> onWaitLoading, 
             Action<float> onLoading, 
             Action<float, float> onAfterLoading, Action onLoadingExit)
