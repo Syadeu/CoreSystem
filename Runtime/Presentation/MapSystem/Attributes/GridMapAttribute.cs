@@ -197,25 +197,6 @@ namespace Syadeu.Presentation.Map
                 }
             }
         }
-        protected override void OnDispose()
-        {
-            ////if (Grid != null)
-            //{
-            //    //Grid.Dispose();
-            //    //Grid = null;
-            //}
-
-            if (Layers != null)
-            {
-                for (int i = 0; i < Layers.Length; i++)
-                {
-                    Layers[i].Dispose();
-                }
-                Layers = null;
-            }
-
-            if (ObstacleLayer.IsCreated) ObstacleLayer.Dispose();
-        }
 
         #region Filter
 
