@@ -27,6 +27,8 @@ namespace Syadeu.Presentation.Render
 
         public Canvas Canvas => m_Canvas;
 
+        #region Presentation Methods
+
         protected override PresentationResult OnInitialize()
         {
             GameObject obj = new GameObject("World Canvas");
@@ -62,21 +64,28 @@ namespace Syadeu.Presentation.Render
             m_RenderSystem = null;
             m_CoroutineSystem = null;
         }
+
+        #region Binds
+
         private void Bind(RenderSystem other)
         {
             m_RenderSystem = other;
 
             m_RenderSystem.OnCameraChanged += M_RenderSystem_OnCameraChanged;
         }
+        private void M_RenderSystem_OnCameraChanged(Camera arg1, Camera arg2)
+        {
+            m_Canvas.worldCamera = arg2;
+        }
+
         private void Bind(CoroutineSystem other)
         {
             m_CoroutineSystem = other;
         }
 
-        private void M_RenderSystem_OnCameraChanged(Camera arg1, Camera arg2)
-        {
-            m_Canvas.worldCamera = arg2;
-        }
+        #endregion
+
+        #endregion
 
         public void RemoveAllOverlayUI(Entity<IEntity> entity)
         {
@@ -91,12 +100,21 @@ namespace Syadeu.Presentation.Render
 
             m_AttachedUIHashMap.Remove(entity);
         }
+
+        #region Actor Overlay UI
+
         public void RegisterActorOverlayUI(Entity<ActorEntity> entity, Reference<ActorOverlayUIEntry> uiEntry)
         {
             ActorOverlayUIEntry setting = uiEntry.GetObject();
 
 #if UNITY_EDITOR
-            if (!setting.m_Prefab.GetObject().HasAttribute<ActorOverlayUIAttributeBase>())
+            if (setting.m_Prefab.IsEmpty() || !setting.m_Prefab.IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Entity({entity.RawName}) has an invalid ui entry({setting.Name}) has invalid prefab entity.");
+                return;
+            }
+            else if (!setting.m_Prefab.GetObject().HasAttribute<ActorOverlayUIAttributeBase>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"Attached UI entity({setting.m_Prefab.GetObject().Name}) at entity({entity.Name}) has no {nameof(ActorOverlayUIAttributeBase)}.");
@@ -104,7 +122,7 @@ namespace Syadeu.Presentation.Render
             }
 #endif
 
-            UpdateJob updateJob = new UpdateJob(entity, uiEntry);
+            ActorOverlayUpdateJob updateJob = new ActorOverlayUpdateJob(entity, uiEntry);
             m_AttachedUIHashMap.Add(entity.Cast<ActorEntity, IEntity>(), updateJob.UIInstance);
 
             if (setting.m_UpdateType != UpdateType.Manual)
@@ -130,7 +148,7 @@ namespace Syadeu.Presentation.Render
             }
         }
 
-        private struct UpdateJob : ICoroutineJob
+        private struct ActorOverlayUpdateJob : ICoroutineJob
         {
             private Entity<ActorEntity> m_Entity;
             private Reference<ActorOverlayUIEntry> m_UI;
@@ -140,7 +158,7 @@ namespace Syadeu.Presentation.Render
             UpdateLoop ICoroutineJob.Loop => UpdateLoop.AfterTransform;
             public Entity<UIObjectEntity> UIInstance => m_InstanceObject;
 
-            public UpdateJob(Entity<ActorEntity> entity, Reference<ActorOverlayUIEntry> ui)
+            public ActorOverlayUpdateJob(Entity<ActorEntity> entity, Reference<ActorOverlayUIEntry> ui)
             {
                 m_Entity = entity;
                 m_UI = ui;
@@ -226,5 +244,7 @@ namespace Syadeu.Presentation.Render
                 }
             }
         }
+
+        #endregion
     }
 }
