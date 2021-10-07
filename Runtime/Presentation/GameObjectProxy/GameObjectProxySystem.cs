@@ -982,6 +982,13 @@ namespace Syadeu.Presentation.Proxy
                 PrefabReference prefabIdx, Vector3 pos, Quaternion rot,
                 Action<RecycleableMonobehaviour> onCompleted)
             {
+                m_ProxySystem = proxySystem;
+                if (SceneSystem.IsSceneLoading)
+                {
+                    CoreSystem.Logger.LogWarning(Channel.Proxy, $"{prefabIdx.Index} is returned because Scene has been changed");
+                    return;
+                }
+
 #if DEBUG_MODE
                 s_SetupMarker.Begin();
 #endif
@@ -1020,8 +1027,6 @@ namespace Syadeu.Presentation.Proxy
                     return;
                 }
 
-                m_ProxySystem = proxySystem;
-                
                 Transform parent;
                 if (prefabInfo.m_IsWorldUI)
                 {
@@ -1056,7 +1061,7 @@ namespace Syadeu.Presentation.Proxy
             private void CreatePrefab(AsyncOperationHandle<GameObject> other)
             {
                 Scene currentScene = SceneSystem.CurrentScene;
-                if (!currentScene.Equals(m_RequestedScene))
+                if (!currentScene.Equals(m_RequestedScene) || SceneSystem.IsSceneLoading)
                 {
                     CoreSystem.Logger.LogWarning(Channel.Proxy, $"{other.Result.name} is returned because Scene has been changed");
                     m_PrefabIdx.ReleaseInstance(other.Result);

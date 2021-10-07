@@ -589,7 +589,7 @@ namespace Syadeu.Presentation.Entities
             }
 
             CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Destroyed entity.");
+                    $"Destroyed entity({RawName}).");
             return 0;
         }
 

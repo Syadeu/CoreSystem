@@ -132,12 +132,20 @@ namespace Syadeu.Presentation.Map
                     m_Sources.AddRange(item);
                 }
             }
-            
-            foreach (NavMeshBaker agent in m_Agents)
+
+            for (int i = m_Agents.Count - 1; i >= 0; i--)
             {
+                if (m_Agents[i] == null)
+                {
+                    "unhandled destroy navagent".ToLogError();
+                    m_Agents.RemoveAt(i);
+                    continue;
+                }
+
+                NavMeshBaker agent = m_Agents[i];
                 Bounds bounds = agent.Bounds;
 
-                NavMeshBuilder.UpdateNavMeshDataAsync(agent.m_NavMeshData, NavMesh.GetSettingsByID(agent.m_AgentType), m_Sources, 
+                NavMeshBuilder.UpdateNavMeshDataAsync(agent.m_NavMeshData, NavMesh.GetSettingsByID(agent.m_AgentType), m_Sources,
                     QuantizedBounds(bounds.center + agent.transform.position, bounds.size));
             }
 

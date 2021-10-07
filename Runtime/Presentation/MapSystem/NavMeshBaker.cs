@@ -27,7 +27,10 @@ namespace Syadeu.Presentation.Map
         }
         private void OnDisable()
         {
-            CoreSystem.StartUnityUpdate(this, Authoring(false));
+            if (!CoreSystem.BlockCreateInstance)
+            {
+                PresentationSystem<DefaultPresentationGroup, NavMeshSystem>.System.RemoveBaker(this);
+            }
         }
 
         private IEnumerator Authoring(bool enable)

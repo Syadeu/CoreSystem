@@ -58,6 +58,7 @@ namespace Syadeu.Presentation.Components
 #endif
 
         private EntitySystem m_EntitySystem;
+        private SceneSystem m_SceneSystem;
 
         #region Presentation Methods
 
@@ -69,6 +70,7 @@ namespace Syadeu.Presentation.Components
             m_Random.InitState();
 
             RequestSystem<DefaultPresentationGroup, EntitySystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, SceneSystem>(Bind);
 
             // 버퍼를 생성하기 위해 미리 모든 컴포넌트 타입들의 정보를 가져옵니다.
             Type[] types = TypeHelper.GetTypes(CollectTypes<IEntityComponent>);
@@ -101,7 +103,7 @@ namespace Syadeu.Presentation.Components
 
             ConstructSharedStatics();
 
-            PresentationManager.Instance.PreUpdate += Presentation_PreUpdate;
+            PresentationManager.Instance.PreUpdate += CompleteAllDisposedComponents;
 
             return base.OnInitialize();
         }
@@ -148,7 +150,8 @@ namespace Syadeu.Presentation.Components
         
         public override void OnDispose()
         {
-            PresentationManager.Instance.PreUpdate -= Presentation_PreUpdate;
+            PresentationManager.Instance.PreUpdate -= CompleteAllDisposedComponents;
+            m_SceneSystem.OnSceneChangeCalled -= CompleteAllDisposedComponents;
 
             int count = m_DisposedComponents.Count;
             for (int i = 0; i < count; i++)
@@ -184,6 +187,7 @@ namespace Syadeu.Presentation.Components
             m_ComponentHashMap.Dispose();
 
             m_EntitySystem = null;
+            m_SceneSystem = null;
         }
 
         #region Binds
@@ -192,10 +196,15 @@ namespace Syadeu.Presentation.Components
         {
             m_EntitySystem = other;
         }
+        private void Bind(SceneSystem other)
+        {
+            m_SceneSystem = other;
+            m_SceneSystem.OnSceneChangeCalled += CompleteAllDisposedComponents;
+        }
 
         #endregion
 
-        private void Presentation_PreUpdate()
+        private void CompleteAllDisposedComponents()
         {
             if (m_DisposedComponents.Count > 0)
             {
@@ -371,16 +380,16 @@ namespace Syadeu.Presentation.Components
 #endif
             DisposedComponent dispose = DisposedComponent.Construct(index, entity);
 
-            if (CoreSystem.BlockCreateInstance)
+            //if (CoreSystem.BlockCreateInstance)
             {
                 dispose.Dispose();
             }
-            else
-            {
-                m_DisposedComponents.Enqueue(dispose);
-                CoreSystem.Logger.Log(Channel.Component,
-                    $"{TypeHelper.TypeOf<TComponent>.Name} component at {entity.Name} remove queued.");
-            }
+            //else
+            //{
+            //    m_DisposedComponents.Enqueue(dispose);
+            //    CoreSystem.Logger.Log(Channel.Component,
+            //        $"{TypeHelper.TypeOf<TComponent>.Name} component at {entity.Name} remove queued.");
+            //}
         }
         public void RemoveComponent(EntityData<IEntityData> entity, Type componentType)
         {
@@ -397,16 +406,16 @@ namespace Syadeu.Presentation.Components
 #endif
             DisposedComponent dispose = DisposedComponent.Construct(index, entity);
 
-            if (CoreSystem.BlockCreateInstance)
+            //if (CoreSystem.BlockCreateInstance)
             {
                 dispose.Dispose();
             }
-            else
-            {
-                m_DisposedComponents.Enqueue(dispose);
-                CoreSystem.Logger.Log(Channel.Component,
-                    $"{TypeHelper.ToString(componentType)} component at {entity.Name} remove queued.");
-            }
+            //else
+            //{
+            //    m_DisposedComponents.Enqueue(dispose);
+            //    CoreSystem.Logger.Log(Channel.Component,
+            //        $"{TypeHelper.ToString(componentType)} component at {entity.RawName} remove queued.");
+            //}
         }
         /// <summary>
         /// TODO: Reflection 이 일어나서 SharedStatic 으로 interface 해싱 후 받아오는 게 좋아보임.
@@ -697,7 +706,7 @@ namespace Syadeu.Presentation.Components
             {
                 if (!s_Buffer[index.x].Find(entity, ref index.y))
                 {
-                    "could\'nt find component target".ToLogError();
+                    "couldn\'t find component target".ToLogError();
                     return;
                 }
 
