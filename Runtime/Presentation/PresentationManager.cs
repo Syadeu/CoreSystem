@@ -1063,7 +1063,7 @@ namespace Syadeu.Presentation
 #endif
             Group group = Instance.m_PresentationGroups[groupHash];
 
-            if (group.m_IsStarted && !group.m_MainthreadSignal)
+            if (!group.m_MainthreadSignal)
             {
                 group.m_RequestSystemDelegates.Enqueue(() =>
                 {

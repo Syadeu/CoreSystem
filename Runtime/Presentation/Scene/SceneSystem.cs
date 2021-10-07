@@ -137,6 +137,8 @@ namespace Syadeu.Presentation
         #region Presentation Methods
         protected override PresentationResult OnInitialize()
         {
+            m_CurrentScene = SceneManager.GetActiveScene();
+
             CreateConsoleCommands();
             if (m_DebugMode)
             {
@@ -232,8 +234,6 @@ namespace Syadeu.Presentation
             if (!IsSceneLoading && m_LoadingEvent.Count > 0)
             {
                 m_LoadingEvent.Dequeue().Invoke();
-
-                OnSceneChangeCalled?.Invoke();
             }
 
             if (m_LoadingRoutine != null)
@@ -426,7 +426,7 @@ namespace Syadeu.Presentation
 
             CoreSystem.WaitInvoke(preDelay, () =>
             {
-                if (m_CurrentScene.IsValid()) InternalUnloadScene(CurrentSceneRef);
+                if (m_CurrentScene.IsValid() && !IsMasterScene) InternalUnloadScene(CurrentSceneRef);
 
                 OnLoading?.Invoke(0);
                 m_AsyncOperation = SceneManager.LoadSceneAsync(scene, LoadSceneMode.Additive);
@@ -449,6 +449,7 @@ namespace Syadeu.Presentation
                 m_CurrentScene = SceneManager.GetSceneByPath(scene);
                 SceneManager.SetActiveScene(m_CurrentScene);
 
+                OnSceneChangeCalled?.Invoke();
                 onCompleted?.Invoke(oper);
 
                 CoreSystem.Logger.Log(Channel.Scene, "Initialize dependence presentation groups");

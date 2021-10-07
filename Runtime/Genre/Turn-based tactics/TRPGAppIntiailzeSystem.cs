@@ -45,16 +45,12 @@ namespace Syadeu.Presentation.TurnTable
         {
             if (!m_IngameLayerStarted)
             {
-                if (!m_SceneSystem.IsMasterScene && !m_SceneSystem.IsStartScene)
+                if ((!m_SceneSystem.IsMasterScene && !m_SceneSystem.IsStartScene)
+                    || m_SceneSystem.IsDebugScene)
                 {
-                    if (m_SceneSystem.IsDebugScene)
-                    {
-                        PresentationSystemGroup<TRPGIngameSystemGroup>.Start();
-                        "start ingame layer".ToLog();
-                        m_IngameLayerStarted = true;
-
-                        return;
-                    }
+                    PresentationSystemGroup<TRPGIngameSystemGroup>.Start();
+                    "start ingame layer".ToLog();
+                    m_IngameLayerStarted = true;
                 }
             }
             else
