@@ -101,6 +101,33 @@ namespace Syadeu.Presentation.Render
             m_AttachedUIHashMap.Remove(entity);
         }
 
+        internal void InternalSetProxy(EntityBase entityBase, Entity<UIObjectEntity> entity, 
+            CanvasGroup cg, bool created)
+        {
+            UIObjectEntity uiObject = (UIObjectEntity)entityBase;
+            var ui = entity.GetComponent<UIObjectCanvasGroupComponent>();
+
+            cg.blocksRaycasts = created ? ui.Enabled : false;
+
+            if (!uiObject.m_EnableAutoFade) return;
+        }
+
+        public void SetActive(Entity<UIObjectEntity> entity, bool enable)
+        {
+            if (!entity.HasComponent<UIObjectCanvasGroupComponent>())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"UI Entity({entity.RawName}) dosen\'t have any {nameof(UIObjectCanvasGroupComponent)}.");
+
+                return;
+            }
+
+            ref var ui = ref entity.GetComponent<UIObjectCanvasGroupComponent>();
+            ui.m_Enabled = enable;
+
+
+        }
+
         #region Actor Overlay UI
 
         public void RegisterActorOverlayUI(Entity<ActorEntity> entity, Reference<ActorOverlayUIEntry> uiEntry)
