@@ -294,26 +294,15 @@ namespace Syadeu.Presentation.Actor
                 index = FindScheduledEvent<TEvent>();
                 if (index >= 0)
                 {
-                    //EventHandler<TEvent> handler = PoolContainer<EventHandler<TEvent>>.Dequeue();
-
-                    //handler.m_Actor = actor;
-                    //handler.m_EventPost = post;
-                    //handler.m_Event = ev;
-
                     m_ScheduledEvents[index].Reserve();
                     if (index != 0)
                     {
                         m_ScheduledEvents.RemoveAt(index);
                     }
-                    //m_ScheduledEvents[index] = handler;
 
-                    //ScheduleEvent(actor, post, ev);
                     "override schedule ev".ToLog();
-                    //return;
                 }
 
-                //ScheduleEvent(actor, post, ev);
-                //return;
                 EventHandler<TEvent> handler = PoolContainer<EventHandler<TEvent>>.Dequeue();
 
                 handler.m_Actor = actor;
@@ -339,28 +328,11 @@ namespace Syadeu.Presentation.Actor
                 m_ScheduledEvents[index].Reserve();
                 m_ScheduledEvents[index] = handler;
 
-                //ScheduleEvent(actor, post, ev);
                 "override schedule ev".ToLog();
                 return;
             }
 
             ScheduleEvent(actor, post, ev);
-            return;
-
-            //handler.Post();
-
-            //if (handler.EventSequence != null &&
-            //    handler.EventSequence.KeepWait)
-            //{
-            //    m_CurrentEvent.Event = handler;
-            //}
-            //else handler.Reserve();
-
-            //CoreSystem.Logger.Log(Channel.Action,
-            //    $"Execute override actor event({handler.GetEventName()})");
-
-            //m_ScheduledEvents.Enqueue(handler);
-            //m_EventSystem.TakeQueueTicket(this);
         }
         public void ScheduleEvent<TEvent>(
             Entity<ActorEntity> actor, ActorEventDelegate<TEvent> post, TEvent ev)

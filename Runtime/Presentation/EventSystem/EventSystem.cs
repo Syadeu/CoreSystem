@@ -280,13 +280,11 @@ namespace Syadeu.Presentation.Events
         public void TakeQueueTicket<TSystem>(TSystem scheduler) 
             where TSystem : PresentationSystemEntity, ISystemEventScheduler
         {
-            "take ticket".ToLog();
             m_SystemTickets.Add(scheduler);
         }
         public void TakePrioritizeTicket<TSystem>(TSystem scheduler)
             where TSystem : PresentationSystemEntity, ISystemEventScheduler
         {
-            "asdads in".ToLog();
             if (m_CurrentTicket == null)
             {
                 m_CurrentTicket = scheduler;
