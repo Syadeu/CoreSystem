@@ -295,10 +295,7 @@ namespace Syadeu.Presentation.Actor
                 if (index >= 0)
                 {
                     m_ScheduledEvents[index].Reserve();
-                    if (index != 0)
-                    {
-                        m_ScheduledEvents.RemoveAt(index);
-                    }
+                    m_ScheduledEvents.RemoveAt(index);
 
                     "override schedule ev".ToLog();
                 }

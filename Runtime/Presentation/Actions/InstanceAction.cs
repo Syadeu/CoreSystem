@@ -93,7 +93,7 @@ namespace Syadeu.Presentation.Actions
             return temp;
         }
 
-        protected virtual void OnExecute() { }
+        protected abstract void OnExecute();
         protected virtual void OnInitialize() { }
         protected virtual void OnTerminate() { }
     }
