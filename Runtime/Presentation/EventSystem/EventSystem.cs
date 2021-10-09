@@ -290,7 +290,7 @@ namespace Syadeu.Presentation.Events
                 m_CurrentTicket = scheduler;
                 return;
             }
-            else if (scheduler.SystemID.Equals(m_CurrentTicket.SystemID)) return;
+            //else if (scheduler.SystemID.Equals(m_CurrentTicket.SystemID)) return;
 
             m_SystemTickets.Insert(0, m_CurrentTicket);
             m_CurrentTicket = scheduler;

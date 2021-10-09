@@ -79,7 +79,6 @@ namespace Syadeu.Presentation.Actions
                     float target = progress / m_TargetUpdateTime;
 
                     Time.timeScale = math.lerp(Time.timeScale, m_TargetTimeScale, target);
-                    $"{Time.timeScale}".ToLog();
 
                     yield return null;
                 }

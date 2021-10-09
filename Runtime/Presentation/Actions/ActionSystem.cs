@@ -68,7 +68,7 @@ namespace Syadeu.Presentation.Actions
                     return;
                 }
 
-                "wait exit".ToLog();
+                $"wait exit {m_CurrentAction.Payload.action.GetObject().Name} : left {m_ScheduledActions.Count}".ToLog();
                 handler.SetEvent(SystemEventResult.Success, m_CurrentAction.Sequence.GetType());
 
                 m_CurrentAction.Terminate.Invoke();
@@ -82,6 +82,25 @@ namespace Syadeu.Presentation.Actions
             m_ScheduledActions.RemoveAt(0);
 
             m_CurrentAction.Payload = temp;
+            if (temp.played)
+            {
+                m_CurrentAction.Sequence = temp.Sequence;
+                m_CurrentAction.Terminate = temp.Terminate;
+
+                if (!m_CurrentAction.Sequence.KeepWait)
+                {
+                    m_CurrentAction.Terminate.Invoke();
+                    m_CurrentAction.Clear();
+
+                    $"wait exit {m_CurrentAction.Payload.action.GetObject().Name} : left {m_ScheduledActions.Count}".ToLog();
+                    handler.SetEvent(SystemEventResult.Success, temp.Sequence.GetType());
+                    return;
+                }
+
+                handler.SetEvent(SystemEventResult.Wait, m_CurrentAction.Sequence.GetType());
+                return;
+            }
+
             switch (temp.actionType)
             {
                 case ActionType.Instance:
@@ -165,7 +184,16 @@ namespace Syadeu.Presentation.Actions
         {
             if (m_CurrentAction.IsEmpty()) return;
 
-            m_CurrentAction.Terminate.Invoke();
+            if (m_CurrentAction.Sequence != null)
+            {
+                var temp = m_CurrentAction.Payload;
+                temp.played = true;
+                temp.Sequence = m_CurrentAction.Sequence;
+                temp.Terminate = m_CurrentAction.Terminate;
+
+                m_ScheduledActions.Insert(0, temp);
+            }
+            
             m_CurrentAction.Clear();
         }
 
@@ -278,11 +306,15 @@ namespace Syadeu.Presentation.Actions
                 "clear".ToLog();
             }
         }
-        private struct Payload
+        private class Payload
         {
             public ActionType actionType;
             public Reference<ActionBase> action;
             public EntityData<IEntityData> entity;
+
+            public bool played;
+            public System.Action Terminate;
+            public IEventSequence Sequence;
         }
     }
 }
