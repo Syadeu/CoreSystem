@@ -33,6 +33,16 @@ namespace Syadeu.Presentation.Actor
             return false;
         }
 
+        public void ScheduleEvent<TEvent>(TEvent ev, bool overrideCurrent)
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
+            where TEvent : struct, IActorEvent
+#else
+            where TEvent : unmanaged, IActorEvent
+#endif
+        {
+            ActorSystem system = PresentationSystem<DefaultPresentationGroup, ActorSystem>.System;
+            system.ScheduleEvent(m_Parent, PostEvent, ev, overrideCurrent);
+        }
         public void ScheduleEvent<TEvent>(TEvent ev)
 #if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             where TEvent : struct, IActorEvent

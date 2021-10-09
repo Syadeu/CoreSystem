@@ -138,7 +138,7 @@ namespace Syadeu.Presentation.Map
                     //    if (!IsDetect(range, m_OnDetected[i].DetectionRange, ev.To)) continue;
                     //}
 
-                    m_OnDetected[i].Schedule(Parent, ev.Entity.As<IEntity, IEntityData>());
+                    m_OnDetected[i].Execute(Parent, ev.Entity.As<IEntity, IEntityData>());
                 }
 
                 "detect".ToLog();

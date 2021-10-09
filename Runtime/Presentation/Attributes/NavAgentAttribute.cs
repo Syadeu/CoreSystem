@@ -21,7 +21,7 @@ namespace Syadeu.Presentation.Attributes
     [DisplayName("Attribute: NavAgent")]
     [AttributeAcceptOnly(typeof(EntityBase))]
     public sealed class NavAgentAttribute : AttributeBase,
-        INotifyComponent<NavAgentCompoonent>
+        INotifyComponent<NavAgentComponent>
     {
         [JsonProperty(Order = 0, PropertyName = "AgentType")] public int m_AgentType = 0;
         [JsonProperty(Order = 1, PropertyName = "BaseOffset")] public float m_BaseOffset = 0;
@@ -44,7 +44,7 @@ namespace Syadeu.Presentation.Attributes
     {
         protected override void OnCreated(NavAgentAttribute attribute, EntityData<IEntityData> entity)
         {
-            entity.AddComponent(new NavAgentCompoonent());
+            entity.AddComponent(new NavAgentComponent());
         }
         public void OnProxyCreated(AttributeBase attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
         {

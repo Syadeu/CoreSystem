@@ -35,31 +35,33 @@ namespace Syadeu.Presentation.Actions
         )]
     public sealed class PlayPlayableDirectorAction : TriggerAction, IEventSequence
     {
-        [JsonProperty] private Reference<TimelineData> m_Data;
-        [JsonProperty(Order = 1, PropertyName = "StartDelay")] private float m_StartDelay = 0;
-        [JsonProperty(Order = 2, PropertyName = "EndDelay")] private float m_EndDelay = 0;
+        [JsonProperty(Order = 0)] private Reference<TimelineData> m_Data;
+        [JsonProperty(Order = 1, PropertyName = "UpdateMode")]
+        private DirectorUpdateMode m_UpdateMode = DirectorUpdateMode.GameTime;
+        [JsonProperty(Order = 2, PropertyName = "StartDelay")] private float m_StartDelay = 0;
+        [JsonProperty(Order = 3, PropertyName = "EndDelay")] private float m_EndDelay = 0;
 
         [Space, Header("PredicateActions: Conditional")]
         [Tooltip("False를 반환하면 이 Timeline 을 실행하지 않습니다.")]
-        [JsonProperty(Order = 3, PropertyName = "Conditional")]
+        [JsonProperty(Order = 4, PropertyName = "Conditional")]
         private Reference<TriggerPredicateAction>[] m_Conditional = Array.Empty<Reference<TriggerPredicateAction>>();
 
         [Space, Header("TriggerActions")]
-        [JsonProperty(Order = 4, PropertyName = "OnStart")]
+        [JsonProperty(Order = 5, PropertyName = "OnStart")]
         private Reference<TriggerAction>[] m_OnStart = Array.Empty<Reference<TriggerAction>>();
-        [JsonProperty(Order = 5, PropertyName = "OnEnd")]
+        [JsonProperty(Order = 6, PropertyName = "OnEnd")]
         private Reference<TriggerAction>[] m_OnEnd = Array.Empty<Reference<TriggerAction>>();
 
         [Space, Header("Actions")]
-        [JsonProperty(Order = 6, PropertyName = "OnStartAction")]
+        [JsonProperty(Order = 7, PropertyName = "OnStartAction")]
         private Reference<InstanceAction>[] m_OnStartAction = Array.Empty<Reference<InstanceAction>>();
-        [JsonProperty(Order = 7, PropertyName = "OnEndActions")]
+        [JsonProperty(Order = 8, PropertyName = "OnEndActions")]
         private Reference<InstanceAction>[] m_OnEndAction = Array.Empty<Reference<InstanceAction>>();
 
         [Space, Header("Sequence")]
-        [JsonProperty(Order = 8, PropertyName = "AfterDelay")]
+        [JsonProperty(Order = 9, PropertyName = "AfterDelay")]
         private float m_AfterDelay = 0;
-        [JsonProperty(Order = 9, PropertyName = "DestroyTimelineAfterFinished")]
+        [JsonProperty(Order = 10, PropertyName = "DestroyTimelineAfterFinished")]
         private bool m_DestroyTimelineAfterFinished = true;
 
         [JsonIgnore] private CoroutineSystem m_CoroutineSystem = null;
@@ -86,6 +88,7 @@ namespace Syadeu.Presentation.Actions
                 m_Data = m_Data,
                 m_Executer = entity,
 
+                m_UpdateMode = m_UpdateMode,
                 m_StartDelay = m_StartDelay,
                 m_EndDelay = m_EndDelay,
 
@@ -111,6 +114,7 @@ namespace Syadeu.Presentation.Actions
             public Reference<TimelineData> m_Data;
             public EntityData<IEntityData> m_Executer;
 
+            public DirectorUpdateMode m_UpdateMode;
             public float m_StartDelay;
             public float m_EndDelay;
 
@@ -190,6 +194,7 @@ namespace Syadeu.Presentation.Actions
                 RecycleableMonobehaviour proxy = tr.proxy;
                 PlayableDirector director = proxy.GetOrAddComponent<PlayableDirector>();
                 director.playOnAwake = false;
+                director.timeUpdateMode = m_UpdateMode;
 
                 PlayableAsset asset;
                 if (!data.m_UseObjectTimeline)

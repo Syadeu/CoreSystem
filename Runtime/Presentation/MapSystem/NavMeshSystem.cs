@@ -301,16 +301,16 @@ namespace Syadeu.Presentation.Map
                 return;
             }
 
-            NativeList<float3> position = new NativeList<float3>(1, Allocator.Persistent);
+            FixedList4096Bytes<float3> position = new FixedList4096Bytes<float3>();
             position.Add(point);
-            MoveJob moveJob = new MoveJob()
+            ev.m_MoveJob = new MoveJob()
             {
                 m_Entity = entity.As<IEntity,IEntityData>(),
                 m_Positions = position
             };
-            m_CoroutineSystem.PostCoroutineJob(moveJob);
+            //m_CoroutineSystem.PostCoroutineJob(moveJob);
 
-            entity.GetComponent<ActorControllerComponent>().ScheduleEvent(ev);
+            entity.GetComponent<ActorControllerComponent>().ScheduleEvent(ev, true);
         }
         public void MoveTo(Entity<IEntity> entity, GridPath64 path, ActorMoveEvent ev)
         {
@@ -321,18 +321,18 @@ namespace Syadeu.Presentation.Map
                 return;
             }
 
-            NativeList<float3> position = new NativeList<float3>(path.Length, Allocator.Persistent);
+            FixedList4096Bytes<float3> position = new FixedList4096Bytes<float3>();
             for (int i = 1; i < path.Length; i++)
             {
                 position.Add(m_GridSystem.IndexToPosition(path[i].index));
             }
 
-            MoveJob moveJob = new MoveJob()
+            ev.m_MoveJob = new MoveJob()
             {
                 m_Entity = entity.As<IEntity,IEntityData>(),
                 m_Positions = position
             };
-            m_CoroutineSystem.PostCoroutineJob(moveJob);
+            //m_CoroutineSystem.PostCoroutineJob(moveJob);
 
             entity.GetComponent<ActorControllerComponent>().ScheduleEvent(ev);
         }
@@ -345,45 +345,50 @@ namespace Syadeu.Presentation.Map
                 return;
             }
 
-            NativeList<float3> position = new NativeList<float3>(points.Count, Allocator.Persistent);
+            FixedList4096Bytes<float3> position = new FixedList4096Bytes<float3>();
             for (int i = 0; i < points.Count; i++)
             {
                 position.Add(points[i]);
             }
 
-            MoveJob moveJob = new MoveJob()
+            ev.m_MoveJob = new MoveJob()
             {
                 m_Entity = entity.As<IEntity,IEntityData>(),
                 m_Positions = position
             };
-            m_CoroutineSystem.PostCoroutineJob(moveJob);
+            //m_CoroutineSystem.PostCoroutineJob(moveJob);
 
             entity.GetComponent<ActorControllerComponent>().ScheduleEvent(ev);
         }
-        private struct MoveJob : ICoroutineJob
+        internal struct MoveJob : ICoroutineJob
         {
             public EntityData<IEntityData> m_Entity;
-            public NativeList<float3> m_Positions;
+            public FixedList4096Bytes<float3> m_Positions;
 
             public UpdateLoop Loop => UpdateLoop.Transform;
 
             public void Dispose()
             {
-                m_Positions.Dispose();
+                //m_Positions.Dispose();
             }
             private void SetPreviousPosition(float3 pos)
             {
-                ref NavAgentCompoonent agent = ref m_Entity.GetComponent<NavAgentCompoonent>();
+                ref NavAgentComponent agent = ref m_Entity.GetComponent<NavAgentComponent>();
                 agent.m_PreviousTarget = pos;
+            }
+            private void SetDestination(float3 pos)
+            {
+                ref NavAgentComponent agent = ref m_Entity.GetComponent<NavAgentComponent>();
+                agent.m_Destination = pos;
             }
             private void SetIsMoving(bool moving)
             {
-                ref NavAgentCompoonent agent = ref m_Entity.GetComponent<NavAgentCompoonent>();
+                ref NavAgentComponent agent = ref m_Entity.GetComponent<NavAgentComponent>();
                 agent.m_IsMoving = moving;
             }
             private void SetDirection(float3 dir)
             {
-                ref NavAgentCompoonent agent = ref m_Entity.GetComponent<NavAgentCompoonent>();
+                ref NavAgentComponent agent = ref m_Entity.GetComponent<NavAgentComponent>();
                 agent.m_Direction = dir;
             }
             public IEnumerator Execute()
@@ -392,6 +397,8 @@ namespace Syadeu.Presentation.Map
                 NavAgentAttribute navAgent = m_Entity.GetAttribute<NavAgentAttribute>();
                 Entity<IEntity> entity = m_Entity.As<IEntityData, IEntity>();
                 ProxyTransform tr = (ProxyTransform)entity.transform;
+
+                SetDestination(m_Positions[m_Positions.Length - 1]);
 
                 if (!tr.hasProxy)
                 {
@@ -517,12 +524,13 @@ namespace Syadeu.Presentation.Map
     {
         private EntityData<IEntityData> m_Entity;
         private float m_AfterDelay;
+        internal NavMeshSystem.MoveJob m_MoveJob;
 
         public bool KeepWait
         {
             get
             {
-                NavAgentCompoonent agent = m_Entity.GetComponent<NavAgentCompoonent>();
+                NavAgentComponent agent = m_Entity.GetComponent<NavAgentComponent>();
                 return agent.m_IsMoving;
             }
         }
@@ -533,25 +541,38 @@ namespace Syadeu.Presentation.Map
         {
             m_Entity = entity;
             m_AfterDelay = afterDelay;
+
+            m_MoveJob = default;
         }
         public ActorMoveEvent(EntityData<IEntityData> entity)
         {
             m_Entity = entity;
             m_AfterDelay = 0;
+
+            m_MoveJob = default;
         }
 
         public void OnExecute(Entity<ActorEntity> from)
         {
-            ref NavAgentCompoonent agent = ref m_Entity.GetComponent<NavAgentCompoonent>();
+            ref NavAgentComponent agent = ref m_Entity.GetComponent<NavAgentComponent>();
             agent.m_IsMoving = true;
+
+            if (agent.m_MoveJob.IsValid())
+            {
+                agent.m_MoveJob.Stop();
+            }
+
+            agent.m_MoveJob 
+                = PresentationSystem<DefaultPresentationGroup, CoroutineSystem>.System.PostCoroutineJob(m_MoveJob);
         }
     }
 
-    public struct NavAgentCompoonent : IEntityComponent
+    public struct NavAgentComponent : IEntityComponent
     {
         internal bool m_IsMoving;
         internal float3 m_Direction;
-        internal float3 m_PreviousTarget;
+        internal float3 m_PreviousTarget, m_Destination;
+        internal CoroutineJob m_MoveJob;
 
         public bool IsMoving => m_IsMoving;
         public float Speed => math.sqrt(math.mul(m_Direction, m_Direction));

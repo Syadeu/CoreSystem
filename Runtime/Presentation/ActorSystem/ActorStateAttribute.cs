@@ -39,6 +39,7 @@ namespace Syadeu.Presentation.Actor
         private Reference<TriggerAction>[] m_OnDead = Array.Empty<Reference<TriggerAction>>();
 
         [JsonIgnore] private StateInfo m_State = StateInfo.Idle;
+        [JsonIgnore] private Action<ActorStateAttribute, StateInfo> m_OnStateChangedEvent;
 
         [JsonIgnore] public StateInfo State
         {
@@ -49,6 +50,8 @@ namespace Syadeu.Presentation.Actor
 
                 StateInfo prev = m_State;
                 m_State = value;
+
+                m_OnStateChangedEvent?.Invoke(this, m_State);
 
                 if ((value & StateInfo.Spawn) == StateInfo.Spawn) m_OnSpawn.Execute(Parent);
                 if ((value & StateInfo.Idle) == StateInfo.Idle) m_OnIdle.Execute(Parent);
@@ -61,6 +64,15 @@ namespace Syadeu.Presentation.Actor
                     .PostEvent(OnActorStateChangedEvent.GetEvent(
                         Parent.As<IEntityData, ActorEntity>(), prev, m_State));
             }
+        }
+
+        public void AddEvent(Action<ActorStateAttribute, StateInfo> ev)
+        {
+            m_OnStateChangedEvent += ev;
+        }
+        public void RemoveEvent(Action<ActorStateAttribute, StateInfo> ev)
+        {
+            m_OnStateChangedEvent -= ev;
         }
     }
 }

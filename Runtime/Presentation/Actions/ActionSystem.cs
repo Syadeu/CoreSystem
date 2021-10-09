@@ -4,6 +4,7 @@
 
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
+using System.Collections.Generic;
 using Unity.Collections;
 
 namespace Syadeu.Presentation.Actions
@@ -15,7 +16,7 @@ namespace Syadeu.Presentation.Actions
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
-        private NativeQueue<Payload> m_ScheduledActions;
+        private readonly List<Payload> m_ScheduledActions = new List<Payload>();
         private readonly ActionContainer m_CurrentAction = new ActionContainer();
 
         private EventSystem m_EventSystem;
@@ -24,13 +25,13 @@ namespace Syadeu.Presentation.Actions
         {
             RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
 
-            m_ScheduledActions = new NativeQueue<Payload>(Allocator.Persistent);
+            //m_ScheduledActions = new NativeQueue<Payload>(Allocator.Persistent);
 
             return base.OnInitialize();
         }
         public override void OnDispose()
         {
-            m_ScheduledActions.Dispose();
+            //m_ScheduledActions.Dispose();
 
             base.OnDispose();
         }
@@ -67,6 +68,7 @@ namespace Syadeu.Presentation.Actions
                     return;
                 }
 
+                "wait exit".ToLog();
                 handler.SetEvent(SystemEventResult.Success, m_CurrentAction.Sequence.GetType());
 
                 m_CurrentAction.Terminate.Invoke();
@@ -75,7 +77,11 @@ namespace Syadeu.Presentation.Actions
                 return;
             }
 
-            Payload temp = m_ScheduledActions.Dequeue();
+            $"empty {m_CurrentAction.IsEmpty()}".ToLog();
+            Payload temp = m_ScheduledActions[0];
+            m_ScheduledActions.RemoveAt(0);
+
+            m_CurrentAction.Payload = temp;
             switch (temp.actionType)
             {
                 case ActionType.Instance:
@@ -101,6 +107,7 @@ namespace Syadeu.Presentation.Actions
                             return;
                         }
 
+                        "wait".ToLog();
                         handler.SetEvent(SystemEventResult.Wait, m_CurrentAction.Sequence.GetType());
                         return;
                     }
@@ -136,6 +143,7 @@ namespace Syadeu.Presentation.Actions
                             return;
                         }
 
+                        $"wait {m_CurrentAction.IsEmpty()}".ToLog();
                         handler.SetEvent(SystemEventResult.Wait, m_CurrentAction.Sequence.GetType());
                         return;
                     }
@@ -153,6 +161,40 @@ namespace Syadeu.Presentation.Actions
             handler.SetEvent(SystemEventResult.Failed, m_CurrentAction.Sequence.GetType());
         }
 
+        private void HandleOverrideAction()
+        {
+            if (m_CurrentAction.IsEmpty()) return;
+
+            m_CurrentAction.Terminate.Invoke();
+            m_CurrentAction.Clear();
+        }
+
+        public bool ExecuteInstanceAction<T>(Reference<T> temp)
+            where T : InstanceAction
+        {
+            if (temp.GetObject() is IEventSequence)
+            {
+                HandleOverrideAction();
+
+                Payload payload = new Payload
+                {
+                    actionType = ActionType.Instance,
+                    action = temp.As<ActionBase>()
+                };
+
+                m_ScheduledActions.Insert(0, payload);
+
+                m_EventSystem.TakePrioritizeTicket(this);
+                return true;
+            }
+
+            InstanceAction action = InstanceAction.GetAction(temp);
+
+            bool result = action.InternalExecute();
+            action.InternalTerminate();
+
+            return result;
+        }
         public void ScheduleInstanceAction<T>(Reference<T> action)
             where T : InstanceAction
         {
@@ -162,8 +204,37 @@ namespace Syadeu.Presentation.Actions
                 action = action.As<ActionBase>()
             };
 
-            m_ScheduledActions.Enqueue(payload);
+            m_ScheduledActions.Add(payload);
             m_EventSystem.TakeQueueTicket(this);
+        }
+        public bool ExecuteTriggerAction<T>(Reference<T> temp, EntityData<IEntityData> entity)
+            where T : TriggerAction
+        {
+            if (temp.GetObject() is IEventSequence)
+            {
+                HandleOverrideAction();
+
+                Payload payload = new Payload
+                {
+                    actionType = ActionType.Trigger,
+                    entity = entity,
+                    action = temp.As<ActionBase>()
+                };
+
+                m_ScheduledActions.Insert(0, payload);
+                CoreSystem.Logger.Log(Channel.Action,
+                    $"Execute override action({temp.GetObject().GetType().Name}: {temp.GetObject().Name})");
+
+                m_EventSystem.TakePrioritizeTicket(this);
+                return true;
+            }
+
+            TriggerAction triggerAction = TriggerAction.GetAction(temp);
+
+            bool result = triggerAction.InternalExecute(entity);
+            triggerAction.InternalTerminate();
+
+            return result;
         }
         public void ScheduleTriggerAction<T>(Reference<T> action, EntityData<IEntityData> entity)
             where T : TriggerAction
@@ -175,7 +246,7 @@ namespace Syadeu.Presentation.Actions
                 action = action.As<ActionBase>()
             };
 
-            m_ScheduledActions.Enqueue(payload);
+            m_ScheduledActions.Add(payload);
             m_EventSystem.TakeQueueTicket(this);
         }
 
@@ -188,6 +259,7 @@ namespace Syadeu.Presentation.Actions
         {
             public System.Action Terminate;
             public IEventSequence Sequence;
+            public Payload Payload;
 
             public bool TimerStarted;
             public float StartTime;
@@ -203,6 +275,7 @@ namespace Syadeu.Presentation.Actions
 
                 TimerStarted = false;
                 StartTime = 0;
+                "clear".ToLog();
             }
         }
         private struct Payload

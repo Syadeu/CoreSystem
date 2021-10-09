@@ -31,13 +31,13 @@ namespace Syadeu.Presentation.Actions
         protected override void OnExecute(EntityData<IEntityData> entity)
         {
             //NavAgentAttribute navAgent = entity.GetAttribute<NavAgentAttribute>();
-            if (!entity.HasComponent<NavAgentCompoonent>())
+            if (!entity.HasComponent<NavAgentComponent>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"{nameof(NavAgentAttribute)} not found at {entity.Name}");
                 return;
             }
-            NavAgentCompoonent navAgent = entity.GetComponent<NavAgentCompoonent>();
+            NavAgentComponent navAgent = entity.GetComponent<NavAgentComponent>();
             AnimatorAttribute animator = entity.GetAttribute<AnimatorAttribute>();
             if (animator == null)
             {

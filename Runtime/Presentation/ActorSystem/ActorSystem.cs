@@ -10,6 +10,7 @@ using Syadeu.Presentation.Map;
 using System;
 using System.Collections.Generic;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
@@ -24,10 +25,10 @@ namespace Syadeu.Presentation.Actor
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
-        private readonly Queue<IEventHandler> m_ScheduledEvents = new Queue<IEventHandler>();
+        private readonly List<IEventHandler> m_ScheduledEvents = new List<IEventHandler>();
         private readonly EventContainer m_CurrentEvent = new EventContainer();
 
-        public Entity<ActorEntity> CurrentEventActor => m_CurrentEvent.Actor;
+        public Entity<ActorEntity> CurrentEventActor => m_CurrentEvent.Event.Actor;
 
         private EntitySystem m_EntitySystem;
         private EventSystem m_EventSystem;
@@ -97,11 +98,11 @@ namespace Syadeu.Presentation.Actor
 
         void ISystemEventScheduler.Execute(ScheduledEventHandler handler)
         {
-            if (m_CurrentEvent.Sequence != null)
+            if (!m_CurrentEvent.IsEmpty())
             {
-                if (m_CurrentEvent.Sequence.KeepWait)
+                if (m_CurrentEvent.Event.EventSequence.KeepWait)
                 {
-                    handler.SetEvent(SystemEventResult.Wait, m_CurrentEvent.Sequence.GetType());
+                    handler.SetEvent(SystemEventResult.Wait, m_CurrentEvent.Event.EventType);
                     return;
                 }
 
@@ -112,25 +113,25 @@ namespace Syadeu.Presentation.Actor
                 }
 
                 if (UnityEngine.Time.time - m_CurrentEvent.StartTime
-                    < m_CurrentEvent.Sequence.AfterDelay)
+                    < m_CurrentEvent.Event.EventSequence.AfterDelay)
                 {
-                    handler.SetEvent(SystemEventResult.Wait, m_CurrentEvent.Sequence.GetType());
+                    handler.SetEvent(SystemEventResult.Wait, m_CurrentEvent.Event.EventType);
                     return;
                 }
 
-                handler.SetEvent(SystemEventResult.Success, m_CurrentEvent.Sequence.GetType());
+                handler.SetEvent(SystemEventResult.Success, m_CurrentEvent.Event.EventType);
 
                 m_CurrentEvent.Clear();
 
                 return;
             }
 
-            IEventHandler ev = m_ScheduledEvents.Dequeue();
+            IEventHandler ev = m_ScheduledEvents[0];
+            m_ScheduledEvents.RemoveAt(0);
 
             if (ev.EventSequence != null)
             {
-                m_CurrentEvent.Actor = ev.Actor;
-                m_CurrentEvent.Sequence = ev.EventSequence;
+                m_CurrentEvent.Event = ev;
 
                 CoreSystem.Logger.Log(Channel.Action,
                     $"Execute scheduled actor event({ev.GetEventName()})");
@@ -156,25 +157,25 @@ namespace Syadeu.Presentation.Actor
                 ev.Post();
 
                 handler.SetEvent(SystemEventResult.Success, ev.EventType);
+                ev.Reserve();
             }
         }
 
         private class EventContainer
         {
-            public Entity<ActorEntity> Actor;
-            public IEventSequence Sequence;
+            public IEventHandler Event;
 
             public bool TimerStarted;
             public float StartTime;
 
             public bool IsEmpty()
             {
-                return Sequence == null;
+                return Event == null;
             }
             public void Clear()
             {
-                Actor = Entity<ActorEntity>.Empty;
-                Sequence = null;
+                Event.Reserve();
+                Event = null;
 
                 TimerStarted = false;
                 StartTime = 0;
@@ -196,6 +197,7 @@ namespace Syadeu.Presentation.Actor
             IEventSequence EventSequence { get; }
 
             void Post();
+            void Reserve();
 
             string GetEventName();
         }
@@ -221,12 +223,17 @@ namespace Syadeu.Presentation.Actor
                 }
             } 
 
-            void IEventHandler.Post()
+            public void Post()
             {
                 m_EventPost.Invoke(m_Event);
+            }
+            public void Reserve()
+            {
+                m_Actor = Entity<ActorEntity>.Empty;
+                m_EventPost = null;
                 PoolContainer<EventHandler<TEvent>>.Enqueue(this);
             }
-            string IEventHandler.GetEventName()
+            public string GetEventName()
             {
                 return TypeHelper.TypeOf<TEvent>.ToString();
             }
@@ -234,13 +241,142 @@ namespace Syadeu.Presentation.Actor
 
         #endregion
 
-        public void ScheduleEvent<TEvent>(Entity<ActorEntity> actor, ActorEventDelegate<TEvent> post, TEvent ev)
+        private int FindScheduledEvent<TEvent>()
 #if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             where TEvent : struct, IActorEvent
 #else
             where TEvent : unmanaged, IActorEvent
 #endif
         {
+            for (int i = 0; i < m_ScheduledEvents.Count; i++)
+            {
+                if (m_ScheduledEvents[i].EventType.Equals(TypeHelper.TypeOf<TEvent>.Type))
+                {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        public void ScheduleEvent<TEvent>(
+            Entity<ActorEntity> actor, ActorEventDelegate<TEvent> post, TEvent ev, bool overrideSameEvent)
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
+            where TEvent : struct, IActorEvent
+#else
+            where TEvent : unmanaged, IActorEvent
+#endif
+        {
+            if (!overrideSameEvent || (m_CurrentEvent.IsEmpty() && m_ScheduledEvents.Count == 0))
+            {
+                ScheduleEvent(actor, post, ev);
+                return;
+            }
+
+#if DEBUG_MODE
+            if (!UnsafeUtility.IsUnmanaged<TEvent>())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Actor event({TypeHelper.TypeOf<TEvent>.ToString()}) is not unmanaged struct.");
+            }
+#endif
+            if (!PoolContainer<EventHandler<TEvent>>.Initialized)
+            {
+                PoolContainer<EventHandler<TEvent>>.Initialize(EventHandlerFactory<TEvent>, 32);
+            }
+
+            int index;
+            if (!m_CurrentEvent.IsEmpty() &&
+                m_CurrentEvent.Event.EventType.Equals(TypeHelper.TypeOf<TEvent>.Type))
+            {
+                bool wasSequence = m_CurrentEvent.Event.EventSequence != null;
+                m_CurrentEvent.Clear();
+
+                index = FindScheduledEvent<TEvent>();
+                if (index >= 0)
+                {
+                    //EventHandler<TEvent> handler = PoolContainer<EventHandler<TEvent>>.Dequeue();
+
+                    //handler.m_Actor = actor;
+                    //handler.m_EventPost = post;
+                    //handler.m_Event = ev;
+
+                    m_ScheduledEvents[index].Reserve();
+                    if (index != 0)
+                    {
+                        m_ScheduledEvents.RemoveAt(index);
+                    }
+                    //m_ScheduledEvents[index] = handler;
+
+                    //ScheduleEvent(actor, post, ev);
+                    "override schedule ev".ToLog();
+                    //return;
+                }
+
+                //ScheduleEvent(actor, post, ev);
+                //return;
+                EventHandler<TEvent> handler = PoolContainer<EventHandler<TEvent>>.Dequeue();
+
+                handler.m_Actor = actor;
+                handler.m_EventPost = post;
+                handler.m_Event = ev;
+
+                m_ScheduledEvents.Insert(0, handler);
+
+                if (!wasSequence) m_EventSystem.TakeQueueTicket(this);
+
+                return;
+            }
+
+            index = FindScheduledEvent<TEvent>();
+            if (index >= 0)
+            {
+                EventHandler<TEvent> handler = PoolContainer<EventHandler<TEvent>>.Dequeue();
+
+                handler.m_Actor = actor;
+                handler.m_EventPost = post;
+                handler.m_Event = ev;
+
+                m_ScheduledEvents[index].Reserve();
+                m_ScheduledEvents[index] = handler;
+
+                //ScheduleEvent(actor, post, ev);
+                "override schedule ev".ToLog();
+                return;
+            }
+
+            ScheduleEvent(actor, post, ev);
+            return;
+
+            //handler.Post();
+
+            //if (handler.EventSequence != null &&
+            //    handler.EventSequence.KeepWait)
+            //{
+            //    m_CurrentEvent.Event = handler;
+            //}
+            //else handler.Reserve();
+
+            //CoreSystem.Logger.Log(Channel.Action,
+            //    $"Execute override actor event({handler.GetEventName()})");
+
+            //m_ScheduledEvents.Enqueue(handler);
+            //m_EventSystem.TakeQueueTicket(this);
+        }
+        public void ScheduleEvent<TEvent>(
+            Entity<ActorEntity> actor, ActorEventDelegate<TEvent> post, TEvent ev)
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
+            where TEvent : struct, IActorEvent
+#else
+            where TEvent : unmanaged, IActorEvent
+#endif
+        {
+#if DEBUG_MODE
+            if (!UnsafeUtility.IsUnmanaged<TEvent>())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Actor event({TypeHelper.TypeOf<TEvent>.ToString()}) is not unmanaged struct.");
+            }
+#endif
             if (!PoolContainer<EventHandler<TEvent>>.Initialized)
             {
                 PoolContainer<EventHandler<TEvent>>.Initialize(EventHandlerFactory<TEvent>, 32);
@@ -252,7 +388,7 @@ namespace Syadeu.Presentation.Actor
             handler.m_EventPost = post;
             handler.m_Event = ev;
 
-            m_ScheduledEvents.Enqueue(handler);
+            m_ScheduledEvents.Add(handler);
             m_EventSystem.TakeQueueTicket(this);
         }
 

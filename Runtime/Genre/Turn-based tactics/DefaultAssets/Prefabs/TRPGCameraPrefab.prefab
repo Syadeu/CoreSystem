@@ -259,7 +259,7 @@ MonoBehaviour:
       m_Flags: 0
   m_DefaultViewString: TopView
   m_AimViewString: AimView
-  m_DefaultTopViewHeight: 0
+  m_DefaultTopViewHeight: -9
 --- !u!114 &8651523515494752577
 MonoBehaviour:
   m_ObjectHideFlags: 0

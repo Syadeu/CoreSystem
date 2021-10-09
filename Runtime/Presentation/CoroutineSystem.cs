@@ -15,7 +15,7 @@ namespace Syadeu.Presentation
     public sealed class CoroutineSystem : PresentationSystemEntity<CoroutineSystem>
     {
         public override bool EnableBeforePresentation => false;
-        public override bool EnableOnPresentation => false;
+        public override bool EnableOnPresentation => true;
         public override bool EnableAfterPresentation => false;
 
         private readonly Queue<CoroutineJobPayload> m_IterationJobs = new Queue<CoroutineJobPayload>();
@@ -34,11 +34,11 @@ namespace Syadeu.Presentation
         protected override PresentationResult OnInitialize()
         {
 #if UNITY_EDITOR
-            PresentationManager.Instance.Update -= PresenationUpdateHandler;
+            //PresentationManager.Instance.Update -= PresenationUpdateHandler;
             PresentationManager.Instance.TransformUpdate -= PresentationTransformUpdateHandler;
             PresentationManager.Instance.AfterTransformUpdate -= PresentationAfterTransformUpdateHandler;
 #endif
-            PresentationManager.Instance.Update += PresenationUpdateHandler;
+            //PresentationManager.Instance.Update += PresenationUpdateHandler;
             PresentationManager.Instance.TransformUpdate += PresentationTransformUpdateHandler;
             PresentationManager.Instance.AfterTransformUpdate += PresentationAfterTransformUpdateHandler;
 
@@ -68,14 +68,14 @@ namespace Syadeu.Presentation
             m_UsedUpdateIndices.Clear();
             m_TerminatedCoroutineIndices.Clear();
 
-            PresentationManager.Instance.Update -= PresenationUpdateHandler;
+            //PresentationManager.Instance.Update -= PresenationUpdateHandler;
             PresentationManager.Instance.TransformUpdate -= PresentationTransformUpdateHandler;
             PresentationManager.Instance.AfterTransformUpdate -= PresentationAfterTransformUpdateHandler;
 
             base.OnDispose();
         }
 
-        private void PresenationUpdateHandler()
+        protected override PresentationResult OnPresentation()
         {
             #region Sequence Iterator Jobs
             if (m_CurrentIterationJob != null)
@@ -209,6 +209,8 @@ namespace Syadeu.Presentation
             }
 
             #endregion
+
+            return base.OnPresentation();
         }
         private void PresentationTransformUpdateHandler()
         {

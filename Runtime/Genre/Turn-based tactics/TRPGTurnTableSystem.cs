@@ -3,6 +3,7 @@
 #endif
 
 using Syadeu.Presentation.Actions;
+using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using System.Collections;
@@ -54,16 +55,21 @@ namespace Syadeu.Presentation.TurnTable
                 throw new System.Exception();
             }
             m_Players.Add(player);
+
+            ActorStateAttribute stateAttribute = player.GetAttribute<ActorStateAttribute>();
+            if (stateAttribute != null)
+            {
+                stateAttribute.AddEvent(OnActorStateChangedEventHandler);
+            }
         }
         public void RemovePlayer(EntityData<IEntityData> player)
         {
-            for (int i = 0; i < m_Players.Count; i++)
+            m_Players.RemoveFor(player);
+
+            ActorStateAttribute stateAttribute = player.GetAttribute<ActorStateAttribute>();
+            if (stateAttribute != null)
             {
-                if (m_Players[i].Equals(player))
-                {
-                    m_Players.RemoveAt(i);
-                    return;
-                }
+                stateAttribute.RemoveEvent(OnActorStateChangedEventHandler);
             }
         }
 
@@ -196,6 +202,11 @@ namespace Syadeu.Presentation.TurnTable
 
                 return -1;
             }
+        }
+
+        private static void OnActorStateChangedEventHandler(ActorStateAttribute attribute, ActorStateAttribute.StateInfo stateInfo)
+        {
+            $"{attribute.Parent.RawName} state changed -> {stateInfo}".ToLog();
         }
     }
 }

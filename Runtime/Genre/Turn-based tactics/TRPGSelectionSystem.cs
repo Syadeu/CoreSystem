@@ -2,11 +2,13 @@
 #define DEBUG_MODE
 #endif
 
+using Syadeu.Database;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Input;
 using Syadeu.Presentation.Map;
 using Syadeu.Presentation.Render;
 using Unity.Collections;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace Syadeu.Presentation.TurnTable
@@ -28,6 +30,7 @@ namespace Syadeu.Presentation.TurnTable
         private RenderSystem m_RenderSystem;
         private InputSystem m_InputSystem;
         private EntityRaycastSystem m_EntityRaycastSystem;
+        private CoroutineSystem m_CoroutineSystem;
 
         // LevelDesignPresentationGroup
         private LevelDesignSystem m_LevelDesignSystem;
@@ -39,6 +42,7 @@ namespace Syadeu.Presentation.TurnTable
             RequestSystem<DefaultPresentationGroup, RenderSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, InputSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, EntityRaycastSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, CoroutineSystem>(Bind);
             RequestSystem<LevelDesignPresentationGroup, LevelDesignSystem>(Bind);
             RequestSystem<TRPGIngameSystemGroup, TRPGTurnTableSystem>(Bind);
 
@@ -53,6 +57,7 @@ namespace Syadeu.Presentation.TurnTable
             m_RenderSystem = null;
             m_InputSystem = null;
             m_EntityRaycastSystem = null;
+            m_CoroutineSystem = null;
             m_LevelDesignSystem = null;
             m_TurnTableSystem = null;
         }
@@ -86,6 +91,10 @@ namespace Syadeu.Presentation.TurnTable
 
             m_LeftMouseButtonAction.Enable();
             m_RightMouseButtonAction.Enable();
+        }
+        private void Bind(CoroutineSystem other)
+        {
+            m_CoroutineSystem = other;
         }
 
         private void Bind(LevelDesignSystem other)
@@ -153,17 +162,47 @@ namespace Syadeu.Presentation.TurnTable
 
         public void SelectEntity(Entity<IEntity> entity)
         {
+            TRPGSelectionAttribute select = entity.GetAttribute<TRPGSelectionAttribute>();
+            if (select == null) return;
+
             ClearSelectedEntities();
             m_SelectedEntities.Add(entity);
+
+            var tr = entity.transform;
+            AABB aabb = tr.aabb;
+            float3 pos = aabb.center;
+            pos.y -= aabb.extents.y;
+
+            for (int i = 0; i < select.m_SelectedFloorUI.Length; i++)
+            {
+                select.m_SelectedFloorUI[i].Fire(m_CoroutineSystem.SystemID, tr);
+            }
 
             $"select entity {entity.RawName}".ToLog();
         }
         public void DeSelectEntity(Entity<IEntity> entity)
         {
+            var select = entity.GetAttribute<TRPGSelectionAttribute>();
+            for (int i = 0; i < select.m_SelectedFloorUI.Length; i++)
+            {
+                select.m_SelectedFloorUI[i].Stop();
+            }
+
             m_SelectedEntities.RemoveFor(entity);
         }
         public void ClearSelectedEntities()
         {
+            for (int i = 0; i < m_SelectedEntities.Length; i++)
+            {
+                Entity<IEntity> entity = m_SelectedEntities[i];
+
+                var select = entity.GetAttribute<TRPGSelectionAttribute>();
+                for (int j = 0; j < select.m_SelectedFloorUI.Length; j++)
+                {
+                    select.m_SelectedFloorUI[j].Stop();
+                }
+            }
+
             m_SelectedEntities.Clear();
         }
     }
