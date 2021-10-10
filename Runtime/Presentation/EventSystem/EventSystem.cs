@@ -1,4 +1,8 @@
-﻿using Syadeu.Database;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Syadeu.Internal;
 using Syadeu.Presentation.Internal;
 using System;
 using System.Collections;
@@ -22,11 +26,15 @@ namespace Syadeu.Presentation.Events
             m_TransformEvents = new Queue<SynchronizedEventBase>(),
             m_ScheduledEvents = new Queue<SynchronizedEventBase>();
         private readonly Queue<Action> m_PostedActions = new Queue<Action>();
-        private readonly Queue<ISystemEventScheduler> m_SystemTickets = new Queue<ISystemEventScheduler>();
+        private readonly List<ISystemEventScheduler> m_SystemTickets = new List<ISystemEventScheduler>();
 
         private readonly ScheduledEventHandler m_ScheduledEventHandler = new ScheduledEventHandler();
         private ISystemEventScheduler m_CurrentTicket;
         private bool m_PausedScheduledEvent = false;
+
+#if DEBUG_MODE
+        private readonly HashSet<int> m_AddedEvents = new HashSet<int>();
+#endif
 
         private SceneSystem m_SceneSystem;
         private CoroutineSystem m_CoroutineSystem;
@@ -165,6 +173,16 @@ namespace Syadeu.Presentation.Events
         /// <param name="ev"></param>
         public void AddEvent<TEvent>(Action<TEvent> ev) where TEvent : SynchronizedEvent<TEvent>, new()
         {
+#if DEBUG_MODE
+            int hash = ev.GetHashCode();
+            if (m_AddedEvents.Contains(hash))
+            {
+                CoreSystem.Logger.LogError(Channel.Event,
+                    $"Attemp to add same delegate event({ev.Method.Name}) at {TypeHelper.TypeOf<TEvent>.ToString()}.");
+                return;
+            }
+            m_AddedEvents.Add(hash);
+#endif
             SynchronizedEvent<TEvent>.AddEvent(ev);
         }
         /// <summary>
@@ -174,6 +192,10 @@ namespace Syadeu.Presentation.Events
         /// <param name="ev"></param>
         public void RemoveEvent<TEvent>(Action<TEvent> ev) where TEvent : SynchronizedEvent<TEvent>, new()
         {
+#if DEBUG_MODE
+            int hash = ev.GetHashCode();
+            m_AddedEvents.Remove(hash);
+#endif
             SynchronizedEvent<TEvent>.RemoveEvent(ev);
         }
 
@@ -213,35 +235,40 @@ namespace Syadeu.Presentation.Events
 
         private void ExecuteSystemTickets()
         {
-            if ((m_ScheduledEventHandler.m_Result & SystemEventResult.Wait) == SystemEventResult.Wait)
+            if (m_CurrentTicket != null && 
+                (m_ScheduledEventHandler.m_Result & SystemEventResult.Wait) == SystemEventResult.Wait)
             {
                 try
                 {
                     m_CurrentTicket.Execute(m_ScheduledEventHandler);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     m_ScheduledEventHandler.m_Result = SystemEventResult.Failed;
+                    CoreSystem.Logger.LogError(Channel.Event, ex);
                 }
 
                 if ((m_ScheduledEventHandler.m_Result & SystemEventResult.Wait) == SystemEventResult.Wait)
                 {
                     return;
                 }
+                else m_CurrentTicket = null;
             }
 
             int count = m_SystemTickets.Count;
             for (int i = 0; i < count; i++)
             {
-                m_CurrentTicket = m_SystemTickets.Dequeue();
+                m_CurrentTicket = m_SystemTickets[0];
+                m_SystemTickets.RemoveAt(0);
 
                 try
                 {
                     m_CurrentTicket.Execute(m_ScheduledEventHandler);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     m_ScheduledEventHandler.m_Result = SystemEventResult.Failed;
+                    CoreSystem.Logger.LogError(Channel.Event, ex);
                 }
 
                 if ((m_ScheduledEventHandler.m_Result & SystemEventResult.Wait) == SystemEventResult.Wait)
@@ -253,7 +280,29 @@ namespace Syadeu.Presentation.Events
         public void TakeQueueTicket<TSystem>(TSystem scheduler) 
             where TSystem : PresentationSystemEntity, ISystemEventScheduler
         {
-            m_SystemTickets.Enqueue(scheduler);
+            m_SystemTickets.Add(scheduler);
+        }
+        public void TakePrioritizeTicket<TSystem>(TSystem scheduler)
+            where TSystem : PresentationSystemEntity, ISystemEventScheduler
+        {
+            if (m_CurrentTicket == null)
+            {
+                m_CurrentTicket = scheduler;
+                return;
+            }
+            //else if (scheduler.SystemID.Equals(m_CurrentTicket.SystemID)) return;
+
+            m_SystemTickets.Insert(0, m_CurrentTicket);
+            m_CurrentTicket = scheduler;
+        }
+        public PresentationSystemEntity GetNextTicketSystem()
+        {
+            if (m_SystemTickets.Count == 0)
+            {
+                return null;
+            }
+
+            return (PresentationSystemEntity)m_SystemTickets[0];
         }
 
         void ISystemEventScheduler.Execute(ScheduledEventHandler handler)

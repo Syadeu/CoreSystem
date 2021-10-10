@@ -38,8 +38,8 @@ namespace Syadeu.Presentation.Actor
         [JsonProperty(Order = 0, PropertyName = "OnDead")]
         private Reference<TriggerAction>[] m_OnDead = Array.Empty<Reference<TriggerAction>>();
 
-        [JsonIgnore] internal EventSystem m_EventSystem = null;
         [JsonIgnore] private StateInfo m_State = StateInfo.Idle;
+        [JsonIgnore] private Action<ActorStateAttribute, StateInfo> m_OnStateChangedEvent;
 
         [JsonIgnore] public StateInfo State
         {
@@ -51,6 +51,8 @@ namespace Syadeu.Presentation.Actor
                 StateInfo prev = m_State;
                 m_State = value;
 
+                m_OnStateChangedEvent?.Invoke(this, m_State);
+
                 if ((value & StateInfo.Spawn) == StateInfo.Spawn) m_OnSpawn.Execute(Parent);
                 if ((value & StateInfo.Idle) == StateInfo.Idle) m_OnIdle.Execute(Parent);
                 if ((value & StateInfo.Alert) == StateInfo.Alert) m_OnAlert.Execute(Parent);
@@ -58,20 +60,19 @@ namespace Syadeu.Presentation.Actor
                 if ((value & StateInfo.Dead) == StateInfo.Dead) m_OnDead.Execute(Parent);
                 m_OnStateChanged.Execute(Parent);
 
-                m_EventSystem.PostEvent(OnActorStateChangedEvent.GetEvent(
-                    Parent.As<IEntityData, ActorEntity>(), prev, m_State));
+                PresentationSystem<DefaultPresentationGroup, EventSystem>.System
+                    .PostEvent(OnActorStateChangedEvent.GetEvent(
+                        Parent.As<IEntityData, ActorEntity>(), prev, m_State));
             }
         }
-    }
-    internal sealed class ActorStateProcessor : AttributeProcessor<ActorStateAttribute>
-    {
-        protected override void OnCreated(ActorStateAttribute attribute, EntityData<IEntityData> entity)
+
+        public void AddEvent(Action<ActorStateAttribute, StateInfo> ev)
         {
-            attribute.m_EventSystem = EventSystem;
+            m_OnStateChangedEvent += ev;
         }
-        protected override void OnDestroy(ActorStateAttribute attribute, EntityData<IEntityData> entity)
+        public void RemoveEvent(Action<ActorStateAttribute, StateInfo> ev)
         {
-            attribute.m_EventSystem = null;
+            m_OnStateChangedEvent -= ev;
         }
     }
 }

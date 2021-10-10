@@ -1,7 +1,9 @@
 ﻿using NUnit.Framework;
 using Syadeu;
 using Syadeu.Presentation;
+using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -106,5 +108,82 @@ public class PresentationSystemTests
         yield return new WaitForSeconds(10);
 
         PresentationSystemGroup<PresentationTestGroup>.Stop();
+    }
+
+    public struct TestComponent_1 : IEntityComponent
+    {
+        public int m_TestInt;
+    }
+    public struct TestComponent_2 : IEntityComponent
+    {
+        public float m_TestSingle;
+    }
+    public struct TestComponent_3 : IEntityComponent
+    {
+        public float m_TestSingle;
+    }
+    public struct TestComponent_4 : IEntityComponent
+    {
+        public float m_TestSingle;
+        public bool m_TestBoolen;
+    }
+
+    [UnityTest]
+    public IEnumerator QueryTest()
+    {
+        //yield return new WaitForSeconds(1);
+        yield return PresentationSystem<DefaultPresentationGroup, EntitySystem>.GetAwaiter();
+
+        TypeInfo
+            a0 = ComponentType<TestComponent_1>.TypeInfo,
+            a1 = ComponentType<TestComponent_2>.TypeInfo,
+            a2 = ComponentType<TestComponent_3>.TypeInfo,
+            a3 = ComponentType<TestComponent_4>.TypeInfo;
+
+        ComponentTypeQuery
+            query1 = ComponentTypeQuery.Combine(a0, a1),
+            query2 = ComponentTypeQuery.Combine(a1, a0),
+            query3 = ComponentTypeQuery.Combine(a3, a2, a0),
+            query4 = ComponentTypeQuery.Combine(a2, a0, a3),
+
+            query5 = ComponentTypeQuery.Combine(a2, a3, a1),
+
+            query6 = ComponentTypeQuery.Combine(a2, a0, a3, a1),
+            query8 = ComponentTypeQuery.Combine(a2, a0, a3, a1) ^ ComponentTypeQuery.ReadWrite,
+            query9 = ComponentTypeQuery.Combine(a2, a0, a3, a1) ^ ComponentTypeQuery.WriteOnly;
+
+        Debug.Log($"Default: {query5} :: a0: {a0.GetHashCode()}");
+
+        Debug.Log($"{query5.Has(a0)}");
+
+        //Debug.Log($"{query9.GetHashCode() | ComponentTypeQuery.WriteOnly} == {query9 ^ ComponentTypeQuery.WriteOnly}\n" +
+        //    $"{(query9.GetHashCode() | ComponentTypeQuery.WriteOnly) == (query9 ^ ComponentTypeQuery.WriteOnly).GetHashCode()}");
+
+
+
+        //if ((query9.GetHashCode() ^ ComponentTypeQuery.ReadOnly) == (query9.GetHashCode() ^ ComponentTypeQuery.ReadOnly))
+        //{
+        //    Debug.Log("query9 is write only");
+        //}
+
+        //if ((query9.GetHashCode() & a0.GetHashCode()) == a0.GetHashCode())
+        //{
+        //    Debug.Log("qua9 has a0");
+        //}
+
+        //var temp = query8 ^ ComponentTypeQuery.ReadOnly;
+
+        //Debug.Log($"original : {query6} :: write : {query9} \n readwrite {query8}");
+
+        //Debug.Log($"rww{(query9 ^ ComponentTypeQuery.ReadOnly)}, rd{(query9 ^ ComponentTypeQuery.WriteOnly)}");
+        //Debug.Log($"{ComponentTypeQuery.ReadOnly} :: {ComponentTypeQuery.WriteOnly}");
+        //Debug.Log(
+        //    $"{temp.GetHashCode()} == {query9.GetHashCode()} ? {temp.GetHashCode() == query9.GetHashCode()}");
+
+        //Debug.Log(
+        //    $"{query1.GetHashCode()} == {query2.GetHashCode()} ? {query1.GetHashCode() == query2.GetHashCode()}");
+        //Debug.Log($"{query3.GetHashCode()} == {query4.GetHashCode()} ? {query3.GetHashCode() == query4.GetHashCode()}");
+        //Debug.Log($"{query5.GetHashCode()} == {query6.GetHashCode()} ? {query5.GetHashCode() == query6.GetHashCode()}");
+        //Debug.Log($"{query7.GetHashCode()} == {query1.GetHashCode()} ? {query7.GetHashCode() == query1.GetHashCode()}");
     }
 }

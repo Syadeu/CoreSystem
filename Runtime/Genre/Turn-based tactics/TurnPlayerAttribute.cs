@@ -40,7 +40,7 @@ namespace Syadeu.Presentation.TurnTable
 
         protected override void OnInitialize()
         {
-            RequestSystem<TRPGSystemGroup, TRPGTurnTableSystem>(Bind);
+            RequestSystem<TRPGIngameSystemGroup, TRPGTurnTableSystem>(Bind);
         }
         protected override void OnDispose()
         {

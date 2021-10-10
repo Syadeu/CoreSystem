@@ -49,7 +49,7 @@ namespace Syadeu.Presentation.Entities
         [JsonProperty(Order = 6, PropertyName = "LocalScale")]
         private float3 m_LocalScale = 1;
 
-        //[JsonIgnore] private Instance<FXEntity> m_Instance = Instance<FXEntity>.Empty;
+        [JsonIgnore] private Instance<FXEntity> m_Instance = Instance<FXEntity>.Empty;
 
         [JsonIgnore] public Reference<FXEntity> FXEntity => m_FXEntity;
         [JsonIgnore] public TriggerOptions TriggerOption => m_TriggerOption;
@@ -64,9 +64,13 @@ namespace Syadeu.Presentation.Entities
         {
             if (parent is ProxyTransform proxy)
             {
+                m_Instance = m_FXEntity.CreateInstance();
+                FXEntity fx = m_Instance.Object;
+                fx.SetPlayOptions(m_PlayOption);
+
                 coroutineSystem.System.PostCoroutineJob(new FireCoroutine
                 {
-                    m_FXEntity = m_FXEntity,
+                    m_FXEntity = m_Instance,
                     m_PlayOption = m_PlayOption,
                     TRS = TRS,
 
@@ -78,10 +82,20 @@ namespace Syadeu.Presentation.Entities
                 CoreSystem.Logger.LogError(Channel.Entity, "");
             }
         }
+        public void Stop()
+        {
+            if (m_Instance.IsEmpty() || !m_Instance.IsValid())
+            {
+                "".ToLogError();
+                return;
+            }
+
+            m_Instance.Object.Stop();
+        }
 
         private struct FireCoroutine : ICoroutineJob
         {
-            public Reference<FXEntity> m_FXEntity;
+            public Instance<FXEntity> m_FXEntity;
             public PlayOptions m_PlayOption;
             public TRS TRS;
 
@@ -101,9 +115,9 @@ namespace Syadeu.Presentation.Entities
                     yield break;
                 }
 
-                Instance<FXEntity> instance = m_FXEntity.CreateInstance();
-                FXEntity fx = instance.Object;
-                fx.SetPlayOptions(m_PlayOption);
+                //Instance<FXEntity> instance = m_FXEntity.CreateInstance();
+                FXEntity fx = m_FXEntity.Object;
+                //fx.SetPlayOptions(m_PlayOption);
 
                 ITransform tr = fx.transform;
 
@@ -114,7 +128,7 @@ namespace Syadeu.Presentation.Entities
 
                 fx.Play();
 
-                $"{m_FXEntity.GetObject().Name} fired".ToLog();
+                $"{m_FXEntity.Object.Name} fired".ToLog();
 
                 while (fx.IsPlaying)
                 {
@@ -129,7 +143,7 @@ namespace Syadeu.Presentation.Entities
                     yield return null;
                 }
 
-                instance.Destroy();
+                m_FXEntity.Destroy();
             }
         }
     }

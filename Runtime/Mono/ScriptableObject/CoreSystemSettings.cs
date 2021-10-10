@@ -59,7 +59,8 @@ namespace Syadeu.Mono
         [Header("TRPG Grid System")]
         public float m_TRPGGridLineWidth = .1f;
         public Material m_TRPGGridLineMaterial;
-
+        public float m_TRPGGridPathLineWidth = .35f;
+        public Material m_TRPGGridPathLineMaterial;
     }
 }
  

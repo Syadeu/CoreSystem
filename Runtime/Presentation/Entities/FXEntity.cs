@@ -16,14 +16,15 @@ namespace Syadeu.Presentation.Entities
             Sequence,
             Random
         }
+
+        [JsonProperty(Order = 0, PropertyName = "PlayOptions")]
+        private FXBounds.PlayOptions m_PlayOptions = FXBounds.PlayOptions.OneShot;
         //[JsonProperty(Order = 8, PropertyName = "FXBounds")]
         //protected PlayType m_PlayType = PlayType.Sequence;
 
         //[JsonProperty(Order = 0, PropertyName = "HitFX")]
         //private Reference<FXEntity> m_HitFX = Reference<FXEntity>.Empty;
         [JsonIgnore] private ParticleSystem m_ParticleSystem;
-        [JsonIgnore] private FXBounds.PlayOptions m_PlayOptions;
-
         [JsonIgnore] internal bool m_PlayQueued = false;
 
         [JsonIgnore] public bool IsPlaying
@@ -68,6 +69,7 @@ namespace Syadeu.Presentation.Entities
                 return;
             }
 
+            m_PlayQueued = false;
             m_ParticleSystem.Stop();
         }
 

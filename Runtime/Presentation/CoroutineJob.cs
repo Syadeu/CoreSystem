@@ -15,7 +15,7 @@ namespace Syadeu.Presentation
         public int Index => m_Idx;
         public int Generation => m_Generation;
 
-        public CoroutineJob(PresentationSystemID<CoroutineSystem> system, int index)
+        internal CoroutineJob(PresentationSystemID<CoroutineSystem> system, int index)
         {
             m_System = system;
 
@@ -28,7 +28,8 @@ namespace Syadeu.Presentation
         public bool IsValid()
         {
             if (m_Idx < 0 ||
-                !m_System.IsNull() && m_System.IsValid()) return false;
+                m_System.IsNull() ||
+                !m_System.IsValid()) return false;
 
             CoroutineSystem system = m_System.System;
 

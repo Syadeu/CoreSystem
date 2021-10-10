@@ -1,4 +1,8 @@
-﻿using Syadeu.Internal;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Syadeu.Internal;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
@@ -16,6 +20,29 @@ namespace Syadeu.Presentation.Actor
         internal InstanceArray<ActorProviderBase> m_InstanceProviders;
         internal ReferenceArray<Reference<ParamAction<IActorEvent>>> m_OnEventReceived;
 
+        public bool IsBusy()
+        {
+            ActorSystem system = PresentationSystem<DefaultPresentationGroup, ActorSystem>.System;
+            if (!system.CurrentEventActor.IsEmpty())
+            {
+                if (system.CurrentEventActor.Idx.Equals(m_Parent.Idx))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public void ScheduleEvent<TEvent>(TEvent ev, bool overrideCurrent)
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
+            where TEvent : struct, IActorEvent
+#else
+            where TEvent : unmanaged, IActorEvent
+#endif
+        {
+            ActorSystem system = PresentationSystem<DefaultPresentationGroup, ActorSystem>.System;
+            system.ScheduleEvent(m_Parent, PostEvent, ev, overrideCurrent);
+        }
         public void ScheduleEvent<TEvent>(TEvent ev)
 #if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             where TEvent : struct, IActorEvent
@@ -23,8 +50,8 @@ namespace Syadeu.Presentation.Actor
             where TEvent : unmanaged, IActorEvent
 #endif
         {
-            ActorSystem system = PresentationSystem<ActorSystem>.System;
-            system.ScheduleEvent(PostEvent, ev);
+            ActorSystem system = PresentationSystem<DefaultPresentationGroup, ActorSystem>.System;
+            system.ScheduleEvent(m_Parent, PostEvent, ev);
         }
 
         [BurstCompile]
@@ -89,9 +116,9 @@ namespace Syadeu.Presentation.Actor
                 {
                     if (lifeTimeChanged.LifeTime == ActorLifetimeChangedEvent.State.Alive)
                     {
-                        if ((state.State & ActorStateAttribute.StateInfo.Spawn) != ActorStateAttribute.StateInfo.Spawn)
+                        if ((state.State & ActorStateAttribute.StateInfo.Spawn | ActorStateAttribute.StateInfo.Idle) != (ActorStateAttribute.StateInfo.Spawn | ActorStateAttribute.StateInfo.Idle))
                         {
-                            state.State = ActorStateAttribute.StateInfo.Spawn;
+                            state.State = ActorStateAttribute.StateInfo.Spawn | ActorStateAttribute.StateInfo.Idle;
                         }
                     }
                     else
@@ -143,6 +170,30 @@ namespace Syadeu.Presentation.Actor
             provider.ReceivedEvent(ev);
         }
 
+        public bool HasProvider<T>() where T : ActorProviderBase
+        {
+            if (TypeHelper.TypeOf<T>.IsAbstract)
+            {
+                for (int i = 0; i < m_InstanceProviders.Length; i++)
+                {
+                    if (TypeHelper.TypeOf<T>.Type.IsAssignableFrom(m_InstanceProviders[i].Object.GetType()))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            for (int i = 0; i < m_InstanceProviders.Length; i++)
+            {
+                if (m_InstanceProviders[i].Object is T)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
         public Instance<T> GetProvider<T>() where T : ActorProviderBase
         {
             if (TypeHelper.TypeOf<T>.IsAbstract)

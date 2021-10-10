@@ -7,7 +7,7 @@ namespace Syadeu.Presentation.Map
     [BurstCompatible]
     public struct GridTile : IEquatable<GridTile>
     {
-        public static readonly GridTile Empty = new GridTile(-1);
+        public static GridTile Empty => new GridTile(-1);
 
         public int parent;
         public int index;

@@ -1,7 +1,6 @@
 ﻿using Syadeu.Mono;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Attributes;
-using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Input;
 using Syadeu.Presentation.Map;
@@ -12,45 +11,67 @@ using UnityEngine;
 
 namespace Syadeu.Presentation.TurnTable
 {
-    [SubSystem(typeof(GridSystem))]
+    [SubSystem(typeof(DefaultPresentationGroup), typeof(GridSystem))]
     public sealed class TRPGGridSystem : PresentationSystemEntity<TRPGGridSystem>
     {
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => true;
         public override bool EnableAfterPresentation => false;
 
-        private LineRenderer m_GridBoundsLineRenderer;
-        private NativeList<GridPosition> m_GridBoundsTempMoveables;
-        private NativeList<Vector3> m_GridBoundsTempOutlines;
-        private bool[] m_GridBoundsMouseOver;
+        private LineRenderer 
+            m_GridOutlineRenderer, m_GridPathlineRenderer;
 
-        private bool m_IsDrawingGrids = false;
-        private readonly List<Entity<IEntity>> m_DrawnCellUIEntities = new List<Entity<IEntity>>();
+        private NativeList<GridPosition> m_GridTempMoveables;
+        private NativeList<Vector3> 
+            m_GridTempOutlines, m_GridTempPathlines;
+
+        private bool 
+            m_IsDrawingGrids = false,
+            m_IsDrawingPaths = false;
 
         public bool IsDrawingUIGrid => m_IsDrawingGrids;
+        public bool ISDrawingUIPath => m_IsDrawingPaths;
 
         private InputSystem m_InputSystem;
         private GridSystem m_GridSystem;
 
         protected override PresentationResult OnInitialize()
         {
-            m_GridBoundsLineRenderer = CreateGameObject("Line Renderer").AddComponent<LineRenderer>();
-            m_GridBoundsLineRenderer.numCornerVertices = 1;
-            m_GridBoundsLineRenderer.numCapVertices = 1;
-            m_GridBoundsLineRenderer.alignment = LineAlignment.View;
-            m_GridBoundsLineRenderer.textureMode = LineTextureMode.Tile;
+            {
+                m_GridOutlineRenderer = CreateGameObject("Grid Outline Renderer", true).AddComponent<LineRenderer>();
+                m_GridOutlineRenderer.numCornerVertices = 1;
+                m_GridOutlineRenderer.numCapVertices = 1;
+                m_GridOutlineRenderer.alignment = LineAlignment.View;
+                m_GridOutlineRenderer.textureMode = LineTextureMode.Tile;
 
-            m_GridBoundsLineRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                m_GridOutlineRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
 
-            m_GridBoundsLineRenderer.startWidth = CoreSystemSettings.Instance.m_TRPGGridLineWidth;
-            m_GridBoundsLineRenderer.endWidth = CoreSystemSettings.Instance.m_TRPGGridLineWidth;
-            m_GridBoundsLineRenderer.material = CoreSystemSettings.Instance.m_TRPGGridLineMaterial;
+                m_GridOutlineRenderer.startWidth = CoreSystemSettings.Instance.m_TRPGGridLineWidth;
+                m_GridOutlineRenderer.endWidth = CoreSystemSettings.Instance.m_TRPGGridLineWidth;
+                m_GridOutlineRenderer.material = CoreSystemSettings.Instance.m_TRPGGridLineMaterial;
 
-            m_GridBoundsLineRenderer.loop = true;
-            m_GridBoundsLineRenderer.positionCount = 0;
+                m_GridOutlineRenderer.loop = true;
+                m_GridOutlineRenderer.positionCount = 0;
+            }
 
-            m_GridBoundsTempMoveables = new NativeList<GridPosition>(512, Allocator.Persistent);
-            m_GridBoundsTempOutlines = new NativeList<Vector3>(512, Allocator.Persistent);
+            {
+                m_GridPathlineRenderer = CreateGameObject("Grid Pathline Renderer", true).AddComponent<LineRenderer>();
+                m_GridPathlineRenderer.numCornerVertices = 1;
+                m_GridPathlineRenderer.numCapVertices = 1;
+                m_GridPathlineRenderer.alignment = LineAlignment.View;
+                m_GridPathlineRenderer.textureMode = LineTextureMode.Tile;
+
+                m_GridPathlineRenderer.startWidth = CoreSystemSettings.Instance.m_TRPGGridPathLineWidth;
+                m_GridPathlineRenderer.endWidth = CoreSystemSettings.Instance.m_TRPGGridPathLineWidth;
+                m_GridPathlineRenderer.material = CoreSystemSettings.Instance.m_TRPGGridPathLineMaterial;
+
+                m_GridPathlineRenderer.loop = false;
+                m_GridPathlineRenderer.positionCount = 0;
+            }
+
+            m_GridTempMoveables = new NativeList<GridPosition>(512, Allocator.Persistent);
+            m_GridTempOutlines = new NativeList<Vector3>(512, Allocator.Persistent);
+            m_GridTempPathlines = new NativeList<Vector3>(512, Allocator.Persistent);
 
             RequestSystem<DefaultPresentationGroup, InputSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, GridSystem>(Bind);
@@ -59,8 +80,12 @@ namespace Syadeu.Presentation.TurnTable
         }
         public override void OnDispose()
         {
-            m_GridBoundsTempMoveables.Dispose();
-            m_GridBoundsTempOutlines.Dispose();
+            m_GridTempMoveables.Dispose();
+            m_GridTempOutlines.Dispose();
+            m_GridTempPathlines.Dispose();
+
+            m_InputSystem = null;
+            m_GridSystem = null;
         }
 
         #region Binds
@@ -86,53 +111,68 @@ namespace Syadeu.Presentation.TurnTable
 
             if (m_IsDrawingGrids)
             {
-                for (int i = 0; i < m_DrawnCellUIEntities.Count; i++)
-                {
-                    m_DrawnCellUIEntities[i].Destroy();
-                }
-                m_DrawnCellUIEntities.Clear();
+                ClearUICell();
             }
 
             TRPGActorMoveComponent move = entity.GetComponent<TRPGActorMoveComponent>();
-            move.GetMoveablePositions(ref m_GridBoundsTempMoveables);
-            move.CalculateMoveableOutlineVertices(m_GridBoundsTempMoveables, ref m_GridBoundsTempOutlines);
+            move.GetMoveablePositions(ref m_GridTempMoveables);
+            move.CalculateMoveableOutlineVertices(m_GridTempMoveables, ref m_GridTempOutlines);
             
-            m_GridBoundsLineRenderer.positionCount = m_GridBoundsTempOutlines.Length;
-            m_GridBoundsLineRenderer.SetPositions(m_GridBoundsTempOutlines);
-            m_GridBoundsMouseOver = new bool[m_GridBoundsLineRenderer.positionCount];
+            m_GridOutlineRenderer.positionCount = m_GridTempOutlines.Length;
+            m_GridOutlineRenderer.SetPositions(m_GridTempOutlines);
 
-            for (int i = 0; i < m_GridBoundsTempMoveables.Length; i++)
+            GridSizeComponent gridSize = entity.GetComponent<GridSizeComponent>();
+
+            for (int i = 0; i < m_GridTempMoveables.Length; i++)
             {
-                Entity<IEntity> ui = m_GridSystem.PlaceUICell(m_GridBoundsTempMoveables[i]);
-
-                ui.AddComponent(new TRPGGridCellComponent()
-                {
-                    m_GridPosition = m_GridBoundsTempMoveables[i]
-                });
-
-                m_DrawnCellUIEntities.Add(ui);
+                PlaceUICell(in gridSize, m_GridTempMoveables[i]);
             }
 
             m_IsDrawingGrids = true;
+        }
+        private void PlaceUICell(in GridSizeComponent gridSize, in GridPosition position)
+        {
+            if (gridSize.IsMyIndex(position.index)) return;
+
+            m_GridSystem.PlaceUICell(position);
         }
         public void ClearUICell()
         {
             if (!m_IsDrawingGrids) return;
 
-            for (int i = 0; i < m_DrawnCellUIEntities.Count; i++)
-            {
-                m_DrawnCellUIEntities[i].Destroy();
-            }
+            m_GridSystem.ClearUICell();
 
-            m_GridBoundsLineRenderer.positionCount = 0;
-            m_DrawnCellUIEntities.Clear();
+            m_GridOutlineRenderer.positionCount = 0;
 
             m_IsDrawingGrids = false;
         }
-    }
 
-    public struct TRPGGridCellComponent : IEntityComponent
-    {
-        public GridPosition m_GridPosition;
+        public void DrawUIPath(in GridPath64 path, float heightOffset = .5f)
+        {
+            if (m_IsDrawingPaths)
+            {
+                ClearUIPath();
+            }
+
+            m_GridTempPathlines.Clear();
+            float3 offset = new float3(0, heightOffset, 0);
+
+            m_GridPathlineRenderer.positionCount = path.Length;
+            for (int i = 0; i < path.Length; i++)
+            {
+                m_GridTempPathlines.Add(m_GridSystem.IndexToPosition(path[i].index) + offset);
+            }
+            m_GridPathlineRenderer.SetPositions(m_GridTempPathlines);
+
+            m_IsDrawingPaths = true;
+        }
+        public void ClearUIPath()
+        {
+            if (!m_IsDrawingPaths) return;
+
+            m_GridPathlineRenderer.positionCount = 0;
+
+            m_IsDrawingPaths = false;
+        }
     }
 }

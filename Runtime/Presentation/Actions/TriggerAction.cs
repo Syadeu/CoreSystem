@@ -1,4 +1,8 @@
-﻿using Newtonsoft.Json;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Newtonsoft.Json;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using System;
@@ -12,10 +16,6 @@ namespace Syadeu.Presentation.Actions
     {
         private static readonly Dictionary<Reference, Stack<ActionBase>> m_Pool = new Dictionary<Reference, Stack<ActionBase>>();
 
-        [Header("Debug")]
-        [JsonProperty(Order = 9999, PropertyName = "DebugText")]
-        public string m_DebugText = string.Empty;
-
         internal override sealed void InternalInitialize()
         {
             OnInitialize();
@@ -23,9 +23,9 @@ namespace Syadeu.Presentation.Actions
         }
         internal bool InternalExecute(EntityData<IEntityData> entity)
         {
-            if (!string.IsNullOrEmpty(m_DebugText))
+            if (!string.IsNullOrEmpty(p_DebugText))
             {
-                CoreSystem.Logger.Log(Channel.Debug, m_DebugText);
+                CoreSystem.Logger.Log(Channel.Debug, p_DebugText);
             }
 
             if (!entity.IsValid())
@@ -113,6 +113,6 @@ namespace Syadeu.Presentation.Actions
 
         protected virtual void OnInitialize() { }
         protected virtual void OnTerminate() { }
-        protected virtual void OnExecute(EntityData<IEntityData> entity) { throw new NotImplementedException(); }
+        protected abstract void OnExecute(EntityData<IEntityData> entity);
     }
 }

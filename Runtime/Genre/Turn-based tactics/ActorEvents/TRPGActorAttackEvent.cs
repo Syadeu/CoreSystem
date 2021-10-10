@@ -19,19 +19,19 @@ namespace Syadeu.Presentation.TurnTable
         public Hash HPStatNameHash => m_StatNameHash;
         public float Damage => m_Damage;
 
-        public TRPGActorAttackEvent(Entity<ActorEntity> target, string targetStatName)
+        public TRPGActorAttackEvent(Entity<ActorEntity> target, string targetStatName, int damage)
         {
             m_Target = target;
             m_StatNameHash = ActorStatAttribute.ToValueHash(targetStatName);
 
-            m_Damage = 0;
+            m_Damage = damage;
         }
-        public TRPGActorAttackEvent(Entity<ActorEntity> target, Hash targetStatHash)
+        public TRPGActorAttackEvent(Entity<ActorEntity> target, Hash targetStatHash, int damage)
         {
             m_Target = target;
             m_StatNameHash = targetStatHash;
 
-            m_Damage = 0;
+            m_Damage = damage;
         }
         private Instance<ActorEntity> Selector(Entity<ActorEntity> entity)
         {
@@ -44,32 +44,32 @@ namespace Syadeu.Presentation.TurnTable
 
         void IActorEvent.OnExecute(Entity<ActorEntity> from)
         {
-            if (!from.HasComponent<ActorControllerComponent>())
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Target entity({m_Target.Name}) doesn\'t have any {nameof(ActorControllerComponent)}.");
-                return;
-            }
+            //if (!from.HasComponent<ActorControllerComponent>())
+            //{
+            //    CoreSystem.Logger.LogError(Channel.Entity,
+            //        $"Target entity({m_Target.Name}) doesn\'t have any {nameof(ActorControllerComponent)}.");
+            //    return;
+            //}
 
-            if (!from.HasComponent<ActorWeaponComponent>())
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                       $"Target entity({m_Target.Name}) doesn\'t have any {nameof(ActorWeaponComponent)}.");
-                return;
-            }
+            //if (!from.HasComponent<ActorWeaponComponent>())
+            //{
+            //    CoreSystem.Logger.LogError(Channel.Entity,
+            //           $"Target entity({m_Target.Name}) doesn\'t have any {nameof(ActorWeaponComponent)}.");
+            //    return;
+            //}
 
-            var stat = m_Target.GetAttribute<ActorStatAttribute>();
+            //var stat = m_Target.GetAttribute<ActorStatAttribute>();
             
-            if (stat == null)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Target entity({m_Target.Name}) doesn\'t have any {nameof(ActorStatAttribute)}.");
-                return;
-            }
+            //if (stat == null)
+            //{
+            //    CoreSystem.Logger.LogError(Channel.Entity,
+            //        $"Target entity({m_Target.Name}) doesn\'t have any {nameof(ActorStatAttribute)}.");
+            //    return;
+            //}
 
-            ActorWeaponComponent weaponComponent = from.GetComponent<ActorWeaponComponent>();
+            //ActorWeaponComponent weaponComponent = from.GetComponent<ActorWeaponComponent>();
 
-            m_Damage = Mathf.RoundToInt(weaponComponent.WeaponDamage);
+            //m_Damage = Mathf.RoundToInt(weaponComponent.WeaponDamage);
 
             //int hp = stat.GetValue<int>(m_StatNameHash);
             //hp -= m_Damage;

@@ -29,10 +29,8 @@ namespace Syadeu.Presentation
             {
                 if (!((IValidation)s_Instance).IsValid())
                 {
-                    if (!PresentationManager.Instance.m_RegisteredGroup.TryGetValue(TypeHelper.TypeOf<T>.Type, out Hash hash))
-                    {
-                        return Null;
-                    }
+                    Hash hash = PresentationManager.GroupToHash(TypeHelper.TypeOf<DefaultPresentationGroup>.Type);
+
                     var list = PresentationManager.Instance.m_PresentationGroups[hash].Systems;
                     int idx = -1;
                     for (int i = 0; i < list.Count; i++)
@@ -201,7 +199,7 @@ namespace Syadeu.Presentation
                 Assert.IsTrue(IsValid(), $"{TypeHelper.TypeOf<TSystem>.Type.Name} System is not valid");
 #endif
                 PresentationSystem<TGroup, TSystem> ins = Instance;
-                return PresentationManager.GetSystem<TSystem>(in ins.m_GroupHash, in ins.m_Index);
+                return PresentationManager.GetSystem<TSystem>(in ins.m_GroupHash);
             }
         }
         /// <summary>

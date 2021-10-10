@@ -4,6 +4,7 @@ using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Proxy;
+using Syadeu.Presentation.Render;
 using System;
 
 namespace Syadeu.Presentation.Actor
@@ -19,6 +20,7 @@ namespace Syadeu.Presentation.Actor
         [JsonIgnore] private PresentationSystemID<EventSystem> m_EventSystem;
         [JsonIgnore] private PresentationSystemID<EntitySystem> m_EntitySystem;
         [JsonIgnore] private PresentationSystemID<CoroutineSystem> m_CoroutineSystem;
+        [JsonIgnore] private PresentationSystemID<WorldCanvasSystem> m_WorldCanvasSystem;
 
         [JsonIgnore] public EntityData<IEntityData> Parent => m_Parent;
         [JsonIgnore] protected ActorControllerComponent Component => m_Parent.GetComponent<ActorControllerComponent>();
@@ -27,13 +29,15 @@ namespace Syadeu.Presentation.Actor
         [JsonIgnore] protected PresentationSystemID<CoroutineSystem> CoroutineSystem => m_CoroutineSystem;
 
         void IActorProvider.Bind(EntityData<IEntityData> parent,
-            EventSystem eventSystem, EntitySystem entitySystem, CoroutineSystem coroutineSystem)
+            EventSystem eventSystem, EntitySystem entitySystem, CoroutineSystem coroutineSystem,
+            WorldCanvasSystem worldCanvasSystem)
         {
             m_Parent = parent;
 
             m_EventSystem = eventSystem.SystemID;
             m_EntitySystem = entitySystem.SystemID;
             m_CoroutineSystem = coroutineSystem.SystemID;
+            m_WorldCanvasSystem = worldCanvasSystem.SystemID;
 
             m_Initialized = true;
         }
@@ -42,6 +46,7 @@ namespace Syadeu.Presentation.Actor
             try
             {
                 OnEventReceived(ev);
+                OnEventReceived(ev, m_WorldCanvasSystem.System);
             }
             catch (System.Exception ex)
             {
@@ -51,10 +56,12 @@ namespace Syadeu.Presentation.Actor
         void IActorProvider.OnCreated(Entity<ActorEntity> entity)
         {
             OnCreated(entity);
+            OnCreated(entity, m_WorldCanvasSystem.System);
         }
         void IActorProvider.OnDestroy(Entity<ActorEntity> entity)
         {
             OnDestroy(entity);
+            OnDestroy(entity, m_WorldCanvasSystem.System);
         }
         void IActorProvider.OnProxyCreated(RecycleableMonobehaviour monoObj)
         {
@@ -77,8 +84,17 @@ namespace Syadeu.Presentation.Actor
             where TEvent : unmanaged, IActorEvent
 #endif
         { }
+        protected virtual void OnEventReceived<TEvent>(TEvent ev, WorldCanvasSystem worldCanvasSystem)
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
+            where TEvent : struct, IActorEvent
+#else
+            where TEvent : unmanaged, IActorEvent
+#endif
+        { }
         protected virtual void OnCreated(Entity<ActorEntity> entity) { }
+        protected virtual void OnCreated(Entity<ActorEntity> entity, WorldCanvasSystem worldCanvasSystem) { }
         protected virtual void OnDestroy(Entity<ActorEntity> entity) { }
+        protected virtual void OnDestroy(Entity<ActorEntity> entity, WorldCanvasSystem worldCanvasSystem) { }
         protected virtual void OnProxyCreated(RecycleableMonobehaviour monoObj) { }
         protected virtual void OnProxyRemoved(RecycleableMonobehaviour monoObj) { }
 

@@ -225,6 +225,7 @@ MonoBehaviour:
       m_Flags: 0
   m_DefaultViewString: TopView
   m_AimViewString: AimView
+  m_DefaultTopViewHeight: 0
 --- !u!1 &8832134446683109531
 GameObject:
   m_ObjectHideFlags: 0
@@ -613,7 +614,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8832134447924349095}
-  m_LocalRotation: {x: 0.61973065, y: 0.003328204, z: -0.002628163, w: 0.7848031}
+  m_LocalRotation: {x: -0.10208, y: 0.77409065, z: -0.6112713, w: -0.1292702}
   m_LocalPosition: {x: 0, y: 1.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
@@ -648,13 +649,6 @@ MonoBehaviour:
     FarClipPlane: 5000
     Dutch: 0
     LensShift: {x: 0, y: 0}
-    Iso: 200
-    ShutterSpeed: 0.005
-    Aperture: 16
-    BladeCount: 5
-    Curvature: {x: 2, y: 11}
-    BarrelClipping: 0.25
-    Anamorphism: 0
   m_Transitions:
     m_BlendHint: 0
     m_InheritPosition: 0
@@ -738,16 +732,9 @@ MonoBehaviour:
     FarClipPlane: 5000
     Dutch: 0
     LensShift: {x: 0, y: 0}
-    Iso: 200
-    ShutterSpeed: 0.005
-    Aperture: 16
-    BladeCount: 5
-    Curvature: {x: 2, y: 11}
-    BarrelClipping: 0.25
-    Anamorphism: 0
   m_Transitions:
     m_BlendHint: 0
-    m_InheritPosition: 0
+    m_InheritPosition: 1
     m_OnCameraLive:
       m_PersistentCalls:
         m_Calls: []
@@ -767,4 +754,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Offset: {x: -7, y: 4.8, z: -28.5}
   m_ApplyAfter: 0
-  m_PreserveComposition: 0
+  m_PreserveComposition: 1

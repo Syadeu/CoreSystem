@@ -1,4 +1,5 @@
-﻿using Syadeu.Presentation.Components;
+﻿using Syadeu.Database;
+using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Map;
 using System;
@@ -59,11 +60,8 @@ namespace Syadeu.Presentation.TurnTable
             gridPositions.Clear();
             for (int i = 0; i < range.Length; i++)
             {
-                if (!gridsize.HasPath(range[i], turnPlayer.ActionPoint)) continue;
-                else if (gridsize.IsMyIndex(range[i]))
-                {
-                    continue;
-                }
+                if (!gridsize.HasPath(range[i], out int pathCount) ||
+                    pathCount > turnPlayer.ActionPoint) continue;
 
                 gridPositions.Add(gridsize.GetGridPosition(range[i]));
             }
@@ -80,7 +78,8 @@ namespace Syadeu.Presentation.TurnTable
             FixedList32Bytes<GridPosition> indices = new FixedList32Bytes<GridPosition>();
             for (int i = 0; i < range.Length; i++)
             {
-                if (!gridsize.HasPath(range[i], turnPlayer.ActionPoint)) continue;
+                if (!gridsize.HasPath(range[i], out int pathCount) ||
+                        pathCount > turnPlayer.ActionPoint) continue;
 
                 indices.Add(gridsize.GetGridPosition(range[i]));
             }
@@ -98,7 +97,8 @@ namespace Syadeu.Presentation.TurnTable
             FixedList64Bytes<GridPosition> indices = new FixedList64Bytes<GridPosition>();
             for (int i = 0; i < range.Length; i++)
             {
-                if (!gridsize.HasPath(range[i], turnPlayer.ActionPoint)) continue;
+                if (!gridsize.HasPath(range[i], out int pathCount) ||
+                        pathCount > turnPlayer.ActionPoint) continue;
 
                 indices.Add(gridsize.GetGridPosition(range[i]));
             }
@@ -116,7 +116,8 @@ namespace Syadeu.Presentation.TurnTable
             FixedList128Bytes<GridPosition> indices = new FixedList128Bytes<GridPosition>();
             for (int i = 0; i < range.Length; i++)
             {
-                if (!gridsize.HasPath(range[i], turnPlayer.ActionPoint)) continue;
+                if (!gridsize.HasPath(range[i], out int pathCount) ||
+                        pathCount > turnPlayer.ActionPoint) continue;
 
                 indices.Add(gridsize.GetGridPosition(range[i]));
             }
@@ -134,7 +135,8 @@ namespace Syadeu.Presentation.TurnTable
             FixedList4096Bytes<GridPosition> indices = new FixedList4096Bytes<GridPosition>();
             for (int i = 0; i < range.Length; i++)
             {
-                if (!gridsize.HasPath(range[i], turnPlayer.ActionPoint)) continue;
+                if (!gridsize.HasPath(range[i], out int pathCount) ||
+                        pathCount > turnPlayer.ActionPoint) continue;
 
                 indices.Add(gridsize.GetGridPosition(range[i]));
             }
@@ -144,10 +146,10 @@ namespace Syadeu.Presentation.TurnTable
 
         #endregion
 
-        public bool GetPath(in GridPosition position, ref GridPath32 path)
+        public bool GetPath(in GridPosition position, ref GridPath64 path)
         {
             var gridsize = m_Parent.GetComponent<GridSizeComponent>();
-            return gridsize.GetPath32(in position.index, ref path, 32);
+            return gridsize.GetPath64(in position.index, ref path, 32);
         }
         public float3 TileToPosition(in GridTile tile)
         {
@@ -155,7 +157,7 @@ namespace Syadeu.Presentation.TurnTable
             return gridsize.IndexToPosition(tile.index);
         }
 
-        public void GetMoveablePath64(List<GridPath32> indices)
+        public void GetMoveablePath64(List<GridPath64> indices)
         {
             if (!SafetyChecks()) return;
 
@@ -165,17 +167,28 @@ namespace Syadeu.Presentation.TurnTable
 
             indices.Clear();
             //FixedList64Bytes<GridPath32> indices = new FixedList64Bytes<GridPath32>();
-            GridPath32 path = GridPath32.Create();
+            GridPath64 path = GridPath64.Create();
             for (int i = 0; i < range.Length; i++)
             {
-                if (!gridsize.GetPath32(range[i], ref path, turnPlayer.ActionPoint)) continue;
+                if (!gridsize.GetPath64(range[i], ref path, turnPlayer.ActionPoint)) continue;
 
                 indices.Add(path);
 
-                if (i + 1 < range.Length) path = GridPath32.Create();
+                if (i + 1 < range.Length) path = GridPath64.Create();
             }
 
             //return indices;
+        }
+
+        public void MoveTo(in GridPath64 path, in ActorMoveEvent ev)
+        {
+            NavMeshSystem navMesh = PresentationSystem<DefaultPresentationGroup, NavMeshSystem>.System;
+            navMesh.MoveTo(m_Parent.As<IEntityData, IEntity>(), path, ev);
+        }
+        public void MoveTo(in float3 point, in ActorMoveEvent ev)
+        {
+            NavMeshSystem navMesh = PresentationSystem<DefaultPresentationGroup, NavMeshSystem>.System;
+            navMesh.MoveTo(m_Parent.As<IEntityData, IEntity>(), point, ev);
         }
 
         public void CalculateMoveableOutline(NativeArray<GridPosition> moveables, 
@@ -241,53 +254,72 @@ namespace Syadeu.Presentation.TurnTable
                 return;
             }
 
-            GridPosition
-                firstRow = moveables[0],
-                lastRow = moveables[moveables.Length - 1];
-
-            // first cell
+            List<float3x2> temp = new List<float3x2>();
+            for (int i = 0; i < moveables.Length; i++)
             {
-                vertices.Add(gridsize.IndexToPosition(firstRow.index) + upright);
-                vertices.Add(gridsize.IndexToPosition(firstRow.index) + downright);
-                vertices.Add(gridsize.IndexToPosition(firstRow.index) + downleft);
-                vertices.Add(gridsize.IndexToPosition(firstRow.index) + upleft);
+                if (gridsize.HasDirection(moveables[i], Direction.Right, out GridPosition target) &&
+                    !moveables.Contains(target))
+                {
+                    temp.Add(new float3x2(
+                        gridsize.IndexToPosition(moveables[i].index) + upright,
+                        gridsize.IndexToPosition(moveables[i].index) + downright
+                        ));
+                }
+
+                // Down
+                if (gridsize.HasDirection(moveables[i], Direction.Up, out target) &&
+                    !moveables.Contains(target))
+                {
+                    temp.Add(new float3x2(
+                        gridsize.IndexToPosition(moveables[i].index) + downright,
+                        gridsize.IndexToPosition(moveables[i].index) + downleft
+                        ));
+                }
+
+                if (gridsize.HasDirection(moveables[i], Direction.Left, out target) &&
+                    !moveables.Contains(target))
+                {
+                    temp.Add(new float3x2(
+                        gridsize.IndexToPosition(moveables[i].index) + downleft,
+                        gridsize.IndexToPosition(moveables[i].index) + upleft
+                        ));
+                }
+
+                // Up
+                if (gridsize.HasDirection(moveables[i], Direction.Down, out target) &&
+                    !moveables.Contains(target))
+                {
+                    temp.Add(new float3x2(
+                        gridsize.IndexToPosition(moveables[i].index) + upleft,
+                        gridsize.IndexToPosition(moveables[i].index) + upright
+                        ));
+                }
             }
 
-            int count = moveables.Length - 1;
-            //float3 prevPos = gridsize.IndexToPosition(firstRow.index) + downright;
-            for (int i = 1; i < count; i++)
+            float3x2 current = temp[temp.Count - 1];
+            temp.RemoveAt(temp.Count - 1);
+
+            for (int i = temp.Count - 1; i >= 0; i--)
             {
-                if (moveables[i - 1].location.y != moveables[i].location.y)
+                vertices.Add(current.c0);
+                vertices.Add(current.c1);
+
+                current = Find(temp, current.c1);
+            }
+
+            float3x2 Find(List<float3x2> list, float3 next)
+            {
+                float3x2 target = 0;
+                for (int i = list.Count - 1; i >= 0; i--)
                 {
-                    //float3 pos = gridsize.IndexToPosition(moveables[i].index) + downleft;
-                    //if (prevPos.x < pos.x)
+                    if (list[i].c0.Equals(next) || list[i].c1.Equals(next))
                     {
-                        vertices.Add(gridsize.IndexToPosition(moveables[i].index) + downleft);
-                        vertices.Add(gridsize.IndexToPosition(moveables[i].index) + upleft);
+                        target = list[i];
+                        list.RemoveAt(i);
+                        break;
                     }
-                    //else
-                    //{
-
-                    //}
                 }
-            }
-            
-            // last cell
-            {
-                vertices.Add(gridsize.IndexToPosition(lastRow.index) + downleft);
-                vertices.Add(gridsize.IndexToPosition(lastRow.index) + upleft);
-                vertices.Add(gridsize.IndexToPosition(lastRow.index) + upright);
-                vertices.Add(gridsize.IndexToPosition(lastRow.index) + downright);
-            }
-
-            for (int i = count - 1; i >= 1; i--)
-            {
-                if (moveables[i + 1].location.y != moveables[i].location.y)
-                {
-                    vertices.Add(gridsize.IndexToPosition(moveables[i].index) + upright);
-                    vertices.Add(gridsize.IndexToPosition(moveables[i].index) + downright);
-                    //vertices.Add(gridsize.IndexToPosition(moveables[i].index) + upright);
-                }
+                return target;
             }
         }
     }

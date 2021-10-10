@@ -56,7 +56,11 @@ namespace Syadeu.Presentation.TurnTable
 
         [Space]
         [SerializeField] private bool m_IsDetectionTile = false;
+
         private bool m_Initialized = false;
+        private TRPGGridSystem m_TRPGGridSystem;
+        private TRPGTurnTableSystem m_TurnTableSystem;
+        private GridPath64 m_TempPath = new GridPath64();
 
         protected override string controlPathInternal
         {
@@ -69,9 +73,24 @@ namespace Syadeu.Presentation.TurnTable
         public GridPosition GridPosition { get; private set; }
 
         public State CurrentState { get; private set; } = State.Normal;
-        public bool IsValid() => m_Initialized && m_RecycleComponent.IsValid();
+        public bool IsValid() => m_Initialized && m_TRPGGridSystem != null && m_TurnTableSystem != null && m_RecycleComponent.IsValid();
 
         private TextMeshProUGUI testAP;
+
+        private IEnumerator Start()
+        {
+            yield return PresentationSystem<TRPGIngameSystemGroup, TRPGGridSystem>.GetAwaiter();
+            yield return PresentationSystem<TRPGIngameSystemGroup, TRPGTurnTableSystem>.GetAwaiter();
+
+            m_TRPGGridSystem = PresentationSystem<TRPGIngameSystemGroup, TRPGGridSystem>.System;
+            m_TurnTableSystem = PresentationSystem<TRPGIngameSystemGroup, TRPGTurnTableSystem>.System;
+        }
+        private void OnDestroy()
+        {
+            m_TRPGGridSystem = null;
+            m_TurnTableSystem = null;
+        }
+
         public void Initialize(GridPosition position)
         {
             GridPosition = position;
@@ -148,6 +167,16 @@ namespace Syadeu.Presentation.TurnTable
             if (!IsValid()) return;
 
             SetState(State.Highlighted);
+
+            var move = m_TurnTableSystem.CurrentTurn.GetComponent<TRPGActorMoveComponent>();
+            if (move.GetPath(GridPosition, ref m_TempPath))
+            {
+                m_TRPGGridSystem.DrawUIPath(in m_TempPath);
+            }
+            else
+            {
+                "path not found".ToLog();
+            }
         }
         public void OnPointerExit(PointerEventData eventData)
         {

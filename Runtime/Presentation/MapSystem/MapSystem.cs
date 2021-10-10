@@ -22,12 +22,12 @@ namespace Syadeu.Presentation.Map
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
-        private readonly Dictionary<SceneReference, List<SceneDataEntity>> m_SceneDataObjects = new Dictionary<SceneReference, List<SceneDataEntity>>();
+        //private readonly Dictionary<SceneReference, List<EntityData<SceneDataEntity>>> m_SceneDataObjects = new Dictionary<SceneReference, List<EntityData<SceneDataEntity>>>();
         private readonly List<SceneDependence> m_SceneDependences = new List<SceneDependence>();
 
-        private readonly List<SceneDataEntity> m_LoadedSceneData = new List<SceneDataEntity>();
+        //private readonly List<EntityData<SceneDataEntity>> m_LoadedSceneData = new List<EntityData<SceneDataEntity>>();
 
-        public IReadOnlyList<SceneDataEntity> LoadedSceneData => m_LoadedSceneData;
+        //public IReadOnlyList<EntityData<SceneDataEntity>> LoadedSceneData => m_LoadedSceneData;
 
         private SceneSystem m_SceneSystem;
         private EntitySystem m_EntitySystem;
@@ -69,7 +69,7 @@ namespace Syadeu.Presentation.Map
                 SceneReference targetScene = sceneData[i].GetTargetScene();
 
                 other.RegisterSceneLoadDependence(targetScene, dependence.RegisterOnSceneLoad);
-                other.RegisterSceneUnloadDependence(targetScene, dependence.RegisterOnSceneLoad);
+                other.RegisterSceneUnloadDependence(targetScene, dependence.RegisterOnSceneUnload);
 
                 m_SceneDependences.Add(dependence);
 
@@ -97,10 +97,10 @@ namespace Syadeu.Presentation.Map
 
         #region Inner Classes
 
-        private struct SceneDependence
+        private sealed class SceneDependence
         {
             public Reference<SceneDataEntity> m_SceneData;
-            private Hash m_InstanceHash;
+            private EntityData<SceneDataEntity> m_InstanceHash;
 
             public void RegisterOnSceneLoad()
             {
@@ -109,41 +109,46 @@ namespace Syadeu.Presentation.Map
 
                 MapSystem mapSystem = PresentationSystem<DefaultPresentationGroup, MapSystem>.System;
 
-                if (!mapSystem.m_SceneDataObjects.TryGetValue(targetScene, out var list))
-                {
-                    list = new List<SceneDataEntity>();
-                    mapSystem.m_SceneDataObjects.Add(targetScene, list);
-                }
+                //if (!mapSystem.m_SceneDataObjects.TryGetValue(targetScene, out var list))
+                //{
+                //    list = new List<EntityData<SceneDataEntity>>();
+                //    mapSystem.m_SceneDataObjects.Add(targetScene, list);
+                //}
 
-                SceneDataEntity ins = (SceneDataEntity)mapSystem.m_EntitySystem.CreateObject(data.Hash);
-                list.Add(ins);
+                var ins = mapSystem.m_EntitySystem.CreateObject(data.Hash);
+                EntityData<SceneDataEntity> entity = ins.Cast<IEntityData, SceneDataEntity>();
+                //list.Add(entity);
 
-                mapSystem.m_LoadedSceneData.Add(ins);
+                //mapSystem.m_LoadedSceneData.Add(entity);
 
-                m_InstanceHash = ins.Idx;
+                m_InstanceHash = entity;
             }
             public void RegisterOnSceneUnload()
             {
-                SceneDataEntity data = m_SceneData.GetObject();
+                if (m_InstanceHash.IsEmpty()) return;
+
+                SceneDataEntity data = m_InstanceHash.Target;
                 SceneReference targetScene = data.GetTargetScene();
 
                 MapSystem mapSystem = PresentationSystem<DefaultPresentationGroup, MapSystem>.System;
 
                 data.DestroyChildOnDestroy = false;
-                mapSystem.m_EntitySystem.InternalDestroyEntity(data.Idx);
+                m_InstanceHash.Destroy();
+                m_InstanceHash = EntityData<SceneDataEntity>.Empty;
+                //mapSystem.m_EntitySystem.InternalDestroyEntity(data.Idx);
 
-                mapSystem.m_LoadedSceneData.Remove(data);
+                //mapSystem.m_LoadedSceneData.Remove(data);
 
-                if (mapSystem.m_SceneDataObjects.TryGetValue(targetScene, out var list))
-                {
-                    var iter = list.Where(Predicate);
-                    if (iter.Any())
-                    {
-                        list.Remove(iter.First());
-                    }
-                }
+                //if (mapSystem.m_SceneDataObjects.TryGetValue(targetScene, out var list))
+                //{
+                //    var iter = list.Where(Predicate);
+                //    if (iter.Any())
+                //    {
+                //        list.Remove(iter.First());
+                //    }
+                //}
             }
-            private bool Predicate(SceneDataEntity sceneData)
+            private bool Predicate(EntityData<SceneDataEntity> sceneData)
             {
                 if (sceneData.Idx.Equals(m_InstanceHash)) return true;
                 return false;

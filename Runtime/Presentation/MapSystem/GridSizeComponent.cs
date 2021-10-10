@@ -8,19 +8,19 @@ using Unity.Mathematics;
 
 namespace Syadeu.Presentation.Map
 {
-    public struct GridSizeComponent : IEntityComponent, IValidation
+    public struct GridSizeComponent : IEntityComponent
     {
-        internal PresentationSystemID<GridSystem> m_GridSystem;
+        //internal PresentationSystemID<GridSystem> m_GridSystem;
         internal EntityData<IEntityData> m_Parent;
 
         internal FixedList128Bytes<int> m_ObstacleLayers;
         public FixedList512Bytes<GridPosition> positions;
 
-        public float CellSize => m_GridSystem.System.CellSize;
+        public float CellSize => PresentationSystem<DefaultPresentationGroup, GridSystem>.System.CellSize;
 
         public float3 IndexToPosition(in int index)
         {
-            return m_GridSystem.System.IndexToPosition(index);
+            return PresentationSystem<DefaultPresentationGroup, GridSystem>.System.IndexToPosition(index);
         }
 
         public bool IsMyIndex(int index)
@@ -35,7 +35,7 @@ namespace Syadeu.Presentation.Map
         [Obsolete("Use GetRange Instead")]
         public int[] GetRange(int range, params int[] ignoreLayers)
         {
-            GridSystem grid = m_GridSystem.System;
+            GridSystem grid = PresentationSystem<DefaultPresentationGroup, GridSystem>.System;
 
             int[] indices = grid.GetRange(positions[0].index, range, ignoreLayers);
             return indices;
@@ -43,65 +43,84 @@ namespace Syadeu.Presentation.Map
 
         public FixedList32Bytes<int> GetRange8(in int range)
         {
-            GridSystem grid = m_GridSystem.System;
+            GridSystem grid = PresentationSystem<DefaultPresentationGroup, GridSystem>.System;
 
             FixedList32Bytes<int> indices = grid.GetRange8(positions[0].index, in range, m_ObstacleLayers);
             return indices;
         }
         public FixedList64Bytes<int> GetRange16(in int range)
         {
-            GridSystem grid = m_GridSystem.System;
+            GridSystem grid = PresentationSystem<DefaultPresentationGroup, GridSystem>.System;
 
             FixedList64Bytes<int> indices = grid.GetRange16(positions[0].index, in range, m_ObstacleLayers);
             return indices;
         }
         public FixedList128Bytes<int> GetRange32(in int range)
         {
-            GridSystem grid = m_GridSystem.System;
+            GridSystem grid = PresentationSystem<DefaultPresentationGroup, GridSystem>.System;
 
             FixedList128Bytes<int> indices = grid.GetRange32(positions[0].index, in range, m_ObstacleLayers);
             return indices;
         }
         public FixedList4096Bytes<int> GetRange1024(in int range)
         {
-            GridSystem grid = m_GridSystem.System;
+            GridSystem grid = PresentationSystem<DefaultPresentationGroup, GridSystem>.System;
 
             FixedList4096Bytes<int> indices = grid.GetRange1024(positions[0].index, in range, m_ObstacleLayers);
             return indices;
         }
+
+        /// <summary>
+        /// <see cref="GridSizeAttribute.m_ObstacleLayers"/> 에서 지정한 레이어를 기반으로,
+        /// <paramref name="range"/> 범위 만큼 반환합니다.
+        /// </summary>
+        /// <remarks>
+        /// <paramref name="list"/> 는 자동으로 Clear 됩니다. 
+        /// 직접 레이어를 지정하고 싶으면 
+        /// <seealso cref="GetRange(ref NativeList{int}, in int, in FixedList128Bytes{int})"/> 를 사용하세요.
+        /// </remarks>
+        /// <param name="list"></param>
+        /// <param name="range"></param>
         public void GetRange(ref NativeList<int> list, in int range)
         {
-            GridSystem grid = m_GridSystem.System;
+            GridSystem grid = PresentationSystem<DefaultPresentationGroup, GridSystem>.System;
             grid.GetRange(ref list, positions[0].index, in range, m_ObstacleLayers);
         }
-
-        public bool HasPath(int to, int maxPathLength)
+        public void GetRange(ref NativeList<int> list, in int range, in FixedList128Bytes<int> ignoreLayers)
         {
-            return m_GridSystem.System.HasPath(positions[0].index, to, maxPathLength, out _);
-        }
-        public bool HasPath(int to, int maxPathLength, out int pathCount)
-        {
-            return m_GridSystem.System.HasPath(positions[0].index, to, maxPathLength, out pathCount);
+            GridSystem grid = PresentationSystem<DefaultPresentationGroup, GridSystem>.System;
+            grid.GetRange(ref list, positions[0].index, in range, ignoreLayers);
         }
 
-        //[Obsolete]
-        //public bool GetPath(int to, List<GridPathTile> path, int maxPathLength)
-        //{
-        //    return m_GridSystem.System.GetPath(positions[0].index, to, path, maxPathLength);
-        //}
-
-        public bool GetPath32(in int to, ref GridPath32 path, in int maxPathLength, in int maxIteration = 32)
+        public bool HasPath(int to, in int maxIteration = 32) => HasPath(in to, out _, maxIteration);
+        public bool HasPath(in int to, out int pathCount, in int maxIteration = 32)
         {
-            return m_GridSystem.System.GetPath32(
-                positions[0].index, in to, in maxPathLength, ref path, 
-                m_Parent.GetAttribute<GridSizeAttribute>().ObstacleLayers, in maxIteration);
+            return PresentationSystem<DefaultPresentationGroup, GridSystem>.System.HasPath(
+                positions[0].index, 
+                to, 
+                out pathCount, 
+                m_Parent.GetAttribute<GridSizeAttribute>().ObstacleLayers,
+                maxIteration);
+        }
+
+        public bool HasDirection(GridPosition position, Direction direction, out GridPosition target)
+        {
+            return PresentationSystem<DefaultPresentationGroup, GridSystem>.System.HasDirection(in position.index, in direction, out target);
+        }
+
+        public bool GetPath64(in int to, ref GridPath64 path, in int maxIteration = 32)
+        {
+            return PresentationSystem<DefaultPresentationGroup, GridSystem>.System.GetPath64(
+                positions[0].index, 
+                in to, 
+                ref path, 
+                m_Parent.GetAttribute<GridSizeAttribute>().ObstacleLayers, 
+                in maxIteration);
         }
 
         public GridPosition GetGridPosition(in int index)
         {
-            return new GridPosition(index, m_GridSystem.System.IndexToLocation(index));
+            return new GridPosition(index, PresentationSystem<DefaultPresentationGroup, GridSystem>.System.IndexToLocation(index));
         }
-
-        public bool IsValid() => !m_GridSystem.IsNull() && m_GridSystem.IsValid();
     }
 }

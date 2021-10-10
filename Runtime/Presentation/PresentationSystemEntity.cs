@@ -1,4 +1,7 @@
-﻿using Syadeu.Database;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
 using Syadeu.Presentation.Internal;
 using System;
 using System.Collections;
@@ -57,8 +60,17 @@ namespace Syadeu.Presentation
         /// <typeparam name="TSystem"></typeparam>
         /// <param name="setter"></param>
         [Obsolete]
-        protected void RequestSystem<TSystem>(Action<TSystem> setter) where TSystem : PresentationSystemEntity
-            => PresentationManager.RegisterRequest<DefaultPresentationGroup, TSystem>(setter);
+        protected void RequestSystem<TSystem>(Action<TSystem> setter
+#if DEBUG_MODE
+            , [System.Runtime.CompilerServices.CallerFilePath] string methodName = ""
+#endif
+            )
+            where TSystem : PresentationSystemEntity
+            => PresentationManager.RegisterRequest<DefaultPresentationGroup, TSystem>(setter
+#if DEBUG_MODE
+                , methodName
+#endif
+                );
         /// <summary>
         /// 시스템을 요청합니다. <typeparamref name="TGroup"/> 은 요청할 <typeparamref name="TSystem"/>이 속한 그룹입니다.
         /// </summary>
@@ -69,11 +81,19 @@ namespace Syadeu.Presentation
         /// <typeparam name="TGroup"></typeparam>
         /// <typeparam name="TSystem"></typeparam>
         /// <param name="setter"></param>
-        protected void RequestSystem<TGroup, TSystem>(Action<TSystem> setter)
+        protected void RequestSystem<TGroup, TSystem>(Action<TSystem> setter
+#if DEBUG_MODE
+            , [System.Runtime.CompilerServices.CallerFilePath] string methodName = ""
+#endif
+            )
             where TGroup : PresentationGroupEntity
             where TSystem : PresentationSystemEntity
         {
-            PresentationManager.RegisterRequest<TGroup, TSystem>(setter);
+            PresentationManager.RegisterRequest<TGroup, TSystem>(setter
+#if DEBUG_MODE
+                , methodName
+#endif
+                );
         }
 
         protected CoreRoutine StartCoroutine(IEnumerator cor) => CoreSystem.StartUnityUpdate(this, cor);
@@ -81,13 +101,16 @@ namespace Syadeu.Presentation
         protected void StopCoroutine(CoreRoutine routine) => CoreSystem.RemoveUnityUpdate(routine);
         protected void StopBackgroundCoroutine(CoreRoutine routine) => CoreSystem.RemoveBackgroundUpdate(routine);
 
-        protected UnityEngine.GameObject CreateGameObject(string name)
+        protected UnityEngine.GameObject CreateGameObject(string name, bool isStatic)
         {
             CoreSystem.Logger.ThreadBlock(nameof(DontDestroyOnLoad), Syadeu.Internal.ThreadInfo.Unity);
 
             UnityEngine.GameObject obj = new UnityEngine.GameObject(name);
 
-            //obj.transform.SetParent(s_PresentationUnityFolder);
+            if (isStatic)
+            {
+                DontDestroyOnLoad(obj);
+            }
 
             return obj;
         }

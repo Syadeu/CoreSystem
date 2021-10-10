@@ -1,4 +1,8 @@
-﻿using Syadeu.Database;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation.Entities;
 
@@ -10,7 +14,8 @@ namespace Syadeu.Presentation.Actions
         const string c_WarningInvalidEntityAction = "This action({0}) has been executed with invalid entity.";
         const string c_ErrorCompletedWithFailed = "Execution ({0}) completed with failed.";
 
-        public static bool Execute<T>(this Reference<T> other, EntityData<IEntityData> entity) where T : TriggerAction
+        public static bool Execute<T>(this Reference<T> other, EntityData<IEntityData> entity) 
+            where T : TriggerAction
         {
             if (!entity.IsValid())
             {
@@ -19,20 +24,21 @@ namespace Syadeu.Presentation.Actions
                 return false;
             }
 
-            T action = TriggerAction.GetAction(other);
-            if (action.Terminated)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    string.Format(c_ErrorIsTerminatedAction, TypeHelper.TypeOf<T>.Name));
-                return false;
-            }
+            //T action = TriggerAction.GetAction(other);
+            //if (action.Terminated)
+            //{
+            //    CoreSystem.Logger.LogError(Channel.Entity,
+            //        string.Format(c_ErrorIsTerminatedAction, TypeHelper.TypeOf<T>.Name));
+            //    return false;
+            //}
 
-            bool result = action.InternalExecute(entity);
-            action.InternalTerminate();
+            //bool result = action.InternalExecute(entity);
+            //action.InternalTerminate();
 
-            return result;
+            return PresentationSystem<DefaultPresentationGroup, ActionSystem>.System.ExecuteTriggerAction(other, entity);
         }
-        public static bool Execute<T>(this Reference<T> other, EntityData<IEntityData> entity, out bool predicate) where T : TriggerPredicateAction
+        public static bool Execute<T>(this Reference<T> other, EntityData<IEntityData> entity, out bool predicate) 
+            where T : TriggerPredicateAction
         {
             if (!entity.IsValid())
             {
@@ -54,18 +60,18 @@ namespace Syadeu.Presentation.Actions
         }
         public static bool Execute<T>(this Reference<T> other) where T : InstanceAction
         {
-            T action = InstanceAction.GetAction(other);
-            if (action.Terminated)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    string.Format(c_ErrorIsTerminatedAction, TypeHelper.TypeOf<T>.Name));
-                return false;
-            }
+            //T action = InstanceAction.GetAction(other);
+            //if (action.Terminated)
+            //{
+            //    CoreSystem.Logger.LogError(Channel.Entity,
+            //        string.Format(c_ErrorIsTerminatedAction, TypeHelper.TypeOf<T>.Name));
+            //    return false;
+            //}
 
-            bool result = action.InternalExecute();
-            action.InternalTerminate();
+            //bool result = action.InternalExecute();
+            //action.InternalTerminate();
 
-            return result;
+            return PresentationSystem<DefaultPresentationGroup, ActionSystem>.System.ExecuteInstanceAction(other);
         }
         public static bool Execute<T>(this Reference<ParamAction<T>> other, T t)
         {
@@ -322,12 +328,19 @@ namespace Syadeu.Presentation.Actions
         public static void Schedule<T>(this Reference<T> action)
             where T : InstanceAction
         {
-            PresentationSystem<ActionSystem>.System.ScheduleInstanceAction(action);
+            PresentationSystem<DefaultPresentationGroup, ActionSystem>.System.ScheduleInstanceAction(action);
         }
         public static void Schedule<T>(this Reference<T> action, EntityData<IEntityData> entity)
             where T : TriggerAction
         {
-            PresentationSystem<ActionSystem>.System.ScheduleTriggerAction(action, entity);
+            if (!entity.IsValid())
+            {
+                CoreSystem.Logger.LogWarning(Channel.Entity,
+                    string.Format(c_WarningInvalidEntityAction, TypeHelper.TypeOf<T>.Name));
+                return;
+            }
+
+            PresentationSystem<DefaultPresentationGroup, ActionSystem>.System.ScheduleTriggerAction(action, entity);
         }
 
         public static void Schedule<T>(this Reference<T>[] actions)
@@ -335,7 +348,7 @@ namespace Syadeu.Presentation.Actions
         {
             if (actions == null || actions.Length == 0) return;
 
-            ActionSystem system = PresentationSystem<ActionSystem>.System;
+            ActionSystem system = PresentationSystem<DefaultPresentationGroup, ActionSystem>.System;
             for (int i = 0; i < actions.Length; i++)
             {
                 system.ScheduleInstanceAction(actions[i]);
@@ -346,7 +359,7 @@ namespace Syadeu.Presentation.Actions
         {
             if (actions == null || actions.Length == 0) return;
 
-            ActionSystem system = PresentationSystem<ActionSystem>.System;
+            ActionSystem system = PresentationSystem<DefaultPresentationGroup, ActionSystem>.System;
             for (int i = 0; i < actions.Length; i++)
             {
                 system.ScheduleTriggerAction(actions[i], entity);

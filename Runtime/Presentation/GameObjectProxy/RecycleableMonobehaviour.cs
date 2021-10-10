@@ -78,6 +78,12 @@ namespace Syadeu.Presentation.Proxy
             return component;
         }
 
+        public T GetComponentUnity<T>() where T : Component
+        {
+            CoreSystem.Logger.ThreadBlock(ThreadInfo.Unity);
+
+            return base.GetComponent<T>();
+        }
         /// <summary>
         /// 이 오브젝트, 혹은 하위 오브젝트의 컴포넌트를 받아옵니다.
         /// </summary>

@@ -20,6 +20,7 @@ using UnityEngine.Timeline;
 using System.Linq;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Timeline;
+using Syadeu.Presentation.Events;
 
 #if UNITY_CINEMACHINE
 using Cinemachine;
@@ -34,30 +35,34 @@ namespace Syadeu.Presentation.Actions
         )]
     public sealed class PlayPlayableDirectorAction : TriggerAction, IEventSequence
     {
-        [JsonProperty] private Reference<TimelineData> m_Data;
-        [JsonProperty(Order = 1, PropertyName = "StartDelay")] private float m_StartDelay = 0;
-        [JsonProperty(Order = 2, PropertyName = "EndDelay")] private float m_EndDelay = 0;
+        [JsonProperty(Order = 0)] private Reference<TimelineData> m_Data;
+        [JsonProperty(Order = 1, PropertyName = "UpdateMode")]
+        private DirectorUpdateMode m_UpdateMode = DirectorUpdateMode.GameTime;
+        [JsonProperty(Order = 2, PropertyName = "StartDelay")] private float m_StartDelay = 0;
+        [JsonProperty(Order = 3, PropertyName = "EndDelay")] private float m_EndDelay = 0;
 
         [Space, Header("PredicateActions: Conditional")]
         [Tooltip("False를 반환하면 이 Timeline 을 실행하지 않습니다.")]
-        [JsonProperty(Order = 3, PropertyName = "Conditional")]
+        [JsonProperty(Order = 4, PropertyName = "Conditional")]
         private Reference<TriggerPredicateAction>[] m_Conditional = Array.Empty<Reference<TriggerPredicateAction>>();
 
         [Space, Header("TriggerActions")]
-        [JsonProperty(Order = 4, PropertyName = "OnStart")]
+        [JsonProperty(Order = 5, PropertyName = "OnStart")]
         private Reference<TriggerAction>[] m_OnStart = Array.Empty<Reference<TriggerAction>>();
-        [JsonProperty(Order = 5, PropertyName = "OnEnd")]
+        [JsonProperty(Order = 6, PropertyName = "OnEnd")]
         private Reference<TriggerAction>[] m_OnEnd = Array.Empty<Reference<TriggerAction>>();
 
         [Space, Header("Actions")]
-        [JsonProperty(Order = 6, PropertyName = "OnStartAction")]
+        [JsonProperty(Order = 7, PropertyName = "OnStartAction")]
         private Reference<InstanceAction>[] m_OnStartAction = Array.Empty<Reference<InstanceAction>>();
-        [JsonProperty(Order = 7, PropertyName = "OnEndActions")]
+        [JsonProperty(Order = 8, PropertyName = "OnEndActions")]
         private Reference<InstanceAction>[] m_OnEndAction = Array.Empty<Reference<InstanceAction>>();
 
         [Space, Header("Sequence")]
-        [JsonProperty(Order = 8, PropertyName = "AfterDelay")]
+        [JsonProperty(Order = 9, PropertyName = "AfterDelay")]
         private float m_AfterDelay = 0;
+        [JsonProperty(Order = 10, PropertyName = "DestroyTimelineAfterFinished")]
+        private bool m_DestroyTimelineAfterFinished = true;
 
         [JsonIgnore] private CoroutineSystem m_CoroutineSystem = null;
         [JsonIgnore] private bool m_KeepWait = false;
@@ -67,7 +72,7 @@ namespace Syadeu.Presentation.Actions
 
         protected override void OnCreated()
         {
-            m_CoroutineSystem = PresentationSystem<CoroutineSystem>.System;
+            m_CoroutineSystem = PresentationSystem<DefaultPresentationGroup, CoroutineSystem>.System;
         }
         protected override void OnDispose()
         {
@@ -83,6 +88,7 @@ namespace Syadeu.Presentation.Actions
                 m_Data = m_Data,
                 m_Executer = entity,
 
+                m_UpdateMode = m_UpdateMode,
                 m_StartDelay = m_StartDelay,
                 m_EndDelay = m_EndDelay,
 
@@ -108,6 +114,7 @@ namespace Syadeu.Presentation.Actions
             public Reference<TimelineData> m_Data;
             public EntityData<IEntityData> m_Executer;
 
+            public DirectorUpdateMode m_UpdateMode;
             public float m_StartDelay;
             public float m_EndDelay;
 
@@ -172,11 +179,11 @@ namespace Syadeu.Presentation.Actions
                 {
                     AsyncOperationHandle<GameObject> entityOper = original.Prefab.LoadAssetAsync();
                     yield return new WaitUntil(() => entityOper.IsDone);
-                    entity = PresentationSystem<EntitySystem>.System.CreateEntity(data.m_Entity, pos, rot, entityOper.Result.transform.localScale);
+                    entity = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.CreateEntity(data.m_Entity, pos, rot, entityOper.Result.transform.localScale);
                 }
                 else
                 {
-                    entity = PresentationSystem<EntitySystem>.System.CreateEntity(data.m_Entity, pos, rot, original.Prefab.Asset.transform.localScale);
+                    entity = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.CreateEntity(data.m_Entity, pos, rot, original.Prefab.Asset.transform.localScale);
                 }
 
                 ProxyTransform tr = (ProxyTransform)entity.transform;
@@ -187,6 +194,7 @@ namespace Syadeu.Presentation.Actions
                 RecycleableMonobehaviour proxy = tr.proxy;
                 PlayableDirector director = proxy.GetOrAddComponent<PlayableDirector>();
                 director.playOnAwake = false;
+                director.timeUpdateMode = m_UpdateMode;
 
                 PlayableAsset asset;
                 if (!data.m_UseObjectTimeline)
@@ -214,7 +222,7 @@ namespace Syadeu.Presentation.Actions
 #if UNITY_CINEMACHINE
                         if (type.Equals(TypeHelper.TypeOf<CinemachineBrain>.Type))
                         {
-                            director.SetGenericBinding(item.sourceObject, PresentationSystem<RenderSystem>.System.Camera.GetComponent<CinemachineBrain>());
+                            director.SetGenericBinding(item.sourceObject, PresentationSystem<DefaultPresentationGroup, RenderSystem>.System.Camera.GetComponent<CinemachineBrain>());
                             continue;
                         }
 #endif
@@ -276,31 +284,40 @@ namespace Syadeu.Presentation.Actions
                         director.ClearGenericBinding(item.sourceObject);
                     }
                 }
+
+                if (m_Caller.Object.m_DestroyTimelineAfterFinished)
+                {
+                    entity.Destroy();
+                }
             }
 
             private void Bind(PlayableDirector director, PlayableAsset asset)
             {
+                //AnimatorAttribute animator = m_Executer.GetAttribute<AnimatorAttribute>();
+                CinemachineBrain cinemachine = PresentationSystem<DefaultPresentationGroup, RenderSystem>.System.Camera.GetComponent<CinemachineBrain>();
+
+                //CoreSystem.Logger.NotNull(animator, "animator not found");
+                CoreSystem.Logger.NotNull(cinemachine, "cinemachine not found");
+
                 foreach (PlayableBinding item in asset.outputs)
                 {
 #if UNITY_CINEMACHINE
                     if (item.sourceObject is CinemachineTrack)
                     {
-                        director.SetGenericBinding(item.sourceObject, PresentationSystem<RenderSystem>.System.Camera.GetComponent<CinemachineBrain>());
+                        director.SetGenericBinding(item.sourceObject, cinemachine);
                         continue;
                     }
 #endif
+
                     if (item.sourceObject is EntityControlTrack entityControlTrack)
                     {
-                        AnimatorAttribute animator = m_Executer.GetAttribute<AnimatorAttribute>();
-                        CoreSystem.Logger.NotNull(animator, "animator not found");
-
                         director.SetGenericBinding(item.sourceObject, m_Executer.As<IEntityData, IEntity>().proxy);
 
-                        foreach (EntityControlTrackClip clip in
-                            entityControlTrack.GetClips().Select((other) => (EntityControlTrackClip)other.asset))
-                        {
-                            director.SetReferenceValue(clip.Animator.exposedName, animator.AnimatorComponent);
-                        }
+                        //foreach (EntityControlTrackClip clip in
+                        //    entityControlTrack.GetClips().Select((other) => (EntityControlTrackClip)other.asset))
+                        //{
+                        //    director.SetReferenceValue(clip.Animator.exposedName, animator.AnimatorComponent);
+                        //}
                     }
                 }
             }

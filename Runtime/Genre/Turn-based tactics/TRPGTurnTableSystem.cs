@@ -1,4 +1,9 @@
-﻿using Syadeu.Presentation.Actions;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Syadeu.Presentation.Actions;
+using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using System.Collections;
@@ -16,13 +21,18 @@ namespace Syadeu.Presentation.TurnTable
         private readonly LinkedList<EntityData<IEntityData>> m_TurnTable = new LinkedList<EntityData<IEntityData>>();
         private LinkedListNode<EntityData<IEntityData>> m_CurrentTurn = null;
 
+        private bool m_TurnTableEnabled = false;
+
+        public bool Enabled => m_TurnTableEnabled;
         public EntityData<IEntityData> CurrentTurn => m_CurrentTurn.Value;
 
         private EventSystem m_EventSystem;
 
+        #region Presentation Methods
+
         protected override PresentationResult OnInitialize()
         {
-            RequestSystem<TRPGSystemGroup, EventSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
 
             return base.OnInitialize();
         }
@@ -36,6 +46,8 @@ namespace Syadeu.Presentation.TurnTable
             m_EventSystem = other;
         }
 
+        #endregion
+
         public void AddPlayer(EntityData<IEntityData> player)
         {
             if (m_Players.Contains(player))
@@ -43,16 +55,21 @@ namespace Syadeu.Presentation.TurnTable
                 throw new System.Exception();
             }
             m_Players.Add(player);
+
+            ActorStateAttribute stateAttribute = player.GetAttribute<ActorStateAttribute>();
+            if (stateAttribute != null)
+            {
+                stateAttribute.AddEvent(OnActorStateChangedEventHandler);
+            }
         }
         public void RemovePlayer(EntityData<IEntityData> player)
         {
-            for (int i = 0; i < m_Players.Count; i++)
+            m_Players.RemoveFor(player);
+
+            ActorStateAttribute stateAttribute = player.GetAttribute<ActorStateAttribute>();
+            if (stateAttribute != null)
             {
-                if (m_Players[i].Equals(player))
-                {
-                    m_Players.RemoveAt(i);
-                    return;
-                }
+                stateAttribute.RemoveEvent(OnActorStateChangedEventHandler);
             }
         }
 
@@ -102,11 +119,24 @@ namespace Syadeu.Presentation.TurnTable
 
                 StartTurn(CurrentTurn);
             }
+            m_TurnTableEnabled = true;
+
+            m_EventSystem.PostEvent(OnTurnTableStateChangedEvent.GetEvent(m_TurnTableEnabled));
         }
+        public void StopTurnTable()
+        {
+            m_TurnTableEnabled = false;
+            InternalClearTable();
+
+            m_EventSystem.PostEvent(OnTurnTableStateChangedEvent.GetEvent(m_TurnTableEnabled));
+        }
+
         private IEnumerator WaitForJoinPlayer()
         {
             while (m_Players.Count == 0)
             {
+                if (!m_TurnTableEnabled) yield break;
+
                 yield return null;
             }
 
@@ -129,7 +159,7 @@ namespace Syadeu.Presentation.TurnTable
                 }
             }
 
-            tempList.Sort();
+            tempList.Sort(0, tempList.Count, new TurnPlayerComparer());
 
             for (int i = tempList.Count - 1; i >= 0; i--)
             {
@@ -137,6 +167,12 @@ namespace Syadeu.Presentation.TurnTable
             }
             m_CurrentTurn = m_TurnTable.First;
         }
+        private void InternalClearTable()
+        {
+            m_TurnTable.Clear();
+            m_CurrentTurn = null;
+        }
+
         public void NextTurn()
         {
             EndTurn(m_CurrentTurn.Value);
@@ -151,6 +187,26 @@ namespace Syadeu.Presentation.TurnTable
 
             $"next turn called: {prev.Value.Name} => {m_CurrentTurn.Value.Name}".ToLog();
             StartTurn(m_CurrentTurn.Value);
+        }
+
+        private struct TurnPlayerComparer : IComparer<EntityData<IEntityData>>
+        {
+            public int Compare(EntityData<IEntityData> xE, EntityData<IEntityData> yE)
+            {
+                TurnPlayerComponent 
+                    x = xE.GetComponent<TurnPlayerComponent>(),
+                    y = yE.GetComponent<TurnPlayerComponent>();
+
+                if (x.TurnSpeed < y.TurnSpeed) return 1;
+                else if (x.TurnSpeed == y.TurnSpeed) return 0;
+
+                return -1;
+            }
+        }
+
+        private static void OnActorStateChangedEventHandler(ActorStateAttribute attribute, ActorStateAttribute.StateInfo stateInfo)
+        {
+            $"{attribute.Parent.RawName} state changed -> {stateInfo}".ToLog();
         }
     }
 }

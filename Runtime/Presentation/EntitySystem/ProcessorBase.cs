@@ -1,4 +1,7 @@
-﻿using Syadeu.Database;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
 using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
@@ -48,15 +51,32 @@ namespace Syadeu.Presentation
         private GameObjectProxySystem ProxySystem => EntitySystem.m_ProxySystem;
 
         [Obsolete]
-        protected void RequestSystem<TSystem>(Action<TSystem> setter) where TSystem : PresentationSystemEntity
+        protected void RequestSystem<TSystem>(Action<TSystem> setter
+#if DEBUG_MODE
+            , [System.Runtime.CompilerServices.CallerFilePath] string methodName = ""
+#endif
+            )
+            where TSystem : PresentationSystemEntity
         {
-            PresentationManager.RegisterRequest<DefaultPresentationGroup, TSystem>(setter);
+            PresentationManager.RegisterRequest<DefaultPresentationGroup, TSystem>(setter
+#if DEBUG_MODE
+                , methodName
+#endif
+                );
         }
-        protected void RequestSystem<TGroup, TSystem>(Action<TSystem> setter)
+        protected void RequestSystem<TGroup, TSystem>(Action<TSystem> setter
+#if DEBUG_MODE
+            , [System.Runtime.CompilerServices.CallerFilePath] string methodName = ""
+#endif
+            )
             where TGroup : PresentationGroupEntity
             where TSystem : PresentationSystemEntity
         {
-            PresentationManager.RegisterRequest<TGroup, TSystem>(setter);
+            PresentationManager.RegisterRequest<TGroup, TSystem>(setter
+#if DEBUG_MODE
+                , methodName
+#endif
+                );
         }
 
         protected EntityData<IEntityData> CreateObject(IReference obj)

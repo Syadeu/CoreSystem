@@ -1,11 +1,13 @@
 ﻿using Syadeu.Database;
 using Syadeu.Presentation.Entities;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Unity.Burst;
 
 namespace Syadeu.Presentation.Components
 {
+    [Obsolete("Use IJobParallelForEntities")]
     public sealed class QueryBuilder<TComponent>
         where TComponent : unmanaged, IEntityComponent
     {
@@ -33,7 +35,7 @@ namespace Syadeu.Presentation.Components
         {
             if (s_System == null)
             {
-                s_System = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>().Data.SystemID.System;
+                s_System = EntityComponentSystem.Constants.SystemID.System;
             }
 
             QueryBuilder<TComponent> builder = s_System.CreateQueryBuilder<TComponent>();

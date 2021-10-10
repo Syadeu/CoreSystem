@@ -1,4 +1,8 @@
-﻿using Newtonsoft.Json;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Newtonsoft.Json;
 using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation.Actions;
@@ -14,9 +18,9 @@ namespace Syadeu.Presentation.Actor
     public class ActorAttackProvider : ActorProviderBase
     {
         [JsonProperty(Order = -10, PropertyName = "OnAttack")]
-        protected LogicTriggerAction m_OnAttack = new LogicTriggerAction();
+        protected LogicTriggerAction[] m_OnAttack = Array.Empty<LogicTriggerAction>();
         [JsonProperty(Order = -9, PropertyName = "OnHit")]
-        protected LogicTriggerAction m_OnHit = new LogicTriggerAction();
+        protected LogicTriggerAction[] m_OnHit = Array.Empty<LogicTriggerAction>();
 
         [JsonIgnore] private ActorStatAttribute m_StatAttribute;
 
@@ -42,15 +46,22 @@ namespace Syadeu.Presentation.Actor
         }
         protected void HitEventHandler(IActorHitEvent ev)
         {
-#if UNITY_EDITOR
-            if (m_StatAttribute == null) return;
+#if DEBUG_MODE
+            if (m_StatAttribute == null)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"{Parent.Name} doesn\'t have {nameof(ActorStatAttribute)}");
+                return;
+            }
 #endif
             EntityData<IEntityData> target = ev.AttackFrom.As<ActorEntity, IEntityData>();
 
-            if (!m_OnHit.Execute(Parent, target))
+            for (int i = 0; i < m_OnHit.Length; i++)
             {
-                $"{Parent.Name} : hit failed attacked from {target.Name}".ToLog();
-                return;
+                if (!m_OnHit[i].Schedule(Parent, target))
+                {
+                    $"{Parent.Name} : hit failed attacked from {target.Name}".ToLog();
+                }
             }
 
             int hp = m_StatAttribute.GetValue<int>(ev.HPStatNameHash);
@@ -63,7 +74,7 @@ namespace Syadeu.Presentation.Actor
                 PostEvent(lifetimeChanged);
             }
 
-            $"{Parent.Name} : {hp} left".ToLog();
+            $"{Parent.Name} : {hp} left, dmg {ev.Damage}".ToLog();
         }
         protected virtual void SendHitEvent(Entity<ActorEntity> target, Hash hpStatName, float damage)
         {
@@ -86,7 +97,13 @@ namespace Syadeu.Presentation.Actor
             EntityData<IEntityData> target = ev.Target.As<ActorEntity, IEntityData>();
             Entity<ActorEntity> parent = Parent.As<IEntityData, ActorEntity>();
 
-            if (m_OnAttack.Schedule(Parent, target))
+            bool isFailed = false;
+            for (int i = 0; i < m_OnAttack.Length; i++)
+            {
+                isFailed |= !m_OnAttack[i].Schedule(Parent, target);
+            }
+
+            if (isFailed)
             {
                 currentWeaponIns.Object.FireFXBounds(parent.transform, CoroutineSystem, FXBounds.TriggerOptions.FireOnSuccess);
                 SendHitEvent(ev.Target, ev.HPStatNameHash, ev.Damage);
@@ -125,7 +142,21 @@ namespace Syadeu.Presentation.Actor
             //}
         }
 
-        public bool IsAlly(Entity<ActorEntity> entity) => Parent.As<IEntityData, ActorEntity>().Target.Faction.IsAlly(entity.Target.Faction);
-        public bool IsEnemy(Entity<ActorEntity> entity) => Parent.As<IEntityData, ActorEntity>().Target.Faction.IsEnemy(entity.Target.Faction);
+        public bool IsAlly(Entity<ActorEntity> entity)
+        {
+            ActorFactionComponent
+                my = Parent.GetComponent<ActorFactionComponent>(),
+                target = entity.GetComponent<ActorFactionComponent>();
+
+            return my.IsAllies(in target);
+        }
+        public bool IsEnemy(Entity<ActorEntity> entity)
+        {
+            ActorFactionComponent
+                my = Parent.GetComponent<ActorFactionComponent>(),
+                target = entity.GetComponent<ActorFactionComponent>();
+
+            return my.IsEnemies(in target);
+        }
     }
 }

@@ -31,19 +31,19 @@ namespace Syadeu.Presentation.Map
         public void Add(in GridTile pathTile) => m_Paths.Add(in pathTile);
         public void RemoveAt(in int index) => m_Paths.RemoveAt(index);
     }
-    public struct GridPath32
+    public struct GridPath64
     {
-        public static GridPath32 Create()
+        public static GridPath64 Create()
         {
-            return new GridPath32()
+            return new GridPath64()
             {
-                m_Paths = new FixedList64Bytes<GridTile>()
+                m_Paths = new FixedList512Bytes<GridTile>()
             };
         }
 
-        private FixedList64Bytes<GridTile> m_Paths;
+        private FixedList512Bytes<GridTile> m_Paths;
 
-        public FixedList64Bytes<GridTile> Paths => m_Paths;
+        public FixedList512Bytes<GridTile> Paths => m_Paths;
         public int Length => m_Paths.Length;
         public GridTile this[int index]
         {
@@ -51,7 +51,7 @@ namespace Syadeu.Presentation.Map
             set => m_Paths[index] = value;
         }
 
-        public GridPath32(in FixedList64Bytes<GridTile> paths)
+        public GridPath64(in FixedList512Bytes<GridTile> paths)
         {
             m_Paths = paths;
         }

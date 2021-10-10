@@ -11,10 +11,9 @@
         "Unity.Addressables",
         "Unity.InputSystem",
         "Unity.TextMeshPro",
-        "GUID:bc030fa7ba60bec40ba1c2f670cbf9ea",
-        "GUID:68f13b45e03a9554385548cd7a38cb02",
         "DOTween.Modules",
-        "DOTweenPro.Scripts"
+        "DOTweenPro.Scripts",
+        "Syadeu.Presentation.Dotween"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -28,7 +27,8 @@
     ],
     "autoReferenced": true,
     "defineConstraints": [
-        "CORESYSTEM_TURNBASESYSTEM"
+        "CORESYSTEM_TURNBASESYSTEM",
+        "CORESYSTEM_DOTWEEN"
     ],
     "versionDefines": [
         {

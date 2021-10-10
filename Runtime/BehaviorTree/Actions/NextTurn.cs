@@ -1,4 +1,5 @@
 ﻿using BehaviorDesigner.Runtime.Tasks;
+using Syadeu.Presentation.Events;
 using Syadeu.Presentation.TurnTable;
 using UnityEngine;
 
@@ -35,7 +36,8 @@ namespace Syadeu.Presentation.BehaviorTree
                 return TaskStatus.Failure;
             }
 
-            PresentationSystemGroup<TRPGSystemGroup>.GetSystem<TRPGTurnTableSystem>().NextTurn();
+            PresentationSystem<DefaultPresentationGroup, EventSystem>
+                .System.ScheduleEvent(TRPGEndTurnEvent.GetEvent());
 
             return TaskStatus.Success;
         }

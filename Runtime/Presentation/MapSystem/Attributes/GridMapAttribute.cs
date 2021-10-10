@@ -3,6 +3,7 @@ using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Render;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -69,13 +70,16 @@ namespace Syadeu.Presentation.Map
         [JsonIgnore] public int3 Size => m_Size;
         [JsonIgnore] public float CellSize => m_CellSize;
         [JsonIgnore] public int LayerCount => m_Layers.Length;
+        [JsonIgnore] public int GridCellCapacity => Grid.length;
         [JsonIgnore] private BinaryGrid Grid { get; set; }
         [JsonIgnore] private BinaryGrid[] SubGrids { get; set; }
         [JsonIgnore] private NativeHashSet<int>[] Layers { get; set; }
 
         [JsonIgnore] public List<int> m_ObstacleLayerIndices = new List<int>();
         [JsonIgnore] public NativeHashSet<int> ObstacleLayer { get; private set; }
+
         [JsonIgnore] public Mesh CellMesh { get; private set; }
+        [JsonIgnore] public Material CellMaterial { get; private set; }
 
         public void CreateGrid()
         {
@@ -135,6 +139,8 @@ namespace Syadeu.Presentation.Map
                 new Vector2(0, 1)
             };
             CellMesh.RecalculateBounds();
+
+            CellMaterial = new Material(Shader.Find(RenderSystem.s_DefaultShaderName));
         }
         public void DestroyGrid()
         {
@@ -190,25 +196,6 @@ namespace Syadeu.Presentation.Map
                     ObstacleLayer.Add(item);
                 }
             }
-        }
-        protected override void OnDispose()
-        {
-            ////if (Grid != null)
-            //{
-            //    //Grid.Dispose();
-            //    //Grid = null;
-            //}
-
-            if (Layers != null)
-            {
-                for (int i = 0; i < Layers.Length; i++)
-                {
-                    Layers[i].Dispose();
-                }
-                Layers = null;
-            }
-
-            if (ObstacleLayer.IsCreated) ObstacleLayer.Dispose();
         }
 
         #region Filter
@@ -353,7 +340,7 @@ namespace Syadeu.Presentation.Map
                     if (!Layers[layer].Contains(indices[i]))
                     {
                         //filtered.Add(indices[i]);
-                        indices.RemoveAt(indices[i]);
+                        indices.RemoveAt(i);
                         continue;
                     }
                 }
@@ -362,7 +349,7 @@ namespace Syadeu.Presentation.Map
                     if (Layers[layer].Contains(indices[i]))
                     {
                         //filtered.Add(indices[i]);
-                        indices.RemoveAt(indices[i]);
+                        indices.RemoveAt(i);
                         continue;
                     }
                 }
@@ -432,7 +419,14 @@ namespace Syadeu.Presentation.Map
         }
         private int ConvertToWorldIndex(in int gridIdx, in int index)
         {
-            if (gridIdx < 0) return index;
+            if (gridIdx < 0)
+            {
+                if (Grid.length < index)
+                {
+                    return -1;
+                }
+                return index;
+            }
 
             int output = Grid.length;
             for (int i = 0; i < gridIdx - 1; i++)
@@ -441,6 +435,11 @@ namespace Syadeu.Presentation.Map
             }
 
             output += index;
+            if (SubGrids[gridIdx].length < output)
+            {
+                output = -1;
+            }
+
             return output;
         }
         private BinaryGrid GetTargetGrid(in int index, out int targetIndex)
@@ -479,7 +478,13 @@ namespace Syadeu.Presentation.Map
                     index += SubGrids[i].length;
                 }
 
-                if (!found) return GridPosition.Empty;
+                if (!found)
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"Could not found an valid grid position for {position}.");
+
+                    return GridPosition.Empty;
+                }
             }
             else
             {
@@ -491,6 +496,12 @@ namespace Syadeu.Presentation.Map
                 index,
                 targetGrid.PositionToLocation(position)
                 );
+        }
+        public GridPosition GetGridPosition(in int idx)
+        {
+            BinaryGrid grid = GetTargetGrid(in idx, out int targetIndex);
+
+            return new GridPosition(idx, grid.IndexToLocation(in targetIndex));
         }
         public float3 GetPosition(in GridPosition position)
         {
@@ -526,7 +537,10 @@ namespace Syadeu.Presentation.Map
 
             int cellIdx = grid.LocationToIndex(location);
 
-            return new GridPosition(ConvertToWorldIndex(in gridIdx, in cellIdx), location);
+            int worldIdx = ConvertToWorldIndex(in gridIdx, in cellIdx);
+
+            if (worldIdx < 0) return GridPosition.Empty;
+            return new GridPosition(worldIdx, location);
         }
 
         #endregion
@@ -538,7 +552,14 @@ namespace Syadeu.Presentation.Map
             BinaryGrid grid = GetTargetGrid(in pos.index, out _);
             int2 temp = pos.location + location;
 
-            return new GridPosition(grid.LocationToIndex(temp), temp);
+            var output = new GridPosition(grid.LocationToIndex(temp), temp);
+
+            if (output.index < 0)
+            {
+                $"{output.index} error {pos.location} + {location} = {pos.location + location}".ToLogError();
+            }
+
+            return output;
         }
 
         #endregion
@@ -642,10 +663,6 @@ namespace Syadeu.Presentation.Map
             var grid = GetTargetGrid(in idx, out int targetIdx);
 
             grid.GetRange(ref list, in targetIdx, in range);
-            for (int i = 0; i < list.Length; i++)
-            {
-                //$"{list[i]}".ToLog();
-            }
             for (int i = 0; i < ignoreLayers.Length; i++)
             {
                 FilterByLayer(ignoreLayers[i], ref list);

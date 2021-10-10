@@ -30,6 +30,14 @@ namespace Syadeu.Presentation.Render
         public override bool EnableOnPresentation => true;
         public override bool EnableAfterPresentation => true;
 
+#if CORESYSTEM_URP
+        public const string s_DefaultShaderName = "Universal Render Pipeline/Lit";
+#elif CORESYSTEM_HDRP
+        public const string s_DefaultShaderName = "HDRP/Lit";
+#else
+        public const string s_DefaultShaderName = "Standard";
+#endif
+
         private ObClass<Camera> m_Camera;
         private CameraComponent m_CameraComponent = null;
 #if CORESYSTEM_URP
@@ -80,7 +88,7 @@ namespace Syadeu.Presentation.Render
         public CameraData LastCameraData => m_LastCameraData;
         public LightData LastDirectionalLightData => m_LastDirectionalLightData;
 
-        #region Presentation Methods
+#region Presentation Methods
 
         protected override PresentationResult OnInitialize()
         {
@@ -206,7 +214,7 @@ namespace Syadeu.Presentation.Render
             }
         }
 
-        #endregion
+#endregion
 
         public CameraFrustum.ReadOnly GetFrustum()
         {
@@ -312,7 +320,7 @@ namespace Syadeu.Presentation.Render
         //    return new float3(temp.xy, worldPoint.z);
         //}
 
-        #region Ray
+#region Ray
 
         //float4x4 GetWorldToCameraMatrix()
         //{
@@ -420,7 +428,7 @@ namespace Syadeu.Presentation.Render
         //    return ViewportPointToRay(new float3(position.x / Screen.width, position.y / Screen.height, position.z));
         //}
 
-        #endregion
+#endregion
 
         //public Ray ScreenPointToRay(float3 screenPoint)
         //{
@@ -437,7 +445,7 @@ namespace Syadeu.Presentation.Render
             //Screen.SetResolution(100,100, FullScreenMode.ExclusiveFullScreen, )
         }
 
-        #region Legacy
+#region Legacy
 
         /// <summary>
         /// 해당 월드 좌표를 입력한 Matrix 기반으로 2D 좌표값을 반환합니다.
@@ -515,6 +523,6 @@ namespace Syadeu.Presentation.Render
             return false;
         }
 
-        #endregion
+#endregion
     }
 }

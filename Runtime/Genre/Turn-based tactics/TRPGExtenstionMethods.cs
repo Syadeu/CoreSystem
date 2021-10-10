@@ -1,4 +1,8 @@
-﻿using Syadeu.Presentation.Actor;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Entities;
 
 namespace Syadeu.Presentation.TurnTable
@@ -7,12 +11,19 @@ namespace Syadeu.Presentation.TurnTable
     {
         public static void Attack(this Entity<ActorEntity> other, Entity<ActorEntity> target, string targetStatName = "HP")
         {
-            TRPGActorAttackEvent ev = new TRPGActorAttackEvent(target, targetStatName);
+            if (!other.HasComponent<ActorWeaponComponent>())
+            {
+                "doesn\'t have weapon".ToLogError();
+                return;
+            }
+
+            var weapon = other.GetComponent<ActorWeaponComponent>();
+
+            TRPGActorAttackEvent ev = new TRPGActorAttackEvent(target, targetStatName, (int)weapon.WeaponDamage);
             ev.ScheduleEvent(other);
         }
         public static void Attack(this Entity<ActorEntity> other, int index, string targetStatName = "HP")
         {
-            //var ctr = other.GetController();
             if (!other.HasComponent<ActorControllerComponent>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
@@ -21,7 +32,7 @@ namespace Syadeu.Presentation.TurnTable
             }
 
             Instance<TRPGActorAttackProvider> attProvider = other.GetComponent<ActorControllerComponent>().GetProvider<TRPGActorAttackProvider>();
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if DEBUG_MODE
             if (attProvider.IsEmpty())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
@@ -34,10 +45,17 @@ namespace Syadeu.Presentation.TurnTable
                     $"Index({index}) is out of range. Target count is {attProvider.Object.Targets.Count}.");
                 return;
             }
+            else if (!other.HasComponent<ActorWeaponComponent>())
+            {
+                "doesn\'t have weapon".ToLogError();
+                return;
+            }
 #endif
+            var weapon = other.GetComponent<ActorWeaponComponent>();
+
             TRPGActorAttackEvent ev = new TRPGActorAttackEvent(
                 attProvider.Object.Targets[index].Cast<IEntity, ActorEntity>(), 
-                targetStatName);
+                targetStatName, (int)weapon.WeaponDamage);
 
             ev.ScheduleEvent(other);
         }

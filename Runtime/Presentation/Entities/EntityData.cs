@@ -28,7 +28,6 @@ namespace Syadeu.Presentation.Entities
     {
         private const string c_Invalid = "Invalid";
         private static PresentationSystemID<EntitySystem> s_EntitySystem = PresentationSystemID<EntitySystem>.Null;
-        internal static PresentationSystemID<EntityComponentSystem> s_ComponentSystem = PresentationSystemID<EntityComponentSystem>.Null;
 
         public static EntityData<T> Empty => new EntityData<T>(Hash.Empty, null);
 
@@ -87,7 +86,7 @@ namespace Syadeu.Presentation.Entities
         }
 
         /// <inheritdoc cref="IEntityData.Idx"/>
-        private readonly Hash m_Idx;
+        private readonly EntityID m_Idx;
         private FixedString128Bytes m_Name;
 
         public T Target
@@ -144,7 +143,7 @@ namespace Syadeu.Presentation.Entities
         /// <inheritdoc cref="IEntityData.Hash"/>
         public Hash Hash => Target.Hash;
         /// <inheritdoc cref="IEntityData.Idx"/>
-        public Hash Idx => m_Idx;
+        public EntityID Idx => m_Idx;
         public Type Type => m_Idx.Equals(Hash.Empty) ? null : Target?.GetType();
 
         internal EntityData(Hash idx, string name)
@@ -298,25 +297,23 @@ namespace Syadeu.Presentation.Entities
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"You\'re trying to access to an invalid entity. This is not allowed.");
-                return default(TComponent);
+
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
 #endif
-            if (s_ComponentSystem.IsNull())
+            if (EntityComponentSystem.Constants.SystemID.IsNull())
             {
-                s_ComponentSystem = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>().Data.SystemID;
-                if (s_ComponentSystem.IsNull())
-                {
-                    CoreSystem.Logger.LogError(Channel.Entity,
-                        $"Cannot retrived {nameof(EntityComponentSystem)}.");
-                    return default(TComponent);
-                }
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot retrived {nameof(EntityComponentSystem)}.");
+
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
 
             EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx);
 #if DEBUG_MODE
             s_EntitySystem.System.Debug_AddComponent<TComponent>(entity);
 #endif
-            return s_ComponentSystem.System.AddComponent(entity, in data);
+            return EntityComponentSystem.Constants.SystemID.System.AddComponent(entity, in data);
         }
         /// <summary>
         /// <typeparamref name="TComponent"/> 컴포넌트가 있는지 반환합니다.
@@ -334,18 +331,14 @@ namespace Syadeu.Presentation.Entities
                 return false;
             }
 #endif
-            if (s_ComponentSystem.IsNull())
+            if (EntityComponentSystem.Constants.SystemID.IsNull())
             {
-                s_ComponentSystem = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>().Data.SystemID;
-                if (s_ComponentSystem.IsNull())
-                {
-                    CoreSystem.Logger.LogError(Channel.Entity,
-                        $"Cannot retrived {nameof(EntityComponentSystem)}.");
-                    return false;
-                }
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot retrived {nameof(EntityComponentSystem)}.");
+                return false;
             }
 
-            return s_ComponentSystem.System.HasComponent<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
+            return EntityComponentSystem.Constants.SystemID.System.HasComponent<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
         }
         /// <summary>
         /// 해당 타입의 컴포넌트가 있는지 반환합니다.
@@ -372,23 +365,22 @@ namespace Syadeu.Presentation.Entities
                 return false;
             }
 #endif
-            if (s_ComponentSystem.IsNull())
+            if (EntityComponentSystem.Constants.SystemID.IsNull())
             {
-                s_ComponentSystem = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>().Data.SystemID;
-                if (s_ComponentSystem.IsNull())
-                {
-                    CoreSystem.Logger.LogError(Channel.Entity,
-                        $"Cannot retrived {nameof(EntityComponentSystem)}.");
-                    return false;
-                }
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot retrived {nameof(EntityComponentSystem)}.");
+                return false;
             }
 
-            return s_ComponentSystem.System.HasComponent(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx), componentType);
+            return EntityComponentSystem.Constants.SystemID.System.HasComponent(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx), componentType);
         }
         /// <summary>
         /// <typeparamref name="TComponent"/> 컴포넌트를 가져옵니다.
         /// </summary>
         /// <remarks>
+        /// <seealso cref="IJobParallelForEntities{TComponent}"/> Job 이 수행 중이라면 완료 후 반환합니다.
+        /// 읽기만 필요하다면 <seealso cref="GetComponentReadOnly{TComponent}"/> 를 사용하세요.<br/>
+        /// <br/>
         /// 컴포넌트가 없는 경우 에러를 뱉습니다. <seealso cref="HasComponent{TComponent}"/> 를 통해
         /// 목표 컴포넌트가 존재하는지 확인 할 수 있습니다.
         /// </remarks>
@@ -402,21 +394,77 @@ namespace Syadeu.Presentation.Entities
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"You\'re trying to access to an invalid entity. This is not allowed.");
-                //return default(TComponent);
+
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
 #endif
-            if (s_ComponentSystem.IsNull())
+            if (EntityComponentSystem.Constants.SystemID.IsNull())
             {
-                s_ComponentSystem = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>().Data.SystemID;
-                if (s_ComponentSystem.IsNull())
-                {
-                    CoreSystem.Logger.LogError(Channel.Entity,
-                        $"Cannot retrived {nameof(EntityComponentSystem)}.");
-                    //return default(TComponent);
-                }
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot retrived {nameof(EntityComponentSystem)}.");
+
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
 
-            return ref s_ComponentSystem.System.GetComponent<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
+            return ref EntityComponentSystem.Constants.SystemID.System.GetComponent<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
+        }
+        /// <summary>
+        /// 박싱된 <typeparamref name="TComponent"/> 컴포넌트를 가져옵니다.
+        /// </summary>
+        /// <remarks>
+        /// 컴포넌트가 없는 경우 에러를 뱉습니다. <seealso cref="HasComponent{TComponent}"/> 를 통해
+        /// 목표 컴포넌트가 존재하는지 확인 할 수 있습니다.
+        /// </remarks>
+        /// <typeparam name="TComponent"></typeparam>
+        /// <returns></returns>
+        public TComponent GetComponentReadOnly<TComponent>()
+            where TComponent : unmanaged, IEntityComponent
+        {
+#if DEBUG_MODE
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
+            }
+#endif
+            if (EntityComponentSystem.Constants.SystemID.IsNull())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot retrived {nameof(EntityComponentSystem)}.");
+
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
+            }
+
+            return EntityComponentSystem.Constants.SystemID.System.GetComponentReadOnly<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
+        }
+        /// <summary>
+        /// <typeparamref name="TComponent"/> 의 포인터 주소를 가져옵니다.
+        /// </summary>
+        /// <typeparam name="TComponent"></typeparam>
+        /// <returns></returns>
+        unsafe public TComponent* GetComponentPointer<TComponent>()
+            where TComponent : unmanaged, IEntityComponent
+        {
+#if DEBUG_MODE
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
+            }
+#endif
+            if (EntityComponentSystem.Constants.SystemID.IsNull())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot retrived {nameof(EntityComponentSystem)}.");
+
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
+            }
+
+            return EntityComponentSystem.Constants.SystemID.System.GetComponentPointer<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx));
         }
         /// <summary>
         /// <typeparamref name="TComponent"/> 컴포넌트를 제거합니다.
@@ -436,22 +484,18 @@ namespace Syadeu.Presentation.Entities
                 return;
             }
 #endif
-            if (s_ComponentSystem.IsNull())
+            if (EntityComponentSystem.Constants.SystemID.IsNull())
             {
-                s_ComponentSystem = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>().Data.SystemID;
-                if (s_ComponentSystem.IsNull())
-                {
-                    CoreSystem.Logger.LogError(Channel.Entity,
-                        $"Cannot retrived {nameof(EntityComponentSystem)}.");
-                    return;
-                }
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot retrived {nameof(EntityComponentSystem)}.");
+                return;
             }
 
             EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx);
 #if DEBUG_MODE
             s_EntitySystem.System.Debug_RemoveComponent<TComponent>(entity);
 #endif
-            s_ComponentSystem.System.RemoveComponent<TComponent>(entity);
+            EntityComponentSystem.Constants.SystemID.System.RemoveComponent<TComponent>(entity);
         }
         /// <summary>
         /// 해당 컴포넌트를 제거합니다.
@@ -478,22 +522,18 @@ namespace Syadeu.Presentation.Entities
                 return;
             }
 #endif
-            if (s_ComponentSystem.IsNull())
+            if (EntityComponentSystem.Constants.SystemID.IsNull())
             {
-                s_ComponentSystem = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem>().Data.SystemID;
-                if (s_ComponentSystem.IsNull())
-                {
-                    CoreSystem.Logger.LogError(Channel.Entity,
-                        $"Cannot retrived {nameof(EntityComponentSystem)}.");
-                    return;
-                }
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot retrived {nameof(EntityComponentSystem)}.");
+                return;
             }
 
             EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(m_Idx);
 #if DEBUG_MODE
             s_EntitySystem.System.Debug_RemoveComponent(entity, componentType);
 #endif
-            s_ComponentSystem.System.RemoveComponent(entity, componentType);
+            EntityComponentSystem.Constants.SystemID.System.RemoveComponent(entity, componentType);
         }
 
         #endregion
@@ -549,7 +589,7 @@ namespace Syadeu.Presentation.Entities
             }
 
             CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Destroyed entity.");
+                    $"Destroyed entity({RawName}).");
             return 0;
         }
 

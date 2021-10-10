@@ -1,15 +1,19 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Presentation.Actor;
+using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Map;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using Unity.Collections;
 
 namespace Syadeu.Presentation.TurnTable
 {
-    public sealed class TRPGActorAttackProvider : ActorAttackProvider
+    [DisplayName("ActorProvider: TRPG Attack Provider")]
+    public sealed class TRPGActorAttackProvider : ActorAttackProvider,
+        INotifyComponent<TRPGActorAttackComponent>
     {
         [JsonProperty(Order = 0, PropertyName = "AttackRange")] private int m_AttackRange;
         [JsonProperty(Order = 1, PropertyName = "DefaultConsumeAP")] private int m_DefaultConsumeAP = 1;
@@ -28,25 +32,46 @@ namespace Syadeu.Presentation.TurnTable
 
         protected override void OnCreated()
         {
-            m_GridSystem = PresentationSystem<GridSystem>.System;
+            m_GridSystem = PresentationSystem<DefaultPresentationGroup, GridSystem>.System;
             m_TempGetRange = new NativeList<int>(512, Allocator.Persistent);
+        }
+        protected override void OnCreated(Entity<ActorEntity> entity)
+        {
+            entity.AddComponent(new TRPGActorAttackComponent()
+            {
+                m_HasTarget = false,
+
+                m_AttackRange = m_AttackRange,
+                m_ConsumeAP = m_DefaultConsumeAP
+            });
         }
         protected override void OnDestroy()
         {
+            Targets = null;
             m_TempGetRange.Dispose();
+
+            m_GridSystem = null;
         }
 
         public IReadOnlyList<Entity<IEntity>> GetTargetsInRange()
-            => GetTargetsWithin(in m_AttackRange);
+            => GetTargetsWithin(in Parent.GetComponent<TRPGActorAttackComponent>().m_AttackRange);
         public IReadOnlyList<Entity<IEntity>> GetTargetsWithin(in int range)
         {
-            //GridSizeAttribute gridSize = Parent.GetAttribute<GridSizeAttribute>();
             if (!Parent.HasComponent<GridSizeComponent>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"Entity({Parent.Name}) doesn\'t have any {nameof(GridSizeComponent)}.");
 
                 return Array.Empty<Entity<IEntity>>();
+            }
+
+            GridSizeComponent gridSize = Parent.GetComponent<GridSizeComponent>();
+            gridSize.GetRange(ref m_TempGetRange, in range);
+
+            ref TRPGActorAttackComponent att = ref Parent.GetComponent<TRPGActorAttackComponent>();
+            if (att.m_HasTarget)
+            {
+                //att.m_CurrentTargets.Dispose();
             }
 
             List<Entity<IEntity>> entities = new List<Entity<IEntity>>();
@@ -66,6 +91,17 @@ namespace Syadeu.Presentation.TurnTable
                 }
 
                 //entities.AddRange(m_GridSystem.GetEntitiesAt(indices[i]));
+            }
+            
+            if (entities.Count > 0)
+            {
+                //att.m_CurrentTargets = entities.GetEnumerator();
+                att.m_TargetCount = entities.Count;
+            }
+            else
+            {
+                att.m_HasTarget = false;
+                att.m_TargetCount = 0;
             }
 
             Targets = entities;

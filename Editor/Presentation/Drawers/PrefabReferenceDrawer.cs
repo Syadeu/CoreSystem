@@ -31,6 +31,12 @@ namespace SyadeuEditor.Presentation
             IPrefabReference prefab = Getter.Invoke();
             if (!prefab.IsNone() && prefab.IsValid())
             {
+                if (prefab.GetEditorAsset() == null)
+                {
+                    Setter.Invoke((IPrefabReference)m_Constructor.Invoke(new object[] { -1 }));
+                    return;
+                }
+
                 if (DeclaredType.GenericTypeArguments.Length > 0)
                 {
                     Type targetType = DeclaredType.GenericTypeArguments[0];
@@ -48,6 +54,12 @@ namespace SyadeuEditor.Presentation
             IPrefabReference prefab = getter.Invoke();
             if (!prefab.IsNone() && prefab.IsValid())
             {
+                if (prefab.GetEditorAsset() == null)
+                {
+                    setter.Invoke((IPrefabReference)m_Constructor.Invoke(new object[] { -1 }));
+                    return;
+                }
+
                 if (declaredType.GenericTypeArguments.Length > 0)
                 {
                     Type targetType = declaredType.GenericTypeArguments[0];

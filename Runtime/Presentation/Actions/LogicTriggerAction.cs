@@ -1,4 +1,8 @@
-﻿using Newtonsoft.Json;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Newtonsoft.Json;
 using Syadeu.Presentation.Entities;
 using System;
 using UnityEngine;
@@ -85,7 +89,7 @@ namespace Syadeu.Presentation.Actions
 
             for (int i = 0; i < m_ElseIf.Length; i++)
             {
-                bool result = m_ElseIf[i].Schedule(entity, target);
+                bool result = m_ElseIf[i].Execute(entity, target);
                 if (result) return true;
             }
             return false;

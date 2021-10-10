@@ -1,22 +1,68 @@
-﻿using System;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Syadeu.Presentation.Components;
+using System;
+using System.Collections.Generic;
 using Unity.Burst;
+using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Jobs.LowLevel.Unsafe;
 
 namespace Syadeu.Presentation.Entities
 {
-    [JobProducerType(typeof(IJobParallelForEntitiesExtensions.JobParallelForEntitiesProducer<>))]
-    public interface IJobParallelForEntities
+    [JobProducerType(typeof(IJobParallelForEntitiesExtensions.JobParallelForEntitiesProducer<,>))]
+    public interface IJobParallelForEntities<TComponent>
+        where TComponent : unmanaged, IEntityComponent
     {
-        void Execute(int length);
+        void Execute(in EntityData<IEntityData> entity, in TComponent component);
+    }
+
+    public static class IJobParallelForEntitiesInterfaces
+        //where TComponent : unmanaged, IEntityComponent
+    {
+        public delegate void EntityComponentDelegate<TComponent>(in EntityData<IEntityData> entity, in TComponent component) where TComponent : unmanaged, IEntityComponent;
+
+        public static void Temp<TComponent>(EntityComponentDelegate<EntityData<IEntityData>, TComponent> action)
+            where TComponent : unmanaged, IEntityComponent
+        {
+
+        }
+
+        //public static void Temp1(in EntityData<IEntityData> entity, in TComponent component)
+        //{
+
+        //}
+
+        public struct Job<TComponent> : IJobParallelForEntities<TComponent>
+            where TComponent : unmanaged, IEntityComponent
+        {
+            public void Execute(in EntityData<IEntityData> entity, in TComponent component)
+            {
+                throw new NotImplementedException();
+            }
+        }
+        internal struct JobTestProducer<TComponent>
+            where TComponent : unmanaged, IEntityComponent
+        {
+            public IntPtr m_JobReflectionData;
+
+
+        }
     }
 
     public static class IJobParallelForEntitiesExtensions
     {
-        internal struct JobParallelForEntitiesProducer<T> where T : struct, IJobParallelForEntities
+        private static JobHandle s_GlobalJobHandle;
+
+        internal struct JobParallelForEntitiesProducer<T, TComponent> 
+            where T : struct, IJobParallelForEntities<TComponent>
+            where TComponent : unmanaged, IEntityComponent
         {
             static IntPtr s_JobReflectionData;
+            static IntPtr s_ComponentBuffer;
 
             public static IntPtr Initialize()
             {
@@ -28,6 +74,11 @@ namespace Syadeu.Presentation.Entities
                     s_JobReflectionData = JobsUtility.CreateJobReflectionData(typeof(T), typeof(T),
                         JobType.ParallelFor, (ExecuteJobFunction)Execute);
 #endif
+                }
+
+                if (s_ComponentBuffer == IntPtr.Zero)
+                {
+                    s_ComponentBuffer = PresentationSystem<DefaultPresentationGroup, EntityComponentSystem>.System.GetComponentBufferPointerIntPtr<TComponent>();
                 }
 
                 return s_JobReflectionData;
@@ -50,36 +101,83 @@ namespace Syadeu.Presentation.Entities
 #endif
                     for (int i = begin; i < end; i++)
                     {
-                        jobData.Execute(i);
+                        PrivateExecute(ref jobData, in i);
                     }
                 }
             }
-        }
-
-        public static JobHandle Schedule<T>(this T jobData, [NoAlias] int length, [NoAlias] int innerloopBatchCount, 
-            JobHandle dependsOn = new JobHandle())
-            where T : struct, IJobParallelForEntities
-        {
-            unsafe
+            private unsafe static void PrivateExecute(ref T jobData, in int i)
             {
-                return ScheduleInternal(ref jobData, innerloopBatchCount, length, dependsOn);
+                ComponentBuffer* p = (ComponentBuffer*)s_ComponentBuffer;
+                ref ComponentBuffer buffer = ref *p;
+
+                buffer.HasElementAt(i, out bool result);
+                if (!result) return;
+
+                buffer.ElementAt<TComponent>(i, out EntityData<IEntityData> entity, out TComponent component);
+
+                jobData.Execute(in entity, in component);
             }
         }
 
-        private static unsafe JobHandle ScheduleInternal<T>(ref T jobData,
+        private static JobHandle Schedule<T, TComponent>(this T jobData, [NoAlias] int length, [NoAlias] int innerloopBatchCount, 
+            JobHandle dependsOn = new JobHandle())
+            where T : struct, IJobParallelForEntities<TComponent>
+            where TComponent : unmanaged, IEntityComponent
+        {
+            unsafe
+            {
+                return ScheduleInternal<T, TComponent>(ref jobData, /*length,*/ innerloopBatchCount, dependsOn);
+            }
+        }
+        public static JobHandle Schedule<T, TComponent>(this T jobData, [NoAlias] int innerloopBatchCount = 64, 
+            JobHandle dependsOn = new JobHandle())
+            where T : struct, IJobParallelForEntities<TComponent>
+            where TComponent : unmanaged, IEntityComponent
+        {
+            unsafe
+            {
+                return ScheduleInternal<T, TComponent>(ref jobData,/* length,*/ innerloopBatchCount, dependsOn);
+            }
+        }
+
+        private static unsafe JobHandle ScheduleInternal<T, TComponent>(ref T jobData,
+            //[NoAlias] int length,
             [NoAlias] int innerloopBatchCount,
-            [NoAlias] int length,
             JobHandle dependsOn) 
             
-            where T : struct, IJobParallelForEntities
+            where T : struct, IJobParallelForEntities<TComponent>
+            where TComponent : unmanaged, IEntityComponent
         {
             var scheduleParams = new JobsUtility.JobScheduleParameters(
                 UnsafeUtility.AddressOf(ref jobData),
-                JobParallelForEntitiesProducer<T>.Initialize(), dependsOn,
+                JobParallelForEntitiesProducer<T, TComponent>.Initialize(),
+                JobHandle.CombineDependencies(s_GlobalJobHandle, dependsOn),
                 ScheduleMode.Parallel);
 
-            return JobsUtility.ScheduleParallelFor(ref scheduleParams, innerloopBatchCount,
-                length);
+            EntityComponentSystem system = PresentationSystem<DefaultPresentationGroup, EntityComponentSystem>.System;
+#if DEBUG_MODE
+            system.ComponentBufferSafetyCheck<TComponent>(out bool result);
+            if (!result) return default(JobHandle);
+#endif
+            ComponentBuffer buffer = system.GetComponentBuffer<TComponent>();
+
+            JobHandle handle = JobsUtility.ScheduleParallelFor(ref scheduleParams, buffer.Length, innerloopBatchCount);
+            JobHandle.CombineDependencies(s_GlobalJobHandle, handle);
+
+            return handle;
         }
+
+        internal static void CompleteAllJobs()
+        {
+            CoreSystem.Logger.ThreadBlock(Syadeu.Internal.ThreadInfo.Unity);
+
+            s_GlobalJobHandle.Complete();
+        }
+    }
+
+    public interface IJobParallelForComponents<TComponent>
+        where TComponent : unmanaged, IEntityComponent
+    {
+        void Execute(in TComponent component);
     }
 }

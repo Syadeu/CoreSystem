@@ -1,5 +1,10 @@
-﻿using Newtonsoft.Json;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Newtonsoft.Json;
 using Syadeu.Presentation.Actions;
+using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Proxy;
@@ -34,6 +39,10 @@ namespace Syadeu.Presentation.Attributes
         [JsonProperty(Order = 6, PropertyName = "OnTriggerExit")]
         public Reference<TriggerAction>[] m_OnTriggerExit = Array.Empty<Reference<TriggerAction>>();
 
+        [Header("Layer")]
+        [JsonProperty(Order = 7, PropertyName = "Layer")]
+        public Reference<TriggerBoundLayer> m_Layer = Reference<TriggerBoundLayer>.Empty;
+
         [JsonIgnore] internal List<Entity<IEntity>> m_Triggered;
 
         [JsonIgnore] public bool Enabled { get; set; } = true;
@@ -41,18 +50,37 @@ namespace Syadeu.Presentation.Attributes
     }
     internal sealed class TriggerBoundProcessor : AttributeProcessor<TriggerBoundAttribute>
     {
+        private EntityRaycastSystem m_EntityRaycastSystem;
+
         protected override void OnInitialize()
         {
+            RequestSystem<DefaultPresentationGroup, EntityRaycastSystem>(Bind);
+
             EventSystem.AddEvent<EntityTriggerBoundEvent>(EntityTriggerBoundEventHandler);
         }
+        private void Bind(EntityRaycastSystem other)
+        {
+            m_EntityRaycastSystem = other;
+        }
+
         protected override void OnDispose()
         {
             EventSystem.RemoveEvent<EntityTriggerBoundEvent>(EntityTriggerBoundEventHandler);
+
+            m_EntityRaycastSystem = null;
         }
+
         protected override void OnCreated(TriggerBoundAttribute attribute, EntityData<IEntityData> entity)
         {
             attribute.m_Triggered = new List<Entity<IEntity>>();
+
+            m_EntityRaycastSystem.AddLayerEntity(attribute.m_Layer, entity.As<IEntityData, IEntity>());
         }
+        protected override void OnDestroy(TriggerBoundAttribute attribute, EntityData<IEntityData> entity)
+        {
+            m_EntityRaycastSystem.RemoveLayerEntity(attribute.m_Layer, entity.As<IEntityData, IEntity>());
+        }
+
         private void EntityTriggerBoundEventHandler(EntityTriggerBoundEvent ev)
         {
             $"{ev.Source.Name}({ev.Source.Idx}) -> {ev.Target.Name}({ev.Target.Idx}) enter?{ev.IsEnter}".ToLog();

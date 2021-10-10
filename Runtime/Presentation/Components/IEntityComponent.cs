@@ -1,4 +1,5 @@
 ﻿using Syadeu.Presentation.Entities;
+using Unity.Burst;
 
 namespace Syadeu.Presentation.Components
 {
@@ -14,5 +15,5 @@ namespace Syadeu.Presentation.Components
     /// <seealso cref="EntityData{T}.GetComponent{TComponent}"/>, <seealso cref="Entity{T}.GetComponent{TComponent}"/>
     /// 를 통해 가져올 수 있습니다.
     /// </remarks>
-    public interface IEntityComponent { }
+    public interface IEntityComponent { }    
 }

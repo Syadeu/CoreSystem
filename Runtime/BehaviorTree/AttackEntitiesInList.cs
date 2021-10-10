@@ -44,13 +44,14 @@ namespace Syadeu.Presentation.BehaviorTree
         {
             if (m_InAttackRange.Result.Count == 0) return TaskStatus.Failure;
 
+            Entity<ActorEntity> me = m_ThisActorController.ActorController.Parent.As<IEntityData, ActorEntity>();
+
             List<Entity<ActorEntity>> temp = m_InAttackRange.Result.Select(Selector).ToList();
             temp.Sort(new Sort() { m_This = m_ThisActorController.ActorController.Parent.As<IEntityData, ActorEntity>() });
 
             for (int i = 0; i < temp.Count && i < m_MaxAttackCount; i++)
             {
-                TRPGActorAttackEvent ev = new TRPGActorAttackEvent(temp[i], "HP");
-                m_ThisActorController.ActorController.Parent.GetComponent<ActorControllerComponent>().PostEvent(ev);
+                me.Attack(temp[i]);
             }
             
             return TaskStatus.Success;

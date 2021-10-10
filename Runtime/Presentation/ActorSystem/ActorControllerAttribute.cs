@@ -11,6 +11,7 @@ using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Proxy;
+using Syadeu.Presentation.Render;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -36,18 +37,49 @@ namespace Syadeu.Presentation.Actor
     internal sealed class ActorControllerProcessor : AttributeProcessor<ActorControllerAttribute>,
         IAttributeOnProxy
     {
+        WorldCanvasSystem m_WorldCanvasSystem;
+
+        protected override void OnInitialize()
+        {
+            RequestSystem<DefaultPresentationGroup, WorldCanvasSystem>(Bind);
+        }
+        private void Bind(WorldCanvasSystem other)
+        {
+            m_WorldCanvasSystem = other;
+        }
+        protected override void OnDispose()
+        {
+            m_WorldCanvasSystem = null;
+        }
+
         protected override void OnCreated(ActorControllerAttribute attribute, EntityData<IEntityData> entity)
         {
-            ActorControllerComponent component = new ActorControllerComponent();
+            entity.AddComponent(new ActorControllerComponent());
+            ref ActorControllerComponent component = ref entity.GetComponent<ActorControllerComponent>();
+
             Entity<ActorEntity> actor = entity.As<IEntityData, ActorEntity>();
 
             component.m_EntitySystem = m_EntitySystem.SystemID;
             component.m_Parent = actor;
-            component.m_InstanceProviders = new InstanceArray<ActorProviderBase>(attribute.m_Providers.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            component.m_InstanceProviders = new InstanceArray<ActorProviderBase>(attribute.m_Providers.Length, Allocator.Persistent
+#if DEBUG_MODE
+                , NativeArrayOptions.ClearMemory
+#else
+                , NativeArrayOptions.UninitializedMemory
+#endif
+                );
             component.m_OnEventReceived = attribute.m_OnEventReceived.ToBuffer(Allocator.Persistent);
             
             for (int i = 0; i < attribute.m_Providers.Length; i++)
             {
+#if DEBUG_MODE
+                if (attribute.m_Providers[i].IsEmpty() || !attribute.m_Providers[i].IsValid())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"Entity({actor.RawName}) has an invalid provider at {i}. This is not allowed.");
+                    continue;
+                }
+#endif
                 Instance<ActorProviderBase> clone = EntitySystem.CreateInstance(attribute.m_Providers[i]);
                 Initialize(entity, clone.Object);
                 component.m_InstanceProviders[i] = clone;
@@ -82,7 +114,7 @@ namespace Syadeu.Presentation.Actor
         }
         private void Initialize(EntityData<IEntityData> parent, IActorProvider provider)
         {
-            provider.Bind(parent, EventSystem, EntitySystem, EntitySystem.m_CoroutineSystem);
+            provider.Bind(parent, EventSystem, EntitySystem, EntitySystem.m_CoroutineSystem, m_WorldCanvasSystem);
 
             //if (provider.ReceiveEventOnly != null)
             //{

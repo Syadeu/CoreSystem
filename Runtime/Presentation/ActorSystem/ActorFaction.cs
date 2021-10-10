@@ -15,43 +15,14 @@ namespace Syadeu.Presentation.Actor
     public sealed class ActorFaction : DataObjectBase
     {
 #pragma warning disable IDE0044 // Add readonly modifier
-        [JsonProperty(Order = 0, PropertyName = "Allies")]
-        private Reference<ActorFaction>[] m_Allies = Array.Empty<Reference<ActorFaction>>();
-        [JsonProperty(Order = 1, PropertyName = "Enemies")] 
-        private Reference<ActorFaction>[] m_Enemies = Array.Empty<Reference<ActorFaction>>();
+        [JsonProperty(Order = 0, PropertyName = "FactionType")]
+        internal FactionType m_FactionType = FactionType.Player;
+
+        [JsonProperty(Order = 1, PropertyName = "Allies")]
+        internal Reference<ActorFaction>[] m_Allies = Array.Empty<Reference<ActorFaction>>();
+        [JsonProperty(Order = 2, PropertyName = "Enemies")]
+        internal Reference<ActorFaction>[] m_Enemies = Array.Empty<Reference<ActorFaction>>();
 #pragma warning restore IDE0044 // Add readonly modifier
-
-        [JsonIgnore] private HashSet<Hash> m_AlliesHashSet;
-        [JsonIgnore] private HashSet<Hash> m_EnemiesHashSet;
-
-        internal void CreateHashSet()
-        {
-            m_AlliesHashSet = new HashSet<Hash>();
-            for (int i = 0; i < m_Allies.Length; i++)
-            {
-                m_AlliesHashSet.Add(m_Allies[i].m_Hash);
-            }
-            m_EnemiesHashSet = new HashSet<Hash>();
-            for (int i = 0; i < m_Enemies.Length; i++)
-            {
-                m_EnemiesHashSet.Add(m_Enemies[i].m_Hash);
-            }
-        }
-
-        public bool IsAlly(ActorFaction faction)
-        {
-            if (m_AlliesHashSet == null) CreateHashSet();
-
-            if (m_AlliesHashSet.Contains(faction.Hash)) return true;
-            return false;
-        }
-        public bool IsEnemy(ActorFaction faction)
-        {
-            if (m_EnemiesHashSet == null) CreateHashSet();
-
-            if (m_EnemiesHashSet.Contains(faction.Hash)) return true;
-            return false;
-        }
 
         [Preserve]
         static void AOTCodeGeneration()

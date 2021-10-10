@@ -24,6 +24,9 @@ namespace Syadeu.Presentation.TurnTable
         [SerializeField] private string m_DefaultViewString = string.Empty;
         [SerializeField] private string m_AimViewString = string.Empty;
 
+        [Space]
+        [SerializeField] private float m_DefaultTopViewHeight = 22.5f;
+
         private CinemachineTargetGroup m_TargetGroup;
         private CinemachineStateDrivenCamera m_StateCamera;
         private Animator m_CameraAnimator;
@@ -137,10 +140,10 @@ namespace Syadeu.Presentation.TurnTable
             GameObject target = new GameObject("Default Target");
             m_DefaultTarget = target.transform;
             m_DefaultTarget.SetParent(transform.parent);
-            m_DefaultTarget.position = m_TargetPosition;
+            m_DefaultTarget.position = m_TargetPosition + new float3(0, m_DefaultTopViewHeight, 0);
 
             m_TargetGroup.AddMember(m_DefaultTarget, 1, 1);
-            m_InputSystem = PresentationSystem<Input.InputSystem>.SystemID;
+            m_InputSystem = PresentationSystem<DefaultPresentationGroup, Input.InputSystem>.SystemID;
 
             for (int i = 0; i < m_AimTarget.Length; i++)
             {
@@ -192,7 +195,7 @@ namespace Syadeu.Presentation.TurnTable
                     AxisVelocity = m_MoveAxis.ReadValue<Vector2>();
                 }
 
-                m_DefaultTarget.position = TargetPosition;
+                m_DefaultTarget.position = TargetPosition + new float3(0, m_DefaultTopViewHeight, 0);
 
                 Transform orientationTarget = OrientationTarget;
                 orientationTarget.localRotation

@@ -59,10 +59,10 @@ namespace Syadeu.Presentation.BehaviorTree
 
             float sqr = float.MaxValue;
             int idx = -1;
-            GridPath32 path = new GridPath32();
+            GridPath64 path = new GridPath64();
             for (int i = 0; i < range.Length; i++)
             {
-                if (targetComponent.IsInIndex(range[i]) || thisComponent.IsInIndex(range[i]))
+                if (targetComponent.IsMyIndex(range[i]) || thisComponent.IsMyIndex(range[i]))
                 {
                     continue;
                 }

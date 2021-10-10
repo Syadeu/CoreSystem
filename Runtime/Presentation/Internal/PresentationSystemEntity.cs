@@ -1,4 +1,8 @@
-﻿using Syadeu.Database;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Syadeu.Database;
 using System;
 using System.Collections.Generic;
 using Unity.Collections;
@@ -16,7 +20,7 @@ namespace Syadeu.Presentation.Internal
         IBeforePresentation, IOnPresentation, IAfterPresentation, 
         IDisposable
     {
-        private static UnityEngine.Transform s_PresentationUnityFolder;
+        internal static UnityEngine.Transform s_PresentationUnityFolder;
         
         internal Hash m_GroupIndex;
         internal int m_SystemIndex;

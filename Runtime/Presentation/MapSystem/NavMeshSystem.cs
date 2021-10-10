@@ -1,10 +1,14 @@
 ﻿using Syadeu.Database;
 using Syadeu.Internal;
+using Syadeu.Presentation.Actions;
+using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Attributes;
+using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Proxy;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Collections;
@@ -24,21 +28,59 @@ namespace Syadeu.Presentation.Map
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
-        private readonly List<NavMeshComponent> m_Agents = new List<NavMeshComponent>();
+        private readonly List<NavMeshBaker> m_Agents = new List<NavMeshBaker>();
         private readonly List<NavObstacleAttribute> m_Obstacles = new List<NavObstacleAttribute>();
         private readonly List<TerrainData> m_Terrains = new List<TerrainData>();
         private readonly List<NavMeshBuildSource> m_Sources = new List<NavMeshBuildSource>();
         private bool m_RequireReload = false;
 
         private EventSystem m_EventSystem;
+        private CoroutineSystem m_CoroutineSystem;
+        private GridSystem m_GridSystem;
 
         #region Presentation Methods
 
         protected override PresentationResult OnInitialize()
         {
             RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, CoroutineSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, GridSystem>(Bind);
+
+            //PoolContainer<NavMeshQueryContainer>.Initialize(NavMeshQueryFactory, 16);
 
             return base.OnInitialize();
+        }
+        public override void OnDispose()
+        {
+            //PoolContainer<NavMeshQueryContainer>.Dispose();
+
+            m_EventSystem.RemoveEvent<OnTransformChangedEvent>(OnTransformChangedEventHandler);
+
+            m_EventSystem = null;
+            m_CoroutineSystem = null;
+        }
+
+        private sealed class NavMeshQueryContainer : IDisposable
+        {
+            public NavMeshQuery m_Query;
+
+            public NavMeshQueryContainer()
+            {
+                m_Query = new NavMeshQuery(NavMeshWorld.GetDefaultWorld(), Allocator.Persistent, 256);
+            }
+            public void Dispose()
+            {
+                m_Query.Dispose();
+            }
+
+            public void asd()
+            {
+                //m_Query.
+            }
+        }
+        private NavMeshQueryContainer NavMeshQueryFactory()
+        {
+            return new NavMeshQueryContainer();
         }
 
         #region Binds
@@ -64,14 +106,17 @@ namespace Syadeu.Presentation.Map
             m_RequireReload = true;
         }
 
+        private void Bind(CoroutineSystem other)
+        {
+            m_CoroutineSystem = other;
+        }
+        private void Bind(GridSystem other)
+        {
+            m_GridSystem = other;
+        }
+
         #endregion
 
-        public override void OnDispose()
-        {
-            m_EventSystem.RemoveEvent<OnTransformChangedEvent>(OnTransformChangedEventHandler);
-
-            m_EventSystem = null;
-        }
         protected override PresentationResult BeforePresentation()
         {
             if (!m_RequireReload) return base.BeforePresentation();
@@ -87,12 +132,20 @@ namespace Syadeu.Presentation.Map
                     m_Sources.AddRange(item);
                 }
             }
-            
-            foreach (NavMeshComponent agent in m_Agents)
+
+            for (int i = m_Agents.Count - 1; i >= 0; i--)
             {
+                if (m_Agents[i] == null)
+                {
+                    "unhandled destroy navagent".ToLogError();
+                    m_Agents.RemoveAt(i);
+                    continue;
+                }
+
+                NavMeshBaker agent = m_Agents[i];
                 Bounds bounds = agent.Bounds;
 
-                NavMeshBuilder.UpdateNavMeshDataAsync(agent.m_NavMeshData, NavMesh.GetSettingsByID(agent.m_AgentType), m_Sources, 
+                NavMeshBuilder.UpdateNavMeshDataAsync(agent.m_NavMeshData, NavMesh.GetSettingsByID(agent.m_AgentType), m_Sources,
                     QuantizedBounds(bounds.center + agent.transform.position, bounds.size));
             }
 
@@ -102,7 +155,7 @@ namespace Syadeu.Presentation.Map
 
         #endregion
 
-        public void AddBaker(NavMeshComponent component)
+        public void AddBaker(NavMeshBaker component)
         {
             if (component.m_Registered)
             {
@@ -118,7 +171,7 @@ namespace Syadeu.Presentation.Map
             m_Agents.Add(component);
             NavMeshBuilder.UpdateNavMeshDataAsync(component.m_NavMeshData, NavMesh.GetSettingsByID(component.m_AgentType), m_Sources, component.Bounds);
         }
-        public void RemoveBaker(NavMeshComponent component)
+        public void RemoveBaker(NavMeshBaker component)
         {
             if (!component.m_Registered)
             {
@@ -239,6 +292,220 @@ namespace Syadeu.Presentation.Map
             m_RequireReload = true;
         }
 
+        public void MoveTo(Entity<IEntity> entity, float3 point, ActorMoveEvent ev)
+        {
+            NavAgentAttribute navAgent = entity.GetAttribute<NavAgentAttribute>();
+            if (navAgent == null)
+            {
+                "no agent".ToLogError();
+                return;
+            }
+
+            FixedList4096Bytes<float3> position = new FixedList4096Bytes<float3>();
+            position.Add(point);
+            ev.m_MoveJob = new MoveJob()
+            {
+                m_Entity = entity.As<IEntity,IEntityData>(),
+                m_Positions = position
+            };
+            //m_CoroutineSystem.PostCoroutineJob(moveJob);
+
+            entity.GetComponent<ActorControllerComponent>().ScheduleEvent(ev, true);
+        }
+        public void MoveTo(Entity<IEntity> entity, GridPath64 path, ActorMoveEvent ev)
+        {
+            NavAgentAttribute navAgent = entity.GetAttribute<NavAgentAttribute>();
+            if (navAgent == null)
+            {
+                "no agent".ToLogError();
+                return;
+            }
+
+            FixedList4096Bytes<float3> position = new FixedList4096Bytes<float3>();
+            for (int i = 1; i < path.Length; i++)
+            {
+                position.Add(m_GridSystem.IndexToPosition(path[i].index));
+            }
+
+            ev.m_MoveJob = new MoveJob()
+            {
+                m_Entity = entity.As<IEntity,IEntityData>(),
+                m_Positions = position
+            };
+            //m_CoroutineSystem.PostCoroutineJob(moveJob);
+
+            entity.GetComponent<ActorControllerComponent>().ScheduleEvent(ev);
+        }
+        public void MoveTo(Entity<IEntity> entity, IList<float3> points, ActorMoveEvent ev)
+        {
+            NavAgentAttribute navAgent = entity.GetAttribute<NavAgentAttribute>();
+            if (navAgent == null)
+            {
+                "no agent".ToLogError();
+                return;
+            }
+
+            FixedList4096Bytes<float3> position = new FixedList4096Bytes<float3>();
+            for (int i = 0; i < points.Count; i++)
+            {
+                position.Add(points[i]);
+            }
+
+            ev.m_MoveJob = new MoveJob()
+            {
+                m_Entity = entity.As<IEntity,IEntityData>(),
+                m_Positions = position
+            };
+            //m_CoroutineSystem.PostCoroutineJob(moveJob);
+
+            entity.GetComponent<ActorControllerComponent>().ScheduleEvent(ev);
+        }
+        internal struct MoveJob : ICoroutineJob
+        {
+            public EntityData<IEntityData> m_Entity;
+            public FixedList4096Bytes<float3> m_Positions;
+
+            public UpdateLoop Loop => UpdateLoop.Transform;
+
+            public void Dispose()
+            {
+                //m_Positions.Dispose();
+            }
+            private void SetPreviousPosition(float3 pos)
+            {
+                ref NavAgentComponent agent = ref m_Entity.GetComponent<NavAgentComponent>();
+                agent.m_PreviousTarget = pos;
+            }
+            private void SetDestination(float3 pos)
+            {
+                ref NavAgentComponent agent = ref m_Entity.GetComponent<NavAgentComponent>();
+                agent.m_Destination = pos;
+            }
+            private void SetIsMoving(bool moving)
+            {
+                ref NavAgentComponent agent = ref m_Entity.GetComponent<NavAgentComponent>();
+                agent.m_IsMoving = moving;
+            }
+            private void SetDirection(float3 dir)
+            {
+                ref NavAgentComponent agent = ref m_Entity.GetComponent<NavAgentComponent>();
+                agent.m_Direction = dir;
+            }
+            public IEnumerator Execute()
+            {
+                EventSystem eventSystem = PresentationSystem<DefaultPresentationGroup, EventSystem>.System;
+                NavAgentAttribute navAgent = m_Entity.GetAttribute<NavAgentAttribute>();
+                Entity<IEntity> entity = m_Entity.As<IEntityData, IEntity>();
+                ProxyTransform tr = (ProxyTransform)entity.transform;
+
+                SetDestination(m_Positions[m_Positions.Length - 1]);
+
+                if (!tr.hasProxy)
+                {
+                    SetPreviousPosition(m_Positions[m_Positions.Length - 1]);
+
+                    tr.position = m_Positions[m_Positions.Length - 1];
+                    eventSystem.PostEvent(
+                        OnMoveStateChangedEvent.GetEvent(entity,
+                            OnMoveStateChangedEvent.MoveState.Teleported | OnMoveStateChangedEvent.MoveState.Idle));
+                    navAgent.m_OnMoveActions.Execute(m_Entity);
+
+                    m_Positions.Clear();
+
+                    yield break;
+                }
+
+                eventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(
+                        entity, OnMoveStateChangedEvent.MoveState.AboutToMove));
+
+                NavMeshAgent agent = tr.proxy.GetComponent<NavMeshAgent>();
+                agent.updatePosition = false;
+                //agent.updateRotation = false;
+
+                if (!agent.isOnNavMesh)
+                {
+                    agent.enabled = false;
+                    agent.enabled = true;
+                }
+
+                agent.ResetPath();
+                agent.SetDestination(m_Positions[0]);
+                SetPreviousPosition(m_Positions[0]);
+                SetIsMoving(true);
+
+                float cacheStoppingDis = agent.stoppingDistance;
+                if (m_Positions.Length > 1)
+                {
+                    agent.stoppingDistance = 0;
+                    agent.autoBraking = false;
+                }
+
+                while (tr.hasProxy && m_Positions.Length > 0)
+                {
+                    if (agent.pathPending)
+                    {
+                        yield return null;
+                        continue;
+                    }
+
+                    if (agent.remainingDistance < 1f)
+                    {
+                        m_Positions.RemoveAt(0);
+                        if (m_Positions.Length == 0)
+                        {
+                            agent.stoppingDistance = cacheStoppingDis;
+                            agent.autoBraking = true;
+                            break;
+                        }
+
+                        agent.SetDestination(m_Positions[0]);
+                        SetPreviousPosition(m_Positions[0]);
+
+                        yield return null;
+                        continue;
+                    }
+
+                    float3 dir = (float3)agent.nextPosition - tr.position;
+                    SetDirection(dir);
+
+                    tr.position = agent.nextPosition;
+                    tr.Synchronize(ProxyTransform.SynchronizeOption.Rotation);
+
+                    eventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(
+                        entity, OnMoveStateChangedEvent.MoveState.OnMoving));
+                    navAgent.m_OnMoveActions.Execute(m_Entity);
+
+                    yield return null;
+                }
+
+                while (tr.hasProxy && agent.remainingDistance > .1f)
+                {
+                    float3 dir = (float3)agent.nextPosition - tr.position;
+                    SetDirection(dir);
+
+                    tr.position = agent.nextPosition;
+                    tr.Synchronize(ProxyTransform.SynchronizeOption.Rotation);
+
+                    eventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(
+                        entity, OnMoveStateChangedEvent.MoveState.OnMoving));
+                    navAgent.m_OnMoveActions.Execute(m_Entity);
+
+                    yield return null;
+                }
+
+                SetDirection(0);
+                tr.position = agent.nextPosition;
+                tr.Synchronize(ProxyTransform.SynchronizeOption.Rotation);
+
+                SetIsMoving(false);
+                agent.ResetPath();
+
+                eventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(entity, 
+                    OnMoveStateChangedEvent.MoveState.Stopped | OnMoveStateChangedEvent.MoveState.Idle));
+                navAgent.m_OnMoveActions.Execute(m_Entity);
+            }
+        }
+
         private static float3 Quantize(float3 v, float3 quant)
         {
             float x = quant.x * math.floor(v.x / quant.x);
@@ -251,5 +518,64 @@ namespace Syadeu.Presentation.Map
             // Quantize the bounds to update only when theres a 10% change in size
             return new Bounds(Quantize(center, 0.1f * size), size);
         }
+    }
+
+    public struct ActorMoveEvent : IActorEvent, IEventSequence
+    {
+        private EntityData<IEntityData> m_Entity;
+        private float m_AfterDelay;
+        internal NavMeshSystem.MoveJob m_MoveJob;
+
+        public bool KeepWait
+        {
+            get
+            {
+                NavAgentComponent agent = m_Entity.GetComponent<NavAgentComponent>();
+                return agent.m_IsMoving;
+            }
+        }
+        public float AfterDelay => m_AfterDelay;
+        public bool BurstCompile => false;
+
+        public ActorMoveEvent(EntityData<IEntityData> entity, float afterDelay)
+        {
+            m_Entity = entity;
+            m_AfterDelay = afterDelay;
+
+            m_MoveJob = default;
+        }
+        public ActorMoveEvent(EntityData<IEntityData> entity)
+        {
+            m_Entity = entity;
+            m_AfterDelay = 0;
+
+            m_MoveJob = default;
+        }
+
+        public void OnExecute(Entity<ActorEntity> from)
+        {
+            ref NavAgentComponent agent = ref m_Entity.GetComponent<NavAgentComponent>();
+            agent.m_IsMoving = true;
+
+            if (agent.m_MoveJob.IsValid())
+            {
+                agent.m_MoveJob.Stop();
+            }
+
+            agent.m_MoveJob 
+                = PresentationSystem<DefaultPresentationGroup, CoroutineSystem>.System.PostCoroutineJob(m_MoveJob);
+        }
+    }
+
+    public struct NavAgentComponent : IEntityComponent
+    {
+        internal bool m_IsMoving;
+        internal float3 m_Direction;
+        internal float3 m_PreviousTarget, m_Destination;
+        internal CoroutineJob m_MoveJob;
+
+        public bool IsMoving => m_IsMoving;
+        public float Speed => math.sqrt(math.mul(m_Direction, m_Direction));
+        public float3 Direction => m_Direction;
     }
 }

@@ -2,12 +2,17 @@
 #define DEBUG_MODE
 #endif
 
+using Syadeu.Database;
 using Syadeu.Internal;
 using Syadeu.Presentation.Attributes;
+using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Proxy;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -19,16 +24,38 @@ namespace Syadeu.Presentation
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
+        private UnsafeMultiHashMap<LayerInfo, Entity<IEntity>> m_LayerMap;
+
         private EntityBoundSystem m_BoundSystem;
+
+        private readonly struct LayerInfo : IEquatable<LayerInfo>
+        {
+            private readonly ulong m_Hash;
+
+            public LayerInfo(Reference<TriggerBoundLayer> layer)
+            {
+                var obj = layer.GetObject();
+                ulong hash = obj.Hash;
+                unchecked
+                {
+                    m_Hash = hash * 397 ^ FNV1a32.Calculate(obj.m_LayerGroup);
+                }
+            }
+            public bool Equals(LayerInfo other) => m_Hash.Equals(other.m_Hash);
+        }
 
         protected override PresentationResult OnInitialize()
         {
-            RequestSystem<EntityBoundSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, EntityBoundSystem>(Bind);
+
+            m_LayerMap = new UnsafeMultiHashMap<LayerInfo, Entity<IEntity>>(512, AllocatorManager.Persistent);
 
             return base.OnInitialize();
         }
         public override void OnDispose()
         {
+            m_LayerMap.Dispose();
+
             m_BoundSystem = null;
         }
 
@@ -40,6 +67,19 @@ namespace Syadeu.Presentation
         }
 
         #endregion
+
+        public void AddLayerEntity(Reference<TriggerBoundLayer> layer, Entity<IEntity> entity)
+        {
+            if (layer.IsEmpty()) return;
+
+            m_LayerMap.Add(new LayerInfo(layer), entity);
+        }
+        public void RemoveLayerEntity(Reference<TriggerBoundLayer> layer, Entity<IEntity> entity)
+        {
+            if (layer.IsEmpty()) return;
+
+            m_LayerMap.Remove(new LayerInfo(layer), entity);
+        }
 
         /// <summary>
         /// 레이캐스트를 실행합니다.

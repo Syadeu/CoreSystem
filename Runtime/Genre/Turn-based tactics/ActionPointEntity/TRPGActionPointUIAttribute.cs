@@ -24,15 +24,35 @@ namespace Syadeu.Presentation.TurnTable
         {
             m_HPNameHash = ActorStatAttribute.ToValueHash(m_HPStatName);
         }
-        protected override void OnUIEventReceived<TEvent>(TEvent ev)
+        protected override void OnEventReceived<TEvent>(TEvent ev)
         {
-            if (ev is TRPGActorActionPointChangedUIEvent apChangedEv)
+            if (ev is ActorHitEvent hitEvent)
+            {
+                ActorHitEventHandler(hitEvent);
+            }
+            else if (ev is TRPGActorActionPointChangedEvent apChangedEv)
             {
                 if (m_CurrentProxy != null)
                 {
                     m_CurrentProxy.SetAPText(apChangedEv.To);
                 }
             }
+        }
+
+        private void ActorHitEventHandler(ActorHitEvent ev)
+        {
+            if (m_CurrentProxy == null) return;
+
+            ActorStatAttribute stat = ParentEntity.GetAttribute<ActorStatAttribute>();
+            if (stat == null)
+            {
+                "no stat".ToLogError();
+                return;
+            }
+
+            int hp = stat.GetValue<int>(m_HPNameHash);
+
+            m_CurrentProxy.SetHPText(hp);
         }
     }
     internal sealed class TRPGActionPointUIProcessor : AttributeProcessor<TRPGActionPointUIAttribute>,

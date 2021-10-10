@@ -9,6 +9,8 @@
     /// </remarks>
     public interface ISystemEventScheduler
     {
+        PresentationSystemID SystemID { get; }
+
         /// <summary>
         /// 수행 대상이 되었을 때 실행하는 메소드입니다.
         /// </summary>

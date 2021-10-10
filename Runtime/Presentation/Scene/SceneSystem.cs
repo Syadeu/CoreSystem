@@ -46,6 +46,10 @@ namespace Syadeu.Presentation
         [ConfigValue(Name = "DebugMode")] private bool m_DebugMode;
 #pragma warning restore IDE0044 // Add readonly modifier
 
+        private readonly Queue<Action> m_LoadingEvent = new Queue<Action>();
+        private IEnumerator m_LoadingRoutine;
+
+        private bool m_IsDebugScene = false;
         private bool m_LoadingEnabled = false;
         private bool m_LoadingSceneSetupDone = false;
 
@@ -53,6 +57,11 @@ namespace Syadeu.Presentation
         public PhysicsScene CurrentPhysicsScene => CurrentScene.GetPhysicsScene();
         public SceneReference CurrentSceneRef => SceneList.Instance.GetScene(m_CurrentScene.path);
 
+        public bool IsDebugScene => m_IsDebugScene;
+        public bool IsMasterScene => CurrentScene.Equals(m_MasterScene);
+        public bool IsStartScene => CurrentSceneRef.Equals(SceneList.Instance.StartScene);
+
+        public event Action OnSceneChangeCalled;
         /// <summary>
         /// 로딩 콜이 실행되었을때 맨 처음으로 발생하는 이벤트입니다.
         /// </summary>
@@ -86,7 +95,7 @@ namespace Syadeu.Presentation
         public event Action OnLoadingExit;
 
         public override bool EnableBeforePresentation => false;
-        public override bool EnableOnPresentation => true;
+        public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
         public override bool IsStartable
         {
@@ -117,6 +126,12 @@ namespace Syadeu.Presentation
                 if (m_SceneInstanceFolder == null)
                 {
                     m_SceneInstanceFolder = new GameObject("Presentation Instances").transform;
+
+                    //CoreSystem.Logger.False(IsMasterScene, "masterscene instance folder error");
+                    if (!m_IsDebugScene)
+                    {
+                        SceneManager.MoveGameObjectToScene(m_SceneInstanceFolder.gameObject, m_MasterScene);
+                    }
                 }
                 return m_SceneInstanceFolder;
             }
@@ -128,6 +143,8 @@ namespace Syadeu.Presentation
         #region Presentation Methods
         protected override PresentationResult OnInitialize()
         {
+            m_CurrentScene = SceneManager.GetActiveScene();
+
             CreateConsoleCommands();
             if (m_DebugMode)
             {
@@ -142,6 +159,8 @@ namespace Syadeu.Presentation
                 SetupMasterScene();
                 SetupLoadingScene();
             }
+
+            PresentationManager.Instance.PostUpdate += Instance_PostUpdate;
 
             return base.OnInitialize();
 
@@ -211,6 +230,24 @@ namespace Syadeu.Presentation
             }
             #endregion
         }
+        public override void OnDispose()
+        {
+            PresentationManager.Instance.PostUpdate -= Instance_PostUpdate;
+        }
+
+        private void Instance_PostUpdate()
+        {
+            if (!IsSceneLoading && m_LoadingEvent.Count > 0)
+            {
+                m_LoadingEvent.Dequeue().Invoke();
+            }
+
+            if (m_LoadingRoutine != null)
+            {
+                if (!m_LoadingRoutine.MoveNext()) m_LoadingRoutine = null;
+            }
+        }
+
         protected override PresentationResult OnStartPresentation()
         {
             if (m_DebugMode)
@@ -239,6 +276,10 @@ namespace Syadeu.Presentation
                     m_CurrentScene = currentScene;
                     StartSceneDependences(this, sceneRef);
                 }
+
+                m_IsDebugScene = true;
+
+                OnSceneChangeCalled?.Invoke();
             }
             return base.OnStartPresentation();
         }
@@ -276,23 +317,6 @@ namespace Syadeu.Presentation
             }
         }
 
-        private readonly Queue<Action> m_LoadingEvent = new Queue<Action>();
-        private IEnumerator m_LoadingRoutine;
-
-        protected override PresentationResult OnPresentation()
-        {
-            if (!IsSceneLoading && m_LoadingEvent.Count > 0)
-            {
-                m_LoadingEvent.Dequeue().Invoke();
-            }
-
-            if (m_LoadingRoutine != null)
-            {
-                if (!m_LoadingRoutine.MoveNext()) m_LoadingRoutine = null;
-            }
-
-            return base.OnPresentation();
-        }
         #endregion
 
         /// <summary>
@@ -356,6 +380,17 @@ namespace Syadeu.Presentation
             list.Add(onSceneStart);
         }
 
+        public GameObject CreateGameObject(string name)
+        {
+            CoreSystem.Logger.ThreadBlock(Syadeu.Internal.ThreadInfo.Unity);
+
+            GameObject obj = new GameObject(name);
+
+            obj.transform.SetParent(SceneInstanceFolder);
+
+            return obj;
+        }
+
         internal void SetLoadingScene(Action onLoadingEnter, Action<float, float> onWaitLoading, 
             Action<float> onLoading, 
             Action<float, float> onAfterLoading, Action onLoadingExit)
@@ -397,7 +432,7 @@ namespace Syadeu.Presentation
 
             CoreSystem.WaitInvoke(preDelay, () =>
             {
-                if (m_CurrentScene.IsValid()) InternalUnloadScene(CurrentSceneRef);
+                if (m_CurrentScene.IsValid() && !IsMasterScene) InternalUnloadScene(CurrentSceneRef);
 
                 OnLoading?.Invoke(0);
                 m_AsyncOperation = SceneManager.LoadSceneAsync(scene, LoadSceneMode.Additive);
@@ -420,6 +455,7 @@ namespace Syadeu.Presentation
                 m_CurrentScene = SceneManager.GetSceneByPath(scene);
                 SceneManager.SetActiveScene(m_CurrentScene);
 
+                OnSceneChangeCalled?.Invoke();
                 onCompleted?.Invoke(oper);
 
                 CoreSystem.Logger.Log(Channel.Scene, "Initialize dependence presentation groups");

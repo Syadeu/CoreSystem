@@ -39,6 +39,8 @@ namespace Syadeu.Presentation.Map
         [JsonIgnore] internal List<Entity<IEntity>> m_Detected;
         [JsonIgnore] internal List<Entity<IEntity>> m_Targeted;
 
+        [JsonIgnore] internal NativeList<int> m_TempGetRanges;
+
         /// <summary>
         /// 내가 발견한
         /// </summary>
@@ -64,7 +66,7 @@ namespace Syadeu.Presentation.Map
             return false;
         }
 
-        private static bool IsDetect(int[] range, int maxRange, FixedList32Bytes<GridPosition> to)
+        private static bool IsDetect(NativeArray<int> range, int maxRange, FixedList32Bytes<GridPosition> to)
         {
             bool detect = false;
             for (int i = 0; i < to.Length; i++)
@@ -82,18 +84,42 @@ namespace Syadeu.Presentation.Map
         {
             if (ev.Entity.Equals(Parent) && !IsTriggerable(ev.Entity)) return;
 
-            GridSizeComponent component = ev.Entity.GetComponent<GridSizeComponent>();
+            if (!Parent.HasComponent<GridSizeComponent>())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Entity({Parent.Name}) doesn\'t have any {nameof(GridSizeComponent)}.");
+                return;
+            }
 
-            int[] range = component.GetRange(m_MaxDetectionRange, m_IgnoreLayers);
-            bool detect = IsDetect(range, m_MaxDetectionRange, ev.To);
+            GridSizeComponent component = Parent.GetComponent<GridSizeComponent>();
+
+            FixedList128Bytes<int> ignores = new FixedList128Bytes<int>();
+            unsafe
+            {
+                fixed (int* temp = m_IgnoreLayers)
+                {
+                    ignores.AddRange(temp, m_IgnoreLayers.Length);
+                }
+            }
+
+            component.GetRange(ref m_TempGetRanges, m_MaxDetectionRange, ignores);
+            bool detect = IsDetect(m_TempGetRanges, m_MaxDetectionRange, ev.To);
 
             if (detect)
             {
-                if (m_Detected.Contains(ev.Entity)) return;
+                if (m_Detected.Contains(ev.Entity))
+                {
+                    "already detected".ToLog();
+                    return;
+                }
                 Entity<IEntity> parent = Parent.As<IEntityData, IEntity>();
 
                 m_OnDetectedPredicate.Execute(Parent, out bool predicate);
-                if (!predicate) return;
+                if (!predicate)
+                {
+                    "predicate failed".ToLog();
+                    return;
+                }
 
                 m_Detected.Add(ev.Entity);
                 m_EventSystem.PostEvent(OnGridDetectEntityEvent.GetEvent(parent, ev.Entity, true));
@@ -112,10 +138,14 @@ namespace Syadeu.Presentation.Map
                     //    if (!IsDetect(range, m_OnDetected[i].DetectionRange, ev.To)) continue;
                     //}
 
-                    m_OnDetected[i].Schedule(Parent, ev.Entity.As<IEntity, IEntityData>());
+                    m_OnDetected[i].Execute(Parent, ev.Entity.As<IEntity, IEntityData>());
                 }
+
+                "detect".ToLog();
                 return;
             }
+
+            "detect falied".ToLog();
 
             if (m_Detected.Contains(ev.Entity))
             {
@@ -131,55 +161,6 @@ namespace Syadeu.Presentation.Map
                 m_EventSystem.PostEvent(OnGridDetectEntityEvent.GetEvent(Parent.As<IEntityData, IEntity>(), ev.Entity, false));
             }
         }
-
-        //[Serializable]
-        //public sealed class LogicTrigger
-        //{
-        //    [JsonProperty(Order = 0, PropertyName = "Name")] private string m_Name = string.Empty;
-        //    [Tooltip("이 로직이 실행될 수 있는 Grid Range 값, MaxDetectionRange 값을 벗어나거나 0 이하가 될 수 없습니다.")]
-        //    [JsonProperty(Order = 1, PropertyName = "DetectionRange")] private int m_DetectionRange = 6;
-
-        //    [JsonProperty(Order = 2, PropertyName = "If")]
-        //    private Reference<TriggerPredicateAction>[] m_If = Array.Empty<Reference<TriggerPredicateAction>>();
-        //    [JsonProperty(Order = 3, PropertyName = "If Target")]
-        //    private Reference<TriggerPredicateAction>[] m_IfTarget = Array.Empty<Reference<TriggerPredicateAction>>();
-
-        //    [Space]
-        //    [JsonProperty(Order = 4, PropertyName = "Else If")]
-        //    private LogicTrigger[] m_ElseIf = Array.Empty<LogicTrigger>();
-
-        //    [Space]
-        //    [JsonProperty(Order = 5, PropertyName = "Do")]
-        //    private Reference<TriggerAction>[] m_Do = Array.Empty<Reference<TriggerAction>>();
-        //    [JsonProperty(Order = 6, PropertyName = "Do Target")]
-        //    private Reference<TriggerAction>[] m_DoTarget = Array.Empty<Reference<TriggerAction>>();
-
-        //    [JsonIgnore] public string Name => m_Name;
-        //    [JsonIgnore] public int DetectionRange => m_DetectionRange;
-
-        //    private bool IsExecutable()
-        //    {
-        //        if (m_If.Length == 0 && m_IfTarget.Length == 0) return false;
-        //        return true;
-        //    }
-        //    public bool Execute(EntityData<IEntityData> entity, EntityData<IEntityData> target)
-        //    {
-        //        if (!IsExecutable()) return false;
-
-        //        if ((m_If.Execute(entity, out bool thisPredicate) && thisPredicate) &&
-        //            (m_IfTarget.Execute(target, out bool targetPredicate) && targetPredicate))
-        //        {
-        //            return m_Do.Execute(entity) && m_DoTarget.Execute(target);
-        //        }
-
-        //        for (int i = 0; i < m_ElseIf.Length; i++)
-        //        {
-        //            bool result = m_ElseIf[i].Execute(entity, target);
-        //            if (result) return true;
-        //        }
-        //        return false;
-        //    }
-        //}
     }
     internal sealed class GridDetectorProcessor : AttributeProcessor<GridDetectorAttribute>
     {
@@ -195,10 +176,14 @@ namespace Syadeu.Presentation.Map
             }
             attribute.m_Detected = new List<Entity<IEntity>>();
 
+            attribute.m_TempGetRanges = new NativeList<int>(128, Allocator.Persistent);
+
             EventSystem.AddEvent<OnGridPositionChangedEvent>(attribute.OnGridPositionChangedEventHandler);
         }
         protected override void OnDestroy(GridDetectorAttribute attribute, EntityData<IEntityData> entity)
         {
+            attribute.m_TempGetRanges.Dispose();
+
             if (attribute.m_GridSize != null)
             {
                 EventSystem.RemoveEvent<OnGridPositionChangedEvent>(attribute.OnGridPositionChangedEventHandler);
