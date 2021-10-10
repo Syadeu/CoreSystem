@@ -137,7 +137,7 @@ namespace Syadeu.Presentation.Actions
                     action.InternalExecute();
                     action.InternalTerminate();
 
-                    handler.SetEvent(SystemEventResult.Success, m_CurrentAction.Sequence.GetType());
+                    handler.SetEvent(SystemEventResult.Success, m_CurrentAction.Payload.action.GetObject().GetType());
                     return;
                 case ActionType.Trigger:
                     TriggerAction triggerAction = TriggerAction.GetAction(temp.action);
@@ -173,7 +173,7 @@ namespace Syadeu.Presentation.Actions
                     triggerAction.InternalExecute(temp.entity);
                     triggerAction.InternalTerminate();
 
-                    handler.SetEvent(SystemEventResult.Success, m_CurrentAction.Sequence.GetType());
+                    handler.SetEvent(SystemEventResult.Success, m_CurrentAction.Payload.action.GetObject().GetType());
                     return;
             }
 

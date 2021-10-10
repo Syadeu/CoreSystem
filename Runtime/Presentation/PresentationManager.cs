@@ -497,7 +497,7 @@ namespace Syadeu.Presentation
                         continue;
                     }
 
-                    group.AddGroupDependence(GroupToHash(presentations[i].DependenceGroup));
+                    group.AddGroupDependence(GroupToHash(presentations[i].GetType()));
                 }
             }
             
@@ -970,11 +970,11 @@ namespace Syadeu.Presentation
             Group group = m_PresentationGroups[groupHash];
             if (group.m_IsStarted)
             {
-                CoreSystem.Logger.LogWarning(Channel.Presentation,
+                CoreSystem.Logger.LogError(Channel.Presentation,
                     $"Presentation Group {group.m_Name.Name} has already started and running. Request ignored.");
                 return null;
             }
-
+            $"start call {group.m_Name.Name}".ToLog();
             for (int i = 0; i < group.m_RegisteredSystemTypes.Length; i++)
             {
                 Type t = group.m_RegisteredSystemTypes[i];
@@ -1005,6 +1005,7 @@ namespace Syadeu.Presentation
             CoreSystem.Logger.Log(Channel.Presentation, $"{group.m_Name.Name} group is started");
 
             List<Hash> connectedGroups = group.GetGroupDependences();
+            $"{group.m_Name.Name} has connected group {connectedGroups.Count}".ToLog();
             for (int i = 0; i < connectedGroups.Count; i++)
             {
                 StartPresentation(connectedGroups[i]);

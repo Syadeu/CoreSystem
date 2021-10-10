@@ -28,7 +28,7 @@ namespace Syadeu.Presentation.Actor
         private readonly List<IEventHandler> m_ScheduledEvents = new List<IEventHandler>();
         private readonly EventContainer m_CurrentEvent = new EventContainer();
 
-        public Entity<ActorEntity> CurrentEventActor => m_CurrentEvent.Event.Actor;
+        public Entity<ActorEntity> CurrentEventActor => m_CurrentEvent.Event == null ? Entity<ActorEntity>.Empty : m_CurrentEvent.Event.Actor;
 
         private EntitySystem m_EntitySystem;
         private EventSystem m_EventSystem;
