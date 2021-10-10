@@ -1,4 +1,8 @@
-﻿using Newtonsoft.Json;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Newtonsoft.Json;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Attributes;
@@ -65,19 +69,62 @@ namespace Syadeu.Presentation.TurnTable
         protected override void OnCreated(TurnPlayerAttribute attribute, EntityData<IEntityData> entity)
         {
             TurnPlayerComponent component = new TurnPlayerComponent(attribute, EntitySystem.CreateHashCode());
-            component = entity.AddComponent(in component);
 
+            entity.AddComponent(in component);
+            
             if (m_TurnTableSystem == null)
             {
                 m_WaitForRegister.Enqueue(entity);
-                return;
+            }
+            else
+            {
+                m_TurnTableSystem.AddPlayer(entity);
             }
 
-            m_TurnTableSystem.AddPlayer(entity);
+            ActorStateAttribute stateAttribute = entity.GetAttribute<ActorStateAttribute>();
+            if (stateAttribute == null)
+            {
+                //CoreSystem.Logger.LogError(Channel.Entity,
+                //    $"Entity({entity.RawName}) has {nameof(TurnPlayerAttribute)} but doesn\'t have" +
+                //    $"{nameof(ActorStateAttribute)}.");
+                return;
+            }
+            stateAttribute.AddEvent(ActorStateChangedEventHandler);
         }
         protected override void OnDestroy(TurnPlayerAttribute attribute, EntityData<IEntityData> entity)
         {
             m_TurnTableSystem.RemovePlayer(entity);
+            ActorStateAttribute stateAttribute = entity.GetAttribute<ActorStateAttribute>();
+
+            if (stateAttribute == null) return;
+
+            stateAttribute.RemoveEvent(ActorStateChangedEventHandler);
+        }
+
+        private void ActorStateChangedEventHandler(ActorStateAttribute att, 
+            ActorStateAttribute.StateInfo from, ActorStateAttribute.StateInfo to)
+        {
+            ActorFaction faction = ((ActorEntity)att.Parent.Target).Faction;
+            if (faction.FactionType != FactionType.Player)
+            {
+                return;
+            }
+
+            EventSystem.PostEvent(OnPlayerFactionStateChangedEvent.GetEvent(att.Parent, from, to));
+
+            //if ((from & ActorStateAttribute.StateInfo.Battle) != ActorStateAttribute.StateInfo.Battle &&
+            //    (to & ActorStateAttribute.StateInfo.Battle) == ActorStateAttribute.StateInfo.Battle)
+            //{
+            //    ActorFactionComponent faction = att.Parent.GetComponent<ActorFactionComponent>();
+            //    if (faction.FactionType != FactionType.Player)
+            //    {
+            //        return;
+            //    }
+
+            //    EventSystem.PostEvent(OnPlayerFactionStateChangedEvent.GetEvent(att.Parent, from, to));
+            //}
+
+            
         }
     }
 }

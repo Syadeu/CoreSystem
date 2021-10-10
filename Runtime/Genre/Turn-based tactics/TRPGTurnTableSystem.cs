@@ -56,21 +56,21 @@ namespace Syadeu.Presentation.TurnTable
             }
             m_Players.Add(player);
 
-            ActorStateAttribute stateAttribute = player.GetAttribute<ActorStateAttribute>();
-            if (stateAttribute != null)
-            {
-                stateAttribute.AddEvent(OnActorStateChangedEventHandler);
-            }
+            //ActorStateAttribute stateAttribute = player.GetAttribute<ActorStateAttribute>();
+            //if (stateAttribute != null)
+            //{
+            //    stateAttribute.AddEvent(OnActorStateChangedEventHandler);
+            //}
         }
         public void RemovePlayer(EntityData<IEntityData> player)
         {
             m_Players.RemoveFor(player);
 
-            ActorStateAttribute stateAttribute = player.GetAttribute<ActorStateAttribute>();
-            if (stateAttribute != null)
-            {
-                stateAttribute.RemoveEvent(OnActorStateChangedEventHandler);
-            }
+            //ActorStateAttribute stateAttribute = player.GetAttribute<ActorStateAttribute>();
+            //if (stateAttribute != null)
+            //{
+            //    stateAttribute.RemoveEvent(OnActorStateChangedEventHandler);
+            //}
         }
 
         private void StartTurn(EntityData<IEntityData> entity)
@@ -202,11 +202,6 @@ namespace Syadeu.Presentation.TurnTable
 
                 return -1;
             }
-        }
-
-        private static void OnActorStateChangedEventHandler(ActorStateAttribute attribute, ActorStateAttribute.StateInfo stateInfo)
-        {
-            $"{attribute.Parent.RawName} state changed -> {stateInfo}".ToLog();
         }
     }
 }

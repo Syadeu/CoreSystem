@@ -581,9 +581,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fc02c0b28bcb0ce4a83f0ba9c82c26fe, type: 3}
   m_Name: EntityControlTrackClip
   m_EditorClassIdentifier: 
-  m_Animator:
-    exposedName: 95b0f3b16f5a63846b29cb8082b86c87
-    defaultValue: {fileID: 0}
 --- !u!114 &-922029548854022174
 MonoBehaviour:
   m_ObjectHideFlags: 1

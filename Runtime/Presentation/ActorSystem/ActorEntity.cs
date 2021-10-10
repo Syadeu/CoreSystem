@@ -52,19 +52,34 @@ namespace Syadeu.Presentation.Actor
             FixedList512Bytes<Hash> allies = new FixedList512Bytes<Hash>();
             FixedList512Bytes<Hash> enemies = new FixedList512Bytes<Hash>();
 
-            for (int i = 0; i < actor.Faction.m_Allies.Length; i++)
+            FactionType factionType;
+            Hash factionHash;
+            if (actor.Faction != null)
             {
-                allies.Add(actor.Faction.m_Allies[i].m_Hash);
+                for (int i = 0; i < actor.Faction.m_Allies.Length; i++)
+                {
+                    allies.Add(actor.Faction.m_Allies[i].m_Hash);
+                }
+                for (int i = 0; i < actor.Faction.m_Enemies.Length; i++)
+                {
+                    enemies.Add(actor.Faction.m_Enemies[i].m_Hash);
+                }
+                factionType = actor.Faction.m_FactionType;
+                factionHash = actor.Faction.Hash;
             }
-            for (int i = 0; i < actor.Faction.m_Enemies.Length; i++)
+            else
             {
-                enemies.Add(actor.Faction.m_Enemies[i].m_Hash);
+                factionType = FactionType.NPC;
+                factionHash = Hash.Empty;
+
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Actor({entity.RawName}) doesn\'t have any faction. This is not allowed.");
             }
 
             entity.AddComponent<ActorFactionComponent>(new ActorFactionComponent()
             {
-                m_FactionType = actor.Faction.m_FactionType,
-                m_Hash = actor.Faction.Hash,
+                m_FactionType = factionType,
+                m_Hash = factionHash,
                 m_Allies = allies,
                 m_Enemies = enemies
             });

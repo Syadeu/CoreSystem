@@ -143,12 +143,12 @@ namespace Syadeu.Presentation.Render
         }
 
         internal void InternalSetProxy(EntityBase entityBase, Entity<UIObjectEntity> entity, 
-            CanvasGroup cg, bool created)
+            CanvasGroup cg)
         {
             UIObjectEntity uiObject = (UIObjectEntity)entityBase;
             var ui = entity.GetComponent<UIObjectCanvasGroupComponent>();
 
-            cg.blocksRaycasts = created ? ui.Enabled : false;
+            cg.blocksRaycasts = ui.Enabled;
 
             if (!uiObject.m_EnableAutoFade) return;
         }

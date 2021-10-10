@@ -109,7 +109,7 @@ namespace Syadeu.Presentation.Map
             {
                 if (m_Detected.Contains(ev.Entity))
                 {
-                    "already detected".ToLog();
+                    //"already detected".ToLog();
                     return;
                 }
                 Entity<IEntity> parent = Parent.As<IEntityData, IEntity>();

@@ -24,6 +24,8 @@ namespace Syadeu.Presentation.Actor
         internal Reference<ActorFaction>[] m_Enemies = Array.Empty<Reference<ActorFaction>>();
 #pragma warning restore IDE0044 // Add readonly modifier
 
+        [JsonIgnore] public FactionType FactionType => m_FactionType;
+
         [Preserve]
         static void AOTCodeGeneration()
         {

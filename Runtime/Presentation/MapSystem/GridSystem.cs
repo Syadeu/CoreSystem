@@ -151,7 +151,14 @@ namespace Syadeu.Presentation.Map
                         continue;
                     }
 
-                    m_GridEntities[cachedIndics[i]].Remove(entity);
+                    if (m_GridEntities[cachedIndics[i]].Count == 1)
+                    {
+                        m_GridEntities.Remove(cachedIndics[i]);
+                    }
+                    else
+                    {
+                        m_GridEntities[cachedIndics[i]].Remove(entity);
+                    }
                 }
                 m_EntityGridIndices.Remove(entity);
             }
@@ -174,8 +181,6 @@ namespace Syadeu.Presentation.Map
                     m_GridEntities.Add(clone[i], entities);
                 }
                 entities.Add(entity);
-
-                $"{entity.Name} :: {clone[i]}".ToLog();
             }
 
             m_EntityGridIndices.Add(entity, clone);

@@ -807,7 +807,9 @@ namespace Syadeu.Presentation
 #endif
             if (m_ObjectEntities[hash] is IEntityData entityData)
             {
-                ProcessEntityOnDestroy(this, entityData);
+                // M_ProxySystem_OnDataObjectDestroyAsync 에서 전부 핸들
+
+                //ProcessEntityOnDestroy(this, entityData);
 
                 //if (!CoreSystem.BlockCreateInstance && m_ObjectEntities[hash] is IEntity entity)
                 //{
@@ -830,9 +832,9 @@ namespace Syadeu.Presentation
                 {
                     dataObject.InternalOnDestroy();
                 }
-            }
 
-            RemoveAllComponents(in hash);
+                RemoveAllComponents(in hash);
+            }
 
             m_DestroyedObjectsInThisFrame.Add(hash);
         }
@@ -932,7 +934,7 @@ namespace Syadeu.Presentation
             if (!m_AddedComponents.TryGetValue(entity.Idx, out var list))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Entity({entity.Name}) doesn\'t have component at all.");
+                    $"Entity({entity.Name}) doesn\'t have component at all but trying to remove {component.Name}.");
                 return;
             }
 

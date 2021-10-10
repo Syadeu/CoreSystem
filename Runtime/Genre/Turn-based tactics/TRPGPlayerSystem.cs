@@ -11,6 +11,7 @@ using Syadeu.Presentation.Map;
 using Syadeu.Presentation.Render;
 using Syadeu.Presentation.TurnTable.UI;
 using System.Collections;
+using System.Collections.Generic;
 using Unity.Collections;
 using UnityEngine;
 
@@ -27,6 +28,8 @@ namespace Syadeu.Presentation.TurnTable
 
         private ShortcutType m_CurrentShortcut = ShortcutType.None;
         private GridPath64 m_LastPath;
+
+        private readonly HashSet<EntityData<IEntityData>> m_InBattlePlayerFaction = new HashSet<EntityData<IEntityData>>();
 
         private RenderSystem m_RenderSystem;
         private CoroutineSystem m_CoroutineSystem;
@@ -63,6 +66,8 @@ namespace Syadeu.Presentation.TurnTable
             m_EventSystem.RemoveEvent<TRPGEndTurnEvent>(TRPGEndTurnEventHandler);
             m_EventSystem.RemoveEvent<OnTurnStateChangedEvent>(OnTurnStateChangedEventHandler);
             m_EventSystem.RemoveEvent<OnTurnTableStateChangedEvent>(OnTurnTableStateChangedEventHandler);
+
+            m_EventSystem.RemoveEvent<OnPlayerFactionStateChangedEvent>(OnPlayerFactionStateChangedEventHandler);
 
             m_RenderSystem = null;
             m_CoroutineSystem = null;
@@ -101,6 +106,8 @@ namespace Syadeu.Presentation.TurnTable
             m_EventSystem.AddEvent<TRPGEndTurnEvent>(TRPGEndTurnEventHandler);
             m_EventSystem.AddEvent<OnTurnStateChangedEvent>(OnTurnStateChangedEventHandler);
             m_EventSystem.AddEvent<OnTurnTableStateChangedEvent>(OnTurnTableStateChangedEventHandler);
+
+            m_EventSystem.AddEvent<OnPlayerFactionStateChangedEvent>(OnPlayerFactionStateChangedEventHandler);
         }
 
         private void Bind(EntityRaycastSystem other)
@@ -160,7 +167,7 @@ namespace Syadeu.Presentation.TurnTable
         {
             if (ev.Shortcut == m_CurrentShortcut)
             {
-                "same return".ToLog();
+                //"same return".ToLog();
                 DisableCurrentShortcut();
                 return;
             }
@@ -251,6 +258,39 @@ namespace Syadeu.Presentation.TurnTable
             if (!ev.Enabled)
             {
                 m_TRPGCanvasUISystem.SetPlayerUI(false);
+            }
+        }
+
+        private void OnPlayerFactionStateChangedEventHandler(OnPlayerFactionStateChangedEvent ev)
+        {
+            if ((ev.From & ActorStateAttribute.StateInfo.Battle) == ActorStateAttribute.StateInfo.Battle &&
+                (ev.To & ActorStateAttribute.StateInfo.Battle) != ActorStateAttribute.StateInfo.Battle)
+            {
+                m_InBattlePlayerFaction.Remove(ev.Entity);
+            }
+            else if ((ev.From & ActorStateAttribute.StateInfo.Battle) != ActorStateAttribute.StateInfo.Battle &&
+                (ev.To & ActorStateAttribute.StateInfo.Battle) == ActorStateAttribute.StateInfo.Battle)
+            {
+                if (!m_InBattlePlayerFaction.Contains(ev.Entity))
+                {
+                    m_InBattlePlayerFaction.Add(ev.Entity);
+                }
+            }
+
+            if (m_InBattlePlayerFaction.Count > 0)
+            {
+                if (!m_TurnTableSystem.Enabled)
+                {
+                    m_TurnTableSystem.StartTurnTable();
+                    "start turntable".ToLog();
+                }
+            }
+            else
+            {
+                if (m_TurnTableSystem.Enabled)
+                {
+                    m_TurnTableSystem.StopTurnTable();
+                }
             }
         }
 

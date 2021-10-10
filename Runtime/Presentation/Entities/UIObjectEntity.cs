@@ -72,13 +72,13 @@ namespace Syadeu.Presentation.Entities
                 return;
             }
 
-            m_WorldCanvasSystem.InternalSetProxy(entityBase, entity.Cast<IEntity, UIObjectEntity>(), cg, true);
+            m_WorldCanvasSystem.InternalSetProxy(entityBase, entity.Cast<IEntity, UIObjectEntity>(), cg);
         }
         public void OnProxyRemoved(EntityBase entityBase, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
         {
-            var cg = monoObj.GetComponentUnity<CanvasGroup>();
+            //var cg = monoObj.GetComponentUnity<CanvasGroup>();
 
-            m_WorldCanvasSystem.InternalSetProxy(entityBase, entity.Cast<IEntity, UIObjectEntity>(), cg, false);
+            //m_WorldCanvasSystem.InternalSetProxy(entityBase, entity.Cast<IEntity, UIObjectEntity>(), cg, false);
         }
     }
 }

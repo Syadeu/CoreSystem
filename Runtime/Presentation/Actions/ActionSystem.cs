@@ -68,7 +68,6 @@ namespace Syadeu.Presentation.Actions
                     return;
                 }
 
-                $"wait exit {m_CurrentAction.Payload.action.GetObject().Name} : left {m_ScheduledActions.Count}".ToLog();
                 handler.SetEvent(SystemEventResult.Success, m_CurrentAction.Sequence.GetType());
 
                 m_CurrentAction.Terminate.Invoke();
@@ -77,7 +76,6 @@ namespace Syadeu.Presentation.Actions
                 return;
             }
 
-            $"empty {m_CurrentAction.IsEmpty()}".ToLog();
             Payload temp = m_ScheduledActions[0];
             m_ScheduledActions.RemoveAt(0);
 
@@ -126,7 +124,6 @@ namespace Syadeu.Presentation.Actions
                             return;
                         }
 
-                        "wait".ToLog();
                         handler.SetEvent(SystemEventResult.Wait, m_CurrentAction.Sequence.GetType());
                         return;
                     }
@@ -162,7 +159,7 @@ namespace Syadeu.Presentation.Actions
                             return;
                         }
 
-                        $"wait {m_CurrentAction.IsEmpty()}".ToLog();
+                        //$"wait {m_CurrentAction.IsEmpty()}".ToLog();
                         handler.SetEvent(SystemEventResult.Wait, m_CurrentAction.Sequence.GetType());
                         return;
                     }
@@ -303,7 +300,6 @@ namespace Syadeu.Presentation.Actions
 
                 TimerStarted = false;
                 StartTime = 0;
-                "clear".ToLog();
             }
         }
         private class Payload
