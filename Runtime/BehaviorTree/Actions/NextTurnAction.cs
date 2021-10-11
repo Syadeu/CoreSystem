@@ -4,6 +4,7 @@ using Syadeu.Presentation.TurnTable;
 
 namespace Syadeu.Presentation.BehaviorTree
 {
+#if CORESYSTEM_TURNBASESYSTEM
     [TaskCategory("Entity/Actor")]
     public sealed class NextTurnAction : ActionBase
     {
@@ -39,4 +40,5 @@ namespace Syadeu.Presentation.BehaviorTree
             return TaskStatus.Success;
         }
     }
+#endif
 }

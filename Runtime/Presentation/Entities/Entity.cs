@@ -220,7 +220,8 @@ namespace Syadeu.Presentation.Entities
                 return false;
             }
 
-            return !s_EntitySystem.System.IsDestroyed(m_Idx);
+            return !s_EntitySystem.System.IsDestroyed(m_Idx) && 
+                !s_EntitySystem.System.IsMarkedAsDestroyed(m_Idx);
         }
 
         public bool Equals(Entity<T> other) => m_Idx.Equals(other.m_Idx);

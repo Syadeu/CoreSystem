@@ -6,6 +6,7 @@ using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
+using Syadeu.Presentation.Render;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -27,23 +28,30 @@ namespace Syadeu.Presentation.TurnTable
         public EntityData<IEntityData> CurrentTurn => m_CurrentTurn.Value;
 
         private EventSystem m_EventSystem;
+        private WorldCanvasSystem m_WorldCanvasSystem;
 
         #region Presentation Methods
 
         protected override PresentationResult OnInitialize()
         {
             RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, WorldCanvasSystem>(Bind);
 
             return base.OnInitialize();
         }
         public override void OnDispose()
         {
             m_EventSystem = null;
+            m_WorldCanvasSystem = null;
         }
 
         private void Bind(EventSystem other)
         {
             m_EventSystem = other;
+        }
+        private void Bind(WorldCanvasSystem other)
+        {
+            m_WorldCanvasSystem = other;
         }
 
         #endregion
@@ -82,6 +90,8 @@ namespace Syadeu.Presentation.TurnTable
                 OnTurnStateChangedEvent.GetEvent(entity, OnTurnStateChangedEvent.TurnState.Start));
 
             entity.GetAttribute<TurnPlayerAttribute>().m_OnStartTurnActions.Schedule(entity);
+
+            CheckStartTurnActorOverlayUI(entity);
         }
         private void EndTurn(EntityData<IEntityData> entity)
         {
@@ -92,6 +102,8 @@ namespace Syadeu.Presentation.TurnTable
                 OnTurnStateChangedEvent.GetEvent(entity, OnTurnStateChangedEvent.TurnState.End));
 
             entity.GetAttribute<TurnPlayerAttribute>().m_OnEndTurnActions.Schedule(entity);
+
+            CheckEndTurnActorOverlayUI(entity);
         }
         private ref TurnPlayerComponent ResetTurn(EntityData<IEntityData> entity)
         {
@@ -203,5 +215,46 @@ namespace Syadeu.Presentation.TurnTable
                 return -1;
             }
         }
+
+        #region ActorOverlayUI Provider
+
+        private void CheckStartTurnActorOverlayUI(EntityData<IEntityData> entity)
+        {
+            if (!entity.HasComponent<ActorControllerComponent>()) return;
+
+            var ctr = entity.GetComponent<ActorControllerComponent>();
+            if (!ctr.HasProvider<ActorOverlayUIProvider>()) return;
+
+            var overlay = ctr.GetProvider<ActorOverlayUIProvider>();
+
+            var list = overlay.Object.UIEntries;
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (list[i].GetObject().m_OnStartTurnPredicate.Execute(entity, out bool result) && result)
+                {
+                    m_WorldCanvasSystem.RegisterActorOverlayUI(entity.As<IEntityData, ActorEntity>(), list[i]);
+                }
+            }
+        }
+        private void CheckEndTurnActorOverlayUI(EntityData<IEntityData> entity)
+        {
+            if (!entity.HasComponent<ActorControllerComponent>()) return;
+
+            var ctr = entity.GetComponent<ActorControllerComponent>();
+            if (!ctr.HasProvider<ActorOverlayUIProvider>()) return;
+
+            var overlay = ctr.GetProvider<ActorOverlayUIProvider>();
+
+            var list = overlay.Object.UIEntries;
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (list[i].GetObject().m_OnEndTurnPredicate.Execute(entity, out bool result) && result)
+                {
+                    m_WorldCanvasSystem.UnregisterActorOverlayUI(entity.As<IEntityData, ActorEntity>(), list[i]);
+                }
+            }
+        }
+
+        #endregion
     }
 }

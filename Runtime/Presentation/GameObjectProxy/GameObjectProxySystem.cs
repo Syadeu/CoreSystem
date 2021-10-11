@@ -879,7 +879,7 @@ namespace Syadeu.Presentation.Proxy
                 proxyTransform.SetProxy(-2);
                 InstantiatePrefab(prefab, (other) =>
                 {
-                    if (proxyTransform.isDestroyed)
+                    if (proxyTransform.isDestroyed || proxyTransform.isDestroyQueued)
                     {
                         if (other.InitializeOnCall) other.Terminate();
                         other.transform.position = INIT_POSITION;

@@ -1185,7 +1185,14 @@ namespace Syadeu.Presentation
             CoreSystem.Logger.Log(Channel.Entity,
                 $"Processing OnProxyCreated at {entity.Name}");
 
-            Entity<IEntity> entityData = Entity<IEntity>.GetEntity(entity.Idx);
+            if (system.IsDestroyed(entity.Idx) || system.IsMarkedAsDestroyed(entity.Idx))
+            {
+                CoreSystem.Logger.LogWarning(Channel.Entity,
+                    $"Fast deletion at {entity.Name}. From {nameof(ProcessEntityOnProxyCreated)}");
+                return;
+            }
+
+            Entity<IEntity> entityData = Entity<IEntity>.GetEntityWithoutCheck(entity.Idx);
 
             #region Entity
             if (system.m_EntityProcessors.TryGetValue(entity.GetType(), out List<IEntityDataProcessor> entityProcessor))
@@ -1245,7 +1252,14 @@ namespace Syadeu.Presentation
             CoreSystem.Logger.Log(Channel.Entity,
                 $"Processing OnProxyRemoved at {entity.Name}");
 
-            Entity<IEntity> entityData = Entity<IEntity>.GetEntity(entity.Idx);
+            if (system.IsDestroyed(entity.Idx) || system.IsMarkedAsDestroyed(entity.Idx))
+            {
+                CoreSystem.Logger.LogWarning(Channel.Entity,
+                    $"Fast deletion at {entity.Name}. From {nameof(ProcessEntityOnProxyRemoved)}");
+                return;
+            }
+
+            Entity<IEntity> entityData = Entity<IEntity>.GetEntityWithoutCheck(entity.Idx);
 
             #region Entity
             if (system.m_EntityProcessors.TryGetValue(entity.GetType(), out List<IEntityDataProcessor> entityProcessor))
