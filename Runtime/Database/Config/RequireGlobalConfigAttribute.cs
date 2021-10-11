@@ -1,4 +1,4 @@
-﻿namespace Syadeu.Database
+﻿namespace Syadeu.Collections
 {
     [System.AttributeUsage(System.AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
     public sealed class RequireGlobalConfigAttribute : System.Attribute

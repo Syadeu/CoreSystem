@@ -2,7 +2,7 @@
 #define DEBUG_MODE
 #endif
 
-using Syadeu.Database;
+using Syadeu.Collections;
 using Syadeu.Internal;
 using Syadeu.Mono;
 using Syadeu.Presentation.Events;
@@ -23,7 +23,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.SceneManagement;
-using AABB = Syadeu.Database.AABB;
+using AABB = Syadeu.Collections.AABB;
 
 namespace Syadeu.Presentation.Proxy
 {

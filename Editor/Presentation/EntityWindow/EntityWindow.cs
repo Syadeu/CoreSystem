@@ -2,7 +2,7 @@
 using Newtonsoft.Json.Serialization;
 using NUnit.Framework;
 using Syadeu;
-using Syadeu.Database;
+using Syadeu.Collections;
 using Syadeu.Internal;
 using Syadeu.Presentation;
 using Syadeu.Presentation.Actions;

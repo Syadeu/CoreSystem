@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using Syadeu.Presentation.Attributes;
-using Syadeu.Database;
+using Syadeu.Collections;
 using BehaviorDesigner.Runtime;
 using Newtonsoft.Json;
 using Syadeu.Presentation.Entities;

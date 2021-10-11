@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     public class SQLiteMigrationData : StaticSettingEntity<SQLiteMigrationData>
     {

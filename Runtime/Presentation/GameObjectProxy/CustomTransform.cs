@@ -3,7 +3,7 @@ using Syadeu.Presentation.Events;
 using System;
 using Unity.Mathematics;
 using UnityEngine;
-using AABB = Syadeu.Database.AABB;
+using AABB = Syadeu.Collections.AABB;
 
 namespace Syadeu.Presentation.Proxy
 {

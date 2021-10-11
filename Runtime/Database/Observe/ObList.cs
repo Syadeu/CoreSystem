@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     [Obsolete("기능 수정 예정")]
     /// <summary>

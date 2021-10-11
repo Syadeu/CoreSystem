@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     [Flags]
     public enum UserTagFlag

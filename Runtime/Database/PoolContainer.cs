@@ -8,7 +8,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     public static class PoolContainer<T> where T : class
     {

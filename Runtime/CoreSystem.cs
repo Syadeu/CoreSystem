@@ -24,8 +24,8 @@ using UnityEngine.Networking;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Reflection;
-using Syadeu.Database;
-using Syadeu.Database.Lua;
+using Syadeu.Collections;
+using Syadeu.Collections.Lua;
 
 using Debug = UnityEngine.Debug;
 
@@ -448,7 +448,7 @@ namespace Syadeu
             }
             if (CoreSystemSettings.Instance.m_EnableLua)
             {
-                Syadeu.Database.Lua.LuaManager.Instance.Initialize();
+                Syadeu.Collections.Lua.LuaManager.Instance.Initialize();
             }
         }
 

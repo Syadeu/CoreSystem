@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     [Serializable] [JsonConverter(typeof(Converters.HashJsonConverter))]
     public struct Hash : IEquatable<Hash>

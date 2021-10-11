@@ -6,7 +6,7 @@ using System.Threading;
 using System.Collections.Concurrent;
 
 using Syadeu.Mono;
-using Syadeu.Database;
+using Syadeu.Collections;
 
 using UnityEngine;
 using Unity.Collections;

@@ -2,6 +2,7 @@
     "name": "Syadeu",
     "rootNamespace": "Syadeu",
     "references": [
+        "Syadeu.Collections",
         "FMODUnity",
         "Unity.InputSystem",
         "Unity.Jobs",

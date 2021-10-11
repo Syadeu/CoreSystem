@@ -1,5 +1,5 @@
 ﻿using Newtonsoft.Json;
-using Syadeu.Database.Converters;
+using Syadeu.Collections.Converters;
 using Syadeu.Mono;
 using System;
 using System.Runtime.InteropServices;
@@ -7,7 +7,7 @@ using Unity.Mathematics;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     [JsonConverter(typeof(PrefabReferenceJsonConvereter))]
     public interface IPrefabReference : IEquatable<IPrefabReference>, IValidation

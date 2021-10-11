@@ -1,4 +1,4 @@
-﻿using Syadeu.Database;
+﻿using Syadeu.Collections;
 using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Entities;
 
@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 
-using AABB = Syadeu.Database.AABB;
+using AABB = Syadeu.Collections.AABB;
 
 namespace Syadeu.Presentation.Proxy
 {

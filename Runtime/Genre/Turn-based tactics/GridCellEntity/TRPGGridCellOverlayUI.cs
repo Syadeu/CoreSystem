@@ -3,7 +3,7 @@ using DG.Tweening;
 #endif
 
 using Syadeu;
-using Syadeu.Database;
+using Syadeu.Collections;
 using Syadeu.Presentation.Input;
 using Syadeu.Presentation.Map;
 using Syadeu.Presentation.Proxy;

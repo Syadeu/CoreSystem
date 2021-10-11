@@ -3,7 +3,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     /// <summary>
     /// 객체(혹은 구조체)가 유효한지 검사하는 interface 입니다.

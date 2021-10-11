@@ -1,7 +1,7 @@
 ﻿using Syadeu.Internal;
 using System.Collections.Generic;
 
-namespace Syadeu.Database.Converters
+namespace Syadeu.Collections.Converters
 {
     public sealed class INIHeader
     {

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Reflection;
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     public class SQLiteException : Exception
     {

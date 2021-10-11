@@ -8,7 +8,7 @@ using UnityEngine.Scripting;
 
 using Unity.Mathematics;
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     [Preserve]
     /// <summary>

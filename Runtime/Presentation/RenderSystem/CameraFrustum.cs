@@ -1,4 +1,4 @@
-﻿using Syadeu.Database;
+﻿using Syadeu.Collections;
 using Syadeu.Internal;
 using System;
 using System.Runtime.CompilerServices;
@@ -8,8 +8,8 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
-using AABB = Syadeu.Database.AABB;
-using Plane = Syadeu.Database.Plane;
+using AABB = Syadeu.Collections.AABB;
+using Plane = Syadeu.Collections.Plane;
 
 namespace Syadeu.Presentation.Render
 {

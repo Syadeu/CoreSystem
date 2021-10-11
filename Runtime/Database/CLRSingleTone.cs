@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     public abstract class CLRSingleTone<T> : IDisposable where T : class, new()
     {

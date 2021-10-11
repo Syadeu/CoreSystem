@@ -13,7 +13,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using UnityEditor;
 #endif
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     [Obsolete]
     [StructLayout(LayoutKind.Sequential)]

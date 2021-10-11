@@ -12,7 +12,7 @@ using UnityEngine;
 using Syadeu.Mono;
 using Unity.Mathematics;
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     /// <summary>
     /// <para><see cref="SQLiteTable"/>, <see cref="SQLiteColumn"/> 데이터베이스의 최상위 구조체</para>

@@ -3,7 +3,7 @@ using System.Globalization;
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     public struct Plane
     {

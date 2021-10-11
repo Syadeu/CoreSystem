@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     /// <summary>
     /// <para><see cref="SQLiteTable"/>의 열 정보입니다</para>

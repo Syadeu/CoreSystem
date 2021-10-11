@@ -3,7 +3,7 @@ using System;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using Syadeu.Database;
+using Syadeu.Collections;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -12,7 +12,7 @@ using UnityEngine.InputSystem.Editor;
 
 namespace Syadeu.Presentation.Input
 {
-    public sealed class ParamActionFloat2Interaction : IInputInteraction, Database.IStaticInitializer
+    public sealed class ParamActionFloat2Interaction : IInputInteraction, Collections.IStaticInitializer
     {
         static ParamActionFloat2Interaction()
         {

@@ -4,7 +4,7 @@ using System;
 using Unity.Mathematics;
 using UnityEngine.Scripting;
 
-namespace Syadeu.Database.Converters
+namespace Syadeu.Collections.Converters
 {
     [Preserve]
     internal sealed class QuaternionJsonConvereter : JsonConverter<quaternion>

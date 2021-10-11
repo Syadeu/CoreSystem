@@ -9,7 +9,7 @@ using System.Linq;
 
 using Syadeu.Mono;
 using Syadeu.Entities;
-using Syadeu.Database;
+using Syadeu.Collections;
 
 using System.Collections;
 using System.IO;

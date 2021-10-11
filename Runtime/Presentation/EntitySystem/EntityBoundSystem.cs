@@ -2,7 +2,7 @@
 #define DEBUG_MODE
 #endif
 
-using Syadeu.Database;
+using Syadeu.Collections;
 using Syadeu.Mono;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Attributes;
@@ -16,7 +16,7 @@ using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 
-using AABB = Syadeu.Database.AABB;
+using AABB = Syadeu.Collections.AABB;
 
 namespace Syadeu.Presentation
 {

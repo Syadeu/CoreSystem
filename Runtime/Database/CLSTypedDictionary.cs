@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     public sealed class CLSTypedDictionary<TKey, TValue>
     {

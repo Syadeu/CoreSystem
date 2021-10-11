@@ -1,4 +1,4 @@
-﻿namespace Syadeu.Database
+﻿namespace Syadeu.Collections
 {
     public static class FNV1a32
     {

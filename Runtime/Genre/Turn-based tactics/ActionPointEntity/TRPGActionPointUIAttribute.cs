@@ -2,7 +2,7 @@
 using Syadeu.Presentation.Entities;
 using UnityEngine;
 using Newtonsoft.Json;
-using Syadeu.Database;
+using Syadeu.Collections;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Proxy;
 using System.ComponentModel;

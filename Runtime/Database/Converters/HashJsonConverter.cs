@@ -3,7 +3,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using UnityEngine.Scripting;
 
-namespace Syadeu.Database.Converters
+namespace Syadeu.Collections.Converters
 {
     [Preserve]
     internal sealed class HashJsonConverter : JsonConverter<Hash>

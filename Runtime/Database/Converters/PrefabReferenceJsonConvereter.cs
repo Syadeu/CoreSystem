@@ -4,7 +4,7 @@ using Syadeu.Internal;
 using System;
 using UnityEngine.Scripting;
 
-namespace Syadeu.Database.Converters
+namespace Syadeu.Collections.Converters
 {
     [Preserve]
     internal sealed class PrefabReferenceJsonConvereter : JsonConverter<IPrefabReference>

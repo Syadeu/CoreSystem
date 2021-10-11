@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     /// <summary>
     /// <para><see cref="SQLiteDatabase"/>에서 받아온 데이터 테이블 정보를 담습니다</para>

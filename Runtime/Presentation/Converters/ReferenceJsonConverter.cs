@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Syadeu.Database;
+using Syadeu.Collections;
 using Syadeu.Internal;
 using Syadeu.Presentation;
 using System;

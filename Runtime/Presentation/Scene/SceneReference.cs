@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using System;
-using Syadeu.Database;
+using Syadeu.Collections;
 using System.Linq;
 
 #if UNITY_EDITOR

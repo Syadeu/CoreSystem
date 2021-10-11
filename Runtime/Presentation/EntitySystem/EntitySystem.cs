@@ -3,8 +3,8 @@
 #endif
 
 using MoonSharp.Interpreter;
-using Syadeu.Database;
-using Syadeu.Database.Lua;
+using Syadeu.Collections;
+using Syadeu.Collections.Lua;
 using Syadeu.Internal;
 using Syadeu.Mono;
 using Syadeu.Presentation.Attributes;

@@ -1,5 +1,5 @@
 ﻿using Newtonsoft.Json;
-using Syadeu.Database.Converters;
+using Syadeu.Collections.Converters;
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -8,7 +8,7 @@ using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
     [StructLayout(LayoutKind.Sequential)]

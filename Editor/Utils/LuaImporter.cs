@@ -9,7 +9,7 @@ using UnityEditor;
 using UnityEditor.AssetImporters;
 
 using Syadeu;
-using Syadeu.Database;
+using Syadeu.Collections;
 using Syadeu.Mono;
 
 namespace SyadeuEditor

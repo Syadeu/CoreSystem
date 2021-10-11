@@ -4,7 +4,7 @@
 
 using UnityEngine;
 using Syadeu.Internal;
-using Syadeu.Database;
+using Syadeu.Collections;
 using Syadeu.Mono;
 using System.Reflection;
 using UnityEngine.AddressableAssets;

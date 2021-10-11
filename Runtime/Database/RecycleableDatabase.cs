@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     /// <summary>
     /// 재사용 가능 데이터 객체입니다.

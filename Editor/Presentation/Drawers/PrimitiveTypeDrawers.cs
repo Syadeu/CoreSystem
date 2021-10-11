@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Syadeu;
-using Syadeu.Database;
-using Syadeu.Database.Lua;
+using Syadeu.Collections;
+using Syadeu.Collections.Lua;
 using Syadeu.Internal;
 using Syadeu.Presentation;
 using System;

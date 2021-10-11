@@ -6,7 +6,7 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     public sealed class Config
     {

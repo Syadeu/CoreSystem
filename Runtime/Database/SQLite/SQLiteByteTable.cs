@@ -1,4 +1,4 @@
-﻿namespace Syadeu.Database
+﻿namespace Syadeu.Collections
 {
     internal struct SQLiteByteTable
     {

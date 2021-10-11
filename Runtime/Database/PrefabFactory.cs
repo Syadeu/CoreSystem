@@ -2,7 +2,7 @@
 using System;
 using UnityEngine;
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     public struct PrefabFactory
     {

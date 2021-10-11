@@ -1,6 +1,6 @@
 ﻿namespace Syadeu
 {
-    public struct CoreRoutine : Database.IValidation, System.IEquatable<CoreRoutine>, ICustomYieldAwaiter
+    public struct CoreRoutine : Collections.IValidation, System.IEquatable<CoreRoutine>, ICustomYieldAwaiter
     {
         private System.Guid m_Guid;
         public enum RoutineType

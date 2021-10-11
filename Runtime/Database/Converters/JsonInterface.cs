@@ -4,7 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 
-namespace Syadeu.Database.Converters
+namespace Syadeu.Collections.Converters
 {
     public static class JsonInterface
     {

@@ -2,7 +2,7 @@
 #define DEBUG_MODE
 #endif
 
-using Syadeu.Database;
+using Syadeu.Collections;
 using Syadeu.Internal;
 using Syadeu.Presentation.Entities;
 

@@ -1,4 +1,4 @@
-﻿using Syadeu.Database;
+﻿using Syadeu.Collections;
 using Syadeu.Presentation.Render;
 using System;
 using System.Collections;
@@ -6,7 +6,7 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
-using AABB = Syadeu.Database.AABB;
+using AABB = Syadeu.Collections.AABB;
 
 namespace Syadeu.Presentation.Proxy
 {

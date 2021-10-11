@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     public sealed class HashDictionory<TItem> : IDictionary<Hash, TItem>
     {

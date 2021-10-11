@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 using UnityEngine;
 using Syadeu.Mono;
-using Syadeu.Database.Converters;
+using Syadeu.Collections.Converters;
 using Syadeu.Internal;
 using System;
 
@@ -11,7 +11,7 @@ using System;
 using UnityEditor;
 #endif
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     [StaticManagerIntializeOnLoad]
     [StaticManagerDescription(

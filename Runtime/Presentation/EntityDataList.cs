@@ -13,7 +13,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     [PreferBinarySerialization] [CustomStaticSetting("Syadeu")]
     public sealed class EntityDataList : StaticSettingEntity<EntityDataList>

@@ -1,7 +1,7 @@
 ﻿using System;
 using Unity.Mathematics;
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     public enum Direction
     {
