@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Collections;
+using Syadeu.Collections.Proxy;
 using Syadeu.Internal;
 using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Entities;

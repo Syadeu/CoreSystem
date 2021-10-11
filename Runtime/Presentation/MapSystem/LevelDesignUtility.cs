@@ -12,6 +12,7 @@ using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Proxy;
 #if UNITY_EDITOR
 using UnityEditor;
+using Syadeu.Collections.Proxy;
 #endif
 
 namespace Syadeu.Presentation.Map
@@ -62,7 +63,7 @@ namespace Syadeu.Presentation.Map
 #endif
             if (entitySystem == null)
             {
-                entitySystem = PresentationSystem<EntitySystem>.System;
+                entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
                 if (entitySystem == null)
                 {
                     CoreSystem.Logger.LogError(Channel.Presentation,

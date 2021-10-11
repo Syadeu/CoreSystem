@@ -1,4 +1,5 @@
 ﻿using Syadeu.Collections;
+using Syadeu.Collections.Proxy;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Proxy;
 using System;

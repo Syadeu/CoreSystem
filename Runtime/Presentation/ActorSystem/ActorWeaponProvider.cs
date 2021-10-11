@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Syadeu.Collections.Proxy;
 using Syadeu.Internal;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Attributes;

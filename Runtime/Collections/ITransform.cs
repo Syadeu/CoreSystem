@@ -1,9 +1,7 @@
-﻿using Syadeu.Collections;
-using System;
+﻿using System;
 using Unity.Mathematics;
-using AABB = Syadeu.Collections.AABB;
 
-namespace Syadeu.Presentation.Proxy
+namespace Syadeu.Collections.Proxy
 {
     /// <summary>
     /// <see cref="Entities.Entity{T}"/>의 트랜스폼입니다.

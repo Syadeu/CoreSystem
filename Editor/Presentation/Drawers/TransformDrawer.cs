@@ -1,4 +1,4 @@
-﻿using Syadeu.Presentation.Proxy;
+﻿using Syadeu.Collections.Proxy;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;

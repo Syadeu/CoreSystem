@@ -9,6 +9,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 
 using AABB = Syadeu.Collections.AABB;
+using Syadeu.Collections.Proxy;
 
 namespace Syadeu.Presentation.Proxy
 {
@@ -151,7 +152,7 @@ namespace Syadeu.Presentation.Proxy
                 if (!value && !hasProxy && !hasProxyQueued)
                 {
                     Ref.m_ProxyIndex = ProxyQueued;
-                    PresentationSystem<GameObjectProxySystem>.System.m_OverrideRequestProxies.Enqueue(m_Index);
+                    PresentationSystem<DefaultPresentationGroup, GameObjectProxySystem>.System.m_OverrideRequestProxies.Enqueue(m_Index);
                 }
 
                 Ref.m_EnableCull = value;
@@ -216,7 +217,7 @@ namespace Syadeu.Presentation.Proxy
                 if (isDestroyed || isDestroyQueued || !hasProxy || hasProxyQueued) return null;
 
                 int2 proxyIndex = Ref.m_ProxyIndex;
-                return PresentationSystem<GameObjectProxySystem>.System.m_Instances[proxyIndex.x][proxyIndex.y];
+                return PresentationSystem<DefaultPresentationGroup, GameObjectProxySystem>.System.m_Instances[proxyIndex.x][proxyIndex.y];
             }
         }
         public bool isDestroyed
@@ -258,7 +259,7 @@ namespace Syadeu.Presentation.Proxy
                 if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
 
                 Ref.translation = value;
-                PresentationSystem<EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
+                PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
             }
         }
         public quaternion rotation
@@ -272,7 +273,7 @@ namespace Syadeu.Presentation.Proxy
             {
                 if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
                 Ref.rotation = value;
-                PresentationSystem<EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
+                PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
             }
         }
         public float3 eulerAngles
@@ -302,7 +303,7 @@ namespace Syadeu.Presentation.Proxy
             {
                 if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
                 Ref.scale = value;
-                PresentationSystem<EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
+                PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
             }
         }
 

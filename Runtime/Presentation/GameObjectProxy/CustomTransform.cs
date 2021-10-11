@@ -1,4 +1,5 @@
-﻿using Syadeu.Presentation.Entities;
+﻿using Syadeu.Collections.Proxy;
+using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using System;
 using Unity.Mathematics;
@@ -25,7 +26,7 @@ namespace Syadeu.Presentation.Proxy
                 if (provider == null) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
 
                 provider.position = value;
-                PresentationSystem<EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
+                PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
             }
         }
         public quaternion rotation
@@ -40,7 +41,7 @@ namespace Syadeu.Presentation.Proxy
                 if (provider == null) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
 
                 provider.rotation = value;
-                PresentationSystem<EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
+                PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
             }
         }
         public float3 eulerAngles
@@ -55,7 +56,7 @@ namespace Syadeu.Presentation.Proxy
                 if (provider == null) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
 
                 provider.eulerAngles = value;
-                PresentationSystem<EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
+                PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
             }
         }
         public float3 scale
@@ -70,7 +71,7 @@ namespace Syadeu.Presentation.Proxy
                 if (provider == null) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
 
                 provider.localScale = value;
-                PresentationSystem<EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
+                PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
             }
         }
 

@@ -1,4 +1,5 @@
 ﻿using Syadeu.Collections;
+using Syadeu.Collections.Proxy;
 using Syadeu.Mono;
 using Unity.Mathematics;
 using AABB = Syadeu.Collections.AABB;
