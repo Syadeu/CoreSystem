@@ -70,13 +70,24 @@ namespace Syadeu.Presentation.Map
         [JsonIgnore] public int3 Size => m_Size;
         [JsonIgnore] public float CellSize => m_CellSize;
         [JsonIgnore] public int LayerCount => m_Layers.Length;
-        [JsonIgnore] public int GridCellCapacity => Grid.length;
         [JsonIgnore] private BinaryGrid Grid { get; set; }
         [JsonIgnore] private BinaryGrid[] SubGrids { get; set; }
         [JsonIgnore] private NativeHashSet<int>[] Layers { get; set; }
 
         [JsonIgnore] public List<int> m_ObstacleLayerIndices = new List<int>();
         [JsonIgnore] public NativeHashSet<int> ObstacleLayer { get; private set; }
+        [JsonIgnore] public int Length
+        {
+            get
+            {
+                int temp = Grid.length;
+                for (int i = 0; i < SubGrids.Length; i++)
+                {
+                    temp += SubGrids[i].length;
+                }
+                return temp;
+            }
+        }
 
         [JsonIgnore] public Mesh CellMesh { get; private set; }
         [JsonIgnore] public Material CellMaterial { get; private set; }
@@ -94,28 +105,35 @@ namespace Syadeu.Presentation.Map
                 }
             }
 
-            SubGrids = new BinaryGrid[m_SubGrids.Length];
-            for (int i = 0; i < m_SubGrids.Length; i++)
+            if (m_SubGrids.Length == 0)
             {
-#if UNITY_EDITOR
-                if (m_SubGrids[i].m_Size.Equals(int3.zero))
+                SubGrids = Array.Empty<BinaryGrid>();
+            }
+            else
+            {
+                SubGrids = new BinaryGrid[m_SubGrids.Length];
+                for (int i = 0; i < m_SubGrids.Length; i++)
                 {
-                    CoreSystem.Logger.LogError(Channel.Presentation,
-                        $"Sub Grid {m_SubGrids[i].m_Name} at {i} size is zero. This is not allowed.");
+#if UNITY_EDITOR
+                    if (m_SubGrids[i].m_Size.Equals(int3.zero))
+                    {
+                        CoreSystem.Logger.LogError(Channel.Presentation,
+                            $"Sub Grid {m_SubGrids[i].m_Name} at {i} size is zero. This is not allowed.");
+                    }
+#endif
+                    SubGrids[i] = new BinaryGrid(m_SubGrids[i].m_Center, m_SubGrids[i].m_Size, m_CellSize);
+                }
+#if UNITY_EDITOR
+                for (int i = 0; i < SubGrids.Length; i++)
+                {
+                    if (Grid.bounds.Intersect(SubGrids[i].bounds))
+                    {
+                        CoreSystem.Logger.LogError(Channel.Presentation,
+                            $"Sub Grid {m_SubGrids[i].m_Name} intersects with main grid. Are you intended?");
+                    }
                 }
 #endif
-                SubGrids[i] = new BinaryGrid(m_SubGrids[i].m_Center, m_SubGrids[i].m_Size, m_CellSize);
             }
-#if UNITY_EDITOR
-            for (int i = 0; i < SubGrids.Length; i++)
-            {
-                if (Grid.bounds.Intersect(SubGrids[i].bounds))
-                {
-                    CoreSystem.Logger.LogError(Channel.Presentation,
-                        $"Sub Grid {m_SubGrids[i].m_Name} intersects with main grid. Are you intended?");
-                }
-            }
-#endif
 
             float halfCell = m_CellSize * .5f;
             CellMesh = new Mesh();

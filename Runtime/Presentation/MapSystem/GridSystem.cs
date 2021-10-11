@@ -37,6 +37,7 @@ namespace Syadeu.Presentation.Map
         private readonly Dictionary<Entity<IEntity>, int[]> m_EntityGridIndices = new Dictionary<Entity<IEntity>, int[]>();
         private readonly Dictionary<int, List<Entity<IEntity>>> m_GridEntities = new Dictionary<int, List<Entity<IEntity>>>();
 
+        private NativeHashMap<GridPosition, Entity<IEntity>> m_PlacedCellUIEntities;
         private readonly List<Entity<IEntity>> m_DrawnCellUIEntities = new List<Entity<IEntity>>();
 
         private GridMapAttribute GridMap => m_MainGrid;
@@ -47,6 +48,7 @@ namespace Syadeu.Presentation.Map
         protected override PresentationResult OnInitialize()
         {
             CreateConsoleCommands();
+            m_PlacedCellUIEntities = new NativeHashMap<GridPosition, Entity<IEntity>>(1024, AllocatorManager.Persistent);
 
             return base.OnInitialize();
         }
@@ -195,6 +197,8 @@ namespace Syadeu.Presentation.Map
             m_RenderSystem.OnRender -= M_RenderSystem_OnRender;
 
             m_EventSystem.RemoveEvent<Events.OnTransformChangedEvent>(OnTransformChangedEventHandler);
+
+            m_PlacedCellUIEntities.Dispose();
 
             m_EntitySystem = null;
             m_RenderSystem = null;
@@ -365,6 +369,12 @@ namespace Syadeu.Presentation.Map
             if (m_MainGrid == null)
             {
                 m_MainGrid = gridMap;
+
+                if (m_MainGrid.Length > m_PlacedCellUIEntities.Capacity)
+                {
+                    m_PlacedCellUIEntities.Dispose();
+                    m_PlacedCellUIEntities = new NativeHashMap<GridPosition, Entity<IEntity>>(m_MainGrid.Length, AllocatorManager.Persistent);
+                }
             }
             else
             {
@@ -712,6 +722,11 @@ namespace Syadeu.Presentation.Map
 
             temp.transform.position = pos;
         }
+
+        public bool HasUICell(GridPosition position)
+        {
+            return m_PlacedCellUIEntities.ContainsKey(position);
+        }
         public Entity<IEntity> PlaceUICell(GridPosition position, float heightOffset = .25f)
         {
 #if DEBUG_MODE
@@ -736,6 +751,7 @@ namespace Syadeu.Presentation.Map
             {
                 m_GridPosition = position
             });
+            m_PlacedCellUIEntities.Add(position, entity);
 
             return entity;
         }
@@ -747,6 +763,7 @@ namespace Syadeu.Presentation.Map
             }
 
             m_DrawnCellUIEntities.Clear();
+            m_PlacedCellUIEntities.Clear();
         }
 
         #endregion

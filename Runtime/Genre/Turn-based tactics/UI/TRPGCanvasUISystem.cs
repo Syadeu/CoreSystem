@@ -1,4 +1,5 @@
 ﻿using Syadeu.Internal;
+using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
@@ -6,6 +7,7 @@ using Syadeu.Presentation.Proxy;
 using Syadeu.Presentation.Render;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -29,6 +31,8 @@ namespace Syadeu.Presentation.TurnTable.UI
 
         private EventSystem m_EventSystem;
         private Input.InputSystem m_InputSystem;
+        private WorldCanvasSystem m_WorldCanvasSystem;
+
         private TRPGTurnTableSystem m_TurnTableSystem;
 
         protected override PresentationResult OnInitialize()
@@ -37,18 +41,23 @@ namespace Syadeu.Presentation.TurnTable.UI
 
             RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, Input.InputSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, WorldCanvasSystem>(Bind);
             RequestSystem<TRPGIngameSystemGroup, TRPGTurnTableSystem>(Bind);
 
             return base.OnInitialize();
         }
         public override void OnDispose()
         {
+            m_TurnTableSystem.RemoveOnStartTurnEvent(CheckStartTurnActorOverlayUI);
+            m_TurnTableSystem.RemoveOnEndTurnEvent(CheckEndTurnActorOverlayUI);
+
             m_Shortcuts = null;
             m_EndTurn = null;
             m_FireUI = null;
 
             m_EventSystem = null;
             m_InputSystem = null;
+            m_WorldCanvasSystem = null;
             m_TurnTableSystem = null;
         }
 
@@ -62,9 +71,16 @@ namespace Syadeu.Presentation.TurnTable.UI
         {
             m_InputSystem = other;
         }
+        private void Bind(WorldCanvasSystem other)
+        {
+            m_WorldCanvasSystem = other;
+        }
         private void Bind(TRPGTurnTableSystem other)
         {
             m_TurnTableSystem = other;
+
+            m_TurnTableSystem.AddOnStartTurnEvent(CheckStartTurnActorOverlayUI);
+            m_TurnTableSystem.AddOnEndTurnEvent(CheckEndTurnActorOverlayUI);
         }
 
         #endregion
@@ -131,5 +147,52 @@ namespace Syadeu.Presentation.TurnTable.UI
             SetEndTurn(!enable);
             SetShortcuts(!enable, true);
         }
+
+        #region ActorOverlayUI Provider
+
+        private void CheckStartTurnActorOverlayUI(EntityData<IEntityData> entity)
+        {
+            if (!entity.HasComponent<ActorControllerComponent>()) return;
+
+            ActorControllerComponent ctr = entity.GetComponent<ActorControllerComponent>();
+            if (!ctr.HasProvider<ActorOverlayUIProvider>()) return;
+
+            Instance<ActorOverlayUIProvider> overlay = ctr.GetProvider<ActorOverlayUIProvider>();
+
+            IReadOnlyList<Reference<ActorOverlayUIEntry>> list = overlay.Object.UIEntries;
+            for (int i = 0; i < list.Count; i++)
+            {
+                ActorOverlayUIEntry obj = list[i].GetObject();
+                if (obj.m_EnableAlways || obj.m_EnableWhileTurnTable) continue;
+
+                if (obj.m_OnStartTurnPredicate.Execute(entity, out bool result) && result)
+                {
+                    m_WorldCanvasSystem.RegisterActorOverlayUI(entity.As<IEntityData, ActorEntity>(), list[i]);
+                }
+            }
+        }
+        private void CheckEndTurnActorOverlayUI(EntityData<IEntityData> entity)
+        {
+            if (!entity.HasComponent<ActorControllerComponent>()) return;
+
+            ActorControllerComponent ctr = entity.GetComponent<ActorControllerComponent>();
+            if (!ctr.HasProvider<ActorOverlayUIProvider>()) return;
+
+            Instance<ActorOverlayUIProvider> overlay = ctr.GetProvider<ActorOverlayUIProvider>();
+
+            IReadOnlyList<Reference<ActorOverlayUIEntry>> list = overlay.Object.UIEntries;
+            for (int i = 0; i < list.Count; i++)
+            {
+                ActorOverlayUIEntry obj = list[i].GetObject();
+                if (obj.m_EnableAlways || obj.m_EnableWhileTurnTable) continue;
+
+                if (obj.m_OnEndTurnPredicate.Execute(entity, out bool result) && result)
+                {
+                    m_WorldCanvasSystem.UnregisterActorOverlayUI(entity.As<IEntityData, ActorEntity>(), list[i]);
+                }
+            }
+        }
+
+        #endregion
     }
 }

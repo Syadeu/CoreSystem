@@ -2,11 +2,13 @@
 #define DEBUG_MODE
 #endif
 
+using Syadeu.Internal;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Render;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -22,13 +24,21 @@ namespace Syadeu.Presentation.TurnTable
         private readonly LinkedList<EntityData<IEntityData>> m_TurnTable = new LinkedList<EntityData<IEntityData>>();
         private LinkedListNode<EntityData<IEntityData>> m_CurrentTurn = null;
 
-        private bool m_TurnTableEnabled = false;
+        private event Action<EntityData<IEntityData>> OnStartTurn;
+        private event Action<EntityData<IEntityData>> OnEndTurn;
+#if DEBUG_MODE
+        private readonly HashSet<int>
+            m_AddedOnStartTurnEvent = new HashSet<int>(),
+            m_AddedOnEndTurnEvent = new HashSet<int>();
+#endif
 
-        public bool Enabled => m_TurnTableEnabled;
-        public EntityData<IEntityData> CurrentTurn => m_CurrentTurn.Value;
+        private bool m_TurnTableEnabled = false;
 
         private EventSystem m_EventSystem;
         private WorldCanvasSystem m_WorldCanvasSystem;
+
+        public bool Enabled => m_TurnTableEnabled;
+        public EntityData<IEntityData> CurrentTurn => m_CurrentTurn.Value;
 
         #region Presentation Methods
 
@@ -81,6 +91,59 @@ namespace Syadeu.Presentation.TurnTable
             //}
         }
 
+        #region Events
+
+        public void AddOnStartTurnEvent(Action<EntityData<IEntityData>> ev)
+        {
+#if DEBUG_MODE
+            int hash = ev.GetHashCode();
+            if (m_AddedOnStartTurnEvent.Contains(hash))
+            {
+                CoreSystem.Logger.LogError(Channel.Event,
+                    $"Attemp to add same delegate event({ev.Method.Name}) at {ev.Method.Name}.");
+                return;
+            }
+            m_AddedOnStartTurnEvent.Add(hash);
+#endif
+
+            OnStartTurn += ev;
+        }
+        public void RemoveOnStartTurnEvent(Action<EntityData<IEntityData>> ev)
+        {
+#if DEBUG_MODE
+            int hash = ev.GetHashCode();
+            m_AddedOnStartTurnEvent.Remove(hash);
+#endif
+
+            OnStartTurn -= ev;
+        }
+        public void AddOnEndTurnEvent(Action<EntityData<IEntityData>> ev)
+        {
+#if DEBUG_MODE
+            int hash = ev.GetHashCode();
+            if (m_AddedOnEndTurnEvent.Contains(hash))
+            {
+                CoreSystem.Logger.LogError(Channel.Event,
+                    $"Attemp to add same delegate event({ev.Method.Name}) at {ev.Method.Name}.");
+                return;
+            }
+            m_AddedOnEndTurnEvent.Add(hash);
+#endif
+
+            OnEndTurn += ev;
+        }
+        public void RemoveOnEndTurnEvent(Action<EntityData<IEntityData>> ev)
+        {
+#if DEBUG_MODE
+            int hash = ev.GetHashCode();
+            m_AddedOnEndTurnEvent.Remove(hash);
+#endif
+
+            OnEndTurn -= ev;
+        }
+
+        #endregion
+
         private void StartTurn(EntityData<IEntityData> entity)
         {
             ref TurnPlayerComponent player = ref entity.GetComponent<TurnPlayerComponent>();
@@ -91,7 +154,7 @@ namespace Syadeu.Presentation.TurnTable
 
             entity.GetAttribute<TurnPlayerAttribute>().m_OnStartTurnActions.Schedule(entity);
 
-            CheckStartTurnActorOverlayUI(entity);
+            OnStartTurn?.Invoke(entity);
         }
         private void EndTurn(EntityData<IEntityData> entity)
         {
@@ -103,7 +166,7 @@ namespace Syadeu.Presentation.TurnTable
 
             entity.GetAttribute<TurnPlayerAttribute>().m_OnEndTurnActions.Schedule(entity);
 
-            CheckEndTurnActorOverlayUI(entity);
+            OnEndTurn?.Invoke(entity);
         }
         private ref TurnPlayerComponent ResetTurn(EntityData<IEntityData> entity)
         {
@@ -121,9 +184,18 @@ namespace Syadeu.Presentation.TurnTable
 
         public void StartTurnTable()
         {
+            if (m_TurnTableEnabled)
+            {
+                "already started".ToLogError();
+                return;
+            }
+
+            m_TurnTableEnabled = true;
+
             if (m_Players.Count == 0)
             {
                 StartCoroutine(WaitForJoinPlayer());
+                return;
             }
             else
             {
@@ -131,12 +203,17 @@ namespace Syadeu.Presentation.TurnTable
 
                 StartTurn(CurrentTurn);
             }
-            m_TurnTableEnabled = true;
-
+            
             m_EventSystem.PostEvent(OnTurnTableStateChangedEvent.GetEvent(m_TurnTableEnabled));
         }
         public void StopTurnTable()
         {
+            if (!m_TurnTableEnabled)
+            {
+                "already stopped".ToLogError();
+                return;
+            }
+
             m_TurnTableEnabled = false;
             InternalClearTable();
 
@@ -155,6 +232,8 @@ namespace Syadeu.Presentation.TurnTable
             InternalInitializeTable();
 
             StartTurn(CurrentTurn);
+
+            m_EventSystem.PostEvent(OnTurnTableStateChangedEvent.GetEvent(m_TurnTableEnabled));
         }
 
         private void InternalInitializeTable()
@@ -215,46 +294,5 @@ namespace Syadeu.Presentation.TurnTable
                 return -1;
             }
         }
-
-        #region ActorOverlayUI Provider
-
-        private void CheckStartTurnActorOverlayUI(EntityData<IEntityData> entity)
-        {
-            if (!entity.HasComponent<ActorControllerComponent>()) return;
-
-            var ctr = entity.GetComponent<ActorControllerComponent>();
-            if (!ctr.HasProvider<ActorOverlayUIProvider>()) return;
-
-            var overlay = ctr.GetProvider<ActorOverlayUIProvider>();
-
-            var list = overlay.Object.UIEntries;
-            for (int i = 0; i < list.Count; i++)
-            {
-                if (list[i].GetObject().m_OnStartTurnPredicate.Execute(entity, out bool result) && result)
-                {
-                    m_WorldCanvasSystem.RegisterActorOverlayUI(entity.As<IEntityData, ActorEntity>(), list[i]);
-                }
-            }
-        }
-        private void CheckEndTurnActorOverlayUI(EntityData<IEntityData> entity)
-        {
-            if (!entity.HasComponent<ActorControllerComponent>()) return;
-
-            var ctr = entity.GetComponent<ActorControllerComponent>();
-            if (!ctr.HasProvider<ActorOverlayUIProvider>()) return;
-
-            var overlay = ctr.GetProvider<ActorOverlayUIProvider>();
-
-            var list = overlay.Object.UIEntries;
-            for (int i = 0; i < list.Count; i++)
-            {
-                if (list[i].GetObject().m_OnEndTurnPredicate.Execute(entity, out bool result) && result)
-                {
-                    m_WorldCanvasSystem.UnregisterActorOverlayUI(entity.As<IEntityData, ActorEntity>(), list[i]);
-                }
-            }
-        }
-
-        #endregion
     }
 }

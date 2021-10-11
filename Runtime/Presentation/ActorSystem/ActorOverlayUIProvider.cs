@@ -33,7 +33,7 @@ namespace Syadeu.Presentation.Actor
             for (int i = 0; i < m_UIEntries.Length; i++)
             {
                 ActorOverlayUIEntry entry = m_UIEntries[i].GetObject();
-                if (!entry.m_CreateOnStart) continue;
+                if (!entry.m_EnableAlways) continue;
 
                 worldCanvasSystem.RegisterActorOverlayUI(entity, m_UIEntries[i]);
             }
