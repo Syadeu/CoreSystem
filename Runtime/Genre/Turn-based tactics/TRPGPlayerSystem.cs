@@ -2,6 +2,7 @@
 #define DEBUG_MODE
 #endif
 
+using Syadeu.Internal;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
@@ -10,6 +11,7 @@ using Syadeu.Presentation.Input;
 using Syadeu.Presentation.Map;
 using Syadeu.Presentation.Render;
 using Syadeu.Presentation.TurnTable.UI;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Collections;
@@ -18,7 +20,8 @@ using UnityEngine;
 namespace Syadeu.Presentation.TurnTable
 {
     [SubSystem(typeof(DefaultPresentationGroup), typeof(RenderSystem))]
-    public sealed class TRPGPlayerSystem : PresentationSystemEntity<TRPGPlayerSystem>
+    public sealed class TRPGPlayerSystem : PresentationSystemEntity<TRPGPlayerSystem>,
+        ISystemEventScheduler
     {
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;
@@ -281,15 +284,19 @@ namespace Syadeu.Presentation.TurnTable
             {
                 if (!m_TurnTableSystem.Enabled)
                 {
-                    m_TurnTableSystem.StartTurnTable();
+                    m_ScheduledActions.Enqueue(m_TurnTableSystem.StartTurnTable);
+                    //m_TurnTableSystem.StartTurnTable();
                     "start turntable".ToLog();
+                    m_EventSystem.TakeQueueTicket(this);
                 }
             }
             else
             {
                 if (m_TurnTableSystem.Enabled)
                 {
-                    m_TurnTableSystem.StopTurnTable();
+                    m_ScheduledActions.Enqueue(m_TurnTableSystem.StopTurnTable);
+                    //m_TurnTableSystem.StopTurnTable();
+                    m_EventSystem.TakeQueueTicket(this);
                 }
             }
         }
@@ -327,6 +334,13 @@ namespace Syadeu.Presentation.TurnTable
             int requireAp = m_LastPath.Length;
 
             turnPlayer.ActionPoint -= requireAp;
+        }
+
+        private readonly Queue<Action> m_ScheduledActions = new Queue<Action>();
+        void ISystemEventScheduler.Execute(ScheduledEventHandler handler)
+        {
+            m_ScheduledActions.Dequeue().Invoke();
+            handler.SetEvent(SystemEventResult.Success, TypeHelper.TypeOf<TRPGPlayerSystem>.Type);
         }
     }
 }

@@ -10,6 +10,11 @@ namespace Syadeu.Presentation.TurnTable
         public bool BurstCompile => false;
         public int To => m_To;
 
+        public TRPGActorActionPointChangedEvent(int to)
+        {
+            m_To = to;
+        }
+
         public void OnExecute(Entity<ActorEntity> from)
         {
         }

@@ -1,4 +1,5 @@
 ﻿using Syadeu.Database;
+using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Map;
@@ -186,6 +187,12 @@ namespace Syadeu.Presentation.TurnTable
             navMesh.MoveTo(m_Parent.As<IEntityData, IEntity>(), path, ev);
         }
         public void MoveTo(in float3 point, in ActorMoveEvent ev)
+        {
+            NavMeshSystem navMesh = PresentationSystem<DefaultPresentationGroup, NavMeshSystem>.System;
+            navMesh.MoveTo(m_Parent.As<IEntityData, IEntity>(), point, ev);
+        }
+        public void MoveTo<TPredicate>(in float3 point, in ActorMoveEvent<TPredicate> ev)
+            where TPredicate : unmanaged, IExecutable<Entity<ActorEntity>>
         {
             NavMeshSystem navMesh = PresentationSystem<DefaultPresentationGroup, NavMeshSystem>.System;
             navMesh.MoveTo(m_Parent.As<IEntityData, IEntity>(), point, ev);

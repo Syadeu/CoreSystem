@@ -312,6 +312,27 @@ namespace Syadeu.Presentation.Map
 
             entity.GetComponent<ActorControllerComponent>().ScheduleEvent(ev, true);
         }
+        public void MoveTo<TPredicate>(Entity<IEntity> entity, float3 point, ActorMoveEvent<TPredicate> ev)
+            where TPredicate : unmanaged, IExecutable<Entity<ActorEntity>>
+        {
+            NavAgentAttribute navAgent = entity.GetAttribute<NavAgentAttribute>();
+            if (navAgent == null)
+            {
+                "no agent".ToLogError();
+                return;
+            }
+
+            FixedList4096Bytes<float3> position = new FixedList4096Bytes<float3>();
+            position.Add(point);
+            ev.m_MoveJob = new MoveJob()
+            {
+                m_Entity = entity.As<IEntity,IEntityData>(),
+                m_Positions = position
+            };
+            //m_CoroutineSystem.PostCoroutineJob(moveJob);
+
+            entity.GetComponent<ActorControllerComponent>().ScheduleEvent(ev, true);
+        }
         public void MoveTo(Entity<IEntity> entity, GridPath64 path, ActorMoveEvent ev)
         {
             NavAgentAttribute navAgent = entity.GetAttribute<NavAgentAttribute>();
@@ -563,6 +584,58 @@ namespace Syadeu.Presentation.Map
             }
 
             agent.m_MoveJob 
+                = PresentationSystem<DefaultPresentationGroup, CoroutineSystem>.System.PostCoroutineJob(m_MoveJob);
+        }
+    }
+    public struct ActorMoveEvent<TPredicate> : IActorEvent, IEventSequence
+        where TPredicate : unmanaged, IExecutable<Entity<ActorEntity>>
+    {
+        private EntityData<IEntityData> m_Entity;
+        private float m_AfterDelay;
+        internal NavMeshSystem.MoveJob m_MoveJob;
+        private TPredicate m_Predicate;
+
+        public bool KeepWait
+        {
+            get
+            {
+                NavAgentComponent agent = m_Entity.GetComponent<NavAgentComponent>();
+                return agent.m_IsMoving;
+            }
+        }
+        public float AfterDelay => m_AfterDelay;
+        public bool BurstCompile => false;
+
+        public ActorMoveEvent(EntityData<IEntityData> entity, float afterDelay, TPredicate predicate)
+        {
+            m_Entity = entity;
+            m_AfterDelay = afterDelay;
+
+            m_MoveJob = default;
+            m_Predicate = predicate;
+        }
+        public ActorMoveEvent(EntityData<IEntityData> entity, TPredicate predicate)
+        {
+            m_Entity = entity;
+            m_AfterDelay = 0;
+
+            m_MoveJob = default;
+            m_Predicate = predicate;
+        }
+
+        public void OnExecute(Entity<ActorEntity> from)
+        {
+            if (!m_Predicate.Predicate(in from)) return;
+
+            ref NavAgentComponent agent = ref m_Entity.GetComponent<NavAgentComponent>();
+            agent.m_IsMoving = true;
+
+            if (agent.m_MoveJob.IsValid())
+            {
+                agent.m_MoveJob.Stop();
+            }
+
+            agent.m_MoveJob
                 = PresentationSystem<DefaultPresentationGroup, CoroutineSystem>.System.PostCoroutineJob(m_MoveJob);
         }
     }

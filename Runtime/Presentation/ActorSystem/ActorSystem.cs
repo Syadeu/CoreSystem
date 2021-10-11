@@ -286,7 +286,8 @@ namespace Syadeu.Presentation.Actor
 
             int index;
             if (!m_CurrentEvent.IsEmpty() &&
-                m_CurrentEvent.Event.EventType.Equals(TypeHelper.TypeOf<TEvent>.Type))
+                m_CurrentEvent.Event.EventType.Equals(TypeHelper.TypeOf<TEvent>.Type) &&
+                m_EventSystem.GetNextTicketSystem() == null)
             {
                 bool wasSequence = m_CurrentEvent.Event.EventSequence != null;
                 m_CurrentEvent.Clear();
