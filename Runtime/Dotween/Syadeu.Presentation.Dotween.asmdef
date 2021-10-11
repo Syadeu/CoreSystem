@@ -3,6 +3,7 @@
     "rootNamespace": "Syadeu.Presentation.Dotween",
     "references": [
         "Syadeu",
+        "Syadeu.Collections",
         "DOTween.Modules",
         "DOTweenPro.Scripts"
     ],
