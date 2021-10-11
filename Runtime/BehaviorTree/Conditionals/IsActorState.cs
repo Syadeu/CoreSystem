@@ -1,10 +1,11 @@
 ﻿using BehaviorDesigner.Runtime.Tasks;
 using Syadeu.Presentation.Actor;
+using System;
 using UnityEngine;
 
 namespace Syadeu.Presentation.BehaviorTree
 {
-    [TaskCategory("Entity/Actor")]
+    [TaskCategory("Entity/Actor"), Obsolete("Use IsActorStateConditional")]
     public sealed class IsActorState : Conditional
     {
         [SerializeField] private SharedRecycleableMonobehaviour m_This;

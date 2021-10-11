@@ -1,8 +1,10 @@
 ﻿using BehaviorDesigner.Runtime;
 using Syadeu.Presentation.Proxy;
+using System;
 
 namespace Syadeu.Presentation.BehaviorTree
 {
+    [Obsolete]
     public sealed class SharedRecycleableMonobehaviour : SharedVariable<RecycleableMonobehaviour>
     {
         public static implicit operator SharedRecycleableMonobehaviour(RecycleableMonobehaviour t)

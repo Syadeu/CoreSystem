@@ -8,6 +8,8 @@ namespace Syadeu.Presentation.BehaviorTree
 {
     public static class PresentationBehaviorTreeUtility
     {
+        public const string c_SelfEntityString = "This";
+
         public static TaskStatus LoadAttributeFromMono<T>(SharedRecycleableMonobehaviour target, string calledFrom, out T att) where T : AttributeBase
         {
             if (!target.IsValid())

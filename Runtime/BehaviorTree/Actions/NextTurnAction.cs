@@ -1,38 +1,35 @@
 ﻿using BehaviorDesigner.Runtime.Tasks;
 using Syadeu.Presentation.Events;
 using Syadeu.Presentation.TurnTable;
-using UnityEngine;
 
 namespace Syadeu.Presentation.BehaviorTree
 {
-    [TaskCategory("Entity/Actor"), System.Obsolete("Use NextTurnAction")]
-    public sealed class NextTurn : Action
+    [TaskCategory("Entity/Actor")]
+    public sealed class NextTurnAction : ActionBase
     {
-        [SerializeField] private SharedRecycleableMonobehaviour m_This;
-
         public override TaskStatus OnUpdate()
         {
-            if (!m_This.IsValid())
+            if (!Entity.IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Invalid Target at {nameof(NextTurn)}.");
+                    $"Invalid Target at {nameof(NextTurnAction)}.");
                 return TaskStatus.Failure;
             }
 
-            
-            if (!m_This.HasComponent<TurnPlayerComponent>())
+
+            if (!Entity.HasComponent<TurnPlayerComponent>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"{m_This.GetEntity().Name} doesn\'t have any {nameof(TurnPlayerComponent)}.");
+                    $"{Entity.RawName} doesn\'t have any {nameof(TurnPlayerComponent)}.");
                 return TaskStatus.Failure;
             }
 
-            TurnPlayerComponent turnPlayer = m_This.GetComponent<TurnPlayerComponent>();
+            TurnPlayerComponent turnPlayer = Entity.GetComponent<TurnPlayerComponent>();
 
             if (!turnPlayer.IsMyTurn)
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"It is not a entity({m_This.GetEntity().Name}) turn.");
+                    $"It is not a entity({Entity.RawName}) turn.");
                 return TaskStatus.Failure;
             }
 
