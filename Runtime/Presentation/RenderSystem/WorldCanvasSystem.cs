@@ -37,6 +37,9 @@ namespace Syadeu.Presentation.Render
                     m_Canvas.renderMode = RenderMode.WorldSpace;
                     m_Canvas.worldCamera = m_RenderSystem.Camera;
                     obj.AddComponent<CanvasScaler>();
+
+                    m_CanvasRaycaster = Canvas.gameObject.AddComponent<GraphicRaycaster>();
+                    m_CanvasRaycaster.blockingMask = LayerMask.GetMask("UI");
                 }
 
                 return m_Canvas;

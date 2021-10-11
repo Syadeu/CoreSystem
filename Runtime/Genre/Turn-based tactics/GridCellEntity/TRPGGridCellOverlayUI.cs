@@ -164,7 +164,12 @@ namespace Syadeu.Presentation.TurnTable
         }
         public void OnPointerEnter(PointerEventData eventData)
         {
-            if (!IsValid()) return;
+            if (!IsValid())
+            {
+                "not valid return".ToLog();
+                return;
+            }
+            "in".ToLog();
 
             SetState(State.Highlighted);
 
