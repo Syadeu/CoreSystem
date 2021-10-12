@@ -10,7 +10,7 @@ namespace Syadeu.Collections
     /// <summary>
     /// <see cref="EntityData{T}"/>, <see cref="Entity{T}"/> 의 인스턴스 ID
     /// </summary>
-    public readonly struct EntityID : IValidation, IEquatable<EntityID>, IEquatable<InstanceID>
+    public readonly struct EntityID : IValidation, IEquatable<EntityID>, IEquatable<InstanceID>, IEquatable<Hash>
     {
         public static readonly EntityID Empty = new EntityID(Hash.Empty);
 
@@ -25,6 +25,7 @@ namespace Syadeu.Collections
 
         public bool Equals(EntityID other) => m_Hash.Equals(other.m_Hash);
         public bool Equals(InstanceID other) => m_Hash.Equals(other.Hash);
+        public bool Equals(Hash other) => m_Hash.Equals(other);
 
         public bool IsEmpty() => m_Hash.IsEmpty();
         public bool IsValid() => !m_Hash.IsEmpty();

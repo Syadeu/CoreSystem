@@ -1,33 +1,13 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Utilities;
 using Syadeu.Collections;
-using Syadeu.Collections.Converters;
-using Syadeu.Internal;
-using Syadeu.Presentation.Actor;
-using Syadeu.Presentation.Converters;
 using Syadeu.Presentation.Entities;
-using Syadeu.Presentation.Map;
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation
 {
-    [JsonConverter(typeof(ReferenceJsonConverter)), RequireImplementors]
-    public interface IReference : IValidation, IEquatable<IReference>
-    {
-        Hash Hash { get; }
-
-        bool IsEmpty();
-        ObjectBase GetObject();
-    }
-    public interface IReference<T> : IReference, IEquatable<IReference<T>> 
-        where T : class, IObject
-    {
-        new T GetObject();
-    }
     [Serializable]
     public struct Reference : IReference, IEquatable<Reference>
     {
@@ -50,7 +30,7 @@ namespace Syadeu.Presentation
         }
         public static Reference GetReference(string name) => new Reference(EntityDataList.Instance.GetObject(name));
 
-        public ObjectBase GetObject()
+        public IObject GetObject()
         {
             if (EntityDataList.Instance.m_Objects.TryGetValue(m_Hash, out ObjectBase value)) return value;
             return null;
@@ -65,7 +45,7 @@ namespace Syadeu.Presentation
         public static implicit operator Hash(Reference a) => a.m_Hash;
     }
     [Serializable]
-    public struct Reference<T> : IReference<T>, IEquatable<Reference<T>> 
+    public struct Reference<T> : IReference<T>, IEquatable<Reference<T>>
         where T : class, IObject
     {
         public static readonly Reference<T> Empty = new Reference<T>(Hash.Empty);
@@ -95,7 +75,7 @@ namespace Syadeu.Presentation
         }
         public static Reference<T> GetReference(string name) => new Reference<T>(EntityDataList.Instance.GetObject(name));
 
-        ObjectBase IReference.GetObject()
+        IObject IReference.GetObject()
         {
             if (EntityDataList.Instance.m_Objects.TryGetValue(m_Hash, out ObjectBase value)) return value;
             return null;
@@ -124,7 +104,7 @@ namespace Syadeu.Presentation
 
             if (s_EntitySystem.IsNull())
             {
-                s_EntitySystem = PresentationSystem<EntitySystem>.SystemID;
+                s_EntitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.SystemID;
                 if (s_EntitySystem.IsNull())
                 {
                     CoreSystem.Logger.LogError(Channel.Entity, "Unexpected error has been raised.");

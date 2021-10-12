@@ -1,7 +1,7 @@
 ﻿using Syadeu.Collections;
 using System;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Collections
 {
     public interface IInstance : IValidation, IEquatable<IInstance>
     {

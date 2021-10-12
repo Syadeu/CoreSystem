@@ -2,7 +2,7 @@
 using Syadeu.Collections;
 using System;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Collections
 {
     public interface IObject : ICloneable, IEquatable<IObject>
     {

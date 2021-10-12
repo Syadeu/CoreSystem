@@ -6,7 +6,7 @@ using System;
 
 namespace Syadeu.Collections
 {
-    public readonly struct InstanceID : IValidation, IEquatable<InstanceID>, IEquatable<EntityID>
+    public readonly struct InstanceID : IValidation, IEquatable<InstanceID>, IEquatable<EntityID>, IEquatable<Hash>
     {
         public static readonly InstanceID Empty = new InstanceID(Hash.Empty);
 
@@ -21,6 +21,7 @@ namespace Syadeu.Collections
 
         public bool Equals(InstanceID other) => m_Hash.Equals(other.m_Hash);
         public bool Equals(EntityID other) => m_Hash.Equals(other.Hash);
+        public bool Equals(Hash other) => m_Hash.Equals(other);
 
         public bool IsEmpty() => m_Hash.IsEmpty();
         public bool IsValid() => !m_Hash.IsEmpty();

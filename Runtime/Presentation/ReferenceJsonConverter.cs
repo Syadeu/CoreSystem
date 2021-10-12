@@ -1,14 +1,12 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Syadeu.Collections;
-using Syadeu.Internal;
-using Syadeu.Presentation;
 using System;
 using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation.Converters
 {
-    [Preserve]
+    [CustomJsonConverterAttribute, Preserve]
     internal sealed class ReferenceJsonConverter : JsonConverter<IReference>
     {
         public override bool CanRead => true;

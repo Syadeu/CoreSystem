@@ -6,6 +6,8 @@ using Syadeu.Mono;
 using Syadeu.Collections.Converters;
 using Syadeu.Internal;
 using System;
+using System.Reflection;
+using System.Linq;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -40,6 +42,8 @@ namespace Syadeu.Collections
         {
             SetJsonConverters();
 
+            
+
             Type[] types = TypeHelper.GetTypes((other) => TypeHelper.TypeOf<IStaticInitializer>.Type.IsAssignableFrom(other));
             for (int i = 0; i < types.Length; i++)
             {
@@ -69,6 +73,12 @@ namespace Syadeu.Collections
                         //new PrefabReferenceJsonConvereter()
                     }
                 };
+
+                Type[] customConverters = TypeHelper.GetTypes((other) => other.GetCustomAttribute<CustomJsonConverterAttribute>() != null);
+                for (int i = 0; i < customConverters.Length; i++)
+                {
+                    SerializerSettings.Converters.Add((JsonConverter)Activator.CreateInstance(customConverters[i]));
+                }
             }
 
             return SerializerSettings;
