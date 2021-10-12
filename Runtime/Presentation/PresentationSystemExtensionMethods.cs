@@ -52,34 +52,35 @@ namespace Syadeu.Presentation
             return new Reference<T>(t.Object.Hash);
         }
 
-        //public static NativeArray<T> GetNativeArray<T>(this ArrayWrapper<T> wrapper) where T : unmanaged
-        //{
-        //    if (!wrapper.m_NativeArray)
-        //    {
-        //        CoreSystem.Logger.LogError(Channel.Data, "Is not NativeArray");
-        //        return default(NativeArray<T>);
-        //    }
+        public static Instance GetInstance(this InstanceID id)
+        {
+            if (id.IsEmpty())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Empty instance cannot be converted.");
+                return Instance.Empty;
+            }
 
-        //    AtomicSafetyHandle.CheckGetSecondaryDataPointerAndThrow(wrapper.m_Safety);
+            return new Instance(id);
+        }
+        public static Instance<T> GetInstance<T>(this InstanceID id) where T : class, IObject
+        {
+            if (id.IsEmpty())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Empty instance cannot be converted.");
+                return Instance<T>.Empty;
+            }
 
-        //    NativeArray<T> arr;
-        //    unsafe
-        //    {
-        //        arr = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<T>(
-        //            wrapper.m_Buffer,
-        //            wrapper.Length,
-        //            Allocator.Invalid);
-        //    }
+            Instance<T> temp = new Instance<T>(id);
+            if (!temp.IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Instance {temp.Idx} is invalid.");
+                return Instance<T>.Empty;
+            }
 
-        //    AtomicSafetyHandle safety = wrapper.m_Safety;
-
-        //    AtomicSafetyHandle.CheckWriteAndBumpSecondaryVersion(safety);
-        //    AtomicSafetyHandle.UseSecondaryVersion(ref safety);
-        //    AtomicSafetyHandle.SetAllowSecondaryVersionWriting(safety, true);
-
-        //    NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref arr, safety);
-
-        //    return arr;
-        //}
+            return temp;
+        }
     }
 }
