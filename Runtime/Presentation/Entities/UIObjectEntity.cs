@@ -50,8 +50,9 @@ namespace Syadeu.Presentation.Entities
             m_WorldCanvasSystem = null;
         }
 
-        protected override void OnCreated(EntityData<UIObjectEntity> entity)
+        protected override void OnCreated(UIObjectEntity e)
         {
+            EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(e.Idx);
             entity.AddComponent(new UIObjectCanvasGroupComponent() { m_Enabled = true });
         }
 

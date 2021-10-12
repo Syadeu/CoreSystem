@@ -15,8 +15,8 @@ namespace Syadeu.Presentation.Entities
         Type IProcessor.Target => TargetEntity;
         void IProcessor.OnInitialize() => OnInitialize();
         void IProcessor.OnInitializeAsync() => OnInitializeAsync();
-        void IEntityDataProcessor.OnCreated(EntityData<IEntityData> entity) => OnCreated(entity);
-        void IEntityDataProcessor.OnDestroy(EntityData<IEntityData> entity) => OnDestory(entity);
+        void IEntityDataProcessor.OnCreated(IEntityData entity) => OnCreated(entity);
+        void IEntityDataProcessor.OnDestroy(IEntityData entity) => OnDestory(entity);
         void IDisposable.Dispose() => OnDispose();
 
         ~EntityDataProcessor()
@@ -39,7 +39,7 @@ namespace Syadeu.Presentation.Entities
         /// 비동기 작업입니다. Unity API에 접근하면 에러를 뱉습니다.
         /// </remarks>
         /// <param name="entity"></param>
-        protected virtual void OnCreated(EntityData<IEntityData> entity) { }
+        protected virtual void OnCreated(IEntityData entity) { }
         /// <summary>
         /// <see cref="Target"/>에 설정된 <see cref="EntityDataBase"/>가
         /// 파괴되었을 때 실행되는 메소드입니다.
@@ -48,7 +48,7 @@ namespace Syadeu.Presentation.Entities
         /// <remarks>
         /// 비동기 작업입니다. Unity API에 접근하면 에러를 뱉습니다.
         /// </remarks>
-        protected virtual void OnDestory(EntityData<IEntityData> entity) { }
+        protected virtual void OnDestory(IEntityData entity) { }
 
         protected virtual void OnDispose() { }
     }
@@ -60,8 +60,8 @@ namespace Syadeu.Presentation.Entities
         Type IProcessor.Target => TargetEntity;
         void IProcessor.OnInitialize() => OnInitialize();
         void IProcessor.OnInitializeAsync() => OnInitializeAsync();
-        void IEntityDataProcessor.OnCreated(EntityData<IEntityData> entity) => OnCreated(EntityData<T>.GetEntityWithoutCheck(entity.Idx));
-        void IEntityDataProcessor.OnDestroy(EntityData<IEntityData> entity) => OnDestroy(EntityData<T>.GetEntityWithoutCheck(entity.Idx));
+        void IEntityDataProcessor.OnCreated(IEntityData entity) => OnCreated((T)entity);
+        void IEntityDataProcessor.OnDestroy(IEntityData entity) => OnDestroy((T)entity);
         void IDisposable.Dispose() => OnDispose();
 
         ~EntityDataProcessor()
@@ -74,9 +74,9 @@ namespace Syadeu.Presentation.Entities
         protected virtual void OnInitialize() { }
         protected virtual void OnInitializeAsync() { }
         /// <inheritdoc cref="EntityDataProcessor.OnCreated(EntityData{IEntityData})"/>
-        protected virtual void OnCreated(EntityData<T> entity) { }
+        protected virtual void OnCreated(T entity) { }
         /// <inheritdoc cref="EntityDataProcessor.OnDestory(EntityData{IEntityData})"/>
-        protected virtual void OnDestroy(EntityData<T> entity) { }
+        protected virtual void OnDestroy(T entity) { }
 
         protected virtual void OnDispose() { }
     }

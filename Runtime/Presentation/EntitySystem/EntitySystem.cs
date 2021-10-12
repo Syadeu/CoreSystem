@@ -1078,7 +1078,7 @@ namespace Syadeu.Presentation
 
                     try
                     {
-                        processor.OnCreated(entityData);
+                        processor.OnCreated(entity);
                     }
                     catch (Exception ex)
                     {
@@ -1192,7 +1192,7 @@ namespace Syadeu.Presentation
 
                     try
                     {
-                        processor.OnDestroy(entityData);
+                        processor.OnDestroy(entity);
                     }
                     catch (Exception ex)
                     {

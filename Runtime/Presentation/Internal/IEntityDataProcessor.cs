@@ -4,7 +4,7 @@ namespace Syadeu.Presentation.Internal
 {
     internal interface IEntityDataProcessor : IProcessor
     {
-        void OnCreated(EntityData<IEntityData> entity);
-        void OnDestroy(EntityData<IEntityData> entity);
+        void OnCreated(IEntityData entity);
+        void OnDestroy(IEntityData entity);
     }
 }

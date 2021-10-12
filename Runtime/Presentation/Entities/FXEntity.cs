@@ -113,9 +113,9 @@ namespace Syadeu.Presentation.Entities
     internal sealed class FXEntityProcessor : EntityDataProcessor<FXEntity>,
         IEntityOnProxyCreated
     {
-        protected override void OnCreated(EntityData<FXEntity> entity)
+        protected override void OnCreated(FXEntity entity)
         {
-            ((ProxyTransform)entity.As().transform).enableCull = false;
+            ((ProxyTransform)entity.transform).enableCull = false;
         }
         public void OnProxyCreated(EntityBase entityBase, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
         {

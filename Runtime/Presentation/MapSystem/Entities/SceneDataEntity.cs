@@ -108,7 +108,7 @@ namespace Syadeu.Presentation.Map
     [Preserve]
     internal sealed class SceneDataEntityProcessor : EntityDataProcessor<SceneDataEntity>
     {
-        protected override void OnCreated(EntityData<SceneDataEntity> entity)
+        protected override void OnCreated(SceneDataEntity entity)
         {
             //if (!entity.Target.IsValid()) return;
 
@@ -123,9 +123,8 @@ namespace Syadeu.Presentation.Map
 
             CreateMapData(entity);
         }
-        private void CreateMapData(EntityData<SceneDataEntity> entity)
+        private void CreateMapData(SceneDataEntity sceneDataEntity)
         {
-            SceneDataEntity sceneDataEntity = entity.Target;
             IReadOnlyList<Reference<MapDataEntity>> mapData = sceneDataEntity.MapData;
 
             SceneDataComponent sceneData = new SceneDataComponent();
@@ -137,7 +136,7 @@ namespace Syadeu.Presentation.Map
                 if (mapData[i].IsEmpty() || !mapData[i].IsValid())
                 {
                     CoreSystem.Logger.LogError(Channel.Entity,
-                        $"MapData(Element At {i}) in SceneData({entity.RawName}) is not valid.");
+                        $"MapData(Element At {i}) in SceneData({sceneDataEntity.Name}) is not valid.");
 
                     sceneData.m_CreatedMapData[i] = Instance<MapDataEntity>.Empty;
                     continue;
@@ -153,9 +152,10 @@ namespace Syadeu.Presentation.Map
                 sceneData.m_CreatedTerrains[i].Object.Create(null);
             }
 
+            EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(sceneDataEntity.Idx);
             entity.AddComponent(sceneData);
         }
-        protected override void OnDestroy(EntityData<SceneDataEntity> entity)
+        protected override void OnDestroy(SceneDataEntity entity)
         {
             //if (entity.Target == null || !entity.Target.IsValid()) return;
 

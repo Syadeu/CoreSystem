@@ -46,9 +46,8 @@ namespace Syadeu.Presentation.Actor
     }
     internal sealed class ActorProccesor : EntityDataProcessor<ActorEntity>
     {
-        protected override void OnCreated(EntityData<ActorEntity> entity)
+        protected override void OnCreated(ActorEntity actor)
         {
-            ActorEntity actor = entity.Target;
             FixedList512Bytes<Hash> allies = new FixedList512Bytes<Hash>();
             FixedList512Bytes<Hash> enemies = new FixedList512Bytes<Hash>();
 
@@ -73,8 +72,10 @@ namespace Syadeu.Presentation.Actor
                 factionHash = Hash.Empty;
 
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Actor({entity.RawName}) doesn\'t have any faction. This is not allowed.");
+                    $"Actor({actor.Name}) doesn\'t have any faction. This is not allowed.");
             }
+
+            EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(actor.Idx);
 
             entity.AddComponent<ActorFactionComponent>(new ActorFactionComponent()
             {
@@ -83,11 +84,13 @@ namespace Syadeu.Presentation.Actor
                 m_Allies = allies,
                 m_Enemies = enemies
             });
-            actor.m_OnCreated.Execute(entity.Cast<ActorEntity, IEntityData>());
+            actor.m_OnCreated.Execute(entity);
         }
-        protected override void OnDestroy(EntityData<ActorEntity> entity)
+        protected override void OnDestroy(ActorEntity actor)
         {
-            entity.Target.m_OnDestroy.Execute(entity.Cast<ActorEntity, IEntityData>());
+            EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(actor.Idx);
+
+            actor.m_OnDestroy.Execute(entity);
         }
     }
 }
