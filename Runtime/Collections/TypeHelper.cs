@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
+using Unity.Collections.LowLevel.Unsafe;
 
 namespace Syadeu.Collections
 {
@@ -45,9 +47,37 @@ namespace Syadeu.Collections
                 }
             }
 
+            private static int s_Align = -1;
+            public static int Align
+            {
+                get
+                {
+                    if (s_Align < 0)
+                    {
+                        s_Align = AlignOf(Type);
+                    }
+                    return s_Align;
+                }
+            }
+
             public static ConstructorInfo GetConstructorInfo(params Type[] args)
                 => TypeHelper.GetConstructorInfo(Type, args);
             public static FieldInfo GetFieldInfo(string name) => TypeHelper.GetFieldInfo(Type, name);
+
+            /// <summary>
+            /// Wrapper struct (아무 ValueType 맴버도 갖지 않은 구조체) 는 C# CLS 에서 무조건 1 byte 를 갖습니다. 
+            /// 해당 컴포넌트 타입이 버퍼에 올라갈 필요가 있는지를 확인하여 메모리 낭비를 줄입니다.
+            /// </summary>
+            /// <remarks>
+            /// https://stackoverflow.com/a/27851610
+            /// </remarks>
+            /// <param name="t"></param>
+            /// <returns></returns>
+            public static bool IsZeroSizeStruct()
+            {
+                return Type.IsValueType && !Type.IsPrimitive &&
+                    Type.GetFields((BindingFlags)0x34).All(fi => TypeHelper.IsZeroSizeStruct(fi.FieldType));
+            }
 
             private static string s_ToString = string.Empty;
             public static new string ToString()
@@ -96,6 +126,12 @@ namespace Syadeu.Collections
                 throw new ArgumentException(nameof(enumValue));
             }
         }
+        [StructLayout(LayoutKind.Sequential)]
+        private struct AlignOfHelper<T> where T : struct
+        {
+            public byte dummy;
+            public T data;
+        }
 
         private static readonly Assembly[] s_Assemblies = AppDomain.CurrentDomain.GetAssemblies();
         private static readonly Type[] s_AllTypes = s_Assemblies.Where(a => !a.IsDynamic).SelectMany(a => GetLoadableTypes(a)).ToArray();
@@ -122,6 +158,18 @@ namespace Syadeu.Collections
             {
                 return e.Types.Where(t => t != null);
             }
+        }
+
+        public static int AlignOf(Type t)
+        {
+            Type temp = typeof(AlignOfHelper<>).MakeGenericType(t);
+
+            return UnsafeUtility.SizeOf(temp) - UnsafeUtility.SizeOf(t);
+        }
+        public static bool IsZeroSizeStruct(Type t)
+        {
+            return t.IsValueType && !t.IsPrimitive &&
+                t.GetFields((BindingFlags)0x34).All(fi => IsZeroSizeStruct(fi.FieldType));
         }
 
         public static string ToString(Type type)

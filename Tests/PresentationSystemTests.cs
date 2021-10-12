@@ -1,5 +1,6 @@
 ﻿using NUnit.Framework;
 using Syadeu;
+using Syadeu.Collections;
 using Syadeu.Presentation;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
