@@ -31,6 +31,7 @@ namespace Syadeu.Presentation.Entities
 
         public static readonly EntityData<T> Empty = new EntityData<T>(Hash.Empty, 0, null);
 
+        public static EntityData<T> GetEntity(InstanceID id) => GetEntity(id.Hash);
         public static EntityData<T> GetEntity(Hash idx)
         {
             #region Validation
@@ -75,6 +76,7 @@ namespace Syadeu.Presentation.Entities
 
             return new EntityData<T>(idx, target.GetHashCode(), target.Name);
         }
+        public static EntityData<T> GetEntityWithoutCheck(InstanceID id) => GetEntityWithoutCheck(id.Hash);
         public static EntityData<T> GetEntityWithoutCheck(Hash idx)
         {
             if (s_EntitySystem.IsNull())
@@ -152,13 +154,24 @@ namespace Syadeu.Presentation.Entities
 
         public FixedString128Bytes RawName => m_Name;
         /// <inheritdoc cref="IEntityData.Name"/>
-        public string Name => m_Idx.Equals(Hash.Empty) ? c_Invalid : Target.Name;
+        public string Name => m_Idx.IsEmpty() ? c_Invalid : Target.Name;
         /// <inheritdoc cref="IEntityData.Hash"/>
         public Hash Hash => Target.Hash;
         /// <inheritdoc cref="IEntityData.Idx"/>
         public EntityID Idx => m_Idx;
-        public Type Type => m_Idx.Equals(Hash.Empty) ? null : Target?.GetType();
+        public Type Type => m_Idx.IsEmpty() ? null : Target?.GetType();
 
+        internal EntityData(InstanceID id, int hashCode, string name)
+        {
+            m_Idx = id.Hash;
+            if (string.IsNullOrEmpty(name))
+            {
+                m_Name = default(FixedString128Bytes);
+            }
+            else m_Name = name;
+
+            m_HashCode = hashCode;
+        }
         internal EntityData(Hash idx, int hashCode, string name)
         {
             m_Idx = idx;

@@ -18,7 +18,7 @@ namespace Syadeu.Presentation
         /// <summary>
         /// 이 오브젝트 엔티티의 인스턴스 고유 해쉬입니다.
         /// </summary>
-        [JsonIgnore] Hash Idx { get; }
+        [JsonIgnore] InstanceID Idx { get; }
 
         int GetHashCode();
     }

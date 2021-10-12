@@ -54,13 +54,13 @@ namespace Syadeu.Presentation
 
         private Unity.Mathematics.Random m_Random;
 
-        internal readonly Dictionary<Hash, ObjectBase> m_ObjectEntities = new Dictionary<Hash, ObjectBase>();
-        internal NativeHashMap<Hash, Hash> m_EntityGameObjects;
+        internal readonly Dictionary<InstanceID, ObjectBase> m_ObjectEntities = new Dictionary<InstanceID, ObjectBase>();
+        internal NativeHashMap<Hash, InstanceID> m_EntityGameObjects;
 
         private readonly Dictionary<Type, List<IAttributeProcessor>> m_AttributeProcessors = new Dictionary<Type, List<IAttributeProcessor>>();
         private readonly Dictionary<Type, List<IEntityDataProcessor>> m_EntityProcessors = new Dictionary<Type, List<IEntityDataProcessor>>();
 
-        private readonly List<Hash> m_DestroyedObjectsInThisFrame = new List<Hash>();
+        private readonly List<InstanceID> m_DestroyedObjectsInThisFrame = new List<InstanceID>();
         private readonly Queue<Query> m_Queries = new Queue<Query>();
 
         internal DataContainerSystem m_DataContainerSystem;
@@ -77,7 +77,7 @@ namespace Syadeu.Presentation
             m_Random = new Unity.Mathematics.Random();
             m_Random.InitState();
 
-            m_EntityGameObjects = new NativeHashMap<Hash, Hash>(10240, Allocator.Persistent);
+            m_EntityGameObjects = new NativeHashMap<Hash, InstanceID>(10240, Allocator.Persistent);
 
             PresentationManager.Instance.PreUpdate += Instance_PreUpdate;
 
@@ -317,7 +317,7 @@ namespace Syadeu.Presentation
         }
         private void M_ProxySystem_OnDataObjectDestroyAsync(ProxyTransform obj)
         {
-            if (!m_EntityGameObjects.TryGetValue(obj.m_Hash, out Hash entityHash) ||
+            if (!m_EntityGameObjects.TryGetValue(obj.m_Hash, out InstanceID entityHash) ||
                 !m_ObjectEntities.ContainsKey(entityHash) || 
                 !(m_ObjectEntities[entityHash] is IEntityData entitydata))
             {
@@ -335,7 +335,7 @@ namespace Syadeu.Presentation
         private void OnDataObjectVisible(ProxyTransform tr)
         {
 #if DEBUG_MODE
-            if (!m_EntityGameObjects.TryGetValue(tr.m_Hash, out Hash eCheckHash) ||
+            if (!m_EntityGameObjects.TryGetValue(tr.m_Hash, out InstanceID eCheckHash) ||
                 !m_ObjectEntities.ContainsKey(eCheckHash))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
@@ -343,7 +343,7 @@ namespace Syadeu.Presentation
                 return;
             }
 #endif
-            Hash entityHash = m_EntityGameObjects[tr.m_Hash];
+            InstanceID entityHash = m_EntityGameObjects[tr.m_Hash];
 
             m_EventSystem.PostEvent<OnEntityVisibleEvent>(OnEntityVisibleEvent.GetEvent(
                 Entity<IEntity>.GetEntityWithoutCheck(entityHash), tr));
@@ -351,7 +351,7 @@ namespace Syadeu.Presentation
         private void OnDataObjectInvisible(ProxyTransform tr)
         {
 #if DEBUG_MODE
-            if (!m_EntityGameObjects.TryGetValue(tr.m_Hash, out Hash eCheckHash) ||
+            if (!m_EntityGameObjects.TryGetValue(tr.m_Hash, out InstanceID eCheckHash) ||
                 !m_ObjectEntities.ContainsKey(eCheckHash))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
@@ -359,7 +359,7 @@ namespace Syadeu.Presentation
                 return;
             }
 #endif
-            Hash entityHash = m_EntityGameObjects[tr.m_Hash];
+            InstanceID entityHash = m_EntityGameObjects[tr.m_Hash];
 
             m_EventSystem.PostEvent<OnEntityVisibleEvent>(OnEntityVisibleEvent.GetEvent(
                 Entity<IEntity>.GetEntityWithoutCheck(entityHash), tr));
@@ -367,7 +367,7 @@ namespace Syadeu.Presentation
         private void M_ProxySystem_OnDataObjectProxyCreated(ProxyTransform tr, RecycleableMonobehaviour monoObj)
         {
 #if DEBUG_MODE
-            if (!m_EntityGameObjects.TryGetValue(tr.m_Hash, out Hash eCheckHash) ||
+            if (!m_EntityGameObjects.TryGetValue(tr.m_Hash, out InstanceID eCheckHash) ||
                 !m_ObjectEntities.ContainsKey(eCheckHash))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
@@ -375,7 +375,7 @@ namespace Syadeu.Presentation
                 return;
             }
 #endif
-            Hash entityHash = m_EntityGameObjects[tr.m_Hash];
+            InstanceID entityHash = m_EntityGameObjects[tr.m_Hash];
             IEntity entity = (IEntity)m_ObjectEntities[entityHash];
 
             monoObj.m_Entity = Entity<IEntity>.GetEntity(entity.Idx);
@@ -386,7 +386,7 @@ namespace Syadeu.Presentation
             if (!m_EntityGameObjects.ContainsKey(tr.m_Hash)) return;
 
 #if DEBUG_MODE
-            if (!m_EntityGameObjects.TryGetValue(tr.m_Hash, out Hash eCheckHash) ||
+            if (!m_EntityGameObjects.TryGetValue(tr.m_Hash, out InstanceID eCheckHash) ||
                 !m_ObjectEntities.ContainsKey(eCheckHash))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
@@ -394,7 +394,7 @@ namespace Syadeu.Presentation
                 return;
             }
 #endif
-            Hash entityHash = m_EntityGameObjects[tr.m_Hash];
+            InstanceID entityHash = m_EntityGameObjects[tr.m_Hash];
             IEntity entity = (IEntity)m_ObjectEntities[entityHash];
 
             ProcessEntityOnProxyRemoved(this, entity, monoObj);
@@ -802,7 +802,7 @@ namespace Syadeu.Presentation
         public void DestroyEntity(EntityData<IEntityData> entity) => InternalDestroyEntity(entity.Idx);
         public void DestroyObject<T>(Instance<T> instance) where T : class, IObject => InternalDestroyEntity(instance.Idx);
         public void DestroyObject(Instance instance) => InternalDestroyEntity(instance.Idx);
-        internal void InternalDestroyEntity(in Hash hash)
+        internal void InternalDestroyEntity(in InstanceID hash)
         {
             if (!m_ObjectEntities.ContainsKey(hash))
             {
@@ -860,10 +860,12 @@ namespace Syadeu.Presentation
             m_DestroyedObjectsInThisFrame.Add(hash);
         }
 
+        internal bool IsDestroyed(in InstanceID id) => IsDestroyed(id.Hash);
         internal bool IsDestroyed(in Hash idx)
         {
             return !m_ObjectEntities.ContainsKey(idx);
         }
+        internal bool IsMarkedAsDestroyed(in InstanceID id) => IsMarkedAsDestroyed(id.Hash);
         internal bool IsMarkedAsDestroyed(in Hash idx)
         {
             return m_DestroyedObjectsInThisFrame.Contains(idx);
@@ -887,7 +889,7 @@ namespace Syadeu.Presentation
 
 #line default
 
-        private void RemoveAllComponents(in Hash hash)
+        private void RemoveAllComponents(in InstanceID hash)
         {
             var interfaceTypes = GetComponentInterface(m_ObjectEntities[hash].GetType());
             foreach (var interfaceType in interfaceTypes)
@@ -909,7 +911,7 @@ namespace Syadeu.Presentation
         }
 
 #if DEBUG_MODE
-        private readonly Dictionary<Hash, List<Type>> m_AddedComponents = new Dictionary<Hash, List<Type>>();
+        private readonly Dictionary<InstanceID, List<Type>> m_AddedComponents = new Dictionary<InstanceID, List<Type>>();
 
         private bool Debug_HasComponent(ObjectBase entity, out int count, out string names)
         {

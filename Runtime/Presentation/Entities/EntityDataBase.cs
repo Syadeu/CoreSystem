@@ -28,7 +28,7 @@ namespace Syadeu.Presentation.Entities
         // TODO : 이거 임시, 나중에 최적화시 지울 것
         [JsonIgnore] internal AttributeBase[] m_Attributes;
 
-        Hash IObject.Idx => Idx;
+        InstanceID IObject.Idx => Idx;
         AttributeBase[] IEntityData.Attributes => m_Attributes;
 
         /// <summary><inheritdoc cref="m_Attributes"/></summary>

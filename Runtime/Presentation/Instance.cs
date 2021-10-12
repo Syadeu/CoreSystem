@@ -66,6 +66,10 @@ namespace Syadeu.Presentation
         {
             m_Idx = idx;
         }
+        public Instance(InstanceID id)
+        {
+            m_Idx = id.Hash;
+        }
         public Instance(EntityData<IEntityData> entity)
         {
             m_Idx = entity.Idx;
@@ -87,7 +91,7 @@ namespace Syadeu.Presentation
                 return;
             }
 
-            m_Idx = obj.Idx;
+            m_Idx = obj.Idx.Hash;
         }
 
         public bool IsValid()
@@ -251,9 +255,9 @@ namespace Syadeu.Presentation
             }
         }
 
-        public Instance(Hash idx)
+        public Instance(InstanceID idx)
         {
-            m_Idx = idx;
+            m_Idx = idx.Hash;
         }
         public Instance(ObjectBase obj)
         {
@@ -265,7 +269,7 @@ namespace Syadeu.Presentation
                 return;
             }
 
-            m_Idx = obj.Idx;
+            m_Idx = obj.Idx.Hash;
         }
 
         public bool IsValid()

@@ -37,6 +37,7 @@ namespace Syadeu.Presentation.Entities
 
         public static Entity<T> Empty => new Entity<T>(Hash.Empty, null);
 
+        public static Entity<T> GetEntity(in InstanceID id) => GetEntity(id.Hash);
         public static Entity<T> GetEntity(Hash idx)
         {
             #region Validation
@@ -75,6 +76,7 @@ namespace Syadeu.Presentation.Entities
 
             return new Entity<T>(idx, target.Name);
         }
+        internal static Entity<T> GetEntityWithoutCheck(in InstanceID id) => GetEntityWithoutCheck(id.Hash);
         internal static Entity<T> GetEntityWithoutCheck(Hash idx)
         {
             if (s_EntitySystem.IsNull())
@@ -139,12 +141,12 @@ namespace Syadeu.Presentation.Entities
 
         public FixedString128Bytes RawName => m_Name;
         /// <inheritdoc cref="IEntityData.Name"/>
-        public string Name => m_Idx.Equals(Hash.Empty) ? c_Invalid : m_Name.ConvertToString();
+        public string Name => m_Idx.IsEmpty() ? c_Invalid : m_Name.ConvertToString();
         /// <inheritdoc cref="IEntityData.Hash"/>
         public Hash Hash => Target.Hash;
         /// <inheritdoc cref="IEntityData.Idx"/>
         public EntityID Idx => m_Idx;
-        public Type Type => m_Idx.Equals(Hash.Empty) ? null : Target.GetType();
+        public Type Type => m_Idx.IsEmpty() ? null : Target.GetType();
 
 #pragma warning disable IDE1006 // Naming Styles
         /// <inheritdoc cref="EntityBase.transform"/>
