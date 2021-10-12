@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 
-namespace Syadeu.Internal
+namespace Syadeu.Collections
 {
     public sealed class TypeHelper
     {

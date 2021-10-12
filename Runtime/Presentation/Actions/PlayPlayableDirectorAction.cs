@@ -22,6 +22,7 @@ using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Timeline;
 using Syadeu.Presentation.Events;
 using Syadeu.Collections.Proxy;
+using Syadeu.Collections;
 
 #if UNITY_CINEMACHINE
 using Cinemachine;

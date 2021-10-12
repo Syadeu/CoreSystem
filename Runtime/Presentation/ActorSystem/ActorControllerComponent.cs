@@ -2,6 +2,7 @@
 #define DEBUG_MODE
 #endif
 
+using Syadeu.Collections;
 using Syadeu.Internal;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Components;
