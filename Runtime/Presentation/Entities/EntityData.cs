@@ -285,7 +285,8 @@ namespace Syadeu.Presentation.Entities
             if (!IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                    $"You\'re trying to access to an invalid entity. This is not allowed.\n" +
+                    $"d:{s_EntitySystem.System.IsDestroyed(m_Idx)}, dq:{s_EntitySystem.System.IsMarkedAsDestroyed(m_Idx)}");
                 return null;
             }
 #endif

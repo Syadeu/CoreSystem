@@ -43,14 +43,14 @@ namespace Syadeu.Presentation
         /// <remarks>
         /// 모든 프로세서가 동작한 후, 맨 마지막에 실행됩니다.
         /// </remarks>
-        public event Action<EntityData<IEntityData>> OnEntityCreated;
+        public event Action<IEntityData> OnEntityCreated;
         /// <summary>
         /// 엔티티가 파괴될때 실행되는 이벤트 delegate 입니다.
         /// </summary>
         /// <remarks>
         /// 모든 프로세서가 동작한 후, 맨 마지막에 실행됩니다.
         /// </remarks>
-        public event Action<EntityData<IEntityData>> OnEntityDestroy;
+        public event Action<IEntityData> OnEntityDestroy;
 
         private Unity.Mathematics.Random m_Random;
 
@@ -85,7 +85,7 @@ namespace Syadeu.Presentation
         }
         private void Instance_PreUpdate()
         {
-            //if (CoreSystem.BlockCreateInstance) return;
+            if (CoreSystem.BlockCreateInstance) return;
 
             for (int i = 0; i < m_DestroyedObjectsInThisFrame.Count; i++)
             {
@@ -111,10 +111,10 @@ namespace Syadeu.Presentation
                     {
                         ProcessEntityOnDestroy(this, entityData);
 
-                        RemoveAllComponents(m_DestroyedObjectsInThisFrame[i]);
+                        RemoveAllComponents(targetObject.Idx);
 
                         ((IDisposable)targetObject).Dispose();
-                        m_ObjectEntities.Remove(m_DestroyedObjectsInThisFrame[i]);
+                        m_ObjectEntities.Remove(targetObject.Idx);
                     }
 #if DEBUG_MODE
                     CoreSystem.WaitInvoke(1, () =>
@@ -134,31 +134,39 @@ namespace Syadeu.Presentation
                 }
                 else
                 {
-                    if (m_ObjectEntities[m_DestroyedObjectsInThisFrame[i]] is DataObjectBase dataObject)
-                    {
-                        dataObject.InternalOnDestroy();
-                    }
+                    PrivateDataEntityDestroy(targetObject);
 
-                    if (m_ObjectEntities[m_DestroyedObjectsInThisFrame[i]] is Components.INotifyComponent notifyComponent)
-                    {
-                        var notifies = GetComponentInterface(m_ObjectEntities[m_DestroyedObjectsInThisFrame[i]].GetType());
-                        foreach (var item in notifies)
-                        {
-                            Type componentType = item.GetGenericArguments()[0];
-                            m_ComponentSystem.RemoveComponent(notifyComponent.Parent, componentType);
-#if DEBUG_MODE
-                            Debug_RemoveComponent(notifyComponent.Parent, componentType);
-#endif
-                        }
-                    }
-
-                    ((IDisposable)m_ObjectEntities[m_DestroyedObjectsInThisFrame[i]]).Dispose();
-                    m_ObjectEntities.Remove(m_DestroyedObjectsInThisFrame[i]);
+                    ((IDisposable)targetObject).Dispose();
+                    m_ObjectEntities.Remove(targetObject.Idx);
                 }
-
             }
 
             m_DestroyedObjectsInThisFrame.Clear();
+        }
+        private void PrivateDataEntityDestroy(ObjectBase targetObject)
+        {
+            if (targetObject is IEntityData entityData)
+            {
+                throw new InvalidOperationException();
+            }
+
+            if (targetObject is DataObjectBase dataObject)
+            {
+                dataObject.InternalOnDestroy();
+            }
+
+            if (targetObject is Components.INotifyComponent notifyComponent)
+            {
+                var notifies = GetComponentInterface(targetObject.GetType());
+                foreach (var item in notifies)
+                {
+                    Type componentType = item.GetGenericArguments()[0];
+                    m_ComponentSystem.RemoveComponent(notifyComponent.Parent, componentType);
+#if DEBUG_MODE
+                    Debug_RemoveComponent(notifyComponent.Parent, componentType);
+#endif
+                }
+            }
         }
 
         protected override PresentationResult OnInitializeAsync()
@@ -236,23 +244,20 @@ namespace Syadeu.Presentation
         }
         public override void OnDispose()
         {
-            Instance_PreUpdate();
+            m_DestroyedObjectsInThisFrame.Clear();
 
             var entityList = m_ObjectEntities.Values.ToArray();
             for (int i = 0; i < entityList.Length; i++)
             {
-                if (m_DestroyedObjectsInThisFrame.Contains(entityList[i].Idx)) continue;
-
                 if (entityList[i] is IEntityData entity)
                 {
-                    //ProcessEntityOnDestroy(this, entity);
                     ProcessEntityOnDestroy(this, entity);
 
                     RemoveAllComponents(entity.Idx);
                 }
                 else
                 {
-                    InternalDestroyEntity(entityList[i].Idx);
+                    PrivateDataEntityDestroy(entityList[i]);
                 }
             }
 
@@ -325,7 +330,38 @@ namespace Syadeu.Presentation
                 return;
             }
 
+            ObjectBase targetObject = m_ObjectEntities[m_EntityGameObjects[obj.m_Hash]];
+
             ProcessEntityOnDestroy(this, entitydata);
+
+            if (targetObject is Components.INotifyComponent notifyComponent)
+            {
+                var notifies = GetComponentInterface(m_ObjectEntities[entityHash].GetType());
+                foreach (var item in notifies)
+                {
+                    Type componentType = item.GetGenericArguments()[0];
+                    m_ComponentSystem.RemoveComponent(notifyComponent.Parent, componentType);
+#if DEBUG_MODE
+                    Debug_RemoveComponent(notifyComponent.Parent, componentType);
+#endif
+                }
+            }
+
+#if DEBUG_MODE
+            CoreSystem.WaitInvoke(1, () =>
+            {
+                if (Debug_HasComponent(targetObject, out int count, out string names))
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"Entity({targetObject.Name}) has " +
+                        $"number of {count} components that didn\'t disposed. {names}");
+                }
+                else
+                {
+                    "good".ToLog();
+                }
+            });
+#endif
 
             m_EntityGameObjects.Remove(obj.m_Hash);
 
@@ -857,7 +893,11 @@ namespace Syadeu.Presentation
                 //RemoveAllComponents(in hash);
             }
 
-            m_DestroyedObjectsInThisFrame.Add(hash);
+
+            if (!CoreSystem.BlockCreateInstance)
+            {
+                m_DestroyedObjectsInThisFrame.Add(hash);
+            }
         }
 
         internal bool IsDestroyed(in InstanceID id) => IsDestroyed(id.Hash);
@@ -1090,7 +1130,7 @@ namespace Syadeu.Presentation
             }
             #endregion
 
-            system.OnEntityCreated?.Invoke(entityData);
+            system.OnEntityCreated?.Invoke(entity);
         }
 
         private static void ProcessEntityOnPresentation(EntitySystem system, IEntityData entity)
@@ -1146,7 +1186,7 @@ namespace Syadeu.Presentation
                 {
                     CoreSystem.Logger.LogWarning(Channel.Presentation,
                         string.Format(c_AttributeEmptyWarning, entity.Name));
-                    return;
+                    continue;
                 }
 
                 Type t = other.GetType();
@@ -1180,8 +1220,6 @@ namespace Syadeu.Presentation
 #endif
                     }
                 }
-
-                other.Dispose();
             }
             #endregion
 
@@ -1204,7 +1242,14 @@ namespace Syadeu.Presentation
             }
             #endregion
 
-            system.OnEntityDestroy?.Invoke(entityData);
+            system.OnEntityDestroy?.Invoke(entity);
+
+            for (int i = 0; i < entity.Attributes.Length; i++)
+            {
+                AttributeBase other = entity.Attributes[i];
+
+                other.Dispose();
+            }
         }
 
         private static void ProcessEntityOnProxyCreated(EntitySystem system, IEntity entity, RecycleableMonobehaviour monoObj)

@@ -748,8 +748,8 @@ namespace Syadeu.Presentation.Proxy
             }
 
             m_RequestDestories.Enqueue(tr.m_Index);
-            CoreSystem.Logger.Log(Channel.Proxy,
-                $"Destroy({tr.Ref.m_Prefab.GetObjectSetting().m_Name}) called");
+            //CoreSystem.Logger.Log(Channel.Proxy,
+            //    $"Destroy({tr.Ref.m_Prefab.GetObjectSetting().m_Name}) called");
         }
 
         #region Proxy Object Control

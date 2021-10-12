@@ -86,23 +86,23 @@ namespace Syadeu.Presentation
             m_EntitySystem.OnEntityCreated += M_EntitySystem_OnEntityCreated;
             m_EntitySystem.OnEntityDestroy += M_EntitySystem_OnEntityDestroy;
         }
-        private void M_EntitySystem_OnEntityCreated(EntityData<IEntityData> obj)
+        private void M_EntitySystem_OnEntityCreated(IEntityData obj)
         {
-            if (!(obj.Target is EntityBase entity)) return;
+            if (!(obj is EntityBase entity)) return;
             TriggerBoundAttribute att = obj.GetAttribute<TriggerBoundAttribute>();
             if (att == null) return;
 
             int arrayIndex = FindOrIncrementTriggerBoundArrayIndex();
             ClusterID id = m_TriggerBoundCluster.Add(entity.transform.position, arrayIndex);
 
-            Entity<IEntity> target = obj.As<IEntityData, IEntity>();
+            Entity<IEntity> target = Entity<IEntity>.GetEntityWithoutCheck(obj.Idx);
             m_TriggerBoundArray[arrayIndex] = target;
 
             att.m_ClusterID = id;
         }
-        private void M_EntitySystem_OnEntityDestroy(EntityData<IEntityData> obj)
+        private void M_EntitySystem_OnEntityDestroy(IEntityData obj)
         {
-            if (!(obj.Target is EntityBase)) return;
+            if (!(obj is EntityBase)) return;
             TriggerBoundAttribute att = obj.GetAttribute<TriggerBoundAttribute>();
             if (att == null) return;
 

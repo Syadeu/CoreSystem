@@ -37,7 +37,7 @@ namespace Syadeu.Collections
         public static void Invoke(Hash key, T t)
         {
             if (!Instance.m_Events.TryGetValue(key, out var value)) return;
-            value.Invoke(t);
+            value?.Invoke(t);
         }
 
         public override void Dispose()

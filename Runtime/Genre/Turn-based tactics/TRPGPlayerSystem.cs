@@ -103,15 +103,6 @@ namespace Syadeu.Presentation.TurnTable
         private void Bind(EventSystem other)
         {
             m_EventSystem = other;
-
-            m_EventSystem.AddEvent<TRPGShortcutUIPressedEvent>(TRPGShortcutUIPressedEventHandler);
-            m_EventSystem.AddEvent<TRPGGridCellUIPressedEvent>(TRPGGridCellUIPressedEventHandler);
-            m_EventSystem.AddEvent<TRPGEndTurnUIPressedEvent>(TRPGEndTurnUIPressedEventHandler);
-            m_EventSystem.AddEvent<TRPGEndTurnEvent>(TRPGEndTurnEventHandler);
-            m_EventSystem.AddEvent<OnTurnStateChangedEvent>(OnTurnStateChangedEventHandler);
-            m_EventSystem.AddEvent<OnTurnTableStateChangedEvent>(OnTurnTableStateChangedEventHandler);
-
-            m_EventSystem.AddEvent<OnPlayerFactionStateChangedEvent>(OnPlayerFactionStateChangedEventHandler);
         }
 
         private void Bind(EntityRaycastSystem other)
@@ -136,6 +127,15 @@ namespace Syadeu.Presentation.TurnTable
 
         protected override PresentationResult OnStartPresentation()
         {
+            m_EventSystem.AddEvent<TRPGShortcutUIPressedEvent>(TRPGShortcutUIPressedEventHandler);
+            m_EventSystem.AddEvent<TRPGGridCellUIPressedEvent>(TRPGGridCellUIPressedEventHandler);
+            m_EventSystem.AddEvent<TRPGEndTurnUIPressedEvent>(TRPGEndTurnUIPressedEventHandler);
+            m_EventSystem.AddEvent<TRPGEndTurnEvent>(TRPGEndTurnEventHandler);
+            m_EventSystem.AddEvent<OnTurnStateChangedEvent>(OnTurnStateChangedEventHandler);
+            m_EventSystem.AddEvent<OnTurnTableStateChangedEvent>(OnTurnTableStateChangedEventHandler);
+
+            m_EventSystem.AddEvent<OnPlayerFactionStateChangedEvent>(OnPlayerFactionStateChangedEventHandler);
+
             m_TRPGCameraMovement = m_RenderSystem.CameraComponent.GetCameraComponent<TRPGCameraMovement>();
 
             m_TRPGCanvasUISystem.SetPlayerUI(false);
