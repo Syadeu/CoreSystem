@@ -48,25 +48,25 @@ namespace Syadeu.Presentation.Actor
         {
             m_EntitySystem = other;
 
-            m_EntitySystem.OnEntityCreated += M_EntitySystem_OnEntityCreated;
-            m_EntitySystem.OnEntityDestroy += M_EntitySystem_OnEntityDestroy;
+            //m_EntitySystem.OnEntityCreated += M_EntitySystem_OnEntityCreated;
+            //m_EntitySystem.OnEntityDestroy += M_EntitySystem_OnEntityDestroy;
         }
-        private void M_EntitySystem_OnEntityCreated(EntityData<IEntityData> obj)
-        {
-            if (!TypeHelper.TypeOf<ActorEntity>.Type.IsAssignableFrom(obj.Type)) return;
+        //private void M_EntitySystem_OnEntityCreated(EntityData<IEntityData> obj)
+        //{
+        //    if (!TypeHelper.TypeOf<ActorEntity>.Type.IsAssignableFrom(obj.Type)) return;
 
-            //Entity<ActorEntity> entity = obj.As<IEntityData, ActorEntity>();
+        //    //Entity<ActorEntity> entity = obj.As<IEntityData, ActorEntity>();
 
-            //m_PlayerHashMap.Add(obj.Idx, obj.As<IEntityData, ActorEntity>());
-        }
-        private void M_EntitySystem_OnEntityDestroy(EntityData<IEntityData> obj)
-        {
-            if (!TypeHelper.TypeOf<ActorEntity>.Type.IsAssignableFrom(obj.Type)) return;
+        //    //m_PlayerHashMap.Add(obj.Idx, obj.As<IEntityData, ActorEntity>());
+        //}
+        //private void M_EntitySystem_OnEntityDestroy(EntityData<IEntityData> obj)
+        //{
+        //    if (!TypeHelper.TypeOf<ActorEntity>.Type.IsAssignableFrom(obj.Type)) return;
 
-            //Entity<ActorEntity> entity = obj.As<IEntityData, ActorEntity>();
+        //    //Entity<ActorEntity> entity = obj.As<IEntityData, ActorEntity>();
 
-            //m_PlayerHashMap.Remove(obj.Idx);
-        }
+        //    //m_PlayerHashMap.Remove(obj.Idx);
+        //}
         private void Bind(EventSystem other)
         {
             m_EventSystem = other;
@@ -83,8 +83,8 @@ namespace Syadeu.Presentation.Actor
 
         public override void OnDispose()
         {
-            m_EntitySystem.OnEntityCreated -= M_EntitySystem_OnEntityCreated;
-            m_EntitySystem.OnEntityDestroy -= M_EntitySystem_OnEntityDestroy;
+            //m_EntitySystem.OnEntityCreated -= M_EntitySystem_OnEntityCreated;
+            //m_EntitySystem.OnEntityDestroy -= M_EntitySystem_OnEntityDestroy;
 
             m_EntitySystem = null;
 

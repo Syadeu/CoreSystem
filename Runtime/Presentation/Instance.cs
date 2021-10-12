@@ -127,6 +127,17 @@ namespace Syadeu.Presentation
                 return;
             }
 
+            if (m_EntitySystem.IsNull())
+            {
+                m_EntitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.SystemID;
+                if (m_EntitySystem.IsNull())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        "Cannot retrived EntitySystem.");
+                    return;
+                }
+            }
+
             m_EntitySystem.System.DestroyObject(this);
         }
 
