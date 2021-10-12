@@ -160,5 +160,7 @@ namespace Syadeu.Presentation.Proxy
             entity = null;
             provider = null;
         }
+
+        public override int GetHashCode() => provider.GetInstanceID();
     }
 }

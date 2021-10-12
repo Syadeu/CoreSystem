@@ -1,4 +1,5 @@
 ﻿using Syadeu.Collections;
+using Syadeu.Collections.Proxy;
 using Syadeu.Internal;
 using Syadeu.Presentation;
 using Syadeu.Presentation.Attributes;
@@ -20,7 +21,7 @@ namespace Syadeu.Presentation.Proxy
     /// OnDestroy 함수를 절때 사용하지마세요
     /// </summary>
     /// <typeparam name="T"></typeparam>    
-    public abstract class RecycleableMonobehaviour : MonoBehaviour, IValidation, INotificationReceiver
+    public abstract class RecycleableMonobehaviour : MonoBehaviour, IProxyMonobehaviour, IValidation, INotificationReceiver
     {
         public delegate bool TerminateCondition();
         /// <summary>

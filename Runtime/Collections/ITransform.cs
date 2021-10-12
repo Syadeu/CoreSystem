@@ -29,5 +29,7 @@ namespace Syadeu.Collections.Proxy
 #pragma warning restore IDE1006 // Naming Styles
 
         void Destroy();
+
+        int GetHashCode();
     }
 }
