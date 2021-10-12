@@ -30,7 +30,7 @@ namespace Syadeu.Presentation.Entities
     /// <see cref="EntityDataBase"/>는 <seealso cref="EntityData{T}"/>를 참조하세요.
     /// </remarks>
     /// <typeparam name="T"></typeparam>
-    public struct Entity<T> : IValidation, IEquatable<Entity<T>>, IEquatable<Hash> where T : class, IEntity
+    public struct Entity<T> : IValidation, IEquatable<Entity<T>>, IEquatable<EntityID> where T : class, IEntity
     {
         private const string c_Invalid = "Invalid";
         private static PresentationSystemID<EntitySystem> s_EntitySystem = PresentationSystemID<EntitySystem>.Null;
@@ -226,7 +226,7 @@ namespace Syadeu.Presentation.Entities
         }
 
         public bool Equals(Entity<T> other) => m_Idx.Equals(other.m_Idx);
-        public bool Equals(Hash other) => m_Idx.Equals(other);
+        public bool Equals(EntityID other) => m_Idx.Equals(other);
 
         #region Attributes
 

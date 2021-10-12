@@ -3,13 +3,14 @@
 #endif
 
 using Syadeu.Collections;
+using System;
 
 namespace Syadeu.Presentation.Entities
 {
     /// <summary>
     /// <see cref="EntityData{T}"/>, <see cref="Entity{T}"/> 의 인스턴스 ID
     /// </summary>
-    public readonly struct EntityID : IValidation
+    public readonly struct EntityID : IValidation, IEquatable<EntityID>
     {
         private readonly Hash m_Idx;
 
@@ -17,6 +18,8 @@ namespace Syadeu.Presentation.Entities
         {
             m_Idx = idx;
         }
+
+        public bool Equals(EntityID other) => m_Idx.Equals(other.m_Idx);
 
         public bool IsEmpty() => m_Idx.IsEmpty();
         public bool IsValid() => !m_Idx.IsEmpty();
