@@ -245,5 +245,24 @@ namespace Syadeu.Presentation.Proxy
             CoreSystem.Logger.LogError(Channel.Entity,
                 $"Unhandled marker type: {notification.GetType().Name}");
         }
+
+        #region Particle System
+
+        private event Action<Entity<IEntity>, RecycleableMonobehaviour> OnParticleStopped;
+
+        public void AddOnParticleStoppedEvent(Action<Entity<IEntity>, RecycleableMonobehaviour> ev)
+        {
+            OnParticleStopped += ev;
+        }
+        public void RemoveOnParticleStoppedEvent(Action<Entity<IEntity>, RecycleableMonobehaviour> ev)
+        {
+            OnParticleStopped -= ev;
+        }
+        private void OnParticleSystemStopped()
+        {
+            OnParticleStopped?.Invoke(m_Entity, this);
+        }
+
+        #endregion
     }
 }

@@ -141,11 +141,11 @@ namespace Syadeu.Presentation.Map
                     m_OnDetected[i].Execute(Parent, ev.Entity.As<IEntity, IEntityData>());
                 }
 
-                "detect".ToLog();
+                //"detect".ToLog();
                 return;
             }
 
-            "detect falied".ToLog();
+            //"detect falied".ToLog();
 
             if (m_Detected.Contains(ev.Entity))
             {

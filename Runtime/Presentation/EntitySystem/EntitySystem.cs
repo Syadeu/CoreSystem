@@ -158,7 +158,8 @@ namespace Syadeu.Presentation
                 }
                 else
                 {
-                    $"Entity({targetObject.Name}) good".ToLog();
+                    CoreSystem.Logger.Log(Channel.Entity, 
+                        $"Entity({targetObject.Name}) component all checked.");
                 }
             });
 #endif
@@ -396,19 +397,22 @@ namespace Syadeu.Presentation
         }
         private void M_ProxySystem_OnDataObjectProxyRemoved(ProxyTransform tr, RecycleableMonobehaviour monoObj)
         {
-            if (!m_EntityGameObjects.ContainsKey(tr.m_Hash)) return;
-
-#if DEBUG_MODE
-            if (!m_EntityGameObjects.TryGetValue(tr.m_Hash, out InstanceID eCheckHash) ||
-                !m_ObjectEntities.ContainsKey(eCheckHash))
+            if (!m_EntityGameObjects.ContainsKey(tr.m_Hash))
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Internal EntitySystem error. ProxyTransform doesn\'t have entity.");
+                "?? error".ToLogError();
                 return;
             }
-#endif
-            InstanceID entityHash = m_EntityGameObjects[tr.m_Hash];
-            IEntity entity = (IEntity)m_ObjectEntities[entityHash];
+
+            if (!m_ObjectEntities.TryGetValue(m_EntityGameObjects[tr.m_Hash], out ObjectBase objectBase))
+            {
+                // Intended.
+
+                //CoreSystem.Logger.LogError(Channel.Entity,
+                //    $"Internal EntitySystem error. ProxyTransform doesn\'t have entity.");
+                return;
+            }
+
+            IEntity entity = (IEntity)objectBase;
 
             ProcessEntityOnProxyRemoved(this, entity, monoObj);
             monoObj.m_Entity = Entity<IEntity>.Empty;

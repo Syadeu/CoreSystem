@@ -131,7 +131,7 @@ namespace Syadeu.Presentation.Entities
 
                 $"{m_FXEntity.Object.Name} fired".ToLog();
 
-                while (fx.IsPlaying)
+                while (fx.IsPlaying && !fx.Stopped)
                 {
                     if ((m_PlayOption & PlayOptions.UpdateTransform) == PlayOptions.UpdateTransform)
                     {
