@@ -1,4 +1,5 @@
-﻿using Syadeu.Presentation.Entities;
+﻿using Syadeu.Collections;
+using Syadeu.Presentation.Entities;
 
 namespace Syadeu.Presentation.Components
 {

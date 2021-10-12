@@ -1,7 +1,4 @@
-﻿using Syadeu.Presentation.Entities;
-using Unity.Burst;
-
-namespace Syadeu.Presentation.Components
+﻿namespace Syadeu.Collections
 {
     /// <summary>
     /// <see cref="EntityData{T}{T}"/>, <see cref="Entity{T}"/> 에 달릴 수 있는 컴포넌트를 만듭니다.

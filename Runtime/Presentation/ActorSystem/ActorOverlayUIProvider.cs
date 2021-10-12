@@ -56,8 +56,4 @@ namespace Syadeu.Presentation.Actor
 #endif
         { }
     }
-    public struct ActorOverlayUIComponent : IEntityComponent
-    {
-        internal FixedList512Bytes<Reference<ActorOverlayUIEntry>> m_OpenedUI;
-    }
 }

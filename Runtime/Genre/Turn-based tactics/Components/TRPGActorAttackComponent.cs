@@ -1,4 +1,5 @@
-﻿using Syadeu.Presentation.Components;
+﻿using Syadeu.Collections;
+using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using System.Collections.Generic;
 using Unity.Collections;
