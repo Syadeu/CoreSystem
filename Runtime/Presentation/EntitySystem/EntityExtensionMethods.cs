@@ -1,4 +1,9 @@
-﻿using Syadeu.Internal;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Syadeu.Collections;
+using Syadeu.Internal;
 using Syadeu.Mono;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
@@ -96,6 +101,116 @@ namespace Syadeu.Presentation
             where T : class, IEntityData
         {
             return Instance<T>.CreateInstance(other).As();
+        }
+
+        public static Entity<T> GetEntity<T>(this EntityID id)
+            where T : class, IEntity
+        {
+            EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+
+            ObjectBase obj = entitySystem.GetEntityByID(id);
+#if DEBUG_MODE
+            if (obj == null)
+            {
+                return Entity<T>.Empty;
+            }
+            else if (!(obj is IEntity))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Instance({obj.Name}) is not entity but you trying to get with {nameof(EntityID)}.");
+                return Entity<T>.Empty;
+            }
+#endif
+            return Entity<T>.GetEntityWithoutCheck(id);
+        }
+        public static Entity<T> GetEntity<T>(this InstanceID id)
+            where T : class, IEntity
+        {
+            EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+
+            ObjectBase obj = entitySystem.GetEntityByID(id);
+#if DEBUG_MODE
+            if (obj == null)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Instance({id.Hash}) is invalid id.");
+                return Entity<T>.Empty;
+            }
+            else if (!(obj is IEntity))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Instance({obj.Name}) is not entity but you trying to get with {nameof(InstanceID)}.");
+                return Entity<T>.Empty;
+            }
+#endif
+            return Entity<T>.GetEntityWithoutCheck(id);
+        }
+        public static EntityData<T> GetEntityData<T>(this EntityID id)
+            where T : class, IEntityData
+        {
+            EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+
+            ObjectBase obj = entitySystem.GetEntityByID(id);
+#if DEBUG_MODE
+            if (obj == null)
+            {
+                return EntityData<T>.Empty;
+            }
+#endif
+            return EntityData<T>.GetEntityWithoutCheck(id);
+        }
+        public static EntityData<T> GetEntityData<T>(this InstanceID id)
+            where T : class, IEntityData
+        {
+            EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+
+            ObjectBase obj = entitySystem.GetEntityByID(id);
+#if DEBUG_MODE
+            if (obj == null)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Instance({id.Hash}) is invalid id.");
+                return EntityData<T>.Empty;
+            }
+            else if (!(obj is IEntityData))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Instance({obj.Name}) is not entity but you trying to get with {nameof(InstanceID)}.");
+                return EntityData<T>.Empty;
+            }
+#endif
+            return EntityData<T>.GetEntityWithoutCheck(id);
+        }
+
+        public static Instance GetInstance(this EntityID id)
+        {
+            EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+
+            ObjectBase obj = entitySystem.GetEntityByID(id);
+            return new Instance(obj);
+        }
+        public static Instance<T> GetInstance<T>(this EntityID id)
+            where T : class, IObject
+        {
+            EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+
+            ObjectBase obj = entitySystem.GetEntityByID(id);
+            return new Instance<T>(obj);
+        }
+        public static Instance GetInstance(this InstanceID id)
+        {
+            EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+
+            ObjectBase obj = entitySystem.GetEntityByID(id);
+            return new Instance(obj);
+        }
+        public static Instance<T> GetInstance<T>(this InstanceID id)
+            where T : class, IObject
+        {
+            EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+
+            ObjectBase obj = entitySystem.GetEntityByID(id);
+            return new Instance<T>(obj);
         }
     }
 }
