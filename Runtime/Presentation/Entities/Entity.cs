@@ -167,6 +167,20 @@ namespace Syadeu.Presentation.Entities
         {
             get
             {
+#if DEBUG_MODE
+                if (IsEmpty())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        "An empty entity reference trying to access.");
+                    return false;
+                }
+                else if (!IsValid())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        "An invalid entity reference trying to access.");
+                    return false;
+                }
+#endif
                 if (transform is IUnityTransform) return true;
                 else
                 {

@@ -24,6 +24,8 @@ namespace Syadeu.Presentation.Entities
         public bool IsEmpty() => m_Idx.IsEmpty();
         public bool IsValid() => !m_Idx.IsEmpty();
 
+        public Hash ToHash() => m_Idx;
+
         public static implicit operator EntityID(Hash hash) => new EntityID(hash);
         public static implicit operator Hash(EntityID id) => id.m_Idx;
     }

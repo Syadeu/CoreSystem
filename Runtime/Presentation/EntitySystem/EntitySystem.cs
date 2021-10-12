@@ -85,13 +85,15 @@ namespace Syadeu.Presentation
         }
         private void Instance_PreUpdate()
         {
-            if (CoreSystem.BlockCreateInstance) return;
+            //if (CoreSystem.BlockCreateInstance) return;
 
             for (int i = 0; i < m_DestroyedObjectsInThisFrame.Count; i++)
             {
-                if (m_ObjectEntities[m_DestroyedObjectsInThisFrame[i]] is IEntityData entityData)
+                var targetObject = m_ObjectEntities[m_DestroyedObjectsInThisFrame[i]];
+
+                if (targetObject is IEntityData entityData)
                 {
-                    if (m_ObjectEntities[m_DestroyedObjectsInThisFrame[i]] is IEntity entity)
+                    if (targetObject is IEntity entity)
                     {
                         if (entity.transform is ProxyTransform tr)
                         {
@@ -107,12 +109,51 @@ namespace Syadeu.Presentation
                     }
                     else
                     {
-                        ((IDisposable)m_ObjectEntities[m_DestroyedObjectsInThisFrame[i]]).Dispose();
+                        ProcessEntityOnDestroy(this, entityData);
+
+                        RemoveAllComponents(m_DestroyedObjectsInThisFrame[i]);
+
+                        ((IDisposable)targetObject).Dispose();
                         m_ObjectEntities.Remove(m_DestroyedObjectsInThisFrame[i]);
                     }
+#if DEBUG_MODE
+                    CoreSystem.WaitInvoke(1, () =>
+                    {
+                        if (Debug_HasComponent(targetObject, out int count, out string names))
+                        {
+                            CoreSystem.Logger.LogError(Channel.Entity,
+                                $"Entity({targetObject.Name}) has " +
+                                $"number of {count} components that didn\'t disposed. {names}");
+                        }
+                        else
+                        {
+                            "good".ToLog();
+                        }
+                    });
+#endif
                 }
                 else
                 {
+                    if (m_ObjectEntities[m_DestroyedObjectsInThisFrame[i]] is DataObjectBase dataObject)
+                    {
+                        dataObject.InternalOnDestroy();
+
+                        //RemoveAllComponents(m_DestroyedObjectsInThisFrame[i]);
+                    }
+
+                    if (m_ObjectEntities[m_DestroyedObjectsInThisFrame[i]] is Components.INotifyComponent notifyComponent)
+                    {
+                        var notifies = GetComponentInterface(m_ObjectEntities[m_DestroyedObjectsInThisFrame[i]].GetType());
+                        foreach (var item in notifies)
+                        {
+                            Type componentType = item.GetGenericArguments()[0];
+                            m_ComponentSystem.RemoveComponent(notifyComponent.Parent, componentType);
+#if DEBUG_MODE
+                            Debug_RemoveComponent(notifyComponent.Parent, componentType);
+#endif
+                        }
+                    }
+
                     ((IDisposable)m_ObjectEntities[m_DestroyedObjectsInThisFrame[i]]).Dispose();
                     m_ObjectEntities.Remove(m_DestroyedObjectsInThisFrame[i]);
                 }
@@ -288,7 +329,7 @@ namespace Syadeu.Presentation
 
             ProcessEntityOnDestroy(this, entitydata);
 
-            RemoveAllComponents(in entityHash);
+            //RemoveAllComponents(in entityHash);
 
             m_EntityGameObjects.Remove(obj.m_Hash);
 
@@ -828,12 +869,12 @@ namespace Syadeu.Presentation
             }
             else
             {
-                if (m_ObjectEntities[hash] is DataObjectBase dataObject)
-                {
-                    dataObject.InternalOnDestroy();
-                }
+                //if (m_ObjectEntities[hash] is DataObjectBase dataObject)
+                //{
+                //    dataObject.InternalOnDestroy();
+                //}
 
-                RemoveAllComponents(in hash);
+                //RemoveAllComponents(in hash);
             }
 
             m_DestroyedObjectsInThisFrame.Add(hash);
@@ -877,14 +918,14 @@ namespace Syadeu.Presentation
 #endif
             }
 
-#if DEBUG_MODE
-            if (Debug_HasComponent(m_ObjectEntities[hash], out int count, out string names))
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Entity({m_ObjectEntities[hash].Name}) has " +
-                    $"number of {count} components that didn\'t disposed. {names}");
-            }
-#endif
+//#if DEBUG_MODE
+//            if (Debug_HasComponent(m_ObjectEntities[hash], out int count, out string names))
+//            {
+//                CoreSystem.Logger.LogError(Channel.Entity,
+//                    $"Entity({m_ObjectEntities[hash].Name}) has " +
+//                    $"number of {count} components that didn\'t disposed. {names}");
+//            }
+//#endif
         }
 
 #if DEBUG_MODE
@@ -1145,13 +1186,17 @@ namespace Syadeu.Presentation
                     }
                 }
 
-                var interfaceTypes = GetComponentInterface(other.GetType());
-                foreach (var interfaceType in interfaceTypes)
+                if (other is Components.INotifyComponent notifyComponent)
                 {
-                    system.m_ComponentSystem.RemoveComponent(other, interfaceType);
+                    var interfaceTypes = GetComponentInterface(other.GetType());
+                    foreach (var interfaceType in interfaceTypes)
+                    {
+                        Type componentType = interfaceType.GetGenericArguments()[0];
+                        system.m_ComponentSystem.RemoveComponent(notifyComponent.Parent, componentType);
 #if DEBUG_MODE
-                    system.Debug_RemoveComponent((ObjectBase)entity, interfaceType.GetGenericArguments()[0]);
+                        system.Debug_RemoveComponent(notifyComponent.Parent, componentType);
 #endif
+                    }
                 }
 
                 other.Dispose();

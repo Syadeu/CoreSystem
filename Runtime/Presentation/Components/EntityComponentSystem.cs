@@ -259,6 +259,10 @@ namespace Syadeu.Presentation.Components
         private static int GetEntityIndex(EntityData<IEntityData> entity)
         {
             int idx = math.abs(entity.GetHashCode()) % ComponentBuffer.c_InitialCount;
+            if (idx == 0)
+            {
+                $"err {entity.GetHashCode()}".ToLogError();
+            }
             return idx;
         }
         private static int2 GetIndex(Type t, EntityData<IEntityData> entity)
@@ -390,6 +394,7 @@ namespace Syadeu.Presentation.Components
             //    CoreSystem.Logger.Log(Channel.Component,
             //        $"{TypeHelper.TypeOf<TComponent>.Name} component at {entity.Name} remove queued.");
             //}
+            $"entity({entity.RawName}) removed component ({TypeHelper.TypeOf<TComponent>.Name})".ToLog();
         }
         public void RemoveComponent(EntityData<IEntityData> entity, Type componentType)
         {
@@ -416,6 +421,8 @@ namespace Syadeu.Presentation.Components
             //    CoreSystem.Logger.Log(Channel.Component,
             //        $"{TypeHelper.ToString(componentType)} component at {entity.RawName} remove queued.");
             //}
+
+            $"entity({entity.RawName}) removed component ({componentType.Name})".ToLog();
         }
         /// <summary>
         /// TODO: Reflection 이 일어나서 SharedStatic 으로 interface 해싱 후 받아오는 게 좋아보임.
@@ -424,12 +431,12 @@ namespace Syadeu.Presentation.Components
         /// <param name="interfaceType"></param>
         public void RemoveComponent(ObjectBase obj, Type interfaceType)
         {
-            const string c_Parent = "Parent";
+            //const string c_Parent = "Parent";
 
-            PropertyInfo property = interfaceType
-                .GetProperty(c_Parent, TypeHelper.TypeOf<EntityData<IEntityData>>.Type);
+            //PropertyInfo property = interfaceType
+            //    .GetProperty(c_Parent, TypeHelper.TypeOf<EntityData<IEntityData>>.Type);
 
-            EntityData<IEntityData> entity = (EntityData<IEntityData>)property.GetValue(obj);
+            EntityData<IEntityData> entity = ((INotifyComponent)obj).Parent;
             RemoveComponent(entity, interfaceType.GetGenericArguments().First());
         }
         public bool HasComponent<TComponent>(EntityData<IEntityData> entity) 
@@ -706,7 +713,7 @@ namespace Syadeu.Presentation.Components
             {
                 if (!s_Buffer[index.x].Find(entity, ref index.y))
                 {
-                    "couldn\'t find component target".ToLogError();
+                    $"couldn\'t find component({s_Buffer[index.x].TypeInfo.Type.Name}) target in entity({entity.RawName}) : index{index}".ToLogError();
                     return;
                 }
 

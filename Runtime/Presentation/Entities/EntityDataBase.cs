@@ -208,7 +208,7 @@ namespace Syadeu.Presentation.Entities
                 }
 
                 AttributeBase clone = (AttributeBase)att.Clone();
-                clone.Parent = new EntityData<IEntityData>(entity.Idx, clone.Name);
+                clone.Parent = new EntityData<IEntityData>(entity.Idx, entity.GetHashCode(), entity.Name);
 
                 entity.m_Attributes[i] = clone;
 

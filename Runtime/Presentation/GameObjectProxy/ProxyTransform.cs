@@ -410,6 +410,6 @@ namespace Syadeu.Presentation.Proxy
             return Equals(tr);
         }
 
-        public override int GetHashCode() => m_Index;
+        public override int GetHashCode() => m_Index * 397 ^ m_Generation;
     }
 }

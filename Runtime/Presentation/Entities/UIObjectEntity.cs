@@ -17,7 +17,7 @@ namespace Syadeu.Presentation.Entities
         [JsonProperty(Order = 0, PropertyName = "EnableAutoFade")]
         internal bool m_EnableAutoFade = false;
 
-        [JsonIgnore] EntityData<IEntityData> INotifyComponent<UIObjectCanvasGroupComponent>.Parent => EntityData<IEntityData>.GetEntity(Idx);
+        [JsonIgnore] EntityData<IEntityData> INotifyComponent.Parent => EntityData<IEntityData>.GetEntity(Idx);
 
         [Preserve]
         static void AOTCodeGeneration()

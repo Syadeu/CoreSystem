@@ -29,7 +29,7 @@ namespace Syadeu.Presentation.Entities
         private const string c_Invalid = "Invalid";
         private static PresentationSystemID<EntitySystem> s_EntitySystem = PresentationSystemID<EntitySystem>.Null;
 
-        public static EntityData<T> Empty => new EntityData<T>(Hash.Empty, null);
+        public static readonly EntityData<T> Empty = new EntityData<T>(Hash.Empty, 0, null);
 
         public static EntityData<T> GetEntity(Hash idx)
         {
@@ -67,7 +67,13 @@ namespace Syadeu.Presentation.Entities
             }
             #endregion
 
-            return new EntityData<T>(idx, target.Name);
+            int hash = target.GetHashCode();
+            if (hash == 0)
+            {
+                "internal error hash 0".ToLogError();
+            }
+
+            return new EntityData<T>(idx, target.GetHashCode(), target.Name);
         }
         public static EntityData<T> GetEntityWithoutCheck(Hash idx)
         {
@@ -82,11 +88,18 @@ namespace Syadeu.Presentation.Entities
                 }
             }
             ObjectBase target = s_EntitySystem.System.m_ObjectEntities[idx];
-            return new EntityData<T>(idx, target.Name);
+            int hash = target.GetHashCode();
+            if (hash == 0)
+            {
+                "internal error hash 0".ToLogError();
+            }
+
+            return new EntityData<T>(idx, target.GetHashCode(), target.Name);
         }
 
         /// <inheritdoc cref="IEntityData.Idx"/>
         private readonly EntityID m_Idx;
+        private readonly int m_HashCode;
         private FixedString128Bytes m_Name;
 
         public T Target
@@ -146,7 +159,7 @@ namespace Syadeu.Presentation.Entities
         public EntityID Idx => m_Idx;
         public Type Type => m_Idx.Equals(Hash.Empty) ? null : Target?.GetType();
 
-        internal EntityData(Hash idx, string name)
+        internal EntityData(Hash idx, int hashCode, string name)
         {
             m_Idx = idx;
             if (string.IsNullOrEmpty(name))
@@ -154,6 +167,8 @@ namespace Syadeu.Presentation.Entities
                 m_Name = default(FixedString128Bytes);
             }
             else m_Name = name;
+
+            m_HashCode = hashCode;
         }
 
         public bool IsEmpty() => Equals(Empty);
@@ -573,25 +588,26 @@ namespace Syadeu.Presentation.Entities
                 return 0;
             }
 #endif
-            if (s_EntitySystem.IsNull())
-            {
-                s_EntitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.SystemID;
-                if (s_EntitySystem.IsNull())
-                {
-                    CoreSystem.Logger.LogError(Channel.Entity,
-                        "Cannot retrived EntitySystem.");
-                    return 0;
-                }
-            }
+            return m_HashCode;
+            //if (s_EntitySystem.IsNull())
+            //{
+            //    s_EntitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.SystemID;
+            //    if (s_EntitySystem.IsNull())
+            //    {
+            //        CoreSystem.Logger.LogError(Channel.Entity,
+            //            "Cannot retrived EntitySystem.");
+            //        return 0;
+            //    }
+            //}
 
-            if (s_EntitySystem.System.m_ObjectEntities.TryGetValue(m_Idx, out ObjectBase value))
-            {
-                return value.GetHashCode();
-            }
+            //if (s_EntitySystem.System.m_ObjectEntities.TryGetValue(m_Idx, out ObjectBase value))
+            //{
+            //    return value.GetHashCode();
+            //}
 
-            CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Destroyed entity({RawName}).");
-            return 0;
+            //CoreSystem.Logger.LogError(Channel.Entity,
+            //        $"Destroyed entity({RawName}).");
+            //return 0;
         }
 
         public static implicit operator T(EntityData<T> a) => a.Target;
