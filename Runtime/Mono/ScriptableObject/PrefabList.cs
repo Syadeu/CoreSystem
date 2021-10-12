@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using Syadeu.Internal;
+using Syadeu.Collections;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -16,7 +17,7 @@ namespace Syadeu.Mono
     public sealed class PrefabList : StaticSettingEntity<PrefabList>
     {
         [Serializable]
-        public sealed class ObjectSetting
+        public sealed class ObjectSetting : IPrefabResource
         {
             public string m_Name;
             [SerializeField] private AssetReference m_RefPrefab;
@@ -29,6 +30,7 @@ namespace Syadeu.Mono
             [NonSerialized] private AsyncOperationHandle m_LoadHandle = default;
             [NonSerialized] private UnityEngine.Object m_LoadedObject = null;
 
+            public string Name => m_Name;
             public UnityEngine.Object LoadedObject => m_LoadedObject;
 
             public ObjectSetting(string name, AssetReference refPrefab, bool isWorldUI)

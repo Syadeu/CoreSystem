@@ -2,7 +2,7 @@
 
 namespace Syadeu.Collections.Proxy
 {
-    public interface IProxyMonobehaviour
+    public interface IProxyMonobehaviour : IValidation
     {
         UnityEngine.GameObject gameObject { get; }
         UnityEngine.Transform transform { get; }

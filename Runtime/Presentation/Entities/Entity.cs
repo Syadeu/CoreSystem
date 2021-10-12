@@ -182,7 +182,7 @@ namespace Syadeu.Presentation.Entities
                 if (transform is IUnityTransform unity) return unity.provider;
 
                 IProxyTransform tr = (IProxyTransform)transform;
-                return tr.proxy;
+                return (UnityEngine.Object)tr.proxy;
             }
         }
 

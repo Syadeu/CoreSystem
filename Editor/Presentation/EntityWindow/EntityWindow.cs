@@ -777,7 +777,7 @@ namespace SyadeuEditor.Presentation
                         if (entityBase.transform is ProxyTransform proxy &&
                             proxy.hasProxy)
                         {
-                            EditorGUILayout.ObjectField(proxy.proxy, TypeHelper.TypeOf<RecycleableMonobehaviour>.Type, true);
+                            EditorGUILayout.ObjectField((UnityEngine.Object)proxy.proxy, TypeHelper.TypeOf<RecycleableMonobehaviour>.Type, true);
                         }
                         else if (entityBase.transform is UnityTransform unityTr)
                         {

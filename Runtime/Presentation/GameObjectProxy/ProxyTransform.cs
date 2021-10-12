@@ -26,17 +26,6 @@ namespace Syadeu.Presentation.Proxy
         internal static readonly int2 ProxyQueued = new int2(-2, -2);
         #endregion
 
-        [Flags]
-        public enum SynchronizeOption
-        {
-            Position    =   0b001,
-            Rotation    =   0b010,
-            Scale       =   0b100,
-
-            TR          =   0b011,
-            TRS         =   0b111
-        }
-
         [NativeDisableUnsafePtrRestriction] unsafe internal readonly NativeProxyData.UnsafeList* m_Pointer;
         internal readonly int m_Index;
         internal readonly int m_Generation;
@@ -210,7 +199,7 @@ namespace Syadeu.Presentation.Proxy
             }
         }
 
-        public RecycleableMonobehaviour proxy
+        public IProxyMonobehaviour proxy
         {
             get
             {
@@ -376,22 +365,22 @@ namespace Syadeu.Presentation.Proxy
 
 #pragma warning restore IDE1006 // Naming Styles
 
-        public void Synchronize(SynchronizeOption option)
+        public void Synchronize(IProxyTransform.SynchronizeOption option)
         {
             CoreSystem.Logger.ThreadBlock(nameof(ProxyTransform.Synchronize), Syadeu.Internal.ThreadInfo.Unity);
 
             if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
 
             UnityEngine.Transform tr = proxy.transform;
-            if ((option & SynchronizeOption.Position) == SynchronizeOption.Position)
+            if ((option & IProxyTransform.SynchronizeOption.Position) == IProxyTransform.SynchronizeOption.Position)
             {
                 position = tr.position;
             }
-            if ((option & SynchronizeOption.Rotation) == SynchronizeOption.Rotation)
+            if ((option & IProxyTransform.SynchronizeOption.Rotation) == IProxyTransform.SynchronizeOption.Rotation)
             {
                 rotation = tr.rotation;
             }
-            if ((option & SynchronizeOption.Scale) == SynchronizeOption.Scale)
+            if ((option & IProxyTransform.SynchronizeOption.Scale) == IProxyTransform.SynchronizeOption.Scale)
             {
                 scale = tr.localScale;
             }

@@ -44,7 +44,7 @@ namespace SyadeuEditor.Presentation
             }
             if (prefab == null) return string.Empty;
 
-            PrefabList.ObjectSetting set = prefab.GetObjectSetting();
+            PrefabList.ObjectSetting set = (PrefabList.ObjectSetting)prefab.GetObjectSetting();
             if (set == null) return string.Empty;
 
             object value = m_RefPrefabField.GetValue(set);
@@ -62,7 +62,7 @@ namespace SyadeuEditor.Presentation
             }
             if (prefab == null) return null;
 
-            PrefabList.ObjectSetting set = prefab.GetObjectSetting();
+            PrefabList.ObjectSetting set = (PrefabList.ObjectSetting)prefab.GetObjectSetting();
             if (set == null) return null;
 
             object value = m_RefPrefabField.GetValue(set);

@@ -21,7 +21,7 @@ namespace Syadeu.Presentation.Proxy
     /// OnDestroy 함수를 절때 사용하지마세요
     /// </summary>
     /// <typeparam name="T"></typeparam>    
-    public abstract class RecycleableMonobehaviour : MonoBehaviour, IProxyMonobehaviour, IValidation, INotificationReceiver
+    public abstract class RecycleableMonobehaviour : MonoBehaviour, IProxyMonobehaviour, INotificationReceiver
     {
         public delegate bool TerminateCondition();
         /// <summary>

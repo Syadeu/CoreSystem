@@ -1,6 +1,4 @@
-﻿using Newtonsoft.Json;
-using Syadeu.Collections.Converters;
-using Syadeu.Mono;
+﻿using Syadeu.Mono;
 using System;
 using System.Runtime.InteropServices;
 using Unity.Mathematics;
@@ -9,18 +7,6 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace Syadeu.Collections
 {
-    [JsonConverter(typeof(PrefabReferenceJsonConvereter))]
-    public interface IPrefabReference : IEquatable<IPrefabReference>, IValidation
-    {
-        long Index { get; }
-        PrefabList.ObjectSetting GetObjectSetting();
-
-        bool IsNone();
-    }
-    public interface IPrefabReference<T> : IPrefabReference, IEquatable<IPrefabReference<T>>
-    {
-    }
-
     [Serializable]
     public readonly struct PrefabReference : IPrefabReference, IEquatable<PrefabReference>
     {
@@ -53,6 +39,7 @@ namespace Syadeu.Collections
         public bool Equals(PrefabReference other) => m_Idx.Equals(other.m_Idx);
         public bool Equals(IPrefabReference other) => m_Idx.Equals(other.Index);
 
+        IPrefabResource IPrefabReference.GetObjectSetting() => GetObjectSetting();
         public PrefabList.ObjectSetting GetObjectSetting()
         {
             if (!IsValid() || Equals(None)) return null;
@@ -100,6 +87,17 @@ namespace Syadeu.Collections
         private readonly long m_Idx;
 
         public long Index => m_Idx;
+
+        UnityEngine.Object IPrefabReference.Asset
+        {
+            get
+            {
+                var set = GetObjectSetting();
+                if (set == null) return null;
+
+                return set.LoadedObject;
+            }
+        }
         public T Asset
         {
             get
@@ -126,6 +124,7 @@ namespace Syadeu.Collections
         public bool Equals(IPrefabReference other) => m_Idx.Equals(other.Index);
         public bool Equals(IPrefabReference<T> other) => m_Idx.Equals(other.Index);
 
+        IPrefabResource IPrefabReference.GetObjectSetting() => GetObjectSetting();
         public PrefabList.ObjectSetting GetObjectSetting()
         {
             if (!IsValid() || Equals(None)) return null;

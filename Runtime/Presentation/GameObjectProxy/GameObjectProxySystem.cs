@@ -3,6 +3,7 @@
 #endif
 
 using Syadeu.Collections;
+using Syadeu.Collections.Proxy;
 using Syadeu.Internal;
 using Syadeu.Mono;
 using Syadeu.Presentation.Events;
@@ -219,7 +220,7 @@ namespace Syadeu.Presentation.Proxy
 
             if (!transform.hasProxy || transform.hasProxyQueued) return;
 
-            RecycleableMonobehaviour proxy = transform.proxy;
+            IProxyMonobehaviour proxy = transform.proxy;
             proxy.transform.position = transform.position;
             proxy.transform.rotation = transform.rotation;
             proxy.transform.localScale = transform.scale;

@@ -1,6 +1,7 @@
 ﻿using Syadeu.Collections;
 using Syadeu.Collections.Proxy;
 using Syadeu.Mono;
+using System;
 using Unity.Mathematics;
 using AABB = Syadeu.Collections.AABB;
 
@@ -23,7 +24,7 @@ namespace Syadeu.Presentation.Proxy
 
         bool hasProxy { get; }
         bool hasProxyQueued { get; }
-        RecycleableMonobehaviour proxy { get; }
+        IProxyMonobehaviour proxy { get; }
         bool isDestroyed { get; }
         bool isDestroyQueued { get; }
         PrefabReference prefab { get; }
@@ -32,6 +33,17 @@ namespace Syadeu.Presentation.Proxy
         float3 size { get; }
 #pragma warning restore IDE1006 // Naming Styles
 
-        void Synchronize(ProxyTransform.SynchronizeOption option);
+        void Synchronize(SynchronizeOption option);
+
+        [Flags]
+        public enum SynchronizeOption
+        {
+            Position = 0b001,
+            Rotation = 0b010,
+            Scale = 0b100,
+
+            TR = 0b011,
+            TRS = 0b111
+        }
     }
 }

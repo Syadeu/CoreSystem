@@ -21,6 +21,7 @@ using System.Linq;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Timeline;
 using Syadeu.Presentation.Events;
+using Syadeu.Collections.Proxy;
 
 #if UNITY_CINEMACHINE
 using Cinemachine;
@@ -191,7 +192,7 @@ namespace Syadeu.Presentation.Actions
 
                 yield return new WaitForProxy(tr);
 
-                RecycleableMonobehaviour proxy = tr.proxy;
+                IProxyMonobehaviour proxy = tr.proxy;
                 PlayableDirector director = proxy.GetOrAddComponent<PlayableDirector>();
                 director.playOnAwake = false;
                 director.timeUpdateMode = m_UpdateMode;

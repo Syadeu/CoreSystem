@@ -352,8 +352,9 @@ namespace SyadeuEditor
             GUIContent displayName;
             if (current.Index >= 0)
             {
-                PrefabList.ObjectSetting objSetting = current.GetObjectSetting();
-                displayName = objSetting == null ? new GUIContent("INVALID") : new GUIContent(objSetting.m_Name);
+                //PrefabList.ObjectSetting objSetting = current.GetObjectSetting();
+                IPrefabResource objSetting = current.GetObjectSetting();
+                displayName = objSetting == null ? new GUIContent("INVALID") : new GUIContent(objSetting.Name);
             }
             else if (current.Equals(PrefabReference.None))
             {

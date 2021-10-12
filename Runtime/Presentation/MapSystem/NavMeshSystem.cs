@@ -491,7 +491,7 @@ namespace Syadeu.Presentation.Map
                     SetDirection(dir);
 
                     tr.position = agent.nextPosition;
-                    tr.Synchronize(ProxyTransform.SynchronizeOption.Rotation);
+                    tr.Synchronize(IProxyTransform.SynchronizeOption.Rotation);
 
                     eventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(
                         entity, OnMoveStateChangedEvent.MoveState.OnMoving));
@@ -506,7 +506,7 @@ namespace Syadeu.Presentation.Map
                     SetDirection(dir);
 
                     tr.position = agent.nextPosition;
-                    tr.Synchronize(ProxyTransform.SynchronizeOption.Rotation);
+                    tr.Synchronize(IProxyTransform.SynchronizeOption.Rotation);
 
                     eventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(
                         entity, OnMoveStateChangedEvent.MoveState.OnMoving));
@@ -517,7 +517,7 @@ namespace Syadeu.Presentation.Map
 
                 SetDirection(0);
                 tr.position = agent.nextPosition;
-                tr.Synchronize(ProxyTransform.SynchronizeOption.Rotation);
+                tr.Synchronize(IProxyTransform.SynchronizeOption.Rotation);
 
                 SetIsMoving(false);
                 agent.ResetPath();

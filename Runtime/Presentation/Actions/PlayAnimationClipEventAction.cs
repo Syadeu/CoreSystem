@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Syadeu.Collections.Proxy;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Entities;
@@ -82,7 +83,7 @@ namespace Syadeu.Presentation.Actions
             
             yield return new WaitUntil(() => tr.proxy != null);
 
-            RecycleableMonobehaviour proxy = tr.proxy;
+            IProxyMonobehaviour proxy = tr.proxy;
             AnimatorComponent component = proxy.GetComponent<AnimatorComponent>();
             if (component == null)
             {
