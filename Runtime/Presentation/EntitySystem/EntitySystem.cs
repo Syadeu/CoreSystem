@@ -273,9 +273,7 @@ namespace Syadeu.Presentation
             {
                 if (entityList[i] is IEntityData entity)
                 {
-                    ProcessEntityOnDestroy(this, entity);
-
-                    RemoveAllComponents(entity.Idx);
+                    ProcessEntityDestroy(entityList[i]);
                 }
                 else
                 {
@@ -909,27 +907,6 @@ namespace Syadeu.Presentation
         #endregion
 
 #line default
-
-        private void RemoveAllComponents(in InstanceID hash)
-        {
-            var interfaceTypes = GetComponentInterface(m_ObjectEntities[hash].GetType());
-            foreach (var interfaceType in interfaceTypes)
-            {
-                m_ComponentSystem.RemoveComponent(m_ObjectEntities[hash], interfaceType);
-#if DEBUG_MODE
-                Debug_RemoveComponent(m_ObjectEntities[hash], interfaceType.GetGenericArguments()[0]);
-#endif
-            }
-
-//#if DEBUG_MODE
-//            if (Debug_HasComponent(m_ObjectEntities[hash], out int count, out string names))
-//            {
-//                CoreSystem.Logger.LogError(Channel.Entity,
-//                    $"Entity({m_ObjectEntities[hash].Name}) has " +
-//                    $"number of {count} components that didn\'t disposed. {names}");
-//            }
-//#endif
-        }
 
 #if DEBUG_MODE
         private readonly Dictionary<InstanceID, List<Type>> m_AddedComponents = new Dictionary<InstanceID, List<Type>>();
