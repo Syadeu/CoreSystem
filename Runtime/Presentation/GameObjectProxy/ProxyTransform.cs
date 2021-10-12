@@ -199,7 +199,8 @@ namespace Syadeu.Presentation.Proxy
             }
         }
 
-        public IProxyMonobehaviour proxy
+        IProxyMonobehaviour IProxyTransform.proxy => proxy;
+        public RecycleableMonobehaviour proxy
         {
             get
             {
@@ -227,6 +228,7 @@ namespace Syadeu.Presentation.Proxy
         {
             get => Ref.m_DestroyQueued;
         }
+        IPrefabReference IProxyTransform.prefab => prefab;
         public PrefabReference prefab
         {
             get

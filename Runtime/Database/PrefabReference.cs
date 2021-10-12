@@ -130,6 +130,8 @@ namespace Syadeu.Collections
             if (!IsValid() || Equals(None)) return null;
             return PrefabList.Instance.ObjectSettings[(int)m_Idx];
         }
+        AsyncOperationHandle IPrefabReference.LoadAssetAsync() => GetObjectSetting().LoadAssetAsync();
+        AsyncOperationHandle<TObject> IPrefabReference.LoadAssetAsync<TObject>() => GetObjectSetting().LoadAssetAsync<TObject>();
         public AsyncOperationHandle<T> LoadAssetAsync() => GetObjectSetting().LoadAssetAsync<T>();
         public void UnloadAsset() => GetObjectSetting().UnloadAsset();
 

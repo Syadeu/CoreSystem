@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Collections.Converters;
 using System;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace Syadeu.Collections
 {
@@ -11,6 +12,11 @@ namespace Syadeu.Collections
         UnityEngine.Object Asset { get; }
 
         IPrefabResource GetObjectSetting();
+
+        AsyncOperationHandle LoadAssetAsync();
+        AsyncOperationHandle<T> LoadAssetAsync<T>() where T : UnityEngine.Object;
+        void UnloadAsset();
+        void ReleaseInstance(UnityEngine.GameObject obj);
 
         bool IsNone();
     }

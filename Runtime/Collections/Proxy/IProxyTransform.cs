@@ -1,11 +1,9 @@
 ﻿using Syadeu.Collections;
 using Syadeu.Collections.Proxy;
-using Syadeu.Mono;
 using System;
 using Unity.Mathematics;
-using AABB = Syadeu.Collections.AABB;
 
-namespace Syadeu.Presentation.Proxy
+namespace Syadeu.Collections.Proxy
 {
     /// <summary>
     /// 프록시 트랜스폼의 인터페이스입니다.
@@ -27,7 +25,7 @@ namespace Syadeu.Presentation.Proxy
         IProxyMonobehaviour proxy { get; }
         bool isDestroyed { get; }
         bool isDestroyQueued { get; }
-        PrefabReference prefab { get; }
+        IPrefabReference prefab { get; }
 
         float3 center { get; }
         float3 size { get; }

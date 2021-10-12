@@ -902,7 +902,7 @@ namespace Syadeu.Presentation.Proxy
 
                     OnDataObjectProxyCreated?.Invoke(proxyTransform, other);
                     CoreSystem.Logger.Log(Channel.Proxy, true,
-                        $"Prefab({proxyTransform.prefab.GetObjectSetting().m_Name}) proxy created");
+                        $"Prefab({proxyTransform.prefab.GetObjectSetting().Name}) proxy created");
                 });
             }
             else
@@ -918,7 +918,7 @@ namespace Syadeu.Presentation.Proxy
 
                 OnDataObjectProxyCreated?.Invoke(proxyTransform, other);
                 CoreSystem.Logger.Log(Channel.Proxy, true,
-                    $"Prefab({proxyTransform.prefab.GetObjectSetting().m_Name}) proxy created, pool remains {pool.Count}");
+                    $"Prefab({proxyTransform.prefab.GetObjectSetting().Name}) proxy created, pool remains {pool.Count}");
             }
         }
         unsafe private RecycleableMonobehaviour RemoveProxy(ProxyTransform proxyTransform)
