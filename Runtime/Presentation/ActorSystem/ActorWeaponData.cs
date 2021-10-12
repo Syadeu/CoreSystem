@@ -96,7 +96,7 @@ namespace Syadeu.Presentation.Actor
         }
         protected override void OnDestroy()
         {
-            if (!m_PrefabInstance.IsEmpty())
+            if (m_PrefabInstance.IsValid())
             {
                 m_PrefabInstance.Destroy();
             }

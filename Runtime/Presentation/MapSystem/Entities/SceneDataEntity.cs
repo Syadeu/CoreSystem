@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Utilities;
 using Syadeu.Mono;
+using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using System;
 using System.Collections.Generic;
@@ -117,6 +118,29 @@ namespace Syadeu.Presentation.Map
                 sceneData.m_CreatedTerrains[i].Object.Create(null);
             }
         }
+        private void CreateMapData(EntityData<SceneDataEntity> entity)
+        {
+            SceneDataEntity sceneDataEntity = entity.Target;
+            IReadOnlyList<Reference<MapDataEntity>> mapData = sceneDataEntity.MapData;
+
+            SceneDataComponent sceneData = new SceneDataComponent();
+            sceneData.m_Created = true;
+            sceneData.m_CreatedMapData = new InstanceArray<MapDataEntity>(mapData.Count, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            for (int i = 0; i < mapData.Count; i++)
+            {
+                if (mapData[i].IsEmpty() || !mapData[i].IsValid())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"MapData(Element At {i}) in SceneData({entity.RawName}) is not valid.");
+
+                    sceneData.m_CreatedMapData[i] = Instance<MapDataEntity>.Empty;
+                    continue;
+                }
+
+                EntityData<IEntityData> temp = EntitySystem.CreateObject(mapData[i]);
+                sceneData.m_CreatedMapData[i] = new Instance<MapDataEntity>(temp);
+            }
+        }
         protected override void OnDestroy(EntityData<SceneDataEntity> entity)
         {
             if (entity.Target == null || !entity.Target.IsValid()) return;
@@ -128,6 +152,23 @@ namespace Syadeu.Presentation.Map
                 sceneData.m_CreatedTerrains[i].Destroy();
             }
             sceneData.m_CreatedTerrains.Dispose();
+        }
+    }
+
+    public struct SceneDataComponent : IEntityComponent, IDisposable
+    {
+        internal bool m_Created;
+        internal InstanceArray<MapDataEntity> m_CreatedMapData;
+        internal InstanceArray<TerrainData> m_CreatedTerrains;
+
+        void IDisposable.Dispose()
+        {
+            for (int i = 0; i < m_CreatedMapData.Length; i++)
+            {
+                MapDataEntity mapData = m_CreatedMapData[i].Object;
+                //mapData.DestroyChildOnDestroy = DestroyChildOnDestroy;
+                m_CreatedMapData[i].Destroy();
+            }
         }
     }
 }

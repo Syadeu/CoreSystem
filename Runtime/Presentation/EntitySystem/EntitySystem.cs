@@ -137,8 +137,6 @@ namespace Syadeu.Presentation
                     if (m_ObjectEntities[m_DestroyedObjectsInThisFrame[i]] is DataObjectBase dataObject)
                     {
                         dataObject.InternalOnDestroy();
-
-                        //RemoveAllComponents(m_DestroyedObjectsInThisFrame[i]);
                     }
 
                     if (m_ObjectEntities[m_DestroyedObjectsInThisFrame[i]] is Components.INotifyComponent notifyComponent)
@@ -329,26 +327,8 @@ namespace Syadeu.Presentation
 
             ProcessEntityOnDestroy(this, entitydata);
 
-            //RemoveAllComponents(in entityHash);
-
             m_EntityGameObjects.Remove(obj.m_Hash);
 
-            //m_DestroyedObjectsInThisFrame.Add(entityHash);
-            //if (!CoreSystem.BlockCreateInstance &&
-            //    m_ObjectEntities[entityHash] is IEntity entity)
-            //{
-            //    if (entity.transform is ProxyTransform tr)
-            //    {
-            //        Hash index = tr.m_Hash;
-            //        tr.Destroy();
-            //        m_EntityGameObjects.Remove(index);
-            //    }
-            //    else if (entity.transform is UnityTransform unityTr)
-            //    {
-            //        UnityEngine.Object.Destroy(unityTr.provider.gameObject);
-            //        ((IDisposable)unityTr).Dispose();
-            //    }
-            //}
             ((IDisposable)m_ObjectEntities[entityHash]).Dispose();
             m_ObjectEntities.Remove(entityHash);
         }
@@ -1192,9 +1172,9 @@ namespace Syadeu.Presentation
                     foreach (var interfaceType in interfaceTypes)
                     {
                         Type componentType = interfaceType.GetGenericArguments()[0];
-                        system.m_ComponentSystem.RemoveComponent(notifyComponent.Parent, componentType);
+                        system.m_ComponentSystem.RemoveComponent(entityData, componentType);
 #if DEBUG_MODE
-                        system.Debug_RemoveComponent(notifyComponent.Parent, componentType);
+                        system.Debug_RemoveComponent(entityData, componentType);
 #endif
                     }
                 }

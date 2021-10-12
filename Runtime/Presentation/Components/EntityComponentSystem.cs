@@ -422,7 +422,7 @@ namespace Syadeu.Presentation.Components
             //        $"{TypeHelper.ToString(componentType)} component at {entity.RawName} remove queued.");
             //}
 
-            $"entity({entity.RawName}) removed component ({componentType.Name})".ToLog();
+            //$"entity({entity.RawName}) removed component ({componentType.Name})".ToLog();
         }
         /// <summary>
         /// TODO: Reflection 이 일어나서 SharedStatic 으로 interface 해싱 후 받아오는 게 좋아보임.

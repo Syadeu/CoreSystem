@@ -66,6 +66,10 @@ namespace Syadeu.Presentation
         {
             m_Idx = idx;
         }
+        public Instance(EntityData<IEntityData> entity)
+        {
+            m_Idx = entity.Idx;
+        }
         public Instance(ObjectBase obj)
         {
             if (obj.Idx.IsEmpty())
@@ -103,6 +107,11 @@ namespace Syadeu.Presentation
                 return false;
             }
 
+            if (m_EntitySystem.System.IsDestroyed(in m_Idx) || m_EntitySystem.System.IsMarkedAsDestroyed(in m_Idx))
+            {
+                return false;
+            }
+
             return true;
         }
         public bool IsEmpty() => Equals(Empty);
@@ -119,7 +128,6 @@ namespace Syadeu.Presentation
             }
 
             m_EntitySystem.System.DestroyObject(this);
-            m_Idx = Hash.Empty;
         }
 
         public static Instance<T> CreateInstance(Reference<T> other)
