@@ -389,13 +389,20 @@ namespace Syadeu.Presentation.Proxy
         }
         public void Destroy()
         {
-            if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+            if (isDestroyed)
+            {
+                CoreSystem.Logger.LogError(Channel.Proxy,
+                    "Cannot access this transform because it is destroyed.");
+                return;
+            }
 
             unsafe
             {
                 if ((*m_Pointer)[m_Index]->m_DestroyQueued)
                 {
-                    throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                    CoreSystem.Logger.LogError(Channel.Proxy,
+                        "Cannot access this transform because it is destroyed.");
+                    return;
                 }
             }
             PresentationSystem<DefaultPresentationGroup, GameObjectProxySystem>.System.Destroy(in this);

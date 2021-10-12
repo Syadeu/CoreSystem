@@ -87,69 +87,90 @@ namespace Syadeu.Presentation
         {
             if (CoreSystem.BlockCreateInstance) return;
 
-            for (int i = 0; i < m_DestroyedObjectsInThisFrame.Count; i++)
+            for (int i = m_DestroyedObjectsInThisFrame.Count - 1; i >= 0; i--)
             {
                 var targetObject = m_ObjectEntities[m_DestroyedObjectsInThisFrame[i]];
+                m_DestroyedObjectsInThisFrame.RemoveAt(i);
 
                 if (targetObject is IEntityData entityData)
                 {
-                    if (targetObject is IEntity entity)
-                    {
-                        if (entity.transform is ProxyTransform tr)
-                        {
-                            Hash index = tr.m_Hash;
-                            tr.Destroy();
-                            //m_EntityGameObjects.Remove(index);
-                        }
-                        else if (entity.transform is UnityTransform unityTr)
-                        {
-                            UnityEngine.Object.Destroy(unityTr.provider.gameObject);
-                            ((IDisposable)unityTr).Dispose();
-                        }
-                    }
-                    else
-                    {
-                        ProcessEntityOnDestroy(this, entityData);
+                    ProcessEntityDestroy(targetObject);
 
-                        RemoveAllComponents(targetObject.Idx);
-
-                        ((IDisposable)targetObject).Dispose();
-                        m_ObjectEntities.Remove(targetObject.Idx);
-                    }
-#if DEBUG_MODE
-                    CoreSystem.WaitInvoke(1, () =>
-                    {
-                        if (Debug_HasComponent(targetObject, out int count, out string names))
-                        {
-                            CoreSystem.Logger.LogError(Channel.Entity,
-                                $"Entity({targetObject.Name}) has " +
-                                $"number of {count} components that didn\'t disposed. {names}");
-                        }
-                        else
-                        {
-                            "good".ToLog();
-                        }
-                    });
-#endif
+                    ((IDisposable)targetObject).Dispose();
+                    m_ObjectEntities.Remove(targetObject.Idx);
                 }
                 else
                 {
-                    PrivateDataEntityDestroy(targetObject);
+                    ProcessNonEntityDestroy(targetObject);
 
                     ((IDisposable)targetObject).Dispose();
                     m_ObjectEntities.Remove(targetObject.Idx);
                 }
             }
-
-            m_DestroyedObjectsInThisFrame.Clear();
         }
-        private void PrivateDataEntityDestroy(ObjectBase targetObject)
+        private void ProcessEntityDestroy(ObjectBase targetObject)
         {
+#if DEBUG_MODE
+            if (!(targetObject is IEntityData))
+            {
+                throw new InvalidOperationException();
+            }
+#endif
+            IEntityData entityData = (IEntityData)targetObject;
+
+            if (targetObject is IEntity entity)
+            {
+                if (entity.transform is ProxyTransform tr && m_EntityGameObjects.ContainsKey(tr.m_Hash))
+                {
+                    Hash index = tr.m_Hash;
+                    tr.Destroy();
+                }
+                else if (entity.transform is UnityTransform unityTr && unityTr.provider != null)
+                {
+                    UnityEngine.Object.Destroy(unityTr.provider.gameObject);
+                    ((IDisposable)unityTr).Dispose();
+                }
+            }
+
+            ProcessEntityOnDestroy(this, entityData);
+
+            if (targetObject is Components.INotifyComponent notifyComponent)
+            {
+                var notifies = GetComponentInterface(targetObject.GetType());
+                foreach (var item in notifies)
+                {
+                    Type componentType = item.GetGenericArguments()[0];
+                    m_ComponentSystem.RemoveComponent(notifyComponent.Parent, componentType);
+#if DEBUG_MODE
+                    Debug_RemoveComponent(notifyComponent.Parent, componentType);
+#endif
+                }
+            }
+
+#if DEBUG_MODE
+            CoreSystem.WaitInvoke(2.5f, () =>
+            {
+                if (Debug_HasComponent(targetObject, out int count, out string names))
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"Entity({targetObject.Name}) has " +
+                        $"number of {count} components that didn\'t disposed. {names}");
+                }
+                else
+                {
+                    $"Entity({targetObject.Name}) good".ToLog();
+                }
+            });
+#endif
+        }
+        private void ProcessNonEntityDestroy(ObjectBase targetObject)
+        {
+#if DEBUG_MODE
             if (targetObject is IEntityData entityData)
             {
                 throw new InvalidOperationException();
             }
-
+#endif
             if (targetObject is DataObjectBase dataObject)
             {
                 dataObject.InternalOnDestroy();
@@ -257,7 +278,7 @@ namespace Syadeu.Presentation
                 }
                 else
                 {
-                    PrivateDataEntityDestroy(entityList[i]);
+                    ProcessNonEntityDestroy(entityList[i]);
                 }
             }
 
@@ -322,51 +343,7 @@ namespace Syadeu.Presentation
         }
         private void M_ProxySystem_OnDataObjectDestroyAsync(ProxyTransform obj)
         {
-            if (!m_EntityGameObjects.TryGetValue(obj.m_Hash, out InstanceID entityHash) ||
-                !m_ObjectEntities.ContainsKey(entityHash) || 
-                !(m_ObjectEntities[entityHash] is IEntityData entitydata))
-            {
-                "not intented handle".ToLogError();
-                return;
-            }
-
-            ObjectBase targetObject = m_ObjectEntities[m_EntityGameObjects[obj.m_Hash]];
-
-            ProcessEntityOnDestroy(this, entitydata);
-
-            if (targetObject is Components.INotifyComponent notifyComponent)
-            {
-                var notifies = GetComponentInterface(m_ObjectEntities[entityHash].GetType());
-                foreach (var item in notifies)
-                {
-                    Type componentType = item.GetGenericArguments()[0];
-                    m_ComponentSystem.RemoveComponent(notifyComponent.Parent, componentType);
-#if DEBUG_MODE
-                    Debug_RemoveComponent(notifyComponent.Parent, componentType);
-#endif
-                }
-            }
-
-#if DEBUG_MODE
-            CoreSystem.WaitInvoke(1, () =>
-            {
-                if (Debug_HasComponent(targetObject, out int count, out string names))
-                {
-                    CoreSystem.Logger.LogError(Channel.Entity,
-                        $"Entity({targetObject.Name}) has " +
-                        $"number of {count} components that didn\'t disposed. {names}");
-                }
-                else
-                {
-                    "good".ToLog();
-                }
-            });
-#endif
-
             m_EntityGameObjects.Remove(obj.m_Hash);
-
-            ((IDisposable)m_ObjectEntities[entityHash]).Dispose();
-            m_ObjectEntities.Remove(entityHash);
         }
         private void OnDataObjectVisible(ProxyTransform tr)
         {
