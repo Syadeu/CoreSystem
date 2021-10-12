@@ -1,5 +1,6 @@
 ﻿using DG.Tweening;
 using DG.Tweening.Core;
+using DG.Tweening.Plugins.Core;
 using Syadeu.Collections;
 using Syadeu.Collections.Proxy;
 using System.Collections.Generic;
@@ -13,13 +14,30 @@ namespace Syadeu.Presentation.Dotween
         {
             private static int s_Index = 0;
 
-            private int m_Index;
-            public ITransform m_Transform;
+            private readonly int m_Index;
+            private ITransform m_Transform;
+            private Tweener m_Tweener;
 
             public ITransformDOTweenHelper()
             {
                 m_Index = s_Index;
                 s_Index += 1;
+            }
+            public void DOPosition(ITransform tr, float3 endValue, float duration)
+            {
+                m_Transform = tr;
+                m_Tweener = DOTween.To<float3, float3, Float3Options>(
+                      DOTweenPlugins.s_Float3Plugin, GetPosition, SetPosition, endValue, duration);
+
+                int hash = tr.GetHashCode();
+                if (!s_Tweens.TryGetValue(hash, out var list))
+                {
+                    list = new List<Tweener>();
+                    s_Tweens.Add(hash, list);
+                }
+                list.Add(m_Tweener);
+
+                m_Tweener.onKill += Reserve;
             }
 
             public float3 GetPosition() => m_Transform.position;
@@ -28,7 +46,10 @@ namespace Syadeu.Presentation.Dotween
             public void Reserve()
             {
                 int hash = m_Transform.GetHashCode();
-                s_Tweens[hash].Remove(this);
+                s_Tweens[hash].Remove(m_Tweener);
+
+                m_Transform = null;
+                m_Tweener = null;
 
                 PoolContainer<ITransformDOTweenHelper>.Enqueue(this);
             }
@@ -43,26 +64,22 @@ namespace Syadeu.Presentation.Dotween
         {
             return new ITransformDOTweenHelper();
         }
-        private static readonly Dictionary<int, List<ITransformDOTweenHelper>> s_Tweens = new Dictionary<int, List<ITransformDOTweenHelper>>();
+        private static readonly Dictionary<int, List<Tweener>> s_Tweens = new Dictionary<int, List<Tweener>>();
 
         public static void DOMove(this ITransform tr, float3 position, float time)
         {
             ITransformDOTweenHelper temp = PoolContainer<ITransformDOTweenHelper>.Dequeue();
-            temp.m_Transform = tr;
-
-            TweenerCore<float3, float3, Float3Options> tween
-                  = DOTween.To<float3, float3, Float3Options>(
-                      DOTweenPlugins.s_Float3Plugin, temp.GetPosition, temp.SetPosition, position, time);
-
-            int hash = tr.GetHashCode();
-            if (!s_Tweens.TryGetValue(hash, out var list))
+            temp.DOPosition(tr, position, time);
+        }
+        public static void DOKill(this ITransform tr, bool complete = false)
+        {
+            if (s_Tweens.TryGetValue(tr.GetHashCode(), out var list))
             {
-                list = new List<ITransformDOTweenHelper>();
-                s_Tweens.Add(hash, list);
+                for (int i = list.Count - 1; i >= 0; i--)
+                {
+                    list[i].Kill(complete);
+                }
             }
-            list.Add(temp);
-
-            tween.onKill += temp.Reserve;
         }
     }
 }
