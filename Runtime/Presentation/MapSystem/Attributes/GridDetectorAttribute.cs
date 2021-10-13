@@ -19,9 +19,10 @@ namespace Syadeu.Presentation.Map
         INotifyComponent<GridDetectorComponent>
     {
         [Tooltip("최대로 탐색할 Grid Range 값")]
-        [JsonProperty(Order = 0, PropertyName = "MaxDetectionRange")] public int m_MaxDetectionRange = 6;
+        [JsonProperty(Order = 0, PropertyName = "MaxDetectionRange")] 
+        internal int m_MaxDetectionRange = 6;
         [JsonProperty(Order = 1, PropertyName = "IgnoreLayers")]
-        public int[] m_IgnoreLayers = Array.Empty<int>();
+        internal int[] m_IgnoreLayers = Array.Empty<int>();
 
         [Header("Trigger Only")]
         [JsonProperty(Order = 2, PropertyName = "Inverse")] private bool m_Inverse = false;
@@ -180,8 +181,21 @@ namespace Syadeu.Presentation.Map
 
             attribute.m_TempGetRanges = new NativeList<int>(128, Allocator.Persistent);
 
-            GridDetectorComponent component = new GridDetectorComponent();
-
+            FixedList128Bytes<int> ignores = new FixedList128Bytes<int>();
+            unsafe
+            {
+                fixed (int* temp = attribute.m_IgnoreLayers)
+                {
+                    ignores.AddRange(temp, attribute.m_IgnoreLayers.Length);
+                }
+            }
+            GridDetectorComponent component = new GridDetectorComponent()
+            {
+                m_MaxDetectionRange = attribute.m_MaxDetectionRange,
+                m_ObserveIndices = new FixedList128Bytes<int>(),
+                m_IgnoreLayers = ignores
+            };
+            
             entity.AddComponent(component);
 
             EventSystem.AddEvent<OnGridPositionChangedEvent>(attribute.OnGridPositionChangedEventHandler);
@@ -201,6 +215,8 @@ namespace Syadeu.Presentation.Map
     }
     public struct GridDetectorComponent : IEntityComponent
     {
-
+        internal int m_MaxDetectionRange;
+        internal FixedList128Bytes<int> m_ObserveIndices;
+        internal FixedList128Bytes<int> m_IgnoreLayers;
     }
 }

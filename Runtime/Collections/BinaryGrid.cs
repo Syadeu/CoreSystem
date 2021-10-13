@@ -717,6 +717,33 @@ namespace Syadeu.Collections
                 }
             }
         }
+        unsafe public void GetRange(int* buffer, in int idx, in int range, in int maxRange, out int count)
+        {
+            //targets.Clear();
+            int2 gridSize = this.gridSize;
+
+            count = 0;
+
+            int startIdx = idx - range + (gridSize.y * range);
+            int height = ((range * 2) + 1);
+            for (int yGrid = 0; yGrid < height; yGrid++)
+            {
+                for (int xGrid = 0; xGrid < height; xGrid++)
+                {
+                    int temp = startIdx - (yGrid * gridSize.y) + xGrid;
+
+                    if (HasCell(temp))
+                    {
+                        //$"add {temp}".ToLog();
+                        buffer[count] = (temp);
+                        count += 1;
+                    }
+                    //if (temp >= temp - (temp % gridSize.x) + gridSize.x - 1) break;
+
+                    if (count >= maxRange) return;
+                }
+            }
+        }
 
         [Obsolete]
         public int[] GetRange(in int idx, in int range)

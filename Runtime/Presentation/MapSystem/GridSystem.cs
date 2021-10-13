@@ -181,11 +181,25 @@ namespace Syadeu.Presentation.Map
             }
         }
 
-        private void UpdateGridDetection(Entity<IEntity> entity)
+        unsafe private void UpdateGridDetection(Entity<IEntity> entity)
         {
             if (!entity.HasComponent<GridDetectorComponent>()) return;
 
+            ref var gridSize = ref entity.GetComponent<GridSizeComponent>();
             ref GridDetectorComponent detector = ref entity.GetComponent<GridDetectorComponent>();
+            for (int i = 0; i < detector.m_ObserveIndices.Length; i++)
+            {
+                m_GridObservers.Remove(detector.m_ObserveIndices[i], entity.Idx);
+            }
+            detector.m_ObserveIndices.Clear();
+
+            int* buffer = stackalloc int[1024];
+            GetRange(buffer, gridSize.positions[0].index, detector.m_MaxDetectionRange, 1024, detector.m_IgnoreLayers, out int count);
+
+            for (int i = 0; i < count; i++)
+            {
+                m_GridObservers.Add(buffer[i], entity.Idx);
+            }
         }
 
         #endregion
@@ -733,6 +747,8 @@ namespace Syadeu.Presentation.Map
             => GridMap.GetRange1024(in idx, in range, in ignoreLayers);
         public void GetRange(ref NativeList<int> list, in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
             => GridMap.GetRange(ref list, in idx, in range, in ignoreLayers);
+        unsafe public void GetRange(int* buffer, in int idx, in int range, in int maxRange, in FixedList128Bytes<int> ignoreLayers, out int count)
+            => GridMap.GetRange(buffer, in idx, in range, in maxRange, in ignoreLayers, out count);
 
         #endregion
 

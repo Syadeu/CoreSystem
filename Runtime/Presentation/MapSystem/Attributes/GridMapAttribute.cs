@@ -686,6 +686,25 @@ namespace Syadeu.Presentation.Map
                 FilterByLayer(ignoreLayers[i], ref list);
             }
         }
+        unsafe public void GetRange(int* buffer, in int idx, in int range, in int maxRange, in FixedList128Bytes<int> ignoreLayers, out int count)
+        {
+            var grid = GetTargetGrid(in idx, out int targetIdx);
+            
+            grid.GetRange(buffer, in targetIdx, in range, in maxRange, out count);
+            FixedList4096Bytes<int> temp = new FixedList4096Bytes<int>();
+            temp.AddRange(buffer, count);
+
+            for (int i = 0; i < ignoreLayers.Length; i++)
+            {
+                FilterByLayer1024(ignoreLayers[i], in temp);
+            }
+
+            for (int i = 0; i < temp.Length; i++)
+            {
+                buffer[i] = temp[i];
+            }
+            count = temp.Length;
+        }
 
         #endregion
 
