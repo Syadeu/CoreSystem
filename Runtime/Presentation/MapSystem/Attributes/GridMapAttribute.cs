@@ -686,11 +686,11 @@ namespace Syadeu.Presentation.Map
                 FilterByLayer(ignoreLayers[i], ref list);
             }
         }
-        unsafe public void GetRange(int* buffer, in int idx, in int range, in int maxRange, in FixedList128Bytes<int> ignoreLayers, out int count)
+        unsafe public void GetRange(int* buffer, in int idx, in int range, in int bufferLength, in FixedList128Bytes<int> ignoreLayers, out int count)
         {
             var grid = GetTargetGrid(in idx, out int targetIdx);
             
-            grid.GetRange(buffer, in targetIdx, in range, in maxRange, out count);
+            grid.GetRange(buffer, in targetIdx, in range, in bufferLength, out count);
             FixedList4096Bytes<int> temp = new FixedList4096Bytes<int>();
             temp.AddRange(buffer, count);
 

@@ -717,7 +717,7 @@ namespace Syadeu.Collections
                 }
             }
         }
-        unsafe public void GetRange(int* buffer, in int idx, in int range, in int maxRange, out int count)
+        unsafe public void GetRange(int* buffer, in int idx, in int range, in int bufferLength, out int count)
         {
             //targets.Clear();
             int2 gridSize = this.gridSize;
@@ -740,7 +740,7 @@ namespace Syadeu.Collections
                     }
                     //if (temp >= temp - (temp % gridSize.x) + gridSize.x - 1) break;
 
-                    if (count >= maxRange) return;
+                    if (count >= bufferLength) return;
                 }
             }
         }

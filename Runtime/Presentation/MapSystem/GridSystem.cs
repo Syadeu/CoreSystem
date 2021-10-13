@@ -179,6 +179,8 @@ namespace Syadeu.Presentation.Map
 
                 m_GridEntities.Add(indices[i].index, entity.Idx);
             }
+
+            UpdateGridDetection(entity);
         }
 
         unsafe private void UpdateGridDetection(Entity<IEntity> entity)
@@ -193,12 +195,17 @@ namespace Syadeu.Presentation.Map
             }
             detector.m_ObserveIndices.Clear();
 
-            int* buffer = stackalloc int[1024];
-            GetRange(buffer, gridSize.positions[0].index, detector.m_MaxDetectionRange, 1024, detector.m_IgnoreLayers, out int count);
+            int
+                halfSize = detector.m_MaxDetectionRange + 2,
+                bufferSize = halfSize * halfSize;
+
+            int* buffer = stackalloc int[bufferSize];
+            GetRange(buffer, gridSize.positions[0].index, detector.m_MaxDetectionRange, bufferSize, detector.m_IgnoreLayers, out int count);
 
             for (int i = 0; i < count; i++)
             {
                 m_GridObservers.Add(buffer[i], entity.Idx);
+                detector.m_ObserveIndices.Add(buffer[i]);
             }
         }
 
@@ -747,8 +754,26 @@ namespace Syadeu.Presentation.Map
             => GridMap.GetRange1024(in idx, in range, in ignoreLayers);
         public void GetRange(ref NativeList<int> list, in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
             => GridMap.GetRange(ref list, in idx, in range, in ignoreLayers);
-        unsafe public void GetRange(int* buffer, in int idx, in int range, in int maxRange, in FixedList128Bytes<int> ignoreLayers, out int count)
-            => GridMap.GetRange(buffer, in idx, in range, in maxRange, in ignoreLayers, out count);
+        unsafe public void GetRange(int* buffer, in int idx, in int range, in int bufferLength, in FixedList128Bytes<int> ignoreLayers, out int count)
+            => GridMap.GetRange(buffer, in idx, in range, in bufferLength, in ignoreLayers, out count);
+
+        unsafe public void GetDetectionRange(
+            int* buffer, in int idx, in int range, in int maxRange, 
+            in FixedList128Bytes<int> ignoreLayers, out int count)
+        {
+            count = 0;
+
+            int* rangeBuffer = stackalloc int[maxRange];
+            GetRange(rangeBuffer, in idx, in range, in maxRange, in ignoreLayers, out int rangeCount);
+            for (int i = 0; i < rangeCount; i++)
+            {
+                if (m_GridObservers.ContainsKey(rangeBuffer[i]))
+                {
+                    buffer[i] = rangeBuffer[i];
+                    count += 1;
+                }
+            }
+        }
 
         #endregion
 
