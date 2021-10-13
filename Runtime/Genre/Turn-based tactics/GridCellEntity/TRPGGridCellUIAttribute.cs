@@ -9,8 +9,7 @@ using System.ComponentModel;
 namespace Syadeu.Presentation.TurnTable
 {
     [DisplayName("Attribute: TRPG GridCell UI")]
-    public sealed class TRPGGridCellUIAttribute : AttributeBase,
-        INotifyComponent<GridCellComponent>
+    public sealed class TRPGGridCellUIAttribute : AttributeBase
     {
 
     }
@@ -22,7 +21,7 @@ namespace Syadeu.Presentation.TurnTable
             GridCellComponent component = entity.GetComponent<GridCellComponent>();
             if (component.m_GridPosition.index == -1) throw new System.Exception("index -1");
 
-            monoObj.GetComponent<TRPGGridCellOverlayUI>().Initialize(component.m_GridPosition);
+            monoObj.GetComponent<TRPGGridCellOverlayUI>().Initialize(component.m_GridPosition, component.m_IsDetectionCell);
         }
         public void OnProxyRemoved(IAttribute attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
         {

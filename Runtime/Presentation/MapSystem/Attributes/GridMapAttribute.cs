@@ -218,9 +218,8 @@ namespace Syadeu.Presentation.Map
 
         #region Filter
 
-        public FixedList32Bytes<int> FilterByLayer32(in int layer, in FixedList32Bytes<int> indices)
+        public void FilterByLayer1024(in int layer, ref FixedList4096Bytes<int> indices)
         {
-            FixedList32Bytes<int> temp = new FixedList32Bytes<int>();
             for (int i = 0; i < indices.Length; i++)
             {
                 if (m_Layers[layer].m_Inverse)
@@ -228,6 +227,7 @@ namespace Syadeu.Presentation.Map
                     if (!Layers[layer].Contains(indices[i]))
                     {
                         //filtered.Add(indices[i]);
+                        indices.RemoveAt(i);
                         continue;
                     }
                 }
@@ -236,117 +236,11 @@ namespace Syadeu.Presentation.Map
                     if (Layers[layer].Contains(indices[i]))
                     {
                         //filtered.Add(indices[i]);
+                        indices.RemoveAt(i);
                         continue;
                     }
                 }
-
-                temp.Add(indices[i]);
             }
-            return temp;
-        }
-        public FixedList64Bytes<int> FilterByLayer64(in int layer, in FixedList64Bytes<int> indices)
-        {
-            FixedList64Bytes<int> temp = new FixedList64Bytes<int>();
-            for (int i = 0; i < indices.Length; i++)
-            {
-                if (m_Layers[layer].m_Inverse)
-                {
-                    if (!Layers[layer].Contains(indices[i]))
-                    {
-                        //filtered.Add(indices[i]);
-                        continue;
-                    }
-                }
-                else
-                {
-                    if (Layers[layer].Contains(indices[i]))
-                    {
-                        //filtered.Add(indices[i]);
-                        continue;
-                    }
-                }
-
-                temp.Add(indices[i]);
-            }
-            return temp;
-        }
-        public FixedList128Bytes<int> FilterByLayer128(in int layer, in FixedList128Bytes<int> indices)
-        {
-            FixedList128Bytes<int> temp = new FixedList128Bytes<int>();
-            for (int i = 0; i < indices.Length; i++)
-            {
-                if (m_Layers[layer].m_Inverse)
-                {
-                    if (!Layers[layer].Contains(indices[i]))
-                    {
-                        //filtered.Add(indices[i]);
-                        continue;
-                    }
-                }
-                else
-                {
-                    if (Layers[layer].Contains(indices[i]))
-                    {
-                        //filtered.Add(indices[i]);
-                        continue;
-                    }
-                }
-
-                temp.Add(indices[i]);
-            }
-            return temp;
-        }
-        public FixedList512Bytes<int> FilterByLayer512(in int layer, in FixedList512Bytes<int> indices)
-        {
-            FixedList512Bytes<int> temp = new FixedList512Bytes<int>();
-            for (int i = 0; i < indices.Length; i++)
-            {
-                if (m_Layers[layer].m_Inverse)
-                {
-                    if (!Layers[layer].Contains(indices[i]))
-                    {
-                        //filtered.Add(indices[i]);
-                        continue;
-                    }
-                }
-                else
-                {
-                    if (Layers[layer].Contains(indices[i]))
-                    {
-                        //filtered.Add(indices[i]);
-                        continue;
-                    }
-                }
-
-                temp.Add(indices[i]);
-            }
-            return temp;
-        }
-        public FixedList4096Bytes<int> FilterByLayer1024(in int layer, in FixedList4096Bytes<int> indices)
-        {
-            FixedList4096Bytes<int> temp = new FixedList4096Bytes<int>();
-            for (int i = 0; i < indices.Length; i++)
-            {
-                if (m_Layers[layer].m_Inverse)
-                {
-                    if (!Layers[layer].Contains(indices[i]))
-                    {
-                        //filtered.Add(indices[i]);
-                        continue;
-                    }
-                }
-                else
-                {
-                    if (Layers[layer].Contains(indices[i]))
-                    {
-                        //filtered.Add(indices[i]);
-                        continue;
-                    }
-                }
-
-                temp.Add(indices[i]);
-            }
-            return temp;
         }
 
         public void FilterByLayer(in int layer, ref NativeList<int> indices)
@@ -628,54 +522,6 @@ namespace Syadeu.Presentation.Map
 
             return temp;
         }
-        public FixedList32Bytes<int> GetRange8(in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
-        {
-            var grid = GetTargetGrid(in idx, out int targetIdx);
-
-            FixedList32Bytes<int> temp = grid.GetRange8(in targetIdx, in range);
-            for (int i = 0; i < ignoreLayers.Length; i++)
-            {
-                temp = FilterByLayer32(ignoreLayers[i], in temp);
-            }
-
-            return temp;
-        }
-        public FixedList64Bytes<int> GetRange16(in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
-        {
-            var grid = GetTargetGrid(in idx, out int targetIdx);
-
-            FixedList64Bytes<int> temp = grid.GetRange16(in targetIdx, in range);
-            for (int i = 0; i < ignoreLayers.Length; i++)
-            {
-                temp = FilterByLayer64(ignoreLayers[i], in temp);
-            }
-
-            return temp;
-        }
-        public FixedList128Bytes<int> GetRange32(in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
-        {
-            var grid = GetTargetGrid(in idx, out int targetIdx);
-
-            FixedList128Bytes<int> temp = grid.GetRange32(in targetIdx, in range);
-            for (int i = 0; i < ignoreLayers.Length; i++)
-            {
-                temp = FilterByLayer128(ignoreLayers[i], in temp);
-            }
-
-            return temp;
-        }
-        public FixedList4096Bytes<int> GetRange1024(in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
-        {
-            var grid = GetTargetGrid(in idx, out int targetIdx);
-
-            FixedList4096Bytes<int> temp = grid.GetRange1024(in targetIdx, in range);
-            for (int i = 0; i < ignoreLayers.Length; i++)
-            {
-                temp = FilterByLayer1024(ignoreLayers[i], in temp);
-            }
-
-            return temp;
-        }
         public void GetRange(ref NativeList<int> list, in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
         {
             var grid = GetTargetGrid(in idx, out int targetIdx);
@@ -686,17 +532,17 @@ namespace Syadeu.Presentation.Map
                 FilterByLayer(ignoreLayers[i], ref list);
             }
         }
-        unsafe public void GetRange(int* buffer, in int idx, in int range, in int bufferLength, in FixedList128Bytes<int> ignoreLayers, out int count)
+        unsafe public void GetRange(in int* buffer, in int bufferLength, in int idx, in int range, in FixedList128Bytes<int> ignoreLayers, out int count)
         {
             var grid = GetTargetGrid(in idx, out int targetIdx);
             
-            grid.GetRange(buffer, in targetIdx, in range, in bufferLength, out count);
+            grid.GetRange(in buffer, in bufferLength, in targetIdx, in range, out count);
             FixedList4096Bytes<int> temp = new FixedList4096Bytes<int>();
             temp.AddRange(buffer, count);
 
             for (int i = 0; i < ignoreLayers.Length; i++)
             {
-                FilterByLayer1024(ignoreLayers[i], in temp);
+                FilterByLayer1024(ignoreLayers[i], ref temp);
             }
 
             for (int i = 0; i < temp.Length; i++)

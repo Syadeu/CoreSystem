@@ -39,7 +39,6 @@ namespace Syadeu.Presentation.TurnTable
         {
             if (!SafetyChecks()) return;
 
-            var grid = PresentationSystem<DefaultPresentationGroup, GridSystem>.System;
             var turnPlayer = m_Parent.GetComponent<TurnPlayerComponent>();
             var gridsize = m_Parent.GetComponent<GridSizeComponent>();
 
@@ -51,8 +50,6 @@ namespace Syadeu.Presentation.TurnTable
             {
                 if (!gridsize.HasPath(range[i], out int pathCount) ||
                     pathCount > turnPlayer.ActionPoint) continue;
-
-                //if (grid.HasEntityAt(range[i])) continue;
 
                 gridPositions.Add(gridsize.GetGridPosition(range[i]));
             }

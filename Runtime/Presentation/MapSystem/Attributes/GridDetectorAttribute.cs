@@ -228,17 +228,18 @@ namespace Syadeu.Presentation.Map
         {
             return m_ObserveIndices.Contains(gridIndex);
         }
-        internal void RemoveDetected(in int gridIndex)
-        {
-            for (int i = m_Detected.Length - 1; i >= 0; i--)
-            {
-                var temp = m_Detected[i].GetEntity<IEntity>().GetComponent<GridSizeComponent>();
-                if (temp.IsMyIndex(gridIndex))
-                {
-                    m_Detected.RemoveAt(i);
-                    continue;
-                }
-            }
-        }
+
+        //internal void RemoveDetected(in int gridIndex)
+        //{
+        //    for (int i = m_Detected.Length - 1; i >= 0; i--)
+        //    {
+        //        var temp = m_Detected[i].GetEntity<IEntity>().GetComponent<GridSizeComponent>();
+        //        if (temp.IsMyIndex(gridIndex))
+        //        {
+        //            m_Detected.RemoveAt(i);
+        //            continue;
+        //        }
+        //    }
+        //}
     }
 }

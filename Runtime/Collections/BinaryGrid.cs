@@ -717,11 +717,12 @@ namespace Syadeu.Collections
                 }
             }
         }
-        unsafe public void GetRange(int* buffer, in int idx, in int range, in int bufferLength, out int count)
+        unsafe public void GetRange(in int* buffer, in int bufferLength, in int idx, in int range, out int count)
         {
             //targets.Clear();
             int2 gridSize = this.gridSize;
-
+            //Debug.Log($"from{IndexToLocation(idx)}: {bufferLength}");
+            
             count = 0;
 
             int startIdx = idx - range + (gridSize.y * range);
@@ -735,6 +736,7 @@ namespace Syadeu.Collections
                     if (HasCell(temp))
                     {
                         //$"add {temp}".ToLog();
+                        //Debug.Log($"add {IndexToLocation(temp)}");
                         buffer[count] = (temp);
                         count += 1;
                     }

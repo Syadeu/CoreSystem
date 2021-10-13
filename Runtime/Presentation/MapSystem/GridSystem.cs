@@ -149,7 +149,7 @@ namespace Syadeu.Presentation.Map
 
                 if (entity.HasComponent<GridDetectorComponent>())
                 {
-                    UpdateGridDetection(entity);
+                    UpdateGridDetection(entity, in component);
                     //CheckGridDetectionAndPost(entity, in component.positions);
                 }
             }
@@ -184,9 +184,8 @@ namespace Syadeu.Presentation.Map
             }
         }
 
-        unsafe private void UpdateGridDetection(Entity<IEntity> entity)
+        unsafe private void UpdateGridDetection(Entity<IEntity> entity, in GridSizeComponent gridSize)
         {
-            ref var gridSize = ref entity.GetComponent<GridSizeComponent>();
             ref GridDetectorComponent detector = ref entity.GetComponent<GridDetectorComponent>();
             for (int i = 0; i < detector.m_ObserveIndices.Length; i++)
             {
@@ -195,11 +194,11 @@ namespace Syadeu.Presentation.Map
             detector.m_ObserveIndices.Clear();
 
             int
-                halfSize = detector.m_MaxDetectionRange + 2,
-                bufferSize = halfSize * halfSize;
+                height = ((detector.m_MaxDetectionRange * 2) + 1),
+                bufferSize = height * height;
 
             int* buffer = stackalloc int[bufferSize];
-            GetRange(buffer, gridSize.positions[0].index, detector.m_MaxDetectionRange, bufferSize, detector.m_IgnoreLayers, out int count);
+            GetRange(in buffer, bufferSize, gridSize.positions[0].index, detector.m_MaxDetectionRange, detector.m_IgnoreLayers, out int count);
 
             for (int i = 0; i < count; i++)
             {
@@ -763,22 +762,22 @@ namespace Syadeu.Presentation.Map
 
         public void GetRange(ref NativeList<int> list, in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
             => GridMap.GetRange(ref list, in idx, in range, in ignoreLayers);
-        unsafe public void GetRange(int* buffer, in int idx, in int range, in int bufferLength, in FixedList128Bytes<int> ignoreLayers, out int count)
-            => GridMap.GetRange(buffer, in idx, in range, in bufferLength, in ignoreLayers, out count);
+        unsafe public void GetRange(in int* buffer, in int bufferLength, in int idx, in int range, in FixedList128Bytes<int> ignoreLayers, out int count)
+            => GridMap.GetRange(in buffer, in bufferLength, in idx, in range, in ignoreLayers, out count);
 
         unsafe public void GetDetectionRange(
-            int* buffer, in int idx, in int range, in int maxRange, 
+            int* buffer, in int idx, in int range, in int bufferLength, 
             in FixedList128Bytes<int> ignoreLayers, out int count)
         {
             count = 0;
 
-            int* rangeBuffer = stackalloc int[maxRange];
-            GetRange(rangeBuffer, in idx, in range, in maxRange, in ignoreLayers, out int rangeCount);
+            int* rangeBuffer = stackalloc int[bufferLength];
+            GetRange(in rangeBuffer, in bufferLength, in idx, in range, in ignoreLayers, out int rangeCount);
             for (int i = 0; i < rangeCount; i++)
             {
                 if (m_GridObservers.ContainsKey(rangeBuffer[i]))
                 {
-                    buffer[i] = rangeBuffer[i];
+                    buffer[count] = rangeBuffer[i];
                     count += 1;
                 }
             }
@@ -799,12 +798,56 @@ namespace Syadeu.Presentation.Map
             temp.transform.position = pos;
         }
 
+        public void PlaceDetectionUICell(Entity<IEntity> entity)
+        {
+            if (!entity.HasComponent<GridDetectorComponent>())
+            {
+                "".ToLogError();
+                return;
+            }
+
+            ref var gridSize = ref entity.GetComponent<GridSizeComponent>();
+            ref var detector = ref entity.GetComponent<GridDetectorComponent>();
+
+            int
+                halfSize = detector.m_MaxDetectionRange + 2,
+                bufferSize = halfSize * halfSize;
+
+            unsafe
+            {
+                int* buffer = stackalloc int[bufferSize];
+                GetDetectionRange(
+                    buffer, gridSize.positions[0].index, detector.m_MaxDetectionRange, in bufferSize,
+                    gridSize.m_ObstacleLayers, out int count);
+
+                GridPosition* positions = stackalloc GridPosition[count];
+                int posCount = 0;
+                for (int i = 0; i < count; i++)
+                {
+                    GridPosition gridPos = IndexToGridPosition(buffer[i]);
+                    if (gridSize.positions.Contains(gridPos)) continue;
+
+                    positions[posCount] = gridPos;
+                    posCount += 1;
+                }
+
+                for (int i = 0; i < posCount; i++)
+                {
+                    PlaceUICell(positions[i]);
+                }
+            }
+        }
+
         public bool HasUICell(GridPosition position)
         {
             return m_PlacedCellUIEntities.ContainsKey(position);
         }
         public Entity<IEntity> PlaceUICell(GridPosition position, float heightOffset = .25f)
         {
+            if (m_PlacedCellUIEntities.TryGetValue(position, out var exist))
+            {
+                return exist;
+            }
 #if DEBUG_MODE
             if (GridMap.m_CellUIPrefab.IsEmpty() || !GridMap.m_CellUIPrefab.IsValid())
             {
@@ -825,7 +868,8 @@ namespace Syadeu.Presentation.Map
             m_DrawnCellUIEntities.Add(entity);
             entity.AddComponent(new GridCellComponent()
             {
-                m_GridPosition = position
+                m_GridPosition = position,
+                m_IsDetectionCell = m_GridObservers.ContainsKey(position.index)
             });
             m_PlacedCellUIEntities.Add(position, entity);
 
@@ -835,6 +879,7 @@ namespace Syadeu.Presentation.Map
         {
             for (int i = 0; i < m_DrawnCellUIEntities.Count; i++)
             {
+                m_DrawnCellUIEntities[i].RemoveComponent<GridCellComponent>();
                 m_DrawnCellUIEntities[i].Destroy();
             }
 

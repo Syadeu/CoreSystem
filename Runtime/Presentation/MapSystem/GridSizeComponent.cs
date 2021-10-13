@@ -54,19 +54,49 @@ namespace Syadeu.Presentation.Map
         /// <param name="range"></param>
         public void GetRange(ref NativeList<int> list, in int range)
         {
-            GridSystem grid = PresentationSystem<DefaultPresentationGroup, GridSystem>.System;
-            grid.GetRange(ref list, positions[0].index, in range, m_ObstacleLayers);
+            //GridSystem grid = PresentationSystem<DefaultPresentationGroup, GridSystem>.System;
+            //grid.GetRange(ref list, positions[0].index, in range, m_ObstacleLayers);
+
+            int 
+                height = ((range * 2) + 1),
+                bufferSize = height * height;
+            unsafe
+            {
+                int* buffer = stackalloc int[bufferSize];
+                GetRange(in buffer, in bufferSize, in range, out int count);
+
+                list.Clear();
+                list.AddRange(buffer, count);
+            }
         }
         public void GetRange(ref NativeList<int> list, in int range, in FixedList128Bytes<int> ignoreLayers)
         {
-            GridSystem grid = PresentationSystem<DefaultPresentationGroup, GridSystem>.System;
-            grid.GetRange(ref list, positions[0].index, in range, ignoreLayers);
+            //GridSystem grid = PresentationSystem<DefaultPresentationGroup, GridSystem>.System;
+            //grid.GetRange(ref list, positions[0].index, in range, ignoreLayers);
+
+            int
+                height = ((range * 2) + 1),
+                bufferSize = height * height;
+            unsafe
+            {
+                int* buffer = stackalloc int[bufferSize];
+                GetRange(in buffer, in bufferSize, in range, in ignoreLayers, out int count);
+
+                list.Clear();
+                list.AddRange(buffer, count);
+            }
         }
-        unsafe public void GetRange(int* buffer, in int bufferSize, in int range, out int count)
+        unsafe public void GetRange(in int* buffer, in int bufferSize, in int range, out int count)
         {
             GridSystem grid = PresentationSystem<DefaultPresentationGroup, GridSystem>.System;
 
-            grid.GetRange(buffer, positions[0].index, in range, in bufferSize, in m_ObstacleLayers, out count);
+            grid.GetRange(in buffer, in bufferSize, positions[0].index, in range,in m_ObstacleLayers, out count);
+        }
+        unsafe public void GetRange(in int* buffer, in int bufferSize, in int range, in FixedList128Bytes<int> ignoreLayers, out int count)
+        {
+            GridSystem grid = PresentationSystem<DefaultPresentationGroup, GridSystem>.System;
+
+            grid.GetRange(in buffer, in bufferSize, positions[0].index, in range, in ignoreLayers, out count);
         }
 
         public bool HasPath(int to, in int maxIteration = 32) => HasPath(in to, out _, maxIteration);
