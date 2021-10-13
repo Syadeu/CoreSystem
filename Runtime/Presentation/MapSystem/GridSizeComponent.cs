@@ -41,35 +41,6 @@ namespace Syadeu.Presentation.Map
             return indices;
         }
 
-        public FixedList32Bytes<int> GetRange8(in int range)
-        {
-            GridSystem grid = PresentationSystem<DefaultPresentationGroup, GridSystem>.System;
-
-            FixedList32Bytes<int> indices = grid.GetRange8(positions[0].index, in range, m_ObstacleLayers);
-            return indices;
-        }
-        public FixedList64Bytes<int> GetRange16(in int range)
-        {
-            GridSystem grid = PresentationSystem<DefaultPresentationGroup, GridSystem>.System;
-
-            FixedList64Bytes<int> indices = grid.GetRange16(positions[0].index, in range, m_ObstacleLayers);
-            return indices;
-        }
-        public FixedList128Bytes<int> GetRange32(in int range)
-        {
-            GridSystem grid = PresentationSystem<DefaultPresentationGroup, GridSystem>.System;
-
-            FixedList128Bytes<int> indices = grid.GetRange32(positions[0].index, in range, m_ObstacleLayers);
-            return indices;
-        }
-        public FixedList4096Bytes<int> GetRange1024(in int range)
-        {
-            GridSystem grid = PresentationSystem<DefaultPresentationGroup, GridSystem>.System;
-
-            FixedList4096Bytes<int> indices = grid.GetRange1024(positions[0].index, in range, m_ObstacleLayers);
-            return indices;
-        }
-
         /// <summary>
         /// <see cref="GridSizeAttribute.m_ObstacleLayers"/> 에서 지정한 레이어를 기반으로,
         /// <paramref name="range"/> 범위 만큼 반환합니다.
@@ -90,6 +61,12 @@ namespace Syadeu.Presentation.Map
         {
             GridSystem grid = PresentationSystem<DefaultPresentationGroup, GridSystem>.System;
             grid.GetRange(ref list, positions[0].index, in range, ignoreLayers);
+        }
+        unsafe public void GetRange(int* buffer, in int bufferSize, in int range, out int count)
+        {
+            GridSystem grid = PresentationSystem<DefaultPresentationGroup, GridSystem>.System;
+
+            grid.GetRange(buffer, positions[0].index, in range, in bufferSize, in m_ObstacleLayers, out count);
         }
 
         public bool HasPath(int to, in int maxIteration = 32) => HasPath(in to, out _, maxIteration);

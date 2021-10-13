@@ -129,18 +129,6 @@ namespace Syadeu.Presentation.Map
 
                 for (int i = 0; i < m_OnDetected.Length; i++)
                 {
-                    //if (m_MaxDetectionRange > m_OnDetected[i].DetectionRange)
-                    //{
-                    //    if (m_OnDetected[i].DetectionRange < 1)
-                    //    {
-                    //        CoreSystem.Logger.LogError(Channel.Entity,
-                    //            $"Invalid detection range at entity({Parent.Name}) logic({m_OnDetected[i].Name}) index({i}). Range cannot be under 0.");
-                    //        continue;
-                    //    }
-
-                    //    if (!IsDetect(range, m_OnDetected[i].DetectionRange, ev.To)) continue;
-                    //}
-
                     m_OnDetected[i].Execute(Parent, ev.Entity.As<IEntity, IEntityData>());
                 }
 
@@ -192,14 +180,14 @@ namespace Syadeu.Presentation.Map
             GridDetectorComponent component = new GridDetectorComponent()
             {
                 m_MaxDetectionRange = attribute.m_MaxDetectionRange,
-                m_ObserveIndices = new FixedList128Bytes<int>(),
+                m_ObserveIndices = new FixedList4096Bytes<int>(),
                 m_IgnoreLayers = ignores,
 
                 m_TriggerOnly = 
                     attribute.m_TriggerOnly.Length == 0 ? 
                         ReferenceArray<Reference<EntityBase>>.Empty : attribute.m_TriggerOnly.ToBuffer(Allocator.Persistent),
 
-                m_Detected = new FixedList512Bytes<EntityShortID>()
+                m_Detected = new FixedList512Bytes<EntityID>()
             };
             
             entity.AddComponent(component);
@@ -222,11 +210,11 @@ namespace Syadeu.Presentation.Map
     public struct GridDetectorComponent : IEntityComponent, IDisposable
     {
         internal int m_MaxDetectionRange;
-        internal FixedList128Bytes<int> m_ObserveIndices;
+        internal FixedList4096Bytes<int> m_ObserveIndices;
         internal FixedList128Bytes<int> m_IgnoreLayers;
         internal ReferenceArray<Reference<EntityBase>> m_TriggerOnly;
 
-        internal FixedList512Bytes<EntityShortID> m_Detected;
+        internal FixedList512Bytes<EntityID> m_Detected;
 
         void IDisposable.Dispose()
         {
@@ -239,6 +227,18 @@ namespace Syadeu.Presentation.Map
         public bool IsObserveIndex(in int gridIndex)
         {
             return m_ObserveIndices.Contains(gridIndex);
+        }
+        internal void RemoveDetected(in int gridIndex)
+        {
+            for (int i = m_Detected.Length - 1; i >= 0; i--)
+            {
+                var temp = m_Detected[i].GetEntity<IEntity>().GetComponent<GridSizeComponent>();
+                if (temp.IsMyIndex(gridIndex))
+                {
+                    m_Detected.RemoveAt(i);
+                    continue;
+                }
+            }
         }
     }
 }

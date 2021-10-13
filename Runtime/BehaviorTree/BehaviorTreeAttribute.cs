@@ -119,7 +119,7 @@ namespace Syadeu.Presentation.BehaviorTree
             attribute.DestroyBehaviorTree();
         }
 
-        public void OnProxyCreated(AttributeBase attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
+        public void OnProxyCreated(IAttribute attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
         {
             BehaviorTreeAttribute att = (BehaviorTreeAttribute)attribute;
             Behavior behavior = monoObj.GetComponent<Behavior>();
@@ -135,7 +135,7 @@ namespace Syadeu.Presentation.BehaviorTree
             behavior.ExternalBehavior = att.InstanceBehaviorTree;
             behavior.SetVariable(PresentationBehaviorTreeUtility.c_SelfEntityString, sharedEntity);
         }
-        public void OnProxyRemoved(AttributeBase attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
+        public void OnProxyRemoved(IAttribute attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
         {
             Behavior behavior = monoObj.GetComponent<Behavior>();
 

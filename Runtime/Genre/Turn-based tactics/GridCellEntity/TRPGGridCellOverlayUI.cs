@@ -169,7 +169,6 @@ namespace Syadeu.Presentation.TurnTable
                 "not valid return".ToLog();
                 return;
             }
-            "in".ToLog();
 
             SetState(State.Highlighted);
 

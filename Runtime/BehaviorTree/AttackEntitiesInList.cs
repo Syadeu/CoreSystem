@@ -1,5 +1,6 @@
 ﻿using BehaviorDesigner.Runtime;
 using BehaviorDesigner.Runtime.Tasks;
+using Syadeu.Collections;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.TurnTable;
