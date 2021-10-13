@@ -181,6 +181,13 @@ namespace Syadeu.Presentation.Map
             }
         }
 
+        private void UpdateGridDetection(Entity<IEntity> entity)
+        {
+            if (!entity.HasComponent<GridDetectorComponent>()) return;
+
+            ref GridDetectorComponent detector = ref entity.GetComponent<GridDetectorComponent>();
+        }
+
         #endregion
 
         public override void OnDispose()

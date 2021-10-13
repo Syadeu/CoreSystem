@@ -2,6 +2,7 @@
 using Syadeu.Collections;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Attributes;
+using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using System;
@@ -14,7 +15,8 @@ using UnityEngine;
 namespace Syadeu.Presentation.Map
 {
     [DisplayName("Attribute: Entity Detector On Grid")]
-    public sealed class GridDetectorAttribute : GridAttributeBase
+    public sealed class GridDetectorAttribute : GridAttributeBase,
+        INotifyComponent<GridDetectorComponent>
     {
         [Tooltip("최대로 탐색할 Grid Range 값")]
         [JsonProperty(Order = 0, PropertyName = "MaxDetectionRange")] public int m_MaxDetectionRange = 6;
@@ -178,6 +180,10 @@ namespace Syadeu.Presentation.Map
 
             attribute.m_TempGetRanges = new NativeList<int>(128, Allocator.Persistent);
 
+            GridDetectorComponent component = new GridDetectorComponent();
+
+            entity.AddComponent(component);
+
             EventSystem.AddEvent<OnGridPositionChangedEvent>(attribute.OnGridPositionChangedEventHandler);
         }
         protected override void OnDestroy(GridDetectorAttribute attribute, EntityData<IEntityData> entity)
@@ -192,5 +198,9 @@ namespace Syadeu.Presentation.Map
             }
             attribute.m_EventSystem = null;
         }
+    }
+    public struct GridDetectorComponent : IEntityComponent
+    {
+
     }
 }
