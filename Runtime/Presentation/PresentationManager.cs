@@ -1180,10 +1180,26 @@ namespace Syadeu.Presentation
                     .Where(i => i.GetGenericTypeDefinition() == typeof(INotifySystemModule<>));
                 system.m_Modules = new PresentationSystemModule[moduleIter.Count()];
                 int index = 0;
+#if DEBUG_MODE
+                HashSet<Type> addedModules = new HashSet<Type>();
+#endif
                 foreach (Type moduleType in moduleIter)
                 {
+                    Type module = moduleType.GetGenericArguments()[0];
+#if DEBUG_MODE
+                    if (addedModules.Contains(module))
+                    {
+                        CoreSystem.Logger.LogError(Channel.Presentation,
+                            $"You\'re adding same module({TypeHelper.ToString(module)}) " +
+                            $"more then one at {TypeHelper.ToString(t)}. " +
+                            $"This is not allowed.");
+
+                        throw new InvalidOperationException("See error log");
+                    }
+                    addedModules.Add(module);
+#endif
                     system.m_Modules[index] 
-                        = (PresentationSystemModule)Activator.CreateInstance(moduleType.GetGenericArguments()[0]);
+                        = (PresentationSystemModule)Activator.CreateInstance(module);
 
                     system.m_Modules[index].m_System = system;
 
