@@ -27,7 +27,7 @@ namespace Syadeu.Presentation.Map
         [Header("Trigger Only")]
         [JsonProperty(Order = 2, PropertyName = "Inverse")] private bool m_Inverse = false;
         [JsonProperty(Order = 3, PropertyName = "TriggerOnly")]
-        private Reference<EntityBase>[] m_TriggerOnly = Array.Empty<Reference<EntityBase>>();
+        internal Reference<EntityBase>[] m_TriggerOnly = Array.Empty<Reference<EntityBase>>();
 
         [Header("TriggerActions")]
         [Tooltip("False 를 반환하면 OnDetected 를 실행하지 않습니다.")]
@@ -193,7 +193,11 @@ namespace Syadeu.Presentation.Map
             {
                 m_MaxDetectionRange = attribute.m_MaxDetectionRange,
                 m_ObserveIndices = new FixedList128Bytes<int>(),
-                m_IgnoreLayers = ignores
+                m_IgnoreLayers = ignores,
+
+                m_TriggerOnly = 
+                    attribute.m_TriggerOnly.Length == 0 ? 
+                        ReferenceArray<Reference<EntityBase>>.Empty : attribute.m_TriggerOnly.ToBuffer(Allocator.Persistent)
             };
             
             entity.AddComponent(component);
@@ -213,10 +217,24 @@ namespace Syadeu.Presentation.Map
             attribute.m_EventSystem = null;
         }
     }
-    public struct GridDetectorComponent : IEntityComponent
+    public struct GridDetectorComponent : IEntityComponent, IDisposable
     {
         internal int m_MaxDetectionRange;
         internal FixedList128Bytes<int> m_ObserveIndices;
         internal FixedList128Bytes<int> m_IgnoreLayers;
+        internal ReferenceArray<Reference<EntityBase>> m_TriggerOnly;
+
+        void IDisposable.Dispose()
+        {
+            if (m_TriggerOnly.IsValid())
+            {
+                m_TriggerOnly.Dispose();
+            }
+        }
+
+        public bool IsObserveIndex(in int gridIndex)
+        {
+            return m_ObserveIndices.Contains(gridIndex);
+        }
     }
 }

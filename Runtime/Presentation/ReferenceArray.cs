@@ -11,12 +11,15 @@ using Unity.Collections.LowLevel.Unsafe;
 namespace Syadeu.Presentation
 {
     [NativeContainer]
-    public struct ReferenceArray<T> : IDisposable
+    public struct ReferenceArray<T> : IValidation, IDisposable
         where T : unmanaged, IReference
     {
+        public static ReferenceArray<T> Empty => new ReferenceArray<T>();
+
         [NativeDisableUnsafePtrRestriction] unsafe private readonly T* m_Buffer;
         private readonly Allocator m_Allocator;
         private readonly int m_Length;
+        private readonly bool m_IsCreated;
 
 #if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
         private AtomicSafetyHandle m_AtomicSafetyHandle;
@@ -51,6 +54,7 @@ namespace Syadeu.Presentation
             }
         }
         public int Length => m_Length;
+        public bool IsCreated => m_IsCreated;
 
         [NativeContainer, NativeContainerIsReadOnly]
         public struct ReadOnly
@@ -97,6 +101,7 @@ namespace Syadeu.Presentation
         {
             m_Allocator = allocator;
             m_Length = length;
+            m_IsCreated = true;
             unsafe
             {
                 m_Buffer = (T*)UnsafeUtility.Malloc(m_Length * UnsafeUtility.SizeOf<T>(), UnsafeUtility.AlignOf<T>(), allocator);
@@ -115,6 +120,7 @@ namespace Syadeu.Presentation
         {
             m_Allocator = allocator;
             m_Length = iter.Count();
+            m_IsCreated = true;
             unsafe
             {
                 m_Buffer = (T*)UnsafeUtility.Malloc(m_Length * UnsafeUtility.SizeOf<T>(), UnsafeUtility.AlignOf<T>(), allocator);
@@ -134,6 +140,13 @@ namespace Syadeu.Presentation
 
         public void Dispose()
         {
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Data,
+                    $"ReferenceArray is not allocated.");
+                return;
+            }
+
             unsafe
             {
                 UnsafeUtility.Free(m_Buffer, m_Allocator);
@@ -142,6 +155,11 @@ namespace Syadeu.Presentation
 #if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             DisposeSentinel.Dispose(ref m_AtomicSafetyHandle, ref m_DisposeSentinel);
 #endif
+        }
+
+        public bool IsValid()
+        {
+            return m_IsCreated;
         }
     }
 }

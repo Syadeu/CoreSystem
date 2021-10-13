@@ -129,18 +129,6 @@ namespace Syadeu.Presentation.Map
                 component.positions[i] = aTemp;
             }
 
-            //int2 p0 = GridMap.Grid.PositionToLocation(entity.transform.position);
-            //for (int i = 0; i < att.m_GridLocations.Length; i++)
-            //{
-            //    int aTemp = GridMap.Grid.LocationToIndex(p0 + att.m_GridLocations[i]);
-            //    if (!aTemp.Equals(component.positions[i].index))
-            //    {
-            //        gridChanged = true;
-            //    }
-
-            //    component.positions[i] = new GridPosition(aTemp, p0 + att.m_GridLocations[i]);
-            //}
-
             if (gridChanged)
             {
                 if (postEvent)
@@ -149,6 +137,12 @@ namespace Syadeu.Presentation.Map
                 }
                 
                 UpdateGridEntity(entity, in component.positions);
+
+                if (entity.HasComponent<GridDetectorComponent>())
+                {
+                    UpdateGridDetection(entity);
+                    CheckGridDetectionAndPost(entity, in component.positions);
+                }
             }
         }
         private void RemoveGridEntity(Entity<IEntity> entity)
@@ -179,14 +173,10 @@ namespace Syadeu.Presentation.Map
 
                 m_GridEntities.Add(indices[i].index, entity.Idx);
             }
-
-            UpdateGridDetection(entity);
         }
 
         unsafe private void UpdateGridDetection(Entity<IEntity> entity)
         {
-            if (!entity.HasComponent<GridDetectorComponent>()) return;
-
             ref var gridSize = ref entity.GetComponent<GridSizeComponent>();
             ref GridDetectorComponent detector = ref entity.GetComponent<GridDetectorComponent>();
             for (int i = 0; i < detector.m_ObserveIndices.Length; i++)
@@ -207,6 +197,10 @@ namespace Syadeu.Presentation.Map
                 m_GridObservers.Add(buffer[i], entity.Idx);
                 detector.m_ObserveIndices.Add(buffer[i]);
             }
+        }
+        private void CheckGridDetectionAndPost(Entity<IEntity> entity, in FixedList512Bytes<GridPosition> indices)
+        {
+
         }
 
         #endregion
