@@ -593,9 +593,10 @@ namespace Syadeu.Presentation
         #endregion
     }
 
-    public static class EntityDataHelper<T> where T : class, IEntityData
+    public static class EntityDataHelper
     {
-        public static EntityData<T> GetEntity(InstanceID idx)
+        public static EntityData<T> GetEntity<T>(InstanceID idx)
+            where T : class, IEntityData
         {
             #region Validation
 #if DEBUG_MODE
@@ -632,7 +633,8 @@ namespace Syadeu.Presentation
 
             return new EntityData<T>(idx, target.GetHashCode(), target.Name);
         }
-        public static EntityData<T> GetEntityWithoutCheck(InstanceID idx)
+        public static EntityData<T> GetEntityWithoutCheck<T>(InstanceID idx)
+            where T : class, IEntityData
         {
             ObjectBase target = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.GetEntityByID(idx);
 

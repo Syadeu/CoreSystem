@@ -31,8 +31,8 @@ namespace Syadeu.Presentation.Entities
 
         public static readonly EntityData<T> Empty = new EntityData<T>(Hash.Empty, 0, null);
 
-        public static EntityData<T> GetEntity(InstanceID id) => EntityDataHelper<T>.GetEntity(id);
-        public static EntityData<T> GetEntityWithoutCheck(InstanceID id) => EntityDataHelper<T>.GetEntityWithoutCheck(id);
+        public static EntityData<T> GetEntity(InstanceID id) => EntityDataHelper.GetEntity<T>(id);
+        public static EntityData<T> GetEntityWithoutCheck(InstanceID id) => EntityDataHelper.GetEntityWithoutCheck<T>(id);
 
         /// <inheritdoc cref="IEntityData.Idx"/>
         private readonly EntityID m_Idx;
