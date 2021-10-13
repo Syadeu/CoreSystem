@@ -11,7 +11,7 @@ namespace Syadeu.Presentation
     /// Contains only instance
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public struct Instance<T> : IInstance, IEquatable<Instance<T>>
+    public struct Instance<T> : IInstance<T>, IEquatable<Instance<T>>
         where T : class, IObject
     {
         public static readonly Instance<T> Empty = new Instance<T>(Hash.Empty);
