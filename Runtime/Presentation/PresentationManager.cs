@@ -271,9 +271,29 @@ namespace Syadeu.Presentation
                     PresentationResult result = m_Initializers[i].OnInitialize();
                     LogMessage(result);
                 }
+
+                InitializeModules();
 #if DEBUG_MODE
                 m_InitializeMarker.End();
 #endif
+            }
+            private void InitializeModules()
+            {
+                for (int i = 0; i < m_Systems.Count; i++)
+                {
+                    for (int j = 0; j < m_Systems[i].m_Modules.Length; j++)
+                    {
+                        try
+                        {
+                            m_Systems[i].m_Modules[j].InternalOnInitialize();
+                        }
+                        catch (Exception ex)
+                        {
+                            CoreSystem.Logger.LogError(Channel.Presentation,
+                                ex);
+                        }
+                    }
+                }
             }
             public void InitializeAsync()
             {
@@ -285,9 +305,29 @@ namespace Syadeu.Presentation
                     PresentationResult result = m_Initializers[i].OnInitializeAsync();
                     LogMessage(result);
                 }
+
+                InitializeAsyncModules();
 #if DEBUG_MODE
                 m_InitializeAsyncMarker.End();
 #endif
+            }
+            private void InitializeAsyncModules()
+            {
+                for (int i = 0; i < m_Systems.Count; i++)
+                {
+                    for (int j = 0; j < m_Systems[i].m_Modules.Length; j++)
+                    {
+                        try
+                        {
+                            m_Systems[i].m_Modules[j].InternalOnInitializeAsync();
+                        }
+                        catch (Exception ex)
+                        {
+                            CoreSystem.Logger.LogError(Channel.Presentation,
+                                ex);
+                        }
+                    }
+                }
             }
             public void OnStartPresentation()
             {
@@ -298,9 +338,29 @@ namespace Syadeu.Presentation
                 {
                     m_Initializers[i].OnStartPresentation();
                 }
+
+                OnStartModules();
 #if DEBUG_MODE
                 m_StartPreMarker.End();
 #endif
+            }
+            private void OnStartModules()
+            {
+                for (int i = 0; i < m_Systems.Count; i++)
+                {
+                    for (int j = 0; j < m_Systems[i].m_Modules.Length; j++)
+                    {
+                        try
+                        {
+                            m_Systems[i].m_Modules[j].InternalOnStartPresentation();
+                        }
+                        catch (Exception ex)
+                        {
+                            CoreSystem.Logger.LogError(Channel.Presentation,
+                                ex);
+                        }
+                    }
+                }
             }
             public void BeforePresentation()
             {
@@ -328,10 +388,30 @@ namespace Syadeu.Presentation
                     }
                 }
 
+                BeforePresentationModules();
+
                 m_MainthreadBeforePre = true;
 #if DEBUG_MODE
                 m_BeforePreMarker.End();
 #endif
+            }
+            private void BeforePresentationModules()
+            {
+                for (int i = 0; i < m_Systems.Count; i++)
+                {
+                    for (int j = 0; j < m_Systems[i].m_Modules.Length; j++)
+                    {
+                        try
+                        {
+                            m_Systems[i].m_Modules[j].InternalBeforePresentation();
+                        }
+                        catch (Exception ex)
+                        {
+                            CoreSystem.Logger.LogError(Channel.Presentation,
+                                ex);
+                        }
+                    }
+                }
             }
             public void BeforePresentationAsync()
             {
@@ -343,6 +423,26 @@ namespace Syadeu.Presentation
                     {
                         PresentationResult result = m_BeforePresentations[i].BeforePresentationAsync();
                         LogMessage(result);
+                    }
+                }
+
+                BeforePresentationAsyncModules();
+            }
+            private void BeforePresentationAsyncModules()
+            {
+                for (int i = 0; i < m_Systems.Count; i++)
+                {
+                    for (int j = 0; j < m_Systems[i].m_Modules.Length; j++)
+                    {
+                        try
+                        {
+                            m_Systems[i].m_Modules[j].InternalBeforePresentationAsync();
+                        }
+                        catch (Exception ex)
+                        {
+                            CoreSystem.Logger.LogError(Channel.Presentation,
+                                ex);
+                        }
                     }
                 }
             }
@@ -372,10 +472,30 @@ namespace Syadeu.Presentation
                     }
                 }
 
+                OnPresentationModules();
+
                 m_MainthreadOnPre = true;
 #if DEBUG_MODE
                 m_OnPreMarker.End();
 #endif
+            }
+            private void OnPresentationModules()
+            {
+                for (int i = 0; i < m_Systems.Count; i++)
+                {
+                    for (int j = 0; j < m_Systems[i].m_Modules.Length; j++)
+                    {
+                        try
+                        {
+                            m_Systems[i].m_Modules[j].InternalOnPresentation();
+                        }
+                        catch (Exception ex)
+                        {
+                            CoreSystem.Logger.LogError(Channel.Presentation,
+                                ex);
+                        }
+                    }
+                }
             }
             public void OnPresentationAsync()
             {
@@ -387,6 +507,26 @@ namespace Syadeu.Presentation
                     {
                         PresentationResult result = m_OnPresentations[i].OnPresentationAsync();
                         LogMessage(result);
+                    }
+                }
+
+                OnPresentationAsyncModules();
+            }
+            private void OnPresentationAsyncModules()
+            {
+                for (int i = 0; i < m_Systems.Count; i++)
+                {
+                    for (int j = 0; j < m_Systems[i].m_Modules.Length; j++)
+                    {
+                        try
+                        {
+                            m_Systems[i].m_Modules[j].InternalOnPresentationAsync();
+                        }
+                        catch (Exception ex)
+                        {
+                            CoreSystem.Logger.LogError(Channel.Presentation,
+                                ex);
+                        }
                     }
                 }
             }
@@ -416,10 +556,30 @@ namespace Syadeu.Presentation
                     }
                 }
 
+                AfterPresentationModules();
+
                 m_MainthreadAfterPre = true;
 #if DEBUG_MODE
                 m_AfterPreMarker.End();
 #endif
+            }
+            private void AfterPresentationModules()
+            {
+                for (int i = 0; i < m_Systems.Count; i++)
+                {
+                    for (int j = 0; j < m_Systems[i].m_Modules.Length; j++)
+                    {
+                        try
+                        {
+                            m_Systems[i].m_Modules[j].InternalAfterPresentation();
+                        }
+                        catch (Exception ex)
+                        {
+                            CoreSystem.Logger.LogError(Channel.Presentation,
+                                ex);
+                        }
+                    }
+                }
             }
             public void AfterPresentationAsync()
             {
@@ -431,6 +591,26 @@ namespace Syadeu.Presentation
                     {
                         PresentationResult result = m_AfterPresentations[i].AfterPresentationAsync();
                         LogMessage(result);
+                    }
+                }
+
+                AfterPresentationAsyncModules();
+            }
+            private void AfterPresentationAsyncModules()
+            {
+                for (int i = 0; i < m_Systems.Count; i++)
+                {
+                    for (int j = 0; j < m_Systems[i].m_Modules.Length; j++)
+                    {
+                        try
+                        {
+                            m_Systems[i].m_Modules[j].InternalAfterPresentationAsync();
+                        }
+                        catch (Exception ex)
+                        {
+                            CoreSystem.Logger.LogError(Channel.Presentation,
+                                ex);
+                        }
                     }
                 }
             }
@@ -993,6 +1173,23 @@ namespace Syadeu.Presentation
 
                 system.SetJobHandle = group.SetJobHandle;
                 system.GetJobHandle = group.GetJobHandle;
+
+                // Modules
+                var moduleIter = t.GetInterfaces()
+                    .Where(i => i.IsGenericType)
+                    .Where(i => i.GetGenericTypeDefinition() == typeof(INotifySystemModule<>));
+                system.m_Modules = new PresentationSystemModuleBase[moduleIter.Count()];
+                int index = 0;
+                foreach (Type moduleType in moduleIter)
+                {
+                    system.m_Modules[index] 
+                        = (PresentationSystemModuleBase)Activator.CreateInstance(moduleType.GetGenericArguments()[0]);
+
+                    system.m_Modules[index].m_System = system;
+
+                    index += 1;
+                }
+                //
 
                 group.Add(system);
             }

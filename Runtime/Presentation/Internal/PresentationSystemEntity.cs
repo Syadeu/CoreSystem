@@ -24,6 +24,7 @@ namespace Syadeu.Presentation.Internal
         
         internal Hash m_GroupIndex;
         internal int m_SystemIndex;
+        internal PresentationSystemModuleBase[] m_Modules = Array.Empty<PresentationSystemModuleBase>();
 
         public abstract bool EnableBeforePresentation { get; }
         public abstract bool EnableOnPresentation { get; }
@@ -62,7 +63,7 @@ namespace Syadeu.Presentation.Internal
         PresentationResult IAfterPresentation.AfterPresentation() => AfterPresentation();
         PresentationResult IAfterPresentation.AfterPresentationAsync() => AfterPresentationAsync();
 
-        public PresentationSystemEntity()
+        internal PresentationSystemEntity()
         {
             ConfigLoader.LoadConfig(this);
         }
@@ -72,6 +73,11 @@ namespace Syadeu.Presentation.Internal
         }
         public void Dispose()
         {
+            for (int i = 0; i < m_Modules.Length; i++)
+            {
+                ((IDisposable)m_Modules[i]).Dispose();
+            }
+
             InternalOnDispose();
             OnUnityJobsDispose();
             OnDispose();

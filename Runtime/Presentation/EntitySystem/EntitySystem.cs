@@ -24,7 +24,8 @@ using Syadeu.Presentation.Proxy;
 
 namespace Syadeu.Presentation
 {
-    public sealed class EntitySystem : PresentationSystemEntity<EntitySystem>
+    public sealed class EntitySystem : PresentationSystemEntity<EntitySystem>,
+        INotifySystemModule<EntityDebugModule>
     {
         private const string c_ObjectNotFoundError = "Object({0}) not found.";
         private const string c_EntityNotFoundError = "Entity({0}) not found. Cannot spawn at {1}";
@@ -1529,5 +1530,13 @@ namespace Syadeu.Presentation
         public Query GetQuery(EntityData<IEntityData> entity) => Query.Dequeue(this, entity);
 
         #endregion
+    }
+
+    internal sealed class EntityDebugModule : PresentationSystemModule<EntitySystem>
+    {
+        protected override void OnInitialize()
+        {
+            "module in".ToLog();
+        }
     }
 }
