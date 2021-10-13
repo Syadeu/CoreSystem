@@ -12,7 +12,7 @@ namespace Syadeu.Presentation
     /// 서브 모듈은 항상 메인 시스템이 동작한 이후에 수행됩니다.
     /// </remarks>
     /// <typeparam name="TModule"></typeparam>
-    public interface INotifySystemModule<TModule> where TModule : PresentationSystemModuleBase
+    public interface INotifySystemModule<TModule> where TModule : PresentationSystemModule
     {
     }
 }

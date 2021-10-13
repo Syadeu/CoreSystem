@@ -1178,12 +1178,12 @@ namespace Syadeu.Presentation
                 var moduleIter = t.GetInterfaces()
                     .Where(i => i.IsGenericType)
                     .Where(i => i.GetGenericTypeDefinition() == typeof(INotifySystemModule<>));
-                system.m_Modules = new PresentationSystemModuleBase[moduleIter.Count()];
+                system.m_Modules = new PresentationSystemModule[moduleIter.Count()];
                 int index = 0;
                 foreach (Type moduleType in moduleIter)
                 {
                     system.m_Modules[index] 
-                        = (PresentationSystemModuleBase)Activator.CreateInstance(moduleType.GetGenericArguments()[0]);
+                        = (PresentationSystemModule)Activator.CreateInstance(moduleType.GetGenericArguments()[0]);
 
                     system.m_Modules[index].m_System = system;
 

@@ -24,7 +24,7 @@ namespace Syadeu.Presentation.Internal
         
         internal Hash m_GroupIndex;
         internal int m_SystemIndex;
-        internal PresentationSystemModuleBase[] m_Modules = Array.Empty<PresentationSystemModuleBase>();
+        internal PresentationSystemModule[] m_Modules = Array.Empty<PresentationSystemModule>();
 
         public abstract bool EnableBeforePresentation { get; }
         public abstract bool EnableOnPresentation { get; }
