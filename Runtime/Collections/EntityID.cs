@@ -30,6 +30,8 @@ namespace Syadeu.Collections
         public bool IsEmpty() => m_Hash.IsEmpty();
         public bool IsValid() => !m_Hash.IsEmpty();
 
+        public EntityShortID ToShortID() => new EntityShortID(m_Hash);
+
         public static implicit operator EntityID(Hash hash) => new EntityID(hash);
         public static implicit operator EntityID(InstanceID hash) => new EntityID(hash.Hash);
         public static implicit operator Hash(EntityID id) => id.m_Hash;

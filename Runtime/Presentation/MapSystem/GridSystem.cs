@@ -141,7 +141,7 @@ namespace Syadeu.Presentation.Map
                 if (entity.HasComponent<GridDetectorComponent>())
                 {
                     UpdateGridDetection(entity);
-                    CheckGridDetectionAndPost(entity, in component.positions);
+                    //CheckGridDetectionAndPost(entity, in component.positions);
                 }
             }
         }
@@ -200,7 +200,21 @@ namespace Syadeu.Presentation.Map
         }
         private void CheckGridDetectionAndPost(Entity<IEntity> entity, in FixedList512Bytes<GridPosition> indices)
         {
+            EntityShortID shortID = entity.Idx.ToShortID();
+            for (int i = 0; i < indices.Length; i++)
+            {
+                if (m_GridObservers.TryGetFirstValue(indices[i].index, out var entityID, out var iter))
+                {
+                    do
+                    {
+                        ref var detector = ref entityID.GetEntity<IEntity>().GetComponent<GridDetectorComponent>();
+                        if (detector.m_Detected.Contains(shortID)) continue;
 
+
+
+                    } while (m_GridObservers.TryGetNextValue(out entityID, ref iter));
+                }
+            }
         }
 
         #endregion

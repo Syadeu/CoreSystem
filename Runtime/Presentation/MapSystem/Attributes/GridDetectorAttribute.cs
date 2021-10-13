@@ -197,7 +197,9 @@ namespace Syadeu.Presentation.Map
 
                 m_TriggerOnly = 
                     attribute.m_TriggerOnly.Length == 0 ? 
-                        ReferenceArray<Reference<EntityBase>>.Empty : attribute.m_TriggerOnly.ToBuffer(Allocator.Persistent)
+                        ReferenceArray<Reference<EntityBase>>.Empty : attribute.m_TriggerOnly.ToBuffer(Allocator.Persistent),
+
+                m_Detected = new FixedList512Bytes<EntityShortID>()
             };
             
             entity.AddComponent(component);
@@ -223,6 +225,8 @@ namespace Syadeu.Presentation.Map
         internal FixedList128Bytes<int> m_ObserveIndices;
         internal FixedList128Bytes<int> m_IgnoreLayers;
         internal ReferenceArray<Reference<EntityBase>> m_TriggerOnly;
+
+        internal FixedList512Bytes<EntityShortID> m_Detected;
 
         void IDisposable.Dispose()
         {
