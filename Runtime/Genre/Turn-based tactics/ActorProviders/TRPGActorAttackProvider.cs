@@ -78,20 +78,24 @@ namespace Syadeu.Presentation.TurnTable
             List<Entity<IEntity>> entities = new List<Entity<IEntity>>();
             for (int i = 0; i < m_TempGetRange.Length; i++)
             {
-                //if (component.positions.Contains(indices[i])) continue;
-                //$"{m_TempGetRange[i]}".ToLog();
-                IReadOnlyList<Entity<IEntity>> targets = m_GridSystem.GetEntitiesAt(m_TempGetRange[i]);
-                for (int j = 0; j < targets.Count; j++)
+                if (m_GridSystem.GetEntitiesAt(m_TempGetRange[i], out var iter))
                 {
-                    if (targets[j].Idx.Equals(Parent.Idx))
+                    foreach (var target in iter)
                     {
-                        continue;
+                        entities.Add(target.GetEntity<IEntity>());
                     }
-
-                    entities.Add(targets[j]);
                 }
 
-                //entities.AddRange(m_GridSystem.GetEntitiesAt(indices[i]));
+                //IReadOnlyList<Entity<IEntity>> targets = m_GridSystem.GetEntitiesAt(m_TempGetRange[i]);
+                //for (int j = 0; j < targets.Count; j++)
+                //{
+                //    if (targets[j].Idx.Equals(Parent.Idx))
+                //    {
+                //        continue;
+                //    }
+
+                //    entities.Add(targets[j]);
+                //}
             }
             
             if (entities.Count > 0)

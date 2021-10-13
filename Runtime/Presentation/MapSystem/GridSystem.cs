@@ -35,8 +35,12 @@ namespace Syadeu.Presentation.Map
 
         private readonly ConcurrentQueue<GridSizeAttribute> m_WaitForRegister = new ConcurrentQueue<GridSizeAttribute>();
 
-        private readonly Dictionary<Entity<IEntity>, int[]> m_EntityGridIndices = new Dictionary<Entity<IEntity>, int[]>();
-        private readonly Dictionary<int, List<Entity<IEntity>>> m_GridEntities = new Dictionary<int, List<Entity<IEntity>>>();
+        //private readonly Dictionary<Entity<IEntity>, int[]> m_EntityGridIndices = new Dictionary<Entity<IEntity>, int[]>();
+        //private readonly Dictionary<int, List<Entity<IEntity>>> m_GridEntities = new Dictionary<int, List<Entity<IEntity>>>();
+
+        private UnsafeMultiHashMap<EntityID, int> m_EntityGridIndices;
+        private UnsafeMultiHashMap<int, EntityID> 
+            m_GridEntities, m_GridObservers;
 
         private NativeHashMap<GridPosition, Entity<IEntity>> m_PlacedCellUIEntities;
         private readonly List<Entity<IEntity>> m_DrawnCellUIEntities = new List<Entity<IEntity>>();
@@ -49,6 +53,11 @@ namespace Syadeu.Presentation.Map
         protected override PresentationResult OnInitialize()
         {
             CreateConsoleCommands();
+
+            m_EntityGridIndices = new UnsafeMultiHashMap<EntityID, int>(4096, AllocatorManager.Persistent);
+            m_GridEntities = new UnsafeMultiHashMap<int, EntityID>(1024, AllocatorManager.Persistent);
+            m_GridObservers = new UnsafeMultiHashMap<int, EntityID>(1024, AllocatorManager.Persistent);
+
             m_PlacedCellUIEntities = new NativeHashMap<GridPosition, Entity<IEntity>>(1024, AllocatorManager.Persistent);
 
             return base.OnInitialize();
@@ -144,49 +153,32 @@ namespace Syadeu.Presentation.Map
         }
         private void RemoveGridEntity(Entity<IEntity> entity)
         {
-            if (m_EntityGridIndices.TryGetValue(entity, out int[] cachedIndics))
-            {
-                for (int i = 0; i < cachedIndics.Length; i++)
-                {
-                    if (!m_GridEntities.ContainsKey(cachedIndics[i]))
-                    {
-                        $"{cachedIndics[i]} notfound?".ToLog();
-                        continue;
-                    }
+            if (!m_EntityGridIndices.TryGetFirstValue(entity.Idx, out int index, out var iter)) return;
 
-                    if (m_GridEntities[cachedIndics[i]].Count == 1)
-                    {
-                        m_GridEntities.Remove(cachedIndics[i]);
-                    }
-                    else
-                    {
-                        m_GridEntities[cachedIndics[i]].Remove(entity);
-                    }
+            do
+            {
+                if (m_GridEntities.CountValuesForKey(index) == 1)
+                {
+                    m_GridEntities.Remove(index);
                 }
-                m_EntityGridIndices.Remove(entity);
-            }
+                else
+                {
+                    m_GridEntities.Remove(index, entity.Idx);
+                }
+            } while (m_EntityGridIndices.TryGetNextValue(out index, ref iter));
+
+            m_EntityGridIndices.Remove(entity.Idx);
         }
         private void UpdateGridEntity(Entity<IEntity> entity, in FixedList512Bytes<GridPosition> indices)
         {
             RemoveGridEntity(entity);
 
-            int[] clone = new int[indices.Length];
             for (int i = 0; i < indices.Length; i++)
             {
-                clone[i] = indices[i].index;
-            }
+                m_EntityGridIndices.Add(entity.Idx, indices[i].index);
 
-            for (int i = 0; i < clone.Length; i++)
-            {
-                if (!m_GridEntities.TryGetValue(clone[i], out List<Entity<IEntity>> entities))
-                {
-                    entities = new List<Entity<IEntity>>();
-                    m_GridEntities.Add(clone[i], entities);
-                }
-                entities.Add(entity);
+                m_GridEntities.Add(indices[i].index, entity.Idx);
             }
-
-            m_EntityGridIndices.Add(entity, clone);
         }
 
         #endregion
@@ -198,6 +190,10 @@ namespace Syadeu.Presentation.Map
             m_RenderSystem.OnRender -= M_RenderSystem_OnRender;
 
             m_EventSystem.RemoveEvent<Events.OnTransformChangedEvent>(OnTransformChangedEventHandler);
+
+            m_EntityGridIndices.Dispose();
+            m_GridEntities.Dispose();
+            m_GridObservers.Dispose();
 
             m_PlacedCellUIEntities.Dispose();
 
@@ -261,8 +257,10 @@ namespace Syadeu.Presentation.Map
                 m_MainGrid.DrawGridGL(.05f);
 
                 GL.Color(colorRed);
-                int[] gridEntities = m_GridEntities.Keys.ToArray();
+                //int[] gridEntities = m_GridEntities.Keys.ToArray();
+                var gridEntities = m_GridEntities.GetKeyArray(AllocatorManager.Temp);
                 m_MainGrid.DrawOccupiedCells(gridEntities);
+                gridEntities.Dispose();
 
                 //GL.Color(Color.black);
                 //var temp = m_EntityGridIndices.Keys.ToArray();
@@ -371,6 +369,15 @@ namespace Syadeu.Presentation.Map
             {
                 m_MainGrid = gridMap;
 
+                if (m_MainGrid.Length > m_GridEntities.Capacity)
+                {
+                    m_GridEntities.Dispose();
+                    m_GridEntities = new UnsafeMultiHashMap<int, EntityID>(m_MainGrid.Length, AllocatorManager.Persistent);
+
+                    m_GridObservers.Dispose();
+                    m_GridObservers = new UnsafeMultiHashMap<int, EntityID>(m_MainGrid.Length, AllocatorManager.Persistent);
+                }
+
                 if (m_MainGrid.Length > m_PlacedCellUIEntities.Capacity)
                 {
                     m_PlacedCellUIEntities.Dispose();
@@ -388,6 +395,10 @@ namespace Syadeu.Presentation.Map
             if (m_MainGrid != null && m_MainGrid.Equals(gridMap))
             {
                 m_MainGrid = null;
+
+                m_EntityGridIndices.Clear();
+                m_GridEntities.Clear();
+                m_GridObservers.Clear();
             }
         }
 
@@ -416,13 +427,20 @@ namespace Syadeu.Presentation.Map
 
         #endregion
 
-        public IReadOnlyList<Entity<IEntity>> GetEntitiesAt(in int index)
+        public bool GetEntitiesAt(in int index, out UnsafeMultiHashMap<int, EntityID>.Enumerator iter)
         {
-            if (m_GridEntities.TryGetValue(index, out List<Entity<IEntity>> entities))
+            //if (m_GridEntities.TryGetValue(index, out List<Entity<IEntity>> entities))
+            //{
+            //    return entities;
+            //}
+            if (m_GridEntities.ContainsKey(index))
             {
-                return entities;
+                iter = m_GridEntities.GetValuesForKey(index);
+                return true;
             }
-            return Array.Empty<Entity<IEntity>>();
+
+            iter = default(UnsafeMultiHashMap<int, EntityID>.Enumerator);
+            return false;
         }
 
         #region Pathfinder
@@ -849,5 +867,11 @@ namespace Syadeu.Presentation.Map
         }
         private int GetSqrMagnitude(int index) => GetSqrMagnitude(IndexToLocation(index));
         private static int GetSqrMagnitude(int2 location) => (location.x * location.x) + (location.y * location.y);
+
+        private struct DetectionTile
+        {
+            public int m_Index;
+            public EntityID m_Observer;
+        }
     }
 }

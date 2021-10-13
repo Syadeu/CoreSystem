@@ -693,6 +693,7 @@ namespace Syadeu.Presentation.Map
 
         public void DrawGridGL(float thinkness) => DrawGridGL(Grid, thinkness);
         public void DrawOccupiedCells(int[] gridEntities) => DrawOccupiedCells(Grid, gridEntities);
+        public void DrawOccupiedCells(NativeArray<int> gridEntities) => DrawOccupiedCells(Grid, gridEntities);
 
         static void DrawGridGL(BinaryGrid grid, float thickness)
         {
@@ -742,6 +743,25 @@ namespace Syadeu.Presentation.Map
             }
         }
         static void DrawOccupiedCells(BinaryGrid grid, int[] gridEntities)
+        {
+            float sizeHalf = grid.cellSize * .5f;
+
+            for (int i = 0; i < gridEntities.Length; i++)
+            {
+                Vector3
+                        cellPos = grid.IndexToPosition(gridEntities[i]),
+                        p1 = new Vector3(cellPos.x - sizeHalf, cellPos.y + .1f, cellPos.z - sizeHalf),
+                        p2 = new Vector3(cellPos.x - sizeHalf, cellPos.y + .1f, cellPos.z + sizeHalf),
+                        p3 = new Vector3(cellPos.x + sizeHalf, cellPos.y + .1f, cellPos.z + sizeHalf),
+                        p4 = new Vector3(cellPos.x + sizeHalf, cellPos.y + .1f, cellPos.z - sizeHalf);
+
+                GL.Vertex(p1);
+                GL.Vertex(p2);
+                GL.Vertex(p3);
+                GL.Vertex(p4);
+            }
+        }
+        static void DrawOccupiedCells(BinaryGrid grid, NativeArray<int> gridEntities)
         {
             float sizeHalf = grid.cellSize * .5f;
 
