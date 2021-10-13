@@ -1162,7 +1162,7 @@ namespace Syadeu.Presentation
             #region Attributes
             for (int i = 0; i < entity.Attributes.Length; i++)
             {
-                AttributeBase other = entity.Attributes[i];
+                IAttribute other = entity.Attributes[i];
                 if (other == null)
                 {
                     CoreSystem.Logger.LogWarning(Channel.Presentation,
@@ -1227,7 +1227,7 @@ namespace Syadeu.Presentation
 
             for (int i = 0; i < entity.Attributes.Length; i++)
             {
-                AttributeBase other = entity.Attributes[i];
+                IAttribute other = entity.Attributes[i];
 
                 other.Dispose();
             }

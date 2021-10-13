@@ -221,7 +221,7 @@ namespace Syadeu.Presentation
                 //}
                 for (int i = 0; i < m_TriggerBoundArray.Length; i++)
                 {
-                    if (!m_TriggerBoundArray[i].IsValid() || m_TriggerBoundArray[i].Hash.Equals(att.Parent.Hash)) continue;
+                    if (!m_TriggerBoundArray[i].IsValid() || m_TriggerBoundArray[i].Hash.Equals(att.ParentEntity.Hash)) continue;
 
                     TryTrigger(in m_EventSystem, ev.entity, in m_TriggerBoundArray[i]);
                 }

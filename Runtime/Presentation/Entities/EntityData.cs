@@ -253,7 +253,7 @@ namespace Syadeu.Presentation.Entities
             return Target.HasAttribute<TA>();
         }
         /// <inheritdoc cref="IEntityData.GetAttribute(Type)"/>
-        public AttributeBase GetAttribute(Type t)
+        public IAttribute GetAttribute(Type t)
         {
 #if DEBUG_MODE
             if (!IsValid())
@@ -266,7 +266,7 @@ namespace Syadeu.Presentation.Entities
             return Target.GetAttribute(t);
         }
         /// <inheritdoc cref="IEntityData.GetAttributes(Type)"/>
-        public AttributeBase[] GetAttributes(Type t)
+        public IAttribute[] GetAttributes(Type t)
         {
 #if DEBUG_MODE
             if (!IsValid())

@@ -1,9 +1,7 @@
-﻿using Newtonsoft.Json;
-using Syadeu.Collections.Proxy;
-using Syadeu.Presentation.Proxy;
+﻿using Syadeu.Collections.Proxy;
 using Unity.Mathematics;
 
-namespace Syadeu.Presentation.Entities
+namespace Syadeu.Collections
 {
     /// <summary>
     /// <see cref="EntitySystem"/>을 통해 생성하는(혹은 생성된) <see cref="ProxyTransform"/>이 있는 엔티티입니다.
@@ -17,7 +15,6 @@ namespace Syadeu.Presentation.Entities
     /// </remarks>
     public interface IEntity : IEntityData
     {
-        //[JsonIgnore] DataGameObject gameObject { get; }
         ITransform transform { get; }
 
         /// <summary>

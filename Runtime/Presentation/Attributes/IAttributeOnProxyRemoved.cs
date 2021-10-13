@@ -1,4 +1,5 @@
-﻿using Syadeu.Mono;
+﻿using Syadeu.Collections;
+using Syadeu.Mono;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Proxy;
 
@@ -18,6 +19,6 @@ namespace Syadeu.Presentation.Attributes
         /// </summary>
         /// <param name="attribute"></param>
         /// <param name="entity"></param>
-        void OnProxyRemoved(AttributeBase attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj);
+        void OnProxyRemoved(IAttribute attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj);
     }
 }

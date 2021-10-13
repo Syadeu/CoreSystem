@@ -34,13 +34,13 @@ namespace Syadeu.Presentation.Attributes
             if (!Parameters.TryGetValue(key, out object target))
             {
                 CoreSystem.Logger.LogError(Channel.Entity, 
-                    string.Format(c_KeyNotFoundError, Parent.Name, key));
+                    string.Format(c_KeyNotFoundError, ParentEntity.Name, key));
                 return;
             }
             if (!(target is int))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    string.Format(c_TypeMisMatchError, key, Parent.Name, 
+                    string.Format(c_TypeMisMatchError, key, ParentEntity.Name, 
                     TypeHelper.ToString(target.GetType()),
                     TypeHelper.TypeOf<int>.ToString()));
                 return;
@@ -57,13 +57,13 @@ namespace Syadeu.Presentation.Attributes
             if (!Parameters.TryGetValue(key, out object target))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    string.Format(c_KeyNotFoundError, Parent.Name, key));
+                    string.Format(c_KeyNotFoundError, ParentEntity.Name, key));
                 return;
             }
             if (!(target is float))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    string.Format(c_TypeMisMatchError, key, Parent.Name,
+                    string.Format(c_TypeMisMatchError, key, ParentEntity.Name,
                     TypeHelper.ToString(target.GetType()),
                     TypeHelper.TypeOf<int>.ToString()));
                 return;
@@ -81,13 +81,13 @@ namespace Syadeu.Presentation.Attributes
             if (!Parameters.TryGetValue(key, out object target))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    string.Format(c_KeyNotFoundError, Parent.Name, key));
+                    string.Format(c_KeyNotFoundError, ParentEntity.Name, key));
                 return;
             }
             if (!(target is bool))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    string.Format(c_TypeMisMatchError, key, Parent.Name,
+                    string.Format(c_TypeMisMatchError, key, ParentEntity.Name,
                     TypeHelper.ToString(target.GetType()),
                     TypeHelper.TypeOf<int>.ToString()));
                 return;
@@ -176,7 +176,7 @@ namespace Syadeu.Presentation.Attributes
 
             return true;
         }
-        public void OnProxyCreated(AttributeBase attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
+        public void OnProxyCreated(IAttribute attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
         {
             AnimatorAttribute att = (AnimatorAttribute)attribute;
             if (!Setup(att, entity, monoObj))
@@ -187,7 +187,7 @@ namespace Syadeu.Presentation.Attributes
             att.AnimatorComponent.SetActive(true);
         }
 
-        public void OnProxyRemoved(AttributeBase attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
+        public void OnProxyRemoved(IAttribute attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
         {
             AnimatorAttribute att = (AnimatorAttribute)attribute;
 

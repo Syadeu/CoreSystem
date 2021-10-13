@@ -51,36 +51,5 @@ namespace Syadeu.Presentation
         {
             return new Reference<T>(t.Object.Hash);
         }
-
-        public static Instance GetInstance(this InstanceID id)
-        {
-            if (id.IsEmpty())
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Empty instance cannot be converted.");
-                return Instance.Empty;
-            }
-
-            return new Instance(id);
-        }
-        public static Instance<T> GetInstance<T>(this InstanceID id) where T : class, IObject
-        {
-            if (id.IsEmpty())
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Empty instance cannot be converted.");
-                return Instance<T>.Empty;
-            }
-
-            Instance<T> temp = new Instance<T>(id);
-            if (!temp.IsValid())
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Instance {temp.Idx} is invalid.");
-                return Instance<T>.Empty;
-            }
-
-            return temp;
-        }
     }
 }

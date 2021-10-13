@@ -1,4 +1,5 @@
-﻿using Syadeu.Presentation.Entities;
+﻿using Syadeu.Collections;
+using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Proxy;
 using Syadeu.Presentation.Render;
@@ -8,8 +9,6 @@ namespace Syadeu.Presentation.Actor
 {
     internal interface IActorProvider
     {
-        //Type[] ReceiveEventOnly { get; }
-
         void Bind(EntityData<IEntityData> parent,
             EventSystem eventSystem, EntitySystem entitySystem, CoroutineSystem coroutineSystem,
             WorldCanvasSystem worldCanvasSystem);

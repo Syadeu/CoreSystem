@@ -130,7 +130,7 @@ namespace Syadeu.Presentation.Actor
             provider.OnDestroy(entity);
         }
 
-        public void OnProxyCreated(AttributeBase attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
+        public void OnProxyCreated(IAttribute attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
         {
             //ActorControllerAttribute att = (ActorControllerAttribute)attribute;
             ActorControllerComponent component = entity.GetComponent<ActorControllerComponent>();
@@ -139,7 +139,7 @@ namespace Syadeu.Presentation.Actor
                 ExecuteOnProxyCreated(component.m_InstanceProviders[i].Object, monoObj);
             }
         }
-        public void OnProxyRemoved(AttributeBase attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
+        public void OnProxyRemoved(IAttribute attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
         {
             //ActorControllerAttribute att = (ActorControllerAttribute)attribute;
             ActorControllerComponent component = entity.GetComponent<ActorControllerComponent>();

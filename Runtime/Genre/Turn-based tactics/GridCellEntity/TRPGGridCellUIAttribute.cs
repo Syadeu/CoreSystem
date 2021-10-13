@@ -1,4 +1,5 @@
-﻿using Syadeu.Presentation.Attributes;
+﻿using Syadeu.Collections;
+using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Map;
@@ -16,14 +17,14 @@ namespace Syadeu.Presentation.TurnTable
     internal sealed class TRPGGridCellUIProcessor : AttributeProcessor<TRPGGridCellUIAttribute>,
         IAttributeOnProxy
     {
-        public void OnProxyCreated(AttributeBase attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
+        public void OnProxyCreated(IAttribute attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
         {
             GridCellComponent component = entity.GetComponent<GridCellComponent>();
             if (component.m_GridPosition.index == -1) throw new System.Exception("index -1");
 
             monoObj.GetComponent<TRPGGridCellOverlayUI>().Initialize(component.m_GridPosition);
         }
-        public void OnProxyRemoved(AttributeBase attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
+        public void OnProxyRemoved(IAttribute attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
         {
         }
     }

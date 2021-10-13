@@ -3,6 +3,7 @@
 #endif
 
 using Newtonsoft.Json;
+using Syadeu.Collections;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Attributes;
@@ -104,7 +105,7 @@ namespace Syadeu.Presentation.TurnTable
         private void ActorStateChangedEventHandler(ActorStateAttribute att, 
             ActorStateAttribute.StateInfo from, ActorStateAttribute.StateInfo to)
         {
-            ActorFaction faction = ((ActorEntity)att.Parent.Target).Faction;
+            ActorFaction faction = ((ActorEntity)att.ParentEntity).Faction;
             if (faction.FactionType != FactionType.Player)
             {
                 return;

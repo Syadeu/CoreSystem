@@ -1,8 +1,7 @@
 ﻿using Newtonsoft.Json;
-using Syadeu.Collections;
-using Syadeu.Presentation.Entities;
+using System;
 
-namespace Syadeu.Presentation.Attributes
+namespace Syadeu.Collections
 {
     /// <summary>
     /// <see cref="EntityBase"/>의 구성부입니다.<br/><br/>
@@ -16,7 +15,7 @@ namespace Syadeu.Presentation.Attributes
     /// <seealso cref="AttributeProcessor"/>를 통해 이 구성부를 이용한 동작부를 선언할 수 있습니다.<br/>
     /// <see cref="AttributeBase"/>와 <seealso cref="AttributeProcessor"/>는 하나처럼 작동합니다.
     /// </remarks>
-    public interface IAttribute
+    public interface IAttribute : IDisposable
     {
         /// <summary>
         /// 이 어트리뷰트의 이름입니다.
@@ -33,6 +32,6 @@ namespace Syadeu.Presentation.Attributes
         /// <remarks>
         /// 런타임 중에만 부모가 할당되어 동작합니다.
         /// </remarks>
-        [JsonIgnore] EntityData<IEntityData> Parent { get; }
+        [JsonIgnore] IEntityData ParentEntity { get; }
     }
 }

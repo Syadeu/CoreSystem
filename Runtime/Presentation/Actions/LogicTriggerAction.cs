@@ -3,6 +3,7 @@
 #endif
 
 using Newtonsoft.Json;
+using Syadeu.Collections;
 using Syadeu.Presentation.Entities;
 using System;
 using UnityEngine;

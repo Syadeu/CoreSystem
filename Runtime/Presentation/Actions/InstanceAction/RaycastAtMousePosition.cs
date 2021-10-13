@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Syadeu.Collections;
 using Syadeu.Internal;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Render;
@@ -33,8 +34,8 @@ namespace Syadeu.Presentation.Actions
 
         protected override void OnCreated()
         {
-            m_RenderSystem = PresentationSystem<RenderSystem>.System;
-            m_RaycastSystem = PresentationSystem<EntityRaycastSystem>.System;
+            m_RenderSystem = PresentationSystem<DefaultPresentationGroup, RenderSystem>.System;
+            m_RaycastSystem = PresentationSystem<DefaultPresentationGroup, EntityRaycastSystem>.System;
 
             CoreSystem.Logger.NotNull(m_RenderSystem);
             CoreSystem.Logger.NotNull(m_RaycastSystem);

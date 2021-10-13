@@ -20,8 +20,8 @@ namespace Syadeu.Presentation.Attributes
         Type IProcessor.Target => TargetAttribute;
         void IProcessor.OnInitialize() => OnInitialize();
         void IProcessor.OnInitializeAsync() => OnInitializeAsync();
-        void IAttributeProcessor.OnCreated(AttributeBase attribute, EntityData<IEntityData> entity) => OnCreated(attribute, entity);
-        void IAttributeProcessor.OnDestroy(AttributeBase attribute, EntityData<IEntityData> entity) => OnDestroy(attribute, entity);
+        void IAttributeProcessor.OnCreated(IAttribute attribute, EntityData<IEntityData> entity) => OnCreated(attribute, entity);
+        void IAttributeProcessor.OnDestroy(IAttribute attribute, EntityData<IEntityData> entity) => OnDestroy(attribute, entity);
         void IDisposable.Dispose() => OnDispose();
 
         ~AttributeProcessor()
@@ -45,7 +45,7 @@ namespace Syadeu.Presentation.Attributes
         /// </remarks>
         /// <param name="attribute"><see cref="Target"/></param>
         /// <param name="entity"></param>
-        protected virtual void OnCreated(AttributeBase attribute, EntityData<IEntityData> entity) { }
+        protected virtual void OnCreated(IAttribute attribute, EntityData<IEntityData> entity) { }
         /// <summary>
         /// <see cref="Target"/>에 설정된 <see cref="AttributeBase"/>가 부착된 <see cref="IEntityData"/>가
         /// 파괴되었을 때 실행되는 메소드입니다.
@@ -55,7 +55,7 @@ namespace Syadeu.Presentation.Attributes
         /// <remarks>
         /// 비동기 작업입니다. Unity API에 접근하면 에러를 뱉습니다.
         /// </remarks>
-        protected virtual void OnDestroy(AttributeBase attribute, EntityData<IEntityData> entity) { }
+        protected virtual void OnDestroy(IAttribute attribute, EntityData<IEntityData> entity) { }
 
         protected virtual void OnDispose() { }
     }
@@ -68,8 +68,8 @@ namespace Syadeu.Presentation.Attributes
         Type IProcessor.Target => TargetAttribute;
         void IProcessor.OnInitialize() => OnInitialize();
         void IProcessor.OnInitializeAsync() => OnInitializeAsync();
-        void IAttributeProcessor.OnCreated(AttributeBase attribute, EntityData<IEntityData> entity) => OnCreated((T)attribute, entity);
-        void IAttributeProcessor.OnDestroy(AttributeBase attribute, EntityData<IEntityData> entity) => OnDestroy((T)attribute, entity);
+        void IAttributeProcessor.OnCreated(IAttribute attribute, EntityData<IEntityData> entity) => OnCreated((T)attribute, entity);
+        void IAttributeProcessor.OnDestroy(IAttribute attribute, EntityData<IEntityData> entity) => OnDestroy((T)attribute, entity);
         void IDisposable.Dispose() => OnDispose();
 
          ~AttributeProcessor()

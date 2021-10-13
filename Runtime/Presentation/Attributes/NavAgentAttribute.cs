@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Syadeu.Collections;
 using Syadeu.Mono;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Actor;
@@ -46,7 +47,7 @@ namespace Syadeu.Presentation.Attributes
         {
             entity.AddComponent(new NavAgentComponent());
         }
-        public void OnProxyCreated(AttributeBase attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
+        public void OnProxyCreated(IAttribute attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
         {
             NavAgentAttribute att = (NavAgentAttribute)attribute;
 
@@ -57,7 +58,7 @@ namespace Syadeu.Presentation.Attributes
 
             att.NavMeshAgent.enabled = true;
         }
-        public void OnProxyRemoved(AttributeBase attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
+        public void OnProxyRemoved(IAttribute attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
         {
             NavAgentAttribute att = (NavAgentAttribute)attribute;
 

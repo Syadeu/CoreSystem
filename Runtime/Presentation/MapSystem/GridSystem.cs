@@ -380,7 +380,7 @@ namespace Syadeu.Presentation.Map
             else
             {
                 CoreSystem.Logger.LogError(Channel.Presentation,
-                    $"Attempt to load grids more then one at SceneDataEntity({gridMap.Parent.Name}). This is not allowed.");
+                    $"Attempt to load grids more then one at SceneDataEntity({gridMap.ParentEntity.Name}). This is not allowed.");
             }
         }
         public void UnregisterGrid(GridMapAttribute gridMap)
@@ -735,7 +735,7 @@ namespace Syadeu.Presentation.Map
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"Cannot place grid ui cell at {position} because there\'s no valid CellEntity " +
-                    $"in {nameof(GridMapAttribute)}({GridMap.Name}, MapData: {GridMap.Parent.Name})");
+                    $"in {nameof(GridMapAttribute)}({GridMap.Name}, MapData: {GridMap.ParentEntity.Name})");
 
                 return Entity<IEntity>.Empty;
             }

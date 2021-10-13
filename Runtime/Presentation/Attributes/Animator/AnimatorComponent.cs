@@ -39,7 +39,7 @@ namespace Syadeu.Presentation.Attributes
             if (!m_AnimatorAttribute.AnimationTriggers.TryGetValue(hash, out List<Reference<AnimationTriggerAction>> actions))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Cannot found {evt.stringParameter} {nameof(AnimationTriggerAction)} at {m_AnimatorAttribute.Parent.Name}");
+                    $"Cannot found {evt.stringParameter} {nameof(AnimationTriggerAction)} at {m_AnimatorAttribute.ParentEntity.Name}");
                 return;
             }
 

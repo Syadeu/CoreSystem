@@ -82,12 +82,12 @@ namespace Syadeu.Presentation.Map
 
         internal void OnGridPositionChangedEventHandler(OnGridPositionChangedEvent ev)
         {
-            if (ev.Entity.Equals(Parent) && !IsTriggerable(ev.Entity)) return;
+            if (ev.Entity.Equals(ParentEntity) && !IsTriggerable(ev.Entity)) return;
 
             if (!Parent.HasComponent<GridSizeComponent>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Entity({Parent.Name}) doesn\'t have any {nameof(GridSizeComponent)}.");
+                    $"Entity({ParentEntity.Name}) doesn\'t have any {nameof(GridSizeComponent)}.");
                 return;
             }
 

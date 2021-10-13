@@ -58,7 +58,7 @@ namespace Syadeu.Presentation.TurnTable
     internal sealed class TRPGActionPointUIProcessor : AttributeProcessor<TRPGActionPointUIAttribute>,
         IAttributeOnProxy
     {
-        public void OnProxyCreated(AttributeBase attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
+        public void OnProxyCreated(IAttribute attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
         {
             TRPGActionPointUIAttribute att = (TRPGActionPointUIAttribute)attribute;
 
@@ -76,7 +76,7 @@ namespace Syadeu.Presentation.TurnTable
 
             Setup(att.ParentEntity, in att);
         }
-        public void OnProxyRemoved(AttributeBase attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
+        public void OnProxyRemoved(IAttribute attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
         {
             TRPGActionPointUIAttribute att = (TRPGActionPointUIAttribute)attribute;
 

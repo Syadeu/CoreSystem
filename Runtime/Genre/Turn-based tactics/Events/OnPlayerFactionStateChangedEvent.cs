@@ -1,4 +1,5 @@
-﻿using Syadeu.Presentation.Actor;
+﻿using Syadeu.Collections;
+using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Entities;
 
 namespace Syadeu.Presentation.TurnTable
