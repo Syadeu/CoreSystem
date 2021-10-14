@@ -11,6 +11,9 @@ using UnityEngine;
 
 namespace Syadeu.Presentation.Actions
 {
+    /// <summary>
+    /// Use <see cref="FixedLogicTriggerAction"/> in component can be gather <see cref="GetFixedLogicTriggerAction"/>
+    /// </summary>
     [Serializable]
     public sealed class LogicTriggerAction
     {

@@ -5,8 +5,11 @@
 using Syadeu.Collections;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
+using System;
 using System.Collections.Generic;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
+using Unity.Jobs;
 
 namespace Syadeu.Presentation.Actions
 {
@@ -20,19 +23,32 @@ namespace Syadeu.Presentation.Actions
         private readonly List<Payload> m_ScheduledActions = new List<Payload>();
         private readonly ActionContainer m_CurrentAction = new ActionContainer();
 
+        private ActionBase[] m_RawActionData;
+        private UnsafeHashMap<FixedReference<ActionBase>, Instance<ActionBase>> m_Actions;
+
         private EventSystem m_EventSystem;
+        private EntitySystem m_EntitySystem;
 
         protected override PresentationResult OnInitialize()
         {
             RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, EntitySystem>(Bind);
 
             //m_ScheduledActions = new NativeQueue<Payload>(Allocator.Persistent);
 
             return base.OnInitialize();
         }
+        protected override PresentationResult OnInitializeAsync()
+        {
+            m_RawActionData = EntityDataList.Instance.GetData<ActionBase>();
+
+            return base.OnInitializeAsync();
+        }
+
         public override void OnDispose()
         {
             //m_ScheduledActions.Dispose();
+            m_Actions.Dispose();
 
             base.OnDispose();
         }
@@ -43,8 +59,31 @@ namespace Syadeu.Presentation.Actions
         {
             m_EventSystem = other;
         }
+        private void Bind(EntitySystem other)
+        {
+            m_EntitySystem = other;
+
+            m_Actions = new UnsafeHashMap<FixedReference<ActionBase>, Instance<ActionBase>>(m_RawActionData.Length, AllocatorManager.Persistent);
+            for (int i = 0; i < m_RawActionData.Length; i++)
+            {
+                var ins = m_EntitySystem.CreateInstance<ActionBase>(m_RawActionData[i]);
+
+                m_Actions.Add(new FixedReference<ActionBase>(m_RawActionData[i].Hash), ins);
+            }
+        }
 
         #endregion
+
+        public Instance<ActionBase> GetAction(FixedReference<ActionBase> reference)
+        {
+            if (!m_Actions.ContainsKey(reference))
+            {
+                CoreSystem.Logger.LogError(Channel.Action, "??");
+                return Instance<ActionBase>.Empty;
+            }
+
+            return m_Actions[reference];
+        }
 
         void ISystemEventScheduler.Execute(ScheduledEventHandler handler)
         {
@@ -103,7 +142,8 @@ namespace Syadeu.Presentation.Actions
             switch (temp.actionType)
             {
                 case ActionType.Instance:
-                    InstanceAction action = InstanceAction.GetAction(temp.action);
+                    //InstanceAction action = InstanceAction.GetAction(temp.action);
+                    InstanceAction action = (InstanceAction)GetAction(temp.action).Object;
 
                     if (action is IEventSequence sequence)
                     {
@@ -138,7 +178,8 @@ namespace Syadeu.Presentation.Actions
                     handler.SetEvent(SystemEventResult.Success, m_CurrentAction.Payload.action.GetObject().GetType());
                     return;
                 case ActionType.Trigger:
-                    TriggerAction triggerAction = TriggerAction.GetAction(temp.action);
+                    //TriggerAction triggerAction = TriggerAction.GetAction(temp.action);
+                    TriggerAction triggerAction = (TriggerAction)GetAction(temp.action).Object;
 
                     if (triggerAction is IEventSequence triggerActionSequence)
                     {
