@@ -2,44 +2,38 @@
 #define DEBUG_MODE
 #endif
 
-using Newtonsoft.Json;
 using Syadeu.Collections;
 using Syadeu.Presentation.Entities;
-using System;
-using UnityEngine;
+using Unity.Collections;
 
 namespace Syadeu.Presentation.Actions
 {
-    /// <summary>
-    /// Use <see cref="FixedLogicTriggerAction"/> in component can be gather <see cref="GetFixedLogicTriggerAction"/>
-    /// </summary>
-    [Serializable]
-    public sealed class LogicTriggerAction
+    public struct FixedLogicTriggerAction
     {
-        [JsonProperty(Order = 0, PropertyName = "Name")] private string m_Name = string.Empty;
+        private FixedString128Bytes m_Name;
 
-        [JsonProperty(Order = 1, PropertyName = "If")]
-        private Reference<TriggerPredicateAction>[] m_If = Array.Empty<Reference<TriggerPredicateAction>>();
-        [JsonProperty(Order = 2, PropertyName = "If Target")]
-        private Reference<TriggerPredicateAction>[] m_IfTarget = Array.Empty<Reference<TriggerPredicateAction>>();
+        private FixedReferenceList64<TriggerPredicateAction> m_If;
+        private FixedReferenceList64<TriggerPredicateAction> m_IfTarget;
 
-        [Space]
-        [JsonProperty(Order = 3, PropertyName = "Do")]
-        private Reference<TriggerAction>[] m_Do = Array.Empty<Reference<TriggerAction>>();
-        [JsonProperty(Order = 4, PropertyName = "Do Target")]
-        private Reference<TriggerAction>[] m_DoTarget = Array.Empty<Reference<TriggerAction>>();
+        private FixedReferenceList64<TriggerAction> m_Do;
+        private FixedReferenceList64<TriggerAction> m_DoTarget;
 
-        [JsonIgnore] public string Name => m_Name;
+        public FixedString128Bytes Name => m_Name;
 
-        public FixedLogicTriggerAction GetFixedLogicTriggerAction()
+        internal FixedLogicTriggerAction(
+            string name,
+            Reference<TriggerPredicateAction>[] @if,
+            Reference<TriggerPredicateAction>[] ifTarget,
+
+            Reference<TriggerAction>[] @do,
+            Reference<TriggerAction>[] doTarget
+            )
         {
-            return new FixedLogicTriggerAction(
-                m_Name,
-                m_If,
-                m_IfTarget,
-                m_Do,
-                m_DoTarget
-                );
+            m_Name = name;
+            m_If = @if.ToFixedList64();
+            m_IfTarget = ifTarget.ToFixedList64();
+            m_Do = @do.ToFixedList64();
+            m_DoTarget = doTarget.ToFixedList64();
         }
 
         private bool IsExecutable()
@@ -47,7 +41,6 @@ namespace Syadeu.Presentation.Actions
             if (m_If.Length == 0 && m_IfTarget.Length == 0) return false;
             return true;
         }
-        [Obsolete("Need to deprecate this. Use FixedLogicTriggerAction Instead")]
         public bool Predicate(EntityData<IEntityData> entity, EntityData<IEntityData> target)
         {
             if (!IsExecutable()) return true;
@@ -60,7 +53,6 @@ namespace Syadeu.Presentation.Actions
 
             return false;
         }
-        [Obsolete("Need to deprecate this. Use FixedLogicTriggerAction Instead")]
         public bool Execute(EntityData<IEntityData> entity, EntityData<IEntityData> target)
         {
             if (!IsExecutable())
@@ -76,7 +68,6 @@ namespace Syadeu.Presentation.Actions
 
             return false;
         }
-        [Obsolete("Need to deprecate this. Use FixedLogicTriggerAction Instead")]
         public bool Schedule(EntityData<IEntityData> entity, EntityData<IEntityData> target)
         {
             if (!IsExecutable())

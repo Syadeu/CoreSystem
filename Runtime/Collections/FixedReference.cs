@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Newtonsoft.Json.Utilities;
+using System;
+using UnityEngine.Scripting;
 
 namespace Syadeu.Collections
 {
@@ -36,12 +38,15 @@ namespace Syadeu.Collections
         public bool Equals(FixedReference<T> other) => m_Hash.Equals(other.m_Hash);
 
         public static implicit operator FixedReference(FixedReference<T> t) => new FixedReference(t.Hash);
+
+        [Preserve]
+        static void AOTCodeGeneration()
+        {
+            AotHelper.EnsureType<FixedReferenceList64<T>>();
+            AotHelper.EnsureType<FixedReference<T>>();
+            AotHelper.EnsureList<FixedReference<T>>();
+
+            throw new InvalidOperationException();
+        }
     }
-    public interface IFixedReference : IValidation, IEmpty, IEquatable<IFixedReference>
-    {
-        Hash Hash { get; }
-    }
-    public interface IFixedReference<T> : IFixedReference
-        where T : class, IObject
-    { }
 }
