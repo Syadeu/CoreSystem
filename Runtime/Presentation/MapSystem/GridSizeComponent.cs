@@ -86,6 +86,17 @@ namespace Syadeu.Presentation.Map
                 list.AddRange(buffer, count);
             }
         }
+        public void GetRange(ref FixedList4096Bytes<int> list, in int range)
+        {
+            unsafe
+            {
+                int* buffer = stackalloc int[1024];
+                GetRange(in buffer, 1024, in range, out int count);
+
+                list.Clear();
+                list.AddRange(buffer, count);
+            }
+        }
         unsafe public void GetRange(in int* buffer, in int bufferSize, in int range, out int count)
         {
             GridSystem grid = PresentationSystem<DefaultPresentationGroup, GridSystem>.System;

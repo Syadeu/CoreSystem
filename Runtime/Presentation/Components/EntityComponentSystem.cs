@@ -395,7 +395,7 @@ namespace Syadeu.Presentation.Components
             //    CoreSystem.Logger.Log(Channel.Component,
             //        $"{TypeHelper.TypeOf<TComponent>.Name} component at {entity.Name} remove queued.");
             //}
-            $"entity({entity.RawName}) removed component ({TypeHelper.TypeOf<TComponent>.Name})".ToLog();
+            //$"entity({entity.RawName}) removed component ({TypeHelper.TypeOf<TComponent>.Name})".ToLog();
         }
         public void RemoveComponent(EntityData<IEntityData> entity, Type componentType)
         {

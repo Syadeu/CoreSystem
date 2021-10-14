@@ -73,14 +73,14 @@ namespace Syadeu.Presentation.Internal
         }
         public void Dispose()
         {
+            InternalOnDispose();
+            OnUnityJobsDispose();
+            OnDispose();
+
             for (int i = 0; i < m_Modules.Length; i++)
             {
                 ((IDisposable)m_Modules[i]).Dispose();
             }
-
-            InternalOnDispose();
-            OnUnityJobsDispose();
-            OnDispose();
         }
         internal virtual void InternalOnDispose() { }
         public abstract void OnDispose();

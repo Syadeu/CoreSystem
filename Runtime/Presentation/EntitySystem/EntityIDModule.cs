@@ -21,8 +21,12 @@ namespace Syadeu.Presentation
         }
         private void System_OnEntityDestroy(IEntityData obj)
         {
-            EntityID id = obj.Idx;
+            if (!m_EntityShortConversions.IsCreated)
+            {
+                return;
+            }
 
+            EntityID id = obj.Idx;
             if (m_EntityShortConversions.TryGetValue(id, out EntityShortID shortID))
             {
                 m_EntityConversions.Remove(shortID);
@@ -51,6 +55,13 @@ namespace Syadeu.Presentation
 
             m_EntityConversions.Add(shortID, id);
             m_EntityShortConversions.Add(id, shortID);
+
+            if (!m_EntityConversions.ContainsKey(shortID))
+            {
+                "??".ToLogError();
+            }
+            else "converted".ToLog();
+
             return shortID;
         }
         public EntityID Convert(EntityShortID id)

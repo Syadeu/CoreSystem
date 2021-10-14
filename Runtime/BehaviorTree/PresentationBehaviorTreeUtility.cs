@@ -85,13 +85,6 @@ namespace Syadeu.Presentation.BehaviorTree
             return att;
         }
 
-        public static Instance<T> GetProvider<T>(this LoadActorControllerAttribute other)
-            where T : ActorProviderBase
-        {
-            if (other == null) return Instance<T>.Empty;
-            return other.ActorController.Parent.GetComponent<ActorControllerComponent>().GetProvider<T>();
-        }
-
         public static T GetComponent<T>(this SharedEntity other)
             where T : unmanaged, IEntityComponent
         {

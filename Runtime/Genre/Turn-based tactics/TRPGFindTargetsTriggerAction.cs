@@ -38,9 +38,9 @@ namespace Syadeu.Presentation.TurnTable
                 return;
             }
 
-            IReadOnlyList<Entity<IEntity>> list = attProvider.Object.GetTargetsInRange();
+            var list = attProvider.Object.GetTargetsInRange();
             CoreSystem.Logger.Log(Channel.Debug,
-                $"Entity({entity.Name}) found {list.Count} targets.");
+                $"Entity({entity.Name}) found {list.Length} targets.");
         }
     }
 }

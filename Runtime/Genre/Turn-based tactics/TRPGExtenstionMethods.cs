@@ -32,18 +32,21 @@ namespace Syadeu.Presentation.TurnTable
                 return;
             }
 
-            Instance<TRPGActorAttackProvider> attProvider = other.GetComponent<ActorControllerComponent>().GetProvider<TRPGActorAttackProvider>();
-#if DEBUG_MODE
-            if (attProvider.IsEmpty())
+            
+//#if DEBUG_MODE
+            if (!other.HasComponent<TRPGActorAttackComponent>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"This entity({other.Name}) doesn\'t have any {nameof(TRPGActorAttackProvider)}.");
                 return;
             }
-            else if (attProvider.Object.Targets.Count < index)
+
+            var attProvider = other.GetComponent<TRPGActorAttackComponent>();
+
+            if (attProvider.TargetCount < index)
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Index({index}) is out of range. Target count is {attProvider.Object.Targets.Count}.");
+                    $"Index({index}) is out of range. Target count is {attProvider.TargetCount}.");
                 return;
             }
             else if (!other.HasComponent<ActorWeaponComponent>())
@@ -51,11 +54,11 @@ namespace Syadeu.Presentation.TurnTable
                 "doesn\'t have weapon".ToLogError();
                 return;
             }
-#endif
+//#endif
             var weapon = other.GetComponent<ActorWeaponComponent>();
 
             TRPGActorAttackEvent ev = new TRPGActorAttackEvent(
-                attProvider.Object.Targets[index].Cast<IEntity, ActorEntity>(), 
+                attProvider.m_Targets[index].GetEntity<ActorEntity>(), 
                 targetStatName, (int)weapon.WeaponDamage);
 
             ev.ScheduleEvent(other);

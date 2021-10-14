@@ -217,11 +217,11 @@ namespace Syadeu.Presentation.TurnTable
                     var targets = attProvider.Object.GetTargetsInRange();
                     var tr = m_TurnTableSystem.CurrentTurn.As<IEntityData, IEntity>().transform;
 
-                    $"{targets.Count} found".ToLog();
-                    for (int i = 0; i < targets.Count; i++)
+                    $"{targets.Length} found".ToLog();
+                    for (int i = 0; i < targets.Length; i++)
                     {
-                        $"{targets[i].Name} found".ToLog();
-                        m_TRPGCameraMovement.SetAim(tr, targets[i].transform);
+                        //$"{targets[i].Name} found".ToLog();
+                        m_TRPGCameraMovement.SetAim(tr, targets[i].GetEntity<IEntity>().transform);
                     }
 
                     m_CurrentShortcut = ShortcutType.Attack;
