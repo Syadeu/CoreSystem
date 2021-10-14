@@ -37,7 +37,7 @@ namespace Syadeu.Presentation.Actions
 
             for (int i = 0; i < m_Value.Length; i++)
             {
-                if (m_Value[i].m_Hash.Equals(actor.Faction.Hash))
+                if (m_Value[i].Hash.Equals(actor.Faction.Hash))
                 {
                     if (m_PredicateType == PredicateType.True) return true;
                     return false;

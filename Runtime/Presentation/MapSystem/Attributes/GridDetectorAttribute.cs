@@ -46,7 +46,7 @@ namespace Syadeu.Presentation.Map
 
             for (int i = 0; i < m_TriggerOnly.Length; i++)
             {
-                Hash temp = m_TriggerOnly[i].m_Hash;
+                Hash temp = m_TriggerOnly[i].Hash;
 
                 if (target.Hash.Equals(temp))
                 {

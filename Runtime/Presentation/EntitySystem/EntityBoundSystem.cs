@@ -271,7 +271,7 @@ namespace Syadeu.Presentation
 
                 for (int i = 0; i < att.m_TriggerOnly.Length; i++)
                 {
-                    if (att.m_TriggerOnly[i].m_Hash.Equals(target.Hash))
+                    if (att.m_TriggerOnly[i].Hash.Equals(target.Hash))
                     {
                         return !att.m_Inverse;
                     }

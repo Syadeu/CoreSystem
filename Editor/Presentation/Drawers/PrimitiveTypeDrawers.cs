@@ -297,9 +297,9 @@ namespace SyadeuEditor.Presentation
                 return new ArrayDrawer(list, m_ElementType, (other) => list[i] = other, () => (IList)list[i]);
             }
 
-            else if (TypeHelper.TypeOf<IReference>.Type.IsAssignableFrom(m_ElementType))
+            else if (TypeHelper.TypeOf<IFixedReference>.Type.IsAssignableFrom(m_ElementType))
             {
-                return new ReferenceDrawer(list, m_ElementType, (other) => list[i] = other, () => (IReference)list[i]);
+                return new ReferenceDrawer(list, m_ElementType, (other) => list[i] = other, () => (IFixedReference)list[i]);
             }
 
             else if (TypeHelper.TypeOf<IPrefabReference>.Type.IsAssignableFrom(m_ElementType))

@@ -44,7 +44,7 @@ namespace Syadeu.Presentation.Entities
             {
                 for (int i = 0; i < m_AttributeList.Length; i++)
                 {
-                    if (m_AttributeList[i].m_Hash.Equals(hash)) return true;
+                    if (m_AttributeList[i].Hash.Equals(hash)) return true;
                 }
                 return false;
             }
@@ -203,7 +203,7 @@ namespace Syadeu.Presentation.Entities
                 AttributeBase att = (AttributeBase)EntityDataList.Instance.GetObject(m_AttributeList[i]);
                 if (att == null)
                 {
-                    CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_AttributeWarning, Name, m_AttributeList[i].m_Hash, i));
+                    CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_AttributeWarning, Name, m_AttributeList[i].Hash, i));
                     continue;
                 }
 

@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace SyadeuEditor.Presentation
 {
-    [CustomPropertyDrawer(typeof(IReference), true)]
+    [CustomPropertyDrawer(typeof(IFixedReference), true)]
     public sealed class ReferencePropertyDrawer : PropertyDrawer
     {
         private static readonly RectOffset boxPadding = EditorStyles.helpBox.padding;

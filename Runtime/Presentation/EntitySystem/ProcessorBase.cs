@@ -88,7 +88,7 @@ namespace Syadeu.Presentation
                 );
         }
 
-        protected EntityData<IEntityData> CreateObject(IReference obj)
+        protected EntityData<IEntityData> CreateObject(IFixedReference obj)
         {
             CoreSystem.Logger.NotNull(obj, "Target object cannot be null");
             return EntitySystem.CreateObject(obj.Hash);

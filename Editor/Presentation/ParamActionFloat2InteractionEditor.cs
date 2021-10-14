@@ -43,7 +43,7 @@ namespace SyadeuEditor.Presentation
         {
             if (GUILayout.Button("Save"))
             {
-                ulong temp = m_Reflector.Action.m_Hash;
+                ulong temp = m_Reflector.Action.Hash;
                 target.Action = (long)temp;
             }
 
@@ -51,7 +51,7 @@ namespace SyadeuEditor.Presentation
             Drawer.OnGUI();
             if (EditorGUI.EndChangeCheck())
             {
-                ulong temp = m_Reflector.Action.m_Hash;
+                ulong temp = m_Reflector.Action.Hash;
                 target.Action = (long)temp;
             }
         }

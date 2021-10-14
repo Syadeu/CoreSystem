@@ -1564,7 +1564,7 @@ namespace SyadeuEditor.Presentation.Map
             Handles.DrawWireCube(selectAabb.center, selectAabb.size);
         }
 
-        private static void DrawMapDataSelector(IReference current, Action<Reference<MapDataEntityBase>> setter)
+        private static void DrawMapDataSelector(IFixedReference current, Action<Reference<MapDataEntityBase>> setter)
         {
             ReflectionHelperEditor.DrawReferenceSelector("Map data: ", (hash) =>
             {

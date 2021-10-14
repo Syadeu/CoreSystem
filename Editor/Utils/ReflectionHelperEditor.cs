@@ -615,7 +615,7 @@ namespace SyadeuEditor
 
             GUILayout.EndHorizontal();
         }
-        public static void DrawReferenceSelector(string name, Action<Hash> setter, IReference current, Type targetType)
+        public static void DrawReferenceSelector(string name, Action<Hash> setter, IFixedReference current, Type targetType)
         {
             string displayName;
             if (current == null || current.Hash.Equals(Hash.Empty)) displayName = "None";
@@ -755,9 +755,9 @@ namespace SyadeuEditor
                             }
 
                             #region CoreSystem Types
-                            if (TypeHelper.TypeOf<IReference>.Type.IsAssignableFrom(elementType))
+                            if (TypeHelper.TypeOf<IFixedReference>.Type.IsAssignableFrom(elementType))
                             {
-                                IReference objRef = (IReference)list[j];
+                                IFixedReference objRef = (IFixedReference)list[j];
                                 Type targetType;
                                 Type[] generics = elementType.GetGenericArguments();
                                 if (generics.Length > 0) targetType = elementType.GetGenericArguments()[0];
@@ -925,9 +925,9 @@ namespace SyadeuEditor
                 }
                 #endregion
                 #region CoreSystem Types
-                else if (TypeHelper.TypeOf<IReference>.Type.IsAssignableFrom(declaredType))
+                else if (TypeHelper.TypeOf<IFixedReference>.Type.IsAssignableFrom(declaredType))
                 {
-                    IReference objRef = (IReference)getter.Invoke(obj);
+                    IFixedReference objRef = (IFixedReference)getter.Invoke(obj);
                     Type targetType;
                     Type[] generics = declaredType.GetGenericArguments();
                     if (generics.Length > 0) targetType = declaredType.GetGenericArguments()[0];

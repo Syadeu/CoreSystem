@@ -99,17 +99,17 @@ namespace Syadeu.Presentation
             return new Instance<T>(entity.Idx);
         }
 
-        public static Entity<T> CreateInstance<T>(this Reference<T> other, in float3 pos)
+        public static Entity<T> CreateEntity<T>(this Reference<T> other, in float3 pos)
             where T : class, IEntity
         {
             return Instance<T>.CreateInstance(in other, in pos);
         }
-        public static Entity<T> CreateInstance<T>(this Reference<T> other, float3 pos, quaternion rot, float3 localScale)
+        public static Entity<T> CreateEntity<T>(this Reference<T> other, float3 pos, quaternion rot, float3 localScale)
             where T : class, IEntity
         {
             return Instance<T>.CreateInstance(in other, in pos, in rot, in localScale);
         }
-        public static EntityData<T> CreateInstance<T>(this Reference<T> other)
+        public static EntityData<T> CreateEntityData<T>(this Reference<T> other)
             where T : class, IEntityData
         {
             return Instance<T>.CreateInstance(other).As();

@@ -82,7 +82,7 @@ namespace SyadeuEditor.Presentation
             for (int i = 0; i < providersDrawer.Count; i++)
             {
                 ReferenceDrawer refDrawer = (ReferenceDrawer)providersDrawer[i];
-                IReference reference = refDrawer.Getter.Invoke();
+                IFixedReference reference = refDrawer.Getter.Invoke();
                 if (reference.IsEmpty() || !reference.IsValid())
                 {
                     continue;

@@ -57,11 +57,11 @@ namespace Syadeu.Presentation.Actor
             {
                 for (int i = 0; i < actor.Faction.m_Allies.Length; i++)
                 {
-                    allies.Add(actor.Faction.m_Allies[i].m_Hash);
+                    allies.Add(actor.Faction.m_Allies[i].Hash);
                 }
                 for (int i = 0; i < actor.Faction.m_Enemies.Length; i++)
                 {
-                    enemies.Add(actor.Faction.m_Enemies[i].m_Hash);
+                    enemies.Add(actor.Faction.m_Enemies[i].Hash);
                 }
                 factionType = actor.Faction.m_FactionType;
                 factionHash = actor.Faction.Hash;

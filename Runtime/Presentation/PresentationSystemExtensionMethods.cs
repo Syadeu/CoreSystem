@@ -32,30 +32,7 @@ namespace Syadeu.Presentation
             return new FixedReference<T>(reference.Hash);
         }
 
-        [Obsolete("Use FixedReferenceList64", true)]
-        public static T[] ToArray<T>(this ReferenceArray<T> t)
-            where T : unmanaged, IReference
-        {
-            T[] array = new T[t.Length];
-            for (int i = 0; i < array.Length; i++)
-            {
-                array[i] = t[i];
-            }
-            return array;
-        }
-        [Obsolete("Use FixedReferenceList64", true)]
-        public static List<T> ToList<T>(this ReferenceArray<T> t)
-            where T : unmanaged, IReference
-        {
-            List<T> list = new List<T>();
-            for (int i = 0; i < t.Length; i++)
-            {
-                list.Add(t[i]);
-            }
-            return list;
-        }
-
-        public static Reference<T> As<T>(this IReference reference)
+        public static Reference<T> As<T>(this IFixedReference<T> reference)
             where T : class, IObject
         {
             return new Reference<T>(reference.Hash);
@@ -73,7 +50,7 @@ namespace Syadeu.Presentation
             return new Reference<T>(t.Object.Hash);
         }
 
-        public static T GetObject<T>(this FixedReference<T> t)
+        public static T GetObject<T>(this IFixedReference<T> t)
             where T : class, IObject
         {
             if (t.IsEmpty())
@@ -87,7 +64,7 @@ namespace Syadeu.Presentation
             }
             return null;
         }
-        public static ObjectBase GetObject(this FixedReference t)
+        public static ObjectBase GetObject(this IFixedReference t)
         {
             if (t.IsEmpty())
             {
@@ -99,7 +76,7 @@ namespace Syadeu.Presentation
             }
             return null;
         }
-        public static Instance<T> CreateInstance<T>(this FixedReference<T> target)
+        public static Instance<T> CreateInstance<T>(this IFixedReference<T> target)
             where T : class, IObject
         {
             if (target.IsEmpty())
@@ -122,5 +99,55 @@ namespace Syadeu.Presentation
 
             return PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.CreateInstance<T>(target.GetObject());
         }
+
+        //public static T GetObject<T>(this Reference<T> t)
+        //    where T : class, IObject
+        //{
+        //    if (t.IsEmpty())
+        //    {
+        //        return null;
+        //    }
+        //    else if (EntityDataList.Instance.m_Objects.TryGetValue(t.m_Hash, out ObjectBase value) &&
+        //        value is T target)
+        //    {
+        //        return target;
+        //    }
+        //    return null;
+        //}
+        //public static ObjectBase GetObject(this IReference t)
+        //{
+        //    if (t.IsEmpty())
+        //    {
+        //        return null;
+        //    }
+        //    else if (EntityDataList.Instance.m_Objects.TryGetValue(t.Hash, out ObjectBase value))
+        //    {
+        //        return value;
+        //    }
+        //    return null;
+        //}
+        //public static Instance<T> CreateInstance<T>(this IReference<T> target)
+        //    where T : class, IObject
+        //{
+        //    if (target.IsEmpty())
+        //    {
+        //        CoreSystem.Logger.LogError(Channel.Entity, "You cannot create instance of null reference.");
+        //        return Instance<T>.Empty;
+        //    }
+
+        //    Type t = target.GetObject().GetType();
+        //    if (TypeHelper.TypeOf<EntityBase>.Type.IsAssignableFrom(t))
+        //    {
+        //        var temp = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.CreateEntity(target.m_Hash, float3.zero);
+        //        return new Instance<T>(temp.Idx);
+        //    }
+        //    else if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(t))
+        //    {
+        //        var temp = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.CreateObject(target.m_Hash);
+        //        return new Instance<T>(temp.Idx);
+        //    }
+
+        //    return PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.CreateInstance<T>(target.GetObject());
+        //}
     }
 }

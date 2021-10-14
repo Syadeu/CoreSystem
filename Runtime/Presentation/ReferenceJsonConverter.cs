@@ -7,12 +7,12 @@ using UnityEngine.Scripting;
 namespace Syadeu.Presentation.Converters
 {
     [CustomJsonConverterAttribute, Preserve]
-    internal sealed class ReferenceJsonConverter : JsonConverter<IReference>
+    internal sealed class ReferenceJsonConverter : JsonConverter<IFixedReference>
     {
         public override bool CanRead => true;
         public override bool CanWrite => true;
 
-        public override IReference ReadJson(JsonReader reader, Type objectType, IReference existingValue, bool hasExistingValue, JsonSerializer serializer)
+        public override IFixedReference ReadJson(JsonReader reader, Type objectType, IFixedReference existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
             JToken jToken = JToken.Load(reader);
 
@@ -29,7 +29,7 @@ namespace Syadeu.Presentation.Converters
             {
                 Type targetT = typeof(Reference<>).MakeGenericType(objectType.GenericTypeArguments[0]);
 
-                return (IReference)TypeHelper.GetConstructorInfo(targetT, TypeHelper.TypeOf<Hash>.Type)
+                return (IFixedReference)TypeHelper.GetConstructorInfo(targetT, TypeHelper.TypeOf<Hash>.Type)
                     .Invoke(new object[] { hash });
             }
             else
@@ -37,7 +37,7 @@ namespace Syadeu.Presentation.Converters
                 return new Reference(hash);
             }
         }
-        public override void WriteJson(JsonWriter writer, IReference value, JsonSerializer serializer)
+        public override void WriteJson(JsonWriter writer, IFixedReference value, JsonSerializer serializer)
         {
             writer.WriteValue(value.Hash);
         }

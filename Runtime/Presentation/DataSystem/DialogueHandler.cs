@@ -139,7 +139,7 @@ namespace Syadeu.Presentation.Data
             }
             Entity<ActorEntity> FindEntity(Reference<ActorEntity> reference, params Entity<ActorEntity>[] entries)
             {
-                var iter = entries.Where((other) => other.Hash.Equals(reference.m_Hash));
+                var iter = entries.Where((other) => other.Hash.Equals(reference.Hash));
                 if (iter.Any())
                 {
                     return iter.First();

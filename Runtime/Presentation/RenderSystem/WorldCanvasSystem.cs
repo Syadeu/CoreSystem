@@ -233,7 +233,7 @@ namespace Syadeu.Presentation.Render
                 return;
             }
 
-            Hash targetUI = uiEntry.GetObject().m_Prefab.m_Hash;
+            Hash targetUI = uiEntry.GetObject().m_Prefab.Hash;
             bool found = false;
 
             do
