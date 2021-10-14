@@ -25,33 +25,20 @@ namespace Syadeu.Presentation.Map
         internal int[] m_IgnoreLayers = Array.Empty<int>();
 
         [Header("Trigger Only")]
-        [JsonProperty(Order = 2, PropertyName = "Inverse")] private bool m_Inverse = false;
+        [JsonProperty(Order = 2, PropertyName = "Inverse")] 
+        internal bool m_Inverse = false;
         [JsonProperty(Order = 3, PropertyName = "TriggerOnly")]
         internal Reference<EntityBase>[] m_TriggerOnly = Array.Empty<Reference<EntityBase>>();
 
         [Header("TriggerActions")]
         [Tooltip("False 를 반환하면 OnDetected 를 실행하지 않습니다.")]
         [JsonProperty(Order = 4, PropertyName = "OnDetectedPredicate")]
-        private Reference<TriggerPredicateAction>[] m_OnDetectedPredicate = Array.Empty<Reference<TriggerPredicateAction>>();
+        internal Reference<TriggerPredicateAction>[] m_OnDetectedPredicate = Array.Empty<Reference<TriggerPredicateAction>>();
         [JsonProperty(Order = 5, PropertyName = "OnDetected")]
-        LogicTriggerAction[] m_OnDetected = Array.Empty<LogicTriggerAction>();
+        internal LogicTriggerAction[] m_OnDetected = Array.Empty<LogicTriggerAction>();
 
         [JsonIgnore] internal EventSystem m_EventSystem = null;
         [JsonIgnore] internal GridSizeAttribute m_GridSize = null;
-
-        [JsonIgnore] internal List<Entity<IEntity>> m_Detected;
-        [JsonIgnore] internal List<Entity<IEntity>> m_Targeted;
-
-        [JsonIgnore] internal NativeList<int> m_TempGetRanges;
-
-        /// <summary>
-        /// 내가 발견한
-        /// </summary>
-        [JsonIgnore] public IReadOnlyList<Entity<IEntity>> Detected => m_Detected;
-        /// <summary>
-        /// 나를 발견한
-        /// </summary>
-        [JsonIgnore] public IReadOnlyList<Entity<IEntity>> Targeted => m_Targeted;
 
         private bool IsTriggerable(Entity<IEntity> target)
         {
@@ -69,18 +56,19 @@ namespace Syadeu.Presentation.Map
             return false;
         }
 
-        private static bool IsDetect(NativeArray<int> range, int maxRange, FixedList32Bytes<GridPosition> to)
+        unsafe private static bool IsDetect(in int* range, in int count, in FixedList32Bytes<GridPosition> to)
         {
-            bool detect = false;
             for (int i = 0; i < to.Length; i++)
             {
-                if (range.Contains(to[i].index))
+                for (int j = 0; j < count; j++)
                 {
-                    detect = true;
-                    break;
+                    if (range[i] == (to[i].index))
+                    {
+                        return true;
+                    }
                 }
             }
-            return detect;
+            return false;
         }
 
         internal void OnGridPositionChangedEventHandler(OnGridPositionChangedEvent ev)
@@ -94,23 +82,26 @@ namespace Syadeu.Presentation.Map
                 return;
             }
 
-            GridSizeComponent component = Parent.GetComponent<GridSizeComponent>();
+            ref GridSizeComponent component = ref Parent.GetComponent<GridSizeComponent>();
+            ref GridDetectorComponent detector = ref Parent.GetComponent<GridDetectorComponent>();
 
-            FixedList128Bytes<int> ignores = new FixedList128Bytes<int>();
+            bool detect;
             unsafe
             {
-                fixed (int* temp = m_IgnoreLayers)
-                {
-                    ignores.AddRange(temp, m_IgnoreLayers.Length);
-                }
+                int maxCount = detector.MaxDetectionIndicesCount;
+                int* buffer = stackalloc int[maxCount];
+
+                component.GetRange(in buffer, in maxCount, in detector.m_MaxDetectionRange, in detector.m_IgnoreLayers, out int count);
+                detect = IsDetect(in buffer, in count, ev.To);
             }
 
-            component.GetRange(ref m_TempGetRanges, m_MaxDetectionRange, ignores);
-            bool detect = IsDetect(m_TempGetRanges, m_MaxDetectionRange, ev.To);
+            EntityShortID 
+                myShortID = Parent.Idx.GetShortID(),
+                targetShortID = ev.Entity.Idx.GetShortID();
 
             if (detect)
             {
-                if (m_Detected.Contains(ev.Entity))
+                if (detector.m_Detected.Contains(targetShortID))
                 {
                     //"already detected".ToLog();
                     return;
@@ -124,7 +115,7 @@ namespace Syadeu.Presentation.Map
                     return;
                 }
 
-                m_Detected.Add(ev.Entity);
+                detector.m_Detected.Add(targetShortID);
                 m_EventSystem.PostEvent(OnGridDetectEntityEvent.GetEvent(parent, ev.Entity, true));
 
                 for (int i = 0; i < m_OnDetected.Length; i++)
@@ -133,20 +124,33 @@ namespace Syadeu.Presentation.Map
                 }
 
                 //"detect".ToLog();
+                if (ev.Entity.HasComponent<GridDetectorComponent>())
+                {
+                    ref var targetDetector = ref ev.Entity.GetComponent<GridDetectorComponent>();
+
+                    if (!targetDetector.m_TargetedBy.Contains(myShortID))
+                    {
+                        targetDetector.m_TargetedBy.Add(myShortID);
+                    }
+                }
+
                 return;
             }
 
             //"detect falied".ToLog();
 
-            if (m_Detected.Contains(ev.Entity))
+            if (detector.m_Detected.Contains(targetShortID))
             {
-                var parent = Parent.As<IEntityData, IEntity>();
-
-                m_Detected.Remove(ev.Entity);
-                GridDetectorAttribute targetAtt = ev.Entity.GetAttribute<GridDetectorAttribute>();
-                if (targetAtt != null && targetAtt.m_Targeted.Contains(parent))
+                detector.m_Detected.Remove(targetShortID);
+                
+                if (ev.Entity.HasComponent<GridDetectorComponent>())
                 {
-                    targetAtt.m_Targeted.Remove(parent);
+                    ref var targetDetector = ref ev.Entity.GetComponent<GridDetectorComponent>();
+
+                    if (targetDetector.m_TargetedBy.Contains(myShortID))
+                    {
+                        targetDetector.m_TargetedBy.Remove(myShortID);
+                    }
                 }
 
                 m_EventSystem.PostEvent(OnGridDetectEntityEvent.GetEvent(Parent.As<IEntityData, IEntity>(), ev.Entity, false));
@@ -165,9 +169,6 @@ namespace Syadeu.Presentation.Map
                     $"This Entity({entity.Name}) doesn\'t have GridSizeAttribute. Cannot initialize GridDetectorAttribute");
                 return;
             }
-            attribute.m_Detected = new List<Entity<IEntity>>();
-
-            attribute.m_TempGetRanges = new NativeList<int>(128, Allocator.Persistent);
 
             FixedList128Bytes<int> ignores = new FixedList128Bytes<int>();
             unsafe
@@ -186,23 +187,21 @@ namespace Syadeu.Presentation.Map
                 m_TriggerOnly = 
                     attribute.m_TriggerOnly.Length == 0 ? 
                         ReferenceArray<Reference<EntityBase>>.Empty : attribute.m_TriggerOnly.ToBuffer(Allocator.Persistent),
+                m_TriggerOnlyInverse = attribute.m_Inverse,
 
-                m_Detected = new FixedList512Bytes<EntityID>()
+                m_Detected = new FixedList512Bytes<EntityShortID>(),
+                m_TargetedBy = new FixedList512Bytes<EntityShortID>()
             };
             
             entity.AddComponent(component);
 
-            EventSystem.AddEvent<OnGridPositionChangedEvent>(attribute.OnGridPositionChangedEventHandler);
+            //EventSystem.AddEvent<OnGridPositionChangedEvent>(attribute.OnGridPositionChangedEventHandler);
         }
         protected override void OnDestroy(GridDetectorAttribute attribute, EntityData<IEntityData> entity)
         {
-            attribute.m_TempGetRanges.Dispose();
-
             if (attribute.m_GridSize != null)
             {
-                EventSystem.RemoveEvent<OnGridPositionChangedEvent>(attribute.OnGridPositionChangedEventHandler);
-
-                attribute.m_Detected = null;
+                //EventSystem.RemoveEvent<OnGridPositionChangedEvent>(attribute.OnGridPositionChangedEventHandler);
             }
             attribute.m_EventSystem = null;
         }
@@ -213,8 +212,21 @@ namespace Syadeu.Presentation.Map
         internal FixedList4096Bytes<int> m_ObserveIndices;
         internal FixedList128Bytes<int> m_IgnoreLayers;
         internal ReferenceArray<Reference<EntityBase>> m_TriggerOnly;
+        internal bool m_TriggerOnlyInverse;
 
-        internal FixedList512Bytes<EntityID> m_Detected;
+        // i found
+        internal FixedList512Bytes<EntityShortID> m_Detected;
+        // ive found
+        internal FixedList512Bytes<EntityShortID> m_TargetedBy;
+
+        public int MaxDetectionIndicesCount
+        {
+            get
+            {
+                int height = ((m_MaxDetectionRange * 2) + 1);
+                return height * height;
+            }
+        }
 
         void IDisposable.Dispose()
         {
@@ -222,6 +234,11 @@ namespace Syadeu.Presentation.Map
             {
                 m_TriggerOnly.Dispose();
             }
+
+            m_ObserveIndices.Clear();
+            m_IgnoreLayers.Clear();
+            m_Detected.Clear();
+            m_TargetedBy.Clear();
         }
 
         public bool IsObserveIndex(in int gridIndex)
