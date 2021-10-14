@@ -22,7 +22,8 @@ using UnityEngine;
 
 namespace Syadeu.Presentation.Map
 {
-    public sealed class GridSystem : PresentationSystemEntity<GridSystem>
+    public sealed class GridSystem : PresentationSystemEntity<GridSystem>,
+        INotifySystemModule<GridDetectionModule>
     {
         public override bool EnableBeforePresentation => true;
         public override bool EnableOnPresentation => false;
@@ -37,15 +38,13 @@ namespace Syadeu.Presentation.Map
 
         private readonly ConcurrentQueue<GridSizeAttribute> m_WaitForRegister = new ConcurrentQueue<GridSizeAttribute>();
 
-        //private readonly Dictionary<Entity<IEntity>, int[]> m_EntityGridIndices = new Dictionary<Entity<IEntity>, int[]>();
-        //private readonly Dictionary<int, List<Entity<IEntity>>> m_GridEntities = new Dictionary<int, List<Entity<IEntity>>>();
-
         private UnsafeMultiHashMap<EntityID, int> m_EntityGridIndices;
-        private UnsafeMultiHashMap<int, EntityID> 
-            m_GridEntities, m_GridObservers;
+        private UnsafeMultiHashMap<int, EntityID> m_GridEntities;
 
         private NativeHashMap<GridPosition, Entity<IEntity>> m_PlacedCellUIEntities;
         private readonly List<Entity<IEntity>> m_DrawnCellUIEntities = new List<Entity<IEntity>>();
+
+        internal UnsafeMultiHashMap<int, EntityID> GridEntities => m_GridEntities;
 
         private GridMapAttribute GridMap => m_MainGrid;
         public float CellSize => m_MainGrid.CellSize;
@@ -58,7 +57,6 @@ namespace Syadeu.Presentation.Map
 
             m_EntityGridIndices = new UnsafeMultiHashMap<EntityID, int>(4096, AllocatorManager.Persistent);
             m_GridEntities = new UnsafeMultiHashMap<int, EntityID>(1024, AllocatorManager.Persistent);
-            m_GridObservers = new UnsafeMultiHashMap<int, EntityID>(1024, AllocatorManager.Persistent);
 
             m_PlacedCellUIEntities = new NativeHashMap<GridPosition, Entity<IEntity>>(1024, AllocatorManager.Persistent);
 
@@ -151,7 +149,7 @@ namespace Syadeu.Presentation.Map
 
                 if (entity.HasComponent<GridDetectorComponent>())
                 {
-                    UpdateGridDetection(entity, in component);
+                    GetModule<GridDetectionModule>().UpdateGridDetection(entity, in component);
                     //CheckGridDetectionAndPost(entity, in component.positions);
                 }
             }
@@ -186,130 +184,6 @@ namespace Syadeu.Presentation.Map
             }
         }
 
-        unsafe private void UpdateGridDetection(Entity<IEntity> entity, in GridSizeComponent gridSize)
-        {
-            ref GridDetectorComponent detector = ref entity.GetComponent<GridDetectorComponent>();
-            for (int i = 0; i < detector.m_ObserveIndices.Length; i++)
-            {
-                if (m_GridObservers.CountValuesForKey(detector.m_ObserveIndices[i]) == 1)
-                {
-                    m_GridObservers.Remove(detector.m_ObserveIndices[i]);
-                }
-                else
-                {
-                    m_GridObservers.Remove(detector.m_ObserveIndices[i], entity.Idx);
-                }
-            }
-            detector.m_ObserveIndices.Clear();
-
-            int maxCount = detector.MaxDetectionIndicesCount;
-
-            int* buffer = stackalloc int[maxCount];
-            GetRange(in buffer, in maxCount, gridSize.positions[0].index, detector.m_MaxDetectionRange, detector.m_IgnoreLayers, out int count);
-
-            FixedList512Bytes<EntityShortID>
-                    newDetected = new FixedList512Bytes<EntityShortID>();
-            GridDetectorAttribute detectorAtt = entity.GetAttribute<GridDetectorAttribute>();
-
-            for (int i = 0; i < count; i++)
-            {
-                m_GridObservers.Add(buffer[i], entity.Idx);
-                detector.m_ObserveIndices.Add(buffer[i]);
-
-                Detection(entity, in detectorAtt, ref detector, in buffer[i], ref newDetected);
-            }
-
-            for (int i = 0; i < detector.m_Detected.Length; i++)
-            {
-                if (newDetected.Contains(detector.m_Detected[i])) continue;
-
-                Entity<IEntity> target = detector.m_Detected[i].GetEntityID().GetEntity<IEntity>();
-
-                if (target.HasComponent<GridDetectorComponent>())
-                {
-                    ref var targetDetector = ref target.GetComponent<GridDetectorComponent>();
-                    EntityShortID myShortID = entity.Idx.GetShortID();
-
-                    if (targetDetector.m_TargetedBy.Contains(myShortID))
-                    {
-                        targetDetector.m_TargetedBy.Remove(myShortID);
-                    }
-                }
-
-                m_EventSystem.PostEvent(OnGridDetectEntityEvent.GetEvent(entity, target, false));
-            }
-
-            detector.m_Detected = newDetected;
-        }
-        unsafe private void Detection(Entity<IEntity> entity, in GridDetectorAttribute detectorAtt, ref GridDetectorComponent detector, in int index, ref FixedList512Bytes<EntityShortID> newDetected)
-        {
-            if (!m_GridEntities.TryGetFirstValue(index, out EntityID targetID, out var iter))
-            {
-                return;
-            }
-
-            do
-            {
-                Entity<IEntity> target = targetID.GetEntity<IEntity>();
-                if (targetID.Equals(entity.Idx) || !IsDetectorTriggerable(in detector, target)) continue;
-
-                EntityShortID targetShortID = targetID.GetShortID();
-
-                if (detector.m_Detected.Contains(targetShortID))
-                {
-                    newDetected.Add(targetShortID);
-                    continue;
-                }
-
-                EntityData<IEntityData>
-                    myDat = entity.As<IEntity, IEntityData>(),
-                    targetDat = target.As<IEntity, IEntityData>();
-
-                detectorAtt.m_OnDetectedPredicate.Execute(myDat, out bool predicate);
-                if (!predicate)
-                {
-                    "predicate failed".ToLog();
-                    continue;
-                }
-
-                //detector.m_Detected.Add(targetShortID);
-                newDetected.Add(targetShortID);
-                m_EventSystem.PostEvent(OnGridDetectEntityEvent.GetEvent(entity, target, true));
-
-                for (int i = 0; i < detectorAtt.m_OnDetected.Length; i++)
-                {
-                    detectorAtt.m_OnDetected[i].Execute(myDat, targetDat);
-                }
-
-                //"detect".ToLog();
-                if (target.HasComponent<GridDetectorComponent>())
-                {
-                    ref var targetDetector = ref target.GetComponent<GridDetectorComponent>();
-                    EntityShortID myShortID = entity.Idx.GetShortID();
-
-                    if (!targetDetector.m_TargetedBy.Contains(myShortID))
-                    {
-                        targetDetector.m_TargetedBy.Add(myShortID);
-                    }
-                }
-
-            } while (m_GridEntities.TryGetNextValue(out targetID, ref iter));
-        }
-        private static bool IsDetectorTriggerable(in GridDetectorComponent detector, Entity<IEntity> target)
-        {
-            if (detector.m_TriggerOnly.Length == 0) return true;
-
-            for (int i = 0; i < detector.m_TriggerOnly.Length; i++)
-            {
-                Hash temp = detector.m_TriggerOnly[i].m_Hash;
-
-                if (target.Hash.Equals(temp))
-                {
-                    return detector.m_TriggerOnlyInverse;
-                }
-            }
-            return false;
-        }
         //unsafe private static bool IsDetect(in int* range, in int count, in FixedList32Bytes<GridPosition> to)
         //{
         //    for (int i = 0; i < to.Length; i++)
@@ -356,7 +230,6 @@ namespace Syadeu.Presentation.Map
 
             m_EntityGridIndices.Dispose();
             m_GridEntities.Dispose();
-            m_GridObservers.Dispose();
 
             m_PlacedCellUIEntities.Dispose();
 
@@ -537,8 +410,7 @@ namespace Syadeu.Presentation.Map
                     m_GridEntities.Dispose();
                     m_GridEntities = new UnsafeMultiHashMap<int, EntityID>(m_MainGrid.Length, AllocatorManager.Persistent);
 
-                    m_GridObservers.Dispose();
-                    m_GridObservers = new UnsafeMultiHashMap<int, EntityID>(m_MainGrid.Length, AllocatorManager.Persistent);
+                    GetModule<GridDetectionModule>().UpdateHashMap(m_MainGrid.Length);
                 }
 
                 if (m_MainGrid.Length > m_PlacedCellUIEntities.Capacity)
@@ -561,7 +433,8 @@ namespace Syadeu.Presentation.Map
 
                 m_EntityGridIndices.Clear();
                 m_GridEntities.Clear();
-                m_GridObservers.Clear();
+
+                GetModule<GridDetectionModule>().ClearHashMap();
             }
         }
 
@@ -892,9 +765,11 @@ namespace Syadeu.Presentation.Map
 
             int* rangeBuffer = stackalloc int[bufferLength];
             GetRange(in rangeBuffer, in bufferLength, in idx, in range, in ignoreLayers, out int rangeCount);
+
+            GridDetectionModule module = GetModule<GridDetectionModule>();
             for (int i = 0; i < rangeCount; i++)
             {
-                if (m_GridObservers.ContainsKey(rangeBuffer[i]))
+                if (module.IsObserveIndex(rangeBuffer[i]))
                 {
                     buffer[count] = rangeBuffer[i];
                     count += 1;
@@ -988,7 +863,7 @@ namespace Syadeu.Presentation.Map
             entity.AddComponent(new GridCellComponent()
             {
                 m_GridPosition = position,
-                m_IsDetectionCell = m_GridObservers.ContainsKey(position.index)
+                m_IsDetectionCell = GetModule<GridDetectionModule>().IsObserveIndex(position.index)
             });
             m_PlacedCellUIEntities.Add(position, entity);
 
@@ -1097,11 +972,5 @@ namespace Syadeu.Presentation.Map
         }
         private int GetSqrMagnitude(int index) => GetSqrMagnitude(IndexToLocation(index));
         private static int GetSqrMagnitude(int2 location) => (location.x * location.x) + (location.y * location.y);
-
-        private struct DetectionTile
-        {
-            public int m_Index;
-            public EntityID m_Observer;
-        }
     }
 }
