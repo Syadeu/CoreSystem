@@ -135,7 +135,9 @@ namespace Syadeu.Presentation.TurnTable
         {
             if (gridSize.IsMyIndex(position.index)) return;
 
-            m_GridSystem.PlaceUICell(position);
+            Entity<IEntity> entity = m_GridSystem.PlaceUICell(position);
+
+
         }
         public void ClearUICell()
         {

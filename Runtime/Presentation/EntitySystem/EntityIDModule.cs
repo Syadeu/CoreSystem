@@ -17,22 +17,22 @@ namespace Syadeu.Presentation
             m_EntityConversions = new NativeHashMap<EntityShortID, EntityID>(1024, AllocatorManager.Persistent);
             m_EntityShortConversions = new NativeHashMap<EntityID, EntityShortID>(1024, AllocatorManager.Persistent);
 
-            System.OnEntityDestroy += System_OnEntityDestroy;
+            //System.OnEntityDestroy += System_OnEntityDestroy;
         }
-        private void System_OnEntityDestroy(IEntityData obj)
-        {
-            if (!m_EntityShortConversions.IsCreated)
-            {
-                return;
-            }
+        //private void System_OnEntityDestroy(IEntityData obj)
+        //{
+        //    if (!m_EntityShortConversions.IsCreated)
+        //    {
+        //        return;
+        //    }
 
-            EntityID id = obj.Idx;
-            if (m_EntityShortConversions.TryGetValue(id, out EntityShortID shortID))
-            {
-                m_EntityConversions.Remove(shortID);
-                m_EntityShortConversions.Remove(id);
-            }
-        }
+        //    EntityID id = obj.Idx;
+        //    if (m_EntityShortConversions.TryGetValue(id, out EntityShortID shortID))
+        //    {
+        //        m_EntityConversions.Remove(shortID);
+        //        m_EntityShortConversions.Remove(id);
+        //    }
+        //}
         protected override void OnDispose()
         {
             m_EntityConversions.Dispose();
