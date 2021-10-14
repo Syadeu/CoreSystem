@@ -181,7 +181,7 @@ namespace Syadeu.Presentation.Map
 
             for (int i = 0; i < detector.m_TriggerOnly.Length; i++)
             {
-                Hash temp = detector.m_TriggerOnly[i].m_Hash;
+                Hash temp = detector.m_TriggerOnly[i].Hash;
 
                 if (target.Hash.Equals(temp))
                 {
