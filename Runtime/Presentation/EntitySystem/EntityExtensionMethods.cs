@@ -19,6 +19,15 @@ namespace Syadeu.Presentation
 {
     public static class EntityExtensionMethods
     {
+        public static EntityShortID GetShortID(this EntityID id)
+        {
+            return PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.Convert(id);
+        }
+        public static EntityID GetEntityID(this EntityShortID id)
+        {
+            return PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.Convert(id);
+        }
+
         #region Converts
 
         public static Entity<TA> As<T, TA>(this EntityData<T> t)

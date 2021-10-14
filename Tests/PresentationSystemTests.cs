@@ -6,6 +6,8 @@ using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using System;
 using System.Collections;
+using Unity.Collections.LowLevel.Unsafe;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.TestTools;
 
@@ -127,6 +129,12 @@ public class PresentationSystemTests
     {
         public float m_TestSingle;
         public bool m_TestBoolen;
+    }
+
+    [Test]
+    public void HalfTest()
+    {
+        Debug.Log($"{UnsafeUtility.SizeOf<half>()}");
     }
 
     [UnityTest]

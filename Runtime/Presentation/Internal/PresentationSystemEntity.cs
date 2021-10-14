@@ -85,6 +85,18 @@ namespace Syadeu.Presentation.Internal
         internal virtual void InternalOnDispose() { }
         public abstract void OnDispose();
 
+        protected T GetModule<T>() where T : PresentationSystemModule
+        {
+            var temp = m_Modules.FindFor(GetModulePredicate<T>);
+
+            if (temp != null) return (T)temp;
+            return null;
+        }
+        private bool GetModulePredicate<T>(PresentationSystemModule item) where T : PresentationSystemModule
+        {
+            if (item is T) return true;
+            return false;
+        }
         protected void DontDestroyOnLoad(UnityEngine.GameObject obj)
         {
             CoreSystem.Logger.ThreadBlock(nameof(DontDestroyOnLoad), Syadeu.Internal.ThreadInfo.Unity);

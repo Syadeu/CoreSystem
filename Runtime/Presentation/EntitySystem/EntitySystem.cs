@@ -25,6 +25,7 @@ using Syadeu.Presentation.Proxy;
 namespace Syadeu.Presentation
 {
     public sealed class EntitySystem : PresentationSystemEntity<EntitySystem>,
+        INotifySystemModule<EntityIDModule>,
         INotifySystemModule<EntityDebugModule>
     {
         private const string c_ObjectNotFoundError = "Object({0}) not found.";
@@ -1007,6 +1008,15 @@ namespace Syadeu.Presentation
         }
 #endif
 
+        internal EntityShortID Convert(EntityID id)
+        {
+            return GetModule<EntityIDModule>().Convert(id);
+        }
+        internal EntityID Convert(EntityShortID id)
+        {
+            return GetModule<EntityIDModule>().Convert(id);
+        }
+
         public ObjectBase GetEntityByID(EntityID id)
         {
             InstanceID instanceID = id;
@@ -1531,7 +1541,6 @@ namespace Syadeu.Presentation
 
         #endregion
     }
-
     internal sealed class EntityDebugModule : PresentationSystemModule<EntitySystem>
     {
         protected override void OnInitialize()
