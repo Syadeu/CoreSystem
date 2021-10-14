@@ -53,6 +53,17 @@ namespace Syadeu.Presentation.Map
         {
             return m_GridObservers.ContainsKey(index);
         }
+        public bool IsObserveIndex(in int index, out UnsafeMultiHashMap<int, EntityID>.Enumerator observers)
+        {
+            if (!IsObserveIndex(in index))
+            {
+                observers = default(UnsafeMultiHashMap<int, EntityID>.Enumerator);
+                return false;
+            }
+
+            observers = m_GridObservers.GetValuesForKey(index);
+            return true;
+        }
 
         public void UpdateGridDetection(Entity<IEntity> entity, in GridSizeComponent gridSize)
         {
@@ -109,7 +120,7 @@ namespace Syadeu.Presentation.Map
 
             detector.m_Detected = newDetected;
         }
-        unsafe private void Detection(Entity<IEntity> entity, in GridDetectorAttribute detectorAtt, ref GridDetectorComponent detector, in int index, ref FixedList512Bytes<EntityShortID> newDetected)
+        private void Detection(Entity<IEntity> entity, in GridDetectorAttribute detectorAtt, ref GridDetectorComponent detector, in int index, ref FixedList512Bytes<EntityShortID> newDetected)
         {
             if (!System.GridEntities.TryGetFirstValue(index, out EntityID targetID, out var iter))
             {
@@ -163,6 +174,7 @@ namespace Syadeu.Presentation.Map
 
             } while (System.GridEntities.TryGetNextValue(out targetID, ref iter));
         }
+
         private static bool IsDetectorTriggerable(in GridDetectorComponent detector, Entity<IEntity> target)
         {
             if (detector.m_TriggerOnly.Length == 0) return true;
