@@ -1,5 +1,5 @@
 ﻿using Syadeu;
-using Syadeu.Database;
+using Syadeu.Collections;
 using Syadeu.Internal;
 using Syadeu.Mono;
 using System;
@@ -154,8 +154,9 @@ namespace SyadeuEditor.Presentation
             }
             else if (current.Index >= 0)
             {
-                PrefabList.ObjectSetting objSetting = current.GetObjectSetting();
-                displayName = objSetting == null ? new GUIContent("INVALID") : new GUIContent(objSetting.m_Name);
+                //PrefabList.ObjectSetting objSetting = current.GetObjectSetting();
+                IPrefabResource objSetting = current.GetObjectSetting();
+                displayName = objSetting == null ? new GUIContent("INVALID") : new GUIContent(objSetting.Name);
             }
             else
             {

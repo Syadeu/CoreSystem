@@ -3,6 +3,7 @@
     "rootNamespace": "Syadeu.Presentation.BehaviorTree",
     "references": [
         "GUID:a35cecc1c26b8eb43b1fcdad25ac3741",
+        "GUID:149e342d6a09fc340831dce824fb8bae",
         "GUID:8bc3a2c31d86c324ba5c080d1b72889b",
         "GUID:2b3ab1e905e63a94abce7e8a81495672",
         "GUID:d7a748240b12425418bee0434947ece6",

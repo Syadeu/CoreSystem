@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     public interface ISQLiteReadOnlyTable : IValidation
     {

@@ -1,5 +1,5 @@
 ﻿using UnityEditor;
-using Syadeu.Database;
+using Syadeu.Collections;
 using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
 using UnityEngine;

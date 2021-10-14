@@ -1,4 +1,5 @@
-﻿using Syadeu.Presentation.Actions;
+﻿using Syadeu.Collections;
+using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using System;
@@ -80,7 +81,18 @@ namespace Syadeu.Presentation.Actor
                 m_WeaponPoser = CoroutineJob.Null;
             }
 
+            for (int i = 0; i < m_EquipedWeapons.Length; i++)
+            {
+                if (m_EquipedWeapons[i].IsEmpty()) continue;
+
+                m_EquipedWeapons[i].Destroy();
+            }
             m_EquipedWeapons.Dispose();
+
+            if (m_DefaultWeaponInstance.IsValid())
+            {
+                m_DefaultWeaponInstance.Destroy();
+            }
         }
     }
 }

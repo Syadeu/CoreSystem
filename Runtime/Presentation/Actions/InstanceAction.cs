@@ -3,6 +3,7 @@
 #endif
 
 using Newtonsoft.Json;
+using Syadeu.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -10,7 +11,7 @@ namespace Syadeu.Presentation.Actions
 {
     public abstract class InstanceAction : ActionBase
     {
-        private static readonly Dictionary<Reference, Stack<ActionBase>> m_Pool = new Dictionary<Reference, Stack<ActionBase>>();
+        private static readonly Dictionary<FixedReference, Stack<ActionBase>> m_Pool = new Dictionary<FixedReference, Stack<ActionBase>>();
 
         internal bool InternalExecute()
         {
@@ -46,7 +47,7 @@ namespace Syadeu.Presentation.Actions
             base.InternalTerminate();
         }
 
-        public static T GetAction<T>(Reference<T> other) where T : InstanceAction
+        public static T GetAction<T>(FixedReference<T> other) where T : InstanceAction
         {
             if (!TryGetEntitySystem(out EntitySystem entitySystem))
             {
@@ -69,7 +70,7 @@ namespace Syadeu.Presentation.Actions
             temp.InternalInitialize();
             return temp;
         }
-        internal static InstanceAction GetAction(Reference other)
+        internal static InstanceAction GetAction(FixedReference other)
         {
             if (!TryGetEntitySystem(out EntitySystem entitySystem))
             {

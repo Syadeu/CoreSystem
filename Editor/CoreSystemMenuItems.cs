@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using Syadeu;
-using Syadeu.Database;
+using Syadeu.Collections;
 using Syadeu.Mono;
 using UnityEditor;
 using UnityEngine;
@@ -92,7 +92,7 @@ namespace SyadeuEditor
         [MenuItem("CoreSystem/SQLite/Create Migration Data", priority = 301)]
         public static void EditSettings()
         {
-            Selection.activeObject = Syadeu.Database.SQLiteMigrationData.Instance;
+            Selection.activeObject = Syadeu.Collections.SQLiteMigrationData.Instance;
             EditorApplication.ExecuteMenuItem("Window/General/Inspector");
         }
 

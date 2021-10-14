@@ -6,7 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.Scripting;
 
-namespace Syadeu.Database.Converters
+namespace Syadeu.Collections.Converters
 {
     [Preserve]
     internal class ValuePairJsonConverter : JsonConverter

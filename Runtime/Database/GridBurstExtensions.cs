@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 #if UNITY_EDITOR
 #endif
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     [BurstCompile(CompileSynchronously = true)]
     public static class GridBurstExtensions

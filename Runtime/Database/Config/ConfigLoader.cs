@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     [StaticManagerIntializeOnLoad]
     [StaticManagerDescription(

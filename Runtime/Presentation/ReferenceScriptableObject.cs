@@ -1,4 +1,4 @@
-﻿using Syadeu.Database;
+﻿using Syadeu.Collections;
 using Syadeu.Presentation.Entities;
 using Unity.Mathematics;
 using UnityEngine;
@@ -21,7 +21,7 @@ namespace Syadeu.Presentation
             }
             set
             {
-                m_Hash = value.m_Hash;
+                m_Hash = value.Hash;
             }
         }
 
@@ -29,7 +29,7 @@ namespace Syadeu.Presentation
 
         private bool Validate()
         {
-            if (!PresentationSystem<EntitySystem>.IsValid() || !IsValid())
+            if (!PresentationSystem<DefaultPresentationGroup, EntitySystem>.IsValid() || !IsValid())
             {
                 return false;
             }
@@ -41,7 +41,7 @@ namespace Syadeu.Presentation
             {
                 throw new System.Exception();
             }
-            return PresentationSystem<EntitySystem>.System.CreateEntity(Reference, in position);
+            return PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.CreateEntity(Reference, in position);
         }
         public Entity<IEntity> CreateEntity(in float3 position, in quaternion rotation, in float3 localScale)
         {
@@ -49,7 +49,7 @@ namespace Syadeu.Presentation
             {
                 throw new System.Exception();
             }
-            return PresentationSystem<EntitySystem>.System.CreateEntity(Reference, 
+            return PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.CreateEntity(Reference, 
                 in position, in rotation, in localScale);
         }
         public EntityData<IEntityData> CreateObject()
@@ -58,7 +58,7 @@ namespace Syadeu.Presentation
             {
                 throw new System.Exception();
             }
-            return PresentationSystem<EntitySystem>.System.CreateObject(Reference);
+            return PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.CreateObject(Reference);
         }
     }
 }

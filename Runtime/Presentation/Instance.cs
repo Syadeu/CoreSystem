@@ -1,4 +1,4 @@
-﻿using Syadeu.Database;
+﻿using Syadeu.Collections;
 using Syadeu.Internal;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
@@ -11,7 +11,7 @@ namespace Syadeu.Presentation
     /// Contains only instance
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public struct Instance<T> : IInstance, IEquatable<Instance<T>>
+    public struct Instance<T> : IInstance<T>, IEquatable<Instance<T>>
         where T : class, IObject
     {
         public static readonly Instance<T> Empty = new Instance<T>(Hash.Empty);
@@ -66,6 +66,14 @@ namespace Syadeu.Presentation
         {
             m_Idx = idx;
         }
+        public Instance(InstanceID id)
+        {
+            m_Idx = id.Hash;
+        }
+        public Instance(EntityData<IEntityData> entity)
+        {
+            m_Idx = entity.Idx;
+        }
         public Instance(ObjectBase obj)
         {
             if (obj.Idx.IsEmpty())
@@ -83,7 +91,7 @@ namespace Syadeu.Presentation
                 return;
             }
 
-            m_Idx = obj.Idx;
+            m_Idx = obj.Idx.Hash;
         }
 
         public bool IsValid()
@@ -103,6 +111,11 @@ namespace Syadeu.Presentation
                 return false;
             }
 
+            if (m_EntitySystem.System.IsDestroyed(in m_Idx) || m_EntitySystem.System.IsMarkedAsDestroyed(in m_Idx))
+            {
+                return false;
+            }
+
             return true;
         }
         public bool IsEmpty() => Equals(Empty);
@@ -118,8 +131,18 @@ namespace Syadeu.Presentation
                 return;
             }
 
+            if (m_EntitySystem.IsNull())
+            {
+                m_EntitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.SystemID;
+                if (m_EntitySystem.IsNull())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        "Cannot retrived EntitySystem.");
+                    return;
+                }
+            }
+
             m_EntitySystem.System.DestroyObject(this);
-            m_Idx = Hash.Empty;
         }
 
         public static Instance<T> CreateInstance(Reference<T> other)
@@ -232,9 +255,9 @@ namespace Syadeu.Presentation
             }
         }
 
-        public Instance(Hash idx)
+        public Instance(InstanceID idx)
         {
-            m_Idx = idx;
+            m_Idx = idx.Hash;
         }
         public Instance(ObjectBase obj)
         {
@@ -246,7 +269,7 @@ namespace Syadeu.Presentation
                 return;
             }
 
-            m_Idx = obj.Idx;
+            m_Idx = obj.Idx.Hash;
         }
 
         public bool IsValid()

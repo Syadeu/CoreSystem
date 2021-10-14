@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Utilities;
+using Syadeu.Collections;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Proxy;
 using Syadeu.Presentation.Render;
@@ -17,7 +18,7 @@ namespace Syadeu.Presentation.Entities
         [JsonProperty(Order = 0, PropertyName = "EnableAutoFade")]
         internal bool m_EnableAutoFade = false;
 
-        [JsonIgnore] EntityData<IEntityData> INotifyComponent<UIObjectCanvasGroupComponent>.Parent => EntityData<IEntityData>.GetEntity(Idx);
+        [JsonIgnore] EntityData<IEntityData> INotifyComponent.Parent => EntityData<IEntityData>.GetEntity(Idx);
 
         [Preserve]
         static void AOTCodeGeneration()
@@ -50,8 +51,9 @@ namespace Syadeu.Presentation.Entities
             m_WorldCanvasSystem = null;
         }
 
-        protected override void OnCreated(EntityData<UIObjectEntity> entity)
+        protected override void OnCreated(UIObjectEntity e)
         {
+            EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(e.Idx);
             entity.AddComponent(new UIObjectCanvasGroupComponent() { m_Enabled = true });
         }
 
@@ -72,13 +74,13 @@ namespace Syadeu.Presentation.Entities
                 return;
             }
 
-            m_WorldCanvasSystem.InternalSetProxy(entityBase, entity.Cast<IEntity, UIObjectEntity>(), cg, true);
+            m_WorldCanvasSystem.InternalSetProxy(entityBase, entity.Cast<IEntity, UIObjectEntity>(), cg);
         }
         public void OnProxyRemoved(EntityBase entityBase, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
         {
-            var cg = monoObj.GetComponentUnity<CanvasGroup>();
+            //var cg = monoObj.GetComponentUnity<CanvasGroup>();
 
-            m_WorldCanvasSystem.InternalSetProxy(entityBase, entity.Cast<IEntity, UIObjectEntity>(), cg, false);
+            //m_WorldCanvasSystem.InternalSetProxy(entityBase, entity.Cast<IEntity, UIObjectEntity>(), cg, false);
         }
     }
 }

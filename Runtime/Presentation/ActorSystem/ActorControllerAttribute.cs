@@ -3,7 +3,7 @@
 #endif
 
 using Newtonsoft.Json;
-using Syadeu.Database;
+using Syadeu.Collections;
 using Syadeu.Internal;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Attributes;
@@ -68,7 +68,7 @@ namespace Syadeu.Presentation.Actor
                 , NativeArrayOptions.UninitializedMemory
 #endif
                 );
-            component.m_OnEventReceived = attribute.m_OnEventReceived.ToBuffer(Allocator.Persistent);
+            component.m_OnEventReceived = attribute.m_OnEventReceived.ToFixedList64();
             
             for (int i = 0; i < attribute.m_Providers.Length; i++)
             {
@@ -130,7 +130,7 @@ namespace Syadeu.Presentation.Actor
             provider.OnDestroy(entity);
         }
 
-        public void OnProxyCreated(AttributeBase attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
+        public void OnProxyCreated(IAttribute attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
         {
             //ActorControllerAttribute att = (ActorControllerAttribute)attribute;
             ActorControllerComponent component = entity.GetComponent<ActorControllerComponent>();
@@ -139,7 +139,7 @@ namespace Syadeu.Presentation.Actor
                 ExecuteOnProxyCreated(component.m_InstanceProviders[i].Object, monoObj);
             }
         }
-        public void OnProxyRemoved(AttributeBase attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
+        public void OnProxyRemoved(IAttribute attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
         {
             //ActorControllerAttribute att = (ActorControllerAttribute)attribute;
             ActorControllerComponent component = entity.GetComponent<ActorControllerComponent>();

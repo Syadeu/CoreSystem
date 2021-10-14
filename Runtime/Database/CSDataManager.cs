@@ -3,15 +3,17 @@ using System.Collections.Generic;
 
 using UnityEngine;
 using Syadeu.Mono;
-using Syadeu.Database.Converters;
+using Syadeu.Collections.Converters;
 using Syadeu.Internal;
 using System;
+using System.Reflection;
+using System.Linq;
 
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     [StaticManagerIntializeOnLoad]
     [StaticManagerDescription(
@@ -39,6 +41,8 @@ namespace Syadeu.Database
         private static void Initialize()
         {
             SetJsonConverters();
+
+            
 
             Type[] types = TypeHelper.GetTypes((other) => TypeHelper.TypeOf<IStaticInitializer>.Type.IsAssignableFrom(other));
             for (int i = 0; i < types.Length; i++)
@@ -69,6 +73,12 @@ namespace Syadeu.Database
                         //new PrefabReferenceJsonConvereter()
                     }
                 };
+
+                Type[] customConverters = TypeHelper.GetTypes((other) => other.GetCustomAttribute<CustomJsonConverterAttribute>() != null);
+                for (int i = 0; i < customConverters.Length; i++)
+                {
+                    SerializerSettings.Converters.Add((JsonConverter)Activator.CreateInstance(customConverters[i]));
+                }
             }
 
             return SerializerSettings;

@@ -1,4 +1,4 @@
-﻿using Syadeu.Database;
+﻿using Syadeu.Collections;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using System.Collections.Generic;
@@ -9,7 +9,7 @@ namespace Syadeu.Presentation.Actions
         where TState : StateBase<TAction>, ITerminate, new()
         where TAction : StatefulActionBase<TState, TAction>
     {
-        private static readonly Dictionary<Reference, Stack<ActionBase>> m_Pool = new Dictionary<Reference, Stack<ActionBase>>();
+        private static readonly Dictionary<FixedReference, Stack<ActionBase>> m_Pool = new Dictionary<FixedReference, Stack<ActionBase>>();
         private TState m_State;
 
         internal override void InternalInitialize()
@@ -29,7 +29,7 @@ namespace Syadeu.Presentation.Actions
 
             m_State.Terminate();
 
-            if (!m_Pool.TryGetValue(m_Reference,out var pool))
+            if (!m_Pool.TryGetValue(m_Reference, out var pool))
             {
                 pool = new Stack<ActionBase>();
                 m_Pool.Add(m_Reference, pool);
@@ -93,7 +93,7 @@ namespace Syadeu.Presentation.Actions
             PresentationSystem<EventSystem>.System.PostAction(InternalTerminate);
         }
 
-        internal static TAction GetAction(Reference<TAction> other)
+        internal static TAction GetAction(FixedReference<TAction> other)
         {
             if (!TryGetEntitySystem(out EntitySystem entitySystem))
             {

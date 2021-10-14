@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
-using Syadeu.Database;
+using Syadeu.Collections;
+using Syadeu.Collections.Proxy;
 using Syadeu.Presentation.Proxy;
 using System;
 using System.Collections;
@@ -130,7 +131,7 @@ namespace Syadeu.Presentation.Entities
 
                 $"{m_FXEntity.Object.Name} fired".ToLog();
 
-                while (fx.IsPlaying)
+                while (fx.IsPlaying && !fx.Stopped)
                 {
                     if ((m_PlayOption & PlayOptions.UpdateTransform) == PlayOptions.UpdateTransform)
                     {

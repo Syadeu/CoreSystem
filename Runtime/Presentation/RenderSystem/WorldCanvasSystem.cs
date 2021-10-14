@@ -1,4 +1,6 @@
-﻿using Syadeu.Presentation.Actor;
+﻿using Syadeu.Collections;
+using Syadeu.Collections.Proxy;
+using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Proxy;
 using System.Collections;
@@ -37,6 +39,9 @@ namespace Syadeu.Presentation.Render
                     m_Canvas.renderMode = RenderMode.WorldSpace;
                     m_Canvas.worldCamera = m_RenderSystem.Camera;
                     obj.AddComponent<CanvasScaler>();
+
+                    m_CanvasRaycaster = Canvas.gameObject.AddComponent<GraphicRaycaster>();
+                    m_CanvasRaycaster.blockingMask = LayerMask.GetMask("UI");
                 }
 
                 return m_Canvas;
@@ -143,12 +148,12 @@ namespace Syadeu.Presentation.Render
         }
 
         internal void InternalSetProxy(EntityBase entityBase, Entity<UIObjectEntity> entity, 
-            CanvasGroup cg, bool created)
+            CanvasGroup cg)
         {
             UIObjectEntity uiObject = (UIObjectEntity)entityBase;
             var ui = entity.GetComponent<UIObjectCanvasGroupComponent>();
 
-            cg.blocksRaycasts = created ? ui.Enabled : false;
+            cg.blocksRaycasts = ui.Enabled;
 
             if (!uiObject.m_EnableAutoFade) return;
         }
@@ -173,6 +178,16 @@ namespace Syadeu.Presentation.Render
 
         public void RegisterActorOverlayUI(Entity<ActorEntity> entity, Reference<ActorOverlayUIEntry> uiEntry)
         {
+            ref var ui = ref entity.GetComponent<ActorOverlayUIComponent>();
+            if (ui.m_OpenedUI.Contains(uiEntry))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Entity({entity.RawName}) already have {uiEntry.GetObject().Name} overlay ui.");
+                return;
+            }
+
+            ui.m_OpenedUI.Add(uiEntry);
+
             ActorOverlayUIEntry setting = uiEntry.GetObject();
 
 #if UNITY_EDITOR
@@ -198,6 +213,50 @@ namespace Syadeu.Presentation.Render
                 m_CoroutineSystem.PostCoroutineJob(updateJob);
             }
         }
+        public void UnregisterActorOverlayUI(Entity<ActorEntity> entity, Reference<ActorOverlayUIEntry> uiEntry)
+        {
+            ref var ui = ref entity.GetComponent<ActorOverlayUIComponent>();
+            if (!ui.m_OpenedUI.Contains(uiEntry))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Entity({entity.RawName}) does not have {uiEntry.GetObject().Name} overlay ui.");
+                return;
+            }
+            ui.m_OpenedUI.Remove(uiEntry);
+
+            Entity<IEntity> targetEntity = entity.Cast<ActorEntity, IEntity>();
+            if (!m_AttachedUIHashMap.TryGetFirstValue(targetEntity,
+                    out Entity<UIObjectEntity> uiEntity, out var iterator))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Unexpected error");
+                return;
+            }
+
+            Hash targetUI = uiEntry.GetObject().m_Prefab.Hash;
+            bool found = false;
+
+            do
+            {
+                if (uiEntity.Hash.Equals(targetUI))
+                {
+                    found = true;
+                    break;
+                }
+
+            } while (m_AttachedUIHashMap.TryGetNextValue(out uiEntity, ref iterator));
+
+            if (!found)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Unexpected error");
+                return;
+            }
+
+            m_AttachedUIHashMap.Remove(targetEntity, uiEntity);
+            uiEntity.Destroy();
+        }
+
         public void PostActorOverlayUIEvent<TEvent>(Entity<ActorEntity> entity, TEvent ev)
 #if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             where TEvent : struct, IActorEvent
@@ -251,7 +310,7 @@ namespace Syadeu.Presentation.Render
 
                 WaitUntil waitUntil = new WaitUntil(() => renderSystem.Camera != null);
 
-                while (m_UI.IsValid())
+                while (m_InstanceObject.IsValid())
                 {
                     if (renderSystem.Camera == null)
                     {

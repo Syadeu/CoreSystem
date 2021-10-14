@@ -1,4 +1,5 @@
-﻿using Syadeu.Presentation;
+﻿using Syadeu.Collections;
+using Syadeu.Presentation;
 using Syadeu.Presentation.Actor;
 using System.Collections.Generic;
 using System.Linq;
@@ -81,7 +82,7 @@ namespace SyadeuEditor.Presentation
             for (int i = 0; i < providersDrawer.Count; i++)
             {
                 ReferenceDrawer refDrawer = (ReferenceDrawer)providersDrawer[i];
-                IReference reference = refDrawer.Getter.Invoke();
+                IFixedReference reference = refDrawer.Getter.Invoke();
                 if (reference.IsEmpty() || !reference.IsValid())
                 {
                     continue;

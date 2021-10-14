@@ -2,9 +2,8 @@
 #define DEBUG_MODE
 #endif
 
-using Syadeu.Database;
+using Syadeu.Collections;
 using Syadeu.Internal;
-using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Entities;
 using System;
 using System.Collections.Generic;
@@ -18,6 +17,8 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
+
+using TypeInfo = Syadeu.Collections.TypeInfo;
 
 namespace Syadeu.Presentation.Components
 {
@@ -112,7 +113,7 @@ namespace Syadeu.Presentation.Components
             int hashCode = CreateHashCode();
             idx = math.abs(hashCode) % totalLength;
 
-            if (IsZeroSizeStruct(componentType))
+            if (TypeHelper.IsZeroSizeStruct(componentType))
             {
                 CoreSystem.Logger.LogError(Channel.Component,
                     $"Zero sized wrapper struct({TypeHelper.ToString(componentType)}) is in component list.");
@@ -130,13 +131,13 @@ namespace Syadeu.Presentation.Components
 
             // 왜인지는 모르겠지만 Type.GetHashCode() 의 정보가 런타임 중 간혹 유효하지 않은 값 (0) 을 뱉어서 미리 파싱합니다.
             TypeInfo runtimeTypeInfo 
-                = TypeInfo.Construct(componentType, idx, UnsafeUtility.SizeOf(componentType), AlignOf(componentType), hashCode);
+                = TypeInfo.Construct(componentType, idx, UnsafeUtility.SizeOf(componentType), TypeHelper.AlignOf(componentType), hashCode);
             ComponentType.GetValue(componentType).Data = runtimeTypeInfo;
 
             ComponentTypeQuery.s_All = ComponentTypeQuery.s_All.Add(runtimeTypeInfo);
             
             // 새로운 버퍼를 생성하고, heap 에 메모리를 할당합니다.
-            temp.Initialize(runtimeTypeInfo, runtimeTypeInfo.Size, runtimeTypeInfo.Align);
+            temp.Initialize(runtimeTypeInfo);
 
             return temp;
         }
@@ -259,6 +260,10 @@ namespace Syadeu.Presentation.Components
         private static int GetEntityIndex(EntityData<IEntityData> entity)
         {
             int idx = math.abs(entity.GetHashCode()) % ComponentBuffer.c_InitialCount;
+            if (idx == 0)
+            {
+                $"err {entity.GetHashCode()}".ToLogError();
+            }
             return idx;
         }
         private static int2 GetIndex(Type t, EntityData<IEntityData> entity)
@@ -390,6 +395,7 @@ namespace Syadeu.Presentation.Components
             //    CoreSystem.Logger.Log(Channel.Component,
             //        $"{TypeHelper.TypeOf<TComponent>.Name} component at {entity.Name} remove queued.");
             //}
+            //$"entity({entity.RawName}) removed component ({TypeHelper.TypeOf<TComponent>.Name})".ToLog();
         }
         public void RemoveComponent(EntityData<IEntityData> entity, Type componentType)
         {
@@ -416,6 +422,8 @@ namespace Syadeu.Presentation.Components
             //    CoreSystem.Logger.Log(Channel.Component,
             //        $"{TypeHelper.ToString(componentType)} component at {entity.RawName} remove queued.");
             //}
+
+            //$"entity({entity.RawName}) removed component ({componentType.Name})".ToLog();
         }
         /// <summary>
         /// TODO: Reflection 이 일어나서 SharedStatic 으로 interface 해싱 후 받아오는 게 좋아보임.
@@ -424,12 +432,12 @@ namespace Syadeu.Presentation.Components
         /// <param name="interfaceType"></param>
         public void RemoveComponent(ObjectBase obj, Type interfaceType)
         {
-            const string c_Parent = "Parent";
+            //const string c_Parent = "Parent";
 
-            PropertyInfo property = interfaceType
-                .GetProperty(c_Parent, TypeHelper.TypeOf<EntityData<IEntityData>>.Type);
+            //PropertyInfo property = interfaceType
+            //    .GetProperty(c_Parent, TypeHelper.TypeOf<EntityData<IEntityData>>.Type);
 
-            EntityData<IEntityData> entity = (EntityData<IEntityData>)property.GetValue(obj);
+            EntityData<IEntityData> entity = ((INotifyComponent)obj).Parent;
             RemoveComponent(entity, interfaceType.GetGenericArguments().First());
         }
         public bool HasComponent<TComponent>(EntityData<IEntityData> entity) 
@@ -619,20 +627,6 @@ namespace Syadeu.Presentation.Components
 
         #region Utils
 
-        /// <summary>
-        /// Wrapper struct (아무 ValueType 맴버도 갖지 않은 구조체) 는 C# CLS 에서 무조건 1 byte 를 갖습니다. 
-        /// 해당 컴포넌트 타입이 버퍼에 올라갈 필요가 있는지를 확인하여 메모리 낭비를 줄입니다.
-        /// </summary>
-        /// <remarks>
-        /// https://stackoverflow.com/a/27851610
-        /// </remarks>
-        /// <param name="t"></param>
-        /// <returns></returns>
-        internal static bool IsZeroSizeStruct(Type t)
-        {
-            return t.IsValueType && !t.IsPrimitive &&
-                t.GetFields((BindingFlags)0x34).All(fi => IsZeroSizeStruct(fi.FieldType));
-        }
         internal static bool CollectTypes<T>(Type t)
         {
             if (t.IsAbstract || t.IsInterface) return false;
@@ -641,13 +635,6 @@ namespace Syadeu.Presentation.Components
 
             return false;
         }
-        internal static int AlignOf(Type t)
-        {
-            Type temp = typeof(AlignOfHelper<>).MakeGenericType(t);
-
-            return UnsafeUtility.SizeOf(temp) - UnsafeUtility.SizeOf(t);
-        }
-
         internal static bool IsComponentType(Type t)
         {
             if (!TypeHelper.TypeOf<IEntityComponent>.Type.IsAssignableFrom(t))
@@ -706,7 +693,7 @@ namespace Syadeu.Presentation.Components
             {
                 if (!s_Buffer[index.x].Find(entity, ref index.y))
                 {
-                    "couldn\'t find component target".ToLogError();
+                    $"couldn\'t find component({s_Buffer[index.x].TypeInfo.Type.Name}) target in entity({entity.RawName}) : index{index}".ToLogError();
                     return;
                 }
 
@@ -735,13 +722,6 @@ namespace Syadeu.Presentation.Components
                 CoreSystem.Logger.Log(Channel.Component,
                     $"{s_Buffer[index.x].TypeInfo.Type.Name} component at {entity.RawName} removed");
             }
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct AlignOfHelper<T> where T : struct
-        {
-            public byte dummy;
-            public T data;
         }
 
         #endregion
@@ -812,16 +792,16 @@ namespace Syadeu.Presentation.Components
         public bool IsCreated => m_ComponentBuffer != null;
         public int Length => m_Length;
 
-        public void Initialize(in TypeInfo typeInfo, in int size, in int align)
+        public void Initialize(in TypeInfo typeInfo)
         {
             long
                 occSize = UnsafeUtility.SizeOf<bool>() * c_InitialCount,
                 idxSize = UnsafeUtility.SizeOf<EntityData<IEntityData>>() * c_InitialCount,
-                bufferSize = size * c_InitialCount;
+                bufferSize = typeInfo.Size * c_InitialCount;
             void*
                 occBuffer = UnsafeUtility.Malloc(occSize, UnsafeUtility.AlignOf<bool>(), Allocator.Persistent),
                 idxBuffer = UnsafeUtility.Malloc(idxSize, UnsafeUtility.AlignOf<EntityData<IEntityData>>(), Allocator.Persistent),
-                buffer = UnsafeUtility.Malloc(bufferSize, align, Allocator.Persistent);
+                buffer = UnsafeUtility.Malloc(bufferSize, typeInfo.Align, Allocator.Persistent);
 
             UnsafeUtility.MemClear(occBuffer, occSize);
             // TODO: 할당되지도 않았는데 엔티티와 데이터 버퍼는 초기화 할 필요가 있나?
@@ -965,56 +945,7 @@ namespace Syadeu.Presentation.Components
         }
     }
 
-    /// <summary>
-    /// Runtime 중 기본 <see cref="System.Type"/> 의 정보를 저장하고, 해당 타입의 binary 크기, alignment를 저장합니다.
-    /// </summary>
-    public readonly struct TypeInfo
-    {
-        private readonly RuntimeTypeHandle m_TypeHandle;
-        private readonly int m_TypeIndex;
-        private readonly int m_Size;
-        private readonly int m_Align;
-
-        private readonly int m_HashCode;
-
-        public Type Type => Type.GetTypeFromHandle(m_TypeHandle);
-        public int Index => m_TypeIndex;
-        public int Size => m_Size;
-        public int Align => m_Align;
-
-        private TypeInfo(Type type, int index, int size, int align, int hashCode)
-        {
-            m_TypeHandle = type.TypeHandle;
-            m_TypeIndex = index;
-            m_Size = size;
-            m_Align = align;
-
-            unchecked
-            {
-                // https://stackoverflow.com/questions/102742/why-is-397-used-for-resharper-gethashcode-override
-                m_HashCode = m_TypeIndex * 397 ^ hashCode;
-            }
-        }
-
-        public static TypeInfo Construct(Type type, int index, int size, int align, int hashCode)
-        {
-            return new TypeInfo(type, index, size, align, hashCode);
-        }
-        public static TypeInfo Construct(Type type, int index, int hashCode)
-        {
-            if (!UnsafeUtility.IsUnmanaged(type))
-            {
-                CoreSystem.Logger.LogError(Channel.Component,
-                    $"Could not resovle type of {TypeHelper.ToString(type)} is not ValueType.");
-
-                return new TypeInfo(type, index, 0, 0, hashCode);
-            }
-
-            return new TypeInfo(type, index, UnsafeUtility.SizeOf(type), EntityComponentSystem.AlignOf(type), hashCode);
-        }
-
-        public override int GetHashCode() => m_HashCode;
-    }
+    
     public struct ComponentType
     {
         public static SharedStatic<TypeInfo> GetValue(Type componentType)

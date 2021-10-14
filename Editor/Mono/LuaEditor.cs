@@ -1,7 +1,8 @@
 ﻿using MoonSharp.Interpreter;
 using MoonSharp.Interpreter.Loaders;
 using Syadeu;
-using Syadeu.Database.Lua;
+using Syadeu.Collections;
+using Syadeu.Collections.Lua;
 using Syadeu.Internal;
 using System;
 using System.Collections.Generic;

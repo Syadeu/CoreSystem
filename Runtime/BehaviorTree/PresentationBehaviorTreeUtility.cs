@@ -1,4 +1,5 @@
 ﻿using BehaviorDesigner.Runtime.Tasks;
+using Syadeu.Collections;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Components;
@@ -8,6 +9,8 @@ namespace Syadeu.Presentation.BehaviorTree
 {
     public static class PresentationBehaviorTreeUtility
     {
+        public const string c_SelfEntityString = "This";
+
         public static TaskStatus LoadAttributeFromMono<T>(SharedRecycleableMonobehaviour target, string calledFrom, out T att) where T : AttributeBase
         {
             if (!target.IsValid())
@@ -80,13 +83,6 @@ namespace Syadeu.Presentation.BehaviorTree
 
             T att = other.Value.GetAttribute<T>();
             return att;
-        }
-
-        public static Instance<T> GetProvider<T>(this LoadActorControllerAttribute other)
-            where T : ActorProviderBase
-        {
-            if (other == null) return Instance<T>.Empty;
-            return other.ActorController.Parent.GetComponent<ActorControllerComponent>().GetProvider<T>();
         }
 
         public static T GetComponent<T>(this SharedEntity other)

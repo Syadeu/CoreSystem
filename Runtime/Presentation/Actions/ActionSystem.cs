@@ -2,10 +2,14 @@
 #define DEBUG_MODE
 #endif
 
+using Syadeu.Collections;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
+using System;
 using System.Collections.Generic;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
+using Unity.Jobs;
 
 namespace Syadeu.Presentation.Actions
 {
@@ -19,19 +23,36 @@ namespace Syadeu.Presentation.Actions
         private readonly List<Payload> m_ScheduledActions = new List<Payload>();
         private readonly ActionContainer m_CurrentAction = new ActionContainer();
 
+        private ActionBase[] m_RawActionData;
+        private UnsafeHashMap<FixedReference<ActionBase>, Instance<ActionBase>> m_Actions;
+
         private EventSystem m_EventSystem;
+        private EntitySystem m_EntitySystem;
 
         protected override PresentationResult OnInitialize()
         {
             RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, EntitySystem>(Bind);
 
             //m_ScheduledActions = new NativeQueue<Payload>(Allocator.Persistent);
 
             return base.OnInitialize();
         }
+        protected override PresentationResult OnInitializeAsync()
+        {
+            m_RawActionData = EntityDataList.Instance.GetData<ActionBase>();
+
+            return base.OnInitializeAsync();
+        }
+
         public override void OnDispose()
         {
-            //m_ScheduledActions.Dispose();
+            foreach (var action in m_Actions)
+            {
+                action.Value.Object.InternalTerminate();
+            }
+
+            m_Actions.Dispose();
 
             base.OnDispose();
         }
@@ -42,8 +63,41 @@ namespace Syadeu.Presentation.Actions
         {
             m_EventSystem = other;
         }
+        private void Bind(EntitySystem other)
+        {
+            m_EntitySystem = other;
+
+            m_Actions = new UnsafeHashMap<FixedReference<ActionBase>, Instance<ActionBase>>(m_RawActionData.Length, AllocatorManager.Persistent);
+            for (int i = 0; i < m_RawActionData.Length; i++)
+            {
+                var ins = m_EntitySystem.CreateInstance<ActionBase>(m_RawActionData[i]);
+
+                m_Actions.Add(new FixedReference<ActionBase>(m_RawActionData[i].Hash), ins);
+            }
+        }
 
         #endregion
+
+        protected override PresentationResult OnStartPresentation()
+        {
+            foreach (var action in m_Actions)
+            {
+                action.Value.Object.InternalCreate();
+            }
+
+            return base.OnStartPresentation();
+        }
+
+        public Instance<ActionBase> GetAction(FixedReference<ActionBase> reference)
+        {
+            if (!m_Actions.ContainsKey(reference))
+            {
+                CoreSystem.Logger.LogError(Channel.Action, "??");
+                return Instance<ActionBase>.Empty;
+            }
+
+            return m_Actions[reference];
+        }
 
         void ISystemEventScheduler.Execute(ScheduledEventHandler handler)
         {
@@ -68,7 +122,6 @@ namespace Syadeu.Presentation.Actions
                     return;
                 }
 
-                $"wait exit {m_CurrentAction.Payload.action.GetObject().Name} : left {m_ScheduledActions.Count}".ToLog();
                 handler.SetEvent(SystemEventResult.Success, m_CurrentAction.Sequence.GetType());
 
                 m_CurrentAction.Terminate.Invoke();
@@ -77,7 +130,6 @@ namespace Syadeu.Presentation.Actions
                 return;
             }
 
-            $"empty {m_CurrentAction.IsEmpty()}".ToLog();
             Payload temp = m_ScheduledActions[0];
             m_ScheduledActions.RemoveAt(0);
 
@@ -104,7 +156,8 @@ namespace Syadeu.Presentation.Actions
             switch (temp.actionType)
             {
                 case ActionType.Instance:
-                    InstanceAction action = InstanceAction.GetAction(temp.action);
+                    //InstanceAction action = InstanceAction.GetAction(temp.action);
+                    InstanceAction action = (InstanceAction)GetAction(temp.action).Object;
 
                     if (action is IEventSequence sequence)
                     {
@@ -126,7 +179,6 @@ namespace Syadeu.Presentation.Actions
                             return;
                         }
 
-                        "wait".ToLog();
                         handler.SetEvent(SystemEventResult.Wait, m_CurrentAction.Sequence.GetType());
                         return;
                     }
@@ -140,7 +192,8 @@ namespace Syadeu.Presentation.Actions
                     handler.SetEvent(SystemEventResult.Success, m_CurrentAction.Payload.action.GetObject().GetType());
                     return;
                 case ActionType.Trigger:
-                    TriggerAction triggerAction = TriggerAction.GetAction(temp.action);
+                    //TriggerAction triggerAction = TriggerAction.GetAction(temp.action);
+                    TriggerAction triggerAction = (TriggerAction)GetAction(temp.action).Object;
 
                     if (triggerAction is IEventSequence triggerActionSequence)
                     {
@@ -162,7 +215,7 @@ namespace Syadeu.Presentation.Actions
                             return;
                         }
 
-                        $"wait {m_CurrentAction.IsEmpty()}".ToLog();
+                        //$"wait {m_CurrentAction.IsEmpty()}".ToLog();
                         handler.SetEvent(SystemEventResult.Wait, m_CurrentAction.Sequence.GetType());
                         return;
                     }
@@ -197,7 +250,7 @@ namespace Syadeu.Presentation.Actions
             m_CurrentAction.Clear();
         }
 
-        public bool ExecuteInstanceAction<T>(Reference<T> temp)
+        public bool ExecuteInstanceAction<T>(FixedReference<T> temp)
             where T : InstanceAction
         {
             if (temp.GetObject() is IEventSequence)
@@ -235,7 +288,19 @@ namespace Syadeu.Presentation.Actions
             m_ScheduledActions.Add(payload);
             m_EventSystem.TakeQueueTicket(this);
         }
-        public bool ExecuteTriggerAction<T>(Reference<T> temp, EntityData<IEntityData> entity)
+        public void ScheduleInstanceAction<T>(FixedReference<T> action)
+            where T : InstanceAction
+        {
+            Payload payload = new Payload
+            {
+                actionType = ActionType.Instance,
+                action = action.As<ActionBase>()
+            };
+
+            m_ScheduledActions.Add(payload);
+            m_EventSystem.TakeQueueTicket(this);
+        }
+        public bool ExecuteTriggerAction<T>(FixedReference<T> temp, EntityData<IEntityData> entity)
             where T : TriggerAction
         {
             if (temp.GetObject() is IEventSequence)
@@ -264,7 +329,7 @@ namespace Syadeu.Presentation.Actions
 
             return result;
         }
-        public void ScheduleTriggerAction<T>(Reference<T> action, EntityData<IEntityData> entity)
+        public void ScheduleTriggerAction<T>(FixedReference<T> action, EntityData<IEntityData> entity)
             where T : TriggerAction
         {
             Payload payload = new Payload
@@ -303,13 +368,12 @@ namespace Syadeu.Presentation.Actions
 
                 TimerStarted = false;
                 StartTime = 0;
-                "clear".ToLog();
             }
         }
         private class Payload
         {
             public ActionType actionType;
-            public Reference<ActionBase> action;
+            public FixedReference<ActionBase> action;
             public EntityData<IEntityData> entity;
 
             public bool played;

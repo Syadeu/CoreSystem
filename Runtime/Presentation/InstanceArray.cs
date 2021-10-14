@@ -1,6 +1,6 @@
 ﻿#undef ENABLE_UNITY_COLLECTIONS_CHECKS
 
-using Syadeu.Database;
+using Syadeu.Collections;
 using System;
 using System.Collections.Generic;
 using System.Linq;

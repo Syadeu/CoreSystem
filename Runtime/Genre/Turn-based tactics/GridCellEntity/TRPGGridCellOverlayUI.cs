@@ -3,7 +3,7 @@ using DG.Tweening;
 #endif
 
 using Syadeu;
-using Syadeu.Database;
+using Syadeu.Collections;
 using Syadeu.Presentation.Input;
 using Syadeu.Presentation.Map;
 using Syadeu.Presentation.Proxy;
@@ -54,8 +54,8 @@ namespace Syadeu.Presentation.TurnTable
         [InputControl(layout = "Button")]
         [SerializeField] private string m_ControlPath;
 
-        [Space]
-        [SerializeField] private bool m_IsDetectionTile = false;
+        //[Space]
+        //[SerializeField] private bool m_IsDetectionTile = false;
 
         private bool m_Initialized = false;
         private TRPGGridSystem m_TRPGGridSystem;
@@ -91,7 +91,7 @@ namespace Syadeu.Presentation.TurnTable
             m_TurnTableSystem = null;
         }
 
-        public void Initialize(GridPosition position)
+        public void Initialize(GridPosition position, bool isDetectionCell)
         {
             GridPosition = position;
 
@@ -110,6 +110,12 @@ namespace Syadeu.Presentation.TurnTable
                 testAP.alignment = TextAlignmentOptions.Center;
             }
             testAP.text = $"{position.location.x},{position.location.y}";
+
+            if (isDetectionCell)
+            {
+                m_DetectionImg.color = Color.white;
+            }
+            else m_DetectionImg.color = Color.clear;
 
             m_Initialized = true;
         }
@@ -164,7 +170,11 @@ namespace Syadeu.Presentation.TurnTable
         }
         public void OnPointerEnter(PointerEventData eventData)
         {
-            if (!IsValid()) return;
+            if (!IsValid())
+            {
+                "not valid return".ToLog();
+                return;
+            }
 
             SetState(State.Highlighted);
 

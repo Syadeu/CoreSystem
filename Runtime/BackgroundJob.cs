@@ -4,7 +4,7 @@ using Unity.Collections;
 
 using Syadeu.Job;
 using Syadeu.Entities;
-using Syadeu.Database;
+using Syadeu.Collections;
 
 namespace Syadeu
 {

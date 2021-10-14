@@ -1,4 +1,5 @@
-﻿using Syadeu.Presentation.Proxy;
+﻿using Syadeu.Collections.Proxy;
+using Syadeu.Presentation.Proxy;
 using UnityEngine;
 
 namespace Syadeu.Presentation.Entities

@@ -1,5 +1,5 @@
 ﻿using Newtonsoft.Json;
-using Syadeu.Database;
+using Syadeu.Collections;
 using Unity.Mathematics;
 
 namespace Syadeu.Presentation.Entities

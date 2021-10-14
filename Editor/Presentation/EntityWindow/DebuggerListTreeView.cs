@@ -1,5 +1,5 @@
 ﻿using Syadeu;
-using Syadeu.Database;
+using Syadeu.Collections;
 using Syadeu.Internal;
 using Syadeu.Presentation;
 using Syadeu.Presentation.Data;
@@ -31,21 +31,21 @@ namespace SyadeuEditor.Presentation
         private readonly EntityWindow m_Window;
 
         private EntitySystem m_EntitySystem;
-        private Dictionary<Hash, ObjectBase> m_ObjectEntities;
+        private Dictionary<InstanceID, ObjectBase> m_ObjectEntities;
         public EntitySystem EntitySystem
         {
             get
             {
                 if (m_EntitySystem == null)
                 {
-                    if (!Application.isPlaying || !PresentationSystem<EntitySystem>.IsValid()) return null;
+                    if (!Application.isPlaying || !PresentationSystem<DefaultPresentationGroup, EntitySystem>.IsValid()) return null;
 
-                    m_EntitySystem = PresentationSystem<EntitySystem>.System;
+                    m_EntitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
                 }
                 return m_EntitySystem;
             }
         }
-        public Dictionary<Hash, ObjectBase> ObjectEntities
+        public Dictionary<InstanceID, ObjectBase> ObjectEntities
         {
             get
             {
@@ -53,7 +53,7 @@ namespace SyadeuEditor.Presentation
                 {
                     if (EntitySystem == null) return null;
 
-                    m_ObjectEntities = (Dictionary<Hash, ObjectBase>)TypeHelper.TypeOf<EntitySystem>.Type.GetField("m_ObjectEntities", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).GetValue(EntitySystem);
+                    m_ObjectEntities = (Dictionary<InstanceID, ObjectBase>)TypeHelper.TypeOf<EntitySystem>.Type.GetField("m_ObjectEntities", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).GetValue(EntitySystem);
                 }
 
                 return m_ObjectEntities;

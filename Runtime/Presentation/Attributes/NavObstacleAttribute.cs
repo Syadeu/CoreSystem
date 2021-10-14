@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Syadeu.Collections;
 using Syadeu.Internal;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Map;
@@ -39,7 +40,7 @@ namespace Syadeu.Presentation.Attributes
 
         protected override void OnInitialize()
         {
-            RequestSystem<NavMeshSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, NavMeshSystem>(Bind);
 
             base.OnInitialize();
         }

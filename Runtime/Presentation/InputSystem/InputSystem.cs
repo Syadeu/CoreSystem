@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
 using UnityEngine.InputSystem.LowLevel;
-using Syadeu.Database;
+using Syadeu.Collections;
 using Syadeu.Mono;
 using System.Collections.Generic;
 

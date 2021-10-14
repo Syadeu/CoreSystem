@@ -1,4 +1,6 @@
 ﻿using Newtonsoft.Json;
+using Syadeu.Collections;
+using Syadeu.Collections.Proxy;
 using Syadeu.Internal;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Attributes;
@@ -211,7 +213,7 @@ namespace Syadeu.Presentation.Actor
 
         protected override void OnProxyCreated(RecycleableMonobehaviour monoObj)
         {
-            ActorWeaponComponent component = Parent.GetComponent<ActorWeaponComponent>();
+            ref ActorWeaponComponent component = ref Parent.GetComponent<ActorWeaponComponent>();
 
             if (component.SelectedWeapon.IsValid() && 
                 component.SelectedWeapon.Object.PrefabInstance.IsValid())
@@ -219,8 +221,6 @@ namespace Syadeu.Presentation.Actor
                 WeaponPoser weaponPoser = new WeaponPoser(Parent.As<IEntityData, ActorEntity>(), component.SelectedWeapon, 
                     m_UseBone, m_AttachedBone, m_WeaponPosOffset, m_WeaponRotOffset);
                 component.m_WeaponPoser = StartCoroutine(weaponPoser);
-
-                Parent.AddComponent(component);
             }
         }
         protected override void OnProxyRemoved(RecycleableMonobehaviour monoObj)
@@ -286,7 +286,7 @@ namespace Syadeu.Presentation.Actor
                 ITransform weaponTr = m_Weapon.Object.PrefabInstance.transform;
                 Transform targetTr = null;
 
-                while (m_Weapon.IsValid())
+                while (m_Weapon.IsValid() && m_Entity.IsValid())
                 {
                     if (!m_Entity.hasProxy)
                     {

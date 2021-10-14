@@ -3,7 +3,7 @@ using System;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using Syadeu.Database;
+using Syadeu.Collections;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -12,7 +12,7 @@ using UnityEngine.InputSystem.Editor;
 
 namespace Syadeu.Presentation.Input
 {
-    public sealed class ParamActionFloat2Interaction : IInputInteraction, Database.IStaticInitializer
+    public sealed class ParamActionFloat2Interaction : IInputInteraction, Collections.IStaticInitializer
     {
         static ParamActionFloat2Interaction()
         {
@@ -25,7 +25,7 @@ namespace Syadeu.Presentation.Input
         public void Process(ref InputInteractionContext context)
         {
             float2 value;
-            Reference<ParamAction<float2>> reference;
+            FixedReference<ParamAction<float2>> reference;
 
             if (!m_Pressed)
             {
@@ -33,7 +33,7 @@ namespace Syadeu.Presentation.Input
                 //if (isActuated)
                 {
                     value = context.ReadValue<Vector2>();
-                    reference = new Reference<ParamAction<float2>>(new Hash((ulong)Action));
+                    reference = new FixedReference<ParamAction<float2>>(new Hash((ulong)Action));
                     reference.Execute(value);
 
                     "1".ToLog();
@@ -49,7 +49,7 @@ namespace Syadeu.Presentation.Input
             if (isStillActuated)
             {
                 value = context.ReadValue<Vector2>();
-                reference = new Reference<ParamAction<float2>>(new Hash((ulong)Action));
+                reference = new FixedReference<ParamAction<float2>>(new Hash((ulong)Action));
                 reference.Execute(value);
 
                 "2".ToLog();
@@ -62,7 +62,7 @@ namespace Syadeu.Presentation.Input
             var actuationTime = context.time - context.startTime;
 
             value = context.ReadValue<Vector2>();
-            reference = new Reference<ParamAction<float2>>(new Hash((ulong)Action));
+            reference = new FixedReference<ParamAction<float2>>(new Hash((ulong)Action));
             reference.Execute(0);
 
             // Control is no longer actuated above 3/4 threshold. If it was held

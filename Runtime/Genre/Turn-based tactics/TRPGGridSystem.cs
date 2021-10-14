@@ -1,4 +1,5 @@
-﻿using Syadeu.Mono;
+﻿using Syadeu.Collections;
+using Syadeu.Mono;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
@@ -134,7 +135,9 @@ namespace Syadeu.Presentation.TurnTable
         {
             if (gridSize.IsMyIndex(position.index)) return;
 
-            m_GridSystem.PlaceUICell(position);
+            Entity<IEntity> entity = m_GridSystem.PlaceUICell(position);
+
+
         }
         public void ClearUICell()
         {

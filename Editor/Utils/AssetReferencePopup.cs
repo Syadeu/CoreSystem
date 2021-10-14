@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Syadeu.Database;
+using Syadeu.Collections;
 using UnityEditor;
 
 using UnityEditor.IMGUI.Controls;

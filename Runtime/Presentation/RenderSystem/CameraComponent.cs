@@ -3,6 +3,7 @@
 #endif
 
 using Cinemachine;
+using Syadeu.Collections.Proxy;
 using Syadeu.Presentation.Proxy;
 using System.Collections;
 using System.Collections.Generic;

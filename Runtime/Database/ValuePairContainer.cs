@@ -7,7 +7,7 @@ using System;
 using System.Collections;
 using System.Linq;
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     [Serializable]
     public sealed class ValuePairContainer : IList, ICloneable

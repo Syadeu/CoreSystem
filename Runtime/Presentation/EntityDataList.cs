@@ -13,7 +13,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     [PreferBinarySerialization] [CustomStaticSetting("Syadeu")]
     public sealed class EntityDataList : StaticSettingEntity<EntityDataList>
@@ -305,12 +305,14 @@ namespace Syadeu.Database
         {
             if (m_Objects == null) return Array.Empty<T>();
             return m_Objects
-                    .Where((other) =>
-                    {
-                        return TypeHelper.TypeOf<T>.Type.IsAssignableFrom(other.Value.GetType());
-                    })
-                    .Select((other) => (T)other.Value)
+                    .Where(GetDataPredicate<T>)
+                    .Select(other => (T)other.Value)
                     .ToArray();
+        }
+        private bool GetDataPredicate<T>(KeyValuePair<Hash, ObjectBase> pair)
+        {
+            Type type = pair.Value.GetType();
+            return TypeHelper.TypeOf<T>.Type.IsAssignableFrom(type);
         }
 
         public ObjectBase GetObject(Hash hash)

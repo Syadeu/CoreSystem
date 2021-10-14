@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     /// <summary>
     /// Value의 값이 바뀌면 OnValueChange event를 호출하는 클래스입니다.

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using Syadeu.Presentation.Attributes;
-using Syadeu.Database;
+using Syadeu.Collections;
 using BehaviorDesigner.Runtime;
 using Newtonsoft.Json;
 using Syadeu.Presentation.Entities;
@@ -8,10 +8,12 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 using Syadeu.Presentation.Proxy;
 using Syadeu.Presentation.TurnTable;
 using Syadeu.Presentation.Actor;
+using System.ComponentModel;
 
 namespace Syadeu.Presentation.BehaviorTree
 {
     [AttributeAcceptOnly(typeof(ActorEntity))]
+    [DisplayName("Attribute: Behavior Tree")]
     public sealed class BehaviorTreeAttribute : AttributeBase
     {
         [JsonProperty(Order = 0, PropertyName = "BehaviorTree")] 
@@ -117,10 +119,8 @@ namespace Syadeu.Presentation.BehaviorTree
             attribute.DestroyBehaviorTree();
         }
 
-        public void OnProxyCreated(AttributeBase attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
+        public void OnProxyCreated(IAttribute attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
         {
-            const string c_ValueString = "This";
-
             BehaviorTreeAttribute att = (BehaviorTreeAttribute)attribute;
             Behavior behavior = monoObj.GetComponent<Behavior>();
             if (behavior == null)
@@ -130,15 +130,17 @@ namespace Syadeu.Presentation.BehaviorTree
                 behavior.DisableBehavior();
             }
 
+            SharedEntity sharedEntity = entity;
+
             behavior.ExternalBehavior = att.InstanceBehaviorTree;
-            behavior.SetVariableValue(c_ValueString, monoObj);
-            //behavior.EnableBehavior();
+            behavior.SetVariable(PresentationBehaviorTreeUtility.c_SelfEntityString, sharedEntity);
         }
-        public void OnProxyRemoved(AttributeBase attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
+        public void OnProxyRemoved(IAttribute attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
         {
             Behavior behavior = monoObj.GetComponent<Behavior>();
 
             behavior.DisableBehavior();
+
             behavior.ExternalBehavior = null;
         }
     }

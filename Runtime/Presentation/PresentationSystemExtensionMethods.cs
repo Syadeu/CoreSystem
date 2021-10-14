@@ -1,39 +1,38 @@
-﻿using Syadeu.Presentation.Entities;
+﻿using Syadeu.Collections;
+using Syadeu.Presentation.Entities;
+using System;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Mathematics;
 
 namespace Syadeu.Presentation
 {
     public static class PresentationSystemExtensionMethods
     {
-        public static ReferenceArray<T> ToBuffer<T>(this T[] t, Allocator allocator)
-            where T : unmanaged, IReference
+        //public static ReferenceArray<T> ToBuffer<T>(this T[] t, Allocator allocator)
+        //    where T : unmanaged, IReference
+        //{
+        //    return new ReferenceArray<T>(t, allocator);
+        //}
+        public static FixedReferenceList64<T> ToFixedList64<T>(this IEnumerable<Reference<T>> t)
+            where T : class, IObject
         {
-            return new ReferenceArray<T>(t, allocator);
-        }
-        public static T[] ToArray<T>(this ReferenceArray<T> t)
-            where T : unmanaged, IReference
-        {
-            T[] array = new T[t.Length];
-            for (int i = 0; i < array.Length; i++)
+            FixedReferenceList64<T> list = new FixedReferenceList64<T>();
+            foreach (var item in t)
             {
-                array[i] = t[i];
-            }
-            return array;
-        }
-        public static List<T> ToList<T>(this ReferenceArray<T> t)
-            where T : unmanaged, IReference
-        {
-            List<T> list = new List<T>();
-            for (int i = 0; i < t.Length; i++)
-            {
-                list.Add(t[i]);
+                FixedReference<T> temp = item;
+                list.Add(temp);
             }
             return list;
         }
+        public static FixedReference<T> As<T>(this IFixedReference reference)
+            where T : class, IObject
+        {
+            return new FixedReference<T>(reference.Hash);
+        }
 
-        public static Reference<T> As<T>(this IReference reference)
+        public static Reference<T> As<T>(this IFixedReference<T> reference)
             where T : class, IObject
         {
             return new Reference<T>(reference.Hash);
@@ -51,34 +50,54 @@ namespace Syadeu.Presentation
             return new Reference<T>(t.Object.Hash);
         }
 
-        //public static NativeArray<T> GetNativeArray<T>(this ArrayWrapper<T> wrapper) where T : unmanaged
-        //{
-        //    if (!wrapper.m_NativeArray)
-        //    {
-        //        CoreSystem.Logger.LogError(Channel.Data, "Is not NativeArray");
-        //        return default(NativeArray<T>);
-        //    }
+        public static T GetObject<T>(this IFixedReference<T> t)
+            where T : class, IObject
+        {
+            if (t.IsEmpty())
+            {
+                return null;
+            }
+            else if (EntityDataList.Instance.m_Objects.TryGetValue(t.Hash, out ObjectBase value) &&
+                value is T target)
+            {
+                return target;
+            }
+            return null;
+        }
+        public static ObjectBase GetObject(this IFixedReference t)
+        {
+            if (t.IsEmpty())
+            {
+                return null;
+            }
+            else if (EntityDataList.Instance.m_Objects.TryGetValue(t.Hash, out ObjectBase value))
+            {
+                return value;
+            }
+            return null;
+        }
+        public static Instance<T> CreateInstance<T>(this IFixedReference<T> target)
+            where T : class, IObject
+        {
+            if (target.IsEmpty())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity, "You cannot create instance of null reference.");
+                return Instance<T>.Empty;
+            }
 
-        //    AtomicSafetyHandle.CheckGetSecondaryDataPointerAndThrow(wrapper.m_Safety);
+            Type t = target.GetObject().GetType();
+            if (TypeHelper.TypeOf<EntityBase>.Type.IsAssignableFrom(t))
+            {
+                var temp = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.CreateEntity(target.Hash, float3.zero);
+                return new Instance<T>(temp.Idx);
+            }
+            else if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(t))
+            {
+                var temp = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.CreateObject(target.Hash);
+                return new Instance<T>(temp.Idx);
+            }
 
-        //    NativeArray<T> arr;
-        //    unsafe
-        //    {
-        //        arr = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<T>(
-        //            wrapper.m_Buffer,
-        //            wrapper.Length,
-        //            Allocator.Invalid);
-        //    }
-
-        //    AtomicSafetyHandle safety = wrapper.m_Safety;
-
-        //    AtomicSafetyHandle.CheckWriteAndBumpSecondaryVersion(safety);
-        //    AtomicSafetyHandle.UseSecondaryVersion(ref safety);
-        //    AtomicSafetyHandle.SetAllowSecondaryVersionWriting(safety, true);
-
-        //    NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref arr, safety);
-
-        //    return arr;
-        //}
+            return PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.CreateInstance<T>(target.GetObject());
+        }
     }
 }

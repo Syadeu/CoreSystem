@@ -2,7 +2,7 @@
 #if UNITY_EDITOR
 #endif
 
-namespace Syadeu.Database.Lua
+namespace Syadeu.Collections.Lua
 {
     internal sealed class LuaVectorUtils
     {

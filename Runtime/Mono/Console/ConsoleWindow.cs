@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Syadeu.Database;
+using Syadeu.Collections;
 using Syadeu.Mono.Console;
 
 using UnityEngine;

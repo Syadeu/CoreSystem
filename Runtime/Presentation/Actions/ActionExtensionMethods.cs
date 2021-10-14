@@ -2,9 +2,10 @@
 #define DEBUG_MODE
 #endif
 
-using Syadeu.Database;
+using Syadeu.Collections;
 using Syadeu.Internal;
 using Syadeu.Presentation.Entities;
+using System;
 
 namespace Syadeu.Presentation.Actions
 {
@@ -14,7 +15,13 @@ namespace Syadeu.Presentation.Actions
         const string c_WarningInvalidEntityAction = "This action({0}) has been executed with invalid entity.";
         const string c_ErrorCompletedWithFailed = "Execution ({0}) completed with failed.";
 
-        public static bool Execute<T>(this Reference<T> other, EntityData<IEntityData> entity) 
+        public static bool Execute<T>(this Reference<T> other, EntityData<IEntityData> entity)
+            where T : TriggerAction
+        {
+            FixedReference<T> t = other;
+            return Execute(t, entity);
+        }
+        public static bool Execute<T>(this FixedReference<T> other, EntityData<IEntityData> entity) 
             where T : TriggerAction
         {
             if (!entity.IsValid())
@@ -23,21 +30,15 @@ namespace Syadeu.Presentation.Actions
                     string.Format(c_WarningInvalidEntityAction, TypeHelper.TypeOf<T>.Name));
                 return false;
             }
-
-            //T action = TriggerAction.GetAction(other);
-            //if (action.Terminated)
-            //{
-            //    CoreSystem.Logger.LogError(Channel.Entity,
-            //        string.Format(c_ErrorIsTerminatedAction, TypeHelper.TypeOf<T>.Name));
-            //    return false;
-            //}
-
-            //bool result = action.InternalExecute(entity);
-            //action.InternalTerminate();
-
             return PresentationSystem<DefaultPresentationGroup, ActionSystem>.System.ExecuteTriggerAction(other, entity);
         }
-        public static bool Execute<T>(this Reference<T> other, EntityData<IEntityData> entity, out bool predicate) 
+        public static bool Execute<T>(this Reference<T> other, EntityData<IEntityData> entity, out bool predicate)
+            where T : TriggerPredicateAction
+        {
+            FixedReference<T> t = other;
+            return Execute(t, entity, out predicate);
+        }
+        public static bool Execute<T>(this FixedReference<T> other, EntityData<IEntityData> entity, out bool predicate) 
             where T : TriggerPredicateAction
         {
             if (!entity.IsValid())
@@ -60,20 +61,19 @@ namespace Syadeu.Presentation.Actions
         }
         public static bool Execute<T>(this Reference<T> other) where T : InstanceAction
         {
-            //T action = InstanceAction.GetAction(other);
-            //if (action.Terminated)
-            //{
-            //    CoreSystem.Logger.LogError(Channel.Entity,
-            //        string.Format(c_ErrorIsTerminatedAction, TypeHelper.TypeOf<T>.Name));
-            //    return false;
-            //}
-
-            //bool result = action.InternalExecute();
-            //action.InternalTerminate();
-
+            FixedReference<T> t = other;
+            return Execute(t);
+        }
+        public static bool Execute<T>(this FixedReference<T> other) where T : InstanceAction
+        {
             return PresentationSystem<DefaultPresentationGroup, ActionSystem>.System.ExecuteInstanceAction(other);
         }
         public static bool Execute<T>(this Reference<ParamAction<T>> other, T t)
+        {
+            FixedReference<ParamAction<T>> temp = other;
+            return Execute(temp, t);
+        }
+        public static bool Execute<T>(this FixedReference<ParamAction<T>> other, T t)
         {
             var action = ParamAction<T>.GetAction(other);
             if (action.Terminated)
@@ -85,6 +85,11 @@ namespace Syadeu.Presentation.Actions
             return action.InternalExecute(t);
         }
         public static bool Execute<T, TA>(this Reference<ParamAction<T, TA>> other, T t, TA ta)
+        {
+            FixedReference<ParamAction<T, TA>> temp = other;
+            return Execute(temp, t, ta);
+        }
+        public static bool Execute<T, TA>(this FixedReference<ParamAction<T, TA>> other, T t, TA ta)
         {
             var action = ParamAction<T, TA>.GetAction(other);
             if (action.Terminated)
@@ -206,7 +211,7 @@ namespace Syadeu.Presentation.Actions
             return !isFailed;
         }
 
-        public static bool Execute<T>(this ReferenceArray<Reference<T>> actions, EntityData<IEntityData> entity) where T : TriggerAction
+        public static bool Execute<T>(this FixedReferenceList64<T> actions, EntityData<IEntityData> entity) where T : TriggerAction
         {
             if (!entity.IsValid())
             {
@@ -218,7 +223,7 @@ namespace Syadeu.Presentation.Actions
             bool isFailed = false;
             for (int i = 0; i < actions.Length; i++)
             {
-                if (!actions[i].IsValid()) continue;
+                if (actions[i].IsEmpty()) continue;
 
                 isFailed |= !actions[i].Execute(entity);
             }
@@ -231,7 +236,7 @@ namespace Syadeu.Presentation.Actions
 
             return !isFailed;
         }
-        public static bool Execute<T>(this ReferenceArray<Reference<T>> actions, EntityData<IEntityData> entity, out bool predicate) where T : TriggerPredicateAction
+        public static bool Execute<T>(this FixedReferenceList64<T> actions, EntityData<IEntityData> entity, out bool predicate) where T : TriggerPredicateAction
         {
             if (!entity.IsValid())
             {
@@ -246,7 +251,7 @@ namespace Syadeu.Presentation.Actions
                 isFalse = false;
             for (int i = 0; i < actions.Length; i++)
             {
-                if (!actions[i].IsValid()) continue;
+                if (actions[i].IsEmpty()) continue;
 
                 isFailed |= !actions[i].Execute(entity, out bool result);
                 isFalse |= !result;
@@ -261,13 +266,13 @@ namespace Syadeu.Presentation.Actions
             predicate = !isFalse;
             return !isFailed;
         }
-        public static bool Execute<T>(this ReferenceArray<Reference<T>> actions) 
+        public static bool Execute<T>(this FixedReferenceList64<T> actions) 
             where T : InstanceAction
         {
             bool isFailed = false;
             for (int i = 0; i < actions.Length; i++)
             {
-                if (!actions[i].IsValid()) continue;
+                if (actions[i].IsEmpty()) continue;
 
                 isFailed |= !actions[i].Execute();
             }
@@ -280,12 +285,12 @@ namespace Syadeu.Presentation.Actions
 
             return !isFailed;
         }
-        public static bool Execute<T>(this ReferenceArray<Reference<ParamAction<T>>> actions, T target)
+        public static bool Execute<T>(this FixedReferenceList64<ParamAction<T>> actions, T target)
         {
             bool isFailed = false;
             for (int i = 0; i < actions.Length; i++)
             {
-                if (!actions[i].IsValid()) continue;
+                if (actions[i].IsEmpty()) continue;
 
                 isFailed |= !actions[i].Execute(target);
             }
@@ -298,12 +303,12 @@ namespace Syadeu.Presentation.Actions
 
             return !isFailed;
         }
-        public static bool Execute<T, TA>(this ReferenceArray<Reference<ParamAction<T, TA>>> actions, T t, TA ta)
+        public static bool Execute<T, TA>(this FixedReferenceList64<ParamAction<T, TA>> actions, T t, TA ta)
         {
             bool isFailed = false;
             for (int i = 0; i < actions.Length; i++)
             {
-                if (!actions[i].IsValid()) continue;
+                if (actions[i].IsEmpty()) continue;
 
                 isFailed |= !actions[i].Execute(t, ta);
             }
@@ -340,9 +345,32 @@ namespace Syadeu.Presentation.Actions
                 return;
             }
 
-            PresentationSystem<DefaultPresentationGroup, ActionSystem>.System.ScheduleTriggerAction(action, entity);
+            PresentationSystem<DefaultPresentationGroup, ActionSystem>.System.ScheduleTriggerAction<T>(action, entity);
         }
 
+        public static void Schedule<T>(this FixedReferenceList64<T> actions)
+            where T : InstanceAction
+        {
+            if (actions.Length == 0) return;
+
+            ActionSystem system = PresentationSystem<DefaultPresentationGroup, ActionSystem>.System;
+            for (int i = 0; i < actions.Length; i++)
+            {
+                system.ScheduleInstanceAction(actions[i]);
+            }
+        }
+        public static void Schedule<T>(this FixedReferenceList64<T> actions, EntityData<IEntityData> entity)
+            where T : TriggerAction
+        {
+            if (actions.Length == 0) return;
+
+            ActionSystem system = PresentationSystem<DefaultPresentationGroup, ActionSystem>.System;
+            for (int i = 0; i < actions.Length; i++)
+            {
+                system.ScheduleTriggerAction(actions[i], entity);
+            }
+        }
+        [Obsolete("Use FixedReferenceList64")]
         public static void Schedule<T>(this Reference<T>[] actions)
             where T : InstanceAction
         {
@@ -354,6 +382,7 @@ namespace Syadeu.Presentation.Actions
                 system.ScheduleInstanceAction(actions[i]);
             }
         }
+        [Obsolete("Use FixedReferenceList64")]
         public static void Schedule<T>(this Reference<T>[] actions, EntityData<IEntityData> entity)
             where T : TriggerAction
         {
@@ -362,7 +391,7 @@ namespace Syadeu.Presentation.Actions
             ActionSystem system = PresentationSystem<DefaultPresentationGroup, ActionSystem>.System;
             for (int i = 0; i < actions.Length; i++)
             {
-                system.ScheduleTriggerAction(actions[i], entity);
+                system.ScheduleTriggerAction<T>(actions[i], entity);
             }
         }
     }

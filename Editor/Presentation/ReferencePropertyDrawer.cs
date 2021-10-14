@@ -1,4 +1,4 @@
-﻿using Syadeu.Database;
+﻿using Syadeu.Collections;
 using Syadeu.Internal;
 using Syadeu.Presentation;
 using System;
@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace SyadeuEditor.Presentation
 {
-    [CustomPropertyDrawer(typeof(IReference), true)]
+    [CustomPropertyDrawer(typeof(IFixedReference), true)]
     public sealed class ReferencePropertyDrawer : PropertyDrawer
     {
         private static readonly RectOffset boxPadding = EditorStyles.helpBox.padding;

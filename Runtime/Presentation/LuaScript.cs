@@ -11,7 +11,7 @@ using Syadeu.Presentation.Proxy;
 #if UNITY_EDITOR
 #endif
 
-namespace Syadeu.Database.Lua
+namespace Syadeu.Collections.Lua
 {
     [Serializable]
     public sealed class LuaScript : IEquatable<LuaScript>, IValidation

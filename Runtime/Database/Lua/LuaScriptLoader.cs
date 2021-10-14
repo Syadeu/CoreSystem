@@ -6,7 +6,7 @@ using System.Linq;
 using MoonSharp.Interpreter.Loaders;
 using System.IO;
 
-namespace Syadeu.Database.Lua
+namespace Syadeu.Collections.Lua
 {
     internal sealed class LuaScriptLoader : ScriptLoaderBase
     {

@@ -1,4 +1,5 @@
-﻿using Syadeu.Database;
+﻿using Syadeu.Collections;
+using Syadeu.Collections.Proxy;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Proxy;
 using System;
@@ -26,7 +27,7 @@ namespace Syadeu.Presentation.Events
 
             if (tr is ProxyTransform proxyTr)
             {
-                Hash entityIdx = temp.EntitySystem.m_EntityGameObjects[proxyTr.m_Hash];
+                InstanceID entityIdx = temp.EntitySystem.m_EntityGameObjects[proxyTr.m_Hash];
                 temp.entity = Entity<IEntity>.GetEntity(entityIdx);
             }
             else if (tr is UnityTransform unityTr)

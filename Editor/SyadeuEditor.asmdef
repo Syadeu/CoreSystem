@@ -3,6 +3,8 @@
     "rootNamespace": "SyadeuEditor",
     "references": [
         "GUID:a35cecc1c26b8eb43b1fcdad25ac3741",
+        "GUID:149e342d6a09fc340831dce824fb8bae",
+        "GUID:8bc3a2c31d86c324ba5c080d1b72889b",
         "GUID:5d2206029ad24d5449851ebacffd1b24",
         "GUID:4a12d3af4a6147c4b9f0a261c6d07305",
         "GUID:0c752da273b17c547ae705acf0f2adf2",
@@ -18,7 +20,6 @@
         "GUID:84651a3751eca9349aac36a66bba901b",
         "GUID:6ade952a417812144aa8d6e9d7547d08",
         "GUID:75469ad4d38634e559750d17036d5f7c",
-        "GUID:8bc3a2c31d86c324ba5c080d1b72889b",
         "GUID:5c1ff9bd975acec488150743d53a93ca",
         "GUID:c5ecc461727906345a35491a0440694f"
     ],

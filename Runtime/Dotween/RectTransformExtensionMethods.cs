@@ -1,7 +1,7 @@
 using DG.Tweening;
 using DG.Tweening.Core;
 using DG.Tweening.Plugins.Options;
-using Syadeu.Database;
+using Syadeu.Collections;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;

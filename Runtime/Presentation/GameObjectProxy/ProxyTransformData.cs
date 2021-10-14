@@ -1,7 +1,7 @@
-﻿using Syadeu.Database;
+﻿using Syadeu.Collections;
 using System;
 using Unity.Mathematics;
-using AABB = Syadeu.Database.AABB;
+using AABB = Syadeu.Collections.AABB;
 
 namespace Syadeu.Presentation.Proxy
 {

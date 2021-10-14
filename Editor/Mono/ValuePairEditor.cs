@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Reflection;
 
 using Syadeu;
-using Syadeu.Database;
+using Syadeu.Collections;
 using UnityEditor;
 using UnityEngine;
 
@@ -141,8 +141,8 @@ namespace SyadeuEditor
                 {
                     Hash hash = container[i].Hash;
 
-                    Syadeu.Database.ValueType valueType = container[i].GetValueType();
-                    if (valueType == Syadeu.Database.ValueType.Array)
+                    Syadeu.Collections.ValueType valueType = container[i].GetValueType();
+                    if (valueType == Syadeu.Collections.ValueType.Array)
                     {
                         IList list = (IList)container[i].GetValue();
                         EditorGUILayout.BeginHorizontal();
@@ -217,35 +217,35 @@ namespace SyadeuEditor
                         container[i].Name = EditorGUILayout.TextField(container[i].Name, GUILayout.MinWidth(100));
                         switch (valueType)
                         {
-                            case Syadeu.Database.ValueType.Int32:
+                            case Syadeu.Collections.ValueType.Int32:
                                 int intFal = EditorGUILayout.IntField((int)container[i].GetValue(), GUILayout.MinWidth(100));
                                 if (!container[i].GetValue().Equals(intFal))
                                 {
                                     container.SetValue(container[i].Name, intFal);
                                 }
                                 break;
-                            case Syadeu.Database.ValueType.Double:
+                            case Syadeu.Collections.ValueType.Double:
                                 double doubleVal = EditorGUILayout.DoubleField((double)container[i].GetValue(), GUILayout.MinWidth(100));
                                 if (!container[i].GetValue().Equals(doubleVal))
                                 {
                                     container.SetValue(container[i].Name, doubleVal);
                                 }
                                 break;
-                            case Syadeu.Database.ValueType.String:
+                            case Syadeu.Collections.ValueType.String:
                                 string stringVal = EditorGUILayout.TextField((string)container[i].GetValue(), GUILayout.MinWidth(100));
                                 if (!container[i].GetValue().Equals(stringVal))
                                 {
                                     container.SetValue(container[i].Name, stringVal);
                                 }
                                 break;
-                            case Syadeu.Database.ValueType.Boolean:
+                            case Syadeu.Collections.ValueType.Boolean:
                                 bool boolVal = EditorGUILayout.ToggleLeft(string.Empty, (bool)container[i].GetValue(), GUILayout.MinWidth(100));
                                 if (!container[i].GetValue().Equals(boolVal))
                                 {
                                     container.SetValue(container[i].Name, boolVal);
                                 }
                                 break;
-                            case Syadeu.Database.ValueType.Delegate:
+                            case Syadeu.Collections.ValueType.Delegate:
                                 EditorGUI.BeginDisabledGroup(true);
                                 EditorGUILayout.TextField($"Delegate: {container[i].GetValue()}", GUILayout.MinWidth(100));
                                 EditorGUI.EndDisabledGroup();
@@ -272,8 +272,8 @@ namespace SyadeuEditor
         {
             Hash hash = valuePair.Hash;
 
-            Syadeu.Database.ValueType valueType = valuePair.GetValueType();
-            if (valueType == Syadeu.Database.ValueType.Array)
+            Syadeu.Collections.ValueType valueType = valuePair.GetValueType();
+            if (valueType == Syadeu.Collections.ValueType.Array)
             {
                 IList list = (IList)valuePair.GetValue();
                 EditorGUILayout.BeginHorizontal();
@@ -340,35 +340,35 @@ namespace SyadeuEditor
                 valuePair.Name = EditorGUILayout.TextField(valuePair.Name, GUILayout.Width(150));
                 switch (valueType)
                 {
-                    case Syadeu.Database.ValueType.Int32:
+                    case Syadeu.Collections.ValueType.Int32:
                         int intFal = EditorGUILayout.IntField((int)valuePair.GetValue());
                         //if (!valuePair.GetValue().Equals(intFal))
                         //{
                         //    container.SetValue(valuePair.Name, intFal);
                         //}
                         break;
-                    case Syadeu.Database.ValueType.Double:
+                    case Syadeu.Collections.ValueType.Double:
                         double doubleVal = EditorGUILayout.DoubleField((double)valuePair.GetValue());
                         //if (!valuePair.GetValue().Equals(doubleVal))
                         //{
                         //    container.SetValue(valuePair.Name, doubleVal);
                         //}
                         break;
-                    case Syadeu.Database.ValueType.String:
+                    case Syadeu.Collections.ValueType.String:
                         string stringVal = EditorGUILayout.TextField((string)valuePair.GetValue());
                         //if (!valuePair.GetValue().Equals(stringVal))
                         //{
                         //    container.SetValue(valuePair.Name, stringVal);
                         //}
                         break;
-                    case Syadeu.Database.ValueType.Boolean:
+                    case Syadeu.Collections.ValueType.Boolean:
                         bool boolVal = EditorGUILayout.Toggle((bool)valuePair.GetValue());
                         //if (!valuePair.GetValue().Equals(boolVal))
                         //{
                         //    container.SetValue(valuePair.Name, boolVal);
                         //}
                         break;
-                    case Syadeu.Database.ValueType.Delegate:
+                    case Syadeu.Collections.ValueType.Delegate:
                         EditorGUI.BeginDisabledGroup(true);
                         EditorGUILayout.TextField("Delegate");
                         EditorGUI.EndDisabledGroup();

@@ -1,4 +1,4 @@
-﻿using Syadeu.Database;
+﻿using Syadeu.Collections;
 using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Entities;
 
@@ -8,7 +8,8 @@ using System.Runtime.InteropServices;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 
-using AABB = Syadeu.Database.AABB;
+using AABB = Syadeu.Collections.AABB;
+using Syadeu.Collections.Proxy;
 
 namespace Syadeu.Presentation.Proxy
 {
@@ -24,17 +25,6 @@ namespace Syadeu.Presentation.Proxy
         internal static readonly int2 ProxyNull = new int2(-1, -1);
         internal static readonly int2 ProxyQueued = new int2(-2, -2);
         #endregion
-
-        [Flags]
-        public enum SynchronizeOption
-        {
-            Position    =   0b001,
-            Rotation    =   0b010,
-            Scale       =   0b100,
-
-            TR          =   0b011,
-            TRS         =   0b111
-        }
 
         [NativeDisableUnsafePtrRestriction] unsafe internal readonly NativeProxyData.UnsafeList* m_Pointer;
         internal readonly int m_Index;
@@ -151,7 +141,7 @@ namespace Syadeu.Presentation.Proxy
                 if (!value && !hasProxy && !hasProxyQueued)
                 {
                     Ref.m_ProxyIndex = ProxyQueued;
-                    PresentationSystem<GameObjectProxySystem>.System.m_OverrideRequestProxies.Enqueue(m_Index);
+                    PresentationSystem<DefaultPresentationGroup, GameObjectProxySystem>.System.m_OverrideRequestProxies.Enqueue(m_Index);
                 }
 
                 Ref.m_EnableCull = value;
@@ -209,6 +199,7 @@ namespace Syadeu.Presentation.Proxy
             }
         }
 
+        IProxyMonobehaviour IProxyTransform.proxy => proxy;
         public RecycleableMonobehaviour proxy
         {
             get
@@ -216,7 +207,7 @@ namespace Syadeu.Presentation.Proxy
                 if (isDestroyed || isDestroyQueued || !hasProxy || hasProxyQueued) return null;
 
                 int2 proxyIndex = Ref.m_ProxyIndex;
-                return PresentationSystem<GameObjectProxySystem>.System.m_Instances[proxyIndex.x][proxyIndex.y];
+                return PresentationSystem<DefaultPresentationGroup, GameObjectProxySystem>.System.m_Instances[proxyIndex.x][proxyIndex.y];
             }
         }
         public bool isDestroyed
@@ -237,6 +228,7 @@ namespace Syadeu.Presentation.Proxy
         {
             get => Ref.m_DestroyQueued;
         }
+        IPrefabReference IProxyTransform.prefab => prefab;
         public PrefabReference prefab
         {
             get
@@ -258,7 +250,7 @@ namespace Syadeu.Presentation.Proxy
                 if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
 
                 Ref.translation = value;
-                PresentationSystem<EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
+                PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
             }
         }
         public quaternion rotation
@@ -272,7 +264,7 @@ namespace Syadeu.Presentation.Proxy
             {
                 if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
                 Ref.rotation = value;
-                PresentationSystem<EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
+                PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
             }
         }
         public float3 eulerAngles
@@ -302,7 +294,7 @@ namespace Syadeu.Presentation.Proxy
             {
                 if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
                 Ref.scale = value;
-                PresentationSystem<EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
+                PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
             }
         }
 
@@ -375,35 +367,42 @@ namespace Syadeu.Presentation.Proxy
 
 #pragma warning restore IDE1006 // Naming Styles
 
-        public void Synchronize(SynchronizeOption option)
+        public void Synchronize(IProxyTransform.SynchronizeOption option)
         {
             CoreSystem.Logger.ThreadBlock(nameof(ProxyTransform.Synchronize), Syadeu.Internal.ThreadInfo.Unity);
 
             if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
 
             UnityEngine.Transform tr = proxy.transform;
-            if ((option & SynchronizeOption.Position) == SynchronizeOption.Position)
+            if ((option & IProxyTransform.SynchronizeOption.Position) == IProxyTransform.SynchronizeOption.Position)
             {
                 position = tr.position;
             }
-            if ((option & SynchronizeOption.Rotation) == SynchronizeOption.Rotation)
+            if ((option & IProxyTransform.SynchronizeOption.Rotation) == IProxyTransform.SynchronizeOption.Rotation)
             {
                 rotation = tr.rotation;
             }
-            if ((option & SynchronizeOption.Scale) == SynchronizeOption.Scale)
+            if ((option & IProxyTransform.SynchronizeOption.Scale) == IProxyTransform.SynchronizeOption.Scale)
             {
                 scale = tr.localScale;
             }
         }
         public void Destroy()
         {
-            if (isDestroyed) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+            if (isDestroyed)
+            {
+                CoreSystem.Logger.LogError(Channel.Proxy,
+                    "Cannot access this transform because it is destroyed.");
+                return;
+            }
 
             unsafe
             {
                 if ((*m_Pointer)[m_Index]->m_DestroyQueued)
                 {
-                    throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+                    CoreSystem.Logger.LogError(Channel.Proxy,
+                        "Cannot access this transform because it is destroyed.");
+                    return;
                 }
             }
             PresentationSystem<DefaultPresentationGroup, GameObjectProxySystem>.System.Destroy(in this);
@@ -418,6 +417,6 @@ namespace Syadeu.Presentation.Proxy
             return Equals(tr);
         }
 
-        public override int GetHashCode() => m_Index;
+        public override int GetHashCode() => m_Index * 397 ^ m_Generation;
     }
 }

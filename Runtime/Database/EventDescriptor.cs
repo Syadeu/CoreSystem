@@ -2,7 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     public class EventDescriptor<T> : CLRSingleTone<EventDescriptor<T>>
     {
@@ -37,7 +37,7 @@ namespace Syadeu.Database
         public static void Invoke(Hash key, T t)
         {
             if (!Instance.m_Events.TryGetValue(key, out var value)) return;
-            value.Invoke(t);
+            value?.Invoke(t);
         }
 
         public override void Dispose()

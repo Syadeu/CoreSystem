@@ -1,6 +1,8 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Utilities;
+using Syadeu.Collections;
 using Syadeu.Mono;
+using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using System;
 using System.Collections.Generic;
@@ -14,7 +16,8 @@ namespace Syadeu.Presentation.Map
 {
     [DisplayName("EntityData: SceneData")]
     [EntityAcceptOnly(typeof(SceneDataAttributeBase))]
-    public sealed class SceneDataEntity : EntityDataBase
+    public sealed class SceneDataEntity : EntityDataBase,
+        INotifyComponent<SceneDataComponent>
     {
         [JsonProperty(Order = 0, PropertyName = "TerrainData")]
         internal Reference<TerrainData>[] m_TerrainData = Array.Empty<Reference<TerrainData>>();
@@ -29,6 +32,8 @@ namespace Syadeu.Presentation.Map
 #pragma warning restore IDE0044 // Add readonly modifier
 
         [JsonIgnore] internal InstanceArray<TerrainData> m_CreatedTerrains;
+
+        [JsonIgnore] EntityData<IEntityData> INotifyComponent.Parent => EntityData<IEntityData>.GetEntityWithoutCheck(Idx);
 
         [JsonIgnore] public bool IsMapDataCreated { get; private set; } = false;
         [JsonIgnore] public IReadOnlyList<Reference<MapDataEntity>> MapData => m_MapData;
@@ -104,30 +109,64 @@ namespace Syadeu.Presentation.Map
     [Preserve]
     internal sealed class SceneDataEntityProcessor : EntityDataProcessor<SceneDataEntity>
     {
-        protected override void OnCreated(EntityData<SceneDataEntity> entity)
+        protected override void OnCreated(SceneDataEntity entity)
         {
-            if (!entity.Target.IsValid()) return;
+            //if (!entity.Target.IsValid()) return;
 
-            entity.Target.CreateMapData(EntitySystem);
-            SceneDataEntity sceneData = entity.Target;
+            //entity.Target.CreateMapData(EntitySystem);
+            //SceneDataEntity sceneData = entity.Target;
 
-            sceneData.m_CreatedTerrains = new InstanceArray<TerrainData>(sceneData.m_TerrainData, Allocator.Persistent);
+            //sceneData.m_CreatedTerrains = new InstanceArray<TerrainData>(sceneData.m_TerrainData, Allocator.Persistent);
+            //for (int i = 0; i < sceneData.m_CreatedTerrains.Length; i++)
+            //{
+            //    sceneData.m_CreatedTerrains[i].Object.Create(null);
+            //}
+
+            CreateMapData(entity);
+        }
+        private void CreateMapData(SceneDataEntity sceneDataEntity)
+        {
+            IReadOnlyList<Reference<MapDataEntity>> mapData = sceneDataEntity.MapData;
+
+            SceneDataComponent sceneData = new SceneDataComponent();
+            sceneData.m_Created = true;
+
+            sceneData.m_CreatedMapData = new InstanceArray<MapDataEntity>(mapData.Count, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            for (int i = 0; i < mapData.Count; i++)
+            {
+                if (mapData[i].IsEmpty() || !mapData[i].IsValid())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"MapData(Element At {i}) in SceneData({sceneDataEntity.Name}) is not valid.");
+
+                    sceneData.m_CreatedMapData[i] = Instance<MapDataEntity>.Empty;
+                    continue;
+                }
+
+                EntityData<IEntityData> temp = EntitySystem.CreateObject(mapData[i]);
+                sceneData.m_CreatedMapData[i] = new Instance<MapDataEntity>(temp);
+            }
+
+            sceneData.m_CreatedTerrains = new InstanceArray<TerrainData>(sceneDataEntity.m_TerrainData, Allocator.Persistent);
             for (int i = 0; i < sceneData.m_CreatedTerrains.Length; i++)
             {
                 sceneData.m_CreatedTerrains[i].Object.Create(null);
             }
-        }
-        protected override void OnDestroy(EntityData<SceneDataEntity> entity)
-        {
-            if (entity.Target == null || !entity.Target.IsValid()) return;
 
-            entity.Target.DestroyMapData();
-            SceneDataEntity sceneData = entity.Target;
-            for (int i = 0; i < sceneData.m_CreatedTerrains.Length; i++)
-            {
-                sceneData.m_CreatedTerrains[i].Destroy();
-            }
-            sceneData.m_CreatedTerrains.Dispose();
+            EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(sceneDataEntity.Idx);
+            entity.AddComponent(sceneData);
+        }
+        protected override void OnDestroy(SceneDataEntity entity)
+        {
+            //if (entity.Target == null || !entity.Target.IsValid()) return;
+
+            //entity.Target.DestroyMapData();
+            //SceneDataEntity sceneData = entity.Target;
+            //for (int i = 0; i < sceneData.m_CreatedTerrains.Length; i++)
+            //{
+            //    sceneData.m_CreatedTerrains[i].Destroy();
+            //}
+            //sceneData.m_CreatedTerrains.Dispose();
         }
     }
 }

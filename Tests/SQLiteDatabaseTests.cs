@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.TestTools;
 
 using Syadeu;
-using Syadeu.Database;
+using Syadeu.Collections;
 using System.IO;
 using System.Linq;
 

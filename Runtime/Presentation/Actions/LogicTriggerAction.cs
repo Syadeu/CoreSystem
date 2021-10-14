@@ -3,12 +3,16 @@
 #endif
 
 using Newtonsoft.Json;
+using Syadeu.Collections;
 using Syadeu.Presentation.Entities;
 using System;
 using UnityEngine;
 
 namespace Syadeu.Presentation.Actions
 {
+    /// <summary>
+    /// Use <see cref="FixedLogicTriggerAction"/> in component can be gather <see cref="GetFixedLogicTriggerAction"/>
+    /// </summary>
     [Serializable]
     public sealed class LogicTriggerAction
     {
@@ -20,22 +24,30 @@ namespace Syadeu.Presentation.Actions
         private Reference<TriggerPredicateAction>[] m_IfTarget = Array.Empty<Reference<TriggerPredicateAction>>();
 
         [Space]
-        [JsonProperty(Order = 3, PropertyName = "Else If")]
-        private LogicTriggerAction[] m_ElseIf = Array.Empty<LogicTriggerAction>();
-
-        [Space]
-        [JsonProperty(Order = 4, PropertyName = "Do")]
+        [JsonProperty(Order = 3, PropertyName = "Do")]
         private Reference<TriggerAction>[] m_Do = Array.Empty<Reference<TriggerAction>>();
-        [JsonProperty(Order = 5, PropertyName = "Do Target")]
+        [JsonProperty(Order = 4, PropertyName = "Do Target")]
         private Reference<TriggerAction>[] m_DoTarget = Array.Empty<Reference<TriggerAction>>();
 
         [JsonIgnore] public string Name => m_Name;
+
+        public FixedLogicTriggerAction GetFixedLogicTriggerAction()
+        {
+            return new FixedLogicTriggerAction(
+                m_Name,
+                m_If,
+                m_IfTarget,
+                m_Do,
+                m_DoTarget
+                );
+        }
 
         private bool IsExecutable()
         {
             if (m_If.Length == 0 && m_IfTarget.Length == 0) return false;
             return true;
         }
+        [Obsolete("Need to deprecate this. Use FixedLogicTriggerAction Instead")]
         public bool Predicate(EntityData<IEntityData> entity, EntityData<IEntityData> target)
         {
             if (!IsExecutable()) return true;
@@ -46,12 +58,9 @@ namespace Syadeu.Presentation.Actions
                 return true;
             }
 
-            for (int i = 0; i < m_ElseIf.Length; i++)
-            {
-                if (m_ElseIf[i].Predicate(entity, target)) return true;
-            }
             return false;
         }
+        [Obsolete("Need to deprecate this. Use FixedLogicTriggerAction Instead")]
         public bool Execute(EntityData<IEntityData> entity, EntityData<IEntityData> target)
         {
             if (!IsExecutable())
@@ -65,13 +74,9 @@ namespace Syadeu.Presentation.Actions
                 return m_Do.Execute(entity) && m_DoTarget.Execute(target);
             }
 
-            for (int i = 0; i < m_ElseIf.Length; i++)
-            {
-                bool result = m_ElseIf[i].Execute(entity, target);
-                if (result) return true;
-            }
             return false;
         }
+        [Obsolete("Need to deprecate this. Use FixedLogicTriggerAction Instead")]
         public bool Schedule(EntityData<IEntityData> entity, EntityData<IEntityData> target)
         {
             if (!IsExecutable())
@@ -87,11 +92,6 @@ namespace Syadeu.Presentation.Actions
                 return true;
             }
 
-            for (int i = 0; i < m_ElseIf.Length; i++)
-            {
-                bool result = m_ElseIf[i].Execute(entity, target);
-                if (result) return true;
-            }
             return false;
         }
     }

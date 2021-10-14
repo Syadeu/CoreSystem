@@ -1,5 +1,5 @@
 ﻿using Syadeu.ThreadSafe;
-using Syadeu.Database;
+using Syadeu.Collections;
 
 using System;
 using System.Collections;

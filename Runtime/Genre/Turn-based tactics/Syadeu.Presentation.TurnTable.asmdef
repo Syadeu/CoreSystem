@@ -3,6 +3,7 @@
     "rootNamespace": "Syadeu.Presentation.TurnTable",
     "references": [
         "Syadeu",
+        "Syadeu.Collections",
         "Syadeu.Presentation",
         "Unity.Mathematics",
         "Cinemachine",

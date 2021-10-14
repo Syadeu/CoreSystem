@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Utilities;
-using Syadeu.Database;
+using Syadeu.Collections;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Entities;
@@ -23,6 +23,8 @@ namespace Syadeu.Presentation.Actor
         [JsonProperty(Order = 2, PropertyName = "Enemies")]
         internal Reference<ActorFaction>[] m_Enemies = Array.Empty<Reference<ActorFaction>>();
 #pragma warning restore IDE0044 // Add readonly modifier
+
+        [JsonIgnore] public FactionType FactionType => m_FactionType;
 
         [Preserve]
         static void AOTCodeGeneration()

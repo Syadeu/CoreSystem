@@ -6,7 +6,7 @@ using UnityEngine.ResourceManagement.ResourceProviders;
 using UnityEngine.ResourceManagement.AsyncOperations;
 #endif
 
-using Syadeu.Database;
+using Syadeu.Collections;
 using Syadeu.Mono;
 using Syadeu.Presentation.Entities;
 using System;

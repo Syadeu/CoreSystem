@@ -1,4 +1,4 @@
-﻿namespace Syadeu.Database
+﻿namespace Syadeu.Collections
 {
     [SQLiteTable]
     public struct SQLiteVersionInfoTableData

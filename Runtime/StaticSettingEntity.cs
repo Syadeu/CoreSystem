@@ -4,7 +4,7 @@ using System.Reflection;
 
 using Syadeu.Entities;
 using Syadeu.Internal;
-using Syadeu.Database;
+using Syadeu.Collections;
 
 #if UNITY_EDITOR
 using UnityEditor;

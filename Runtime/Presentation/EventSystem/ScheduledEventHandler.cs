@@ -1,4 +1,5 @@
-﻿using Syadeu.Internal;
+﻿using Syadeu.Collections;
+using Syadeu.Internal;
 using System;
 
 namespace Syadeu.Presentation.Events

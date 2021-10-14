@@ -1,4 +1,4 @@
-﻿namespace Syadeu.Database
+﻿namespace Syadeu.Collections
 {
     [System.AttributeUsage(System.AttributeTargets.Field, AllowMultiple = false, Inherited = false)]
     public sealed class ConfigValueAttribute : System.Attribute

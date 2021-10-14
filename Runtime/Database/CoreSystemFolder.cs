@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.IO;
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     public static class CoreSystemFolder
     {

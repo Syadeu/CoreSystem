@@ -2,7 +2,7 @@
 #define DEBUG_MODE
 #endif
 
-using Syadeu.Database;
+using Syadeu.Collections;
 using System;
 using System.Collections.Generic;
 using Unity.Collections;
@@ -24,6 +24,7 @@ namespace Syadeu.Presentation.Internal
         
         internal Hash m_GroupIndex;
         internal int m_SystemIndex;
+        internal PresentationSystemModule[] m_Modules = Array.Empty<PresentationSystemModule>();
 
         public abstract bool EnableBeforePresentation { get; }
         public abstract bool EnableOnPresentation { get; }
@@ -62,7 +63,7 @@ namespace Syadeu.Presentation.Internal
         PresentationResult IAfterPresentation.AfterPresentation() => AfterPresentation();
         PresentationResult IAfterPresentation.AfterPresentationAsync() => AfterPresentationAsync();
 
-        public PresentationSystemEntity()
+        internal PresentationSystemEntity()
         {
             ConfigLoader.LoadConfig(this);
         }
@@ -75,10 +76,27 @@ namespace Syadeu.Presentation.Internal
             InternalOnDispose();
             OnUnityJobsDispose();
             OnDispose();
+
+            for (int i = 0; i < m_Modules.Length; i++)
+            {
+                ((IDisposable)m_Modules[i]).Dispose();
+            }
         }
         internal virtual void InternalOnDispose() { }
         public abstract void OnDispose();
 
+        protected T GetModule<T>() where T : PresentationSystemModule
+        {
+            var temp = m_Modules.FindFor(GetModulePredicate<T>);
+
+            if (temp != null) return (T)temp;
+            return null;
+        }
+        private bool GetModulePredicate<T>(PresentationSystemModule item) where T : PresentationSystemModule
+        {
+            if (item is T) return true;
+            return false;
+        }
         protected void DontDestroyOnLoad(UnityEngine.GameObject obj)
         {
             CoreSystem.Logger.ThreadBlock(nameof(DontDestroyOnLoad), Syadeu.Internal.ThreadInfo.Unity);

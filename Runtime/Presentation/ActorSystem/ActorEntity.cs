@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Utilities;
-using Syadeu.Database;
+using Syadeu.Collections;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
@@ -46,33 +46,51 @@ namespace Syadeu.Presentation.Actor
     }
     internal sealed class ActorProccesor : EntityDataProcessor<ActorEntity>
     {
-        protected override void OnCreated(EntityData<ActorEntity> entity)
+        protected override void OnCreated(ActorEntity actor)
         {
-            ActorEntity actor = entity.Target;
             FixedList512Bytes<Hash> allies = new FixedList512Bytes<Hash>();
             FixedList512Bytes<Hash> enemies = new FixedList512Bytes<Hash>();
 
-            for (int i = 0; i < actor.Faction.m_Allies.Length; i++)
+            FactionType factionType;
+            Hash factionHash;
+            if (actor.Faction != null)
             {
-                allies.Add(actor.Faction.m_Allies[i].m_Hash);
+                for (int i = 0; i < actor.Faction.m_Allies.Length; i++)
+                {
+                    allies.Add(actor.Faction.m_Allies[i].Hash);
+                }
+                for (int i = 0; i < actor.Faction.m_Enemies.Length; i++)
+                {
+                    enemies.Add(actor.Faction.m_Enemies[i].Hash);
+                }
+                factionType = actor.Faction.m_FactionType;
+                factionHash = actor.Faction.Hash;
             }
-            for (int i = 0; i < actor.Faction.m_Enemies.Length; i++)
+            else
             {
-                enemies.Add(actor.Faction.m_Enemies[i].m_Hash);
+                factionType = FactionType.NPC;
+                factionHash = Hash.Empty;
+
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Actor({actor.Name}) doesn\'t have any faction. This is not allowed.");
             }
+
+            EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(actor.Idx);
 
             entity.AddComponent<ActorFactionComponent>(new ActorFactionComponent()
             {
-                m_FactionType = actor.Faction.m_FactionType,
-                m_Hash = actor.Faction.Hash,
+                m_FactionType = factionType,
+                m_Hash = factionHash,
                 m_Allies = allies,
                 m_Enemies = enemies
             });
-            actor.m_OnCreated.Execute(entity.Cast<ActorEntity, IEntityData>());
+            actor.m_OnCreated.Execute(entity);
         }
-        protected override void OnDestroy(EntityData<ActorEntity> entity)
+        protected override void OnDestroy(ActorEntity actor)
         {
-            entity.Target.m_OnDestroy.Execute(entity.Cast<ActorEntity, IEntityData>());
+            EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(actor.Idx);
+
+            actor.m_OnDestroy.Execute(entity);
         }
     }
 }

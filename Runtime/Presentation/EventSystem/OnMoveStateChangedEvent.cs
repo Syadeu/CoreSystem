@@ -1,6 +1,7 @@
 ﻿using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Attributes;
 using System;
+using Syadeu.Collections;
 
 namespace Syadeu.Presentation.Events
 {

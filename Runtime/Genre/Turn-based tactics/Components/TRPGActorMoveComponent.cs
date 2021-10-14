@@ -1,4 +1,5 @@
-﻿using Syadeu.Database;
+﻿using Syadeu.Collections;
+using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Map;
@@ -34,26 +35,13 @@ namespace Syadeu.Presentation.TurnTable
 
         #region Get Moveable GridPositions
 
-        public INativeList<GridPosition> GetMoveablePositions()
-        {
-            if (!SafetyChecks()) return default(FixedList32Bytes<GridPosition>);
-
-            var turnPlayer = m_Parent.GetComponent<TurnPlayerComponent>();
-            int maxValue = turnPlayer.ActionPoint * turnPlayer.ActionPoint;
-
-            if (maxValue < 8) return GetMoveablePositions8();
-            else if (maxValue < 16) return GetMoveablePositions16();
-            else if (maxValue < 32) return GetMoveablePositions32();
-
-            throw new NotImplementedException();
-        }
         public void GetMoveablePositions(ref NativeList<GridPosition> gridPositions)
         {
             if (!SafetyChecks()) return;
 
             var turnPlayer = m_Parent.GetComponent<TurnPlayerComponent>();
             var gridsize = m_Parent.GetComponent<GridSizeComponent>();
-            
+
             NativeList<int> range = new NativeList<int>(512, Allocator.Temp);
             gridsize.GetRange(ref range, turnPlayer.ActionPoint);
             
@@ -66,82 +54,6 @@ namespace Syadeu.Presentation.TurnTable
                 gridPositions.Add(gridsize.GetGridPosition(range[i]));
             }
             range.Dispose();
-        }
-        public FixedList32Bytes<GridPosition> GetMoveablePositions8()
-        {
-            if (!SafetyChecks()) return default(FixedList64Bytes<GridPosition>);
-
-            var turnPlayer = m_Parent.GetComponent<TurnPlayerComponent>();
-            var gridsize = m_Parent.GetComponent<GridSizeComponent>();
-            var range = gridsize.GetRange8(turnPlayer.ActionPoint);
-
-            FixedList32Bytes<GridPosition> indices = new FixedList32Bytes<GridPosition>();
-            for (int i = 0; i < range.Length; i++)
-            {
-                if (!gridsize.HasPath(range[i], out int pathCount) ||
-                        pathCount > turnPlayer.ActionPoint) continue;
-
-                indices.Add(gridsize.GetGridPosition(range[i]));
-            }
-
-            return indices;
-        }
-        public FixedList64Bytes<GridPosition> GetMoveablePositions16()
-        {
-            if (!SafetyChecks()) return default(FixedList64Bytes<GridPosition>);
-
-            var turnPlayer = m_Parent.GetComponent<TurnPlayerComponent>();
-            var gridsize = m_Parent.GetComponent<GridSizeComponent>();
-            var range = gridsize.GetRange16(turnPlayer.ActionPoint);
-
-            FixedList64Bytes<GridPosition> indices = new FixedList64Bytes<GridPosition>();
-            for (int i = 0; i < range.Length; i++)
-            {
-                if (!gridsize.HasPath(range[i], out int pathCount) ||
-                        pathCount > turnPlayer.ActionPoint) continue;
-
-                indices.Add(gridsize.GetGridPosition(range[i]));
-            }
-
-            return indices;
-        }
-        public FixedList128Bytes<GridPosition> GetMoveablePositions32()
-        {
-            if (!SafetyChecks()) return default(FixedList64Bytes<GridPosition>);
-
-            var turnPlayer = m_Parent.GetComponent<TurnPlayerComponent>();
-            var gridsize = m_Parent.GetComponent<GridSizeComponent>();
-            var range = gridsize.GetRange32(turnPlayer.ActionPoint);
-
-            FixedList128Bytes<GridPosition> indices = new FixedList128Bytes<GridPosition>();
-            for (int i = 0; i < range.Length; i++)
-            {
-                if (!gridsize.HasPath(range[i], out int pathCount) ||
-                        pathCount > turnPlayer.ActionPoint) continue;
-
-                indices.Add(gridsize.GetGridPosition(range[i]));
-            }
-
-            return indices;
-        }
-        public FixedList4096Bytes<GridPosition> GetMoveablePositions340()
-        {
-            if (!SafetyChecks()) return default(FixedList4096Bytes<GridPosition>);
-
-            var turnPlayer = m_Parent.GetComponent<TurnPlayerComponent>();
-            var gridsize = m_Parent.GetComponent<GridSizeComponent>();
-            var range = gridsize.GetRange1024(turnPlayer.ActionPoint);
-
-            FixedList4096Bytes<GridPosition> indices = new FixedList4096Bytes<GridPosition>();
-            for (int i = 0; i < range.Length; i++)
-            {
-                if (!gridsize.HasPath(range[i], out int pathCount) ||
-                        pathCount > turnPlayer.ActionPoint) continue;
-
-                indices.Add(gridsize.GetGridPosition(range[i]));
-            }
-
-            return indices;
         }
 
         #endregion
@@ -157,35 +69,18 @@ namespace Syadeu.Presentation.TurnTable
             return gridsize.IndexToPosition(tile.index);
         }
 
-        public void GetMoveablePath64(List<GridPath64> indices)
-        {
-            if (!SafetyChecks()) return;
-
-            var turnPlayer = m_Parent.GetComponent<TurnPlayerComponent>();
-            var gridsize = m_Parent.GetComponent<GridSizeComponent>();
-            var range = gridsize.GetRange16(turnPlayer.ActionPoint);
-
-            indices.Clear();
-            //FixedList64Bytes<GridPath32> indices = new FixedList64Bytes<GridPath32>();
-            GridPath64 path = GridPath64.Create();
-            for (int i = 0; i < range.Length; i++)
-            {
-                if (!gridsize.GetPath64(range[i], ref path, turnPlayer.ActionPoint)) continue;
-
-                indices.Add(path);
-
-                if (i + 1 < range.Length) path = GridPath64.Create();
-            }
-
-            //return indices;
-        }
-
         public void MoveTo(in GridPath64 path, in ActorMoveEvent ev)
         {
             NavMeshSystem navMesh = PresentationSystem<DefaultPresentationGroup, NavMeshSystem>.System;
             navMesh.MoveTo(m_Parent.As<IEntityData, IEntity>(), path, ev);
         }
         public void MoveTo(in float3 point, in ActorMoveEvent ev)
+        {
+            NavMeshSystem navMesh = PresentationSystem<DefaultPresentationGroup, NavMeshSystem>.System;
+            navMesh.MoveTo(m_Parent.As<IEntityData, IEntity>(), point, ev);
+        }
+        public void MoveTo<TPredicate>(in float3 point, in ActorMoveEvent<TPredicate> ev)
+            where TPredicate : unmanaged, IExecutable<Entity<ActorEntity>>
         {
             NavMeshSystem navMesh = PresentationSystem<DefaultPresentationGroup, NavMeshSystem>.System;
             navMesh.MoveTo(m_Parent.As<IEntityData, IEntity>(), point, ev);

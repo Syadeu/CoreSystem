@@ -2,7 +2,7 @@
 using Newtonsoft.Json.Serialization;
 using NUnit.Framework;
 using Syadeu;
-using Syadeu.Database;
+using Syadeu.Collections;
 using Syadeu.Internal;
 using Syadeu.Presentation;
 using Syadeu.Presentation.Actions;
@@ -144,7 +144,7 @@ namespace SyadeuEditor.Presentation
             CoreSystem.Logger.Log(Channel.Editor, "Entity data loaded");
         }
 
-        public void Select(IReference reference)
+        public void Select(IFixedReference reference)
         {
             var obj = reference.GetObject();
             if (obj == null)
@@ -467,7 +467,7 @@ namespace SyadeuEditor.Presentation
                 m_MainWindow.m_SelectedObject = obj;
             }
 
-            public void Select(IReference reference)
+            public void Select(IFixedReference reference)
             {
                 var obj = reference.GetObject();
                 if (obj == null) return;
@@ -661,7 +661,7 @@ namespace SyadeuEditor.Presentation
                             Type declaredType = ReflectionHelper.GetDeclaredType(other);
 
                             if (TypeHelper.TypeOf<Delegate>.Type.IsAssignableFrom(declaredType) ||
-                                TypeHelper.TypeOf<IReference>.Type.IsAssignableFrom(declaredType))
+                                TypeHelper.TypeOf<IFixedReference>.Type.IsAssignableFrom(declaredType))
                             {
                                 return false;
                             }
@@ -749,7 +749,7 @@ namespace SyadeuEditor.Presentation
                         }
                         else if (m_SelectedMembers[i] is ArrayDrawer array)
                         {
-                            if (TypeHelper.TypeOf<IReference>.Type.IsAssignableFrom(array.ElementType)) continue;
+                            if (TypeHelper.TypeOf<IFixedReference>.Type.IsAssignableFrom(array.ElementType)) continue;
                         }
 
                         m_SelectedMembers[i].OnGUI();
@@ -777,7 +777,7 @@ namespace SyadeuEditor.Presentation
                         if (entityBase.transform is ProxyTransform proxy &&
                             proxy.hasProxy)
                         {
-                            EditorGUILayout.ObjectField(proxy.proxy, TypeHelper.TypeOf<RecycleableMonobehaviour>.Type, true);
+                            EditorGUILayout.ObjectField((UnityEngine.Object)proxy.proxy, TypeHelper.TypeOf<RecycleableMonobehaviour>.Type, true);
                         }
                         else if (entityBase.transform is UnityTransform unityTr)
                         {

@@ -1,5 +1,5 @@
 ﻿using Newtonsoft.Json;
-using Syadeu.Database;
+using Syadeu.Collections;
 using Syadeu.Internal;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
@@ -70,13 +70,24 @@ namespace Syadeu.Presentation.Map
         [JsonIgnore] public int3 Size => m_Size;
         [JsonIgnore] public float CellSize => m_CellSize;
         [JsonIgnore] public int LayerCount => m_Layers.Length;
-        [JsonIgnore] public int GridCellCapacity => Grid.length;
         [JsonIgnore] private BinaryGrid Grid { get; set; }
         [JsonIgnore] private BinaryGrid[] SubGrids { get; set; }
         [JsonIgnore] private NativeHashSet<int>[] Layers { get; set; }
 
         [JsonIgnore] public List<int> m_ObstacleLayerIndices = new List<int>();
         [JsonIgnore] public NativeHashSet<int> ObstacleLayer { get; private set; }
+        [JsonIgnore] public int Length
+        {
+            get
+            {
+                int temp = Grid.length;
+                for (int i = 0; i < SubGrids.Length; i++)
+                {
+                    temp += SubGrids[i].length;
+                }
+                return temp;
+            }
+        }
 
         [JsonIgnore] public Mesh CellMesh { get; private set; }
         [JsonIgnore] public Material CellMaterial { get; private set; }
@@ -94,28 +105,35 @@ namespace Syadeu.Presentation.Map
                 }
             }
 
-            SubGrids = new BinaryGrid[m_SubGrids.Length];
-            for (int i = 0; i < m_SubGrids.Length; i++)
+            if (m_SubGrids.Length == 0)
             {
-#if UNITY_EDITOR
-                if (m_SubGrids[i].m_Size.Equals(int3.zero))
+                SubGrids = Array.Empty<BinaryGrid>();
+            }
+            else
+            {
+                SubGrids = new BinaryGrid[m_SubGrids.Length];
+                for (int i = 0; i < m_SubGrids.Length; i++)
                 {
-                    CoreSystem.Logger.LogError(Channel.Presentation,
-                        $"Sub Grid {m_SubGrids[i].m_Name} at {i} size is zero. This is not allowed.");
+#if UNITY_EDITOR
+                    if (m_SubGrids[i].m_Size.Equals(int3.zero))
+                    {
+                        CoreSystem.Logger.LogError(Channel.Presentation,
+                            $"Sub Grid {m_SubGrids[i].m_Name} at {i} size is zero. This is not allowed.");
+                    }
+#endif
+                    SubGrids[i] = new BinaryGrid(m_SubGrids[i].m_Center, m_SubGrids[i].m_Size, m_CellSize);
+                }
+#if UNITY_EDITOR
+                for (int i = 0; i < SubGrids.Length; i++)
+                {
+                    if (Grid.bounds.Intersect(SubGrids[i].bounds))
+                    {
+                        CoreSystem.Logger.LogError(Channel.Presentation,
+                            $"Sub Grid {m_SubGrids[i].m_Name} intersects with main grid. Are you intended?");
+                    }
                 }
 #endif
-                SubGrids[i] = new BinaryGrid(m_SubGrids[i].m_Center, m_SubGrids[i].m_Size, m_CellSize);
             }
-#if UNITY_EDITOR
-            for (int i = 0; i < SubGrids.Length; i++)
-            {
-                if (Grid.bounds.Intersect(SubGrids[i].bounds))
-                {
-                    CoreSystem.Logger.LogError(Channel.Presentation,
-                        $"Sub Grid {m_SubGrids[i].m_Name} intersects with main grid. Are you intended?");
-                }
-            }
-#endif
 
             float halfCell = m_CellSize * .5f;
             CellMesh = new Mesh();
@@ -200,9 +218,8 @@ namespace Syadeu.Presentation.Map
 
         #region Filter
 
-        public FixedList32Bytes<int> FilterByLayer32(in int layer, in FixedList32Bytes<int> indices)
+        public void FilterByLayer1024(in int layer, ref FixedList4096Bytes<int> indices)
         {
-            FixedList32Bytes<int> temp = new FixedList32Bytes<int>();
             for (int i = 0; i < indices.Length; i++)
             {
                 if (m_Layers[layer].m_Inverse)
@@ -210,6 +227,7 @@ namespace Syadeu.Presentation.Map
                     if (!Layers[layer].Contains(indices[i]))
                     {
                         //filtered.Add(indices[i]);
+                        indices.RemoveAt(i);
                         continue;
                     }
                 }
@@ -218,117 +236,11 @@ namespace Syadeu.Presentation.Map
                     if (Layers[layer].Contains(indices[i]))
                     {
                         //filtered.Add(indices[i]);
+                        indices.RemoveAt(i);
                         continue;
                     }
                 }
-
-                temp.Add(indices[i]);
             }
-            return temp;
-        }
-        public FixedList64Bytes<int> FilterByLayer64(in int layer, in FixedList64Bytes<int> indices)
-        {
-            FixedList64Bytes<int> temp = new FixedList64Bytes<int>();
-            for (int i = 0; i < indices.Length; i++)
-            {
-                if (m_Layers[layer].m_Inverse)
-                {
-                    if (!Layers[layer].Contains(indices[i]))
-                    {
-                        //filtered.Add(indices[i]);
-                        continue;
-                    }
-                }
-                else
-                {
-                    if (Layers[layer].Contains(indices[i]))
-                    {
-                        //filtered.Add(indices[i]);
-                        continue;
-                    }
-                }
-
-                temp.Add(indices[i]);
-            }
-            return temp;
-        }
-        public FixedList128Bytes<int> FilterByLayer128(in int layer, in FixedList128Bytes<int> indices)
-        {
-            FixedList128Bytes<int> temp = new FixedList128Bytes<int>();
-            for (int i = 0; i < indices.Length; i++)
-            {
-                if (m_Layers[layer].m_Inverse)
-                {
-                    if (!Layers[layer].Contains(indices[i]))
-                    {
-                        //filtered.Add(indices[i]);
-                        continue;
-                    }
-                }
-                else
-                {
-                    if (Layers[layer].Contains(indices[i]))
-                    {
-                        //filtered.Add(indices[i]);
-                        continue;
-                    }
-                }
-
-                temp.Add(indices[i]);
-            }
-            return temp;
-        }
-        public FixedList512Bytes<int> FilterByLayer512(in int layer, in FixedList512Bytes<int> indices)
-        {
-            FixedList512Bytes<int> temp = new FixedList512Bytes<int>();
-            for (int i = 0; i < indices.Length; i++)
-            {
-                if (m_Layers[layer].m_Inverse)
-                {
-                    if (!Layers[layer].Contains(indices[i]))
-                    {
-                        //filtered.Add(indices[i]);
-                        continue;
-                    }
-                }
-                else
-                {
-                    if (Layers[layer].Contains(indices[i]))
-                    {
-                        //filtered.Add(indices[i]);
-                        continue;
-                    }
-                }
-
-                temp.Add(indices[i]);
-            }
-            return temp;
-        }
-        public FixedList4096Bytes<int> FilterByLayer1024(in int layer, in FixedList4096Bytes<int> indices)
-        {
-            FixedList4096Bytes<int> temp = new FixedList4096Bytes<int>();
-            for (int i = 0; i < indices.Length; i++)
-            {
-                if (m_Layers[layer].m_Inverse)
-                {
-                    if (!Layers[layer].Contains(indices[i]))
-                    {
-                        //filtered.Add(indices[i]);
-                        continue;
-                    }
-                }
-                else
-                {
-                    if (Layers[layer].Contains(indices[i]))
-                    {
-                        //filtered.Add(indices[i]);
-                        continue;
-                    }
-                }
-
-                temp.Add(indices[i]);
-            }
-            return temp;
         }
 
         public void FilterByLayer(in int layer, ref NativeList<int> indices)
@@ -610,54 +522,6 @@ namespace Syadeu.Presentation.Map
 
             return temp;
         }
-        public FixedList32Bytes<int> GetRange8(in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
-        {
-            var grid = GetTargetGrid(in idx, out int targetIdx);
-
-            FixedList32Bytes<int> temp = grid.GetRange8(in targetIdx, in range);
-            for (int i = 0; i < ignoreLayers.Length; i++)
-            {
-                temp = FilterByLayer32(ignoreLayers[i], in temp);
-            }
-
-            return temp;
-        }
-        public FixedList64Bytes<int> GetRange16(in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
-        {
-            var grid = GetTargetGrid(in idx, out int targetIdx);
-
-            FixedList64Bytes<int> temp = grid.GetRange16(in targetIdx, in range);
-            for (int i = 0; i < ignoreLayers.Length; i++)
-            {
-                temp = FilterByLayer64(ignoreLayers[i], in temp);
-            }
-
-            return temp;
-        }
-        public FixedList128Bytes<int> GetRange32(in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
-        {
-            var grid = GetTargetGrid(in idx, out int targetIdx);
-
-            FixedList128Bytes<int> temp = grid.GetRange32(in targetIdx, in range);
-            for (int i = 0; i < ignoreLayers.Length; i++)
-            {
-                temp = FilterByLayer128(ignoreLayers[i], in temp);
-            }
-
-            return temp;
-        }
-        public FixedList4096Bytes<int> GetRange1024(in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
-        {
-            var grid = GetTargetGrid(in idx, out int targetIdx);
-
-            FixedList4096Bytes<int> temp = grid.GetRange1024(in targetIdx, in range);
-            for (int i = 0; i < ignoreLayers.Length; i++)
-            {
-                temp = FilterByLayer1024(ignoreLayers[i], in temp);
-            }
-
-            return temp;
-        }
         public void GetRange(ref NativeList<int> list, in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
         {
             var grid = GetTargetGrid(in idx, out int targetIdx);
@@ -668,6 +532,25 @@ namespace Syadeu.Presentation.Map
                 FilterByLayer(ignoreLayers[i], ref list);
             }
         }
+        unsafe public void GetRange(in int* buffer, in int bufferLength, in int idx, in int range, in FixedList128Bytes<int> ignoreLayers, out int count)
+        {
+            var grid = GetTargetGrid(in idx, out int targetIdx);
+            
+            grid.GetRange(in buffer, in bufferLength, in targetIdx, in range, out count);
+            FixedList4096Bytes<int> temp = new FixedList4096Bytes<int>();
+            temp.AddRange(buffer, count);
+
+            for (int i = 0; i < ignoreLayers.Length; i++)
+            {
+                FilterByLayer1024(ignoreLayers[i], ref temp);
+            }
+
+            for (int i = 0; i < temp.Length; i++)
+            {
+                buffer[i] = temp[i];
+            }
+            count = temp.Length;
+        }
 
         #endregion
 
@@ -675,6 +558,7 @@ namespace Syadeu.Presentation.Map
 
         public void DrawGridGL(float thinkness) => DrawGridGL(Grid, thinkness);
         public void DrawOccupiedCells(int[] gridEntities) => DrawOccupiedCells(Grid, gridEntities);
+        public void DrawOccupiedCells(NativeArray<int> gridEntities) => DrawOccupiedCells(Grid, gridEntities);
 
         static void DrawGridGL(BinaryGrid grid, float thickness)
         {
@@ -724,6 +608,25 @@ namespace Syadeu.Presentation.Map
             }
         }
         static void DrawOccupiedCells(BinaryGrid grid, int[] gridEntities)
+        {
+            float sizeHalf = grid.cellSize * .5f;
+
+            for (int i = 0; i < gridEntities.Length; i++)
+            {
+                Vector3
+                        cellPos = grid.IndexToPosition(gridEntities[i]),
+                        p1 = new Vector3(cellPos.x - sizeHalf, cellPos.y + .1f, cellPos.z - sizeHalf),
+                        p2 = new Vector3(cellPos.x - sizeHalf, cellPos.y + .1f, cellPos.z + sizeHalf),
+                        p3 = new Vector3(cellPos.x + sizeHalf, cellPos.y + .1f, cellPos.z + sizeHalf),
+                        p4 = new Vector3(cellPos.x + sizeHalf, cellPos.y + .1f, cellPos.z - sizeHalf);
+
+                GL.Vertex(p1);
+                GL.Vertex(p2);
+                GL.Vertex(p3);
+                GL.Vertex(p4);
+            }
+        }
+        static void DrawOccupiedCells(BinaryGrid grid, NativeArray<int> gridEntities)
         {
             float sizeHalf = grid.cellSize * .5f;
 

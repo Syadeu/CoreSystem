@@ -2,10 +2,14 @@
 #define DEBUG_MODE
 #endif
 
+using Syadeu.Collections;
+using Syadeu.Internal;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
+using Syadeu.Presentation.Render;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -21,29 +25,44 @@ namespace Syadeu.Presentation.TurnTable
         private readonly LinkedList<EntityData<IEntityData>> m_TurnTable = new LinkedList<EntityData<IEntityData>>();
         private LinkedListNode<EntityData<IEntityData>> m_CurrentTurn = null;
 
+        private event Action<EntityData<IEntityData>> OnStartTurn;
+        private event Action<EntityData<IEntityData>> OnEndTurn;
+#if DEBUG_MODE
+        private readonly HashSet<int>
+            m_AddedOnStartTurnEvent = new HashSet<int>(),
+            m_AddedOnEndTurnEvent = new HashSet<int>();
+#endif
+
         private bool m_TurnTableEnabled = false;
+
+        private EventSystem m_EventSystem;
+        private WorldCanvasSystem m_WorldCanvasSystem;
 
         public bool Enabled => m_TurnTableEnabled;
         public EntityData<IEntityData> CurrentTurn => m_CurrentTurn.Value;
-
-        private EventSystem m_EventSystem;
 
         #region Presentation Methods
 
         protected override PresentationResult OnInitialize()
         {
             RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, WorldCanvasSystem>(Bind);
 
             return base.OnInitialize();
         }
         public override void OnDispose()
         {
             m_EventSystem = null;
+            m_WorldCanvasSystem = null;
         }
 
         private void Bind(EventSystem other)
         {
             m_EventSystem = other;
+        }
+        private void Bind(WorldCanvasSystem other)
+        {
+            m_WorldCanvasSystem = other;
         }
 
         #endregion
@@ -56,22 +75,75 @@ namespace Syadeu.Presentation.TurnTable
             }
             m_Players.Add(player);
 
-            ActorStateAttribute stateAttribute = player.GetAttribute<ActorStateAttribute>();
-            if (stateAttribute != null)
-            {
-                stateAttribute.AddEvent(OnActorStateChangedEventHandler);
-            }
+            //ActorStateAttribute stateAttribute = player.GetAttribute<ActorStateAttribute>();
+            //if (stateAttribute != null)
+            //{
+            //    stateAttribute.AddEvent(OnActorStateChangedEventHandler);
+            //}
         }
         public void RemovePlayer(EntityData<IEntityData> player)
         {
             m_Players.RemoveFor(player);
 
-            ActorStateAttribute stateAttribute = player.GetAttribute<ActorStateAttribute>();
-            if (stateAttribute != null)
-            {
-                stateAttribute.RemoveEvent(OnActorStateChangedEventHandler);
-            }
+            //ActorStateAttribute stateAttribute = player.GetAttribute<ActorStateAttribute>();
+            //if (stateAttribute != null)
+            //{
+            //    stateAttribute.RemoveEvent(OnActorStateChangedEventHandler);
+            //}
         }
+
+        #region Events
+
+        public void AddOnStartTurnEvent(Action<EntityData<IEntityData>> ev)
+        {
+#if DEBUG_MODE
+            int hash = ev.GetHashCode();
+            if (m_AddedOnStartTurnEvent.Contains(hash))
+            {
+                CoreSystem.Logger.LogError(Channel.Event,
+                    $"Attemp to add same delegate event({ev.Method.Name}) at {ev.Method.Name}.");
+                return;
+            }
+            m_AddedOnStartTurnEvent.Add(hash);
+#endif
+
+            OnStartTurn += ev;
+        }
+        public void RemoveOnStartTurnEvent(Action<EntityData<IEntityData>> ev)
+        {
+#if DEBUG_MODE
+            int hash = ev.GetHashCode();
+            m_AddedOnStartTurnEvent.Remove(hash);
+#endif
+
+            OnStartTurn -= ev;
+        }
+        public void AddOnEndTurnEvent(Action<EntityData<IEntityData>> ev)
+        {
+#if DEBUG_MODE
+            int hash = ev.GetHashCode();
+            if (m_AddedOnEndTurnEvent.Contains(hash))
+            {
+                CoreSystem.Logger.LogError(Channel.Event,
+                    $"Attemp to add same delegate event({ev.Method.Name}) at {ev.Method.Name}.");
+                return;
+            }
+            m_AddedOnEndTurnEvent.Add(hash);
+#endif
+
+            OnEndTurn += ev;
+        }
+        public void RemoveOnEndTurnEvent(Action<EntityData<IEntityData>> ev)
+        {
+#if DEBUG_MODE
+            int hash = ev.GetHashCode();
+            m_AddedOnEndTurnEvent.Remove(hash);
+#endif
+
+            OnEndTurn -= ev;
+        }
+
+        #endregion
 
         private void StartTurn(EntityData<IEntityData> entity)
         {
@@ -81,7 +153,10 @@ namespace Syadeu.Presentation.TurnTable
             m_EventSystem.PostEvent(
                 OnTurnStateChangedEvent.GetEvent(entity, OnTurnStateChangedEvent.TurnState.Start));
 
-            entity.GetAttribute<TurnPlayerAttribute>().m_OnStartTurnActions.Schedule(entity);
+            //entity.GetAttribute<TurnPlayerAttribute>().m_OnStartTurnActions.Schedule(entity);
+            player.OnEndTurnActions.Schedule(entity);
+
+            OnStartTurn?.Invoke(entity);
         }
         private void EndTurn(EntityData<IEntityData> entity)
         {
@@ -91,7 +166,10 @@ namespace Syadeu.Presentation.TurnTable
             m_EventSystem.PostEvent(
                 OnTurnStateChangedEvent.GetEvent(entity, OnTurnStateChangedEvent.TurnState.End));
 
-            entity.GetAttribute<TurnPlayerAttribute>().m_OnEndTurnActions.Schedule(entity);
+            //entity.GetAttribute<TurnPlayerAttribute>().m_OnEndTurnActions.Schedule(entity);
+            player.OnEndTurnActions.Schedule(entity);
+
+            OnEndTurn?.Invoke(entity);
         }
         private ref TurnPlayerComponent ResetTurn(EntityData<IEntityData> entity)
         {
@@ -102,16 +180,26 @@ namespace Syadeu.Presentation.TurnTable
             m_EventSystem.PostEvent(
                 OnTurnStateChangedEvent.GetEvent(entity, OnTurnStateChangedEvent.TurnState.Reset));
 
-            entity.GetAttribute<TurnPlayerAttribute>().m_OnResetTurnActions.Schedule(entity);
+            //entity.GetAttribute<TurnPlayerAttribute>().m_OnResetTurnActions.Schedule(entity);
+            player.OnResetTurnActions.Schedule(entity);
 
             return ref player;
         }
 
         public void StartTurnTable()
         {
+            if (m_TurnTableEnabled)
+            {
+                "already started".ToLogError();
+                return;
+            }
+
+            m_TurnTableEnabled = true;
+
             if (m_Players.Count == 0)
             {
                 StartCoroutine(WaitForJoinPlayer());
+                return;
             }
             else
             {
@@ -119,12 +207,17 @@ namespace Syadeu.Presentation.TurnTable
 
                 StartTurn(CurrentTurn);
             }
-            m_TurnTableEnabled = true;
-
+            
             m_EventSystem.PostEvent(OnTurnTableStateChangedEvent.GetEvent(m_TurnTableEnabled));
         }
         public void StopTurnTable()
         {
+            if (!m_TurnTableEnabled)
+            {
+                "already stopped".ToLogError();
+                return;
+            }
+
             m_TurnTableEnabled = false;
             InternalClearTable();
 
@@ -143,6 +236,8 @@ namespace Syadeu.Presentation.TurnTable
             InternalInitializeTable();
 
             StartTurn(CurrentTurn);
+
+            m_EventSystem.PostEvent(OnTurnTableStateChangedEvent.GetEvent(m_TurnTableEnabled));
         }
 
         private void InternalInitializeTable()
@@ -202,11 +297,6 @@ namespace Syadeu.Presentation.TurnTable
 
                 return -1;
             }
-        }
-
-        private static void OnActorStateChangedEventHandler(ActorStateAttribute attribute, ActorStateAttribute.StateInfo stateInfo)
-        {
-            $"{attribute.Parent.RawName} state changed -> {stateInfo}".ToLog();
         }
     }
 }

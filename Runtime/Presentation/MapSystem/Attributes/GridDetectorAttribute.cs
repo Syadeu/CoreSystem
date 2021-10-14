@@ -1,7 +1,8 @@
 ﻿using Newtonsoft.Json;
-using Syadeu.Database;
+using Syadeu.Collections;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Attributes;
+using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using System;
@@ -14,41 +15,30 @@ using UnityEngine;
 namespace Syadeu.Presentation.Map
 {
     [DisplayName("Attribute: Entity Detector On Grid")]
-    public sealed class GridDetectorAttribute : GridAttributeBase
+    public sealed class GridDetectorAttribute : GridAttributeBase,
+        INotifyComponent<GridDetectorComponent>
     {
         [Tooltip("최대로 탐색할 Grid Range 값")]
-        [JsonProperty(Order = 0, PropertyName = "MaxDetectionRange")] public int m_MaxDetectionRange = 6;
+        [JsonProperty(Order = 0, PropertyName = "MaxDetectionRange")] 
+        internal int m_MaxDetectionRange = 6;
         [JsonProperty(Order = 1, PropertyName = "IgnoreLayers")]
-        public int[] m_IgnoreLayers = Array.Empty<int>();
+        internal int[] m_IgnoreLayers = Array.Empty<int>();
 
         [Header("Trigger Only")]
-        [JsonProperty(Order = 2, PropertyName = "Inverse")] private bool m_Inverse = false;
+        [JsonProperty(Order = 2, PropertyName = "Inverse")] 
+        internal bool m_Inverse = false;
         [JsonProperty(Order = 3, PropertyName = "TriggerOnly")]
-        private Reference<EntityBase>[] m_TriggerOnly = Array.Empty<Reference<EntityBase>>();
+        internal Reference<EntityBase>[] m_TriggerOnly = Array.Empty<Reference<EntityBase>>();
 
         [Header("TriggerActions")]
         [Tooltip("False 를 반환하면 OnDetected 를 실행하지 않습니다.")]
         [JsonProperty(Order = 4, PropertyName = "OnDetectedPredicate")]
-        private Reference<TriggerPredicateAction>[] m_OnDetectedPredicate = Array.Empty<Reference<TriggerPredicateAction>>();
+        internal Reference<TriggerPredicateAction>[] m_OnDetectedPredicate = Array.Empty<Reference<TriggerPredicateAction>>();
         [JsonProperty(Order = 5, PropertyName = "OnDetected")]
-        LogicTriggerAction[] m_OnDetected = Array.Empty<LogicTriggerAction>();
+        internal LogicTriggerAction[] m_OnDetected = Array.Empty<LogicTriggerAction>();
 
         [JsonIgnore] internal EventSystem m_EventSystem = null;
         [JsonIgnore] internal GridSizeAttribute m_GridSize = null;
-
-        [JsonIgnore] internal List<Entity<IEntity>> m_Detected;
-        [JsonIgnore] internal List<Entity<IEntity>> m_Targeted;
-
-        [JsonIgnore] internal NativeList<int> m_TempGetRanges;
-
-        /// <summary>
-        /// 내가 발견한
-        /// </summary>
-        [JsonIgnore] public IReadOnlyList<Entity<IEntity>> Detected => m_Detected;
-        /// <summary>
-        /// 나를 발견한
-        /// </summary>
-        [JsonIgnore] public IReadOnlyList<Entity<IEntity>> Targeted => m_Targeted;
 
         private bool IsTriggerable(Entity<IEntity> target)
         {
@@ -56,7 +46,7 @@ namespace Syadeu.Presentation.Map
 
             for (int i = 0; i < m_TriggerOnly.Length; i++)
             {
-                Hash temp = m_TriggerOnly[i].m_Hash;
+                Hash temp = m_TriggerOnly[i].Hash;
 
                 if (target.Hash.Equals(temp))
                 {
@@ -66,50 +56,54 @@ namespace Syadeu.Presentation.Map
             return false;
         }
 
-        private static bool IsDetect(NativeArray<int> range, int maxRange, FixedList32Bytes<GridPosition> to)
+        unsafe private static bool IsDetect(in int* range, in int count, in FixedList32Bytes<GridPosition> to)
         {
-            bool detect = false;
             for (int i = 0; i < to.Length; i++)
             {
-                if (range.Contains(to[i].index))
+                for (int j = 0; j < count; j++)
                 {
-                    detect = true;
-                    break;
+                    if (range[i] == (to[i].index))
+                    {
+                        return true;
+                    }
                 }
             }
-            return detect;
+            return false;
         }
 
         internal void OnGridPositionChangedEventHandler(OnGridPositionChangedEvent ev)
         {
-            if (ev.Entity.Equals(Parent) && !IsTriggerable(ev.Entity)) return;
+            if (ev.Entity.Equals(ParentEntity) && !IsTriggerable(ev.Entity)) return;
 
             if (!Parent.HasComponent<GridSizeComponent>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Entity({Parent.Name}) doesn\'t have any {nameof(GridSizeComponent)}.");
+                    $"Entity({ParentEntity.Name}) doesn\'t have any {nameof(GridSizeComponent)}.");
                 return;
             }
 
-            GridSizeComponent component = Parent.GetComponent<GridSizeComponent>();
+            ref GridSizeComponent component = ref Parent.GetComponent<GridSizeComponent>();
+            ref GridDetectorComponent detector = ref Parent.GetComponent<GridDetectorComponent>();
 
-            FixedList128Bytes<int> ignores = new FixedList128Bytes<int>();
+            bool detect;
             unsafe
             {
-                fixed (int* temp = m_IgnoreLayers)
-                {
-                    ignores.AddRange(temp, m_IgnoreLayers.Length);
-                }
+                int maxCount = detector.MaxDetectionIndicesCount;
+                int* buffer = stackalloc int[maxCount];
+
+                component.GetRange(in buffer, in maxCount, in detector.m_MaxDetectionRange, in detector.m_IgnoreLayers, out int count);
+                detect = IsDetect(in buffer, in count, ev.To);
             }
 
-            component.GetRange(ref m_TempGetRanges, m_MaxDetectionRange, ignores);
-            bool detect = IsDetect(m_TempGetRanges, m_MaxDetectionRange, ev.To);
+            EntityShortID 
+                myShortID = Parent.Idx.GetShortID(),
+                targetShortID = ev.Entity.Idx.GetShortID();
 
             if (detect)
             {
-                if (m_Detected.Contains(ev.Entity))
+                if (detector.m_Detected.Contains(targetShortID))
                 {
-                    "already detected".ToLog();
+                    //"already detected".ToLog();
                     return;
                 }
                 Entity<IEntity> parent = Parent.As<IEntityData, IEntity>();
@@ -121,41 +115,42 @@ namespace Syadeu.Presentation.Map
                     return;
                 }
 
-                m_Detected.Add(ev.Entity);
+                detector.m_Detected.Add(targetShortID);
                 m_EventSystem.PostEvent(OnGridDetectEntityEvent.GetEvent(parent, ev.Entity, true));
 
                 for (int i = 0; i < m_OnDetected.Length; i++)
                 {
-                    //if (m_MaxDetectionRange > m_OnDetected[i].DetectionRange)
-                    //{
-                    //    if (m_OnDetected[i].DetectionRange < 1)
-                    //    {
-                    //        CoreSystem.Logger.LogError(Channel.Entity,
-                    //            $"Invalid detection range at entity({Parent.Name}) logic({m_OnDetected[i].Name}) index({i}). Range cannot be under 0.");
-                    //        continue;
-                    //    }
-
-                    //    if (!IsDetect(range, m_OnDetected[i].DetectionRange, ev.To)) continue;
-                    //}
-
                     m_OnDetected[i].Execute(Parent, ev.Entity.As<IEntity, IEntityData>());
                 }
 
-                "detect".ToLog();
+                //"detect".ToLog();
+                if (ev.Entity.HasComponent<GridDetectorComponent>())
+                {
+                    ref var targetDetector = ref ev.Entity.GetComponent<GridDetectorComponent>();
+
+                    if (!targetDetector.m_TargetedBy.Contains(myShortID))
+                    {
+                        targetDetector.m_TargetedBy.Add(myShortID);
+                    }
+                }
+
                 return;
             }
 
-            "detect falied".ToLog();
+            //"detect falied".ToLog();
 
-            if (m_Detected.Contains(ev.Entity))
+            if (detector.m_Detected.Contains(targetShortID))
             {
-                var parent = Parent.As<IEntityData, IEntity>();
-
-                m_Detected.Remove(ev.Entity);
-                GridDetectorAttribute targetAtt = ev.Entity.GetAttribute<GridDetectorAttribute>();
-                if (targetAtt != null && targetAtt.m_Targeted.Contains(parent))
+                detector.m_Detected.Remove(targetShortID);
+                
+                if (ev.Entity.HasComponent<GridDetectorComponent>())
                 {
-                    targetAtt.m_Targeted.Remove(parent);
+                    ref var targetDetector = ref ev.Entity.GetComponent<GridDetectorComponent>();
+
+                    if (targetDetector.m_TargetedBy.Contains(myShortID))
+                    {
+                        targetDetector.m_TargetedBy.Remove(myShortID);
+                    }
                 }
 
                 m_EventSystem.PostEvent(OnGridDetectEntityEvent.GetEvent(Parent.As<IEntityData, IEntity>(), ev.Entity, false));
@@ -174,21 +169,41 @@ namespace Syadeu.Presentation.Map
                     $"This Entity({entity.Name}) doesn\'t have GridSizeAttribute. Cannot initialize GridDetectorAttribute");
                 return;
             }
-            attribute.m_Detected = new List<Entity<IEntity>>();
 
-            attribute.m_TempGetRanges = new NativeList<int>(128, Allocator.Persistent);
+            FixedList128Bytes<int> ignores = new FixedList128Bytes<int>();
+            unsafe
+            {
+                fixed (int* temp = attribute.m_IgnoreLayers)
+                {
+                    ignores.AddRange(temp, attribute.m_IgnoreLayers.Length);
+                }
+            }
+            GridDetectorComponent component = new GridDetectorComponent()
+            {
+                m_MyShortID = entity.Idx.GetShortID(),
+                m_MaxDetectionRange = attribute.m_MaxDetectionRange,
+                m_ObserveIndices = new FixedList4096Bytes<int>(),
+                m_IgnoreLayers = ignores,
 
-            EventSystem.AddEvent<OnGridPositionChangedEvent>(attribute.OnGridPositionChangedEventHandler);
+                m_TriggerOnly = attribute.m_TriggerOnly.ToFixedList64(),
+                m_TriggerOnlyInverse = attribute.m_Inverse,
+
+                m_OnDetectedPredicate = attribute.m_OnDetectedPredicate.ToFixedList64(),
+                m_OnDetected = new FixedLogicTriggerAction8(attribute.m_OnDetected),
+
+                m_Detected = new FixedList512Bytes<EntityShortID>(),
+                m_TargetedBy = new FixedList512Bytes<EntityShortID>()
+            };
+            
+            entity.AddComponent(component);
+
+            //EventSystem.AddEvent<OnGridPositionChangedEvent>(attribute.OnGridPositionChangedEventHandler);
         }
         protected override void OnDestroy(GridDetectorAttribute attribute, EntityData<IEntityData> entity)
         {
-            attribute.m_TempGetRanges.Dispose();
-
             if (attribute.m_GridSize != null)
             {
-                EventSystem.RemoveEvent<OnGridPositionChangedEvent>(attribute.OnGridPositionChangedEventHandler);
-
-                attribute.m_Detected = null;
+                //EventSystem.RemoveEvent<OnGridPositionChangedEvent>(attribute.OnGridPositionChangedEventHandler);
             }
             attribute.m_EventSystem = null;
         }

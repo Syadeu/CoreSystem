@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     /// <summary>
     /// <para>이 구조체를 <see cref="SQLiteDatabase"/> 용 데이터 테이블로 선언합니다.</para>

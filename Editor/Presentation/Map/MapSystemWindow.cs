@@ -1,5 +1,5 @@
 ﻿using Syadeu;
-using Syadeu.Database;
+using Syadeu.Collections;
 using Syadeu.Internal;
 using Syadeu.Mono;
 using Syadeu.Presentation;
@@ -1492,6 +1492,26 @@ namespace SyadeuEditor.Presentation.Map
             const float width = 180;
 
             EntityBase objData = obj.m_Object.GetObject();
+            if (objData == null)
+            {
+                Handles.BeginGUI();
+                Rect tempRect = new Rect(HandleUtility.WorldToGUIPoint(obj.m_Translation), new Vector2(width, 60));
+                GUI.BeginGroup(tempRect, "INVALID", EditorUtils.Box);
+
+                if (GUI.Button(GUILayoutUtility.GetRect(width, 20, GUILayout.ExpandWidth(false)), "Remove"))
+                {
+                    m_SelectedMapData.Remove(proxy);
+
+                    m_SelectedGameObjects = null;
+                    m_SelectedMapData = null;
+                    m_SelectedObjects = null;
+                }
+
+                GUI.EndGroup();
+                Handles.EndGUI();
+                return;
+            }
+
             AABB selectAabb = obj.aabb;
 
             #region Scene GUI Overlays
@@ -1544,7 +1564,7 @@ namespace SyadeuEditor.Presentation.Map
             Handles.DrawWireCube(selectAabb.center, selectAabb.size);
         }
 
-        private static void DrawMapDataSelector(IReference current, Action<Reference<MapDataEntityBase>> setter)
+        private static void DrawMapDataSelector(IFixedReference current, Action<Reference<MapDataEntityBase>> setter)
         {
             ReflectionHelperEditor.DrawReferenceSelector("Map data: ", (hash) =>
             {

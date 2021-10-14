@@ -9,7 +9,8 @@
         "MonoSystem",
         "Unity.Collections",
         "Unity.Mathematics",
-        "Syadeu.Presentation"
+        "Syadeu.Presentation",
+        "Syadeu.Collections"
     ],
     "includePlatforms": [],
     "excludePlatforms": [

@@ -7,7 +7,7 @@ using System;
 using UnityEditor;
 #endif
 
-namespace Syadeu.Database.Lua
+namespace Syadeu.Collections.Lua
 {
     [UnityEngine.AddComponentMenu("")]
     public sealed class LuaManager : StaticDataManager<LuaManager>

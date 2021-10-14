@@ -2,11 +2,13 @@
 #define DEBUG_MODE
 #endif
 
-using Syadeu.Database;
+using Syadeu.Collections;
+using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Input;
 using Syadeu.Presentation.Map;
 using Syadeu.Presentation.Render;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
@@ -156,7 +158,12 @@ namespace Syadeu.Presentation.TurnTable
                 }
 
                 var move = m_SelectedEntities[i].GetComponent<TRPGActorMoveComponent>();
-                move.MoveTo(hit.point, new ActorMoveEvent(m_SelectedEntities[i].As<IEntity, IEntityData>()));
+                move.MoveTo(
+                    hit.point, 
+                    new ActorMoveEvent<ActorPointMovePredicate>(
+                        m_SelectedEntities[i].As<IEntity, IEntityData>(), 
+                        0,
+                        new ActorPointMovePredicate()));
             }
         }
 
@@ -204,6 +211,22 @@ namespace Syadeu.Presentation.TurnTable
             }
 
             m_SelectedEntities.Clear();
+        }
+
+        private struct ActorPointMovePredicate : IExecutable<Entity<ActorEntity>>
+        {
+            [BurstDiscard]
+            private bool IsTurnTableStarted()
+            {
+                return PresentationSystem<TRPGIngameSystemGroup, TRPGTurnTableSystem>.System.Enabled;
+            }
+
+            public bool Predicate(in Entity<ActorEntity> t)
+            {
+                if (IsTurnTableStarted()) return false;
+
+                return true;
+            }
         }
     }
 }

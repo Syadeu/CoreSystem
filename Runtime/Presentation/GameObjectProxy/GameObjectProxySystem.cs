@@ -2,7 +2,8 @@
 #define DEBUG_MODE
 #endif
 
-using Syadeu.Database;
+using Syadeu.Collections;
+using Syadeu.Collections.Proxy;
 using Syadeu.Internal;
 using Syadeu.Mono;
 using Syadeu.Presentation.Events;
@@ -23,7 +24,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.SceneManagement;
-using AABB = Syadeu.Database.AABB;
+using AABB = Syadeu.Collections.AABB;
 
 namespace Syadeu.Presentation.Proxy
 {
@@ -219,7 +220,7 @@ namespace Syadeu.Presentation.Proxy
 
             if (!transform.hasProxy || transform.hasProxyQueued) return;
 
-            RecycleableMonobehaviour proxy = transform.proxy;
+            IProxyMonobehaviour proxy = transform.proxy;
             proxy.transform.position = transform.position;
             proxy.transform.rotation = transform.rotation;
             proxy.transform.localScale = transform.scale;
@@ -747,8 +748,8 @@ namespace Syadeu.Presentation.Proxy
             }
 
             m_RequestDestories.Enqueue(tr.m_Index);
-            CoreSystem.Logger.Log(Channel.Proxy,
-                $"Destroy({tr.Ref.m_Prefab.GetObjectSetting().m_Name}) called");
+            //CoreSystem.Logger.Log(Channel.Proxy,
+            //    $"Destroy({tr.Ref.m_Prefab.GetObjectSetting().m_Name}) called");
         }
 
         #region Proxy Object Control
@@ -879,7 +880,7 @@ namespace Syadeu.Presentation.Proxy
                 proxyTransform.SetProxy(-2);
                 InstantiatePrefab(prefab, (other) =>
                 {
-                    if (proxyTransform.isDestroyed)
+                    if (proxyTransform.isDestroyed || proxyTransform.isDestroyQueued)
                     {
                         if (other.InitializeOnCall) other.Terminate();
                         other.transform.position = INIT_POSITION;
@@ -901,7 +902,7 @@ namespace Syadeu.Presentation.Proxy
 
                     OnDataObjectProxyCreated?.Invoke(proxyTransform, other);
                     CoreSystem.Logger.Log(Channel.Proxy, true,
-                        $"Prefab({proxyTransform.prefab.GetObjectSetting().m_Name}) proxy created");
+                        $"Prefab({proxyTransform.prefab.GetObjectSetting().Name}) proxy created");
                 });
             }
             else
@@ -917,7 +918,7 @@ namespace Syadeu.Presentation.Proxy
 
                 OnDataObjectProxyCreated?.Invoke(proxyTransform, other);
                 CoreSystem.Logger.Log(Channel.Proxy, true,
-                    $"Prefab({proxyTransform.prefab.GetObjectSetting().m_Name}) proxy created, pool remains {pool.Count}");
+                    $"Prefab({proxyTransform.prefab.GetObjectSetting().Name}) proxy created, pool remains {pool.Count}");
             }
         }
         unsafe private RecycleableMonobehaviour RemoveProxy(ProxyTransform proxyTransform)

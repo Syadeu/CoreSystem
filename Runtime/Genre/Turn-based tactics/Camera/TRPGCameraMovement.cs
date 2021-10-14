@@ -1,5 +1,6 @@
 ﻿using Cinemachine;
-using Syadeu.Database;
+using Syadeu.Collections;
+using Syadeu.Collections.Proxy;
 using Syadeu.Presentation.Proxy;
 using Syadeu.Presentation.Render;
 using System.Collections;

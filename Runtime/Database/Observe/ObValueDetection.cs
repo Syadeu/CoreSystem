@@ -1,4 +1,4 @@
-﻿namespace Syadeu.Database
+﻿namespace Syadeu.Collections
 {
     /// <summary>
     /// 값을 체크하는 방식을 설정합니다.

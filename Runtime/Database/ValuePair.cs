@@ -6,10 +6,10 @@ using Syadeu.Mono;
 using System;
 using System.Collections;
 
-using Syadeu.Database.Lua;
+using Syadeu.Collections.Lua;
 using Syadeu.Internal;
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     [Serializable] [JsonConverter(typeof(Converters.ValuePairJsonConverter))]
     public abstract class ValuePair : ICloneable, IEquatable<ValuePair>

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     /// <summary>
     /// <para>이 맴버를 <see cref="SQLiteDatabase"/> 용 변수로 선언합니다.</para>

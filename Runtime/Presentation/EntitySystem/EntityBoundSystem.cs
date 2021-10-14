@@ -2,7 +2,7 @@
 #define DEBUG_MODE
 #endif
 
-using Syadeu.Database;
+using Syadeu.Collections;
 using Syadeu.Mono;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Attributes;
@@ -16,7 +16,7 @@ using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 
-using AABB = Syadeu.Database.AABB;
+using AABB = Syadeu.Collections.AABB;
 
 namespace Syadeu.Presentation
 {
@@ -86,23 +86,23 @@ namespace Syadeu.Presentation
             m_EntitySystem.OnEntityCreated += M_EntitySystem_OnEntityCreated;
             m_EntitySystem.OnEntityDestroy += M_EntitySystem_OnEntityDestroy;
         }
-        private void M_EntitySystem_OnEntityCreated(EntityData<IEntityData> obj)
+        private void M_EntitySystem_OnEntityCreated(IEntityData obj)
         {
-            if (!(obj.Target is EntityBase entity)) return;
+            if (!(obj is EntityBase entity)) return;
             TriggerBoundAttribute att = obj.GetAttribute<TriggerBoundAttribute>();
             if (att == null) return;
 
             int arrayIndex = FindOrIncrementTriggerBoundArrayIndex();
             ClusterID id = m_TriggerBoundCluster.Add(entity.transform.position, arrayIndex);
 
-            Entity<IEntity> target = obj.As<IEntityData, IEntity>();
+            Entity<IEntity> target = Entity<IEntity>.GetEntityWithoutCheck(obj.Idx);
             m_TriggerBoundArray[arrayIndex] = target;
 
             att.m_ClusterID = id;
         }
-        private void M_EntitySystem_OnEntityDestroy(EntityData<IEntityData> obj)
+        private void M_EntitySystem_OnEntityDestroy(IEntityData obj)
         {
-            if (!(obj.Target is EntityBase)) return;
+            if (!(obj is EntityBase)) return;
             TriggerBoundAttribute att = obj.GetAttribute<TriggerBoundAttribute>();
             if (att == null) return;
 
@@ -221,7 +221,7 @@ namespace Syadeu.Presentation
                 //}
                 for (int i = 0; i < m_TriggerBoundArray.Length; i++)
                 {
-                    if (!m_TriggerBoundArray[i].IsValid() || m_TriggerBoundArray[i].Hash.Equals(att.Parent.Hash)) continue;
+                    if (!m_TriggerBoundArray[i].IsValid() || m_TriggerBoundArray[i].Hash.Equals(att.ParentEntity.Hash)) continue;
 
                     TryTrigger(in m_EventSystem, ev.entity, in m_TriggerBoundArray[i]);
                 }
@@ -271,7 +271,7 @@ namespace Syadeu.Presentation
 
                 for (int i = 0; i < att.m_TriggerOnly.Length; i++)
                 {
-                    if (att.m_TriggerOnly[i].m_Hash.Equals(target.Hash))
+                    if (att.m_TriggerOnly[i].Hash.Equals(target.Hash))
                     {
                         return !att.m_Inverse;
                     }

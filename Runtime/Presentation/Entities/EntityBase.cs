@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Utilities;
-using Syadeu.Database;
+using Syadeu.Collections;
+using Syadeu.Collections.Proxy;
 using Syadeu.Internal;
 using Syadeu.Presentation.Proxy;
 using Unity.Mathematics;
@@ -42,7 +43,7 @@ namespace Syadeu.Presentation.Entities
 
         public override bool IsValid()
         {
-            if (Disposed || !m_IsCreated || PresentationSystem<GameObjectProxySystem>.System.Disposed) return false;
+            if (Disposed || !m_IsCreated || PresentationSystem<DefaultPresentationGroup, GameObjectProxySystem>.System.Disposed) return false;
 
             return true;
         }

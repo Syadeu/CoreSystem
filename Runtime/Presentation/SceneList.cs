@@ -1,7 +1,7 @@
 ﻿#if UNITY_EDITOR
 #endif
 
-using Syadeu.Database;
+using Syadeu.Collections;
 using Syadeu.Presentation;
 using System.Collections.Generic;
 using UnityEngine;

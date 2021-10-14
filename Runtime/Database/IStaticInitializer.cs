@@ -1,7 +1,7 @@
 ﻿#if UNITY_EDITOR
 #endif
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     public interface IStaticInitializer
     {

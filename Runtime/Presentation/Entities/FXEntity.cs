@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Utilities;
+using Syadeu.Collections;
 using Syadeu.Presentation.Proxy;
 using Syadeu.Presentation.Render;
 using System.ComponentModel;
@@ -19,13 +20,10 @@ namespace Syadeu.Presentation.Entities
 
         [JsonProperty(Order = 0, PropertyName = "PlayOptions")]
         private FXBounds.PlayOptions m_PlayOptions = FXBounds.PlayOptions.OneShot;
-        //[JsonProperty(Order = 8, PropertyName = "FXBounds")]
-        //protected PlayType m_PlayType = PlayType.Sequence;
 
-        //[JsonProperty(Order = 0, PropertyName = "HitFX")]
-        //private Reference<FXEntity> m_HitFX = Reference<FXEntity>.Empty;
         [JsonIgnore] private ParticleSystem m_ParticleSystem;
         [JsonIgnore] internal bool m_PlayQueued = false;
+        [JsonIgnore] internal bool m_Stopped = false;
 
         [JsonIgnore] public bool IsPlaying
         {
@@ -40,6 +38,7 @@ namespace Syadeu.Presentation.Entities
                 return m_ParticleSystem.isPlaying;
             }
         }
+        [JsonIgnore] public bool Stopped => m_Stopped;
 
         public void SetPlayOptions(FXBounds.PlayOptions playOptions)
         {
@@ -55,11 +54,13 @@ namespace Syadeu.Presentation.Entities
             }
 
             m_ParticleSystem.Play();
+
             Render.IPlayable[] playables = m_ParticleSystem.GetComponentsInChildren<Render.IPlayable>();
             for (int i = 0; i < playables?.Length; i++)
             {
                 playables[i].Play();
             }
+            m_Stopped = false;
         }
         public void Stop()
         {
@@ -71,6 +72,7 @@ namespace Syadeu.Presentation.Entities
 
             m_PlayQueued = false;
             m_ParticleSystem.Stop();
+            m_Stopped = true;
         }
 
         internal void Setup(ParticleSystem particleSystem)
@@ -113,14 +115,20 @@ namespace Syadeu.Presentation.Entities
     internal sealed class FXEntityProcessor : EntityDataProcessor<FXEntity>,
         IEntityOnProxyCreated
     {
-        protected override void OnCreated(EntityData<FXEntity> entity)
+        protected override void OnCreated(FXEntity entity)
         {
-            ((ProxyTransform)entity.As().transform).enableCull = false;
+            ((ProxyTransform)entity.transform).enableCull = false;
         }
         public void OnProxyCreated(EntityBase entityBase, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
         {
             FXEntity fx = (FXEntity)entityBase;
-            fx.Setup(monoObj.GetComponent<ParticleSystem>());
+            var particle = monoObj.GetComponent<ParticleSystem>();
+            var main = particle.main;
+            main.stopAction = ParticleSystemStopAction.Callback;
+
+            monoObj.AddOnParticleStoppedEvent(OnParticleStopped);
+
+            fx.Setup(particle);
 
             if (fx.m_PlayQueued)
             {
@@ -131,6 +139,13 @@ namespace Syadeu.Presentation.Entities
         public void OnProxyRemoved(EntityBase entityBase, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
         {
             //monoObj.gameObject.SetActive(false);
+            monoObj.RemoveOnParticleStoppedEvent(OnParticleStopped);
+        }
+
+        private void OnParticleStopped(Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
+        {
+            FXEntity fx = (FXEntity)entity.Target;
+            fx.m_Stopped = true;
         }
     }
 }

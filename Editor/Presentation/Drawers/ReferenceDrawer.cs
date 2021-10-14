@@ -1,5 +1,5 @@
 ﻿using Syadeu;
-using Syadeu.Database;
+using Syadeu.Collections;
 using Syadeu.Internal;
 using Syadeu.Presentation;
 using System;
@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace SyadeuEditor.Presentation
 {
-    public sealed class ReferenceDrawer : ObjectDrawer<IReference>
+    public sealed class ReferenceDrawer : ObjectDrawer<IFixedReference>
     {
         private bool 
             m_Open, 
@@ -20,11 +20,11 @@ namespace SyadeuEditor.Presentation
         {
         }
 
-        public ReferenceDrawer(object parentObject, Type declaredType, Action<IReference> setter, Func<IReference> getter) : base(parentObject, declaredType, setter, getter)
+        public ReferenceDrawer(object parentObject, Type declaredType, Action<IFixedReference> setter, Func<IFixedReference> getter) : base(parentObject, declaredType, setter, getter)
         {
         }
 
-        public override IReference Draw(IReference currentValue)
+        public override IFixedReference Draw(IFixedReference currentValue)
         {
             Type targetType;
             Type[] generics = DeclaredType.GetGenericArguments();
@@ -41,8 +41,8 @@ namespace SyadeuEditor.Presentation
                 object temp = TypeHelper.GetConstructorInfo(DeclaredType, TypeHelper.TypeOf<ObjectBase>.Type).Invoke(
                     new object[] { objBase });
 
-                IReference origin = Getter.Invoke();
-                Setter.Invoke((IReference)temp);
+                IFixedReference origin = Getter.Invoke();
+                Setter.Invoke((IFixedReference)temp);
                 m_WasEdited = !origin.Equals(Getter.Invoke());
             }, currentValue, targetType);
             if (m_WasEdited)
@@ -71,7 +71,7 @@ namespace SyadeuEditor.Presentation
 
                 object temp = TypeHelper.GetConstructorInfo(DeclaredType, TypeHelper.TypeOf<ObjectBase>.Type).Invoke(
                     new object[] { clone });
-                currentValue = (IReference)temp;
+                currentValue = (IFixedReference)temp;
             }
             EditorGUI.EndDisabledGroup();
 
@@ -98,7 +98,7 @@ namespace SyadeuEditor.Presentation
                             "This is shared reference. Anything made changes in this inspector view will affect to original reference directly.",
                             MessageType.Info);
 
-                        ObjectBaseDrawer.GetDrawer(currentValue.GetObject()).OnGUI();
+                        ObjectBaseDrawer.GetDrawer((ObjectBase)currentValue.GetObject()).OnGUI();
                     }
                 }
 
@@ -109,7 +109,7 @@ namespace SyadeuEditor.Presentation
             return currentValue;
         }
 
-        public static void DrawReferenceSelector(string name, Action<Hash> setter, IReference current, Type targetType)
+        public static void DrawReferenceSelector(string name, Action<Hash> setter, IFixedReference current, Type targetType)
         {
             GUIContent displayName;
             ObjectBase objBase = null;

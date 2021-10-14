@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Utilities;
-using Syadeu.Database;
+using Syadeu.Collections;
 using Syadeu.Internal;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Proxy;
@@ -28,8 +28,8 @@ namespace Syadeu.Presentation.Entities
         // TODO : 이거 임시, 나중에 최적화시 지울 것
         [JsonIgnore] internal AttributeBase[] m_Attributes;
 
-        Hash IObject.Idx => Idx;
-        AttributeBase[] IEntityData.Attributes => m_Attributes;
+        InstanceID IObject.Idx => Idx;
+        IAttribute[] IEntityData.Attributes => m_Attributes;
 
         /// <summary><inheritdoc cref="m_Attributes"/></summary>
         [JsonProperty(Order = -10, PropertyName = "Attributes")] private Reference<AttributeBase>[] m_AttributeList = Array.Empty<Reference<AttributeBase>>();
@@ -44,7 +44,7 @@ namespace Syadeu.Presentation.Entities
             {
                 for (int i = 0; i < m_AttributeList.Length; i++)
                 {
-                    if (m_AttributeList[i].m_Hash.Equals(hash)) return true;
+                    if (m_AttributeList[i].Hash.Equals(hash)) return true;
                 }
                 return false;
             }
@@ -72,9 +72,9 @@ namespace Syadeu.Presentation.Entities
             }
             return false;
         }
-        public bool HasAttribute<T>() where T : AttributeBase => HasAttribute(TypeHelper.TypeOf<T>.Type);
-        
-        AttributeBase IEntityData.GetAttribute(Type t)
+        public bool HasAttribute<T>() where T : class, IAttribute => HasAttribute(TypeHelper.TypeOf<T>.Type);
+
+        IAttribute IEntityData.GetAttribute(Type t)
         {
             if (!m_IsCreated)
             {
@@ -94,7 +94,7 @@ namespace Syadeu.Presentation.Entities
             }
             return null;
         }
-        AttributeBase[] IEntityData.GetAttributes(Type t)
+        IAttribute[] IEntityData.GetAttributes(Type t)
         {
             if (!m_IsCreated)
             {
@@ -124,7 +124,7 @@ namespace Syadeu.Presentation.Entities
                 return null;
             }
 
-            AttributeBase att = ((IEntityData)this).GetAttribute(TypeHelper.TypeOf<T>.Type);
+            IAttribute att = ((IEntityData)this).GetAttribute(TypeHelper.TypeOf<T>.Type);
             return att == null ? null : (T)att;
         }
         T[] IEntityData.GetAttributes<T>()
@@ -136,7 +136,7 @@ namespace Syadeu.Presentation.Entities
                 return null;
             }
 
-            AttributeBase[] atts = ((IEntityData)this).GetAttributes(TypeHelper.TypeOf<T>.Type);
+            IAttribute[] atts = ((IEntityData)this).GetAttributes(TypeHelper.TypeOf<T>.Type);
             if (atts == null) return null;
 
             return atts.Select((other) => (T)other).ToArray();
@@ -174,7 +174,7 @@ namespace Syadeu.Presentation.Entities
 
         public virtual bool IsValid()
         {
-            if (Disposed || !m_IsCreated || PresentationSystem<GameObjectProxySystem>.System.Disposed) return false;
+            if (Disposed || !m_IsCreated || PresentationSystem<DefaultPresentationGroup, GameObjectProxySystem>.System.Disposed) return false;
 
             return true;
         }
@@ -203,12 +203,13 @@ namespace Syadeu.Presentation.Entities
                 AttributeBase att = (AttributeBase)EntityDataList.Instance.GetObject(m_AttributeList[i]);
                 if (att == null)
                 {
-                    CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_AttributeWarning, Name, m_AttributeList[i].m_Hash, i));
+                    CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_AttributeWarning, Name, m_AttributeList[i].Hash, i));
                     continue;
                 }
 
                 AttributeBase clone = (AttributeBase)att.Clone();
-                clone.Parent = new EntityData<IEntityData>(entity.Idx, clone.Name);
+                //clone.ParentEntity = new EntityData<IEntityData>(entity.Idx, entity.GetHashCode(), entity.Name);
+                clone.ParentEntity = entity;
 
                 entity.m_Attributes[i] = clone;
 

@@ -5,7 +5,7 @@ using System.IO;
 using UnityEngine;
 using UnityEngine.Scripting;
 
-namespace Syadeu.Database
+namespace Syadeu.Collections
 {
     /// <summary>
     /// SQLiteDatabase 마이그레이션을 위한 유틸 데이터객체
